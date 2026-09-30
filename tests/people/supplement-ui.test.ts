@@ -9,7 +9,7 @@ import type { PersonEntry } from '../../src/people/types';
 
 const p: PersonEntry = { id: 'wxid_a', name: '老王', createdAt: '2026-09-25T00:00:00.000Z', imports: [] };
 
-const emptyImage: SuppImageViewState = { queue: [], imported: 0, undescribed: 0, describeBusy: false, modelLabel: '智谱/glm', items: [], hidden: 0 };
+const emptyImage: SuppImageViewState = { queue: [], imported: 0, undescribed: 0, broken: 0, missing: 0, describeBusy: false, modelLabel: '智谱/glm', items: [], hidden: 0 };
 const emptyRec: SuppRecViewState = { rows: [], ref: 'missing', queue: [] };
 
 describe('suppPage 三页签骨架', () => {
@@ -33,6 +33,8 @@ describe('suppPage 三页签骨架', () => {
       ],
       imported: 5,
       undescribed: 2,
+      broken: 0,
+      missing: 0,
       describeBusy: false,
       modelLabel: '智谱/glm',
       items: [],

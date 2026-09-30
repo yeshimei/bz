@@ -43,6 +43,10 @@ bz-face prep 本体（issue 468）：单联系人重活——媒体导出 → �
   <数据根>/<联系人>/file/<月>/…        附件直拷
   <数据根>/<联系人>/desc/<月>/*.jpg    派生图片档（长边 / 质量可配）
   <数据根>/<联系人>/image_map.json     图片↔消息关联 [{file,ct,sid?}]（file 相对联系人目录）
+  <数据根>/<联系人>/media_fail.json    不可消费清单 [{file,reason,ct,sid?}]（issue 521；
+                                       reason=missing 源图没导出 / broken 源图打不开）：这两类图
+                                       永远派生不出档、永远描述不了，插件据此标终态不再当欠账。
+                                       --limit 调试轮不写（半轮会把「没轮到」误判成终态缺失）
   <数据根>/<联系人>/voice.json         转写结果表 [{wav,sid,dur,text,emotion}]（wav 相对数据根）
 
 进度走四行协议（与 src/core/external-tool.ts 同口径；phase 与 lib/prep-core.js PREP_PHASES 同源）：
@@ -405,6 +409,18 @@ def derive_image(src: Path, target: Path, edge: int, quality: int) -> None:
         im.save(target, "JPEG", quality=quality)
 
 
+def _unusable_entry(file: str, reason: str, m: dict) -> dict:
+    """media_fail.json 的一条（issue 521）：`file` + `reason`(missing|broken) + ct/sid。
+
+    ct / sid 与 image_map.json 同口径——插件按 sid 优先、ct 兜底匹配回聊天仓消息，
+    `missing` 的 file 可能无扩展名（chat 原始引用形态），只有 ct/sid 能稳定对上人。
+    """
+    entry = {"file": file, "reason": reason, "ct": int(m.get("ct") or 0)}
+    if m.get("sid"):
+        entry["sid"] = int(m["sid"])
+    return entry
+
+
 # ---------------- 语音转写（voice_transcribe_all 收编 + faster-whisper 备选） ----------------
 
 def clean_sensevoice(raw: str):
@@ -711,7 +727,10 @@ def main() -> int:
         info(phase="media", counts=media)
 
         # ================= 段 2：派生图片档（derive）=================
+        # 打不开的源图（微信备份里就坏 / 数据流截断）记进 derive_failed：段 3 会把它们归成
+        # media_fail.json 的 broken 项——插件据此标注终态，别每轮再当欠账重扫（issue 521）。
         progress("derive", 0)
+        derive_failed = set()
         img_root = cdir / "image"
         sources = sorted(q for q in img_root.rglob("*")
                          if q.is_file() and q.suffix.lower() in DERIVE_EXTS) if img_root.exists() else []
@@ -728,6 +747,7 @@ def main() -> int:
                 derive["done"] += 1
             except Exception as e:
                 derive["fail"] += 1
+                derive_failed.add(f"{q.parent.name}/{q.name}")
                 fails.add("derive", f"{q.parent.name}/{q.name}: {e}")
         progress("derive", 100)
         info(phase="derive", **derive)
@@ -744,6 +764,10 @@ def main() -> int:
                     disk.setdefault(q.stem, f"{q.parent.name}/{q.name}")
         seen = set()
         refs = 0
+        # 不可消费清单（issue 521）：missing = 消息引用了图、磁盘上没有可消费的解码产物；
+        # broken = 有产物但段 2 打不开。两者都是终态，插件按本表标注 descSkip，不再当欠账。
+        unusable = []
+        missing_seen = set()
         flow_total = len(flow)
         last_pct = -1
         for idx, m in enumerate(flow):
@@ -756,20 +780,38 @@ def main() -> int:
             if m.get("type") != 3:
                 continue
             refs += 1
-            hexs = (m.get("img") or "").split("/")[-1]
+            raw_img = str(m.get("img") or "").strip()
+            if not raw_img:
+                continue  # 引用都没有（未关联的图片消息）——不是「不可消费」，是还没关联上
+            hexs = raw_img.split("/")[-1]
             rel = disk.get(hexs)
-            if not rel or rel in seen:
-                continue  # 无磁盘文件 / 同图被多条消息引用只记一次
+            if not rel:
+                # 缺失：源图没导出 / .bin 没解出来。按消息去重（同图被多条消息引用只记一次）
+                if raw_img not in missing_seen:
+                    missing_seen.add(raw_img)
+                    unusable.append(_unusable_entry(raw_img, "missing", m))
+                continue
+            if rel in seen:
+                continue  # 同图被多条消息引用只记一次
             entry = {"file": rel, "ct": int(m.get("ct") or 0)}
             if m.get("sid"):
                 entry["sid"] = int(m["sid"])
             entries.append(entry)
             seen.add(rel)
+            if rel in derive_failed:
+                unusable.append(_unusable_entry(rel, "broken", m))
         entries.sort(key=lambda e: e["ct"])
         atomic_write(cdir / "image_map.json",
                      json.dumps(entries, ensure_ascii=False, separators=(",", ":")).encode("utf-8"))
+        unusable.sort(key=lambda e: e["ct"])
+        # --limit（调试半轮）不写该表：半轮结果会把「没轮到」误判成终态缺失（issue 521 决策 1）。
+        # 表缺失 = 无权威——插件据此不碰已有标注；空表 = 权威的「全部可消费」。
+        if not args.limit:
+            atomic_write(cdir / "media_fail.json",
+                         json.dumps(unusable, ensure_ascii=False, separators=(",", ":")).encode("utf-8"))
         progress("map", 100)
-        info(phase="map", refs=refs, mapped=len(entries), file="image_map.json")
+        info(phase="map", refs=refs, mapped=len(entries),
+             unusable=len(unusable), file="image_map.json")
 
         # ================= 段 4：语音转写（transcribe）=================
         progress("transcribe", 0)

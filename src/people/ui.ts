@@ -64,6 +64,11 @@ import {
   storeToUnified,
   pendingMediaCounts,
   isDescSkipped,
+  descSkipOf,
+  SENSITIVE_SKIP,
+  BROKEN_SKIP,
+  MISSING_SKIP,
+  type DescSkip,
   isGroupChat,
   SIDE_SPEECH_SPEAKER,
   type StoreContact,
@@ -342,14 +347,24 @@ let recStartEditFile: string | null = null;
 let recTurnsFile: string | null = null;
 /** 「重建质心」二次确认开着（复评：覆盖式重跑先问一声；确认 / 取消 / 换人即清） */
 let recRefConfirm = false;
+/** 终态标注的界面文案（单源：图片格子角标、汇总行、通知共读；取值见 DescSkip） */
+const SKIP_LABEL: Record<DescSkip, string> = {
+  [SENSITIVE_SKIP]: '敏感',
+  [BROKEN_SKIP]: '源图损坏',
+  [MISSING_SKIP]: '源图缺失',
+};
+
 /** 聊天仓侧事实缓存（弹窗渲染是同步的：开页异步刷，刷完重画） */
 let suppStoreInfo: {
   imported: number;
   undescribed: number;
+  /** 源图损坏 / 缺失、已标终态跳过的张数（ADR-0225；页面汇总行如实报，别让它们变成神秘数字） */
+  broken: number;
+  missing: number;
   mergedRecs: Set<string>;
-  /** 已入库的留影（img 相对路径 + 派生描述；新的在前——留影页签的预览网格用） */
-  imageItems: Array<{ img: string; text: string }>;
-} = { imported: 0, undescribed: 0, mergedRecs: new Set(), imageItems: [] };
+  /** 已入库的留影（img 相对路径 + 派生描述 + 终态标注；新的在前——留影页签的预览网格用） */
+  imageItems: Array<{ img: string; text: string; skip?: DescSkip; label?: string }>;
+} = { imported: 0, undescribed: 0, broken: 0, missing: 0, mergedRecs: new Set(), imageItems: [] };
 /** 录音页签的进度轮询（只在页签可见时跑） */
 let recPollTimer: number | null = null;
 
@@ -383,7 +398,7 @@ function openDialog(kind: DialogKind, tier?: DeleteTier): void {
       suppImgShown = SUPP_IMG_PAGE; // 分片跟着人走（issue 519）：别把上一人滚出来的量带给下一人
       noteDelPending = null; // 撕掉确认跟着人走（D 组）：换人不把确认带到别人的纸条上
       closeImgViewer();
-      suppStoreInfo = { imported: 0, undescribed: 0, mergedRecs: new Set(), imageItems: [] };
+      suppStoreInfo = { imported: 0, undescribed: 0, broken: 0, missing: 0, mergedRecs: new Set(), imageItems: [] };
     }
     void refreshSuppStoreInfo(detailId);
     startRecPolling();
@@ -1569,7 +1584,19 @@ async function persistJobDone(job: JobView, target?: GenTarget): Promise<void> {
   try {
     // issue 455 双卷：卷一《其人》为必达产物（旧落盘 portrait 已由引擎 resumeJobs 读入时映射成 person）
     const person = job.person;
-    if (!person) { notice(`「${name}」生成完成但其人画像为空`, 'warning'); return; }
+    if (!person) {
+      // 「done 且无产物」只有一个来源：描述段报「有欠账、零可读」后提前收尾（ADR-0225 决策 3）。
+      // 只说清楚 + 把任务清出队列（不清 = 进度块挂着一条永远不动的 done），不写导入记录 / 不动
+      // 锚点：本次确实什么都没提炼，下次补画照旧从同一水位续。
+      if (job.describe?.unreadable) {
+        notice(`「${name}」${job.message ?? '本次没有可提炼的内容'}`, 'warning');
+        jobs().removeJob(talker);
+        if (overlay) void renderAlbum();
+        return;
+      }
+      notice(`「${name}」生成完成但其人画像为空`, 'warning');
+      return;
+    }
     const store = new PeopleStore(getApp());
     const existing = (await store.list()).find((p) => p.id === talker);
     const now = new Date().toISOString();
@@ -3398,8 +3425,10 @@ async function refreshSuppStoreInfo(talker: string): Promise<void> {
   if (!peopleSafe) peopleSafe = await getPeopleSafeStore();
   let imported = 0;
   let undescribed = 0;
+  let broken = 0;
+  let missing = 0;
   const mergedRecs = new Set<string>();
-  const imageItems: Array<{ img: string; text: string; sensitive?: boolean }> = [];
+  const imageItems: Array<{ img: string; text: string; skip?: DescSkip; label?: string }> = [];
   try {
     const rec = await peopleSafe.read(talker);
     for (const m of rec?.store.msgs ?? []) {
@@ -3407,9 +3436,13 @@ async function refreshSuppStoreInfo(talker: string): Promise<void> {
         imported++;
         // 敏感标注的图不算未描述（ADR-0224）：标注是终态，计进欠账会与「生成描述」按钮的
         // 可用性、开工单待办口径对不上
-        const sensitive = isDescSkipped(m);
-        imageItems.push(sensitive ? { img: m.img, text: m.text, sensitive: true } : { img: m.img, text: m.text });
-        if (m.text === '' && !sensitive) undescribed++;
+        // 敏感标注的图不算未描述（ADR-0224）：标注是终态，计进欠账会与「生成描述」按钮的
+        // 可用性、开工单待办口径对不上。源图损坏 / 缺失（ADR-0225）同理，且单独计数上屏。
+        const skip = descSkipOf(m);
+        if (skip === BROKEN_SKIP) broken++;
+        else if (skip === MISSING_SKIP) missing++;
+        imageItems.push(skip ? { img: m.img, text: m.text, skip, label: SKIP_LABEL[skip] } : { img: m.img, text: m.text });
+        if (m.text === '' && !skip) undescribed++;
       }
       if (m.key.startsWith('rec:')) {
         const end = m.key.lastIndexOf(':');
@@ -3420,7 +3453,7 @@ async function refreshSuppStoreInfo(talker: string): Promise<void> {
     /* 读不到按零值渲染 */
   }
   if (!overlay || suppOwnerId !== talker) return; // await 期间换人 / 关面板：旧仓账不顶替新页（B 组审查 P3）
-  suppStoreInfo = { imported, undescribed, mergedRecs, imageItems: imageItems.reverse() };
+  suppStoreInfo = { imported, undescribed, broken, missing, mergedRecs, imageItems: imageItems.reverse() };
   if (dialog?.kind === 'note') void renderAlbum();
 }
 
@@ -3439,6 +3472,8 @@ function suppImageState(): SuppImageViewState {
     queue: suppImages,
     imported: suppStoreInfo.imported,
     undescribed: suppStoreInfo.undescribed,
+    broken: suppStoreInfo.broken,
+    missing: suppStoreInfo.missing,
     describeBusy: running,
     modelLabel: `${describeModelLabelOf().provider}/${describeModelLabelOf().model}`,
     items: active

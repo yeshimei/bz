@@ -30,7 +30,12 @@ import {
   pendingMediaCounts,
   applySensitiveSkipsToMsgs,
   isDescSkipped,
+  descSkipOf,
+  applyMediaFailToMsgs,
+  applyImageMapToMsgs,
+  applyImageDescToMsgs,
   applyVoiceToMsgs,
+  type MediaFailItem,
 } from '../../src/people/datasource';
 import { PeopleSafeStore, setPeopleSafeStoreForTests } from '../../src/people/safe-store';
 import { setApp } from '../../src/core/app';
@@ -778,5 +783,86 @@ describe('敏感标注写入（ADR-0224 决策 3）', () => {
     expect(applySensitiveSkipsToMsgs(msgs, [''])).toBe(0);
     expect(applySensitiveSkipsToMsgs(msgs, ['2026-05/zzz.jpg'])).toBe(0);
     expect(msgs.every((m) => m.descSkip === undefined)).toBe(true);
+  });
+});
+
+describe('不可消费清单标注（issue 521 / ADR-0225：源图损坏 / 缺失的终态）', () => {
+  const mk = (over: Record<string, unknown>): any => ({ key: 'k', ts: 1000, isSender: true, type: 3, text: '', ...over });
+
+  it('两类分开标：broken / missing；只标 text 空的，已描述的不碰', () => {
+    const msgs = [
+      mk({ key: 'a', ts: 1754394429000, img: '2025-08/broken.jpg' }),                      // → broken
+      mk({ key: 'b', ts: 1755000705000, img: '2025-08/42d09733769c808f81a6bf0f0b794b06' }), // → missing（无扩展名）
+      mk({ key: 'c', ts: 3, img: '2025-08/done.jpg', text: '[图片] 已经描述过了' }),          // 已完成：不动
+      mk({ key: 'd', ts: 4, img: '2025-08/sens.jpg', descSkip: 'sensitive' }),               // 敏感优先：不覆盖
+      mk({ key: 'e', ts: 5, img: '2025-08/fine.jpg' }),                                      // 不在表里：不动
+    ];
+    const n = applyMediaFailToMsgs(msgs, [
+      { file: '2025-08/broken.jpg', reason: 'broken', ct: 1754394429 },
+      { file: '2025-08/42d09733769c808f81a6bf0f0b794b06', reason: 'missing', ct: 1755000705 },
+      { file: '2025-08/done.jpg', reason: 'broken', ct: 3 },
+      { file: '2025-08/sens.jpg', reason: 'broken', ct: 4 },
+    ]);
+    expect(n).toBe(2);
+    expect(msgs[0].descSkip).toBe('broken');
+    expect(msgs[1].descSkip).toBe('missing');
+    expect(msgs[2].descSkip).toBeUndefined();
+    expect(msgs[3].descSkip).toBe('sensitive');
+    expect(msgs[4].descSkip).toBeUndefined();
+    expect(isDescSkipped(msgs[0])).toBe(true);
+    expect(descSkipOf(msgs[1])).toBe('missing');
+  });
+
+  it('sid 优先、img 精确次之（image_map 已把 img 换成产物名后的真实路径）', () => {
+    const msgs = [
+      mk({ key: 'a', ts: 10, sid: 999, img: '2025-08/hexname' }),  // 未并关联表：img 还是 chat 原值
+      mk({ key: 'b', ts: 20, sid: 1000, img: '2025-08/x.jpg' }),
+    ];
+    const items: MediaFailItem[] = [
+      { file: '2025-08/x.jpg', reason: 'broken', ct: 20, sid: 1000 },
+      { file: '2025-08/hexname', reason: 'missing', ct: 10, sid: 999 },
+    ];
+    expect(applyMediaFailToMsgs(msgs, items)).toBe(2);
+    expect(msgs[0].descSkip).toBe('missing');
+    expect(msgs[1].descSkip).toBe('broken');
+  });
+
+  it('表即权威（自愈）：本轮能消费 → 清掉旧标注；空表清全部 broken/missing，敏感不动', () => {
+    const msgs = [
+      mk({ key: 'a', img: '2025-08/a.jpg', descSkip: 'broken' }),
+      mk({ key: 'b', img: '2025-08/b.jpg', descSkip: 'missing' }),
+      mk({ key: 'c', img: '2025-08/c.jpg', descSkip: 'sensitive' }),
+    ];
+    expect(applyMediaFailToMsgs(msgs, [])).toBe(2); // 空表 = 权威的「全部可消费」
+    expect(msgs[0].descSkip).toBeUndefined();
+    expect(msgs[1].descSkip).toBeUndefined();
+    expect(msgs[2].descSkip).toBe('sensitive'); // AI 判定不归这张表管
+  });
+
+  it('未知 reason / 空表项 / 非图片消息一律忽略（工具将来加新取值时旧插件不误标）', () => {
+    const msgs = [mk({ key: 'a', img: '2025-08/a.jpg' }), mk({ key: 'b', type: 34, text: '' })];
+    expect(applyMediaFailToMsgs(msgs, [{ file: '2025-08/a.jpg', reason: 'unknown-future', ct: 1 }])).toBe(0);
+    expect(applyMediaFailToMsgs(msgs, [{ reason: 'broken' }])).toBe(0);
+    expect(msgs.every((m) => m.descSkip === undefined)).toBe(true);
+  });
+
+  it('终态后：不算欠账、不进描述集（欠账口径与批口径不再互相矛盾）', () => {
+    const msgs = [
+      mk({ key: 'a', ts: 1, img: '2025-08/a.jpg', descSkip: 'broken' }),
+      mk({ key: 'b', ts: 2, img: '2025-08/b.jpg' }),
+    ];
+    expect(pendingMediaCounts(msgs)).toEqual({ images: 1, voices: 0 });
+  });
+
+  it('整体链路：并关联表 → 标终态（次序要紧——broken 项对的是产物名，不是 chat 原值）', () => {
+    const msgs = [mk({ key: 'a', ts: 1754394429000, sid: 777, img: '2025-08/8d7141ff269d25a91aa82c0e71fca5cf' })];
+    applyImageMapToMsgs(msgs, [{ file: '2025-08/8d7141ff269d25a91aa82c0e71fca5cf.jpg', ct: 1754394429, sid: 777 }]);
+    expect(msgs[0].img).toBe('2025-08/8d7141ff269d25a91aa82c0e71fca5cf.jpg');
+    const n = applyMediaFailToMsgs(msgs, [{ file: '2025-08/8d7141ff269d25a91aa82c0e71fca5cf.jpg', reason: 'broken', ct: 1754394429, sid: 777 }]);
+    expect(n).toBe(1);
+    expect(msgs[0].descSkip).toBe('broken');
+    // 描述段再想兜底也进不来（终态优先于旁路表最近邻，ADR-0224 同款）
+    expect(applyImageDescToMsgs(msgs, [{ file: '2025-08/other.jpg', ct: 1754394429, desc: '借来的描述' }])).toBe(0);
+    expect(msgs[0].text).toBe('');
   });
 });

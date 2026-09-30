@@ -1,4 +1,4 @@
-/* 源指纹 f15122f17fec714c · 仓内输入 2 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 561add073b37bdc6 · 仓内输入 2 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["src/people/render.ts","src/people/types.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — src/people/render.ts → window.BZR_people（评审壳预览包，ADR-0104） */
 var BZR_people = (() => {
@@ -1485,8 +1485,10 @@ var BZR_people = (() => {
         button("bz-people-btn bz-people-btn-acc bz-people-btn-sm", `落盘并导入 ${s.queue.length} 张`, { "data-people-supp-img-import": "" })
       ]));
     }
+    const unusable = s.broken + s.missing;
+    const unusableNote = unusable > 0 ? ` · ${[s.broken > 0 ? `源图损坏 ${s.broken} 张` : "", s.missing > 0 ? `源图缺失 ${s.missing} 张` : ""].filter(Boolean).join("、")}（无法描述）` : "";
     out.push(el("div", "bz-people-supp-stat", text(
-      s.imported > 0 ? `已入库图片 ${s.imported} 张${s.undescribed > 0 ? ` · 未描述 ${s.undescribed} 张` : " · 全部有描述"}` : "还没补过图片。"
+      s.imported > 0 ? `已入库图片 ${s.imported} 张${s.undescribed > 0 ? ` · 未描述 ${s.undescribed} 张` : " · 全部有描述"}${unusableNote}` : "还没补过图片。"
     )));
     if (s.imported > 0 && s.undescribed > 0) {
       out.push(el("div", "bz-people-supp-acts", [
@@ -1506,6 +1508,7 @@ var BZR_people = (() => {
     return out;
   }
   function suppImgCell(imgDel, it) {
+    var _a, _b;
     const cap = it.text.replace(/^\[图片\]\s*/, "");
     const box = el("div", "bz-people-supp-imgbox");
     box.appendChild(el("img", "bz-people-supp-imgthumb", {
@@ -1520,7 +1523,7 @@ var BZR_people = (() => {
       "aria-label": "删掉这张",
       title: "从时间线里删掉这张（原件留在数据根，不会动）"
     }));
-    if (it.sensitive) box.appendChild(el("div", "bz-people-supp-imgsens", text("敏感")));
+    if (it.skip) box.appendChild(el("div", "bz-people-supp-imgsens", text((_a = it.label) != null ? _a : "敏感")));
     if (imgDel === it.img) {
       box.appendChild(el("div", "bz-people-supp-imgask", [
         el("div", "bz-people-supp-imgask-tx", text("删掉这张？")),
@@ -1531,11 +1534,15 @@ var BZR_people = (() => {
       ]));
     }
     const cell = el("div", "bz-people-supp-imgcell", [box]);
-    if (it.sensitive) {
+    if (it.skip === "sensitive") {
       cell.appendChild(button("bz-people-supp-imgcap bz-people-supp-imgcap-sens", "敏感 · 解除", {
         "data-people-supp-img-unsens": it.img,
         title: "这张被判为敏感内容、已跳过描述——点一下解除标注并重试"
       }));
+    } else if (it.skip) {
+      cell.appendChild(el("div", "bz-people-supp-imgcap bz-people-supp-imgcap-none", {
+        title: `${it.skip === "broken" ? "源图打不开（文件本身损坏）" : "源图没导出（数据根里只有微信缩略图）"}，无法生成描述——重新导出媒体后会自动重试`
+      }, text((_b = it.label) != null ? _b : "无法描述")));
     } else {
       cell.appendChild(el(
         "div",

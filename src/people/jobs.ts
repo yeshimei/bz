@@ -98,6 +98,7 @@ import { computeStats } from './stats';
 import { PeopleStore } from './data';
 import {
   applyImageDescToMsgs,
+  applyMediaFailToMsgs,
   applyImageMapToMsgs,
   applySensitiveSkipsToMsgs,
   applyVoiceToMsgs,
@@ -1324,18 +1325,23 @@ export async function mergePrepArtifactsIntoStore(
   talker: string,
   dataRoot: string,
   opts?: { previewVoice?: boolean }
-): Promise<{ voice: number; images: number } | null> {
+): Promise<{ voice: number; images: number; unusable: number } | null> {
   if (!safe.unlocked) return null;
   const side = readPrepSidecars(dataRoot, talker);
-  if (!side || (!side.voice.length && !side.imageMap.length)) return null;
+  // mediaFail 为 null = 无权威（表缺失 / --limit 调试轮），此时不并该类（不动已有标注）
+  if (!side || (!side.voice.length && !side.imageMap.length && side.mediaFail === null)) return null;
   const previewVoice = opts?.previewVoice ?? normalizeOptionsFromSettings().previewVoice;
-  const counts = { voice: 0, images: 0 };
+  const counts = { voice: 0, images: 0, unusable: 0 };
   await safe.write(talker, (rec) => {
+    // 次序：先并关联表（img 换成产物名），再按产物名标终态——否则 broken 项对不上 img（ADR-0225）
     counts.voice = applyVoiceToMsgs(rec.store.msgs, side.voice, { previewVoice });
     counts.images = applyImageMapToMsgs(rec.store.msgs, side.imageMap);
+    if (side.mediaFail !== null) counts.unusable = applyMediaFailToMsgs(rec.store.msgs, side.mediaFail);
     if (counts.voice + counts.images > 0) {
       rec.store.stats = storeStatsOf(rec.store.msgs); // 时间线变多 → 统计重算（口径单源 storeStatsOf）
       rec.store.updatedAt = new Date().toISOString();
+    } else if (counts.unusable > 0) {
+      rec.store.updatedAt = new Date().toISOString(); // 标注变了也要让面板重读（统计不受影响）
     }
   });
   return counts;
@@ -1355,7 +1361,7 @@ export async function mergePrepArtifactsIntoStore(
  *   - 暂停 = 批间自然断点（批完成后停）；批级 checkpoint 逐批落保库记录（job.describe 账本）。
  * 返回 'skipped' | 'ok' | 'halted'（halted = runJob 立即返回，finish 已落状态）。
  */
-async function runDescribeStage(job: PersonJob, finish: (patch: Partial<PersonJob>) => Promise<void>): Promise<'skipped' | 'ok' | 'halted'> {
+async function runDescribeStage(job: PersonJob, finish: (patch: Partial<PersonJob>) => Promise<void>): Promise<'skipped' | 'ok' | 'halted' | 'unreadable'> {
   const safe = st!.safe;
   if (!safe?.unlocked) return 'halted'; // 上锁竞态：runQueue 下一轮自会停，任务保持原态
   const ledger = describeOf(job);
@@ -1431,6 +1437,10 @@ async function runDescribeStage(job: PersonJob, finish: (patch: Partial<PersonJo
   job.stage = 'describe';
   await finish({ describe: led, message: describeStageLine(led.doneBatches, batches.length) });
   const ask = asksOf().describe;
+  // 「有欠账、零可读」探测（issue 521 / ADR-0225 决策 3）：整个图片集一张派生档都读不动时，
+  // 本段零调用走完——过去这就静默当「全批完成」，欠账口径（待描述 N 张）与批完成口径互相
+  // 矛盾、永不收敛。现在把它认出来，交 runJob 收尾并说清楚。
+  let readRefs = 0;
   for (let i = 0; i < batches.length; i++) {
     const batch = batches[i];
     const pending = batch.filter((r) => !isDone(r));
@@ -1450,10 +1460,11 @@ async function runDescribeStage(job: PersonJob, finish: (patch: Partial<PersonJo
       if (url) images.push({ ref, url });
     }
     if (!images.length) {
-      led.doneBatches = i + 1; // 批内派生档全读不动：不烧调用，计完成跳过
+      led.doneBatches = i + 1; // 批内派生档全读不动：不烧调用，计完成跳过（成因见下面的收尾判定）
       await persist();
       continue;
     }
+    readRefs += images.length;
     led.doneBatches = i; // 进行中口径（当前批未完，断点落在本批开头）
     job.message = `本批 ${images.length} 张`; // 批号与主行锚点（`图片描述 3/82 批`）同义，这里只补本批张数
     emit();
@@ -1531,6 +1542,14 @@ async function runDescribeStage(job: PersonJob, finish: (patch: Partial<PersonJo
     led.doneBatches = i + 1;
     await persist();
     emit();
+  }
+  // 「有欠账、零可读」→ 交 runJob 收尾（ADR-0225 决策 3）。判据收窄的理由：终态标注落地后，
+  // 死欠账已不算欠账，这里只剩两种成因——本轮刚导入、派生还没跑起来，或数据根 / 磁盘临时掉线。
+  // 两种都该停下手说清楚，而不是继续烧 4 次成文调用（用户实测：1 条新增素材白烧 5 次）。
+  if (readRefs === 0 && pendingCount > 0) {
+    led.unreadable = pendingCount;
+    await finish({ describe: led, message: `图片描述 0/${batches.length} 批` });
+    return 'unreadable';
   }
   // 敏感标注是终态、不会重跑（ADR-0224）。这里不通知——通知归 UI 层（引擎不碰 DOM，
   // 任务完成时的统一通知在 ui.persistJobDone，读 job.describe.sensitive 拼出去）。
@@ -1682,6 +1701,19 @@ async function runJob(job: PersonJob): Promise<void> {
     //     描述逐批合并进聊天仓派生 text。零图片 / 已跳过 / 已描述完的自动跳过且不弹确认。
     const descState = await runDescribeStage(job, finish);
     if (descState === 'halted') return; // 确认 / 暂停 / 批失败（finish 已落状态）
+    if (descState === 'unreadable') {
+      // 有欠账、零可读（ADR-0225 决策 3，用户拍板）：本趟没有可提炼的内容——收尾说清楚，
+      // 不再往下烧采集批 + 其人 / 相交 / 纪事 / 档案提炼（实测 1 条新增素材白烧 5 次）。
+      // 收尾为 done 但**不挂 person**：ui.persistJobDone 对「done 且无产物」只提示不留痕
+      // （不写导入记录 / 不动锚点，下次补画照旧从同一水位续）。
+      const n = job.describe?.unreadable ?? 0;
+      await finish({
+        stage: 'done',
+        status: 'done',
+        message: `本次没有可提炼的内容：${n} 张图片的源图损坏或缺失，无法生成描述`,
+      });
+      return;
+    }
 
     // 3. 重读聊天仓 + 指纹判定（prep 合并与 describe 合并把转写 / 关联 / 描述升级进 text——
     //    指纹在合并后算）。判废只认「外部漂移且烧过批」（上面已拦）；此处的指纹变化只能来自

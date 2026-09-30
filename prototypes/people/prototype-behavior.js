@@ -1,4 +1,4 @@
-/* 源指纹 b246794e87b5d0e6 · 仓内输入 91 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 57074ddf373c167c · 仓内输入 91 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/people/fake-sim.ts","prototypes/people/fake/fake-obsidian.ts","src/bookshelf/data.ts","src/bookshelf/state.ts","src/cinema/state.ts","src/core/ai.ts","src/core/app.ts","src/core/asr-proofread.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/external-tool.ts","src/core/flow-dialog.ts","src/core/gesture.ts","src/core/http.ts","src/core/item-actions.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/settings-btn-state.ts","src/core/settings-common.ts","src/core/settings-modal.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/help-tip.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/motion.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/password-vault/data.ts","src/people/data.ts","src/people/datasource.ts","src/people/describe.ts","src/people/digest.ts","src/people/export.ts","src/people/heavy-gate.ts","src/people/incremental.ts","src/people/insights.ts","src/people/jobs.ts","src/people/media.ts","src/people/migrate.ts","src/people/parse.ts","src/people/prep.ts","src/people/recording.ts","src/people/render.ts","src/people/safe-store.ts","src/people/settings.ts","src/people/stats.ts","src/people/sync.ts","src/people/thumbs.ts","src/people/types.ts","src/people/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/people/fake-sim.ts → window.BZW_people（行为单源预览包，issue 245/ADR-0106） */
 var BZW_people = (() => {
@@ -15853,8 +15853,14 @@ ${lines}`;
 
   // src/people/datasource.ts
   var SENSITIVE_SKIP = "sensitive";
+  var BROKEN_SKIP = "broken";
+  var MISSING_SKIP = "missing";
   function isDescSkipped(m) {
-    return (m == null ? void 0 : m.descSkip) === SENSITIVE_SKIP;
+    return descSkipOf(m) !== void 0;
+  }
+  function descSkipOf(m) {
+    const v = m == null ? void 0 : m.descSkip;
+    return v === SENSITIVE_SKIP || v === BROKEN_SKIP || v === MISSING_SKIP ? v : void 0;
   }
   function hash32(s) {
     let h = 2166136261;
@@ -16281,6 +16287,45 @@ ${lines}`;
       }
     }
     return n;
+  }
+  function applyMediaFailToMsgs(msgs, items) {
+    var _a2, _b2;
+    const bySid = /* @__PURE__ */ new Map();
+    const byFile = /* @__PURE__ */ new Map();
+    const byCt = /* @__PURE__ */ new Map();
+    for (const it of items) {
+      const reason = canonReason(it == null ? void 0 : it.reason);
+      if (!reason) continue;
+      const entry = { ...it, reason };
+      const file = String((_a2 = it.file) != null ? _a2 : "").trim();
+      if (file) byFile.set(file, entry);
+      const sid = typeof it.sid === "number" && Number.isFinite(it.sid) && it.sid !== 0 ? it.sid : 0;
+      if (sid) bySid.set(sid, entry);
+      else if (Number.isFinite(it.ct)) byCt.set(Math.round(it.ct), entry);
+    }
+    let n = 0;
+    for (const m of msgs) {
+      if (m.type !== 3) continue;
+      const img = String((_b2 = m.img) != null ? _b2 : "").trim();
+      let it;
+      if (m.sid) it = bySid.get(m.sid);
+      if (!it && img) it = byFile.get(img);
+      if (!it && !img) it = byCt.get(Math.round(m.ts / 1e3));
+      if (it == null ? void 0 : it.reason) {
+        if (m.text === "" && !isDescSkipped(m)) {
+          m.descSkip = it.reason;
+          n++;
+        }
+      } else if (m.descSkip === BROKEN_SKIP || m.descSkip === MISSING_SKIP) {
+        delete m.descSkip;
+        n++;
+      }
+    }
+    return n;
+  }
+  function canonReason(v) {
+    const s = String(v != null ? v : "").trim();
+    return s === BROKEN_SKIP ? BROKEN_SKIP : s === MISSING_SKIP ? MISSING_SKIP : null;
   }
   function applyImageDescToMsgs(msgs, descs) {
     var _a2, _b2, _c2, _d2, _e, _f;
@@ -17053,10 +17098,12 @@ ${lines}`;
     const base = `${dataRoot}/${contact}`.replace(/\/+$/, "");
     const voice = readArray(norm(`${base}/voice.json`));
     const imageMap = readArray(norm(`${base}/image_map.json`));
-    if (!voice && !imageMap) return null;
+    const mediaFail = readArray(norm(`${base}/media_fail.json`));
+    if (!voice && !imageMap && !mediaFail) return null;
     return {
       voice: (voice != null ? voice : []).filter((v) => !!v && typeof v === "object"),
-      imageMap: (imageMap != null ? imageMap : []).filter((v) => !!v && typeof v === "object")
+      imageMap: (imageMap != null ? imageMap : []).filter((v) => !!v && typeof v === "object"),
+      mediaFail: mediaFail ? mediaFail.filter((v) => !!v && typeof v === "object") : null
     };
   }
   function pendingVoiceProofread(items) {
@@ -17991,14 +18038,17 @@ ${lines}`;
     var _a2;
     if (!safe.unlocked) return null;
     const side = readPrepSidecars(dataRoot, talker);
-    if (!side || !side.voice.length && !side.imageMap.length) return null;
+    if (!side || !side.voice.length && !side.imageMap.length && side.mediaFail === null) return null;
     const previewVoice = (_a2 = opts == null ? void 0 : opts.previewVoice) != null ? _a2 : normalizeOptionsFromSettings().previewVoice;
-    const counts = { voice: 0, images: 0 };
+    const counts = { voice: 0, images: 0, unusable: 0 };
     await safe.write(talker, (rec) => {
       counts.voice = applyVoiceToMsgs(rec.store.msgs, side.voice, { previewVoice });
       counts.images = applyImageMapToMsgs(rec.store.msgs, side.imageMap);
+      if (side.mediaFail !== null) counts.unusable = applyMediaFailToMsgs(rec.store.msgs, side.mediaFail);
       if (counts.voice + counts.images > 0) {
         rec.store.stats = storeStatsOf(rec.store.msgs);
+        rec.store.updatedAt = (/* @__PURE__ */ new Date()).toISOString();
+      } else if (counts.unusable > 0) {
         rec.store.updatedAt = (/* @__PURE__ */ new Date()).toISOString();
       }
     });
@@ -18076,6 +18126,7 @@ ${lines}`;
     job.stage = "describe";
     await finish({ describe: led, message: describeStageLine(led.doneBatches, batches.length) });
     const ask = asksOf().describe;
+    let readRefs = 0;
     for (let i = 0; i < batches.length; i++) {
       const batch = batches[i];
       const pending = batch.filter((r) => !isDone(r));
@@ -18098,6 +18149,7 @@ ${lines}`;
         await persist();
         continue;
       }
+      readRefs += images.length;
       led.doneBatches = i;
       job.message = `本批 ${images.length} 张`;
       emit();
@@ -18171,6 +18223,11 @@ ${lines}`;
       led.doneBatches = i + 1;
       await persist();
       emit();
+    }
+    if (readRefs === 0 && pendingCount > 0) {
+      led.unreadable = pendingCount;
+      await finish({ describe: led, message: `图片描述 0/${batches.length} 批` });
+      return "unreadable";
     }
     return "ok";
   }
@@ -18258,7 +18315,7 @@ ${lines}`;
     }
   }
   async function runJob(job) {
-    var _a2, _b2, _c2, _d2, _e, _f, _g, _h, _i, _j, _k, _l, _m, _n, _o, _p, _q, _r, _s, _t, _u, _v, _w;
+    var _a2, _b2, _c2, _d2, _e, _f, _g, _h, _i, _j, _k, _l, _m, _n, _o, _p, _q, _r, _s, _t, _u, _v, _w, _x, _y;
     const asks = asksOf();
     st.runningJob = job.talker;
     job.status = "running";
@@ -18295,7 +18352,16 @@ ${lines}`;
       }
       const descState = await runDescribeStage(job, finish);
       if (descState === "halted") return;
-      const contact = (_e = await safe.read(job.talker)) == null ? void 0 : _e.store;
+      if (descState === "unreadable") {
+        const n = (_f = (_e = job.describe) == null ? void 0 : _e.unreadable) != null ? _f : 0;
+        await finish({
+          stage: "done",
+          status: "done",
+          message: `本次没有可提炼的内容：${n} 张图片的源图损坏或缺失，无法生成描述`
+        });
+        return;
+      }
+      const contact = (_g = await safe.read(job.talker)) == null ? void 0 : _g.store;
       if (gone(job)) return;
       const bucketMsgs = contact ? storeToUnified(contact.msgs) : [];
       const fp = fingerprintOf2(bucketMsgs);
@@ -18340,19 +18406,19 @@ ${lines}`;
       if (refresh) {
         job.msgCount = fp.msgCount;
         job.contentHash = fp.contentHash;
-        job.stats = computeStats(bucketMsgs, (_f = contact == null ? void 0 : contact.kindCounts) != null ? _f : {});
+        job.stats = computeStats(bucketMsgs, (_h = contact == null ? void 0 : contact.kindCounts) != null ? _h : {});
         job.material = {
-          ...(_g = job.material) != null ? _g : { traits: [], moments: [] },
+          ...(_i = job.material) != null ? _i : { traits: [], moments: [] },
           mediaNote: buildMediaNote({
-            voiceCount: (_h = job.stats.voiceCount) != null ? _h : 0,
-            voiceTotalSec: (_i = job.stats.voiceTotalSec) != null ? _i : 0,
-            imageCount: (_j = job.stats.imageCount) != null ? _j : 0
+            voiceCount: (_j = job.stats.voiceCount) != null ? _j : 0,
+            voiceTotalSec: (_k = job.stats.voiceTotalSec) != null ? _k : 0,
+            imageCount: (_l = job.stats.imageCount) != null ? _l : 0
           }) || void 0
         };
         if (bucketMsgs.length) {
           job.importRecord = {
             fileLabel: job.fileLabel,
-            skippedCount: (_l = (_k = job.importRecord) == null ? void 0 : _k.skippedCount) != null ? _l : 0,
+            skippedCount: (_n = (_m = job.importRecord) == null ? void 0 : _m.skippedCount) != null ? _n : 0,
             messageCount: digestMsgs.length,
             timeFrom: new Date(bucketMsgs[0].ts).toISOString(),
             timeTo: new Date(bucketMsgs[bucketMsgs.length - 1].ts).toISOString()
@@ -18360,7 +18426,7 @@ ${lines}`;
         }
       }
       if (!job.portraitConfirmed) {
-        const gate = (_m = st.injected) == null ? void 0 : _m.askPortraitConfirm;
+        const gate = (_o = st.injected) == null ? void 0 : _o.askPortraitConfirm;
         if (gate) {
           const label = describeModelLabelOf();
           job.stage = "chunked";
@@ -18437,9 +18503,9 @@ ${lines}`;
         merged = mergeWithOld(merged, existing == null ? void 0 : existing.digest);
         if ((existing == null ? void 0 : existing.digest) && (existing.digest.person || existing.digest.bond || existing.digest.chronicle)) {
           job.revisedFrom = {
-            person: (_n = existing.digest.person) != null ? _n : "",
-            bond: (_o = existing.digest.bond) != null ? _o : "",
-            chronicle: (_p = existing.digest.chronicle) != null ? _p : ""
+            person: (_p = existing.digest.person) != null ? _p : "",
+            bond: (_q = existing.digest.bond) != null ? _q : "",
+            chronicle: (_r = existing.digest.chronicle) != null ? _r : ""
           };
         }
       }
@@ -18451,9 +18517,9 @@ ${lines}`;
         traits: merged.traits.length
       };
       const material = toPortraitMaterial(merged, {
-        mediaNote: (_q = job.material) == null ? void 0 : _q.mediaNote,
-        statsNote: (_r = job.material) == null ? void 0 : _r.statsNote,
-        profileNote: (_s = job.material) == null ? void 0 : _s.profileNote,
+        mediaNote: (_s = job.material) == null ? void 0 : _s.mediaNote,
+        statsNote: (_t = job.material) == null ? void 0 : _t.statsNote,
+        profileNote: (_u = job.material) == null ? void 0 : _u.profileNote,
         sampleEvents: job.mode === "incremental"
       });
       const sampleWarn = sampleWarnOf(job.msgCount);
@@ -18463,7 +18529,7 @@ ${lines}`;
       });
       let person = "";
       try {
-        person = (await asks.portrait(buildPersonPrompt(job.name, material, sampleWarn, job.mode === "incremental" ? (_t = existing == null ? void 0 : existing.digest) == null ? void 0 : _t.person : void 0))).trim();
+        person = (await asks.portrait(buildPersonPrompt(job.name, material, sampleWarn, job.mode === "incremental" ? (_v = existing == null ? void 0 : existing.digest) == null ? void 0 : _v.person : void 0))).trim();
       } catch (e) {
         await finish({ status: "error", error: errorMessage(e) });
         return;
@@ -18480,7 +18546,7 @@ ${lines}`;
       await finish({ stage: "bond", message: "《其人》完成，正在生成《相交》…" });
       let bond = "";
       try {
-        bond = (await asks.portrait(buildBondPrompt(job.name, material, sampleWarn, job.mode === "incremental" ? (_u = existing == null ? void 0 : existing.digest) == null ? void 0 : _u.bond : void 0))).trim();
+        bond = (await asks.portrait(buildBondPrompt(job.name, material, sampleWarn, job.mode === "incremental" ? (_w = existing == null ? void 0 : existing.digest) == null ? void 0 : _w.bond : void 0))).trim();
       } catch (e) {
         await finish({ status: "error", error: errorMessage(e) });
         return;
@@ -18504,7 +18570,7 @@ ${lines}`;
               evenlySample(merged.events, MATERIAL_LIMITS.chronicle),
               material.mediaNote,
               material.statsNote,
-              job.mode === "incremental" ? (_v = existing == null ? void 0 : existing.digest) == null ? void 0 : _v.chronicle : void 0
+              job.mode === "incremental" ? (_x = existing == null ? void 0 : existing.digest) == null ? void 0 : _x.chronicle : void 0
             )
           )).trim();
         } catch (e) {
@@ -18544,7 +18610,7 @@ ${lines}`;
       });
     } catch (e) {
       if (gone(job)) return;
-      if (!((_w = st == null ? void 0 : st.safe) == null ? void 0 : _w.unlocked)) {
+      if (!((_y = st == null ? void 0 : st.safe) == null ? void 0 : _y.unlocked)) {
         await finish({ status: "paused", message: "保险库已上锁，解锁后继续" });
         return;
       }
@@ -20879,8 +20945,10 @@ ${lines}`;
         button("bz-people-btn bz-people-btn-acc bz-people-btn-sm", `落盘并导入 ${s.queue.length} 张`, { "data-people-supp-img-import": "" })
       ]));
     }
+    const unusable = s.broken + s.missing;
+    const unusableNote = unusable > 0 ? ` · ${[s.broken > 0 ? `源图损坏 ${s.broken} 张` : "", s.missing > 0 ? `源图缺失 ${s.missing} 张` : ""].filter(Boolean).join("、")}（无法描述）` : "";
     out.push(el("div", "bz-people-supp-stat", text(
-      s.imported > 0 ? `已入库图片 ${s.imported} 张${s.undescribed > 0 ? ` · 未描述 ${s.undescribed} 张` : " · 全部有描述"}` : "还没补过图片。"
+      s.imported > 0 ? `已入库图片 ${s.imported} 张${s.undescribed > 0 ? ` · 未描述 ${s.undescribed} 张` : " · 全部有描述"}${unusableNote}` : "还没补过图片。"
     )));
     if (s.imported > 0 && s.undescribed > 0) {
       out.push(el("div", "bz-people-supp-acts", [
@@ -20900,6 +20968,7 @@ ${lines}`;
     return out;
   }
   function suppImgCell(imgDel, it) {
+    var _a2, _b2;
     const cap = it.text.replace(/^\[图片\]\s*/, "");
     const box = el("div", "bz-people-supp-imgbox");
     box.appendChild(el("img", "bz-people-supp-imgthumb", {
@@ -20914,7 +20983,7 @@ ${lines}`;
       "aria-label": "删掉这张",
       title: "从时间线里删掉这张（原件留在数据根，不会动）"
     }));
-    if (it.sensitive) box.appendChild(el("div", "bz-people-supp-imgsens", text("敏感")));
+    if (it.skip) box.appendChild(el("div", "bz-people-supp-imgsens", text((_a2 = it.label) != null ? _a2 : "敏感")));
     if (imgDel === it.img) {
       box.appendChild(el("div", "bz-people-supp-imgask", [
         el("div", "bz-people-supp-imgask-tx", text("删掉这张？")),
@@ -20925,11 +20994,15 @@ ${lines}`;
       ]));
     }
     const cell = el("div", "bz-people-supp-imgcell", [box]);
-    if (it.sensitive) {
+    if (it.skip === "sensitive") {
       cell.appendChild(button("bz-people-supp-imgcap bz-people-supp-imgcap-sens", "敏感 · 解除", {
         "data-people-supp-img-unsens": it.img,
         title: "这张被判为敏感内容、已跳过描述——点一下解除标注并重试"
       }));
+    } else if (it.skip) {
+      cell.appendChild(el("div", "bz-people-supp-imgcap bz-people-supp-imgcap-none", {
+        title: `${it.skip === "broken" ? "源图打不开（文件本身损坏）" : "源图没导出（数据根里只有微信缩略图）"}，无法生成描述——重新导出媒体后会自动重试`
+      }, text((_b2 = it.label) != null ? _b2 : "无法描述")));
     } else {
       cell.appendChild(el(
         "div",
@@ -21707,7 +21780,12 @@ ${lines}`;
   var recStartEditFile = null;
   var recTurnsFile = null;
   var recRefConfirm = false;
-  var suppStoreInfo = { imported: 0, undescribed: 0, mergedRecs: /* @__PURE__ */ new Set(), imageItems: [] };
+  var SKIP_LABEL = {
+    [SENSITIVE_SKIP]: "敏感",
+    [BROKEN_SKIP]: "源图损坏",
+    [MISSING_SKIP]: "源图缺失"
+  };
+  var suppStoreInfo = { imported: 0, undescribed: 0, broken: 0, missing: 0, mergedRecs: /* @__PURE__ */ new Set(), imageItems: [] };
   var recPollTimer = null;
   var animBoot = true;
   var animTurn = "";
@@ -21732,7 +21810,7 @@ ${lines}`;
         suppImgShown = SUPP_IMG_PAGE;
         noteDelPending = null;
         closeImgViewer();
-        suppStoreInfo = { imported: 0, undescribed: 0, mergedRecs: /* @__PURE__ */ new Set(), imageItems: [] };
+        suppStoreInfo = { imported: 0, undescribed: 0, broken: 0, missing: 0, mergedRecs: /* @__PURE__ */ new Set(), imageItems: [] };
       }
       void refreshSuppStoreInfo(detailId);
       startRecPolling();
@@ -22656,12 +22734,18 @@ ${lines}`;
     return { runnable: runnable2, skipped };
   }
   async function persistJobDone(job, target) {
-    var _a2, _b2, _c2, _d2, _e, _f, _g, _h, _i, _j, _k, _l, _m, _n, _o, _p, _q, _r, _s, _t, _u, _v, _w, _x, _y;
+    var _a2, _b2, _c2, _d2, _e, _f, _g, _h, _i, _j, _k, _l, _m, _n, _o, _p, _q, _r, _s, _t, _u, _v, _w, _x, _y, _z, _A;
     const talker = (_a2 = target == null ? void 0 : target.talker) != null ? _a2 : job.talker;
     const name = (_b2 = target == null ? void 0 : target.name) != null ? _b2 : job.name;
     try {
       const person = job.person;
       if (!person) {
+        if ((_c2 = job.describe) == null ? void 0 : _c2.unreadable) {
+          notice(`「${name}」${(_d2 = job.message) != null ? _d2 : "本次没有可提炼的内容"}`, "warning");
+          jobs().removeJob(talker);
+          if (overlay) void renderAlbum();
+          return;
+        }
         notice(`「${name}」生成完成但其人画像为空`, "warning");
         return;
       }
@@ -22670,12 +22754,12 @@ ${lines}`;
       const now = (/* @__PURE__ */ new Date()).toISOString();
       const msgs = target == null ? void 0 : target.msgs;
       const rec = {
-        file: (_f = (_e = (_d2 = target == null ? void 0 : target.fileLabel) != null ? _d2 : (_c2 = job.importRecord) == null ? void 0 : _c2.fileLabel) != null ? _e : job.fileLabel) != null ? _f : `数据源:${talker}`,
+        file: (_h = (_g = (_f = target == null ? void 0 : target.fileLabel) != null ? _f : (_e = job.importRecord) == null ? void 0 : _e.fileLabel) != null ? _g : job.fileLabel) != null ? _h : `数据源:${talker}`,
         importedAt: now,
-        messageCount: target ? (_h = (_g = job.importRecord) == null ? void 0 : _g.messageCount) != null ? _h : msgs.length : (_j = (_i = job.importRecord) == null ? void 0 : _i.messageCount) != null ? _j : 0,
-        skippedCount: (_m = (_l = target == null ? void 0 : target.skippedCount) != null ? _l : (_k = job.importRecord) == null ? void 0 : _k.skippedCount) != null ? _m : 0,
-        timeFrom: msgs ? new Date(msgs[0].ts).toISOString() : (_o = (_n = job.importRecord) == null ? void 0 : _n.timeFrom) != null ? _o : now,
-        timeTo: msgs ? new Date(msgs[msgs.length - 1].ts).toISOString() : (_q = (_p = job.importRecord) == null ? void 0 : _p.timeTo) != null ? _q : now,
+        messageCount: target ? (_j = (_i = job.importRecord) == null ? void 0 : _i.messageCount) != null ? _j : msgs.length : (_l = (_k = job.importRecord) == null ? void 0 : _k.messageCount) != null ? _l : 0,
+        skippedCount: (_o = (_n = target == null ? void 0 : target.skippedCount) != null ? _n : (_m = job.importRecord) == null ? void 0 : _m.skippedCount) != null ? _o : 0,
+        timeFrom: msgs ? new Date(msgs[0].ts).toISOString() : (_q = (_p = job.importRecord) == null ? void 0 : _p.timeFrom) != null ? _q : now,
+        timeTo: msgs ? new Date(msgs[msgs.length - 1].ts).toISOString() : (_s = (_r = job.importRecord) == null ? void 0 : _r.timeTo) != null ? _s : now,
         stats: target ? computeStats(msgs, target.kindCounts) : job.stats
       };
       const entry = existing ? { ...existing, name } : { id: talker, name, createdAt: now, imports: [] };
@@ -22690,24 +22774,24 @@ ${lines}`;
         // 卷一《其人》
         bond: job.bond || void 0,
         // 卷二《相交》（旧引擎无此产物）
-        events: mergeManualEvents((_r = job.events) != null ? _r : [], existing == null ? void 0 : existing.manualEvents),
+        events: mergeManualEvents((_t = job.events) != null ? _t : [], existing == null ? void 0 : existing.manualEvents),
         // 439：手动随手记并入事件素材
         quotes: job.quotes,
-        moments: (_s = job.material) == null ? void 0 : _s.moments,
+        moments: (_u = job.material) == null ? void 0 : _u.moments,
         // 449：场景 / 特质随生成落盘
-        traits: (_t = job.material) == null ? void 0 : _t.traits,
+        traits: (_v = job.material) == null ? void 0 : _v.traits,
         chronicle: job.chronicle || void 0,
         ...job.revisedFrom ? { revisedFrom: job.revisedFrom } : {},
         // issue 517：修订前旧卷留档
         generatedAt: now
       };
       await store2.setDigest(talker, digest);
-      const lastTs = msgs ? msgs[msgs.length - 1].ts : Date.parse((_v = (_u = job.importRecord) == null ? void 0 : _u.timeTo) != null ? _v : "");
+      const lastTs = msgs ? msgs[msgs.length - 1].ts : Date.parse((_x = (_w = job.importRecord) == null ? void 0 : _w.timeTo) != null ? _x : "");
       if (Number.isFinite(lastTs)) {
-        await store2.setLastProcessedTs(talker, Math.max((_w = existing == null ? void 0 : existing.lastProcessedTs) != null ? _w : 0, lastTs));
+        await store2.setLastProcessedTs(talker, Math.max((_y = existing == null ? void 0 : existing.lastProcessedTs) != null ? _y : 0, lastTs));
       }
       notice(`「${name}」的脸谱已生成`, "success");
-      const sens = (_y = (_x = job.describe) == null ? void 0 : _x.sensitive) != null ? _y : 0;
+      const sens = (_A = (_z = job.describe) == null ? void 0 : _z.sensitive) != null ? _A : 0;
       if (sens > 0) {
         notice(`其中 ${sens} 张图片被判敏感已跳过描述——图片页签里可以解除标注并重试`, "warning");
       }
@@ -24417,6 +24501,8 @@ ${lines}`;
     if (!peopleSafe) peopleSafe = await getPeopleSafeStore();
     let imported = 0;
     let undescribed = 0;
+    let broken = 0;
+    let missing = 0;
     const mergedRecs = /* @__PURE__ */ new Set();
     const imageItems = [];
     try {
@@ -24424,9 +24510,11 @@ ${lines}`;
       for (const m of (_a2 = rec == null ? void 0 : rec.store.msgs) != null ? _a2 : []) {
         if (m.type === 3 && m.img) {
           imported++;
-          const sensitive = isDescSkipped(m);
-          imageItems.push(sensitive ? { img: m.img, text: m.text, sensitive: true } : { img: m.img, text: m.text });
-          if (m.text === "" && !sensitive) undescribed++;
+          const skip = descSkipOf(m);
+          if (skip === BROKEN_SKIP) broken++;
+          else if (skip === MISSING_SKIP) missing++;
+          imageItems.push(skip ? { img: m.img, text: m.text, skip, label: SKIP_LABEL[skip] } : { img: m.img, text: m.text });
+          if (m.text === "" && !skip) undescribed++;
         }
         if (m.key.startsWith("rec:")) {
           const end = m.key.lastIndexOf(":");
@@ -24436,7 +24524,7 @@ ${lines}`;
     } catch (e) {
     }
     if (!overlay || suppOwnerId !== talker) return;
-    suppStoreInfo = { imported, undescribed, mergedRecs, imageItems: imageItems.reverse() };
+    suppStoreInfo = { imported, undescribed, broken, missing, mergedRecs, imageItems: imageItems.reverse() };
     if ((dialog == null ? void 0 : dialog.kind) === "note") void renderAlbum();
   }
   function suppImageState() {
@@ -24450,6 +24538,8 @@ ${lines}`;
       queue: suppImages,
       imported: suppStoreInfo.imported,
       undescribed: suppStoreInfo.undescribed,
+      broken: suppStoreInfo.broken,
+      missing: suppStoreInfo.missing,
       describeBusy: running3,
       modelLabel: `${describeModelLabelOf().provider}/${describeModelLabelOf().model}`,
       items: active ? suppStoreInfo.imageItems.slice(0, shown).map((it) => ({ ...it, url: suppGridImgOf(root, talker, it.img) })) : [],

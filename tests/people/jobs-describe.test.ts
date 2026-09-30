@@ -143,9 +143,11 @@ async function until(cond: () => boolean | Promise<boolean>): Promise<void> {
 /** 派生档 fs 假件：desc/ 下的 jpg 都可读（内容任意非空字节） */
 class MemDescFs implements DescribeFs {
   missing = new Set<string>();
+  /** 全库派生档都读不动（issue 521「有欠账、零可读」现场：源图损坏 / 缺失） */
+  allMissing = false;
   readBytes(path: string): Uint8Array | null {
     const p = path.replace(/\\/g, '/');
-    if (!p.includes('/desc/') || this.missing.has(p)) return null;
+    if (!p.includes('/desc/') || this.allMissing || this.missing.has(p)) return null;
     return new Uint8Array([1, 2, 3]);
   }
 }
@@ -471,6 +473,34 @@ describe('describe 段编排（470）', () => {
     expect(p2.descSkip).toBe('sensitive'); // 没被并仓动作抹掉（applyImageDescToMsgs 也跳过它）
     expect(p2.text).toBe('');
     expect(jobOf()?.describe?.sensitive).toBeUndefined(); // 本轮没有新标注
+  });
+
+  it('有欠账、零可读（ADR-0225 决策 3）：整段零调用收尾，不烧画像，明确告知张数', async () => {
+    const msgs = imageMsgs();
+    await seedStore(msgs);
+    await markPrepDone();
+    // 三张图的派生档全读不动（源图损坏 / 缺失的真实现场：磁盘上压根没有 desc/ 档）
+    descFs.allMissing = true;
+    const gateBox = makeGate('start');
+    const askBox = makeAskDescribe();
+    const asks = makeAsks();
+    await startJobs(app, [target(msgs)], {
+      maxRetries: 0,
+      sleep: async () => {},
+      ...asks,
+      askDescribe: askBox.ask,
+      askDescribeConfirm: gateBox.gate,
+    });
+    await whenIdle();
+    const job = jobOf()!;
+    expect(job.status).toBe('done');
+    expect(job.describe?.unreadable).toBe(3);
+    expect(job.message).toContain('源图损坏或缺失');
+    expect(job.person).toBeUndefined(); // 没有产物：不进「done 即有画像」的口径
+    // 关键：视觉 / 采集 / 画像一次都没烧（用户实测的那 5 次调用就此省掉）
+    expect(askBox.ask).not.toHaveBeenCalled();
+    expect(asks.askExtract).not.toHaveBeenCalled();
+    expect(asks.askPortrait).not.toHaveBeenCalled();
   });
 
   it('非敏感失败仍走原重试路径（不误伤）：5xx 不会触发逐张降级', async () => {

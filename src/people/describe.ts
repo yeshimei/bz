@@ -39,6 +39,11 @@ export interface DescribeProgress {
   skipped?: boolean;
   /** 被服务商判敏感拒绝并已标注的张数（ADR-0224）。展示口径，权威在聊天仓的 descSkip */
   sensitive?: number;
+  /**
+   * 「有欠账、零可读」的张数（ADR-0225 决策 3）：本段一张派生档都没读动时的欠账数。
+   * 有值即整段零调用收尾，交 runJob 结束任务并明确告知（不再往下烧画像调用）。
+   */
+  unreadable?: number;
 }
 
 /** 缺省每批张数（spec 用户故事 47：默认 20 张，可配） */
