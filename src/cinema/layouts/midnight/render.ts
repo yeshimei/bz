@@ -92,17 +92,22 @@ export function railHtml(cards: CardEntry[], view: CinemaView, lists: string[] =
   return { groups, status, lists: listsHtml };
 }
 
-/** 移动端筛选 chips（全部/类型/状态横滑条；ai/stat 页同 rail 口径整体熄灭）。
+/** 移动端筛选 chips（全部/类型/状态/片单横滑条；ai/stat 页同 rail 口径整体熄灭）。
+ *  片单组（2026-09-30 补）：桌面侧栏片单区的移动端等价物，书签图标区分类型/状态，
+ *  `data-l` 由全端筛选委托（ui.ts railBtn 分支）接管，与桌面同一套切换语义。
  *  `bz-touch-target--lg`：触屏（pointer:coarse）::after 外扩热区（core 单源，视觉零改动，
  *  绝对定位外扩不触发横滑容器额外滚动宽度；desk 的 rail/seg 等鼠标惯用件不挂）。 */
-export function chipsHtml(view: CinemaView): string {
+export function chipsHtml(view: CinemaView, lists: string[] = []): string {
   const listOn = view.view === 'list';
-  let html = `<button class="chip bz-touch-target--lg${listOn && !view.typeFilter && !view.statusFilter ? ' is-on' : ''}" data-c="all">${iconSpan(ICON.grid)}全部</button>`;
+  let html = `<button class="chip bz-touch-target--lg${listOn && !view.typeFilter && !view.statusFilter && !view.listFilter ? ' is-on' : ''}" data-c="all">${iconSpan(ICON.grid)}全部</button>`;
   for (const name of GROUP_ORDER) {
     html += `<button class="chip bz-touch-target--lg${listOn && view.typeFilter === name && !view.statusFilter ? ' is-on' : ''}" data-c="${name}">${name}</button>`;
   }
   for (const s of ['想看', '在看', '已看'] as const) {
     html += `<button class="chip bz-touch-target--lg${listOn && view.statusFilter === s ? ' is-on' : ''}" data-s="${s}">${s}</button>`;
+  }
+  for (const name of lists) {
+    html += `<button class="chip bz-touch-target--lg${listOn && view.listFilter === name ? ' is-on' : ''}" data-l="${esc(name)}">${iconSpan(ICON.shelf)}${esc(name)}</button>`;
   }
   return html;
 }
@@ -220,5 +225,5 @@ export function renderMidnightMob(root: HTMLElement, inp: MidnightRenderInput): 
     }
   }
   const chips = root.querySelector('.j-chips');
-  if (chips) chips.innerHTML = chipsHtml(v);
+  if (chips) chips.innerHTML = chipsHtml(v, inp.lists);
 }
