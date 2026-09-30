@@ -1,4 +1,4 @@
-/* 源指纹 a931b50f05cd0228 · 仓内输入 6 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 b2c795082ae25dff · 仓内输入 6 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["src/cinema/constants.ts","src/cinema/layouts/midnight/render.ts","src/cinema/render.ts","src/cinema/seasons.ts","src/cinema/shared.ts","src/core/ui/str.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — src/cinema/render.ts → window.BZR_cinema（评审壳预览包，ADR-0104） */
 var BZR_cinema = (() => {
@@ -580,14 +580,17 @@ var BZR_cinema = (() => {
     }
     return { groups, status, lists: listsHtml };
   }
-  function chipsHtml(view) {
+  function chipsHtml(view, lists = []) {
     const listOn = view.view === "list";
-    let html = `<button class="chip bz-touch-target--lg${listOn && !view.typeFilter && !view.statusFilter ? " is-on" : ""}" data-c="all">${iconSpan(ICON.grid)}全部</button>`;
+    let html = `<button class="chip bz-touch-target--lg${listOn && !view.typeFilter && !view.statusFilter && !view.listFilter ? " is-on" : ""}" data-c="all">${iconSpan(ICON.grid)}全部</button>`;
     for (const name of GROUP_ORDER) {
       html += `<button class="chip bz-touch-target--lg${listOn && view.typeFilter === name && !view.statusFilter ? " is-on" : ""}" data-c="${name}">${name}</button>`;
     }
     for (const s of ["想看", "在看", "已看"]) {
       html += `<button class="chip bz-touch-target--lg${listOn && view.statusFilter === s ? " is-on" : ""}" data-s="${s}">${s}</button>`;
+    }
+    for (const name of lists) {
+      html += `<button class="chip bz-touch-target--lg${listOn && view.listFilter === name ? " is-on" : ""}" data-l="${esc(name)}">${iconSpan(ICON.shelf)}${esc(name)}</button>`;
     }
     return html;
   }
@@ -654,7 +657,7 @@ var BZR_cinema = (() => {
       }
     }
     const chips = root.querySelector(".j-chips");
-    if (chips) chips.innerHTML = chipsHtml(v);
+    if (chips) chips.innerHTML = chipsHtml(v, inp.lists);
   }
   return __toCommonJS(render_exports);
 })();
