@@ -38,7 +38,7 @@ import {
   profileExtractMaterial,
 } from './digest';
 import { createAI } from '../core/ai';
-import { mergeManualEvents, planIncremental } from './incremental';
+import { mergeManualEvents, planIncremental, type IncrementalPlan } from './incremental';
 import { emptyMediaStats, formatMediaCount, type MediaStats } from './media';
 import { computeStats, formatReplySec } from './stats';
 import * as jobsApi from './jobs';
@@ -1531,6 +1531,21 @@ function buildGenerationConfirmInfo(runnable: GenTarget[], skipped: string[] = [
 }
 
 /**
+ * 「这批候选其实一条新的都没有」判定（issue 523，ADR-0226 的同批补偿）：
+ * `planIncremental` 的同秒容差认「ts ≥ 锚点」的候选（评审 P2-1b，秒级导出不丢同秒消息），
+ * 但候选若**全都停在锚点那一秒之内**，它们就是上次已经处理过的那一批——锚点本来就是
+ * 「上次处理到的末条」，落在锚点里的消息不可能还没处理过。指纹之所以对不上，是因为 523 之前
+ * 的版本把导入记录条数记成了「本次提炼子集条数」（增量只跑 1 条就记 1，ADR-0226），
+ * 不是真有新素材。这层把它判成「没有新素材」：不再白烧一遍采集批 + 双卷（ADR-0225 决策 3 同一精神）。
+ * 只要候选里有**任何一条严格晚于锚点**（真新消息），照常进引擎。
+ */
+function onlyWatermarkMsgs(plan: IncrementalPlan, existing: PersonEntry | undefined): boolean {
+  const anchor = existing?.lastProcessedTs;
+  if (plan.mode !== 'newer' || !anchor || !plan.msgs.length) return false;
+  return plan.msgs.every((m) => m.ts <= anchor);
+}
+
+/**
  * 本地预筛（441 planIncremental 语义保留在 ui 层）：skip 不进引擎；补录 / 增量的提示沿用原口径。
  * 模式与旧画像的解析归引擎（startJobs opts / 增量所需 old digest 由引擎内部处理）。
  */
@@ -1542,7 +1557,7 @@ async function planTargets(targets: GenTarget[]): Promise<{ runnable: GenTarget[
   for (const t of targets) {
     const existing = people.find((p) => p.id === t.talker);
     const plan = planIncremental(t.msgs, existing);
-    if (plan.mode === 'skip') {
+    if (plan.mode === 'skip' || onlyWatermarkMsgs(plan, existing)) {
       // skip 只可能发生在已有导入的人物上；顺带应用改名，并给 440 之前的旧数据补一份
       // 互动统计到最近一条导入记录（没有记录则不动）
       if (existing) {
