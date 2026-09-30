@@ -3415,7 +3415,10 @@ function suppImageState(): SuppImageViewState {
   const talker = detailId ?? '';
   // 预览网格（issue 519 分片）：只切已展开的前段换 data URL——缩略档命中读小图，
   // 缺档回退原图并后台补齐；全量一次拉齐是开页冻死的病根，不再犯。
-  const total = root && talker ? suppStoreInfo.imageItems.length : 0;
+  // 只在留影页签才算（note 弹窗每个页签每轮重画都会路过这里）：录音页千张全展开时
+  // 不该白跑一遍千次 existsSync。
+  const active = suppTab === 'image' && Boolean(root && talker);
+  const total = active ? suppStoreInfo.imageItems.length : 0;
   const shown = Math.min(suppImgShown, total);
   return {
     queue: suppImages,
@@ -3423,8 +3426,8 @@ function suppImageState(): SuppImageViewState {
     undescribed: suppStoreInfo.undescribed,
     describeBusy: running,
     modelLabel: `${describeModelLabelOf().provider}/${describeModelLabelOf().model}`,
-    items: root && talker
-      ? suppStoreInfo.imageItems.slice(0, shown).map((it) => ({ ...it, url: suppGridImgOf(root, talker, it.img) }))
+    items: active
+      ? suppStoreInfo.imageItems.slice(0, shown).map((it) => ({ ...it, url: suppGridImgOf(root!, talker!, it.img) }))
       : [],
     hidden: Math.max(0, total - shown),
     ...(suppImgDelPending ? { imgDel: suppImgDelPending } : {}),
@@ -3445,16 +3448,18 @@ function suppGridImgOf(root: string, talker: string, img: string): string {
   }
   if (!thumbHandled(thumbAbs)) {
     queueThumbBuild(fs2, descImagePath(root, talker, img), thumbAbs, (ok) => {
-      if (ok) swapGridThumb(img, thumbAbs);
+      if (ok) swapGridThumb(talker, img, thumbAbs);
     });
   }
   return localImgOf(descImagePath(root, talker, img));
 }
 
-/** 缩略档补齐后原位换图：这张格子在弹窗里还挂着原图回退的话悄悄换成小图 */
-function swapGridThumb(img: string, thumbAbs: string): void {
+/** 缩略档补齐后原位换图：这张格子在弹窗里还挂着原图回退的话悄悄换成小图。
+ *  人对不上就不换（关面板→重开的窄窗里在跑任务的回调还活着；跨人同名相对路径
+ *  会把旧人的缩略塞进新人的格——下次重画自愈的便宜不占，直接不动手）。 */
+function swapGridThumb(talker: string, img: string, thumbAbs: string): void {
   const url = localImgOf(thumbAbs);
-  if (!url || !overlay) return;
+  if (!url || !overlay || detailId !== talker) return;
   overlay.querySelectorAll<HTMLImageElement>('[data-people-supp-img-view]').forEach((im) => {
     if (im.getAttribute('data-people-supp-img-view') === img && im.src !== url) im.src = url;
   });
@@ -3471,7 +3476,8 @@ function growSuppImgGrid(): HTMLElement | null {
   const talker = detailId;
   const root = suppDataRoot();
   const grid = overlay?.querySelector<HTMLElement>('.bz-people-supp-imggrid');
-  if (!talker || !root || !grid) return null;
+  // 同源守卫：非 note 弹窗 / 换人清仓后的 await 窗口里，旧哨兵的 IO 不替新页追加
+  if (!talker || !root || !grid || dialog?.kind !== 'note' || suppOwnerId !== detailId) return null;
   const total = suppStoreInfo.imageItems.length;
   const from = Math.min(suppImgShown, total);
   const to = Math.min(suppImgShown + SUPP_IMG_PAGE, total);
@@ -3738,8 +3744,12 @@ async function suppImportImages(): Promise<void> {
       }
       fs2.copyFileSync(it.path, target);
       // 缩略档随后台队列出（issue 519）：不挡导入主流程；补上后网格原位换小图
-      queueThumbBuild(fs2, target, descThumbPath(root, talker, `${month}/${stamp}_${p2(seq)}${ext}`));
-      imported.push({ file: `${month}/${stamp}_${p2(seq)}${ext}`, ts: it.ts, isSender: !it.peer });
+      const rel = `${month}/${stamp}_${p2(seq)}${ext}`;
+      const thumbAbs = descThumbPath(root, talker, rel);
+      queueThumbBuild(fs2, target, thumbAbs, (ok) => {
+        if (ok) swapGridThumb(talker, rel, thumbAbs);
+      });
+      imported.push({ file: rel, ts: it.ts, isSender: !it.peer });
     }
     // 并仓：type=3 消息（text 空 = 不进时间线，描述并仓后自然出现）+ 形态计数 + 统计重算
     let n = 0;
