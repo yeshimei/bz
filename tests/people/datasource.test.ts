@@ -752,8 +752,8 @@ describe('statsHasNewerData（issue 532：lastCt 对仓内最后聊天消息；m
 
   it('maxSid 再大也不参与判定（server_id 与时间无序——旧判据退役的病根）', () => {
     const store = storeOf([chatMsg(BASE * 1000)]);
-    // 2026-03 的旧消息 sid 可以大过 2026-09 全部新消息（实测），lastCt 不新就是无新
     expect(statsHasNewerData(stats({ lastCt: BASE + 60, maxSid: 9223372036854775807 }), store)).toBe(true);
+    // 2026-03 的旧消息 sid 可以大过 2026-09 全部新消息（实测）——lastCt 不新就是无新，maxSid 再大也不翻案
     expect(statsHasNewerData(stats({ lastCt: BASE, maxSid: 9223372036854775807 }), storeOf([chatMsg(BASE * 1000)]))).toBe(false);
   });
 
