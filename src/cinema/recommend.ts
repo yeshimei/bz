@@ -169,7 +169,7 @@ export function parseRecommendJson(raw: string): any[] | null {
 }
 
 /** 加入想看（AI 推荐条目 → 建笔记，评分 -1） */
-export async function quickAddWant(app: App, name: string, type: string, opts?: { silent?: boolean }): Promise<boolean> {
+export async function quickAddWant(app: App, name: string, type: string, opts?: { silent?: boolean; sid?: string }): Promise<boolean> {
   // 返回「是否实际建档」——批量导入按它汇总（跳过/失败为 false，调用方区分口径）
   // silent（豆瓣片单批量导入用）：不出逐条 toast、不逐条刷新——调用方统一统计 + 最后一次刷
   const quiet = !!opts?.silent;
@@ -208,7 +208,7 @@ tags:
     // 事件补发（smartcat 行为流观察；ADR-0087 cinema 接管）：created want
     emitDomainEvent('movie', { kind: 'created', name: trimmedName, status: 'want', rating: null, review: null });
     // 入抓取队列（ADR-0113）：卡片 loading 反馈，无通知
-    enqueueDoubanFetch(f, trimmedName);
+    enqueueDoubanFetch(f, trimmedName, opts?.sid); // 片单导入携带 sid：队列直取 queryDoubanBySid（省一次名称检索）
     if (!quiet) refreshDataAndView(app); // silent：调用方批量收尾统一刷
     return true;
   } catch (e) {
