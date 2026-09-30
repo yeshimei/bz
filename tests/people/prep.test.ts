@@ -184,9 +184,9 @@ describe('纯函数：参数组装（468 prep-core CLI 参数面）', () => {
     expect(spec.cmd).toBe('bz-face');
     expect(spec.args).toEqual([
       'prep',
-      process.platform === 'win32' ? '"大琳"' : '大琳',
+      process.platform === 'win32' ? '"大琳"' : "'大琳'",
       '--data-root',
-      process.platform === 'win32' ? '"E:\\数据根"' : 'E:\\数据根',
+      process.platform === 'win32' ? '"E:\\数据根"' : "'E:\\数据根'",
       '--asr-engine',
       'sensevoice',
     ]);
@@ -205,17 +205,17 @@ describe('纯函数：参数组装（468 prep-core CLI 参数面）', () => {
     });
     expect(full.args).toEqual([
       'prep',
-      process.platform === 'win32' ? '"陈默"' : '陈默',
+      process.platform === 'win32' ? '"陈默"' : "'陈默'",
       '--data-root',
-      process.platform === 'win32' ? '"D:\\根"' : 'D:\\根',
+      process.platform === 'win32' ? '"D:\\根"' : "'D:\\根'",
       '--asr-engine',
       'faster-whisper',
       '--asr-model',
       'small',
       '--src',
-      process.platform === 'win32' ? '"wxid_x"' : 'wxid_x',
+      process.platform === 'win32' ? '"wxid_x"' : "'wxid_x'",
       '--ffmpeg',
-      process.platform === 'win32' ? '"C:\\ff\\ffmpeg.exe"' : 'C:\\ff\\ffmpeg.exe',
+      process.platform === 'win32' ? '"C:\\ff\\ffmpeg.exe"' : "'C:\\ff\\ffmpeg.exe'",
       '--python',
       'py -3',
     ]);

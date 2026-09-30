@@ -11,6 +11,9 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { setApp } from '../../src/core/app';
 import { setSettingsProvider } from '../../src/core/settings-provider';
 import { MockVault, parseFrontmatter as vaultParseFrontmatter } from '../mock-vault';
+// 通知打桩：node 环境无 DOM，core/notice 的容器路径不可走；校对失败通知只断言调用形态
+vi.mock('../../src/core/notice', () => ({ notice: vi.fn() }));
+import { notice } from '../../src/core/notice';
 import {
   parseDomainList,
   chunkTranscript,
@@ -139,7 +142,7 @@ describe('parseFrontmatter / injectFrontmatter（frontmatter 轻量读写）', (
   });
 });
 
-describe('generateVideoNote（视频文献：九键 frontmatter + 润色正文）', () => {
+describe('generateVideoNote（视频文献：九键 frontmatter + 校对开关两态正文，ADR-0222）', () => {
   let vault: MockVault;
 
   beforeEach(() => {
@@ -153,25 +156,21 @@ describe('generateVideoNote（视频文献：九键 frontmatter + 润色正文�
     setSettingsProvider(() => ({}) as any);
   });
 
-  it('元数据一次 JSON（提示词带领域词表）+ 分块润色逐块 chat → 九键 frontmatter 落盘', async () => {
-    // 两段各 <4000、合并 >4000 → 分两块 → chat 两次
+  it('开关关（缺省）：元数据一次 JSON，正文 = 转写原文直出，正文零 LLM 调用（润色已退役）', async () => {
     const transcript = '长'.repeat(3000) + '。' + '长'.repeat(3000);
     const path = await generateVideoNote({ transcript, videoTitle: '测试视频', url: 'https://b23.tv/xxx', uploader: '某UP' });
 
     expect(path).toBe('文献盒/T.md'); // 文件名取 AI title：sanitizeMdTitle('T')
     expect(aiStub.json).toHaveBeenCalledTimes(1);
     expect(String(aiStub.json.mock.calls[0][0])).toContain('心理、计算机'); // 领域词表进入判定指令
-    // issue 276：标题指令收敛为完整陈述句（禁疑问语气），旧口径「陈述句或疑问句」移除
     const metaPrompt = String(aiStub.json.mock.calls[0][0]);
     expect(metaPrompt).toContain('完整陈述句');
     expect(metaPrompt).toContain('不得使用疑问句或疑问语气');
-    expect(metaPrompt).not.toContain('陈述句或疑问句');
-    expect(aiStub.chat).toHaveBeenCalledTimes(2); // 两块转录 → 两次润色
+    expect(aiStub.chat).not.toHaveBeenCalled(); // 旧「分块润色」退役；校对未开 → 正文零调用
 
     const content = vault.files.get(path)!;
     const fm = vaultParseFrontmatter(content)!;
     // 九键：title/tags/summary/source/date/author/sourceTitle/type/domain
-    // （2026-09-16 统一来源：url → source、videoTitle → sourceTitle，四类文献共用「来源」一个名）
     expect(fm.title).toBe('T');
     expect(fm.tags).toEqual(['a']);
     expect(fm.summary).toBe('s');
@@ -181,13 +180,32 @@ describe('generateVideoNote（视频文献：九键 frontmatter + 润色正文�
     expect(fm.sourceTitle).toBe('测试视频');
     expect(fm.type).toBe('video');
     expect(fm.domain).toBe('心理');
-    // 旧键名不再出现
     expect(fm.url).toBeUndefined();
     expect(fm.videoTitle).toBeUndefined();
-    // 正文 = 两块润色拼接
-    expect(content).toContain('润色润色');
-    // 未传 videoPath（keepVideo=false 等）→ 无视频段
+    // 正文 = 转写原文直出（两块原样拼接）
+    expect(content).toContain('长'.repeat(3000));
     expect(content).not.toContain('![[CONFIG/APPENDIX/');
+  });
+
+  it('开关开：分块送 LLM 校对（只修错），正文 = 校对稿', async () => {
+    setSettingsProvider(() => ({ knowledgeDirectory: '文献盒', asrLlmProofread: true }) as any);
+    aiStub.chat.mockResolvedValue('{"items":[{"n":1,"text":"校对稿"}]}');
+    const path = await generateVideoNote({ transcript: '第一段。第二段！', videoTitle: '短视频', url: 'BV1xx411c7mD', uploader: 'UP主' });
+    expect(aiStub.json).toHaveBeenCalledTimes(1); // 元数据调用保留
+    expect(aiStub.chat).toHaveBeenCalledTimes(1); // 单块 → 一批
+    const proofreadPrompt = String(aiStub.chat.mock.calls[0][0]);
+    expect(proofreadPrompt).toContain('#1|第一段。第二段！');
+    expect(proofreadPrompt).toContain('只修错');
+    expect(vault.files.get(path)!).toContain('校对稿');
+  });
+
+  it('开关开但校对失败：重试后仍败 → 原文直出 + 通知（任务不炸）', async () => {
+    setSettingsProvider(() => ({ knowledgeDirectory: '文献盒', asrLlmProofread: true }) as any);
+    aiStub.chat.mockResolvedValue('不是JSON');
+    const path = await generateVideoNote({ transcript: '甲段。乙段！', videoTitle: 't', url: 'u', uploader: 'w' });
+    expect(aiStub.chat).toHaveBeenCalledTimes(2); // 初试 + 重试 1 次
+    expect(vault.files.get(path)!).toContain('甲段。乙段！');
+    expect(notice).toHaveBeenCalledWith(expect.stringContaining('LLM 校对失败'), 'warning');
   });
 
   it('videoPath 非空 → 正文尾部附视频双链（ticket 151 补回，ADR-0066）', async () => {
@@ -198,18 +216,10 @@ describe('generateVideoNote（视频文献：九键 frontmatter + 润色正文�
     const content = vault.files.get(path)!;
     expect(content).not.toContain('## 视频');
     expect(content).toContain('![[CONFIG/APPENDIX/短视频_BV1xx411c7mD.mp4]]');
-    // 反斜杠路径归一化为正斜杠（跨平台交付路径）
     const p2 = await generateVideoNote({
       transcript: 'x', videoTitle: 't2', url: 'u', uploader: 'w', videoPath: 'CONFIG\\APPENDIX\\v2.mp4',
     });
     expect(vault.files.get(p2)!).toContain('![[CONFIG/APPENDIX/v2.mp4]]');
-  });
-
-  it('短转录单块：一次 chat，正文为单段润色', async () => {
-    const path = await generateVideoNote({ transcript: '第一段。第二段！', videoTitle: '短视频', url: 'BV1xx411c7mD', uploader: 'UP主' });
-    expect(path).toBe('文献盒/T.md');
-    expect(aiStub.chat).toHaveBeenCalledTimes(1);
-    expect(vault.files.get(path)!).toContain('润色');
   });
 });
 

@@ -359,6 +359,30 @@ export function readPrepSidecars(dataRoot: string, contact: string): { voice: Vo
   };
 }
 
+/** 待校对的语音条目（ADR-0222）：有转写文本且未打过校对标记（纯函数，导出供测试） */
+export function pendingVoiceProofread(items: VoiceItem[]): VoiceItem[] {
+  return items.filter((v) => String(v.text ?? '').trim() !== '' && v.proofread !== true);
+}
+
+/**
+ * 语音旁路表写回（ADR-0222）：LLM 校对结果 + `proofread` 标记就地落 voice.json——
+ * 只在整档校对全成后调用（失败不写回）；工具重跑 prep 重写整表即失效重校，语义自洽。
+ * 写失败返回 false（不抛：校对失败本就不阻断并仓，写失败同理按原文并仓）。
+ */
+export function writeVoiceSidecarRaw(dataRoot: string, contact: string, items: VoiceItem[]): boolean {
+  const fs = fso();
+  if (!fs || !dataRoot || !contact || !items.length) return false;
+  try {
+    const norm = (s: string): string => s.replace(/\\/g, '/');
+    const base = `${dataRoot}/${contact}`.replace(/\/+$/, '');
+    fs.writeText(norm(`${base}/voice.json`), `${JSON.stringify(items, null, 1)}\n`);
+    return true;
+  } catch (e) {
+    console.warn('[people] 语音旁路表写回失败:', e);
+    return false;
+  }
+}
+
 // ---------------- 失败分流（错误面归类同 sync.ts 口径） ----------------
 
 /** 错误消息取首行并限长（不抛栈，弹窗 / 进度块一行放得下） */

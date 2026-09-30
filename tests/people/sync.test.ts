@@ -9,7 +9,7 @@
  * describeSyncStats / classifySyncFailure）与状态机分流（成功 / 停止 / 工具预检失败 /
  * 工具未装 / 依赖缺失 / exit 0 但 failed>0）分开断言。
  */
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { resetObsidianMocks, getNoticeMessages } from '../mock-obsidian-entry';
 import { setSettingsProvider } from '../../src/core/settings-provider';
 import type { ExternalToolCallbacks, ExternalToolOutcome, ExternalToolSpec } from '../../src/core/external-tool';
@@ -23,6 +23,7 @@ import {
   describeSyncStats,
   emptySyncStats,
   isSyncing,
+  quotePathArg,
   setSyncRunnerForTests,
   startSync,
   statsFromResult,
@@ -93,7 +94,7 @@ describe('纯函数：参数组装与协议映射', () => {
     const spec = buildSyncSpec({ dataRoot: 'E:\\数据根' });
     expect(spec.cmd).toBe('bz-face');
     // shell:true 会把含空格路径按空格拆散（bili-dl b64 同源坑）——Windows 下路径参数包引号无损（Win32 路径不含双引号）
-    expect(spec.args).toEqual(['sync', '--data-root', process.platform === 'win32' ? '"E:\\数据根"' : 'E:\\数据根']);
+    expect(spec.args).toEqual(['sync', '--data-root', process.platform === 'win32' ? '"E:\\数据根"' : "'E:\\数据根'"]);
     expect(buildSyncSpec({ dataRoot: 'E:\\My Data\\根' }).args?.[2] ?? '').toMatch(process.platform === 'win32' ? /"/ : /^(?!").*$/);
     expect(spec.shell).toBe(true);
   });
@@ -103,17 +104,31 @@ describe('纯函数：参数组装与协议映射', () => {
     expect(full.args).toEqual([
       'sync',
       '--data-root',
-      process.platform === 'win32' ? '"D:\\根"' : 'D:\\根',
+      process.platform === 'win32' ? '"D:\\根"' : "'D:\\根'",
       '--src',
-      process.platform === 'win32' ? '"wxid_x"' : 'wxid_x',
+      process.platform === 'win32' ? '"wxid_x"' : "'wxid_x'",
       '--python',
       'py -3',
     ]);
     expect(buildSyncSpec({ dataRoot: 'D:\\根', src: '  ', python: '' }).args).toEqual([
       'sync',
       '--data-root',
-      process.platform === 'win32' ? '"D:\\根"' : 'D:\\根',
+      process.platform === 'win32' ? '"D:\\根"' : "'D:\\根'",
     ]);
+  });
+
+  it('quotePathArg：POSIX 下单引号包裹并转义内嵌单引号（含空格的数据根 / 联系人名不再被 shell 拆散）', () => {
+    const platformSpy = vi.spyOn(process, 'platform', 'get').mockReturnValue('linux');
+    try {
+      expect(quotePathArg('/data/微信脸谱 数据')).toBe("'/data/微信脸谱 数据'");
+      expect(quotePathArg("/data/O'Brien's 根")).toBe("'/data/O'\\''Brien'\\''s 根'");
+      // 无特殊字符也一律包裹（口径单源：包裹是无条件的，不按内容嗅探）
+      expect(quotePathArg('/data/plain')).toBe("'/data/plain'");
+    } finally {
+      platformSpy.mockRestore();
+    }
+    // 回到本平台：win32 双引号 / POSIX 单引号，口径仍单源
+    expect(quotePathArg('/data/x')).toBe(process.platform === 'win32' ? '"/data/x"' : "'/data/x'");
   });
 
   it('syncPhaseLabel：phase 词 → 中文阶段（与工具 SYNC_PHASES 同词汇；485 起 contacts 为统计联系人）；未知 / null 给空', () => {
@@ -212,9 +227,9 @@ describe('状态机：startSync / stopSync 终态分流', () => {
     expect(tool.calls[0].args).toEqual([
       'sync',
       '--data-root',
-      process.platform === 'win32' ? '"D:\\微信脸谱数据\\export_full"' : 'D:\\微信脸谱数据\\export_full',
+      process.platform === 'win32' ? '"D:\\微信脸谱数据\\export_full"' : "'D:\\微信脸谱数据\\export_full'",
       '--src',
-      process.platform === 'win32' ? '"wxidacct"' : 'wxidacct',
+      process.platform === 'win32' ? '"wxidacct"' : "'wxidacct'",
       '--python',
       'C:\\py\\python.exe',
     ]);

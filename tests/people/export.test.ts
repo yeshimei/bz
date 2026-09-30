@@ -72,11 +72,11 @@ describe('buildExportSpec 参数组装', () => {
     expect(spec.args).toEqual([
       'export',
       '--data-root',
-      process.platform === 'win32' ? '"E:\\数据根"' : 'E:\\数据根',
+      process.platform === 'win32' ? '"E:\\数据根"' : "'E:\\数据根'",
       '--contact',
-      process.platform === 'win32' ? '"大琳"' : '大琳',
+      process.platform === 'win32' ? '"大琳"' : "'大琳'",
       '--contact',
-      process.platform === 'win32' ? '"老周"' : '老周',
+      process.platform === 'win32' ? '"老周"' : "'老周'",
       '--python',
       'C:\\py\\python.exe',
     ]);
@@ -88,9 +88,9 @@ describe('buildExportSpec 参数组装', () => {
     expect(spec.args).toEqual([
       'export',
       '--data-root',
-      process.platform === 'win32' ? '"D:\\根"' : 'D:\\根',
+      process.platform === 'win32' ? '"D:\\根"' : "'D:\\根'",
       '--contact',
-      process.platform === 'win32' ? '"陈默"' : '陈默',
+      process.platform === 'win32' ? '"陈默"' : "'陈默'",
     ]);
   });
 });
