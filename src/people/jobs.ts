@@ -40,6 +40,7 @@ import { ENCRYPT_UNLOCK_CHANGED_CHANNEL } from '../encrypt/data';
 import { getPeopleSafeStore, type PeopleSafeStore } from './safe-store';
 import {
   canAcquireHeavy,
+  heavyGatePortraitBusy,
   releaseHeavy,
   setHeavyPortraitBusy,
   setHeavyPreemptHandler,
@@ -229,6 +230,12 @@ export interface PersonJob {
   error?: string;
   /** 最新进度文案（切批说明 / 逐批 / 成文；切批后立刻可算） */
   message?: string;
+  /**
+   * 排队中（issue 505 补漏 / 531）：paused 且前面还有在跑 / 待跑的同队任务——还没轮到。
+   * 派生值，emit() 单源归一（此前无人赋值，render 的「等」印分支是死代码，
+   * 排队者被画成「歇 · 上次没画完」与进度便签「第 2/2 位」自相矛盾）。
+   */
+  queued?: boolean;
   startedAt: string;
   updatedAt: string;
 }
@@ -576,6 +583,15 @@ export function subscribe(fn: (s: JobsSnapshot) => void): () => void {
 }
 
 function emit(): void {
+  // 排队印归一（单源）：paused 且前面还有在跑 / 待跑者 = 排队中。所有状态变迁路径都过 emit，
+  // 在这里推导比在每个赋值点维护可靠。interrupted / error / done 不算等待者（它们在等用户）。
+  if (st) {
+    let seenActive = false;
+    for (const j of st.queue) {
+      j.queued = j.status === 'paused' && seenActive;
+      if (j.status === 'running' || j.status === 'paused') seenActive = true;
+    }
+  }
   const snap = snapshot();
   for (const fn of subs) {
     try {
@@ -742,7 +758,9 @@ function wireHeavyPreempt(): void {
     if (dataRoot) void writePrepControl(dataRoot, 'stop');
     console.log('[people] 为腾出内存已请求结束待命预处理进程（恢复画谱任务时会重新加载模型）');
     setTimeout(() => {
-      if (currentPrepSession()?.talker === s.talker) abortPrepSession(s.talker); // 兜底
+      // 30 秒兜底只杀「仍是待命」的会话：宽限期内用户点了「继续生成」（resume 控制已写、
+      // 进程复活在跑活）时 portraitBusy 为真——再杀会把活跃任务打回 paused（意外中断）。
+      if (!heavyGatePortraitBusy() && currentPrepSession()?.talker === s.talker) abortPrepSession(s.talker);
     }, PREP_PREEMPT_KILL_MS);
   });
 }
@@ -1286,7 +1304,8 @@ async function runPrepStage(
     return 'halted';
   }
   const failed = Number(result.failed);
-  if (Number.isFinite(failed) && failed > 0 && job.prep) job.prep.failed = failed;
+  // 成账即以本轮为准：重跑全成功后 failed 清零（否则「N 条失败待补齐」与「重试失败项」永久残留）
+  if (job.prep) job.prep.failed = Number.isFinite(failed) && failed > 0 ? failed : 0;
   clearPrepControl(dataRoot); // 终态收尾：残留的 pause 会让下一次 prep 起跑即待命
   return 'ok';
 }
@@ -1367,7 +1386,12 @@ export async function mergePrepArtifactsIntoStore(
  */
 async function runDescribeStage(job: PersonJob, finish: (patch: Partial<PersonJob>) => Promise<void>): Promise<'skipped' | 'ok' | 'halted' | 'unreadable'> {
   const safe = st!.safe;
-  if (!safe?.unlocked) return 'halted'; // 上锁竞态：runQueue 下一轮自会停，任务保持原态
+  if (!safe?.unlocked) {
+    // 同 runJob 步 1：早退不留 running 孤儿——按上锁暂停落账，解锁自续
+    pauseEngine(true);
+    await finish({ status: 'paused', message: '已暂停 · 保险库上锁，解锁后自动继续' });
+    return 'halted';
+  }
   const ledger = describeOf(job);
   if (ledger?.skipped) return 'skipped'; // 已跳过：续跑不再问（跳过 ≠ 取消，整链继续）
   const dataRoot = dataRootOf();
@@ -1677,7 +1701,13 @@ async function runJob(job: PersonJob): Promise<void> {
     // 1. 读保库记录的聊天仓段（合并前快照）+ 外部漂移粗校验：烧过批（AI 已付费）的素材
     //    先验指纹，别为一份已经对不上的素材白跑几十分钟工具段
     const safe = st!.safe;
-    if (!safe?.unlocked) return; // 上锁竞态：runQueue 下一轮自会停，任务保持原态
+    if (!safe?.unlocked) {
+      // 上锁竞态：早退不能把任务留在 running 态——resume()/runQueue 只受理 paused，
+      // running 是没人拾起的孤儿（引擎堵死到重启）。按上锁暂停落账，解锁广播自续（wireLock）。
+      pauseEngine(true);
+      await finish({ status: 'paused', message: '已暂停 · 保险库上锁，解锁后自动继续' });
+      return;
+    }
     const storeBefore = (await safe.read(job.talker))?.store ?? null;
     if (gone(job)) return;
     const fp0 = fingerprintOf(storeToUnified(storeBefore?.msgs ?? []));
@@ -1728,6 +1758,17 @@ async function runJob(job: PersonJob): Promise<void> {
     const fp = fingerprintOf(bucketMsgs);
     const drifted = fp.msgCount !== job.msgCount || fp.contentHash !== job.contentHash;
     const refresh = drifted;
+
+    if (!bucketMsgs.length) {
+      // 聊天数据被清空（设置「清空聊天数据」不清任务）后续跑：空数组进 planIncremental 会炸出
+      // 英文 TypeError。startJobs 的空守卫管起跑，这里管续跑——拦下说人话。
+      await finish({
+        status: 'error',
+        error: '聊天记录是空的——数据可能已被清空，请重新导入聊天数据后再画',
+        message: '聊天记录为空，无法提炼',
+      });
+      return;
+    }
 
     // 4. 提炼集重推导（与 startJobs 同判定：bucket + 人物卡未变 ⇒ 结果确定）
     const existing = (await new PeopleStore(st!.app).list()).find((p) => p.id === job.talker);

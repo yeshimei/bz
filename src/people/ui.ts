@@ -293,6 +293,8 @@ let dsContacts: DsContact[] | null = null;
 let dsSelected = new Set<string>();
 let dsScanning = false;
 let dsImporting = false;
+/** 扫描令牌（旧扫描复活防护）：关面板快速重开会开出新一轮扫描，过期那轮不得再落账 */
+let dsScanSeq = 0;
 let dsHiddenGroups = 0;
 let dsNotice = '';
 /** 导入完成且新增 >0（合上数据源那页时新照片飞回册页的点名账；D 组起不再挂「画脸谱」钮） */
@@ -429,6 +431,7 @@ function openDialog(kind: DialogKind, tier?: DeleteTier): void {
       suppImgDelPending = null;
       suppImgShown = SUPP_IMG_PAGE; // 分片跟着人走（issue 519）：别把上一人滚出来的量带给下一人
       noteDelPending = null; // 撕掉确认跟着人走（D 组）：换人不把确认带到别人的纸条上
+      recTurnsFile = null; // 「查看轮次」展开跟着人走：B 的同名录音不该自己摊开 A 留下的展开态
       closeImgViewer();
       suppStoreInfo = { imported: 0, undescribed: 0, broken: 0, missing: 0, mergedRecs: new Set(), mergedRecCounts: new Map(), imageItems: [] };
     }
@@ -691,6 +694,9 @@ function buildPanelShell(app?: unknown): void {
       clearChatState(); // 聊天页的行也是解密后的聊天原文（issue 529）
       void renderAlbum(); // renderBody 检查解锁态，渲染锁定占位
     } else if (evt?.unlocked === true) {
+      // 解锁后聊天页若开着要重读：上锁时 clearChatState 清了行缓存，只重画会落进
+      // 「还没有这个人的消息」假空态（loadChatRows 自带页/人守卫，人已换则自动丢弃）
+      if (dialog?.kind === 'chat' && detailId) void loadChatRows(detailId);
       void renderAlbum();
     }
   });
@@ -875,8 +881,9 @@ function dsRowStates(query = dsFilter): DsRowState[] {
   });
   // 排序在这里落（不是扫描时）：水位依赖 recordCache，导入后水位才落到「无新素材」——
   // 排在渲染前算，关掉数据源页再打开就能看到刚导入的那几位沉到下面（issue 507）。
+  const groupEnabled = tryGetSettings()?.peopleIncludeGroups === true;
   const rank = (r: DsRowState): number => {
-    const k = dsWaterOf(r)?.k;
+    const k = dsWaterOf(r, groupEnabled)?.k;
     return k === 'newer' ? 0 : k === 'skip' ? 2 : 1;
   };
   const sorted = rows.sort((a, b) => rank(a) - rank(b) || b.newCount - a.newCount || a.name.localeCompare(b.name, 'zh'));
@@ -898,6 +905,8 @@ function dsPageState(): DsModalState {
     scannedAt: dsScannedAt,
     syncing: isSyncing(),
     sync: dsSyncLine(),
+    // 群聊开关跟着设置走：开 = 群聊行可勾可选（render 不再画灰 off）
+    groupEnabled: tryGetSettings()?.peopleIncludeGroups === true,
     // 过滤（D 组）：框里现挂的字 + 全量总人数（页眉「N / 共 M 位」的 M）+ 全量行（页脚账不丢勾选）
     filter: dsFilter,
     totalRows: (dsContacts ?? []).length,
@@ -1017,6 +1026,9 @@ function updateSyncLine(): boolean {
 function handleSyncClick(): void {
   if (isSyncing()) return;
   if (jobsRunning()) { notice('正在生成脸谱——等这批结束再同步', 'info'); return; }
+  // 导入进行中不同步（双向守卫的另一半）：导入循环在逐人读写数据根，同步工具同时写
+  // 会撞上半截产物——导入按钮在 syncing 时禁用，这侧也不能漏
+  if (dsImporting) { notice('正在导入所选——等导入完成再同步', 'info'); return; }
   if (!isDesktop()) {
     dsNotice = '同步仅桌面端支持（需要调用外部工具 bz-face）。';
     renderAlbum();
@@ -1058,6 +1070,27 @@ function applySyncLockdown(): void {
  */
 function applyJobsLockdown(): void {
   const queue = jobsCache?.queue ?? [];
+  // 严格单跑（issue 531）的可见半边：录音处理在跑 = 重进程闸门被录音持有——画谱动作一律
+  // 置灰、理由写在钮上（另一半是 startGeneration 的运行时守卫；引擎侧本就等闸不并发）
+  const recBusy = runningRecordingItems().length > 0;
+  if (!recBusy) {
+    // 录音收工：解掉录音锁（同步锁优先——它有自己的解锁路径，不越权）
+    overlay?.querySelectorAll<HTMLButtonElement>('[data-people-rec-lock]').forEach((b) => {
+      if (b.hasAttribute('data-people-sync-lock')) return;
+      b.disabled = false;
+      b.removeAttribute('data-people-rec-lock');
+    });
+  }
+  if (recBusy && !jobsBusy()) {
+    overlay?.querySelectorAll<HTMLButtonElement>('[data-people-act="generate"], [data-people-seal-act]').forEach((b) => {
+      b.disabled = true;
+      b.setAttribute('data-people-rec-lock', '1');
+      b.title = '正在处理录音——录完再画脸谱';
+      const hint = b.querySelector<HTMLElement>('.bz-people-act-hint');
+      if (hint) hint.textContent = '等录音跑完';
+    });
+    return;
+  }
   if (!jobsBusy()) return;
   // 在跑的优先；只剩暂停 / 中断时理由换一句（那一位在等用户，不在等 AI）
   const active = queue.find((j) => j.status === 'running')
@@ -1101,6 +1134,7 @@ async function runScan(force = false): Promise<void> {
   if (force) dsContacts = null;
   dsNotice = '';
   renderAlbum();
+  const seq = ++dsScanSeq; // 本轮令牌：被新一轮接棒（快速关开面板）后自行作废
   const contacts: DsContact[] = [];
   let hidden = 0;
   try {
@@ -1109,7 +1143,7 @@ async function runScan(force = false): Promise<void> {
     const opts = normalizeOptionsFromSettings();
     const [storeData, people] = await Promise.all([records(), store.list()]);
     for (const name of dirNames) {
-      if (!overlay) return; // 面板已关，放弃本次扫描
+      if (!overlay || seq !== dsScanSeq) return; // 面板已关 / 新扫描已接棒：放弃本次
       // 485：sync 轮只产 stats.json——优先读统计；缺文件回落 chat.json（存量兼容）
       const stats = readStatsJson(dataDir, name);
       if (stats) {
@@ -1157,6 +1191,7 @@ async function runScan(force = false): Promise<void> {
     console.warn('[people] 数据源扫描失败:', e);
     dsNotice = '扫描失败：读不到数据文件夹或文件格式不对。';
   }
+  if (seq !== dsScanSeq) return; // 过期扫描：不落账、不动 dsScanning（新一轮掌管这些状态）
   dsScanning = false;
   dsHiddenGroups = hidden;
   if (overlay) {
@@ -1528,6 +1563,12 @@ function handleJobsSnapshot(s: EngineSnapshot): void {
  * 4) 订阅快照渲染进度块——独立于面板生命周期，关面板照跑。
  */
 export async function startGeneration(targets: GenTarget[]): Promise<void> {
+  // 严格单跑（issue 531）：录音处理在跑 = 重进程闸门被录音持有——画谱不与它并发，
+  // 也不悄悄排队（点了就明说，录完再点）
+  if (runningRecordingItems().length > 0) {
+    notice('正在处理录音——同一时刻只跑一件事，录音跑完再画脸谱', 'warning');
+    return;
+  }
   const { runnable, skipped } = await planTargets(targets);
   if (!runnable.length) {
     // issue 523：没有新素材也翻开工单——把「没有新素材」说清楚，「开始生成」置灰（用户拍板）。
@@ -1752,6 +1793,14 @@ async function persistJobDone(job: JobView, target?: GenTarget): Promise<void> {
     }
     const store = new PeopleStore(getApp());
     const existing = (await store.list()).find((p) => p.id === talker);
+    if (!existing) {
+      // 任务收尾前联系人已被删（删人 vs done 落盘竞速）：不复活——下面的 upsert 会给已删的
+      // 人重建空壳卡（聊天仓已随删除清空，画像成了无源之水）。结果作废，任务清出队列。
+      notice(`「${name}」的联系人已删除，本次生成结果不再保存`, 'info');
+      jobs().removeJob(talker);
+      if (overlay) void renderAlbum();
+      return;
+    }
     const now = new Date().toISOString();
     const msgs = target?.msgs;
     const rec: ImportRecord = {
@@ -1957,7 +2006,11 @@ function jobsAction(kind: 'resume' | 'dismiss' | 'prep-retry' | 'cancel'): void 
     if (isSyncing()) { notice('正在同步微信数据——同步完成后再继续生成', 'info'); return; } // ADR-0196 决策 10
     const who = talker || currentJobsItem()?.talker || '';
     if (!who) return;
-    api.resume(who);
+    // resume 受理失败（描述单段占线 / 上锁 / 任务已漂移判废等）不报成功——印章路径同款口径
+    if (!api.resume(who)) {
+      notice('现在续不了这一趟——看进度块里的原因（可能要先删了重新生成）', 'warning');
+      return;
+    }
     notice('继续生成——已完成的批次不重画', 'info');
     return;
   }
@@ -1986,6 +2039,8 @@ function sealJobOf(job: JobView | undefined): FoldCardJob | null {
     stagesDone: jobsStagesDone(job.stage, job.status),
     // 漂移类失败（消息集已变）接不上——印章改出「重新生成」
     resumable: isResumable(job),
+    // 排队印（issue 505 补漏）：引擎 emit() 单源归一的派生值，直通即可
+    queued: job.queued === true,
     // 工具段总进度（469）：preprocess 阶段印章百分比按它算（AI 段回落批口径）
     prepPct: job.prep && job.stage === 'preprocess' ? prepOverallPct(job.prep) : undefined,
     // 图片描述段总进度（470）：describe 阶段印章百分比按它算
@@ -2968,6 +3023,9 @@ function closePerson(): void {
   overlay?.querySelector<HTMLElement>('.bz-people-cell.bz-people-out')?.classList.remove('bz-people-out');
   const id = pulled;
   const finish = (): void => {
+    // 开工单开着时从详情页合上（B 组 P1 漸的两条路之一）：先按未授权结清再清 dialog——
+    // 否则 genConfirmOpen / pendingGenAnswer 永久挂起，本会话画脸谱恒「已取消」
+    if (genConfirmOpen) answerGenConfirm('cancel');
     pulled = null;
     detailId = null;
     dialog = null;
@@ -3263,6 +3321,8 @@ async function handleDelete(id: string): Promise<void> {
   if (!store) { notice('保险库未解锁——先解锁再删', 'info'); return; }
   const open = (p: PersonEntry): void => {
     openedTier = deleteTierOf(p, jobViews().get(id) ?? null);
+    // 开工单开着时直接翻删除页（B 组 P1 漏的两条路之二）：先结清再覆盖，别把确认页挂死
+    if (genConfirmOpen) answerGenConfirm('cancel');
     dialog = { kind: 'del', tier: openedTier };
     void renderAlbum().then(focusDelPw);
   };
@@ -4655,6 +4715,13 @@ async function suppMergeRecording(talker: string, file: string, why: 'merge' | '
     notice('保险库上锁——解锁后在这条录音上点「并仓」补上', 'warning');
     return;
   }
+  // 转写还在跑（或排着）不并仓：sidecar 是插件与脚本两边共写的账本，这头写回会跟脚本的
+  // os.replace 对撞——写回被整档覆盖 = 报了「已并仓」实际并的是原文，写半截 = 账本退回「待处理」
+  const recKey = recordingSidecarPath(root, talker, file);
+  if (isRecordingRunning(recKey) || isRecordingQueued(recKey)) {
+    notice('这条录音还在转写——等它跑完再点「并仓」', 'warning');
+    return;
+  }
   let side = readRecordingSidecar(root, talker, file);
   if (!side || !recordingTurnsComplete(side)) {
     void renderAlbum();
@@ -4671,8 +4738,12 @@ async function suppMergeRecording(talker: string, file: string, why: 'merge' | '
       rec.store.msgs = r.msgs;
       added = r.added;
       removed = r.removed;
-      const net = Math.max(0, added - removed); // kindCounts 取净增量（重并不翻倍）
-      if (net > 0) rec.store.kindCounts = { ...(rec.store.kindCounts ?? {}), 录音: (rec.store.kindCounts?.录音 ?? 0) + net };
+      // kindCounts 取净增量（重并不翻倍）且**允许净减**：重转后分段变少（5 段 → 3 段）时
+      // 旧口径 Math.max(0, …) 让计数只增不减、永久虚高——按带符号差修正，总量托底不为负
+      const net = added - removed;
+      if (net !== 0) {
+        rec.store.kindCounts = { ...(rec.store.kindCounts ?? {}), 录音: Math.max(0, (rec.store.kindCounts?.录音 ?? 0) + net) };
+      }
       rec.store.stats = storeStatsOf(rec.store.msgs);
       rec.store.updatedAt = new Date().toISOString();
     });

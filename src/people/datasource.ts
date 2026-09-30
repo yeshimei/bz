@@ -692,8 +692,30 @@ export function pendingMediaCounts(msgs: StoreMsg[]): { images: number; voices: 
 
 // ---------------- prep 旁路表 → 聊天仓靶向升级（issue 469 / ADR-0197 决策 4） ----------------
 
-/** 转写失败条目（468：工具把失败也写进 voice.json——text=`<转写失败:…>`、emotion=ERR） */
-function isFailedVoice(v: VoiceItem): boolean {
+/**
+ * 量化键匹配的歧义哨兵。sid 是 16~19 位整数，chat.json / voice.json 经 JSON.parse 尾数有损
+ * （双精度在 9e18 量级量化间距可达 1024）——**不同的真实 id 会撞出同一个量化键**。
+ * 撞键 = 匹配不可信：标记歧义、匹配时拒配。宁可不配也不配错——配错是静默的内容损坏
+ * （转写文本进错消息），不配只是留待办（补画页可见，重跑可收敛）。
+ * 同一条目重复 set 同键不记歧义（voice.json 的 wav 文件名 id 与 sid 字段按设计量化同值）。
+ */
+function quantKeyMap<K, V>(): { set(k: K, v: V): void; get(k: K): V | undefined; ambiguous(k: K): boolean } {
+  const map = new Map<K, V>();
+  const bad = new Set<K>();
+  return {
+    set(k, v) {
+      if (map.has(k)) {
+        if (map.get(k) !== v) bad.add(k);
+      } else map.set(k, v);
+    },
+    get: (k) => map.get(k),
+    ambiguous: (k) => bad.has(k),
+  };
+}
+
+/** 转写失败条目（468：工具把失败也写进 voice.json——text=`<转写失败:…>`、emotion=ERR）。
+ *  导出共权：prep 的校对待办（ADR-0222）用同一口径排除失败占位 */
+export function isFailedVoice(v: VoiceItem): boolean {
   const t = String(v.text ?? '').trim();
   return String(v.emotion ?? '').trim().toUpperCase() === 'ERR' || t.startsWith('<转写失败');
 }
@@ -719,7 +741,7 @@ function storeVoiceText(m: StoreMsg, v: VoiceItem): string {
 export function applyVoiceToMsgs(msgs: StoreMsg[], voice: VoiceItem[], opts: { previewVoice: boolean }): number {
   if (!opts.previewVoice) return 0;
   const byWav = new Map<string, VoiceItem>();
-  const bySid = new Map<number, VoiceItem>();
+  const bySid = quantKeyMap<number, VoiceItem>();
   for (const v of voice) {
     if (!v || isFailedVoice(v) || !String(v.text ?? '').trim()) continue;
     const wav = String(v.wav ?? '').trim();
@@ -733,7 +755,7 @@ export function applyVoiceToMsgs(msgs: StoreMsg[], voice: VoiceItem[], opts: { p
       const m = /_(\d{10,})\.\w+$/.exec(base);
       if (m) {
         const q = Number(m[1]);
-        if (Number.isFinite(q) && q !== 0 && !bySid.has(q)) bySid.set(q, v);
+        if (Number.isFinite(q) && q !== 0) bySid.set(q, v);
       }
     }
     const sid = typeof v.sid === 'number' && Number.isFinite(v.sid) && v.sid !== 0 ? v.sid : 0;
@@ -751,7 +773,7 @@ export function applyVoiceToMsgs(msgs: StoreMsg[], voice: VoiceItem[], opts: { p
         if (base) v = byWav.get(base);
       }
     }
-    if (!v && m.sid) v = bySid.get(m.sid);
+    if (!v && m.sid && !bySid.ambiguous(m.sid)) v = bySid.get(m.sid);
     if (!v) continue;
     const next = storeVoiceText(m, v);
     if (next && next !== m.text) {
@@ -769,8 +791,8 @@ export function applyVoiceToMsgs(msgs: StoreMsg[], voice: VoiceItem[], opts: { p
  * 防同秒误配）。返回新关联条数。
  */
 export function applyImageMapToMsgs(msgs: StoreMsg[], map: ImageMapItem[]): number {
-  const bySid = new Map<number, ImageMapItem>();
-  const byCt = new Map<number, ImageMapItem>();
+  const bySid = quantKeyMap<number, ImageMapItem>();
+  const byCt = quantKeyMap<number, ImageMapItem>();
   for (const it of map) {
     if (!it || !String(it.file ?? '').trim()) continue;
     const sid = typeof it.sid === 'number' && Number.isFinite(it.sid) && it.sid !== 0 ? it.sid : 0;
@@ -780,8 +802,11 @@ export function applyImageMapToMsgs(msgs: StoreMsg[], map: ImageMapItem[]): numb
   let n = 0;
   for (const m of msgs) {
     let it: ImageMapItem | undefined;
-    if (m.sid) it = bySid.get(m.sid);
-    if (!it && m.type === 3 && !m.img) it = byCt.get(Math.round(m.ts / 1000));
+    if (m.sid && !bySid.ambiguous(m.sid)) it = bySid.get(m.sid);
+    if (!it && m.type === 3 && !m.img) {
+      const ct = Math.round(m.ts / 1000);
+      if (!byCt.ambiguous(ct)) it = byCt.get(ct); // 同秒多图撞键 = 猜不准：宁缺不错
+    }
     const file = it ? String(it.file ?? '').trim() : '';
     if (file && file !== m.img) {
       m.img = file;
@@ -807,9 +832,9 @@ export function applyImageMapToMsgs(msgs: StoreMsg[], map: ImageMapItem[]): numb
  * 返回本次标注变动条数（新标 + 清除）。
  */
 export function applyMediaFailToMsgs(msgs: StoreMsg[], items: MediaFailItem[]): number {
-  const bySid = new Map<number, MediaFailItem>();
+  const bySid = quantKeyMap<number, MediaFailItem>();
   const byFile = new Map<string, MediaFailItem>();
-  const byCt = new Map<number, MediaFailItem>();
+  const byCt = quantKeyMap<number, MediaFailItem>();
   for (const it of items) {
     const reason = canonReason(it?.reason);
     if (!reason) continue; // 未知 reason 一律忽略（工具将来加新取值时，旧插件不误标）
@@ -825,9 +850,12 @@ export function applyMediaFailToMsgs(msgs: StoreMsg[], items: MediaFailItem[]): 
     if (m.type !== 3) continue;
     const img = String(m.img ?? '').trim();
     let it: MediaFailItem | undefined;
-    if (m.sid) it = bySid.get(m.sid);
+    if (m.sid && !bySid.ambiguous(m.sid)) it = bySid.get(m.sid);
     if (!it && img) it = byFile.get(img);
-    if (!it && !img) it = byCt.get(Math.round(m.ts / 1000)); // 无 img 的老场景按秒级 ct 兜底（同 applyImageMapToMsgs）
+    if (!it && !img) {
+      const ct = Math.round(m.ts / 1000); // 无 img 的老场景按秒级 ct 兜底（同 applyImageMapToMsgs；撞键拒配）
+      if (!byCt.ambiguous(ct)) it = byCt.get(ct);
+    }
     if (it?.reason) {
       // 已有描述的、已标敏感的都不碰（前者是已完成态，后者是 AI 判定优先，ADR-0224）
       if (m.text === '' && !isDescSkipped(m)) {

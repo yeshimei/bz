@@ -12,6 +12,7 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { resetObsidianMocks } from '../mock-obsidian-entry';
 import { setSettingsProvider } from '../../src/core/settings-provider';
+import { quotePythonArg } from '../../src/people/sync';
 import type { ExternalToolCallbacks, ExternalToolOutcome, ExternalToolSpec } from '../../src/core/external-tool';
 import {
   buildExportSpec,
@@ -78,7 +79,8 @@ describe('buildExportSpec 参数组装', () => {
       '--contact',
       process.platform === 'win32' ? '"老周"' : "'老周'",
       '--python',
-      'C:\\py\\python.exe',
+      // .exe 路径形态 → quotePythonArg 包引号（防空格路径被 shell 拆碎）
+      process.platform === 'win32' ? '"C:\\py\\python.exe"' : quotePythonArg('C:\\py\\python.exe'),
     ]);
     expect(spec.shell).toBe(true);
   });

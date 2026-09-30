@@ -84,12 +84,19 @@ export function chatLinesOf(msgs: StoreMsg[] | undefined): ChatLineData[] {
     if (!m || m.text === '') continue;
     const ts = Number(m.ts);
     if (!Number.isFinite(ts)) continue;
-    const { tag, body } = splitChatTag(m.text);
+    let raw = String(m.text ?? '');
+    // 群聊行：datasource 给非我消息合成 `[成员名] ` 前缀（与 who 同源）。气泡上方已出名字行，
+    // 正文里这层前缀要剥掉——否则标签芯片剥不出（`[语音达人] [图片] 猫` 整段放弃）、名字重复上屏。
+    // 按 who **精确匹配**剥（比负向断言猜「哪个括号是成员名」更准：名字恰以标签词开头也不误剥）；
+    // 单聊 who 为空、用户手打的 `[xx] ` 原样保留。
+    const who = String(m.who ?? '').trim();
+    if (who && raw.startsWith(`[${who}]`)) raw = raw.slice(`[${who}]`.length).replace(/^\s+/, '');
+    const { tag, body } = splitChatTag(raw);
     out.push({
       key: String(m.key ?? `${ts}`),
       ts,
       me: m.isSender === true,
-      who: String(m.who ?? '').trim() || (m.isSender === true ? '我' : ''),
+      who: who || (m.isSender === true ? '我' : ''),
       tag,
       text: body,
     });

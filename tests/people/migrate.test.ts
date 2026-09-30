@@ -124,4 +124,18 @@ describe('迁移故障面：读不动中止 / 头像缺失不卡清理', () => {
     expect(safe.attachmentCount('wxid_a')).toBe(1);
     expect(vault.files.has(`${P}/people.json`)).toBe(false);
   });
+
+  it('旧明文带 UTF-8 BOM（外部编辑器/同步工具动过）：照常迁移并清理（不再永远卡「读不动」）', async () => {
+    await sm.unlock(PW);
+    seedLegacy();
+    for (const p of THREE) {
+      const raw = vault.files.get(p);
+      if (raw !== undefined) vault.files.set(p, `﻿${raw}`);
+    }
+    const out = await migrateLegacyPeopleData({ vault } as never, safe);
+    expect(out.migrated).toBe(1);
+    expect(out.keptBack).toEqual([]);
+    expect(out.cleaned.sort()).toEqual([...THREE].sort());
+    expect(safe.attachmentCount('wxid_a')).toBe(0);
+  });
 });

@@ -22,9 +22,9 @@
  * 自然消失，续跑重起进程由工具的产物幂等补缺口。
  */
 import { runExternalTool, type ExternalToolCallbacks, type ExternalToolHandle, type ExternalToolSpec, type ExternalToolOutcome } from '../core/external-tool';
-import { BZ_FACE_INSTALL_HINT } from './sync';
+import { BZ_FACE_INSTALL_HINT, quotePathArg, quotePythonArg } from './sync';
 import { releaseHeavy, tryAcquireHeavy } from './heavy-gate';
-import type { VoiceItem, ImageMapItem, MediaFailItem } from './datasource';
+import { isFailedVoice, type VoiceItem, type ImageMapItem, type MediaFailItem } from './datasource';
 
 // ---------------- 阶段词汇表（与 tools/obsidian-face lib/prep-core PREP_PHASES 同词汇） ----------------
 
@@ -209,7 +209,8 @@ export interface BuildPrepSpecOpts {
 
 /**
  * 组装 `bz-face prep` 启动参数。shell 会把参数按空格拆散（sync.ts 同源坑）——Windows 下
- * 路径/联系人名一律包引号（Win32 路径不含双引号，无损）；--python 是命令词不包。
+ * 路径/联系人名一律包引号（Win32 路径不含双引号，无损）；--python 命令词不包、
+ * 带路径分隔符 / .exe 后缀的包（可能含空格，quotePythonArg 单源判）。
  */
 export function buildPrepSpec(opts: BuildPrepSpecOpts): ExternalToolSpec {
   const engine = opts.asrEngine === 'faster-whisper' ? 'faster-whisper' : 'sensevoice';
@@ -217,7 +218,7 @@ export function buildPrepSpec(opts: BuildPrepSpecOpts): ExternalToolSpec {
   const src = opts.src?.trim() || undefined;
   const python = opts.python?.trim() || undefined;
   const ffmpeg = opts.ffmpeg?.trim() || undefined;
-  const q = (v: string): string => (process.platform === 'win32' ? `"${v}"` : v);
+  const q = (v: string): string => (process.platform === 'win32' ? quotePathArg(v) : v);
   return {
     cmd: 'bz-face',
     args: [
@@ -230,7 +231,7 @@ export function buildPrepSpec(opts: BuildPrepSpecOpts): ExternalToolSpec {
       ...(engine === 'faster-whisper' && model ? ['--asr-model', model] : []),
       ...(src ? ['--src', q(src)] : []),
       ...(ffmpeg ? ['--ffmpeg', q(ffmpeg)] : []),
-      ...(python ? ['--python', python] : []),
+      ...(python ? ['--python', quotePythonArg(python)] : []),
     ],
     shell: true,
   };
@@ -252,6 +253,8 @@ export interface PrepFs {
   readText(path: string): string | null;
   exists(path: string): boolean;
   unlink(path: string): void;
+  /** 原子换名（可选；缺省适配带 renameSync，测试桩可不给——调用方退回直写） */
+  rename?(from: string, to: string): void;
 }
 
 function defaultPrepFs(): PrepFs | null {
@@ -264,6 +267,7 @@ function defaultPrepFs(): PrepFs | null {
       readFileSync(p: string, enc: string): string;
       existsSync(p: string): boolean;
       unlinkSync(p: string): void;
+      renameSync?(a: string, b: string): void;
     };
     return {
       writeText: (p, d) => fs.writeFileSync(p, d),
@@ -288,6 +292,7 @@ function defaultPrepFs(): PrepFs | null {
           /* 已不存在 */
         }
       },
+      ...(fs.renameSync ? { rename: (a: string, b: string) => fs.renameSync!(a, b) } : {}),
     };
   } catch {
     return null;
@@ -366,9 +371,11 @@ export function readPrepSidecars(dataRoot: string, contact: string): { voice: Vo
   };
 }
 
-/** 待校对的语音条目（ADR-0222）：有转写文本且未打过校对标记（纯函数，导出供测试） */
+/** 待校对的语音条目（ADR-0222）：有转写文本、未打过校对标记、**且不是转写失败占位**——
+ *  失败占位（`<转写失败:…>`）拿去校对是白烧一次调用，回写还会盖掉失败标记，
+ *  重跑 prep 就补不了转（isFailedVoice 口径同 datasource） */
 export function pendingVoiceProofread(items: VoiceItem[]): VoiceItem[] {
-  return items.filter((v) => String(v.text ?? '').trim() !== '' && v.proofread !== true);
+  return items.filter((v) => !isFailedVoice(v) && String(v.text ?? '').trim() !== '' && v.proofread !== true);
 }
 
 /**
@@ -382,7 +389,25 @@ export function writeVoiceSidecarRaw(dataRoot: string, contact: string, items: V
   try {
     const norm = (s: string): string => s.replace(/\\/g, '/');
     const base = `${dataRoot}/${contact}`.replace(/\/+$/, '');
-    fs.writeText(norm(`${base}/voice.json`), `${JSON.stringify(items, null, 1)}\n`);
+    const p = norm(`${base}/voice.json`);
+    // 原子落盘（tmp + rename，与工具的 atomic_write 同口径）：直写会和在跑的 prep 进程竞态
+    // ——脚本随后整档覆盖 = 校对稿白写；写一半崩 = 半截 JSON 让旁路表报废
+    if (fs.rename) {
+      const tmp = `${p}.proofread.tmp`;
+      try {
+        fs.writeText(tmp, `${JSON.stringify(items, null, 1)}\n`);
+        fs.rename(tmp, p);
+      } catch (e) {
+        try {
+          fs.unlink(tmp);
+        } catch {
+          /* 清理失败不影响结论 */
+        }
+        throw e;
+      }
+    } else {
+      fs.writeText(p, `${JSON.stringify(items, null, 1)}\n`); // 测试桩等无 rename：退回直写
+    }
     return true;
   } catch (e) {
     console.warn('[people] 语音旁路表写回失败:', e);

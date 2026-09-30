@@ -155,10 +155,30 @@ export interface BuildSyncSpecOpts {
  * （Win32 路径本身不允许含双引号，无损）；非 Windows 用单引号包裹并转义内嵌单引号
  * （POSIX shell 单引号内空格不拆词、不展开；内嵌 ' 按 '\'' 三连闭合再开），
  * 否则含空格的数据根 / 联系人名在 POSIX 下照样被拆散。
+ *
+ * 含 `%` 的路径在 Windows 直接拒绝：cmd 在双引号内**仍做** `%VAR%` 展开（batch 的 `%%`
+ * 转义在命令行上下文不生效），路径会被改写后进工具——报「找不到目录」且看不出原因。
+ * 宁可起跑前明说，不做静默坏参。
  */
 export function quotePathArg(v: string): string {
-  if (process.platform === 'win32') return `"${v}"`;
+  if (process.platform === 'win32') {
+    if (v.includes('%')) {
+      throw new Error(`路径含 % 字符，Windows 命令行会误解析：${v}——请把这个目录挪到不含 % 的路径再试`);
+    }
+    return `"${v}"`;
+  }
   return `'${v.replace(/'/g, "'\\''")}'`;
+}
+
+/**
+ * `--python` 参数引号口径：命令词形态（`py -3` / `python3`）不包引号——shell 要把它拆成
+ * 两个词；带路径分隔符或 .exe 后缀的是可执行文件**路径**（可能含空格，如
+ * `C:\Program Files\python.exe`），包引号当一个词传（否则被拆碎成碎参，报错对不上原因）。
+ */
+export function quotePythonArg(v: string): string {
+  const isPath = /[\\/]/.test(v) || /\.exe$/i.test(v.trim());
+  if (!isPath) return v;
+  return quotePathArg(v);
 }
 
 /**
@@ -175,7 +195,7 @@ export function buildSyncSpec(opts: BuildSyncSpecOpts): ExternalToolSpec {
       '--data-root',
       quotePathArg(opts.dataRoot),
       ...(src ? ['--src', quotePathArg(src)] : []),
-      ...(python ? ['--python', python] : []),
+      ...(python ? ['--python', quotePythonArg(python)] : []),
     ],
     shell: true,
   };
@@ -337,11 +357,23 @@ export function startSync(): void {
     });
     return;
   }
-  const spec = buildSyncSpec({
-    dataRoot,
-    src: nonEmpty(s?.peopleWxAccountDir),
-    python: nonEmpty(s?.pythonPath),
-  });
+  let spec: ExternalToolSpec;
+  try {
+    spec = buildSyncSpec({
+      dataRoot,
+      src: nonEmpty(s?.peopleWxAccountDir),
+      python: nonEmpty(s?.pythonPath),
+    });
+  } catch (e) {
+    // 参数面问题起跑前明说（quotePathArg 拒绝含 % 的路径等）：落错误面，不静默不出半截状态
+    setState({
+      ...freshState(),
+      outcome: 'error',
+      message: e instanceof Error ? e.message : String(e),
+      hint: '改好路径后重新点「同步」',
+    });
+    return;
+  }
   const live = emptySyncStats();
   let result: Record<string, unknown> | null = null;
   const cbs: ExternalToolCallbacks = {

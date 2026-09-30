@@ -421,6 +421,14 @@ def _unusable_entry(file: str, reason: str, m: dict) -> dict:
     return entry
 
 
+def _rec_failed(r: dict) -> bool:
+    """voice.json 失败条目口径（与插件 datasource.isFailedVoice 一致）：
+    emotion=ERR 或 text 以 `<转写失败` 开头。失败条不算转写水位——重跑要补转它们。"""
+    emotion = str(r.get("emotion") or "").strip().upper()
+    text = str(r.get("text") or "").strip()
+    return emotion == "ERR" or text.startswith("<转写失败")
+
+
 # ---------------- 语音转写（voice_transcribe_all 收编 + faster-whisper 备选） ----------------
 
 def clean_sensevoice(raw: str):
@@ -824,7 +832,10 @@ def main() -> int:
                     recs = [r for r in loaded if isinstance(r, dict)]
             except Exception:
                 recs = []  # 坏表按空表续：重转写并整表重写（幂等覆盖）
-        done_keys = {r.get("wav") for r in recs}
+        # 水位只认**成功**条目：失败条（emotion=ERR / text=<转写失败:…>）占住 wav 键的话，
+        # 重跑会被幂等跳过、缺口永不补——与「重跑即只补失败项」的承诺相反（口径对齐
+        # 插件 datasource.isFailedVoice）。失败条重进 jobs，重转写并整表覆盖。
+        done_keys = {r.get("wav") for r in recs if not _rec_failed(r)}
         voice_root = cdir / "voice"
         wavs = sorted(voice_root.glob("*.wav")) if voice_root.exists() else []
         jobs = [w for w in limit_cut(wavs) if f"{name}/voice/{w.name}" not in done_keys]

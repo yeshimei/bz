@@ -30,6 +30,7 @@ import {
   dsRow,
   dsSyncLineNode,
   dsWaterOf,
+  dueSoonOf,
   el,
   foldBondBody,
   foldEventsBody,
@@ -1186,4 +1187,48 @@ describe('「我的头像」设置行（issue 529）', () => {
     expect(row.querySelector('[data-people-setava-pick]')!.textContent).toBe('上传图片…');
     expect(row.querySelector('[data-people-setava-reset]')!.textContent).toBe('恢复默认');
   });
+});
+
+describe('bug 批修回归（2026-10-01 批）', () => {
+  it('空壳 digest 不盖「已画」印（与 deleteTierOf 同判据：三卷正文任一非空才算已画）', () => {
+    const shell = person({ digest: digest() }); // digest 对象在、三卷正文全空
+    expect(albumSealOf(shell, null).state).toBe('none');
+    // 有正文才算已画
+    const drawn = person({ digest: digest({ person: '卷一正文' }) });
+    expect(albumSealOf(drawn, null).state).toBe('drawn');
+  });
+
+  it('排队印（queued）复活：引擎归一的 queued 任务盖「等」印，不再画成「歇 · 上次没画完」', () => {
+    const queued = albumSealOf(person(), job({ status: 'paused', queued: true, resumable: true }));
+    expect(queued.state).toBe('queued');
+    expect(queued.text).toBe('等');
+    // 没排队标志的 paused 照旧走 halted「歇」
+    const halted = albumSealOf(person(), job({ status: 'paused', resumable: true }));
+    expect(halted.state).toBe('halted');
+  });
+
+  it('重要日子：不存在的月日（02-30 / 平年 02-29）不出错误倒计时', () => {
+    const p = person({ profile: { importantDates: [{ what: '生日', date: '02-30' }] } } as Partial<PersonEntry>);
+    expect(dueSoonOf(p, new Date(2026, 0, 1))).toBeNull();
+    const leap = person({ profile: { importantDates: [{ what: '生日', date: '02-29' }] } } as Partial<PersonEntry>);
+    expect(dueSoonOf(leap, new Date(2026, 0, 1))).toBeNull(); // 2026 非闰年：02-29 不存在
+    expect(dueSoonOf(leap, new Date(2028, 1, 1))!.days).toBe(28); // 闰年 2/29 真实存在：照常倒数
+    const ok = person({ profile: { importantDates: [{ what: '生日', date: '01-02' }] } } as Partial<PersonEntry>);
+    expect(dueSoonOf(ok, new Date(2026, 0, 1))!.days).toBe(1); // 正常日子不误伤
+  });
+
+  it('数据源行群聊开关：设置开 = 群聊行可勾（无 off 类、不出「未纳入」），关 = 照旧灰 off', () => {
+    const group = { ...dsRowBase, name: '群聊@chatroom', displayName: '家人群', isGroup: true, newCount: 3 };
+    const enabled = dsRow(group, false, true);
+    expect(enabled.classList.contains('bz-people-ds-off')).toBe(false);
+    expect(enabled.querySelector('.bz-people-ds-mark')!.textContent).not.toBe('未纳入');
+    expect(enabled.querySelector('[data-people-ds-check]')).not.toBeNull();
+    const off = dsRow(group, false, false);
+    expect(off.classList.contains('bz-people-ds-off')).toBe(true);
+    expect(off.querySelector('.bz-people-ds-mark')!.textContent).toBe('未纳入');
+    // 非群聊行不受开关影响
+    const plain = dsRow({ ...dsRowBase }, false, true);
+    expect(plain.classList.contains('bz-people-ds-off')).toBe(false);
+  });
+
 });

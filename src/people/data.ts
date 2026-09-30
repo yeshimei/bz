@@ -98,9 +98,26 @@ export class PeopleStore {
     if (!from || !to) throw new Error(`人物不存在: ${!from ? fromId : toId}`);
     await safe.write(toId, (rec) => {
       const t = rec.person;
-      t.imports.push(...from.imports);
+      // 去重并入（重试翻倍防护）：上一次 write 成功、removeContact 失败（恰逢上锁）后
+      // 重试合并，会把 from 的 imports / manualEvents 原样再并一份——按内容只收没有的。
+      const seenImports = new Set(t.imports.map((i) => JSON.stringify(i)));
+      for (const i of from.imports) {
+        const k = JSON.stringify(i);
+        if (!seenImports.has(k)) {
+          seenImports.add(k);
+          t.imports.push(i);
+        }
+      }
       t.imports.sort((a, b) => a.importedAt.localeCompare(b.importedAt));
-      t.manualEvents = [...(t.manualEvents ?? []), ...(from.manualEvents ?? [])].sort((a, b) => a.ts.localeCompare(b.ts));
+      const seenEvents = new Set((t.manualEvents ?? []).map((e) => e.id));
+      const mergedEvents = [...(t.manualEvents ?? [])];
+      for (const e of from.manualEvents ?? []) {
+        if (!seenEvents.has(e.id)) {
+          seenEvents.add(e.id);
+          mergedEvents.push(e);
+        }
+      }
+      t.manualEvents = mergedEvents.sort((a, b) => a.ts.localeCompare(b.ts));
       if (!t.profile && from.profile) t.profile = from.profile;
       if (!t.digest && from.digest) t.digest = from.digest;
       t.lastProcessedTs = Math.max(t.lastProcessedTs ?? 0, from.lastProcessedTs ?? 0);

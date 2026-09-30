@@ -912,3 +912,33 @@ describe('重进程闸门接入（ADR-0218 决策 6）', () => {
     expect((askExtract as any).mock.calls.length).toBe(1);
   });
 });
+
+describe('排队印归一（bug 批修回归：queued 派生值，等的那位不再画成「歇」）', () => {
+  it('先到者等闸、后到者排队：snapshot 里前者 queued=false、后者 queued=true；接棒后归零', async () => {
+    const { askExtract, askPortrait } = makeAsks();
+    await seedPreview([pm(0), pm(1)]);
+    await seedPreview([pm(0, '乙一'), pm(1, '乙二')], 'wxid_b');
+    tryAcquireHeavy('recording'); // 录音占闸：队头进不了 running
+    try {
+      const done = startJobs(app, [target([pm(0), pm(1)]), target([pm(0, '乙一'), pm(1, '乙二')], { talker: 'wxid_b', name: '构造乙' })], { askExtract, askPortrait });
+      await until(() => snapshot().queue.length === 2 && snapshot().queue[0]?.message === '等待录音处理结束…');
+      const [first, second] = snapshot().queue;
+      expect(first.queued).toBe(false); // 队头：下一个跑（等闸 ≠ 排队）
+      expect(second.queued).toBe(true); // 后到：还没轮到——印「等」而不是「歇」
+      releaseHeavy('recording');
+      await done;
+      await whenIdle();
+    } finally {
+      releaseHeavy('recording'); // 断言失败也不把闸拖进下一个用例
+    }
+    expect(snapshot().queue.find((j) => j.talker === 'wxid_b')?.queued ?? false).toBe(false); // 接棒后归零
+  });
+
+  it('单人跑完无排队者：queued 全程 false（哨兵不误伤）', async () => {
+    const { askExtract, askPortrait } = makeAsks();
+    await seedPreview([pm(0), pm(1)]);
+    await startJobs(app, [target([pm(0), pm(1)])], { askExtract, askPortrait });
+    await whenIdle();
+    expect(snapshot().queue.every((j) => !j.queued)).toBe(true);
+  });
+});

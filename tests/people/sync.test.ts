@@ -24,6 +24,7 @@ import {
   emptySyncStats,
   isSyncing,
   quotePathArg,
+  quotePythonArg,
   setSyncRunnerForTests,
   startSync,
   statsFromResult,
@@ -231,7 +232,8 @@ describe('状态机：startSync / stopSync 终态分流', () => {
       '--src',
       process.platform === 'win32' ? '"wxidacct"' : "'wxidacct'",
       '--python',
-      'C:\\py\\python.exe',
+      // .exe 路径形态 → quotePythonArg 包引号（防空格路径被 shell 拆碎）；'py -3' 命令词形态不包
+      process.platform === 'win32' ? '"C:\\py\\python.exe"' : quotePythonArg('C:\\py\\python.exe'),
     ]);
     tool.step('正在解密数据库');
     tool.progress('decrypt', 40);

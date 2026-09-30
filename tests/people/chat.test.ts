@@ -116,3 +116,28 @@ describe('isGroupChatLines 群聊判定', () => {
     expect(isGroupChatLines([])).toBe(false);
   });
 });
+
+describe('chatLinesOf 群聊成员名前缀（bug 批修回归：标签芯片剥不出 / 名字重复上屏）', () => {
+  it('who 精确匹配剥掉 datasource 合成的 [成员名] 前缀，媒体标签照常剥出', () => {
+    const rows = chatLinesOf([
+      msg({ key: 'g1', who: '张三', text: '[张三] [图片] 一只猫' }),
+      msg({ key: 'g2', who: '语音达人', text: '[语音达人] [语音 12秒·平静] 到了' }),
+    ]);
+    expect(rows[0].who).toBe('张三');
+    expect(rows[0].tag).toBe('[图片]');
+    expect(rows[0].text).toBe('一只猫');
+    // 成员名恰以标签词开头也不误剥（按 who 精确匹配，不按词表猜）
+    expect(rows[1].who).toBe('语音达人');
+    expect(rows[1].tag).toBe('[语音 12秒·平静]');
+    expect(rows[1].text).toBe('到了');
+  });
+
+  it('纯文本群聊消息剥前缀后正文干净（名字只在上方出一次）；单聊 who 为空不剥', () => {
+    const rows = chatLinesOf([
+      msg({ key: 'g3', who: '张三', text: '[张三] 你好呀' }),
+      msg({ key: 's1', who: '', text: '[张三] 这是我手打的方括号' }),
+    ]);
+    expect(rows[0].text).toBe('你好呀');
+    expect(rows[1].text).toBe('[张三] 这是我手打的方括号'); // 单聊无 who：手打方括号原样保留
+  });
+});

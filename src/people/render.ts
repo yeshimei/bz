@@ -618,7 +618,9 @@ export function albumSealOf(p: PersonEntry, job: FoldCardJob | null): AlbumSeal 
   }
   // 旧单卷脸谱（只有 portrait）先认出来：它虽有 digest，但「旧版」这枚印要提醒重画一次
   if (isLegacyFace(p)) return { state: 'legacy', text: '旧', title: `「${name}」的脸谱还是旧版单卷——去详情页重画一次`, action: null };
-  if (p.digest) {
+  // 「已画」判据与 deleteTierOf 同源：只认三卷正文任一非空——空壳 digest（字段全空）不算已画，
+  // 否则墙上盖「已画」印、详情三折全是「还没生成」、删除却按未画谱走，同一份数据两处判定打架
+  if (p.digest && (personOf(p.digest) || bondOf(p.digest) || p.digest.chronicle)) {
     return {
       state: 'drawn',
       text: p.lastProcessedTs ? '画' : '绘',
@@ -1163,9 +1165,15 @@ export function dueSoonOf(p: PersonEntry, today = new Date()): { what: string; d
   for (const d of list) {
     const m = /^(\d{2})-(\d{2})$/.exec(String(d.date ?? ''));
     if (!m) continue;
+    const mm = Number(m[1]);
+    const dd = Number(m[2]);
+    if (!(mm >= 1 && mm <= 12 && dd >= 1 && dd <= 31)) continue;
     let when = new Date(base);
-    when.setMonth(Number(m[1]) - 1, Number(m[2]));
-    if (when.getTime() < base) when = new Date(today.getFullYear() + 1, Number(m[1]) - 1, Number(m[2]));
+    when.setMonth(mm - 1, dd);
+    // 月日进位校验（2 月 30 / 平年 2 月 29 这类不存在的日子 setMonth 会静默滚进下个月）：
+    // 滚了就跳过——按错误日期倒数比不提醒更糟
+    if (when.getMonth() !== mm - 1 || when.getDate() !== dd) continue;
+    if (when.getTime() < base) when = new Date(today.getFullYear() + 1, mm - 1, dd);
     const days = Math.round((when.getTime() - base) / 86400000);
     if (days >= 0 && days <= 30 && (!best || days < best.days)) best = { what: d.what, date: d.date, days };
   }
@@ -1666,10 +1674,13 @@ export function dsPage(s: DsModalState): HTMLElement {
     if (s.filter.trim()) fbox.appendChild(iconButton('x', 'bz-people-ico bz-people-ico-sm', { 'data-people-ds-filter-clear': '', 'aria-label': '清空过滤' }));
     body.push(fbox);
     if (!s.rows.length) {
-      body.push(el('div', 'bz-people-empty-hint', text(`没匹配「${s.filter.trim()}」的联系人——清掉过滤字再看全名单。`)));
+      // 扫过但没人，分两种说：没填过滤字 = 目录里真没扫到人；填了 = 过滤无结果
+      body.push(el('div', 'bz-people-empty-hint', text(s.filter.trim()
+        ? `没匹配「${s.filter.trim()}」的联系人——清掉过滤字再看全名单。`
+        : '这个目录里没有扫到联系人——确认微信已登录、同步已完成，或数据根目录选对了。')));
     } else {
       const list = el('div', 'bz-people-ds-list', { 'data-people-ds-list': '' });
-      for (const r of s.rows) list.appendChild(dsRow(r, s.selected.includes(r.name)));
+      for (const r of s.rows) list.appendChild(dsRow(r, s.selected.includes(r.name), s.groupEnabled === true));
       body.push(list);
       const legend = el('div', 'bz-people-ds-legend');
       legend.append(
@@ -1690,11 +1701,16 @@ export function dsPage(s: DsModalState): HTMLElement {
   if (s.importing || s.syncing) imp.setAttribute('disabled', '');
   foot.appendChild(imp);
   // 右上角动作位（issue 465）：语义从「重读目录」升级为「同步——从微信重新取数」；
-  // 运行中该位置只出「停止」，绝不与「同步」并列——互斥动作不并列
+  // 运行中该位置只出「停止」，绝不与「同步」并列——互斥动作不并列。导入中同理禁点
+  // （导入循环在读写数据根，同步工具同时写会撞半截产物——双向守卫的渲染半边）
   const head: HTMLElement[] = [];
   head.push(s.syncing
     ? button('bz-people-btn bz-people-btn-sm', '停止', { 'data-people-ds-sync-stop': '', title: '停止同步——已导出的部分保留，重跑可续传' })
-    : button('bz-people-btn bz-people-btn-sm', '同步', { 'data-people-ds-sync': '', title: '从微信重新解密并导出，需要微信已登录' }));
+    : button('bz-people-btn bz-people-btn-sm', '同步', {
+        'data-people-ds-sync': '',
+        title: '从微信重新解密并导出，需要微信已登录',
+        ...(s.importing ? { disabled: '', title: '正在导入所选——等导入完成再同步' } : {}),
+      }));
   const meta = s.syncing
     ? '正在同步…'
     : s.scanning
@@ -2864,6 +2880,8 @@ export interface DsModalState {
   scannedAt: string;
   /** 同步进行中（issue 465）：右上角只出「停止」、页脚「导入所选」置灰 */
   syncing: boolean;
+  /** 「群聊纳入列表」设置（peopleIncludeGroups）：开 = 群聊行可勾可选，关/缺省 = 灰 off「未纳入」 */
+  groupEnabled?: boolean;
   /** 同步进度行（册页内一条，不占画像生成进度便签——ADR-0196 决策 6；null = 无同步动态） */
   sync: DsSyncLine | null;
 }
@@ -2885,9 +2903,11 @@ export interface DsSyncLine {
   failures: string[];
 }
 
-/** 导入水位：勾这一位、点导入，会发生什么（水位签的文案与色档） */
-export function dsWaterOf(row: DsRowState): { k: string; label: string } | null {
-  if (row.isGroup) return null;
+/** 导入水位：勾这一位、点导入，会发生什么（水位签的文案与色档）。
+ *  `groupEnabled` = 「群聊纳入列表」设置开：群聊行照常给水位（可勾可选）；
+ *  关（缺省）= 群聊不出水位、行画成不可勾（isGroup 无条件 off 是旧约——设置开了还灰着等于开关没做）。 */
+export function dsWaterOf(row: DsRowState, groupEnabled = false): { k: string; label: string } | null {
+  if (row.isGroup && !groupEnabled) return null;
   // 完整聊天已经导出来了、还没入库：中间态（停在导出阶段时，导完的那几位就停在这儿）。
   // 已入库的就算导出账还在，也该走后面的「无新素材」—— 所以这儿先看 imported
   if (row.exported && !row.imported) return { k: 'exported', label: '已导出 · 待入库' };
@@ -2903,12 +2923,14 @@ export function dsWatermark(row: DsRowState): string {
   return `已导 ${formatCount(row.rawCount)} 条 · ${drawn}`;
 }
 
-/** 数据源行：勾选框 + 头像 + 名 / 条数 + 右侧水位签与已导账 */
-export function dsRow(row: DsRowState, on: boolean): HTMLElement {
+/** 数据源行：勾选框 + 头像 + 名 / 条数 + 右侧水位签与已导账。
+ *  `groupEnabled` 开 = 群聊行是普通行（可勾）；关 = 灰 off（点勾 / 空格都无反应，角标「未纳入」） */
+export function dsRow(row: DsRowState, on: boolean, groupEnabled = false): HTMLElement {
   const fresh = row.newCount > 0 && row.imported;
-  const water = dsWaterOf(row);
-  // 三档不可勾：群聊（未纳入）、「已导入且无新素材」（issue 507：再导一遍等于白导）
-  const cls = `bz-people-ds-row${on ? ' bz-people-ds-on' : ''}${fresh ? ' bz-people-ds-fresh' : ''}${row.isGroup ? ' bz-people-ds-off' : ''}${water?.k === 'skip' ? ' bz-people-ds-skip' : ''}`;
+  const water = dsWaterOf(row, groupEnabled);
+  const groupOff = row.isGroup && !groupEnabled;
+  // 三档不可勾：群聊（设置未纳入时）、「已导入且无新素材」（issue 507：再导一遍等于白导）
+  const cls = `bz-people-ds-row${on ? ' bz-people-ds-on' : ''}${fresh ? ' bz-people-ds-fresh' : ''}${groupOff ? ' bz-people-ds-off' : ''}${water?.k === 'skip' ? ' bz-people-ds-skip' : ''}`;
   // tabindex（D 组键盘可达）：勾选框可聚焦，Space 切勾选由 ui 的 keydown 委托接（与点击同账）
   const box = el('span', 'bz-people-ds-box', { 'data-people-ds-check': row.name, role: 'checkbox', tabindex: '0', 'aria-checked': on ? 'true' : 'false' },
     on ? el('i', 'bz-ic', { 'data-lucide': 'check', 'aria-hidden': 'true' }) : text(''));
@@ -2922,7 +2944,7 @@ export function dsRow(row: DsRowState, on: boolean): HTMLElement {
     ]),
     el('span', 'bz-people-ds-side', [
       water ? el('span', `bz-people-ds-water bz-people-ds-w-${water.k}`, text(water.label)) : text(''),
-      el('span', 'bz-people-ds-mark', text(row.isGroup ? '未纳入' : dsWatermark(row))),
+      el('span', 'bz-people-ds-mark', text(groupOff ? '未纳入' : dsWatermark(row))),
     ]),
   ]);
 }

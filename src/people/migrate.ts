@@ -65,7 +65,9 @@ async function readLegacyJson<T>(
   try {
     const raw = await adapter.read(path);
     if (!raw || !raw.trim()) return null;
-    return JSON.parse(raw) as T;
+    // 剥 BOM（同 datasource 读 chat.json 口径）：旧明文被外部编辑器 / 同步工具动过后
+    // 常带 UTF-8 BOM——不剥会在这里 JSON.parse 必炸，迁移永远卡「读不动」反复中止
+    return JSON.parse(raw.replace(/^\uFEFF/, '')) as T;
   } catch {
     return LEGACY_READ_FAILED;
   }

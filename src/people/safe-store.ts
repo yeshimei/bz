@@ -21,6 +21,7 @@
  * （计数/锁屏统计/概览/笔记列表桌面+移动端）已排除脸谱记录—— 与 'password-vault' 先例同款口径。
  */
 import { onDomainEvent } from '../core/domain-bus';
+import { notice } from '../core/notice';
 import {
   ENCRYPT_CHANGED_CHANNEL,
   ENCRYPT_UNLOCK_CHANGED_CHANNEL,
@@ -111,6 +112,41 @@ function normalizeRecord(talker: string, parsed: unknown): PeopleSafeRecord {
  * 保库记录读写器（注入 SafeManager——测试传内存假件 / MockVault 上的真件，同密码本先例）。
  * 同一 talker 的读改写经实例内 per-talker 串行链互斥（引擎落任务与面板落脸谱并发不互吞）。
  */
+/**
+ * 重建回滚**也**失败的恢复队列（毫秒级窗口：removeNote 已把旧记录除名、回锁恰逢上锁——
+ * 回锁同样要解锁态，必然再抛）。挂起待解锁自动回锁，不把整条记录默默丢掉。
+ * 恢复料只挂**内存**：那是明文记录体，落盘等于给保库开明文旁门；进程退出即放弃
+ * （窗口极窄，撞上退出的概率可忽略）。
+ */
+const pendingRecordRecovery: Array<{ talker: string; json: string; avatar: AvatarInput | null }> = [];
+let recoveryWired = false;
+
+function stashRecordRecovery(talker: string, json: string, avatar: AvatarInput | null): void {
+  pendingRecordRecovery.push({ talker, json, avatar });
+  console.warn(`[people] 「${talker}」保库记录重建失败已挂起，解锁后自动恢复`);
+  if (recoveryWired) return;
+  recoveryWired = true;
+  onDomainEvent<{ unlocked: boolean }>(ENCRYPT_UNLOCK_CHANGED_CHANNEL, (evt) => {
+    if (evt?.unlocked !== true) return;
+    void flushRecordRecovery();
+  });
+}
+
+/** 解锁后逐条回锁恢复（队列通常 ≤1 条；再遇锁抛错留在队里等下一次解锁） */
+async function flushRecordRecovery(): Promise<void> {
+  const store = await getPeopleSafeStore();
+  for (let i = pendingRecordRecovery.length - 1; i >= 0; i--) {
+    const it = pendingRecordRecovery[i];
+    try {
+      await store.lockNoteFresh(it.talker, JSON.parse(it.json) as PeopleSafeRecord, it.avatar);
+      pendingRecordRecovery.splice(i, 1);
+      notice(`「${it.talker}」的记录已在解锁后自动恢复`, 'success');
+    } catch (e) {
+      console.warn('[people] 保库记录恢复失败（等下次解锁重试）:', e);
+    }
+  }
+}
+
 export class PeopleSafeStore {
   private readonly safe: SafeManager;
   /** 解密记录缓存（明文）；上锁 / 外部清单变更即清 */
@@ -354,6 +390,10 @@ export class PeopleSafeStore {
         const b64 = await this.safe.decryptAttachmentOriginal(oldAtt);
         if (b64) oldAvatar = { base64: b64, ext: (oldAtt.path.split('.').pop() || 'jpg').toLowerCase() };
       }
+      if (!this.safe.unlocked) {
+        // 起跑前置检查：重建两步（removeNote / lockNote）都需要解锁态——锁着还拆记录等于白拆
+        throw new Error('保险库已上锁——解锁后再同步头像');
+      }
       this.suppressClear++;
       let removed = false;
       try {
@@ -366,7 +406,8 @@ export class PeopleSafeStore {
           try {
             await this.lockNoteFresh(talker, JSON.parse(previousJson) as PeopleSafeRecord, oldAvatar);
           } catch {
-            /* 兜底也失败：已无自动恢复路径，如实上抛原错 */
+            /* 兜底也失败（典型：恰逢上锁——回锁同样要解锁态）：挂起待解锁自动恢复，不丢记录 */
+            stashRecordRecovery(talker, previousJson, oldAvatar);
           }
         }
         // 盘上状态已不由缓存代表（停在新记录 / 旧记录 / 半重建态）——逐出，回读以盘为准
@@ -399,7 +440,8 @@ export class PeopleSafeStore {
   }
 
   /** 首建 / 重建整条记录（含头像附件；keptShared 置真——脸谱不删任何源文件） */
-  private async lockNoteFresh(talker: string, rec: PeopleSafeRecord, avatar: AvatarInput | null): Promise<void> {
+  /** 重加密落一条记录（重建 / 恢复共用；模块内 flushRecordRecovery 也调） */
+  async lockNoteFresh(talker: string, rec: PeopleSafeRecord, avatar: AvatarInput | null): Promise<void> {
     const input: LockNoteInput = {
       path: peopleNotePath(talker),
       title: `脸谱：${rec.person.name || talker}`,

@@ -18,8 +18,9 @@
  * 续跑由脚本按账本只补缺口。
  */
 import { runExternalTool, type ExternalToolHandle, type ExternalToolSpec } from '../core/external-tool';
+import { notice } from '../core/notice';
 import { preemptHeavyStandby, releaseHeavy, waitHeavyGate } from './heavy-gate';
-import { quotePathArg } from './sync';
+import { quotePathArg, quotePythonArg } from './sync';
 import { recordingTurnSegments, type RecordingTurn } from './datasource';
 
 // ---------------- 路径 ----------------
@@ -742,7 +743,20 @@ export function writeRecordingTurnsProofread(
   hit.forEach((ti, k) => { raw.turns[ti].text = texts[k]; });
   raw.proofread = true;
   try {
-    fs2.writeFileSync(p, JSON.stringify(raw, null, 1));
+    // 原子落盘（tmp + rename，与转写脚本的 os.replace 同口径）：直写正式路径会跟在跑脚本的
+    // replace 竞态——脚本随后整档覆盖 = 校对稿白写；写一半崩 = 半截 JSON 让 sidecar 退回「待处理」。
+    if (typeof fs2.renameSync === 'function') {
+      const tmp = `${p}.proofread.tmp`;
+      try {
+        fs2.writeFileSync(tmp, JSON.stringify(raw, null, 1));
+        fs2.renameSync(tmp, p);
+      } catch (e) {
+        try { fs2.unlinkSync(tmp); } catch { /* 清理失败不影响结论 */ }
+        throw e;
+      }
+    } else {
+      fs2.writeFileSync(p, JSON.stringify(raw, null, 1)); // 测试桩等无 rename 环境：退回直写
+    }
   } catch {
     return false;
   }
@@ -1169,13 +1183,24 @@ async function pumpRecordingQueue(): Promise<void> {
         releaseHeavy('recording');
         continue;
       }
-      const handle = startRecordingTask(
-        entry.spec(),
-        entry.key,
-        entry.onExit,
-        entry.meta ?? { talker: entry.talker, file: entry.file },
-        entry.onResult
-      );
+      let handle: ExternalToolHandle | null = null;
+      try {
+        handle = startRecordingTask(
+          entry.spec(),
+          entry.key,
+          entry.onExit,
+          entry.meta ?? { talker: entry.talker, file: entry.file },
+          entry.onResult
+        );
+      } catch (e) {
+        // spec 组装就炸（路径含 % 之类参数面问题，quotePathArg 拒绝）：这条按失败收账、
+        // 松闸续跑下一条——异常穿出 pump 会卡死 pumping 标记，整条队列跟着装死
+        const msg = e instanceof Error ? e.message : String(e);
+        releaseHeavy('recording');
+        entry.onExit?.({ ok: false, stopped: false, error: msg });
+        notice(`录音任务无法启动：${msg}`, 'error');
+        continue;
+      }
       if (!handle) {
         releaseHeavy('recording');
         continue;

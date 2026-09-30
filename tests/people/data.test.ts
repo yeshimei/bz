@@ -234,3 +234,60 @@ describe('FaceDigest 双卷契约与兼容读（issue 455）', () => {
     expect(bondOf(undefined)).toBe('');
   });
 });
+
+describe('mergeInto 去重并入（重试翻倍防护，bug 批修回归）', () => {
+  let vault2: MockVault;
+  let sm2: SafeManager;
+  let store2: PeopleStore;
+
+  beforeEach(async () => {
+    vault2 = new MockVault();
+    setup(vault2);
+    sm2 = new SafeManager('CONFIG/.ENCRYPT');
+    await sm2.unlock(PW);
+    setPeopleSafeStoreForTests(new PeopleSafeStore(sm2));
+    store2 = new PeopleStore(vault2);
+  });
+
+  afterEach(() => {
+    setPeopleSafeStoreForTests(null);
+    sm2.lock();
+  });
+
+  const imp = (label: string, at: string): ImportRecord => ({
+    file: label, importedAt: at, messageCount: 10, skippedCount: 0,
+    timeFrom: '2026-01-01T00:00:00.000Z', timeTo: '2026-02-01T00:00:00.000Z',
+  });
+
+  it('上一次并入成功、移除失败后重试：imports / manualEvents 不翻倍', async () => {
+    await store2.upsert(person('wxid_from', '旧号'));
+    await store2.upsert(person('wxid_to', '新号'));
+    const from = (await store2.list()).find((p) => p.id === 'wxid_from')!;
+    // 给 from 挂两份导入记录 + 一条随手记（模拟既有数据）
+    from.imports.push(imp('chat-a.json', '2026-01-01T00:00:00.000Z'), imp('chat-b.json', '2026-02-01T00:00:00.000Z'));
+    await store2.upsert(from);
+    await store2.addManualEvent('wxid_from', { id: 'ev1', ts: '2026-03-01', text: '第一次见面' });
+
+    await store2.mergeInto('wxid_from', 'wxid_to');
+    // 模拟「removeContact 失败后用户再点一次合并」：from 还在，再并一次
+    const fromAgain = (await store2.list()).find((p) => p.id === 'wxid_from');
+    if (fromAgain) await store2.mergeInto('wxid_from', 'wxid_to');
+
+    const to = (await store2.list()).find((p) => p.id === 'wxid_to')!;
+    expect(to.imports).toHaveLength(2); // 两条各只并一次
+    expect(to.manualEvents).toHaveLength(1);
+    expect(to.manualEvents?.[0].id).toBe('ev1');
+  });
+
+  it('内容不同的导入记录照常都并进来（去重不误伤）', async () => {
+    await store2.upsert(person('wxid_from2', '旧号'));
+    await store2.upsert(person('wxid_to2', '新号'));
+    const from = (await store2.list()).find((p) => p.id === 'wxid_from2')!;
+    from.imports.push(imp('chat-a.json', '2026-01-01T00:00:00.000Z'));
+    from.imports.push(imp('chat-a.json', '2026-05-01T00:00:00.000Z')); // 同文件不同批次：内容不同
+    await store2.upsert(from);
+    await store2.mergeInto('wxid_from2', 'wxid_to2');
+    const to = (await store2.list()).find((p) => p.id === 'wxid_to2')!;
+    expect(to.imports).toHaveLength(2);
+  });
+});

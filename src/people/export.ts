@@ -14,7 +14,7 @@
  */
 import { runExternalTool, type ExternalToolCallbacks, type ExternalToolHandle, type ExternalToolSpec, type ExternalToolOutcome } from '../core/external-tool';
 import { tryGetSettings } from '../core/settings-provider';
-import { classifySyncFailure, emptySyncStats, firstLine, quotePathArg, statsFromResult } from './sync';
+import { classifySyncFailure, emptySyncStats, firstLine, quotePathArg, quotePythonArg, statsFromResult } from './sync';
 
 /** 组装 `bz-face export` 的参数（引号口径与 buildSyncSpec 同源：quotePathArg） */
 export interface BuildExportSpecOpts {
@@ -35,7 +35,7 @@ export function buildExportSpec(opts: BuildExportSpecOpts): ExternalToolSpec {
       '--data-root',
       quotePathArg(opts.dataRoot),
       ...opts.contacts.flatMap((c) => ['--contact', quotePathArg(c)]),
-      ...(python ? ['--python', python] : []),
+      ...(python ? ['--python', quotePythonArg(python)] : []),
     ],
     shell: true,
   };
@@ -130,7 +130,16 @@ export function startContactsExport(
   }
   const s = (tryGetSettings() ?? {}) as Record<string, unknown>;
   const python = typeof s.pythonPath === 'string' ? s.pythonPath.trim() : '';
-  const spec = buildExportSpec({ dataRoot: opts.dataRoot, contacts: names, python });
+  let spec: ExternalToolSpec;
+  try {
+    spec = buildExportSpec({ dataRoot: opts.dataRoot, contacts: names, python });
+  } catch (e) {
+    // 参数面问题（路径含 % 被 quotePathArg 拒绝等）：按失败结果返回，调用方照常走失败分流
+    return {
+      done: Promise.resolve({ ...emptyResult(), error: e instanceof Error ? e.message : String(e) }),
+      stop: () => {},
+    };
+  }
   let result: Record<string, unknown> | null = null;
   let total = names.length; // [bz-info]{phase:"contacts",total} 来了以后以工具口径为准
   let done = 0;
