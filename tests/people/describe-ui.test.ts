@@ -256,6 +256,87 @@ describe('总确认接线（startGeneration → 翻开工单 → 引擎自动放
     expect(calls.length).toBe(0);
     await vi.waitFor(() => expect(document.querySelector(GEN_PAGE)).toBeNull());
   });
+
+  it('旧版记下的子集条数（如丘羽：跨度覆盖到导出末尾、条数却只有 1）也不再误报「新增素材」', async () => {
+    const { engine, calls } = fakeEngine();
+    setJobsModuleForTests(engine);
+    // 523 之前 importRecordOf 记的是「本次提炼子集条数」：增量只跑 1 条就写 1，跨度却是全量
+    // → 指纹（条数 + 跨度）永不命中 → 同秒容差又把锚点那条自身算成候选。这层要判回「没有新素材」。
+    const talker = 'wxid_a';
+    const stale: ImportRecord = {
+      file: '数据源:陈默',
+      importedAt: '2026-09-02T00:00:00.000Z',
+      messageCount: 1,
+      skippedCount: 0,
+      timeFrom: new Date(T0).toISOString(),
+      timeTo: new Date(T0 + 60_000).toISOString(),
+    };
+    const p: PersonEntry = { id: talker, name: '陈默', createdAt: '2026-09-01T00:00:00.000Z', imports: [stale], lastProcessedTs: T0 + 60_000 };
+    await (await getPeopleSafeStore()).write(talker, (rec) => { rec.person = p; });
+
+    const gen = startGeneration([genTarget()]);
+    await vi.waitFor(() => expect(document.querySelector(GEN_PAGE)).toBeTruthy());
+    expect(document.querySelector<HTMLElement>('.bz-people-gen-line')!.textContent).toBe('没有新的素材');
+    expect(document.querySelector<HTMLButtonElement>('[data-people-gen-start]')!.hasAttribute('disabled')).toBe(true);
+    click('[data-people-gen-cancel]');
+    await gen;
+    expect(calls.length).toBe(0); // 候选全停在锚点一秒内 = 上次已处理过的，不白烧一遍
+  });
+
+  it('候选里只要有一条严格晚于锚点（真新消息），照常进引擎', async () => {
+    const { engine, calls } = fakeEngine();
+    setJobsModuleForTests(engine);
+    // 锚点停在第 1 条：第 2 条严格晚于锚点 → 是真新素材，必须跑
+    const talker = 'wxid_a';
+    const p: PersonEntry = {
+      id: talker,
+      name: '陈默',
+      createdAt: '2026-09-01T00:00:00.000Z',
+      imports: [{ file: '数据源:陈默', importedAt: '2026-09-02T00:00:00.000Z', messageCount: 1, skippedCount: 0, timeFrom: new Date(T0).toISOString(), timeTo: new Date(T0).toISOString() }],
+      lastProcessedTs: T0,
+    };
+    await (await getPeopleSafeStore()).write(talker, (rec) => { rec.person = p; });
+
+    const gen = startGeneration([genTarget()]);
+    await vi.waitFor(() => expect(document.querySelector(GEN_PAGE)).toBeTruthy());
+    expect(document.querySelector<HTMLElement>('.bz-people-gen-line')!.textContent).toContain('为 1 位联系人生成脸谱');
+    expect(document.querySelector<HTMLElement>('.bz-people-gen-item')!.textContent).toContain('新增聊天记录 2 条');
+    click('[data-people-gen-start]');
+    await gen;
+    expect(calls.length).toBe(1);
+  });
+
+  it('旧记录条数口径 + 有未描述图片：不判「没有新素材」，照常起引擎（描述欠账不能被这层闸连带关掉）', async () => {
+    const { engine, calls } = fakeEngine();
+    setJobsModuleForTests(engine);
+    // 同上一条的旧记录（候选全停在锚点内），但仓里压着 3 张没描述的图——那些图 text 还空着，
+    // 不进文本时间线、也就进不了候选。旧版记错条数时这些人本来会照跑一趟顺手把图描述掉，
+    // 这层闸只该拦「真的什么都没有」的人。照片欠账另有留影页「生成描述」入口，但不是把
+    // 画脸谱这条路堵死的理由。
+    const talker = 'wxid_a';
+    const stale: ImportRecord = {
+      file: '数据源:陈默',
+      importedAt: '2026-09-02T00:00:00.000Z',
+      messageCount: 1,
+      skippedCount: 0,
+      timeFrom: new Date(T0).toISOString(),
+      timeTo: new Date(T0 + 60_000).toISOString(),
+    };
+    const p: PersonEntry = { id: talker, name: '陈默', createdAt: '2026-09-01T00:00:00.000Z', imports: [stale], lastProcessedTs: T0 + 60_000 };
+    await (await getPeopleSafeStore()).write(talker, (rec) => { rec.person = p; });
+
+    const t = genTarget();
+    const gen = startGeneration([{ ...t, pending: { images: 3, voices: 0 } }]);
+    await vi.waitFor(() => expect(document.querySelector(GEN_PAGE)).toBeTruthy());
+    expect(document.querySelector<HTMLElement>('.bz-people-gen-line')!.textContent).toContain('为 1 位联系人生成脸谱');
+    // 开工单照旧只说素材：图片 3 张如实报出（聊天记录走 514 的增量口径）
+    const rows = [...document.querySelectorAll('.bz-people-gen-row')].map((n) => n.textContent ?? '');
+    expect(rows.some((r) => r.includes('图片') && r.includes('3 张'))).toBe(true);
+    expect(document.querySelector<HTMLButtonElement>('[data-people-gen-start]')!.hasAttribute('disabled')).toBe(false);
+    click('[data-people-gen-start]');
+    await gen;
+    expect(calls.length).toBe(1);
+  });
 });
 
 describe('进度便签与印的 describe 段呈现', () => {
