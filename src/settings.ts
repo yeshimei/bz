@@ -547,7 +547,7 @@ export default interface BzSettings {
   /** 设置面板主题：'chenhun' = 晨昏（亮如晨、暗如夜，跟随 Obsidian 自动切合；当前唯一主题） */
   settingsPanelSkin: string;
 
-  // ===== 🪟 主面板桌面尺寸记忆（ADR-0084 拖拽缩放全域推广；运行时记忆，不进设置页）=====
+  // ===== 主面板桌面尺寸记忆（ADR-0084 拖拽缩放全域推广；运行时记忆，不进设置页）=====
   // 语义同 memoPanelWidth/Height（0 = 未拖过，打开走各域 CSS 默认尺寸）；读写统一走
   // core/settings-provider 的 panelSizePersist 工厂，各域不再手写 load/save 闭包。
   // 半屏挤压修复后落盘口径为「意图尺寸」（不受视口钳制污染，全屏自动复原）。

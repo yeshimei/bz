@@ -131,13 +131,15 @@ export function uiVSplitter(opts: BzVSplitterOpts): {
     if (!dragging) return;
     e.preventDefault();
     const raw = startW + (e.clientX - startX);
+    // 意图值记原始拖拽值——必须先于渲染短路更新：触顶后继续拖时渲染宽恒等于
+    // lastRender，若短路先行 wantW 会停在首次触顶帧，落盘退化回容器上限（挤压渲染值）
+    wantW = Math.max(raw, minLeft);
+    debSave(wantW);
     const w = clampW(raw); // 渲染照旧按容器钳（右栏弹性吸收不溢出）
     if (w === lastRender) return;
-    wantW = Math.max(raw, minLeft); // 意图值记原始拖拽值
     lastRender = w;
     applyW(w);
     if (opts.onChange) opts.onChange(w);
-    debSave(wantW);
   };
 
   const onMouseDown = (e: MouseEvent): void => {

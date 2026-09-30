@@ -177,6 +177,25 @@ describe('uiVSplitter 意图宽 × 渲染宽分离（半屏挤压修复）', () 
     }
   });
 
+  it('触顶后继续拖：意图宽追上最终拖拽值，不被渲染短路卡在首次触顶帧', () => {
+    vi.useFakeTimers();
+    try {
+      const { left } = makePanes(1000); // 容器上限 680
+      const save = vi.fn();
+      const split = uiVSplitter({ left, right: document.createElement('div'), minLeft: 220, minRight: 320, persist: { save } });
+      document.body.appendChild(split.el);
+      split.el.dispatchEvent(new MouseEvent('mousedown', { clientX: 500, clientY: 12, bubbles: true, button: 0 }));
+      document.dispatchEvent(new MouseEvent('mousemove', { clientX: 1180, clientY: 12, bubbles: true })); // raw 680 恰触顶
+      document.dispatchEvent(new MouseEvent('mousemove', { clientX: 1400, clientY: 12, bubbles: true })); // 触顶后继续拖 raw 900
+      document.dispatchEvent(new MouseEvent('mouseup', { clientX: 1400, clientY: 12, bubbles: true, button: 0 }));
+      vi.advanceTimersByTime(300);
+      expect(save).toHaveBeenLastCalledWith(900); // 落最终意图宽而非首次触顶帧的 680
+      split.detach();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it('restore：窄容器下记忆宽渲染钳制，意图值只兜下限不掺容器宽', () => {
     const { left } = makePanes(1000);
     const split = uiVSplitter({
