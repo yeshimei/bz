@@ -762,6 +762,16 @@ function asrGroupRows(): SettingsRow[] {
       ],
       visibleWhen: (snapshot) => snapshot.asrEngine === 'faster-whisper',
     },
+    {
+      type: 'toggle',
+      name: 'LLM 校对',
+      desc: '转写文本发送到所配大模型只修错校对，开启即同意文本出域',
+      help:
+        '开启后，脸谱语音条、脸谱录音、知识盒影像的转写在入库前发送到本页 LLM 组所配服务商校对：只修同音错别字、串音与识别噪声，不改写内容、不猜存疑数字，口语原样保留。' +
+        '失败保留原文，重跑任务或再点并仓只补校对、不重转文字；知识盒影像的正文文本处理由本开关接管（替换原「AI 润色」，关闭时转写原文直出正文）。' +
+        '注意：开启即表示转写文本将上传至所选 AI 服务商（突破「文本不出本地」默认）；历史已并仓的转写不补校。',
+      binding: { key: 'asrLlmProofread' },
+    },
   ];
 }
 

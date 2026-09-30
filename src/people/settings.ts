@@ -21,7 +21,7 @@ export function peopleSettingsSchema(opts?: { onClearStore?: () => void | Promis
           {
             type: 'text',
             name: '数据根目录',
-            desc: '预处理导出的联系人数据目录，粘贴完整路径；空 = 面板不显示数据源入口',
+            desc: '预处理导出的联系人数据目录，粘贴完整路径；空 = 数据源页提示先配置',
             binding: { key: 'peopleDataDir' },
             placeholder: '例如 D:\\微信备份\\export_full',
           },

@@ -334,7 +334,7 @@ export const BatchRunner = {
 
   /**
    * 插件侧 AI 阶段（ADR-0071）：CLI close(0) 后由插件接管——
-   * 「AI 生成文献笔记中」→ 读转录临时文件 → generateVideoNote（元数据 + 分块润色 + 落盘）→
+   * 「AI 生成文献笔记中」→ 读转录临时文件 → generateVideoNote（元数据 + LLM 校对开关下的正文文本档 + 落盘）→
    * 读毕删临时文件 → 「笔记落盘中」→ 成功终态。
    * 转录读取失败 / AI 失败（含 AI 未配置）→ 该任务 failed（reason 中文、不落半成品笔记），
    * 转录临时文件尽力清理；单部失败即整批语义与 CLI 失败一致（继续剩余 / 遇错即停）。

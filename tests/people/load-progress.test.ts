@@ -9,7 +9,7 @@
  */
 // @vitest-environment jsdom
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { resetObsidianMocks } from '../mock-obsidian-entry';
+import { resetObsidianMocks, hasNotice } from '../mock-obsidian-entry';
 import { MockVault } from '../mock-vault';
 import { makeApp } from '../helpers/app';
 import { setApp, getApp } from '../../src/core/app';
@@ -165,5 +165,32 @@ describe('冷读加载指示（issue 483 / 505）', () => {
     g.releaseLast();
     await vi.waitFor(() => expect(pocket('莫莫')).toBeTruthy());
     expect(loadingSpread()).toBeNull();
+  });
+});
+
+describe('坏记录不拖垮全墙：readAll 跳过损坏档并提示（P3）', () => {
+  it('readAll 报 failedCount>0：出一条损坏提示，其余联系人照常上墙', async () => {
+    const { safe } = await boot();
+    const good = await safe.read('莫莫');
+    // 假 readAll：模拟一位解密失败（failedCount=1），只回莫莫一人——
+    // 修复前单条坏记录使 readAll 整体抛错，UI 兜底成空表（一人坏全墙空）
+    (safe as unknown as { readAll: unknown }).readAll = async (
+      _cb?: (d: number, t: number) => void,
+      stats?: { failedCount: number }
+    ) => {
+      if (stats) stats.failedCount = 1;
+      return new Map([['莫莫', good!]]);
+    };
+    safe.clearPlainCaches(); // 冷读路径（模拟刚解锁首开）
+    openPeoplePanel(getApp());
+    await vi.waitFor(() => expect(pocket('莫莫')).toBeTruthy());
+    expect(hasNotice('有 1 条记录损坏，无法读取')).toBe(true);
+  });
+
+  it('全库可读（failedCount=0）不出损坏提示', async () => {
+    await boot();
+    openPeoplePanel(getApp());
+    await vi.waitFor(() => expect(pocket('莫莫')).toBeTruthy());
+    expect(hasNotice(/记录损坏/)).toBe(false);
   });
 });

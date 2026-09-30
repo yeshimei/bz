@@ -51,6 +51,9 @@ export default interface BzSettings {
   /** Whisper 档位（仅 faster-whisper 引擎消费）：tiny/base/small/medium/large-v2/large-v3，缺省 small。
    *  旧键 knowledgeWhisperModel 已一次性迁移到本键（migrateAsrKeys） */
   asrWhisperModel: string;
+  /** 转写 LLM 校对总开关（ADR-0222/issue 518，缺省关）：脸谱语音条 / 脸谱录音 / 知识盒影像
+   *  三处转写文本在并仓/成文前发送到 LLM 组所配服务商「只修错不创作」校对。开启即同意文本出域 */
+  asrLlmProofread: boolean;
 
   // ===== 🔧 外部工具（issue 462/ADR-0195：域无关运行时路径组，知识盒与脸谱共用同一套）=====
   /** Python 可执行文件路径；空 = 跟随系统 PATH / 工具侧兜底。
@@ -857,6 +860,8 @@ export const DEFAULT_SETTINGS: BzSettings = {
   // 语音转写（issue 444：AI 面板「语音转写」组；知识盒视频录入转文字消费）
   asrEngine: 'sensevoice',
   asrWhisperModel: 'small',
+  // 转写 LLM 校对（ADR-0222/issue 518）：缺省关——出域是显式行为，不默认替用户同意
+  asrLlmProofread: false,
 
   // 外部工具（issue 462/ADR-0195：域无关运行时路径组，知识盒与脸谱共用；默认值=原 knowledge 三键缺省）
   pythonPath: '',

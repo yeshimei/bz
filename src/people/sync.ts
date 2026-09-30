@@ -150,12 +150,15 @@ export interface BuildSyncSpecOpts {
 }
 
 /**
- * Windows shell 路径参数引号（buildSyncSpec / buildExportSpec 共用；485 提出复用）：
- * shell 会把参数按空格拆散（external-tool 头注的坑）——Windows 下路径类参数一律包引号
- * （Win32 路径本身不允许含双引号，无损）；非 Windows 原样。
+ * shell 路径参数引号（buildSyncSpec / buildExportSpec / recording 共用；485 提出复用）：
+ * shell 会把参数按空格拆散（external-tool 头注的坑）——Windows 下路径类参数一律包双引号
+ * （Win32 路径本身不允许含双引号，无损）；非 Windows 用单引号包裹并转义内嵌单引号
+ * （POSIX shell 单引号内空格不拆词、不展开；内嵌 ' 按 '\'' 三连闭合再开），
+ * 否则含空格的数据根 / 联系人名在 POSIX 下照样被拆散。
  */
 export function quotePathArg(v: string): string {
-  return process.platform === 'win32' ? `"${v}"` : v;
+  if (process.platform === 'win32') return `"${v}"`;
+  return `'${v.replace(/'/g, "'\\''")}'`;
 }
 
 /**

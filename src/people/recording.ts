@@ -329,6 +329,8 @@ export interface RecordingSidecar {
   speakersSec?: Record<string, number>;
   progress?: RecordingSidecarProgress;
   turns?: RecordingTurn[];
+  /** LLM 校对已落（ADR-0222）：插件写回的 additive 标记，工具重跑补账时按轮次 text 保留语义不变 */
+  proofread?: boolean;
 }
 
 function num(v: unknown): number | undefined {
@@ -384,6 +386,7 @@ export function parseRecordingSidecar(text: string): RecordingSidecar | null {
       : {}),
     ...(o.progress && typeof o.progress === 'object' ? { progress: o.progress as RecordingSidecarProgress } : {}),
     ...(turnsParsed ? { turns: turnsParsed } : {}),
+    ...(o.proofread === true ? { proofread: true } : {}),
   };
 }
 
@@ -706,6 +709,45 @@ export function readRecordingSidecar(dataRoot: string, talker: string, file: str
   }
   sidecarCache.set(p, { sig, value });
   return value;
+}
+
+/**
+ * LLM 校对结果写回录音账本（ADR-0222 / issue 518）：texts 与「有转写文本的轮次」按序一一对齐，
+ * 就地替换 turns[].text 并落顶层 `proofread: true` 标记。在**原始 JSON** 上动刀——snake_case
+ * 字段（duration_sec / mean_abs_llr…）零触碰，工具续跑照常读；写成功失效 sidecar 缓存。
+ * 只在整档校对全成后调用（调用方失败不写回）；条数对不上（账本中途被工具重写）返回 false 不写。
+ */
+export function writeRecordingTurnsProofread(
+  dataRoot: string,
+  talker: string,
+  file: string,
+  texts: string[]
+): boolean {
+  const fs2 = controlFs();
+  if (!fs2 || !texts.length) return false;
+  const p = recordingSidecarPath(dataRoot, talker, file);
+  let raw: any;
+  try {
+    raw = JSON.parse(fs2.readFileSync(p, 'utf8'));
+  } catch {
+    return false;
+  }
+  if (!raw || !Array.isArray(raw.turns)) return false;
+  const hit: number[] = [];
+  for (let i = 0; i < raw.turns.length; i++) {
+    const t = raw.turns[i];
+    if (t && typeof t === 'object' && typeof t.text === 'string' && t.text.trim() !== '') hit.push(i);
+  }
+  if (hit.length !== texts.length) return false;
+  hit.forEach((ti, k) => { raw.turns[ti].text = texts[k]; });
+  raw.proofread = true;
+  try {
+    fs2.writeFileSync(p, JSON.stringify(raw, null, 1));
+  } catch {
+    return false;
+  }
+  sidecarCache.delete(p);
+  return true;
 }
 
 // ---------------- 录音 meta（插件侧一等数据；ADR-0217） ----------------

@@ -248,7 +248,8 @@
   font-size: var(--f-mid); color: var(--ink-strong); animation: bz-people-banner-in .34s cubic-bezier(.2,.85,.3,1) both; }
 .bz-people-banner svg { width: 15px; height: 15px; color: var(--acc); flex: none; }
 .bz-people-banner-tx { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.bz-people-banner-x { flex: none; width: 20px; height: 20px; border-radius: 50%; color: var(--ink-mut); font-size: var(--f-body); line-height: 1;
+/* 双类提权（同按钮：core reset 的 button:not(.clickable-icon) 会剥掉裸按钮的底色/字色） */
+.bz-people-banner-x.bz-people-banner-x { flex: none; width: 20px; height: 20px; border-radius: 50%; color: var(--ink-mut); font-size: var(--f-body); line-height: 1;
   font-family: var(--sans); }
 @media (hover: hover) { .bz-people-banner-x:hover { background: rgba(168,67,60,.1); color: var(--acc); } }
 /* 空手而归那档：素纸 + 灰印（不是错误，是「这趟没有新东西」），跟并入成功一眼分得开 */
@@ -503,9 +504,10 @@
 .bz-people-seal-ring circle:not(.bz-people-seal-arc) { stroke: rgba(255,255,255,.42); }
 .bz-people-seal-arc { stroke: #fff; stroke-linecap: round; transition: stroke-dasharray .5s ease-out; }
 @keyframes bz-people-seal-spin { to { transform: rotate(270deg); } }
-/* 歇 / 停 / 等：同一枚印的另外三态 —— 虚边、褪色，一眼看出不是「画着」 */
-.bz-people-seal-hold { border-style: dashed; background: rgba(90,80,62,.72); }
-.bz-people-seal-wait { border-style: dashed; background: rgba(120,110,92,.5); color: rgba(255,248,240,.8); font-size: var(--f-aux); }
+/* 歇 / 停 / 等：同一枚印的另外几态 —— 虚边、褪色，一眼看出不是「画着」。
+   （渲染侧出的是 halted / queued，hold / wait 是旧名——两套都接，防断链） */
+.bz-people-seal-hold, .bz-people-seal-halted { border-style: dashed; background: rgba(90,80,62,.72); }
+.bz-people-seal-wait, .bz-people-seal-queued { border-style: dashed; background: rgba(120,110,92,.5); color: rgba(255,248,240,.8); font-size: var(--f-aux); }
 /* 临近的重要日子：照片左下角一枚小签（生日 / 纪念日 · 还剩几天）。
    名字长了自己收省略号（整句写在 title 里，指上去还看得见） */
 .bz-people-due { position: absolute; left: 6px; bottom: 28px; z-index: 3; max-width: 76%; padding: 2px 7px; border-radius: var(--r-paper);
@@ -889,7 +891,8 @@
 .bz-people-ds-legend { display: flex; align-items: center; gap: 14px; margin-top: 11px; font-size: var(--f-aux); color: var(--ink-mut); }
 .bz-people-ds-legend i { display: inline-block; width: 7px; height: 7px; border-radius: 50%; margin-right: 4px; }
 .bz-people-ds-dot-ok { background: var(--acc); } .bz-people-ds-dot-idle { background: #c9c1ad; } .bz-people-ds-dot-none { background: #e3dccb; border: 1px solid #cfc7b2; }
-.bz-people-ds-pickfresh { margin-left: auto; font-size: var(--f-aux); color: var(--acc); font-family: var(--kai); letter-spacing: 1px;
+/* 双类提权（同按钮：core reset 的 button:not(.clickable-icon) 会剥掉裸按钮的字色/虚线） */
+.bz-people-ds-pickfresh.bz-people-ds-pickfresh { margin-left: auto; font-size: var(--f-aux); color: var(--acc); font-family: var(--kai); letter-spacing: 1px;
   border-bottom: 1px dashed rgba(168,67,60,.5); padding-bottom: 1px; }
 .bz-people-ds-count { font-size: var(--f-aux); color: var(--pencil); font-style: italic; }
 .bz-people-notice { font-size: var(--f-aux); color: var(--acc-deep); margin-top: 8px; font-style: italic; }
@@ -1525,6 +1528,8 @@ input.bz-people-input.bz-people-input::-webkit-calendar-picker-indicator {
   box-shadow: inset 0 0 22px rgba(0, 0, 0, 0.4);
 }
 .theme-dark .bz-people-page-head { border-bottom-color: #453f33; }
+/* 暗色下窄容器吸顶页眉的实底（亮色写的 #f7f2e6 在暗处是一块白斑）：与折签吸顶同款页底色 */
+.theme-dark .bz-people-page-head { background: #2f2b24; box-shadow: 0 1px 0 #453f33; }
 .theme-dark .bz-people-head-count { color: #c9b58a; background: rgba(201, 162, 78, 0.14); border-color: rgba(201, 162, 78, 0.3); }
 .theme-dark .bz-people-head-ledger { color: #d8c08a; background: #3b3423; border-color: #55492c; }
 .theme-dark .bz-people-head-note { color: var(--ink-mut); }
@@ -1553,8 +1558,8 @@ input.bz-people-input.bz-people-input::-webkit-calendar-picker-indicator {
 .theme-dark .bz-people-bigframe { background: #ded7c8; }
 .theme-dark .bz-people-bigphoto { background: #cbc3b2; }
 .theme-dark .bz-people-cap { background: linear-gradient(0deg, rgba(24, 18, 12, 0.24), rgba(24, 18, 12, 0)); }
-.theme-dark .bz-people-seal-hold { background: rgba(60, 54, 46, 0.8); }
-.theme-dark .bz-people-seal-wait { background: rgba(70, 64, 54, 0.6); }
+.theme-dark .bz-people-seal-hold, .theme-dark .bz-people-seal-halted { background: rgba(60, 54, 46, 0.8); }
+.theme-dark .bz-people-seal-wait, .theme-dark .bz-people-seal-queued { background: rgba(70, 64, 54, 0.6); }
 .theme-dark .bz-people-vacant { background: repeating-linear-gradient(135deg, rgba(255, 255, 255, 0.02) 0 6px, transparent 6px 12px), #322c25; }
 .theme-dark .bz-people-vacs { color: #7d7460; }
 .theme-dark .bz-people-blank { color: #7d7460; }
@@ -1576,6 +1581,9 @@ input.bz-people-input.bz-people-input::-webkit-calendar-picker-indicator {
 .theme-dark .bz-people-ftab.on { background: var(--card); color: var(--acc); }
 /* 暗色下折签吸顶的实底（与暗色页底同色，滚过的字同样不许透上来） */
 .theme-dark .bz-people-pagebody .bz-people-ftabs { background: #2f2b24; box-shadow: 0 1px 0 #453f33; }
+/* 暗色断档补齐（B 组审查 P2）：ds 行 / 一眼账小纸片 / 随手记纸条亮色写死了米白底——
+   暗主题下亮字落白底不可读，跟着页内其它纸片压暗 */
+.theme-dark .bz-people-ds-row, .theme-dark .bz-people-fact, .theme-dark .bz-people-note-row { background: #35312a; border-color: #454036; }
 .theme-dark .bz-people-fsheet { background: var(--card); border-color: var(--card-bd); }
 .theme-dark .bz-people-ins {
   background-color: #322e28;

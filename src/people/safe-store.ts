@@ -230,16 +230,28 @@ export class PeopleSafeStore {
    * 读全部联系人记录（面板墙一次拉全量）。
    * onProgress（issue 483）：逐人解密进度回调——开跑即报 (0, total)，每人完成报 (i+1, total)；
    * 缓存命中时同步快速走完（面板热读路径不因此出加载态）。可选参数，既有调用点零漂移。
+   * 单条坏记录不拖垮整体：某 talker 解密/解析失败只跳过不进结果（此前整库抛错 → UI 兜底
+   * 成空表，一人坏全墙空）；失败人数经可选 stats 出参带出（stats.failedCount），调用方据此提示。
    */
-  async readAll(onProgress?: (done: number, total: number) => void): Promise<Map<string, PeopleSafeRecord>> {
+  async readAll(
+    onProgress?: (done: number, total: number) => void,
+    stats?: { failedCount: number }
+  ): Promise<Map<string, PeopleSafeRecord>> {
     const out = new Map<string, PeopleSafeRecord>();
     const all = this.talkers();
     onProgress?.(0, all.length);
+    let failed = 0;
     for (let i = 0; i < all.length; i++) {
-      const rec = await this.read(all[i]);
+      let rec: PeopleSafeRecord | null = null;
+      try {
+        rec = await this.read(all[i]);
+      } catch {
+        failed += 1; // 单条坏记录跳过：其余照常上墙，坏档留待重试 / 修复
+      }
       if (rec) out.set(all[i], rec);
       onProgress?.(i + 1, all.length);
     }
+    if (stats) stats.failedCount = failed;
     return out;
   }
 
@@ -303,6 +315,9 @@ export class PeopleSafeStore {
       const nowIso = new Date().toISOString();
       rec = { version: 1, person: emptyPersonEntry(talker, talker, nowIso), store: emptyStoreContact(nowIso), job: null };
     }
+    // 重建回滚料：mutate 前的记录体 JSON。只有「已有记录 + 显式传 avatar」才可能走
+    // removeNote→lockNote 附件层重建，序列化成本只付在这一低频路径（同步导入换头像）
+    const previousJson = existing && opts?.avatar !== undefined ? JSON.stringify(rec) : null;
     await mutate(rec);
 
     // 头像判定：与既有附件指纹一致 → 零重写；不一致 / 无中生有 / 移除 → 附件层重建
@@ -330,11 +345,34 @@ export class PeopleSafeStore {
       // 无公开 API 替换单个附件 → 整条重建（removeNote 删旧镜像 + lockNote 重加密；
       // 头像只在同步导入时变化，低频路径）。重建前记录体已是最新（mutate 已跑）。
       // 重建期间的 ENCRYPT_CHANGED 广播是自己的写入——抑制清缓存（492：否则其他联系人
-      // 的缓存记录被重新解密成新对象，面板 recordCache 旧引用读到导入前的空仓）
+      // 的缓存记录被重新解密成新对象，面板 recordCache 旧引用读到导入前的空仓）。
+      // 回滚兜底：removeNote→lockNoteFresh 两句之间失败 = 旧记录已除名、新记录未落，
+      // 整条联系人记录丢失——重建前先取出旧头像原始字节，失败时用 mutate 前的载荷 +
+      // 旧头像回锁同路径（宁回旧数据不丢整条）；兜底也失败如实上抛原错。
+      let oldAvatar: AvatarInput | null = null;
+      if (oldAtt) {
+        const b64 = await this.safe.decryptAttachmentOriginal(oldAtt);
+        if (b64) oldAvatar = { base64: b64, ext: (oldAtt.path.split('.').pop() || 'jpg').toLowerCase() };
+      }
       this.suppressClear++;
+      let removed = false;
       try {
         await this.safe.removeNote(existing.id);
+        removed = true;
         await this.lockNoteFresh(talker, rec, avatar ?? null);
+      } catch (e) {
+        // 仅旧记录已除名才回锁：removeNote 未成功则旧记录仍在盘上，回锁会堆重复条目
+        if (removed && previousJson !== null) {
+          try {
+            await this.lockNoteFresh(talker, JSON.parse(previousJson) as PeopleSafeRecord, oldAvatar);
+          } catch {
+            /* 兜底也失败：已无自动恢复路径，如实上抛原错 */
+          }
+        }
+        // 盘上状态已不由缓存代表（停在新记录 / 旧记录 / 半重建态）——逐出，回读以盘为准
+        this.cache.delete(talker);
+        this.avatarUrls.delete(talker);
+        throw e;
       } finally {
         this.suppressClear--;
       }
@@ -342,7 +380,19 @@ export class PeopleSafeStore {
       return 'updated';
     }
     const json = JSON.stringify(rec);
-    await this.safe.updateNotePayload(existing.id, json); // 原子覆盖同一密文镜像，不堆积孤儿
+    // 普通写路径同样抑制自写广播（updateNotePayload 常规路径显式 emit encrypt:changed）：
+    // 不抑制 = 每次写都把自己刚落的明文缓存全清，全库热读被打破（492 只盖了另两分支）
+    this.suppressClear++;
+    try {
+      await this.safe.updateNotePayload(existing.id, json); // 原子覆盖同一密文镜像，不堆积孤儿
+    } catch (e) {
+      // 落盘失败不清脏缓存 = 「界面已保存、盘上没存」——逐出后回读重新解密盘上旧数据
+      this.cache.delete(talker);
+      this.avatarUrls.delete(talker);
+      throw e;
+    } finally {
+      this.suppressClear--;
+    }
     this.cache.set(talker, rec);
     if (avatar === null) this.avatarUrls.delete(talker);
     return 'updated';
@@ -371,8 +421,17 @@ export class PeopleSafeStore {
     this.avatarUrls.delete(talker);
   }
 
-  /** 删除一位联系人的整条保库记录（连同头像镜像；二次确认由 UI 层管） */
+  /** 删除一位联系人的整条保库记录（连同头像镜像；二次确认由 UI 层管）。
+   *  经同一 per-talker 串行链排队：删除若与在途写并发，写会在删除之后落盘——
+   *  已删联系人以空骨架「复活」；串行后「删」与「写」严格有序，删定即删净。 */
   async removeContact(talker: string): Promise<void> {
+    const prev = this.chains.get(talker) ?? Promise.resolve();
+    const run = prev.catch(() => undefined).then(() => this.removeSerial(talker));
+    this.chains.set(talker, run);
+    return run;
+  }
+
+  private async removeSerial(talker: string): Promise<void> {
     this.requireUnlocked();
     const note = this.noteOf(talker);
     if (note) await this.safe.removeNote(note.id);

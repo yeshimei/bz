@@ -111,8 +111,10 @@ import {
   voiceprintRefStatus,
   writeRecordingMeta,
   writeRecordingTurnsMd,
+  writeRecordingTurnsProofread,
   type RecordingSidecar,
 } from './recording';
+import { proofreadPieces } from '../core/asr-proofread';
 import { pickSystemFiles } from '../core/path-picker';
 import { startContactsExport, type ContactsExportHandle } from './export';
 import { getPeopleSafeStore, type PeopleSafeRecord, type PeopleSafeStore } from './safe-store';
@@ -172,6 +174,7 @@ import {
   statsPopBody,
   statsText,
   subPage,
+  suppLocalTsValue,
   tagChip,
   turnLoad,
   type AlbumPhoto,
@@ -283,6 +286,8 @@ let dsImported = false;
 const dsExported = new Set<string>();
 /** 「找一找」的关键字（空 = 提示与标签） */
 let findQuery = '';
+/** 「找一找」键入防抖（B 组审查 P1）：输入框是重画重建的，停手 150ms 才整册重画并找回焦点 */
+let findDebounce: ReturnType<typeof setTimeout> | null = null;
 
 /** 在跑的按需导出（485「导入所选」前置段；面板关闭即 stop——导出生命周期跟着导入走） */
 let exportRun: ContactsExportHandle | null = null;
@@ -345,6 +350,9 @@ let foldScrollTop = false;
 
 /** 开一只册页弹窗（靠人的页要有人开着；另一只开着则换页） */
 function openDialog(kind: DialogKind, tier?: DeleteTier): void {
+  // 画谱总确认开着时被换页（B 组审查 P1）：先按未授权结清，再动 dialog——
+  // 否则直接覆盖会把 genConfirmOpen / pendingGenAnswer 永久挂起，本会话画脸谱恒返回「取消」
+  if (genConfirmOpen) answerGenConfirm('cancel');
   dialog = { kind, tier };
   if (kind === 'note' && detailId) {
     // 换人清页内暂存（509 评审 P0）：图片队列 / 录音 ts 覆盖都是上一人的，跟着人走
@@ -401,6 +409,15 @@ export function setUnlockGateForTests(fn: (() => Promise<boolean>) | null): void
 }
 
 /**
+ * 测试注入缝：直接摆好录音导入队列（起点候选 / 移出队列的面板交互回归用——
+ * 真路径要弹系统文件对话框与本机 fs，jsdom 里走不到）。传入的条目对象原样进队列，
+ * 测试持有同一引用即可断言模型侧的 startMs 变化；传 null 清空。
+ */
+export function setSuppRecQueueForTests(items: SuppRecQueueItem[] | null): void {
+  suppRecQueue = items ? [...items] : [];
+}
+
+/**
  * 打开面板（已开则聚到前台；不自动开弹窗、不自动扫描——447 拍板）。
  * **解锁门禁前置（467 / ADR-0194 决策 3）**：脸谱数据整体在保险库里（索引也加密）——
  * 未解锁先弹主密码；取消 / 失败不开面板、不展示任何数据。
@@ -418,12 +435,18 @@ export function openPeoplePanel(app?: unknown): void {
       if (!safe.unlocked) {
         const ok = await unlockGate();
         if (!ok) {
+          pendingDs = false; // 取消解锁：数据源直开的账也一并清（B 组审查 P2）
           notice('脸谱数据在保险库里——解锁后才能查看', 'info');
           return;
         }
       }
       peopleSafe = safe;
       buildPanelShell(app);
+      // 数据源直开补账（B 组审查 P2）：bz-people-import 面板未开时先开了面板——壳建好了就补开数据源页
+      if (pendingDs) {
+        pendingDs = false;
+        void openDsIfIdle();
+      }
       // 存量迁移（幂等）：明文三件（people.json / people-preview.json / people-jobs.json）
       // 每人拆进保库记录；全部校验通过才清理旧明文。半途崩溃重跑自动收敛。
       await runLegacyMigration();
@@ -458,8 +481,24 @@ function buildPanelShell(app?: unknown): void {
   // 补充素材·图片行的时间改写即落状态（509 评审 P2：落盘才读回会被中途重画打回 mtime）
   // 录音导入行的起点同理（ADR-0217）——落盘前随时可改，不逐键绑状态只在 selected 时落
   overlay.addEventListener('change', (e) => {
-    const inp = e.target instanceof HTMLInputElement ? e.target : null;
-    if (!inp) return;
+    const tgt = e.target instanceof HTMLInputElement || e.target instanceof HTMLSelectElement ? e.target : null;
+    if (!tgt) return;
+    // 录音起点候选下拉（ADR-0217；B 组审查 P1）：只认 change——之前挂在 click 上，
+    // 点开下拉那一下就带着旧值重画（DOM 重建把下拉合上），选完的 change 又没人接。
+    // 只落账 + 原位同步起点输入框，不整页重画（起点输入框是落盘前 harvest 的事实源）。
+    const cand = tgt.getAttribute('data-people-supp-rec-cand');
+    if (cand !== null) {
+      const path = tgt.getAttribute('data-people-supp-rec-path');
+      const it = path !== null ? suppRecQueue.find((q) => q.path === path) : suppRecQueue[Number(cand)];
+      const v = Number((tgt as HTMLSelectElement).value);
+      if (it && Number.isFinite(v)) {
+        it.startMs = v;
+        const ts = tgt.closest('.bz-people-supp-qrow')?.querySelector<HTMLInputElement>('[data-people-supp-rec-ts]');
+        if (ts) ts.value = suppLocalTsValue(v);
+      }
+      return;
+    }
+    const inp = tgt as HTMLInputElement;
     const idxRaw = inp.getAttribute('data-people-supp-img-ts');
     if (idxRaw !== null) {
       const it = suppImages[Number(idxRaw)];
@@ -469,7 +508,8 @@ function buildPanelShell(app?: unknown): void {
     }
     const recIdx = inp.getAttribute('data-people-supp-rec-ts');
     if (recIdx !== null) {
-      const it = suppRecQueue[Number(recIdx)];
+      const recPath = inp.getAttribute('data-people-supp-rec-path');
+      const it = recPath !== null ? suppRecQueue.find((q) => q.path === recPath) : suppRecQueue[Number(recIdx)];
       const v = inp.value ? new Date(inp.value).getTime() : NaN;
       if (it) it.startMs = Number.isFinite(v) ? v : null;
       return;
@@ -498,6 +538,19 @@ function buildPanelShell(app?: unknown): void {
       const btn = overlay?.querySelector<HTMLButtonElement>('[data-people-del-ok]') ?? null;
       if (p && btn && !btn.disabled) void confirmDeleteFromPage(p, btn);
     } else void saveManualNote();
+  });
+  // 「找一找」键入即滤（B 组审查 P1）：输入框每次重画都按 findQuery 重建，input 委托必须挂在
+  // overlay 上才活得过重画——否则打字永远不过滤，且任意重画把输入框按旧关键字重建回空。
+  // 停手 150ms 才整册重画（逐键重画会抢走焦点），画完 focusFind 找回焦点（与清空 / 标签同路）。
+  overlay.addEventListener('input', (e) => {
+    const inp = e.target instanceof HTMLInputElement ? e.target : null;
+    if (!inp || !inp.hasAttribute('data-people-find')) return;
+    findQuery = inp.value;
+    if (findDebounce !== null) clearTimeout(findDebounce);
+    findDebounce = setTimeout(() => {
+      findDebounce = null;
+      void renderAlbum().then(() => focusFind());
+    }, 150);
   });
   // 解锁态跟帧（ADR-0194 决策 5）：任意路径上锁（面板/锁屏/安全模式）→ 面板立即转不可读；
   // 重新解锁 → 恢复渲染
@@ -541,6 +594,9 @@ async function runLegacyMigration(): Promise<void> {
 }
 
 export function closePeoplePanel(): void {
+  // 画谱总确认开着时点遮罩关面板（B 组审查 P1）：先按未授权结清再拆——否则
+  // genConfirmOpen / pendingGenAnswer 不结清，Promise 与开工单泄漏，本会话画脸谱恒返回「取消」
+  if (genConfirmOpen) answerGenConfirm('cancel');
   // 关面板转后台（issue 450）：引擎照跑；有正在跑的任务才提示，只剩暂停 / 排队不打扰
   const backgrounded = jobsRunning();
   unregisterPanelEsc(ESC_ID);
@@ -555,6 +611,7 @@ export function closePeoplePanel(): void {
   overlay?.remove();
   overlay = null;
   store = null;
+  if (findDebounce !== null) { clearTimeout(findDebounce); findDebounce = null; } // 关面板不欠一次重画
   stopRecPolling();
   exportRun?.stop(); // 在跑的按需导出跟着导入一起中止（485：导出生命周期不独立于面板）
   exportRun = null;
@@ -591,9 +648,16 @@ function closeDsState(): void {
   dsScannedAt = '';
 }
 
+/** 数据源延迟开门（B 组审查 P2）：bz-people-import 在未解锁时只能先开面板——解锁成功建好壳后按它补开数据源页 */
+let pendingDs = false;
+
 /** 直开数据源弹窗（bz-people-import 命令回调；面板未开先开） */
 export function openDataSource(): void {
-  if (!overlay) openPeoplePanel();
+  if (!overlay) {
+    pendingDs = true; // 面板还没建（可能卡在解锁门禁）：记一笔，解锁建壳后补开
+    openPeoplePanel();
+    return;
+  }
   void openDsIfIdle();
 }
 
@@ -1937,18 +2001,12 @@ function onOverlayClick(e: MouseEvent): void {
     return;
   }
   if (t.closest('[data-people-supp-rec-add]')) { void suppPickRecordings(); return; }
-  const recCand = t.closest<HTMLElement>('[data-people-supp-rec-cand]');
-  if (recCand) {
-    const it = suppRecQueue[Number(recCand.getAttribute('data-people-supp-rec-cand'))];
-    const v = Number((recCand as HTMLSelectElement).value);
-    if (it && Number.isFinite(v)) {
-      it.startMs = v;
-      void renderAlbum();
-    }
-    return;
-  }
+  // （录音起点候选下拉不在这：select 只认 change 委托——click 会把展开的下拉合上，见 buildPanelShell）
   const recDrop = t.closest<HTMLElement>('[data-people-supp-rec-drop]');
   if (recDrop) {
+    // 移出队列（B 组审查 P1）：先 harvest 再 splice——renderAlbum 开头的 harvest 按旧 DOM 下标
+    // 写新数组，删第 k 条后其后所有录音的起点会被前一条的值串位覆盖
+    harvestRecQueueInputs();
     suppRecQueue.splice(Number(recDrop.getAttribute('data-people-supp-rec-drop')), 1);
     void renderAlbum();
     return;
@@ -2232,11 +2290,12 @@ function findPageState(): HTMLElement {
       const at = sorted.indexOf(p);
       const job = sealJobOf(jobViews().get(p.id));
       const seal = albumSealOf(p, job);
+      const pi = Math.floor(at / AL_PER_PAGE); // 按页序号定左右（B 组审查 P3）：全局下标奇偶会把偶数摊整页报错边
       rows.push({
         p,
         avatar: '',
-        page: Math.floor(at / AL_PER_PAGE) + 1,
-        half: at % PER_SPREAD === 0 ? '左' : '右',
+        page: pi + 1,
+        half: pi % PER_SPREAD === 0 ? '左' : '右',
         state: seal.state === 'none' ? 'todo' : seal.state === 'drawn' || seal.state === 'legacy' ? 'drawn' : 'drawing',
       });
     }
@@ -2249,12 +2308,14 @@ function findPageState(): HTMLElement {
  * 把导入队列里**已上屏但还没提交**的起点收回模型（issue 516 回归防护）。
  * 必须在任何整页重画前调用：否则「用户正在输起点时队列动了一下（抽检进程出队 / 转写推进）」
  * 会把输入框里的字连同 DOM 一起抹掉——模型还是旧值，字却没了。
- * 页签没开时 querySelectorAll 为空，零成本。
+ * 按 path 身份认条目（B 组审查 P1）：下标在队列增删后会串位——删第 k 条，其后录音的起点
+ * 会被前一条的输入值覆盖。页签没开时 querySelectorAll 为空，零成本。
  */
 function harvestRecQueueInputs(): void {
   if (!suppRecQueue.length || !overlay) return;
   overlay.querySelectorAll<HTMLInputElement>('[data-people-supp-rec-ts]').forEach((inp) => {
-    const it = suppRecQueue[Number(inp.getAttribute('data-people-supp-rec-ts'))];
+    const path = inp.getAttribute('data-people-supp-rec-path');
+    const it = path !== null ? suppRecQueue.find((q) => q.path === path) : suppRecQueue[Number(inp.getAttribute('data-people-supp-rec-ts'))];
     if (!it) return;
     const v = new Date(inp.value).getTime();
     it.startMs = inp.value && Number.isFinite(v) ? v : null;
@@ -2456,6 +2517,7 @@ function pullPhoto(id: string): void {
   flyPending = { src: img?.getAttribute('src') ?? '', txt: txt?.textContent ?? '' };
   cell?.classList.add('bz-people-out');
   window.setTimeout(() => {
+    if (!overlay) return; // 240ms 内面板关了：落地即作废（B 组审查 P3）——别把详情页直落到重开的面板上
     pulled = id;
     detailId = id;
     detailFold = 'p';
@@ -2650,11 +2712,16 @@ async function records(): Promise<Map<string, PeopleSafeRecord>> {
       loadActive = true;
       loadDone = 0;
       loadTotal = null;
+      const failedStat = { failedCount: 0 };
       const map = await peopleSafe!.readAll((done, total) => {
         loadTotal = total;
         loadDone = done;
         paintLoadCount();
-      });
+      }, failedStat);
+      // 单条坏记录不再拖垮全墙（readAll 已跳过），但损坏必须让人知道
+      if (failedStat.failedCount > 0) {
+        notice(`有 ${failedStat.failedCount} 条记录损坏，无法读取`, 'warning');
+      }
       recordCache = map;
       return map;
     } catch (e) {
@@ -2845,12 +2912,14 @@ async function refreshStatsKinds(): Promise<void> {
   if (!talker) return;
   statsKinds = null;
   if (!peopleSafe) peopleSafe = await getPeopleSafeStore();
+  let kinds: Record<string, number> | null = null;
   try {
-    const rec = await peopleSafe.read(talker);
-    statsKinds = rec?.store.kindCounts ?? null;
+    kinds = (await peopleSafe.read(talker))?.store.kindCounts ?? null;
   } catch {
-    statsKinds = null;
+    kinds = null; // 读不到按零值回落导入快照
   }
+  if (detailId !== talker) return; // await 期间换人：旧形态不顶替新视图（B 组审查 P3）
+  statsKinds = kinds;
   if (dialog?.kind === 'stats') void renderAlbum();
 }
 
@@ -2976,12 +3045,14 @@ async function aiFillProfile(): Promise<void> {
   if (!p) return;
   const dg = p.digest;
   if (!dg) { notice('还没有脸谱素材——先导入并画脸谱，AI 才有据可依', 'warning'); return; }
+  const talker = detailId; // 起跑时把人记下（B 组审查 P2）：等待期间换人，结果不许填进别家的表单
   if (profEditId !== detailId) { profEditId = detailId; await renderAlbum(); } // 表单在编辑卡里，先进入编辑态
   profAiBusy = true;
   notice('AI 正在读交往素材补充背景…', 'info');
   try {
     const prompt = buildProfileExtractPrompt(p.name, profileExtractMaterial(dg), knownProfileText(p.profile));
     const data = parseProfileReply(await createAI().json(prompt));
+    if (detailId !== talker || !overlay) return; // await 期间换人 / 关面板：这次回包作废，一个字都不写
     let filled = 0;
     // 自由文本字段：只填空白输入行
     for (const f of PROFILE_TEXT_FIELDS) {
@@ -3198,6 +3269,7 @@ async function refreshSuppStoreInfo(talker: string): Promise<void> {
   } catch {
     /* 读不到按零值渲染 */
   }
+  if (!overlay || suppOwnerId !== talker) return; // await 期间换人 / 关面板：旧仓账不顶替新页（B 组审查 P3）
   suppStoreInfo = { imported, undescribed, mergedRecs, imageItems: imageItems.reverse() };
   if (dialog?.kind === 'note') void renderAlbum();
 }
@@ -3908,6 +3980,38 @@ async function prepareVoiceprintFor(talker: string, root: string): Promise<boole
 }
 
 /**
+ * 录音转写 LLM 校对（ADR-0222 / issue 518）：开关关 / 已校过 / 重排（why='restart' 只动 ts）零开销直返。
+ * 逐轮文本送 LLM「只修错不创作」，全成写回账本（顶层 `proofread` 标记 + 轮次 text 就地替换）后
+ * 以校对稿并仓；任一批终败不写回——原文并仓并通知，缺口留给重跑任务（Python 对已有 text 不重转）
+ * 或再点「并仓」补校。
+ */
+async function proofreadRecordingSidecarIfEnabled(
+  root: string,
+  talker: string,
+  file: string,
+  side: RecordingSidecar,
+  why: 'merge' | 'restart'
+): Promise<RecordingSidecar> {
+  if (why === 'restart') return side;
+  if (tryGetSettings()?.asrLlmProofread !== true || side.proofread) return side;
+  const pieces = (side.turns ?? []).filter((t) => t.text.trim() !== '').map((t) => t.text);
+  if (!pieces.length) return side;
+  notice(`「${file}」LLM 校对转写中（${pieces.length} 轮）…`, 'info');
+  const res = await proofreadPieces(pieces, {
+    contextNote: `双人录音聊天的逐轮转写（「我」与「${talker}」交替说话，口语）`,
+  });
+  if (res.failed) {
+    notice(`「${file}」LLM 校对失败——按原文并仓，重跑或再点并仓可补校`, 'warning');
+    return side;
+  }
+  if (!writeRecordingTurnsProofread(root, talker, file, res.texts)) {
+    notice(`「${file}」LLM 校对结果写回失败——按原文并仓`, 'warning');
+    return side;
+  }
+  return readRecordingSidecar(root, talker, file) ?? side;
+}
+
+/**
  * 转写成果齐（done，或停在 transcribe 但成果已齐的兜底）→ 聊天仓轮次并仓
  * （插件是聊天仓唯一写入者；kindCounts / stats 同步重算）。
  * `why = 'restart'` 是改起点后的重排：同一函数幂等（先按 `rec:<文件>:` 前缀清旧再写），
@@ -3920,11 +4024,12 @@ async function suppMergeRecording(talker: string, file: string, why: 'merge' | '
     notice('保险库上锁——解锁后在这条录音上点「并仓」补上', 'warning');
     return;
   }
-  const side = readRecordingSidecar(root, talker, file);
+  let side = readRecordingSidecar(root, talker, file);
   if (!side || !recordingTurnsComplete(side)) {
     void renderAlbum();
     return;
   }
+  side = await proofreadRecordingSidecarIfEnabled(root, talker, file, side, why);
   const salvaged = side.phase !== 'done'; // 账本收尾标记缺失的兜底并仓（ADR-0219）
   const base = recordingStartOf(root, talker, file, recMtimeOf(root, talker, file));
   let added = 0;

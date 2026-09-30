@@ -47,15 +47,27 @@ function legacyPaths(): { people: string; preview: string; jobs: string } {
   };
 }
 
-/** 只读直读旧 json（不走 jsonFileStore——缺失/损坏绝不触发「重建落盘」，保住迁移现场） */
-async function readLegacyJson<T>(adapter: { exists(p: string): Promise<boolean>; read(p: string): Promise<string> }, path: string): Promise<T | null> {
+/** readLegacyJson 三态哨兵：文件存在但读/解析失败。绝不与「不存在」(null) 混淆——
+ *  错吞成 null 会带着残缺现场走到清理段，旧明文三件被误删后聊天记录永久丢失 */
+const LEGACY_READ_FAILED: unique symbol = Symbol('people-migrate-legacy-read-failed');
+
+/** 只读直读旧 json（不走 jsonFileStore——缺失/损坏绝不触发「重建落盘」，保住迁移现场）。
+ *  三态：数据 / null = 文件不存在 / LEGACY_READ_FAILED = 存在但读不动（调用方须中止迁移） */
+async function readLegacyJson<T>(
+  adapter: { exists(p: string): Promise<boolean>; read(p: string): Promise<string> },
+  path: string
+): Promise<T | null | typeof LEGACY_READ_FAILED> {
   try {
     if (!(await adapter.exists(path))) return null;
+  } catch {
+    return LEGACY_READ_FAILED; // 存在性都探不动：按「存在但读失败」处置，宁中止不冒险
+  }
+  try {
     const raw = await adapter.read(path);
     if (!raw || !raw.trim()) return null;
     return JSON.parse(raw) as T;
   } catch {
-    return null;
+    return LEGACY_READ_FAILED;
   }
 }
 
@@ -129,10 +141,14 @@ export async function migrateLegacyPeopleData(app: App, safe: PeopleSafeStore): 
   const adapter = (app.vault as any).adapter;
   const paths = legacyPaths();
 
-  // 1. 读旧明文三件（只读；缺哪件算哪件）
+  // 1. 读旧明文三件（只读；缺哪件算哪件）。任一件「存在但读不动」（被锁 / IO 故障 / 坏 JSON）
+  //    即整体中止并保留现场——绝不带残缺数据走到第 4 步清理，否则旧明文会被误删且不可恢复。
   const people = await readLegacyJson<PeopleData>(adapter, paths.people);
   const preview = await readLegacyJson<MessageStoreData>(adapter, paths.preview);
   const jobs = await readLegacyJson<JobsData>(adapter, paths.jobs);
+  if (people === LEGACY_READ_FAILED || preview === LEGACY_READ_FAILED || jobs === LEGACY_READ_FAILED) {
+    return { migrated: 0, skipped: 0, cleaned: [], keptBack: [paths.people, paths.preview, paths.jobs] };
+  }
 
   const cards = Array.isArray(people?.people) ? people!.people : [];
   // 聊天仓只认 v2（466 / ADR-0197 决策 6：v1 缺回溯原料，判废不迁，从数据根重导）
@@ -150,6 +166,10 @@ export async function migrateLegacyPeopleData(app: App, safe: PeopleSafeStore): 
 
   let migrated = 0;
   let skipped = 0;
+  /** resolveLegacyAvatar 的实际结果（talker → 真读到头像字节）：第 3 步校验的唯一依据——
+   *  旧头像源缺失 / 读不动时返回 null（设计为不阻断迁移），按旧元数据「有没有路径」判定
+   *  会自相矛盾：永远 verifyFail、旧明文永不清理且无提示 */
+  const avatarReadOk = new Map<string, boolean>();
   for (const talker of talkers) {
     if (safe.has(talker)) {
       skipped += 1; // 幂等键：已有记录即视为已迁（半途崩溃重跑的收敛点）
@@ -162,6 +182,7 @@ export async function migrateLegacyPeopleData(app: App, safe: PeopleSafeStore): 
     const job = jobList.length ? jobList[jobList.length - 1] : null;
     const nowIso = new Date().toISOString();
     const avatar = await resolveLegacyAvatar(app, contact ?? ({} as StoreContact));
+    avatarReadOk.set(talker, avatar !== null);
     await safe.write(
       talker,
       (rec: PeopleSafeRecord) => {
@@ -190,7 +211,9 @@ export async function migrateLegacyPeopleData(app: App, safe: PeopleSafeStore): 
         verifyFail.push(talker);
         continue;
       }
-      const expectedAvatar = Boolean(contacts[talker]?.avatar);
+      // 校验口径 = 迁移时头像字节的实际读取结果：真读到字节才要求附件在位
+      // （expectedAvatar = 有路径 && 读文件成功；源缺失按设计不阻断，也不该卡清理）
+      const expectedAvatar = avatarReadOk.get(talker) === true;
       if (expectedAvatar && safe.attachmentCount(talker) === 0) verifyFail.push(talker);
     } catch {
       verifyFail.push(talker);

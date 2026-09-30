@@ -31,7 +31,9 @@
  * 人物卡写回（PeopleStore / ImportRecord / 面板刷新）由 ui 层（E2）订阅 done 完成。
  */
 import { createAI } from '../core/ai';
+import { proofreadPieces } from '../core/asr-proofread';
 import { onDomainEvent } from '../core/domain-bus';
+import { notice } from '../core/notice';
 import { tryGetSettings } from '../core/settings-provider';
 import type { ExternalToolCallbacks } from '../core/external-tool';
 import { ENCRYPT_UNLOCK_CHANGED_CHANNEL } from '../encrypt/data';
@@ -52,6 +54,7 @@ import {
   collectPrepInfo,
   currentPrepSession,
   newPrepProgress,
+  pendingVoiceProofread,
   prepAllDone,
   prepMediaTotals,
   prepStageLine,
@@ -59,6 +62,7 @@ import {
   resetPrepForTests,
   startPrepSession,
   writePrepControl,
+  writeVoiceSidecarRaw,
   type PrepProgress,
 } from './prep';
 import {
@@ -1185,6 +1189,7 @@ async function runPrepStage(
   // 就不起 prep 进程了（3000+ 文件的全扫整个消失）；覆盖不全（转写失败 / 新语音）才落回原路径。
   const side = readPrepSidecars(dataRoot, job.talker);
   if (side && (side.voice.length || side.imageMap.length)) {
+    await proofreadVoiceSidecarIfEnabled(job, dataRoot, job.talker); // ADR-0222：并仓前校对
     await mergePrepArtifactsIntoStore(safe, job.talker, dataRoot);
     const fresh = (await safe.read(job.talker))?.store;
     const after = pendingMediaCounts(fresh?.msgs ?? []);
@@ -1261,6 +1266,32 @@ async function runPrepStage(
   if (Number.isFinite(failed) && failed > 0 && job.prep) job.prep.failed = failed;
   clearPrepControl(dataRoot); // 终态收尾：残留的 pause 会让下一次 prep 起跑即待命
   return 'ok';
+}
+
+/**
+ * 语音条旁路表 LLM 校对（ADR-0222 / issue 518）：开关关 / 无待校条目零开销直返。
+ * 校对结果连同 `proofread` 标记写回 voice.json——整档任一批终败**不写回**，原文照旧并仓并
+ * 通知留缺口；重跑任务时 Python 侧 text 已有不重转，只补校对（批内不可暂停，整档通常秒级）。
+ */
+async function proofreadVoiceSidecarIfEnabled(job: PersonJob, dataRoot: string, talker: string): Promise<void> {
+  if (tryGetSettings()?.asrLlmProofread !== true) return;
+  const items = readPrepSidecars(dataRoot, talker)?.voice ?? [];
+  const pending = pendingVoiceProofread(items);
+  if (!pending.length) return;
+  const step = (t: string) => { job.message = t; void persist(); emit(); };
+  step(`LLM 校对语音条中（${pending.length} 条）…`);
+  const res = await proofreadPieces(pending.map((v) => String(v.text ?? '')), {
+    contextNote: '双人聊天语音消息逐条转写（口语，按时间先后排列）',
+    onProgress: (done, total) => step(`LLM 校对语音条 ${done}/${total} 批`),
+  });
+  if (res.failed) {
+    notice(`「${talker}」语音条 LLM 校对失败——按原文并仓，重跑任务可补校`, 'warning');
+    return;
+  }
+  pending.forEach((v, k) => { v.text = res.texts[k]; v.proofread = true; });
+  if (!writeVoiceSidecarRaw(dataRoot, talker, items)) {
+    notice(`「${talker}」语音条校对结果写回失败——按原文并仓`, 'warning');
+  }
 }
 
 /**
@@ -1583,7 +1614,8 @@ async function runJob(job: PersonJob): Promise<void> {
     const prepState = await runPrepStage(job, finish, storeBefore, safe);
     if (prepState === 'halted') return; // 暂停 / 硬失败（finish 已落状态）
     if (prepState === 'ok') {
-      // prep 产物合并进聊天仓（ADR-0197 决策 4：插件是唯一写入者；幂等靶向升级）
+      // prep 产物合并进聊天仓（ADR-0197 决策 4：插件是唯一写入者；幂等靶向升级）；合并前先过 LLM 校对（ADR-0222）
+      await proofreadVoiceSidecarIfEnabled(job, dataRootOf(), job.talker);
       const merged = await mergePrepArtifactsIntoStore(safe, job.talker, dataRootOf());
       if (gone(job)) return;
       if (merged && merged.voice + merged.images > 0) {
