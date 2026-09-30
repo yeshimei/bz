@@ -4714,13 +4714,14 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 
 /* ============ 面板骨架：桌面居中卡 / 移动真全屏 ============ */
 /* 桌面实例：居中卡（980px 宽 82vh，原型 desk-panel）
-   矮窗兜底：max-height 压住 640px 下限（min-height 随视口收缩到可用高度内），防溢出被裁 */
+   矮窗兜底：max-height 随视口收缩防溢出被裁；min-height 对齐 PANEL.MIN_H=560
+   （src/diary/ui.ts）——低于它的 CSS 下限会让拖拽收高在内联与 min-height 之间出现死区 */
 .bz-diary-desk {
   position: relative;
   width: 980px;
   max-width: 95vw;
   height: 82vh;
-  min-height: min(640px, calc(100vh - 48px));
+  min-height: min(560px, calc(100vh - 48px));
   max-height: calc(100vh - 48px);
   display: flex;
   flex-direction: column;
