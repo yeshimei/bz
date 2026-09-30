@@ -63,7 +63,7 @@ import { readNewsAndSidecar } from './loader';
 import { readNewsData } from './news-data';
 import { writeClipNote } from './save';
 import { getKnowledgeBoxes } from '../core/knowledge-boxes';
-import { applyBodyTransforms, applyClipContentTransforms, findMarkdownSnippet, addArticleMark, addPendingSourceNote, clearArticleTracking, linkAliasText, type ClipMark } from './anchor';
+import { applyBodyTransforms, applyClipContentTransforms, addArticleMark, addPendingSourceNote, clearArticleTracking, linkAliasText, type ClipMark } from './anchor';
 import { saveClipImage, fetchImageDataUrl } from './image-save';
 import {
   flowSave, flowMarkRead, flowDeleteNews, setReadingSession, pauseReadingSession, flushReadingSession,
@@ -1854,7 +1854,9 @@ function renderMobDetail(): void {
 }
 
 // ================= 划选工具框（issue 329 / ADR-0144：桌面/移动同套） =================
-// 阅读正文划选文字 → 光标上方浮框：复制 Markdown / 存为名词 / 存为段落；
+// 阅读正文划选文字 → 浮框：存为名词 / 存为段落（复制 Markdown 已按用户要求移除，
+// 选区回查工具 findMarkdownSnippet 留在 anchor.ts 备用）；移动端浮框放选区**下方**
+// （系统选择菜单在上方，下方不再抢位，见 placeSelBar）；
 // 单击图片 → 浮框：保存图片 / 存为图版。选区塌陷/点击别处/Esc/滚动即收。
 // 录入动作动态 import('../knowledge') 契约 API（openTermNote/openPassageNote/openImageNote，
 // 新参全可选；本域按存在调用——旧版本缺导出时提示，不崩）。生成后不自动打开笔记。
@@ -1866,7 +1868,7 @@ let selChangeTimer: ReturnType<typeof setTimeout> | null = null;
 /** 动作发起后的静默窗口：点按钮触发的 selectionchange 不再重弹工具框 */
 let selBarHoldUntil = 0;
 /** 文字动作快照（显示工具框时定格，防动作执行中切篇错锚） */
-interface SelSnapshot { articleId: string; text: string; body: string; }
+interface SelSnapshot { articleId: string; text: string; }
 let selSnap: SelSnapshot | null = null;
 /** 图片动作快照 */
 interface ImgSnapshot { articleId: string; src: string; }
@@ -1908,28 +1910,31 @@ function armSelBarEsc(): void {
   });
 }
 
-/** 浮框定位：光标（选区/图片）上方 8px，放不下翻下方，视口内钳制（jsdom 零尺寸走估算兜底）。
- *  双端同一份口径：issue 329 曾给移动端额外让位 48px（躲系统选择菜单），issue 341 屏蔽生效后
- *  系统菜单不再抢位，让位只剩空隙，故撤销（2026-09-16 真机验收确认）。 */
-function placeSelBar(rect: { top: number; left: number; bottom: number; right: number }): void {
+/** 浮框定位：默认光标上方 8px；`preferBelow`（移动端文字工具框）改选区下方 8px 优先，
+ *  放不下翻上方，视口内钳制（jsdom 零尺寸走估算兜底）。
+ *  方位沿革：issue 329 曾给移动端让位 48px（躲系统选择菜单）→ issue 341 contextmenu 拦截
+ *  「真机验收生效」后撤销 → 2026-09-30 真机复验推翻该结论：Android 选择 ActionMode 不认
+ *  preventDefault，系统菜单仍在选区上方弹出与工具框叠位（与 weave 阅读器同结论——系统菜单
+ *  与选区手柄同源，压不下去）。改为下方优先：系统菜单恒在上方，下方天然让开，零让位常量。 */
+function placeSelBar(rect: { top: number; left: number; bottom: number; right: number }, preferBelow = false): void {
   const bar = selBarEl!;
   const w = bar.offsetWidth || 240;
   const h = bar.offsetHeight || 36;
   const vw = window.innerWidth || document.documentElement.clientWidth || 0;
   const vh = window.innerHeight || document.documentElement.clientHeight || 0;
   let left = rect.left;
-  let top = rect.top - h - 8;
-  if (top < 8) top = (rect.bottom || rect.top) + 8;
+  let top: number;
+  if (preferBelow) {
+    top = (rect.bottom || rect.top) + 8;
+    if (vh && top + h > vh - 8) top = rect.top - h - 8;
+  } else {
+    top = rect.top - h - 8;
+    if (top < 8) top = (rect.bottom || rect.top) + 8;
+  }
   if (vw) left = Math.min(Math.max(left, 8), Math.max(8, vw - w - 8));
   if (vh) top = Math.min(Math.max(top, 8), Math.max(8, vh - h - 8));
   bar.style.left = `${left}px`;
   bar.style.top = `${top}px`;
-}
-
-/** 当前条目源 body（复制 Markdown 回查用）：clip 条目 = 正文缓存原文；news 条目 = body（只读，永不被写） */
-function currentSourceBody(a: ClipArticle): string {
-  if (a.origin === 'clip') return a.notePath ? (clipBodyCache.get(a.notePath) || '') : '';
-  return a.body || '';
 }
 
 /** 选区读盘：仅认双端阅读正文容器（桌面 [data-clip-md] / 移动 [data-clip-mob-md]）内的非空选区 */
@@ -1952,19 +1957,17 @@ function readTextSelection(): { text: string; rect: { top: number; left: number;
 function showTextSelBar(info: { text: string; rect: { top: number; left: number; bottom: number; right: number } }): void {
   const a = M.cur;
   if (!a) return;
-  const body = currentSourceBody(a);
-  selSnap = { articleId: a.id, text: info.text, body };
+  selSnap = { articleId: a.id, text: info.text };
   imgSnap = null;
   const bar = ensureSelBar();
   bar.innerHTML = `
-    <button type="button" class="bz-clip-selbar-btn" data-clip-selbar-act="copy" title="复制选中内容的 Markdown 源语法">复制 Markdown</button>
     <button type="button" class="bz-clip-selbar-btn" data-clip-selbar-act="term" title="存为知识盒名词，并在此处留下锚定双链">存为名词</button>
     <button type="button" class="bz-clip-selbar-btn" data-clip-selbar-act="passage" title="存为知识盒段落，并在此处留下锚定双链">存为段落</button>`;
   bar.style.display = 'flex';
   topifyZ(bar); // 显示即发号（ADR-0067）：浮框挂 body 无静态档，主面板经 topifyZ 有号——
   // 不发号则 z-index:auto 恒被面板遮罩（z-index 数值元素）压住，工具框「看不见」但 DOM 在
   // （CSS 注释里写的 allocZ 此前从未接线，2026-09-19 用户报「被主弹窗遮挡」补齐）
-  placeSelBar(info.rect);
+  placeSelBar(info.rect, isMobileEnv()); // 移动端下方优先：系统选择菜单恒在选区上方（2026-09-30）
   armSelBarEsc();
   motionSelbarIn(bar); // 动效：工具框浮现（只动 opacity/transform，定位内联不动）
 }
@@ -2038,11 +2041,6 @@ function onDocMouseDown(ev: MouseEvent): void {
 /** 工具框动作分发 */
 async function runSelBarAct(act: string): Promise<void> {
   selBarHoldUntil = Date.now() + 600;
-  if (act === 'copy') {
-    hideSelBar();
-    await actCopyMarkdown();
-    return;
-  }
   if (act === 'term' || act === 'passage') {
     hideSelBar();
     await actSaveEntry(act);
@@ -2057,14 +2055,6 @@ async function runSelBarAct(act: string): Promise<void> {
     hideSelBar();
     await actImageNote();
   }
-}
-
-/** 复制 Markdown：选区文本回查源 body 片段（保语法），回查失败回退纯文本 */
-async function actCopyMarkdown(): Promise<void> {
-  const snap = selSnap;
-  if (!snap) return;
-  const snippet = snap.body ? findMarkdownSnippet(snap.body, snap.text) : null;
-  await copyText(snippet || snap.text, 'Markdown 已复制');
 }
 
 /** 快照校验：动作执行时仍是发起时的当前条目才落锚（切篇后丢弃） */

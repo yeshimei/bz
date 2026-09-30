@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 /**
  * clipbook（issue 329 / ADR-0144）：划选工具框 + 锚定直写 + 保存物化 UI 层测试。
- * 覆盖：工具框出现与收起、五动作触发与预填参数、复制 Markdown 剪贴板内容、
+ * 覆盖：工具框出现与收起、动作触发与预填参数、浮框定位（移动端下方优先避让系统菜单）、
  * 点击拦截（文献盒内拦/目录外不拦）、保存物化链路（md 含替换/侧写清理/upgrade 被调）、
  * 已保存条目直写路径、保存图片（requestUrl 落盘 + 侧写 + 渲染层换链）。
  * knowledge 契约 API 由并行 worktree 实现——vi.mock 打桩（仿 flow.test.ts 对 knowledge 的 mock）。
@@ -117,13 +117,13 @@ beforeEach(() => {
 // ================= 工具框出现与收起 =================
 
 describe('划选工具框出现与收起（issue 329）', () => {
-  it('阅读区划选 → 浮框出三动作（复制 Markdown / 存为名词 / 存为段落）', async () => {
+  it('阅读区划选 → 浮框出两动作（存为名词 / 存为段落；复制 Markdown 已移除）', async () => {
     await openDesktop();
     const bar = await showToolbar('量子纠缠');
-    expect(bar.textContent).toContain('复制 Markdown');
+    expect(bar.textContent).not.toContain('复制 Markdown');
     expect(bar.textContent).toContain('存为名词');
     expect(bar.textContent).toContain('存为段落');
-    expect(bar.querySelectorAll('[data-clip-selbar-act]')).toHaveLength(3);
+    expect(bar.querySelectorAll('[data-clip-selbar-act]')).toHaveLength(2);
     closeAndCleanup();
   });
 
@@ -197,10 +197,10 @@ function closePanelSafe(): void {
   } catch (e) { /* 用例内已收 */ }
 }
 
-// ================= 浮框定位（双端同一份口径，issue 341 撤销移动端让位） =================
+// ================= 浮框定位（移动端下方优先：系统选择菜单恒在选区上方，2026-09-30） =================
 
-describe('浮框定位：双端同口径（issue 341 撤销移动端系统菜单让位）', () => {
-  it('桌面：选区上 8px', async () => {
+describe('浮框定位：移动端下方优先避让系统选择菜单', () => {
+  it('桌面：选区上 8px（无系统菜单，维持上方）', async () => {
     await openDesktop();
     const bar = await showToolbar('量子纠缠');
     // 选区 rect top=100、浮框高 jsdom 零尺寸估算 36 → 100 - 36 - 8 = 56
@@ -208,26 +208,27 @@ describe('浮框定位：双端同口径（issue 341 撤销移动端系统菜单
     closePanelSafe();
   });
 
-  it('移动端：零让位，与桌面同定位（系统选择菜单已屏蔽，让位只剩空隙）', async () => {
+  it('移动端：选区下方 8px 优先（系统菜单在上方，下方不抢位）', async () => {
     await openDesktop();
     (Platform as any).isMobile = true;
     const bar = await showToolbar('量子纠缠');
-    // 100 - 36 - 8 = 56（与桌面同一算式，端别不再参与定位）
-    expect(bar.style.top).toBe('56px');
+    // 选区 rect bottom=120 → 120 + 8 = 128
+    expect(bar.style.top).toBe('128px');
     closePanelSafe();
   });
 
-  it('移动端：上方放不下 → 翻下方，同样零让位', async () => {
+  it('移动端：下方放不下 → 翻上方', async () => {
     await openDesktop();
     (Platform as any).isMobile = true;
     const mdEl = document.querySelector('[data-clip-md]') as HTMLElement;
+    // 视口高 jsdom 默认 768：bottom=750 → 下方 758+36 越界 → 翻上方 720 - 36 - 8 = 676
     vi.spyOn(window, 'getSelection').mockReturnValue({
       isCollapsed: false,
       rangeCount: 1,
       toString: () => '量子纠缠',
       getRangeAt: () => ({
         commonAncestorContainer: mdEl,
-        getBoundingClientRect: () => ({ top: 0, left: 50, bottom: 30, right: 260, width: 210, height: 20 }),
+        getBoundingClientRect: () => ({ top: 720, left: 50, bottom: 750, right: 260, width: 210, height: 20 }),
       }),
     } as any);
     (document.querySelector('[data-clip-read-pane]') as HTMLElement).dispatchEvent(new MouseEvent('mouseup', { bubbles: true }));
@@ -236,8 +237,7 @@ describe('浮框定位：双端同口径（issue 341 撤销移动端系统菜单
       expect(bar).toBeTruthy();
       expect(bar!.style.display).toBe('flex');
     });
-    // 上方 0 - 36 - 8 < 8 放不下 → 翻下方：30 + 8 = 38
-    expect((document.querySelector('.bz-clip-selbar') as HTMLElement).style.top).toBe('38px');
+    expect((document.querySelector('.bz-clip-selbar') as HTMLElement).style.top).toBe('676px');
     closePanelSafe();
   });
 });
@@ -319,20 +319,6 @@ describe('工具框五动作触发与预填参数（issue 329）', () => {
     expect(app).toBe(getApp());
     expect(opts.text).toBe('量子纠缠');
     expect(opts.source).toEqual({ kind: 'url', url: 'https://guokr.com/1', title: '甲文' });
-    closePanelSafe();
-  });
-
-  it('复制 Markdown：剪贴板 = 选区回查的源片段（保 markdown 语法，非 DOM textContent）', async () => {
-    await openDesktop();
-    const writeText = vi.fn(async (_text: string) => {});
-    Object.defineProperty(navigator, 'clipboard', { value: { writeText }, configurable: true });
-    const bar = await showToolbar('量子纠缠');
-    (bar.querySelector('[data-clip-selbar-act="copy"]') as HTMLElement).click();
-    await vi.waitFor(() => expect(writeText).toHaveBeenCalledTimes(1));
-    // body 原文该行 = '正文讲到了**量子纠缠** 是现象，…' —— 回查覆盖整行保语法
-    const written = writeText.mock.calls[0][0] as string;
-    expect(written).toContain('**量子纠缠**');
-    expect(written).not.toBe('量子纠缠');
     closePanelSafe();
   });
 
