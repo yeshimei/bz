@@ -18,6 +18,28 @@ describe('豆瓣片单解析（parseDoubanListHtml）', () => {
     expect(parseDoubanListHtml(html)[0]).toEqual({ sid: '1', name: 'A & B' });
   });
 
+  it('doulist 豆列形态：链接不带 title 属性，片名取链接文本（真机 doulist 抓 0 条的根因）', () => {
+    const html = `<div class="doulist-item"><a href="https://movie.douban.com/subject/1292052/" >肖申克的救赎</a>
+      <a href="https://movie.douban.com/subject/3011091/" class="title">  绿里奇迹
+  </a></div>`;
+    expect(parseDoubanListHtml(html)).toEqual([
+      { sid: '1292052', name: '肖申克的救赎' },
+      { sid: '3011091', name: '绿里奇迹' },
+    ]);
+  });
+
+  it('doulist 与 wish 混排同片：title 优先于链接文本，仍按 sid 去重', () => {
+    const html = `<a href="https://movie.douban.com/subject/9/" title="正名">文本名</a>
+      <a href="https://movie.douban.com/subject/9/">另一文本</a>`;
+    expect(parseDoubanListHtml(html)).toEqual([{ sid: '9', name: '正名' }]);
+  });
+
+  it('链接文本含换行与多空白折叠为单空格；空文本且无 title 跳过', () => {
+    const html = `<a href="https://movie.douban.com/subject/5/" >多 词
+      片名</a><a href="https://movie.douban.com/subject/6/"></a>`;
+    expect(parseDoubanListHtml(html)).toEqual([{ sid: '5', name: '多 词 片名' }]);
+  });
+
   it('无条目回空数组（登录页/风控页都表现为空）', () => {
     expect(parseDoubanListHtml('<html>豆瓣登录页</html>')).toEqual([]);
   });
@@ -27,23 +49,36 @@ describe('豆瓣片单翻页抓取（fetchDoubanList）', () => {
   const page = (names: string[], offset = 0): string =>
     names.map((n, i) => `<a href="https://movie.douban.com/subject/${offset + i + 1}/" title="${n}">x</a>`).join('');
 
-  it('翻页聚合跨页去重，末页（不足 25 条）即停', async () => {
+  it('翻页聚合跨页去重；末页不足整页（20 条/页的 doulist）继续翻到空页为止', async () => {
     const calls: string[] = [];
-    const base = 'https://movie.douban.com/people/x/wish';
+    const base = 'https://www.douban.com/doulist/164548718';
     const pages: Record<string, string> = {
-      [`${base}?start=0`]: page(Array.from({ length: 25 }, (_, i) => `片${i}`)),
+      [`${base}?start=0`]: page(Array.from({ length: 20 }, (_, i) => `片${i}`)),
       [`${base}?start=25`]: page(['尾片A', '尾片B'], 25),
     };
     const { entries, firstPageEmpty } = await fetchDoubanList(base, async (url) => {
       calls.push(url);
       return pages[url] ?? '';
     });
+    // 不假设每页条数（wish 25 / doulist 20）：末页之后还要探一页空页才停
     expect(calls).toEqual([
-      'https://movie.douban.com/people/x/wish?start=0',
-      'https://movie.douban.com/people/x/wish?start=25',
+      'https://www.douban.com/doulist/164548718?start=0',
+      'https://www.douban.com/doulist/164548718?start=25',
+      'https://www.douban.com/doulist/164548718?start=50',
     ]);
     expect(firstPageEmpty).toBe(false);
-    expect(entries).toHaveLength(27);
+    expect(entries).toHaveLength(22);
+  });
+
+  it('翻过界豆瓣回落末页内容 → 无新 sid 即停（不死循环）', async () => {
+    const calls: string[] = [];
+    const last = page(['甲', '乙'], 0);
+    const { entries } = await fetchDoubanList('https://movie.douban.com/people/x/wish', async (url) => {
+      calls.push(url);
+      return last; // 每页都返回同样内容
+    });
+    expect(calls.length).toBe(2); // 第二页全是已见 sid → fresh=0 停
+    expect(entries).toHaveLength(2);
   });
 
   it('首页为空标记 firstPageEmpty（需登录/风控的提示口径），条目为空', async () => {

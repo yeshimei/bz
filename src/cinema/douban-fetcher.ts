@@ -622,17 +622,23 @@ export interface DoubanListEntry { sid: string; name: string }
 
 /**
  * 片单页 HTML → 条目列表（纯函数，测试可直接喂 HTML）。
- * 认豆瓣两类页面共有的条目锚点：subject 链接自带 `title="片名"`（wish/collect 主页
- * 收藏页与 doulist 豆列同构）；同一条目在页面里可能出现多次（海报链接 + 文字链接），
- * 按 sid 去重保序。空结果 = 抓不到（风控/需登录/链接不对，由调用方分流提示）。
+ * 兼容豆瓣两类真实形态（doulist 豆列的条目链接**不带** title 属性，片名只在
+ * 链接文本里——2026-09-30 真机 doulist 导入抓到 0 条的根因）：
+ *   - wish/collect 主页收藏页：`<a href="…/subject/N/" title="片名">…</a>`
+ *   - doulist 豆列：          `<a href="…/subject/N/">片名</a>`
+ * title 属性优先、缺失回落链接文本（实体反转义 + 空白折叠）；同一片在页面里
+ * 出现多次（海报链接 + 文字链接）按 sid 去重保序。空结果 = 抓不到（风控/需
+ * 登录/链接不对，由调用方分流提示）。
  */
 export function parseDoubanListHtml(html: string): DoubanListEntry[] {
   const out: DoubanListEntry[] = [];
   const seen = new Set<string>();
-  const re = /movie\.douban\.com\/subject\/(\d+)\/"[^>]*?title="([^"]+)"/g;
+  const unescape = (t: string): string =>
+    t.replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;/g, '\'');
+  const re = /movie\.douban\.com\/subject\/(\d+)\/"[^>]*?(?:\stitle="([^"]*)")?[^>]*>([^<]{0,200})</g;
   for (let m = re.exec(html); m; m = re.exec(html)) {
     const sid = m[1];
-    const name = m[2].replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').trim();
+    const name = unescape((m[2] ?? m[3] ?? '').replace(/\s+/g, ' ').trim());
     if (!name || seen.has(sid)) continue;
     seen.add(sid);
     out.push({ sid, name });
@@ -644,9 +650,11 @@ export function parseDoubanListHtml(html: string): DoubanListEntry[] {
 const DOUBAN_LIST_MAX_PAGES = 16;
 
 /**
- * 抓取整个豆瓣片单（翻页聚合）：wish / doulist 等 subject 列表页，25 条/页按 `start=` 递进，
- * 某页解析为空即停（到底/需登录/风控拦截页都表现为空）。cookie 可选（个人页登录态；
- * 公开豆列不填）。返回条目与「是否疑似被拦」（首页为空但请求本身成功 → 让调用方提示查 cookie）。
+ * 抓取整个豆瓣片单（翻页聚合）：wish / doulist 等 subject 列表页按 `start=` 递进。
+ * 停页条件不假设每页条数（wish 25/页、doulist 20/页不等）：**本页解析为空即停**
+ * （到底/需登录/风控拦截页都表现为空），**本页无新 sid 也停**（翻过界豆瓣回落
+ * 末页内容，继续翻只会原地打转）。cookie 可选（个人页登录态；公开豆列不填）。
+ * 返回条目与「是否疑似被拦」（首页为空但请求本身成功 → 让调用方提示查 cookie）。
  */
 export async function fetchDoubanList(base: string, httpGet: HttpGet, cookie?: string): Promise<{ entries: DoubanListEntry[]; firstPageEmpty: boolean }> {
   const sep = base.includes('?') ? '&' : '?';
@@ -664,12 +672,14 @@ export async function fetchDoubanList(base: string, httpGet: HttpGet, cookie?: s
     const page = html ? parseDoubanListHtml(html) : [];
     if (start === 0 && page.length === 0) firstPageEmpty = true;
     if (page.length === 0) break;
+    let fresh = 0;
     for (const e of page) {
       if (seen.has(e.sid)) continue;
       seen.add(e.sid);
       all.push(e);
+      fresh++;
     }
-    if (page.length < 25) break; // 末页（不足一整页）
+    if (fresh === 0) break; // 翻过界：豆瓣回落末页内容，无新条目即到底
   }
   return { entries: all, firstPageEmpty };
 }
