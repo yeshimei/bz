@@ -386,6 +386,8 @@ let chatAll: ChatLineData[] = [];
 let chatShown = CHAT_PAGE;
 /** 正在读保库记录（首屏） */
 let chatLoading = false;
+/** 读不了（保库记录缺失 / 损坏；空 = 正常） */
+let chatError: string | null = null;
 /** 加载更早时重画前记下的「离底距离」（重画后按同一距离还原——内容往上长，不是往下长） */
 let chatAnchorBottom: number | null = null;
 /** 这一次重画完要滚到底（进页 / 点「回到最新」） */
@@ -2016,7 +2018,12 @@ function onOverlayClick(e: MouseEvent): void {
   if (t.closest('[data-people-banner-close]')) { banner = null; renderBanner(); return; }
   // —— 聊天页（issue 529）：往上放更早的一页 / 回到最新 ——
   if (t.closest('[data-people-chat-more]')) { growChat(); return; }
-  if (t.closest('[data-people-chat-bottom]')) { chatScrollBottom = true; chatAnchorBottom = null; void renderAlbum(); return; }
+  // 「回到最新」直接滚，不值得为一次滚动重画整册（重画还得再走一遍滚动还原）
+  if (t.closest('[data-people-chat-bottom]')) {
+    const box = overlay?.querySelector<HTMLElement>('[data-people-sub="chat"] [data-people-scroll]');
+    if (box) box.scrollTop = box.scrollHeight;
+    return;
+  }
   // —— 数据源册页 ——
   if (t.closest('[data-people-ds-sync]')) { handleSyncClick(); return; }
   if (t.closest('[data-people-ds-sync-stop]')) { stopSync(); return; }
@@ -2511,6 +2518,7 @@ function openChat(): void {
   if (!id) return;
   chatAll = [];
   chatLoading = true;
+  chatError = null;
   chatShown = CHAT_PAGE;
   chatScrollBottom = true;
   chatAnchorBottom = null;
@@ -2521,14 +2529,20 @@ function openChat(): void {
 /** 读聊天仓 → 展示行（换页 / 换人 / 关面板期间回来的结果一律丢掉） */
 async function loadChatRows(id: string): Promise<void> {
   let rows: ChatLineData[] = [];
+  let err: string | null = null;
   try {
     const recs = await records();
-    rows = chatLinesOf(recs.get(id)?.store.msgs);
+    const rec = recs.get(id);
+    // 记录读不出来时如实说：不要拿「还没有这个人的消息」冒充空仓
+    if (!rec) err = '读不到这个人的聊天记录——保险库记录缺失或损坏，重开面板再试一次。';
+    else rows = chatLinesOf(rec.store.msgs);
   } catch (e) {
     console.warn('[people] 读取聊天记录失败:', e);
+    err = '读聊天记录时出错了——重开面板再试一次。';
   }
   if (dialog?.kind !== 'chat' || detailId !== id) return;
   chatAll = rows;
+  chatError = err;
   chatLoading = false;
   chatScrollBottom = true;
   void renderAlbum();
@@ -2566,6 +2580,7 @@ function chatPageState(p: PersonEntry, avatars?: Map<string, string>): ChatViewS
     total: chatAll.length,
     hasMore: chatAll.length > shown.length,
     loading: chatLoading,
+    ...(chatError ? { error: chatError } : {}),
   };
 }
 
@@ -2624,6 +2639,7 @@ function clearChatState(): void {
   chatAll = [];
   chatShown = CHAT_PAGE;
   chatLoading = false;
+  chatError = null;
   chatAnchorBottom = null;
   chatScrollBottom = false;
   disarmChatMore();
