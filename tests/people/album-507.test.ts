@@ -441,3 +441,29 @@ describe('画谱锁跟帧（507 二审）：忙闲翻转那一下册子自己重
     expect(css).toContain('.bz-people-pagebody .bz-people-act-hint { display: none; }');
   });
 });
+
+// ==================== 面板拖拽缩放 + 尺寸记忆（ADR-0084/0094） ====================
+
+describe('面板拖拽缩放 + 尺寸记忆（开关型，buildPanelShell 挂 / closePeoplePanel 摘）', () => {
+  /** 开面板（解锁门禁走 boot 的已解锁保库）并等壳在位 */
+  async function openShell(): Promise<HTMLElement> {
+    openPeoplePanel(getApp());
+    await vi.waitFor(() => expect(document.querySelector('.bz-people-panel')).toBeTruthy());
+    return document.querySelector('.bz-people-panel') as HTMLElement;
+  }
+
+  it('有记忆值时打开即套用内联宽高（挂载 load 恢复口径，同 clipbook）', async () => {
+    await boot([entry('wxid_a', { name: '陈默' })]);
+    setSettingsProvider(() => ({ storagePath: 'CONFIG/STORAGE', peoplePanelWidth: 900, peoplePanelHeight: 640 }) as never);
+    const panel = await openShell();
+    expect(panel.style.width).toBe('900px');
+    expect(panel.style.height).toBe('640px');
+  });
+
+  it('0 = 未拖过 → 不写内联尺寸（走 CSS 默认 min(1080px,96vw)，persist 语义）', async () => {
+    await boot([entry('wxid_a', { name: '陈默' })]);
+    const panel = await openShell();
+    expect(panel.style.width).toBe('');
+    expect(panel.style.height).toBe('');
+  });
+});

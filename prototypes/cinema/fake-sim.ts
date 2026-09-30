@@ -31,9 +31,11 @@ import { closeOverlay, openAddModalDirect } from '../../src/cinema/ui';
 const FOLDER = '我的/影视';
 /** 种子标记：存在 = 已种子过（用户在评审壳里的增删改保留，不被覆盖）。
  *  **演示数据一变就提版本号**（v4：演示数据改为 `scripts/_gen-cinema-demo.mjs` 全量真库导出
- *  686 条，并补齐 片长 / 季集 / 热门短评 / 上映日期 四项——「观影志」吃这些字段）
+ *  686 条，并补齐 片长 / 季集 / 热门短评 / 上映日期 四项——「观影志」吃这些字段；
+ *  v6：补「重看」重温记录字段——卡片「N刷」角标 / 详情重温行 / 重温 +1 可评审；
+ *  v7：补「片单」自建片单字段（v8：内置片单更名「重映厅」）——侧栏片单区 / 重映厅 / 归入弹层可评审）
  *  ——否则老浏览器停在旧种子上，新条目静默不出现（得手点「重置演示数据」）。 */
-const SEED_MARK = 'bz-sim:__cinema-seed-v5';
+const SEED_MARK = 'bz-sim:__cinema-seed-v8';
 /** 设置持久键（设置弹窗保存经 saveSettings 通道写入；自检可断言） */
 const SETTINGS_KEY = 'bz-sim:__settings';
 
@@ -63,6 +65,10 @@ interface SeedItem {
   seasonText?: string | null;
   /** 豆瓣热门短评原文 */
   hotComment?: string | null;
+  /** 重温日期列表（v6 起演示数据挑几部带值；导出脚本未重跑前旧快照无此键 = 照旧） */
+  rewatches?: string[] | null;
+  /** 自建片单（v7 起演示数据按导演挑几部带值 + 重映厅；无此键 = 照旧） */
+  lists?: string[] | null;
 }
 
 declare global {
@@ -80,7 +86,7 @@ function one(v: unknown): string {
 function mdOf(raw: SeedItem): string {
   const rating =
     raw.status === '想看' ? '-1' : raw.status === '在看' ? '0' : raw.rating == null ? '' : String(raw.rating);
-  return [
+  const lines = [
     '---',
     'tags:',
     `- ${one(raw.typeTag) || '电影'}`,
@@ -99,9 +105,14 @@ function mdOf(raw: SeedItem): string {
     `片长: ${one(raw.duration)}`,
     `季集: ${one(raw.seasonText)}`,
     `热门短评: ${one(raw.hotComment)}`,
-    '---',
-    '',
-  ].join('\n');
+  ];
+  // 重温记录：块列表与 tags 同构（fake 的 frontmatter 解析器对块列表已验证）
+  const rw = (raw.rewatches ?? []).map((d) => one(d)).filter(Boolean);
+  if (rw.length) lines.push('重看:', ...rw.map((d) => `- ${d}`));
+  const ls = (raw.lists ?? []).map((d) => one(d)).filter(Boolean);
+  if (ls.length) lines.push('片单:', ...ls.map((d) => `- ${d}`));
+  lines.push('---', '');
+  return lines.join('\n');
 }
 
 /** 旧演示数据清场：**整目录清掉再种**。

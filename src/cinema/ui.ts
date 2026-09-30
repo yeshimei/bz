@@ -22,23 +22,23 @@ import { isMobileEnv } from '../core/mobile';
 import { fitRotatedBox } from '../core/landscape';
 import { topifyZ, longPress } from '../core/dom';
 import { openItemMenu, openItemSheet, closeItemMenu, resetItemMenuClickGuard, type ItemAction } from '../core/item-actions';
-import { tryGetSettings } from '../core/settings-provider';
-import { mountIcons, openLightbox, uiSuggest } from '../core/ui';
+import { tryGetSettings, panelSizePersist } from '../core/settings-provider';
+import { mountIcons, openLightbox, uiSuggest, uiResizable } from '../core/ui';
 import { syncSlidePills, type BzSlidePillTarget } from '../core/ui/slide-pill';
-import { iconSpan } from '../core/ui/str';
+import { iconSpan, esc } from '../core/ui/str';
 import { openExternalUrl } from '../core/utils';
 import { bindFormSubmit } from '../core/ui/modal';
 import {
   STATUS_WANT, STATUS_WATCHING, STATUS_WATCHED, DEFAULT_RATING,
-  getGroupForTag, hasIllegalNameChar, ILLEGAL_NAME_HINT,
+  getGroupForTag, hasIllegalNameChar, ILLEGAL_NAME_HINT, rewatchCount, REWATCH_SHELF,
 } from './constants';
 import { M, type CinemaItem, type CinemaSortMode } from './state';
 import { loadDoubanNameIndex, searchDoubanNameIndex, normName, type DoubanIndexRow } from '../core/douban-name-index';
-import { rebuildItems, getDisplayItems, normalizeTags } from './data';
+import { rebuildItems, getDisplayItems, normalizeTags, normalizeRewatches, normalizeLists, allLists, refreshDataAndView } from './data';
 import { localNow } from '../core/ui/str';
 import { runAIRecommend, runSimilarRecommend, buildTasteProfile, quickAddWant } from './recommend';
 import { bindYearbook, deriveYb, yearbookHtml, yearbookFixedHtml, yearbookOpenHtml, type YbHandle } from './yearbook';
-import { enqueueDoubanFetch, dequeueDoubanFetch, isFetching, queryDoubanForPreview, downloadPreviewPoster } from './douban-queue';
+import { enqueueDoubanFetch, dequeueDoubanFetch, isFetching, queryDoubanForPreview, downloadPreviewPoster, fetchDoubanListForImport } from './douban-queue';
 import { normalizeListValue, insertPosterEmbed, type DoubanQuery } from './douban-fetcher';
 import { decideCinemaType } from './type-decide';
 import {
@@ -116,6 +116,176 @@ async function markStatus(item: CinemaItem, target: '在看' | '已看', app: Ap
   }
 }
 
+/** 重温 +1：今天追加进 frontmatter「重看」（日期数组；建档/编辑不写此键，旧笔记无键照旧）。
+ *  内存先行——processFrontMatter 落盘后 metadataCache 就绪是异步的，紧跟的 renderAll
+ *  要拿到新值（markStatus 同模式）；写盘失败回滚内存快照。同日多次重温各自成条（一刷一条）。 */
+async function markRewatch(it: CinemaItem, app: App): Promise<void> {
+  if (!it.file) return;
+  const today = localNow().slice(0, 10);
+  const prev = it.rewatches;
+  it.rewatches = [...prev, today];
+  try {
+    await app.fileManager.processFrontMatter(it.file, (fm: Record<string, unknown>) => {
+      fm['重看'] = normalizeRewatches(fm['重看']).concat(today);
+    });
+    notice(`「${it.name}」记下第 ${rewatchCount(it)} 刷（${today}）`, 'success');
+    markCardFlash(itemKey(it));
+    renderAll(app);
+  } catch (e) {
+    it.rewatches = prev;
+    notifySaveError(e);
+    console.error(e);
+    renderAll(app);
+  }
+}
+
+/** 片单归入/移出落盘（含内置「重映厅」）：frontmatter「片单」数组 toggle——建档/编辑不写此键；
+ *  空数组删键（不留无意义的空列表）。内存先行（markRewatch 同模式），写盘失败回滚 */
+async function toggleListMembership(it: CinemaItem, list: string, app: App): Promise<void> {
+  if (!it.file) return;
+  const on = it.lists.includes(list);
+  const prev = it.lists;
+  it.lists = on ? prev.filter((l) => l !== list) : [...prev, list];
+  try {
+    await app.fileManager.processFrontMatter(it.file, (fm: Record<string, unknown>) => {
+      const cur = normalizeLists(fm['片单']);
+      const next = on ? cur.filter((l) => l !== list) : [...cur, list];
+      if (next.length) fm['片单'] = next;
+      else delete fm['片单'];
+    });
+    notice(on ? `已把「${it.name}」移出「${list}」` : `已把「${it.name}」归入「${list}」`, 'success');
+    markCardFlash(itemKey(it));
+    renderAll(app);
+  } catch (e) {
+    it.lists = prev;
+    notifySaveError(e);
+    console.error(e);
+    renderAll(app);
+  }
+}
+
+/** 归入片单弹层（cn-modal--listpick）：现有片单逐行点选（就地切换勾选不关层）+ 底部新建行。
+ *  落盘走 toggleListMembership（每行一次写盘）；勾选态刷新走 ovl 局部 class 翻转，不整刷。
+ *  行内计数 = 库内成员数（与侧栏「卡片数」口径不同：这里是笔记粒度，弹层语境更直观） */
+function openListPick(sec: HTMLElement, it: CinemaItem, app: App): void {
+  const countOf = (name: string): number => M.items.reduce((n, x) => n + (x.lists.includes(name) ? 1 : 0), 0);
+  const rowHtml = (name: string): string =>
+    `<button type="button" class="lp-item${it.lists.includes(name) ? ' is-on' : ''}" data-lp="${esc(name)}"><span class="lp-check">${iconSpan('check')}</span><span class="lp-label">${esc(name)}</span><span class="lp-n">${countOf(name)}</span></button>`;
+  const bodyHtml = (): string => allLists(M.items).map(rowHtml).join('') || '<div class="lp-empty">还没有片单——下面建第一个</div>';
+  const url = posterUrl(it, app);
+  const { el, close } = ovl(sec, `<div class="cn-modal cn-modal--listpick">
+    <div class="lp-head"><div class="lp-poster">${url ? `<img src="${esc(url)}" onerror="this.remove()">` : ''}</div>
+      <div class="lp-head-txt"><span class="lp-kicker">归入片单</span><span class="lp-name">${esc(it.name)}</span></div></div>
+    <div class="lp-body" data-lp-body>${bodyHtml()}</div>
+    <div class="lp-new"><input class="j-lp-new" placeholder="新片单名，回车新建并归入"><button type="button" class="lp-add j-lp-add">${iconSpan(ICON.listPlus)}新建</button></div>
+  </div>`);
+  mountIcons(el);
+  el.querySelector('[data-lp-body]')?.addEventListener('click', (e) => {
+    const btn = (e.target as HTMLElement).closest('[data-lp]') as HTMLElement | null;
+    if (!btn) return;
+    void toggleListMembership(it, btn.dataset.lp as string, app);
+    // 弹层勾选态就地翻转（renderAll 重建的是面板与卡片，弹层挂在 ovHost 上不随整刷换血；
+    // 语义一致靠这里同步——落盘失败时 notifySaveError 有 toast，勾选漂移一次可接受）
+    btn.classList.toggle('is-on');
+  });
+  const submitNew = (): void => {
+    const input = el.querySelector<HTMLInputElement>('.j-lp-new');
+    const name = (input?.value ?? '').trim();
+    if (!name) return;
+    if (hasIllegalNameChar(name)) { notice(`${ILLEGAL_NAME_HINT}，请修改`, 'error'); return; }
+    void toggleListMembership(it, name, app);
+    close();
+  };
+  el.querySelector('.j-lp-add')?.addEventListener('click', submitNew);
+  el.querySelector<HTMLInputElement>('.j-lp-new')?.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') { e.preventDefault(); submitNew(); }
+  });
+}
+
+/** 一键导入豆瓣片单（侧栏「导入片单」）：贴 wish 收藏页 / 豆列链接 → 抓取解析出条目 →
+ *  已在库的跳过，新片按「想看」静默批量建档（quickAddWant silent，最后统一刷新），
+ *  海报与豆瓣信息走补抓队列。Cookie 走设置键 cinemaDoubanCookie（queue 单源装配），
+ *  弹层不收敏感值；两段式（先看抓取结果再导入），导入完关层出汇总 toast。 */
+function openDoubanImport(sec: HTMLElement, app: App): void {
+  const { el, close } = ovl(sec, `<div class="cn-modal cn-modal--dimp">
+    <div class="dimp-head"><span class="lp-kicker">一键导入</span><span class="dimp-name">豆瓣片单</span></div>
+    <div class="dimp-stage" data-dimp-input>
+      <input class="j-dimp-url" placeholder="片单链接：豆瓣 wish 收藏页或豆列 doulist">
+      <div class="dimp-hint">按「想看」批量建档；已在库的自动跳过，海报与豆瓣信息随后台队列补齐。个人收藏页需先在设置里填豆瓣 Cookie。</div>
+      <button type="button" class="lp-add j-dimp-fetch">抓取片单</button>
+    </div>
+    <div class="dimp-stage" data-dimp-result hidden>
+      <div class="dimp-stat j-dimp-stat"></div>
+      <div class="dimp-list j-dimp-list"></div>
+      <div class="dimp-acts"><button type="button" class="lp-add j-dimp-run">导入</button><button type="button" class="dm-btn j-dimp-back">返回重填</button></div>
+    </div>
+  </div>`);
+  mountIcons(el);
+  const inputStage = el.querySelector<HTMLElement>('[data-dimp-input]');
+  const resultStage = el.querySelector<HTMLElement>('[data-dimp-result]');
+  let pending: { name: string }[] = [];
+  const inLibrary = (name: string): boolean => M.items.some((it) => it.name === name);
+  const fetchBtn = el.querySelector<HTMLButtonElement>('.j-dimp-fetch');
+  fetchBtn?.addEventListener('click', () => {
+    const url = (el.querySelector<HTMLInputElement>('.j-dimp-url')?.value ?? '').trim();
+    if (!/^https?:\/\/(www\.)?(movie\.)?douban\.com\//.test(url)) {
+      notice('先贴一个豆瓣片单链接（movie.douban.com 下）', 'warning');
+      return;
+    }
+    fetchBtn.disabled = true;
+    fetchBtn.textContent = '抓取中…';
+    void fetchDoubanListForImport(app, url).then(({ entries, firstPageEmpty }) => {
+      fetchBtn.disabled = false;
+      fetchBtn.textContent = '抓取片单';
+      if (!inputStage || !resultStage) return;
+      if (!entries.length) {
+        notice(firstPageEmpty
+          ? '一条都没抓到：个人收藏页需要登录态（设置里填豆瓣 Cookie），或改用公开豆列链接'
+          : '这个链接没解析出条目，确认是豆瓣 wish 页或豆列链接', 'warning');
+        return;
+      }
+      pending = entries.filter((e) => !inLibrary(e.name));
+      const stat = resultStage.querySelector<HTMLElement>('.j-dimp-stat');
+      if (stat) stat.textContent = `共 ${entries.length} 部 · 已在库 ${entries.length - pending.length} · 待导入 ${pending.length}`;
+      const list = resultStage.querySelector<HTMLElement>('.j-dimp-list');
+      if (list) {
+        list.innerHTML = entries.map((e) =>
+          `<div class="dimp-row${inLibrary(e.name) ? ' is-inlib' : ''}"><span class="lp-label">${esc(e.name)}</span><span class="dimp-tag">${inLibrary(e.name) ? '已在库' : '新片'}</span></div>`,
+        ).join('');
+      }
+      const runBtn = resultStage.querySelector<HTMLButtonElement>('.j-dimp-run');
+      if (runBtn) {
+        runBtn.textContent = `导入 ${pending.length} 部新片`;
+        runBtn.disabled = !pending.length;
+      }
+      inputStage.hidden = true;
+      resultStage.hidden = false;
+    });
+  });
+  el.querySelector('.j-dimp-back')?.addEventListener('click', () => {
+    if (resultStage) resultStage.hidden = true;
+    if (inputStage) inputStage.hidden = false;
+  });
+  el.querySelector('.j-dimp-run')?.addEventListener('click', () => {
+    const runBtn = el.querySelector<HTMLButtonElement>('.j-dimp-run');
+    if (runBtn) {
+      runBtn.disabled = true;
+      runBtn.textContent = '导入中…';
+    }
+    void (async () => {
+      for (const e of pending) {
+        await quickAddWant(app, e.name, '电影', { silent: true });
+      }
+      refreshDataAndView(app);
+      renderAll(app);
+      close();
+      notice(pending.length
+        ? `已从豆瓣片单导入 ${pending.length} 部到想看，海报与信息后台补齐`
+        : '没有可导入的新片', pending.length ? 'success' : 'warning');
+    })();
+  });
+}
+
 /** 菜单/抽屉动作列表（顺序即显示顺序） */
 interface MenuAct { icon: string; label: string; danger?: boolean; run: () => void }
 function itemActions(it: CinemaItem, sec: HTMLElement, app: App): MenuAct[] {
@@ -126,8 +296,18 @@ function itemActions(it: CinemaItem, sec: HTMLElement, app: App): MenuAct[] {
   if (it.status !== STATUS_WATCHED) {
     // 标记已看不直改状态/评分：改走编辑窗预选「已看」，评分影评由用户确认后保存（memo item-1789105594322）
     out.push({ icon: 'check', label: '标记已看', run: () => openForm(sec, it, app, '已看') });
+  } else {
+    // 重温只对已看成立（想看/在看没有「再来一遍」语义）；今天入列 frontmatter「重看」
+    out.push({ icon: ICON.repeat, label: '重温 +1', run: () => void markRewatch(it, app) });
+    // 重温候补架（内置片单，不动三状态机）：看过想再看的归堆，侧栏「重映厅」直达
+    out.push({
+      icon: ICON.shelf,
+      label: it.lists.includes(REWATCH_SHELF) ? '移出重映厅' : '放入重映厅',
+      run: () => void toggleListMembership(it, REWATCH_SHELF, app),
+    });
   }
   out.push(
+    { icon: ICON.listPlus, label: '归入片单…', run: () => openListPick(sec, it, app) },
     { icon: ICON.ai, label: '找同类', run: () => void runSimilarRecommend(it, app) },
     { icon: ICON.globe, label: '在豆瓣打开', run: () => openDouban(it) },
     { icon: ICON.edit, label: '编辑', run: () => openForm(sec, it, app) },
@@ -218,9 +398,14 @@ export function openAddModalDirect(app: App): void {
 
 // ---------- 面板标题 ----------
 
-/** 列表标题 = 筛选名（组 + 状态叠加） */
+/** 列表标题 = 筛选名（片单 + 组 + 状态叠加；全空回落「全部」） */
 function listTitle(): string {
-  return (M.typeFilter || '全部') + (M.statusFilter ? ` · ${M.statusFilter}` : '');
+  const parts = [
+    M.listFilter ? `片单·${M.listFilter}` : '',
+    M.typeFilter || '',
+    M.statusFilter || '',
+  ].filter(Boolean);
+  return parts.join(' · ') || '全部';
 }
 /** 网格每行列数：2026-09-26 用户拍板固定 5 列，面板不再暴露该设置（cinemaGridColumns 键退役）。
  *  窄屏另有自适应（移动端 3 列，见本文件网格渲染处），与这里无关。 */
@@ -639,6 +824,9 @@ function openDetail(sec: HTMLElement, it: CinemaItem, app: App, opts: { from?: H
   el.querySelector('.j-edit')?.addEventListener('click', () => { close({ skipReturn: true }); openForm(sec, it, app); });
   el.querySelector('.j-del')?.addEventListener('click', () => { close({ skipReturn: true }); openConfirm(it, app); });
   el.querySelector('.j-similar')?.addEventListener('click', () => { close({ skipReturn: true }); void runSimilarRecommend(it, app); });
+  // 重温 +1：关弹窗走面板级动作（同上面三钮语义——动作后 N 刷徽标/角标由整刷带新），
+  // skipReturn 跳过返程动效，卡片闪一下 + toast 就是落点
+  el.querySelector('.j-rewatch')?.addEventListener('click', () => { close({ skipReturn: true }); void markRewatch(it, app); });
   // 热门短评展开/收起（纯层对超阈值长评打 .is-fold 收 3 行；短评无按钮）
   const foldBtn = el.querySelector<HTMLElement>('[data-dm-fold]');
   const quote = el.querySelector<HTMLElement>('[data-dm-quote]');
@@ -1590,7 +1778,7 @@ async function saveNew(p: FormPayload, app: App, form: FormHandle): Promise<void
   }
   const group = getGroupForTag(p.tag) ?? '其他';
   const st = p.st === '想看' ? STATUS_WANT : p.st === '在看' ? STATUS_WATCHING : STATUS_WATCHED;
-  const it: CinemaItem = { file: null, name: p.name, typeTag: p.tag, group, status: st, rating: p.rating, watchDate: p.date, review: p.review, poster: null, genre: null, director: null, actors: null, region: null, year: null, releaseDate: null, doubanRating: null, doubanUrl: null, synopsis: null, duration: null, seasonText: null, hotComment: null };
+  const it: CinemaItem = { file: null, name: p.name, typeTag: p.tag, group, status: st, rating: p.rating, watchDate: p.date, rewatches: [], lists: [], review: p.review, poster: null, genre: null, director: null, actors: null, region: null, year: null, releaseDate: null, doubanRating: null, doubanUrl: null, synopsis: null, duration: null, seasonText: null, hotComment: null };
   try {
     if (app.vault.getAbstractFileByPath(`${M.folderPath}/《${p.name}》.md`)) {
       notice(DUP_NAME_HINT_FULL, 'warning');
@@ -1758,10 +1946,12 @@ function midnightInput(app: App): MidnightRenderInput {
       view: M.view,
       typeFilter: M.typeFilter,
       statusFilter: M.statusFilter,
+      listFilter: M.listFilter,
       sortMode: M.sortMode,
       searchKeyword: M.searchKeyword,
     },
     cols: gridColumns(),
+    lists: allLists(M.items),
     title: listTitle(),
     aiHtml: onList ? '' : aiPageHtml(aiInput()),
     aiCount: M.aiResult && M.aiResult.length ? M.aiResult.length : null,
@@ -1990,6 +2180,8 @@ function bindMidnight(sec: HTMLElement, app: App, hoverable = hoverCapable()): v
       renderAll(app);
       return;
     }
+    // 一键导入豆瓣片单：动作不是视图，不走 j-tool 的视图切换分流
+    if (t.closest('.j-import')) { openDoubanImport(sec, app); return; }
     const tool = t.closest('.j-tool') as HTMLElement | null;
     if (tool && tool.dataset.tool) {
       // 进 ai 不动筛选状态：rail 高亮由渲染层按视图熄灭（render.ts listOn 门控），
@@ -2012,12 +2204,17 @@ function bindMidnight(sec: HTMLElement, app: App, hoverable = hoverCapable()): v
     }
     const back = t.closest('.j-back') as HTMLElement | null;
     if (back) { M.view = 'list'; renderAll(app); return; }
-    const railBtn = t.closest('[data-g],[data-s]') as HTMLElement | null;
+    const railBtn = t.closest('[data-g],[data-s],[data-l]') as HTMLElement | null;
     if (railBtn) {
       M.view = 'list';
       if (railBtn.dataset.g) {
         M.typeFilter = railBtn.dataset.g === '全部' ? null : railBtn.dataset.g;
         M.statusFilter = null;
+        // 「全部」= 清全部筛选（片单筛选亮着时「全部」不再高亮，点它必须回到真全部）
+        if (railBtn.dataset.g === '全部') M.listFilter = null;
+      } else if (railBtn.dataset.l) {
+        // 片单行：与类型/状态叠加的第三维筛选，再点同一行取消
+        M.listFilter = M.listFilter === railBtn.dataset.l ? null : railBtn.dataset.l;
       } else {
         const s = railBtn.dataset.s ?? null;
         M.statusFilter = M.statusFilter === s ? null : s;
@@ -2085,6 +2282,11 @@ function bindMidnight(sec: HTMLElement, app: App, hoverable = hoverCapable()): v
 
 // ---------- 壳选择 / 创建 / 渲染总入口 ----------
 
+/** 主面板桌面缩放边界（ADR-0084）：拖拽下限 / 硬上限，视口 92% 由 uiResizable 逐帧钳 */
+const PANEL = { MIN_W: 640, MIN_H: 440, MAX_W: 1280, MAX_H: 880 };
+/** 桌面拖动缩放句柄（ADR-0084/0094）：createOverlay 挂 / closeOverlay 摘（面板开关重建型） */
+let panelResizeDetach: { flush: () => void; detach: () => void } | null = null;
+
 export function createOverlay(app: App): void {
   const overlay = document.createElement('div');
   overlay.className = 'bz-panel-overlay';
@@ -2100,6 +2302,16 @@ export function createOverlay(app: App): void {
   if (!root) return;
   // 打开即入焦 + Tab 圈闭（呈报#13 F3+H3 全域范式，core trapPanelFocus 单源）
   trapPanelFocus(root);
+  // 桌面拖动缩放（ADR-0084）：只挂桌面午夜场壳（mobile 壳恒真全屏不挂，root 取自 desk 分支）；
+  // 面板开关重建型，随 createOverlay 挂、closeOverlay 摘；persist 记忆键
+  // cinemaPanelWidth/Height（ADR-0094，core 工厂读写）
+  if (!mobile && !panelResizeDetach && root) {
+    panelResizeDetach = uiResizable(root, {
+      minW: PANEL.MIN_W, minH: PANEL.MIN_H,
+      maxW: PANEL.MAX_W, maxH: PANEL.MAX_H,
+      persist: panelSizePersist('cinemaPanelWidth', 'cinemaPanelHeight', PANEL.MIN_W, PANEL.MIN_H),
+    });
+  }
   // 点遮罩 = 关闭主面板（桌面；移动全屏无遮罩）
   overlay.addEventListener('click', (e) => {
     if (e.target === overlay) closeOverlay();
@@ -2445,6 +2657,9 @@ export function closeOverlay(): void {
   // 堆积。这里遍历句柄补 unregister（close 幂等：句柄集先删后 remove，遍历副本安全）
   for (const close of [...liveOvlCloses]) close();
   closeItemMenu(); // 浮层（跟手菜单/抽屉）挂 body，不随面板移除 → 关面板时一并收掉
+  // 桌面缩放随面板销毁摘除（与 createOverlay 成对；detach 内含 flush，防抖尾值不丢）
+  panelResizeDetach?.detach();
+  panelResizeDetach = null;
   if (M.currentOverlay) {
     M.currentOverlay.remove();
     M.currentOverlay = null;

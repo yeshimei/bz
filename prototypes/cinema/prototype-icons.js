@@ -17,5 +17,10 @@ window.CN_ICONS = {
   "check": "<path d=\"M20 6 9 17l-5-5\"/>",
   "globe": "<circle cx=\"12\" cy=\"12\" r=\"10\"/><path d=\"M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z\"/>",
   "clapperboard": "<rect x=\"3\" y=\"4\" width=\"18\" height=\"16\" rx=\"2\"/><path d=\"M7 4v16M17 4v16M3 8.5h4M3 15.5h4M17 8.5h4M17 15.5h4M7 12h10\"/>",
-  "sliders-horizontal": "<path d=\"M21 4h-8m-5 0H3M21 12h-3m-6 0H3M21 20h-11m-4 0H3\"/><circle cx=\"11\" cy=\"4\" r=\"1.6\"/><circle cx=\"16\" cy=\"12\" r=\"1.6\"/><circle cx=\"8\" cy=\"20\" r=\"1.6\"/>"
+  "sliders-horizontal": "<path d=\"M21 4h-8m-5 0H3M21 12h-3m-6 0H3M21 20h-11m-4 0H3\"/><circle cx=\"11\" cy=\"4\" r=\"1.6\"/><circle cx=\"16\" cy=\"12\" r=\"1.6\"/><circle cx=\"8\" cy=\"20\" r=\"1.6\"/>",
+  "layers": "<path d=\"m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z\"/><path d=\"m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65\"/><path d=\"m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65\"/>",
+  "rotate-ccw": "<path d=\"M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8\"/><path d=\"M3 3v5h5\"/>",
+  "bookmark": "<path d=\"m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2Z\"/>",
+  "list-plus": "<path d=\"M11 12H3M13 6H3M3 18h6\"/><path d=\"M18 9v6M15 12h6\"/>",
+  "download": "<path d=\"M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4\"/><polyline points=\"7 10 12 15 17 10\"/><line x1=\"12\" x2=\"12\" y1=\"3\" y2=\"15\"/>"
 };

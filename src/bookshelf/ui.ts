@@ -18,9 +18,9 @@ import { escManager, registerPanelEsc, unregisterPanelEsc } from '../core/esc-ma
 import { trapPanelFocus } from '../core/ui/focus-trap';
 import { allocZ } from '../core/z-order';
 import { isMobileEnv } from '../core/mobile';
-import { tryGetSettings } from '../core/settings-provider';
+import { tryGetSettings, panelSizePersist } from '../core/settings-provider';
 import { isRemoteSkinReady } from '../core/skin-pack';
-import { uiModal, mountIcons } from '../core/ui';
+import { uiModal, mountIcons, uiResizable } from '../core/ui';
 import { notice } from '../core/notice';
 import { renderReadingReport, cancelReadingReport, handleReportInteraction, type ReportRenderOptions } from '../reading-report';
 import { M, applyDefaultView, type BookshelfItem, type BookshelfView, type SideId, type SortKey } from './state';
@@ -332,6 +332,11 @@ export function applyBookshelfSkin(skin: unknown): void {
 let wallResizeHandler: (() => void) | null = null;
 let wallResizeTimer: ReturnType<typeof setTimeout> | null = null;
 
+/** 主面板桌面缩放边界（ADR-0084）：拖拽下限 / 硬上限，视口 92% 由 uiResizable 逐帧钳 */
+const PANEL = { MIN_W: 820, MIN_H: 540, MAX_W: 1440, MAX_H: 960 };
+/** 桌面拖动缩放句柄（ADR-0084/0094）：createOverlay 挂 / closeOverlay 摘（面板开关重建型） */
+let panelResizeDetach: { flush: () => void; detach: () => void } | null = null;
+
 export function createOverlay(app: App): void {
   const overlay = document.createElement('div');
   overlay.className = 'bz-panel-overlay';
@@ -475,6 +480,17 @@ export function createOverlay(app: App): void {
   };
   window.addEventListener('resize', wallResizeHandler);
 
+  // 桌面拖动缩放（ADR-0084）：面板开关重建型，随 createOverlay 挂、closeOverlay 摘；
+  // persist 记忆键 bookshelfPanelWidth/Height（ADR-0094，core 工厂读写）
+  const bsPanel = overlay.querySelector<HTMLElement>('.bz-bs-panel');
+  if (!isMobileEnv() && !panelResizeDetach && bsPanel) {
+    panelResizeDetach = uiResizable(bsPanel, {
+      minW: PANEL.MIN_W, minH: PANEL.MIN_H,
+      maxW: PANEL.MAX_W, maxH: PANEL.MAX_H,
+      persist: panelSizePersist('bookshelfPanelWidth', 'bookshelfPanelHeight', PANEL.MIN_W, PANEL.MIN_H),
+    });
+  }
+
   mountIcons(overlay);
   paintViewContainers();
   motionPanelIn(overlay); // 动效层：书房灯亮（置位 boot；首屏编排由 rebuild 后的 renderWall 消费）
@@ -498,6 +514,9 @@ export function closeOverlay(): void {
     window.removeEventListener('resize', wallResizeHandler);
     wallResizeHandler = null;
   }
+  // 桌面缩放随面板销毁摘除（与 createOverlay 成对；detach 内含 flush，防抖尾值不丢）
+  panelResizeDetach?.detach();
+  panelResizeDetach = null;
   closeDomainModals();
   cancelReadingReport();
   motionTeardown(); // 动效层：动画/循环/观察器/调度一把收（面板销毁前不留永动孤儿）

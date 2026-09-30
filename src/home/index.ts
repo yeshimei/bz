@@ -4,7 +4,7 @@
  */
 import type { App } from 'obsidian';
 import { H, resetHomeState } from './state';
-import { createOverlay, showOverlay, closeOverlay, registerEscapeHandler, unregisterEscapeHandler } from './ui';
+import { createOverlay, showOverlay, closeOverlay, registerEscapeHandler, unregisterEscapeHandler, unmountPanelResize } from './ui';
 
 let initialized = false;
 
@@ -39,6 +39,7 @@ export function openHome(app: App): void {
 export function unloadHome(): void {
   initialized = false;
   unregisterEscapeHandler();
+  unmountPanelResize(); // 缩放句柄随卸载摘除：模块级句柄不随 DOM 移除自清，漏摘会让重开后的新面板被「已挂」误判跳过
   if (H.currentOverlay) {
     H.currentOverlay.remove();
     H.currentOverlay = null;

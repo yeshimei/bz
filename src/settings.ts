@@ -547,6 +547,39 @@ export default interface BzSettings {
   /** 设置面板主题：'chenhun' = 晨昏（亮如晨、暗如夜，跟随 Obsidian 自动切合；当前唯一主题） */
   settingsPanelSkin: string;
 
+  // ===== 🪟 主面板桌面尺寸记忆（ADR-0084 拖拽缩放全域推广；运行时记忆，不进设置页）=====
+  // 语义同 memoPanelWidth/Height（0 = 未拖过，打开走各域 CSS 默认尺寸）；读写统一走
+  // core/settings-provider 的 panelSizePersist 工厂，各域不再手写 load/save 闭包。
+  // 半屏挤压修复后落盘口径为「意图尺寸」（不受视口钳制污染，全屏自动复原）。
+  diaryPanelWidth: number;
+  diaryPanelHeight: number;
+  belongingsPanelWidth: number;
+  belongingsPanelHeight: number;
+  peoplePanelWidth: number;
+  peoplePanelHeight: number;
+  favoritesPanelWidth: number;
+  favoritesPanelHeight: number;
+  reviewPanelWidth: number;
+  reviewPanelHeight: number;
+  secondbrainPanelWidth: number;
+  secondbrainPanelHeight: number;
+  encryptPanelWidth: number;
+  encryptPanelHeight: number;
+  passwordVaultPanelWidth: number;
+  passwordVaultPanelHeight: number;
+  bookshelfPanelWidth: number;
+  bookshelfPanelHeight: number;
+  cinemaPanelWidth: number;
+  cinemaPanelHeight: number;
+  gameshelfPanelWidth: number;
+  gameshelfPanelHeight: number;
+  knowledgePanelWidth: number;
+  knowledgePanelHeight: number;
+  homePanelWidth: number;
+  homePanelHeight: number;
+  settingsPanelWidth: number;
+  settingsPanelHeight: number;
+
 }
 
 /** issue 260 正名一次性迁移：旧 todo* 面板设置键 → memo*（读旧写新删旧；键缺失不写） */
@@ -1124,6 +1157,35 @@ export const DEFAULT_SETTINGS: BzSettings = {
   // 设置面板（ADR-0080）：移动端默认全屏（默认开）；布局默认经纬；主题默认晨昏（跟随亮暗）
   settingsPanelLayout: 'jingwei',
   settingsPanelSkin: 'chenhun',
+  // 主面板桌面尺寸记忆（ADR-0084 全域推广；0 = 未拖过，打开走各域 CSS 默认尺寸）
+  diaryPanelWidth: 0,
+  diaryPanelHeight: 0,
+  belongingsPanelWidth: 0,
+  belongingsPanelHeight: 0,
+  peoplePanelWidth: 0,
+  peoplePanelHeight: 0,
+  favoritesPanelWidth: 0,
+  favoritesPanelHeight: 0,
+  reviewPanelWidth: 0,
+  reviewPanelHeight: 0,
+  secondbrainPanelWidth: 0,
+  secondbrainPanelHeight: 0,
+  encryptPanelWidth: 0,
+  encryptPanelHeight: 0,
+  passwordVaultPanelWidth: 0,
+  passwordVaultPanelHeight: 0,
+  bookshelfPanelWidth: 0,
+  bookshelfPanelHeight: 0,
+  cinemaPanelWidth: 0,
+  cinemaPanelHeight: 0,
+  gameshelfPanelWidth: 0,
+  gameshelfPanelHeight: 0,
+  knowledgePanelWidth: 0,
+  knowledgePanelHeight: 0,
+  homePanelWidth: 0,
+  homePanelHeight: 0,
+  settingsPanelWidth: 0,
+  settingsPanelHeight: 0,
   // 小橘陪伴猫（smartcat 域；移动端默认全屏键聊天/设置/数据面板共用，2026-08-23 合并一套）
   smartcatEnabled: true,
   smartcatEmbeddingModel: '',

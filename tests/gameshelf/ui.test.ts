@@ -517,3 +517,24 @@ describe('海报头与悬浮预览（issue 378：头行退役 / 截图快轮播 
     unloadGameshelf();
   });
 });
+
+describe('面板拖拽缩放 + 尺寸记忆（ADR-0084/0094）', () => {
+  it('有记忆值时打开即套用内联宽高（挂载 load 恢复口径，同 clipbook）', () => {
+    setSettingsProvider(() => ({ ...CONFIG, gameshelfPanelWidth: 900, gameshelfPanelHeight: 640 }) as any);
+    const app = { vault: { getMarkdownFiles: () => [], getAbstractFileByPath: () => null, createFolder: async () => {} } } as any;
+    openGameshelf(app);
+    const frame = document.querySelector('.bz-gs-panel') as HTMLElement;
+    expect(frame.style.width).toBe('900px');
+    expect(frame.style.height).toBe('640px');
+    unloadGameshelf();
+  });
+
+  it('0 = 未拖过 → 不写内联尺寸（走 CSS 默认，persist 语义）', () => {
+    const app = { vault: { getMarkdownFiles: () => [], getAbstractFileByPath: () => null, createFolder: async () => {} } } as any;
+    openGameshelf(app);
+    const frame = document.querySelector('.bz-gs-panel') as HTMLElement;
+    expect(frame.style.width).toBe('');
+    expect(frame.style.height).toBe('');
+    unloadGameshelf();
+  });
+});

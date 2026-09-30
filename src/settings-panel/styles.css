@@ -442,16 +442,23 @@
 /* 滚动条隐藏由 core 界面级单源规则接管（ADR-0122 / issue 277），
    原面板作用域（.bz-sp-desk / .bz-sp-mobile）域内声明已删 */
 
-/* ═══════════ 桌面壳（几何 !important 压 createOverlay 内联尺寸） ═══════════ */
+/* ═══════════ 桌面壳（几何口径：默认尺寸走本段 CSS，拖拽/记忆尺寸走 uiResizable 内联） ═══════════ */
 .bz-sp-desk {
   /* 定位不声明——popup 居中由 core .bz-overlay-mask/`.bz-overlay-popup` 体系负责，
      域内改 position 会打断 fixed/translate 居中链（曾致面板位移出屏只剩遮罩） */
   display: flex;
   flex-direction: column !important;
-  width: min(1080px, 94vw) !important;
-  max-width: 1080px !important;
-  height: min(780px, 88vh) !important;
-  max-height: 88vh !important;
+  /* 几何四条不挂 !important（ADR-0084 拖拽缩放）：内联宽高（记忆恢复/拖拽写入）须能
+     生效；默认尺寸的「防 createOverlay 内联反压」改由 build() 传参对齐接管（width 同源、
+     maxWidth=PANEL.MAX_W），见 ui.ts */
+  width: min(1080px, 94vw);
+  /* 运行时宽度上限 = createOverlay 内联 maxWidth（uiResizable 硬上限同源）；
+     本条留作内联参数缺位时的视口护栏 */
+  max-width: 1080px;
+  height: min(780px, 88vh);
+  /* 原 88vh 放宽：1080p 视口下 88vh ≈ 850px 会把 MAX_H=900 的拖大钳死在半途；
+     口径对齐 core uiResizable 的 92% 视口逐帧钳制（memo 域 92vh 先例） */
+  max-height: 92vh;
   padding: 0 !important;
   overflow: hidden !important;
   border: 1px solid var(--sp-line);

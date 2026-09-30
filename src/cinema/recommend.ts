@@ -169,23 +169,26 @@ export function parseRecommendJson(raw: string): any[] | null {
 }
 
 /** 加入想看（AI 推荐条目 → 建笔记，评分 -1） */
-export async function quickAddWant(app: App, name: string, type: string): Promise<void> {
+export async function quickAddWant(app: App, name: string, type: string, opts?: { silent?: boolean }): Promise<void> {
+  // silent（豆瓣片单批量导入用）：不出逐条 toast、不逐条刷新——调用方统一统计 + 最后一次刷
+  const quiet = !!opts?.silent;
   const trimmedName = typeof name === 'string' ? name.trim() : '';
   if (!trimmedName) {
-    notice('推荐条目缺少片名，已跳过加入想看');
+    if (!quiet) notice('推荐条目缺少片名，已跳过加入想看');
     return;
   }
   // 非法字符校验（深审批A P3-7）：名称进文件名《X》.md，AI 返回的 title 不受控
   if (hasIllegalNameChar(trimmedName)) {
-    notice(`${ILLEGAL_NAME_HINT}，已跳过加入想看`, 'error');
+    if (!quiet) notice(`${ILLEGAL_NAME_HINT}，已跳过加入想看`, 'error');
     return;
   }
   const tag = GROUP_DEFAULT_TAG[type] || '电影';
   let folderObj = app.vault.getAbstractFileByPath(M.folderPath);
   if (!folderObj) await app.vault.createFolder(M.folderPath);
   const filePath = `${M.folderPath}/《${trimmedName}》.md`;
-  if (app.vault.getAbstractFileByPath(filePath)) {
-    notice(`影视「${trimmedName}」已在库中`);
+  const dup = app.vault.getAbstractFileByPath(filePath);
+  if (dup) {
+    if (!quiet) notice(`影视「${trimmedName}」已在库中`);
     return;
   }
   const now = localNow();
@@ -200,12 +203,12 @@ tags:
 `;
   try {
     const f = await app.vault.create(filePath, content);
-    notice(`已加入想看：「${trimmedName}」`, 'success'); // 引号形制与全域一致（深审批A P3-16）
+    if (!quiet) notice(`已加入想看：「${trimmedName}」`, 'success'); // 引号形制与全域一致（深审批A P3-16）
     // 事件补发（smartcat 行为流观察；ADR-0087 cinema 接管）：created want
     emitDomainEvent('movie', { kind: 'created', name: trimmedName, status: 'want', rating: null, review: null });
     // 入抓取队列（ADR-0113）：卡片 loading 反馈，无通知
     enqueueDoubanFetch(f, trimmedName);
-    refreshDataAndView(app);
+    if (!quiet) refreshDataAndView(app); // silent：调用方批量收尾统一刷
   } catch (e) {
     notifySaveError(e, '加入想看');
     console.error(e);

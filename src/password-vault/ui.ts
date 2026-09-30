@@ -17,7 +17,9 @@ import { ENCRYPT_UNLOCK_CHANGED_CHANNEL } from '../encrypt/data';
 import { onDomainEvent } from '../core/domain-bus';
 import { topifyZ, createSiteIcon } from '../core/dom';
 import { confirmDiscard, openFlowDialog, cancelActiveFlowDialog } from '../core/flow-dialog';
-import { tryGetSettings } from '../core/settings-provider';
+import { tryGetSettings, panelSizePersist } from '../core/settings-provider';
+import { uiResizable } from '../core/ui';
+import { isMobileEnv } from '../core/mobile';
 import { uiLockScreen } from '../core/ui/lock-screen';
 import type { LockScreenHandle, LockScreenStat } from '../core/ui/lock-screen';
 import { bindFormSubmit } from '../core/ui/modal';
@@ -100,6 +102,9 @@ function hydrateAvatars(scope: HTMLElement): void {
   });
 }
 
+/** 桌面工作台缩放边界（ADR-0084）：拖拽下限 / 硬上限，视口 92% 由 uiResizable 逐帧钳 */
+const PANEL = { MIN_W: 760, MIN_H: 520, MAX_W: 1440, MAX_H: 960 };
+
 export interface PasswordVaultUIConfig {
   charset: string;
   length: string;
@@ -139,6 +144,10 @@ export class PasswordVaultUIManager {
   private unlockOff: (() => void) | null = null;
   private _initialized = false;
   // DOM 引用（桌面）
+  /** 桌面工作台根（缩放挂载点；移动实例全屏不挂） */
+  private deskEl: HTMLElement | null = null;
+  /** 桌面拖动缩放句柄（ADR-0084/0094）：show 挂、hide 摘，与面板显隐成对（幂等防重复挂） */
+  private panelResizeDetach: { flush: () => void; detach: () => void } | null = null;
   private desk!: {
     rows: HTMLElement;
     detail: HTMLElement;
@@ -182,6 +191,7 @@ export class PasswordVaultUIManager {
     desk.className = 'bz-password-vault-desk';
     desk.innerHTML = deskHTML();
     this.root.appendChild(desk);
+    this.deskEl = desk;
     this.desk = {
       rows: desk.querySelector('.bz-password-vault-rows')!,
       detail: desk.querySelector('.bz-password-vault-detail')!,
@@ -1368,6 +1378,15 @@ export class PasswordVaultUIManager {
     if (!this._initialized) this.ensureElements();
     this.root!.style.display = 'flex';
     topifyZ(this.root!); // ADR-0067
+    // 桌面拖动缩放（ADR-0084）：只挂桌面工作台卡（root 全屏遮罩 / 移动实例真全屏不挂）；
+    // show 幂等挂（重入不重复挂）、hide 摘；persist 记忆键 passwordVaultPanelWidth/Height（ADR-0094）
+    if (!isMobileEnv() && !this.panelResizeDetach && this.deskEl) {
+      this.panelResizeDetach = uiResizable(this.deskEl, {
+        minW: PANEL.MIN_W, minH: PANEL.MIN_H,
+        maxW: PANEL.MAX_W, maxH: PANEL.MAX_H,
+        persist: panelSizePersist('passwordVaultPanelWidth', 'passwordVaultPanelHeight', PANEL.MIN_W, PANEL.MIN_H),
+      });
+    }
     motionArmBoot(); // 动效层：boot 意图置位（首个渲染消费即熄）
     motionPanelIn(this.root!); // 动效层：工作台卡升起 + 金印压落 + FAB 弹入
     this.subscribeUnlockEvents(); // E2：面板打开期间感知别域上锁/解锁（保险库「立即上锁」/安全模式/日记域）
@@ -1417,6 +1436,9 @@ export class PasswordVaultUIManager {
     this.clearIdleLock(); // 关面板即撤 idle 布防
     // 动效层：同步收 display 前让 body 替身覆层演「金印卡沉入暗场」（同步语义不变）
     if (this.root.style.display === 'flex') motionPanelCollapse(this.root);
+    // 桌面缩放随面板隐藏摘除（与 show 成对；detach 内含 flush，防抖尾值不丢）
+    this.panelResizeDetach?.detach();
+    this.panelResizeDetach = null;
     this.root.style.display = 'none';
     if (this.isSecurityModeLive()) {
       // T12：统计落盘收敛到消费点——写最近一次解锁期内存快照（渲染期已备好，不依赖此刻 pwData）
@@ -1909,6 +1931,8 @@ export class PasswordVaultUIManager {
     motionTeardown(); // 动效层清场：延时编排 + 长驻循环（金印候场辉光）一并无孤儿
     this.escUnregister?.unregister();
     this.escUnregister = null;
+    this.panelResizeDetach?.detach(); // 缩放监听随宿主销毁一并清（面板未 hide 直接卸载的兜底）
+    this.panelResizeDetach = null;
     this.dataManager.destroy();
     if (this.root) {
       this.root.remove();

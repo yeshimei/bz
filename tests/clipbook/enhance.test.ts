@@ -369,9 +369,10 @@ describe('面板拖拽缩放 + 尺寸记忆（enh 包 8）', () => {
     frame.dispatchEvent(new MouseEvent('mousedown', { clientX: 1179, clientY: 300, bubbles: true }));
     document.dispatchEvent(new MouseEvent('mousemove', { clientX: 1300, clientY: 300, bubbles: true }));
     document.dispatchEvent(new MouseEvent('mouseup', { clientX: 1300, clientY: 300, bubbles: true }));
-    await vi.waitFor(() => expect(settings.clipbookPanelWidth).toBe(942)); // cap(min(1600, 1024*0.92))
-    // uiResizable 每帧对宽高双向钳视口 92%：jsdom 高 768×0.92=706 < 当前 760 → 同步钳小
-    expect(settings.clipbookPanelHeight).toBe(706);
+    // 半屏挤压修复后落盘口径 = 意图值（只钳硬上限 1600，不受 jsdom 视口 942 挤压）
+    await vi.waitFor(() => expect(settings.clipbookPanelWidth).toBe(1301));
+    // 高轴未拖：mousedown 固化当前渲染高为意图基线（760），同样不被视口 92%（706）挤小
+    expect(settings.clipbookPanelHeight).toBe(760);
     await vi.waitFor(() => expect(saveSpy).toHaveBeenCalled());
   });
 });

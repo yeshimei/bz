@@ -209,9 +209,10 @@ import { appendSuppImageGridPage, el, profLeaveAsk, text, textEl } from './rende
 import { chatLinesOf, chatSepOf, isGroupChatLines, type ChatLineData } from './chat';
 import { clearMyAvatarCache, localImgOf, resolveMyAvatar } from './me-avatar';
 import { cancelThumbQueue, descThumbPath, queueThumbBuild, resetThumbQueueForPanel, thumbHandled } from './thumbs';
-import { mountIcons, openLightbox } from '../core/ui';
+import { mountIcons, openLightbox, uiResizable } from '../core/ui';
 import { bindWheelTurn } from '../core/gesture';
-import { tryGetSettings } from '../core/settings-provider';
+import { tryGetSettings, panelSizePersist } from '../core/settings-provider';
+import { isMobileEnv } from '../core/mobile';
 
 const ESC_ID = 'people-panel';
 
@@ -231,6 +232,10 @@ let offSyncWatch: (() => void) | null = null;
 let offWheelTurn: (() => void) | null = null;
 /** 视口尺寸跟帧：窄↔宽翻转时页眉高度变了，折签吸顶基准（--bz-page-head-h）要重量 */
 let offResizeWatch: (() => void) | null = null;
+/** 桌面面板拖拽缩放限界（ADR-0084）+ 缩放句柄（开关型面板：buildPanelShell 挂，closePeoplePanel 摘；
+ *  与 offResizeWatch 职责不同——后者是视口跟帧，本句柄是拖拽改尺寸） */
+const PANEL = { MIN_W: 760, MIN_H: 540, MAX_W: 1440, MAX_H: 960 };
+let panelResizeDetach: { flush: () => void; detach: () => void } | null = null;
 let stage: Stage = 'list';
 let detailId: string | null = null;
 /** 互动统计卡的实时形态计数（issue 513）：打开统计页时异步读保库 store.kindCounts（全量口径，
@@ -524,6 +529,17 @@ function buildPanelShell(app?: unknown): void {
   overlay.appendChild(panelShell());
   document.body.appendChild(overlay);
   topifyZ(overlay);
+  // 桌面拖动缩放（ADR-0084）+ 尺寸记忆（ADR-0094）：面板开关型（关即拆 DOM），开壳挂 / 关面板摘
+  if (!isMobileEnv()) {
+    const panelEl = overlay.querySelector<HTMLElement>('.bz-people-panel');
+    if (panelEl) {
+      panelResizeDetach = uiResizable(panelEl, {
+        minW: PANEL.MIN_W, minH: PANEL.MIN_H,
+        maxW: PANEL.MAX_W, maxH: PANEL.MAX_H,
+        persist: panelSizePersist('peoplePanelWidth', 'peoplePanelHeight', PANEL.MIN_W, PANEL.MIN_H),
+      });
+    }
+  }
   // ESC 分层（448 评审；455 弹窗再加一层）：统计/档案弹窗最上先关，其次数据源弹窗（保扫描快照与勾选），再层层关面板
   registerPanelEsc(ESC_ID, isPeopleOpen, () => {
     if (dialog) {
@@ -720,6 +736,9 @@ export function closePeoplePanel(): void {
   offWheelTurn = null;
   offResizeWatch?.();
   offResizeWatch = null;
+  // 拖拽缩放随面板关闭摘除（防抖尾值 detach 内自动 flush，尺寸不丢；先于 overlay 拆除）
+  panelResizeDetach?.detach();
+  panelResizeDetach = null;
   overlay?.remove();
   overlay = null;
   store = null;

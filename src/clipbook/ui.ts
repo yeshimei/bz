@@ -38,7 +38,7 @@ import { attachItemActions, closeItemMenu, type ItemAction } from '../core/item-
 import { openFlowDialog } from '../core/flow-dialog';
 import { openSettingsModal } from '../core/settings-modal';
 import type { SettingsSchema } from '../core/settings-schema';
-import { saveSettings, tryGetSettings } from '../core/settings-provider';
+import { saveSettings, tryGetSettings, panelSizePersist } from '../core/settings-provider';
 import { ensureAutoSummary, stopAutoSummary, regenerateSummary } from '../auto-summary';
 import { AUTO_SUMMARY_KEYS } from '../auto-summary/keys';
 import { dataSourceGroupRows } from './news-sources-group';
@@ -519,13 +519,13 @@ function buildDom(app: any): void {
   });
   const frameEl = overlayEl.querySelector('.bz-clip-frame') as HTMLElement;
   // 桌面面板拖拽缩放 + 尺寸记忆（enh 包 8 → ADR-0094 persist 选项）：仅桌面写内联宽高——
-  // 内联样式优先级高于移动端媒体查询的满屏规则；恢复/防抖落盘/收尾补存全由 uiResizable 承担
-  // （挂载时 load 恢复并钳制、onChange 后防抖 300ms 调 save、detach 未落尾值立即补存）；
+  // 内联样式优先级高于移动端媒体查询的满屏规则；恢复/防抖落盘/收尾补存全由 uiResizable 承担，
+  // persist 收敛 core panelSizePersist 工厂（键 clipbookPanelWidth/Height 语义不变）；
   // uiResizable 自身对触屏也空操作兜底
   if (!isMobileEnv()) {
     panelResizeDetach = uiResizable(frameEl, {
       minW: PANEL_MIN_W, minH: PANEL_MIN_H, maxW: PANEL_MAX_W, maxH: PANEL_MAX_H,
-      persist: { load: savedPanelSize, save: rememberPanelSize },
+      persist: panelSizePersist('clipbookPanelWidth', 'clipbookPanelHeight', PANEL_MIN_W, PANEL_MIN_H),
     });
     // 中栏 ⇄ 右栏分割线（issue 222）：拖动改中栏定宽、右栏弹性吸收；
     // restore 在 showPanel 面板可见后调（display:none 容器宽度为 0 无法钳制）
@@ -1613,24 +1613,7 @@ async function refreshAfterAction(): Promise<void> {
 }
 
 // ================= 面板尺寸记忆（enh 包 8 → uiResizable persist，ADR-0094） =================
-
-/** 记忆尺寸安全读取（null=未拖过 → 不写内联，走 CSS 默认 1180×760；越界值由 uiResizable 钳到硬上限 + 视口 92%） */
-function savedPanelSize(): { w: number; h: number } | null {
-  const s = tryGetSettings() as any;
-  const w = Number(s?.clipbookPanelWidth) || 0;
-  const h = Number(s?.clipbookPanelHeight) || 0;
-  if (w < PANEL_MIN_W || h < PANEL_MIN_H) return null;
-  return { w, h };
-}
-
-/** 落盘（uiResizable 防抖 300ms 后调用；键语义不变 clipbookPanelWidth/Height） */
-function rememberPanelSize(w: number, h: number): void {
-  const s = tryGetSettings() as any;
-  if (!s) return;
-  s.clipbookPanelWidth = w;
-  s.clipbookPanelHeight = h;
-  void saveSettings();
-}
+// 主面板宽高已收敛 core panelSizePersist 工厂（接线处内联调用）；分割线单值为域内保留。
 
 /** 分割线宽度记忆读取（null=未拖过 → 不写内联，中栏走 CSS 默认 360px；越界值由 uiVSplitter 钳制） */
 function savedSplitWidth(): number | null {

@@ -32,8 +32,9 @@ import { trapPanelFocus } from '../core/ui/focus-trap';
 import { notice, notifyUndo, notifySaveError, notifyActionError } from '../core/notice';
 import { openFlowDialog } from '../core/flow-dialog';
 import { escManager } from '../core/esc-manager';
-import { tryGetSettings } from '../core/settings-provider';
-import { uiEmpty, mountIcons } from '../core/ui';
+import { tryGetSettings, panelSizePersist } from '../core/settings-provider';
+import { isMobileEnv } from '../core/mobile';
+import { uiEmpty, mountIcons, uiResizable } from '../core/ui';
 import { DEFAULT_W } from './fsrs';
 import type { ReviewItem } from './data';
 import { ReviewDataManager } from './data';
@@ -59,6 +60,9 @@ export { isPlayableRender as isPlayable };
 
 /** 到期可做题判定（render 实现；本文件内部沿用旧名） */
 const isPlayable = isPlayableRender;
+
+/** 桌面面板拖拽缩放限界（ADR-0084；只挂 #review-popup，移动端真全屏不挂） */
+const PANEL = { MIN_W: 640, MIN_H: 440, MAX_W: 1280, MAX_H: 880 };
 
 // issue 253：到期标签/可做题判定等纯口径随 markup 一并迁 render.ts（dueLabelOf/isPlayable/stageTagHtml/stageNum）
 
@@ -97,6 +101,8 @@ export class UIManager {
   private escHandle: { unregister: () => void } | null = null;
   /** 动效 boot 消费标志：showMain 置位，首个 renderEntries 消费（后台刷新静默不重播） */
   private motionBootPending = false;
+  /** 桌面拖拽缩放句柄（ADR-0084/ADR-0094）：壳常驻 DOM，showMain 幂等挂 / hideMain 摘；null = 未挂 */
+  private panelResizeDetach: { flush: () => void; detach: () => void } | null = null;
 
   constructor(app: App, dataManager: ReviewDataManager) {
     this.app = app;
@@ -156,6 +162,14 @@ export class UIManager {
     topifyZ(this.mask, this.popup);
     this.mask.style.display = 'block';
     this.popup.style.display = 'flex';
+    // 桌面拖动缩放（ADR-0084）+ 尺寸记忆（ADR-0094）：壳常驻 DOM，showMain 幂等挂 / hideMain 摘
+    if (!isMobileEnv() && !this.panelResizeDetach) {
+      this.panelResizeDetach = uiResizable(this.popup, {
+        minW: PANEL.MIN_W, minH: PANEL.MIN_H,
+        maxW: PANEL.MAX_W, maxH: PANEL.MAX_H,
+        persist: panelSizePersist('reviewPanelWidth', 'reviewPanelHeight', PANEL.MIN_W, PANEL.MIN_H),
+      });
+    }
     this.motionBootPending = true; // 动效首屏编排由紧随的 renderEntries 消费
     // 打开即入焦 + Tab 圈闭（呈报#13 F3+H3 全域范式，core trapPanelFocus 单源）
     trapPanelFocus(this.popup);
@@ -165,6 +179,9 @@ export class UIManager {
   hideMain(): void {
     if (this.sprint) return; // 冲刺中不响应遮罩关闭
     motionTeardown(); // 动效延时编排随面板收场
+    // 拖拽缩放随面板隐藏摘除（防抖尾值 detach 内自动 flush，尺寸不丢）
+    this.panelResizeDetach?.detach();
+    this.panelResizeDetach = null;
     if (this.mask) this.mask.style.display = 'none';
     if (this.popup) this.popup.style.display = 'none';
   }

@@ -2327,3 +2327,33 @@ describe('金额单位（issue 294）', () => {
 async function drain(): Promise<void> {
   for (let i = 0; i < 30; i++) await Promise.resolve();
 }
+
+// ==================== 面板拖拽缩放 + 尺寸记忆（ADR-0084/0094） ====================
+
+describe('面板拖拽缩放 + 尺寸记忆（开关重建型，open 挂 / close 摘）', () => {
+  beforeEach(() => {
+    setupDom();
+  });
+  afterEach(() => {
+    cleanupBelongings();
+    closeItemMenu();
+  });
+
+  it('有记忆值时打开即套用内联宽高（挂载 load 恢复口径，同 clipbook）', async () => {
+    const vault = new MockVault();
+    await open(vault, { belongingsPanelWidth: 900, belongingsPanelHeight: 640 });
+    const p = panelOf()!;
+    expect(p.style.width).toBe('900px');
+    expect(p.style.height).toBe('640px');
+    close();
+  });
+
+  it('0 = 未拖过 → 不写内联尺寸（走 CSS 默认 920×640，persist 语义）', async () => {
+    const vault = new MockVault();
+    await open(vault);
+    const p = panelOf()!;
+    expect(p.style.width).toBe('');
+    expect(p.style.height).toBe('');
+    close();
+  });
+});

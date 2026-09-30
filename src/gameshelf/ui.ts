@@ -20,10 +20,11 @@ import type { App } from 'obsidian';
 import { topifyZ } from '../core/dom';
 import { registerPanelEsc, unregisterPanelEsc } from '../core/esc-manager';
 import { trapPanelFocus } from '../core/ui/focus-trap';
-import { tryGetSettings } from '../core/settings-provider';
+import { isMobileEnv } from '../core/mobile';
+import { tryGetSettings, panelSizePersist } from '../core/settings-provider';
 import { debounce, openExternalUrl } from '../core/utils';
 import { esc, escAttr, pad2 } from '../core/ui/str';
-import { uiSegmented, uiSelect, uiStat, uiEmpty, uiBtn, uiIconBtn, uiChip, uiSearch, uiModal, mountIcons, openLightbox } from '../core/ui';
+import { uiSegmented, uiSelect, uiStat, uiEmpty, uiBtn, uiIconBtn, uiChip, uiSearch, uiModal, mountIcons, openLightbox, uiResizable } from '../core/ui';
 import { M, displayNameOf, nameMatches, type GameItem, type GameshelfBucket, type GameshelfSort, type GameshelfViewKind } from './state';
 import {
   motionAchPaint, motionDetailIn, motionEmptyIn, motionHeroSwap, motionPanelOut, motionRendered,
@@ -42,6 +43,13 @@ import { coverDisplayUrl, iconDisplayUrl, resolveShotUrls } from './posters';
 
 /** ESC 层 id 沿域内约定 'bz-<域>'（cons C4：全仓面板级层 id 唯一不带前缀的破例，对齐） */
 const ESC_ID = 'bz-gameshelf';
+
+/** 主面板拖拽缩放口径（ADR-0084）：下限挡住游戏墙网格塌缩，上限留视口余量；
+ *  视口 92% 逐帧钳制在 core uiResizable 内，此处只给硬边界 */
+const PANEL = { MIN_W: 820, MIN_H: 540, MAX_W: 1440, MAX_H: 960 };
+
+/** 面板当前 resize 句柄（打开期间非空，关闭 detach 清空——uiResizable detach 幂等） */
+let panelResizeDetach: { flush: () => void; detach: () => void } | null = null;
 
 let maskEl: HTMLElement | null = null;
 let popupEl: HTMLElement | null = null;
@@ -1441,6 +1449,17 @@ function isConfigured(): boolean {
 export function openPanel(app: App, view: GameshelfViewKind = 'shelf'): void {
   createUI(app);
   M.view = view;
+  // 桌面拖动缩放（ADR-0084；移动端真全屏由 CSS 撑满视口，不挂）。尺寸记忆（ADR-0094）
+  // 收敛 core panelSizePersist 工厂；挂前先摘旧句柄——createUI 幂等早退时 frame 复用，
+  // 重挂会叠一层监听
+  if (!isMobileEnv() && popupEl) {
+    panelResizeDetach?.detach();
+    panelResizeDetach = uiResizable(popupEl, {
+      minW: PANEL.MIN_W, minH: PANEL.MIN_H,
+      maxW: PANEL.MAX_W, maxH: PANEL.MAX_H,
+      persist: panelSizePersist('gameshelfPanelWidth', 'gameshelfPanelHeight', PANEL.MIN_W, PANEL.MIN_H),
+    });
+  }
   gsBoot = true; // 动效层：开机演出置位，本次（首个）渲染消费即熄
   // 三队列 scheduleRerender 与 sync 收尾统一走 renderSoft（G1）：打字/下拉菜单开着时顺延，
   // 不再整刷抢焦点——调用点（names/backfill/posters/sync）零改动即全收
@@ -1479,6 +1498,11 @@ export function closePanel(): void {
   M.statusMsg = ''; // 状态行不跨开关残留（UX-1）：重开面板不再挂着上次的「同步完成…」
   M.renderFn = null;
   M.modalRepaintFn = null;
+  // 卸载拖动缩放（ADR-0084；persist 未落盘的防抖尾值由 detach 立即补存）
+  if (panelResizeDetach) {
+    panelResizeDetach.detach();
+    panelResizeDetach = null;
+  }
   clearDetailCache();
   unloadZhNames();
   // 后台回填（商店资料/成就三键）也随面板关闭停止：别在用户眼皮外继续改笔记，

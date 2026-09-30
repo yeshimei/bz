@@ -206,6 +206,33 @@ describe('知识盒 UI（ADR-0112 三部）', () => {
     await vi.waitFor(() => expect(popup.querySelector('.bz-kb-sc')!.textContent).toContain('还没有文献笔记'));
   });
 
+  it('主窗尺寸记忆：有记忆值时打开即套用内联宽高，重复 showMain 不叠挂（ADR-0084/0094）', async () => {
+    settings.knowledgePanelWidth = 880;
+    settings.knowledgePanelHeight = 600;
+    ui.showMain();
+    const popup = document.getElementById('knowledge-popup') as HTMLElement;
+    expect(popup.style.width).toBe('880px');
+    expect(popup.style.height).toBe('600px');
+    // 常驻 DOM 面板：未 hide 直接再 showMain（幂等路径）不得叠挂监听——重挂会双倍落盘
+    ui.showMain();
+    expect(popup.style.width).toBe('880px');
+    // hide 摘句柄后改记忆值，再开套新值（hideMain detach 生效的间接验证）
+    ui.hideMain();
+    await vi.waitFor(() => expect(popup.style.display).toBe('none'));
+    settings.knowledgePanelWidth = 900;
+    settings.knowledgePanelHeight = 620;
+    ui.showMain();
+    expect(popup.style.width).toBe('900px');
+    expect(popup.style.height).toBe('620px');
+  });
+
+  it('主窗尺寸记忆：0 = 未拖过 → 主窗不写内联尺寸（走 CSS 默认，persist 语义）', () => {
+    ui.showMain();
+    const popup = document.getElementById('knowledge-popup') as HTMLElement;
+    expect(popup.style.width).toBe('');
+    expect(popup.style.height).toBe('');
+  });
+
   it('部壹文献列表：词条/影像 + 领域 + 日期，最近创建降序；行点击开预览（全文段落 + 关联；无操作按钮；无行内编号）', async () => {
     vault.files.set('文献盒/视频C.md', noteMd({
       title: '视频C', type: 'video', domain: '物理', date: '2026-09-01 10:00:00',

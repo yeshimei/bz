@@ -614,3 +614,62 @@ export async function fetchNoteDouban(app: App, file: TFile, deps: DoubanFetchDe
   }
   return { ok: true };
 }
+
+// ==================== 豆瓣片单导入（一键批量建档） ====================
+
+/** 片单条目（解析产物）：豆瓣条目 sid + 片名原文 */
+export interface DoubanListEntry { sid: string; name: string }
+
+/**
+ * 片单页 HTML → 条目列表（纯函数，测试可直接喂 HTML）。
+ * 认豆瓣两类页面共有的条目锚点：subject 链接自带 `title="片名"`（wish/collect 主页
+ * 收藏页与 doulist 豆列同构）；同一条目在页面里可能出现多次（海报链接 + 文字链接），
+ * 按 sid 去重保序。空结果 = 抓不到（风控/需登录/链接不对，由调用方分流提示）。
+ */
+export function parseDoubanListHtml(html: string): DoubanListEntry[] {
+  const out: DoubanListEntry[] = [];
+  const seen = new Set<string>();
+  const re = /movie\.douban\.com\/subject\/(\d+)\/"[^>]*?title="([^"]+)"/g;
+  for (let m = re.exec(html); m; m = re.exec(html)) {
+    const sid = m[1];
+    const name = m[2].replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').trim();
+    if (!name || seen.has(sid)) continue;
+    seen.add(sid);
+    out.push({ sid, name });
+  }
+  return out;
+}
+
+/** 翻页上限（防死循环/防风控激怒）：240 部 ≈ 豆瓣 wish 页 16 页，远超正常片单规模 */
+const DOUBAN_LIST_MAX_PAGES = 16;
+
+/**
+ * 抓取整个豆瓣片单（翻页聚合）：wish / doulist 等 subject 列表页，25 条/页按 `start=` 递进，
+ * 某页解析为空即停（到底/需登录/风控拦截页都表现为空）。cookie 可选（个人页登录态；
+ * 公开豆列不填）。返回条目与「是否疑似被拦」（首页为空但请求本身成功 → 让调用方提示查 cookie）。
+ */
+export async function fetchDoubanList(base: string, httpGet: HttpGet, cookie?: string): Promise<{ entries: DoubanListEntry[]; firstPageEmpty: boolean }> {
+  const sep = base.includes('?') ? '&' : '?';
+  const headers = cookie?.trim() ? { Cookie: cookie.trim() } : undefined;
+  const all: DoubanListEntry[] = [];
+  const seen = new Set<string>();
+  let firstPageEmpty = false;
+  for (let start = 0; start < DOUBAN_LIST_MAX_PAGES * 25; start += 25) {
+    let html: string | null = null;
+    try {
+      html = await httpGet(`${base}${sep}start=${start}`, headers);
+    } catch {
+      break; // 网络失败：交已抓到的部分（可能是翻页中途断），抓不到就空
+    }
+    const page = html ? parseDoubanListHtml(html) : [];
+    if (start === 0 && page.length === 0) firstPageEmpty = true;
+    if (page.length === 0) break;
+    for (const e of page) {
+      if (seen.has(e.sid)) continue;
+      seen.add(e.sid);
+      all.push(e);
+    }
+    if (page.length < 25) break; // 末页（不足一整页）
+  }
+  return { entries: all, firstPageEmpty };
+}

@@ -732,11 +732,12 @@ describe('bz ui 组件库', () => {
         expect(save).not.toHaveBeenCalled();
         vi.advanceTimersByTime(1);
         expect(save).toHaveBeenCalledWith(540);
-        // 第二次拖动 → flush 立即落尾值（未到防抖期）
+        // 第二次拖动 → flush 立即落尾值（未到防抖期）；
+        // 半屏挤压修复后落盘口径 = 意图宽（840，只钳下限），渲染值仍钳容器（680）
         fire(el, 'mousedown', 900);
-        fire(document, 'mousemove', 1200); // 540+300=840 → 钳 680
+        fire(document, 'mousemove', 1200); // 540+300=840 → 渲染钳 680
         flush();
-        expect(save).toHaveBeenLastCalledWith(680);
+        expect(save).toHaveBeenLastCalledWith(840);
         detach();
       } finally {
         vi.useRealTimers();

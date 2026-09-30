@@ -18,7 +18,9 @@
 .bz-encrypt-dialog-btn--primary {
   background: var(--bz-brand); color: var(--bz-on-brand); font-weight: 500;
 }
-#bz-encrypt-popup { width: 90%; max-width: 700px; max-height: 80vh; }
+/* max-width/max-height 只作视口钳制（ADR-0084 桌面拖动缩放）：固定 700px 上限会压住拖拽意图，
+   放开到视口径——width:90% 保留作默认态，拖拽后的内联宽高覆盖之 */
+#bz-encrypt-popup { width: 90%; max-width: calc(100vw - 32px); max-height: 92vh; }
 #bz-encrypt-preview-popup { max-height: 86vh; overflow: hidden; }
 /* 旧列表 id 选择器已死清退（现行列表容器 .bz-vault-listcol，encrypt 域深审批 D）；
    滚动条隐藏由 core 界面级单源规则接管（ADR-0122 / issue 277，[id^="bz-"] 通杀），
