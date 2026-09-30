@@ -257,6 +257,7 @@ export function detailModalHtml(it: CinemaItem, posterUrl: string | null): strin
   if (firstDate) nodes.push({ d: firstDate, tag: rewatched ? '首看' : '已看', first: true });
   for (const r of [...it.rewatches].sort()) nodes.push({ d: r.slice(0, 16), tag: '' });
   nodes.sort((a, b) => a.d.localeCompare(b.d));
+  // is-first = 首看节点金色高亮（非 DOM 首行——想看/在看日期可能更早排在前面）
   const timeline = nodes.length
     ? `<div class="dm-tl">${nodes.map((n) => `<div class="dm-tl-row${n.first ? ' is-first' : ''}"><i></i><span class="d">${esc(n.d)}</span>${n.tag ? `<span class="tag">${esc(n.tag)}</span>` : ''}</div>`).join('')}</div>`
     : '';

@@ -1,4 +1,4 @@
-/* 源指纹 452f706666d77fba · 仓内输入 79 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 81705877a300a12b · 仓内输入 79 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/cinema/fake-sim.ts","prototypes/cinema/fake/fake-obsidian.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/douban-fetcher.ts","src/cinema/douban-queue.ts","src/cinema/index.ts","src/cinema/layouts/midnight/render.ts","src/cinema/motion.ts","src/cinema/recommend.ts","src/cinema/render.ts","src/cinema/seasons.ts","src/cinema/shared.ts","src/cinema/state.ts","src/cinema/type-decide.ts","src/cinema/ui.ts","src/cinema/yearbook/data.ts","src/cinema/yearbook/engine.ts","src/cinema/yearbook/index.ts","src/cinema/yearbook/kits.ts","src/cinema/yearbook/motions.ts","src/cinema/yearbook/scenes.ts","src/core/ai.ts","src/core/app.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/douban-name-index.ts","src/core/download-manifest.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/gesture.ts","src/core/http.ts","src/core/item-actions.ts","src/core/jev-fallback.ts","src/core/jev.ts","src/core/landscape.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/remote-asset.ts","src/core/remote-base.ts","src/core/settings-provider.ts","src/core/sha256.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/help-tip.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slide-pill.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/cinema/fake-sim.ts → window.BZW_cinema（行为单源预览包，issue 245/ADR-0106） */
 var BZW_cinema = (() => {
@@ -11731,18 +11731,17 @@ tags:
     const hot = ((_i = it.hotComment) != null ? _i : "").trim();
     const hotFold = hot.length > HOT_FOLD_MIN;
     const rewatched = it.rewatches.length > 0;
-    const onShelf = it.lists.includes(REWATCH_SHELF);
     const firstDate = (it.watchDate || "").slice(0, 10);
-    const rewDates = [...it.rewatches].map((d) => d.slice(0, 10)).sort();
     const wantD = (it.wantDate || "").slice(0, 10);
     const watchingD = (it.watchingDate || "").slice(0, 10);
-    const dateBits = [];
-    if (wantD) dateBits.push(`想看 ${wantD}`);
-    if (watchingD) dateBits.push(`在看 ${watchingD}`);
-    if (statusNum(it.status) === STATUS_WATCHED) {
-      if (firstDate) dateBits.push(`已看 ${firstDate}`);
-    } else if (!dateBits.length && firstDate) dateBits.push(firstDate);
-    const timeline = rewatched ? `<div class="dm-tl">${firstDate ? `<div class="dm-tl-row is-first"><i></i><span class="d">${esc(firstDate)}</span><span class="tag">首看</span></div>` : ""}${rewDates.map((d) => `<div class="dm-tl-row"><i></i><span class="d">${esc(d)}</span></div>`).join("")}</div>` : "";
+    const nodes = [];
+    if (wantD) nodes.push({ d: wantD, tag: "想看" });
+    if (watchingD) nodes.push({ d: watchingD, tag: "在看" });
+    if (firstDate) nodes.push({ d: firstDate, tag: rewatched ? "首看" : "已看", first: true });
+    for (const r of [...it.rewatches].sort()) nodes.push({ d: r.slice(0, 16), tag: "" });
+    nodes.sort((a, b) => a.d.localeCompare(b.d));
+    const timeline = nodes.length ? `<div class="dm-tl">${nodes.map((n) => `<div class="dm-tl-row${n.first ? " is-first" : ""}"><i></i><span class="d">${esc(n.d)}</span>${n.tag ? `<span class="tag">${esc(n.tag)}</span>` : ""}</div>`).join("")}</div>` : "";
+    const listChips = [...it.lists].sort((a, b) => a === REWATCH_SHELF ? -1 : b === REWATCH_SHELF ? 1 : 0).map((l) => `<span class="dm-chip dm-chip--shelf">${esc(l)}</span>`).join("");
     return `<div class="cn-modal cn-modal--detail">
     <div class="dm-head"><div class="dm-poster">${posterUrl2 ? `<img src="${esc(posterUrl2)}" onerror="this.remove()">` : ""}</div>
       <div style="flex:1;min-width:0"><div class="dm-title">${esc(it.name)}</div>
@@ -11752,9 +11751,8 @@ tags:
       return st !== STATUS_WATCHED ? badge(statusColor(st), statusText(st)) : "";
     })()}
           ${rewatched ? `<span class="dm-chip dm-chip--re">${rewatchCount(it)} 刷</span>` : ""}
-          ${onShelf ? `<span class="dm-chip dm-chip--shelf">重映厅</span>` : ""}
-          ${it.rating && it.rating > 0 ? `<span class="dm-stars">${getStarString(it.rating)}</span><span class="dm-rating">${Number(it.rating).toFixed(1)}</span>` : ""}
-          ${dateBits.length ? `<span class="dm-date">${esc(dateBits.join(" · "))}</span>` : ""}</div>
+          ${listChips}
+          ${it.rating && it.rating > 0 ? `<span class="dm-stars">${getStarString(it.rating)}</span><span class="dm-rating">${Number(it.rating).toFixed(1)}</span>` : ""}</div>
         ${it.review ? `<div class="dm-review">${esc(it.review)}</div>` : ""}
         ${timeline}</div></div>
     ${rows.length ? '<div class="dm-sec">豆 瓣 信 息</div>' + rows.map(([k, v]) => `<div class="dm-kv"><span class="dm-kv-k">${k}</span><span class="dm-kv-v">${esc(v)}</span></div>`).join("") : ""}
@@ -12154,18 +12152,26 @@ tags:
   }
   async function markRewatch(it, app) {
     if (!it.file) return;
-    const today = localNow().slice(0, 10);
-    const prev = it.rewatches;
-    it.rewatches = [...prev, today];
+    const now = localNow();
+    const prev = { rewatches: it.rewatches, lists: it.lists };
+    it.rewatches = [...prev.rewatches, now];
+    const wasOnShelf = it.lists.includes(REWATCH_SHELF);
+    if (wasOnShelf) it.lists = it.lists.filter((l) => l !== REWATCH_SHELF);
     try {
       await app.fileManager.processFrontMatter(it.file, (fm) => {
-        fm["重看"] = normalizeRewatches(fm["重看"]).concat(today);
+        fm["重看"] = normalizeRewatches(fm["重看"]).concat(now);
+        if (wasOnShelf) {
+          const rest = normalizeLists(fm["片单"]).filter((l) => l !== REWATCH_SHELF);
+          if (rest.length) fm["片单"] = rest;
+          else delete fm["片单"];
+        }
       });
-      notice(`「${it.name}」记下第 ${rewatchCount(it)} 刷（${today}）`, "success");
+      notice(`「${it.name}」记下第 ${rewatchCount(it)} 刷（${now.slice(0, 16)}）${wasOnShelf ? `，已移出「${REWATCH_SHELF}」` : ""}`, "success");
       markCardFlash(itemKey(it));
       renderAll(app);
     } catch (e) {
-      it.rewatches = prev;
+      it.rewatches = prev.rewatches;
+      it.lists = prev.lists;
       notifySaveError(e);
       console.error(e);
       renderAll(app);

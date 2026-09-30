@@ -1,4 +1,4 @@
-/* 源指纹 b2c795082ae25dff · 仓内输入 6 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 7051c30a3929b194 · 仓内输入 6 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["src/cinema/constants.ts","src/cinema/layouts/midnight/render.ts","src/cinema/render.ts","src/cinema/seasons.ts","src/cinema/shared.ts","src/core/ui/str.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — src/cinema/render.ts → window.BZR_cinema（评审壳预览包，ADR-0104） */
 var BZR_cinema = (() => {
@@ -281,18 +281,17 @@ var BZR_cinema = (() => {
     const hot = ((_i = it.hotComment) != null ? _i : "").trim();
     const hotFold = hot.length > HOT_FOLD_MIN;
     const rewatched = it.rewatches.length > 0;
-    const onShelf = it.lists.includes(REWATCH_SHELF);
     const firstDate = (it.watchDate || "").slice(0, 10);
-    const rewDates = [...it.rewatches].map((d) => d.slice(0, 10)).sort();
     const wantD = (it.wantDate || "").slice(0, 10);
     const watchingD = (it.watchingDate || "").slice(0, 10);
-    const dateBits = [];
-    if (wantD) dateBits.push(`想看 ${wantD}`);
-    if (watchingD) dateBits.push(`在看 ${watchingD}`);
-    if (statusNum(it.status) === STATUS_WATCHED) {
-      if (firstDate) dateBits.push(`已看 ${firstDate}`);
-    } else if (!dateBits.length && firstDate) dateBits.push(firstDate);
-    const timeline = rewatched ? `<div class="dm-tl">${firstDate ? `<div class="dm-tl-row is-first"><i></i><span class="d">${esc(firstDate)}</span><span class="tag">首看</span></div>` : ""}${rewDates.map((d) => `<div class="dm-tl-row"><i></i><span class="d">${esc(d)}</span></div>`).join("")}</div>` : "";
+    const nodes = [];
+    if (wantD) nodes.push({ d: wantD, tag: "想看" });
+    if (watchingD) nodes.push({ d: watchingD, tag: "在看" });
+    if (firstDate) nodes.push({ d: firstDate, tag: rewatched ? "首看" : "已看", first: true });
+    for (const r of [...it.rewatches].sort()) nodes.push({ d: r.slice(0, 16), tag: "" });
+    nodes.sort((a, b) => a.d.localeCompare(b.d));
+    const timeline = nodes.length ? `<div class="dm-tl">${nodes.map((n) => `<div class="dm-tl-row${n.first ? " is-first" : ""}"><i></i><span class="d">${esc(n.d)}</span>${n.tag ? `<span class="tag">${esc(n.tag)}</span>` : ""}</div>`).join("")}</div>` : "";
+    const listChips = [...it.lists].sort((a, b) => a === REWATCH_SHELF ? -1 : b === REWATCH_SHELF ? 1 : 0).map((l) => `<span class="dm-chip dm-chip--shelf">${esc(l)}</span>`).join("");
     return `<div class="cn-modal cn-modal--detail">
     <div class="dm-head"><div class="dm-poster">${posterUrl ? `<img src="${esc(posterUrl)}" onerror="this.remove()">` : ""}</div>
       <div style="flex:1;min-width:0"><div class="dm-title">${esc(it.name)}</div>
@@ -302,9 +301,8 @@ var BZR_cinema = (() => {
       return st !== STATUS_WATCHED ? badge(statusColor(st), statusText(st)) : "";
     })()}
           ${rewatched ? `<span class="dm-chip dm-chip--re">${rewatchCount(it)} 刷</span>` : ""}
-          ${onShelf ? `<span class="dm-chip dm-chip--shelf">重映厅</span>` : ""}
-          ${it.rating && it.rating > 0 ? `<span class="dm-stars">${getStarString(it.rating)}</span><span class="dm-rating">${Number(it.rating).toFixed(1)}</span>` : ""}
-          ${dateBits.length ? `<span class="dm-date">${esc(dateBits.join(" · "))}</span>` : ""}</div>
+          ${listChips}
+          ${it.rating && it.rating > 0 ? `<span class="dm-stars">${getStarString(it.rating)}</span><span class="dm-rating">${Number(it.rating).toFixed(1)}</span>` : ""}</div>
         ${it.review ? `<div class="dm-review">${esc(it.review)}</div>` : ""}
         ${timeline}</div></div>
     ${rows.length ? '<div class="dm-sec">豆 瓣 信 息</div>' + rows.map(([k, v]) => `<div class="dm-kv"><span class="dm-kv-k">${k}</span><span class="dm-kv-v">${esc(v)}</span></div>`).join("") : ""}
