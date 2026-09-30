@@ -1,4 +1,4 @@
-/* 源指纹 44db09887ec263aa · 仓内输入 3 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 4687c2443076b00c · 仓内输入 3 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["src/people/chat.ts","src/people/render.ts","src/people/types.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — src/people/render.ts → window.BZR_people（评审壳预览包，ADR-0104） */
 var BZR_people = (() => {
@@ -513,7 +513,7 @@ var BZR_people = (() => {
       };
     }
     if (isLegacyFace(p)) return { state: "legacy", text: "旧", title: `「${name}」的脸谱还是旧版单卷——去详情页重画一次`, action: null };
-    if (p.digest) {
+    if (p.digest && (personOf(p.digest) || bondOf(p.digest) || p.digest.chronicle)) {
       return {
         state: "drawn",
         text: p.lastProcessedTs ? "画" : "绘",
@@ -956,9 +956,13 @@ var BZR_people = (() => {
     for (const d of list) {
       const m = /^(\d{2})-(\d{2})$/.exec(String((_c = d.date) != null ? _c : ""));
       if (!m) continue;
+      const mm = Number(m[1]);
+      const dd = Number(m[2]);
+      if (!(mm >= 1 && mm <= 12 && dd >= 1 && dd <= 31)) continue;
       let when = new Date(base);
-      when.setMonth(Number(m[1]) - 1, Number(m[2]));
-      if (when.getTime() < base) when = new Date(today.getFullYear() + 1, Number(m[1]) - 1, Number(m[2]));
+      when.setMonth(mm - 1, dd);
+      if (when.getMonth() !== mm - 1 || when.getDate() !== dd) continue;
+      if (when.getTime() < base) when = new Date(today.getFullYear() + 1, mm - 1, dd);
       const days = Math.round((when.getTime() - base) / 864e5);
       if (days >= 0 && days <= 30 && (!best || days < best.days)) best = { what: d.what, date: d.date, days };
     }
@@ -1358,10 +1362,10 @@ var BZR_people = (() => {
       if (s.filter.trim()) fbox.appendChild(iconButton("x", "bz-people-ico bz-people-ico-sm", { "data-people-ds-filter-clear": "", "aria-label": "清空过滤" }));
       body.push(fbox);
       if (!s.rows.length) {
-        body.push(el("div", "bz-people-empty-hint", text(`没匹配「${s.filter.trim()}」的联系人——清掉过滤字再看全名单。`)));
+        body.push(el("div", "bz-people-empty-hint", text(s.filter.trim() ? `没匹配「${s.filter.trim()}」的联系人——清掉过滤字再看全名单。` : "这个目录里没有扫到联系人——确认微信已登录、同步已完成，或数据根目录选对了。")));
       } else {
         const list = el("div", "bz-people-ds-list", { "data-people-ds-list": "" });
-        for (const r of s.rows) list.appendChild(dsRow(r, s.selected.includes(r.name)));
+        for (const r of s.rows) list.appendChild(dsRow(r, s.selected.includes(r.name), s.groupEnabled === true));
         body.push(list);
         const legend = el("div", "bz-people-ds-legend");
         legend.append(
@@ -1385,7 +1389,11 @@ var BZR_people = (() => {
     if (s.importing || s.syncing) imp.setAttribute("disabled", "");
     foot.appendChild(imp);
     const head = [];
-    head.push(s.syncing ? button("bz-people-btn bz-people-btn-sm", "停止", { "data-people-ds-sync-stop": "", title: "停止同步——已导出的部分保留，重跑可续传" }) : button("bz-people-btn bz-people-btn-sm", "同步", { "data-people-ds-sync": "", title: "从微信重新解密并导出，需要微信已登录" }));
+    head.push(s.syncing ? button("bz-people-btn bz-people-btn-sm", "停止", { "data-people-ds-sync-stop": "", title: "停止同步——已导出的部分保留，重跑可续传" }) : button("bz-people-btn bz-people-btn-sm", "同步", {
+      "data-people-ds-sync": "",
+      title: "从微信重新解密并导出，需要微信已登录",
+      ...s.importing ? { disabled: "", title: "正在导入所选——等导入完成再同步" } : {}
+    }));
     const meta = s.syncing ? "正在同步…" : s.scanning ? "正在扫描…" : s.rows ? s.filter.trim() ? `${s.rows.length} / 共 ${s.totalRows} 位` : `${s.rows.length} 位联系人${s.hiddenGroups ? ` · ${s.hiddenGroups} 个群聊未纳入` : ""}` : "";
     return subPage({ title: "数据源", meta, head, foot, hook: "ds" }, body);
   }
@@ -2197,8 +2205,8 @@ var BZR_people = (() => {
     }
     return root;
   }
-  function dsWaterOf(row) {
-    if (row.isGroup) return null;
+  function dsWaterOf(row, groupEnabled = false) {
+    if (row.isGroup && !groupEnabled) return null;
     if (row.exported && !row.imported) return { k: "exported", label: "已导出 · 待入库" };
     if (!row.imported) return { k: "full", label: `全新 · ${formatCount(row.rawCount)} 条` };
     if (row.newCount > 0) return { k: "newer", label: row.newApprox ? "增量 · 有新消息" : `增量 · ${formatCount(row.newCount)} 条` };
@@ -2209,11 +2217,12 @@ var BZR_people = (() => {
     const drawn = row.processedTs ? `画到 ${formatDay(row.processedTs).slice(5)}` : "未画脸谱";
     return `已导 ${formatCount(row.rawCount)} 条 · ${drawn}`;
   }
-  function dsRow(row, on) {
+  function dsRow(row, on, groupEnabled = false) {
     var _a;
     const fresh = row.newCount > 0 && row.imported;
-    const water = dsWaterOf(row);
-    const cls = `bz-people-ds-row${on ? " bz-people-ds-on" : ""}${fresh ? " bz-people-ds-fresh" : ""}${row.isGroup ? " bz-people-ds-off" : ""}${(water == null ? void 0 : water.k) === "skip" ? " bz-people-ds-skip" : ""}`;
+    const water = dsWaterOf(row, groupEnabled);
+    const groupOff = row.isGroup && !groupEnabled;
+    const cls = `bz-people-ds-row${on ? " bz-people-ds-on" : ""}${fresh ? " bz-people-ds-fresh" : ""}${groupOff ? " bz-people-ds-off" : ""}${(water == null ? void 0 : water.k) === "skip" ? " bz-people-ds-skip" : ""}`;
     const box = el(
       "span",
       "bz-people-ds-box",
@@ -2230,7 +2239,7 @@ var BZR_people = (() => {
       ]),
       el("span", "bz-people-ds-side", [
         water ? el("span", `bz-people-ds-water bz-people-ds-w-${water.k}`, text(water.label)) : text(""),
-        el("span", "bz-people-ds-mark", text(row.isGroup ? "未纳入" : dsWatermark(row)))
+        el("span", "bz-people-ds-mark", text(groupOff ? "未纳入" : dsWatermark(row)))
       ])
     ]);
   }

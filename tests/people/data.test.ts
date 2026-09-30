@@ -266,7 +266,7 @@ describe('mergeInto 去重并入（重试翻倍防护，bug 批修回归）', ()
     // 给 from 挂两份导入记录 + 一条随手记（模拟既有数据）
     from.imports.push(imp('chat-a.json', '2026-01-01T00:00:00.000Z'), imp('chat-b.json', '2026-02-01T00:00:00.000Z'));
     await store2.upsert(from);
-    await store2.addManualEvent('wxid_from', { id: 'ev1', ts: '2026-03-01', text: '第一次见面' });
+    await store2.addManualEvent('wxid_from', { id: 'ev1', ts: '2026-03-01', summary: '第一次见面', createdAt: '2026-03-01T00:00:00.000Z' });
 
     await store2.mergeInto('wxid_from', 'wxid_to');
     // 模拟「removeContact 失败后用户再点一次合并」：from 还在，再并一次
