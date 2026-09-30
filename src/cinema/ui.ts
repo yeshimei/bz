@@ -34,11 +34,11 @@ import {
 } from './constants';
 import { M, type CinemaItem, type CinemaSortMode } from './state';
 import { loadDoubanNameIndex, searchDoubanNameIndex, normName, type DoubanIndexRow } from '../core/douban-name-index';
-import { rebuildItems, getDisplayItems, normalizeTags, normalizeRewatches, normalizeLists, allLists } from './data';
+import { rebuildItems, getDisplayItems, normalizeTags, normalizeRewatches, normalizeLists, allLists, refreshDataAndView } from './data';
 import { localNow } from '../core/ui/str';
 import { runAIRecommend, runSimilarRecommend, buildTasteProfile, quickAddWant } from './recommend';
 import { bindYearbook, deriveYb, yearbookHtml, yearbookFixedHtml, yearbookOpenHtml, type YbHandle } from './yearbook';
-import { enqueueDoubanFetch, dequeueDoubanFetch, isFetching, queryDoubanForPreview, downloadPreviewPoster } from './douban-queue';
+import { enqueueDoubanFetch, dequeueDoubanFetch, isFetching, queryDoubanForPreview, downloadPreviewPoster, fetchDoubanListForImport } from './douban-queue';
 import { normalizeListValue, insertPosterEmbed, type DoubanQuery } from './douban-fetcher';
 import { decideCinemaType } from './type-decide';
 import {
@@ -199,6 +199,90 @@ function openListPick(sec: HTMLElement, it: CinemaItem, app: App): void {
   el.querySelector('.j-lp-add')?.addEventListener('click', submitNew);
   el.querySelector<HTMLInputElement>('.j-lp-new')?.addEventListener('keydown', (e) => {
     if (e.key === 'Enter') { e.preventDefault(); submitNew(); }
+  });
+}
+
+/** 一键导入豆瓣片单（侧栏「导入片单」）：贴 wish 收藏页 / 豆列链接 → 抓取解析出条目 →
+ *  已在库的跳过，新片按「想看」静默批量建档（quickAddWant silent，最后统一刷新），
+ *  海报与豆瓣信息走补抓队列。Cookie 走设置键 cinemaDoubanCookie（queue 单源装配），
+ *  弹层不收敏感值；两段式（先看抓取结果再导入），导入完关层出汇总 toast。 */
+function openDoubanImport(sec: HTMLElement, app: App): void {
+  const { el, close } = ovl(sec, `<div class="cn-modal cn-modal--dimp">
+    <div class="dimp-head"><span class="lp-kicker">一键导入</span><span class="dimp-name">豆瓣片单</span></div>
+    <div class="dimp-stage" data-dimp-input>
+      <input class="j-dimp-url" placeholder="片单链接：豆瓣 wish 收藏页或豆列 doulist">
+      <div class="dimp-hint">按「想看」批量建档；已在库的自动跳过，海报与豆瓣信息随后台队列补齐。个人收藏页需先在设置里填豆瓣 Cookie。</div>
+      <button type="button" class="lp-add j-dimp-fetch">抓取片单</button>
+    </div>
+    <div class="dimp-stage" data-dimp-result hidden>
+      <div class="dimp-stat j-dimp-stat"></div>
+      <div class="dimp-list j-dimp-list"></div>
+      <div class="dimp-acts"><button type="button" class="lp-add j-dimp-run">导入</button><button type="button" class="dm-btn j-dimp-back">返回重填</button></div>
+    </div>
+  </div>`);
+  mountIcons(el);
+  const inputStage = el.querySelector<HTMLElement>('[data-dimp-input]');
+  const resultStage = el.querySelector<HTMLElement>('[data-dimp-result]');
+  let pending: { name: string }[] = [];
+  const inLibrary = (name: string): boolean => M.items.some((it) => it.name === name);
+  const fetchBtn = el.querySelector<HTMLButtonElement>('.j-dimp-fetch');
+  fetchBtn?.addEventListener('click', () => {
+    const url = (el.querySelector<HTMLInputElement>('.j-dimp-url')?.value ?? '').trim();
+    if (!/^https?:\/\/(www\.)?(movie\.)?douban\.com\//.test(url)) {
+      notice('先贴一个豆瓣片单链接（movie.douban.com 下）', 'warning');
+      return;
+    }
+    fetchBtn.disabled = true;
+    fetchBtn.textContent = '抓取中…';
+    void fetchDoubanListForImport(app, url).then(({ entries, firstPageEmpty }) => {
+      fetchBtn.disabled = false;
+      fetchBtn.textContent = '抓取片单';
+      if (!inputStage || !resultStage) return;
+      if (!entries.length) {
+        notice(firstPageEmpty
+          ? '一条都没抓到：个人收藏页需要登录态（设置里填豆瓣 Cookie），或改用公开豆列链接'
+          : '这个链接没解析出条目，确认是豆瓣 wish 页或豆列链接', 'warning');
+        return;
+      }
+      pending = entries.filter((e) => !inLibrary(e.name));
+      const stat = resultStage.querySelector<HTMLElement>('.j-dimp-stat');
+      if (stat) stat.textContent = `共 ${entries.length} 部 · 已在库 ${entries.length - pending.length} · 待导入 ${pending.length}`;
+      const list = resultStage.querySelector<HTMLElement>('.j-dimp-list');
+      if (list) {
+        list.innerHTML = entries.map((e) =>
+          `<div class="dimp-row${inLibrary(e.name) ? ' is-inlib' : ''}"><span class="lp-label">${esc(e.name)}</span><span class="dimp-tag">${inLibrary(e.name) ? '已在库' : '新片'}</span></div>`,
+        ).join('');
+      }
+      const runBtn = resultStage.querySelector<HTMLButtonElement>('.j-dimp-run');
+      if (runBtn) {
+        runBtn.textContent = `导入 ${pending.length} 部新片`;
+        runBtn.disabled = !pending.length;
+      }
+      inputStage.hidden = true;
+      resultStage.hidden = false;
+    });
+  });
+  el.querySelector('.j-dimp-back')?.addEventListener('click', () => {
+    if (resultStage) resultStage.hidden = true;
+    if (inputStage) inputStage.hidden = false;
+  });
+  el.querySelector('.j-dimp-run')?.addEventListener('click', () => {
+    const runBtn = el.querySelector<HTMLButtonElement>('.j-dimp-run');
+    if (runBtn) {
+      runBtn.disabled = true;
+      runBtn.textContent = '导入中…';
+    }
+    void (async () => {
+      for (const e of pending) {
+        await quickAddWant(app, e.name, '电影', { silent: true });
+      }
+      refreshDataAndView(app);
+      renderAll(app);
+      close();
+      notice(pending.length
+        ? `已从豆瓣片单导入 ${pending.length} 部到想看，海报与信息后台补齐`
+        : '没有可导入的新片', pending.length ? 'success' : 'warning');
+    })();
   });
 }
 
@@ -2096,6 +2180,8 @@ function bindMidnight(sec: HTMLElement, app: App, hoverable = hoverCapable()): v
       renderAll(app);
       return;
     }
+    // 一键导入豆瓣片单：动作不是视图，不走 j-tool 的视图切换分流
+    if (t.closest('.j-import')) { openDoubanImport(sec, app); return; }
     const tool = t.closest('.j-tool') as HTMLElement | null;
     if (tool && tool.dataset.tool) {
       // 进 ai 不动筛选状态：rail 高亮由渲染层按视图熄灭（render.ts listOn 门控），

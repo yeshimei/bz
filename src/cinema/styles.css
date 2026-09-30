@@ -1571,3 +1571,23 @@
 .bz-yb-box.is-rot90 .yb-rail{right:auto; left:.5em}
 .bz-yb-box.is-rot90 .yb-attl{top:20%}
 .bz-yb-box.is-rot90 .yb-arc{bottom:-42em; --arc-r:44em}
+
+/* 一键导入豆瓣片单弹层（cn-modal--dimp）：listpick 同语言——金 kicker 头部 + 两段式
+   （输入态：链接框/提示/金钮；结果态：统计行 + 条目列表 + 导入/返回）。全 token 取色 */
+.bz-cinema--midnight .cn-modal--dimp{width:300px;max-height:74%;display:flex;flex-direction:column;gap:14px;padding:18px 18px 16px}
+.bz-cinema--midnight .dimp-head{display:flex;flex-direction:column;gap:4px}
+.bz-cinema--midnight .dimp-name{font-size:14.5px;font-weight:600;color:var(--ink);line-height:1.4}
+.bz-cinema--midnight .dimp-stage{display:flex;flex-direction:column;gap:10px;min-height:0}
+.bz-cinema--midnight .dimp-stage[hidden]{display:none}
+.bz-cinema--midnight .dimp-stage .j-dimp-url{width:100%;background:var(--chip);border:1px solid var(--line);border-radius:10px;padding:9px 12px;color:var(--ink);font-size:12.5px;font-family:inherit;outline:none;transition:border-color var(--cn-m-fast) ease}
+.bz-cinema--midnight .dimp-stage .j-dimp-url:focus{border-color:var(--gold)}
+.bz-cinema--midnight .dimp-stage .j-dimp-url::placeholder{color:var(--ink-3)}
+.bz-cinema--midnight .dimp-hint{font-size:11.5px;color:var(--ink-3);line-height:1.7}
+.bz-cinema--midnight .dimp-stat{font-size:12px;color:var(--ink-2);letter-spacing:.02em}
+.bz-cinema--midnight .dimp-list{overflow-y:auto;display:grid;gap:5px;min-height:0;max-height:260px;padding:2px}
+.bz-cinema--midnight .dimp-row{display:flex;align-items:center;gap:9px;padding:7px 11px;border-radius:9px;border:1px solid var(--line);font-size:12.5px;color:var(--ink)}
+.bz-cinema--midnight .dimp-row.is-inlib{color:var(--ink-3)}
+.bz-cinema--midnight .dimp-row .lp-label{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bz-cinema--midnight .dimp-tag{font-size:10.5px;letter-spacing:.06em;flex:none;padding:1px 8px;border-radius:99px;border:1px solid var(--line);color:var(--ink-3)}
+.bz-cinema--midnight .dimp-row:not(.is-inlib) .dimp-tag{border-color:var(--gold);color:var(--gold)}
+.bz-cinema--midnight .dimp-acts{display:flex;gap:8px;align-items:center}

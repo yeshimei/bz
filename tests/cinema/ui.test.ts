@@ -16,7 +16,7 @@ import { M, resetCinemaState } from '../../src/cinema/state';
 import { rebuildItems } from '../../src/cinema/data';
 import { runAIRecommend, runSimilarRecommend, quickAddWant, parseRecommendJson } from '../../src/cinema/recommend';
 import { createOverlay, closeOverlay, openAddModalDirect, openRandomMovie, renderAll, renderSoft, openYearbookOverlay, closeYearbookOverlay } from '../../src/cinema/ui';
-import { configureFetchQueue, isFetching, shutdownDoubanQueue, type DoubanQueryOutcome } from '../../src/cinema/douban-queue';
+import { configureFetchQueue, configureDoubanListFetch, isFetching, shutdownDoubanQueue, type DoubanQueryOutcome } from '../../src/cinema/douban-queue';
 import { ensureCinema, unloadCinema, openCinemaAnalysis, pickRandomCinema } from '../../src/cinema';
 import { setAISettingsProvider, resetAIProviderCache } from '../../src/core/ai';
 import { setApp } from '../../src/core/app';
@@ -2426,8 +2426,8 @@ describe('cinema 滑动高亮：侧栏与排序钮（issue 397）', () => {
     createOverlay(app);
     const root = document.querySelector('[data-cinema-root]') as HTMLElement;
     const rail = root.querySelector('.d-rail') as HTMLElement;
-    const items = pinList(rail, '.rail-item', 90); // 类型 7 + 状态 3 + 底部工具 2
-    expect(items.length).toBe(12);
+    const items = pinList(rail, '.rail-item', 90); // 类型 7 + 状态 3 + 底部工具 3（AI 荐片/观影分析/导入片单）
+    expect(items.length).toBe(13);
     resync(rail);
     const at = (el: HTMLElement): string => `translate(0px, ${90 + items.indexOf(el) * 30}px)`;
     const pill = rail.querySelector(':scope > .bz-slide-pill') as HTMLElement;
@@ -2915,5 +2915,80 @@ describe('影院覆盖层与跟手（issue 409）', () => {
     expect(scns.length).toBe(25);
     expect(scns[24].getAttribute('data-foot'), '落款副题跟着改名').toContain('观影分析');
     closeYearbookOverlay();
+  });
+});
+
+
+describe('一键导入豆瓣片单', () => {
+  function seedOne(): { app: ReturnType<typeof mockAppWithVault>; vault: MockVault } {
+    const vault = new MockVault();
+    vault.files.set('我的/影视/《奥德赛》.md', md('---\ntags: [电影]\n评分: 8\n观影日期: 2026-09-01\n---'));
+    const app = makeApp(vault);
+    ensureCinema(app);
+    rebuildItems(app);
+    return { app, vault };
+  }
+
+  it('侧栏「导入片单」→ 弹层输入态；非豆瓣链接提示且不切结果区', () => {
+    const { app } = seedOne();
+    createOverlay(app);
+    const root = document.querySelector('[data-cinema-root]') as HTMLElement;
+    clickEl(root.querySelector('.j-import'));
+    const modal = document.querySelector('.cn-modal--dimp') as HTMLElement;
+    expect(modal).toBeTruthy();
+    expect(modal.querySelector('.j-dimp-url')).toBeTruthy();
+    (modal.querySelector('.j-dimp-url') as HTMLInputElement).value = 'https://example.com/x';
+    clickEl(modal.querySelector('.j-dimp-fetch'));
+    expect(hasNotice(/豆瓣片单链接/)).toBe(true);
+    expect((modal.querySelector('[data-dimp-result]') as HTMLElement).hidden).toBe(true);
+    closeOverlay();
+  });
+
+  it('抓取结果两段式：在库标记 + 静默批量建档（统一刷新一次）', async () => {
+    const seeded = seedOne();
+    const { app } = seeded;
+    const vault = seeded.vault;
+    configureDoubanListFetch(() => Promise.resolve({
+      entries: [
+        { sid: '4151650', name: '银翼杀手 2049' },
+        { sid: '1292001', name: '一一' },
+        { sid: '1', name: '奥德赛' },
+      ],
+      firstPageEmpty: false,
+    }));
+    createOverlay(app);
+    const root = document.querySelector('[data-cinema-root]') as HTMLElement;
+    clickEl(root.querySelector('.j-import'));
+    const modal = document.querySelector('.cn-modal--dimp') as HTMLElement;
+    (modal.querySelector('.j-dimp-url') as HTMLInputElement).value = 'https://movie.douban.com/people/x/wish';
+    clickEl(modal.querySelector('.j-dimp-fetch'));
+    await vi.waitFor(() => expect((modal.querySelector('[data-dimp-result]') as HTMLElement).hidden).toBe(false));
+    expect(modal.querySelector('.j-dimp-stat')?.textContent).toContain('共 3 部 · 已在库 1 · 待导入 2');
+    expect(modal.querySelectorAll('.dimp-row.is-inlib')).toHaveLength(1);
+    // run 段（点击 → 静默批量建档 → 汇总 toast）的建档语义由 recommend.test 的
+    // quickAddWant 单测覆盖（silent 路径同函数同分支）；此处断 UI 管线终点：
+    // 待导入 N 部时按钮就绪、零待导入时禁用。
+    const runBtn = modal.querySelector('.j-dimp-run') as HTMLButtonElement;
+    expect(runBtn.textContent).toContain('导入 2 部新片');
+    expect(runBtn.disabled).toBe(false);
+    closeOverlay();
+  });
+
+  it('零待导入（全部已在库）→ 导入钮禁用', async () => {
+    const { app } = seedOne();
+    configureDoubanListFetch(() => Promise.resolve({
+      entries: [{ sid: '1', name: '奥德赛' }],
+      firstPageEmpty: false,
+    }));
+    createOverlay(app);
+    const root = document.querySelector('[data-cinema-root]') as HTMLElement;
+    clickEl(root.querySelector('.j-import'));
+    const modal = document.querySelector('.cn-modal--dimp') as HTMLElement;
+    (modal.querySelector('.j-dimp-url') as HTMLInputElement).value = 'https://movie.douban.com/people/x/wish';
+    clickEl(modal.querySelector('.j-dimp-fetch'));
+    await vi.waitFor(() => expect((modal.querySelector('[data-dimp-result]') as HTMLElement).hidden).toBe(false));
+    expect(modal.querySelector('.j-dimp-stat')?.textContent).toContain('待导入 0');
+    expect((modal.querySelector('.j-dimp-run') as HTMLButtonElement).disabled).toBe(true);
+    closeOverlay();
   });
 });

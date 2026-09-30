@@ -33,6 +33,7 @@ export function midnightDeskHtml(): string {
         <div class="rail-foot">
           <button class="rail-item j-tool" data-tool="ai">${iconSpan(ICON.ai)}AI 荐片</button>
           <button class="rail-item j-tool" data-film-open>${iconSpan(ICON.stat)}观影分析</button>
+          <button class="rail-item j-import">${iconSpan(ICON.import)}导入片单</button>
         </div>
       </aside>
       <div class="d-main j-view"></div>

@@ -43,6 +43,7 @@ export const ICON = {
   repeat: 'rotate-ccw',
   shelf: 'bookmark',
   listPlus: 'list-plus',
+  import: 'download',
 } as const;
 
 // ---------- 格式化/口径 ----------

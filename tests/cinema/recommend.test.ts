@@ -91,6 +91,17 @@ describe('cinema quickAddWant', () => {
     await quickAddWant(app, '新片', '电影');
     expect((app.vault as any).files.size).toBe(before);
   });
+
+  it('silent 批量模式：不出逐条 toast、不逐条刷新（豆瓣片单导入用，建档照常）', async () => {
+    const app = M.appRef as any;
+    const sizeBefore = (app.vault as any).files.size;
+    await quickAddWant(app, '静默片', '电影', { silent: true });
+    expect((app.vault as any).files.get('我的/影视/《静默片》.md')).toContain('评分: -1');
+    expect((app.vault as any).files.size).toBe(sizeBefore + 1);
+    // silent 下在库重复同样静默跳过（不 notice 不抛，由调用方汇总统计）
+    await quickAddWant(app, '静默片', '电影', { silent: true });
+    expect((app.vault as any).files.size).toBe(sizeBefore + 1);
+  });
 });
 
 describe('cinema runAIRecommend（页内化：等待 → 结果列表 / 失败，不弹窗）', () => {

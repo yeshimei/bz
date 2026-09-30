@@ -1,4 +1,4 @@
-/* 源指纹 b52bed5e55e54f41 · 仓内输入 79 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 d6bca1272ea2c423 · 仓内输入 79 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/cinema/fake-sim.ts","prototypes/cinema/fake/fake-obsidian.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/douban-fetcher.ts","src/cinema/douban-queue.ts","src/cinema/index.ts","src/cinema/layouts/midnight/render.ts","src/cinema/motion.ts","src/cinema/recommend.ts","src/cinema/render.ts","src/cinema/seasons.ts","src/cinema/shared.ts","src/cinema/state.ts","src/cinema/type-decide.ts","src/cinema/ui.ts","src/cinema/yearbook/data.ts","src/cinema/yearbook/engine.ts","src/cinema/yearbook/index.ts","src/cinema/yearbook/kits.ts","src/cinema/yearbook/motions.ts","src/cinema/yearbook/scenes.ts","src/core/ai.ts","src/core/app.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/douban-name-index.ts","src/core/download-manifest.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/gesture.ts","src/core/http.ts","src/core/item-actions.ts","src/core/jev-fallback.ts","src/core/jev.ts","src/core/landscape.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/remote-asset.ts","src/core/remote-base.ts","src/core/settings-provider.ts","src/core/sha256.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/help-tip.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slide-pill.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/cinema/fake-sim.ts → window.BZW_cinema（行为单源预览包，issue 245/ADR-0106） */
 var BZW_cinema = (() => {
@@ -4148,6 +4148,12 @@ var BZW_cinema = (() => {
     96,
     130
   ]);
+  var CANNED_DOUBAN_LIST_HTML = `<html><body><ul class="list-wish">
+<li><a href="https://movie.douban.com/subject/4151650/" title="银翼杀手 2049">银翼杀手 2049</a></li>
+<li><a href="https://movie.douban.com/subject/1292001/" title="一一">一一</a></li>
+<li><a href="https://movie.douban.com/subject/4083325/" title="2001太空漫游">2001太空漫游</a></li>
+<li><a href="https://movie.douban.com/subject/1/" title="奥德赛">奥德赛</a></li>
+</ul></body></html>`;
   function bytesToDataUrl(data) {
     const bytes = new Uint8Array(data);
     const mime = bytes[0] === 137 && bytes[1] === 80 ? "image/png" : "image/jpeg";
@@ -4269,6 +4275,10 @@ var BZW_cinema = (() => {
       await cannedDelay(CANNED_DOUBAN_MS);
       const q = decodeURIComponent(((_d = (_c = /[?&]q=([^&]*)/.exec(url)) == null ? void 0 : _c[1]) != null ? _d : "").replace(/\+/g, " "));
       return ok(cannedSuggestJson(q || "未命名", presetIndexOf(q)));
+    }
+    if (/douban\.com\/(people\/[^/]+\/(wish|collect)|doulist)/.test(url)) {
+      await cannedDelay(CANNED_DOUBAN_MS);
+      return ok(CANNED_DOUBAN_LIST_HTML);
     }
     if (url.includes("v1.apizero.cn")) {
       await cannedDelay(CANNED_DOUBAN_MS);
@@ -6160,6 +6170,45 @@ var BZW_cinema = (() => {
     }
     return { ok: true };
   }
+  function parseDoubanListHtml(html) {
+    const out = [];
+    const seen = /* @__PURE__ */ new Set();
+    const re = /movie\.douban\.com\/subject\/(\d+)\/"[^>]*?title="([^"]+)"/g;
+    for (let m = re.exec(html); m; m = re.exec(html)) {
+      const sid = m[1];
+      const name = m[2].replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"').trim();
+      if (!name || seen.has(sid)) continue;
+      seen.add(sid);
+      out.push({ sid, name });
+    }
+    return out;
+  }
+  var DOUBAN_LIST_MAX_PAGES = 16;
+  async function fetchDoubanList(base, httpGet2, cookie) {
+    const sep = base.includes("?") ? "&" : "?";
+    const headers = (cookie == null ? void 0 : cookie.trim()) ? { Cookie: cookie.trim() } : void 0;
+    const all = [];
+    const seen = /* @__PURE__ */ new Set();
+    let firstPageEmpty = false;
+    for (let start = 0; start < DOUBAN_LIST_MAX_PAGES * 25; start += 25) {
+      let html = null;
+      try {
+        html = await httpGet2(`${base}${sep}start=${start}`, headers);
+      } catch (e) {
+        break;
+      }
+      const page = html ? parseDoubanListHtml(html) : [];
+      if (start === 0 && page.length === 0) firstPageEmpty = true;
+      if (page.length === 0) break;
+      for (const e of page) {
+        if (seen.has(e.sid)) continue;
+        seen.add(e.sid);
+        all.push(e);
+      }
+      if (page.length < 25) break;
+    }
+    return { entries: all, firstPageEmpty };
+  }
 
   // src/cinema/data.ts
   function normalizeTags(raw) {
@@ -7721,6 +7770,12 @@ var BZW_cinema = (() => {
       (_b2 = (_a2 = M).renderFn) == null ? void 0 : _b2.call(_a2);
     }, refreshDelayMs);
   }
+  var listFetchFn = null;
+  async function fetchDoubanListForImport(app, base) {
+    if (listFetchFn) return listFetchFn(app, base);
+    const deps = fetchDepsFromSettings(app);
+    return fetchDoubanList(base, deps.httpGet, deps.doubanCookie || void 0);
+  }
 
   // src/cinema/recommend.ts
   var GROUP_DEFAULT_TAG = {
@@ -7838,22 +7893,24 @@ var BZW_cinema = (() => {
       return null;
     }
   }
-  async function quickAddWant(app, name, type) {
+  async function quickAddWant(app, name, type, opts) {
+    const quiet = !!(opts == null ? void 0 : opts.silent);
     const trimmedName = typeof name === "string" ? name.trim() : "";
     if (!trimmedName) {
-      notice("推荐条目缺少片名，已跳过加入想看");
+      if (!quiet) notice("推荐条目缺少片名，已跳过加入想看");
       return;
     }
     if (hasIllegalNameChar(trimmedName)) {
-      notice(`${ILLEGAL_NAME_HINT}，已跳过加入想看`, "error");
+      if (!quiet) notice(`${ILLEGAL_NAME_HINT}，已跳过加入想看`, "error");
       return;
     }
     const tag = GROUP_DEFAULT_TAG[type] || "电影";
     let folderObj = app.vault.getAbstractFileByPath(M.folderPath);
     if (!folderObj) await app.vault.createFolder(M.folderPath);
     const filePath = `${M.folderPath}/《${trimmedName}》.md`;
-    if (app.vault.getAbstractFileByPath(filePath)) {
-      notice(`影视「${trimmedName}」已在库中`);
+    const dup = app.vault.getAbstractFileByPath(filePath);
+    if (dup) {
+      if (!quiet) notice(`影视「${trimmedName}」已在库中`);
       return;
     }
     const now = localNow();
@@ -7867,10 +7924,10 @@ tags:
 `;
     try {
       const f = await app.vault.create(filePath, content);
-      notice(`已加入想看：「${trimmedName}」`, "success");
+      if (!quiet) notice(`已加入想看：「${trimmedName}」`, "success");
       emitDomainEvent("movie", { kind: "created", name: trimmedName, status: "want", rating: null, review: null });
       enqueueDoubanFetch(f, trimmedName);
-      refreshDataAndView(app);
+      if (!quiet) refreshDataAndView(app);
     } catch (e) {
       notifySaveError(e, "加入想看");
       console.error(e);
@@ -11340,7 +11397,8 @@ tags:
     globe: "globe",
     repeat: "rotate-ccw",
     shelf: "bookmark",
-    listPlus: "list-plus"
+    listPlus: "list-plus",
+    import: "download"
   };
   function typeColor(group) {
     var _a;
@@ -11694,6 +11752,7 @@ tags:
         <div class="rail-foot">
           <button class="rail-item j-tool" data-tool="ai">${iconSpan(ICON.ai)}AI 荐片</button>
           <button class="rail-item j-tool" data-film-open>${iconSpan(ICON.stat)}观影分析</button>
+          <button class="rail-item j-import">${iconSpan(ICON.import)}导入片单</button>
         </div>
       </aside>
       <div class="d-main j-view"></div>
@@ -11942,6 +12001,83 @@ tags:
         e.preventDefault();
         submitNew();
       }
+    });
+  }
+  function openDoubanImport(sec, app) {
+    var _a, _b;
+    const { el, close } = ovl(sec, `<div class="cn-modal cn-modal--dimp">
+    <div class="dimp-head"><span class="lp-kicker">一键导入</span><span class="dimp-name">豆瓣片单</span></div>
+    <div class="dimp-stage" data-dimp-input>
+      <input class="j-dimp-url" placeholder="片单链接：豆瓣 wish 收藏页或豆列 doulist">
+      <div class="dimp-hint">按「想看」批量建档；已在库的自动跳过，海报与豆瓣信息随后台队列补齐。个人收藏页需先在设置里填豆瓣 Cookie。</div>
+      <button type="button" class="lp-add j-dimp-fetch">抓取片单</button>
+    </div>
+    <div class="dimp-stage" data-dimp-result hidden>
+      <div class="dimp-stat j-dimp-stat"></div>
+      <div class="dimp-list j-dimp-list"></div>
+      <div class="dimp-acts"><button type="button" class="lp-add j-dimp-run">导入</button><button type="button" class="dm-btn j-dimp-back">返回重填</button></div>
+    </div>
+  </div>`);
+    mountIcons(el);
+    const inputStage = el.querySelector("[data-dimp-input]");
+    const resultStage = el.querySelector("[data-dimp-result]");
+    let pending2 = [];
+    const inLibrary = (name) => M.items.some((it) => it.name === name);
+    const fetchBtn = el.querySelector(".j-dimp-fetch");
+    fetchBtn == null ? void 0 : fetchBtn.addEventListener("click", () => {
+      var _a2, _b2;
+      const url = ((_b2 = (_a2 = el.querySelector(".j-dimp-url")) == null ? void 0 : _a2.value) != null ? _b2 : "").trim();
+      if (!/^https?:\/\/(www\.)?(movie\.)?douban\.com\//.test(url)) {
+        notice("先贴一个豆瓣片单链接（movie.douban.com 下）", "warning");
+        return;
+      }
+      fetchBtn.disabled = true;
+      fetchBtn.textContent = "抓取中…";
+      void fetchDoubanListForImport(app, url).then(({ entries, firstPageEmpty }) => {
+        fetchBtn.disabled = false;
+        fetchBtn.textContent = "抓取片单";
+        if (!inputStage || !resultStage) return;
+        if (!entries.length) {
+          notice(firstPageEmpty ? "一条都没抓到：个人收藏页需要登录态（设置里填豆瓣 Cookie），或改用公开豆列链接" : "这个链接没解析出条目，确认是豆瓣 wish 页或豆列链接", "warning");
+          return;
+        }
+        pending2 = entries.filter((e) => !inLibrary(e.name));
+        const stat = resultStage.querySelector(".j-dimp-stat");
+        if (stat) stat.textContent = `共 ${entries.length} 部 · 已在库 ${entries.length - pending2.length} · 待导入 ${pending2.length}`;
+        const list = resultStage.querySelector(".j-dimp-list");
+        if (list) {
+          list.innerHTML = entries.map(
+            (e) => `<div class="dimp-row${inLibrary(e.name) ? " is-inlib" : ""}"><span class="lp-label">${esc(e.name)}</span><span class="dimp-tag">${inLibrary(e.name) ? "已在库" : "新片"}</span></div>`
+          ).join("");
+        }
+        const runBtn = resultStage.querySelector(".j-dimp-run");
+        if (runBtn) {
+          runBtn.textContent = `导入 ${pending2.length} 部新片`;
+          runBtn.disabled = !pending2.length;
+        }
+        inputStage.hidden = true;
+        resultStage.hidden = false;
+      });
+    });
+    (_a = el.querySelector(".j-dimp-back")) == null ? void 0 : _a.addEventListener("click", () => {
+      if (resultStage) resultStage.hidden = true;
+      if (inputStage) inputStage.hidden = false;
+    });
+    (_b = el.querySelector(".j-dimp-run")) == null ? void 0 : _b.addEventListener("click", () => {
+      const runBtn = el.querySelector(".j-dimp-run");
+      if (runBtn) {
+        runBtn.disabled = true;
+        runBtn.textContent = "导入中…";
+      }
+      void (async () => {
+        for (const e of pending2) {
+          await quickAddWant(app, e.name, "电影", { silent: true });
+        }
+        refreshDataAndView(app);
+        renderAll(app);
+        close();
+        notice(pending2.length ? `已从豆瓣片单导入 ${pending2.length} 部到想看，海报与信息后台补齐` : "没有可导入的新片", pending2.length ? "success" : "warning");
+      })();
     });
   }
   function itemActions(it, sec, app) {
@@ -13474,6 +13610,10 @@ tags:
         if (inp) inp.value = "";
         clear.hidden = true;
         renderAll(app);
+        return;
+      }
+      if (t.closest(".j-import")) {
+        openDoubanImport(sec, app);
         return;
       }
       const tool = t.closest(".j-tool");
