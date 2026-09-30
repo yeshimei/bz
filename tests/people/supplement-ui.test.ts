@@ -352,6 +352,41 @@ describe('录音行删除入口与二次确认（issue 516 Q12/Q13/Q14）', () =
   });
 });
 
+describe('录音孤儿行（issue 528：原件没了，仓里转写轮次还在）', () => {
+  const base3: SuppRecViewState = { rows: [], ref: 'ready', queue: [] };
+  const orphan: SuppRecRowState = { file: '大琳 周一 10点40分✔️.aac', status: 'merged', phaseText: '', pct: null, orphan: true, turns: 410 };
+
+  it('徽章「源已失」+ 如实报仓内轮数；只留「删除」，不给改起点 / 查看轮次', () => {
+    const page = suppPage(p, 'rec', emptyImage, { ...base3, rows: [orphan] }, '2026-09-28');
+    const row = page.querySelector<HTMLElement>(`.bz-people-supp-row[data-people-supp-row="${orphan.file}"]`)!;
+    expect(row.querySelector('.bz-people-supp-badge')?.textContent).toBe('源已失');
+    expect(row.classList.contains('orphan')).toBe(true);
+    expect(row.textContent).toContain('原件已不在磁盘 · 仓内 410 条转写轮次仍在统计与素材');
+    expect(row.querySelector(`[data-people-supp-rec-del="${orphan.file}"]`)).not.toBeNull();
+    expect(row.querySelector(`[data-people-supp-rec-start-edit="${orphan.file}"]`)).toBeNull();
+    expect(row.querySelector(`[data-people-supp-rec-turns="${orphan.file}"]`)).toBeNull();
+  });
+
+  it('页头提示块：报几条、说清去哪清；没有孤儿就不出块', () => {
+    const page = suppPage(p, 'rec', emptyImage, { ...base3, rows: [orphan] }, '2026-09-28');
+    const box = page.querySelector('.bz-people-supp-orphans');
+    expect(box).not.toBeNull();
+    expect(box!.textContent).toContain('有 1 条录音的原件已不在磁盘');
+    expect(box!.textContent).toContain('点「删除」即可清掉');
+    // 正常行一个都不带 orphan 时不出块（别把没有孤儿的人页头也挂一条警告）
+    const clean = suppPage(p, 'rec', emptyImage, { ...base3, rows: [{ file: 'a.aac', status: 'merged', phaseText: '', pct: null }] }, '2026-09-28');
+    expect(clean.querySelector('.bz-people-supp-orphans')).toBeNull();
+  });
+
+  it('孤儿确认面板：说清清仓里几条，且不给「同时删除录音原件」勾选（原件早就不在了）', () => {
+    const page = suppPage(p, 'rec', emptyImage, { ...base3, rows: [orphan], del: { file: orphan.file, alsoFile: true, drawn: false } }, '2026-09-28');
+    expect(page.textContent).toContain('原件已不在磁盘');
+    expect(page.textContent).toContain('那 410 条转写轮次');
+    expect(page.querySelector(`[data-people-supp-rec-del-file="${orphan.file}"]`)).toBeNull();
+    expect(page.querySelector(`[data-people-supp-rec-del-ok="${orphan.file}"]`)).not.toBeNull();
+  });
+});
+
 describe('库里疑似重复巡检（issue 516 Q3：只报不清）', () => {
   it('有重复组 → 出巡检块，列出每组文件名与组数；不给任何「一键清理」按钮', () => {
     const page = suppPage(p, 'rec', emptyImage, { ...emptyRec, dupGroups: [['a.aac', 'a (2).aac'], ['b.m4a', 'c.m4a']] }, '2026-09-28');
