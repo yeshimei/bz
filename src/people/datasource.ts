@@ -65,6 +65,8 @@ export interface VoiceItem {
   dur?: number;
   text?: string;
   emotion?: string;
+  /** LLM 校对已落（ADR-0222）：插件写回的 additive 标记，工具重跑重写整表即失效重校 */
+  proofread?: boolean;
 }
 
 /** image_map.json 条目（468：图片↔消息关联旁路表；file 与 image_desc.file 同格式 `<月>/<文件名>`，ct 秒级，sid 可缺） */

@@ -1,7 +1,7 @@
 /**
  * 文献笔记生成（literature 域，ADR-0071：AI 回迁 bz 插件侧）
  * - 视频文献（type: video，frontmatter 九键：title/tags/summary/source/date/author/sourceTitle/type/domain，
- *   正文 = 润色转录 + 视频双链——ticket 151 补回：videoPath 非空时正文尾部嵌 `![[路径]]`，
+ *   正文 = 转写原文或 LLM 校对稿（开关口径，ADR-0222——旧「润色转录」已退役）+ 视频双链——ticket 151 补回：videoPath 非空时正文尾部嵌 `![[路径]]`，
  *   ADR-0066「保留视频原件」关（keepVideo=false）时 videoPath 为 null，无视频段）
  * - 术语文献（type: term，frontmatter 四键：title/type/domain/date + 可选 source/sourceTitle（术语来源，ADR-0116），
  *   正文=一段百科式简介；term 与 title 同值的历史冗余键已退役，ADR-0169——存量由 backfillNotes 清理）
@@ -12,6 +12,8 @@
  * - 旧笔记自动补全（type 启发式 + domain AI，补过落库不重复）
  */
 import { createAI } from '../core/ai';
+import { proofreadPieces } from '../core/asr-proofread';
+import { notice } from '../core/notice';
 import { localNow } from '../core/ui/str';
 import { withTimeout } from '../core/http';
 import { getApp } from '../core/app';
@@ -152,9 +154,10 @@ export function findDuplicateTermNote(term: string): string | null {
 }
 
 /**
- * 生成视频文献笔记：元数据（title/tags/summary/domain）+ 分块润色 → 九键 frontmatter 落盘；
- * videoPath 非空时正文尾部附视频双链（ADR-0066/0073「正文 = 润色 + 视频双链」，ticket 151 补回）。
- * 返回 vault 相对笔记路径。
+ * 生成视频文献笔记：元数据（title/tags/summary/domain，一次 JSON 调用，非文本润色，保留）→
+ * 正文文本档（ADR-0222 / issue 518）：LLM 校对开 = 分块「只修错不创作」校对后拼接；关 = 转写
+ * 原文直出——旧「分块润色」已退役（用户 2026-09-29 拍板），本链路对文本的 LLM 处理只剩校对一档。
+ * videoPath 非空时正文尾部附视频双链（ADR-0066/0073，ticket 151 补回）。返回 vault 相对笔记路径。
  */
 export async function generateVideoNote(opts: {
   transcript: string;
@@ -181,20 +184,14 @@ ${chunks[0] || ''}`,
   const tags = Array.isArray(meta?.tags) ? meta.tags.map(String).filter(Boolean).slice(0, 6) : [];
   const summary = String(meta?.summary || '').trim();
   const domain = String(meta?.domain || '').trim();
-  // 分块润色
-  const polished: string[] = [];
-  for (const c of chunks) {
-    const p = await ai.chat(
-      `你是文字编辑。把下面的视频转写文稿轻度润色为书面语：口语转书面、删除口水词与重复内容，保持原顺序、原事实（数字与专名不变）。转写可能存在语音误听，专名与术语（如火箭型号、人名、地名、专业词）若明显是误听则按上下文纠正为最合理的写法；无法确定的保持原文。输出必须是简体中文（繁体转写一律转为简体）。直接输出润色后的正文，不要解释、不要加标题、不要列表。
-
-【转写文稿】
-${c}`,
-      // 输出上限走设置面板（issue 334/ADR-0148）；模型也跟随设置——历史上这里曾想私换
-      // deepseek-chat 避思考，但 options.model 从未被 prompt() 读取，属无效死参数，一并拆除
-    );
-    polished.push(String(p || '').trim());
+  // 正文文本档：LLM 校对开 = 分块只修错（失败原文直出，任务不炸）；关 = 原文直出（ADR-0222）
+  let bodies = chunks;
+  if (s.asrLlmProofread === true && chunks.length) {
+    const r = await proofreadPieces(chunks, { contextNote: 'B站视频语音转写文稿（讲解/独白，按原顺序切块）' });
+    if (r.failed) notice('LLM 校对失败——按转写原文生成文献正文', 'warning');
+    else bodies = r.texts;
   }
-  const whole = polished.join('');
+  const whole = bodies.join('');
   // 视频双链（ticket 151 补回，ADR-0066）：CLI 交付的 mp4 vault 相对路径 → 正文尾部嵌 `![[…]]`；
   // keepVideo=false（未交付）时 videoPath 为 null → 无视频段
   const videoSection = opts.videoPath
