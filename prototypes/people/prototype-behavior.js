@@ -1,4 +1,4 @@
-/* 源指纹 3476fb6fb0c515cd · 仓内输入 93 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 d6ff0f0f39e6a13a · 仓内输入 93 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/people/fake-sim.ts","prototypes/people/fake/fake-obsidian.ts","src/bookshelf/data.ts","src/bookshelf/state.ts","src/cinema/state.ts","src/core/ai.ts","src/core/app.ts","src/core/asr-proofread.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/external-tool.ts","src/core/flow-dialog.ts","src/core/gesture.ts","src/core/http.ts","src/core/item-actions.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/settings-btn-state.ts","src/core/settings-common.ts","src/core/settings-modal.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/help-tip.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/motion.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/password-vault/data.ts","src/people/chat.ts","src/people/data.ts","src/people/datasource.ts","src/people/describe.ts","src/people/digest.ts","src/people/export.ts","src/people/heavy-gate.ts","src/people/incremental.ts","src/people/insights.ts","src/people/jobs.ts","src/people/me-avatar.ts","src/people/media.ts","src/people/migrate.ts","src/people/parse.ts","src/people/prep.ts","src/people/recording.ts","src/people/render.ts","src/people/safe-store.ts","src/people/settings.ts","src/people/stats.ts","src/people/sync.ts","src/people/thumbs.ts","src/people/types.ts","src/people/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/people/fake-sim.ts → window.BZW_people（行为单源预览包，issue 245/ADR-0106） */
 var BZW_people = (() => {
@@ -14125,7 +14125,6 @@ var BZW_people = (() => {
       if (avatar === null) this.avatarUrls.delete(talker);
       return "updated";
     }
-    /** 首建 / 重建整条记录（含头像附件；keptShared 置真——脸谱不删任何源文件） */
     /** 重加密落一条记录（重建 / 恢复共用；模块内 flushRecordRecovery 也调） */
     async lockNoteFresh(talker, rec, avatar) {
       const input = {
@@ -16988,9 +16987,10 @@ ${lines}`;
     return `'${v.replace(/'/g, "'\\''")}'`;
   }
   function quotePythonArg(v) {
-    const isPath = /[\\/]/.test(v) || /\.exe$/i.test(v.trim());
-    if (!isPath) return v;
-    return quotePathArg(v);
+    const t = v.trim();
+    const isPath = /[\\/]/.test(t) || /\.exe$/i.test(t);
+    if (!isPath) return t;
+    return quotePathArg(t);
   }
   function buildSyncSpec(opts) {
     var _a2, _b2;
@@ -18392,7 +18392,7 @@ ${lines}`;
     const safe = st.safe;
     if (!(safe == null ? void 0 : safe.unlocked)) {
       pauseEngine(true);
-      await finish({ status: "paused", message: "已暂停 · 保险库上锁，解锁后自动继续" });
+      await finish({ status: "paused", message: "已暂停 · 保险库上锁——解锁后可继续" });
       return "halted";
     }
     const ledger = describeOf(job);
@@ -18670,7 +18670,7 @@ ${lines}`;
       const safe = st.safe;
       if (!(safe == null ? void 0 : safe.unlocked)) {
         pauseEngine(true);
-        await finish({ status: "paused", message: "已暂停 · 保险库上锁，解锁后自动继续" });
+        await finish({ status: "paused", message: "已暂停 · 保险库上锁——解锁后可继续" });
         return;
       }
       const storeBefore = (_b2 = (_a2 = await safe.read(job.talker)) == null ? void 0 : _a2.store) != null ? _b2 : null;
@@ -19142,7 +19142,7 @@ ${lines}`;
         "--contact",
         quotePathArg(opts.talker),
         ...ffmpeg ? ["--ffmpeg", quotePathArg(ffmpeg)] : [],
-        ...python ? ["--python", python] : []
+        ...python ? ["--python", quotePythonArg(python)] : []
       ],
       shell: true
     };
@@ -19158,7 +19158,7 @@ ${lines}`;
         quotePathArg(opts.dataRoot),
         "--contact",
         quotePathArg(opts.talker),
-        ...python ? ["--python", python] : []
+        ...python ? ["--python", quotePythonArg(python)] : []
       ],
       shell: true
     };
@@ -19177,7 +19177,7 @@ ${lines}`;
         quotePathArg(opts.talker),
         ...opts.srcs.flatMap((s) => ["--src", quotePathArg(s)]),
         ...ffmpeg ? ["--ffmpeg", quotePathArg(ffmpeg)] : [],
-        ...python ? ["--python", python] : []
+        ...python ? ["--python", quotePythonArg(python)] : []
       ],
       shell: true
     };
@@ -19727,6 +19727,7 @@ ${lines}`;
             go = await entry.prepare();
           } catch (e) {
             go = false;
+            notice(`「${entry.file}」无法开始：${e instanceof Error ? e.message : String(e)}`, "error");
           }
         }
         if (epoch !== queueEpoch) {
@@ -22139,12 +22140,13 @@ ${lines}`;
   }
   function footerLabel(s) {
     var _a2, _b2;
-    const picked = ((_b2 = (_a2 = s.allRows) != null ? _a2 : s.rows) != null ? _b2 : []).filter((r) => s.selected.includes(r.name) && !r.isGroup);
+    const groupEnabled = s.groupEnabled === true;
+    const picked = ((_b2 = (_a2 = s.allRows) != null ? _a2 : s.rows) != null ? _b2 : []).filter((r) => s.selected.includes(r.name));
     if (!picked.length) return "未勾选联系人";
     const n = { full: 0, newer: 0, skip: 0, exported: 0 };
     let msgs = 0;
     for (const r of picked) {
-      const w = dsWaterOf(r);
+      const w = dsWaterOf(r, groupEnabled);
       if (!w) continue;
       if (w.k === "full") {
         n.full++;
@@ -24368,7 +24370,7 @@ ${lines}`;
   }
   function pickFresh() {
     for (const c of dsContacts != null ? dsContacts : []) {
-      if (c.newCount > 0 && !c.isGroup) dsSelected.add(c.name);
+      if (c.newCount > 0) dsSelected.add(c.name);
     }
     syncDsChecks();
   }

@@ -176,9 +176,10 @@ export function quotePathArg(v: string): string {
  * `C:\Program Files\python.exe`），包引号当一个词传（否则被拆碎成碎参，报错对不上原因）。
  */
 export function quotePythonArg(v: string): string {
-  const isPath = /[\\/]/.test(v) || /\.exe$/i.test(v.trim());
-  if (!isPath) return v;
-  return quotePathArg(v);
+  const t = v.trim(); // 设置值可能带尾随空白：包进引号前剥掉，否则路径连空格一起失效
+  const isPath = /[\\/]/.test(t) || /\.exe$/i.test(t);
+  if (!isPath) return t;
+  return quotePathArg(t);
 }
 
 /**

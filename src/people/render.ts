@@ -2950,14 +2950,16 @@ export function dsRow(row: DsRowState, on: boolean, groupEnabled = false): HTMLE
 }
 
 /** 页脚账：勾了几位、会发生什么（全新 / 增量 / 跳过逐项报）。
- *  口径取 allRows（未过滤全量；D 组过滤只裁列表显示，勾着但被滤掉的行照常入账）。 */
+ *  口径取 allRows（未过滤全量；D 组过滤只裁列表显示，勾着但被滤掉的行照常入账）。
+ *  群聊随开关入账（设置开 = 行可勾 = 账也认）；关着时行本就不可选、扫描也不列，自然不出现。 */
 function footerLabel(s: DsModalState): string {
-  const picked = (s.allRows ?? s.rows ?? []).filter((r) => s.selected.includes(r.name) && !r.isGroup);
+  const groupEnabled = s.groupEnabled === true;
+  const picked = (s.allRows ?? s.rows ?? []).filter((r) => s.selected.includes(r.name));
   if (!picked.length) return '未勾选联系人';
   const n = { full: 0, newer: 0, skip: 0, exported: 0 };
   let msgs = 0;
   for (const r of picked) {
-    const w = dsWaterOf(r);
+    const w = dsWaterOf(r, groupEnabled);
     if (!w) continue;
     if (w.k === 'full') { n.full++; msgs += r.rawCount; }
     else if (w.k === 'exported') { n.exported++; msgs += r.rawCount; } // 已导出没入库：这批也照样并进来

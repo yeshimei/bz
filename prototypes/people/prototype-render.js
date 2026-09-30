@@ -1,4 +1,4 @@
-/* 源指纹 4687c2443076b00c · 仓内输入 3 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 a9ff2f7750f649fd · 仓内输入 3 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["src/people/chat.ts","src/people/render.ts","src/people/types.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — src/people/render.ts → window.BZR_people（评审壳预览包，ADR-0104） */
 var BZR_people = (() => {
@@ -2245,12 +2245,13 @@ var BZR_people = (() => {
   }
   function footerLabel(s) {
     var _a, _b;
-    const picked = ((_b = (_a = s.allRows) != null ? _a : s.rows) != null ? _b : []).filter((r) => s.selected.includes(r.name) && !r.isGroup);
+    const groupEnabled = s.groupEnabled === true;
+    const picked = ((_b = (_a = s.allRows) != null ? _a : s.rows) != null ? _b : []).filter((r) => s.selected.includes(r.name));
     if (!picked.length) return "未勾选联系人";
     const n = { full: 0, newer: 0, skip: 0, exported: 0 };
     let msgs = 0;
     for (const r of picked) {
-      const w = dsWaterOf(r);
+      const w = dsWaterOf(r, groupEnabled);
       if (!w) continue;
       if (w.k === "full") {
         n.full++;

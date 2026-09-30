@@ -247,7 +247,7 @@ export function buildRecordingSpec(opts: BuildRecordingSpecOpts): ExternalToolSp
       '--contact',
       quotePathArg(opts.talker),
       ...(ffmpeg ? ['--ffmpeg', quotePathArg(ffmpeg)] : []),
-      ...(python ? ['--python', python] : []),
+      ...(python ? ['--python', quotePythonArg(python)] : []),
     ],
     shell: true,
   };
@@ -264,7 +264,7 @@ export function buildVoiceprintSpec(opts: { dataRoot: string; talker: string; py
       quotePathArg(opts.dataRoot),
       '--contact',
       quotePathArg(opts.talker),
-      ...(python ? ['--python', python] : []),
+      ...(python ? ['--python', quotePythonArg(python)] : []),
     ],
     shell: true,
   };
@@ -285,7 +285,7 @@ export function buildRecordingCheckSpec(opts: { dataRoot: string; talker: string
       quotePathArg(opts.talker),
       ...opts.srcs.flatMap((s) => ['--src', quotePathArg(s)]),
       ...(ffmpeg ? ['--ffmpeg', quotePathArg(ffmpeg)] : []),
-      ...(python ? ['--python', python] : []),
+      ...(python ? ['--python', quotePythonArg(python)] : []),
     ],
     shell: true,
   };
@@ -1171,8 +1171,10 @@ async function pumpRecordingQueue(): Promise<void> {
       if (entry.prepare) {
         try {
           go = await entry.prepare();
-        } catch {
+        } catch (e) {
+          // 质心准备等前置炸了（如数据根含 % 被 quotePathArg 拒）：说明原因，别让「点了没反应」
           go = false;
+          notice(`「${entry.file}」无法开始：${e instanceof Error ? e.message : String(e)}`, 'error');
         }
       }
       if (epoch !== queueEpoch) {

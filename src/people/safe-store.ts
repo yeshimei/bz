@@ -439,7 +439,6 @@ export class PeopleSafeStore {
     return 'updated';
   }
 
-  /** 首建 / 重建整条记录（含头像附件；keptShared 置真——脸谱不删任何源文件） */
   /** 重加密落一条记录（重建 / 恢复共用；模块内 flushRecordRecovery 也调） */
   async lockNoteFresh(talker: string, rec: PeopleSafeRecord, avatar: AvatarInput | null): Promise<void> {
     const input: LockNoteInput = {

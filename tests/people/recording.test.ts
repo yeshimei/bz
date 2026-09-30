@@ -144,7 +144,8 @@ describe('路径组装', () => {
       '"大琳"',
     ]);
     const withPy = buildRecordingSpec({ dataRoot: 'D:\\根', talker: '大', file: 'r', python: 'C:\\Program Files\\py.exe ' });
-    expect(withPy.args).toEqual(['rec', '"r"', '--data-root', '"D:\\根"', '--contact', '"大"', '--python', 'C:\\Program Files\\py.exe']);
+    // .exe 路径形态 → quotePythonArg 包引号（防带空格路径被 shell 拆碎）；尾随空白先 trim 再判
+    expect(withPy.args).toEqual(['rec', '"r"', '--data-root', '"D:\\根"', '--contact', '"大"', '--python', '"C:\\Program Files\\py.exe"']);
   });
 
   it('buildVoiceprintSpec：bz-face refs、路径参数包引号', () => {

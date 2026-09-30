@@ -2478,10 +2478,11 @@ function requestProfRender(): void {
   void renderAlbum();
 }
 
-/** 「勾有更新的」：一键勾上全部有新素材的单聊（弹窗内原位刷新） */
+/** 「勾有更新的」：一键勾上全部有新素材的联系人（弹窗内原位刷新）。
+ *  群聊随开关入列：关着时 runScan 根本不列群聊，这里自然选不到；开着就是普通行。 */
 function pickFresh(): void {
   for (const c of dsContacts ?? []) {
-    if (c.newCount > 0 && !c.isGroup) dsSelected.add(c.name);
+    if (c.newCount > 0) dsSelected.add(c.name);
   }
   syncDsChecks();
 }

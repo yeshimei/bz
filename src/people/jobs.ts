@@ -1389,7 +1389,7 @@ async function runDescribeStage(job: PersonJob, finish: (patch: Partial<PersonJo
   if (!safe?.unlocked) {
     // 同 runJob 步 1：早退不留 running 孤儿——按上锁暂停落账，解锁自续
     pauseEngine(true);
-    await finish({ status: 'paused', message: '已暂停 · 保险库上锁，解锁后自动继续' });
+    await finish({ status: 'paused', message: '已暂停 · 保险库上锁——解锁后可继续' });
     return 'halted';
   }
   const ledger = describeOf(job);
@@ -1705,7 +1705,7 @@ async function runJob(job: PersonJob): Promise<void> {
       // 上锁竞态：早退不能把任务留在 running 态——resume()/runQueue 只受理 paused，
       // running 是没人拾起的孤儿（引擎堵死到重启）。按上锁暂停落账，解锁广播自续（wireLock）。
       pauseEngine(true);
-      await finish({ status: 'paused', message: '已暂停 · 保险库上锁，解锁后自动继续' });
+      await finish({ status: 'paused', message: '已暂停 · 保险库上锁——解锁后可继续' });
       return;
     }
     const storeBefore = (await safe.read(job.talker))?.store ?? null;
