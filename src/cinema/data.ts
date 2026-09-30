@@ -66,16 +66,22 @@ export function parseMovieFile(file: TFile, app: App): CinemaItem | null {
 
   const watchDate = fm['观影日期']?.toString() ?? null;
   const rawRating = fm['评分'];
-  const rating =
+  const ratingNum =
     rawRating === undefined || rawRating === null || rawRating === ''
       ? null
       : Number(rawRating);
 
-  // 状态由评分推断：-1=想看 / 0=在看 / 其余（>0 或无评分）=已看
+  // 状态单源键「状态」（2026-09-30 拍板：评分编码 -1/0 退役，评分从此只当评分）。
+  // 旧笔记无「状态」键 → 回落评分推断（-1=想看 / 0=在看 / 其余=已看），迁移/落盘即补键。
+  // 评分清洗：-1/0 是旧编码不是分值 → 内存归 null（真分恒 >0），未评分（含无键）同为 null
+  const stRaw = typeof fm['状态'] === 'string' ? (fm['状态'] as string).trim() : '';
   let status: number;
-  if (rating === -1) status = STATUS_WANT;
-  else if (rating === 0) status = STATUS_WATCHING;
-  else status = STATUS_WATCHED;
+  if (stRaw === '想看' || stRaw === '在看' || stRaw === '已看') {
+    status = stRaw === '想看' ? STATUS_WANT : stRaw === '在看' ? STATUS_WATCHING : STATUS_WATCHED;
+  } else {
+    status = ratingNum === -1 ? STATUS_WANT : ratingNum === 0 ? STATUS_WATCHING : STATUS_WATCHED;
+  }
+  const rating = ratingNum !== null && ratingNum > 0 ? ratingNum : null;
 
   return {
     file,
@@ -174,7 +180,7 @@ export function sortByCreatedDesc(list: CinemaItem[]): CinemaItem[] {
   });
 }
 
-/** 按评分倒序：已看（评分>0）降序；未看（-1/0/无评分）排最后（其内部按日期倒序） */
+/** 按评分倒序：已看（评分>0）降序；未看（未评分/想看/在看）排最后（其内部按日期倒序） */
 export function sortByRatingDesc(list: CinemaItem[]): CinemaItem[] {
   return [...list].sort((a, b) => {
     const ar = a.rating && a.rating > 0 ? a.rating : -1;

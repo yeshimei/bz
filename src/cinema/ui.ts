@@ -93,11 +93,9 @@ async function markStatus(item: CinemaItem, target: '在看' | '已看', app: Ap
   const prev = { status: item.status, rating: item.rating, watchDate: item.watchDate, watchingDate: item.watchingDate };
   item.status = target === '已看' ? STATUS_WATCHED : STATUS_WATCHING;
   if (target === '在看') {
-    item.rating = 0;
     item.watchingDate = localNow().slice(0, 10); // 状态日期（在看日期记到达日）；已看沿用观影日期不另设键
-  } else if (!prevRating) {
-    item.rating = DEFAULT_RATING;
   }
+  // 评分不再参与状态编码（2026-09-30 拍板）：流转不动评分——已看没分就是没分，分值只由用户在表单给
   item.watchDate = localNow();
   try {
     await persistItem(item, app);
@@ -454,9 +452,11 @@ async function persistItem(item: CinemaItem, app: App, edit?: { prevName: string
     // 影评在建档后与编辑路径同通道（processFrontMatter，Obsidian YAML 序列化兜底）写入。
     // 观影日期加双引号（深审批A P3-8）：裸日期被真机 YAML 解析成 timestamp（Moment 对象）
     // → 展示英文星期；评分/(tags 列表项) 是纯数字/固定枚举，无需引号。
-    // 状态日期随建档落键（有才写，向后兼容旧档）：想看档带想看日期、在看档带在看日期
+    // 状态单源键「状态」随建档必写（2026-09-30 拍板：评分编码 -1/0 退役）；
+    // 评分只有真分值才落键；状态日期随建档落键（有才写，向后兼容旧档）
     const stDates = `${item.wantDate ? `\n想看日期: "${item.wantDate}"` : ''}${item.watchingDate ? `\n在看日期: "${item.watchingDate}"` : ''}`;
-    let content = `---\ntags:\n- ${item.typeTag}\n观影日期: "${item.watchDate || localNow()}"${stDates}\n评分: ${item.rating ?? 0}\n海报: \n---\n`;
+    const ratingLine = item.rating !== null && item.rating > 0 ? `\n评分: ${item.rating}` : '';
+    let content = `---\ntags:\n- ${item.typeTag}\n状态: ${statusText(item.status)}\n观影日期: "${item.watchDate || localNow()}"${stDates}${ratingLine}\n海报: \n---\n`;
     // 海报已落库（issue 397：保存时下载进库）→ 正文 embed 与抓取路径同款插入，
     // 免得「建档即齐」的笔记比队列抓过的少一张图（insertPosterEmbed 单源）
     if (posterRel) content = insertPosterEmbed(content, posterRel);
@@ -497,7 +497,10 @@ async function persistItem(item: CinemaItem, app: App, edit?: { prevName: string
     }
   }
   await app.fileManager.processFrontMatter(item.file, (fm: Record<string, unknown>) => {
-    fm['评分'] = item.rating ?? 0;
+    // 状态单源键必写（迁移即补键）；评分编码退役：只有真分值落键，-1/0 旧编码顺手摘除
+    fm['状态'] = statusText(item.status);
+    if (item.rating !== null && item.rating > 0) fm['评分'] = item.rating;
+    else if (fm['评分'] !== undefined) delete fm['评分'];
     fm['观影日期'] = item.watchDate || localNow();
     // 状态日期只增不删（历史足迹）：进过想看/在看就一直留着，状态再流转也不抹（引号口径同观影日期）
     if (item.wantDate) fm['想看日期'] = item.wantDate;
@@ -1874,13 +1877,13 @@ function openForm(sec: HTMLElement, item: CinemaItem | null, app: App, presetSt?
     if (!name) { notice('请输入名称', 'warning'); return; }
     if (isDuplicateName(name, item?.name)) { notice(DUP_NAME_HINT_FULL, 'warning'); return; }
     const date = watchDateOf();
-    // 想看编码 -1（评分推断状态的既有合法值，AI「＋想看」quickAddWant 同口径）：
-    // 若给 null 会在 persistItem 被 `?? 0` 兜底成 0 → 落盘重解析判为在看，编辑/新增想看当场弹回。
+    // 评分编码退役（2026-09-30 拍板）：状态走独立键落盘，评分只在「已看」态有真值
+    // （想看/在看给 null，parseMovieFile 对 -1/0 旧编码也清洗成 null）——不会再被兜底成编码值弹回。
     // 评分/影评在正面状态下方（2026-09-21 用户拍板）——编辑/新增两态同一个框，querySelector 直取。
     const ratingBox = el.querySelector<HTMLInputElement>('.j-range');
     const rating = cur.st === '已看'
       ? (ratingBox ? parseFloat(ratingBox.value) : DEFAULT_RATING)
-      : cur.st === '在看' ? 0 : -1;
+      : null;
     // 非「已看」态保留原影评不写空（深审批A P2-2）：影评框在非已看态隐藏，原实现在这里
     // 强置空串 + persistItem `delete fm['影评']`——「已看」影片改回想看/在看保存，影评被静默清空。
     // 影评只在「已看」态的输入框里被用户显式改写/清空（空串保存 = 显式删除，语义保留）。

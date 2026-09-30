@@ -336,7 +336,7 @@ describe('cinema 风格化面板（issue 236）', () => {
 
   // 回归（memo item-1789722741019）：编辑改「想看」保存后弹回在看——想看曾被收集成 null，
   // persistItem `?? 0` 兜底写 0（=在看），落盘自动刷新重解析当场翻回
-  it('编辑已看条目改「想看」→ 落盘评分 -1（不再写 0 弹回在看）；重建解析仍想看 + status 域事件', async () => {
+  it('编辑已看条目改「想看」→ 落盘状态键想看（评分编码退役，摘评分键）；重建解析仍想看 + status 域事件', async () => {
     const { app, vault } = seedVault();
     createOverlay(app);
     const root = document.querySelector('[data-cinema-root]') as HTMLElement;
@@ -350,9 +350,10 @@ describe('cinema 风格化面板（issue 236）', () => {
     await vi.waitFor(() => expect(hasNotice(/已保存「/)).toBe(true)); // toast 收编 core notice（一致审查#2）
     const item = M.items.find((i) => i.name === '星际穿越')!;
     expect(item.status).toBe(0); // STATUS_WANT
-    expect(item.rating).toBe(-1);
-    expect(vault.files.get('我的/影视/《星际穿越》.md')).toContain('评分: -1');
-    // 落盘触发自动刷新重解析（同链路 rebuildItems）：评分 -1 → 想看，不再弹回在看
+    expect(item.rating).toBe(null); // 评分编码退役：想看不占 -1，评分归 null
+    expect(vault.files.get('我的/影视/《星际穿越》.md')).toContain('状态: 想看');
+    expect(vault.files.get('我的/影视/《星际穿越》.md')).not.toContain('评分:');
+    // 落盘触发自动刷新重解析（同链路 rebuildItems）：状态键想看，不再弹回在看
     rebuildItems(app);
     expect(M.items.find((i) => i.name === '星际穿越')!.status).toBe(0);
     // 状态流转域事件语义保留（saveEdit 补发，小橘行为流承接）

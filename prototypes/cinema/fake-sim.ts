@@ -33,9 +33,11 @@ const FOLDER = '我的/影视';
  *  **演示数据一变就提版本号**（v4：演示数据改为 `scripts/_gen-cinema-demo.mjs` 全量真库导出
  *  686 条，并补齐 片长 / 季集 / 热门短评 / 上映日期 四项——「观影志」吃这些字段；
  *  v6：补「重看」重温记录字段——卡片「N刷」角标 / 详情重温行 / 重温 +1 可评审；
- *  v7：补「片单」自建片单字段（v8：内置片单更名「重映厅」）——侧栏片单区 / 重映厅 / 归入弹层可评审）
+ *  v7：补「片单」自建片单字段（v8：内置片单更名「重映厅」）——侧栏片单区 / 重映厅 / 归入弹层可评审；
+ *  v10：补「想看日期 / 在看日期」状态日期 + frontmatter「状态」单源键（评分编码 -1/0 退役）——
+ *  详情弹窗状态日期徽标、移动端片单 chips 可评审）
  *  ——否则老浏览器停在旧种子上，新条目静默不出现（得手点「重置演示数据」）。 */
-const SEED_MARK = 'bz-sim:__cinema-seed-v8';
+const SEED_MARK = 'bz-sim:__cinema-seed-v10';
 /** 设置持久键（设置弹窗保存经 saveSettings 通道写入；自检可断言） */
 const SETTINGS_KEY = 'bz-sim:__settings';
 
@@ -69,6 +71,10 @@ interface SeedItem {
   rewatches?: string[] | null;
   /** 自建片单（v7 起演示数据按导演挑几部带值 + 重映厅；无此键 = 照旧） */
   lists?: string[] | null;
+  /** 进入「想看」的日期（v10 起演示数据挑几部带值；无此键 = 照旧） */
+  wantDate?: string | null;
+  /** 进入「在看」的日期（v10 起；无此键 = 照旧） */
+  watchingDate?: string | null;
 }
 
 declare global {
@@ -82,16 +88,21 @@ function one(v: unknown): string {
   return String(v ?? '').replace(/\s*\n+\s*/g, ' ').trim();
 }
 
-/** 种子条目 → 影视笔记（frontmatter 字段与 data.ts parseMovieFile 消费面同名） */
+/** 种子条目 → 影视笔记（frontmatter 字段与 data.ts parseMovieFile 消费面同名）。
+ *  状态单源键「状态」（评分编码 -1/0 已退役，与插件建档同口径）：评分只在已看真分值时落键 */
 function mdOf(raw: SeedItem): string {
   const rating =
-    raw.status === '想看' ? '-1' : raw.status === '在看' ? '0' : raw.rating == null ? '' : String(raw.rating);
+    raw.status === '已看' && raw.rating != null && raw.rating > 0 ? String(raw.rating) : '';
   const lines = [
     '---',
     'tags:',
     `- ${one(raw.typeTag) || '电影'}`,
+    `状态: ${one(raw.status) || '已看'}`,
     `观影日期: ${one(raw.watchDate)}`,
-    `评分: ${rating}`,
+    // 状态日期（v10）：有才落键——想看档带想看日期、在看档带在看日期（插件侧建档同口径）
+    ...(raw.wantDate ? [`想看日期: ${one(raw.wantDate)}`] : []),
+    ...(raw.watchingDate ? [`在看日期: ${one(raw.watchingDate)}`] : []),
+    ...(rating ? [`评分: ${rating}`] : []),
     `海报: ${one(raw.poster)}`,
     `类型: ${one(raw.genre)}`,
     `导演: ${one(raw.director)}`,

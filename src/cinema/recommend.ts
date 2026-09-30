@@ -193,13 +193,14 @@ export async function quickAddWant(app: App, name: string, type: string, opts?: 
     return false;
   }
   const now = localNow();
-  // 观影日期加双引号（深审批A P3-8）：裸日期被真机 YAML 解析成 timestamp（Moment 对象）→ 英文星期
+  // 观影日期加双引号（深审批A P3-8）：裸日期被真机 YAML 解析成 timestamp（Moment 对象）→ 英文星期；
+  // 状态单源键「状态」（评分编码 -1 已退役）
   const content = `---
 tags:
 - ${tag}
+状态: 想看
 观影日期: "${now}"
 想看日期: "${now.slice(0, 10)}"
-评分: -1
 海报: 
 ---
 `;
