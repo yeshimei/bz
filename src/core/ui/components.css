@@ -621,6 +621,30 @@ textarea.bz-input { height: auto; min-height: 80px; padding: 8px 10px; line-heig
 .bz-lightbox-close:hover { background: rgba(255, 255, 255, 0.24); }
 }
 .bz-lightbox-close .bz-ic { width: 16px; height: 16px; }
+/* 翻图箭头（多图模式）：两侧居中，首末位禁用（不循环） */
+.bz-lightbox-nav {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 40px; height: 40px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(255, 255, 255, 0.12);
+  color: var(--bz-on-overlay, #fff);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+.bz-lightbox-prev { left: 16px; }
+.bz-lightbox-next { right: 16px; }
+.bz-lightbox-nav[disabled] { opacity: 0.25; cursor: default; }
+@media (hover: hover) {
+
+.bz-lightbox-nav:hover { background: rgba(255, 255, 255, 0.24); }
+.bz-lightbox-nav[disabled]:hover { background: rgba(255, 255, 255, 0.12); }
+}
+.bz-lightbox-nav .bz-ic { width: 20px; height: 20px; }
 .bz-lightbox-media {
   max-width: min(900px, 92vw);
   max-height: 78vh;
