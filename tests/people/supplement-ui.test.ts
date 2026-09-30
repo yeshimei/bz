@@ -4,12 +4,12 @@
  * render 纯层（零数据访问），fixture 全构造数据。
  */
 import { describe, it, expect } from 'vitest';
-import { suppPage, recNote, type SuppImageViewState, type SuppRecQueueItem, type SuppRecViewState, type SuppRecRowState } from '../../src/people/render';
+import { suppPage, recNote, appendSuppImageGridPage, type SuppImageViewState, type SuppRecQueueItem, type SuppRecViewState, type SuppRecRowState } from '../../src/people/render';
 import type { PersonEntry } from '../../src/people/types';
 
 const p: PersonEntry = { id: 'wxid_a', name: '老王', createdAt: '2026-09-25T00:00:00.000Z', imports: [] };
 
-const emptyImage: SuppImageViewState = { queue: [], imported: 0, undescribed: 0, describeBusy: false, modelLabel: '智谱/glm', items: [] };
+const emptyImage: SuppImageViewState = { queue: [], imported: 0, undescribed: 0, describeBusy: false, modelLabel: '智谱/glm', items: [], hidden: 0 };
 const emptyRec: SuppRecViewState = { rows: [], ref: 'missing', queue: [] };
 
 describe('suppPage 三页签骨架', () => {
@@ -36,6 +36,7 @@ describe('suppPage 三页签骨架', () => {
       describeBusy: false,
       modelLabel: '智谱/glm',
       items: [],
+      hidden: 0,
     };
     const page = suppPage(p, 'image', image, emptyRec, '2026-09-28');
     const rows = [...page.querySelectorAll('.bz-people-supp-qrow')];
@@ -112,6 +113,49 @@ describe('留影网格（复评：缩略图 / 描述在下 / 点开看大图 / �
     expect(page.querySelector('[data-people-supp-img-del-cancel]')).not.toBeNull();
   });
 });
+
+describe('留影网格分片（issue 519：千张不全量铺，哨兵兜底追加）', () => {
+  const item = (n: number) => ({ img: `2026-09/IMG_${n}.jpg`, text: `[图片] 第 ${n} 张`, url: `u${n}` });
+  const page = (count: number, hidden: number): HTMLElement => {
+    const items = Array.from({ length: count }, (_, i) => item(i + 1));
+    return suppPage(p, 'image', { ...emptyImage, imported: count + hidden, items, hidden }, emptyRec, '2026-09-28');
+  };
+
+  it('只渲染已展开分片；hidden > 0 出「还有 N 张」哨兵，铺完不哨兵', () => {
+    const first = page(120, 1496);
+    expect(first.querySelectorAll('.bz-people-supp-imgthumb')).toHaveLength(120);
+    const more = first.querySelector<HTMLButtonElement>('[data-people-supp-img-more]');
+    expect(more?.textContent).toBe('还有 1496 张 · 继续看');
+    const all = page(2, 0);
+    expect(all.querySelectorAll('.bz-people-supp-imgthumb')).toHaveLength(2);
+    expect(all.querySelector('[data-people-supp-img-more]')).toBeNull();
+  });
+
+  it('增量追加一片：只 append 不重建既有格；哨兵原位换新文案，hidden 归 0 即移除', () => {
+    const grid = page(3, 4).querySelector<HTMLElement>('.bz-people-supp-imggrid')!;
+    const firstThumbs = [...grid.querySelectorAll('.bz-people-supp-imgthumb')];
+    const nextPage = [item(4), item(5), item(6)];
+    const more = appendSuppImageGridPage(grid, nextPage, 1);
+    expect(grid.querySelectorAll('.bz-people-supp-imgthumb')).toHaveLength(6);
+    expect([...grid.querySelectorAll('.bz-people-supp-imgthumb')].slice(0, 3)).toEqual(firstThumbs); // 旧格没重建
+    expect(more?.textContent).toBe('还有 1 张 · 继续看');
+    expect(grid.contains(more!)).toBe(true);
+    const last = appendSuppImageGridPage(grid, [item(7)], 0);
+    expect(grid.querySelectorAll('.bz-people-supp-imgthumb')).toHaveLength(7);
+    expect(last).toBeNull();
+    expect(grid.querySelector('[data-people-supp-img-more]')).toBeNull();
+  });
+
+  it('追加页的格子与全量渲染同构（描述在下、点开看大图；同源铁律）', () => {
+    const grid = page(1, 1).querySelector<HTMLElement>('.bz-people-supp-imggrid')!;
+    appendSuppImageGridPage(grid, [{ img: '2026-09/IMG_9.jpg', text: '', url: 'u9' }], 0);
+    const added = grid.querySelectorAll('.bz-people-supp-imgcell')[1];
+    expect(added.querySelector('img')?.getAttribute('data-people-supp-img-view')).toBe('2026-09/IMG_9.jpg');
+    expect(added.querySelector('.bz-people-supp-imgcap')?.textContent).toBe('未描述');
+    expect(added.querySelector('.bz-people-supp-imgcap')?.classList.contains('bz-people-supp-imgcap-none')).toBe(true);
+  });
+});
+
 
 describe('质心重建（复评：只在已建时问「会覆盖」）', () => {
   it('已建 + 待确认 → 出确认块（按钮另起一行），不再出「重建质心」', () => {

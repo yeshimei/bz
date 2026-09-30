@@ -1,5 +1,5 @@
-/* 源指纹 187255687db44c25 · 仓内输入 90 个（校验见 tests/preview-freshness.test.ts） */
-/*#preview-inputs=["prototypes/people/fake-sim.ts","prototypes/people/fake/fake-obsidian.ts","src/bookshelf/data.ts","src/bookshelf/state.ts","src/cinema/state.ts","src/core/ai.ts","src/core/app.ts","src/core/asr-proofread.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/external-tool.ts","src/core/flow-dialog.ts","src/core/gesture.ts","src/core/http.ts","src/core/item-actions.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/settings-btn-state.ts","src/core/settings-common.ts","src/core/settings-modal.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/help-tip.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/motion.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/password-vault/data.ts","src/people/data.ts","src/people/datasource.ts","src/people/describe.ts","src/people/digest.ts","src/people/export.ts","src/people/heavy-gate.ts","src/people/incremental.ts","src/people/insights.ts","src/people/jobs.ts","src/people/media.ts","src/people/migrate.ts","src/people/parse.ts","src/people/prep.ts","src/people/recording.ts","src/people/render.ts","src/people/safe-store.ts","src/people/settings.ts","src/people/stats.ts","src/people/sync.ts","src/people/types.ts","src/people/ui.ts"]*/
+/* 源指纹 940e29011b99ab48 · 仓内输入 91 个（校验见 tests/preview-freshness.test.ts） */
+/*#preview-inputs=["prototypes/people/fake-sim.ts","prototypes/people/fake/fake-obsidian.ts","src/bookshelf/data.ts","src/bookshelf/state.ts","src/cinema/state.ts","src/core/ai.ts","src/core/app.ts","src/core/asr-proofread.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/external-tool.ts","src/core/flow-dialog.ts","src/core/gesture.ts","src/core/http.ts","src/core/item-actions.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/settings-btn-state.ts","src/core/settings-common.ts","src/core/settings-modal.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/help-tip.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/motion.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/password-vault/data.ts","src/people/data.ts","src/people/datasource.ts","src/people/describe.ts","src/people/digest.ts","src/people/export.ts","src/people/heavy-gate.ts","src/people/incremental.ts","src/people/insights.ts","src/people/jobs.ts","src/people/media.ts","src/people/migrate.ts","src/people/parse.ts","src/people/prep.ts","src/people/recording.ts","src/people/render.ts","src/people/safe-store.ts","src/people/settings.ts","src/people/stats.ts","src/people/sync.ts","src/people/thumbs.ts","src/people/types.ts","src/people/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/people/fake-sim.ts → window.BZW_people（行为单源预览包，issue 245/ADR-0106） */
 var BZW_people = (() => {
   var __create = Object.create;
@@ -7883,23 +7883,24 @@ var BZW_people = (() => {
     function mediaNode(item) {
       const media = document.createElement("div");
       media.className = "bz-lightbox-media";
-      const bareSrc = item.src.split("?")[0].split("#")[0];
+      const src = item.srcOf ? item.srcOf() : item.src;
+      const bareSrc = src.split("?")[0].split("#")[0];
       const type = item.type || (bareSrc.endsWith(".mp4") || bareSrc.endsWith(".webm") ? "video" : "image");
       if (type === "video") {
         const v = document.createElement("video");
-        v.src = item.src;
+        v.src = src;
         v.controls = true;
         v.autoplay = true;
         media.appendChild(v);
       } else if (type === "audio") {
         const a = document.createElement("audio");
-        a.src = item.src;
+        a.src = src;
         a.controls = true;
         a.autoplay = true;
         media.appendChild(a);
       } else {
         const img = document.createElement("img");
-        img.src = item.src;
+        img.src = src;
         img.alt = item.title || opts.title || "";
         media.appendChild(img);
       }
@@ -20829,42 +20830,64 @@ ${lines}`;
     }
     if (s.items.length) {
       const grid = el("div", "bz-people-supp-imggrid");
-      for (const it of s.items) {
-        const cap = it.text.replace(/^\[图片\]\s*/, "");
-        const box = el("div", "bz-people-supp-imgbox");
-        box.appendChild(el("img", "bz-people-supp-imgthumb", {
-          src: it.url,
-          alt: cap,
-          loading: "lazy",
-          "data-people-supp-img-view": it.img,
-          title: "点开看大图"
-        }));
-        box.appendChild(button("bz-people-supp-imgdel", "×", {
-          "data-people-supp-img-del": it.img,
-          "aria-label": "删掉这张",
-          title: "从时间线里删掉这张（原件留在数据根，不会动）"
-        }));
-        if (s.imgDel === it.img) {
-          box.appendChild(el("div", "bz-people-supp-imgask", [
-            el("div", "bz-people-supp-imgask-tx", text("删掉这张？")),
-            el("div", "bz-people-supp-imgask-acts", [
-              button("bz-people-supp-imgask-yes", "删掉", { "data-people-supp-img-del-ok": it.img }),
-              button("bz-people-supp-imgask-no", "取消", { "data-people-supp-img-del-cancel": "" })
-            ])
-          ]));
-        }
-        const cell = el("div", "bz-people-supp-imgcell", [box]);
-        cell.appendChild(el(
-          "div",
-          `bz-people-supp-imgcap${cap ? "" : " bz-people-supp-imgcap-none"}`,
-          { title: cap || "未描述" },
-          text(cap || "未描述")
-        ));
-        grid.appendChild(cell);
-      }
+      for (const it of s.items) grid.appendChild(suppImgCell(s.imgDel, it));
+      if (s.hidden > 0) grid.appendChild(suppImgMore(s.hidden));
       out.push(grid);
     }
     return out;
+  }
+  function suppImgCell(imgDel, it) {
+    const cap = it.text.replace(/^\[图片\]\s*/, "");
+    const box = el("div", "bz-people-supp-imgbox");
+    box.appendChild(el("img", "bz-people-supp-imgthumb", {
+      src: it.url,
+      alt: cap,
+      loading: "lazy",
+      "data-people-supp-img-view": it.img,
+      title: "点开看大图"
+    }));
+    box.appendChild(button("bz-people-supp-imgdel", "×", {
+      "data-people-supp-img-del": it.img,
+      "aria-label": "删掉这张",
+      title: "从时间线里删掉这张（原件留在数据根，不会动）"
+    }));
+    if (imgDel === it.img) {
+      box.appendChild(el("div", "bz-people-supp-imgask", [
+        el("div", "bz-people-supp-imgask-tx", text("删掉这张？")),
+        el("div", "bz-people-supp-imgask-acts", [
+          button("bz-people-supp-imgask-yes", "删掉", { "data-people-supp-img-del-ok": it.img }),
+          button("bz-people-supp-imgask-no", "取消", { "data-people-supp-img-del-cancel": "" })
+        ])
+      ]));
+    }
+    const cell = el("div", "bz-people-supp-imgcell", [box]);
+    cell.appendChild(el(
+      "div",
+      `bz-people-supp-imgcap${cap ? "" : " bz-people-supp-imgcap-none"}`,
+      { title: cap || "未描述" },
+      text(cap || "未描述")
+    ));
+    return cell;
+  }
+  function suppImgMore(hidden) {
+    return el(
+      "button",
+      "bz-people-supp-imgmore",
+      { "data-people-supp-img-more": "", type: "button" },
+      text(`还有 ${hidden} 张 · 继续看`)
+    );
+  }
+  function appendSuppImageGridPage(grid, page, hidden, imgDel) {
+    for (const it of page) grid.appendChild(suppImgCell(imgDel, it));
+    const fresh = hidden > 0 ? suppImgMore(hidden) : null;
+    const old = grid.querySelector("[data-people-supp-img-more]");
+    if (fresh) {
+      if (old) old.replaceWith(fresh);
+      else grid.appendChild(fresh);
+    } else {
+      old == null ? void 0 : old.remove();
+    }
+    return fresh;
   }
   function suppRecBody(s) {
     var _a2, _b2;
@@ -21108,9 +21131,9 @@ ${lines}`;
   function recNote(rows) {
     var _a2;
     const block = el("div", "bz-people-jobs", { "data-people-rec-note": "", role: "status" });
-    const running2 = rows.filter((r) => r.status === "running").length;
+    const running3 = rows.filter((r) => r.status === "running").length;
     const waiting = rows.filter((r) => r.status === "queued").length;
-    block.appendChild(el("div", "bz-people-jobs-who", text(`录音处理 · ${running2} 条在跑${waiting ? ` · ${waiting} 条等待` : ""}`)));
+    block.appendChild(el("div", "bz-people-jobs-who", text(`录音处理 · ${running3} 条在跑${waiting ? ` · ${waiting} 条等待` : ""}`)));
     for (const r of rows) {
       if (r.status !== "running" && r.status !== "queued" && r.status !== "interrupted") continue;
       const line = el("div", "bz-people-jobs-main", text(r.file));
@@ -21415,6 +21438,101 @@ ${lines}`;
     return `${rec.timeFrom.slice(0, 7)} ~ ${rec.timeTo.slice(0, 7)} · 共 ${formatCount(textMsgs)} 条文本（形态占比含图片/语音等全部消息形态）`;
   }
 
+  // src/people/thumbs.ts
+  var THUMB_EDGE = 240;
+  var THUMB_DIR = "thumbs";
+  var THUMB_QUALITY = 0.72;
+  function descThumbPath(dataRoot, talker, img) {
+    const src = String(img).trim().replace(/\\/g, "/");
+    const dot = src.lastIndexOf(".");
+    const stem = dot > 0 ? src.slice(0, dot) : src;
+    const base = `${dataRoot}/${talker}/desc/${THUMB_DIR}/${stem}.webp`.replace(/\\/g, "/");
+    return base.replace(/\/+/g, "/");
+  }
+  var compressOverride = null;
+  async function compressThumb(bytes, mime) {
+    if (compressOverride) return compressOverride(bytes, mime);
+    if (typeof createImageBitmap === "undefined" || typeof document === "undefined") return null;
+    try {
+      const bmp = await createImageBitmap(new Blob([bytes], { type: mime }));
+      const scale = Math.min(1, THUMB_EDGE / Math.max(bmp.width, bmp.height));
+      const w = Math.max(1, Math.round(bmp.width * scale));
+      const h = Math.max(1, Math.round(bmp.height * scale));
+      const canvas = document.createElement("canvas");
+      canvas.width = w;
+      canvas.height = h;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) {
+        bmp.close();
+        return null;
+      }
+      ctx.drawImage(bmp, 0, 0, w, h);
+      bmp.close();
+      const blob = await new Promise((resolve) => canvas.toBlob(resolve, "image/webp", THUMB_QUALITY));
+      if (!blob) return null;
+      return new Uint8Array(await blob.arrayBuffer());
+    } catch (e) {
+      return null;
+    }
+  }
+  async function ensureThumbFile(fs, srcAbs, dstAbs) {
+    try {
+      if (fs.existsSync(dstAbs)) return true;
+      if (!fs.existsSync(srcAbs)) return false;
+      const mime = imageMimeOfPath(srcAbs);
+      if (!mime) return false;
+      const bytes = fs.readFileSync(srcAbs);
+      if (!bytes || !bytes.length) return false;
+      const out = await compressThumb(bytes, mime);
+      if (!out || !out.length) return false;
+      fs.mkdirSync(dstAbs.slice(0, dstAbs.lastIndexOf("/")), { recursive: true });
+      fs.writeFileSync(dstAbs, out);
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+  var pendingJobs = /* @__PURE__ */ new Map();
+  var inFlight = /* @__PURE__ */ new Set();
+  var settledPaths = /* @__PURE__ */ new Set();
+  var running2 = false;
+  var queueFs = null;
+  function resetThumbQueueForPanel() {
+    settledPaths.clear();
+  }
+  function cancelThumbQueue() {
+    pendingJobs.clear();
+  }
+  function thumbHandled(dstAbs) {
+    return pendingJobs.has(dstAbs) || inFlight.has(dstAbs) || settledPaths.has(dstAbs);
+  }
+  function queueThumbBuild(fs, srcAbs, dstAbs, onDone) {
+    if (thumbHandled(dstAbs)) return;
+    queueFs = fs;
+    pendingJobs.set(dstAbs, { src: srcAbs, dst: dstAbs, onDone });
+    void runThumbQueue();
+  }
+  async function runThumbQueue() {
+    var _a2;
+    if (running2) return;
+    running2 = true;
+    try {
+      for (; ; ) {
+        const job = pendingJobs.values().next().value;
+        if (!job) break;
+        pendingJobs.delete(job.dst);
+        inFlight.add(job.dst);
+        const ok = queueFs ? await ensureThumbFile(queueFs, job.src, job.dst) : false;
+        inFlight.delete(job.dst);
+        settledPaths.add(job.dst);
+        (_a2 = job.onDone) == null ? void 0 : _a2.call(job, ok);
+        await new Promise((resolve) => setTimeout(resolve, 0));
+      }
+    } finally {
+      running2 = false;
+    }
+  }
+
   // src/people/ui.ts
   init_ui();
 
@@ -21509,6 +21627,9 @@ ${lines}`;
   var suppImages = [];
   var suppBusy = false;
   var suppImgDelPending = null;
+  var SUPP_IMG_PAGE = 120;
+  var suppImgShown = SUPP_IMG_PAGE;
+  var suppImgMoreIO = null;
   var suppRecQueue = [];
   var recDelPending = null;
   var recDelAlsoFile = true;
@@ -21537,6 +21658,7 @@ ${lines}`;
         recStartEditFile = null;
         recRefConfirm = false;
         suppImgDelPending = null;
+        suppImgShown = SUPP_IMG_PAGE;
         noteDelPending = null;
         closeImgViewer();
         suppStoreInfo = { imported: 0, undescribed: 0, mergedRecs: /* @__PURE__ */ new Set(), imageItems: [] };
@@ -21746,6 +21868,8 @@ ${lines}`;
     });
     offSyncWatch = subscribeSync(onSyncState);
     localImgCache.clear();
+    suppImgShown = SUPP_IMG_PAGE;
+    resetThumbQueueForPanel();
     const onViewportResize = () => {
       syncStickyHeadH();
     };
@@ -21806,6 +21930,8 @@ ${lines}`;
     pulled = null;
     cur = 0;
     suppImgDelPending = null;
+    disarmSuppImgMore();
+    cancelThumbQueue();
     closeImgViewer();
     closeDsState();
     if (findDebounce !== null) {
@@ -22044,9 +22170,9 @@ ${lines}`;
     if (!jobsBusy()) return;
     const active = (_b2 = queue2.find((j) => j.status === "running")) != null ? _b2 : queue2.find((j) => j.status === "paused" || j.status === "interrupted");
     const who = (active == null ? void 0 : active.name) || (active == null ? void 0 : active.talker) || "";
-    const running2 = (active == null ? void 0 : active.status) === "running";
-    const why = running2 ? `正在给「${who}」画谱——一位一位来，等它画完再画这位` : `「${who}」那一趟还没收工——先接着画它（或删掉它的任务），再画这位`;
-    const short = running2 ? `等「${who}」画完` : "先接上没画完的那位";
+    const running3 = (active == null ? void 0 : active.status) === "running";
+    const why = running3 ? `正在给「${who}」画谱——一位一位来，等它画完再画这位` : `「${who}」那一趟还没收工——先接着画它（或删掉它的任务），再画这位`;
+    const short = running3 ? `等「${who}」画完` : "先接上没画完的那位";
     overlay == null ? void 0 : overlay.querySelectorAll("[data-people-detail]").forEach((page) => {
       var _a3;
       const id = (_a3 = page.dataset.peopleDetail) != null ? _a3 : "";
@@ -23029,6 +23155,10 @@ ${lines}`;
       if (suppTab === "rec") void noticeInterruptedRecordings();
       return;
     }
+    if (t.closest("[data-people-supp-img-more]")) {
+      armSuppImgMore(growSuppImgGrid());
+      return;
+    }
     if (t.closest("[data-people-supp-img-pick]")) {
       void suppPickImages();
       return;
@@ -23421,6 +23551,7 @@ ${lines}`;
     renderBanner();
     applySyncLockdown();
     applyJobsLockdown();
+    armSuppImgMore(overlay.querySelector("[data-people-supp-img-more]"));
     mountIcons(overlay);
     clearAnim();
   }
@@ -24228,19 +24359,71 @@ ${lines}`;
     if ((dialog == null ? void 0 : dialog.kind) === "note") void renderAlbum();
   }
   function suppImageState() {
-    const running2 = isDescribeOnlyBusy();
+    const running3 = isDescribeOnlyBusy();
     const root = suppDataRoot();
     const talker = detailId != null ? detailId : "";
+    const total = root && talker ? suppStoreInfo.imageItems.length : 0;
+    const shown = Math.min(suppImgShown, total);
     return {
       queue: suppImages,
       imported: suppStoreInfo.imported,
       undescribed: suppStoreInfo.undescribed,
-      describeBusy: running2,
+      describeBusy: running3,
       modelLabel: `${describeModelLabelOf().provider}/${describeModelLabelOf().model}`,
-      // 预览网格：缩略图读库外 desc 档字节换 data URL（懒加载照旧；按路径缓存，重画不重读）
-      items: root && talker ? suppStoreInfo.imageItems.map((it) => ({ ...it, url: localImgOf(descImagePath(root, talker, it.img)) })) : [],
+      items: root && talker ? suppStoreInfo.imageItems.slice(0, shown).map((it) => ({ ...it, url: suppGridImgOf(root, talker, it.img) })) : [],
+      hidden: Math.max(0, total - shown),
       ...suppImgDelPending ? { imgDel: suppImgDelPending } : {}
     };
+  }
+  function suppGridImgOf(root, talker, img) {
+    const thumbAbs = descThumbPath(root, talker, img);
+    const fs2 = suppFs();
+    if (!fs2) return "";
+    if (fs2.existsSync(thumbAbs)) {
+      const thumbUrl = localImgOf(thumbAbs);
+      if (thumbUrl) return thumbUrl;
+    }
+    if (!thumbHandled(thumbAbs)) {
+      queueThumbBuild(fs2, descImagePath(root, talker, img), thumbAbs, (ok) => {
+        if (ok) swapGridThumb(img, thumbAbs);
+      });
+    }
+    return localImgOf(descImagePath(root, talker, img));
+  }
+  function swapGridThumb(img, thumbAbs) {
+    const url = localImgOf(thumbAbs);
+    if (!url || !overlay) return;
+    overlay.querySelectorAll("[data-people-supp-img-view]").forEach((im) => {
+      if (im.getAttribute("data-people-supp-img-view") === img && im.src !== url) im.src = url;
+    });
+  }
+  function disarmSuppImgMore() {
+    suppImgMoreIO == null ? void 0 : suppImgMoreIO.disconnect();
+    suppImgMoreIO = null;
+  }
+  function growSuppImgGrid() {
+    const talker = detailId;
+    const root = suppDataRoot();
+    const grid = overlay == null ? void 0 : overlay.querySelector(".bz-people-supp-imggrid");
+    if (!talker || !root || !grid) return null;
+    const total = suppStoreInfo.imageItems.length;
+    const from = Math.min(suppImgShown, total);
+    const to = Math.min(suppImgShown + SUPP_IMG_PAGE, total);
+    if (from >= to) return grid.querySelector("[data-people-supp-img-more]");
+    const page = suppStoreInfo.imageItems.slice(from, to).map((it) => ({ ...it, url: suppGridImgOf(root, talker, it.img) }));
+    suppImgShown = to;
+    const more = appendSuppImageGridPage(grid, page, Math.max(0, total - to), suppImgDelPending != null ? suppImgDelPending : void 0);
+    return more;
+  }
+  function armSuppImgMore(sentinel) {
+    disarmSuppImgMore();
+    if (!sentinel || typeof IntersectionObserver === "undefined") return;
+    suppImgMoreIO = new IntersectionObserver((entries) => {
+      if (!entries.some((e) => e.isIntersecting)) return;
+      disarmSuppImgMore();
+      armSuppImgMore(growSuppImgGrid());
+    }, { rootMargin: "600px 0px" });
+    suppImgMoreIO.observe(sentinel);
   }
   function recSidecarFresh(fs2, key, startedAt) {
     if (!startedAt) return false;
@@ -24458,6 +24641,7 @@ ${lines}`;
           seq++;
         }
         fs2.copyFileSync(it.path, target);
+        queueThumbBuild(fs2, target, descThumbPath(root, talker, `${month}/${stamp}_${p2(seq)}${ext}`));
         imported.push({ file: `${month}/${stamp}_${p2(seq)}${ext}`, ts: it.ts, isSender: !it.peer });
       }
       let n = 0;
@@ -24500,8 +24684,10 @@ ${lines}`;
     if (index < 0) return;
     const { close } = openLightbox({
       title: "留影",
+      // srcOf 惰性（issue 519）：翻到哪张才读哪张的原图——千张组一次性把 data URL 拉齐是同一笔卡账
       items: suppStoreInfo.imageItems.map((it) => ({
-        src: localImgOf(descImagePath(root, talker, it.img)),
+        src: "",
+        srcOf: () => localImgOf(descImagePath(root, talker, it.img)),
         caption: it.text.replace(/^\[图片\]\s*/, "")
       })),
       index

@@ -1,4 +1,4 @@
-/* 源指纹 0f60af5a324750c8 · 仓内输入 2 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 d2c8385b86d9a6e5 · 仓内输入 2 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["src/people/render.ts","src/people/types.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — src/people/render.ts → window.BZR_people（评审壳预览包，ADR-0104） */
 var BZR_people = (() => {
@@ -38,6 +38,7 @@ var BZR_people = (() => {
     albumSleeve: () => albumSleeve,
     albumSpread: () => albumSpread,
     albumVacant: () => albumVacant,
+    appendSuppImageGridPage: () => appendSuppImageGridPage,
     applyRecStageChain: () => applyRecStageChain,
     avatarColor: () => avatarColor,
     avatarNode: () => avatarNode,
@@ -1498,42 +1499,64 @@ var BZR_people = (() => {
     }
     if (s.items.length) {
       const grid = el("div", "bz-people-supp-imggrid");
-      for (const it of s.items) {
-        const cap = it.text.replace(/^\[图片\]\s*/, "");
-        const box = el("div", "bz-people-supp-imgbox");
-        box.appendChild(el("img", "bz-people-supp-imgthumb", {
-          src: it.url,
-          alt: cap,
-          loading: "lazy",
-          "data-people-supp-img-view": it.img,
-          title: "点开看大图"
-        }));
-        box.appendChild(button("bz-people-supp-imgdel", "×", {
-          "data-people-supp-img-del": it.img,
-          "aria-label": "删掉这张",
-          title: "从时间线里删掉这张（原件留在数据根，不会动）"
-        }));
-        if (s.imgDel === it.img) {
-          box.appendChild(el("div", "bz-people-supp-imgask", [
-            el("div", "bz-people-supp-imgask-tx", text("删掉这张？")),
-            el("div", "bz-people-supp-imgask-acts", [
-              button("bz-people-supp-imgask-yes", "删掉", { "data-people-supp-img-del-ok": it.img }),
-              button("bz-people-supp-imgask-no", "取消", { "data-people-supp-img-del-cancel": "" })
-            ])
-          ]));
-        }
-        const cell = el("div", "bz-people-supp-imgcell", [box]);
-        cell.appendChild(el(
-          "div",
-          `bz-people-supp-imgcap${cap ? "" : " bz-people-supp-imgcap-none"}`,
-          { title: cap || "未描述" },
-          text(cap || "未描述")
-        ));
-        grid.appendChild(cell);
-      }
+      for (const it of s.items) grid.appendChild(suppImgCell(s.imgDel, it));
+      if (s.hidden > 0) grid.appendChild(suppImgMore(s.hidden));
       out.push(grid);
     }
     return out;
+  }
+  function suppImgCell(imgDel, it) {
+    const cap = it.text.replace(/^\[图片\]\s*/, "");
+    const box = el("div", "bz-people-supp-imgbox");
+    box.appendChild(el("img", "bz-people-supp-imgthumb", {
+      src: it.url,
+      alt: cap,
+      loading: "lazy",
+      "data-people-supp-img-view": it.img,
+      title: "点开看大图"
+    }));
+    box.appendChild(button("bz-people-supp-imgdel", "×", {
+      "data-people-supp-img-del": it.img,
+      "aria-label": "删掉这张",
+      title: "从时间线里删掉这张（原件留在数据根，不会动）"
+    }));
+    if (imgDel === it.img) {
+      box.appendChild(el("div", "bz-people-supp-imgask", [
+        el("div", "bz-people-supp-imgask-tx", text("删掉这张？")),
+        el("div", "bz-people-supp-imgask-acts", [
+          button("bz-people-supp-imgask-yes", "删掉", { "data-people-supp-img-del-ok": it.img }),
+          button("bz-people-supp-imgask-no", "取消", { "data-people-supp-img-del-cancel": "" })
+        ])
+      ]));
+    }
+    const cell = el("div", "bz-people-supp-imgcell", [box]);
+    cell.appendChild(el(
+      "div",
+      `bz-people-supp-imgcap${cap ? "" : " bz-people-supp-imgcap-none"}`,
+      { title: cap || "未描述" },
+      text(cap || "未描述")
+    ));
+    return cell;
+  }
+  function suppImgMore(hidden) {
+    return el(
+      "button",
+      "bz-people-supp-imgmore",
+      { "data-people-supp-img-more": "", type: "button" },
+      text(`还有 ${hidden} 张 · 继续看`)
+    );
+  }
+  function appendSuppImageGridPage(grid, page, hidden, imgDel) {
+    for (const it of page) grid.appendChild(suppImgCell(imgDel, it));
+    const fresh = hidden > 0 ? suppImgMore(hidden) : null;
+    const old = grid.querySelector("[data-people-supp-img-more]");
+    if (fresh) {
+      if (old) old.replaceWith(fresh);
+      else grid.appendChild(fresh);
+    } else {
+      old == null ? void 0 : old.remove();
+    }
+    return fresh;
   }
   function suppRecBody(s) {
     var _a, _b;

@@ -197,7 +197,8 @@ import {
   type SuppTab,
 } from './render';
 
-import { el, profLeaveAsk, text, textEl } from './render';
+import { appendSuppImageGridPage, el, profLeaveAsk, text, textEl } from './render';
+import { cancelThumbQueue, descThumbPath, queueThumbBuild, resetThumbQueueForPanel, thumbHandled } from './thumbs';
 import { mountIcons, openLightbox } from '../core/ui';
 import { bindWheelTurn } from '../core/gesture';
 import { tryGetSettings } from '../core/settings-provider';
@@ -321,6 +322,13 @@ let suppImages: SuppImageQueueItem[] = [];
 let suppBusy = false;
 /** 留影页签：点了叉、等二次确认的那张（img 相对路径；复评点名要问一声） */
 let suppImgDelPending: string | null = null;
+/** 留影网格分片页张量（issue 519）：首屏 120 张，滚到哨兵再追加一片——千张级全量把
+ *  data URL 一次拉齐是开页冻死的病根（514 之前 python 预处理线直落 1616 张的教训）。 */
+const SUPP_IMG_PAGE = 120;
+/** 已展开的留影张数（开面板重置；删图重画不重置——保住用户已滚出来的量） */
+let suppImgShown = SUPP_IMG_PAGE;
+/** 哨兵的滚动观察（每次渲染 / 追加重挂；面板与弹窗关闭摘除） */
+let suppImgMoreIO: IntersectionObserver | null = null;
 /** 录音页签的待落盘暂存（选完文件、确认起点，再落盘；ADR-0217 起点是一等数据） */
 let suppRecQueue: SuppRecQueueItem[] = [];
 /** 删除二次确认开着的那条录音（issue 516 Q13；null = 没开） */
@@ -371,6 +379,7 @@ function openDialog(kind: DialogKind, tier?: DeleteTier): void {
       recStartEditFile = null;
       recRefConfirm = false;
       suppImgDelPending = null;
+      suppImgShown = SUPP_IMG_PAGE; // 分片跟着人走（issue 519）：别把上一人滚出来的量带给下一人
       noteDelPending = null; // 撕掉确认跟着人走（D 组）：换人不把确认带到别人的纸条上
       closeImgViewer();
       suppStoreInfo = { imported: 0, undescribed: 0, mergedRecs: new Set(), imageItems: [] };
@@ -630,6 +639,9 @@ function buildPanelShell(app?: unknown): void {
   offSyncWatch = subscribeSync(onSyncState);
   // 库外图字节缓存在开面板时清一次（同路径换了图 / 补了文件不用重载插件）
   localImgCache.clear();
+  // 分片与缩略档跟面板走（issue 519）：shown 回首屏量；坏档办结记录清了给重试机会
+  suppImgShown = SUPP_IMG_PAGE;
+  resetThumbQueueForPanel();
   // 视口尺寸跟帧：容器宽窄翻转（缩窗 / 转屏）而没重画时，折签吸顶基准跟着页眉重新量
   const onViewportResize = (): void => { syncStickyHeadH(); };
   window.addEventListener('resize', onViewportResize);
@@ -695,6 +707,8 @@ export function closePeoplePanel(): void {
   pulled = null;
   cur = 0;
   suppImgDelPending = null;
+  disarmSuppImgMore();
+  cancelThumbQueue(); // 缩略档补齐跟着面板停（重开入新活自然接着补）
   closeImgViewer();
   closeDsState();
   if (findDebounce !== null) { clearTimeout(findDebounce); findDebounce = null; } // 关面板不欠一次重画
@@ -2040,6 +2054,8 @@ function onOverlayClick(e: MouseEvent): void {
     if (suppTab === 'rec') void noticeInterruptedRecordings();
     return;
   }
+  // 网格哨兵（issue 519）：滚到自动追加（IO），点了也追加——兜底 IO 怪异的环境
+  if (t.closest('[data-people-supp-img-more]')) { armSuppImgMore(growSuppImgGrid()); return; }
   if (t.closest('[data-people-supp-img-pick]')) { void suppPickImages(); return; }
   const imgDrop = t.closest<HTMLElement>('[data-people-supp-img-drop]');
   if (imgDrop) { suppImages.splice(Number(imgDrop.getAttribute('data-people-supp-img-drop')), 1); void renderAlbum(); return; }
@@ -2431,6 +2447,8 @@ async function renderAlbum(): Promise<void> {
   renderBanner();
   applySyncLockdown();
   applyJobsLockdown();
+  // 留影网格哨兵（issue 519）：渲染后重挂观察——非素材页 query 不到 = 仅摘，幂等
+  armSuppImgMore(overlay.querySelector<HTMLElement>('[data-people-supp-img-more]'));
   mountIcons(overlay); // lucide 占位 → SVG
   clearAnim();
 }
@@ -3395,18 +3413,87 @@ function suppImageState(): SuppImageViewState {
   const running = jobsApi.isDescribeOnlyBusy();
   const root = suppDataRoot();
   const talker = detailId ?? '';
+  // 预览网格（issue 519 分片）：只切已展开的前段换 data URL——缩略档命中读小图，
+  // 缺档回退原图并后台补齐；全量一次拉齐是开页冻死的病根，不再犯。
+  const total = root && talker ? suppStoreInfo.imageItems.length : 0;
+  const shown = Math.min(suppImgShown, total);
   return {
     queue: suppImages,
     imported: suppStoreInfo.imported,
     undescribed: suppStoreInfo.undescribed,
     describeBusy: running,
     modelLabel: `${describeModelLabelOf().provider}/${describeModelLabelOf().model}`,
-    // 预览网格：缩略图读库外 desc 档字节换 data URL（懒加载照旧；按路径缓存，重画不重读）
     items: root && talker
-      ? suppStoreInfo.imageItems.map((it) => ({ ...it, url: localImgOf(descImagePath(root, talker, it.img)) }))
+      ? suppStoreInfo.imageItems.slice(0, shown).map((it) => ({ ...it, url: suppGridImgOf(root, talker, it.img) }))
       : [],
+    hidden: Math.max(0, total - shown),
     ...(suppImgDelPending ? { imgDel: suppImgDelPending } : {}),
   };
+}
+
+/** 网格取图（issue 519）：优先 240px 缩略档；缺档回退原图 data URL 并入队后台补齐，
+ *  补上后原位换图（不整页重画）。thumb 缺档时**不过** localImgOf——空串会被按路径缓存住，
+ *  档补齐后原位换图 / 重画取小图全都命中空串，管线整个白做。坏档（存在但读不出）
+ *  同样回退原图，由 settled 记账不再空转。 */
+function suppGridImgOf(root: string, talker: string, img: string): string {
+  const thumbAbs = descThumbPath(root, talker, img);
+  const fs2 = suppFs();
+  if (!fs2) return ''; // 非桌面：补充素材整页不可用，别碰缓存
+  if (fs2.existsSync(thumbAbs)) {
+    const thumbUrl = localImgOf(thumbAbs);
+    if (thumbUrl) return thumbUrl;
+  }
+  if (!thumbHandled(thumbAbs)) {
+    queueThumbBuild(fs2, descImagePath(root, talker, img), thumbAbs, (ok) => {
+      if (ok) swapGridThumb(img, thumbAbs);
+    });
+  }
+  return localImgOf(descImagePath(root, talker, img));
+}
+
+/** 缩略档补齐后原位换图：这张格子在弹窗里还挂着原图回退的话悄悄换成小图 */
+function swapGridThumb(img: string, thumbAbs: string): void {
+  const url = localImgOf(thumbAbs);
+  if (!url || !overlay) return;
+  overlay.querySelectorAll<HTMLImageElement>('[data-people-supp-img-view]').forEach((im) => {
+    if (im.getAttribute('data-people-supp-img-view') === img && im.src !== url) im.src = url;
+  });
+}
+
+/** 摘掉哨兵观察（幂等） */
+function disarmSuppImgMore(): void {
+  suppImgMoreIO?.disconnect();
+  suppImgMoreIO = null;
+}
+
+/** 留影网格追加下一片（哨兵进视口自动 / 点哨兵兜底）；返回当前哨兵（没有更多 = null） */
+function growSuppImgGrid(): HTMLElement | null {
+  const talker = detailId;
+  const root = suppDataRoot();
+  const grid = overlay?.querySelector<HTMLElement>('.bz-people-supp-imggrid');
+  if (!talker || !root || !grid) return null;
+  const total = suppStoreInfo.imageItems.length;
+  const from = Math.min(suppImgShown, total);
+  const to = Math.min(suppImgShown + SUPP_IMG_PAGE, total);
+  if (from >= to) return grid.querySelector<HTMLElement>('[data-people-supp-img-more]');
+  const page = suppStoreInfo.imageItems.slice(from, to).map((it) => ({ ...it, url: suppGridImgOf(root, talker, it.img) }));
+  suppImgShown = to;
+  // 只 append 不走 renderAlbum：全量重建千格是同一笔卡账的第二处（增量路就是为绕开它）
+  const more = appendSuppImageGridPage(grid, page, Math.max(0, total - to), suppImgDelPending ?? undefined);
+  return more;
+}
+
+/** 重挂哨兵观察（rootMargin 提前量：滚到离底一屏就开始拼下一片，不露等待；
+ *  IO 缺席的环境不挂——哨兵点击兜底还在） */
+function armSuppImgMore(sentinel: HTMLElement | null): void {
+  disarmSuppImgMore();
+  if (!sentinel || typeof IntersectionObserver === 'undefined') return;
+  suppImgMoreIO = new IntersectionObserver((entries) => {
+    if (!entries.some((e) => e.isIntersecting)) return;
+    disarmSuppImgMore();
+    armSuppImgMore(growSuppImgGrid());
+  }, { rootMargin: '600px 0px' });
+  suppImgMoreIO.observe(sentinel);
 }
 
 /** 账本是否本轮起跑后落过笔（fs mtime 判；读不到 / 无起跑时刻 = 旧账，按冷加载期算） */
@@ -3650,6 +3737,8 @@ async function suppImportImages(): Promise<void> {
         seq++;
       }
       fs2.copyFileSync(it.path, target);
+      // 缩略档随后台队列出（issue 519）：不挡导入主流程；补上后网格原位换小图
+      queueThumbBuild(fs2, target, descThumbPath(root, talker, `${month}/${stamp}_${p2(seq)}${ext}`));
       imported.push({ file: `${month}/${stamp}_${p2(seq)}${ext}`, ts: it.ts, isSender: !it.peer });
     }
     // 并仓：type=3 消息（text 空 = 不进时间线，描述并仓后自然出现）+ 形态计数 + 统计重算
@@ -3701,8 +3790,10 @@ function openImgViewer(img: string): void {
   if (index < 0) return;
   const { close } = openLightbox({
     title: '留影',
+    // srcOf 惰性（issue 519）：翻到哪张才读哪张的原图——千张组一次性把 data URL 拉齐是同一笔卡账
     items: suppStoreInfo.imageItems.map((it) => ({
-      src: localImgOf(descImagePath(root, talker, it.img)),
+      src: '',
+      srcOf: () => localImgOf(descImagePath(root, talker, it.img)),
       caption: it.text.replace(/^\[图片\]\s*/, ''),
     })),
     index,
