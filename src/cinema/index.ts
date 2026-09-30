@@ -16,13 +16,16 @@ let autoRefreshRegistered = false;
 
 /** 打开面板时的默认视图接线（issue 194）：每次打开读设置，非法值回落
  *  （排序 date/created/rating 之外回落 date；状态筛选仅认想看/在看/已看，其余回全部）。
- *  与收藏本 openPanel 同语义：设置是「下次打开的初始值」，面板内改选为会话内临时态。 */
+ *  与收藏本 openPanel 同语义：设置是「下次打开的初始值」，面板内改选为会话内临时态。
+ *  片单筛选无设置键：同「临时态」口径，重开面板回落全部 */
 export function applyDefaultView(): void {
   const s = tryGetSettings() as Record<string, unknown>;
   const sort = s.cinemaSortMode;
   M.sortMode = sort === 'created' || sort === 'rating' ? sort : 'date';
   const st = s.cinemaStatusFilter;
   M.statusFilter = st === '想看' || st === '在看' || st === '已看' ? st : null;
+  M.typeFilter = null;
+  M.listFilter = null;
 }
 
 /** 幂等初始化（懒加载）：设置注入 + ESC + 自动刷新 */

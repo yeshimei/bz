@@ -20,6 +20,8 @@ function item(p: Partial<CinemaItem> & { name: string }): CinemaItem {
   return {
     file: null, name: p.name, typeTag: p.typeTag ?? '电影', group: p.group ?? '电影',
     watchDate: p.watchDate ?? null, rating: p.rating ?? null, status: p.status ?? STATUS_WATCHED,
+    rewatches: p.rewatches ?? [],
+    lists: p.lists ?? [],
     poster: p.poster ?? null, review: p.review ?? null, genre: p.genre ?? null,
     director: p.director ?? null, actors: p.actors ?? null, region: p.region ?? null,
     year: p.year ?? null, releaseDate: p.releaseDate ?? null, doubanRating: p.doubanRating ?? null,

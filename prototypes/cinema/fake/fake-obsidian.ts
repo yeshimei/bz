@@ -103,6 +103,15 @@ const PNG_1PX = new Uint8Array([
   174, 66, 96, 130,
 ]);
 
+/** 豆瓣片单导入罐头（一键导入评审）：一页 4 条——「奥德赛」在库验证跳过标记，其余 3 部新片
+ *  走静默批量建档；单页即尽（<25 条，fetchDoubanList 不再翻页）。 */
+const CANNED_DOUBAN_LIST_HTML = `<html><body><ul class="list-wish">
+<li><a href="https://movie.douban.com/subject/4151650/" title="银翼杀手 2049">银翼杀手 2049</a></li>
+<li><a href="https://movie.douban.com/subject/1292001/" title="一一">一一</a></li>
+<li><a href="https://movie.douban.com/subject/4083325/" title="2001太空漫游">2001太空漫游</a></li>
+<li><a href="https://movie.douban.com/subject/1/" title="奥德赛">奥德赛</a></li>
+</ul></body></html>`;
+
 /** ArrayBuffer → data URL（评审壳的海报存储形态；分块 btoa 免爆栈） */
 function bytesToDataUrl(data: ArrayBuffer): string {
   const bytes = new Uint8Array(data);
@@ -235,6 +244,11 @@ export async function requestUrl(req: { url?: string; method?: string; body?: st
     await cannedDelay(CANNED_DOUBAN_MS);
     const q = decodeURIComponent((/[?&]q=([^&]*)/.exec(url)?.[1] ?? '').replace(/\+/g, ' '));
     return ok(cannedSuggestJson(q || '未命名', presetIndexOf(q)));
+  }
+  // 豆瓣片单导入（wish 收藏页 / doulist 豆列）：罐头一页 4 条（含 1 部在库片验证跳过）
+  if (/douban\.com\/(people\/[^/]+\/(wish|collect)|doulist)/.test(url)) {
+    await cannedDelay(CANNED_DOUBAN_MS);
+    return ok(CANNED_DOUBAN_LIST_HTML);
   }
   if (url.includes('v1.apizero.cn')) {
     await cannedDelay(CANNED_DOUBAN_MS);

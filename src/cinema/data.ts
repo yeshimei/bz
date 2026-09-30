@@ -2,7 +2,7 @@
  * 影院（cinema）域数据层：扫描笔记 → 条目；排序（观影日期倒序）；筛选
  */
 import type { App, TFile } from 'obsidian';
-import { ALL_TAGS, getGroupSafe, STATUS_WANT, STATUS_WATCHING, STATUS_WATCHED } from './constants';
+import { ALL_TAGS, getGroupSafe, REWATCH_SHELF, STATUS_WANT, STATUS_WATCHING, STATUS_WATCHED } from './constants';
 import { extractMovieName } from './douban-fetcher';
 import type { CinemaItem } from './state';
 import { M } from './state';
@@ -14,6 +14,30 @@ export function normalizeTags(raw: unknown): string[] {
   if (Array.isArray(raw)) return raw.map((t) => String(t));
   if (typeof raw === 'string' && raw) return [raw];
   return [];
+}
+
+/** frontmatter `重看` → string[]（重温日期列表；兼容数组 / 单字符串 / 缺失，口径同 normalizeTags）。
+ *  建档/编辑不写此键——只有「重温 +1」与未来的删除入口落盘，旧笔记无键照旧 */
+export function normalizeRewatches(raw: unknown): string[] {
+  return normalizeTags(raw).filter(Boolean);
+}
+
+/** frontmatter `片单` → string[]（自建片单；兼容数组 / 单字符串 / 缺失，口径同 normalizeTags）。
+ *  归入/移出弹层落盘，建档/编辑不写此键 */
+export function normalizeLists(raw: unknown): string[] {
+  return normalizeTags(raw).filter(Boolean);
+}
+
+/** 片单枚举（侧栏 / 归入弹层消费）：内置「重映厅」恒首位，其余按成员数降序、同数按名称。
+ *  纯函数显式入参（原型侧/纯层同源可用）；空片单不出现（没有成员就没有枚举） */
+export function allLists(items: CinemaItem[]): string[] {
+  const count = new Map<string, number>();
+  for (const it of items) for (const name of it.lists) count.set(name, (count.get(name) ?? 0) + 1);
+  const rest = [...count.entries()]
+    .filter(([name]) => name !== REWATCH_SHELF)
+    .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
+    .map(([name]) => name);
+  return count.has(REWATCH_SHELF) ? [REWATCH_SHELF, ...rest] : rest;
 }
 
 /** 解析单条笔记（frontmatter → CinemaItem）；无 frontmatter 返回 null */
@@ -61,6 +85,8 @@ export function parseMovieFile(file: TFile, app: App): CinemaItem | null {
     watchDate,
     rating,
     status,
+    rewatches: normalizeRewatches(fm['重看']),
+    lists: normalizeLists(fm['片单']),
     poster: fm['海报']?.toString() ?? null,
     review: fm['影评']?.toString() ?? null,
     genre: fm['类型']?.toString() ?? null,
@@ -161,11 +187,12 @@ export function applySortMode(list: CinemaItem[], mode: string): CinemaItem[] {
   return sortByDateDesc(list);
 }
 
-/** 当前筛选（类型/状态/搜索）+ 当前排序模式（先筛选后排序，保证列表正确） */
+/** 当前筛选（类型/状态/片单/搜索）+ 当前排序模式（先筛选后排序，保证列表正确） */
 export function getDisplayItems(): CinemaItem[] {
   let list = [...M.items];
   if (M.typeFilter) list = list.filter((it) => it.group === M.typeFilter);
   if (M.statusFilter) list = list.filter((it) => it.status === (M.statusFilter === '想看' ? STATUS_WANT : M.statusFilter === '在看' ? STATUS_WATCHING : STATUS_WATCHED));
+  if (M.listFilter) list = list.filter((it) => it.lists.includes(M.listFilter as string));
   if (M.searchKeyword) {
     const kw = M.searchKeyword.toLowerCase();
     list = list.filter((it) => {

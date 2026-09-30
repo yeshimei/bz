@@ -13,7 +13,7 @@ import { sleep } from '../core/utils';
 import { tryGetSettings } from '../core/settings-provider';
 import { M } from './state';
 import { rebuildItems } from './data';
-import { fetchNoteDouban, queryDoubanByName, queryDoubanBySid, downloadPosterToVault, type DoubanFetchDeps, type DoubanFetchOutcome, type DoubanQueryOutcome } from './douban-fetcher';
+import { fetchNoteDouban, queryDoubanByName, queryDoubanBySid, downloadPosterToVault, fetchDoubanList, type DoubanListEntry, type DoubanFetchDeps, type DoubanFetchOutcome, type DoubanQueryOutcome } from './douban-fetcher';
 
 /** 查询结果类型再导出：测试注入 `configureFetchQueue({ preview })` 时要用 */
 export type { DoubanQueryOutcome };
@@ -342,4 +342,18 @@ export function shutdownDoubanQueue(): void {
   blockedNames = [];
   blockedEntries = [];
   pumping = false;
+}
+
+/** 豆瓣片单导入（一键批量建档的抓取端）：复用队列 HTTP 通道与设置里的豆瓣 Cookie
+ *  （fetchDepsFromSettings 单源——导入不自己拼第二份 HTTP 层，同 queryDoubanForPreview 口径）。
+ *  firstPageEmpty = 首页就没解析出条目（个人收藏页缺登录态 / 风控拦截 / 链接不对），
+ *  调用方据此分流提示。 */
+let listFetchFn: ((app: App, base: string) => Promise<{ entries: DoubanListEntry[]; firstPageEmpty: boolean }>) | null = null;
+/** 测试注入：片单抓取（默认走真 fetchDoubanList + 队列 HTTP 通道，同 previewFn 模式） */
+export function configureDoubanListFetch(fn: NonNullable<typeof listFetchFn> | null): void { listFetchFn = fn; }
+
+export async function fetchDoubanListForImport(app: App, base: string): Promise<{ entries: DoubanListEntry[]; firstPageEmpty: boolean }> {
+  if (listFetchFn) return listFetchFn(app, base);
+  const deps = fetchDepsFromSettings(app);
+  return fetchDoubanList(base, deps.httpGet, deps.doubanCookie || undefined);
 }

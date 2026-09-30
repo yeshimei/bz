@@ -9,7 +9,7 @@ import { esc, iconSpan } from '../../../core/ui/str';
 import { GROUP_ORDER } from '../../constants';
 import {
   ICON, ST_COLOR, statusText, typeColor,
-  cardHtml, cardStatus, viewFiltered,
+  cardHtml, cardStatus, cardInList, viewFiltered,
   type CinemaView,
 } from '../../shared';
 import { cardFace, cardGroup, type CardEntry } from '../../seasons';
@@ -28,10 +28,12 @@ export function midnightDeskHtml(): string {
           <div class="j-groups"></div>
           <div class="rail-label" style="padding-top:14px">状 态</div>
           <div class="j-status"></div>
+          <div class="j-lists"></div>
         </div>
         <div class="rail-foot">
           <button class="rail-item j-tool" data-tool="ai">${iconSpan(ICON.ai)}AI 荐片</button>
           <button class="rail-item j-tool" data-film-open>${iconSpan(ICON.stat)}观影分析</button>
+          <button class="rail-item j-import">${iconSpan(ICON.import)}导入片单</button>
         </div>
       </aside>
       <div class="d-main j-view"></div>
@@ -61,15 +63,17 @@ export function midnightMobHtml(): string {
 const railRow = (on: boolean, attr: string, color: string, name: string, n: number) =>
   `<button class="rail-item${on ? ' is-on' : ''}" ${attr}><span class="dot" style="background:${color}"></span>${esc(name)}<span class="n">${n}</span></button>`;
 
-/** 侧栏 rail（类型 + 状态两组；计数 = **卡片**数——合并开后「剧集 9」与网格 9 张卡对得上，
+/** 侧栏 rail（类型 + 状态 + 片单三组；计数 = **卡片**数——合并开后「剧集 9」与网格 9 张卡对得上，
  *  不是「库里 33 个季笔记」那种点了对不上的数）。
+ *  片单组（j-lists）：内置「重温架」+ 自建片单，成员计数同卡片口径（合并卡任一成员命中算）；
+ *  无任何片单时整组不出。金色圆点与「全部」同源（片单无类型色语义）。
  *  ai/stat 页 rail 整体熄灭（含「全部」）——它是列表视图的筛选控件，非列表页不表达选中 */
-export function railHtml(cards: CardEntry[], view: CinemaView): { groups: string; status: string } {
+export function railHtml(cards: CardEntry[], view: CinemaView, lists: string[] = []): { groups: string; status: string; lists: string } {
   const listOn = view.view === 'list';
   const g: Record<string, number> = {};
   const c: Record<string, number> = { 想看: 0, 在看: 0, 已看: 0 };
   cards.forEach((e) => { const grp = cardGroup(e); g[grp] = (g[grp] || 0) + 1; c[statusText(cardStatus(e))]++; });
-  let groups = railRow(listOn && !view.typeFilter && !view.statusFilter, 'data-g="全部"', 'var(--gold)', '全部', cards.length);
+  let groups = railRow(listOn && !view.typeFilter && !view.statusFilter && !view.listFilter, 'data-g="全部"', 'var(--gold)', '全部', cards.length);
   for (const name of GROUP_ORDER) {
     groups += railRow(listOn && view.typeFilter === name && !view.statusFilter, `data-g="${name}"`, typeColor(name), name, g[name] || 0);
   }
@@ -77,7 +81,15 @@ export function railHtml(cards: CardEntry[], view: CinemaView): { groups: string
   for (const s of ['想看', '在看', '已看'] as const) {
     status += railRow(listOn && view.statusFilter === s, `data-s="${s}"`, ST_COLOR[s], s, c[s]);
   }
-  return { groups, status };
+  let listsHtml = '';
+  if (lists.length) {
+    listsHtml = '<div class="rail-label" style="padding-top:14px">片 单</div>';
+    for (const name of lists) {
+      const n = cards.filter((e) => cardInList(e, name)).length;
+      listsHtml += railRow(listOn && view.listFilter === name, `data-l="${esc(name)}"`, 'var(--gold)', name, n);
+    }
+  }
+  return { groups, status, lists: listsHtml };
 }
 
 /** 移动端筛选 chips（全部/类型/状态横滑条；ai/stat 页同 rail 口径整体熄灭）。
@@ -118,6 +130,8 @@ export interface MidnightRenderInput {
   view: CinemaView;
   /** 网格每行列数（插件读设置钳制，壳给演示值） */
   cols: number;
+  /** 片单枚举（侧栏片单组；data.allLists 产物，重温架恒首位） */
+  lists: string[];
   /** 列表标题（组 + 状态叠加口径，listTitle） */
   title: string;
   /** AI 荐片页 HTML（shared aiPageHtml 产物） */
@@ -152,11 +166,13 @@ export function listToolsHtml(view: CinemaView): string {
 
 /** desk 渲染：侧栏 rail + 主视图（list/ai 按视图状态装配；观影分析走覆盖面板的一层，ADR-0175） */
 export function renderMidnightDesk(root: HTMLElement, inp: MidnightRenderInput): void {
-  const rail = railHtml(inp.allCards, inp.view);
+  const rail = railHtml(inp.allCards, inp.view, inp.lists);
   const groupsEl = root.querySelector('.j-groups');
   const statusEl = root.querySelector('.j-status');
+  const listsEl = root.querySelector('.j-lists');
   if (groupsEl) groupsEl.innerHTML = rail.groups;
   if (statusEl) statusEl.innerHTML = rail.status;
+  if (listsEl) listsEl.innerHTML = rail.lists;
   const view = root.querySelector('.j-view');
   if (!view) return;
   const v = inp.view;
