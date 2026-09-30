@@ -85,6 +85,9 @@ export function parseMovieFile(file: TFile, app: App): CinemaItem | null {
     watchDate,
     rating,
     status,
+    // 状态日期（想看日期/在看日期；已看沿用观影日期）：旧笔记无键 = null，不参与显示
+    wantDate: fm['想看日期']?.toString() ?? null,
+    watchingDate: fm['在看日期']?.toString() ?? null,
     rewatches: normalizeRewatches(fm['重看']),
     lists: normalizeLists(fm['片单']),
     shelvedOnly: fm['片单收纳'] === true,

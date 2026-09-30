@@ -119,7 +119,7 @@ tags: [美剧]
     const tfile = vault.getMarkdownFiles()[0];
     const handItem: CinemaItem = {
       file: tfile, name: '缓存未就绪', typeTag: '电影', group: '电影', watchDate: null, rating: null,
-      status: 2, rewatches: [], lists: [], shelvedOnly: false, poster: null, review: null, genre: null, director: null, actors: null,
+      status: 2, wantDate: null, watchingDate: null, rewatches: [], lists: [], shelvedOnly: false, poster: null, review: null, genre: null, director: null, actors: null,
       region: null, year: null, releaseDate: null, doubanRating: null, doubanUrl: null, synopsis: null, duration: null, seasonText: null, hotComment: null,
     };
     M.items.push(handItem);
@@ -135,7 +135,7 @@ tags: [美剧]
     const tfile = vault.getMarkdownFiles()[0];
     M.items.push({
       file: tfile, name: '无效', typeTag: '电影', group: '电影', watchDate: null, rating: null,
-      status: 2, rewatches: [], lists: [], shelvedOnly: false, poster: null, review: null, genre: null, director: null, actors: null,
+      status: 2, wantDate: null, watchingDate: null, rewatches: [], lists: [], shelvedOnly: false, poster: null, review: null, genre: null, director: null, actors: null,
       region: null, year: null, releaseDate: null, doubanRating: null, doubanUrl: null, synopsis: null, duration: null, seasonText: null, hotComment: null,
     });
     rebuildItems(app);
@@ -193,7 +193,7 @@ describe('cinema 排序与筛选', () => {
     const mk = (name: string, ctime: number, mtime: number): CinemaItem => ({
       file: { path: `我的/影视/《${name}》.md`, stat: { ctime, mtime } } as any,
       name, typeTag: '电影', group: '电影',
-      watchDate: null, rating: null, status: 2, rewatches: [], lists: [], shelvedOnly: false, poster: null, review: null,
+      watchDate: null, rating: null, status: 2, wantDate: null, watchingDate: null, rewatches: [], lists: [], shelvedOnly: false, poster: null, review: null,
       genre: null, director: null, actors: null, region: null, year: null, releaseDate: null,
       doubanRating: null, doubanUrl: null, synopsis: null, duration: null, seasonText: null, hotComment: null,
     });

@@ -198,6 +198,7 @@ export async function quickAddWant(app: App, name: string, type: string, opts?: 
 tags:
 - ${tag}
 观影日期: "${now}"
+想看日期: "${now.slice(0, 10)}"
 评分: -1
 海报: 
 ---
