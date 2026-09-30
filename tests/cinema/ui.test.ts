@@ -2962,18 +2962,19 @@ describe('一键导入豆瓣片单', () => {
     (modal.querySelector('.j-dimp-url') as HTMLInputElement).value = 'https://movie.douban.com/people/x/wish';
     clickEl(modal.querySelector('.j-dimp-fetch'));
     await vi.waitFor(() => expect((modal.querySelector('[data-dimp-result]') as HTMLElement).hidden).toBe(false));
-    expect(modal.querySelector('.j-dimp-stat')?.textContent).toContain('共 3 部 · 已在库 1 · 待导入 2');
+    // 在库不过滤（2026-09-30 拍板）：全量进确认清单，在库仅标记、导入时由重名保护保持现状
+    expect(modal.querySelector('.j-dimp-stat')?.textContent).toContain('抓到 3 部（其中 1 部已在库，将保持不动），确认入库？');
+    expect(modal.querySelectorAll('.dimp-row')).toHaveLength(3);
     expect(modal.querySelectorAll('.dimp-row.is-inlib')).toHaveLength(1);
     // run 段（点击 → 静默批量建档 → 汇总 toast）的建档语义由 recommend.test 的
-    // quickAddWant 单测覆盖（silent 路径同函数同分支）；此处断 UI 管线终点：
-    // 待导入 N 部时按钮就绪、零待导入时禁用。
+    // quickAddWant 单测覆盖（silent 路径同函数同分支）；此处断 UI 管线终点：全量导入钮就绪。
     const runBtn = modal.querySelector('.j-dimp-run') as HTMLButtonElement;
-    expect(runBtn.textContent).toContain('导入 2 部新片');
+    expect(runBtn.textContent).toContain('导入 3 部');
     expect(runBtn.disabled).toBe(false);
     closeOverlay();
   });
 
-  it('零待导入（全部已在库）→ 导入钮禁用', async () => {
+  it('全部已在库：清单照常列出（不过滤不隐藏），导入钮仍就绪', async () => {
     const { app } = seedOne();
     configureDoubanListFetch(() => Promise.resolve({
       entries: [{ sid: '1', name: '奥德赛' }],
@@ -2986,8 +2987,9 @@ describe('一键导入豆瓣片单', () => {
     (modal.querySelector('.j-dimp-url') as HTMLInputElement).value = 'https://movie.douban.com/people/x/wish';
     clickEl(modal.querySelector('.j-dimp-fetch'));
     await vi.waitFor(() => expect((modal.querySelector('[data-dimp-result]') as HTMLElement).hidden).toBe(false));
-    expect(modal.querySelector('.j-dimp-stat')?.textContent).toContain('待导入 0');
-    expect((modal.querySelector('.j-dimp-run') as HTMLButtonElement).disabled).toBe(true);
+    expect(modal.querySelector('.j-dimp-stat')?.textContent).toContain('抓到 1 部（其中 1 部已在库，将保持不动），确认入库？');
+    expect(modal.querySelectorAll('.dimp-row.is-inlib')).toHaveLength(1);
+    expect((modal.querySelector('.j-dimp-run') as HTMLButtonElement).disabled).toBe(false);
     closeOverlay();
   });
 });

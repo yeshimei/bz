@@ -203,15 +203,17 @@ function openListPick(sec: HTMLElement, it: CinemaItem, app: App): void {
 }
 
 /** 一键导入豆瓣片单（侧栏「导入片单」）：贴 wish 收藏页 / 豆列链接 → 抓取解析出条目 →
- *  已在库的跳过，新片按「想看」静默批量建档（quickAddWant silent，最后统一刷新），
- *  海报与豆瓣信息走补抓队列。Cookie 走设置键 cinemaDoubanCookie（queue 单源装配），
- *  弹层不收敏感值；两段式（先看抓取结果再导入），导入完关层出汇总 toast。 */
+ *  弹层列出抓到的全部条目由用户二次确认 → 确认后按「想看」静默批量建档
+ *  （quickAddWant silent，最后统一刷新），海报与豆瓣信息走补抓队列。
+ *  **在库条目不过滤**（2026-09-30 拍板）：照常进清单参与导入，建档层的重名保护
+ *  自然让它们保持现状，toast 汇总区分「新导入 / 已在库未动」。Cookie 走设置键
+ *  cinemaDoubanCookie（queue 单源装配），弹层不收敏感值。 */
 function openDoubanImport(sec: HTMLElement, app: App): void {
   const { el, close } = ovl(sec, `<div class="cn-modal cn-modal--dimp">
     <div class="dimp-head"><span class="lp-kicker">一键导入</span><span class="dimp-name">豆瓣片单</span></div>
     <div class="dimp-stage" data-dimp-input>
       <input class="j-dimp-url" placeholder="片单链接：豆瓣 wish 收藏页或豆列 doulist">
-      <div class="dimp-hint">按「想看」批量建档；已在库的自动跳过，海报与豆瓣信息随后台队列补齐。个人收藏页需先在设置里填豆瓣 Cookie。</div>
+      <div class="dimp-hint">抓到后列出清单确认入库；按「想看」批量建档，已在库的保持不动，海报与豆瓣信息随后台队列补齐。个人收藏页需先在设置里填豆瓣 Cookie。</div>
       <button type="button" class="lp-add j-dimp-fetch">抓取片单</button>
     </div>
     <div class="dimp-stage" data-dimp-result hidden>
@@ -239,14 +241,18 @@ function openDoubanImport(sec: HTMLElement, app: App): void {
       fetchBtn.textContent = '抓取片单';
       if (!inputStage || !resultStage) return;
       if (!entries.length) {
-        notice(firstPageEmpty
-          ? '一条都没抓到：个人收藏页需要登录态（设置里填豆瓣 Cookie），或改用公开豆列链接'
-          : '这个链接没解析出条目，确认是豆瓣 wish 页或豆列链接', 'warning');
+        notice(/doulist/.test(url)
+          ? '豆列一条都没抓到：可能被豆瓣风控拦截或链接已失效，稍后再试'
+          : firstPageEmpty
+            ? '一条都没抓到：个人收藏页需要登录态（设置里填豆瓣 Cookie）'
+            : '这个链接没解析出条目，确认是豆瓣 wish 页或豆列链接', 'warning');
         return;
       }
-      pending = entries.filter((e) => !inLibrary(e.name));
+      // 二次确认清单（2026-09-30 拍板）：全部条目列出、不过滤在库；用户确认才入库
+      pending = entries;
+      const inLibCount = entries.filter((e) => inLibrary(e.name)).length;
       const stat = resultStage.querySelector<HTMLElement>('.j-dimp-stat');
-      if (stat) stat.textContent = `共 ${entries.length} 部 · 已在库 ${entries.length - pending.length} · 待导入 ${pending.length}`;
+      if (stat) stat.textContent = `抓到 ${entries.length} 部${inLibCount ? `（其中 ${inLibCount} 部已在库，将保持不动）` : ''}，确认入库？`;
       const list = resultStage.querySelector<HTMLElement>('.j-dimp-list');
       if (list) {
         list.innerHTML = entries.map((e) =>
@@ -255,8 +261,8 @@ function openDoubanImport(sec: HTMLElement, app: App): void {
       }
       const runBtn = resultStage.querySelector<HTMLButtonElement>('.j-dimp-run');
       if (runBtn) {
-        runBtn.textContent = `导入 ${pending.length} 部新片`;
-        runBtn.disabled = !pending.length;
+        runBtn.textContent = `导入 ${entries.length} 部`;
+        runBtn.disabled = false;
       }
       inputStage.hidden = true;
       resultStage.hidden = false;
@@ -273,15 +279,17 @@ function openDoubanImport(sec: HTMLElement, app: App): void {
       runBtn.textContent = '导入中…';
     }
     void (async () => {
+      let ok = 0;
       for (const e of pending) {
-        await quickAddWant(app, e.name, '电影', { silent: true });
+        // 在库条目照常尝试加入（不跳过）：建档层重名保护让它们保持现状（false）
+        if (await quickAddWant(app, e.name, '电影', { silent: true })) ok++;
       }
       refreshDataAndView(app);
       renderAll(app);
       close();
-      notice(pending.length
-        ? `已从豆瓣片单导入 ${pending.length} 部到想看，海报与信息后台补齐`
-        : '没有可导入的新片', pending.length ? 'success' : 'warning');
+      notice(ok
+        ? `已从豆瓣片单导入 ${ok} 部到想看${pending.length > ok ? `（${pending.length - ok} 部已在库保持不动）` : ''}，海报与信息后台补齐`
+        : '片单里的片都已在库，没有新增', ok ? 'success' : 'warning');
     })();
   });
 }

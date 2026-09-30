@@ -169,18 +169,19 @@ export function parseRecommendJson(raw: string): any[] | null {
 }
 
 /** 加入想看（AI 推荐条目 → 建笔记，评分 -1） */
-export async function quickAddWant(app: App, name: string, type: string, opts?: { silent?: boolean }): Promise<void> {
+export async function quickAddWant(app: App, name: string, type: string, opts?: { silent?: boolean }): Promise<boolean> {
+  // 返回「是否实际建档」——批量导入按它汇总（跳过/失败为 false，调用方区分口径）
   // silent（豆瓣片单批量导入用）：不出逐条 toast、不逐条刷新——调用方统一统计 + 最后一次刷
   const quiet = !!opts?.silent;
   const trimmedName = typeof name === 'string' ? name.trim() : '';
   if (!trimmedName) {
     if (!quiet) notice('推荐条目缺少片名，已跳过加入想看');
-    return;
+    return false;
   }
   // 非法字符校验（深审批A P3-7）：名称进文件名《X》.md，AI 返回的 title 不受控
   if (hasIllegalNameChar(trimmedName)) {
     if (!quiet) notice(`${ILLEGAL_NAME_HINT}，已跳过加入想看`, 'error');
-    return;
+    return false;
   }
   const tag = GROUP_DEFAULT_TAG[type] || '电影';
   let folderObj = app.vault.getAbstractFileByPath(M.folderPath);
@@ -189,7 +190,7 @@ export async function quickAddWant(app: App, name: string, type: string, opts?: 
   const dup = app.vault.getAbstractFileByPath(filePath);
   if (dup) {
     if (!quiet) notice(`影视「${trimmedName}」已在库中`);
-    return;
+    return false;
   }
   const now = localNow();
   // 观影日期加双引号（深审批A P3-8）：裸日期被真机 YAML 解析成 timestamp（Moment 对象）→ 英文星期
@@ -209,9 +210,11 @@ tags:
     // 入抓取队列（ADR-0113）：卡片 loading 反馈，无通知
     enqueueDoubanFetch(f, trimmedName);
     if (!quiet) refreshDataAndView(app); // silent：调用方批量收尾统一刷
+    return true;
   } catch (e) {
     notifySaveError(e, '加入想看');
     console.error(e);
+    return false;
   }
 }
 
