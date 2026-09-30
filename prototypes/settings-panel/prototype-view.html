@@ -32,6 +32,10 @@
 <link rel="stylesheet" href="../../src/settings-panel/styles.css">
 <!-- 跨域弹窗：通用组「数据体检」经动态 import('../checkup') 打开 bz-checkup-* 弹窗，其域样式须入链 -->
 <link rel="stylesheet" href="../../src/checkup/styles.css">
+<!-- 脸谱域样式：本面板「脸谱 → 聊天仓 → 我的头像」是 custom 行（issue 529 的上传行），
+     行骨架 .bz-people-setava-* 在 people/styles.css；漏链同样静默裸奔（与收藏本标签管理同症）。
+     插件端走聚合根 styles.css 天然不缺。 -->
+<link rel="stylesheet" href="../../src/people/styles.css">
 <script src="./prototype-icons.js"></script>
 <script src="./prototype-behavior.js"></script>
 <style>

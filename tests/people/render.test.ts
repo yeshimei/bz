@@ -20,6 +20,8 @@ import {
   albumSealNode,
   albumSealOf,
   albumSpread,
+  chatPage,
+  chatStream,
   clipList,
   delPage,
   deleteTierOf,
@@ -41,6 +43,7 @@ import {
   lastCur,
   lockCover,
   miniMarkdown,
+  myAvatarRow,
   pageTotal,
   panelShell,
   profilePopBody,
@@ -52,6 +55,7 @@ import {
   turnLoad,
   vtName,
   type AlbumPhoto,
+  type ChatLine,
   type DsRowState,
   type DsSyncLine,
   type FoldCardJob,
@@ -536,12 +540,15 @@ describe('详情页（detailPage）', () => {
     expect(detailPage(drawn(), opts({ side: 'left' })).classList.contains('bz-people-sit-l')).toBe(true);
   });
 
-  it('动作小签六枚按序：画谱是主路在最前，删除自带 id 钩子，合上在最后', () => {
+  it('动作小签六枚按序：画谱是主路在最前，删除自带 id 钩子，查看聊天在最后（issue 529）', () => {
     const acts = detailPage(drawn(), opts()).querySelector('.bz-people-acts')!;
     expect([...acts.children].map((n) => n.getAttribute('data-people-act')))
-      .toEqual(['generate', 'note', 'stats', 'prof', 'del', 'back']);
+      .toEqual(['generate', 'note', 'stats', 'prof', 'del', 'chat']);
     expect(acts.querySelector('[data-people-del]')!.getAttribute('data-people-del')).toBe('wxid_a');
     expect(acts.querySelector('[data-people-act="generate"]')!.textContent).toContain('补画脸谱');
+    // issue 529：这枚原来是第二枚「合上这页」（与页眉那枚重复）——现在是聊天入口
+    expect(acts.querySelector('[data-people-act="chat"]')!.textContent).toContain('查看聊天');
+    expect(acts.querySelector('[data-people-act="back"]')).toBeNull();
     expect([...acts.children].every((n) => (n as HTMLButtonElement).type === 'button')).toBe(true);
   });
 
@@ -1090,5 +1097,93 @@ describe('进度块「取消」按钮（issue 517）', () => {
     const labels = [...block.querySelectorAll('button')].map((b) => b.textContent ?? '');
     expect(labels).toContain('删除任务');
     expect(labels).not.toContain('取消');
+  });
+});
+
+describe('会话流与聊天页（issue 529：详情页「查看聊天」与录音「查看轮次」共用）', () => {
+  const line = (over: Partial<ChatLine> = {}): ChatLine => ({ me: false, avatar: '', who: '大琳', text: '在吗', ...over });
+
+  it('chatStream：我方靠右、旁音收灰带上名、时间分隔条居中、媒体标签成签带 lucide 图标', () => {
+    const box = chatStream([
+      line({ sep: '昨天 22:10' }),
+      line({ me: true, avatar: 'data:image/png;base64,aa', who: '我', text: '在的', tag: '[图片]' }),
+      line({ who: '其他', name: '其他', text: '电视里的人声', side: true }),
+    ]);
+    const rows = [...box.querySelectorAll('.bz-people-chat-row')];
+    expect(rows.map((r) => r.className)).toEqual([
+      'bz-people-chat-row',
+      'bz-people-chat-row me',
+      'bz-people-chat-row side named',
+    ]);
+    expect(box.querySelector('.bz-people-chat-sep')!.textContent).toBe('昨天 22:10');
+    // 没头像走首字印；有头像走 img（data URL 原样）
+    expect(rows[0].querySelector('.bz-people-chat-ava .bz-people-ava-txt')!.textContent).toBe('大');
+    expect(rows[1].querySelector<HTMLImageElement>('.bz-people-chat-ava img')!.getAttribute('src'))
+      .toBe('data:image/png;base64,aa');
+    // 媒体标签单独成签，图标与词表同源（chatTagIcon）
+    expect(rows[1].querySelector('.bz-people-chat-tag')!.textContent).toBe('[图片]');
+    expect(rows[1].querySelector<HTMLElement>('.bz-people-chat-tag [data-lucide]')!.getAttribute('data-lucide')).toBe('image');
+    // 群聊 / 旁音才有名字那一行
+    expect(rows[2].querySelector('.bz-people-chat-who')!.textContent).toBe('其他');
+    expect(rows[0].querySelector('.bz-people-chat-who')).toBeNull();
+  });
+
+  it('chatStream：没正文也没标签的条目给「（空消息）」；空列表给空态文案', () => {
+    const box = chatStream([line({ text: '' })]);
+    expect(box.querySelector('.bz-people-chat-bub')!.textContent).toBe('（空消息）');
+    expect(chatStream([], { empty: '还没聊过' }).textContent).toContain('还没聊过');
+  });
+
+  it('chatPage：册页外壳 + 只读页脚 + 「更早的消息（还有 N 条）」哨兵', () => {
+    const page = chatPage({ name: '大琳', lines: [line()], total: 120, hasMore: true, loading: false });
+    expect(page.dataset.peopleSub).toBe('chat');
+    expect(page.querySelector('.bz-people-head-label')!.textContent).toBe('聊天记录');
+    expect(page.querySelector('.bz-people-head-note')!.textContent).toBe('大琳');
+    expect(page.querySelector('[data-people-chat-more]')!.textContent).toContain('还有 119 条');
+    expect(page.querySelector('.bz-people-chat-readonly')!.textContent).toContain('共 120 条');
+    expect(page.querySelector('[data-people-chat-bottom]')!.textContent).toBe('回到最新');
+  });
+
+  it('chatPage：没有更早 → 不出哨兵；读完当页仍留着「回到最新」', () => {
+    const page = chatPage({ name: '大琳', lines: [line(), line()], total: 2, hasMore: false, loading: false });
+    expect(page.querySelector('[data-people-chat-more]')).toBeNull();
+    expect(page.querySelector('[data-people-chat-bottom]')).toBeTruthy();
+  });
+
+  it('chatPage：读记录中与空仓两态各给一句话（不出会话流）', () => {
+    const loading = chatPage({ name: '大琳', lines: [], total: 0, hasMore: false, loading: true });
+    expect(loading.querySelector('.bz-people-chat-list')).toBeNull();
+    expect(loading.textContent).toContain('正在读聊天记录');
+    const empty = chatPage({ name: '大琳', lines: [], total: 0, hasMore: false, loading: false });
+    expect(empty.textContent).toContain('还没有这个人的消息');
+    expect(empty.querySelector('[data-people-chat-bottom]')).toBeNull();
+  });
+
+  it('chatPage：读不了（上锁 / 坏记录）时如实说，不给空会话流', () => {
+    const page = chatPage({ name: '大琳', lines: [], total: 0, hasMore: false, loading: false, error: '保险库上锁了' });
+    expect(page.textContent).toContain('保险库上锁了');
+  });
+});
+
+describe('「我的头像」设置行（issue 529）', () => {
+  it('有自定义图出预览 img；没有落「我」字印', () => {
+    const withImg = myAvatarRow({ url: 'CONFIG/FACES/我/avatar.jpg', source: 'custom' });
+    expect(withImg.querySelector<HTMLImageElement>('.bz-people-setava-img')).toBeTruthy();
+    const none = myAvatarRow({ url: '', source: 'none' });
+    expect(none.querySelector('.bz-people-setava-txt')!.textContent).toBe('我');
+    expect(none.querySelector('.bz-people-setava-img')).toBeNull();
+  });
+
+  it('来源三态各说一句话；数据根没配时指路', () => {
+    expect(myAvatarRow({ url: 'x', source: 'custom' }).textContent).toContain('自定义图片');
+    expect(myAvatarRow({ url: 'x', source: 'wechat' }).textContent).toContain('微信数据里扒出来的本人头像');
+    expect(myAvatarRow({ url: '', source: 'none' }).textContent).toContain('跑一次同步');
+    expect(myAvatarRow({ url: '', source: 'none', noDataRoot: true }).textContent).toContain('先配好数据根');
+  });
+
+  it('两枚动作钮挂稳定钩子（上传 / 恢复默认）', () => {
+    const row = myAvatarRow({ url: '', source: 'none' });
+    expect(row.querySelector('[data-people-setava-pick]')!.textContent).toBe('上传图片…');
+    expect(row.querySelector('[data-people-setava-reset]')!.textContent).toBe('恢复默认');
   });
 });

@@ -7,8 +7,16 @@
  * 扫描在打开数据源弹窗时进行，生成由弹窗内「画脸谱」手动触发。
  * 467 退役：「媒体」组（peopleMediaDir 媒体文件夹 + 头像入库说明）随明文媒体目录一并退役——
  * 头像作为密文附件随保库记录走，库内不再有明文头像目录。
+ * 529：「我的头像」从文本路径行改成上传行（预览 + 上传图片 / 恢复默认），默认值 = 微信数据里
+ * 扒出来的本人头像（工具 sync 轮导出到 <数据根>/.bz-face/me/avatar.<ext>，判定单源 me-avatar.ts）。
  */
 import { openFlowDialog } from '../core/flow-dialog';
+import { notifyActionError, notice } from '../core/notice';
+import { pickSystemFiles } from '../core/path-picker';
+import { saveSettings, tryGetSettings } from '../core/settings-provider';
+import { mountIcons } from '../core/ui/icons';
+import { myAvatarRow } from './render';
+import { clearMyAvatarCache, importMyAvatarFromFile, myAvatarSource, resolveMyAvatar } from './me-avatar';
 import type { SettingsSchema } from '../core/settings-schema';
 
 export function peopleSettingsSchema(opts?: { onClearStore?: () => void | Promise<void> }): SettingsSchema {
@@ -84,11 +92,13 @@ export function peopleSettingsSchema(opts?: { onClearStore?: () => void | Promis
             binding: { key: 'peopleKeepSystem' },
           },
           {
-            type: 'text',
+            // issue 529：原来是「文本路径行」（要用户自己填一个库外绝对路径）——改成上传行：
+            // 预览 + 上传图片 / 恢复默认。默认值 = 微信数据里扒出来的本人头像
+            //（工具 sync 轮导出到 <数据根>/.bz-face/me/avatar.<ext>）
+            type: 'custom',
             name: '我的头像',
-            desc: '逐轮时间轴里「我」一侧的头像图片路径；留空 = 名字首字',
-            binding: { key: 'peopleMyAvatar' },
-            placeholder: '例如 D:\\图片\\我.png',
+            desc: '聊天里「我」那一侧的头像；默认用微信数据里导出的本人头像',
+            render: (body) => renderMyAvatarRow(body),
           },
         ],
       },
@@ -130,4 +140,70 @@ export function peopleSettingsSchema(opts?: { onClearStore?: () => void | Promis
       },
     ],
   };
+}
+
+// ---------------- 「我的头像」上传行（issue 529） ----------------
+
+/** 当前设置快照里与头像有关的两项（数据根用来找微信导出的本人头像） */
+function avatarCtx(): { setting: string; root: string } {
+  const s = tryGetSettings() as { peopleMyAvatar?: unknown; peopleDataDir?: unknown };
+  return {
+    setting: typeof s.peopleMyAvatar === 'string' ? s.peopleMyAvatar.trim() : '',
+    root: typeof s.peopleDataDir === 'string' ? s.peopleDataDir.trim() : '',
+  };
+}
+
+/** 头像行渲染（settings 的 custom 行入口）：画一次 + 事件委托（上传 / 恢复默认） */
+function renderMyAvatarRow(body: HTMLElement): void {
+  const draw = (): void => {
+    const { setting, root } = avatarCtx();
+    body.replaceChildren(myAvatarRow({
+      url: resolveMyAvatar(setting, root),
+      source: myAvatarSource(setting, root),
+      noDataRoot: !root,
+    }));
+    mountIcons(body);
+  };
+  draw();
+  body.addEventListener('click', (ev) => {
+    const t = ev.target as HTMLElement;
+    if (t.closest('[data-people-setava-pick]')) { void pickMyAvatar(draw); return; }
+    if (t.closest('[data-people-setava-reset]')) { void resetMyAvatar(draw); return; }
+  });
+}
+
+/** 上传：系统文件选择器选一张 → 复制进 vault 的 CONFIG/FACES/我，键值存库内相对路径 */
+async function pickMyAvatar(draw: () => void): Promise<void> {
+  const files = await pickSystemFiles('选择头像图片', [
+    { name: '图片', ext: ['jpg', 'jpeg', 'png', 'webp', 'gif'] },
+    { name: '全部文件', ext: ['*'] },
+  ]);
+  if (!files.length) return;
+  try {
+    const rel = await importMyAvatarFromFile(files[0]);
+    if (!rel) {
+      notice('这张图读不动或没写进 vault——换一张图片再试', 'warning');
+      return;
+    }
+    (tryGetSettings() as { peopleMyAvatar?: string }).peopleMyAvatar = rel;
+    await saveSettings();
+    clearMyAvatarCache();
+    draw();
+    notice('头像已换成这张图', 'success');
+  } catch (e) {
+    notifyActionError(e, '设置头像');
+  }
+}
+
+/** 恢复默认：清掉自定义键 → 回到微信数据里扒出来的本人头像（没有就回落首字印） */
+async function resetMyAvatar(draw: () => void): Promise<void> {
+  try {
+    (tryGetSettings() as { peopleMyAvatar?: string }).peopleMyAvatar = '';
+    await saveSettings();
+    clearMyAvatarCache();
+    draw();
+    notice('头像已恢复默认', 'restore');
+  } catch (e) {
+    notifyActionError(e, '恢复默认头像');
+  }
 }

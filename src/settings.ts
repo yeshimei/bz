@@ -532,7 +532,7 @@ export default interface BzSettings {
   peopleKeepSystem: boolean;
   /** 图片描述每批张数（issue 470：画脸谱时 AI 描述一次调用的图片上限，默认 20） */
   peopleDescBatchSize: number;
-  /** 「我」在逐轮时间轴里的头像图片（本机图片路径或库内相对路径）；空 = 名字首字印 */
+  /** 「我」在聊天里的头像（本机图片绝对路径 / 库内相对路径）；空 = 回落微信数据里扒出来的本人头像，再没有才落首字印 */
   peopleMyAvatar: string;
   // 447 退役：peopleScanOnOpen（开弹窗即扫）/ peopleGenTrigger / peopleGenThreshold（画脸谱一律弹窗内手动）
   // 467 退役：peopleMediaDir（库内明文媒体文件夹）——头像随保库记录进保险库，「文件夹名=人名」的明文目录停止使用
@@ -547,7 +547,7 @@ export default interface BzSettings {
   /** 设置面板主题：'chenhun' = 晨昏（亮如晨、暗如夜，跟随 Obsidian 自动切合；当前唯一主题） */
   settingsPanelSkin: string;
 
-  // ===== 🪟 主面板桌面尺寸记忆（ADR-0084 拖拽缩放全域推广；运行时记忆，不进设置页）=====
+  // ===== 主面板桌面尺寸记忆（ADR-0084 拖拽缩放全域推广；运行时记忆，不进设置页）=====
   // 语义同 memoPanelWidth/Height（0 = 未拖过，打开走各域 CSS 默认尺寸）；读写统一走
   // core/settings-provider 的 panelSizePersist 工厂，各域不再手写 load/save 闭包。
   // 半屏挤压修复后落盘口径为「意图尺寸」（不受视口钳制污染，全屏自动复原）。

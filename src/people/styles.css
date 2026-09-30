@@ -1684,38 +1684,81 @@ input.bz-people-supp-qts.bz-people-supp-qts { font-size: var(--f-mid); }
 /* 起点行（ADR-0217：一等数据，可见可改） */
 .bz-people-supp-startrow { display: flex; gap: 7px; align-items: center; margin-top: 6px;
   font-size: var(--f-mid); color: var(--ink-mut); }
-/* 逐轮时间轴预览（面板内读 sidecar；旁音轮收灰留档，供复核没误杀） */
-.bz-people-supp-turns { margin-top: 8px; padding: 7px 9px; border: 1px solid rgba(148, 130, 100, 0.25);
-  border-radius: 8px; background: rgba(148, 130, 100, 0.05); }
-.bz-people-supp-turnhead { font-size: var(--f-mid); color: var(--ink-mut); margin-bottom: 5px; }
-.bz-people-supp-turnlist { display: flex; flex-direction: column; gap: 14px; max-height: 320px; overflow: auto; padding: 3px 2px; }
-/* 微信式聊天流（复评「仿照微信」）：头像 + 气泡；段签 / 时刻 / 分割线一律不上屏——对方靠左、我靠右 */
-.bz-people-supp-turn { display: flex; align-items: flex-start; gap: 9px; }
-.bz-people-supp-turn.side { opacity: 0.5; }
-.bz-people-supp-turn.me { flex-direction: row-reverse; }
-.bz-people-supp-turnava { flex: none; width: 34px; height: 34px; border-radius: 6px; overflow: hidden; }
-.bz-people-supp-turnava img { width: 100%; height: 100%; display: block; object-fit: cover; }
-.bz-people-supp-turnava .bz-people-ava-txt { width: 100%; height: 100%; display: flex; align-items: center;
+/* 会话流（issue 529）：详情页「查看聊天」与录音页签「查看轮次」共用一份 markup——
+   微信式头像 + 气泡（我方靠右绿气泡、带小尖角），时间分隔条居中淡出。
+   面板内（查看轮次）是嵌在行里的一小块：圆角框 + 定高内滚；
+   册页里（查看聊天）铺满整页，微信灰底由页级作用域接管（见本段末）。 */
+.bz-people-chat { display: flex; flex-direction: column; gap: 10px; }
+.bz-people-chat-head { font-size: var(--f-mid); color: var(--ink-mut); }
+.bz-people-chat-list { display: flex; flex-direction: column; gap: 14px; }
+.bz-people-chat-row { display: flex; align-items: flex-start; gap: 9px; }
+.bz-people-chat-row.me { flex-direction: row-reverse; }
+.bz-people-chat-row.side { opacity: 0.55; }
+.bz-people-chat-ava { flex: none; width: 38px; height: 38px; border-radius: 5px; overflow: hidden; }
+.bz-people-chat-ava img { width: 100%; height: 100%; display: block; object-fit: cover; }
+.bz-people-chat-ava .bz-people-ava-txt { width: 100%; height: 100%; display: flex; align-items: center;
   justify-content: center; color: #fff8f0; font-family: var(--kai); font-size: var(--f-head); }
-.bz-people-supp-turnbubble { position: relative; max-width: 74%; padding: 6px 11px 7px; border-radius: 5px;
+.bz-people-chat-col { display: flex; flex-direction: column; min-width: 0; max-width: 76%; }
+.bz-people-chat-row.me .bz-people-chat-col { align-items: flex-end; }
+/* 群聊才出的发送者名（单聊不写名——微信同款） */
+.bz-people-chat-who { font-size: var(--f-aux); color: var(--ink-mut); margin: 0 2px 3px; }
+.bz-people-chat-bub { position: relative; max-width: 100%; padding: 7px 11px 8px; border-radius: 5px;
   font-size: var(--f-mid); line-height: 1.7; color: var(--ink); overflow-wrap: anywhere;
-  background: #fff; box-shadow: 0 0 0 1px rgba(23, 21, 18, 0.05); }
-.bz-people-supp-turnbubble::before { content: ''; position: absolute; top: 12px; left: -5px; width: 0; height: 0;
+  background: #fff; box-shadow: 0 0 0 1px rgba(23, 21, 18, 0.05);
+  display: flex; flex-direction: column; align-items: flex-start; gap: 3px; }
+.bz-people-chat-bub::before { content: ''; position: absolute; top: 12px; left: -5px; width: 0; height: 0;
   border-style: solid; border-width: 4px 6px 4px 0; border-color: transparent #fff transparent transparent; }
-.bz-people-supp-turn.me .bz-people-supp-turnbubble { background: #95ec69; }
-.bz-people-supp-turn.me .bz-people-supp-turnbubble::before { left: auto; right: -5px;
+.bz-people-chat-row.me .bz-people-chat-bub { background: #95ec69; }
+.bz-people-chat-row.me .bz-people-chat-bub::before { left: auto; right: -5px;
   border-width: 4px 0 4px 6px; border-color: transparent transparent transparent #95ec69; }
+/* 媒体标签（`[图片]` / `[语音 12秒·平静]`）：气泡里的第一行小签，带一枚 lucide 图标 */
+.bz-people-chat-tag { display: inline-flex; align-items: center; gap: 4px; padding: 1px 7px 1px 5px;
+  border-radius: 999px; font-size: var(--f-aux); color: var(--ink-mut); background: rgba(148, 130, 100, 0.14); }
+.bz-people-chat-tag .bz-ic { display: inline-flex; }
+.bz-people-chat-tag svg { width: 12px; height: 12px; }
+.bz-people-chat-tx { min-width: 0; }
+/* 时间分隔条（微信同款：与上一条隔 5 分钟以上才出） */
+.bz-people-chat-sep { display: flex; justify-content: center; }
+.bz-people-chat-sep > span { padding: 1px 8px; border-radius: 4px; font-size: var(--f-aux); color: var(--ink-mut); }
+/* 「更早的消息」（点它 / 滚到它就放上一页；哨兵本体就是这枚按钮）。
+   双类提权 + 宿主机裸 button 基线按份覆盖（尺寸/内边距/圆角/字号全写死） */
+.bz-people-chat-more.bz-people-chat-more { align-self: center; display: inline-flex; align-items: center;
+  justify-content: center; width: auto; height: auto; min-height: 0; padding: 3px 12px; border: 0;
+  border-radius: 999px; cursor: pointer; font-family: inherit; font-size: var(--f-mid); line-height: 1.7;
+  color: var(--ink-mut); background: rgba(148, 130, 100, 0.14); }
+@media (hover: hover) { .bz-people-chat-more.bz-people-chat-more:hover { color: var(--acc); } }
+/* 面板内（录音「查看轮次」）：嵌在行里的一小块 */
+.bz-people-supp-row .bz-people-chat { margin-top: 8px; padding: 7px 9px; border: 1px solid rgba(148, 130, 100, 0.25);
+  border-radius: 8px; background: rgba(148, 130, 100, 0.05); }
+.bz-people-supp-row .bz-people-chat-list { max-height: 320px; overflow: auto; padding: 3px 2px; }
+/* 聊天记录册页（issue 529）：铺满整页，微信那块灰底；页脚是只读说明 + 「回到最新」。
+   纸页顶上那道内影（::before 渐变）在灰底上像一条脏边，聊天页整条撤掉 */
+.bz-people-page[data-people-sub='chat'] .bz-people-pagebody { background: #ededed; padding: 10px 12px 2px; }
+.bz-people-page[data-people-sub='chat'] .bz-people-pagebody::before { display: none; }
+.bz-people-chat-bar { display: flex; align-items: center; gap: 10px; padding: 8px 12px;
+  border-top: 1px solid rgba(148, 130, 100, 0.25); }
+.bz-people-chat-readonly { flex: 1 1 auto; min-width: 0; font-size: var(--f-aux); color: var(--ink-mut);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.bz-people-chat-jump.bz-people-chat-jump { flex: none; display: inline-flex; align-items: center;
+  justify-content: center; width: auto; height: auto; min-height: 0; padding: 3px 11px; border-radius: 999px;
+  cursor: pointer; font-size: var(--f-mid); line-height: 1.7; color: var(--ink); background: #fffdf7;
+  border: 1px solid #e2dac6; font-family: var(--kai); }
+@media (hover: hover) { .bz-people-chat-jump.bz-people-chat-jump:hover { color: var(--acc); border-color: rgba(168, 67, 60, 0.45); } }
 /* 疑似重复巡检（Q3：只报不清） */
 .bz-people-supp-dups { margin: 8px 0 2px; padding: 7px 9px; border-radius: 8px;
   border: 1px solid rgba(176, 138, 62, 0.35); background: rgba(176, 138, 62, 0.08);
   font-size: var(--f-mid); color: var(--ink-mut); }
 .bz-people-supp-dupshead { margin-bottom: 4px; }
 .bz-people-supp-duprow { color: var(--ink); overflow-wrap: anywhere; }
-.theme-dark .bz-people-supp-turns { background: rgba(0, 0, 0, 0.14); border-color: rgba(200, 180, 140, 0.2); }
-.theme-dark .bz-people-supp-turnbubble { background: #2c2c2c; box-shadow: none; }
-.theme-dark .bz-people-supp-turnbubble::before { border-color: transparent #2c2c2c transparent transparent; }
-.theme-dark .bz-people-supp-turn.me .bz-people-supp-turnbubble { background: #3eb575; color: #0f1a12; }
-.theme-dark .bz-people-supp-turn.me .bz-people-supp-turnbubble::before { border-color: transparent transparent transparent #3eb575; }
+.theme-dark .bz-people-supp-row .bz-people-chat { background: rgba(0, 0, 0, 0.14); border-color: rgba(200, 180, 140, 0.2); }
+.theme-dark .bz-people-chat-bub { background: #2c2c2c; box-shadow: none; }
+.theme-dark .bz-people-chat-bub::before { border-color: transparent #2c2c2c transparent transparent; }
+.theme-dark .bz-people-chat-row.me .bz-people-chat-bub { background: #3eb575; color: #0f1a12; }
+.theme-dark .bz-people-chat-row.me .bz-people-chat-bub::before { border-color: transparent transparent transparent #3eb575; }
+.theme-dark .bz-people-chat-tag { background: rgba(200, 180, 140, 0.16); }
+.theme-dark .bz-people-page[data-people-sub='chat'] .bz-people-pagebody { background: #191919; }
+.theme-dark .bz-people-chat-more { background: rgba(200, 180, 140, 0.16); }
+.theme-dark .bz-people-chat-jump { background: #2c2c2c; border-color: #3a3a3a; color: var(--ink); }
 .bz-people-supp-stat { font-size: var(--f-mid); color: var(--ink-mut); margin: 10px 0 2px; }
 /* 留影预览网格（复评）：入库的图看得见、点开看大图、描述在图下、右上角的叉删得掉（二次确认） */
 .bz-people-supp-imggrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(104px, 1fr));
@@ -1805,3 +1848,14 @@ input.bz-people-supp-qts.bz-people-supp-qts { font-size: var(--f-mid); }
 .theme-dark .bz-people-supp-ref b { color: #d6b274; }
 .bz-people-supp-badge-awaiting-merge { background: rgba(196, 146, 58, 0.28); color: var(--acc-deep); }
 .theme-dark .bz-people-supp-badge-awaiting-merge { color: #d6b274; }
+
+/* 「我的头像」设置行（issue 529）：预览 + 上传 / 恢复默认。
+   设置面板里引用相同时（.bz-sp-custom-slot 撑满整行），桌面与移动端同一份布局。 */
+.bz-people-setava { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+.bz-people-setava-img, .bz-people-setava-txt { flex: none; width: 52px; height: 52px; border-radius: 8px;
+  display: block; object-fit: cover; border: 1px solid rgba(148, 130, 100, 0.3); }
+.bz-people-setava-txt { display: flex; align-items: center; justify-content: center; background: #b5534a;
+  color: #fff8f0; font-family: var(--kai); font-size: var(--f-head); }
+.bz-people-setava-col { display: flex; flex-direction: column; gap: 7px; min-width: 0; flex: 1 1 auto; }
+.bz-people-setava-hint { font-size: var(--f-mid); color: var(--ink-mut); overflow-wrap: anywhere; }
+.bz-people-setava-acts { display: flex; gap: 8px; flex-wrap: wrap; }

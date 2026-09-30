@@ -28,6 +28,12 @@ export interface CinemaItem {
   watchDate: string | null;
   rating: number | null;
   status: number;
+  /** 重温日期列表（frontmatter「重看」数组，每项一次重温；建档/编辑不写此键，旧笔记无键 = 空数组照旧）。
+   *  「N 刷」口径唯一落点 rewatchCount（constants），卡片角标 / 详情徽标 / 重温通知共用 */
+  rewatches: string[];
+  /** 自建片单（frontmatter「片单」数组；建档/编辑不写，归入/移出时落盘）。
+   *  含内置片单「重映厅」（constants REWATCH_SHELF）。侧栏片单区 / 片单筛选 / 归入弹层消费 */
+  lists: string[];
   poster: string | null;
   review: string | null;
   genre: string | null;
@@ -55,9 +61,10 @@ export type CinemaSortMode = 'date' | 'created' | 'rating';
 export interface CinemaState {
   currentOverlay: HTMLElement | null;
   items: CinemaItem[];
-  /** 当前筛选：type=组（null=全部）、status=状态（null=全部） */
+  /** 当前筛选：type=组（null=全部）、status=状态（null=全部）、list=片单（null=全部；与类型/状态叠加） */
   typeFilter: string | null;
   statusFilter: string | null;
+  listFilter: string | null;
   /** 排序模式 */
   sortMode: CinemaSortMode;
   /** 当前视图：list / ai */
@@ -84,6 +91,7 @@ export const M: CinemaState = {
   items: [],
   typeFilter: null,
   statusFilter: null,
+  listFilter: null,
   sortMode: 'date',
   view: 'list',
   searchKeyword: '',
@@ -105,6 +113,7 @@ export function resetCinemaState(): void {
   M.items = [];
   M.typeFilter = null;
   M.statusFilter = null;
+  M.listFilter = null;
   M.sortMode = 'date';
   M.view = 'list';
   M.searchKeyword = '';

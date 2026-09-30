@@ -221,4 +221,57 @@ print("TGT-OK")
       expect(stdout).toContain('TGT-OK');
     },
   );
+
+  itPy(
+    '本人头像导出 write_self_avatar（issue 529）：落 <数据根>/.bz-face/me/、字节比对幂等、换格式清旧图',
+    { timeout: 60000 },
+    async () => {
+      // 插件设置「我的头像」的默认值就靠这个产物；路径形态与幂等语义是插件侧 me-avatar.ts 的契约对齐面。
+      // 只有 sqlite3（stdlib）参与，不需要 numpy —— 走 itPy 档。
+      const driver = `
+import os, sqlite3, sys, tempfile
+from pathlib import Path
+sys.path.insert(0, sys.argv[1])
+try:
+    import bz_sync
+except Exception as e:
+    print("SELF-SKIP", e)
+    raise SystemExit(0)
+
+PNG = b"\\x89PNG\\r\\n\\x1a\\n" + b"p" * 16
+JPG = b"\\xff\\xd8\\xff" + b"j" * 16
+
+with tempfile.TemporaryDirectory() as td:
+    root = Path(td) / "root"
+    db = Path(td) / "db"
+    (db / "head_image").mkdir(parents=True)
+    p = db / "head_image" / "head_image.db"
+    con = sqlite3.connect(str(p))
+    con.execute("create table head_image(username text, image_buffer blob)")
+    con.execute("insert into head_image values(?,?)", ("wxid_me", PNG))
+    con.commit()
+    con.close()
+
+    # ① 首写：new + 落 .bz-face/me/avatar.png（放对目录 = 不会被联系人扫描当成一位联系人）
+    assert bz_sync.write_self_avatar(root, db, "wxid_me") == "new"
+    t = root / ".bz-face" / "me" / "avatar.png"
+    assert t.read_bytes() == PNG
+    # ② 幂等：同字节不重写
+    assert bz_sync.write_self_avatar(root, db, "wxid_me") == "unchanged"
+    # ③ 换格式：新扩展名落位、旧的那张清掉（插件按扩展名探测序取第一张）
+    con = sqlite3.connect(str(p))
+    con.execute("update head_image set image_buffer=? where username=?", (JPG, "wxid_me"))
+    con.commit()
+    con.close()
+    assert bz_sync.write_self_avatar(root, db, "wxid_me") == "new"
+    assert sorted(os.listdir(root / ".bz-face" / "me")) == ["avatar.jpg"]
+    # ④ 没有本人记录 / 不知道账号 wxid：none / skipped（都不挡整轮）
+    assert bz_sync.write_self_avatar(root, db, "nobody") == "none"
+    assert bz_sync.write_self_avatar(root, db, "") == "skipped"
+print("SELF-AVATAR-OK")
+`;
+      const { stdout } = await execFileAsync('python', ['-X', 'utf8', '-c', driver, PY_DIR], { timeout: 60000 });
+      expect(stdout).toContain('SELF-AVATAR-OK');
+    },
+  );
 });

@@ -11,6 +11,8 @@
 import type { FaceEvent, GenerationConfirmInfo, ImportRecord, ManualEvent, PersonEntry, PersonProfile } from './types';
 // 终态标注取值（ADR-0224/0225）——只取类型，保持渲染层不碰数据层实现
 import type { DescSkip } from './datasource';
+// 会话流标签 → 图标（issue 529；chat.ts 是零依赖纯逻辑，两侧共用同一张词表）
+import { chatTagIcon } from './chat';
 import { bondOf, personOf } from './types';
 
 // ---------------- 自持小件（纯 DOM helper；与旧 ui.ts 同款签名） ----------------
@@ -1094,7 +1096,7 @@ export function detailPage(p: PersonEntry, opts: DetailOpts): HTMLElement {
   if (facts) side.appendChild(facts);
   body.appendChild(el('div', 'bz-people-dttop', [el('div', 'bz-people-bigph', frame), side]));
 
-  // 动作小签：画谱是主路（第一个），其余是记事 / 数据 / 档案 / 删除 / 合上
+  // 动作小签：画谱是主路（第一个），其余是记事 / 数据 / 档案 / 删除 / 查看聊天（issue 529）
   const gen = genActionOf(p, opts.job);
   const acts = el('div', 'bz-people-acts', [
     el('button', 'bz-people-act', { 'data-people-act': 'generate' }, [
@@ -1114,8 +1116,10 @@ export function detailPage(p: PersonEntry, opts: DetailOpts): HTMLElement {
     el('button', 'bz-people-act', { 'data-people-act': 'del', 'data-people-del': p.id }, [
       el('i', 'bz-ic', { 'data-lucide': 'trash-2', 'aria-hidden': 'true' }), el('span', '', text('删除联系人')),
     ]),
-    el('button', 'bz-people-act', { 'data-people-act': 'back' }, [
-      el('i', 'bz-ic', { 'data-lucide': 'arrow-left', 'aria-hidden': 'true' }), el('span', '', text('合上这页')),
+    // issue 529：这里原来是第二枚「合上这页」（与页眉右上角那枚完全重复）——换成聊天入口：
+    // 聊天仓里那几万条消息终于有地方看（关页仍走页眉右上角那枚）
+    el('button', 'bz-people-act', { 'data-people-act': 'chat' }, [
+      el('i', 'bz-ic', { 'data-lucide': 'message-circle', 'aria-hidden': 'true' }), el('span', '', text('查看聊天')),
     ]),
   ]);
   for (const b of Array.from(acts.children)) (b as HTMLButtonElement).type = 'button';
@@ -1770,6 +1774,162 @@ export function profLeaveAsk(): HTMLElement {
   ]);
 }
 
+// ---------------- 设置行 markup ----------------
+
+/** 「我的头像」设置行展示态（issue 529；来源判定在 me-avatar.ts，这里只摆 markup） */
+export interface MyAvatarRowState {
+  /** 预览图（data URL / 库内相对路径；空 = 首字印） */
+  url: string;
+  source: 'custom' | 'wechat' | 'none';
+  /** 数据根没配（微信那档连影子都摸不到——文案里指路） */
+  noDataRoot?: boolean;
+}
+
+/** 来源那一句话（如实说清「现在用的是哪张」，别让用户猜） */
+function myAvatarSourceText(s: MyAvatarRowState): string {
+  if (s.source === 'custom') return '当前：自定义图片（存在 vault 的 CONFIG/FACES/我 里）';
+  if (s.source === 'wechat') return '当前：微信数据里扒出来的本人头像';
+  return s.noDataRoot
+    ? '当前：还没设置——先配好数据根再同步，或者直接传一张'
+    : '当前：还没设置——跑一次同步就能拿到微信里的本人头像，也可以直接传一张';
+}
+
+/** 「我的头像」设置行：预览 + 上传 / 恢复默认（交互在 settings.ts） */
+export function myAvatarRow(s: MyAvatarRowState): HTMLElement {
+  const box = el('div', 'bz-people-setava', { 'data-people-setava': '' });
+  box.appendChild(s.url
+    ? el('img', 'bz-people-setava-img', { src: avatarUri(s.url), alt: '我的头像' })
+    : el('span', 'bz-people-setava-txt', text('我')));
+  const col = el('div', 'bz-people-setava-col');
+  col.appendChild(el('div', 'bz-people-setava-hint', text(myAvatarSourceText(s))));
+  col.appendChild(el('div', 'bz-people-setava-acts', [
+    // 组件库按钮（设置面板的控件基线；面板是本行唯一消费面——ADR-0153 起原生设置页只留跳转）
+    button('bz-btn bz-btn--primary bz-btn--sm', '上传图片…', { 'data-people-setava-pick': '' }),
+    button('bz-btn bz-btn--ghost bz-btn--sm', '恢复默认', { 'data-people-setava-reset': '' }),
+  ]));
+  box.appendChild(col);
+  return box;
+}
+
+// ---------------- 会话流（issue 529：详情页「查看聊天」与录音「查看轮次」共用一份） ----------------
+
+/**
+ * 会话流的一条（微信式：头像 + 气泡，我方靠右绿气泡）。
+ * 数据侧原料 = `chat.ts` 的 `ChatLineData`——渲染层不剥标签、不算时间，只摆 markup。
+ */
+export interface ChatLine {
+  /** 稳定键（聊天页给 data 钩子认条；录音轮次不带） */
+  key?: string;
+  /** 我方（右侧绿气泡） */
+  me: boolean;
+  /** 头像图（data URL / vault 路径；空 = 首字印） */
+  avatar: string;
+  /** 首字印与 alt 用的名字（「我」/ 联系人 / 群成员） */
+  who: string;
+  /** 群聊里气泡上方那行名字（空 = 不显——单聊不写名，微信同款） */
+  name?: string;
+  /** 媒体标签（`[图片]` 这类，含方括号；空 = 纯文本） */
+  tag?: string;
+  /** 气泡正文（图片描述 / 语音转写 / 回复内容；可空） */
+  text: string;
+  /** 时间分隔条文案（空串 = 不出条） */
+  sep?: string;
+  /** 旁音轮（不进仓的留档轮：淡出显示，供复核我们没误杀） */
+  side?: boolean;
+}
+
+export interface ChatStreamOpts {
+  /** 顶部一行说明（录音轮次：「逐轮时间轴 · N 轮 · 并成 M 段」） */
+  head?: string;
+  /** 顶部「更早的消息」入口（聊天页专用；null / 缺省 = 没有更早） */
+  more?: HTMLElement | null;
+  /** 列表空态文案（缺省不出空态块） */
+  empty?: string;
+}
+
+/**
+ * 会话流列表（两个上屏面共用：详情页「查看聊天」页 + 录音页签「查看轮次」）。
+ * 观感照微信：气泡带小尖角、时间分隔条居中淡出、群聊才在气泡上方写发送者名。
+ */
+export function chatStream(lines: ChatLine[], opts: ChatStreamOpts = {}): HTMLElement {
+  const box = el('div', 'bz-people-chat');
+  if (opts.head) box.appendChild(el('div', 'bz-people-chat-head', text(opts.head)));
+  if (opts.more) box.appendChild(opts.more);
+  const list = el('div', 'bz-people-chat-list', { 'data-people-chat-list': '' });
+  if (!lines.length && opts.empty) list.appendChild(el('div', 'bz-people-empty-hint', text(opts.empty)));
+  for (const l of lines) {
+    if (l.sep) list.appendChild(el('div', 'bz-people-chat-sep', el('span', '', text(l.sep))));
+    const row = el('div', `bz-people-chat-row${l.me ? ' me' : ''}${l.side ? ' side' : ''}${l.name ? ' named' : ''}`);
+    row.appendChild(el('div', 'bz-people-chat-ava', avatarNode(l.who || (l.me ? '我' : '?'), l.avatar)));
+    const col = el('div', 'bz-people-chat-col');
+    if (l.name) col.appendChild(el('div', 'bz-people-chat-who', text(l.name)));
+    const bub = el('div', 'bz-people-chat-bub');
+    if (l.tag) {
+      const chip = el('span', 'bz-people-chat-tag');
+      const icon = chatTagIcon(l.tag);
+      if (icon) chip.appendChild(el('i', 'bz-ic', { 'data-lucide': icon, 'aria-hidden': 'true' }));
+      chip.appendChild(text(l.tag));
+      bub.appendChild(chip);
+    }
+    if (l.text) bub.appendChild(el('span', 'bz-people-chat-tx', text(l.text)));
+    if (!l.tag && !l.text) bub.appendChild(el('span', 'bz-people-chat-tx', text('（空消息）')));
+    col.appendChild(bub);
+    row.appendChild(col);
+    list.appendChild(row);
+  }
+  box.appendChild(list);
+  return box;
+}
+
+/** 「更早的消息」哨兵（点一下 / 进视口都放一页；ui 侧挂 IO）。
+ *  真 button（不是 div + role）：键盘 Enter / 空格照旧可点，焦点环与宿主基线一套走。 */
+export function chatMoreBar(hidden: number): HTMLElement {
+  return el('button', 'bz-people-chat-more', { 'data-people-chat-more': '', type: 'button' },
+    text(hidden > 0 ? `更早的消息（还有 ${formatCount(hidden)} 条）` : '更早的消息'));
+}
+
+/** 聊天页展示态（ui 侧备好；lines 时间升序，最后一条 = 最新） */
+export interface ChatViewState {
+  /** 联系人称呼（页眉 meta） */
+  name: string;
+  /** 已上屏的行 */
+  lines: ChatLine[];
+  /** 聊天仓时间线总条数（页脚只读行报数用） */
+  total: number;
+  /** 上面还有更早的（出「更早的消息」哨兵） */
+  hasMore: boolean;
+  /** 正在读保库记录（首屏） */
+  loading: boolean;
+  /** 读不了的原因（上锁 / 记录损坏；空 = 正常） */
+  error?: string;
+}
+
+/**
+ * 聊天记录册页（issue 529）：仿微信聊天页——会话流铺满，页脚是只读说明 + 「回到最新」。
+ * 只有读得到聊天仓的人才翻得开；分页（一页 50 条、往上长）由 ui 侧的状态驱动，这里只管画。
+ */
+export function chatPage(s: ChatViewState): HTMLElement {
+  const body: HTMLElement[] = [];
+  if (s.loading) {
+    body.push(el('div', 'bz-people-empty-hint', text('正在读聊天记录…')));
+  } else if (s.error) {
+    body.push(el('div', 'bz-people-empty-hint', text(s.error)));
+  } else if (!s.total) {
+    body.push(el('div', 'bz-people-empty-hint', text('聊天仓里还没有这个人的消息——先在「补充素材」里补几笔，或到数据源导入微信记录。')));
+  } else {
+    body.push(chatStream(s.lines, {
+      more: s.hasMore ? chatMoreBar(s.total - s.lines.length) : null,
+      empty: '这一页没有可显示的消息。',
+    }));
+  }
+  const foot = el('div', 'bz-people-chat-bar');
+  foot.appendChild(el('div', 'bz-people-chat-readonly', text(
+    s.total ? `只读 · 来自微信导入的聊天记录 · 共 ${formatCount(s.total)} 条` : '只读 · 来自微信导入的聊天记录',
+  )));
+  if (s.lines.length) foot.appendChild(button('bz-people-chat-jump', '回到最新', { 'data-people-chat-bottom': '' }));
+  return subPage({ title: '聊天记录', meta: s.name, hook: 'chat', foot }, body);
+}
+
 // ---------------- 补充素材册页（issue 509 / ADR-0212：文本 / 图片 / 录音三页签） ----------------
 
 export type SuppTab = 'text' | 'image' | 'rec';
@@ -2269,32 +2429,28 @@ function suppRecQueueBody(queue: SuppRecQueueItem[]): HTMLElement[] {
 /**
  * 逐轮时间轴预览（面板内读 sidecar 渲染，同 `<名>.turns.md` 口径）：**含旁音轮**，
  * 旁音打标——这份视图的用处之一就是复核我们没误杀（issue 516 Q16b）。
+ * issue 529：会话流本体收进 `chatStream`（与详情页「查看聊天」同一份 markup），
+ * 这里只把轮次翻译成展示行。
  */
 function recTurnsPreview(lines: SuppRecTurnLine[], meAvatar: string, otherAvatar: string): HTMLElement {
-  const box = el('div', 'bz-people-supp-turns');
-  if (!lines.length) {
-    box.appendChild(el('div', 'bz-people-pop-note', text('账本里还没有轮次——转写跑完才会有。')));
-    return box;
-  }
   const sideN = lines.filter((l) => l.side).length;
   const segN = lines.reduce((m, l) => Math.max(m, l.segHead ?? 0), 0);
-  // 录音头（issue 516 Q22）：不新造消息，把「这条录音是什么、并成了几段」贴在全轮列表顶上
-  box.appendChild(el('div', 'bz-people-supp-turnhead', text(
-    `逐轮时间轴 · ${lines.length} 轮 · 并成 ${segN} 段${sideN ? ` · 旁音 ${sideN}（不进聊天仓）` : ''}`,
-  )));
-  // 微信式聊天流（复评）：头像 + 气泡，无段签 / 无时刻 / 无分割线；旁音收灰留档供复核
-  const list = el('div', 'bz-people-supp-turnlist');
-  for (const l of lines) {
+  return chatStream(lines.map((l) => {
     const me = l.speaker === '我';
-    const line = el('div', `bz-people-supp-turn${l.side ? ' side' : ''}${me ? ' me' : ''}`);
-    const ava = el('div', 'bz-people-supp-turnava');
-    ava.appendChild(avatarNode(l.speaker, me ? meAvatar : l.side ? '' : otherAvatar));
-    line.appendChild(ava);
-    line.appendChild(el('div', 'bz-people-supp-turnbubble', text(l.text || '（空转写）')));
-    list.appendChild(line);
-  }
-  box.appendChild(list);
-  return box;
+    return {
+      me,
+      avatar: me ? meAvatar : l.side ? '' : otherAvatar,
+      who: l.speaker,
+      // 旁音轮不是联系人本人的声音：名字上屏，一眼看清这条为什么不进聊天仓
+      ...(l.side ? { name: l.speaker } : {}),
+      text: l.text || '（空转写）',
+      side: l.side,
+    };
+  }), {
+    // 录音头（issue 516 Q22）：不新造消息，把「这条录音是什么、并成了几段」贴在全轮列表顶上
+    head: `逐轮时间轴 · ${lines.length} 轮 · 并成 ${segN} 段${sideN ? ` · 旁音 ${sideN}（不进聊天仓）` : ''}`,
+    empty: '账本里还没有轮次——转写跑完才会有。',
+  });
 }
 
 function suppRecRow(r: SuppRecRowState, del?: SuppRecViewState['del'], startEdit = false, turnsView?: SuppRecViewState['turnsView']): HTMLElement {

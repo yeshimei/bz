@@ -1,5 +1,5 @@
-/* 源指纹 e734f112fb3faa07 · 仓内输入 2 个（校验见 tests/preview-freshness.test.ts） */
-/*#preview-inputs=["src/people/render.ts","src/people/types.ts"]*/
+/* 源指纹 6ad0f8b8374d37cd · 仓内输入 3 个（校验见 tests/preview-freshness.test.ts） */
+/*#preview-inputs=["src/people/chat.ts","src/people/render.ts","src/people/types.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — src/people/render.ts → window.BZR_people（评审壳预览包，ADR-0104） */
 var BZR_people = (() => {
   var __defProp = Object.defineProperty;
@@ -44,6 +44,9 @@ var BZR_people = (() => {
     avatarNode: () => avatarNode,
     avatarUri: () => avatarUri,
     button: () => button,
+    chatMoreBar: () => chatMoreBar,
+    chatPage: () => chatPage,
+    chatStream: () => chatStream,
     clipList: () => clipList,
     dateRow: () => dateRow,
     delPage: () => delPage,
@@ -88,6 +91,7 @@ var BZR_people = (() => {
     mergeBanner: () => mergeBanner,
     miniMarkdown: () => miniMarkdown,
     monthlyChart: () => monthlyChart,
+    myAvatarRow: () => myAvatarRow,
     noteAddRow: () => noteAddRow,
     pageTotal: () => pageTotal,
     panelShell: () => panelShell,
@@ -116,6 +120,32 @@ var BZR_people = (() => {
     turnLoad: () => turnLoad,
     vtName: () => vtName
   });
+
+  // src/people/chat.ts
+  var TAG_WORDS = ["引用", "分享", "链接", "文件", "撤回", "通话", "表情", "小程序", "视频", "录音", "语音", "图片"];
+  var TAG_ICONS = {
+    图片: "image",
+    语音: "mic",
+    录音: "mic",
+    视频: "video",
+    表情: "smile",
+    通话: "phone",
+    文件: "file-text",
+    引用: "quote",
+    分享: "link",
+    链接: "link",
+    小程序: "link",
+    撤回: "rotate-ccw"
+  };
+  function chatTagIcon(tag) {
+    var _a, _b, _c;
+    const inner = (_b = (_a = /^\[([^\]\n]{0,80})\]/.exec(tag)) == null ? void 0 : _a[1]) != null ? _b : "";
+    for (const w of TAG_WORDS) {
+      if (inner === w || inner.startsWith(w)) return (_c = TAG_ICONS[w]) != null ? _c : "";
+    }
+    return "";
+  }
+  var CHAT_SEP_GAP_MS = 5 * 60 * 1e3;
 
   // src/people/types.ts
   function personOf(d) {
@@ -886,9 +916,11 @@ var BZR_people = (() => {
         el("i", "bz-ic", { "data-lucide": "trash-2", "aria-hidden": "true" }),
         el("span", "", text("删除联系人"))
       ]),
-      el("button", "bz-people-act", { "data-people-act": "back" }, [
-        el("i", "bz-ic", { "data-lucide": "arrow-left", "aria-hidden": "true" }),
-        el("span", "", text("合上这页"))
+      // issue 529：这里原来是第二枚「合上这页」（与页眉右上角那枚完全重复）——换成聊天入口：
+      // 聊天仓里那几万条消息终于有地方看（关页仍走页眉右上角那枚）
+      el("button", "bz-people-act", { "data-people-act": "chat" }, [
+        el("i", "bz-ic", { "data-lucide": "message-circle", "aria-hidden": "true" }),
+        el("span", "", text("查看聊天"))
       ])
     ]);
     for (const b of Array.from(acts.children)) b.type = "button";
@@ -1406,6 +1438,82 @@ var BZR_people = (() => {
       ])
     ]);
   }
+  function myAvatarSourceText(s) {
+    if (s.source === "custom") return "当前：自定义图片（存在 vault 的 CONFIG/FACES/我 里）";
+    if (s.source === "wechat") return "当前：微信数据里扒出来的本人头像";
+    return s.noDataRoot ? "当前：还没设置——先配好数据根再同步，或者直接传一张" : "当前：还没设置——跑一次同步就能拿到微信里的本人头像，也可以直接传一张";
+  }
+  function myAvatarRow(s) {
+    const box = el("div", "bz-people-setava", { "data-people-setava": "" });
+    box.appendChild(s.url ? el("img", "bz-people-setava-img", { src: avatarUri(s.url), alt: "我的头像" }) : el("span", "bz-people-setava-txt", text("我")));
+    const col = el("div", "bz-people-setava-col");
+    col.appendChild(el("div", "bz-people-setava-hint", text(myAvatarSourceText(s))));
+    col.appendChild(el("div", "bz-people-setava-acts", [
+      // 组件库按钮（设置面板的控件基线；面板是本行唯一消费面——ADR-0153 起原生设置页只留跳转）
+      button("bz-btn bz-btn--primary bz-btn--sm", "上传图片…", { "data-people-setava-pick": "" }),
+      button("bz-btn bz-btn--ghost bz-btn--sm", "恢复默认", { "data-people-setava-reset": "" })
+    ]));
+    box.appendChild(col);
+    return box;
+  }
+  function chatStream(lines, opts = {}) {
+    const box = el("div", "bz-people-chat");
+    if (opts.head) box.appendChild(el("div", "bz-people-chat-head", text(opts.head)));
+    if (opts.more) box.appendChild(opts.more);
+    const list = el("div", "bz-people-chat-list", { "data-people-chat-list": "" });
+    if (!lines.length && opts.empty) list.appendChild(el("div", "bz-people-empty-hint", text(opts.empty)));
+    for (const l of lines) {
+      if (l.sep) list.appendChild(el("div", "bz-people-chat-sep", el("span", "", text(l.sep))));
+      const row = el("div", `bz-people-chat-row${l.me ? " me" : ""}${l.side ? " side" : ""}${l.name ? " named" : ""}`);
+      row.appendChild(el("div", "bz-people-chat-ava", avatarNode(l.who || (l.me ? "我" : "?"), l.avatar)));
+      const col = el("div", "bz-people-chat-col");
+      if (l.name) col.appendChild(el("div", "bz-people-chat-who", text(l.name)));
+      const bub = el("div", "bz-people-chat-bub");
+      if (l.tag) {
+        const chip = el("span", "bz-people-chat-tag");
+        const icon = chatTagIcon(l.tag);
+        if (icon) chip.appendChild(el("i", "bz-ic", { "data-lucide": icon, "aria-hidden": "true" }));
+        chip.appendChild(text(l.tag));
+        bub.appendChild(chip);
+      }
+      if (l.text) bub.appendChild(el("span", "bz-people-chat-tx", text(l.text)));
+      if (!l.tag && !l.text) bub.appendChild(el("span", "bz-people-chat-tx", text("（空消息）")));
+      col.appendChild(bub);
+      row.appendChild(col);
+      list.appendChild(row);
+    }
+    box.appendChild(list);
+    return box;
+  }
+  function chatMoreBar(hidden) {
+    return el(
+      "button",
+      "bz-people-chat-more",
+      { "data-people-chat-more": "", type: "button" },
+      text(hidden > 0 ? `更早的消息（还有 ${formatCount(hidden)} 条）` : "更早的消息")
+    );
+  }
+  function chatPage(s) {
+    const body = [];
+    if (s.loading) {
+      body.push(el("div", "bz-people-empty-hint", text("正在读聊天记录…")));
+    } else if (s.error) {
+      body.push(el("div", "bz-people-empty-hint", text(s.error)));
+    } else if (!s.total) {
+      body.push(el("div", "bz-people-empty-hint", text("聊天仓里还没有这个人的消息——先在「补充素材」里补几笔，或到数据源导入微信记录。")));
+    } else {
+      body.push(chatStream(s.lines, {
+        more: s.hasMore ? chatMoreBar(s.total - s.lines.length) : null,
+        empty: "这一页没有可显示的消息。"
+      }));
+    }
+    const foot = el("div", "bz-people-chat-bar");
+    foot.appendChild(el("div", "bz-people-chat-readonly", text(
+      s.total ? `只读 · 来自微信导入的聊天记录 · 共 ${formatCount(s.total)} 条` : "只读 · 来自微信导入的聊天记录"
+    )));
+    if (s.lines.length) foot.appendChild(button("bz-people-chat-jump", "回到最新", { "data-people-chat-bottom": "" }));
+    return subPage({ title: "聊天记录", meta: s.name, hook: "chat", foot }, body);
+  }
   var SUPP_TABS = [
     ["text", "记一笔", "随手记一件事"],
     ["image", "留影", "补画谱素材图"],
@@ -1622,12 +1730,6 @@ var BZR_people = (() => {
       }
       out.push(warn);
     }
-    const orphanN = s.rows.filter((r) => r.orphan).length;
-    if (orphanN) {
-      out.push(el("div", "bz-people-supp-orphans", text(
-        `有 ${orphanN} 条录音的原件已不在磁盘，但聊天仓里的转写轮次还在（仍计入统计、也进画谱素材）——在下面标「源已失」的行点「删除」即可清掉。`
-      )));
-    }
     if (!s.rows.length) {
       out.push(el("div", "bz-people-empty-hint", text("还没有录音。AAC / M4A / MP3 都行——时间默认取文件名或文件属性，说话人分离与转写交给本地管线。")));
       return out;
@@ -1640,23 +1742,20 @@ var BZR_people = (() => {
     return out;
   }
   function recDelConfirm(r, del) {
-    var _a;
     const box = el("div", "bz-people-supp-delbox");
     const inLedger = r.status === "merged" || r.status === "awaiting-merge";
     box.appendChild(el("div", "bz-people-del-line", text(
-      r.orphan ? `这条录音的原件已不在磁盘——删除会清掉聊天仓里那 ${(_a = r.turns) != null ? _a : 0} 条转写轮次，统计与画谱素材跟着减${del.drawn ? "；脸谱正文不会跟着变，要反映得重新画谱（花钱）" : ""}。` : inLedger ? `删除会把这条录音的转写轮次从聊天仓一并清掉${del.drawn ? "；脸谱正文不会跟着变，要反映得重新画谱（花钱）" : ""}。` : `这条还没进聊天仓——删除只清账本与派生档${del.drawn ? "；脸谱正文不会跟着变" : ""}。`
+      inLedger ? `删除会把这条录音的转写轮次从聊天仓一并清掉${del.drawn ? "；脸谱正文不会跟着变，要反映得重新画谱（花钱）" : ""}。` : `这条还没进聊天仓——删除只清账本与派生档${del.drawn ? "；脸谱正文不会跟着变" : ""}。`
     )));
-    if (!r.orphan) {
-      const label = document.createElement("label");
-      label.className = "bz-people-supp-delchk";
-      const ck = document.createElement("input");
-      ck.type = "checkbox";
-      ck.checked = del.alsoFile;
-      ck.setAttribute("data-people-supp-rec-del-file", r.file);
-      label.appendChild(ck);
-      label.appendChild(text(" 同时删除录音原件（不勾只清账本，之后可重跑）"));
-      box.appendChild(label);
-    }
+    const label = document.createElement("label");
+    label.className = "bz-people-supp-delchk";
+    const ck = document.createElement("input");
+    ck.type = "checkbox";
+    ck.checked = del.alsoFile;
+    ck.setAttribute("data-people-supp-rec-del-file", r.file);
+    label.appendChild(ck);
+    label.appendChild(text(" 同时删除录音原件（不勾只清账本，之后可重跑）"));
+    box.appendChild(label);
     box.appendChild(el("div", "bz-people-supp-rowfoot", [
       button("bz-people-btn bz-people-btn-sm bz-people-btn-danger", "确认删除", { "data-people-supp-rec-del-ok": r.file }),
       button("bz-people-btn bz-people-btn-ghost bz-people-btn-sm", "取消", { "data-people-supp-rec-del-cancel": r.file })
@@ -1717,42 +1816,34 @@ var BZR_people = (() => {
     return out;
   }
   function recTurnsPreview(lines, meAvatar, otherAvatar) {
-    const box = el("div", "bz-people-supp-turns");
-    if (!lines.length) {
-      box.appendChild(el("div", "bz-people-pop-note", text("账本里还没有轮次——转写跑完才会有。")));
-      return box;
-    }
     const sideN = lines.filter((l) => l.side).length;
     const segN = lines.reduce((m, l) => {
       var _a;
       return Math.max(m, (_a = l.segHead) != null ? _a : 0);
     }, 0);
-    box.appendChild(el("div", "bz-people-supp-turnhead", text(
-      `逐轮时间轴 · ${lines.length} 轮 · 并成 ${segN} 段${sideN ? ` · 旁音 ${sideN}（不进聊天仓）` : ""}`
-    )));
-    const list = el("div", "bz-people-supp-turnlist");
-    for (const l of lines) {
+    return chatStream(lines.map((l) => {
       const me = l.speaker === "我";
-      const line = el("div", `bz-people-supp-turn${l.side ? " side" : ""}${me ? " me" : ""}`);
-      const ava = el("div", "bz-people-supp-turnava");
-      ava.appendChild(avatarNode(l.speaker, me ? meAvatar : l.side ? "" : otherAvatar));
-      line.appendChild(ava);
-      line.appendChild(el("div", "bz-people-supp-turnbubble", text(l.text || "（空转写）")));
-      list.appendChild(line);
-    }
-    box.appendChild(list);
-    return box;
+      return {
+        me,
+        avatar: me ? meAvatar : l.side ? "" : otherAvatar,
+        who: l.speaker,
+        // 旁音轮不是联系人本人的声音：名字上屏，一眼看清这条为什么不进聊天仓
+        ...l.side ? { name: l.speaker } : {},
+        text: l.text || "（空转写）",
+        side: l.side
+      };
+    }), {
+      // 录音头（issue 516 Q22）：不新造消息，把「这条录音是什么、并成了几段」贴在全轮列表顶上
+      head: `逐轮时间轴 · ${lines.length} 轮 · 并成 ${segN} 段${sideN ? ` · 旁音 ${sideN}（不进聊天仓）` : ""}`,
+      empty: "账本里还没有轮次——转写跑完才会有。"
+    });
   }
   function suppRecRow(r, del, startEdit = false, turnsView) {
-    var _a, _b;
-    const row = el("div", `bz-people-supp-row${r.orphan ? " orphan" : ""}`, { "data-people-supp-row": r.file });
+    var _a;
+    const row = el("div", "bz-people-supp-row", { "data-people-supp-row": r.file });
     const head = el("div", "bz-people-supp-rowhead");
     head.appendChild(el("span", "bz-people-supp-qname", { title: r.file }, text(r.file)));
-    head.appendChild(el(
-      "span",
-      `bz-people-supp-badge bz-people-supp-badge-${r.orphan ? "orphan" : r.status}`,
-      text(r.orphan ? "源已失" : SUPP_REC_LABEL[r.status])
-    ));
+    head.appendChild(el("span", `bz-people-supp-badge bz-people-supp-badge-${r.status}`, text(SUPP_REC_LABEL[r.status])));
     row.appendChild(head);
     if (del) {
       row.appendChild(recDelConfirm(r, del));
@@ -1799,11 +1890,10 @@ var BZR_people = (() => {
     if (r.phaseText) bits.push(r.phaseText);
     if (r.mode === "me-only") bits.push("单质心：非我即对方");
     if (r.mode === "blind") bits.push("无质心：盲分");
-    if (r.orphan) bits.push(`原件已不在磁盘 · 仓内 ${(_b = r.turns) != null ? _b : 0} 条转写轮次仍在统计与素材`);
-    else if (r.turns !== void 0) bits.push(`${r.turns} 轮`);
+    if (r.turns !== void 0) bits.push(`${r.turns} 轮`);
     if (r.sideSpeaks) bits.push(`已滤 ${r.sideSpeaks} 轮旁音`);
     if (bits.length) row.appendChild(el("div", "bz-people-supp-rowmeta", text(bits.join(" · "))));
-    if (startEdit && !r.orphan) {
+    if (startEdit) {
       const line = el("div", "bz-people-supp-startrow");
       line.appendChild(el("span", void 0, text("起点")));
       const inp = document.createElement("input");
@@ -1813,7 +1903,7 @@ var BZR_people = (() => {
       inp.setAttribute("data-people-supp-rec-start", r.file);
       line.appendChild(inp);
       row.appendChild(line);
-    } else if (!r.orphan && r.startMs !== void 0) {
+    } else if (r.startMs !== void 0) {
       row.appendChild(el("div", "bz-people-supp-rowmeta", text(`起点 ${suppLocalTsValue(r.startMs).replace("T", " ")}`)));
     }
     const foot = [];
@@ -1822,14 +1912,12 @@ var BZR_people = (() => {
     if (r.status === "interrupted") foot.push(button("bz-people-btn bz-people-btn-ghost bz-people-btn-sm", "续跑", { "data-people-supp-rec-run": r.file }));
     if (r.status === "failed") foot.push(button("bz-people-btn bz-people-btn-ghost bz-people-btn-sm", "重试", { "data-people-supp-rec-run": r.file }));
     if (r.status === "awaiting-merge") foot.push(button("bz-people-btn bz-people-btn-acc bz-people-btn-sm", "并仓", { "data-people-supp-rec-merge": r.file, title: "转写完成但还没进时间线——点这里按轮次并仓" }));
-    if (!r.orphan) {
-      if (startEdit) foot.push(button("bz-people-btn bz-people-btn-ghost bz-people-btn-sm", "收起", { "data-people-supp-rec-start-cancel": r.file }));
-      else foot.push(button("bz-people-btn bz-people-btn-ghost bz-people-btn-sm", "改起点", { "data-people-supp-rec-start-edit": r.file, title: "录音开始录的时刻——改完绝对时间跟着重排（已并仓的同步回写）" }));
-      if (r.turns !== void 0) {
-        foot.push(button("bz-people-btn bz-people-btn-ghost bz-people-btn-sm", "查看轮次", { "data-people-supp-rec-turns": r.file, title: "逐轮时间轴（含被滤的旁音轮）——复核我们没误杀" }));
-      }
+    if (startEdit) foot.push(button("bz-people-btn bz-people-btn-ghost bz-people-btn-sm", "收起", { "data-people-supp-rec-start-cancel": r.file }));
+    else foot.push(button("bz-people-btn bz-people-btn-ghost bz-people-btn-sm", "改起点", { "data-people-supp-rec-start-edit": r.file, title: "录音开始录的时刻——改完绝对时间跟着重排（已并仓的同步回写）" }));
+    if (r.turns !== void 0) {
+      foot.push(button("bz-people-btn bz-people-btn-ghost bz-people-btn-sm", "查看轮次", { "data-people-supp-rec-turns": r.file, title: "逐轮时间轴（含被滤的旁音轮）——复核我们没误杀" }));
     }
-    foot.push(button("bz-people-btn bz-people-btn-ghost bz-people-btn-sm", "删除", { "data-people-supp-rec-del": r.file, title: r.orphan ? "清掉这条录音在聊天仓里的转写轮次（原件早已不在磁盘）" : "删掉这条录音（二次确认里可勾选是否连原件一起删）" }));
+    foot.push(button("bz-people-btn bz-people-btn-ghost bz-people-btn-sm", "删除", { "data-people-supp-rec-del": r.file, title: "删掉这条录音（二次确认里可勾选是否连原件一起删）" }));
     if (foot.length) row.appendChild(el("div", "bz-people-supp-rowfoot", foot));
     return row;
   }

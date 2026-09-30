@@ -110,6 +110,10 @@ const WHITELIST: Array<{ file: RegExp; reason: string; /** 防回归哨兵：预
     file: /^src\/auto-summary\/processor\.ts$/,
     reason: '剪藏 frontmatter md 写回：写前重读最新内容仅合并目标字段（P1-21 防盲写），md 文件操作不套 json 原语（D3 拍板保留）',
   },
+  {
+    file: /^src\/people\/me-avatar\.ts$/,
+    reason: '「我」的头像图片二进制附件写（issue 529：adapter.writeBinary 至 CONFIG/FACES/我/avatar.<ext>，用户附件非插件私有数据，同 gameshelf/posters 与 cinema/douban-queue 先例）',
+  },
   // 467：src/people/datasource.ts 的 writeBinary 豁免随「头像入库明文目录」一并退役——
   // 头像现在作为密文附件进保库记录（写路径全在 SafeManager 内，encrypt/data.ts 自有豁免）。
 ];
