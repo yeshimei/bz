@@ -17333,6 +17333,16 @@ canvas { display: block; }
 .bz-cinema--midnight .d-head .add:hover{filter:brightness(1.08)}
 }
 .bz-cinema--midnight .d-head .add svg{width:13px;height:13px}
+/* 「导入片单」图标钮（跟在「添加影片」后面，2026-10-01 从 rail-foot 左下角移来）：
+   30×30 与添加钮同高；形制贴 m-tool/sp-back 一脉（线框幽灵钮，hover 亮色+chip 底）。
+   贴右定位的 margin-left:auto 在添加钮上，本钮随后、占最右角。
+   .bz-ic 容器与 svg 同尺寸钉死——同 m-tool 注释：容器随宿主字号漂移会让图标偏心 */
+.bz-cinema--midnight .d-head .imp{flex:none;width:30px;height:30px;padding:0;border:1px solid var(--line);background:none;border-radius:var(--bz-radius-sm);color:var(--ink-3);cursor:pointer;display:grid;place-items:center;font-family:inherit}@media (hover: hover) {
+
+.bz-cinema--midnight .d-head .imp:hover{color:var(--ink);background:var(--chip)}
+}
+.bz-cinema--midnight .d-head .imp svg{width:14px;height:14px}
+.bz-cinema--midnight .d-head .imp .bz-ic{width:14px;height:14px}
 .bz-cinema--midnight .d-tools{flex:none;display:flex;align-items:center;gap:10px;padding:var(--bz-space-md) 20px}
 .bz-cinema--midnight .d-search{flex:1;display:flex;align-items:center;gap:var(--bz-space-sm);border:1px solid var(--line);border-radius:var(--bz-radius-sm);padding:6px var(--bz-space-md);color:var(--ink-3);font-size:12.5px;background:var(--panel)}
 .bz-cinema--midnight .d-search svg{width:13px;height:13px;flex:none}
@@ -17397,7 +17407,7 @@ canvas { display: block; }
 .bz-cinema--midnight .m-head h2{font-family:"Noto Serif SC",SimSun,serif;font-size:var(--bz-font-title);letter-spacing:.1em;color:var(--ink);margin:0}
 .bz-cinema--midnight .m-head .cnt{font-size:11.5px;color:var(--ink-3)}
 .bz-cinema--midnight .m-acts{margin-left:auto;display:flex;gap:var(--bz-space-sm);align-items:center}
-/* 右上角钮组（m-acts：＋ / AI / 分析 / ✕）图标精确居中——两处必须钉死，只作用于本组：
+/* 右上角钮组（m-acts：＋ / 导入 / AI / 分析 / ✕）图标精确居中——两处必须钉死，只作用于本组：
    ① 按钮 padding:0：宿主 app.css 裸 button 基线带 padding（手机 var(--bz-space-xs) var(--bz-space-md)、平板
       `.is-tablet button:not(.clickable-icon)` var(--bz-space-xs) 20px），不钉死时 30px 的 border-box
       会被撑到 34~42px，右侧钮组行就散了。带 !important 是因宿主那条特异性 (0,2,1)
@@ -18097,6 +18107,7 @@ canvas { display: block; }
 .bz-cinema--midnight .rec-add,
 .bz-cinema--midnight .seg button,
 .bz-cinema--midnight .rail-item,
+.bz-cinema--midnight .d-head .imp,
 .bz-cinema--midnight .m-tool,
 .bz-cinema--midnight .sp-back{transition:color var(--cn-m-fast),border-color var(--cn-m-fast),background var(--cn-m-fast),transform var(--cn-m-fast),filter var(--cn-m-fast)}
 .bz-cinema--midnight .dm-btn:active,
@@ -18843,17 +18854,16 @@ canvas { display: block; }
 .bz-yb-box.is-rot90 .yb-attl{top:20%}
 .bz-yb-box.is-rot90 .yb-arc{bottom:-42em; --arc-r:44em}
 
-/* 一键导入豆瓣片单弹层（cn-modal--dimp）：listpick 同语言——金 kicker 头部 + 两段式
-   （输入态：链接框/提示/金钮；结果态：统计行 + 条目列表 + 导入/返回）。全 token 取色 */
+/* 一键导入豆瓣片单弹层（cn-modal--dimp）：两段式（输入态：链接框 + 金钮；结果态：统计行 +
+   条目列表 + 归入行 + 导入钮）。2026-10-01 用户反馈两轮：删说明段（Cookie 前提由抓取失败
+   的提示兜底）、整块标题（金 kicker 头）不要、去「返回重填」钮（重来一次 = 关掉重开）、
+   「归入片单」行补齐对齐样式；片单名默认值由抓取端 title 提供。全 token 取色 */
 .bz-cinema--midnight .cn-modal--dimp{width:300px;max-height:74%;display:flex;flex-direction:column;gap:14px;padding:18px 18px 16px}
-.bz-cinema--midnight .dimp-head{display:flex;flex-direction:column;gap:4px}
-.bz-cinema--midnight .dimp-name{font-size:14.5px;font-weight:600;color:var(--ink);line-height:1.4}
 .bz-cinema--midnight .dimp-stage{display:flex;flex-direction:column;gap:10px;min-height:0}
 .bz-cinema--midnight .dimp-stage[hidden]{display:none}
 .bz-cinema--midnight .dimp-stage .j-dimp-url{width:100%;background:var(--chip);border:1px solid var(--line);border-radius:10px;padding:9px 12px;color:var(--ink);font-size:12.5px;font-family:inherit;outline:none;transition:border-color var(--cn-m-fast) ease}
 .bz-cinema--midnight .dimp-stage .j-dimp-url:focus{border-color:var(--gold)}
 .bz-cinema--midnight .dimp-stage .j-dimp-url::placeholder{color:var(--ink-3)}
-.bz-cinema--midnight .dimp-hint{font-size:11.5px;color:var(--ink-3);line-height:1.7}
 .bz-cinema--midnight .dimp-stat{font-size:12px;color:var(--ink-2);letter-spacing:.02em}
 .bz-cinema--midnight .dimp-list{overflow-y:auto;display:grid;gap:5px;min-height:0;max-height:260px;padding:2px}
 .bz-cinema--midnight .dimp-row{display:flex;align-items:center;gap:9px;padding:7px 11px;border-radius:9px;border:1px solid var(--line);font-size:12.5px;color:var(--ink)}
@@ -18861,7 +18871,11 @@ canvas { display: block; }
 .bz-cinema--midnight .dimp-row .lp-label{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .bz-cinema--midnight .dimp-tag{font-size:10.5px;letter-spacing:.06em;flex:none;padding:1px 8px;border-radius:99px;border:1px solid var(--line);color:var(--ink-3)}
 .bz-cinema--midnight .dimp-row:not(.is-inlib) .dimp-tag{border-color:var(--gold);color:var(--gold)}
-.bz-cinema--midnight .dimp-acts{display:flex;gap:8px;align-items:center}
+.bz-cinema--midnight .dimp-newlist{display:flex;align-items:center;gap:10px}
+.bz-cinema--midnight .dimp-newlist label{flex:none;font-size:12.5px;color:var(--ink-2)}
+.bz-cinema--midnight .dimp-newlist input{flex:1;min-width:0;background:var(--chip);border:1px solid var(--line);border-radius:10px;padding:8px 12px;color:var(--ink);font-size:12.5px;font-family:inherit;outline:none;transition:border-color var(--cn-m-fast) ease}
+.bz-cinema--midnight .dimp-newlist input::placeholder{color:var(--ink-3)}
+.bz-cinema--midnight .dimp-newlist input:focus{border-color:var(--gold)}
 /* ==================== 游戏库域样式（src/gameshelf/styles.css）v3 ====================
    方向 = V1 海报墙落域（2026-09-17 用户点版）：门面 hero + 工具行 + 封面网格 + 数据统计面板
    + 全量详情弹窗。2026-09-18（issue 378）：头行退役，大海报顶到面板顶，常驻操作 = 右上角
