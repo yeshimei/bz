@@ -217,6 +217,8 @@
         // 期望值（与 data.ts 同口径从种子现算，不硬编码）
         const watched = DATA.filter((x) => x.status === '已看').length;
         const movies = DATA.filter((x) => x.group === '电影').length;
+        // 片单枚数（chipsHtml 的片单组 = allLists 口径：全量去重，含「重映厅」）
+        const listCount = new Set(DATA.flatMap((x) => x.lists || [])).size;
         const dateVal = (x) => { const t2 = new Date(x.watchDate || '').getTime(); return isNaN(t2) ? 0 : t2; };
         const topRated = [...DATA].filter((x) => x.status === '已看' && x.rating > 0)
           .sort((a, b) => b.rating - a.rating || dateVal(b) - dateVal(a))[0];
@@ -241,7 +243,7 @@
         t('侧栏状态3行', dd.querySelectorAll('.j-status [data-s]').length === 3);
         t('rail计数=数据口径', dt('.j-groups [data-g="全部"] .n')?.textContent === String(DATA.length)
           && dt('.j-status [data-s="已看"] .n')?.textContent === String(watched));
-        t('移动chips10枚', md.querySelectorAll('.j-chips .chip').length === 10);
+        t('移动chips' + (10 + listCount) + '枚', md.querySelectorAll('.j-chips .chip').length === 10 + listCount);
 
         // 组筛选（桌面）
         dt('[data-g="电影"]').click();
@@ -290,13 +292,14 @@
         await sleep(80);
         t('AI页返回列表', !!dt('.d-head'));
 
-        // 观影分析页（桌面，analysis.ts 真统计）
-        dt('[data-tool="stat"]').click();
-        await sleep(80);
-        t('分析页19板块', dt('.sp-title')?.textContent === '观影分析' && dd.querySelectorAll('.stat-card').length === 4
-          && dd.querySelectorAll('.sec').length === 19 && dt('.sp-cnt')?.textContent === '· ' + watched + ' 部已看');
-        dt('.sp-back').click();
-        await sleep(80);
+        // 观影分析覆盖层《观影志》（桌面；stat 独立页 44c07ae57 退役——2026-10-01 跟上：
+        // 这里只冒烟开/闭层，细项由 tests/cinema 全尺寸覆盖）
+        dt('[data-film-open]').click();
+        await sleep(200);
+        t('观影分析覆盖层开', !!dt('.bz-yb-box') && dd.querySelectorAll('.bz-yb-scn').length > 0);
+        dd.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+        await sleep(120);
+        t('观影分析覆盖层关（ESC 回面板）', !dt('.bz-yb') && !!dt('.d-head'));
 
         // 表单（桌面，issue 395 双面卡片）：正面只有名称 + 状态 → 解析 → 翻面 → 背面保存
         dt('[data-cinema-add]').click();
@@ -614,8 +617,8 @@
             && pillOn(railEl, sf('.d-rail .rail-item.is-on')));
           await hoverRail('[data-s="已看"]');
           t('悬停滑到该行（跨类型/状态组）', pillOn(railEl, sf('[data-s="已看"]')));
-          await hoverRail('[data-tool="stat"]');
-          t('悬停滑到底部工具', pillOn(railEl, sf('[data-tool="stat"]')));
+          await hoverRail('[data-film-open]');
+          t('悬停滑到底部工具', pillOn(railEl, sf('[data-film-open]')));
           railEl.dispatchEvent(new MouseEvent('mouseleave'));
           await sleep(280);
           t('移开回落选中项', pillOn(railEl, sf('.d-rail .rail-item.is-on')));
@@ -777,9 +780,11 @@
         res.textContent = window.__st.fail.length ? '自检失败' : `自检通过 ${window.__st.pass}`;
         res.className = window.__st.fail.length ? 'bad' : 'ok';
       } catch (err) {
-        // 报错必须带进度：只报 message 时无法判断断在哪一步（2026-09-21 排查双面卡片时吃过亏）
+        // 报错必须带进度：只报 message 时无法判断断在哪一步（2026-09-21 排查双面卡片时吃过亏）；
+        // 带上栈帧首行（行号），message 相同也分得清是哪一处（2026-10-01 排查时补）
         document.title = 'SELFTEST ERR @pass=' + window.__st.pass
-          + ' fail=[' + window.__st.fail.join('|') + '] ' + (err && err.message || err);
+          + ' fail=[' + window.__st.fail.join('|') + '] ' + (err && err.message || err)
+          + ' @' + String((err && err.stack) || '').split('\n').slice(1, 2).join('').trim();
         res.textContent = '自检异常';
         res.className = 'bad';
       }
