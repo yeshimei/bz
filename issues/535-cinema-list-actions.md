@@ -20,7 +20,7 @@
 
 | 文件 | 改了什么 |
 |---|---|
-| `src/cinema/ui.ts` | ① `toggleListMembership` 下沉为多条目版 `setListMembership(items, list, on, app, label?)`（逐篇 `processFrontMatter`、内存先行、任一篇失败整体回滚、一条汇总通知）；② `openListPick` 由单条目改多目标（勾选态 = 任一成员命中，点一下对全部成员执行；头部用卡片名 + 正脸季海报）；③ 新增 `listExitActs()`（「移出<片单名>」直出行单源，重映厅排除）；④ 单条目 `itemActions` 补移出行；⑤ `seriesAllAct` 升级为 `seriesActs`（查看全部 + 重映厅行 + 归入片单… + 移出<片单名>），`seriesSheetTarget` 与右键两处调用点跟进 |
+| `src/cinema/ui.ts` | ① `toggleListMembership` 下沉为多条目版 `setListMembership(items, list, on, app, label?)`（逐篇 `processFrontMatter`、内存先行、**任一篇失败只回滚内存**——已写成功的篇不回滚，只保证内存态不再二次漂移；一条汇总通知）；② `openListPick` 由单条目改多目标（勾选态 = 任一成员命中，点一下对全部成员执行；头部用卡片名 + 正脸季海报；通知主语由调用方传 `head.who`）；③ 新增 `listExitActs()`（「移出<片单名>」直出行单源，重映厅排除）；④ 单条目 `itemActions` 补移出行；⑤ `seriesAllAct` 升级为 `seriesActs`（查看全部 + 重映厅行 + 归入片单… + 移出<片单名>），`seriesSheetTarget` 与右键两处调用点跟进 |
 | `src/cinema/layouts/midnight/render.ts` | `railHtml` 引入 `scope`：`view.listFilter` 有值时类型组 / 状态组计数以该片单的卡片集为基数；「全部」与片单组不受影响。顺带修 JSDoc 里的旧名「重温架」→「重映厅」 |
 | `prototypes/cinema/*.js` | 重出（`node scripts/build-preview.mjs cinema`） |
 

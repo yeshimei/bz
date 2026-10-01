@@ -21,6 +21,10 @@ function item(p: Partial<CinemaItem> & { name: string }): CinemaItem {
     typeTag: p.typeTag ?? '电影',
     group: p.group ?? '电影',
     watchDate: p.watchDate ?? null,
+    // 已看日期（issue 536）：年书各轴读它。夹具按 data.ts 的口径补——**已看态**缺省回落观影日期
+    //（老笔记就是这么被兜住的）；想看/在看条目一律 null，下面那两条「有日期却没看过」的老毛病照留，
+    // 用来钉「年书只收已看」
+    watchedDate: p.watchedDate ?? ((p.status ?? STATUS_WATCHED) === STATUS_WATCHED ? p.watchDate ?? null : null),
     rating: p.rating ?? null,
     status: p.status ?? STATUS_WATCHED,
     wantDate: p.wantDate ?? null,
@@ -80,9 +84,10 @@ describe('观影志 · 片长/季集解析（只认字段里真有的数）', ()
     expect(humanMinutes(40)).toBe('40 分钟');
   });
 
-  it('dayOf 只取日期位（观影日期有带时刻的）', () => {
-    expect(dayOf(item({ name: 'x', watchDate: '2026-09-22 02:39:25' }))).toBe('2026-09-22');
+  it('dayOf 只取日期位（已看日期带时刻的）；没看过的条目给 null（观影日期是排序戳，不算数）', () => {
+    expect(dayOf(item({ name: 'x', watchedDate: '2026-09-22 02:39:25' }))).toBe('2026-09-22');
     expect(dayOf(item({ name: 'x' }))).toBeNull();
+    expect(dayOf(item({ name: 'x', watchDate: '2026-09-22' }))).toBe('2026-09-22'); // 已看态缺新键 → 回落观影日期
   });
 });
 

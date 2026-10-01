@@ -1,4 +1,4 @@
-/* 源指纹 1d6255bc64f0f95a · 仓内输入 6 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 f3b0b5046b1a02d5 · 仓内输入 6 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["src/cinema/constants.ts","src/cinema/layouts/midnight/render.ts","src/cinema/render.ts","src/cinema/seasons.ts","src/cinema/shared.ts","src/core/ui/str.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — src/cinema/render.ts → window.BZR_cinema（评审壳预览包，ADR-0104） */
 var BZR_cinema = (() => {
@@ -281,7 +281,7 @@ var BZR_cinema = (() => {
     const hot = ((_i = it.hotComment) != null ? _i : "").trim();
     const hotFold = hot.length > HOT_FOLD_MIN;
     const rewatched = it.rewatches.length > 0;
-    const firstDate = (it.watchDate || "").slice(0, 10);
+    const firstDate = (it.watchedDate || "").slice(0, 10);
     const wantD = (it.wantDate || "").slice(0, 10);
     const watchingD = (it.watchingDate || "").slice(0, 10);
     const nodes = [];
@@ -323,6 +323,7 @@ var BZR_cinema = (() => {
     return `共 ${card.seasons.length} 季` + (extra ? ` · ${extra}` : "");
   }
   function seriesDetailModalHtml(card, posterOf) {
+    var _a;
     const face = card.face;
     const url = posterOf(face);
     const st = seriesStatus(card.seasons, card.specials);
@@ -335,7 +336,8 @@ var BZR_cinema = (() => {
       const sub = [
         it.group !== card.group ? esc(it.group) : "",
         // 特别篇常是电影/纪录片：标出组，免得看着像「某一季」
-        it.watchDate ? `观影 ${esc(it.watchDate.slice(0, 10))}` : "",
+        it.watchedDate ? `观影 ${esc(it.watchedDate.slice(0, 10))}` : "",
+        // 同时间线口径：读已看日期，非排序用的观影日期（issue 536）
         it.seasonText ? esc(it.seasonText) : ""
         // 深审批 B #6：季集原文自带单位（「2季」），不再拼「 集」出「2季 集」叠字
       ].filter(Boolean).join(" · ");
@@ -351,13 +353,15 @@ var BZR_cinema = (() => {
       ...card.specials.map((it) => ({ it, special: true }))
     ].sort((a, b) => cmpByRelease(a.it, b.it) || (a.special === b.special ? 0 : a.special ? 1 : -1));
     const rows = rowSrc.map(({ it, special }) => rowOf(it, special ? " s-row-special" : "")).join("");
+    const watchedDays = rowSrc.map(({ it }) => it.watchedDate).filter((d) => !!d).sort();
+    const lastWatched = ((_a = watchedDays[watchedDays.length - 1]) != null ? _a : "").slice(0, 10);
     return `<div class="cn-modal cn-modal--detail">
     <div class="dm-head"><div class="dm-poster">${url ? `<img src="${esc(url)}" onerror="this.remove()">` : ""}</div>
       <div style="flex:1;min-width:0"><div class="dm-title">${esc(card.name)}<span class="dm-n">${seriesCountsText(card)}</span></div>
         <div class="dm-badges">${badge(typeColor(card.group), face.typeTag)}
           ${st !== STATUS_WATCHED ? badge(statusColor(st), statusText(st)) : ""}
           ${card.rating && card.rating > 0 ? `<span class="dm-stars">${getStarString(card.rating)}</span><span class="dm-rating">${Number(card.rating).toFixed(1)}</span>` : ""}
-          ${face.watchDate ? `<span class="dm-date">${esc(face.watchDate.slice(0, 10))}</span>` : ""}</div></div></div>
+          ${lastWatched ? `<span class="dm-date">${esc(lastWatched)}</span>` : ""}</div></div></div>
     <div class="s-list">${rows}</div>
   </div>`;
   }

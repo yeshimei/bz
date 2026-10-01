@@ -308,7 +308,7 @@ describe('豆瓣抓取队列·frontmatter 契约', () => {
   it('pcardHtml fetching：海报遮罩 spinner 只在抓取中渲染', () => {
     const it: CinemaItem = {
       file: null, name: 'X', typeTag: '电影', group: '电影', watchDate: null, rating: null,
-      status: 2, wantDate: null, watchingDate: null, rewatches: [], lists: [], shelvedOnly: false, poster: null, review: null, genre: null, director: null, actors: null,
+      status: 2, wantDate: null, watchingDate: null, watchedDate: null, rewatches: [], lists: [], shelvedOnly: false, poster: null, review: null, genre: null, director: null, actors: null,
       region: null, year: null, releaseDate: null, doubanRating: null, doubanUrl: null, synopsis: null,
       duration: null, seasonText: null, hotComment: null,
     };

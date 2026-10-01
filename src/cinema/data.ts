@@ -65,6 +65,7 @@ export function parseMovieFile(file: TFile, app: App): CinemaItem | null {
   }
 
   const watchDate = fm['观影日期']?.toString() ?? null;
+  const watchedRaw = fm['已看日期']?.toString() ?? null;
   const rawRating = fm['评分'];
   const ratingNum =
     rawRating === undefined || rawRating === null || rawRating === ''
@@ -91,9 +92,13 @@ export function parseMovieFile(file: TFile, app: App): CinemaItem | null {
     watchDate,
     rating,
     status,
-    // 状态日期（想看日期/在看日期；已看沿用观影日期）：旧笔记无键 = null，不参与显示
+    // 状态日期（想看日期/在看日期）：旧笔记无键 = null，不参与显示
     wantDate: fm['想看日期']?.toString() ?? null,
     watchingDate: fm['在看日期']?.toString() ?? null,
+    // 已看日期（issue 536）：新键优先；旧笔记无键但状态已是已看 → 回落观影日期
+    //（那时观影日期就是当初标记已看盖的章），故未迁移的老笔记/手写笔记照旧显示得出已看日。
+    // 非已看态一律 null：一条刚导入的在看条目不该凭空冒出一个「已看」日（幽灵节点的根）
+    watchedDate: watchedRaw ?? (status === STATUS_WATCHED ? watchDate : null),
     rewatches: normalizeRewatches(fm['重看']),
     lists: normalizeLists(fm['片单']),
     shelvedOnly: fm['片单收纳'] === true,

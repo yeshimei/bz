@@ -19,7 +19,9 @@ import type { CinemaItem } from '../../src/cinema/state';
 function item(p: Partial<CinemaItem> & { name: string }): CinemaItem {
   return {
     file: null, name: p.name, typeTag: p.typeTag ?? '电影', group: p.group ?? '电影',
-    watchDate: p.watchDate ?? null, rating: p.rating ?? null, status: p.status ?? STATUS_WATCHED,
+    watchDate: p.watchDate ?? null,
+    // 已看日期（issue 536）：年书各轴读它，夹具按 data.ts 口径补（已看态缺省回落观影日期）
+    watchedDate: p.watchedDate ?? ((p.status ?? STATUS_WATCHED) === STATUS_WATCHED ? p.watchDate ?? null : null), rating: p.rating ?? null, status: p.status ?? STATUS_WATCHED,
     rewatches: p.rewatches ?? [],
     lists: p.lists ?? [],
     shelvedOnly: p.shelvedOnly ?? false,

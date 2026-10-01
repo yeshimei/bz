@@ -85,15 +85,18 @@ function openDouban(item: CinemaItem): void {
 }
 
 /** 快速标记状态（菜单/抽屉「标记在看」）：状态流转 + 刷新观影日期 + 域事件补发。
- *  「标记已看」已改走编辑窗（评分影评由用户在表单输入，saveEdit 落盘时补发同款域事件） */
+ *  「标记已看」已改走编辑窗（评分影评由用户在表单输入，saveEdit 落盘时补发同款域事件）；
+ *  两态的日期分工见状态切点：到已看盖「已看日期」，观影日期只管排序（两者同值）。 */
 async function markStatus(item: CinemaItem, target: '在看' | '已看', app: App): Promise<void> {
   const fromSt = item.status === STATUS_WANT ? 'want' : item.status === STATUS_WATCHING ? 'watching' : 'watched';
   const prevRating = item.rating && item.rating > 0 ? item.rating : null;
   // G7：先记快照，落盘失败回滚内存（saveEdit 同法）——否则面板显示与磁盘相反
-  const prev = { status: item.status, rating: item.rating, watchDate: item.watchDate, watchingDate: item.watchingDate };
+  const prev = { status: item.status, rating: item.rating, watchDate: item.watchDate, watchingDate: item.watchingDate, watchedDate: item.watchedDate };
   item.status = target === '已看' ? STATUS_WATCHED : STATUS_WATCHING;
   if (target === '在看') {
-    item.watchingDate = localNow().slice(0, 10); // 状态日期（在看日期记到达日）；已看沿用观影日期不另设键
+    item.watchingDate = localNow().slice(0, 10); // 状态日期（在看日期记到达日）
+  } else if (!item.watchedDate) {
+    item.watchedDate = localNow().slice(0, 10); // 到已看才盖「已看日期」；只增不删
   }
   // 评分不再参与状态编码（2026-09-30 拍板）：流转不动评分——已看没分就是没分，分值只由用户在表单给
   item.watchDate = localNow();
@@ -187,8 +190,10 @@ async function setListMembership(items: CinemaItem[], list: string, on: boolean,
     renderAll(app);
     return;
   }
+  // 通知在守卫之前：全员已在目标态时（弹层里点的那个片单，全组成员本来就都在）动作**已经**是目标态，
+  // 报一句终态不算谎报；只是没写盘、不必整刷，故守卫只挡 flash 与 renderAll
   notice(on ? `已把${who}归入「${list}」` : `已把${who}移出「${list}」`, 'success');
-  if (!changing.length) return; // 全员已在目标态：无盘上改动，不必整刷
+  if (!changing.length) return;
   changing.forEach((it) => markCardFlash(itemKey(it)));
   renderAll(app);
 }
@@ -231,8 +236,10 @@ async function renameList(oldName: string, newName: string, app: App): Promise<v
  *
  *  **多目标（issue 535）**：合并卡 = 全部季 + 特别篇一起归入/移出。勾选态 = **任一成员命中**
  *  （与 cardInList / 侧栏计数 / 片单筛选同一口径——卡片在片单视图里出现靠的就是这条），
- *  点一下 = 对全部成员执行同一动作。head 用卡片名与正脸海报（不是某一季的名字）。 */
-function openListPick(sec: HTMLElement, targets: CinemaItem[], app: App, head: { name: string; face: CinemaItem }): void {
+ *  点一下 = 对全部成员执行同一动作。head 用卡片名与正脸海报（不是某一季的名字）。
+ *
+ *  @param head.who 通知主语（合并卡传「剧名」+ 总数）；缺省由 setListMembership 按条目数兜底 */
+function openListPick(sec: HTMLElement, targets: CinemaItem[], app: App, head: { name: string; face: CinemaItem; who?: string }): void {
   const inList = (name: string): boolean => targets.some((t) => t.lists.includes(name));
   const countOf = (name: string): number => M.items.reduce((n, x) => n + (x.lists.includes(name) ? 1 : 0), 0);
   const rowHtml = (name: string): string =>
@@ -287,8 +294,9 @@ function openListPick(sec: HTMLElement, targets: CinemaItem[], app: App, head: {
     const btn = target.closest('[data-lp]') as HTMLElement | null;
     if (!btn) return;
     const name = btn.dataset.lp as string;
-    // 目标态取反 = 多目标勾选态（任一成员在即算「在」）的 toggle：部分成员在时点一下 = 补齐全部
-    void setListMembership(targets, name, !inList(name), app);
+    // 目标态取反 = 勾选态（任一成员在即算「在」）的 toggle：**勾着再点就是整组移出**——
+    // 勾选表达的是「这部剧在本片单里」，取消勾选即全部成员退出，不是补齐缺席的那几季
+    void setListMembership(targets, name, !inList(name), app, head.who);
     // 弹层勾选态就地翻转（renderAll 重建的是面板与卡片，弹层挂在 ovHost 上不随整刷换血；
     // 语义一致靠这里同步——落盘失败时 notifySaveError 有 toast，勾选漂移一次可接受）
     btn.classList.toggle('is-on');
@@ -298,7 +306,7 @@ function openListPick(sec: HTMLElement, targets: CinemaItem[], app: App, head: {
     const name = (input?.value ?? '').trim();
     if (!name) return;
     if (hasIllegalNameChar(name)) { notice(`${ILLEGAL_NAME_HINT}，请修改`, 'error'); return; }
-    void setListMembership(targets, name, true, app);
+    void setListMembership(targets, name, true, app, head.who);
     close();
   };
   el.querySelector('.j-lp-add')?.addEventListener('click', submitNew);
@@ -520,7 +528,7 @@ async function persistItem(item: CinemaItem, app: App, edit?: { prevName: string
     // → 展示英文星期；评分/(tags 列表项) 是纯数字/固定枚举，无需引号。
     // 状态单源键「状态」随建档必写（2026-09-30 拍板：评分编码 -1/0 退役）；
     // 评分只有真分值才落键；状态日期随建档落键（有才写，向后兼容旧档）
-    const stDates = `${item.wantDate ? `\n想看日期: "${item.wantDate}"` : ''}${item.watchingDate ? `\n在看日期: "${item.watchingDate}"` : ''}`;
+    const stDates = `${item.wantDate ? `\n想看日期: "${item.wantDate}"` : ''}${item.watchingDate ? `\n在看日期: "${item.watchingDate}"` : ''}${item.watchedDate ? `\n已看日期: "${item.watchedDate}"` : ''}`;
     const ratingLine = item.rating !== null && item.rating > 0 ? `\n评分: ${item.rating}` : '';
     let content = `---\ntags:\n- ${item.typeTag}\n状态: ${statusText(item.status)}\n观影日期: "${item.watchDate || localNow()}"${stDates}${ratingLine}\n海报: \n---\n`;
     // 海报已落库（issue 397：保存时下载进库）→ 正文 embed 与抓取路径同款插入，
@@ -571,6 +579,9 @@ async function persistItem(item: CinemaItem, app: App, edit?: { prevName: string
     // 状态日期只增不删（历史足迹）：进过想看/在看就一直留着，状态再流转也不抹（引号口径同观影日期）
     if (item.wantDate) fm['想看日期'] = item.wantDate;
     if (item.watchingDate) fm['在看日期'] = item.watchingDate;
+    // 已看日期（issue 536）：只在条目确实到过已看时才写——非已看态不落这个键（幽灵节点的根），
+    // 已看后即便状态退回在看也留着（那是真看过的历史凭据）
+    if (item.watchedDate) fm['已看日期'] = item.watchedDate;
     if (item.review) fm['影评'] = item.review;
     else delete fm['影评'];
     // 状态离开「想看」（在看/已看）→ 摘「片单收纳」：用户开始正式管理这条片，
@@ -992,7 +1003,8 @@ function bindCardTilt(sec: HTMLElement): void {
 }
 
 /** 移动端长按 → 底部抽屉（手势 core/dom.longPress；卡片每次重渲染重建后重挂）。
- *  合并卡（剧集按季合并）长按只出「查看全部」一条（同桌面右键口径）；左键点击也是它。 */
+ *  合并卡（剧集按季合并）长按出**片级动作集**（查看全部 + 片单归属，同桌面右键口径，issue 535）；
+ *  左键点击仍是「查看全部」。 */
 function attachLongPress(sec: HTMLElement, app: App): void {
   sec.querySelectorAll<HTMLElement>('.m-grid .pcard').forEach((c) => {
     // 原生长按菜单（保存图片/复制链接）让位给抽屉
@@ -2013,7 +2025,7 @@ async function saveNew(p: FormPayload, app: App, form: FormHandle): Promise<void
   const group = getGroupForTag(p.tag) ?? '其他';
   const st = p.st === '想看' ? STATUS_WANT : p.st === '在看' ? STATUS_WATCHING : STATUS_WATCHED;
   const today = localNow().slice(0, 10);
-  const it: CinemaItem = { file: null, name: p.name, typeTag: p.tag, group, status: st, rating: p.rating, watchDate: p.date, wantDate: st === STATUS_WANT ? today : null, watchingDate: st === STATUS_WATCHING ? today : null, rewatches: [], lists: [], shelvedOnly: false, review: p.review, poster: null, genre: null, director: null, actors: null, region: null, year: null, releaseDate: null, doubanRating: null, doubanUrl: null, synopsis: null, duration: null, seasonText: null, hotComment: null };
+  const it: CinemaItem = { file: null, name: p.name, typeTag: p.tag, group, status: st, rating: p.rating, watchDate: p.date, wantDate: st === STATUS_WANT ? today : null, watchingDate: st === STATUS_WATCHING ? today : null, watchedDate: st === STATUS_WATCHED ? today : null, rewatches: [], lists: [], shelvedOnly: false, review: p.review, poster: null, genre: null, director: null, actors: null, region: null, year: null, releaseDate: null, doubanRating: null, doubanUrl: null, synopsis: null, duration: null, seasonText: null, hotComment: null };
   try {
     if (app.vault.getAbstractFileByPath(`${M.folderPath}/《${p.name}》.md`)) {
       notice(DUP_NAME_HINT_FULL, 'warning');
@@ -2050,7 +2062,7 @@ async function saveEdit(item: CinemaItem, p: FormPayload, app: App, form: FormHa
   const st = p.st === '想看' ? STATUS_WANT : p.st === '在看' ? STATUS_WATCHING : STATUS_WATCHED;
   // G7 快照回滚 + P3-11（深审批A）：filePath 单独记字符串——真机 renameFile 原地更新同一
   // TFile 引用，比较对象路径（item.file === prev.file）永远相等，半失败检测必须走路径快照
-  const prev = { name: item.name, typeTag: item.typeTag, group: item.group, status: item.status, rating: item.rating, watchDate: item.watchDate, wantDate: item.wantDate, watchingDate: item.watchingDate, review: item.review, file: item.file, filePath: item.file?.path ?? null };
+  const prev = { name: item.name, typeTag: item.typeTag, group: item.group, status: item.status, rating: item.rating, watchDate: item.watchDate, wantDate: item.wantDate, watchingDate: item.watchingDate, watchedDate: item.watchedDate, review: item.review, file: item.file, filePath: item.file?.path ?? null };
   if (p.name !== item.name) {
     if (hasIllegalNameChar(p.name)) {
       notice(`${ILLEGAL_NAME_HINT}，请修改`, 'error');
@@ -2063,10 +2075,12 @@ async function saveEdit(item: CinemaItem, p: FormPayload, app: App, form: FormHa
   }
   item.name = p.name; item.typeTag = p.tag; item.group = group;
   item.status = st; item.rating = p.rating; item.watchDate = p.date; item.review = p.review;
-  // 状态日期（想看日期/在看日期）：状态真变了才盖今天的章，原地编辑沿用原有（观影日期判据同款口径）
+  // 状态日期（想看日期/在看日期/已看日期）：状态真变了才盖今天的章，原地编辑沿用原有
+  //（观影日期判据同款口径）。已看日期只增不删：已看→在看→再切回已看，记的仍是第一次到已看那天
   if (st !== prev.status) {
     if (st === STATUS_WANT) item.wantDate = localNow().slice(0, 10);
     else if (st === STATUS_WATCHING) item.watchingDate = localNow().slice(0, 10);
+    else if (!item.watchedDate) item.watchedDate = localNow().slice(0, 10);
   }
   try {
     await persistItem(item, app, { prevName: prev.name, prevTag: prev.typeTag });

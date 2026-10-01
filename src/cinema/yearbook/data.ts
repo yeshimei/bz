@@ -142,9 +142,10 @@ export function parseEpisodes(raw: string | null | undefined): number | null {
   return m ? Number(m[1]) : null;
 }
 
-/** 观影日（YYYY-MM-DD；带时刻的只取日期位） */
+/** 已看日（YYYY-MM-DD；带时刻的只取日期位）——年书各轴一律以**真看过**的日期为准（issue 536）：
+ *  观影日期是排序戳（建档/导入/标记在看都会刷它），拿它当「哪天看的」会把从没看过的条目算进来。 */
 export const dayOf = (it: CinemaItem): string | null =>
-  it.watchDate ? String(it.watchDate).slice(0, 10) : null;
+  it.watchedDate ? String(it.watchedDate).slice(0, 10) : null;
 
 const byDate = (a: CinemaItem, b: CinemaItem): number =>
   (dayOf(a) ?? '') < (dayOf(b) ?? '') ? -1 : 1;

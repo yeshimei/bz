@@ -3306,3 +3306,99 @@ tags: [电影]
     expect(railN(root, '.j-status', 'data-s="想看"')).toBe('1');
   });
 });
+
+/**
+ * 已看日期（issue 536，2026-10-01 用户报「影视还是在看，时间线已经有已看了」）
+ *
+ * 根因：frontmatter「观影日期」兼着**排序时间戳**（建档/导入/标记在看都会刷），渲染层却拿它当
+ * 「哪天看的」——一条刚导入的在看条目于是凭空多出一行「已看」。修法 = 拆分：观影日期继续当排序戳，
+ * 真看过的日子记在独立的「已看日期」键上（只增不删，同另两个状态日期）。这一段钉三条链路：
+ * 写盘不误落 / 解析能兜住老笔记 / 手动建档带上。
+ */
+describe('已看日期（issue 536）', () => {
+  beforeEach(() => { resetObsidianMocks(); resetCinemaState(); document.body.innerHTML = ''; });
+  afterEach(() => { closeOverlay(); });
+
+  const fmOf = (vault: MockVault, name: string): string => vault.files.get(`我的/影视/《${name}》.md`) ?? '';
+
+  it('标记在看 → 只写观影日期与在看日期，绝不落已看日期（幽灵已看行的源头）', async () => {
+    const { app, vault } = seedVault();
+    createOverlay(app);
+    const root = document.querySelector('[data-cinema-root]') as HTMLElement;
+    clickEl(pcardByName(root, '想看片'));
+    clickEl((root.querySelector('.cn-modal') as HTMLElement).querySelector('.j-edit'));
+    const form = root.querySelector('.cn-modal') as HTMLElement;
+    clickEl(form.querySelector('[data-f-st="在看"]'));
+    clickEl(form.querySelector('.j-save'));
+    await vi.waitFor(() => expect(hasNotice(/已保存「/)).toBe(true));
+    const fm = fmOf(vault, '想看片');
+    expect(fm).toContain('状态: 在看');
+    expect(fm).toMatch(/在看日期: "\d{4}-\d{2}-\d{2}"/);
+    expect(fm).not.toContain('已看日期');
+    expect(M.items.find((i) => i.name === '想看片')!.watchedDate).toBeNull();
+  });
+
+  it('编辑切「已看」→ 盖上已看日期；退回想看后该键保留（只增不删的操作痕迹）', async () => {
+    const { app, vault } = seedVault();
+    createOverlay(app);
+    const root = document.querySelector('[data-cinema-root]') as HTMLElement;
+    clickEl(pcardByName(root, '瑞克和莫蒂')); // 评分 0 → 在看，无已看日期
+    clickEl((root.querySelector('.cn-modal') as HTMLElement).querySelector('.j-edit'));
+    let form = root.querySelector('.cn-modal') as HTMLElement;
+    clickEl(form.querySelector('[data-f-st="已看"]'));
+    clickEl((root.querySelector('.cn-modal') as HTMLElement).querySelector('.j-save'));
+    // 等结果而不是等 toast：同一段里前面用例的「已保存」通知可能还挂在容器上
+    await vi.waitFor(() => expect(fmOf(vault, '瑞克和莫蒂')).toMatch(/已看日期: "\d{4}-\d{2}-\d{2}"/));
+    const stamped = M.items.find((i) => i.name === '瑞克和莫蒂')!.watchedDate;
+
+    // 再退回想看：状态与在看日期变，已看日期留着（那是真看过的凭据，不是排序戳）
+    // 等弹窗真收干净再开——保存后还有收层/重画若干微任务，抢在前面会 querySelector 到旧弹窗
+    await vi.waitFor(() => expect(root.querySelectorAll('.cn-modal').length).toBe(0));
+    clickEl(pcardByName(root, '瑞克和莫蒂'));
+    clickEl((root.querySelector('.cn-modal') as HTMLElement).querySelector('.j-edit'));
+    form = root.querySelector('.cn-modal') as HTMLElement;
+    clickEl(form.querySelector('[data-f-st="想看"]'));
+    clickEl((root.querySelector('.cn-modal') as HTMLElement).querySelector('.j-save'));
+    await vi.waitFor(() => expect(fmOf(vault, '瑞克和莫蒂')).toContain('状态: 想看'));
+    expect(fmOf(vault, '瑞克和莫蒂')).toMatch(/已看日期: "\d{4}-\d{2}-\d{2}"/);
+    expect(M.items.find((i) => i.name === '瑞克和莫蒂')!.watchedDate).toBe(stamped);
+  });
+
+  it('解析：已看态无新键回落观影日期（老笔记兜住），非已看态即便带日期也不算看过', () => {
+    const { app, vault } = seedVault();
+    const byName = (n: string): string | null => M.items.find((i) => i.name === n)!.watchedDate;
+    expect(byName('星际穿越')).toBe('2026-08-01'); // 已看（评分编码）无新键 → 回落观影日期
+    expect(byName('瑞克和莫蒂')).toBeNull();       // 在看：观影日期只是排序戳
+    expect(byName('想看片')).toBeNull();
+
+    // 显式键优先：看过又退回想看的条目，历史照样在
+    vault.files.set('我的/影视/《退回想看的老片》.md', md(`---
+tags: [电影]
+状态: 在看
+观影日期: 2026-10-01 20:00:00
+在看日期: 2026-10-01
+已看日期: 2026-09-16
+---`));
+    rebuildItems(app);
+    expect(byName('退回想看的老片')).toBe('2026-09-16');
+  });
+
+  it('手动建档为「已看」→ 模板写进已看日期（三状态各记各的到达日）', async () => {
+    const { app, vault } = seedVault();
+    createOverlay(app);
+    const root = document.querySelector('[data-cinema-root]') as HTMLElement;
+    clickEl(root.querySelector('[data-cinema-add]'));
+    // 切到已看会重画表单（评价区随之出现）——名称后填，免得填好的输入框被换血清空
+    clickEl((root.querySelector('.cn-modal') as HTMLElement).querySelector('[data-f-st="已看"]'));
+    const form = root.querySelector('.cn-modal') as HTMLElement;
+    (form.querySelector('.j-name') as HTMLInputElement).value = '手动已看片';
+    clickEl(form.querySelector('.j-save'));
+    await vi.waitFor(() => expect(vault.files.has('我的/影视/《手动已看片》.md')).toBe(true));
+    const fm = fmOf(vault, '手动已看片');
+    expect(fm).toContain('状态: 已看');
+    expect(fm).toMatch(/已看日期: "\d{4}-\d{2}-\d{2}"/);
+    expect(fm).not.toContain('在看日期');
+    rebuildItems(app);
+    expect(M.items.find((i) => i.name === '手动已看片')!.watchedDate).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+  });
+});

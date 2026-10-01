@@ -29,10 +29,17 @@ export interface CinemaItem {
   rating: number | null;
   status: number;
   /** 进入「想看」的日期（frontmatter「想看日期」，YYYY-MM-DD；想看建档 / 状态切回想看时记）。
-   *  与观影日期（=已看日期）分工：三状态各记各的到达日，旧笔记无键 = null 不显示 */
+   *  与观影日期分工：三状态各记各的到达日，旧笔记无键 = null 不显示 */
   wantDate: string | null;
   /** 进入「在看」的日期（frontmatter「在看日期」，YYYY-MM-DD；标记在看 / 编辑切在看时记） */
   watchingDate: string | null;
+  /** 到「已看」的日期（frontmatter「已看日期」，YYYY-MM-DD；编辑切已看时记）。
+   *  **与观影日期分工**（2026-10-01 拍板，issue 536）：观影日期是**排序时间戳**——建档/编辑/标记在看
+   *  都会刷它，所以它不能当「看过」的凭据（用户报的幽灵节点：一条刚导入的在看条目，时间线里凭空
+   *  多出一行「已看」，日期就是入库日）。凡是要表达「哪天看的」（详情时间线的已看/首看节点、
+   *  合集行副行、年书各轴），一律读本键。
+   *  只增不删（同另两个状态日期）；旧笔记无键 = 读取层在已看态回落观影日期（data.ts 单点兜底）。 */
+  watchedDate: string | null;
   /** 重温时刻列表（frontmatter「重看」数组，每项一次重温；2026-09-30 起记日期+时刻，旧档 date-only 照旧；建档/编辑不写此键）。
    *  「N 刷」口径唯一落点 rewatchCount（constants），卡片角标 / 详情徽标 / 重温通知共用 */
   rewatches: string[];

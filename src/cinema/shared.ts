@@ -248,7 +248,9 @@ export function detailModalHtml(it: CinemaItem, posterUrl: string | null): strin
   // 观影足迹时间线（2026-09-30 拍板：状态日期从日期徽标挪进时间线）：
   // 想看 → 在看 → 首看 → 重温逐条升序；无重温时首看行标「已看」，有重温改标「首看」；
   // 重温记录带时刻（同日多刷可辨），行内显示到分钟，旧 date-only 档照旧
-  const firstDate = (it.watchDate || '').slice(0, 10);
+  // 「已看」行读**已看日期**、不读观影日期（issue 536）：观影日期是排序时间戳，建档/导入/标记在看
+  // 都会刷它——照它渲染，一条从没看过的在看条目就会凭空多出一行「已看」（日期还是入库那天）
+  const firstDate = (it.watchedDate || '').slice(0, 10);
   const wantD = (it.wantDate || '').slice(0, 10);
   const watchingD = (it.watchingDate || '').slice(0, 10);
   const nodes: { d: string; tag: string; first?: boolean }[] = [];
@@ -323,7 +325,7 @@ export function seriesDetailModalHtml(card: SeriesCard, posterOf: (it: CinemaIte
   const rowOf = (it: CinemaItem, cls: string): string => {
     const sub = [
       it.group !== card.group ? esc(it.group) : '', // 特别篇常是电影/纪录片：标出组，免得看着像「某一季」
-      it.watchDate ? `观影 ${esc(it.watchDate.slice(0, 10))}` : '',
+      it.watchedDate ? `观影 ${esc(it.watchedDate.slice(0, 10))}` : '', // 同时间线口径：读已看日期，非排序用的观影日期（issue 536）
       it.seasonText ? esc(it.seasonText) : '', // 深审批 B #6：季集原文自带单位（「2季」），不再拼「 集」出「2季 集」叠字
     ].filter(Boolean).join(' · ');
     const r = it.rating;
@@ -343,13 +345,17 @@ export function seriesDetailModalHtml(card: SeriesCard, posterOf: (it: CinemaIte
     ...card.specials.map((it) => ({ it, special: true })),
   ].sort((a, b) => cmpByRelease(a.it, b.it) || (a.special === b.special ? 0 : a.special ? 1 : -1));
   const rows = rowSrc.map(({ it, special }) => rowOf(it, special ? ' s-row-special' : '')).join('');
+  // 头部日期徽章（issue 536）：取全卡**最晚的已看日期**——原来取 face.watchDate（正脸季的排序戳），
+  // 一条在看剧也会带出「今天」看着像看过日；改用真看过的凭据，一次都没看过就不出这一格
+  const watchedDays = rowSrc.map(({ it }) => it.watchedDate).filter((d): d is string => !!d).sort();
+  const lastWatched = (watchedDays[watchedDays.length - 1] ?? '').slice(0, 10);
   return `<div class="cn-modal cn-modal--detail">
     <div class="dm-head"><div class="dm-poster">${url ? `<img src="${esc(url)}" onerror="this.remove()">` : ''}</div>
       <div style="flex:1;min-width:0"><div class="dm-title">${esc(card.name)}<span class="dm-n">${seriesCountsText(card)}</span></div>
         <div class="dm-badges">${badge(typeColor(card.group), face.typeTag)}
           ${st !== STATUS_WATCHED ? badge(statusColor(st), statusText(st)) : ''}
           ${card.rating && card.rating > 0 ? `<span class="dm-stars">${getStarString(card.rating)}</span><span class="dm-rating">${Number(card.rating).toFixed(1)}</span>` : ''}
-          ${face.watchDate ? `<span class="dm-date">${esc(face.watchDate.slice(0, 10))}</span>` : ''}</div></div></div>
+          ${lastWatched ? `<span class="dm-date">${esc(lastWatched)}</span>` : ''}</div></div></div>
     <div class="s-list">${rows}</div>
   </div>`;
 }

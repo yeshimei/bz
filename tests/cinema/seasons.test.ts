@@ -14,6 +14,7 @@ import {
   type SeriesCard, type SeasonSlot,
 } from '../../src/cinema/seasons';
 import { cardHtml, pcardHtml, facePiecesHtml, seasonDotsHtml, seasonSegState, seriesStatus, seriesCountsText, seriesDetailModalHtml, detailModalHtml } from '../../src/cinema/shared';
+import { STATUS_WANT, STATUS_WATCHING } from '../../src/cinema/constants';
 import type { CinemaItem } from '../../src/cinema/state';
 
 /** 造条目（字段默认值不参与本组断言） */
@@ -28,6 +29,8 @@ function item(name: string, opts: Partial<CinemaItem> = {}): CinemaItem {
     shelvedOnly: opts.shelvedOnly ?? false,
     wantDate: opts.wantDate ?? null,
     watchingDate: opts.watchingDate ?? null,
+    // 已看日期（issue 536）：时间线的「已看/首看」行读它，不读观影日期（后者是排序戳）
+    watchedDate: opts.watchedDate ?? null,
   };
 }
 
@@ -232,8 +235,8 @@ describe('cinema 季圆点与合并卡 markup（D1 定稿形态）', () => {
  * 「之」刻意不作分隔符（复合词误合比漏合更伤）。
  */
 describe('cinema 特别篇前缀并入（只按片名前缀认）', () => {
-  const s1 = item('老友记 第一季', { watchDate: '2026-06-18', rating: 9.2, status: 2 });
-  const s2 = item('老友记 第二季', { watchDate: '2026-08-18', rating: 0, status: 1 });
+  const s1 = item('老友记 第一季', { watchDate: '2026-06-18', watchedDate: '2026-06-18', rating: 9.2, status: 2 });
+  const s2 = item('老友记 第二季', { watchDate: '2026-08-18', rating: 0, status: 1 }); // 在看：观影日期只是排序戳，无已看日期
   const film = (name: string, opts: Partial<CinemaItem> = {}) =>
     item(name, { group: '电影', typeTag: '电影', ...opts });
 
@@ -325,7 +328,7 @@ describe('cinema 特别篇前缀并入（只按片名前缀认）', () => {
   });
 
   it('季圆点只算季（特别篇不进圆点）；弹窗里特别篇顺在季后面，不分区段', () => {
-    const sp1 = film('老友记：重聚特辑', { watchDate: '2026-09-19', rating: 8.6, status: 2 });
+    const sp1 = film('老友记：重聚特辑', { watchDate: '2026-09-19', watchedDate: '2026-09-19', rating: 8.6, status: 2 });
     const sp2 = film('老友记 演唱会', { watchDate: null, rating: null, status: 0 });
     const series = mergeSeasonCards([s1, sp1, sp2, s2], true)[0] as SeriesCard;
     // 卡面：本组 2 季 → 2 个圆点，特别篇一个都不算
@@ -384,7 +387,7 @@ describe('详情弹窗足迹时间线（detailModalHtml）', () => {
 
   it('状态日期纳入时间线：想看 → 在看 → 已看（无重温）升序；全片单徽章重映厅排最前且在星标前', () => {
     const html = detailModalHtml(item('示例子', {
-      wantDate: '2026-09-01', watchingDate: '2026-09-14', watchDate: '2026-09-16', rating: 8.5,
+      wantDate: '2026-09-01', watchingDate: '2026-09-14', watchDate: '2026-09-16', watchedDate: '2026-09-16', rating: 8.5,
       rewatches: [], lists: ['诺兰补完计划', '重映厅'],
     }), null);
     expect(rowsOf(html)).toEqual(['2026-09-01|想看', '2026-09-14|在看', '2026-09-16|已看']);
@@ -395,14 +398,28 @@ describe('详情弹窗足迹时间线（detailModalHtml）', () => {
 
   it('有重温：首看改标「首看」；重温升序在后且带时刻（旧 date-only 档原样）', () => {
     const html = detailModalHtml(item('示例子二', {
-      wantDate: '2026-09-01', watchDate: '2026-09-16 20:00:00',
+      wantDate: '2026-09-01', watchDate: '2026-09-16 20:00:00', watchedDate: '2026-09-16',
       rewatches: ['2026-09-24 07:30:15', '2026-09-20'], lists: [],
     }), null);
     expect(rowsOf(html)).toEqual(['2026-09-01|想看', '2026-09-16|首看', '2026-09-20|', '2026-09-24 07:30|']);
   });
 
-  it('无任何足迹（无状态日期、无观影日期、无重温）不出时间线', () => {
-    const html = detailModalHtml(item('空白档', { watchDate: null, rewatches: [] }), null);
+  it('无任何足迹（无状态日期、无已看日期、无重温）不出时间线', () => {
+    const html = detailModalHtml(item('空白档', { watchDate: null, watchedDate: null, rewatches: [] }), null);
     expect(html).not.toContain('dm-tl');
+  });
+
+  it('幽灵已看行（issue 536）：观影日期只是排序戳——未到过的状态不凭空多一行「已看」', () => {
+    // 用户报的原图：豆瓣导入的在看条目，观影日期=入库那天（建档/导入/标记在看都会刷它）
+    const imp = item('刚导入的在看片', { status: STATUS_WATCHING, watchDate: '2026-10-01 16:12:42', watchingDate: '2026-10-01' });
+    expect(rowsOf(detailModalHtml(imp, null))).toEqual(['2026-10-01|在看']);
+
+    // 想看态同理：库里带日期，但不该凭空变成「看过」
+    const want = item('想看片', { status: STATUS_WANT, watchDate: '2026-09-30 22:03:29' });
+    expect(detailModalHtml(want, null)).not.toContain('dm-tl');
+
+    // 真看过的（已看日期在手）即便后来退回在看，行还在——那是历史，不是幽灵
+    const back = item('看过又退回来看', { status: STATUS_WATCHING, watchDate: '2026-10-01 20:00:00', watchedDate: '2026-09-16' });
+    expect(rowsOf(detailModalHtml(back, null))).toEqual(['2026-09-16|已看']);
   });
 });
