@@ -6,11 +6,17 @@
  * settings-panel.test.ts（面板内嵌渲染）承接。
  * 依赖 mock-obsidian-entry 的 Setting 链式 mock（MockButton 渲染真实 button 元素）。
  */
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, afterAll, afterEach, vi } from 'vitest';
 import BzPlugin, { BzSettingTab } from '../src/main';
+import { unloadSmartCat } from '../src/smartcat/index';
 import { MockVault } from './mock-vault';
 import { resetObsidianMocks } from './mock-obsidian-entry';
 import { openSettingsPanel } from '../src/settings-panel';
+
+// 插件加载经 onLayoutReady 触发 `void ensureSmartCat(app)`（fire-and-forget 常驻装配）。
+// 文件结束时若装配链仍在 await，jsdom 拆除后会跑到 mountCatContainer 读 document →
+// Unhandled Rejection；按生产卸载路径短路（竞态守卫以 initialized=false 中止装配）。
+afterAll(() => { unloadSmartCat(); });
 
 // 拦截面板打开（本页只断言「点击 → openSettingsPanel(app)」，面板内部行为归 settings-panel.test.ts）
 vi.mock('../src/settings-panel', async (importOriginal) => {

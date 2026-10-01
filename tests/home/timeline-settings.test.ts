@@ -1,3 +1,4 @@
+// @vitest-environment node
 /**
  * 首页时间线设置纯层契约（issue 287，2026-09-11 用户点名六项；issue 305 痕迹源替换）：
  *  - timelineKind：**旧形态**（无 kind）痕迹 → 类别，按文案前缀判；行为流事件由映射时直带

@@ -1,3 +1,4 @@
+// @vitest-environment node
 // @vitest-environment jsdom
 /**
  * clipbook 批 B 修复回归（孤点接线侧）：index.markAllUnreadRead（孤点授权区 48-73）

@@ -1,3 +1,4 @@
+// @vitest-environment node
 /**
  * 终局 review 修复批 B（样式与图标收编）回归测试。
  * 覆盖：

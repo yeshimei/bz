@@ -1,3 +1,4 @@
+// @vitest-environment node
 // @vitest-environment jsdom
 /**
  * 豆瓣影视名称索引资产层测试（issue 498 / ADR-0210）——core/douban-name-index.ts：

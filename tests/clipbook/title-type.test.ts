@@ -1,3 +1,4 @@
+// @vitest-environment node
 /**
  * 剪藏本文章标题字号回归（issue 300：桌面/移动阅读面顶栏文章标题降档）。
  * 断言读源文件文本（jsdom 不解析 css 文件；先例 review-mobile-type.test.ts）：

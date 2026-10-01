@@ -1,3 +1,4 @@
+// @vitest-environment node
 /**
  * 原型假层 FakeVault.offref 回归（diary 深查 A7，ADR-0122）：
  * 替身语义与宿主 Vault.offref 逐条对齐——按 ref 摘单个监听，不清空整表

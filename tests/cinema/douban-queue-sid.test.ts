@@ -1,3 +1,4 @@
+// @vitest-environment node
 // @vitest-environment jsdom
 /**
  * 解析缝生产通道测试（issue 498 / ADR-0209）：queryDoubanForPreview 在 **previewFn 未注入**

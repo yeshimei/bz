@@ -1,3 +1,4 @@
+// @vitest-environment node
 /**
  * 自动关联改名同步测试（issue 339，jsdom）：
  * - vault:md-renamed 消费：队列条目与基准哈希键 oldPath→newPath 去抖合并 rekey（hash/queuedAt/empty 随键保留）；

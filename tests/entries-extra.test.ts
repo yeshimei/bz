@@ -3,7 +3,7 @@
  * core/dom createSiteIcon 加载分支、main.ts onunload 清理分支。
  * ADR-0085/0087：news/clipping/movie 入口已随旧域退役，对应 describe 删除。
  */
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, afterAll, vi } from 'vitest';
 import { MockVault, mockAppWithVault } from './mock-vault';
 import { resetObsidianMocks } from './mock-obsidian-entry';
 import { setApp } from '../src/core/app';
@@ -12,6 +12,12 @@ import { emitDomainEvent } from '../src/core/domain-bus';
 import { ensureFavorites, openFavoritesPanel, addFavoriteItem, unloadFavorites } from '../src/favorites/index';
 import { createSiteIcon } from '../src/core/dom';
 import BzPlugin from '../src/main';
+import { unloadSmartCat } from '../src/smartcat/index';
+
+// 插件加载经 onLayoutReady 触发 `void ensureSmartCat(app)`（fire-and-forget 常驻装配）。
+// 文件结束时若装配链仍在 await，jsdom 拆除后会跑到 mountCatContainer 读 document →
+// Unhandled Rejection；按生产卸载路径短路（竞态守卫以 initialized=false 中止装配）。
+afterAll(() => { unloadSmartCat(); });
 
 let vault: MockVault;
 let app: any;

@@ -1,3 +1,4 @@
+// @vitest-environment node
 /**
  * 首页入口顺序纯函数（shared.applyOrder / visibleDomains / reorderTo）。
  *

@@ -1,3 +1,4 @@
+// @vitest-environment node
 // @vitest-environment jsdom
 /**
  * 影院豆瓣抓取核心测试（issue 303 / ADR-0129；ADR-0177 suggest / ADR-0178 三路检索链，

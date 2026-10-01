@@ -2,7 +2,45 @@
  * 测试环境共享 setup：jsdom 中补齐 Obsidian 运行时常用 API。
  * obsidian 模块的替换由 vitest.config.ts 的 resolve.alias 完成。
  */
-import { vi } from 'vitest';
+import { afterAll, vi } from 'vitest';
+import { webcrypto } from 'node:crypto';
+import { ReadableStream as NodeReadableStream, WritableStream as NodeWritableStream, TransformStream as NodeTransformStream } from 'node:stream/web';
+
+/**
+ * 补齐 VM realm 里缺失的 Node 全局。
+ *
+ * `pool: 'vmThreads'`（环境每 worker 建一次、每文件全新 VM 上下文）下，测试代码跑在
+ * 独立的 VM realm 里，`crypto.subtle` / `ReadableStream` 这类 Node 全局**不会**被带进去，
+ * 表现是加密域大面积 `Cannot read properties of undefined (reading 'importKey')`
+ * 与 `ReadableStream is not defined`。这里按需兜底（已存在的环境不动）。
+ */
+const VM_GLOBAL_POLYFILLS: Record<string, unknown> = {
+  ReadableStream: NodeReadableStream,
+  WritableStream: NodeWritableStream,
+  TransformStream: NodeTransformStream,
+};
+for (const [name, value] of Object.entries(VM_GLOBAL_POLYFILLS)) {
+  if (value && typeof (globalThis as Record<string, unknown>)[name] === 'undefined') {
+    (globalThis as Record<string, unknown>)[name] = value;
+  }
+}
+if ((globalThis as { crypto?: Crypto }).crypto?.subtle === undefined) {
+  Object.defineProperty(globalThis, 'crypto', { value: webcrypto, configurable: true, writable: true });
+}
+// `CryptoKey` / `SubtleCrypto` 这两个类没有公开导出（`node:crypto` 与 `webcrypto` 上都没有），
+// 只能从真实实现产出的实例上取原型构造器——否则 `toBeInstanceOf(CryptoKey)` 会因为
+// 拿到的是另一个类而假红。
+if (typeof (globalThis as Record<string, unknown>).CryptoKey === 'undefined') {
+  const probe = await webcrypto.subtle.importKey(
+    'raw',
+    new Uint8Array([0]),
+    { name: 'HMAC', hash: 'SHA-256' },
+    false,
+    ['sign'],
+  );
+  (globalThis as Record<string, unknown>).CryptoKey = Object.getPrototypeOf(probe).constructor;
+  (globalThis as Record<string, unknown>).SubtleCrypto = Object.getPrototypeOf(webcrypto.subtle).constructor;
+}
 
 /**
  * waitFor 默认超时加宽（1000ms → 5000ms）。
@@ -33,6 +71,41 @@ const WAIT_FOR_TIMEOUT_MS = 5000;
     Object.defineProperty(vi, 'waitFor', { value: patched, writable: true, configurable: true });
   }
 }
+
+/**
+ * 给「发出去没等」的异步收尾一个跑完的窗口（必须在环境拆除之前）。
+ *
+ * 生产代码里有多处 fire-and-forget（`void manager.removeNote(...).then(渲染).catch(通知)`、
+ * 智能猫的异步挂载等）。测试触发之后就结束了，这些收尾会拖到**文件环境拆除之后**才执行，
+ * 那时 `document` 已被删掉 → `TypeError: Cannot read properties of undefined (reading
+ * 'getElementById' / 'createElement')`。线程池下它们偶发地被掩盖，`pool: 'vmThreads'`
+ * 下会稳定冒出来，并被计成 Unhandled Rejection（整个 run 退出码变红）。
+ *
+ * 这里在 afterAll 里排空微任务 + 让出一轮宏任务：既让收尾在 document 还在时跑完，
+ * 又几乎不花时间。宏任务用**模块加载时抓到的真实实现**，避免被文件内 vi.useFakeTimers 拦掉。
+ */
+const realMacrotask: (cb: () => void) => unknown =
+  typeof setImmediate === 'function' ? setImmediate : (cb) => setTimeout(cb, 0);
+const realTimeout = setTimeout;
+/**
+ * 排空窗口。**这是本文件唯一需要调的数**，取值逻辑：
+ *
+ * - 几轮宏任务不够：真实收尾里有 `setTimeout` 兜底与**真实 PBKDF2**（保险库预览解密）,
+ *   它们既不在微任务队列里，也无法从 `process._getActiveRequests()` 观测到
+ *   （实测 threadpool 加密请求恒为 0），只能在**真实时间**上等。
+ * - 10ms 能把「5 个未处理拒绝」压到 1 个，说明差的就是最后一段真实异步尾巴；
+ *   60ms 给到 6 倍富余，全量连跑 4 遍零错误（见提交说明）。
+ * - 成本 = 60ms × 文件数 / worker 数 ≈ 60ms × 588 / 16 ≈ 2.2s（全量 ~50s 的 4%）。
+ *
+ * 为什么不逐个去修那几处 fire-and-forget：它们是**开放集合**（加密预览、复制、
+ * 智能猫挂载…，且新代码会继续用同一模式），且 `void x.then(渲染)` 里的 promise
+ * 没有对外句柄，测试无法 await。窗口排空是唯一不依赖逐个定位、对新代码也自动生效的做法。
+ */
+const DRAIN_MS = 60;
+afterAll(async () => {
+  await new Promise<void>((resolve) => realTimeout(() => resolve(), DRAIN_MS));
+  await new Promise<void>((resolve) => realMacrotask(() => resolve()));
+});
 
 // 补齐 jsdom 缺失的 API（node 环境跳过：数据层测试不依赖 DOM）
 if (typeof window !== 'undefined' && !window.getSelection) {

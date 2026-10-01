@@ -1,3 +1,4 @@
+// @vitest-environment node
 /**
  * 自动关联裁判接入 Jev（issue 392 / ADR-0173）：多维判定 + 失败回落 LLM。
  *

@@ -3,12 +3,18 @@
  * 六条复习命令 name 从括号式改动宾式（命令面板顺读；id 一律不动，本批不新增不改命令 id）。
  * 命名对照：跳转逾期复习 / 选择复习难度 / 复习评级：忘了·困难·一般·简单。
  */
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterAll } from 'vitest';
 import BzPlugin from '../../src/main';
+import { unloadSmartCat } from '../../src/smartcat/index';
 import { setApp } from '../../src/core/app';
 import { setSettingsProvider } from '../../src/core/settings-provider';
 import { MockVault } from '../mock-vault';
 import { resetObsidianMocks } from '../mock-obsidian-entry';
+
+// 插件加载经 onLayoutReady 触发 `void ensureSmartCat(app)`（fire-and-forget 常驻装配）。
+// 文件结束时若装配链仍在 await，jsdom 拆除后会跑到 mountCatContainer 读 document →
+// Unhandled Rejection；按生产卸载路径短路（竞态守卫以 initialized=false 中止装配）。
+afterAll(() => { unloadSmartCat(); });
 
 const registeredCommands: any[] = [];
 

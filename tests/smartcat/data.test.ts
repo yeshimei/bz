@@ -1,3 +1,4 @@
+// @vitest-environment node
 /**
  * smartcat 数据层测试：smartcat.json 读写 + 记忆流结构归一化 + .vec 路径。
  * ADR-0021：迁移路径已删除——旧 localStorage/旧文件一律不再读取（无数据产生）。

@@ -1,3 +1,4 @@
+// @vitest-environment node
 /**
  * review 域深审批 A「算法与数据层」回归集（2026-09-19）：
  * - A7：fsrs.currentR 单源（原 app/queue/stats/render/stats-ui 五处同式复写；本批收编

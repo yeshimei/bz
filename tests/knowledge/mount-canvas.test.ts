@@ -9,9 +9,10 @@
  * 建议链路全程 mock/stub（**不联网、不跑 AI**）：只替换 `generateSuggestions` / `markSuggestion`，
  * `mergeSuggestions` 等其余导出保持真实实现（用 importOriginal 展开）。
  */
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, afterAll, afterEach, vi } from 'vitest';
 import { Platform } from 'obsidian';
 import BzPlugin from '../../src/main';
+import { unloadSmartCat } from '../../src/smartcat/index';
 import { MockVault, mockAppWithVault } from '../mock-vault';
 import { clearNotices, hasNotice, mockMarkdownRenderer, resetObsidianMocks } from '../mock-obsidian-entry';
 import { setApp } from '../../src/core/app';
@@ -27,6 +28,11 @@ import {
   openMountTree,
 } from '../../src/knowledge/mount-canvas';
 import { suggestionId } from '../../src/knowledge/mount-suggest';
+
+// 插件加载经 onLayoutReady 触发 `void ensureSmartCat(app)`（fire-and-forget 常驻装配）。
+// 文件结束时若装配链仍在 await，jsdom 拆除后会跑到 mountCatContainer 读 document →
+// Unhandled Rejection；按生产卸载路径短路（竞态守卫以 initialized=false 中止装配）。
+afterAll(() => { unloadSmartCat(); });
 
 /* ---------- 建议链路替身（真实 mergeSuggestions 保留） ---------- */
 const suggestMock = vi.hoisted(() => ({

@@ -2,6 +2,9 @@ node_modules/
 *.log
 *.stackdump
 .pi-subagents/
+# vitest 模组转译的临时文件（根目录 _tmp_<pid>_<hash>，零字节），跑测试时反复出现
+_tmp_*
+
 
 coverage/
 viz/

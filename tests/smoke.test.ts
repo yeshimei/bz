@@ -2,8 +2,9 @@
  * 骨架加载冒烟（ticket 01）：mock obsidian 环境下插件可加载、
  * 25 命令裸注册、ribbon 主入口、设置页挂载、卸载清理命令。
  */
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, afterAll, vi } from 'vitest';
 import BzPlugin, { BzSettingTab } from '../src/main';
+import { unloadSmartCat } from '../src/smartcat/index';
 import { MockVault } from './mock-vault';
 import { resetObsidianMocks, getNoticeMessages, hasNotice, clearNotices } from './mock-obsidian-entry';
 import { notify } from '../src/core/notice';
@@ -18,6 +19,12 @@ vi.mock('../src/memo', async (importOriginal) => ({
   ...(await importOriginal<Record<string, unknown>>()),
   ensureFileSync: syncSpies.ensureFileSync,
 }));
+
+// 插件骨架加载会经 onLayoutReady 触发 `void ensureSmartCat(app)`（fire-and-forget 常驻装配）。
+// 本文件只冒烟命令/入口，不消费小橘；文件结束时若装配链仍卡在 await，jsdom 环境拆除后它会继续
+// 跑到 mountCatContainer 读 document → Unhandled Rejection。按生产卸载路径短路它（ensureSmartCat
+// 各 await 后的竞态守卫以 initialized=false 中止装配）。
+afterAll(() => { unloadSmartCat(); });
 /** 构造 mock app（workspace/vault/commands/metadataCache 最小面） */
 function makeMockApp() {
   const vault = new MockVault();

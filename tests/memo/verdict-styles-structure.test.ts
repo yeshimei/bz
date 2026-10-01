@@ -1,3 +1,4 @@
+// @vitest-environment node
 /**
  * memo styles.css 结构守卫（拍板执行批收口发现）：移动端收口段的「5) 触控热区抬档」
  * 一组曾被机械悬浮包裹误关进嵌套 (hover:hover) 块——触屏无悬浮，整组 40/44px 抬档失效。

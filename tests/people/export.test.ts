@@ -1,3 +1,4 @@
+// @vitest-environment node
 // @vitest-environment jsdom
 /**
  * 脸谱按需导出驱动层测试（issue 485）。

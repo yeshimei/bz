@@ -1,3 +1,4 @@
+// @vitest-environment node
 /**
  * 全站收尾 C 包（enh-sweep-c：移动端与样式细节扫尾）回归测试。
  * 覆盖：

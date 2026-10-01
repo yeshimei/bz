@@ -1,3 +1,4 @@
+// @vitest-environment node
 // @vitest-environment jsdom
 /**
  * RSS 源库资产层测试（issue 495 / ADR-0208）——core/rss-catalog.ts：

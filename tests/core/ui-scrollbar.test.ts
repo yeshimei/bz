@@ -1,3 +1,4 @@
+// @vitest-environment node
 /**
  * issue 277 / ADR-0122：隐藏滚动条收敛为界面级单源（src/core/ui/components.css）回归：
  * - core 一条通杀规则覆盖「bz- 前缀类/ID + 面板壳整树 + 非 bz 前缀遗留弹层」，刻意不用 * 通配

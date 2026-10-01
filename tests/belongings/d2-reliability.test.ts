@@ -1,3 +1,4 @@
+// @vitest-environment node
 /**
  * 归物本 D2 可靠写契约回归（试点域写路径迁移）：
  * ①并发写不互踩——并发 saveDatabase 按 per-path 队列串行落盘，终态为后写者完整内容

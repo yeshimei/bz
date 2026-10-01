@@ -1,3 +1,4 @@
+// @vitest-environment node
 /**
  * smartcat 配置归一覆盖率补测：非法类型字段回退默认（speakInterval/speakProbability/
  * contextLength/contextSplitRatio/noteSource/proactiveCare）、proactiveWeeklyCap 与

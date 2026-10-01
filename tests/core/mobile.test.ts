@@ -1,3 +1,4 @@
+// @vitest-environment node
 /**
  * src/core/mobile.ts isMobileEnv（移动端环境判定）。
  * 「移动端默认全屏」特性已全链退役（相关 helper 与设置键均已删除），仅保留环境判定覆盖。

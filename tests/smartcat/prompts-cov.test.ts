@@ -1,3 +1,4 @@
+// @vitest-environment node
 /**
  * smartcat prompt 生成覆盖率补测：字数乘数（traits 推导/互动权重/消息长度/PAD 因子）、
  * PAD 心情因子四阈值、性格描述全分支合成、心情详情/亮点/emoji 分档、

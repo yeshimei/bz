@@ -1,3 +1,4 @@
+// @vitest-environment node
 /**
  * 影院类型判定（issue 395；ADR-0181 补 LLM 回落）：豆瓣字段 → Jev Choice → 闭合词表选一；
  * Jev 不可用回落 LLM（题面同样给闭合词表 + 回执严格校验）。

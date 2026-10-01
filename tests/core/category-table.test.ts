@@ -1,3 +1,4 @@
+// @vitest-environment node
 // @vitest-environment jsdom
 /**
  * 分类表运行时（issue 478 阶段 A）测试：覆盖

@@ -1,3 +1,4 @@
+// @vitest-environment node
 /**
  * issue 270（review 批）回归测试：quiz 会话弹窗样式恢复 + 统计/历史弹窗内联收编。
  * 覆盖：

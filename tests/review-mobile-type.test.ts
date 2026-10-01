@@ -1,3 +1,4 @@
+// @vitest-environment node
 /**
  * 复习计划移动端字号体系回归（2026-09-12 评审：面板在手机上整体偏小，按层级放大）。
  * 断言读源文件文本（jsdom 不解析 css 文件；先例 review-fix-b.test.ts / enh-sweep-c.test.ts）：

@@ -1,3 +1,4 @@
+// @vitest-environment node
 /**
  * issue 270 knowledge 三处无样式 UI 补齐回归：
  * - .bz-kb-brand（主壳面板头品牌区，ui.ts 桌面/移动两处）、.bz-lit-run-btn（影像批量处理钮 play/square 图标）、

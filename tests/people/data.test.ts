@@ -1,3 +1,4 @@
+// @vitest-environment node
 /**
  * 脸谱域数据层测试（issue 435 建域；467 / ADR-0194 改走保库记录）：PeopleStore 门面（同 API）
  * 的 upsert 增改、导入记录与脸谱写入、删除与不存在人物报错；明文 people.json 不再产生；

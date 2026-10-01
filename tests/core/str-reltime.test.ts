@@ -1,3 +1,4 @@
+// @vitest-environment node
 /**
  * core/ui/str relTime 跨域单源回归（review-deep 一致#4 收编）：
  * - 档位与说法 = favorites 原版蓝本拍板（「N 分钟前」带空格，7 天封顶回落 M-D）；

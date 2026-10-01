@@ -1,3 +1,4 @@
+// @vitest-environment node
 /**
  * 记忆目录数据层测试（ADR-0069 记忆目录流）：扫描/日记拆段/节流合并/增删改/目录清理/失效自愈。
  * vault 经注入 adapter（内存 map 模拟），memory.ts 契约 API 经 backend 桩承接。

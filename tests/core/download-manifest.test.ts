@@ -1,3 +1,4 @@
+// @vitest-environment node
 // @vitest-environment jsdom
 /**
  * 下载清单（ADR-0203 / issue 480，core/download-manifest.ts）测试。
