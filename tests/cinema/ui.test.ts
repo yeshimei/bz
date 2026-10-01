@@ -663,7 +663,7 @@ describe('cinema 风格化面板（issue 236）', () => {
     expect(root.querySelector('.j-sort button.is-on')?.textContent).toBe('按评分');
   });
 
-  it('AI 页按需触发：切页不自动发请求；j-back 回列表；工具再点回列表（toggle）', () => {
+  it('AI 页按需触发：切页不自动发请求；sp-back 回列表；工具再点回列表（toggle）', () => {
     const { app } = seedVault();
     createOverlay(app);
     const root = document.querySelector('[data-cinema-root]') as HTMLElement;
@@ -672,13 +672,21 @@ describe('cinema 风格化面板（issue 236）', () => {
     expect(M.aiRunning).toBe(false);
     expect(root.querySelector('.sp-head .sp-title')?.textContent).toBe('AI 荐片');
     expect(root.querySelector('[data-cinema-ai-start]')?.textContent).toContain('开始推荐');
-    clickEl(root.querySelector('.j-back'));
+    clickEl(root.querySelector('.sp-back'));
     expect(M.view).toBe('list');
     expect(root.querySelector('.d-head')).toBeTruthy();
     clickEl(root.querySelector('[data-tool="ai"]'));
     expect(M.view).toBe('ai');
     clickEl(root.querySelector('[data-tool="ai"]'));
     expect(M.view).toBe('list');
+  });
+
+  it('AI 返回钮委托收窄到 .sp-back（复审 P2②：不再误撞换面表单的背面容器 .j-back）', () => {
+    // 源码文本守卫：委托目标必须是钮本体 .sp-back——换面表单的背面容器也叫 .j-back，
+    // 按它委托时点背面任何内容都会静默切视图（M.view='list' + renderAll）。
+    const src = readFileSync(join(process.cwd(), 'src/cinema/ui.ts'), 'utf8');
+    expect(src, '委托认钮本体').toMatch(/closest\('\.sp-back'\)/);
+    expect(src, '不再按 .j-back 委托（与换面背面容器同名）').not.toMatch(/closest\('\.j-back'\)/);
   });
 
   it('进 AI 页筛选段熄灭、底片固定到入口；返回恢复先前选中高亮（桌面）', () => {
@@ -697,7 +705,7 @@ describe('cinema 风格化面板（issue 236）', () => {
     expect(root.querySelector('.rail-sec .rail-item.is-on'), '筛选段熄灭').toBeNull();
     expect(root.querySelector('.rail-foot .rail-item.is-on')?.textContent, '底片固定到 AI 荐片入口').toContain('AI 荐片');
     // 返回：先前选中的高亮原样恢复，入口熄灭
-    clickEl(root.querySelector('.j-back'));
+    clickEl(root.querySelector('.sp-back'));
     expect(M.view).toBe('list');
     expect(root.querySelector('.rail-item.is-on')?.textContent).toContain('已看');
     expect(root.querySelector('.rail-foot .rail-item.is-on'), '离开 AI 页入口不再点亮').toBeNull();

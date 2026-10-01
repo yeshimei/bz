@@ -129,7 +129,7 @@ export function emptyPageHtml(filtered: boolean): string {
 
 /** ai/stat 页头（返回钮 + 标题 + 计数） */
 export function spHeadHtml(title: string, cnt: string): string {
-  return `<div class="sp-head"><button class="sp-back j-back">${iconSpan(ICON.back)}</button><span class="sp-title">${esc(title)}</span><span class="sp-cnt j-spcnt">${cnt}</span></div>`;
+  return `<div class="sp-head"><button class="sp-back">${iconSpan(ICON.back)}</button><span class="sp-title">${esc(title)}</span><span class="sp-cnt j-spcnt">${cnt}</span></div>`;
 }
 
 /** 渲染输入快照（一次渲染的全部数据与回调，显式入参——纯层禁读模块态） */

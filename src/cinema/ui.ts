@@ -17,7 +17,7 @@ import { notice, notifySaveError } from '../core/notice';
 import { openFlowDialog } from '../core/flow-dialog';
 import { emitDomainEvent } from '../core/domain-bus';
 import { escManager, registerPanelEsc, unregisterPanelEsc } from '../core/esc-manager';
-import { trapPanelFocus } from '../core/ui/focus-trap';
+import { firstFocusable, trapPanelFocus } from '../core/ui/focus-trap';
 import { isMobileEnv } from '../core/mobile';
 import { fitRotatedBox } from '../core/landscape';
 import { topifyZ, longPress } from '../core/dom';
@@ -1713,8 +1713,8 @@ function openForm(sec: HTMLElement, item: CinemaItem | null, app: App, presetSt?
    *
    *  动效 = 纯 CSS 换面编排（2026-10-01 撤 3D 后重做）：行为层只切 is-flipped 一个类——
    *  正面快出 / 背面按弹窗语汇浮现 / 内容分段接力 / 收口微光，全在 styles.css 换面段
-   *  （cnModalIn / cnRiseIn / cnSheen 复用，时长曲线走台账 token）；不再有 animationend
-   *  清理与光照遮罩。
+   *  （cnModalIn / cnRiseIn / cnSheen 复用，时长曲线走台账 token）；不再有 is-flipping
+   *  清理与光照遮罩，animationend 只剩一处用途：入场毕的焦点接力（见下）。
    *  起手前先强制一次布局：把 renderBack 插入整卡 + 海报解码的排版开销结在过渡之前，
    *  否则过渡首帧要同时做「插入 + 重排 + 合成」，表现为起手一顿。 */
   const flipToBack = (): void => {
@@ -1723,6 +1723,19 @@ function openForm(sec: HTMLElement, item: CinemaItem | null, app: App, presetSt?
     const start = (): void => {
       if (!el.isConnected) return; // 过渡起手前弹窗已被关掉（用户手快）
       flipEl.classList.add('is-flipped');
+      // 焦点接力（复审 P1①）：正面「解析」钮在 .16s 时被 visibility 摘出焦点序，焦点掉到 body；
+      // 背面浮现完（cnModalIn 的 animationend，.34s）若焦点还没落回弹窗，交给背面首个可交互项——
+      // 键盘用户无缝续上，鼠标用户无感（程序化聚焦不亮焦点环）。
+      // 只认背面本体：内容分段接力的动画同事件冒泡（子元素先结束），不筛会在入场半途提前交接。
+      const backFace = flipEl.querySelector<HTMLElement>('.form-face--back');
+      if (!backFace) return;
+      const onEnd = (e: AnimationEvent): void => {
+        if (e.target !== backFace) return;
+        backFace.removeEventListener('animationend', onEnd);
+        if (!el.isConnected || el.contains(document.activeElement)) return; // 焦点已在他处 → 不抢
+        firstFocusable(backFace)?.focus({ preventScroll: true });
+      };
+      backFace.addEventListener('animationend', onEnd);
     };
     // 推到下一帧起手（jsdom 无 rAF 时退回定时器，测试不必区分两种环境）
     if (typeof requestAnimationFrame === 'function') requestAnimationFrame(start);
@@ -2461,7 +2474,9 @@ function bindMidnight(sec: HTMLElement, app: App, hoverable = hoverCapable()): v
       }
       return;
     }
-    const back = t.closest('.j-back') as HTMLElement | null;
+    // AI 页返回钮（.sp-back 钮本体）→ 回列表。原先按 .j-back 匹配，而换面表单的背面容器
+    // 同名（.j-back）——点背面任何内容都会撞进来悄悄切视图（复审 P2②，2026-10-01 收窄）。
+    const back = t.closest('.sp-back') as HTMLElement | null;
     if (back) { M.view = 'list'; renderAll(app); return; }
     const railBtn = t.closest('[data-g],[data-s],[data-l]') as HTMLElement | null;
     if (railBtn) {

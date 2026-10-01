@@ -182,7 +182,9 @@
 /* ---------- 午夜场 · 弹窗与子页面（完整功能版；视觉语言延续探索稿：纸白/金/衬线） ---------- */
 /* 覆盖层：absolute 挂在面板根内（桌面 900×620 与移动 .mob 各自 contained） */
 .bz-cinema--midnight .cn-ovl{position:absolute;inset:0;z-index:50;background:rgba(20,16,8,.45);display:flex;align-items:center;justify-content:center;padding:20px}
-.bz-cinema--midnight .cn-modal{background:var(--panel);border:1px solid var(--line);border-radius:var(--bz-radius-md);box-shadow:0 18px 48px #0005,0 2px 10px #0003;padding:18px 20px;max-width:min(430px,100%);max-height:100%;overflow-y:auto;position:relative}
+/* 滚动链收口（复审 P1②）：卡片自己就是滚动层，滚到底不能把滚动链递给背后页面（原来面板
+   列表会跟着滚）；换面层 `.cn-ovl--flip` 同段另有同款声明。 */
+.bz-cinema--midnight .cn-modal{background:var(--panel);border:1px solid var(--line);border-radius:var(--bz-radius-md);box-shadow:0 18px 48px #0005,0 2px 10px #0003;padding:18px 20px;max-width:min(430px,100%);max-height:100%;overflow-y:auto;overscroll-behavior:contain;position:relative}
 .bz-cinema--midnight .cn-modal-title{font-family:"Noto Serif SC",SimSun,serif;font-size:var(--bz-font-title);font-weight:700;letter-spacing:.08em;color:var(--ink);margin-bottom:var(--bz-space-md);padding-right:var(--bz-space-xl)}
 /* 详情弹窗 */
 .bz-cinema--midnight .dm-head{display:flex;gap:14px;align-items:flex-start}
@@ -370,15 +372,22 @@
    正面：.16s 淡出上移；visibility 走同长离散过渡——可见性离散插值在 progress<1 时仍算
    visible、末尾才 hidden，所以淡出全程可读，静止后又从 Tab 序与点击命中里退出。
    背面：基础态隐形；is-flipped 起手 .06s 后浮现（cnModalIn 给曲线与位移）。
+   入场期不可点（复审 P1①）：背面 pointer-events 基础态 none，is-flipped 上挂一条离散过渡
+   把放开时刻定到入场毕——.34s = .06s 延迟 + .28s 浮现，之前点卡片不落到任何控件上
+   （否则透明期的保存钮、徽标会被误点）；正面 is-flipped 起手即 pointer-events:none，
+   淡出的 .16s 里点它也不会二次触发解析。allow-discrete 是离散属性过渡的开关，旧引擎
+   不认时退化成「立刻可点」，与改前等同、无回归。
    overflow:hidden：裁微光扫过的光带（光带比卡面宽，不裁会飞出圆角）。 */
 .bz-cinema--midnight .form-face--front{transition:opacity var(--cn-m-fast) ease,transform var(--cn-m-fast) ease,visibility var(--cn-m-fast) linear}
-.bz-cinema--midnight .form-face--back{opacity:0;visibility:hidden;overflow:hidden}
-.bz-cinema--midnight .form-flip.is-flipped .form-face--front{opacity:0;visibility:hidden;transform:translateY(-6px)}
+.bz-cinema--midnight .form-face--back{opacity:0;visibility:hidden;overflow:hidden;pointer-events:none}
+.bz-cinema--midnight .form-flip.is-flipped .form-face--front{opacity:0;visibility:hidden;transform:translateY(-6px);pointer-events:none}
 .bz-cinema--midnight .form-flip.is-flipped .form-face--back{opacity:1;visibility:visible;
+  transition:pointer-events;transition-delay:.34s;transition-behavior:allow-discrete;
   animation:cnModalIn var(--cn-m-base) var(--cn-e-out) both;animation-delay:.06s}
 /* 背面内容分段接力（复用详情弹窗 cnRiseIn——同一种「信息逐段显影」语言）。
    槽位按 .j-back 子元素序号手排（正文里 2/3 是两个 pick-list，被排除）：dm-head 与背面
-   同起手 .06s，「豆瓣信息」段头 .09s，信息行 .12–.24s 逐行升入，余下段收 .24s，保存条压轴 .27s。
+   同起手 .06s，「豆瓣信息」段头 .09s，信息行 .12–.30s 逐行升入，余下段收 .30s，保存条压轴 .33s。
+   （2026-10-01 复审 P2①：原阶梯 9 号位后就齐发 .24s，满数据六块同刻太夯；行阶梯延两档。）
    pick-list 必须排除：收起态靠 opacity:0 + max-height:0，接力动画的 forwards 填充会把它的
    opacity 钉死在 1，展开/收起的淡入就废了。 */
 .bz-cinema--midnight .form-flip.is-flipped .form-face--back .j-back > :not(.dm-pick-list),
@@ -389,8 +398,10 @@
 .bz-cinema--midnight .form-flip.is-flipped .form-face--back .j-back > :nth-child(6){animation-delay:.15s}
 .bz-cinema--midnight .form-flip.is-flipped .form-face--back .j-back > :nth-child(7){animation-delay:.18s}
 .bz-cinema--midnight .form-flip.is-flipped .form-face--back .j-back > :nth-child(8){animation-delay:.21s}
-.bz-cinema--midnight .form-flip.is-flipped .form-face--back .j-back > :nth-child(n+9){animation-delay:.24s}
-.bz-cinema--midnight .form-flip.is-flipped .form-face--back > .dm-actions{animation-delay:.27s}
+.bz-cinema--midnight .form-flip.is-flipped .form-face--back .j-back > :nth-child(9){animation-delay:.24s}
+.bz-cinema--midnight .form-flip.is-flipped .form-face--back .j-back > :nth-child(10){animation-delay:.27s}
+.bz-cinema--midnight .form-flip.is-flipped .form-face--back .j-back > :nth-child(n+11){animation-delay:.30s}
+.bz-cinema--midnight .form-flip.is-flipped .form-face--back > .dm-actions{animation-delay:.33s}
 /* 收口微光：一道金色斜光一次性扫过背面（冲量档 = 「表单换面这类一次性状态切换」的定档所在）。
    光带走 transform（台账只许 transform/opacity），46% 宽、两端透明羽化；delay .12s 与接力波
    同起，扫过时内容正在逐段显影；扫完停在 opacity:0（forwards），不扰后续操作。 */
