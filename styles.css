@@ -17597,59 +17597,70 @@ canvas { display: block; }
 .bz-cinema--midnight .f-choice-btn .dot{width:6px;height:6px;border-radius:50%}
 .bz-cinema--midnight .f-choice-btn.is-on{background:var(--gold);border-color:var(--gold);color:#fff;font-weight:600}
 .bz-cinema--midnight .f-choice-btn.is-on .dot{outline:1.5px solid #fff}
-/* ── 添加影视：双面翻转卡片（issue 395）——正面名称+状态 → 解析 → 翻到背面看全部信息。
-     3D 真实感三件套（2026-09-21 重做；原版 perspective:1400px + 单段 rotateY 被评「很假」）：
-     ① 透视拉近到 900px：旋转时能读出厚度与侧面，而不是平面翻片；
-     ② 翻转走 keyframes，中段 translateZ 抬起 22px——卡片像被捏起来翻过去再贴合落回。
-        过渡只能描述两端，做不出中段抬起，所以这里必须用动画，见行为层 flipToBack；
-     ③ 两面各压一层光照遮罩：正向受光 → 侧转背光变暗 → 背面翻正重新受光。
-        原来靠背面 opacity 淡入遮「突然闪现」，那恰恰加重了假——真卡片背面是被转过来的，不是淡进来的。
-     高度与居中由 grid 同格叠放解决（见下），行为层不参与——原先的「量高 + 过渡」每帧重排 = 卡顿源。 */
-.bz-cinema--midnight .cn-modal--flip{perspective:900px;perspective-origin:50% 50%;margin:auto;
-  /* 纯透视容器：卡片外观（底/边/圆角/阴影/内距）全部下放到两面。
-     否则转的是「白框里的一张纸」——框不动、纸在框里翻滚，一眼看穿是假的（2026-09-21 观感定位）。
-     overflow 必须 visible：旋转时卡片的投影会超出容器，裁掉就成了被切碎的碎片。
+/* ── 添加影视：双面卡片换面（issue 395；2026-10-01 撤 3D 后重做）——正面名称+状态 → 解析 →
+     换到背面看全部信息。原「3D 翻页」（perspective + rotateY keyframes + 中段抬升 + 光照遮罩）
+     整段退役：用户反馈 3D 翻转让整个弹窗看起来失真。
+     2026-10-01 用户点题「高级的动画」后按入场编排重做——高级感来自每一拍都有出处，而不是更大的动作：
+     ① 正面 .16s 快出（淡出 + 上移）给背面腾位；
+     ② 背面延迟 .06s 起手，按**详情弹窗同款 cnModalIn** 浮现——弹窗出场怎么演，换面就怎么演；
+     ③ 背面内容按 **cnRiseIn 阶梯**分段接力（.03s 步进、上限 .27s，issue 401 口径原样复用），
+        信息逐段显影而不是整块砸下来；
+     ④ 金色微光一次性扫过卡面收口（impulse 档，与解析中 chip 的流光同源）。
+     全程只有 opacity/transform，行为层只切 is-flipped 一个类。
+     结构照旧：两面 grid 同格叠放（容器高度 = 较高面），换面期间零重排（原论证保留）；
+     时长/曲线纪律由 motion-ledger.test.ts 钉死（delay 走接力轴，不算时长）。 */
+.bz-cinema--midnight .cn-modal--flip{margin:auto;
+  /* 纯外壳容器：卡片外观（底/边/圆角/阴影/内距）全部下放到两面。
+     overflow 必须 visible：卡片阴影会超出容器，裁掉就成了被切碎的碎片。
      margin:auto 负责垂直居中——flex 居中在「背面比视口高」时会把顶部推出可视区且滚不到，
      auto 外边距在溢出方向退化为 0，滚动条能从头滚起（2026-09-21 用户要求去掉顶部锚定）。 */
   background:none;border:none;box-shadow:none;padding:0;max-height:none;overflow:visible}
-/* 两面用 grid 叠在**同一格**（1/1）：容器高度自动 = 较高那一面，于是**翻转全程高度零变化**。
+/* 两面用 grid 叠在**同一格**（1/1）：容器高度自动 = 较高那一面，于是换面全程零重排。
    原先靠行为层量高 + height 过渡补齐，每帧都要重排整个弹窗（含 flex 遮罩重新居中、滚动区重算），
    首帧必然顿一下——这才是「翻转时卡顿」的根因，不是 3D 本身（2026-09-21 定位）。
-   同时两面都在行内居中 → 两个面的中心与容器中心重合 = 旋转中心，各自绕自己的中心转；
-   可见的那一面绝不会因为另一面变高而被推移。**居中之所以可行就在这一条**：原先锚顶是为了绕开
-   「高度一变卡片整体上移」，而那个上移的根因是面挂在容器顶边，不是居中本身。 */
-.bz-cinema--midnight .form-flip{position:relative;display:grid;transform-style:preserve-3d;will-change:transform}
-/* will-change:transform：把整棵子树提到独立合成层，旋转期间复用同一份光栅。
-   不提升的话，卡片那圈 48px 模糊阴影会在每一帧重绘——这是第二个卡顿来源。 */
-.bz-cinema--midnight .form-face{grid-area:1/1;align-self:center;position:relative;backface-visibility:hidden;
+   两面都在行内居中 → 可见面绝不会因为另一面变高而被推移；居中方案同 margin:auto 的论证。 */
+.bz-cinema--midnight .form-flip{position:relative;display:grid}
+.bz-cinema--midnight .form-face{grid-area:1/1;align-self:center;position:relative;
   background:var(--panel);border:1px solid var(--line);border-radius:var(--bz-radius-md);
   box-shadow:0 18px 48px #0005,0 2px 10px #0003;padding:18px 20px}
-/* 两面各向外推 .6/1px：共面时在 3D 空间里会穿插闪烁（80° 附近能同时看到两块）。 */
-.bz-cinema--midnight .form-face--front{transform:translateZ(.6px)}
-/* 滚动**不能**装在面上：元素自身带 overflow 时，Chromium 下 backface-visibility 会失灵，
-   翻到 80° 附近两面会同时可见（重影）。改由遮罩层承担滚动——它在 3D 上下文之外，不参与合成。 */
-.bz-cinema--midnight .form-face--back{transform:rotateY(180deg) translateZ(1px)}
-.bz-cinema--midnight .form-flip.is-flipped{transform:rotateY(180deg)}
-/* 旋转只走 keyframes，不叠 transition：两条同时作用于 transform 时引擎可能先起一条过渡再被动画
-   覆盖，首帧会顿一下（2026-09-21 定位）。is-flipped 只作终态锚点——动画万一没生效也落在正确姿势。 */
-.bz-cinema--midnight .form-flip.is-flipping{animation:cnFlipToBack var(--cn-m-impulse) var(--cn-e-move) both}
-@keyframes cnFlipToBack{
-  0%{transform:rotateY(0deg) translateZ(0)}
-  44%{transform:rotateY(80deg) translateZ(22px)}
-  100%{transform:rotateY(180deg) translateZ(0)}
-}
-/* 光照遮罩：贴在面上的纯黑层，随面一起旋转 = 该面相对光源的角度变化。
-   inset 比卡片多铺 1px，避免旋转到边缘时露出未覆盖的细线。 */
-.bz-cinema--midnight .form-face::after{content:'';position:absolute;inset:-1px;border-radius:var(--bz-radius-md);
-  background:#0b0906;opacity:0;pointer-events:none}
-.bz-cinema--midnight .form-flip.is-flipping .form-face--front::after{animation:cnShadeFront var(--cn-m-impulse) ease-in-out both}
-.bz-cinema--midnight .form-flip.is-flipping .form-face--back::after{animation:cnShadeBack var(--cn-m-impulse) ease-in-out both}
-@keyframes cnShadeFront{0%{opacity:0}44%{opacity:.46}100%{opacity:.46}}
-@keyframes cnShadeBack{0%{opacity:.46}52%{opacity:.46}100%{opacity:0}}
-/* 翻转弹窗：垂直居中（2026-09-21 用户要求）。居中可行性的论证见 .form-flip 那段——
-   结论是「能居中」，原先锚顶属于绕开症状。上下留 6vh：背面比视口高时由本层滚动，
-   不能装在面上（见上：会破坏 backface-visibility）。 */
-.bz-cinema--midnight .cn-ovl.cn-ovl--flip{padding-top:6vh;padding-bottom:6vh;overflow-y:auto}
+/* 换面（单向：正面 → 背面；2026-09-21 去掉「返回」后没有反向路径）。
+   正面：.16s 淡出上移；visibility 走同长离散过渡——可见性离散插值在 progress<1 时仍算
+   visible、末尾才 hidden，所以淡出全程可读，静止后又从 Tab 序与点击命中里退出。
+   背面：基础态隐形；is-flipped 起手 .06s 后浮现（cnModalIn 给曲线与位移）。
+   overflow:hidden：裁微光扫过的光带（光带比卡面宽，不裁会飞出圆角）。 */
+.bz-cinema--midnight .form-face--front{transition:opacity var(--cn-m-fast) ease,transform var(--cn-m-fast) ease,visibility var(--cn-m-fast) linear}
+.bz-cinema--midnight .form-face--back{opacity:0;visibility:hidden;overflow:hidden}
+.bz-cinema--midnight .form-flip.is-flipped .form-face--front{opacity:0;visibility:hidden;transform:translateY(-6px)}
+.bz-cinema--midnight .form-flip.is-flipped .form-face--back{opacity:1;visibility:visible;
+  animation:cnModalIn var(--cn-m-base) var(--cn-e-out) both;animation-delay:.06s}
+/* 背面内容分段接力（复用详情弹窗 cnRiseIn——同一种「信息逐段显影」语言）。
+   槽位按 .j-back 子元素序号手排（正文里 2/3 是两个 pick-list，被排除）：dm-head 与背面
+   同起手 .06s，「豆瓣信息」段头 .09s，信息行 .12–.24s 逐行升入，余下段收 .24s，保存条压轴 .27s。
+   pick-list 必须排除：收起态靠 opacity:0 + max-height:0，接力动画的 forwards 填充会把它的
+   opacity 钉死在 1，展开/收起的淡入就废了。 */
+.bz-cinema--midnight .form-flip.is-flipped .form-face--back .j-back > :not(.dm-pick-list),
+.bz-cinema--midnight .form-flip.is-flipped .form-face--back > .dm-actions{animation:cnRiseIn var(--cn-m-base) var(--cn-e-out) both}
+.bz-cinema--midnight .form-flip.is-flipped .form-face--back .j-back > :nth-child(1){animation-delay:.06s}
+.bz-cinema--midnight .form-flip.is-flipped .form-face--back .j-back > :nth-child(4){animation-delay:.09s}
+.bz-cinema--midnight .form-flip.is-flipped .form-face--back .j-back > :nth-child(5){animation-delay:.12s}
+.bz-cinema--midnight .form-flip.is-flipped .form-face--back .j-back > :nth-child(6){animation-delay:.15s}
+.bz-cinema--midnight .form-flip.is-flipped .form-face--back .j-back > :nth-child(7){animation-delay:.18s}
+.bz-cinema--midnight .form-flip.is-flipped .form-face--back .j-back > :nth-child(8){animation-delay:.21s}
+.bz-cinema--midnight .form-flip.is-flipped .form-face--back .j-back > :nth-child(n+9){animation-delay:.24s}
+.bz-cinema--midnight .form-flip.is-flipped .form-face--back > .dm-actions{animation-delay:.27s}
+/* 收口微光：一道金色斜光一次性扫过背面（冲量档 = 「表单换面这类一次性状态切换」的定档所在）。
+   光带走 transform（台账只许 transform/opacity），46% 宽、两端透明羽化；delay .12s 与接力波
+   同起，扫过时内容正在逐段显影；扫完停在 opacity:0（forwards），不扰后续操作。 */
+.bz-cinema--midnight .form-face--back::after{content:'';position:absolute;top:0;bottom:0;left:0;width:46%;
+  pointer-events:none;opacity:0;transform:translateX(-110%);
+  background:linear-gradient(105deg,transparent 12%,#c9992f2e 50%,transparent 88%)}
+@keyframes cnSheen{0%{opacity:0;transform:translateX(-110%)}18%{opacity:1}72%{opacity:1}100%{opacity:0;transform:translateX(240%)}}
+.bz-cinema--midnight .form-flip.is-flipped .form-face--back::after{animation:cnSheen var(--cn-m-impulse) var(--cn-e-move) both;animation-delay:.12s}
+/* 换面弹窗：垂直居中（2026-09-21 用户要求）。上下留 6vh：背面比视口高时由本层滚动——
+   滚动不装在面上（面内 overflow 会把卡片高度钳在滚动区里）。
+   overscroll-behavior:contain：滚到两端不把滚动链递给背后页面（遮罩区的滚轮由行为层
+   整段拦截，见 ui.ts ovl 的 wheel 守卫）。 */
+.bz-cinema--midnight .cn-ovl.cn-ovl--flip{padding-top:6vh;padding-bottom:6vh;overflow-y:auto;overscroll-behavior:contain}
 /* 解析中：全部分类 chip 的边框走流光扫过（2026-09-21 用户点名「所有分类的边框变成流动的特效」） */
 @keyframes cnFormScan{from{background-position:200% 50%}to{background-position:-200% 50%}}
 .bz-cinema--midnight .f-choice-btn.is-scanning{
@@ -18049,7 +18060,7 @@ canvas { display: block; }
   --cn-m-fast:.16s;    /* 微反馈：hover / 按下 / 底色 / 高亮滑行 */
   --cn-m-move:.2s;     /* 空间位移：海报飞行、FLIP 让位、面板撑开与折回、涟漪 */
   --cn-m-base:.28s;    /* 揭示：面板入场、下拉展开、内容接力、海报淡入、卡片抬升与推近 */
-  --cn-m-impulse:.74s; /* 冲量：表单翻转这类一次性状态切换 */
+  --cn-m-impulse:.74s; /* 冲量：表单换面这类一次性状态切换 */
   --cn-e-out:cubic-bezier(.22,.82,.3,1);   /* 揭示：先快后缓、末尾收势 */
   --cn-e-move:cubic-bezier(.34,.06,.16,1); /* 迁移与冲量：起手重、收尾干脆 */
 }
