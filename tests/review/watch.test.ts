@@ -3,7 +3,7 @@ import { makeApp } from '../helpers/app';
  * 复习计划监听器测试（ticket 098；ticket 099 修订+追加）：isUnderFolder / 自动加入四态 /
  * 收编确认（取消=什么都不做）/ 删除确认移除/保留 / 改名自动更新 / 移除目录清空其下排除记录
  */
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, beforeAll, vi } from 'vitest';
 import { MockVault, mockAppWithVault } from '../mock-vault';
 import { resetObsidianMocks, hasNotice, clearNotices } from '../mock-obsidian-entry';
 import { setApp } from '../../src/core/app';
@@ -17,6 +17,24 @@ function lastNoticeText(): string {
   const c = document.querySelector('#bz-notice-container');
   return c ? c.textContent || '' : '';
 }
+
+/**
+ * 预热 ReviewWatcher.refresh() 的两处动态 import 目标
+ *
+ * onVaultCreate / onVaultRename / onVaultDelete / removeWatchedFolder 都用 `void this.refresh()` 发射刷新
+ * （列表即时补卡，不随事件一起 await —— 这是被测行为，别改成 await）。**冷模块**的动态导入要先走
+ * 真实 transport + transform（几十 ms），而本文件级 beforeEach 会装假钟：请求在用例中途发出、
+ * 假钟一装上就再也不会被推进，直到文件结束才由 runner 拒绝 → 4 条 `Vite module runner has been closed`
+ * 的 Unhandled Rejection（`pnpm test` 因此退出码 1，门禁恒红，2026-10-01 定位）。
+ *
+ * 预热放在 beforeAll（首次 beforeEach 装假钟之前，真实计时器下完成）：图已进 evaluator 缓存后，
+ * refresh 的两次 import 只剩微任务跳数，在用例内就跑完了，什么都不留在飞。
+ * refresh() 若新增动态 import 目标，这里要一起预热。
+ */
+beforeAll(async () => {
+  await import('../../src/review/index');
+  await import('../../src/review/app');
+});
 
 // 文件级假钟：合并窗口（50ms 注入）与握手等待全部可控快进，真实等待归零
 beforeEach(() => {
@@ -440,4 +458,4 @@ describe('批 B 修复回归：watch 事件链（2026-09-19 深审）', () => {
     await vi.advanceTimersByTimeAsync(30);
     expect((await dm.loadItems()).some((i) => i.filePath === '我的/复习/A.md')).toBe(true); // 原样插回
   }, 10000);
-});
+});
