@@ -12,10 +12,10 @@
  *  2. 其余（顶层散落）→ 归它 import 得最多的 `src/<域>/`；只 import `core` 的归 `core`。
  *
  * 用法：
- *   pnpm test:dom <域> [<域>...]        只跑这些域的用例
- *   pnpm test:dom all                   跑全部（等价全量）
- *   pnpm test:dom --list                打印域 → 文件数 映射
- *   pnpm test:dom <域> -- -t "某用例"     `--` 之后的参数原样透传给 vitest
+ *   node scripts/test-domain.mjs <域> [<域>...]       只跑这些域的用例
+ *   node scripts/test-domain.mjs all                  跑全部（等价全量）
+ *   node scripts/test-domain.mjs --list               打印域 → 文件数 映射
+ *   node scripts/test-domain.mjs <域> -- -t "某用例"    `--` 之后的参数原样透传给 vitest
  */
 import fs from 'node:fs';
 import path from 'node:path';
@@ -89,7 +89,7 @@ function main() {
       console.log(`  ${d.padEnd(18)} ${String(files.length).padStart(3)}  (目录内 ${inside} + 归属 ${files.length - inside})${tag}`);
     }
     if (wanted.length === 0) {
-      console.log('\n用法：pnpm test:dom <域> [<域>...]   或   pnpm test:dom all');
+      console.log('\n用法：node scripts/test-domain.mjs <域> [<域>...]   或   node scripts/test-domain.mjs all');
     }
     return wanted.length === 0 ? 1 : 0;
   }

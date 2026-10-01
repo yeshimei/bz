@@ -25,12 +25,12 @@
  *    `.md` 例外，仓库里没有测试把文档当输入
  *
  * 用法：
- *   pnpm test:affected                     # 相对 HEAD 的未提交改动（开发循环）
- *   pnpm test:affected --since master      # 分支上相对主线的全部改动
- *   pnpm test:affected --list              # 只看选择结果与理由，不跑
- *   pnpm test:affected --no-cache          # 忽略结果缓存
- *   pnpm test:affected -- --reporter=dot   # `--` 之后透传给 vitest
- *   pnpm test:affected --full              # 强制全量并刷新结果缓存
+ *   node scripts/test-affected.mjs                     # 相对 HEAD 的未提交改动（开发循环）
+ *   node scripts/test-affected.mjs --since master      # 分支上相对主线的全部改动
+ *   node scripts/test-affected.mjs --list              # 只看选择结果与理由，不跑
+ *   node scripts/test-affected.mjs --no-cache          # 忽略结果缓存
+ *   node scripts/test-affected.mjs -- --reporter=dot   # `--` 之后透传给 vitest
+ *   node scripts/test-affected.mjs --full              # 强制全量并刷新结果缓存
  */
 import fs from 'node:fs';
 import path from 'node:path';
@@ -741,7 +741,7 @@ function main() {
     if (plan.reused?.length) {
       console.log(`没有要跑的测试：${plan.reused.length} 个命中文件全部复用上次成功结果（输入逐字节未变）。`);
     } else if (!plan.changed.length) {
-      console.log('工作区没有变更，未跑任何用例。要门禁结论请跑 `pnpm test:changed`（相对主线）或 `--full`。');
+      console.log('工作区没有变更，未跑任何用例。要门禁结论请跑 `--since master`（相对主线）或 `--full`。');
     } else {
       console.log(`变更 ${plan.changed.length} 个文件，但没有测试受影响（未跑任何用例）。`);
       console.log('若这不是文档类改动，请加 `--full` 全量确认 —— 空命中不等于通过。');

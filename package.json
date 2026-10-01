@@ -14,13 +14,13 @@
     "cinema-index": "node scripts/build-cinema-index.mjs",
     "manifest": "node scripts/build-manifest.mjs",
     "split-skins": "node scripts/split-domain-skins.mjs",
-    "test": "vitest run",
+    "test": "node node_modules/vitest/vitest.mjs run",
     "test:dom": "node scripts/test-domain.mjs",
     "test:affected": "node scripts/test-affected.mjs",
     "test:changed": "node scripts/test-affected.mjs --since master",
-    "test:changed:vitest": "vitest run --changed master",
-    "test:watch": "vitest",
-    "test:coverage": "vitest run --coverage --maxWorkers=2"
+    "test:changed:vitest": "node node_modules/vitest/vitest.mjs run --changed master",
+    "test:watch": "node node_modules/vitest/vitest.mjs",
+    "test:coverage": "node node_modules/vitest/vitest.mjs run --coverage --maxWorkers=2"
   },
   "keywords": [
     "obsidian",
