@@ -15,6 +15,7 @@ import { M } from '../../src/clipbook/state';
 import { openClipbook, unloadClipbook } from '../../src/clipbook';
 import { drainNewsWritesForTests } from '../../src/clipbook/write-queue';
 import { getNewsFilePath } from '../../src/clipbook/news-data';
+import { ago } from '../helpers/date';
 
 const knowledgeMocks: Record<string, any> = await import('../../src/knowledge');
 
@@ -33,8 +34,8 @@ function seedVault(): MockVault {
   const vault = new MockVault();
   vault.files.set(getNewsFilePath(), JSON.stringify({
     articles: [
-      { platform: 'B站', title: '视频一', url: 'https://b23.tv/1', author: '影视飓风', body: '简介', date: '2026-09-01 08:00:00' },
-      { platform: '果壳科学人', title: '甲文', url: 'https://guokr.com/1', author: '果壳', date: '2026-09-01 09:00:00', body: '甲的正文' },
+      { platform: 'B站', title: '视频一', url: 'https://b23.tv/1', author: '影视飓风', body: '简介', date: ago(1, '08:00:00') },
+      { platform: '果壳科学人', title: '甲文', url: 'https://guokr.com/1', author: '果壳', date: ago(1, '09:00:00'), body: '甲的正文' },
     ],
     stats: { totalRead: 0, totalSaved: 0, totalSkipped: 0, byPlatform: {}, byDate: {} },
     bilibiliUps: [], bilibiliUpInfo: {}, bilibiliMaxItems: 10, bilibiliCookie: '',

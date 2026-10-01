@@ -20,6 +20,18 @@ import { resetPomodoroFixture } from '../helpers/pomodoro-fixture';
 
 const T0 = new Date('2026-08-10T10:00:00').getTime();
 
+/**
+ * 本文件 testTimeout 单独放宽到 60s（全局 20s 不够）。
+ *
+ * 番茄钟计时器是 `setInterval(onTick, 1000)`，而 `onTick` 每次都整屏 `render()`
+ * （src/pomodoro/ui.ts:625 → applyAction('tick') → render）。浏览器里 1 次/秒毫无成本，
+ * jsdom 里一次 render 约 10ms——于是「推进 25 分钟假时钟」= 1500 次 render ≈ 15s 真墙钟
+ * （并发争抢下实测 15-19s），`第 4 个专注完成` 那条推进 115 分钟直接撞穿 20s。
+ * 撞穿 → retry ×2 每条白烧 60s，比放宽上限更贵；假时钟推进本身是这些用例的**被测语义**，
+ * 不能靠缩短推进量来省时间（那会改掉覆盖）。
+ */
+vi.setConfig({ testTimeout: 60000 });
+
 /** 构造一条「已就绪」的皮肤条目（ADR-0199：远端皮肤要进就绪表才可用） */
 function skinEntry(domain: string, id: string): SkinPackEntry {
   return {
@@ -483,12 +495,15 @@ describe('番茄钟弹窗', () => {
   });
 
   it('第 4 个专注完成 → 长休开始声（392Hz）', async () => {
-    const { app } = setup(new MockVault(), { pomodoroAutoCycle: true, pomodoroTickSound: false });
+    // 时长压到 1 分钟 / 1 分钟：本用例只验「第 4 个专注完成 → 长休」这一步的相位与音效构成，
+    // 与单段实际时长无关；而假时钟推进的墙钟成本 = 推进秒数 × 每秒一次整屏 render（onTick）。
+    // 按默认 25/5 走完 115min = 6900 次 render，并发争抢下 >60s，直接撞穿超时（2026-10-01 实测）。
+    const { app } = setup(new MockVault(), { pomodoroAutoCycle: true, pomodoroTickSound: false, pomodoroWorkMin: '1', pomodoroShortBreakMin: '1' });
     const audio = makeAudioMock();
     await openPomodoro(app);
     el('pomodoro-btn-start').click(); // 手动开始：专注开始声
-    // 完整走完 4 个专注 + 3 个短休（115min），第 4 个专注完成 → 长休
-    await vi.advanceTimersByTimeAsync(4 * 25 * 60 * 1000 + 3 * 5 * 60 * 1000);
+    // 完整走完 4 个专注 + 3 个短休（7min），第 4 个专注完成 → 长休
+    await vi.advanceTimersByTimeAsync(4 * 1 * 60 * 1000 + 3 * 1 * 60 * 1000);
     expect(el('pomodoro-phase').textContent).toContain('长休息');
     const calls = audio.createOscillator.mock.calls.length;
     // 2026-09-23 特效批后的构成（32 = 手动专注开始 2 + 3×(专注完成 6) + 3×(短休完成 2) + 第 4 次专注完成 6）：
@@ -712,15 +727,16 @@ describe('增强包：循环圆点 / 时段分布 / 通知动作 / Space / 备�
   });
 
   it('循环位置圆点行：4 个 6px 方点，完成 1 个专注后点亮 1 个（替代「专注 N/M」文字）', async () => {
-    const { app } = setup(new MockVault(), { pomodoroAutoCycle: true });
+    // 同「长休开始声」：只验圆点点亮数，与单段时长无关 → 时长压到 1 分钟，省掉上百倍假时钟推进
+    const { app } = setup(new MockVault(), { pomodoroAutoCycle: true, pomodoroWorkMin: '1', pomodoroShortBreakMin: '1' });
     await openPomodoro(app);
     const dots = () => [...document.querySelectorAll('.pomodoro-cycle-dot')] as HTMLElement[];
     expect(dots().length).toBe(4);
     expect(dots().every((d) => !d.classList.contains('pomodoro-cycle-dot-on'))).toBe(true);
     el('pomodoro-btn-start').click();
-    await vi.advanceTimersByTimeAsync(25 * 60 * 1000 + 500); // 第 1 个完成 → 自动短休
+    await vi.advanceTimersByTimeAsync(1 * 60 * 1000 + 500); // 第 1 个完成 → 自动短休
     expect(dots().filter((d) => d.classList.contains('pomodoro-cycle-dot-on')).length).toBe(1);
-    await vi.advanceTimersByTimeAsync(5 * 60 * 1000 + 25 * 60 * 1000 + 500); // 第 2 个完成
+    await vi.advanceTimersByTimeAsync(1 * 60 * 1000 + 1 * 60 * 1000 + 500); // 第 2 个完成
     expect(dots().filter((d) => d.classList.contains('pomodoro-cycle-dot-on')).length).toBe(2);
   });
 

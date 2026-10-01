@@ -22,6 +22,7 @@ import { M } from '../src/clipbook/state';
 import { getNewsFilePath } from '../src/clipbook/news-data';
 import { drainNewsWritesForTests } from '../src/clipbook/write-queue';
 import { setClipDir } from './clipbook/helpers';
+import { ago } from './helpers/date';
 
 /** news.json 种子（lastFetchAt 拦 openClipbook 自动抓取，同 enhance.test.ts 口径） */
 function seedNews(articles: any[]): string {
@@ -77,9 +78,9 @@ describe('C1：rail 站点行批量已读按该站口径（不落 {kind:all}）'
   it('站点行菜单计数 = 该站未读数；确认后只标该站、统计只 +1', async () => {
     const vault = new MockVault();
     vault.files.set(getNewsFilePath(), seedNews([
-      { platform: '果壳科学人', title: '果壳未读', url: 'https://guokr.com/g1', date: '2026-09-03 08:00:00', body: '果壳正文' },
-      { platform: 'B站', title: 'B站未读甲', url: 'https://bilibili.com/video/BV1', date: '2026-09-02 08:00:00', body: 'B站正文甲' },
-      { platform: 'B站', title: 'B站未读乙', url: 'https://bilibili.com/video/BV2', date: '2026-09-01 08:00:00', body: 'B站正文乙' },
+      { platform: '果壳科学人', title: '果壳未读', url: 'https://guokr.com/g1', date: ago(1, '08:00:00'), body: '果壳正文' },
+      { platform: 'B站', title: 'B站未读甲', url: 'https://bilibili.com/video/BV1', date: ago(2, '08:00:00'), body: 'B站正文甲' },
+      { platform: 'B站', title: 'B站未读乙', url: 'https://bilibili.com/video/BV2', date: ago(3, '08:00:00'), body: 'B站正文乙' },
     ]));
     await boot(vault);
     await vi.waitFor(() => expect(M.articles.length).toBe(3));
@@ -181,7 +182,7 @@ describe('C7：closePanel 复位移动详情显示态', () => {
   it('详情开着关面板 → 重开不落在上次详情屏（DOM 态与 mobDetailOpen 对齐）', async () => {
     const vault = new MockVault();
     vault.files.set(getNewsFilePath(), seedNews([
-      { platform: '果壳科学人', title: '果壳甲', url: 'https://guokr.com/c7a', date: '2026-09-01 08:00:00', body: 'b1' },
+      { platform: '果壳科学人', title: '果壳甲', url: 'https://guokr.com/c7a', date: ago(3, '08:00:00'), body: 'b1' },
     ]));
     await boot(vault);
     await vi.waitFor(() => expect(M.articles.length).toBe(1));
@@ -210,9 +211,9 @@ describe('C8：stepArticle 感知搜索态与剪藏源', () => {
   it('搜索态 j 在命中集内步进（不切到无高亮的非命中条目）', async () => {
     const vault = new MockVault();
     vault.files.set(getNewsFilePath(), seedNews([
-      { platform: '果壳科学人', title: '苹果甲', url: 'https://guokr.com/p1', date: '2026-09-03 08:00:00', body: 'b1' },
-      { platform: '果壳科学人', title: '香蕉乙', url: 'https://guokr.com/p2', date: '2026-09-02 08:00:00', body: 'b2' },
-      { platform: '果壳科学人', title: '苹果丙', url: 'https://guokr.com/p3', date: '2026-09-01 08:00:00', body: 'b3' },
+      { platform: '果壳科学人', title: '苹果甲', url: 'https://guokr.com/p1', date: ago(1, '08:00:00'), body: 'b1' },
+      { platform: '果壳科学人', title: '香蕉乙', url: 'https://guokr.com/p2', date: ago(2, '08:00:00'), body: 'b2' },
+      { platform: '果壳科学人', title: '苹果丙', url: 'https://guokr.com/p3', date: ago(3, '08:00:00'), body: 'b3' },
     ]));
     await boot(vault);
     await vi.waitFor(() => expect(M.articles.length).toBe(3));
@@ -254,8 +255,8 @@ describe('C13：移动详情「第 X 则 / N」按 id 查序', () => {
   it('点开未读条目显示实际序号（身份失配不再恒空）', async () => {
     const vault = new MockVault();
     vault.files.set(getNewsFilePath(), seedNews([
-      { platform: '果壳科学人', title: '果壳甲', url: 'https://guokr.com/n1', date: '2026-09-02 08:00:00', body: '正文甲' },
-      { platform: '果壳科学人', title: '果壳乙', url: 'https://guokr.com/n2', date: '2026-09-01 08:00:00', body: '正文乙' },
+      { platform: '果壳科学人', title: '果壳甲', url: 'https://guokr.com/n1', date: ago(2, '08:00:00'), body: '正文甲' },
+      { platform: '果壳科学人', title: '果壳乙', url: 'https://guokr.com/n2', date: ago(3, '08:00:00'), body: '正文乙' },
     ]));
     await boot(vault);
     await vi.waitFor(() => expect(M.articles.length).toBe(2));
@@ -282,7 +283,7 @@ describe('C14：已读条目不挂「标记为已读」', () => {
   it('已读条目右键菜单无该项（守卫会静默吞掉，不给无效入口），保存/删除仍在', async () => {
     const vault = new MockVault();
     vault.files.set(getNewsFilePath(), seedNews([
-      { platform: '果壳科学人', title: '已读甲', url: 'https://guokr.com/r1', date: '2026-09-01 08:00:00', body: '正文甲', read: true, state: 'skipped' },
+      { platform: '果壳科学人', title: '已读甲', url: 'https://guokr.com/r1', date: ago(3, '08:00:00'), body: '正文甲', read: true, state: 'skipped' },
     ]));
     await boot(vault);
     await vi.waitFor(() => expect(M.articles.length).toBe(1));

@@ -218,7 +218,9 @@ describe('深审修复批 C（password-vault 渲染/列表/弹窗面）', () => 
     await sm.unlock('pw');
     await dm.addItem({ platform: 'GitHub', account: 'me', password: 'x' });
     ui.show();
-    await flush(10);
+    // 轮询等平台行渲染完（原写死 flush(10)：并发争抢下渲染链走不完，querySelector 拿到 null
+    // 再点 → 全量跑偶发红；本文件 flush 上方注释已写明「固定短 flush 会撞上保存中途」）
+    await waitFor(() => !!document.querySelector('.bz-password-vault-rows .bz-password-vault-plrow'));
     (document.querySelector('.bz-password-vault-rows .bz-password-vault-plrow') as HTMLElement).click();
     await flush(10);
     expect(ui.selPlatform).toBe('GitHub');
@@ -307,7 +309,9 @@ describe('深审修复批 C（password-vault 渲染/列表/弹窗面）', () => 
     await sm.unlock('pw');
     await dm.addItem({ platform: 'GitHub', account: 'me', password: 'x' }); // 无收藏
     ui.show();
-    await flush(10);
+    // 轮询等平台行渲染完（原写死 flush(10)：并发争抢下渲染链走不完，querySelector 拿到 null
+    // 再点 → 全量跑偶发红；本文件 flush 上方注释已写明「固定短 flush 会撞上保存中途」）
+    await waitFor(() => !!document.querySelector('.bz-password-vault-rows .bz-password-vault-plrow'));
     (document.querySelector('.bz-password-vault-rows .bz-password-vault-plrow') as HTMLElement).click();
     await flush(10);
     // 切到收藏视图：平台行从列表消失（无收藏），详情保留选中平台 → 空态按视图分叉

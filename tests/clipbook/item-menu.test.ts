@@ -14,6 +14,7 @@ import { setSettingsProvider } from '../../src/core/settings-provider';
 import { M } from '../../src/clipbook/state';
 import { openClipbook, unloadClipbook } from '../../src/clipbook';
 import { closeItemMenu } from '../../src/core/item-actions';
+import { ago } from '../helpers/date';
 
 /** 旁路记录 attachItemActions 入参（桌面卡/移动卡/rail 行共用断言池） */
 const capture = vi.hoisted(() => ({ calls: [] as Array<{ actions: any[]; opts: any }> }));
@@ -33,7 +34,7 @@ function seedVault(): MockVault {
   const vault = new MockVault();
   vault.files.set('CONFIG/STORAGE/news.json', JSON.stringify({
     articles: [
-      { platform: '果壳科学人', title: '甲文标题', url: 'https://guokr.com/1', author: '果壳', date: '2026-09-01 08:00:00', fetchedAt: '2026-09-01 07:00:00', body: '量子纠缠是一种奇妙的量子力学现象，值得划词记录。' },
+      { platform: '果壳科学人', title: '甲文标题', url: 'https://guokr.com/1', author: '果壳', date: ago(1, '08:00:00'), fetchedAt: ago(1, '07:00:00'), body: '量子纠缠是一种奇妙的量子力学现象，值得划词记录。' },
     ],
     stats: { totalRead: 0, totalSaved: 0, totalSkipped: 0, byPlatform: {}, byDate: {} },
     bilibiliUps: [], bilibiliUpInfo: {}, bilibiliMaxItems: 10, bilibiliCookie: '',

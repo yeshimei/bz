@@ -17,13 +17,7 @@ import { openClipbook, unloadClipbook } from '../../src/clipbook';
 import { readClipbookData } from '../../src/clipbook/data';
 import { flushReadingSession } from '../../src/clipbook/flow';
 import { setClipDir } from './helpers';
-
-/** 相对今天的日期串（`YYYY-MM-DD HH:MM:SS`）：保留期按「早于 N 天」删已处理条目，种子里写死日期会过期 */
-function ago(days: number, hms: string): string {
-  const d = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
-  const p = (n: number): string => String(n).padStart(2, '0');
-  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ${hms}`;
-}
+import { ago } from '../helpers/date';
 
 /** 种子：news.json 未读 2 + 已处理 1 + 剪藏目录 1 篇 */
 function seedVault(): MockVault {
@@ -163,9 +157,9 @@ describe('clipbook UI 桌面三栏', () => {
     const app = getApp();
     const raw = JSON.parse((app.vault as any).files.get('CONFIG/STORAGE/news.json'));
     raw.articles = [
-      { platform: 'B站', title: '视频一', url: 'https://b23.tv/1', author: '9823496', date: '2026-09-01 08:00:00', body: 'b1' },
-      { platform: 'B站', title: '视频二', url: 'https://b23.tv/2', author: '9823496', date: '2026-09-01 09:00:00', body: 'b2' },
-      { platform: 'B站', title: '视频三', url: 'https://b23.tv/3', author: '9823496', date: '2026-09-01 10:00:00', body: 'b3' },
+      { platform: 'B站', title: '视频一', url: 'https://b23.tv/1', author: '9823496', date: ago(4, '08:00:00'), body: 'b1' },
+      { platform: 'B站', title: '视频二', url: 'https://b23.tv/2', author: '9823496', date: ago(4, '09:00:00'), body: 'b2' },
+      { platform: 'B站', title: '视频三', url: 'https://b23.tv/3', author: '9823496', date: ago(4, '10:00:00'), body: 'b3' },
     ];
     raw.bilibiliUpInfo = { '9823496': { name: '影视飓风', avatar: 'https://a.b/c.png' } };
     (app.vault as any).files.set('CONFIG/STORAGE/news.json', JSON.stringify(raw));
@@ -209,8 +203,8 @@ describe('clipbook UI 桌面三栏', () => {
     const app = getApp();
     const raw = JSON.parse((app.vault as any).files.get('CONFIG/STORAGE/news.json'));
     raw.articles = [
-      { platform: 'B站', title: '带引号UP的视频', url: 'https://b23.tv/q1', author: '9823496', date: '2026-09-01 08:00:00', body: 'b1' },
-      { platform: '果壳科学人', title: '果壳另一篇', url: 'https://guokr.com/9', author: '果壳', date: '2026-09-01 08:00:00', body: 'b2' },
+      { platform: 'B站', title: '带引号UP的视频', url: 'https://b23.tv/q1', author: '9823496', date: ago(4, '08:00:00'), body: 'b1' },
+      { platform: '果壳科学人', title: '果壳另一篇', url: 'https://guokr.com/9', author: '果壳', date: ago(4, '08:00:00'), body: 'b2' },
     ];
     raw.bilibiliUpInfo = { '9823496': { name: "O'Prime 圈圈" } };
     (app.vault as any).files.set('CONFIG/STORAGE/news.json', JSON.stringify(raw));
@@ -301,9 +295,9 @@ describe('clipbook UI 桌面三栏', () => {
     const app = getApp();
     const raw = JSON.parse((app.vault as any).files.get('CONFIG/STORAGE/news.json'));
     raw.articles = [
-      { platform: '果壳科学人', title: '果壳文一', url: 'https://guokr.com/a1', date: '2026-09-01 08:00:00', body: 'b1' },
-      { platform: '果壳科学人', title: '果壳文二', url: 'https://guokr.com/a2', date: '2026-09-02 08:00:00', body: 'b2' },
-      { platform: 'B站', title: '视频z', url: 'https://b23.tv/z', date: '2026-09-03 08:00:00', body: 'b3' },
+      { platform: '果壳科学人', title: '果壳文一', url: 'https://guokr.com/a1', date: ago(4, '08:00:00'), body: 'b1' },
+      { platform: '果壳科学人', title: '果壳文二', url: 'https://guokr.com/a2', date: ago(3, '08:00:00'), body: 'b2' },
+      { platform: 'B站', title: '视频z', url: 'https://b23.tv/z', date: ago(2, '08:00:00'), body: 'b3' },
     ];
     (app.vault as any).files.set('CONFIG/STORAGE/news.json', JSON.stringify(raw));
     openClipbook(getApp());
@@ -331,8 +325,8 @@ describe('clipbook UI 桌面三栏', () => {
     const app = getApp();
     const raw = JSON.parse((app.vault as any).files.get('CONFIG/STORAGE/news.json'));
     raw.articles = [
-      { platform: '果壳科学人', title: '旧文', url: 'https://guokr.com/old', date: '2026-09-01 08:00:00', fetchedAt: '2026-09-01 08:00:00', body: '旧正文 ![配图](https://a.example/old.png)' },
-      { platform: '果壳科学人', title: '新文', url: 'https://guokr.com/new', date: '2026-09-05 22:00:00', fetchedAt: '2026-09-05 22:00:00', body: '新正文' },
+      { platform: '果壳科学人', title: '旧文', url: 'https://guokr.com/old', date: ago(4, '08:00:00'), fetchedAt: ago(4, '08:00:00'), body: '旧正文 ![配图](https://a.example/old.png)' },
+      { platform: '果壳科学人', title: '新文', url: 'https://guokr.com/new', date: ago(1, '22:00:00'), fetchedAt: ago(1, '22:00:00'), body: '新正文' },
     ];
     (app.vault as any).files.set('CONFIG/STORAGE/news.json', JSON.stringify(raw));
     openClipbook(getApp());
@@ -364,8 +358,8 @@ describe('clipbook UI 桌面三栏', () => {
     const app = getApp();
     const raw = JSON.parse((app.vault as any).files.get('CONFIG/STORAGE/news.json'));
     raw.articles = [
-      { platform: '果壳科学人', title: '文章甲', url: 'https://guokr.com/s1', date: '2026-09-01 08:00:00', body: '甲正文' },
-      { platform: '果壳科学人', title: '文章乙', url: 'https://guokr.com/s2', date: '2026-09-02 08:00:00', body: '乙正文' },
+      { platform: '果壳科学人', title: '文章甲', url: 'https://guokr.com/s1', date: ago(4, '08:00:00'), body: '甲正文' },
+      { platform: '果壳科学人', title: '文章乙', url: 'https://guokr.com/s2', date: ago(3, '08:00:00'), body: '乙正文' },
     ];
     (app.vault as any).files.set('CONFIG/STORAGE/news.json', JSON.stringify(raw));
     openClipbook(getApp());
@@ -419,8 +413,8 @@ describe('clipbook UI 桌面三栏', () => {
     const app = getApp();
     const raw = JSON.parse((app.vault as any).files.get('CONFIG/STORAGE/news.json'));
     raw.articles = [
-      { platform: '果壳科学人', title: '在读新文', url: 'https://guokr.com/r1', date: '2026-09-05 08:00:00', body: 'b1' },
-      { platform: '果壳科学人', title: '未读旧文', url: 'https://guokr.com/u1', date: '2026-09-01 08:00:00', body: 'b2' },
+      { platform: '果壳科学人', title: '在读新文', url: 'https://guokr.com/r1', date: ago(1, '08:00:00'), body: 'b1' },
+      { platform: '果壳科学人', title: '未读旧文', url: 'https://guokr.com/u1', date: ago(4, '08:00:00'), body: 'b2' },
     ];
     (app.vault as any).files.set('CONFIG/STORAGE/news.json', JSON.stringify(raw));
     vault.files.set('CONFIG/STORAGE/clipbook.json', JSON.stringify({
@@ -465,14 +459,13 @@ describe('clipbook UI 桌面三栏', () => {
     closePanel();
   });
 
-
   it('去在读（issue 248 追）：overrides.reading 不再派生状态——两篇均未读按源序展示', async () => {
     const vault = boot();
     const app = getApp();
     const raw = JSON.parse((app.vault as any).files.get('CONFIG/STORAGE/news.json'));
     raw.articles = [
-      { platform: '果壳科学人', title: '在读新文', url: 'https://guokr.com/r1', date: '2026-09-05 08:00:00', body: 'b1' },
-      { platform: '果壳科学人', title: '未读旧文', url: 'https://guokr.com/u1', date: '2026-09-01 08:00:00', body: 'b2' },
+      { platform: '果壳科学人', title: '在读新文', url: 'https://guokr.com/r1', date: ago(1, '08:00:00'), body: 'b1' },
+      { platform: '果壳科学人', title: '未读旧文', url: 'https://guokr.com/u1', date: ago(4, '08:00:00'), body: 'b2' },
     ];
     (app.vault as any).files.set('CONFIG/STORAGE/news.json', JSON.stringify(raw));
     vault.files.set('CONFIG/STORAGE/clipbook.json', JSON.stringify({
@@ -494,8 +487,8 @@ describe('移动章目录（issue 248：site 章 + 已收折叠）', () => {
     const vault = new MockVault();
     vault.files.set('CONFIG/STORAGE/news.json', JSON.stringify({
       articles: [
-        { platform: '果壳科学人', title: '未读果壳文', url: 'https://guokr.com/n1', author: '果壳', date: '2026-09-02 08:00:00', body: '正文甲' },
-        { platform: 'B站', title: '未读B站视频', url: 'https://bilibili.com/video/BV2', author: 'UP甲', date: '2026-09-02 09:00:00', body: '正文乙' },
+        { platform: '果壳科学人', title: '未读果壳文', url: 'https://guokr.com/n1', author: '果壳', date: ago(3, '08:00:00'), body: '正文甲' },
+        { platform: 'B站', title: '未读B站视频', url: 'https://bilibili.com/video/BV2', author: 'UP甲', date: ago(3, '09:00:00'), body: '正文乙' },
       ],
       stats: { totalRead: 0, totalSaved: 0, totalSkipped: 0, byPlatform: {}, byDate: {} },
       bilibiliUps: [], bilibiliUpInfo: {}, bilibiliMaxItems: 10, bilibiliCookie: '',
@@ -578,10 +571,10 @@ describe('会话冻结序（ADR-0108：桌面打开即已读 + 原位保留 + �
     const vault = new MockVault();
     vault.files.set('CONFIG/STORAGE/news.json', JSON.stringify({
       articles: [
-        { platform: '果壳科学人', title: '果壳未读甲', url: 'https://guokr.com/fa', author: '果壳', date: '2026-09-02 08:00:00', body: '正文甲' },
-        { platform: '果壳科学人', title: '果壳未读乙', url: 'https://guokr.com/fb', author: '果壳', date: '2026-09-01 08:00:00', body: '正文乙' },
+        { platform: '果壳科学人', title: '果壳未读甲', url: 'https://guokr.com/fa', author: '果壳', date: ago(3, '08:00:00'), body: '正文甲' },
+        { platform: '果壳科学人', title: '果壳未读乙', url: 'https://guokr.com/fb', author: '果壳', date: ago(4, '08:00:00'), body: '正文乙' },
         { platform: '果壳科学人', title: '果壳已读旧', url: 'https://guokr.com/old', author: '果壳', date: readSkeletonDate(), read: true, state: 'skipped' },
-        { platform: '知乎日报', title: '知乎未读', url: 'https://zhihu.com/z1', date: '2026-09-03 08:00:00', body: '正文知' },
+        { platform: '知乎日报', title: '知乎未读', url: 'https://zhihu.com/z1', date: ago(2, '08:00:00'), body: '正文知' },
       ],
       stats: { totalRead: 1, totalSaved: 0, totalSkipped: 1, byPlatform: {}, byDate: {} },
       bilibiliUps: [], bilibiliUpInfo: {}, bilibiliMaxItems: 10, bilibiliCookie: '',
