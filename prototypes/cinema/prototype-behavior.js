@@ -1,4 +1,4 @@
-/* 源指纹 5971146918484d1d · 仓内输入 79 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 68ebc877d78f7858 · 仓内输入 79 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/cinema/fake-sim.ts","prototypes/cinema/fake/fake-obsidian.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/douban-fetcher.ts","src/cinema/douban-queue.ts","src/cinema/index.ts","src/cinema/layouts/midnight/render.ts","src/cinema/motion.ts","src/cinema/recommend.ts","src/cinema/render.ts","src/cinema/seasons.ts","src/cinema/shared.ts","src/cinema/state.ts","src/cinema/type-decide.ts","src/cinema/ui.ts","src/cinema/yearbook/data.ts","src/cinema/yearbook/engine.ts","src/cinema/yearbook/index.ts","src/cinema/yearbook/kits.ts","src/cinema/yearbook/motions.ts","src/cinema/yearbook/scenes.ts","src/core/ai.ts","src/core/app.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/douban-name-index.ts","src/core/download-manifest.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/gesture.ts","src/core/http.ts","src/core/item-actions.ts","src/core/jev-fallback.ts","src/core/jev.ts","src/core/landscape.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/remote-asset.ts","src/core/remote-base.ts","src/core/settings-provider.ts","src/core/sha256.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/help-tip.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slide-pill.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/cinema/fake-sim.ts → window.BZW_cinema（行为单源预览包，issue 245/ADR-0106） */
 var BZW_cinema = (() => {
@@ -39,9 +39,9 @@ var BZW_cinema = (() => {
   ));
   var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
 
-  // node_modules/.pnpm/moment@2.30.1/node_modules/moment/moment.js
+  // ../../bz/node_modules/.pnpm/moment@2.30.1/node_modules/moment/moment.js
   var require_moment = __commonJS({
-    "node_modules/.pnpm/moment@2.30.1/node_modules/moment/moment.js"(exports, module) {
+    "../../bz/node_modules/.pnpm/moment@2.30.1/node_modules/moment/moment.js"(exports, module) {
       (function(global, factory) {
         typeof exports === "object" && typeof module !== "undefined" ? module.exports = factory() : typeof define === "function" && define.amd ? define(factory) : global.moment = factory();
       })(exports, function() {
@@ -4148,7 +4148,7 @@ var BZW_cinema = (() => {
     96,
     130
   ]);
-  var CANNED_DOUBAN_LIST_HTML = `<html><body><ul class="list-wish">
+  var CANNED_DOUBAN_LIST_HTML = `<html><head><title>包仔的想看</title></head><body><ul class="list-wish">
 <li><a href="https://movie.douban.com/subject/4151650/" title="银翼杀手 2049">银翼杀手 2049</a></li>
 <li><a href="https://movie.douban.com/subject/1292001/" title="一一">一一</a></li>
 <li><a href="https://movie.douban.com/subject/4083325/" title="2001太空漫游">2001太空漫游</a></li>
@@ -11987,7 +11987,6 @@ tags:
         <div class="rail-foot">
           <button class="rail-item j-tool" data-tool="ai">${iconSpan(ICON.ai)}AI 荐片</button>
           <button class="rail-item j-tool" data-film-open>${iconSpan(ICON.stat)}观影分析</button>
-          <button class="rail-item j-import">${iconSpan(ICON.import)}导入片单</button>
         </div>
       </aside>
       <div class="d-main j-view"></div>
@@ -11999,6 +11998,7 @@ tags:
     <div class="m-head"><h2 class="j-mtitle">全部</h2><span class="cnt j-mcnt"></span>
       <span class="m-acts">
         <button class="add j-madd bz-touch-target bz-touch-target--lg" data-cinema-add title="添加影片">${iconSpan(ICON.add)}</button>
+        <button class="m-tool j-import bz-touch-target bz-touch-target--lg" title="导入片单">${iconSpan(ICON.import)}</button>
         <button class="m-tool j-mai bz-touch-target bz-touch-target--lg" title="AI 荐片">${iconSpan(ICON.ai)}</button>
         <button class="m-tool j-mstat bz-touch-target bz-touch-target--lg" title="观影分析" data-film-open>${iconSpan(ICON.stat)}</button>
         <button class="m-tool j-mclose bz-touch-target bz-touch-target--lg" title="关闭">${iconSpan(ICON.close)}</button>
@@ -12068,7 +12068,7 @@ tags:
   }
   function listHeadHtml(inp) {
     return `<div class="d-head"><h2 class="j-title">${esc(inp.title)}</h2><span class="cnt j-cnt">· ${inp.cards.length} 部</span>
-    <button class="add j-add" data-cinema-add>${iconSpan(ICON.add)}添加影片</button></div>`;
+    <button class="add j-add" data-cinema-add>${iconSpan(ICON.add)}添加影片</button><button class="imp j-import" title="导入片单">${iconSpan(ICON.import)}</button></div>`;
   }
   function listToolsHtml(view) {
     return `<div class="d-tools"><label class="d-search">${iconSpan(ICON.search)}<input class="j-q" placeholder="搜索片名、类型、导演、主演、影评…" value="${esc(view.searchKeyword)}"><button type="button" class="q-clear" data-cinema-clear title="清空搜索" aria-label="清空搜索"${view.searchKeyword ? "" : " hidden"}>${iconSpan(ICON.close)}</button></label>
@@ -12335,19 +12335,17 @@ tags:
     });
   }
   function openDoubanImport(sec, app) {
-    var _a, _b;
+    var _a;
     const { el, close } = ovl(sec, `<div class="cn-modal cn-modal--dimp">
-    <div class="dimp-head"><span class="lp-kicker">一键导入</span><span class="dimp-name">豆瓣片单</span></div>
     <div class="dimp-stage" data-dimp-input>
-      <input class="j-dimp-url" placeholder="片单链接：豆瓣 wish 收藏页或豆列 doulist">
-      <div class="dimp-hint">抓到后列出清单确认入库；按「想看」批量建档并归入同名片单，已在库的保持不动，海报与豆瓣信息随后台队列补齐（约 15 秒一部，防豆瓣限流）。个人收藏页需先在设置里填豆瓣 Cookie。</div>
+      <input class="j-dimp-url" placeholder="粘贴 wish 收藏页 / 豆列链接">
       <button type="button" class="lp-add j-dimp-fetch">抓取片单</button>
     </div>
     <div class="dimp-stage" data-dimp-result hidden>
       <div class="dimp-stat j-dimp-stat"></div>
       <div class="dimp-list j-dimp-list"></div>
       <div class="dimp-newlist"><label>归入片单</label><input class="j-dimp-listname" placeholder="片单名（留空不归入）"></div>
-      <div class="dimp-acts"><button type="button" class="lp-add j-dimp-run">导入</button><button type="button" class="dm-btn j-dimp-back">返回重填</button></div>
+      <button type="button" class="lp-add j-dimp-run">导入</button>
     </div>
   </div>`);
     mountIcons(el);
@@ -12363,12 +12361,12 @@ tags:
     const rowHtml = (e) => `<div class="dimp-row${inLibrary(e.name) ? " is-inlib" : ""}"><span class="lp-label">${esc(e.name)}</span><span class="dimp-tag">${inLibrary(e.name) ? "已在库" : "新片"}</span></div>`;
     const refreshStat = (done) => {
       if (!statEl) return;
-      statEl.textContent = done ? `抓到 ${pending2.length} 部${inLibCount ? `（其中 ${inLibCount} 部已在库，将保持不动）` : ""}，确认入库？` : `抓取中… 已 ${pending2.length} 部`;
+      statEl.textContent = done ? `抓到 ${pending2.length} 部${inLibCount ? `（其中 ${inLibCount} 部已在库）` : ""}` : `抓取中… 已 ${pending2.length} 部`;
     };
     const fetchBtn = el.querySelector(".j-dimp-fetch");
     fetchBtn == null ? void 0 : fetchBtn.addEventListener("click", () => {
-      var _a2, _b2;
-      const url = ((_b2 = (_a2 = el.querySelector(".j-dimp-url")) == null ? void 0 : _a2.value) != null ? _b2 : "").trim();
+      var _a2, _b;
+      const url = ((_b = (_a2 = el.querySelector(".j-dimp-url")) == null ? void 0 : _a2.value) != null ? _b : "").trim();
       if (!/^https?:\/\/(www\.)?(movie\.)?douban\.com\//.test(url)) {
         notice("先贴一个豆瓣片单链接（movie.douban.com 下）", "warning");
         return;
@@ -12407,17 +12405,12 @@ tags:
         runBtn.disabled = false;
       });
     });
-    (_a = el.querySelector(".j-dimp-back")) == null ? void 0 : _a.addEventListener("click", () => {
-      if (fetching) return;
-      if (resultStage) resultStage.hidden = true;
-      if (inputStage) inputStage.hidden = false;
-    });
-    (_b = el.querySelector(".j-dimp-run")) == null ? void 0 : _b.addEventListener("click", () => {
-      var _a2, _b2;
+    (_a = el.querySelector(".j-dimp-run")) == null ? void 0 : _a.addEventListener("click", () => {
+      var _a2, _b;
       if (fetching || !runBtn) return;
       runBtn.disabled = true;
       runBtn.textContent = "导入中…";
-      const listName = ((_b2 = (_a2 = resultStage == null ? void 0 : resultStage.querySelector(".j-dimp-listname")) == null ? void 0 : _a2.value) != null ? _b2 : "").trim();
+      const listName = ((_b = (_a2 = resultStage == null ? void 0 : resultStage.querySelector(".j-dimp-listname")) == null ? void 0 : _a2.value) != null ? _b : "").trim();
       void (async () => {
         const createdNames = [];
         for (const e of pending2) {
@@ -14250,7 +14243,7 @@ tags:
     renderAll(app);
   }
   var PILL_TARGETS = [
-    { box: ".d-rail", item: ".rail-item", keys: ["g", "s", "tool", "k"], clip: ".rail-sec" },
+    { box: ".d-rail", item: ".rail-item", keys: ["g", "s", "l", "tool", "k"], clip: ".rail-sec" },
     { box: ".j-sort", item: "button", keys: ["k"] }
   ];
   function updateFormStars(range, rating) {

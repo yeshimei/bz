@@ -1,4 +1,4 @@
-/* 源指纹 f3b0b5046b1a02d5 · 仓内输入 6 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 ab7cbb464b18deba · 仓内输入 6 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["src/cinema/constants.ts","src/cinema/layouts/midnight/render.ts","src/cinema/render.ts","src/cinema/seasons.ts","src/cinema/shared.ts","src/core/ui/str.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — src/cinema/render.ts → window.BZR_cinema（评审壳预览包，ADR-0104） */
 var BZR_cinema = (() => {
@@ -532,7 +532,6 @@ var BZR_cinema = (() => {
         <div class="rail-foot">
           <button class="rail-item j-tool" data-tool="ai">${iconSpan(ICON.ai)}AI 荐片</button>
           <button class="rail-item j-tool" data-film-open>${iconSpan(ICON.stat)}观影分析</button>
-          <button class="rail-item j-import">${iconSpan(ICON.import)}导入片单</button>
         </div>
       </aside>
       <div class="d-main j-view"></div>
@@ -544,6 +543,7 @@ var BZR_cinema = (() => {
     <div class="m-head"><h2 class="j-mtitle">全部</h2><span class="cnt j-mcnt"></span>
       <span class="m-acts">
         <button class="add j-madd bz-touch-target bz-touch-target--lg" data-cinema-add title="添加影片">${iconSpan(ICON.add)}</button>
+        <button class="m-tool j-import bz-touch-target bz-touch-target--lg" title="导入片单">${iconSpan(ICON.import)}</button>
         <button class="m-tool j-mai bz-touch-target bz-touch-target--lg" title="AI 荐片">${iconSpan(ICON.ai)}</button>
         <button class="m-tool j-mstat bz-touch-target bz-touch-target--lg" title="观影分析" data-film-open>${iconSpan(ICON.stat)}</button>
         <button class="m-tool j-mclose bz-touch-target bz-touch-target--lg" title="关闭">${iconSpan(ICON.close)}</button>
@@ -613,7 +613,7 @@ var BZR_cinema = (() => {
   }
   function listHeadHtml(inp) {
     return `<div class="d-head"><h2 class="j-title">${esc(inp.title)}</h2><span class="cnt j-cnt">· ${inp.cards.length} 部</span>
-    <button class="add j-add" data-cinema-add>${iconSpan(ICON.add)}添加影片</button></div>`;
+    <button class="add j-add" data-cinema-add>${iconSpan(ICON.add)}添加影片</button><button class="imp j-import" title="导入片单">${iconSpan(ICON.import)}</button></div>`;
   }
   function listToolsHtml(view) {
     return `<div class="d-tools"><label class="d-search">${iconSpan(ICON.search)}<input class="j-q" placeholder="搜索片名、类型、导演、主演、影评…" value="${esc(view.searchKeyword)}"><button type="button" class="q-clear" data-cinema-clear title="清空搜索" aria-label="清空搜索"${view.searchKeyword ? "" : " hidden"}>${iconSpan(ICON.close)}</button></label>

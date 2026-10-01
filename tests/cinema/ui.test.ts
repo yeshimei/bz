@@ -885,13 +885,13 @@ tags: [电影]
   });
 
   // ======================= 移动端（mob 壳） ================
-  it('移动端：mob 壳渲染（m-head 添加/AI/分析/关闭 + chips 10 + m-grid）', () => {
+  it('移动端：mob 壳渲染（m-head 添加/导入/AI/分析/关闭 + chips 10 + m-grid）', () => {
     setSettingsProvider(() => ({  } as any));
     const { app } = seedMobile();
     createOverlay(app);
     const root = document.querySelector('section.mob.bz-cinema--midnight') as HTMLElement;
     expect(root).toBeTruthy();
-    expect(root.querySelectorAll('.m-acts .m-tool').length).toBe(3); // AI/分析/关闭（设置钮退役，添加钮为 .add）
+    expect(root.querySelectorAll('.m-acts .m-tool').length).toBe(4); // 导入/AI/分析/关闭（设置钮退役，添加钮为 .add）
     expect(root.querySelector('.j-mclose')).toBeTruthy(); // 落域适配：移动关闭钮
     expect(root.querySelectorAll('.m-chips .chip').length).toBe(10);
     expect(root.querySelectorAll('.m-grid .pcard').length).toBe(4);
@@ -1085,13 +1085,14 @@ tags: [电影]
     }
   });
 
-  it('移动端头行钮序：添加最前、关闭最后，设置钮退役（影院设置并入插件设置页）', () => {
+  it('移动端头行钮序：添加最前、导入随后、关闭最后，设置钮退役（影院设置并入插件设置页）', () => {
     const { app } = seedMobile();
     createOverlay(app);
     const root = document.querySelector('section.mob.bz-cinema--midnight') as HTMLElement;
     const acts = [...root.querySelectorAll('.m-acts button')];
     expect(acts.map((b) => b.className)).toEqual([
       'add j-madd bz-touch-target bz-touch-target--lg',
+      'm-tool j-import bz-touch-target bz-touch-target--lg',
       'm-tool j-mai bz-touch-target bz-touch-target--lg',
       'm-tool j-mstat bz-touch-target bz-touch-target--lg',
       'm-tool j-mclose bz-touch-target bz-touch-target--lg',
@@ -2430,8 +2431,8 @@ describe('cinema 滑动高亮：侧栏与排序钮（issue 397）', () => {
     createOverlay(app);
     const root = document.querySelector('[data-cinema-root]') as HTMLElement;
     const rail = root.querySelector('.d-rail') as HTMLElement;
-    const items = pinList(rail, '.rail-item', 90); // 类型 7 + 状态 3 + 底部工具 3（AI 荐片/观影分析/导入片单）
-    expect(items.length).toBe(13);
+    const items = pinList(rail, '.rail-item', 90); // 类型 7 + 状态 3 + 底部工具 2（AI 荐片/观影分析）
+    expect(items.length).toBe(12);
     resync(rail);
     const at = (el: HTMLElement): string => `translate(0px, ${90 + items.indexOf(el) * 30}px)`;
     const pill = rail.querySelector(':scope > .bz-slide-pill') as HTMLElement;
@@ -2462,6 +2463,17 @@ describe('cinema 滑动高亮：侧栏与排序钮（issue 397）', () => {
     const movie = rail.querySelector('.rail-item.is-on') as HTMLElement;
     expect(movie.textContent).toContain('电影');
     expect(pillTransform(rail)).toBe(`translate(0px, ${90 + items2.indexOf(movie) * 30}px)`);
+
+    // 片单行也吃悬停跟随（2026-10-01 补齐 l 键：片单组比底片晚出生，keys 漏了 data-l，
+    // 鼠标滑到片单那一段底片就断）——归个片单重渲染，悬停该行底片应滑过去
+    M.items[0].lists = ['测试片单'];
+    clickEl(rail.querySelector('[data-g="全部"]')); // 重渲染带出片单组
+    const items3 = pinList(rail, '.rail-item', 90);
+    const listRow = rail.querySelector('[data-l="测试片单"]') as HTMLElement;
+    expect(listRow, '片单行应出现').toBeTruthy();
+    listRow.dispatchEvent(new MouseEvent('mouseover', { bubbles: true }));
+    expect(rail.dataset.pillHover).toBe('测试片单');
+    expect(pillTransform(rail)).toBe(`translate(0px, ${90 + items3.indexOf(listRow) * 30}px)`);
   });
 
   it('排序钮（最近观看三项）：同款底片', () => {
@@ -2933,7 +2945,7 @@ describe('一键导入豆瓣片单', () => {
     return { app, vault };
   }
 
-  it('侧栏「导入片单」→ 弹层输入态；非豆瓣链接提示且不切结果区', () => {
+  it('列表头「导入片单」→ 弹层输入态；非豆瓣链接提示且不切结果区', () => {
     const { app } = seedOne();
     createOverlay(app);
     const root = document.querySelector('[data-cinema-root]') as HTMLElement;
@@ -2971,7 +2983,7 @@ describe('一键导入豆瓣片单', () => {
     // 流式抓取：结果区立即出现（「抓取中…」），等完成态 stat 才算抓完
     expect(modal.querySelector('.j-dimp-stat')?.textContent).toContain('抓取中');
     // 在库不过滤（2026-09-30 拍板）：全量进确认清单，在库仅标记、导入时由重名保护保持现状
-    await vi.waitFor(() => expect(modal.querySelector('.j-dimp-stat')?.textContent).toContain('抓到 3 部（其中 1 部已在库，将保持不动），确认入库？'));
+    await vi.waitFor(() => expect(modal.querySelector('.j-dimp-stat')?.textContent).toContain('抓到 3 部（其中 1 部已在库）'));
     expect(modal.querySelectorAll('.dimp-row')).toHaveLength(3);
     expect(modal.querySelectorAll('.dimp-row.is-inlib')).toHaveLength(1);
     // 片单名从豆列 title 提取并回填输入（用户可改，留空不归入）
@@ -2998,7 +3010,7 @@ describe('一键导入豆瓣片单', () => {
     (modal.querySelector('.j-dimp-url') as HTMLInputElement).value = 'https://movie.douban.com/people/x/wish';
     clickEl(modal.querySelector('.j-dimp-fetch'));
     await vi.waitFor(() => expect((modal.querySelector('[data-dimp-result]') as HTMLElement).hidden).toBe(false));
-    await vi.waitFor(() => expect(modal.querySelector('.j-dimp-stat')?.textContent).toContain('抓到 1 部（其中 1 部已在库，将保持不动），确认入库？'));
+    await vi.waitFor(() => expect(modal.querySelector('.j-dimp-stat')?.textContent).toContain('抓到 1 部（其中 1 部已在库）'));
     expect(modal.querySelectorAll('.dimp-row.is-inlib')).toHaveLength(1);
     expect((modal.querySelector('.j-dimp-run') as HTMLButtonElement).disabled).toBe(false);
     closeOverlay();

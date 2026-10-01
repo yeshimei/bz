@@ -104,8 +104,10 @@ const PNG_1PX = new Uint8Array([
 ]);
 
 /** 豆瓣片单导入罐头（一键导入评审）：一页 4 条——「奥德赛」在库验证跳过标记，其余 3 部新片
- *  走静默批量建档；单页即尽（<25 条，fetchDoubanList 不再翻页）。 */
-const CANNED_DOUBAN_LIST_HTML = `<html><body><ul class="list-wish">
+ *  走静默批量建档；单页即尽（<25 条，fetchDoubanList 不再翻页）。
+ *  head `<title>` 是「归入片单」默认名的来源（extractListTitle 消费）——真实 wish 页
+ *  是「XXX 的想看」形态，罐头照真形态给，别省略（2026-10-01 用户反馈：演示里没带出默认名）。 */
+const CANNED_DOUBAN_LIST_HTML = `<html><head><title>包仔的想看</title></head><body><ul class="list-wish">
 <li><a href="https://movie.douban.com/subject/4151650/" title="银翼杀手 2049">银翼杀手 2049</a></li>
 <li><a href="https://movie.douban.com/subject/1292001/" title="一一">一一</a></li>
 <li><a href="https://movie.douban.com/subject/4083325/" title="2001太空漫游">2001太空漫游</a></li>

@@ -33,7 +33,6 @@ export function midnightDeskHtml(): string {
         <div class="rail-foot">
           <button class="rail-item j-tool" data-tool="ai">${iconSpan(ICON.ai)}AI 荐片</button>
           <button class="rail-item j-tool" data-film-open>${iconSpan(ICON.stat)}观影分析</button>
-          <button class="rail-item j-import">${iconSpan(ICON.import)}导入片单</button>
         </div>
       </aside>
       <div class="d-main j-view"></div>
@@ -47,6 +46,7 @@ export function midnightMobHtml(): string {
     <div class="m-head"><h2 class="j-mtitle">全部</h2><span class="cnt j-mcnt"></span>
       <span class="m-acts">
         <button class="add j-madd bz-touch-target bz-touch-target--lg" data-cinema-add title="添加影片">${iconSpan(ICON.add)}</button>
+        <button class="m-tool j-import bz-touch-target bz-touch-target--lg" title="导入片单">${iconSpan(ICON.import)}</button>
         <button class="m-tool j-mai bz-touch-target bz-touch-target--lg" title="AI 荐片">${iconSpan(ICON.ai)}</button>
         <button class="m-tool j-mstat bz-touch-target bz-touch-target--lg" title="观影分析" data-film-open>${iconSpan(ICON.stat)}</button>
         <button class="m-tool j-mclose bz-touch-target bz-touch-target--lg" title="关闭">${iconSpan(ICON.close)}</button>
@@ -164,10 +164,12 @@ function cardsHtml(cards: CardEntry[], inp: MidnightRenderInput): string {
   }).join('');
 }
 
-/** 列表视图头 + 工具行（d-head/d-tools；添加钮钩子 data-cinema-add） */
+/** 列表视图头 + 工具行（d-head/d-tools；添加钮钩子 data-cinema-add）。
+ *  导入片单图标钮排在「添加影片」后面（2026-10-01 拍板：原来压在侧栏左下角落
+ *  rail-foot 里与 AI/分析两个视图工具混排，不好看；挪到「添加」旁的图标动作位） */
 export function listHeadHtml(inp: MidnightRenderInput): string {
   return `<div class="d-head"><h2 class="j-title">${esc(inp.title)}</h2><span class="cnt j-cnt">· ${inp.cards.length} 部</span>
-    <button class="add j-add" data-cinema-add>${iconSpan(ICON.add)}添加影片</button></div>`;
+    <button class="add j-add" data-cinema-add>${iconSpan(ICON.add)}添加影片</button><button class="imp j-import" title="导入片单">${iconSpan(ICON.import)}</button></div>`;
 }
 export function listToolsHtml(view: CinemaView): string {
   return `<div class="d-tools"><label class="d-search">${iconSpan(ICON.search)}<input class="j-q" placeholder="搜索片名、类型、导演、主演、影评…" value="${esc(view.searchKeyword)}"><button type="button" class="q-clear" data-cinema-clear title="清空搜索" aria-label="清空搜索"${view.searchKeyword ? '' : ' hidden'}>${iconSpan(ICON.close)}</button></label>

@@ -315,27 +315,26 @@ function openListPick(sec: HTMLElement, targets: CinemaItem[], app: App, head: {
   });
 }
 
-/** 一键导入豆瓣片单（侧栏「导入片单」）：贴 wish 收藏页 / 豆列链接 → **流式**抓取
+/** 一键导入豆瓣片单（桌面列表头「添加影片」后的图标钮；移动端在头行 ＋ 后同款图标钮）：贴 wish 收藏页 / 豆列链接 → **流式**抓取
  *  （结果区随页增量出现，不等全部抓完——豆列几十部要翻好几页，过程肉眼可见）→
  *  清单由用户二次确认 → 确认后按「想看」静默批量建档（quickAddWant silent 携带
  *  sid，补抓队列直取 queryDoubanBySid——与表单解析 sid 直取同口径），并可归入
- *  同名自建片单（片单名从豆列页 title 提取，可改，留空不归入）。
+ *  同名自建片单（片单名默认取抓取到的片单标题——豆列名 / 「XXX 的想看」，可改，留空不归入）。
+ *  **弹层轻装**（2026-10-01 拍板）：无标题块、无「返回重填」钮——重来一次 = 关掉重开。
  *  **在库条目不过滤**（2026-09-30 拍板）：照常进清单参与导入，建档层的重名保护
  *  自然让它们保持现状，toast 汇总区分「新导入 / 已在库未动」。Cookie 走设置键
  *  cinemaDoubanCookie（queue 单源装配），弹层不收敏感值。 */
 function openDoubanImport(sec: HTMLElement, app: App): void {
   const { el, close } = ovl(sec, `<div class="cn-modal cn-modal--dimp">
-    <div class="dimp-head"><span class="lp-kicker">一键导入</span><span class="dimp-name">豆瓣片单</span></div>
     <div class="dimp-stage" data-dimp-input>
-      <input class="j-dimp-url" placeholder="片单链接：豆瓣 wish 收藏页或豆列 doulist">
-      <div class="dimp-hint">抓到后列出清单确认入库；按「想看」批量建档并归入同名片单，已在库的保持不动，海报与豆瓣信息随后台队列补齐（约 15 秒一部，防豆瓣限流）。个人收藏页需先在设置里填豆瓣 Cookie。</div>
+      <input class="j-dimp-url" placeholder="粘贴 wish 收藏页 / 豆列链接">
       <button type="button" class="lp-add j-dimp-fetch">抓取片单</button>
     </div>
     <div class="dimp-stage" data-dimp-result hidden>
       <div class="dimp-stat j-dimp-stat"></div>
       <div class="dimp-list j-dimp-list"></div>
       <div class="dimp-newlist"><label>归入片单</label><input class="j-dimp-listname" placeholder="片单名（留空不归入）"></div>
-      <div class="dimp-acts"><button type="button" class="lp-add j-dimp-run">导入</button><button type="button" class="dm-btn j-dimp-back">返回重填</button></div>
+      <button type="button" class="lp-add j-dimp-run">导入</button>
     </div>
   </div>`);
   mountIcons(el);
@@ -353,7 +352,7 @@ function openDoubanImport(sec: HTMLElement, app: App): void {
   const refreshStat = (done: boolean): void => {
     if (!statEl) return;
     statEl.textContent = done
-      ? `抓到 ${pending.length} 部${inLibCount ? `（其中 ${inLibCount} 部已在库，将保持不动）` : ''}，确认入库？`
+      ? `抓到 ${pending.length} 部${inLibCount ? `（其中 ${inLibCount} 部已在库）` : ''}`
       : `抓取中… 已 ${pending.length} 部`;
   };
   const fetchBtn = el.querySelector<HTMLButtonElement>('.j-dimp-fetch');
@@ -403,11 +402,6 @@ function openDoubanImport(sec: HTMLElement, app: App): void {
       runBtn.textContent = `导入 ${pending.length} 部`;
       runBtn.disabled = false;
     });
-  });
-  el.querySelector('.j-dimp-back')?.addEventListener('click', () => {
-    if (fetching) return; // 抓取中不回退（流式写入进行时切视图会错乱）；抓完随便回
-    if (resultStage) resultStage.hidden = true;
-    if (inputStage) inputStage.hidden = false;
   });
   el.querySelector('.j-dimp-run')?.addEventListener('click', () => {
     if (fetching || !runBtn) return;
@@ -2693,9 +2687,12 @@ export function renderSoft(app: App): void {
 // 机制已收编 core/ui/slide-pill.ts：底片常驻选中项、悬停跟随、移开回落、渲染后落位不演滑行。
 // 与备忘录（侧栏场景 / 排序钮）共用同一套，禁止域内各写一份。
 
-/** 影院的两处底片挂载点：左栏 rail（类型/状态/底部工具三段通吃）与排序钮 j-sort */
+/** 影院的两处底片挂载点：左栏 rail（类型/状态/片单/底部工具通吃）与排序钮 j-sort。
+ *  keys 里的 "l" 是 2026-10-01 补的：片单组是底片之后加的功能，行键 data-l 漏进 keys，
+ *  悬停跟随滑到片单行就断（用户反馈「跟随的背景色也要进片单」）；l 与 g/s/tool 同权——
+ *  都是「行键」，任取第一个非空即该项的稳定标识。 */
 const PILL_TARGETS: readonly BzSlidePillTarget[] = [
-  { box: ".d-rail", item: ".rail-item", keys: ["g", "s", "tool", "k"], clip: ".rail-sec" },
+  { box: ".d-rail", item: ".rail-item", keys: ["g", "s", "l", "tool", "k"], clip: ".rail-sec" },
   { box: ".j-sort", item: "button", keys: ["k"] },
 ];
 
