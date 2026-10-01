@@ -6,6 +6,14 @@
 - `pnpm install` / `pnpm run dev` / `pnpm run build` / `pnpm test` / `pnpm exec tsc --noEmit`（依赖用 pnpm，勿用 npm）
 - 构建产物直出 Obsidian 插件目录（esbuild 硬编码），根目录三件套用于 GitHub Release。
 - 测试用 vitest，alias 替换 obsidian 为 mock。
+- 开发循环按域跑：`pnpm test:dom <域>`（不动依赖图，域内 8–10s）；跨域/多域改动用
+  `pnpm test:affected`（ADR-0229：只跑受影响 + 扫树守卫，域内改动 11–15s vs 全量 29s；
+  `--list` 只看选择结果、`--since master` 相对主线、`--full` 强制全量、`--no-cache` 关缓存）。
+  输入逐字节没再变的文件会**复用上次成功结果**（落 `.bz-test-cache/`，gitignored）——
+  同一变更连跑两次第二次 ≈ 1s；改了任何东西指纹就变，必须真跑。
+  **别用 `vitest --changed`/`related`**：本仓有 37 个测试靠 `readFileSync` 读源码断言、
+  没有 import 边，改样式会「命中 0 个且退出码 0」（实测，issue 534）；原生版本只在
+  `test:changed:vitest` 留作诊断。**增量只是开发循环加速器，合并前仍跑全量 `pnpm test`。**
 - 皮肤包（ADR-0199）：`pnpm split-skins`（从域样式切出远端皮肤到 `src/<域>/skins/`）/ `pnpm skin-pack`（出版到 `manual/skins/` + 重算清单 sha256）。**两者都带 `--check`**，只校验不写盘。改了皮肤样式 = 改 `src/<域>/skins/<id>.css`，然后跑 `pnpm skin-pack`（清单 sha256 得跟着更新，否则插件下载后校验不过）。
 
 ## 架构

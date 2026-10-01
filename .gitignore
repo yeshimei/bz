@@ -12,6 +12,8 @@ viz/
 .dsh-worktrees/
 .zcode/
 .workbuddy/
+# 增量跑测试的结果缓存（按文件复用上次成功结果；本轮通过即写回）
+.bz-test-cache/
 
 # bz-face vendor 运行日志（logger.py 以 __file__ 锚定，落在 vendor 内，不入 git）
 tools/obsidian-face/python/vendor/WeChatMsg_Lite/logs/
