@@ -21,16 +21,21 @@ import { resetPomodoroFixture } from '../helpers/pomodoro-fixture';
 const T0 = new Date('2026-08-10T10:00:00').getTime();
 
 /**
- * 本文件 testTimeout 单独放宽到 60s（全局 20s 不够）。
+ * 本文件不再单独放宽 testTimeout（全局 20s 够用）。
  *
- * 番茄钟计时器是 `setInterval(onTick, 1000)`，而 `onTick` 每次都整屏 `render()`
- * （src/pomodoro/ui.ts:625 → applyAction('tick') → render）。浏览器里 1 次/秒毫无成本，
- * jsdom 里一次 render 约 10ms——于是「推进 25 分钟假时钟」= 1500 次 render ≈ 15s 真墙钟
- * （并发争抢下实测 15-19s），`第 4 个专注完成` 那条推进 115 分钟直接撞穿 20s。
- * 撞穿 → retry ×2 每条白烧 60s，比放宽上限更贵；假时钟推进本身是这些用例的**被测语义**，
- * 不能靠缩短推进量来省时间（那会改掉覆盖）。
+ * 关于假时钟的成本（2026-10-01 校正）：计时器是 `setInterval(onTick, 1000)`，而 `onTick` 每次
+ * 整屏 `render()`（src/pomodoro/ui.ts → applyAction('tick') → render）。假时钟推 N 分钟**不是
+ * 「跳过等待」，而是真实补跑 N×60 次 tick + render**——jsdom 下一次 render 约 10ms，于是
+ * 「推进 25 分钟」= 1500 次 ≈ 15s 真墙钟，`第 4 个专注完成` 那条推 115 分钟直接撞穿 20s。
+ *
+ * 修法不是放宽上限，而是**把只验「自然完成」语义的用例压到 1 分钟**：这类用例关心的是「走完一个
+ * 专注后如何流转/落盘/发通知/响提示音」，与具体分钟数无关；压到 1 分钟即 60 次 tick，成本 1/25，
+ * 覆盖不减。本文件原注释曾断言「不能靠缩短推进量来省时间（那会改掉覆盖）」，那是错的——同一文件
+ * 里「循环位置圆点行」用例早就用了这个手法并写明「省掉上百倍假时钟推进」。真正验「默认 25 分钟」
+ * 的断言（预置 fixture、settings）走数据层，不需要推满 25 分钟。
+ *
+ * 例外：`PF6 环形进度钳制` 需要「total < remain」这一特定状态，靠推 20 分钟构造，故保留原时长。
  */
-vi.setConfig({ testTimeout: 60000 });
 
 /** 构造一条「已就绪」的皮肤条目（ADR-0199：远端皮肤要进就绪表才可用） */
 function skinEntry(domain: string, id: string): SkinPackEntry {
@@ -437,17 +442,17 @@ describe('番茄钟弹窗', () => {
   });
 
   it('tick 完成专注 → 流转短休息 + 历史落盘 + toast + 短休开始声（523Hz）', async () => {
-    const { app, vault } = setup(new MockVault(), { pomodoroTickSound: false });
+    const { app, vault } = setup(new MockVault(), { pomodoroWorkMin: '1', pomodoroTickSound: false });
     const audio = makeAudioMock();
     await openPomodoro(app);
     el('pomodoro-btn-start').click(); // 手动开始：专注开始声（880Hz）
     const before = audio.createOscillator.mock.calls.length;
-    await vi.advanceTimersByTimeAsync(25 * 60 * 1000); // 走完一个专注
+    await vi.advanceTimersByTimeAsync(60 * 1000); // 走完一个专注
     expect(el('pomodoro-phase').textContent).toContain('短休息');
     expect(el('pomodoro-time').textContent).toBe('05:00');
     const raw = JSON.parse(vault.files.get(getPomodoroFilePath())!);
     expect(raw.history).toHaveLength(1);
-    expect(raw.history[0].duration).toBe(25 * 60);
+    expect(raw.history[0].duration).toBe(60); // 落盘时长跟随 pomodoroWorkMin（本用例压到 1 分钟）
     expect(raw.state.phase).toBe('short-break');
     expect(hasNotice('专注完成：休息 5 分钟')).toBe(true);
     expect(document.querySelector('.bz-notice--success')).not.toBeNull();
@@ -462,11 +467,11 @@ describe('番茄钟弹窗', () => {
   });
 
   it('休息完成 → toast 挂「开始专注」动作（autoCycle 关不计时，文案不说「开始专注」）+ 完成提示声', async () => {
-    const { app } = setup(new MockVault(), { pomodoroTickSound: false });
+    const { app } = setup(new MockVault(), { pomodoroWorkMin: '1', pomodoroTickSound: false });
     const audio = makeAudioMock();
     await openPomodoro(app);
     el('pomodoro-btn-start').click();
-    await vi.advanceTimersByTimeAsync(25 * 60 * 1000); // 专注完成（短休开始 523Hz）
+    await vi.advanceTimersByTimeAsync(60 * 1000); // 专注完成（短休开始 523Hz）
     el('pomodoro-btn-start').click(); // 开始短休
     const before = audio.createOscillator.mock.calls.length;
     await vi.advanceTimersByTimeAsync(5 * 60 * 1000); // 休息完成
@@ -513,33 +518,33 @@ describe('番茄钟弹窗', () => {
   });
 
   it('声音开关关闭：完成时不响（toast 仍发）', async () => {
-    const { app } = setup(new MockVault(), { pomodoroSound: false });
+    const { app } = setup(new MockVault(), { pomodoroWorkMin: '1', pomodoroSound: false });
     const audio = makeAudioMock();
     await openPomodoro(app);
     el('pomodoro-btn-start').click();
-    await vi.advanceTimersByTimeAsync(25 * 60 * 1000);
+    await vi.advanceTimersByTimeAsync(60 * 1000);
     expect(hasNotice('专注完成：休息 5 分钟')).toBe(true);
     expect(audio.createOscillator).not.toHaveBeenCalled();
   });
 
   it('倒数滴答：最后十秒每秒一记（独立开关默认开）', async () => {
-    const { app } = setup();
+    const { app } = setup(new MockVault(), { pomodoroWorkMin: '1' });
     const audio = makeAudioMock();
     await openPomodoro(app);
     el('pomodoro-btn-start').click();
     const before = audio.createOscillator.mock.calls.length;
-    await vi.advanceTimersByTimeAsync(25 * 60 * 1000); // 走完整个专注
+    await vi.advanceTimersByTimeAsync(60 * 1000); // 走完整个专注
     const freqs = audio.createOscillator.mock.results.slice(before).map((r) => r.value.frequency.value);
     expect(freqs.filter((f) => f === 1900)).toHaveLength(10); // 剩 10…1 秒各一记，同一秒不重播
   });
 
   it('倒数滴答开关关闭：最后十秒静默，提示音不受影响', async () => {
-    const { app } = setup(new MockVault(), { pomodoroTickSound: false });
+    const { app } = setup(new MockVault(), { pomodoroWorkMin: '1', pomodoroTickSound: false });
     const audio = makeAudioMock();
     await openPomodoro(app);
     el('pomodoro-btn-start').click();
     const before = audio.createOscillator.mock.calls.length;
-    await vi.advanceTimersByTimeAsync(25 * 60 * 1000);
+    await vi.advanceTimersByTimeAsync(60 * 1000);
     const freqs = audio.createOscillator.mock.results.slice(before).map((r) => r.value.frequency.value);
     expect(freqs.filter((f) => f === 1900)).toHaveLength(0);
     expect(freqs.length).toBeGreaterThan(0); // 收工钟/过渡音/落定音照响
@@ -557,12 +562,12 @@ describe('番茄钟弹窗', () => {
   });
 
   it('弹窗内展示今日计数与近 7 天柱条，完成专注后刷新', async () => {
-    const { app } = setup();
+    const { app } = setup(new MockVault(), { pomodoroWorkMin: '1' });
     await openPomodoro(app);
     expect(el('pomodoro-today').textContent).toContain('今日 0 个');
     expect(document.querySelectorAll('.pomodoro-stat-day').length).toBe(7);
     el('pomodoro-btn-start').click();
-    await vi.advanceTimersByTimeAsync(25 * 60 * 1000); // 完成一个专注
+    await vi.advanceTimersByTimeAsync(60 * 1000); // 完成一个专注
     expect(el('pomodoro-today').textContent).toContain('今日 1 个');
     const bars = Array.from(document.querySelectorAll('.pomodoro-stat-bar')).map((b) => (b as HTMLElement).style.height);
     expect(bars[6]).toBe('40px'); // 今天最高
@@ -741,24 +746,24 @@ describe('增强包：循环圆点 / 时段分布 / 通知动作 / Space / 备�
   });
 
   it('统计区：今日行带总分钟、7 天柱 title 带「N 个 · M 分钟」（时段分布已移除，2026-09-11）', async () => {
-    const { app } = setup();
+    const { app } = setup(new MockVault(), { pomodoroWorkMin: '1' });
     await openPomodoro(app);
     expect(el('pomodoro-today').textContent).toContain('今日 0 个 · 0 分钟');
     expect(document.getElementById('pomodoro-hours')).toBeNull(); // 今日时段分布已删（视觉降噪）
     expect(document.querySelectorAll('.pomodoro-hour-bar').length).toBe(0);
     el('pomodoro-btn-start').click();
-    await vi.advanceTimersByTimeAsync(25 * 60 * 1000);
-    expect(el('pomodoro-today').textContent).toContain('今日 1 个 · 25 分钟');
+    await vi.advanceTimersByTimeAsync(60 * 1000);
+    expect(el('pomodoro-today').textContent).toContain('今日 1 个 · 1 分钟');
     const dayBars = [...document.querySelectorAll('.pomodoro-stat-day')] as HTMLElement[];
-    expect(dayBars[6].title).toBe('2026-08-10：1 个 · 25 分钟');
+    expect(dayBars[6].title).toBe('2026-08-10：1 个 · 1 分钟');
     expect(dayBars[6].textContent).toBe('10'); // 标签缩为「日」（窄面板不折行；T0 = 2026-08-10）
   });
 
   it('autoCycle 关：专注完成 toast 挂「开始休息」动作，点击直达开始短休', async () => {
-    const { app } = setup();
+    const { app } = setup(new MockVault(), { pomodoroWorkMin: '1' });
     await openPomodoro(app);
     el('pomodoro-btn-start').click();
-    await vi.advanceTimersByTimeAsync(25 * 60 * 1000);
+    await vi.advanceTimersByTimeAsync(60 * 1000);
     const restBtn = [...document.querySelectorAll('.bz-notice-action')].find((b) => b.textContent === '开始休息');
     expect(restBtn).toBeTruthy();
     (restBtn as HTMLElement).click();
@@ -767,10 +772,10 @@ describe('增强包：循环圆点 / 时段分布 / 通知动作 / Space / 备�
   });
 
   it('autoCycle 开：完成 toast 无动作按钮（下一阶段已自动计时，文案报事实）', async () => {
-    const { app } = setup(new MockVault(), { pomodoroAutoCycle: true });
+    const { app } = setup(new MockVault(), { pomodoroWorkMin: '1', pomodoroAutoCycle: true });
     await openPomodoro(app);
     el('pomodoro-btn-start').click();
-    await vi.advanceTimersByTimeAsync(25 * 60 * 1000);
+    await vi.advanceTimersByTimeAsync(60 * 1000);
     expect(hasNotice('专注完成：休息 5 分钟')).toBe(true);
     expect(document.querySelectorAll('.bz-notice-action').length).toBe(0);
   });
@@ -792,7 +797,7 @@ describe('增强包：循环圆点 / 时段分布 / 通知动作 / Space / 备�
   });
 
   it('startFocusForTask：直接开始归属专注（弹窗任务行 + 状态栏 title 展示；完成落账后收起）', async () => {
-    const { app, vault } = setup();
+    const { app, vault } = setup(new MockVault(), { pomodoroWorkMin: '1' });
     const container = document.createElement('div');
     container.className = 'status-bar';
     document.body.appendChild(container);
@@ -806,7 +811,7 @@ describe('增强包：循环圆点 / 时段分布 / 通知动作 / Space / 备�
     const statusEl = container.querySelector('.pomodoro-statusbar') as HTMLElement;
     expect(statusEl.title).toBe('番茄钟：完成阅读报告');
     // 自然完成 → 归属写入历史 + 任务行/状态栏收起
-    await vi.advanceTimersByTimeAsync(25 * 60 * 1000);
+    await vi.advanceTimersByTimeAsync(60 * 1000);
     const raw = JSON.parse(vault.files.get(getPomodoroFilePath())!);
     expect(raw.history).toHaveLength(1);
     expect(raw.history[0].task).toBe('完成阅读报告');
@@ -825,10 +830,10 @@ describe('增强包：循环圆点 / 时段分布 / 通知动作 / Space / 备�
   });
 
   it('startFocusForTask：休息计时中 → 跳过休息（不记历史）直接开始归属专注', async () => {
-    const { app, vault } = setup();
+    const { app, vault } = setup(new MockVault(), { pomodoroWorkMin: '1' });
     await openPomodoro(app);
     el('pomodoro-btn-start').click();
-    await vi.advanceTimersByTimeAsync(25 * 60 * 1000); // 专注完成 → 短休未开始
+    await vi.advanceTimersByTimeAsync(60 * 1000); // 专注完成 → 短休未开始
     el('pomodoro-btn-start').click(); // 开始休息
     expect(el('pomodoro-phase').textContent).toBe('短休息');
     await startFocusForTask(app, '给影评加封面');
@@ -1095,7 +1100,7 @@ describe('统计两档与周归档（issue 357）', () => {
         history: [{ ts: T0 - 30 * DAY, duration: 1500 }], // 2026-07-11 周六，窗外
       })
     );
-    const { app, vault: v } = setup(vault);
+    const { app, vault: v } = setup(vault, { pomodoroWorkMin: '1' });
     await openPomodoro(app); // initData：裁剪 + 归档增量 → 立即固化落盘
     await enqueueFileTask(getPomodoroFilePath(), async () => undefined);
     let raw = JSON.parse(v.files.get(getPomodoroFilePath())!);
@@ -1103,7 +1108,7 @@ describe('统计两档与周归档（issue 357）', () => {
     expect(raw.archived).toEqual([{ week: '2026-07-06', count: 1, minutes: 25 }]); // 归档一行
     // 完成一个专注（今天）→ save 再走 trimWithArchive：明细不重复归档
     el('pomodoro-btn-start').click();
-    await vi.advanceTimersByTimeAsync(25 * 60 * 1000);
+    await vi.advanceTimersByTimeAsync(60 * 1000);
     await enqueueFileTask(getPomodoroFilePath(), async () => undefined);
     raw = JSON.parse(v.files.get(getPomodoroFilePath())!);
     expect(raw.history).toHaveLength(1);
@@ -1111,10 +1116,10 @@ describe('统计两档与周归档（issue 357）', () => {
   });
 
   it('save：无归档数据时文件不写 archived 键（文件形状与旧版一致）', async () => {
-    const { app, vault: v } = setup();
+    const { app, vault: v } = setup(new MockVault(), { pomodoroWorkMin: '1' });
     await openPomodoro(app);
     el('pomodoro-btn-start').click();
-    await vi.advanceTimersByTimeAsync(25 * 60 * 1000);
+    await vi.advanceTimersByTimeAsync(60 * 1000);
     await enqueueFileTask(getPomodoroFilePath(), async () => undefined);
     const raw = JSON.parse(v.files.get(getPomodoroFilePath())!);
     expect(raw.history).toHaveLength(1);
@@ -1208,10 +1213,10 @@ describe('深审修复批回归（bz-fix-pomo-core）', () => {
   });
 
   it('PF3：休息阶段手动暂停 → toast「已暂停休息」（修复前恒「已暂停专注」）', async () => {
-    const { app } = setup();
+    const { app } = setup(new MockVault(), { pomodoroWorkMin: '1' });
     await openPomodoro(app);
     el('pomodoro-btn-start').click();
-    await vi.advanceTimersByTimeAsync(25 * 60 * 1000); // 专注完成 → 短休息待开始
+    await vi.advanceTimersByTimeAsync(60 * 1000); // 专注完成 → 短休息待开始
     el('pomodoro-btn-start').click(); // 开始休息
     el('pomodoro-btn-start').click(); // 暂停休息
     expect(hasNotice('已暂停休息')).toBe(true);

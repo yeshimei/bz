@@ -22,12 +22,8 @@ async function flush(ms = 20) {
 }
 
 /** 轮询等待（写盘含真实 PBKDF2，固定短 flush 会撞上保存中途） */
-async function waitFor(cond: () => boolean, timeout = 3000) {
-  const start = Date.now();
-  while (!cond()) {
-    if (Date.now() - start > timeout) throw new Error('waitFor 超时');
-    await new Promise((r) => setTimeout(r, 20));
-  }
+async function waitFor(cond: () => boolean, timeout = 3000): Promise<void> {
+  await vi.waitFor(() => expect(cond()).toBe(true), { timeout });
 }
 
 /** 等 core 流程框（askConfirm 收编后的唯一确认 UI，挂 body）出现并返回其弹窗 */

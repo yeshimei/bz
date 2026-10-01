@@ -2,9 +2,13 @@
  * 做题家 UI 测试（ticket 141 重构版）：纯复习会话语义（普通模式随 ticket 098 退役入口一并删除）。
  * 覆盖：startReviewSession 契约 / 单选多选判定 / 持久化后计数 / 答对 0.8s 亮绿后自动跳题（ticket 156）/
  * 键盘快捷键 / 头部对错计数删除（ticket 156）/ 退出确认闸门 / 结果卡阶段防拆 DOM。
+ *
+ * 定时器口径（2026-10-01 提速）：本文件全程假时钟（只 fake 4 个定时器 API，Date 不动——
+ * session.ts 无 Date.now）。答对 0.8s 跳题延时此前用真实 `setTimeout(850)` 等 13 处 ≈ 11s
+ * 真墙钟；改 `vi.advanceTimersByTimeAsync` 后推进瞬间完成，语义不变（仍是「延时到点才跳题」）。
  */
 import { makeApp } from '../../helpers/app';
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { MockVault, mockAppWithVault } from '../../mock-vault';
 import { resetObsidianMocks, getNoticeMessages } from '../../mock-obsidian-entry';
 import { setApp } from '../../../src/core/app';
@@ -18,20 +22,28 @@ function seedQuiz(vault: MockVault, notes: Record<string, any[]>) {
   vault.files.set(QUIZ_FILE_PATH, JSON.stringify({ notes }));
 }
 
-/** 微任务落盘等待（removeQuestion → jsonStore 写盘在微任务内结算） */
+/** 微任务落盘等待（removeQuestion → jsonStore 写盘在微任务内结算；0ms 推进触发挂起的 setTimeout 链） */
 async function flushPersist(): Promise<void> {
-  await new Promise((r) => setTimeout(r, 0));
+  await vi.advanceTimersByTimeAsync(0);
   await Promise.resolve();
   await Promise.resolve();
 }
 
-/** 答对自动跳题延时等待（ticket 156：0.8s 亮绿反馈后进入下一题） */
+/** 答对自动跳题延时等待（ticket 156：0.8s 亮绿反馈后进入下一题）——假时钟推进，不烧真墙钟 */
 async function flushJump(): Promise<void> {
-  await new Promise((r) => setTimeout(r, 850));
+  await vi.advanceTimersByTimeAsync(850);
 }
 
 const Q = (question: string, correctIndices: number[], notePath = 'A.md'): QuizQuestion =>
   ({ question, options: ['甲', '乙', '丙', '丁'], correctIndices, notePath } as QuizQuestion);
+
+// 文件级假时钟（三个 describe 统一覆盖）：只 fake 4 个定时器 API，Date 不动
+beforeEach(() => {
+  vi.useFakeTimers({ toFake: ['setTimeout', 'setInterval', 'clearTimeout', 'clearInterval'] });
+});
+afterEach(() => {
+  vi.useRealTimers();
+});
 
 describe('QuizMasterUI（纯复习会话）', () => {
   beforeEach(() => {
@@ -481,7 +493,7 @@ describe('复习联动契约', () => {
     expect(onComplete).not.toHaveBeenCalled();
     // 取消 → 继续做题
     (document.getElementById('__shared_confirm_cancel__') as HTMLElement).click();
-    await new Promise((r) => setTimeout(r, 0)); // U1：confirming 复位走 promise 微任务（真实点击间隔必有任务边界）
+    await vi.advanceTimersByTimeAsync(0); // U1：confirming 复位走 promise 微任务（真实点击间隔必有任务边界）
     expect(document.getElementById('quiz-popup')).not.toBeNull();
     // 再点遮罩 → 确认放弃 → 按已答结算（0 题）
     (document.getElementById('quiz-mask') as HTMLElement).click();

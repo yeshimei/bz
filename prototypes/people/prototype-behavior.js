@@ -1,4 +1,4 @@
-/* 源指纹 fc6a1aa26f824a74 · 仓内输入 93 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 490d3d9088d109d6 · 仓内输入 93 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/people/fake-sim.ts","prototypes/people/fake/fake-obsidian.ts","src/bookshelf/data.ts","src/bookshelf/state.ts","src/cinema/state.ts","src/core/ai.ts","src/core/app.ts","src/core/asr-proofread.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/external-tool.ts","src/core/flow-dialog.ts","src/core/gesture.ts","src/core/http.ts","src/core/item-actions.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/settings-btn-state.ts","src/core/settings-common.ts","src/core/settings-modal.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/help-tip.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/motion.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/password-vault/data.ts","src/people/chat.ts","src/people/data.ts","src/people/datasource.ts","src/people/describe.ts","src/people/digest.ts","src/people/export.ts","src/people/heavy-gate.ts","src/people/incremental.ts","src/people/insights.ts","src/people/jobs.ts","src/people/me-avatar.ts","src/people/media.ts","src/people/migrate.ts","src/people/parse.ts","src/people/prep.ts","src/people/recording.ts","src/people/render.ts","src/people/safe-store.ts","src/people/settings.ts","src/people/stats.ts","src/people/sync.ts","src/people/thumbs.ts","src/people/types.ts","src/people/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/people/fake-sim.ts → window.BZW_people（行为单源预览包，issue 245/ADR-0106） */
 var BZW_people = (() => {
@@ -5121,9 +5121,10 @@ var BZW_people = (() => {
   function clearCryptoKeyCache() {
     keyCache.clear();
   }
-  var CryptoService, keyCache, KEY_CACHE_MAX;
+  var PBKDF2_ITERATIONS, CryptoService, keyCache, KEY_CACHE_MAX;
   var init_crypto = __esm({
     "src/core/crypto.ts"() {
+      PBKDF2_ITERATIONS = 1e5;
       CryptoService = class {
         static async deriveKey(password, salt) {
           const cacheKey = toBase64(salt);
@@ -5141,7 +5142,7 @@ var BZW_people = (() => {
             {
               name: "PBKDF2",
               salt,
-              iterations: 1e5,
+              iterations: PBKDF2_ITERATIONS,
               hash: "SHA-256"
             },
             keyMaterial,
@@ -11220,7 +11221,7 @@ var BZW_people = (() => {
       ]
     };
   }
-  var LOCK_KIND_META, lastVisitedAsset, activeUnlock, PANEL, _UIManager, UIManager, _EncryptAppController, EncryptAppController;
+  var PREVIEW_RENDER_TIMEOUT_MS, LOCK_KIND_META, lastVisitedAsset, activeUnlock, PANEL, _UIManager, UIManager, _EncryptAppController, EncryptAppController;
   var init_ui2 = __esm({
     "src/encrypt/ui.ts"() {
       init_fake_obsidian();
@@ -11245,6 +11246,7 @@ var BZW_people = (() => {
       init_lock_screen();
       init_lock_stats();
       init_motion();
+      PREVIEW_RENDER_TIMEOUT_MS = 3e3;
       LOCK_KIND_META = {
         vault: {
           icon: "shield",
@@ -13246,12 +13248,13 @@ var BZW_people = (() => {
           }
         }
         /**
-         * 渲染带超时：3000ms 内不完成视为失败（防真实环境 render 挂起导致弹窗永久空白/不可关）。
+         * 渲染带超时：PREVIEW_RENDER_TIMEOUT_MS（默认 3000ms）内不完成视为失败（防真实环境 render
+         * 挂起导致弹窗永久空白/不可关）。
          * E9：render 渲入私有容器——超时弃用该容器（迟到 promise 追加进孤儿节点永不入 DOM），
          * 返回全新容器给调用方走纯文本兜底，正文不再「纯文本 + 迟到渲染」叠双份。
          * T13：返回渲染 Component，调用链在关窗/下一次填充前 unload 收掉生命周期。
          */
-        async renderWithTimeout(app, text2, path, timeoutMs = 3e3) {
+        async renderWithTimeout(app, text2, path, timeoutMs = PREVIEW_RENDER_TIMEOUT_MS) {
           this.unloadPreviewComponent();
           const el2 = document.createElement("div");
           const component = new Component();
@@ -18196,6 +18199,7 @@ ${lines}`;
       lockPaused: false,
       prepGate: null
     };
+    if (ai.sleep) st.retry.sleep = ai.sleep;
     wireLock();
     runPromise = null;
     if (dirty) await store2.write({ version: 1, queue: queue2 });

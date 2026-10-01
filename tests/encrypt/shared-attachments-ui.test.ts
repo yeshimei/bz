@@ -5,7 +5,7 @@
  * （两笔记嵌同一图：加密后原件保留、他篇完好、manifest 标记、完成通知区分、还原跳过写回）、
  * 非共享附件确认框与既有语义不变。
  */
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { setApp } from '../../src/core/app';
 import { setSettingsProvider } from '../../src/core/settings-provider';
 import { EncryptAppController, findSharedAttachmentPaths, collectSharedAttachmentPaths } from '../../src/encrypt/ui';
@@ -13,12 +13,8 @@ import { MockVault, mockAppWithVault } from '../mock-vault';
 import { resetObsidianMocks, hasNotice } from '../mock-obsidian-entry';
 
 /** 轮询等待（真实 PBKDF2 长异步） */
-async function waitFor(cond: () => boolean, timeout = 3000) {
-  const start = Date.now();
-  while (!cond()) {
-    if (Date.now() - start > timeout) throw new Error('waitFor 超时');
-    await new Promise((r) => setTimeout(r, 25));
-  }
+async function waitFor(cond: () => boolean, timeout = 3000): Promise<void> {
+  await vi.waitFor(() => expect(cond()).toBe(true), { timeout });
 }
 
 const CONFIG = { root: 'CONFIG/.ENCRYPT', previewEnabled: false, previewSize: 384, previewQuality: 0.5, autoLoadOriginal: false, securityMode: false };

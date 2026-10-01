@@ -55,12 +55,8 @@ afterEach(() => {
   document.body.innerHTML = '';
 });
 
-async function waitFor(cond: () => boolean, timeout = 8000) {
-  const start = Date.now();
-  while (!cond()) {
-    if (Date.now() - start > timeout) throw new Error('waitFor 超时');
-    await new Promise((r) => setTimeout(r, 20));
-  }
+async function waitFor(cond: () => boolean, timeout = 8000): Promise<void> {
+  await vi.waitFor(() => expect(cond()).toBe(true), { timeout });
 }
 
 /** 直连解锁保险箱 */

@@ -32,12 +32,8 @@ const CONFIG = {
   securityMode: false,
 };
 
-async function waitFor(cond: () => boolean, timeout = 3000) {
-  const start = Date.now();
-  while (!cond()) {
-    if (Date.now() - start > timeout) throw new Error('waitFor 超时');
-    await new Promise((r) => setTimeout(r, 20));
-  }
+async function waitFor(cond: () => boolean, timeout = 3000): Promise<void> {
+  await vi.waitFor(() => expect(cond()).toBe(true), { timeout });
 }
 
 /** 伪造 SafeNote（纯 UI 层 fixture：直塞 manifest，不落盘、不走加密） */

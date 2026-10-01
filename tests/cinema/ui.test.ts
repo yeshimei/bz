@@ -1773,6 +1773,8 @@ describe('深审批A：写路径与 ui 行为回归', () => {
     expect(parseFrontmatter(content0), '建档 frontmatter 应可解析').toBeTruthy();
     // ② 编辑态写多行/含「: 」影评：裸拼模板会写破 YAML → 影片从面板黏性消失、sweep 永不补抓
     await vi.waitFor(() => expect(root.querySelectorAll('.cn-modal').length).toBe(0));
+    // 弹窗关 ≠ 网格已重画：建档后的列表刷新是异步收尾，等卡片真出现（原写法紧跟弹窗断言，负载下抢跑）
+    await vi.waitFor(() => expect(pcardByName(root, '多行影评片')).toBeTruthy());
     clickEl(pcardByName(root, '多行影评片'));
     clickEl((root.querySelector('.cn-modal') as HTMLElement).querySelector('.j-edit'));
     form = root.querySelector('.cn-modal') as HTMLElement;

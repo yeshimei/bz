@@ -95,11 +95,7 @@ function sbSettings() {
 
 /** 轮询等待异步条件（load/render 链路经多个微任务+定时器） */
 async function until(fn: () => boolean, timeoutMs = 1500): Promise<void> {
-  const start = Date.now();
-  while (!fn()) {
-    if (Date.now() - start > timeoutMs) throw new Error('until 超时');
-    await new Promise((r) => setTimeout(r, 10));
-  }
+  await vi.waitFor(() => expect(fn()).toBe(true), { timeout: timeoutMs });
 }
 
 describe('第二大脑首用引导（ticket 107）', () => {

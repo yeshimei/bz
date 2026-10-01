@@ -36,12 +36,8 @@ vi.mock('../../src/encrypt/preview', async (importOriginal) => {
 const mockCompressImage = vi.mocked(compressImage);
 const mockVideoFrame = vi.mocked(videoFrame);
 
-async function waitFor(cond: () => boolean, timeout = 3000) {
-  const start = Date.now();
-  while (!cond()) {
-    if (Date.now() - start > timeout) throw new Error('waitFor 超时');
-    await new Promise((r) => setTimeout(r, 25));
-  }
+async function waitFor(cond: () => boolean, timeout = 3000): Promise<void> {
+  await vi.waitFor(() => expect(cond()).toBe(true), { timeout });
 }
 
 const BASE_CONFIG = { root: 'CONFIG/.ENCRYPT', previewEnabled: false, previewSize: 384, previewQuality: 0.5, autoLoadOriginal: false, securityMode: false };

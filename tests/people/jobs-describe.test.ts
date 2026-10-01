@@ -580,7 +580,10 @@ describe('补充素材·描述单段（509）：零可读不许报成功 / 收�
       await gate; // 卡住单段：留出「期间用户点重试失败项」的窗口
       return JSON.stringify({ descs: ['构造描述'] });
     });
-    await resumeJobs(app, { askDescribe });
+    // sleep 注入：mock 返回 1 条 desc 对 3 张图数量不符 → 批级重试链（describe-only 段 +
+    // 被唤醒任务的 describe 段各一条），真实退避各 1000+3000ms 是纯墙钟浪费；本用例只验
+    // 「收尾唤醒队列」，与退避时长无关（2026-10-01：resumeJobs 此前漏消费 sleep，补齐后方生效）
+    await resumeJobs(app, { askDescribe, sleep: async () => {} });
     const r = runDescribeOnly(app, TALKER);
     await until(() => isDescribeOnlyBusy() && (askDescribe as any).mock.calls.length === 1);
     expect(retryPrepFailures(TALKER)).toBe(true);

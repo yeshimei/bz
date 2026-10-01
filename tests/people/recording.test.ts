@@ -5,7 +5,7 @@
  *
  * @vitest-environment node
  */
-import { describe, it, expect, afterEach } from 'vitest';
+import { describe, it, expect, afterEach, beforeEach } from 'vitest';
 import { createHash } from 'node:crypto';
 import {
   buildRecordingSpec,
@@ -40,6 +40,7 @@ import {
   recordingsDirOf,
   RECORDING_DERIVED_SUFFIXES,
   resetFaceCapabilitiesForTests,
+  resetRecordingProcessesForTests,
   resetRecordingSidecarCacheForTests,
   resolveRecordingTargetName,
   setRecordingFsForTests,
@@ -116,6 +117,14 @@ function dupShaOf(fs2: { readFileSync: (p: string) => string }) {
     }
   };
 }
+
+/**
+ * 进程注册表跨用例隔离：前一条用例收尾的 `running.delete` 挂在微任务链上（done.then），
+ * 未 flush 即进下一条时，同 key 的 startRecordingTask 会因「占位还在」静默返回 null（用例假绿重试）
+ */
+beforeEach(() => {
+  resetRecordingProcessesForTests();
+});
 
 describe('路径组装', () => {
   it('recordingsDirOf / sidecar / 质心 npz 的固定布局（ADR-0212；质心随数据根，0214）', () => {

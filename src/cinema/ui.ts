@@ -1259,11 +1259,16 @@ function createSharedFlight(): {
         };
         fly.finished.then(done).catch(done);
       };
-      ov.animate([
-        { clipPath: `inset(-64px round ${panelRadius}px)`, backgroundColor: 'rgba(20,16,8,.45)' },
-        { clipPath: foldInset, backgroundColor: 'rgba(20,16,8,0)' },
-      ], { duration: SE_GROW, easing: EASE.out }); // 折回与撑开同曲线（issue 401）：往返不同缓动会让「关」比「开」急
-      const fold = ov.getAnimations().pop();
+      // 折回与撑开同曲线（issue 401）：往返不同缓动会让「关」比「开」急。
+      // WAAPI 不可用（jsdom / 老环境）：撤层直交棒——与上方「起飞途中被关」同款兜底
+      let fold: Animation | undefined;
+      try {
+        ov.animate([
+          { clipPath: `inset(-64px round ${panelRadius}px)`, backgroundColor: 'rgba(20,16,8,.45)' },
+          { clipPath: foldInset, backgroundColor: 'rgba(20,16,8,0)' },
+        ], { duration: SE_GROW, easing: EASE.out });
+        fold = ov.getAnimations().pop();
+      } catch { fold = undefined; }
       if (fold) fold.finished.then(handOver).catch(handOver);
       else handOver();
       window.setTimeout(handOver, SE_GROW + 1200); // 兜底：动画事件丢失也必须交棒，弹窗层不能赖着不走
@@ -2325,6 +2330,10 @@ function bindMidnight(sec: HTMLElement, app: App, hoverable = hoverCapable()): v
     }
     const clear = t.closest('[data-cinema-clear]') as HTMLElement | null;
     if (clear) {
+      // 打字后 300ms 内点 ✕：防抖必须连根取消——否则清理完的空搜索态会被旧词的回声重新滤回来
+      // （与 clearSearchKeyword 的清词段对齐；框值/状态词清空口径不变）
+      if (M.searchDebounceTimer) clearTimeout(M.searchDebounceTimer);
+      M.searchDebounceTimer = null;
       M.typeFilter = null; M.statusFilter = null; M.searchKeyword = '';
       // 效率#12 全域口径：✕ 点击 = 框值同清 + ✕ 即隐（mob 框常驻不随 renderAll 重建）
       const inp = clear.closest('label')?.querySelector('input') as HTMLInputElement | null;

@@ -127,6 +127,7 @@ export function resetCinemaState(): void {
   M.sortMode = 'date';
   M.view = 'list';
   M.searchKeyword = '';
+  if (M.searchDebounceTimer) clearTimeout(M.searchDebounceTimer); // 悬挂防抖真定时器必须清（只置 null = 定时器仍在，到点把旧词写回搜索态）
   M.searchDebounceTimer = null;
   M.lastInputAt = 0;
   M.appRef = null;

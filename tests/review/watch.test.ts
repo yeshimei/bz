@@ -367,7 +367,8 @@ describe('批 B 修复回归：watch 事件链（2026-09-19 深审）', () => {
     const { reviewApp } = await import('../../src/review/app');
     const styleSpy = vi.spyOn(reviewApp, 'applyReviewStyles').mockResolvedValue(undefined);
     await w.onVaultCreate({ path: '我的/复习/E.md', extension: 'md', basename: 'E' } as any);
-    expect(styleSpy).toHaveBeenCalled(); // refresh 链跑过（列表 + 染色）
+    // refresh 是 void 发射（不随 onVaultCreate 一起 await）——等染色链跑到（原写法紧跟其后，负载下抢跑）
+    await vi.waitFor(() => expect(styleSpy).toHaveBeenCalled());
     expect((await dm.loadItems()).some((i) => i.filePath === '我的/复习/E.md')).toBe(true);
   });
 

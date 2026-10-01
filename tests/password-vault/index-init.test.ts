@@ -24,12 +24,8 @@ import { PasswordVaultDataManager } from '../../src/password-vault/data';
 import { MockVault, mockAppWithVault } from '../mock-vault';
 import { resetObsidianMocks, hasNotice, clearNotices } from '../mock-obsidian-entry';
 
-async function waitFor(cond: () => boolean, timeout = 3000) {
-  const start = Date.now();
-  while (!cond()) {
-    if (Date.now() - start > timeout) throw new Error('waitFor 超时');
-    await new Promise((r) => setTimeout(r, 20));
-  }
+async function waitFor(cond: () => boolean, timeout = 3000): Promise<void> {
+  await vi.waitFor(() => expect(cond()).toBe(true), { timeout });
 }
 
 describe('password-vault 域入口命令链', () => {

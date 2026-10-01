@@ -52,7 +52,7 @@ import {
   readerHtml, mobListHtml, mobDetailHtml, mobTocHtml, mobNoHitHtml, type MobChapter, siteTint,
   deskFoldRowHtml, foldBodyHtml, ICO, clipReportEntryHtml,
 } from './render';
-import { M, resetClipbookState } from './state';
+import { M, resetClipbookState, bumpLoadGeneration, currentLoadGeneration } from './state';
 import {
   motionPanelIn, motionPanelOut, motionHeadRevealed, motionRailRendered, motionListRendered,
   motionReaderRendered, motionMobTocRendered, motionMobFoldOpen, motionMobDetailIn,
@@ -91,6 +91,10 @@ let escHandle: { unregister(): void } | null = null;
 let loading = false;
 let dirty = false; // 数据变化待刷标志（目录事件回调期）
 let loaded = false; // C5：本次会话是否已成功装载过（false = 首开必须装载）
+/** 装载代际见 state.bumpLoadGeneration：loadIfNeeded / unloadPanel 递增即作废在途装载；
+ *  loader.readNewsAndSidecar 写 M 前也按同代际校验（卸载后迟到的装载不得写脏新会话状态）。
+ *  此前卸载后迟到的装载回调照常执行 `loaded = true`（+ renderAll 往已卸载 DOM 写）——
+ *  下一次打开见 `loaded=true` 便跳过装载，面板卡「空态不装载」直到再兜一次 unload（真 bug：关面板时装载在途即可触发）。 */
 /** 装载错误态（效率#16）：null = 正常；corrupt（news.json 损坏）/ exception（读盘通道异常）
  *  两态 + 原因。错误时中栏出「读取失败」错误空态（带重试钮）替代引导空态——
  *  防「暂无内容」假空态误导用户以为数据全丢（数据明明在盘上） */
@@ -187,8 +191,10 @@ function loadIfNeeded(): Promise<void> {
   if (loading) return loadPromise || Promise.resolve();
   if (!M.open && overlayEl) return Promise.resolve();
   loading = true;
+  const gen = bumpLoadGeneration(); // 本次装载代际：下次装载 / unloadPanel 递增即作废
   loadPromise = readNewsAndSidecar()
     .then((res) => {
+      if (gen !== currentLoadGeneration()) return; // 卸载后迟到（或已被新装载取代）：丢弃（不写状态不渲染）
       // C9 + 效率#16：news.json 损坏（status='corrupt'）不再静默——错误态标记 + 错误空态
       //（renderList 分流）+ onRetry 通知，不再呈现「暂无内容」假空态误导。missing（首用引导）语义不动。
       if (res && res.status === 'corrupt') {
@@ -200,6 +206,7 @@ function loadIfNeeded(): Promise<void> {
       dirty = false; loaded = true; beginSession(); renderAll();
     })
     .catch((e) => {
+      if (gen !== currentLoadGeneration()) return; // 卸载后迟到：失败也不打扰（面板已不在）
       // 效率#16：装载通道异常（同步盘锁住/权限等）——错误态标记 + onRetry 通知 + 错误空态，
       // 首开不再纯白三栏、错误与真空可辨
       console.error('[剪藏本] 装载失败', e);
@@ -207,7 +214,7 @@ function loadIfNeeded(): Promise<void> {
       notifyActionError(e, '剪藏本数据读取', { onRetry: retryLoad });
       if (M.open) renderAll();
     })
-    .finally(() => { loading = false; loadPromise = null; });
+    .finally(() => { if (gen === currentLoadGeneration()) { loading = false; loadPromise = null; } });
   return loadPromise;
 }
 
@@ -253,6 +260,7 @@ export function closePanel(): void {
   panelResizeDetach?.flush(); // 关面板即落盘面板尺寸（review P2：恢复旧 flushPendingSize 语义）
   panelSplit?.flush(); // 关面板即落盘分割线宽度（同上语义）
   hideSelBar(); // CB7：划选工具框挂 body，面板藏了框还悬着（要等下一次 mousedown 才被兜底收走）
+  selBarHoldUntil = 0; // 交互会话结束：静默窗口不跨面板生命周期（重开后立即可划选）
   M.open = false;
   M.mobDetailOpen = false;
   // C7：移动详情 overlay 的 DOM 显示态同步复位——原实现只清布尔，重开面板会直接落在上次的详情屏
@@ -278,6 +286,7 @@ export function unloadPanel(): void {
     selChangeTimer = null;
   }
   hideSelBar();
+  selBarHoldUntil = 0; // 同 closePanel：卸载后静默窗口不复用（跨装载泄漏修复）
   if (selBarEl) {
     selBarEl.remove();
     selBarEl = null;
@@ -305,6 +314,7 @@ export function unloadPanel(): void {
   setSearchKw(''); // 卸载清搜索词（模块级变量，泄漏会污染下一次装载的列表/rail 计数）
   M.open = false;
   M.mobDetailOpen = false;
+  bumpLoadGeneration(); // 作废在途装载（迟到回调不得把 loaded 置回 true / 不得写脏 M —— 见 state.ts 注释）
   loading = false;
   loadPromise = null;
   dirty = false;
@@ -1586,9 +1596,14 @@ async function copyText(text: string, okMsg: string): Promise<void> {
  * 仅条目真消失（删除/剪藏目录删除）才补位到同位置下一条。
  */
 async function refreshAfterAction(): Promise<void> {
+  // 面板已卸载（DOM 已销毁）→ 动作刷新整体作废：点击发出后动作链的异步收尾可能晚于卸载才启动，
+  // 此时不应再写 cur / 重渲 / 让 loader 读盘写 M（否则旧数据污染已 reset 的状态，跨会话可见）
+  if (!overlayEl) return;
+  const gen = currentLoadGeneration(); // 卸载代际：卸载后迟到的刷新不得写 cur / 渲染（loader 侧已守 M 写入）
   const prevId = M.cur?.id;
   const prevIdx = M.cur ? deskFlat().findIndex((x) => x.id === prevId) : -1;
   await readNewsAndSidecar();
+  if (gen !== currentLoadGeneration()) return; // 卸载后迟到：丢弃（面板已不在，状态已被 resetClipbookState 清）
   const flat = deskFlat();
   let advanced = false;
   if (prevId && flat.some((x) => x.id === prevId)) {
@@ -1848,7 +1863,9 @@ function renderMobDetail(): void {
 let selBarEl: HTMLElement | null = null;
 let selBarEsc: { unregister(): void } | null = null;
 let selChangeTimer: ReturnType<typeof setTimeout> | null = null;
-/** 动作发起后的静默窗口：点按钮触发的 selectionchange 不再重弹工具框 */
+/** 动作发起后的静默窗口：点按钮触发的 selectionchange 不再重弹工具框。
+ *  关面板 / 卸载时须复位（closePanel、unloadPanel 两处）——窗口是「同一交互会话内」的防抖，
+ *  面板都关了还压着会把重开后 600ms 内的正常划选一并吞掉（跨装载泄漏，2026-10-01 修复）。 */
 let selBarHoldUntil = 0;
 /** 文字动作快照（显示工具框时定格，防动作执行中切篇错锚） */
 interface SelSnapshot { articleId: string; text: string; }

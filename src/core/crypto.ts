@@ -10,6 +10,17 @@
  * 命中语义不变（热条目始终可复用）。锁定语义：保险库上锁时须 clearCryptoKeyCache()，
  * 密钥不残留内存。
  */
+/**
+ * PBKDF2 迭代数（默认 100000）。测试注入短值（tests/setup.ts 统一调低，见 __setPbkdf2IterationsForTests）：
+ * 加密/解密链路全真（PBKDF2 + AES-GCM），只是强度参数调低——加解密同源读同一变量，密文照常互解。
+ * 单次派生基准（Node webcrypto）：100k ≈ 12.5ms、1k ≈ 0.3ms——每次加密新 salt 必 cache miss，
+ * 加密密集的测试里这一项就是主要 CPU 成本。
+ */
+export let PBKDF2_ITERATIONS = 100000;
+export function __setPbkdf2IterationsForTests(n: number): void {
+  PBKDF2_ITERATIONS = n;
+}
+
 export class CryptoService {
   static async deriveKey(password: string, salt: Uint8Array): Promise<CryptoKey> {
     const cacheKey = toBase64(salt);
@@ -28,7 +39,7 @@ export class CryptoService {
       {
         name: 'PBKDF2',
         salt: salt as BufferSource,
-        iterations: 100000,
+        iterations: PBKDF2_ITERATIONS,
         hash: 'SHA-256',
       },
       keyMaterial,

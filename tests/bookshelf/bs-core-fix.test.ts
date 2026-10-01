@@ -49,12 +49,8 @@ readingProgress: 100
 }
 
 /** 轮询等待（防抖 + rebuild 链路对负载敏感，裸 sleep 有 flake 面积） */
-async function waitFor(fn: () => boolean, timeout = 5000, step = 15): Promise<void> {
-  const start = Date.now();
-  while (!fn()) {
-    if (Date.now() - start > timeout) throw new Error('waitFor: 断言轮询超时');
-    await new Promise((r) => setTimeout(r, step));
-  }
+async function waitFor(fn: () => boolean, timeout = 5000): Promise<void> {
+  await vi.waitFor(() => expect(fn()).toBe(true), { timeout });
 }
 
 function overlayEl(): HTMLElement {

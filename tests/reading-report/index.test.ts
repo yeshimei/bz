@@ -73,11 +73,7 @@ function newContainer(): HTMLElement {
 
 /** 条件轮询（局部 DOM 标记；防并行负载钉死时长） */
 async function until(cond: () => boolean, timeout = 6000): Promise<void> {
-  const start = Date.now();
-  while (!cond()) {
-    if (Date.now() - start > timeout) throw new Error('until: 条件超时');
-    await new Promise((r) => setTimeout(r, 10));
-  }
+  await vi.waitFor(() => expect(cond()).toBe(true), { timeout });
 }
 
 function notices(): HTMLElement[] {

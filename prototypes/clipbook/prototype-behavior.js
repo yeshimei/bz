@@ -1,4 +1,4 @@
-/* 源指纹 17f56976455e3f30 · 仓内输入 123 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 b8661fb80e84a6d1 · 仓内输入 123 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/clipbook/fake-sim.ts","prototypes/clipbook/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/keys.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/clipbook/anchor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/file-sync.ts","src/clipbook/flow.ts","src/clipbook/image-save.ts","src/clipbook/index.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/motion.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/press/data.ts","src/clipbook/press/engine.ts","src/clipbook/press/index.ts","src/clipbook/press/motions.ts","src/clipbook/press/view.ts","src/clipbook/render.ts","src/clipbook/report-stats.ts","src/clipbook/report-ui.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai.ts","src/core/app.ts","src/core/asr-proofread.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/download-manifest.ts","src/core/esc-manager.ts","src/core/file-sync.ts","src/core/flow-dialog.ts","src/core/gesture.ts","src/core/http.ts","src/core/item-actions.ts","src/core/knowledge-boxes.ts","src/core/landscape.ts","src/core/link-now.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/path-picker.ts","src/core/remote-asset.ts","src/core/remote-base.ts","src/core/rss-catalog.ts","src/core/settings-btn-state.ts","src/core/settings-common.ts","src/core/settings-modal.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/sha256.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/help-tip.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/knowledge/data.ts","src/knowledge/file-sync.ts","src/knowledge/index.ts","src/knowledge/motion.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/partial-json.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source-retire.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/secondbrain/readonly.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/motion.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/shared.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/clipbook/fake-sim.ts → window.BZW_clipbook（行为单源预览包，issue 245/ADR-0106） */
 var BZW_clipbook = (() => {
@@ -25124,7 +25124,13 @@ ${bodyText.substring(0, 6e3)}`;
     M3.upInfo = {};
     M3.mobDetailOpen = false;
   }
-  var M3;
+  function bumpLoadGeneration() {
+    return ++loadGeneration;
+  }
+  function currentLoadGeneration() {
+    return loadGeneration;
+  }
+  var M3, loadGeneration;
   var init_state = __esm({
     "src/clipbook/state.ts"() {
       M3 = {
@@ -25141,6 +25147,7 @@ ${bodyText.substring(0, 6e3)}`;
         upInfo: {},
         mobDetailOpen: false
       };
+      loadGeneration = 0;
     }
   });
 
@@ -25881,24 +25888,29 @@ ${bodyText.substring(0, 6e3)}`;
   // src/clipbook/loader.ts
   async function readNewsAndSidecar() {
     var _a;
+    const gen = currentLoadGeneration();
     const res = await readNewsData();
     if (res.missing) {
-      M3.articles = [];
-      M3.clipNotes = null;
-      M3.clipUrls = /* @__PURE__ */ new Set();
-      M3.sidecar = emptySidecar();
-      M3.upInfo = {};
-      M3.stats = { totalRead: 0, totalSaved: 0, totalSkipped: 0, byPlatform: {}, byDate: {} };
-      return { status: "missing", articles: [], sidecar: M3.sidecar, clipNotes: null, clipUrls: M3.clipUrls, upInfo: {} };
+      if (gen === currentLoadGeneration()) {
+        M3.articles = [];
+        M3.clipNotes = null;
+        M3.clipUrls = /* @__PURE__ */ new Set();
+        M3.sidecar = emptySidecar();
+        M3.upInfo = {};
+        M3.stats = { totalRead: 0, totalSaved: 0, totalSkipped: 0, byPlatform: {}, byDate: {} };
+      }
+      return { status: "missing", articles: [], sidecar: emptySidecar(), clipNotes: null, clipUrls: /* @__PURE__ */ new Set(), upInfo: {} };
     }
     if (!res.ok) {
-      M3.articles = [];
-      M3.clipNotes = null;
-      M3.clipUrls = /* @__PURE__ */ new Set();
-      M3.sidecar = emptySidecar();
-      M3.upInfo = {};
-      M3.stats = { totalRead: 0, totalSaved: 0, totalSkipped: 0, byPlatform: {}, byDate: {} };
-      return { status: "corrupt", articles: [], sidecar: M3.sidecar, clipNotes: null, clipUrls: M3.clipUrls, upInfo: {} };
+      if (gen === currentLoadGeneration()) {
+        M3.articles = [];
+        M3.clipNotes = null;
+        M3.clipUrls = /* @__PURE__ */ new Set();
+        M3.sidecar = emptySidecar();
+        M3.upInfo = {};
+        M3.stats = { totalRead: 0, totalSaved: 0, totalSkipped: 0, byPlatform: {}, byDate: {} };
+      }
+      return { status: "corrupt", articles: [], sidecar: emptySidecar(), clipNotes: null, clipUrls: /* @__PURE__ */ new Set(), upInfo: {} };
     }
     const s = tryGetSettings();
     const days = (_a = normalizeRetentionDays(s == null ? void 0 : s.newsRetentionUnsavedDays)) != null ? _a : 30;
@@ -25935,6 +25947,9 @@ ${bodyText.substring(0, 6e3)}`;
       console.warn(`[剪藏本] 剪藏目录有 ${clipNotes.rejected} 篇无法识别（缺 url/created frontmatter）`, clipNotes.rejectedPaths);
     }
     const clipUrls = clipUrlSet(clipNotes || []);
+    if (gen !== currentLoadGeneration()) {
+      return { status: "ok", articles: data.articles, sidecar, clipNotes, clipUrls, upInfo: data.bilibiliUpInfo || {} };
+    }
     M3.articles = data.articles;
     M3.stats = data.stats;
     M3.sidecar = sidecar;
@@ -28521,7 +28536,9 @@ ${bodyText.substring(0, 6e3)}`;
     if (loading) return loadPromise || Promise.resolve();
     if (!M3.open && overlayEl2) return Promise.resolve();
     loading = true;
+    const gen = bumpLoadGeneration();
     loadPromise = readNewsAndSidecar().then((res) => {
+      if (gen !== currentLoadGeneration()) return;
       if (res && res.status === "corrupt") {
         loadError = { kind: "corrupt", reason: "news.json 损坏（原文件已保留）" };
         notifyActionError(new Error(loadError.reason), "剪藏本数据读取", { onRetry: retryLoad });
@@ -28533,13 +28550,16 @@ ${bodyText.substring(0, 6e3)}`;
       beginSession();
       renderAll();
     }).catch((e) => {
+      if (gen !== currentLoadGeneration()) return;
       console.error("[剪藏本] 装载失败", e);
       loadError = { kind: "exception", reason: e instanceof Error ? e.message : String(e) };
       notifyActionError(e, "剪藏本数据读取", { onRetry: retryLoad });
       if (M3.open) renderAll();
     }).finally(() => {
-      loading = false;
-      loadPromise = null;
+      if (gen === currentLoadGeneration()) {
+        loading = false;
+        loadPromise = null;
+      }
     });
     return loadPromise;
   }
@@ -28572,6 +28592,7 @@ ${bodyText.substring(0, 6e3)}`;
     panelResizeDetach == null ? void 0 : panelResizeDetach.flush();
     panelSplit == null ? void 0 : panelSplit.flush();
     hideSelBar();
+    selBarHoldUntil = 0;
     M3.open = false;
     M3.mobDetailOpen = false;
     if (mobDetailEl) mobDetailEl.style.display = "none";
@@ -28597,6 +28618,7 @@ ${bodyText.substring(0, 6e3)}`;
       selChangeTimer = null;
     }
     hideSelBar();
+    selBarHoldUntil = 0;
     if (selBarEl) {
       selBarEl.remove();
       selBarEl = null;
@@ -28624,6 +28646,7 @@ ${bodyText.substring(0, 6e3)}`;
     setSearchKw("");
     M3.open = false;
     M3.mobDetailOpen = false;
+    bumpLoadGeneration();
     loading = false;
     loadPromise = null;
     dirty = false;
@@ -29631,9 +29654,12 @@ ${bodyText.substring(0, 6e3)}`;
   }
   async function refreshAfterAction() {
     var _a;
+    if (!overlayEl2) return;
+    const gen = currentLoadGeneration();
     const prevId = (_a = M3.cur) == null ? void 0 : _a.id;
     const prevIdx = M3.cur ? deskFlat().findIndex((x) => x.id === prevId) : -1;
     await readNewsAndSidecar();
+    if (gen !== currentLoadGeneration()) return;
     const flat = deskFlat();
     let advanced = false;
     if (prevId && flat.some((x) => x.id === prevId)) {

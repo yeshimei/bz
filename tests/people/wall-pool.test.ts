@@ -199,7 +199,8 @@ describe('墙成员 = 人物卡 ∪ 聊天仓（452）', () => {
     const saved = (await safe.read('大琳'))!.person;
     expect(saved.profile!.job).toBe('插画师');
     expect(saved.imports).toEqual([]); // 合成导入记录不落盘
-    expect(getNoticeMessages().some((m) => m.includes('档案已保存'))).toBe(true);
+    // 保存成功的 toast 在落盘链尾才渲染——等它出现（原写法紧跟 read 断言，首跑时序偶发落空）
+    await vi.waitFor(() => expect(getNoticeMessages().some((m) => m.includes('档案已保存'))).toBe(true));
   });
 
   // ---------------- issue 454：合成记录的媒体数 ----------------

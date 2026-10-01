@@ -321,6 +321,8 @@ export interface JobResumeOptions {
   askDescribeConfirm?: DescribeGate;
   /** 画像生成的确认门注入（471；缺省 = 放行，生产入口恒注入） */
   askPortraitConfirm?: PortraitGate;
+  /** 重试退避等待（缺省真实定时器；测试注入 no-op，避免空等——与 startJobs 同语义） */
+  sleep?: (ms: number) => Promise<void>;
 }
 
 /**
@@ -984,6 +986,9 @@ export async function resumeJobs(app: unknown, ai: JobResumeOptions = {}): Promi
     lockPaused: false,
     prepGate: null,
   };
+  // 重试策略：只在显式传入时覆盖（不传 = 真实退避；与 startJobs 同语义——此前 resumeJobs
+  // 收了 opts 却漏消费 sleep，测试注入 no-op 退避不生效，重试链白烧 1000+3000ms 真墙钟）
+  if (ai.sleep) st.retry.sleep = ai.sleep;
   wireLock();
   runPromise = null;
   if (dirty) await store.write({ version: 1, queue });

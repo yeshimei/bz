@@ -6,18 +6,15 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { setApp } from '../../src/core/app';
 import { setSettingsProvider } from '../../src/core/settings-provider';
 import { SafeManager, type SafeAttachment } from '../../src/encrypt/data';
-import { EncryptAppController, UIManager, collectMediaSlots, truncateName, mimeOf, collectNoteAttachments, collectNoteAttachmentPaths } from '../../src/encrypt/ui';
+import { EncryptAppController, UIManager, collectMediaSlots, truncateName, mimeOf, collectNoteAttachments, collectNoteAttachmentPaths, __setPreviewRenderTimeoutMsForTests } from '../../src/encrypt/ui';
 import { PasswordVaultDataManager } from '../../src/password-vault/data';
 import { MockVault, mockAppWithVault } from '../mock-vault';
 import { resetObsidianMocks, getNoticeMessages, hasNotice, clearNotices, mockMarkdownRenderer } from '../mock-obsidian-entry';
 
-/** 轮询等待（真实 PBKDF2 长异步） */
-async function waitFor(cond: () => boolean, timeout = 3000) {
-  const start = Date.now();
-  while (!cond()) {
-    if (Date.now() - start > timeout) throw new Error('waitFor 超时');
-    await new Promise((r) => setTimeout(r, 25));
-  }
+/** 轮询等待（真实 PBKDF2 长异步）——委托 vi.waitFor（全局轮询间隔 2ms，见 tests/setup.ts）。
+ *  自建 25ms 节拍的版本每处至少白等一个 25ms 周期；PBKDF2 本身耗时照付（CPU 时间省不掉）。 */
+async function waitFor(cond: () => boolean, timeout = 3000): Promise<void> {
+  await vi.waitFor(() => expect(cond()).toBe(true), { timeout });
 }
 
 const CONFIG = { root: 'CONFIG/.ENCRYPT', previewEnabled: false, previewSize: 384, previewQuality: 0.5, autoLoadOriginal: false, securityMode: false };
@@ -99,17 +96,24 @@ describe('UIManager 解锁弹窗', () => {
     const confirmBtn = dialog.querySelector('.bz-lockscreen-action') as HTMLElement;
     (inputs[0] as HTMLInputElement).value = 'wrong';
     confirmBtn.click();
-    await new Promise((r) => setTimeout(r, 200));
+    await waitFor(() => hasNotice(/密码错误，1 秒后可重试/)); // 等错误链渲染（比固定 200ms 更准更快）
     expect(dm.unlocked).toBe(false);
     // 密码错误单通知（效率新-8）：行内报错与冷却提示合并为一条「密码错误，N 秒后可重试」
-    expect(hasNotice(/密码错误，1 秒后可重试/)).toBe(true);
     expect(hasNotice('密码错误，请重试')).toBe(false);
     expect(hasNotice(/1 秒后可再次尝试/)).toBe(false);
-    await new Promise((r) => setTimeout(r, 1100)); // 等冷却结束再试
-    (inputs[0] as HTMLInputElement).value = 'master123';
-    confirmBtn.click();
-    await p;
-    expect(dm.unlocked).toBe(true);
+    // 偏移时钟跳过秒级冷却（节流内部以 Date.now 计冷却截止；同「连续失败递增冷却」用例手法）
+    const realNow = Date.now;
+    let offsetMs = 0;
+    const nowSpy = vi.spyOn(Date, 'now').mockImplementation(() => realNow() + offsetMs);
+    try {
+      offsetMs += 1100;
+      (inputs[0] as HTMLInputElement).value = 'master123';
+      confirmBtn.click();
+      await p;
+      expect(dm.unlocked).toBe(true);
+    } finally {
+      nowSpy.mockRestore();
+    }
   });
 
   it('回归：首次设主密码后再次打开→解锁弹窗（不再要求重设主密码）', async () => {
@@ -396,17 +400,20 @@ describe('预览窗混排与还原打开', () => {
     // 模拟真实 Obsidian 里 render 永不 resolve 的挂起
     const orig = mockMarkdownRenderer.render;
     mockMarkdownRenderer.render = vi.fn(async () => new Promise<void>(() => {})) as any;
+    // 渲染超时注入短值：「挂起 → 超时 → 降级」的语义与阈值数值无关，真等 3s 是纯浪费
+    __setPreviewRenderTimeoutMsForTests(80);
     try {
       ui.openPreview(note);
       // 弹窗立即可见（骨架同步显示，不依赖渲染完成）
       await waitFor(() => document.getElementById('bz-encrypt-preview-popup')!.style.display === 'flex');
-      // 超时兜底后降级纯文本正文（等 3s 渲染超时 + 余量）
+      // 超时兜底后降级纯文本正文（注入 80ms 超时后到点即降级）
       await waitFor(() => (document.querySelector('.bz-encrypt-preview-md') as HTMLElement)?.textContent?.includes('正文'), 8000);
       const md = document.querySelector('.bz-encrypt-preview-md')!;
       expect(md.textContent).toContain('正文');
       expect(md.querySelectorAll('img').length).toBe(0);
     } finally {
       mockMarkdownRenderer.render = orig;
+      __setPreviewRenderTimeoutMsForTests(3000);
     }
   });
 
@@ -1105,14 +1112,21 @@ describe('解锁弹窗：清单损坏重设确认 + 首设写失败（雷 1/4 UI
     const confirmBtn = dialog.querySelector('.bz-lockscreen-action') as HTMLElement;
     (inputs[0] as HTMLInputElement).value = 'wrong';
     confirmBtn.click();
-    await new Promise((r) => setTimeout(r, 200));
     // 密码错误（清单正常）走单通知「密码错误，N 秒后可重试」，无损坏确认
-    expect(hasNotice(/密码错误，1 秒后可重试/)).toBe(true);
+    await waitFor(() => hasNotice(/密码错误，1 秒后可重试/));
     expect(document.getElementById('__shared_confirm_mask__')).toBeNull(); // 无损坏确认
-    await new Promise((r) => setTimeout(r, 1100)); // 等失败节流冷却（P2）结束再试
-    (inputs[0] as HTMLInputElement).value = 'pw';
-    confirmBtn.click();
-    expect(await p).toBe(true);
+    // 偏移时钟跳过秒级冷却（P2；同「连续失败递增冷却」用例手法）
+    const realNow = Date.now;
+    let offsetMs = 0;
+    const nowSpy = vi.spyOn(Date, 'now').mockImplementation(() => realNow() + offsetMs);
+    try {
+      offsetMs += 1100;
+      (inputs[0] as HTMLInputElement).value = 'pw';
+      confirmBtn.click();
+      expect(await p).toBe(true);
+    } finally {
+      nowSpy.mockRestore();
+    }
   });
 
   it('连续失败递增冷却：1s/2s/4s 封顶 8s；冷却期内拒绝尝试；成功后复位（P2）', async () => {

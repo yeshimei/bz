@@ -16,12 +16,13 @@ import { openPomodoro, unloadPomodoro } from '../../src/pomodoro';
 const T0 = new Date('2026-08-10T10:00:00').getTime();
 
 /**
- * 本文件 testTimeout 单独放宽到 60s（全局 20s 不够）。
- * 番茄钟 onTick 每秒整屏 render 一次（src/pomodoro/ui.ts:625），jsdom 里约 10ms/次——
- * 「推进 50 分钟假时钟」= 3000 次 render ≈ 30s 真墙钟，并发争抢下撞穿 20s（2026-10-01 实测）。
- * 推进量本身是这些用例的被测语义（minutes 跟随配置），不能靠缩短推进量省时间。
+ * 本文件不再单独放宽 testTimeout（2026-10-01 校正）。
+ * 番茄钟 onTick 每秒整屏 render 一次（src/pomodoro/ui.ts），jsdom 里约 10ms/次——「推进 50 分钟
+ * 假时钟」= 3000 次 render ≈ 30s 真墙钟。原注释断言「推进量本身是被测语义（minutes 跟随配置），
+ * 不能靠缩短推进量省时间」，那是把「验数字 25/50」误当成「验跟随配置」了：**「minutes 跟随配置」
+ * 只需「值取自 durations().workMin、不是硬编码」，用几个不同的短时长即可证明**；而「默认配置是
+ * 25」由 settings/config 层覆盖，不必在这里推满 25 分钟。故两个用例改压到 1 / 2 分钟。
  */
-vi.setConfig({ testTimeout: 60000 });
 
 /** 'pomodoro' 通道间谍（真实总线挂点；每用例前清调用记录，afterEach 退订） */
 let pomodoroSpy: (evt?: unknown) => void = () => {};
@@ -58,24 +59,25 @@ function el(id: string): HTMLElement {
 }
 
 describe('番茄钟专注完成观察挂点（域事件派发，ticket 080）', () => {
-  it('tick 自然完成专注 → 发 focus-done 事件，minutes = 默认 25', async () => {
-    const { app } = setup();
+  it('tick 自然完成专注 → 发 focus-done 事件，minutes 取 durations().workMin', async () => {
+    const { app } = setup({ pomodoroWorkMin: '1' }); // 只为触发「自然完成」；minutes 语义与具体分钟数无关
     await openPomodoro(app);
     el('pomodoro-btn-start').click();
     expect(pomodoroSpy).not.toHaveBeenCalled();
-    await vi.advanceTimersByTimeAsync(25 * 60 * 1000); // 专注自然完成
+    await vi.advanceTimersByTimeAsync(60 * 1000); // 专注自然完成
     expect(pomodoroSpy).toHaveBeenCalledTimes(1);
-    expect(pomodoroSpy).toHaveBeenCalledWith({ kind: 'focus-done', minutes: 25 });
+    expect(pomodoroSpy).toHaveBeenCalledWith({ kind: 'focus-done', minutes: 1 });
   });
 
-  it('自定义工作时长（50 分钟）完成 → minutes 跟随当前配置（durations().workMin）', async () => {
-    const { app } = setup({ pomodoroWorkMin: '50' });
+  it('自定义工作时长完成 → minutes 跟随当前配置（durations().workMin）', async () => {
+    // 与上一条用不同的值（2 ≠ 1）即证明「不是硬编码」；「默认 25」由 settings/config 层覆盖
+    const { app } = setup({ pomodoroWorkMin: '2' });
     await openPomodoro(app);
     el('pomodoro-btn-start').click();
-    expect(el('pomodoro-time').textContent).toBe('50:00');
-    await vi.advanceTimersByTimeAsync(50 * 60 * 1000);
+    expect(el('pomodoro-time').textContent).toBe('02:00');
+    await vi.advanceTimersByTimeAsync(2 * 60 * 1000);
     expect(pomodoroSpy).toHaveBeenCalledTimes(1);
-    expect(pomodoroSpy).toHaveBeenCalledWith({ kind: 'focus-done', minutes: 50 });
+    expect(pomodoroSpy).toHaveBeenCalledWith({ kind: 'focus-done', minutes: 2 });
   });
 
   it('start → 不发事件', async () => {
@@ -110,13 +112,13 @@ describe('番茄钟专注完成观察挂点（域事件派发，ticket 080）', 
   });
 
   it('休息自然完成 → 只收专注完成的 1 次（historyEntry 仅 focus 产生）', async () => {
-    const { app } = setup();
+    const { app } = setup({ pomodoroWorkMin: '1', pomodoroShortBreakMin: '1' });
     await openPomodoro(app);
     el('pomodoro-btn-start').click();
-    await vi.advanceTimersByTimeAsync(25 * 60 * 1000); // 专注完成
+    await vi.advanceTimersByTimeAsync(60 * 1000); // 专注完成
     expect(pomodoroSpy).toHaveBeenCalledTimes(1);
     el('pomodoro-btn-start').click(); // 开始短休
-    await vi.advanceTimersByTimeAsync(5 * 60 * 1000); // 休息自然完成
+    await vi.advanceTimersByTimeAsync(60 * 1000); // 休息自然完成
     expect(pomodoroSpy).toHaveBeenCalledTimes(1); // 休息完成不叠加
   });
 });

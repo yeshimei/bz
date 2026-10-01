@@ -15,7 +15,7 @@ import { clipUrlSet } from './store';
 import { articleKeyOf } from './constants';
 import { tryGetSettings } from '../core/settings-provider';
 import { getApp } from '../core/app';
-import { M } from './state';
+import { M, currentLoadGeneration } from './state';
 import { enqueueNewsWrite } from './write-queue';
 
 export interface PanelData {
@@ -34,25 +34,30 @@ export { clipDir };
 
 /** 整盘装载（news 保留清理 + 迁移 + 侧写 + 剪藏扫描）→ 结果写入 M */
 export async function readNewsAndSidecar(): Promise<PanelData> {
+  const gen = currentLoadGeneration(); // 写 M 前校验的代际：卸载后迟到的装载不得写脏新会话
   const res = await readNewsData();
 
   if (res.missing) {
-    M.articles = [];
-    M.clipNotes = null;
-    M.clipUrls = new Set();
-    M.sidecar = emptySidecar();
-    M.upInfo = {};
-    M.stats = { totalRead: 0, totalSaved: 0, totalSkipped: 0, byPlatform: {}, byDate: {} }; // CB9：missing 分支复位统计脚注（state.ts 同款字面量），不留上一会话旧值
-    return { status: 'missing', articles: [], sidecar: M.sidecar, clipNotes: null, clipUrls: M.clipUrls, upInfo: {} };
+    if (gen === currentLoadGeneration()) {
+      M.articles = [];
+      M.clipNotes = null;
+      M.clipUrls = new Set();
+      M.sidecar = emptySidecar();
+      M.upInfo = {};
+      M.stats = { totalRead: 0, totalSaved: 0, totalSkipped: 0, byPlatform: {}, byDate: {} }; // CB9：missing 分支复位统计脚注（state.ts 同款字面量），不留上一会话旧值
+    }
+    return { status: 'missing', articles: [], sidecar: emptySidecar(), clipNotes: null, clipUrls: new Set(), upInfo: {} };
   }
   if (!res.ok) {
-    M.articles = [];
-    M.clipNotes = null;
-    M.clipUrls = new Set();
-    M.sidecar = emptySidecar();
-    M.upInfo = {};
-    M.stats = { totalRead: 0, totalSaved: 0, totalSkipped: 0, byPlatform: {}, byDate: {} }; // CB9：corrupt 分支复位统计脚注
-    return { status: 'corrupt', articles: [], sidecar: M.sidecar, clipNotes: null, clipUrls: M.clipUrls, upInfo: {} };
+    if (gen === currentLoadGeneration()) {
+      M.articles = [];
+      M.clipNotes = null;
+      M.clipUrls = new Set();
+      M.sidecar = emptySidecar();
+      M.upInfo = {};
+      M.stats = { totalRead: 0, totalSaved: 0, totalSkipped: 0, byPlatform: {}, byDate: {} }; // CB9：corrupt 分支复位统计脚注
+    }
+    return { status: 'corrupt', articles: [], sidecar: emptySidecar(), clipNotes: null, clipUrls: new Set(), upInfo: {} };
   }
 
   // 保留策略清理（插件侧，打开时执行一次）
@@ -104,6 +109,10 @@ export async function readNewsAndSidecar(): Promise<PanelData> {
   }
   const clipUrls = clipUrlSet(clipNotes || []);
 
+  if (gen !== currentLoadGeneration()) {
+    // 卸载后迟到（或已被更新的装载取代）：计算照常返回，但不再写 M——防旧数据污染新会话
+    return { status: 'ok', articles: data.articles, sidecar, clipNotes, clipUrls, upInfo: data.bilibiliUpInfo || {} };
+  }
   M.articles = data.articles;
   M.stats = data.stats;
   M.sidecar = sidecar;

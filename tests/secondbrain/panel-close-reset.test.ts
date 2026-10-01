@@ -44,11 +44,7 @@ function makeStore(): any {
 
 /** 轮询等待异步渲染（open → showContent → autoRefreshThenRender → renderStats 链路） */
 async function until(fn: () => boolean, timeoutMs = 1500): Promise<void> {
-  const start = Date.now();
-  while (!fn()) {
-    if (Date.now() - start > timeoutMs) throw new Error('until 超时');
-    await new Promise((r) => setTimeout(r, 10));
-  }
+  await vi.waitFor(() => expect(fn()).toBe(true), { timeout: timeoutMs });
 }
 
 describe('第二大脑主面板：关闭钮复位优先', () => {

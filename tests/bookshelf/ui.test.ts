@@ -27,12 +27,8 @@ async function waitReport(content: HTMLElement, timeout = 6000): Promise<void> {
 }
 
 /** 轮询等待断言（TG4：裸 sleep 对并行负载敏感；spines 数量稳定即过） */
-async function waitFor(fn: () => boolean, timeout = 3000, step = 15): Promise<void> {
-  const start = Date.now();
-  while (!fn()) {
-    if (Date.now() - start > timeout) throw new Error('waitFor: 断言轮询超时');
-    await new Promise((r) => setTimeout(r, step));
-  }
+async function waitFor(fn: () => boolean, timeout = 3000): Promise<void> {
+  await vi.waitFor(() => expect(fn()).toBe(true), { timeout });
 }
 
 /** 本地时区日期串（YYYY-MM-DD） */

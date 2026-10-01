@@ -14,12 +14,8 @@ import { PeopleSafeStore } from '../../src/people/safe-store';
 import { MockVault, mockAppWithVault } from '../mock-vault';
 import { resetObsidianMocks, clearNotices } from '../mock-obsidian-entry';
 
-async function waitFor(cond: () => boolean, timeout = 4000) {
-  const start = Date.now();
-  while (!cond()) {
-    if (Date.now() - start > timeout) throw new Error('waitFor 超时');
-    await new Promise((r) => setTimeout(r, 25));
-  }
+async function waitFor(cond: () => boolean, timeout = 4000): Promise<void> {
+  await vi.waitFor(() => expect(cond()).toBe(true), { timeout });
 }
 
 const CONFIG = { root: 'CONFIG/.ENCRYPT', previewEnabled: false, previewSize: 384, previewQuality: 0.5, autoLoadOriginal: false, securityMode: false };

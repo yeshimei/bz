@@ -8,7 +8,7 @@
  * 修复前必红：报告态输入穿过防抖写入 M.searchKeyword 并重刷隐藏墙。
  */
 // @vitest-environment jsdom
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { makeApp } from '../helpers/app';
 import { MockVault, mockAppWithVault } from '../mock-vault';
 import { resetObsidianMocks } from '../mock-obsidian-entry';
@@ -16,12 +16,8 @@ import { M, resetBookshelfState } from '../../src/bookshelf/state';
 import { ensureBookshelf, unloadBookshelf } from '../../src/bookshelf';
 import { createOverlay, closeOverlay } from '../../src/bookshelf/ui';
 
-async function waitFor(fn: () => boolean, timeout = 3000, step = 15): Promise<void> {
-  const start = Date.now();
-  while (!fn()) {
-    if (Date.now() - start > timeout) throw new Error('waitFor: 断言轮询超时');
-    await new Promise((r) => setTimeout(r, step));
-  }
+async function waitFor(fn: () => boolean, timeout = 3000): Promise<void> {
+  await vi.waitFor(() => expect(fn()).toBe(true), { timeout });
 }
 
 function seedVault(): { vault: MockVault; app: ReturnType<typeof mockAppWithVault> } {

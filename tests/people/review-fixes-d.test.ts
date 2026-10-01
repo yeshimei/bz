@@ -560,19 +560,31 @@ describe('找一找结果行真头像（D 组 7③）', () => {
     await openAlbum();
     click('[data-people-dialog="find"]');
     await vi.waitFor(() => expect(document.querySelector('[data-people-sub="find"]')).toBeTruthy());
-    const inp = document.querySelector<HTMLInputElement>('[data-people-find]')!;
-    inp.value = '陈';
-    inp.dispatchEvent(new Event('input', { bubbles: true }));
-    await vi.waitFor(() => expect(document.querySelectorAll('[data-people-find-open]')).toHaveLength(1));
+    // 键入即防抖 150ms 整册重画——重画会替换输入框节点，对其派发事件不冒泡到 overlay 委托（静默失效）；
+    // 每次派发前重取当前节点
+    const typeFind = (v: string): void => {
+      const el = document.querySelector<HTMLInputElement>('[data-people-find]')!;
+      el.value = v;
+      el.dispatchEvent(new Event('input', { bubbles: true }));
+    };
+    typeFind('陈');
+    await vi.waitFor(() => {
+      const rows = [...document.querySelectorAll('[data-people-find-open]')];
+      expect(rows).toHaveLength(1);
+      expect(rows[0].getAttribute('data-people-find-open')).toBe('wxid_a');
+    });
 
     const want = await safe.avatarDataUrl('wxid_b');
-    // 林晚不在「陈」的结果里——改搜「晚」验她的真头像
-    inp.value = '晚';
-    inp.dispatchEvent(new Event('input', { bubbles: true }));
-    await vi.waitFor(() => expect(document.querySelectorAll('[data-people-find-open]')).toHaveLength(1));
-    const img = document.querySelector('.bz-people-find-ava img') as HTMLImageElement;
-    expect(img).toBeTruthy();
-    expect(img.getAttribute('src')).toBe(want);
+    // 林晚不在「陈」的结果里——改搜「晚」验她的真头像（行渲染时头像 data URL 异步加载，连 img 一起等）
+    typeFind('晚');
+    await vi.waitFor(() => {
+      const rows = [...document.querySelectorAll('[data-people-find-open]')];
+      expect(rows).toHaveLength(1);
+      expect(rows[0].getAttribute('data-people-find-open')).toBe('wxid_b');
+      const img = rows[0].querySelector('.bz-people-find-ava img') as HTMLImageElement | null;
+      expect(img).toBeTruthy();
+      expect(img!.getAttribute('src')).toBe(want);
+    });
   });
 });
 

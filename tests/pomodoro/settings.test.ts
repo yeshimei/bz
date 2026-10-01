@@ -428,21 +428,22 @@ describe('设置生效', () => {
   });
 
   it('autoCycle 生效：专注完成自动开始短休', async () => {
-    const settings = { ...DEFAULT_SETTINGS, pomodoroAutoCycle: true } as any;
+    // 压到 1 分钟：本用例验的是「完成后自动进短休」，与专注段长度无关（25 分钟 = 1500 次 tick）
+    const settings = { ...DEFAULT_SETTINGS, pomodoroPreset: CUSTOM_PRESET_ID, pomodoroWorkMin: '1', pomodoroAutoCycle: true } as any;
     const { app } = setup(settings);
     await openPomodoro(app);
     el('pomodoro-btn-start').click();
-    await vi.advanceTimersByTimeAsync(25 * 60 * 1000);
+    await vi.advanceTimersByTimeAsync(60 * 1000);
     expect(el('pomodoro-phase').textContent).toContain('短休息');
     expect(el('pomodoro-btn-start').textContent).toContain('暂停'); // 自动开始中
   });
 
   it('autoSkipBreak 生效：专注完成直接开始下一专注（圆点记 1 个已完成）', async () => {
-    const settings = { ...DEFAULT_SETTINGS, pomodoroAutoSkipBreak: true } as any;
+    const settings = { ...DEFAULT_SETTINGS, pomodoroPreset: CUSTOM_PRESET_ID, pomodoroWorkMin: '1', pomodoroAutoSkipBreak: true } as any;
     const { app } = setup(settings);
     await openPomodoro(app);
     el('pomodoro-btn-start').click();
-    await vi.advanceTimersByTimeAsync(25 * 60 * 1000);
+    await vi.advanceTimersByTimeAsync(60 * 1000);
     expect(el('pomodoro-phase').textContent).toBe('专注'); // 恒回专注
     expect(cycleDots().length).toBe(4);
     expect(cycleDots().filter((d) => d.classList.contains('pomodoro-cycle-dot-on')).length).toBe(1); // 已完成 1 个

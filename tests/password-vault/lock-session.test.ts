@@ -23,13 +23,9 @@ async function flush(ms = 20) {
   await new Promise((r) => setTimeout(r, ms));
 }
 
-/** 轮询等待异步落盘/回落完成（fire-and-forget 链无完成信号） */
-async function waitForAsync(cond: () => Promise<boolean>, timeout = 4000) {
-  const start = Date.now();
-  while (!(await cond())) {
-    if (Date.now() - start > timeout) throw new Error('waitForAsync 超时');
-    await new Promise((r) => setTimeout(r, 25));
-  }
+/** 轮询等待异步落盘/回落完成（fire-and-forget 链无完成信号）——委托 vi.waitFor（全局 2ms 轮询） */
+async function waitForAsync(cond: () => Promise<boolean>, timeout = 4000): Promise<void> {
+  await vi.waitFor(async () => expect(await cond()).toBe(true), { timeout });
 }
 
 /** 已解锁进入面板（锁屏关闭 + 列表渲染就绪——load 是异步的，未等渲染就读列表会撞空） */
@@ -305,19 +301,26 @@ describe('批 B · ui 会话锁屏回归（password-vault）', () => {
     const input = lock.querySelector('[data-ls="p1"]') as HTMLInputElement;
     const go = lock.querySelector('[data-ls="go"]') as HTMLButtonElement;
     const err = lock.querySelector('[data-ls="err"]') as HTMLElement;
-    // 空输入错误 2600ms 自动消失（修复前清除条件 `if (input.value)` 恒不成立 → 错误永驻）
-    go.click();
-    await vi.waitFor(() => expect(err.textContent).toBe('请输入主密码'));
-    await new Promise((r) => setTimeout(r, 2700));
-    expect(err.textContent).toBe('');
-    // 错误密码 → 单条倒计时通知（修复前「密码错误，请重试」+「N 秒后可再次尝试」两连发互顶且不倒数）
-    input.value = 'wrong';
-    go.click();
-    await vi.waitFor(() => expect(err.textContent).toBe('密码错误，1 秒后可重试'));
-    expect(go.disabled).toBe(true); // 冷却期按钮按住
-    await new Promise((r) => setTimeout(r, 1200));
-    expect(err.textContent).toBe(''); // 归零清错误
-    expect(go.disabled).toBe(false); // 复位按钮
+    // 假时钟推进两条定时器语义（错误 2600ms 自动消失 / 冷却 interval 1s 归零），免 3900ms 真墙钟。
+    // 倒计时是「计数 + setInterval」不读 Date.now，故无需 fake Date；PBKDF2 校验走真实 promise 不受影响
+    vi.useFakeTimers({ toFake: ['setTimeout', 'setInterval', 'clearTimeout', 'clearInterval'] });
+    try {
+      // 空输入错误 2600ms 自动消失（修复前清除条件 `if (input.value)` 恒不成立 → 错误永驻）
+      go.click();
+      await vi.waitFor(() => expect(err.textContent).toBe('请输入主密码'));
+      await vi.advanceTimersByTimeAsync(2700); // errTimer 到点 → 清空
+      expect(err.textContent).toBe('');
+      // 错误密码 → 单条倒计时通知（修复前「密码错误，请重试」+「N 秒后可再次尝试」两连发互顶且不倒数）
+      input.value = 'wrong';
+      go.click();
+      await vi.waitFor(() => expect(err.textContent).toBe('密码错误，1 秒后可重试'));
+      expect(go.disabled).toBe(true); // 冷却期按钮按住
+      await vi.advanceTimersByTimeAsync(1200); // interval @1s → 归零清错误
+      expect(err.textContent).toBe(''); // 归零清错误
+      expect(go.disabled).toBe(false); // 复位按钮
+    } finally {
+      vi.useRealTimers();
+    }
   }, 15000);
 
   // ---------- S9 eye 三件套复位（N13，P3） ----------

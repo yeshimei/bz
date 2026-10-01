@@ -50,6 +50,13 @@ import {
   motionStatusbarSpin, motionTeardown,
 } from './motion';
 
+/** 预览窗 Markdown 渲染超时（默认 3000ms；挂起降级用例注入短值，不必真等 3 秒——
+ *  同 review/watch.ts __set*ForTests 口径） */
+export let PREVIEW_RENDER_TIMEOUT_MS = 3000;
+export function __setPreviewRenderTimeoutMsForTests(ms: number): void {
+  PREVIEW_RENDER_TIMEOUT_MS = ms;
+}
+
 /**
  * 解锁屏四域口径（结构同源，内容与统计按域注入；ADR-0002：共享壳在 core，语义在数据域）
  * 模块常量（T15 降级：无外部消费，不再导出——解锁屏语义只归本域 showPasswordDialog）。
@@ -2739,7 +2746,8 @@ export class UIManager {
   }
 
   /**
-   * 渲染带超时：3000ms 内不完成视为失败（防真实环境 render 挂起导致弹窗永久空白/不可关）。
+   * 渲染带超时：PREVIEW_RENDER_TIMEOUT_MS（默认 3000ms）内不完成视为失败（防真实环境 render
+   * 挂起导致弹窗永久空白/不可关）。
    * E9：render 渲入私有容器——超时弃用该容器（迟到 promise 追加进孤儿节点永不入 DOM），
    * 返回全新容器给调用方走纯文本兜底，正文不再「纯文本 + 迟到渲染」叠双份。
    * T13：返回渲染 Component，调用链在关窗/下一次填充前 unload 收掉生命周期。
@@ -2748,7 +2756,7 @@ export class UIManager {
     app: any,
     text: string,
     path: string,
-    timeoutMs = 3000
+    timeoutMs = PREVIEW_RENDER_TIMEOUT_MS
   ): Promise<{ ok: boolean; el: HTMLElement; component: Component }> {
     this.unloadPreviewComponent(); // 下一次填充前收掉上一次渲染生命周期
     const el = document.createElement('div');

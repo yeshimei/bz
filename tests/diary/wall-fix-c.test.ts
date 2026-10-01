@@ -110,11 +110,7 @@ vi.mock('../../src/diary/encrypt', () => ({
 let vault: MockVault;
 
 async function waitFor(fn: () => boolean, timeout = 2000): Promise<void> {
-  const start = Date.now();
-  while (!fn()) {
-    if (Date.now() - start > timeout) throw new Error('waitFor timeout');
-    await new Promise((r) => setTimeout(r, 10));
-  }
+  await vi.waitFor(() => expect(fn()).toBe(true), { timeout });
 }
 
 async function openAndWait() {

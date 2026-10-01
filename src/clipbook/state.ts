@@ -75,3 +75,11 @@ export function resetClipbookState(): void {
   M.upInfo = {};
   M.mobDetailOpen = false;
 }
+
+/** 装载代际（state 层单源：ui 装载/卸载递增，loader 写 M 前校验）。
+ *  用途 = 作废在途异步：卸载后迟到的装载回调不得把 M 写脏新会话
+ *  （ui.loadIfNeeded 只守渲染；loader.readNewsAndSidecar 内部写 M 也必须守）。
+ *  放 state 层是因为 loader 与 ui 都要用——ui 导入 loader，loader 不能反向导入 ui（环）。 */
+let loadGeneration = 0;
+export function bumpLoadGeneration(): number { return ++loadGeneration; }
+export function currentLoadGeneration(): number { return loadGeneration; }

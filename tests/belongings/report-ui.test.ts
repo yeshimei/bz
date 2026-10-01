@@ -7,7 +7,7 @@
  * unload 清理可重开、面板工具行入口（openPanel → data-bel-report → closePanel 连带收口）、
  * 命令路径（bz-belongings-report 回调：面板未开从盘载库直开）。
  */
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import {
   openBelReport, closeBelReport, cancelBelReport, unloadBelReport, isBelReportOpen,
 } from '../../src/belongings/report';
@@ -55,11 +55,7 @@ const toastText = () => document.querySelector('#bz-notice-container')?.textCont
 
 /** 条件轮询（防并行负载钉死时长） */
 async function until(cond: () => boolean, timeout = 6000): Promise<void> {
-  const start = Date.now();
-  while (!cond()) {
-    if (Date.now() - start > timeout) throw new Error('until: 条件超时');
-    await new Promise((r) => setTimeout(r, 10));
-  }
+  await vi.waitFor(() => expect(cond()).toBe(true), { timeout });
 }
 
 /** 轮询等待分片渲染完成（success 反馈 toast = finishDone 标记） */

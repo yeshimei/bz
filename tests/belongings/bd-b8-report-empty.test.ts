@@ -6,7 +6,7 @@
  * 修复前必红：空态容器是 .bz-belr-emptyyear / <p class="bz-belr-none">，无 bz-empty 形态。
  */
 // @vitest-environment jsdom
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { openBelReport, closeBelReport, unloadBelReport } from '../../src/belongings/report';import { __resetNoticeForTests } from '../../src/core/notice';
 import { setApp } from '../../src/core/app';
 import { setSettingsProvider } from '../../src/core/settings-provider';
@@ -33,11 +33,7 @@ const body = () => document.querySelector('[data-belr-body]') as HTMLElement | n
 const emptyHosts = () => [...document.querySelectorAll('.bz-belr-body .bz-empty, [data-belr-body] .bz-empty')] as HTMLElement[];
 
 async function until(cond: () => boolean, timeout = 6000): Promise<void> {
-  const start = Date.now();
-  while (!cond()) {
-    if (Date.now() - start > timeout) throw new Error('until: 条件超时');
-    await new Promise((r) => setTimeout(r, 10));
-  }
+  await vi.waitFor(() => expect(cond()).toBe(true), { timeout });
 }
 
 describe('B8：报告空态统一小图标版（bz-empty 口径）', () => {

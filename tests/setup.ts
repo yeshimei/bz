@@ -4,6 +4,7 @@
  */
 import { afterAll, vi } from 'vitest';
 import { webcrypto } from 'node:crypto';
+import { __setPbkdf2IterationsForTests } from '../src/core/crypto';
 import { ReadableStream as NodeReadableStream, WritableStream as NodeWritableStream, TransformStream as NodeTransformStream } from 'node:stream/web';
 
 /**
@@ -43,6 +44,17 @@ if (typeof (globalThis as Record<string, unknown>).CryptoKey === 'undefined') {
 }
 
 /**
+ * 测试统一降低 PBKDF2 迭代数（100000 → 1000）。
+ *
+ * 保险库/密码本/脸谱/日记加密的每个用例都在真跑 PBKDF2 + AES-GCM——链路留真，只调强度参数：
+ * 单次派生 100k≈12.5ms → 1k≈0.3ms（Node webcrypto 基准），而「每次加密新 salt 必 cache miss」，
+ * 加密密集的域（people / encrypt / password-vault）里这是最大单项 CPU。加解密同源读同一变量，
+ * 密文照常互解；没有任何用例断言迭代强度或依赖预烘焙密文
+ * （2026-10-01 全仓 grep 核对过：所有 decrypt 的入参都是同运行内 encrypt 的产物）。
+ */
+__setPbkdf2IterationsForTests(1000);
+
+/**
  * waitFor 默认超时加宽（1000ms → 5000ms）。
  *
  * vitest 4 的 `vi.waitFor` 默认 `timeout: 1e3` 是**硬编码**的，没有全局配置键
@@ -57,12 +69,34 @@ if (typeof (globalThis as Record<string, unknown>).CryptoKey === 'undefined') {
  * 显式传了 timeout 的调用（含数字简写）原样透传。
  */
 const WAIT_FOR_TIMEOUT_MS = 5000;
+/**
+ * waitFor 轮询间隔（默认 50ms → 2ms，2026-10-01 实测定稿）。
+ *
+ * 上面的 timeout 只管「等多久放弃」，管不到「多久看一眼」——而后者才是常态成本：`vi.waitFor`
+ * 默认 `interval` 是 **50ms 硬编码**，vitest 的检查节拍是「首次立即查，不通过后每 interval
+ * 复查一次」，于是「查过一次、几毫秒后才成立」的调用每处至少白等一个 50ms 周期。全仓
+ * 1580 处 waitFor，interval 压到 2ms 后实测（受控单文件 A/B 交替各 2 轮、--no-file-parallelism；
+ * 括号内为调用密度）：
+ *   · knowledge/ui（203 处）6.42s → 2.58s（-60%） · clipbook/core-fix-c（57）7.80 → 6.22（-20%）
+ *   · clipbook/enhance（36）9.26 → 7.61（-18%）     · clipbook/toolbar（52）13.06 → 11.63（-11%）
+ *   · pomodoro/ui（0 处）3.61 → 3.52（无差异——收益严格跟随 waitFor 密度，零调用零影响）
+ *   · encrypt/ui（71 处「本地 25ms 轮询函数」，不经 vi.waitFor）14.0 → 14.0（无差异）
+ * 全量 588 文件 A/B 各 2 轮：用例时长累加 492.3 → 463.0s（-29.3s，-6.0%，与「1580 处 × 平均
+ * ~19ms」吻合）；墙钟 39.0 → 38.1s（-2.5%，单轮墙钟噪声 ±2s，负载为更稳口径）。
+ *
+ * 语义不变：条件成立即返回，条件恒假照样在 timeout 后暴露。代价是忙轮询（条件长时间不成立时
+ * 每 2ms 空转一次检查）——但那正是「该失败」的场景，上限仍是 timeout；callback 为微秒级断言，
+ * 2ms 与 50ms 的 CPU 占用差可忽略。显式传了 interval 的调用原样透传。
+ */
+const WAIT_FOR_INTERVAL_MS = 2;
 {
   const original = vi.waitFor.bind(vi);
   const patched = ((callback: any, options?: any) =>
     original(
       callback,
-      typeof options === 'number' ? options : { timeout: WAIT_FOR_TIMEOUT_MS, ...(options ?? {}) },
+      typeof options === 'number'
+        ? options
+        : { timeout: WAIT_FOR_TIMEOUT_MS, interval: WAIT_FOR_INTERVAL_MS, ...(options ?? {}) },
     )) as typeof vi.waitFor;
   try {
     vi.waitFor = patched;

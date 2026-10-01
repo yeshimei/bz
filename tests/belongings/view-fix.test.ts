@@ -139,11 +139,7 @@ function close() {
 
 /** 报告分片渲染轮询 */
 async function until(cond: () => boolean, timeout = 6000): Promise<void> {
-  const start = Date.now();
-  while (!cond()) {
-    if (Date.now() - start > timeout) throw new Error('until: 条件超时');
-    await new Promise((r) => setTimeout(r, 10));
-  }
+  await vi.waitFor(() => expect(cond()).toBe(true), { timeout });
 }
 
 // ==================== 生命周期：closePanel 收口 / 年份回落 ====================

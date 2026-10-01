@@ -24,11 +24,7 @@ const LONG_BODY = '段落内容。'.repeat(30); // >100 字
 
 /** 重试链路是异步泵，固定睡眠在全量并发下偶有不够用——按条件轮询（与 diary/bookshelf 测试同款小帮手） */
 async function waitFor(cond: () => boolean, timeout = 3000): Promise<void> {
-  const start = Date.now();
-  while (!cond()) {
-    if (Date.now() - start > timeout) throw new Error('waitFor 超时');
-    await new Promise((r) => setTimeout(r, 15));
-  }
+  await vi.waitFor(() => expect(cond()).toBe(true), { timeout });
 }
 
 describe('aiProcess', () => {

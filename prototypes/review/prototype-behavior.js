@@ -1,4 +1,4 @@
-/* 源指纹 bfc9498bbaddeda5 · 仓内输入 285 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 e4b924f5c9fb97af · 仓内输入 285 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/review/fake-sim.ts","prototypes/review/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/keys.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/belongings/ai.ts","src/belongings/catalog-suggest.ts","src/belongings/category.ts","src/belongings/data.ts","src/belongings/layouts/poster/render.ts","src/belongings/motion.ts","src/belongings/render.ts","src/belongings/report-stats.ts","src/belongings/report.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/epub-notes.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/motion.ts","src/bookshelf/notes-ui.ts","src/bookshelf/notes.ts","src/bookshelf/render.ts","src/bookshelf/settings.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/bookshelf/ui.ts","src/checkup/checks-consistency.ts","src/checkup/checks-drift.ts","src/checkup/checks-json.ts","src/checkup/checks-orphans.ts","src/checkup/files.ts","src/checkup/index.ts","src/checkup/run.ts","src/checkup/ui.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/douban-fetcher.ts","src/cinema/settings.ts","src/cinema/state.ts","src/clipbook/anchor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/file-sync.ts","src/clipbook/flow.ts","src/clipbook/image-save.ts","src/clipbook/index.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/motion.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/press/data.ts","src/clipbook/press/engine.ts","src/clipbook/press/index.ts","src/clipbook/press/motions.ts","src/clipbook/press/view.ts","src/clipbook/render.ts","src/clipbook/report-stats.ts","src/clipbook/report-ui.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai-models.ts","src/core/ai.ts","src/core/app.ts","src/core/asr-proofread.ts","src/core/category-table.ts","src/core/changelog.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/domain-icons.ts","src/core/douban-name-index.ts","src/core/download-manifest.ts","src/core/esc-manager.ts","src/core/file-sync.ts","src/core/flow-dialog.ts","src/core/gesture.ts","src/core/http.ts","src/core/item-actions.ts","src/core/jev-fallback.ts","src/core/jev.ts","src/core/json-store.ts","src/core/knowledge-boxes.ts","src/core/landscape.ts","src/core/link-now.ts","src/core/lock-stats.ts","src/core/manual.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/pomodoro-phase.ts","src/core/remote-asset.ts","src/core/remote-base.ts","src/core/rss-catalog.ts","src/core/settings-btn-state.ts","src/core/settings-common.ts","src/core/settings-main-schema.ts","src/core/settings-modal.ts","src/core/settings-model-picker.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/sha256.ts","src/core/skin-pack.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/flip.ts","src/core/ui/focus-trap.ts","src/core/ui/help-tip.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slide-pill.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/settings.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/motion.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/favorites/ai.ts","src/favorites/app.ts","src/favorites/config.ts","src/favorites/data.ts","src/favorites/layouts/board/render.ts","src/favorites/motion.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/gameshelf/constants.ts","src/gameshelf/settings.ts","src/gameshelf/state.ts","src/home/entry-editor.ts","src/home/order.ts","src/home/settings.ts","src/home/shared.ts","src/knowledge/data.ts","src/knowledge/file-sync.ts","src/knowledge/index.ts","src/knowledge/motion.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/partial-json.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source-retire.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/memo/data.ts","src/memo/due.ts","src/memo/render.ts","src/memo/settings.ts","src/memo/state.ts","src/memo/ui.ts","src/password-vault/data.ts","src/password-vault/settings.ts","src/people/chat.ts","src/people/datasource.ts","src/people/insights.ts","src/people/me-avatar.ts","src/people/media.ts","src/people/parse.ts","src/people/render.ts","src/people/safe-store.ts","src/people/settings.ts","src/people/stats.ts","src/people/types.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/index.ts","src/pomodoro/motion.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts","src/reading-report/index.ts","src/reading-report/report.ts","src/reading-report/stats.ts","src/review/analysis/data.ts","src/review/analysis/engine.ts","src/review/analysis/index.ts","src/review/analysis/kits.ts","src/review/analysis/motions.ts","src/review/analysis/view.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/motion.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/quiz-panel-data.ts","src/review/quiz-panel.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts","src/secondbrain/ai.ts","src/secondbrain/chunk.ts","src/secondbrain/config.ts","src/secondbrain/link-agent/data.ts","src/secondbrain/link-agent/pipeline.ts","src/secondbrain/motion.ts","src/secondbrain/panel.ts","src/secondbrain/readonly.ts","src/secondbrain/render.ts","src/secondbrain/store-file.ts","src/secondbrain/tfidf.ts","src/secondbrain/vector-math.ts","src/secondbrain/weekly-ui.ts","src/secondbrain/weekly.ts","src/secondbrain/whitelist.ts","src/settings-panel/changelog.ts","src/settings-panel/index.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/manual-viewer.ts","src/settings-panel/motion.ts","src/settings-panel/online-resources.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/schema.ts","src/settings-panel/shared.ts","src/settings-panel/ui.ts","src/settings.ts","src/smartcat/belongings-source.ts","src/smartcat/character.ts","src/smartcat/config.ts","src/smartcat/data.ts","src/smartcat/favorites-source.ts","src/smartcat/motion.ts","src/smartcat/types.ts","src/smartcat/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/review/fake-sim.ts → window.BZW_review（行为单源预览包，issue 245/ADR-0106） */
 var BZW_review = (() => {
@@ -4422,9 +4422,10 @@ var BZW_review = (() => {
   function clearCryptoKeyCache() {
     keyCache.clear();
   }
-  var CryptoService, keyCache, KEY_CACHE_MAX;
+  var PBKDF2_ITERATIONS, CryptoService, keyCache, KEY_CACHE_MAX;
   var init_crypto = __esm({
     "src/core/crypto.ts"() {
+      PBKDF2_ITERATIONS = 1e5;
       CryptoService = class {
         static async deriveKey(password, salt) {
           const cacheKey = toBase64(salt);
@@ -4442,7 +4443,7 @@ var BZW_review = (() => {
             {
               name: "PBKDF2",
               salt,
-              iterations: 1e5,
+              iterations: PBKDF2_ITERATIONS,
               hash: "SHA-256"
             },
             keyMaterial,
@@ -44968,7 +44969,13 @@ ${bodyText.substring(0, 6e3)}`;
     M10.upInfo = {};
     M10.mobDetailOpen = false;
   }
-  var M10;
+  function bumpLoadGeneration() {
+    return ++loadGeneration;
+  }
+  function currentLoadGeneration() {
+    return loadGeneration;
+  }
+  var M10, loadGeneration;
   var init_state6 = __esm({
     "src/clipbook/state.ts"() {
       M10 = {
@@ -44985,6 +44992,7 @@ ${bodyText.substring(0, 6e3)}`;
         upInfo: {},
         mobDetailOpen: false
       };
+      loadGeneration = 0;
     }
   });
 
@@ -50408,24 +50416,29 @@ ${c.trim()}
   // src/clipbook/loader.ts
   async function readNewsAndSidecar() {
     var _a2;
+    const gen = currentLoadGeneration();
     const res = await readNewsData();
     if (res.missing) {
-      M10.articles = [];
-      M10.clipNotes = null;
-      M10.clipUrls = /* @__PURE__ */ new Set();
-      M10.sidecar = emptySidecar();
-      M10.upInfo = {};
-      M10.stats = { totalRead: 0, totalSaved: 0, totalSkipped: 0, byPlatform: {}, byDate: {} };
-      return { status: "missing", articles: [], sidecar: M10.sidecar, clipNotes: null, clipUrls: M10.clipUrls, upInfo: {} };
+      if (gen === currentLoadGeneration()) {
+        M10.articles = [];
+        M10.clipNotes = null;
+        M10.clipUrls = /* @__PURE__ */ new Set();
+        M10.sidecar = emptySidecar();
+        M10.upInfo = {};
+        M10.stats = { totalRead: 0, totalSaved: 0, totalSkipped: 0, byPlatform: {}, byDate: {} };
+      }
+      return { status: "missing", articles: [], sidecar: emptySidecar(), clipNotes: null, clipUrls: /* @__PURE__ */ new Set(), upInfo: {} };
     }
     if (!res.ok) {
-      M10.articles = [];
-      M10.clipNotes = null;
-      M10.clipUrls = /* @__PURE__ */ new Set();
-      M10.sidecar = emptySidecar();
-      M10.upInfo = {};
-      M10.stats = { totalRead: 0, totalSaved: 0, totalSkipped: 0, byPlatform: {}, byDate: {} };
-      return { status: "corrupt", articles: [], sidecar: M10.sidecar, clipNotes: null, clipUrls: M10.clipUrls, upInfo: {} };
+      if (gen === currentLoadGeneration()) {
+        M10.articles = [];
+        M10.clipNotes = null;
+        M10.clipUrls = /* @__PURE__ */ new Set();
+        M10.sidecar = emptySidecar();
+        M10.upInfo = {};
+        M10.stats = { totalRead: 0, totalSaved: 0, totalSkipped: 0, byPlatform: {}, byDate: {} };
+      }
+      return { status: "corrupt", articles: [], sidecar: emptySidecar(), clipNotes: null, clipUrls: /* @__PURE__ */ new Set(), upInfo: {} };
     }
     const s = tryGetSettings();
     const days = (_a2 = normalizeRetentionDays(s == null ? void 0 : s.newsRetentionUnsavedDays)) != null ? _a2 : 30;
@@ -50462,6 +50475,9 @@ ${c.trim()}
       console.warn(`[剪藏本] 剪藏目录有 ${clipNotes.rejected} 篇无法识别（缺 url/created frontmatter）`, clipNotes.rejectedPaths);
     }
     const clipUrls = clipUrlSet(clipNotes || []);
+    if (gen !== currentLoadGeneration()) {
+      return { status: "ok", articles: data.articles, sidecar, clipNotes, clipUrls, upInfo: data.bilibiliUpInfo || {} };
+    }
     M10.articles = data.articles;
     M10.stats = data.stats;
     M10.sidecar = sidecar;
@@ -50542,7 +50558,9 @@ ${c.trim()}
     if (loading) return loadPromise || Promise.resolve();
     if (!M10.open && overlayEl2) return Promise.resolve();
     loading = true;
+    const gen = bumpLoadGeneration();
     loadPromise = readNewsAndSidecar().then((res) => {
+      if (gen !== currentLoadGeneration()) return;
       if (res && res.status === "corrupt") {
         loadError = { kind: "corrupt", reason: "news.json 损坏（原文件已保留）" };
         notifyActionError(new Error(loadError.reason), "剪藏本数据读取", { onRetry: retryLoad });
@@ -50554,13 +50572,16 @@ ${c.trim()}
       beginSession();
       renderAll3();
     }).catch((e) => {
+      if (gen !== currentLoadGeneration()) return;
       console.error("[剪藏本] 装载失败", e);
       loadError = { kind: "exception", reason: e instanceof Error ? e.message : String(e) };
       notifyActionError(e, "剪藏本数据读取", { onRetry: retryLoad });
       if (M10.open) renderAll3();
     }).finally(() => {
-      loading = false;
-      loadPromise = null;
+      if (gen === currentLoadGeneration()) {
+        loading = false;
+        loadPromise = null;
+      }
     });
     return loadPromise;
   }
@@ -50593,6 +50614,7 @@ ${c.trim()}
     panelResizeDetach3 == null ? void 0 : panelResizeDetach3.flush();
     panelSplit == null ? void 0 : panelSplit.flush();
     hideSelBar();
+    selBarHoldUntil = 0;
     M10.open = false;
     M10.mobDetailOpen = false;
     if (mobDetailEl) mobDetailEl.style.display = "none";
@@ -50618,6 +50640,7 @@ ${c.trim()}
       selChangeTimer = null;
     }
     hideSelBar();
+    selBarHoldUntil = 0;
     if (selBarEl) {
       selBarEl.remove();
       selBarEl = null;
@@ -50645,6 +50668,7 @@ ${c.trim()}
     setSearchKw("");
     M10.open = false;
     M10.mobDetailOpen = false;
+    bumpLoadGeneration();
     loading = false;
     loadPromise = null;
     dirty = false;
@@ -51652,9 +51676,12 @@ ${c.trim()}
   }
   async function refreshAfterAction() {
     var _a2;
+    if (!overlayEl2) return;
+    const gen = currentLoadGeneration();
     const prevId = (_a2 = M10.cur) == null ? void 0 : _a2.id;
     const prevIdx = M10.cur ? deskFlat().findIndex((x) => x.id === prevId) : -1;
     await readNewsAndSidecar();
+    if (gen !== currentLoadGeneration()) return;
     const flat = deskFlat();
     let advanced = false;
     if (prevId && flat.some((x) => x.id === prevId)) {
@@ -60093,7 +60120,9 @@ GitHub 仓库：${ghInfo.title}
   var ui_exports8 = {};
   __export(ui_exports8, {
     EncryptAppController: () => EncryptAppController,
+    PREVIEW_RENDER_TIMEOUT_MS: () => PREVIEW_RENDER_TIMEOUT_MS,
     UIManager: () => UIManager3,
+    __setPreviewRenderTimeoutMsForTests: () => __setPreviewRenderTimeoutMsForTests,
     collectMediaSlots: () => collectMediaSlots,
     collectNoteAttachmentPaths: () => collectNoteAttachmentPaths,
     collectNoteAttachments: () => collectNoteAttachments,
@@ -60104,6 +60133,9 @@ GitHub 仓库：${ghInfo.title}
     mimeOf: () => mimeOf,
     truncateName: () => truncateName
   });
+  function __setPreviewRenderTimeoutMsForTests(ms) {
+    PREVIEW_RENDER_TIMEOUT_MS = ms;
+  }
   function searchClearHtml() {
     return `<button type="button" class="bz-search-clear" data-search-clear title="清除搜索" aria-label="清除搜索" hidden>${vIc("x", 12)}</button>`;
   }
@@ -60389,7 +60421,7 @@ GitHub 仓库：${ghInfo.title}
       ]
     };
   }
-  var LOCK_KIND_META, lastVisitedAsset, activeUnlock, PANEL6, _UIManager, UIManager3, _EncryptAppController, EncryptAppController;
+  var PREVIEW_RENDER_TIMEOUT_MS, LOCK_KIND_META, lastVisitedAsset, activeUnlock, PANEL6, _UIManager, UIManager3, _EncryptAppController, EncryptAppController;
   var init_ui11 = __esm({
     "src/encrypt/ui.ts"() {
       init_fake_obsidian();
@@ -60414,6 +60446,7 @@ GitHub 仓库：${ghInfo.title}
       init_lock_screen();
       init_lock_stats();
       init_motion10();
+      PREVIEW_RENDER_TIMEOUT_MS = 3e3;
       LOCK_KIND_META = {
         vault: {
           icon: "shield",
@@ -62415,12 +62448,13 @@ GitHub 仓库：${ghInfo.title}
           }
         }
         /**
-         * 渲染带超时：3000ms 内不完成视为失败（防真实环境 render 挂起导致弹窗永久空白/不可关）。
+         * 渲染带超时：PREVIEW_RENDER_TIMEOUT_MS（默认 3000ms）内不完成视为失败（防真实环境 render
+         * 挂起导致弹窗永久空白/不可关）。
          * E9：render 渲入私有容器——超时弃用该容器（迟到 promise 追加进孤儿节点永不入 DOM），
          * 返回全新容器给调用方走纯文本兜底，正文不再「纯文本 + 迟到渲染」叠双份。
          * T13：返回渲染 Component，调用链在关窗/下一次填充前 unload 收掉生命周期。
          */
-        async renderWithTimeout(app, text2, path, timeoutMs = 3e3) {
+        async renderWithTimeout(app, text2, path, timeoutMs = PREVIEW_RENDER_TIMEOUT_MS) {
           this.unloadPreviewComponent();
           const el2 = document.createElement("div");
           const component = new Component();
