@@ -66,7 +66,7 @@ vitest 的图只看 `transformed.deps ∪ transformed.dynamicDeps`，**永远看
 | **文本边** | 字符串字面量里**真实存在**的仓库路径（**含藏在变量/helper 里的形态**） | `repo('src/core/ui/components.css')` |
 | **目录/整树边** | 扫树守卫的目录实参（`readdirSync(...)` 上下文） | `listDomainStyles('src')` → 整棵 src |
 
-实测建边结果：**111 个测试有文本边**（281 条文件级 + 58 条目录级），**其中 43 个含整树级**，
+实测建边结果：**111 个测试有文本边**（278 条文件级 + 54 条目录级），**其中 42 个含整树级**，
 其余精确绑定到本域 —— 这比「一律常跑 96 个守卫」精确得多。
 
 **目录边在指纹里的分母 = git 可见全集（tracked ∪ 未跟踪未忽略），不是 `src/`**（自审抓到的 P0）：
@@ -80,7 +80,8 @@ vitest 的图只看 `transformed.deps ∪ transformed.dynamicDeps`，**永远看
 （初版用了白名单，被自己的自审打回）：`downloads/manifest.json`、`tools/obsidian-face/lib/*.js`、
 `prototypes/**`、`manual/**` 这些**索引根之外**的路径一样有守卫在读，白名单把它们全挡在门外，
 只能靠升格兜底 —— 而「一律全量」在那几格既不必要又不快（改 `downloads/manifest.json` 实际只
-影响 5 个测试，全量要跑 589 个）。现在按存在性判定，这三类目录都走精确选择。
+影响 4 个测试，全量要跑 589 个）。现在按存在性判定，这三类目录都走精确选择。
+（初版这里是 5 个：多出来的那个正是本测试文件被自己的夹具假路径卷进来的自指边，已消掉。）
 代价是要挡住「不是路径的字符串」：廉价形状过滤（含 `/` / 带文件后缀 / 是仓库根的一级目录名）
 把 statSync 从 1.66 万次压到 2.8 千次 —— 不压这层，冷建索引要 1.57s。
 
@@ -125,7 +126,7 @@ vitest 的图只看 `transformed.deps ∪ transformed.dynamicDeps`，**永远看
 | `src/memo/styles.css` | 增量 23 文件 | **11.5s** | 原生 0 文件假绿 / 全量 29.2s |
 | `src/core/ui/components.css` | 增量 28 文件 | **11.4s** | 原生 0 文件假绿 / 全量 29.2s |
 | `src/memo/data.ts` | 增量 75 文件 | **14.7s** | 原生 59 文件 18.2s / 全量 29.2s |
-| `downloads/manifest.json`（索引根之外） | 增量 **5** 文件 | — | 白名单版会全量 589 |
+| `downloads/manifest.json`（索引根之外） | 增量 **4** 文件 | — | 白名单版会全量 589 |
 | 根 `main.js`（构建产物，无守卫读它） | 全量 589 文件 | — | 没边 → 兜底 |
 | `docs/changelog.md` | 增量 0 文件（**出提示，不静默**） | 0.8s | — |
 | `pnpm-lock.yaml` | 全量 589 文件 | 29.2s | 原生 0 文件假绿 |
