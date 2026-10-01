@@ -81,6 +81,7 @@ import {
   buildRecordingSpec,
   buildRecordingTurnsMd,
   buildVoiceprintSpec,
+  cancelRecordingTasksOfTalker,
   clearRecordingQueue,
   dequeueRecordingTask,
   duplicateRecordingGroups,
@@ -426,6 +427,7 @@ function openDialog(kind: DialogKind, tier?: DeleteTier): void {
       suppOwnerId = detailId;
       suppImages = [];
       suppRecQueue = [];
+      suppTab = 'text'; // 页签也跟着人走：否则上一个人停在「留影」，打开下一个人的补充素材直接停那儿（审计 #8）
       recDelPending = null;
       recStartEditFile = null;
       recRefConfirm = false;
@@ -3397,13 +3399,24 @@ async function confirmDeleteFromPage(p: PersonEntry, btn: HTMLButtonElement): Pr
  */
 async function deletePerson(p: PersonEntry): Promise<void> {
   try {
+    // 录音任务也得一并清（not 画谱那条队）：转写跑在独立队列上，removeJob 管不着。不拦的话它
+    // 跑完会走 suppMergeRecording → peopleSafe.write 的 !existing 分支，把刚删掉的人**重建**成
+    // 一张空壳卡（只剩并仓的转写、没有人物卡），删除白删。顺序：先停录音（在跑的协作式停止、
+    // 排队的移出）再删记录，把窗口收到最小；万一进程已收尾、merge 已在途，suppMergeRecording
+    // 里还有一道「记录还在不在」的兜底。
+    const rec = cancelRecordingTasksOfTalker(p.id, suppDataRoot() || undefined);
     const stopped = await Promise.resolve(jobs().removeJob(p.id));
     await store!.remove(p.id);
     recordCache?.delete(p.id);
     if (pulled === p.id) pulled = null;
     detailId = null;
     dialog = null;
-    notice(stopped ? `已删除「${p.name}」，未完成的任务一并停掉` : `已删除「${p.name}」`, 'delete');
+    const recAny = rec.stopped > 0 || rec.dequeued > 0;
+    const why = stopped && recAny ? '，未完成的画谱任务与录音转写一并停掉'
+      : stopped ? '，未完成的任务一并停掉' // 单引擎档文案不变（既有口径）
+        : recAny ? '，未完成的录音转写一并停掉'
+          : '';
+    notice(`已删除「${p.name}」${why}`, 'delete');
     void renderAlbum();
   } catch (e) {
     notifyActionError(e, `删除「${p.name}」`);
@@ -3606,10 +3619,12 @@ async function aiFillProfile(): Promise<void> {
   const dg = p.digest;
   if (!dg) { notice('还没有脸谱素材——先导入并画脸谱，AI 才有据可依', 'warning'); return; }
   const talker = detailId; // 起跑时把人记下（B 组审查 P2）：等待期间换人，结果不许填进别家的表单
-  if (profEditId !== detailId) { profEditId = detailId; await renderAlbum(); } // 表单在编辑卡里，先进入编辑态
+  // 占位**必须早于本函数内第一个 await**：进编辑态那次重画在冷读下要几百毫秒，期间第二击
+  // 会看到 profAiBusy 仍是 false 而放行 → 两次 AI 调用都发出去（白烧一次钱，表单填两遍）。
   profAiBusy = true;
   notice('AI 正在读交往素材补充背景…', 'info');
   try {
+    if (profEditId !== detailId) { profEditId = detailId; await renderAlbum(); } // 表单在编辑卡里，先进入编辑态
     const prompt = buildProfileExtractPrompt(p.name, profileExtractMaterial(dg), knownProfileText(p.profile));
     const data = parseProfileReply(await createAI().json(prompt));
     if (detailId !== talker || !overlay) return; // await 期间换人 / 关面板：这次回包作废，一个字都不写
@@ -4730,6 +4745,10 @@ async function suppMergeRecording(talker: string, file: string, why: 'merge' | '
     notice('保险库上锁——解锁后在这条录音上点「并仓」补上', 'warning');
     return;
   }
+  // 删除竞态兜底：人已经不在了就别再写回去——peopleSafe.write 的 !existing 分支会把记录
+  // **重建**出来，被删的人以一张空壳卡复活（只剩转写、没有人物卡）。正常路径由 deletePerson
+  // 先停掉录音任务拦下，这道专门兜「进程恰好同一刻收尾、merge 已在途」。
+  if (!peopleSafe.has(talker)) return;
   // 转写还在跑（或排着）不并仓：sidecar 是插件与脚本两边共写的账本，这头写回会跟脚本的
   // os.replace 对撞——写回被整档覆盖 = 报了「已并仓」实际并的是原文，写半截 = 账本退回「待处理」
   const recKey = recordingSidecarPath(root, talker, file);

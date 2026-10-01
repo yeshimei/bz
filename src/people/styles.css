@@ -1604,6 +1604,10 @@ input.bz-people-input.bz-people-input::-webkit-calendar-picker-indicator {
 /* 暗色断档补齐（B 组审查 P2）：ds 行 / 一眼账小纸片 / 随手记纸条亮色写死了米白底——
    暗主题下亮字落白底不可读，跟着页内其它纸片压暗 */
 .theme-dark .bz-people-ds-row, .theme-dark .bz-people-fact, .theme-dark .bz-people-note-row { background: #35312a; border-color: #454036; }
+/* 同族子元素补齐：上面改了纸条的底，但纸条上的日期字色在 844 行写死了深棕 #8a7440——
+   压在新的深底上对比度约 3:1，小字（italic aux）糊掉。取与同行「撕掉」按钮（1643 的
+   #a89c84）同一档偏亮的浅金，保证小字也能读。 */
+.theme-dark .bz-people-note-ts { color: #b8a888; }
 .theme-dark .bz-people-fsheet { background: var(--card); border-color: var(--card-bd); }
 .theme-dark .bz-people-ins {
   background-color: #322e28;

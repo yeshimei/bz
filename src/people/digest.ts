@@ -30,8 +30,12 @@ export interface DigestChunk {
   count: number;
   /** 已渲染对话行（[YYYY-MM-DD HH:mm][我|对方] 文本） */
   lines: string[];
-  /** 批内媒体消息条数（语音转写 / 图片描述；无媒体则缺省，issue 445） */
-  media?: { voice: number; image: number };
+  /**
+   * 批内媒体消息条数（语音转写 / 图片描述 / 录音转写；全零则缺省，issue 445）。
+   * recording 只作**批内提示词开关**用，不进 ChunkMeta（见 chunkMetaOf）——落盘批元数据的
+   * 形状不许因它变化，否则升级后旧任务的批比对会全判漂移。
+   */
+  media?: { voice: number; image: number; recording?: number };
 }
 
 export interface BatchExtract {
@@ -83,26 +87,31 @@ export function chunkMessages(messages: UnifiedMessage[], opts: ChunkOptions = {
   let chars = 0;
   let voice = 0;
   let image = 0;
+  let recording = 0;
   for (const m of messages) {
     const text = (m.text ?? '').trim();
     if (!text) continue;
     const line = renderLine(m.ts, m.isSender, text);
     const fits = lines.length === 0 || (lines.length < maxCount && chars + line.length <= maxChars);
     if (!fits) {
-      chunks.push(makeChunk(lines, voice, image));
+      chunks.push(makeChunk(lines, voice, image, recording));
       lines = [];
       chars = 0;
       voice = 0;
       image = 0;
+      recording = 0;
     }
     // 媒体计数随消息归属本批：先 flush 再计数，被挤出本批的消息不算上一批的媒体（issue 445）
+    // 三类都数（voice / image / recording，issue 509）——只数前两类会让纯录音批拿不到
+    // 「`[录音 …]` 行是亲口说的原话」那段提示词（审计 #3：录音素材静默掉出 quotes 采集）
     const mat = parseMediaTag(text);
     if (mat?.kind === 'voice') voice++;
     else if (mat?.kind === 'image') image++;
+    else if (mat?.kind === 'recording') recording++;
     lines.push(line);
     chars += line.length;
   }
-  if (lines.length) chunks.push(makeChunk(lines, voice, image));
+  if (lines.length) chunks.push(makeChunk(lines, voice, image, recording));
   if (chunks.length <= maxBatches) return chunks;
   return evenlySample(chunks, maxBatches);
 }
@@ -115,11 +124,14 @@ export function evenlySample<T>(items: T[], max: number): T[] {
   return picked.filter((v, i, a) => i === 0 || v !== a[i - 1]);
 }
 
-function makeChunk(lines: string[], voice = 0, image = 0): DigestChunk {
+function makeChunk(lines: string[], voice = 0, image = 0, recording = 0): DigestChunk {
   const first = lines[0] ?? '';
   const last = lines[lines.length - 1] ?? '';
   const chunk: DigestChunk = { from: first.slice(1, 11), to: last.slice(1, 11), count: lines.length, lines };
-  if (voice || image) chunk.media = { voice, image };
+  if (voice || image || recording) {
+    chunk.media = { voice, image };
+    if (recording) chunk.media.recording = recording; // 零录音不落键：批元数据与提示词都保持干净
+  }
   return chunk;
 }
 
@@ -155,6 +167,8 @@ function renderLine(ts: number, isSender: boolean, text: string): string {
  * 批内有媒体消息（issue 445）时补标签说明：语音转写行是亲口说的原话，quotes 优先收（表达 DNA 质量核心）；
  * 图片描述行可作「难忘画面」进 moments。issue 515：`[录音 …]` 行是见面 / 通话录音的原话，
  * 与 `[语音 …]`（微信语音条）同为口述证据——正文引用时保留来源标签，两类不混写。
+ * 三类媒体（语音 / 图片 / 录音）**任一非空**即触发媒体说明：只有录音、没有微信语音条与图片的
+ * 联系人同样要拿到「`[录音 …]` 是原话」那段指引（否则转写白做，quotes 静默偏少）。
  * interests / threads（issue 455）：兴趣信号喂卷一「兴趣爱好」的具体名目，未竟之事喂卷二「未竟之事」。
  */
 export function buildExtractPrompt(chunk: DigestChunk, personName: string): string {
@@ -164,7 +178,7 @@ export function buildExtractPrompt(chunk: DigestChunk, personName: string): stri
     // 新对话行的语义说明（issue 449）：分享 / 引用 / 通话 / 命名表情是口味审美与关系温度的证据来源
     '行首方括号标签说明：`[分享]…` 与 `[小程序]…` 是分享 / 安利的内容标题（口味与审美的证据，可进 moments 与 traits）；`[文件]…` 是发送的文件；`[引用「…」]` 开头的行是引用回复（引号内为被引内容，其后是回复）；`[通话 …]` / `[通话中断 …]` / `[未接通·…]` 是通话事件（通话时长是关系温度的直接证据，可进 events 与 moments）；`[表情·名]` 是带名称的表情。群聊导出的行首会多一层 `[成员名]`——那不是标签，是群成员的名字，忽略它，谁在说仍看后面的 [我] / [对方]。',
   ];
-  if (media?.voice || media?.image) {
+  if (media?.voice || media?.image || media?.recording) {
     head.push(
       '本段含媒体消息：`[语音 …]` 开头的行是微信语音条的转写——] 后的文本就是原话内容，标签里可能带时长与情感标记（如 12s·平静）；`[录音 …]` 开头的行是见面 / 通话录音的逐轮转写（同样带时长与情感），也是原话；`[图片]` 开头的行是一张图片的画面描述。'
     );
@@ -188,7 +202,7 @@ export function buildExtractPrompt(chunk: DigestChunk, personName: string): stri
     '3. quotes：对方说过的有代表性原话（口头禅 / 典型语气 / 情绪外露的句子 / 冲突时的说法 / 关心人的说法）。',
     '   每条含 ts（YYYY-MM-DD）、who（固定为 "对方" 或 "我"）与 text（原话，可截断但**不要改写**）。',
     '   优先收能体现说话风格与脾气秉性的句子，最多 8 条。',
-    ...(media?.voice
+    ...(media?.voice || media?.recording
       ? ['   `[语音 …]` 与 `[录音 …]` 行都是亲口说的话：quotes 优先收这里的口语原话，text 只写转写文本（不要把标签、时长、情感标记写进去）；正文或纪事引用两类原话时保留行首的 `[语音 …]` / `[录音 …]` 来源标签，微信语音条与见面录音不要混写。']
       : []),
     '',

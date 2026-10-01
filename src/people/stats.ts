@@ -41,7 +41,9 @@ export function medianOf(samples: number[]): number {
  *   均值与中位数双向统计（中位数抗离群，是展示主口径）；无样本记 0；
  * - hourly：24 长度数组，本地小时分布；
  * - kindCounts：透传（形态计数在 parse 层算好）；
- * - 媒体素材（issue 445）：voiceCount / voiceTotalSec / imageCount 由 media.collectMediaStats 从消息文本算出。
+ * - 媒体素材（issue 445 / 509）：voiceCount / voiceTotalSec / imageCount / recordingCount /
+ *   recordingTotalSec 全由 media.collectMediaStats 从消息文本算出——采集器给什么就搬什么，
+ *   不许在这里漏字段（漏了 = 录音在统计里隐形：媒体徽章不显示、给 AI 的素材说明也没有它）。
  */
 export function computeStats(messages: UnifiedMessage[], kindCounts: Record<string, number>): ContactStats {
   const msgs = [...messages].sort((a, b) => a.ts - b.ts);
@@ -83,6 +85,8 @@ export function computeStats(messages: UnifiedMessage[], kindCounts: Record<stri
     voiceCount: media.voiceCount,
     voiceTotalSec: media.voiceTotalSec,
     imageCount: media.imageCount,
+    recordingCount: media.recordingCount,
+    recordingTotalSec: media.recordingTotalSec,
   };
 }
 

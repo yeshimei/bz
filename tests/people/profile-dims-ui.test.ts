@@ -407,3 +407,58 @@ describe('persistJobDone 档案自动回填（issue 487）', () => {
     expect((await disk()).people[0]?.profile).toBeUndefined();
   });
 });
+
+describe('审计批（2026-10-01）：AI 补充防连点 · 补充素材页签跟人走', () => {
+  /** 开到某人的详情页（不预设哪只册页） */
+  async function openDetail(id: string): Promise<void> {
+    openPeoplePanel(getApp());
+    await vi.waitFor(() => expect(document.querySelector(`[data-people-pocket="${id}"]`)).toBeTruthy());
+    click(`[data-people-pocket="${id}"]`);
+    await vi.waitFor(() => expect(document.querySelector(`[data-people-detail="${id}"]`)).toBeTruthy());
+  }
+
+  it('AI 补充：进编辑态那次重画期间连点第二下，不再发第二次调用（审计 #6）', async () => {
+    await boot([person()]);
+    setJobsModuleForTests(new FakeEngine());
+    await openDetail('wxid_a');
+    click('[data-people-act="prof"]'); // 补充背景页（只读态：还没进编辑器）
+    await vi.waitFor(() => expect(document.querySelector('[data-people-prof-ai]')).toBeTruthy());
+    expect(document.querySelector('.bz-people-prof-edit')).toBeNull(); // 确认是只读态
+    jsonMock.mockResolvedValue(JSON.stringify({ personality: '外冷内热' }));
+
+    // 两击落在同一 tick：修复前占位在 await renderAlbum() 之后才置位，第二击会被放行 → 两次 AI 调用
+    const btn = document.querySelector<HTMLElement>('[data-people-prof-ai]')!;
+    btn.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    btn.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    await vi.waitFor(() => expect(jsonMock).toHaveBeenCalled());
+    await tick(60);
+    expect(jsonMock).toHaveBeenCalledTimes(1);
+    // 该补的照补（不是被占位挡死）
+    await vi.waitFor(() =>
+      expect(document.querySelector<HTMLInputElement>('[data-people-prof-field="personality"]')!.value).toBe('外冷内热')
+    );
+  });
+
+  it('补充素材页签跟人走：上一位停在「留影」，打开下一位回到「记一笔」（审计 #8）', async () => {
+    const other: PersonEntry = { id: 'wxid_b', name: '小李', createdAt: '2026-03-02T00:00:00.000Z', imports: [] };
+    await boot([person(), other]);
+    setJobsModuleForTests(new FakeEngine());
+
+    await openDetail('wxid_a');
+    click('[data-people-act="note"]'); // 补充素材
+    await vi.waitFor(() => expect(document.querySelector('[data-people-supp-tab]')).toBeTruthy());
+    click('[data-people-supp-tab="image"]'); // 切到留影
+    await vi.waitFor(() =>
+      expect(document.querySelector('[data-people-supp-tab="image"]')!.classList.contains('on')).toBe(true)
+    );
+
+    click('[data-people-act="back"]'); // 回墙上，再打开另一位
+    await vi.waitFor(() => expect(document.querySelector(`[data-people-pocket="wxid_b"]`)).toBeTruthy());
+    click('[data-people-pocket="wxid_b"]');
+    await vi.waitFor(() => expect(document.querySelector('[data-people-detail="wxid_b"]')).toBeTruthy());
+    click('[data-people-act="note"]');
+    await vi.waitFor(() => expect(document.querySelector('[data-people-supp-tab]')).toBeTruthy());
+    const on = [...document.querySelectorAll<HTMLElement>('[data-people-supp-tab]')].find((t) => t.classList.contains('on'));
+    expect(on!.getAttribute('data-people-supp-tab')).toBe('text'); // 修复前会停在 image
+  });
+});

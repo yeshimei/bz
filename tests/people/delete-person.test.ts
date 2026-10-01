@@ -21,6 +21,16 @@ import {
   type JobsApi,
 } from '../../src/people/ui';
 import { PeopleSafeStore, setPeopleSafeStoreForTests } from '../../src/people/safe-store';
+import {
+  enqueueRecordingTask,
+  isRecordingQueued,
+  queuedRecordingItems,
+  resetRecordingProcessesForTests,
+  resetRecordingQueueForTests,
+  setRecordingQueueSleepForTests,
+  setRecordingRunnerForTests,
+} from '../../src/people/recording';
+import { releaseHeavy, resetHeavyGateForTests, tryAcquireHeavy } from '../../src/people/heavy-gate';
 import { SafeManager } from '../../src/encrypt/data';
 import { getSafeManager } from '../../src/encrypt';
 import type { PersonEntry } from '../../src/people/types';
@@ -116,6 +126,11 @@ afterEach(() => {
   setJobsModuleForTests(null);
   setUnlockGateForTests(null);
   setPeopleSafeStoreForTests(null);
+  resetRecordingQueueForTests();
+  resetRecordingProcessesForTests();
+  resetHeavyGateForTests();
+  setRecordingRunnerForTests(null);
+  setRecordingQueueSleepForTests(null);
   vi.restoreAllMocks();
 });
 
@@ -257,5 +272,31 @@ describe('删除口径（issue 500）：先停任务再删记录，数据源目�
     expect(order).toEqual(['removeJob:莫莫', 'removeContact:莫莫']);
     await vi.waitFor(async () => expect(await safe.read('莫莫')).toBeFalsy());
     expect(hasNotice(/未完成的任务一并停掉/)).toBe(true);
+  });
+
+  it('录音任务也一并清（审计 #1）：转写排在独立队列上，不清掉它跑完会把删掉的人重建出来', async () => {
+    const order: string[] = [];
+    const { safe } = await boot([entry()], order);
+    // 占住重进程闸门：让录音任务停在「排队」态（不起真进程），构造确定的清理对象
+    tryAcquireHeavy('portrait');
+    setRecordingQueueSleepForTests(() => new Promise((r) => setTimeout(r, 1)));
+    enqueueRecordingTask({
+      key: 'rec-key',
+      talker: '莫莫',
+      file: 'a.aac',
+      spec: () => ({ cmd: 'x', args: [], shell: true }),
+    });
+    expect(isRecordingQueued('rec-key')).toBe(true);
+
+    click('[data-people-del="莫莫"]');
+    await vi.waitFor(() => expect(flowOk()).toBeTruthy());
+    flowOk()!.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    await vi.waitFor(async () => expect(await safe.read('莫莫')).toBeFalsy());
+    // 关键：该人的转写任务必须已移出队列——留着的话转写收尾会走 suppMergeRecording →
+    // peopleSafe.write 的 !existing 分支把「莫莫」以空壳卡重建出来（删除白删）
+    expect(isRecordingQueued('rec-key')).toBe(false);
+    expect(queuedRecordingItems().some((q) => q.talker === '莫莫')).toBe(false);
+    expect(hasNotice(/录音转写一并停掉/)).toBe(true);
+    releaseHeavy('portrait');
   });
 });

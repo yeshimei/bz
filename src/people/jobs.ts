@@ -865,6 +865,10 @@ export async function startJobs(
       voiceCount: stats.voiceCount ?? 0,
       voiceTotalSec: stats.voiceTotalSec ?? 0,
       imageCount: stats.imageCount ?? 0,
+      // 录音三项别漏（审计 #2）：buildMediaNote 按「全零返回空串」判无素材——只传语音/图片时，
+      // 纯录音的联系人会拿到空说明，AI 完全不知道录音已转写并入对话
+      recordingCount: stats.recordingCount ?? 0,
+      recordingTotalSec: stats.recordingTotalSec ?? 0,
     });
     const now = nowIso();
     const prev = st.queue.find((j) => j.talker === t.talker);
@@ -1669,6 +1673,12 @@ export async function runDescribeOnly(app: unknown, talker: string): Promise<{ o
       const r = await runDescribeStage(job, finish);
       if (job.status === 'error') return { ok: false, reason: job.error };
       if (r === 'halted') return { ok: false, reason: '描述没有跑完（保险库上锁或任务被移除），稍后重试' };
+      // 零可读（ADR-0225 决策 3）：runJob 那条路会收尾说清楚、不往下烧；这里必须**同样不算成功**，
+      // 否则按钮回一句「描述完成，已并进时间线」，实际 0 张——用户以为做完了，账还欠着。
+      if (r === 'unreadable') {
+        const n = job.describe?.unreadable ?? 0;
+        return { ok: false, reason: `${n} 张图片的源图损坏或缺失，一张都没描述成功` };
+      }
       return { ok: true, skipped: r === 'skipped' };
     } finally {
       st.queue = st.queue.filter((j) => j !== job);
@@ -1680,6 +1690,10 @@ export async function runDescribeOnly(app: unknown, talker: string): Promise<{ o
   } finally {
     describeOnlyBusy = false;
     if (st) st.injected = prevInjected; // 确认门注入还原（不短路后续全链的确认门）
+    // 本段在跑时队列整条让位（runQueue 见 describeOnlyBusy 即 break，顺带把 runPromise 置空）——
+    // 这期间新入队 / 用户点「重试失败项」置成 paused 的任务没人再踢，会安静躺在队里到用户手动
+    // 再点一次「继续生成」。收尾补一次唤醒（flag 已落回 false，runQueue 这次进得去）。
+    kick();
   }
 }
 
@@ -1827,6 +1841,9 @@ async function runJob(job: PersonJob): Promise<void> {
             voiceCount: job.stats.voiceCount ?? 0,
             voiceTotalSec: job.stats.voiceTotalSec ?? 0,
             imageCount: job.stats.imageCount ?? 0,
+            // 录音三项同 864 处（审计 #2）：这处是素材升级（refresh）时重算说明的路径
+            recordingCount: job.stats.recordingCount ?? 0,
+            recordingTotalSec: job.stats.recordingTotalSec ?? 0,
           }) || undefined,
       };
       if (bucketMsgs.length) {

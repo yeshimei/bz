@@ -21,6 +21,7 @@ import {
   whenIdle,
   runDescribeOnly,
   isDescribeOnlyBusy,
+  retryPrepFailures,
   __resetJobsForTests,
   type JobTarget,
   type PersonJob,
@@ -29,6 +30,7 @@ import { storeStatsOf, storeToUnified, type StoreMsg } from '../../src/people/da
 import { PeopleSafeStore, setPeopleSafeStoreForTests } from '../../src/people/safe-store';
 import { SafeManager } from '../../src/encrypt/data';
 import { setDescribeFsForTests, type DescribeFs } from '../../src/people/describe';
+import { setPrepRunnerForTests } from '../../src/people/prep';
 import type { DescribeConfirmInfo } from '../../src/people/types';
 import { setApp } from '../../src/core/app';
 import { setSettingsProvider } from '../../src/core/settings-provider';
@@ -175,6 +177,7 @@ afterEach(() => {
   __resetJobsForTests();
   setPeopleSafeStoreForTests(null);
   setDescribeFsForTests(null);
+  setPrepRunnerForTests(null);
   sm.lock();
 });
 
@@ -522,6 +525,73 @@ describe('describe 段编排（470）', () => {
     await whenIdle();
     expect(sizes).toEqual([3, 3]); // 整批退避重试一次后耗尽——从未降到逐张
     expect(jobOf()?.status).toBe('error');
+  });
+});
+
+describe('补充素材·描述单段（509）：零可读不许报成功 / 收尾唤醒队列（审计 #4 #5）', () => {
+  it('零可读：单段入口返回 ok:false 并交代张数（修复前返回 ok:true，界面弹「描述完成」）', async () => {
+    const msgs = imageMsgs();
+    await seedStore(msgs);
+    descFs.allMissing = true; // 三张图的派生档全读不动（源图损坏 / 缺失的真实现场）
+    const askBox = makeAskDescribe();
+    await resumeJobs(app, { askDescribe: askBox.ask });
+    const r = await runDescribeOnly(app, TALKER);
+    expect(r.ok).toBe(false);
+    expect(r.reason).toContain('3 张');
+    expect(r.reason).toContain('源图损坏或缺失');
+    expect(askBox.ask).not.toHaveBeenCalled(); // 一张都没读出来 → 零视觉调用，不烧钱
+    expect(isDescribeOnlyBusy()).toBe(false);
+  });
+
+  it('收尾唤醒队列：跑单段期间被置回 paused 的任务不再卡死在队列里', async () => {
+    const msgs = imageMsgs();
+    await seedStore(msgs);
+    // 造一个「已 error、prep 有失败项」的正式任务：只有它能在描述单段跑着的时候被
+    // 「重试失败项」置回 paused（队列里本来就有 paused 任务时，describe-only 自己会拒绝起跑）
+    await safe.write(TALKER, (rec) => {
+      rec.job = {
+        talker: TALKER,
+        name: '构造对象',
+        mode: 'incremental',
+        fileLabel: `数据源:${TALKER}`,
+        status: 'error',
+        stage: 'preprocess',
+        msgCount: 0,
+        contentHash: '',
+        chunks: [],
+        batchesDone: 0,
+        results: [],
+        message: '构造：预处理失败',
+        startedAt: '2026-09-25T00:00:00.000Z',
+        updatedAt: '2026-09-25T00:00:00.000Z',
+        prep: { phase: null, pct: null, counts: {}, donePhases: [], failed: 1 },
+      };
+    });
+    // prep 假件：进程立刻以失败收场（只为让被唤醒的任务跑完，不让它真起 python）
+    setPrepRunnerForTests((() => ({
+      stop: () => {},
+      done: Promise.resolve({ ok: false, stopped: false, code: 1, stderr: '', error: new Error('构造：prep 失败') }),
+    })) as never);
+    let release!: () => void;
+    const gate = new Promise<void>((res) => {
+      release = res;
+    });
+    const askDescribe = vi.fn(async () => {
+      await gate; // 卡住单段：留出「期间用户点重试失败项」的窗口
+      return JSON.stringify({ descs: ['构造描述'] });
+    });
+    await resumeJobs(app, { askDescribe });
+    const r = runDescribeOnly(app, TALKER);
+    await until(() => isDescribeOnlyBusy() && (askDescribe as any).mock.calls.length === 1);
+    expect(retryPrepFailures(TALKER)).toBe(true);
+    expect(jobOf()?.status).toBe('paused'); // 单段在跑，队列让位：这一脚踢不动
+    release();
+    await r;
+    // 修复前：describe-only 收尾没有 kick，任务永远停在 paused（用户得手动再点一次「继续生成」）；
+    // 修复后：收尾唤醒队列，它被拾起跑掉（status 离开 paused）
+    await whenIdle();
+    expect(jobOf()?.status).not.toBe('paused');
+    expect(isDescribeOnlyBusy()).toBe(false);
   });
 });
 

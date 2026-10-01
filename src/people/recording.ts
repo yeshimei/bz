@@ -1139,6 +1139,33 @@ export function clearRecordingQueue(): number {
   return n;
 }
 
+/**
+ * 按联系人清掉录音任务（删人收尾用）：在跑的那条走协作式停止（opts 齐备时让脚本在安全点留账本
+ * 退出），还在排队的直接移出。注意这里停的是**进程**——onExit 会带 stopped=true 回来，调用方的
+ * onExit 分支对 stopped 只重画不并仓，所以删掉的人不会被转写的后续结果重建出来。
+ * dataRoot 缺省（旧口径）时退化为直接杀，与 stopRecordingTask 同判据。
+ */
+export function cancelRecordingTasksOfTalker(
+  talker: string,
+  dataRoot?: string
+): { stopped: number; dequeued: number } {
+  if (!talker) return { stopped: 0, dequeued: 0 };
+  let stopped = 0;
+  for (const [key, v] of [...running]) {
+    if (v.talker !== talker) continue;
+    stopRecordingTask(key, dataRoot && v.file ? { dataRoot, talker, file: v.file } : undefined);
+    stopped += 1;
+  }
+  let dequeued = 0;
+  for (let i = queue.length - 1; i >= 0; i--) {
+    if (queue[i].talker !== talker) continue;
+    queue.splice(i, 1);
+    dequeued += 1;
+  }
+  if (dequeued) notifyQueue();
+  return { stopped, dequeued };
+}
+
 /** 单次队列推进（测试可手动驱动） */
 async function pumpRecordingQueue(): Promise<void> {
   if (pumping) return;
