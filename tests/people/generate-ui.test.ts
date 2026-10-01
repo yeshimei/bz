@@ -343,9 +343,12 @@ describe('startGeneration → 引擎 → done 落盘', () => {
     await vi.waitFor(async () => expect((await disk()).people[0]?.lastProcessedTs).toBe(T0 + 120_000)); // 等落盘链走完
     expect((await disk()).people[0]?.digest?.person).toBe('画像');
     engine.push([done]); // 引擎侧若仍带着 done 任务再推一帧
-    await tick(); await tick();
+    // 收敛点用轮询而非写死的两个宏任务：落盘链是「写 people.json → 写 digest → 通知 → removeJob」，
+    // 并发争抢下走不完两个 tick 就断言，`engine.calls.remove` 恒为 0（2026-10-01 全量跑实测偶发红）。
+    // 等幂等守卫真的清出队列，再用「恰好一次」的等值断言守住不重复调 remove。
+    await vi.waitFor(() => expect(engine.calls.remove).toHaveLength(1));
+    expect(engine.calls.remove).toEqual(['wxid_a']);
     expect((await disk()).people[0].imports).toHaveLength(1);
-    expect(engine.calls.remove).toHaveLength(1);
   });
 
   it('skip 预筛：同一导出再导（指纹命中）不进引擎，改名照常应用、不落新记录；开工单出「没有新素材」且开始生成置灰', async () => {

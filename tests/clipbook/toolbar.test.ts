@@ -18,6 +18,7 @@ import { writeClipNote } from '../../src/clipbook/save';
 import { readClipbookData } from '../../src/clipbook/data';
 import { drainNewsWritesForTests } from '../../src/clipbook/write-queue';
 import { getNewsFilePath } from '../../src/clipbook/news-data';
+import { ago } from '../helpers/date';
 
 vi.mock('../../src/knowledge', () => ({
   openKnowledgeAddTask: vi.fn(),
@@ -38,7 +39,7 @@ function seedVault(): MockVault {
   const vault = new MockVault();
   vault.files.set(getNewsFilePath(), JSON.stringify({
     articles: [
-      { platform: '果壳科学人', title: '甲文', url: 'https://guokr.com/1', author: '果壳', date: '2026-09-01 08:00:00', fetchedAt: '2026-09-01 07:00:00', body: '正文讲到了**量子纠缠** 是现象，配一张 ![配图](https://img.example/a.png) 图。' },
+      { platform: '果壳科学人', title: '甲文', url: 'https://guokr.com/1', author: '果壳', date: ago(1, '08:00:00'), fetchedAt: ago(1, '07:00:00'), body: '正文讲到了**量子纠缠** 是现象，配一张 ![配图](https://img.example/a.png) 图。' },
     ],
     stats: { totalRead: 0, totalSaved: 0, totalSkipped: 0, byPlatform: {}, byDate: {} },
     bilibiliUps: [], bilibiliUpInfo: {}, bilibiliMaxItems: 10, bilibiliCookie: '',
@@ -508,7 +509,7 @@ describe('保存物化（issue 329 / ADR-0144 决策 4）', () => {
     }));
     const raw = {
       platform: '果壳科学人', title: '甲文', url: 'https://guokr.com/1', author: '果壳',
-      date: '2026-09-01 08:00:00',
+      date: ago(1, '08:00:00'),
       body: '正文讲到了量子纠缠，配一张 ![配图](https://img.example/a.png) 图。',
     };
     const ok = await writeClipNote(raw);
@@ -614,7 +615,7 @@ describe('保存剪藏全量图片本地化（issue 329 追加修订）', () => 
       String(opts.url).includes('slow') ? gate : Promise.resolve(okResp(opts)));
     const p = writeClipNote({
       platform: '果壳科学人', title: '图文丙', url: 'https://guokr.com/3', author: '果壳',
-      date: '2026-09-01 08:00:00',
+      date: ago(1, '08:00:00'),
       body: '图一 ![慢](https://img.example/slow.png) 图二 ![乙](https://img.example/b.png)。',
     });
     await vi.waitFor(() => {

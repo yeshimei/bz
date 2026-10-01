@@ -323,11 +323,12 @@ describe('PasswordVaultUIManager', () => {
     await sm.unlock('pw');
     await dm.addItem({ platform: 'GitHub', account: 'me', password: 'x' });
     ui.show();
-    await new Promise((r) => setTimeout(r, 10));
+    // 轮询等平台卡渲染完（原写死 setTimeout 10ms：并发争抢下 show() 的 fire-and-forget 链
+    // 走不完，`querySelector` 拿到 null 再点 → 全量跑偶发红）
+    await vi.waitFor(() => expect(document.querySelector('.bz-password-vault-mobcard')).toBeTruthy());
     // 打开平台详情页（点击移动端平台卡）
-    const card = document.querySelector('.bz-password-vault-mobcard')!;
-    expect(card).toBeTruthy();
-    (card as HTMLElement).click();
+    const card = document.querySelector('.bz-password-vault-mobcard') as HTMLElement;
+    card.click();
     const page = document.querySelector('.bz-password-vault-mobpage')!;
     expect(page.classList.contains('open')).toBe(true);
     // 面板内点击不关闭

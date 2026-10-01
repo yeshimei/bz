@@ -35,6 +35,7 @@ import { articleKeyOf } from '../../src/clipbook/constants';
 import { revealArticleByKey, refreshReadingViews, closePanel } from '../../src/clipbook/ui';
 import { M } from '../../src/clipbook/state';
 import { drainNewsWritesForTests } from '../../src/clipbook/write-queue';
+import { ago } from '../helpers/date';
 
 const repo = (p: string): string => readFileSync(fileURLToPath(new URL('../..' + p, import.meta.url)), 'utf8');
 const cssOf = (): string => repo('/src/clipbook/styles.css');
@@ -270,9 +271,9 @@ function seedVault(): MockVault {
   const vault = new MockVault();
   vault.files.set('CONFIG/STORAGE/news.json', JSON.stringify({
     articles: [
-      { platform: '果壳科学人', title: '果壳文章一', url: 'https://guokr.com/1', author: '果壳', date: '2026-09-01 08:00:00', fetchedAt: '2026-09-01 07:00:00', body: '正文一 的内容段落。' },
-      { platform: 'B站', title: '影视飓风视频', url: 'https://bilibili.com/video/BV1', author: '影视飓风', date: '2026-09-01 09:00:00', body: '视频简介内容' },
-      { platform: 'B站', title: '已读旧视频', url: 'https://bilibili.com/video/BV0', author: '影视飓风', date: '2026-09-10 09:00:00', body: '旧视频', read: true, state: 'skipped' },
+      { platform: '果壳科学人', title: '果壳文章一', url: 'https://guokr.com/1', author: '果壳', date: ago(2, '08:00:00'), fetchedAt: ago(2, '07:00:00'), body: '正文一 的内容段落。' },
+      { platform: 'B站', title: '影视飓风视频', url: 'https://bilibili.com/video/BV1', author: '影视飓风', date: ago(2, '09:00:00'), body: '视频简介内容' },
+      { platform: 'B站', title: '已读旧视频', url: 'https://bilibili.com/video/BV0', author: '影视飓风', date: ago(1, '09:00:00'), body: '旧视频', read: true, state: 'skipped' },
     ],
     stats: { totalRead: 1, totalSaved: 0, totalSkipped: 1, byPlatform: {}, byDate: {} },
     bilibiliUps: [], bilibiliUpInfo: {}, bilibiliMaxItems: 10, bilibiliCookie: '',

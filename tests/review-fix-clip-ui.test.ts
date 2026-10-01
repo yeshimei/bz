@@ -38,6 +38,7 @@ import { getPomodoroFilePath } from '../src/pomodoro/data';
 import { DataManager } from '../src/favorites/data';
 import { FavoritesAIService } from '../src/favorites/ai';
 import { openPanel, openForm, initFavoritesUI, unloadFavoritesUI } from '../src/favorites/ui';
+import { ago } from './helpers/date';
 
 const T0 = new Date('2026-08-10T10:00:00').getTime();
 const tick = (ms: number) => new Promise((r) => setTimeout(r, ms));
@@ -62,7 +63,7 @@ describe('F3/C14：已读条目不再给「标记为已读」入口', () => {
     const vault = new MockVault();
     vault.files.set(getNewsFilePath(), JSON.stringify({
       articles: [
-        { platform: '果壳科学人', title: '已读甲', url: 'https://gk.com/read', body: '正文甲', date: '2026-09-01 08:00:00', read: true, state: 'skipped' },
+        { platform: '果壳科学人', title: '已读甲', url: 'https://gk.com/read', body: '正文甲', date: ago(1, '08:00:00'), read: true, state: 'skipped' },
       ],
       stats: { totalRead: 3, totalSaved: 1, totalSkipped: 2, byPlatform: { 果壳科学人: 3 }, byDate: {} },
       bilibiliUps: [], bilibiliUpInfo: {}, bilibiliMaxItems: 10, bilibiliCookie: '',

@@ -15,6 +15,14 @@ import { openPomodoro, unloadPomodoro } from '../../src/pomodoro';
 
 const T0 = new Date('2026-08-10T10:00:00').getTime();
 
+/**
+ * 本文件 testTimeout 单独放宽到 60s（全局 20s 不够）。
+ * 番茄钟 onTick 每秒整屏 render 一次（src/pomodoro/ui.ts:625），jsdom 里约 10ms/次——
+ * 「推进 50 分钟假时钟」= 3000 次 render ≈ 30s 真墙钟，并发争抢下撞穿 20s（2026-10-01 实测）。
+ * 推进量本身是这些用例的被测语义（minutes 跟随配置），不能靠缩短推进量省时间。
+ */
+vi.setConfig({ testTimeout: 60000 });
+
 /** 'pomodoro' 通道间谍（真实总线挂点；每用例前清调用记录，afterEach 退订） */
 let pomodoroSpy: (evt?: unknown) => void = () => {};
 let offSpy: () => void = () => {};

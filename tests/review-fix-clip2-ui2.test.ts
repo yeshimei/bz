@@ -31,6 +31,7 @@ import { drainNewsWritesForTests } from '../src/clipbook/write-queue';
 import { localDayKey } from '../src/clipbook/constants';
 import { flowSave, flowMarkRead } from '../src/clipbook/flow';
 import { setClipDir } from './clipbook/helpers';
+import { ago } from './helpers/date';
 
 // flowSave B 站分流分支动态 import 文献盒 → 打桩，避免拉起其 UI 依赖
 vi.mock('../src/knowledge', () => ({ openKnowledgeAddTask: vi.fn() }));
@@ -93,7 +94,7 @@ describe('C11：skipped→saved 升级路径不重复计分布', () => {
     const today = localDayKey();
     const vault = new MockVault();
     vault.files.set(getNewsFilePath(), seedNews(
-      [{ platform: '果壳科学人', title: '已读未收文', url: 'https://guokr.com/c11', author: '果壳', body: '正文', date: '2026-09-01 08:00:00', read: true, state: 'skipped' }],
+      [{ platform: '果壳科学人', title: '已读未收文', url: 'https://guokr.com/c11', author: '果壳', body: '正文', date: ago(1, '08:00:00'), read: true, state: 'skipped' }],
       { totalRead: 1, totalSaved: 0, totalSkipped: 1, byPlatform: { 果壳科学人: 1 }, byDate: { [today]: 1 } },
     ));
     setApp(mockAppWithVault(vault));
@@ -118,7 +119,7 @@ describe('C16：移动端折叠记忆随会话复位', () => {
   it('展开「已读」段 → 详情往返仍展开；关面板重开 → 复位为收起', async () => {
     const vault = new MockVault();
     vault.files.set(getNewsFilePath(), seedNews([
-      { platform: '果壳科学人', title: '已读甲', url: 'https://guokr.com/c16', date: '2026-09-01 08:00:00', body: '正文甲', read: true, state: 'skipped' },
+      { platform: '果壳科学人', title: '已读甲', url: 'https://guokr.com/c16', date: ago(1, '08:00:00'), body: '正文甲', read: true, state: 'skipped' },
     ]));
     await boot(vault);
     await vi.waitFor(() => expect(M.articles.length).toBe(1));
@@ -152,7 +153,7 @@ describe('C17：静默打开即读后 rail 脚注刷新', () => {
     const today = localDayKey();
     const vault = new MockVault();
     vault.files.set(getNewsFilePath(), seedNews([
-      { platform: '果壳科学人', title: '未读甲', url: 'https://guokr.com/c17', date: '2026-09-01 08:00:00', body: '正文甲' },
+      { platform: '果壳科学人', title: '未读甲', url: 'https://guokr.com/c17', date: ago(1, '08:00:00'), body: '正文甲' },
     ]));
     await boot(vault);
     await vi.waitFor(() => expect(M.articles.length).toBe(1));
@@ -234,7 +235,7 @@ describe('C19：ESC 先收移动详情返回列表', () => {
   it('详情屏按 ESC → 回列表（面板仍开）；再按一次 → 关面板', async () => {
     const vault = new MockVault();
     vault.files.set(getNewsFilePath(), seedNews([
-      { platform: '果壳科学人', title: '果壳甲', url: 'https://guokr.com/c19', date: '2026-09-01 08:00:00', body: '正文甲' },
+      { platform: '果壳科学人', title: '果壳甲', url: 'https://guokr.com/c19', date: ago(1, '08:00:00'), body: '正文甲' },
     ]));
     await boot(vault);
     await vi.waitFor(() => expect(M.articles.length).toBe(1));
@@ -264,7 +265,7 @@ describe('C20：当前条目被删且列表清空时收起详情', () => {
   it('详情开着删掉唯一条目 → 详情 overlay 收起（不留已删文章的详情屏）', async () => {
     const vault = new MockVault();
     vault.files.set(getNewsFilePath(), seedNews([
-      { platform: '果壳科学人', title: '待删甲', url: 'https://guokr.com/c20', date: '2026-09-01 08:00:00', body: '正文甲' },
+      { platform: '果壳科学人', title: '待删甲', url: 'https://guokr.com/c20', date: ago(1, '08:00:00'), body: '正文甲' },
     ]));
     await boot(vault);
     await vi.waitFor(() => expect(M.articles.length).toBe(1));
@@ -290,7 +291,7 @@ describe('C32：重复标读不重复喂行为流；撤销快照按磁盘现态'
   it('同一篇两次 flowMarkRead（第二跳盘面已读）→ 只发一条 news:read', async () => {
     const vault = new MockVault();
     vault.files.set(getNewsFilePath(), seedNews([
-      { platform: '果壳科学人', title: '甲', url: 'https://guokr.com/c32a', date: '2026-09-01 08:00:00', body: '正文甲' },
+      { platform: '果壳科学人', title: '甲', url: 'https://guokr.com/c32a', date: ago(1, '08:00:00'), body: '正文甲' },
     ]));
     setApp(mockAppWithVault(vault));
     setSettingsProvider(() => ({ storagePath: 'CONFIG/STORAGE', articleDirectory: '归档/网页剪藏' } as any));
@@ -311,7 +312,7 @@ describe('C32：重复标读不重复喂行为流；撤销快照按磁盘现态'
   it('内存 raw.read 被「打开即已读」同步位污染的窗口内手动标读：撤销按磁盘快照恢复未读', async () => {
     const vault = new MockVault();
     vault.files.set(getNewsFilePath(), seedNews([
-      { platform: '果壳科学人', title: '未读甲', url: 'https://guokr.com/c32b', date: '2026-09-01 08:00:00', body: '正文甲' },
+      { platform: '果壳科学人', title: '未读甲', url: 'https://guokr.com/c32b', date: ago(1, '08:00:00'), body: '正文甲' },
     ]));
     setApp(mockAppWithVault(vault));
     setSettingsProvider(() => ({ storagePath: 'CONFIG/STORAGE', articleDirectory: '归档/网页剪藏' } as any));
