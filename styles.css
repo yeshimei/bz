@@ -17634,11 +17634,14 @@ canvas { display: block; }
    （否则透明期的保存钮、徽标会被误点）；正面 is-flipped 起手即 pointer-events:none，
    淡出的 .16s 里点它也不会二次触发解析。allow-discrete 是离散属性过渡的开关，旧引擎
    不认时退化成「立刻可点」，与改前等同、无回归。
+   **两态必须成对**（复审 P0）：基础态的 none 会被 is-flipped 规则一并命中，放行必须显式
+   写 pointer-events:auto——漏了它 computed 恒为 none，换面后整面永远点不动（jsdom 没有
+   命中测试拦不住，ui.test.ts 样式契约守卫按两态文案钉死）。
    overflow:hidden：裁微光扫过的光带（光带比卡面宽，不裁会飞出圆角）。 */
 .bz-cinema--midnight .form-face--front{transition:opacity var(--cn-m-fast) ease,transform var(--cn-m-fast) ease,visibility var(--cn-m-fast) linear}
 .bz-cinema--midnight .form-face--back{opacity:0;visibility:hidden;overflow:hidden;pointer-events:none}
 .bz-cinema--midnight .form-flip.is-flipped .form-face--front{opacity:0;visibility:hidden;transform:translateY(-6px);pointer-events:none}
-.bz-cinema--midnight .form-flip.is-flipped .form-face--back{opacity:1;visibility:visible;
+.bz-cinema--midnight .form-flip.is-flipped .form-face--back{opacity:1;visibility:visible;pointer-events:auto;
   transition:pointer-events;transition-delay:.34s;transition-behavior:allow-discrete;
   animation:cnModalIn var(--cn-m-base) var(--cn-e-out) both;animation-delay:.06s}
 /* 背面内容分段接力（复用详情弹窗 cnRiseIn——同一种「信息逐段显影」语言）。
