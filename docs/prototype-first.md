@@ -2,7 +2,7 @@
 
 域 UI 的唯一真理源是**与插件共用的实现源码**（`src/<域>/` 的 `styles.css` / `render.ts` / `ui.ts`）。原型评审壳（`prototypes/<域>/prototype.html`）与插件是同一份代码的两个运行端：改源码一处两侧生效；两侧不一致 = 缺陷，改源码（或假层），禁止任一侧私改、禁止手改构建产物、禁止目测调参。
 
-行为单源域以 `scripts/build-preview.mjs` 的 `BEHAVIOR_DOMAINS` 为准：belongings / bookshelf / cinema / clipbook / diary / favorites / home / knowledge / memo / password-vault / review / secondbrain / settings-panel。
+行为单源域（17 个）以 `scripts/build-preview.mjs` 的 `BEHAVIOR_DOMAINS` 为准，渲染单源域（13 个）以同文件的 `PREVIEW_DOMAINS` 为准。**别在这里抄名单**——两张都是代码里的数组，抄一次过期一次（本行曾把 encrypt / gameshelf / people / pomodoro 四个行为域抄丢）。
 
 ## 文件约定
 
@@ -25,7 +25,7 @@
 
 1. 从最新 master 开 worktree（`../.dsh-worktrees/<名>`），起 `node scripts/preview-live.mjs`。
 2. 迭代三不：不构建、不提交、不跑全量门禁。热重载即评审，反复改到用户满意。
-3. 测试：只改样式/UI 不测试；动功能代码只跑当前域测试（如 `pnpm exec vitest run tests/knowledge`）。
+3. 测试：**一次都不跑**（铁律 8，2026-09-24）。不跑 `vitest`（包括「只跑当前域」这种自以为克制的版本）、不起 CDP/无头探针、不读计算样式、不比截图。改完源码 → 起/复用预览服务 → 把网址交给用户，由**用户**判断。门禁推迟到他说「同步」。
 4. 用户说「同步」→ 收尾全流程：merge master → `pnpm test:changed`（选择器按需升格全量）+ `tsc --noEmit` → 提交 → 合并回主仓库 → 主仓库 `pnpm run build` 部署（提交产物）→ 清 worktree。
 5. 种子数据改了浏览器没变 = localStorage 种子标记未清：点壳「重置演示数据」或清 `bz-sim:*`。
 
@@ -46,7 +46,7 @@
 - 布局：overlay 弹性子项显式宽高；grid 用 `minmax(0,1fr)` + 卡片 `min-width:0`；头行固定、内容区 `flex:1; min-height:0; overflow:auto`；浮层与面板**同挂 scope 类**（否则 CSS 变量全丢）；自绘按钮带容器前缀（防 reset 压样式）。
 - 两端：桌面 + 移动（412×915 iframe / `Platform.isMobile`）任何改动都验；移动弹窗留边 `min(430px, 100vw - 32px)`。
 - **移动外景 = 小米13U 真机尺寸**（412×915 CSS px = 1440×3200 物理 px ÷ dpr 3.5；412 仍 ≤768 → 移动布局命中）；
-  13 个行为单源域共用 `prototypes/mob-1to1.css` + `mob-1to1.js`，把外景缩放到屏幕上的
+  17 个行为单源域共用 `prototypes/mob-1to1.css` + `mob-1to1.js`，把外景缩放到屏幕上的
   70.2×155.9mm（= 真机屏幕实测尺寸）。缩放用 `transform`，绝不能改 iframe 的 `width/height`
   （会连内部视口一起改，动到 `@media ≤768` 判据）。换显示器只需改 `mob-1to1.js` 的 `RULER_MM`。
 - 测试：UI 锚用 `bz-<域>-*` 类 / `data-*` 钩子；颜色断言读 `rgb()` 计算值。
@@ -60,10 +60,11 @@
   再 `node scripts/build-preview.mjs` 重出——守卫即全绿，且**重出的产物可安全带回主仓库**
   （指纹由与主仓库相同的字节算出）。反例：不对齐就重出，产物内嵌的是 worktree 的 CRLF 指纹，
   合并回主仓库后必红。实例口径见 `issues/341-clipbook-native-sel-menu.md` 门禁段。
-- **省事口径：worktree 内的全量直接跳过该守卫** —— `vitest run --exclude tests/preview-freshness.test.ts`。
+- **省事口径：worktree 里跑测试时直接排除该守卫** —— `vitest run --exclude tests/preview-freshness.test.ts`。
   这条守卫的权威判定场景是**主仓库重出产物之后**（无 CRLF 假红）；在 worktree 里跑它只有两种下场：
   逐次对齐字节，或 `git stash` 取基线做差集。前者是给环境做人工补偿、后者白花一轮，都不如不跑。
-  worktree 的红线因此收窄为「本域测试 + tsc + 其余全量绿」，重出产物与 `pnpm run build` 一律回主仓做，
+  worktree 的红线因此收窄为「本域测试 + tsc」，合回主干前再跑 `pnpm test:changed`（选择器按需升格，
+  **全量不是默认动作**，见 AGENTS.md「跑什么」）；重出产物与 `pnpm run build` 一律回主仓做，
   做完在主仓跑该守卫取权威结论（issue 341 后续实证：336 文件 5268 例绿 → 主仓 337/5295 + 27/27 绿）。
 - **仓库级遗留**：`.gitattributes` 只固定了 `main.js` 与 `prototypes/**/*.{js,ts}`，`src/**` 未固定行尾——
   全新 clone（autocrlf 检出 CRLF）下这些域的原型新鲜度守卫仍会假红。跨域根治需给 `src/**` 定
