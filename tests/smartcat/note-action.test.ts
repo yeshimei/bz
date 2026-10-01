@@ -360,4 +360,4 @@ describe('卡片盒/现代诗/信 观察（per-file 10 分钟结算，ticket 083
     expect(__getNoteTimersForTests().size).toBe(0);
     expect(__getNoteTrackedForTests().has(path)).toBe(false);
   });
-});
+});

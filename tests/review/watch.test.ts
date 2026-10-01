@@ -440,4 +440,4 @@ describe('批 B 修复回归：watch 事件链（2026-09-19 深审）', () => {
     await vi.advanceTimersByTimeAsync(30);
     expect((await dm.loadItems()).some((i) => i.filePath === '我的/复习/A.md')).toBe(true); // 原样插回
   }, 10000);
-});
+});

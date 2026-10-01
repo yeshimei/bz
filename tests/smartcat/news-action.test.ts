@@ -307,4 +307,4 @@ describe('行为流落盘（writeBehaviorStream → sidecar 防抖落盘，ADR-0
   });
 });
 
-void vi; // 保持 vi 引用（测试风格一致性，同 movie-action.test.ts）
+void vi; // 保持 vi 引用（测试风格一致性，同 movie-action.test.ts）
