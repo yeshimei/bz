@@ -254,21 +254,47 @@ export function isSelfWho(who: string | undefined): boolean {
 const IMG_DESC_NEAREST_SEC = 12 * 3600;
 
 /**
+ * 关联键词干（`img` ↔ `image_desc.file` / `image_map.file` 的**缺扩展名容错**）：统一分隔符后
+ * 抹掉尾段扩展名。现实数据里 chat.json 的 `img` 常**不带扩展名**（`2026-09/<md5>`），而
+ * image_desc / image_map 的 `file` **带扩展名**（`2026-09/<md5>.jpg`）——精确比对恒落空，
+ * 两侧都退化到词干才对得上（`.` 前无字符不算扩展名，`.hidden` 之类原样保留）。
+ */
+export function keyStem(s: string): string {
+  const n = s.replace(/\\/g, '/');
+  const i = n.lastIndexOf('/');
+  const head = i >= 0 ? n.slice(0, i + 1) : '';
+  const base = i >= 0 ? n.slice(i + 1) : n;
+  const dot = base.lastIndexOf('.');
+  return head + (dot > 0 ? base.slice(0, dot) : base);
+}
+
+/** 词干索引（复用 `quantKeyMap` 的歧义拒配）：同词干撞上不同条目 = 匹配不可信，宁缺不错 */
+function stemIndex<T>(): { set(raw: string, v: T): void; get(raw: string): T | undefined } {
+  const idx = quantKeyMap<string, T>();
+  return {
+    set: (raw, v) => { const k = keyStem(raw); if (k) idx.set(k, v); },
+    get: (raw) => { const k = keyStem(raw); return k && !idx.ambiguous(k) ? idx.get(k) : undefined; },
+  };
+}
+
+/**
  * 图片消息 → 描述文本（纯查找，返回 '' = 未命中）：
- * 1) img 字段有值 → descByFile 按 file 精确匹配（image_ct_map 回写后的权威路径；同图多次出现复用同描述）；
+ * 1) img 字段有值 → descByFile 按 file 精确匹配（image_ct_map 回写后的权威路径；同图多次出现复用同描述），
+ *    精确落空再走 descByStem 词干匹配（img 缺扩展名 / 扩展名不一致的现实容错）；
  * 2) img 缺失 → 同月 ct 最近邻（±12h 内、未被消费过；一张描述只配一条消息，防批量错位）；
  * 3) 都失手 → ''（回退空标签，不解析成素材）。
  */
 function matchImageDesc(
   raw: RawChatMsg,
   descByFile: Map<string, ImageDescItem>,
+  descByStem: { get(raw: string): ImageDescItem | undefined },
   descByMonth: Map<string, ImageDescItem[]>,
   descUsed: Set<string>
 ): string {
   const img = String(raw.img ?? '').trim();
   if (img) {
-    const exact = descByFile.get(img);
-    return exact ? String(exact.desc ?? '').trim() : '';
+    const hit = descByFile.get(img) ?? descByStem.get(img);
+    return hit ? String(hit.desc ?? '').trim() : '';
   }
   const ct = Number(raw.ct);
   if (!Number.isFinite(ct)) return '';
@@ -439,15 +465,34 @@ export function normalizeChatJson(
     const base = wav.includes('/') ? wav.slice(wav.lastIndexOf('/') + 1) : wav;
     if (base) voiceByWav.set(base, v); // 尾段文件名键（防御 chat.json 只存文件名的变体）
   }
-  // 图片描述索引：file 精确键（img 回写后的主路径）+ 月内 ct 升序表（img 缺失时最近邻兜底）
+  // 语音 sid 索引（与 applyVoiceToMsgs 同款兜底）：现实 chat.json 的语音条**只有 sid、没有 wav**
+  // （导出工具不写 wav），只按 wav 查表恒落空 → 转写全丢。voice.json 有 sid 字段就直接用它；
+  // 没有时退到 wav 文件名尾段内嵌的 server_id（`_<数字>.wav`，与 chat.json 的 sid 同值量化）。
+  // 转写失败条目（`<转写失败:…>` / ERR）不入索引——否则失败占位会被当成正文并进时间线。
+  const voiceBySid = quantKeyMap<number, VoiceItem>();
+  for (const v of extras?.voice ?? []) {
+    if (!v || typeof v !== 'object' || isFailedVoice(v)) continue;
+    const sid = typeof v.sid === 'number' && Number.isFinite(v.sid) && v.sid !== 0 ? v.sid : 0;
+    if (sid) voiceBySid.set(sid, v);
+    const wav = String(v.wav ?? '').trim();
+    const base = wav.includes('/') ? wav.slice(wav.lastIndexOf('/') + 1) : wav;
+    const embed = /_(\d{10,})\.\w+$/.exec(base);
+    if (embed) {
+      const q = Number(embed[1]);
+      if (Number.isFinite(q) && q !== 0) voiceBySid.set(q, v);
+    }
+  }
+  // 图片描述索引：file 精确键（img 回写后的主路径）+ 词干键（img 缺扩展名容错）+ 月内 ct 升序表
+  // （img 缺失时最近邻兜底）
   const descByFile = new Map<string, ImageDescItem>();
+  const descByStem = stemIndex<ImageDescItem>();
   const descByMonth = new Map<string, ImageDescItem[]>();
   for (const it of extras?.imageDesc ?? []) {
     if (!it || typeof it !== 'object') continue;
     const desc = String(it.desc ?? '').trim();
     if (!desc) continue;
     const file = String(it.file ?? '').trim();
-    if (file) descByFile.set(file, it);
+    if (file) { descByFile.set(file, it); descByStem.set(file, it); }
     const month = file.includes('/') ? file.slice(0, file.indexOf('/')) : monthOf(Number(it.ct));
     if (!month) continue;
     let list = descByMonth.get(month);
@@ -488,13 +533,16 @@ export function normalizeChatJson(
         break;
       case 34: {
         if (opts.previewVoice) {
-          // msg 已回填转写（有正文）原样；无正文查 voice.json（wav / sid 兜底）回填；仍无 → text 空
+          // msg 已回填转写（有正文）原样；无正文查 voice.json（wav 优先 / sid 兜底）回填；仍无 → text 空
           const tagged = text ? parseMediaTag(text) : null;
           if (tagged) {
             out = text;
             bumpEmotion(tagged.emotion);
           } else {
-            const v = voiceByWav.get(String(raw.wav ?? '').trim());
+            let v = voiceByWav.get(String(raw.wav ?? '').trim());
+            // 现实数据：chat.json 语音条只有受损 sid、没有 wav（导出工具不写 wav）——按 wav 查恒落空，
+            // 必须退到 sid（量化键、撞键拒配）；否则整库语音转写每次重导都被判「待转写」。
+            if (!v && sid && !voiceBySid.ambiguous(sid)) v = voiceBySid.get(sid);
             const merged = buildVoiceText(raw, v);
             const parsed = parseMediaTag(merged);
             if (parsed) {
@@ -507,7 +555,7 @@ export function normalizeChatJson(
       }
       case 3: {
         if (opts.imageDescMode === 'file') { // off / 旧存档 ai 回落后的兜底路径：text 空
-          const hit = matchImageDesc(raw, descByFile, descByMonth, descUsed);
+          const hit = matchImageDesc(raw, descByFile, descByStem, descByMonth, descUsed);
           if (hit) out = `[图片] ${hit}`;
         }
         break;
@@ -612,24 +660,48 @@ export function storeStatsOf(msgs: StoreMsg[]): StoreStats {
 // ---------------- 聊天仓合并（upsert） ----------------
 
 /**
+ * mergeStore 的非破坏性合并选项：传导入时的同一份 normalize 选项，让合并知道「空派生文本」到底是
+ * 「本轮没恢复出来」还是「用户用开关明确不要」。不传 = 不做空文本保护（旧行为）。
+ */
+export type MergeStoreOptions = Pick<NormalizeOptions, 'previewVoice' | 'imageDescMode'>;
+
+/** 该条派生文本「本轮为空」是否等于「恢复失败」（开关开着说明用户要，空 = 没查到 → 保留仓里的） */
+function keepDerivedOnBlank(m: StoreMsg, opts: MergeStoreOptions | undefined): boolean {
+  if (!opts) return false;
+  if (m.type === 34) return opts.previewVoice; // 语音转写：previewVoice 关 = 用户明确不要
+  if (m.type === 3) return opts.imageDescMode === 'file'; // 图片描述：off = 用户明确不要标签
+  return false;
+}
+
+/**
  * 聊天仓合并（466 upsert，取代旧 append-only）：同键新条目**整体覆盖**（派生文本升级 + 原始字段
  * 按新值更新——修「源里表情带名变了、仓里永远停在旧文本」修不回来的事故）；新键追加；仓里已有
  * 而本次没出现的条目保留（部分导出 / 留痕导入等来源不互删）。结果按 ts 升序。
  * stats 全量重算（时间线口径）；kindCounts / watermarkSid 合并取大；insights 随本次导入覆盖。
  * 返回 added = 新键条数、updated = 被覆盖条数（供导入反馈）。
+ *
+ * **非破坏性合并**（issue 533 事故：导一次增量后全库图片描述 / 语音转写变成「待转」）：
+ * 导入会把整份 chat.json 重算一遍再同键覆盖——若这一轮归一没恢复出派生文本（旁路表缺、键对不上），
+ * 「整体覆盖」就把仓里已经画好的描述与转写抹成空。故：
+ *   - 图片 / 语音的派生文本：新文本为空、仓里同键已有非空文本、且该媒体的开关还开着 → 保留仓里的
+ *     （空 = 没查到，不是「没了」）；开关关掉（用户明确不要）时照旧清空。
+ *   - `descSkip` 终态标注：normalize 从不产出它，合并时一律沿用仓里的（ADR-0224 / 0225：标注是
+ *     终态，只由 prep 的旁路表权威地增删，不该被一次重导抹掉）。
  */
 export function mergeStore(
   existing: StoreContact | undefined,
   incoming: NormalizeResult,
-  nowIso: string
+  nowIso: string,
+  opts?: MergeStoreOptions
 ): { contact: StoreContact; added: number; updated: number } {
   const prev = new Map((existing?.msgs ?? []).map((m) => [m.key, m]));
   let added = 0;
   let updated = 0;
   for (const m of incoming.msgs) {
-    if (prev.has(m.key)) updated++;
+    const old = prev.get(m.key);
+    if (old) updated++;
     else added++;
-    prev.set(m.key, m);
+    prev.set(m.key, old ? mergeStoreMsg(old, m, opts) : m);
   }
   const msgs = [...prev.values()].sort((a, b) => a.ts - b.ts || a.key.localeCompare(b.key));
   const contact: StoreContact = {
@@ -642,6 +714,16 @@ export function mergeStore(
     updatedAt: nowIso,
   };
   return { contact, added, updated };
+}
+
+/** 同键条目合并（mergeStore 逐条；口径见 mergeStore 的「非破坏性合并」注释） */
+function mergeStoreMsg(old: StoreMsg, next: StoreMsg, opts: MergeStoreOptions | undefined): StoreMsg {
+  const merged: StoreMsg = { ...next };
+  // descSkip 只由 prep 的旁路表权威增删（normalize 从不产出）：沿用仓里的，别被一次重导抹掉
+  if (merged.descSkip === undefined && old.descSkip !== undefined) merged.descSkip = old.descSkip;
+  // 派生文本空 = 本轮没恢复出来（开关还开着）→ 保留仓里已有的，绝不抹成空
+  if (merged.text === '' && old.text !== '' && keepDerivedOnBlank(merged, opts)) merged.text = old.text;
+  return merged;
 }
 
 /** 聊天仓 → 提炼管线消息（UnifiedMessage；**只取时间线**：`text !== ''` 这一行过滤——展示与素材组装的唯一入口） */
@@ -834,13 +916,14 @@ export function applyImageMapToMsgs(msgs: StoreMsg[], map: ImageMapItem[]): numb
 export function applyMediaFailToMsgs(msgs: StoreMsg[], items: MediaFailItem[]): number {
   const bySid = quantKeyMap<number, MediaFailItem>();
   const byFile = new Map<string, MediaFailItem>();
+  const byStem = stemIndex<MediaFailItem>();
   const byCt = quantKeyMap<number, MediaFailItem>();
   for (const it of items) {
     const reason = canonReason(it?.reason);
     if (!reason) continue; // 未知 reason 一律忽略（工具将来加新取值时，旧插件不误标）
     const entry: MediaFailItem = { ...it, reason };
     const file = String(it.file ?? '').trim();
-    if (file) byFile.set(file, entry);
+    if (file) { byFile.set(file, entry); byStem.set(file, entry); }
     const sid = typeof it.sid === 'number' && Number.isFinite(it.sid) && it.sid !== 0 ? it.sid : 0;
     if (sid) bySid.set(sid, entry);
     else if (Number.isFinite(it.ct)) byCt.set(Math.round(it.ct as number), entry);
@@ -851,7 +934,7 @@ export function applyMediaFailToMsgs(msgs: StoreMsg[], items: MediaFailItem[]): 
     const img = String(m.img ?? '').trim();
     let it: MediaFailItem | undefined;
     if (m.sid && !bySid.ambiguous(m.sid)) it = bySid.get(m.sid);
-    if (!it && img) it = byFile.get(img);
+    if (!it && img) it = byFile.get(img) ?? byStem.get(img); // 词干兜底：img 缺扩展名也认得出源图缺失
     if (!it && !img) {
       const ct = Math.round(m.ts / 1000); // 无 img 的老场景按秒级 ct 兜底（同 applyImageMapToMsgs；撞键拒配）
       if (!byCt.ambiguous(ct)) it = byCt.get(ct);
@@ -879,13 +962,14 @@ function canonReason(v: unknown): DescSkip | null {
 /**
  * 图片描述 → 仓内图片条目的派生 text 靶向升级（470 / ADR-0197 决策 4：描述是插件侧 AI 产物，
  * 合并进聊天仓的动作由插件执行）。按 img 精确匹配（`月/文件名`，与 image_desc.file 同格式），
- * img 没对上的条目走同月 ct 最近邻（±12h、只补缺）兜底——与 normalizeChatJson 的
- * matchImageDesc 同一匹配口径。**只升级 text 为空的条目**（描述已并仓的不重写；跳过语义 =
- * 该条保持空文本不进时间线），文本形态 `[图片] 描述`，空描述跳过。幂等：同键同值不重复计数。
- * 返回升级条数。
+ * 精确落空再走词干匹配（img 缺扩展名 / 扩展名不一致的现实容错），还没对上走同月 ct 最近邻
+ * （±12h、只补缺）兜底——与 normalizeChatJson 的 matchImageDesc 同一匹配口径。**只升级 text
+ * 为空的条目**（描述已并仓的不重写；跳过语义 = 该条保持空文本不进时间线），文本形态
+ * `[图片] 描述`，空描述跳过。幂等：同键同值不重复计数。返回升级条数。
  */
 export function applyImageDescToMsgs(msgs: StoreMsg[], descs: ImageDescItem[]): number {
   const byFile = new Map<string, ImageDescItem>();
+  const byStem = stemIndex<ImageDescItem>();
   const byMonth = new Map<string, ImageDescItem[]>();
   // items 里**明示了 file 但没有描述**的图（ADR-0224）：它们的「空」是「本轮确实没拿到」，
   // 不是「调用方没提这张」——不能被下面的最近邻兜底借走邻居的描述，否则一张失败 / 被拒的图
@@ -895,10 +979,10 @@ export function applyImageDescToMsgs(msgs: StoreMsg[], descs: ImageDescItem[]): 
     if (!it || typeof it !== 'object') continue;
     const file = String(it.file ?? '').trim();
     if (!String(it.desc ?? '').trim()) {
-      if (file) explicitBlank.add(file);
+      if (file) { explicitBlank.add(file); explicitBlank.add(keyStem(file)); }
       continue;
     }
-    if (file) byFile.set(file, it);
+    if (file) { byFile.set(file, it); byStem.set(file, it); }
     const month = file.includes('/') ? file.slice(0, file.indexOf('/')) : monthOf(Number(it.ct));
     if (!month) continue;
     let list = byMonth.get(month);
@@ -915,10 +999,10 @@ export function applyImageDescToMsgs(msgs: StoreMsg[], descs: ImageDescItem[]): 
     const img = String(m.img ?? '').trim();
     const ctSec = Math.round(m.ts / 1000);
     let desc = '';
-    const exact = img ? byFile.get(img) : undefined;
+    const exact = img ? (byFile.get(img) ?? byStem.get(img)) : undefined;
     if (exact) {
       desc = String(exact.desc ?? '').trim();
-    } else if (img && explicitBlank.has(img)) {
+    } else if (img && (explicitBlank.has(img) || explicitBlank.has(keyStem(img)))) {
       // 明示无描述：留空待补，不借邻居（ADR-0224）
     } else {
       const list = byMonth.get(monthOf(ctSec));
@@ -1274,8 +1358,8 @@ export function statsHasNewerData(stats: DataSourceStats, store: StoreContact | 
   return stats.lastCt * 1000 > last;
 }
 
-/** 读一个联系人的数据束（chat.json 必读；voice.json / image_desc.json 为兼容兜底——
- *  正常情况 chat.json 已回填转写与 img 关联，单文件即可，缺回填的旧数据目录才靠这两张表补齐）；
+/** 读一个联系人的数据束（chat.json 必读；voice.json / image_desc*.json 为兼容兜底——
+ *  正常情况 chat.json 已回填转写与 img 关联，单文件即可，缺回填的旧数据目录才靠这几张表补齐）；
  *  读失败 / 不是数组返回 null */
 export function readContactBundle(
   dataDir: string,
@@ -1293,10 +1377,33 @@ export function readContactBundle(
   };
   const raws = readJson(`${dataDir}/${name}/chat.json`);
   if (!raws) return null;
+  // 描述表：聚合 `image_desc.json`（旧契约权威）+ 分月 `image_desc.<YYYY-MM>.json`（每个导出轮各自
+  // 落盘，**比聚合表新**——工具有时应跑完当月却没有回写聚合表，只读聚合表会漏掉这批描述）。
+  // 分月表**只补聚合表没有的 file**：聚合表仍是权威，分月表不覆盖它的取值。
+  const imageDesc: ImageDescItem[] = [];
+  const descSeen = new Set<string>();
+  const pushDesc = (list: unknown[] | null): void => {
+    for (const it of list ?? []) {
+      const o = it as ImageDescItem;
+      if (!o || typeof o !== 'object') continue;
+      const file = String(o.file ?? '').trim();
+      if (file && descSeen.has(file)) continue;
+      if (file) descSeen.add(file);
+      imageDesc.push(o);
+    }
+  };
+  pushDesc(readJson(`${dataDir}/${name}/image_desc.json`));
+  let monthFiles: string[] = [];
+  try {
+    monthFiles = (fs.readdirSync(`${dataDir}/${name}`) as string[])
+      .filter((f) => /^image_desc\.\d{4}-\d{2}\.json$/.test(f))
+      .sort();
+  } catch { /* 目录不可列：只用聚合表（读不到分月表不影响主流程） */ }
+  for (const f of monthFiles) pushDesc(readJson(`${dataDir}/${name}/${f}`));
   return {
     raws: raws as RawChatMsg[],
     voice: (readJson(`${dataDir}/${name}/voice.json`) as VoiceItem[]) ?? [],
-    imageDesc: (readJson(`${dataDir}/${name}/image_desc.json`) as ImageDescItem[]) ?? [],
+    imageDesc,
     avatar: avatarFileOf(fs, `${dataDir}/${name}`),
   };
 }

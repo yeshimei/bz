@@ -1307,7 +1307,7 @@ async function importDsSelected(): Promise<void> {
       if (!bundle) { readFail.push(c.name); continue; }
       const norm = normalizeChatJson(bundle.raws, opts, { voice: bundle.voice, imageDesc: bundle.imageDesc });
       const existing = storeData.get(c.name)?.store; // ①里取的导出前快照（records 有缓存，同源）
-      const { contact, added } = mergeStore(existing, norm, now);
+      const { contact, added } = mergeStore(existing, norm, now, opts);
       // 头像（467）：字节直接进保库记录附件（渲染时解密成内存 data URL，不落明文文件）；
       // 外部头像已删 → 记录侧一并移除。路径字段退役，不再进密文记录。
       const avatar = readAvatarInput(bundle.avatar);
