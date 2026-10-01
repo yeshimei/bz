@@ -49,6 +49,20 @@ export default defineConfig({
     // retry 只重试失败的用例：真 bug 重试仍失败照常红，flaky 抖动自动吸收。
     retry: 2,
   },
+  // 转译/模块求值结果落盘复用。**vitest 5 迁移点**：v4 里它挂在 `test.experimental.fsModuleCache`，
+  // v5 转正为配置顶层同名项（沿用旧写法会打 DEPRECATED 且不再生效）；默认缓存目录也随之从
+  // `node_modules/.experimental-vitest-cache` 换成 `node_modules/.vitest-cache`——两者都在
+  // node_modules/ 忽略范围内，无需另行 ignore。
+  //
+  // 为什么开（实测，16 worker、温机；结论出自主线 513a0916）：这是**每文件固定开销**那一块的
+  // 解法——第二轮起 transform 累计 39.97s→8.17s（-80%）、import 90.27s→54.06s（-40%），
+  // 墙钟 52.5s→48.3s。对照实验：单独开 NODE_COMPILE_CACHE 无此效果（transform/import 各只动
+  // ~1s），收益 100% 来自这里，故不引入那个额外的缓存目录。
+  //
+  // 代价与边界：缓存冷时第一轮要写缓存，反而慢约 9s（52.5s→61.7s）；所以它是**本地反复跑
+  // 测试**的收益。CI 若每次全新检出且不缓存该目录，请改用不带此开关的运行方式，或把
+  // node_modules/.vitest-cache 一并纳入缓存。
+  fsModuleCache: true,
   coverage: {
     provider: 'v8',
     include: ['src/**/*.ts'],

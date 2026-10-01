@@ -12,6 +12,14 @@ import { createAddDialog, createTagPicker, openAddDialog, saveNewEntry, showTagP
 import { clearNotices, getNoticeMessages } from '../mock-obsidian-entry';
 import { MockVault, mockAppWithVault } from '../mock-vault';
 
+// partial mock（只替 showConfirm，保留 jumpToDiaryEntry 等真实现；saveNewEntry 成功路径经
+// jumpToDiaryEntry 打开新笔记，整模块 mock 会把它变 undefined）。vitest 5 起要求可提升方法
+// 必须在模块顶层，原实现嵌在用例里会被直接报错中断整个文件。
+vi.mock('../../src/diary/ui/entry-actions', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../../src/diary/ui/entry-actions')>();
+  return { ...actual, showConfirm: vi.fn() };
+});
+
 let vault: MockVault;
 
 beforeEach(() => {
@@ -194,12 +202,6 @@ describe('showTagPicker（标签选择器，locator 定位）', () => {
   });
 
   it('删除按钮：locator 传给 showConfirm 并收起选择器', async () => {
-    // partial mock（hoist 至文件顶）：只替 showConfirm，保留 jumpToDiaryEntry 等真实现
-    //（saveNewEntry 成功路径经 jumpToDiaryEntry 打开新笔记，整模块 mock 会把它变 undefined）
-    vi.mock('../../src/diary/ui/entry-actions', async (importOriginal) => {
-      const actual = await importOriginal<typeof import('../../src/diary/ui/entry-actions')>();
-      return { ...actual, showConfirm: vi.fn() };
-    });
     const { showConfirm } = await import('../../src/diary/ui/entry-actions');
     vault.files.set(
       '我的/日记/2401010800.md',
