@@ -26,7 +26,7 @@
 1. 从最新 master 开 worktree（`../.dsh-worktrees/<名>`），起 `node scripts/preview-live.mjs`。
 2. 迭代三不：不构建、不提交、不跑全量门禁。热重载即评审，反复改到用户满意。
 3. 测试：只改样式/UI 不测试；动功能代码只跑当前域测试（如 `pnpm exec vitest run tests/knowledge`）。
-4. 用户说「同步」→ 收尾全流程：merge master → 全量 `pnpm test` + `tsc --noEmit` → 提交 → 合并回主仓库 → 主仓库 `pnpm run build` 部署（提交产物）→ 清 worktree。
+4. 用户说「同步」→ 收尾全流程：merge master → `pnpm test:changed`（选择器按需升格全量）+ `tsc --noEmit` → 提交 → 合并回主仓库 → 主仓库 `pnpm run build` 部署（提交产物）→ 清 worktree。
 5. 种子数据改了浏览器没变 = localStorage 种子标记未清：点壳「重置演示数据」或清 `bz-sim:*`。
 
 ## 探索稿（未定稿的方案）= `.scratch/<名>/`

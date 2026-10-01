@@ -741,7 +741,7 @@ function main() {
     if (plan.reused?.length) {
       console.log(`没有要跑的测试：${plan.reused.length} 个命中文件全部复用上次成功结果（输入逐字节未变）。`);
     } else if (!plan.changed.length) {
-      console.log('工作区没有变更，未跑任何用例。这不是门禁结论——合并前请跑 `pnpm test`（全量）。');
+      console.log('工作区没有变更，未跑任何用例。要门禁结论请跑 `pnpm test:changed`（相对主线）或 `--full`。');
     } else {
       console.log(`变更 ${plan.changed.length} 个文件，但没有测试受影响（未跑任何用例）。`);
       console.log('若这不是文档类改动，请加 `--full` 全量确认 —— 空命中不等于通过。');
