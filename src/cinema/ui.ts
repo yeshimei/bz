@@ -1726,11 +1726,13 @@ function openForm(sec: HTMLElement, item: CinemaItem | null, app: App, presetSt?
       // 焦点接力（复审 P1①）：正面「解析」钮在 .16s 时被 visibility 摘出焦点序，焦点掉到 body；
       // 背面浮现完（cnModalIn 的 animationend，.34s）若焦点还没落回弹窗，交给背面首个可交互项——
       // 键盘用户无缝续上，鼠标用户无感（程序化聚焦不亮焦点环）。
-      // 只认背面本体：内容分段接力的动画同事件冒泡（子元素先结束），不筛会在入场半途提前交接。
+      // 只认背面本体：内容分段接力的动画同事件冒泡（子元素先结束），不筛会在入场半途提前交接；
+      // 收口微光（::after）也不算子元素——它的 animationend 带同一个 target、只多一个
+      // pseudoElement（复审 P2），一并筛掉，别把交接时刻赌在「微光比浮现晚」的时间账上。
       const backFace = flipEl.querySelector<HTMLElement>('.form-face--back');
       if (!backFace) return;
       const onEnd = (e: AnimationEvent): void => {
-        if (e.target !== backFace) return;
+        if (e.target !== backFace || e.pseudoElement) return;
         backFace.removeEventListener('animationend', onEnd);
         if (!el.isConnected || el.contains(document.activeElement)) return; // 焦点已在他处 → 不抢
         firstFocusable(backFace)?.focus({ preventScroll: true });

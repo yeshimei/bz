@@ -286,7 +286,7 @@
         await sleep(500);
         t('AI降级错误页不崩', !!dt('.ai-err-ic') && dt('.ai-title')?.textContent === 'AI 分析失败'
           && dt('[data-cinema-ai-start]')?.textContent.includes('重试'));
-        dt('.j-back').click();
+        dt('.sp-back').click();
         await sleep(80);
         t('AI页返回列表', !!dt('.d-head'));
 
@@ -295,7 +295,7 @@
         await sleep(80);
         t('分析页19板块', dt('.sp-title')?.textContent === '观影分析' && dd.querySelectorAll('.stat-card').length === 4
           && dd.querySelectorAll('.sec').length === 19 && dt('.sp-cnt')?.textContent === '· ' + watched + ' 部已看');
-        dt('.j-back').click();
+        dt('.sp-back').click();
         await sleep(80);
 
         // 表单（桌面，issue 395 双面卡片）：正面只有名称 + 状态 → 解析 → 翻面 → 背面保存

@@ -2929,6 +2929,12 @@ describe('影院覆盖层与跟手（issue 409）', () => {
     expect(css, '倾斜量走变量，抬升/回弹不被顶掉').toMatch(/\.pcard\{--tlt-x:0deg/);
   });
 
+  it('换面指针门控两态成对：背面基础态 none / is-flipped 必须给 auto（复审 P0 教训）', () => {
+    const css = readFileSync(join(process.cwd(), 'src/cinema/styles.css'), 'utf8');
+    expect(css, '基础态收针').toMatch(/\.form-face--back\{[^}]*pointer-events:none/);
+    expect(css, 'is-flipped 放行').toMatch(/\.form-flip\.is-flipped \.form-face--back\{[^}]*pointer-events:auto/);
+  });
+
   it('上屏片名 = 观影分析（四字）；落款副题同步（2026-09-21 拍板）', () => {
     expect(YB_TITLE).toBe('观影分析');
     const { app } = seedVault();
