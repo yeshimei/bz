@@ -1311,7 +1311,7 @@ tags: [电影]
     expect(modal.querySelector('.dm-actions')).toBeTruthy(); // 单季详情才有 找同类/编辑/删除
   });
 
-  it('合集卡右键 → 只有「查看全部」一条（点它开合集弹窗），不像单卡那样出笔记级动作', () => {
+  it('合集卡右键 → 「查看全部」+ 片级动作（查看全部开合集弹窗），不放笔记级动作', () => {
     setSettingsProvider(() => ({ cinemaMergeSeasons: true } as any));
     stubHover(true); // 右键分流走 hoverCapable：桌面用例显式开
     const { app } = seedSeasons();
@@ -1321,8 +1321,10 @@ tags: [电影]
     series.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true, clientX: 30, clientY: 30 }));
     const menu = document.querySelector('.bz-item-menu') as HTMLElement;
     expect(menu).toBeTruthy();
-    // 合集上不放标记/编辑/删除（都是笔记级动作，卡片没有具体条目可指）
-    expect(menuLabels(menu)).toEqual(['查看全部']);
+    // 合集上不放标记/编辑/删除（都是笔记级动作，卡片没有具体条目可指）；
+    // issue 535 补的是**片级**动作：片单归属天然以「一部剧」为单位。
+    // 本夹具无片单、且聚合状态 = 在看（第二季在看）→ 不出重映厅行（沿用已看门控）。
+    expect(menuLabels(menu)).toEqual(['查看全部', '归入片单…']);
     expect(root.querySelectorAll('.s-row')).toHaveLength(0); // 右键不再直接开合集弹窗
     clickEl(menuBtn(menu, '查看全部'));
     expect(document.querySelector('.bz-item-menu')).toBeNull();
@@ -1453,7 +1455,7 @@ tags: [电影]
     }
   });
 
-  it('移动端长按合集卡 → 抽屉只有「查看全部」（头 = 剧名 + 共 N 季 · M 部电影）', () => {
+  it('移动端长按合集卡 → 抽屉 = 查看全部 + 片级动作（头 = 剧名 + 共 N 季 · M 部电影）', () => {
     vi.useFakeTimers();
     try {
       setSettingsProvider(() => ({ cinemaMergeSeasons: true } as any));
@@ -1466,10 +1468,10 @@ tags: [电影]
       vi.advanceTimersByTime(600); // core longPress 500ms 阈值 → 抽屉
       const sheet = document.querySelector('.bz-item-sheet.cn-sheet-skin') as HTMLElement;
       expect(sheet).toBeTruthy();
-      // 头部指卡片自身（归一剧名 + 计数），不是某一季；动作只有一条
+      // 头部指卡片自身（归一剧名 + 计数），不是某一季；动作为片级两条（issue 535）
       expect(sheet.querySelector('.cn-sheet-name')?.textContent).toBe('老友记');
       expect(sheet.querySelector('.cn-sheet-sub')?.textContent).toBe('共 2 季 · 1 部电影');
-      expect([...sheet.querySelectorAll('.bz-item-sheet-label')].map((x) => x.textContent)).toEqual(['查看全部']);
+      expect([...sheet.querySelectorAll('.bz-item-sheet-label')].map((x) => x.textContent)).toEqual(['查看全部', '归入片单…']);
       expect(root.querySelectorAll('.s-row')).toHaveLength(0); // 长按不再直接开合集弹窗
       vi.advanceTimersByTime(500); // 越过合成 click 静置窗口
       clickEl(sheet.querySelector('.bz-item-sheet-item'));
@@ -3088,5 +3090,219 @@ describe('重温 +1：时刻粒度 + 重映厅自动移出', () => {
     await new Promise((r) => setTimeout(r, 0));
     expect(item.rewatches).toHaveLength(0);
     expect(item.lists).toEqual(['重映厅']);
+  });
+});
+
+/**
+ * 片单归属动作与计数（issue 535）
+ * ① 条目抽屉补「移出<片单名>」直出行（标签带真实片单名，不用点进弹层）；
+ * ② 合并卡补**片级**动作：归入片单…（一次归入全部季 + 特别篇）/ 重映厅行（沿用单条目「已看」门控，
+ *    但已在架一律给出口）/ 移出<片单名>（任一成员命中即出，动作作用于全部成员）；
+ * ③ 选中片单后，侧栏类型组与状态组计数以该片单为准；「全部」与片单组各行不受影响。
+ */
+describe('片单动作与计数（issue 535）', () => {
+  beforeEach(() => { resetObsidianMocks(); resetCinemaState(); document.body.innerHTML = ''; });
+  afterEach(() => { closeOverlay(); });
+
+  const menuLabelsOf = (menu: HTMLElement): (string | null)[] =>
+    [...menu.querySelectorAll('.bz-item-menu-label')].map((x) => x.textContent);
+  const menuButton = (menu: HTMLElement, label: string): HTMLElement =>
+    [...menu.querySelectorAll<HTMLElement>('.bz-item-menu-item')].find((b) => b.textContent?.includes(label)) as HTMLElement;
+  /** 在卡片上开桌面跟手菜单（右键分流走 hoverCapable，jsdom 无真 hover 能力 → 用例显式开） */
+  const openMenu = (root: HTMLElement, name: string): HTMLElement => {
+    stubHover(true);
+    pcardByName(root, name).dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true, clientX: 30, clientY: 30 }));
+    return document.querySelector('.bz-item-menu') as HTMLElement;
+  };
+  /** 侧栏某组某个按钮上的计数（容器 = .j-groups / .j-status / .j-lists） */
+  const railN = (root: HTMLElement, group: string, attr: string): string =>
+    (root.querySelector(`${group} [${attr}] .n`) as HTMLElement).textContent ?? '';
+  const listsOf = (name: string): string[] => M.items.find((i) => i.name === name)!.lists;
+
+  /** 老友记三季（全已看 → 聚合态已看，重映厅行出得来）+ 一部独立电影。
+   *  extra 按季追加 frontmatter 行（要在进面板之前就有片单归属时用） */
+  function seedSeries(extra: Record<string, string> = {}): { vault: MockVault; app: ReturnType<typeof mockAppWithVault> } {
+    const vault = new MockVault();
+    const put = (file: string, body: string): void => { vault.files.set(`我的/影视/${file}`, md(body)); };
+    put('《老友记 第一季》.md', `---\ntags: [美剧]\n评分: 9.0\n观影日期: 2026-01-18\n${extra.s1 ?? ''}---`);
+    put('《老友记 第二季》.md', `---\ntags: [美剧]\n评分: 9.2\n观影日期: 2026-02-18\n${extra.s2 ?? ''}---`);
+    put('《老友记 第三季》.md', `---\ntags: [美剧]\n评分: 9.4\n观影日期: 2026-03-18\n${extra.s3 ?? ''}---`);
+    put('《奥本海默》.md', '---\ntags: [电影]\n评分: 9\n观影日期: 2026-09-01\n---');
+    const app = makeApp(vault);
+    ensureCinema(app);
+    rebuildItems(app);
+    return { vault, app };
+  }
+
+  it('条目在片单里 → 抽屉多出「移出<片单名>」；重映厅不重复出（它已有专用 toggle 行）', () => {
+    const { app, vault } = seedVault();
+    vault.files.set('我的/影视/《星际穿越》.md', md(`---
+tags: [电影]
+评分: 9.6
+观影日期: 2026-08-01
+片单:
+- 诺兰补完计划
+- 重映厅
+---`));
+    rebuildItems(app);
+    createOverlay(app);
+    const root = document.querySelector('[data-cinema-root]') as HTMLElement;
+    const labels = menuLabelsOf(openMenu(root, '星际穿越'));
+    // 顺序：… 重温 +1 / 移出重映厅（专用 toggle 行）/ 归入片单… / 移出诺兰补完计划（直出行）…
+    expect(labels).toEqual([
+      '打开详情', '重温 +1', '移出重映厅', '归入片单…', '移出诺兰补完计划',
+      '找同类', '在豆瓣打开', '编辑', '删除',
+    ]);
+    // 重映厅只出现一次：listExitActs 把它排除了（专用行已经是一条完整入口）
+    expect(labels.filter((l) => l === '移出重映厅')).toHaveLength(1);
+  });
+
+  it('点「移出<片单名>」→ 该片单从 frontmatter 摘掉（唯一片单 → 删键）', async () => {
+    const { app, vault } = seedVault();
+    vault.files.set('我的/影视/《星际穿越》.md', md(`---
+tags: [电影]
+评分: 9.6
+观影日期: 2026-08-01
+片单:
+- 诺兰补完计划
+---`));
+    rebuildItems(app);
+    createOverlay(app);
+    const root = document.querySelector('[data-cinema-root]') as HTMLElement;
+    clickEl(menuButton(openMenu(root, '星际穿越'), '移出诺兰补完计划'));
+    await vi.waitFor(() => expect(hasNotice(/已把「星际穿越」移出「诺兰补完计划」/)).toBe(true));
+    expect(vault.files.get('我的/影视/《星际穿越》.md')).not.toContain('片单');
+    expect(listsOf('星际穿越')).toEqual([]);
+  });
+
+  it('无片单归属的条目：不出任何「移出…」行（不占位、不空转）', () => {
+    const { app } = seedVault();
+    createOverlay(app);
+    const root = document.querySelector('[data-cinema-root]') as HTMLElement;
+    expect(menuLabelsOf(openMenu(root, '星际穿越')).some((l) => l?.startsWith('移出'))).toBe(false);
+  });
+
+  it('合并卡（已看）：出「放入重映厅」与「归入片单…」；点放入 → 全部季一起入架', async () => {
+    setSettingsProvider(() => ({ cinemaMergeSeasons: true } as any));
+    const { app } = seedSeries();
+    createOverlay(app);
+    const root = document.querySelector('[data-cinema-root]') as HTMLElement;
+    const menu = openMenu(root, '老友记');
+    expect(menuLabelsOf(menu)).toEqual(['查看全部', '放入重映厅', '归入片单…']);
+    clickEl(menuButton(menu, '放入重映厅'));
+    await vi.waitFor(() => expect(hasNotice(/已把「老友记」全部 3 部归入「重映厅」/)).toBe(true));
+    expect(listsOf('老友记 第一季')).toContain('重映厅');
+    expect(listsOf('老友记 第二季')).toContain('重映厅');
+    expect(listsOf('老友记 第三季')).toContain('重映厅');
+  });
+
+  it('合并卡：任一季在片单里就出「移出<片单名>」，点了全部季一起移出', async () => {
+    setSettingsProvider(() => ({ cinemaMergeSeasons: true } as any));
+    const { app } = seedSeries({ s1: '片单:\n- 诺兰补完计划\n', s3: '片单:\n- 诺兰补完计划\n' });
+    createOverlay(app);
+    const root = document.querySelector('[data-cinema-root]') as HTMLElement;
+    const menu = openMenu(root, '老友记');
+    // 第二季并不在这个片单里，但「任一成员命中」即出出口（卡片能在片单视图里被看见靠的就是这条）
+    expect(menuLabelsOf(menu)).toEqual(['查看全部', '放入重映厅', '归入片单…', '移出诺兰补完计划']);
+    clickEl(menuButton(menu, '移出诺兰补完计划'));
+    await vi.waitFor(() => expect(hasNotice(/已把「老友记」全部 3 部移出「诺兰补完计划」/)).toBe(true));
+    expect(listsOf('老友记 第一季')).toEqual([]);
+    expect(listsOf('老友记 第二季')).toEqual([]); // 顺带清掉半吊子（动作作用于全部成员）
+    expect(listsOf('老友记 第三季')).toEqual([]);
+  });
+
+  it('合并卡未看、成员也不在架 → 无重映厅行（沿用单条目已看门控）', () => {
+    setSettingsProvider(() => ({ cinemaMergeSeasons: true } as any));
+    const vault = new MockVault();
+    vault.files.set('我的/影视/《老友记 第一季》.md', md('---\ntags: [美剧]\n评分: 0\n观影日期: 2026-01-18\n---'));
+    vault.files.set('我的/影视/《老友记 第二季》.md', md('---\ntags: [美剧]\n评分: 0\n观影日期: 2026-02-18\n---'));
+    const app = makeApp(vault);
+    ensureCinema(app);
+    rebuildItems(app);
+    createOverlay(app);
+    const root = document.querySelector('[data-cinema-root]') as HTMLElement;
+    expect(menuLabelsOf(openMenu(root, '老友记'))).toEqual(['查看全部', '归入片单…']);
+  });
+
+  it('合并卡未看但成员已在重映厅 → 仍出「移出重映厅」（门控挡入口，不困住已归入的成员）', () => {
+    setSettingsProvider(() => ({ cinemaMergeSeasons: true } as any));
+    const { app } = (() => {
+      const vault = new MockVault();
+      vault.files.set('我的/影视/《老友记 第一季》.md', md('---\ntags: [美剧]\n评分: 0\n观影日期: 2026-01-18\n片单:\n- 重映厅\n---'));
+      vault.files.set('我的/影视/《老友记 第二季》.md', md('---\ntags: [美剧]\n评分: 0\n观影日期: 2026-02-18\n---'));
+      const app = makeApp(vault);
+      ensureCinema(app);
+      rebuildItems(app);
+      return { app };
+    })();
+    createOverlay(app);
+    const root = document.querySelector('[data-cinema-root]') as HTMLElement;
+    expect(menuLabelsOf(openMenu(root, '老友记'))).toEqual(['查看全部', '移出重映厅', '归入片单…']);
+  });
+
+  it('归入片单弹层（合并卡）：勾选态 = 任一季命中；点一下把全部季一起归入', async () => {
+    setSettingsProvider(() => ({ cinemaMergeSeasons: true } as any));
+    const { app } = seedSeries({ s1: '片单:\n- 诺兰补完计划\n' });
+    createOverlay(app);
+    const root = document.querySelector('[data-cinema-root]') as HTMLElement;
+    clickEl(menuButton(openMenu(root, '老友记'), '归入片单…'));
+    const pick = root.querySelector('.cn-modal--listpick') as HTMLElement;
+    expect(pick).toBeTruthy();
+    // 头部指卡片本身（剧名），不是某一季
+    expect(pick.querySelector('.lp-name')?.textContent).toBe('老友记');
+    const row = pick.querySelector('[data-lp="诺兰补完计划"]') as HTMLElement;
+    expect(row.classList.contains('is-on'), '只有第一季在，但勾选态按「任一成员命中」').toBe(true);
+    // 勾着的行点一下 = 整组移出（半吊子状态一并清掉）
+    clickEl(row);
+    await vi.waitFor(() => expect(listsOf('老友记 第一季')).toEqual([]));
+    expect(listsOf('老友记 第二季')).toEqual([]);
+    expect(listsOf('老友记 第三季')).toEqual([]);
+    expect(row.classList.contains('is-on'), '就地翻转勾选态').toBe(false);
+    // 再点一下 = 整组归入（全部季都进，不再有半吊子）
+    clickEl(row);
+    await vi.waitFor(() => expect(listsOf('老友记 第二季')).toContain('诺兰补完计划'));
+    expect(listsOf('老友记 第一季')).toContain('诺兰补完计划');
+    expect(listsOf('老友记 第三季')).toContain('诺兰补完计划');
+    expect(listsOf('奥本海默'), '不误伤别的条目').toEqual([]);
+  });
+
+  it('选中片单 → 类型组与状态组计数以该片单为准；「全部」与片单行不受影响；点「全部」回主视图', () => {
+    const vault = new MockVault();
+    const put = (file: string, tags: string, rating: string, lists = ''): void => {
+      vault.files.set(`我的/影视/${file}`, md(`---\ntags: [${tags}]\n评分: ${rating}\n观影日期: 2026-08-01\n${lists}---`));
+    };
+    const inList = '片单:\n- 诺兰补完计划\n';
+    put('《星际穿越》.md', '电影', '9.6', inList);
+    put('《盗梦空间》.md', '电影', '9.2', inList);
+    put('《绝命毒师》.md', '美剧', '9.4');
+    put('《想看片》.md', '电影', '-1');
+    const app = makeApp(vault);
+    ensureCinema(app);
+    rebuildItems(app);
+    createOverlay(app);
+    const root = document.querySelector('[data-cinema-root]') as HTMLElement;
+
+    // 主视图：全部 4 / 电影 3 / 剧集 1；想看 1、已看 3；片单「诺兰补完计划」2
+    expect(railN(root, '.j-groups', 'data-g="全部"')).toBe('4');
+    expect(railN(root, '.j-groups', 'data-g="电影"')).toBe('3');
+    expect(railN(root, '.j-groups', 'data-g="剧集"')).toBe('1');
+    expect(railN(root, '.j-status', 'data-s="想看"')).toBe('1');
+    expect(railN(root, '.j-status', 'data-s="已看"')).toBe('3');
+    expect(railN(root, '.j-lists', 'data-l="诺兰补完计划"')).toBe('2');
+
+    // 选中片单 → 类型组 / 状态组基数收窄到该片单（2 张卡：两部诺兰电影，都已看）
+    clickEl(root.querySelector('.j-lists [data-l="诺兰补完计划"]'));
+    expect(railN(root, '.j-groups', 'data-g="电影"')).toBe('2');
+    expect(railN(root, '.j-groups', 'data-g="剧集"')).toBe('0');
+    expect(railN(root, '.j-status', 'data-s="已看"')).toBe('2');
+    expect(railN(root, '.j-status', 'data-s="想看"')).toBe('0');
+    // 「全部」保持库内总数（它是回主视图的出口）；片单组各行保持各自成员数（清单级计数）
+    expect(railN(root, '.j-groups', 'data-g="全部"')).toBe('4');
+    expect(railN(root, '.j-lists', 'data-l="诺兰补完计划"')).toBe('2');
+
+    // 点「全部」→ 回主视图计数
+    clickEl(root.querySelector('.j-groups [data-g="全部"]'));
+    expect(railN(root, '.j-groups', 'data-g="电影"')).toBe('3');
+    expect(railN(root, '.j-status', 'data-s="想看"')).toBe('1');
   });
 });

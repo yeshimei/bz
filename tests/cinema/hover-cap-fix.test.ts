@@ -170,7 +170,7 @@ describe('影院右键菜单分流：壳类近似改悬浮能力判定（右键�
     }
   });
 
-  it('桌面 + 有悬浮能力：合并卡右键出「查看全部」跟手菜单，行为零变化', () => {
+  it('桌面 + 有悬浮能力：合并卡右键出跟手菜单（查看全部 + 片级片单动作），分流不变', () => {
     stubHoverCapable(true);
     const app = seedSeasons();
     createOverlay(app);
@@ -179,7 +179,10 @@ describe('影院右键菜单分流：壳类近似改悬浮能力判定（右键�
     series.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true, clientX: 30, clientY: 30 }));
     const menu = document.querySelector('.bz-item-menu') as HTMLElement;
     expect(menu).toBeTruthy();
-    expect(Array.from(menu.querySelectorAll('.bz-item-menu-item')).map((b) => b.textContent)).toEqual(['查看全部']);
+    // 本批只关心「桌面 + 悬浮能力 → 出鼠标跟手菜单」这条分流；菜单内容见 ui.test.ts
+    // （issue 535 起合并卡多了片级动作，故不再钉「只有一条」）
+    expect(Array.from(menu.querySelectorAll('.bz-item-menu-item')).map((b) => b.textContent))
+      .toEqual(['查看全部', '归入片单…']);
   });
 
   it('桌面 + 有悬浮能力：弹窗季行右键出该季跟手菜单，行为零变化', () => {

@@ -1,4 +1,4 @@
-/* 源指纹 d2c6b1927ef02e77 · 仓内输入 6 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 1d6255bc64f0f95a · 仓内输入 6 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["src/cinema/constants.ts","src/cinema/layouts/midnight/render.ts","src/cinema/render.ts","src/cinema/seasons.ts","src/cinema/shared.ts","src/core/ui/str.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — src/cinema/render.ts → window.BZR_cinema（评审壳预览包，ADR-0104） */
 var BZR_cinema = (() => {
@@ -553,9 +553,10 @@ var BZR_cinema = (() => {
   var railRow = (on, attr, color, name, n) => `<button class="rail-item${on ? " is-on" : ""}" ${attr}><span class="dot" style="background:${color}"></span>${esc(name)}<span class="n">${n}</span></button>`;
   function railHtml(cards, view, lists = []) {
     const listOn = view.view === "list";
+    const scope = view.listFilter ? cards.filter((e) => cardInList(e, view.listFilter)) : cards;
     const g = {};
     const c = { 想看: 0, 在看: 0, 已看: 0 };
-    cards.forEach((e) => {
+    scope.forEach((e) => {
       const grp = cardGroup(e);
       g[grp] = (g[grp] || 0) + 1;
       c[statusText(cardStatus(e))]++;

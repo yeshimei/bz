@@ -45,7 +45,7 @@ import {
   ICON, statusText, itemByKey, doubanSearchUrl, itemKey,
   detailModalHtml, seriesDetailModalHtml, formModalHtml, formBackHtml,
   formTagChipHtml, formStChipHtml, type FormPreviewData,
-  aiPageHtml, sheetHeadHtml, seriesSheetHeadHtml, cardHtml, facePiecesHtml, starsHtml, starsLit, type AiPageInput,
+  aiPageHtml, sheetHeadHtml, seriesSheetHeadHtml, cardHtml, facePiecesHtml, starsHtml, starsLit, seriesStatus, type AiPageInput,
   midnightDeskHtml, midnightMobHtml, renderMidnightDesk, renderMidnightMob,
   type MidnightRenderInput,
 } from './render';
@@ -148,29 +148,54 @@ async function markRewatch(it: CinemaItem, app: App): Promise<void> {
   }
 }
 
-/** 片单归入/移出落盘（含内置「重映厅」）：frontmatter「片单」数组 toggle——建档/编辑不写此键；
- *  空数组删键（不留无意义的空列表）。内存先行（markRewatch 同模式），写盘失败回滚 */
-async function toggleListMembership(it: CinemaItem, list: string, app: App): Promise<void> {
-  if (!it.file) return;
-  const on = it.lists.includes(list);
-  const prev = it.lists;
-  it.lists = on ? prev.filter((l) => l !== list) : [...prev, list];
+/**
+ * 片单归入/移出落盘（含内置「重映厅」）：frontmatter「片单」数组按需增删——建档/编辑不写此键；
+ * 空数组删键（不留无意义的空列表）。内存先行（markRewatch 同模式），写盘失败回滚。
+ *
+ * **多条目变体**（issue 535）：合并卡 = 全部季 + 特别篇一起动，故入参是条目集合。
+ * 逐篇 processFrontMatter（各写各的文件，互不依赖）；任一篇抛错 → 全部内存快照回滚 + 报错，
+ * 保证内存态与「可能已写了一半的盘」至少不会二次漂移。
+ *
+ * @param on 目标成员态（true = 归入 / false = 移出）。**幂等**：已在目标态的条目既不写内存也不
+ *           碰盘——合并卡常出现「3 季里只有 1 季已在」的半吊子态（移出时另两季本就没这份键）。
+ * @param label 通知里的主语；缺省按条目名单条 `「片名」` / 多条 `N 部`
+ */
+async function setListMembership(items: CinemaItem[], list: string, on: boolean, app: App, label = ''): Promise<void> {
+  const targets = items.filter((it) => it.file);
+  if (!targets.length) return;
+  const who = label || (targets.length === 1 ? `「${targets[0].name}」` : `${targets.length} 部`);
+  const changing = targets.filter((it) => it.lists.includes(list) !== on);
+  const prev = changing.map((it) => it.lists);
+  changing.forEach((it) => {
+    it.lists = on ? [...it.lists, list] : it.lists.filter((l) => l !== list);
+  });
   try {
-    await app.fileManager.processFrontMatter(it.file, (fm: Record<string, unknown>) => {
-      const cur = normalizeLists(fm['片单']);
-      const next = on ? cur.filter((l) => l !== list) : [...cur, list];
-      if (next.length) fm['片单'] = next;
-      else delete fm['片单'];
-    });
-    notice(on ? `已把「${it.name}」移出「${list}」` : `已把「${it.name}」归入「${list}」`, 'success');
-    markCardFlash(itemKey(it));
-    renderAll(app);
+    for (const it of changing) {
+      await app.fileManager.processFrontMatter(it.file!, (fm: Record<string, unknown>) => {
+        const cur = normalizeLists(fm['片单']);
+        const next = on
+          ? cur.includes(list) ? cur : [...cur, list]
+          : cur.filter((l) => l !== list);
+        if (next.length) fm['片单'] = next;
+        else delete fm['片单'];
+      });
+    }
   } catch (e) {
-    it.lists = prev;
+    changing.forEach((it, i) => { it.lists = prev[i]; });
     notifySaveError(e);
     console.error(e);
     renderAll(app);
+    return;
   }
+  notice(on ? `已把${who}归入「${list}」` : `已把${who}移出「${list}」`, 'success');
+  if (!changing.length) return; // 全员已在目标态：无盘上改动，不必整刷
+  changing.forEach((it) => markCardFlash(itemKey(it)));
+  renderAll(app);
+}
+
+/** 单条目片单 toggle（调用点语义不变：入参条目当前不在 → 归入，在 → 移出） */
+async function toggleListMembership(it: CinemaItem, list: string, app: App): Promise<void> {
+  await setListMembership([it], list, !it.lists.includes(list), app);
 }
 
 /** 片单改名（归入弹层行尾铅笔钮，2026-09-30 拍板补改名途径）：全库扫含旧名的笔记
@@ -201,17 +226,22 @@ async function renameList(oldName: string, newName: string, app: App): Promise<v
 
 /** 归入片单弹层（cn-modal--listpick）：现有片单逐行点选（就地切换勾选不关层）+ 底部新建行
  *  + 行尾铅笔改名（行内编辑态：label 换输入框，Enter 提交 / Esc 还原；编辑中行点击不触发勾选）。
- *  落盘走 toggleListMembership / renameList；勾选态刷新走 ovl 局部 class 翻转，不整刷。
- *  行内计数 = 库内成员数（与侧栏「卡片数」口径不同：这里是笔记粒度，弹层语境更直观） */
-function openListPick(sec: HTMLElement, it: CinemaItem, app: App): void {
+ *  落盘走 setListMembership / renameList；勾选态刷新走 ovl 局部 class 翻转，不整刷。
+ *  行内计数 = 库内成员数（与侧栏「卡片数」口径不同：这里是笔记粒度，弹层语境更直观）
+ *
+ *  **多目标（issue 535）**：合并卡 = 全部季 + 特别篇一起归入/移出。勾选态 = **任一成员命中**
+ *  （与 cardInList / 侧栏计数 / 片单筛选同一口径——卡片在片单视图里出现靠的就是这条），
+ *  点一下 = 对全部成员执行同一动作。head 用卡片名与正脸海报（不是某一季的名字）。 */
+function openListPick(sec: HTMLElement, targets: CinemaItem[], app: App, head: { name: string; face: CinemaItem }): void {
+  const inList = (name: string): boolean => targets.some((t) => t.lists.includes(name));
   const countOf = (name: string): number => M.items.reduce((n, x) => n + (x.lists.includes(name) ? 1 : 0), 0);
   const rowHtml = (name: string): string =>
-    `<button type="button" class="lp-item${it.lists.includes(name) ? ' is-on' : ''}" data-lp="${esc(name)}"><span class="lp-check">${iconSpan('check')}</span><span class="lp-label">${esc(name)}</span><span class="lp-n">${countOf(name)}</span><span class="lp-rename" data-lp-rename="${esc(name)}" title="改名片单">${iconSpan(ICON.edit)}</span></button>`;
+    `<button type="button" class="lp-item${inList(name) ? ' is-on' : ''}" data-lp="${esc(name)}"><span class="lp-check">${iconSpan('check')}</span><span class="lp-label">${esc(name)}</span><span class="lp-n">${countOf(name)}</span><span class="lp-rename" data-lp-rename="${esc(name)}" title="改名片单">${iconSpan(ICON.edit)}</span></button>`;
   const bodyHtml = (): string => allLists(M.items).map(rowHtml).join('') || '<div class="lp-empty">还没有片单——下面建第一个</div>';
-  const url = posterUrl(it, app);
+  const url = posterUrl(head.face, app);
   const { el, close } = ovl(sec, `<div class="cn-modal cn-modal--listpick">
     <div class="lp-head"><div class="lp-poster">${url ? `<img src="${esc(url)}" onerror="this.remove()">` : ''}</div>
-      <div class="lp-head-txt"><span class="lp-kicker">归入片单</span><span class="lp-name">${esc(it.name)}</span></div></div>
+      <div class="lp-head-txt"><span class="lp-kicker">归入片单</span><span class="lp-name">${esc(head.name)}</span></div></div>
     <div class="lp-body" data-lp-body>${bodyHtml()}</div>
     <div class="lp-new"><input class="j-lp-new" placeholder="新片单名，回车新建并归入"><button type="button" class="lp-add j-lp-add">${iconSpan(ICON.listPlus)}新建</button></div>
   </div>`);
@@ -256,7 +286,9 @@ function openListPick(sec: HTMLElement, it: CinemaItem, app: App): void {
     }
     const btn = target.closest('[data-lp]') as HTMLElement | null;
     if (!btn) return;
-    void toggleListMembership(it, btn.dataset.lp as string, app);
+    const name = btn.dataset.lp as string;
+    // 目标态取反 = 多目标勾选态（任一成员在即算「在」）的 toggle：部分成员在时点一下 = 补齐全部
+    void setListMembership(targets, name, !inList(name), app);
     // 弹层勾选态就地翻转（renderAll 重建的是面板与卡片，弹层挂在 ovHost 上不随整刷换血；
     // 语义一致靠这里同步——落盘失败时 notifySaveError 有 toast，勾选漂移一次可接受）
     btn.classList.toggle('is-on');
@@ -266,7 +298,7 @@ function openListPick(sec: HTMLElement, it: CinemaItem, app: App): void {
     const name = (input?.value ?? '').trim();
     if (!name) return;
     if (hasIllegalNameChar(name)) { notice(`${ILLEGAL_NAME_HINT}，请修改`, 'error'); return; }
-    void toggleListMembership(it, name, app);
+    void setListMembership(targets, name, true, app);
     close();
   };
   el.querySelector('.j-lp-add')?.addEventListener('click', submitNew);
@@ -416,6 +448,28 @@ function openDoubanImport(sec: HTMLElement, app: App): void {
 
 /** 菜单/抽屉动作列表（顺序即显示顺序） */
 interface MenuAct { icon: string; label: string; danger?: boolean; run: () => void }
+
+/**
+ * 「移出<片单名>」直出行（issue 535）：把条目集合所归属的片单各出一条出口——标签带**真实片单名**，
+ * 不点进弹层就能退。
+ *
+ * - **重映厅除外**：抽屉里本就有它的专用 toggle 行（放入/移出重映厅），再出一条是同一动作两个入口。
+ * - 出现条件 = **任一成员命中**（`cardInList` / 片单筛选 / 侧栏计数同一口径）——卡片能在片单视图里
+ *   被看见靠的就是这条，所以「看得见就该退得掉」。动作作用于**全部成员**。
+ * - 顺序 = 侧栏片单组同序（`allLists`：重映厅恒首位、其余按成员数降序、同数按名称），剔掉重映厅后原序不变。
+ *
+ * @param who 通知主语（合并卡传「剧名 + 全部 N 部」；单条目留空 → 走 `「片名」` 缺省）
+ */
+function listExitActs(items: CinemaItem[], app: App, who = ''): MenuAct[] {
+  return allLists(M.items)
+    .filter((l) => l !== REWATCH_SHELF && items.some((it) => it.lists.includes(l)))
+    .map((l) => ({
+      icon: ICON.shelf,
+      label: `移出${l}`,
+      run: () => void setListMembership(items, l, false, app, who),
+    }));
+}
+
 function itemActions(it: CinemaItem, sec: HTMLElement, app: App): MenuAct[] {
   const out: MenuAct[] = [{ icon: ICON.eye, label: '打开详情', run: () => openDetail(sec, it, app) }];
   if (it.status !== STATUS_WATCHING && it.status !== STATUS_WATCHED) {
@@ -434,8 +488,10 @@ function itemActions(it: CinemaItem, sec: HTMLElement, app: App): MenuAct[] {
       run: () => void toggleListMembership(it, REWATCH_SHELF, app),
     });
   }
+  out.push({ icon: ICON.listPlus, label: '归入片单…', run: () => openListPick(sec, [it], app, { name: it.name, face: it }) });
+  // 已在的片单各出一条「移出<片单名>」（issue 535）；无归属时零条，不占位
+  out.push(...listExitActs([it], app));
   out.push(
-    { icon: ICON.listPlus, label: '归入片单…', run: () => openListPick(sec, it, app) },
     { icon: ICON.ai, label: '找同类', run: () => void runSimilarRecommend(it, app) },
     { icon: ICON.globe, label: '在豆瓣打开', run: () => openDouban(it) },
     { icon: ICON.edit, label: '编辑', run: () => openForm(sec, it, app) },
@@ -571,14 +627,40 @@ function seriesCardByKey(key: string): SeriesCard | undefined {
     .find((c): c is SeriesCard => c.kind === 'series' && c.key === key);
 }
 
+/** 合并卡的全部成员（各季 + 特别篇）——片级动作（片单 / 重映厅）的作用目标 */
+function seriesMembers(card: SeriesCard): CinemaItem[] {
+  return [...card.seasons.map((s) => s.item), ...card.specials];
+}
+
 /**
- * 合并卡的手势（桌面右键菜单 / 移动长按抽屉）：**只有一条入口**——打开各季明细弹窗。
- * 卡片级没有具体条目可指，所以不放标记/编辑/删除这类**笔记级**动作（要动哪一条就进列表点它）；
- * 文案不用「各季列表」：合并卡里除了各季还可能挂着电影版 / 特别篇 / 外传，
- * 「查看全部」不带类型限定，与弹窗头部「共 N 季 · M 部电影」互补。
+ * 合并卡的手势（桌面右键菜单 / 移动长按抽屉）：一条「查看全部」+ 片单归属动作（issue 535）。
+ *
+ * 仍然**不放**标记/编辑/删除这类**笔记级**动作——合并卡手里没有「一条笔记」可指
+ * （要动具体哪一季就进「查看全部」的列表点它）；文案也不用「各季列表」：卡里除了各季还可能挂着
+ * 电影版 / 特别篇 / 外传，「查看全部」不带类型限定，与弹窗头部「共 N 季 · M 部电影」互补。
+ *
+ * 新放的这几条是**片级**动作——片单归属天然以「一部剧」为单位，逼用户挨个点 N 季才是荒唐的那个：
+ * - 「归入片单…」一次把全部成员归入所选片单（弹层勾选态 = 任一成员命中）；
+ * - 重映厅行沿用单条目的「已看」门控（issue 535 用户拍板）：聚合状态为已看才给入口，
+ *   但**已在架中一律给出口**——否则状态退回在看之后成员会卡在重映厅里、卡上无路可退；
+ *   标签与单条目同词（放入 / 移出），同一动作不另造第二个动词；
+ * - 其余片单各出一条「移出<片单名>」，作用于全部成员。
  */
-function seriesAllAct(sec: HTMLElement, key: string, app: App): MenuAct {
-  return { icon: 'layers', label: '查看全部', run: () => openSeriesDetail(sec, key, app) };
+function seriesActs(card: SeriesCard, sec: HTMLElement, app: App): MenuAct[] {
+  const members = seriesMembers(card);
+  const who = `「${card.name}」全部 ${members.length} 部`;
+  const out: MenuAct[] = [{ icon: 'layers', label: '查看全部', run: () => openSeriesDetail(sec, card.key, app) }];
+  const onShelf = members.some((m) => m.lists.includes(REWATCH_SHELF));
+  if (onShelf || seriesStatus(card.seasons, card.specials) === STATUS_WATCHED) {
+    out.push({
+      icon: ICON.shelf,
+      label: onShelf ? `移出${REWATCH_SHELF}` : `放入${REWATCH_SHELF}`,
+      run: () => void setListMembership(members, REWATCH_SHELF, !onShelf, app, who),
+    });
+  }
+  out.push({ icon: ICON.listPlus, label: '归入片单…', run: () => openListPick(sec, members, app, { name: card.name, face: card.face }) });
+  out.push(...listExitActs(members, app, who));
+  return out;
 }
 
 /** 卡片条目 → HTML（正脸季的海报与抓取态；网格与局部重刷共用一份口径） */
@@ -937,9 +1019,9 @@ function itemSheetTarget(it: CinemaItem, sec: HTMLElement, app: App): SheetTarge
   return { acts: itemActions(it, sec, app), head: sheetHeadEl(it, posterUrl(it, app)) };
 }
 
-/** 合并卡抽屉目标：只有「查看全部」一条 + 剧名（正脸季海报）+ 共 N 季 · M 部电影 */
+/** 合并卡抽屉目标：片级动作集（查看全部 + 片单归属，issue 535）+ 剧名（正脸季海报）+ 共 N 季 · M 部电影 */
 function seriesSheetTarget(card: SeriesCard, sec: HTMLElement, app: App): SheetTarget {
-  return { acts: [seriesAllAct(sec, card.key, app)], head: seriesSheetHeadEl(card, posterUrl(card.face, app)) };
+  return { acts: seriesActs(card, sec, app), head: seriesSheetHeadEl(card, posterUrl(card.face, app)) };
 }
 
 /** 移动端抽屉：core openItemSheet（遮罩 + 底部滑入 + 头部信息 + 动作行，皮肤保午夜场观感）
@@ -2426,9 +2508,11 @@ function bindMidnight(sec: HTMLElement, app: App, hoverable = hoverCapable()): v
     if (!cardEl) return;
     e.preventDefault();
     const key = cardEl.dataset.cinemaKey;
-    // 合并卡（剧集按季合并）：右键与普通卡同款浮层，但只有「查看全部」一条（2026-09-20 用户拍板）
+    // 合并卡（剧集按季合并）：右键与普通卡同款浮层，动作集为片级（查看全部 + 片单归属，issue 535）
     if (isSeriesKey(key)) {
-      openItemMenu(e.clientX, e.clientY, toItemActions([seriesAllAct(sec, key as string, app)]), true, MENU_SKIN);
+      const card = seriesCardByKey(key as string);
+      if (!card) return;
+      openItemMenu(e.clientX, e.clientY, toItemActions(seriesActs(card, sec, app)), true, MENU_SKIN);
       resetItemMenuClickGuard();
       return;
     }

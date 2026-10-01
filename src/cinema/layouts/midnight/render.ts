@@ -65,14 +65,21 @@ const railRow = (on: boolean, attr: string, color: string, name: string, n: numb
 
 /** 侧栏 rail（类型 + 状态 + 片单三组；计数 = **卡片**数——合并开后「剧集 9」与网格 9 张卡对得上，
  *  不是「库里 33 个季笔记」那种点了对不上的数）。
- *  片单组（j-lists）：内置「重温架」+ 自建片单，成员计数同卡片口径（合并卡任一成员命中算）；
+ *  **片单筛选生效时，类型组 / 状态组两组的基数收窄到该片单**（issue 535，见下方 scope 注）；
+ *  「全部」与片单组各行不受影响。
+ *  片单组（j-lists）：内置「重映厅」+ 自建片单，成员计数同卡片口径（合并卡任一成员命中算）；
  *  无任何片单时整组不出。金色圆点与「全部」同源（片单无类型色语义）。
  *  ai/stat 页 rail 整体熄灭（含「全部」）——它是列表视图的筛选控件，非列表页不表达选中 */
 export function railHtml(cards: CardEntry[], view: CinemaView, lists: string[] = []): { groups: string; status: string; lists: string } {
   const listOn = view.view === 'list';
+  // 选中片单时，类型组 / 状态组计数改以**该片单的卡片集**为基数（issue 535，2026-10-01 拍板）：
+  // 侧栏数字得跟网格对得上——「片单·漫威」下点「电影 3」就该看到 3 张。
+  // 「全部」保持库内总数（它是回主视图的出口）；片单组各行保持各自成员数（本就是清单级计数，
+  // 若也收敛成本片单与各片单的交集，其余行会整排归零，看着像坏了）。
+  const scope = view.listFilter ? cards.filter((e) => cardInList(e, view.listFilter as string)) : cards;
   const g: Record<string, number> = {};
   const c: Record<string, number> = { 想看: 0, 在看: 0, 已看: 0 };
-  cards.forEach((e) => { const grp = cardGroup(e); g[grp] = (g[grp] || 0) + 1; c[statusText(cardStatus(e))]++; });
+  scope.forEach((e) => { const grp = cardGroup(e); g[grp] = (g[grp] || 0) + 1; c[statusText(cardStatus(e))]++; });
   let groups = railRow(listOn && !view.typeFilter && !view.statusFilter && !view.listFilter, 'data-g="全部"', 'var(--gold)', '全部', cards.length);
   for (const name of GROUP_ORDER) {
     groups += railRow(listOn && view.typeFilter === name && !view.statusFilter, `data-g="${name}"`, typeColor(name), name, g[name] || 0);

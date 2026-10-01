@@ -1,4 +1,4 @@
-/* 源指纹 a45f921fb9b21365 · 仓内输入 79 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 190fdf85bd92ac53 · 仓内输入 79 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/cinema/fake-sim.ts","prototypes/cinema/fake/fake-obsidian.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/douban-fetcher.ts","src/cinema/douban-queue.ts","src/cinema/index.ts","src/cinema/layouts/midnight/render.ts","src/cinema/motion.ts","src/cinema/recommend.ts","src/cinema/render.ts","src/cinema/seasons.ts","src/cinema/shared.ts","src/cinema/state.ts","src/cinema/type-decide.ts","src/cinema/ui.ts","src/cinema/yearbook/data.ts","src/cinema/yearbook/engine.ts","src/cinema/yearbook/index.ts","src/cinema/yearbook/kits.ts","src/cinema/yearbook/motions.ts","src/cinema/yearbook/scenes.ts","src/core/ai.ts","src/core/app.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/douban-name-index.ts","src/core/download-manifest.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/gesture.ts","src/core/http.ts","src/core/item-actions.ts","src/core/jev-fallback.ts","src/core/jev.ts","src/core/landscape.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/remote-asset.ts","src/core/remote-base.ts","src/core/settings-provider.ts","src/core/sha256.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/help-tip.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slide-pill.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/cinema/fake-sim.ts → window.BZW_cinema（行为单源预览包，issue 245/ADR-0106） */
 var BZW_cinema = (() => {
@@ -12003,9 +12003,10 @@ tags:
   var railRow = (on, attr, color, name, n) => `<button class="rail-item${on ? " is-on" : ""}" ${attr}><span class="dot" style="background:${color}"></span>${esc(name)}<span class="n">${n}</span></button>`;
   function railHtml(cards, view, lists = []) {
     const listOn = view.view === "list";
+    const scope = view.listFilter ? cards.filter((e) => cardInList(e, view.listFilter)) : cards;
     const g = {};
     const c = { 想看: 0, 在看: 0, 已看: 0 };
-    cards.forEach((e) => {
+    scope.forEach((e) => {
       const grp = cardGroup(e);
       g[grp] = (g[grp] || 0) + 1;
       c[statusText(cardStatus(e))]++;
@@ -12177,27 +12178,40 @@ tags:
       renderAll(app);
     }
   }
-  async function toggleListMembership(it, list, app) {
-    if (!it.file) return;
-    const on = it.lists.includes(list);
-    const prev = it.lists;
-    it.lists = on ? prev.filter((l) => l !== list) : [...prev, list];
+  async function setListMembership(items, list, on, app, label = "") {
+    const targets = items.filter((it) => it.file);
+    if (!targets.length) return;
+    const who = label || (targets.length === 1 ? `「${targets[0].name}」` : `${targets.length} 部`);
+    const changing = targets.filter((it) => it.lists.includes(list) !== on);
+    const prev = changing.map((it) => it.lists);
+    changing.forEach((it) => {
+      it.lists = on ? [...it.lists, list] : it.lists.filter((l) => l !== list);
+    });
     try {
-      await app.fileManager.processFrontMatter(it.file, (fm) => {
-        const cur = normalizeLists(fm["片单"]);
-        const next = on ? cur.filter((l) => l !== list) : [...cur, list];
-        if (next.length) fm["片单"] = next;
-        else delete fm["片单"];
-      });
-      notice(on ? `已把「${it.name}」移出「${list}」` : `已把「${it.name}」归入「${list}」`, "success");
-      markCardFlash(itemKey(it));
-      renderAll(app);
+      for (const it of changing) {
+        await app.fileManager.processFrontMatter(it.file, (fm) => {
+          const cur = normalizeLists(fm["片单"]);
+          const next = on ? cur.includes(list) ? cur : [...cur, list] : cur.filter((l) => l !== list);
+          if (next.length) fm["片单"] = next;
+          else delete fm["片单"];
+        });
+      }
     } catch (e) {
-      it.lists = prev;
+      changing.forEach((it, i) => {
+        it.lists = prev[i];
+      });
       notifySaveError(e);
       console.error(e);
       renderAll(app);
+      return;
     }
+    notice(on ? `已把${who}归入「${list}」` : `已把${who}移出「${list}」`, "success");
+    if (!changing.length) return;
+    changing.forEach((it) => markCardFlash(itemKey(it)));
+    renderAll(app);
+  }
+  async function toggleListMembership(it, list, app) {
+    await setListMembership([it], list, !it.lists.includes(list), app);
   }
   async function renameList(oldName, newName, app) {
     const targets = M.items.filter((x) => x.lists.includes(oldName) && x.file);
@@ -12221,15 +12235,16 @@ tags:
       renderAll(app);
     }
   }
-  function openListPick(sec, it, app) {
+  function openListPick(sec, targets, app, head) {
     var _a, _b;
+    const inList = (name) => targets.some((t) => t.lists.includes(name));
     const countOf = (name) => M.items.reduce((n, x) => n + (x.lists.includes(name) ? 1 : 0), 0);
-    const rowHtml = (name) => `<button type="button" class="lp-item${it.lists.includes(name) ? " is-on" : ""}" data-lp="${esc(name)}"><span class="lp-check">${iconSpan("check")}</span><span class="lp-label">${esc(name)}</span><span class="lp-n">${countOf(name)}</span><span class="lp-rename" data-lp-rename="${esc(name)}" title="改名片单">${iconSpan(ICON.edit)}</span></button>`;
+    const rowHtml = (name) => `<button type="button" class="lp-item${inList(name) ? " is-on" : ""}" data-lp="${esc(name)}"><span class="lp-check">${iconSpan("check")}</span><span class="lp-label">${esc(name)}</span><span class="lp-n">${countOf(name)}</span><span class="lp-rename" data-lp-rename="${esc(name)}" title="改名片单">${iconSpan(ICON.edit)}</span></button>`;
     const bodyHtml = () => allLists(M.items).map(rowHtml).join("") || '<div class="lp-empty">还没有片单——下面建第一个</div>';
-    const url = posterUrl(it, app);
+    const url = posterUrl(head.face, app);
     const { el, close } = ovl(sec, `<div class="cn-modal cn-modal--listpick">
     <div class="lp-head"><div class="lp-poster">${url ? `<img src="${esc(url)}" onerror="this.remove()">` : ""}</div>
-      <div class="lp-head-txt"><span class="lp-kicker">归入片单</span><span class="lp-name">${esc(it.name)}</span></div></div>
+      <div class="lp-head-txt"><span class="lp-kicker">归入片单</span><span class="lp-name">${esc(head.name)}</span></div></div>
     <div class="lp-body" data-lp-body>${bodyHtml()}</div>
     <div class="lp-new"><input class="j-lp-new" placeholder="新片单名，回车新建并归入"><button type="button" class="lp-add j-lp-add">${iconSpan(ICON.listPlus)}新建</button></div>
   </div>`);
@@ -12284,7 +12299,8 @@ tags:
       }
       const btn = target.closest("[data-lp]");
       if (!btn) return;
-      void toggleListMembership(it, btn.dataset.lp, app);
+      const name = btn.dataset.lp;
+      void setListMembership(targets, name, !inList(name), app);
       btn.classList.toggle("is-on");
     });
     const submitNew = () => {
@@ -12296,7 +12312,7 @@ tags:
         notice(`${ILLEGAL_NAME_HINT}，请修改`, "error");
         return;
       }
-      void toggleListMembership(it, name, app);
+      void setListMembership(targets, name, true, app);
       close();
     };
     (_a = el.querySelector(".j-lp-add")) == null ? void 0 : _a.addEventListener("click", submitNew);
@@ -12424,6 +12440,13 @@ tags:
       })();
     });
   }
+  function listExitActs(items, app, who = "") {
+    return allLists(M.items).filter((l) => l !== REWATCH_SHELF && items.some((it) => it.lists.includes(l))).map((l) => ({
+      icon: ICON.shelf,
+      label: `移出${l}`,
+      run: () => void setListMembership(items, l, false, app, who)
+    }));
+  }
   function itemActions(it, sec, app) {
     const out = [{ icon: ICON.eye, label: "打开详情", run: () => openDetail(sec, it, app) }];
     if (it.status !== STATUS_WATCHING && it.status !== STATUS_WATCHED) {
@@ -12439,8 +12462,9 @@ tags:
         run: () => void toggleListMembership(it, REWATCH_SHELF, app)
       });
     }
+    out.push({ icon: ICON.listPlus, label: "归入片单…", run: () => openListPick(sec, [it], app, { name: it.name, face: it }) });
+    out.push(...listExitActs([it], app));
     out.push(
-      { icon: ICON.listPlus, label: "归入片单…", run: () => openListPick(sec, it, app) },
       { icon: ICON.ai, label: "找同类", run: () => void runSimilarRecommend(it, app) },
       { icon: ICON.globe, label: "在豆瓣打开", run: () => openDouban(it) },
       { icon: ICON.edit, label: "编辑", run: () => openForm(sec, it, app) },
@@ -12551,8 +12575,24 @@ tags:
   function seriesCardByKey(key) {
     return mergeSeasonCards(getDisplayItems(), mergeSeasonsOn()).find((c) => c.kind === "series" && c.key === key);
   }
-  function seriesAllAct(sec, key, app) {
-    return { icon: "layers", label: "查看全部", run: () => openSeriesDetail(sec, key, app) };
+  function seriesMembers(card) {
+    return [...card.seasons.map((s) => s.item), ...card.specials];
+  }
+  function seriesActs(card, sec, app) {
+    const members = seriesMembers(card);
+    const who = `「${card.name}」全部 ${members.length} 部`;
+    const out = [{ icon: "layers", label: "查看全部", run: () => openSeriesDetail(sec, card.key, app) }];
+    const onShelf = members.some((m) => m.lists.includes(REWATCH_SHELF));
+    if (onShelf || seriesStatus(card.seasons, card.specials) === STATUS_WATCHED) {
+      out.push({
+        icon: ICON.shelf,
+        label: onShelf ? `移出${REWATCH_SHELF}` : `放入${REWATCH_SHELF}`,
+        run: () => void setListMembership(members, REWATCH_SHELF, !onShelf, app, who)
+      });
+    }
+    out.push({ icon: ICON.listPlus, label: "归入片单…", run: () => openListPick(sec, members, app, { name: card.name, face: card.face }) });
+    out.push(...listExitActs(members, app, who));
+    return out;
   }
   function cardEntryHtml(e, app) {
     var _a;
@@ -12827,7 +12867,7 @@ tags:
     return { acts: itemActions(it, sec, app), head: sheetHeadEl2(it, posterUrl(it, app)) };
   }
   function seriesSheetTarget(card, sec, app) {
-    return { acts: [seriesAllAct(sec, card.key, app)], head: seriesSheetHeadEl(card, posterUrl(card.face, app)) };
+    return { acts: seriesActs(card, sec, app), head: seriesSheetHeadEl(card, posterUrl(card.face, app)) };
   }
   function openSheet(sec, target, preFire) {
     if (!sec.isConnected) return;
@@ -14069,7 +14109,9 @@ tags:
       e.preventDefault();
       const key = cardEl.dataset.cinemaKey;
       if (isSeriesKey(key)) {
-        openItemMenu(e.clientX, e.clientY, toItemActions([seriesAllAct(sec, key, app)]), true, MENU_SKIN);
+        const card = seriesCardByKey(key);
+        if (!card) return;
+        openItemMenu(e.clientX, e.clientY, toItemActions(seriesActs(card, sec, app)), true, MENU_SKIN);
         resetItemMenuClickGuard();
         return;
       }
