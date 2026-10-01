@@ -383,10 +383,10 @@ export function formChoicesHtml(values: string[], cur: string, attr: string): st
     `<button type="button" class="f-choice-btn${v === cur ? ' is-on' : ''}" data-${attr}="${v}"><span class="dot" style="background:${attr === 'f-tag' ? typeColor(getGroupForTag(v) ?? '其他') : ST_COLOR[v] ?? '#888'}"></span>${v}</button>`).join('');
 }
 
-/** 添加/编辑表单弹窗内容（保存 / 解析 / 翻转等接线留行为层）。
+/** 添加/编辑表单弹窗内容（保存 / 解析 / 换面等接线留行为层）。
  *  新增态 = **双面卡片**（issue 395）：正面 = 名称 + 状态 +（已看点开）评分/影评 + 解析按钮；
- *  点「解析」拉豆瓣 → 翻到背面看全部信息。评分/影评收在正面状态下方（2026-09-21 用户拍板：
- *  点已看就要当场能填，不必等解析翻面；背面是豆瓣形制信息，不放记录段）。
+ *  点「解析」拉豆瓣 → 换到背面看全部信息。评分/影评收在正面状态下方（2026-09-21 用户拍板：
+ *  点已看就要当场能填，不必等解析换面；背面是豆瓣形制信息，不放记录段）。
  *  编辑态 = 单面到底：已有笔记不必重新解析，全字段直出 + 保存。 */
 export function formModalHtml(opts: { editing: boolean; name: string; typeTag: string; stText: string; rating: number; review: string }): string {
   const { editing } = opts;

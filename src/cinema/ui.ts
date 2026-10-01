@@ -715,6 +715,13 @@ function ovl(sec: HTMLElement, html: string, opts: { sticky?: boolean; onWillClo
   };
   liveOvlCloses.add(close);
   el.addEventListener('click', (e) => { if (e.target === el && !opts.sticky) close(); });
+  // 遮罩区整段不吃滚轮（2026-10-01 用户反馈：在遮罩上滚鼠标会滚动弹窗卡片/把背后页面也滚了）——
+  // 滚轮只在卡片（.cn-modal 内容树）上生效：落在遮罩空区的滚轮直接吞掉，既不滚卡片，
+  // 也不把默认滚动链递给背后页面。passive:false 才允许 preventDefault（元素级监听虽默认非 passive，
+  // 显式写出防引擎差异）。卡片上的滚轮照常（含卡片内滚动区与 --flip 层的整卡滚动）。
+  el.addEventListener('wheel', (e) => {
+    if (!(e.target as HTMLElement | null)?.closest?.('.cn-modal')) e.preventDefault();
+  }, { passive: false });
   return { el, close };
 }
 
@@ -1647,7 +1654,7 @@ function openForm(sec: HTMLElement, item: CinemaItem | null, app: App, presetSt?
   // 表单阶段（issue 395）：新增 = 双面卡片「正面（名称+状态）→ 解析 → 背面（全部信息）→ 保存」；
   // 编辑 = 单面到底（已有笔记不必重解析）。
   let phase: 'idle' | 'parsing' | 'parsed' = editing ? 'parsed' : 'idle';
-  /** 翻面之后分类仍在判定（2026-09-21 拆两段：豆瓣信息到手即翻面，分类随后补）。
+  /** 换面之后分类仍在判定（2026-09-21 拆两段：豆瓣信息到手即换面，分类随后补）。
    *  此间徽标是占位骨架、保存按钮锁着——分类没落定就保存，等于把这个值当默认值用。 */
   let classifying = false;
   let parsed: DoubanQuery | null = null;
@@ -1698,24 +1705,24 @@ function openForm(sec: HTMLElement, item: CinemaItem | null, app: App, presetSt?
     el.querySelectorAll<HTMLElement>('.j-review').forEach((x) => { x.style.display = show ? '' : 'none'; });
   };
 
-  /** 翻到背面（新增态只有单向：正面 → 解析 → 背面；2026-09-21 去掉「返回」后没有反向路径）。
+  /** 换到背面（新增态只有单向：正面 → 解析 → 背面；2026-09-21 去掉「返回」后没有反向路径）。
    *
    *  **高度不在这层管**：两面用 grid 叠在同一格，容器高度自动取较高那一面（见 styles.css）——
-   *  于是翻转全程高度零变化，没有重排可卡。此前是「量高 + height 过渡 + ResizeObserver 持续同步」，
+   *  于是换面全程高度零变化，没有重排可卡。此前是「量高 + height 过渡 + ResizeObserver 持续同步」，
    *  每帧重排整个弹窗，是「翻转时卡顿一下」的根因（2026-09-21 定位并移除）。
    *
-   *  旋转只由 keyframes 描述（中段 translateZ 抬起的弧线，两端式过渡做不出来）。
-   *  起手前先强制一次布局：把 renderBack 插入整卡 + 海报解码的排版开销结在动画之前，
-   *  否则动画首帧要同时做「插入 + 重排 + 合成」，表现为起手一顿。 */
+   *  动效 = 纯 CSS 换面编排（2026-10-01 撤 3D 后重做）：行为层只切 is-flipped 一个类——
+   *  正面快出 / 背面按弹窗语汇浮现 / 内容分段接力 / 收口微光，全在 styles.css 换面段
+   *  （cnModalIn / cnRiseIn / cnSheen 复用，时长曲线走台账 token）；不再有 animationend
+   *  清理与光照遮罩。
+   *  起手前先强制一次布局：把 renderBack 插入整卡 + 海报解码的排版开销结在过渡之前，
+   *  否则过渡首帧要同时做「插入 + 重排 + 合成」，表现为起手一顿。 */
   const flipToBack = (): void => {
     if (!flipEl) return;
     void flipEl.offsetHeight;
     const start = (): void => {
-      if (!el.isConnected) return; // 动画起手前弹窗已被关掉（用户手快）
-      flipEl.classList.add('is-flipped', 'is-flipping');
-      const clear = (): void => flipEl.classList.remove('is-flipping');
-      flipEl.addEventListener('animationend', clear, { once: true });
-      window.setTimeout(clear, 1200); // 兜底清理：动画被系统关掉时 animationend 不触发
+      if (!el.isConnected) return; // 过渡起手前弹窗已被关掉（用户手快）
+      flipEl.classList.add('is-flipped');
     };
     // 推到下一帧起手（jsdom 无 rAF 时退回定时器，测试不必区分两种环境）
     if (typeof requestAnimationFrame === 'function') requestAnimationFrame(start);
@@ -1776,7 +1783,7 @@ function openForm(sec: HTMLElement, item: CinemaItem | null, app: App, presetSt?
   };
 
   /** 解析（2026-09-21 拆两段）：
-   *  ① 豆瓣信息到手 → **立刻翻面**（不等信息全齐才让用户看到卡）
+   *  ① 豆瓣信息到手 → **立刻换面**（不等信息全齐才让用户看到卡）
    *  ② 海报与分类随后补——海报交给 img 自己加载（骨架 → 淡入），分类等 Jev 回来就地填
    *  （Jev 不可用回落 LLM，见 type-decide）。判定弃权或两道都不可用都不阻断解析：
    *  字段已经到手，分类留空、由用户手点。 */
@@ -1810,7 +1817,7 @@ function openForm(sec: HTMLElement, item: CinemaItem | null, app: App, presetSt?
       return;
     }
     parsed = q.data;
-    // ① 字段到手即翻面：分类先占位（骨架），海报由 img 加载完自行淡入
+    // ① 字段到手即换面：分类先占位（骨架），海报由 img 加载完自行淡入
     phase = 'parsed';
     classifying = true;
     renderBack();
