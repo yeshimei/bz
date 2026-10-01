@@ -7,7 +7,7 @@
  * ticket 084b（R2 审查 A2）：剪藏无 title → auto-summary rename 改名 → 登记键失效——
  * 改名后降级按 url/baseName 定位新路径命中带摘要、modify 新路径反查登记补全、防重保留。
  */
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { MockVault, mockAppWithVault } from '../mock-vault';
 import { setApp } from '../../src/core/app';
 import { setSettingsProvider, setSettingsSaver } from '../../src/core/settings-provider';
@@ -43,15 +43,23 @@ function makeApp() {
 }
 
 /** 等待 fire-and-forget 的 addObservation 落流 */
-const settle = () => new Promise((r) => setTimeout(r, 100));
+const settle = () => vi.advanceTimersByTimeAsync(100);
 
 const readStream = (): any[] => __getSmartcatInternals().data.memory.memoryStream;
 
 beforeEach(() => {
+  // 全文件假钟：降级等待（60ms 注入）/ 落流等待全部可控快进
+  vi.useFakeTimers({
+    toFake: ['setTimeout', 'clearTimeout', 'setInterval', 'clearInterval', 'Date',
+      'requestAnimationFrame', 'cancelAnimationFrame', 'performance'],
+  });
   resetObsidianMocks();
   document.body.innerHTML = '';
   settings = { storagePath: 'CONFIG/STORAGE', smartcatEnabled: true };
   unloadSmartCat();
+});
+afterEach(() => {
+  vi.useRealTimers();
 });
 
 const readBeh = (): any[] => __getSmartcatInternals().data.memory.behaviorStream;
@@ -158,7 +166,7 @@ describe('保存联动 auto-summary（方案 a，ticket 076）', () => {
     const clipPath = '归档/网页剪藏/未等来摘要.md';
     emitDomainEvent('news', { kind: 'saved', evt: { title: '未等来摘要', platform: '知乎日报', state: 'saved', durationMin: 3 }, clipPath: clipPath });
     expect(__getNewsPendingSavesForTests().size).toBe(1);
-    await new Promise((r) => setTimeout(r, 250)); // 超过降级等待（60ms）并等落流
+    await vi.advanceTimersByTimeAsync(250); // 超过降级等待（60ms）并等落流
     const beh = readBeh();
     const last = beh[beh.length - 1];
     expect(last.source).toBe('news');
@@ -181,12 +189,12 @@ describe('保存联动 auto-summary（方案 a，ticket 076）', () => {
     // saveToClip 落盘（剪藏模板形态：url 有、title 无）
     vault.files.set(oldPath, '---\nurl: "https://www.guokr.com/article/black-hole"\n---\n\n正文');
     emitDomainEvent('news', { kind: 'saved', evt: { title: '黑洞照片刷新认知', platform: '果壳', state: 'saved', durationMin: 5 }, clipPath: oldPath });
-    await new Promise((r) => setTimeout(r, 5)); // 只等异步 url 登记（微任务），60ms 定时器未到
+    await vi.advanceTimersByTimeAsync(5); // 只等异步 url 登记（微任务），60ms 定时器未到
     expect(__getNewsPendingSavesForTests().size).toBe(1);
     // auto-summary renameToTitle：原路径删除，新路径同名 url + summary/tags 写回（modify 事件未捕获场景）
     vault.files.delete(oldPath);
     vault.files.set(newPath, '---\nurl: "https://www.guokr.com/article/black-hole"\nsummary: "首张黑洞照片公布，视觉中国被质疑滥用版权。"\ntags:\n  - "科学"\n---\n\n正文');
-    await new Promise((r) => setTimeout(r, 250)); // 超过降级等待（60ms）并等落流
+    await vi.advanceTimersByTimeAsync(250); // 超过降级等待（60ms）并等落流
     const beh = readBeh();
     const last = beh[beh.length - 1];
     expect(last.source).toBe('news');
@@ -224,10 +232,10 @@ describe('保存联动 auto-summary（方案 a，ticket 076）', () => {
     const newPath = '归档/网页剪藏/科技/黑洞照片刷新认知.md'; // 同 basename 新路径（目录移动）
     vault.files.set(oldPath, '---\nsummary: ""\n---\n\n正文'); // 无 url 剪藏 → 登记 baseName 兜底
     emitDomainEvent('news', { kind: 'saved', evt: { title: '黑洞照片刷新认知', platform: '果壳', state: 'saved', durationMin: 5 }, clipPath: oldPath });
-    await new Promise((r) => setTimeout(r, 5)); // 登记完成即可（60ms 定时器未到）
+    await vi.advanceTimersByTimeAsync(5); // 登记完成即可（60ms 定时器未到）
     vault.files.delete(oldPath);
     vault.files.set(newPath, '---\nurl: "https://www.guokr.com/article/black-hole"\nsummary: "首张黑洞照片公布。"\ntags:\n  - "科学"\n---\n\n正文');
-    await new Promise((r) => setTimeout(r, 250));
+    await vi.advanceTimersByTimeAsync(250);
     const beh = readBeh();
     const last = beh[beh.length - 1];
     expect(last.source).toBe('news');
@@ -247,7 +255,7 @@ describe('保存联动 auto-summary（方案 a，ticket 076）', () => {
     const before = readBeh().length;
     vault.files.set(clipPath, '---\nsummary: ""\n---\n\n正文'); // auto-summary 未及写回
     emitDomainEvent('news', { kind: 'saved', evt: { title: '防重文章', platform: '少数派', state: 'saved', durationMin: 2 }, clipPath: clipPath });
-    await new Promise((r) => setTimeout(r, 250));
+    await vi.advanceTimersByTimeAsync(250);
     const beh = readBeh();
     expect(beh.length).toBe(before); // 降级无摘要 → 同标题防重跳过
     expect(__getNewsPendingSavesForTests().size).toBe(0);

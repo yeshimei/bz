@@ -8,7 +8,7 @@
  * 5) ticket 084c：A3 noteSource 关三入口静默（consumeLibraryDiff/settleLibraryPending/onDomainActivity）；
  *    A4 hl/ex 按内容指纹记账（删除划线不重发旧内容、同内容只产一次）。
  */
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { MockVault, mockAppWithVault } from '../mock-vault';
 import { setApp } from '../../src/core/app';
 import { setSettingsProvider, setSettingsSaver } from '../../src/core/settings-provider';
@@ -286,19 +286,16 @@ function makeApp() {
   return { app, vault };
 }
 
-const settle = () => new Promise((r) => setTimeout(r, 100));
-/** 轮询等待条件成立（即时观察异步入流不稳定，用轮询替代固定等待；对齐 diary/news 测试稳健性先例）。
+const settle = () => vi.advanceTimersByTimeAsync(100);
+/** 轮询等待条件成立（文件级假钟：每轮推进 step 假毫秒；deadline 亦按假钟计）。
  *  默认 2000ms 在全量并发下会被拖超（waitFor timeout），放宽到 10000ms。 */
-const waitFor = (pred: () => boolean, timeout = 10000, step = 30) =>
-  new Promise<void>((resolve, reject) => {
-    const t0 = Date.now();
-    const tick = () => {
-      if (pred()) return resolve();
-      if (Date.now() - t0 > timeout) return reject(new Error('waitFor timeout'));
-      setTimeout(tick, step);
-    };
-    tick();
-  });
+const waitFor = async (pred: () => boolean, timeout = 10000, step = 30): Promise<void> => {
+  const t0 = Date.now();
+  while (!pred()) {
+    if (Date.now() - t0 > timeout) throw new Error('waitFor timeout');
+    await vi.advanceTimersByTimeAsync(step);
+  }
+};
 // ADR-0069：library 事件类全走 behavior 流，富描述在 metadata.snapshot.summary——
 // 这里映射出与旧记忆流条目同形的 { description, source } 视图，既有断言口径不变
 const readStream = (): any[] =>
@@ -318,11 +315,19 @@ async function bootWithWeave(books: Record<string, any>) {
 }
 
 beforeEach(() => {
+  // 全文件假钟：5 分钟防抖窗口（注入短时长）/ waitFor 轮询全部可控快进
+  vi.useFakeTimers({
+    toFake: ['setTimeout', 'clearTimeout', 'setInterval', 'clearInterval', 'Date',
+      'requestAnimationFrame', 'cancelAnimationFrame', 'performance'],
+  });
   resetObsidianMocks();
   document.body.innerHTML = '';
   settings = { storagePath: 'CONFIG/STORAGE', smartcatEnabled: true };
   unloadSmartCat();
   __setLibraryDebounceMsForTests(5 * 60 * 1000); // 复位默认窗口
+});
+afterEach(() => {
+  vi.useRealTimers();
 });
 
 describe('书库 md 通道短路（ticket 081：onVaultActivity reading 短路）', () => {
@@ -390,7 +395,7 @@ describe('weave-data modify 链路（library；书架/时长即时 + 划线想�
     await waitFor(() => __getLibraryPendingForTests().size === 1);
     expect(readStream().length).toBe(before); // 划线走防抖，不即时
     // 窗口内（500ms）第二次 save：划线 +1、想法 +1 → 追加内容并重置窗口
-    await new Promise((r) => setTimeout(r, 150));
+    await vi.advanceTimersByTimeAsync(150);
     vault.files.set(WEAVE_PATH, JSON.stringify(weave({
       b1: book({ reading: { position: { percent: 52 }, stats: {}, sessions: [] }, notes: { highlights: [{ text: 'c1' }, { text: 'c2' }], excerpts: [{ commentText: 'e1' }] } }),
     })));

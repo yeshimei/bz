@@ -113,6 +113,17 @@ function menuButton(menu: HTMLElement, label: string): HTMLElement | null {
   return Array.from(menu.querySelectorAll('button')).find((b) => b.textContent!.includes(label)) ?? null;
 }
 
+// 文件级假钟：等待一律可控快进（真实等待归零）
+beforeEach(() => {
+  vi.useFakeTimers({
+    toFake: ['setTimeout', 'clearTimeout', 'setInterval', 'clearInterval', 'Date',
+      'requestAnimationFrame', 'cancelAnimationFrame', 'performance'],
+  });
+});
+afterEach(() => {
+  vi.useRealTimers();
+});
+
 describe('日记本条目动作（ADR-0115 定位重构）', () => {
   it('普通日记条目「复制双链」：entry-actions 收到 filename+filePath+emoji+time（ADR-0131：filename 即条目文件路径）', async () => {
     await openAndWait();
@@ -214,7 +225,7 @@ describe('日记本条目动作（ADR-0115 定位重构）', () => {
       const ts = new TouchEvent('touchstart', { bubbles: true, cancelable: true });
       Object.defineProperty(ts, 'touches', { value: [{ clientX: 10, clientY: 10 }] });
       el.dispatchEvent(ts);
-      await new Promise((r) => setTimeout(r, 550));
+      await vi.advanceTimersByTimeAsync(550);
       el.dispatchEvent(new TouchEvent('touchend', { bubbles: true }));
     };
     const mob = document.querySelector('.bz-diary-mob')!;
@@ -244,7 +255,7 @@ describe('日记本条目动作（ADR-0115 定位重构）', () => {
     const ts = new TouchEvent('touchstart', { bubbles: true, cancelable: true });
     Object.defineProperty(ts, 'touches', { value: [{ clientX: 10, clientY: 10 }] });
     item.dispatchEvent(ts);
-    await new Promise((resolve) => setTimeout(resolve, 550));
+    await vi.advanceTimersByTimeAsync(550);
     item.dispatchEvent(new TouchEvent('touchend', { bubbles: true }));
     const ctx = new MouseEvent('contextmenu', {
       bubbles: true,

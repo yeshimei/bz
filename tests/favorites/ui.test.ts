@@ -34,7 +34,9 @@ function makeApp(vault: MockVault) {
   } as any;
 }
 
-const tick = (ms: number) => new Promise((r) => setTimeout(r, ms));
+/** 假钟推进：等一拍 / 等防抖 / 等动画一律走它——真实等待归零，断言一字不改
+ *  （假钟下 Date 与 rAF 一并前进，产品代码用 Date.now 做的判时也自洽） */
+const tick = (ms: number) => vi.advanceTimersByTimeAsync(ms);
 
 /** 桌面：右键卡片 = 行浮层（.bz-item-menu）。issue 201 起点卡片不再弹菜单（bug 修复），菜单只走右键 */
 function openCardMenu(card: HTMLElement): void {
@@ -148,6 +150,11 @@ async function setup(): Promise<Ctx> {
 }
 
 beforeEach(() => {
+  // 全文件假钟：tick 只推假钟不烧真实时间（防抖/动画/长按全部可控快进）
+  vi.useFakeTimers({
+    toFake: ['setTimeout', 'clearTimeout', 'setInterval', 'clearInterval', 'Date',
+      'requestAnimationFrame', 'cancelAnimationFrame'],
+  });
   // 清掉上个用例的残留（setup 内 unloadFavoritesUI 依赖注入先执行，保证 state 干净）
   try { unloadFavoritesUI(); } catch { /* 未初始化状态 */ }
   closeItemMenu();

@@ -18,7 +18,7 @@
  *
  * 渲染走真实渲染器（renderPanelSchema）——与面板同路径：rowHtml 骨架 + button 分支 + visibleWhen 门控。
  */
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { requestUrl } from 'obsidian';
 import { resetObsidianMocks, clearNotices, getNoticeMessages } from '../mock-obsidian-entry';
 import { onlineResourcesGroup, resetOnlineResourcesState } from '../../src/settings-panel/online-resources';
@@ -42,7 +42,8 @@ const HTML_V1 = '<!DOCTYPE html><html><body>日志 v1</body></html>';
 const HTML_V2 = '<!DOCTYPE html><html><body>日志 v2</body></html>';
 const CSS_NOIR = '/* noir */\n.bz-bs-skin-noir { --bz-brand: #d9b45f; }\n';
 
-const tick = (ms = 25) => new Promise((r) => setTimeout(r, ms));
+/** 假钟推进（文件级 beforeEach 已装假钟） */
+const tick = (ms = 25) => vi.advanceTimersByTimeAsync(ms);
 
 /** 组首两行：0 检查更新、1 全部更新；资源行从 2 起（顺序 = 清单 rowOrder） */
 const CTRL_ROWS = 2;
@@ -124,12 +125,20 @@ const resBtn = (el: HTMLElement, i: number) => rowBtn(el, i + CTRL_ROWS);
 const resCount = (el: HTMLElement) => el.querySelectorAll('.bz-sp-group-body > .bz-sp-set-row').length - CTRL_ROWS;
 
 beforeEach(() => {
+  // 全文件假钟：tick 只推假钟不烧真实时间（下载/核对/缓存时间链全部可控快进）
+  vi.useFakeTimers({
+    toFake: ['setTimeout', 'clearTimeout', 'setInterval', 'clearInterval', 'Date',
+      'requestAnimationFrame', 'cancelAnimationFrame', 'performance'],
+  });
   resetObsidianMocks();
   clearNotices();
   document.body.innerHTML = '';
   resetOnlineResourcesState();
   setSettingsProvider(() => ({}) as any);
   vi.mocked(requestUrl).mockReset();
+});
+afterEach(() => {
+  vi.useRealTimers();
 });
 
 /** 建一个挂好 app 的 vault（每用例自配版本与缓存清单） */

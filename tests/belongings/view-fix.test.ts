@@ -35,8 +35,20 @@ import { MockVault } from '../mock-vault';
 import { resetObsidianMocks, Platform } from '../mock-obsidian-entry';
 import type { BelongingsItem } from '../../src/belongings/types';
 
-const tick = (ms = 0) => new Promise((r) => setTimeout(r, ms));
+/** 假钟推进（文件级已装假钟）：等防抖 / 等一拍一律走它——真实等待归零 */
+const tick = (ms = 0) => vi.advanceTimersByTimeAsync(ms);
 const flush = () => tick(5);
+
+// 文件级假钟：搜索防抖 / 表单落定全部可控快进
+beforeEach(() => {
+  vi.useFakeTimers({
+    toFake: ['setTimeout', 'clearTimeout', 'setInterval', 'clearInterval', 'Date',
+      'requestAnimationFrame', 'cancelAnimationFrame', 'performance'],
+  });
+});
+afterEach(() => {
+  vi.useRealTimers();
+});
 const DATA_PATH = 'CONFIG/STORAGE/belongings.json';
 
 /** 单件构造（默认使用中；默认日期 2024-06-01 中午，跨时区确定） */

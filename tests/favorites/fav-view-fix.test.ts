@@ -41,7 +41,7 @@ function makeApp(vault: MockVault) {
   return { vault, metadataCache: {}, workspace: { openLinkText: vi.fn() }, openUrl: vi.fn() } as any;
 }
 
-const tick = (ms: number) => new Promise((r) => setTimeout(r, ms));
+const tick = (ms: number) => vi.advanceTimersByTimeAsync(ms);
 
 function seedItem(seed: { id: string; title: string; created?: string; tags?: string[]; desc?: string; url?: string; pinned?: boolean; archived?: boolean }): any {
   return {
@@ -110,12 +110,18 @@ function openAddViaMainBtn(): void {
 }
 
 beforeEach(() => {
+  // 全文件假钟：tick 只推假钟不烧真实时间（防抖 / 键盘时序全部可控快进）
+  vi.useFakeTimers({
+    toFake: ['setTimeout', 'clearTimeout', 'setInterval', 'clearInterval', 'Date',
+      'requestAnimationFrame', 'cancelAnimationFrame', 'performance'],
+  });
   try { unloadFavoritesUI(); } catch { /* 未初始化状态 */ }
   closeItemMenu();
   Platform.isMobile = false;
 });
 
 afterEach(() => {
+  vi.useRealTimers();
   Platform.isMobile = false;
   closeItemMenu();
   try { unloadFavoritesUI(); } catch { /* 幂等 */ }

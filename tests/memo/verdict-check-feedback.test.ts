@@ -50,7 +50,18 @@ function seedVault(): { vault: MockVault; app: ReturnType<typeof mockAppWithVaul
   return { vault, app };
 }
 
-const wait = (ms: number) => new Promise((r) => setTimeout(r, ms));
+const wait = (ms: number) => vi.advanceTimersByTimeAsync(ms);
+
+// 文件级假钟：勾选防抖与落盘刷新全部可控快进
+beforeEach(() => {
+  vi.useFakeTimers({
+    toFake: ['setTimeout', 'clearTimeout', 'setInterval', 'clearInterval', 'Date',
+      'requestAnimationFrame', 'cancelAnimationFrame', 'performance'],
+  });
+});
+afterEach(() => {
+  vi.useRealTimers();
+});
 
 async function openSeeded(): Promise<ReturnType<typeof seedVault>> {
   const seeded = seedVault();
@@ -99,21 +110,19 @@ describe('呈报#12（12A）：勾选 300ms 反悔窗口「待定」视觉态', 
     await openSeeded();
     const check = document.querySelector('[data-memo-check]') as HTMLElement;
     check.click();
-    await wait(450); // 300ms 防抖 + 落盘刷新
-    await vi.waitFor(() => {
-      // 折叠区默认收起：条目从列表消失、计数 +1（与 13A 口径同源）
-      expect(document.querySelectorAll('.bz-memo-card').length).toBe(1);
-      expect(document.querySelector('[data-memo-donebar] .bz-memo-donebar-cnt')!.textContent).toBe('2');
-    });
+    await wait(450); // 300ms 防抖落定
+    await wait(1200); // 卷/飞/撞击动效演完 → refresh（折叠区计数 +1）
+    // 折叠区默认收起：条目从列表消失、计数 +1（与 13A 口径同源）
+    expect(document.querySelectorAll('.bz-memo-card').length).toBe(1);
+    expect(document.querySelector('[data-memo-donebar] .bz-memo-donebar-cnt')!.textContent).toBe('2');
     // 展开折叠区：完成条目勾选圈 checked、无待定态
     (document.querySelector('[data-memo-donebar]') as HTMLElement).click();
-    await vi.waitFor(() => {
-      const doneCard = document.querySelector('.bz-memo-card.bz-memo-done');
-      expect(doneCard).toBeTruthy();
-      const c = doneCard!.querySelector('[data-memo-check]') as HTMLElement;
-      expect(c.classList.contains('bz-memo-pending')).toBe(false);
-      expect(c.classList.contains('bz-memo-checked')).toBe(true);
-    });
+    await wait(50);
+    const doneCard = document.querySelector('.bz-memo-card.bz-memo-done');
+    expect(doneCard).toBeTruthy();
+    const c = doneCard!.querySelector('[data-memo-check]') as HTMLElement;
+    expect(c.classList.contains('bz-memo-pending')).toBe(false);
+    expect(c.classList.contains('bz-memo-checked')).toBe(true);
   });
 });
 
@@ -136,11 +145,10 @@ describe('呈报#13（13A）：完成去向轻量反馈（不自动展开）', (
     expect(bar().querySelector('.bz-memo-donebar-cnt')!.textContent).toBe('1');
     (document.querySelector('[data-memo-check]') as HTMLElement).click();
     await wait(450);
-    await vi.waitFor(() => {
-      expect(bar().classList.contains('bz-memo-donebar-bump')).toBe(true);
-      expect(bar().querySelector('.bz-memo-donebar-cnt')!.textContent).toBe('2');
-      // 13B 拍板不做：折叠区不自动展开（默认收起，无已完成卡直列）
-      expect(document.querySelector('.bz-memo-card.bz-memo-done')).toBeNull();
-    });
+    await wait(1200); // 卷走（340）+ 飞行（400）+ 撞击（360）动效演完 → refresh + bump
+    expect(bar().classList.contains('bz-memo-donebar-bump')).toBe(true);
+    expect(bar().querySelector('.bz-memo-donebar-cnt')!.textContent).toBe('2');
+    // 13B 拍板不做：折叠区不自动展开（默认收起，无已完成卡直列）
+    expect(document.querySelector('.bz-memo-card.bz-memo-done')).toBeNull();
   });
 });

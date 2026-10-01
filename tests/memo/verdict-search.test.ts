@@ -59,7 +59,19 @@ function typeSearch(input: HTMLInputElement, word: string): void {
   input.dispatchEvent(new Event('input', { bubbles: true }));
 }
 
-const wait = (ms: number) => new Promise((r) => setTimeout(r, ms));
+/** 假钟推进（文件级已装假钟）：等防抖尾触一律走它——真实等待归零 */
+const wait = (ms: number) => vi.advanceTimersByTimeAsync(ms);
+
+// 文件级假钟：搜索防抖全部可控快进
+beforeEach(() => {
+  vi.useFakeTimers({
+    toFake: ['setTimeout', 'clearTimeout', 'setInterval', 'clearInterval', 'Date',
+      'requestAnimationFrame', 'cancelAnimationFrame', 'performance'],
+  });
+});
+afterEach(() => {
+  vi.useRealTimers();
+});
 
 describe('呈报#7（7A）：搜索范围补网址字段', () => {
   beforeEach(() => {

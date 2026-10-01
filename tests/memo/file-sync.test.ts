@@ -6,7 +6,7 @@
  * stub 手法照抄 tests/ai-agent/ai-agent.test.ts（MockVault / vault 事件经总线
  * emitDomainEvent 派发；纯 JSON 读写无 DOM，故标 node 环境）。
  */
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { setApp } from '../../src/core/app';
 import { setSettingsProvider } from '../../src/core/settings-provider';
 import { ensureFileSync, unloadFileSync } from '../../src/memo/file-sync';
@@ -30,10 +30,21 @@ async function setup() {
 
 /** 等待队列清空：rename 经 DEBOUNCE_DELAY（默认 300ms）合并去抖，先越过窗口再等队列 */
 async function flushQueue() {
-  await new Promise((r) => setTimeout(r, 400)); // 覆盖去抖窗口
-  await new Promise((r) => setTimeout(r, 30));
-  await new Promise((r) => setTimeout(r, 0));
+  await vi.advanceTimersByTimeAsync(400); // 覆盖去抖窗口
+  await vi.advanceTimersByTimeAsync(30);
+  await vi.advanceTimersByTimeAsync(0);
 }
+
+// 文件级假钟：冲刷去抖窗口（300ms）与队列等待全部可控快进，真实等待归零
+beforeEach(() => {
+  vi.useFakeTimers({
+    toFake: ['setTimeout', 'clearTimeout', 'setInterval', 'clearInterval', 'Date',
+      'requestAnimationFrame', 'cancelAnimationFrame', 'performance'],
+  });
+});
+afterEach(() => {
+  vi.useRealTimers();
+});
 
 function memoWrites(vault: MockVault): number {
   return vault.modifiedPaths.filter((p) => p.endsWith('memo.json')).length;
@@ -143,13 +154,13 @@ describe('memo 引用同步', () => {
 
     emitDomainEvent('vault:md-renamed', { oldPath: '卡片盒/旧笔记.md', newPath: '卡片盒/新笔记.md' });
     unloadFileSync(); // 立即卸载：cancelled 置位 + 清去抖定时器
-    await new Promise((r) => setTimeout(r, 500)); // 越过本应触发的去抖窗口
+    await vi.advanceTimersByTimeAsync(500); // 越过本应触发的去抖窗口
     expect(JSON.parse(vault.files.get('CONFIG/STORAGE/memo.json')!)[0].linkedNote).toBe('卡片盒/旧笔记.md');
     expect(memoWrites(vault)).toBe(0);
 
     // 卸载后新事件同样静默（订阅已退订 + 任务首行短路）
     emitDomainEvent('vault:md-deleted', { path: '卡片盒/旧笔记.md' });
-    await new Promise((r) => setTimeout(r, 60));
+    await vi.advanceTimersByTimeAsync(60);
     const bz = JSON.parse(vault.files.get('CONFIG/STORAGE/memo.json')!);
     expect(bz[0].linkedNote).toBe('卡片盒/旧笔记.md');
     expect(memoWrites(vault)).toBe(0);

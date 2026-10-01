@@ -1,14 +1,14 @@
 import { todayStr } from '../helpers/date';
 /**
  * 日记观察集成（ticket 077，ADR-0030；ADR-0131 一目一文件）：ensure 后模拟条目文件 create/modify/delete/rename →
- * 每条独立 10 分钟结算（测试注入 60ms 真实 timer，规避 fake timers 与反射调度相互作用）。
+ * 每条独立 10 分钟结算（测试注入 60ms 结算计时 + 全文件假钟快进，等待零真实耗时）。
  * 覆盖：首次（首落有字）/ 累计 >50 更新 / ≤50 不生成（计入累计）/ 空正文不落 / 条目文件删除追加 /
  * 文件删除（逐条 + 文件级兜底）/ noteSource 关静默 / 多条目独立计时 / 重启基线不落首落 / unload 清理。
  * ticket 084d 修复：B1 settle 真删除 vs 瞬态读失败分离；B2 rename 计时/快照 key 迁移与移出目录删除；
  * B3 基线扩窗（当日+前 2 天）；B4 累计 delta 钳位 ≥0。
  * 文案构造单测见 diary-source.test.ts。
  */
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { MockVault, mockAppWithVault } from '../mock-vault';
 import { diaryEntryPath, serializeDiaryEntryFile } from '../../src/core/diary-format';
 import { setApp } from '../../src/core/app';
@@ -53,12 +53,12 @@ function makeApp() {
   return { app, vault };
 }
 
-/** 短促等待：让事件 handler 的异步首段（读+解析+装计时）跑完 */
-const flush = () => new Promise((r) => setTimeout(r, 5));
+/** 假钟推进：等一拍 / 等结算一律走它——真实等待归零，60ms 注入计时由推进直接触发 */
+const flush = () => vi.advanceTimersByTimeAsync(5);
 /** 等待 fire-and-forget 的 addObservation 落流 */
-const settle = () => new Promise((r) => setTimeout(r, 100));
+const settle = () => vi.advanceTimersByTimeAsync(100);
 /** 等待计时结算：60ms 计时 + 读文件 + 判定 + 观察落流 */
-const waitSettle = () => new Promise((r) => setTimeout(r, 320));
+const waitSettle = () => vi.advanceTimersByTimeAsync(320);
 
 const readStream = (): any[] => __getSmartcatInternals().data.memory.memoryStream;
 const readBehavior = (): any[] => __getSmartcatInternals().data.memory.behaviorStream;
@@ -73,11 +73,19 @@ function dateOffset(offset: number): string {
 }
 
 beforeEach(() => {
+  // 全文件假钟：flush/settle/waitSettle 只推假钟不烧真实时间（注入的 60ms 结算计时可控触发）
+  vi.useFakeTimers({
+    toFake: ['setTimeout', 'clearTimeout', 'setInterval', 'clearInterval', 'Date',
+      'requestAnimationFrame', 'cancelAnimationFrame', 'performance'],
+  });
   resetObsidianMocks();
   document.body.innerHTML = '';
   settings = { storagePath: 'CONFIG/STORAGE', smartcatEnabled: true };
   unloadSmartCat();
   __setDiarySettleMsForTests(60); // 注入短计时（unload 会复位，须在 unload 之后设置）
+});
+afterEach(() => {
+  vi.useRealTimers();
 });
 
 describe('日记观察（per-entry 10 分钟结算，ticket 077；条目文件口径）', () => {

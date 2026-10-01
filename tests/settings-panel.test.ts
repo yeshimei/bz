@@ -10,7 +10,7 @@
  *   （prototype.app.js 已退役删除，不再有「app.js ↔ ui.ts」镜像对齐锚点）。
  */
 // @vitest-environment jsdom
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { resetObsidianMocks } from './mock-obsidian-entry';
 import { SettingsPanelUI } from '../src/settings-panel/ui';
 import { openSettingsPanel, unloadSettingsPanel } from '../src/settings-panel';
@@ -36,22 +36,34 @@ vi.mock('obsidian', async (importOriginal) => {
   };
 });
 
-/** 等渲染微任务完成（动态 import 首次加载可能 >20ms，用轮询等到分组出现或超时） */
-const tick = () => new Promise((r) => setTimeout(r, 20));
+/** 等渲染微任务完成（假钟推一拍；动态 import 内部是纯微任务链，推进即落定） */
+const tick = () => vi.advanceTimersByTimeAsync(20);
 /** 等搜索防抖（E-5：180ms 防抖 + 余量）走完 */
-const flushSearch = () => new Promise((r) => setTimeout(r, 260));
-/** 等待 pane 内出现 .bz-sp-group（最多 2s），超时返回 false */
+const flushSearch = () => vi.advanceTimersByTimeAsync(260);
+/** 等待 pane 内出现 .bz-sp-group：动态 import 走真实 I/O（不受假钟控制），
+ *  用捕获的真定时器轮询给 I/O 让路（文件级假钟下 setTimeout 已被替换，须用真引用） */
+const realSetTimeout = globalThis.setTimeout.bind(globalThis);
 async function waitGroups(container: HTMLElement, min: number): Promise<boolean> {
-  const deadline = Date.now() + 2000;
-  while (Date.now() < deadline) {
+  for (let i = 0; i < 300; i++) {
     if (container.querySelectorAll('.bz-sp-group').length >= min) return true;
-    await new Promise((r) => setTimeout(r, 30));
+    await new Promise((r) => realSetTimeout(r, 5));
   }
   return false;
 }
 
 /** emoji 区间（面板收编后禁止 emoji 当图标，回归守卫） */
 const EMOJI_RE = /[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}\u{2B00}-\u{2BFF}\u{FE0F}]/u;
+
+// 文件级假钟：渲染拍 / 搜索防抖 / waitGroups 轮询全部可控快进，真实等待归零
+beforeEach(() => {
+  vi.useFakeTimers({
+    toFake: ['setTimeout', 'clearTimeout', 'setInterval', 'clearInterval', 'Date',
+      'requestAnimationFrame', 'cancelAnimationFrame', 'performance'],
+  });
+});
+afterEach(() => {
+  vi.useRealTimers();
+});
 
 describe('设置面板（settings-panel）', () => {
   /** 共享 settings 单例（provider 每次返回同对象；beforeEach 重置） */
@@ -100,7 +112,7 @@ describe('设置面板（settings-panel）', () => {
     for (;;) {
       const badges = [...popup.querySelectorAll('.bz-sp-nav-count')].map((b) => b.textContent);
       if (Date.now() > deadline || (badges.length >= 18 && !badges.includes('·'))) break;
-      await new Promise((r) => setTimeout(r, 30));
+      await vi.advanceTimersByTimeAsync(30);
     }
     // 徽标契约承接（ARCH-5）：逐域硬编码数字退役（issue 186/194/201/246/250/293/331/342/368
     // 连续重锚的脆断史）——面板测试只留「与 loadedCounts 自洽」契约；每域可见项数基准在
@@ -721,7 +733,7 @@ describe('设置面板（settings-panel）', () => {
     while (Date.now() < deadline) {
       row = [...document.querySelectorAll('.bz-path-picker-row')].find((r) => r.textContent?.includes('（库根目录）')) ?? null;
       if (row) break;
-      await new Promise((r) => setTimeout(r, 30));
+      await vi.advanceTimersByTimeAsync(30);
     }
     expect(row, '选择器目录行就绪').toBeTruthy();
     (row as HTMLElement).click();
@@ -747,7 +759,7 @@ describe('设置面板（settings-panel）', () => {
     const deadline = Date.now() + 2000;
     while (Date.now() < deadline) {
       if (popup.querySelector('.bz-empty')) break;
-      await new Promise((r) => setTimeout(r, 30));
+      await vi.advanceTimersByTimeAsync(30);
     }
     expect(popup.querySelector('.bz-empty')).toBeTruthy();
     expect(popup.querySelector('.bz-empty-title')!.textContent).toContain('暂无设置项');
@@ -763,7 +775,7 @@ describe('设置面板（settings-panel）', () => {
     // 等 preload 完成（全部有 schema 的域计数回填）
     const deadline = Date.now() + 3000;
     while (Date.now() < deadline && (mod.loadedCounts as Map<string, number>).size < 14) {
-      await new Promise((r) => setTimeout(r, 30));
+      await vi.advanceTimersByTimeAsync(30);
     }
     expect((mod.loadedCounts as Map<string, number>).size).toBeGreaterThanOrEqual(14);
     // 模拟某域在当前端零可见项（如设置全为移动端组时处于桌面端）→ 列表剔除
@@ -808,7 +820,7 @@ describe('设置面板（settings-panel）', () => {
       names = [...popup.querySelectorAll('.bz-sp-nav-item .bz-sp-nav-name')].map((b) => b.textContent);
       const badges = [...popup.querySelectorAll('.bz-sp-nav-count')].map((b) => b.textContent);
       if (Date.now() > deadline0 || (names.length === 19 && !badges.includes('·'))) break;
-      await new Promise((r) => setTimeout(r, 30));
+      await vi.advanceTimersByTimeAsync(30);
     }
     // 只看域名（nav-name），避免描述包含（如剪藏本「网页剪藏与聚合讯」）误判
     expect(names).toHaveLength(19); // issue 250 补密码本 → 18；issue 368 补游戏架 → 19；issue 446 补脸谱 → 20；issue 479 通知页退役 → 19
@@ -849,7 +861,7 @@ describe('设置面板（settings-panel）', () => {
       // 只数域项（.bz-sp-mob-item）——末尾「文档」组（手册/日志）非域，不得入域计数
       names = [...popup.querySelectorAll('.bz-sp-mob-item .bz-sp-mob-name')].map((b) => b.textContent);
       if (Date.now() > deadline0 || names.length === 19) break;
-      await new Promise((r) => setTimeout(r, 30));
+      await vi.advanceTimersByTimeAsync(30);
     }
     // 只看域名（mob-name），避免描述包含误判
     expect(names).toHaveLength(19); // issue 368 补游戏架 → 19；issue 446 补脸谱 → 20；issue 479 通知页退役 → 19
@@ -937,7 +949,7 @@ describe('设置面板（settings-panel）', () => {
       if (Date.now() > deadline) break;
       if (popup.classList.contains('bz-sp-mob-pushed') &&
           popup.querySelectorAll('.bz-sp-mob-page-body .bz-sp-group').length >= 2) break;
-      await new Promise((r) => setTimeout(r, 30));
+      await vi.advanceTimersByTimeAsync(30);
     }
     // 推入态：域页头行标题 = 域名；页内渲染真实设置分组
     expect(popup.classList.contains('bz-sp-mob-pushed')).toBe(true);
@@ -974,7 +986,7 @@ describe('设置面板（settings-panel）', () => {
     const deadline = Date.now() + 2000;
     while (Date.now() < deadline) {
       if (popup.querySelector('.bz-sp-mob-page-body .bz-sp-group')) break;
-      await new Promise((r) => setTimeout(r, 30));
+      await vi.advanceTimersByTimeAsync(30);
     }
     (popup.querySelector('.bz-sp-mob-back-btn') as HTMLElement).click();
     // 搜「AI」→ 域段（AI）+ 设置项段

@@ -14,14 +14,23 @@ function mountContainer(): HTMLElement {
 }
 
 beforeEach(() => {
+  // 全文件假钟：打字机节拍 / 点击窗口 / 气泡计时全部可控快进（sleep 只推假钟不烧真实时间）
+  vi.useFakeTimers({
+    toFake: ['setTimeout', 'clearTimeout', 'setInterval', 'clearInterval', 'Date',
+      'requestAnimationFrame', 'cancelAnimationFrame', 'performance'],
+  });
   document.body.innerHTML = '';
   __resetVisibilityForTests();
 });
+afterEach(() => {
+  vi.useRealTimers();
+});
 
 describe('BubbleManager.showBubble', () => {
-  const sleep = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
+  /** 假钟推进（真钟下曾是真等 200~700ms/处） */
+  const sleep = (ms: number) => vi.advanceTimersByTimeAsync(ms);
 
-  it('容器存在 → 气泡出现并打字（真实计时器）', async () => {
+  it('容器存在 → 气泡出现并打字（假钟节拍）', async () => {
     mountContainer();
     const b = new BubbleManager();
     b.showBubble('喵呜~ 你好！');
@@ -102,7 +111,7 @@ describe('BubbleManager.showBubble', () => {
 });
 
 describe('容器缺失恢复（P1-28 气泡锁死修复）', () => {
-  const sleep = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
+  const sleep = (ms: number) => vi.advanceTimersByTimeAsync(ms);
 
   it('容器缺失入队：早退复位打字锁、消息退回队首；容器恢复后 processBubbleQueue 消费', async () => {
     const b = new BubbleManager(); // 故意不挂猫容器（模拟 hide 后）

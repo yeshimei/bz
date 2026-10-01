@@ -36,6 +36,17 @@ async function waitFor(cond: () => boolean, timeout = 3000): Promise<void> {
   await vi.waitFor(() => expect(cond()).toBe(true), { timeout });
 }
 
+// 文件级假钟：30ms 拍 / 防抖 / toast 计时全部可控快进（waitFor 轮询自动推假钟）
+beforeEach(() => {
+  vi.useFakeTimers({
+    toFake: ['setTimeout', 'clearTimeout', 'setInterval', 'clearInterval', 'Date',
+      'requestAnimationFrame', 'cancelAnimationFrame', 'performance'],
+  });
+});
+afterEach(() => {
+  vi.useRealTimers();
+});
+
 /** 伪造 SafeNote（纯 UI 层 fixture：直塞 manifest，不落盘、不走加密） */
 function fakeNote(i: number, kind: 'note' | 'diary-entry' = 'note', iso?: string): SafeNote {
   const isDiary = kind === 'diary-entry';
@@ -88,7 +99,7 @@ describe('批 C 修复回归：日记入口/概览绑定/滚位/搜索/流水口
     expect(document.querySelector('.bz-vault-mseg .sg[data-masset="diary"]')).toBeTruthy();
     // 点击 nav 日记项 → 资产切到 diary，列表渲染日记条目（book-lock 行），详情含「还原回日记」
     diaryItem.click();
-    await new Promise((r) => setTimeout(r, 30));
+    await vi.advanceTimersByTimeAsync(30);
     expect(ui.asset).toBe('diary');
     expect(document.querySelector('.bz-vault-listcol')!.textContent).toContain('日记2');
     expect(document.querySelector('[data-detail="restore-diary"]')).toBeTruthy();
@@ -96,7 +107,7 @@ describe('批 C 修复回归：日记入口/概览绑定/滚位/搜索/流水口
     expect(document.querySelector('[data-detail="destroy-diary"]')).toBeTruthy();
     // seg 点击日记段同样可达
     (document.querySelector('.bz-vault-mseg .sg[data-masset="diary"]') as HTMLElement).click();
-    await new Promise((r) => setTimeout(r, 30));
+    await vi.advanceTimersByTimeAsync(30);
     expect(ui.asset).toBe('diary');
   });
 
@@ -135,7 +146,7 @@ describe('批 C 修复回归：日记入口/概览绑定/滚位/搜索/流水口
     ui.onLockCurrentNote = onLock;
     // 统计卡 → 笔记资产
     (document.querySelector('.bz-vault-mob-overview .card[data-nav="note"]') as HTMLElement).click();
-    await new Promise((r) => setTimeout(r, 20));
+    await vi.advanceTimersByTimeAsync(20);
     expect(ui.asset).toBe('note');
     // 回概览：hero「存入笔记」触发 onLockCurrentNote
     (document.querySelector('.bz-vault-nav .bz-vault-item[data-asset="overview"]') as HTMLElement).click();
@@ -146,22 +157,22 @@ describe('批 C 修复回归：日记入口/概览绑定/滚位/搜索/流水口
     const diaryRow = document.querySelector('.bz-vault-mob-overview .bz-vault-minirow[data-recent="diary"]') as HTMLElement;
     expect(diaryRow).toBeTruthy();
     diaryRow.click();
-    await new Promise((r) => setTimeout(r, 20));
+    await vi.advanceTimersByTimeAsync(20);
     expect(ui.asset).toBe('diary');
   });
 
   it('T3 列表滚位保留：行选中全量重建后 .bz-vault-lc-body scrollTop 还原', async () => {
     for (let i = 3; i <= 27; i++) sm.manifest.notes.push(fakeNote(i)); // 凑长列表（1+25=26 条笔记）
     ui.show();
-    await new Promise((r) => setTimeout(r, 30));
+    await vi.advanceTimersByTimeAsync(30);
     (document.querySelector('.bz-vault-nav .bz-vault-item[data-asset="note"]') as HTMLElement).click();
-    await new Promise((r) => setTimeout(r, 30));
+    await vi.advanceTimersByTimeAsync(30);
     const body = document.querySelector('.bz-vault-lc-body') as HTMLElement;
     expect(body.querySelectorAll('.bz-vault-row').length).toBe(26);
     body.scrollTop = 200;
     // 点中段一行 → 全量重建详情 + 列表
     (body.querySelectorAll('.bz-vault-row')[10] as HTMLElement).click();
-    await new Promise((r) => setTimeout(r, 30));
+    await vi.advanceTimersByTimeAsync(30);
     const body2 = document.querySelector('.bz-vault-lc-body') as HTMLElement;
     expect(body2.querySelectorAll('.bz-vault-row').length).toBe(26);
     expect(body2.scrollTop).toBe(200); // 重建前后滚位保留（不再跳回顶部）
@@ -173,17 +184,17 @@ describe('批 C 修复回归：日记入口/概览绑定/滚位/搜索/流水口
     const ui2 = new UIManager(sm, { ...CONFIG, securityMode: true });
     ui2.ensureElements();
     ui2.show();
-    await new Promise((r) => setTimeout(r, 30));
+    await vi.advanceTimersByTimeAsync(30);
     (document.querySelector('.bz-vault-nav .bz-vault-item[data-asset="note"]') as HTMLElement).click();
-    await new Promise((r) => setTimeout(r, 30));
+    await vi.advanceTimersByTimeAsync(30);
     const search = document.querySelector('[data-vault-search]') as HTMLInputElement;
     search.value = '笔记1';
     search.dispatchEvent(new Event('input', { bubbles: true }));
-    await new Promise((r) => setTimeout(r, 250)); // 防抖尾触
+    await vi.advanceTimersByTimeAsync(250); // 防抖尾触
     expect(ui2.searchKw).toBe('笔记1');
     // ESC：清词 + 截断 escManager 关面板链
     search.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true }));
-    await new Promise((r) => setTimeout(r, 30));
+    await vi.advanceTimersByTimeAsync(30);
     expect(ui2.searchKw).toBe('');
     expect(search.value).toBe('');
     expect(ui2.mask!.style.display).toBe('block'); // 面板未关
@@ -194,32 +205,32 @@ describe('批 C 修复回归：日记入口/概览绑定/滚位/搜索/流水口
 
   it('T4b 搜索 ESC 无词：放行走面板关闭链', async () => {
     ui.show();
-    await new Promise((r) => setTimeout(r, 30));
+    await vi.advanceTimersByTimeAsync(30);
     (document.querySelector('.bz-vault-nav .bz-vault-item[data-asset="note"]') as HTMLElement).click();
-    await new Promise((r) => setTimeout(r, 30));
+    await vi.advanceTimersByTimeAsync(30);
     const search = document.querySelector('[data-vault-search]') as HTMLInputElement;
     expect(search.value).toBe('');
     search.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true }));
-    await new Promise((r) => setTimeout(r, 30));
+    await vi.advanceTimersByTimeAsync(30);
     expect(ui.mask!.style.display).toBe('none');
   });
 
   it('T4c 列表头 ✕ 清除钮：有词显、点击清词 + 焦点回框；两框显隐同步', async () => {
     ui.show();
-    await new Promise((r) => setTimeout(r, 30));
+    await vi.advanceTimersByTimeAsync(30);
     (document.querySelector('.bz-vault-nav .bz-vault-item[data-asset="note"]') as HTMLElement).click();
-    await new Promise((r) => setTimeout(r, 30));
+    await vi.advanceTimersByTimeAsync(30);
     const search = document.querySelector('[data-vault-search]') as HTMLInputElement;
     const clearBtn = document.querySelector('.bz-vault-listcol [data-search-clear]') as HTMLButtonElement;
     expect(clearBtn).toBeTruthy();
     expect(clearBtn.hidden).toBe(true); // 无词隐藏
     search.value = '日记';
     search.dispatchEvent(new Event('input', { bubbles: true }));
-    await new Promise((r) => setTimeout(r, 250));
+    await vi.advanceTimersByTimeAsync(250);
     expect(clearBtn.hidden).toBe(false); // 有词显示
     expect((ui as any).mob.search.value).toBe('日记'); // 移动框同步
     clearBtn.click();
-    await new Promise((r) => setTimeout(r, 30));
+    await vi.advanceTimersByTimeAsync(30);
     expect(ui.searchKw).toBe('');
     expect(search.value).toBe('');
     expect((ui as any).mob.search.value).toBe('');
@@ -245,7 +256,7 @@ describe('批 C 修复回归：日记入口/概览绑定/滚位/搜索/流水口
     expect(diaryRow.getAttribute('data-recent-id')).toBe('d2');
     // 点击 diary 行 → 落加密日记列表（旧实现落不含该条目的笔记列表，死端点击）
     diaryRow.click();
-    await new Promise((r) => setTimeout(r, 30));
+    await vi.advanceTimersByTimeAsync(30);
     expect(ui.asset).toBe('diary');
     expect(document.querySelector('.bz-vault-listcol')!.textContent).toContain('日记2');
     expect((ui as any)._selNoteId).toBe('d2'); // 直定位该条目
@@ -302,7 +313,7 @@ describe('批 C 修复回归：日记入口/概览绑定/滚位/搜索/流水口
 
   it('T11 renderAll 不再触发 lock-stats 读盘落盘 + pwDataManager.load 解锁会话内一次化', async () => {
     ui.show();
-    await new Promise((r) => setTimeout(r, 400));
+    await vi.advanceTimersByTimeAsync(400);
     expect(await readLockStats('vault')).toBeNull(); // renderAll 链路不再写 lock-stats.json
     // load 一次化：同解锁会话内多次 renderList 不再重复装载（show 时已装载）
     const loadSpy = vi.spyOn(ui.pwDataManager, 'load');

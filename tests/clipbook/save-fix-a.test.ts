@@ -41,7 +41,6 @@ import { dataSourceGroupRows } from '../../src/clipbook/news-sources-group';
 import { emptyDataSourceState } from '../../src/clipbook/news-source-settings';
 
 const { reloadIfOpen } = await import('../../src/clipbook/ui');
-const wait = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
 
 /** 默认设置（尾斜杠场景单独覆写） */
 function setDefaultSettings(articleDirectory = '归档/网页剪藏'): void {
@@ -292,41 +291,46 @@ describe('CB10/A1：createOverlay 存活登记 + closeAllOverlays + unloadClipbo
 
 describe('CB11 + A7：自动刷新事件拦截与退订闭环', () => {
   it('缺 path 载荷跳过；目录外跳过；unload 后不再 reload；open/unload 循环订阅不叠加', async () => {
-    const vault = new MockVault();
-    // 种「刚抓取过」的 lastFetchAt：openClipbook 的 void maybeFetchNews() 走间隔判定静默跳过，
-    // 不触发 executeFetchRound（其完成回调也会调 reloadIfOpen，混入本测试的计数）
-    vault.files.set(
-      getNewsFilePath(),
-      JSON.stringify({ articles: [], stats: {}, bilibiliUps: [], bilibiliUpInfo: {}, bilibiliMaxItems: 10, bilibiliCookie: '', sources: { zhihu: true, guokr: true, bilibili: true }, lastFetchAt: Date.now(), fetchIntervalMin: 30 })
-    );
-    setApp(mockAppWithVault(vault));
-    const inDir = (p: string) => ({ path: p });
-    openClipbook(getApp());
-    // 目录内事件：300ms 防抖后 reload 一次（接线在位的 sanity）
-    emitDomainEvent('clipping:file-created', inDir('归档/网页剪藏/甲.md'));
-    await wait(500);
-    expect(reloadIfOpen).toHaveBeenCalledTimes(1);
-    // CB11：载荷缺 path 的异常事件显式跳过，不放行防抖全量重扫
-    emitDomainEvent('clipping:file-created', {} as any);
-    emitDomainEvent('clipping:file-created', null as any);
-    await wait(500);
-    expect(reloadIfOpen).toHaveBeenCalledTimes(1);
-    // 目录外事件不触发
-    emitDomainEvent('clipping:file-modified', inDir('其他目录/乙.md'));
-    await wait(500);
-    expect(reloadIfOpen).toHaveBeenCalledTimes(1);
-    // A7：unload 后事件不再触发 reload（退订闭环）
-    unloadClipbook();
-    emitDomainEvent('clipping:file-created', inDir('归档/网页剪藏/丙.md'));
-    await wait(500);
-    expect(reloadIfOpen).toHaveBeenCalledTimes(1);
-    // A7：open→unload 循环后重开，单事件只 reload 一次（订阅数不叠加）
-    openClipbook(getApp());
-    unloadClipbook();
-    openClipbook(getApp());
-    emitDomainEvent('clipping:file-modified', inDir('归档/网页剪藏/丁.md'));
-    await wait(500);
-    expect(reloadIfOpen).toHaveBeenCalledTimes(2);
-    unloadClipbook();
+    vi.useFakeTimers();
+    try {
+      const vault = new MockVault();
+      // 种「刚抓取过」的 lastFetchAt：openClipbook 的 void maybeFetchNews() 走间隔判定静默跳过，
+      // 不触发 executeFetchRound（其完成回调也会调 reloadIfOpen，混入本测试的计数）
+      vault.files.set(
+        getNewsFilePath(),
+        JSON.stringify({ articles: [], stats: {}, bilibiliUps: [], bilibiliUpInfo: {}, bilibiliMaxItems: 10, bilibiliCookie: '', sources: { zhihu: true, guokr: true, bilibili: true }, lastFetchAt: Date.now(), fetchIntervalMin: 30 })
+      );
+      setApp(mockAppWithVault(vault));
+      const inDir = (p: string) => ({ path: p });
+      openClipbook(getApp());
+      // 目录内事件：300ms 防抖后 reload 一次（接线在位的 sanity）
+      emitDomainEvent('clipping:file-created', inDir('归档/网页剪藏/甲.md'));
+      await vi.advanceTimersByTimeAsync(500);
+      expect(reloadIfOpen).toHaveBeenCalledTimes(1);
+      // CB11：载荷缺 path 的异常事件显式跳过，不放行防抖全量重扫
+      emitDomainEvent('clipping:file-created', {} as any);
+      emitDomainEvent('clipping:file-created', null as any);
+      await vi.advanceTimersByTimeAsync(500);
+      expect(reloadIfOpen).toHaveBeenCalledTimes(1);
+      // 目录外事件不触发
+      emitDomainEvent('clipping:file-modified', inDir('其他目录/乙.md'));
+      await vi.advanceTimersByTimeAsync(500);
+      expect(reloadIfOpen).toHaveBeenCalledTimes(1);
+      // A7：unload 后事件不再触发 reload（退订闭环）
+      unloadClipbook();
+      emitDomainEvent('clipping:file-created', inDir('归档/网页剪藏/丙.md'));
+      await vi.advanceTimersByTimeAsync(500);
+      expect(reloadIfOpen).toHaveBeenCalledTimes(1);
+      // A7：open→unload 循环后重开，单事件只 reload 一次（订阅数不叠加）
+      openClipbook(getApp());
+      unloadClipbook();
+      openClipbook(getApp());
+      emitDomainEvent('clipping:file-modified', inDir('归档/网页剪藏/丁.md'));
+      await vi.advanceTimersByTimeAsync(500);
+      expect(reloadIfOpen).toHaveBeenCalledTimes(2);
+      unloadClipbook();
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });

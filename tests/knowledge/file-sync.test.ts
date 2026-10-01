@@ -7,7 +7,7 @@
  * stub 手法照抄 tests/memo/file-sync.test.ts（MockVault / mockAppWithVault，域事件经总线
  * emitDomainEvent 派发；consumer 通知 mock 掉，纯 JSON 读写无 DOM，故标 node 环境）。
  */
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 vi.mock('../../src/core/notice', async (importOriginal) => {
   const actual = await importOriginal<typeof import('../../src/core/notice')>();
   return {
@@ -45,10 +45,21 @@ async function setup() {
 
 /** 等待队列清空：rename 经 DEBOUNCE_DELAY（默认 300ms）合并去抖，先越过窗口再等队列 */
 async function flushQueue() {
-  await new Promise((r) => setTimeout(r, 400)); // 覆盖去抖窗口
-  await new Promise((r) => setTimeout(r, 30));
-  await new Promise((r) => setTimeout(r, 0));
+  await vi.advanceTimersByTimeAsync(400); // 覆盖去抖窗口
+  await vi.advanceTimersByTimeAsync(30);
+  await vi.advanceTimersByTimeAsync(0);
 }
+
+// 文件级假钟：冲刷去抖窗口（300ms）与队列等待全部可控快进，真实等待归零
+beforeEach(() => {
+  vi.useFakeTimers({
+    toFake: ['setTimeout', 'clearTimeout', 'setInterval', 'clearInterval', 'Date',
+      'requestAnimationFrame', 'cancelAnimationFrame', 'performance'],
+  });
+});
+afterEach(() => {
+  vi.useRealTimers();
+});
 
 function knowledgeWrites(vault: MockVault): number {
   return vault.modifiedPaths.filter((p) => p.endsWith('knowledge.json')).length;
@@ -176,13 +187,13 @@ describe('卸载静默（unloadFileSync）', () => {
 
     emitDomainEvent('vault:md-renamed', { oldPath: '文献盒/旧笔记.md', newPath: '文献盒/新笔记.md' });
     unloadFileSync(); // 立即卸载：cancelled 置位 + 清去抖定时器
-    await new Promise((r) => setTimeout(r, 500)); // 越过本应触发的去抖窗口
+    await vi.advanceTimersByTimeAsync(500); // 越过本应触发的去抖窗口
     expect(JSON.parse(vault.files.get('CONFIG/STORAGE/knowledge.json')!)[0].notePath).toBe('文献盒/旧笔记.md');
 
     // 卸载后新事件同样静默（订阅已退订 + 任务首行短路；md-deleted 消费体不再摘卡片）
     vault.files.set('文献盒/量子.md', termCard('source: "[[归档/网页剪藏/甲文.md|甲文]]"'));
     emitDomainEvent('vault:md-deleted', { path: '归档/网页剪藏/甲文.md' });
-    await new Promise((r) => setTimeout(r, 60));
+    await vi.advanceTimersByTimeAsync(60);
     expect(JSON.parse(vault.files.get('CONFIG/STORAGE/knowledge.json')!)[0].notePath).toBe('文献盒/旧笔记.md');
     expect(vault.files.get('文献盒/量子.md')).toContain('source: "[[归档/网页剪藏/甲文.md|甲文]]"');
   });

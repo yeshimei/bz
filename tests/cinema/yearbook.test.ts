@@ -6,7 +6,7 @@
  *  2. 版式 25 幕、骨架齐整、用户文本转义；
  *  3. 引擎「一滚一幕」+ 翻幕即激活 + stop 后不再响应（这几条是用户当场拍板的交互）。
  */
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { deriveYb, parseMinutes, parseEpisodes, humanMinutes, dayOf, YB_WEEK } from '../../src/cinema/yearbook/data';
 import { yearbookHtml, yearbookFixedHtml, yearbookOpenHtml, YB_SCENES } from '../../src/cinema/yearbook/scenes';
 import { bindYearbook } from '../../src/cinema/yearbook/engine';
@@ -240,6 +240,11 @@ describe('观影志 · 引擎（一滚一幕 / 翻幕即激活 / stop 后安静�
   let handle: { stop: () => void; goTo: (i: number, o?: { replay?: boolean }) => void } | null = null;
 
   beforeEach(() => {
+    // 假钟（含 performance/rAF）：引擎按秒演，过片与终态等待改为可控快进
+    vi.useFakeTimers({
+      toFake: ['setTimeout', 'clearTimeout', 'setInterval', 'clearInterval', 'Date',
+        'requestAnimationFrame', 'cancelAnimationFrame', 'performance'],
+    });
     document.body.innerHTML = '';
     // jsdom 没有 2d 上下文：画布取不到就跳过绘制（引擎按 null 处理）
     vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue(null);
@@ -250,6 +255,7 @@ describe('观影志 · 引擎（一滚一幕 / 翻幕即激活 / stop 后安静�
     document.body.appendChild(ovl);
     sc = ovl.querySelector<HTMLElement>('.bz-yb-scroll')!;
   });
+  afterEach(() => { vi.useRealTimers(); });
 
   const railOn = (): number => Array.from(ovl.querySelectorAll('.yb-rail-t')).findIndex((el) => el.hasAttribute('data-on'));
 
@@ -263,10 +269,10 @@ describe('观影志 · 引擎（一滚一幕 / 翻幕即激活 / stop 后安静�
   it('goTo 翻到第 4 幕：刻度尺同步，且被翻过的那幕定格', async () => {
     handle = bindYearbook(ovl, deriveYb(FIXTURE));
     handle.goTo(3);
-    await new Promise((r) => setTimeout(r, 60));
+    await vi.advanceTimersByTimeAsync(60);
     // 过片：换幕前遮片先合上（MOTION.fast = 160ms 后才真正换幕）
     expect(ovl.querySelector('[data-r="shutter"]')?.className).toContain('is-close');
-    await new Promise((r) => setTimeout(r, 260));
+    await vi.advanceTimersByTimeAsync(260);
     expect(railOn()).toBe(3);
     // 目标幕的表演跑到终态：日晷第一根辐条已整根抽出（不是停在 t=0 的半截）
     const bar = ovl.querySelector('[data-id="week"] .yb-spoke-bar') as HTMLElement;
@@ -278,11 +284,12 @@ describe('观影志 · 引擎（一滚一幕 / 翻幕即激活 / stop 后安静�
 
   it('一次滚轮手势只翻一幕，同手势里的连发被吃掉（触控板惯性不连翻）', async () => {
     handle = bindYearbook(ovl, deriveYb(FIXTURE));
+    await vi.advanceTimersByTimeAsync(400); // 预热假钟：performance.now 越过 GESTURE_GAP（首滚必判「新手势」）
     const wheel = (dy: number): void => { sc.dispatchEvent(new WheelEvent('wheel', { deltaY: dy, bubbles: true, cancelable: true })); };
     wheel(120);
     wheel(120);
     wheel(120); // 同一次手势：只认第一下
-    await new Promise((r) => setTimeout(r, 260));
+    await vi.advanceTimersByTimeAsync(260);
     expect(railOn()).toBe(1);
     handle.stop();
   });
@@ -290,7 +297,7 @@ describe('观影志 · 引擎（一滚一幕 / 翻幕即激活 / stop 后安静�
   it('向右滚不越界（第 1 幕再往上滚仍停在第 1 幕）', async () => {
     handle = bindYearbook(ovl, deriveYb(FIXTURE));
     sc.dispatchEvent(new WheelEvent('wheel', { deltaY: -120, bubbles: true, cancelable: true }));
-    await new Promise((r) => setTimeout(r, 260));
+    await vi.advanceTimersByTimeAsync(260);
     expect(railOn()).toBe(0);
     handle.stop();
   });
@@ -298,7 +305,7 @@ describe('观影志 · 引擎（一滚一幕 / 翻幕即激活 / stop 后安静�
   it('刻度尺点击翻幕；stop 之后滚轮不再有任何反应', async () => {
     handle = bindYearbook(ovl, deriveYb(FIXTURE));
     (ovl.querySelectorAll('.yb-rail-t')[5] as HTMLElement).click();
-    await new Promise((r) => setTimeout(r, 260));
+    await vi.advanceTimersByTimeAsync(260);
     expect(railOn()).toBe(5);
     handle.stop();
     sc.dispatchEvent(new WheelEvent('wheel', { deltaY: 120, bubbles: true, cancelable: true }));

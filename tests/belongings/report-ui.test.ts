@@ -7,7 +7,7 @@
  * unload 清理可重开、面板工具行入口（openPanel → data-bel-report → closePanel 连带收口）、
  * 命令路径（bz-belongings-report 回调：面板未开从盘载库直开）。
  */
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
 import {
   openBelReport, closeBelReport, cancelBelReport, unloadBelReport, isBelReportOpen,
 } from '../../src/belongings/report';
@@ -73,6 +73,17 @@ function seedVault(items: BelongingsItem[]): MockVault {
   return vault;
 }
 
+// 文件级假钟：等待一律可控快进（真实等待归零）
+beforeEach(() => {
+  vi.useFakeTimers({
+    toFake: ['setTimeout', 'clearTimeout', 'setInterval', 'clearInterval', 'Date',
+      'requestAnimationFrame', 'cancelAnimationFrame', 'performance'],
+  });
+});
+afterEach(() => {
+  vi.useRealTimers();
+});
+
 describe('年度报告页渲染（body 级 mask）', () => {
   beforeEach(() => {
     resetObsidianMocks();
@@ -110,7 +121,7 @@ describe('年度报告页渲染（body 级 mask）', () => {
     await until(() => (body()!.textContent || '').includes('$1,200'));
     closeBelReport();
     // 等 toast 离场动画结束（旧完成反馈不干扰下一轮判定）
-    await new Promise((r) => setTimeout(r, 450));
+    await vi.advanceTimersByTimeAsync(450);
     openBelReport(seedItems(), 'none');
     await until(() => {
       const t = body()!.textContent || '';
@@ -130,7 +141,7 @@ describe('年度报告页渲染（body 级 mask）', () => {
     expect(btn).toBeTruthy();
     btn.click();
     expect(added).toBe(1);
-    await new Promise((r) => setTimeout(r, 60));
+    await vi.advanceTimersByTimeAsync(60);
     expect(toastText()).not.toContain('年度报告完成');
   });
 
@@ -173,14 +184,14 @@ describe('年度报告页渲染（body 级 mask）', () => {
     expect(isBelReportOpen()).toBe(false);
     cancelBelReport(); // 幂等
     // 等 toast 离场动画（hide 200ms）结束再断言无残留
-    await new Promise((r) => setTimeout(r, 450));
+    await vi.advanceTimersByTimeAsync(450);
     expect(toastText()).not.toContain('年度报告');
   });
 
   it('取消三路：遮罩被外力摘除（面板关闭路径）→ 渲染中止不抛错，unload 复位模块状态', async () => {
     openBelReport(seedItems(), 'cny');
     mask()!.remove(); // 模拟外力摘除（closePanel 已摘 mask 后的在途分片）
-    await new Promise((r) => setTimeout(r, 120)); // 不抛错即通过
+    await vi.advanceTimersByTimeAsync(120); // 不抛错即通过
     unloadBelReport();
     expect(isBelReportOpen()).toBe(false);
     // 复位后可正常重开

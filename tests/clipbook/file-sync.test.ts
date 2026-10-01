@@ -7,7 +7,7 @@
  * stub 手法照抄 tests/memo/file-sync.test.ts（MockVault，域事件经总线 emitDomainEvent 派发；
  * 通知 mock 掉，纯 JSON 读写无 DOM，故标 node 环境）。
  */
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 vi.mock('../../src/core/notice', async (importOriginal) => {
   const actual = await importOriginal<typeof import('../../src/core/notice')>();
   return {
@@ -48,9 +48,9 @@ async function setup() {
 
 /** 等待队列清空：rename 经 DEBOUNCE_DELAY（默认 300ms）合并去抖，先越过窗口再等队列 */
 async function flushQueue() {
-  await new Promise((r) => setTimeout(r, 400)); // 覆盖去抖窗口
-  await new Promise((r) => setTimeout(r, 30));
-  await new Promise((r) => setTimeout(r, 0));
+  await vi.advanceTimersByTimeAsync(400); // 覆盖去抖窗口
+  await vi.advanceTimersByTimeAsync(30);
+  await vi.advanceTimersByTimeAsync(0);
 }
 
 function clipbookWrites(vault: MockVault): number {
@@ -58,7 +58,15 @@ function clipbookWrites(vault: MockVault): number {
 }
 
 beforeEach(() => {
+  // 文件级假钟：冲刷去抖窗口（300ms）与队列等待全部可控快进，真实等待归零
+  vi.useFakeTimers({
+    toFake: ['setTimeout', 'clearTimeout', 'setInterval', 'clearInterval', 'Date',
+      'requestAnimationFrame', 'cancelAnimationFrame', 'performance'],
+  });
   resetObsidianMocks();
+});
+afterEach(() => {
+  vi.useRealTimers();
 });
 
 describe('clipbook.json 引用同步', () => {
@@ -151,13 +159,13 @@ describe('clipbook.json 引用同步', () => {
 
     emitDomainEvent('vault:md-renamed', { oldPath: '文献盒/旧笔记.md', newPath: '文献盒/新笔记.md' });
     unloadFileSync(); // 立即卸载：cancelled 置位 + 清去抖定时器
-    await new Promise((r) => setTimeout(r, 500));
+    await vi.advanceTimersByTimeAsync(500);
     let side = await readClipbookData();
     expect(side.marks['url:https://a.com/8']![0].notePath).toBe('文献盒/旧笔记.md');
 
     // 卸载后新 delete 事件同样静默
     emitDomainEvent('vault:md-deleted', { path: '文献盒/旧笔记.md' });
-    await new Promise((r) => setTimeout(r, 60));
+    await vi.advanceTimersByTimeAsync(60);
     side = await readClipbookData();
     expect(side.marks['url:https://a.com/8']).toHaveLength(1);
   });

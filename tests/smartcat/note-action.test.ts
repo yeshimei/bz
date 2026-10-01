@@ -1,6 +1,6 @@
 /**
  * 卡片盒/现代诗/信 观察集成（ticket 083，ADR-0035；v1 + v2 + v3 + v4）：ensure 后模拟三域 create/modify/delete/rename →
- * 每篇独立 10 分钟结算（测试注入 60ms 真实 timer，规避 fake timers 与反射调度相互作用）。
+ * 每篇独立 10 分钟结算（测试注入 60ms 结算计时 + 全文件假钟快进，等待零真实耗时）。
  * 覆盖：新建有字首落（flash 无日期 / 信 frontmatter date / 诗三层日期）/ 信无 date 或 readonly 不观察 /
  * 修改重置 + 段落 diff（小改动也产）/ 窗口内连续编辑合并一次 / 删除（有跟踪 → 删除观察；未跟踪 → 跳过）/
  * 存量基线（flash 直接 diff；存量信先补首落再 diff；存量诗无日期只 diff）/ 空文件不产（补字后首落）/
@@ -8,7 +8,7 @@
  * ticket 084d 同款修复：B1 settle 真删除 vs 瞬态读失败分离；B2 rename 计时/快照 key 迁移与移出目录删除。
  * 文案与 diff 纯函数单测见 note-source.test.ts。
  */
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { MockVault, mockAppWithVault } from '../mock-vault';
 import { setApp } from '../../src/core/app';
 import { setSettingsProvider, setSettingsSaver } from '../../src/core/settings-provider';
@@ -36,22 +36,30 @@ function makeApp() {
   return { app, vault };
 }
 
-/** 短促等待：让事件 handler 的异步首段（读+装计时）跑完 */
-const flush = () => new Promise((r) => setTimeout(r, 5));
+/** 假钟推进：等一拍 / 等结算一律走它——真实等待归零，60ms 注入计时由推进直接触发 */
+const flush = () => vi.advanceTimersByTimeAsync(5);
 /** 等待 fire-and-forget 的 addObservation 落流 */
-const settle = () => new Promise((r) => setTimeout(r, 100));
+const settle = () => vi.advanceTimersByTimeAsync(100);
 /** 等待计时结算：60ms 计时 + 读文件 + 判定 + 观察落流 */
-const waitSettle = () => new Promise((r) => setTimeout(r, 320));
+const waitSettle = () => vi.advanceTimersByTimeAsync(320);
 
 const readStream = (): any[] => __getSmartcatInternals().data.memory.memoryStream;
 const readBehavior = (): any[] => __getSmartcatInternals().data.memory.behaviorStream;
 
 beforeEach(() => {
+  // 全文件假钟：flush/settle/waitSettle 只推假钟不烧真实时间（注入的 60ms 结算计时可控触发）
+  vi.useFakeTimers({
+    toFake: ['setTimeout', 'clearTimeout', 'setInterval', 'clearInterval', 'Date',
+      'requestAnimationFrame', 'cancelAnimationFrame', 'performance'],
+  });
   resetObsidianMocks();
   document.body.innerHTML = '';
   settings = { storagePath: 'CONFIG/STORAGE', smartcatEnabled: true };
   unloadSmartCat();
   __setNoteSettleMsForTests(60); // 注入短计时（unload 会复位，须在 unload 之后设置）
+});
+afterEach(() => {
+  vi.useRealTimers();
 });
 
 describe('卡片盒/现代诗/信 观察（per-file 10 分钟结算，ticket 083 v1+v2+v3+v4）', () => {

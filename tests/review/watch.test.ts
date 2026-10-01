@@ -3,7 +3,7 @@ import { makeApp } from '../helpers/app';
  * 复习计划监听器测试（ticket 098；ticket 099 修订+追加）：isUnderFolder / 自动加入四态 /
  * 收编确认（取消=什么都不做）/ 删除确认移除/保留 / 改名自动更新 / 移除目录清空其下排除记录
  */
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { MockVault, mockAppWithVault } from '../mock-vault';
 import { resetObsidianMocks, hasNotice, clearNotices } from '../mock-obsidian-entry';
 import { setApp } from '../../src/core/app';
@@ -17,6 +17,17 @@ function lastNoticeText(): string {
   const c = document.querySelector('#bz-notice-container');
   return c ? c.textContent || '' : '';
 }
+
+// 文件级假钟：合并窗口（50ms 注入）与握手等待全部可控快进，真实等待归零
+beforeEach(() => {
+  vi.useFakeTimers({
+    toFake: ['setTimeout', 'clearTimeout', 'setInterval', 'clearInterval', 'Date',
+      'requestAnimationFrame', 'cancelAnimationFrame', 'performance'],
+  });
+});
+afterEach(() => {
+  vi.useRealTimers();
+});
 
 describe('isUnderFolder', () => {
   it('恰为目录/子路径命中；兄弟目录/前缀相似不命中；空目录不命中', () => {
@@ -95,18 +106,18 @@ describe('ReviewWatcher 自动加入', () => {
     // 窗口内连续两篇 → 一条合并通知
     await w.onVaultCreate({ path: '我的/复习/E.md', extension: 'md', basename: 'E' } as any);
     await w.onVaultCreate({ path: '我的/复习/F.md', extension: 'md', basename: 'F' } as any);
-    await new Promise((r) => setTimeout(r, 80));
+    await vi.advanceTimersByTimeAsync(80);
     expect(lastNoticeText()).toContain('已自动加入复习计划：E、F');
     // 单篇（下一窗口）→ 原文案
     await w.onVaultCreate({ path: '我的/复习/G.md', extension: 'md', basename: 'G' } as any);
-    await new Promise((r) => setTimeout(r, 80));
+    await vi.advanceTimersByTimeAsync(80);
     expect(lastNoticeText()).toContain('已自动加入复习计划：G');
     // 开关关 → 静默收编（数据仍加入、无通知）
     (settings as any).reviewAutoAddNotice = false;
     expect((await dm.loadItems()).some((i) => i.filePath === '我的/复习/H.md')).toBe(false);
     await w.onVaultCreate({ path: '我的/复习/H.md', extension: 'md', basename: 'H' } as any);
     expect((await dm.loadItems()).some((i) => i.filePath === '我的/复习/H.md')).toBe(true);
-    await new Promise((r) => setTimeout(r, 80));
+    await vi.advanceTimersByTimeAsync(80);
     expect(lastNoticeText()).not.toContain('已自动加入复习计划：H');
   });
 
@@ -129,12 +140,12 @@ describe('ReviewWatcher 自动加入', () => {
 
     // 确认路径：弹窗出现 → 点「加入」→ 批量加入 + 返回 true
     const confirmedP = w.confirmBatchAddForFolder('我的/复习');
-    await new Promise((r) => setTimeout(r, 20));
+    await vi.advanceTimersByTimeAsync(20);
     const popup = document.getElementById('__shared_confirm_popup__')!;
     expect(popup).not.toBeNull();
     expect(popup.textContent).toContain('2 篇'); // A 已在计划 → 候选 B,C
     (document.getElementById('__shared_confirm_ok__') as HTMLElement).click();
-    await new Promise((r) => setTimeout(r, 20));
+    await vi.advanceTimersByTimeAsync(20);
     expect(await confirmedP).toBe(true);
     const paths = (await dm.loadItems()).map((i) => i.filePath);
     expect(paths).toContain('我的/复习/B.md');
@@ -144,9 +155,9 @@ describe('ReviewWatcher 自动加入', () => {
     vault.files.set(REVIEW_FILE_PATH, JSON.stringify(raw.filter((r: any) => r.filePath !== '我的/复习/B.md' && r.filePath !== '我的/复习/C.md')));
     const w2 = new ReviewWatcher(app, dm);
     const confirmedP2 = w2.confirmBatchAddForFolder('我的/复习');
-    await new Promise((r) => setTimeout(r, 20));
+    await vi.advanceTimersByTimeAsync(20);
     (document.getElementById('__shared_confirm_cancel__') as HTMLElement).click();
-    await new Promise((r) => setTimeout(r, 20));
+    await vi.advanceTimersByTimeAsync(20);
     expect(await confirmedP2).toBe(false);
     expect(settings.reviewExcludedNotes).toEqual([]);
   });
@@ -185,16 +196,16 @@ describe('ReviewWatcher 自动加入', () => {
 
     // 保留
     w.onVaultDelete({ path: '我的/复习/A.md', extension: 'md', basename: 'A' } as any);
-    await new Promise((r) => setTimeout(r, 350));
+    await vi.advanceTimersByTimeAsync(350);
     (document.getElementById('__shared_confirm_cancel__') as HTMLElement).click();
-    await new Promise((r) => setTimeout(r, 30));
+    await vi.advanceTimersByTimeAsync(30);
     expect((await dm.loadItems()).some((i) => i.filePath === '我的/复习/A.md')).toBe(true);
     expect(settings.reviewExcludedNotes).toEqual([]);
     // 移除 → 记录删除 + 监听目录内写排除
     w.onVaultDelete({ path: '我的/复习/A.md', extension: 'md', basename: 'A' } as any);
-    await new Promise((r) => setTimeout(r, 350));
+    await vi.advanceTimersByTimeAsync(350);
     (document.getElementById('__shared_confirm_ok__') as HTMLElement).click();
-    await new Promise((r) => setTimeout(r, 30));
+    await vi.advanceTimersByTimeAsync(30);
     expect((await dm.loadItems()).some((i) => i.filePath === '我的/复习/A.md')).toBe(false);
     expect(settings.reviewExcludedNotes).toContain('我的/复习/A.md');
   }, 10000);
@@ -216,18 +227,18 @@ describe('ReviewWatcher 自动加入', () => {
 
     // 计划内改名 → 自动更新，无需点击确认
     w.onVaultRename({ path: '我的/复习/A-new.md', extension: 'md', basename: 'A-new' } as any, '我的/复习/A.md');
-    await new Promise((r) => setTimeout(r, 30));
+    await vi.advanceTimersByTimeAsync(30);
     expect(document.getElementById('__shared_confirm_popup__')).toBeNull();
     const items = await dm.loadItems();
     expect(items.some((i) => i.filePath === '我的/复习/A-new.md')).toBe(true);
     // 移动（跨目录）→ 同样自动跟随
     w.onVaultRename({ path: '归档/A-new.md', extension: 'md', basename: 'A-new' } as any, '我的/复习/A-new.md');
-    await new Promise((r) => setTimeout(r, 30));
+    await vi.advanceTimersByTimeAsync(30);
     const items2 = await dm.loadItems();
     expect(items2.some((i) => i.filePath === '归档/A-new.md')).toBe(true);
     // 不在计划的文件改名 → 不产生任何记录
     w.onVaultRename({ path: 'X-new.md', extension: 'md', basename: 'X-new' } as any, 'X.md');
-    await new Promise((r) => setTimeout(r, 30));
+    await vi.advanceTimersByTimeAsync(30);
     expect((await dm.loadItems()).some((i) => i.filePath === 'X-new.md')).toBe(false);
   });
 
@@ -248,23 +259,23 @@ describe('ReviewWatcher 自动加入', () => {
     __setRenameMergeMsForTests(50); // 测试注入短窗口
     // 窗口内连续两篇改名 → 一条合并通知；路径即时更新（不等窗口；串行触发避免并发读盘覆盖）
     w.onVaultRename({ path: '我的/复习/A2.md', extension: 'md', basename: 'A2' } as any, '我的/复习/A.md');
-    await new Promise((r) => setTimeout(r, 30));
+    await vi.advanceTimersByTimeAsync(30);
     w.onVaultRename({ path: '我的/复习/B2.md', extension: 'md', basename: 'B2' } as any, '我的/复习/B.md');
-    await new Promise((r) => setTimeout(r, 30));
+    await vi.advanceTimersByTimeAsync(30);
     const items = await dm.loadItems();
     expect(items.some((i) => i.filePath === '我的/复习/A2.md')).toBe(true);
     expect(items.some((i) => i.filePath === '我的/复习/B2.md')).toBe(true);
-    await new Promise((r) => setTimeout(r, 80));
+    await vi.advanceTimersByTimeAsync(80);
     expect(lastNoticeText()).toContain('已更新 2 篇笔记的复习路径');
     // 窗口外单篇 → 原文案
     __setRenameMergeMsForTests(50);
     w.onVaultRename({ path: '我的/复习/A3.md', extension: 'md', basename: 'A3' } as any, '我的/复习/A2.md');
-    await new Promise((r) => setTimeout(r, 80));
+    await vi.advanceTimersByTimeAsync(80);
     expect(lastNoticeText()).toContain('已更新复习计划路径');
     // 计划外文件改名 → 不产生通知
     const before = document.querySelectorAll('.bz-notice').length;
     w.onVaultRename({ path: 'X2.md', extension: 'md', basename: 'X2' } as any, 'X.md');
-    await new Promise((r) => setTimeout(r, 80));
+    await vi.advanceTimersByTimeAsync(80);
     expect(document.querySelectorAll('.bz-notice').length).toBe(before);
   });
 
@@ -383,7 +394,7 @@ describe('批 B 修复回归：watch 事件链（2026-09-19 深审）', () => {
     setupWatched(settings);
     const w = new ReviewWatcher(app, dm);
     w.onVaultRename({ path: '我的/复习/A2.md', extension: 'md', basename: 'A2' } as any, '我的/复习/A.md');
-    await new Promise((r) => setTimeout(r, 30));
+    await vi.advanceTimersByTimeAsync(30);
     expect(hasNotice('新路径已存在复习条目，未能自动更新路径，请手动处理')).toBe(true);
     expect((await dm.loadItems()).some((i) => i.filePath === '我的/复习/A.md')).toBe(true); // 原条目未动
   });
@@ -398,12 +409,12 @@ describe('批 B 修复回归：watch 事件链（2026-09-19 深审）', () => {
     setupWatched(settings);
     const w = new ReviewWatcher(app, dm);
     w.onVaultDelete({ path: '我的/复习/A.md', extension: 'md', basename: 'A' } as any);
-    await new Promise((r) => setTimeout(r, 350)); // 防抖 300ms
+    await vi.advanceTimersByTimeAsync(350); // 防抖 300ms
     const popup = document.getElementById('__shared_confirm_popup__')!;
     expect(popup.textContent).toContain('「A」已从 vault 删除');
     expect(popup.textContent).not.toContain('A.md');
     (document.getElementById('__shared_confirm_cancel__') as HTMLElement).click();
-    await new Promise((r) => setTimeout(r, 30));
+    await vi.advanceTimersByTimeAsync(30);
   }, 10000);
 
   it('C-UX2：确认移除 → notifyUndo 撤销原样插回（不再只发一条不可反悔的 success）', async () => {
@@ -416,9 +427,9 @@ describe('批 B 修复回归：watch 事件链（2026-09-19 深审）', () => {
     setupWatched(settings);
     const w = new ReviewWatcher(app, dm);
     w.onVaultDelete({ path: '我的/复习/A.md', extension: 'md', basename: 'A' } as any);
-    await new Promise((r) => setTimeout(r, 350));
+    await vi.advanceTimersByTimeAsync(350);
     (document.getElementById('__shared_confirm_ok__') as HTMLElement).click();
-    await new Promise((r) => setTimeout(r, 30));
+    await vi.advanceTimersByTimeAsync(30);
     expect((await dm.loadItems()).some((i) => i.filePath === '我的/复习/A.md')).toBe(false);
     expect(hasNotice(/已移除 1 条复习记录/)).toBe(true);
     const undoBtn = [...document.querySelectorAll('.bz-notice-action')].find(
@@ -426,7 +437,7 @@ describe('批 B 修复回归：watch 事件链（2026-09-19 深审）', () => {
     ) as HTMLElement | undefined;
     expect(undoBtn).toBeTruthy();
     undoBtn!.click();
-    await new Promise((r) => setTimeout(r, 30));
+    await vi.advanceTimersByTimeAsync(30);
     expect((await dm.loadItems()).some((i) => i.filePath === '我的/复习/A.md')).toBe(true); // 原样插回
   }, 10000);
 });

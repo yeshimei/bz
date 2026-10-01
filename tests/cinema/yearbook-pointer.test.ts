@@ -164,6 +164,12 @@ describe('观影志 · 引擎把指针转给「当前这一幕」', () => {
   let handle: { stop(): void } | null = null;
 
   beforeEach(() => {
+    // 引擎是「按秒演」的：进场演出、过片、指针缓动全靠 rAF 心跳推 performance.now。
+    // 全假钟（含 performance/rAF）→ 等待变成瞬时快进，行为断言一字不改。
+    vi.useFakeTimers({
+      toFake: ['setTimeout', 'clearTimeout', 'setInterval', 'clearInterval',
+        'requestAnimationFrame', 'cancelAnimationFrame', 'performance', 'Date'],
+    });
     document.body.innerHTML = '';
     ovl = document.createElement('div');
     ovl.className = 'bz-yb';
@@ -172,13 +178,17 @@ describe('观影志 · 引擎把指针转给「当前这一幕」', () => {
     sc = ovl.querySelector('.bz-yb-scroll') as HTMLElement;
     Object.defineProperty(sc, 'clientHeight', { value: 600, configurable: true });
   });
-  afterEach(() => { handle?.stop(); handle = null; });
+  afterEach(() => {
+    handle?.stop();
+    handle = null;
+    vi.useRealTimers();
+  });
 
   it('悬停日晷：针跟着指针转，盘心报出那一格（切幕后不再吃指针）', async () => {
     handle = bindYearbook(ovl, deriveYb(FIXTURE));
     const rail = ovl.querySelectorAll('.yb-rail-t')[3] as HTMLElement; // 04 星期节律
     rail.click();
-    await new Promise((r) => setTimeout(r, 2400)); // 进场演完（t>2.2 之后指针才接管）
+    await vi.advanceTimersByTimeAsync(2400); // 进场演完（t>2.2 之后指针才接管）
     const face = ovl.querySelector('[data-r="face"]') as HTMLElement;
     const needle = ovl.querySelector('[data-r="needle"]') as HTMLElement;
     const hub = ovl.querySelector('.yb-dial-hub') as HTMLElement;
@@ -187,50 +197,50 @@ describe('观影志 · 引擎把指针转给「当前这一幕」', () => {
     const before = needle.style.transform;
     // 指针摆在盘面的右下：0° 在正上方、顺时针为正 → 落在 90°~135° 那一格（周三 ~ 周四）
     ovl.dispatchEvent(new PointerEvent('pointermove', { clientX: 400, clientY: 280, bubbles: true }));
-    await new Promise((r) => setTimeout(r, 400));
+    await vi.advanceTimersByTimeAsync(400);
     expect(needle.style.transform).not.toBe(before);
     expect(hub.textContent).toContain('周'); // 盘心从「N 部」换成「N 周X」
     // 翻到下一幕：不该再吃指针（上一幕不许背着演）。
     // 过片要 160ms，等遮片合上、上一幕被推到终态之后再取基准值
     (ovl.querySelectorAll('.yb-rail-t')[4] as HTMLElement).click();
-    await new Promise((r) => setTimeout(r, 600));
+    await vi.advanceTimersByTimeAsync(600);
     const after = needle.style.transform;
     ovl.dispatchEvent(new PointerEvent('pointermove', { clientX: 120, clientY: 120, bubbles: true }));
-    await new Promise((r) => setTimeout(r, 320));
+    await vi.advanceTimersByTimeAsync(320);
     expect(needle.style.transform).toBe(after);
   });
 
   it('浮签跟着指针走，翻幕时收干净（不挂在上一层楼上）', async () => {
     handle = bindYearbook(ovl, deriveYb(FIXTURE));
     (ovl.querySelectorAll('.yb-rail-t')[2] as HTMLElement).click(); // 03 落笔的日子
-    await new Promise((r) => setTimeout(r, 300));
+    await vi.advanceTimersByTimeAsync(300);
     const cell = ovl.querySelector('.yb-cell[data-tip]') as HTMLElement;
     expect(cell, '夹具里应当有点亮过的日子').toBeTruthy();
     withHitTest(cell, () => {
       ovl.dispatchEvent(new PointerEvent('pointermove', { clientX: 200, clientY: 200, bubbles: true }));
     });
-    await new Promise((r) => setTimeout(r, 300));
+    await vi.advanceTimersByTimeAsync(300);
     const box = ovl.querySelector('.yb-tip') as HTMLElement;
     expect(box).toBeTruthy();
     expect(box.style.opacity).toBe('1');
     expect(box.textContent).toContain('部');
     (ovl.querySelectorAll('.yb-rail-t')[3] as HTMLElement).click();
-    await new Promise((r) => setTimeout(r, 320));
+    await vi.advanceTimersByTimeAsync(320);
     expect(box.style.opacity).toBe('0');
   });
 
   it('按下/松开只影响天平一幕：松手后秤杆回到数据那一档', async () => {
     handle = bindYearbook(ovl, deriveYb(FIXTURE));
     (ovl.querySelectorAll('.yb-rail-t')[14] as HTMLElement).click(); // 15 打分天平
-    await new Promise((r) => setTimeout(r, 300));
+    await vi.advanceTimersByTimeAsync(300);
     const arm = ovl.querySelector('[data-r="arm"]') as HTMLElement;
     const pan = ovl.querySelector('.yb-bal-pan.l') as HTMLElement;
     stubRect(pan);
     ovl.dispatchEvent(new PointerEvent('pointerdown', { clientX: 200, clientY: 200, bubbles: true }));
-    await new Promise((r) => setTimeout(r, 400));
+    await vi.advanceTimersByTimeAsync(400);
     const pressed = arm.style.transform;
     ovl.dispatchEvent(new PointerEvent('pointerup', { clientX: 200, clientY: 200, bubbles: true }));
-    await new Promise((r) => setTimeout(r, 700));
+    await vi.advanceTimersByTimeAsync(700);
     expect(arm.style.transform).not.toBe(pressed); // 松手后往回走
   });
 

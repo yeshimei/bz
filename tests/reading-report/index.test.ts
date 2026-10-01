@@ -9,7 +9,7 @@
  * - C-6：dedupeKey 退役——连续两次渲染各自有独立 toast（去重契约不再被唯一键虚化）。
  * （报告容器由 bookshelf 面板提供，此处直接传容器。）
  */
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
 import { setApp } from '../../src/core/app';
 import { setSettingsProvider } from '../../src/core/settings-provider';
 import * as noticeModule from '../../src/core/notice';
@@ -87,6 +87,17 @@ function notices(): HTMLElement[] {
 async function waitReportRendered(container: HTMLElement, timeout = 6000): Promise<void> {
   await until(() => container.querySelectorAll('.bz-rr-card').length >= 9, timeout);
 }
+
+// 文件级假钟：等待一律可控快进（真实等待归零）
+beforeEach(() => {
+  vi.useFakeTimers({
+    toFake: ['setTimeout', 'clearTimeout', 'setInterval', 'clearInterval', 'Date',
+      'requestAnimationFrame', 'cancelAnimationFrame', 'performance'],
+  });
+});
+afterEach(() => {
+  vi.useRealTimers();
+});
 
 describe('报告视图渲染（面板内容区）', () => {
   beforeEach(() => {
@@ -175,7 +186,7 @@ describe('报告视图渲染（面板内容区）', () => {
     // 同步取消（分片渲染尚未开始；小库本无 toast，cancel 幂等无残留）
     cancelReadingReport();
     container.remove();
-    await new Promise((r) => setTimeout(r, 450));
+    await vi.advanceTimersByTimeAsync(450);
     expect(document.querySelector('#bz-notice-container .bz-notice')).toBeNull();
   });
 
@@ -184,7 +195,7 @@ describe('报告视图渲染（面板内容区）', () => {
     const container = newContainer();
     renderReadingReport(container, makeApp(vault));
     container.remove(); // 模拟 closeOverlay 摘除面板
-    await new Promise((r) => setTimeout(r, 120));
+    await vi.advanceTimersByTimeAsync(120);
     // 不抛错即通过（分片循环逐段检查 container.isConnected）
     expect(container.isConnected).toBe(false);
   });
@@ -206,7 +217,7 @@ describe('报告视图渲染（面板内容区）', () => {
     const container = newContainer();
     renderReadingReport(container, makeApp(vault));
     unloadReadingReport();
-    await new Promise((r) => setTimeout(r, 450));
+    await vi.advanceTimersByTimeAsync(450);
     expect(document.querySelector('#bz-notice-container .bz-notice')).toBeNull();
     renderReadingReport(container, makeApp(vault));
     await waitReportRendered(container);
@@ -225,7 +236,7 @@ describe('报告视图渲染（面板内容区）', () => {
 
     // 同签名：短路返回——探针仍在（容器未被重写）、无 toast
     renderReadingReport(container, app, { dataSignature: 'sig-1' });
-    await new Promise((r) => setTimeout(r, 80));
+    await vi.advanceTimersByTimeAsync(80);
     expect(container.querySelector('#sig-probe')).not.toBeNull();
     expect(notices().length).toBe(0);
 

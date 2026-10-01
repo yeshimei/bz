@@ -26,7 +26,8 @@ import { resetAIProviderCache, setAISettingsProvider } from '../../src/core/ai';
 import { MockVault } from '../mock-vault';
 import { resetObsidianMocks, hasNotice, clearNotices, Platform } from '../mock-obsidian-entry';
 
-const tick = (ms = 0) => new Promise((r) => setTimeout(r, ms));
+/** 假钟推进（文件级 beforeEach 已装假钟）：等一拍 / 等防抖 / 等滚动动画一律走它——真实等待归零 */
+const tick = (ms = 0) => vi.advanceTimersByTimeAsync(ms);
 const flush = () => tick(5);
 
 const DATA_PATH = 'CONFIG/STORAGE/belongings.json';
@@ -148,6 +149,18 @@ function close() {
 function clickChip(key: string) {
   (chipOf(key) as HTMLElement).click();
 }
+
+// 文件级假钟：tick 只推假钟不烧真实时间（防抖 / 滚动动画 / rAF 全部可控快进；
+// performance 一并假，滚动动画按假钟 elapsed 收尾）。个别用例自装的假钟（含 setSystemTime）会覆盖本档，行为不变。
+beforeEach(() => {
+  vi.useFakeTimers({
+    toFake: ['setTimeout', 'clearTimeout', 'setInterval', 'clearInterval', 'Date',
+      'requestAnimationFrame', 'cancelAnimationFrame', 'performance'],
+  });
+});
+afterEach(() => {
+  vi.useRealTimers();
+});
 
 // ==================== 面板开合 / 空态 / 清理 ====================
 

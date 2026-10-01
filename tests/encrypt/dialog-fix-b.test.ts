@@ -49,6 +49,17 @@ function dialogControls(mask: HTMLElement) {
   };
 }
 
+// 文件级假钟：20/30ms 拍 / 密码错误冷却（1100ms）全部可控快进，真实等待归零
+beforeEach(() => {
+  vi.useFakeTimers({
+    toFake: ['setTimeout', 'clearTimeout', 'setInterval', 'clearInterval', 'Date',
+      'requestAnimationFrame', 'cancelAnimationFrame', 'performance'],
+  });
+});
+afterEach(() => {
+  vi.useRealTimers();
+});
+
 describe('批 B · T1 孤立 % 附件名（decodeURIComponent URIError 静默失败）', () => {
   let vault: MockVault;
   let dm: SafeManager;
@@ -156,7 +167,7 @@ describe('批 B · T2 上锁/关窗收场（预览明文浮层 + body 弹层）'
   it('hide 收场：体检窗（窗内为体检发现）随面板关闭一并收起', async () => {
     await dm.lockNote({ path: '笔记/h.md', title: 'H', content: '# h', attachments: [] });
     ui.show();
-    await new Promise((r) => setTimeout(r, 20));
+    await vi.advanceTimersByTimeAsync(20);
     await ui.openHealthDialog();
     await waitFor(() => document.getElementById('bz-encrypt-health-popup')!.style.display === 'flex');
     ui.hide();
@@ -311,7 +322,7 @@ describe('批 B · T5 外部上锁事件侧清场 + 锁定态预览提示', () =
       attachments: [{ path: 'pic.png', data: 'QUJD', previewData: 'data:image/jpeg;base64,QUJD' }],
     });
     ui.show();
-    await new Promise((r) => setTimeout(r, 20));
+    await vi.advanceTimersByTimeAsync(20);
     (ui as any)._selNoteId = note.id;
     (ui as any)._diaryPlain['d1'] = '明文';
     ui.lastHealth = { issues: 1, lastChecked: 'x' };
@@ -319,7 +330,7 @@ describe('批 B · T5 外部上锁事件侧清场 + 锁定态预览提示', () =
     await waitFor(() => ui.previewPopup!.style.display === 'flex');
     // 模拟密码本面板侧直调 SafeManager.lock()（不经本域 lockNow/hide）
     dm.lock();
-    await new Promise((r) => setTimeout(r, 30));
+    await vi.advanceTimersByTimeAsync(30);
     expect(ui.popup!.style.display).toBe('none'); // 面板收起（重开走解锁）
     expect(ui.previewPopup!.style.display).toBe('none'); // 预览明文收起
     expect((ui as any)._selNoteId).toBeNull();
@@ -399,7 +410,7 @@ describe('批 B · T6 解锁屏单例 + T7 busy 防重 + T11 密码错误单通�
     expect(msgs).toEqual(['密码错误，1 秒后可重试']); // 恰一条，双信息合一
     expect(getNoticeMessages().some((m) => m.includes('可再次尝试'))).toBe(false);
     // 冷却结束后正确密码可解锁（不回归节流行为）
-    await new Promise((r) => setTimeout(r, 1100));
+    await vi.advanceTimersByTimeAsync(1100);
     input.value = 'pw';
     btn.click();
     expect(await p).toBe(true);
@@ -481,7 +492,7 @@ describe('批 B · T9 体检重入守卫 + T10 体检锁定态如实', () => {
     await waitFor(() => rescan()?.disabled === true); // 扫描中禁用
     const calls = spy.mock.calls.length;
     rescan().click(); // 重入被旗标拦截
-    await new Promise((r) => setTimeout(r, 40));
+    await vi.advanceTimersByTimeAsync(40);
     expect(spy.mock.calls.length).toBe(calls);
     resolveScan({ items: [], integrityChecked: true });
     await waitFor(() => rescan()?.disabled === false); // 收场复位
@@ -509,7 +520,7 @@ async function readStatsEventually(kind: 'vault' | 'diary' | 'password-vault') {
   let stats: Awaited<ReturnType<typeof readLockStats>> = null;
   while (!(stats = await readLockStats(kind))) {
     if (Date.now() - start > 4000) break;
-    await new Promise((r) => setTimeout(r, 25));
+    await vi.advanceTimersByTimeAsync(25);
   }
   return stats;
 }

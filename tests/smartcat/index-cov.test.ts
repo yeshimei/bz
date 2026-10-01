@@ -53,7 +53,8 @@ function makeApp() {
   return { app, vault };
 }
 
-const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+/** 假钟推进（文件级 beforeEach 已装假钟）：等一拍 / 等防抖/结算一律走它——真实等待归零 */
+const sleep = (ms: number) => vi.advanceTimersByTimeAsync(ms);
 const todayStr = () => {
   const d = new Date();
   const p = (n: number) => String(n).padStart(2, '0');
@@ -79,6 +80,11 @@ const bubbleListener = (d: any) => bubbles.push(d?.message ?? '');
 let origFetch: typeof fetch;
 
 beforeEach(() => {
+  // 全文件假钟：sleep 只推假钟不烧真实时间（防抖 / 结算 / 打字机全部可控快进）
+  vi.useFakeTimers({
+    toFake: ['setTimeout', 'clearTimeout', 'setInterval', 'clearInterval', 'Date',
+      'requestAnimationFrame', 'cancelAnimationFrame', 'performance'],
+  });
   resetObsidianMocks();
   document.body.innerHTML = '';
   settings = { storagePath: 'CONFIG/STORAGE', smartcatEnabled: true };

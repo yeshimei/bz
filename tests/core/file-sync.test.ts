@@ -8,7 +8,7 @@
  * 域事件走内存总线 domain-bus（模块级 Map 即内存 fake）；域数据层用内存数组
  * 模拟读改写（纯逻辑无 DOM，故标 node 环境）。
  */
-import { describe, it, expect, vi, afterEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 vi.mock('../../src/core/notice', async (importOriginal) => {
   const actual = await importOriginal<typeof import('../../src/core/notice')>();
   return {
@@ -26,7 +26,16 @@ interface Ref {
   path?: string | null;
 }
 
-const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+/** 假钟推进（文件级 beforeEach 已装假钟）：等去抖窗口 / 等队列一律走它——真实等待归零 */
+const sleep = (ms: number) => vi.advanceTimersByTimeAsync(ms);
+
+// 文件级假钟：去抖窗口（300ms 缺省 / 注入窗口）与队列等待全部可控快进
+beforeEach(() => {
+  vi.useFakeTimers({
+    toFake: ['setTimeout', 'clearTimeout', 'setInterval', 'clearInterval', 'Date',
+      'requestAnimationFrame', 'cancelAnimationFrame', 'performance'],
+  });
+});
 
 /** 域 fake：内存数组数据 + 写盘/纯函数调用记录 */
 function makeAgent(opts: Partial<FileSyncConfig<Ref[], FileSyncRenameEvent>> & { debounce?: string } = {}) {
@@ -77,6 +86,7 @@ async function flushQueue(windowMs: number) {
 afterEach(() => {
   clearDomainEvents(); // 总线为模块级单例：清掉跨测试残留订阅
   vi.mocked(notify).mockClear();
+  vi.useRealTimers();
 });
 
 describe('watched folders 匹配与范围放行', () => {

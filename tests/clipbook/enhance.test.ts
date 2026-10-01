@@ -78,6 +78,17 @@ afterEach(() => {
   document.body.innerHTML = '';
 });
 
+// 文件级假钟：等待一律可控快进（真实等待归零）
+beforeEach(() => {
+  vi.useFakeTimers({
+    toFake: ['setTimeout', 'clearTimeout', 'setInterval', 'clearInterval', 'Date',
+      'requestAnimationFrame', 'cancelAnimationFrame', 'performance'],
+  });
+});
+afterEach(() => {
+  vi.useRealTimers();
+});
+
 describe('桌面搜索（enh 包 1）', () => {
   it('desk-head 搜索框存在；输入 180ms 防抖后列表过滤', async () => {
     await openDesktop();
@@ -86,7 +97,7 @@ describe('桌面搜索（enh 包 1）', () => {
     // 防抖窗口内不刷新
     input.value = '影视飓风';
     input.dispatchEvent(new Event('input', { bubbles: true }));
-    await new Promise((r) => setTimeout(r, 60));
+    await vi.advanceTimersByTimeAsync(60);
     expect(document.querySelectorAll('.bz-clip-item').length).toBe(2);
     // 防抖到期 → 过滤命中 1 条
     await vi.waitFor(() => expect(document.querySelectorAll('.bz-clip-item').length).toBe(1));
@@ -190,7 +201,7 @@ describe('rail 源行批量已读（enh 包 4）', () => {
     const clipRow = [...document.querySelectorAll('.bz-rail-item')].find((r) => r.textContent!.includes('剪藏本')) as HTMLElement;
     clipRow.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true, clientX: 10, clientY: 10 }));
     // 无动作 → 不弹菜单
-    await new Promise((r) => setTimeout(r, 60));
+    await vi.advanceTimersByTimeAsync(60);
     expect(document.querySelector('.bz-item-menu')).toBeNull();
   });
 });
@@ -233,7 +244,7 @@ describe('误标/误删可撤销（enh 包 5）', () => {
     const delBtn = [...menu.querySelectorAll('.bz-item-menu-item')].find((b) => b.textContent!.trim() === '删除') as HTMLElement;
     expect(delBtn.title).toBe('从收件流删除'); // 确认点的是收件流分支（非剪藏本删除）
     delBtn.click();
-    await new Promise((r) => setTimeout(r, 30));
+    await vi.advanceTimersByTimeAsync(30);
     // 免确认：确认框不出现，条目直落
     expect(document.querySelector('#__shared_confirm_popup__')).toBeNull();
     await vi.waitFor(() => expect(diskJson(vault).articles).toHaveLength(1));
@@ -264,7 +275,7 @@ describe('误标/误删可撤销（enh 包 5）', () => {
     const menu = await openContextMenuOn(item);
     const delBtn = [...menu.querySelectorAll('.bz-item-menu-item')].find((b) => b.textContent!.trim() === '删除') as HTMLElement;
     delBtn.click();
-    await new Promise((r) => setTimeout(r, 30));
+    await vi.advanceTimersByTimeAsync(30);
     // 免确认：确认框不出现，直接进系统回收站
     expect(document.querySelector('#__shared_confirm_popup__')).toBeNull();
     await vi.waitFor(() => {
@@ -432,7 +443,7 @@ describe('重新生成摘要入口与查看定位（enh-autosum 包）', () => {
     await gotoClipSource(2);
     const card = [...document.querySelectorAll('.bz-clip-mob-item')].find((c) => c.textContent!.includes('长文剪藏')) as HTMLElement;
     card.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, cancelable: true, button: 0 }));
-    await new Promise((r) => setTimeout(r, 700)); // 超过长按阈值 500ms
+    await vi.advanceTimersByTimeAsync(700); // 超过长按阈值 500ms
     card.dispatchEvent(new MouseEvent('mouseup', { bubbles: true }));
     await vi.waitFor(() => expect(document.querySelector('.bz-item-sheet')).toBeTruthy());
     const sheet = document.querySelector('.bz-item-sheet') as HTMLElement;
