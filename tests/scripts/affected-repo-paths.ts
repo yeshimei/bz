@@ -18,6 +18,11 @@ export const REPO = {
   uiComponents: 'src/core/ui/components.css',
   memoData: 'src/memo/data.ts',
   lockfile: 'pnpm-lock.yaml',
+  pkgJson: 'package.json',
+  vitestConfig: 'vitest.config.ts',
+  tsconfig: 'tsconfig.json',
+  testsSetup: 'tests/setup.ts',
+  testDomainScript: 'scripts/test-domain.mjs',
   rootMainJs: 'main.js',
   /** 依赖图外但**有守卫在读**（tests/core/skin-pack-catalog.test.ts 用字符串字面量指着它） */
   downloadsManifest: 'downloads/manifest.json',
@@ -26,7 +31,19 @@ export const REPO = {
   prototypesFakeObsidian: 'prototypes/diary/fake/fake-obsidian.ts',
   docChangelog: 'docs/changelog.md',
   issueFile: 'issues/534-test-affected-incremental.md',
-  readme: 'README.md',
+  /** 本套测试自己（「不许有自指边」那条守卫要用它指自己） */
+  selfTest: 'tests/scripts/test-affected.test.mjs',
+} as const;
+
+/**
+ * 目录前缀断言用。同样是真实仓库路径片段，写进测试文件就会变成目录边
+ * （`'downloads/skins/'` 一出现，本文件就被绑到远端皮肤目录上）。
+ */
+export const PREFIX = {
+  /** 目录整树边必须展开到这里（git 可见集 ∩ downloads 前缀） */
+  downloadsSkins: 'downloads/skins/',
+  /** 幂等性分母不该混进被 git 忽略的目录 */
+  nodeModules: 'node_modules/',
 } as const;
 
 /** 断言用的守卫文件路径（同样理由不写在测试文件里） */

@@ -17,7 +17,7 @@
     "test": "vitest run",
     "test:dom": "node scripts/test-domain.mjs",
     "test:affected": "node scripts/test-affected.mjs",
-    "test:changed": "node scripts/test-affected.mjs",
+    "test:changed": "node scripts/test-affected.mjs --since master",
     "test:changed:vitest": "vitest run --changed master",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage --maxWorkers=2"

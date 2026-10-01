@@ -69,6 +69,13 @@ vitest 的图只看 `transformed.deps ∪ transformed.dynamicDeps`，**永远看
 实测建边结果：**111 个测试有文本边**（281 条文件级 + 58 条目录级），**其中 43 个含整树级**，
 其余精确绑定到本域 —— 这比「一律常跑 96 个守卫」精确得多。
 
+**目录边在指纹里的分母 = git 可见全集（tracked ∪ 未跟踪未忽略），不是 `src/`**（自审抓到的 P0）：
+初版展开成 `for (const f of srcFiles)`，于是索引根之外的目录边（`downloads/`、`manual/`、
+`prototypes/`、`tools/`）会**选中守卫却一个文件都没进指纹**，`applyCache` 拿旧 pass 一复用 ——
+**选中 ≠ 会跑**，是确定性漏测而不是理论风险。改成与变更集同口径后，新增 / 删除 / 修改都会改指纹
+（被删的 tracked 文件留在集合里、内容按 `missing` 计），`node_modules` 等被忽略目录不进来
+（它们永不出现在变更集里），非 git 目录（测试夹具）退回磁盘扫描。
+
 **文本边的判定依据是「路径在仓库里真实存在」，不是「根目录 ∈ {src,tests,scripts}」**
 （初版用了白名单，被自己的自审打回）：`downloads/manifest.json`、`tools/obsidian-face/lib/*.js`、
 `prototypes/**`、`manual/**` 这些**索引根之外**的路径一样有守卫在读，白名单把它们全挡在门外，
@@ -94,8 +101,15 @@ vitest 的图只看 `transformed.deps ∪ transformed.dynamicDeps`，**永远看
 
 - key = `TOOL ‖ LOCK ‖ CONFIG ‖ HARNESS ‖ ENV ‖ 依赖闭包内容 hash`
   （harness 分片含 node/pnpm/vitest 版本、锁文件、`vitest.config.ts`、`tsconfig.json`、
-  `scripts/test-workers.mjs`、`tests/setup.ts`、两个 mock、`BZ_TEST_MAX_WORKERS`、**本地日期**）
-- **只复用 `status = pass`**；fail / 靠 retry 救回的 flaky 一律重跑
+  `scripts/test-workers.mjs`、`tests/setup.ts`、两个 mock、`BZ_TEST_MAX_WORKERS`、**本地日期**、
+  **工具自身的 sha256（`tool:`）**）。`tool:` 不能省：少了它，改选择口径（如目录边从只展开 src
+  改成展开全目录）后旧 rows 的 key 算法已变却仍「对得上」，**修复会被旧缓存原样继承**；
+  字段形状另有 `CACHE_VERSION` 闸（version 不符整包丢）。内容按**字节**哈希（不按 utf8），
+  否则 `downloads/`、`prototypes/` 下的图片/HTML 会被 U+FFFD 归一化，不同文件撞同一个指纹
+- **只复用 `status = pass`**；fail 一律重跑。**靠 retry 救回的 flaky 认不出来**：vitest 的 json
+  报告里没有 `retryCount`（实测 `assertionResults` 只有 status/duration），要区分得自挂 reporter
+  读 `diagnostic().retryCount`，代价大于收益；与本仓 `retry: 2`「flaky 抖动自动吸收」同一口径
+  —— 该用例本轮确实通过，不是漏测
 - **只要本轮退出码 0 就写回**（增量跑也写）。缓存是**按文件**的：某文件本轮 pass 且其依赖
   闭包指纹一致，这个 pass 就成立，与「本轮一共跑了几个文件」无关；没跑到的文件保持原条目不动，
   不会被增量结论伪造成通过。原子写（并发 worktree）
@@ -121,33 +135,48 @@ vitest 的图只看 `transformed.deps ∪ transformed.dynamicDeps`，**永远看
 
 ## 五、验收
 
-`tests/scripts/test-affected.test.mjs`（28 项，node 环境）：
+`tests/scripts/test-affected.test.mjs`（36 项，node 环境）：
 
-- 三类边都真的建得起来（含「路径藏在 helper 里」这种原生抓不到的形态）；
+- 三类边都真的建得起来（含「路径藏在 helper 里」这种原生抓不到的形态；含目录实参带尾斜杠
+  `'src/big/'` 的写法）；
 - 文本边**不限索引根**（`downloads/`、`tools/` 下的真实路径也建边），且**不认不存在的路径**
   （URL / `D:/` 绝对路径 / `.obsidian/...` vault 路径 / 含空格的句子 / 夹具假路径一律丢）；
 - 硬升格该全量时全量、不该全量时**别**全量；「依赖图外」按**有无边**分流；
-- 缓存：内容变 / 依赖变 / harness 变 → key 变；只复用 pass；`updateFromReport` 只回写本轮跑过的；
+- CLI 参数：`--since master` 与 `--since=master` 等价、`--since` 空值按没传处理、
+  `--` 之后一律透传、`--full`/`--list`/`--no-cache`/自带 reporter 都认得出；
+- 缓存：内容变 / 依赖变 / harness 变（含**工具自身**）→ key 变；只复用 pass；
+  `updateFromReport` 只回写本轮跑过的；**目录整树边展开到索引根之外**（改 / 增 / 删
+  `downloads/**` 都要改指纹，且选中后不得被旧 pass 复用）；
 - **真实仓库回归（防回到假绿）**：改 `src/memo/styles.css` 必须命中
   `tests/memo/skin-dark.test.ts`；改 `components.css` 必须命中 `tests/core/ui-scrollbar.test.ts`；
   改锁文件必须全量；改域内源码必须命中三个整树守卫（依赖方向 / 渲染纯度 / 聚合清单）；
   改 `downloads/manifest.json` 必须命中 `skin-pack-catalog`（**且不是全量**）；
-  改根 `main.js` 必须全量。
+  改根 `main.js` 必须全量；**整树边的 deps 里必须真的有 `downloads/skins/**`、且不混进
+  `node_modules`**；**本测试文件自身的字面量边必须恰好是 `package.json` / `tests/setup.ts` /
+  `scripts/test-affected.mjs` 三条**（多一条就是自指边回归）。
 
 > 测试文件里**不许出现指向真实仓库的路径字面量**（夹具用假名，真实路径从
 > `tests/scripts/affected-repo-paths.ts` 取）：否则这些字面量会被选择器当成文本边读走，
 > 轻则自指噪声，重则把「改构建产物 → 全量」这类兜底压掉 —— 测试自己变成假绿源。
+> 这条纪律已由上面最后那条断言**强制**：实测踩坑来源就是夹具里为测「不像路径的字符串」
+> 写下的裸 `'tools'` / `'downloads'`，它们在真实仓库里正好是根一级目录名。
+>
+> 另一处实测坑：**`fileKey` 不是索引的纯函数**（目录边现读磁盘展开）。测试里必须在变更发生的
+> 那一刻把指纹钉进变量；事后再拿同一个 `index` 重算，算出来已是变更后的口径，两边「一致地错」，
+> 断言永远为绿（本轮就是这样假绿了一次）。
 
 ## 六、命令
 
 ```bash
 pnpm test:affected                     # 相对 HEAD 的未提交改动（开发循环）
-pnpm test:affected --since master      # 分支上相对主线的全部改动
+pnpm test:affected --since master      # 分支上相对主线的全部改动（--since=master 同义）
 pnpm test:affected --list              # 只看选择结果与理由，不跑
 pnpm test:affected --full              # 强制全量并刷新结果缓存
 pnpm test:affected --no-cache          # 忽略缓存
 pnpm test:affected -- src/memo/data.ts # 显式指定变更文件（诊断/回归用）
-pnpm test:changed                      # 已指向新脚本（旧的原生版本改名 test:changed:vitest 留作诊断）
+pnpm test:affected -- --reporter=dot   # -- 之后透传给 vitest（自带 reporter 时本轮不写缓存）
+pnpm test:changed                      # = test:affected --since master
+                                       # （旧的原生版本改名 test:changed:vitest 留作诊断）
 ```
 
 **门的纪律不变：合并前仍跑全量 `pnpm test`。** 增量只是开发循环的加速器，

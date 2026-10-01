@@ -42,6 +42,10 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const VITEST = path.join(ROOT, 'node_modules', 'vitest', 'vitest.mjs');
 const CACHE_DIR = path.join(ROOT, '.bz-test-cache');
 const CACHE_FILE = path.join(CACHE_DIR, 'results.json');
+/** 工具自身路径：进 harness 分片（见 harnessParts），改了选择口径旧缓存必须整体作废 */
+const TOOL_SELF = fileURLToPath(import.meta.url);
+/** 缓存结构版本：不与 tool 分片重复，但改字段形状时得一起抬 */
+const CACHE_VERSION = 1;
 
 /** 只索引这些目录（node_modules 等一律不看） */
 const INDEX_ROOTS = ['src', 'tests', 'scripts'];
@@ -52,21 +56,28 @@ const INDEXABLE = /\.(ts|mjs|js|css|json)$/;
 const slash = (p) => p.split(path.sep).join('/');
 
 /**
- * 文件内容缓存：一次运行内每个文件只读一遍。
+ * 文件内容缓存：一次运行内每个文件只读一遍，**读字节**（不是解码后的文本）。
  * 必要性：算结果指纹时要对「自身 ∪ 依赖闭包」逐个哈希，而扫树守卫的闭包≈整棵 src
- * （491 个文件 × 18 个守卫），不缓存就是几十万次重复读盘。
+ * （491 个文件 × 43 个守卫），不缓存就是几十万次重复读盘。
+ * 为什么要字节：目录边会盖住 `downloads/`、`prototypes/` 里的 .css/.html/图片，
+ * `readFileSync(p,'utf8')` 会把所有非法字节统一成 U+FFFD —— 两个不同的二进制文件可能
+ * 解出同一个字符串，指纹就撞了。哈希一律走 Buffer。
  */
-const contentCache = new Map();
-function readText(abs) {
-  if (contentCache.has(abs)) return contentCache.get(abs);
-  let text = null;
+const bytesCache = new Map();
+function readBytes(abs) {
+  if (bytesCache.has(abs)) return bytesCache.get(abs);
+  let buf = null;
   try {
-    text = fs.readFileSync(abs, 'utf8');
+    buf = fs.readFileSync(abs);
   } catch {
-    text = null;
+    buf = null;
   }
-  contentCache.set(abs, text);
-  return text;
+  bytesCache.set(abs, buf);
+  return buf;
+}
+function readText(abs) {
+  const buf = readBytes(abs);
+  return buf === null ? null : buf.toString('utf8');
 }
 
 /**
@@ -90,12 +101,18 @@ function statOrNull(abs) {
 
 /** 相对说明符 → 仓库内文件（按「所在目录 + 说明符」记忆化，重复 import 不再重试 8 个后缀） */
 const resolveCache = new Map();
+/** 目录整树边 → 文件列表（见 expandDir） */
+const dirExpansionCache = new Map();
+/** git 可见文件全集（见 gitVisibleSet） */
+const gitVisibleCache = new Map();
 
 /** 供测试用：丢掉内容缓存（临时目录夹具改文件后必须调） */
 export function _clearContentCache() {
-  contentCache.clear();
+  bytesCache.clear();
   statCache.clear();
   resolveCache.clear();
+  dirExpansionCache.clear();
+  gitVisibleCache.clear();
 }
 
 function walk(dir, acc = []) {
@@ -164,6 +181,25 @@ export function collectChanged({ root = ROOT, since = 'HEAD' } = {}) {
     out.set(slash(f), 'A');
   }
   return [...out.entries()].map(([file, status]) => ({ file, status }));
+}
+
+/**
+ * 「git 能报成变更的文件」全集 = tracked ∪ 未跟踪未忽略。
+ * 与 collectChanged 的口径严格一致，非 git 目录返回 null（测试夹具退回磁盘扫描）。
+ * 用途是算目录整树边的指纹分母：新增文件在、被删的 tracked 文件也还在（内容按 missing 计），
+ * 增 / 删 / 改三种都能让指纹变。相反 `git ls-files` 之外的东西（node_modules 等被忽略的目录）
+ * 不进来 —— 它们永远不会出现在变更集里，不该参与指纹，也不该被整树遍历。
+ */
+function gitVisibleSet(root) {
+  if (gitVisibleCache.has(root)) return gitVisibleCache.get(root);
+  const tracked = git(root, ['ls-files']);
+  let set = null;
+  if (tracked) {
+    set = new Set(tracked.map(slash));
+    for (const f of git(root, ['ls-files', '--other', '--exclude-standard']) ?? []) set.add(slash(f));
+  }
+  gitVisibleCache.set(root, set);
+  return set;
 }
 
 // ───────────────────────────── 依赖索引 ─────────────────────────────
@@ -240,7 +276,11 @@ function resolveFile(root, fromAbs, spec, fileSet = null) {
 
 /** 把字符串字面量归一成 repo 相对路径（逃出仓库的一律丢） */
 function normalizeTextPath(root, fromAbs, raw) {
-  const cleaned = raw.trim().replace(/^\.\//, '');
+  const cleaned = raw
+    .trim()
+    .replace(/\\/g, '/') // 字面量里的反斜杠写法（'src\\x.css'）也要能认
+    .replace(/^\.\//, '')
+    .replace(/\/+$/, ''); // 'src/' 这种带尾斜杠的目录实参：不剥掉就永远匹配不上任何文件
   const rel = cleaned.startsWith('../')
     ? slash(path.relative(root, path.resolve(path.dirname(fromAbs), cleaned)))
     : cleaned;
@@ -324,6 +364,29 @@ export function buildIndex(root = ROOT, files = indexableFiles(root)) {
 
 function dirMatches(dirTarget, file) {
   return file === dirTarget || file.startsWith(`${dirTarget}/`);
+}
+
+/**
+ * 目录整树边 → 该目录下「可能被报成变更」的全部文件（升序，供指纹用）。
+ *
+ * **这是自审抓到的 P0**：初版把目录边写成 `for (const f of srcFiles) if (dirMatches(target, f))`，
+ * 也就是只拿 `src/` 下的文件去展开。于是 `downloads/`、`manual/`、`prototypes/`、
+ * `tools/` 这些**索引根之外**的目录边：`pickTests` 会靠它选中守卫，但 `fileKey` 里一个文件都
+ * 没有 → `applyCache` 拿旧 pass 把守卫复用掉 ——「选中了」和「会跑」成了两回事，确定性漏测。
+ * 现在分母取 git 可见全集（与 collectChanged 同口径）；非 git 目录（夹具）退回磁盘扫描。
+ */
+function expandDir(root, target) {
+  const key = `${root}\0${target}`;
+  const hit = dirExpansionCache.get(key);
+  if (hit) return hit;
+  const universe = gitVisibleSet(root);
+  const out = (
+    universe
+      ? [...universe].filter((rel) => dirMatches(target, rel))
+      : walk(path.join(root, target)).map((abs) => slash(path.relative(root, abs)))
+  ).sort();
+  dirExpansionCache.set(key, out);
+  return out;
 }
 
 /** 文本边是否命中该变更文件 */
@@ -492,8 +555,14 @@ export function pickTests({ root = ROOT, since = 'HEAD', cache = null, files: ov
 
 const sha = (s) => crypto.createHash('sha256').update(s).digest('hex');
 
-/** TOOL ‖ LOCK ‖ CONFIG ‖ HARNESS ‖ ENV 分片：任一变化 → 缓存整体作废 */
-export function harnessHash(root = ROOT) {
+/**
+ * harness 分片：任一变化 → 缓存整体作废。
+ *
+ * **`tool:` 这条不能省**（自审补上）：分片里少了工具自身，改 `fileKey` 的口径（例如把目录边
+ * 从只展开 src 改成展开全目录）之后，旧 rows 的 key 算法与新算法不同却仍然「对得上」——
+ * 修复会被旧缓存原样继承。代价只是脚本一改就全部重跑一次（脚本改动本身就该触发全量）。
+ */
+export function harnessParts(root = ROOT) {
   const parts = [`node:${process.version}`, `platform:${process.platform}-${process.arch}`];
   for (const f of ['package.json', 'pnpm-lock.yaml', 'vitest.config.ts', 'tsconfig.json', 'scripts/test-workers.mjs', 'tests/setup.ts', 'tests/mock-obsidian-entry.ts', 'tests/mock-vault.ts']) {
     try {
@@ -502,18 +571,27 @@ export function harnessHash(root = ROOT) {
       parts.push(`${f}:missing`);
     }
   }
+  try {
+    parts.push(`tool:${sha(fs.readFileSync(TOOL_SELF, 'utf8'))}`);
+  } catch {
+    parts.push('tool:missing');
+  }
   parts.push(`env:BZ_TEST_MAX_WORKERS=${process.env.BZ_TEST_MAX_WORKERS ?? ''}`);
   // 本地日期入 key：用例结果可能与「今天」有关（时间窗口 / 到期 / 周界）。
   // 仓库已把日期依赖改成相对口径，但跨日复用一个 pass 是**不必冒**的风险——
   // 代价只是一天一次缓存未命中，换来的是「日期边界永不假绿」。
   const d = new Date();
   parts.push(`date:${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`);
-  return sha(parts.join('|'));
+  return parts;
+}
+
+export function harnessHash(root = ROOT) {
+  return sha(harnessParts(root).join('|'));
 }
 
 /** 单个测试文件的指纹 = harness ‖ 自身 ∪ 依赖闭包 的内容 hash */
 export function fileKey(root, testFile, index, harness = harnessHash(root)) {
-  const { importEdges, textEdges, srcFiles } = index;
+  const { importEdges, textEdges } = index;
   const deps = new Set();
   const queue = [testFile];
   const seen = new Set(queue);
@@ -526,10 +604,10 @@ export function fileKey(root, testFile, index, harness = harnessHash(root)) {
       queue.push(d);
     }
   }
-  // 文本/目录边：目录边换算成「该目录下全部文件」
+  // 文本/目录边：目录边展开成「该目录下 git 可见的全部文件」（见 expandDir 的 P0 说明）
   for (const { target, kind } of textEdges.get(testFile) ?? []) {
     if (kind === 'file') deps.add(target);
-    else for (const f of srcFiles) if (dirMatches(target, f)) deps.add(f);
+    else for (const f of expandDir(root, target)) deps.add(f);
   }
   const sorted = [...deps].sort();
   const h = crypto.createHash('sha256');
@@ -537,18 +615,23 @@ export function fileKey(root, testFile, index, harness = harnessHash(root)) {
   for (const rel of sorted) {
     h.update(rel);
     h.update('\0');
-    h.update(readText(path.join(root, rel)) ?? 'missing');
+    // 按字节哈希：闭包里会有 downloads/*.html、prototypes/*.jpg 这类非文本文件
+    h.update(readBytes(path.join(root, rel)) ?? Buffer.from('missing'));
     h.update('\0');
   }
   return { key: h.digest('hex'), deps: sorted };
 }
 
 export function loadCache(root = ROOT, file = CACHE_FILE) {
+  const empty = { version: CACHE_VERSION, results: {} };
   try {
     const raw = JSON.parse(fs.readFileSync(file, 'utf8'));
-    return raw && typeof raw === 'object' && raw.results ? raw : { version: 1, results: {} };
+    if (!raw || typeof raw !== 'object' || !raw.results) return empty;
+    // 结构版本对不上就整包丢掉：字段形状变了，旧行怎么解释都是猜
+    if (raw.version !== CACHE_VERSION) return empty;
+    return raw;
   } catch {
-    return { version: 1, results: {} };
+    return empty;
   }
 }
 
@@ -556,7 +639,7 @@ export function loadCache(root = ROOT, file = CACHE_FILE) {
 export function saveCache(cache, root = ROOT, file = CACHE_FILE) {
   fs.mkdirSync(path.dirname(file), { recursive: true });
   const tmp = `${file}.${process.pid}.tmp`;
-  fs.writeFileSync(tmp, JSON.stringify(cache, null, 2));
+  fs.writeFileSync(tmp, JSON.stringify({ ...cache, version: CACHE_VERSION }, null, 2));
   fs.renameSync(tmp, file);
 }
 
@@ -578,10 +661,16 @@ export function applyCache({ root = ROOT, files, index, cache, harness = harness
 /**
  * 从 vitest 的 json 报告回写缓存。
  *
- * 只回写**这次真的跑过**的文件，且只有 pass 会被复用（fail / flaky 一律重跑）；
+ * 只回写**这次真的跑过**的文件，且只有 pass 会被复用（fail 一律重跑）；
  * 报告里没有的文件保持原条目不动。缓存是**按文件**的，所以增量跑出来的 pass 同样有效
  * ——「只有全量才写回」是没必要的自我阉割：单个文件的 pass 与「本次跑了多少个文件」无关，
  * 而 key 已经覆盖了它自己的依赖闭包。
+ *
+ * flaky 的口径（别被注释骗了）：vitest 的 json 报告里**没有** retryCount（实测
+ * `assertionResults` 只有 status/duration 等），靠 retry 救回的 pass 与一次过的 pass 长得一样，
+ * 因此会被同等缓存。这与本仓 `vitest.config.ts` 的 `retry: 2`「flaky 抖动自动吸收」是同一口径
+ * —— 该用例本轮确实通过了，不是漏测。真要区分得自挂一个 reporter 去读 `diagnostic().retryCount`，
+ * 代价大于收益。
  */
 export function updateFromReport(cache, report, index, harness, root = ROOT) {
   for (const t of report?.testResults ?? []) {
@@ -597,19 +686,39 @@ export function updateFromReport(cache, report, index, harness, root = ROOT) {
 
 // ───────────────────────────── CLI ─────────────────────────────
 
-function main() {
-  const argv = process.argv.slice(2);
+/**
+ * 解析 CLI 参数。抽成纯函数是为了能测 —— `--since=master` 曾被静默当成没传
+ * （于是退回 HEAD，选的改动集悄悄变了），这种事只有测得到才守得住。
+ */
+export function parseArgs(argv) {
   const sep = argv.indexOf('--');
   const head = sep === -1 ? argv : argv.slice(0, sep);
   const passthrough = sep === -1 ? [] : argv.slice(sep + 1);
 
   const sinceIdx = head.indexOf('--since');
-  const since = sinceIdx >= 0 ? head[sinceIdx + 1] : 'HEAD';
-  const forceFull = head.includes('--full');
-  const listOnly = head.includes('--list');
-  const useCache = !head.includes('--no-cache');
-  // 位置参数 = 显式指定变更文件（诊断/回归用：不改动工作区也能看会选谁）
-  const explicit = head.filter((a, i) => !a.startsWith('--') && head[i - 1] !== '--since');
+  const sinceEq = head.find((a) => a.startsWith('--since='));
+  const since = sinceEq
+    ? sinceEq.slice('--since='.length)
+    : sinceIdx >= 0
+      ? head[sinceIdx + 1]
+      : 'HEAD';
+
+  return {
+    // `--since` 后面空着（或 `--since=`）→ 当没传：`git diff <undefined>` 是另一码事，不能赌
+    since: since || 'HEAD',
+    full: head.includes('--full'),
+    list: head.includes('--list'),
+    useCache: !head.includes('--no-cache'),
+    // 位置参数 = 显式指定变更文件（诊断/回归用：不改动工作区也能看会选谁）
+    files: head.filter((a, i) => !a.startsWith('--') && head[i - 1] !== '--since' && a !== since),
+    passthrough,
+    reporterGiven: head.some((a) => a.startsWith('--reporter') || a.startsWith('--outputFile')),
+  };
+}
+
+function main() {
+  const opt = parseArgs(process.argv.slice(2));
+  const { since, full: forceFull, list: listOnly, useCache, files: explicit, passthrough } = opt;
 
   const cache = useCache ? loadCache() : null;
   const plan = forceFull
@@ -627,18 +736,18 @@ function main() {
   }
 
   if (!plan.files.length) {
-    // 「没得跑」有三种成因，必须说清是哪一种 —— 原 `vitest --changed` 的假绿就是这里含混
+    // 「没得跑」有三种成因，必须说清是哪一种 —— 原 `vitest --changed` 的假绿就是这里含混。
+    // 一律 `exitCode = 0` + return，不用 `process.exit()`：管道下 exit 会截断还没刷出去的 stdout。
     if (plan.reused?.length) {
       console.log(`没有要跑的测试：${plan.reused.length} 个命中文件全部复用上次成功结果（输入逐字节未变）。`);
-      process.exit(0);
-    }
-    if (!plan.changed.length) {
+    } else if (!plan.changed.length) {
       console.log('工作区没有变更，未跑任何用例。这不是门禁结论——合并前请跑 `pnpm test`（全量）。');
-      process.exit(0);
+    } else {
+      console.log(`变更 ${plan.changed.length} 个文件，但没有测试受影响（未跑任何用例）。`);
+      console.log('若这不是文档类改动，请加 `--full` 全量确认 —— 空命中不等于通过。');
     }
-    console.log(`变更 ${plan.changed.length} 个文件，但没有测试受影响（未跑任何用例）。`);
-    console.log('若这不是文档类改动，请加 `--full` 全量确认 —— 空命中不等于通过。');
-    process.exit(0);
+    process.exitCode = 0;
+    return;
   }
   if (listOnly) {
     // 全量时逐条列 589 行没有信息量，只报个数
@@ -649,33 +758,44 @@ function main() {
 
   // 缓存要写回就必须拿到每个文件的结果 —— 增量跑同样需要报告，不能只在全量时挂 json。
   // 用户自己带了 reporter/outputFile 时让位（不覆盖他的输出配置，宁可这次不写缓存）。
-  const userHasReporter = head.some((a) => a.startsWith('--reporter') || a.startsWith('--outputFile'));
-  const wantReport = useCache && !userHasReporter;
+  const wantReport = useCache && !opt.reporterGiven;
   if (wantReport) fs.mkdirSync(CACHE_DIR, { recursive: true });
   const reportPath = path.join(CACHE_DIR, 'vitest-report.json');
 
   const args = [
     VITEST, 'run', ...plan.files,
-    ...(wantReport ? ['--reporter=json', `--outputFile=${path.relative(ROOT, reportPath)}`] : []),
+    // default 那个 reporter 是给人看的：只挂 json 的话跑完一行用例都不列（实测过），
+    // 而 `--reporter` 是数组语义，两个可以并存。
+    ...(wantReport ? ['--reporter=default', '--reporter=json', `--outputFile=${path.relative(ROOT, reportPath)}`] : []),
     ...passthrough,
   ];
   const child = spawn(process.execPath, args, { cwd: ROOT, stdio: 'inherit', env: process.env });
-  child.on('exit', (code) => {
+  // 没有这个监听，spawn 失败（EMFILE 等）会以「未处理的 'error' 事件」崩掉，
+  // 只在 stderr 留一段栈 —— 用户看到的是一句没头没尾的 node 报错。
+  child.on('error', (err) => {
+    console.error(`→ 起不来 vitest：${err.message}`);
+    process.exitCode = 1;
+  });
+  child.on('exit', (code, signal) => {
     // 通过就写回。缓存是**按文件**的：单个文件这次 pass、且它的依赖闭包指纹一致，
     // 这个 pass 就成立，与「本次一共跑了几个文件」无关；fail 一律不写 pass，
     // 所以增量结论不会把没跑到的文件伪装成通过。
-    if (code === 0 && useCache) {
+    if (code !== 0) {
+      console.error(`→ vitest 退出码 ${code}${signal ? `（信号 ${signal}）` : ''}，不写回结果缓存。`);
+    } else if (useCache) {
       try {
         const report = JSON.parse(fs.readFileSync(reportPath, 'utf8'));
         const next = updateFromReport(loadCache(), report, plan.index, harnessHash());
         saveCache(next);
         const n = Object.keys(next.results).length;
         console.log(`→ 结果缓存已更新：本轮 ${report.testResults?.length ?? 0} 个文件通过（历史共 ${n} 条）→ ${CACHE_FILE}`);
-      } catch {
-        /* 报告缺失不影响退出码 */
+      } catch (err) {
+        // 报告缺失/半截不影响退出码，但必须说出来 —— 悄悄不写回等于缓存永远不长
+        console.error(`→ 结果缓存未写回：${err.message}`);
       }
     }
-    process.exit(code ?? 1);
+    // 同样不用 process.exit()：stdout 是管道时它会把上面几行连同 vitest 的尾部输出一起截掉
+    process.exitCode = code ?? 1;
   });
 }
 
