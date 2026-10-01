@@ -1,4 +1,4 @@
-/* 源指纹 d6ff0f0f39e6a13a · 仓内输入 93 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 fc6a1aa26f824a74 · 仓内输入 93 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/people/fake-sim.ts","prototypes/people/fake/fake-obsidian.ts","src/bookshelf/data.ts","src/bookshelf/state.ts","src/cinema/state.ts","src/core/ai.ts","src/core/app.ts","src/core/asr-proofread.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/external-tool.ts","src/core/flow-dialog.ts","src/core/gesture.ts","src/core/http.ts","src/core/item-actions.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/settings-btn-state.ts","src/core/settings-common.ts","src/core/settings-modal.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/help-tip.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/motion.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/password-vault/data.ts","src/people/chat.ts","src/people/data.ts","src/people/datasource.ts","src/people/describe.ts","src/people/digest.ts","src/people/export.ts","src/people/heavy-gate.ts","src/people/incremental.ts","src/people/insights.ts","src/people/jobs.ts","src/people/me-avatar.ts","src/people/media.ts","src/people/migrate.ts","src/people/parse.ts","src/people/prep.ts","src/people/recording.ts","src/people/render.ts","src/people/safe-store.ts","src/people/settings.ts","src/people/stats.ts","src/people/sync.ts","src/people/thumbs.ts","src/people/types.ts","src/people/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/people/fake-sim.ts → window.BZW_people（行为单源预览包，issue 245/ADR-0106） */
 var BZW_people = (() => {
@@ -13727,6 +13727,8 @@ var BZW_people = (() => {
     let s = String(msg != null ? msg : "").trim();
     const stripped = s.replace(/^\[(?!(?:语音|图片|录音|视频|通话|文件|分享|引用|表情|链接|撤回|小程序))[^[\]]{1,16}\]\s*/, "");
     if (stripped !== s && /^\[(语音|图片|录音)\s*([^\]]*)\]/.test(stripped)) s = stripped;
+    const named = /^\[(?:语音|图片|录音|视频|通话|文件|分享|引用|表情|链接|撤回|小程序)\]\s*(\[[^\]]*\][\s\S]*)$/.exec(s);
+    if (named && /^\[(语音|图片|录音)\s*[^\]]*\]\s*\S/.test(named[1])) s = named[1];
     const m = /^\[(语音|图片|录音)\s*([^\]]*)\]\s*([\s\S]+)$/.exec(s);
     if (!m) return null;
     const body = m[3].trim();
@@ -14317,25 +14319,28 @@ var BZW_people = (() => {
     let chars = 0;
     let voice = 0;
     let image = 0;
+    let recording = 0;
     for (const m of messages) {
       const text2 = ((_a2 = m.text) != null ? _a2 : "").trim();
       if (!text2) continue;
       const line = renderLine(m.ts, m.isSender, text2);
       const fits = lines.length === 0 || lines.length < maxCount && chars + line.length <= maxChars;
       if (!fits) {
-        chunks.push(makeChunk(lines, voice, image));
+        chunks.push(makeChunk(lines, voice, image, recording));
         lines = [];
         chars = 0;
         voice = 0;
         image = 0;
+        recording = 0;
       }
       const mat = parseMediaTag(text2);
       if ((mat == null ? void 0 : mat.kind) === "voice") voice++;
       else if ((mat == null ? void 0 : mat.kind) === "image") image++;
+      else if ((mat == null ? void 0 : mat.kind) === "recording") recording++;
       lines.push(line);
       chars += line.length;
     }
-    if (lines.length) chunks.push(makeChunk(lines, voice, image));
+    if (lines.length) chunks.push(makeChunk(lines, voice, image, recording));
     if (chunks.length <= maxBatches) return chunks;
     return evenlySample(chunks, maxBatches);
   }
@@ -14345,12 +14350,15 @@ var BZW_people = (() => {
     for (let i = 0; i < max; i++) picked.push(items[Math.round(i * (items.length - 1) / (max - 1))]);
     return picked.filter((v, i, a) => i === 0 || v !== a[i - 1]);
   }
-  function makeChunk(lines, voice = 0, image = 0) {
+  function makeChunk(lines, voice = 0, image = 0, recording = 0) {
     var _a2, _b2;
     const first = (_a2 = lines[0]) != null ? _a2 : "";
     const last = (_b2 = lines[lines.length - 1]) != null ? _b2 : "";
     const chunk = { from: first.slice(1, 11), to: last.slice(1, 11), count: lines.length, lines };
-    if (voice || image) chunk.media = { voice, image };
+    if (voice || image || recording) {
+      chunk.media = { voice, image };
+      if (recording) chunk.media.recording = recording;
+    }
     return chunk;
   }
   function chunkMetaOf(c) {
@@ -14375,7 +14383,7 @@ var BZW_people = (() => {
       // 新对话行的语义说明（issue 449）：分享 / 引用 / 通话 / 命名表情是口味审美与关系温度的证据来源
       "行首方括号标签说明：`[分享]…` 与 `[小程序]…` 是分享 / 安利的内容标题（口味与审美的证据，可进 moments 与 traits）；`[文件]…` 是发送的文件；`[引用「…」]` 开头的行是引用回复（引号内为被引内容，其后是回复）；`[通话 …]` / `[通话中断 …]` / `[未接通·…]` 是通话事件（通话时长是关系温度的直接证据，可进 events 与 moments）；`[表情·名]` 是带名称的表情。群聊导出的行首会多一层 `[成员名]`——那不是标签，是群成员的名字，忽略它，谁在说仍看后面的 [我] / [对方]。"
     ];
-    if ((media == null ? void 0 : media.voice) || (media == null ? void 0 : media.image)) {
+    if ((media == null ? void 0 : media.voice) || (media == null ? void 0 : media.image) || (media == null ? void 0 : media.recording)) {
       head.push(
         "本段含媒体消息：`[语音 …]` 开头的行是微信语音条的转写——] 后的文本就是原话内容，标签里可能带时长与情感标记（如 12s·平静）；`[录音 …]` 开头的行是见面 / 通话录音的逐轮转写（同样带时长与情感），也是原话；`[图片]` 开头的行是一张图片的画面描述。"
       );
@@ -14399,7 +14407,7 @@ var BZW_people = (() => {
       "3. quotes：对方说过的有代表性原话（口头禅 / 典型语气 / 情绪外露的句子 / 冲突时的说法 / 关心人的说法）。",
       '   每条含 ts（YYYY-MM-DD）、who（固定为 "对方" 或 "我"）与 text（原话，可截断但**不要改写**）。',
       "   优先收能体现说话风格与脾气秉性的句子，最多 8 条。",
-      ...(media == null ? void 0 : media.voice) ? ["   `[语音 …]` 与 `[录音 …]` 行都是亲口说的话：quotes 优先收这里的口语原话，text 只写转写文本（不要把标签、时长、情感标记写进去）；正文或纪事引用两类原话时保留行首的 `[语音 …]` / `[录音 …]` 来源标签，微信语音条与见面录音不要混写。"] : [],
+      ...(media == null ? void 0 : media.voice) || (media == null ? void 0 : media.recording) ? ["   `[语音 …]` 与 `[录音 …]` 行都是亲口说的话：quotes 优先收这里的口语原话，text 只写转写文本（不要把标签、时长、情感标记写进去）；正文或纪事引用两类原话时保留行首的 `[语音 …]` / `[录音 …]` 来源标签，微信语音条与见面录音不要混写。"] : [],
       "",
       "4. moments：具体场景或细节（反复出现的地点 / 物件 / 习惯动作 / 难忘画面）。",
       "   每条含 ts（YYYY-MM-DD）与 summary（不超过 30 字）。抽象的形容词不要收。",
@@ -15457,7 +15465,9 @@ ${lines.join("\n")}`);
       // 浅拷贝：与调用方数据脱钩，改返回值不伤原对象
       voiceCount: media.voiceCount,
       voiceTotalSec: media.voiceTotalSec,
-      imageCount: media.imageCount
+      imageCount: media.imageCount,
+      recordingCount: media.recordingCount,
+      recordingTotalSec: media.recordingTotalSec
     };
   }
   function formatReplySec(sec) {
@@ -16123,12 +16133,33 @@ ${lines}`;
     return String(who != null ? who : "").trim() === SELF_WHO;
   }
   var IMG_DESC_NEAREST_SEC = 12 * 3600;
-  function matchImageDesc(raw, descByFile, descByMonth, descUsed) {
-    var _a2, _b2, _c2, _d2;
+  function keyStem(s) {
+    const n = s.replace(/\\/g, "/");
+    const i = n.lastIndexOf("/");
+    const head = i >= 0 ? n.slice(0, i + 1) : "";
+    const base = i >= 0 ? n.slice(i + 1) : n;
+    const dot = base.lastIndexOf(".");
+    return head + (dot > 0 ? base.slice(0, dot) : base);
+  }
+  function stemIndex() {
+    const idx = quantKeyMap();
+    return {
+      set: (raw, v) => {
+        const k = keyStem(raw);
+        if (k) idx.set(k, v);
+      },
+      get: (raw) => {
+        const k = keyStem(raw);
+        return k && !idx.ambiguous(k) ? idx.get(k) : void 0;
+      }
+    };
+  }
+  function matchImageDesc(raw, descByFile, descByStem, descByMonth, descUsed) {
+    var _a2, _b2, _c2, _d2, _e;
     const img = String((_a2 = raw.img) != null ? _a2 : "").trim();
     if (img) {
-      const exact = descByFile.get(img);
-      return exact ? String((_b2 = exact.desc) != null ? _b2 : "").trim() : "";
+      const hit = (_b2 = descByFile.get(img)) != null ? _b2 : descByStem.get(img);
+      return hit ? String((_c2 = hit.desc) != null ? _c2 : "").trim() : "";
     }
     const ct = Number(raw.ct);
     if (!Number.isFinite(ct)) return "";
@@ -16146,11 +16177,11 @@ ${lines}`;
       }
     }
     if (!best || bestDiff > IMG_DESC_NEAREST_SEC) return "";
-    const file = String((_c2 = best.file) != null ? _c2 : "").trim();
+    const file = String((_d2 = best.file) != null ? _d2 : "").trim();
     const usedKey = file || `ct:${Number(best.ct)}`;
     if (descUsed.has(usedKey)) return "";
     descUsed.add(usedKey);
-    return String((_d2 = best.desc) != null ? _d2 : "").trim();
+    return String((_e = best.desc) != null ? _e : "").trim();
   }
   function isGroupChat(raws) {
     var _a2;
@@ -16237,7 +16268,7 @@ ${lines}`;
     return null;
   }
   function normalizeChatJson(raws, opts, extras) {
-    var _a2, _b2, _c2, _d2, _e, _f, _g, _h, _i, _j;
+    var _a2, _b2, _c2, _d2, _e, _f, _g, _h, _i, _j, _k, _l;
     const voiceByWav = /* @__PURE__ */ new Map();
     for (const v of (_a2 = extras == null ? void 0 : extras.voice) != null ? _a2 : []) {
       if (!v || typeof v !== "object") continue;
@@ -16247,14 +16278,31 @@ ${lines}`;
       const base = wav.includes("/") ? wav.slice(wav.lastIndexOf("/") + 1) : wav;
       if (base) voiceByWav.set(base, v);
     }
+    const voiceBySid = quantKeyMap();
+    for (const v of (_c2 = extras == null ? void 0 : extras.voice) != null ? _c2 : []) {
+      if (!v || typeof v !== "object" || isFailedVoice(v)) continue;
+      const sid = typeof v.sid === "number" && Number.isFinite(v.sid) && v.sid !== 0 ? v.sid : 0;
+      if (sid) voiceBySid.set(sid, v);
+      const wav = String((_d2 = v.wav) != null ? _d2 : "").trim();
+      const base = wav.includes("/") ? wav.slice(wav.lastIndexOf("/") + 1) : wav;
+      const embed = /_(\d{10,})\.\w+$/.exec(base);
+      if (embed) {
+        const q = Number(embed[1]);
+        if (Number.isFinite(q) && q !== 0) voiceBySid.set(q, v);
+      }
+    }
     const descByFile = /* @__PURE__ */ new Map();
+    const descByStem = stemIndex();
     const descByMonth = /* @__PURE__ */ new Map();
-    for (const it of (_c2 = extras == null ? void 0 : extras.imageDesc) != null ? _c2 : []) {
+    for (const it of (_e = extras == null ? void 0 : extras.imageDesc) != null ? _e : []) {
       if (!it || typeof it !== "object") continue;
-      const desc = String((_d2 = it.desc) != null ? _d2 : "").trim();
+      const desc = String((_f = it.desc) != null ? _f : "").trim();
       if (!desc) continue;
-      const file = String((_e = it.file) != null ? _e : "").trim();
-      if (file) descByFile.set(file, it);
+      const file = String((_g = it.file) != null ? _g : "").trim();
+      if (file) {
+        descByFile.set(file, it);
+        descByStem.set(file, it);
+      }
       const month = file.includes("/") ? file.slice(0, file.indexOf("/")) : monthOf(Number(it.ct));
       if (!month) continue;
       let list = descByMonth.get(month);
@@ -16280,12 +16328,12 @@ ${lines}`;
     for (const item of raws) {
       rawTotal++;
       if (!item || typeof item !== "object") {
-        kindCounts["其他"] = ((_f = kindCounts["其他"]) != null ? _f : 0) + 1;
+        kindCounts["其他"] = ((_h = kindCounts["其他"]) != null ? _h : 0) + 1;
         continue;
       }
       const raw = item;
-      const typeNum = String((_g = raw.type) != null ? _g : "");
-      const text2 = String((_h = raw.msg) != null ? _h : "").trim();
+      const typeNum = String((_i = raw.type) != null ? _i : "");
+      const text2 = String((_j = raw.msg) != null ? _j : "").trim();
       bump(kindCounts, normalizeKind(void 0, typeNum, text2));
       const sid = typeof raw.sid === "number" && Number.isFinite(raw.sid) && raw.sid !== 0 ? raw.sid : 0;
       if (sid && sid > maxSid) maxSid = sid;
@@ -16303,7 +16351,8 @@ ${lines}`;
               out = text2;
               bumpEmotion(tagged.emotion);
             } else {
-              const v = voiceByWav.get(String((_i = raw.wav) != null ? _i : "").trim());
+              let v = voiceByWav.get(String((_k = raw.wav) != null ? _k : "").trim());
+              if (!v && sid && !voiceBySid.ambiguous(sid)) v = voiceBySid.get(sid);
               const merged = buildVoiceText(raw, v);
               const parsed = parseMediaTag(merged);
               if (parsed) {
@@ -16316,7 +16365,7 @@ ${lines}`;
         }
         case 3: {
           if (opts.imageDescMode === "file") {
-            const hit = matchImageDesc(raw, descByFile, descByMonth, descUsed);
+            const hit = matchImageDesc(raw, descByFile, descByStem, descByMonth, descUsed);
             if (hit) out = `[图片] ${hit}`;
           }
           break;
@@ -16376,7 +16425,7 @@ ${lines}`;
           break;
       }
       if (out) {
-        const who = String((_j = raw.who) != null ? _j : "").trim();
+        const who = String((_l = raw.who) != null ? _l : "").trim();
         if (group && who && !isSelfWho(who) && raw.type !== 1e4) out = `[${who}] ${out}`;
         out = out.replace(/\r\n?/g, "\n");
       }
@@ -16414,15 +16463,22 @@ ${lines}`;
       recordingTotalSec: media.recordingTotalSec
     };
   }
-  function mergeStore(existing, incoming, nowIso2) {
+  function keepDerivedOnBlank(m, opts) {
+    if (!opts) return false;
+    if (m.type === 34) return opts.previewVoice;
+    if (m.type === 3) return opts.imageDescMode === "file";
+    return false;
+  }
+  function mergeStore(existing, incoming, nowIso2, opts) {
     var _a2, _b2, _c2;
     const prev = new Map(((_a2 = existing == null ? void 0 : existing.msgs) != null ? _a2 : []).map((m) => [m.key, m]));
     let added = 0;
     let updated = 0;
     for (const m of incoming.msgs) {
-      if (prev.has(m.key)) updated++;
+      const old = prev.get(m.key);
+      if (old) updated++;
       else added++;
-      prev.set(m.key, m);
+      prev.set(m.key, old ? mergeStoreMsg(old, m, opts) : m);
     }
     const msgs = [...prev.values()].sort((a, b) => a.ts - b.ts || a.key.localeCompare(b.key));
     const contact = {
@@ -16435,6 +16491,12 @@ ${lines}`;
       updatedAt: nowIso2
     };
     return { contact, added, updated };
+  }
+  function mergeStoreMsg(old, next, opts) {
+    const merged = { ...next };
+    if (merged.descSkip === void 0 && old.descSkip !== void 0) merged.descSkip = old.descSkip;
+    if (merged.text === "" && old.text !== "" && keepDerivedOnBlank(merged, opts)) merged.text = old.text;
+    return merged;
   }
   function storeToUnified(msgs) {
     return msgs.filter((m) => m.text !== "").map((m) => ({ ts: m.ts, isSender: m.isSender, text: m.text }));
@@ -16559,16 +16621,20 @@ ${lines}`;
     return n;
   }
   function applyMediaFailToMsgs(msgs, items) {
-    var _a2, _b2;
+    var _a2, _b2, _c2;
     const bySid = quantKeyMap();
     const byFile = /* @__PURE__ */ new Map();
+    const byStem = stemIndex();
     const byCt = quantKeyMap();
     for (const it of items) {
       const reason = canonReason(it == null ? void 0 : it.reason);
       if (!reason) continue;
       const entry = { ...it, reason };
       const file = String((_a2 = it.file) != null ? _a2 : "").trim();
-      if (file) byFile.set(file, entry);
+      if (file) {
+        byFile.set(file, entry);
+        byStem.set(file, entry);
+      }
       const sid = typeof it.sid === "number" && Number.isFinite(it.sid) && it.sid !== 0 ? it.sid : 0;
       if (sid) bySid.set(sid, entry);
       else if (Number.isFinite(it.ct)) byCt.set(Math.round(it.ct), entry);
@@ -16579,7 +16645,7 @@ ${lines}`;
       const img = String((_b2 = m.img) != null ? _b2 : "").trim();
       let it;
       if (m.sid && !bySid.ambiguous(m.sid)) it = bySid.get(m.sid);
-      if (!it && img) it = byFile.get(img);
+      if (!it && img) it = (_c2 = byFile.get(img)) != null ? _c2 : byStem.get(img);
       if (!it && !img) {
         const ct = Math.round(m.ts / 1e3);
         if (!byCt.ambiguous(ct)) it = byCt.get(ct);
@@ -16601,18 +16667,25 @@ ${lines}`;
     return s === BROKEN_SKIP ? BROKEN_SKIP : s === MISSING_SKIP ? MISSING_SKIP : null;
   }
   function applyImageDescToMsgs(msgs, descs) {
-    var _a2, _b2, _c2, _d2, _e, _f;
+    var _a2, _b2, _c2, _d2, _e, _f, _g;
     const byFile = /* @__PURE__ */ new Map();
+    const byStem = stemIndex();
     const byMonth = /* @__PURE__ */ new Map();
     const explicitBlank = /* @__PURE__ */ new Set();
     for (const it of descs) {
       if (!it || typeof it !== "object") continue;
       const file = String((_a2 = it.file) != null ? _a2 : "").trim();
       if (!String((_b2 = it.desc) != null ? _b2 : "").trim()) {
-        if (file) explicitBlank.add(file);
+        if (file) {
+          explicitBlank.add(file);
+          explicitBlank.add(keyStem(file));
+        }
         continue;
       }
-      if (file) byFile.set(file, it);
+      if (file) {
+        byFile.set(file, it);
+        byStem.set(file, it);
+      }
       const month = file.includes("/") ? file.slice(0, file.indexOf("/")) : monthOf(Number(it.ct));
       if (!month) continue;
       let list = byMonth.get(month);
@@ -16630,10 +16703,10 @@ ${lines}`;
       const img = String((_c2 = m.img) != null ? _c2 : "").trim();
       const ctSec = Math.round(m.ts / 1e3);
       let desc = "";
-      const exact = img ? byFile.get(img) : void 0;
+      const exact = img ? (_d2 = byFile.get(img)) != null ? _d2 : byStem.get(img) : void 0;
       if (exact) {
-        desc = String((_d2 = exact.desc) != null ? _d2 : "").trim();
-      } else if (img && explicitBlank.has(img)) {
+        desc = String((_e = exact.desc) != null ? _e : "").trim();
+      } else if (img && (explicitBlank.has(img) || explicitBlank.has(keyStem(img)))) {
       } else {
         const list = byMonth.get(monthOf(ctSec));
         if (list == null ? void 0 : list.length) {
@@ -16649,10 +16722,10 @@ ${lines}`;
             }
           }
           if (best && bestDiff <= IMG_DESC_NEAREST_SEC) {
-            const key = String((_e = best.file) != null ? _e : "").trim() || `ct:${Number(best.ct)}`;
+            const key = String((_f = best.file) != null ? _f : "").trim() || `ct:${Number(best.ct)}`;
             if (!used.has(key)) {
               used.add(key);
-              desc = String((_f = best.desc) != null ? _f : "").trim();
+              desc = String((_g = best.desc) != null ? _g : "").trim();
             }
           }
         }
@@ -16857,7 +16930,7 @@ ${lines}`;
     return stats.lastCt * 1e3 > last;
   }
   function readContactBundle(dataDir, name) {
-    var _a2, _b2;
+    var _a2;
     const fs = getFs();
     if (!fs) return null;
     const readJson = (path) => {
@@ -16870,10 +16943,30 @@ ${lines}`;
     };
     const raws = readJson(`${dataDir}/${name}/chat.json`);
     if (!raws) return null;
+    const imageDesc = [];
+    const descSeen = /* @__PURE__ */ new Set();
+    const pushDesc = (list) => {
+      var _a3;
+      for (const it of list != null ? list : []) {
+        const o = it;
+        if (!o || typeof o !== "object") continue;
+        const file = String((_a3 = o.file) != null ? _a3 : "").trim();
+        if (file && descSeen.has(file)) continue;
+        if (file) descSeen.add(file);
+        imageDesc.push(o);
+      }
+    };
+    pushDesc(readJson(`${dataDir}/${name}/image_desc.json`));
+    let monthFiles = [];
+    try {
+      monthFiles = fs.readdirSync(`${dataDir}/${name}`).filter((f) => /^image_desc\.\d{4}-\d{2}\.json$/.test(f)).sort();
+    } catch (e) {
+    }
+    for (const f of monthFiles) pushDesc(readJson(`${dataDir}/${name}/${f}`));
     return {
       raws,
       voice: (_a2 = readJson(`${dataDir}/${name}/voice.json`)) != null ? _a2 : [],
-      imageDesc: (_b2 = readJson(`${dataDir}/${name}/image_desc.json`)) != null ? _b2 : [],
+      imageDesc,
       avatar: avatarFileOf(fs, `${dataDir}/${name}`)
     };
   }
@@ -17918,7 +18011,7 @@ ${lines}`;
     return !!st && !st.pauseRequested && !!((_a2 = st.safe) == null ? void 0 : _a2.unlocked);
   }
   async function startJobs(app, targets, opts = {}) {
-    var _a2, _b2, _c2, _d2, _e, _f;
+    var _a2, _b2, _c2, _d2, _e, _f, _g, _h;
     if (describeOnlyBusy) {
       return { queued: [], skipped: targets.map((t) => t.name || t.talker), resumed: [] };
     }
@@ -17995,7 +18088,11 @@ ${lines}`;
       const mediaNote = buildMediaNote({
         voiceCount: (_b2 = stats.voiceCount) != null ? _b2 : 0,
         voiceTotalSec: (_c2 = stats.voiceTotalSec) != null ? _c2 : 0,
-        imageCount: (_d2 = stats.imageCount) != null ? _d2 : 0
+        imageCount: (_d2 = stats.imageCount) != null ? _d2 : 0,
+        // 录音三项别漏（审计 #2）：buildMediaNote 按「全零返回空串」判无素材——只传语音/图片时，
+        // 纯录音的联系人会拿到空说明，AI 完全不知道录音已转写并入对话
+        recordingCount: (_e = stats.recordingCount) != null ? _e : 0,
+        recordingTotalSec: (_f = stats.recordingTotalSec) != null ? _f : 0
       });
       const now = nowIso();
       const prev = st.queue.find((j) => j.talker === t.talker);
@@ -18005,7 +18102,7 @@ ${lines}`;
         mediaNote: mediaNote || void 0,
         statsNote: t.insights ? buildStatsNote(t.insights, t.monthly) || void 0 : void 0,
         // 手动档案段（issue 455）：入参优先，回落人物卡现有档案；排队时定稿（与 statsNote 同一语义）
-        profileNote: buildProfileNote((_e = t.profile) != null ? _e : existing == null ? void 0 : existing.profile) || void 0
+        profileNote: buildProfileNote((_g = t.profile) != null ? _g : existing == null ? void 0 : existing.profile) || void 0
       };
       if (prev && reusableJob(prev, fp, effective, chunkFull)) {
         Object.assign(prev, {
@@ -18013,7 +18110,7 @@ ${lines}`;
           fileLabel: t.fileLabel,
           importRecord,
           stats,
-          material: { ...(_f = prev.material) != null ? _f : { traits: [], moments: [] }, ...noteMaterial },
+          material: { ...(_h = prev.material) != null ? _h : { traits: [], moments: [] }, ...noteMaterial },
           message: `继续生成：已完成 ${prev.batchesDone}/${prev.chunks.length} 批`,
           status: "paused",
           error: void 0,
@@ -18574,7 +18671,7 @@ ${lines}`;
     return describeOnlyBusy;
   }
   async function runDescribeOnly(app, talker) {
-    var _a2, _b2, _c2, _d2;
+    var _a2, _b2, _c2, _d2, _e, _f;
     if (describeOnlyBusy) return { ok: false, reason: "已有描述任务在跑" };
     if (st && (st.runningJob || st.queue.some((j) => j.status === "paused"))) {
       return { ok: false, reason: "画谱任务进行中——等它跑完再补描述" };
@@ -18638,6 +18735,10 @@ ${lines}`;
         const r = await runDescribeStage(job, finish);
         if (job.status === "error") return { ok: false, reason: job.error };
         if (r === "halted") return { ok: false, reason: "描述没有跑完（保险库上锁或任务被移除），稍后重试" };
+        if (r === "unreadable") {
+          const n = (_f = (_e = job.describe) == null ? void 0 : _e.unreadable) != null ? _f : 0;
+          return { ok: false, reason: `${n} 张图片的源图损坏或缺失，一张都没描述成功` };
+        }
         return { ok: true, skipped: r === "skipped" };
       } finally {
         st.queue = st.queue.filter((j) => j !== job);
@@ -18649,10 +18750,11 @@ ${lines}`;
     } finally {
       describeOnlyBusy = false;
       if (st) st.injected = prevInjected;
+      kick();
     }
   }
   async function runJob(job) {
-    var _a2, _b2, _c2, _d2, _e, _f, _g, _h, _i, _j, _k, _l, _m, _n, _o, _p, _q, _r, _s, _t, _u, _v, _w, _x, _y;
+    var _a2, _b2, _c2, _d2, _e, _f, _g, _h, _i, _j, _k, _l, _m, _n, _o, _p, _q, _r, _s, _t, _u, _v, _w, _x, _y, _z, _A;
     const asks = asksOf();
     st.runningJob = job.talker;
     job.status = "running";
@@ -18761,13 +18863,16 @@ ${lines}`;
           mediaNote: buildMediaNote({
             voiceCount: (_j = job.stats.voiceCount) != null ? _j : 0,
             voiceTotalSec: (_k = job.stats.voiceTotalSec) != null ? _k : 0,
-            imageCount: (_l = job.stats.imageCount) != null ? _l : 0
+            imageCount: (_l = job.stats.imageCount) != null ? _l : 0,
+            // 录音三项同 864 处（审计 #2）：这处是素材升级（refresh）时重算说明的路径
+            recordingCount: (_m = job.stats.recordingCount) != null ? _m : 0,
+            recordingTotalSec: (_n = job.stats.recordingTotalSec) != null ? _n : 0
           }) || void 0
         };
         if (bucketMsgs.length) {
           job.importRecord = {
             fileLabel: job.fileLabel,
-            skippedCount: (_n = (_m = job.importRecord) == null ? void 0 : _m.skippedCount) != null ? _n : 0,
+            skippedCount: (_p = (_o = job.importRecord) == null ? void 0 : _o.skippedCount) != null ? _p : 0,
             messageCount: bucketMsgs.length,
             timeFrom: new Date(bucketMsgs[0].ts).toISOString(),
             timeTo: new Date(bucketMsgs[bucketMsgs.length - 1].ts).toISOString()
@@ -18775,7 +18880,7 @@ ${lines}`;
         }
       }
       if (!job.portraitConfirmed) {
-        const gate = (_o = st.injected) == null ? void 0 : _o.askPortraitConfirm;
+        const gate = (_q = st.injected) == null ? void 0 : _q.askPortraitConfirm;
         if (gate) {
           const label = describeModelLabelOf();
           job.stage = "chunked";
@@ -18852,9 +18957,9 @@ ${lines}`;
         merged = mergeWithOld(merged, existing == null ? void 0 : existing.digest);
         if ((existing == null ? void 0 : existing.digest) && (existing.digest.person || existing.digest.bond || existing.digest.chronicle)) {
           job.revisedFrom = {
-            person: (_p = existing.digest.person) != null ? _p : "",
-            bond: (_q = existing.digest.bond) != null ? _q : "",
-            chronicle: (_r = existing.digest.chronicle) != null ? _r : ""
+            person: (_r = existing.digest.person) != null ? _r : "",
+            bond: (_s = existing.digest.bond) != null ? _s : "",
+            chronicle: (_t = existing.digest.chronicle) != null ? _t : ""
           };
         }
       }
@@ -18866,9 +18971,9 @@ ${lines}`;
         traits: merged.traits.length
       };
       const material = toPortraitMaterial(merged, {
-        mediaNote: (_s = job.material) == null ? void 0 : _s.mediaNote,
-        statsNote: (_t = job.material) == null ? void 0 : _t.statsNote,
-        profileNote: (_u = job.material) == null ? void 0 : _u.profileNote,
+        mediaNote: (_u = job.material) == null ? void 0 : _u.mediaNote,
+        statsNote: (_v = job.material) == null ? void 0 : _v.statsNote,
+        profileNote: (_w = job.material) == null ? void 0 : _w.profileNote,
         sampleEvents: job.mode === "incremental"
       });
       const sampleWarn = sampleWarnOf(job.msgCount);
@@ -18878,7 +18983,7 @@ ${lines}`;
       });
       let person = "";
       try {
-        person = (await asks.portrait(buildPersonPrompt(job.name, material, sampleWarn, job.mode === "incremental" ? (_v = existing == null ? void 0 : existing.digest) == null ? void 0 : _v.person : void 0))).trim();
+        person = (await asks.portrait(buildPersonPrompt(job.name, material, sampleWarn, job.mode === "incremental" ? (_x = existing == null ? void 0 : existing.digest) == null ? void 0 : _x.person : void 0))).trim();
       } catch (e) {
         await finish({ status: "error", error: errorMessage(e) });
         return;
@@ -18895,7 +19000,7 @@ ${lines}`;
       await finish({ stage: "bond", message: "《其人》完成，正在生成《相交》…" });
       let bond = "";
       try {
-        bond = (await asks.portrait(buildBondPrompt(job.name, material, sampleWarn, job.mode === "incremental" ? (_w = existing == null ? void 0 : existing.digest) == null ? void 0 : _w.bond : void 0))).trim();
+        bond = (await asks.portrait(buildBondPrompt(job.name, material, sampleWarn, job.mode === "incremental" ? (_y = existing == null ? void 0 : existing.digest) == null ? void 0 : _y.bond : void 0))).trim();
       } catch (e) {
         await finish({ status: "error", error: errorMessage(e) });
         return;
@@ -18919,7 +19024,7 @@ ${lines}`;
               evenlySample(merged.events, MATERIAL_LIMITS.chronicle),
               material.mediaNote,
               material.statsNote,
-              job.mode === "incremental" ? (_x = existing == null ? void 0 : existing.digest) == null ? void 0 : _x.chronicle : void 0
+              job.mode === "incremental" ? (_z = existing == null ? void 0 : existing.digest) == null ? void 0 : _z.chronicle : void 0
             )
           )).trim();
         } catch (e) {
@@ -18959,7 +19064,7 @@ ${lines}`;
       });
     } catch (e) {
       if (gone(job)) return;
-      if (!((_y = st == null ? void 0 : st.safe) == null ? void 0 : _y.unlocked)) {
+      if (!((_A = st == null ? void 0 : st.safe) == null ? void 0 : _A.unlocked)) {
         await finish({ status: "paused", message: "保险库已上锁，解锁后继续" });
         return;
       }
@@ -19697,6 +19802,23 @@ ${lines}`;
     queue.length = 0;
     notifyQueue();
     return n;
+  }
+  function cancelRecordingTasksOfTalker(talker, dataRoot) {
+    if (!talker) return { stopped: 0, dequeued: 0 };
+    let stopped = 0;
+    for (const [key, v] of [...running]) {
+      if (v.talker !== talker) continue;
+      stopRecordingTask(key, dataRoot && v.file ? { dataRoot, talker, file: v.file } : void 0);
+      stopped += 1;
+    }
+    let dequeued = 0;
+    for (let i = queue.length - 1; i >= 0; i--) {
+      if (queue[i].talker !== talker) continue;
+      queue.splice(i, 1);
+      dequeued += 1;
+    }
+    if (dequeued) notifyQueue();
+    return { stopped, dequeued };
   }
   async function pumpRecordingQueue() {
     var _a2, _b2;
@@ -22514,6 +22636,7 @@ ${lines}`;
         suppOwnerId = detailId;
         suppImages = [];
         suppRecQueue = [];
+        suppTab = "text";
         recDelPending = null;
         recStartEditFile = null;
         recRefConfirm = false;
@@ -23257,7 +23380,7 @@ ${lines}`;
         }
         const norm = normalizeChatJson(bundle.raws, opts, { voice: bundle.voice, imageDesc: bundle.imageDesc });
         const existing = (_a2 = storeData.get(c.name)) == null ? void 0 : _a2.store;
-        const { contact, added } = mergeStore(existing, norm, now);
+        const { contact, added } = mergeStore(existing, norm, now, opts);
         const avatar = readAvatarInput(bundle.avatar);
         delete contact.avatar;
         await peopleSafe.write(c.name, (rec) => {
@@ -25130,13 +25253,16 @@ ${lines}`;
   }
   async function deletePerson(p) {
     try {
+      const rec = cancelRecordingTasksOfTalker(p.id, suppDataRoot() || void 0);
       const stopped = await Promise.resolve(jobs().removeJob(p.id));
       await store.remove(p.id);
       recordCache == null ? void 0 : recordCache.delete(p.id);
       if (pulled === p.id) pulled = null;
       detailId = null;
       dialog = null;
-      notice(stopped ? `已删除「${p.name}」，未完成的任务一并停掉` : `已删除「${p.name}」`, "delete");
+      const recAny = rec.stopped > 0 || rec.dequeued > 0;
+      const why = stopped && recAny ? "，未完成的画谱任务与录音转写一并停掉" : stopped ? "，未完成的任务一并停掉" : recAny ? "，未完成的录音转写一并停掉" : "";
+      notice(`已删除「${p.name}」${why}`, "delete");
       void renderAlbum();
     } catch (e) {
       notifyActionError(e, `删除「${p.name}」`);
@@ -25292,13 +25418,13 @@ ${lines}`;
       return;
     }
     const talker = detailId;
-    if (profEditId !== detailId) {
-      profEditId = detailId;
-      await renderAlbum();
-    }
     profAiBusy = true;
     notice("AI 正在读交往素材补充背景…", "info");
     try {
+      if (profEditId !== detailId) {
+        profEditId = detailId;
+        await renderAlbum();
+      }
       const prompt = buildProfileExtractPrompt(p.name, profileExtractMaterial(dg), knownProfileText(p.profile));
       const data = parseProfileReply(await createAI().json(prompt));
       if (detailId !== talker || !overlay) return;
@@ -26265,6 +26391,7 @@ ${lines}`;
       notice("保险库上锁——解锁后在这条录音上点「并仓」补上", "warning");
       return;
     }
+    if (!peopleSafe.has(talker)) return;
     const recKey = recordingSidecarPath(root, talker, file);
     if (isRecordingRunning(recKey) || isRecordingQueued(recKey)) {
       notice("这条录音还在转写——等它跑完再点「并仓」", "warning");
