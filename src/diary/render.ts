@@ -528,39 +528,6 @@ export function entryBlockHTMLs(
   return out;
 }
 
-/**
- * 块 HTML 的根类名（首个标签上的 `class`）。
- *
- * 给**检索**用：判命中时要按块根类挑出「没有可读正文」的那几种（媒体 / 信封 / 日戳）跳过，
- * 而不是拿整串 HTML 去 `includes`——那会把内层同名类也算上。
- * 放在本文件是因为「块根长什么样」是 render 层的契约（`entryBlockHTMLs` 的产出形状）。
- */
-export function blockRootClass(html: string): string {
-  const m = /^<[a-z][^>]*\sclass="([^"]*)"/i.exec(html);
-  return m ? m[1] : '';
-}
-
-/**
- * 块 HTML → 纯文本（= 这块上屏后的 `textContent`）。
- *
- * 给**检索**用：判「哪几则命中」不能只扫窗口内已上屏的 DOM（那会漏掉还没排版的条目），
- * 又不能靠 `plainTextOf` 那种字段拼接——块里还会长出行内 md（wikilink / 标签 / 加粗）来，
- * 两边一对不上就会出现「说命中了 N 则、点过去却标不出荧光笔」。
- * 所以直接读块的产出串：去标签 + 反转义。
- *
- * **必须与 `esc` 严格互逆、且与 `entryBlockHTMLs` 同住一个文件**——转义表一旦在别处改了，
- * 检索的命中数就会与实际能标出的范围漂移。`&amp;` 放最后解，否则 `&amp;lt;` 会被拆两遍。
- */
-export function blockPlainText(html: string): string {
-  return html
-    .replace(/<[^>]*>/g, '')
-    .replace(/&lt;/g, '<')
-    .replace(/&gt;/g, '>')
-    .replace(/&quot;/g, '"')
-    .replace(/&#39;/g, "'")
-    .replace(/&amp;/g, '&');
-}
-
 /** 日戳（新的一天：大日号 + 月/星期/则数 + 年份 + 一道水纹） */
 export function daystampHTML(date: string, count: number): string {
   const [y, m, dd] = date.split('-');

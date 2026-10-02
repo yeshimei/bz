@@ -34,11 +34,10 @@ import { getApp } from '../core/app';
 import { onDomainEvent } from '../core/domain-bus';
 import { escapeHtml } from '../core/utils';
 import { openFlowDialog } from '../core/flow-dialog';
-import { DIARY_DIRECTORY, inWallDirs, getTagEmoji, FIRST_PAINT_ENTRIES } from './config';
+import { DIARY_DIRECTORY, inWallDirs, getTagEmoji } from './config';
 import {
   loadWallEntries,
   invalidateWallCache,
-  onWallProgress,
   mediaSrc,
   extractMedia,
   extractSegments,
@@ -46,13 +45,10 @@ import {
   type WallEntry,
   type WallMedia,
 } from './data';
-import { LIST_BATCH_SIZE } from '../core/paging';
 import {
   bookPanelHTML,
   daystampHTML,
   entryBlockHTMLs,
-  blockPlainText,
-  blockRootClass,
   inlineMd,
   mimeOfMediaName,
   splitTextBlocks,
@@ -87,59 +83,14 @@ import { mountIcons } from '../core/ui';
 
 // ===== 常量 =====
 
-/** 窄屏单页断点——**与 styles.css 的 `@media (max-width: 720px)` 必须一致**（两侧都改）。
- * 导出是给 `lastReachableCursor` 的条件 ② 守卫用（`ui-book.test.ts`：单页档下 2×页宽必须大于它）。 */
-export const SINGLE_MAX_W = 720;
+/** 窄屏单页断点——**与 styles.css 的 `@media (max-width: 720px)` 必须一致**（两侧都改） */
+const SINGLE_MAX_W = 720;
 /** StPageFlip 翻页动画时长（原型 620ms 实测偏拖沓，收到 380ms） */
 const FLIP_TIME_MS = 380;
-
-/** 后台续排：首屏成册后隔多久开始——给「开一眼就走」留一个不付这笔账的窗口（收起来即作废） */
-const WIDEN_DELAY_MS = 350;
-/** 现场不静（浮层开着 / 录音在放 / 拆信封动效在飞）时，隔多久再看一眼——不静就不许动书 */
-const WIDEN_RETRY_MS = 400;
-/** 让路的耐心上限（次）：浮层一直开着不能无限空转；用尽后由「点了才推宽」兜底 */
-const WIDEN_RETRY_MAX = 30;
-/** 后台续排的分片粒度（则）：片间让出主线程，单片 ≈ 数百个块元素量级 */
-const WIDEN_CHUNK = 60;
-/**
- * 后台续排：一次最多把窗口推到多少则。
- *
- * ⚠️ **不是「排到全量」**。52d1b580 那一版就是排到全量，真机上报回「打开界面翻页会卡顿很久」——
- * 两个原因都在「书的大小 = 全量条目」上：
- * ① 尾段（探针量高 → `paginateFlow` → `buildBook`）是**原子的 O(窗口)**，推到全量就是一次长冻结；
- * ② 书页数是**每一次翻页**的成本：vendored 的 `drawFrame()` 每帧调 `clear()`，而 `clear()`
- *    遍历**全部**页元素逐个写 `style.cssText="display:none"` —— 几百页 × 每次约 23 帧，
- *    于是每次翻页都卡。书必须保持小。
- *
- * 所以这里只把窗口推到有限的一段（够用就好）；更外的目标仍走 `widenToCover` 按需推宽（只顿那一下）。
- * 真正的解法是把**书本身**做成视窗：只渲染当前跨页附近的纸页，总页数由「块高缓存 + 预估高度」
- * 算出来（社区口径：不定高虚拟列表 = 预估 + 真实高度缓存 + 占位撑对总长 + 区域渲染；
- * Obsidian 编辑器「视窗」同一思路）。在那之前先不退化成更糟的形态。
- *
- * 导出是给测试用的（守卫「封顶生效、书不跟着条目数无限长」）。
- */
-export const WIDEN_CAP = 120;
-
-/**
- * 检索不看的块（`entryBlockHTMLs` 块根类名里的片段）：媒体卡 / 录音卡 / 火漆信封 / 日戳。
- * 它们没有可读正文——尤其日戳，一串日期加「N 则」会把「则」这种词命中一大片。
- * 口径与改版前一致（那时是拿已上屏的 DOM 元素按同一组类名跳过）。
- */
-const SEARCH_SKIP_BLOCKS = [
-  'bz-diary-b-photo',
-  'bz-diary-b-audio',
-  'bz-diary-b-envelope',
-  'bz-diary-b-daystamp',
-];
 /** 页尾能塞下一刀的最小剩余高度：比这更矮就不切，直接换页（切出来两行字没有意义） */
 const PAGE_CUT_MIN_PX = 84;
 /** 日戳不孤行：本页剩余空间装不下「日戳 + 一点点内容」就提前换页 */
 const DAYSTAMP_KEEP_PX = 96;
-/**
- * 可缩媒体块（照片 / 视频）最多缩到多窄（占自然块宽的比例）。
- * 再窄就不缩了，宁可整块换到下一页——一枚邮票大小的照片还不如让它下页好好摊开。
- */
-const MEDIA_FIT_MIN_RATIO = 0.6;
 /** 域事件/vault 变更后的整册回刷防抖 */
 const REFRESH_DEBOUNCE_MS = 400;
 /** 滚轮翻页节流 */
@@ -182,24 +133,18 @@ export interface FlowItem {
   el: HTMLElement;
   h: number;
   keep?: boolean;
-  /** 可缩块（照片 / 视频）：放不下时先让 `shrink` 等比缩到塞进剩余高度，别为差一点点就整块换页 */
-  fit?: boolean;
 }
 /** 段落逐行续排的注入点：返回 `[上半, 下半, 下半高]`，放不下返回 null。测试可换成桩。 */
 export type SplitFn = (el: HTMLElement, availPx: number) => [HTMLElement, HTMLElement, number] | null;
-/** 可缩块的收缩口：就地缩到 `maxH` 以内并返回新的块高；缩不动（已到下限 / 模型有误差）返回 null。 */
-export type ShrinkFn = (el: HTMLElement, maxH: number) => number | null;
 
 /**
  * 块流 → 页（纯函数，可单测）。规则与原型一致，逐条对应：
  * 1. `keep` 块（日戳）= 新的一天 = 新的一张纸，且**对齐到跨页左位**（前一天纸的背面自然留白）；
  * 2. 空页上遇到「自己就超过一整页」的块：先按整页高度切一刀；
- * 3. 装不下时：3a 可缩块（`fit`，照片 / 视频）先等比缩到塞进剩余高度；3b 还装不下且页尾够高
- *    （≥ PAGE_CUT_MIN_PX）就在剩余空间里逐行切一刀，上半留页尾、下半顶格续下页；否则换页；
+ * 3. 装不下时若页尾还够高（≥ PAGE_CUT_MIN_PX）就在剩余空间里逐行切一刀，上半留页尾、下半顶格续下页；
  * 4. `keep` 块还要求剩余高度容得下「它 + 一点内容」，否则提前换页（日戳不孤行）。
  *
  * 抽成纯函数是为了让这段最难的逻辑能脱开 DOM 单测（真实现里 `split` 走 Range 二分）。
- * `shrink` 同理：真实现按块宽等比缩，桩里给个定值就能单独钉 3a 的分支。
  *
  * 注：规则 4 目前**走不到**——规则 1 对 `keep` 块已经先换了页（`cur` 必为空），
  * 此处 `cur!.length` 恒假。移植期照原型逐行对齐（`.scratch/diary-quill/app.js` 同一形态），
@@ -209,10 +154,9 @@ export function paginateFlow(
   items: FlowItem[],
   availH: number,
   split: SplitFn,
-  heightOf: (el: HTMLElement) => number,
-  shrink?: ShrinkFn
+  heightOf: (el: HTMLElement) => number
 ): Page[] {
-  const metas = items.map((it) => ({ el: it.el, h: it.h, keep: !!it.keep, fit: !!it.fit }));
+  const metas = items.map((it) => ({ el: it.el, h: it.h, keep: !!it.keep }));
   const pages: Page[] = [];
   let cur: Page | null = null;
   let used = 0;
@@ -236,32 +180,22 @@ export function paginateFlow(
       const c2 = split(it.el, availH - 4);
       if (c2) {
         it.h = heightOf(c2[0]);
-        metas.splice(i + 1, 0, { el: c2[1], h: c2[2], keep: false, fit: false });
+        metas.splice(i + 1, 0, { el: c2[1], h: c2[2], keep: false });
       }
     }
-    /* 3) 装不下 */
+    /* 3) 装不下：页尾够高就逐行续排，否则换页 */
     if (used + it.h > availH && cur!.length) {
       const remain = availH - used;
-      /* 3a) 可缩块（照片 / 视频）：先等比缩到塞进剩余高度。
-         差几十像素就整块换页，会在页尾留一大片白（真机症状：左页下半页全空、照片独自在右页）。
-         缩不动（已到下限）或缩了仍塞不下就照旧往下走，交给 3b。 */
-      if (it.fit && shrink) {
-        const nh = shrink(it.el, remain);
-        if (nh !== null && nh <= remain) it.h = nh;
-      }
-      /* 3b) 还装不下：页尾够高就逐行续排，否则换页 */
-      if (used + it.h > availH) {
-        if (remain >= PAGE_CUT_MIN_PX) {
-          const cut = split(it.el, remain - 4);
-          if (cut) {
-            cur!.push(cut[0]);
-            metas.splice(i + 1, 0, { el: cut[1], h: cut[2], keep: false, fit: false });
-            used = availH;
-            continue;
-          }
+      if (remain >= PAGE_CUT_MIN_PX) {
+        const cut = split(it.el, remain - 4);
+        if (cut) {
+          cur!.push(cut[0]);
+          metas.splice(i + 1, 0, { el: cut[1], h: cut[2], keep: false });
+          used = availH;
+          continue;
         }
-        newPage();
       }
+      newPage();
     }
     /* 4) 日戳不孤行 */
     if (it.keep && used + it.h + DAYSTAMP_KEEP_PX > availH && cur!.length) newPage();
@@ -271,41 +205,42 @@ export function paginateFlow(
   return pages;
 }
 
-/** 月索引项：`key` = `YYYY-MM`，`firstEid` = 该月最新那一则的条目 id，`n` = 该月条目数 */
-export interface MonthEntry {
+/** 月索引项：某月的首页号（书页序号，0 起）与该月条目数 */
+export interface MonthMark {
   key: string;
-  firstEid: string;
+  page1: number;
   n: number;
 }
 
 /**
- * 册页索引（纯函数，可单测）：**只看条目、不看排版**。
- *
- * 为什么不吃 `pages`：书只排了「已加载全量」的前 `shown` 条（ADR-0231 的排版窗口），
- * 拿书页去汇月份，索引纸就只列得出首屏那半个月的月——窗口外的月份整行缺失、跳不过去。
- * 窗口是**排版**细节，不是**数据**边界；索引该覆盖已加载的全部。
- *
- * 页码不在这里算：只有排过版才知道某月落在第几页，而窗口外的月份还没排。
- * 调用方拿到 `firstEid` 后按需推宽窗口再定位（见 `DiaryAppController.revealEntry`）。
- *
- * `entries` 最新在前（全域同序），故每月**首次出现**的那条就是该月最新一条——
- * 跳它即落到该月开头（同一天日戳 `keep` 必开新纸，日戳与首条同页）。
+ * 册页索引（纯函数，可单测）：每个月**第一次出现**的页（读日戳的 `data-date`）。
+ * 目录纸 / 书口年份染色 / 台历跳日共用这一份口径。
  */
-export function monthIndex(entries: WallEntry[]): MonthEntry[] {
-  const out: MonthEntry[] = [];
-  const byKey = new Map<string, MonthEntry>();
-  for (const e of entries) {
-    const key = e.date.slice(0, 7);
-    const hit = byKey.get(key);
-    if (hit) {
-      hit.n++;
-      continue;
-    }
-    const m: MonthEntry = { key, firstEid: e.id || '', n: 1 };
-    byKey.set(key, m);
-    out.push(m);
+export function monthMarks(pages: Page[], entries: WallEntry[]): MonthMark[] {
+  const out: MonthMark[] = [];
+  const seen = new Set<string>();
+  for (let pi = 0; pi < pages.length; pi++) {
+    const dayEl = pages[pi].find((el) => el.classList.contains('bz-diary-b-daystamp'));
+    const date = dayEl?.getAttribute('data-date');
+    if (!date) continue;
+    const key = date.slice(0, 7);
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push({ key, page1: pi + 1, n: 0 });
   }
+  const byMonth = new Map<string, number>();
+  for (const e of entries) {
+    const k = e.date.slice(0, 7);
+    byMonth.set(k, (byMonth.get(k) || 0) + 1);
+  }
+  for (const m of out) m.n = byMonth.get(m.key) || 0;
   return out;
+}
+
+/** 某页的日戳日期（跳日/搜索定位用；无日戳返回 null） */
+export function pageDateOf(page: Page): string | null {
+  const el = page.find((n) => n.classList.contains('bz-diary-b-daystamp'));
+  return el?.getAttribute('data-date') || null;
 }
 
 // ===== 小工具 =====
@@ -363,37 +298,6 @@ function writeClipboard(text: string, okMsg: string, failMsg: string): void {
   if (navigator.clipboard && navigator.clipboard.writeText) {
     void navigator.clipboard.writeText(text).then(() => notice(okMsg, 'success'), fallback);
   } else fallback();
-}
-
-/**
- * 读者在当前端式下能翻到的**最后一个 `cursor` 值**（= 书尾判据）。抽成纯函数是因为它的正确性
- * 完全由 StPageFlip 的 `flip` 语义决定、跟 DOM 量尺无关，必须能脱开书实例单测。
- *
- * 为什么**不能**用 `pageCount - 1`：跨页（landscape）模式下 StPageFlip 的 `flip` 事件给的是
- * `currentPageIndex`，而库里它等于**当前跨页的左页号**（`showSpread()`：`currentPageIndex =
- * spread[0]`）。`createSpread()` 把页两两配对；本域 `showCover: false`（无封面页）所以从 0 起配：
- * **偶数页数**时最后一跨是 `[n-2, n-1]`，左页号最多到 `n-2` —— 永远到不了 `n-1`。若按
- * `cursor === n-1` 判「已在书尾」，条件在偶数页数下恒不成立、续叠一次都不触发。真机症状：
- * 首屏那批翻完就到底了，后台读进来的一千多则再也翻不到。**奇数**页数时最后一跨是 `[n-1]`，
- * 左页号就是 `n-1`。单页（portrait）模式每页自成跨，最大恒为 `n-1`。
- *
- * 端式参数取本域自己那份判定（`ui.ts` 的 `this.single`，与 `pageWidth()` 同源）。可达布局下它与
- * 库的真实端式**恒等**，两个方向分头看：
- * ① `single === false` ⇒ 建书时 `usePortrait: false` ⇒ 库不可能成 portrait，必 landscape；
- * ② `single === true` ⇒ 屏宽 ≤ `SINGLE_MAX_W`，而 `pageWidth()` 此时 = min(0.92×屏宽, 480)
- *    ⇒ 2×页宽 > 屏宽 ≥ 块宽 ⇒ 库 `calculateBoundsRect` 的 portrait 条件（块宽 < 2×页宽）必成立。
- * 所以这里用 `this.single` 是安全的。（库另有一份「当前端式」的现成答案
- * `this.flip.getOrientation()`——改用它可以免掉上面这条推导，但要给测试替身补上同一层语义。
- * **若日后调 `SINGLE_MAX_W` 或 `pageWidth()` 的 480 上限，必须重核条件 ②**：库的 portrait
- * 不是只看 `usePortrait`，多看一个「块宽 < 2×页宽」；条件 ② 一旦不成立，本判据会把偶数页数的
- * landscape 书当成 portrait，`n-1` 又永远够不到——本轮修掉的缺陷就会以反方向回来。
- * 条件 ② 已由 `ui-book.test.ts` 的「单页档下 2×页宽必大于断点宽」守卫看着，改坏会红。）
- */
-export function lastReachableCursor(pageCount: number, single: boolean): number {
-  const n = pageCount;
-  if (n <= 0) return 0;
-  if (single) return n - 1;
-  return n % 2 === 1 ? n - 1 : n - 2;
 }
 
 /**
@@ -473,32 +377,12 @@ export class DiaryAppController {
   // ---------- 状态 ----------
   /** 当前册子里的条目（只读聚合结果；加密条目在解锁时才并入） */
   entries: WallEntry[] = [];
-  /**
-   * 排版窗口（ADR-0231）：只把前这么多条排成纸页，其余**留在内存里但不排**。
-   * 排版是本域最贵的一步（全量块流测高 + 二分切段），全量排会在开册时顿住，而且书一重
-   * **每次翻页**都跟着变卡（`WIDEN_CAP` 的注里有 StPageFlip 侧的成因）。
-   * 首批按 `FIRST_PAINT_ENTRIES` 成册。读盘结束后 `widenFull()` 会在后台把窗口推到 `WIDEN_CAP`；
-   * 更外的目标由 `widenToCover` 按需推宽、翻到书尾由 `extendIfAtTail` 续叠。
-   */
-  private shown = FIRST_PAINT_ENTRIES;
-  /** 本轮的「首批已成册」闸门：进度可能连发多次，只认第一次 */
-  private firstPaintDone = false;
-  /** 续叠窗口的重入闸门（relayout → buildBook 会重挂 flip 事件） */
-  private extending = false;
-  /** 延后一拍续叠的定时器（`flip` 钩子用；`relayout`/`hide` 复位的旁路遗物） */
-  private extendTimer: ReturnType<typeof setTimeout> | null = null;
-  /** 后台续排的定时器（见 `scheduleWidenFull`；`hide` / `cleanup` 要清） */
-  private widenTimer: ReturnType<typeof setTimeout> | null = null;
-  /** 后台续排让路的重试计数（现场不静时累加；次数上限见 WIDEN_RETRY_MAX） */
-  private widenRetry = 0;
   private byEid = new Map<string, WallEntry>();
   private pages: Page[] = [];
   private cursor = 0;
   private single = false;
   private filterTag: string | null = null;
-  /** 检索态：`hits` 存的是**命中条目的 id**（不是页内元素）——命中可能落在还没排版的窗口外，
-   *  得先按需推宽窗口才能定位，所以这一层记的是「哪几则」而不是「哪几个元素」。 */
-  private search: { kw: string | null; hits: string[]; i: number } = {
+  private search: { kw: string | null; hits: { pi: number; el: HTMLElement }[]; i: number } = {
     kw: null,
     hits: [],
     i: 0,
@@ -639,39 +523,6 @@ export class DiaryAppController {
     return el.offsetHeight + (parseFloat(cs.marginTop) || 0) + (parseFloat(cs.marginBottom) || 0);
   }
 
-  /**
-   * 可缩媒体块（照片 / 视频）等比缩到 `maxH` 以内，返回新的块高；缩不动返回 null。
-   *
-   * 为什么缩**块宽**而不是高度：相框是 img 自己的 padding、媒体盒是 `aspect-ratio: 4/3`，
-   * 宽度一缩两者按比例同步收，照片不会被压扁也不会有信封边（改高度只会把框拉成横条）。
-   * 缩幅按「内容高 ∝ 块宽」一次算到位——那圈白框与 margin 是常数项，所以算完**再用真的量一遍**
-   * 确认；量出来还超就撤回这次缩，交给换页（宁可留白也不要「缩过却仍换页」的怪尺寸）。
-   *
-   * 内联的是**几何值**（由页面剩余高度反推的块宽），与 `renderEdgeMarks` 的 top/height 同类：
-   * 行为性内联值，不是视觉样式——颜色、框体、落影仍全在 `styles.css`。
-   */
-  private fitMedia(el: HTMLElement, maxH: number): number | null {
-    const cs = getComputedStyle(el);
-    const marg = (parseFloat(cs.marginTop) || 0) + (parseFloat(cs.marginBottom) || 0);
-    const h0 = this.blockHeightOf(el);
-    const w0 = el.offsetWidth;
-    const body = h0 - marg;
-    const room = maxH - marg;
-    if (!w0 || body <= 0 || room <= 0) return null;
-    const ratio = Math.min(1, room / body);
-    const w = Math.floor(w0 * ratio);
-    if (w < Math.ceil(w0 * MEDIA_FIT_MIN_RATIO)) return null; // 到下限了：宁可不缩，整块下页
-    const prev = el.style.getPropertyValue('--bz-diary-ph-w');
-    el.style.setProperty('--bz-diary-ph-w', w + 'px');
-    const h = this.blockHeightOf(el);
-    if (h > maxH) {
-      if (prev) el.style.setProperty('--bz-diary-ph-w', prev);
-      else el.style.removeProperty('--bz-diary-ph-w');
-      return null;
-    }
-    return h;
-  }
-
   // ============================================================
   //  排版：块流 → 测量 → 切页 → 建书
   // ============================================================
@@ -685,10 +536,8 @@ export class DiaryAppController {
   /**
    * 重排整册。`keepRatio`：视口变化/回刷时按上次页数比例保住阅读位置（跟手不跳回最新）；
    * 换筛选、写完一篇等场景传 false（落回第 0 页 = 最新那篇）。
-   * `keepPage`（ADR-0231）：钉住**当前页索引**不动——只往尾部续叠纸页时用（见 extendIfAtTail）：
-   * 那种场景下总页数变了，按比例映射会把读者往前推，而位置其实本该纹丝不动。
    */
-  private relayout(keepRatio: boolean, keepPage = false): number {
+  private relayout(keepRatio: boolean): number {
     const root = this.root;
     if (!root) return 0;
     const t0 = typeof performance !== 'undefined' ? performance.now() : 0;
@@ -700,74 +549,19 @@ export class DiaryAppController {
     this.pauseAllAudio();
     this.search = { kw: null, hits: [], i: 0 };
 
-    // ADR-0231：`all` = 已加载的全部（计数 / 查找 / 灯箱用），`list` = 排版窗口。
-    // 排版是这一域最贵的一步，窗口化是首屏能出来、且后台读到新条目时**不必重排**的前提。
-    const all = this.visibleEntries();
-    const list = all.slice(0, Math.max(0, this.shown));
-    this.setScope(all);
-    this.layoutBook(this.buildFlow(list, this.dayCountOf(all)), keepRatio, keepPage);
-    return (typeof performance !== 'undefined' ? performance.now() : 0) - t0;
-  }
-
-  /** 排版要用的「全量视角」三件套：id → 条目、相片引用与索引。建块流**之前**必须就位——
-   *  `ctx()` 读 `photoIndex`，灯箱读 `photoRefs`。两条排版路都要先调它。 */
-  private setScope(all: WallEntry[]): void {
-    this.byEid = new Map(all.map((e) => [e.id || '', e]));
-    this.photoRefs = collectPhotoRefs(all);
-    this.photoIndex = new Map(this.photoRefs.map((p, i) => [p.media.name, i]));
-  }
-
-  /**
-   * 日戳「当天几则」：按**已加载的全部**算（含窗口外），只排窗口内的条目——
-   * 否则窗口边界那天会数少。条目数不参与排版成本，多算不亏。
-   */
-  private dayCountOf(all: WallEntry[]): Map<string, number> {
-    const dayCount = new Map<string, number>();
-    for (const e of all) dayCount.set(e.date, (dayCount.get(e.date) || 0) + 1);
-    return dayCount;
-  }
-
-  /** 块流：日戳 + 条目块（票根/藏书票/信封的归位由 render 层决定）。 */
-  private buildFlow(list: WallEntry[], dayCount: Map<string, number>): FlowItem[] {
-    const ctx = this.ctx();
-    const flow: FlowItem[] = [];
-    let lastDate: string | null = null;
-    for (const e of list) {
-      if (e.date !== lastDate) {
-        lastDate = e.date;
-        flow.push({ el: elOf(daystampHTML(e.date, dayCount.get(e.date) || 1)), h: 0, keep: true });
-      }
-      this.pushEntryBlocks(flow, e, ctx);
-    }
-    return flow;
-  }
-
-  /**
-   * 条目 → 块元素。`bz-diary-b-photo`（照片 / 视频）标成**可缩块**：放不下时先等比缩到塞进
-   * 剩余高度（见 `paginateFlow` 规则 3a），别为差几十像素就整块换页、在页尾留半页白。
-   * 日戳与文字块不缩——文字走逐行续排，日戳必须整块起新纸。
-   */
-  private pushEntryBlocks(flow: FlowItem[], e: WallEntry, ctx: RenderCtx): void {
-    for (const html of entryBlockHTMLs(e, ctx)) {
-      const el = elOf(html);
-      flow.push(el.classList.contains('bz-diary-b-photo') ? { el, h: 0, fit: true } : { el, h: 0 });
-    }
-  }
-
-  /**
-   * 排版尾段：量高 → 切页 → 建书 → 定位。两条路共用——
-   * `relayout()`（同步：整窗重排，前奏清场）与 `widenFull()`（后台：只往尾部续叠，不清场）。
-   *
-   * 之所以抽出来是因为后台那条路的**前奏**必须不一样，而**尾段**必须逐字一样：
-   * 页边界、页码、`keepPage` 保位全在这里，两套实现必然漂移。
-   */
-  private layoutBook(flow: FlowItem[], keepRatio: boolean, keepPage: boolean): void {
-    const root = this.root;
-    if (!root) return;
+    // 清空书芯但保住 StPageFlip 容器（库实例随后 destroy/重建；库的 destroy 会摘掉容器）
+    const fbHost = this.flipHost;
+    this.blockEl.innerHTML = '';
+    if (fbHost) this.blockEl.appendChild(fbHost);
 
     const single = typeof window !== 'undefined' && window.innerWidth <= SINGLE_MAX_W;
     this.single = single;
     root.classList.toggle('bz-diary-single', single);
+
+    const list = this.visibleEntries();
+    this.byEid = new Map(list.map((e) => [e.id || '', e]));
+    this.photoRefs = collectPhotoRefs(list);
+    this.photoIndex = new Map(this.photoRefs.map((p, i) => [p.media.name, i]));
 
     // 离屏测量盒：宽度/内边距全读 CSS（.bz-diary-probe），不在 JS 里重复一份
     const probe = document.createElement('div');
@@ -778,36 +572,47 @@ export class DiaryAppController {
     const bookH = this.bookEl.clientHeight || parseFloat(this.cssVar('--bz-diary-pg-h')) || 700;
     const availH = bookH - padT - padB;
 
-    // 一次 reflow 全量测量（读完 offsetHeight 再读 margin，不会再触发一次布局）
+    // 1) 块流：日戳 + 条目块（票根/藏书票/信封的归位由 render 层决定）
+    const ctx = this.ctx();
+    const flow: FlowItem[] = [];
+    let lastDate: string | null = null;
+    const dayCount = new Map<string, number>();
+    for (const e of list) dayCount.set(e.date, (dayCount.get(e.date) || 0) + 1);
+    for (const e of list) {
+      if (e.date !== lastDate) {
+        lastDate = e.date;
+        flow.push({ el: elOf(daystampHTML(e.date, dayCount.get(e.date) || 1)), h: 0, keep: true });
+      }
+      for (const html of entryBlockHTMLs(e, ctx)) flow.push({ el: elOf(html), h: 0 });
+    }
+
+    // 2) 一次 reflow 全量测量（读完 offsetHeight 再读 margin，不会再触发一次布局）
     for (const f of flow) probe.appendChild(f.el);
     void probe.offsetHeight;
     for (const f of flow) f.h = this.blockHeightOf(f.el);
 
-    // 切页
+    // 3) 切页
     this.pages = paginateFlow(
       flow,
       availH,
       (el, avail) => this.splitParagraph(el, avail, probe),
-      (el) => this.blockHeightOf(el),
-      (el, maxH) => this.fitMedia(el, maxH)
+      (el) => this.blockHeightOf(el)
     );
     probe.innerHTML = '';
     probe.remove();
 
     this.renderEdgeMarks();
 
-    // 目标页：保比例，否则落第一页（最新排在最前，第一页就是最新）
+    // 4) 目标页：保比例，否则落第一页（最新排在最前，第一页就是最新）
     const last = Math.max(0, this.pages.length - 1);
     let target = 0;
-    if (keepPage) {
-      // 只往尾部续叠过纸页：页索引语义没变，钉住它就行（按比例算反而会把读者往前推）
-      target = Math.max(0, Math.min(last, this.cursor));
-    } else if (keepRatio && this.lastSpreadCount > 1) {
+    if (keepRatio && this.lastSpreadCount > 1) {
       target = Math.round((this.cursor / (this.lastSpreadCount - 1)) * last);
     }
     this.lastSpreadCount = this.pages.length;
     this.buildBook(Math.max(0, Math.min(last, target)));
     this.refreshBookRect();
+    return (typeof performance !== 'undefined' ? performance.now() : 0) - t0;
   }
 
   /** 段落内第 idx 个字符落在哪个文本节点的哪个偏移 */
@@ -883,10 +688,6 @@ export class DiaryAppController {
   /** 建 StPageFlip 书：页元素 → 库，翻页动画/拖拽/纸张弯曲全交库 */
   private buildBook(targetPage: number): void {
     const host = this.flipHost;
-    /* 清空书芯但保住 StPageFlip 容器。放在这里而不是 `relayout` 的前奏，是因为后台续排
-       （`widenFull`）不走清场那条路，旧纸页也得一并扫干净。
-       清在量高之前还是之后无关紧要：书的尺寸来自 CSS 变量（`.bz-diary-book`），不是内容撑的。 */
-    this.blockEl.innerHTML = '';
     if (this.flip) {
       try {
         this.flip.destroy();
@@ -936,10 +737,6 @@ export class DiaryAppController {
     this.flip.turnToPage(Math.max(0, targetPage));
     this.flip.on('flip', (e) => {
       this.cursor = e.data;
-      // 拖拽/键盘翻到书尾也要能续上（点「下一页」那条走 turnPage）。
-      // **延后一拍**再续：续叠会 destroy 当前 StPageFlip 实例，而这条回调是库自己
-      // 在翻页流程里发的——在它的回调栈里把实例拆掉风险不可控。让出一拍最稳。
-      this.scheduleExtend();
     });
     this.cursor = Math.max(0, targetPage);
     this.afterPagesBuilt(host);
@@ -954,178 +751,8 @@ export class DiaryAppController {
 
   private turnPage(dir: 1 | -1): void {
     if (!this.flip) return;
-    if (dir > 0) {
-      // 已在书尾而窗口外还有条目 → 续叠一批，别让「下一页」变成没反应
-      if (this.extendIfAtTail()) return;
-      this.flip.flipNext();
-    } else this.flip.flipPrev();
-  }
-
-  /**
-   * 翻到书尾就推宽排版窗口一批（ADR-0231）。返回是否真的推宽了。
-   *
-   * 为什么必须「只往尾部追加」：`paginateFlow` 是从最新往最早**顺序**装页的，往流尾加条目
-   * 不会改动前面任何一页的边界 ⇒ 当前页索引语义不变、读者看到的那一页原地不动。
-   * `relayout(false, true)` 的 `keepPage` 就是为这条准备的。
-   *
-   * 代价（诚实版）：这是**整窗重排**——`paginateFlow` 对加宽后的窗口重跑一遍、一次 reflow 量高、
-   * `buildBook` 重建 StPageFlip 实例；**不是**「只测新增条目」。之所以可接受：成本以**窗口**为界
-   * （不是 1243 全量），且只在用户主动翻到书尾这一刻发生。StPageFlip v2.0.7 没有 `addPage`，
-   * 动态加页本就得整实例重建，所以这一次重建省不掉；真要省下重测，得按条目 id 缓存块高。
-   *
-   * 「书尾」的判据见 `lastReachableCursor()`——**不是** `pages.length - 1`，别改回去。
-   */
-  private extendIfAtTail(): boolean {
-    if (this.extending) return false;
-    const all = this.visibleEntries();
-    if (this.shown >= all.length) return false; // 窗口已覆盖全部已加载条目
-    if (!this.pages.length) return false;
-    if (this.cursor < lastReachableCursor(this.pages.length, this.single)) return false;
-    const next = Math.min(this.shown + LIST_BATCH_SIZE, all.length);
-    if (next <= this.shown) return false;
-    this.extending = true;
-    try {
-      this.shown = next;
-      this.relayout(false, true);
-      return true;
-    } finally {
-      this.extending = false;
-    }
-  }
-
-  /** 延后一拍再续叠（见 `buildBook` 的 `flip` 钩子）：合并同一拍内的多次 flip，不排队多份。 */
-  private scheduleExtend(): void {
-    if (this.extendTimer !== null) return;
-    this.extendTimer = setTimeout(() => {
-      this.extendTimer = null;
-      this.extendIfAtTail();
-    }, 0);
-  }
-
-  // ============================================================
-  //  后台续排：首屏之后把窗口推到「够用的一段」（ADR-0231 决策 12 回修）
-  // ============================================================
-
-  /**
-   * 首屏成册、读盘结束后，趁空闲把排版窗口**一次推到 `WIDEN_CAP` 则**。
-   *
-   * 为什么要有这一步：窗口外的索引 / 检索 / 台历跳转，原先都要当场付一次「从最新一路排到目标」
-   * 的重排——上千则的本子上那基本等于排全量，于是点一下卡一下。提前在后台排到一段，绝大多数
-   * 近期的跳转就只剩一次 `turnToPage`。
-   *
-   * 为什么是「一次」而不是「分批续叠」：StPageFlip 没有 `addPage`，每批都得 destroy + 重建整本书
-   * ——分批就是把读者正在看的书反复拆装十几遍。一次排完只重建一遍。
-   *
-   * 为什么**封顶**而不是排到全量：见 `WIDEN_CAP` 的注（书一重，每次翻页都卡）。
-   * 不阻塞也只做了一半：建块流分片让出主线程，**尾段（量高 + 切页 + 建书）仍是原子的**——
-   * 所以封顶必须小到让那一段的代价可以忽略，而不是靠「分片」把全量摊平。
-   *
-   * 让路规矩（四条，缺一不可）：
-   * 1. 场景不静（任一浮层开着 / 录音在放 / 拆信封动效在飞）不介入——重排会把现场拆掉；
-   *    这种情况**不是放弃**而是过一拍再看（`rearmWiden`），有次数上限；
-   * 2. 期间任何重排（`epoch` 变）或收起即作废，不把陈旧结果落地；
-   * 3. 目标超过 `WIDEN_CAP` 的部分不自动续排，退回 `widenToCover` 按需推宽；
-   * 4. 建流前后各查一次「静不静」：浮层/动效可能是**建流那几拍里**才开的。
-   */
-  private scheduleWidenFull(): void {
-    if (this.widenTimer !== null) return;
-    this.widenRetry = 0; // 新的一轮：耐心从头算
-    this.widenTimer = setTimeout(() => {
-      this.widenTimer = null;
-      void this.widenFull();
-    }, WIDEN_DELAY_MS);
-  }
-
-  /** 后台续排的执行体（`scheduleWidenFull` 的定时器里调；测试可直接 await 它） */
-  private async widenFull(): Promise<void> {
-    if (!this.root) return;
-    const all = this.visibleEntries();
-    /* 只推到 `WIDEN_CAP`：书一重，**每次翻页**都要跟着付代价（见该常量的注）。 */
-    const target = Math.min(all.length, WIDEN_CAP);
-    if (this.shown >= target) return; // 窗口已够（cap 之内 / 条目本就少），什么都不用做
-    if (!this.sceneQuiet()) return this.rearmWiden(); // 现场不静：重排会把现场拆掉，让一拍再来
-
-    const epoch = this.epoch;
-    this.setScope(all); // 全量视角（计数 / 灯箱 / 相片索引）不跟着窗口缩
-
-    const flow = await this.buildFlowChunked(
-      all.slice(0, target),
-      this.dayCountOf(all),
-      epoch
-    );
-    if (!flow) return; // 期间重排过 / 书收起了 → 作废（起过重排的自然由新一轮接手）
-    if (epoch !== this.epoch) return; // 同上：起过重排，这轮的流已经是旧的
-    if (!this.sceneQuiet()) return this.rearmWiden(); // 期间开了浮层 / 拆信封：同样让路
-
-    this.shown = target;
-    /* 只往尾部追加 ⇒ 前面每页边界不变、页索引语义不变，所以 keepPage 钉住读者当前那一页。
-       这是「后台续排」敢在后台做的前提：不换血，读者看到的还是同一页。 */
-    this.layoutBook(flow, false, true);
-  }
-
-  /**
-   * 现场没静、这一轮让开了：过一拍再看一眼。
-   *
-   * 为什么不能「让一次就放弃」：放开的时机恰恰是用户要去跳转的时机——刚开册就点开册页索引、
-   * 或正在拆一封加密信。这时放弃，索引 / 台历的跳转就落回同步重排那条路（就是这次要治的卡顿）。
-   *
-   * 耐心有上限：浮层一直开着不能无限空转。用尽后不再自动续排，退回按需推宽——**正确性不靠它**。
-   */
-  private rearmWiden(): void {
-    if (this.widenTimer !== null) return; // 已经排上了，别叠
-    if (this.widenRetry >= WIDEN_RETRY_MAX) return;
-    this.widenRetry++;
-    this.widenTimer = setTimeout(() => {
-      this.widenTimer = null;
-      void this.widenFull();
-    }, WIDEN_RETRY_MS);
-  }
-
-  /** 分片建块流：片间让出主线程；`epoch` 变、书收起即放弃（返回 null，别把陈旧结果落地） */
-  private async buildFlowChunked(
-    list: WallEntry[],
-    dayCount: Map<string, number>,
-    epoch: number
-  ): Promise<FlowItem[] | null> {
-    const ctx = this.ctx();
-    const flow: FlowItem[] = [];
-    let lastDate: string | null = null;
-    for (let i = 0; i < list.length; i += WIDEN_CHUNK) {
-      const end = Math.min(list.length, i + WIDEN_CHUNK);
-      for (let k = i; k < end; k++) {
-        const e = list[k];
-        if (e.date !== lastDate) {
-          lastDate = e.date;
-          flow.push({ el: elOf(daystampHTML(e.date, dayCount.get(e.date) || 1)), h: 0, keep: true });
-        }
-        this.pushEntryBlocks(flow, e, ctx);
-      }
-      await new Promise<void>((r) => setTimeout(r, 0));
-      if (epoch !== this.epoch || !this.root || this.root.style.display === 'none') return null;
-    }
-    return flow;
-  }
-
-  /**
-   * 场景静不静：书没收起、任一浮层都没开、没有录音在放、没有页级动效在飞
-   * ——不静就不许动书（重排会把现场全拆掉）。
-   */
-  private sceneQuiet(): boolean {
-    if (!this.root || this.root.style.display === 'none') return false;
-    const layers: (HTMLElement | undefined)[] = [
-      this.sheetEl,
-      this.slipEl,
-      this.lightboxEl,
-      this.albumEl,
-      this.calEl,
-      this.menuEl,
-    ];
-    if (layers.some((el) => el && !el.hidden)) return false;
-    /* 页级动效在飞也必须让路：拆信封那 620ms 里信封元素是「现场」——重建书会把它换掉，
-       收尾时 `onEnvelope` 的 `env.isConnected` 判假 → 全文再也放不出来（曾经的真缺陷）。 */
-    if (this.blockEl.querySelector('.bz-diary-opening')) return false;
-    const audios = Array.from(this.root.querySelectorAll<HTMLAudioElement>('audio'));
-    return !audios.some((a) => !a.paused);
+    if (dir > 0) this.flip.flipNext();
+    else this.flip.flipPrev();
   }
 
   private jumpToPage(pi: number): void {
@@ -1133,112 +760,37 @@ export class DiaryAppController {
     this.flip.turnToPage(Math.max(0, Math.min(this.pages.length - 1, pi)));
   }
 
-  /**
-   * 「按需推宽窗口再跳」——索引 / 检索 / 台历跳日三条共用。
-   *
-   * 为什么还需要这一步：`pages` 只覆盖「已加载全量」的前 `shown` 条（ADR-0231 的排版窗口），
-   * 而索引与检索必须覆盖**全部已加载条目**（否则窗口外的月/词既看不见也翻不到）。于是目标落在
-   * 窗口外时：把窗口一次性推到盖住它 → 重排 → 再定位到它那一页。
-   *
-   * 正常情况下这条路已经很少走到：读盘结束后 `widenFull()` 会把窗口推到 `WIDEN_CAP`，此后
-   * 那段之内的跳转只剩一次 `turnToPage`。它是**兜底**——目标落在 cap 之外、用户点得比后台快、
-   * 或后台那一轮被作废（场景不静 / 起过重排）时才轮到它。
-   *
-   * 兜底时的成本（诚实版）：一次**整窗重排**（`paginateFlow` 重跑 + 一次 reflow 量高 + 重建
-   * StPageFlip），代价 = O(目标在 `all` 里的位置)——上千则的本子上跳最旧那一则基本等于排全量，
-   * 会顿一下**而且之后书变重、每次翻页也跟着钝**（见 `WIDEN_CAP` 的注）。所以它只当兜底。
-   * 不改成滑窗：页码 / 书口年份带 / `keepPage` 保位都要重做——那要另立一次拍板。
-   */
-  private indexInAllOf(eid: string): number {
-    if (!eid) return -1;
-    return this.visibleEntries().findIndex((e) => (e.id || '') === eid);
-  }
-
-  /** 把排版窗口推到至少覆盖 `all` 的第 `idx` 条。返回是否真的推了。 */
-  private widenToCover(idx: number): boolean {
-    const all = this.visibleEntries();
-    if (idx < 0 || idx >= all.length) return false;
-    if (idx + 1 <= this.shown) return false;
-    this.shown = idx + 1;
-    /* 只往尾部追加 ⇒ 前面每页边界不变、页索引语义不变，所以 keepPage 钉住当前页 */
-    this.relayout(false, true);
-    return true;
-  }
-
-  /** 条目 id → 它现在落在第几页（没排到 / 不在可见集 → -1） */
-  private pageOfEid(eid: string): number {
-    if (!eid) return -1;
-    for (let pi = 0; pi < this.pages.length; pi++) {
-      if (this.pages[pi].some((el) => el.dataset.eid === eid)) return pi;
-    }
-    return -1;
-  }
-
-  /**
-   * 跳到某一则：不在排版窗口里就先按需推宽窗口，再定位到它那一页。
-   * 返回是否真落到了页上（false = 这一则不在当前可见集里）。
-   */
-  private revealEntry(eid: string): boolean {
-    const idx = this.indexInAllOf(eid);
-    if (idx < 0) return false;
-    this.widenToCover(idx);
-    const pi = this.pageOfEid(eid);
-    if (pi < 0) return false;
-    this.jumpToPage(pi);
-    return true;
-  }
-
   // ============================================================
   //  书口：年份染色 + 册页索引
   // ============================================================
 
-  /** 月份索引的**全量**口径（不吃排版窗口），见 `monthIndex()` */
-  private monthIndexAll(): MonthEntry[] {
-    return monthIndex(this.visibleEntries());
-  }
-
-  /**
-   * 某月落在第几页（**1 起**，与索引纸上印的页码同口径）；该月还没排进书里就返回 0。
-   * 定位的是该月最新那一则的页——日戳 `keep` 必开新纸，日戳与首条同页，所以那就是该月开头。
-   */
-  private pageOfMonth(m: MonthEntry): number {
-    const idx = this.indexInAllOf(m.firstEid);
-    if (idx < 0 || idx + 1 > this.shown) return 0;
-    const pi = this.pageOfEid(m.firstEid);
-    return pi < 0 ? 0 : pi + 1;
+  private monthMarksOf(): MonthMark[] {
+    return monthMarks(this.pages, this.visibleEntries());
   }
 
   /**
    * 书口年份染色带：只作「这几年各占多厚」的缩影（整条边缘才是那个大按钮——点开抽索引）。
    * 只有一年时不画：一条通高的色带等于没有信息，只是把整条书口刷成一块颜色。
    * `top`/`height` 是量出来的几何（行为性内联值）；颜色按年序轮转走 `.bz-diary-ey-N` 类。
-   *
-   * 占比按**已加载全量的条目数**算，不按页码：书口是给整本日记看的缩影，而书只排了窗口那段
-   * （ADR-0231）——按页码算的话色带会随窗口边长，且与索引纸列出的月份对不上。
-   * 顺带把「分几年」也搬到条目上，于是它不再依赖排版窗口。
    */
   private renderEdgeMarks(): void {
     const edge = this.edgeEl;
     edge.querySelectorAll('.bz-diary-edge-year').forEach((b) => b.remove());
-    const all = this.visibleEntries();
-    if (!all.length) return;
-    /* 条目最新在前、按日期排过序 ⇒ 同一年必然连成一段，相邻比较即可分段 */
-    const years: { y: string; n: number }[] = [];
-    for (const e of all) {
-      const y = e.date.slice(0, 4);
-      const last = years[years.length - 1];
-      if (!last || last.y !== y) years.push({ y, n: 1 });
-      else last.n++;
+    const months = this.monthMarksOf();
+    if (!months.length) return;
+    const total = Math.max(1, this.pages.length);
+    const years: { y: string; from: number }[] = [];
+    for (const m of months) {
+      const y = m.key.slice(0, 4);
+      if (!years.length || years[years.length - 1].y !== y) years.push({ y, from: m.page1 });
     }
     if (years.length < 2) return;
-    const total = all.length;
-    let acc = 0;
     years.forEach((sg, i) => {
-      const top = (acc / total) * 100;
-      acc += sg.n;
-      /* 先按条目数占比算高，再夹住 —— 不夹的话最旧那年只占 2% 时会被撑到 5%，
+      const top = ((sg.from - 1) / total) * 100;
+      const endFrom = i + 1 < years.length ? years[i + 1].from : total + 1;
+      /* 先按页数占比算高，再夹住 —— 不夹的话最旧那年只占 2% 时会被撑到 5%，
          色带就拖出书口、露出书底一截 */
-      let h = Math.max(1.2, (sg.n / total) * 100);
+      let h = Math.max(1.2, ((endFrom - 1) / total) * 100 - top);
       h = Math.min(h, 100 - top);
       const b = document.createElement('div');
       b.className = `bz-diary-edge-year bz-diary-ey-${i % 8}`;
@@ -1248,24 +800,16 @@ export class DiaryAppController {
     });
   }
 
-  /**
-   * 点书口 → 抽出「册页索引」那张纸：一年一段、一月一行。
-   *
-   * 月份表与「凡 N 则」都按**已加载全量**（`visibleEntries()`）算，所以三项口径同源：
-   * 表头说凡 N 则，下面列出的月加起来就是 N 则，一个月也不会少。
-   * 行分两种：月已经排进书里 → 印「第 N 页」、点它直接翻页；还没排 → 印「未展开」、
-   * 点它先按需推宽窗口再翻（`revealEntry`）——页码只有排过版才知道，窗口外的月没排过，
-   * 这里就不假装知道，也不为了印页码去把全量排一遍。
-   */
+  /** 点书口 → 抽出「册页索引」那张纸：一年一段、一月一行 */
   private openIndexSheet(): void {
+    const months = this.monthMarksOf();
     const list = this.visibleEntries();
-    const months = this.monthIndexAll();
-    if (!months.length) {
+    if (!months.length || !list.length) {
       this.toast('册页还空着');
       return;
     }
     const total = list.length;
-    /* 条目最新在前：list[0] 是最新一篇，list[total-1] 是最旧一篇 */
+    /* 条目最新在前：list[0] 是最新一篇，list[last] 是最旧一篇 */
     let html =
       '<div class="bz-diary-sheet-meta">自 ' +
       list[total - 1].date +
@@ -1286,17 +830,10 @@ export class DiaryAppController {
         curY = parts[0];
         open = true;
       }
-      const page = this.pageOfMonth(m);
-      const anchor = page
-        ? `data-jump-page="${page - 1}"`
-        : `data-jump-eid="${escapeHtml(m.firstEid)}"`;
-      const tail = page
-        ? `<span class="bz-diary-ir-p">第 ${page} 页</span>`
-        : `<span class="bz-diary-ir-p bz-diary-ir-pend">未展开</span>`;
       html +=
-        `<div class="bz-diary-idx-row" ${anchor}>` +
+        `<div class="bz-diary-idx-row" data-jump-page="${m.page1 - 1}">` +
         `<span class="bz-diary-ir-m">${parseInt(parts[1], 10)} 月</span><span class="bz-diary-ir-dots"></span>` +
-        `<span class="bz-diary-ir-n">${cnNum(m.n)} 则</span>${tail}</div>`;
+        `<span class="bz-diary-ir-n">${cnNum(m.n)} 则</span><span class="bz-diary-ir-p">第 ${m.page1} 页</span></div>`;
     }
     if (open) html += '</div></div>';
     this.openSheet('册 页 索 引', html);
@@ -1722,17 +1259,11 @@ export class DiaryAppController {
         this.toggleAudio(aud);
         return;
       }
-      /* 册页索引：点一行跳到那个月，纸就收回去。
-         窗口外的月没有页码，带的是 `data-jump-eid`——先按需推宽窗口再翻（见 revealEntry）。 */
+      /* 册页索引：点一行跳到那个月，纸就收回去 */
       const row = t.closest<HTMLElement>('.bz-diary-idx-row');
       if (row) {
         this.closeSheet();
-        const eid = row.dataset.jumpEid;
-        if (eid) {
-          if (!this.revealEntry(eid)) this.toast('这一则翻不到页上');
-        } else {
-          this.jumpToPage(Number(row.dataset.jumpPage || 0));
-        }
+        this.jumpToPage(Number(row.dataset.jumpPage || 0));
         return;
       }
       if (t.closest('.bz-diary-sheet-paper') && !t.closest('.bz-diary-sh-close')) return;
@@ -2309,9 +1840,7 @@ export class DiaryAppController {
   // ============================================================
 
   private openCal(): void {
-    /* 基准月取**当前这本册子**最新一篇所在的月（筛选态下不是全量最新那篇）——
-       否则一开台历停在早就翻不到的那个月，与本册对不上 */
-    const newest = this.visibleEntries()[0];
+    const newest = this.entries[0];
     const base = newest ? newest.date : '2026-01-01';
     this.cal.year = Number(base.slice(0, 4));
     this.cal.month = Number(base.slice(5, 7));
@@ -2326,10 +1855,7 @@ export class DiaryAppController {
     const { year, month } = this.cal;
     this.calYmEl.textContent = `${year} 年 ${month} 月`;
     const byDay = new Map<number, number>();
-    /* 每日「当天几则」按**当前这本册子的可见集**算（筛选标一挂，册子里就只剩那个标的内容）。
-       原先读未过滤的 `this.entries`：筛选态下台历会把筛掉的日子的标成「有」，
-       点下去却落到 `jumpToDay` 的「那天没落笔」——标着有、说没有，自相矛盾。 */
-    for (const e of this.visibleEntries()) {
+    for (const e of this.entries) {
       if (e.date.slice(0, 7) === `${year}-${pad2(month)}`) {
         const d = Number(e.date.slice(8, 10));
         byDay.set(d, (byDay.get(d) || 0) + 1);
@@ -2361,16 +1887,13 @@ export class DiaryAppController {
     this.calEl.hidden = true;
   }
 
-  /**
-   * 台历点某天 → 跳到那天。
-   *
-   * 在**已加载全量**里找那天，而不是只扫已排版的 `this.pages`：原先那圈只覆盖首屏那 30 则，
-   * 于是台历上明明标着「那天有 N 则」（标记读的是全量），点下去却说「这一册里，那天没落笔」
-   * ——一句话把自己否了。那天真的一条都没有时才说这句。
-   */
   private jumpToDay(date: string): void {
-    const hit = this.visibleEntries().find((e) => e.date === date);
-    if (hit && this.revealEntry(hit.id || '')) return;
+    for (let pi = 0; pi < this.pages.length; pi++) {
+      if (pageDateOf(this.pages[pi]) === date) {
+        this.jumpToPage(pi);
+        return;
+      }
+    }
     this.toast('这一册里，那天没落笔');
   }
 
@@ -2401,67 +1924,37 @@ export class DiaryAppController {
   //  放大镜（检索：荧光笔）
   // ============================================================
 
-  /**
-   * 检索（荧光笔）。**吃已加载全量，不吃排版窗口**。
-   *
-   * 原先遍历 `this.pages`（= 只排了首屏那 30 则的书页），于是搜老词会一本正经地弹
-   * 「整本册子都翻了，没有「X」这个词」——而窗口外那 1200 多则根本没搜。搜索是**数据**问题，
-   * 不该受**排版**窗口限制（ADR-0231 的窗口是首屏提速手段，不是数据边界）。
-   *
-   * 判命中用 `entryBlockHTMLs` 现算块文本：不吃 DOM（不用先把条目排进书里）、
-   * 也不必拿字段拼一串近似文本来代替——那两边一旦对不上，就会出现「说命中了 N 则、
-   * 点过去却标不出荧光笔」。命中按**则**计，跳过去把它那几块一起标。
-   */
   private runSearch(kw: string): void {
     this.clearMarks();
-    const ctx = this.ctx();
-    const hits: string[] = [];
-    for (const e of this.visibleEntries()) {
-      if (this.entryMatches(e, kw, ctx)) hits.push(e.id || '');
+    this.search = { kw, hits: [], i: 0 };
+    for (let pi = 0; pi < this.pages.length; pi++) {
+      for (const el of this.pages[pi]) {
+        if (
+          el.classList.contains('bz-diary-b-photo') ||
+          el.classList.contains('bz-diary-b-audio') ||
+          el.classList.contains('bz-diary-b-envelope') ||
+          el.classList.contains('bz-diary-b-daystamp')
+        ) {
+          continue;
+        }
+        if ((el.textContent || '').indexOf(kw) >= 0) this.search.hits.push({ pi, el });
+      }
     }
-    this.search = { kw, hits, i: 0 };
-    if (!hits.length) {
-      this.openSlip({ title: '没 找 到', body: `这本册子里没有「${escapeHtml(kw)}」这个词。`, ok: '知道了' });
+    if (!this.search.hits.length) {
+      this.openSlip({ title: '没 找 到', body: `整本册子都翻了，没有「${escapeHtml(kw)}」这个词。`, ok: '知道了' });
       return;
     }
-    this.toast(`寻得 ${hits.length} 则，荧光笔伺候`);
+    this.toast(`寻得 ${this.search.hits.length} 处，荧光笔伺候`);
     this.nextHit();
-  }
-
-  /** 一则是否命中：逐块判（跳过没有可读正文的那几类块），任一块的纯文本含 `kw` 即算 */
-  private entryMatches(e: WallEntry, kw: string, ctx: RenderCtx): boolean {
-    for (const html of entryBlockHTMLs(e, ctx)) {
-      const cls = blockRootClass(html);
-      if (SEARCH_SKIP_BLOCKS.some((c) => cls.includes(c))) continue;
-      if (blockPlainText(html).indexOf(kw) >= 0) return true;
-    }
-    return false;
   }
 
   private nextHit(): void {
     const s = this.search;
-    const kw = s.kw;
-    if (!s.hits.length || !kw) return;
-    const eid = s.hits[s.i % s.hits.length];
+    if (!s.hits.length) return;
+    const hit = s.hits[s.i % s.hits.length];
     s.i++;
-    /* 命中可能在排版窗口外：先按需推宽窗口再翻过去，否则跳了个寂寞。
-       推宽会重建书页 DOM，所以标记等新页落定（与原先翻页后延后一拍同理）。 */
-    if (!this.revealEntry(eid)) {
-      this.toast('这一则翻不到页上');
-      return;
-    }
-    /* `revealEntry` 若推了窗口就会走 `relayout`，而那里把 `this.search` 整个换成空态
-       （旧页 DOM 已销毁，荧光笔自然没了）。把检索态续回去——不然「还剩几条命中」这一层
-       在第一次跨窗跳转后就被丢掉，将来接上「下一处」入口会从第 2 条起就断。 */
-    if (this.search !== s) this.search = s;
-    setTimeout(() => this.markEntry(eid, kw), 80);
-  }
-
-  /** 给某一则上荧光笔：它在书里可能被切成多块、甚至跨两页，凡带同一 `data-eid` 的块都标 */
-  private markEntry(eid: string, kw: string): void {
-    for (const page of this.pages) {
-      for (const el of page) if (el.dataset.eid === eid) this.markHit(el, kw);
-    }
+    this.jumpToPage(hit.pi);
+    setTimeout(() => this.markHit(hit.el, s.kw || ''), 80);
   }
 
   private markHit(el: HTMLElement, kw: string): void {
@@ -2807,17 +2300,8 @@ export class DiaryAppController {
   /**
    * 读盘。`allowCache`：开册路径命中预热/上次刷新后的缓存秒开；
    * 刷新/写后回刷/重试一律先作废回源（保持「每次刷新即读盘」语义，不赌缓存失效是否触发）。
-   *
-   * `onWindow`（ADR-0231）：攒够 `FIRST_PAINT_ENTRIES` 条就把**部分**结果交出来先成册——
-   * 首屏不必等 1243 篇正文读完。只有开册路径传它；刷新/写后回刷不传（那两条要的是完整一致，
-   * 中途成册反而会让正在读的那一页被重排）。缓存命中时不会有进度，由调用方在结算后补一次成册。
    */
-  private async loadEntries(allowCache: boolean, onWindow?: (partial: WallEntry[]) => void): Promise<void> {
-    const off = onWindow
-      ? onWallProgress((partial) => {
-          if (partial.length >= FIRST_PAINT_ENTRIES) onWindow(partial);
-        })
-      : null;
+  private async loadEntries(allowCache: boolean): Promise<void> {
     try {
       if (allowCache) {
         this._allowCacheNext = false;
@@ -2830,8 +2314,6 @@ export class DiaryAppController {
       this.entries = [];
       this._loadError = e instanceof Error ? e.message : String(e);
       notice(`加载日记失败：${this._loadError}`, 'error');
-    } finally {
-      off?.();
     }
     // 保险箱已解锁：一并并入加密日记（幂等；上锁态不可见）
     await this.mergeEncryptedEntries();
@@ -3013,31 +2495,8 @@ export class DiaryAppController {
     this.subscribeVault();
     void (async () => {
       await this.afterPaint();
-      this.firstPaintDone = false;
-      this.shown = FIRST_PAINT_ENTRIES;
-      // ADR-0231：首批一成 -> 立刻成册给用户翻；其余正文在后台继续读，**不重排**。
-      await this.loadEntries(this._allowCacheNext, (partial) => {
-        if (this.firstPaintDone) return;
-        this.firstPaintDone = true;
-        this.entries = partial;
-        this.shown = Math.min(FIRST_PAINT_ENTRIES, partial.length);
-        this.relayout(false);
-      });
-      if (!this.firstPaintDone) {
-        // 缓存命中（结算即全量）或条目本就很少：没有进度可等，读盘结束后成册一次
-        this.firstPaintDone = true;
-        this.shown = Math.min(this.shown, this.entries.length);
-        this.relayout(false);
-      } else {
-        /* 后台读完了：书口年份带按**全量**重画一次。
-           它现在按已加载条目数算（不吃排版窗口），而首批成册那次只见到 30 条——
-           不补这一下，色带就永远停在「只占首屏那半个月」的比例上，与索引纸对不上。
-           只重画那几条色带、不重排书页（后台读完不该动正在读的那一页）。 */
-        this.renderEdgeMarks();
-      }
-      /* 读盘结束、书已经能翻了：趁空闲把排版窗口推到「够用的一段」（`WIDEN_CAP`）。
-         推全量那一版是错的——书一重，每次翻页都卡，见 WIDEN_CAP 的注。 */
-      this.scheduleWidenFull();
+      await this.loadEntries(this._allowCacheNext);
+      this.relayout(false);
       this.toast(reopen ? '又翻开了' : '翻开的是最新那篇');
     })();
   }
@@ -3060,14 +2519,6 @@ export class DiaryAppController {
     if (this.modifyTimer !== null) {
       clearTimeout(this.modifyTimer);
       this.modifyTimer = null;
-    }
-    if (this.extendTimer !== null) {
-      clearTimeout(this.extendTimer);
-      this.extendTimer = null;
-    }
-    if (this.widenTimer !== null) {
-      clearTimeout(this.widenTimer);
-      this.widenTimer = null;
     }
     this.setToolsShown(false);
     this._hideMotion = false;
@@ -3103,14 +2554,6 @@ export class DiaryAppController {
     if (this.modifyTimer !== null) {
       clearTimeout(this.modifyTimer);
       this.modifyTimer = null;
-    }
-    if (this.extendTimer !== null) {
-      clearTimeout(this.extendTimer);
-      this.extendTimer = null;
-    }
-    if (this.widenTimer !== null) {
-      clearTimeout(this.widenTimer);
-      this.widenTimer = null;
     }
     if (this.toolsRaf) cancelAnimationFrame(this.toolsRaf);
     this.unsubscribeEvents();

@@ -17,17 +17,6 @@ export let DIARY_DIRECTORY = '我的/日记';
 export let LETTER_DIRECTORY = '我的/信';
 
 /**
- * 首屏成册的条目数（ADR-0231）。
- *
- * 定为 30 的理由（按版式算，不是拍脑袋）：书页 `--bz-diary-pg-w: 520px` / `-h: 700px`，
- * 上下内边距 88 + 66 ⇒ 正文可用高 546px；日记单篇平均约 306 B（约 100 字），一页约 3 则
- * ⇒ **一个跨页（2 页）约 6 则**。30 则 ≈ 5 个跨页 ≈ 最近半个月，翻开像一本有厚度的册子，
- * 而不是「翻两页就见底」。其余条目由后台按 `LIST_BATCH_SIZE`（50）续读、翻到书尾才叠页，
- * 见 `ui.ts` 的 `extendIfAtTail`。
- */
-export const FIRST_PAINT_ENTRIES = 30;
-
-/**
  * 影视/书库目录（D6 修复）：函数实时解析对端域设置——旧实现只在 applyDirectories
  * （插件启动/日记设置变更）时快照一次，用户改影院/书架目录后日记本一直读旧目录直到重启。
  * 每次读取实时 resolve，与 applyDirectories 注释「实时读对域设置」的既有契约对齐。

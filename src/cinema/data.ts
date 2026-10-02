@@ -163,57 +163,6 @@ export function rebuildItems(app: App): CinemaItem[] {
   return newItems;
 }
 
-/** metadataCache 就绪等待上限（ms）：超时放行——宁可扫一次空，也不能让面板永远不开 */
-const META_READY_TIMEOUT_MS = 1500;
-/** 本会话已确认过就绪：后续打开直接放行，不再走订阅 */
-let metaReady = false;
-
-/**
- * 等 metadataCache 就绪（ADR-0231）。
- *
- * 起因：`getFileCache` 在冷启动 / `onload` 期间对**尚未解析**的文件返回 `null`——
- * 此时扫描整个影院目录会扫成空（冷启动瞬间开面板 = 看到「影片空空如也」）。
- *
- * 两条路任一先到即可：`onLayoutReady`（已就绪时**同步**回调）+ **一次性** `resolved`，
- * 再配超时兜底。拿到即 `offref` 退订——**绝不常驻订阅 `resolved`**：大库上它是洪水式触发，
- * 有插件把它记成启动回归的根因。
- */
-export function whenMetaReady(app: App): Promise<void> {
-  if (metaReady) return Promise.resolve();
-  return new Promise((resolve) => {
-    let settled = false;
-    let ref: { offref: (r: unknown) => void } | null = null;
-    let armed: unknown = null;
-    const finish = (): void => {
-      if (settled) return;
-      settled = true;
-      metaReady = true;
-      if (ref && armed) {
-        try { ref.offref(armed); } catch { /* 已退订无害 */ }
-      }
-      resolve();
-    };
-    try {
-      app.workspace.onLayoutReady(finish);
-    } catch { /* 老版本无此 API：靠 resolved / 超时兜底 */ }
-    try {
-      ref = app.metadataCache as unknown as { offref: (r: unknown) => void };
-      armed = app.metadataCache.on('resolved', finish as never);
-    } catch { /* 同上 */ }
-    setTimeout(finish, META_READY_TIMEOUT_MS);
-  });
-}
-
-/** 影院目录下有没有 .md（用于区分「缓存没就绪」与「库真的空」） */
-export function hasCinemaFiles(app: App): boolean {
-  return app.vault.getMarkdownFiles().some((f) => f.path.startsWith(M.folderPath + '/'));
-}
-
-/** 测试/重建用：复位就绪标记（`resetCinemaState` 之外单独暴露，避免跨用例串味） */
-export function resetMetaReady(): void {
-  metaReady = false;
-}
-
 /** 观影日期时间戳（无日期 → 0，排最后） */
 export function dateVal(it: CinemaItem): number {
   if (!it.watchDate) return 0;

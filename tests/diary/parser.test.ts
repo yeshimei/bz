@@ -14,9 +14,6 @@ function mockApp(files: Record<string, string>, frontmatters: Record<string, any
     },
     vault: {
       read: async (f: any) => files[f.path] ?? '',
-      // ADR-0231：信正文改走 cachedRead（纯展示，官方口径）。真实 Vault 两 API 并存，
-      // 夹具须同构，否则解析路径抛错被 catch 成 null、用例假红。
-      cachedRead: async (f: any) => files[f.path] ?? '',
     },
   };
   setApp(app as any);

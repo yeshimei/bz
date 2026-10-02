@@ -16,8 +16,6 @@ import { parseEntryFile, parseMovieFile, parseLetterFile, parseBookFile } from '
 import { diaryMetaFromEntryPath } from '../core/diary-format';
 import { DIARY_DIRECTORY, LETTER_DIRECTORY, movieDirectory, bookDirectory, inWallDirs } from './config';
 import { onDomainEvent } from '../core/domain-bus';
-import { LIST_BATCH_SIZE } from '../core/paging';
-import { yieldToMainThread } from '../core/utils';
 import type { DiaryEntry } from './types';
 
 // WallEntry 家族类型已上移 ./types（render 纯层经 types 引用，不触本文件 obsidian 依赖）
@@ -92,10 +90,8 @@ export function stripMediaLinks(content: string): string {
   }).trim();
 }
 
-/** 批量并发读取窗口（日记/影视/信/书共用：控制单批并发量）。
- *  ADR-0231：原为 10 ⇒ 1243 篇要 125 个串行批次，光排队就把首屏拖住；
- *  改用跨域共享的 `LIST_BATCH_SIZE`（50）⇒ 25 批，且每批之间让出主线程（见 readWallEntriesFresh）。 */
-const READ_BATCH_SIZE = LIST_BATCH_SIZE;
+/** 批量并发读取窗口（日记/影视/信/书共用：控制单批 vault.read 并发量） */
+const READ_BATCH_SIZE = 10;
 
 /**
  * 批量读一个批次（D5' per-file 容错）：单个文件读取/解析失败只跳过该文件
@@ -224,101 +220,30 @@ function toWallEntry(e: DiaryEntry, kind: WallEntry['kind'], dir: string): WallE
   };
 }
 
-/** 单条日记文件的读取与解析（分片循环复用）。
- *  正文走 `cachedRead`：日记正文只用来**展示**，官方 `Vault` 文档口径是
- *  「Use this if you intend to modify the file content afterwards. Use Vault.cachedRead otherwise
- *  for better performance」——1243 篇走磁盘读是本域首屏最贵的一笔。写后回刷不走这里。 */
-async function readDiaryFile(app: App, file: TFile, diaryDir: string): Promise<WallEntry[]> {
-  if (!diaryMetaFromEntryPath(file.name)) return [];
-  const content = await app.vault.cachedRead(file);
-  const e = parseEntryFile(content, file.path);
-  return e ? [toWallEntry(e, 'diary', diaryDir)] : [];
-}
-
-/** 合并四类内容 → 统一 date 降序、time 降序（HH:mm 字典序与数值序一致） */
-function mergeWallEntries(diary: WallEntry[], specials: WallEntry[]): WallEntry[] {
-  const entries = [...diary, ...specials];
-  entries.sort((a, b) => {
-    const dateCmp = b.date.localeCompare(a.date);
-    return dateCmp !== 0 ? dateCmp : b.time.localeCompare(a.time);
-  });
-  return entries;
-}
-
-/** 读盘进度订阅者（ADR-0231）：首屏窗口先成册用 */
-export type WallProgressFn = (partial: WallEntry[]) => void;
-const progressSinks = new Set<WallProgressFn>();
-
-/**
- * 订阅「当前/下一轮」读盘的进度（ADR-0231）。返回退订函数。
- *
- * 为什么是模块级订阅而不是 `loadWallEntries(app, onProgress)` 的入参：
- * 预热（`prewarmDiary`）可能已经在读同一轮，UI 打开时命中的是**在途**那一个 promise——
- * 入参式回调这时就丢了。订阅制对「命中在途」与「新起一轮」一视同仁。
- * 缓存命中（同步返回全量）不报进度，也不需要——调用方在 promise 结算后自行成册。
- */
-export function onWallProgress(fn: WallProgressFn): () => void {
-  progressSinks.add(fn);
-  return () => {
-    progressSinks.delete(fn);
-  };
-}
-
-function emitWallProgress(partial: WallEntry[]): void {
-  for (const fn of [...progressSinks]) {
-    try {
-      fn(partial);
-    } catch {
-      /* 单个订阅者出错不拖垮读盘 */
-    }
+/** 加载日记：diaryDir 下所有条目文件（ADR-0130/0131：一目一文件，题目 `YYMMDDHHmm(-N)`；含子目录递归）。
+ *  每文件一条，filename=file.path（UI 跳转/写层定位依据）。 */
+async function loadDiaryEntries(app: App, diaryDir: string): Promise<WallEntry[]> {
+  const vault = app.vault;
+  const mdFiles = await mdFilesUnder(app, diaryDir);
+  const entries: WallEntry[] = [];
+  const failed: string[] = [];
+  for (let i = 0; i < mdFiles.length; i += READ_BATCH_SIZE) {
+    const batch = mdFiles.slice(i, i + READ_BATCH_SIZE);
+    entries.push(
+      ...(await readBatch(
+        batch,
+        async (file) => {
+          if (!diaryMetaFromEntryPath(file.name)) return [];
+          const content = await vault.read(file);
+          const e = parseEntryFile(content, file.path);
+          return e ? [toWallEntry(e, 'diary', diaryDir)] : [];
+        },
+        failed
+      ))
+    );
   }
-}
-
-/**
- * 无缓存聚合读（ADR-0231 重写）。四类内容合并，统一 date 降序、time 降序混排。
- *
- * 与旧实现的三处不同：
- * ① **日记按文件名倒序读**：`YYMMDDHHmm` 天然是时间序，新在前 ⇒「最近 N 则」在头一两个批次
- *    就落地，首屏不必等 1243 篇读完（旧实现按目录返回顺序读，前 10 篇是谁完全看文件系统）；
- * ② **批间让出主线程**：每批之间 `yieldToMainThread()`，把一个长任务切成 25 个小任务，
- *    用户打字/滚动不被读盘占死；
- * ③ **报进度**：每批读完向订阅者发一次合并后的部分结果，UI 拿它把首批成册。
- *    影视/信/书三目录的日期要参与混排（昨天的电影得排进「最近 30 则」），所以进度必须等它们；
- *    它们只读 frontmatter（不走正文），通常比第一批正文还快。
- *
- * 并行口径沿用 ADR-0170 ①：四目录仍并行（Promise.all），wall-clock ≈ 最慢那个。
- */
-async function readWallEntriesFresh(app: App): Promise<WallEntry[]> {
-  // ① 影视 / 信 / 书：只读 frontmatter，便宜
-  const specialsPromise: Promise<WallEntry[]> = Promise.all([
-    loadSpecialEntries(app, movieDirectory(), 'movie', parseMovieFile),
-    loadSpecialEntries(app, LETTER_DIRECTORY, 'letter', parseLetterFile),
-    loadSpecialEntries(app, bookDirectory(), 'book', parseBookFile),
-  ]).then(([movieE, letterE, bookE]) => [...movieE, ...letterE, ...bookE]);
-
-  // ② 日记正文：分片读、批间让出、每批报进度（与 ① 并行）
-  const diaryPromise = (async (): Promise<WallEntry[]> => {
-    const files = await mdFilesUnder(app, DIARY_DIRECTORY);
-    files.sort((a, b) => b.name.localeCompare(a.name)); // 文件名即时间：新在前
-    const out: WallEntry[] = [];
-    const failed: string[] = [];
-    for (let i = 0; i < files.length; i += READ_BATCH_SIZE) {
-      if (i > 0) await yieldToMainThread();
-      out.push(
-        ...(await readBatch(
-          files.slice(i, i + READ_BATCH_SIZE),
-          (file) => readDiaryFile(app, file, DIARY_DIRECTORY),
-          failed
-        ))
-      );
-      if (progressSinks.size) emitWallProgress(mergeWallEntries(out, await specialsPromise));
-    }
-    warnFailedBatch('日记', failed);
-    return out;
-  })();
-
-  const [specials, diaryE] = await Promise.all([specialsPromise, diaryPromise]);
-  return mergeWallEntries(diaryE, specials);
+  warnFailedBatch('日记', failed);
+  return entries;
 }
 
 /** 加载单文件单条目的特殊内容（影视/信/书）：parse 返回 null 的跳过；kind 由调用方标记 */
@@ -345,6 +270,26 @@ async function loadSpecialEntries(
     );
   }
   warnFailedBatch(kind, failed);
+  return entries;
+}
+
+/** 无缓存聚合读（① 四目录并行）：四类内容各自读盘解析后合并，统一 date 降序、time 降序混排。 */
+async function readWallEntriesFresh(app: App): Promise<WallEntry[]> {
+  // ① 并行：旧实现四段 await 串行，wall-clock ≈ 四目录耗时之和；改 Promise.all 后 ≈ 最慢目录。
+  //   目录常量同步取值（await 前），与事件失效判定同源。
+  const [diaryE, movieE, letterE, bookE] = await Promise.all([
+    loadDiaryEntries(app, DIARY_DIRECTORY),
+    loadSpecialEntries(app, movieDirectory(), 'movie', parseMovieFile),
+    loadSpecialEntries(app, LETTER_DIRECTORY, 'letter', parseLetterFile),
+    loadSpecialEntries(app, bookDirectory(), 'book', parseBookFile),
+  ]);
+  const entries: WallEntry[] = [...diaryE, ...movieE, ...letterE, ...bookE];
+
+  // 排序：日期降序、时间降序（HH:mm 字典序与数值序一致）
+  entries.sort((a, b) => {
+    const dateCmp = b.date.localeCompare(a.date);
+    return dateCmp !== 0 ? dateCmp : b.time.localeCompare(a.time);
+  });
   return entries;
 }
 
