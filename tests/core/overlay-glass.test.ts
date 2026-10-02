@@ -102,7 +102,8 @@ describe('域遮罩 blur 全量在位', () => {
     // 「底色随主题自适应」在这里没有可观察差别（ADR-0230 样式头注的有意例外）。
     // 口径：半点不掺——既不挂 .bz-overlay-mask，也不带 backdrop-filter，
     // 防「只抄底不抄 blur」的中间态。
-    for (const sel of ['.bz-diary-slip', '.bz-diary-album-pop', '.bz-diary-cal-pop', '.bz-diary-sheet']) {
+    // 火漆密码框（.bz-diary-pass）同理：也是域内自绘的拟物纸层，不是 token 遮罩
+    for (const sel of ['.bz-diary-slip', '.bz-diary-album-pop', '.bz-diary-cal-pop', '.bz-diary-sheet', '.bz-diary-pass']) {
       const body = rule(css, sel);
       expect(body, `${sel} 应保留域内拟物压暗底`).toMatch(/background: rgba\(20, 12, 5/);
       expect(body, `${sel} 不应掺 token 遮罩`).not.toContain('backdrop-filter');

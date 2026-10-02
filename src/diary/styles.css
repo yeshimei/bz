@@ -13,9 +13,11 @@
  * - **不带外链字体**：原型观感的一半靠 Ma Shan Zheng / Long Cang / 霞鹜文楷四个 webfont，插件不能
  *   依赖 CDN、CJK 又无法子集化打包。故 `font-family` 声明一律删除，回归宿主字体栈；观感由「手写」
  *   转「印刷」，层级改由字号/字重/字距/留白承担。
- * - **不改调色板**：书桌木质、纸张、火漆、皮面是「材料」不是「主题表面」，沿用原型色值、不映射
+ * - **不改调色板**：纸张、火漆、皮面是「材料」不是「主题表面」，沿用原型色值、不映射
  *   Obsidian 变量——映射会让书在深色主题下变成黑纸，拟物就崩了。这是对「不写死颜色」的一处
  *   **有意例外**，代价是深浅主题下这本册子长得一样。
+ *   （整屏木纹桌面已撤——用户拍板「只要日记本本身」：场景根不铺底色，遮罩回归 token 单源，
+ *   木纹肌理只剩文具托那件实物还在用。）
  *
  * z-index 不在本文件设静态档：域根由 ui.ts 经 core 的 `allocZ()`（ADR-0067）发号（行为性内联值）。
  */
@@ -46,44 +48,48 @@
 .bz-diary-scene * { margin: 0; padding: 0; box-sizing: border-box; }
 .bz-diary-scene { height: 100%; }
 .bz-diary-scene {
-  
+  /* 拟物只剩书本身：场景根不铺底色，让遮罩透出宿主（与其他域同款观感） */
   color: var(--bz-diary-ink);
-  background: #241a12;
   overflow: hidden;
   -webkit-font-smoothing: antialiased;
 }
 
 .bz-diary-scene { position: fixed; inset: 0; }
 
-/* ---------- 桌面与灯光 ---------- */
+/* ---------- 遮罩（与其他域同款 token 遮罩，点它收起整本） ---------- */
+/* 原型那张整屏木纹桌面已撤（用户拍板：只要日记本本身）；木纹肌理只留在
+   文具托那件实物上。遮罩底色/blur 回归 token 单源，与 core .bz-overlay-mask 同口径。 */
 .bz-diary-desk {
   position: absolute; inset: 0;
-  background:
-    radial-gradient(120% 90% at 50% 30%, rgba(255, 214, 150, .16), rgba(0,0,0,0) 55%),
-    repeating-linear-gradient(93deg, #33241763 0 26px, #00000000 26px 47px, #2a1d1163 47px 78px),
-    repeating-linear-gradient(88deg, #00000000 0 60px, #1d120873 60px 122px),
-    linear-gradient(160deg, #59402b, #3c2a1b 55%, #2b1d11);
+  background: var(--bz-overlay);
+  backdrop-filter: blur(var(--bz-overlay-blur));
 }
-.bz-diary-desk::before {
-  content: ""; position: absolute; inset: 0;
-  background: var(--bz-diary-wood-noise);
-  background-size: 300px;
-  opacity: .5; mix-blend-mode: overlay;
-  pointer-events: none;
+
+/* ---------- 收起整本：桌角一枚黄铜小牌，常驻右上角 ---------- */
+/* 整屏场景没有遮罩可点，这枚牌是唯一看得见的出口（另两条：点桌面空白、Esc） */
+.bz-diary-close {
+  position: absolute; top: 18px; right: 20px; z-index: 60;
+  width: 38px; height: 38px; padding: 0;
+  display: inline-flex; align-items: center; justify-content: center;
+  border: 1px solid rgba(201, 162, 83, .55); border-radius: 50%;
+  background: linear-gradient(160deg, #6b4b2e, #3f2a18);
+  color: #e8d9b5; cursor: pointer;
+  box-shadow: 0 2px 7px rgba(20, 12, 5, .5), inset 0 1px 0 rgba(255, 226, 170, .18);
+  transition: transform .16s ease, box-shadow .16s ease;
 }
-.bz-diary-desk::after {
-  content: ""; position: absolute; inset: 0;
-  background: radial-gradient(140% 110% at 50% 42%, transparent 42%, rgba(8, 4, 1, .55) 100%);
-  pointer-events: none;
+.bz-diary-close .bz-ic { width: 18px; height: 18px; display: inline-block; vertical-align: middle; }
+@media (hover: hover) {
+  .bz-diary-close:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 11px rgba(20, 12, 5, .58), inset 0 1px 0 rgba(255, 226, 170, .28);
+  }
 }
-.bz-diary-lamp {
-  position: absolute; left: 50%; top: -220px; width: 720px; height: 380px;
-  transform: translateX(-50%);
-  background: radial-gradient(50% 62% at 50% 100%, rgba(255, 196, 110, .34), transparent 70%);
-  pointer-events: none;
-  animation: bz-diary-lampBreathe 9s ease-in-out infinite;
+.bz-diary-close:focus-visible { outline: 2px solid var(--bz-diary-gold); outline-offset: 2px; }
+/* 桌面端不摆这枚钮：退出走 Esc / 点遮罩，与其他域同口径。
+   触屏没有 Esc、也没有「点遮罩」的习惯，≤720px 保留。 */
+@media (min-width: 721px) {
+  .bz-diary-close { display: none; }
 }
-@keyframes bz-diary-lampBreathe { 50% { opacity: .82; } }
 
 /* ---------- 案头文具:紧贴书的下沿,默认藏着;鼠标压到书底那一条才浮出来 ---------- */
 /* 一只横木托,插着六枚象牙纸签,签上一个墨字 —— 功能就是书前这几件文具 */
@@ -707,6 +713,50 @@
 .bz-diary-slip-err { color: var(--bz-diary-seal-red); font-size: 13px;  }
 
 /* 贴纸册弹层 */
+/* ---------- 火漆密码框：动保险箱前的那道封（域内自绘，主密码只经此手） ---------- */
+/* 压暗底与纸条/贴纸册同族，是「桌面材料」不是 token 遮罩（ADR-0230 决策 8 第 5 层，
+   与那四层同一条例外：压的是域根这块固定深色桌面，不是宿主内容） */
+.bz-diary-pass { position: fixed; inset: 0; z-index: 340; display: flex; align-items: center; justify-content: center; background: rgba(20, 12, 5, .45); }
+.bz-diary-pass[hidden] { display: none; }
+.bz-diary-pass-paper {
+  width: min(360px, 88vw); padding: 24px 26px 20px; text-align: center;
+  background: linear-gradient(178deg, #f6efdd, #ece2c8);
+  border: 1px solid rgba(120, 92, 56, .42);
+  box-shadow: 0 24px 50px rgba(20, 12, 5, .6), inset 0 1px 0 rgba(255, 252, 240, .55);
+  transform: rotate(-.8deg);
+  animation: bz-diary-passIn .26s cubic-bezier(.3, 1.3, .5, 1) both;
+}
+@keyframes bz-diary-passIn { from { transform: rotate(-3deg) translateY(24px) scale(.94); opacity: 0; } }
+/* 火漆印：一枚压在纸上的红蜡 */
+.bz-diary-pass-wax {
+  width: 46px; height: 46px; margin: 0 auto 12px;
+  display: flex; align-items: center; justify-content: center;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #c04433, #8d2b1d 72%);
+  color: #fdf3e2;
+  box-shadow: 0 3px 8px rgba(80, 20, 12, .5), inset 0 1px 0 rgba(255, 220, 200, .35);
+}
+.bz-diary-pass-wax .bz-ic { width: 22px; height: 22px; display: inline-block; vertical-align: middle; }
+.bz-diary-pass-title { font-size: 20px; color: var(--bz-diary-ink); letter-spacing: .08em; }
+.bz-diary-pass-desc { font-size: 13px; color: var(--bz-diary-ink-soft); margin-top: 6px; line-height: 20px; }
+.bz-diary-pass-input {
+  width: 100%; margin-top: 16px; padding: 9px 10px;
+  border: 0; border-bottom: 1.5px dashed rgba(107, 95, 76, .55); outline: 0;
+  background: transparent; font-size: 17px; color: var(--bz-diary-ink);
+  text-align: center; letter-spacing: .1em;
+}
+.bz-diary-pass-input:focus { border-bottom-color: var(--bz-diary-seal-red); }
+.bz-diary-pass-err { min-height: 18px; margin-top: 8px; font-size: 12px; color: var(--bz-diary-seal-red); }
+.bz-diary-pass-row { display: flex; gap: 22px; justify-content: center; margin-top: 4px; }
+.bz-diary-pass-btn {
+  font-size: 17px; cursor: pointer; color: var(--bz-diary-ink-soft);
+  border-bottom: 1px dashed currentColor; padding-bottom: 1px; user-select: none;
+}
+.bz-diary-pass-btn.bz-diary-primary { color: var(--bz-diary-seal-red); }
+@media (hover: hover) {
+  .bz-diary-pass-btn:hover { color: var(--bz-diary-ink); }
+}
+
 .bz-diary-album-pop { position: fixed; inset: 0; z-index: 320; display: flex; align-items: center; justify-content: center; background: rgba(20, 12, 5, .4); }
 .bz-diary-album-pop[hidden] { display: none; }
 .bz-diary-ap-book {
@@ -893,52 +943,8 @@
 .bz-diary-lb-next { right: 4vw; }
 .bz-diary-lb-count { position: absolute; bottom: 4vh; left: 50%; transform: translateX(-50%); color: #bfae8e;  font-size: 15px; letter-spacing: 2px; }
 
-/* 引导便签 */
-.bz-diary-hint {
-  position: fixed; right: 26px; top: 26px; z-index: 250;
-  width: 250px; background: #fff6ac; padding: 16px 18px 14px;
-  box-shadow: 0 14px 30px rgba(50, 30, 5, .4);
-  transform: rotate(2deg);
-  animation: bz-diary-slipIn .4s .8s cubic-bezier(.3, 1.3, .5, 1) both;
-}
-.bz-diary-hint::before { content: ""; position: absolute; left: 50%; top: -9px; width: 84px; height: 20px; transform: translateX(-50%) rotate(-2deg); background: rgba(233, 216, 170, .8); box-shadow: 0 2px 4px rgba(90,60,20,.25); }
-.bz-diary-hint b {  font-size: 19px; color: #6b5417; display: block; margin-bottom: 8px; }
-.bz-diary-hint ul { list-style: none; }
-.bz-diary-hint li { font-size: 13.5px; line-height: 24px; color: #6e5f2e; }
-.bz-diary-hint li b { display: inline;  font-size: inherit; color: #4c3d10; }
-.bz-diary-hint-close {
-  display: inline-block; margin-top: 8px; margin-left: 150px;
-   font-size: 16px; color: #8a7420; cursor: pointer;
-  border-bottom: 1px dashed rgba(138, 116, 32, .6);
-}
-@media (hover: hover) {
-
-.bz-diary-hint-close:hover { opacity: .7; }
-}
-.bz-diary-hint.bz-diary-gone { animation: bz-diary-hintOut .35s ease both; }
-@keyframes bz-diary-hintOut { to { transform: rotate(6deg) translateY(-30px); opacity: 0; } }
-
-/* 明信片 */
-.bz-diary-postcard {
-  position: fixed; z-index: 260; left: 8vw; bottom: -8px; width: 300px;
-  background: linear-gradient(160deg, #f6ecd2, #eddfba);
-  padding: 18px 20px 16px;
-  box-shadow: 0 18px 40px rgba(0,0,0,.5);
-  transform: rotate(-3deg);
-  animation: bz-diary-cardUp .6s cubic-bezier(.25, 1.2, .4, 1) both;
-  cursor: pointer;
-  border: 1px solid rgba(122, 92, 44, .3);
-}
-@keyframes bz-diary-cardUp { from { transform: rotate(-8deg) translateY(90%); } }
-.bz-diary-postcard[hidden] { display: none; }
-.bz-diary-pc-stamp {
-  position: absolute; right: 14px; top: 12px; width: 44px; height: 52px;
-  background: repeating-linear-gradient(45deg, #d9c8a0 0 4px, #cdb98a 4px 8px);
-  border: 1px dashed rgba(122, 92, 44, .5);
-}
-.bz-diary-pc-title {  font-size: 21px; color: #503a14; }
-.bz-diary-pc-body { margin-top: 6px; font-size: 14px; line-height: 23px; color: var(--bz-diary-ink-soft); display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
-.bz-diary-pc-open { margin-top: 8px; text-align: right;  font-size: 15px; color: #8a6a33; border-bottom: 1px dashed rgba(138,106,51,.5); width: max-content; margin-left: auto; }
+/* 引导便签与「那年今日」明信片已整件退役（开册就往桌上摆的非请求物件，与「只要日记本本身」
+   冲突）——原 .bz-diary-hint / .bz-diary-postcard 两套规则一并摘除 */
 
 /* Toast:墨字纸条 */
 .bz-diary-toast {
@@ -973,23 +979,30 @@
    --pg-h 挂 :root(不再只挂 #book):#tools 已经移出 #book 挂到桌上,它也要读到同一个书高 */
 @media (min-width: 721px) and (max-height: 900px) {
   .bz-diary-scene { --bz-diary-pg-h: min(700px, calc(100vh - 180px)); }}
-@media (max-width: 1120px) {
-  .bz-diary-scene { --bz-diary-book-zoom: calc((100vw - 30px) / 1060); }}
+/* 书的整体缩放由 ui.ts 的 applyBookZoom() 发号（--bz-diary-book-zoom）：
+   CSS 算不出无单位比值（长度 ÷ 数出来还是长度，scale() 吃不下会整条 transform 失效，
+   书就不居中了——实测窗口 ≤1120px 必现） */
 @media (max-width: 720px) {
   .bz-diary-scene {
-    --bz-diary-book-zoom: 1; --bz-diary-pg-w: min(92vw, 480px); --bz-diary-pg-h: min(76vh, 660px);
-    --bz-diary-pg-pad-t: 56px; --bz-diary-pg-pad-x: 34px; --bz-diary-pg-pad-b: 46px;
+    /* 移动端书页铺满整屏：顶部留 44px 给刘海屏安全区（用户拍板），底边贴窗底 */
+    --bz-diary-pg-w: 100vw; --bz-diary-pg-h: calc(100vh - 44px);
+    --bz-diary-pg-pad-t: 56px; --bz-diary-pg-pad-x: 34px; --bz-diary-pg-pad-b: 76px;
   }
-  .bz-diary-book { width: var(--bz-diary-pg-w); }
+  /* 居中公式 50% - pg-h/2 只留得出 22px，补 22px 才钉在 44px 安全区上 */
+  .bz-diary-book { width: var(--bz-diary-pg-w); top: calc(50% + 22px); }
   /* 书签条:窄屏没有"书外那 26px"可用,原来的 right:2px 是直接压在正文右缘上。
      改成从**书顶**翻出来 —— 书顶到窗口顶有 12vh 的余量,不盖任何字 */
   .bz-diary-filter-tab { right: -8px; top: -20px; }
   .bz-diary-ds-day { font-size: 56px; }
-  .bz-diary-tools { top: calc(50% + var(--bz-diary-pg-h) / 2 * var(--bz-diary-book-zoom, 1) + 14px); gap: 5px; padding: 7px 8px; }
+  /* 书铺满后下沿没有余量可挂，文具改钉在窗底、浮在纸上（页底内边距已放到 76px 让位） */
+  .bz-diary-tools { top: auto; bottom: 14px; gap: 5px; padding: 7px 8px; }
   .bz-diary-tl { width: 40px; height: 36px; }
   .bz-diary-tl b { font-size: 19px; }
   /* 触屏没有 hover:mousemove 驱动的 .show 永远开不了 → 这一屏文具直接常驻 */
-  .bz-diary-tools { opacity: 1; pointer-events: auto; transform: translateX(-50%) translateY(0); }}
+  .bz-diary-tools { opacity: 1; pointer-events: auto; transform: translateX(-50%) translateY(0); }
+  /* 收起钮收一档塞进顶部 44px 安全条：书从第 44px 起铺满，钮压在书上会挡字 */
+  .bz-diary-close { top: 6px; right: 12px; width: 32px; height: 32px; }
+  .bz-diary-close .bz-ic { width: 16px; height: 16px; }}
 
 /* 扉页整页已废:书名/目录/印章那套随"目录改由书口索引抽纸承担"一并删掉,
    书打开第一页(page-item,无 toc-page 类)就是最近那篇 */
@@ -1038,6 +1051,92 @@
    旧 #add-diary-mask / .add-diary-popup / .diary-tag-selector-popup 手绘壳与
    #add-diary-content:focus 等死选择器一并退役。此处只补域内布局（效率#1 表单骨架 +
    sticky 底栏）与触控热区（D-UI15）。 */
+
+/* ---- 拟物皮：这两张弹窗就是摊在桌上的一张纸 ----
+   此前只补了布局，观感仍是 core 通用面板；此处把纸/墨/铜三色补回来。
+   弹窗挂在 document.body 上（不在 .bz-diary-scene 内），场景根上的 --bz-diary-* 变量取不到，
+   故本块自带一份材料色（与 ADR-0230「不改调色板」同一条例外：材料 ≠ 主题表面）。 */
+.bz-overlay-popup.bz-diary-add-popup,
+.bz-overlay-popup.bz-diary-tag-popup {
+  background: linear-gradient(178deg, #f6efdd, #ece2c8);
+  color: #43392b;
+  border: 1px solid rgba(120, 92, 56, .42);
+  border-radius: 3px;
+  box-shadow: 0 18px 44px rgba(20, 12, 5, .55), inset 0 1px 0 rgba(255, 252, 240, .55);
+}
+/* 标题栏：墨字 + 一道金线（书页天头那条界线的同款收窄） */
+.bz-diary-add-popup .bz-dialog-head,
+.bz-diary-tag-popup .bz-dialog-head {
+  border-bottom: 1px solid rgba(201, 162, 83, .45);
+  padding-bottom: 9px;
+}
+.bz-diary-add-popup .bz-dialog-title,
+.bz-diary-tag-popup .bz-dialog-title {
+  color: #43392b;
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: .06em;
+}
+/* 正文里的说明/标签名跟着墨色走（壳默认用宿主题变量，深色主题下会变成浅字压浅纸） */
+.bz-diary-add-popup .bz-dialog-body,
+.bz-diary-tag-popup .bz-dialog-body { color: #43392b; }
+/* 输入框 = 纸上一道压痕 */
+.bz-diary-add-popup input,
+.bz-diary-add-popup textarea,
+.bz-diary-tag-popup input {
+  background: rgba(255, 253, 245, .72);
+  border: 1px solid rgba(120, 92, 56, .34);
+  border-radius: 2px;
+  color: #43392b;
+}
+.bz-diary-add-popup input::placeholder,
+.bz-diary-tag-popup input::placeholder { color: #9a8d74; }
+/* 按钮：纸签（次级）与火漆（主行动）两档 */
+.bz-diary-add-popup .bz-btn:not(.bz-btn--primary):not(.bz-btn--danger),
+.bz-diary-tag-popup .bz-btn:not(.bz-btn--primary):not(.bz-btn--danger) {
+  background: linear-gradient(180deg, #fbf6e8, #efe6cf);
+  border: 1px solid rgba(120, 92, 56, .4);
+  color: #43392b;
+}
+.bz-diary-add-popup .bz-btn--primary {
+  background: linear-gradient(180deg, #b23a2a, #8d2b1d);
+  border: 1px solid rgba(90, 25, 15, .55);
+  color: #fdf3e2;
+}
+@media (hover: hover) {
+  .bz-diary-add-popup .bz-btn--primary:hover { background: linear-gradient(180deg, #c04433, #9c3122); }
+}
+
+/* ---- 撕页确认：桌角撕下来的一角纸 ----
+   注意：删除是慎重决策（设计手册 §9/§10），主按钮**不得高亮**——
+   core 用 `#__shared_confirm_popup__.bz-flow-dialog.bz-flow-dialog--danger #__shared_confirm_ok__`
+   （2,2,0）把主动作压回中性档，域皮只能换材料、不能提级：
+   纸签中性底 + 危险墨红字，形制仍是次级。 */
+#__shared_confirm_popup__.bz-diary-flow-dialog {
+  background: linear-gradient(178deg, #f6efdd, #ece2c8);
+  color: #43392b;
+  border: 1px solid rgba(120, 92, 56, .42);
+  border-radius: 3px;
+  box-shadow: 0 18px 44px rgba(20, 12, 5, .55), inset 0 1px 0 rgba(255, 252, 240, .55);
+}
+#__shared_confirm_popup__.bz-diary-flow-dialog h4 {
+  color: #43392b;
+  border-bottom: 1px solid rgba(201, 162, 83, .45);
+  padding-bottom: 9px;
+}
+#__shared_confirm_popup__.bz-diary-flow-dialog p { color: #6b5f4c; }
+#__shared_confirm_popup__.bz-diary-flow-dialog #__shared_confirm_cancel__,
+#__shared_confirm_popup__.bz-diary-flow-dialog #__shared_confirm_ok__ {
+  background: linear-gradient(180deg, #fbf6e8, #efe6cf);
+  border: 1px solid rgba(120, 92, 56, .4);
+  color: #43392b;
+}
+/* 同特异性（2,2,0）+ 域文件后到即胜：把危险主动作换成「纸签 + 墨红字」，仍是不高亮的中性档 */
+#__shared_confirm_popup__.bz-diary-flow-dialog.bz-flow-dialog--danger #__shared_confirm_ok__ {
+  background: linear-gradient(180deg, #fbf6e8, #efe6cf);
+  border: 1px solid rgba(120, 92, 56, .4);
+  color: #b23a2a;
+}
 
 /* 表单纵向骨架：日期行 + 类型标签 + 过滤框 + chip 滚动区 + 底栏；
    壳限高 82vh 内 chip 区自滚、底栏常驻，保存钮不再随 chips 滚走 */

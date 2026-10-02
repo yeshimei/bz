@@ -58,7 +58,6 @@ const mocks = vi.hoisted(() => ({
   hideTagPicker: vi.fn(),
   copyDiaryLink: vi.fn(async () => {}),
   showConfirm: vi.fn(),
-  ensureSafeUnlocked: vi.fn(async () => true),
   openFlowDialog: vi.fn(async (): Promise<string | undefined> => 'ok'),
   isUnlocked: vi.fn(() => false),
   loadEncryptedEntries: vi.fn(async (): Promise<any[]> => []),
@@ -66,7 +65,15 @@ const mocks = vi.hoisted(() => ({
   reclassifyEntry: vi.fn(async (): Promise<boolean> => true),
   deleteEncryptedEntry: vi.fn(async () => {}),
   loadWallEntries: vi.fn(async (app: any, real: (a: any) => Promise<any[]>) => real(app)),
-  getSafeManager: vi.fn(() => ({ unlocked: false, manifest: null }) as unknown),
+  getSafeManager: vi.fn(
+    () =>
+      ({
+        unlocked: true, // 默认已解锁：动保险箱的动作不该在测里卡在密码框上
+        manifest: null,
+        unlock: mocks.safeUnlock,
+      }) as unknown
+  ),
+  safeUnlock: vi.fn(async () => true),
 }));
 
 vi.mock('../../src/diary/ui/dialogs', () => ({
@@ -91,7 +98,6 @@ vi.mock('../../src/diary/data', async (importOriginal) => {
   };
 });
 vi.mock('../../src/encrypt', () => ({
-  ensureSafeUnlocked: mocks.ensureSafeUnlocked,
   openEncrypt: vi.fn(),
   getSafeManager: () => mocks.getSafeManager(),
 }));
@@ -165,10 +171,11 @@ beforeEach(() => {
   resetFlips();
   applyDirectories({});
   for (const fn of Object.values(mocks)) fn.mockClear();
-  mocks.ensureSafeUnlocked.mockResolvedValue(true);
   mocks.isUnlocked.mockReturnValue(false);
   mocks.encryptEntry.mockResolvedValue({ encrypted: true, noteId: 'note-1' });
   mocks.openFlowDialog.mockResolvedValue('ok');
+  // mockClear 不清 mockReturnValue：解锁态默认值每用例复位（「没解锁」那条会临时翻 false）
+  mocks.getSafeManager.mockReturnValue({ unlocked: true, manifest: null, unlock: mocks.safeUnlock });
   mocks.loadEncryptedEntries.mockResolvedValue([]);
   mocks.loadWallEntries.mockImplementation(async (app: any, real: (a: any) => Promise<any[]>) => real(app));
   Object.defineProperty(navigator, 'clipboard', {
@@ -400,7 +407,11 @@ describe('render 纯层：命名空间与零内联视觉样式', () => {
       .flatMap((m) => m[1].split(/\s+/))
       .filter(Boolean);
     expect(classes.length).toBeGreaterThan(30);
-    for (const c of classes) expect(c.startsWith('bz-diary-'), `类名未加域前缀：${c}`).toBe(true);
+    // core 自有的共享类不算「裸类名」（21 个域共用同一份 core 样式，本来就全局唯一）
+    const CORE_SHARED = new Set(['bz-ic']);
+    for (const c of classes) {
+      expect(c.startsWith('bz-diary-') || CORE_SHARED.has(c), `类名未加域前缀：${c}`).toBe(true);
+    }
   });
 
   it('零内联视觉样式：倾角走 bz-diary-tilt-N 类，图片失败态走 data-media-err', () => {
@@ -527,7 +538,8 @@ describe('DiaryAppController · 首屏与建书', () => {
     expect(rec.opts.showCover).toBe(false);
     expect(rec.opts.disableFlipByClick).toBe(true);
     expect(rec.opts.showPageCorners).toBe(false);
-    expect(rec.opts.flippingTime).toBe(620);
+    // 620 太拖（原型里翻一页像等半拍），按手感收到 380
+    expect(rec.opts.flippingTime).toBe(380);
     expect(rec.opts.size).toBe('fixed');
     // 页内元素真的装进了页容器
     expect(rec.items[0].querySelector('.bz-diary-b-daystamp')).toBeTruthy();
@@ -831,7 +843,8 @@ describe('DiaryAppController · 条目动作走真写层', () => {
     );
     q('.bz-diary-menu .bz-diary-mn-item[data-act="envelope"]').click();
     await vi.waitFor(() => expect(vault.files.has(DIARY_PATH)).toBe(false));
-    expect(mocks.ensureSafeUnlocked).toHaveBeenCalledWith('diary');
+    // 解锁门禁问的是真保险箱状态（`getSafeManager().unlocked`），不再借通用解锁屏
+    expect(mocks.getSafeManager).toHaveBeenCalled();
     expect(mocks.openFlowDialog).toHaveBeenCalledTimes(1);
     // 入库的是写层反查出的真实条目（filename=条目文件路径、时刻与磁盘一致）
     expect(mocks.encryptEntry.mock.calls[0][0]).toMatchObject({ filename: DIARY_PATH, time: '23:02', lineNumber: 0 });

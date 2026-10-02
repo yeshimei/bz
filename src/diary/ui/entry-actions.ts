@@ -70,6 +70,9 @@ export function showConfirm(loc: DiaryEntryLocator): void {
   const isEncrypted = !!loc.encrypted;
   void openFlowDialog({
     title: '确认删除',
+    // 皮肤类串走域侧惯例（bz-<域>-flow-dialog）：撕页这张是「桌上撕下来的一角纸」，
+    // 不是 core 通用流程框
+    className: 'bz-diary-flow-dialog',
     message: isEncrypted
       ? '确定删除这篇加密日记吗？\n\n此操作不可撤销，密文将从保险库永久销毁。'
       : '确定要删除这篇日记吗？\n\n此操作不可撤销，日记将从笔记中永久删除。',

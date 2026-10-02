@@ -30,8 +30,12 @@ const mocks = vi.hoisted(() => ({
   hideTagPicker: vi.fn(),
   copyDiaryLink: vi.fn(async () => {}),
   showConfirm: vi.fn(),
-  ensureSafeUnlocked: vi.fn(async () => true),
   openFlowDialog: vi.fn(async (): Promise<string | undefined> => 'ok'),
+  /** 保险箱状态可控：默认是已解锁，只有「没解锁」那条用例临时翻成 false */
+  getSafeManager: vi.fn(
+    () => ({ unlocked: true, manifest: null, unlock: mocks.safeUnlock }) as unknown
+  ),
+  safeUnlock: vi.fn(async () => true),
   isUnlocked: vi.fn(() => false),
   loadEncryptedEntries: vi.fn(async (): Promise<any[]> => []),
   encryptEntry: vi.fn(async (): Promise<any> => ({ encrypted: true, noteId: 'note-1' })),
@@ -52,9 +56,8 @@ vi.mock('../../src/diary/ui/entry-actions', () => ({
 }));
 vi.mock('../../src/core/flow-dialog', () => ({ openFlowDialog: mocks.openFlowDialog }));
 vi.mock('../../src/encrypt', () => ({
-  ensureSafeUnlocked: mocks.ensureSafeUnlocked,
   openEncrypt: vi.fn(),
-  getSafeManager: () => ({ unlocked: false, manifest: null }),
+  getSafeManager: () => mocks.getSafeManager(),
 }));
 vi.mock('../../src/diary/encrypt', () => ({
   ENCRYPT_TAG: '加密',
@@ -129,8 +132,9 @@ beforeEach(() => {
   resetFlips();
   applyDirectories({});
   for (const fn of Object.values(mocks)) fn.mockClear();
-  mocks.ensureSafeUnlocked.mockResolvedValue(true);
   mocks.openFlowDialog.mockResolvedValue('ok');
+  // mockClear 不清 mockReturnValue：解锁态默认值每用例复位（「没解锁」那条会临时翻 false）
+  mocks.getSafeManager.mockReturnValue({ unlocked: true, manifest: null, unlock: mocks.safeUnlock });
   mocks.encryptEntry.mockResolvedValue({ encrypted: true, noteId: 'note-1' });
   mocks.isUnlocked.mockReturnValue(false);
   mocks.loadEncryptedEntries.mockResolvedValue([]);
@@ -269,15 +273,15 @@ describe('收进信封（加密）的守卫与失败分支', () => {
       text: 'x',
       segments: [],
     });
-    expect(mocks.ensureSafeUnlocked).not.toHaveBeenCalled();
+    expect(mocks.getSafeManager).not.toHaveBeenCalled();
     expect(mocks.openFlowDialog).not.toHaveBeenCalled();
     expect(mocks.encryptEntry).not.toHaveBeenCalled();
   });
 
-  it('保险箱没解锁就原地退出（没弹确认框、没动文件）', async () => {
+  it('保险箱没解锁：弹本域火漆密码框候着，点了「算了」就原地退出（没弹二次确认、没动文件）', async () => {
     const c = await openBook();
-    mocks.ensureSafeUnlocked.mockResolvedValue(false);
-    await (c as unknown as { encryptEntryAction: (e: WallEntry) => Promise<void> }).encryptEntryAction({
+    mocks.getSafeManager.mockReturnValue({ unlocked: false, manifest: null, unlock: mocks.safeUnlock });
+    const p = (c as unknown as { encryptEntryAction: (e: WallEntry) => Promise<void> }).encryptEntryAction({
       date: '2026-08-19',
       time: '23:02',
       tags: ['日记'],
@@ -291,8 +295,42 @@ describe('收进信封（加密）的守卫与失败分支', () => {
       text: 'x',
       segments: [],
     });
+    // 未解锁时不该直接走写层：先摆密码框，二次确认框得等密码过了才轮到
+    await vi.waitFor(() => expect(q('.bz-diary-pass').hidden).toBe(false));
     expect(mocks.openFlowDialog).not.toHaveBeenCalled();
     expect(vault.files.has(DIARY_PATH)).toBe(true);
+    q('.bz-diary-pass-btn[data-pact="cancel"]').click();
+    await p;
+    expect(q('.bz-diary-pass').hidden).toBe(true);
+    expect(mocks.openFlowDialog).not.toHaveBeenCalled();
+    expect(mocks.encryptEntry).not.toHaveBeenCalled();
+    expect(vault.files.has(DIARY_PATH)).toBe(true);
+  });
+
+  it('保险箱没解锁时填对主密码 → 放行（密码交给真保险箱校验，本域只收字符串）', async () => {
+    const c = await openBook();
+    mocks.getSafeManager.mockReturnValue({ unlocked: false, manifest: null, unlock: mocks.safeUnlock });
+    const p = (c as unknown as { encryptEntryAction: (e: WallEntry) => Promise<void> }).encryptEntryAction({
+      date: '2026-08-19',
+      time: '23:02',
+      tags: ['日记'],
+      emoji: '📖',
+      content: 'x',
+      filename: DIARY_PATH,
+      filePath: DIARY_PATH,
+      lineNumber: 0,
+      kind: 'diary',
+      media: [],
+      text: 'x',
+      segments: [],
+    });
+    await vi.waitFor(() => expect(q('.bz-diary-pass').hidden).toBe(false));
+    (q('.bz-diary-pass-input') as HTMLInputElement).value = '主密码-123';
+    q('.bz-diary-pass-btn[data-pact="ok"]').click();
+    await p;
+    expect(mocks.safeUnlock).toHaveBeenCalledWith('主密码-123');
+    expect(q('.bz-diary-pass').hidden).toBe(true);
+    expect(mocks.encryptEntry).toHaveBeenCalled();
   });
 
   it('磁盘上找不到原文条目 → 提示并不入库', async () => {
@@ -474,39 +512,18 @@ describe('纸上的 [[双链]]', () => {
 });
 
 // ============================================================
-//  那年今天（明信片）
+//  那年今天（明信片）—— 整件退役
 // ============================================================
-
+/* 明信片是开册就往桌上摆的非请求物件，与「只要日记本本身」冲突，随 ADR-0230 追加拍板退役：
+   标记（.bz-diary-postcard）、逻辑（checkOnThisDay）与用例在本轮一并摘除。
+   反向钉死一处：域内不得再出现这张明信片（防有人按旧稿恢复）。 */
 describe('那年今天', () => {
-  it('去年同月同日有则 → 明信片自动摆出来；点「展信」翻到那一页并收回来', async () => {
-    const c = await openBook();
-    (c as unknown as { checkOnThisDay: () => void }).checkOnThisDay();
-    const pc = q('.bz-diary-postcard');
-    expect(pc.hidden).toBe(false);
-    expect(pc.querySelector('.bz-diary-pc-body')!.textContent).toContain('去年的今天在下雨');
-    expect(pc.querySelector('.bz-diary-pc-body')!.innerHTML).toContain('年的今天');
-
-    const before = lastFlip().page;
-    (pc.querySelector('.bz-diary-pc-open') as HTMLElement).click();
-    expect(pc.hidden).toBe(true);
-    expect(lastFlip().page).toBeGreaterThanOrEqual(before);
-  });
-
-  it('只有当年同月同日（不算「那年」）→ 明信片不出现', async () => {
-    const c = await openBook();
-    // 拿掉去年那则，只留当年的另一则
-    vault.files.delete(lastYearSameDayPath());
-    const today = new Date();
-    const key = `2026-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
-    vault.files.set(
-      `我的/日记/${key.replace(/-/g, '').slice(2)}0900.md`,
-      serializeDiaryEntryFile({ date: key, time: '09:00' }, ['日记'], '今天写的')
-    );
-    await (c as unknown as { loadAndRelayout: () => Promise<void> }).loadAndRelayout();
-    q('.bz-diary-postcard').hidden = true; // 清掉前一轮可能摆出来的
-    (c as unknown as { checkOnThisDay: () => void }).checkOnThisDay();
-    expect(q('.bz-diary-postcard').hidden).toBe(true);
-    expect(q('.bz-diary-postcard').querySelector('.bz-diary-pc-body')!.textContent).toBe('');
+  it('明信片已退役：开册不摆明信片，控制器也不再有 checkOnThisDay', async () => {
+    await openBook();
+    expect(document.querySelector('.bz-diary-postcard')).toBeNull();
+    expect(document.querySelector('.bz-diary-hint')).toBeNull();
+    const proto = DiaryAppController.prototype as unknown as Record<string, unknown>;
+    expect(proto.checkOnThisDay).toBeUndefined();
   });
 });
 

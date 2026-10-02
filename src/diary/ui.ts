@@ -39,7 +39,6 @@ import {
   loadWallEntries,
   invalidateWallCache,
   mediaSrc,
-  pickOnThisDay,
   extractMedia,
   extractSegments,
   stripMediaLinks,
@@ -78,13 +77,16 @@ import {
 } from './encrypt';
 import { openAddDialog, showTagPicker, hideAddDialog, hideTagPicker } from './ui/dialogs';
 import { copyDiaryLink, showConfirm } from './ui/entry-actions';
+/* 纯层只吐 data-lucide 占位（iconSpan），兑现统一在这里做一次：
+   插件端走 setIcon（全 lucide 名），评审壳走 prototype-icons.js 的手写白名单。 */
+import { mountIcons } from '../core/ui';
 
 // ===== 常量 =====
 
 /** 窄屏单页断点——**与 styles.css 的 `@media (max-width: 720px)` 必须一致**（两侧都改） */
 const SINGLE_MAX_W = 720;
-/** StPageFlip 翻页动画时长（与原型同值） */
-const FLIP_TIME_MS = 620;
+/** StPageFlip 翻页动画时长（原型 620ms 实测偏拖沓，收到 380ms） */
+const FLIP_TIME_MS = 380;
 /** 页尾能塞下一刀的最小剩余高度：比这更矮就不切，直接换页（切出来两行字没有意义） */
 const PAGE_CUT_MIN_PX = 84;
 /** 日戳不孤行：本页剩余空间装不下「日戳 + 一点点内容」就提前换页 */
@@ -336,8 +338,8 @@ export class DiaryAppController {
   private edgeEl!: HTMLElement;
   private toolsEl!: HTMLElement;
   private filterTabEl!: HTMLElement;
-  private postcardEl!: HTMLElement;
-  private hintEl!: HTMLElement;
+  /* 明信片（那年今日）与引导便签已整件退役：开册就往桌上摆的非请求物件，
+     与「只要日记本本身」冲突（postcardEl / hintEl 随之摘除） */
   private menuEl!: HTMLElement;
   private sheetEl!: HTMLElement;
   private sheetTitleEl!: HTMLElement;
@@ -363,6 +365,14 @@ export class DiaryAppController {
   private lbCountEl!: HTMLElement;
   private toastEl!: HTMLElement;
   private fallbackEl!: HTMLElement;
+  /** 右上角常驻的「收起」钮（整屏场景唯一可见出口） */
+  private closeEl!: HTMLElement;
+  /** 火漆密码框（域内自绘，主密码交给真保险箱校验） */
+  private passEl!: HTMLElement;
+  private passInputEl!: HTMLInputElement;
+  private passErrEl!: HTMLElement;
+  /** 密码框在途的结算器（同一时刻至多一个） */
+  private passSettle: ((ok: boolean) => void) | null = null;
 
   // ---------- 状态 ----------
   /** 当前册子里的条目（只读聚合结果；加密条目在解锁时才并入） */
@@ -422,6 +432,8 @@ export class DiaryAppController {
     root.innerHTML = bookPanelHTML();
     document.body.appendChild(root);
     this.root = root;
+    mountIcons(root); // 兑现「收起」钮与火漆印上的 lucide 占位（缺这步图标是空白）
+    this.applyBookZoom(); // 首屏就把书缩放进遮罩（窗口比书窄时）
 
     const q = <T extends HTMLElement = HTMLElement>(sel: string) => root.querySelector<T>(sel)!;
     this.bookEl = q('.bz-diary-book');
@@ -430,8 +442,6 @@ export class DiaryAppController {
     this.edgeEl = q('.bz-diary-bk-edge');
     this.toolsEl = q('.bz-diary-tools');
     this.filterTabEl = q('.bz-diary-filter-tab');
-    this.postcardEl = q('.bz-diary-postcard');
-    this.hintEl = q('.bz-diary-hint');
     this.menuEl = q('.bz-diary-menu');
     this.sheetEl = q('.bz-diary-sheet');
     this.sheetTitleEl = q('.bz-diary-sh-title');
@@ -457,6 +467,10 @@ export class DiaryAppController {
     this.lbCountEl = q('.bz-diary-lb-count');
     this.toastEl = q('.bz-diary-toast');
     this.fallbackEl = q('.bz-diary-fallback');
+    this.closeEl = q('.bz-diary-close');
+    this.passEl = q('.bz-diary-pass');
+    this.passInputEl = q<HTMLInputElement>('.bz-diary-pass-input');
+    this.passErrEl = q('.bz-diary-pass-err');
 
     this.bindChrome();
     this.bindMenu();
@@ -465,6 +479,7 @@ export class DiaryAppController {
     this.bindAlbum();
     this.bindCal();
     this.bindSlip();
+    this.bindPass();
     this.bindTools();
 
     registerPanelEsc('diary', () => !!this.root && this.root.style.display === 'flex', () => this.escapeStack());
@@ -1028,6 +1043,30 @@ export class DiaryAppController {
        早退先挡一道，Esc 就永远到不了 esc 栈。早退只该管方向键。 */
     document.addEventListener('keydown', this.onKeydown);
 
+    /* 常驻出口：右上角「收起」钮 */
+    this.closeEl.addEventListener('click', () => this.hide());
+
+    /* 点遮罩空白处 = 收起整本（与其他域「点遮罩关闭」同口径）。
+       书 / 文具 / 各浮层都是 desk 的子节点，点它们不会命中这层；
+       有浮层开着时交给浮层自己的 click-outside，此处不抢。 */
+    const root = this.root;
+    root?.addEventListener('click', (ev) => {
+      const t = ev.target as HTMLElement;
+      if (t !== root && !t.classList.contains('bz-diary-desk')) return;
+      if (
+        !this.lightboxEl.hidden ||
+        !this.sheetEl.hidden ||
+        !this.slipEl.hidden ||
+        !this.albumEl.hidden ||
+        !this.calEl.hidden ||
+        !this.menuEl.hidden ||
+        !this.passEl.hidden
+      ) {
+        return;
+      }
+      this.hide();
+    });
+
     /* 窗口高矮会改书高（--pg-h 的短屏规则），书高变了必须重排，不能只盯宽度 */
     this.lastSingle = typeof window !== 'undefined' && window.innerWidth <= SINGLE_MAX_W;
     this.lastW = typeof window !== 'undefined' ? window.innerWidth : 0;
@@ -1059,6 +1098,7 @@ export class DiaryAppController {
     if (this.resizeTimer !== null) clearTimeout(this.resizeTimer);
     this.resizeTimer = setTimeout(() => {
       this.resizeTimer = null;
+      this.applyBookZoom();
       const s = window.innerWidth <= SINGLE_MAX_W;
       const h = window.innerHeight;
       const w = window.innerWidth;
@@ -1074,9 +1114,27 @@ export class DiaryAppController {
     }, 380);
   };
 
+  /**
+   * 书的整体缩放：窗口比书窄时把书缩进遮罩。
+   * 原本想用 CSS `calc((100vw - 30px) / 1060)` 得纯数 —— 长度除以数**出来还是长度**，
+   * `scale()` 吃不下，整条 `transform` 在 ≤1120px 直接失效变 none，书就偏到右半边
+   * （左沿钉在视口中线上）。改由 JS 算成无单位数发号；≤720 单页档恒为 1。
+   */
+  private applyBookZoom(): void {
+    if (!this.root) return;
+    const w = window.innerWidth;
+    // 书皮比纸宽（inset -16px 两侧），1072 = 1040 + 32；留 30px 呼吸边
+    const zoom = w <= SINGLE_MAX_W ? 1 : Math.min(1, (w - 30) / 1072);
+    this.root.style.setProperty('--bz-diary-book-zoom', zoom.toFixed(4));
+  }
+
   /** Esc 分流：纸条 → 贴纸册 → 台历 → 抽出的一张纸 → 灯箱 → 便签 → 翻回最新 */
   private escapeStack(): void {
     if (!this.root || this.root.style.display !== 'flex') return;
+    if (!this.passEl.hidden) {
+      this.closePass(false);
+      return;
+    }
     if (!this.slipEl.hidden) {
       this.closeSlip();
       return;
@@ -1101,11 +1159,14 @@ export class DiaryAppController {
       this.closeMenu();
       return;
     }
-    /* 没有扉页可「合上」：ESC 的收尾动作改成翻回最新那一页（第 0 页） */
+    /* 没有扉页可「合上」：ESC 分两步收尾——先翻回最新那一页，再关掉整本
+       （此前只翻回第 0 页就停住，等于面板永远关不掉：整屏场景里再没有别的出口） */
     if (this.flip && this.cursor > 0) {
       this.jumpToPage(0);
       this.toast('翻到最新');
+      return;
     }
+    this.hide();
   }
 
   // ============================================================
@@ -1504,8 +1565,8 @@ export class DiaryAppController {
     if (e.kind !== 'diary') return; // 影视/信/书无加密入口（入库语义错位）
     let enc: Awaited<ReturnType<typeof encryptEntry>> = null;
     try {
-      const { ensureSafeUnlocked } = (await import('../encrypt')) as typeof import('../encrypt');
-      const unlocked = await ensureSafeUnlocked('diary');
+      // 解锁走本域火漆框（此前调 encrypt 域的通用锁屏，观感与这本册子不搭）
+      const unlocked = await this.ensureUnlocked();
       if (!unlocked) return;
       const ok = await openFlowDialog({
         title: '收进信封',
@@ -1567,6 +1628,8 @@ export class DiaryAppController {
         notice('无法取出（缺少保险箱记录）', 'error');
         return;
       }
+      // 此前不问解锁直接取，锁着时只会报一句「主密码可能不正确」（其实是压根没问过密码）
+      if (!(await this.ensureUnlocked())) return;
       const newTags = e.tags.filter((t) => t !== '加密');
       const ok = await reclassifyEntry(noteId, newTags);
       if (!ok) {
@@ -2053,6 +2116,87 @@ export class DiaryAppController {
     }
   }
 
+  // ============================================================
+  //  火漆密码框（域内自绘）+ 解锁守卫
+  // ============================================================
+
+  private bindPass(): void {
+    this.passEl.addEventListener('click', (ev) => {
+      const t = ev.target as HTMLElement;
+      const btn = t.closest<HTMLElement>('.bz-diary-pass-btn');
+      if (!btn || !this.passSettle) return;
+      if (btn.dataset.pact === 'cancel') {
+        this.closePass(false);
+        return;
+      }
+      void this.submitPass();
+    });
+    // 回车提交（与纸条层同口径：Enter = 主行动）
+    this.passInputEl.addEventListener('keydown', (ev) => {
+      if (ev.key !== 'Enter' || !this.passSettle) return;
+      ev.preventDefault();
+      void this.submitPass();
+    });
+  }
+
+  private closePass(ok: boolean): void {
+    const settle = this.passSettle;
+    this.passSettle = null;
+    this.passEl.hidden = true;
+    this.passInputEl.value = '';
+    this.passErrEl.textContent = '';
+    if (settle) settle(ok);
+  }
+
+  private async submitPass(): Promise<void> {
+    const pw = this.passInputEl.value;
+    if (!pw) {
+      this.passErrEl.textContent = '先填主密码';
+      return;
+    }
+    const { getSafeManager } = (await import('../encrypt')) as typeof import('../encrypt');
+    const safe = getSafeManager();
+    let ok = false;
+    try {
+      ok = await safe.unlock(pw);
+    } catch {
+      ok = false;
+    }
+    if (!ok) {
+      // 不对就留在框里让人重输（密文没被动过，重输没有代价）
+      this.passErrEl.textContent = '主密码不对，再来一次';
+      this.passInputEl.select();
+      return;
+    }
+    this.closePass(true);
+  }
+
+  /**
+   * 动保险箱前的解锁守卫：已解锁直接放行，否则弹本域的火漆密码框。
+   * 原型那个演示用假密码框不搬（ui.ts 头部注记）；校验一律走真保险箱，
+   * 本域只收字符串、不碰密码学、不存明文。
+   */
+  private async ensureUnlocked(): Promise<boolean> {
+    let safe: Awaited<ReturnType<typeof import('../encrypt')['getSafeManager']>>;
+    try {
+      const mod = (await import('../encrypt')) as typeof import('../encrypt');
+      safe = mod.getSafeManager();
+    } catch (err) {
+      // 保险箱没起来（评审壳里常见）：说清原因，别静默吞掉动作
+      notice(`保险箱暂不可用：${err instanceof Error ? err.message : String(err)}`, 'error');
+      return false;
+    }
+    if (safe.unlocked) return true;
+    if (this.passSettle) return false; // 已在等输入
+    return new Promise<boolean>((resolve) => {
+      this.passSettle = resolve;
+      this.passErrEl.textContent = '';
+      this.passInputEl.value = '';
+      this.passEl.hidden = false;
+      this.passInputEl.focus();
+    });
+  }
+
   private bindTools(): void {
     this.bindSheet();
     /* 案头文具贴着书的下沿：桌面靠鼠标压到书底那一条浮出来；≤720px 由 CSS 直接常驻 */
@@ -2072,11 +2216,6 @@ export class DiaryAppController {
       }
     }
     this.edgeEl.addEventListener('click', () => this.openIndexSheet());
-    this.hintEl.addEventListener('click', (ev) => {
-      if (!(ev.target as HTMLElement).closest('.bz-diary-hint-close')) return;
-      this.hintEl.classList.add('bz-diary-gone');
-      setTimeout(() => this.hintEl.remove(), 400);
-    });
   }
 
   private onMouseMove = (ev: MouseEvent): void => {
@@ -2112,47 +2251,10 @@ export class DiaryAppController {
   }
 
   // ============================================================
-  //  那年今天（明信片）
-  // ============================================================
-
-  private checkOnThisDay(): void {
-    const today = new Date();
-    const key = `${today.getFullYear()}-${pad2(today.getMonth() + 1)}-${pad2(today.getDate())}`;
-    const old = pickOnThisDay(this.entries, key);
-    const body = this.postcardEl.querySelector<HTMLElement>('.bz-diary-pc-body');
-    if (!old.length) {
-      /* 域根是单例、明信片常驻 DOM：上一轮摊出来的正文要擦掉，否则下次开册
-         「不出现」时还揣着去年的字（隐藏态看不见，但留着就是脏读） */
-      if (body) body.innerHTML = '';
-      return;
-    }
-    const e = old[0];
-    if (body) {
-      body.innerHTML = `<b>${e.date.slice(0, 4)} 年的今天</b> · ${e.emoji}<br>${escapeHtml(
-        plainTextOf(e).slice(0, 60)
-      )}……`;
-    }
-    this.postcardEl.hidden = false;
-    const open = this.postcardEl.querySelector<HTMLElement>('.bz-diary-pc-open');
-    if (open) {
-      open.onclick = () => {
-        this.postcardEl.hidden = true;
-        for (let pi = 0; pi < this.pages.length; pi++) {
-          if (this.pages[pi].some((el) => el.dataset.eid === e.id)) {
-            this.jumpToPage(pi);
-            break;
-          }
-        }
-      };
-    }
-    setTimeout(() => {
-      if (this.postcardEl) this.postcardEl.hidden = true;
-    }, 12000);
-  }
-
-  // ============================================================
   //  纸上的小提示
   // ============================================================
+  /* 「那年今日」明信片已按用户要求整件退役（连同 checkOnThisDay 与其「展信」跳页）：
+     它和引导便签一样是开册就往桌上摆的非请求物件，与「只要日记本本身」冲突。 */
 
   private toast(msg: string): void {
     if (!this.toastEl) return;
@@ -2396,7 +2498,6 @@ export class DiaryAppController {
       await this.loadEntries(this._allowCacheNext);
       this.relayout(false);
       this.toast(reopen ? '又翻开了' : '翻开的是最新那篇');
-      this.checkOnThisDay();
     })();
   }
 
@@ -2409,6 +2510,7 @@ export class DiaryAppController {
     this.closeAlbum();
     this.closeCal();
     this.closeMenu();
+    this.closePass(false);
     hideAddDialog();
     hideTagPicker();
     this.pauseAllAudio();

@@ -17,7 +17,7 @@
  *    （失败时把 `data-media-err` 的值当类名换上，值即目标类全名）、**专用类**；
  *    图片失败态一律走类切换，不写行内样式。
  */
-import { esc } from '../core/ui/str';
+import { esc, iconSpan } from '../core/ui/str';
 import type { WallEntry, WallMedia } from './types';
 
 // ===== 媒体地址解析（纯层不碰 vault：回调由 ui 侧给） =====
@@ -568,10 +568,11 @@ function basenameOf(p: string | undefined): string {
  */
 export function bookPanelHTML(): string {
   return `
-  <div class="bz-diary-lamp"></div>
+  <!-- 收起整本：右上角常驻一枚出口（另两条路：点遮罩、Esc——先翻回最新那篇，再按一次收起） -->
+  <button class="bz-diary-close" type="button" title="收起日记本（Esc）" aria-label="收起日记本">${iconSpan('x')}</button>
 
-  <div class="bz-diary-desk">
-    <!-- 书：打开就落在最新那篇（第 0 页 = 最近一则）；功能在书底下那排文具上 -->
+    <div class="bz-diary-desk">
+    <!-- 遮罩层（token 底色 + blur）：点空白处收起整本；书：打开就落在最新那篇（第 0 页 = 最近一则） -->
     <div class="bz-diary-book" tabindex="0">
       <!-- 底壳与厚度 -->
       <div class="bz-diary-bk-shell"></div>
@@ -600,25 +601,8 @@ export function bookPanelHTML(): string {
       <span class="bz-diary-tl" data-tact="stickers" title="按类翻"><b>类</b></span>
     </div>
 
-    <!-- 明信片：那年今天 -->
-    <div class="bz-diary-postcard" hidden>
-      <div class="bz-diary-pc-stamp"></div>
-      <div class="bz-diary-pc-title">那年今日</div>
-      <div class="bz-diary-pc-body"></div>
-      <div class="bz-diary-pc-open">展信</div>
-    </div>
-
-    <!-- 引导便签 -->
-    <div class="bz-diary-hint">
-      <b>这本册子这样用</b>
-      <ul>
-        <li>翻开就是<b>最新一篇</b>，往后翻是更旧的日子；翻远了按 <b>Esc</b> 回到最新那篇</li>
-        <li>翻页 —— 拖拽纸页 · 滚轮 · ← →</li>
-        <li>功能在书底下的<b>文具</b>上：鼠标移到书下沿就浮出来（写 / 找 / 跳 / 类）</li>
-        <li>书口整条<b>点一下</b>抽出册页索引；条目上 <b>右键 / 长按</b> 有便签</li>
-      </ul>
-      <span class="bz-diary-hint-close">知道啦</span>
-    </div>
+    <!-- 明信片（那年今日）与引导便签已整件退役：开册就往桌上摆的非请求物件，
+         与「只要日记本本身」冲突（桌面端关闭钮也摘了，收起走 Esc / 点遮罩） -->
   </div>
 
   <!-- 便签菜单（条目操作） -->
@@ -646,6 +630,23 @@ export function bookPanelHTML(): string {
       <div class="bz-diary-slip-title"></div>
       <div class="bz-diary-slip-body"></div>
       <div class="bz-diary-slip-row"></div>
+    </div>
+  </div>
+
+  <!-- 火漆密码框：拆信/收进信封/看加密照片都要过这道（主密码交给真保险箱校验，
+       本域只负责收，绝不碰密码学——原型那个演示用假密码框不搬，见 ui.ts 头部注记） -->
+  <div class="bz-diary-pass" hidden>
+    <div class="bz-diary-pass-paper">
+      <div class="bz-diary-pass-wax">${iconSpan('lock')}</div>
+      <div class="bz-diary-pass-title">火漆封缄</div>
+      <div class="bz-diary-pass-desc">这一下要动保险箱，先报主密码</div>
+      <input class="bz-diary-pass-input" type="password" spellcheck="false"
+             autocomplete="off" placeholder="主密码">
+      <div class="bz-diary-pass-err"></div>
+      <div class="bz-diary-pass-row">
+        <span class="bz-diary-pass-btn" data-pact="cancel">算了</span>
+        <span class="bz-diary-pass-btn bz-diary-primary" data-pact="ok">拆封</span>
+      </div>
     </div>
   </div>
 

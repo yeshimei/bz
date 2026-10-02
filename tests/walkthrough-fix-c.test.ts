@@ -268,15 +268,20 @@ describe('批 C-19：settings-panel 移动列表项名归档', () => {
 });
 
 describe('批 C-20：diary 矮窗兜底（ADR-0230 书页界面换代后口径）', () => {
-  it('矮窗把书高收到 min(700px, 100vh-180px)，窄屏收到 min(76vh, 660px)——书与案头文具都不被窗口下沿切掉', () => {
+  it('矮窗把书高收到 min(700px, 100vh-180px)；窄屏书页铺满整屏、顶部留 44px 安全区', () => {
     const css = repo('src/diary/styles.css');
-    // 桌面矮窗：书高上限 700px，且底下留 180px 给「文具托」（它挂在桌上、按书沿定位，不是书的一部分）
+    // 桌面矮窗：书高上限 700px，且底下留 180px 给「文具托」（它挂在遮罩上、按书沿定位，不是书的一部分）
     expect(css).toMatch(
       /@media \(min-width: 721px\) and \(max-height: 900px\)\s*\{\s*\.bz-diary-scene\s*\{\s*--bz-diary-pg-h: min\(700px, calc\(100vh - 180px\)\);\s*\}\s*\}/
     );
-    // 窄屏单页档：书高跟视口走
-    expect(css).toMatch(/--bz-diary-pg-h: min\(76vh, 660px\)/);
-    // 回忆墙那张「自己压顶」的面板卡已退役：.bz-diary-desk 现在是桌面台面（铺满域根的背景层）
+    // 窄屏（≤720px）改铺满：页宽 100vw、页高 100vh - 44px（刘海屏安全区），
+    // 书顶钉在 44px（居中公式只留得出 22px，故 top 补 22px），文具改钉窗底
+    expect(css).toMatch(/--bz-diary-pg-w: 100vw/);
+    expect(css).toMatch(/--bz-diary-pg-h: calc\(100vh - 44px\)/);
+    expect(css).toMatch(/--bz-diary-pg-pad-b: 76px/);
+    expect(css).toMatch(/\.bz-diary-book\s*\{[^}]*top: calc\(50% \+ 22px\)/);
+    expect(css).toMatch(/\.bz-diary-tools\s*\{[^}]*bottom: 14px/);
+    // 回忆墙那张「自己压顶」的面板卡已退役：.bz-diary-desk 现在是全屏遮罩层（token 底色 + blur，点它收起）
     const desk = rule(css, '.bz-diary-desk');
     expect(desk, '缺 .bz-diary-desk 规则').not.toBeNull();
     expect(desk![1]).toContain('position: absolute; inset: 0');
