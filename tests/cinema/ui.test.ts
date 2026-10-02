@@ -2387,6 +2387,35 @@ describe('cinema 添加影视：解析即落盘，不再后台抓取（issue 397
     expect(parseFrontmatter(vault.files.get('我的/影视/《海报片》.md')!)?.['海报']).toBeFalsy();
     await vi.waitFor(() => expect(fetched).toContain('我的/影视/《海报片》.md')); // 回退：仍交后台抓
   });
+
+  /** 预览海报的索引滞后（真机回归）：`downloadPosterToVault` 走 `adapter.writeBinary` 裸写——
+   *  只落磁盘、不动 vault 内存索引，索引要等文件监听回调。解析回来后的同一个微任务链里查
+   *  `getAbstractFileByPath` 必是 null；一次 null 就放弃 = 预览卡永远停在骨架（卡片路径正常）。 */
+  it('预览海报：落盘后 vault 索引还没追上 → 等索引到了再贴图', async () => {
+    const POSTER = '海报/海报片_1.jpg';
+    // TFile 实例：真机 getAbstractFileByPath 给的是 TFile，MockVault.file() 是裸对象（类型不匹配）
+    const posterFile = Object.assign(Object.create(TFile.prototype), {
+      path: POSTER, name: '海报片_1.jpg', extension: 'jpg', basename: '海报片_1',
+    });
+    let indexed = false;
+    configureFetchQueue({ preview: posterPreview, poster: async () => POSTER });
+    const { app, vault } = seedVault();
+    const orig = vault.getAbstractFileByPath.bind(vault);
+    (vault as any).getAbstractFileByPath = (p: string) => (p === POSTER ? (indexed ? posterFile : null) : orig(p));
+    createOverlay(app);
+    const root = document.querySelector('[data-cinema-root]') as HTMLElement;
+    clickEl(root.querySelector('[data-cinema-add]'));
+    const form = root.querySelector('.cn-modal') as HTMLElement;
+    (form.querySelector('.j-name') as HTMLInputElement).value = '海报片';
+    clickEl(form.querySelector('.j-parse'));
+    await vi.waitFor(() => expect(form.querySelector('.form-flip')?.classList.contains('is-flipped')).toBe(true));
+    const box = form.querySelector('.form-face--back .dm-poster') as HTMLElement;
+    expect(box, '背面海报槽应已渲染').toBeTruthy();
+    expect(box.querySelector('img'), '索引未到 → 不贴图（也不建坏 src 的 img）').toBeNull();
+    indexed = true; // watcher 追上：索引里有了这张海报
+    await vi.waitFor(() => expect(box.querySelector('img'), '索引追上后应补上 img').toBeTruthy());
+    expect(box.querySelector('img')!.getAttribute('src')).toContain(POSTER);
+  });
 });
 
 /**

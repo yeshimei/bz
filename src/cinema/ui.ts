@@ -36,7 +36,7 @@ import { M, type CinemaItem, type CinemaSortMode, FIRST_PAINT_CARDS } from './st
 import { loadDoubanNameIndex, searchDoubanNameIndex, normName, type DoubanIndexRow } from '../core/douban-name-index';
 import { rebuildItems, whenMetaReady, hasCinemaFiles, getDisplayItems, normalizeTags, normalizeRewatches, normalizeLists, allLists, refreshDataAndView } from './data';
 import { LIST_BATCH_SIZE, nextBatchRange } from '../core/paging';
-import { yieldToMainThread } from '../core/utils';
+import { yieldToMainThread, sleep } from '../core/utils';
 import { localNow } from '../core/ui/str';
 import { runAIRecommend, runSimilarRecommend, buildTasteProfile, quickAddWant } from './recommend';
 import { bindYearbook, deriveYb, yearbookHtml, yearbookFixedHtml, yearbookOpenHtml, type YbHandle } from './yearbook';
@@ -1773,11 +1773,27 @@ function openForm(sec: HTMLElement, item: CinemaItem | null, app: App, presetSt?
    *  下载失败保持骨架（保存路径还会再试一次），预览卡不因海报阻塞。 */
   let previewPosterRel: string | null = null;
   let posterKicked = false;
-  const applyPreviewPoster = (rel: string): void => {
+  /** 等 vault 索引的轮询节奏：150ms × 10 ≈ 1.5s 上限（等不到就交保存路径与后台抓取） */
+  const POSTER_INDEX_POLL_MS = 150;
+  const POSTER_INDEX_TRIES = 10;
+
+  /** 等 vault 索引追上刚落盘的海报。
+   *  海报是 `adapter.writeBinary` 裸写的（douban-queue 的 deps 组装）——只落磁盘、**不动 vault
+   *  内存索引**，索引要等文件监听回调才更新。解析回来后的同一个微任务链里查
+   *  `getAbstractFileByPath` 中间没有一次宏任务让 watcher 插进来，**必是 null**：
+   *  于是预览卡永远停在骨架，而卡片路径（保存后几十秒、每次都重查）正常——
+   *  同一个海报文件，差的只是查索引的时刻。这里短轮询等索引，拿到文件再贴图。 */
+  const waitPosterFile = async (rel: string): Promise<TFile | null> => {
+    for (let i = 0; i < POSTER_INDEX_TRIES; i++) {
+      const f = app.vault.getAbstractFileByPath(rel);
+      if (f instanceof TFile) return f;
+      await sleep(POSTER_INDEX_POLL_MS);
+    }
+    return null;
+  };
+  const applyPreviewPoster = (f: TFile): void => {
     const box = backSlot?.querySelector<HTMLElement>('.dm-poster');
     if (!box) return;
-    const f = app.vault.getAbstractFileByPath(rel);
-    if (!(f instanceof TFile)) return;
     let img = box.querySelector('img');
     if (!img) {
       img = document.createElement('img');
@@ -1795,7 +1811,9 @@ function openForm(sec: HTMLElement, item: CinemaItem | null, app: App, presetSt?
       const rel = await downloadPreviewPoster(app, nameInput?.value.trim() ?? '', url);
       if (!rel || !el.isConnected) return;
       previewPosterRel = rel;
-      applyPreviewPoster(rel);
+      const f = await waitPosterFile(rel);
+      if (!f || !el.isConnected) return;
+      applyPreviewPoster(f);
     } catch { /* 预览海报失败不阻断表单（保存路径兜底） */ }
   };
 
