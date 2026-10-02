@@ -203,6 +203,23 @@ async function openBook(): Promise<DiaryAppController> {
   return c;
 }
 
+/**
+ * 掐掉后台续排（`ui.ts::scheduleWidenFull`）：本轮只想看**排版窗口**本身
+ * （首屏那 30 则 / 书尾续叠 / 按需推宽）时用。
+ *
+ * 正常路径是读盘结束后 350ms 在后台一次排到全量——不掐掉的话窗口态只活 350ms，
+ * 断言就退化成「机器快就过、机器慢就红」。掐掉后窗口停在首屏值，专测窗口那套逻辑；
+ * 要测后台续排本身（它才是主路），就**别**掐——见「首屏只排 30 则…」与
+ * 「后台排到全量后…」两条。
+ */
+function freezeWindow(c: DiaryAppController): void {
+  const raw = c as unknown as { widenTimer: ReturnType<typeof setTimeout> | null };
+  if (raw.widenTimer !== null) {
+    clearTimeout(raw.widenTimer);
+    raw.widenTimer = null;
+  }
+}
+
 const q = <T extends HTMLElement = HTMLElement>(sel: string): T => document.querySelector<T>(sel)!;
 const qa = (sel: string): HTMLElement[] => Array.from(document.querySelectorAll<HTMLElement>(sel));
 
@@ -1126,13 +1143,14 @@ describe('DiaryAppController · 排版窗口（ADR-0231）', () => {
     }
   }
 
-  it('首屏只把前 FIRST_PAINT_ENTRIES 则排成纸页，其余只进内存不排', async () => {
+  it('首屏只把前 FIRST_PAINT_ENTRIES 则排成纸页，读盘结束后在后台一次排到全量', async () => {
     seedManyEntries(45);
     const c = await openBook();
     expect(qa('.bz-diary-b-seal').length).toBe(FIRST_PAINT_ENTRIES); // 上屏 = 窗口
     await vi.waitFor(() => expect(c.entries.length).toBe(45)); // 数据 = 全量
-    // 全量到位也不重排——否则正在读的那一页会被当场换血
-    expect(qa('.bz-diary-b-seal').length).toBe(FIRST_PAINT_ENTRIES);
+    /* 后台续排（ADR-0231 决策 12 回修）：不必等用户去点索引/台历，书自己排到全量——
+       此后「点日期跳转」就只剩一次 turnToPage，不再当场付「从最新排到目标」的重排账。 */
+    await vi.waitFor(() => expect(qa('.bz-diary-b-seal').length).toBe(45));
   });
 
   /** 翻到「真机能到的那一页」。跨页模式（`showCover:false`）下 StPageFlip 的 `flip` 事件给的是
@@ -1159,6 +1177,7 @@ describe('DiaryAppController · 排版窗口（ADR-0231）', () => {
     seedManyEntries(45);
     const c = await openBook();
     await vi.waitFor(() => expect(c.entries.length).toBe(45));
+    freezeWindow(c); // 专测「书尾续叠」这条兜底路径：掐掉后台续排，否则窗口已是全量、续叠恒假
     expect(qa('.bz-diary-b-seal').length).toBe(FIRST_PAINT_ENTRIES); // 还没到书尾：只有窗口
     flipToTail(c);
     await vi.waitFor(() => expect(qa('.bz-diary-b-seal').length).toBe(45)); // 书尾 → 一批补到顶
@@ -1173,6 +1192,7 @@ describe('DiaryAppController · 排版窗口（ADR-0231）', () => {
     seedManyEntries(45);
     const c = await openBook();
     await vi.waitFor(() => expect(c.entries.length).toBe(45));
+    freezeWindow(c); // 同上：续叠是兜底路径，先掐掉后台续排
     expect(qa('.bz-diary-b-seal').length).toBe(FIRST_PAINT_ENTRIES);
     flipToTail(c);
     await vi.waitFor(() => expect(qa('.bz-diary-b-seal').length).toBe(45));
@@ -1190,6 +1210,7 @@ describe('DiaryAppController · 排版窗口（ADR-0231）', () => {
     seedManyEntries(45);
     const c = await openBook();
     await vi.waitFor(() => expect(c.entries.length).toBe(45));
+    freezeWindow(c); // 前提：窗口停在首屏值——后台一续排就是全量，续叠这条就测不着了
     const raw = c as unknown as {
       pages: Page[];
       cursor: number;
@@ -1211,6 +1232,7 @@ describe('DiaryAppController · 排版窗口（ADR-0231）', () => {
     seedManyEntries(45);
     const c = await openBook();
     await vi.waitFor(() => expect(c.entries.length).toBe(45));
+    freezeWindow(c); // 要断言「不动窗口」，先让后台续排别来动
     const extend = (c as unknown as { extendIfAtTail: () => boolean }).extendIfAtTail.bind(c);
     expect(extend()).toBe(false); // cursor=0，非书尾
     expect(qa('.bz-diary-b-seal').length).toBe(FIRST_PAINT_ENTRIES);
@@ -1220,11 +1242,13 @@ describe('DiaryAppController · 排版窗口（ADR-0231）', () => {
     seedManyEntries(45);
     const c = await openBook();
     await vi.waitFor(() => expect(c.entries.length).toBe(45));
+    freezeWindow(c);
     flipToTail(c);
     await vi.waitFor(() => expect(qa('.bz-diary-b-seal').length).toBe(45));
     c.hide();
     c.show();
     await vi.waitFor(() => expect(qa('.bz-diary-b-seal').length).toBe(FIRST_PAINT_ENTRIES));
+    freezeWindow(c); // show() 又排了一轮后台续排；别把它漏到用例之外
   });
 
   it('窗口已覆盖全量时 no-op（条目本就不足 30 则）', async () => {
@@ -1252,6 +1276,7 @@ describe('DiaryAppController · 排版窗口（ADR-0231）', () => {
     seedManyEntries(90);
     const c = await openBook();
     await vi.waitFor(() => expect(c.entries.length).toBe(90));
+    freezeWindow(c); // 前提：只排了首屏那批——后台一续排三个月就全进窗口，「未展开」那两支没了
     expect(qa('.bz-diary-b-seal').length).toBe(FIRST_PAINT_ENTRIES); // 前提：只排了首屏那批
     q('.bz-diary-bk-edge').click();
     const rows = qa('.bz-diary-idx-row');
@@ -1275,6 +1300,7 @@ describe('DiaryAppController · 排版窗口（ADR-0231）', () => {
     seedManyEntries(90);
     const c = await openBook();
     await vi.waitFor(() => expect(c.entries.length).toBe(90));
+    freezeWindow(c); // 前提：窗口停在首屏值——否则后台已排到 90，按需推宽的落点（60）就测不出来了
     const raw = c as unknown as { shown: number };
     expect(raw.shown).toBe(FIRST_PAINT_ENTRIES);
     q('.bz-diary-bk-edge').click();
@@ -1284,6 +1310,35 @@ describe('DiaryAppController · 排版窗口（ADR-0231）', () => {
     expect(q('.bz-diary-sheet').hidden).toBe(true); // 纸收回去
     expect(lastFlip().page).toBeGreaterThan(0); // 落到了页上，不是停在首页
     expect(qa('.bz-diary-b-seal').length).toBe(60); // 书里真排到了那一则
+  });
+
+  it('后台排到全量后，点窗口外的月份只是一次翻页（不再当场重排整册）', async () => {
+    seedManyEntries(90);
+    const c = await openBook();
+    await vi.waitFor(() => expect(c.entries.length).toBe(90));
+    const raw = c as unknown as { shown: number };
+    await vi.waitFor(() => expect(raw.shown).toBe(90)); // 后台已一次排到全量，不必等用户去点
+    const booksBefore = flipRecords.length; // 每次重排都会 buildBook → 新建一本 StPageFlip 实例
+    q('.bz-diary-bk-edge').click();
+    qa('.bz-diary-idx-row')[2].click(); // 1 月，最旧那一段
+    await vi.waitFor(() => expect(lastFlip().page).toBeGreaterThan(0)); // 真翻过去了
+    expect(flipRecords.length).toBe(booksBefore); // 但没重建书 ⇒ 没重排 ⇒ 不卡
+    expect(raw.shown).toBe(90);
+  });
+
+  it('现场不静时后台续排让路，静了自动接着排（开着的层吃不掉续排）', async () => {
+    seedManyEntries(90);
+    const c = await openBook();
+    await vi.waitFor(() => expect(c.entries.length).toBe(90));
+    const raw = c as unknown as { shown: number; widenFull: () => Promise<void> };
+    freezeWindow(c); // 先按住自动那一拍，好由用例自己发令
+    q('.bz-diary-bk-edge').click(); // 册页索引摊开 = 现场不静
+    expect(q('.bz-diary-sheet').hidden).toBe(false); // 前提：那层真开着
+    await raw.widenFull();
+    expect(raw.shown).toBe(FIRST_PAINT_ENTRIES); // 让路：重排会把那张纸拆掉，窗口不动
+    q('.bz-diary-sheet').hidden = true; // 纸收回（等价于用户关掉那层）
+    // 让的那一拍已经排上了（sceneQuiet 是「过一拍再看」不是「放弃」）⇒ 静了自动接手
+    await vi.waitFor(() => expect(raw.shown).toBe(90));
   });
 
   it('检索吃全量：窗口外（最旧）那一则也搜得到、标得上', async () => {
