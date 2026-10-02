@@ -1,4 +1,4 @@
-/* 源指纹 e5a600ff39ec15c8 · 仓内输入 78 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 3bedb8f1389f0737 · 仓内输入 78 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/diary/fake-sim.ts","prototypes/diary/fake/fake-obsidian.ts","src/bookshelf/data.ts","src/bookshelf/state.ts","src/cinema/state.ts","src/core/app.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/settings-btn-state.ts","src/core/settings-common.ts","src/core/settings-modal.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/help-tip.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/data.ts","src/diary/encrypt.ts","src/diary/index.ts","src/diary/motion.ts","src/diary/parser.ts","src/diary/render.ts","src/diary/repair.ts","src/diary/store.ts","src/diary/ui.ts","src/diary/ui/datetime-picker.ts","src/diary/ui/dialogs.ts","src/diary/ui/entry-actions.ts","src/diary/ui/locator.ts","src/diary/vendor/page-flip.browser.js","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/motion.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/password-vault/data.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/diary/fake-sim.ts → window.BZW_diary（行为单源预览包，issue 245/ADR-0106） */
 var BZW_diary = (() => {
@@ -15717,12 +15717,6 @@ ${String(review).trim()}`;
     currentCtrl = null;
     wallCacheApp = null;
   }
-  function pickOnThisDay(entries, today) {
-    const mmdd = (today || "").slice(5);
-    const thisYear = (today || "").slice(0, 4);
-    if (!mmdd || mmdd.length !== 5) return [];
-    return entries.filter((e) => e.date.slice(5) === mmdd && e.date.slice(0, 4) !== thisYear);
-  }
   function mediaSrc(app, mediaName, sourcePath) {
     var _a, _b, _c;
     if (!mediaName) return "";
@@ -16021,10 +16015,11 @@ ${String(review).trim()}`;
   }
   function bookPanelHTML() {
     return `
-  <div class="bz-diary-lamp"></div>
+  <!-- 收起整本：右上角常驻一枚出口（另两条路：点遮罩、Esc——先翻回最新那篇，再按一次收起） -->
+  <button class="bz-diary-close" type="button" title="收起日记本（Esc）" aria-label="收起日记本">${iconSpan("x")}</button>
 
-  <div class="bz-diary-desk">
-    <!-- 书：打开就落在最新那篇（第 0 页 = 最近一则）；功能在书底下那排文具上 -->
+    <div class="bz-diary-desk">
+    <!-- 遮罩层（token 底色 + blur）：点空白处收起整本；书：打开就落在最新那篇（第 0 页 = 最近一则） -->
     <div class="bz-diary-book" tabindex="0">
       <!-- 底壳与厚度 -->
       <div class="bz-diary-bk-shell"></div>
@@ -16053,25 +16048,8 @@ ${String(review).trim()}`;
       <span class="bz-diary-tl" data-tact="stickers" title="按类翻"><b>类</b></span>
     </div>
 
-    <!-- 明信片：那年今天 -->
-    <div class="bz-diary-postcard" hidden>
-      <div class="bz-diary-pc-stamp"></div>
-      <div class="bz-diary-pc-title">那年今日</div>
-      <div class="bz-diary-pc-body"></div>
-      <div class="bz-diary-pc-open">展信</div>
-    </div>
-
-    <!-- 引导便签 -->
-    <div class="bz-diary-hint">
-      <b>这本册子这样用</b>
-      <ul>
-        <li>翻开就是<b>最新一篇</b>，往后翻是更旧的日子；翻远了按 <b>Esc</b> 回到最新那篇</li>
-        <li>翻页 —— 拖拽纸页 · 滚轮 · ← →</li>
-        <li>功能在书底下的<b>文具</b>上：鼠标移到书下沿就浮出来（写 / 找 / 跳 / 类）</li>
-        <li>书口整条<b>点一下</b>抽出册页索引；条目上 <b>右键 / 长按</b> 有便签</li>
-      </ul>
-      <span class="bz-diary-hint-close">知道啦</span>
-    </div>
+    <!-- 明信片（那年今日）与引导便签已整件退役：开册就往桌上摆的非请求物件，
+         与「只要日记本本身」冲突（桌面端关闭钮也摘了，收起走 Esc / 点遮罩） -->
   </div>
 
   <!-- 便签菜单（条目操作） -->
@@ -16099,6 +16077,23 @@ ${String(review).trim()}`;
       <div class="bz-diary-slip-title"></div>
       <div class="bz-diary-slip-body"></div>
       <div class="bz-diary-slip-row"></div>
+    </div>
+  </div>
+
+  <!-- 火漆密码框：拆信/收进信封/看加密照片都要过这道（主密码交给真保险箱校验，
+       本域只负责收，绝不碰密码学——原型那个演示用假密码框不搬，见 ui.ts 头部注记） -->
+  <div class="bz-diary-pass" hidden>
+    <div class="bz-diary-pass-paper">
+      <div class="bz-diary-pass-wax">${iconSpan("lock")}</div>
+      <div class="bz-diary-pass-title">火漆封缄</div>
+      <div class="bz-diary-pass-desc">这一下要动保险箱，先报主密码</div>
+      <input class="bz-diary-pass-input" type="password" spellcheck="false"
+             autocomplete="off" placeholder="主密码">
+      <div class="bz-diary-pass-err"></div>
+      <div class="bz-diary-pass-row">
+        <span class="bz-diary-pass-btn" data-pact="cancel">算了</span>
+        <span class="bz-diary-pass-btn bz-diary-primary" data-pact="ok">拆封</span>
+      </div>
     </div>
   </div>
 
@@ -17103,6 +17098,9 @@ ${String(review).trim()}`;
     const isEncrypted = !!loc.encrypted;
     void openFlowDialog({
       title: "确认删除",
+      // 皮肤类串走域侧惯例（bz-<域>-flow-dialog）：撕页这张是「桌上撕下来的一角纸」，
+      // 不是 core 通用流程框
+      className: "bz-diary-flow-dialog",
       message: isEncrypted ? "确定删除这篇加密日记吗？\n\n此操作不可撤销，密文将从保险库永久销毁。" : "确定要删除这篇日记吗？\n\n此操作不可撤销，日记将从笔记中永久删除。",
       actions: [
         { label: "取消", value: "cancel" },
@@ -17560,8 +17558,9 @@ ${String(review).trim()}`;
   }
 
   // src/diary/ui.ts
+  init_ui();
   var SINGLE_MAX_W = 720;
-  var FLIP_TIME_MS = 620;
+  var FLIP_TIME_MS = 380;
   var PAGE_CUT_MIN_PX = 84;
   var DAYSTAMP_KEEP_PX = 96;
   var REFRESH_DEBOUNCE_MS = 400;
@@ -17686,6 +17685,8 @@ ${x.review || ""}`;
     constructor() {
       // ---------- DOM ----------
       this.root = null;
+      /** 密码框在途的结算器（同一时刻至多一个） */
+      this.passSettle = null;
       // ---------- 状态 ----------
       /** 当前册子里的条目（只读聚合结果；加密条目在解锁时才并入） */
       this.entries = [];
@@ -17749,6 +17750,7 @@ ${x.review || ""}`;
         if (this.resizeTimer !== null) clearTimeout(this.resizeTimer);
         this.resizeTimer = setTimeout(() => {
           this.resizeTimer = null;
+          this.applyBookZoom();
           const s = window.innerWidth <= SINGLE_MAX_W;
           const h = window.innerHeight;
           const w = window.innerWidth;
@@ -17801,6 +17803,8 @@ ${x.review || ""}`;
       root.innerHTML = bookPanelHTML();
       document.body.appendChild(root);
       this.root = root;
+      mountIcons(root);
+      this.applyBookZoom();
       const q = (sel) => root.querySelector(sel);
       this.bookEl = q(".bz-diary-book");
       this.blockEl = q(".bz-diary-bk-block");
@@ -17808,8 +17812,6 @@ ${x.review || ""}`;
       this.edgeEl = q(".bz-diary-bk-edge");
       this.toolsEl = q(".bz-diary-tools");
       this.filterTabEl = q(".bz-diary-filter-tab");
-      this.postcardEl = q(".bz-diary-postcard");
-      this.hintEl = q(".bz-diary-hint");
       this.menuEl = q(".bz-diary-menu");
       this.sheetEl = q(".bz-diary-sheet");
       this.sheetTitleEl = q(".bz-diary-sh-title");
@@ -17835,6 +17837,10 @@ ${x.review || ""}`;
       this.lbCountEl = q(".bz-diary-lb-count");
       this.toastEl = q(".bz-diary-toast");
       this.fallbackEl = q(".bz-diary-fallback");
+      this.closeEl = q(".bz-diary-close");
+      this.passEl = q(".bz-diary-pass");
+      this.passInputEl = q(".bz-diary-pass-input");
+      this.passErrEl = q(".bz-diary-pass-err");
       this.bindChrome();
       this.bindMenu();
       this.bindBlockEvents();
@@ -17842,6 +17848,7 @@ ${x.review || ""}`;
       this.bindAlbum();
       this.bindCal();
       this.bindSlip();
+      this.bindPass();
       this.bindTools();
       registerPanelEsc("diary", () => !!this.root && this.root.style.display === "flex", () => this.escapeStack());
       window.__bzDiaryReplay = () => this.show();
@@ -18333,14 +18340,40 @@ ${x.review || ""}`;
         { passive: false }
       );
       document.addEventListener("keydown", this.onKeydown);
+      this.closeEl.addEventListener("click", () => this.hide());
+      const root = this.root;
+      root == null ? void 0 : root.addEventListener("click", (ev) => {
+        const t = ev.target;
+        if (t !== root && !t.classList.contains("bz-diary-desk")) return;
+        if (!this.lightboxEl.hidden || !this.sheetEl.hidden || !this.slipEl.hidden || !this.albumEl.hidden || !this.calEl.hidden || !this.menuEl.hidden || !this.passEl.hidden) {
+          return;
+        }
+        this.hide();
+      });
       this.lastSingle = typeof window !== "undefined" && window.innerWidth <= SINGLE_MAX_W;
       this.lastW = typeof window !== "undefined" ? window.innerWidth : 0;
       this.lastH = typeof window !== "undefined" ? window.innerHeight : 0;
       window.addEventListener("resize", this.onResize);
     }
+    /**
+     * 书的整体缩放：窗口比书窄时把书缩进遮罩。
+     * 原本想用 CSS `calc((100vw - 30px) / 1060)` 得纯数 —— 长度除以数**出来还是长度**，
+     * `scale()` 吃不下，整条 `transform` 在 ≤1120px 直接失效变 none，书就偏到右半边
+     * （左沿钉在视口中线上）。改由 JS 算成无单位数发号；≤720 单页档恒为 1。
+     */
+    applyBookZoom() {
+      if (!this.root) return;
+      const w = window.innerWidth;
+      const zoom = w <= SINGLE_MAX_W ? 1 : Math.min(1, (w - 30) / 1072);
+      this.root.style.setProperty("--bz-diary-book-zoom", zoom.toFixed(4));
+    }
     /** Esc 分流：纸条 → 贴纸册 → 台历 → 抽出的一张纸 → 灯箱 → 便签 → 翻回最新 */
     escapeStack() {
       if (!this.root || this.root.style.display !== "flex") return;
+      if (!this.passEl.hidden) {
+        this.closePass(false);
+        return;
+      }
       if (!this.slipEl.hidden) {
         this.closeSlip();
         return;
@@ -18368,7 +18401,9 @@ ${x.review || ""}`;
       if (this.flip && this.cursor > 0) {
         this.jumpToPage(0);
         this.toast("翻到最新");
+        return;
       }
+      this.hide();
     }
     // ============================================================
     //  块级事件（一次委托）：录音 / wiki / 重封 / 照片 / 票根·藏书票 / 信封
@@ -18719,8 +18754,7 @@ ${x.review || ""}`;
       if (e.kind !== "diary") return;
       let enc = null;
       try {
-        const { ensureSafeUnlocked: ensureSafeUnlocked2 } = await Promise.resolve().then(() => (init_encrypt(), encrypt_exports));
-        const unlocked = await ensureSafeUnlocked2("diary");
+        const unlocked = await this.ensureUnlocked();
         if (!unlocked) return;
         const ok = await openFlowDialog({
           title: "收进信封",
@@ -18779,6 +18813,7 @@ ${x.review || ""}`;
           notice("无法取出（缺少保险箱记录）", "error");
           return;
         }
+        if (!await this.ensureUnlocked()) return;
         const newTags = e.tags.filter((t) => t !== "加密");
         const ok = await reclassifyEntry(noteId, newTags);
         if (!ok) {
@@ -19215,6 +19250,79 @@ ${x.review || ""}`;
         notice(`写日记暂不可用：${e instanceof Error ? e.message : String(e)}`, "error");
       }
     }
+    // ============================================================
+    //  火漆密码框（域内自绘）+ 解锁守卫
+    // ============================================================
+    bindPass() {
+      this.passEl.addEventListener("click", (ev) => {
+        const t = ev.target;
+        const btn = t.closest(".bz-diary-pass-btn");
+        if (!btn || !this.passSettle) return;
+        if (btn.dataset.pact === "cancel") {
+          this.closePass(false);
+          return;
+        }
+        void this.submitPass();
+      });
+      this.passInputEl.addEventListener("keydown", (ev) => {
+        if (ev.key !== "Enter" || !this.passSettle) return;
+        ev.preventDefault();
+        void this.submitPass();
+      });
+    }
+    closePass(ok) {
+      const settle = this.passSettle;
+      this.passSettle = null;
+      this.passEl.hidden = true;
+      this.passInputEl.value = "";
+      this.passErrEl.textContent = "";
+      if (settle) settle(ok);
+    }
+    async submitPass() {
+      const pw = this.passInputEl.value;
+      if (!pw) {
+        this.passErrEl.textContent = "先填主密码";
+        return;
+      }
+      const { getSafeManager: getSafeManager2 } = await Promise.resolve().then(() => (init_encrypt(), encrypt_exports));
+      const safe = getSafeManager2();
+      let ok = false;
+      try {
+        ok = await safe.unlock(pw);
+      } catch (e) {
+        ok = false;
+      }
+      if (!ok) {
+        this.passErrEl.textContent = "主密码不对，再来一次";
+        this.passInputEl.select();
+        return;
+      }
+      this.closePass(true);
+    }
+    /**
+     * 动保险箱前的解锁守卫：已解锁直接放行，否则弹本域的火漆密码框。
+     * 原型那个演示用假密码框不搬（ui.ts 头部注记）；校验一律走真保险箱，
+     * 本域只收字符串、不碰密码学、不存明文。
+     */
+    async ensureUnlocked() {
+      let safe;
+      try {
+        const mod = await Promise.resolve().then(() => (init_encrypt(), encrypt_exports));
+        safe = mod.getSafeManager();
+      } catch (err) {
+        notice(`保险箱暂不可用：${err instanceof Error ? err.message : String(err)}`, "error");
+        return false;
+      }
+      if (safe.unlocked) return true;
+      if (this.passSettle) return false;
+      return new Promise((resolve) => {
+        this.passSettle = resolve;
+        this.passErrEl.textContent = "";
+        this.passInputEl.value = "";
+        this.passEl.hidden = false;
+        this.passInputEl.focus();
+      });
+    }
     bindTools() {
       var _a;
       this.bindSheet();
@@ -19233,11 +19341,6 @@ ${x.review || ""}`;
         }
       }
       this.edgeEl.addEventListener("click", () => this.openIndexSheet());
-      this.hintEl.addEventListener("click", (ev) => {
-        if (!ev.target.closest(".bz-diary-hint-close")) return;
-        this.hintEl.classList.add("bz-diary-gone");
-        setTimeout(() => this.hintEl.remove(), 400);
-      });
     }
     setToolsShown(on) {
       if (on === this.toolsShown) return;
@@ -19250,43 +19353,10 @@ ${x.review || ""}`;
       this.bookRect = this.bookEl.getBoundingClientRect();
     }
     // ============================================================
-    //  那年今天（明信片）
-    // ============================================================
-    checkOnThisDay() {
-      const today = /* @__PURE__ */ new Date();
-      const key = `${today.getFullYear()}-${pad22(today.getMonth() + 1)}-${pad22(today.getDate())}`;
-      const old = pickOnThisDay(this.entries, key);
-      const body = this.postcardEl.querySelector(".bz-diary-pc-body");
-      if (!old.length) {
-        if (body) body.innerHTML = "";
-        return;
-      }
-      const e = old[0];
-      if (body) {
-        body.innerHTML = `<b>${e.date.slice(0, 4)} 年的今天</b> · ${e.emoji}<br>${escapeHtml2(
-          plainTextOf(e).slice(0, 60)
-        )}……`;
-      }
-      this.postcardEl.hidden = false;
-      const open = this.postcardEl.querySelector(".bz-diary-pc-open");
-      if (open) {
-        open.onclick = () => {
-          this.postcardEl.hidden = true;
-          for (let pi = 0; pi < this.pages.length; pi++) {
-            if (this.pages[pi].some((el) => el.dataset.eid === e.id)) {
-              this.jumpToPage(pi);
-              break;
-            }
-          }
-        };
-      }
-      setTimeout(() => {
-        if (this.postcardEl) this.postcardEl.hidden = true;
-      }, 12e3);
-    }
-    // ============================================================
     //  纸上的小提示
     // ============================================================
+    /* 「那年今日」明信片已按用户要求整件退役（连同 checkOnThisDay 与其「展信」跳页）：
+       它和引导便签一样是开册就往桌上摆的非请求物件，与「只要日记本本身」冲突。 */
     toast(msg) {
       if (!this.toastEl) return;
       this.toastEl.textContent = msg;
@@ -19517,7 +19587,6 @@ ${x.review || ""}`;
         await this.loadEntries(this._allowCacheNext);
         this.relayout(false);
         this.toast(reopen ? "又翻开了" : "翻开的是最新那篇");
-        this.checkOnThisDay();
       })();
     }
     hide() {
@@ -19529,6 +19598,7 @@ ${x.review || ""}`;
       this.closeAlbum();
       this.closeCal();
       this.closeMenu();
+      this.closePass(false);
       hideAddDialog();
       hideTagPicker();
       this.pauseAllAudio();
