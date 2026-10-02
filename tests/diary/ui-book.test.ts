@@ -280,6 +280,82 @@ describe('paginateFlow（块流 → 页）', () => {
     expect(pages.length).toBe(1);
     expect(pages[0].length).toBe(3);
   });
+
+  it('可缩块（照片 / 视频）放不下时先等比缩到塞进剩余高度，不在页尾留白', () => {
+    // 症状（真机图一）：左页下半页整整一片白，照片独自挪到右页——
+    // 只差一点点就整块换页。规则 3a 让可缩块先缩，塞得下就留在本页。
+    const seen: number[] = [];
+    const items_ = items([80], [40]);
+    items_[1].fit = true;
+    const shrink = (e: HTMLElement, maxH: number): number | null => {
+      seen.push(maxH);
+      expect(e).toBe(items_[1].el);
+      return maxH - 5;
+    };
+    const pages = paginateFlow(items_, 100, noSplit, () => 0, shrink);
+    expect(seen).toEqual([20]); // 剩余 = 100 - 80
+    expect(pages.map((p) => p.length)).toEqual([2]); // 缩完仍同页
+  });
+
+  it('可缩块缩不动（到下限，shrink 返回 null）时照旧换页', () => {
+    const items_ = items([80], [40]);
+    items_[1].fit = true;
+    const pages = paginateFlow(items_, 100, noSplit, () => 0, () => null);
+    expect(pages.map((p) => p.length)).toEqual([1, 1]);
+  });
+
+  it('非可缩块不调 shrink——文字块走逐行续排，日戳必须整块起新纸', () => {
+    let called = 0;
+    const shrink = (): null => {
+      called++;
+      return null;
+    };
+    paginateFlow(items([80], [40]), 100, noSplit, () => 0, shrink);
+    expect(called).toBe(0);
+  });
+
+  it('缩到「塞得下」后不再按剩余高度续切：3a 命中即跳过 3b', () => {
+    // shrink 返回一个恰好 == 剩余高度的高，此时 3b 的 split 不该被触发——
+    // 否则会把一张照片再横切一刀（图的内容被切成两页）。
+    let splitCalled = 0;
+    const split = (): null => {
+      splitCalled++;
+      return null;
+    };
+    const items_ = items([80], [40]);
+    items_[1].fit = true;
+    const pages = paginateFlow(items_, 100, split, () => 0, (e, maxH) => maxH);
+    expect(splitCalled).toBe(0);
+    expect(pages.map((p) => p.length)).toEqual([2]); // 缩到刚好：仍在本页
+  });
+});
+
+describe('可缩媒体块（图一：照片放不下 → 页尾大片留白）· 接线守卫', () => {
+  // jsdom 没有排版引擎（offsetHeight 恒 0），缩块的真实几何量不出来，
+  // 但「接线有没有断」可以钉：照片块被标成 fit、分页吃到 shrink、样式消费收缩变量。
+  // 三者缺一，规则 3a 就是死代码——照片又会整块跳到下页、页尾留白。
+  const read = (p: string) => readFileSync(resolve(process.cwd(), p), 'utf8');
+
+  it('照片块（.bz-diary-b-photo）标成可缩块 fit:true', () => {
+    const src = read('src/diary/ui.ts');
+    const m = src.match(/flow\.push\(el\.classList\.contains\('bz-diary-b-photo'\)([\s\S]{0,120}?)\);/);
+    expect(m, 'pushEntryBlocks 里没找到照片块的分流').toBeTruthy();
+    expect(m![1]).toContain('fit: true');
+  });
+
+  it('排版尾段把 fitMedia 作为 shrink 传给 paginateFlow（第 5 个实参）', () => {
+    const src = read('src/diary/ui.ts');
+    const call = src.match(/this\.pages = paginateFlow\(([\s\S]*?)\);/);
+    expect(call, '没找到 paginateFlow 调用').toBeTruthy();
+    expect(call![1]).toContain('this.fitMedia(el, maxH)');
+  });
+
+  it('.bz-diary-b-photo 消费 --bz-diary-ph-w（不然缩块改了变量也没人读）', () => {
+    const css = read('src/diary/styles.css');
+    const block = css.match(/\.bz-diary-b-photo\s*\{([^}]*)\}/);
+    expect(block, '没找到 .bz-diary-b-photo 规则').toBeTruthy();
+    expect(block![1]).toContain('var(--bz-diary-ph-w');
+  });
 });
 
 describe('monthMarks / pageDateOf（册页索引口径）', () => {
