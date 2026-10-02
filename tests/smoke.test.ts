@@ -319,10 +319,20 @@ describe('bz 骨架冒烟', () => {
       serializeDiaryEntryFile({ date: '2026-01-01', time: '08:00' }, ['日记'], '预热样张')
     );
     let diaryReads = 0;
-    const real = vault.read.bind(vault);
-    vi.spyOn(vault, 'read').mockImplementation(async (f: any) => {
+    // ADR-0231：日记正文展示路径改走 `cachedRead`（信正文同）；夹具两个 API 都要计，
+    // 否则「预热真的读了盘」会数成 0。按路径过滤，避免把其他域的读盘算进来。
+    const countDiary = (f: any) => {
       if (f && typeof f.path === 'string' && f.path.startsWith('我的/日记/')) diaryReads++;
-      return real(f);
+    };
+    const realRead = vault.read.bind(vault);
+    const realCachedRead = vault.cachedRead.bind(vault);
+    vi.spyOn(vault, 'read').mockImplementation(async (f: any) => {
+      countDiary(f);
+      return realRead(f);
+    });
+    vi.spyOn(vault, 'cachedRead').mockImplementation(async (f: any) => {
+      countDiary(f);
+      return realCachedRead(f);
     });
     const plugin = await createPlugin(app); // onLayoutReady（mock 同步回调）内已调度 prewarmDiary
     const { prewarmDiary } = await import('../src/diary');

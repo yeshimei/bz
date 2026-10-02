@@ -321,7 +321,8 @@ function requeueFailed(entries: QueueEntry[]): void {
 }
 
 /** 抓取落盘后刷新：立即一次（loading 退场）+ 延迟一次（等 metadataCache 消化磁盘变化，
- *  海报/豆瓣链接字段才会上卡）。 */
+ *  海报/豆瓣链接字段才会上卡）。扫描保持同步（ADR-0231：纯内存查表，非首屏病根）；
+ *  上屏走 `M.renderFn`（= renderSoft），打字期间自动顺延，不抢主线程。 */
 function refreshAfterFetch(): void {
   if (!M.currentOverlay || !M.appRef) return;
   rebuildItems(M.appRef);

@@ -9,6 +9,16 @@ import { tryGetSettings } from '../core/settings-provider';
 /** 影视目录默认值（cinemaFolderPath 未配置时回落；旧 movieFolderPath 键已退役） */
 export const DEFAULT_FOLDER = '我的/影视';
 
+/**
+ * 首屏渲染的卡片数（ADR-0231）。
+ *
+ * 定为 20 的理由（按版式算，不是拍脑袋）：网格桌面 5 列 / 移动 3 列，卡片海报是
+ * `aspect-ratio: 2/3` 等比缩放 ⇒ **面板拉多大，可视区都只有约 2 行**。20 = 5 列 × 4 行
+ * ≈ 两屏：首屏一定填满，且向下滚一小段不会见底。
+ * 其余条目由空闲追加按 `LIST_BATCH_SIZE`（50）逐批补上，见 `ui.ts` 的 `idleAppend`。
+ */
+export const FIRST_PAINT_CARDS = 20;
+
 /** 影视目录解析（目录唯一真理跨域化，ADR-0115）：cinemaFolderPath 显式配置优先，缺省回落默认。
  *  日记本域经此函数读取影视目录（不再有独立的 movieDirectory 设置键），设置访问器未注入时回落默认。 */
 export function resolveCinemaFolderPath(): string {
@@ -94,6 +104,13 @@ export interface CinemaState {
   appRef: App | null;
   folderPath: string;
   renderFn: (() => void) | null;
+  /** 渲染窗口：当前渲染多少张卡（ADR-0231）。首屏 = FIRST_PAINT_CARDS，后台追加时增长；
+   *  筛选/搜索/排序一变即重置回首屏值。**只影响渲染，不影响任何计数**（计数恒按全量）。 */
+  shown: number;
+  /** 数据尚未就绪（本会话首次打开、扫描还没跑完）→ list 视图出骨架页而不是空态页 */
+  loading: boolean;
+  /** 滚动心跳（ms）：追加循环据此让路，手在滚就不追加 */
+  lastScrollAt: number;
   /** AI 页内状态（不弹窗）：是否运行中 / 等待消息 / 结果列表 / 错误信息 */
   aiRunning: boolean;
   aiWaitMsg: string;
@@ -117,6 +134,9 @@ export const M: CinemaState = {
   appRef: null,
   folderPath: DEFAULT_FOLDER,
   renderFn: null,
+  shown: FIRST_PAINT_CARDS,
+  loading: true,
+  lastScrollAt: 0,
   aiRunning: false,
   aiWaitMsg: '',
   aiResult: null,
@@ -140,6 +160,9 @@ export function resetCinemaState(): void {
   M.appRef = null;
   M.folderPath = DEFAULT_FOLDER;
   M.renderFn = null;
+  M.shown = FIRST_PAINT_CARDS;
+  M.loading = true;
+  M.lastScrollAt = 0;
   M.aiRunning = false;
   M.aiWaitMsg = '';
   M.aiResult = null;

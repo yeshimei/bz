@@ -9,7 +9,7 @@
 export * from './shared';
 export {
   midnightDeskHtml, midnightMobHtml, railHtml, chipsHtml,
-  emptyPageHtml, spHeadHtml, listHeadHtml, listToolsHtml,
+  emptyPageHtml, spHeadHtml, listHeadHtml, listToolsHtml, cardsRangeHtml,
   renderMidnightDesk, renderMidnightMob,
   type MidnightRenderInput,
 } from './layouts/midnight/render';

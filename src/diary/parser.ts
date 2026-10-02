@@ -187,8 +187,9 @@ export async function parseLetterFile(file: any, app: any): Promise<DiaryEntry |
     const timeStr = parsed.format('HH:mm');
     const timeValue = parseInt(parsed.format('HHmm'), 10);
 
-    // 读取文件内容，提取正文（去掉 frontmatter）
-    const fullContent = await app.vault.read(file);
+    // 读取文件内容，提取正文（去掉 frontmatter）。cachedRead：信正文只进书页展示，
+    // 不回写（ADR-0231，官方口径「只展示用 cachedRead」，省磁盘 I/O）
+    const fullContent = await app.vault.cachedRead(file);
     const frontmatterRegex = /^---\n([\s\S]*?)\n---\n/;
     const match = fullContent.match(frontmatterRegex);
     let body = fullContent;

@@ -17,7 +17,7 @@ import { describe, expect, it, beforeEach, afterEach, vi, beforeAll } from 'vite
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { setApp } from '../../src/core/app';
-import { applyDirectories } from '../../src/diary/config';
+import { applyDirectories, FIRST_PAINT_ENTRIES } from '../../src/diary/config';
 import { serializeDiaryEntryFile } from '../../src/core/diary-format';
 import { MockVault, mockAppWithVault } from '../mock-vault';
 import { resetObsidianMocks, clearNotices, getNoticeMessages, Platform } from '../mock-obsidian-entry';
@@ -1023,5 +1023,87 @@ describe('DiaryAppController · 条目动作走真写层', () => {
     await vi.waitFor(() => expect(q('.bz-diary-fallback').hidden).toBe(false));
     expect(q('.bz-diary-fallback').textContent).toContain('没读出来');
     expect(getNoticeMessages().join('\n')).toContain('加载日记失败');
+  });
+});
+
+// ============================================================
+//  六、排版窗口（ADR-0231 / issue 539）
+//
+//  守的是「首屏不排全量、其余留在内存、翻到书尾才叠页」这条链——它坏了页面不报错，
+//  只是开册又变慢，或者翻到第 30 则就见了底（后台读进来的一千多则永远不会出现）。
+// ============================================================
+
+describe('DiaryAppController · 排版窗口（ADR-0231）', () => {
+  /** 清掉夹具里的既有条目（2 则日记 + 影视/书/信），换成 n 则连续日期的日记（一天一则） */
+  function seedManyEntries(n: number): void {
+    for (const p of [DIARY_PATH, YOUNGER_PATH, MOVIE_PATH, BOOK_PATH, LETTER_PATH]) vault.files.delete(p);
+    for (let i = 0; i < n; i++) {
+      const d = new Date(Date.UTC(2026, 0, 1 + i));
+      const y = d.getUTCFullYear();
+      const mo = String(d.getUTCMonth() + 1).padStart(2, '0');
+      const da = String(d.getUTCDate()).padStart(2, '0');
+      vault.files.set(
+        `我的/日记/${String(y).slice(2)}${mo}${da}0800.md`,
+        serializeDiaryEntryFile({ date: `${y}-${mo}-${da}`, time: '08:00' }, ['日记'], `第 ${i + 1} 天`)
+      );
+    }
+  }
+
+  it('首屏只把前 FIRST_PAINT_ENTRIES 则排成纸页，其余只进内存不排', async () => {
+    seedManyEntries(45);
+    const c = await openBook();
+    expect(qa('.bz-diary-b-seal').length).toBe(FIRST_PAINT_ENTRIES); // 上屏 = 窗口
+    await vi.waitFor(() => expect(c.entries.length).toBe(45)); // 数据 = 全量
+    // 全量到位也不重排——否则正在读的那一页会被当场换血
+    expect(qa('.bz-diary-b-seal').length).toBe(FIRST_PAINT_ENTRIES);
+  });
+
+  /** 走真实路径翻到书尾：替身 `turnToPage` → 发 `flip` → ui 同步 cursor → 钩子推窗 */
+  function flipToTail(c: DiaryAppController): void {
+    const flip = (c as unknown as { flip: { turnToPage: (n: number) => void } }).flip;
+    flip.turnToPage(qa('.bz-diary-page-item').length - 1);
+  }
+
+  it('翻到书尾自动推宽一批；已覆盖全量后不再叠页', async () => {
+    seedManyEntries(45);
+    const c = await openBook();
+    await vi.waitFor(() => expect(c.entries.length).toBe(45));
+    expect(qa('.bz-diary-b-seal').length).toBe(FIRST_PAINT_ENTRIES); // 还没到书尾：只有窗口
+    flipToTail(c);
+    await vi.waitFor(() => expect(qa('.bz-diary-b-seal').length).toBe(45)); // 书尾 → 一批补到顶
+    const pages = qa('.bz-diary-page-item').length;
+    flipToTail(c); // 已覆盖全部 → 不再叠页
+    await new Promise((r) => setTimeout(r, 20)); // 等延后那拍跑完（续叠是让一拍再做的）
+    expect(qa('.bz-diary-page-item').length).toBe(pages);
+  });
+
+  it('不进书尾就不动窗口（光标不在最后一页时 extendIfAtTail 不生效）', async () => {
+    seedManyEntries(45);
+    const c = await openBook();
+    await vi.waitFor(() => expect(c.entries.length).toBe(45));
+    const extend = (c as unknown as { extendIfAtTail: () => boolean }).extendIfAtTail.bind(c);
+    expect(extend()).toBe(false); // cursor=0，非书尾
+    expect(qa('.bz-diary-b-seal').length).toBe(FIRST_PAINT_ENTRIES);
+  });
+
+  it('重开册子窗口复位回首屏值（不沿用上次推宽的窗口）', async () => {
+    seedManyEntries(45);
+    const c = await openBook();
+    await vi.waitFor(() => expect(c.entries.length).toBe(45));
+    flipToTail(c);
+    await vi.waitFor(() => expect(qa('.bz-diary-b-seal').length).toBe(45));
+    c.hide();
+    c.show();
+    await vi.waitFor(() => expect(qa('.bz-diary-b-seal').length).toBe(FIRST_PAINT_ENTRIES));
+  });
+
+  it('窗口已覆盖全量时 no-op（条目本就不足 30 则）', async () => {
+    const few = FIRST_PAINT_ENTRIES - 5;
+    seedManyEntries(few);
+    const c = await openBook();
+    await vi.waitFor(() => expect(c.entries.length).toBe(few));
+    const extend = (c as unknown as { extendIfAtTail: () => boolean }).extendIfAtTail.bind(c);
+    expect(extend()).toBe(false);
+    expect(qa('.bz-diary-b-seal').length).toBe(few);
   });
 });

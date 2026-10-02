@@ -127,6 +127,14 @@ export function emptyPageHtml(filtered: boolean): string {
     ${filtered ? '<button class="dm-btn j-clear" data-cinema-clear style="margin-top:6px">清空筛选</button>' : '<span style="font-size:11.5px">点右上「添加影片」开始记录</span>'}</div>`;
 }
 
+/** 数据未就绪的骨架页（ADR-0231）。
+ *  首开时库里明明有片、只是还没扫完，不能落 `emptyPageHtml`（那是「空空如也」的语义，错的）；
+ *  骨架不显示任何数字、不假装知道条数，只按当前列数占住版式位置。纯结构，样式在 cinema/styles.css。 */
+export function skeletonPageHtml(cols: number): string {
+  const cell = '<div class="cn-skel-card"><div class="cn-skel-pw"></div><div class="cn-skel-line"></div></div>';
+  return `<div class="cn-skel-grid" style="grid-template-columns:repeat(${cols},1fr)">${cell.repeat(Math.max(1, cols * 3))}</div>`;
+}
+
 /** ai/stat 页头（返回钮 + 标题 + 计数） */
 export function spHeadHtml(title: string, cnt: string): string {
   return `<div class="sp-head"><button class="sp-back">${iconSpan(ICON.back)}</button><span class="sp-title">${esc(title)}</span><span class="sp-cnt j-spcnt">${cnt}</span></div>`;
@@ -138,6 +146,10 @@ export interface MidnightRenderInput {
   allCards: CardEntry[];
   /** 当前展示卡片条目（筛选 + 排序 + 按季合并后，与网格逐张对应） */
   cards: CardEntry[];
+  /** 渲染窗口：`cards` 里只渲前这么多张（ADR-0231）。计数一律读 `cards.length`，与窗口无关 */
+  shown: number;
+  /** 数据尚未就绪（首开扫描中）→ list 视图出骨架页而非空态页 */
+  loading: boolean;
   /** 视图状态快照 */
   view: CinemaView;
   /** 网格每行列数（插件读设置钳制，壳给演示值） */
@@ -162,6 +174,17 @@ function cardsHtml(cards: CardEntry[], inp: MidnightRenderInput): string {
     const face = cardFace(e);
     return cardHtml(e, inp.poster(face), inp.fetching?.(face) ?? false);
   }).join('');
+}
+
+/** 追加一批卡片 HTML（ADR-0231 后台分片追加用）：取 `cards` 的 `[from, to)` 段。
+ *  调用方把它 `insertAdjacentHTML` 到网格尾部即可——不走整刷，免 scrollTop 复原、免重算网格动效。 */
+export function cardsRangeHtml(inp: MidnightRenderInput, from: number, to: number): string {
+  return cardsHtml(inp.cards.slice(from, to), inp);
+}
+
+/** 渲染窗口内的卡片（首屏 20 / 后台追加后增长；计数不受此影响） */
+function visibleCards(inp: MidnightRenderInput): CardEntry[] {
+  return inp.cards.slice(0, Math.max(0, inp.shown));
 }
 
 /** 列表视图头 + 工具行（d-head/d-tools；添加钮钩子 data-cinema-add）。
@@ -197,9 +220,16 @@ export function renderMidnightDesk(root: HTMLElement, inp: MidnightRenderInput):
   if (v.view === 'ai') {
     view.innerHTML = spHeadHtml('AI 荐片', inp.aiCount ? `· ${inp.aiCount} 部` : '') + `<div class="sp-body">${inp.aiHtml}</div>`;
   } else {
-    const body = inp.cards.length
-      ? `<div class="d-scroll"><div class="grid" style="grid-template-columns:repeat(${inp.cols},1fr)">${cardsHtml(inp.cards, inp)}</div></div>`
-      : emptyPageHtml(viewFiltered(v));
+    const win = visibleCards(inp);
+    let body: string;
+    if (win.length) {
+      body = `<div class="d-scroll"><div class="grid" style="grid-template-columns:repeat(${inp.cols},1fr)">${cardsHtml(win, inp)}</div></div>`;
+    } else if (inp.loading) {
+      // 首开扫描中：骨架，不落「影片空空如也」（那是库真空才该说的话）
+      body = `<div class="d-scroll">${skeletonPageHtml(inp.cols)}</div>`;
+    } else {
+      body = emptyPageHtml(viewFiltered(v));
+    }
     view.innerHTML = listHeadHtml(inp) + listToolsHtml(v) + body;
   }
 }
@@ -224,10 +254,12 @@ export function renderMidnightMob(root: HTMLElement, inp: MidnightRenderInput): 
       // 深审批 B #1：空态分支与 desk 同构（筛选无命中 / 空库两态）——此前 mob 恒渲染 m-grid，
       // 空库或无命中整片空白。清词/清筛按钮走 data-cinema-clear 委托（ui.ts 全端已生效）。
       // 空态时容器转 flex（.cn-mempty），空态页才能撑满垂直居中。
-      mv.className = inp.cards.length ? 'm-scroll j-mview' : 'm-scroll j-mview cn-mempty';
-      mv.innerHTML = inp.cards.length
-        ? `<div class="m-grid">${cardsHtml(inp.cards, inp)}</div>`
-        : emptyPageHtml(viewFiltered(v));
+      const win = visibleCards(inp);
+      const empty = !inp.cards.length;
+      mv.className = empty && !inp.loading ? 'm-scroll j-mview cn-mempty' : 'm-scroll j-mview';
+      mv.innerHTML = empty
+        ? (inp.loading ? skeletonPageHtml(inp.cols) : emptyPageHtml(viewFiltered(v)))
+        : `<div class="m-grid">${cardsHtml(win, inp)}</div>`;
     } else {
       mv.className = 'sp-body j-mview';
       mv.innerHTML = inp.aiHtml;

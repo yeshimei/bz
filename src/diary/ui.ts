@@ -34,10 +34,11 @@ import { getApp } from '../core/app';
 import { onDomainEvent } from '../core/domain-bus';
 import { escapeHtml } from '../core/utils';
 import { openFlowDialog } from '../core/flow-dialog';
-import { DIARY_DIRECTORY, inWallDirs, getTagEmoji } from './config';
+import { DIARY_DIRECTORY, inWallDirs, getTagEmoji, FIRST_PAINT_ENTRIES } from './config';
 import {
   loadWallEntries,
   invalidateWallCache,
+  onWallProgress,
   mediaSrc,
   extractMedia,
   extractSegments,
@@ -45,6 +46,7 @@ import {
   type WallEntry,
   type WallMedia,
 } from './data';
+import { LIST_BATCH_SIZE } from '../core/paging';
 import {
   bookPanelHTML,
   daystampHTML,
@@ -377,6 +379,18 @@ export class DiaryAppController {
   // ---------- 状态 ----------
   /** 当前册子里的条目（只读聚合结果；加密条目在解锁时才并入） */
   entries: WallEntry[] = [];
+  /**
+   * 排版窗口（ADR-0231）：只把前这么多条排成纸页，其余**留在内存里但不排**。
+   * 排版是本域最贵的一步（全量块流测高 + 二分切段），1443 条全排会在开册时顿住；
+   * 首批按 `FIRST_PAINT_ENTRIES` 成册，用户翻到书尾才把窗口推宽一批（见 extendIfAtTail）。
+   */
+  private shown = FIRST_PAINT_ENTRIES;
+  /** 本轮的「首批已成册」闸门：进度可能连发多次，只认第一次 */
+  private firstPaintDone = false;
+  /** 续叠窗口的重入闸门（relayout → buildBook 会重挂 flip 事件） */
+  private extending = false;
+  /** 延后一拍续叠的定时器（`flip` 钩子用；`relayout`/`hide` 复位的旁路遗物） */
+  private extendTimer: ReturnType<typeof setTimeout> | null = null;
   private byEid = new Map<string, WallEntry>();
   private pages: Page[] = [];
   private cursor = 0;
@@ -536,8 +550,10 @@ export class DiaryAppController {
   /**
    * 重排整册。`keepRatio`：视口变化/回刷时按上次页数比例保住阅读位置（跟手不跳回最新）；
    * 换筛选、写完一篇等场景传 false（落回第 0 页 = 最新那篇）。
+   * `keepPage`（ADR-0231）：钉住**当前页索引**不动——只往尾部续叠纸页时用（见 extendIfAtTail）：
+   * 那种场景下总页数变了，按比例映射会把读者往前推，而位置其实本该纹丝不动。
    */
-  private relayout(keepRatio: boolean): number {
+  private relayout(keepRatio: boolean, keepPage = false): number {
     const root = this.root;
     if (!root) return 0;
     const t0 = typeof performance !== 'undefined' ? performance.now() : 0;
@@ -558,9 +574,12 @@ export class DiaryAppController {
     this.single = single;
     root.classList.toggle('bz-diary-single', single);
 
-    const list = this.visibleEntries();
-    this.byEid = new Map(list.map((e) => [e.id || '', e]));
-    this.photoRefs = collectPhotoRefs(list);
+    // ADR-0231：`all` = 已加载的全部（计数 / 查找 / 灯箱用），`list` = 排版窗口。
+    // 排版是这一域最贵的一步，窗口化是首屏能出来、且后台读到新条目时**不必重排**的前提。
+    const all = this.visibleEntries();
+    const list = all.slice(0, Math.max(0, this.shown));
+    this.byEid = new Map(all.map((e) => [e.id || '', e]));
+    this.photoRefs = collectPhotoRefs(all);
     this.photoIndex = new Map(this.photoRefs.map((p, i) => [p.media.name, i]));
 
     // 离屏测量盒：宽度/内边距全读 CSS（.bz-diary-probe），不在 JS 里重复一份
@@ -577,7 +596,9 @@ export class DiaryAppController {
     const flow: FlowItem[] = [];
     let lastDate: string | null = null;
     const dayCount = new Map<string, number>();
-    for (const e of list) dayCount.set(e.date, (dayCount.get(e.date) || 0) + 1);
+    // 日戳「当天几则」按**已加载的全部**算（含窗口外），只排窗口内的条目——
+    // 否则窗口边界那天会数少。条目数不参与排版成本，多算不亏。
+    for (const e of all) dayCount.set(e.date, (dayCount.get(e.date) || 0) + 1);
     for (const e of list) {
       if (e.date !== lastDate) {
         lastDate = e.date;
@@ -606,7 +627,10 @@ export class DiaryAppController {
     // 4) 目标页：保比例，否则落第一页（最新排在最前，第一页就是最新）
     const last = Math.max(0, this.pages.length - 1);
     let target = 0;
-    if (keepRatio && this.lastSpreadCount > 1) {
+    if (keepPage) {
+      // 只往尾部续叠过纸页：页索引语义没变，钉住它就行（按比例算反而会把读者往前推）
+      target = Math.max(0, Math.min(last, this.cursor));
+    } else if (keepRatio && this.lastSpreadCount > 1) {
       target = Math.round((this.cursor / (this.lastSpreadCount - 1)) * last);
     }
     this.lastSpreadCount = this.pages.length;
@@ -737,6 +761,10 @@ export class DiaryAppController {
     this.flip.turnToPage(Math.max(0, targetPage));
     this.flip.on('flip', (e) => {
       this.cursor = e.data;
+      // 拖拽/键盘翻到书尾也要能续上（点「下一页」那条走 turnPage）。
+      // **延后一拍**再续：续叠会 destroy 当前 StPageFlip 实例，而这条回调是库自己
+      // 在翻页流程里发的——在它的回调栈里把实例拆掉风险不可控。让出一拍最稳。
+      this.scheduleExtend();
     });
     this.cursor = Math.max(0, targetPage);
     this.afterPagesBuilt(host);
@@ -751,8 +779,50 @@ export class DiaryAppController {
 
   private turnPage(dir: 1 | -1): void {
     if (!this.flip) return;
-    if (dir > 0) this.flip.flipNext();
-    else this.flip.flipPrev();
+    if (dir > 0) {
+      // 已在书尾而窗口外还有条目 → 续叠一批，别让「下一页」变成没反应
+      if (this.extendIfAtTail()) return;
+      this.flip.flipNext();
+    } else this.flip.flipPrev();
+  }
+
+  /**
+   * 翻到书尾就推宽排版窗口一批（ADR-0231）。返回是否真的推宽了。
+   *
+   * 为什么必须「只往尾部追加」：`paginateFlow` 是从最新往最早**顺序**装页的，往流尾加条目
+   * 不会改动前面任何一页的边界 ⇒ 当前页索引语义不变、读者看到的那一页原地不动。
+   * `relayout(false, true)` 的 `keepPage` 就是为这条准备的。
+   *
+   * 代价（诚实版）：这是**整窗重排**——`paginateFlow` 对加宽后的窗口重跑一遍、一次 reflow 量高、
+   * `buildBook` 重建 StPageFlip 实例；**不是**「只测新增条目」。之所以可接受：成本以**窗口**为界
+   * （不是 1243 全量），且只在用户主动翻到书尾这一刻发生。StPageFlip v2.0.7 没有 `addPage`，
+   * 动态加页本就得整实例重建，所以这一次重建省不掉；真要省下重测，得按条目 id 缓存块高。
+   */
+  private extendIfAtTail(): boolean {
+    if (this.extending) return false;
+    const all = this.visibleEntries();
+    if (this.shown >= all.length) return false; // 窗口已覆盖全部已加载条目
+    if (!this.pages.length) return false;
+    if (this.cursor < this.pages.length - 1) return false; // 还没到最后一页
+    const next = Math.min(this.shown + LIST_BATCH_SIZE, all.length);
+    if (next <= this.shown) return false;
+    this.extending = true;
+    try {
+      this.shown = next;
+      this.relayout(false, true);
+      return true;
+    } finally {
+      this.extending = false;
+    }
+  }
+
+  /** 延后一拍再续叠（见 `buildBook` 的 `flip` 钩子）：合并同一拍内的多次 flip，不排队多份。 */
+  private scheduleExtend(): void {
+    if (this.extendTimer !== null) return;
+    this.extendTimer = setTimeout(() => {
+      this.extendTimer = null;
+      this.extendIfAtTail();
+    }, 0);
   }
 
   private jumpToPage(pi: number): void {
@@ -2300,8 +2370,17 @@ export class DiaryAppController {
   /**
    * 读盘。`allowCache`：开册路径命中预热/上次刷新后的缓存秒开；
    * 刷新/写后回刷/重试一律先作废回源（保持「每次刷新即读盘」语义，不赌缓存失效是否触发）。
+   *
+   * `onWindow`（ADR-0231）：攒够 `FIRST_PAINT_ENTRIES` 条就把**部分**结果交出来先成册——
+   * 首屏不必等 1243 篇正文读完。只有开册路径传它；刷新/写后回刷不传（那两条要的是完整一致，
+   * 中途成册反而会让正在读的那一页被重排）。缓存命中时不会有进度，由调用方在结算后补一次成册。
    */
-  private async loadEntries(allowCache: boolean): Promise<void> {
+  private async loadEntries(allowCache: boolean, onWindow?: (partial: WallEntry[]) => void): Promise<void> {
+    const off = onWindow
+      ? onWallProgress((partial) => {
+          if (partial.length >= FIRST_PAINT_ENTRIES) onWindow(partial);
+        })
+      : null;
     try {
       if (allowCache) {
         this._allowCacheNext = false;
@@ -2314,6 +2393,8 @@ export class DiaryAppController {
       this.entries = [];
       this._loadError = e instanceof Error ? e.message : String(e);
       notice(`加载日记失败：${this._loadError}`, 'error');
+    } finally {
+      off?.();
     }
     // 保险箱已解锁：一并并入加密日记（幂等；上锁态不可见）
     await this.mergeEncryptedEntries();
@@ -2495,8 +2576,22 @@ export class DiaryAppController {
     this.subscribeVault();
     void (async () => {
       await this.afterPaint();
-      await this.loadEntries(this._allowCacheNext);
-      this.relayout(false);
+      this.firstPaintDone = false;
+      this.shown = FIRST_PAINT_ENTRIES;
+      // ADR-0231：首批一成 -> 立刻成册给用户翻；其余正文在后台继续读，**不重排**。
+      await this.loadEntries(this._allowCacheNext, (partial) => {
+        if (this.firstPaintDone) return;
+        this.firstPaintDone = true;
+        this.entries = partial;
+        this.shown = Math.min(FIRST_PAINT_ENTRIES, partial.length);
+        this.relayout(false);
+      });
+      if (!this.firstPaintDone) {
+        // 缓存命中（结算即全量）或条目本就很少：没有进度可等，读盘结束后成册一次
+        this.firstPaintDone = true;
+        this.shown = Math.min(this.shown, this.entries.length);
+        this.relayout(false);
+      }
       this.toast(reopen ? '又翻开了' : '翻开的是最新那篇');
     })();
   }
@@ -2519,6 +2614,10 @@ export class DiaryAppController {
     if (this.modifyTimer !== null) {
       clearTimeout(this.modifyTimer);
       this.modifyTimer = null;
+    }
+    if (this.extendTimer !== null) {
+      clearTimeout(this.extendTimer);
+      this.extendTimer = null;
     }
     this.setToolsShown(false);
     this._hideMotion = false;
@@ -2554,6 +2653,10 @@ export class DiaryAppController {
     if (this.modifyTimer !== null) {
       clearTimeout(this.modifyTimer);
       this.modifyTimer = null;
+    }
+    if (this.extendTimer !== null) {
+      clearTimeout(this.extendTimer);
+      this.extendTimer = null;
     }
     if (this.toolsRaf) cancelAnimationFrame(this.toolsRaf);
     this.unsubscribeEvents();
