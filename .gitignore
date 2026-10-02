@@ -14,6 +14,8 @@ viz/
 .workbuddy/
 # 增量跑测试的结果缓存（按文件复用上次成功结果；本轮通过即写回）
 .bz-test-cache/
+# tsc --noEmit 的增量编译缓存（tsconfig.json 的 incremental；每棵工作树各一份）
+/tsconfig.tsbuildinfo
 
 # bz-face vendor 运行日志（logger.py 以 __file__ 锚定，落在 vendor 内，不入 git）
 tools/obsidian-face/python/vendor/WeChatMsg_Lite/logs/
