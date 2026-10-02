@@ -102,6 +102,11 @@ const REFRESH_DEBOUNCE_MS = 400;
 const WHEEL_LOCK_MS = 560;
 /** 进度纸条的显示延时：读得快（预热缓存命中）就不摆这一下，免得闪一闪 */
 const LOADING_SHOW_DELAY_MS = 120;
+/**
+ * 可缩媒体块（照片 / 视频）最多缩到多窄（占自然块宽的比例）。
+ * 再窄就不缩了，宁可整块换到下一页——一枚邮票大小的照片还不如让它下页好好摊开。
+ */
+const MEDIA_FIT_MIN_RATIO = 0.6;
 
 // ===== 纯函数（可单测）=====
 
@@ -140,18 +145,24 @@ export interface FlowItem {
   el: HTMLElement;
   h: number;
   keep?: boolean;
+  /** 可缩块（照片 / 视频）：放不下时先让 `shrink` 等比缩到塞进剩余高度，别为差一点点就整块换页 */
+  fit?: boolean;
 }
 /** 段落逐行续排的注入点：返回 `[上半, 下半, 下半高]`，放不下返回 null。测试可换成桩。 */
 export type SplitFn = (el: HTMLElement, availPx: number) => [HTMLElement, HTMLElement, number] | null;
+/** 可缩块的收缩口：就地缩到 `maxH` 以内并返回新的块高；缩不动（已到下限 / 模型有误差）返回 null。 */
+export type ShrinkFn = (el: HTMLElement, maxH: number) => number | null;
 
 /**
  * 块流 → 页（纯函数，可单测）。规则与原型一致，逐条对应：
  * 1. `keep` 块（日戳）= 新的一天 = 新的一张纸，且**对齐到跨页左位**（前一天纸的背面自然留白）；
  * 2. 空页上遇到「自己就超过一整页」的块：先按整页高度切一刀；
- * 3. 装不下时若页尾还够高（≥ PAGE_CUT_MIN_PX）就在剩余空间里逐行切一刀，上半留页尾、下半顶格续下页；
+ * 3. 装不下时：3a 可缩块（`fit`，照片 / 视频）先等比缩到塞进剩余高度；3b 还装不下且页尾够高
+ *    （≥ PAGE_CUT_MIN_PX）就在剩余空间里逐行切一刀，上半留页尾、下半顶格续下页；否则换页；
  * 4. `keep` 块还要求剩余高度容得下「它 + 一点内容」，否则提前换页（日戳不孤行）。
  *
- * 抽成纯函数是为了让这段最难的逻辑能脱开 DOM 单测（真实现里 `split` 走 Range 二分）。
+ * 抽成纯函数是为了让这段最难的逻辑能脱开 DOM 单测（真实现里 `split` 走 Range 二分，
+ * `shrink` 同理：真实现按块宽等比缩，桩里给个定值就能单独钉 3a 的分支）。
  *
  * 注：规则 4 目前**走不到**——规则 1 对 `keep` 块已经先换了页（`cur` 必为空），
  * 此处 `cur!.length` 恒假。移植期照原型逐行对齐（`.scratch/diary-quill/app.js` 同一形态），
@@ -161,9 +172,10 @@ export function paginateFlow(
   items: FlowItem[],
   availH: number,
   split: SplitFn,
-  heightOf: (el: HTMLElement) => number
+  heightOf: (el: HTMLElement) => number,
+  shrink?: ShrinkFn
 ): Page[] {
-  const metas = items.map((it) => ({ el: it.el, h: it.h, keep: !!it.keep }));
+  const metas = items.map((it) => ({ el: it.el, h: it.h, keep: !!it.keep, fit: !!it.fit }));
   const pages: Page[] = [];
   let cur: Page | null = null;
   let used = 0;
@@ -187,22 +199,32 @@ export function paginateFlow(
       const c2 = split(it.el, availH - 4);
       if (c2) {
         it.h = heightOf(c2[0]);
-        metas.splice(i + 1, 0, { el: c2[1], h: c2[2], keep: false });
+        metas.splice(i + 1, 0, { el: c2[1], h: c2[2], keep: false, fit: false });
       }
     }
-    /* 3) 装不下：页尾够高就逐行续排，否则换页 */
+    /* 3) 装不下 */
     if (used + it.h > availH && cur!.length) {
       const remain = availH - used;
-      if (remain >= PAGE_CUT_MIN_PX) {
-        const cut = split(it.el, remain - 4);
-        if (cut) {
-          cur!.push(cut[0]);
-          metas.splice(i + 1, 0, { el: cut[1], h: cut[2], keep: false });
-          used = availH;
-          continue;
-        }
+      /* 3a) 可缩块（照片 / 视频）：先等比缩到塞进剩余高度。
+         差几十像素就整块换页，会在页尾留一大片白（真机症状：左页下半页全空、照片独自在右页）。
+         缩不动（已到下限）或缩了仍塞不下就照旧往下走，交给 3b。 */
+      if (it.fit && shrink) {
+        const nh = shrink(it.el, remain);
+        if (nh !== null && nh <= remain) it.h = nh;
       }
-      newPage();
+      /* 3b) 还装不下：页尾够高就逐行续排，否则换页 */
+      if (used + it.h > availH) {
+        if (remain >= PAGE_CUT_MIN_PX) {
+          const cut = split(it.el, remain - 4);
+          if (cut) {
+            cur!.push(cut[0]);
+            metas.splice(i + 1, 0, { el: cut[1], h: cut[2], keep: false, fit: false });
+            used = availH;
+            continue;
+          }
+        }
+        newPage();
+      }
     }
     /* 4) 日戳不孤行 */
     if (it.keep && used + it.h + DAYSTAMP_KEEP_PX > availH && cur!.length) newPage();
@@ -566,6 +588,39 @@ export class DiaryAppController {
     return el.offsetHeight + (parseFloat(cs.marginTop) || 0) + (parseFloat(cs.marginBottom) || 0);
   }
 
+  /**
+   * 可缩媒体块（照片 / 视频）等比缩到 `maxH` 以内，返回新的块高；缩不动返回 null。
+   *
+   * 为什么缩**块宽**而不是高度：相框是 img 自己的 padding、媒体盒是 `aspect-ratio: 4/3`，
+   * 宽度一缩两者按比例同步收，照片不会被压扁也不会有信封边（改高度只会把框拉成横条）。
+   * 缩幅按「内容高 ∝ 块宽」一次算到位——那圈白框与 margin 是常数项，所以算完**再用真的量一遍**
+   * 确认；量出来还超就撤回这次缩，交给换页（宁可留白也不要「缩过却仍换页」的怪尺寸）。
+   *
+   * 内联的是**几何值**（由页面剩余高度反推的块宽），与 `renderEdgeMarks` 的 top/height 同类：
+   * 行为性内联值，不是视觉样式——颜色、框体、落影仍全在 `styles.css`。
+   */
+  private fitMedia(el: HTMLElement, maxH: number): number | null {
+    const cs = getComputedStyle(el);
+    const marg = (parseFloat(cs.marginTop) || 0) + (parseFloat(cs.marginBottom) || 0);
+    const h0 = this.blockHeightOf(el);
+    const w0 = el.offsetWidth;
+    const body = h0 - marg;
+    const room = maxH - marg;
+    if (!w0 || body <= 0 || room <= 0) return null;
+    const ratio = Math.min(1, room / body);
+    const w = Math.floor(w0 * ratio);
+    if (w < Math.ceil(w0 * MEDIA_FIT_MIN_RATIO)) return null; // 到下限了：宁可不缩，整块下页
+    const prev = el.style.getPropertyValue('--bz-diary-ph-w');
+    el.style.setProperty('--bz-diary-ph-w', w + 'px');
+    const h = this.blockHeightOf(el);
+    if (h > maxH) {
+      if (prev) el.style.setProperty('--bz-diary-ph-w', prev);
+      else el.style.removeProperty('--bz-diary-ph-w');
+      return null;
+    }
+    return h;
+  }
+
   // ============================================================
   //  排版：块流 → 测量 → 切页 → 建书
   // ============================================================
@@ -626,7 +681,7 @@ export class DiaryAppController {
         lastDate = e.date;
         flow.push({ el: elOf(daystampHTML(e.date, dayCount.get(e.date) || 1)), h: 0, keep: true });
       }
-      for (const html of entryBlockHTMLs(e, ctx)) flow.push({ el: elOf(html), h: 0 });
+      this.pushEntryBlocks(flow, e, ctx);
     }
 
     // 2) 一次 reflow 全量测量（读完 offsetHeight 再读 margin，不会再触发一次布局）
@@ -639,7 +694,8 @@ export class DiaryAppController {
       flow,
       availH,
       (el, avail) => this.splitParagraph(el, avail, probe),
-      (el) => this.blockHeightOf(el)
+      (el) => this.blockHeightOf(el),
+      (el, maxH) => this.fitMedia(el, maxH)
     );
     probe.innerHTML = '';
     probe.remove();
@@ -656,6 +712,18 @@ export class DiaryAppController {
     this.buildBook(Math.max(0, Math.min(last, target)));
     this.refreshBookRect();
     return (typeof performance !== 'undefined' ? performance.now() : 0) - t0;
+  }
+
+  /**
+   * 条目 → 块元素。`bz-diary-b-photo`（照片 / 视频）标成**可缩块**：放不下时先等比缩到塞进
+   * 剩余高度（见 `paginateFlow` 规则 3a），别为差几十像素就整块换页、在页尾留半页白。
+   * 日戳与文字块不缩——文字走逐行续排，日戳必须整块起新纸。
+   */
+  private pushEntryBlocks(flow: FlowItem[], e: WallEntry, ctx: RenderCtx): void {
+    for (const html of entryBlockHTMLs(e, ctx)) {
+      const el = elOf(html);
+      flow.push(el.classList.contains('bz-diary-b-photo') ? { el, h: 0, fit: true } : { el, h: 0 });
+    }
   }
 
   /** 段落内第 idx 个字符落在哪个文本节点的哪个偏移 */
