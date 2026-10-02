@@ -11,10 +11,11 @@
  *   - 设置注入：setSettingsProvider（真 settings-provider，注入空默认键——目录走 config
  *     默认回落链）、applyDirectories（真 config，跨域目录解析同插件路径）；
  *   - 入口：openPanel = 真 index.openDiary（ensureDiary + controller.show）；
- *     openWrite = 真 index.openDiaryWrite（bz-diary-write 同链路，写日记弹窗直开）。
+ *     openWrite = 真 index.openDiaryWrite（bz-diary-write 同链路：摊开册子 → 摆出写作内页）。
  *
  * 产物：build-preview.mjs 以本文件为入口、alias obsidian→fake/fake-obsidian，
- * 产出 prototype-behavior.js 挂 window.BZW_diary，iframe 壳只调 boot + openPanel。
+ * 产出 prototype-behavior.js 挂 window.BZW_diary，iframe 壳调 boot + openPanel
+ * （`?write=1` 时改调 openWrite，直达写作内页——见 prototype-view.html）。
  * 插件的 ui.ts / data.ts / store.ts / dialogs.ts 等一律零改动——行为代码单源。
  */
 import { FakeApp, encodeSeedFile } from './fake/fake-obsidian';
@@ -71,7 +72,7 @@ export function openPanel(): void {
   openDiary(_app as never);
 }
 
-/** 写日记命令（真 index.openDiaryWrite：bz-diary-write 同链路，写日记弹窗直开） */
+/** 写日记命令（真 index.openDiaryWrite：bz-diary-write 同链路——先摊开册子，排好再摆写作内页） */
 export function openWrite(): void {
   bootDiarySim();
   openDiaryWrite(_app as never);
