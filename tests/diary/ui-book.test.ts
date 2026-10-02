@@ -1245,7 +1245,7 @@ describe('DiaryAppController · 排版窗口（ADR-0231）', () => {
   //  （「整本册子都翻了」「这一册里，那天没落笔」）。
   //
   //  夹具：seedManyEntries(90) = 2026-01-01 起连续 90 天 ⇒ 1 月 31 / 2 月 28 / 3 月 31。
-  //  条目最新在前 ⇒ 排版窗口（最新 30 条）= **整个 3 月**，1 月与 2 月全在窗口外。
+  //  条目最新在前 ⇒ 排版窗口（最新 30 条）= 3/31…3/2（3/1 恰落在窗口外），1 月与 2 月全在窗口外。
   // ------------------------------------------------------------
 
   it('册页索引按全量列月份：书里只排了 3 月，索引仍给出 1/2/3 三个月', async () => {
@@ -1296,6 +1296,11 @@ describe('DiaryAppController · 排版窗口（ADR-0231）', () => {
     await vi.waitFor(() => expect(raw.shown).toBe(90)); // 命中在最旧一则 ⇒ 推宽到全量
     await vi.waitFor(() => expect(qa('.bz-diary-page-item mark.bz-diary-hl-on').length).toBeGreaterThan(0));
     expect(q('.bz-diary-toast').textContent).toContain('寻得 1 则');
+    // 跨窗跳转走了一次 relayout（那里会把 this.search 换成空态）——检索态必须续回来，
+    // 否则将来接上「下一处」入口会从第 2 条起就断（去掉 nextHit 里的续回，这两条断言即红）
+    const st = (c as unknown as { search: { kw: string | null; hits: string[] } }).search;
+    expect(st.kw).toBe('第 1 天');
+    expect(st.hits.length).toBe(1);
   });
 
   it('台历点窗口外那天 → 推宽窗口再跳，不再假称「那天没落笔」', async () => {

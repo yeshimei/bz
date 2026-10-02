@@ -2188,7 +2188,14 @@ export class DiaryAppController {
     s.i++;
     /* 命中可能在排版窗口外：先按需推宽窗口再翻过去，否则跳了个寂寞。
        推宽会重建书页 DOM，所以标记等新页落定（与原先翻页后延后一拍同理）。 */
-    if (!this.revealEntry(eid)) return;
+    if (!this.revealEntry(eid)) {
+      this.toast('这一则翻不到页上');
+      return;
+    }
+    /* `revealEntry` 若推了窗口就会走 `relayout`，而那里把 `this.search` 整个换成空态
+       （旧页 DOM 已销毁，荧光笔自然没了）。把检索态续回去——不然「还剩几条命中」这一层
+       在第一次跨窗跳转后就被丢掉，将来接上「下一处」入口会从第 2 条起就断。 */
+    if (this.search !== s) this.search = s;
     setTimeout(() => this.markEntry(eid, kw), 80);
   }
 
