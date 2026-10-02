@@ -51,6 +51,8 @@ import {
   bookPanelHTML,
   daystampHTML,
   entryBlockHTMLs,
+  blockPlainText,
+  blockRootClass,
   inlineMd,
   mimeOfMediaName,
   splitTextBlocks,
@@ -90,6 +92,18 @@ import { mountIcons } from '../core/ui';
 export const SINGLE_MAX_W = 720;
 /** StPageFlip 翻页动画时长（原型 620ms 实测偏拖沓，收到 380ms） */
 const FLIP_TIME_MS = 380;
+
+/**
+ * 检索不看的块（`entryBlockHTMLs` 块根类名里的片段）：媒体卡 / 录音卡 / 火漆信封 / 日戳。
+ * 它们没有可读正文——尤其日戳，一串日期加「N 则」会把「则」这种词命中一大片。
+ * 口径与改版前一致（那时是拿已上屏的 DOM 元素按同一组类名跳过）。
+ */
+const SEARCH_SKIP_BLOCKS = [
+  'bz-diary-b-photo',
+  'bz-diary-b-audio',
+  'bz-diary-b-envelope',
+  'bz-diary-b-daystamp',
+];
 /** 页尾能塞下一刀的最小剩余高度：比这更矮就不切，直接换页（切出来两行字没有意义） */
 const PAGE_CUT_MIN_PX = 84;
 /** 日戳不孤行：本页剩余空间装不下「日戳 + 一点点内容」就提前换页 */
@@ -208,42 +222,41 @@ export function paginateFlow(
   return pages;
 }
 
-/** 月索引项：某月的首页号（书页序号，0 起）与该月条目数 */
-export interface MonthMark {
+/** 月索引项：`key` = `YYYY-MM`，`firstEid` = 该月最新那一则的条目 id，`n` = 该月条目数 */
+export interface MonthEntry {
   key: string;
-  page1: number;
+  firstEid: string;
   n: number;
 }
 
 /**
- * 册页索引（纯函数，可单测）：每个月**第一次出现**的页（读日戳的 `data-date`）。
- * 目录纸 / 书口年份染色 / 台历跳日共用这一份口径。
+ * 册页索引（纯函数，可单测）：**只看条目、不看排版**。
+ *
+ * 为什么不吃 `pages`：书只排了「已加载全量」的前 `shown` 条（ADR-0231 的排版窗口），
+ * 拿书页去汇月份，索引纸就只列得出首屏那半个月的月——窗口外的月份整行缺失、跳不过去。
+ * 窗口是**排版**细节，不是**数据**边界；索引该覆盖已加载的全部。
+ *
+ * 页码不在这里算：只有排过版才知道某月落在第几页，而窗口外的月份还没排。
+ * 调用方拿到 `firstEid` 后按需推宽窗口再定位（见 `DiaryAppController.revealEntry`）。
+ *
+ * `entries` 最新在前（全域同序），故每月**首次出现**的那条就是该月最新一条——
+ * 跳它即落到该月开头（同一天日戳 `keep` 必开新纸，日戳与首条同页）。
  */
-export function monthMarks(pages: Page[], entries: WallEntry[]): MonthMark[] {
-  const out: MonthMark[] = [];
-  const seen = new Set<string>();
-  for (let pi = 0; pi < pages.length; pi++) {
-    const dayEl = pages[pi].find((el) => el.classList.contains('bz-diary-b-daystamp'));
-    const date = dayEl?.getAttribute('data-date');
-    if (!date) continue;
-    const key = date.slice(0, 7);
-    if (seen.has(key)) continue;
-    seen.add(key);
-    out.push({ key, page1: pi + 1, n: 0 });
-  }
-  const byMonth = new Map<string, number>();
+export function monthIndex(entries: WallEntry[]): MonthEntry[] {
+  const out: MonthEntry[] = [];
+  const byKey = new Map<string, MonthEntry>();
   for (const e of entries) {
-    const k = e.date.slice(0, 7);
-    byMonth.set(k, (byMonth.get(k) || 0) + 1);
+    const key = e.date.slice(0, 7);
+    const hit = byKey.get(key);
+    if (hit) {
+      hit.n++;
+      continue;
+    }
+    const m: MonthEntry = { key, firstEid: e.id || '', n: 1 };
+    byKey.set(key, m);
+    out.push(m);
   }
-  for (const m of out) m.n = byMonth.get(m.key) || 0;
   return out;
-}
-
-/** 某页的日戳日期（跳日/搜索定位用；无日戳返回 null） */
-export function pageDateOf(page: Page): string | null {
-  const el = page.find((n) => n.classList.contains('bz-diary-b-daystamp'));
-  return el?.getAttribute('data-date') || null;
 }
 
 // ===== 小工具 =====
@@ -428,7 +441,9 @@ export class DiaryAppController {
   private cursor = 0;
   private single = false;
   private filterTag: string | null = null;
-  private search: { kw: string | null; hits: { pi: number; el: HTMLElement }[]; i: number } = {
+  /** 检索态：`hits` 存的是**命中条目的 id**（不是页内元素）——命中可能落在还没排版的窗口外，
+   *  得先按需推宽窗口才能定位，所以这一层记的是「哪几则」而不是「哪几个元素」。 */
+  private search: { kw: string | null; hits: string[]; i: number } = {
     kw: null,
     hits: [],
     i: 0,
@@ -864,37 +879,108 @@ export class DiaryAppController {
     this.flip.turnToPage(Math.max(0, Math.min(this.pages.length - 1, pi)));
   }
 
+  /**
+   * 「按需推宽窗口再跳」——索引 / 检索 / 台历跳日三条共用。
+   *
+   * 为什么要这一步：`Pages` 只覆盖「已加载全量」的前 `shown` 条（ADR-0231 的排版窗口），
+   * 而索引与检索必须覆盖**全部已加载条目**（否则窗口外的月/词既看不见也翻不到）。
+   * 于是目标落在窗口外时：把窗口一次性推到盖住它 → 重排 → 再定位到它那一页。
+   *
+   * 成本（诚实版）：这是一次**整窗重排**（`paginateFlow` 重跑 + 一次 reflow 量高 + 重建
+   * StPageFlip），代价 = O(目标在 `all` 里的位置)。只发生在**用户真的点过去**那一刻，
+   * 不是后台行为；跳最旧那一则就是排全量一次。之所以不用「后台一路排到全量」：那会持续重排，
+   * 把正在读的那一页反复重建。也不用滑窗：页码 / 书口年份带 / `keepPage` 保位都要跟着重做。
+   */
+  private indexInAllOf(eid: string): number {
+    if (!eid) return -1;
+    return this.visibleEntries().findIndex((e) => (e.id || '') === eid);
+  }
+
+  /** 把排版窗口推到至少覆盖 `all` 的第 `idx` 条。返回是否真的推了。 */
+  private widenToCover(idx: number): boolean {
+    const all = this.visibleEntries();
+    if (idx < 0 || idx >= all.length) return false;
+    if (idx + 1 <= this.shown) return false;
+    this.shown = idx + 1;
+    /* 只往尾部追加 ⇒ 前面每页边界不变、页索引语义不变，所以 keepPage 钉住当前页 */
+    this.relayout(false, true);
+    return true;
+  }
+
+  /** 条目 id → 它现在落在第几页（没排到 / 不在可见集 → -1） */
+  private pageOfEid(eid: string): number {
+    if (!eid) return -1;
+    for (let pi = 0; pi < this.pages.length; pi++) {
+      if (this.pages[pi].some((el) => el.dataset.eid === eid)) return pi;
+    }
+    return -1;
+  }
+
+  /**
+   * 跳到某一则：不在排版窗口里就先按需推宽窗口，再定位到它那一页。
+   * 返回是否真落到了页上（false = 这一则不在当前可见集里）。
+   */
+  private revealEntry(eid: string): boolean {
+    const idx = this.indexInAllOf(eid);
+    if (idx < 0) return false;
+    this.widenToCover(idx);
+    const pi = this.pageOfEid(eid);
+    if (pi < 0) return false;
+    this.jumpToPage(pi);
+    return true;
+  }
+
   // ============================================================
   //  书口：年份染色 + 册页索引
   // ============================================================
 
-  private monthMarksOf(): MonthMark[] {
-    return monthMarks(this.pages, this.visibleEntries());
+  /** 月份索引的**全量**口径（不吃排版窗口），见 `monthIndex()` */
+  private monthIndexAll(): MonthEntry[] {
+    return monthIndex(this.visibleEntries());
+  }
+
+  /**
+   * 某月落在第几页（**1 起**，与索引纸上印的页码同口径）；该月还没排进书里就返回 0。
+   * 定位的是该月最新那一则的页——日戳 `keep` 必开新纸，日戳与首条同页，所以那就是该月开头。
+   */
+  private pageOfMonth(m: MonthEntry): number {
+    const idx = this.indexInAllOf(m.firstEid);
+    if (idx < 0 || idx + 1 > this.shown) return 0;
+    const pi = this.pageOfEid(m.firstEid);
+    return pi < 0 ? 0 : pi + 1;
   }
 
   /**
    * 书口年份染色带：只作「这几年各占多厚」的缩影（整条边缘才是那个大按钮——点开抽索引）。
    * 只有一年时不画：一条通高的色带等于没有信息，只是把整条书口刷成一块颜色。
    * `top`/`height` 是量出来的几何（行为性内联值）；颜色按年序轮转走 `.bz-diary-ey-N` 类。
+   *
+   * 占比按**已加载全量的条目数**算，不按页码：书口是给整本日记看的缩影，而书只排了窗口那段
+   * （ADR-0231）——按页码算的话色带会随窗口边长，且与索引纸列出的月份对不上。
+   * 顺带把「分几年」也搬到条目上，于是它不再依赖排版窗口。
    */
   private renderEdgeMarks(): void {
     const edge = this.edgeEl;
     edge.querySelectorAll('.bz-diary-edge-year').forEach((b) => b.remove());
-    const months = this.monthMarksOf();
-    if (!months.length) return;
-    const total = Math.max(1, this.pages.length);
-    const years: { y: string; from: number }[] = [];
-    for (const m of months) {
-      const y = m.key.slice(0, 4);
-      if (!years.length || years[years.length - 1].y !== y) years.push({ y, from: m.page1 });
+    const all = this.visibleEntries();
+    if (!all.length) return;
+    /* 条目最新在前、按日期排过序 ⇒ 同一年必然连成一段，相邻比较即可分段 */
+    const years: { y: string; n: number }[] = [];
+    for (const e of all) {
+      const y = e.date.slice(0, 4);
+      const last = years[years.length - 1];
+      if (!last || last.y !== y) years.push({ y, n: 1 });
+      else last.n++;
     }
     if (years.length < 2) return;
+    const total = all.length;
+    let acc = 0;
     years.forEach((sg, i) => {
-      const top = ((sg.from - 1) / total) * 100;
-      const endFrom = i + 1 < years.length ? years[i + 1].from : total + 1;
-      /* 先按页数占比算高，再夹住 —— 不夹的话最旧那年只占 2% 时会被撑到 5%，
+      const top = (acc / total) * 100;
+      acc += sg.n;
+      /* 先按条目数占比算高，再夹住 —— 不夹的话最旧那年只占 2% 时会被撑到 5%，
          色带就拖出书口、露出书底一截 */
-      let h = Math.max(1.2, ((endFrom - 1) / total) * 100 - top);
+      let h = Math.max(1.2, (sg.n / total) * 100);
       h = Math.min(h, 100 - top);
       const b = document.createElement('div');
       b.className = `bz-diary-edge-year bz-diary-ey-${i % 8}`;
@@ -904,16 +990,24 @@ export class DiaryAppController {
     });
   }
 
-  /** 点书口 → 抽出「册页索引」那张纸：一年一段、一月一行 */
+  /**
+   * 点书口 → 抽出「册页索引」那张纸：一年一段、一月一行。
+   *
+   * 月份表与「凡 N 则」都按**已加载全量**（`visibleEntries()`）算，所以三项口径同源：
+   * 表头说凡 N 则，下面列出的月加起来就是 N 则，一个月也不会少。
+   * 行分两种：月已经排进书里 → 印「第 N 页」、点它直接翻页；还没排 → 印「未展开」、
+   * 点它先按需推宽窗口再翻（`revealEntry`）——页码只有排过版才知道，窗口外的月没排过，
+   * 这里就不假装知道，也不为了印页码去把全量排一遍。
+   */
   private openIndexSheet(): void {
-    const months = this.monthMarksOf();
     const list = this.visibleEntries();
-    if (!months.length || !list.length) {
+    const months = this.monthIndexAll();
+    if (!months.length) {
       this.toast('册页还空着');
       return;
     }
     const total = list.length;
-    /* 条目最新在前：list[0] 是最新一篇，list[last] 是最旧一篇 */
+    /* 条目最新在前：list[0] 是最新一篇，list[total-1] 是最旧一篇 */
     let html =
       '<div class="bz-diary-sheet-meta">自 ' +
       list[total - 1].date +
@@ -934,10 +1028,17 @@ export class DiaryAppController {
         curY = parts[0];
         open = true;
       }
+      const page = this.pageOfMonth(m);
+      const anchor = page
+        ? `data-jump-page="${page - 1}"`
+        : `data-jump-eid="${escapeHtml(m.firstEid)}"`;
+      const tail = page
+        ? `<span class="bz-diary-ir-p">第 ${page} 页</span>`
+        : `<span class="bz-diary-ir-p bz-diary-ir-pend">未展开</span>`;
       html +=
-        `<div class="bz-diary-idx-row" data-jump-page="${m.page1 - 1}">` +
+        `<div class="bz-diary-idx-row" ${anchor}>` +
         `<span class="bz-diary-ir-m">${parseInt(parts[1], 10)} 月</span><span class="bz-diary-ir-dots"></span>` +
-        `<span class="bz-diary-ir-n">${cnNum(m.n)} 则</span><span class="bz-diary-ir-p">第 ${m.page1} 页</span></div>`;
+        `<span class="bz-diary-ir-n">${cnNum(m.n)} 则</span>${tail}</div>`;
     }
     if (open) html += '</div></div>';
     this.openSheet('册 页 索 引', html);
@@ -1363,11 +1464,17 @@ export class DiaryAppController {
         this.toggleAudio(aud);
         return;
       }
-      /* 册页索引：点一行跳到那个月，纸就收回去 */
+      /* 册页索引：点一行跳到那个月，纸就收回去。
+         窗口外的月没有页码，带的是 `data-jump-eid`——先按需推宽窗口再翻（见 revealEntry）。 */
       const row = t.closest<HTMLElement>('.bz-diary-idx-row');
       if (row) {
         this.closeSheet();
-        this.jumpToPage(Number(row.dataset.jumpPage || 0));
+        const eid = row.dataset.jumpEid;
+        if (eid) {
+          if (!this.revealEntry(eid)) this.toast('这一则翻不到页上');
+        } else {
+          this.jumpToPage(Number(row.dataset.jumpPage || 0));
+        }
         return;
       }
       if (t.closest('.bz-diary-sheet-paper') && !t.closest('.bz-diary-sh-close')) return;
@@ -1944,7 +2051,9 @@ export class DiaryAppController {
   // ============================================================
 
   private openCal(): void {
-    const newest = this.entries[0];
+    /* 基准月取**当前这本册子**最新一篇所在的月（筛选态下不是全量最新那篇）——
+       否则一开台历停在早就翻不到的那个月，与本册对不上 */
+    const newest = this.visibleEntries()[0];
     const base = newest ? newest.date : '2026-01-01';
     this.cal.year = Number(base.slice(0, 4));
     this.cal.month = Number(base.slice(5, 7));
@@ -1959,7 +2068,10 @@ export class DiaryAppController {
     const { year, month } = this.cal;
     this.calYmEl.textContent = `${year} 年 ${month} 月`;
     const byDay = new Map<number, number>();
-    for (const e of this.entries) {
+    /* 每日「当天几则」按**当前这本册子的可见集**算（筛选标一挂，册子里就只剩那个标的内容）。
+       原先读未过滤的 `this.entries`：筛选态下台历会把筛掉的日子的标成「有」，
+       点下去却落到 `jumpToDay` 的「那天没落笔」——标着有、说没有，自相矛盾。 */
+    for (const e of this.visibleEntries()) {
       if (e.date.slice(0, 7) === `${year}-${pad2(month)}`) {
         const d = Number(e.date.slice(8, 10));
         byDay.set(d, (byDay.get(d) || 0) + 1);
@@ -1991,13 +2103,16 @@ export class DiaryAppController {
     this.calEl.hidden = true;
   }
 
+  /**
+   * 台历点某天 → 跳到那天。
+   *
+   * 在**已加载全量**里找那天，而不是只扫已排版的 `this.pages`：原先那圈只覆盖首屏那 30 则，
+   * 于是台历上明明标着「那天有 N 则」（标记读的是全量），点下去却说「这一册里，那天没落笔」
+   * ——一句话把自己否了。那天真的一条都没有时才说这句。
+   */
   private jumpToDay(date: string): void {
-    for (let pi = 0; pi < this.pages.length; pi++) {
-      if (pageDateOf(this.pages[pi]) === date) {
-        this.jumpToPage(pi);
-        return;
-      }
-    }
+    const hit = this.visibleEntries().find((e) => e.date === date);
+    if (hit && this.revealEntry(hit.id || '')) return;
     this.toast('这一册里，那天没落笔');
   }
 
@@ -2028,37 +2143,60 @@ export class DiaryAppController {
   //  放大镜（检索：荧光笔）
   // ============================================================
 
+  /**
+   * 检索（荧光笔）。**吃已加载全量，不吃排版窗口**。
+   *
+   * 原先遍历 `this.pages`（= 只排了首屏那 30 则的书页），于是搜老词会一本正经地弹
+   * 「整本册子都翻了，没有「X」这个词」——而窗口外那 1200 多则根本没搜。搜索是**数据**问题，
+   * 不该受**排版**窗口限制（ADR-0231 的窗口是首屏提速手段，不是数据边界）。
+   *
+   * 判命中用 `entryBlockHTMLs` 现算块文本：不吃 DOM（不用先把条目排进书里）、
+   * 也不必拿字段拼一串近似文本来代替——那两边一旦对不上，就会出现「说命中了 N 则、
+   * 点过去却标不出荧光笔」。命中按**则**计，跳过去把它那几块一起标。
+   */
   private runSearch(kw: string): void {
     this.clearMarks();
-    this.search = { kw, hits: [], i: 0 };
-    for (let pi = 0; pi < this.pages.length; pi++) {
-      for (const el of this.pages[pi]) {
-        if (
-          el.classList.contains('bz-diary-b-photo') ||
-          el.classList.contains('bz-diary-b-audio') ||
-          el.classList.contains('bz-diary-b-envelope') ||
-          el.classList.contains('bz-diary-b-daystamp')
-        ) {
-          continue;
-        }
-        if ((el.textContent || '').indexOf(kw) >= 0) this.search.hits.push({ pi, el });
-      }
+    const ctx = this.ctx();
+    const hits: string[] = [];
+    for (const e of this.visibleEntries()) {
+      if (this.entryMatches(e, kw, ctx)) hits.push(e.id || '');
     }
-    if (!this.search.hits.length) {
-      this.openSlip({ title: '没 找 到', body: `整本册子都翻了，没有「${escapeHtml(kw)}」这个词。`, ok: '知道了' });
+    this.search = { kw, hits, i: 0 };
+    if (!hits.length) {
+      this.openSlip({ title: '没 找 到', body: `这本册子里没有「${escapeHtml(kw)}」这个词。`, ok: '知道了' });
       return;
     }
-    this.toast(`寻得 ${this.search.hits.length} 处，荧光笔伺候`);
+    this.toast(`寻得 ${hits.length} 则，荧光笔伺候`);
     this.nextHit();
+  }
+
+  /** 一则是否命中：逐块判（跳过没有可读正文的那几类块），任一块的纯文本含 `kw` 即算 */
+  private entryMatches(e: WallEntry, kw: string, ctx: RenderCtx): boolean {
+    for (const html of entryBlockHTMLs(e, ctx)) {
+      const cls = blockRootClass(html);
+      if (SEARCH_SKIP_BLOCKS.some((c) => cls.includes(c))) continue;
+      if (blockPlainText(html).indexOf(kw) >= 0) return true;
+    }
+    return false;
   }
 
   private nextHit(): void {
     const s = this.search;
-    if (!s.hits.length) return;
-    const hit = s.hits[s.i % s.hits.length];
+    const kw = s.kw;
+    if (!s.hits.length || !kw) return;
+    const eid = s.hits[s.i % s.hits.length];
     s.i++;
-    this.jumpToPage(hit.pi);
-    setTimeout(() => this.markHit(hit.el, s.kw || ''), 80);
+    /* 命中可能在排版窗口外：先按需推宽窗口再翻过去，否则跳了个寂寞。
+       推宽会重建书页 DOM，所以标记等新页落定（与原先翻页后延后一拍同理）。 */
+    if (!this.revealEntry(eid)) return;
+    setTimeout(() => this.markEntry(eid, kw), 80);
+  }
+
+  /** 给某一则上荧光笔：它在书里可能被切成多块、甚至跨两页，凡带同一 `data-eid` 的块都标 */
+  private markEntry(eid: string, kw: string): void {
+    for (const page of this.pages) {
+      for (const el of page) if (el.dataset.eid === eid) this.markHit(el, kw);
+    }
   }
 
   private markHit(el: HTMLElement, kw: string): void {
@@ -2625,6 +2763,12 @@ export class DiaryAppController {
         this.firstPaintDone = true;
         this.shown = Math.min(this.shown, this.entries.length);
         this.relayout(false);
+      } else {
+        /* 后台读完了：书口年份带按**全量**重画一次。
+           它现在按已加载条目数算（不吃排版窗口），而首批成册那次只见到 30 条——
+           不补这一下，色带就永远停在「只占首屏那半个月」的比例上，与索引纸对不上。
+           只重画那几条色带、不重排书页（后台读完不该动正在读的那一页）。 */
+        this.renderEdgeMarks();
       }
       this.toast(reopen ? '又翻开了' : '翻开的是最新那篇');
     })();

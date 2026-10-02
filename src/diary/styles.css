@@ -894,6 +894,9 @@
 .bz-diary-ir-n { flex: none;  color: var(--bz-diary-ink-soft); }
 /* 宽到容得下「第 1243 页」——原来 64px 放不下三位数,「页」被挤到第二行 */
 .bz-diary-ir-p { flex: none; width: 92px; text-align: right;  color: var(--bz-diary-ink-faint); }
+/* 窗口外的月份：那一月还没排进书里，页码算不出来（ADR-0231 排版窗口）。这里不假装知道，
+   改标「未展开」，点它先按需推宽窗口再翻——所以要比页码再淡一档，读作「待定」而非「第 N 页」 */
+.bz-diary-ir-p.bz-diary-ir-pend { opacity: .62; font-style: italic; letter-spacing: .04em; }
 
 /* 灯箱:相片显影 */
 .bz-diary-lightbox {

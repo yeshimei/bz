@@ -3,7 +3,7 @@
  *
  * 回忆墙 UI 已整域退役（ADR-0230 决策 7），本文件是换代后的第一条主线测试，覆盖三层：
  *
- * 1. **纯函数**（`collectPhotoRefs` / `paginateFlow` / `monthMarks` / `pageDateOf` / `plainTextOf`）——
+ * 1. **纯函数**（`collectPhotoRefs` / `paginateFlow` / `monthIndex` / `plainTextOf`）——
  *    分页与索引是这次换代里唯一「算法」所在，抽成纯函数就是为了能脱开 DOM 量尺直接测；
  * 2. **markup 守卫**（render 纯层）——类名一律 `bz-diary-` 前缀（21 域共用一个 document）、
  *    零内联视觉样式（倾角走 `bz-diary-tilt-N` 类）、失败态走 `data-media-err` 换类；
@@ -25,8 +25,7 @@ import { DiaryAppController } from '../../src/diary/ui';
 import {
   collectPhotoRefs,
   paginateFlow,
-  monthMarks,
-  pageDateOf,
+  monthIndex,
   plainTextOf,
   lastReachableCursor,
   SINGLE_MAX_W,
@@ -284,33 +283,42 @@ describe('paginateFlow（块流 → 页）', () => {
   });
 });
 
-describe('monthMarks / pageDateOf（册页索引口径）', () => {
-  const stamp = (date: string) => {
-    const t = document.createElement('template');
-    t.innerHTML = daystampHTML(date, 1);
-    return t.content.firstElementChild as HTMLElement;
-  };
-
-  it('每个月第一次出现的页（1 起），条目数按月份汇总', () => {
-    const pages: Page[] = [[stamp('2026-08-19')], [], [stamp('2026-07-02')], [], [stamp('2025-12-31')]];
+describe('monthIndex（册页索引口径）', () => {
+  it('按月汇总条目数，一条不漏；每月记该月最新那一则的 id 供跳转', () => {
     const entries = [
-      mk({ date: '2026-08-19', kind: 'diary' }),
-      mk({ date: '2026-08-01', kind: 'diary' }),
-      mk({ date: '2026-07-02', kind: 'diary' }),
-      mk({ date: '2025-12-31', kind: 'movie', time: '00:00' }),
+      mk({ id: 'a', date: '2026-08-19', kind: 'diary' }),
+      mk({ id: 'b', date: '2026-08-01', kind: 'diary' }),
+      mk({ id: 'c', date: '2026-07-02', kind: 'diary' }),
+      mk({ id: 'd', date: '2025-12-31', kind: 'movie', time: '00:00' }),
     ];
-    expect(monthMarks(pages, entries)).toEqual([
-      { key: '2026-08', page1: 1, n: 2 },
-      { key: '2026-07', page1: 3, n: 1 },
-      { key: '2025-12', page1: 5, n: 1 },
+    expect(monthIndex(entries)).toEqual([
+      { key: '2026-08', firstEid: 'a', n: 2 },
+      { key: '2026-07', firstEid: 'c', n: 1 },
+      { key: '2025-12', firstEid: 'd', n: 1 },
     ]);
   });
 
-  it('没有日戳的页面不进索引，pageDateOf 返回 null', () => {
-    const pages: Page[] = [[stamp('2026-08-19')], []];
-    expect(monthMarks(pages, [])).toEqual([{ key: '2026-08', page1: 1, n: 0 }]);
-    expect(pageDateOf(pages[0])).toBe('2026-08-19');
-    expect(pageDateOf(pages[1])).toBeNull();
+  it('空集 → 空索引；缺 id 的条目记空串（跳转层会退化成找不到）', () => {
+    expect(monthIndex([])).toEqual([]);
+    expect(monthIndex([mk({ date: '2026-08-19', kind: 'diary' })])).toEqual([
+      { key: '2026-08', firstEid: '', n: 1 },
+    ]);
+  });
+
+  // 这是本次修的核心不变量：索引只吃条目，**不吃排版窗口**。
+  // 旧实现（monthMarks(pages, entries)）拿书页汇月份 ⇒ 书只排了首屏那 30 则时，
+  // 窗口外的月份整行消失（索引失真）。
+  it('不吃排版窗口：条目在、书页没排出来，月份照样在索引里', () => {
+    const entries = Array.from({ length: 40 }, (_, i) =>
+      mk({
+        id: `e${i}`,
+        date: `2026-0${i < 20 ? 8 : 7}-${String((i % 20) + 1).padStart(2, '0')}`,
+        kind: 'diary',
+      })
+    );
+    const idx = monthIndex(entries);
+    expect(idx.map((m) => m.key)).toEqual(['2026-08', '2026-07']);
+    expect(idx.reduce((s, m) => s + m.n, 0)).toBe(40);
   });
 });
 
@@ -662,6 +670,21 @@ describe('DiaryAppController · 文具四项接线', () => {
     q('.bz-diary-filter-tab').click();
     await vi.waitFor(() => expect(qa('.bz-diary-b-seal').length).toBe(5));
     expect(q('.bz-diary-filter-tab').classList.contains('bz-diary-on')).toBe(false);
+  });
+
+  it('筛选态下台历「当天几则」只数这本册子里有的（标着有，就得点得动）', async () => {
+    const c = await openBook();
+    // 夹具里 2026-08-19 有四则（日记 / 影视 / 书 / 信）；挂上「日记」标后册子里只剩两则
+    q('.bz-diary-tools [data-tact="stickers"]').click();
+    qa('.bz-diary-ap-sticker').find((el) => (el.textContent || '').includes('日记'))!.click();
+    await vi.waitFor(() => expect(qa('.bz-diary-b-seal').length).toBe(2));
+    (c as unknown as { closeAlbum: () => void }).closeAlbum();
+    q('.bz-diary-tools [data-tact="calendar"]').click();
+    const day = q('.bz-diary-cal-cell[data-d="19"]');
+    // 原先这枚角标读未过滤的 `this.entries` → 标 4 则，点下去却落到「那天没落笔」
+    expect(day.dataset.n).toBe('1');
+    expect(day.classList.contains('bz-diary-has')).toBe(true);
+    expect(qa('.bz-diary-cal-cell.bz-diary-has').length).toBe(1);
   });
 
   it('书口点一下抽出「册页索引」：一年一段、一月一行，行上带跳页号', async () => {
@@ -1212,5 +1235,76 @@ describe('DiaryAppController · 排版窗口（ADR-0231）', () => {
     const extend = (c as unknown as { extendIfAtTail: () => boolean }).extendIfAtTail.bind(c);
     expect(extend()).toBe(false);
     expect(qa('.bz-diary-b-seal').length).toBe(few);
+  });
+
+  // ------------------------------------------------------------
+  //  七、索引 / 检索 / 台历一律吃「已加载全量」，不吃排版窗口
+  //
+  //  守的是「窗口只决定排版多少，不决定数据边界」这条：索引与检索若跟着窗口走，
+  //  首屏那 30 则之外的月份会整行消失、老词会搜不到，而且界面还会**言之凿凿地说没有**
+  //  （「整本册子都翻了」「这一册里，那天没落笔」）。
+  //
+  //  夹具：seedManyEntries(90) = 2026-01-01 起连续 90 天 ⇒ 1 月 31 / 2 月 28 / 3 月 31。
+  //  条目最新在前 ⇒ 排版窗口（最新 30 条）= **整个 3 月**，1 月与 2 月全在窗口外。
+  // ------------------------------------------------------------
+
+  it('册页索引按全量列月份：书里只排了 3 月，索引仍给出 1/2/3 三个月', async () => {
+    seedManyEntries(90);
+    const c = await openBook();
+    await vi.waitFor(() => expect(c.entries.length).toBe(90));
+    expect(qa('.bz-diary-b-seal').length).toBe(FIRST_PAINT_ENTRIES); // 前提：只排了首屏那批
+    q('.bz-diary-bk-edge').click();
+    const rows = qa('.bz-diary-idx-row');
+    expect(rows.length).toBe(3); // 旧实现（拿书页汇月份）在这里只会给 1 行
+    expect(rows.map((r) => r.querySelector('.bz-diary-ir-m')!.textContent)).toEqual(['3 月', '2 月', '1 月']);
+    // 排进书里的那个月带页码；窗口外的两个月标「未展开」、改带条目 id 供按需推宽
+    expect(rows[0].dataset.jumpPage).toBe('0');
+    expect(rows[0].textContent).toContain('第 1 页');
+    expect(rows[1].dataset.jumpPage).toBeUndefined();
+    expect(rows[1].dataset.jumpEid).toBeTruthy();
+    expect(rows[1].textContent).toContain('未展开');
+    expect(rows[2].dataset.jumpEid).toBeTruthy();
+    // 表头三项同源：则数 / 月数都按全量（原先月数按窗口，跟「凡 N 则」自相矛盾）
+    const meta = q('.bz-diary-sheet-meta').textContent || '';
+    expect(meta).toContain('2026-03-31');
+    expect(meta).toContain('2026-01-01');
+    expect(meta).toContain('三 个月');
+  });
+
+  it('点窗口外那个月 → 按需推宽窗口再翻过去（只推到盖住它，不排全量）', async () => {
+    seedManyEntries(90);
+    const c = await openBook();
+    await vi.waitFor(() => expect(c.entries.length).toBe(90));
+    const raw = c as unknown as { shown: number };
+    expect(raw.shown).toBe(FIRST_PAINT_ENTRIES);
+    q('.bz-diary-bk-edge').click();
+    qa('.bz-diary-idx-row')[2].click(); // 1 月，窗口外
+    // 1 月最新那一则是第 60 条（3 月 31 条 + 2 月 28 条 + 1 条）⇒ 推宽到 60，不是 90
+    await vi.waitFor(() => expect(raw.shown).toBe(60));
+    expect(q('.bz-diary-sheet').hidden).toBe(true); // 纸收回去
+    expect(lastFlip().page).toBeGreaterThan(0); // 落到了页上，不是停在首页
+    expect(qa('.bz-diary-b-seal').length).toBe(60); // 书里真排到了那一则
+  });
+
+  it('检索吃全量：窗口外（最旧）那一则也搜得到、标得上', async () => {
+    seedManyEntries(90);
+    const c = await openBook();
+    await vi.waitFor(() => expect(c.entries.length).toBe(90));
+    const raw = c as unknown as { shown: number };
+    // 「第 1 天」是最旧那一则（i=0）——旧实现只扫已排版的 30 则，会弹「整本册子都翻了，没有」
+    (c as unknown as { runSearch: (k: string) => void }).runSearch('第 1 天');
+    await vi.waitFor(() => expect(raw.shown).toBe(90)); // 命中在最旧一则 ⇒ 推宽到全量
+    await vi.waitFor(() => expect(qa('.bz-diary-page-item mark.bz-diary-hl-on').length).toBeGreaterThan(0));
+    expect(q('.bz-diary-toast').textContent).toContain('寻得 1 则');
+  });
+
+  it('台历点窗口外那天 → 推宽窗口再跳，不再假称「那天没落笔」', async () => {
+    seedManyEntries(90);
+    const c = await openBook();
+    await vi.waitFor(() => expect(c.entries.length).toBe(90));
+    const raw = c as unknown as { shown: number; jumpToDay: (d: string) => void };
+    raw.jumpToDay('2026-01-05'); // 窗口里只有 3 月；这天真的有日记
+    await vi.waitFor(() => expect(raw.shown).toBeGreaterThan(FIRST_PAINT_ENTRIES));
+    expect(q('.bz-diary-toast').textContent).not.toContain('没落笔');
   });
 });
