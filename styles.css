@@ -4631,1583 +4631,1100 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   background: var(--bz-text-3);
 }
 
-/* ==================== 日记本域样式（src/diary/styles.css）—— 原回忆墙升格正名（ADR-0115） ==================== */
-/* ==================== 日记本（媒体墙原型 v5：章节固定 + 滚动高亮 + 性能优化） ==================== */
-/* 铁律 8：视觉样式写域源头，构建时聚合进根 styles.css；类名 bz- 前缀；禁止运行时注入 <style>。
- * reset 隔离：所有规则以 .bz-diary 为根，杜绝 Obsidian 全局样式渗透——
- * box-sizing、清 margin、清 Obsidian 对 button/input 的默认样式、隐藏滚动条（用户明确要求）。
- * 设计变量全部照搬原型，但映射 Obsidian 主题变量（不写死颜色）：
- * --background-primary/secondary、--text-normal/muted/faint、--interactive-accent、
- * --background-modifier-border/hover/active-hover、--color-green/orange/cyan。 */
+.stf__parent {
+  position: relative;
+  display: block;
+  box-sizing: border-box;
+  transform: translateZ(0);
 
-/* ---------- 设计变量（token 化，跟随 Obsidian 主题亮暗） ----------
-   挂 body 的日记弹层（日期筛选 .bz-diary-datefilter、滚轮选择器 #unified-datetime-picker-mask）
-   不在 .bz-diary 根内，必须同列声明——否则 --dw-* 在它身上全部解析失败
-   （背景 transparent、边框/文字色/阴影全丢）。
-   用户报障：「点击『日记本』打开的日期窗口没有背景色」即此因（此前只补过按钮背景，
-   卡片的 var(--dw-bg) 仍是空值）。滚轮壳系一致#2 降级口径：阴影对齐手册三档依赖同列声明。 */
-.bz-diary,
-.bz-diary-datefilter,
-#unified-datetime-picker-mask {
-  --dw-bg: var(--background-primary);
-  --dw-surface: var(--background-secondary);
-  --dw-hover: var(--background-modifier-hover);
-  --dw-active-hover: var(--background-modifier-active-hover);
-  --dw-line: var(--background-modifier-border);
-  --dw-cover: var(--background-modifier-cover);
-  --dw-ink: var(--text-normal);
-  --dw-muted: var(--text-muted);
-  --dw-faint: var(--text-faint);
-  --dw-accent: var(--interactive-accent);
-  --dw-on-accent: var(--text-on-accent);
-  --dw-green: var(--color-green);
-  --dw-orange: var(--color-orange);
-  --dw-cyan: var(--color-cyan);
-  --dw-bad: var(--text-error);
-  --dw-mono: var(--font-monospace);
-  --dw-shadow-sm: 0 1px 2px -2px rgba(0, 0, 0, 0.16), 0 3px 6px 0 rgba(0, 0, 0, 0.12);
-  --dw-shadow-md: 0 3px 6px -4px rgba(0, 0, 0, 0.12), 0 6px 16px 0 rgba(0, 0, 0, 0.08), 0 9px 28px 8px rgba(0, 0, 0, 0.05);
-  --dw-shadow-lg: 0 6px 16px -8px rgba(0, 0, 0, 0.08), 0 9px 28px 0 rgba(0, 0, 0, 0.05), 0 12px 48px 16px rgba(0, 0, 0, 0.03);
+  -ms-touch-action: pan-y;
+  touch-action: pan-y;
 }
 
-/* 面板根容器：固定全屏遮罩层（JS 控制 display），居中卡由子元素承担 */
-.bz-diary {
-  background: var(--dw-cover);
-  color: var(--dw-ink);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: var(--bz-space-xl);
+.sft__wrapper {
+  position: relative;
+  width: 100%;
   box-sizing: border-box;
 }
 
-/* ============ reset 隔离（用户明确要求：杜绝 Obsidian 全局样式渗透） ============ */
-.bz-diary *,
-.bz-diary *::before,
-.bz-diary *::after {
+.stf__parent canvas {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  left: 0;
+  top: 0;
+}
+
+.stf__block {
+  position: absolute;
+  width: 100%;
+  height: 100%;
   box-sizing: border-box;
-  margin: 0;
-  padding: 0;
+  perspective: 2000px;
 }
-/* 滚动条隐藏由 core 界面级单源规则接管（ADR-0122 / issue 277），原 .bz-diary 域内声明已删 */
-/* 清 Obsidian 对 button 的默认样式（font-family 继承字体族即可；font-size 交由各组件自身声明——
-   `font: inherit` shorthand 特异性 (0,1,1) 会覆盖 .bz-diary-chip 等组件的 font-size，导致字号失效） */
-.bz-diary button {
-  font-family: inherit;
-  cursor: pointer;
-  border: none;
-  background: none;
-  color: inherit;
+
+.stf__item {
+  display: none;
+  position: absolute;
+  transform-style: preserve-3d;
 }
-/* 清 Obsidian 对 input/textarea 的默认样式 */
-.bz-diary input,
-.bz-diary textarea {
-  font-family: inherit;
-  border: none;
-  background: none;
-  color: inherit;
+
+.stf__outerShadow {
+  position: absolute;
+  left: 0;
+  top: 0;
+}
+
+.stf__innerShadow {
+  position: absolute;
+  left: 0;
+  top: 0;
+}
+
+.stf__hardShadow {
+  position: absolute;
+  left: 0;
+  top: 0;
+}
+
+.stf__hardInnerShadow {
+  position: absolute;
+  left: 0;
+  top: 0;
+}
+/* ==================== 日记本域样式（src/diary/styles.css）—— 「桌上那本」书页界面（ADR-0230） ==================== */
+/* 铁律 8：视觉样式写域源头，构建时聚合进根 styles.css；禁止运行时注入 <style>；零内联视觉样式。
+ * 来源：`.scratch/diary-quill/`（v43 自由拟物探索稿）**按单源口径重写**，非搬运。命名规则与
+ * src/diary/render.ts 是同一条：**凡类名一律 `bz-diary-` 前缀**（21 个域共用一个 document）。
+ *
+ * 隔离口径（从独立页进插件必须付的两笔代价）：
+ * 1) 原型的 `:root` / `html, body` / `*` / 裸元素选择器（`button`/`code`/`mark`…）**全部收进
+ *    `.bz-diary-scene` 域根**——否则 `body{overflow:hidden}`、`*{margin:0}` 会把整个 Obsidian 重排。
+ * 2) 原型的 CSS 变量（`--paper`/`--ink`/`--gold`…）**统一加 `--bz-diary-` 前缀**并挂在域根上
+ *    ——原型的 `--paper` 与宿主/主题同名变量会互相污染；宿主 `--font-*` 保持不动。
+ *
+ * 刻意不做的两件事（ADR-0230 决策 3、决策 8）：
+ * - **不带外链字体**：原型观感的一半靠 Ma Shan Zheng / Long Cang / 霞鹜文楷四个 webfont，插件不能
+ *   依赖 CDN、CJK 又无法子集化打包。故 `font-family` 声明一律删除，回归宿主字体栈；观感由「手写」
+ *   转「印刷」，层级改由字号/字重/字距/留白承担。
+ * - **不改调色板**：书桌木质、纸张、火漆、皮面是「材料」不是「主题表面」，沿用原型色值、不映射
+ *   Obsidian 变量——映射会让书在深色主题下变成黑纸，拟物就崩了。这是对「不写死颜色」的一处
+ *   **有意例外**，代价是深浅主题下这本册子长得一样。
+ *
+ * z-index 不在本文件设静态档：域根由 ui.ts 经 core 的 `allocZ()`（ADR-0067）发号（行为性内联值）。
+ */
+
+.bz-diary-scene {
+  --bz-diary-pg-w: 520px;
+  --bz-diary-pg-h: 700px;
+  /* 书的整体缩放(窄桌面用)。默认给 1,不只靠 var() 的兜底 ——
+     .bz-diary-tools 的位置公式里要用它做乘法,值必须先存在 */
+  --bz-diary-book-zoom: 1;
+  --bz-diary-pg-pad-t: 88px;
+  --bz-diary-pg-pad-x: 54px;
+  --bz-diary-pg-pad-b: 66px;
+  --bz-diary-paper: #f6efdd;
+  --bz-diary-paper-2: #efe6cf;
+  --bz-diary-ink: #43392b;
+  --bz-diary-ink-soft: #6b5f4c;
+  --bz-diary-ink-faint: #9a8d74;
+  --bz-diary-seal-red: #b23a2a;
+  --bz-diary-gold: #c9a253;
+  --bz-diary-leather: #4e3423;
+  --bz-diary-leather-2: #3a2618;
+  /* 字体变量（--hand/--brush/--scrib）已删：ADR-0230 决策 3「不使用字体」，回归宿主字体栈 */
+  --bz-diary-paper-noise: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2'/%3E%3CfeColorMatrix values='0 0 0 0 0.45 0 0 0 0 0.4 0 0 0 0 0.32 0 0 0 .5 0'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23n)' opacity='.5'/%3E%3C/svg%3E");
+  --bz-diary-wood-noise: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='w'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.012 .18' numOctaves='4' seed='7'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 .8 0'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23w)'/%3E%3C/svg%3E");
+}
+
+.bz-diary-scene * { margin: 0; padding: 0; box-sizing: border-box; }
+.bz-diary-scene { height: 100%; }
+.bz-diary-scene {
+  
+  color: var(--bz-diary-ink);
+  background: #241a12;
+  overflow: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+.bz-diary-scene { position: fixed; inset: 0; }
+
+/* ---------- 桌面与灯光 ---------- */
+.bz-diary-desk {
+  position: absolute; inset: 0;
+  background:
+    radial-gradient(120% 90% at 50% 30%, rgba(255, 214, 150, .16), rgba(0,0,0,0) 55%),
+    repeating-linear-gradient(93deg, #33241763 0 26px, #00000000 26px 47px, #2a1d1163 47px 78px),
+    repeating-linear-gradient(88deg, #00000000 0 60px, #1d120873 60px 122px),
+    linear-gradient(160deg, #59402b, #3c2a1b 55%, #2b1d11);
+}
+.bz-diary-desk::before {
+  content: ""; position: absolute; inset: 0;
+  background: var(--bz-diary-wood-noise);
+  background-size: 300px;
+  opacity: .5; mix-blend-mode: overlay;
+  pointer-events: none;
+}
+.bz-diary-desk::after {
+  content: ""; position: absolute; inset: 0;
+  background: radial-gradient(140% 110% at 50% 42%, transparent 42%, rgba(8, 4, 1, .55) 100%);
+  pointer-events: none;
+}
+.bz-diary-lamp {
+  position: absolute; left: 50%; top: -220px; width: 720px; height: 380px;
+  transform: translateX(-50%);
+  background: radial-gradient(50% 62% at 50% 100%, rgba(255, 196, 110, .34), transparent 70%);
+  pointer-events: none;
+  animation: bz-diary-lampBreathe 9s ease-in-out infinite;
+}
+@keyframes bz-diary-lampBreathe { 50% { opacity: .82; } }
+
+/* ---------- 案头文具:紧贴书的下沿,默认藏着;鼠标压到书底那一条才浮出来 ---------- */
+/* 一只横木托,插着六枚象牙纸签,签上一个墨字 —— 功能就是书前这几件文具 */
+.bz-diary-tools {
+  position: absolute; left: 50%;
+  /* 挂在桌上,位置自己算:书高 --pg-h、书在 #desk 里居中(#book 是 translate(-50%,-50%)),
+     而书又被 --book-zoom 整体缩过 —— 所以**视觉上**的书下沿 = 50% + pgH/2 × zoom。
+     这样文具不跟着书缩(窄桌面下纸签还是 25px 的字),每一屏尺寸都是真的。 */
+  top: calc(50% + var(--bz-diary-pg-h) / 2 * var(--bz-diary-book-zoom, 1) + 22px);
+  z-index: 20;
+  display: flex; align-items: center; gap: 7px;
+  padding: 9px 10px; border-radius: 8px; isolation: isolate;
+  background: linear-gradient(180deg, #5d4630, #402e1e 58%, #322315);
+  box-shadow:
+    0 20px 34px -14px rgba(0,0,0,.8), 0 6px 14px rgba(0,0,0,.45),
+    inset 0 1px 0 rgba(255, 226, 178, .16), inset 0 -1px 0 rgba(0,0,0,.5);
+  opacity: 0; pointer-events: none;
+  transform: translateX(-50%) translateY(-8px);
+  transition: opacity .22s ease, transform .22s ease;
+}
+.bz-diary-tools.bz-diary-show { opacity: 1; pointer-events: auto; transform: translateX(-50%) translateY(0); }
+.bz-diary-tools::before {
+  content: ""; position: absolute; inset: 0; border-radius: inherit;
+  background: var(--bz-diary-wood-noise); background-size: 300px;
+  opacity: .55; mix-blend-mode: overlay; pointer-events: none;
+}
+.bz-diary-tl {
+  position: relative; width: 50px; height: 42px;
+  display: flex; align-items: center; justify-content: center;
+  border-radius: 2px; cursor: pointer; user-select: none;
+  background: linear-gradient(180deg, #fbf4e3, #ecdec0);
+  box-shadow: 0 2px 4px rgba(0,0,0,.5), inset 0 1px 0 rgba(255,255,255,.6);
+  transform: rotate(var(--bz-diary-r, -1deg));
+  transition: transform .16s, box-shadow .16s, background .18s;
+}
+.bz-diary-tl:nth-child(2n) { --bz-diary-r: 1deg; }
+.bz-diary-tl:nth-child(3n) { --bz-diary-r: -.5deg; }
+/* 纸的纹 */
+.bz-diary-tl::before {
+  content: ""; position: absolute; inset: 0; border-radius: inherit;
+  background: var(--bz-diary-paper-noise); background-size: 180px;
+  opacity: .5; mix-blend-mode: multiply; pointer-events: none;
+}
+/* 左缘一道印泥色：四件文具各有其色（原型的第五件「抹」见 ADR-0230 决策 9，已不搬） */
+.bz-diary-tl::after {
+  content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 3px;
+  border-radius: 2px 0 0 2px;
+  background: var(--bz-diary-c, #b23a2a); opacity: .5;
+}
+.bz-diary-tl[data-tact="pencil"] { --bz-diary-c: #b23a2a; }
+.bz-diary-tl[data-tact="lens"] { --bz-diary-c: #2e5a72; }
+.bz-diary-tl[data-tact="calendar"] { --bz-diary-c: #4a6b33; }
+.bz-diary-tl[data-tact="stickers"] { --bz-diary-c: #a8762b; }
+.bz-diary-tl b {
+  position: relative;  font-weight: 400;
+  font-size: 25px; line-height: 1; color: #463617;
+  text-shadow: 0 1px 0 rgba(255,255,255,.5);
+}
+@media (hover: hover) {
+
+.bz-diary-tl:hover { transform: rotate(0) translateY(-6px); box-shadow: 0 8px 14px rgba(0,0,0,.55), inset 0 1px 0 rgba(255,255,255,.6); }
+}
+
+/* ============================================================
+   书
+   ============================================================ */
+.bz-diary-book {
+  --bz-diary-book-w: calc(var(--bz-diary-pg-w) * 2);
+  position: absolute; left: 50%; top: 50%;
+  width: var(--bz-diary-book-w); height: var(--bz-diary-pg-h);
+  transform: translate(-50%, -50%) scale(var(--bz-diary-book-zoom, 1));
   outline: none;
 }
-.bz-diary ::selection {
-  background: color-mix(in srgb, var(--dw-accent) 25%, transparent);
-}
 
-/* ============ 面板骨架：桌面居中卡 / 移动真全屏 ============ */
-/* 桌面实例：居中卡（980px 宽 82vh，原型 desk-panel）
-   矮窗兜底：max-height 随视口收缩防溢出被裁；min-height 对齐 PANEL.MIN_H=560
-   （src/diary/ui.ts）——低于它的 CSS 下限会让拖拽收高在内联与 min-height 之间出现死区 */
-.bz-diary-desk {
-  position: relative;
-  width: 980px;
-  max-width: 95vw;
-  height: 82vh;
-  min-height: min(560px, calc(100vh - 48px));
-  max-height: calc(100vh - 48px);
-  display: flex;
-  flex-direction: column;
-  background: var(--dw-bg);
-  border-radius: var(--bz-radius-md);
-  box-shadow: var(--dw-shadow-md);
-  overflow: hidden;
-  animation: bz-diary-slide-up 0.24s ease-out;
-  flex-shrink: 0;
-}
-/* 移动实例：真全屏（默认隐藏，≤768px 显示；顶部避让由 .bz-panel-mtop 统一接管） */
-.bz-diary-mob {
-  display: none;
-  position: absolute;
-  inset: 0;
-  flex-direction: column;
-  background: var(--dw-bg);
-}
-
-/* ============ 头部行（品牌 + 范围 + 按钮组） ============ */
-.bz-diary-head {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: var(--bz-space-sm);
-  padding: var(--bz-space-lg) var(--bz-space-xl) 10px;
-  flex-shrink: 0;
-}
-.bz-diary-mob .bz-diary-head {
-  padding: 14px 20px var(--bz-space-sm);
-}
-.bz-diary-brand {
-  display: flex;
-  align-items: baseline;
-  gap: 10px;
-  cursor: pointer;
-}
-.bz-diary-bookname {
-  font-size: 18px;
-  font-weight: 600;
-  color: var(--dw-ink);
-}
-.bz-diary-range {
-  font-size: var(--bz-font-label);
-  color: var(--dw-muted);
-  font-weight: 400;
-  transition: color var(--bz-dur-fast);
-}@media (hover: hover) {
-
-.bz-diary-brand:hover .bz-diary-range {
-  color: var(--dw-accent);
-}
-}
-.bz-diary-btns {
-  display: flex;
-  align-items: center;
-  gap: var(--bz-space-sm);
-}
-/* 图标按钮（原型 icon-btn；关闭按钮规格由 core .bz-win-close 统一收窄）。
-   前缀 .bz-diary：reset.css 全局按钮重置（(0,1,1)）会压掉 hover/选中态背景 */
-.bz-diary .bz-diary-icon-btn {
-  width: 22px;
-  height: 26px;
-  font-size: var(--bz-font-body);
-  line-height: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: none;
-  border: none;
-  border-radius: var(--bz-radius-xs);
-  color: var(--dw-muted);
-  cursor: pointer;
-  padding: 0;
-  transition: background var(--bz-dur-fast);
-}@media (hover: hover) {
-
-.bz-diary .bz-diary-icon-btn:hover {
-  background: var(--dw-surface);
-}
-}
-/* 搜索按钮打开态（toggle 视觉反馈：搜索框展开时按钮高亮） */
-.bz-diary .bz-diary-icon-btn--on {
-  background: var(--dw-active-hover);
-  color: var(--dw-accent);
-}@media (hover: hover) {
-
-.bz-diary .bz-diary-icon-btn--on:hover {
-  background: var(--dw-active-hover);
-}
-}
-
-/* ============ 类型 chips 行 ============ */
-.bz-diary-chiprow {
-  display: flex;
-  gap: var(--bz-space-sm);
-  align-items: center;
-  padding: var(--bz-space-xs) var(--bz-space-xl) var(--bz-space-sm);
-  flex-wrap: wrap;
-  flex-shrink: 0;
-}
-.bz-diary-mob .bz-diary-chiprow {
-  padding: 2px 20px var(--bz-space-sm);
-  flex-wrap: nowrap;
-  overflow-x: auto;
-}
-.bz-diary-mob .bz-diary-chiprow .bz-diary-chip {
-  flex-shrink: 0;
-}
-/* 选择器带 .bz-diary 前缀（(0,2,0)+）：core reset.css 的全局按钮重置
-   `[class*="bz-"] button`（(0,1,1)）会清掉背景/字号/边框——用户反馈标签无背景色、
-   点击无高亮。前缀化后域样式胜出（reset 在根 styles.css 最前，域样式在后）。 */
-.bz-diary .bz-diary-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--bz-space-xs);
-  padding: 5px 10px;
-  border-radius: var(--bz-radius-full);
-  background: var(--dw-surface);
-  border: none;
-  box-shadow: none;
-  font-size: var(--bz-font-caption);
-  color: var(--dw-ink);
-  cursor: pointer;
-  font-family: inherit;
-  line-height: 1.25;
-  transition: background var(--bz-dur-fast), color var(--bz-dur-fast);
-  white-space: nowrap;
-}@media (hover: hover) {
-
-.bz-diary .bz-diary-chip:hover {
-  background: var(--dw-hover);
-}
-}
-.bz-diary-chip-cnt {
-  font-size: var(--bz-font-caption);
-  color: var(--dw-faint);
-}
-.bz-diary .bz-diary-chip--on {
-  background: var(--dw-accent);
-  color: var(--dw-on-accent);
-  box-shadow: none;
-}@media (hover: hover) {
-
-.bz-diary .bz-diary-chip--on:hover {
-  background: var(--dw-accent);
-  color: var(--dw-on-accent);
-}
-}
-.bz-diary .bz-diary-chip--on .bz-diary-chip-cnt {
-  color: rgba(255, 255, 255, 0.75);
-}
-/* 「加密」锁定态：虚线边框 + 半透明（原型 chip.locked） */
-.bz-diary .bz-diary-chip--locked {
-  border: 1px dashed var(--dw-line);
-  opacity: 0.72;
-}@media (hover: hover) {
-
-.bz-diary .bz-diary-chip--locked:hover {
-  opacity: 1;
-}
-}
-
-/* 二级标签行（选中主标签后显示其子标签 chips） */
-.bz-diary-subrow {
-  display: flex;
-  gap: 6px;
-  align-items: center;
-  padding: 0 var(--bz-space-xl) var(--bz-space-sm);
-  flex-wrap: wrap;
-  flex-shrink: 0;
-}
-.bz-diary-mob .bz-diary-subrow {
-  padding: 0 20px var(--bz-space-sm);
-  flex-wrap: nowrap;
-  overflow-x: auto;
-}
-.bz-diary .bz-diary-subchip {
-  flex-shrink: 0;
-  display: inline-flex;
-  align-items: center;
-  gap: 3px;
-  padding: 3px 10px;
-  border-radius: var(--bz-radius-full);
-  background: var(--dw-surface);
-  border: none;
-  box-shadow: none;
-  font-size: var(--bz-font-caption);
-  color: var(--dw-muted);
-  cursor: pointer;
-  font-family: inherit;
-  line-height: 1.25;
-  transition: background var(--bz-dur-fast), color var(--bz-dur-fast);
-  white-space: nowrap;
-}@media (hover: hover) {
-
-.bz-diary .bz-diary-subchip:hover {
-  background: var(--dw-hover);
-}
-}
-.bz-diary .bz-diary-subchip--on {
-  background: var(--dw-accent);
-  color: var(--dw-on-accent);
-}
-
-/* 搜索行（搜索框 = 共享 .bz-search 壳 + .bz-input，uiSearch 工厂挂载；域内只留行内边距） */
-.bz-diary-searchrow {
-  padding: 0 var(--bz-space-xl) 10px;
-  flex-shrink: 0;
-}
-.bz-diary-mob .bz-diary-searchrow {
-  padding: 0 20px var(--bz-space-sm);
-}
-
-/* ============ 主体：左章节栏 + 右瀑布 ============ */
-.bz-diary-mob .bz-diary-body {
-  height: 100%;
-}
-.bz-diary-body {
-  flex: 1;
-  display: flex;
-  min-height: 0;
-  min-width: 0;
-}
-
-/* ---- 章节栏（固定不随瀑布滚动；自身超高时内部滚动；滚动自动高亮当前月份） ----
-   壳 = 组件库 .bz-rail 族（ADR-0094）：.bz-rail（钩子类 .bz-diary-rail 锁 168px 档）
-   + .bz-rail-scroll + .bz-rail-item(.on)/.bz-rail-name/.bz-rail-count。
-   域内只留：宽度档/滚动内边距/月份行补垫（域 reset 通配会清 padding，需 ≥(0,2,0) 恢复）/
-   sticky 标题/年份分组/胶卷缩略图条（月份行域内特有形态）。 */
-.bz-diary-rail {
-  --bz-rail-w: 168px;
-}
-.bz-diary-mob .bz-diary-rail {
-  display: none;
-}
-.bz-diary-rail .bz-rail-scroll {
-  padding: var(--bz-space-md) 10px var(--bz-space-lg);
-}
-.bz-diary-rail .bz-diary-month {
-  padding: 10px;
-  /* 胶卷缩略图条换行到名称/计数第二行（.bz-rail-item 是 flex row） */
-  flex-wrap: wrap;
-}
-/* 栏顶「章 节」标题块已移除（2026-09-10 用户要求）：一列月份本身自明，
-   其 .bz-diary-rail-title 规则（含 sticky 遮罩）随元素一并删除 */
-/* 增强 #2：年份分组分隔标签（跨年处插入；月份项 data-month 不变，定位逻辑不动）。
-   首个年份标签（现为栏内首个子元素）顶垫收窄——上方已有 .bz-rail-scroll 的 12px 内垫 */
-.bz-diary-rail-year {
-  font-size: var(--bz-font-caption);
-  font-weight: 600;
-  color: var(--dw-faint);
-  padding: var(--bz-space-md) 10px 2px;
-  letter-spacing: 0.06em;
-}
-.bz-diary-rail-year:first-child {
-  padding-top: var(--bz-space-xs);
-}
-.bz-diary-month-strip {
-  width: 100%;
-  display: flex;
-  gap: 3px;
-  margin-top: 6px;
-  overflow: hidden;
-}
-/* issue 210：一行 5 格超小缩略（168px 栏 − padding − 4×3px gap ≈ 20px/格）；
-   issue 216：固定尺寸不伸缩——flex:1 均分会让缩略少的月份拉成整行宽条 */
-.bz-diary-month-thumb {
-  width: 20px;
-  height: 20px;
-  border-radius: var(--bz-radius-xs);
-  flex: 0 0 auto;
-  overflow: hidden;
-  background: var(--dw-surface);
-  font-size: var(--bz-font-caption);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  position: relative;
-}
-.bz-diary-month-thumb svg {
-  width: 12px;
-  height: 12px;
-}
-.bz-diary-month-thumb img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-.bz-diary-month-thumb--v {
-  /* issue 217 小项：teal 写死色 → 主题 token（跟随亮暗主题） */
-  background: linear-gradient(135deg, var(--dw-green), var(--dw-cyan));
-  color: #fff;
-}
-/* 视频缩略：缓存首帧小图/视频元素铺满格子，播放角标浮在其上（issue 212） */
-.bz-diary-month-thumb--v img,
-.bz-diary-month-thumb video {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-/* 视频格小图铺满格子（角标已按用户要求撤销，格内只有图一个主体） */
-.bz-diary-month-thumb--v img {
-  z-index: 0;
-}
-
-/* ---- 瀑布区（独立滚动容器） ---- */
-.bz-diary-wall {
-  flex: 1;
-  overflow-y: auto;
-  /* 顶垫必须是 0：日节头是 sticky top:0，而 sticky 的包含块是滚动容器的【内容框】——
-     容器带 padding-top 时节头只能停在「容器顶 + padding」处，那几像素就会露出滚过去
-     的正文（用户报障：日期头吸附时和上面头部之间有一道空隙）。首屏顶距由节头自身
-     padding(14px) 与时光条 padding 承担，不靠容器顶垫。 */
-  padding: 0 var(--bz-space-xl) var(--bz-space-2xl);
-  position: relative;
-  scroll-behavior: smooth;
-}
-.bz-diary-mob .bz-diary {
-  padding: 0 var(--bz-space-lg) var(--bz-space-xl);
-}
-/* ---- 增强 #5：那年今天时光条（wall 首屏顶部横滑回顾条，独立块不打断瀑布流；媒体卡 + 文字块卡，issue 352） ---- */
-.bz-diary-memories {
-  padding: var(--bz-space-md) 0 2px;
-}
-.bz-diary-memories-head {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: var(--bz-font-label);
-  font-weight: 600;
-  color: var(--dw-ink);
-  padding-bottom: var(--bz-space-sm);
-}
-.bz-diary-memories-head .bz-ic {
-  color: var(--dw-accent);
-}
-.bz-diary-memories-row {
-  display: flex;
-  gap: var(--bz-space-sm);
-  overflow-x: auto;
-  padding-bottom: 10px;
-}
-.bz-diary .bz-diary-memory {
-  position: relative;
-  flex-shrink: 0;
-  width: 96px;
-  padding: 0;
-  border: none;
-  border-radius: 10px;
-  overflow: hidden;
-  background: var(--dw-surface);
-  cursor: pointer;
-  font-family: inherit;
-  transition: opacity var(--bz-dur-fast);
-}@media (hover: hover) {
-
-.bz-diary .bz-diary-memory:hover {
-  opacity: 0.85;
-}
-}
-.bz-diary-memory-thumb {
-  width: 100%;
-  aspect-ratio: 4 / 3;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--dw-muted);
-  font-size: var(--bz-font-display);
-}
-.bz-diary-memory-thumb img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  display: block;
-}
-/* 视频缩略：首帧小图铺满 + 播放角标浮其上（与章节栏同口径，issue 212/217 修正） */
-.bz-diary-memory-thumb--v {
-  position: relative;
-}
-.bz-diary-memory-thumb--v img {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  z-index: 0;
-}
-.bz-diary-memory-thumb--v svg {
-  position: relative;
+/* 底壳(皮革外底,合书时即封面背板)。
+   层级(从下往上):书壳 1 → 纸层厚度 2 → 书口 3 → 书页 4
+   书口压在书页**后面**:扎进书页的那一段被书页挡住,只探出书页右沿几像素,
+   所以它既补上"纸边那一摞"的侧面,又不会盖住书页、也不会盖住书壳外沿 */
+.bz-diary-bk-shell {
+  position: absolute; inset: -14px -16px -16px -14px;
   z-index: 1;
-  filter: drop-shadow(0 0 2px rgb(0 0 0 / 0.5));
+  border-radius: 6px 14px 14px 6px;
+  background: linear-gradient(155deg, var(--bz-diary-leather), var(--bz-diary-leather-2));
+  box-shadow:
+    0 34px 60px -18px rgba(0, 0, 0, .75),
+    0 10px 24px rgba(0, 0, 0, .5),
+    inset 0 1px 0 rgba(255, 220, 160, .12);
 }
-.bz-diary-memory-year {
-  position: absolute;
-  left: 6px;
-  bottom: 5px;
-  font-size: var(--bz-font-caption);
-  line-height: 1.4;
-  color: #fff;
-  background: rgba(0, 0, 0, 0.45);
-  padding: 0 6px;
-  border-radius: var(--bz-radius-full);
+.bz-diary-bk-shell::before {
+  content: ""; position: absolute; inset: 0;
+  border-radius: inherit;
+  background: var(--bz-diary-paper-noise);
+  background-size: 180px; opacity: .25; mix-blend-mode: overlay;
 }
-/* 纯文字条目卡（issue 352）：与媒体缩略卡同形（4/3 面块 + 年份角标）不同貌——
-   无图面垫 hover 色，emoji 垫头 + 摘要多行截断，一眼可辨「这是文字不是图」。
-   审查修复批（issue 352）：摘要原 3 行满高溢出被卡裁半、且左下年份角标叠在字上——
-   底部 padding 让开角标（角标 bottom 4 + 行高 1.3 ≈ 18px）、摘要降 2 行，空间不足时
-   摘要块 flex 收缩裁剪，永不压角标 */
-.bz-diary .bz-diary-memory--text {
-  background: var(--dw-hover);
+/* 书芯下厚度(纸层)。只往**下**探,不往右伸 —— 右边那一摞由 .bk-edge 管,
+   两条纸色带叠着出现才是先前"纸质边缘裸露"的样子 */
+.bz-diary-bk-under {
+  position: absolute; left: 6px; right: 0; bottom: -12px; top: 8px;
+  z-index: 2;
+  border-radius: 2px 4px 6px 2px;
+  background:
+    repeating-linear-gradient(180deg, #e8dfc8 0 1.6px, #b7a98a 1.6px 3px);
+  transform: translateZ(-2px);
 }
-.bz-diary-memory-text {
-  width: 100%;
-  aspect-ratio: 4 / 3;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 3px;
-  padding: 6px 9px 18px;
-  text-align: left;
+
+/* 书口:书页那一摞的侧面 + 年份染色带。整条可点(点开在「抽出的一张纸」里看册页索引)。
+   压在书页**后面**(z-index 3 < 书页 4):扎进书页的那 6px 被书页盖住,
+   只有探出书页右沿的 8px 露在外面 —— 正好把"纸边那一摞"补上,又不盖书页、不盖书壳外沿。
+   上下不留余量(top/bottom 都是 0):书口不能比书还长,否则年份带会拖出书底 */
+.bz-diary-bk-edge {
+  position: absolute; top: 0; bottom: 0; right: -8px; width: 14px; z-index: 3;
+  border-radius: 0 5px 5px 0;
+  background: repeating-linear-gradient(180deg, #f4ecda 0 2px, #cbbd9e 2px 3.1px);
+  box-shadow: inset -3px 0 6px rgba(0,0,0,.16), 3px 0 8px rgba(0,0,0,.26);
+  overflow: hidden;   /* 年份带一律裁在书口里:任何情况下都不许拖出书底 */
+  cursor: pointer; transition: right .18s;
 }
-.bz-diary-memory-text-em {
-  font-size: var(--bz-font-meta);
-  line-height: 1.2;
-  flex-shrink: 0;
+/* 悬停 = 再往外抽几像素(抽到 14px 也还在书壳 16px 的范围内,书的轮廓不变) */
+@media (hover: hover) {
+
+.bz-diary-bk-edge:hover { right: -14px; }
 }
-.bz-diary-memory-text-tx {
-  font-size: var(--bz-font-caption);
-  line-height: 1.45;
-  color: var(--dw-ink);
-  display: -webkit-box;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
+/* 年份染色带:只作"这几年各占多厚"的缩影,不吃点击(点击归整条边缘)。
+   色很淡、alpha 压在颜色里 —— 底下的纸层横纹要透出来,书口还是"纸"不是漆。
+   只有一年时 ui.ts 直接不画(通高一色等于没有信息)。
+   色相按年序轮转,取八个类**(不上内联 background —— 见 ADR-0230 的零内联口径)**;
+   `top` / `height` 是量出来的几何,仍由 ui.ts 内联下发(行为性内联值)。 */
+.bz-diary-edge-year {
+  position: absolute; right: 0; width: 100%; pointer-events: none;
+  border-radius: 0 3px 3px 0;
+  box-shadow: inset -1px 0 2px rgba(0,0,0,.16);
+}
+.bz-diary-edge-year + .bz-diary-edge-year { border-top: 1px solid rgba(74, 54, 24, .24); }
+.bz-diary-ey-0 { background: hsla(340, 36%, 52%, .34); }
+.bz-diary-ey-1 { background: hsla(30, 36%, 52%, .34); }
+.bz-diary-ey-2 { background: hsla(205, 36%, 52%, .34); }
+.bz-diary-ey-3 { background: hsla(130, 36%, 52%, .34); }
+.bz-diary-ey-4 { background: hsla(270, 36%, 52%, .34); }
+.bz-diary-ey-5 { background: hsla(50, 36%, 52%, .34); }
+.bz-diary-ey-6 { background: hsla(170, 36%, 52%, .34); }
+.bz-diary-ey-7 { background: hsla(15, 36%, 52%, .34); }
+/* 提示签:原来挂在 .bk-edge 里,现在书口被书壳挡了一半,挂在它里头会一起被挡掉,
+   所以挪成它的兄弟节点(#bk-edge + .eb-hint)。位置 = 书右沿往内 14px,压在纸上 */
+.bz-diary-eb-hint {
+  position: absolute; right: 14px; top: 50%; z-index: 6;
+  transform: translateY(-50%) rotate(-1.5deg);
+  background: #fff9ea; color: var(--bz-diary-ink); 
+  font-size: 13px; padding: 4px 12px 5px; border-radius: 3px;
+  box-shadow: 0 4px 10px rgba(0,0,0,.3);
+  white-space: nowrap; opacity: 0; pointer-events: none;
+  transition: opacity .15s;
+}
+@media (hover: hover) {
+
+.bz-diary-bk-edge:hover + .bz-diary-eb-hint { opacity: 1; }
+}
+/* 触屏没有 hover:进来先亮 4 秒,让人知道书口能抽(桌面仍走 hover) */
+.bz-diary-eb-hint.bz-diary-peek { opacity: 1; }
+
+/* ---------- 芯:正文页交给 StPageFlip 渲染 ---------- */
+/* 书页:最上面一层。往右投一道浅影落到书口上 —— 读起来就是"这一摞纸压在书口前面" */
+.bz-diary-bk-block { position: absolute; inset: 0; z-index: 4; box-shadow: 5px 0 9px -2px rgba(40, 26, 10, .26); }
+
+/* 原型的「写作页」(.write-spread / .write-pad / .page.right / .wp-*) 已删：
+   ADR-0230 决策 8——写日记仍走本域既有的 openAddDialog（写层守卫 / 串行队列 / 加密分流都在那边），
+   书里不再自己装一张会写盘的纸 */
+.bz-diary-page-inner {
+  position: absolute; inset: 0;
+  padding: var(--bz-diary-pg-pad-t) var(--bz-diary-pg-pad-x) var(--bz-diary-pg-pad-b);
   overflow: hidden;
-  flex: 1;
-  min-height: 0;
 }
-/* 文字卡年份角标：左下略收紧（bottom 4 + 行高 1.3），为摘要腾出净空（媒体卡角标不受影响） */
-.bz-diary-memory--text .bz-diary-memory-year {
-  bottom: 4px;
-  line-height: 1.3;
+/* 离屏测量盒：与真页同宽同内边距，只量不分页（宽度读 --pg-w 单源；
+   原型在 JS 里另写了一个 520，改页宽要两处同步——这里只有 CSS 一处） */
+.bz-diary-probe {
+  position: absolute; visibility: hidden; left: -9999px; top: 0;
+  width: var(--bz-diary-pg-w); height: auto;
+  padding: var(--bz-diary-pg-pad-t) var(--bz-diary-pg-pad-x) var(--bz-diary-pg-pad-b);
 }
-/* 日期节头（sticky：滚动时吸顶显示日期 + 周几 + 统计） */
-.bz-diary-day-head {
-  position: sticky;
-  top: 0;
-  z-index: 10;
-  display: flex;
-  align-items: baseline;
-  gap: 10px;
-  padding: 14px 0 10px;
-  background: var(--dw-bg);
+.bz-diary-page-no {
+  position: absolute; bottom: 18px; left: 0; right: 0;
+   font-size: 14px;
+  color: var(--bz-diary-ink-faint); letter-spacing: 2px; user-select: none;
+  text-align: center;
 }
-.bz-diary-day-date {
-  font-size: var(--bz-font-title);
-  font-weight: 600;
-  color: var(--dw-ink);
-}
-.bz-diary-day-week {
-  font-size: var(--bz-font-meta);
-  color: var(--dw-muted);
-}
-.bz-diary-day-stat {
-  font-size: var(--bz-font-caption);
-  color: var(--dw-faint);
-  margin-left: auto;
-  display: flex;
-  gap: 6px;
-}
-.bz-diary-day-stat b {
-  font-weight: 500;
-  color: var(--dw-muted);
-}
-.bz-diary-day-head::after {
-  content: '';
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  height: 1px;
-  background: var(--dw-line);
-}
-/* masonry 瀑布（CSS 列式填充 = 真瀑布流：列内竖向排布、不等高不产生行对齐空隙。
-   原型 v5 即 column-count:3；grid 行式在不等高媒体下会出现横向大空隙——用户反馈改回） */
-.bz-diary-masonry {
-  column-count: 3;
-  column-gap: 10px;
-  padding-top: var(--bz-space-sm);
-}
-.bz-diary-masonry--mob {
-  column-count: 2;
-  column-gap: var(--bz-space-sm);
-}
-/* 每项避免跨列截断 */
-.bz-diary-masonry .bz-diary-item {
-  break-inside: avoid;
-  -webkit-column-break-inside: avoid;
-}
-/* 稀疏铺满（columns 下用全宽/半宽表达，避免大留白）：
-   稀疏 1 条：文字条全宽，媒体块保持单列宽（居中感由整块宽度表达） */
-.bz-diary-masonry--sparse-1 .bz-diary-item.bz-diary-text {
-  column-span: all;
-  margin-bottom: 10px;
-}
+/* 页码靠外缘(跨页时两个页码落在切口两侧);单页模式仍居中 */
+.bz-diary-page-item.--left .bz-diary-page-no { text-align: left; padding-left: 40px; }
+.bz-diary-page-item.--right .bz-diary-page-no { text-align: right; padding-right: 40px; }
+.bz-diary-scene.bz-diary-single .bz-diary-page-item .bz-diary-page-no { text-align: center; padding-left: 0; padding-right: 0; }
 
-/* ---- issue 218：长文跨栏卡（正文 ≥800 字）----
-   整卡横跨瀑布全宽（column-span:all），正文卡内报纸式分栏（桌面 3 栏/移动 2 栏），
-   媒体横排网格垫底——四五千字不再单列直坠千像素、两列陪跑空白 */
-.bz-diary-wide {
-  column-span: all;
-  -webkit-column-span: all;
-  background: var(--dw-surface);
-}
-.bz-diary-wide > .bz-diary-text-row {
-  padding: 14px 14px 0;
-}
-/* 卡内分栏：媒体嵌入已剥离的纯 markdown，块级内容自然流入各栏 */
-.bz-diary-wide-md {
-  columns: 3;
-  column-gap: 28px;
-  padding: 6px 14px 10px;
-}
-.bz-diary-masonry--mob .bz-diary-wide-md {
-  columns: 2;
-  column-gap: 18px;
-}
-/* 分栏阅读性：小块（引用/代码/表）禁跨栏断裂，段落允许自然续栏 */
-.bz-diary-wide-md pre,
-.bz-diary-wide-md blockquote,
-.bz-diary-wide-md img,
-.bz-diary-wide-md table,
-.bz-diary-wide-md li {
-  break-inside: avoid;
-}
-/* 长文媒体横排网格 */
-.bz-diary-wide-media {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-  gap: var(--bz-space-sm);
-  padding: 2px 14px 14px;
-}
-
-/* 条目（性能：屏外内容跳过渲染 + 布局/绘制隔离，原型 .item） */
-.bz-diary-item {
-  min-width: 0;
-  margin-bottom: 10px;
-  border-radius: 10px;
-  -webkit-touch-callout: none;
-  user-select: none;
+/* ---------- StPageFlip 书:容器与页纸(翻页动画由库渲染) ---------- */
+.bz-diary-flipbook { position: absolute; inset: 0; }
+.bz-diary-page-item {
   position: relative;
-  content-visibility: auto;
-  contain-intrinsic-size: auto 240px;
-  contain: layout paint style;
+  width: 100%; height: 100%; overflow: hidden;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.35), transparent 30px),
+    linear-gradient(90deg, var(--bz-diary-paper), var(--bz-diary-paper-2));
+  box-shadow: inset 0 0 46px rgba(120, 90, 40, .1);
 }
-
-/* ---- 媒体块 ---- */
-.bz-diary-media-wrap {
-  position: relative;
+.bz-diary-page-item::before {
+  content: ''; position: absolute; inset: 0;
+  background: var(--bz-diary-paper-noise); background-size: 180px;
+  opacity: .5; mix-blend-mode: multiply; pointer-events: none;
 }
-/* issue 214：卡内文字区（时间+类型行 + 拼接全文）垫在媒体堆叠上方 */
-.bz-diary-media-wrap > .bz-diary-text-row {
-  padding: 10px 10px 0;
-}
-.bz-diary-media-wrap > .bz-diary-text-tx {
-  padding: 2px 10px var(--bz-space-sm);
-}
-.bz-diary-media-wrap > .bz-diary-media + .bz-diary-media {
-  margin-top: 6px;
-}
-.bz-diary-media {
-  position: relative;
-  display: block;
-  width: 100%;
-  border-radius: 10px;
-  overflow: hidden;
-  cursor: zoom-in;
-  background: var(--dw-surface);
-  aspect-ratio: 4 / 3;
-}
-/* issue 217 S4：音频矮条——语音备忘不占 4/3~1/1 大块（媒体元素不设内联 aspect） */
-.bz-diary-media--audio {
-  aspect-ratio: auto;
-  height: 56px;
-  cursor: pointer;
-}
-.bz-diary-media img,
-.bz-diary-media video {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  display: block;
-}
-/* 渐变占位（加载失败/未加载时的兜底；视频/图片无 emoji 文字——用户要求去掉，
-   纯渐变 + 媒体自身 hover 角标；音频保留 🎵 图标（无封面可显示）） */
-.bz-diary-ph {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 36px;
-  transition: opacity var(--bz-dur-base);
-}
-/* 描述条（hover 浮现：emoji + 时间 + 媒体名） */
-.bz-diary-cap {
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  padding: 18px 10px 7px;
-  font-size: var(--bz-font-caption);
-  color: #fff;
-  background: linear-gradient(transparent, rgba(0, 0, 0, 0.6));
-  opacity: 0;
-  transition: opacity var(--bz-dur-fast);
-}@media (hover: hover) {
-
-.bz-diary-media:hover .bz-diary-cap {
-  opacity: 1;
-}
-}
-/* 视频 ▶ 播放角标（hover 浮现） */
-.bz-diary-play {
-  position: absolute;
-  inset: 0;
-  margin: auto;
-  width: 44px;
-  height: 44px;
-  border-radius: 50%;
-  background: rgba(0, 0, 0, 0.55);
-  color: #fff;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: var(--bz-font-title);
+/* 跨页内侧:翻页库给当前页挂 --left / --right,据此立起书脊的凹陷 */
+.bz-diary-page-item.--left::after {
+  content: ''; position: absolute; top: 0; bottom: 0; right: 0; width: 58px;
+  background: linear-gradient(-90deg, rgba(60, 40, 15, .26), rgba(60, 40, 15, .05) 46%, transparent);
   pointer-events: none;
-  opacity: 0;
-  transition: opacity var(--bz-dur-fast);
-}@media (hover: hover) {
+}
+.bz-diary-page-item.--right::after {
+  content: ''; position: absolute; top: 0; bottom: 0; left: 0; width: 58px;
+  background: linear-gradient(90deg, rgba(60, 40, 15, .26), rgba(60, 40, 15, .05) 46%, transparent);
+  pointer-events: none;
+}
+.bz-diary-scene.bz-diary-single .bz-diary-page-item::after { display: none; }
 
-.bz-diary-media:hover .bz-diary-play {
-  opacity: 1;
-}
-}
-/* 时长角标（视频） */
-.bz-diary-dur {
-  position: absolute;
-  right: 6px;
-  bottom: 6px;
-  padding: 1px 6px;
-  border-radius: var(--bz-radius-xs);
-  background: rgba(0, 0, 0, 0.65);
-  color: #fff;
-  font-size: var(--bz-font-caption);
-  font-family: var(--dw-mono);
+/* 触屏档收回正文的选择豁免（issue 217 同款教训）：便签菜单在触屏上唯一入口是长按，
+   正文若可选中，系统文本选择浮标会掐死长按计时 → 菜单永不出。桌面保留选中复制。 */
+@media (pointer: coarse) {
+  .bz-diary-page-item { user-select: none; -webkit-user-select: none; }
 }
 
-/* ---- 文字条 ---- */
-.bz-diary-text {
-  background: var(--dw-surface);
-  padding: var(--bz-space-md) 14px;
-  cursor: pointer;
-  transition: background var(--bz-dur-fast);
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}@media (hover: hover) {
+/* ---------- 丝带书签:整块去掉(2026-10-02)----------
+   回到最新那页改由 Esc 承担(见 ui.ts escapeStack),纸面上不再挂飘带 */
 
-.bz-diary-text:hover {
-  background: var(--dw-hover);
+/* ---------- 分类书签条 ---------- */
+.bz-diary-filter-tab {
+  position: absolute; right: -26px; top: 120px; z-index: 58;
+  writing-mode: vertical-rl; padding: 14px 6px 10px;
+  background: linear-gradient(180deg, #b23a2a, #8c2b1e);
+  color: #ffe9d8; font-size: 14px; letter-spacing: 4px;
+  clip-path: polygon(0 0, 100% 0, 100% calc(100% - 10px), 50% 100%, 0 calc(100% - 10px));
+  box-shadow: 3px 6px 12px rgba(0,0,0,.4);
+  cursor: pointer; display: none; user-select: none;
 }
-}
-.bz-diary-text-row {
-  display: flex;
-  align-items: center;
-  gap: var(--bz-space-sm);
-}
-.bz-diary-text-t {
-  font-family: var(--dw-mono);
-  font-size: var(--bz-font-caption);
-  color: var(--dw-muted);
-}
-.bz-diary-text-em {
-  font-size: var(--bz-font-meta);
-}
-/* issue 217 S5：`.bz-diary-tx`（媒体下挂正文）规则已随 213/214 版式删除（死规则）；
-   原随 217 加的正文可选中豁免已退役（2026-09-11 用户拍板，两端取消）：真机长按正文时系统
-   文本选择接管 → touchcancel 掐死 core/dom.longPress 的 500ms 计时 → 长按抽屉永不出
-   （用户见到的「右键菜单」即系统选择浮标）。正文选择回归 none（继承 .bz-diary-item） */
-.bz-diary-text-tx {
-  font-size: var(--bz-font-label);
-  line-height: 1.6;
-  color: var(--dw-ink);
+.bz-diary-filter-tab.bz-diary-on { display: block; }
+.bz-diary-filter-tab .bz-diary-ft-x { font-size: 11px; letter-spacing: 2px; opacity: .75; margin-top: 8px; }
+@media (hover: hover) {
+
+.bz-diary-filter-tab:hover .bz-diary-ft-x { opacity: 1; text-decoration: underline; }
 }
 
-/* ---- issue 217 S1：markdown 排版（域 reset 的 * {margin:0;padding:0} 会把
-   MarkdownRenderer 产出的块级间距全部抹平，必须有配套排版规则） ---- */
-.bz-diary-md p {
-  margin: 0 0 0.6em;
+/* ============================================================
+   纸上内容
+   ============================================================ */
+.bz-diary-b-daystamp { position: relative; margin: 0 0 18px; }
+.bz-diary-dstamp {
+  display: flex; align-items: flex-end; gap: 16px;
+  padding: 6px 2px 2px;
 }
-.bz-diary-md p:last-child {
-  margin-bottom: 0;
+@keyframes bz-diary-stampIn {
+  0% { transform: rotate(-6deg) scale(2.1); opacity: 0; filter: blur(1px); }
+  60% { transform: rotate(-.4deg) scale(.96); opacity: 1; filter: blur(0); }
 }
-.bz-diary-md h1,
-.bz-diary-md h2,
-.bz-diary-md h3,
-.bz-diary-md h4,
-.bz-diary-md h5,
-.bz-diary-md h6 {
-  margin: 0.9em 0 0.4em;
-  line-height: 1.35;
-  font-weight: 600;
+.bz-diary-ds-day {
+   font-size: 76px; line-height: .88;
+  color: #9a2f22; text-shadow: 0 1px 0 rgba(255,255,255,.6);
 }
-.bz-diary-md h1 {
-  font-size: 1.25em;
-}
-.bz-diary-md h2 {
-  font-size: 1.15em;
-}
-.bz-diary-md h3 {
-  font-size: 1.05em;
-}
-.bz-diary-md h4,
-.bz-diary-md h5,
-.bz-diary-md h6 {
-  font-size: 1em;
-}
-.bz-diary-md ul,
-.bz-diary-md ol {
-  margin: 0.3em 0 0.6em;
-  padding-left: 1.4em;
-}
-.bz-diary-md li {
-  margin: 2px 0;
-}
-.bz-diary-md blockquote {
-  margin: 0.5em 0;
-  padding: 2px var(--bz-space-md);
-  border-left: 3px solid var(--dw-line);
-  color: var(--dw-muted);
-}
-.bz-diary-md code {
-  font-family: var(--dw-mono);
-  font-size: 0.9em;
-  background: var(--dw-surface);
-  padding: 1px 5px;
-  border-radius: var(--bz-radius-xs);
-}
-.bz-diary-md pre {
-  margin: 0.5em 0;
-  padding: var(--bz-space-sm) 10px;
-  border-radius: var(--bz-radius-sm);
-  background: var(--dw-surface);
-  overflow-x: auto;
-}
-.bz-diary-md pre code {
-  background: none;
-  padding: 0;
-}
-.bz-diary-md a {
-  color: var(--dw-accent);
-  text-decoration: none;
-}@media (hover: hover) {
-
-.bz-diary-md a:hover {
-  text-decoration: underline;
-}
-}
-.bz-diary-md hr {
-  border: none;
-  border-top: 1px solid var(--dw-line);
-  margin: 0.8em 0;
-}
-.bz-diary-md img {
-  max-width: 100%;
-  border-radius: var(--bz-radius-sm);
-}
-.bz-diary-md table {
-  border-collapse: collapse;
-  margin: 0.5em 0;
-}
-.bz-diary-md th,
-.bz-diary-md td {
-  border: 1px solid var(--dw-line);
-  padding: 3px var(--bz-space-sm);
-}
-/* ============ 灯箱（全屏黑底，图片/视频/音频 controls 播放） ============ */
-.bz-diary-lb {
-  position: fixed;
-  inset: 0;
-  /* 静态 z 90 仅在面板 root 的 stacking context 内有意义（.bz-diary root 自身经 topifyZ
-     动态定层）；勿把该值当「高于一切 body 浮层」复用——抽屉/菜单等 body 级浮层走
-     core allocZ 动态发号，跨树层叠比较取的是面板 root 的号（D-UI1 根因注记） */
-  z-index: 90;
-  background: rgba(0, 0, 0, 0.9);
-  display: none;
-  align-items: center;
-  justify-content: center;
-  flex-direction: column;
-  animation: bz-diary-fade-in var(--bz-dur-base) ease-out;
-}
-.bz-diary-lb--show {
-  display: flex;
-}
-.bz-diary-lb-media {
-  max-width: 94vw;
-  max-height: 84vh;
-  border-radius: var(--bz-radius-sm);
-  object-fit: contain;
-}
-.bz-diary-lb video.bz-diary-lb-media,
-.bz-diary-lb audio.bz-diary-lb-media {
-  background: #000;
-  width: min(92vw, 900px);
-}
-.bz-diary-lb audio.bz-diary-lb-media {
-  height: 54px;
-  border-radius: var(--bz-radius-sm);
-}
-.bz-diary-lbcap {
-  margin-top: 14px;
-  color: rgba(255, 255, 255, 0.75);
-  font-size: var(--bz-font-label);
-  max-width: 80vw;
-  text-align: center;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-/* 灯箱副行：日记正文文字（不再显示媒体路径——用户要求）；
-   正文多行截断，行高与正文阅读一致，非等宽字体 */
-.bz-diary-lbsub {
-  margin-top: var(--bz-space-sm);
-  max-width: 76vw;
-  font-size: 12.5px;
-  line-height: 1.6;
-  color: rgba(255, 255, 255, 0.6);
-  text-align: center;
-  display: -webkit-box;
-  -webkit-line-clamp: 3;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-  word-break: break-word;
-}
-.bz-diary .bz-diary-lbclose {
-  position: absolute;
-  right: 20px;
-  top: 20px;
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.12);
-  color: #fff;
-  border: none;
-  font-size: var(--bz-font-emphasis);
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}@media (hover: hover) {
-
-.bz-diary .bz-diary-lbclose:hover {
-  background: rgba(255, 255, 255, 0.25);
-}
-}
-/* 增强 #1：灯箱左右连看按钮（到头循环；方向键 / 移动端滑动同口径） */
-.bz-diary .bz-diary-lbnav {
-  position: absolute;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.12);
-  color: #fff;
-  border: none;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: background var(--bz-dur-fast);
-}@media (hover: hover) {
-
-.bz-diary .bz-diary-lbnav:hover {
-  background: rgba(255, 255, 255, 0.25);
-}
-}
-.bz-diary .bz-diary-lbnav--prev {
-  left: 20px;
-}
-.bz-diary .bz-diary-lbnav--next {
-  right: 20px;
-}
-/* 增强 #8：加密媒体灯箱解密中占位（半透明块，解出后原地替换） */
-.bz-diary-lb-pending {
-  width: 120px;
-  height: 120px;
-  border-radius: var(--bz-radius-md);
-  background: rgba(255, 255, 255, 0.08);
-}
-.bz-diary-lberr {
-  color: #fff;
-  font-size: 40px;
-  text-align: center;
-  display: flex;
-  align-items: center;
-  gap: 10px;
+.bz-diary-ds-side { display: flex; flex-direction: column; gap: 3px; padding-bottom: 10px; }
+.bz-diary-ds-side b {  font-weight: 400; font-size: 20px; color: var(--bz-diary-ink); letter-spacing: 5px; }
+.bz-diary-ds-side i {  font-style: normal; font-size: 14px; color: var(--bz-diary-ink-soft); }
+.bz-diary-ds-side em {  font-style: normal; font-size: 13px; color: var(--bz-diary-ink-faint); }
+.bz-diary-ds-year { margin-left: auto; align-self: flex-end;  font-size: 15px; letter-spacing: 4px; color: var(--bz-diary-ink-faint); padding-bottom: 12px; }
+.bz-diary-ds-wave {
+  height: 12px; margin: 4px 0 16px;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='12'%3E%3Cpath d='M0 7 C 40 1, 80 11, 130 6 S 230 2, 290 8 S 370 10, 400 5' stroke='%23a34b3a' fill='none' stroke-width='1.6' stroke-linecap='round' opacity='.55'/%3E%3C/svg%3E") center/100% 12px no-repeat;
 }
 
-/* ============ 底部抽屉（移动端长按条目弹出） ============
-   2026-09-11 换核：壳/动作行/遮罩/关闭手势全归 core openItemSheet（.bz-item-sheet，
-   与 favorites/belongings/cinema 同源——全套 !important 抗 Obsidian 移动端 button 居中压盖，
-   域内自绘 .bz-sheet 壳真机动作行被压成居中即此因）。抽屉挂 body 不在 .bz-diary 内，
-   域内只留富媒体头（mkSheetHead 产物）：emoji + 时间行 + 正文预览 + 媒体缩略 + 右上关闭钮。
-   ⚠️ 头不在 .bz-diary 根内 → 域变量 --dw-* 取不到（var() 解析失败退化为继承，不是回退到
-   core 规则），此段一律用 core token / Obsidian 全局变量取色。 */
-.bz-diary-sheet-head {
-  position: relative;
-  display: flex;
-  align-items: flex-start;
-  gap: var(--bz-space-md);
-  padding: 2px 0 var(--bz-space-md);
-  border-bottom: 1px solid var(--background-modifier-border);
+/* 条目头(时间 · 类型)的整体重排见下方 .b-seal 那一段 —— 这里只留 .seal-pop 的落章动效 */
+.bz-diary-seal-tag.bz-diary-seal-pop { animation: bz-diary-stampIn .4s cubic-bezier(.2,1.4,.4,1) both; }
+
+/* 正文提取出来的 #标签:铅笔圈画小签,与米黄贴纸区分 */
+.bz-diary-seal-hash {
+  display: inline-block;  font-size: 14px;
+  color: #35637d; background: rgba(46, 90, 114, .05);
+  border: 1px dashed rgba(53, 99, 125, .4); border-radius: 3px;
+  padding: 0 5px 1px; transform: rotate(-1.5deg);
 }
-.bz-diary-sheet-emoji {
-  font-size: var(--bz-font-display);
-  line-height: 1;
+.bz-diary-seal-hash:nth-child(2n) { transform: rotate(1.5deg); }
+/* 原文空行（连续空行合并成一枚 blank 块，上限 3 行）。
+   高度走 `bz-diary-blank-N` 类（**非内联 height**——原型是 `d.style.height = 26*b.n+'px'`）：
+   render.ts 的 splitTextBlocks() 会把累计空行折成 n=1..3 的块。 */
+.bz-diary-b-blank { height: 26px; }
+.bz-diary-b-blank.bz-diary-blank-2 { height: 52px; }
+.bz-diary-b-blank.bz-diary-blank-3 { height: 78px; }
+
+/* 正文排版(段距为 0:分段语义交给首行缩进,段中跨页续排才严丝合缝) */
+.bz-diary-b-para {
+  font-size: 16.5px; line-height: 27px; color: var(--bz-diary-ink);
+  text-align: justify; margin: 0;
 }
-.bz-diary-sheet-info {
-  flex: 1;
-  min-width: 0;
+.bz-diary-b-para.bz-diary-p-indent { text-indent: 2em; }
+.bz-diary-b-para.bz-diary-p-cont { text-indent: 0; }
+/* 段中大标题(条目正文里的 ## 小标题)。
+   上 16 / 下 6:标题是"另起一段"的信号,得跟上面一段正文分开;
+   下面只留 6 —— 它管着的那段正文要贴紧它,不能也拉开。 */
+.bz-diary-b-head {
+   font-size: 22px; letter-spacing: 2px;
+  margin: 16px 0 6px; color: #503f22;
 }
-.bz-diary-sheet-time {
-  font-size: var(--bz-font-emphasis);
-  font-weight: var(--bz-weight-semibold);
-  color: var(--bz-text-1);
+.bz-diary-b-head.bz-diary-h2 { font-size: 19px; color: #5d4d2e; }
+.bz-diary-b-quote {
+  border-left: 3px solid rgba(140, 110, 60, .5);
+  padding: 2px 0 2px 12px; margin: 6px 0;
+  color: var(--bz-diary-ink-soft); font-size: 15.5px; line-height: 25px;
 }
-.bz-diary-sheet-content {
-  font-size: var(--bz-font-label);
-  color: var(--text-muted);
-  line-height: 1.5;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-  margin-top: var(--bz-space-xs);
+.bz-diary-b-list { margin: 4px 0 4px 4px; list-style: none; }
+.bz-diary-b-list li { font-size: 16px; line-height: 26px; padding-left: 20px; position: relative; }
+.bz-diary-b-list li::before { content: "·"; position: absolute; left: 6px; color: var(--bz-diary-seal-red); font-weight: bold; }
+.bz-diary-b-list.bz-diary-ordered { counter-reset: oli; }
+.bz-diary-b-list.bz-diary-ordered li { counter-increment: oli; }
+.bz-diary-b-list.bz-diary-ordered li::before { content: counter(oli) "."; font-size: 14px; }
+.bz-diary-b-hr { border: 0; height: 14px; margin: 8px 0;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='14'%3E%3Cpath d='M2 8 C 30 2, 60 12, 95 7 S 165 4, 198 8' stroke='%23a08b62' fill='none' stroke-width='1.6' stroke-linecap='round' opacity='.7'/%3E%3C/svg%3E") center/100% 14px no-repeat;
 }
-.bz-diary-sheet-media {
-  display: flex;
-  gap: 6px;
-  margin-top: var(--bz-space-sm);
-  overflow-x: auto;
+.bz-diary-b-code {
+   font-size: 13.5px;
+  background: rgba(90, 70, 40, .09); border-radius: 4px; padding: 8px 12px;
+  white-space: pre-wrap; line-height: 21px; margin: 6px 0;
 }
-.bz-diary-sheet-thumb {
-  width: 44px;
-  height: 44px;
+.bz-diary-scene b, .bz-diary-scene strong { font-weight: 700; color: #33291a; }
+.bz-diary-scene em, .bz-diary-scene i { font-style: normal; text-decoration: underline dotted rgba(120,90,40,.6); text-underline-offset: 3px; }
+.bz-diary-scene code {  font-size: .85em; background: rgba(90,70,40,.12); padding: 1px 5px; border-radius: 3px; }
+.bz-diary-scene del { text-decoration: line-through; color: var(--bz-diary-ink-faint); }
+.bz-diary-wikilink {
+  color: #2e5a72; cursor: pointer;
+  border-bottom: 1px dashed rgba(46, 90, 114, .6);
+}
+@media (hover: hover) {
+
+.bz-diary-wikilink:hover { background: rgba(46, 90, 114, .1); }
+}
+.bz-diary-scene mark.bz-diary-hl { background: linear-gradient(180deg, transparent 18%, #ffe566 18%, #ffd93e 88%, transparent 88%); color: inherit; padding: 0 1px; }
+.bz-diary-scene mark.bz-diary-hl.bz-diary-hl-on { animation: bz-diary-hlSweep .7s ease both; background-size: 0% 100%; background-repeat: no-repeat; }
+@keyframes bz-diary-hlSweep { from { background-size: 0% 100%; } to { background-size: 100% 100%; } }
+
+/* ---------- 日记里的照片 ----------
+   口径回到单源那份(src/diary/styles.css 的 .bz-diary-media):
+   媒体块就是"一张圆角的图 + 一层落影",没有相框、没有白边、不贴便利贴。
+   我先前自造的那些(相纸留白相框 / 骑在顶边的透明便利贴)全部撤掉:
+   便利贴既难贴准(有的图没贴上),又在纸上多出一层"另一件东西",反倒更乱。
+   外框高度仍固定 4/3 —— 分页只在重排时量一次,图后到不能改纸高 */
+.bz-diary-b-photo { margin: 12px auto 14px; width: min(300px, 78%); }
+.bz-diary-photo {
+  position: relative; margin: 0;
+  transform: rotate(-1.5deg);   /* 兜底角：tiltClassOf 未命中时也不正着贴 */
+  transition: transform .25s ease;
+  cursor: zoom-in;
+}
+/* 确定性微旋角：render.ts 的 tiltClassOf() 按序号发 0..5 号类（**类，非内联 style**——
+   原型那套 `style="--tilt:…"` 违反「禁内联视觉样式」）。6 档均分原型的 (-2deg, 2deg) 区间。 */
+.bz-diary-photo.bz-diary-tilt-0 { transform: rotate(-1.7deg); }
+.bz-diary-photo.bz-diary-tilt-1 { transform: rotate(-1deg); }
+.bz-diary-photo.bz-diary-tilt-2 { transform: rotate(-.3deg); }
+.bz-diary-photo.bz-diary-tilt-3 { transform: rotate(.3deg); }
+.bz-diary-photo.bz-diary-tilt-4 { transform: rotate(1deg); }
+.bz-diary-photo.bz-diary-tilt-5 { transform: rotate(1.7deg); }
+@media (hover: hover) {
+
+.bz-diary-photo:hover { transform: rotate(0deg) scale(1.025); z-index: 3; }
+}
+.bz-diary-ph-media {
+  width: 100%; aspect-ratio: 4 / 3; position: relative;
+  display: flex; align-items: center; justify-content: center;
+  overflow: visible;   /* 图外的落影要放出来,别被 4/3 框切掉 */
+}
+/* ---------- 相框(白) ----------
+   做法:框做在 img 自己的 padding 上。
+   img 的 padding 区会露出 background —— 那就是框体,而相片内容原样缩在里头,
+   于是框**天然贴着每张相片的真实尺寸**(竖图横图都合身),不用包一层壳去猜尺寸。
+   两层:
+     ① background 白 —— 框体本身(只剩一丝斜向衰减,不描任何线)
+     ② box-shadow 落影 —— 白框压在纸上,靠影和"白比纸亮"立住边
+   为什么一条线都不描:这张纸是米黄的,框是白的,而**每张相片是歪着贴的**
+   (`.photo` 有 rotate(-1.5deg))。旋转 1px 的描边会被光栅成台阶 —— 就是"锯齿"的来源。
+   白色块面自带 4px 宽的过渡,同样的旋转下边沿是软的。所以不是"少描一条线",
+   是描边这条路在旋转元素上本来就走不通。 */
+.bz-diary-ph-media img, .bz-diary-ph-media video {
+  max-width: 100%; max-height: 100%; width: auto; height: auto;
+  display: block; object-fit: contain; cursor: inherit;
+  padding: 9px;
+  border: 0;
+  border-radius: 3px;
+  background: linear-gradient(155deg, #ffffff 0%, #fefdfb 52%, #faf8f2 100%);
+  box-shadow: 0 12px 24px -9px rgba(58, 44, 22, .46), 0 3px 7px rgba(58, 44, 22, .2);
+}
+.bz-diary-ph-media img { opacity: 0; }
+/* 显影:照片从药水里捞出来 */
+.bz-diary-ph-media img.bz-diary-develop { animation: bz-diary-develop 1.1s ease both; }
+@keyframes bz-diary-develop {
+  0% { filter: blur(10px) brightness(1.55) sepia(.4); opacity: .2; }
+  55% { filter: blur(3px) brightness(1.18) sepia(.2); opacity: .8; }
+  100% { filter: none; opacity: 1; }
+}
+/* 冲不出来的那张:只在框里铺斜纹,不撑纸 */
+.bz-diary-ph-empty {
+  width: 100%; height: 100%;
+  background: repeating-linear-gradient(45deg, #ece2ca 0 12px, #e4d8ba 12px 24px);
+  display: flex; align-items: center; justify-content: center;
+  color: var(--bz-diary-ink-faint);  font-size: 15px; letter-spacing: 2px;
+  border: 1px solid rgba(74, 54, 24, .35);
+  box-shadow: none;
+}
+
+/* 音频:纸带录音卡(自绘播放键,不用原生播放器 —— 原生控件贴在纸上最出戏) */
+.bz-diary-b-audio { margin: 12px 0; }
+.bz-diary-ba-card {
+  display: flex; align-items: center; gap: 12px;
+  padding: 9px 14px 10px; border-radius: 3px; cursor: pointer;
+  background:
+    repeating-linear-gradient(135deg, rgba(190,160,100,.07) 0 8px, transparent 8px 16px),
+    linear-gradient(180deg, #f4ebd4, #ebe0c0);
+  border: 1px dashed rgba(140, 105, 50, .5);
+  box-shadow: 0 2px 5px rgba(60, 40, 15, .16);
+   color: var(--bz-diary-ink-soft);
+  transition: border-color .18s, box-shadow .18s;
+}
+@media (hover: hover) {
+
+.bz-diary-ba-card:hover { border-color: rgba(178, 58, 42, .55); box-shadow: 0 4px 10px rgba(60,40,15,.22); }
+}
+.bz-diary-ba-play {
+  flex: none; width: 30px; height: 30px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  border: 1.5px solid rgba(178, 58, 42, .55); color: var(--bz-diary-seal-red); font-size: 12px;
+  background: radial-gradient(circle at 40% 34%, #fff8e6, #f0e3c0);
+  padding-left: 2px;
+}
+.bz-diary-b-audio.bz-diary-playing .bz-diary-ba-play { background: radial-gradient(circle at 40% 34%, #cf6b5c, #a93324); color: #ffe9d8; padding-left: 0; }
+.bz-diary-ba-mid { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px; }
+.bz-diary-ba-name { font-size: 14px; color: var(--bz-diary-ink-soft); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.bz-diary-ba-bar { height: 3px; border-radius: 2px; background: rgba(140, 105, 50, .22); overflow: hidden; }
+.bz-diary-ba-bar i { display: block; height: 100%; width: 0; background: linear-gradient(90deg, #c9a253, #b23a2a); transition: width .2s linear; }
+.bz-diary-ba-time { flex: none; min-width: 44px; text-align: right; font-size: 13px; color: var(--bz-diary-ink-faint); letter-spacing: 1px; }
+.bz-diary-b-audio audio { display: none; }
+
+/* ---------- 电影票根 ---------- */
+.bz-diary-b-ticket { margin: 10px auto 16px; width: 92%; }
+.bz-diary-ticket {
+  display: flex; position: relative;
+  background: linear-gradient(160deg, #f3e6c4, #ecdcb2 60%, #e2cfa0);
   border-radius: 6px;
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  overflow: hidden;
-  position: relative;
-  background: var(--background-secondary);
+  box-shadow: 0 8px 18px rgba(60, 40, 15, .3);
+  transform: rotate(-.5deg);
+}
+.bz-diary-ticket::before, .bz-diary-ticket::after {
+  content: ""; position: absolute; width: 14px; height: 14px; border-radius: 50%;
+  background: var(--bz-diary-paper); box-shadow: inset 0 2px 4px rgba(90,60,20,.3);
+}
+.bz-diary-ticket::before { left: -7px; top: 50%; transform: translateY(-50%); }
+.bz-diary-ticket::after { right: -7px; top: 50%; transform: translateY(-50%); }
+.bz-diary-tk-main { flex: 1; padding: 14px 16px 12px; min-width: 0; }
+.bz-diary-tk-stub {
+  width: 92px; flex: none; border-left: 2px dashed rgba(140, 105, 50, .55);
+  padding: 12px 8px; display: flex; flex-direction: column; align-items: center; gap: 6px;
+}
+.bz-diary-tk-kind { font-size: 11px; letter-spacing: 3px; color: #8a6a33; }
+.bz-diary-tk-title {
+   font-size: 21px; line-height: 1.3; color: #4a3313;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+}
+.bz-diary-tk-meta { font-size: 12.5px; color: var(--bz-diary-ink-soft); line-height: 20px; margin-top: 6px; }
+.bz-diary-tk-meta b { color: #4a3313; }
+.bz-diary-tk-score { color: #b2732a;  }
+.bz-diary-tk-poster { width: 72px; height: 96px; object-fit: cover; background: #d8c9a4; box-shadow: 0 2px 6px rgba(0,0,0,.25); }
+.bz-diary-tk-date {  font-size: 13px; color: #8a6a33; }
+.bz-diary-tk-review {
+  margin-top: 8px; font-size: 14.5px; line-height: 23px; color: var(--bz-diary-ink-soft);
+  display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;
+}
+.bz-diary-tk-more {  font-size: 13px; color: #8a6a33; margin-top: 4px; cursor: pointer; align-self: flex-end; }
+@media (hover: hover) {
+
+.bz-diary-tk-more:hover { text-decoration: underline; }
+}
+
+/* ---------- 藏书票 ---------- */
+.bz-diary-b-exlibris { margin: 12px auto 16px; width: 88%; }
+.bz-diary-exlibris {
+  position: relative; display: flex; gap: 14px; padding: 16px 16px 14px;
+  background: linear-gradient(150deg, #f7efd9, #efe2c2);
+  border: 3px double rgba(122, 92, 44, .65);
+  box-shadow: 0 8px 18px rgba(60, 40, 15, .28);
+  transform: rotate(.6deg);
+}
+.bz-diary-exlibris::before {
+  content: "EX LIBRIS"; position: absolute; top: 8px; right: 12px;
+   font-size: 11px; letter-spacing: 3px; color: rgba(122, 92, 44, .55);
+}
+.bz-diary-ex-cover { width: 84px; height: 112px; object-fit: cover; flex: none; background: #d8c9a4; box-shadow: 2px 3px 8px rgba(0,0,0,.3); }
+.bz-diary-ex-nothing { width: 84px; height: 112px; flex: none; background: repeating-linear-gradient(45deg,#e2d5b4 0 10px,#d8c9a4 10px 20px); box-shadow: 2px 3px 8px rgba(0,0,0,.3); }
+.bz-diary-ex-main { min-width: 0; flex: 1; }
+.bz-diary-ex-title {  font-size: 21px; color: #503a14; line-height: 1.35; }
+.bz-diary-ex-author { font-size: 13.5px; color: var(--bz-diary-ink-soft); margin: 4px 0 8px; }
+.bz-diary-ex-review { font-size: 14.5px; line-height: 23px; color: var(--bz-diary-ink-soft); display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; }
+.bz-diary-ex-date {  font-size: 13px; color: #8a6a33; margin-top: 8px; text-align: right; }
+
+/* ---------- 火漆信封(加密) ---------- */
+.bz-diary-b-envelope { margin: 14px auto 18px; width: 78%; }
+.bz-diary-envelope { position: relative; cursor: pointer; }
+.bz-diary-env-body {
+  height: 150px; border-radius: 5px;
+  background: linear-gradient(160deg, #5c4a38, #4a3a2a 60%, #3d2f22);
+  box-shadow: 0 10px 20px rgba(30, 18, 8, .45), inset 0 1px 0 rgba(255,255,255,.1);
+  position: relative; overflow: hidden;
+}
+.bz-diary-env-body::before {
+  content: ""; position: absolute; inset: 0;
+  background:
+    linear-gradient(45deg, transparent 46%, rgba(255,255,255,.06) 46% 54%, transparent 54%),
+    linear-gradient(-45deg, transparent 46%, rgba(0,0,0,.12) 46% 54%, transparent 54%);
+}
+.bz-diary-env-flap {
+  position: absolute; left: 0; right: 0; top: 0; height: 76px;
+  background: linear-gradient(180deg, #6a563f, #55432f);
+  clip-path: polygon(0 0, 100% 0, 50% 100%);
+  transition: transform .5s ease; transform-origin: top center;
+  box-shadow: 0 3px 6px rgba(0,0,0,.3);
+  z-index: 2;
+}
+.bz-diary-env-wax {
+  position: absolute; left: 50%; top: 58px; transform: translateX(-50%);
+  width: 44px; height: 44px; border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #a03325, #6e1d13 70%, #571409);
+  box-shadow: 0 3px 8px rgba(0,0,0,.5), inset 0 -3px 6px rgba(0,0,0,.35);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 19px; z-index: 3;
+  transition: transform .3s;
+}
+@media (hover: hover) {
+
+.bz-diary-envelope:hover .bz-diary-env-wax { transform: translateX(-50%) scale(1.07); }
+}
+.bz-diary-env-label {
+  position: absolute; left: 0; right: 0; bottom: 14px; text-align: center;
+  color: #cbb896;  font-size: 14px; letter-spacing: 4px;
+}
+.bz-diary-env-split { position: absolute; left: 0; right: 0; top: 58px; height: 44px; pointer-events: none; z-index: 4; display: none; }
+.bz-diary-env-split i { position: absolute; top: 0; width: 50%; height: 100%; }
+.bz-diary-env-split .bz-diary-es-l { left: 0; transform-origin: right bottom; }
+.bz-diary-env-split .bz-diary-es-r { right: 0; transform-origin: left bottom; }
+.bz-diary-envelope.bz-diary-opening .bz-diary-env-split { display: block; }
+.bz-diary-envelope.bz-diary-opening .bz-diary-env-split .bz-diary-es-l { animation: bz-diary-waxL .6s ease both; }
+.bz-diary-envelope.bz-diary-opening .bz-diary-env-split .bz-diary-es-r { animation: bz-diary-waxR .6s ease both; }
+@keyframes bz-diary-waxL { to { transform: rotate(-38deg) translate(-12px, 10px); opacity: 0; } }
+@keyframes bz-diary-waxR { to { transform: rotate(30deg) translate(10px, 14px); opacity: 0; } }
+.bz-diary-envelope.bz-diary-opening .bz-diary-env-wax { animation: bz-diary-waxBreak .6s ease both; }
+@keyframes bz-diary-waxBreak {
+  0% { transform: translateX(-50%) scale(1); }
+  45% { transform: translateX(-50%) scale(1.25); }
+  100% { transform: translateX(-50%) scale(0); opacity: 0; }
+}
+.bz-diary-envelope.bz-diary-opening .bz-diary-env-flap { transform: rotateX(150deg); }
+/* 拆开的信不在纸上原地撑高(会把纸面顶破),全文在「抽出的一张纸」里读 */
+.bz-diary-env-reseal {
+  display: none; margin: 4px auto 12px; width: max-content;
+   font-size: 14px; color: #8a6a33; cursor: pointer;
+  border-bottom: 1px dashed rgba(138, 106, 51, .6); padding-bottom: 1px;
+}
+.bz-diary-envelope.bz-diary-unsealed .bz-diary-env-reseal { display: block; }
+
+/* ============================================================
+   浮层:便签菜单 / 纸条 / 贴纸册 / 台历 / 抽出的一张纸 / 灯箱
+   ============================================================ */
+.bz-diary-menu {
+  position: fixed; z-index: 200; min-width: 128px;
+  background: #fff8d6; padding: 8px 0;
+  box-shadow: 0 10px 24px rgba(50, 30, 5, .35), 0 2px 5px rgba(50,30,5,.2);
+  transform: rotate(-1deg);
+  animation: bz-diary-menuPop .18s cubic-bezier(.3, 1.4, .5, 1) both;
+}
+.bz-diary-menu::before {
+  content: ""; position: absolute; left: 0; right: 0; top: 0; height: 16px;
+  background: rgba(120, 90, 30, .12);
+  box-shadow: 0 1px 2px rgba(90,60,20,.15);
+}
+@keyframes bz-diary-menuPop { from { transform: rotate(-4deg) scale(.7); opacity: 0; } }
+.bz-diary-mn-item {
+  padding: 7px 18px 8px; font-size: 15.5px; cursor: pointer; color: var(--bz-diary-ink);
+  
+}
+@media (hover: hover) {
+
+.bz-diary-mn-item:hover { background: rgba(178, 58, 42, .1); }
+}
+.bz-diary-mn-item.bz-diary-danger { color: var(--bz-diary-seal-red); }
+.bz-diary-mn-item[hidden] { display: none; }
+.bz-diary-menu[hidden] { display: none; }
+
+/* 纸条(输入/确认) */
+.bz-diary-slip { position: fixed; inset: 0; z-index: 300; display: flex; align-items: center; justify-content: center; background: rgba(20, 12, 5, .35); }
+.bz-diary-slip[hidden] { display: none; }
+.bz-diary-slip-paper {
+  width: min(400px, 88vw); background: #fff8d6; padding: 22px 26px 20px;
+  box-shadow: 0 24px 50px rgba(0,0,0,.5);
+  transform: rotate(-1.2deg);
+  animation: bz-diary-slipIn .28s cubic-bezier(.3, 1.3, .5, 1) both;
+  background-image: repeating-linear-gradient(180deg, transparent 0 30px, rgba(116,148,156,.35) 30px 31px);
+}
+@keyframes bz-diary-slipIn { from { transform: rotate(-4deg) translateY(30px) scale(.92); opacity: 0; } }
+.bz-diary-slip-title {  font-size: 22px; color: #503a14; margin-bottom: 10px; }
+.bz-diary-slip-body { font-size: 15.5px; line-height: 26px; color: var(--bz-diary-ink); }
+.bz-diary-slip-body em { font-style: normal; color: var(--bz-diary-seal-red); }
+.bz-diary-slip-row { display: flex; gap: 22px; justify-content: flex-end; margin-top: 18px; }
+.bz-diary-slip-input {
+  width: 100%; border: 0; border-bottom: 1.5px dashed rgba(107, 95, 76, .55); outline: 0;
+  background: transparent; font-size: 17px; padding: 5px 2px; color: var(--bz-diary-ink);
+  
+}
+.bz-diary-slip-input:focus { border-bottom-color: var(--bz-diary-seal-red); }
+.bz-diary-slip-btn {
+   font-size: 18px; cursor: pointer; color: var(--bz-diary-ink-soft);
+  border-bottom: 1px dashed currentColor; padding-bottom: 1px; user-select: none;
+}
+.bz-diary-slip-btn.bz-diary-primary, .bz-diary-slip-btn.bz-diary-danger { color: var(--bz-diary-seal-red); }
+@media (hover: hover) {
+
+.bz-diary-slip-btn:hover { opacity: .75; }
+}
+.bz-diary-slip-err { color: var(--bz-diary-seal-red); font-size: 13px;  }
+
+/* 贴纸册弹层 */
+.bz-diary-album-pop { position: fixed; inset: 0; z-index: 320; display: flex; align-items: center; justify-content: center; background: rgba(20, 12, 5, .4); }
+.bz-diary-album-pop[hidden] { display: none; }
+.bz-diary-ap-book {
+  width: min(640px, 92vw); max-height: 78vh; overflow: auto;
+  background: linear-gradient(160deg, #fbf3de, #f2e7cb);
+  box-shadow: 0 30px 60px rgba(0,0,0,.55);
+  border: 1px solid rgba(122, 92, 44, .35);
+  transform: rotate(-.6deg);
+  animation: bz-diary-slipIn .3s cubic-bezier(.3,1.3,.5,1) both;
+  padding: 20px 26px 16px;
+}
+.bz-diary-ap-head {  font-size: 24px; color: #503a14; margin-bottom: 14px; letter-spacing: 4px; }
+.bz-diary-ap-sub {  font-size: 14px; color: var(--bz-diary-ink-faint); margin-left: 12px; letter-spacing: 1px; }
+.bz-diary-ap-grid { display: flex; flex-wrap: wrap; gap: 10px 12px; }
+.bz-diary-ap-sticker {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 6px 12px 7px; font-size: 15px; border-radius: 3px; cursor: pointer;
+  background: linear-gradient(180deg, #fffbe8, #f4e8c4);
+  box-shadow: 0 3px 5px rgba(90,60,20,.22), inset 0 0 5px rgba(255,255,255,.7);
+  color: #5c4a26; transform: rotate(var(--bz-diary-r, -1deg)); transition: transform .16s;
+  user-select: none;
+}
+.bz-diary-ap-sticker:nth-child(2n) { --bz-diary-r: 1.3deg; }
+.bz-diary-ap-sticker:nth-child(3n) { --bz-diary-r: -.7deg; }
+@media (hover: hover) {
+
+.bz-diary-ap-sticker:hover { transform: translateY(-3px) rotate(0); box-shadow: 0 6px 10px rgba(90,60,20,.3); }
+}
+.bz-diary-ap-sticker.bz-diary-on { background: linear-gradient(180deg, #dcebcf, #c3d9ae); box-shadow: 0 3px 8px rgba(90,60,20,.4); }
+.bz-diary-ap-sticker.bz-diary-locked { opacity: .55; }
+.bz-diary-ap-sticker .bz-diary-as-emoji { font-size: 17px; }
+/* 分类册里每张贴纸尾上的计数（原型是 `<i style="…">N</i>`，内联样式禁） */
+.bz-diary-ap-sticker .bz-diary-as-count { opacity: .55; font-size: 12px; }
+.bz-diary-ap-sticker.bz-diary-as-encrypt { background: linear-gradient(180deg, #f3e0d8, #e6c4b4); }
+.bz-diary-ap-foot { display: flex; justify-content: flex-end; margin-top: 16px; }
+
+/* 台历弹层 */
+.bz-diary-cal-pop { position: fixed; inset: 0; z-index: 320; display: flex; align-items: center; justify-content: center; background: rgba(20, 12, 5, .4); }
+.bz-diary-cal-pop[hidden] { display: none; }
+.bz-diary-cal {
+  width: min(430px, 92vw); background: #fdfcf7; border-radius: 6px; overflow: hidden;
+  box-shadow: 0 30px 60px rgba(0,0,0,.55);
+  transform: rotate(-.8deg); animation: bz-diary-slipIn .3s cubic-bezier(.3,1.3,.5,1) both;
+}
+.bz-diary-cal-head {
+  background: linear-gradient(180deg, #b23a2a, #8c2b1e); color: #ffe9d8;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 16px;
+}
+.bz-diary-cal-ym {  font-size: 22px; letter-spacing: 3px; }
+.bz-diary-cal-nav { cursor: pointer; font-size: 18px; padding: 2px 10px; opacity: .85; }
+@media (hover: hover) {
+
+.bz-diary-cal-nav:hover { opacity: 1; }
+}
+.bz-diary-cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px; padding: 14px 14px 6px; }
+.bz-diary-cal-wd { text-align: center; font-size: 12px; color: var(--bz-diary-ink-faint); padding: 3px 0; }
+.bz-diary-cal-cell {
+  position: relative; text-align: center; font-size: 14.5px; padding: 8px 0 9px;
+  border-radius: 4px; cursor: default; color: var(--bz-diary-ink);
+}
+.bz-diary-cal-cell.bz-diary-has { cursor: pointer; }
+@media (hover: hover) {
+
+.bz-diary-cal-cell.bz-diary-has:hover { background: rgba(178, 58, 42, .1); }
+}
+.bz-diary-cal-cell.bz-diary-has::after {
+  content: attr(data-n); position: absolute; right: 3px; top: 1px;
+  /* 可访问性下限 11px（原型那份是 9px，单源域样式不接受 <11px） */
+  font-size: 11px; color: var(--bz-diary-seal-red); 
+}
+.bz-diary-cal-cell.bz-diary-sel { background: rgba(178, 58, 42, .14); box-shadow: inset 0 0 0 1.5px rgba(178,58,42,.55); }
+.bz-diary-cal-time-row { display: flex; align-items: center; gap: 10px; padding: 4px 18px 0; }
+.bz-diary-ct-label {  font-size: 15px; color: var(--bz-diary-ink-soft); flex: none; }
+.bz-diary-ct-input {
+  flex: 1; border: 0; border-bottom: 1.5px dashed rgba(107,95,76,.5); outline: 0; background: transparent;
+  font-size: 16px; padding: 4px 2px;  color: var(--bz-diary-ink);
+}
+.bz-diary-ct-err { font-size: 12px; color: var(--bz-diary-seal-red);  }
+.bz-diary-cal-foot { display: flex; justify-content: flex-end; gap: 22px; padding: 14px 18px 14px; }
+.bz-diary-cal-ok, .bz-diary-cal-cancel {  font-size: 17px; cursor: pointer; color: var(--bz-diary-ink-soft); border-bottom: 1px dashed currentColor; }
+.bz-diary-cal-ok { color: var(--bz-diary-seal-red); }
+@media (hover: hover) {
+
+.bz-diary-cal-ok:hover, .bz-diary-cal-cancel:hover { opacity: .75; }
+}
+
+/* 抽出的一张纸:全文阅读(影评/书评/拆开的信都到这里读,不在纸面上原地撑高) */
+.bz-diary-sheet { position: fixed; inset: 0; z-index: 330; display: flex; align-items: center; justify-content: center; background: rgba(20, 12, 5, .42); }
+.bz-diary-sheet[hidden] { display: none; }
+.bz-diary-sheet-paper {
+  width: min(560px, 90vw); display: flex; flex-direction: column;
+  /* 抽出来的纸不能比书还长:上限同时压住书高(--pg-h)与视口,免得屁股拖出书本一截 */
+  max-height: min(78vh, calc(var(--bz-diary-pg-h) - 30px), calc(100vh - 190px));
+  background: linear-gradient(160deg, #fbf3de, #f2e7cb);
+  border: 1px solid rgba(122, 92, 44, .35);
+  box-shadow: 0 30px 60px rgba(0,0,0,.55);
+  transform: rotate(-.6deg);
+  animation: bz-diary-slipIn .3s cubic-bezier(.3,1.3,.5,1) both;
+  padding: 18px 26px 16px;
+}
+.bz-diary-sheet-head {
+  display: flex; align-items: baseline; justify-content: space-between; gap: 16px;
+  padding-bottom: 10px; border-bottom: 1px dashed rgba(140, 105, 50, .4);
+}
+.bz-diary-sh-title {  font-size: 24px; color: #503a14; letter-spacing: 2px; }
+.bz-diary-sh-close { flex: none;  font-size: 16px; color: var(--bz-diary-ink-soft); cursor: pointer; border-bottom: 1px dashed currentColor; }
+@media (hover: hover) {
+
+.bz-diary-sh-close:hover { opacity: .75; }
+}
+.bz-diary-sheet-body { flex: 1 1 auto; min-height: 0; margin-top: 12px; overflow-y: auto; font-size: 16px; line-height: 27px; color: var(--bz-diary-ink); }
+.bz-diary-sheet-body .bz-diary-b-para { margin-bottom: 8px; }
+.bz-diary-sheet-meta {  font-size: 14px; color: var(--bz-diary-ink-soft); margin-bottom: 6px; }
+
+/* 册页索引(点书口抽出来的那张纸):一年一段,月为大行 —— 月份再多也不挤 */
+.bz-diary-idx-year { margin-top: 10px; }
+.bz-diary-iy-head {
+   font-size: 20px; color: #503a14; letter-spacing: 4px;
+  padding: 3px 0 6px; border-bottom: 1px solid rgba(140, 105, 50, .3);
+}
+.bz-diary-iy-months { display: flex; flex-direction: column; }
+.bz-diary-idx-row {
+  display: flex; align-items: baseline; gap: 10px;
+  font-size: 15.5px; line-height: 33px; color: var(--bz-diary-ink);
+  cursor: pointer; border-radius: 3px; padding: 0 8px;
+  white-space: nowrap;   /* 行内绝不折行:页号一折,整行就鼓成两行高,月与月之间出现一道空档 */
+}
+@media (hover: hover) {
+
+.bz-diary-idx-row:hover { background: rgba(140, 105, 50, .12); }
+}
+.bz-diary-ir-m { flex: none; width: 58px; }
+.bz-diary-ir-dots { flex: 1 1 auto; min-width: 16px; border-bottom: 1.5px dotted rgba(120, 95, 50, .5); margin: 0 6px 5px; }
+.bz-diary-ir-n { flex: none;  color: var(--bz-diary-ink-soft); }
+/* 宽到容得下「第 1243 页」——原来 64px 放不下三位数,「页」被挤到第二行 */
+.bz-diary-ir-p { flex: none; width: 92px; text-align: right;  color: var(--bz-diary-ink-faint); }
+
+/* 灯箱:相片显影 */
+.bz-diary-lightbox {
+  position: fixed; inset: 0; z-index: 400;
+  background: rgba(12, 7, 3, .82);
+  display: flex; align-items: center; justify-content: center;
+}
+.bz-diary-lightbox[hidden] { display: none; }
+.bz-diary-lb-photo {
+  background: #fdfcf7; padding: 16px 16px 12px;
+  box-shadow: 0 40px 90px rgba(0,0,0,.7);
+  transform: rotate(0deg);
+  animation: bz-diary-lbPick .38s cubic-bezier(.25, 1.2, .4, 1) both;
+  max-width: min(86vw, 1000px);
+}
+/* 灯箱相片的微旋角同样走类：原型是 `el.style.setProperty('--lb-tilt', …)`，
+   那是运行时内联样式，插件里禁。ui.ts 开灯箱时按 tiltClassOf(idx+3) 挂同一个 tilt 类。 */
+.bz-diary-lb-photo.bz-diary-tilt-0 { transform: rotate(-1.7deg); }
+.bz-diary-lb-photo.bz-diary-tilt-1 { transform: rotate(-1deg); }
+.bz-diary-lb-photo.bz-diary-tilt-2 { transform: rotate(-.3deg); }
+.bz-diary-lb-photo.bz-diary-tilt-3 { transform: rotate(.3deg); }
+.bz-diary-lb-photo.bz-diary-tilt-4 { transform: rotate(1deg); }
+.bz-diary-lb-photo.bz-diary-tilt-5 { transform: rotate(1.7deg); }
+@keyframes bz-diary-lbPick { from { transform: scale(.4) rotate(6deg); opacity: 0; } }
+.bz-diary-lb-media { position: relative; background: #111; }
+/* 照片按**容器**收边,不按视口 —— 外层 .lb-photo 是 min(86vw,1000px) 再减 32px 内边距,
+   图若按 86vw 取宽,会比它宽 32px 顶出白卡(卡纸两侧被切、说明文字相对图片偏心)。
+   max-height 仍是视口比例:竖图靠它收高。 */
+.bz-diary-lb-media img, .bz-diary-lb-media video {
+  display: block; max-width: 100%; max-height: 74vh; object-fit: contain;
+  animation: bz-diary-develop 1s ease both;
+}
+.bz-diary-lb-cap { text-align: center;  font-size: 16px; color: var(--bz-diary-ink-soft); padding-top: 10px; letter-spacing: 1px; }
+.bz-diary-lb-nav {
+  position: absolute; top: 50%; transform: translateY(-50%);
+  width: 52px; height: 52px; border-radius: 50%;
+  background: rgba(253, 252, 247, .12); color: #e8dcc2;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 22px; cursor: pointer; user-select: none;
+  transition: background .2s;
+}
+@media (hover: hover) {
+
+.bz-diary-lb-nav:hover { background: rgba(253, 252, 247, .25); }
+}
+.bz-diary-lb-prev { left: 4vw; }
+.bz-diary-lb-next { right: 4vw; }
+.bz-diary-lb-count { position: absolute; bottom: 4vh; left: 50%; transform: translateX(-50%); color: #bfae8e;  font-size: 15px; letter-spacing: 2px; }
+
+/* 引导便签 */
+.bz-diary-hint {
+  position: fixed; right: 26px; top: 26px; z-index: 250;
+  width: 250px; background: #fff6ac; padding: 16px 18px 14px;
+  box-shadow: 0 14px 30px rgba(50, 30, 5, .4);
+  transform: rotate(2deg);
+  animation: bz-diary-slipIn .4s .8s cubic-bezier(.3, 1.3, .5, 1) both;
+}
+.bz-diary-hint::before { content: ""; position: absolute; left: 50%; top: -9px; width: 84px; height: 20px; transform: translateX(-50%) rotate(-2deg); background: rgba(233, 216, 170, .8); box-shadow: 0 2px 4px rgba(90,60,20,.25); }
+.bz-diary-hint b {  font-size: 19px; color: #6b5417; display: block; margin-bottom: 8px; }
+.bz-diary-hint ul { list-style: none; }
+.bz-diary-hint li { font-size: 13.5px; line-height: 24px; color: #6e5f2e; }
+.bz-diary-hint li b { display: inline;  font-size: inherit; color: #4c3d10; }
+.bz-diary-hint-close {
+  display: inline-block; margin-top: 8px; margin-left: 150px;
+   font-size: 16px; color: #8a7420; cursor: pointer;
+  border-bottom: 1px dashed rgba(138, 116, 32, .6);
+}
+@media (hover: hover) {
+
+.bz-diary-hint-close:hover { opacity: .7; }
+}
+.bz-diary-hint.bz-diary-gone { animation: bz-diary-hintOut .35s ease both; }
+@keyframes bz-diary-hintOut { to { transform: rotate(6deg) translateY(-30px); opacity: 0; } }
+
+/* 明信片 */
+.bz-diary-postcard {
+  position: fixed; z-index: 260; left: 8vw; bottom: -8px; width: 300px;
+  background: linear-gradient(160deg, #f6ecd2, #eddfba);
+  padding: 18px 20px 16px;
+  box-shadow: 0 18px 40px rgba(0,0,0,.5);
+  transform: rotate(-3deg);
+  animation: bz-diary-cardUp .6s cubic-bezier(.25, 1.2, .4, 1) both;
   cursor: pointer;
+  border: 1px solid rgba(122, 92, 44, .3);
 }
-.bz-diary-sheet-thumb img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
+@keyframes bz-diary-cardUp { from { transform: rotate(-8deg) translateY(90%); } }
+.bz-diary-postcard[hidden] { display: none; }
+.bz-diary-pc-stamp {
+  position: absolute; right: 14px; top: 12px; width: 44px; height: 52px;
+  background: repeating-linear-gradient(45deg, #d9c8a0 0 4px, #cdb98a 4px 8px);
+  border: 1px dashed rgba(122, 92, 44, .5);
+}
+.bz-diary-pc-title {  font-size: 21px; color: #503a14; }
+.bz-diary-pc-body { margin-top: 6px; font-size: 14px; line-height: 23px; color: var(--bz-diary-ink-soft); display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.bz-diary-pc-open { margin-top: 8px; text-align: right;  font-size: 15px; color: #8a6a33; border-bottom: 1px dashed rgba(138,106,51,.5); width: max-content; margin-left: auto; }
+
+/* Toast:墨字纸条 */
+.bz-diary-toast {
+  position: fixed; left: 50%; bottom: 7vh; z-index: 500;
+  transform: translateX(-50%);
+  background: #3a3020; color: #efe4c8;
+   font-size: 17px; letter-spacing: 2px;
+  padding: 9px 26px; border-radius: 3px;
+  box-shadow: 0 10px 26px rgba(0,0,0,.5);
+  animation: bz-diary-toastIn .3s ease both;
+}
+.bz-diary-toast[hidden] { display: none; }
+.bz-diary-toast.bz-diary-out { animation: bz-diary-toastOut .4s ease both; }
+@keyframes bz-diary-toastIn { from { opacity: 0; transform: translateX(-50%) translateY(14px); } }
+@keyframes bz-diary-toastOut { to { opacity: 0; transform: translateX(-50%) translateY(10px); } }
+
+/* 数据缺失 */
+.bz-diary-fallback { position: fixed; inset: 0; z-index: 600; display: flex; align-items: center; justify-content: center; }
+.bz-diary-fallback[hidden] { display: none; }
+.bz-diary-fb-paper { background: #fff8d6; padding: 30px 36px; font-size: 17px; line-height: 32px; text-align: center; transform: rotate(-1.5deg); box-shadow: 0 20px 50px rgba(0,0,0,.5); }
+
+/* 撕页碎片 */
+.bz-diary-scrap {
+  position: fixed; z-index: 210; pointer-events: none;
+  background: var(--bz-diary-paper);
+  background-image: var(--bz-diary-paper-noise); background-size: 180px;
+  box-shadow: 0 8px 18px rgba(50, 30, 5, .35);
 }
 
-/* ============ 空态 ============
-   一致#4（review-deep 一致性）：空态接 core uiEmpty 单源（.bz-empty 族，components.css），
-   mkEmpty 改走 uiEmpty 工厂 + uiBtnRow——域内 .bz-diary-empty 家族 14 条样式随单源化删除。 */
+/* ---------- 响应式:窄屏单页 ---------- */
+/* 书底下得给那排文具留出位置(托高 60 + 间距 22 + 余量),不然浮出来会被窗口下沿切掉。
+   --pg-h 挂 :root(不再只挂 #book):#tools 已经移出 #book 挂到桌上,它也要读到同一个书高 */
+@media (min-width: 721px) and (max-height: 900px) {
+  .bz-diary-scene { --bz-diary-pg-h: min(700px, calc(100vh - 180px)); }}
+@media (max-width: 1120px) {
+  .bz-diary-scene { --bz-diary-book-zoom: calc((100vw - 30px) / 1060); }}
+@media (max-width: 720px) {
+  .bz-diary-scene {
+    --bz-diary-book-zoom: 1; --bz-diary-pg-w: min(92vw, 480px); --bz-diary-pg-h: min(76vh, 660px);
+    --bz-diary-pg-pad-t: 56px; --bz-diary-pg-pad-x: 34px; --bz-diary-pg-pad-b: 46px;
+  }
+  .bz-diary-book { width: var(--bz-diary-pg-w); }
+  /* 书签条:窄屏没有"书外那 26px"可用,原来的 right:2px 是直接压在正文右缘上。
+     改成从**书顶**翻出来 —— 书顶到窗口顶有 12vh 的余量,不盖任何字 */
+  .bz-diary-filter-tab { right: -8px; top: -20px; }
+  .bz-diary-ds-day { font-size: 56px; }
+  .bz-diary-tools { top: calc(50% + var(--bz-diary-pg-h) / 2 * var(--bz-diary-book-zoom, 1) + 14px); gap: 5px; padding: 7px 8px; }
+  .bz-diary-tl { width: 40px; height: 36px; }
+  .bz-diary-tl b { font-size: 19px; }
+  /* 触屏没有 hover:mousemove 驱动的 .show 永远开不了 → 这一屏文具直接常驻 */
+  .bz-diary-tools { opacity: 1; pointer-events: auto; transform: translateX(-50%) translateY(0); }}
 
-/* ============ 效率批 C 新增样式（全部 bz-diary 前缀，随域聚合） ============ */
-/* 效率#6：brand 行「✕ 清除」日期筛选胶囊（筛选生效时由 renderRange 动态挂载） */
-.bz-diary .bz-diary-filter-clear {
-  display: inline-flex;
-  align-items: center;
-  gap: 3px;
-  padding: 2px 9px;
-  border: none;
-  border-radius: var(--bz-radius-full);
-  background: var(--dw-surface);
-  box-shadow: none;
-  color: var(--dw-muted);
-  font-size: var(--bz-font-caption);
-  line-height: 1.4;
-  cursor: pointer;
-  white-space: nowrap;
-  transition: background var(--bz-dur-fast), color var(--bz-dur-fast);
-}
-.bz-diary .bz-diary-filter-clear .bz-ic {
-  width: 11px;
-  height: 11px;
-}@media (hover: hover) {
+/* 扉页整页已废:书名/目录/印章那套随"目录改由书口索引抽纸承担"一并删掉,
+   书打开第一页(page-item,无 toc-page 类)就是最近那篇 */
 
-.bz-diary .bz-diary-filter-clear:hover {
-  background: var(--dw-hover);
-  color: var(--dw-accent);
-}
-}
-/* 效率#9：搜索命中词轻高亮（文字卡 <mark>，accent 底） */
-.bz-diary mark.bz-diary-mark {
-  background: var(--text-accent);
-  color: var(--text-on-accent);
-  border-radius: 2px;
-  padding: 0 1px;
-}
-/* 效率#10：灯箱「⋯」动作菜单钮（规格同 lbclose，位于其左侧） */
-.bz-diary .bz-diary-lbmore {
-  position: absolute;
-  right: 64px;
-  top: 20px;
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.12);
-  color: #fff;
-  border: none;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: background var(--bz-dur-fast);
-}@media (hover: hover) {
+/* ---------- 条目头(每则开头那行「时间 · 类型」) ----------
+   一条条目 = 题头行 + 正文。原来这行右对齐、还带个「—— 」前缀,
+   于是纸面上出现一截悬在右边、开头两笔横线没有来处的孤行,和左起的正文完全错开。
+   重排成单源那份卡头的样子(src/diary/styles.css `.bz-diary-text-row`):
+   **左起、和时间对齐在同一条竖线上**,题头贴着正文的头一个字起。
+   两截字按层级分开:时间(手写体 · 15px · ink-soft)→ 类型(楷体 · 13px · ink-faint),
+   中间 10px 空,不加分隔符、不加框 —— 一行小字,读过去就行。
 
-.bz-diary .bz-diary-lbmore:hover {
-  background: rgba(255, 255, 255, 0.25);
+   上下留白:原来这行 `margin: 0 0 14px`,而正文段距是 0 ——
+   于是这一则的题头死死贴着上一则的最后一行字,两则的正文连成一片,题头根本认不出来。
+   改成 `margin: 20px 0 12px`：**上面留 20**（和上一则的正文分开，一天里几则才分得开），
+   **下面收到 12**（题头管的是它自己那一段，得贴着自己那段）。
+   改这里的 margin 不用另找同步点：分页的高度是**读计算样式量出来的**
+   （ui.ts 的 `blockHeightOf()` 取 `offsetHeight + marginTop + marginBottom`），
+   不再有原型那张家手写的 GAP 表。 */
+.bz-diary-b-seal {
+  display: flex; justify-content: flex-start; align-items: baseline;
+  gap: 10px; flex-wrap: wrap; margin: 20px 0 12px; min-height: 22px;
 }
+.bz-diary-seal-hashes { display: inline-flex; gap: 8px; flex-wrap: wrap; }
+.bz-diary-seal-time {  font-size: 15px; color: var(--bz-diary-ink-soft); letter-spacing: 1px; }
+.bz-diary-seal-tags { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.bz-diary-seal-tag {
+  
+  font-size: 13px; letter-spacing: 2px; line-height: 1;
+  color: var(--bz-diary-ink-faint);
+  background: none; border: 0; border-radius: 0; padding: 0;
+  box-shadow: none; transform: none; cursor: default;
 }
-/* 效率#13：loadAndRender 读取期骨架占位（shimmer 渐变卡 + 一句话；媒体占位表面 token） */
-.bz-diary-skel {
-  padding: var(--bz-space-lg) 0;
-}
-.bz-diary-skel-tip {
-  font-size: var(--bz-font-label);
-  color: var(--dw-faint);
-  text-align: center;
-  padding-bottom: var(--bz-space-md);
-}
-.bz-diary-skel-row {
-  column-count: 3;
-  column-gap: 10px;
-}
-.bz-diary-skel-card {
-  break-inside: avoid;
-  height: 180px;
-  margin-bottom: 10px;
-  border-radius: 10px;
-  background: linear-gradient(100deg, var(--dw-surface) 35%, var(--dw-hover) 50%, var(--dw-surface) 65%);
-  background-size: 200% 100%;
-  animation: bz-diary-skel-shimmer 1.2s linear infinite;
-}
-.bz-diary-skel-card--tall {
-  height: 250px;
-}
-@keyframes bz-diary-skel-shimmer {
-  from {
-    background-position: 200% 0;
-  }
-  to {
-    background-position: -200% 0;
-  }
-}
-@media (max-width: 768px) {
-  .bz-diary-skel-row {
-    column-count: 2;
-  }
-}
+/* ============================================================
+   写链路弹窗 + 解锁屏（**本次 ADR-0230 的 UI 换代不碰它们**）
 
-/* ============ 动画 ============ */
-@keyframes bz-diary-slide-up {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-@keyframes bz-diary-fade-in {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-}
-@media (prefers-reduced-motion: reduce) {
-  .bz-diary * {
-    animation: none !important;
-    transition: none !important;
-  }
-}
-
-/* ============ 移动端：≤768px 真全屏（桌面实例隐藏，移动实例显示） ============ */
-@media (max-width: 768px) {
-  .bz-diary {
-    padding: 0;
-  }
-  .bz-diary-desk {
-    display: none;
-  }
-  .bz-diary-mob {
-    display: flex;
-    width: 100vw;
-    /* D-UI7（review-deep P3）：接 core 可视视口机制（components.css --bz-vvh + viewport.ts）——
-       100vh 是布局视口高度，不随软键盘/原生栏收缩；memo/cinema 已接，diary 同批对齐 */
-    height: var(--bz-vvh, 100vh);
-    max-width: 100vw;
-    max-height: var(--bz-vvh, 100vh);
-    border-radius: 0;
-    padding-bottom: env(safe-area-inset-bottom, 0px);
-  }
-  /* 顶部避让由根节点 .bz-panel-mtop 统一接管（44px，components.css），头行不再垫顶 */
-  .bz-diary-mob .bz-diary-chiprow {
-    padding-bottom: 10px;
-  }
-  /* ---- 2026-09-11 移动端字号体系（按视觉层级定标，替代一刀切倍数） ----
-     六档层级（z 顺序 = 视觉分量）：
-       L1 页面题   书名                22px/600
-       L2 区块题   日期节头            19px/600
-       L3 卡片题   抽屉标题/弹窗题/空态题 17px/600
-       L4 正文     条目正文/markdown/抽屉正文/搜索 15.5px
-       L5 控件辅助 chips 14 · 动作行 15 · 周几/计数 13.5
-       L6 角标小字 时间戳/题注/时长/统计/计数 12px（年份角标 11.5）
-     控件尺寸跟随同级文字（图标 .bz-ic 1em 自缩放）：头行钮 42×46 盒（主界面控件，
-     触控热区另由 .bz-touch-target--xl 外扩）> 弹层关闭钮 32×36 > 播放角标 46 圆。
-     头行钮 !important 必须带：core「.bz-win-head button 统一 22×26/14px」（跨域头行
-     规范）带 !important，无 important 恒被压掉；同为 important 时 (0,3,0) > (0,1,1)。 ---- */
-  /* L1 页面题 + 头行控件 */
-  .bz-diary-mob .bz-diary-bookname {
-    font-size: 22px;
-  }
-  .bz-diary-mob .bz-diary-range {
-    font-size: 13.5px;
-  }
-  .bz-diary .bz-diary-mob .bz-diary-icon-btn {
-    width: 42px !important;
-    height: 46px !important;
-    font-size: 22px !important;
-    flex-shrink: 0;
-  }
-  /* L5 控件：类型 chips（主 14 / 子 13） */
-  /* D-UI6：触控热区改 padding 抬档（替代 ::after 外扩——紧凑行外扩两两重叠误触）：
-     chip ≈ 17.5px 内容 + 2×11px 垫 ≥ 40px 绝对下限；subchip 16.25 + 2×12 ≥ 40 */
-  .bz-diary .bz-diary-mob .bz-diary-chip {
-    padding: 11px 16px;
-    font-size: 14px;
-    gap: 5px;
-  }
-  .bz-diary-mob .bz-diary-chip-cnt {
-    font-size: 12px;
-  }
-  .bz-diary .bz-diary-mob .bz-diary-subchip {
-    padding: 12px 15px;
-    font-size: 13px;
-    gap: 4px;
-  }
-  /* L4 正文档：搜索框 */
-  .bz-diary-mob .bz-diary-searchrow .bz-input {
-    font-size: 15px;
-    height: 40px;
-  }
-  .bz-diary-mob .bz-diary-searchrow .bz-search .bz-ic {
-    width: 16px;
-    height: 16px;
-  }
-  /* L2 区块题：日期节头（题 19 / 周几 13.5 / 统计 12） */
-  .bz-diary-mob .bz-diary-day-date {
-    font-size: 19px;
-  }
-  .bz-diary-mob .bz-diary-day-week {
-    font-size: 13.5px;
-  }
-  .bz-diary-mob .bz-diary-day-stat {
-    font-size: 12px;
-  }
-  /* L4 正文 + L6 卡内小字 */
-  .bz-diary-mob .bz-diary-text-t {
-    font-size: 12px;
-  }
-  .bz-diary-mob .bz-diary-text-em {
-    font-size: 14px;
-  }
-  .bz-diary-mob .bz-diary-text-tx {
-    font-size: 15.5px;
-  }
-  .bz-diary-mob .bz-diary-md,
-  .bz-diary-mob .bz-diary-wide-md {
-    font-size: 15.5px;
-  }
-  /* 媒体块：题注/时长 = L6，播放角标 46 圆，音频矮条 62px（音符留 ui.ts 内联 28px） */
-  .bz-diary-mob .bz-diary-cap {
-    font-size: 12px;
-  }
-  .bz-diary-mob .bz-diary-dur {
-    font-size: 12px;
-  }
-  .bz-diary-mob .bz-diary-play {
-    width: 46px;
-    height: 46px;
-    font-size: 20px;
-  }
-  .bz-diary-mob .bz-diary-media--audio {
-    height: 62px;
-  }
-  /* 那年今天时光条：区块题 15 / 卡内年份角标 L6 */
-  .bz-diary-mob .bz-diary-memories-head {
-    font-size: 15px;
-  }
-  .bz-diary-mob .bz-diary-memory {
-    width: 124px;
-  }
-  .bz-diary-mob .bz-diary-memory-thumb {
-    font-size: 22px;
-  }
-  .bz-diary-mob .bz-diary-memory-year {
-    font-size: 11.5px;
-  }
-  /* 灯箱：全屏观影层，控件略大于头行钮（44/46），题注副行 L5/L6 */
-  .bz-diary-mob .bz-diary-lbclose {
-    width: 44px;
-    height: 44px;
-    font-size: 20px;
-  }
-  .bz-diary-mob .bz-diary-lbnav {
-    width: 46px;
-    height: 46px;
-  }
-  .bz-diary-mob .bz-diary-lbcap {
-    font-size: 14px;
-  }
-  .bz-diary-mob .bz-diary-lbsub {
-    font-size: 13px;
-  }
-  /* 底部抽屉字号/几何不再域内定档：2026-09-11 换核 core openItemSheet（.bz-item-sheet），
-     与 favorites/belongings/cinema 同壳同档——「和别的域一致」正是本次用户诉求。
-     域内六档 sheet 段（emoji/title/content/thumb/act/act-sub/close）随之退役。
-     空态样式段随一致#4 单源化一并退役（.bz-empty 族由 core 管，含移动端档位）。 */
-}
-
-/* ============ 增强 #13：移动端触控热区 ≥44px 档 ============ */
-/* 触屏（pointer: coarse）下横滑标签/chips/头行图标钮/那年今天卡 ::after 外扩热区
-   已收编 core 样式库 .bz-touch-target--xl（components.css，模板挂类，inset -12px 补足 44px；
-   shadcn extend-touch-target 同款：视觉不变；绝对定位外扩不触发横滑容器额外滚动宽度） */
-
-/* ============ 日期筛选弹窗（自包含，标题「日记本」点击打开） ============
-   2026-09-10 视觉重做：旧版是「居中大卡 + 4 列实心方块」，与域内语言脱节
-   （面板自己用 11px 药丸 chips、--dw-faint 字距小标签、发丝分隔线，没有大色块）。
-   现规格全部对齐面板：head 同日节头（左标题 + 右动作 + ::after 发丝线）、
-   年份 chip 同 .bz-diary-chip（11px 药丸 + faint 计数 + 选中实心 accent）、
-   月份改 3 列轻量格（表面底 + 右侧裸计数），空月沿用 chip--locked 的虚线语义。 */
-
-/* 该弹窗挂 body，吃不到 .bz-diary 的域 reset（box-sizing / 清 margin）——就地补一份 */
-.bz-diary-datefilter,
-.bz-diary-datefilter *,
-.bz-diary-datefilter *::before,
-.bz-diary-datefilter *::after {
-  box-sizing: border-box;
-}
-.bz-diary-datefilter * {
-  margin: 0;
-  padding: 0;
-  font-family: inherit;
-}
-.bz-diary-datefilter {
-  position: fixed;
-  inset: 0;
-  z-index: 95;
-  background: var(--bz-overlay);
-  backdrop-filter: blur(var(--bz-overlay-blur));
-  display: none;
-  align-items: center;
-  justify-content: center;
-  padding: var(--bz-space-xl);
-}
-.bz-diary-datefilter-card {
-  width: 372px;
-  max-width: 92vw;
-  max-height: 82vh;
-  overflow-y: auto;
-  background: var(--dw-bg);
-  border-radius: 14px;
-  box-shadow: var(--dw-shadow-md);
-  animation: bz-diary-slide-up var(--bz-dur-base) ease-out;
-  padding-bottom: var(--bz-space-lg);
-}
-/* 头行：规格同 .bz-diary-head / .bz-diary-day-head（左标题、右动作，发丝分隔线走 ::after） */
-.bz-diary-datefilter-head {
-  position: relative;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: var(--bz-space-lg) 20px 10px;
-}
-.bz-diary-datefilter-head::after {
-  content: '';
-  position: absolute;
-  left: 20px;
-  right: 20px;
-  bottom: 0;
-  height: 1px;
-  background: var(--dw-line);
-}
-.bz-diary-datefilter-title {
-  flex: 1;
-  font-size: var(--bz-font-emphasis);
-  font-weight: 600;
-  color: var(--dw-ink);
-}
-/* 小节标签：与章节栏年份标签同规格（11px / faint / 字距 0.08em） */
-.bz-diary-datefilter-label {
-  font-size: var(--bz-font-caption);
-  font-weight: 600;
-  letter-spacing: 0.08em;
-  color: var(--dw-faint);
-  padding: 14px 20px var(--bz-space-sm);
-}
-/* 按钮一律带 .bz-diary-datefilter 前缀：core reset.css `[class*="bz-"] button`
-   会清背景/字号/边框，前缀化（(0,2,0)）才能恢复（用户反馈过样式丢失） */
-.bz-diary-datefilter .bz-diary-datefilter-reset {
-  padding: var(--bz-space-xs) 10px;
-  border-radius: var(--bz-radius-full);
-  border: none;
-  background: none;
-  box-shadow: none;
-  color: var(--dw-muted);
-  font-size: var(--bz-font-caption);
-  cursor: pointer;
-  transition: background var(--bz-dur-fast), color var(--bz-dur-fast);
-}@media (hover: hover) {
-
-.bz-diary-datefilter .bz-diary-datefilter-reset:hover {
-  background: var(--dw-surface);
-  color: var(--dw-accent);
-}
-}
-/* 年份 chips：与 .bz-diary-chip 同规格（11px 药丸 / surface 底 / 计数 faint） */
-.bz-diary-datefilter-years {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  padding: 0 20px;
-}
-.bz-diary-datefilter .bz-diary-datefilter-year {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--bz-space-xs);
-  padding: 5px 10px;
-  border: none;
-  border-radius: var(--bz-radius-full);
-  background: var(--dw-surface);
-  box-shadow: none;
-  color: var(--dw-ink);
-  font-size: var(--bz-font-caption);
-  line-height: 1.25;
-  cursor: pointer;
-  white-space: nowrap;
-  transition: background var(--bz-dur-fast), color var(--bz-dur-fast);
-}@media (hover: hover) {
-
-.bz-diary-datefilter .bz-diary-datefilter-year:hover {
-  background: var(--dw-hover);
-}
-}
-.bz-diary-datefilter .bz-diary-datefilter-year--on {
-  background: var(--dw-accent);
-  color: var(--dw-on-accent);
-}
-.bz-diary-datefilter-year-name {
-  font-weight: 500;
-}
-.bz-diary-datefilter-year-cnt {
-  font-size: var(--bz-font-caption);
-  color: var(--dw-faint);
-}
-.bz-diary-datefilter .bz-diary-datefilter-year--on .bz-diary-datefilter-year-cnt {
-  color: rgba(255, 255, 255, 0.75);
-}
-/* 月份格：轻量表面 + 右侧裸计数；空月虚线底（同 chip--locked 语义），不做不可点的大灰块 */
-.bz-diary-datefilter-months {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 6px;
-  padding: 0 20px;
-}
-.bz-diary-datefilter .bz-diary-datefilter-month {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 6px;
-  padding: var(--bz-space-sm) 10px;
-  /* 常态也留 1px 透明边框：空月的虚线边框不撑高行，整格高度恒定 */
-  border: 1px solid transparent;
-  border-radius: var(--bz-radius-sm);
-  background: var(--dw-surface);
-  box-shadow: none;
-  cursor: pointer;
-  transition: background var(--bz-dur-fast);
-}@media (hover: hover) {
-
-.bz-diary-datefilter .bz-diary-datefilter-month:hover {
-  background: var(--dw-hover);
-}
-}
-.bz-diary-datefilter .bz-diary-datefilter-month--on {
-  background: var(--dw-accent);
-}
-.bz-diary-datefilter .bz-diary-datefilter-month--on .bz-diary-datefilter-month-name,
-.bz-diary-datefilter .bz-diary-datefilter-month--on .bz-diary-datefilter-month-cnt {
-  color: var(--dw-on-accent);
-}
-.bz-diary-datefilter .bz-diary-datefilter-month--empty {
-  background: none;
-  border: 1px dashed var(--dw-line);
-  opacity: 0.6;
-  cursor: not-allowed;
-}@media (hover: hover) {
-
-.bz-diary-datefilter .bz-diary-datefilter-month--empty:hover {
-  background: none;
-}
-}
-.bz-diary-datefilter-month-name {
-  font-size: var(--bz-font-meta);
-  font-weight: 500;
-  color: var(--dw-ink);
-}
-.bz-diary-datefilter-month-cnt {
-  font-size: var(--bz-font-caption);
-  color: var(--dw-faint);
-}
-.bz-diary-datefilter-hint {
-  padding: var(--bz-space-xs) 20px 20px;
-  text-align: center;
-  font-size: var(--bz-font-meta);
-  color: var(--dw-faint);
-}
-@media (max-width: 768px) {
-  .bz-diary-datefilter {
-    padding: 0;
-  }
-  .bz-diary-datefilter-months {
-    grid-template-columns: repeat(3, 1fr);
-  }
-  /* ---- 2026-09-11 移动端字号体系对齐（弹窗挂 body、不在 .bz-diary-mob 内，
-     不能借 .bz-diary-mob 前缀——按断点直给；档位同主面板六档：题 L3 17 / 控件 L5 13~14 /
-     角标 L6 12，关闭钮 32×36 与抽屉关闭钮同规格） ---- */
-  .bz-diary-datefilter-title {
-    font-size: 17px;
-  }
-  .bz-diary-datefilter-label {
-    font-size: 12px;
-  }
-  .bz-diary-datefilter .bz-diary-datefilter-reset {
-    font-size: 13px;
-  }
-  .bz-diary-datefilter .bz-diary-datefilter-year {
-    padding: 6px 13px;
-    font-size: 13.5px;
-  }
-  .bz-diary-datefilter-year-cnt {
-    font-size: 12px;
-  }
-  .bz-diary-datefilter .bz-diary-datefilter-month {
-    padding: 10px 12px;
-  }
-  .bz-diary-datefilter-month-name {
-    font-size: 14.5px;
-  }
-  .bz-diary-datefilter-month-cnt {
-    font-size: 12px;
-  }
-  .bz-diary-datefilter-hint {
-    font-size: 12.5px;
-  }
-}
+   日记本的表层界面从「回忆墙」换成「桌上那本」了，但写日记与开保险箱这两条链路没动：
+   写日记仍是本域 openAddDialog（表单骨架 / sticky 底栏 / 类型 chip / D-UI16 软键盘上移档），
+   开锁仍是三域共用的 .bz-lockscreen--diary 骨架。它们挂 body、独立于书页界面，
+   样式源仍在本文件——**换代时整段原样保留，未改一字**。
+   ============================================================ */
 
 /* ==================== 写链路弹窗（bz-diary-add-popup / bz-diary-tag-popup，一致#2 收编 core uiModal 壳） ====================
    遮罩底色/blur/圆角/阴影/82vh 限高/焦点圈闭由 .bz-overlay-* 壳单源承载
@@ -6334,60 +5851,6 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   --ls-ink: var(--dw-ink);
   --ls-muted: var(--dw-muted);
   --ls-faint: var(--dw-faint);
-}
-
-/* ============ 动效层支持样式（src/diary/motion.ts 注入件与功能性指示；不参与排版） ============
-   注入件一律 absolute + pointer-events:none + aria-hidden（属性由 JS 挂），演出完自动移除——
-   终态 UI 与无动效版逐像素一致；时长/曲线台账见 motion.ts（token 不落 CSS，行为层单源）。 */
-
-/* 翻页纸面：筛选切换时扫过面板的一页纸（假透视由 JS 内联 transform 驱动，演完即撤） */
-.bz-dm-page {
-  position: absolute;
-  inset: 0;
-  z-index: 6;
-  pointer-events: none;
-  opacity: 0;
-  background: linear-gradient(
-    90deg,
-    transparent,
-    var(--dw-surface) 16%,
-    var(--dw-bg) 50%,
-    var(--dw-surface) 84%,
-    transparent
-  );
-  box-shadow: 0 0 24px 6px color-mix(in srgb, var(--dw-ink) 8%, transparent);
-  will-change: transform, opacity;
-}
-
-/* 墨晕：台历戳落下时在日期下洇开的一小撮墨（演完即撤，墙上不留痕） */
-.bz-dm-ink {
-  position: absolute;
-  width: 14px;
-  height: 14px;
-  margin: -7px 0 0 -7px;
-  border-radius: 50%;
-  pointer-events: none;
-  opacity: 0;
-  background: radial-gradient(
-    circle,
-    color-mix(in srgb, var(--dw-ink) 42%, transparent) 0%,
-    transparent 70%
-  );
-}
-
-/* 灯箱加密媒体解密等待占位：功能性加载指示（加载类循环不入台账，同影院口径；
-   系统 RM 下随既有通杀规则停摆） */
-.bz-diary-lb-pending {
-  animation: bz-dm-pulse 1.1s ease-in-out infinite;
-}
-@keyframes bz-dm-pulse {
-  0%,
-  100% {
-    opacity: 0.45;
-  }
-  50% {
-    opacity: 1;
-  }
 }
 /* ==================== 内容首页域样式（src/home/styles.css）——活动河全域入口版（issue 232） ====================
    p16-full 原型一比一移植：头行（今日活动河+日期）+ 三栏 grid（全部域|时间线|明天预告）。
