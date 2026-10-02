@@ -401,6 +401,14 @@ export function invalidateWallCache(): void {
   wallCacheApp = null;
 }
 
+/**
+ * 缓存还新不新（UI 的「这一册不用重排」快路要用）：同一个 app、有在途/已完成的加载、且没被事件作废。
+ * 为真 ⇒ 再调 `loadWallEntries` 会拿到**同一份结果**，书页不必重排；为假 ⇒ 得回源重读。
+ */
+export function wallCacheFresh(app: App): boolean {
+  return wallCacheApp === app && !!currentCtrl && !currentCtrl.invalidated;
+}
+
 /** 按月份分组（key 为 'YYYY-MM'），组内保持传入顺序 */
 export function groupByMonth(entries: WallEntry[]): Map<string, WallEntry[]> {
   const map = new Map<string, WallEntry[]>();

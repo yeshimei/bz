@@ -285,6 +285,10 @@
   display: flex; justify-content: flex-end;
   cursor: text;
 }
+/* 本层设了 display，就必须自己声明 `[hidden]`：作者样式里的 `display: flex` 压得过浏览器
+   默认的 `[hidden] { display: none }`（与 `.bz-diary-slip[hidden]` 等十条同一个坑，故同款兜底）。
+   少了这一条，纸会**一直**摊在书上：既挡住右页内容，`hidden = true` 也关不掉它。 */
+.bz-diary-wsp[hidden] { display: none; }
 .bz-diary-wsp-sheet {
   position: relative;
   width: 50%; height: 100%;
@@ -305,9 +309,26 @@
 /* 素纸不铺格线：落笔前后不突变换版（原型口径） */
 .bz-diary-wsp-area {
   flex: 1; margin-top: 12px; width: 100%;
-  border: 0; outline: 0; resize: none; background: transparent;
+  resize: none;
   font-family: inherit; font-size: 17px; line-height: 27px;
   color: var(--bz-diary-ink); caret-color: var(--bz-diary-seal-red);
+}
+/* 输入面把宿主的表单皮归零（真机症状：这块框是白的，鼠标一悬停还更白）。
+   压在单类规则压不住：Obsidian 的 `textarea` / `textarea:hover` / `:focus` 带主题类选择器
+   （`.theme-light textarea` 这类 = 一个类 + 一个元素），比 `.bz-diary-wsp-area` 高一档，
+   所以这里带场景前缀（两个类）并逐态覆盖 —— 不靠 `!important`。
+   悬停那一态照仓里范式包在 @media (hover: hover) 里（触屏粘滞）。 */
+.bz-diary-scene .bz-diary-wsp-area {
+  background: transparent; border: 0; outline: 0; box-shadow: none;
+}
+@media (hover: hover) {
+
+.bz-diary-scene .bz-diary-wsp-area:hover {
+  background: transparent; border: 0; box-shadow: none;
+}
+}
+.bz-diary-scene .bz-diary-wsp-area:focus {
+  background: transparent; border: 0; box-shadow: none;
 }
 .bz-diary-wsp-area::placeholder { color: var(--bz-diary-ink-faint); }
 .bz-diary-wsp-tools {
@@ -926,9 +947,12 @@
   border-radius: 4px; cursor: default; color: var(--bz-diary-ink);
 }
 .bz-diary-cal-cell.bz-diary-has { cursor: pointer; }
+/* 写作模式（ADR-0233）：整月格子都可点，光标也得跟着说明白 */
+.bz-diary-cal-cell.bz-diary-pickable { cursor: pointer; }
 @media (hover: hover) {
 
 .bz-diary-cal-cell.bz-diary-has:hover { background: rgba(178, 58, 42, .1); }
+.bz-diary-cal-cell.bz-diary-pickable:hover { background: rgba(178, 58, 42, .1); }
 }
 .bz-diary-cal-cell.bz-diary-has::after {
   content: attr(data-n); position: absolute; right: 3px; top: 1px;
@@ -1144,12 +1168,12 @@
   box-shadow: none; transform: none; cursor: default;
 }
 /* ============================================================
-   写链路弹窗 + 解锁屏（**本次 ADR-0230 的 UI 换代不碰它们**）
+   写链路弹窗 + 解锁屏
 
-   日记本的表层界面从「回忆墙」换成「桌上那本」了，但写日记与开保险箱这两条链路没动：
-   写日记仍是本域 openAddDialog（表单骨架 / sticky 底栏 / 类型 chip / D-UI16 软键盘上移档），
-   开锁仍是三域共用的 .bz-lockscreen--diary 骨架。它们挂 body、独立于书页界面，
-   样式源仍在本文件——**换代时整段原样保留，未改一字**。
+   ADR-0230 换代时这两条链路没动（写日记走 openAddDialog、开锁走 .bz-lockscreen--diary）。
+   **ADR-0233 起写日记改走书内写作页**（见上文 `.bz-diary-wsp` 一段），本段只剩
+   「换张贴纸」用的标签选择器（.bz-diary-tag-popup）与解锁屏骨架；旧写日记弹窗的样式
+   （bz-diary-add-popup / add-diary-popup）已无 UI 入口，随代码清理一并退役。
    ============================================================ */
 
 /* ==================== 写链路弹窗（bz-diary-add-popup / bz-diary-tag-popup，一致#2 收编 core uiModal 壳） ====================

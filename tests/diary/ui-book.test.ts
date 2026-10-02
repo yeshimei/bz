@@ -41,6 +41,7 @@ import {
 } from '../../src/diary/render';
 import type { WallEntry, WallMedia, WallSegment } from '../../src/diary/types';
 import { lastFlip, flipRecords, resetFlips } from './page-flip-fake';
+import { invalidateWallCache } from '../../src/diary/data';
 
 // ===== 翻页库替身 =====
 
@@ -791,6 +792,46 @@ describe('DiaryAppController · 文具四项接线', () => {
     (c as unknown as { jumpToDay: (d: string) => void }).jumpToDay('2026-08-15');
     expect(q('.bz-diary-toast').textContent).toContain('没落笔');
   });
+
+  it('台历跳到书尾那天：真翻过去了（不是停在第 0 页的假绿）', async () => {
+    await openBook();
+    // 夹具里 2025-01-01 那则排在第 1 页（2026-08-19 的一页 + 它自己那页）
+    q('.bz-diary-tools [data-tact="calendar"]').click();
+    q('.bz-diary-cal-nav[data-nav="-1"]').click(); // 2025-01 在 2026-08 之前
+    // 一直往回翻到有落笔的月份（夹具最旧是 2025-01）
+    for (let i = 0; i < 24 && !qa('.bz-diary-cal-cell.bz-diary-has').length; i++) {
+      q('.bz-diary-cal-nav[data-nav="-1"]').click();
+    }
+    expect(qa('.bz-diary-cal-cell.bz-diary-has').length).toBeGreaterThan(0);
+    q('.bz-diary-cal-cell.bz-diary-has').click();
+    expect(lastFlip().page).toBeGreaterThan(0); // 真的翻到后面那一页去了
+  });
+
+  it('筛选态下台历「当天几则」只数这本册子里有的（标着有，就得点得动）', async () => {
+    const c = await openBook();
+    q('.bz-diary-tools [data-tact="stickers"]').click();
+    qa('.bz-diary-ap-sticker')
+      .find((el) => (el.textContent || '').includes('日记'))!
+      .click();
+    await vi.waitFor(() => expect((c as unknown as { filterTag: string | null }).filterTag).toBe('日记'));
+
+    q('.bz-diary-tools [data-tact="calendar"]').click();
+    const day = qa('.bz-diary-cal-cell.bz-diary-has').find((el) => el.dataset.d === '19')!;
+    // 2026-08-19 那天总共有 4 则（日记/信/影视/书），挂「日记」标后册子里只剩 1 则
+    expect(day.dataset.n).toBe('1');
+    day.click();
+    expect(lastFlip().page).toBe(0);
+    expect(q('.bz-diary-toast').textContent).not.toContain('没落笔');
+  });
+
+  it('检索命中书尾那一则：真翻到后面那页（跨页命中有落点）', async () => {
+    await openBook();
+    q('.bz-diary-tools [data-tact="lens"]').click();
+    q<HTMLInputElement>('.bz-diary-slip-input').value = '元旦';
+    q('.bz-diary-slip-row .bz-diary-slip-btn.bz-diary-primary').click();
+    expect(lastFlip().page).toBeGreaterThan(0); // 「元旦那天」在 2025-01-01，不在第 0 页
+    await vi.waitFor(() => expect(qa('mark.bz-diary-hl-on').length).toBe(1));
+  });
 });
 
 describe('DiaryAppController · 便签菜单（右键 / 长按）', () => {
@@ -1143,6 +1184,18 @@ async function openWritePage(c: DiaryAppController): Promise<HTMLTextAreaElement
   return q<HTMLTextAreaElement>('.bz-diary-wsp-area');
 }
 
+/** 撒 n 篇连续日期的日记（读盘批次 / 进度条那几条用例要跨批） */
+function seedManyEntries(n: number): void {
+  for (let i = 0; i < n; i++) {
+    const d = new Date(2026, 7, 19 - i);
+    const date = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    const stamp = `${String(d.getFullYear()).slice(2)}${String(d.getMonth() + 1).padStart(2, '0')}${String(
+      d.getDate()
+    ).padStart(2, '0')}0800`;
+    vault.files.set(`我的/日记/${stamp}.md`, serializeDiaryEntryFile({ date, time: '08:00' }, ['日记'], `第 ${i} 则`));
+  }
+}
+
 describe('DiaryAppController · 写作内页（ADR-0233）', () => {
   it('bz-diary-write 同链路：openWrite() 先摊开册子，书排好之后才摆出写作内页', async () => {
     const c = DiaryAppController.getInstance();
@@ -1213,22 +1266,103 @@ describe('DiaryAppController · 写作内页（ADR-0233）', () => {
     expect(inner(c).draft).toBeNull();
   });
 
-  it('草稿在纸上：滚轮 / 索引行跳转都让路，Esc 只提醒不关册子', async () => {
+  it('草稿在纸上：滚轮 / 书口 / 台历跳日都让路（翻页要等落笔）', async () => {
     const c = await openBook();
     await openWritePage(c);
     const rec = lastFlip();
 
     q('.bz-diary-book').dispatchEvent(new WheelEvent('wheel', { deltaY: 120, bubbles: true, cancelable: true }));
-    expect(rec.page).toBe(0);
-
-    q('.bz-diary-bk-edge').click(); // 抽出册页索引
-    qa('.bz-diary-idx-row')[0].click(); // 点一行
     expect(rec.page).toBe(0); // 没翻过去
 
+    q('.bz-diary-bk-edge').click(); // 书口有 8px 露在写作页之外：这道口子同样堵上
+    expect(q('.bz-diary-sheet').hidden).toBe(true);
+
+    q('.bz-diary-tools [data-tact="calendar"]').click();
+    const hasDay = qa('.bz-diary-cal-cell.bz-diary-has')[0];
+    hasDay?.click();
+    expect(rec.page).toBe(0); // 跳日也过同一道闸
+    expect(q('.bz-diary-cal-pop').hidden).toBe(true);
+  });
+
+  it('无草稿时书口照常抽索引（闸只在纸上有字/有草稿时落下）', async () => {
+    await openBook();
+    q('.bz-diary-bk-edge').click();
+    expect(q('.bz-diary-sheet').hidden).toBe(false);
+    expect(qa('.bz-diary-idx-row').length).toBeGreaterThan(0);
+  });
+
+  it('写作页上的滚轮不被翻页吃掉（长正文要能滚；这条必须在 preventDefault 之前）', async () => {
+    const c = await openBook();
+    await openWritePage(c);
+    const onPaper = new WheelEvent('wheel', { deltaY: 120, bubbles: true, cancelable: true });
+    q('.bz-diary-wsp-area').dispatchEvent(onPaper);
+    expect(onPaper.defaultPrevented).toBe(false); // 纸上的滚轮归纸（默认滚动），不归翻页
+    const onBook = new WheelEvent('wheel', { deltaY: 120, bubbles: true, cancelable: true });
+    q('.bz-diary-book').dispatchEvent(onBook);
+    expect(onBook.defaultPrevented).toBe(true); // 书上仍是翻页
+  });
+
+  it('写了字要收起整本：Esc / 收起钮 / 点遮罩都走二次确认（接着写 · 先收着 · 落笔）', async () => {
+    const c = await openBook();
+    const area = await openWritePage(c);
+    area.value = '写了一半';
+
+    // ① Esc：框弹出来；取消（mock 默认返回 'ok'，不是三支里的任何一支）= 接着写
     document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+    await vi.waitFor(() => expect(mocks.openFlowDialog).toHaveBeenCalledTimes(1));
+    const asked = (mocks.openFlowDialog.mock.calls[0] as unknown as [{ title: string }])[0];
+    expect(asked.title).toContain('还没落笔');
+    await Promise.resolve();
     expect(q('.bz-diary-scene').style.display).toBe('flex'); // 册子还开着
     expect(q('.bz-diary-wsp').hidden).toBe(false);
-    expect(q('.bz-diary-toast').textContent).toContain('先落笔');
+    expect(area.value).toBe('写了一半');
+
+    // ② 收起钮 → 「先收着」：册子收起来，草稿留在纸上
+    mocks.openFlowDialog.mockResolvedValueOnce('hold');
+    q('.bz-diary-close').click();
+    await vi.waitFor(() => expect(q('.bz-diary-scene').style.display).toBe('none'));
+    expect(q('.bz-diary-wsp').hidden).toBe(false);
+    expect(area.value).toBe('写了一半');
+
+    // ③ 点遮罩 → 「落笔」：条目落盘，纸才收
+    mocks.openFlowDialog.mockResolvedValueOnce('save');
+    c.show();
+    q('.bz-diary-desk').click();
+    await vi.waitFor(() => expect(q('.bz-diary-wsp').hidden).toBe(true));
+    expect([...vault.files.values()].join('\n')).toContain('写了一半');
+  });
+
+  it('空纸收起不拦一道（纸上没东西可丢）', async () => {
+    const c = await openBook();
+    await openWritePage(c);
+    q('.bz-diary-close').click();
+    expect(q('.bz-diary-scene').style.display).toBe('none');
+    expect(mocks.openFlowDialog).not.toHaveBeenCalled();
+  });
+
+  it('重开册子：草稿还在，且不重新渲染（书页与实例都复用）', async () => {
+    const c = await openBook();
+    const area = await openWritePage(c);
+    area.value = '收起来下次接着写';
+    const booksBefore = flipRecords.length;
+
+    c.hide();
+    expect(q('.bz-diary-scene').style.display).toBe('none');
+    c.show();
+    await vi.waitFor(() => expect(q('.bz-diary-scene').style.display).toBe('flex'));
+
+    expect(flipRecords.length).toBe(booksBefore); // 没重建书：重开不重排
+    expect(q('.bz-diary-wsp').hidden).toBe(false); // 纸还摊着
+    expect(q<HTMLTextAreaElement>('.bz-diary-wsp-area').value).toBe('收起来下次接着写'); // 字还在
+  });
+
+  it('数据被外部改动过（墙缓存作废）→ 重开照旧重读重排', async () => {
+    const c = await openBook();
+    const booksBefore = flipRecords.length;
+    c.hide();
+    invalidateWallCache(); // 等价于外部改了条目：缓存作废，快路不成立
+    c.show();
+    await vi.waitFor(() => expect(flipRecords.length).toBeGreaterThan(booksBefore));
   });
 
   it('改日子 · 时辰：台历进写作模式（空白日子也能点），「就这天」回写日戳', async () => {
@@ -1308,6 +1442,90 @@ describe('DiaryAppController · 写作内页（ADR-0233）', () => {
     expect(vault.binaryFiles.has('我的/日记/附件/相纸_2.png')).toBe(true); // 不覆盖前一件
     expect(area.value).toBe('![[相纸.png]]\n![[相纸_2.png]]\n');
   });
+
+  it('超上限（>64MB）的那件不进 vault，通知单独说「太大」而不是混在失败里', async () => {
+    const c = await openBook();
+    const area = await openWritePage(c);
+    const huge = { name: '大片.mp4', size: 65 * 1024 * 1024, arrayBuffer: async () => new ArrayBuffer(0) } as unknown as File;
+    await inner(c).importMedia([huge]);
+    expect(vault.binaryFiles.size).toBe(0);
+    expect(area.value).toBe('');
+    const msg = getNoticeMessages().join('\n');
+    expect(msg).toContain('64MB');
+    expect(msg).toContain('大片.mp4');
+  });
+
+  it('写盘失败：通知说「写盘没成」，纸面不动（不插半条死链）', async () => {
+    const c = await openBook();
+    const area = await openWritePage(c);
+    area.value = '先写一句';
+    vi.spyOn(vault, 'createBinary').mockRejectedValueOnce(new Error('盘满了'));
+    const file = { name: '相纸.png', size: 3, arrayBuffer: async () => new Uint8Array([1]).buffer } as unknown as File;
+    await inner(c).importMedia([file]);
+    expect(area.value).toBe('先写一句'); // 没插引用
+    const msg = getNoticeMessages().join('\n');
+    expect(msg).toContain('写盘没成');
+  });
+
+  it('落笔在途：再点落笔只落一篇，点「揉掉」让路（不写进去、也不清纸）', async () => {
+    const c = await openBook();
+    const area = await openWritePage(c);
+    area.value = '只该落一篇';
+    const realCreate = vault.create.bind(vault);
+    vi.spyOn(vault, 'create').mockImplementation(async (p: string, content: string) => {
+      await new Promise((r) => setTimeout(r, 60));
+      return realCreate(p, content);
+    });
+    const before = new Set(Object.keys(fixtureFiles()));
+    q('[data-wact="save"]').click();
+    q('[data-wact="save"]').click(); // 第二下：saving 挡掉
+    q('[data-wact="discard"]').click(); // 在途揉掉：让路（toast 提醒），不清纸
+    await vi.waitFor(() => expect(q('.bz-diary-wsp').hidden).toBe(true));
+    const created = [...vault.files.keys()].filter((p) => p.startsWith('我的/日记/') && !before.has(p));
+    expect(created.length).toBe(1);
+  });
+});
+
+describe('两个真机 bug 的守卫（书页层的 hidden / 宿主表单皮）', () => {
+  const css = () => readFileSync(resolve(process.cwd(), 'src/diary/styles.css'), 'utf8');
+
+  it('凡自己设了 display 的浮层都必须自带 [hidden] 规则（否则 hidden=true 关不掉它）', () => {
+    // 真机 bug：`.bz-diary-wsp { display: flex }` 是作者样式，压得过浏览器默认的
+    // `[hidden] { display: none }` —— 那张纸于是**一直**摊在书上，揉掉/落笔都关不掉。
+    const text = css();
+    const layers = [
+      'bz-diary-wsp',
+      'bz-diary-slip',
+      'bz-diary-sheet',
+      'bz-diary-lightbox',
+      'bz-diary-menu',
+      'bz-diary-cal-pop',
+      'bz-diary-album-pop',
+      'bz-diary-pass',
+      'bz-diary-fallback',
+      'bz-diary-toast',
+      'bz-diary-loading',
+    ];
+    for (const cls of layers) {
+      const rule = new RegExp(`\\.${cls}\\s*\\{([^}]*)\\}`).exec(text)?.[1] ?? '';
+      if (!/display\s*:/.test(rule)) continue; // 没设 display 的层，[hidden] 本来就生效
+      expect(text, `.${cls} 设了 display 却没有 .${cls}[hidden] 兜底`).toContain(`.${cls}[hidden]`);
+    }
+  });
+
+  it('写作页的输入面把宿主表单皮归零（带场景前缀 + 逐态覆盖 hover / focus）', () => {
+    // 真机 bug：那块框是白的，鼠标一悬停还更白——Obsidian 的 `textarea` / `textarea:hover`
+    // 带主题类选择器，单类规则压不住；归零规则必须够具体，且不能只写默认态。
+    const text = css();
+    const ruleOf = (sel: string): string =>
+      new RegExp(`${sel.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\s*\\{([^}]*)\\}`).exec(text)?.[1] ?? '';
+    const base = ruleOf('.bz-diary-scene .bz-diary-wsp-area');
+    expect(base, '没找到带场景前缀的输入面归零规则').toContain('background: transparent');
+    expect(base).toContain('border: 0');
+    expect(base).toContain('box-shadow: none');
+    expect(ruleOf('.bz-diary-scene .bz-diary-wsp-area:hover')).toContain('background: transparent');
+    expect(ruleOf('.bz-diary-scene .bz-diary-wsp-area:focus')).toContain('background: transparent');
+  });
 });
 
 describe('DiaryAppController · 开册进度（读全量 → 一次成册）', () => {
@@ -1329,6 +1547,7 @@ describe('DiaryAppController · 开册进度（读全量 → 一次成册）', (
   });
 
   it('读盘每批都向订阅者报一次进度，末次 = 读到的全量（进度条的唯一数据源）', async () => {
+    seedManyEntries(25); // 一批 10 篇 ⇒ 至少 3 批；只有 2 篇的话「每批都报」证不出来
     const { onWallProgress } = await import('../../src/diary/data');
     const seen: [number, number][] = [];
     const off = onWallProgress((done, total) => seen.push([done, total]));
@@ -1337,10 +1556,50 @@ describe('DiaryAppController · 开册进度（读全量 → 一次成册）', (
     } finally {
       off();
     }
-    expect(seen.length).toBeGreaterThan(0);
+    expect(seen.length).toBeGreaterThanOrEqual(3);
+    for (let i = 1; i < seen.length; i++) expect(seen[i][0]).toBeGreaterThan(seen[i - 1][0]); // 单调递增
     const [done, total] = seen[seen.length - 1];
     expect(total).toBeGreaterThan(0);
     expect(done).toBe(total); // 末尾那一批读完 = 全量到位
+  });
+
+  it('进度条读数真的接在 UI 上：读盘途中纸条现身并报 N / M 篇，成册即收', async () => {
+    seedManyEntries(25);
+    // 每篇读慢一点（一批 10 篇 ≈ 300ms）：纸条 120ms 才现身，读太快这一拍抓不到；
+    // 用 MutationObserver 收下这块文本**变过的所有值**——断言「UI 真被喂过数」，
+    // 而不是「最后一刻恰好是某个值」（后者在成册后会被「共 N 则」覆盖，测不出接线）。
+    const realRead = vault.read.bind(vault);
+    vi.spyOn(vault, 'read').mockImplementation(async (f: any) => {
+      await new Promise((r) => setTimeout(r, 30));
+      return realRead(f);
+    });
+    const c = DiaryAppController.getInstance();
+    c.show(); // 同步建 DOM，异步任务先让一拍（afterPaint）——观察者接在这中间来得及
+    const countEl = q('.bz-diary-ld-count');
+    const seen: string[] = [];
+    const obs = new MutationObserver(() => seen.push(countEl.textContent || ''));
+    obs.observe(countEl, { childList: true, characterData: true, subtree: true });
+
+    await vi.waitFor(() => expect(qa('.bz-diary-page-item').length).toBeGreaterThan(0), { timeout: 8000 });
+    obs.disconnect();
+
+    const readings = seen.filter((t) => /^\d+ \/ \d+ 篇$/.test(t));
+    expect(readings.length, `读数没被喂过：${seen.join(' | ')}`).toBeGreaterThanOrEqual(3); // 一批一发
+    const total = [...vault.files.keys()].filter((p) => p.startsWith('我的/日记/')).length;
+    expect(readings[readings.length - 1]).toBe(`${total} / ${total} 篇`); // 末次 = 全量到位
+    expect(countEl.textContent).toContain('则'); // 末尾停在「装订」那一段
+    expect(q('.bz-diary-loading').hidden).toBe(true); // 成册即收
+  });
+
+  it('读盘失败：不出「正在装订… 共 0 则」这种自相矛盾的纸条，兜底纸说话', async () => {
+    mocks.loadWallEntries.mockImplementation(async () => {
+      throw new Error('盘读不动');
+    });
+    const c = DiaryAppController.getInstance();
+    c.show();
+    await vi.waitFor(() => expect(q('.bz-diary-fallback').hidden).toBe(false));
+    expect(q('.bz-diary-loading').hidden).toBe(true);
+    expect(q('.bz-diary-ld-title').textContent).not.toContain('装订');
   });
 
   it('成册之后进度纸条收起（不挡着书）', async () => {

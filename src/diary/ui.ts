@@ -14,13 +14,15 @@
  * - **数据层不动**（`data.ts`/`store.ts`/`encrypt.ts`/`config.ts`）：本域 content 只读聚合，
  *   写盘全走 `./store` 的守卫 + 串行队列。
  *
- * 与原型（`.scratch/diary-quill/`）的三处刻意不同（ADR-0230 决策 3 / 8 / 9）：
+ * 与原型（`.scratch/diary-quill/`）的两处刻意不同（ADR-0230 决策 3 / 9）：
  * 1. **不带外链字体**（决策 3）：`font-family` 一律回归宿主，观感由「手写」转「印刷」。
- * 2. **写日记仍走本域 `openAddDialog`**（决策 8），不搬原型那张会自己写盘的书内写作页——
- *    写层守卫、同刻唯一、串行队列、加密分流、写后跳转都在那边，重造一份必然丢几条。
- * 3. **没有「抹（抹掉全部本地涂改）」这件文具**（决策 9）：那是探索稿 localStorage 覆盖层专有的
+ * 2. **没有「抹（抹掉全部本地涂改）」这件文具**（决策 9）：那是探索稿 localStorage 覆盖层专有的
  *    概念（added/deleted/tags/encrypted 四本账），单源里对应的是真文件，没有可抹的对象。
  *    同为原型的「拆信/取出」在单源里走真保险箱，也不再需要那个演示用假密码框。
+ *
+ * **写日记走书内写作页**（ADR-0233，推翻 ADR-0230 决策 8）：点「写」在这本书上摊开一张素纸
+ * （`.bz-diary-wsp`，见 `startWrite` 一族），落笔即进写层。旧写日记弹窗
+ * （`./ui/dialogs` 的 `openAddDialog`）已无 UI 入口，只剩「换张贴纸」用的标签选择器还在那条链上。
  *
  * 隔离口径：根元素即 `.bz-diary-scene`（全部样式挂它，见 `./styles.css` 头注）；根上只写
  * `position/inset/display/z-index` 这类**行为性内联值**，z-index 经 core 的 `allocZ()`（ADR-0067）。
@@ -38,6 +40,7 @@ import { DIARY_DIRECTORY, inWallDirs, getTagEmoji, getSortedTagsForAddDialog } f
 import {
   loadWallEntries,
   invalidateWallCache,
+  wallCacheFresh,
   onWallProgress,
   mediaSrc,
   extractMedia,
@@ -456,12 +459,22 @@ export class DiaryAppController {
   private draft: { date: string; time: string; tags: string[] } | null = null;
   /** 落笔进行中（防连点：写盘慢时双击「落笔」会在同刻落两篇） */
   private saving = false;
-  /** 开册进度条的 `uiProgress` 句柄（每次 show 现建，成册随层一起摘） */
+  /** 开册进度条的 `uiProgress` 句柄（首次开册建一次就复用，不随层出入栈——基元没有状态） */
   private loadBar: { el: HTMLElement; setValue: (n: number) => void } | null = null;
   /** 进度条的显示延时器：读得快（缓存命中）就不闪这一下 */
   private loadShowTimer: ReturnType<typeof setTimeout> | null = null;
   /** 本次开册的读盘 + 成册任务（`bz-diary-write`：等它落地再摆写作内页） */
   private loadTask: Promise<void> | null = null;
+  /** 本轮开册的身份牌：连点命令时旧那一轮在落地前对不上牌，自行让位（不重排第二遍） */
+  private loadToken: object | null = null;
+  /**
+   * 书页是否就是「当前数据排出来的那一册」（`relayout` 落地即置真）。
+   * 配合 `bookStillValid()` 构成 `show()` 的快路：重开册子不重读、不重排
+   * （用户点名：「再次打开日记本，写的内容不会消失，也不会再重新渲染页面」）。
+   */
+  private bookFresh = false;
+  /** 上次排版时的保险箱锁态：锁态一变，加密条目要重并 ⇒ 快路作废 */
+  private layoutUnlocked = false;
 
   // ---------- 生命周期标记 ----------
   private _initialized = false;
@@ -711,6 +724,9 @@ export class DiaryAppController {
     this.lastSpreadCount = this.pages.length;
     this.buildBook(Math.max(0, Math.min(last, target)));
     this.refreshBookRect();
+    /* 这一册现在与「已加载数据 + 当前锁态 + 当前筛选」严格对应 ⇒ 重开册子可以走快路 */
+    this.bookFresh = true;
+    this.layoutUnlocked = isUnlocked();
     return (typeof performance !== 'undefined' ? performance.now() : 0) - t0;
   }
 
@@ -1143,6 +1159,10 @@ export class DiaryAppController {
       'wheel',
       (ev: WheelEvent) => {
         if (!this.flip) return;
+        /* 写作内页就摆在书里：纸上的滚轮该滚正文 / 贴纸行，不是翻页。
+           这一条必须在 `preventDefault()` **之前**——反过来会把纸上的滚动一起吃掉，
+           长正文就成了滚不动的一段（且每次还弹一句「先落笔」）。 */
+        if ((ev.target as HTMLElement | null)?.closest?.('.bz-diary-wsp')) return;
         ev.preventDefault();
         const now = Date.now();
         if (now - this.wheelLock < WHEEL_LOCK_MS) return;
@@ -1158,8 +1178,7 @@ export class DiaryAppController {
 
     /* 常驻出口：右上角「收起」钮 */
     this.closeEl.addEventListener('click', () => {
-      if (this.writeGuard()) return; // 草稿在纸上：先落笔或揉掉
-      this.hide();
+      void this.requestClose(); // 草稿在纸上：先问一句（接着写 / 先收着 / 落笔）
     });
 
     /* 点遮罩空白处 = 收起整本（与其他域「点遮罩关闭」同口径）。
@@ -1180,8 +1199,7 @@ export class DiaryAppController {
       ) {
         return;
       }
-      if (this.writeGuard()) return; // 草稿在纸上：先落笔或揉掉
-      this.hide();
+      void this.requestClose();
     });
 
     /* 窗口高矮会改书高（--pg-h 的短屏规则），书高变了必须重排，不能只盯宽度 */
@@ -1276,9 +1294,12 @@ export class DiaryAppController {
       this.closeMenu();
       return;
     }
-    /* 写作内页摊着：Esc 不关整本、也不翻页（草稿会跟着一起没），只提醒一句
-       —— 与原型同口径，纸上那两个动作才是出口 */
-    if (this.writeGuard()) return;
+    /* 写作内页摊着：Esc 走「收起整本」同一道闸——有字先问一句（接着写 / 先收着 / 落笔），
+       没字就直接收（纸上没东西可丢） */
+    if (this.hasDraft()) {
+      void this.requestClose();
+      return;
+    }
     /* 没有扉页可「合上」：ESC 分两步收尾——先翻回最新那一页，再关掉整本
        （此前只翻回第 0 页就停住，等于面板永远关不掉：整屏场景里再没有别的出口） */
     if (this.flip && this.cursor > 0) {
@@ -1969,7 +1990,9 @@ export class DiaryAppController {
   private openCal(mode: 'jump' | 'write' = 'jump'): void {
     this.calMode = mode;
     const d = this.draft;
-    const base = mode === 'write' && d ? d.date : this.entries[0]?.date || '2026-01-01';
+    /* 基准月取**当前这本册子**最新一篇所在的月（`visibleEntries()`：筛选态下不是全量最新那篇）——
+       否则一开台历停在早就翻不到的那个月，与本册对不上 */
+    const base = mode === 'write' && d ? d.date : this.visibleEntries()[0]?.date || '2026-01-01';
     this.cal.year = Number(base.slice(0, 4));
     this.cal.month = Number(base.slice(5, 7));
     this.calTimeRowEl.hidden = mode !== 'write';
@@ -1990,7 +2013,10 @@ export class DiaryAppController {
     const writeMode = this.calMode === 'write';
     this.calYmEl.textContent = `${year} 年 ${month} 月`;
     const byDay = new Map<number, number>();
-    for (const e of this.entries) {
+    /* 每日「当天几则」按**当前这本册子的可见集**算（筛选标一挂，册子里就只剩那个标的内容）。
+       读未过滤的 `this.entries` 会让筛选态把筛掉的日子的标成「有」：角上那枚小字虚高，
+       格子还留着 `bz-diary-has` 可点，点下去却落到 `jumpToDay` 的「那天没落笔」——标着有、说没有。 */
+    for (const e of this.visibleEntries()) {
       if (e.date.slice(0, 7) === `${year}-${pad2(month)}`) {
         const d = Number(e.date.slice(8, 10));
         byDay.set(d, (byDay.get(d) || 0) + 1);
@@ -2402,6 +2428,10 @@ export class DiaryAppController {
   /** 揉掉这张纸。写过的字不静默丢：有正文先问一句（纸条层，本域自己的确认件）。 */
   private discardWrite(): void {
     if (!this.draft) return;
+    if (this.saving) {
+      this.toast('正在落笔，等一下'); // 落笔在途时揉掉＝条目照样写进去，语义被否
+      return;
+    }
     if (this.wspAreaEl.value.trim()) {
       this.openSlip({
         title: '这张纸还没落笔',
@@ -2427,34 +2457,41 @@ export class DiaryAppController {
   }
 
   /**
-   * 落笔：正文、日子时辰、贴纸一并进写层（`store.addEntry`）。
+   * 落笔：正文、日子时辰、贴纸一并进写层（`store.addEntry`）。返回是否真写进去了。
    *
    * 落完之后只翻回第 0 页——新条目就是最新那一篇，而 `diary:entry-added` 的域事件会安排
    * 一次防抖回刷把这一篇排进册子（此处不抢着重排，免得同一拍排两遍整册）。
+   *
+   * 写盘在途时把纸面锁住（`readOnly` + 「揉掉」让路）：`await` 期间用户接着敲的字，
+   * 会在成功那一刻被 `dropWrite()` 连纸一起清掉——条目已经落盘，那段字却没人收，静默丢。
    */
-  private async saveWrite(): Promise<void> {
+  private async saveWrite(): Promise<boolean> {
     const d = this.draft;
-    if (!d || this.saving) return;
+    if (!d || this.saving) return false;
     const text = this.wspAreaEl.value.trim();
     if (!text) {
       this.toast('一个字都没写呢');
       this.focusWrite();
-      return;
+      return false;
     }
     this.saving = true;
+    this.wspAreaEl.readOnly = true;
     try {
       await addEntry(d.date, d.time, d.tags.length ? d.tags : ['日记'], text);
       this.dropWrite();
       this.jumpToPage(0);
       this.toast('记下了，盖个章');
+      return true;
     } catch (e) {
       // 守卫拒写 / 读盘失败的人话通知已由写层发出，这里只兜底其余异常
       if (!isUnparsedRefusal(e) && !isDiaryReadFailure(e)) {
         console.error('落笔失败:', e);
         notice(`落笔没成：${e instanceof Error ? e.message : String(e)}`, 'error');
       }
+      return false;
     } finally {
       this.saving = false;
+      this.wspAreaEl.readOnly = false;
     }
   }
 
@@ -2462,27 +2499,39 @@ export class DiaryAppController {
   //  内页媒体：从本机挑一件，写进 vault，正文里留一条 `![[名字]]`
   // ============================================================
 
+  /**
+   * 唤起系统文件选择器。`<input type=file>` 挂在 body 上再点（仓内既有先例
+   * `core/path-picker.ts`）：游离节点在部分 WebView 里不保证唤起；settle 后自己摘掉。
+   */
   private pickMedia(): void {
     if (!this.draft) return;
     const input = document.createElement('input');
     input.type = 'file';
     input.accept = PICK_MEDIA_ACCEPT;
     input.multiple = true;
+    input.style.display = 'none'; // 只是容器，不参与布局（行为性隐藏，非视觉样式）
+    const cleanup = (): void => input.remove();
     input.addEventListener('change', () => {
       const files = Array.from(input.files || []);
+      cleanup();
       void this.importMedia(files);
     });
+    // 用户取消选择时不会触发 change：挂一拍兜底把节点摘掉，免得每点一次多一个游离 input
+    input.addEventListener('cancel', cleanup);
+    document.body.appendChild(input);
     input.click();
   }
 
   private async importMedia(files: File[]): Promise<void> {
     if (!files.length) return;
     const app = this.app();
+    const maxBytes = MEDIA_PICK_MAX_MB * 1024 * 1024;
     const done: string[] = [];
+    const tooBig: string[] = [];
     const failed: string[] = [];
     for (const f of files) {
-      if (f.size > MEDIA_PICK_MAX_MB * 1024 * 1024) {
-        failed.push(f.name);
+      if (f.size > maxBytes) {
+        tooBig.push(f.name);
         continue;
       }
       try {
@@ -2493,13 +2542,11 @@ export class DiaryAppController {
         failed.push(f.name);
       }
     }
+    /* 三类结果分开说：超限是「这件太大」，写失败是「盘上没写成」，两件事的下一步不一样 */
+    if (tooBig.length) notice(`超过 ${MEDIA_PICK_MAX_MB}MB，没放进册子：${tooBig.join('、')}`, 'warning');
+    if (failed.length) notice(`这些写盘没成：${failed.join('、')}`, 'error');
     if (done.length) {
-      notice(
-        `放进册子 ${done.length} 件${failed.length ? `（另有 ${failed.length} 件没成）` : ''}`,
-        failed.length ? 'warning' : 'success'
-      );
-    } else if (failed.length) {
-      notice(`这些没能放进册子：${failed.join('、')}`, 'error');
+      notice(`放进册子 ${done.length} 件`, tooBig.length || failed.length ? 'warning' : 'success');
     }
   }
 
@@ -2618,7 +2665,11 @@ export class DiaryAppController {
         setTimeout(() => eh.classList.remove('bz-diary-peek'), 4000);
       }
     }
-    this.edgeEl.addEventListener('click', () => this.openIndexSheet());
+    this.edgeEl.addEventListener('click', () => {
+      /* 书口有 8px 露在书页之外（写作内页只盖书页那一块），草稿在纸上时这道口子也得堵上 */
+      if (this.writeGuard()) return;
+      this.openIndexSheet();
+    });
   }
 
   private onMouseMove = (ev: MouseEvent): void => {
@@ -2839,24 +2890,23 @@ export class DiaryAppController {
     this._subs = [];
   }
 
-  /** vault modify/create 回刷（纯外部变更：其他工具写入条目文件时册子也要跟上） */
+  /** vault modify/create 回刷（纯外部变更：其他工具写入条目文件时册子也要跟上）。
+   *  **只认 `.md`**：册子只由条目笔记排出来，而 `我的/日记/附件/` 这类媒体落点也在目录命中面内
+   *  （写作内页退回落点时就会往那儿写真照片/录音）——不筛扩展名的话，贴一件媒体就换一次
+   *  防抖整册重读 + 重排，用户正写着字被卡一下。 */
   private subscribeVault(): void {
     if (this._vaultRefs.length) return;
-    const schedule = () => {
+    const schedule = (p: string | undefined): void => {
+      if (!p || !p.toLowerCase().endsWith('.md')) return;
+      if (!inWallDirs(p)) return;
       if (this.root?.style.display !== 'flex') return;
       this.scheduleRelayout();
     };
     this._vaultRefs.push(
-      this.app().vault.on('modify', (file: { path?: string }) => {
-        const p = file?.path;
-        if (p && inWallDirs(p)) schedule();
-      })
+      this.app().vault.on('modify', (file: { path?: string }) => schedule(file?.path))
     );
     this._vaultRefs.push(
-      this.app().vault.on('create', (file: { path?: string }) => {
-        const p = file?.path;
-        if (p && inWallDirs(p)) schedule();
-      })
+      this.app().vault.on('create', (file: { path?: string }) => schedule(file?.path))
     );
   }
 
@@ -2888,10 +2938,13 @@ export class DiaryAppController {
   /**
    * 打开日记本（命令路径：ensure 后 show）。
    *
-   * 一条直路：**读全量 → 起进度条 → 读完一次成册**。
-   * 上千篇正文走磁盘读 + 每批 10，读完要好几秒；这段时间书还是空的，桌上摆一张
-   * 报进度的纸条（`showLoading`），读完换「正在装订」，成册即收——不再先排一小批顶着、
-   * 也不再读完之后在后台重排一遍（那两版真机上都只是「更卡 + 每次打开又整册重排」）。
+   * 两条路：
+   * - **快路**（`bookFresh` + 墙缓存还新 + 保险箱锁态没变）：这一册就是上次排好的那一册
+   *   （DOM 与 StPageFlip 实例都还在，`hide()` 只是 `display:none`），直接翻开——不重读、不重排、
+   *   纸上没落笔的草稿原样还在。用户点名：「再次打开日记本的时候，写的内容也不会消失，
+   *   也不会再重新渲染页面」。
+   * - **慢路**：读全量 → 进度条 → 读完一次成册。上千篇正文走磁盘读 + 每批 10，读完要好几秒；
+   *   这段时间书还是空的，桌上摆一张报进度的纸条（`showLoading`），读完换「正在装订」，成册即收。
    */
   show(): void {
     if (!this._initialized) this.ensureElements();
@@ -2903,7 +2956,16 @@ export class DiaryAppController {
     this._allowCacheNext = true;
     this.subscribeEvents();
     this.subscribeVault();
-    this.loadTask = (async () => {
+
+    /* 快路：上次排好的这一册还能用（数据没被外部改动、锁态没变） */
+    if (this.bookFresh && this.entries.length && !this._loadError && this.bookStillValid()) {
+      this.toast(reopen ? '又翻开了' : '翻开的是最新那篇');
+      return;
+    }
+
+    const token = {};
+    this.loadToken = token;
+    const task = (async () => {
       await this.afterPaint();
       this.showLoading();
       const off = onWallProgress((done, total) => this.updateLoading(done, total));
@@ -2912,9 +2974,18 @@ export class DiaryAppController {
       } finally {
         off();
       }
-      // 读盘期间被收起（点了遮罩 / Esc）：这一册不必再排，下一次 show 重来
+      /* 读盘期间被收起（点了遮罩 / Esc）：这一册不必再排，下一次 show 重来 */
       if (this.root?.style.display !== 'flex') {
         this.hideLoading();
+        return;
+      }
+      /* 期间又 show 过一次（命令连点）：这一轮已经过期，让位给新的那一轮——
+         否则两个任务会各排一遍整册，还把新一轮正在用的进度纸条收掉 */
+      if (this.loadToken !== token) return;
+      if (this._loadError) {
+        // 兜底纸已经摆出来了：别再写「正在装订… 共 0 则」自相矛盾
+        this.hideLoading();
+        this.toast('这一册没读出来');
         return;
       }
       this.setLoadingBinding();
@@ -2927,6 +2998,17 @@ export class DiaryAppController {
       }
       this.toast(reopen ? '又翻开了' : '翻开的是最新那篇');
     })();
+    this.loadTask = task;
+  }
+
+  /**
+   * 上一册还能用吗：书页排过 + 墙数据缓存没被外部改动作废 + 保险箱锁态与上次排版的相同
+   * （锁态变了要重并加密条目，必须重排）。
+   */
+  private bookStillValid(): boolean {
+    if (!this.pages.length) return false;
+    if (!wallCacheFresh(this.app())) return false;
+    return isUnlocked() === this.layoutUnlocked;
   }
 
   /**
@@ -2942,10 +3024,15 @@ export class DiaryAppController {
     }
     /* 等**这一次** show 的读盘 + 成册落地（show() 刚把 loadTask 换成新任务）——
        写作内页是书里的一张纸，书还没排出来就摆上去，读者会看到一张浮在空书壳上的纸 */
-    const task = this.loadTask;
-    void (task ?? Promise.resolve()).then(() => {
-      if (this.root?.style.display === 'flex') this.startWrite();
-    });
+    void Promise.resolve(this.loadTask)
+      .then(() => {
+        if (this.root?.style.display === 'flex') this.startWrite();
+      })
+      .catch((e) => {
+        // 建书/重排抛错时 loadTask 会 reject：命令不能静默失联
+        console.error('[diary] 写日记打开失败:', e);
+        notice(`写日记打开失败：${e instanceof Error ? e.message : String(e)}`, 'error');
+      });
   }
 
   // ============================================================
@@ -2995,14 +3082,63 @@ export class DiaryAppController {
     this.loadBar?.setValue(0);
   }
 
+  /** 纸上摊着草稿吗（空纸也算摊着：那张纸还在书里） */
+  private hasDraft(): boolean {
+    return !!this.draft && !this.wspEl.hidden;
+  }
+
+  /** 纸上有字吗（「写了东西」的唯一判据：正文非空白） */
+  private draftHasText(): boolean {
+    return this.hasDraft() && !!this.wspAreaEl.value.trim();
+  }
+
   /**
-   * 「草稿在纸上」的统一门禁：翻页、点遮罩、点收起、Esc 都要先过这道。
+   * 「草稿在纸上」的**翻页门禁**：翻页 / 索引行 / 台历跳日都要先过这道。
    * 与原型同款——写作页摊开时它不是「一个可以顺便翻过去的浮层」，而是当前唯一该处理的东西。
    */
   private writeGuard(): boolean {
-    if (!this.draft || this.wspEl.hidden) return false;
+    if (!this.hasDraft()) return false;
     this.toast('先落笔，或把这张纸揉掉');
     return true;
+  }
+
+  /**
+   * 收起整本的统一入口（点遮罩 / 点收起钮 / Esc 三条路都走它）。
+   *
+   * 纸上有字 → **先问一句**（用户点名要求）：接着写 / 先收着 / 落笔。
+   * 「先收着」不是丢——草稿留在纸上，下次翻开还在（见 `hide()` 的注释）。
+   * 空纸直接收：纸上没东西可丢，不值得拦一道。
+   */
+  private async requestClose(): Promise<void> {
+    if (!this.root || this.root.style.display !== 'flex') return;
+    if (!this.draftHasText()) {
+      this.dropWrite();
+      this.hide();
+      return;
+    }
+    let choice: string | undefined;
+    try {
+      choice = await openFlowDialog({
+        title: '这张纸还没落笔',
+        message: '先收着的话，下次翻开日记本还在这张纸上。',
+        actions: [
+          { label: '接着写', value: 'stay' },
+          { label: '先收着', value: 'hold' },
+          { label: '落笔', value: 'save', cta: true },
+        ],
+      });
+    } catch {
+      return; // 框没能开出来（宿主异常）：什么都不做比默默收起安全
+    }
+    if (choice === 'save') {
+      const saved = await this.saveWrite();
+      if (!saved) return; // 落笔没成（写层拒绝 / 空文）：留在纸上
+      this.hide();
+      return;
+    }
+    // 'stay' / undefined（Esc 关框）= 留在纸上
+    if (choice !== 'hold') return;
+    this.hide();
   }
 
   hide(): void {
@@ -3015,8 +3151,9 @@ export class DiaryAppController {
     this.closeCal();
     this.closeMenu();
     this.closePass(false);
-    // 写作内页随书一起收：草稿不跨会话（下一次摊开是新的一张纸）
-    this.dropWrite();
+    /* 写作内页的草稿**不随书一起丢**（用户点名）：空纸收掉，写了字的纸原样留在书里，
+       下次翻开（`show()` 的快路不重排）还是这一张、字都在。 */
+    if (!this.draftHasText()) this.dropWrite();
     this.hideLoading();
     hideTagPicker();
     this.pauseAllAudio();
@@ -3082,6 +3219,8 @@ export class DiaryAppController {
     this.photoIndex.clear();
     this.pages = [];
     this.entries = [];
+    this.bookFresh = false; // DOM 都要拆了，快路的凭据跟着作废
+    this.draft = null;
     if (this.root) {
       this.root.remove();
       this.root = null;
