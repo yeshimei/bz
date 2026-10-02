@@ -36,6 +36,9 @@ const SOURCES = [
   // bz 组件库（自绘 token + 组件样式，源顺序在 core 之后保证可覆盖旧基线）
   "src/core/ui/tokens.css",
   "src/core/ui/components.css",
+  // 日记本内嵌 StPageFlip v2.0.7（MIT，见 src/diary/vendor/page-flip.LICENSE）——库自带样式，
+  // 必须排在本域 styles.css 之前，域样式才能覆盖它（ADR-0230）
+  "src/diary/vendor/stPageFlip.css",
   "src/diary/styles.css",
   "src/home/styles.css",
   "src/memo/styles.css",

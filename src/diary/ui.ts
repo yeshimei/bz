@@ -1,87 +1,308 @@
 /**
- * 日记本（diary）UI —— 原回忆墙升格正名（ADR-0115，issue 256）：原型 v5「章节固定 + 滚动高亮 + 性能优化」一比一移植
+ * 日记本（diary）域 UI · 「桌上那本」书页界面（ADR-0230）
  *
- * 布局（照搬原型）：
- * - 全屏/居中卡弹窗：桌面 = 980px 宽 82vh 居中卡（根容器遮罩 flex 居中）；
- *   移动端 = 真全屏（≤768px，根容器自带全屏 + 安全区避让。
- * - 头部行：品牌「日记本」+ 范围/计数 + 按钮组（pen-line 写日记、search 搜索、calendar 按年月跳转、x 关闭——lucide 线条图标）。
- * - 类型 chips 行：主标签胶囊（日记📖/摄影📸/骑行🚴/猫🐱…，emoji 为数据语义），可点选筛选，带计数；「加密」锁定态（lock 线条图标虚线）。
- * - 主体两栏：左 = 固定章节栏（年份分组 + 月份列表，每项带缩略图胶卷小图，滚动自动高亮当前月份，点击平滑滚动定位）；
- *   右 = 瀑布流（masonry：图片/视频/音频块 + 纯文字窄条，按日期分节，节头 sticky 显示日期+周几+统计；首屏顶部可有「那年今天」横滑回顾条——媒体缩略卡 + 纯文字文字块卡，issue 352）。
- * - 媒体块：真实 <img>（object-fit:cover 按比例）、<video preload=none> 渐变海报+▶角标（点击开灯箱真播）、
- *   音频块 music 图标（点击开灯箱内联播放）；加密条目媒体走保险箱按需解密（增强 #8）；
- *   渲染失败（mediaSrc 返回空）显示渐变占位（原型 .ph 逻辑）。
- * - 灯箱：全屏黑底，图片/视频/音频 controls 播放，Esc/点背景关闭；左右按钮 + 方向键 + 移动端滑动连看（增强 #1）。
- * - 空态：图标 + 一句话 + 动作按钮。
- * - 性能：媒体视口懒加载（IntersectionObserver，进视口才挂 src）、content-visibility:auto、
- *   滚动高亮用 rAF 节流。
+ * 一本书落在台灯下的桌面上：翻开就是最新那篇，往后翻是更旧的日子；功能全是桌上实物——
+ * 书口抽册页索引 / 台历跳日 / 放大镜检索 / 铅笔写 / 贴纸册分类 / 火漆信封加密 / 撕页删除 /
+ * 相纸显影灯箱 / 那年今天明信片 / 票根·信笺·藏书票。
  *
- * 数据层对接（./data）：
- * - openManager() 时 loadWallEntries(app)；
- * - 章节栏月份 = groupByMonth(entries) 的 key，倒序；
- * - 媒体块 src = mediaSrc(app, media.name)；mediaSrc 返回空 → 渐变占位（原型 .ph）。
- * 本文件只 import ./data，不自行读取数据。
+ * 分层（ADR-0106 / ADR-0230 决策 2）：
+ * - **markup 纯层在 `./render`**（书桌 DOM 骨架 + seal/ticket/exlibris/para/entryBlocks/daystamp/photo），
+ *   受 render-purity 守卫约束；两处消费同一份——插件这里，以及评审壳
+ *   （`prototypes/diary/fake-sim.ts` 跑的是真 `openDiary` → 真 `show()`，不是复刻件）。
+ * - **本文件只放行为**：分页测量与切页、StPageFlip 建书与翻页、文具五项动作、台历/贴纸册/检索/
+ *   信封/撕页/灯箱/便签菜单、域事件回刷、加密媒体按需解密。
+ * - **数据层不动**（`data.ts`/`store.ts`/`encrypt.ts`/`config.ts`）：本域 content 只读聚合，
+ *   写盘全走 `./store` 的守卫 + 串行队列。
  *
- * 写链路（issue 256 迁入本域）：✏️写日记接 ./ui/dialogs openAddDialog（滚轮年份范围取自当前数据）；
- * 改标签/删除/加密/解密经 ./ui/dialogs showTagPicker 与 ./ui/entry-actions（写层守卫 + 串行队列），
- * 动作结果经域事件（diary:entry-added/tags-changed/entry-deleted/entry-decrypted/encrypted-purged）
- * 防抖重载本墙。旧编辑面板的「在日记本中查看」动作随域退役（墙即日记本，无处可看）。
- * 条目动作（issue 198 批次 A 收敛）：桌面右键 = core item-actions 跟手菜单（.bz-item-menu）；
- * 移动端长按 = 共享 .bz-sheet 底部抽屉（单击入口已按 2026-09-11 评审取消，动作集与菜单不合并）。
+ * 与原型（`.scratch/diary-quill/`）的三处刻意不同（ADR-0230 决策 3 / 8 / 9）：
+ * 1. **不带外链字体**（决策 3）：`font-family` 一律回归宿主，观感由「手写」转「印刷」。
+ * 2. **写日记仍走本域 `openAddDialog`**（决策 8），不搬原型那张会自己写盘的书内写作页——
+ *    写层守卫、同刻唯一、串行队列、加密分流、写后跳转都在那边，重造一份必然丢几条。
+ * 3. **没有「抹（抹掉全部本地涂改）」这件文具**（决策 9）：那是探索稿 localStorage 覆盖层专有的
+ *    概念（added/deleted/tags/encrypted 四本账），单源里对应的是真文件，没有可抹的对象。
+ *    同为原型的「拆信/取出」在单源里走真保险箱，也不再需要那个演示用假密码框。
+ *
+ * 隔离口径：根元素即 `.bz-diary-scene`（全部样式挂它，见 `./styles.css` 头注）；根上只写
+ * `position/inset/display/z-index` 这类**行为性内联值**，z-index 经 core 的 `allocZ()`（ADR-0067）。
  */
-import { Component, MarkdownRenderer, type App, type EventRef, type IconName } from 'obsidian';
-import { escManager } from '../core/esc-manager';
-import { topifyZ, longPress } from '../core/dom';
-import { isMobileEnv } from '../core/mobile';
-import { uiIcon, uiSearch, uiEmpty, uiBtn, uiBtnRow, uiResizable } from '../core/ui';
-import { panelSizePersist } from '../core/settings-provider';
-import { openItemMenu, openItemSheet, closeItemMenu, resetItemMenuClickGuard, type ItemAction } from '../core/item-actions';
-import { debounce, escapeHtml, hash31, localDayKey, pad2, stripMdExt } from '../core/utils';
-import { onDomainEvent, emitDomainEvent } from '../core/domain-bus';
-import { openFlowDialog } from '../core/flow-dialog';
+import { type App, type EventRef } from 'obsidian';
+import { PageFlip } from './vendor/page-flip.browser.js';
+import { registerPanelEsc, unregisterPanelEsc } from '../core/esc-manager';
+import { topifyZ } from '../core/dom';
 import { notice } from '../core/notice';
 import { getApp } from '../core/app';
-import { DIARY_DIRECTORY, LETTER_DIRECTORY, movieDirectory, bookDirectory, inWallDirs, getSubTagsOfPrimary, getPrimaryTagsInDisplayOrder, getTagEmoji } from './config';
-import { loadWallEntries, invalidateWallCache, mediaSrc, groupByMonth, pickOnThisDay, extractMedia, extractSegments, stripMediaLinks, type WallEntry, type WallMedia } from './data';
-import { railThumbKey, railThumbKeepKeys, pruneRailThumbs, getRailThumb, putRailThumb, makeImageThumb, makeVideoThumb } from './thumb-cache';
-// markup 单源（ADR-0104）：壳模板/图标表/MIME/统计/题注在 render.ts，原型壳与插件同源消费
-import { wallPanelHTML, ACT_ICON, KIND_ICON, mimeOfMediaName, dayStats, statHtml, lbCaption, lbSubText, mediaCapHtml, WEEK } from './render';
-import { hideAddDialog, hideTagPicker, openAddDialog, showTagPicker } from './ui/dialogs';
-import { jumpToDiaryEntry, copyDiaryLink, showConfirm } from './ui/entry-actions';
-// 动效层（纸张/翻页/墨迹/日历）：只动表现不改布局；render.ts markup 单源一字不动
+import { onDomainEvent } from '../core/domain-bus';
+import { escapeHtml } from '../core/utils';
+import { openFlowDialog } from '../core/flow-dialog';
+import { DIARY_DIRECTORY, inWallDirs, getTagEmoji } from './config';
 import {
-  motionArmBoot, motionChipDeny, motionChipPress, motionClearChip, motionConsumeBoot,
-  motionDateFilterIn, motionDateFilterOut, motionDayStamp, motionDevelop, motionLightboxOut,
-  motionLightboxShow, motionMarks, motionMonthPress, motionPageTurn, motionPanelIn,
-  motionPanelOut, motionRendered, motionSearchRow, motionSheetDialog, motionSkeleton,
-  motionTeardown, type DiaryMotionMode,
-} from './motion';
-import { findDiaryEntry, removeDiaryEntries, isUnparsedRefusal, isDiaryReadFailure, rekeyDiaryMapPath, dropDiaryMapPath } from './store';
-import { isUnlocked, loadEncryptedEntries, encryptEntry, reclassifyEntry, deleteEncryptedEntry } from './encrypt';
+  loadWallEntries,
+  invalidateWallCache,
+  mediaSrc,
+  pickOnThisDay,
+  extractMedia,
+  extractSegments,
+  stripMediaLinks,
+  type WallEntry,
+  type WallMedia,
+} from './data';
+import {
+  bookPanelHTML,
+  daystampHTML,
+  entryBlockHTMLs,
+  inlineMd,
+  mimeOfMediaName,
+  splitTextBlocks,
+  stripHashInto,
+  tiltClassOf,
+  cnNum,
+  pad2,
+  weekdayOf,
+  WEEK,
+  type RenderCtx,
+} from './render';
+import {
+  findDiaryEntry,
+  removeDiaryEntries,
+  isUnparsedRefusal,
+  isDiaryReadFailure,
+  rekeyDiaryMapPath,
+  dropDiaryMapPath,
+} from './store';
+import {
+  isUnlocked,
+  loadEncryptedEntries,
+  encryptEntry,
+  reclassifyEntry,
+  deleteEncryptedEntry,
+} from './encrypt';
+import { openAddDialog, showTagPicker, hideAddDialog, hideTagPicker } from './ui/dialogs';
+import { copyDiaryLink, showConfirm } from './ui/entry-actions';
 
-/** 右键菜单/抽屉动作 → lucide 图标名（增强包 #4/#7；ItemAction.icon 走 Obsidian IconName；
- *  头行/灯箱/媒体类型图标表在 render.ts 单源，import 处合入） */
-/** 动作图标映射：`satisfies`（非 Record<string, …> 注解）——键集由字面量推断，
- *  取不存在的键是编译错误。2026-09-11 真机事故：曾因缺 close 键取到 undefined，
- *  Obsidian setIcon(undefined) 在 getIcon 里 `name.startsWith` 抛异常，整条抽屉构建
- *  中断且被 mock 静默吞掉——Record<string,…> 注解是漏网主因，勿改回。 */
-const ACTION_ICON = {
-  open: 'external-link',
-  copyLink: 'copy',
-  copyContent: 'file-text',
-  attachment: 'paperclip',
-  editTags: 'tags',
-  encrypt: 'lock',
-  decrypt: 'lock-open',
-  remove: 'trash-2',
-  play: 'play',
-  music: 'music',
-  image: 'image',
-  close: 'x',
-} satisfies Record<string, IconName>;
+// ===== 常量 =====
+
+/** 窄屏单页断点——**与 styles.css 的 `@media (max-width: 720px)` 必须一致**（两侧都改） */
+const SINGLE_MAX_W = 720;
+/** StPageFlip 翻页动画时长（与原型同值） */
+const FLIP_TIME_MS = 620;
+/** 页尾能塞下一刀的最小剩余高度：比这更矮就不切，直接换页（切出来两行字没有意义） */
+const PAGE_CUT_MIN_PX = 84;
+/** 日戳不孤行：本页剩余空间装不下「日戳 + 一点点内容」就提前换页 */
+const DAYSTAMP_KEEP_PX = 96;
+/** 域事件/vault 变更后的整册回刷防抖 */
+const REFRESH_DEBOUNCE_MS = 400;
+/** 滚轮翻页节流 */
+const WHEEL_LOCK_MS = 560;
+
+// ===== 纯函数（可单测）=====
+
+/** 灯箱条目：媒体文件 + 它属于哪一则 */
+export interface PhotoRef {
+  entry: WallEntry;
+  media: WallMedia;
+}
 
 /**
- * 增强包 #11：跳原文（/在日记本中查看）前捕获的墙视图状态——回墙恢复筛选与滚动位置。
+ * 灯箱序列（纯函数，可单测）：按**条目顺序 × 段序**收集图片/视频，**同名媒体只登记一次**
+ * （正文里同一张图引用两次不该在灯箱里数成两张）。
+ * 录音卡不进灯箱；加密条目的媒体不在其中——`loadWallEntries` 本就不含未解锁的加密条目，
+ * 解锁后在册的加密条目其媒体走 `encryptedMediaUrl()` 单独解密。
+ */
+export function collectPhotoRefs(entries: WallEntry[]): PhotoRef[] {
+  const out: PhotoRef[] = [];
+  const seen = new Set<string>();
+  for (const e of entries) {
+    if (e.encrypted) continue;
+    for (const seg of e.segments) {
+      if (seg.kind !== 'media') continue;
+      if (seg.media.kind === 'audio') continue;
+      if (seen.has(seg.media.name)) continue;
+      seen.add(seg.media.name);
+      out.push({ entry: e, media: seg.media });
+    }
+  }
+  return out;
+}
+
+/** 分页结果：一页 = 一串块元素 */
+export type Page = HTMLElement[];
+/** 切页输入：块元素 + 已量好的占位高（`offsetHeight + 上下 margin`）+ 是否「不孤行」 */
+export interface FlowItem {
+  el: HTMLElement;
+  h: number;
+  keep?: boolean;
+}
+/** 段落逐行续排的注入点：返回 `[上半, 下半, 下半高]`，放不下返回 null。测试可换成桩。 */
+export type SplitFn = (el: HTMLElement, availPx: number) => [HTMLElement, HTMLElement, number] | null;
+
+/**
+ * 块流 → 页（纯函数，可单测）。规则与原型一致，逐条对应：
+ * 1. `keep` 块（日戳）= 新的一天 = 新的一张纸，且**对齐到跨页左位**（前一天纸的背面自然留白）；
+ * 2. 空页上遇到「自己就超过一整页」的块：先按整页高度切一刀；
+ * 3. 装不下时若页尾还够高（≥ PAGE_CUT_MIN_PX）就在剩余空间里逐行切一刀，上半留页尾、下半顶格续下页；
+ * 4. `keep` 块还要求剩余高度容得下「它 + 一点内容」，否则提前换页（日戳不孤行）。
+ *
+ * 抽成纯函数是为了让这段最难的逻辑能脱开 DOM 单测（真实现里 `split` 走 Range 二分）。
+ *
+ * 注：规则 4 目前**走不到**——规则 1 对 `keep` 块已经先换了页（`cur` 必为空），
+ * 此处 `cur!.length` 恒假。移植期照原型逐行对齐（`.scratch/diary-quill/app.js` 同一形态），
+ * 不擅自「修好」它：改了会动分页结果，而那要另起一次拍板。测试也不钉这条死分支，只钉可观察行为。
+ */
+export function paginateFlow(
+  items: FlowItem[],
+  availH: number,
+  split: SplitFn,
+  heightOf: (el: HTMLElement) => number
+): Page[] {
+  const metas = items.map((it) => ({ el: it.el, h: it.h, keep: !!it.keep }));
+  const pages: Page[] = [];
+  let cur: Page | null = null;
+  let used = 0;
+  const newPage = () => {
+    cur = [];
+    pages.push(cur);
+    used = 0;
+  };
+  newPage();
+
+  for (let i = 0; i < metas.length; i++) {
+    const it = metas[i];
+    /* 1) 新的一天 = 新的一张纸 */
+    if (it.keep && (cur!.length || pages.length > 1)) {
+      if (pages.length % 2 === 1) pages.push([]); // 补一页空白背面，让日戳落在左页
+      newPage();
+      used = 0;
+    }
+    /* 2) 空页上遇到超长块：先按整页高度切一刀 */
+    if (!cur!.length && it.h > availH) {
+      const c2 = split(it.el, availH - 4);
+      if (c2) {
+        it.h = heightOf(c2[0]);
+        metas.splice(i + 1, 0, { el: c2[1], h: c2[2], keep: false });
+      }
+    }
+    /* 3) 装不下：页尾够高就逐行续排，否则换页 */
+    if (used + it.h > availH && cur!.length) {
+      const remain = availH - used;
+      if (remain >= PAGE_CUT_MIN_PX) {
+        const cut = split(it.el, remain - 4);
+        if (cut) {
+          cur!.push(cut[0]);
+          metas.splice(i + 1, 0, { el: cut[1], h: cut[2], keep: false });
+          used = availH;
+          continue;
+        }
+      }
+      newPage();
+    }
+    /* 4) 日戳不孤行 */
+    if (it.keep && used + it.h + DAYSTAMP_KEEP_PX > availH && cur!.length) newPage();
+    cur!.push(it.el);
+    used += it.h;
+  }
+  return pages;
+}
+
+/** 月索引项：某月的首页号（书页序号，0 起）与该月条目数 */
+export interface MonthMark {
+  key: string;
+  page1: number;
+  n: number;
+}
+
+/**
+ * 册页索引（纯函数，可单测）：每个月**第一次出现**的页（读日戳的 `data-date`）。
+ * 目录纸 / 书口年份染色 / 台历跳日共用这一份口径。
+ */
+export function monthMarks(pages: Page[], entries: WallEntry[]): MonthMark[] {
+  const out: MonthMark[] = [];
+  const seen = new Set<string>();
+  for (let pi = 0; pi < pages.length; pi++) {
+    const dayEl = pages[pi].find((el) => el.classList.contains('bz-diary-b-daystamp'));
+    const date = dayEl?.getAttribute('data-date');
+    if (!date) continue;
+    const key = date.slice(0, 7);
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push({ key, page1: pi + 1, n: 0 });
+  }
+  const byMonth = new Map<string, number>();
+  for (const e of entries) {
+    const k = e.date.slice(0, 7);
+    byMonth.set(k, (byMonth.get(k) || 0) + 1);
+  }
+  for (const m of out) m.n = byMonth.get(m.key) || 0;
+  return out;
+}
+
+/** 某页的日戳日期（跳日/搜索定位用；无日戳返回 null） */
+export function pageDateOf(page: Page): string | null {
+  const el = page.find((n) => n.classList.contains('bz-diary-b-daystamp'));
+  return el?.getAttribute('data-date') || null;
+}
+
+// ===== 小工具 =====
+
+/** HTML 串 → 元素（render 层出串，行为层要 DOM 才量得动） */
+function elOf(html: string): HTMLElement {
+  const t = document.createElement('template');
+  t.innerHTML = html;
+  return t.content.firstElementChild as HTMLElement;
+}
+
+/** `#标签` 收集（换贴纸后要就地重画类型签；口径与 render.entryBlockHTMLs 内部那份一致） */
+function hashesOf(e: WallEntry): string[] {
+  const out: string[] = [];
+  if (e.kind !== 'diary' && e.kind !== 'letter') return out;
+  for (const seg of e.segments) {
+    if (seg.kind !== 'text') continue;
+    for (const b of splitTextBlocks(seg.text)) {
+      if (b.t === 'para' || b.t === 'quote') stripHashInto(b.text, out);
+    }
+  }
+  return out;
+}
+
+/** 条目 → 誊录用纯文本 */
+export function plainTextOf(e: WallEntry): string {
+  const x = e.extra || {};
+  if (e.kind === 'movie') return `《${x.title || ''}》观影于 ${e.date}\n${x.review || ''}`;
+  if (e.kind === 'book') return `《${x.title || ''}》${x.author || ''}\n${x.review || ''}`;
+  if (e.kind === 'letter') return `${e.filename ? e.filename.split('/').pop()?.replace(/\.md$/, '') + '\n' : ''}${e.content || ''}`;
+  return e.content || '';
+}
+
+/** 绝对定位浮层的工作区坐标 → 视口坐标（`.bz-diary-scene` 是 position:fixed，故直接用 clientX/Y） */
+interface MenuPos {
+  x: number;
+  y: number;
+}
+
+/** 剪贴板（带 execCommand 兜底：非安全上下文里 navigator.clipboard 不存在） */
+function writeClipboard(text: string, okMsg: string, failMsg: string): void {
+  const fallback = () => {
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    document.body.appendChild(ta);
+    ta.select();
+    try {
+      document.execCommand('copy');
+      notice(okMsg, 'success');
+    } catch {
+      notice(failMsg, 'error');
+    }
+    ta.remove();
+  };
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    void navigator.clipboard.writeText(text).then(() => notice(okMsg, 'success'), fallback);
+  } else fallback();
+}
+
+/**
+ * 回忆墙视图状态（增强 #11）——**已随 ADR-0230 退役**：书页界面没有筛选 chips / 章节栏 / 滚动位置，
+ * 跳原文回首时只需重新摊开在同一篇上（`cursor` 由 `keepRatio` 保比例即可）。
+ * 类型保留是为了不惊动外部引用面的编译；新代码不要用它。
+ * @deprecated 书页界面（ADR-0230）不再需要跨视图恢复筛选与滚动。
  */
 export interface WallViewState {
   selTag: string | null;
@@ -92,676 +313,1917 @@ export interface WallViewState {
   scrollTop: { desk: number; mob: number };
 }
 
-/** issue 218：长文跨栏卡阈值——正文 ≥ 此字符数整卡跨瀑布全宽、卡内分栏（~800 字单列已明显坠长） */
-const WIDE_TEXT_MIN_CHARS = 800;
-
-/** 搜索输入防抖（停顿后才触发过滤） */
-const SEARCH_DEBOUNCE_MS = 250;
-/** 条目双击判定窗口（窗口内两次点击 = 双击跳转） */
-const DBLCLICK_WINDOW_MS = 300;
-/** 灯箱移动端滑动切图的水平位移阈值（垂直滚动不受影响） */
-const LB_SWIPE_THRESHOLD_PX = 40;
-/** 滚动高亮当前月份判定：节头相对墙顶 ≤ 此像素视为已过线 */
-const RAIL_HIGHLIGHT_EPSILON_PX = 8;
-/** DW6：章节跳转 smooth 滚动落定后的几何校正延时 */
-const SCROLL_FIX_DELAY_MS = 480;
-/** DW3：vault modify 自动刷新防抖 */
-const MODIFY_REFRESH_DEBOUNCE_MS = 400;
-
-/** issue 352：时光条文字卡摘要长度上限（字符）——CSS 行截断管显示，此处只防超长正文整段进 DOM */
-const MEMORY_EXCERPT_MAX_CHARS = 64;
-
-/** 桌面面板拖拽缩放限界（ADR-0084，只作用于桌面实例 .bz-diary-desk；移动实例真全屏不挂） */
-const PANEL = { MIN_W: 720, MIN_H: 560, MAX_W: 1280, MAX_H: 960 };
+// ===== 控制器 =====
 
 /**
- * 时光条文字卡摘要（issue 352，纯函数，可单测）：
- * 压平空白（换行/连续空格并一）后截断，超长补省略号；空正文回退「（无正文）」
- * （抽屉头「（仅媒体）」同款占位文案）。markdown 标记不渲染——横滑缩略位纯文本预览（抽屉头同款）。
- */
-export function memoryExcerpt(text: string): string {
-  const flat = (text || '').replace(/\s+/g, ' ').trim();
-  if (!flat) return '（无正文）';
-  // 审查修复批（issue 352）：String.slice 按 UTF-16 码元截断，emoji 代理对跨 63/64 位会截出
-  // 半只乱码——改按 Unicode 码点切分（[...flat]），截断永远落在完整字符边界上
-  const chars = [...flat];
-  return chars.length > MEMORY_EXCERPT_MAX_CHARS ? `${chars.slice(0, MEMORY_EXCERPT_MAX_CHARS).join('')}…` : flat;
-}
-
-/**
- * 滚动高亮的当前月份选取（纯函数，可单测）：
- * 取最后一个 relTop ≤ 8 的节头所属月份（relTop 为相对墙体的视口相对量，与滚动距离无关——
- * P1 审查修复：旧实现把 relTop 与 scrollTop+8 比较，坐标系混用导致滚过半程后全部命中、
- * 章节栏恒高亮最后月份）。全部未过线时返回 null（调用方回退首节头）。
- */
-export function pickCurrentMonth(heads: { date: string; relTop: number }[]): string | null {
-  let current: string | null = null;
-  for (const h of heads) {
-    if (h.relTop <= RAIL_HIGHLIGHT_EPSILON_PX) current = h.date.slice(0, 7);
-    else break;
-  }
-  return current;
-}
-
-/**
- * 回忆墙 AppController（照搬 password-vault AppController 模式）：
- * 单例 getInstance(config) / init() / openManager() / cleanup()。
- * 根容器 position:fixed;inset:0;z-index:var(--bz-z-overlay,1000);display:none; 挂 body。
- * 桌面实例 + 移动实例双 DOM，CSS 断点 @media (max-width: 768px) 切真全屏；
- * ensureElements() 幂等创建；ESC 注册用 escManager；z-index 用 topifyZ。
+ * 日记本 AppController（对齐 password-vault AppController 模式）：
+ * 单例 `getInstance()` / `show()` / `hide()` / `cleanup()`。
+ * 根容器 `.bz-diary-scene`（position:fixed;inset:0;display:none）挂 body，z-index 走 `topifyZ`。
  */
 export class DiaryAppController {
   static instance: DiaryAppController | null = null;
 
   static getInstance(): DiaryAppController {
-    if (!DiaryAppController.instance) {
-      DiaryAppController.instance = new DiaryAppController();
-    }
+    if (!DiaryAppController.instance) DiaryAppController.instance = new DiaryAppController();
     return DiaryAppController.instance;
   }
 
-  /** 桌面实例 DOM */
-  private desk!: {
-    el: HTMLElement; // 动效层编排锚点：实例根元素
-    head: HTMLElement;
-    range: HTMLElement;
-    chipRow: HTMLElement;
-    subRow: HTMLElement;
-    searchRow: HTMLElement;
-    searchBox: HTMLInputElement;
-    body: HTMLElement;
-    wall: HTMLElement;
-    rail: HTMLElement;
-    lb: HTMLElement;
-    lbMedia: HTMLElement;
-    lbCap: HTMLElement;
-    lbSub: HTMLElement;
-  };
-  /** 移动实例 DOM */
-  private mob!: {
-    el: HTMLElement;
-    head: HTMLElement;
-    range: HTMLElement;
-    chipRow: HTMLElement;
-    subRow: HTMLElement;
-    searchRow: HTMLElement;
-    searchBox: HTMLInputElement;
-    body: HTMLElement;
-    wall: HTMLElement;
-    rail: HTMLElement;
-    lb: HTMLElement;
-    lbMedia: HTMLElement;
-    lbCap: HTMLElement;
-    lbSub: HTMLElement;
-  };
-  /** 根容器（固定全屏遮罩层） */
+  // ---------- DOM ----------
   root: HTMLDivElement | null = null;
-  /** 数据 */
-  entries: WallEntry[] = [];
-  /** 当前筛选标签（null = 全部） */
-  selTag: string | null = null;
-  /** 搜索关键词（空 = 全部） */
-  searchKeyword = '';
-  /** 日期筛选（null = 全部；{ year } = 年份；{ year, month } = 某月）——回忆墙自包含，不再依赖 diary 面板 filter */
-  selDateFilter: { year: string; month?: string } | null = null;
-  /** 二级标签筛选（选中主标签后其子标签） */
-  selSubTag: string | null = null;
-  /** 加密条目是否可见（原型 S.locked：默认锁定隐藏） */
-  lockedVisible = false;
-  private escUnregister: { unregister: () => void } | null = null;
-  private _initialized = false;
-  /** DW3：vault modify 自动刷新订阅（show 挂 / hide+cleanup 摘）+ 防抖计时 */
-  private _modifyRef: EventRef | null = null;
-  /** N5（review-deep func）：vault create 订阅——外部新建/移入条目文件 modify 不触发、
-   *  rename 事件 oldPath 在墙外不命中，create 是唯一入口（与 modify 同一防抖回刷） */
-  private _createRef: EventRef | null = null;
-  private _modifyTimer: ReturnType<typeof setTimeout> | null = null;
-  /** DW6：章节跳转落定校正计时 */
-  private _scrollFixTimer: ReturnType<typeof setTimeout> | null = null;
-  /** 媒体懒加载 observer + 章节滚动高亮 cleanup：按 desk/mob 实例分存（双实例各自独立，互不覆盖） */
-  private observers: Record<'desk' | 'mob', IntersectionObserver | null> = { desk: null, mob: null };
-  /** issue 210：章节栏视频缩略懒加载 observer（desk/mob 各自独立） */
-  private railObservers: Record<'desk' | 'mob', IntersectionObserver | null> = { desk: null, mob: null };
-  private rafCleanups: Record<'desk' | 'mob', (() => void) | null> = { desk: null, mob: null };
-  private sheetEntry: WallEntry | null = null;
-  /** 搜索防抖（250ms 尾触；issue 365 收编 core debounce。实例唯一槽：desk/mob 双搜索框共享，
-   *  与原共享 _searchTimer 槽语义一致。D-UI3：收起/ESC 清空路径须 cancel()——否则 250ms 内
-   *  的尾触落地把已清空的关键词写回，列表按一个不可见的词过滤（「收起搜索后列表莫名变短」）。
-   *  效率#8：回调走增量显隐，基线不符才整墙重建） */
-  private _searchDebounced = debounce((v: string) => {
-    this.searchKeyword = v;
-    if (this.applySearchVisibility()) return;
-    this.renderAll();
-  }, SEARCH_DEBOUNCE_MS);
-  /** 日期筛选弹窗元素（null = 未打开） */
-  private _dateFilterEl: HTMLElement | null = null;
-  /** 当前渲染条目列表（右键委托按 dataset.widx 反查条目；renderWall 时重建） */
-  private _wallEntries: WallEntry[] = [];
-  /** 右键委托已挂载标记（按 desk/mob 实例，防重复绑定） */
-  private _ctxBound: Record<'desk' | 'mob', boolean> = { desk: false, mob: false };
-  /** 增强 #1：灯箱连看序列（filtered 列表媒体平铺，renderWall 重建）与当前下标（-1 = 未开） */
-  private _lbSeq: { entry: WallEntry; media: WallMedia }[] = [];
-  /** issue 217 F1：时光条灯箱打开期间暂存的墙内主序列（关闭时还原） */
-  private _lbSeqMain: { entry: WallEntry; media: WallMedia }[] | null = null;
-  private _lbIdx = -1;
-  /** D6'（review-all2）：灯箱会话代次——openLightbox 每次开新会话递增，加密媒体慢解密
-   *  promise 闭包捕获发起时的代次，回填前比对；关灯箱立刻重开、新旧项同下标时，
-   *  旧会话晚到的解密结果不再穿透进新灯箱（旧实现只比对 isConnected + _lbIdx）。 */
-  private _lbGen = 0;
-  /** issue 217 F3：桌面/移动断点（renderAll 只渲染可见端；跨断点变化补渲染） */
-  private _mql: MediaQueryList | null = null;
-  private _onMqChange: (() => void) | null = null;
-  /** 增强 #1：方向键切图（bindLightbox 单次注册，灯箱可见时才生效） */
-  private _onLbKeydown = (ev: KeyboardEvent) => {
-    if (!this.lbVisible()) return;
-    if (ev.key === 'ArrowLeft') {
-      ev.preventDefault();
-      this.stepLightbox(-1);
-    } else if (ev.key === 'ArrowRight') {
-      ev.preventDefault();
-      this.stepLightbox(1);
-    }
-  };
-  /** 增强 #9：保险箱解锁状态订阅（show 挂 / hide+cleanup 摘；encrypt:unlock-changed 域事件） */
-  private _unlockOff: (() => void) | null = null;
-  /** 写链路事件订阅退订（show 挂 / hide+cleanup 摘；entry-added 等 diary 域事件防抖回刷） */
-  private _writeOff: (() => void) | null = null;
-  /** 引用同步订阅退订（issue 339：vault:md-renamed/deleted 内存路径同步；show 挂 / hide+cleanup 摘） */
-  private _refSyncOff: (() => void) | null = null;
-  /** 增强 #11：跳走前捕获的墙视图状态（回墙恢复；一次性消费） */
-  private _restore: WallViewState | null = null;
-  /** 增强 #8：加密媒体解密结果缓存（noteId|kind|name → dataURL promise；失败也缓存避免重复解密风暴） */
-  private encMediaCache = new Map<string, Promise<string | null>>();
-  /** 效率#14：整墙读取失败的错误消息（null = 无错误；mkEmpty 据此分流错误态） */
-  private _loadError: string | null = null;
-  /** 效率#8：增量显隐基线——上次 renderWall 时的 entries 引用与「除关键词外」的筛选键，
-   *  两者都没变才允许对既有卡片 toggle display（否则卡片集合与 widx 不对应） */
-  private _wallBaseRef: WallEntry[] | null = null;
-  private _wallBaseKey = '';
-  /** ②：开墙（show）路径允许命中预热/上次刷新后的缓存秒开（含关墙后再开）；其余 loadAndRender
-   *  （刷新/写后回刷/重试）恒先 invalidateWallCache 回源，保持「每次刷新即读盘」原语义。
-   *  show 置真、loadAndRender 消费后复位 */
-  private _allowCacheNext = false;
-  /** 动效层：用户筛选切换（chip/二级签/日期/清除）待走翻页编排的标志（renderWall 消费即熄） */
-  private _motionSwitchPend = false;
-  /** 动效层：面板退场演出进行中（hide 防重入；show 复位） */
-  private _hideMotion = false;
-  /** 动效层：是否开过面板（重开走短档入场） */
-  private _shownOnce = false;
-  /** 桌面拖拽缩放句柄（ADR-0084/ADR-0094）：常驻 DOM 双实例，show 挂 / hide 摘；null = 未挂 */
-  private panelResizeDetach: { flush: () => void; detach: () => void } | null = null;
+  private bookEl!: HTMLElement;
+  private blockEl!: HTMLElement;
+  private flipHost!: HTMLElement;
+  private edgeEl!: HTMLElement;
+  private toolsEl!: HTMLElement;
+  private filterTabEl!: HTMLElement;
+  private postcardEl!: HTMLElement;
+  private hintEl!: HTMLElement;
+  private menuEl!: HTMLElement;
+  private sheetEl!: HTMLElement;
+  private sheetTitleEl!: HTMLElement;
+  private sheetBodyEl!: HTMLElement;
+  private slipEl!: HTMLElement;
+  private slipTitleEl!: HTMLElement;
+  private slipBodyEl!: HTMLElement;
+  private slipRowEl!: HTMLElement;
+  private albumEl!: HTMLElement;
+  private albumSubEl!: HTMLElement;
+  private albumGridEl!: HTMLElement;
+  private calEl!: HTMLElement;
+  private calYmEl!: HTMLElement;
+  private calGridEl!: HTMLElement;
+  private calTimeRowEl!: HTMLElement;
+  private calInputEl!: HTMLInputElement;
+  private calErrEl!: HTMLElement;
+  private calOkEl!: HTMLElement;
+  private lightboxEl!: HTMLElement;
+  private lbPhotoEl!: HTMLElement;
+  private lbMediaEl!: HTMLElement;
+  private lbCapEl!: HTMLElement;
+  private lbCountEl!: HTMLElement;
+  private toastEl!: HTMLElement;
+  private fallbackEl!: HTMLElement;
 
-  // ---------- 创建 DOM（桌面 + 移动双实例，幂等） ----------
-  ensureElements() {
+  // ---------- 状态 ----------
+  /** 当前册子里的条目（只读聚合结果；加密条目在解锁时才并入） */
+  entries: WallEntry[] = [];
+  private byEid = new Map<string, WallEntry>();
+  private pages: Page[] = [];
+  private cursor = 0;
+  private single = false;
+  private filterTag: string | null = null;
+  private search: { kw: string | null; hits: { pi: number; el: HTMLElement }[]; i: number } = {
+    kw: null,
+    hits: [],
+    i: 0,
+  };
+  private photoRefs: PhotoRef[] = [];
+  private photoIndex = new Map<string, number>();
+  private lbIdx = 0;
+  private flip: PageFlip | null = null;
+  private menuEid: string | null = null;
+  private bookRect: DOMRect | null = null;
+  private epoch = 0;
+  private toastTimer: ReturnType<typeof setTimeout> | null = null;
+  private modifyTimer: ReturnType<typeof setTimeout> | null = null;
+  private wheelLock = 0;
+  private toolsRaf = 0;
+  private toolsShown = false;
+  private lastSingle = false;
+  private lastW = 0;
+  private lastH = 0;
+  private resizeTimer: ReturnType<typeof setTimeout> | null = null;
+  private encMediaCache = new Map<string, Promise<string | null>>();
+  private lastSpreadCount = 0;
+  private cal = { year: 2026, month: 1 };
+
+  // ---------- 生命周期标记 ----------
+  private _initialized = false;
+  private _shownOnce = false;
+  private _hideMotion = false;
+  private _allowCacheNext = false;
+  private _loadError: string | null = null;
+  private _subs: (() => void)[] = [];
+  private _vaultRefs: EventRef[] = [];
+
+  // ============================================================
+  //  DOM 构建
+  // ============================================================
+
+  /** 幂等建 DOM + 绑事件（show/init 均经此） */
+  ensureElements(): void {
     if (this._initialized) return;
     this._initialized = true;
-    // 根容器：固定全屏遮罩层（Obsidian 弹窗层之上）
-    this.root = document.createElement('div');
-    this.root.className = 'bz-diary';
-    this.root.style.cssText = 'position:fixed;inset:0;z-index:var(--bz-z-overlay,1000);display:none;';
-    document.body.appendChild(this.root);
 
-    // 桌面实例（面板卡，无关闭按钮——靠 mask + ESC）
-    const desk = document.createElement('div');
-    desk.className = 'bz-diary-desk';
-    desk.innerHTML = this.panelHTML();
-    this.mountSearch(desk);
-    this.root.appendChild(desk);
-    this.desk = this.bindRefs(desk);
-    // 移动实例（真全屏）
-    const mob = document.createElement('div');
-    mob.className = 'bz-diary-mob bz-panel-mtop';
-    mob.innerHTML = this.panelHTML();
-    this.mountSearch(mob);
-    this.root.appendChild(mob);
-    this.mob = this.bindRefs(mob);
+    const root = document.createElement('div');
+    root.className = 'bz-diary-scene';
+    // root 上只落行为性内联值：几何 + 层级 + 显示与否（视觉样式全在 styles.css）
+    root.style.cssText = 'position:fixed;inset:0;display:none;';
+    root.innerHTML = bookPanelHTML();
+    document.body.appendChild(root);
+    this.root = root;
 
-    this.bindPanel(this.desk);
-    this.bindPanel(this.mob);
-    this.decorateIcons(desk);
-    this.decorateIcons(mob);
+    const q = <T extends HTMLElement = HTMLElement>(sel: string) => root.querySelector<T>(sel)!;
+    this.bookEl = q('.bz-diary-book');
+    this.blockEl = q('.bz-diary-bk-block');
+    this.flipHost = q('.bz-diary-flipbook');
+    this.edgeEl = q('.bz-diary-bk-edge');
+    this.toolsEl = q('.bz-diary-tools');
+    this.filterTabEl = q('.bz-diary-filter-tab');
+    this.postcardEl = q('.bz-diary-postcard');
+    this.hintEl = q('.bz-diary-hint');
+    this.menuEl = q('.bz-diary-menu');
+    this.sheetEl = q('.bz-diary-sheet');
+    this.sheetTitleEl = q('.bz-diary-sh-title');
+    this.sheetBodyEl = q('.bz-diary-sheet-body');
+    this.slipEl = q('.bz-diary-slip');
+    this.slipTitleEl = q('.bz-diary-slip-title');
+    this.slipBodyEl = q('.bz-diary-slip-body');
+    this.slipRowEl = q('.bz-diary-slip-row');
+    this.albumEl = q('.bz-diary-album-pop');
+    this.albumSubEl = q('.bz-diary-ap-sub');
+    this.albumGridEl = q('.bz-diary-ap-grid');
+    this.calEl = q('.bz-diary-cal-pop');
+    this.calYmEl = q('.bz-diary-cal-ym');
+    this.calGridEl = q('.bz-diary-cal-grid');
+    this.calTimeRowEl = q('.bz-diary-cal-time-row');
+    this.calInputEl = q<HTMLInputElement>('.bz-diary-ct-input');
+    this.calErrEl = q('.bz-diary-ct-err');
+    this.calOkEl = q('.bz-diary-cal-ok');
+    this.lightboxEl = q('.bz-diary-lightbox');
+    this.lbPhotoEl = q('.bz-diary-lb-photo');
+    this.lbMediaEl = q('.bz-diary-lb-media');
+    this.lbCapEl = q('.bz-diary-lb-cap');
+    this.lbCountEl = q('.bz-diary-lb-count');
+    this.toastEl = q('.bz-diary-toast');
+    this.fallbackEl = q('.bz-diary-fallback');
+
+    this.bindChrome();
+    this.bindMenu();
+    this.bindBlockEvents();
     this.bindLightbox();
-    this.registerEscape();
-    // 增强 #1：方向键连看（单次注册；handler 内自判灯箱可见）
-    document.addEventListener('keydown', this._onLbKeydown);
-    // issue 217 F3：断点切换补渲染另一端实例（renderAll 只渲染可见端的前提）
-    if (typeof matchMedia === 'function') {
-      this._mql = matchMedia('(max-width: 768px)');
-      this._onMqChange = () => {
-        if (this.root?.style.display === 'flex') this.renderAll();
-      };
-      this._mql.addEventListener('change', this._onMqChange);
-    }
-    // 评审便利：#replay 重播首屏编排（motion.ts 的 hashchange 钩子消费；插件内无害）
-    (window as unknown as Record<string, unknown>).__bzDiaryReplay = () => {
-      if (!this.root) return;
-      this.root.style.display = 'flex';
-      this._hideMotion = false;
-      motionArmBoot();
-      motionPanelIn(this.root, false);
-      void this.loadAndRender();
+    this.bindAlbum();
+    this.bindCal();
+    this.bindSlip();
+    this.bindTools();
+
+    registerPanelEsc('diary', () => !!this.root && this.root.style.display === 'flex', () => this.escapeStack());
+
+    // 评审便利：`window.__bzDiaryReplay()` 重放首屏（与旧墙同款钩子，插件内无害）
+    (window as unknown as Record<string, unknown>).__bzDiaryReplay = () => this.show();
+  }
+
+  /** 渲染上下文：纯层要的两条回调——媒体地址 + 灯箱序号 */
+  private ctx(): RenderCtx {
+    const app = this.app();
+    return {
+      mediaSrc: (name: string) => this.mediaUrlOf(app, name),
+      lbIndexOf: (name: string) => this.photoIndex.get(name) ?? 0,
     };
   }
 
-  /** 从实例 HTML 收集 DOM 引用 */
-  private bindRefs(scope: HTMLElement) {
-    const q = <T extends HTMLElement = HTMLElement>(sel: string) => scope.querySelector<T>(sel)!;
-    return {
-      el: scope, // 动效层编排锚点：实例根元素（桌面卡 / 移动全屏）
-      head: q('.bz-diary-head'),
-      range: q('.bz-diary-range'),
-      chipRow: q('.bz-diary-chiprow'),
-      subRow: q('.bz-diary-subrow'),
-      searchRow: q('.bz-diary-searchrow'),
-      searchBox: q<HTMLInputElement>('.bz-diary-searchrow .bz-search input'),
-      body: q('.bz-diary-body'),
-      wall: q('.bz-diary-wall'),
-      rail: q('.bz-diary-rail'),
-      lb: q('.bz-diary-lb'),
-      lbMedia: q('.bz-diary-lbmedia'),
-      lbCap: q('.bz-diary-lbcap'),
-      lbSub: q('.bz-diary-lbsub'),
-    };
+  /** 媒体地址：data.ts 的解析（vault 相对/全局回退），解析不到返回空串（渲染层走占位） */
+  private mediaUrlOf(app: App, name: string): string {
+    return mediaSrc(app, name);
+  }
+
+  /** 页宽（单页模式跟视口走；桌面读 CSS 变量）——离屏测量盒与 StPageFlip 建书**共用这一个值** */
+  private pageWidth(): number {
+    if (typeof window !== 'undefined' && window.innerWidth <= SINGLE_MAX_W) {
+      return Math.min(window.innerWidth * 0.92, 480);
+    }
+    const w = parseFloat(this.cssVar('--bz-diary-pg-w'));
+    return Number.isFinite(w) && w > 0 ? w : 520;
+  }
+
+  /** 读域根上的 CSS 变量（宽度/内边距/书高的唯一来源） */
+  private cssVar(name: string): string {
+    if (!this.root) return '';
+    return getComputedStyle(this.root).getPropertyValue(name);
+  }
+
+  /** 块高 = offsetHeight + 上下 margin（原型那张家手写 GAP 表已被这一步取代） */
+  private blockHeightOf(el: HTMLElement): number {
+    const cs = getComputedStyle(el);
+    return el.offsetHeight + (parseFloat(cs.marginTop) || 0) + (parseFloat(cs.marginBottom) || 0);
+  }
+
+  // ============================================================
+  //  排版：块流 → 测量 → 切页 → 建书
+  // ============================================================
+
+  private visibleEntries(): WallEntry[] {
+    if (!this.filterTag) return this.entries;
+    const tag = this.filterTag;
+    return this.entries.filter((e) => e.tags.includes(tag));
   }
 
   /**
-   * 面板骨架（桌面/移动共用——真全屏由 CSS ≤768px 控制，两份 HTML 一字不差）。
-   * 增强包 #4：头行/灯箱按钮 emoji 换 lucide（ensureElements 后 decorateIcons 按 data-act 注入 uiIcon）；
-   * 头行精简（2026-09-10 用户要求）：关闭/设置/按年月跳转三枚按钮移除，日期入口只留品牌行；
-   * 增强包 #1：灯箱加左右切换按钮（连看）。
+   * 重排整册。`keepRatio`：视口变化/回刷时按上次页数比例保住阅读位置（跟手不跳回最新）；
+   * 换筛选、写完一篇等场景传 false（落回第 0 页 = 最新那篇）。
    */
-  private panelHTML(): string {
-    return wallPanelHTML();
+  private relayout(keepRatio: boolean): number {
+    const root = this.root;
+    if (!root) return 0;
+    const t0 = typeof performance !== 'undefined' ? performance.now() : 0;
+    this.epoch++;
+
+    // 现场清理：在飞的翻页回调/灯箱/检索命中，引用的旧块马上全部销毁
+    this.closeLightbox();
+    this.closeSheet();
+    this.pauseAllAudio();
+    this.search = { kw: null, hits: [], i: 0 };
+
+    // 清空书芯但保住 StPageFlip 容器（库实例随后 destroy/重建；库的 destroy 会摘掉容器）
+    const fbHost = this.flipHost;
+    this.blockEl.innerHTML = '';
+    if (fbHost) this.blockEl.appendChild(fbHost);
+
+    const single = typeof window !== 'undefined' && window.innerWidth <= SINGLE_MAX_W;
+    this.single = single;
+    root.classList.toggle('bz-diary-single', single);
+
+    const list = this.visibleEntries();
+    this.byEid = new Map(list.map((e) => [e.id || '', e]));
+    this.photoRefs = collectPhotoRefs(list);
+    this.photoIndex = new Map(this.photoRefs.map((p, i) => [p.media.name, i]));
+
+    // 离屏测量盒：宽度/内边距全读 CSS（.bz-diary-probe），不在 JS 里重复一份
+    const probe = document.createElement('div');
+    probe.className = 'bz-diary-probe';
+    root.appendChild(probe);
+    const padT = parseFloat(getComputedStyle(probe).paddingTop) || 88;
+    const padB = parseFloat(getComputedStyle(probe).paddingBottom) || 66;
+    const bookH = this.bookEl.clientHeight || parseFloat(this.cssVar('--bz-diary-pg-h')) || 700;
+    const availH = bookH - padT - padB;
+
+    // 1) 块流：日戳 + 条目块（票根/藏书票/信封的归位由 render 层决定）
+    const ctx = this.ctx();
+    const flow: FlowItem[] = [];
+    let lastDate: string | null = null;
+    const dayCount = new Map<string, number>();
+    for (const e of list) dayCount.set(e.date, (dayCount.get(e.date) || 0) + 1);
+    for (const e of list) {
+      if (e.date !== lastDate) {
+        lastDate = e.date;
+        flow.push({ el: elOf(daystampHTML(e.date, dayCount.get(e.date) || 1)), h: 0, keep: true });
+      }
+      for (const html of entryBlockHTMLs(e, ctx)) flow.push({ el: elOf(html), h: 0 });
+    }
+
+    // 2) 一次 reflow 全量测量（读完 offsetHeight 再读 margin，不会再触发一次布局）
+    for (const f of flow) probe.appendChild(f.el);
+    void probe.offsetHeight;
+    for (const f of flow) f.h = this.blockHeightOf(f.el);
+
+    // 3) 切页
+    this.pages = paginateFlow(
+      flow,
+      availH,
+      (el, avail) => this.splitParagraph(el, avail, probe),
+      (el) => this.blockHeightOf(el)
+    );
+    probe.innerHTML = '';
+    probe.remove();
+
+    this.renderEdgeMarks();
+
+    // 4) 目标页：保比例，否则落第一页（最新排在最前，第一页就是最新）
+    const last = Math.max(0, this.pages.length - 1);
+    let target = 0;
+    if (keepRatio && this.lastSpreadCount > 1) {
+      target = Math.round((this.cursor / (this.lastSpreadCount - 1)) * last);
+    }
+    this.lastSpreadCount = this.pages.length;
+    this.buildBook(Math.max(0, Math.min(last, target)));
+    this.refreshBookRect();
+    return (typeof performance !== 'undefined' ? performance.now() : 0) - t0;
   }
 
-  /** 搜索框：组件库 uiSearch（.bz-search 壳 + 前缀搜索图标 + .bz-input），双实例各挂一份 */
-  private mountSearch(scope: HTMLElement) {
-    const row = scope.querySelector('.bz-diary-searchrow');
-    if (!row) return;
-    row.appendChild(uiSearch({ placeholder: '搜索日记（正文、类型、时间）…' }).el);
+  /** 段落内第 idx 个字符落在哪个文本节点的哪个偏移 */
+  private textPos(root: Node, idx: number): [Node, number] | null {
+    const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, null);
+    let acc = 0;
+    let n: Node | null;
+    while ((n = walker.nextNode())) {
+      const len = n.nodeValue?.length || 0;
+      if (idx <= acc + len) return [n, idx - acc];
+      acc += len;
+    }
+    return null;
   }
 
-  /** 增强包 #4/#10：按 data-act 给空按钮注入 lucide 图标（ensureElements 时各实例跑一次） */
-  private decorateIcons(scope: HTMLElement) {
-    for (const [act, name] of Object.entries(ACT_ICON)) {
-      scope.querySelectorAll<HTMLElement>(`[data-act="${act}"]`).forEach((btn) => {
-        // 只注入空壳 button（品牌行 div 等非按钮载体、已注入过的一律跳过）
-        if (btn.tagName !== 'BUTTON' || btn.firstChild) return;
-        btn.appendChild(uiIcon(name));
+  /**
+   * 段落按目标高度用 Range 二分切两半（逐行续排）；返回 `[上半, 下半, 下半高]` 或 null。
+   * 带行内格式（wikilink/加粗/高亮/删除线…）的段同样能切：下半是整段克隆后删掉前缀，
+   * 两边的行内格式都保住。切点对齐句读，避免词中腰斩。
+   */
+  private splitParagraph(el: HTMLElement, availPx: number, probe: HTMLElement): [HTMLElement, HTMLElement, number] | null {
+    const text = el.textContent || '';
+    if (text.length < 40 || availPx < 70) return null;
+    const range = document.createRange();
+    let lo = 1;
+    let hi = text.length;
+    let best = 0;
+    while (lo <= hi) {
+      const mid = (lo + hi) >> 1;
+      const pos = this.textPos(el, mid);
+      if (pos) {
+        range.setStart(el, 0);
+        range.setEnd(pos[0], pos[1]);
+        if (range.getBoundingClientRect().height <= availPx) {
+          best = mid;
+          lo = mid + 1;
+          continue;
+        }
+      }
+      hi = mid - 1;
+    }
+    if (best < 16) return null;
+    let cut = best;
+    const from = Math.max(0, best - 24);
+    const stops = '。!?;,:、~…」』”" ';
+    for (let k = best - 1; k >= from; k--) {
+      if (stops.indexOf(text[k]) >= 0) {
+        cut = k + 1;
+        break;
+      }
+    }
+    if (cut < 10 || cut > text.length - 6) return null;
+
+    const down = el.cloneNode(true) as HTMLElement;
+    const dp = this.textPos(down, cut);
+    const up = this.textPos(el, cut);
+    if (!dp || !up) return null;
+    const rd = document.createRange();
+    rd.setStart(down, 0);
+    rd.setEnd(dp[0], dp[1]);
+    rd.deleteContents();
+    const ru = document.createRange();
+    ru.setStart(up[0], up[1]);
+    ru.setEnd(el, el.childNodes.length);
+    ru.deleteContents();
+
+    down.className = el.className.replace('bz-diary-p-indent', 'bz-diary-p-cont');
+    down.dataset.eid = el.dataset.eid || '';
+    probe.insertBefore(down, el.nextSibling);
+    return [el, down, this.blockHeightOf(down)];
+  }
+
+  /** 建 StPageFlip 书：页元素 → 库，翻页动画/拖拽/纸张弯曲全交库 */
+  private buildBook(targetPage: number): void {
+    const host = this.flipHost;
+    if (this.flip) {
+      try {
+        this.flip.destroy();
+      } catch {
+        /* 重复销毁无害 */
+      }
+      this.flip = null;
+    }
+    /* 库的 destroy() 会把容器整个从 DOM 摘掉，必须放回去 */
+    host.innerHTML = '';
+    this.blockEl.appendChild(host);
+
+    const items: HTMLElement[] = [];
+    for (let pi = 0; pi < this.pages.length; pi++) {
+      const d = document.createElement('div');
+      d.className = 'bz-diary-page-item';
+      const inner = document.createElement('div');
+      inner.className = 'bz-diary-page-inner';
+      for (const el of this.pages[pi]) inner.appendChild(el);
+      d.appendChild(inner);
+      /* 为「每天起于左页」补出来的空白背面不印页码（素纸上一个号最扎眼） */
+      if (this.pages[pi].length) {
+        const no = document.createElement('div');
+        no.className = 'bz-diary-page-no';
+        no.textContent = `— ${pi + 1} —`;
+        d.appendChild(no);
+      }
+      items.push(d);
+    }
+
+    const pgW = this.pageWidth();
+    const pgH = this.bookEl.clientHeight || parseFloat(this.cssVar('--bz-diary-pg-h')) || 700;
+    this.flip = new PageFlip(host, {
+      width: pgW,
+      height: pgH,
+      size: 'fixed',
+      usePortrait: this.single,
+      maxShadowOpacity: 0.5,
+      showCover: false, // 没有封面页：直接按跨页排（0=左，1=右）
+      mobileScrollSupport: false,
+      flippingTime: FLIP_TIME_MS,
+      useMouseEvents: true,
+      disableFlipByClick: true, // 点击翻页由本域自管（且已按用户要求取消四角点击）
+      showPageCorners: false,
+    });
+    this.flip.loadFromHTML(items);
+    this.flip.turnToPage(Math.max(0, targetPage));
+    this.flip.on('flip', (e) => {
+      this.cursor = e.data;
+    });
+    this.cursor = Math.max(0, targetPage);
+    this.afterPagesBuilt(host);
+  }
+
+  /** 每次建书后要重挂的东西：显影 / 媒体失败态 / 录音卡 */
+  private afterPagesBuilt(scope: HTMLElement): void {
+    this.developPhotos(scope);
+    this.bindMediaErrors(scope);
+    this.bindAudios(scope);
+  }
+
+  private turnPage(dir: 1 | -1): void {
+    if (!this.flip) return;
+    if (dir > 0) this.flip.flipNext();
+    else this.flip.flipPrev();
+  }
+
+  private jumpToPage(pi: number): void {
+    if (!this.flip || !this.pages.length) return;
+    this.flip.turnToPage(Math.max(0, Math.min(this.pages.length - 1, pi)));
+  }
+
+  // ============================================================
+  //  书口：年份染色 + 册页索引
+  // ============================================================
+
+  private monthMarksOf(): MonthMark[] {
+    return monthMarks(this.pages, this.visibleEntries());
+  }
+
+  /**
+   * 书口年份染色带：只作「这几年各占多厚」的缩影（整条边缘才是那个大按钮——点开抽索引）。
+   * 只有一年时不画：一条通高的色带等于没有信息，只是把整条书口刷成一块颜色。
+   * `top`/`height` 是量出来的几何（行为性内联值）；颜色按年序轮转走 `.bz-diary-ey-N` 类。
+   */
+  private renderEdgeMarks(): void {
+    const edge = this.edgeEl;
+    edge.querySelectorAll('.bz-diary-edge-year').forEach((b) => b.remove());
+    const months = this.monthMarksOf();
+    if (!months.length) return;
+    const total = Math.max(1, this.pages.length);
+    const years: { y: string; from: number }[] = [];
+    for (const m of months) {
+      const y = m.key.slice(0, 4);
+      if (!years.length || years[years.length - 1].y !== y) years.push({ y, from: m.page1 });
+    }
+    if (years.length < 2) return;
+    years.forEach((sg, i) => {
+      const top = ((sg.from - 1) / total) * 100;
+      const endFrom = i + 1 < years.length ? years[i + 1].from : total + 1;
+      /* 先按页数占比算高，再夹住 —— 不夹的话最旧那年只占 2% 时会被撑到 5%，
+         色带就拖出书口、露出书底一截 */
+      let h = Math.max(1.2, ((endFrom - 1) / total) * 100 - top);
+      h = Math.min(h, 100 - top);
+      const b = document.createElement('div');
+      b.className = `bz-diary-edge-year bz-diary-ey-${i % 8}`;
+      b.style.top = `${top}%`;
+      b.style.height = `${h}%`;
+      edge.appendChild(b);
+    });
+  }
+
+  /** 点书口 → 抽出「册页索引」那张纸：一年一段、一月一行 */
+  private openIndexSheet(): void {
+    const months = this.monthMarksOf();
+    const list = this.visibleEntries();
+    if (!months.length || !list.length) {
+      this.toast('册页还空着');
+      return;
+    }
+    const total = list.length;
+    /* 条目最新在前：list[0] 是最新一篇，list[last] 是最旧一篇 */
+    let html =
+      '<div class="bz-diary-sheet-meta">自 ' +
+      list[total - 1].date +
+      ' 至 ' +
+      list[0].date +
+      ' · 凡 ' +
+      cnNum(total) +
+      ' 则 · ' +
+      cnNum(months.length) +
+      ' 个月</div>';
+    let curY: string | null = null;
+    let open = false;
+    for (const m of months) {
+      const parts = m.key.split('-');
+      if (parts[0] !== curY) {
+        if (open) html += '</div></div>';
+        html += `<div class="bz-diary-idx-year"><div class="bz-diary-iy-head">${parts[0]} 年</div><div class="bz-diary-iy-months">`;
+        curY = parts[0];
+        open = true;
+      }
+      html +=
+        `<div class="bz-diary-idx-row" data-jump-page="${m.page1 - 1}">` +
+        `<span class="bz-diary-ir-m">${parseInt(parts[1], 10)} 月</span><span class="bz-diary-ir-dots"></span>` +
+        `<span class="bz-diary-ir-n">${cnNum(m.n)} 则</span><span class="bz-diary-ir-p">第 ${m.page1} 页</span></div>`;
+    }
+    if (open) html += '</div></div>';
+    this.openSheet('册 页 索 引', html);
+  }
+
+  // ============================================================
+  //  媒体：显影 / 失败态 / 录音卡 / 加密媒体
+  // ============================================================
+
+  /** 照片显影：加载完成即从药水里显出；冲不出来的给占位相纸 */
+  private developPhotos(root: HTMLElement): void {
+    root.querySelectorAll<HTMLImageElement>('.bz-diary-ph-media img').forEach((img) => {
+      if (img.dataset.dev) return;
+      img.dataset.dev = '1';
+      const dev = () => img.classList.add('bz-diary-develop');
+      if (img.complete && img.naturalWidth) {
+        dev();
+        return;
+      }
+      img.addEventListener('load', dev, { once: true });
+      img.addEventListener(
+        'error',
+        () => {
+          const m = img.parentElement;
+          if (m && m.isConnected) {
+            img.remove();
+            const ph = document.createElement('div');
+            ph.className = 'bz-diary-ph-empty';
+            ph.textContent = '相片未冲出';
+            m.appendChild(ph);
+          }
+        },
+        { once: true }
+      );
+    });
+  }
+
+  /**
+   * 媒体失败 → 换占位类（**不写内联样式**：`data-media-err` 的值就是失败时要换上的类全名，
+   * 这是 render 层与行为层的约定，见 render.ts 头注第 3 条）。
+   */
+  private bindMediaErrors(root: HTMLElement): void {
+    root.querySelectorAll<HTMLElement>('img[data-media-err]').forEach((img) => {
+      if (img.dataset.mediaErrWired) return;
+      img.dataset.mediaErrWired = '1';
+      img.addEventListener(
+        'error',
+        () => {
+          const target = img.dataset.mediaErr;
+          if (target) img.className = target;
+          img.removeAttribute('src');
+          delete img.dataset.mediaErr;
+        },
+        { once: true }
+      );
+    });
+  }
+
+  private fmtClock(s: number): string {
+    const v = Math.max(0, Math.floor(s || 0));
+    return `${Math.floor(v / 60)}:${pad2(v % 60)}`;
+  }
+
+  private pauseAllAudio(): void {
+    if (!this.root) return;
+    this.root.querySelectorAll('audio').forEach((a) => {
+      try {
+        a.pause();
+      } catch {
+        /* 已随重排销毁 */
+      }
+    });
+  }
+
+  private toggleAudio(card: HTMLElement): void {
+    const wrap = card.closest('.bz-diary-b-audio');
+    const a = wrap?.querySelector('audio');
+    if (!a) return;
+    if (a.paused) {
+      // 一次只放一段：换了这张卡，前面那段自己停
+      this.root?.querySelectorAll('audio').forEach((o) => {
+        if (o !== a) {
+          try {
+            o.pause();
+          } catch {
+            /* 忽略 */
+          }
+        }
       });
+      void a.play().catch(() => this.toast('这段录音放不出来'));
+    } else a.pause();
+  }
+
+  /** 录音卡：自绘播放键驱动隐藏的 `<audio>` */
+  private bindAudios(root: HTMLElement): void {
+    root.querySelectorAll<HTMLElement>('.bz-diary-b-audio').forEach((wrap) => {
+      if (wrap.dataset.wired) return;
+      wrap.dataset.wired = '1';
+      const a = wrap.querySelector('audio');
+      const card = wrap.querySelector<HTMLElement>('.bz-diary-ba-card');
+      if (!a || !card) return;
+      const bar = card.querySelector<HTMLElement>('.bz-diary-ba-bar i');
+      const tm = card.querySelector<HTMLElement>('.bz-diary-ba-time');
+      const btn = card.querySelector<HTMLElement>('.bz-diary-ba-play');
+      const idle = () => {
+        if (btn) btn.textContent = '▷';
+        wrap.classList.remove('bz-diary-playing');
+        if (bar) bar.style.width = '0';
+        if (tm) tm.textContent = isFinite(a.duration) && a.duration ? this.fmtClock(a.duration) : '--:--';
+      };
+      a.addEventListener('loadedmetadata', () => {
+        if (a.paused) idle();
+      });
+      a.addEventListener('play', () => {
+        if (btn) btn.textContent = '❚❚';
+        wrap.classList.add('bz-diary-playing');
+      });
+      a.addEventListener('pause', idle);
+      a.addEventListener('ended', idle);
+      a.addEventListener('timeupdate', () => {
+        if (!isFinite(a.duration) || !a.duration) {
+          if (tm) tm.textContent = this.fmtClock(a.currentTime);
+          return;
+        }
+        if (bar) bar.style.width = `${(a.currentTime / a.duration) * 100}%`;
+        if (tm) tm.textContent = `-${this.fmtClock(a.duration - a.currentTime)}`;
+      });
+      a.addEventListener('error', () => {
+        if (tm) tm.textContent = '放不出';
+      });
+    });
+  }
+
+  /**
+   * 加密条目的媒体按需解密（保险箱附件镜像 → 原始层 base64 → data URL）。
+   * 带缓存（含失败结果，避免渲染风暴下反复解密）；未解锁/无附件/解密失败返回 null（保持占位）。
+   */
+  private encryptedMediaUrl(noteId: string, k: WallMedia): Promise<string | null> {
+    if (!noteId) return Promise.resolve(null);
+    const key = `${noteId}|${k.kind}|${k.name}`;
+    let p = this.encMediaCache.get(key);
+    if (!p) {
+      p = this.decryptEncMedia(noteId, k);
+      this.encMediaCache.set(key, p);
+    }
+    return p;
+  }
+
+  private async decryptEncMedia(noteId: string, k: WallMedia): Promise<string | null> {
+    try {
+      const { getSafeManager } = (await import('../encrypt')) as typeof import('../encrypt');
+      const safe = getSafeManager();
+      if (!safe.unlocked) return null;
+      const note = safe.manifest?.notes.find((n) => n.id === noteId);
+      if (!note) return null;
+      const att = note.attachments.find((a) => a.path === k.name || a.path.endsWith(`/${k.name}`));
+      if (!att) return null;
+      const b64 = await safe.decryptAttachmentOriginal(att);
+      if (!b64) return null;
+      return `data:${mimeOfMediaName(k.name)};base64,${b64}`;
+    } catch {
+      return null; // 加密域未初始化/密码本未注入：保持占位不阻断
     }
   }
 
-  // ---------- 交互绑定 ----------
-  private bindPanel(ui: typeof this.desk) {
-    // 按日期筛选：头行仅剩品牌行入口（点「日记本」标题）——显式「按年月跳转」按钮已移除
-    ui.head.querySelectorAll('[data-act="date-picker"]').forEach((el) => {
-      el.addEventListener('click', () => this.openDatePicker());
+  /** 拆信后的那张纸上若带照片：加密媒体解出后挂 src（并走显影） */
+  private async mountEncryptedMedia(scope: HTMLElement, noteId: string): Promise<void> {
+    const els = scope.querySelectorAll<HTMLElement>('[data-enc-name]');
+    for (const el of Array.from(els)) {
+      const name = el.dataset.encName || '';
+      const kind = (el.dataset.encKind || 'img') as WallMedia['kind'];
+      const url = await this.encryptedMediaUrl(noteId, { name, kind });
+      if (!url || !el.isConnected) continue;
+      if (el instanceof HTMLImageElement) {
+        el.addEventListener('load', () => el.classList.add('bz-diary-develop'), { once: true });
+        el.src = url;
+      } else if (el instanceof HTMLVideoElement) {
+        el.src = url;
+        el.preload = 'metadata';
+      } else if (el instanceof HTMLAudioElement) {
+        el.src = url;
+        el.preload = 'metadata';
+      }
+    }
+  }
+
+  // ============================================================
+  //  交互：滚轮 / 键盘 / 缩放
+  // ============================================================
+
+  private bindChrome(): void {
+    /* 四角点击翻页已按用户要求取消：翻页只留 拖拽 / 滚轮 / ← → 三条路 */
+    this.bookEl.addEventListener(
+      'wheel',
+      (ev: WheelEvent) => {
+        if (!this.flip) return;
+        ev.preventDefault();
+        const now = Date.now();
+        if (now - this.wheelLock < WHEEL_LOCK_MS) return;
+        this.wheelLock = now;
+        this.turnPage(ev.deltaY > 0 ? 1 : -1);
+      },
+      { passive: false }
+    );
+
+    /* Esc 必须排在「输入框早退」之前：纸条一打开就自动聚焦输入框，
+       早退先挡一道，Esc 就永远到不了 esc 栈。早退只该管方向键。 */
+    document.addEventListener('keydown', this.onKeydown);
+
+    /* 窗口高矮会改书高（--pg-h 的短屏规则），书高变了必须重排，不能只盯宽度 */
+    this.lastSingle = typeof window !== 'undefined' && window.innerWidth <= SINGLE_MAX_W;
+    this.lastW = typeof window !== 'undefined' ? window.innerWidth : 0;
+    this.lastH = typeof window !== 'undefined' ? window.innerHeight : 0;
+    window.addEventListener('resize', this.onResize);
+  }
+
+  private onKeydown = (ev: KeyboardEvent): void => {
+    if (ev.key === 'Escape') {
+      this.escapeStack();
+      return;
+    }
+    if (ev.target instanceof Element && ev.target.matches('input, textarea')) return;
+    if (!this.lightboxEl.hidden) {
+      if (ev.key === 'ArrowLeft') {
+        this.lbStep(-1);
+        return;
+      }
+      if (ev.key === 'ArrowRight') {
+        this.lbStep(1);
+        return;
+      }
+    }
+    if (ev.key === 'ArrowLeft') this.turnPage(-1);
+    if (ev.key === 'ArrowRight') this.turnPage(1);
+  };
+
+  private onResize = (): void => {
+    if (this.resizeTimer !== null) clearTimeout(this.resizeTimer);
+    this.resizeTimer = setTimeout(() => {
+      this.resizeTimer = null;
+      const s = window.innerWidth <= SINGLE_MAX_W;
+      const h = window.innerHeight;
+      const w = window.innerWidth;
+      const hChanged = Math.abs(h - this.lastH) > 40;
+      /* 单页模式页宽跟着视口走：**宽度变了也得重排**，否则库还按旧宽摆页、CSS 已把书缩了 */
+      const wChanged = s && Math.abs(w - this.lastW) > 16;
+      this.lastH = h;
+      this.lastW = w;
+      if (s !== this.lastSingle || hChanged || wChanged) {
+        this.lastSingle = s;
+        this.relayout(true);
+      } else this.refreshBookRect();
+    }, 380);
+  };
+
+  /** Esc 分流：纸条 → 贴纸册 → 台历 → 抽出的一张纸 → 灯箱 → 便签 → 翻回最新 */
+  private escapeStack(): void {
+    if (!this.root || this.root.style.display !== 'flex') return;
+    if (!this.slipEl.hidden) {
+      this.closeSlip();
+      return;
+    }
+    if (!this.albumEl.hidden) {
+      this.closeAlbum();
+      return;
+    }
+    if (!this.calEl.hidden) {
+      this.closeCal();
+      return;
+    }
+    if (!this.sheetEl.hidden) {
+      this.closeSheet();
+      return;
+    }
+    if (!this.lightboxEl.hidden) {
+      this.closeLightbox();
+      return;
+    }
+    if (!this.menuEl.hidden) {
+      this.closeMenu();
+      return;
+    }
+    /* 没有扉页可「合上」：ESC 的收尾动作改成翻回最新那一页（第 0 页） */
+    if (this.flip && this.cursor > 0) {
+      this.jumpToPage(0);
+      this.toast('翻到最新');
+    }
+  }
+
+  // ============================================================
+  //  块级事件（一次委托）：录音 / wiki / 重封 / 照片 / 票根·藏书票 / 信封
+  // ============================================================
+
+  private bindBlockEvents(): void {
+    this.blockEl.addEventListener('click', (ev) => {
+      const t = ev.target as HTMLElement;
+      const aud = t.closest<HTMLElement>('.bz-diary-ba-card');
+      if (aud) {
+        this.toggleAudio(aud);
+        return;
+      }
+      const wl = t.closest<HTMLElement>('.bz-diary-wikilink');
+      if (wl) {
+        this.openWikilink(wl);
+        return;
+      }
+      const reseal = t.closest<HTMLElement>('.bz-diary-env-reseal');
+      if (reseal) {
+        reseal.closest('.bz-diary-envelope')?.classList.remove('bz-diary-unsealed', 'bz-diary-opening');
+        this.closeSheet();
+        this.toast('重新封缄了');
+        return;
+      }
+      const ph = t.closest<HTMLElement>('.bz-diary-photo');
+      if (ph && ph.dataset.lb != null) {
+        /* 加密条目的媒体不入灯箱（无 data-lb），别把 0 当页号 */
+        this.openLightbox(Number(ph.dataset.lb));
+        return;
+      }
+      const more = t.closest<HTMLElement>('.bz-diary-tk-more');
+      if (more) {
+        this.openReviewSheet(this.byEid.get(more.closest<HTMLElement>('.bz-diary-ticket')?.dataset.eid || ''));
+        return;
+      }
+      const env = t.closest<HTMLElement>('.bz-diary-envelope');
+      if (env) {
+        this.onEnvelope(env);
+        return;
+      }
+      const ex = t.closest<HTMLElement>('.bz-diary-exlibris');
+      if (ex) this.openReviewSheet(this.byEid.get(ex.dataset.eid || ''));
     });
-    // 写日记：本域 openAddDialog（写链路已迁入，滚轮年份范围取自当前数据）
-    ui.head.querySelector('[data-act="add"]')?.addEventListener('click', () => this.openAddEntry());
-    // 搜索：toggle 真搜索框
-    ui.head.querySelector('[data-act="search"]')?.addEventListener('click', () => this.toggleSearch(ui));
-    // 头行「关闭」已按用户要求移除（2026-09-19）：关闭走 ESC 与点遮罩；搜索栏收起走搜索钮自身 toggle
-    // 关闭（ESC / 点遮罩）与设置直达的按钮已随头行精简移除，见 render.ts wallPanelHTML 注释
-    // 灯箱关闭按钮（双实例各自一份）
-    ui.lb.querySelector('[data-act="lb-close"]')?.addEventListener('click', (e) => {
-      e.stopPropagation();
+  }
+
+  /** `[[双链]]`：书页里点它跳原文 */
+  private openWikilink(el: HTMLElement): void {
+    const target = el.dataset.target;
+    if (!target) return;
+    const app = this.app();
+    const file = app.metadataCache.getFirstLinkpathDest(target, '');
+    if (file) void app.workspace.getLeaf(false).openFile(file);
+    else this.toast(`找不到「${el.textContent || target}」`);
+  }
+
+  // ============================================================
+  //  抽出的一张纸（全文阅读：影评 / 书评 / 拆开的信 / 册页索引）
+  // ============================================================
+
+  private openSheet(title: string, src: string | HTMLElement): void {
+    this.sheetTitleEl.textContent = title || '';
+    this.sheetBodyEl.innerHTML = '';
+    if (typeof src === 'string') this.sheetBodyEl.innerHTML = src;
+    else this.sheetBodyEl.appendChild(src);
+    this.sheetEl.hidden = false;
+    this.developPhotos(this.sheetBodyEl);
+    this.bindMediaErrors(this.sheetBodyEl);
+    this.bindAudios(this.sheetBodyEl);
+  }
+
+  private closeSheet(): void {
+    if (!this.sheetEl || this.sheetEl.hidden) return;
+    this.sheetEl.hidden = true;
+    this.pauseAllAudio();
+    this.sheetBodyEl.innerHTML = '';
+  }
+
+  private bindSheet(): void {
+    this.sheetEl.addEventListener('click', (ev) => {
+      const t = ev.target as HTMLElement;
+      const ph = t.closest<HTMLElement>('.bz-diary-photo');
+      if (ph && ph.dataset.lb != null) {
+        this.openLightbox(Number(ph.dataset.lb));
+        return;
+      }
+      const aud = t.closest<HTMLElement>('.bz-diary-ba-card');
+      if (aud) {
+        this.toggleAudio(aud);
+        return;
+      }
+      /* 册页索引：点一行跳到那个月，纸就收回去 */
+      const row = t.closest<HTMLElement>('.bz-diary-idx-row');
+      if (row) {
+        this.closeSheet();
+        this.jumpToPage(Number(row.dataset.jumpPage || 0));
+        return;
+      }
+      if (t.closest('.bz-diary-sheet-paper') && !t.closest('.bz-diary-sh-close')) return;
+      this.closeSheet();
+    });
+  }
+
+  /** 长文 → 纸上的段落 */
+  private sheetParas(text: string): string {
+    return String(text || '')
+      .split(/\r?\n+/)
+      .map((s) => s.trim())
+      .filter(Boolean)
+      .map((s) => `<div class="bz-diary-b-para bz-diary-p-indent">${inlineMd(s)}</div>`)
+      .join('');
+  }
+
+  /** 影评 / 书评全文纸 */
+  private openReviewSheet(e: WallEntry | undefined): void {
+    if (!e) return;
+    const x = e.extra || {};
+    if (e.kind === 'movie') {
+      this.openSheet(
+        `《${x.title || ''}》影评`,
+        `<div class="bz-diary-sheet-meta">${e.date} 观影 · ${e.tags
+          .map((t) => `${getTagEmoji(t)}${t}`)
+          .join(' ')}</div>${this.sheetParas(x.review || '')}`
+      );
+    } else if (e.kind === 'book') {
+      this.openSheet(
+        `《${x.title || ''}》书评`,
+        `<div class="bz-diary-sheet-meta">${[x.author, x.category, e.date ? `读毕 ${e.date}` : '']
+          .filter(Boolean)
+          .join(' · ')}</div>${this.sheetParas(x.review || '')}`
+      );
+    }
+  }
+
+  /**
+   * 拆开的信 / 解封的加密条目：全文（含照片）按需装进一张纸。
+   * render 层对 `encrypted` 条目只出信封，故走 `unwrap`（跳过信封分支）——
+   * **条目仍带着 `encrypted` 身份**，媒体段才会发出 `data-enc-name` 挂载点，
+   * 由 `mountEncryptedMedia` 解密后补 src（内容一字不差，只是不走信封那条分支）。
+   */
+  private buildUnsealed(e: WallEntry): HTMLElement {
+    const box = document.createElement('div');
+    for (const html of entryBlockHTMLs(e, this.ctx(), { unwrap: true })) {
+      box.appendChild(elOf(html));
+    }
+    return box;
+  }
+
+  // ============================================================
+  //  灯箱（相纸显影）
+  // ============================================================
+
+  private openLightbox(i: number): void {
+    if (!this.photoRefs[i]) return;
+    this.lbIdx = i;
+    this.renderLightbox();
+    this.lightboxEl.hidden = false;
+  }
+
+  private lbStep(d: 1 | -1): void {
+    if (this.lightboxEl.hidden || !this.photoRefs.length) return;
+    this.lbIdx = (this.lbIdx + d + this.photoRefs.length) % this.photoRefs.length;
+    this.renderLightbox();
+  }
+
+  private renderLightbox(): void {
+    const p = this.photoRefs[this.lbIdx];
+    if (!p) return;
+    const app = this.app();
+    const src = this.mediaUrlOf(app, p.media.name);
+    this.lbMediaEl.innerHTML = '';
+    if (p.media.kind === 'video') {
+      const v = document.createElement('video');
+      v.src = src;
+      v.controls = true;
+      v.autoplay = true;
+      v.loop = true;
+      v.playsInline = true;
+      this.lbMediaEl.appendChild(v);
+    } else {
+      const img = document.createElement('img');
+      img.src = src;
+      img.alt = '';
+      this.lbMediaEl.appendChild(img);
+    }
+    /* 确定性微旋角（类，非内联）：原型是 `style.setProperty('--lb-tilt', …)` */
+    this.lbPhotoEl.className = `bz-diary-lb-photo ${tiltClassOf(this.lbIdx + 3)}`;
+    const cap = p.media.name.split('/').pop() || '';
+    this.lbCapEl.textContent = `${p.entry.date} ${p.entry.time} · ${cap}`;
+    this.lbCountEl.textContent = `${this.lbIdx + 1} / ${this.photoRefs.length}`;
+  }
+
+  private closeLightbox(): void {
+    if (!this.lightboxEl) return;
+    this.lightboxEl.hidden = true;
+    this.lbMediaEl.innerHTML = '';
+  }
+
+  private bindLightbox(): void {
+    this.lightboxEl.addEventListener('click', (ev) => {
+      const t = ev.target as HTMLElement;
+      if (t.closest('.bz-diary-lb-prev')) {
+        this.lbStep(-1);
+        return;
+      }
+      if (t.closest('.bz-diary-lb-next')) {
+        this.lbStep(1);
+        return;
+      }
+      if (t.closest('.bz-diary-lb-media') || t.closest('.bz-diary-lb-photo')) return;
       this.closeLightbox();
     });
-    // DW10：灯箱背景关闭由 bindLightbox 统一绑定、根遮罩关闭移 ensureElements 单次绑定（此处原重复绑 2~3 次）
-    // 章节栏（仅桌面有）事件委托：月份点击 → 平滑滚动定位
-    ui.rail.addEventListener('click', (e) => {
-      const item = (e.target as HTMLElement).closest<HTMLElement>('.bz-diary-month');
-      if (!item) return;
-      motionMonthPress(item); // 动效层：书签签条按压
-      this.scrollToMonth(item.dataset.month || '', ui.wall);
-    });
-    // 搜索输入：防抖过滤
-    ui.searchBox.addEventListener('input', () => this._searchDebounced(ui.searchBox.value));
-    // ESC 在搜索框内：只清空/失焦（不关面板）；D-UI3：先取消防抖尾触，防关键词「复活」。
-    // 置空后派发 input：同步 uiSearch 内置清除钮显隐（效率#12 全域口径），随后的 cancel
-    // 收掉派生尾触（renderAll 已同步刷，不重复）
-    ui.searchBox.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape') {
-        e.stopPropagation();
-        this._searchDebounced.cancel();
-        ui.searchBox.value = '';
-        ui.searchBox.dispatchEvent(new Event('input', { bubbles: true }));
-        this._searchDebounced.cancel();
-        this.searchKeyword = '';
-        this.renderAll();
-        ui.searchBox.blur();
+  }
+
+  // ============================================================
+  //  便签菜单（右键 / 长按）
+  // ============================================================
+
+  private openMenu(pos: MenuPos, eid: string): void {
+    const e = this.byEid.get(eid);
+    if (!e) return;
+    this.menuEid = eid;
+    const show = (act: string, on: boolean) => {
+      const el = this.menuEl.querySelector<HTMLElement>(`.bz-diary-mn-item[data-act="${act}"]`);
+      if (el) el.hidden = !on;
+    };
+    const isDiary = e.kind === 'diary';
+    const enc = !!e.encrypted;
+    show('retype', isDiary && !enc);
+    show('envelope', isDiary && !enc);
+    show('unseal', enc);
+    show('takeout', enc);
+    show('copytext', true);
+    /* 影视/信/书没有 filePath（只有完整 vault 路径的 filename），但 copyLink 正是按 filename 拼的
+       文件级双链——不能用 filePath 一个字段把它们一起挡在门外。加密条目反倒没有「位置」可誊，
+       只给誊录正文（copyLink 对它也是复制正文）。 */
+    show('copylink', !enc && !!(e.filePath || e.filename));
+    show('tear', isDiary);
+    const tear = this.menuEl.querySelector<HTMLElement>('.bz-diary-mn-item[data-act="tear"]');
+    if (tear) tear.textContent = enc ? '撕掉（销毁密文）' : '撕掉';
+    this.menuEl.hidden = false;
+    /* 夹在窗口内：上下都要夹（只有上界时，窗口比菜单窄 left 会是负数） */
+    const mw = this.menuEl.offsetWidth;
+    const mh = this.menuEl.offsetHeight;
+    this.menuEl.style.left = `${Math.max(10, Math.min(pos.x, window.innerWidth - mw - 10))}px`;
+    this.menuEl.style.top = `${Math.max(10, Math.min(pos.y, window.innerHeight - mh - 10))}px`;
+  }
+
+  private closeMenu(): void {
+    if (!this.menuEl) return;
+    this.menuEl.hidden = true;
+    this.menuEid = null;
+  }
+
+  private bindMenu(): void {
+    this.menuEl.addEventListener('click', (ev) => {
+      const it = (ev.target as HTMLElement).closest<HTMLElement>('.bz-diary-mn-item');
+      if (!it || !this.menuEid) return;
+      const e = this.byEid.get(this.menuEid);
+      this.closeMenu();
+      if (!e) return;
+      switch (it.dataset.act) {
+        case 'retype':
+          this.editTags(e);
+          break;
+        case 'envelope':
+          void this.encryptEntryAction(e);
+          break;
+        case 'unseal':
+          this.unsealEntry(e);
+          break;
+        case 'takeout':
+          void this.decryptEntryAction(e);
+          break;
+        case 'copytext':
+          writeClipboard(plainTextOf(e), '誊好了，在剪贴板里', '誊不成……');
+          break;
+        case 'copylink':
+          void this.copyLink(e);
+          break;
+        case 'tear':
+          void this.tearEntry(e);
+          break;
       }
     });
-  }
+    document.addEventListener('pointerdown', this.onDocPointerDown, true);
 
-  /** 灯箱通用绑定（双实例各一份；增强 #1：左右按钮 + 触摸滑动连看） */
-  private bindLightbox() {
-    [this.desk, this.mob].forEach((ui) => {
-      // 点击背景关闭（lb-media 之外）
-      ui.lb.addEventListener('click', (e) => {
-        if (e.target === ui.lb) this.closeLightbox();
-      });
-      // 左右切换按钮
-      ui.lb.querySelector('[data-act="lb-prev"]')?.addEventListener('click', (e) => {
-        e.stopPropagation();
-        this.stepLightbox(-1);
-      });
-      ui.lb.querySelector('[data-act="lb-next"]')?.addEventListener('click', (e) => {
-        e.stopPropagation();
-        this.stepLightbox(1);
-      });
-      // 效率#10：灯箱「⋯」动作菜单——看图时跳原文/改标签不必先关灯箱（上下文即当前连看项）
-      ui.lb.querySelector('[data-act="lb-more"]')?.addEventListener('click', (e) => {
-        e.stopPropagation();
-        const me = e as MouseEvent;
-        this.openLbActions(me.clientX, me.clientY);
-      });
-      // 移动端滑动切图：水平位移 ≥ LB_SWIPE_THRESHOLD_PX 判定（垂直滚动不受影响）。
-      // D-UI4（review-deep P3）：video/audio/button（原生进度条/控件、灯箱内按钮）上的
-      // 触点不参与——横拖进度条位移轻松超阈值，旧实现把调进度手势判成「切下一个媒体」。
-      let touchX: number | null = null;
-      ui.lb.addEventListener(
-        'touchstart',
-        (e) => {
-          if ((e.target as HTMLElement).closest('video, audio, button')) {
-            touchX = null;
-            return;
-          }
-          touchX = e.touches[0]?.clientX ?? null;
-        },
-        { passive: true }
-      );
-      ui.lb.addEventListener(
-        'touchend',
-        (e) => {
-          if (touchX === null) return;
-          const dx = (e.changedTouches[0]?.clientX ?? touchX) - touchX;
-          touchX = null;
-          if (Math.abs(dx) >= LB_SWIPE_THRESHOLD_PX) this.stepLightbox(dx < 0 ? 1 : -1);
-        },
-        { passive: true }
-      );
+    this.blockEl.addEventListener('contextmenu', (ev) => {
+      const t = (ev.target as HTMLElement).closest<HTMLElement>('[data-eid]');
+      if (!t) return;
+      ev.preventDefault();
+      this.closeMenu();
+      this.openMenu({ x: ev.clientX, y: ev.clientY }, t.dataset.eid || '');
     });
-    // DW10：根遮罩点击关闭——单次绑定（原在 bindPanel 内随双实例重复绑 2 次）
-    this.root!.addEventListener('click', (e) => {
-      if (e.target === this.root && this.root!.style.display === 'flex') this.hide();
-    });
-  }
 
-  /** 灯箱是否可见（任一实例） */
-  private lbVisible(): boolean {
-    return (
-      !!this.root &&
-      (this.desk.lb.classList.contains('bz-diary-lb--show') ||
-        this.mob.lb.classList.contains('bz-diary-lb--show'))
+    /* 长按（触屏）：500ms 不动就开便签 */
+    let lpTimer: ReturnType<typeof setTimeout> | null = null;
+    let lpPos: MenuPos | null = null;
+    this.blockEl.addEventListener(
+      'touchstart',
+      (ev: TouchEvent) => {
+        const t = (ev.target as HTMLElement).closest<HTMLElement>('[data-eid]');
+        if (!t) return;
+        const f = ev.touches[0];
+        if (!f) return;
+        lpPos = { x: f.clientX, y: f.clientY };
+        lpTimer = setTimeout(() => {
+          if (lpPos) this.openMenu(lpPos, t.dataset.eid || '');
+        }, 500);
+      },
+      { passive: true }
     );
-  }
-
-  /** 增强 #1：灯箱步进（dir=1 下一张 / -1 上一张；到头循环——相册式连看，与移动端滑动同口径） */
-  private stepLightbox(dir: 1 | -1) {
-    if (!this.lbVisible() || !this._lbSeq.length) return;
-    this.showLightboxAt(this._lbIdx + dir, dir);
-  }
-
-  /**
-   * 效率#10：灯箱「⋯」动作菜单——复用 buildMenuActions 动作集（core openItemMenu 跟手菜单，
-   * 桌面移动通用），上下文 = 当前连看项 _lbSeq[_lbIdx]；动作项点击后菜单自动收，灯箱保持开着
-   * （「打开原文」的 hide() 会顺带收灯箱，符合跳走语义）。
-   */
-  private openLbActions(x: number, y: number) {
-    const cur = this._lbSeq[this._lbIdx];
-    if (!cur) return;
-    if (this.isEncHidden(cur.entry)) return;
-    openItemMenu(x, y, this.buildMenuActions(cur.entry), true);
-    resetItemMenuClickGuard();
-  }
-
-  // ---------- 渲染 ----------
-  /** 重新渲染（筛选变化 / 数据加载后）。
-   *  issue 217 F3：只渲染当前可见端实例——隐藏端全量渲染（每条正文 MarkdownRenderer ×2）
-   *  是开墙耗时翻倍的隐性大头；断点切换由 _onMqChange 补渲染。jsdom 无 matchMedia 保留双渲染。 */
-  renderAll() {
-    if (!this.root) return;
-    this.renderChips();
-    // 增强 #3：头行计数 = 当前结果数（filtered().length，对齐「头行计数=当前结果数」范式）；
-    // 过滤结果一次计算，两实例渲染与计数共用
-    const list = this.filtered();
-    this.renderRange(list);
-    if (this._mql) {
-      if (this._mql.matches) this.renderWall(this.mob, true, list);
-      else this.renderWall(this.desk, false, list);
-      return;
-    }
-    this.renderWall(this.desk, false, list);
-    this.renderWall(this.mob, true, list);
-  }
-
-  /**
-   * 动效层：用户筛选切换（chip / 二级签 / 日期筛选 / 清除）走翻页编排——旧墙墨隐、
-   * 纸面扫过面板、过中线那一刻 renderAll 换血、新内容以 switch 档接力落纸。
-   * RM / 无 WAAPI 宿主：motionPageTurn 同步 rewrite，行为与直接 renderAll 等价。
-   * 后台刷新（写后回刷 / vault modify / 解锁）仍走静默 renderAll，不翻页。
-   */
-  private renderAllMotioned() {
-    const ui = this._mql ? (this._mql.matches ? this.mob : this.desk) : this.desk;
-    this._motionSwitchPend = true;
-    motionPageTurn(ui.el, ui.wall, () => this.renderAll());
-  }
-
-  /**
-   * 效率#6：头行范围文案带日期筛选态（「2026-06 · 37 条」）——旧实现只有「N 条」，
-   * 套用月份筛选后无处可见当前被限定在哪个月，墙看起来像丢数据；
-   * 同步 brand 行「✕ 清除」胶囊（筛选生效时出现，一键清日期筛选）。
-   */
-  private renderRange(list: WallEntry[]) {
-    const df = this.selDateFilter;
-    const range = df
-      ? `${df.year}${df.month ? '-' + df.month : ''} · ${list.length} 条`
-      : `${list.length} 条`;
-    this.desk.range.textContent = range;
-    this.mob.range.textContent = range;
-    [this.desk, this.mob].forEach((ui) => this.syncFilterClearChip(ui));
-  }
-
-  /** 效率#6：brand 行「✕ 清除」日期筛选胶囊（brand 点击本体 = 开筛选弹窗，胶囊是独立动作） */
-  private syncFilterClearChip(ui: typeof this.desk) {
-    const brand = ui.head.querySelector('.bz-diary-brand');
-    if (!brand) return;
-    const chip = brand.querySelector<HTMLElement>('.bz-diary-filter-clear');
-    if (!this.selDateFilter) {
-      chip?.remove();
-      return;
-    }
-    if (chip) return;
-    const b = document.createElement('button');
-    b.className = 'bz-diary-filter-clear';
-    b.title = '清除日期筛选';
-    b.appendChild(uiIcon('x'));
-    b.appendChild(document.createTextNode('清除'));
-    motionClearChip(b); // 动效层：胶囊 pop 入
-    b.addEventListener('click', (e) => {
-      e.stopPropagation();
-      this.selDateFilter = null;
-      this.renderAllMotioned();
-    });
-    brand.appendChild(b);
-  }
-
-  /** 增量显隐基线键：除搜索关键词外的全部筛选态 + 数据量（任一变化即失效，强制整墙重建） */
-  private filterKeyNoKw(): string {
-    const df = this.selDateFilter;
-    return `${this.selTag}|${this.selSubTag}|${df ? df.year + '-' + (df.month || '') : ''}|${this.entries.length}`;
-  }
-
-  /**
-   * 效率#8：搜索增量显隐——关键词变化只对既有卡片 toggle display（widx↔条目映射现成），
-   * 不匹配藏、匹配显，墙结构不动（MarkdownRenderer 不重跑、媒体 observer 不重建）。
-   * 仅空结果（要渲染空态）/ 首渲或基线不符（卡片集合与 widx 对不上）走整墙重建。
-   * 返回 false = 调用方须 renderAll 整墙重建。
-   */
-  private applySearchVisibility(): boolean {
-    const list = this.filtered();
-    if (!list.length) return false;
-    if (this._wallBaseRef !== this.entries || this._wallBaseKey !== this.filterKeyNoKw()) return false;
-    const show = new Set<WallEntry>(list);
-    let applied = 0;
-    for (const ui of [this.desk, this.mob]) {
-      if (this._mql) {
-        const mobNow = this._mql.matches;
-        if ((mobNow && ui !== this.mob) || (!mobNow && ui !== this.desk)) continue;
-      }
-      const items = ui.wall.querySelectorAll<HTMLElement>('.bz-diary-item[data-widx]');
-      if (!items.length || items.length !== this._wallEntries.length) return false;
-      items.forEach((el) => {
-        const e = this._wallEntries[Number(el.dataset.widx)];
-        el.style.display = show.has(e) ? '' : 'none';
-      });
-      // 节内条目全被藏住的日期分节：节头与 masonry 容器一并藏（不留「空节头」）
-      ui.wall.querySelectorAll<HTMLElement>('.bz-diary-day-head[data-date]').forEach((h) => {
-        const m = h.nextElementSibling;
-        const cards = m ? (Array.from(m.children) as HTMLElement[]) : [];
-        const anyVisible = cards.some((el) => el.classList.contains('bz-diary-item') && el.style.display !== 'none');
-        h.style.display = anyVisible ? '' : 'none';
-        if (m && m.classList.contains('bz-diary-masonry')) (m as HTMLElement).style.display = anyVisible ? '' : 'none';
-      });
-      // 时光条是「当年今日」快照，与关键词过滤无关——搜索态下整块暂藏
-      const mem = ui.wall.querySelector<HTMLElement>('.bz-diary-memories');
-      if (mem) mem.style.display = this.searchKeyword ? 'none' : '';
-      applied++;
-    }
-    if (!applied) return false;
-    // 灯箱序列与可见集同步（灯箱开着则按 D7' 暂缓，不动）
-    if (!this.lbVisible()) {
-      this._lbSeq = list.flatMap((e) => e.media.map((m) => ({ entry: e, media: m })));
-    }
-    this.renderRange(list);
-    return true;
-  }
-
-  /** 过滤后的条目（加密条目默认隐藏，选中「加密」标签时显示；支持标签/二级标签/搜索/日期） */
-  private filtered(): WallEntry[] {
-    const kw = this.searchKeyword.trim().toLowerCase();
-    const df = this.selDateFilter;
-    return this.entries.filter((e) => {
-      // 加密可见性以 encrypted 标志为准（tags 可能因 emoji 反解不含「加密」，P2-3 审查修复）
-      const isEnc = e.encrypted || e.tags.includes('加密');
-      if (this.selTag === '加密') {
-        if (!isEnc) return false;
-      } else {
-        // 二级标签已选中：只按二级标签精确过滤（日记条目标的是子标签而非主标签，如「四川」而非「旅游」）
-        if (this.selSubTag) {
-          if (!e.tags.includes(this.selSubTag)) return false;
-        } else {
-          if (this.selTag && !e.tags.includes(this.selTag)) return false;
+    this.blockEl.addEventListener(
+      'touchmove',
+      (ev: TouchEvent) => {
+        if (!lpTimer || !lpPos) return;
+        const f = ev.touches[0];
+        if (f && (Math.abs(f.clientX - lpPos.x) > 12 || Math.abs(f.clientY - lpPos.y) > 12)) {
+          clearTimeout(lpTimer);
+          lpTimer = null;
         }
-        // issue 217 F6：非「加密」筛选恒剔除加密条目——旧条件 lockedVisible 一旦为真
-        //（解锁后点过「加密」），切到其他标签加密条目会一直混入结果
-        if (isEnc) return false;
-      }
-      if (df) {
-        if (df.month) {
-          if (!e.date.startsWith(`${df.year}-${df.month}`)) return false;
-        } else if (!e.date.startsWith(df.year)) {
-          return false;
-        }
-      }
-      if (kw) {
-        const hit =
-          (e.text || '').toLowerCase().includes(kw) ||
-          e.tags.some((t) => t.toLowerCase().includes(kw)) ||
-          e.time.toLowerCase().includes(kw) ||
-          e.date.includes(kw);
-        if (!hit) return false;
-      }
-      return true;
-    });
+      },
+      { passive: true }
+    );
+    /* touchend / touchcancel 都要清计时——真机长按正文时系统选择浮标会发 touchcancel，
+       不清的话计时器还会在抬手后补开一次菜单 */
+    const cancelLp = () => {
+      if (lpTimer) clearTimeout(lpTimer);
+      lpTimer = null;
+    };
+    this.blockEl.addEventListener('touchend', cancelLp);
+    this.blockEl.addEventListener('touchcancel', cancelLp);
   }
 
-  /** 类型 chips 行（主标签胶囊 + 计数；「加密」锁定态 🔒 虚线）——标签表取自 config（含旅游/收藏等带二级标签的主标签），非硬编码 */
-  private renderChips() {
-    // 计数：加密条目（encrypted 标志）计入「加密」chip
-    const countFor = (tag: string) =>
-      tag === '加密'
-        ? this.entries.filter((e) => e.encrypted || e.tags.includes('加密')).length
-        : this.entries.filter((e) => e.tags.includes(tag)).length;
-    // 全量主标签（展示顺序固定 + 「加密」垫底），emoji 走 config 映射（getTagEmoji 兜底 📖）
-    const tagChips: [string, string][] = getPrimaryTagsInDisplayOrder().map((tag) => [tag, getTagEmoji(tag)]);
-    [this.desk.chipRow, this.mob.chipRow].forEach((row) => {
-      row.innerHTML = '';
-      tagChips.forEach(([tag, emoji]) => {
-        const locked = tag === '加密' && !this.lockedVisible;
-        const b = document.createElement('button');
-        // D-UI6（review-deep P3）：不挂 bz-touch-target--xl——::after 外扩热区（inset -12px）
-        // 在 gap 8px 的紧凑 chips 行两两重叠 16px，点边缘触发相邻 chip；触控热区由移动端
-        // padding 抬档达标（styles.css 768px 段），不再外扩
-        b.className =
-          'bz-diary-chip' +
-          (locked ? ' bz-diary-chip--locked' : '') +
-          (this.selTag === tag ? ' bz-diary-chip--on' : '');
-        b.dataset.tag = tag;
-        // 「加密」锁定态显示 lock 线条图标（未解锁，增强 #4）；其余显示配置 emoji（数据语义，非 UI 图标）
-        if (locked) b.appendChild(uiIcon('lock'));
-        else b.appendChild(document.createTextNode(emoji));
-        b.appendChild(document.createTextNode(' ' + tag + ' '));
-        const cnt = document.createElement('span');
-        cnt.className = 'bz-diary-chip-cnt';
-        cnt.textContent = String(countFor(tag));
-        b.appendChild(cnt);
-        b.addEventListener('click', () => {
-          motionChipPress(b); // 动效层：签条按压回弹
-          if (tag === '加密') {
-            // 点击锁定态「加密」→ 弹保险箱解锁面板（对齐日记本 createTag：ensureSafeUnlocked 弹主密码）；
-            // 解锁成功后加载加密日记并筛选。已解锁态再点 = 选中/取消筛选。
-            if (locked) {
-              void this.unlockAndSelectEncrypt();
-              return;
-            }
-            this.selTag = this.selTag === '加密' ? null : '加密';
-            this.renderAllMotioned();
-            return;
-          }
-          // 切主标签：重置二级标签选中
-          if (this.selTag !== tag) this.selSubTag = null;
-          this.selTag = this.selTag === tag ? null : tag;
-          this.renderAllMotioned();
-        });
-        row.appendChild(b);
-      });
-      // 「加密」chip 常驻显示（不再因无加密条目而隐藏——用户需要入口测试加密流程；计数 0 照常显示）
-    });
-    this.renderSubRow(this.desk);
-    this.renderSubRow(this.mob);
-  }
+  private onDocPointerDown = (ev: PointerEvent): void => {
+    if (!(ev.target as HTMLElement).closest?.('.bz-diary-menu')) this.closeMenu();
+  };
 
-  /** 加密 chip 锁定态点击：弹保险箱解锁 → 解锁后并入加密日记 → 选中「加密」筛选（对齐日记本） */
-  private async unlockAndSelectEncrypt() {
+  // ============================================================
+  //  条目动作：复制 / 改标签 / 加密 / 解密 / 撕掉
+  // ============================================================
+
+  /** 双链：加密条目无 md 锚点 → 复制正文；影视/信/书 → 文件级双链；普通条目 → 本域 copyDiaryLink */
+  private async copyLink(e: WallEntry): Promise<void> {
     try {
-      const { ensureSafeUnlocked } = await import('../encrypt');
-      // 同一套解锁屏骨架，按日记域口径注入文案/统计与配色（--dw-* token）
-      const ok = await ensureSafeUnlocked('diary');
-      if (!ok) {
-        // 动效层：解锁被取消——锁定签摇头示意（锁还扣着）
-        const vis = this._mql?.matches ? this.mob : this.desk;
-        const chip = vis.chipRow.querySelector<HTMLElement>('.bz-diary-chip[data-tag="加密"]');
-        if (chip) motionChipDeny(chip);
-        return; // 用户取消/密码错误：保持锁定态
+      if (e.encrypted) {
+        await navigator.clipboard.writeText(e.content || e.text || '');
+        notice('已复制加密日记正文', 'success');
+        return;
       }
-      this.lockedVisible = true;
-      this.selTag = '加密';
-      await this.mergeEncryptedEntries();
-      this.renderAll();
+      if (e.kind !== 'diary') {
+        if (!e.filename) {
+          notice('找不到原文，无法复制双链', 'error');
+          return;
+        }
+        const path = e.filename.replace(/\.md$/, '');
+        await navigator.clipboard.writeText(`[[${path}]]`);
+        notice('已复制双链引用', 'success');
+        return;
+      }
+      if (!e.filePath && !e.filename) {
+        notice('找不到原文，无法复制双链', 'error');
+        return;
+      }
+      await copyDiaryLink({ filename: e.filename || '', filePath: e.filePath, emoji: e.emoji, time: e.time });
     } catch {
-      notice('解密失败：主密码可能不正确，密文未受影响', 'error');
+      notice('复制双链失败', 'error');
+    }
+  }
+
+  /** 换贴纸：接本域 showTagPicker（写层守卫落盘，结果经 `diary:tags-changed` 回刷整册） */
+  private editTags(e: WallEntry): void {
+    try {
+      showTagPicker({
+        filename: e.filename || e.date,
+        filePath: e.filePath,
+        date: e.date,
+        time: e.time,
+        lineNumber: e.lineNumber || 0,
+        tags: e.tags,
+        encrypted: e.encrypted,
+        noteId: e.noteId,
+      });
+    } catch (err) {
+      notice(`改标签暂不可用：${err instanceof Error ? err.message : String(err)}`, 'error');
     }
   }
 
   /**
-   * 并入保险箱里的加密日记条目（ADR-0017：加密日记 = 保险箱 kind='diary-entry' 的 SafeNote）。
-   * 未解锁/无加密条目/加载失败均为幂等空操作；合并后与普通条目统一按日期时间降序混排。
+   * 收进信封（加密）：本域 `encryptEntry`（需保险箱解锁）+ 写层摘除原块；
+   * 摘除失败必须回滚密文——密文已入库而原文未删时，解锁后同条出现两次且重试越积越多。
+   * 与「撕掉」同为「条目当场从册上消失」，同样补二次确认。
    */
-  private async mergeEncryptedEntries() {
+  private async encryptEntryAction(e: WallEntry): Promise<void> {
+    if (e.kind !== 'diary') return; // 影视/信/书无加密入口（入库语义错位）
+    let enc: Awaited<ReturnType<typeof encryptEntry>> = null;
+    try {
+      const { ensureSafeUnlocked } = (await import('../encrypt')) as typeof import('../encrypt');
+      const unlocked = await ensureSafeUnlocked('diary');
+      if (!unlocked) return;
+      const ok = await openFlowDialog({
+        title: '收进信封',
+        message: `将把「${e.date} ${e.time}」这条日记移入保险库加密保存，原位置不再保留明文。`,
+        actions: [
+          { label: '取消', value: 'cancel' },
+          { label: '收进信封', value: 'ok', cta: true, danger: true },
+        ],
+      });
+      if (ok !== 'ok') return;
+      const entry = await findDiaryEntry(e.filePath || e.filename || e.date);
+      if (!entry) {
+        notice('找不到原文条目，无法加密', 'error');
+        return;
+      }
+      enc = await encryptEntry(entry);
+      if (!enc) return;
+      let removed = 0;
+      try {
+        removed = await removeDiaryEntries(
+          entry.date,
+          (x) => x.filePath === entry.filePath && x.time === entry.time && x.lineNumber === entry.lineNumber,
+          { filePath: entry.filePath }
+        );
+      } catch (err) {
+        await this.rollbackEncryptedNote(enc);
+        throw err;
+      }
+      if (removed === 0) {
+        await this.rollbackEncryptedNote(enc);
+        notice('加密失败：原文块摘除未生效', 'error');
+        return;
+      }
+      /* 加密 = 原条目文件摘除，同级磁盘变更须发同通道域事件（对齐删除的发射形态） */
+      const { emitDomainEvent } = await import('../core/domain-bus');
+      emitDomainEvent('diary:entry-deleted', { date: entry.date, time: entry.time, wasEncrypted: false, encrypted: true });
+      await this.loadAndRelayout();
+    } catch (err) {
+      if (err && (isUnparsedRefusal(err) || isDiaryReadFailure(err))) return; // 守卫拒处理/读失败：写层已发人话通知
+      notice('加密失败', 'error');
+    }
+  }
+
+  /** 加密失败兜底：尽力销毁刚入库的密文（失败只留日志——原始失败原因更要紧） */
+  private async rollbackEncryptedNote(enc: NonNullable<Awaited<ReturnType<typeof encryptEntry>>>): Promise<void> {
+    if (!enc.noteId) return;
+    try {
+      await deleteEncryptedEntry(enc.noteId);
+    } catch (err) {
+      console.warn('[bz-diary] 加密回滚失败（保险箱可能残留密文，请手动删除）:', err);
+    }
+  }
+
+  /** 从信封取出（解密）：本域 `reclassifyEntry` 降级（还原块 merge 回 md，取出即删） */
+  private async decryptEntryAction(e: WallEntry): Promise<void> {
+    try {
+      const noteId = e.noteId;
+      if (!noteId) {
+        notice('无法取出（缺少保险箱记录）', 'error');
+        return;
+      }
+      const newTags = e.tags.filter((t) => t !== '加密');
+      const ok = await reclassifyEntry(noteId, newTags);
+      if (!ok) {
+        notice('取出失败：主密码可能不正确，密文未受影响', 'error');
+        return;
+      }
+      const { emitDomainEvent } = await import('../core/domain-bus');
+      emitDomainEvent('diary:entry-decrypted', { noteId, date: e.date, newTags });
+      await this.loadAndRelayout();
+    } catch {
+      notice('取出失败：主密码可能不正确，密文未受影响', 'error');
+    }
+  }
+
+  /** 拆信看：加密条目在册时（保险箱已解锁）直接摊开全文；内容随密文一起存在内存里 */
+  private unsealEntry(e: WallEntry): void {
+    const env = this.blockEl.querySelector<HTMLElement>(
+      `.bz-diary-envelope[data-eid="${cssEscape(e.id || '')}"]`
+    );
+    if (env) this.onEnvelope(env);
+    else this.openSheet(e.kind === 'letter' ? '火漆封缄 · 全文' : '火漆封缄 · 全文', this.buildUnsealed(e));
+  }
+
+  /** 信封被点：演示拆封动效，然后把全文放到抽出来的那张纸上 */
+  private onEnvelope(env: HTMLElement): void {
+    if (env.classList.contains('bz-diary-unsealed') || env.classList.contains('bz-diary-opening')) return;
+    const eid = env.dataset.eid || '';
+    const e = this.byEid.get(eid);
+    if (!e) return;
+    env.classList.add('bz-diary-opening');
+    const epoch = this.epoch;
+    setTimeout(() => {
+      if (epoch !== this.epoch || !env.isConnected) return;
+      env.classList.remove('bz-diary-opening');
+      env.classList.add('bz-diary-unsealed');
+      /* 拆开：火漆碎开，全文在抽出来的那张纸上读（信封本身高度不变，纸面不会被顶破） */
+      const box = this.buildUnsealed(e);
+      this.openSheet('火漆封缄 · 全文', box);
+      if (e.noteId) void this.mountEncryptedMedia(box, e.noteId);
+    }, 620);
+  }
+
+  /** 撕掉：接本域 `showConfirm`（加密条目走保险箱销毁分支）+ 碎纸动效 */
+  private async tearEntry(e: WallEntry): Promise<void> {
+    try {
+      if (e.kind !== 'diary') {
+        notice('影视、信、书条目请在对应面板中管理', 'info');
+        return;
+      }
+      const els = Array.from(this.blockEl.querySelectorAll<HTMLElement>('[data-eid]')).filter(
+        (el) => el.dataset.eid === e.id && el.offsetParent
+      );
+      this.tearAnim(els);
+      showConfirm({
+        filename: e.filename || e.date,
+        filePath: e.filePath,
+        date: e.date,
+        time: e.time,
+        lineNumber: e.lineNumber || 0,
+        tags: e.tags,
+        encrypted: e.encrypted,
+        noteId: e.noteId,
+      });
+    } catch {
+      notice('删除暂不可用', 'error');
+    }
+  }
+
+  /**
+   * 碎纸动效：按元素实测矩形把两片纸撕开抛下（几何是**量出来的**，故走内联；
+   * 颜色/材质仍由 `.bz-diary-scrap` 的 CSS 给 —— 零内联视觉样式口径不破）。
+   */
+  private tearAnim(els: HTMLElement[]): void {
+    if (!els.length) return;
+    const r0 = els[0].getBoundingClientRect();
+    const rN = els[els.length - 1].getBoundingClientRect();
+    const box = {
+      l: Math.min(r0.left, rN.left),
+      t: r0.top,
+      r: Math.max(r0.right, rN.right),
+      b: Math.max(r0.bottom, rN.bottom),
+    };
+    const teeth = 7;
+    const pts = ['0% 0%'];
+    for (let i = 0; i <= teeth; i++) pts.push(`${(i / teeth) * 100}% ${28 + Math.random() * 18}%`);
+    pts.push('100% 0%');
+    const path = `polygon(${pts.join(',')})`;
+    [0, 1].forEach((side) => {
+      const frag = document.createElement('div');
+      frag.className = 'bz-diary-scrap';
+      frag.style.left = `${box.l}px`;
+      frag.style.top = `${box.t}px`;
+      frag.style.width = `${box.r - box.l}px`;
+      frag.style.height = `${box.b - box.t}px`;
+      frag.style.clipPath = path;
+      frag.style.transformOrigin = side ? '100% 0' : '0 0';
+      document.body.appendChild(frag);
+      const dir = side ? 1 : -1;
+      frag.animate(
+        [
+          { transform: 'rotate(0deg) translate(0,0)', opacity: 1 },
+          { transform: `rotate(${dir * (9 + Math.random() * 13)}deg) translate(${dir * 60}px, 220px)`, opacity: 0 },
+        ],
+        { duration: 700, easing: 'cubic-bezier(.3,.4,.6,1)', fill: 'forwards' }
+      );
+      setTimeout(() => frag.remove(), 760);
+    });
+    for (let i = 0; i < 7; i++) {
+      const s = document.createElement('div');
+      s.className = 'bz-diary-scrap';
+      const sz = 5 + Math.random() * 7;
+      s.style.left = `${box.l + Math.random() * (box.r - box.l)}px`;
+      s.style.top = `${box.t + Math.random() * (box.b - box.t)}px`;
+      s.style.width = `${sz}px`;
+      s.style.height = `${sz * (0.7 + Math.random() * 0.7)}px`;
+      document.body.appendChild(s);
+      s.animate(
+        [
+          { transform: 'translate(0,0) rotate(0)', opacity: 1 },
+          {
+            transform: `translate(${-90 + Math.random() * 180}px, ${160 + Math.random() * 140}px) rotate(${
+              -260 + Math.random() * 520
+            }deg)`,
+            opacity: 0,
+          },
+        ],
+        { duration: 650 + Math.random() * 300, easing: 'ease-in', fill: 'forwards' }
+      );
+      setTimeout(() => s.remove(), 1000);
+    }
+    els.forEach((el) => {
+      el.style.visibility = 'hidden';
+    });
+  }
+
+  // ============================================================
+  //  贴纸册（按类翻）
+  // ============================================================
+
+  private tagCounts(): Map<string, number> {
+    const m = new Map<string, number>();
+    for (const e of this.entries) {
+      if (e.encrypted) continue;
+      for (const t of e.tags) m.set(t, (m.get(t) || 0) + 1);
+    }
+    return m;
+  }
+
+  /** 贴纸册：按类重装订一本分类册（原型的「换贴纸」模式改走真 showTagPicker，不在这里） */
+  private openAlbum(): void {
+    this.albumGridEl.innerHTML = '';
+    const counts = this.tagCounts();
+    this.albumSubEl.textContent = '点一张，就按它重装订一本分类册';
+    const tags = Array.from(counts.keys()).filter((t) => t !== '加密').sort((a, b) => (counts.get(b) || 0) - (counts.get(a) || 0));
+    if (counts.has('加密')) tags.push('加密');
+    for (const t of tags) {
+      const isEncrypt = t === '加密';
+      const b = document.createElement('span');
+      b.className = `bz-diary-ap-sticker${isEncrypt ? ' bz-diary-as-encrypt' : ''}`;
+      if (this.filterTag === t) b.classList.add('bz-diary-on');
+      b.innerHTML =
+        `<span class="bz-diary-as-emoji">${getTagEmoji(t)}</span>${escapeHtml(t)}` +
+        (isEncrypt ? '' : `<i class="bz-diary-as-count"> ${counts.get(t) || 0}</i>`);
+      b.addEventListener('click', () => {
+        this.closeAlbum();
+        this.filterTag = this.filterTag === t ? null : t;
+        this.applyFilter();
+      });
+      this.albumGridEl.appendChild(b);
+    }
+    const ok = this.albumEl.querySelector<HTMLElement>('.bz-diary-ap-confirm');
+    if (ok) ok.hidden = true; // 只留「按类翻」一种模式（换贴纸在便签菜单里走真标签选择器）
+    this.albumEl.hidden = false;
+  }
+
+  private closeAlbum(): void {
+    if (!this.albumEl) return;
+    this.albumEl.hidden = true;
+  }
+
+  private applyFilter(): void {
+    this.relayout(false);
+    if (this.filterTag) {
+      this.filterTabEl.classList.add('bz-diary-on');
+      const name = this.filterTabEl.querySelector<HTMLElement>('.bz-diary-ft-name');
+      if (name) name.textContent = `${getTagEmoji(this.filterTag)} ${this.filterTag}`;
+      this.jumpToPage(0);
+      this.toast(`分类册装订好了：${this.filterTag}`);
+    } else {
+      this.filterTabEl.classList.remove('bz-diary-on');
+      this.toast('整本册子回来了');
+    }
+  }
+
+  private bindAlbum(): void {
+    this.albumEl.addEventListener('click', (ev) => {
+      const t = ev.target as HTMLElement;
+      if (t.closest('.bz-diary-ap-cancel') || !t.closest('.bz-diary-ap-book')) this.closeAlbum();
+    });
+    this.filterTabEl.addEventListener('click', () => {
+      this.filterTag = null;
+      this.applyFilter();
+    });
+  }
+
+  // ============================================================
+  //  台历（跳日子）
+  // ============================================================
+
+  private openCal(): void {
+    const newest = this.entries[0];
+    const base = newest ? newest.date : '2026-01-01';
+    this.cal.year = Number(base.slice(0, 4));
+    this.cal.month = Number(base.slice(5, 7));
+    this.calTimeRowEl.hidden = true; // 改日子·时辰属写作，已随写链路走 openAddDialog
+    this.calOkEl.hidden = true; // 纯跳日模式没有可提交的选中态，「合上」是唯一出口
+    this.calErrEl.textContent = '';
+    this.renderCal();
+    this.calEl.hidden = false;
+  }
+
+  private renderCal(): void {
+    const { year, month } = this.cal;
+    this.calYmEl.textContent = `${year} 年 ${month} 月`;
+    const byDay = new Map<number, number>();
+    for (const e of this.entries) {
+      if (e.date.slice(0, 7) === `${year}-${pad2(month)}`) {
+        const d = Number(e.date.slice(8, 10));
+        byDay.set(d, (byDay.get(d) || 0) + 1);
+      }
+    }
+    const first = new Date(year, month - 1, 1).getDay();
+    const days = new Date(year, month, 0).getDate();
+    let html = WEEK.map((w) => `<span class="bz-diary-cal-wd">${w}</span>`).join('');
+    for (let i = 0; i < first; i++) html += '<span class="bz-diary-cal-cell"></span>';
+    for (let d = 1; d <= days; d++) {
+      const n = byDay.get(d);
+      /* `data-n` 是角上那枚「当天几则」小字（原型同款）；不设就白留一条 ::after 规则 */
+      html += `<span class="bz-diary-cal-cell${n ? ' bz-diary-has' : ''}" data-d="${d}"${
+        n ? ` data-n="${n}"` : ''
+      }>${d}</span>`;
+    }
+    this.calGridEl.innerHTML = html;
+    this.calGridEl.querySelectorAll<HTMLElement>('.bz-diary-cal-cell.bz-diary-has').forEach((c) => {
+      c.addEventListener('click', () => {
+        const date = `${year}-${pad2(month)}-${pad2(Number(c.dataset.d))}`;
+        this.closeCal();
+        this.jumpToDay(date);
+      });
+    });
+  }
+
+  private closeCal(): void {
+    if (!this.calEl) return;
+    this.calEl.hidden = true;
+  }
+
+  private jumpToDay(date: string): void {
+    for (let pi = 0; pi < this.pages.length; pi++) {
+      if (pageDateOf(this.pages[pi]) === date) {
+        this.jumpToPage(pi);
+        return;
+      }
+    }
+    this.toast('这一册里，那天没落笔');
+  }
+
+  private bindCal(): void {
+    this.calEl.addEventListener('click', (ev) => {
+      const t = ev.target as HTMLElement;
+      if (t.closest('.bz-diary-cal-cancel') || !t.closest('.bz-diary-cal')) {
+        this.closeCal();
+        return;
+      }
+      const nav = t.closest<HTMLElement>('.bz-diary-cal-nav');
+      if (nav) {
+        this.cal.month += Number(nav.dataset.nav || 0);
+        if (this.cal.month > 12) {
+          this.cal.month = 1;
+          this.cal.year++;
+        }
+        if (this.cal.month < 1) {
+          this.cal.month = 12;
+          this.cal.year--;
+        }
+        this.renderCal();
+      }
+    });
+  }
+
+  // ============================================================
+  //  放大镜（检索：荧光笔）
+  // ============================================================
+
+  private runSearch(kw: string): void {
+    this.clearMarks();
+    this.search = { kw, hits: [], i: 0 };
+    for (let pi = 0; pi < this.pages.length; pi++) {
+      for (const el of this.pages[pi]) {
+        if (
+          el.classList.contains('bz-diary-b-photo') ||
+          el.classList.contains('bz-diary-b-audio') ||
+          el.classList.contains('bz-diary-b-envelope') ||
+          el.classList.contains('bz-diary-b-daystamp')
+        ) {
+          continue;
+        }
+        if ((el.textContent || '').indexOf(kw) >= 0) this.search.hits.push({ pi, el });
+      }
+    }
+    if (!this.search.hits.length) {
+      this.openSlip({ title: '没 找 到', body: `整本册子都翻了，没有「${escapeHtml(kw)}」这个词。`, ok: '知道了' });
+      return;
+    }
+    this.toast(`寻得 ${this.search.hits.length} 处，荧光笔伺候`);
+    this.nextHit();
+  }
+
+  private nextHit(): void {
+    const s = this.search;
+    if (!s.hits.length) return;
+    const hit = s.hits[s.i % s.hits.length];
+    s.i++;
+    this.jumpToPage(hit.pi);
+    setTimeout(() => this.markHit(hit.el, s.kw || ''), 80);
+  }
+
+  private markHit(el: HTMLElement, kw: string): void {
+    if (!el.isConnected || !kw) return;
+    if (!el.dataset.orig) el.dataset.orig = el.innerHTML;
+    const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT, {
+      acceptNode: (n) =>
+        n.parentElement && n.parentElement.closest('mark') ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT,
+    });
+    const texts: Text[] = [];
+    let n: Node | null;
+    while ((n = walker.nextNode())) texts.push(n as Text);
+    for (const node of texts) {
+      const t = node.textContent || '';
+      if (t.indexOf(kw) < 0) continue;
+      const frag = document.createDocumentFragment();
+      let rest = t;
+      while (rest.indexOf(kw) >= 0) {
+        const i = rest.indexOf(kw);
+        if (i) frag.appendChild(document.createTextNode(rest.slice(0, i)));
+        const mk = document.createElement('mark');
+        mk.className = 'bz-diary-hl bz-diary-hl-on';
+        mk.textContent = kw;
+        frag.appendChild(mk);
+        rest = rest.slice(i + kw.length);
+      }
+      if (rest) frag.appendChild(document.createTextNode(rest));
+      node.parentNode?.replaceChild(frag, node);
+    }
+  }
+
+  /**
+   * 拆荧光笔。只拆**检索打的那一笔**（`bz-diary-hl-on`）——原文里作者自己写的 `==高亮==`
+   * 经 inlineMd 渲染出来也是 `mark`，无差别拆会把全册手写高亮无声拆光。
+   */
+  private clearMarks(): void {
+    if (!this.root) return;
+    this.root.querySelectorAll<HTMLElement>('[data-orig]').forEach((el) => {
+      el.innerHTML = el.dataset.orig || '';
+      delete el.dataset.orig;
+    });
+    this.root.querySelectorAll('.bz-diary-page-item mark.bz-diary-hl-on').forEach((m) => {
+      const p = m.parentNode;
+      if (p) {
+        p.replaceChild(document.createTextNode(m.textContent || ''), m);
+        p.normalize();
+      }
+    });
+  }
+
+  private askSearch(): void {
+    this.openSlip({
+      title: '放 大 镜',
+      body: '要找哪个词？整本册子替你翻。',
+      input: { placeholder: '比如：雨、猫、游戏……' },
+      ok: '翻找',
+      onSubmit: (v) => {
+        if (!v) return '写一个词嘛';
+        this.runSearch(v);
+        return null;
+      },
+    });
+  }
+
+  // ============================================================
+  //  纸条（通用输入 / 确认）
+  // ============================================================
+
+  private openSlip(opt: {
+    title?: string;
+    body?: string;
+    input?: { placeholder?: string; type?: string };
+    ok?: string;
+    cancelText?: string;
+    danger?: boolean;
+    onSubmit?: (v: string | undefined) => string | null;
+  }): void {
+    this.slipTitleEl.textContent = opt.title || '';
+    this.slipBodyEl.innerHTML = opt.body || '';
+    this.slipRowEl.innerHTML = '';
+    let input: HTMLInputElement | null = null;
+    if (opt.input) {
+      input = document.createElement('input');
+      input.className = 'bz-diary-slip-input';
+      input.type = opt.input.type || 'text';
+      input.placeholder = opt.input.placeholder || '';
+      this.slipBodyEl.appendChild(input);
+    }
+    const cancel = document.createElement('span');
+    cancel.className = 'bz-diary-slip-btn';
+    cancel.textContent = opt.cancelText || '算了';
+    cancel.addEventListener('click', () => this.closeSlip());
+    this.slipRowEl.appendChild(cancel);
+
+    const ok = document.createElement('span');
+    ok.className = `bz-diary-slip-btn bz-diary-primary${opt.danger ? ' bz-diary-danger' : ''}`;
+    ok.textContent = opt.ok || '好';
+    ok.addEventListener('click', () => {
+      const v = input ? input.value.trim() : undefined;
+      const err = opt.onSubmit ? opt.onSubmit(v) : null;
+      if (err) {
+        let line = this.slipBodyEl.querySelector<HTMLElement>('.bz-diary-slip-err-line');
+        if (!line) {
+          line = document.createElement('div');
+          line.className = 'bz-diary-slip-err bz-diary-slip-err-line';
+          this.slipBodyEl.appendChild(line);
+        }
+        line.textContent = err;
+        return;
+      }
+      this.closeSlip();
+    });
+    this.slipRowEl.appendChild(ok);
+    this.slipEl.hidden = false;
+    if (input) setTimeout(() => input?.focus(), 60);
+  }
+
+  private closeSlip(): void {
+    if (!this.slipEl) return;
+    this.slipEl.hidden = true;
+  }
+
+  private bindSlip(): void {
+    this.slipEl.addEventListener('click', (ev) => {
+      if (!(ev.target as HTMLElement).closest('.bz-diary-slip-paper')) this.closeSlip();
+    });
+    this.slipEl.addEventListener('keydown', (ev) => {
+      if (ev.key === 'Enter') this.slipRowEl.querySelector<HTMLElement>('.bz-diary-slip-btn.bz-diary-primary')?.click();
+    });
+  }
+
+  // ============================================================
+  //  文具五项（写 / 找 / 跳 / 类）
+  // ============================================================
+
+  private doTact(name: string): void {
+    switch (name) {
+      case 'pencil':
+        this.startWrite();
+        break;
+      case 'lens':
+        this.askSearch();
+        break;
+      case 'calendar':
+        this.openCal();
+        break;
+      case 'stickers':
+        this.openAlbum();
+        break;
+    }
+  }
+
+  /** 写一篇：本域写链路（守卫 / 串行队列 / 加密分流 / 写后跳转都在那边），写完关册子去新笔记 */
+  private startWrite(): void {
+    try {
+      openAddDialog({ yearRange: this.getYearRange() ?? undefined, onSaved: () => this.hide() });
+    } catch (e) {
+      notice(`写日记暂不可用：${e instanceof Error ? e.message : String(e)}`, 'error');
+    }
+  }
+
+  private bindTools(): void {
+    this.bindSheet();
+    /* 案头文具贴着书的下沿：桌面靠鼠标压到书底那一条浮出来；≤720px 由 CSS 直接常驻 */
+    this.toolsEl.addEventListener('click', (ev) => {
+      const tl = (ev.target as HTMLElement).closest<HTMLElement>('[data-tact]');
+      if (tl) this.doTact(tl.dataset.tact || '');
+    });
+    this.refreshBookRect();
+    document.addEventListener('mousemove', this.onMouseMove);
+    document.addEventListener('mouseleave', this.onMouseLeave);
+    /* 触屏没有 hover：「抽出册页索引」那句提示进来先亮 4 秒 */
+    if (typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(hover: none)').matches) {
+      const eh = this.root?.querySelector<HTMLElement>('.bz-diary-eb-hint');
+      if (eh) {
+        eh.classList.add('bz-diary-peek');
+        setTimeout(() => eh.classList.remove('bz-diary-peek'), 4000);
+      }
+    }
+    this.edgeEl.addEventListener('click', () => this.openIndexSheet());
+    this.hintEl.addEventListener('click', (ev) => {
+      if (!(ev.target as HTMLElement).closest('.bz-diary-hint-close')) return;
+      this.hintEl.classList.add('bz-diary-gone');
+      setTimeout(() => this.hintEl.remove(), 400);
+    });
+  }
+
+  private onMouseMove = (ev: MouseEvent): void => {
+    if (this.toolsRaf) return;
+    const x = ev.clientX;
+    const y = ev.clientY;
+    this.toolsRaf = requestAnimationFrame(() => {
+      this.toolsRaf = 0;
+      /* 弹层开着的时候不凑热闹 */
+      if (!this.lightboxEl.hidden || !this.sheetEl.hidden || !this.slipEl.hidden) {
+        this.setToolsShown(false);
+        return;
+      }
+      if (!this.bookRect) this.refreshBookRect();
+      const r = this.bookRect;
+      if (!r) return;
+      this.setToolsShown(y > r.bottom - 48 && y < r.bottom + 112 && x > r.left - 70 && x < r.right + 70);
+    });
+  };
+
+  private onMouseLeave = (): void => this.setToolsShown(false);
+
+  private setToolsShown(on: boolean): void {
+    if (on === this.toolsShown) return;
+    this.toolsShown = on;
+    this.toolsEl.classList.toggle('bz-diary-show', on);
+  }
+
+  /** 书在屏幕上的位置：只在窗口尺寸变化时刷新，别每帧量（原来鼠标一动就强制一次整页布局） */
+  private refreshBookRect(): void {
+    if (!this.bookEl) return;
+    this.bookRect = this.bookEl.getBoundingClientRect();
+  }
+
+  // ============================================================
+  //  那年今天（明信片）
+  // ============================================================
+
+  private checkOnThisDay(): void {
+    const today = new Date();
+    const key = `${today.getFullYear()}-${pad2(today.getMonth() + 1)}-${pad2(today.getDate())}`;
+    const old = pickOnThisDay(this.entries, key);
+    const body = this.postcardEl.querySelector<HTMLElement>('.bz-diary-pc-body');
+    if (!old.length) {
+      /* 域根是单例、明信片常驻 DOM：上一轮摊出来的正文要擦掉，否则下次开册
+         「不出现」时还揣着去年的字（隐藏态看不见，但留着就是脏读） */
+      if (body) body.innerHTML = '';
+      return;
+    }
+    const e = old[0];
+    if (body) {
+      body.innerHTML = `<b>${e.date.slice(0, 4)} 年的今天</b> · ${e.emoji}<br>${escapeHtml(
+        plainTextOf(e).slice(0, 60)
+      )}……`;
+    }
+    this.postcardEl.hidden = false;
+    const open = this.postcardEl.querySelector<HTMLElement>('.bz-diary-pc-open');
+    if (open) {
+      open.onclick = () => {
+        this.postcardEl.hidden = true;
+        for (let pi = 0; pi < this.pages.length; pi++) {
+          if (this.pages[pi].some((el) => el.dataset.eid === e.id)) {
+            this.jumpToPage(pi);
+            break;
+          }
+        }
+      };
+    }
+    setTimeout(() => {
+      if (this.postcardEl) this.postcardEl.hidden = true;
+    }, 12000);
+  }
+
+  // ============================================================
+  //  纸上的小提示
+  // ============================================================
+
+  private toast(msg: string): void {
+    if (!this.toastEl) return;
+    this.toastEl.textContent = msg;
+    this.toastEl.hidden = false;
+    this.toastEl.classList.remove('bz-diary-out');
+    if (this.toastTimer !== null) clearTimeout(this.toastTimer);
+    this.toastTimer = setTimeout(() => {
+      this.toastEl.classList.add('bz-diary-out');
+      setTimeout(() => {
+        if (!this.toastEl) return;
+        this.toastEl.hidden = true;
+        this.toastEl.classList.remove('bz-diary-out');
+      }, 420);
+    }, 2400);
+  }
+
+  // ============================================================
+  //  数据：加载 / 回刷 / 订阅
+  // ============================================================
+
+  private app(): App {
+    return getApp();
+  }
+
+  /** 让位首帧：rAF 后再落一拍 setTimeout，等面板画出来再读盘/整册排版 */
+  private afterPaint(): Promise<void> {
+    return new Promise((resolve) => {
+      if (typeof requestAnimationFrame !== 'function' || document.hidden) {
+        setTimeout(resolve, 0);
+        return;
+      }
+      requestAnimationFrame(() => setTimeout(resolve, 0));
+    });
+  }
+
+  /** 重新读盘 + 整册重排（事件回刷路径；保阅读位置） */
+  private async loadAndRelayout(): Promise<void> {
+    await this.loadEntries(false);
+    this.relayout(true);
+  }
+
+  /**
+   * 读盘。`allowCache`：开册路径命中预热/上次刷新后的缓存秒开；
+   * 刷新/写后回刷/重试一律先作废回源（保持「每次刷新即读盘」语义，不赌缓存失效是否触发）。
+   */
+  private async loadEntries(allowCache: boolean): Promise<void> {
+    try {
+      if (allowCache) {
+        this._allowCacheNext = false;
+      } else {
+        invalidateWallCache();
+      }
+      this.entries = await loadWallEntries(this.app());
+      this._loadError = null;
+    } catch (e) {
+      this.entries = [];
+      this._loadError = e instanceof Error ? e.message : String(e);
+      notice(`加载日记失败：${this._loadError}`, 'error');
+    }
+    // 保险箱已解锁：一并并入加密日记（幂等；上锁态不可见）
+    await this.mergeEncryptedEntries();
+    if (this._loadError) this.fallbackEl.hidden = false;
+    else this.fallbackEl.hidden = true;
+  }
+
+  /**
+   * 并入加密日记（保险箱已解锁时）。内容随密文一起在内存里，媒体段照常切出来——
+   * 纸面只出火漆信封（render 层按 `encrypted` 分流），拆信时再把全文放到抽出的纸上。
+   */
+  private async mergeEncryptedEntries(): Promise<void> {
     try {
       if (!isUnlocked()) return;
       const encrypted = await loadEncryptedEntries();
@@ -781,10 +2243,12 @@ export class DiaryAppController {
           media: extractMedia(e.content, DIARY_DIRECTORY),
           segments: extractSegments(e.content),
           filename: e.filename,
+          filePath: e.filePath,
           lineNumber: e.lineNumber,
           id: e.id,
           noteId: e.noteId,
           encrypted: true,
+          extra: e.extra,
           kind: 'diary',
         });
       }
@@ -799,1776 +2263,9 @@ export class DiaryAppController {
     }
   }
 
-  /** 二级标签行：选中的主标签有二级标签时显示（如 旅游 → 四川/大理） */
-  private renderSubRow(ui: typeof this.desk) {
-    const row = ui.subRow;
-    if (!row) return;
-    row.innerHTML = '';
-    if (!this.selTag) {
-      row.style.display = 'none';
-      return;
-    }
-    const subs = getSubTagsOfPrimary(this.selTag);
-    if (!subs || subs.length === 0) {
-      row.style.display = 'none';
-      return;
-    }
-    row.style.display = 'flex';
-    subs.forEach((sub) => {
-      const b = document.createElement('button');
-      // D-UI6：去外扩热区（subrow gap 6px 更紧凑），触控达标走移动端 padding 抬档
-      b.className =
-        'bz-diary-subchip' + (this.selSubTag === sub.tag ? ' bz-diary-subchip--on' : '');
-      b.dataset.tag = sub.tag;
-      b.innerHTML = `${sub.emoji} ${sub.tag}`;
-      b.addEventListener('click', () => {
-        motionChipPress(b); // 动效层：签条按压回弹
-        this.selSubTag = this.selSubTag === sub.tag ? null : sub.tag;
-        this.renderAllMotioned();
-      });
-      row.appendChild(b);
-    });
-  }
-
-  /** 渲染章节栏 + 瀑布（桌面/移动各一份；list = 本次过滤结果，renderAll 一次计算共享） */
-  private renderWall(ui: typeof this.desk, mobile: boolean, list: WallEntry[]) {
-    // 动效层编排档位：用户筛选切换（翻页后 switch 接力）> 打开后的首渲（boot，消费即熄）> 静默
-    const mode: DiaryMotionMode = this._motionSwitchPend ? 'switch' : motionConsumeBoot() ? 'boot' : 'none';
-    this._motionSwitchPend = false;
-    this.teardownScrollers(mobile ? 'mob' : 'desk');
-    ui.wall.innerHTML = '';
-    ui.rail.innerHTML = '';
-    // issue 217 F2：这里不再清空 lbMedia——灯箱开着时 vault modify 自动刷新会把媒体
-    // 掏空成黑屏；灯箱内容生命周期完全归 closeLightbox/showLightboxAt 管
-    // 增强 #1：灯箱连看序列 = 过滤列表的媒体平铺（openLightbox 按条目+媒体名定位）。
-    // D7'（review-all2）：灯箱开着时暂缓重建——vault modify 防抖刷新会整体换序列，而
-    // _lbIdx 不变，←/→ 步进落在错位的媒体上；灯箱关闭后的下次 renderWall 自然重建
-    if (!this.lbVisible()) {
-      this._lbSeq = list.flatMap((e) => e.media.map((m) => ({ entry: e, media: m })));
-    }
-    if (!list.length) {
-      ui.wall.appendChild(this.mkEmpty());
-      motionRendered(ui.el, mode); // 动效层：空态/错误态浮起（档位为 none 时零编排）
-      return;
-    }
-    // 增强 #5 + issue 352：那年今天时光条（首屏顶部横滑条，不打断主瀑布流；无命中不渲染）。
-    // 口径放开：媒体条目走缩略卡，纯文字条目也入回顾流走文字块卡（分流在 mkMemories 内）。
-    const memories = pickOnThisDay(list, this.todayStr());
-    if (memories.length) ui.wall.appendChild(this.mkMemories(memories));
-    // 章节栏（仅桌面）：壳 = .bz-rail 族（ADR-0094），月份行 = .bz-rail-item(.on) 形制
-    if (!mobile) {
-      ui.rail.appendChild(this.mkRailScroll(list));
-      // issue 210：章节栏视频缩略懒加载（进视口才读首帧，修「开墙全量解码」卡顿）
-      this.setupRailLazy(ui.rail, 'desk');
-    }
-    // 条目 → 数据索引表（右键委托用）：list 是本次渲染的过滤后列表，widx 即其在 list 中的下标。
-    // 同时记增量显隐基线（效率#8）：entries 引用 + 非关键词筛选键都没变，搜索才可只 toggle display
-    this._wallEntries = list;
-    this._wallBaseRef = this.entries;
-    this._wallBaseKey = this.filterKeyNoKw();
-    this.renderMasonry(ui, mobile, list);
-    this.setupLazy(ui.wall, mobile ? 'mob' : 'desk');
-    this.bindWallContext(ui.wall, mobile ? 'mob' : 'desk');
-    if (!mobile && ui.rail.children.length > 0) {
-      this.setupRailHighlight(ui.wall, ui.rail, 'desk');
-    }
-    motionRendered(ui.el, mode); // 动效层：首屏全编排 / 筛切接力 / 后台刷新静默
-  }
-
-  /**
-   * 章节栏构建（仅桌面调用）：年份分组月份行（含胶卷缩略条）。
-   * 月份 = groupByMonth(list) 的 key 倒序（对齐数据层契约）。
-   * 2026-09-10：栏顶「章 节」标题块按用户要求移除——一列月份本身自明，标题是多余噪点。
-   */
-  private mkRailScroll(list: WallEntry[]): HTMLElement {
-    const scroll = document.createElement('div');
-    scroll.className = 'bz-rail-scroll';
-    const byMonth = groupByMonth(list);
-    const months = [...byMonth.keys()].sort().reverse();
-    // 增强 #2：年份分组——跨年处插年份分隔标签（data-month 仍存完整 YYYY-MM，定位逻辑不动）
-    let lastYear = '';
-    months.forEach((mk) => {
-      const yr = mk.slice(0, 4);
-      if (yr !== lastYear) {
-        lastYear = yr;
-        const yLabel = document.createElement('div');
-        yLabel.className = 'bz-diary-rail-year';
-        yLabel.textContent = yr;
-        scroll.appendChild(yLabel);
-      }
-      const it = document.createElement('div');
-      it.className = 'bz-rail-item bz-diary-month';
-      it.dataset.month = mk;
-      const name = document.createElement('span');
-      name.className = 'bz-rail-name';
-      name.textContent = `${Number(mk.slice(5))}月`;
-      const cnt = document.createElement('span');
-      cnt.className = 'bz-rail-count';
-      cnt.textContent = `${byMonth.get(mk)!.length} 条`;
-      it.append(name, cnt);
-      // 胶卷缩略图条（issue 210）：只收图片/视频条目（文字/纯音频不占格——
-      // 旧版 emoji/图标格什么都不显示），一行最多 5 格；图片 lazy+async，
-      // 视频进视口才 preload=metadata 读首帧（setupRailLazy），修开墙全量解码卡顿
-      const strip = document.createElement('div');
-      strip.className = 'bz-diary-month-strip';
-      byMonth
-        .get(mk)!
-        .map((e) => ({ e, m: e.media.find((x) => x.kind === 'img' || x.kind === 'video') }))
-        .filter((x) => x.m)
-        .slice(0, 5)
-        .forEach(({ e, m }) => strip.appendChild(this.thumbEl(m!, e)));
-      if (!strip.children.length) strip.style.display = 'none';
-      it.appendChild(strip);
-      // DW8：点击滚动由 bindPanel 的 rail 委托统一处理（此处原逐月再绑一次 → 双触发 smooth 滚动）
-      scroll.appendChild(it);
-    });
-    return scroll;
-  }
-
-  /** 瀑布流：按日期分节渲染（节头 sticky + 当日 masonry 容器；媒体卡/文字卡） */
-  private renderMasonry(ui: typeof this.desk, mobile: boolean, list: WallEntry[]) {
-    // issue 217 F8：日期 → 条目表一次预聚合（旧实现每节 list.filter，O(n²)）
-    const byDate = new Map<string, WallEntry[]>();
-    list.forEach((e) => {
-      const l = byDate.get(e.date);
-      if (l) l.push(e);
-      else byDate.set(e.date, [e]);
-    });
-    let widx = 0;
-    let lastDate: string | null = null;
-    list.forEach((e) => {
-      if (e.date !== lastDate) {
-        lastDate = e.date;
-        const dayList = byDate.get(e.date)!;
-        const head = document.createElement('div');
-        head.className = 'bz-diary-day-head';
-        head.dataset.date = e.date;
-        const date = document.createElement('span');
-        date.className = 'bz-diary-day-date';
-        date.textContent = e.date;
-        const week = document.createElement('span');
-        week.className = 'bz-diary-day-week';
-        week.textContent = '周' + WEEK[new Date(e.date + 'T00:00:00').getDay()];
-        const stat = document.createElement('span');
-        stat.className = 'bz-diary-day-stat';
-        stat.innerHTML = this.statHtml(this.dayStats(dayList));
-        head.append(date, week, stat);
-        ui.wall.appendChild(head);
-        // 稀疏铺满：仅保留单条日文字条跨列（issue 213 删 sparse-2 半宽 hack——
-        // 多列容器内百分比按列宽解析把卡片压成细条，用户截图实锤的挤压病根）
-        const n = dayList.length;
-        const sparseCls = n === 1 ? ' bz-diary-masonry--sparse-1' : '';
-        const m = document.createElement('div');
-        m.className = 'bz-diary-masonry' + (mobile ? ' bz-diary-masonry--mob' : '') + sparseCls;
-        ui.wall.appendChild(m);
-      }
-      const hasMedia = e.media.length > 0;
-      // issue 218：长文跨栏卡阈值（字符数）——四五千字整卡在三栏里直坠千像素、两侧留白
-      const isLongText = (e.text || '').length >= WIDE_TEXT_MIN_CHARS;
-      const container = ui.wall.lastChild as HTMLElement;
-      if (hasMedia || isLongText) {
-        // issue 214 拍板版式：一卡 = 顶部「时间 + 类型」行 → 拼接全文（markdown 渲染）
-        // → 图片/视频竖排堆叠下方。媒体单独提取、文字拼在一起置顶（issue 213 段序版文字被拆散，退回整卡）。
-        // issue 218：长文（含纯文字长条）整卡跨三栏，正文卡内分栏、媒体横排网格——根除长卡单列直坠+两侧空白
-        const item = document.createElement('div');
-        item.className =
-          'bz-diary-item bz-diary-media-wrap' + (isLongText ? ' bz-diary-wide' : '');
-        item.dataset.widx = String(widx);
-        if (e.text) {
-          const row = document.createElement('div');
-          row.className = 'bz-diary-text-row';
-          const t = document.createElement('span');
-          t.className = 'bz-diary-text-t';
-          t.textContent = e.time;
-          const em = document.createElement('span');
-          em.className = 'bz-diary-text-em';
-          em.textContent = e.emoji;
-          row.append(t, em);
-          const tx = document.createElement('div');
-          tx.className = 'bz-diary-text-tx bz-diary-md' + (isLongText ? ' bz-diary-wide-md' : '');
-          if (this.isEncHidden(e)) {
-            tx.textContent = '（已加密）';
-          } else {
-            void this.renderText(tx, e.text, e);
-          }
-          item.append(row, tx);
-        }
-        if (isLongText) {
-          // 长文媒体横排网格（竖排堆叠会把跨栏卡再度撑成千像素高）；纯文字长文不建空网格
-          if (e.media.length) {
-            const grid = document.createElement('div');
-            grid.className = 'bz-diary-wide-media';
-            e.media.forEach((k) => grid.appendChild(this.mediaEl(k, e, mobile)));
-            item.appendChild(grid);
-          }
-        } else {
-          e.media.forEach((k) => item.appendChild(this.mediaEl(k, e, mobile)));
-        }
-        // 媒体块不挂 ⋯ 按钮（用户要求去掉右上角三点；动作入口 = 右键菜单 / 双击）
-        this.bindItem(item, e, mobile);
-        container.appendChild(item);
-      } else {
-        const item = this.textItem(e, e.text, widx);
-        this.bindItem(item, e, mobile);
-        container.appendChild(item);
-      }
-      widx++;
-    });
-  }
-
-  /** 文字卡（时间 + emoji + markdown 正文；加密未解锁显示占位）——纯文字条目与段序渲染共用 */
-  private textItem(e: WallEntry, text: string, widx: number): HTMLElement {
-    const item = document.createElement('div');
-    item.className = 'bz-diary-item bz-diary-text';
-    item.dataset.widx = String(widx);
-    const row = document.createElement('div');
-    row.className = 'bz-diary-text-row';
-    const t = document.createElement('span');
-    t.className = 'bz-diary-text-t';
-    t.textContent = e.time;
-    const em = document.createElement('span');
-    em.className = 'bz-diary-text-em';
-    em.textContent = e.emoji;
-    row.append(t, em);
-    const tx = document.createElement('div');
-    tx.className = 'bz-diary-text-tx bz-diary-md';
-    if (this.isEncHidden(e)) {
-      tx.textContent = '（已加密）';
-    } else {
-      // 效率#9：搜索命中词轻高亮——渲染完成后 TreeWalker 包 <mark>（先只纯文本卡；
-      // must 等渲染管线产出再扫，直接改 markdown 源串会破坏语法）
-      void this.renderText(tx, text, e).then(() => {
-        if (tx.isConnected) {
-          this.highlightHits(tx);
-          motionMarks(tx); // 动效层：命中墨闪
-        }
-      });
-    }
-    item.append(row, tx);
-    return item;
-  }
-
-  /** 效率#9：容器内文本节点命中关键词 → <mark class="bz-diary-mark"> 包裹（大小写不敏感） */
-  private highlightHits(container: HTMLElement) {
-    const kw = this.searchKeyword.trim().toLowerCase();
-    if (!kw) return;
-    const walker = document.createTreeWalker(container, NodeFilter.SHOW_TEXT);
-    const targets: Text[] = [];
-    let n: Node | null;
-    while ((n = walker.nextNode())) {
-      if (!n.nodeValue || !n.nodeValue.toLowerCase().includes(kw)) continue;
-      if ((n.parentElement as HTMLElement | null)?.closest('mark')) continue; // 已高亮不重复包
-      targets.push(n as Text);
-    }
-    for (const t of targets) {
-      const text = t.nodeValue!;
-      const frag = document.createDocumentFragment();
-      const lower = text.toLowerCase();
-      let i = 0;
-      while (i < text.length) {
-        const hit = lower.indexOf(kw, i);
-        if (hit === -1) {
-          frag.appendChild(document.createTextNode(text.slice(i)));
-          break;
-        }
-        if (hit > i) frag.appendChild(document.createTextNode(text.slice(i, hit)));
-        const mark = document.createElement('mark');
-        mark.className = 'bz-diary-mark';
-        mark.textContent = text.slice(hit, hit + kw.length);
-        frag.appendChild(mark);
-        i = hit + kw.length;
-      }
-      t.parentNode?.replaceChild(frag, t);
-    }
-  }
-
-  /**
-   * Markdown 渲染正文（支持 Obsidian 语法；sourcePath 用条目 filename 供链接解析）。
-   * issue 215 三轮定位终版：真凶是 `await import('obsidian')` 动态导入——打包后插件
-   * 环境解析不了裸模块名，导入即抛 TypeError（用户控制台 Failed to resolve module
-   * specifier 'obsidian'），渲染从未开始、永远走纯文本回退。全仓仅此一处动态导入，
-   * 改静态 import（diary/encrypt 域同款）；直挂已挂载容器、无超时、失败回退纯文本。
-   */
-  private async renderText(container: HTMLElement, md: string, e: WallEntry) {
-    if (!md) {
-      container.textContent = '';
-      return;
-    }
-    try {
-      const sourcePath = e.filePath || e.filename || '';
-      const comp = new Component();
-      try {
-        container.textContent = '';
-        await Promise.resolve(MarkdownRenderer.render(this.app(), md, container, sourcePath, comp));
-      } finally {
-        comp.unload();
-      }
-      // 渲染成功但一条节点都没产出 = 渲染管线没吃这段内容，回退纯文本
-      if (container.isConnected && !container.firstChild) container.textContent = md;
-    } catch (err) {
-      if (container.isConnected) container.textContent = md; // 渲染失败回退纯文本，不空白
-      console.warn('[bz-diary] markdown 渲染失败，已回退纯文本', e.date, err);
-    }
-  }
-
-  /** 条目级交互：双击 → 跳转原文；右键 → 跟手上下文菜单（桌面，容器委托）；移动端逐卡长按 → 抽屉；
-   *  加密隐藏时不弹。单击开抽屉已取消（2026-09-11 用户评审）：移动端抽屉唯一入口 = 长按。 */
-  private bindItem(item: HTMLElement, e: WallEntry, mobile: boolean) {
-    // 双击跳转（300ms 内两次点击）
-    let lastClick = 0;
-    item.addEventListener('click', (ev) => {
-      if (this.isEncHidden(e)) return;
-      const now = Date.now();
-      if (now - lastClick < DBLCLICK_WINDOW_MS) {
-        lastClick = 0;
-        void this.jumpTo(e);
-        return;
-      }
-      lastClick = now;
-    });
-    // 右键 → 跟手上下文菜单（桌面；capture 委托挂在 wall 容器（bindWallContext），覆盖媒体/正文子元素）
-    if (mobile) {
-      // 2026-09-11 真机重写：影院 attachLongPress 同款**逐卡**绑定，弃「容器委托 + filter」的
-      // diary 独有形态——与真机验证过的域实现归零差异。原生长按菜单/文本选择让位（逐卡
-      // preventDefault，影院同款）；桌面实例（mobile=false）不挂，鼠标右键走容器委托。
-      item.addEventListener('contextmenu', (ev) => ev.preventDefault());
-      longPress(item, () => {
-        if (this.isEncHidden(e)) return;
-        this.openSheet(e);
-      });
-    }
-  }
-
-  /** 在瀑布容器上挂右键委托：正文/图片/视频任意子元素右键都能打开条目菜单（#9） */
-  private bindWallContext(wall: HTMLElement, key: 'desk' | 'mob') {
-    if (this._ctxBound[key]) return;
-    this._ctxBound[key] = true;
-    wall.addEventListener(
-      'contextmenu',
-      (ev) => {
-        const item = (ev.target as HTMLElement).closest<HTMLElement>('.bz-diary-item');
-        if (!item) return;
-        // 条目 → 数据：renderWall 时在 item 上挂了 dataset.widx（wall 数据索引）
-        const idx = Number(item.dataset.widx);
-        const e = this._wallEntries[idx];
-        if (!e || Number.isNaN(idx)) return;
-        // 移动端分流（core attachItemActions 同款范式）：真机触屏长按 ~500ms 会伴发 contextmenu，
-        // 与 longPress 手势同到——不分流就弹桌面跟手菜单盖住抽屉（影院 mobile-3fix B 同款真机
-        // 缺陷，2026-09-11 真机复现：长按出的是右键菜单不是抽屉）。preventDefault 让位给抽屉，
-        // 原生长按菜单/文本选择一并让位；抽屉唯一入口 = longPress。
-        if (isMobileEnv()) {
-          ev.preventDefault();
-          return;
-        }
-        if (this.isEncHidden(e)) return;
-        ev.preventDefault();
-        ev.stopPropagation();
-        ev.stopImmediatePropagation();
-        // 右键菜单迁移 core item-actions（issue 198 批次 A）：.bz-item-menu 跟手菜单，
-        // 防溢出定位/动态 z/键盘导航/外部点击关闭统一由共享层承载（动作集与旧自绘菜单一致）
-        openItemMenu(ev.clientX, ev.clientY, this.buildMenuActions(e), true);
-        // 复位残余 click 抑制（issue 198 review P1）：Chromium 右键时序（mousedown → contextmenu →
-        // mouseup 落菜单外）会置位 armed，吞掉下一次左键——菜单项要点两次；右键无补发 click，直接复位
-        resetItemMenuClickGuard();
-      },
-      true
-    );
-    // 移动端长按已随 2026-09-11 真机重写迁至 bindItem 逐卡绑定（cinema 同款）——容器委托式
-    // 「longPress + filter」是 diary 独有形态，与真机异常的触发路径相关，整段退役。
-  }
-
-  /** 双击跳转原文（普通日记走 entry-actions 标题锚点；加密/影视/信/书分流） */
-  private async jumpTo(e: WallEntry) {
-    try {
-      // 增强 #11：跳走前捕获墙视图（筛选 + 滚动位置），回墙恢复
-      this.captureRestore();
-      // 加密条目：正文即预览（对齐日记本「加密条目不跳 md」），无对应 md 文件——
-      // 打开保险箱面板供查看/管理；不解密不跳转
-      if (e.encrypted) {
-        const { openEncrypt } = await import('../encrypt');
-        openEncrypt(this.app());
-        this.hide();
-        return;
-      }
-      // 书（book）：filename 是完整路径，直接打开文件
-      if (e.kind === 'book' && e.filename) {
-        const file = this.app().vault.getAbstractFileByPath(e.filename);
-        if (!file) {
-          notice('找不到书文件', 'error');
-          return;
-        }
-        await this.app().workspace.openLinkText(file.path, '', false, { active: true });
-        this.hide();
-        return;
-      }
-      // 影视/信：整文件即条目，直接打开原文件（无标题锚点可跳）
-      if ((e.kind === 'movie' || e.kind === 'letter') && e.filename && e.filename.includes('/')) {
-        const file = this.app().vault.getAbstractFileByPath(e.filename);
-        if (!file) {
-          notice('找不到原文', 'error');
-          return;
-        }
-        await this.app().workspace.openLinkText(file.path, '', false, { active: true });
-        this.hide();
-        return;
-      }
-      // 普通日记条目：直接打开条目文件（openLinkText 原生定位，不依赖旧面板）；
-      // A4：v2「日期.md」拼装兜底退役——无 filePath/filename 的异常条目显式报错，不拼幽灵路径
-      if (!e.filePath && !e.filename) {
-        notice('找不到原文', 'error');
-        return;
-      }
-      await jumpToDiaryEntry({ filename: e.filename || '', filePath: e.filePath, emoji: e.emoji, time: e.time });
-      this.hide(); // 跳转后关日记本（对齐旧面板行为）
-    } catch (err) {
-      notice('跳转失败', 'error');
-    }
-  }
-
-  /** 增强 #11：捕获当前墙视图状态（筛选 + 双实例滚动位置），show 恢复路径一次性消费 */
-  private captureRestore() {
-    this._restore = {
-      selTag: this.selTag,
-      selSubTag: this.selSubTag,
-      selDateFilter: this.selDateFilter ? { ...this.selDateFilter } : null,
-      searchKeyword: this.searchKeyword,
-      lockedVisible: this.lockedVisible,
-      scrollTop: { desk: this.desk.wall.scrollTop, mob: this.mob.wall.scrollTop },
-    };
-  }
-
-  /** 增强 #11：回墙恢复（loadAndRender 渲染完成后调；wall 有 scroll-behavior:smooth，临时关掉即时归位） */
-  private applyRestore() {
-    const r = this._restore;
-    if (!r) return;
-    this._restore = null;
-    ([['desk', this.desk.wall], ['mob', this.mob.wall]] as const).forEach(([key, wall]) => {
-      const top = r.scrollTop[key];
-      if (!top) return;
-      wall.style.scrollBehavior = 'auto';
-      wall.scrollTop = top;
-      wall.style.scrollBehavior = '';
-    });
-  }
-
-  /** 特殊条目（影视/信/书）：整文件即条目，无日记 md 块语义（对齐旧面板 !special 语义） */
-  private isSpecialWallEntry(e: WallEntry): boolean {
-    return e.kind === 'movie' || e.kind === 'letter' || e.kind === 'book';
-  }
-
-  /** 加密条目锁定态（encrypted 标志或「加密」标签，且保险箱未解锁）：正文显示占位、不响应动作 */
-  private isEncHidden(e: WallEntry): boolean {
-    return (e.encrypted || e.tags.includes('加密')) && !this.lockedVisible;
-  }
-
-  /**
-   * 右键菜单动作集（core item-actions ItemAction 形制；顺序与旧自绘菜单逐项一致）：
-   * 加密条目给「解密」（accent）；影视/信/书特殊条目不给「加密/删除」（对齐旧面板 !special 语义）；
-   * 删除 danger。「在日记本中查看」随旧编辑面板退役（ADR-0115：墙即日记本）。
-   */
-  private buildMenuActions(e: WallEntry): ItemAction[] {
-    const acts: ItemAction[] = [];
-    const special = this.isSpecialWallEntry(e);
-    acts.push({ icon: ACTION_ICON.open, label: '打开原文', onClick: () => void this.jumpTo(e) });
-    acts.push({ icon: ACTION_ICON.copyLink, label: '复制双链', onClick: () => this.copyLink(e) });
-    acts.push({ icon: ACTION_ICON.copyContent, label: '复制正文', onClick: () => this.copyContent(e) });
-    if (!e.encrypted && !e.tags.includes('加密')) {
-      acts.push({ icon: ACTION_ICON.editTags, label: '改标签', onClick: () => this.editTags(e) });
-      if (!special) {
-        acts.push({ icon: ACTION_ICON.encrypt, label: '加密', tone: 'accent', onClick: () => void this.encryptEntryAction(e) });
-      }
-    } else {
-      acts.push({ icon: ACTION_ICON.decrypt, label: '解密', tone: 'accent', onClick: () => void this.decryptEntryAction(e) });
-    }
-    if (!special) {
-      acts.push({ icon: ACTION_ICON.remove, label: '删除', kind: 'danger', onClick: () => void this.deleteEntryAction(e) });
-    }
-    return acts;
-  }
-
-  /** 本地今天 YYYY-MM-DD（那年今天口径用） */
-  private todayStr(): string {
-    return localDayKey();
-  }
-
-  /**
-   * 增强 #5 + issue 352：那年今天时光条——mmdd 命中的历史条目横滑条（wall 首屏顶部，独立块不打断瀑布流）。
-   * 卡片分流：媒体条目走缩略卡（点击进灯箱连看，与主墙灯箱同一序列外条目，单条目内步进）；
-   * 纯文字条目走文字块卡（与媒体卡同形不同貌），点击跳原文（无媒体，灯箱无意义）。
-   */
-  private mkMemories(entries: WallEntry[]): HTMLElement {
-    const box = document.createElement('div');
-    box.className = 'bz-diary-memories';
-    const head = document.createElement('div');
-    head.className = 'bz-diary-memories-head';
-    const ic = uiIcon('history');
-    const t = document.createElement('span');
-    t.textContent = '那年今天';
-    head.append(ic, t);
-    const row = document.createElement('div');
-    row.className = 'bz-diary-memories-row';
-    entries.forEach((e) => {
-      const cell = document.createElement('button');
-      // D-UI6：时光条卡自身 96/124px 宽 × 4/3 高（远超 44px），外扩热区纯放大误触面（卡间 gap 8px）
-      cell.className = 'bz-diary-memory';
-      cell.title = `${e.date} ${e.time}`;
-      const year = document.createElement('span');
-      year.className = 'bz-diary-memory-year';
-      year.textContent = e.date.slice(0, 4);
-      // issue 352：纯文字条目——文字块卡（emoji 垫头 + 摘要截断），点击跳原文
-      if (!e.media.length) {
-        cell.classList.add('bz-diary-memory--text');
-        const encHidden = this.isEncHidden(e);
-        // 审查修复批（issue 352）：title 由「日期 时刻」拼摘要 + 「跳转原文」提示（点击跳走的
-        // 语义可预期）；加密锁定态不泄漏正文，只注「（已加密）」
-        cell.title = encHidden
-          ? `${e.date} ${e.time} · （已加密）`
-          : `${e.date} ${e.time} · ${memoryExcerpt(e.text)} · 跳转原文`;
-        const block = document.createElement('div');
-        block.className = 'bz-diary-memory-text';
-        const em = document.createElement('span');
-        em.className = 'bz-diary-memory-text-em';
-        em.textContent = e.emoji;
-        const tx = document.createElement('span');
-        tx.className = 'bz-diary-memory-text-tx';
-        // 加密未解锁不漏正文（同墙内文字卡口径）；摘要纯文本预览（抽屉头同款：markdown 标记不渲染）
-        tx.textContent = encHidden ? '（已加密）' : memoryExcerpt(e.text);
-        block.append(em, tx);
-        cell.append(block, year);
-        cell.addEventListener('click', () => {
-          if (this.isEncHidden(e)) return;
-          void this.jumpTo(e);
-        });
-        row.appendChild(cell);
-        return;
-      }
-      const thumb = document.createElement('div');
-      thumb.className = 'bz-diary-memory-thumb';
-      const m = e.media[0];
-      const src = this.mediaSrcFor(e, m.name);
-      const isVid = m.kind === 'video';
-      // 视频格先垫播放角标：小图未就绪/取帧失败时它就是「这是视频」的说明
-      if (isVid) {
-        thumb.classList.add('bz-diary-memory-thumb--v');
-        thumb.appendChild(uiIcon(ACTION_ICON.play));
-      }
-      if ((m.kind === 'img' || isVid) && src) {
-        const img = document.createElement('img');
-        img.loading = 'lazy';
-        img.alt = e.date;
-        // issue 217 S2：时光条缩略走小图缓存——直挂原图会在纪念日命中多时整排原图解码
-        //（与 issue 212 章节栏同病根）；命中贴 48px 小图，未命中贴原图 + 后台压图回存。
-        // 视频不能直挂原 src（img 挂不了视频）→ 一律走首帧压缩，失败只留播放角标。
-        const key = railThumbKey(e.date, m.name);
-        // 角标只在「还没有图」时占位（同章节栏口径）：小图一落地就撤，不压在图上
-        const showThumb = (url: string) => {
-          img.src = url;
-          thumb.querySelectorAll('[data-icon]').forEach((ic) => ic.remove());
-        };
-        void getRailThumb(key).then((small) => {
-          if (!img.isConnected) return;
-          if (small) {
-            showThumb(small);
-            return;
-          }
-          if (isVid) {
-            // 同图片口径：无 IO（jsdom/旧内核）不进压缩管线，留角标占位
-            if (typeof IntersectionObserver === 'undefined') return;
-            void makeVideoThumb(src).then((t2) => {
-              if (!t2) return;
-              void putRailThumb(key, t2);
-              if (img.isConnected) showThumb(t2);
-            });
-            return;
-          }
-          img.src = src;
-          if (typeof IntersectionObserver !== 'undefined') {
-            void makeImageThumb(src).then((t2) => {
-              if (t2) void putRailThumb(key, t2);
-            });
-          }
-        });
-        thumb.appendChild(img);
-      } else if (m.kind === 'audio') {
-        thumb.appendChild(uiIcon(ACTION_ICON.music));
-      }
-      cell.append(thumb, year);
-      cell.addEventListener('click', () => {
-        // 时光条自身成序列（该条目媒体平铺），点击进灯箱后可在条目内左右连看。
-        // issue 217 F1：墙内主序列先存 _lbSeqMain、关灯箱时还原——旧实现直接覆盖
-        // _lbSeq 后，openLightbox 找不到就把主序列整表换成单条，墙内连看从此退化
-        this._lbSeqMain = this._lbSeq;
-        this._lbSeq = e.media.map((mm) => ({ entry: e, media: mm }));
-        this.openLightbox(m, e);
-      });
-      row.appendChild(cell);
-    });
-    box.append(head, row);
-    return box;
-  }
-
-  /** 空态（一致#4：接 core uiEmpty 单源 .bz-empty 族，删 .bz-diary-empty 家族域内样式；
-   *  效率#14：读墙失败 ≠ 真空——错误态单独分流，旧实现渲染「写下第一篇」引导空态
-   *  会误导用户以为数据没了，且 toast 级错误错过即无痕） */
-  private mkEmpty(): HTMLElement {
-    if (this._loadError) {
-      return uiEmpty({
-        icon: 'file-warning',
-        title: '日记加载失败',
-        desc: this._loadError,
-        actions: uiBtnRow([
-          uiBtn({ label: '重试', tone: 'primary', onClick: () => void this.loadAndRender() }),
-        ]),
-      });
-    }
-    return uiEmpty({
-      icon: 'book-open',
-      title: this.selTag ? '这个类型还没有记录' : '这一页还空着',
-      desc: '写下第一篇，或放上第一张照片',
-      actions: uiBtnRow([
-        uiBtn({ label: '写第一篇', tone: 'primary', onClick: () => this.openAddEntry() }),
-      ]),
-    });
-  }
-
-  /**
-   * 效率#13：loadAndRender 读取期间的墙区骨架占位——大库首屏曾是一段「看起来像空库」的
-   * 纯空白期（面板壳/chips 都在，唯独墙区空着）。渐变 shimmer 卡复用媒体占位的表面 token；
-   * 只在墙区无内容时铺（防抖回刷等刷新场景已有内容，不闪骨架）。
-   */
-  private showSkeleton() {
-    for (const ui of [this.desk, this.mob]) {
-      if (ui.wall.querySelector('.bz-diary-item')) continue;
-      ui.wall.innerHTML = '';
-      const skel = this.mkSkeleton();
-      ui.wall.appendChild(skel);
-      motionSkeleton(skel); // 动效层：骨架浮现（shimmer 循环是既有 CSS 功能指示，不动）
-    }
-  }
-
-  private mkSkeleton(): HTMLElement {
-    const box = document.createElement('div');
-    box.className = 'bz-diary-skel';
-    const tip = document.createElement('div');
-    tip.className = 'bz-diary-skel-tip';
-    tip.textContent = '正在翻日记…';
-    const row = document.createElement('div');
-    row.className = 'bz-diary-skel-row';
-    for (let i = 0; i < 6; i++) {
-      const card = document.createElement('div');
-      card.className = 'bz-diary-skel-card' + (i % 3 === 1 ? ' bz-diary-skel-card--tall' : '');
-      row.appendChild(card);
-    }
-    box.append(tip, row);
-    return box;
-  }
-
-  // ---------- 媒体构建（视口懒加载） ----------
-  /** 媒体 URL：带 sourcePath 解析（条目 filePath 优先；影视/信/书 filename 即完整路径）。
-   *  A4（review-deep 架）：v2「日期.md」拼装兜底退役——ADR-0131 契约外格式知识泄漏面，
-   *  条目文件化后 filePath 恒在，异常条目解析不出 → 返回空 → 渐变占位（可辨的失败形态） */
-  private mediaSrcFor(entry: WallEntry, name: string): string {
-    return mediaSrc(this.app(), name, entry.filePath || entry.filename || '');
-  }
-
-  /** 媒体块（图片/视频/音频 + 渐变占位 + 描述；无 emoji 角标——用户要求去掉） */
-  private mediaEl(k: WallMedia, entry: WallEntry, mobile: boolean): HTMLElement {
-    const wrap = document.createElement('div');
-    wrap.className = 'bz-diary-media' + (k.kind === 'audio' ? ' bz-diary-media--audio' : '');
-    // 功能性内联（动态计算）：宽高比——视频 16/9，图片按条目+媒体名稳定散列轮换 1/1 与 4/3，
-    // 音频矮条不设 aspect（issue 217 S4：语音备忘占 4/3~1/1 大块视觉过重）
-    // （DW7：原全局 mediaSeed++ 递增——双实例各渲染一次 + 重渲染漂移，同条目宽高比不稳定致瀑布重排抖动）
-    if (k.kind !== 'audio') wrap.style.aspectRatio = k.kind === 'video' ? '16 / 9' : this.mediaAspect(entry, k.name);
-    const ph = document.createElement('div');
-    ph.className = 'bz-diary-ph';
-    // 占位只保留渐变背景（视频/图片不显示图标大字；音频保留 music 图标——无封面可显示）
-    if (k.kind === 'audio') {
-      ph.appendChild(uiIcon(ACTION_ICON.music));
-      ph.style.fontSize = '28px';
-    }
-    wrap.appendChild(ph);
-    if (k.kind === 'img') {
-      // 懒加载：占位 → 进视口才加载真实图；加密条目走保险箱按需解密（增强 #8）
-      const img = document.createElement('img');
-      img.alt = k.name;
-      img.style.opacity = '0';
-      if (entry.encrypted) {
-        img.dataset.enc = '1';
-        img.dataset.encName = k.name;
-        img.dataset.encKind = k.kind;
-        if (entry.noteId) img.dataset.encNote = entry.noteId;
-      } else {
-        const src = this.mediaSrcFor(entry, k.name);
-        if (src) {
-          img.dataset.lazy = src;
-          img.onload = () => {
-            ph.style.opacity = '0';
-            img.style.opacity = '1';
-            motionDevelop(img); // 动效层：照片显影
-          };
-          img.onerror = () => {
-            ph.style.opacity = '1';
-          };
-        }
-      }
-      wrap.appendChild(img);
-    } else if (k.kind === 'video') {
-      // 视频：不预载（preload=none），进视口才挂 src 读首帧；点击灯箱真播；加密条目同图走解密
-      const v = document.createElement('video');
-      v.muted = true;
-      v.preload = 'none';
-      v.playsInline = true;
-      if (entry.encrypted) {
-        v.dataset.enc = '1';
-        v.dataset.encName = k.name;
-        v.dataset.encKind = k.kind;
-        if (entry.noteId) v.dataset.encNote = entry.noteId;
-      } else {
-        const src = this.mediaSrcFor(entry, k.name);
-        if (src) {
-          v.dataset.src = src;
-          if (mobile) this.mountWallPoster(v, src, entry, k.name);
-        }
-      }
-      v.onerror = () => {
-        ph.style.opacity = '1';
-      };
-      wrap.appendChild(v);
-      const play = document.createElement('div');
-      play.className = 'bz-diary-play';
-      play.appendChild(uiIcon(ACTION_ICON.play));
-      wrap.appendChild(play);
-      const dur = document.createElement('span');
-      dur.className = 'bz-diary-dur';
-      dur.appendChild(uiIcon(ACTION_ICON.play));
-      wrap.appendChild(dur);
-    }
-    if (k.name) {
-      // 增强 #6：cap 去媒体文件名，改「时间 · 标签字」（标签为空仅时间）
-      const cap = document.createElement('div');
-      cap.className = 'bz-diary-cap';
-      cap.innerHTML = mediaCapHtml(entry);
-      wrap.appendChild(cap);
-    }
-    wrap.addEventListener('click', (e) => {
-      e.stopPropagation();
-      // DW4 反转（2026-09-11 用户评审：移动端单击开抽屉取消）：媒体单击回归灯箱预览；
-      // 条目级动作（改标签/加密/删除）经长按抽屉可达，DW4 的可达性诉求由长按入口承接
-      this.openLightbox(k, entry);
-    });
-    // issue 217 F4：媒体区 click stopPropagation 使卡片级双击计数器收不到事件——
-    // 桌面双击媒体补一条直达路径：首击开灯箱、双击关灯箱跳原文（与文字卡双击语义一致）
-    wrap.addEventListener('dblclick', (e) => {
-      e.stopPropagation();
-      if (mobile) return;
-      if (this.isEncHidden(entry)) return;
-      if (this.lbVisible()) this.closeLightbox();
-      void this.jumpTo(entry);
-    });
-    return wrap;
-  }
-
-  /**
-   * 增强 #8：加密媒体按需解密（保险箱附件镜像 → 原始层 base64 → data URL）。
-   * 带缓存（含失败结果——避免渲染风暴下反复解密）；未解锁/无附件/解密失败返回 null（保持占位）。
-   */
-  private encMediaUrl(noteId: string, k: WallMedia): Promise<string | null> {
-    if (!noteId) return Promise.resolve(null);
-    const key = `${noteId}|${k.kind}|${k.name}`;
-    let p = this.encMediaCache.get(key);
-    if (!p) {
-      p = this.decryptEncMedia(noteId, k);
-      this.encMediaCache.set(key, p);
-    }
-    return p;
-  }
-
-  private async decryptEncMedia(noteId: string, k: WallMedia): Promise<string | null> {
-    try {
-      const { getSafeManager } = await import('../encrypt') as typeof import('../encrypt');
-      const safe = getSafeManager();
-      if (!safe.unlocked || !safe.manifest) return null;
-      const note = safe.manifest.notes.find((n) => n.id === noteId);
-      if (!note) return null;
-      const att = note.attachments.find((a) => a.path === k.name || a.path.endsWith('/' + k.name));
-      if (!att) return null;
-      // 直显原图：解附件原始层（非预览层），对齐加密域预览窗「点击看原图」同款 API
-      const b64 = await safe.decryptAttachmentOriginal(att);
-      if (!b64) return null;
-      return `data:${mimeOfMediaName(k.name)};base64,${b64}`;
-    } catch {
-      return null; // 加密域未初始化/密码本未注入：保持占位不阻断
-    }
-  }
-
-  /** 增强 #8：懒加载挂载点调用——解密并点亮单个加密媒体元素（dataset.enc 系列标记） */
-  private async mountEncMedia(el: HTMLElement) {
-    const name = el.dataset.encName || '';
-    const kind = (el.dataset.encKind || 'img') as WallMedia['kind'];
-    const noteId = el.dataset.encNote || '';
-    const url = await this.encMediaUrl(noteId, { name, kind });
-    if (!el.isConnected) return; // 渲染期间被重建：丢弃
-    const ph = el.parentElement?.querySelector<HTMLElement>('.bz-diary-ph');
-    if (!url) {
-      if (ph) ph.style.opacity = '1';
-      return;
-    }
-    if (el.tagName === 'IMG') {
-      const img = el as HTMLImageElement;
-      img.onload = () => {
-        if (ph) ph.style.opacity = '0';
-        img.style.opacity = '1';
-        motionDevelop(img); // 动效层：加密媒体解出后同样走显影
-      };
-      img.onerror = () => {
-        if (ph) ph.style.opacity = '1';
-      };
-      img.src = url;
-    } else if (el.tagName === 'VIDEO') {
-      const v = el as HTMLVideoElement;
-      v.src = url;
-      v.preload = 'metadata';
-      this.bindVideoDuration(v);
-    }
-  }
-
-  /** 媒体宽高比稳定散列：按条目日期+媒体名派生（DW7——全局递增 seed 双实例/重渲染下漂移） */
-  private mediaAspect(entry: WallEntry, name: string): string {
-    const h = hash31(`${entry.date}|${name}`);
-    return h % 3 === 0 ? '1 / 1' : '4 / 3';
-  }
-
-  /**
-   * 章节栏缩略图（issue 210/212）：调用方保证只传图片/视频媒体。
-   * 渲染时零加载——图片挂 data-thumb-src 占位、视频挂 data-src 占位，
-   * 交 setupRailLazy 进视口才走「查小图缓存 → 命中贴 48px 小图 / 未命中压图回存」，
-   * 20px 小格永不触发原图整张解码（issue 212 卡顿病根）。
-   *
-   * 视频格不出现播放角标（用户 2026-09-10 明确要求）：格内始终只有一个视觉主体——
-   * 小图就绪前是 --v 的 teal 渐变底（自身即「这是视频」的标记），就绪后直接贴小图。
-   */
-  private thumbEl(m: WallMedia, entry: WallEntry): HTMLElement {
-    const t = document.createElement('span');
-    t.className = 'bz-diary-month-thumb' + (m.kind === 'video' ? ' bz-diary-month-thumb--v' : '');
-    // issue 217 F5：加密媒体 vault 路径解析不出——挂 enc 标记走保险箱按需解密
-    //（与抽屉/灯箱同口径），不再永远图标格
-    const src = entry.encrypted ? '' : this.mediaSrcFor(entry, m.name);
-    if (!src) {
-      if (entry.encrypted && entry.noteId) {
-        t.dataset.thumbEnc = '1';
-        t.dataset.encName = m.name;
-        t.dataset.encKind = m.kind;
-        t.dataset.encNote = entry.noteId;
-        t.dataset.thumbKey = railThumbKey(entry.date, m.name);
-      }
-      // 无资源：图片仍挂占位图标（破图可辨）；视频不挂（区分靠 --v 渐变底）
-      if (m.kind !== 'video') t.appendChild(uiIcon(ACTION_ICON.image));
-      return t;
-    }
-    if (m.kind === 'video') {
-      const v = document.createElement('video');
-      v.muted = true;
-      v.preload = 'none';
-      v.dataset.src = src;
-      v.dataset.thumbKey = railThumbKey(entry.date, m.name);
-      t.appendChild(v);
-    } else {
-      const img = document.createElement('img');
-      img.decoding = 'async';
-      img.dataset.thumbSrc = src;
-      img.dataset.thumbKey = railThumbKey(entry.date, m.name);
-      // 加载失败才出现图标占位
-      img.addEventListener('error', () => {
-        img.remove();
-        if (!t.querySelector('img')) t.appendChild(uiIcon(ACTION_ICON.image));
-      });
-      t.appendChild(img);
-    }
-    return t;
-  }
-
-  /**
-   * 章节栏缩略懒加载（issue 212，机制沿 issue 209/210）：root = 章节栏滚动容器，
-   * 进视口才挂载。图片/视频统一走小图缓存：命中贴 48px dataURL（零原图解码）；
-   * 未命中后台压图回存后贴小图，压缩失败回退直挂原 src（旧行为）。
-   * 无 IO 环境（jsdom/旧内核）直接按未命中路径挂载，保证测试确定性。
-   */
-  private setupRailLazy(rail: HTMLElement, key: 'desk' | 'mob') {
-    if (this.railObservers[key]) this.railObservers[key]!.disconnect();
-    const scroller = (rail.querySelector('.bz-rail-scroll') as HTMLElement | null) || rail;
-    const thumbs = Array.from(
-      rail.querySelectorAll<HTMLElement>('img[data-thumb-src], video[data-src], [data-thumb-enc]')
-    );
-    if (typeof IntersectionObserver === 'undefined') {
-      // jsdom/旧内核：跳过缓存管线，直挂原 src（E4 语义：不依赖 IO 也有图）；加密格无 IO 不解密
-      thumbs.forEach((el) => {
-        if (el.tagName === 'VIDEO') this.hydrateRailVideo(el as HTMLVideoElement);
-        else if (el.tagName === 'IMG') (el as HTMLImageElement).src = (el as HTMLImageElement).dataset.thumbSrc!;
-      });
-      return;
-    }
-    const io = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((en) => {
-          const el = en.target as HTMLElement;
-          if (en.isIntersecting) {
-            this.hydrateRailThumb(el);
-          } else {
-            const v = el as HTMLVideoElement;
-            if (el.tagName === 'VIDEO' && !v.paused) v.pause();
-          }
-        });
-      },
-      { root: scroller, rootMargin: '120px 0px 120px 0px', threshold: 0 }
-    );
-    thumbs.forEach((el) => io.observe(el));
-    this.railObservers[key] = io;
-  }
-
-  /**
-   * 章节栏缩略格挂载：查缓存贴小图 / 后台压图回存；失败回退原 src 直挂（视频 = 旧行为读首帧）。
-   * data-thumb-src 挂载后即移除，防重复触发。
-   */
-  private hydrateRailThumb(el: HTMLElement): void {
-    // issue 217 F5：加密格（span 载体）——先走保险箱解密，再复用小图缓存管线
-    if (el.dataset.thumbEnc === '1') {
-      delete el.dataset.thumbEnc; // 防重复触发
-      const key = el.dataset.thumbKey;
-      const name = el.dataset.encName || '';
-      const kind = (el.dataset.encKind || 'img') as WallMedia['kind'];
-      const noteId = el.dataset.encNote || '';
-      void this.encMediaUrl(noteId, { name, kind }).then((url) => {
-        if (!el.isConnected || !url) return; // 未解锁/失败：保持图标占位
-        this.hydrateThumbViaCache(el, url, key, kind === 'video');
-      });
-      return;
-    }
-    const isVideo = el.tagName === 'VIDEO';
-    const key = el.dataset.thumbKey;
-    if (isVideo) {
-      const v = el as HTMLVideoElement;
-      const src = v.dataset.src;
-      if (!src || v.getAttribute('src')) return;
-      this.hydrateThumbViaCache(el, src, key, true);
-    } else {
-      const img = el as HTMLImageElement;
-      const src = img.dataset.thumbSrc;
-      if (!src) return;
-      img.removeAttribute('data-thumb-src');
-      this.hydrateThumbViaCache(el, src, key, false);
-    }
-  }
-
-  /** 查小图缓存 → 命中贴图；未命中后台压图回存；压缩失败回退原 src（视频 = 旧读首帧行为） */
-  private hydrateThumbViaCache(el: HTMLElement, src: string, key: string | undefined, isVideo: boolean): void {
-    if (!key) {
-      // issue 217 F5：加密格载体是 span（无 img/video 子元素），兜底只对真实媒体元素生效
-      if (isVideo && el.tagName === 'VIDEO') this.hydrateRailVideo(el as HTMLVideoElement);
-      else if (!isVideo && el.tagName === 'IMG') (el as HTMLImageElement).src = src;
-      return;
-    }
-    void getRailThumb(key).then((cached) => {
-      if (cached) {
-        this.swapThumbToImg(el, cached);
-        return;
-      }
-      void (isVideo ? makeVideoThumb(src) : makeImageThumb(src)).then((small) => {
-        if (small) {
-          void putRailThumb(key, small);
-          this.swapThumbToImg(el, small);
-          return;
-        }
-        if (isVideo && el.tagName === 'VIDEO') this.hydrateRailVideo(el as HTMLVideoElement);
-        else if (!isVideo && el.tagName === 'IMG') (el as HTMLImageElement).src = src;
-      });
-    });
-  }
-
-  /**
-   * 缩略格换成小图（图片/视频/加密格三路共用）。
-   * 播放角标只在「还没有图」时当占位——小图一落地就撤掉（用户 2026-09-10 要求：
-   * 章节栏视频图上不要再压一个播放图标）。
-   * 载体两种：加密格 el 是 span（自身即格）；其余 el 是格内的 img/video 元素。
-   */
-  private swapThumbToImg(el: HTMLElement, dataUrl: string): void {
-    const img = document.createElement('img');
-    img.src = dataUrl;
-    img.decoding = 'async';
-    const cell = el.tagName === 'SPAN' ? el : el.parentElement;
-    if (!cell) return;
-    cell.querySelectorAll('[data-icon]').forEach((ic) => ic.remove());
-    const cur = cell.querySelector('img, video');
-    if (cur) cell.replaceChild(img, cur);
-    else cell.appendChild(img);
-  }
-
-  /**
-   * 章节栏视频缩略挂载（issue 210 旧行为，现为压缩失败兜底）：data-src → src。
-   * preload 必须是 auto：`metadata` 只到 readyState=1，浏览器不解码帧，格子永远是空的
-   * （与 issue 212 的 loadeddata 取帧全黑同一实测结论）。元素在 IO 离开视口时 pause，
-   * 真实用途是「压缩管线失败时至少还看得到首帧」。
-   */
-  private hydrateRailVideo(v: HTMLVideoElement) {
-    const src = v.dataset.src;
-    if (!src || v.getAttribute('src')) return;
-    v.setAttribute('src', src);
-    delete v.dataset.src;
-    v.preload = 'auto';
-  }
-
-  // ---------- 视口懒加载控制器 ----------
-  /** DW9：视频元数据就绪后把时长角标从 ▶ 换成真实 mm:ss（preload=metadata 读首帧元数据时触发） */
-  private bindVideoDuration(v: HTMLVideoElement): void {
-    v.addEventListener('loadedmetadata', () => {
-      const dur = v.parentElement?.querySelector<HTMLElement>('.bz-diary-dur');
-      if (!dur || !Number.isFinite(v.duration) || v.duration <= 0) return;
-      const m = Math.floor(v.duration / 60);
-      const s = Math.round(v.duration % 60);
-      dur.textContent = `${m}:${pad2(s)}`;
-    }, { once: true });
-  }
-
-  /**
-   * 移动端墙内视频首帧海报（2026-09-11 评审：移动浏览器不给未播放的 <video> 绘制首帧，
-   * iOS 全黑——墙上视频卡没有预览图）。复用章节栏首帧小图管线（IndexedDB 缓存），
-   * 480px 档（墙卡 2 列 ~180css px@3x 需 ~540 设备 px），结果挂 video.poster——
-   * poster 移动端免视频解码直出。失败静默回落现状（渐变占位；桌面不走此路径，
-   * preload=metadata 本就绘真首帧，不因 480px 海报降清）。
-   */
-  private mountWallPoster(v: HTMLVideoElement, src: string, entry: WallEntry, name: string): void {
-    const key = `wall480|${railThumbKey(entry.date, name)}`;
-    void getRailThumb(key).then((cached) => {
-      if (!v.isConnected) return;
-      if (cached) {
-        v.poster = cached;
-        return;
-      }
-      void makeVideoThumb(src, 480).then((thumb) => {
-        if (!v.isConnected || !thumb) return;
-        v.poster = thumb;
-        void putRailThumb(key, thumb);
-      });
-    });
-  }
-
-  /** 懒加载挂载：普通媒体挂 src；加密媒体触发按需解密（增强 #8；fallback 与 IO 命中共用） */
-  private hydrateMediaEl(el: HTMLElement) {
-    const lazySrc = el.dataset.lazy;
-    if (lazySrc && el.tagName === 'IMG' && !el.getAttribute('src')) {
-      el.setAttribute('src', lazySrc);
-      delete el.dataset.lazy;
-    }
-    const vidSrc = el.dataset.src;
-    if (el.tagName === 'VIDEO' && vidSrc && el.getAttribute('src') === null) {
-      el.setAttribute('src', vidSrc);
-      delete el.dataset.src;
-      const v = el as HTMLVideoElement;
-      v.preload = 'metadata';
-      this.bindVideoDuration(v);
-    }
-    if (el.dataset.enc === '1') {
-      delete el.dataset.enc;
-      void this.mountEncMedia(el);
-    }
-  }
-
-  private setupLazy(wall: HTMLElement, key: 'desk' | 'mob') {
-    if (this.observers[key]) this.observers[key]!.disconnect();
-    if (typeof IntersectionObserver === 'undefined') {
-      // jsdom/旧环境无 IO：直接挂载 src（可见性由浏览器兜底）
-      wall.querySelectorAll<HTMLElement>('img[data-lazy], video[data-src], [data-enc]').forEach((el) => {
-        this.hydrateMediaEl(el);
-      });
-      return;
-    }
-    const io = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((en) => {
-          const el = en.target as HTMLElement;
-          if (en.isIntersecting) {
-            this.hydrateMediaEl(el);
-          } else {
-            // 离开视口的视频暂停（释放解码资源）
-            const v = el as HTMLVideoElement;
-            if (el.tagName === 'VIDEO' && !v.paused) v.pause();
-          }
-        });
-      },
-      { root: wall, rootMargin: '200px 0px 200px 0px', threshold: 0 }
-    );
-    wall.querySelectorAll<HTMLElement>('img[data-lazy], video[data-src], [data-enc]').forEach((el) => io.observe(el));
-    this.observers[key] = io;
-  }
-
-  // ---------- 滚动 → 章节自动高亮 ----------
-  /**
-   * 章节点击：平滑滚动定位到该月的第一个 day-head（不重渲染、不切过滤）。
-   * P2/G 审查修复：day-head 是 sticky 吸顶头，月份滚过后 rect 恒贴墙顶，rect 差值
-   * 推不出目标位置（点已滚过的月份 no-op）——改用 flowTopOf 流式位置推算（见下），
-   * 定位仍不依赖 offsetTop（content-visibility 的屏外占位高度不可靠），smooth 滚动
-   * 途中条目陆续真渲染导致文档流漂移，落定后按最终几何校正一次（DW6 保留）。
-   */
-  private scrollToMonth(mk: string, wall: HTMLElement) {
-    const head = wall.querySelector<HTMLElement>(`.bz-diary-day-head[data-date^="${mk}"]`);
-    if (!head) return;
-    const wallRect = wall.getBoundingClientRect();
-    const top = wall.scrollTop + (this.flowTopOf(head, wallRect) - 6);
-    wall.scrollTo({ top: Math.max(0, top), behavior: 'smooth' });
-    // DW6：smooth 滚动途中 content-visibility 条目陆续真渲染（占位 240px → 真实高度），
-    // 文档流漂移导致停偏；落定后按最终几何校正一次
-    if (this._scrollFixTimer !== null) clearTimeout(this._scrollFixTimer);
-    this._scrollFixTimer = setTimeout(() => {
-      this._scrollFixTimer = null;
-      if (this.root?.style.display !== 'flex') return;
-      const h = wall.querySelector<HTMLElement>(`.bz-diary-day-head[data-date^="${mk}"]`);
-      if (!h) return;
-      motionDayStamp(h); // 动效层：落定即盖台历戳（告诉你「就是这一页」）
-      const t2 = wall.scrollTop + (this.flowTopOf(h, wall.getBoundingClientRect()) - 6);
-      if (Math.abs(t2 - wall.scrollTop) > 2) wall.scrollTo({ top: Math.max(0, t2) });
-    }, SCROLL_FIX_DELAY_MS);
-  }
-
-  /**
-   * 节头的流式相对位置（相对墙体顶）：节头是 sticky，滚过后自身 rect 不再反映流式位置；
-   * 其后的 masonry 容器不是 sticky，rect 即流式真实位置——用 masonry 顶 − 节头高反推。
-   * 无后续块（防御）时回退节头自身 rect 差值。
-   */
-  private flowTopOf(head: HTMLElement, wallRect: DOMRect): number {
-    const next = head.nextElementSibling as HTMLElement | null;
-    if (next && !next.classList.contains('bz-diary-day-head')) {
-      return next.getBoundingClientRect().top - wallRect.top - head.offsetHeight;
-    }
-    return head.getBoundingClientRect().top - wallRect.top;
-  }
-
-  /** 滚动高亮：rAF 节流，当前月份在章节栏高亮并滚到可见。
-   *  与 scrollToMonth 同口径用 getBoundingClientRect 差值（content-visibility 下 offsetTop 不可靠，P2-1 审查修复）。
-   *  ADR-0094：滚动容器收敛为 .bz-rail 内的 .bz-rail-scroll（共享族结构）。
-   *  2026-09-10：绑定后立即 schedule 一次——旧实现只挂 scroll 监听，开墙不滚动就一个月份
-   *  都不亮（用户要求「打开日记本默认高亮当前月份」）。 */
-  private setupRailHighlight(wall: HTMLElement, rail: HTMLElement, key: 'desk' | 'mob') {
-    const scroller = (rail.querySelector('.bz-rail-scroll') as HTMLElement | null) || rail;
-    // rAF 兜底：无 rAF 的环境（部分 jsdom 配置/旧内核）退 setTimeout，
-    // 保证「开墙即定高亮」不因环境差异失效
-    const rafFn = (cb: FrameRequestCallback): number =>
-      typeof requestAnimationFrame === 'function' ? requestAnimationFrame(cb) : (setTimeout(() => cb(0), 16) as unknown as number);
-    const cafFn = (h: number): void => {
-      if (typeof cancelAnimationFrame === 'function') cancelAnimationFrame(h);
-      else clearTimeout(h as unknown as ReturnType<typeof setTimeout>);
-    };
-    let rafId: number | null = null;
-    const sync = () => {
-      const headEls = wall.querySelectorAll<HTMLElement>('.bz-diary-day-head');
-      if (!headEls.length) return;
-      const wallRect = wall.getBoundingClientRect();
-      // relTop 是「节头顶 − 墙体顶」的视口相对量（P1 审查修复：旧实现误与
-      // scrollTop+8 比较——坐标系混用导致滚过一半后所有节头全部命中，章节栏恒高亮最后月份）
-      const items = Array.from(headEls, (h) => ({
-        date: h.dataset.date!,
-        relTop: h.getBoundingClientRect().top - wallRect.top,
-      }));
-      let currentMonth = pickCurrentMonth(items);
-      if (!currentMonth) currentMonth = items[0].date.slice(0, 7);
-      rail.querySelectorAll('.bz-diary-month').forEach((it) => {
-        it.classList.toggle('on', it.getAttribute('data-month') === currentMonth);
-      });
-      const active = rail.querySelector<HTMLElement>(`.bz-diary-month[data-month="${currentMonth}"]`);
-      if (active) {
-        const railRect = scroller.getBoundingClientRect();
-        const actRect = active.getBoundingClientRect();
-        if (actRect.top < railRect.top || actRect.bottom > railRect.bottom) {
-          scroller.scrollTop += actRect.top - railRect.top - (scroller.clientHeight - actRect.height) / 2;
-        }
-      }
-    };
-    const schedule = () => {
-      if (rafId !== null) return;
-      rafId = rafFn(() => {
-        rafId = null;
-        sync();
-      });
-    };
-    wall.addEventListener('scroll', schedule, { passive: true });
-    this.rafCleanups[key] = () => {
-      wall.removeEventListener('scroll', schedule);
-      if (rafId !== null) {
-        cafFn(rafId);
-        rafId = null;
-      }
-    };
-    // 开墙即定高亮（用户要求：打开日记本时章节栏默认高亮当前月份）——
-    // 旧实现只在 scroll 事件里跑，不滚动就一个月份都不亮。
-    // 延一帧测量：renderWall 刚重建 DOM，等布局落地再取 rect。
-    schedule();
-  }
-
-  private teardownScrollers(key: 'desk' | 'mob') {
-    if (this.rafCleanups[key]) {
-      this.rafCleanups[key]!();
-      this.rafCleanups[key] = null;
-    }
-    if (this.observers[key]) {
-      this.observers[key]!.disconnect();
-      this.observers[key] = null;
-    }
-    if (this.railObservers[key]) {
-      this.railObservers[key]!.disconnect();
-      this.railObservers[key] = null;
-    }
-  }
-
-  // ---------- 灯箱 ----------
-  /** 打开灯箱：定位连看序列下标后展示（增强 #1；找不到 = 非墙内入口，退化为单条序列） */
-  private openLightbox(k: WallMedia, entry: WallEntry) {
-    // D6'：开新灯箱会话——旧会话的加密慢解密回填自此全部失效
-    this._lbGen++;
-    let idx = this._lbSeq.findIndex((s) => s.entry === entry && s.media.name === k.name && s.media.kind === k.kind);
-    if (idx === -1) {
-      // N10（review-deep func）：对齐时光条口径——落空覆盖前先存主序列（若已在会话序列中
-      // 则不重复存），关灯箱由 closeLightbox 统一还原。抽屉入口在后台 modify 重渲染
-      // （条目对象引用全换）后必然落空，旧实现直接覆盖 → 墙内 ←/→ 连看退化为单条。
-      if (!this._lbSeqMain) this._lbSeqMain = this._lbSeq;
-      this._lbSeq = [{ entry, media: k }];
-      idx = 0;
-    }
-    this.showLightboxAt(idx);
-  }
-
-  /**
-   * 展示连看序列第 idx 项（到头循环——与移动端滑动、桌面按钮、方向键同一口径）。
-   * dir：0 = 开箱（显影）；±1 = 步进（方向性滑入）——动效层 motionLightboxShow 消费。
-   * P3 审查修复保留：只填充当前端实例（另一实例 lbMedia 保持为空，无双份加载/播放）。
-   */
-  private showLightboxAt(idx: number, dir: 0 | 1 | -1 = 0) {
-    const seq = this._lbSeq;
-    if (!seq.length) return;
-    const n = seq.length;
-    this._lbIdx = ((idx % n) + n) % n;
-    const { entry, media: k } = seq[this._lbIdx];
-    // 增强 #1：切换前停掉旧视频/音频（释放解码与声音，避免后台继续播）
-    this.pauseLbMedia();
-    const mobileNow = typeof matchMedia === 'function' && matchMedia('(max-width: 768px)').matches;
-    const target = mobileNow ? this.mob : this.desk;
-    this.fillLbMedia(target.lbMedia, k, entry);
-    // 增强 #6：标题行去文件名，改「日期 时间 · 标签字」；副行 = 日记正文文字（去媒体引用），
-    // 不显示资源路径（用户要求：放大后下面显示日记的文字）
-    const cap = lbCaption(entry);
-    const sub = lbSubText(entry);
-    this.desk.lbCap.textContent = cap;
-    this.desk.lbSub.textContent = sub;
-    this.mob.lbCap.textContent = cap;
-    this.mob.lbSub.textContent = sub;
-    // 仅当前可见实例加 --show（≤768px 桌面实例 display:none；避免双实例重复 autoplay/冗余节点）
-    if (mobileNow) this.mob.lb.classList.add('bz-diary-lb--show');
-    else this.desk.lb.classList.add('bz-diary-lb--show');
-    // 动效层：媒体显影/方向性滑入 + 题注墨迹浮起（并清关箱退场残留）
-    motionLightboxShow(target.lb, target.lbMedia, target.lbCap, target.lbSub, dir);
-  }
-
-  /** 停掉双实例灯箱内正在播放的媒体（切换/关闭前调用） */
-  private pauseLbMedia() {
-    [this.desk, this.mob].forEach((ui) => {
-      ui.lbMedia.querySelectorAll('video, audio').forEach((m) => {
-        try {
-          (m as HTMLVideoElement).pause();
-        } catch {
-          /* mock 环境无 pause：忽略 */
-        }
-      });
-    });
-  }
-
-  /** 灯箱加载失败占位（lucide 图标 + 文字） */
-  private mkLbErr(k: WallMedia): HTMLElement {
-    const d = document.createElement('div');
-    d.className = 'bz-diary-lberr';
-    d.appendChild(uiIcon(KIND_ICON[k.kind]));
-    d.appendChild(document.createTextNode(' 无法加载'));
-    return d;
-  }
-
-  /** 构建灯箱媒体元素（真实 src；视频/音频 controls + autoplay） */
-  private mkLbMediaEl(k: WallMedia, src: string): HTMLElement {
-    if (k.kind === 'img') {
-      const img = document.createElement('img');
-      img.src = src;
-      img.alt = k.name;
-      img.className = 'bz-diary-lb-media';
-      return img;
-    }
-    if (k.kind === 'video') {
-      const v = document.createElement('video');
-      v.src = src;
-      v.controls = true;
-      v.autoplay = true;
-      v.className = 'bz-diary-lb-media';
-      return v;
-    }
-    const a = document.createElement('audio');
-    a.src = src;
-    a.controls = true;
-    a.autoplay = true;
-    a.className = 'bz-diary-lb-media';
-    return a;
-  }
-
-  /**
-   * 填充单个实例的灯箱媒体容器：
-   * - 普通条目：mediaSrc 同步解析，onerror 换失败占位；
-   * - 加密条目（增强 #8）：先占位，按需解密保险箱附件原图后异步替换；未解锁/失败保持失败占位。
-   */
-  private fillLbMedia(box: HTMLElement, k: WallMedia, entry: WallEntry) {
-    box.innerHTML = '';
-    if (entry.encrypted) {
-      // D13：捕获发起时的连看下标——快速连按/滑动时旧请求晚到，只比对 isConnected 会把
-      // 上一个媒体回填进当前灯箱（图文错位）。下标已推进则丢弃本次回填。
-      // D6'：再捕获会话代次——关灯箱立刻重开（openLightbox 递增 _lbGen）、新旧落点同
-      // 下标时，旧会话慢解密 promise 仍能通过下标比对穿透，覆盖新灯箱内容。
-      const idx = this._lbIdx;
-      const gen = this._lbGen;
-      const pend = document.createElement('div');
-      pend.className = 'bz-diary-lb-pending';
-      box.appendChild(pend);
-      void this.encMediaUrl(entry.noteId || '', k).then((url) => {
-        if (!box.isConnected || this._lbGen !== gen || this._lbIdx !== idx) return;
-        box.innerHTML = '';
-        if (!url) {
-          box.appendChild(this.mkLbErr(k));
-          return;
-        }
-        const el = this.mkLbMediaEl(k, url);
-        box.appendChild(el);
-        motionDevelop(el); // 动效层：密文解出即显影（解密等待期的 pending 脉冲由域样式承担）
-      });
-      return;
-    }
-    const src = this.mediaSrcFor(entry, k.name);
-    if (!src) {
-      box.appendChild(this.mkLbErr(k));
-      return;
-    }
-    const el = this.mkLbMediaEl(k, src);
-    el.addEventListener('error', () => {
-      if (!box.isConnected) return;
-      box.innerHTML = '';
-      box.appendChild(this.mkLbErr(k));
-    });
-    box.appendChild(el);
-  }
-
-  private closeLightbox() {
-    this.pauseLbMedia();
-    // 动效层：退光合箱——退场期间重开的竞态用会话代次兜住（退场完成回调发现代次已推进即放弃收口）
-    const gen = ++this._lbGen;
-    [this.desk, this.mob].forEach((ui) => {
-      if (!ui.lb.classList.contains('bz-diary-lb--show')) return;
-      motionLightboxOut(ui.lb, () => {
-        if (gen !== this._lbGen) return; // 退场期间灯箱被重开：不动新会话
-        ui.lb.classList.remove('bz-diary-lb--show');
-        ui.lbMedia.innerHTML = '';
-      });
-    });
-    // issue 217 F1：时光条序列会话结束，还原墙内主序列
-    if (this._lbSeqMain) {
-      this._lbSeq = this._lbSeqMain;
-      this._lbSeqMain = null;
-    }
-    this._lbIdx = -1;
-  }
-
-  // ---------- 条目动作（复制/改标签/加密/删除；自包含前复用 diary 域） ----------
-  private async copyLink(e: WallEntry) {
-    try {
-      // 加密条目：无 md 锚点可复制——复制正文作为替代（diary 面板对加密条目同样无跳转）
-      if (e.encrypted) {
-        await navigator.clipboard.writeText(e.content || e.text || '');
-        notice('已复制加密日记正文', 'success');
-        return;
-      }
-      // 特殊条目（影视/信/书）：整文件即条目，无日记标题锚点——按文件路径本地拼双链
-      if (this.isSpecialWallEntry(e)) {
-        if (!e.filename) {
-          notice('找不到原文，无法复制双链', 'error');
-          return;
-        }
-        await navigator.clipboard.writeText(`[[${stripMdExt(e.filename)}]]`);
-        notice('已复制双链引用', 'success');
-        return;
-      }
-      // 普通日记条目：ADR-0130 一目一文件，双链即条目文件本身（无标题锚点）；
-      // A4：v2 兜底退役——无 filePath/filename 的异常条目显式报错
-      if (!e.filePath && !e.filename) {
-        notice('找不到原文，无法复制双链', 'error');
-        return;
-      }
-      await copyDiaryLink({ filename: e.filename || '', filePath: e.filePath, emoji: e.emoji, time: e.time });
-    } catch (err) {
-      notice('复制双链失败', 'error');
-    }
-  }
-
-  private async copyContent(e: WallEntry) {
-    try {
-      await navigator.clipboard.writeText(e.content || e.text || '');
-      notice('已复制日记正文', 'success');
-    } catch (err) {
-      notice('复制失败', 'error');
-    }
-  }
-
-  /** 改标签：接本域 showTagPicker（filePath+lineNumber 定位，写层守卫落盘；结果经域事件回刷本墙） */
-  private async editTags(e: WallEntry) {
-    try {
-      showTagPicker({
-        filename: e.filename || e.date,
-        filePath: e.filePath,
-        date: e.date,
-        time: e.time,
-        lineNumber: e.lineNumber || 0,
-        tags: e.tags,
-        encrypted: e.encrypted,
-        noteId: e.noteId,
-      });
-    } catch (err) {
-      notice('改标签暂不可用', 'error');
-    }
-  }
-
-  /**
-   * 加密：本域 encryptEntry（需保险箱解锁）+ 写层摘除原块；结果经域事件回刷本墙。
-   * D5：摘除失败（返回 0 或抛错）必须回滚保险箱密文——密文已入库原文未删时，
-   * 解锁后同条出现两次且重试越积越多。
-   * 效率#12（review-deep ★★）：加密与删除同为「条目当场从墙消失」，且挂在右键/长按
-   * 菜单（「加密」紧邻「改标签」，滑错一格条目即蒸发）——ensureSafeUnlocked 之后补
-   * openFlowDialog 二次确认（对齐 CONTEXT「日记加密入口」词条既有承诺）。
-   */
-  private async encryptEntryAction(e: WallEntry) {
-    let enc: Awaited<ReturnType<typeof encryptEntry>> = null;
-    try {
-      // P1 审查修复：影视/信/书特殊条目不提供加密（入库语义错位）——菜单已屏蔽，此处兜底
-      if (this.isSpecialWallEntry(e)) return;
-      const { ensureSafeUnlocked } = await import('../encrypt') as typeof import('../encrypt');
-      const unlocked = await ensureSafeUnlocked('diary'); // 加密的是日记条目，解锁屏走 diary 域口径（与 519 行入口同文案）
-      if (!unlocked) return;
-      // 效率#12：二次确认。danger 标记走中性主钮口径（ADR-0125 慎重决策形态，
-      // 与 entry-actions 删除确认同款）；文案带条目标识（删错/滑错可辨认是哪篇）
-      const confirmed = await openFlowDialog({
-        title: '加密日记',
-        message: `将把「${e.date} ${e.time}」这条日记移入保险库加密保存，原位置不再保留明文。`,
-        actions: [
-          { label: '取消', value: 'cancel' },
-          { label: '加密', value: 'ok', cta: true, danger: true },
-        ],
-      });
-      if (confirmed !== 'ok') return;
-      const entry = await findDiaryEntry(e.filePath || e.filename || e.date);
-      if (!entry) {
-        notice('找不到原文条目，无法加密', 'error');
-        return;
-      }
-      enc = await encryptEntry(entry);
-      if (enc) {
-        let removed = 0;
-        try {
-          removed = await removeDiaryEntries(
-            entry.date,
-            (x) => x.filePath === entry.filePath && x.time === entry.time && x.lineNumber === entry.lineNumber,
-            { filePath: entry.filePath }
-          );
-        } catch (e) {
-          // 摘除抛错（守卫拒写/读盘失败）：回滚密文后原样上抛（人话通知已由写层发出）
-          await this.rollbackEncryptedNote(enc);
-          throw e;
-        }
-        if (removed === 0) {
-          // 原块摘除失败：回滚密文（D5），不留「保险箱 + 原文」双份
-          await this.rollbackEncryptedNote(enc);
-          notice('加密失败：原文块摘除未生效', 'error');
-          return;
-        }
-        // A2（review-deep 架）：加密 = 原条目文件摘除，同级的磁盘变更须发同通道域事件
-        //（对齐 entry-actions 删除发射形态）——此前仅墙自刷兜住，后续消费方接入即漏报
-        emitDomainEvent('diary:entry-deleted', { date: entry.date, time: entry.time, wasEncrypted: false, encrypted: true });
-        // 收紧通知：加密移入成功结果立即可见（条目从墙消失），不再弹成功提示
-        void this.loadAndRender();
-      }
-    } catch (err) {
-      if (err && (isUnparsedRefusal(err) || isDiaryReadFailure(err))) return; // 守卫拒处理/读失败：人话通知已由写层发出
-      notice('加密失败', 'error');
-    }
-  }
-
-  /** 加密失败兜底：尽力销毁刚入库的密文（失败仅留日志，不强抛——原失败原因更要紧） */
-  private async rollbackEncryptedNote(enc: NonNullable<Awaited<ReturnType<typeof encryptEntry>>>) {
-    if (!enc.noteId) return;
-    try {
-      await deleteEncryptedEntry(enc.noteId);
-    } catch (e) {
-      console.warn('[bz-diary] 加密回滚失败（保险箱可能残留密文，请手动删除）:', e);
-    }
-  }
-
-  /** 解密：本域 reclassifyEntry 降级（还原块 merge 回 md，取出即删）。
-   *  效率#12：还原是恢复性操作（条目回墙、密文释放回明文），不加二次确认——
-   *  确认留给「条目当场消失」的加密/删除两动作，风险口径与删除对齐。 */
-  private async decryptEntryAction(e: WallEntry) {
-    try {
-      const noteId = e.noteId;
-      if (!noteId) {
-        notice('无法解密（缺少保险箱记录）', 'error');
-        return;
-      }
-      const newTags = e.tags.filter((t) => t !== '加密');
-      const ok = await reclassifyEntry(noteId, newTags);
-      if (ok) {
-        // A2（review-deep 架）：解密 = 还原写盘 + 密文取出，补发同通道域事件
-        //（对齐 dialogs showTagPicker 降级路径的发射形态）
-        emitDomainEvent('diary:entry-decrypted', { noteId, date: e.date, newTags });
-        // 收紧通知：解密还原成功结果立即可见（条目回墙），不再弹成功提示
-        void this.loadAndRender();
-      } else {
-        notice('解密失败：主密码可能不正确，密文未受影响', 'error');
-      }
-    } catch (err) {
-      notice('解密失败：主密码可能不正确，密文未受影响', 'error');
-    }
-  }
-
-  /** 删除：接本域 showConfirm 流程（加密条目走保险箱销毁分支） */
-  private async deleteEntryAction(e: WallEntry) {
-    try {
-      // P1 审查修复：影视/信/书特殊条目不给删除——lineNumber=0 与 md 全部失配，
-      // 「该时间仅一条」兜底可能误删同刻真实日记。菜单已屏蔽，此处兜底。
-      if (this.isSpecialWallEntry(e)) {
-        notice('影视、信、书条目请在对应面板中管理', 'info');
-        return;
-      }
-      showConfirm({
-        filename: e.filename || e.date,
-        filePath: e.filePath,
-        date: e.date,
-        time: e.time,
-        lineNumber: e.lineNumber || 0,
-        tags: e.tags,
-        encrypted: e.encrypted,
-        noteId: e.noteId,
-      });
-    } catch (err) {
-      notice('删除暂不可用', 'error');
-    }
-  }
-
-  // ---------- 底部抽屉（移动端长按条目弹出；2026-09-11 换核 core openItemSheet） ----------
-  private openSheet(e: WallEntry) {
-    // 与 favorites/belongings/cinema 同壳（.bz-item-sheet，挂 body 不受域 reset/Obsidian
-    // 移动端 button 样式压盖）；动作集与桌面右键同源；动作项点击后 core 自动关抽屉，
-    // 遮罩点击/下拉关闭也归共享层。
-    try {
-      this.sheetEntry = e;
-      openItemSheet(this.buildSheetActions(e), { sheetHead: this.mkSheetHead(e) });
-    } catch (err) {
-      // 构建期异常会让抽屉整体不出（2026-09-11 真机事故：图标名 undefined → setIcon 抛异常，
-      // 手机端无控制台，全程静默）——兜底上屏 + 复位 ESC 标记，栈进控制台
-      this.sheetEntry = null;
-      notice(`日记抽屉打开失败：${err instanceof Error ? err.message : String(err)}`);
-      console.error('[bz-diary] openSheet', err);
-    }
-  }
-
-  /** 抽屉动作集 = buildMenuActions 同源 + 抽屉特有项（附件、复制正文字数小字；
-   *  ItemAction.sub 仅移动端抽屉渲染，桌面菜单不渲染小字——core 既有口径） */
-  private buildSheetActions(e: WallEntry): ItemAction[] {
-    const acts = this.buildMenuActions(e).map((a) => ({ ...a }));
-    const copyIdx = acts.findIndex((a) => a.label === '复制正文');
-    if (copyIdx >= 0) acts[copyIdx].sub = `${(e.content || '').trim().length} 字`;
-    if (e.media.length) {
-      acts.splice(copyIdx + 1, 0, {
-        icon: ACTION_ICON.attachment,
-        label: '附件',
-        sub: `${e.media.length} 个媒体`,
-        onClick: () => notice(`附件：${e.media.map((m) => m.name).join('、')}`),
-      });
-    }
-    return acts;
-  }
-
-  /** 抽屉富媒体头（core sheetHead）：emoji + 时间行 + 正文预览 + 媒体缩略（点击进灯箱） */
-  private mkSheetHead(e: WallEntry): HTMLElement {
-    const head = document.createElement('div');
-    head.className = 'bz-diary-sheet-head';
-    const emoji = document.createElement('span');
-    emoji.className = 'bz-diary-sheet-emoji';
-    emoji.textContent = e.emoji;
-    const info = document.createElement('div');
-    info.className = 'bz-diary-sheet-info';
-    const timeEl = document.createElement('div');
-    timeEl.className = 'bz-diary-sheet-time';
-    timeEl.textContent = `${e.date}  ${e.time}  ·  ${(e.tags || []).join(' ')}`;
-    const contentEl = document.createElement('div');
-    contentEl.className = 'bz-diary-sheet-content';
-    // issue 217 S6：抽屉预览去媒体嵌入语法（![[xxx.jpg]] 原样外露）
-    contentEl.textContent = stripMediaLinks(e.content) || '（仅媒体）';
-    const media = document.createElement('div');
-    media.className = 'bz-diary-sheet-media';
-    e.media.forEach((k) => {
-      const mt = document.createElement('div');
-      mt.className = 'bz-diary-sheet-thumb';
-      const src = this.mediaSrcFor(e, k.name);
-      if (k.kind === 'img') {
-        const img = document.createElement('img');
-        img.alt = k.name;
-        // 加密条目缩略图走按需解密——增强 #8
-        if (e.encrypted) {
-          void this.encMediaUrl(e.noteId || '', k).then((url) => {
-            if (url && img.isConnected) img.src = url;
-          });
-        } else if (src) {
-          img.src = src;
-        }
-        mt.appendChild(img);
-      } else {
-        mt.appendChild(uiIcon(k.kind === 'video' ? ACTION_ICON.play : ACTION_ICON.music));
-      }
-      // D-UI1（review-deep P2）：抽屉是 body 级浮层（core allocZ 动态发号，后开必高于面板
-      // root），灯箱是面板实例内静态层——不先收抽屉，灯箱会被抽屉遮罩整体盖住（点缩略图
-      // 「毫无反应」假象，且 ESC 分流 sheetEntry 优先还会吃掉第一次 ESC）。动作行 ItemAction
-      // 有 core 自动关抽屉，自定义 sheetHead 头内点击不经过该路径，须显式先关。
-      mt.addEventListener('click', () => {
-        this.closeSheet();
-        this.openLightbox(k, e);
-      });
-      media.appendChild(mt);
-    });
-    info.appendChild(timeEl);
-    info.appendChild(contentEl);
-    info.appendChild(media);
-    head.appendChild(emoji);
-    head.appendChild(info);
-    return head;
-  }
-
-  private closeSheet() {
-    // 抽屉壳/遮罩/关闭手势归 core（closeItemMenu 幂等）；sheetEntry 只作 ESC 分流标记
-    closeItemMenu();
-    this.sheetEntry = null;
-  }
-
-  // ---------- 统计 ----------
-  private dayStats(list: WallEntry[]) {
-    return dayStats(list); // render 单源（ADR-0104）：与原型壳同源
-  }
-
-  private statHtml(s: { imgs: number; vids: number; auds: number; texts: number }): string {
-    return statHtml(s); // render 单源
-  }
-
-  // ---------- ESC ----------
-  private registerEscape() {
-    this.escUnregister = escManager.register('diary', {
-      isVisible: () => !!this.root && this.root.style.display === 'flex',
-      close: () => {
-        // 日期弹窗优先，其次抽屉，其次灯箱，最后整体关闭
-        // issue 217 F7：双实例都查——旧实现只看 desk 实例，移动端抽屉/灯箱开着时 ESC 直接关整个面板
-        if (this._dateFilterEl) {
-          this.closeDateFilter();
-          return;
-        }
-        if (this.sheetEntry) {
-          // D8'（review-all2）：抽屉可能已被 core 路径（点遮罩/下拉关闭）关掉，而 core
-          // openItemSheet 无 onClose 回调、sheetEntry 残留——先探测 DOM，抽屉确实不在则
-          // 清标记继续下一分流，否则 ESC 第一次被空操作消费（要按两次才见效果）
-          if (document.querySelector('.bz-item-sheet')) {
-            this.closeSheet();
-            return;
-          }
-          this.sheetEntry = null;
-        }
-        if ([this.desk, this.mob].some((u) => u.lb.classList.contains('bz-diary-lb--show'))) {
-          this.closeLightbox();
-          return;
-        }
-        this.hide();
-      },
-    });
-  }
-
-  // ---------- 显示/隐藏 ----------
-  /** 幂等初始化（ensureElements 创建 DOM + 绑定事件） */
-  async init() {
-    if (this._initialized) return;
-    this.ensureElements();
-  }
-
-  /** 打开日记本：加载数据并渲染 */
-  async openManager() {
-    await this.init();
-    this.show();
-  }
-
-  show() {
-    if (!this._initialized) this.ensureElements();
-    const reopen = this._shownOnce;
-    this._shownOnce = true;
-    this._hideMotion = false; // 快速关开：退场演出中断即复位（display 已被拉回，不抢 done）
-    this.root!.style.display = 'flex';
-    topifyZ(this.root!); // ADR-0067
-    // 桌面拖动缩放（ADR-0084）+ 尺寸记忆（ADR-0094）：只挂桌面实例 .bz-diary-desk
-    // （移动实例真全屏；常驻 DOM，show 幂等挂 / hide 摘，判空防重入）
-    if (!isMobileEnv() && !this.panelResizeDetach && this.desk) {
-      this.panelResizeDetach = uiResizable(this.desk.el, {
-        minW: PANEL.MIN_W, minH: PANEL.MIN_H,
-        maxW: PANEL.MAX_W, maxH: PANEL.MAX_H,
-        persist: panelSizePersist('diaryPanelWidth', 'diaryPanelHeight', PANEL.MIN_W, PANEL.MIN_H),
-      });
-    }
-    motionPanelIn(this.root!, reopen); // 动效层：遮罩退光淡入（卡体自带 CSS slide-up；内容编排归 renderWall）
-    this.subscribeVaultModify();
-    this.subscribeUnlockEvents(); // 增强 #9：上锁实时归位
-    this.subscribeWriteEvents(); // 写链路域事件防抖回刷（含整文件删除等 vault delete 无 modify 的路径）
-    this.subscribeRefSync(); // issue 339：改名/删除内存路径同步
-    // 增强 #11：loadAndRender 完成后一次性恢复跳走前的筛选与滚动位置
-    // ②：开墙读允许命中预热/上次刷新后的缓存秒开（闭合期写改已由 domain-bus 事件作废缓存，不会读到脏数据）
-    this._allowCacheNext = true;
-    motionArmBoot(); // 动效层：boot 标志置位——本帧首个 renderWall 消费即熄，回刷/重渲不重播
-    void this.loadAndRender().then(() => this.applyRestore());
-  }
-
-  hide() {
-    if (!this.root) return;
-    if (this._hideMotion) return; // 动效层：退场演出中防重入（演出完由 done 收口 display:none）
-    this._hideMotion = true;
-    this.closeDateFilter();
-    this.closeLightbox();
-    this.closeSheet();
-    // 右键菜单（core .bz-item-menu）挂 body，不收起会在面板关闭后残留、菜单动作仍可点击
-    closeItemMenu();
-    // 写链路两弹窗挂 body（D-UI2 残款兜底）：面板关闭强制收壳，不留可交互浮层
-    hideAddDialog();
-    hideTagPicker();
-    this.unsubscribeVaultModify();
-    this.unsubscribeUnlockEvents();
-    this.unsubscribeWriteEvents();
-    this.unsubscribeRefSync(); // issue 339：摘引用同步订阅
-    // 桌面拖拽缩放随面板隐藏摘除（防抖尾值 detach 内自动 flush，尺寸不丢）
-    this.panelResizeDetach?.detach();
-    this.panelResizeDetach = null;
-    // 动效层：先演「合上本子」（卡体落回桌面 + 遮罩退光）再收 display；
-    // 无 WAAPI 宿主同步收口（测试/老内核 display:none 不晚到）
-    motionPanelOut(this.root, () => {
-      this._hideMotion = false;
-      if (!this.root) return;
-      this.root.style.display = 'none';
-    });
-  }
-
-  /**
-   * 写链路域事件回刷（issue 256）：entry-added/tags-changed/entry-deleted/entry-decrypted/
-   * encrypted-purged 五通道防抖 loadAndRender——写日记命令（域外弹窗保存）、首页「生成今日
-   * 总结」写回（ADR-0157 起，原 recap 面板链路）、条目删除等路径统一收口（ADR-0130：
-   * file-vacated 通道随条目文件化退役，删除由 UI 层 entry-deleted 通知）。
-   */
-  private subscribeWriteEvents(): void {
-    if (this._writeOff) return;
+  /** 写链路五通道 + 保险箱锁态 + 引用同步：域事件防抖回刷整册 */
+  private subscribeEvents(): void {
+    if (this._subs.length) return;
     const chs = [
       'diary:entry-added',
       'diary:tags-changed',
@@ -2576,231 +2273,157 @@ export class DiaryAppController {
       'diary:entry-decrypted',
       'diary:encrypted-purged',
     ] as const;
-    const offs = chs.map((ch) =>
-      onDomainEvent(ch, () => {
-        if (this.root?.style.display !== 'flex') return;
-        if (this._modifyTimer !== null) clearTimeout(this._modifyTimer);
-        this._modifyTimer = setTimeout(() => {
-          this._modifyTimer = null;
+    for (const ch of chs) {
+      this._subs.push(
+        onDomainEvent(ch, () => {
           if (this.root?.style.display !== 'flex') return;
-          void this.loadAndRender();
-        }, MODIFY_REFRESH_DEBOUNCE_MS);
+          this.scheduleRelayout();
+        })
+      );
+    }
+    this._subs.push(
+      onDomainEvent<{ unlocked: boolean }>('encrypt:unlock-changed', (evt) => {
+        if (this.root?.style.display !== 'flex') return;
+        this.encMediaCache.clear();
+        if (!evt || !evt.unlocked) {
+          // 上锁：加密条目实时不可见
+          if (this.filterTag === '加密') this.filterTag = null;
+          void this.loadAndRelayout();
+        } else {
+          void this.loadAndRelayout();
+        }
       })
     );
-    this._writeOff = () => offs.forEach((off) => off());
+    /* 引用同步：册子开着时条目文件改名/删除 → 内存条目与 diaryDataMap 键同步（不落盘） */
+    this._subs.push(
+      onDomainEvent<{ oldPath: string; newPath: string }>('vault:md-renamed', (evt) => {
+        const oldPath = evt?.oldPath || '';
+        const newPath = evt?.newPath || '';
+        if (!oldPath || !newPath || oldPath === newPath) return;
+        if (this.root?.style.display !== 'flex' || !inWallDirs(oldPath)) return;
+        const movedOut = !inWallDirs(newPath);
+        if (movedOut) dropDiaryMapPath(oldPath);
+        else rekeyDiaryMapPath(oldPath, newPath);
+        let touched = false;
+        for (const e of this.entries) {
+          if (e.filePath !== oldPath) continue;
+          touched = true;
+          if (movedOut) continue;
+          e.filePath = newPath;
+          if (e.filename === oldPath) e.filename = newPath;
+        }
+        if (movedOut) this.entries = this.entries.filter((e) => e.filePath !== oldPath);
+        if (movedOut || touched) this.relayout(true);
+      })
+    );
+    this._subs.push(
+      onDomainEvent<{ path: string }>('vault:md-deleted', (evt) => {
+        const path = evt?.path || '';
+        if (!path) return;
+        if (this.root?.style.display !== 'flex' || !inWallDirs(path)) return;
+        const hadMap = dropDiaryMapPath(path);
+        const before = this.entries.length;
+        this.entries = this.entries.filter((e) => e.filePath !== path);
+        if (hadMap || this.entries.length !== before) this.relayout(true);
+      })
+    );
   }
 
-  private unsubscribeWriteEvents(): void {
-    if (this._writeOff) {
-      this._writeOff();
-      this._writeOff = null;
-    }
+  private unsubscribeEvents(): void {
+    this._subs.forEach((off) => off());
+    this._subs = [];
   }
 
-  /**
-   * 增强 #9：订阅保险箱解锁状态（encrypt:unlock-changed 域事件，复用既有 channel 不动 encrypt 域）。
-   * - 上锁（unlocked=false）：加密条目实时回不可见——剔除条目、清锁定筛选态、收灯箱/抽屉/菜单；
-   * - 解锁（unlocked=true）：并入加密日记（默认仍隐藏，点「加密」chip 查看；已可见则媒体可按需解密）。
-   */
-  private subscribeUnlockEvents(): void {
-    if (this._unlockOff) return;
-    this._unlockOff = onDomainEvent<{ unlocked: boolean }>('encrypt:unlock-changed', (evt) => {
-      if (!evt || !evt.unlocked) this.relockWallMedia();
-      else void this.onSafeUnlockedWhileOpen();
-    });
-  }
-
-  private unsubscribeUnlockEvents(): void {
-    if (this._unlockOff) {
-      this._unlockOff();
-      this._unlockOff = null;
-    }
-  }
-
-  /**
-   * 引用同步（issue 339）：墙开着时条目文件改名/删除 → 内存条目与 diaryDataMap 键同步（不落盘，
-   * 快照回写机制不动；重开全量重读自愈兜底不变）。改名后 filePath/filename 指向新路径——
-   * 跳转与媒体解析不再 stale；删除条目移出内存，墙自动反映。改出墙目录按删除口径移出
-   * （条目不再是墙内容，与 obsidian-adapter movedOut 同语义）。
-   */
-  private subscribeRefSync(): void {
-    if (this._refSyncOff) return;
-    const offRename = onDomainEvent<{ oldPath: string; newPath: string }>('vault:md-renamed', (evt) => {
-      const oldPath = (evt as { oldPath?: string } | null)?.oldPath || '';
-      const newPath = (evt as { newPath?: string } | null)?.newPath || '';
-      if (!oldPath || !newPath || oldPath === newPath) return;
-      if (this.root?.style.display !== 'flex' || !inWallDirs(oldPath)) return;
-      const movedOut = !inWallDirs(newPath);
-      if (movedOut) dropDiaryMapPath(oldPath);
-      else rekeyDiaryMapPath(oldPath, newPath);
-      let touched = false;
-      for (const e of this.entries) {
-        if (e.filePath !== oldPath) continue;
-        touched = true;
-        if (movedOut) continue; // 移出墙目录：条目留待下方统一剔除
-        e.filePath = newPath;
-        if (e.filename === oldPath) e.filename = newPath;
-      }
-      if (movedOut) this.entries = this.entries.filter((e) => e.filePath !== oldPath);
-      if (movedOut || touched) this.renderAll();
-    });
-    const offDelete = onDomainEvent<{ path: string }>('vault:md-deleted', (evt) => {
-      const path = (evt as { path?: string } | null)?.path || '';
-      if (!path) return;
-      if (this.root?.style.display !== 'flex' || !inWallDirs(path)) return;
-      const hadMap = dropDiaryMapPath(path);
-      const before = this.entries.length;
-      this.entries = this.entries.filter((e) => e.filePath !== path);
-      if (hadMap || this.entries.length !== before) this.renderAll();
-    });
-    this._refSyncOff = () => {
-      offRename();
-      offDelete();
+  /** vault modify/create 回刷（纯外部变更：其他工具写入条目文件时册子也要跟上） */
+  private subscribeVault(): void {
+    if (this._vaultRefs.length) return;
+    const schedule = () => {
+      if (this.root?.style.display !== 'flex') return;
+      this.scheduleRelayout();
     };
+    this._vaultRefs.push(
+      this.app().vault.on('modify', (file: { path?: string }) => {
+        const p = file?.path;
+        if (p && inWallDirs(p)) schedule();
+      })
+    );
+    this._vaultRefs.push(
+      this.app().vault.on('create', (file: { path?: string }) => {
+        const p = file?.path;
+        if (p && inWallDirs(p)) schedule();
+      })
+    );
   }
 
-  private unsubscribeRefSync(): void {
-    if (this._refSyncOff) {
-      this._refSyncOff();
-      this._refSyncOff = null;
+  private unsubscribeVault(): void {
+    for (const ref of this._vaultRefs) {
+      try {
+        this.app().vault.offref(ref);
+      } catch {
+        /* mock/异常环境：忽略 offref 失败 */
+      }
     }
+    this._vaultRefs = [];
   }
 
-  /** 上锁：加密内容实时归位（不可见）——增强 #9 主路径 */
-  private relockWallMedia() {
-    const hadEnc = this.entries.some((x) => x.encrypted);
-    this.lockedVisible = false;
-    this.entries = this.entries.filter((x) => !x.encrypted);
-    this.encMediaCache.clear();
-    if (this.selTag === '加密') {
-      this.selTag = null;
-      this.selSubTag = null;
-    }
+  /** 防抖整册回刷（域事件与 vault 变更共用；重入时后一次覆盖前一次） */
+  private scheduleRelayout(): void {
+    if (this.modifyTimer !== null) clearTimeout(this.modifyTimer);
+    this.modifyTimer = setTimeout(() => {
+      this.modifyTimer = null;
+      if (this.root?.style.display !== 'flex') return;
+      void this.loadAndRelayout();
+    }, REFRESH_DEBOUNCE_MS);
+  }
+
+  // ============================================================
+  //  显示 / 隐藏 / 卸载
+  // ============================================================
+
+  /** 打开日记本（命令路径：ensure 后 show） */
+  show(): void {
+    if (!this._initialized) this.ensureElements();
+    const reopen = this._shownOnce;
+    this._shownOnce = true;
+    this._hideMotion = false;
+    this.root!.style.display = 'flex';
+    topifyZ(this.root!); // ADR-0067：域根层级动态发号
+    this._allowCacheNext = true;
+    this.subscribeEvents();
+    this.subscribeVault();
+    void (async () => {
+      await this.afterPaint();
+      await this.loadEntries(this._allowCacheNext);
+      this.relayout(false);
+      this.toast(reopen ? '又翻开了' : '翻开的是最新那篇');
+      this.checkOnThisDay();
+    })();
+  }
+
+  hide(): void {
+    if (!this.root || this._hideMotion) return;
+    this._hideMotion = true;
     this.closeLightbox();
     this.closeSheet();
-    // 改标签选择器挂 body 且加密条目改签链路依赖解锁态（func N1）：上锁归位一并强制收壳
+    this.closeSlip();
+    this.closeAlbum();
+    this.closeCal();
+    this.closeMenu();
+    hideAddDialog();
     hideTagPicker();
-    closeItemMenu();
-    if (hadEnc) this.renderAll();
-  }
-
-  /** 墙开着时解锁：并入加密条目（lockedVisible 不自动置真——默认仍按锁定态隐藏） */
-  private async onSafeUnlockedWhileOpen() {
-    if (this.root?.style.display !== 'flex') return;
-    await this.mergeEncryptedEntries();
-    this.renderAll();
-  }
-
-  /** DW3：vault modify 自动刷新（clipbook 同款模式）——墙开着时日记/影视/信/书被编辑 → 防抖重读重渲染；
-   *  只关心四个数据源目录（影视/书库实时解析，D6：改影院/书架目录后新目录即刻生效；判定单源 config.inWallDirs）；
-   *  隐藏期不订阅不刷新。
-   *  N5：create（外部新建/拖入/其他工具写入条目文件）同路回刷——此前纯外部变更是盲区，直到手动重开面板。 */
-  private subscribeVaultModify(): void {
-    if (this._modifyRef) return;
-    const schedule = () => {
-      if (this._modifyTimer !== null) clearTimeout(this._modifyTimer);
-      this._modifyTimer = setTimeout(() => {
-        this._modifyTimer = null;
-        if (this.root?.style.display !== 'flex') return;
-        void this.loadAndRender();
-      }, MODIFY_REFRESH_DEBOUNCE_MS);
-    };
-    this._modifyRef = this.app().vault.on('modify', (file: { path?: string }) => {
-      const p = (file as { path?: string } | null)?.path;
-      if (!p || this.root?.style.display !== 'flex') return;
-      if (!inWallDirs(p)) return;
-      schedule();
-    });
-    this._createRef = this.app().vault.on('create', (file: { path?: string }) => {
-      const p = (file as { path?: string } | null)?.path;
-      if (!p || this.root?.style.display !== 'flex') return;
-      if (!inWallDirs(p)) return;
-      schedule();
-    });
-  }
-
-  private unsubscribeVaultModify(): void {
-    for (const key of ['_modifyRef', '_createRef'] as const) {
-      const ref = this[key];
-      if (ref) {
-        try {
-          this.app().vault.offref(ref);
-        } catch {
-          // mock/异常环境兜底：忽略 offref 失败
-        }
-        this[key] = null;
-      }
+    this.pauseAllAudio();
+    this.unsubscribeEvents();
+    this.unsubscribeVault();
+    if (this.modifyTimer !== null) {
+      clearTimeout(this.modifyTimer);
+      this.modifyTimer = null;
     }
-    if (this._modifyTimer !== null) {
-      clearTimeout(this._modifyTimer);
-      this._modifyTimer = null;
-    }
+    this.setToolsShown(false);
+    this._hideMotion = false;
+    this.root.style.display = 'none';
   }
 
-  /** 让位首帧（issue 383）：rAF 后再落一拍 setTimeout——浏览器完成一次绘制（面板+骨架已
-   *  在屏上）才放行后续读盘/整墙渲染；隐藏窗口与无 rAF 环境直接 setTimeout(0)（后台标签页
-   *  rAF 不触发，等它会把刷新卡住）。对齐 prewarmDiary 的「rAF + setTimeout 到空闲」范式。 */
-  private afterPaint(): Promise<void> {
-    return new Promise((resolve) => {
-      if (typeof requestAnimationFrame !== 'function' || document.hidden) {
-        setTimeout(resolve, 0);
-        return;
-      }
-      requestAnimationFrame(() => setTimeout(resolve, 0));
-    });
-  }
-
-  /** 加载数据并渲染（openManager 主路径） */
-  private async loadAndRender() {
-    // D9'（review-all2）：面板关闭期间保险箱可能被外部上锁（别域「立即上锁」/安全模式
-    // 自动锁）——按真实锁态复位「加密」可见性，否则重开后 chip 呈已解锁态与真实锁态不符
-    //（show() 路径经此处覆盖）
-    this.lockedVisible = isUnlocked();
-    // 效率#13：数据读取期间墙区骨架占位（大库首屏不再是一段「看起来像空库」的空白期）
-    this.showSkeleton();
-    // issue 383 先开面板后填内容：让位首帧——等浏览器把面板+骨架画出来，再读盘/渲染。
-    // 缓存命中（issue 381 预热）时 loadWallEntries 立即 resolve，整条链会在微任务里一口气
-    // 跑到 renderAll，首帧被「读盘+整墙渲染」堵住 → 观感「点了没反应，然后整墙突然出现」。
-    await this.afterPaint();
-    try {
-      // ②：开墙路径（_allowCacheNext）命中缓存秒开；其余（刷新/写后回刷/重试）一律先作废回源，
-      //    保持「每次刷新/写后回刷即读盘」原语义（不依赖缓存失效是否触发）
-      if (this._allowCacheNext) {
-        this._allowCacheNext = false;
-      } else {
-        invalidateWallCache();
-      }
-      this.entries = await loadWallEntries(this.app());
-      this._loadError = null;
-    } catch (e: any) {
-      this.entries = [];
-      // 效率#14：挂错误标记，mkEmpty 分流错误态（toast 一闪即逝，错误要留在墙上可重试）
-      this._loadError = e && e.message ? e.message : String(e);
-      notice('加载日记失败：' + this._loadError, 'error');
-    }
-    // 保险箱已解锁：一并并入加密日记（幂等；上锁态不可见）
-    await this.mergeEncryptedEntries();
-    this.renderAll();
-    // D14：按当前数据的小图键集惰性清扫 IndexedDB 残留（删改媒体后旧小图不再永久占位）
-    void pruneRailThumbs(railThumbKeepKeys(this.entries));
-  }
-
-  // ---------- 头部动作（写日记 / 搜索 / 日期选择器） ----------
-  /** 写日记：本域 openAddDialog（滚轮年份动态范围取自当前数据，UX-34）。
-   *  onSaved：保存成功回调注入（item-1789672493967-y11jgy）——新笔记打开后收起墙，
-   *  避免弹窗关了墙仍盖在最上层挡住笔记（对齐 jumpTo 先例「跳转后关日记本」） */
-  private openAddEntry() {
-    try {
-      openAddDialog({
-        yearRange: this.getYearRange() ?? undefined,
-        onSaved: () => this.hide(),
-      });
-    } catch (e) {
-      notice('写日记暂不可用：' + (e instanceof Error ? e.message : String(e)), 'error');
-    }
-  }
-
-  /** 当前数据的滚轮年份动态范围（UX-34；无数据返回 null → 控件回落 1900～当前年+1） */
+  /** 当前数据的滚轮年份动态范围（无数据返回 null → 控件回落 1900～当前年+1） */
   getYearRange(): { min: number; max: number } | null {
     let earliest: number | null = null;
     for (const entry of this.entries) {
@@ -2811,242 +2434,55 @@ export class DiaryAppController {
     return { min: Math.max(1900, earliest), max: new Date().getFullYear() + 1 };
   }
 
-  /** 标题点击 → 回忆墙自包含日期选择器（按年份/月份过滤本域数据；不再调 diary showDatePicker——那是 diary 面板的 filter） */
-  private openDatePicker() {
-    this.showDateFilter(this.selDateFilter?.year ?? this.defaultFilterYear());
-  }
-  /**
-   * 打开时的默认浏览年份 = 当前年份（用户要求「打开日期筛选默认选中当前年份」）。
-   * 当前年若没有任何数据（跨年空窗），回落最新有数据的年份——否则月份网格不渲染，
-   * 打开只剩一句提示。
-   */
-  private defaultFilterYear(): string | null {
-    const years = Array.from(new Set(this.entries.map((e) => e.date.slice(0, 4))));
-    if (!years.length) return null;
-    const now = String(new Date().getFullYear());
-    return years.includes(now) ? now : years.sort((a, b) => b.localeCompare(a))[0];
-  }
-
-  /** 显示日期筛选弹窗：viewYear 只是「正在浏览的年份」临时值（P2 审查修复：
-   *  旧实现点年份即写入 selDateFilter，ESC 关闭后筛选已悄悄生效）。
-   *  只有点月份或「全部」才提交筛选。
-   *  light（动效层）：年内切年重开——只翻月份格，不重演题头与年份签。 */
-  private showDateFilter(viewYear: string | null, light = false) {
-    this.closeDateFilter();
-    this._dateFilterEl = this.mkDateFilter(viewYear);
-    document.body.appendChild(this._dateFilterEl);
-    topifyZ(this._dateFilterEl); // ADR-0067：后显示在上
-    this._dateFilterEl.style.display = 'flex';
-    motionDateFilterIn(this._dateFilterEl, light); // 动效层：台历翻开（卡体自带 CSS slide-up）
-  }
-
-  /** 自绘日期筛选弹窗（年份行 + 月份网格 + 全部/关闭）；viewYear 为正在浏览的年份临时值 */
-  private mkDateFilter(viewYear: string | null): HTMLElement {
-    const wrap = document.createElement('div');
-    wrap.className = 'bz-diary-datefilter';
-    const card = document.createElement('div');
-    card.className = 'bz-diary-datefilter-card';
-    const years = Array.from(new Set(this.entries.map((e) => e.date.slice(0, 4)))).sort((a, b) => b.localeCompare(a));
-    const cur = this.selDateFilter;
-    // 年份高亮：浏览中的年份优先，未浏览时回落已生效筛选的年份
-    const activeYear = viewYear ?? cur?.year ?? null;
-
-    // 头部：标题 +（有筛选时）全部——规格对齐头行（左标题、右动作）；
-    // 「关闭」钮已按用户要求移除（2026-09-19）：关闭走点遮罩与 ESC
-    const head = document.createElement('div');
-    head.className = 'bz-diary-datefilter-head';
-    const title = document.createElement('div');
-    title.className = 'bz-diary-datefilter-title';
-    title.textContent = '按日期筛选';
-    head.appendChild(title);
-    if (cur) {
-      // 无筛选时不给「全部」——没有东西可清，纯噪点
-      const resetBtn = document.createElement('button');
-      resetBtn.className = 'bz-diary-datefilter-reset';
-      resetBtn.textContent = '全部';
-      resetBtn.addEventListener('click', () => {
-        this.selDateFilter = null;
-        this.closeDateFilter();
-        this.renderAllMotioned();
-      });
-      head.appendChild(resetBtn);
+  cleanup(): void {
+    unregisterPanelEsc('diary');
+    document.removeEventListener('keydown', this.onKeydown);
+    document.removeEventListener('pointerdown', this.onDocPointerDown, true);
+    document.removeEventListener('mousemove', this.onMouseMove);
+    document.removeEventListener('mouseleave', this.onMouseLeave);
+    window.removeEventListener('resize', this.onResize);
+    if (this.resizeTimer !== null) {
+      clearTimeout(this.resizeTimer);
+      this.resizeTimer = null;
     }
-    card.appendChild(head);
-
-    // 年份行 chips（规格对齐类型 chips：11px 药丸 + 计数 faint）
-    const yearLabel = document.createElement('div');
-    yearLabel.className = 'bz-diary-datefilter-label';
-    yearLabel.textContent = '年份';
-    card.appendChild(yearLabel);
-
-    const yearRow = document.createElement('div');
-    yearRow.className = 'bz-diary-datefilter-years';
-    const yearCount = new Map<string, number>();
-    this.entries.forEach((e) => {
-      const y = e.date.slice(0, 4);
-      yearCount.set(y, (yearCount.get(y) || 0) + 1);
-    });
-    years.forEach((y) => {
-      const b = document.createElement('button');
-      b.className = 'bz-diary-datefilter-year' + (activeYear === y ? ' bz-diary-datefilter-year--on' : '');
-      b.dataset.year = y;
-      b.innerHTML = `<span class="bz-diary-datefilter-year-name">${y}</span><span class="bz-diary-datefilter-year-cnt">${yearCount.get(y) || 0}</span>`;
-      b.addEventListener('click', () => {
-        // 两段式：点年份 → 只切换到该年的月份网格（临时值，不提交筛选）；
-        // 点月份才应用过滤并关闭。动效层走 light 档：只翻月份格
-        this.showDateFilter(y, true);
-      });
-      yearRow.appendChild(b);
-    });
-    card.appendChild(yearRow);
-
-    // 正在浏览年份的月份网格
-    if (viewYear && years.includes(viewYear)) {
-      const monthLabel = document.createElement('div');
-      monthLabel.className = 'bz-diary-datefilter-label';
-      monthLabel.textContent = '月份';
-      card.appendChild(monthLabel);
-      const monthRow = document.createElement('div');
-      monthRow.className = 'bz-diary-datefilter-months';
-      const monthCounts = new Map<string, number>();
-      this.entries
-        .filter((e) => e.date.startsWith(viewYear))
-        .forEach((e) => {
-          const m = e.date.slice(5, 7);
-          monthCounts.set(m, (monthCounts.get(m) || 0) + 1);
-        });
-      for (let i = 1; i <= 12; i++) {
-        const ms = String(i).padStart(2, '0');
-        const cnt = monthCounts.get(ms) || 0;
-        const isOn = cur?.year === viewYear && cur.month === ms;
-        const cardEl = document.createElement('button');
-        cardEl.className =
-          'bz-diary-datefilter-month' +
-          (cnt === 0 ? ' bz-diary-datefilter-month--empty' : '') +
-          (isOn ? ' bz-diary-datefilter-month--on' : '');
-        // 计数裸数字（同 chips 口径）；空月不写 0，靠虚线底自证
-        cardEl.innerHTML = `<span class="bz-diary-datefilter-month-name">${i}月</span><span class="bz-diary-datefilter-month-cnt">${cnt || ''}</span>`;
-        cardEl.addEventListener('click', () => {
-          if (cnt === 0) return;
-          motionChipPress(cardEl); // 动效层：台历格按压
-          // 点月份才提交筛选（年份本身只是浏览临时值）
-          this.selDateFilter = { year: viewYear, month: ms };
-          this.closeDateFilter();
-          this.renderAllMotioned();
-        });
-        monthRow.appendChild(cardEl);
+    if (this.toastTimer !== null) {
+      clearTimeout(this.toastTimer);
+      this.toastTimer = null;
+    }
+    if (this.modifyTimer !== null) {
+      clearTimeout(this.modifyTimer);
+      this.modifyTimer = null;
+    }
+    if (this.toolsRaf) cancelAnimationFrame(this.toolsRaf);
+    this.unsubscribeEvents();
+    this.unsubscribeVault();
+    if (this.flip) {
+      try {
+        this.flip.destroy();
+      } catch {
+        /* 忽略：销毁失败不阻断卸载 */
       }
-      card.appendChild(monthRow);
-    } else {
-      const hint = document.createElement('div');
-      hint.className = 'bz-diary-datefilter-hint';
-      hint.textContent = '点击年份查看该年各月';
-      card.appendChild(hint);
+      this.flip = null;
     }
-
-    wrap.appendChild(card);
-    // 遮罩点击关闭（点卡片外）
-    wrap.addEventListener('click', (e) => {
-      if (e.target === wrap) this.closeDateFilter();
-    });
-    return wrap;
-  }
-
-  private closeDateFilter() {
-    const el = this._dateFilterEl;
-    if (!el) return;
-    this._dateFilterEl = null; // 先摘引用：退场期间的二次关闭/重开都按「已关」走
-    // 动效层：台历合上再摘除（演出完 remove）；退场期间不吃指针、对读屏隐身
-    motionDateFilterOut(el, () => el.remove());
-    el.style.pointerEvents = 'none';
-    el.setAttribute('aria-hidden', 'true');
-  }
-
-  /** 搜索：toggle 搜索框（桌面/移动各一），输入过滤；打开/收起同步按钮高亮态 */
-  private toggleSearch(ui: typeof this.desk) {
-    const row = ui.searchRow;
-    const box = ui.searchBox;
-    const btn = ui.head.querySelector<HTMLElement>('[data-act="search"]');
-    if (!row || !box) return;
-    // DW11：双实例搜索框共享同一 searchKeyword，开/收时互相同步值（防显示与状态不一致）
-    const other = ui === this.desk ? this.mob : this.desk;
-    if (row.style.display === 'none') {
-      row.style.display = 'block';
-      motionSearchRow(row); // 动效层：搜索行纸条滑出
-      box.value = this.searchKeyword;
-      // 预填后派发 input：同步 uiSearch 内置清除钮显隐（效率#12 全域口径）；cancel 收掉
-      // 派生尾触——开框只恢复显示，不触发重刷
-      box.dispatchEvent(new Event('input', { bubbles: true }));
-      this._searchDebounced.cancel();
-      box.focus();
-      box.select();
-      btn?.classList.add('bz-diary-icon-btn--on');
-    } else {
-      // D-UI3：收起前取消防抖尾触——否则 250ms 内尾触落地把关键词写回 + 再 renderAll，
-      // 列表按一个不可见的词过滤（下次点开搜索框「自己长出了词」）。
-      // 置空后派发 input：同步清除钮显隐，随后的 cancel 收掉派生尾触
-      row.style.display = 'none';
-      box.value = '';
-      box.dispatchEvent(new Event('input', { bubbles: true }));
-      this.searchKeyword = '';
-      if (other?.searchBox) {
-        other.searchBox.value = '';
-        other.searchBox.dispatchEvent(new Event('input', { bubbles: true }));
-      }
-      this._searchDebounced.cancel();
-      this.renderAll();
-      btn?.classList.remove('bz-diary-icon-btn--on');
-    }
-  }
-
-  /** 效率#6「回到今天」钮已按用户要求移除（2026-09-19）：清筛选走 chips 行「全部」 */
-
-  /** App 实例（生产由主实现注入；测试 setApp——diary/app.ts 单例，与 diary 域同口径） */
-  private app(): App {
-    return getApp();
-  }
-
-  // ---------- 卸载 ----------
-  cleanup() {
-    this.closeDateFilter();
-    closeItemMenu();
-    motionTeardown(); // 动效层：摘全部延时编排 + 复位 boot 标志
-    this.teardownScrollers('desk');
-    this.teardownScrollers('mob');
-    this.unsubscribeVaultModify(); // DW3：摘 modify 订阅
-    this.unsubscribeUnlockEvents(); // 增强 #9：摘解锁状态订阅
-    this.unsubscribeWriteEvents(); // 写链路域事件：摘防抖回刷订阅
-    this.unsubscribeRefSync(); // issue 339：摘引用同步订阅
-    // 卸载收口：拖拽缩放句柄一并摘（root 随后移除，句柄不留悬空监听）
-    this.panelResizeDetach?.detach();
-    this.panelResizeDetach = null;
-    document.removeEventListener('keydown', this._onLbKeydown); // 增强 #1：摘方向键连看
-    if (this._mql && this._onMqChange) {
-      this._mql.removeEventListener('change', this._onMqChange); // issue 217 F3：摘断点切换
-      this._mql = null;
-      this._onMqChange = null;
-    }
-    if (this._scrollFixTimer !== null) {
-      clearTimeout(this._scrollFixTimer);
-      this._scrollFixTimer = null;
-    }
-    this.escUnregister?.unregister();
-    this.escUnregister = null;
-    this._ctxBound = { desk: false, mob: false };
-    this._wallEntries = [];
-    this._lbSeq = [];
-    this._lbSeqMain = null;
-    this._lbIdx = -1;
-    this._restore = null;
     this.encMediaCache.clear();
+    this.byEid.clear();
+    this.photoRefs = [];
+    this.photoIndex.clear();
+    this.pages = [];
+    this.entries = [];
     if (this.root) {
       this.root.remove();
       this.root = null;
     }
     this._initialized = false;
-    // 单例清空（对齐 password-vault AppController：cleanup 后 getInstance 重建）
     DiaryAppController.instance = null;
   }
+}
+
+/** CSS.escape 缺失时的兜底（jsdom 与本仓 mock 环境都得能选中 `data-eid`） */
+function cssEscape(s: string): string {
+  if (typeof CSS !== 'undefined' && typeof CSS.escape === 'function') return CSS.escape(s);
+  return s.replace(/["\\]/g, '\\$&');
 }
 
 // 便捷导入（供 index.ts / 测试）

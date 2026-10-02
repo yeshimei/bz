@@ -215,6 +215,8 @@ function toWallEntry(e: DiaryEntry, kind: WallEntry['kind'], dir: string): WallE
     text: stripMediaLinks(e.content),
     // 按原文顺序的内容段（issue 213：UI 段序渲染，文字不重复、媒体归位）
     segments: extractSegments(e.content),
+    // 附加元信息（ADR-0230）：影视/书库的展示余项——票根 meta/score、藏书票 author/category
+    extra: e.extra,
   };
 }
 

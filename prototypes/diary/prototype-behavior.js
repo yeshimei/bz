@@ -1,5 +1,5 @@
-/* 源指纹 f4c9fb3a7c075f15 · 仓内输入 78 个（校验见 tests/preview-freshness.test.ts） */
-/*#preview-inputs=["prototypes/diary/fake-sim.ts","prototypes/diary/fake/fake-obsidian.ts","src/bookshelf/data.ts","src/bookshelf/state.ts","src/cinema/state.ts","src/core/app.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/settings-btn-state.ts","src/core/settings-common.ts","src/core/settings-modal.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/help-tip.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/data.ts","src/diary/encrypt.ts","src/diary/index.ts","src/diary/motion.ts","src/diary/parser.ts","src/diary/render.ts","src/diary/repair.ts","src/diary/store.ts","src/diary/thumb-cache.ts","src/diary/ui.ts","src/diary/ui/datetime-picker.ts","src/diary/ui/dialogs.ts","src/diary/ui/entry-actions.ts","src/diary/ui/locator.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/motion.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/password-vault/data.ts"]*/
+/* 源指纹 e5a600ff39ec15c8 · 仓内输入 78 个（校验见 tests/preview-freshness.test.ts） */
+/*#preview-inputs=["prototypes/diary/fake-sim.ts","prototypes/diary/fake/fake-obsidian.ts","src/bookshelf/data.ts","src/bookshelf/state.ts","src/cinema/state.ts","src/core/app.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/settings-btn-state.ts","src/core/settings-common.ts","src/core/settings-modal.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/help-tip.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/data.ts","src/diary/encrypt.ts","src/diary/index.ts","src/diary/motion.ts","src/diary/parser.ts","src/diary/render.ts","src/diary/repair.ts","src/diary/store.ts","src/diary/ui.ts","src/diary/ui/datetime-picker.ts","src/diary/ui/dialogs.ts","src/diary/ui/entry-actions.ts","src/diary/ui/locator.ts","src/diary/vendor/page-flip.browser.js","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/motion.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/password-vault/data.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/diary/fake-sim.ts → window.BZW_diary（行为单源预览包，issue 245/ADR-0106） */
 var BZW_diary = (() => {
   var __create = Object.create;
@@ -42,9 +42,9 @@ var BZW_diary = (() => {
   ));
   var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
 
-  // node_modules/.pnpm/moment@2.30.1/node_modules/moment/moment.js
+  // ../../bz/node_modules/.pnpm/moment@2.30.1/node_modules/moment/moment.js
   var require_moment = __commonJS({
-    "node_modules/.pnpm/moment@2.30.1/node_modules/moment/moment.js"(exports, module) {
+    "../../bz/node_modules/.pnpm/moment@2.30.1/node_modules/moment/moment.js"(exports, module) {
       (function(global, factory) {
         typeof exports === "object" && typeof module !== "undefined" ? module.exports = factory() : typeof define === "function" && define.amd ? define(factory) : global.moment = factory();
       })(exports, function() {
@@ -5032,12 +5032,6 @@ var BZW_diary = (() => {
     }
     return shouldShowTime() ? target.format("YYYY-MM-DD HH:mm") : target.format("YYYY-MM-DD");
   }
-  function hash31(str) {
-    let h = 0;
-    const t = String(str || "");
-    for (let i = 0; i < t.length; i++) h = h * 31 + t.charCodeAt(i) >>> 0;
-    return h >>> 0;
-  }
   function debounce(fn, ms) {
     let t;
     const wrapped = (...args) => {
@@ -5314,6 +5308,1007 @@ var BZW_diary = (() => {
     }
   });
 
+  // src/diary/vendor/page-flip.browser.js
+  var require_page_flip_browser = __commonJS({
+    "src/diary/vendor/page-flip.browser.js"(exports, module) {
+      !function(t, e) {
+        "object" == typeof exports && "undefined" != typeof module ? e(exports) : "function" == typeof define && define.amd ? define(["exports"], e) : e((t = t || self).St = {});
+      }(exports, function(t) {
+        "use strict";
+        class e {
+          constructor(t2, e2) {
+            this.state = { angle: 0, area: [], position: { x: 0, y: 0 }, hardAngle: 0, hardDrawingAngle: 0 }, this.createdDensity = e2, this.nowDrawingDensity = this.createdDensity, this.render = t2;
+          }
+          setDensity(t2) {
+            this.createdDensity = t2, this.nowDrawingDensity = t2;
+          }
+          setDrawingDensity(t2) {
+            this.nowDrawingDensity = t2;
+          }
+          setPosition(t2) {
+            this.state.position = t2;
+          }
+          setAngle(t2) {
+            this.state.angle = t2;
+          }
+          setArea(t2) {
+            this.state.area = t2;
+          }
+          setHardDrawingAngle(t2) {
+            this.state.hardDrawingAngle = t2;
+          }
+          setHardAngle(t2) {
+            this.state.hardAngle = t2, this.state.hardDrawingAngle = t2;
+          }
+          setOrientation(t2) {
+            this.orientation = t2;
+          }
+          getDrawingDensity() {
+            return this.nowDrawingDensity;
+          }
+          getDensity() {
+            return this.createdDensity;
+          }
+          getHardAngle() {
+            return this.state.hardAngle;
+          }
+        }
+        class i extends e {
+          constructor(t2, e2, i2) {
+            super(t2, i2), this.image = null, this.isLoad = false, this.loadingAngle = 0, this.image = new Image(), this.image.src = e2;
+          }
+          draw(t2) {
+            const e2 = this.render.getContext(), i2 = this.render.convertToGlobal(this.state.position), s2 = this.render.getRect().pageWidth, n2 = this.render.getRect().height;
+            e2.save(), e2.translate(i2.x, i2.y), e2.beginPath();
+            for (let t3 of this.state.area) null !== t3 && (t3 = this.render.convertToGlobal(t3), e2.lineTo(t3.x - i2.x, t3.y - i2.y));
+            e2.rotate(this.state.angle), e2.clip(), this.isLoad ? e2.drawImage(this.image, 0, 0, s2, n2) : this.drawLoader(e2, { x: 0, y: 0 }, s2, n2), e2.restore();
+          }
+          simpleDraw(t2) {
+            const e2 = this.render.getRect(), i2 = this.render.getContext(), s2 = e2.pageWidth, n2 = e2.height, h2 = 1 === t2 ? e2.left + e2.pageWidth : e2.left, r2 = e2.top;
+            this.isLoad ? i2.drawImage(this.image, h2, r2, s2, n2) : this.drawLoader(i2, { x: h2, y: r2 }, s2, n2);
+          }
+          drawLoader(t2, e2, i2, s2) {
+            t2.beginPath(), t2.strokeStyle = "rgb(200, 200, 200)", t2.fillStyle = "rgb(255, 255, 255)", t2.lineWidth = 1, t2.rect(e2.x + 1, e2.y + 1, i2 - 1, s2 - 1), t2.stroke(), t2.fill();
+            const n2 = { x: e2.x + i2 / 2, y: e2.y + s2 / 2 };
+            t2.beginPath(), t2.lineWidth = 10, t2.arc(n2.x, n2.y, 20, this.loadingAngle, 3 * Math.PI / 2 + this.loadingAngle), t2.stroke(), t2.closePath(), this.loadingAngle += 0.07, this.loadingAngle >= 2 * Math.PI && (this.loadingAngle = 0);
+          }
+          load() {
+            this.isLoad || (this.image.onload = () => {
+              this.isLoad = true;
+            });
+          }
+          newTemporaryCopy() {
+            return this;
+          }
+          getTemporaryCopy() {
+            return this;
+          }
+          hideTemporaryCopy() {
+          }
+        }
+        class s {
+          constructor(t2, e2) {
+            this.pages = [], this.currentPageIndex = 0, this.currentSpreadIndex = 0, this.landscapeSpread = [], this.portraitSpread = [], this.render = e2, this.app = t2, this.currentPageIndex = 0, this.isShowCover = this.app.getSettings().showCover;
+          }
+          destroy() {
+            this.pages = [];
+          }
+          createSpread() {
+            this.landscapeSpread = [], this.portraitSpread = [];
+            for (let t3 = 0; t3 < this.pages.length; t3++) this.portraitSpread.push([t3]);
+            let t2 = 0;
+            this.isShowCover && (this.pages[0].setDensity("hard"), this.landscapeSpread.push([t2]), t2++);
+            for (let e2 = t2; e2 < this.pages.length; e2 += 2) e2 < this.pages.length - 1 ? this.landscapeSpread.push([e2, e2 + 1]) : (this.landscapeSpread.push([e2]), this.pages[e2].setDensity("hard"));
+          }
+          getSpread() {
+            return "landscape" === this.render.getOrientation() ? this.landscapeSpread : this.portraitSpread;
+          }
+          getSpreadIndexByPage(t2) {
+            const e2 = this.getSpread();
+            for (let i2 = 0; i2 < e2.length; i2++) if (t2 === e2[i2][0] || t2 === e2[i2][1]) return i2;
+            return null;
+          }
+          getPageCount() {
+            return this.pages.length;
+          }
+          getPages() {
+            return this.pages;
+          }
+          getPage(t2) {
+            if (t2 >= 0 && t2 < this.pages.length) return this.pages[t2];
+            throw new Error("Invalid page number");
+          }
+          nextBy(t2) {
+            const e2 = this.pages.indexOf(t2);
+            return e2 < this.pages.length - 1 ? this.pages[e2 + 1] : null;
+          }
+          prevBy(t2) {
+            const e2 = this.pages.indexOf(t2);
+            return e2 > 0 ? this.pages[e2 - 1] : null;
+          }
+          getFlippingPage(t2) {
+            const e2 = this.currentSpreadIndex;
+            if ("portrait" === this.render.getOrientation()) return 0 === t2 ? this.pages[e2].newTemporaryCopy() : this.pages[e2 - 1];
+            {
+              const i2 = 0 === t2 ? this.getSpread()[e2 + 1] : this.getSpread()[e2 - 1];
+              return 1 === i2.length || 0 === t2 ? this.pages[i2[0]] : this.pages[i2[1]];
+            }
+          }
+          getBottomPage(t2) {
+            const e2 = this.currentSpreadIndex;
+            if ("portrait" === this.render.getOrientation()) return 0 === t2 ? this.pages[e2 + 1] : this.pages[e2 - 1];
+            {
+              const i2 = 0 === t2 ? this.getSpread()[e2 + 1] : this.getSpread()[e2 - 1];
+              return 1 === i2.length ? this.pages[i2[0]] : 0 === t2 ? this.pages[i2[1]] : this.pages[i2[0]];
+            }
+          }
+          showNext() {
+            this.currentSpreadIndex < this.getSpread().length && (this.currentSpreadIndex++, this.showSpread());
+          }
+          showPrev() {
+            this.currentSpreadIndex > 0 && (this.currentSpreadIndex--, this.showSpread());
+          }
+          getCurrentPageIndex() {
+            return this.currentPageIndex;
+          }
+          show(t2 = null) {
+            if (null === t2 && (t2 = this.currentPageIndex), t2 < 0 || t2 >= this.pages.length) return;
+            const e2 = this.getSpreadIndexByPage(t2);
+            null !== e2 && (this.currentSpreadIndex = e2, this.showSpread());
+          }
+          getCurrentSpreadIndex() {
+            return this.currentSpreadIndex;
+          }
+          setCurrentSpreadIndex(t2) {
+            if (!(t2 >= 0 && t2 < this.getSpread().length)) throw new Error("Invalid page");
+            this.currentSpreadIndex = t2;
+          }
+          showSpread() {
+            const t2 = this.getSpread()[this.currentSpreadIndex];
+            2 === t2.length ? (this.render.setLeftPage(this.pages[t2[0]]), this.render.setRightPage(this.pages[t2[1]])) : "landscape" === this.render.getOrientation() && t2[0] === this.pages.length - 1 ? (this.render.setLeftPage(this.pages[t2[0]]), this.render.setRightPage(null)) : (this.render.setLeftPage(null), this.render.setRightPage(this.pages[t2[0]])), this.currentPageIndex = t2[0], this.app.updatePageIndex(this.currentPageIndex);
+          }
+        }
+        class n extends s {
+          constructor(t2, e2, i2) {
+            super(t2, e2), this.imagesHref = i2;
+          }
+          load() {
+            for (const t2 of this.imagesHref) {
+              const e2 = new i(this.render, t2, "soft");
+              e2.load(), this.pages.push(e2);
+            }
+            this.createSpread();
+          }
+        }
+        class h {
+          static GetDistanceBetweenTwoPoint(t2, e2) {
+            return null === t2 || null === e2 ? 1 / 0 : Math.sqrt(Math.pow(e2.x - t2.x, 2) + Math.pow(e2.y - t2.y, 2));
+          }
+          static GetSegmentLength(t2) {
+            return h.GetDistanceBetweenTwoPoint(t2[0], t2[1]);
+          }
+          static GetAngleBetweenTwoLine(t2, e2) {
+            const i2 = t2[0].y - t2[1].y, s2 = e2[0].y - e2[1].y, n2 = t2[1].x - t2[0].x, h2 = e2[1].x - e2[0].x;
+            return Math.acos((i2 * s2 + n2 * h2) / (Math.sqrt(i2 * i2 + n2 * n2) * Math.sqrt(s2 * s2 + h2 * h2)));
+          }
+          static PointInRect(t2, e2) {
+            return null === e2 ? null : e2.x >= t2.left && e2.x <= t2.width + t2.left && e2.y >= t2.top && e2.y <= t2.top + t2.height ? e2 : null;
+          }
+          static GetRotatedPoint(t2, e2, i2) {
+            return { x: t2.x * Math.cos(i2) + t2.y * Math.sin(i2) + e2.x, y: t2.y * Math.cos(i2) - t2.x * Math.sin(i2) + e2.y };
+          }
+          static LimitPointToCircle(t2, e2, i2) {
+            if (h.GetDistanceBetweenTwoPoint(t2, i2) <= e2) return i2;
+            const s2 = t2.x, n2 = t2.y, r2 = i2.x, o2 = i2.y;
+            let a2 = Math.sqrt(Math.pow(e2, 2) * Math.pow(s2 - r2, 2) / (Math.pow(s2 - r2, 2) + Math.pow(n2 - o2, 2))) + s2;
+            i2.x < 0 && (a2 *= -1);
+            let g2 = (a2 - s2) * (n2 - o2) / (s2 - r2) + n2;
+            return s2 - r2 + n2 === 0 && (g2 = e2), { x: a2, y: g2 };
+          }
+          static GetIntersectBetweenTwoSegment(t2, e2, i2) {
+            return h.PointInRect(t2, h.GetIntersectBeetwenTwoLine(e2, i2));
+          }
+          static GetIntersectBeetwenTwoLine(t2, e2) {
+            const i2 = t2[0].y - t2[1].y, s2 = e2[0].y - e2[1].y, n2 = t2[1].x - t2[0].x, h2 = e2[1].x - e2[0].x, r2 = t2[0].x * t2[1].y - t2[1].x * t2[0].y, o2 = e2[0].x * e2[1].y - e2[1].x * e2[0].y, a2 = i2 * o2 - s2 * r2, g2 = n2 * o2 - h2 * r2, l2 = -(r2 * h2 - o2 * n2) / (i2 * h2 - s2 * n2), d2 = -(i2 * o2 - s2 * r2) / (i2 * h2 - s2 * n2);
+            if (isFinite(l2) && isFinite(d2)) return { x: l2, y: d2 };
+            if (Math.abs(a2 - g2) < 0.1) throw new Error("Segment included");
+            return null;
+          }
+          static GetCordsFromTwoPoint(t2, e2) {
+            const i2 = Math.abs(t2.x - e2.x), s2 = Math.abs(t2.y - e2.y), n2 = Math.max(i2, s2), h2 = [t2];
+            function r2(t3, e3, i3, s3, n3) {
+              return e3 > t3 ? t3 + n3 * (i3 / s3) : e3 < t3 ? t3 - n3 * (i3 / s3) : t3;
+            }
+            for (let o2 = 1; o2 <= n2; o2 += 1) h2.push({ x: r2(t2.x, e2.x, i2, n2, o2), y: r2(t2.y, e2.y, s2, n2, o2) });
+            return h2;
+          }
+        }
+        class r extends e {
+          constructor(t2, e2, i2) {
+            super(t2, i2), this.copiedElement = null, this.temporaryCopy = null, this.isLoad = false, this.element = e2, this.element.classList.add("stf__item"), this.element.classList.add("--" + i2);
+          }
+          newTemporaryCopy() {
+            return "hard" === this.nowDrawingDensity ? this : (null === this.temporaryCopy && (this.copiedElement = this.element.cloneNode(true), this.element.parentElement.appendChild(this.copiedElement), this.temporaryCopy = new r(this.render, this.copiedElement, this.nowDrawingDensity)), this.getTemporaryCopy());
+          }
+          getTemporaryCopy() {
+            return this.temporaryCopy;
+          }
+          hideTemporaryCopy() {
+            null !== this.temporaryCopy && (this.copiedElement.remove(), this.copiedElement = null, this.temporaryCopy = null);
+          }
+          draw(t2) {
+            const e2 = t2 || this.nowDrawingDensity, i2 = this.render.convertToGlobal(this.state.position), s2 = this.render.getRect().pageWidth, n2 = this.render.getRect().height;
+            this.element.classList.remove("--simple");
+            const h2 = `
+            display: block;
+            z-index: ${this.element.style.zIndex};
+            left: 0;
+            top: 0;
+            width: ${s2}px;
+            height: ${n2}px;
+        `;
+            "hard" === e2 ? this.drawHard(h2) : this.drawSoft(i2, h2);
+          }
+          drawHard(t2 = "") {
+            const e2 = this.render.getRect().left + this.render.getRect().width / 2, i2 = this.state.hardDrawingAngle, s2 = t2 + "\n                backface-visibility: hidden;\n                -webkit-backface-visibility: hidden;\n                clip-path: none;\n                -webkit-clip-path: none;\n            " + (0 === this.orientation ? `transform-origin: ${this.render.getRect().pageWidth}px 0; 
+                   transform: translate3d(0, 0, 0) rotateY(${i2}deg);` : `transform-origin: 0 0; 
+                   transform: translate3d(${e2}px, 0, 0) rotateY(${i2}deg);`);
+            this.element.style.cssText = s2;
+          }
+          drawSoft(t2, e2 = "") {
+            let i2 = "polygon( ";
+            for (const t3 of this.state.area) if (null !== t3) {
+              let e3 = 1 === this.render.getDirection() ? { x: -t3.x + this.state.position.x, y: t3.y - this.state.position.y } : { x: t3.x - this.state.position.x, y: t3.y - this.state.position.y };
+              e3 = h.GetRotatedPoint(e3, { x: 0, y: 0 }, this.state.angle), i2 += e3.x + "px " + e3.y + "px, ";
+            }
+            i2 = i2.slice(0, -2), i2 += ")";
+            const s2 = e2 + `transform-origin: 0 0; clip-path: ${i2}; -webkit-clip-path: ${i2};` + (this.render.isSafari() && 0 === this.state.angle ? `transform: translate(${t2.x}px, ${t2.y}px);` : `transform: translate3d(${t2.x}px, ${t2.y}px, 0) rotate(${this.state.angle}rad);`);
+            this.element.style.cssText = s2;
+          }
+          simpleDraw(t2) {
+            const e2 = this.render.getRect(), i2 = e2.pageWidth, s2 = e2.height, n2 = 1 === t2 ? e2.left + e2.pageWidth : e2.left, h2 = e2.top;
+            this.element.classList.add("--simple"), this.element.style.cssText = `
+            position: absolute; 
+            display: block; 
+            height: ${s2}px; 
+            left: ${n2}px; 
+            top: ${h2}px; 
+            width: ${i2}px; 
+            z-index: ${this.render.getSettings().startZIndex + 1};`;
+          }
+          getElement() {
+            return this.element;
+          }
+          load() {
+            this.isLoad = true;
+          }
+          setOrientation(t2) {
+            super.setOrientation(t2), this.element.classList.remove("--left", "--right"), this.element.classList.add(1 === t2 ? "--right" : "--left");
+          }
+          setDrawingDensity(t2) {
+            this.element.classList.remove("--soft", "--hard"), this.element.classList.add("--" + t2), super.setDrawingDensity(t2);
+          }
+        }
+        class o extends s {
+          constructor(t2, e2, i2, s2) {
+            super(t2, e2), this.element = i2, this.pagesElement = s2;
+          }
+          load() {
+            for (const t2 of this.pagesElement) {
+              const e2 = new r(this.render, t2, "hard" === t2.dataset.density ? "hard" : "soft");
+              e2.load(), this.pages.push(e2);
+            }
+            this.createSpread();
+          }
+        }
+        class a {
+          constructor(t2, e2, i2, s2) {
+            this.direction = t2, this.corner = e2, this.topIntersectPoint = null, this.sideIntersectPoint = null, this.bottomIntersectPoint = null, this.pageWidth = parseInt(i2, 10), this.pageHeight = parseInt(s2, 10);
+          }
+          calc(t2) {
+            try {
+              return this.position = this.calcAngleAndPosition(t2), this.calculateIntersectPoint(this.position), true;
+            } catch (t3) {
+              return false;
+            }
+          }
+          getFlippingClipArea() {
+            const t2 = [];
+            let e2 = false;
+            return t2.push(this.rect.topLeft), t2.push(this.topIntersectPoint), null === this.sideIntersectPoint ? e2 = true : (t2.push(this.sideIntersectPoint), null === this.bottomIntersectPoint && (e2 = false)), t2.push(this.bottomIntersectPoint), (e2 || "bottom" === this.corner) && t2.push(this.rect.bottomLeft), t2;
+          }
+          getBottomClipArea() {
+            const t2 = [];
+            return t2.push(this.topIntersectPoint), "top" === this.corner ? t2.push({ x: this.pageWidth, y: 0 }) : (null !== this.topIntersectPoint && t2.push({ x: this.pageWidth, y: 0 }), t2.push({ x: this.pageWidth, y: this.pageHeight })), null !== this.sideIntersectPoint ? h.GetDistanceBetweenTwoPoint(this.sideIntersectPoint, this.topIntersectPoint) >= 10 && t2.push(this.sideIntersectPoint) : "top" === this.corner && t2.push({ x: this.pageWidth, y: this.pageHeight }), t2.push(this.bottomIntersectPoint), t2.push(this.topIntersectPoint), t2;
+          }
+          getAngle() {
+            return 0 === this.direction ? -this.angle : this.angle;
+          }
+          getRect() {
+            return this.rect;
+          }
+          getPosition() {
+            return this.position;
+          }
+          getActiveCorner() {
+            return 0 === this.direction ? this.rect.topLeft : this.rect.topRight;
+          }
+          getDirection() {
+            return this.direction;
+          }
+          getFlippingProgress() {
+            return Math.abs((this.position.x - this.pageWidth) / (2 * this.pageWidth) * 100);
+          }
+          getCorner() {
+            return this.corner;
+          }
+          getBottomPagePosition() {
+            return 1 === this.direction ? { x: this.pageWidth, y: 0 } : { x: 0, y: 0 };
+          }
+          getShadowStartPoint() {
+            return "top" === this.corner ? this.topIntersectPoint : null !== this.sideIntersectPoint ? this.sideIntersectPoint : this.topIntersectPoint;
+          }
+          getShadowAngle() {
+            const t2 = h.GetAngleBetweenTwoLine(this.getSegmentToShadowLine(), [{ x: 0, y: 0 }, { x: this.pageWidth, y: 0 }]);
+            return 0 === this.direction ? t2 : Math.PI - t2;
+          }
+          calcAngleAndPosition(t2) {
+            let e2 = t2;
+            if (this.updateAngleAndGeometry(e2), e2 = "top" === this.corner ? this.checkPositionAtCenterLine(e2, { x: 0, y: 0 }, { x: 0, y: this.pageHeight }) : this.checkPositionAtCenterLine(e2, { x: 0, y: this.pageHeight }, { x: 0, y: 0 }), Math.abs(e2.x - this.pageWidth) < 1 && Math.abs(e2.y) < 1) throw new Error("Point is too small");
+            return e2;
+          }
+          updateAngleAndGeometry(t2) {
+            this.angle = this.calculateAngle(t2), this.rect = this.getPageRect(t2);
+          }
+          calculateAngle(t2) {
+            const e2 = this.pageWidth - t2.x + 1, i2 = "bottom" === this.corner ? this.pageHeight - t2.y : t2.y;
+            let s2 = 2 * Math.acos(e2 / Math.sqrt(i2 * i2 + e2 * e2));
+            i2 < 0 && (s2 = -s2);
+            const n2 = Math.PI - s2;
+            if (!isFinite(s2) || n2 >= 0 && n2 < 3e-3) throw new Error("The G point is too small");
+            return "bottom" === this.corner && (s2 = -s2), s2;
+          }
+          getPageRect(t2) {
+            return "top" === this.corner ? this.getRectFromBasePoint([{ x: 0, y: 0 }, { x: this.pageWidth, y: 0 }, { x: 0, y: this.pageHeight }, { x: this.pageWidth, y: this.pageHeight }], t2) : this.getRectFromBasePoint([{ x: 0, y: -this.pageHeight }, { x: this.pageWidth, y: -this.pageHeight }, { x: 0, y: 0 }, { x: this.pageWidth, y: 0 }], t2);
+          }
+          getRectFromBasePoint(t2, e2) {
+            return { topLeft: this.getRotatedPoint(t2[0], e2), topRight: this.getRotatedPoint(t2[1], e2), bottomLeft: this.getRotatedPoint(t2[2], e2), bottomRight: this.getRotatedPoint(t2[3], e2) };
+          }
+          getRotatedPoint(t2, e2) {
+            return { x: t2.x * Math.cos(this.angle) + t2.y * Math.sin(this.angle) + e2.x, y: t2.y * Math.cos(this.angle) - t2.x * Math.sin(this.angle) + e2.y };
+          }
+          calculateIntersectPoint(t2) {
+            const e2 = { left: -1, top: -1, width: this.pageWidth + 2, height: this.pageHeight + 2 };
+            "top" === this.corner ? (this.topIntersectPoint = h.GetIntersectBetweenTwoSegment(e2, [t2, this.rect.topRight], [{ x: 0, y: 0 }, { x: this.pageWidth, y: 0 }]), this.sideIntersectPoint = h.GetIntersectBetweenTwoSegment(e2, [t2, this.rect.bottomLeft], [{ x: this.pageWidth, y: 0 }, { x: this.pageWidth, y: this.pageHeight }]), this.bottomIntersectPoint = h.GetIntersectBetweenTwoSegment(e2, [this.rect.bottomLeft, this.rect.bottomRight], [{ x: 0, y: this.pageHeight }, { x: this.pageWidth, y: this.pageHeight }])) : (this.topIntersectPoint = h.GetIntersectBetweenTwoSegment(e2, [this.rect.topLeft, this.rect.topRight], [{ x: 0, y: 0 }, { x: this.pageWidth, y: 0 }]), this.sideIntersectPoint = h.GetIntersectBetweenTwoSegment(e2, [t2, this.rect.topLeft], [{ x: this.pageWidth, y: 0 }, { x: this.pageWidth, y: this.pageHeight }]), this.bottomIntersectPoint = h.GetIntersectBetweenTwoSegment(e2, [this.rect.bottomLeft, this.rect.bottomRight], [{ x: 0, y: this.pageHeight }, { x: this.pageWidth, y: this.pageHeight }]));
+          }
+          checkPositionAtCenterLine(t2, e2, i2) {
+            let s2 = t2;
+            const n2 = h.LimitPointToCircle(e2, this.pageWidth, s2);
+            s2 !== n2 && (s2 = n2, this.updateAngleAndGeometry(s2));
+            const r2 = Math.sqrt(Math.pow(this.pageWidth, 2) + Math.pow(this.pageHeight, 2));
+            let o2 = this.rect.bottomRight, a2 = this.rect.topLeft;
+            if ("bottom" === this.corner && (o2 = this.rect.topRight, a2 = this.rect.bottomLeft), o2.x <= 0) {
+              const t3 = h.LimitPointToCircle(i2, r2, a2);
+              t3 !== s2 && (s2 = t3, this.updateAngleAndGeometry(s2));
+            }
+            return s2;
+          }
+          getSegmentToShadowLine() {
+            const t2 = this.getShadowStartPoint();
+            return [t2, t2 !== this.sideIntersectPoint && null !== this.sideIntersectPoint ? this.sideIntersectPoint : this.bottomIntersectPoint];
+          }
+        }
+        class g {
+          constructor(t2, e2) {
+            this.flippingPage = null, this.bottomPage = null, this.calc = null, this.state = "read", this.render = t2, this.app = e2;
+          }
+          fold(t2) {
+            this.setState("user_fold"), null === this.calc && this.start(t2), this.do(this.render.convertToPage(t2));
+          }
+          flip(t2) {
+            if (this.app.getSettings().disableFlipByClick && !this.isPointOnCorners(t2)) return;
+            if (null !== this.calc && this.render.finishAnimation(), !this.start(t2)) return;
+            const e2 = this.getBoundsRect();
+            this.setState("flipping");
+            const i2 = e2.height / 10, s2 = "bottom" === this.calc.getCorner() ? e2.height - i2 : i2, n2 = "bottom" === this.calc.getCorner() ? e2.height : 0;
+            this.calc.calc({ x: e2.pageWidth - i2, y: s2 }), this.animateFlippingTo({ x: e2.pageWidth - i2, y: s2 }, { x: -e2.pageWidth, y: n2 }, true);
+          }
+          start(t2) {
+            this.reset();
+            const e2 = this.render.convertToBook(t2), i2 = this.getBoundsRect(), s2 = this.getDirectionByPoint(e2), n2 = e2.y >= i2.height / 2 ? "bottom" : "top";
+            if (!this.checkDirection(s2)) return false;
+            try {
+              if (this.flippingPage = this.app.getPageCollection().getFlippingPage(s2), this.bottomPage = this.app.getPageCollection().getBottomPage(s2), "landscape" === this.render.getOrientation()) if (1 === s2) {
+                const t3 = this.app.getPageCollection().nextBy(this.flippingPage);
+                null !== t3 && this.flippingPage.getDensity() !== t3.getDensity() && (this.flippingPage.setDrawingDensity("hard"), t3.setDrawingDensity("hard"));
+              } else {
+                const t3 = this.app.getPageCollection().prevBy(this.flippingPage);
+                null !== t3 && this.flippingPage.getDensity() !== t3.getDensity() && (this.flippingPage.setDrawingDensity("hard"), t3.setDrawingDensity("hard"));
+              }
+              return this.render.setDirection(s2), this.calc = new a(s2, n2, i2.pageWidth.toString(10), i2.height.toString(10)), true;
+            } catch (t3) {
+              return false;
+            }
+          }
+          do(t2) {
+            if (null !== this.calc && this.calc.calc(t2)) {
+              const t3 = this.calc.getFlippingProgress();
+              this.bottomPage.setArea(this.calc.getBottomClipArea()), this.bottomPage.setPosition(this.calc.getBottomPagePosition()), this.bottomPage.setAngle(0), this.bottomPage.setHardAngle(0), this.flippingPage.setArea(this.calc.getFlippingClipArea()), this.flippingPage.setPosition(this.calc.getActiveCorner()), this.flippingPage.setAngle(this.calc.getAngle()), 0 === this.calc.getDirection() ? this.flippingPage.setHardAngle(90 * (200 - 2 * t3) / 100) : this.flippingPage.setHardAngle(-90 * (200 - 2 * t3) / 100), this.render.setPageRect(this.calc.getRect()), this.render.setBottomPage(this.bottomPage), this.render.setFlippingPage(this.flippingPage), this.render.setShadowData(this.calc.getShadowStartPoint(), this.calc.getShadowAngle(), t3, this.calc.getDirection());
+            }
+          }
+          flipToPage(t2, e2) {
+            const i2 = this.app.getPageCollection().getCurrentSpreadIndex(), s2 = this.app.getPageCollection().getSpreadIndexByPage(t2);
+            try {
+              s2 > i2 && (this.app.getPageCollection().setCurrentSpreadIndex(s2 - 1), this.flipNext(e2)), s2 < i2 && (this.app.getPageCollection().setCurrentSpreadIndex(s2 + 1), this.flipPrev(e2));
+            } catch (t3) {
+            }
+          }
+          flipNext(t2) {
+            this.flip({ x: this.render.getRect().left + 2 * this.render.getRect().pageWidth - 10, y: "top" === t2 ? 1 : this.render.getRect().height - 2 });
+          }
+          flipPrev(t2) {
+            this.flip({ x: 10, y: "top" === t2 ? 1 : this.render.getRect().height - 2 });
+          }
+          stopMove() {
+            if (null === this.calc) return;
+            const t2 = this.calc.getPosition(), e2 = this.getBoundsRect(), i2 = "bottom" === this.calc.getCorner() ? e2.height : 0;
+            t2.x <= 0 ? this.animateFlippingTo(t2, { x: -e2.pageWidth, y: i2 }, true) : this.animateFlippingTo(t2, { x: e2.pageWidth, y: i2 }, false);
+          }
+          showCorner(t2) {
+            if (!this.checkState("read", "fold_corner")) return;
+            const e2 = this.getBoundsRect(), i2 = e2.pageWidth;
+            if (this.isPointOnCorners(t2)) if (null === this.calc) {
+              if (!this.start(t2)) return;
+              this.setState("fold_corner"), this.calc.calc({ x: i2 - 1, y: 1 });
+              const s2 = 50, n2 = "bottom" === this.calc.getCorner() ? e2.height - 1 : 1, h2 = "bottom" === this.calc.getCorner() ? e2.height - s2 : s2;
+              this.animateFlippingTo({ x: i2 - 1, y: n2 }, { x: i2 - s2, y: h2 }, false, false);
+            } else this.do(this.render.convertToPage(t2));
+            else this.setState("read"), this.render.finishAnimation(), this.stopMove();
+          }
+          animateFlippingTo(t2, e2, i2, s2 = true) {
+            const n2 = h.GetCordsFromTwoPoint(t2, e2), r2 = [];
+            for (const t3 of n2) r2.push(() => this.do(t3));
+            const o2 = this.getAnimationDuration(n2.length);
+            this.render.startAnimation(r2, o2, () => {
+              this.calc && (i2 && (1 === this.calc.getDirection() ? this.app.turnToPrevPage() : this.app.turnToNextPage()), s2 && (this.render.setBottomPage(null), this.render.setFlippingPage(null), this.render.clearShadow(), this.setState("read"), this.reset()));
+            });
+          }
+          getCalculation() {
+            return this.calc;
+          }
+          getState() {
+            return this.state;
+          }
+          setState(t2) {
+            this.state !== t2 && (this.app.updateState(t2), this.state = t2);
+          }
+          getDirectionByPoint(t2) {
+            const e2 = this.getBoundsRect();
+            if ("portrait" === this.render.getOrientation()) {
+              if (t2.x - e2.pageWidth <= e2.width / 5) return 1;
+            } else if (t2.x < e2.width / 2) return 1;
+            return 0;
+          }
+          getAnimationDuration(t2) {
+            const e2 = this.app.getSettings().flippingTime;
+            return t2 >= 1e3 ? e2 : t2 / 1e3 * e2;
+          }
+          checkDirection(t2) {
+            return 0 === t2 ? this.app.getCurrentPageIndex() < this.app.getPageCount() - 1 : this.app.getCurrentPageIndex() >= 1;
+          }
+          reset() {
+            this.calc = null, this.flippingPage = null, this.bottomPage = null;
+          }
+          getBoundsRect() {
+            return this.render.getRect();
+          }
+          checkState(...t2) {
+            for (const e2 of t2) if (this.state === e2) return true;
+            return false;
+          }
+          isPointOnCorners(t2) {
+            const e2 = this.getBoundsRect(), i2 = e2.pageWidth, s2 = Math.sqrt(Math.pow(i2, 2) + Math.pow(e2.height, 2)) / 5, n2 = this.render.convertToBook(t2);
+            return n2.x > 0 && n2.y > 0 && n2.x < e2.width && n2.y < e2.height && (n2.x < s2 || n2.x > e2.width - s2) && (n2.y < s2 || n2.y > e2.height - s2);
+          }
+        }
+        class l {
+          constructor(t2, e2) {
+            this.leftPage = null, this.rightPage = null, this.flippingPage = null, this.bottomPage = null, this.direction = null, this.orientation = null, this.shadow = null, this.animation = null, this.pageRect = null, this.boundsRect = null, this.timer = 0, this.safari = false, this.setting = e2, this.app = t2;
+            const i2 = new RegExp("Version\\/[\\d\\.]+.*Safari/");
+            this.safari = null !== i2.exec(window.navigator.userAgent);
+          }
+          render(t2) {
+            if (null !== this.animation) {
+              const e2 = Math.round((t2 - this.animation.startedAt) / this.animation.durationFrame);
+              e2 < this.animation.frames.length ? this.animation.frames[e2]() : (this.animation.onAnimateEnd(), this.animation = null);
+            }
+            this.timer = t2, this.drawFrame();
+          }
+          start() {
+            this.update();
+            const t2 = (e2) => {
+              this.render(e2), requestAnimationFrame(t2);
+            };
+            requestAnimationFrame(t2);
+          }
+          startAnimation(t2, e2, i2) {
+            this.finishAnimation(), this.animation = { frames: t2, duration: e2, durationFrame: e2 / t2.length, onAnimateEnd: i2, startedAt: this.timer };
+          }
+          finishAnimation() {
+            null !== this.animation && (this.animation.frames[this.animation.frames.length - 1](), null !== this.animation.onAnimateEnd && this.animation.onAnimateEnd()), this.animation = null;
+          }
+          update() {
+            this.boundsRect = null;
+            const t2 = this.calculateBoundsRect();
+            this.orientation !== t2 && (this.orientation = t2, this.app.updateOrientation(t2));
+          }
+          calculateBoundsRect() {
+            let t2 = "landscape";
+            const e2 = this.getBlockWidth(), i2 = e2 / 2, s2 = this.getBlockHeight() / 2, n2 = this.setting.width / this.setting.height;
+            let h2 = this.setting.width, r2 = this.setting.height, o2 = i2 - h2;
+            return "stretch" === this.setting.size ? (e2 < 2 * this.setting.minWidth && this.app.getSettings().usePortrait && (t2 = "portrait"), h2 = "portrait" === t2 ? this.getBlockWidth() : this.getBlockWidth() / 2, h2 > this.setting.maxWidth && (h2 = this.setting.maxWidth), r2 = h2 / n2, r2 > this.getBlockHeight() && (r2 = this.getBlockHeight(), h2 = r2 * n2), o2 = "portrait" === t2 ? i2 - h2 / 2 - h2 : i2 - h2) : e2 < 2 * h2 && this.app.getSettings().usePortrait && (t2 = "portrait", o2 = i2 - h2 / 2 - h2), this.boundsRect = { left: o2, top: s2 - r2 / 2, width: 2 * h2, height: r2, pageWidth: h2 }, t2;
+          }
+          setShadowData(t2, e2, i2, s2) {
+            if (!this.app.getSettings().drawShadow) return;
+            const n2 = 100 * this.getSettings().maxShadowOpacity;
+            this.shadow = { pos: t2, angle: e2, width: 3 * this.getRect().pageWidth / 4 * i2 / 100, opacity: (100 - i2) * n2 / 100 / 100, direction: s2, progress: 2 * i2 };
+          }
+          clearShadow() {
+            this.shadow = null;
+          }
+          getBlockWidth() {
+            return this.app.getUI().getDistElement().offsetWidth;
+          }
+          getBlockHeight() {
+            return this.app.getUI().getDistElement().offsetHeight;
+          }
+          getDirection() {
+            return this.direction;
+          }
+          getRect() {
+            return null === this.boundsRect && this.calculateBoundsRect(), this.boundsRect;
+          }
+          getSettings() {
+            return this.app.getSettings();
+          }
+          getOrientation() {
+            return this.orientation;
+          }
+          setPageRect(t2) {
+            this.pageRect = t2;
+          }
+          setDirection(t2) {
+            this.direction = t2;
+          }
+          setRightPage(t2) {
+            null !== t2 && t2.setOrientation(1), this.rightPage = t2;
+          }
+          setLeftPage(t2) {
+            null !== t2 && t2.setOrientation(0), this.leftPage = t2;
+          }
+          setBottomPage(t2) {
+            null !== t2 && t2.setOrientation(1 === this.direction ? 0 : 1), this.bottomPage = t2;
+          }
+          setFlippingPage(t2) {
+            null !== t2 && t2.setOrientation(0 === this.direction && "portrait" !== this.orientation ? 0 : 1), this.flippingPage = t2;
+          }
+          convertToBook(t2) {
+            const e2 = this.getRect();
+            return { x: t2.x - e2.left, y: t2.y - e2.top };
+          }
+          isSafari() {
+            return this.safari;
+          }
+          convertToPage(t2, e2) {
+            e2 || (e2 = this.direction);
+            const i2 = this.getRect();
+            return { x: 0 === e2 ? t2.x - i2.left - i2.width / 2 : i2.width / 2 - t2.x + i2.left, y: t2.y - i2.top };
+          }
+          convertToGlobal(t2, e2) {
+            if (e2 || (e2 = this.direction), null == t2) return null;
+            const i2 = this.getRect();
+            return { x: 0 === e2 ? t2.x + i2.left + i2.width / 2 : i2.width / 2 - t2.x + i2.left, y: t2.y + i2.top };
+          }
+          convertRectToGlobal(t2, e2) {
+            return e2 || (e2 = this.direction), { topLeft: this.convertToGlobal(t2.topLeft, e2), topRight: this.convertToGlobal(t2.topRight, e2), bottomLeft: this.convertToGlobal(t2.bottomLeft, e2), bottomRight: this.convertToGlobal(t2.bottomRight, e2) };
+          }
+        }
+        class d extends l {
+          constructor(t2, e2, i2) {
+            super(t2, e2), this.canvas = i2, this.ctx = i2.getContext("2d");
+          }
+          getContext() {
+            return this.ctx;
+          }
+          reload() {
+          }
+          drawFrame() {
+            this.clear(), "portrait" !== this.orientation && null != this.leftPage && this.leftPage.simpleDraw(0), null != this.rightPage && this.rightPage.simpleDraw(1), null != this.bottomPage && this.bottomPage.draw(), this.drawBookShadow(), null != this.flippingPage && this.flippingPage.draw(), null != this.shadow && (this.drawOuterShadow(), this.drawInnerShadow());
+            const t2 = this.getRect();
+            "portrait" === this.orientation && (this.ctx.beginPath(), this.ctx.rect(t2.left + t2.pageWidth, t2.top, t2.width, t2.height), this.ctx.clip());
+          }
+          drawBookShadow() {
+            const t2 = this.getRect();
+            this.ctx.save(), this.ctx.beginPath();
+            const e2 = t2.width / 20;
+            this.ctx.rect(t2.left, t2.top, t2.width, t2.height);
+            const i2 = { x: t2.left + t2.width / 2 - e2 / 2, y: 0 };
+            this.ctx.translate(i2.x, i2.y);
+            const s2 = this.ctx.createLinearGradient(0, 0, e2, 0);
+            s2.addColorStop(0, "rgba(0, 0, 0, 0)"), s2.addColorStop(0.4, "rgba(0, 0, 0, 0.2)"), s2.addColorStop(0.49, "rgba(0, 0, 0, 0.1)"), s2.addColorStop(0.5, "rgba(0, 0, 0, 0.5)"), s2.addColorStop(0.51, "rgba(0, 0, 0, 0.4)"), s2.addColorStop(1, "rgba(0, 0, 0, 0)"), this.ctx.clip(), this.ctx.fillStyle = s2, this.ctx.fillRect(0, 0, e2, 2 * t2.height), this.ctx.restore();
+          }
+          drawOuterShadow() {
+            const t2 = this.getRect();
+            this.ctx.save(), this.ctx.beginPath(), this.ctx.rect(t2.left, t2.top, t2.width, t2.height);
+            const e2 = this.convertToGlobal({ x: this.shadow.pos.x, y: this.shadow.pos.y });
+            this.ctx.translate(e2.x, e2.y), this.ctx.rotate(Math.PI + this.shadow.angle + Math.PI / 2);
+            const i2 = this.ctx.createLinearGradient(0, 0, this.shadow.width, 0);
+            0 === this.shadow.direction ? (this.ctx.translate(0, -100), i2.addColorStop(0, "rgba(0, 0, 0, " + this.shadow.opacity + ")"), i2.addColorStop(1, "rgba(0, 0, 0, 0)")) : (this.ctx.translate(-this.shadow.width, -100), i2.addColorStop(0, "rgba(0, 0, 0, 0)"), i2.addColorStop(1, "rgba(0, 0, 0, " + this.shadow.opacity + ")")), this.ctx.clip(), this.ctx.fillStyle = i2, this.ctx.fillRect(0, 0, this.shadow.width, 2 * t2.height), this.ctx.restore();
+          }
+          drawInnerShadow() {
+            const t2 = this.getRect();
+            this.ctx.save(), this.ctx.beginPath();
+            const e2 = this.convertToGlobal({ x: this.shadow.pos.x, y: this.shadow.pos.y }), i2 = this.convertRectToGlobal(this.pageRect);
+            this.ctx.moveTo(i2.topLeft.x, i2.topLeft.y), this.ctx.lineTo(i2.topRight.x, i2.topRight.y), this.ctx.lineTo(i2.bottomRight.x, i2.bottomRight.y), this.ctx.lineTo(i2.bottomLeft.x, i2.bottomLeft.y), this.ctx.translate(e2.x, e2.y), this.ctx.rotate(Math.PI + this.shadow.angle + Math.PI / 2);
+            const s2 = 3 * this.shadow.width / 4, n2 = this.ctx.createLinearGradient(0, 0, s2, 0);
+            0 === this.shadow.direction ? (this.ctx.translate(-s2, -100), n2.addColorStop(1, "rgba(0, 0, 0, " + this.shadow.opacity + ")"), n2.addColorStop(0.9, "rgba(0, 0, 0, 0.05)"), n2.addColorStop(0.7, "rgba(0, 0, 0, " + this.shadow.opacity + ")"), n2.addColorStop(0, "rgba(0, 0, 0, 0)")) : (this.ctx.translate(0, -100), n2.addColorStop(0, "rgba(0, 0, 0, " + this.shadow.opacity + ")"), n2.addColorStop(0.1, "rgba(0, 0, 0, 0.05)"), n2.addColorStop(0.3, "rgba(0, 0, 0, " + this.shadow.opacity + ")"), n2.addColorStop(1, "rgba(0, 0, 0, 0)")), this.ctx.clip(), this.ctx.fillStyle = n2, this.ctx.fillRect(0, 0, s2, 2 * t2.height), this.ctx.restore();
+          }
+          clear() {
+            this.ctx.fillStyle = "white", this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+          }
+        }
+        class p {
+          constructor(t2, e2, i2) {
+            this.touchPoint = null, this.swipeTimeout = 250, this.onResize = () => {
+              this.update();
+            }, this.onMouseDown = (t3) => {
+              if (this.checkTarget(t3.target)) {
+                const e3 = this.getMousePos(t3.clientX, t3.clientY);
+                this.app.startUserTouch(e3), t3.preventDefault();
+              }
+            }, this.onTouchStart = (t3) => {
+              if (this.checkTarget(t3.target) && t3.changedTouches.length > 0) {
+                const e3 = t3.changedTouches[0], i3 = this.getMousePos(e3.clientX, e3.clientY);
+                this.touchPoint = { point: i3, time: Date.now() }, setTimeout(() => {
+                  null !== this.touchPoint && this.app.startUserTouch(i3);
+                }, this.swipeTimeout), this.app.getSettings().mobileScrollSupport || t3.preventDefault();
+              }
+            }, this.onMouseUp = (t3) => {
+              const e3 = this.getMousePos(t3.clientX, t3.clientY);
+              this.app.userStop(e3);
+            }, this.onMouseMove = (t3) => {
+              const e3 = this.getMousePos(t3.clientX, t3.clientY);
+              this.app.userMove(e3, false);
+            }, this.onTouchMove = (t3) => {
+              if (t3.changedTouches.length > 0) {
+                const e3 = t3.changedTouches[0], i3 = this.getMousePos(e3.clientX, e3.clientY);
+                this.app.getSettings().mobileScrollSupport ? (null !== this.touchPoint && (Math.abs(this.touchPoint.point.x - i3.x) > 10 || "read" !== this.app.getState()) && t3.cancelable && this.app.userMove(i3, true), "read" !== this.app.getState() && t3.preventDefault()) : this.app.userMove(i3, true);
+              }
+            }, this.onTouchEnd = (t3) => {
+              if (t3.changedTouches.length > 0) {
+                const e3 = t3.changedTouches[0], i3 = this.getMousePos(e3.clientX, e3.clientY);
+                let s3 = false;
+                if (null !== this.touchPoint) {
+                  const t4 = i3.x - this.touchPoint.point.x, e4 = Math.abs(i3.y - this.touchPoint.point.y);
+                  Math.abs(t4) > this.swipeDistance && e4 < 2 * this.swipeDistance && Date.now() - this.touchPoint.time < this.swipeTimeout && (t4 > 0 ? this.app.flipPrev(this.touchPoint.point.y < this.app.getRender().getRect().height / 2 ? "top" : "bottom") : this.app.flipNext(this.touchPoint.point.y < this.app.getRender().getRect().height / 2 ? "top" : "bottom"), s3 = true), this.touchPoint = null;
+                }
+                this.app.userStop(i3, s3);
+              }
+            }, this.parentElement = t2, t2.classList.add("stf__parent"), t2.insertAdjacentHTML("afterbegin", '<div class="stf__wrapper"></div>'), this.wrapper = t2.querySelector(".stf__wrapper"), this.app = e2;
+            const s2 = this.app.getSettings().usePortrait ? 1 : 2;
+            t2.style.minWidth = i2.minWidth * s2 + "px", t2.style.minHeight = i2.minHeight + "px", "fixed" === i2.size && (t2.style.minWidth = i2.width * s2 + "px", t2.style.minHeight = i2.height + "px"), i2.autoSize && (t2.style.width = "100%", t2.style.maxWidth = 2 * i2.maxWidth + "px"), t2.style.display = "block", window.addEventListener("resize", this.onResize, false), this.swipeDistance = i2.swipeDistance;
+          }
+          destroy() {
+            this.app.getSettings().useMouseEvents && this.removeHandlers(), this.distElement.remove(), this.wrapper.remove();
+          }
+          getDistElement() {
+            return this.distElement;
+          }
+          getWrapper() {
+            return this.wrapper;
+          }
+          setOrientationStyle(t2) {
+            this.wrapper.classList.remove("--portrait", "--landscape"), "portrait" === t2 ? (this.app.getSettings().autoSize && (this.wrapper.style.paddingBottom = this.app.getSettings().height / this.app.getSettings().width * 100 + "%"), this.wrapper.classList.add("--portrait")) : (this.app.getSettings().autoSize && (this.wrapper.style.paddingBottom = this.app.getSettings().height / (2 * this.app.getSettings().width) * 100 + "%"), this.wrapper.classList.add("--landscape")), this.update();
+          }
+          removeHandlers() {
+            window.removeEventListener("resize", this.onResize), this.distElement.removeEventListener("mousedown", this.onMouseDown), this.distElement.removeEventListener("touchstart", this.onTouchStart), window.removeEventListener("mousemove", this.onMouseMove), window.removeEventListener("touchmove", this.onTouchMove), window.removeEventListener("mouseup", this.onMouseUp), window.removeEventListener("touchend", this.onTouchEnd);
+          }
+          setHandlers() {
+            window.addEventListener("resize", this.onResize, false), this.app.getSettings().useMouseEvents && (this.distElement.addEventListener("mousedown", this.onMouseDown), this.distElement.addEventListener("touchstart", this.onTouchStart), window.addEventListener("mousemove", this.onMouseMove), window.addEventListener("touchmove", this.onTouchMove, { passive: !this.app.getSettings().mobileScrollSupport }), window.addEventListener("mouseup", this.onMouseUp), window.addEventListener("touchend", this.onTouchEnd));
+          }
+          getMousePos(t2, e2) {
+            const i2 = this.distElement.getBoundingClientRect();
+            return { x: t2 - i2.left, y: e2 - i2.top };
+          }
+          checkTarget(t2) {
+            return !this.app.getSettings().clickEventForward || !["a", "button"].includes(t2.tagName.toLowerCase());
+          }
+        }
+        class c extends p {
+          constructor(t2, e2, i2, s2) {
+            super(t2, e2, i2), this.wrapper.insertAdjacentHTML("afterbegin", '<div class="stf__block"></div>'), this.distElement = t2.querySelector(".stf__block"), this.items = s2;
+            for (const t3 of s2) this.distElement.appendChild(t3);
+            this.setHandlers();
+          }
+          clear() {
+            for (const t2 of this.items) this.parentElement.appendChild(t2);
+          }
+          updateItems(t2) {
+            this.removeHandlers(), this.distElement.innerHTML = "";
+            for (const e2 of t2) this.distElement.appendChild(e2);
+            this.items = t2, this.setHandlers();
+          }
+          update() {
+            this.app.getRender().update();
+          }
+        }
+        class u extends p {
+          constructor(t2, e2, i2) {
+            super(t2, e2, i2), this.wrapper.innerHTML = '<canvas class="stf__canvas"></canvas>', this.canvas = t2.querySelectorAll("canvas")[0], this.distElement = this.canvas, this.resizeCanvas(), this.setHandlers();
+          }
+          resizeCanvas() {
+            const t2 = getComputedStyle(this.canvas), e2 = parseInt(t2.getPropertyValue("width"), 10), i2 = parseInt(t2.getPropertyValue("height"), 10);
+            this.canvas.width = e2, this.canvas.height = i2;
+          }
+          getCanvas() {
+            return this.canvas;
+          }
+          update() {
+            this.resizeCanvas(), this.app.getRender().update();
+          }
+        }
+        class w extends l {
+          constructor(t2, e2, i2) {
+            super(t2, e2), this.outerShadow = null, this.innerShadow = null, this.hardShadow = null, this.hardInnerShadow = null, this.element = i2, this.createShadows();
+          }
+          createShadows() {
+            this.element.insertAdjacentHTML("beforeend", '<div class="stf__outerShadow"></div>\n             <div class="stf__innerShadow"></div>\n             <div class="stf__hardShadow"></div>\n             <div class="stf__hardInnerShadow"></div>'), this.outerShadow = this.element.querySelector(".stf__outerShadow"), this.innerShadow = this.element.querySelector(".stf__innerShadow"), this.hardShadow = this.element.querySelector(".stf__hardShadow"), this.hardInnerShadow = this.element.querySelector(".stf__hardInnerShadow");
+          }
+          clearShadow() {
+            super.clearShadow(), this.outerShadow.style.cssText = "display: none", this.innerShadow.style.cssText = "display: none", this.hardShadow.style.cssText = "display: none", this.hardInnerShadow.style.cssText = "display: none";
+          }
+          reload() {
+            this.element.querySelector(".stf__outerShadow") || this.createShadows();
+          }
+          drawHardInnerShadow() {
+            const t2 = this.getRect(), e2 = this.shadow.progress > 100 ? 200 - this.shadow.progress : this.shadow.progress;
+            let i2 = (100 - e2) * (2.5 * t2.pageWidth) / 100 + 20;
+            i2 > t2.pageWidth && (i2 = t2.pageWidth);
+            let s2 = `
+            display: block;
+            z-index: ${(this.getSettings().startZIndex + 5).toString(10)};
+            width: ${i2}px;
+            height: ${t2.height}px;
+            background: linear-gradient(to right,
+                rgba(0, 0, 0, ${this.shadow.opacity * e2 / 100}) 5%,
+                rgba(0, 0, 0, 0) 100%);
+            left: ${t2.left + t2.width / 2}px;
+            transform-origin: 0 0;
+        `;
+            s2 += 0 === this.getDirection() && this.shadow.progress > 100 || 1 === this.getDirection() && this.shadow.progress <= 100 ? "transform: translate3d(0, 0, 0);" : "transform: translate3d(0, 0, 0) rotateY(180deg);", this.hardInnerShadow.style.cssText = s2;
+          }
+          drawHardOuterShadow() {
+            const t2 = this.getRect();
+            let e2 = (100 - (this.shadow.progress > 100 ? 200 - this.shadow.progress : this.shadow.progress)) * (2.5 * t2.pageWidth) / 100 + 20;
+            e2 > t2.pageWidth && (e2 = t2.pageWidth);
+            let i2 = `
+            display: block;
+            z-index: ${(this.getSettings().startZIndex + 4).toString(10)};
+            width: ${e2}px;
+            height: ${t2.height}px;
+            background: linear-gradient(to left, rgba(0, 0, 0, ${this.shadow.opacity}) 5%, rgba(0, 0, 0, 0) 100%);
+            left: ${t2.left + t2.width / 2}px;
+            transform-origin: 0 0;
+        `;
+            i2 += 0 === this.getDirection() && this.shadow.progress > 100 || 1 === this.getDirection() && this.shadow.progress <= 100 ? "transform: translate3d(0, 0, 0) rotateY(180deg);" : "transform: translate3d(0, 0, 0);", this.hardShadow.style.cssText = i2;
+          }
+          drawInnerShadow() {
+            const t2 = this.getRect(), e2 = 3 * this.shadow.width / 4, i2 = 0 === this.getDirection() ? e2 : 0, s2 = 0 === this.getDirection() ? "to left" : "to right", n2 = this.convertToGlobal(this.shadow.pos), r2 = this.shadow.angle + 3 * Math.PI / 2, o2 = [this.pageRect.topLeft, this.pageRect.topRight, this.pageRect.bottomRight, this.pageRect.bottomLeft];
+            let a2 = "polygon( ";
+            for (const t3 of o2) {
+              let e3 = 1 === this.getDirection() ? { x: -t3.x + this.shadow.pos.x, y: t3.y - this.shadow.pos.y } : { x: t3.x - this.shadow.pos.x, y: t3.y - this.shadow.pos.y };
+              e3 = h.GetRotatedPoint(e3, { x: i2, y: 100 }, r2), a2 += e3.x + "px " + e3.y + "px, ";
+            }
+            a2 = a2.slice(0, -2), a2 += ")";
+            const g2 = `
+            display: block;
+            z-index: ${(this.getSettings().startZIndex + 10).toString(10)};
+            width: ${e2}px;
+            height: ${2 * t2.height}px;
+            background: linear-gradient(${s2},
+                rgba(0, 0, 0, ${this.shadow.opacity}) 5%,
+                rgba(0, 0, 0, 0.05) 15%,
+                rgba(0, 0, 0, ${this.shadow.opacity}) 35%,
+                rgba(0, 0, 0, 0) 100%);
+            transform-origin: ${i2}px 100px;
+            transform: translate3d(${n2.x - i2}px, ${n2.y - 100}px, 0) rotate(${r2}rad);
+            clip-path: ${a2};
+            -webkit-clip-path: ${a2};
+        `;
+            this.innerShadow.style.cssText = g2;
+          }
+          drawOuterShadow() {
+            const t2 = this.getRect(), e2 = this.convertToGlobal({ x: this.shadow.pos.x, y: this.shadow.pos.y }), i2 = this.shadow.angle + 3 * Math.PI / 2, s2 = 1 === this.getDirection() ? this.shadow.width : 0, n2 = 0 === this.getDirection() ? "to right" : "to left", r2 = [{ x: 0, y: 0 }, { x: t2.pageWidth, y: 0 }, { x: t2.pageWidth, y: t2.height }, { x: 0, y: t2.height }];
+            let o2 = "polygon( ";
+            for (const t3 of r2) if (null !== t3) {
+              let e3 = 1 === this.getDirection() ? { x: -t3.x + this.shadow.pos.x, y: t3.y - this.shadow.pos.y } : { x: t3.x - this.shadow.pos.x, y: t3.y - this.shadow.pos.y };
+              e3 = h.GetRotatedPoint(e3, { x: s2, y: 100 }, i2), o2 += e3.x + "px " + e3.y + "px, ";
+            }
+            o2 = o2.slice(0, -2), o2 += ")";
+            const a2 = `
+            display: block;
+            z-index: ${(this.getSettings().startZIndex + 10).toString(10)};
+            width: ${this.shadow.width}px;
+            height: ${2 * t2.height}px;
+            background: linear-gradient(${n2}, rgba(0, 0, 0, ${this.shadow.opacity}), rgba(0, 0, 0, 0));
+            transform-origin: ${s2}px 100px;
+            transform: translate3d(${e2.x - s2}px, ${e2.y - 100}px, 0) rotate(${i2}rad);
+            clip-path: ${o2};
+            -webkit-clip-path: ${o2};
+        `;
+            this.outerShadow.style.cssText = a2;
+          }
+          drawLeftPage() {
+            "portrait" !== this.orientation && null !== this.leftPage && (1 === this.direction && null !== this.flippingPage && "hard" === this.flippingPage.getDrawingDensity() ? (this.leftPage.getElement().style.zIndex = (this.getSettings().startZIndex + 5).toString(10), this.leftPage.setHardDrawingAngle(180 + this.flippingPage.getHardAngle()), this.leftPage.draw(this.flippingPage.getDrawingDensity())) : this.leftPage.simpleDraw(0));
+          }
+          drawRightPage() {
+            null !== this.rightPage && (0 === this.direction && null !== this.flippingPage && "hard" === this.flippingPage.getDrawingDensity() ? (this.rightPage.getElement().style.zIndex = (this.getSettings().startZIndex + 5).toString(10), this.rightPage.setHardDrawingAngle(180 + this.flippingPage.getHardAngle()), this.rightPage.draw(this.flippingPage.getDrawingDensity())) : this.rightPage.simpleDraw(1));
+          }
+          drawBottomPage() {
+            if (null === this.bottomPage) return;
+            const t2 = null != this.flippingPage ? this.flippingPage.getDrawingDensity() : null;
+            "portrait" === this.orientation && 1 === this.direction || (this.bottomPage.getElement().style.zIndex = (this.getSettings().startZIndex + 3).toString(10), this.bottomPage.draw(t2));
+          }
+          drawFrame() {
+            this.clear(), this.drawLeftPage(), this.drawRightPage(), this.drawBottomPage(), null != this.flippingPage && (this.flippingPage.getElement().style.zIndex = (this.getSettings().startZIndex + 5).toString(10), this.flippingPage.draw()), null != this.shadow && null !== this.flippingPage && ("soft" === this.flippingPage.getDrawingDensity() ? (this.drawOuterShadow(), this.drawInnerShadow()) : (this.drawHardOuterShadow(), this.drawHardInnerShadow()));
+          }
+          clear() {
+            for (const t2 of this.app.getPageCollection().getPages()) t2 !== this.leftPage && t2 !== this.rightPage && t2 !== this.flippingPage && t2 !== this.bottomPage && (t2.getElement().style.cssText = "display: none"), t2.getTemporaryCopy() !== this.flippingPage && t2.hideTemporaryCopy();
+          }
+          update() {
+            super.update(), null !== this.rightPage && this.rightPage.setOrientation(1), null !== this.leftPage && this.leftPage.setOrientation(0);
+          }
+        }
+        class x {
+          constructor() {
+            this._default = { startPage: 0, size: "fixed", width: 0, height: 0, minWidth: 0, maxWidth: 0, minHeight: 0, maxHeight: 0, drawShadow: true, flippingTime: 1e3, usePortrait: true, startZIndex: 0, autoSize: true, maxShadowOpacity: 1, showCover: false, mobileScrollSupport: true, swipeDistance: 30, clickEventForward: true, useMouseEvents: true, showPageCorners: true, disableFlipByClick: false };
+          }
+          getSettings(t2) {
+            const e2 = this._default;
+            if (Object.assign(e2, t2), "stretch" !== e2.size && "fixed" !== e2.size) throw new Error('Invalid size type. Available only "fixed" and "stretch" value');
+            if (e2.width <= 0 || e2.height <= 0) throw new Error("Invalid width or height");
+            if (e2.flippingTime <= 0) throw new Error("Invalid flipping time");
+            return "stretch" === e2.size ? (e2.minWidth <= 0 && (e2.minWidth = 100), e2.maxWidth < e2.minWidth && (e2.maxWidth = 2e3), e2.minHeight <= 0 && (e2.minHeight = 100), e2.maxHeight < e2.minHeight && (e2.maxHeight = 2e3)) : (e2.minWidth = e2.width, e2.maxWidth = e2.width, e2.minHeight = e2.height, e2.maxHeight = e2.height), e2;
+          }
+        }
+        !function(t2, e2) {
+          void 0 === e2 && (e2 = {});
+          var i2 = e2.insertAt;
+          if (t2 && "undefined" != typeof document) {
+            var s2 = document.head || document.getElementsByTagName("head")[0], n2 = document.createElement("style");
+            n2.type = "text/css", "top" === i2 && s2.firstChild ? s2.insertBefore(n2, s2.firstChild) : s2.appendChild(n2), n2.styleSheet ? n2.styleSheet.cssText = t2 : n2.appendChild(document.createTextNode(t2));
+          }
+        }(".stf__parent {\n  position: relative;\n  display: block;\n  box-sizing: border-box;\n  transform: translateZ(0);\n\n  -ms-touch-action: pan-y;\n  touch-action: pan-y;\n}\n\n.sft__wrapper {\n  position: relative;\n  width: 100%;\n  box-sizing: border-box;\n}\n\n.stf__parent canvas {\n  position: absolute;\n  width: 100%;\n  height: 100%;\n  left: 0;\n  top: 0;\n}\n\n.stf__block {\n  position: absolute;\n  width: 100%;\n  height: 100%;\n  box-sizing: border-box;\n  perspective: 2000px;\n}\n\n.stf__item {\n  display: none;\n  position: absolute;\n  transform-style: preserve-3d;\n}\n\n.stf__outerShadow {\n  position: absolute;\n  left: 0;\n  top: 0;\n}\n\n.stf__innerShadow {\n  position: absolute;\n  left: 0;\n  top: 0;\n}\n\n.stf__hardShadow {\n  position: absolute;\n  left: 0;\n  top: 0;\n}\n\n.stf__hardInnerShadow {\n  position: absolute;\n  left: 0;\n  top: 0;\n}");
+        t.PageFlip = class extends class {
+          constructor() {
+            this.events = /* @__PURE__ */ new Map();
+          }
+          on(t2, e2) {
+            return this.events.has(t2) ? this.events.get(t2).push(e2) : this.events.set(t2, [e2]), this;
+          }
+          off(t2) {
+            this.events.delete(t2);
+          }
+          trigger(t2, e2, i2 = null) {
+            if (this.events.has(t2)) for (const s2 of this.events.get(t2)) s2({ data: i2, object: e2 });
+          }
+        } {
+          constructor(t2, e2) {
+            super(), this.isUserTouch = false, this.isUserMove = false, this.setting = null, this.pages = null, this.setting = new x().getSettings(e2), this.block = t2;
+          }
+          destroy() {
+            this.ui.destroy(), this.block.remove();
+          }
+          update() {
+            this.render.update(), this.pages.show();
+          }
+          loadFromImages(t2) {
+            this.ui = new u(this.block, this, this.setting);
+            const e2 = this.ui.getCanvas();
+            this.render = new d(this, this.setting, e2), this.flipController = new g(this.render, this), this.pages = new n(this, this.render, t2), this.pages.load(), this.render.start(), this.pages.show(this.setting.startPage), setTimeout(() => {
+              this.ui.update(), this.trigger("init", this, { page: this.setting.startPage, mode: this.render.getOrientation() });
+            }, 1);
+          }
+          loadFromHTML(t2) {
+            this.ui = new c(this.block, this, this.setting, t2), this.render = new w(this, this.setting, this.ui.getDistElement()), this.flipController = new g(this.render, this), this.pages = new o(this, this.render, this.ui.getDistElement(), t2), this.pages.load(), this.render.start(), this.pages.show(this.setting.startPage), setTimeout(() => {
+              this.ui.update(), this.trigger("init", this, { page: this.setting.startPage, mode: this.render.getOrientation() });
+            }, 1);
+          }
+          updateFromImages(t2) {
+            const e2 = this.pages.getCurrentPageIndex();
+            this.pages.destroy(), this.pages = new n(this, this.render, t2), this.pages.load(), this.pages.show(e2), this.trigger("update", this, { page: e2, mode: this.render.getOrientation() });
+          }
+          updateFromHtml(t2) {
+            const e2 = this.pages.getCurrentPageIndex();
+            this.pages.destroy(), this.pages = new o(this, this.render, this.ui.getDistElement(), t2), this.pages.load(), this.ui.updateItems(t2), this.render.reload(), this.pages.show(e2), this.trigger("update", this, { page: e2, mode: this.render.getOrientation() });
+          }
+          clear() {
+            this.pages.destroy(), this.ui.clear();
+          }
+          turnToPrevPage() {
+            this.pages.showPrev();
+          }
+          turnToNextPage() {
+            this.pages.showNext();
+          }
+          turnToPage(t2) {
+            this.pages.show(t2);
+          }
+          flipNext(t2 = "top") {
+            this.flipController.flipNext(t2);
+          }
+          flipPrev(t2 = "top") {
+            this.flipController.flipPrev(t2);
+          }
+          flip(t2, e2 = "top") {
+            this.flipController.flipToPage(t2, e2);
+          }
+          updateState(t2) {
+            this.trigger("changeState", this, t2);
+          }
+          updatePageIndex(t2) {
+            this.trigger("flip", this, t2);
+          }
+          updateOrientation(t2) {
+            this.ui.setOrientationStyle(t2), this.update(), this.trigger("changeOrientation", this, t2);
+          }
+          getPageCount() {
+            return this.pages.getPageCount();
+          }
+          getCurrentPageIndex() {
+            return this.pages.getCurrentPageIndex();
+          }
+          getPage(t2) {
+            return this.pages.getPage(t2);
+          }
+          getRender() {
+            return this.render;
+          }
+          getFlipController() {
+            return this.flipController;
+          }
+          getOrientation() {
+            return this.render.getOrientation();
+          }
+          getBoundsRect() {
+            return this.render.getRect();
+          }
+          getSettings() {
+            return this.setting;
+          }
+          getUI() {
+            return this.ui;
+          }
+          getState() {
+            return this.flipController.getState();
+          }
+          getPageCollection() {
+            return this.pages;
+          }
+          startUserTouch(t2) {
+            this.mousePosition = t2, this.isUserTouch = true, this.isUserMove = false;
+          }
+          userMove(t2, e2) {
+            this.isUserTouch || e2 || !this.setting.showPageCorners ? this.isUserTouch && h.GetDistanceBetweenTwoPoint(this.mousePosition, t2) > 5 && (this.isUserMove = true, this.flipController.fold(t2)) : this.flipController.showCorner(t2);
+          }
+          userStop(t2, e2 = false) {
+            this.isUserTouch && (this.isUserTouch = false, e2 || (this.isUserMove ? this.flipController.stopMove() : this.flipController.flip(t2)));
+          }
+        }, Object.defineProperty(t, "__esModule", { value: true });
+      });
+    }
+  });
+
   // src/core/esc-manager.ts
   function registerPanelEsc(id, isVisible, close) {
     if (panelEscHandles.has(id)) return;
@@ -5508,6 +6503,51 @@ var BZW_diary = (() => {
     }
   });
 
+  // src/core/domain-bus.ts
+  var domain_bus_exports = {};
+  __export(domain_bus_exports, {
+    clearDomainEvents: () => clearDomainEvents,
+    emitDomainEvent: () => emitDomainEvent,
+    onDomainEvent: () => onDomainEvent
+  });
+  function emitDomainEvent(channel, evt) {
+    const handlers = channels.get(channel);
+    if (!handlers || handlers.size === 0) return;
+    for (const handler of [...handlers]) {
+      try {
+        handler(evt);
+      } catch (e) {
+        console.error(`bz: 域事件 handler 异常（channel=${channel}）`, e);
+      }
+    }
+  }
+  function onDomainEvent(channel, handler) {
+    let set = channels.get(channel);
+    if (!set) {
+      set = /* @__PURE__ */ new Set();
+      channels.set(channel, set);
+    }
+    set.add(handler);
+    let offed = false;
+    return () => {
+      if (offed) return;
+      offed = true;
+      const cur = channels.get(channel);
+      if (!cur) return;
+      cur.delete(handler);
+      if (cur.size === 0) channels.delete(channel);
+    };
+  }
+  function clearDomainEvents() {
+    channels.clear();
+  }
+  var channels;
+  var init_domain_bus = __esm({
+    "src/core/domain-bus.ts"() {
+      channels = /* @__PURE__ */ new Map();
+    }
+  });
+
   // src/core/mobile.ts
   function isMobileEnv() {
     return typeof Platform !== "undefined" && !!Platform.isMobile;
@@ -5515,6 +6555,902 @@ var BZW_diary = (() => {
   var init_mobile = __esm({
     "src/core/mobile.ts"() {
       init_fake_obsidian();
+    }
+  });
+
+  // src/core/ui/focus-trap.ts
+  function isHidden(el) {
+    let cur = el;
+    while (cur && cur !== document.body) {
+      if (cur.classList.contains("bz-setting-hidden")) return true;
+      if (cur.style.display === "none") return true;
+      cur = cur.parentElement;
+    }
+    return false;
+  }
+  function firstFocusable(container) {
+    const list = Array.from(container.querySelectorAll(FOCUSABLE_SELECTOR)).filter((el) => {
+      if (isHidden(el)) return false;
+      if (isMobileEnv()) {
+        const tag = el.tagName;
+        if (tag === "INPUT" || tag === "TEXTAREA") return false;
+      }
+      return true;
+    });
+    return list[0] || null;
+  }
+  function trapFocus(container) {
+    const onKeydown = (e) => {
+      if (e.key !== "Tab") return;
+      const items = Array.from(container.querySelectorAll(FOCUSABLE_SELECTOR)).filter(
+        (el) => !isHidden(el) && !el.hasAttribute("disabled")
+      );
+      if (!items.length) return;
+      const first = items[0];
+      const last = items[items.length - 1];
+      const active = document.activeElement;
+      const inside = active instanceof Node && active !== container && container.contains(active);
+      if (e.shiftKey) {
+        if (active === first || !inside) {
+          e.preventDefault();
+          last.focus();
+        }
+      } else if (active === last || !inside) {
+        e.preventDefault();
+        first.focus();
+      }
+    };
+    container.addEventListener("keydown", onKeydown);
+    return () => container.removeEventListener("keydown", onKeydown);
+  }
+  function trapPanelFocus(panel) {
+    panel.classList.add(PANEL_FOCUS_CLASS);
+    if (!panel.hasAttribute("tabindex")) panel.setAttribute("tabindex", "-1");
+    const release = trapFocus(panel);
+    panel.focus({ preventScroll: true });
+    return release;
+  }
+  var FOCUSABLE_SELECTOR, PANEL_FOCUS_CLASS;
+  var init_focus_trap = __esm({
+    "src/core/ui/focus-trap.ts"() {
+      init_mobile();
+      FOCUSABLE_SELECTOR = 'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])';
+      PANEL_FOCUS_CLASS = "bz-panel-focushost";
+    }
+  });
+
+  // src/core/flow-dialog.ts
+  function buildFlowDialogParts(title, message, actions) {
+    var _a;
+    let buttons;
+    if (actions.length === 2) {
+      buttons = [
+        { id: FLOW_DIALOG_CANCEL_ID, className: "", label: actions[0].label, value: actions[0].value },
+        { id: FLOW_DIALOG_OK_ID, className: "", label: actions[1].label, value: actions[1].value }
+      ];
+    } else {
+      buttons = actions.map((a, i) => {
+        const cls = ["bz-flow-dialog-action"];
+        if (a.danger) cls.push("bz-flow-dialog-danger");
+        if (a.cta) cls.push("bz-flow-dialog-cta");
+        return { id: `bz-flow-dialog-action-${i}`, className: cls.join(" "), label: a.label, value: a.value };
+      });
+    }
+    const ctaIdx = actions.findIndex((a) => a.cta);
+    const primaryIdx = ctaIdx >= 0 ? ctaIdx : actions.length - 1;
+    const dangerPrimary = !!((_a = actions[primaryIdx]) == null ? void 0 : _a.danger);
+    let focusIdx = primaryIdx;
+    if (dangerPrimary) {
+      const safeIdx = actions.findIndex((a, i) => i !== primaryIdx && !a.danger);
+      if (safeIdx >= 0) focusIdx = safeIdx;
+    }
+    const html = "<h4>" + escapeHtml2(title || "确认") + "</h4><p>" + escapeHtml2(message).replace(/\n/g, "<br>") + '</p><div class="confirm-actions">' + buttons.map((b) => {
+      const clsAttr = b.className ? ' class="' + b.className + '"' : "";
+      return '<button id="' + b.id + '"' + clsAttr + ">" + escapeHtml2(b.label) + "</button>";
+    }).join("") + "</div>";
+    return { html, buttons, focusId: buttons[focusIdx].id, dangerPrimary };
+  }
+  function openFlowDialog(opts) {
+    if (!opts.actions || opts.actions.length === 0) {
+      return Promise.reject(new Error("openFlowDialog：actions 不能为空"));
+    }
+    return new Promise((resolve) => {
+      const prevActive = document.activeElement;
+      if (activeSettle) activeSettle(void 0);
+      const parts = buildFlowDialogParts(opts.title, opts.message, opts.actions);
+      const mask = document.createElement("div");
+      mask.id = "__shared_confirm_mask__";
+      mask.style.zIndex = String(allocZ());
+      mask.onclick = (e) => {
+        if (e.target === mask) settle(void 0);
+      };
+      const popup = document.createElement("div");
+      popup.id = "__shared_confirm_popup__";
+      popup.className = "bz-overlay-popup bz-flow-dialog" + (parts.dangerPrimary ? " bz-flow-dialog--danger" : "");
+      if (opts.className) {
+        for (const cls of opts.className.split(/\s+/)) if (cls) popup.classList.add(cls);
+      }
+      popup.setAttribute("role", "dialog");
+      popup.setAttribute("aria-modal", "true");
+      popup.innerHTML = parts.html;
+      mask.appendChild(popup);
+      document.body.appendChild(mask);
+      const escHandle = escManager.register("q3-confirm", {
+        isVisible: () => mask.isConnected,
+        close: () => settle(void 0)
+      });
+      let settled = false;
+      const releaseFocusTrap = trapFocus(popup);
+      function restoreFocus() {
+        if (prevActive && prevActive instanceof HTMLElement && prevActive.isConnected) {
+          prevActive.focus();
+        }
+      }
+      function settle(v) {
+        if (settled) return;
+        settled = true;
+        if (activeSettle === settle) activeSettle = null;
+        releaseFocusTrap();
+        escHandle.unregister();
+        mask.remove();
+        restoreFocus();
+        resolve(v);
+      }
+      activeSettle = settle;
+      for (const b of parts.buttons) {
+        const btn = document.getElementById(b.id);
+        if (btn) btn.onclick = () => settle(b.value);
+      }
+      const focusBtn = document.getElementById(parts.focusId);
+      if (focusBtn) focusBtn.focus();
+    });
+  }
+  function cancelActiveFlowDialog() {
+    if (activeSettle) activeSettle(void 0);
+  }
+  function confirmDiscard(proceed, message, className) {
+    void openFlowDialog({
+      title: "放弃未保存的内容？",
+      message: message || "弹窗内有未保存的输入，关闭后将丢失",
+      className,
+      actions: [
+        { label: "放弃", value: "ok" },
+        { label: "继续编辑", value: "cancel" }
+      ]
+    }).then((v) => {
+      if (v === "ok") proceed();
+    });
+  }
+  var FLOW_DIALOG_CANCEL_ID, FLOW_DIALOG_OK_ID, activeSettle;
+  var init_flow_dialog = __esm({
+    "src/core/flow-dialog.ts"() {
+      init_esc_manager();
+      init_utils();
+      init_z_order();
+      init_focus_trap();
+      FLOW_DIALOG_CANCEL_ID = "__shared_confirm_cancel__";
+      FLOW_DIALOG_OK_ID = "__shared_confirm_ok__";
+      activeSettle = null;
+    }
+  });
+
+  // src/core/diary-format.ts
+  function diaryEntryBaseName(dateStr, timeStr, seq) {
+    const d = String(dateStr || "").replace(/-/g, "");
+    const t = String(timeStr || "").replace(/:/g, "");
+    const stamp = `${d.slice(2, 8)}${t.slice(0, 4)}`;
+    return seq && seq > 1 ? `${stamp}-${seq}` : stamp;
+  }
+  function diaryEntryPath(dir, dateStr, timeStr, seq) {
+    return `${dir}/${diaryEntryBaseName(dateStr, timeStr, seq)}.md`;
+  }
+  function diaryMetaFromEntryPath(path) {
+    const base = (path || "").replace(/\\/g, "/").split("/").pop() || "";
+    const m = DIARY_ENTRY_FILE_RE.exec(base);
+    if (!m) return null;
+    const date = `20${m[1]}-${m[2]}-${m[3]}`;
+    const time = `${m[4]}:${m[5]}`;
+    if (!isValidDiaryDate(date) || !isValidDiaryTime(time)) return null;
+    return m[6] ? { date, time, seq: Number(m[6]) } : { date, time };
+  }
+  function diaryDateFromLegacyPath(path) {
+    const base = (path || "").replace(/\\/g, "/").split("/").pop() || "";
+    const m = DIARY_LEGACY_FILE_RE.exec(base);
+    if (!m) return null;
+    const date = `${m[1]}-${m[2]}-${m[3]}`;
+    return isValidDiaryDate(date) ? date : null;
+  }
+  function diaryDateFromEntryPath(path) {
+    var _a, _b;
+    return (_b = (_a = diaryMetaFromEntryPath(path)) == null ? void 0 : _a.date) != null ? _b : null;
+  }
+  function resolveDiaryEntryMeta(path, parsed) {
+    var _a;
+    return (_a = parsed.meta) != null ? _a : diaryMetaFromEntryPath(path);
+  }
+  function diaryStampText(date, time) {
+    return `${date} ${time}`;
+  }
+  function parseDiaryStamp(value) {
+    const m = /^(\d{4}-\d{2}-\d{2}) (\d{2}:\d{2})$/.exec(String(value || "").trim());
+    return m && isValidDiaryDate(m[1]) && isValidDiaryTime(m[2]) ? { date: m[1], time: m[2] } : null;
+  }
+  function isValidDiaryDate(s) {
+    const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(s || "");
+    if (!m) return false;
+    const y = Number(m[1]);
+    const mo = Number(m[2]);
+    const d = Number(m[3]);
+    if (mo < 1 || mo > 12 || d < 1) return false;
+    const days = [31, y % 4 === 0 && y % 100 !== 0 || y % 400 === 0 ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+    return d <= days[mo - 1];
+  }
+  function isValidDiaryTime(s) {
+    const m = /^(\d{2}):(\d{2})$/.exec(s || "");
+    if (!m) return false;
+    return Number(m[1]) <= 23 && Number(m[2]) <= 59;
+  }
+  function serializeDiaryEntryFile(meta, tags, content) {
+    const lines = ["---", `${DIARY_DATE_KEY}: ${diaryStampText(meta.date, meta.time)}`, `${DIARY_TYPE_KEY}:`];
+    for (const t of tags) lines.push(`  - ${t}`);
+    lines.push("---", "", content);
+    let out = lines.join("\n");
+    if (!out.endsWith("\n")) out += "\n";
+    return out;
+  }
+  function unquote(v) {
+    const t = v.trim();
+    if (t.length >= 2 && (t.startsWith('"') && t.endsWith('"') || t.startsWith("'") && t.endsWith("'"))) {
+      return t.slice(1, -1);
+    }
+    return t;
+  }
+  function serializeDiaryBlockHeader(tags, time) {
+    return `# ${tags.join("/")} ${time}`;
+  }
+  function parseDiaryBlockHeader(line) {
+    const m = /^#\s+(.+)\s+(\d{2}:\d{2})$/.exec(String(line || "").trim());
+    if (!m) return null;
+    const tags = [];
+    for (const name of m[1].split("/")) {
+      const t = name.trim();
+      if (t && !tags.includes(t)) tags.push(t);
+    }
+    return { tags, time: m[2] };
+  }
+  function readDiaryFrontmatterFieldRaw(content, key) {
+    const text = (content || "").replace(/\r\n/g, "\n");
+    if (!text.startsWith("---\n")) return null;
+    const end = text.indexOf("\n---", 4);
+    if (end < 0) return null;
+    const safeKey = key.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const m = new RegExp(`^${safeKey}:[^\\S\\n]*(.*)$`, "m").exec(text.slice(4, end));
+    return m ? m[1].trim() : null;
+  }
+  function parseDiaryEntryFile(content) {
+    const text = (content || "").replace(/\r\n/g, "\n");
+    if (!text.startsWith("---\n")) return { meta: null, tags: [], body: content || "" };
+    const end = text.indexOf("\n---", 4);
+    if (end < 0) return { meta: null, tags: [], body: content || "" };
+    const afterClose = text.slice(end + 4);
+    if (afterClose && !afterClose.startsWith("\n")) return { meta: null, tags: [], body: content || "" };
+    const fmText = text.slice(4, end);
+    let body = afterClose;
+    if (body.startsWith("\n")) body = body.slice(1);
+    if (body.startsWith("\n")) body = body.slice(1);
+    let meta = null;
+    const tags = [];
+    let inTags = false;
+    for (const line of fmText.split("\n")) {
+      const tagItem = /^\s+-\s*(.*)$/.exec(line);
+      if (inTags && tagItem) {
+        const v = unquote(tagItem[1]);
+        if (v) tags.push(v);
+        continue;
+      }
+      inTags = false;
+      const kv = /^([^:]+):(.*)$/.exec(line);
+      if (!kv) continue;
+      const key = kv[1].trim();
+      const val = kv[2].trim();
+      if (key === DIARY_DATE_KEY) {
+        meta = parseDiaryStamp(unquote(val));
+      } else if (key === DIARY_TYPE_KEY) {
+        inTags = true;
+        if (val.startsWith("[") && val.endsWith("]")) {
+          for (const item of val.slice(1, -1).split(",")) {
+            const v = unquote(item);
+            if (v) tags.push(v);
+          }
+          inTags = false;
+        } else if (val) {
+          const v = unquote(val);
+          if (v) tags.push(v);
+          inTags = false;
+        }
+      }
+    }
+    return { meta, tags, body };
+  }
+  var DIARY_ENTRY_FILE_RE, DIARY_LEGACY_FILE_RE, DIARY_DATE_KEY, DIARY_TYPE_KEY;
+  var init_diary_format = __esm({
+    "src/core/diary-format.ts"() {
+      DIARY_ENTRY_FILE_RE = /^(\d{2})(\d{2})(\d{2})(\d{2})(\d{2})(?:-(\d+))?\.md$/;
+      DIARY_LEGACY_FILE_RE = /^(\d{4})-(\d{2})-(\d{2})\.md$/;
+      DIARY_DATE_KEY = "date";
+      DIARY_TYPE_KEY = "type";
+    }
+  });
+
+  // src/core/storage.ts
+  function normalizeStorageDir(value) {
+    let dir = (value || DEFAULT_STORAGE_DIR).trim().replace(/\/+$/, "");
+    if (/\.json$/i.test(dir)) {
+      const idx = dir.lastIndexOf("/");
+      dir = idx >= 0 ? dir.slice(0, idx) : "";
+    }
+    return dir || DEFAULT_STORAGE_DIR;
+  }
+  function storageDir() {
+    const s = tryGetSettings();
+    return normalizeStorageDir(s && s.storagePath);
+  }
+  function storageFile(name, base) {
+    const dir = (base || storageDir()).trim().replace(/\/+$/, "");
+    return `${dir}/${name}`;
+  }
+  function encryptDir() {
+    return `${storageDir()}/.ENCRYPT`;
+  }
+  function enqueueFileTask(filePath, task) {
+    var _a;
+    const prev = (_a = fileTaskQueues.get(filePath)) != null ? _a : Promise.resolve();
+    const run = prev.then(task, task);
+    const tail = run.then(
+      () => void 0,
+      () => void 0
+    );
+    fileTaskQueues.set(filePath, tail);
+    void tail.then(() => {
+      if (fileTaskQueues.get(filePath) === tail) fileTaskQueues.delete(filePath);
+    });
+    return run;
+  }
+  function assertPlainObject(filePath, current) {
+    if (current && typeof current === "object" && !Array.isArray(current)) return current;
+    const got = Array.isArray(current) ? "array" : current === null ? "null" : typeof current;
+    throw new Error("storage: 段级合并写要求对象形态 JSON（" + filePath + " 读到 " + got + "），请先归一文件形态");
+  }
+  function updateFileSections(filePath, writer, opts = {}) {
+    return enqueueFileTask(filePath, async () => {
+      var _a;
+      const store = jsonFileStore(filePath, { ...opts, defaultValue: (_a = opts.defaultValue) != null ? _a : {} });
+      const current = assertPlainObject(filePath, await store.read());
+      const set = await writer(current) || {};
+      const next = { ...current, ...set };
+      await store.write(next);
+      return next;
+    });
+  }
+  function isAlreadyExistsError(e) {
+    const msg = e instanceof Error ? e.message : String(e);
+    return /already exist/i.test(msg);
+  }
+  function corruptStamp(d = /* @__PURE__ */ new Date()) {
+    const p = (n) => String(n).padStart(2, "0");
+    return `${d.getFullYear()}${p(d.getMonth() + 1)}${p(d.getDate())}-${p(d.getHours())}${p(d.getMinutes())}${p(d.getSeconds())}`;
+  }
+  function baseNameOf(p) {
+    return p.includes("/") ? p.slice(p.lastIndexOf("/") + 1) : p;
+  }
+  async function backupOriginal(app, filePath, raw) {
+    try {
+      const f = app.vault.getAbstractFileByPath(filePath);
+      if (!f) return null;
+      const content = raw !== void 0 ? raw : await app.vault.read(f);
+      if (!app.vault.getAbstractFileByPath(CORRUPT_BACKUP_DIR)) {
+        try {
+          await app.vault.createFolder(CORRUPT_BACKUP_DIR);
+        } catch (e) {
+        }
+      }
+      const base = baseNameOf(filePath);
+      const stamp = corruptStamp();
+      let backupPath = `${CORRUPT_BACKUP_DIR}/${base}.${stamp}.bak`;
+      for (let i = 2; app.vault.getAbstractFileByPath(backupPath); i++) {
+        backupPath = `${CORRUPT_BACKUP_DIR}/${base}.${stamp}-${i}.bak`;
+      }
+      await app.vault.create(backupPath, content);
+      return backupPath;
+    } catch (e) {
+      console.warn("[storage] " + filePath + " 留档失败（" + CORRUPT_BACKUP_DIR + "），继续原流程", e);
+      return null;
+    }
+  }
+  function notifyBackup(filePath, backupPath, cause) {
+    var _a;
+    const now = Date.now();
+    if (now - ((_a = corruptNotifyAt.get(filePath)) != null ? _a : 0) < CORRUPT_NOTIFY_DEDUPE_MS) return;
+    corruptNotifyAt.set(filePath, now);
+    try {
+      const name = baseNameOf(filePath);
+      const msg = cause === "解析失败" ? `数据文件 ${name} 解析失败，原内容已留档到 ${backupPath}，数据不会丢，已重建默认文件继续使用` : `数据文件 ${name} 写入失败，原内容已留档到 ${backupPath}，数据不会丢，请稍后重试`;
+      notify(msg, { type: "warning" });
+    } catch (e) {
+    }
+  }
+  function serialize(v) {
+    return JSON.stringify(v, null, 2);
+  }
+  function jsonFileStore(filePath, opts = {}) {
+    const resolveApp = () => opts.app || getApp();
+    const resolveDefault = () => {
+      const d = opts.defaultValue;
+      return typeof d === "function" ? d() : d === void 0 ? [] : d;
+    };
+    async function ensureDir(app) {
+      const d = filePath.substring(0, filePath.lastIndexOf("/"));
+      if (d && !app.vault.getAbstractFileByPath(d)) await app.vault.createFolder(d);
+    }
+    async function createIfMissing(app, content) {
+      await ensureDir(app);
+      try {
+        await app.vault.create(filePath, content);
+        return true;
+      } catch (e) {
+        if (isAlreadyExistsError(e) && app.vault.getAbstractFileByPath(filePath)) return false;
+        throw e;
+      }
+    }
+    async function handleCorrupt(app, err, raw) {
+      var _a;
+      if (((_a = opts.onCorrupt) == null ? void 0 : _a.call(opts, filePath, err)) === false) {
+        return null;
+      }
+      const backupPath = await backupOriginal(app, filePath, raw);
+      if (backupPath && !opts.onCorrupt) notifyBackup(filePath, backupPath, "解析失败");
+      const f = app.vault.getAbstractFileByPath(filePath);
+      if (f) {
+        await app.vault.modify(f, serialize(resolveDefault()));
+      } else {
+        await createIfMissing(app, serialize(resolveDefault()));
+      }
+      return resolveDefault();
+    }
+    async function modifyWithBackup(app, f, c) {
+      try {
+        await app.vault.modify(f, c);
+      } catch (e) {
+        const backupPath = await backupOriginal(app, filePath);
+        if (backupPath) notifyBackup(filePath, backupPath, "写入失败");
+        throw e;
+      }
+    }
+    return {
+      async read() {
+        const app = resolveApp();
+        let f = app.vault.getAbstractFileByPath(filePath);
+        if (!f) {
+          const created = await createIfMissing(app, serialize(resolveDefault()));
+          if (created) return resolveDefault();
+          f = app.vault.getAbstractFileByPath(filePath);
+          if (!f) return resolveDefault();
+        }
+        const raw = await app.vault.read(f);
+        try {
+          return JSON.parse(raw);
+        } catch (e) {
+          return await handleCorrupt(app, e, raw);
+        }
+      },
+      async write(data) {
+        const app = resolveApp();
+        const c = serialize(data);
+        let f = app.vault.getAbstractFileByPath(filePath);
+        if (f) {
+          if (opts.writeIfChanged) {
+            try {
+              const cur2 = await app.vault.read(f);
+              if (cur2 === c) return;
+            } catch (e) {
+            }
+          }
+          await modifyWithBackup(app, f, c);
+          return;
+        }
+        const created = await createIfMissing(app, c);
+        if (created) return;
+        let cur = app.vault.getAbstractFileByPath(filePath);
+        if (!cur) {
+          const retried = await createIfMissing(app, c);
+          if (retried) return;
+          cur = app.vault.getAbstractFileByPath(filePath);
+          if (!cur) throw new Error("storage: create 竞态降级失败（" + filePath + "）");
+        }
+        await modifyWithBackup(app, cur, c);
+      }
+    };
+  }
+  var DEFAULT_STORAGE_DIR, fileTaskQueues, CORRUPT_BACKUP_DIR, CORRUPT_NOTIFY_DEDUPE_MS, corruptNotifyAt;
+  var init_storage = __esm({
+    "src/core/storage.ts"() {
+      init_app();
+      init_settings_provider();
+      init_notice();
+      DEFAULT_STORAGE_DIR = "CONFIG/STORAGE";
+      fileTaskQueues = /* @__PURE__ */ new Map();
+      CORRUPT_BACKUP_DIR = "CONFIG/.CORRUPT";
+      CORRUPT_NOTIFY_DEDUPE_MS = 3e4;
+      corruptNotifyAt = /* @__PURE__ */ new Map();
+    }
+  });
+
+  // src/core/item-actions.ts
+  function renderIcon(container, iconId) {
+    try {
+      setIcon(container, iconId);
+    } catch (e) {
+    }
+  }
+  function registerSheetCompanion(el) {
+    sheetCompanions.add(el);
+  }
+  function unregisterSheetCompanion(el) {
+    sheetCompanions.delete(el);
+  }
+  function inSheetCompanion(target) {
+    for (const c of sheetCompanions) {
+      if (c.isConnected && c.contains(target)) return true;
+    }
+    return false;
+  }
+  function onMouseDownCapture(ev) {
+    if (touchSettlePending) return;
+    if (popupEl && popupEl.isConnected && !popupEl.contains(ev.target) && !inSheetCompanion(ev.target)) {
+      closeItemMenu();
+    }
+  }
+  function onMouseUpCapture(ev) {
+    if (!suppressNextClick) return;
+    if (popupEl && popupEl.isConnected && popupEl.contains(ev.target)) return;
+    suppressNextClick = false;
+    residualClickArmed = true;
+  }
+  function onClickCapture(ev) {
+    const target = ev.target;
+    if (residualClickArmed) {
+      residualClickArmed = false;
+      ev.stopImmediatePropagation();
+      ev.preventDefault();
+      return;
+    }
+    if (touchSettlePending) {
+      const inPopup = popupEl != null && popupEl.contains(target) || sheetMask != null && sheetMask.contains(target);
+      touchSettlePending = false;
+      if (inPopup) {
+        ev.stopImmediatePropagation();
+        ev.preventDefault();
+        return;
+      }
+    }
+    if (popupEl && popupEl.isConnected && !popupEl.contains(target) && !inSheetCompanion(target)) {
+      closeItemMenu();
+    }
+  }
+  function closeItemMenu() {
+    if (menuEsc) {
+      menuEsc.unregister();
+      menuEsc = null;
+    }
+    if (touchSettleTimer) {
+      clearTimeout(touchSettleTimer);
+      touchSettleTimer = null;
+    }
+    document.removeEventListener("mousedown", onMouseDownCapture, true);
+    document.removeEventListener("mouseup", onMouseUpCapture, true);
+    document.removeEventListener("click", onClickCapture, true);
+    if (sheetMask) {
+      sheetMask.remove();
+      sheetMask = null;
+    }
+    if (popupEl) {
+      popupEl.remove();
+      popupEl = null;
+    }
+    sheetBodyEl = null;
+    sheetHeadEl = null;
+    suppressNextClick = false;
+    residualClickArmed = false;
+    touchSettlePending = false;
+    if (prevFocus && prevFocus.isConnected && document.activeElement === document.body) {
+      prevFocus.focus();
+    }
+    prevFocus = null;
+  }
+  function armTouchSettle() {
+    touchSettlePending = true;
+    if (touchSettleTimer) clearTimeout(touchSettleTimer);
+    touchSettleTimer = setTimeout(() => {
+      touchSettlePending = false;
+      touchSettleTimer = null;
+    }, TOUCH_SETTLE_MS);
+  }
+  function attachPopupListeners(id) {
+    document.addEventListener("mousedown", onMouseDownCapture, true);
+    document.addEventListener("mouseup", onMouseUpCapture, true);
+    document.addEventListener("click", onClickCapture, true);
+    menuEsc = escManager.register(id, {
+      isVisible: () => !!(popupEl && popupEl.isConnected),
+      close: closeItemMenu
+    });
+  }
+  function positionMenu(m, x, y) {
+    const mw = m.offsetWidth || 168;
+    const mh = m.offsetHeight || m.children.length * ITEM_HEIGHT + MENU_PADDING;
+    const vw = window.innerWidth || document.documentElement.clientWidth || 0;
+    const vh = window.innerHeight || document.documentElement.clientHeight || 0;
+    let left = x + ANCHOR_GAP;
+    let top = y + ANCHOR_GAP;
+    if (vw && left + mw > vw - VIEWPORT_PAD) left = Math.max(VIEWPORT_PAD, x - mw - ANCHOR_GAP);
+    if (vh && top + mh > vh - VIEWPORT_PAD) top = Math.max(VIEWPORT_PAD, y - mh - ANCHOR_GAP);
+    if (vw) left = Math.min(Math.max(left, VIEWPORT_PAD), Math.max(VIEWPORT_PAD, vw - mw - VIEWPORT_PAD));
+    if (vh) top = Math.min(Math.max(top, VIEWPORT_PAD), Math.max(VIEWPORT_PAD, vh - mh - VIEWPORT_PAD));
+    m.style.left = `${left}px`;
+    m.style.top = `${top}px`;
+  }
+  function attachItemKeyboardNav(host, scope) {
+    host.addEventListener("keydown", (e) => {
+      if (e.key !== "ArrowDown" && e.key !== "ArrowUp") return;
+      const items = Array.from(scope.querySelectorAll("button"));
+      if (items.length === 0) return;
+      e.preventDefault();
+      const idx = items.indexOf(document.activeElement);
+      const next = idx === -1 ? 0 : e.key === "ArrowDown" ? (idx + 1) % items.length : (idx - 1 + items.length) % items.length;
+      items[next].focus();
+    });
+  }
+  function focusMenuFirst(host, scope) {
+    prevFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    const first = scope.querySelector("button");
+    if (first) first.focus();
+    attachItemKeyboardNav(host, scope);
+  }
+  function openItemMenu(x, y, actions, suppressResidualClick = false, menuClass, menuHeadHtml) {
+    closeItemMenu();
+    const m = document.createElement("div");
+    m.className = "bz-item-menu" + (menuClass ? " " + menuClass : "");
+    m.style.visibility = "hidden";
+    if (menuHeadHtml) {
+      const head = document.createElement("div");
+      head.className = "bz-item-menu-head";
+      head.innerHTML = menuHeadHtml;
+      m.appendChild(head);
+      const sep = document.createElement("div");
+      sep.className = "bz-item-menu-sep";
+      m.appendChild(sep);
+    }
+    for (const a of actions) {
+      const item = document.createElement("button");
+      item.type = "button";
+      if (a.title) item.title = a.title;
+      item.className = "bz-item-menu-item" + (a.kind === "danger" ? " bz-item-menu-item--danger" : "") + (a.tone === "accent" ? " bz-item-menu-item--accent" : "");
+      const itemIcon = document.createElement("span");
+      itemIcon.className = "bz-item-menu-icon";
+      renderIcon(itemIcon, a.icon);
+      const itemLabel = document.createElement("span");
+      itemLabel.className = "bz-item-menu-label";
+      itemLabel.textContent = a.label;
+      item.appendChild(itemIcon);
+      item.appendChild(itemLabel);
+      item.addEventListener("click", (ev) => {
+        ev.stopPropagation();
+        closeItemMenu();
+        a.onClick();
+      });
+      m.appendChild(item);
+    }
+    m.style.zIndex = String(allocZ());
+    document.body.appendChild(m);
+    positionMenu(m, x, y);
+    m.style.visibility = "visible";
+    popupEl = m;
+    suppressNextClick = suppressResidualClick;
+    residualClickArmed = false;
+    if (!suppressResidualClick) armTouchSettle();
+    attachPopupListeners("bz-item-menu");
+    focusMenuFirst(m, m);
+  }
+  function buildSheetItem(a) {
+    const item = document.createElement("button");
+    item.type = "button";
+    if (a.title) item.title = a.title;
+    item.className = "bz-item-sheet-item" + (a.kind === "danger" ? " bz-item-sheet-item--danger" : "") + (a.tone === "accent" ? " bz-item-sheet-item--accent" : "");
+    const itemIcon = document.createElement("span");
+    itemIcon.className = "bz-item-sheet-icon";
+    renderIcon(itemIcon, a.icon);
+    const itemLabel = document.createElement("span");
+    itemLabel.className = "bz-item-sheet-label";
+    itemLabel.textContent = a.label;
+    item.appendChild(itemIcon);
+    item.appendChild(itemLabel);
+    if (a.sub) {
+      const itemSub = document.createElement("span");
+      itemSub.className = "bz-item-sheet-item-sub";
+      itemSub.textContent = a.sub;
+      item.appendChild(itemSub);
+    }
+    item.addEventListener("click", (ev) => {
+      ev.stopPropagation();
+      if (a.keepOpen) {
+        a.onClick();
+        return;
+      }
+      closeItemMenu();
+      a.onClick();
+    });
+    return item;
+  }
+  function openItemSheet(actions, opts, suppressResidualClick = false) {
+    closeItemMenu();
+    const mask = document.createElement("div");
+    mask.className = "bz-item-sheet-mask";
+    const sheet = document.createElement("div");
+    sheet.className = "bz-item-sheet" + ((opts == null ? void 0 : opts.sheetClass) ? " " + opts.sheetClass : "");
+    if (opts == null ? void 0 : opts.sheetHead) {
+      const head = document.createElement("div");
+      head.className = "bz-item-sheet-head";
+      head.appendChild(opts.sheetHead);
+      sheet.appendChild(head);
+      sheetHeadEl = head;
+    } else if (opts == null ? void 0 : opts.sheetTitle) {
+      const head = document.createElement("div");
+      head.className = "bz-item-sheet-head";
+      const titleEl = document.createElement("div");
+      titleEl.className = "bz-item-sheet-title";
+      titleEl.textContent = opts.sheetTitle;
+      head.appendChild(titleEl);
+      if (opts.sheetSub) {
+        const subEl = document.createElement("div");
+        subEl.className = "bz-item-sheet-sub";
+        subEl.textContent = opts.sheetSub;
+        head.appendChild(subEl);
+      }
+      sheet.appendChild(head);
+      sheetHeadEl = head;
+    }
+    const body = document.createElement("div");
+    body.className = "bz-item-sheet-body";
+    for (const a of actions) {
+      body.appendChild(buildSheetItem(a));
+    }
+    sheet.appendChild(body);
+    mask.style.zIndex = String(allocZ());
+    sheet.style.zIndex = String(allocZ());
+    document.body.appendChild(mask);
+    document.body.appendChild(sheet);
+    popupEl = sheet;
+    sheetMask = mask;
+    sheetBodyEl = body;
+    suppressNextClick = suppressResidualClick;
+    residualClickArmed = false;
+    if (!suppressResidualClick) armTouchSettle();
+    attachPopupListeners("bz-item-sheet");
+    attachSheetDismiss(sheet, body);
+    focusMenuFirst(sheet, body);
+  }
+  function attachSheetDismiss(sheet, body) {
+    const CLOSE_AT = 80;
+    let startY = 0;
+    let dragging = false;
+    let dy = 0;
+    const reset = () => {
+      dragging = false;
+      dy = 0;
+      sheet.style.transform = "";
+      sheet.classList.remove("bz-item-sheet--dragging");
+    };
+    sheet.addEventListener(
+      "touchstart",
+      (e) => {
+        const t = e.touches && e.touches[0];
+        if (!t) return;
+        startY = t.clientY;
+        dragging = true;
+        dy = 0;
+      },
+      { passive: true }
+    );
+    sheet.addEventListener(
+      "touchmove",
+      (e) => {
+        if (!dragging) return;
+        const t = e.touches && e.touches[0];
+        if (!t) return;
+        const cur = t.clientY - startY;
+        if (cur <= 0) {
+          if (dy !== 0) reset();
+          return;
+        }
+        if (body.scrollTop > 0 && body.contains(e.target)) {
+          if (dy !== 0) reset();
+          return;
+        }
+        dy = cur;
+        e.preventDefault();
+        sheet.classList.add("bz-item-sheet--dragging");
+        sheet.style.transform = `translateY(${dy}px)`;
+        if (sheetMask) sheetMask.style.opacity = String(Math.max(0, 1 - dy / 400));
+      },
+      { passive: false }
+    );
+    const onTouchEnd = () => {
+      if (!dragging) return;
+      const over = dy > CLOSE_AT;
+      dragging = false;
+      if (over) {
+        sheet.classList.remove("bz-item-sheet--dragging");
+        const s = sheet;
+        s.style.transform = "translateY(100%)";
+        if (sheetMask) sheetMask.style.opacity = "0";
+        setTimeout(() => {
+          if (popupEl === s) closeItemMenu();
+        }, 180);
+      } else {
+        reset();
+        if (sheetMask) sheetMask.style.opacity = "1";
+      }
+      dy = 0;
+    };
+    sheet.addEventListener("touchend", onTouchEnd);
+    sheet.addEventListener("touchcancel", () => {
+      reset();
+      if (sheetMask) sheetMask.style.opacity = "1";
+    });
+  }
+  function attachItemActions(card, actions, opts) {
+    if (!card || actions.length === 0) return;
+    card.classList.add("bz-item-card");
+    card.addEventListener("contextmenu", (e) => {
+      if (isMobileEnv()) return;
+      if ((opts == null ? void 0 : opts.longPressFilter) && !opts.longPressFilter(e)) return;
+      e.preventDefault();
+      openItemMenu(e.clientX, e.clientY, actions, true, opts == null ? void 0 : opts.menuClass, opts == null ? void 0 : opts.menuHeadHtml);
+      suppressNextClick = false;
+    });
+    longPress(
+      card,
+      (ev) => {
+        if (!isMobileEnv()) return;
+        openItemSheet(actions, opts, ev.type !== "touchstart");
+      },
+      void 0,
+      opts == null ? void 0 : opts.longPressFilter
+    );
+  }
+  var VIEWPORT_PAD, ANCHOR_GAP, ITEM_HEIGHT, MENU_PADDING, TOUCH_SETTLE_MS, popupEl, sheetMask, sheetBodyEl, sheetHeadEl, sheetCompanions, menuEsc, prevFocus, suppressNextClick, residualClickArmed, touchSettlePending, touchSettleTimer;
+  var init_item_actions = __esm({
+    "src/core/item-actions.ts"() {
+      init_dom();
+      init_esc_manager();
+      init_z_order();
+      init_mobile();
+      init_fake_obsidian();
+      VIEWPORT_PAD = 8;
+      ANCHOR_GAP = 12;
+      ITEM_HEIGHT = 30;
+      MENU_PADDING = 10;
+      TOUCH_SETTLE_MS = 400;
+      popupEl = null;
+      sheetMask = null;
+      sheetBodyEl = null;
+      sheetHeadEl = null;
+      sheetCompanions = /* @__PURE__ */ new Set();
+      menuEsc = null;
+      prevFocus = null;
+      suppressNextClick = false;
+      residualClickArmed = false;
+      touchSettlePending = false;
+      touchSettleTimer = null;
     }
   });
 
@@ -5587,15 +7523,6 @@ var BZW_diary = (() => {
     }
     if (opts.onClick) b.addEventListener("click", opts.onClick);
     return b;
-  }
-  function uiBtnRow(buttons, opts) {
-    const row = document.createElement("div");
-    const cls = ["bz-btn-row"];
-    if (opts == null ? void 0 : opts.center) cls.push("bz-btn-row--center");
-    if (opts == null ? void 0 : opts.grow) cls.push("bz-btn-row--grow");
-    row.className = cls.join(" ");
-    buttons.forEach((x) => row.appendChild(x));
-    return row;
   }
   var init_button = __esm({
     "src/core/ui/button.ts"() {
@@ -6071,67 +7998,6 @@ var BZW_diary = (() => {
     }
   });
 
-  // src/core/ui/focus-trap.ts
-  function isHidden(el) {
-    let cur = el;
-    while (cur && cur !== document.body) {
-      if (cur.classList.contains("bz-setting-hidden")) return true;
-      if (cur.style.display === "none") return true;
-      cur = cur.parentElement;
-    }
-    return false;
-  }
-  function firstFocusable(container) {
-    const list = Array.from(container.querySelectorAll(FOCUSABLE_SELECTOR)).filter((el) => {
-      if (isHidden(el)) return false;
-      if (isMobileEnv()) {
-        const tag = el.tagName;
-        if (tag === "INPUT" || tag === "TEXTAREA") return false;
-      }
-      return true;
-    });
-    return list[0] || null;
-  }
-  function trapFocus(container) {
-    const onKeydown = (e) => {
-      if (e.key !== "Tab") return;
-      const items = Array.from(container.querySelectorAll(FOCUSABLE_SELECTOR)).filter(
-        (el) => !isHidden(el) && !el.hasAttribute("disabled")
-      );
-      if (!items.length) return;
-      const first = items[0];
-      const last = items[items.length - 1];
-      const active = document.activeElement;
-      const inside = active instanceof Node && active !== container && container.contains(active);
-      if (e.shiftKey) {
-        if (active === first || !inside) {
-          e.preventDefault();
-          last.focus();
-        }
-      } else if (active === last || !inside) {
-        e.preventDefault();
-        first.focus();
-      }
-    };
-    container.addEventListener("keydown", onKeydown);
-    return () => container.removeEventListener("keydown", onKeydown);
-  }
-  function trapPanelFocus(panel) {
-    panel.classList.add(PANEL_FOCUS_CLASS);
-    if (!panel.hasAttribute("tabindex")) panel.setAttribute("tabindex", "-1");
-    const release = trapFocus(panel);
-    panel.focus({ preventScroll: true });
-    return release;
-  }
-  var FOCUSABLE_SELECTOR, PANEL_FOCUS_CLASS;
-  var init_focus_trap = __esm({
-    "src/core/ui/focus-trap.ts"() {
-      init_mobile();
-      FOCUSABLE_SELECTOR = 'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])';
-      PANEL_FOCUS_CLASS = "bz-panel-focushost";
-    }
-  });
-
   // src/core/ui/modal.ts
   function bindFormSubmit(popup, onSubmit) {
     popup.addEventListener("keydown", (e) => {
@@ -6413,881 +8279,6 @@ var BZW_diary = (() => {
       init_modal();
       init_resize();
       init_splitter();
-    }
-  });
-
-  // src/core/item-actions.ts
-  function renderIcon(container, iconId) {
-    try {
-      setIcon(container, iconId);
-    } catch (e) {
-    }
-  }
-  function registerSheetCompanion(el) {
-    sheetCompanions.add(el);
-  }
-  function unregisterSheetCompanion(el) {
-    sheetCompanions.delete(el);
-  }
-  function inSheetCompanion(target) {
-    for (const c of sheetCompanions) {
-      if (c.isConnected && c.contains(target)) return true;
-    }
-    return false;
-  }
-  function onMouseDownCapture(ev) {
-    if (touchSettlePending) return;
-    if (popupEl && popupEl.isConnected && !popupEl.contains(ev.target) && !inSheetCompanion(ev.target)) {
-      closeItemMenu();
-    }
-  }
-  function onMouseUpCapture(ev) {
-    if (!suppressNextClick) return;
-    if (popupEl && popupEl.isConnected && popupEl.contains(ev.target)) return;
-    suppressNextClick = false;
-    residualClickArmed = true;
-  }
-  function onClickCapture(ev) {
-    const target = ev.target;
-    if (residualClickArmed) {
-      residualClickArmed = false;
-      ev.stopImmediatePropagation();
-      ev.preventDefault();
-      return;
-    }
-    if (touchSettlePending) {
-      const inPopup = popupEl != null && popupEl.contains(target) || sheetMask != null && sheetMask.contains(target);
-      touchSettlePending = false;
-      if (inPopup) {
-        ev.stopImmediatePropagation();
-        ev.preventDefault();
-        return;
-      }
-    }
-    if (popupEl && popupEl.isConnected && !popupEl.contains(target) && !inSheetCompanion(target)) {
-      closeItemMenu();
-    }
-  }
-  function closeItemMenu() {
-    if (menuEsc) {
-      menuEsc.unregister();
-      menuEsc = null;
-    }
-    if (touchSettleTimer) {
-      clearTimeout(touchSettleTimer);
-      touchSettleTimer = null;
-    }
-    document.removeEventListener("mousedown", onMouseDownCapture, true);
-    document.removeEventListener("mouseup", onMouseUpCapture, true);
-    document.removeEventListener("click", onClickCapture, true);
-    if (sheetMask) {
-      sheetMask.remove();
-      sheetMask = null;
-    }
-    if (popupEl) {
-      popupEl.remove();
-      popupEl = null;
-    }
-    sheetBodyEl = null;
-    sheetHeadEl = null;
-    suppressNextClick = false;
-    residualClickArmed = false;
-    touchSettlePending = false;
-    if (prevFocus && prevFocus.isConnected && document.activeElement === document.body) {
-      prevFocus.focus();
-    }
-    prevFocus = null;
-  }
-  function armTouchSettle() {
-    touchSettlePending = true;
-    if (touchSettleTimer) clearTimeout(touchSettleTimer);
-    touchSettleTimer = setTimeout(() => {
-      touchSettlePending = false;
-      touchSettleTimer = null;
-    }, TOUCH_SETTLE_MS);
-  }
-  function resetItemMenuClickGuard() {
-    suppressNextClick = false;
-    residualClickArmed = false;
-  }
-  function attachPopupListeners(id) {
-    document.addEventListener("mousedown", onMouseDownCapture, true);
-    document.addEventListener("mouseup", onMouseUpCapture, true);
-    document.addEventListener("click", onClickCapture, true);
-    menuEsc = escManager.register(id, {
-      isVisible: () => !!(popupEl && popupEl.isConnected),
-      close: closeItemMenu
-    });
-  }
-  function positionMenu(m, x, y) {
-    const mw = m.offsetWidth || 168;
-    const mh = m.offsetHeight || m.children.length * ITEM_HEIGHT + MENU_PADDING;
-    const vw = window.innerWidth || document.documentElement.clientWidth || 0;
-    const vh = window.innerHeight || document.documentElement.clientHeight || 0;
-    let left = x + ANCHOR_GAP;
-    let top = y + ANCHOR_GAP;
-    if (vw && left + mw > vw - VIEWPORT_PAD) left = Math.max(VIEWPORT_PAD, x - mw - ANCHOR_GAP);
-    if (vh && top + mh > vh - VIEWPORT_PAD) top = Math.max(VIEWPORT_PAD, y - mh - ANCHOR_GAP);
-    if (vw) left = Math.min(Math.max(left, VIEWPORT_PAD), Math.max(VIEWPORT_PAD, vw - mw - VIEWPORT_PAD));
-    if (vh) top = Math.min(Math.max(top, VIEWPORT_PAD), Math.max(VIEWPORT_PAD, vh - mh - VIEWPORT_PAD));
-    m.style.left = `${left}px`;
-    m.style.top = `${top}px`;
-  }
-  function attachItemKeyboardNav(host, scope) {
-    host.addEventListener("keydown", (e) => {
-      if (e.key !== "ArrowDown" && e.key !== "ArrowUp") return;
-      const items = Array.from(scope.querySelectorAll("button"));
-      if (items.length === 0) return;
-      e.preventDefault();
-      const idx = items.indexOf(document.activeElement);
-      const next = idx === -1 ? 0 : e.key === "ArrowDown" ? (idx + 1) % items.length : (idx - 1 + items.length) % items.length;
-      items[next].focus();
-    });
-  }
-  function focusMenuFirst(host, scope) {
-    prevFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
-    const first = scope.querySelector("button");
-    if (first) first.focus();
-    attachItemKeyboardNav(host, scope);
-  }
-  function openItemMenu(x, y, actions, suppressResidualClick = false, menuClass, menuHeadHtml) {
-    closeItemMenu();
-    const m = document.createElement("div");
-    m.className = "bz-item-menu" + (menuClass ? " " + menuClass : "");
-    m.style.visibility = "hidden";
-    if (menuHeadHtml) {
-      const head = document.createElement("div");
-      head.className = "bz-item-menu-head";
-      head.innerHTML = menuHeadHtml;
-      m.appendChild(head);
-      const sep = document.createElement("div");
-      sep.className = "bz-item-menu-sep";
-      m.appendChild(sep);
-    }
-    for (const a of actions) {
-      const item = document.createElement("button");
-      item.type = "button";
-      if (a.title) item.title = a.title;
-      item.className = "bz-item-menu-item" + (a.kind === "danger" ? " bz-item-menu-item--danger" : "") + (a.tone === "accent" ? " bz-item-menu-item--accent" : "");
-      const itemIcon = document.createElement("span");
-      itemIcon.className = "bz-item-menu-icon";
-      renderIcon(itemIcon, a.icon);
-      const itemLabel = document.createElement("span");
-      itemLabel.className = "bz-item-menu-label";
-      itemLabel.textContent = a.label;
-      item.appendChild(itemIcon);
-      item.appendChild(itemLabel);
-      item.addEventListener("click", (ev) => {
-        ev.stopPropagation();
-        closeItemMenu();
-        a.onClick();
-      });
-      m.appendChild(item);
-    }
-    m.style.zIndex = String(allocZ());
-    document.body.appendChild(m);
-    positionMenu(m, x, y);
-    m.style.visibility = "visible";
-    popupEl = m;
-    suppressNextClick = suppressResidualClick;
-    residualClickArmed = false;
-    if (!suppressResidualClick) armTouchSettle();
-    attachPopupListeners("bz-item-menu");
-    focusMenuFirst(m, m);
-  }
-  function buildSheetItem(a) {
-    const item = document.createElement("button");
-    item.type = "button";
-    if (a.title) item.title = a.title;
-    item.className = "bz-item-sheet-item" + (a.kind === "danger" ? " bz-item-sheet-item--danger" : "") + (a.tone === "accent" ? " bz-item-sheet-item--accent" : "");
-    const itemIcon = document.createElement("span");
-    itemIcon.className = "bz-item-sheet-icon";
-    renderIcon(itemIcon, a.icon);
-    const itemLabel = document.createElement("span");
-    itemLabel.className = "bz-item-sheet-label";
-    itemLabel.textContent = a.label;
-    item.appendChild(itemIcon);
-    item.appendChild(itemLabel);
-    if (a.sub) {
-      const itemSub = document.createElement("span");
-      itemSub.className = "bz-item-sheet-item-sub";
-      itemSub.textContent = a.sub;
-      item.appendChild(itemSub);
-    }
-    item.addEventListener("click", (ev) => {
-      ev.stopPropagation();
-      if (a.keepOpen) {
-        a.onClick();
-        return;
-      }
-      closeItemMenu();
-      a.onClick();
-    });
-    return item;
-  }
-  function openItemSheet(actions, opts, suppressResidualClick = false) {
-    closeItemMenu();
-    const mask = document.createElement("div");
-    mask.className = "bz-item-sheet-mask";
-    const sheet = document.createElement("div");
-    sheet.className = "bz-item-sheet" + ((opts == null ? void 0 : opts.sheetClass) ? " " + opts.sheetClass : "");
-    if (opts == null ? void 0 : opts.sheetHead) {
-      const head = document.createElement("div");
-      head.className = "bz-item-sheet-head";
-      head.appendChild(opts.sheetHead);
-      sheet.appendChild(head);
-      sheetHeadEl = head;
-    } else if (opts == null ? void 0 : opts.sheetTitle) {
-      const head = document.createElement("div");
-      head.className = "bz-item-sheet-head";
-      const titleEl = document.createElement("div");
-      titleEl.className = "bz-item-sheet-title";
-      titleEl.textContent = opts.sheetTitle;
-      head.appendChild(titleEl);
-      if (opts.sheetSub) {
-        const subEl = document.createElement("div");
-        subEl.className = "bz-item-sheet-sub";
-        subEl.textContent = opts.sheetSub;
-        head.appendChild(subEl);
-      }
-      sheet.appendChild(head);
-      sheetHeadEl = head;
-    }
-    const body = document.createElement("div");
-    body.className = "bz-item-sheet-body";
-    for (const a of actions) {
-      body.appendChild(buildSheetItem(a));
-    }
-    sheet.appendChild(body);
-    mask.style.zIndex = String(allocZ());
-    sheet.style.zIndex = String(allocZ());
-    document.body.appendChild(mask);
-    document.body.appendChild(sheet);
-    popupEl = sheet;
-    sheetMask = mask;
-    sheetBodyEl = body;
-    suppressNextClick = suppressResidualClick;
-    residualClickArmed = false;
-    if (!suppressResidualClick) armTouchSettle();
-    attachPopupListeners("bz-item-sheet");
-    attachSheetDismiss(sheet, body);
-    focusMenuFirst(sheet, body);
-  }
-  function attachSheetDismiss(sheet, body) {
-    const CLOSE_AT = 80;
-    let startY = 0;
-    let dragging = false;
-    let dy = 0;
-    const reset = () => {
-      dragging = false;
-      dy = 0;
-      sheet.style.transform = "";
-      sheet.classList.remove("bz-item-sheet--dragging");
-    };
-    sheet.addEventListener(
-      "touchstart",
-      (e) => {
-        const t = e.touches && e.touches[0];
-        if (!t) return;
-        startY = t.clientY;
-        dragging = true;
-        dy = 0;
-      },
-      { passive: true }
-    );
-    sheet.addEventListener(
-      "touchmove",
-      (e) => {
-        if (!dragging) return;
-        const t = e.touches && e.touches[0];
-        if (!t) return;
-        const cur = t.clientY - startY;
-        if (cur <= 0) {
-          if (dy !== 0) reset();
-          return;
-        }
-        if (body.scrollTop > 0 && body.contains(e.target)) {
-          if (dy !== 0) reset();
-          return;
-        }
-        dy = cur;
-        e.preventDefault();
-        sheet.classList.add("bz-item-sheet--dragging");
-        sheet.style.transform = `translateY(${dy}px)`;
-        if (sheetMask) sheetMask.style.opacity = String(Math.max(0, 1 - dy / 400));
-      },
-      { passive: false }
-    );
-    const onTouchEnd = () => {
-      if (!dragging) return;
-      const over = dy > CLOSE_AT;
-      dragging = false;
-      if (over) {
-        sheet.classList.remove("bz-item-sheet--dragging");
-        const s = sheet;
-        s.style.transform = "translateY(100%)";
-        if (sheetMask) sheetMask.style.opacity = "0";
-        setTimeout(() => {
-          if (popupEl === s) closeItemMenu();
-        }, 180);
-      } else {
-        reset();
-        if (sheetMask) sheetMask.style.opacity = "1";
-      }
-      dy = 0;
-    };
-    sheet.addEventListener("touchend", onTouchEnd);
-    sheet.addEventListener("touchcancel", () => {
-      reset();
-      if (sheetMask) sheetMask.style.opacity = "1";
-    });
-  }
-  function attachItemActions(card, actions, opts) {
-    if (!card || actions.length === 0) return;
-    card.classList.add("bz-item-card");
-    card.addEventListener("contextmenu", (e) => {
-      if (isMobileEnv()) return;
-      if ((opts == null ? void 0 : opts.longPressFilter) && !opts.longPressFilter(e)) return;
-      e.preventDefault();
-      openItemMenu(e.clientX, e.clientY, actions, true, opts == null ? void 0 : opts.menuClass, opts == null ? void 0 : opts.menuHeadHtml);
-      suppressNextClick = false;
-    });
-    longPress(
-      card,
-      (ev) => {
-        if (!isMobileEnv()) return;
-        openItemSheet(actions, opts, ev.type !== "touchstart");
-      },
-      void 0,
-      opts == null ? void 0 : opts.longPressFilter
-    );
-  }
-  var VIEWPORT_PAD, ANCHOR_GAP, ITEM_HEIGHT, MENU_PADDING, TOUCH_SETTLE_MS, popupEl, sheetMask, sheetBodyEl, sheetHeadEl, sheetCompanions, menuEsc, prevFocus, suppressNextClick, residualClickArmed, touchSettlePending, touchSettleTimer;
-  var init_item_actions = __esm({
-    "src/core/item-actions.ts"() {
-      init_dom();
-      init_esc_manager();
-      init_z_order();
-      init_mobile();
-      init_fake_obsidian();
-      VIEWPORT_PAD = 8;
-      ANCHOR_GAP = 12;
-      ITEM_HEIGHT = 30;
-      MENU_PADDING = 10;
-      TOUCH_SETTLE_MS = 400;
-      popupEl = null;
-      sheetMask = null;
-      sheetBodyEl = null;
-      sheetHeadEl = null;
-      sheetCompanions = /* @__PURE__ */ new Set();
-      menuEsc = null;
-      prevFocus = null;
-      suppressNextClick = false;
-      residualClickArmed = false;
-      touchSettlePending = false;
-      touchSettleTimer = null;
-    }
-  });
-
-  // src/core/domain-bus.ts
-  function emitDomainEvent(channel, evt) {
-    const handlers = channels.get(channel);
-    if (!handlers || handlers.size === 0) return;
-    for (const handler of [...handlers]) {
-      try {
-        handler(evt);
-      } catch (e) {
-        console.error(`bz: 域事件 handler 异常（channel=${channel}）`, e);
-      }
-    }
-  }
-  function onDomainEvent(channel, handler) {
-    let set = channels.get(channel);
-    if (!set) {
-      set = /* @__PURE__ */ new Set();
-      channels.set(channel, set);
-    }
-    set.add(handler);
-    let offed = false;
-    return () => {
-      if (offed) return;
-      offed = true;
-      const cur = channels.get(channel);
-      if (!cur) return;
-      cur.delete(handler);
-      if (cur.size === 0) channels.delete(channel);
-    };
-  }
-  var channels;
-  var init_domain_bus = __esm({
-    "src/core/domain-bus.ts"() {
-      channels = /* @__PURE__ */ new Map();
-    }
-  });
-
-  // src/core/flow-dialog.ts
-  function buildFlowDialogParts(title, message, actions) {
-    var _a;
-    let buttons;
-    if (actions.length === 2) {
-      buttons = [
-        { id: FLOW_DIALOG_CANCEL_ID, className: "", label: actions[0].label, value: actions[0].value },
-        { id: FLOW_DIALOG_OK_ID, className: "", label: actions[1].label, value: actions[1].value }
-      ];
-    } else {
-      buttons = actions.map((a, i) => {
-        const cls = ["bz-flow-dialog-action"];
-        if (a.danger) cls.push("bz-flow-dialog-danger");
-        if (a.cta) cls.push("bz-flow-dialog-cta");
-        return { id: `bz-flow-dialog-action-${i}`, className: cls.join(" "), label: a.label, value: a.value };
-      });
-    }
-    const ctaIdx = actions.findIndex((a) => a.cta);
-    const primaryIdx = ctaIdx >= 0 ? ctaIdx : actions.length - 1;
-    const dangerPrimary = !!((_a = actions[primaryIdx]) == null ? void 0 : _a.danger);
-    let focusIdx = primaryIdx;
-    if (dangerPrimary) {
-      const safeIdx = actions.findIndex((a, i) => i !== primaryIdx && !a.danger);
-      if (safeIdx >= 0) focusIdx = safeIdx;
-    }
-    const html = "<h4>" + escapeHtml2(title || "确认") + "</h4><p>" + escapeHtml2(message).replace(/\n/g, "<br>") + '</p><div class="confirm-actions">' + buttons.map((b) => {
-      const clsAttr = b.className ? ' class="' + b.className + '"' : "";
-      return '<button id="' + b.id + '"' + clsAttr + ">" + escapeHtml2(b.label) + "</button>";
-    }).join("") + "</div>";
-    return { html, buttons, focusId: buttons[focusIdx].id, dangerPrimary };
-  }
-  function openFlowDialog(opts) {
-    if (!opts.actions || opts.actions.length === 0) {
-      return Promise.reject(new Error("openFlowDialog：actions 不能为空"));
-    }
-    return new Promise((resolve) => {
-      const prevActive = document.activeElement;
-      if (activeSettle) activeSettle(void 0);
-      const parts = buildFlowDialogParts(opts.title, opts.message, opts.actions);
-      const mask = document.createElement("div");
-      mask.id = "__shared_confirm_mask__";
-      mask.style.zIndex = String(allocZ());
-      mask.onclick = (e) => {
-        if (e.target === mask) settle(void 0);
-      };
-      const popup = document.createElement("div");
-      popup.id = "__shared_confirm_popup__";
-      popup.className = "bz-overlay-popup bz-flow-dialog" + (parts.dangerPrimary ? " bz-flow-dialog--danger" : "");
-      if (opts.className) {
-        for (const cls of opts.className.split(/\s+/)) if (cls) popup.classList.add(cls);
-      }
-      popup.setAttribute("role", "dialog");
-      popup.setAttribute("aria-modal", "true");
-      popup.innerHTML = parts.html;
-      mask.appendChild(popup);
-      document.body.appendChild(mask);
-      const escHandle = escManager.register("q3-confirm", {
-        isVisible: () => mask.isConnected,
-        close: () => settle(void 0)
-      });
-      let settled = false;
-      const releaseFocusTrap = trapFocus(popup);
-      function restoreFocus() {
-        if (prevActive && prevActive instanceof HTMLElement && prevActive.isConnected) {
-          prevActive.focus();
-        }
-      }
-      function settle(v) {
-        if (settled) return;
-        settled = true;
-        if (activeSettle === settle) activeSettle = null;
-        releaseFocusTrap();
-        escHandle.unregister();
-        mask.remove();
-        restoreFocus();
-        resolve(v);
-      }
-      activeSettle = settle;
-      for (const b of parts.buttons) {
-        const btn = document.getElementById(b.id);
-        if (btn) btn.onclick = () => settle(b.value);
-      }
-      const focusBtn = document.getElementById(parts.focusId);
-      if (focusBtn) focusBtn.focus();
-    });
-  }
-  function cancelActiveFlowDialog() {
-    if (activeSettle) activeSettle(void 0);
-  }
-  function confirmDiscard(proceed, message, className) {
-    void openFlowDialog({
-      title: "放弃未保存的内容？",
-      message: message || "弹窗内有未保存的输入，关闭后将丢失",
-      className,
-      actions: [
-        { label: "放弃", value: "ok" },
-        { label: "继续编辑", value: "cancel" }
-      ]
-    }).then((v) => {
-      if (v === "ok") proceed();
-    });
-  }
-  var FLOW_DIALOG_CANCEL_ID, FLOW_DIALOG_OK_ID, activeSettle;
-  var init_flow_dialog = __esm({
-    "src/core/flow-dialog.ts"() {
-      init_esc_manager();
-      init_utils();
-      init_z_order();
-      init_focus_trap();
-      FLOW_DIALOG_CANCEL_ID = "__shared_confirm_cancel__";
-      FLOW_DIALOG_OK_ID = "__shared_confirm_ok__";
-      activeSettle = null;
-    }
-  });
-
-  // src/core/diary-format.ts
-  function diaryEntryBaseName(dateStr, timeStr, seq) {
-    const d = String(dateStr || "").replace(/-/g, "");
-    const t = String(timeStr || "").replace(/:/g, "");
-    const stamp = `${d.slice(2, 8)}${t.slice(0, 4)}`;
-    return seq && seq > 1 ? `${stamp}-${seq}` : stamp;
-  }
-  function diaryEntryPath(dir, dateStr, timeStr, seq) {
-    return `${dir}/${diaryEntryBaseName(dateStr, timeStr, seq)}.md`;
-  }
-  function diaryMetaFromEntryPath(path) {
-    const base = (path || "").replace(/\\/g, "/").split("/").pop() || "";
-    const m = DIARY_ENTRY_FILE_RE.exec(base);
-    if (!m) return null;
-    const date = `20${m[1]}-${m[2]}-${m[3]}`;
-    const time = `${m[4]}:${m[5]}`;
-    if (!isValidDiaryDate(date) || !isValidDiaryTime(time)) return null;
-    return m[6] ? { date, time, seq: Number(m[6]) } : { date, time };
-  }
-  function diaryDateFromLegacyPath(path) {
-    const base = (path || "").replace(/\\/g, "/").split("/").pop() || "";
-    const m = DIARY_LEGACY_FILE_RE.exec(base);
-    if (!m) return null;
-    const date = `${m[1]}-${m[2]}-${m[3]}`;
-    return isValidDiaryDate(date) ? date : null;
-  }
-  function diaryDateFromEntryPath(path) {
-    var _a, _b;
-    return (_b = (_a = diaryMetaFromEntryPath(path)) == null ? void 0 : _a.date) != null ? _b : null;
-  }
-  function resolveDiaryEntryMeta(path, parsed) {
-    var _a;
-    return (_a = parsed.meta) != null ? _a : diaryMetaFromEntryPath(path);
-  }
-  function diaryStampText(date, time) {
-    return `${date} ${time}`;
-  }
-  function parseDiaryStamp(value) {
-    const m = /^(\d{4}-\d{2}-\d{2}) (\d{2}:\d{2})$/.exec(String(value || "").trim());
-    return m && isValidDiaryDate(m[1]) && isValidDiaryTime(m[2]) ? { date: m[1], time: m[2] } : null;
-  }
-  function isValidDiaryDate(s) {
-    const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(s || "");
-    if (!m) return false;
-    const y = Number(m[1]);
-    const mo = Number(m[2]);
-    const d = Number(m[3]);
-    if (mo < 1 || mo > 12 || d < 1) return false;
-    const days = [31, y % 4 === 0 && y % 100 !== 0 || y % 400 === 0 ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
-    return d <= days[mo - 1];
-  }
-  function isValidDiaryTime(s) {
-    const m = /^(\d{2}):(\d{2})$/.exec(s || "");
-    if (!m) return false;
-    return Number(m[1]) <= 23 && Number(m[2]) <= 59;
-  }
-  function serializeDiaryEntryFile(meta, tags, content) {
-    const lines = ["---", `${DIARY_DATE_KEY}: ${diaryStampText(meta.date, meta.time)}`, `${DIARY_TYPE_KEY}:`];
-    for (const t of tags) lines.push(`  - ${t}`);
-    lines.push("---", "", content);
-    let out = lines.join("\n");
-    if (!out.endsWith("\n")) out += "\n";
-    return out;
-  }
-  function unquote(v) {
-    const t = v.trim();
-    if (t.length >= 2 && (t.startsWith('"') && t.endsWith('"') || t.startsWith("'") && t.endsWith("'"))) {
-      return t.slice(1, -1);
-    }
-    return t;
-  }
-  function serializeDiaryBlockHeader(tags, time) {
-    return `# ${tags.join("/")} ${time}`;
-  }
-  function parseDiaryBlockHeader(line) {
-    const m = /^#\s+(.+)\s+(\d{2}:\d{2})$/.exec(String(line || "").trim());
-    if (!m) return null;
-    const tags = [];
-    for (const name of m[1].split("/")) {
-      const t = name.trim();
-      if (t && !tags.includes(t)) tags.push(t);
-    }
-    return { tags, time: m[2] };
-  }
-  function readDiaryFrontmatterFieldRaw(content, key) {
-    const text = (content || "").replace(/\r\n/g, "\n");
-    if (!text.startsWith("---\n")) return null;
-    const end = text.indexOf("\n---", 4);
-    if (end < 0) return null;
-    const safeKey = key.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-    const m = new RegExp(`^${safeKey}:[^\\S\\n]*(.*)$`, "m").exec(text.slice(4, end));
-    return m ? m[1].trim() : null;
-  }
-  function parseDiaryEntryFile(content) {
-    const text = (content || "").replace(/\r\n/g, "\n");
-    if (!text.startsWith("---\n")) return { meta: null, tags: [], body: content || "" };
-    const end = text.indexOf("\n---", 4);
-    if (end < 0) return { meta: null, tags: [], body: content || "" };
-    const afterClose = text.slice(end + 4);
-    if (afterClose && !afterClose.startsWith("\n")) return { meta: null, tags: [], body: content || "" };
-    const fmText = text.slice(4, end);
-    let body = afterClose;
-    if (body.startsWith("\n")) body = body.slice(1);
-    if (body.startsWith("\n")) body = body.slice(1);
-    let meta = null;
-    const tags = [];
-    let inTags = false;
-    for (const line of fmText.split("\n")) {
-      const tagItem = /^\s+-\s*(.*)$/.exec(line);
-      if (inTags && tagItem) {
-        const v = unquote(tagItem[1]);
-        if (v) tags.push(v);
-        continue;
-      }
-      inTags = false;
-      const kv = /^([^:]+):(.*)$/.exec(line);
-      if (!kv) continue;
-      const key = kv[1].trim();
-      const val = kv[2].trim();
-      if (key === DIARY_DATE_KEY) {
-        meta = parseDiaryStamp(unquote(val));
-      } else if (key === DIARY_TYPE_KEY) {
-        inTags = true;
-        if (val.startsWith("[") && val.endsWith("]")) {
-          for (const item of val.slice(1, -1).split(",")) {
-            const v = unquote(item);
-            if (v) tags.push(v);
-          }
-          inTags = false;
-        } else if (val) {
-          const v = unquote(val);
-          if (v) tags.push(v);
-          inTags = false;
-        }
-      }
-    }
-    return { meta, tags, body };
-  }
-  var DIARY_ENTRY_FILE_RE, DIARY_LEGACY_FILE_RE, DIARY_DATE_KEY, DIARY_TYPE_KEY;
-  var init_diary_format = __esm({
-    "src/core/diary-format.ts"() {
-      DIARY_ENTRY_FILE_RE = /^(\d{2})(\d{2})(\d{2})(\d{2})(\d{2})(?:-(\d+))?\.md$/;
-      DIARY_LEGACY_FILE_RE = /^(\d{4})-(\d{2})-(\d{2})\.md$/;
-      DIARY_DATE_KEY = "date";
-      DIARY_TYPE_KEY = "type";
-    }
-  });
-
-  // src/core/storage.ts
-  function normalizeStorageDir(value) {
-    let dir = (value || DEFAULT_STORAGE_DIR).trim().replace(/\/+$/, "");
-    if (/\.json$/i.test(dir)) {
-      const idx = dir.lastIndexOf("/");
-      dir = idx >= 0 ? dir.slice(0, idx) : "";
-    }
-    return dir || DEFAULT_STORAGE_DIR;
-  }
-  function storageDir() {
-    const s = tryGetSettings();
-    return normalizeStorageDir(s && s.storagePath);
-  }
-  function storageFile(name, base) {
-    const dir = (base || storageDir()).trim().replace(/\/+$/, "");
-    return `${dir}/${name}`;
-  }
-  function encryptDir() {
-    return `${storageDir()}/.ENCRYPT`;
-  }
-  function enqueueFileTask(filePath, task) {
-    var _a;
-    const prev = (_a = fileTaskQueues.get(filePath)) != null ? _a : Promise.resolve();
-    const run = prev.then(task, task);
-    const tail = run.then(
-      () => void 0,
-      () => void 0
-    );
-    fileTaskQueues.set(filePath, tail);
-    void tail.then(() => {
-      if (fileTaskQueues.get(filePath) === tail) fileTaskQueues.delete(filePath);
-    });
-    return run;
-  }
-  function assertPlainObject(filePath, current) {
-    if (current && typeof current === "object" && !Array.isArray(current)) return current;
-    const got = Array.isArray(current) ? "array" : current === null ? "null" : typeof current;
-    throw new Error("storage: 段级合并写要求对象形态 JSON（" + filePath + " 读到 " + got + "），请先归一文件形态");
-  }
-  function updateFileSections(filePath, writer, opts = {}) {
-    return enqueueFileTask(filePath, async () => {
-      var _a;
-      const store = jsonFileStore(filePath, { ...opts, defaultValue: (_a = opts.defaultValue) != null ? _a : {} });
-      const current = assertPlainObject(filePath, await store.read());
-      const set = await writer(current) || {};
-      const next = { ...current, ...set };
-      await store.write(next);
-      return next;
-    });
-  }
-  function isAlreadyExistsError(e) {
-    const msg = e instanceof Error ? e.message : String(e);
-    return /already exist/i.test(msg);
-  }
-  function corruptStamp(d = /* @__PURE__ */ new Date()) {
-    const p = (n) => String(n).padStart(2, "0");
-    return `${d.getFullYear()}${p(d.getMonth() + 1)}${p(d.getDate())}-${p(d.getHours())}${p(d.getMinutes())}${p(d.getSeconds())}`;
-  }
-  function baseNameOf(p) {
-    return p.includes("/") ? p.slice(p.lastIndexOf("/") + 1) : p;
-  }
-  async function backupOriginal(app, filePath, raw) {
-    try {
-      const f = app.vault.getAbstractFileByPath(filePath);
-      if (!f) return null;
-      const content = raw !== void 0 ? raw : await app.vault.read(f);
-      if (!app.vault.getAbstractFileByPath(CORRUPT_BACKUP_DIR)) {
-        try {
-          await app.vault.createFolder(CORRUPT_BACKUP_DIR);
-        } catch (e) {
-        }
-      }
-      const base = baseNameOf(filePath);
-      const stamp = corruptStamp();
-      let backupPath = `${CORRUPT_BACKUP_DIR}/${base}.${stamp}.bak`;
-      for (let i = 2; app.vault.getAbstractFileByPath(backupPath); i++) {
-        backupPath = `${CORRUPT_BACKUP_DIR}/${base}.${stamp}-${i}.bak`;
-      }
-      await app.vault.create(backupPath, content);
-      return backupPath;
-    } catch (e) {
-      console.warn("[storage] " + filePath + " 留档失败（" + CORRUPT_BACKUP_DIR + "），继续原流程", e);
-      return null;
-    }
-  }
-  function notifyBackup(filePath, backupPath, cause) {
-    var _a;
-    const now = Date.now();
-    if (now - ((_a = corruptNotifyAt.get(filePath)) != null ? _a : 0) < CORRUPT_NOTIFY_DEDUPE_MS) return;
-    corruptNotifyAt.set(filePath, now);
-    try {
-      const name = baseNameOf(filePath);
-      const msg = cause === "解析失败" ? `数据文件 ${name} 解析失败，原内容已留档到 ${backupPath}，数据不会丢，已重建默认文件继续使用` : `数据文件 ${name} 写入失败，原内容已留档到 ${backupPath}，数据不会丢，请稍后重试`;
-      notify(msg, { type: "warning" });
-    } catch (e) {
-    }
-  }
-  function serialize(v) {
-    return JSON.stringify(v, null, 2);
-  }
-  function jsonFileStore(filePath, opts = {}) {
-    const resolveApp = () => opts.app || getApp();
-    const resolveDefault = () => {
-      const d = opts.defaultValue;
-      return typeof d === "function" ? d() : d === void 0 ? [] : d;
-    };
-    async function ensureDir(app) {
-      const d = filePath.substring(0, filePath.lastIndexOf("/"));
-      if (d && !app.vault.getAbstractFileByPath(d)) await app.vault.createFolder(d);
-    }
-    async function createIfMissing(app, content) {
-      await ensureDir(app);
-      try {
-        await app.vault.create(filePath, content);
-        return true;
-      } catch (e) {
-        if (isAlreadyExistsError(e) && app.vault.getAbstractFileByPath(filePath)) return false;
-        throw e;
-      }
-    }
-    async function handleCorrupt(app, err, raw) {
-      var _a;
-      if (((_a = opts.onCorrupt) == null ? void 0 : _a.call(opts, filePath, err)) === false) {
-        return null;
-      }
-      const backupPath = await backupOriginal(app, filePath, raw);
-      if (backupPath && !opts.onCorrupt) notifyBackup(filePath, backupPath, "解析失败");
-      const f = app.vault.getAbstractFileByPath(filePath);
-      if (f) {
-        await app.vault.modify(f, serialize(resolveDefault()));
-      } else {
-        await createIfMissing(app, serialize(resolveDefault()));
-      }
-      return resolveDefault();
-    }
-    async function modifyWithBackup(app, f, c) {
-      try {
-        await app.vault.modify(f, c);
-      } catch (e) {
-        const backupPath = await backupOriginal(app, filePath);
-        if (backupPath) notifyBackup(filePath, backupPath, "写入失败");
-        throw e;
-      }
-    }
-    return {
-      async read() {
-        const app = resolveApp();
-        let f = app.vault.getAbstractFileByPath(filePath);
-        if (!f) {
-          const created = await createIfMissing(app, serialize(resolveDefault()));
-          if (created) return resolveDefault();
-          f = app.vault.getAbstractFileByPath(filePath);
-          if (!f) return resolveDefault();
-        }
-        const raw = await app.vault.read(f);
-        try {
-          return JSON.parse(raw);
-        } catch (e) {
-          return await handleCorrupt(app, e, raw);
-        }
-      },
-      async write(data) {
-        const app = resolveApp();
-        const c = serialize(data);
-        let f = app.vault.getAbstractFileByPath(filePath);
-        if (f) {
-          if (opts.writeIfChanged) {
-            try {
-              const cur2 = await app.vault.read(f);
-              if (cur2 === c) return;
-            } catch (e) {
-            }
-          }
-          await modifyWithBackup(app, f, c);
-          return;
-        }
-        const created = await createIfMissing(app, c);
-        if (created) return;
-        let cur = app.vault.getAbstractFileByPath(filePath);
-        if (!cur) {
-          const retried = await createIfMissing(app, c);
-          if (retried) return;
-          cur = app.vault.getAbstractFileByPath(filePath);
-          if (!cur) throw new Error("storage: create 竞态降级失败（" + filePath + "）");
-        }
-        await modifyWithBackup(app, cur, c);
-      }
-    };
-  }
-  var DEFAULT_STORAGE_DIR, fileTaskQueues, CORRUPT_BACKUP_DIR, CORRUPT_NOTIFY_DEDUPE_MS, corruptNotifyAt;
-  var init_storage = __esm({
-    "src/core/storage.ts"() {
-      init_app();
-      init_settings_provider();
-      init_notice();
-      DEFAULT_STORAGE_DIR = "CONFIG/STORAGE";
-      fileTaskQueues = /* @__PURE__ */ new Map();
-      CORRUPT_BACKUP_DIR = "CONFIG/.CORRUPT";
-      CORRUPT_NOTIFY_DEDUPE_MS = 3e4;
-      corruptNotifyAt = /* @__PURE__ */ new Map();
     }
   });
 
@@ -14233,18 +15224,14 @@ ${entry.content.trim()}`;
   init_config();
 
   // src/diary/ui.ts
-  init_fake_obsidian();
+  var import_page_flip_browser = __toESM(require_page_flip_browser());
   init_esc_manager();
   init_dom();
-  init_mobile();
-  init_ui();
-  init_settings_provider();
-  init_item_actions();
-  init_utils();
-  init_domain_bus();
-  init_flow_dialog();
   init_notice();
   init_app();
+  init_domain_bus();
+  init_utils();
+  init_flow_dialog();
   init_config();
 
   // src/diary/parser.ts
@@ -14266,7 +15253,11 @@ ${entry.content.trim()}`;
       content: parsed.body.trim(),
       filename: filePath,
       filePath,
-      lineNumber: 0
+      lineNumber: 0,
+      /* 稳定 id：书页 UI（ADR-0230）按 `data-eid` 定位条目（便签菜单 / 撕页 / 明信片展信），
+         没有 id 时所有日记条目都塌成 `data-eid=""`——右键哪一篇都会落到最后一篇上。
+         与影视/信/书同一套 `makeEntryId` 口径（一目一文件，路径即唯一）。 */
+      id: makeEntryId("diary", { path: filePath }, meta.date)
     };
   }
   function getFileFrontmatter(file, app) {
@@ -14277,6 +15268,16 @@ ${entry.content.trim()}`;
   var FALLBACK_TIME_VALUE = 0;
   function makeEntryId(prefix, file, dateStr) {
     return `${prefix}-${file.path.replace(/\//g, "-")}-${dateStr}`;
+  }
+  function pickFmStrings(fm, keys) {
+    const out = {};
+    for (const k of keys) {
+      const v = fm == null ? void 0 : fm[k];
+      if (v === void 0 || v === null) continue;
+      const s = String(v).trim();
+      if (s) out[k] = s;
+    }
+    return out;
   }
   async function parseMovieFile(file, app) {
     try {
@@ -14322,7 +15323,14 @@ ${entry.content.trim()}`;
         content,
         filename: file.path,
         lineNumber: 0,
-        id: makeEntryId("movie", file, dateStr)
+        id: makeEntryId("movie", file, dateStr),
+        // ADR-0230：票根渲染要的余项（content 里被压平丢掉的那部分 FM）
+        extra: {
+          title: fileNameWithoutExt.replace(/^《/, "").replace(/》$/, ""),
+          review: review.trim(),
+          poster: poster && String(poster).trim() !== "" ? String(poster).trim() : void 0,
+          meta: pickFmStrings(fm, ["豆瓣评分", "导演", "类型", "片长", "上映日期"])
+        }
       };
     } catch (err) {
       console.error(`解析影视文件失败 ${file.path}:`, err);
@@ -14406,7 +15414,15 @@ ${String(review).trim()}`;
         content,
         filename: file.path,
         lineNumber: 0,
-        id: makeEntryId("book", file, dateStr)
+        id: makeEntryId("book", file, dateStr),
+        // ADR-0230：藏书票渲染要的余项（content 里被压平丢掉的那部分 FM）
+        extra: {
+          title,
+          review: String(review).trim(),
+          cover: cover && String(cover).trim() !== "" ? String(cover).trim() : void 0,
+          author: fm.author && String(fm.author).trim() ? String(fm.author).trim() : void 0,
+          category: fm.category && String(fm.category).trim() ? String(fm.category).trim() : void 0
+        }
       };
     } catch (err) {
       console.error(`解析书文件失败 ${file.path}:`, err);
@@ -14592,7 +15608,9 @@ ${String(review).trim()}`;
       // 渲染用正文：去媒体嵌入，保留 markdown 语法（content 保留原文供复制/跳转）
       text: stripMediaLinks(e.content),
       // 按原文顺序的内容段（issue 213：UI 段序渲染，文字不重复、媒体归位）
-      segments: extractSegments(e.content)
+      segments: extractSegments(e.content),
+      // 附加元信息（ADR-0230）：影视/书库的展示余项——票根 meta/score、藏书票 author/category
+      extra: e.extra
     };
   }
   async function loadDiaryEntries(app, diaryDir) {
@@ -14699,19 +15717,6 @@ ${String(review).trim()}`;
     currentCtrl = null;
     wallCacheApp = null;
   }
-  function groupByMonth(entries) {
-    const map = /* @__PURE__ */ new Map();
-    for (const e of entries) {
-      const key = e.date.slice(0, 7);
-      let list = map.get(key);
-      if (!list) {
-        list = [];
-        map.set(key, list);
-      }
-      list.push(e);
-    }
-    return map;
-  }
   function pickOnThisDay(entries, today) {
     const mmdd = (today || "").slice(5);
     const thisYear = (today || "").slice(0, 4);
@@ -14731,246 +15736,414 @@ ${String(review).trim()}`;
     }
   }
 
-  // src/diary/thumb-cache.ts
-  var DB_NAME = "bz-diary-thumbs-v2";
-  var LEGACY_DB_NAME = "bz-diary-thumbs";
-  var STORE = "thumbs";
-  var THUMB_SIZE = 48;
-  var FLAT_TOLERANCE = 12;
-  var VIDEO_TIMEOUT = 8e3;
-  var SEEK_TIMEOUT = 3e3;
-  var SEEK_MAX = 0.5;
-  var BLOB_MAX_BYTES = 48 * 1024 * 1024;
-  var directBlocked = false;
-  var legacyCleaned = false;
-  var NO_DRAW = { url: null, tainted: false };
-  function openDb() {
-    return new Promise((resolve, reject) => {
-      if (typeof indexedDB === "undefined") {
-        reject(new Error("no idb"));
-        return;
-      }
-      const req = indexedDB.open(DB_NAME, 1);
-      req.onupgradeneeded = () => {
-        if (!req.result.objectStoreNames.contains(STORE)) req.result.createObjectStore(STORE);
-      };
-      req.onsuccess = () => {
-        cleanLegacyDb();
-        resolve(req.result);
-      };
-      req.onerror = () => reject(req.error);
-    });
-  }
-  function cleanLegacyDb() {
-    if (legacyCleaned) return;
-    legacyCleaned = true;
-    try {
-      indexedDB.deleteDatabase(LEGACY_DB_NAME);
-    } catch (e) {
-    }
-  }
-  function railThumbKey(entryDate, mediaName) {
-    return `${entryDate}|${mediaName}`;
-  }
-  function railThumbKeepKeys(entries) {
-    const keys = /* @__PURE__ */ new Set();
-    for (const e of entries || []) {
-      for (const m of e.media || []) {
-        const key = railThumbKey(e.date, m.name);
-        keys.add(key);
-        keys.add(`wall480|${key}`);
-      }
-    }
-    return keys;
-  }
-  async function pruneRailThumbs(keepKeys) {
-    try {
-      const db = await openDb();
-      await new Promise((resolve, reject) => {
-        const tx = db.transaction(STORE, "readwrite");
-        const store = tx.objectStore(STORE);
-        const req = store.getAllKeys();
-        req.onsuccess = () => {
-          try {
-            for (const key of req.result || []) {
-              if (typeof key === "string" && !keepKeys.has(key)) store.delete(key);
-            }
-            resolve();
-          } catch (e) {
-            reject(e);
-          }
-        };
-        req.onerror = () => reject(req.error);
-      });
-    } catch (e) {
-    }
-  }
-  async function getRailThumb(key) {
-    try {
-      const db = await openDb();
-      return await new Promise((resolve, reject) => {
-        const req = db.transaction(STORE, "readonly").objectStore(STORE).get(key);
-        req.onsuccess = () => resolve(typeof req.result === "string" ? req.result : null);
-        req.onerror = () => reject(req.error);
-      });
-    } catch (e) {
-      return null;
-    }
-  }
-  async function putRailThumb(key, dataUrl) {
-    try {
-      const db = await openDb();
-      await new Promise((resolve, reject) => {
-        const req = db.transaction(STORE, "readwrite").objectStore(STORE).put(dataUrl, key);
-        req.onsuccess = () => resolve();
-        req.onerror = () => reject(req.error);
-      });
-    } catch (e) {
-    }
-  }
-  function isFlatFrameData(data, tolerance = FLAT_TOLERANCE) {
-    let rMin = 255;
-    let rMax = 0;
-    let gMin = 255;
-    let gMax = 0;
-    let bMin = 255;
-    let bMax = 0;
-    for (let i = 0; i + 2 < data.length; i += 16) {
-      const r = data[i];
-      const g = data[i + 1];
-      const b = data[i + 2];
-      if (r < rMin) rMin = r;
-      if (r > rMax) rMax = r;
-      if (g < gMin) gMin = g;
-      if (g > gMax) gMax = g;
-      if (b < bMin) bMin = b;
-      if (b > bMax) bMax = b;
-      if (rMax - rMin > tolerance || gMax - gMin > tolerance || bMax - bMin > tolerance) return false;
-    }
-    return true;
-  }
-  function isFlatFrame(ctx, size) {
-    return isFlatFrameData(ctx.getImageData(0, 0, size, size).data);
-  }
-  function drawCover(source, w, h, size = THUMB_SIZE) {
-    try {
-      if (typeof document === "undefined" || !w || !h) return NO_DRAW;
-      const canvas = document.createElement("canvas");
-      canvas.width = size;
-      canvas.height = size;
-      const ctx = canvas.getContext("2d");
-      if (!ctx) return NO_DRAW;
-      const side = Math.min(w, h);
-      ctx.drawImage(source, (w - side) / 2, (h - side) / 2, side, side, 0, 0, size, size);
-      if (isFlatFrame(ctx, size)) return NO_DRAW;
-      return { url: canvas.toDataURL("image/webp", 0.8) || null, tainted: false };
-    } catch (e) {
-      const name = e && typeof e === "object" ? e.name : "";
-      return { url: null, tainted: name === "SecurityError" };
-    }
-  }
-  async function makeImageThumb(src) {
-    try {
-      const blob = await (await fetch(src)).blob();
-      const bmp = await createImageBitmap(blob);
-      const { url } = drawCover(bmp, bmp.width, bmp.height);
-      bmp.close();
-      return url;
-    } catch (e) {
-      return null;
-    }
-  }
-  function waitMediaEvent(el, event, ms) {
-    return new Promise((resolve) => {
-      let timer;
-      const done = (ok) => {
-        clearTimeout(timer);
-        el.removeEventListener(event, onHit);
-        el.removeEventListener("error", onErr);
-        resolve(ok);
-      };
-      const onHit = () => done(true);
-      const onErr = () => done(false);
-      timer = setTimeout(() => done(false), ms);
-      el.addEventListener(event, onHit, { once: true });
-      el.addEventListener("error", onErr, { once: true });
-    });
-  }
-  function seekPlan(duration) {
-    if (!Number.isFinite(duration) || duration <= 0) return [];
-    const plan = [Math.min(SEEK_MAX, duration * 0.1), duration * 0.25, duration * 0.5];
-    return [...new Set(plan)].filter((t) => t > 0.05 && t < duration - 0.05);
-  }
-  async function frameFromUrl(src, size) {
-    if (typeof document === "undefined") return NO_DRAW;
-    const v = document.createElement("video");
-    v.muted = true;
-    v.playsInline = true;
-    v.preload = "auto";
-    v.src = src;
-    try {
-      if (!await waitMediaEvent(v, "canplay", VIDEO_TIMEOUT)) return NO_DRAW;
-      const plan = seekPlan(v.duration);
-      if (!plan.length) return drawCover(v, v.videoWidth, v.videoHeight, size);
-      for (const t of plan) {
-        v.currentTime = t;
-        await waitMediaEvent(v, "seeked", SEEK_TIMEOUT);
-        const r = drawCover(v, v.videoWidth, v.videoHeight, size);
-        if (r.url || r.tainted) return r;
-      }
-      return NO_DRAW;
-    } catch (e) {
-      return NO_DRAW;
-    } finally {
-      v.removeAttribute("src");
-      try {
-        v.load();
-      } catch (e) {
-      }
-    }
-  }
-  async function frameFromBlob(src, size) {
-    var _a, _b;
-    let objectUrl = null;
-    try {
-      const res = await fetch(src);
-      const declared = Number(((_b = (_a = res.headers) == null ? void 0 : _a.get) == null ? void 0 : _b.call(_a, "content-length")) || 0);
-      if (declared > BLOB_MAX_BYTES) return NO_DRAW;
-      const blob = await res.blob();
-      if (blob.size > BLOB_MAX_BYTES) return NO_DRAW;
-      objectUrl = URL.createObjectURL(blob);
-      return await frameFromUrl(objectUrl, size);
-    } catch (e) {
-      return NO_DRAW;
-    } finally {
-      if (objectUrl) URL.revokeObjectURL(objectUrl);
-    }
-  }
-  async function makeVideoThumb(src, size = THUMB_SIZE) {
-    if (!directBlocked) {
-      const r = await frameFromUrl(src, size);
-      if (r.url) return r.url;
-      if (!r.tainted) return null;
-      directBlocked = true;
-    }
-    return (await frameFromBlob(src, size)).url;
-  }
-
   // src/diary/render.ts
   init_str();
-  var ACT_ICON = {
-    add: "pen-line",
-    search: "search",
-    "lb-close": "x",
-    "lb-more": "more-horizontal",
-    "lb-prev": "chevron-left",
-    "lb-next": "chevron-right"
-  };
-  var KIND_ICON = {
-    img: "image",
-    video: "video-off",
-    audio: "music"
-  };
+  var WEEK = ["日", "一", "二", "三", "四", "五", "六"];
+  var NUM_CN = ["〇", "一", "二", "三", "四", "五", "六", "七", "八", "九", "十"];
+  function pad22(n) {
+    return n < 10 ? "0" + n : "" + n;
+  }
+  function cnNum(n) {
+    const v = Math.floor(Number(n));
+    if (!isFinite(v) || v < 0) return "——";
+    if (v <= 10) return NUM_CN[v];
+    if (v < 20) return "十" + (v % 10 ? NUM_CN[v % 10] : "");
+    if (v < 100) return NUM_CN[Math.floor(v / 10)] + "十" + (v % 10 ? NUM_CN[v % 10] : "");
+    if (v < 1e3) {
+      const r = v % 100;
+      const s = NUM_CN[Math.floor(v / 100)] + "百";
+      if (!r) return s;
+      if (r < 10) return s + "零" + NUM_CN[r];
+      if (r < 20) return s + "一十" + (r % 10 ? NUM_CN[r % 10] : "");
+      return s + cnNum(r);
+    }
+    if (v < 1e4) {
+      const r = v % 1e3;
+      const s = NUM_CN[Math.floor(v / 1e3)] + "千";
+      if (!r) return s;
+      return s + (r < 100 ? "零" + cnNum(r) : cnNum(r));
+    }
+    return String(v);
+  }
+  function weekdayOf(dateStr) {
+    const d = /* @__PURE__ */ new Date(dateStr + "T12:00:00");
+    return "星期" + WEEK[d.getDay()];
+  }
+  var TILT_BUCKETS = 6;
+  function tiltClassOf(seed) {
+    const x = Math.sin(seed * 997) * 1e4;
+    const t = (x - Math.floor(x) - 0.5) * 4;
+    const k = Math.min(TILT_BUCKETS - 1, Math.max(0, Math.floor((t + 2) / 4 * TILT_BUCKETS)));
+    return `bz-diary-tilt-${k}`;
+  }
+  function inlineMd(s) {
+    let t = esc(s);
+    t = t.replace(/\[\[([^\]|]+)(?:\|([^\]]+))?\]\]/g, (_m, target, alias) => {
+      const label = alias || target.split("/").pop().replace(/\.md$/, "");
+      return '<span class="bz-diary-wikilink" data-target="' + esc(target) + '">' + esc(label) + "</span>";
+    });
+    t = t.replace(/\*\*([^*]+)\*\*/g, "<b>$1</b>");
+    t = t.replace(/(^|[^*])\*([^*\n]+)\*(?!\*)/g, "$1<i>$2</i>");
+    t = t.replace(/==([^=]+)==/g, '<mark class="bz-diary-hl">$1</mark>');
+    t = t.replace(/~~([^~]+)~~/g, "<del>$1</del>");
+    t = t.replace(/`([^`]+)`/g, "<code>$1</code>");
+    return t;
+  }
+  function splitTextBlocks(text) {
+    const blocks = [];
+    const lines = String(text).split(/\r?\n/);
+    let i = 0;
+    let pendingBlank = 0;
+    const emit = (b) => {
+      if (pendingBlank) {
+        blocks.push({ t: "blank", n: Math.min(pendingBlank, 3) });
+        pendingBlank = 0;
+      }
+      blocks.push(b);
+    };
+    const pushPara = (s) => {
+      if (s.length <= 240) {
+        emit({ t: "para", text: s });
+        return;
+      }
+      let cur = "";
+      let first = true;
+      const segs = s.split(/(?<=[。!?;~」”…])/);
+      for (const seg of segs) {
+        cur += seg;
+        if (cur.length > 200) {
+          emit({ t: "para", text: cur, cont: !first });
+          first = false;
+          cur = "";
+        }
+      }
+      if (cur) emit({ t: "para", text: cur, cont: !first });
+    };
+    while (i < lines.length) {
+      const line = lines[i];
+      if (/^```/.test(line)) {
+        const buf2 = [];
+        i++;
+        while (i < lines.length && !/^```/.test(lines[i])) {
+          buf2.push(lines[i]);
+          i++;
+        }
+        i++;
+        emit({ t: "code", text: buf2.join("\n") });
+        continue;
+      }
+      const h = line.match(/^(#{1,4})\s+(.*)$/);
+      if (h) {
+        emit({ t: "head", level: h[1].length, text: h[2] });
+        i++;
+        continue;
+      }
+      if (/^>\s?/.test(line)) {
+        const buf2 = [];
+        while (i < lines.length && /^>\s?/.test(lines[i])) {
+          buf2.push(lines[i].replace(/^>\s?/, ""));
+          i++;
+        }
+        emit({ t: "quote", text: buf2.join("\n") });
+        continue;
+      }
+      if (/^\s*[-*]\s+/.test(line)) {
+        const items = [];
+        while (i < lines.length) {
+          const m = lines[i].match(/^\s*[-*]\s+(.*)$/);
+          if (!m) break;
+          items.push(m[1]);
+          i++;
+        }
+        emit({ t: "list", ordered: false, items });
+        continue;
+      }
+      if (/^\s*\d+[.、]\s+/.test(line)) {
+        const items = [];
+        while (i < lines.length) {
+          const m = lines[i].match(/^\s*\d+[.、]\s+(.*)$/);
+          if (!m) break;
+          items.push(m[1]);
+          i++;
+        }
+        emit({ t: "list", ordered: true, items });
+        continue;
+      }
+      if (/^(---+|\*\*\*+)$/.test(line.trim())) {
+        emit({ t: "hr" });
+        i++;
+        continue;
+      }
+      if (line.trim() === "") {
+        pendingBlank++;
+        i++;
+        continue;
+      }
+      const buf = [line];
+      i++;
+      while (i < lines.length && lines[i].trim() !== "" && !/^(#{1,4}\s|>|\s*[-*]\s|\s*\d+[.、]\s|```|!\[\[)/.test(lines[i])) {
+        buf.push(lines[i]);
+        i++;
+      }
+      pushPara(buf.join(""));
+    }
+    return blocks;
+  }
+  var HASH_RE = new RegExp("(^|[\\s(（【\\[])#([^\\s#,.!?;:、,。!?~»」』”…]+)", "g");
+  function stripHashInto(t, out) {
+    return String(t).replace(HASH_RE, (_m, pre, tag) => {
+      out.push(tag);
+      return pre;
+    });
+  }
+  function sealHTML(e, hashes) {
+    const tags = e.tags.map((t) => '<span class="bz-diary-seal-tag">' + esc(t) + "</span>").join("");
+    const hs = hashes.length ? '<span class="bz-diary-seal-hashes">' + hashes.map((t) => '<span class="bz-diary-seal-hash">#' + esc(t) + "</span>").join("") + "</span>" : "";
+    const time = e.kind === "diary" || e.kind === "letter" ? '<span class="bz-diary-seal-time">' + esc(e.time) + "</span>" : "";
+    return time + '<span class="bz-diary-seal-tags">' + tags + "</span>" + hs;
+  }
+  function photoHTML(m, e, lbIndex, ctx) {
+    const name = m.name;
+    const lazy = !!e.encrypted;
+    const hook = lazy ? ' data-enc-name="' + esc(name) + '" data-enc-kind="' + m.kind + '"' : "";
+    const src = lazy ? "" : ' src="' + esc(ctx.mediaSrc(name)) + '"';
+    if (m.kind === "audio") {
+      const label = name.split("/").pop() || name;
+      return '<div class="bz-diary-b-audio" data-eid="' + esc(e.id || "") + '"><div class="bz-diary-ba-card"><span class="bz-diary-ba-play">▷</span><span class="bz-diary-ba-mid"><span class="bz-diary-ba-name">♪ ' + esc(label) + '</span><span class="bz-diary-ba-bar"><i></i></span></span><span class="bz-diary-ba-time">--:--</span></div><audio preload="none"' + src + hook + "></audio></div>";
+    }
+    const stem = String(name.split("/").pop() || "").replace(/\.[a-z0-9]+$/i, "");
+    const alt = esc(
+      /[^\d\s_\-.]/.test(stem) ? stem.slice(0, 16) : e.date.slice(5).replace("-", "/") + " " + e.time
+    );
+    const inner = m.kind === "video" ? "<video" + src + ' preload="metadata" muted playsinline' + hook + "></video>" : "<img" + src + ' loading="lazy" alt="' + alt + '"' + hook + ">";
+    return '<div class="bz-diary-b-photo" data-eid="' + esc(e.id || "") + '"><figure class="bz-diary-photo ' + tiltClassOf(lbIndex) + '"' + (lazy ? "" : ' data-lb="' + lbIndex + '"') + '><div class="bz-diary-ph-media">' + inner + "</div></figure></div>";
+  }
+  var TICKET_META_ROWS = [
+    ["导演", "导演"],
+    ["类型", "类型"],
+    ["片长", "片长"],
+    ["上映日期", "上映"]
+  ];
+  function ticketHTML(e, ctx) {
+    const x = e.extra || {};
+    const meta = x.meta || {};
+    const rows = [];
+    for (const [key, label] of TICKET_META_ROWS) {
+      const v = meta[key];
+      if (!v) continue;
+      rows.push("<b>" + esc(label) + "</b> " + esc(label === "上映" ? v.slice(0, 10) : v.slice(0, 40)));
+    }
+    const score = meta["豆瓣评分"] ? '<span class="bz-diary-tk-score">★ ' + esc(meta["豆瓣评分"]) + "</span>" : "";
+    const poster = x.poster ? '<img class="bz-diary-tk-poster" data-media-err="bz-diary-ph-empty" src="' + esc(ctx.mediaSrc(x.poster)) + '" loading="lazy" alt="">' : '<i class="bz-diary-tk-poster bz-diary-ph-empty"></i>';
+    return '<div class="bz-diary-ticket" data-eid="' + esc(e.id || "") + '"><div class="bz-diary-tk-main"><span class="bz-diary-tk-kind">' + esc(e.tags[0] || "") + ' · 观影票根</span><div class="bz-diary-tk-title">《' + esc(x.title || "") + '》</div><div class="bz-diary-tk-meta">' + rows.join("　") + (rows.length ? "　" : "") + score + '</div><div class="bz-diary-tk-review">' + inlineMd(x.review || "") + '</div><span class="bz-diary-tk-more">… 影评全文</span></div><div class="bz-diary-tk-stub">' + poster + '<span class="bz-diary-tk-date">' + esc(e.date) + "</span>" + esc(e.emoji) + "</div></div>";
+  }
+  function exlibrisHTML(e, ctx) {
+    const x = e.extra || {};
+    const cover = x.cover ? '<img class="bz-diary-ex-cover" data-media-err="bz-diary-ex-nothing" src="' + esc(ctx.mediaSrc(x.cover)) + '" loading="lazy" alt="">' : '<i class="bz-diary-ex-nothing"></i>';
+    const byline = x.author ? esc(x.author) + (x.category ? " · " + esc(x.category) : "") : esc(x.category || "");
+    return '<div class="bz-diary-exlibris" data-eid="' + esc(e.id || "") + '">' + cover + '<div class="bz-diary-ex-main"><div class="bz-diary-ex-title">《' + esc(x.title || "") + '》</div><div class="bz-diary-ex-author">' + byline + '</div><div class="bz-diary-ex-review">' + inlineMd(x.review || "") + '</div><div class="bz-diary-ex-date">读毕 ' + esc(e.date) + " · " + esc(e.emoji) + "</div></div></div>";
+  }
+  function paraHTML(b, e) {
+    return '<div class="bz-diary-b-para ' + (b.cont ? "bz-diary-p-cont" : "bz-diary-p-indent") + '" data-eid="' + esc(e.id || "") + '">' + inlineMd(b.text) + "</div>";
+  }
+  function envelopeHTML(e) {
+    return '<div class="bz-diary-b-envelope"><div class="bz-diary-envelope" data-eid="' + esc(e.id || "") + '"><div class="bz-diary-env-body"><div class="bz-diary-env-flap"></div><div class="bz-diary-env-split"><i class="bz-diary-es-l"></i><i class="bz-diary-es-r"></i></div><div class="bz-diary-env-wax">🔐</div><div class="bz-diary-env-label">火漆封缄 · 拆信需主密码</div></div><span class="bz-diary-env-reseal">重新封缄</span></div></div>';
+  }
+  function entryBlockHTMLs(e, ctx, opts = {}) {
+    const eid = esc(e.id || "");
+    const wrap = (cls, inner) => '<div class="' + cls + '" data-eid="' + eid + '">' + inner + "</div>";
+    if (e.encrypted && !opts.unwrap) return [envelopeHTML(e)];
+    const hashes = [];
+    for (const seg of e.segments) {
+      if (seg.kind !== "text") continue;
+      for (const b of splitTextBlocks(seg.text)) {
+        if (b.t === "para" || b.t === "quote") stripHashInto(b.text, hashes);
+      }
+    }
+    const out = [];
+    out.push('<div class="bz-diary-b-seal" data-eid="' + eid + '">' + sealHTML(e, hashes) + "</div>");
+    if (e.kind === "movie") return out.concat(wrap("bz-diary-b-ticket", ticketHTML(e, ctx)));
+    if (e.kind === "book") return out.concat(wrap("bz-diary-b-exlibris", exlibrisHTML(e, ctx)));
+    if (e.kind === "letter") {
+      out.push(
+        '<div class="bz-diary-b-head" data-eid="' + eid + '">' + esc(basenameOf(e.filename)) + "</div>"
+      );
+    }
+    for (const seg of e.segments) {
+      if (seg.kind === "media") {
+        out.push(photoHTML(seg.media, e, ctx.lbIndexOf(seg.media.name), ctx));
+        continue;
+      }
+      for (const b of splitTextBlocks(seg.text)) {
+        switch (b.t) {
+          case "blank":
+            out.push(
+              '<div class="bz-diary-b-blank bz-diary-blank-' + b.n + '" data-eid="' + eid + '"></div>'
+            );
+            break;
+          case "para": {
+            const t = stripHashInto(b.text, []);
+            if (t.trim()) out.push(paraHTML({ text: t, cont: b.cont }, e));
+            break;
+          }
+          case "head":
+            out.push(
+              '<div class="bz-diary-b-head' + (b.level > 2 ? " bz-diary-h2" : "") + '" data-eid="' + eid + '">' + esc(b.text.replace(/[#*]/g, "")) + "</div>"
+            );
+            break;
+          case "quote": {
+            const t = stripHashInto(b.text, []);
+            out.push(wrap("bz-diary-b-quote", inlineMd(t).replace(/\n/g, "<br>")));
+            break;
+          }
+          case "list":
+            out.push(
+              '<ul class="bz-diary-b-list' + (b.ordered ? " bz-diary-ordered" : "") + '" data-eid="' + eid + '">' + b.items.map((it) => "<li>" + inlineMd(it) + "</li>").join("") + "</ul>"
+            );
+            break;
+          case "code":
+            out.push(wrap("bz-diary-b-code", esc(b.text)));
+            break;
+          case "hr":
+            out.push('<hr class="bz-diary-b-hr" data-eid="' + eid + '">');
+            break;
+        }
+      }
+    }
+    return out;
+  }
+  function daystampHTML(date, count) {
+    const [y, m, dd] = date.split("-");
+    return '<div class="bz-diary-b-daystamp" data-date="' + esc(date) + '"><div class="bz-diary-dstamp"><span class="bz-diary-ds-day">' + Number(dd) + '</span><span class="bz-diary-ds-side"><b>' + parseInt(m, 10) + "月</b><i>" + weekdayOf(date) + "</i><em>" + cnNum(count) + ' 则</em></span><span class="bz-diary-ds-year">' + esc(y) + '</span></div><div class="bz-diary-ds-wave"></div></div>';
+  }
+  function basenameOf(p) {
+    return String(p || "").split("/").pop().replace(/\.md$/, "");
+  }
+  function bookPanelHTML() {
+    return `
+  <div class="bz-diary-lamp"></div>
+
+  <div class="bz-diary-desk">
+    <!-- 书：打开就落在最新那篇（第 0 页 = 最近一则）；功能在书底下那排文具上 -->
+    <div class="bz-diary-book" tabindex="0">
+      <!-- 底壳与厚度 -->
+      <div class="bz-diary-bk-shell"></div>
+      <div class="bz-diary-bk-under"></div>
+      <!-- 书口：书页那一摞的侧面，压在书页底下只探出右沿几像素——点它抽出册页索引 -->
+      <div class="bz-diary-bk-edge"></div>
+      <span class="bz-diary-eb-hint">抽出册页索引</span>
+
+      <!-- 芯：StPageFlip 书（全是正文页，无扉页；库管理翻页动画/拖拽） -->
+      <div class="bz-diary-bk-block">
+        <div class="bz-diary-flipbook"></div>
+      </div>
+
+      <!-- 分类书签条（筛选态） -->
+      <div class="bz-diary-filter-tab"><span class="bz-diary-ft-name"></span><span class="bz-diary-ft-x">取下</span></div>
+    </div>
+
+    <!-- 案头文具挂在桌上、不挂在书里：书在窄桌面下会被整体缩小，
+         文具跟着缩就成了「小一号的纸签」。挂在桌上按缩放后的书沿定位，尺寸永远是真的。
+         文具共四件：写 / 找 / 跳 / 类 —— 原型第五件「抹（抹掉全部本地涂改）」处置见 ADR-0230
+         决策 9：那是探索稿 localStorage 覆盖层专有的概念，单源没有对应的真对象，故不搬。 -->
+    <div class="bz-diary-tools">
+      <span class="bz-diary-tl" data-tact="pencil" title="写一篇"><b>写</b></span>
+      <span class="bz-diary-tl" data-tact="lens" title="找一找"><b>找</b></span>
+      <span class="bz-diary-tl" data-tact="calendar" title="跳日子"><b>跳</b></span>
+      <span class="bz-diary-tl" data-tact="stickers" title="按类翻"><b>类</b></span>
+    </div>
+
+    <!-- 明信片：那年今天 -->
+    <div class="bz-diary-postcard" hidden>
+      <div class="bz-diary-pc-stamp"></div>
+      <div class="bz-diary-pc-title">那年今日</div>
+      <div class="bz-diary-pc-body"></div>
+      <div class="bz-diary-pc-open">展信</div>
+    </div>
+
+    <!-- 引导便签 -->
+    <div class="bz-diary-hint">
+      <b>这本册子这样用</b>
+      <ul>
+        <li>翻开就是<b>最新一篇</b>，往后翻是更旧的日子；翻远了按 <b>Esc</b> 回到最新那篇</li>
+        <li>翻页 —— 拖拽纸页 · 滚轮 · ← →</li>
+        <li>功能在书底下的<b>文具</b>上：鼠标移到书下沿就浮出来（写 / 找 / 跳 / 类）</li>
+        <li>书口整条<b>点一下</b>抽出册页索引；条目上 <b>右键 / 长按</b> 有便签</li>
+      </ul>
+      <span class="bz-diary-hint-close">知道啦</span>
+    </div>
+  </div>
+
+  <!-- 便签菜单（条目操作） -->
+  <div class="bz-diary-menu" hidden>
+    <div class="bz-diary-mn-item" data-act="retype">换张贴纸</div>
+    <div class="bz-diary-mn-item" data-act="envelope">收进信封</div>
+    <div class="bz-diary-mn-item" data-act="unseal">拆信看</div>
+    <div class="bz-diary-mn-item" data-act="takeout">从信封取出</div>
+    <div class="bz-diary-mn-item" data-act="copytext">誊录正文</div>
+    <div class="bz-diary-mn-item" data-act="copylink">誊录位置</div>
+    <div class="bz-diary-mn-item bz-diary-danger" data-act="tear">撕掉</div>
+  </div>
+
+  <!-- 抽出的一张纸：全文阅读（影评/书评/拆开的信） -->
+  <div class="bz-diary-sheet" hidden>
+    <div class="bz-diary-sheet-paper">
+      <div class="bz-diary-sheet-head"><span class="bz-diary-sh-title"></span><span class="bz-diary-sh-close">收回去</span></div>
+      <div class="bz-diary-sheet-body"></div>
+    </div>
+  </div>
+
+  <!-- 纸条层：输入/确认 通用 -->
+  <div class="bz-diary-slip" hidden>
+    <div class="bz-diary-slip-paper">
+      <div class="bz-diary-slip-title"></div>
+      <div class="bz-diary-slip-body"></div>
+      <div class="bz-diary-slip-row"></div>
+    </div>
+  </div>
+
+  <!-- 贴纸册弹层 -->
+  <div class="bz-diary-album-pop" hidden>
+    <div class="bz-diary-ap-book">
+      <div class="bz-diary-ap-head">贴纸册<span class="bz-diary-ap-sub"></span></div>
+      <div class="bz-diary-ap-grid"></div>
+      <div class="bz-diary-ap-foot"><span class="bz-diary-ap-confirm bz-diary-slip-btn bz-diary-primary" hidden>盖上去</span><span class="bz-diary-ap-cancel">合上</span></div>
+    </div>
+  </div>
+
+  <!-- 台历弹层 -->
+  <div class="bz-diary-cal-pop" hidden>
+    <div class="bz-diary-cal">
+      <div class="bz-diary-cal-head">
+        <span class="bz-diary-cal-nav" data-nav="-1">◂</span>
+        <span class="bz-diary-cal-ym"></span>
+        <span class="bz-diary-cal-nav" data-nav="1">▸</span>
+      </div>
+      <div class="bz-diary-cal-grid"></div>
+      <div class="bz-diary-cal-time-row" hidden>
+        <span class="bz-diary-ct-label">时辰</span>
+        <input class="bz-diary-ct-input" spellcheck="false" placeholder="21:30 或「1 分钟前」">
+        <span class="bz-diary-ct-err"></span>
+      </div>
+      <div class="bz-diary-cal-foot"><span class="bz-diary-cal-ok">就这天</span><span class="bz-diary-cal-cancel">合上</span></div>
+    </div>
+  </div>
+
+  <!-- 灯箱：相片显影 -->
+  <div class="bz-diary-lightbox" hidden>
+    <figure class="bz-diary-lb-photo">
+      <div class="bz-diary-lb-media"></div>
+      <figcaption class="bz-diary-lb-cap"></figcaption>
+    </figure>
+    <div class="bz-diary-lb-nav bz-diary-lb-prev">◂</div>
+    <div class="bz-diary-lb-nav bz-diary-lb-next">▸</div>
+    <div class="bz-diary-lb-count"></div>
+  </div>
+
+  <div class="bz-diary-toast" hidden></div>
+  <div class="bz-diary-fallback" hidden><div class="bz-diary-fb-paper">册子的数据没读出来。<br>可以把日记本关掉再开一次试试。</div></div>
+    `;
+  }
   var MIME_BY_EXT = {
     jpg: "image/jpeg",
     jpeg: "image/jpeg",
@@ -14993,84 +16166,6 @@ ${String(review).trim()}`;
     const ext = dot > -1 ? name.slice(dot + 1).toLowerCase() : "";
     return MIME_BY_EXT[ext] || "application/octet-stream";
   }
-  function wallPanelHTML() {
-    return `
-      <div class="bz-diary-head bz-win-head">
-        <div class="bz-diary-brand" data-act="date-picker" title="按日期筛选">
-          <span class="bz-diary-bookname">日记本</span>
-          <span class="bz-diary-range"></span>
-        </div>
-        <div class="bz-diary-btns">
-          <button class="bz-diary-icon-btn" data-act="add" title="写日记"></button>
-          <button class="bz-diary-icon-btn" data-act="search" title="搜索"></button>
-        </div>
-      </div>
-      <div class="bz-diary-chiprow"></div>
-      <div class="bz-diary-subrow" style="display:none"></div>
-      <div class="bz-diary-searchrow" style="display:none"></div>
-      <div class="bz-diary-body">
-        <div class="bz-rail bz-diary-rail"></div>
-        <div class="bz-diary-wall"></div>
-      </div>
-      <div class="bz-diary-lb">
-        <button class="bz-diary-lbnav bz-diary-lbnav--prev" data-act="lb-prev" title="上一个（←）"></button>
-        <button class="bz-diary-lbclose" data-act="lb-close" title="关闭"></button>
-        <button class="bz-diary-lbmore" data-act="lb-more" title="更多动作"></button>
-        <button class="bz-diary-lbnav bz-diary-lbnav--next" data-act="lb-next" title="下一个（→）"></button>
-        <div class="bz-diary-lbmedia"></div>
-        <div class="bz-diary-lbcap"></div>
-        <div class="bz-diary-lbsub"></div>
-      </div>
-    `;
-  }
-  function dayStats(list) {
-    let imgs = 0;
-    let vids = 0;
-    let auds = 0;
-    let texts = 0;
-    list.forEach((e) => {
-      e.media.forEach((k) => {
-        if (k.kind === "video") vids++;
-        else if (k.kind === "audio") auds++;
-        else imgs++;
-      });
-      if (e.content) texts++;
-    });
-    return { imgs, vids, auds, texts };
-  }
-  function statHtml(s) {
-    const parts = [];
-    if (s.imgs) parts.push(`<b>${s.imgs}</b> 图`);
-    if (s.vids) parts.push(`<b>${s.vids}</b> 视频`);
-    if (s.auds) parts.push(`<b>${s.auds}</b> 音频`);
-    if (s.texts) parts.push(`<b>${s.texts}</b> 条文字`);
-    return parts.join(" · ") || "空";
-  }
-  var WEEK = ["日", "一", "二", "三", "四", "五", "六"];
-  function lbCaption(entry) {
-    return `${entry.date} ${entry.time}` + (entry.tags.length ? ` · ${entry.tags.join(" ")}` : "");
-  }
-  function lbSubText(entry) {
-    return entry.text || entry.content || "";
-  }
-  function mediaCapHtml(entry) {
-    const tagText = entry.tags.filter((t) => t !== "加密").join(" ");
-    return `<span style="opacity:.75">${esc(entry.emoji)} ${esc(entry.time)}</span>${tagText ? `　${esc(tagText)}` : ""}`;
-  }
-
-  // src/diary/ui/dialogs.ts
-  init_fake_obsidian();
-  init_notice();
-  init_flow_dialog();
-  init_app();
-  init_settings_provider();
-  init_diary_format();
-  init_utils();
-  init_domain_bus();
-  init_modal();
-  init_search();
-  init_button();
-  init_config();
 
   // src/diary/store.ts
   init_app();
@@ -15323,7 +16418,22 @@ ${String(review).trim()}`;
     return diaryDataMap.delete(path);
   }
 
+  // src/diary/ui.ts
+  init_encrypt2();
+
   // src/diary/ui/dialogs.ts
+  init_fake_obsidian();
+  init_notice();
+  init_flow_dialog();
+  init_app();
+  init_settings_provider();
+  init_diary_format();
+  init_utils();
+  init_domain_bus();
+  init_modal();
+  init_search();
+  init_button();
+  init_config();
   init_encrypt2();
 
   // src/diary/ui/datetime-picker.ts
@@ -16023,12 +17133,8 @@ ${String(review).trim()}`;
   }
 
   // src/diary/motion.ts
-  var M3 = { fast: 160, move: 200, base: 280, impulse: 740 };
-  var E2 = {
-    out: "cubic-bezier(.22,.82,.3,1)",
-    move: "cubic-bezier(.34,.06,.16,1)"
-  };
-  var STAG2 = 30;
+  var M3 = { fast: 160, move: 200, base: 280 };
+  var E2 = { out: "cubic-bezier(.22,.82,.3,1)" };
   function reduced() {
     try {
       return typeof location !== "undefined" && location.search.includes("rm=1");
@@ -16039,11 +17145,13 @@ ${String(review).trim()}`;
   function waapi(el, frames, opts) {
     if (!el || reduced() || typeof el.animate !== "function") {
       const last = frames[frames.length - 1];
-      if (el && last) for (const k of Object.keys(last)) {
-        if (k === "offset") continue;
-        try {
-          el.style[k] = String(last[k]);
-        } catch (e) {
+      if (el && last) {
+        for (const k of Object.keys(last)) {
+          if (k === "offset") continue;
+          try {
+            el.style[k] = String(last[k]);
+          } catch (e) {
+          }
         }
       }
       return null;
@@ -16053,478 +17161,6 @@ ${String(review).trim()}`;
     } catch (e) {
       return null;
     }
-  }
-  function tween(dur, step, ease = (t) => 1 - Math.pow(1 - t, 3)) {
-    if (typeof requestAnimationFrame !== "function") {
-      step(1);
-      return;
-    }
-    const t0 = performance.now();
-    const tick = (now) => {
-      const p = Math.min(1, (now - t0) / dur);
-      step(ease(p));
-      if (p < 1) requestAnimationFrame(tick);
-    };
-    requestAnimationFrame(tick);
-  }
-  var easeInOut = (t) => t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
-  var timers2 = /* @__PURE__ */ new Set();
-  function after(ms, fn) {
-    const id = setTimeout(() => {
-      timers2.delete(id);
-      fn();
-    }, ms);
-    timers2.add(id);
-  }
-  function cancelPending() {
-    timers2.forEach(clearTimeout);
-    timers2.clear();
-  }
-  var bootArmed = false;
-  function motionArmBoot2() {
-    bootArmed = true;
-  }
-  function motionConsumeBoot() {
-    const was = bootArmed;
-    bootArmed = false;
-    return was;
-  }
-  function clearAnims(...els) {
-    for (const el of els) {
-      if (!el || typeof el.getAnimations !== "function") continue;
-      try {
-        el.getAnimations().forEach((a) => a.cancel());
-      } catch (e) {
-      }
-    }
-  }
-  function motionPanelIn2(root, reopen) {
-    clearAnims(root);
-    root.style.opacity = "";
-    root.style.transform = "";
-    root.style.filter = "";
-    const card = visibleCard(root);
-    clearAnims(card);
-    if (card) {
-      card.style.opacity = "";
-      card.style.transform = "";
-      card.style.filter = "";
-    }
-    waapi(
-      root,
-      [{ opacity: 0 }, { opacity: 1 }],
-      { duration: reopen ? M3.fast + 40 : M3.base + 120, easing: E2.out }
-    );
-  }
-  function motionPanelOut(root, done) {
-    const card = visibleCard(root);
-    let finished = false;
-    const finish = () => {
-      if (finished) return;
-      finished = true;
-      root.style.opacity = "";
-      if (card) {
-        card.style.opacity = "";
-        card.style.transform = "";
-        card.style.filter = "";
-      }
-      done();
-    };
-    const a = waapi(
-      root,
-      [{ opacity: 1 }, { opacity: 0 }],
-      { duration: M3.move, easing: E2.out, fill: "forwards" }
-    );
-    if (card) {
-      waapi(
-        card,
-        [
-          { opacity: 1, transform: "none", filter: "blur(0px)" },
-          { opacity: 0, transform: "translateY(9px) scale(.99)", filter: "blur(5px)" }
-        ],
-        { duration: M3.move + 40, easing: E2.out, fill: "forwards" }
-      );
-    }
-    if (!a) {
-      finish();
-      return;
-    }
-    a.finished.then(finish).catch(finish);
-    after(M3.move + 200, finish);
-  }
-  function visibleCard(root) {
-    var _a;
-    return (_a = [...root.querySelectorAll(".bz-diary-desk, .bz-diary-mob")].find((el) => el.clientWidth > 0)) != null ? _a : null;
-  }
-  function motionRendered2(scope, mode) {
-    cancelPending();
-    if (mode === "none" || reduced()) return;
-    const boot = mode === "boot";
-    if (boot) {
-      const bookname = scope.querySelector(".bz-diary-bookname");
-      if (bookname) {
-        waapi(
-          bookname,
-          [
-            { opacity: 0, transform: "translateY(3px)", filter: "blur(6px)" },
-            { opacity: 1, transform: "none", filter: "blur(0px)" }
-          ],
-          { duration: M3.base + 100, delay: 40, easing: E2.out, fill: "backwards" }
-        );
-      }
-      const range = scope.querySelector(".bz-diary-range");
-      if (range) {
-        waapi(
-          range,
-          [{ opacity: 0 }, { opacity: 1 }],
-          { duration: M3.base, delay: 180, easing: E2.out, fill: "backwards" }
-        );
-      }
-    }
-    const chips = [...scope.querySelectorAll(".bz-diary-chip, .bz-diary-subchip")];
-    chips.forEach((el, i) => {
-      if (i >= (boot ? 12 : 10)) return;
-      waapi(
-        el,
-        [
-          { opacity: 0, transform: "translateY(5px) scale(.92)", filter: "blur(3px)" },
-          { opacity: 1, transform: "none", filter: "blur(0px)" }
-        ],
-        { duration: boot ? M3.base : M3.fast + 60, delay: boot ? 140 + i * STAG2 : 10 + i * 14, easing: E2.out, fill: "backwards" }
-      );
-    });
-    if (boot) {
-      const rail = scope.querySelector(".bz-rail-scroll");
-      if (rail) {
-        [...rail.children].forEach((el, i) => {
-          if (i >= 16) return;
-          waapi(
-            el,
-            [
-              { opacity: 0, transform: "translateX(-9px)", filter: "blur(3px)" },
-              { opacity: 1, transform: "none", filter: "blur(0px)" }
-            ],
-            { duration: M3.base, delay: 200 + i * 24, easing: E2.out, fill: "backwards" }
-          );
-        });
-      }
-    }
-    const wall = scope.querySelector(".bz-diary-wall");
-    if (!wall) return;
-    clearAnims(wall);
-    const mem = wall.querySelector(".bz-diary-memories");
-    if (mem && boot) {
-      const head = mem.querySelector(".bz-diary-memories-head");
-      if (head) {
-        waapi(
-          head,
-          [{ opacity: 0, transform: "translateY(4px)" }, { opacity: 1, transform: "none" }],
-          { duration: M3.base, delay: 240, easing: E2.out, fill: "backwards" }
-        );
-      }
-      const row = mem.querySelector(".bz-diary-memories-row");
-      if (row) {
-        waapi(
-          row,
-          [{ opacity: 0, clipPath: "inset(0 100% 0 0)" }, { opacity: 1, clipPath: "inset(0 -2% 0 0)" }],
-          { duration: M3.base + 160, delay: 300, easing: E2.out, fill: "backwards" }
-        );
-        row.querySelectorAll(".bz-diary-memory").forEach((el, i) => {
-          if (i >= 6) return;
-          waapi(
-            el,
-            [
-              { opacity: 0, transform: "translateX(-10px)", filter: "blur(3px)" },
-              { opacity: 1, transform: "none", filter: "blur(0px)" }
-            ],
-            { duration: M3.base, delay: 380 + i * 60, easing: E2.out, fill: "backwards" }
-          );
-        });
-      }
-    } else if (mem) {
-      waapi(
-        mem,
-        [{ opacity: 0 }, { opacity: 1 }],
-        { duration: M3.fast + 40, delay: 30, easing: E2.out, fill: "backwards" }
-      );
-    }
-    const empty = wall.querySelector(".bz-empty");
-    if (empty) {
-      waapi(
-        empty,
-        [
-          { opacity: 0, transform: "translateY(8px)", filter: "blur(3px)" },
-          { opacity: 1, transform: "none", filter: "blur(0px)" }
-        ],
-        { duration: M3.base, delay: boot ? 180 : 30, easing: E2.out, fill: "backwards" }
-      );
-    }
-    [...wall.querySelectorAll(".bz-diary-day-head")].forEach((h, i) => {
-      if (i >= (boot ? 8 : 5)) return;
-      const delay = boot ? 300 + i * 70 : 40 + i * 40;
-      waapi(
-        h,
-        [
-          { opacity: 0, transform: "translateY(-7px) scale(1.04)", filter: "blur(4px)" },
-          { opacity: 1, transform: "none", filter: "blur(0px)" }
-        ],
-        { duration: M3.base, delay, easing: E2.out, fill: "backwards" }
-      );
-      if (boot) after(delay + 150, () => inkBlot(h));
-    });
-    [...wall.querySelectorAll(".bz-diary-item")].forEach((el, i) => {
-      if (i >= (boot ? 20 : 12)) return;
-      waapi(
-        el,
-        [
-          { opacity: 0, transform: "translateY(11px)", filter: "blur(4px)" },
-          { opacity: 1, transform: "none", filter: "blur(0px)" }
-        ],
-        { duration: M3.base + 80, delay: boot ? 380 + i * 26 : 70 + i * 14, easing: E2.out, fill: "backwards" }
-      );
-    });
-  }
-  function motionPageTurn(scope, wall, rewrite) {
-    if (reduced() || typeof wall.animate !== "function") {
-      rewrite();
-      return;
-    }
-    cancelPending();
-    activePage == null ? void 0 : activePage.remove();
-    const out = waapi(
-      wall,
-      [{ opacity: 1, filter: "blur(0px)" }, { opacity: 0, filter: "blur(5px)" }],
-      { duration: M3.fast + 20, easing: E2.out, fill: "forwards" }
-    );
-    const page = document.createElement("i");
-    page.className = "bz-dm-page";
-    page.setAttribute("aria-hidden", "true");
-    scope.appendChild(page);
-    activePage = page;
-    let swapped = false;
-    tween(M3.impulse, (v) => {
-      if (!page.isConnected) return;
-      const p = v * 2 - 1;
-      page.style.opacity = String(Math.max(0, Math.sin(Math.min(1, v * 1.18) * Math.PI)));
-      page.style.transform = `perspective(1100px) rotateY(${(-p * 34).toFixed(1)}deg) translateX(${(p * 74).toFixed(1)}%)`;
-      if (!swapped && v >= 0.45) {
-        swapped = true;
-        if (out) out.cancel();
-        wall.style.opacity = "";
-        wall.style.filter = "";
-        rewrite();
-      }
-      if (v >= 1) {
-        page.remove();
-        if (activePage === page) activePage = null;
-      }
-    }, easeInOut);
-  }
-  var activePage = null;
-  function motionDateFilterIn(wrap, light) {
-    if (reduced()) return;
-    const card = wrap.querySelector(".bz-diary-datefilter-card");
-    if (!card) return;
-    waapi(
-      wrap,
-      [{ opacity: 0 }, { opacity: 1 }],
-      { duration: light ? M3.fast : M3.base, easing: E2.out }
-    );
-    if (light) {
-      flipMonths(card, 40);
-      return;
-    }
-    const title = card.querySelector(".bz-diary-datefilter-title");
-    if (title) {
-      waapi(
-        title,
-        [{ opacity: 0, filter: "blur(5px)" }, { opacity: 1, filter: "blur(0px)" }],
-        { duration: M3.base, delay: 30, easing: E2.out, fill: "backwards" }
-      );
-    }
-    [...card.querySelectorAll(".bz-diary-datefilter-year")].forEach((el, i) => {
-      if (i >= 10) return;
-      waapi(
-        el,
-        [{ opacity: 0, transform: "translateY(5px) scale(.92)" }, { opacity: 1, transform: "none" }],
-        { duration: M3.base, delay: 90 + i * STAG2, easing: E2.out, fill: "backwards" }
-      );
-    });
-    flipMonths(card, 200);
-  }
-  function flipMonths(card, base) {
-    [...card.querySelectorAll(".bz-diary-datefilter-month")].forEach((el, i) => {
-      if (i >= 12) return;
-      el.style.transformOrigin = "50% 0%";
-      waapi(
-        el,
-        [
-          { opacity: 0, transform: "perspective(700px) rotateX(-32deg) translateY(6px)" },
-          { opacity: 1, transform: "none" }
-        ],
-        { duration: M3.base + 60, delay: base + i * 24, easing: E2.out, fill: "backwards" }
-      );
-    });
-  }
-  function motionDateFilterOut(wrap, done) {
-    const card = wrap.querySelector(".bz-diary-datefilter-card");
-    if (!card) {
-      done();
-      return;
-    }
-    let finished = false;
-    const finish = () => {
-      if (finished) return;
-      finished = true;
-      wrap.style.opacity = "";
-      card.style.opacity = "";
-      card.style.transform = "";
-      card.style.filter = "";
-      done();
-    };
-    const a = waapi(
-      wrap,
-      [{ opacity: 1 }, { opacity: 0 }],
-      { duration: M3.fast, easing: E2.out, fill: "forwards" }
-    );
-    waapi(
-      card,
-      [
-        { opacity: 1, transform: "none", filter: "blur(0px)" },
-        { opacity: 0, transform: "translateY(6px) scale(.98)", filter: "blur(3px)" }
-      ],
-      { duration: M3.fast, easing: E2.out, fill: "forwards" }
-    );
-    if (!a) {
-      finish();
-      return;
-    }
-    a.finished.then(finish).catch(finish);
-    after(M3.fast + 140, finish);
-  }
-  function motionChipPress(el) {
-    waapi(
-      el,
-      [{ transform: "scale(.94)" }, { transform: "none" }],
-      { duration: M3.fast + 20, easing: E2.out }
-    );
-  }
-  function motionChipDeny(el) {
-    waapi(
-      el,
-      [
-        { transform: "translateX(0)" },
-        { transform: "translateX(-3px)" },
-        { transform: "translateX(3px)" },
-        { transform: "translateX(-2px)" },
-        { transform: "translateX(0)" }
-      ],
-      { duration: M3.fast + 80, easing: E2.out }
-    );
-  }
-  function motionMonthPress(el) {
-    motionChipPress(el);
-  }
-  function motionDayStamp(head) {
-    if (reduced()) return;
-    waapi(
-      head,
-      [{ transform: "scale(1.03)", filter: "blur(2px)" }, { transform: "none", filter: "blur(0px)" }],
-      { duration: M3.base, easing: E2.out }
-    );
-    after(70, () => inkBlot(head));
-  }
-  function motionClearChip(el) {
-    waapi(
-      el,
-      [{ opacity: 0, transform: "scale(.85)" }, { opacity: 1, transform: "none" }],
-      { duration: M3.fast + 40, easing: E2.out }
-    );
-  }
-  function motionMarks(container) {
-    if (reduced()) return;
-    container.querySelectorAll("mark.bz-diary-mark").forEach((el, i) => {
-      if (i >= 6) return;
-      waapi(
-        el,
-        [{ opacity: 0.25 }, { opacity: 1 }],
-        { duration: M3.fast + 60, delay: i * 40, easing: E2.out }
-      );
-    });
-  }
-  function motionSearchRow(row) {
-    waapi(
-      row,
-      [
-        { opacity: 0, transform: "translateY(-5px)", filter: "blur(3px)" },
-        { opacity: 1, transform: "none", filter: "blur(0px)" }
-      ],
-      { duration: M3.move, easing: E2.out }
-    );
-  }
-  function motionDevelop(el) {
-    waapi(
-      el,
-      [
-        { opacity: 0, filter: "blur(9px) brightness(1.05)", transform: "scale(1.02)" },
-        { opacity: 1, filter: "blur(0px) brightness(1)", transform: "none" }
-      ],
-      { duration: M3.base + 160, easing: E2.out }
-    );
-  }
-  function motionLightboxShow(lb, box, cap, sub, dir) {
-    clearAnims(lb);
-    lb.style.opacity = "";
-    lb.style.transform = "";
-    lb.style.filter = "";
-    const media = box.querySelector(".bz-diary-lb-media");
-    if (media) {
-      const enter = dir === 0 ? [
-        { opacity: 0, transform: "scale(.965)", filter: "blur(8px)" },
-        { opacity: 1, transform: "none", filter: "blur(0px)" }
-      ] : [
-        { opacity: 0, transform: `translateX(${dir * 26}px)`, filter: "blur(5px)" },
-        { opacity: 1, transform: "none", filter: "blur(0px)" }
-      ];
-      waapi(media, enter, { duration: dir === 0 ? M3.base + 140 : M3.move + 60, easing: E2.out });
-    }
-    const pending = box.querySelector(".bz-diary-lb-pending");
-    if (pending) waapi(pending, [{ opacity: 0 }, { opacity: 1 }], { duration: M3.fast, easing: E2.out });
-    [cap, sub].filter((x) => !!x).forEach((el, i) => {
-      waapi(
-        el,
-        [
-          { opacity: 0, transform: "translateY(5px)", filter: "blur(3px)" },
-          { opacity: 1, transform: "none", filter: "blur(0px)" }
-        ],
-        { duration: M3.base, delay: 60 + i * 40, easing: E2.out, fill: "backwards" }
-      );
-    });
-  }
-  function motionLightboxOut(lb, done) {
-    let finished = false;
-    const finish = () => {
-      if (finished) return;
-      finished = true;
-      lb.style.opacity = "";
-      lb.style.transform = "";
-      lb.style.filter = "";
-      done();
-    };
-    const a = waapi(
-      lb,
-      [
-        { opacity: 1, transform: "none", filter: "blur(0px)" },
-        { opacity: 0, transform: "scale(.985)", filter: "blur(4px)" }
-      ],
-      { duration: M3.move, easing: E2.out, fill: "forwards" }
-    );
-    if (!a) {
-      finish();
-      return;
-    }
-    a.finished.then(finish).catch(finish);
-    after(M3.move + 160, finish);
   }
   function motionSheetDialog(popup) {
     if (reduced()) return;
@@ -16545,59 +17181,13 @@ ${String(review).trim()}`;
       if (i >= 14) return;
       waapi(
         el,
-        [{ opacity: 0, transform: "translateY(4px) scale(.94)" }, { opacity: 1, transform: "none" }],
+        [
+          { opacity: 0, transform: "translateY(4px) scale(.94)" },
+          { opacity: 1, transform: "none" }
+        ],
         { duration: M3.base, delay: 150 + i * 18, easing: E2.out, fill: "backwards" }
       );
     });
-  }
-  function motionSkeleton(box) {
-    waapi(
-      box,
-      [{ opacity: 0, transform: "translateY(6px)" }, { opacity: 1, transform: "none" }],
-      { duration: M3.fast + 40, easing: E2.out }
-    );
-  }
-  function inkBlot(head) {
-    if (reduced() || !head.isConnected) return;
-    const date = head.querySelector(".bz-diary-day-date");
-    const dot = document.createElement("i");
-    dot.className = "bz-dm-ink";
-    dot.setAttribute("aria-hidden", "true");
-    dot.style.left = `${date ? date.offsetWidth / 2 : 20}px`;
-    dot.style.top = `${head.offsetHeight / 2}px`;
-    head.appendChild(dot);
-    waapi(
-      dot,
-      [
-        { opacity: 0, transform: "scale(.5)" },
-        { opacity: 0.5, transform: "scale(1)", offset: 0.45 },
-        { opacity: 0, transform: "scale(1.8)" }
-      ],
-      { duration: M3.base + 240, easing: E2.out }
-    );
-    after(M3.base + 300, () => dot.remove());
-  }
-  function motionTeardown2() {
-    cancelPending();
-    bootArmed = false;
-  }
-  if (typeof window !== "undefined") {
-    window.addEventListener("hashchange", () => {
-      if (location.hash !== "#replay") return;
-      location.hash = "";
-      const replay = window.__bzDiaryReplay;
-      if (typeof replay === "function") setTimeout(replay, 600);
-    });
-    if (location.hash === "#replay") {
-      const wait = () => {
-        const replay = window.__bzDiaryReplay;
-        if (typeof replay === "function") {
-          location.hash = "";
-          setTimeout(replay, 600);
-        } else setTimeout(wait, 120);
-      };
-      setTimeout(wait, 120);
-    }
   }
 
   // src/diary/ui/dialogs.ts
@@ -16970,541 +17560,1794 @@ ${String(review).trim()}`;
   }
 
   // src/diary/ui.ts
-  init_encrypt2();
-  var ACTION_ICON = {
-    open: "external-link",
-    copyLink: "copy",
-    copyContent: "file-text",
-    attachment: "paperclip",
-    editTags: "tags",
-    encrypt: "lock",
-    decrypt: "lock-open",
-    remove: "trash-2",
-    play: "play",
-    music: "music",
-    image: "image",
-    close: "x"
-  };
-  var WIDE_TEXT_MIN_CHARS = 800;
-  var SEARCH_DEBOUNCE_MS = 250;
-  var DBLCLICK_WINDOW_MS = 300;
-  var LB_SWIPE_THRESHOLD_PX = 40;
-  var RAIL_HIGHLIGHT_EPSILON_PX = 8;
-  var SCROLL_FIX_DELAY_MS = 480;
-  var MODIFY_REFRESH_DEBOUNCE_MS = 400;
-  var MEMORY_EXCERPT_MAX_CHARS = 64;
-  var PANEL2 = { MIN_W: 720, MIN_H: 560, MAX_W: 1280, MAX_H: 960 };
-  function memoryExcerpt(text) {
-    const flat = (text || "").replace(/\s+/g, " ").trim();
-    if (!flat) return "（无正文）";
-    const chars = [...flat];
-    return chars.length > MEMORY_EXCERPT_MAX_CHARS ? `${chars.slice(0, MEMORY_EXCERPT_MAX_CHARS).join("")}…` : flat;
-  }
-  function pickCurrentMonth(heads) {
-    let current = null;
-    for (const h of heads) {
-      if (h.relTop <= RAIL_HIGHLIGHT_EPSILON_PX) current = h.date.slice(0, 7);
-      else break;
+  var SINGLE_MAX_W = 720;
+  var FLIP_TIME_MS = 620;
+  var PAGE_CUT_MIN_PX = 84;
+  var DAYSTAMP_KEEP_PX = 96;
+  var REFRESH_DEBOUNCE_MS = 400;
+  var WHEEL_LOCK_MS = 560;
+  function collectPhotoRefs(entries) {
+    const out = [];
+    const seen = /* @__PURE__ */ new Set();
+    for (const e of entries) {
+      if (e.encrypted) continue;
+      for (const seg of e.segments) {
+        if (seg.kind !== "media") continue;
+        if (seg.media.kind === "audio") continue;
+        if (seen.has(seg.media.name)) continue;
+        seen.add(seg.media.name);
+        out.push({ entry: e, media: seg.media });
+      }
     }
-    return current;
+    return out;
+  }
+  function paginateFlow(items, availH, split, heightOf) {
+    const metas = items.map((it) => ({ el: it.el, h: it.h, keep: !!it.keep }));
+    const pages = [];
+    let cur = null;
+    let used = 0;
+    const newPage = () => {
+      cur = [];
+      pages.push(cur);
+      used = 0;
+    };
+    newPage();
+    for (let i = 0; i < metas.length; i++) {
+      const it = metas[i];
+      if (it.keep && (cur.length || pages.length > 1)) {
+        if (pages.length % 2 === 1) pages.push([]);
+        newPage();
+        used = 0;
+      }
+      if (!cur.length && it.h > availH) {
+        const c2 = split(it.el, availH - 4);
+        if (c2) {
+          it.h = heightOf(c2[0]);
+          metas.splice(i + 1, 0, { el: c2[1], h: c2[2], keep: false });
+        }
+      }
+      if (used + it.h > availH && cur.length) {
+        const remain = availH - used;
+        if (remain >= PAGE_CUT_MIN_PX) {
+          const cut = split(it.el, remain - 4);
+          if (cut) {
+            cur.push(cut[0]);
+            metas.splice(i + 1, 0, { el: cut[1], h: cut[2], keep: false });
+            used = availH;
+            continue;
+          }
+        }
+        newPage();
+      }
+      if (it.keep && used + it.h + DAYSTAMP_KEEP_PX > availH && cur.length) newPage();
+      cur.push(it.el);
+      used += it.h;
+    }
+    return pages;
+  }
+  function monthMarks(pages, entries) {
+    const out = [];
+    const seen = /* @__PURE__ */ new Set();
+    for (let pi = 0; pi < pages.length; pi++) {
+      const dayEl = pages[pi].find((el) => el.classList.contains("bz-diary-b-daystamp"));
+      const date = dayEl == null ? void 0 : dayEl.getAttribute("data-date");
+      if (!date) continue;
+      const key = date.slice(0, 7);
+      if (seen.has(key)) continue;
+      seen.add(key);
+      out.push({ key, page1: pi + 1, n: 0 });
+    }
+    const byMonth = /* @__PURE__ */ new Map();
+    for (const e of entries) {
+      const k = e.date.slice(0, 7);
+      byMonth.set(k, (byMonth.get(k) || 0) + 1);
+    }
+    for (const m of out) m.n = byMonth.get(m.key) || 0;
+    return out;
+  }
+  function pageDateOf(page) {
+    const el = page.find((n) => n.classList.contains("bz-diary-b-daystamp"));
+    return (el == null ? void 0 : el.getAttribute("data-date")) || null;
+  }
+  function elOf(html) {
+    const t = document.createElement("template");
+    t.innerHTML = html;
+    return t.content.firstElementChild;
+  }
+  function plainTextOf(e) {
+    var _a;
+    const x = e.extra || {};
+    if (e.kind === "movie") return `《${x.title || ""}》观影于 ${e.date}
+${x.review || ""}`;
+    if (e.kind === "book") return `《${x.title || ""}》${x.author || ""}
+${x.review || ""}`;
+    if (e.kind === "letter") return `${e.filename ? ((_a = e.filename.split("/").pop()) == null ? void 0 : _a.replace(/\.md$/, "")) + "\n" : ""}${e.content || ""}`;
+    return e.content || "";
+  }
+  function writeClipboard(text, okMsg, failMsg) {
+    const fallback = () => {
+      const ta = document.createElement("textarea");
+      ta.value = text;
+      document.body.appendChild(ta);
+      ta.select();
+      try {
+        document.execCommand("copy");
+        notice(okMsg, "success");
+      } catch (e) {
+        notice(failMsg, "error");
+      }
+      ta.remove();
+    };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      void navigator.clipboard.writeText(text).then(() => notice(okMsg, "success"), fallback);
+    } else fallback();
   }
   var _DiaryAppController = class _DiaryAppController {
     constructor() {
-      /** 根容器（固定全屏遮罩层） */
+      // ---------- DOM ----------
       this.root = null;
-      /** 数据 */
+      // ---------- 状态 ----------
+      /** 当前册子里的条目（只读聚合结果；加密条目在解锁时才并入） */
       this.entries = [];
-      /** 当前筛选标签（null = 全部） */
-      this.selTag = null;
-      /** 搜索关键词（空 = 全部） */
-      this.searchKeyword = "";
-      /** 日期筛选（null = 全部；{ year } = 年份；{ year, month } = 某月）——回忆墙自包含，不再依赖 diary 面板 filter */
-      this.selDateFilter = null;
-      /** 二级标签筛选（选中主标签后其子标签） */
-      this.selSubTag = null;
-      /** 加密条目是否可见（原型 S.locked：默认锁定隐藏） */
-      this.lockedVisible = false;
-      this.escUnregister = null;
-      this._initialized = false;
-      /** DW3：vault modify 自动刷新订阅（show 挂 / hide+cleanup 摘）+ 防抖计时 */
-      this._modifyRef = null;
-      /** N5（review-deep func）：vault create 订阅——外部新建/移入条目文件 modify 不触发、
-       *  rename 事件 oldPath 在墙外不命中，create 是唯一入口（与 modify 同一防抖回刷） */
-      this._createRef = null;
-      this._modifyTimer = null;
-      /** DW6：章节跳转落定校正计时 */
-      this._scrollFixTimer = null;
-      /** 媒体懒加载 observer + 章节滚动高亮 cleanup：按 desk/mob 实例分存（双实例各自独立，互不覆盖） */
-      this.observers = { desk: null, mob: null };
-      /** issue 210：章节栏视频缩略懒加载 observer（desk/mob 各自独立） */
-      this.railObservers = { desk: null, mob: null };
-      this.rafCleanups = { desk: null, mob: null };
-      this.sheetEntry = null;
-      /** 搜索防抖（250ms 尾触；issue 365 收编 core debounce。实例唯一槽：desk/mob 双搜索框共享，
-       *  与原共享 _searchTimer 槽语义一致。D-UI3：收起/ESC 清空路径须 cancel()——否则 250ms 内
-       *  的尾触落地把已清空的关键词写回，列表按一个不可见的词过滤（「收起搜索后列表莫名变短」）。
-       *  效率#8：回调走增量显隐，基线不符才整墙重建） */
-      this._searchDebounced = debounce((v) => {
-        this.searchKeyword = v;
-        if (this.applySearchVisibility()) return;
-        this.renderAll();
-      }, SEARCH_DEBOUNCE_MS);
-      /** 日期筛选弹窗元素（null = 未打开） */
-      this._dateFilterEl = null;
-      /** 当前渲染条目列表（右键委托按 dataset.widx 反查条目；renderWall 时重建） */
-      this._wallEntries = [];
-      /** 右键委托已挂载标记（按 desk/mob 实例，防重复绑定） */
-      this._ctxBound = { desk: false, mob: false };
-      /** 增强 #1：灯箱连看序列（filtered 列表媒体平铺，renderWall 重建）与当前下标（-1 = 未开） */
-      this._lbSeq = [];
-      /** issue 217 F1：时光条灯箱打开期间暂存的墙内主序列（关闭时还原） */
-      this._lbSeqMain = null;
-      this._lbIdx = -1;
-      /** D6'（review-all2）：灯箱会话代次——openLightbox 每次开新会话递增，加密媒体慢解密
-       *  promise 闭包捕获发起时的代次，回填前比对；关灯箱立刻重开、新旧项同下标时，
-       *  旧会话晚到的解密结果不再穿透进新灯箱（旧实现只比对 isConnected + _lbIdx）。 */
-      this._lbGen = 0;
-      /** issue 217 F3：桌面/移动断点（renderAll 只渲染可见端；跨断点变化补渲染） */
-      this._mql = null;
-      this._onMqChange = null;
-      /** 增强 #1：方向键切图（bindLightbox 单次注册，灯箱可见时才生效） */
-      this._onLbKeydown = (ev) => {
-        if (!this.lbVisible()) return;
-        if (ev.key === "ArrowLeft") {
-          ev.preventDefault();
-          this.stepLightbox(-1);
-        } else if (ev.key === "ArrowRight") {
-          ev.preventDefault();
-          this.stepLightbox(1);
-        }
+      this.byEid = /* @__PURE__ */ new Map();
+      this.pages = [];
+      this.cursor = 0;
+      this.single = false;
+      this.filterTag = null;
+      this.search = {
+        kw: null,
+        hits: [],
+        i: 0
       };
-      /** 增强 #9：保险箱解锁状态订阅（show 挂 / hide+cleanup 摘；encrypt:unlock-changed 域事件） */
-      this._unlockOff = null;
-      /** 写链路事件订阅退订（show 挂 / hide+cleanup 摘；entry-added 等 diary 域事件防抖回刷） */
-      this._writeOff = null;
-      /** 引用同步订阅退订（issue 339：vault:md-renamed/deleted 内存路径同步；show 挂 / hide+cleanup 摘） */
-      this._refSyncOff = null;
-      /** 增强 #11：跳走前捕获的墙视图状态（回墙恢复；一次性消费） */
-      this._restore = null;
-      /** 增强 #8：加密媒体解密结果缓存（noteId|kind|name → dataURL promise；失败也缓存避免重复解密风暴） */
+      this.photoRefs = [];
+      this.photoIndex = /* @__PURE__ */ new Map();
+      this.lbIdx = 0;
+      this.flip = null;
+      this.menuEid = null;
+      this.bookRect = null;
+      this.epoch = 0;
+      this.toastTimer = null;
+      this.modifyTimer = null;
+      this.wheelLock = 0;
+      this.toolsRaf = 0;
+      this.toolsShown = false;
+      this.lastSingle = false;
+      this.lastW = 0;
+      this.lastH = 0;
+      this.resizeTimer = null;
       this.encMediaCache = /* @__PURE__ */ new Map();
-      /** 效率#14：整墙读取失败的错误消息（null = 无错误；mkEmpty 据此分流错误态） */
-      this._loadError = null;
-      /** 效率#8：增量显隐基线——上次 renderWall 时的 entries 引用与「除关键词外」的筛选键，
-       *  两者都没变才允许对既有卡片 toggle display（否则卡片集合与 widx 不对应） */
-      this._wallBaseRef = null;
-      this._wallBaseKey = "";
-      /** ②：开墙（show）路径允许命中预热/上次刷新后的缓存秒开（含关墙后再开）；其余 loadAndRender
-       *  （刷新/写后回刷/重试）恒先 invalidateWallCache 回源，保持「每次刷新即读盘」原语义。
-       *  show 置真、loadAndRender 消费后复位 */
-      this._allowCacheNext = false;
-      /** 动效层：用户筛选切换（chip/二级签/日期/清除）待走翻页编排的标志（renderWall 消费即熄） */
-      this._motionSwitchPend = false;
-      /** 动效层：面板退场演出进行中（hide 防重入；show 复位） */
-      this._hideMotion = false;
-      /** 动效层：是否开过面板（重开走短档入场） */
+      this.lastSpreadCount = 0;
+      this.cal = { year: 2026, month: 1 };
+      // ---------- 生命周期标记 ----------
+      this._initialized = false;
       this._shownOnce = false;
-      /** 桌面拖拽缩放句柄（ADR-0084/ADR-0094）：常驻 DOM 双实例，show 挂 / hide 摘；null = 未挂 */
-      this.panelResizeDetach = null;
+      this._hideMotion = false;
+      this._allowCacheNext = false;
+      this._loadError = null;
+      this._subs = [];
+      this._vaultRefs = [];
+      this.onKeydown = (ev) => {
+        if (ev.key === "Escape") {
+          this.escapeStack();
+          return;
+        }
+        if (ev.target instanceof Element && ev.target.matches("input, textarea")) return;
+        if (!this.lightboxEl.hidden) {
+          if (ev.key === "ArrowLeft") {
+            this.lbStep(-1);
+            return;
+          }
+          if (ev.key === "ArrowRight") {
+            this.lbStep(1);
+            return;
+          }
+        }
+        if (ev.key === "ArrowLeft") this.turnPage(-1);
+        if (ev.key === "ArrowRight") this.turnPage(1);
+      };
+      this.onResize = () => {
+        if (this.resizeTimer !== null) clearTimeout(this.resizeTimer);
+        this.resizeTimer = setTimeout(() => {
+          this.resizeTimer = null;
+          const s = window.innerWidth <= SINGLE_MAX_W;
+          const h = window.innerHeight;
+          const w = window.innerWidth;
+          const hChanged = Math.abs(h - this.lastH) > 40;
+          const wChanged = s && Math.abs(w - this.lastW) > 16;
+          this.lastH = h;
+          this.lastW = w;
+          if (s !== this.lastSingle || hChanged || wChanged) {
+            this.lastSingle = s;
+            this.relayout(true);
+          } else this.refreshBookRect();
+        }, 380);
+      };
+      this.onDocPointerDown = (ev) => {
+        var _a, _b;
+        if (!((_b = (_a = ev.target).closest) == null ? void 0 : _b.call(_a, ".bz-diary-menu"))) this.closeMenu();
+      };
+      this.onMouseMove = (ev) => {
+        if (this.toolsRaf) return;
+        const x = ev.clientX;
+        const y = ev.clientY;
+        this.toolsRaf = requestAnimationFrame(() => {
+          this.toolsRaf = 0;
+          if (!this.lightboxEl.hidden || !this.sheetEl.hidden || !this.slipEl.hidden) {
+            this.setToolsShown(false);
+            return;
+          }
+          if (!this.bookRect) this.refreshBookRect();
+          const r = this.bookRect;
+          if (!r) return;
+          this.setToolsShown(y > r.bottom - 48 && y < r.bottom + 112 && x > r.left - 70 && x < r.right + 70);
+        });
+      };
+      this.onMouseLeave = () => this.setToolsShown(false);
     }
     static getInstance() {
-      if (!_DiaryAppController.instance) {
-        _DiaryAppController.instance = new _DiaryAppController();
-      }
+      if (!_DiaryAppController.instance) _DiaryAppController.instance = new _DiaryAppController();
       return _DiaryAppController.instance;
     }
-    // ---------- 创建 DOM（桌面 + 移动双实例，幂等） ----------
+    // ============================================================
+    //  DOM 构建
+    // ============================================================
+    /** 幂等建 DOM + 绑事件（show/init 均经此） */
     ensureElements() {
       if (this._initialized) return;
       this._initialized = true;
-      this.root = document.createElement("div");
-      this.root.className = "bz-diary";
-      this.root.style.cssText = "position:fixed;inset:0;z-index:var(--bz-z-overlay,1000);display:none;";
-      document.body.appendChild(this.root);
-      const desk = document.createElement("div");
-      desk.className = "bz-diary-desk";
-      desk.innerHTML = this.panelHTML();
-      this.mountSearch(desk);
-      this.root.appendChild(desk);
-      this.desk = this.bindRefs(desk);
-      const mob = document.createElement("div");
-      mob.className = "bz-diary-mob bz-panel-mtop";
-      mob.innerHTML = this.panelHTML();
-      this.mountSearch(mob);
-      this.root.appendChild(mob);
-      this.mob = this.bindRefs(mob);
-      this.bindPanel(this.desk);
-      this.bindPanel(this.mob);
-      this.decorateIcons(desk);
-      this.decorateIcons(mob);
+      const root = document.createElement("div");
+      root.className = "bz-diary-scene";
+      root.style.cssText = "position:fixed;inset:0;display:none;";
+      root.innerHTML = bookPanelHTML();
+      document.body.appendChild(root);
+      this.root = root;
+      const q = (sel) => root.querySelector(sel);
+      this.bookEl = q(".bz-diary-book");
+      this.blockEl = q(".bz-diary-bk-block");
+      this.flipHost = q(".bz-diary-flipbook");
+      this.edgeEl = q(".bz-diary-bk-edge");
+      this.toolsEl = q(".bz-diary-tools");
+      this.filterTabEl = q(".bz-diary-filter-tab");
+      this.postcardEl = q(".bz-diary-postcard");
+      this.hintEl = q(".bz-diary-hint");
+      this.menuEl = q(".bz-diary-menu");
+      this.sheetEl = q(".bz-diary-sheet");
+      this.sheetTitleEl = q(".bz-diary-sh-title");
+      this.sheetBodyEl = q(".bz-diary-sheet-body");
+      this.slipEl = q(".bz-diary-slip");
+      this.slipTitleEl = q(".bz-diary-slip-title");
+      this.slipBodyEl = q(".bz-diary-slip-body");
+      this.slipRowEl = q(".bz-diary-slip-row");
+      this.albumEl = q(".bz-diary-album-pop");
+      this.albumSubEl = q(".bz-diary-ap-sub");
+      this.albumGridEl = q(".bz-diary-ap-grid");
+      this.calEl = q(".bz-diary-cal-pop");
+      this.calYmEl = q(".bz-diary-cal-ym");
+      this.calGridEl = q(".bz-diary-cal-grid");
+      this.calTimeRowEl = q(".bz-diary-cal-time-row");
+      this.calInputEl = q(".bz-diary-ct-input");
+      this.calErrEl = q(".bz-diary-ct-err");
+      this.calOkEl = q(".bz-diary-cal-ok");
+      this.lightboxEl = q(".bz-diary-lightbox");
+      this.lbPhotoEl = q(".bz-diary-lb-photo");
+      this.lbMediaEl = q(".bz-diary-lb-media");
+      this.lbCapEl = q(".bz-diary-lb-cap");
+      this.lbCountEl = q(".bz-diary-lb-count");
+      this.toastEl = q(".bz-diary-toast");
+      this.fallbackEl = q(".bz-diary-fallback");
+      this.bindChrome();
+      this.bindMenu();
+      this.bindBlockEvents();
       this.bindLightbox();
-      this.registerEscape();
-      document.addEventListener("keydown", this._onLbKeydown);
-      if (typeof matchMedia === "function") {
-        this._mql = matchMedia("(max-width: 768px)");
-        this._onMqChange = () => {
-          var _a;
-          if (((_a = this.root) == null ? void 0 : _a.style.display) === "flex") this.renderAll();
-        };
-        this._mql.addEventListener("change", this._onMqChange);
-      }
-      window.__bzDiaryReplay = () => {
-        if (!this.root) return;
-        this.root.style.display = "flex";
-        this._hideMotion = false;
-        motionArmBoot2();
-        motionPanelIn2(this.root, false);
-        void this.loadAndRender();
-      };
+      this.bindAlbum();
+      this.bindCal();
+      this.bindSlip();
+      this.bindTools();
+      registerPanelEsc("diary", () => !!this.root && this.root.style.display === "flex", () => this.escapeStack());
+      window.__bzDiaryReplay = () => this.show();
     }
-    /** 从实例 HTML 收集 DOM 引用 */
-    bindRefs(scope) {
-      const q = (sel) => scope.querySelector(sel);
+    /** 渲染上下文：纯层要的两条回调——媒体地址 + 灯箱序号 */
+    ctx() {
+      const app = this.app();
       return {
-        el: scope,
-        // 动效层编排锚点：实例根元素（桌面卡 / 移动全屏）
-        head: q(".bz-diary-head"),
-        range: q(".bz-diary-range"),
-        chipRow: q(".bz-diary-chiprow"),
-        subRow: q(".bz-diary-subrow"),
-        searchRow: q(".bz-diary-searchrow"),
-        searchBox: q(".bz-diary-searchrow .bz-search input"),
-        body: q(".bz-diary-body"),
-        wall: q(".bz-diary-wall"),
-        rail: q(".bz-diary-rail"),
-        lb: q(".bz-diary-lb"),
-        lbMedia: q(".bz-diary-lbmedia"),
-        lbCap: q(".bz-diary-lbcap"),
-        lbSub: q(".bz-diary-lbsub")
+        mediaSrc: (name) => this.mediaUrlOf(app, name),
+        lbIndexOf: (name) => {
+          var _a;
+          return (_a = this.photoIndex.get(name)) != null ? _a : 0;
+        }
       };
     }
-    /**
-     * 面板骨架（桌面/移动共用——真全屏由 CSS ≤768px 控制，两份 HTML 一字不差）。
-     * 增强包 #4：头行/灯箱按钮 emoji 换 lucide（ensureElements 后 decorateIcons 按 data-act 注入 uiIcon）；
-     * 头行精简（2026-09-10 用户要求）：关闭/设置/按年月跳转三枚按钮移除，日期入口只留品牌行；
-     * 增强包 #1：灯箱加左右切换按钮（连看）。
-     */
-    panelHTML() {
-      return wallPanelHTML();
+    /** 媒体地址：data.ts 的解析（vault 相对/全局回退），解析不到返回空串（渲染层走占位） */
+    mediaUrlOf(app, name) {
+      return mediaSrc(app, name);
     }
-    /** 搜索框：组件库 uiSearch（.bz-search 壳 + 前缀搜索图标 + .bz-input），双实例各挂一份 */
-    mountSearch(scope) {
-      const row = scope.querySelector(".bz-diary-searchrow");
-      if (!row) return;
-      row.appendChild(uiSearch({ placeholder: "搜索日记（正文、类型、时间）…" }).el);
-    }
-    /** 增强包 #4/#10：按 data-act 给空按钮注入 lucide 图标（ensureElements 时各实例跑一次） */
-    decorateIcons(scope) {
-      for (const [act, name] of Object.entries(ACT_ICON)) {
-        scope.querySelectorAll(`[data-act="${act}"]`).forEach((btn) => {
-          if (btn.tagName !== "BUTTON" || btn.firstChild) return;
-          btn.appendChild(uiIcon(name));
-        });
+    /** 页宽（单页模式跟视口走；桌面读 CSS 变量）——离屏测量盒与 StPageFlip 建书**共用这一个值** */
+    pageWidth() {
+      if (typeof window !== "undefined" && window.innerWidth <= SINGLE_MAX_W) {
+        return Math.min(window.innerWidth * 0.92, 480);
       }
+      const w = parseFloat(this.cssVar("--bz-diary-pg-w"));
+      return Number.isFinite(w) && w > 0 ? w : 520;
     }
-    // ---------- 交互绑定 ----------
-    bindPanel(ui) {
-      var _a, _b, _c;
-      ui.head.querySelectorAll('[data-act="date-picker"]').forEach((el) => {
-        el.addEventListener("click", () => this.openDatePicker());
-      });
-      (_a = ui.head.querySelector('[data-act="add"]')) == null ? void 0 : _a.addEventListener("click", () => this.openAddEntry());
-      (_b = ui.head.querySelector('[data-act="search"]')) == null ? void 0 : _b.addEventListener("click", () => this.toggleSearch(ui));
-      (_c = ui.lb.querySelector('[data-act="lb-close"]')) == null ? void 0 : _c.addEventListener("click", (e) => {
-        e.stopPropagation();
-        this.closeLightbox();
-      });
-      ui.rail.addEventListener("click", (e) => {
-        const item = e.target.closest(".bz-diary-month");
-        if (!item) return;
-        motionMonthPress(item);
-        this.scrollToMonth(item.dataset.month || "", ui.wall);
-      });
-      ui.searchBox.addEventListener("input", () => this._searchDebounced(ui.searchBox.value));
-      ui.searchBox.addEventListener("keydown", (e) => {
-        if (e.key === "Escape") {
-          e.stopPropagation();
-          this._searchDebounced.cancel();
-          ui.searchBox.value = "";
-          ui.searchBox.dispatchEvent(new Event("input", { bubbles: true }));
-          this._searchDebounced.cancel();
-          this.searchKeyword = "";
-          this.renderAll();
-          ui.searchBox.blur();
-        }
-      });
+    /** 读域根上的 CSS 变量（宽度/内边距/书高的唯一来源） */
+    cssVar(name) {
+      if (!this.root) return "";
+      return getComputedStyle(this.root).getPropertyValue(name);
     }
-    /** 灯箱通用绑定（双实例各一份；增强 #1：左右按钮 + 触摸滑动连看） */
-    bindLightbox() {
-      [this.desk, this.mob].forEach((ui) => {
-        var _a, _b, _c;
-        ui.lb.addEventListener("click", (e) => {
-          if (e.target === ui.lb) this.closeLightbox();
-        });
-        (_a = ui.lb.querySelector('[data-act="lb-prev"]')) == null ? void 0 : _a.addEventListener("click", (e) => {
-          e.stopPropagation();
-          this.stepLightbox(-1);
-        });
-        (_b = ui.lb.querySelector('[data-act="lb-next"]')) == null ? void 0 : _b.addEventListener("click", (e) => {
-          e.stopPropagation();
-          this.stepLightbox(1);
-        });
-        (_c = ui.lb.querySelector('[data-act="lb-more"]')) == null ? void 0 : _c.addEventListener("click", (e) => {
-          e.stopPropagation();
-          const me = e;
-          this.openLbActions(me.clientX, me.clientY);
-        });
-        let touchX = null;
-        ui.lb.addEventListener(
-          "touchstart",
-          (e) => {
-            var _a2, _b2;
-            if (e.target.closest("video, audio, button")) {
-              touchX = null;
-              return;
-            }
-            touchX = (_b2 = (_a2 = e.touches[0]) == null ? void 0 : _a2.clientX) != null ? _b2 : null;
-          },
-          { passive: true }
-        );
-        ui.lb.addEventListener(
-          "touchend",
-          (e) => {
-            var _a2, _b2;
-            if (touchX === null) return;
-            const dx = ((_b2 = (_a2 = e.changedTouches[0]) == null ? void 0 : _a2.clientX) != null ? _b2 : touchX) - touchX;
-            touchX = null;
-            if (Math.abs(dx) >= LB_SWIPE_THRESHOLD_PX) this.stepLightbox(dx < 0 ? 1 : -1);
-          },
-          { passive: true }
-        );
-      });
-      this.root.addEventListener("click", (e) => {
-        if (e.target === this.root && this.root.style.display === "flex") this.hide();
-      });
+    /** 块高 = offsetHeight + 上下 margin（原型那张家手写 GAP 表已被这一步取代） */
+    blockHeightOf(el) {
+      const cs = getComputedStyle(el);
+      return el.offsetHeight + (parseFloat(cs.marginTop) || 0) + (parseFloat(cs.marginBottom) || 0);
     }
-    /** 灯箱是否可见（任一实例） */
-    lbVisible() {
-      return !!this.root && (this.desk.lb.classList.contains("bz-diary-lb--show") || this.mob.lb.classList.contains("bz-diary-lb--show"));
-    }
-    /** 增强 #1：灯箱步进（dir=1 下一张 / -1 上一张；到头循环——相册式连看，与移动端滑动同口径） */
-    stepLightbox(dir) {
-      if (!this.lbVisible() || !this._lbSeq.length) return;
-      this.showLightboxAt(this._lbIdx + dir, dir);
+    // ============================================================
+    //  排版：块流 → 测量 → 切页 → 建书
+    // ============================================================
+    visibleEntries() {
+      if (!this.filterTag) return this.entries;
+      const tag = this.filterTag;
+      return this.entries.filter((e) => e.tags.includes(tag));
     }
     /**
-     * 效率#10：灯箱「⋯」动作菜单——复用 buildMenuActions 动作集（core openItemMenu 跟手菜单，
-     * 桌面移动通用），上下文 = 当前连看项 _lbSeq[_lbIdx]；动作项点击后菜单自动收，灯箱保持开着
-     * （「打开原文」的 hide() 会顺带收灯箱，符合跳走语义）。
+     * 重排整册。`keepRatio`：视口变化/回刷时按上次页数比例保住阅读位置（跟手不跳回最新）；
+     * 换筛选、写完一篇等场景传 false（落回第 0 页 = 最新那篇）。
      */
-    openLbActions(x, y) {
-      const cur = this._lbSeq[this._lbIdx];
-      if (!cur) return;
-      if (this.isEncHidden(cur.entry)) return;
-      openItemMenu(x, y, this.buildMenuActions(cur.entry), true);
-      resetItemMenuClickGuard();
-    }
-    // ---------- 渲染 ----------
-    /** 重新渲染（筛选变化 / 数据加载后）。
-     *  issue 217 F3：只渲染当前可见端实例——隐藏端全量渲染（每条正文 MarkdownRenderer ×2）
-     *  是开墙耗时翻倍的隐性大头；断点切换由 _onMqChange 补渲染。jsdom 无 matchMedia 保留双渲染。 */
-    renderAll() {
-      if (!this.root) return;
-      this.renderChips();
-      const list = this.filtered();
-      this.renderRange(list);
-      if (this._mql) {
-        if (this._mql.matches) this.renderWall(this.mob, true, list);
-        else this.renderWall(this.desk, false, list);
-        return;
-      }
-      this.renderWall(this.desk, false, list);
-      this.renderWall(this.mob, true, list);
-    }
-    /**
-     * 动效层：用户筛选切换（chip / 二级签 / 日期筛选 / 清除）走翻页编排——旧墙墨隐、
-     * 纸面扫过面板、过中线那一刻 renderAll 换血、新内容以 switch 档接力落纸。
-     * RM / 无 WAAPI 宿主：motionPageTurn 同步 rewrite，行为与直接 renderAll 等价。
-     * 后台刷新（写后回刷 / vault modify / 解锁）仍走静默 renderAll，不翻页。
-     */
-    renderAllMotioned() {
-      const ui = this._mql ? this._mql.matches ? this.mob : this.desk : this.desk;
-      this._motionSwitchPend = true;
-      motionPageTurn(ui.el, ui.wall, () => this.renderAll());
-    }
-    /**
-     * 效率#6：头行范围文案带日期筛选态（「2026-06 · 37 条」）——旧实现只有「N 条」，
-     * 套用月份筛选后无处可见当前被限定在哪个月，墙看起来像丢数据；
-     * 同步 brand 行「✕ 清除」胶囊（筛选生效时出现，一键清日期筛选）。
-     */
-    renderRange(list) {
-      const df = this.selDateFilter;
-      const range = df ? `${df.year}${df.month ? "-" + df.month : ""} · ${list.length} 条` : `${list.length} 条`;
-      this.desk.range.textContent = range;
-      this.mob.range.textContent = range;
-      [this.desk, this.mob].forEach((ui) => this.syncFilterClearChip(ui));
-    }
-    /** 效率#6：brand 行「✕ 清除」日期筛选胶囊（brand 点击本体 = 开筛选弹窗，胶囊是独立动作） */
-    syncFilterClearChip(ui) {
-      const brand = ui.head.querySelector(".bz-diary-brand");
-      if (!brand) return;
-      const chip = brand.querySelector(".bz-diary-filter-clear");
-      if (!this.selDateFilter) {
-        chip == null ? void 0 : chip.remove();
-        return;
-      }
-      if (chip) return;
-      const b = document.createElement("button");
-      b.className = "bz-diary-filter-clear";
-      b.title = "清除日期筛选";
-      b.appendChild(uiIcon("x"));
-      b.appendChild(document.createTextNode("清除"));
-      motionClearChip(b);
-      b.addEventListener("click", (e) => {
-        e.stopPropagation();
-        this.selDateFilter = null;
-        this.renderAllMotioned();
-      });
-      brand.appendChild(b);
-    }
-    /** 增量显隐基线键：除搜索关键词外的全部筛选态 + 数据量（任一变化即失效，强制整墙重建） */
-    filterKeyNoKw() {
-      const df = this.selDateFilter;
-      return `${this.selTag}|${this.selSubTag}|${df ? df.year + "-" + (df.month || "") : ""}|${this.entries.length}`;
-    }
-    /**
-     * 效率#8：搜索增量显隐——关键词变化只对既有卡片 toggle display（widx↔条目映射现成），
-     * 不匹配藏、匹配显，墙结构不动（MarkdownRenderer 不重跑、媒体 observer 不重建）。
-     * 仅空结果（要渲染空态）/ 首渲或基线不符（卡片集合与 widx 对不上）走整墙重建。
-     * 返回 false = 调用方须 renderAll 整墙重建。
-     */
-    applySearchVisibility() {
-      const list = this.filtered();
-      if (!list.length) return false;
-      if (this._wallBaseRef !== this.entries || this._wallBaseKey !== this.filterKeyNoKw()) return false;
-      const show = new Set(list);
-      let applied = 0;
-      for (const ui of [this.desk, this.mob]) {
-        if (this._mql) {
-          const mobNow = this._mql.matches;
-          if (mobNow && ui !== this.mob || !mobNow && ui !== this.desk) continue;
+    relayout(keepRatio) {
+      const root = this.root;
+      if (!root) return 0;
+      const t0 = typeof performance !== "undefined" ? performance.now() : 0;
+      this.epoch++;
+      this.closeLightbox();
+      this.closeSheet();
+      this.pauseAllAudio();
+      this.search = { kw: null, hits: [], i: 0 };
+      const fbHost = this.flipHost;
+      this.blockEl.innerHTML = "";
+      if (fbHost) this.blockEl.appendChild(fbHost);
+      const single = typeof window !== "undefined" && window.innerWidth <= SINGLE_MAX_W;
+      this.single = single;
+      root.classList.toggle("bz-diary-single", single);
+      const list = this.visibleEntries();
+      this.byEid = new Map(list.map((e) => [e.id || "", e]));
+      this.photoRefs = collectPhotoRefs(list);
+      this.photoIndex = new Map(this.photoRefs.map((p, i) => [p.media.name, i]));
+      const probe = document.createElement("div");
+      probe.className = "bz-diary-probe";
+      root.appendChild(probe);
+      const padT = parseFloat(getComputedStyle(probe).paddingTop) || 88;
+      const padB = parseFloat(getComputedStyle(probe).paddingBottom) || 66;
+      const bookH = this.bookEl.clientHeight || parseFloat(this.cssVar("--bz-diary-pg-h")) || 700;
+      const availH = bookH - padT - padB;
+      const ctx = this.ctx();
+      const flow = [];
+      let lastDate = null;
+      const dayCount = /* @__PURE__ */ new Map();
+      for (const e of list) dayCount.set(e.date, (dayCount.get(e.date) || 0) + 1);
+      for (const e of list) {
+        if (e.date !== lastDate) {
+          lastDate = e.date;
+          flow.push({ el: elOf(daystampHTML(e.date, dayCount.get(e.date) || 1)), h: 0, keep: true });
         }
-        const items = ui.wall.querySelectorAll(".bz-diary-item[data-widx]");
-        if (!items.length || items.length !== this._wallEntries.length) return false;
-        items.forEach((el) => {
-          const e = this._wallEntries[Number(el.dataset.widx)];
-          el.style.display = show.has(e) ? "" : "none";
-        });
-        ui.wall.querySelectorAll(".bz-diary-day-head[data-date]").forEach((h) => {
-          const m = h.nextElementSibling;
-          const cards = m ? Array.from(m.children) : [];
-          const anyVisible = cards.some((el) => el.classList.contains("bz-diary-item") && el.style.display !== "none");
-          h.style.display = anyVisible ? "" : "none";
-          if (m && m.classList.contains("bz-diary-masonry")) m.style.display = anyVisible ? "" : "none";
-        });
-        const mem = ui.wall.querySelector(".bz-diary-memories");
-        if (mem) mem.style.display = this.searchKeyword ? "none" : "";
-        applied++;
+        for (const html of entryBlockHTMLs(e, ctx)) flow.push({ el: elOf(html), h: 0 });
       }
-      if (!applied) return false;
-      if (!this.lbVisible()) {
-        this._lbSeq = list.flatMap((e) => e.media.map((m) => ({ entry: e, media: m })));
+      for (const f of flow) probe.appendChild(f.el);
+      void probe.offsetHeight;
+      for (const f of flow) f.h = this.blockHeightOf(f.el);
+      this.pages = paginateFlow(
+        flow,
+        availH,
+        (el, avail) => this.splitParagraph(el, avail, probe),
+        (el) => this.blockHeightOf(el)
+      );
+      probe.innerHTML = "";
+      probe.remove();
+      this.renderEdgeMarks();
+      const last = Math.max(0, this.pages.length - 1);
+      let target = 0;
+      if (keepRatio && this.lastSpreadCount > 1) {
+        target = Math.round(this.cursor / (this.lastSpreadCount - 1) * last);
       }
-      this.renderRange(list);
-      return true;
+      this.lastSpreadCount = this.pages.length;
+      this.buildBook(Math.max(0, Math.min(last, target)));
+      this.refreshBookRect();
+      return (typeof performance !== "undefined" ? performance.now() : 0) - t0;
     }
-    /** 过滤后的条目（加密条目默认隐藏，选中「加密」标签时显示；支持标签/二级标签/搜索/日期） */
-    filtered() {
-      const kw = this.searchKeyword.trim().toLowerCase();
-      const df = this.selDateFilter;
-      return this.entries.filter((e) => {
-        const isEnc = e.encrypted || e.tags.includes("加密");
-        if (this.selTag === "加密") {
-          if (!isEnc) return false;
-        } else {
-          if (this.selSubTag) {
-            if (!e.tags.includes(this.selSubTag)) return false;
-          } else {
-            if (this.selTag && !e.tags.includes(this.selTag)) return false;
-          }
-          if (isEnc) return false;
-        }
-        if (df) {
-          if (df.month) {
-            if (!e.date.startsWith(`${df.year}-${df.month}`)) return false;
-          } else if (!e.date.startsWith(df.year)) {
-            return false;
-          }
-        }
-        if (kw) {
-          const hit = (e.text || "").toLowerCase().includes(kw) || e.tags.some((t) => t.toLowerCase().includes(kw)) || e.time.toLowerCase().includes(kw) || e.date.includes(kw);
-          if (!hit) return false;
-        }
-        return true;
-      });
-    }
-    /** 类型 chips 行（主标签胶囊 + 计数；「加密」锁定态 🔒 虚线）——标签表取自 config（含旅游/收藏等带二级标签的主标签），非硬编码 */
-    renderChips() {
-      const countFor = (tag) => tag === "加密" ? this.entries.filter((e) => e.encrypted || e.tags.includes("加密")).length : this.entries.filter((e) => e.tags.includes(tag)).length;
-      const tagChips = getPrimaryTagsInDisplayOrder().map((tag) => [tag, getTagEmoji(tag)]);
-      [this.desk.chipRow, this.mob.chipRow].forEach((row) => {
-        row.innerHTML = "";
-        tagChips.forEach(([tag, emoji]) => {
-          const locked = tag === "加密" && !this.lockedVisible;
-          const b = document.createElement("button");
-          b.className = "bz-diary-chip" + (locked ? " bz-diary-chip--locked" : "") + (this.selTag === tag ? " bz-diary-chip--on" : "");
-          b.dataset.tag = tag;
-          if (locked) b.appendChild(uiIcon("lock"));
-          else b.appendChild(document.createTextNode(emoji));
-          b.appendChild(document.createTextNode(" " + tag + " "));
-          const cnt = document.createElement("span");
-          cnt.className = "bz-diary-chip-cnt";
-          cnt.textContent = String(countFor(tag));
-          b.appendChild(cnt);
-          b.addEventListener("click", () => {
-            motionChipPress(b);
-            if (tag === "加密") {
-              if (locked) {
-                void this.unlockAndSelectEncrypt();
-                return;
-              }
-              this.selTag = this.selTag === "加密" ? null : "加密";
-              this.renderAllMotioned();
-              return;
-            }
-            if (this.selTag !== tag) this.selSubTag = null;
-            this.selTag = this.selTag === tag ? null : tag;
-            this.renderAllMotioned();
-          });
-          row.appendChild(b);
-        });
-      });
-      this.renderSubRow(this.desk);
-      this.renderSubRow(this.mob);
-    }
-    /** 加密 chip 锁定态点击：弹保险箱解锁 → 解锁后并入加密日记 → 选中「加密」筛选（对齐日记本） */
-    async unlockAndSelectEncrypt() {
+    /** 段落内第 idx 个字符落在哪个文本节点的哪个偏移 */
+    textPos(root, idx) {
       var _a;
-      try {
-        const { ensureSafeUnlocked: ensureSafeUnlocked2 } = await Promise.resolve().then(() => (init_encrypt(), encrypt_exports));
-        const ok = await ensureSafeUnlocked2("diary");
-        if (!ok) {
-          const vis = ((_a = this._mql) == null ? void 0 : _a.matches) ? this.mob : this.desk;
-          const chip = vis.chipRow.querySelector('.bz-diary-chip[data-tag="加密"]');
-          if (chip) motionChipDeny(chip);
+      const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, null);
+      let acc = 0;
+      let n;
+      while (n = walker.nextNode()) {
+        const len = ((_a = n.nodeValue) == null ? void 0 : _a.length) || 0;
+        if (idx <= acc + len) return [n, idx - acc];
+        acc += len;
+      }
+      return null;
+    }
+    /**
+     * 段落按目标高度用 Range 二分切两半（逐行续排）；返回 `[上半, 下半, 下半高]` 或 null。
+     * 带行内格式（wikilink/加粗/高亮/删除线…）的段同样能切：下半是整段克隆后删掉前缀，
+     * 两边的行内格式都保住。切点对齐句读，避免词中腰斩。
+     */
+    splitParagraph(el, availPx, probe) {
+      const text = el.textContent || "";
+      if (text.length < 40 || availPx < 70) return null;
+      const range = document.createRange();
+      let lo = 1;
+      let hi = text.length;
+      let best = 0;
+      while (lo <= hi) {
+        const mid = lo + hi >> 1;
+        const pos = this.textPos(el, mid);
+        if (pos) {
+          range.setStart(el, 0);
+          range.setEnd(pos[0], pos[1]);
+          if (range.getBoundingClientRect().height <= availPx) {
+            best = mid;
+            lo = mid + 1;
+            continue;
+          }
+        }
+        hi = mid - 1;
+      }
+      if (best < 16) return null;
+      let cut = best;
+      const from = Math.max(0, best - 24);
+      const stops = '。!?;,:、~…」』”" ';
+      for (let k = best - 1; k >= from; k--) {
+        if (stops.indexOf(text[k]) >= 0) {
+          cut = k + 1;
+          break;
+        }
+      }
+      if (cut < 10 || cut > text.length - 6) return null;
+      const down = el.cloneNode(true);
+      const dp = this.textPos(down, cut);
+      const up = this.textPos(el, cut);
+      if (!dp || !up) return null;
+      const rd = document.createRange();
+      rd.setStart(down, 0);
+      rd.setEnd(dp[0], dp[1]);
+      rd.deleteContents();
+      const ru = document.createRange();
+      ru.setStart(up[0], up[1]);
+      ru.setEnd(el, el.childNodes.length);
+      ru.deleteContents();
+      down.className = el.className.replace("bz-diary-p-indent", "bz-diary-p-cont");
+      down.dataset.eid = el.dataset.eid || "";
+      probe.insertBefore(down, el.nextSibling);
+      return [el, down, this.blockHeightOf(down)];
+    }
+    /** 建 StPageFlip 书：页元素 → 库，翻页动画/拖拽/纸张弯曲全交库 */
+    buildBook(targetPage) {
+      const host = this.flipHost;
+      if (this.flip) {
+        try {
+          this.flip.destroy();
+        } catch (e) {
+        }
+        this.flip = null;
+      }
+      host.innerHTML = "";
+      this.blockEl.appendChild(host);
+      const items = [];
+      for (let pi = 0; pi < this.pages.length; pi++) {
+        const d = document.createElement("div");
+        d.className = "bz-diary-page-item";
+        const inner = document.createElement("div");
+        inner.className = "bz-diary-page-inner";
+        for (const el of this.pages[pi]) inner.appendChild(el);
+        d.appendChild(inner);
+        if (this.pages[pi].length) {
+          const no = document.createElement("div");
+          no.className = "bz-diary-page-no";
+          no.textContent = `— ${pi + 1} —`;
+          d.appendChild(no);
+        }
+        items.push(d);
+      }
+      const pgW = this.pageWidth();
+      const pgH = this.bookEl.clientHeight || parseFloat(this.cssVar("--bz-diary-pg-h")) || 700;
+      this.flip = new import_page_flip_browser.PageFlip(host, {
+        width: pgW,
+        height: pgH,
+        size: "fixed",
+        usePortrait: this.single,
+        maxShadowOpacity: 0.5,
+        showCover: false,
+        // 没有封面页：直接按跨页排（0=左，1=右）
+        mobileScrollSupport: false,
+        flippingTime: FLIP_TIME_MS,
+        useMouseEvents: true,
+        disableFlipByClick: true,
+        // 点击翻页由本域自管（且已按用户要求取消四角点击）
+        showPageCorners: false
+      });
+      this.flip.loadFromHTML(items);
+      this.flip.turnToPage(Math.max(0, targetPage));
+      this.flip.on("flip", (e) => {
+        this.cursor = e.data;
+      });
+      this.cursor = Math.max(0, targetPage);
+      this.afterPagesBuilt(host);
+    }
+    /** 每次建书后要重挂的东西：显影 / 媒体失败态 / 录音卡 */
+    afterPagesBuilt(scope) {
+      this.developPhotos(scope);
+      this.bindMediaErrors(scope);
+      this.bindAudios(scope);
+    }
+    turnPage(dir) {
+      if (!this.flip) return;
+      if (dir > 0) this.flip.flipNext();
+      else this.flip.flipPrev();
+    }
+    jumpToPage(pi) {
+      if (!this.flip || !this.pages.length) return;
+      this.flip.turnToPage(Math.max(0, Math.min(this.pages.length - 1, pi)));
+    }
+    // ============================================================
+    //  书口：年份染色 + 册页索引
+    // ============================================================
+    monthMarksOf() {
+      return monthMarks(this.pages, this.visibleEntries());
+    }
+    /**
+     * 书口年份染色带：只作「这几年各占多厚」的缩影（整条边缘才是那个大按钮——点开抽索引）。
+     * 只有一年时不画：一条通高的色带等于没有信息，只是把整条书口刷成一块颜色。
+     * `top`/`height` 是量出来的几何（行为性内联值）；颜色按年序轮转走 `.bz-diary-ey-N` 类。
+     */
+    renderEdgeMarks() {
+      const edge = this.edgeEl;
+      edge.querySelectorAll(".bz-diary-edge-year").forEach((b) => b.remove());
+      const months = this.monthMarksOf();
+      if (!months.length) return;
+      const total = Math.max(1, this.pages.length);
+      const years = [];
+      for (const m of months) {
+        const y = m.key.slice(0, 4);
+        if (!years.length || years[years.length - 1].y !== y) years.push({ y, from: m.page1 });
+      }
+      if (years.length < 2) return;
+      years.forEach((sg, i) => {
+        const top = (sg.from - 1) / total * 100;
+        const endFrom = i + 1 < years.length ? years[i + 1].from : total + 1;
+        let h = Math.max(1.2, (endFrom - 1) / total * 100 - top);
+        h = Math.min(h, 100 - top);
+        const b = document.createElement("div");
+        b.className = `bz-diary-edge-year bz-diary-ey-${i % 8}`;
+        b.style.top = `${top}%`;
+        b.style.height = `${h}%`;
+        edge.appendChild(b);
+      });
+    }
+    /** 点书口 → 抽出「册页索引」那张纸：一年一段、一月一行 */
+    openIndexSheet() {
+      const months = this.monthMarksOf();
+      const list = this.visibleEntries();
+      if (!months.length || !list.length) {
+        this.toast("册页还空着");
+        return;
+      }
+      const total = list.length;
+      let html = '<div class="bz-diary-sheet-meta">自 ' + list[total - 1].date + " 至 " + list[0].date + " · 凡 " + cnNum(total) + " 则 · " + cnNum(months.length) + " 个月</div>";
+      let curY = null;
+      let open = false;
+      for (const m of months) {
+        const parts = m.key.split("-");
+        if (parts[0] !== curY) {
+          if (open) html += "</div></div>";
+          html += `<div class="bz-diary-idx-year"><div class="bz-diary-iy-head">${parts[0]} 年</div><div class="bz-diary-iy-months">`;
+          curY = parts[0];
+          open = true;
+        }
+        html += `<div class="bz-diary-idx-row" data-jump-page="${m.page1 - 1}"><span class="bz-diary-ir-m">${parseInt(parts[1], 10)} 月</span><span class="bz-diary-ir-dots"></span><span class="bz-diary-ir-n">${cnNum(m.n)} 则</span><span class="bz-diary-ir-p">第 ${m.page1} 页</span></div>`;
+      }
+      if (open) html += "</div></div>";
+      this.openSheet("册 页 索 引", html);
+    }
+    // ============================================================
+    //  媒体：显影 / 失败态 / 录音卡 / 加密媒体
+    // ============================================================
+    /** 照片显影：加载完成即从药水里显出；冲不出来的给占位相纸 */
+    developPhotos(root) {
+      root.querySelectorAll(".bz-diary-ph-media img").forEach((img) => {
+        if (img.dataset.dev) return;
+        img.dataset.dev = "1";
+        const dev = () => img.classList.add("bz-diary-develop");
+        if (img.complete && img.naturalWidth) {
+          dev();
           return;
         }
-        this.lockedVisible = true;
-        this.selTag = "加密";
-        await this.mergeEncryptedEntries();
-        this.renderAll();
+        img.addEventListener("load", dev, { once: true });
+        img.addEventListener(
+          "error",
+          () => {
+            const m = img.parentElement;
+            if (m && m.isConnected) {
+              img.remove();
+              const ph = document.createElement("div");
+              ph.className = "bz-diary-ph-empty";
+              ph.textContent = "相片未冲出";
+              m.appendChild(ph);
+            }
+          },
+          { once: true }
+        );
+      });
+    }
+    /**
+     * 媒体失败 → 换占位类（**不写内联样式**：`data-media-err` 的值就是失败时要换上的类全名，
+     * 这是 render 层与行为层的约定，见 render.ts 头注第 3 条）。
+     */
+    bindMediaErrors(root) {
+      root.querySelectorAll("img[data-media-err]").forEach((img) => {
+        if (img.dataset.mediaErrWired) return;
+        img.dataset.mediaErrWired = "1";
+        img.addEventListener(
+          "error",
+          () => {
+            const target = img.dataset.mediaErr;
+            if (target) img.className = target;
+            img.removeAttribute("src");
+            delete img.dataset.mediaErr;
+          },
+          { once: true }
+        );
+      });
+    }
+    fmtClock(s) {
+      const v = Math.max(0, Math.floor(s || 0));
+      return `${Math.floor(v / 60)}:${pad22(v % 60)}`;
+    }
+    pauseAllAudio() {
+      if (!this.root) return;
+      this.root.querySelectorAll("audio").forEach((a) => {
+        try {
+          a.pause();
+        } catch (e) {
+        }
+      });
+    }
+    toggleAudio(card) {
+      var _a;
+      const wrap = card.closest(".bz-diary-b-audio");
+      const a = wrap == null ? void 0 : wrap.querySelector("audio");
+      if (!a) return;
+      if (a.paused) {
+        (_a = this.root) == null ? void 0 : _a.querySelectorAll("audio").forEach((o) => {
+          if (o !== a) {
+            try {
+              o.pause();
+            } catch (e) {
+            }
+          }
+        });
+        void a.play().catch(() => this.toast("这段录音放不出来"));
+      } else a.pause();
+    }
+    /** 录音卡：自绘播放键驱动隐藏的 `<audio>` */
+    bindAudios(root) {
+      root.querySelectorAll(".bz-diary-b-audio").forEach((wrap) => {
+        if (wrap.dataset.wired) return;
+        wrap.dataset.wired = "1";
+        const a = wrap.querySelector("audio");
+        const card = wrap.querySelector(".bz-diary-ba-card");
+        if (!a || !card) return;
+        const bar = card.querySelector(".bz-diary-ba-bar i");
+        const tm = card.querySelector(".bz-diary-ba-time");
+        const btn = card.querySelector(".bz-diary-ba-play");
+        const idle = () => {
+          if (btn) btn.textContent = "▷";
+          wrap.classList.remove("bz-diary-playing");
+          if (bar) bar.style.width = "0";
+          if (tm) tm.textContent = isFinite(a.duration) && a.duration ? this.fmtClock(a.duration) : "--:--";
+        };
+        a.addEventListener("loadedmetadata", () => {
+          if (a.paused) idle();
+        });
+        a.addEventListener("play", () => {
+          if (btn) btn.textContent = "❚❚";
+          wrap.classList.add("bz-diary-playing");
+        });
+        a.addEventListener("pause", idle);
+        a.addEventListener("ended", idle);
+        a.addEventListener("timeupdate", () => {
+          if (!isFinite(a.duration) || !a.duration) {
+            if (tm) tm.textContent = this.fmtClock(a.currentTime);
+            return;
+          }
+          if (bar) bar.style.width = `${a.currentTime / a.duration * 100}%`;
+          if (tm) tm.textContent = `-${this.fmtClock(a.duration - a.currentTime)}`;
+        });
+        a.addEventListener("error", () => {
+          if (tm) tm.textContent = "放不出";
+        });
+      });
+    }
+    /**
+     * 加密条目的媒体按需解密（保险箱附件镜像 → 原始层 base64 → data URL）。
+     * 带缓存（含失败结果，避免渲染风暴下反复解密）；未解锁/无附件/解密失败返回 null（保持占位）。
+     */
+    encryptedMediaUrl(noteId, k) {
+      if (!noteId) return Promise.resolve(null);
+      const key = `${noteId}|${k.kind}|${k.name}`;
+      let p = this.encMediaCache.get(key);
+      if (!p) {
+        p = this.decryptEncMedia(noteId, k);
+        this.encMediaCache.set(key, p);
+      }
+      return p;
+    }
+    async decryptEncMedia(noteId, k) {
+      var _a;
+      try {
+        const { getSafeManager: getSafeManager2 } = await Promise.resolve().then(() => (init_encrypt(), encrypt_exports));
+        const safe = getSafeManager2();
+        if (!safe.unlocked) return null;
+        const note = (_a = safe.manifest) == null ? void 0 : _a.notes.find((n) => n.id === noteId);
+        if (!note) return null;
+        const att = note.attachments.find((a) => a.path === k.name || a.path.endsWith(`/${k.name}`));
+        if (!att) return null;
+        const b64 = await safe.decryptAttachmentOriginal(att);
+        if (!b64) return null;
+        return `data:${mimeOfMediaName(k.name)};base64,${b64}`;
       } catch (e) {
-        notice("解密失败：主密码可能不正确，密文未受影响", "error");
+        return null;
+      }
+    }
+    /** 拆信后的那张纸上若带照片：加密媒体解出后挂 src（并走显影） */
+    async mountEncryptedMedia(scope, noteId) {
+      const els = scope.querySelectorAll("[data-enc-name]");
+      for (const el of Array.from(els)) {
+        const name = el.dataset.encName || "";
+        const kind = el.dataset.encKind || "img";
+        const url = await this.encryptedMediaUrl(noteId, { name, kind });
+        if (!url || !el.isConnected) continue;
+        if (el instanceof HTMLImageElement) {
+          el.addEventListener("load", () => el.classList.add("bz-diary-develop"), { once: true });
+          el.src = url;
+        } else if (el instanceof HTMLVideoElement) {
+          el.src = url;
+          el.preload = "metadata";
+        } else if (el instanceof HTMLAudioElement) {
+          el.src = url;
+          el.preload = "metadata";
+        }
+      }
+    }
+    // ============================================================
+    //  交互：滚轮 / 键盘 / 缩放
+    // ============================================================
+    bindChrome() {
+      this.bookEl.addEventListener(
+        "wheel",
+        (ev) => {
+          if (!this.flip) return;
+          ev.preventDefault();
+          const now = Date.now();
+          if (now - this.wheelLock < WHEEL_LOCK_MS) return;
+          this.wheelLock = now;
+          this.turnPage(ev.deltaY > 0 ? 1 : -1);
+        },
+        { passive: false }
+      );
+      document.addEventListener("keydown", this.onKeydown);
+      this.lastSingle = typeof window !== "undefined" && window.innerWidth <= SINGLE_MAX_W;
+      this.lastW = typeof window !== "undefined" ? window.innerWidth : 0;
+      this.lastH = typeof window !== "undefined" ? window.innerHeight : 0;
+      window.addEventListener("resize", this.onResize);
+    }
+    /** Esc 分流：纸条 → 贴纸册 → 台历 → 抽出的一张纸 → 灯箱 → 便签 → 翻回最新 */
+    escapeStack() {
+      if (!this.root || this.root.style.display !== "flex") return;
+      if (!this.slipEl.hidden) {
+        this.closeSlip();
+        return;
+      }
+      if (!this.albumEl.hidden) {
+        this.closeAlbum();
+        return;
+      }
+      if (!this.calEl.hidden) {
+        this.closeCal();
+        return;
+      }
+      if (!this.sheetEl.hidden) {
+        this.closeSheet();
+        return;
+      }
+      if (!this.lightboxEl.hidden) {
+        this.closeLightbox();
+        return;
+      }
+      if (!this.menuEl.hidden) {
+        this.closeMenu();
+        return;
+      }
+      if (this.flip && this.cursor > 0) {
+        this.jumpToPage(0);
+        this.toast("翻到最新");
+      }
+    }
+    // ============================================================
+    //  块级事件（一次委托）：录音 / wiki / 重封 / 照片 / 票根·藏书票 / 信封
+    // ============================================================
+    bindBlockEvents() {
+      this.blockEl.addEventListener("click", (ev) => {
+        var _a, _b;
+        const t = ev.target;
+        const aud = t.closest(".bz-diary-ba-card");
+        if (aud) {
+          this.toggleAudio(aud);
+          return;
+        }
+        const wl = t.closest(".bz-diary-wikilink");
+        if (wl) {
+          this.openWikilink(wl);
+          return;
+        }
+        const reseal = t.closest(".bz-diary-env-reseal");
+        if (reseal) {
+          (_a = reseal.closest(".bz-diary-envelope")) == null ? void 0 : _a.classList.remove("bz-diary-unsealed", "bz-diary-opening");
+          this.closeSheet();
+          this.toast("重新封缄了");
+          return;
+        }
+        const ph = t.closest(".bz-diary-photo");
+        if (ph && ph.dataset.lb != null) {
+          this.openLightbox(Number(ph.dataset.lb));
+          return;
+        }
+        const more = t.closest(".bz-diary-tk-more");
+        if (more) {
+          this.openReviewSheet(this.byEid.get(((_b = more.closest(".bz-diary-ticket")) == null ? void 0 : _b.dataset.eid) || ""));
+          return;
+        }
+        const env = t.closest(".bz-diary-envelope");
+        if (env) {
+          this.onEnvelope(env);
+          return;
+        }
+        const ex = t.closest(".bz-diary-exlibris");
+        if (ex) this.openReviewSheet(this.byEid.get(ex.dataset.eid || ""));
+      });
+    }
+    /** `[[双链]]`：书页里点它跳原文 */
+    openWikilink(el) {
+      const target = el.dataset.target;
+      if (!target) return;
+      const app = this.app();
+      const file = app.metadataCache.getFirstLinkpathDest(target, "");
+      if (file) void app.workspace.getLeaf(false).openFile(file);
+      else this.toast(`找不到「${el.textContent || target}」`);
+    }
+    // ============================================================
+    //  抽出的一张纸（全文阅读：影评 / 书评 / 拆开的信 / 册页索引）
+    // ============================================================
+    openSheet(title, src) {
+      this.sheetTitleEl.textContent = title || "";
+      this.sheetBodyEl.innerHTML = "";
+      if (typeof src === "string") this.sheetBodyEl.innerHTML = src;
+      else this.sheetBodyEl.appendChild(src);
+      this.sheetEl.hidden = false;
+      this.developPhotos(this.sheetBodyEl);
+      this.bindMediaErrors(this.sheetBodyEl);
+      this.bindAudios(this.sheetBodyEl);
+    }
+    closeSheet() {
+      if (!this.sheetEl || this.sheetEl.hidden) return;
+      this.sheetEl.hidden = true;
+      this.pauseAllAudio();
+      this.sheetBodyEl.innerHTML = "";
+    }
+    bindSheet() {
+      this.sheetEl.addEventListener("click", (ev) => {
+        const t = ev.target;
+        const ph = t.closest(".bz-diary-photo");
+        if (ph && ph.dataset.lb != null) {
+          this.openLightbox(Number(ph.dataset.lb));
+          return;
+        }
+        const aud = t.closest(".bz-diary-ba-card");
+        if (aud) {
+          this.toggleAudio(aud);
+          return;
+        }
+        const row = t.closest(".bz-diary-idx-row");
+        if (row) {
+          this.closeSheet();
+          this.jumpToPage(Number(row.dataset.jumpPage || 0));
+          return;
+        }
+        if (t.closest(".bz-diary-sheet-paper") && !t.closest(".bz-diary-sh-close")) return;
+        this.closeSheet();
+      });
+    }
+    /** 长文 → 纸上的段落 */
+    sheetParas(text) {
+      return String(text || "").split(/\r?\n+/).map((s) => s.trim()).filter(Boolean).map((s) => `<div class="bz-diary-b-para bz-diary-p-indent">${inlineMd(s)}</div>`).join("");
+    }
+    /** 影评 / 书评全文纸 */
+    openReviewSheet(e) {
+      if (!e) return;
+      const x = e.extra || {};
+      if (e.kind === "movie") {
+        this.openSheet(
+          `《${x.title || ""}》影评`,
+          `<div class="bz-diary-sheet-meta">${e.date} 观影 · ${e.tags.map((t) => `${getTagEmoji(t)}${t}`).join(" ")}</div>${this.sheetParas(x.review || "")}`
+        );
+      } else if (e.kind === "book") {
+        this.openSheet(
+          `《${x.title || ""}》书评`,
+          `<div class="bz-diary-sheet-meta">${[x.author, x.category, e.date ? `读毕 ${e.date}` : ""].filter(Boolean).join(" · ")}</div>${this.sheetParas(x.review || "")}`
+        );
       }
     }
     /**
-     * 并入保险箱里的加密日记条目（ADR-0017：加密日记 = 保险箱 kind='diary-entry' 的 SafeNote）。
-     * 未解锁/无加密条目/加载失败均为幂等空操作；合并后与普通条目统一按日期时间降序混排。
+     * 拆开的信 / 解封的加密条目：全文（含照片）按需装进一张纸。
+     * render 层对 `encrypted` 条目只出信封，故走 `unwrap`（跳过信封分支）——
+     * **条目仍带着 `encrypted` 身份**，媒体段才会发出 `data-enc-name` 挂载点，
+     * 由 `mountEncryptedMedia` 解密后补 src（内容一字不差，只是不走信封那条分支）。
+     */
+    buildUnsealed(e) {
+      const box = document.createElement("div");
+      for (const html of entryBlockHTMLs(e, this.ctx(), { unwrap: true })) {
+        box.appendChild(elOf(html));
+      }
+      return box;
+    }
+    // ============================================================
+    //  灯箱（相纸显影）
+    // ============================================================
+    openLightbox(i) {
+      if (!this.photoRefs[i]) return;
+      this.lbIdx = i;
+      this.renderLightbox();
+      this.lightboxEl.hidden = false;
+    }
+    lbStep(d) {
+      if (this.lightboxEl.hidden || !this.photoRefs.length) return;
+      this.lbIdx = (this.lbIdx + d + this.photoRefs.length) % this.photoRefs.length;
+      this.renderLightbox();
+    }
+    renderLightbox() {
+      const p = this.photoRefs[this.lbIdx];
+      if (!p) return;
+      const app = this.app();
+      const src = this.mediaUrlOf(app, p.media.name);
+      this.lbMediaEl.innerHTML = "";
+      if (p.media.kind === "video") {
+        const v = document.createElement("video");
+        v.src = src;
+        v.controls = true;
+        v.autoplay = true;
+        v.loop = true;
+        v.playsInline = true;
+        this.lbMediaEl.appendChild(v);
+      } else {
+        const img = document.createElement("img");
+        img.src = src;
+        img.alt = "";
+        this.lbMediaEl.appendChild(img);
+      }
+      this.lbPhotoEl.className = `bz-diary-lb-photo ${tiltClassOf(this.lbIdx + 3)}`;
+      const cap = p.media.name.split("/").pop() || "";
+      this.lbCapEl.textContent = `${p.entry.date} ${p.entry.time} · ${cap}`;
+      this.lbCountEl.textContent = `${this.lbIdx + 1} / ${this.photoRefs.length}`;
+    }
+    closeLightbox() {
+      if (!this.lightboxEl) return;
+      this.lightboxEl.hidden = true;
+      this.lbMediaEl.innerHTML = "";
+    }
+    bindLightbox() {
+      this.lightboxEl.addEventListener("click", (ev) => {
+        const t = ev.target;
+        if (t.closest(".bz-diary-lb-prev")) {
+          this.lbStep(-1);
+          return;
+        }
+        if (t.closest(".bz-diary-lb-next")) {
+          this.lbStep(1);
+          return;
+        }
+        if (t.closest(".bz-diary-lb-media") || t.closest(".bz-diary-lb-photo")) return;
+        this.closeLightbox();
+      });
+    }
+    // ============================================================
+    //  便签菜单（右键 / 长按）
+    // ============================================================
+    openMenu(pos, eid) {
+      const e = this.byEid.get(eid);
+      if (!e) return;
+      this.menuEid = eid;
+      const show = (act, on) => {
+        const el = this.menuEl.querySelector(`.bz-diary-mn-item[data-act="${act}"]`);
+        if (el) el.hidden = !on;
+      };
+      const isDiary = e.kind === "diary";
+      const enc = !!e.encrypted;
+      show("retype", isDiary && !enc);
+      show("envelope", isDiary && !enc);
+      show("unseal", enc);
+      show("takeout", enc);
+      show("copytext", true);
+      show("copylink", !enc && !!(e.filePath || e.filename));
+      show("tear", isDiary);
+      const tear = this.menuEl.querySelector('.bz-diary-mn-item[data-act="tear"]');
+      if (tear) tear.textContent = enc ? "撕掉（销毁密文）" : "撕掉";
+      this.menuEl.hidden = false;
+      const mw = this.menuEl.offsetWidth;
+      const mh = this.menuEl.offsetHeight;
+      this.menuEl.style.left = `${Math.max(10, Math.min(pos.x, window.innerWidth - mw - 10))}px`;
+      this.menuEl.style.top = `${Math.max(10, Math.min(pos.y, window.innerHeight - mh - 10))}px`;
+    }
+    closeMenu() {
+      if (!this.menuEl) return;
+      this.menuEl.hidden = true;
+      this.menuEid = null;
+    }
+    bindMenu() {
+      this.menuEl.addEventListener("click", (ev) => {
+        const it = ev.target.closest(".bz-diary-mn-item");
+        if (!it || !this.menuEid) return;
+        const e = this.byEid.get(this.menuEid);
+        this.closeMenu();
+        if (!e) return;
+        switch (it.dataset.act) {
+          case "retype":
+            this.editTags(e);
+            break;
+          case "envelope":
+            void this.encryptEntryAction(e);
+            break;
+          case "unseal":
+            this.unsealEntry(e);
+            break;
+          case "takeout":
+            void this.decryptEntryAction(e);
+            break;
+          case "copytext":
+            writeClipboard(plainTextOf(e), "誊好了，在剪贴板里", "誊不成……");
+            break;
+          case "copylink":
+            void this.copyLink(e);
+            break;
+          case "tear":
+            void this.tearEntry(e);
+            break;
+        }
+      });
+      document.addEventListener("pointerdown", this.onDocPointerDown, true);
+      this.blockEl.addEventListener("contextmenu", (ev) => {
+        const t = ev.target.closest("[data-eid]");
+        if (!t) return;
+        ev.preventDefault();
+        this.closeMenu();
+        this.openMenu({ x: ev.clientX, y: ev.clientY }, t.dataset.eid || "");
+      });
+      let lpTimer = null;
+      let lpPos = null;
+      this.blockEl.addEventListener(
+        "touchstart",
+        (ev) => {
+          const t = ev.target.closest("[data-eid]");
+          if (!t) return;
+          const f = ev.touches[0];
+          if (!f) return;
+          lpPos = { x: f.clientX, y: f.clientY };
+          lpTimer = setTimeout(() => {
+            if (lpPos) this.openMenu(lpPos, t.dataset.eid || "");
+          }, 500);
+        },
+        { passive: true }
+      );
+      this.blockEl.addEventListener(
+        "touchmove",
+        (ev) => {
+          if (!lpTimer || !lpPos) return;
+          const f = ev.touches[0];
+          if (f && (Math.abs(f.clientX - lpPos.x) > 12 || Math.abs(f.clientY - lpPos.y) > 12)) {
+            clearTimeout(lpTimer);
+            lpTimer = null;
+          }
+        },
+        { passive: true }
+      );
+      const cancelLp = () => {
+        if (lpTimer) clearTimeout(lpTimer);
+        lpTimer = null;
+      };
+      this.blockEl.addEventListener("touchend", cancelLp);
+      this.blockEl.addEventListener("touchcancel", cancelLp);
+    }
+    // ============================================================
+    //  条目动作：复制 / 改标签 / 加密 / 解密 / 撕掉
+    // ============================================================
+    /** 双链：加密条目无 md 锚点 → 复制正文；影视/信/书 → 文件级双链；普通条目 → 本域 copyDiaryLink */
+    async copyLink(e) {
+      try {
+        if (e.encrypted) {
+          await navigator.clipboard.writeText(e.content || e.text || "");
+          notice("已复制加密日记正文", "success");
+          return;
+        }
+        if (e.kind !== "diary") {
+          if (!e.filename) {
+            notice("找不到原文，无法复制双链", "error");
+            return;
+          }
+          const path = e.filename.replace(/\.md$/, "");
+          await navigator.clipboard.writeText(`[[${path}]]`);
+          notice("已复制双链引用", "success");
+          return;
+        }
+        if (!e.filePath && !e.filename) {
+          notice("找不到原文，无法复制双链", "error");
+          return;
+        }
+        await copyDiaryLink({ filename: e.filename || "", filePath: e.filePath, emoji: e.emoji, time: e.time });
+      } catch (e2) {
+        notice("复制双链失败", "error");
+      }
+    }
+    /** 换贴纸：接本域 showTagPicker（写层守卫落盘，结果经 `diary:tags-changed` 回刷整册） */
+    editTags(e) {
+      try {
+        showTagPicker({
+          filename: e.filename || e.date,
+          filePath: e.filePath,
+          date: e.date,
+          time: e.time,
+          lineNumber: e.lineNumber || 0,
+          tags: e.tags,
+          encrypted: e.encrypted,
+          noteId: e.noteId
+        });
+      } catch (err) {
+        notice(`改标签暂不可用：${err instanceof Error ? err.message : String(err)}`, "error");
+      }
+    }
+    /**
+     * 收进信封（加密）：本域 `encryptEntry`（需保险箱解锁）+ 写层摘除原块；
+     * 摘除失败必须回滚密文——密文已入库而原文未删时，解锁后同条出现两次且重试越积越多。
+     * 与「撕掉」同为「条目当场从册上消失」，同样补二次确认。
+     */
+    async encryptEntryAction(e) {
+      if (e.kind !== "diary") return;
+      let enc = null;
+      try {
+        const { ensureSafeUnlocked: ensureSafeUnlocked2 } = await Promise.resolve().then(() => (init_encrypt(), encrypt_exports));
+        const unlocked = await ensureSafeUnlocked2("diary");
+        if (!unlocked) return;
+        const ok = await openFlowDialog({
+          title: "收进信封",
+          message: `将把「${e.date} ${e.time}」这条日记移入保险库加密保存，原位置不再保留明文。`,
+          actions: [
+            { label: "取消", value: "cancel" },
+            { label: "收进信封", value: "ok", cta: true, danger: true }
+          ]
+        });
+        if (ok !== "ok") return;
+        const entry = await findDiaryEntry(e.filePath || e.filename || e.date);
+        if (!entry) {
+          notice("找不到原文条目，无法加密", "error");
+          return;
+        }
+        enc = await encryptEntry(entry);
+        if (!enc) return;
+        let removed = 0;
+        try {
+          removed = await removeDiaryEntries(
+            entry.date,
+            (x) => x.filePath === entry.filePath && x.time === entry.time && x.lineNumber === entry.lineNumber,
+            { filePath: entry.filePath }
+          );
+        } catch (err) {
+          await this.rollbackEncryptedNote(enc);
+          throw err;
+        }
+        if (removed === 0) {
+          await this.rollbackEncryptedNote(enc);
+          notice("加密失败：原文块摘除未生效", "error");
+          return;
+        }
+        const { emitDomainEvent: emitDomainEvent2 } = await Promise.resolve().then(() => (init_domain_bus(), domain_bus_exports));
+        emitDomainEvent2("diary:entry-deleted", { date: entry.date, time: entry.time, wasEncrypted: false, encrypted: true });
+        await this.loadAndRelayout();
+      } catch (err) {
+        if (err && (isUnparsedRefusal(err) || isDiaryReadFailure(err))) return;
+        notice("加密失败", "error");
+      }
+    }
+    /** 加密失败兜底：尽力销毁刚入库的密文（失败只留日志——原始失败原因更要紧） */
+    async rollbackEncryptedNote(enc) {
+      if (!enc.noteId) return;
+      try {
+        await deleteEncryptedEntry(enc.noteId);
+      } catch (err) {
+        console.warn("[bz-diary] 加密回滚失败（保险箱可能残留密文，请手动删除）:", err);
+      }
+    }
+    /** 从信封取出（解密）：本域 `reclassifyEntry` 降级（还原块 merge 回 md，取出即删） */
+    async decryptEntryAction(e) {
+      try {
+        const noteId = e.noteId;
+        if (!noteId) {
+          notice("无法取出（缺少保险箱记录）", "error");
+          return;
+        }
+        const newTags = e.tags.filter((t) => t !== "加密");
+        const ok = await reclassifyEntry(noteId, newTags);
+        if (!ok) {
+          notice("取出失败：主密码可能不正确，密文未受影响", "error");
+          return;
+        }
+        const { emitDomainEvent: emitDomainEvent2 } = await Promise.resolve().then(() => (init_domain_bus(), domain_bus_exports));
+        emitDomainEvent2("diary:entry-decrypted", { noteId, date: e.date, newTags });
+        await this.loadAndRelayout();
+      } catch (e2) {
+        notice("取出失败：主密码可能不正确，密文未受影响", "error");
+      }
+    }
+    /** 拆信看：加密条目在册时（保险箱已解锁）直接摊开全文；内容随密文一起存在内存里 */
+    unsealEntry(e) {
+      const env = this.blockEl.querySelector(
+        `.bz-diary-envelope[data-eid="${cssEscape(e.id || "")}"]`
+      );
+      if (env) this.onEnvelope(env);
+      else this.openSheet(e.kind === "letter" ? "火漆封缄 · 全文" : "火漆封缄 · 全文", this.buildUnsealed(e));
+    }
+    /** 信封被点：演示拆封动效，然后把全文放到抽出来的那张纸上 */
+    onEnvelope(env) {
+      if (env.classList.contains("bz-diary-unsealed") || env.classList.contains("bz-diary-opening")) return;
+      const eid = env.dataset.eid || "";
+      const e = this.byEid.get(eid);
+      if (!e) return;
+      env.classList.add("bz-diary-opening");
+      const epoch = this.epoch;
+      setTimeout(() => {
+        if (epoch !== this.epoch || !env.isConnected) return;
+        env.classList.remove("bz-diary-opening");
+        env.classList.add("bz-diary-unsealed");
+        const box = this.buildUnsealed(e);
+        this.openSheet("火漆封缄 · 全文", box);
+        if (e.noteId) void this.mountEncryptedMedia(box, e.noteId);
+      }, 620);
+    }
+    /** 撕掉：接本域 `showConfirm`（加密条目走保险箱销毁分支）+ 碎纸动效 */
+    async tearEntry(e) {
+      try {
+        if (e.kind !== "diary") {
+          notice("影视、信、书条目请在对应面板中管理", "info");
+          return;
+        }
+        const els = Array.from(this.blockEl.querySelectorAll("[data-eid]")).filter(
+          (el) => el.dataset.eid === e.id && el.offsetParent
+        );
+        this.tearAnim(els);
+        showConfirm({
+          filename: e.filename || e.date,
+          filePath: e.filePath,
+          date: e.date,
+          time: e.time,
+          lineNumber: e.lineNumber || 0,
+          tags: e.tags,
+          encrypted: e.encrypted,
+          noteId: e.noteId
+        });
+      } catch (e2) {
+        notice("删除暂不可用", "error");
+      }
+    }
+    /**
+     * 碎纸动效：按元素实测矩形把两片纸撕开抛下（几何是**量出来的**，故走内联；
+     * 颜色/材质仍由 `.bz-diary-scrap` 的 CSS 给 —— 零内联视觉样式口径不破）。
+     */
+    tearAnim(els) {
+      if (!els.length) return;
+      const r0 = els[0].getBoundingClientRect();
+      const rN = els[els.length - 1].getBoundingClientRect();
+      const box = {
+        l: Math.min(r0.left, rN.left),
+        t: r0.top,
+        r: Math.max(r0.right, rN.right),
+        b: Math.max(r0.bottom, rN.bottom)
+      };
+      const teeth = 7;
+      const pts = ["0% 0%"];
+      for (let i = 0; i <= teeth; i++) pts.push(`${i / teeth * 100}% ${28 + Math.random() * 18}%`);
+      pts.push("100% 0%");
+      const path = `polygon(${pts.join(",")})`;
+      [0, 1].forEach((side) => {
+        const frag = document.createElement("div");
+        frag.className = "bz-diary-scrap";
+        frag.style.left = `${box.l}px`;
+        frag.style.top = `${box.t}px`;
+        frag.style.width = `${box.r - box.l}px`;
+        frag.style.height = `${box.b - box.t}px`;
+        frag.style.clipPath = path;
+        frag.style.transformOrigin = side ? "100% 0" : "0 0";
+        document.body.appendChild(frag);
+        const dir = side ? 1 : -1;
+        frag.animate(
+          [
+            { transform: "rotate(0deg) translate(0,0)", opacity: 1 },
+            { transform: `rotate(${dir * (9 + Math.random() * 13)}deg) translate(${dir * 60}px, 220px)`, opacity: 0 }
+          ],
+          { duration: 700, easing: "cubic-bezier(.3,.4,.6,1)", fill: "forwards" }
+        );
+        setTimeout(() => frag.remove(), 760);
+      });
+      for (let i = 0; i < 7; i++) {
+        const s = document.createElement("div");
+        s.className = "bz-diary-scrap";
+        const sz = 5 + Math.random() * 7;
+        s.style.left = `${box.l + Math.random() * (box.r - box.l)}px`;
+        s.style.top = `${box.t + Math.random() * (box.b - box.t)}px`;
+        s.style.width = `${sz}px`;
+        s.style.height = `${sz * (0.7 + Math.random() * 0.7)}px`;
+        document.body.appendChild(s);
+        s.animate(
+          [
+            { transform: "translate(0,0) rotate(0)", opacity: 1 },
+            {
+              transform: `translate(${-90 + Math.random() * 180}px, ${160 + Math.random() * 140}px) rotate(${-260 + Math.random() * 520}deg)`,
+              opacity: 0
+            }
+          ],
+          { duration: 650 + Math.random() * 300, easing: "ease-in", fill: "forwards" }
+        );
+        setTimeout(() => s.remove(), 1e3);
+      }
+      els.forEach((el) => {
+        el.style.visibility = "hidden";
+      });
+    }
+    // ============================================================
+    //  贴纸册（按类翻）
+    // ============================================================
+    tagCounts() {
+      const m = /* @__PURE__ */ new Map();
+      for (const e of this.entries) {
+        if (e.encrypted) continue;
+        for (const t of e.tags) m.set(t, (m.get(t) || 0) + 1);
+      }
+      return m;
+    }
+    /** 贴纸册：按类重装订一本分类册（原型的「换贴纸」模式改走真 showTagPicker，不在这里） */
+    openAlbum() {
+      this.albumGridEl.innerHTML = "";
+      const counts = this.tagCounts();
+      this.albumSubEl.textContent = "点一张，就按它重装订一本分类册";
+      const tags = Array.from(counts.keys()).filter((t) => t !== "加密").sort((a, b) => (counts.get(b) || 0) - (counts.get(a) || 0));
+      if (counts.has("加密")) tags.push("加密");
+      for (const t of tags) {
+        const isEncrypt = t === "加密";
+        const b = document.createElement("span");
+        b.className = `bz-diary-ap-sticker${isEncrypt ? " bz-diary-as-encrypt" : ""}`;
+        if (this.filterTag === t) b.classList.add("bz-diary-on");
+        b.innerHTML = `<span class="bz-diary-as-emoji">${getTagEmoji(t)}</span>${escapeHtml2(t)}` + (isEncrypt ? "" : `<i class="bz-diary-as-count"> ${counts.get(t) || 0}</i>`);
+        b.addEventListener("click", () => {
+          this.closeAlbum();
+          this.filterTag = this.filterTag === t ? null : t;
+          this.applyFilter();
+        });
+        this.albumGridEl.appendChild(b);
+      }
+      const ok = this.albumEl.querySelector(".bz-diary-ap-confirm");
+      if (ok) ok.hidden = true;
+      this.albumEl.hidden = false;
+    }
+    closeAlbum() {
+      if (!this.albumEl) return;
+      this.albumEl.hidden = true;
+    }
+    applyFilter() {
+      this.relayout(false);
+      if (this.filterTag) {
+        this.filterTabEl.classList.add("bz-diary-on");
+        const name = this.filterTabEl.querySelector(".bz-diary-ft-name");
+        if (name) name.textContent = `${getTagEmoji(this.filterTag)} ${this.filterTag}`;
+        this.jumpToPage(0);
+        this.toast(`分类册装订好了：${this.filterTag}`);
+      } else {
+        this.filterTabEl.classList.remove("bz-diary-on");
+        this.toast("整本册子回来了");
+      }
+    }
+    bindAlbum() {
+      this.albumEl.addEventListener("click", (ev) => {
+        const t = ev.target;
+        if (t.closest(".bz-diary-ap-cancel") || !t.closest(".bz-diary-ap-book")) this.closeAlbum();
+      });
+      this.filterTabEl.addEventListener("click", () => {
+        this.filterTag = null;
+        this.applyFilter();
+      });
+    }
+    // ============================================================
+    //  台历（跳日子）
+    // ============================================================
+    openCal() {
+      const newest = this.entries[0];
+      const base = newest ? newest.date : "2026-01-01";
+      this.cal.year = Number(base.slice(0, 4));
+      this.cal.month = Number(base.slice(5, 7));
+      this.calTimeRowEl.hidden = true;
+      this.calOkEl.hidden = true;
+      this.calErrEl.textContent = "";
+      this.renderCal();
+      this.calEl.hidden = false;
+    }
+    renderCal() {
+      const { year, month } = this.cal;
+      this.calYmEl.textContent = `${year} 年 ${month} 月`;
+      const byDay = /* @__PURE__ */ new Map();
+      for (const e of this.entries) {
+        if (e.date.slice(0, 7) === `${year}-${pad22(month)}`) {
+          const d = Number(e.date.slice(8, 10));
+          byDay.set(d, (byDay.get(d) || 0) + 1);
+        }
+      }
+      const first = new Date(year, month - 1, 1).getDay();
+      const days = new Date(year, month, 0).getDate();
+      let html = WEEK.map((w) => `<span class="bz-diary-cal-wd">${w}</span>`).join("");
+      for (let i = 0; i < first; i++) html += '<span class="bz-diary-cal-cell"></span>';
+      for (let d = 1; d <= days; d++) {
+        const n = byDay.get(d);
+        html += `<span class="bz-diary-cal-cell${n ? " bz-diary-has" : ""}" data-d="${d}"${n ? ` data-n="${n}"` : ""}>${d}</span>`;
+      }
+      this.calGridEl.innerHTML = html;
+      this.calGridEl.querySelectorAll(".bz-diary-cal-cell.bz-diary-has").forEach((c) => {
+        c.addEventListener("click", () => {
+          const date = `${year}-${pad22(month)}-${pad22(Number(c.dataset.d))}`;
+          this.closeCal();
+          this.jumpToDay(date);
+        });
+      });
+    }
+    closeCal() {
+      if (!this.calEl) return;
+      this.calEl.hidden = true;
+    }
+    jumpToDay(date) {
+      for (let pi = 0; pi < this.pages.length; pi++) {
+        if (pageDateOf(this.pages[pi]) === date) {
+          this.jumpToPage(pi);
+          return;
+        }
+      }
+      this.toast("这一册里，那天没落笔");
+    }
+    bindCal() {
+      this.calEl.addEventListener("click", (ev) => {
+        const t = ev.target;
+        if (t.closest(".bz-diary-cal-cancel") || !t.closest(".bz-diary-cal")) {
+          this.closeCal();
+          return;
+        }
+        const nav = t.closest(".bz-diary-cal-nav");
+        if (nav) {
+          this.cal.month += Number(nav.dataset.nav || 0);
+          if (this.cal.month > 12) {
+            this.cal.month = 1;
+            this.cal.year++;
+          }
+          if (this.cal.month < 1) {
+            this.cal.month = 12;
+            this.cal.year--;
+          }
+          this.renderCal();
+        }
+      });
+    }
+    // ============================================================
+    //  放大镜（检索：荧光笔）
+    // ============================================================
+    runSearch(kw) {
+      this.clearMarks();
+      this.search = { kw, hits: [], i: 0 };
+      for (let pi = 0; pi < this.pages.length; pi++) {
+        for (const el of this.pages[pi]) {
+          if (el.classList.contains("bz-diary-b-photo") || el.classList.contains("bz-diary-b-audio") || el.classList.contains("bz-diary-b-envelope") || el.classList.contains("bz-diary-b-daystamp")) {
+            continue;
+          }
+          if ((el.textContent || "").indexOf(kw) >= 0) this.search.hits.push({ pi, el });
+        }
+      }
+      if (!this.search.hits.length) {
+        this.openSlip({ title: "没 找 到", body: `整本册子都翻了，没有「${escapeHtml2(kw)}」这个词。`, ok: "知道了" });
+        return;
+      }
+      this.toast(`寻得 ${this.search.hits.length} 处，荧光笔伺候`);
+      this.nextHit();
+    }
+    nextHit() {
+      const s = this.search;
+      if (!s.hits.length) return;
+      const hit = s.hits[s.i % s.hits.length];
+      s.i++;
+      this.jumpToPage(hit.pi);
+      setTimeout(() => this.markHit(hit.el, s.kw || ""), 80);
+    }
+    markHit(el, kw) {
+      var _a;
+      if (!el.isConnected || !kw) return;
+      if (!el.dataset.orig) el.dataset.orig = el.innerHTML;
+      const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT, {
+        acceptNode: (n2) => n2.parentElement && n2.parentElement.closest("mark") ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT
+      });
+      const texts = [];
+      let n;
+      while (n = walker.nextNode()) texts.push(n);
+      for (const node of texts) {
+        const t = node.textContent || "";
+        if (t.indexOf(kw) < 0) continue;
+        const frag = document.createDocumentFragment();
+        let rest = t;
+        while (rest.indexOf(kw) >= 0) {
+          const i = rest.indexOf(kw);
+          if (i) frag.appendChild(document.createTextNode(rest.slice(0, i)));
+          const mk = document.createElement("mark");
+          mk.className = "bz-diary-hl bz-diary-hl-on";
+          mk.textContent = kw;
+          frag.appendChild(mk);
+          rest = rest.slice(i + kw.length);
+        }
+        if (rest) frag.appendChild(document.createTextNode(rest));
+        (_a = node.parentNode) == null ? void 0 : _a.replaceChild(frag, node);
+      }
+    }
+    /**
+     * 拆荧光笔。只拆**检索打的那一笔**（`bz-diary-hl-on`）——原文里作者自己写的 `==高亮==`
+     * 经 inlineMd 渲染出来也是 `mark`，无差别拆会把全册手写高亮无声拆光。
+     */
+    clearMarks() {
+      if (!this.root) return;
+      this.root.querySelectorAll("[data-orig]").forEach((el) => {
+        el.innerHTML = el.dataset.orig || "";
+        delete el.dataset.orig;
+      });
+      this.root.querySelectorAll(".bz-diary-page-item mark.bz-diary-hl-on").forEach((m) => {
+        const p = m.parentNode;
+        if (p) {
+          p.replaceChild(document.createTextNode(m.textContent || ""), m);
+          p.normalize();
+        }
+      });
+    }
+    askSearch() {
+      this.openSlip({
+        title: "放 大 镜",
+        body: "要找哪个词？整本册子替你翻。",
+        input: { placeholder: "比如：雨、猫、游戏……" },
+        ok: "翻找",
+        onSubmit: (v) => {
+          if (!v) return "写一个词嘛";
+          this.runSearch(v);
+          return null;
+        }
+      });
+    }
+    // ============================================================
+    //  纸条（通用输入 / 确认）
+    // ============================================================
+    openSlip(opt) {
+      this.slipTitleEl.textContent = opt.title || "";
+      this.slipBodyEl.innerHTML = opt.body || "";
+      this.slipRowEl.innerHTML = "";
+      let input = null;
+      if (opt.input) {
+        input = document.createElement("input");
+        input.className = "bz-diary-slip-input";
+        input.type = opt.input.type || "text";
+        input.placeholder = opt.input.placeholder || "";
+        this.slipBodyEl.appendChild(input);
+      }
+      const cancel = document.createElement("span");
+      cancel.className = "bz-diary-slip-btn";
+      cancel.textContent = opt.cancelText || "算了";
+      cancel.addEventListener("click", () => this.closeSlip());
+      this.slipRowEl.appendChild(cancel);
+      const ok = document.createElement("span");
+      ok.className = `bz-diary-slip-btn bz-diary-primary${opt.danger ? " bz-diary-danger" : ""}`;
+      ok.textContent = opt.ok || "好";
+      ok.addEventListener("click", () => {
+        const v = input ? input.value.trim() : void 0;
+        const err = opt.onSubmit ? opt.onSubmit(v) : null;
+        if (err) {
+          let line = this.slipBodyEl.querySelector(".bz-diary-slip-err-line");
+          if (!line) {
+            line = document.createElement("div");
+            line.className = "bz-diary-slip-err bz-diary-slip-err-line";
+            this.slipBodyEl.appendChild(line);
+          }
+          line.textContent = err;
+          return;
+        }
+        this.closeSlip();
+      });
+      this.slipRowEl.appendChild(ok);
+      this.slipEl.hidden = false;
+      if (input) setTimeout(() => input == null ? void 0 : input.focus(), 60);
+    }
+    closeSlip() {
+      if (!this.slipEl) return;
+      this.slipEl.hidden = true;
+    }
+    bindSlip() {
+      this.slipEl.addEventListener("click", (ev) => {
+        if (!ev.target.closest(".bz-diary-slip-paper")) this.closeSlip();
+      });
+      this.slipEl.addEventListener("keydown", (ev) => {
+        var _a;
+        if (ev.key === "Enter") (_a = this.slipRowEl.querySelector(".bz-diary-slip-btn.bz-diary-primary")) == null ? void 0 : _a.click();
+      });
+    }
+    // ============================================================
+    //  文具五项（写 / 找 / 跳 / 类）
+    // ============================================================
+    doTact(name) {
+      switch (name) {
+        case "pencil":
+          this.startWrite();
+          break;
+        case "lens":
+          this.askSearch();
+          break;
+        case "calendar":
+          this.openCal();
+          break;
+        case "stickers":
+          this.openAlbum();
+          break;
+      }
+    }
+    /** 写一篇：本域写链路（守卫 / 串行队列 / 加密分流 / 写后跳转都在那边），写完关册子去新笔记 */
+    startWrite() {
+      var _a;
+      try {
+        openAddDialog({ yearRange: (_a = this.getYearRange()) != null ? _a : void 0, onSaved: () => this.hide() });
+      } catch (e) {
+        notice(`写日记暂不可用：${e instanceof Error ? e.message : String(e)}`, "error");
+      }
+    }
+    bindTools() {
+      var _a;
+      this.bindSheet();
+      this.toolsEl.addEventListener("click", (ev) => {
+        const tl = ev.target.closest("[data-tact]");
+        if (tl) this.doTact(tl.dataset.tact || "");
+      });
+      this.refreshBookRect();
+      document.addEventListener("mousemove", this.onMouseMove);
+      document.addEventListener("mouseleave", this.onMouseLeave);
+      if (typeof window !== "undefined" && window.matchMedia && window.matchMedia("(hover: none)").matches) {
+        const eh = (_a = this.root) == null ? void 0 : _a.querySelector(".bz-diary-eb-hint");
+        if (eh) {
+          eh.classList.add("bz-diary-peek");
+          setTimeout(() => eh.classList.remove("bz-diary-peek"), 4e3);
+        }
+      }
+      this.edgeEl.addEventListener("click", () => this.openIndexSheet());
+      this.hintEl.addEventListener("click", (ev) => {
+        if (!ev.target.closest(".bz-diary-hint-close")) return;
+        this.hintEl.classList.add("bz-diary-gone");
+        setTimeout(() => this.hintEl.remove(), 400);
+      });
+    }
+    setToolsShown(on) {
+      if (on === this.toolsShown) return;
+      this.toolsShown = on;
+      this.toolsEl.classList.toggle("bz-diary-show", on);
+    }
+    /** 书在屏幕上的位置：只在窗口尺寸变化时刷新，别每帧量（原来鼠标一动就强制一次整页布局） */
+    refreshBookRect() {
+      if (!this.bookEl) return;
+      this.bookRect = this.bookEl.getBoundingClientRect();
+    }
+    // ============================================================
+    //  那年今天（明信片）
+    // ============================================================
+    checkOnThisDay() {
+      const today = /* @__PURE__ */ new Date();
+      const key = `${today.getFullYear()}-${pad22(today.getMonth() + 1)}-${pad22(today.getDate())}`;
+      const old = pickOnThisDay(this.entries, key);
+      const body = this.postcardEl.querySelector(".bz-diary-pc-body");
+      if (!old.length) {
+        if (body) body.innerHTML = "";
+        return;
+      }
+      const e = old[0];
+      if (body) {
+        body.innerHTML = `<b>${e.date.slice(0, 4)} 年的今天</b> · ${e.emoji}<br>${escapeHtml2(
+          plainTextOf(e).slice(0, 60)
+        )}……`;
+      }
+      this.postcardEl.hidden = false;
+      const open = this.postcardEl.querySelector(".bz-diary-pc-open");
+      if (open) {
+        open.onclick = () => {
+          this.postcardEl.hidden = true;
+          for (let pi = 0; pi < this.pages.length; pi++) {
+            if (this.pages[pi].some((el) => el.dataset.eid === e.id)) {
+              this.jumpToPage(pi);
+              break;
+            }
+          }
+        };
+      }
+      setTimeout(() => {
+        if (this.postcardEl) this.postcardEl.hidden = true;
+      }, 12e3);
+    }
+    // ============================================================
+    //  纸上的小提示
+    // ============================================================
+    toast(msg) {
+      if (!this.toastEl) return;
+      this.toastEl.textContent = msg;
+      this.toastEl.hidden = false;
+      this.toastEl.classList.remove("bz-diary-out");
+      if (this.toastTimer !== null) clearTimeout(this.toastTimer);
+      this.toastTimer = setTimeout(() => {
+        this.toastEl.classList.add("bz-diary-out");
+        setTimeout(() => {
+          if (!this.toastEl) return;
+          this.toastEl.hidden = true;
+          this.toastEl.classList.remove("bz-diary-out");
+        }, 420);
+      }, 2400);
+    }
+    // ============================================================
+    //  数据：加载 / 回刷 / 订阅
+    // ============================================================
+    app() {
+      return getApp();
+    }
+    /** 让位首帧：rAF 后再落一拍 setTimeout，等面板画出来再读盘/整册排版 */
+    afterPaint() {
+      return new Promise((resolve) => {
+        if (typeof requestAnimationFrame !== "function" || document.hidden) {
+          setTimeout(resolve, 0);
+          return;
+        }
+        requestAnimationFrame(() => setTimeout(resolve, 0));
+      });
+    }
+    /** 重新读盘 + 整册重排（事件回刷路径；保阅读位置） */
+    async loadAndRelayout() {
+      await this.loadEntries(false);
+      this.relayout(true);
+    }
+    /**
+     * 读盘。`allowCache`：开册路径命中预热/上次刷新后的缓存秒开；
+     * 刷新/写后回刷/重试一律先作废回源（保持「每次刷新即读盘」语义，不赌缓存失效是否触发）。
+     */
+    async loadEntries(allowCache) {
+      try {
+        if (allowCache) {
+          this._allowCacheNext = false;
+        } else {
+          invalidateWallCache();
+        }
+        this.entries = await loadWallEntries(this.app());
+        this._loadError = null;
+      } catch (e) {
+        this.entries = [];
+        this._loadError = e instanceof Error ? e.message : String(e);
+        notice(`加载日记失败：${this._loadError}`, "error");
+      }
+      await this.mergeEncryptedEntries();
+      if (this._loadError) this.fallbackEl.hidden = false;
+      else this.fallbackEl.hidden = true;
+    }
+    /**
+     * 并入加密日记（保险箱已解锁时）。内容随密文一起在内存里，媒体段照常切出来——
+     * 纸面只出火漆信封（render 层按 `encrypted` 分流），拆信时再把全文放到抽出的纸上。
      */
     async mergeEncryptedEntries() {
       try {
@@ -17526,10 +19369,12 @@ ${String(review).trim()}`;
             media: extractMedia(e.content, DIARY_DIRECTORY),
             segments: extractSegments(e.content),
             filename: e.filename,
+            filePath: e.filePath,
             lineNumber: e.lineNumber,
             id: e.id,
             noteId: e.noteId,
             encrypted: true,
+            extra: e.extra,
             kind: "diary"
           });
         }
@@ -17542,1552 +19387,9 @@ ${String(review).trim()}`;
       } catch (e) {
       }
     }
-    /** 二级标签行：选中的主标签有二级标签时显示（如 旅游 → 四川/大理） */
-    renderSubRow(ui) {
-      const row = ui.subRow;
-      if (!row) return;
-      row.innerHTML = "";
-      if (!this.selTag) {
-        row.style.display = "none";
-        return;
-      }
-      const subs = getSubTagsOfPrimary(this.selTag);
-      if (!subs || subs.length === 0) {
-        row.style.display = "none";
-        return;
-      }
-      row.style.display = "flex";
-      subs.forEach((sub) => {
-        const b = document.createElement("button");
-        b.className = "bz-diary-subchip" + (this.selSubTag === sub.tag ? " bz-diary-subchip--on" : "");
-        b.dataset.tag = sub.tag;
-        b.innerHTML = `${sub.emoji} ${sub.tag}`;
-        b.addEventListener("click", () => {
-          motionChipPress(b);
-          this.selSubTag = this.selSubTag === sub.tag ? null : sub.tag;
-          this.renderAllMotioned();
-        });
-        row.appendChild(b);
-      });
-    }
-    /** 渲染章节栏 + 瀑布（桌面/移动各一份；list = 本次过滤结果，renderAll 一次计算共享） */
-    renderWall(ui, mobile, list) {
-      const mode = this._motionSwitchPend ? "switch" : motionConsumeBoot() ? "boot" : "none";
-      this._motionSwitchPend = false;
-      this.teardownScrollers(mobile ? "mob" : "desk");
-      ui.wall.innerHTML = "";
-      ui.rail.innerHTML = "";
-      if (!this.lbVisible()) {
-        this._lbSeq = list.flatMap((e) => e.media.map((m) => ({ entry: e, media: m })));
-      }
-      if (!list.length) {
-        ui.wall.appendChild(this.mkEmpty());
-        motionRendered2(ui.el, mode);
-        return;
-      }
-      const memories = pickOnThisDay(list, this.todayStr());
-      if (memories.length) ui.wall.appendChild(this.mkMemories(memories));
-      if (!mobile) {
-        ui.rail.appendChild(this.mkRailScroll(list));
-        this.setupRailLazy(ui.rail, "desk");
-      }
-      this._wallEntries = list;
-      this._wallBaseRef = this.entries;
-      this._wallBaseKey = this.filterKeyNoKw();
-      this.renderMasonry(ui, mobile, list);
-      this.setupLazy(ui.wall, mobile ? "mob" : "desk");
-      this.bindWallContext(ui.wall, mobile ? "mob" : "desk");
-      if (!mobile && ui.rail.children.length > 0) {
-        this.setupRailHighlight(ui.wall, ui.rail, "desk");
-      }
-      motionRendered2(ui.el, mode);
-    }
-    /**
-     * 章节栏构建（仅桌面调用）：年份分组月份行（含胶卷缩略条）。
-     * 月份 = groupByMonth(list) 的 key 倒序（对齐数据层契约）。
-     * 2026-09-10：栏顶「章 节」标题块按用户要求移除——一列月份本身自明，标题是多余噪点。
-     */
-    mkRailScroll(list) {
-      const scroll = document.createElement("div");
-      scroll.className = "bz-rail-scroll";
-      const byMonth = groupByMonth(list);
-      const months = [...byMonth.keys()].sort().reverse();
-      let lastYear = "";
-      months.forEach((mk) => {
-        const yr = mk.slice(0, 4);
-        if (yr !== lastYear) {
-          lastYear = yr;
-          const yLabel = document.createElement("div");
-          yLabel.className = "bz-diary-rail-year";
-          yLabel.textContent = yr;
-          scroll.appendChild(yLabel);
-        }
-        const it = document.createElement("div");
-        it.className = "bz-rail-item bz-diary-month";
-        it.dataset.month = mk;
-        const name = document.createElement("span");
-        name.className = "bz-rail-name";
-        name.textContent = `${Number(mk.slice(5))}月`;
-        const cnt = document.createElement("span");
-        cnt.className = "bz-rail-count";
-        cnt.textContent = `${byMonth.get(mk).length} 条`;
-        it.append(name, cnt);
-        const strip = document.createElement("div");
-        strip.className = "bz-diary-month-strip";
-        byMonth.get(mk).map((e) => ({ e, m: e.media.find((x) => x.kind === "img" || x.kind === "video") })).filter((x) => x.m).slice(0, 5).forEach(({ e, m }) => strip.appendChild(this.thumbEl(m, e)));
-        if (!strip.children.length) strip.style.display = "none";
-        it.appendChild(strip);
-        scroll.appendChild(it);
-      });
-      return scroll;
-    }
-    /** 瀑布流：按日期分节渲染（节头 sticky + 当日 masonry 容器；媒体卡/文字卡） */
-    renderMasonry(ui, mobile, list) {
-      const byDate = /* @__PURE__ */ new Map();
-      list.forEach((e) => {
-        const l = byDate.get(e.date);
-        if (l) l.push(e);
-        else byDate.set(e.date, [e]);
-      });
-      let widx = 0;
-      let lastDate = null;
-      list.forEach((e) => {
-        if (e.date !== lastDate) {
-          lastDate = e.date;
-          const dayList = byDate.get(e.date);
-          const head = document.createElement("div");
-          head.className = "bz-diary-day-head";
-          head.dataset.date = e.date;
-          const date = document.createElement("span");
-          date.className = "bz-diary-day-date";
-          date.textContent = e.date;
-          const week = document.createElement("span");
-          week.className = "bz-diary-day-week";
-          week.textContent = "周" + WEEK[(/* @__PURE__ */ new Date(e.date + "T00:00:00")).getDay()];
-          const stat = document.createElement("span");
-          stat.className = "bz-diary-day-stat";
-          stat.innerHTML = this.statHtml(this.dayStats(dayList));
-          head.append(date, week, stat);
-          ui.wall.appendChild(head);
-          const n = dayList.length;
-          const sparseCls = n === 1 ? " bz-diary-masonry--sparse-1" : "";
-          const m = document.createElement("div");
-          m.className = "bz-diary-masonry" + (mobile ? " bz-diary-masonry--mob" : "") + sparseCls;
-          ui.wall.appendChild(m);
-        }
-        const hasMedia = e.media.length > 0;
-        const isLongText = (e.text || "").length >= WIDE_TEXT_MIN_CHARS;
-        const container = ui.wall.lastChild;
-        if (hasMedia || isLongText) {
-          const item = document.createElement("div");
-          item.className = "bz-diary-item bz-diary-media-wrap" + (isLongText ? " bz-diary-wide" : "");
-          item.dataset.widx = String(widx);
-          if (e.text) {
-            const row = document.createElement("div");
-            row.className = "bz-diary-text-row";
-            const t = document.createElement("span");
-            t.className = "bz-diary-text-t";
-            t.textContent = e.time;
-            const em = document.createElement("span");
-            em.className = "bz-diary-text-em";
-            em.textContent = e.emoji;
-            row.append(t, em);
-            const tx = document.createElement("div");
-            tx.className = "bz-diary-text-tx bz-diary-md" + (isLongText ? " bz-diary-wide-md" : "");
-            if (this.isEncHidden(e)) {
-              tx.textContent = "（已加密）";
-            } else {
-              void this.renderText(tx, e.text, e);
-            }
-            item.append(row, tx);
-          }
-          if (isLongText) {
-            if (e.media.length) {
-              const grid = document.createElement("div");
-              grid.className = "bz-diary-wide-media";
-              e.media.forEach((k) => grid.appendChild(this.mediaEl(k, e, mobile)));
-              item.appendChild(grid);
-            }
-          } else {
-            e.media.forEach((k) => item.appendChild(this.mediaEl(k, e, mobile)));
-          }
-          this.bindItem(item, e, mobile);
-          container.appendChild(item);
-        } else {
-          const item = this.textItem(e, e.text, widx);
-          this.bindItem(item, e, mobile);
-          container.appendChild(item);
-        }
-        widx++;
-      });
-    }
-    /** 文字卡（时间 + emoji + markdown 正文；加密未解锁显示占位）——纯文字条目与段序渲染共用 */
-    textItem(e, text, widx) {
-      const item = document.createElement("div");
-      item.className = "bz-diary-item bz-diary-text";
-      item.dataset.widx = String(widx);
-      const row = document.createElement("div");
-      row.className = "bz-diary-text-row";
-      const t = document.createElement("span");
-      t.className = "bz-diary-text-t";
-      t.textContent = e.time;
-      const em = document.createElement("span");
-      em.className = "bz-diary-text-em";
-      em.textContent = e.emoji;
-      row.append(t, em);
-      const tx = document.createElement("div");
-      tx.className = "bz-diary-text-tx bz-diary-md";
-      if (this.isEncHidden(e)) {
-        tx.textContent = "（已加密）";
-      } else {
-        void this.renderText(tx, text, e).then(() => {
-          if (tx.isConnected) {
-            this.highlightHits(tx);
-            motionMarks(tx);
-          }
-        });
-      }
-      item.append(row, tx);
-      return item;
-    }
-    /** 效率#9：容器内文本节点命中关键词 → <mark class="bz-diary-mark"> 包裹（大小写不敏感） */
-    highlightHits(container) {
-      var _a, _b;
-      const kw = this.searchKeyword.trim().toLowerCase();
-      if (!kw) return;
-      const walker = document.createTreeWalker(container, NodeFilter.SHOW_TEXT);
-      const targets = [];
-      let n;
-      while (n = walker.nextNode()) {
-        if (!n.nodeValue || !n.nodeValue.toLowerCase().includes(kw)) continue;
-        if ((_a = n.parentElement) == null ? void 0 : _a.closest("mark")) continue;
-        targets.push(n);
-      }
-      for (const t of targets) {
-        const text = t.nodeValue;
-        const frag = document.createDocumentFragment();
-        const lower = text.toLowerCase();
-        let i = 0;
-        while (i < text.length) {
-          const hit = lower.indexOf(kw, i);
-          if (hit === -1) {
-            frag.appendChild(document.createTextNode(text.slice(i)));
-            break;
-          }
-          if (hit > i) frag.appendChild(document.createTextNode(text.slice(i, hit)));
-          const mark = document.createElement("mark");
-          mark.className = "bz-diary-mark";
-          mark.textContent = text.slice(hit, hit + kw.length);
-          frag.appendChild(mark);
-          i = hit + kw.length;
-        }
-        (_b = t.parentNode) == null ? void 0 : _b.replaceChild(frag, t);
-      }
-    }
-    /**
-     * Markdown 渲染正文（支持 Obsidian 语法；sourcePath 用条目 filename 供链接解析）。
-     * issue 215 三轮定位终版：真凶是 `await import('obsidian')` 动态导入——打包后插件
-     * 环境解析不了裸模块名，导入即抛 TypeError（用户控制台 Failed to resolve module
-     * specifier 'obsidian'），渲染从未开始、永远走纯文本回退。全仓仅此一处动态导入，
-     * 改静态 import（diary/encrypt 域同款）；直挂已挂载容器、无超时、失败回退纯文本。
-     */
-    async renderText(container, md, e) {
-      if (!md) {
-        container.textContent = "";
-        return;
-      }
-      try {
-        const sourcePath = e.filePath || e.filename || "";
-        const comp = new Component();
-        try {
-          container.textContent = "";
-          await Promise.resolve(MarkdownRenderer.render(this.app(), md, container, sourcePath, comp));
-        } finally {
-          comp.unload();
-        }
-        if (container.isConnected && !container.firstChild) container.textContent = md;
-      } catch (err) {
-        if (container.isConnected) container.textContent = md;
-        console.warn("[bz-diary] markdown 渲染失败，已回退纯文本", e.date, err);
-      }
-    }
-    /** 条目级交互：双击 → 跳转原文；右键 → 跟手上下文菜单（桌面，容器委托）；移动端逐卡长按 → 抽屉；
-     *  加密隐藏时不弹。单击开抽屉已取消（2026-09-11 用户评审）：移动端抽屉唯一入口 = 长按。 */
-    bindItem(item, e, mobile) {
-      let lastClick = 0;
-      item.addEventListener("click", (ev) => {
-        if (this.isEncHidden(e)) return;
-        const now = Date.now();
-        if (now - lastClick < DBLCLICK_WINDOW_MS) {
-          lastClick = 0;
-          void this.jumpTo(e);
-          return;
-        }
-        lastClick = now;
-      });
-      if (mobile) {
-        item.addEventListener("contextmenu", (ev) => ev.preventDefault());
-        longPress(item, () => {
-          if (this.isEncHidden(e)) return;
-          this.openSheet(e);
-        });
-      }
-    }
-    /** 在瀑布容器上挂右键委托：正文/图片/视频任意子元素右键都能打开条目菜单（#9） */
-    bindWallContext(wall, key) {
-      if (this._ctxBound[key]) return;
-      this._ctxBound[key] = true;
-      wall.addEventListener(
-        "contextmenu",
-        (ev) => {
-          const item = ev.target.closest(".bz-diary-item");
-          if (!item) return;
-          const idx = Number(item.dataset.widx);
-          const e = this._wallEntries[idx];
-          if (!e || Number.isNaN(idx)) return;
-          if (isMobileEnv()) {
-            ev.preventDefault();
-            return;
-          }
-          if (this.isEncHidden(e)) return;
-          ev.preventDefault();
-          ev.stopPropagation();
-          ev.stopImmediatePropagation();
-          openItemMenu(ev.clientX, ev.clientY, this.buildMenuActions(e), true);
-          resetItemMenuClickGuard();
-        },
-        true
-      );
-    }
-    /** 双击跳转原文（普通日记走 entry-actions 标题锚点；加密/影视/信/书分流） */
-    async jumpTo(e) {
-      try {
-        this.captureRestore();
-        if (e.encrypted) {
-          const { openEncrypt: openEncrypt2 } = await Promise.resolve().then(() => (init_encrypt(), encrypt_exports));
-          openEncrypt2(this.app());
-          this.hide();
-          return;
-        }
-        if (e.kind === "book" && e.filename) {
-          const file = this.app().vault.getAbstractFileByPath(e.filename);
-          if (!file) {
-            notice("找不到书文件", "error");
-            return;
-          }
-          await this.app().workspace.openLinkText(file.path, "", false, { active: true });
-          this.hide();
-          return;
-        }
-        if ((e.kind === "movie" || e.kind === "letter") && e.filename && e.filename.includes("/")) {
-          const file = this.app().vault.getAbstractFileByPath(e.filename);
-          if (!file) {
-            notice("找不到原文", "error");
-            return;
-          }
-          await this.app().workspace.openLinkText(file.path, "", false, { active: true });
-          this.hide();
-          return;
-        }
-        if (!e.filePath && !e.filename) {
-          notice("找不到原文", "error");
-          return;
-        }
-        await jumpToDiaryEntry({ filename: e.filename || "", filePath: e.filePath, emoji: e.emoji, time: e.time });
-        this.hide();
-      } catch (err) {
-        notice("跳转失败", "error");
-      }
-    }
-    /** 增强 #11：捕获当前墙视图状态（筛选 + 双实例滚动位置），show 恢复路径一次性消费 */
-    captureRestore() {
-      this._restore = {
-        selTag: this.selTag,
-        selSubTag: this.selSubTag,
-        selDateFilter: this.selDateFilter ? { ...this.selDateFilter } : null,
-        searchKeyword: this.searchKeyword,
-        lockedVisible: this.lockedVisible,
-        scrollTop: { desk: this.desk.wall.scrollTop, mob: this.mob.wall.scrollTop }
-      };
-    }
-    /** 增强 #11：回墙恢复（loadAndRender 渲染完成后调；wall 有 scroll-behavior:smooth，临时关掉即时归位） */
-    applyRestore() {
-      const r = this._restore;
-      if (!r) return;
-      this._restore = null;
-      [["desk", this.desk.wall], ["mob", this.mob.wall]].forEach(([key, wall]) => {
-        const top = r.scrollTop[key];
-        if (!top) return;
-        wall.style.scrollBehavior = "auto";
-        wall.scrollTop = top;
-        wall.style.scrollBehavior = "";
-      });
-    }
-    /** 特殊条目（影视/信/书）：整文件即条目，无日记 md 块语义（对齐旧面板 !special 语义） */
-    isSpecialWallEntry(e) {
-      return e.kind === "movie" || e.kind === "letter" || e.kind === "book";
-    }
-    /** 加密条目锁定态（encrypted 标志或「加密」标签，且保险箱未解锁）：正文显示占位、不响应动作 */
-    isEncHidden(e) {
-      return (e.encrypted || e.tags.includes("加密")) && !this.lockedVisible;
-    }
-    /**
-     * 右键菜单动作集（core item-actions ItemAction 形制；顺序与旧自绘菜单逐项一致）：
-     * 加密条目给「解密」（accent）；影视/信/书特殊条目不给「加密/删除」（对齐旧面板 !special 语义）；
-     * 删除 danger。「在日记本中查看」随旧编辑面板退役（ADR-0115：墙即日记本）。
-     */
-    buildMenuActions(e) {
-      const acts = [];
-      const special = this.isSpecialWallEntry(e);
-      acts.push({ icon: ACTION_ICON.open, label: "打开原文", onClick: () => void this.jumpTo(e) });
-      acts.push({ icon: ACTION_ICON.copyLink, label: "复制双链", onClick: () => this.copyLink(e) });
-      acts.push({ icon: ACTION_ICON.copyContent, label: "复制正文", onClick: () => this.copyContent(e) });
-      if (!e.encrypted && !e.tags.includes("加密")) {
-        acts.push({ icon: ACTION_ICON.editTags, label: "改标签", onClick: () => this.editTags(e) });
-        if (!special) {
-          acts.push({ icon: ACTION_ICON.encrypt, label: "加密", tone: "accent", onClick: () => void this.encryptEntryAction(e) });
-        }
-      } else {
-        acts.push({ icon: ACTION_ICON.decrypt, label: "解密", tone: "accent", onClick: () => void this.decryptEntryAction(e) });
-      }
-      if (!special) {
-        acts.push({ icon: ACTION_ICON.remove, label: "删除", kind: "danger", onClick: () => void this.deleteEntryAction(e) });
-      }
-      return acts;
-    }
-    /** 本地今天 YYYY-MM-DD（那年今天口径用） */
-    todayStr() {
-      return localDayKey();
-    }
-    /**
-     * 增强 #5 + issue 352：那年今天时光条——mmdd 命中的历史条目横滑条（wall 首屏顶部，独立块不打断瀑布流）。
-     * 卡片分流：媒体条目走缩略卡（点击进灯箱连看，与主墙灯箱同一序列外条目，单条目内步进）；
-     * 纯文字条目走文字块卡（与媒体卡同形不同貌），点击跳原文（无媒体，灯箱无意义）。
-     */
-    mkMemories(entries) {
-      const box = document.createElement("div");
-      box.className = "bz-diary-memories";
-      const head = document.createElement("div");
-      head.className = "bz-diary-memories-head";
-      const ic = uiIcon("history");
-      const t = document.createElement("span");
-      t.textContent = "那年今天";
-      head.append(ic, t);
-      const row = document.createElement("div");
-      row.className = "bz-diary-memories-row";
-      entries.forEach((e) => {
-        const cell = document.createElement("button");
-        cell.className = "bz-diary-memory";
-        cell.title = `${e.date} ${e.time}`;
-        const year = document.createElement("span");
-        year.className = "bz-diary-memory-year";
-        year.textContent = e.date.slice(0, 4);
-        if (!e.media.length) {
-          cell.classList.add("bz-diary-memory--text");
-          const encHidden = this.isEncHidden(e);
-          cell.title = encHidden ? `${e.date} ${e.time} · （已加密）` : `${e.date} ${e.time} · ${memoryExcerpt(e.text)} · 跳转原文`;
-          const block = document.createElement("div");
-          block.className = "bz-diary-memory-text";
-          const em = document.createElement("span");
-          em.className = "bz-diary-memory-text-em";
-          em.textContent = e.emoji;
-          const tx = document.createElement("span");
-          tx.className = "bz-diary-memory-text-tx";
-          tx.textContent = encHidden ? "（已加密）" : memoryExcerpt(e.text);
-          block.append(em, tx);
-          cell.append(block, year);
-          cell.addEventListener("click", () => {
-            if (this.isEncHidden(e)) return;
-            void this.jumpTo(e);
-          });
-          row.appendChild(cell);
-          return;
-        }
-        const thumb = document.createElement("div");
-        thumb.className = "bz-diary-memory-thumb";
-        const m = e.media[0];
-        const src = this.mediaSrcFor(e, m.name);
-        const isVid = m.kind === "video";
-        if (isVid) {
-          thumb.classList.add("bz-diary-memory-thumb--v");
-          thumb.appendChild(uiIcon(ACTION_ICON.play));
-        }
-        if ((m.kind === "img" || isVid) && src) {
-          const img = document.createElement("img");
-          img.loading = "lazy";
-          img.alt = e.date;
-          const key = railThumbKey(e.date, m.name);
-          const showThumb = (url) => {
-            img.src = url;
-            thumb.querySelectorAll("[data-icon]").forEach((ic2) => ic2.remove());
-          };
-          void getRailThumb(key).then((small) => {
-            if (!img.isConnected) return;
-            if (small) {
-              showThumb(small);
-              return;
-            }
-            if (isVid) {
-              if (typeof IntersectionObserver === "undefined") return;
-              void makeVideoThumb(src).then((t2) => {
-                if (!t2) return;
-                void putRailThumb(key, t2);
-                if (img.isConnected) showThumb(t2);
-              });
-              return;
-            }
-            img.src = src;
-            if (typeof IntersectionObserver !== "undefined") {
-              void makeImageThumb(src).then((t2) => {
-                if (t2) void putRailThumb(key, t2);
-              });
-            }
-          });
-          thumb.appendChild(img);
-        } else if (m.kind === "audio") {
-          thumb.appendChild(uiIcon(ACTION_ICON.music));
-        }
-        cell.append(thumb, year);
-        cell.addEventListener("click", () => {
-          this._lbSeqMain = this._lbSeq;
-          this._lbSeq = e.media.map((mm) => ({ entry: e, media: mm }));
-          this.openLightbox(m, e);
-        });
-        row.appendChild(cell);
-      });
-      box.append(head, row);
-      return box;
-    }
-    /** 空态（一致#4：接 core uiEmpty 单源 .bz-empty 族，删 .bz-diary-empty 家族域内样式；
-     *  效率#14：读墙失败 ≠ 真空——错误态单独分流，旧实现渲染「写下第一篇」引导空态
-     *  会误导用户以为数据没了，且 toast 级错误错过即无痕） */
-    mkEmpty() {
-      if (this._loadError) {
-        return uiEmpty({
-          icon: "file-warning",
-          title: "日记加载失败",
-          desc: this._loadError,
-          actions: uiBtnRow([
-            uiBtn({ label: "重试", tone: "primary", onClick: () => void this.loadAndRender() })
-          ])
-        });
-      }
-      return uiEmpty({
-        icon: "book-open",
-        title: this.selTag ? "这个类型还没有记录" : "这一页还空着",
-        desc: "写下第一篇，或放上第一张照片",
-        actions: uiBtnRow([
-          uiBtn({ label: "写第一篇", tone: "primary", onClick: () => this.openAddEntry() })
-        ])
-      });
-    }
-    /**
-     * 效率#13：loadAndRender 读取期间的墙区骨架占位——大库首屏曾是一段「看起来像空库」的
-     * 纯空白期（面板壳/chips 都在，唯独墙区空着）。渐变 shimmer 卡复用媒体占位的表面 token；
-     * 只在墙区无内容时铺（防抖回刷等刷新场景已有内容，不闪骨架）。
-     */
-    showSkeleton() {
-      for (const ui of [this.desk, this.mob]) {
-        if (ui.wall.querySelector(".bz-diary-item")) continue;
-        ui.wall.innerHTML = "";
-        const skel = this.mkSkeleton();
-        ui.wall.appendChild(skel);
-        motionSkeleton(skel);
-      }
-    }
-    mkSkeleton() {
-      const box = document.createElement("div");
-      box.className = "bz-diary-skel";
-      const tip = document.createElement("div");
-      tip.className = "bz-diary-skel-tip";
-      tip.textContent = "正在翻日记…";
-      const row = document.createElement("div");
-      row.className = "bz-diary-skel-row";
-      for (let i = 0; i < 6; i++) {
-        const card = document.createElement("div");
-        card.className = "bz-diary-skel-card" + (i % 3 === 1 ? " bz-diary-skel-card--tall" : "");
-        row.appendChild(card);
-      }
-      box.append(tip, row);
-      return box;
-    }
-    // ---------- 媒体构建（视口懒加载） ----------
-    /** 媒体 URL：带 sourcePath 解析（条目 filePath 优先；影视/信/书 filename 即完整路径）。
-     *  A4（review-deep 架）：v2「日期.md」拼装兜底退役——ADR-0131 契约外格式知识泄漏面，
-     *  条目文件化后 filePath 恒在，异常条目解析不出 → 返回空 → 渐变占位（可辨的失败形态） */
-    mediaSrcFor(entry, name) {
-      return mediaSrc(this.app(), name, entry.filePath || entry.filename || "");
-    }
-    /** 媒体块（图片/视频/音频 + 渐变占位 + 描述；无 emoji 角标——用户要求去掉） */
-    mediaEl(k, entry, mobile) {
-      const wrap = document.createElement("div");
-      wrap.className = "bz-diary-media" + (k.kind === "audio" ? " bz-diary-media--audio" : "");
-      if (k.kind !== "audio") wrap.style.aspectRatio = k.kind === "video" ? "16 / 9" : this.mediaAspect(entry, k.name);
-      const ph = document.createElement("div");
-      ph.className = "bz-diary-ph";
-      if (k.kind === "audio") {
-        ph.appendChild(uiIcon(ACTION_ICON.music));
-        ph.style.fontSize = "28px";
-      }
-      wrap.appendChild(ph);
-      if (k.kind === "img") {
-        const img = document.createElement("img");
-        img.alt = k.name;
-        img.style.opacity = "0";
-        if (entry.encrypted) {
-          img.dataset.enc = "1";
-          img.dataset.encName = k.name;
-          img.dataset.encKind = k.kind;
-          if (entry.noteId) img.dataset.encNote = entry.noteId;
-        } else {
-          const src = this.mediaSrcFor(entry, k.name);
-          if (src) {
-            img.dataset.lazy = src;
-            img.onload = () => {
-              ph.style.opacity = "0";
-              img.style.opacity = "1";
-              motionDevelop(img);
-            };
-            img.onerror = () => {
-              ph.style.opacity = "1";
-            };
-          }
-        }
-        wrap.appendChild(img);
-      } else if (k.kind === "video") {
-        const v = document.createElement("video");
-        v.muted = true;
-        v.preload = "none";
-        v.playsInline = true;
-        if (entry.encrypted) {
-          v.dataset.enc = "1";
-          v.dataset.encName = k.name;
-          v.dataset.encKind = k.kind;
-          if (entry.noteId) v.dataset.encNote = entry.noteId;
-        } else {
-          const src = this.mediaSrcFor(entry, k.name);
-          if (src) {
-            v.dataset.src = src;
-            if (mobile) this.mountWallPoster(v, src, entry, k.name);
-          }
-        }
-        v.onerror = () => {
-          ph.style.opacity = "1";
-        };
-        wrap.appendChild(v);
-        const play = document.createElement("div");
-        play.className = "bz-diary-play";
-        play.appendChild(uiIcon(ACTION_ICON.play));
-        wrap.appendChild(play);
-        const dur = document.createElement("span");
-        dur.className = "bz-diary-dur";
-        dur.appendChild(uiIcon(ACTION_ICON.play));
-        wrap.appendChild(dur);
-      }
-      if (k.name) {
-        const cap = document.createElement("div");
-        cap.className = "bz-diary-cap";
-        cap.innerHTML = mediaCapHtml(entry);
-        wrap.appendChild(cap);
-      }
-      wrap.addEventListener("click", (e) => {
-        e.stopPropagation();
-        this.openLightbox(k, entry);
-      });
-      wrap.addEventListener("dblclick", (e) => {
-        e.stopPropagation();
-        if (mobile) return;
-        if (this.isEncHidden(entry)) return;
-        if (this.lbVisible()) this.closeLightbox();
-        void this.jumpTo(entry);
-      });
-      return wrap;
-    }
-    /**
-     * 增强 #8：加密媒体按需解密（保险箱附件镜像 → 原始层 base64 → data URL）。
-     * 带缓存（含失败结果——避免渲染风暴下反复解密）；未解锁/无附件/解密失败返回 null（保持占位）。
-     */
-    encMediaUrl(noteId, k) {
-      if (!noteId) return Promise.resolve(null);
-      const key = `${noteId}|${k.kind}|${k.name}`;
-      let p = this.encMediaCache.get(key);
-      if (!p) {
-        p = this.decryptEncMedia(noteId, k);
-        this.encMediaCache.set(key, p);
-      }
-      return p;
-    }
-    async decryptEncMedia(noteId, k) {
-      try {
-        const { getSafeManager: getSafeManager2 } = await Promise.resolve().then(() => (init_encrypt(), encrypt_exports));
-        const safe = getSafeManager2();
-        if (!safe.unlocked || !safe.manifest) return null;
-        const note = safe.manifest.notes.find((n) => n.id === noteId);
-        if (!note) return null;
-        const att = note.attachments.find((a) => a.path === k.name || a.path.endsWith("/" + k.name));
-        if (!att) return null;
-        const b64 = await safe.decryptAttachmentOriginal(att);
-        if (!b64) return null;
-        return `data:${mimeOfMediaName(k.name)};base64,${b64}`;
-      } catch (e) {
-        return null;
-      }
-    }
-    /** 增强 #8：懒加载挂载点调用——解密并点亮单个加密媒体元素（dataset.enc 系列标记） */
-    async mountEncMedia(el) {
-      var _a;
-      const name = el.dataset.encName || "";
-      const kind = el.dataset.encKind || "img";
-      const noteId = el.dataset.encNote || "";
-      const url = await this.encMediaUrl(noteId, { name, kind });
-      if (!el.isConnected) return;
-      const ph = (_a = el.parentElement) == null ? void 0 : _a.querySelector(".bz-diary-ph");
-      if (!url) {
-        if (ph) ph.style.opacity = "1";
-        return;
-      }
-      if (el.tagName === "IMG") {
-        const img = el;
-        img.onload = () => {
-          if (ph) ph.style.opacity = "0";
-          img.style.opacity = "1";
-          motionDevelop(img);
-        };
-        img.onerror = () => {
-          if (ph) ph.style.opacity = "1";
-        };
-        img.src = url;
-      } else if (el.tagName === "VIDEO") {
-        const v = el;
-        v.src = url;
-        v.preload = "metadata";
-        this.bindVideoDuration(v);
-      }
-    }
-    /** 媒体宽高比稳定散列：按条目日期+媒体名派生（DW7——全局递增 seed 双实例/重渲染下漂移） */
-    mediaAspect(entry, name) {
-      const h = hash31(`${entry.date}|${name}`);
-      return h % 3 === 0 ? "1 / 1" : "4 / 3";
-    }
-    /**
-     * 章节栏缩略图（issue 210/212）：调用方保证只传图片/视频媒体。
-     * 渲染时零加载——图片挂 data-thumb-src 占位、视频挂 data-src 占位，
-     * 交 setupRailLazy 进视口才走「查小图缓存 → 命中贴 48px 小图 / 未命中压图回存」，
-     * 20px 小格永不触发原图整张解码（issue 212 卡顿病根）。
-     *
-     * 视频格不出现播放角标（用户 2026-09-10 明确要求）：格内始终只有一个视觉主体——
-     * 小图就绪前是 --v 的 teal 渐变底（自身即「这是视频」的标记），就绪后直接贴小图。
-     */
-    thumbEl(m, entry) {
-      const t = document.createElement("span");
-      t.className = "bz-diary-month-thumb" + (m.kind === "video" ? " bz-diary-month-thumb--v" : "");
-      const src = entry.encrypted ? "" : this.mediaSrcFor(entry, m.name);
-      if (!src) {
-        if (entry.encrypted && entry.noteId) {
-          t.dataset.thumbEnc = "1";
-          t.dataset.encName = m.name;
-          t.dataset.encKind = m.kind;
-          t.dataset.encNote = entry.noteId;
-          t.dataset.thumbKey = railThumbKey(entry.date, m.name);
-        }
-        if (m.kind !== "video") t.appendChild(uiIcon(ACTION_ICON.image));
-        return t;
-      }
-      if (m.kind === "video") {
-        const v = document.createElement("video");
-        v.muted = true;
-        v.preload = "none";
-        v.dataset.src = src;
-        v.dataset.thumbKey = railThumbKey(entry.date, m.name);
-        t.appendChild(v);
-      } else {
-        const img = document.createElement("img");
-        img.decoding = "async";
-        img.dataset.thumbSrc = src;
-        img.dataset.thumbKey = railThumbKey(entry.date, m.name);
-        img.addEventListener("error", () => {
-          img.remove();
-          if (!t.querySelector("img")) t.appendChild(uiIcon(ACTION_ICON.image));
-        });
-        t.appendChild(img);
-      }
-      return t;
-    }
-    /**
-     * 章节栏缩略懒加载（issue 212，机制沿 issue 209/210）：root = 章节栏滚动容器，
-     * 进视口才挂载。图片/视频统一走小图缓存：命中贴 48px dataURL（零原图解码）；
-     * 未命中后台压图回存后贴小图，压缩失败回退直挂原 src（旧行为）。
-     * 无 IO 环境（jsdom/旧内核）直接按未命中路径挂载，保证测试确定性。
-     */
-    setupRailLazy(rail, key) {
-      if (this.railObservers[key]) this.railObservers[key].disconnect();
-      const scroller = rail.querySelector(".bz-rail-scroll") || rail;
-      const thumbs = Array.from(
-        rail.querySelectorAll("img[data-thumb-src], video[data-src], [data-thumb-enc]")
-      );
-      if (typeof IntersectionObserver === "undefined") {
-        thumbs.forEach((el) => {
-          if (el.tagName === "VIDEO") this.hydrateRailVideo(el);
-          else if (el.tagName === "IMG") el.src = el.dataset.thumbSrc;
-        });
-        return;
-      }
-      const io = new IntersectionObserver(
-        (entries) => {
-          entries.forEach((en) => {
-            const el = en.target;
-            if (en.isIntersecting) {
-              this.hydrateRailThumb(el);
-            } else {
-              const v = el;
-              if (el.tagName === "VIDEO" && !v.paused) v.pause();
-            }
-          });
-        },
-        { root: scroller, rootMargin: "120px 0px 120px 0px", threshold: 0 }
-      );
-      thumbs.forEach((el) => io.observe(el));
-      this.railObservers[key] = io;
-    }
-    /**
-     * 章节栏缩略格挂载：查缓存贴小图 / 后台压图回存；失败回退原 src 直挂（视频 = 旧行为读首帧）。
-     * data-thumb-src 挂载后即移除，防重复触发。
-     */
-    hydrateRailThumb(el) {
-      if (el.dataset.thumbEnc === "1") {
-        delete el.dataset.thumbEnc;
-        const key2 = el.dataset.thumbKey;
-        const name = el.dataset.encName || "";
-        const kind = el.dataset.encKind || "img";
-        const noteId = el.dataset.encNote || "";
-        void this.encMediaUrl(noteId, { name, kind }).then((url) => {
-          if (!el.isConnected || !url) return;
-          this.hydrateThumbViaCache(el, url, key2, kind === "video");
-        });
-        return;
-      }
-      const isVideo = el.tagName === "VIDEO";
-      const key = el.dataset.thumbKey;
-      if (isVideo) {
-        const v = el;
-        const src = v.dataset.src;
-        if (!src || v.getAttribute("src")) return;
-        this.hydrateThumbViaCache(el, src, key, true);
-      } else {
-        const img = el;
-        const src = img.dataset.thumbSrc;
-        if (!src) return;
-        img.removeAttribute("data-thumb-src");
-        this.hydrateThumbViaCache(el, src, key, false);
-      }
-    }
-    /** 查小图缓存 → 命中贴图；未命中后台压图回存；压缩失败回退原 src（视频 = 旧读首帧行为） */
-    hydrateThumbViaCache(el, src, key, isVideo) {
-      if (!key) {
-        if (isVideo && el.tagName === "VIDEO") this.hydrateRailVideo(el);
-        else if (!isVideo && el.tagName === "IMG") el.src = src;
-        return;
-      }
-      void getRailThumb(key).then((cached) => {
-        if (cached) {
-          this.swapThumbToImg(el, cached);
-          return;
-        }
-        void (isVideo ? makeVideoThumb(src) : makeImageThumb(src)).then((small) => {
-          if (small) {
-            void putRailThumb(key, small);
-            this.swapThumbToImg(el, small);
-            return;
-          }
-          if (isVideo && el.tagName === "VIDEO") this.hydrateRailVideo(el);
-          else if (!isVideo && el.tagName === "IMG") el.src = src;
-        });
-      });
-    }
-    /**
-     * 缩略格换成小图（图片/视频/加密格三路共用）。
-     * 播放角标只在「还没有图」时当占位——小图一落地就撤掉（用户 2026-09-10 要求：
-     * 章节栏视频图上不要再压一个播放图标）。
-     * 载体两种：加密格 el 是 span（自身即格）；其余 el 是格内的 img/video 元素。
-     */
-    swapThumbToImg(el, dataUrl) {
-      const img = document.createElement("img");
-      img.src = dataUrl;
-      img.decoding = "async";
-      const cell = el.tagName === "SPAN" ? el : el.parentElement;
-      if (!cell) return;
-      cell.querySelectorAll("[data-icon]").forEach((ic) => ic.remove());
-      const cur = cell.querySelector("img, video");
-      if (cur) cell.replaceChild(img, cur);
-      else cell.appendChild(img);
-    }
-    /**
-     * 章节栏视频缩略挂载（issue 210 旧行为，现为压缩失败兜底）：data-src → src。
-     * preload 必须是 auto：`metadata` 只到 readyState=1，浏览器不解码帧，格子永远是空的
-     * （与 issue 212 的 loadeddata 取帧全黑同一实测结论）。元素在 IO 离开视口时 pause，
-     * 真实用途是「压缩管线失败时至少还看得到首帧」。
-     */
-    hydrateRailVideo(v) {
-      const src = v.dataset.src;
-      if (!src || v.getAttribute("src")) return;
-      v.setAttribute("src", src);
-      delete v.dataset.src;
-      v.preload = "auto";
-    }
-    // ---------- 视口懒加载控制器 ----------
-    /** DW9：视频元数据就绪后把时长角标从 ▶ 换成真实 mm:ss（preload=metadata 读首帧元数据时触发） */
-    bindVideoDuration(v) {
-      v.addEventListener("loadedmetadata", () => {
-        var _a;
-        const dur = (_a = v.parentElement) == null ? void 0 : _a.querySelector(".bz-diary-dur");
-        if (!dur || !Number.isFinite(v.duration) || v.duration <= 0) return;
-        const m = Math.floor(v.duration / 60);
-        const s = Math.round(v.duration % 60);
-        dur.textContent = `${m}:${pad2(s)}`;
-      }, { once: true });
-    }
-    /**
-     * 移动端墙内视频首帧海报（2026-09-11 评审：移动浏览器不给未播放的 <video> 绘制首帧，
-     * iOS 全黑——墙上视频卡没有预览图）。复用章节栏首帧小图管线（IndexedDB 缓存），
-     * 480px 档（墙卡 2 列 ~180css px@3x 需 ~540 设备 px），结果挂 video.poster——
-     * poster 移动端免视频解码直出。失败静默回落现状（渐变占位；桌面不走此路径，
-     * preload=metadata 本就绘真首帧，不因 480px 海报降清）。
-     */
-    mountWallPoster(v, src, entry, name) {
-      const key = `wall480|${railThumbKey(entry.date, name)}`;
-      void getRailThumb(key).then((cached) => {
-        if (!v.isConnected) return;
-        if (cached) {
-          v.poster = cached;
-          return;
-        }
-        void makeVideoThumb(src, 480).then((thumb) => {
-          if (!v.isConnected || !thumb) return;
-          v.poster = thumb;
-          void putRailThumb(key, thumb);
-        });
-      });
-    }
-    /** 懒加载挂载：普通媒体挂 src；加密媒体触发按需解密（增强 #8；fallback 与 IO 命中共用） */
-    hydrateMediaEl(el) {
-      const lazySrc = el.dataset.lazy;
-      if (lazySrc && el.tagName === "IMG" && !el.getAttribute("src")) {
-        el.setAttribute("src", lazySrc);
-        delete el.dataset.lazy;
-      }
-      const vidSrc = el.dataset.src;
-      if (el.tagName === "VIDEO" && vidSrc && el.getAttribute("src") === null) {
-        el.setAttribute("src", vidSrc);
-        delete el.dataset.src;
-        const v = el;
-        v.preload = "metadata";
-        this.bindVideoDuration(v);
-      }
-      if (el.dataset.enc === "1") {
-        delete el.dataset.enc;
-        void this.mountEncMedia(el);
-      }
-    }
-    setupLazy(wall, key) {
-      if (this.observers[key]) this.observers[key].disconnect();
-      if (typeof IntersectionObserver === "undefined") {
-        wall.querySelectorAll("img[data-lazy], video[data-src], [data-enc]").forEach((el) => {
-          this.hydrateMediaEl(el);
-        });
-        return;
-      }
-      const io = new IntersectionObserver(
-        (entries) => {
-          entries.forEach((en) => {
-            const el = en.target;
-            if (en.isIntersecting) {
-              this.hydrateMediaEl(el);
-            } else {
-              const v = el;
-              if (el.tagName === "VIDEO" && !v.paused) v.pause();
-            }
-          });
-        },
-        { root: wall, rootMargin: "200px 0px 200px 0px", threshold: 0 }
-      );
-      wall.querySelectorAll("img[data-lazy], video[data-src], [data-enc]").forEach((el) => io.observe(el));
-      this.observers[key] = io;
-    }
-    // ---------- 滚动 → 章节自动高亮 ----------
-    /**
-     * 章节点击：平滑滚动定位到该月的第一个 day-head（不重渲染、不切过滤）。
-     * P2/G 审查修复：day-head 是 sticky 吸顶头，月份滚过后 rect 恒贴墙顶，rect 差值
-     * 推不出目标位置（点已滚过的月份 no-op）——改用 flowTopOf 流式位置推算（见下），
-     * 定位仍不依赖 offsetTop（content-visibility 的屏外占位高度不可靠），smooth 滚动
-     * 途中条目陆续真渲染导致文档流漂移，落定后按最终几何校正一次（DW6 保留）。
-     */
-    scrollToMonth(mk, wall) {
-      const head = wall.querySelector(`.bz-diary-day-head[data-date^="${mk}"]`);
-      if (!head) return;
-      const wallRect = wall.getBoundingClientRect();
-      const top = wall.scrollTop + (this.flowTopOf(head, wallRect) - 6);
-      wall.scrollTo({ top: Math.max(0, top), behavior: "smooth" });
-      if (this._scrollFixTimer !== null) clearTimeout(this._scrollFixTimer);
-      this._scrollFixTimer = setTimeout(() => {
-        var _a;
-        this._scrollFixTimer = null;
-        if (((_a = this.root) == null ? void 0 : _a.style.display) !== "flex") return;
-        const h = wall.querySelector(`.bz-diary-day-head[data-date^="${mk}"]`);
-        if (!h) return;
-        motionDayStamp(h);
-        const t2 = wall.scrollTop + (this.flowTopOf(h, wall.getBoundingClientRect()) - 6);
-        if (Math.abs(t2 - wall.scrollTop) > 2) wall.scrollTo({ top: Math.max(0, t2) });
-      }, SCROLL_FIX_DELAY_MS);
-    }
-    /**
-     * 节头的流式相对位置（相对墙体顶）：节头是 sticky，滚过后自身 rect 不再反映流式位置；
-     * 其后的 masonry 容器不是 sticky，rect 即流式真实位置——用 masonry 顶 − 节头高反推。
-     * 无后续块（防御）时回退节头自身 rect 差值。
-     */
-    flowTopOf(head, wallRect) {
-      const next = head.nextElementSibling;
-      if (next && !next.classList.contains("bz-diary-day-head")) {
-        return next.getBoundingClientRect().top - wallRect.top - head.offsetHeight;
-      }
-      return head.getBoundingClientRect().top - wallRect.top;
-    }
-    /** 滚动高亮：rAF 节流，当前月份在章节栏高亮并滚到可见。
-     *  与 scrollToMonth 同口径用 getBoundingClientRect 差值（content-visibility 下 offsetTop 不可靠，P2-1 审查修复）。
-     *  ADR-0094：滚动容器收敛为 .bz-rail 内的 .bz-rail-scroll（共享族结构）。
-     *  2026-09-10：绑定后立即 schedule 一次——旧实现只挂 scroll 监听，开墙不滚动就一个月份
-     *  都不亮（用户要求「打开日记本默认高亮当前月份」）。 */
-    setupRailHighlight(wall, rail, key) {
-      const scroller = rail.querySelector(".bz-rail-scroll") || rail;
-      const rafFn = (cb) => typeof requestAnimationFrame === "function" ? requestAnimationFrame(cb) : setTimeout(() => cb(0), 16);
-      const cafFn = (h) => {
-        if (typeof cancelAnimationFrame === "function") cancelAnimationFrame(h);
-        else clearTimeout(h);
-      };
-      let rafId = null;
-      const sync = () => {
-        const headEls = wall.querySelectorAll(".bz-diary-day-head");
-        if (!headEls.length) return;
-        const wallRect = wall.getBoundingClientRect();
-        const items = Array.from(headEls, (h) => ({
-          date: h.dataset.date,
-          relTop: h.getBoundingClientRect().top - wallRect.top
-        }));
-        let currentMonth = pickCurrentMonth(items);
-        if (!currentMonth) currentMonth = items[0].date.slice(0, 7);
-        rail.querySelectorAll(".bz-diary-month").forEach((it) => {
-          it.classList.toggle("on", it.getAttribute("data-month") === currentMonth);
-        });
-        const active = rail.querySelector(`.bz-diary-month[data-month="${currentMonth}"]`);
-        if (active) {
-          const railRect = scroller.getBoundingClientRect();
-          const actRect = active.getBoundingClientRect();
-          if (actRect.top < railRect.top || actRect.bottom > railRect.bottom) {
-            scroller.scrollTop += actRect.top - railRect.top - (scroller.clientHeight - actRect.height) / 2;
-          }
-        }
-      };
-      const schedule = () => {
-        if (rafId !== null) return;
-        rafId = rafFn(() => {
-          rafId = null;
-          sync();
-        });
-      };
-      wall.addEventListener("scroll", schedule, { passive: true });
-      this.rafCleanups[key] = () => {
-        wall.removeEventListener("scroll", schedule);
-        if (rafId !== null) {
-          cafFn(rafId);
-          rafId = null;
-        }
-      };
-      schedule();
-    }
-    teardownScrollers(key) {
-      if (this.rafCleanups[key]) {
-        this.rafCleanups[key]();
-        this.rafCleanups[key] = null;
-      }
-      if (this.observers[key]) {
-        this.observers[key].disconnect();
-        this.observers[key] = null;
-      }
-      if (this.railObservers[key]) {
-        this.railObservers[key].disconnect();
-        this.railObservers[key] = null;
-      }
-    }
-    // ---------- 灯箱 ----------
-    /** 打开灯箱：定位连看序列下标后展示（增强 #1；找不到 = 非墙内入口，退化为单条序列） */
-    openLightbox(k, entry) {
-      this._lbGen++;
-      let idx = this._lbSeq.findIndex((s) => s.entry === entry && s.media.name === k.name && s.media.kind === k.kind);
-      if (idx === -1) {
-        if (!this._lbSeqMain) this._lbSeqMain = this._lbSeq;
-        this._lbSeq = [{ entry, media: k }];
-        idx = 0;
-      }
-      this.showLightboxAt(idx);
-    }
-    /**
-     * 展示连看序列第 idx 项（到头循环——与移动端滑动、桌面按钮、方向键同一口径）。
-     * dir：0 = 开箱（显影）；±1 = 步进（方向性滑入）——动效层 motionLightboxShow 消费。
-     * P3 审查修复保留：只填充当前端实例（另一实例 lbMedia 保持为空，无双份加载/播放）。
-     */
-    showLightboxAt(idx, dir = 0) {
-      const seq = this._lbSeq;
-      if (!seq.length) return;
-      const n = seq.length;
-      this._lbIdx = (idx % n + n) % n;
-      const { entry, media: k } = seq[this._lbIdx];
-      this.pauseLbMedia();
-      const mobileNow = typeof matchMedia === "function" && matchMedia("(max-width: 768px)").matches;
-      const target = mobileNow ? this.mob : this.desk;
-      this.fillLbMedia(target.lbMedia, k, entry);
-      const cap = lbCaption(entry);
-      const sub = lbSubText(entry);
-      this.desk.lbCap.textContent = cap;
-      this.desk.lbSub.textContent = sub;
-      this.mob.lbCap.textContent = cap;
-      this.mob.lbSub.textContent = sub;
-      if (mobileNow) this.mob.lb.classList.add("bz-diary-lb--show");
-      else this.desk.lb.classList.add("bz-diary-lb--show");
-      motionLightboxShow(target.lb, target.lbMedia, target.lbCap, target.lbSub, dir);
-    }
-    /** 停掉双实例灯箱内正在播放的媒体（切换/关闭前调用） */
-    pauseLbMedia() {
-      [this.desk, this.mob].forEach((ui) => {
-        ui.lbMedia.querySelectorAll("video, audio").forEach((m) => {
-          try {
-            m.pause();
-          } catch (e) {
-          }
-        });
-      });
-    }
-    /** 灯箱加载失败占位（lucide 图标 + 文字） */
-    mkLbErr(k) {
-      const d = document.createElement("div");
-      d.className = "bz-diary-lberr";
-      d.appendChild(uiIcon(KIND_ICON[k.kind]));
-      d.appendChild(document.createTextNode(" 无法加载"));
-      return d;
-    }
-    /** 构建灯箱媒体元素（真实 src；视频/音频 controls + autoplay） */
-    mkLbMediaEl(k, src) {
-      if (k.kind === "img") {
-        const img = document.createElement("img");
-        img.src = src;
-        img.alt = k.name;
-        img.className = "bz-diary-lb-media";
-        return img;
-      }
-      if (k.kind === "video") {
-        const v = document.createElement("video");
-        v.src = src;
-        v.controls = true;
-        v.autoplay = true;
-        v.className = "bz-diary-lb-media";
-        return v;
-      }
-      const a = document.createElement("audio");
-      a.src = src;
-      a.controls = true;
-      a.autoplay = true;
-      a.className = "bz-diary-lb-media";
-      return a;
-    }
-    /**
-     * 填充单个实例的灯箱媒体容器：
-     * - 普通条目：mediaSrc 同步解析，onerror 换失败占位；
-     * - 加密条目（增强 #8）：先占位，按需解密保险箱附件原图后异步替换；未解锁/失败保持失败占位。
-     */
-    fillLbMedia(box, k, entry) {
-      box.innerHTML = "";
-      if (entry.encrypted) {
-        const idx = this._lbIdx;
-        const gen = this._lbGen;
-        const pend = document.createElement("div");
-        pend.className = "bz-diary-lb-pending";
-        box.appendChild(pend);
-        void this.encMediaUrl(entry.noteId || "", k).then((url) => {
-          if (!box.isConnected || this._lbGen !== gen || this._lbIdx !== idx) return;
-          box.innerHTML = "";
-          if (!url) {
-            box.appendChild(this.mkLbErr(k));
-            return;
-          }
-          const el2 = this.mkLbMediaEl(k, url);
-          box.appendChild(el2);
-          motionDevelop(el2);
-        });
-        return;
-      }
-      const src = this.mediaSrcFor(entry, k.name);
-      if (!src) {
-        box.appendChild(this.mkLbErr(k));
-        return;
-      }
-      const el = this.mkLbMediaEl(k, src);
-      el.addEventListener("error", () => {
-        if (!box.isConnected) return;
-        box.innerHTML = "";
-        box.appendChild(this.mkLbErr(k));
-      });
-      box.appendChild(el);
-    }
-    closeLightbox() {
-      this.pauseLbMedia();
-      const gen = ++this._lbGen;
-      [this.desk, this.mob].forEach((ui) => {
-        if (!ui.lb.classList.contains("bz-diary-lb--show")) return;
-        motionLightboxOut(ui.lb, () => {
-          if (gen !== this._lbGen) return;
-          ui.lb.classList.remove("bz-diary-lb--show");
-          ui.lbMedia.innerHTML = "";
-        });
-      });
-      if (this._lbSeqMain) {
-        this._lbSeq = this._lbSeqMain;
-        this._lbSeqMain = null;
-      }
-      this._lbIdx = -1;
-    }
-    // ---------- 条目动作（复制/改标签/加密/删除；自包含前复用 diary 域） ----------
-    async copyLink(e) {
-      try {
-        if (e.encrypted) {
-          await navigator.clipboard.writeText(e.content || e.text || "");
-          notice("已复制加密日记正文", "success");
-          return;
-        }
-        if (this.isSpecialWallEntry(e)) {
-          if (!e.filename) {
-            notice("找不到原文，无法复制双链", "error");
-            return;
-          }
-          await navigator.clipboard.writeText(`[[${stripMdExt(e.filename)}]]`);
-          notice("已复制双链引用", "success");
-          return;
-        }
-        if (!e.filePath && !e.filename) {
-          notice("找不到原文，无法复制双链", "error");
-          return;
-        }
-        await copyDiaryLink({ filename: e.filename || "", filePath: e.filePath, emoji: e.emoji, time: e.time });
-      } catch (err) {
-        notice("复制双链失败", "error");
-      }
-    }
-    async copyContent(e) {
-      try {
-        await navigator.clipboard.writeText(e.content || e.text || "");
-        notice("已复制日记正文", "success");
-      } catch (err) {
-        notice("复制失败", "error");
-      }
-    }
-    /** 改标签：接本域 showTagPicker（filePath+lineNumber 定位，写层守卫落盘；结果经域事件回刷本墙） */
-    async editTags(e) {
-      try {
-        showTagPicker({
-          filename: e.filename || e.date,
-          filePath: e.filePath,
-          date: e.date,
-          time: e.time,
-          lineNumber: e.lineNumber || 0,
-          tags: e.tags,
-          encrypted: e.encrypted,
-          noteId: e.noteId
-        });
-      } catch (err) {
-        notice("改标签暂不可用", "error");
-      }
-    }
-    /**
-     * 加密：本域 encryptEntry（需保险箱解锁）+ 写层摘除原块；结果经域事件回刷本墙。
-     * D5：摘除失败（返回 0 或抛错）必须回滚保险箱密文——密文已入库原文未删时，
-     * 解锁后同条出现两次且重试越积越多。
-     * 效率#12（review-deep ★★）：加密与删除同为「条目当场从墙消失」，且挂在右键/长按
-     * 菜单（「加密」紧邻「改标签」，滑错一格条目即蒸发）——ensureSafeUnlocked 之后补
-     * openFlowDialog 二次确认（对齐 CONTEXT「日记加密入口」词条既有承诺）。
-     */
-    async encryptEntryAction(e) {
-      let enc = null;
-      try {
-        if (this.isSpecialWallEntry(e)) return;
-        const { ensureSafeUnlocked: ensureSafeUnlocked2 } = await Promise.resolve().then(() => (init_encrypt(), encrypt_exports));
-        const unlocked = await ensureSafeUnlocked2("diary");
-        if (!unlocked) return;
-        const confirmed = await openFlowDialog({
-          title: "加密日记",
-          message: `将把「${e.date} ${e.time}」这条日记移入保险库加密保存，原位置不再保留明文。`,
-          actions: [
-            { label: "取消", value: "cancel" },
-            { label: "加密", value: "ok", cta: true, danger: true }
-          ]
-        });
-        if (confirmed !== "ok") return;
-        const entry = await findDiaryEntry(e.filePath || e.filename || e.date);
-        if (!entry) {
-          notice("找不到原文条目，无法加密", "error");
-          return;
-        }
-        enc = await encryptEntry(entry);
-        if (enc) {
-          let removed = 0;
-          try {
-            removed = await removeDiaryEntries(
-              entry.date,
-              (x) => x.filePath === entry.filePath && x.time === entry.time && x.lineNumber === entry.lineNumber,
-              { filePath: entry.filePath }
-            );
-          } catch (e2) {
-            await this.rollbackEncryptedNote(enc);
-            throw e2;
-          }
-          if (removed === 0) {
-            await this.rollbackEncryptedNote(enc);
-            notice("加密失败：原文块摘除未生效", "error");
-            return;
-          }
-          emitDomainEvent("diary:entry-deleted", { date: entry.date, time: entry.time, wasEncrypted: false, encrypted: true });
-          void this.loadAndRender();
-        }
-      } catch (err) {
-        if (err && (isUnparsedRefusal(err) || isDiaryReadFailure(err))) return;
-        notice("加密失败", "error");
-      }
-    }
-    /** 加密失败兜底：尽力销毁刚入库的密文（失败仅留日志，不强抛——原失败原因更要紧） */
-    async rollbackEncryptedNote(enc) {
-      if (!enc.noteId) return;
-      try {
-        await deleteEncryptedEntry(enc.noteId);
-      } catch (e) {
-        console.warn("[bz-diary] 加密回滚失败（保险箱可能残留密文，请手动删除）:", e);
-      }
-    }
-    /** 解密：本域 reclassifyEntry 降级（还原块 merge 回 md，取出即删）。
-     *  效率#12：还原是恢复性操作（条目回墙、密文释放回明文），不加二次确认——
-     *  确认留给「条目当场消失」的加密/删除两动作，风险口径与删除对齐。 */
-    async decryptEntryAction(e) {
-      try {
-        const noteId = e.noteId;
-        if (!noteId) {
-          notice("无法解密（缺少保险箱记录）", "error");
-          return;
-        }
-        const newTags = e.tags.filter((t) => t !== "加密");
-        const ok = await reclassifyEntry(noteId, newTags);
-        if (ok) {
-          emitDomainEvent("diary:entry-decrypted", { noteId, date: e.date, newTags });
-          void this.loadAndRender();
-        } else {
-          notice("解密失败：主密码可能不正确，密文未受影响", "error");
-        }
-      } catch (err) {
-        notice("解密失败：主密码可能不正确，密文未受影响", "error");
-      }
-    }
-    /** 删除：接本域 showConfirm 流程（加密条目走保险箱销毁分支） */
-    async deleteEntryAction(e) {
-      try {
-        if (this.isSpecialWallEntry(e)) {
-          notice("影视、信、书条目请在对应面板中管理", "info");
-          return;
-        }
-        showConfirm({
-          filename: e.filename || e.date,
-          filePath: e.filePath,
-          date: e.date,
-          time: e.time,
-          lineNumber: e.lineNumber || 0,
-          tags: e.tags,
-          encrypted: e.encrypted,
-          noteId: e.noteId
-        });
-      } catch (err) {
-        notice("删除暂不可用", "error");
-      }
-    }
-    // ---------- 底部抽屉（移动端长按条目弹出；2026-09-11 换核 core openItemSheet） ----------
-    openSheet(e) {
-      try {
-        this.sheetEntry = e;
-        openItemSheet(this.buildSheetActions(e), { sheetHead: this.mkSheetHead(e) });
-      } catch (err) {
-        this.sheetEntry = null;
-        notice(`日记抽屉打开失败：${err instanceof Error ? err.message : String(err)}`);
-        console.error("[bz-diary] openSheet", err);
-      }
-    }
-    /** 抽屉动作集 = buildMenuActions 同源 + 抽屉特有项（附件、复制正文字数小字；
-     *  ItemAction.sub 仅移动端抽屉渲染，桌面菜单不渲染小字——core 既有口径） */
-    buildSheetActions(e) {
-      const acts = this.buildMenuActions(e).map((a) => ({ ...a }));
-      const copyIdx = acts.findIndex((a) => a.label === "复制正文");
-      if (copyIdx >= 0) acts[copyIdx].sub = `${(e.content || "").trim().length} 字`;
-      if (e.media.length) {
-        acts.splice(copyIdx + 1, 0, {
-          icon: ACTION_ICON.attachment,
-          label: "附件",
-          sub: `${e.media.length} 个媒体`,
-          onClick: () => notice(`附件：${e.media.map((m) => m.name).join("、")}`)
-        });
-      }
-      return acts;
-    }
-    /** 抽屉富媒体头（core sheetHead）：emoji + 时间行 + 正文预览 + 媒体缩略（点击进灯箱） */
-    mkSheetHead(e) {
-      const head = document.createElement("div");
-      head.className = "bz-diary-sheet-head";
-      const emoji = document.createElement("span");
-      emoji.className = "bz-diary-sheet-emoji";
-      emoji.textContent = e.emoji;
-      const info = document.createElement("div");
-      info.className = "bz-diary-sheet-info";
-      const timeEl = document.createElement("div");
-      timeEl.className = "bz-diary-sheet-time";
-      timeEl.textContent = `${e.date}  ${e.time}  ·  ${(e.tags || []).join(" ")}`;
-      const contentEl = document.createElement("div");
-      contentEl.className = "bz-diary-sheet-content";
-      contentEl.textContent = stripMediaLinks(e.content) || "（仅媒体）";
-      const media = document.createElement("div");
-      media.className = "bz-diary-sheet-media";
-      e.media.forEach((k) => {
-        const mt = document.createElement("div");
-        mt.className = "bz-diary-sheet-thumb";
-        const src = this.mediaSrcFor(e, k.name);
-        if (k.kind === "img") {
-          const img = document.createElement("img");
-          img.alt = k.name;
-          if (e.encrypted) {
-            void this.encMediaUrl(e.noteId || "", k).then((url) => {
-              if (url && img.isConnected) img.src = url;
-            });
-          } else if (src) {
-            img.src = src;
-          }
-          mt.appendChild(img);
-        } else {
-          mt.appendChild(uiIcon(k.kind === "video" ? ACTION_ICON.play : ACTION_ICON.music));
-        }
-        mt.addEventListener("click", () => {
-          this.closeSheet();
-          this.openLightbox(k, e);
-        });
-        media.appendChild(mt);
-      });
-      info.appendChild(timeEl);
-      info.appendChild(contentEl);
-      info.appendChild(media);
-      head.appendChild(emoji);
-      head.appendChild(info);
-      return head;
-    }
-    closeSheet() {
-      closeItemMenu();
-      this.sheetEntry = null;
-    }
-    // ---------- 统计 ----------
-    dayStats(list) {
-      return dayStats(list);
-    }
-    statHtml(s) {
-      return statHtml(s);
-    }
-    // ---------- ESC ----------
-    registerEscape() {
-      this.escUnregister = escManager.register("diary", {
-        isVisible: () => !!this.root && this.root.style.display === "flex",
-        close: () => {
-          if (this._dateFilterEl) {
-            this.closeDateFilter();
-            return;
-          }
-          if (this.sheetEntry) {
-            if (document.querySelector(".bz-item-sheet")) {
-              this.closeSheet();
-              return;
-            }
-            this.sheetEntry = null;
-          }
-          if ([this.desk, this.mob].some((u) => u.lb.classList.contains("bz-diary-lb--show"))) {
-            this.closeLightbox();
-            return;
-          }
-          this.hide();
-        }
-      });
-    }
-    // ---------- 显示/隐藏 ----------
-    /** 幂等初始化（ensureElements 创建 DOM + 绑定事件） */
-    async init() {
-      if (this._initialized) return;
-      this.ensureElements();
-    }
-    /** 打开日记本：加载数据并渲染 */
-    async openManager() {
-      await this.init();
-      this.show();
-    }
-    show() {
-      if (!this._initialized) this.ensureElements();
-      const reopen = this._shownOnce;
-      this._shownOnce = true;
-      this._hideMotion = false;
-      this.root.style.display = "flex";
-      topifyZ(this.root);
-      if (!isMobileEnv() && !this.panelResizeDetach && this.desk) {
-        this.panelResizeDetach = uiResizable(this.desk.el, {
-          minW: PANEL2.MIN_W,
-          minH: PANEL2.MIN_H,
-          maxW: PANEL2.MAX_W,
-          maxH: PANEL2.MAX_H,
-          persist: panelSizePersist("diaryPanelWidth", "diaryPanelHeight", PANEL2.MIN_W, PANEL2.MIN_H)
-        });
-      }
-      motionPanelIn2(this.root, reopen);
-      this.subscribeVaultModify();
-      this.subscribeUnlockEvents();
-      this.subscribeWriteEvents();
-      this.subscribeRefSync();
-      this._allowCacheNext = true;
-      motionArmBoot2();
-      void this.loadAndRender().then(() => this.applyRestore());
-    }
-    hide() {
-      var _a;
-      if (!this.root) return;
-      if (this._hideMotion) return;
-      this._hideMotion = true;
-      this.closeDateFilter();
-      this.closeLightbox();
-      this.closeSheet();
-      closeItemMenu();
-      hideAddDialog();
-      hideTagPicker();
-      this.unsubscribeVaultModify();
-      this.unsubscribeUnlockEvents();
-      this.unsubscribeWriteEvents();
-      this.unsubscribeRefSync();
-      (_a = this.panelResizeDetach) == null ? void 0 : _a.detach();
-      this.panelResizeDetach = null;
-      motionPanelOut(this.root, () => {
-        this._hideMotion = false;
-        if (!this.root) return;
-        this.root.style.display = "none";
-      });
-    }
-    /**
-     * 写链路域事件回刷（issue 256）：entry-added/tags-changed/entry-deleted/entry-decrypted/
-     * encrypted-purged 五通道防抖 loadAndRender——写日记命令（域外弹窗保存）、首页「生成今日
-     * 总结」写回（ADR-0157 起，原 recap 面板链路）、条目删除等路径统一收口（ADR-0130：
-     * file-vacated 通道随条目文件化退役，删除由 UI 层 entry-deleted 通知）。
-     */
-    subscribeWriteEvents() {
-      if (this._writeOff) return;
+    /** 写链路五通道 + 保险箱锁态 + 引用同步：域事件防抖回刷整册 */
+    subscribeEvents() {
+      if (this._subs.length) return;
       const chs = [
         "diary:entry-added",
         "diary:tags-changed",
@@ -19095,213 +19397,152 @@ ${String(review).trim()}`;
         "diary:entry-decrypted",
         "diary:encrypted-purged"
       ];
-      const offs = chs.map(
-        (ch) => onDomainEvent(ch, () => {
+      for (const ch of chs) {
+        this._subs.push(
+          onDomainEvent(ch, () => {
+            var _a;
+            if (((_a = this.root) == null ? void 0 : _a.style.display) !== "flex") return;
+            this.scheduleRelayout();
+          })
+        );
+      }
+      this._subs.push(
+        onDomainEvent("encrypt:unlock-changed", (evt) => {
           var _a;
           if (((_a = this.root) == null ? void 0 : _a.style.display) !== "flex") return;
-          if (this._modifyTimer !== null) clearTimeout(this._modifyTimer);
-          this._modifyTimer = setTimeout(() => {
-            var _a2;
-            this._modifyTimer = null;
-            if (((_a2 = this.root) == null ? void 0 : _a2.style.display) !== "flex") return;
-            void this.loadAndRender();
-          }, MODIFY_REFRESH_DEBOUNCE_MS);
+          this.encMediaCache.clear();
+          if (!evt || !evt.unlocked) {
+            if (this.filterTag === "加密") this.filterTag = null;
+            void this.loadAndRelayout();
+          } else {
+            void this.loadAndRelayout();
+          }
         })
       );
-      this._writeOff = () => offs.forEach((off) => off());
+      this._subs.push(
+        onDomainEvent("vault:md-renamed", (evt) => {
+          var _a;
+          const oldPath = (evt == null ? void 0 : evt.oldPath) || "";
+          const newPath = (evt == null ? void 0 : evt.newPath) || "";
+          if (!oldPath || !newPath || oldPath === newPath) return;
+          if (((_a = this.root) == null ? void 0 : _a.style.display) !== "flex" || !inWallDirs(oldPath)) return;
+          const movedOut = !inWallDirs(newPath);
+          if (movedOut) dropDiaryMapPath(oldPath);
+          else rekeyDiaryMapPath(oldPath, newPath);
+          let touched = false;
+          for (const e of this.entries) {
+            if (e.filePath !== oldPath) continue;
+            touched = true;
+            if (movedOut) continue;
+            e.filePath = newPath;
+            if (e.filename === oldPath) e.filename = newPath;
+          }
+          if (movedOut) this.entries = this.entries.filter((e) => e.filePath !== oldPath);
+          if (movedOut || touched) this.relayout(true);
+        })
+      );
+      this._subs.push(
+        onDomainEvent("vault:md-deleted", (evt) => {
+          var _a;
+          const path = (evt == null ? void 0 : evt.path) || "";
+          if (!path) return;
+          if (((_a = this.root) == null ? void 0 : _a.style.display) !== "flex" || !inWallDirs(path)) return;
+          const hadMap = dropDiaryMapPath(path);
+          const before = this.entries.length;
+          this.entries = this.entries.filter((e) => e.filePath !== path);
+          if (hadMap || this.entries.length !== before) this.relayout(true);
+        })
+      );
     }
-    unsubscribeWriteEvents() {
-      if (this._writeOff) {
-        this._writeOff();
-        this._writeOff = null;
-      }
+    unsubscribeEvents() {
+      this._subs.forEach((off) => off());
+      this._subs = [];
     }
-    /**
-     * 增强 #9：订阅保险箱解锁状态（encrypt:unlock-changed 域事件，复用既有 channel 不动 encrypt 域）。
-     * - 上锁（unlocked=false）：加密条目实时回不可见——剔除条目、清锁定筛选态、收灯箱/抽屉/菜单；
-     * - 解锁（unlocked=true）：并入加密日记（默认仍隐藏，点「加密」chip 查看；已可见则媒体可按需解密）。
-     */
-    subscribeUnlockEvents() {
-      if (this._unlockOff) return;
-      this._unlockOff = onDomainEvent("encrypt:unlock-changed", (evt) => {
-        if (!evt || !evt.unlocked) this.relockWallMedia();
-        else void this.onSafeUnlockedWhileOpen();
-      });
-    }
-    unsubscribeUnlockEvents() {
-      if (this._unlockOff) {
-        this._unlockOff();
-        this._unlockOff = null;
-      }
-    }
-    /**
-     * 引用同步（issue 339）：墙开着时条目文件改名/删除 → 内存条目与 diaryDataMap 键同步（不落盘，
-     * 快照回写机制不动；重开全量重读自愈兜底不变）。改名后 filePath/filename 指向新路径——
-     * 跳转与媒体解析不再 stale；删除条目移出内存，墙自动反映。改出墙目录按删除口径移出
-     * （条目不再是墙内容，与 obsidian-adapter movedOut 同语义）。
-     */
-    subscribeRefSync() {
-      if (this._refSyncOff) return;
-      const offRename = onDomainEvent("vault:md-renamed", (evt) => {
+    /** vault modify/create 回刷（纯外部变更：其他工具写入条目文件时册子也要跟上） */
+    subscribeVault() {
+      if (this._vaultRefs.length) return;
+      const schedule = () => {
         var _a;
-        const oldPath = (evt == null ? void 0 : evt.oldPath) || "";
-        const newPath = (evt == null ? void 0 : evt.newPath) || "";
-        if (!oldPath || !newPath || oldPath === newPath) return;
-        if (((_a = this.root) == null ? void 0 : _a.style.display) !== "flex" || !inWallDirs(oldPath)) return;
-        const movedOut = !inWallDirs(newPath);
-        if (movedOut) dropDiaryMapPath(oldPath);
-        else rekeyDiaryMapPath(oldPath, newPath);
-        let touched = false;
-        for (const e of this.entries) {
-          if (e.filePath !== oldPath) continue;
-          touched = true;
-          if (movedOut) continue;
-          e.filePath = newPath;
-          if (e.filename === oldPath) e.filename = newPath;
-        }
-        if (movedOut) this.entries = this.entries.filter((e) => e.filePath !== oldPath);
-        if (movedOut || touched) this.renderAll();
-      });
-      const offDelete = onDomainEvent("vault:md-deleted", (evt) => {
-        var _a;
-        const path = (evt == null ? void 0 : evt.path) || "";
-        if (!path) return;
-        if (((_a = this.root) == null ? void 0 : _a.style.display) !== "flex" || !inWallDirs(path)) return;
-        const hadMap = dropDiaryMapPath(path);
-        const before = this.entries.length;
-        this.entries = this.entries.filter((e) => e.filePath !== path);
-        if (hadMap || this.entries.length !== before) this.renderAll();
-      });
-      this._refSyncOff = () => {
-        offRename();
-        offDelete();
+        if (((_a = this.root) == null ? void 0 : _a.style.display) !== "flex") return;
+        this.scheduleRelayout();
       };
+      this._vaultRefs.push(
+        this.app().vault.on("modify", (file) => {
+          const p = file == null ? void 0 : file.path;
+          if (p && inWallDirs(p)) schedule();
+        })
+      );
+      this._vaultRefs.push(
+        this.app().vault.on("create", (file) => {
+          const p = file == null ? void 0 : file.path;
+          if (p && inWallDirs(p)) schedule();
+        })
+      );
     }
-    unsubscribeRefSync() {
-      if (this._refSyncOff) {
-        this._refSyncOff();
-        this._refSyncOff = null;
+    unsubscribeVault() {
+      for (const ref of this._vaultRefs) {
+        try {
+          this.app().vault.offref(ref);
+        } catch (e) {
+        }
       }
+      this._vaultRefs = [];
     }
-    /** 上锁：加密内容实时归位（不可见）——增强 #9 主路径 */
-    relockWallMedia() {
-      const hadEnc = this.entries.some((x) => x.encrypted);
-      this.lockedVisible = false;
-      this.entries = this.entries.filter((x) => !x.encrypted);
-      this.encMediaCache.clear();
-      if (this.selTag === "加密") {
-        this.selTag = null;
-        this.selSubTag = null;
-      }
+    /** 防抖整册回刷（域事件与 vault 变更共用；重入时后一次覆盖前一次） */
+    scheduleRelayout() {
+      if (this.modifyTimer !== null) clearTimeout(this.modifyTimer);
+      this.modifyTimer = setTimeout(() => {
+        var _a;
+        this.modifyTimer = null;
+        if (((_a = this.root) == null ? void 0 : _a.style.display) !== "flex") return;
+        void this.loadAndRelayout();
+      }, REFRESH_DEBOUNCE_MS);
+    }
+    // ============================================================
+    //  显示 / 隐藏 / 卸载
+    // ============================================================
+    /** 打开日记本（命令路径：ensure 后 show） */
+    show() {
+      if (!this._initialized) this.ensureElements();
+      const reopen = this._shownOnce;
+      this._shownOnce = true;
+      this._hideMotion = false;
+      this.root.style.display = "flex";
+      topifyZ(this.root);
+      this._allowCacheNext = true;
+      this.subscribeEvents();
+      this.subscribeVault();
+      void (async () => {
+        await this.afterPaint();
+        await this.loadEntries(this._allowCacheNext);
+        this.relayout(false);
+        this.toast(reopen ? "又翻开了" : "翻开的是最新那篇");
+        this.checkOnThisDay();
+      })();
+    }
+    hide() {
+      if (!this.root || this._hideMotion) return;
+      this._hideMotion = true;
       this.closeLightbox();
       this.closeSheet();
+      this.closeSlip();
+      this.closeAlbum();
+      this.closeCal();
+      this.closeMenu();
+      hideAddDialog();
       hideTagPicker();
-      closeItemMenu();
-      if (hadEnc) this.renderAll();
-    }
-    /** 墙开着时解锁：并入加密条目（lockedVisible 不自动置真——默认仍按锁定态隐藏） */
-    async onSafeUnlockedWhileOpen() {
-      var _a;
-      if (((_a = this.root) == null ? void 0 : _a.style.display) !== "flex") return;
-      await this.mergeEncryptedEntries();
-      this.renderAll();
-    }
-    /** DW3：vault modify 自动刷新（clipbook 同款模式）——墙开着时日记/影视/信/书被编辑 → 防抖重读重渲染；
-     *  只关心四个数据源目录（影视/书库实时解析，D6：改影院/书架目录后新目录即刻生效；判定单源 config.inWallDirs）；
-     *  隐藏期不订阅不刷新。
-     *  N5：create（外部新建/拖入/其他工具写入条目文件）同路回刷——此前纯外部变更是盲区，直到手动重开面板。 */
-    subscribeVaultModify() {
-      if (this._modifyRef) return;
-      const schedule = () => {
-        if (this._modifyTimer !== null) clearTimeout(this._modifyTimer);
-        this._modifyTimer = setTimeout(() => {
-          var _a;
-          this._modifyTimer = null;
-          if (((_a = this.root) == null ? void 0 : _a.style.display) !== "flex") return;
-          void this.loadAndRender();
-        }, MODIFY_REFRESH_DEBOUNCE_MS);
-      };
-      this._modifyRef = this.app().vault.on("modify", (file) => {
-        var _a;
-        const p = file == null ? void 0 : file.path;
-        if (!p || ((_a = this.root) == null ? void 0 : _a.style.display) !== "flex") return;
-        if (!inWallDirs(p)) return;
-        schedule();
-      });
-      this._createRef = this.app().vault.on("create", (file) => {
-        var _a;
-        const p = file == null ? void 0 : file.path;
-        if (!p || ((_a = this.root) == null ? void 0 : _a.style.display) !== "flex") return;
-        if (!inWallDirs(p)) return;
-        schedule();
-      });
-    }
-    unsubscribeVaultModify() {
-      for (const key of ["_modifyRef", "_createRef"]) {
-        const ref = this[key];
-        if (ref) {
-          try {
-            this.app().vault.offref(ref);
-          } catch (e) {
-          }
-          this[key] = null;
-        }
+      this.pauseAllAudio();
+      this.unsubscribeEvents();
+      this.unsubscribeVault();
+      if (this.modifyTimer !== null) {
+        clearTimeout(this.modifyTimer);
+        this.modifyTimer = null;
       }
-      if (this._modifyTimer !== null) {
-        clearTimeout(this._modifyTimer);
-        this._modifyTimer = null;
-      }
+      this.setToolsShown(false);
+      this._hideMotion = false;
+      this.root.style.display = "none";
     }
-    /** 让位首帧（issue 383）：rAF 后再落一拍 setTimeout——浏览器完成一次绘制（面板+骨架已
-     *  在屏上）才放行后续读盘/整墙渲染；隐藏窗口与无 rAF 环境直接 setTimeout(0)（后台标签页
-     *  rAF 不触发，等它会把刷新卡住）。对齐 prewarmDiary 的「rAF + setTimeout 到空闲」范式。 */
-    afterPaint() {
-      return new Promise((resolve) => {
-        if (typeof requestAnimationFrame !== "function" || document.hidden) {
-          setTimeout(resolve, 0);
-          return;
-        }
-        requestAnimationFrame(() => setTimeout(resolve, 0));
-      });
-    }
-    /** 加载数据并渲染（openManager 主路径） */
-    async loadAndRender() {
-      this.lockedVisible = isUnlocked();
-      this.showSkeleton();
-      await this.afterPaint();
-      try {
-        if (this._allowCacheNext) {
-          this._allowCacheNext = false;
-        } else {
-          invalidateWallCache();
-        }
-        this.entries = await loadWallEntries(this.app());
-        this._loadError = null;
-      } catch (e) {
-        this.entries = [];
-        this._loadError = e && e.message ? e.message : String(e);
-        notice("加载日记失败：" + this._loadError, "error");
-      }
-      await this.mergeEncryptedEntries();
-      this.renderAll();
-      void pruneRailThumbs(railThumbKeepKeys(this.entries));
-    }
-    // ---------- 头部动作（写日记 / 搜索 / 日期选择器） ----------
-    /** 写日记：本域 openAddDialog（滚轮年份动态范围取自当前数据，UX-34）。
-     *  onSaved：保存成功回调注入（item-1789672493967-y11jgy）——新笔记打开后收起墙，
-     *  避免弹窗关了墙仍盖在最上层挡住笔记（对齐 jumpTo 先例「跳转后关日记本」） */
-    openAddEntry() {
-      var _a;
-      try {
-        openAddDialog({
-          yearRange: (_a = this.getYearRange()) != null ? _a : void 0,
-          onSaved: () => this.hide()
-        });
-      } catch (e) {
-        notice("写日记暂不可用：" + (e instanceof Error ? e.message : String(e)), "error");
-      }
-    }
-    /** 当前数据的滚轮年份动态范围（UX-34；无数据返回 null → 控件回落 1900～当前年+1） */
+    /** 当前数据的滚轮年份动态范围（无数据返回 null → 控件回落 1900～当前年+1） */
     getYearRange() {
       let earliest = null;
       for (const entry of this.entries) {
@@ -19311,201 +19552,41 @@ ${String(review).trim()}`;
       if (earliest === null) return null;
       return { min: Math.max(1900, earliest), max: (/* @__PURE__ */ new Date()).getFullYear() + 1 };
     }
-    /** 标题点击 → 回忆墙自包含日期选择器（按年份/月份过滤本域数据；不再调 diary showDatePicker——那是 diary 面板的 filter） */
-    openDatePicker() {
-      var _a, _b;
-      this.showDateFilter((_b = (_a = this.selDateFilter) == null ? void 0 : _a.year) != null ? _b : this.defaultFilterYear());
-    }
-    /**
-     * 打开时的默认浏览年份 = 当前年份（用户要求「打开日期筛选默认选中当前年份」）。
-     * 当前年若没有任何数据（跨年空窗），回落最新有数据的年份——否则月份网格不渲染，
-     * 打开只剩一句提示。
-     */
-    defaultFilterYear() {
-      const years = Array.from(new Set(this.entries.map((e) => e.date.slice(0, 4))));
-      if (!years.length) return null;
-      const now = String((/* @__PURE__ */ new Date()).getFullYear());
-      return years.includes(now) ? now : years.sort((a, b) => b.localeCompare(a))[0];
-    }
-    /** 显示日期筛选弹窗：viewYear 只是「正在浏览的年份」临时值（P2 审查修复：
-     *  旧实现点年份即写入 selDateFilter，ESC 关闭后筛选已悄悄生效）。
-     *  只有点月份或「全部」才提交筛选。
-     *  light（动效层）：年内切年重开——只翻月份格，不重演题头与年份签。 */
-    showDateFilter(viewYear, light = false) {
-      this.closeDateFilter();
-      this._dateFilterEl = this.mkDateFilter(viewYear);
-      document.body.appendChild(this._dateFilterEl);
-      topifyZ(this._dateFilterEl);
-      this._dateFilterEl.style.display = "flex";
-      motionDateFilterIn(this._dateFilterEl, light);
-    }
-    /** 自绘日期筛选弹窗（年份行 + 月份网格 + 全部/关闭）；viewYear 为正在浏览的年份临时值 */
-    mkDateFilter(viewYear) {
-      var _a;
-      const wrap = document.createElement("div");
-      wrap.className = "bz-diary-datefilter";
-      const card = document.createElement("div");
-      card.className = "bz-diary-datefilter-card";
-      const years = Array.from(new Set(this.entries.map((e) => e.date.slice(0, 4)))).sort((a, b) => b.localeCompare(a));
-      const cur = this.selDateFilter;
-      const activeYear = (_a = viewYear != null ? viewYear : cur == null ? void 0 : cur.year) != null ? _a : null;
-      const head = document.createElement("div");
-      head.className = "bz-diary-datefilter-head";
-      const title = document.createElement("div");
-      title.className = "bz-diary-datefilter-title";
-      title.textContent = "按日期筛选";
-      head.appendChild(title);
-      if (cur) {
-        const resetBtn = document.createElement("button");
-        resetBtn.className = "bz-diary-datefilter-reset";
-        resetBtn.textContent = "全部";
-        resetBtn.addEventListener("click", () => {
-          this.selDateFilter = null;
-          this.closeDateFilter();
-          this.renderAllMotioned();
-        });
-        head.appendChild(resetBtn);
-      }
-      card.appendChild(head);
-      const yearLabel = document.createElement("div");
-      yearLabel.className = "bz-diary-datefilter-label";
-      yearLabel.textContent = "年份";
-      card.appendChild(yearLabel);
-      const yearRow = document.createElement("div");
-      yearRow.className = "bz-diary-datefilter-years";
-      const yearCount = /* @__PURE__ */ new Map();
-      this.entries.forEach((e) => {
-        const y = e.date.slice(0, 4);
-        yearCount.set(y, (yearCount.get(y) || 0) + 1);
-      });
-      years.forEach((y) => {
-        const b = document.createElement("button");
-        b.className = "bz-diary-datefilter-year" + (activeYear === y ? " bz-diary-datefilter-year--on" : "");
-        b.dataset.year = y;
-        b.innerHTML = `<span class="bz-diary-datefilter-year-name">${y}</span><span class="bz-diary-datefilter-year-cnt">${yearCount.get(y) || 0}</span>`;
-        b.addEventListener("click", () => {
-          this.showDateFilter(y, true);
-        });
-        yearRow.appendChild(b);
-      });
-      card.appendChild(yearRow);
-      if (viewYear && years.includes(viewYear)) {
-        const monthLabel = document.createElement("div");
-        monthLabel.className = "bz-diary-datefilter-label";
-        monthLabel.textContent = "月份";
-        card.appendChild(monthLabel);
-        const monthRow = document.createElement("div");
-        monthRow.className = "bz-diary-datefilter-months";
-        const monthCounts = /* @__PURE__ */ new Map();
-        this.entries.filter((e) => e.date.startsWith(viewYear)).forEach((e) => {
-          const m = e.date.slice(5, 7);
-          monthCounts.set(m, (monthCounts.get(m) || 0) + 1);
-        });
-        for (let i = 1; i <= 12; i++) {
-          const ms = String(i).padStart(2, "0");
-          const cnt = monthCounts.get(ms) || 0;
-          const isOn = (cur == null ? void 0 : cur.year) === viewYear && cur.month === ms;
-          const cardEl = document.createElement("button");
-          cardEl.className = "bz-diary-datefilter-month" + (cnt === 0 ? " bz-diary-datefilter-month--empty" : "") + (isOn ? " bz-diary-datefilter-month--on" : "");
-          cardEl.innerHTML = `<span class="bz-diary-datefilter-month-name">${i}月</span><span class="bz-diary-datefilter-month-cnt">${cnt || ""}</span>`;
-          cardEl.addEventListener("click", () => {
-            if (cnt === 0) return;
-            motionChipPress(cardEl);
-            this.selDateFilter = { year: viewYear, month: ms };
-            this.closeDateFilter();
-            this.renderAllMotioned();
-          });
-          monthRow.appendChild(cardEl);
-        }
-        card.appendChild(monthRow);
-      } else {
-        const hint = document.createElement("div");
-        hint.className = "bz-diary-datefilter-hint";
-        hint.textContent = "点击年份查看该年各月";
-        card.appendChild(hint);
-      }
-      wrap.appendChild(card);
-      wrap.addEventListener("click", (e) => {
-        if (e.target === wrap) this.closeDateFilter();
-      });
-      return wrap;
-    }
-    closeDateFilter() {
-      const el = this._dateFilterEl;
-      if (!el) return;
-      this._dateFilterEl = null;
-      motionDateFilterOut(el, () => el.remove());
-      el.style.pointerEvents = "none";
-      el.setAttribute("aria-hidden", "true");
-    }
-    /** 搜索：toggle 搜索框（桌面/移动各一），输入过滤；打开/收起同步按钮高亮态 */
-    toggleSearch(ui) {
-      const row = ui.searchRow;
-      const box = ui.searchBox;
-      const btn = ui.head.querySelector('[data-act="search"]');
-      if (!row || !box) return;
-      const other = ui === this.desk ? this.mob : this.desk;
-      if (row.style.display === "none") {
-        row.style.display = "block";
-        motionSearchRow(row);
-        box.value = this.searchKeyword;
-        box.dispatchEvent(new Event("input", { bubbles: true }));
-        this._searchDebounced.cancel();
-        box.focus();
-        box.select();
-        btn == null ? void 0 : btn.classList.add("bz-diary-icon-btn--on");
-      } else {
-        row.style.display = "none";
-        box.value = "";
-        box.dispatchEvent(new Event("input", { bubbles: true }));
-        this.searchKeyword = "";
-        if (other == null ? void 0 : other.searchBox) {
-          other.searchBox.value = "";
-          other.searchBox.dispatchEvent(new Event("input", { bubbles: true }));
-        }
-        this._searchDebounced.cancel();
-        this.renderAll();
-        btn == null ? void 0 : btn.classList.remove("bz-diary-icon-btn--on");
-      }
-    }
-    /** 效率#6「回到今天」钮已按用户要求移除（2026-09-19）：清筛选走 chips 行「全部」 */
-    /** App 实例（生产由主实现注入；测试 setApp——diary/app.ts 单例，与 diary 域同口径） */
-    app() {
-      return getApp();
-    }
-    // ---------- 卸载 ----------
     cleanup() {
-      var _a, _b;
-      this.closeDateFilter();
-      closeItemMenu();
-      motionTeardown2();
-      this.teardownScrollers("desk");
-      this.teardownScrollers("mob");
-      this.unsubscribeVaultModify();
-      this.unsubscribeUnlockEvents();
-      this.unsubscribeWriteEvents();
-      this.unsubscribeRefSync();
-      (_a = this.panelResizeDetach) == null ? void 0 : _a.detach();
-      this.panelResizeDetach = null;
-      document.removeEventListener("keydown", this._onLbKeydown);
-      if (this._mql && this._onMqChange) {
-        this._mql.removeEventListener("change", this._onMqChange);
-        this._mql = null;
-        this._onMqChange = null;
+      unregisterPanelEsc("diary");
+      document.removeEventListener("keydown", this.onKeydown);
+      document.removeEventListener("pointerdown", this.onDocPointerDown, true);
+      document.removeEventListener("mousemove", this.onMouseMove);
+      document.removeEventListener("mouseleave", this.onMouseLeave);
+      window.removeEventListener("resize", this.onResize);
+      if (this.resizeTimer !== null) {
+        clearTimeout(this.resizeTimer);
+        this.resizeTimer = null;
       }
-      if (this._scrollFixTimer !== null) {
-        clearTimeout(this._scrollFixTimer);
-        this._scrollFixTimer = null;
+      if (this.toastTimer !== null) {
+        clearTimeout(this.toastTimer);
+        this.toastTimer = null;
       }
-      (_b = this.escUnregister) == null ? void 0 : _b.unregister();
-      this.escUnregister = null;
-      this._ctxBound = { desk: false, mob: false };
-      this._wallEntries = [];
-      this._lbSeq = [];
-      this._lbSeqMain = null;
-      this._lbIdx = -1;
-      this._restore = null;
+      if (this.modifyTimer !== null) {
+        clearTimeout(this.modifyTimer);
+        this.modifyTimer = null;
+      }
+      if (this.toolsRaf) cancelAnimationFrame(this.toolsRaf);
+      this.unsubscribeEvents();
+      this.unsubscribeVault();
+      if (this.flip) {
+        try {
+          this.flip.destroy();
+        } catch (e) {
+        }
+        this.flip = null;
+      }
       this.encMediaCache.clear();
+      this.byEid.clear();
+      this.photoRefs = [];
+      this.photoIndex.clear();
+      this.pages = [];
+      this.entries = [];
       if (this.root) {
         this.root.remove();
         this.root = null;
@@ -19516,6 +19597,10 @@ ${String(review).trim()}`;
   };
   _DiaryAppController.instance = null;
   var DiaryAppController = _DiaryAppController;
+  function cssEscape(s) {
+    if (typeof CSS !== "undefined" && typeof CSS.escape === "function") return CSS.escape(s);
+    return s.replace(/["\\]/g, "\\$&");
+  }
 
   // src/diary/index.ts
   var initialized2 = false;
@@ -19592,6 +19677,13 @@ ${String(review).trim()}`;
   }
   return __toCommonJS(fake_sim_exports);
 })();
+/*!
+ * page-flip (StPageFlip) v2.0.7 | MIT License | https://github.com/Nodlik/StPageFlip
+ * Copyright (c) 2020 Nodlik
+ *
+ * 原样内嵌（未改一字）—— 完整许可原文见同目录 page-flip.LICENSE；
+ * 类型声明见同目录 page-flip.browser.d.ts（只覆盖本域用到的 API 面）。
+ */
 /*! Bundled license information:
 
 moment/moment.js:

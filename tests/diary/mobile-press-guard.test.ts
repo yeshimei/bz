@@ -1,12 +1,13 @@
 // @vitest-environment node
 /* ============================================================
- * 日记本移动端长按手势守卫（用户真机报告，2026-09-11）
+ * 日记本移动端长按手势守卫（用户真机报告 2026-09-11；ADR-0230 书页界面换代后改口径）
  *
- *   长按 = 抽屉唯一入口（core/dom.longPress，500ms 计时）。条目正文若 user-select:text，
- *   真机长按正文时系统文本选择接管 → touchcancel 掐死计时 → 抽屉永不出（用户看到的
- *   「右键菜单」即系统选择浮标）。favorites/belongings/cinema 卡片均 user-select:none
- *   故无此症；diary 是全插件唯一开了 text 豁免的域（issue 217 正文可复制）——
- *   移动端必须收回豁免（桌面保留选中复制不受影响）。
+ *   长按 = 便签菜单的唯一入口（`ui.ts::bindMenu` 的 500ms 计时）。书页正文若 `user-select:text`，
+ *   真机长按正文时系统文本选择接管 → touchcancel 掐死计时 → 便签永不出（用户看到的
+ *   「右键菜单」即系统选择浮标）。故触屏下整页收回选中豁免；桌面不受影响。
+ *
+ * 与回忆墙版的差别（ADR-0230 决策 7）：豁免的宿主从「正文卡 `.bz-diary-text-tx`」换成
+ * **整页 `.bz-diary-page-item`**——书页里所有字都在页容器内，逐块挂豁免既漏又互相打架。
  *
  * 本文件只做**样式源静态断言**（不跑 jsdom），与 tests/cinema/mobile-3fix-guard.test.ts 同款手法。
  * ============================================================ */
@@ -16,20 +17,19 @@ import { describe, expect, it } from 'vitest';
 
 const css = fs.readFileSync(path.join(process.cwd(), 'src/diary/styles.css'), 'utf8');
 
-/** 取某条规则的声明块（选择器后第一个 {...}；diary styles.css 经 prettier，选择器与 { 有空格） */
-function rule(selector: string): string {
-  const at = css.indexOf(selector);
-  expect(at, `规则 ${selector} 应存在`).toBeGreaterThan(-1);
-  const open = css.indexOf('{', at);
-  const close = css.indexOf('}', open);
-  return css.slice(open + 1, close);
-}
+describe('移动端长按手势 vs 书页选中豁免（ADR-0230）', () => {
+  it('触屏下整页收回选中（桌面保留选中复制不受影响）', () => {
+    const blocks = [...css.matchAll(/@media\s*\(pointer:\s*coarse\)\s*\{([^}]*)\}/g)].map((m) => m[1]);
+    expect(blocks.length, '域内应有 pointer:coarse 块').toBeGreaterThan(0);
+    const joined = blocks.join('\n');
+    expect(joined, '触屏下页容器必须 user-select:none').toMatch(
+      /\.bz-diary-page-item\s*\{[^}]*user-select:\s*none/
+    );
+    // -webkit- 前缀同时给（Obsidian 移动端 WebView 的旧内核）
+    expect(joined).toMatch(/-webkit-user-select:\s*none/);
+  });
 
-describe('移动端长按手势 vs 正文选中豁免（issue 217）', () => {
-  it('正文 user-select:text 豁免已退役（2026-09-11 用户拍板两端取消，防回归）', () => {
-    const dec = rule('.bz-diary-text-tx');
-    expect(dec, '正文卡规则不得再开选择豁免').not.toMatch(/user-select/);
-    // 整个域样式不得再出现任何 user-select:text——系统选择接管会掐死长按抽屉计时
+  it('整个域样式不得再出现任何 user-select:text——系统选择接管会掐死长按计时', () => {
     expect(css).not.toMatch(/user-select:\s*text/);
   });
 });

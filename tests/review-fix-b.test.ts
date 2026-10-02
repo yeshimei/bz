@@ -74,8 +74,8 @@ describe('批 B-3：触控热区收编 core .bz-touch-target', () => {
     // 加密空态钮/复制账号钮随 ADR-0158 密码视图退役（vault-pw-view 文件删除，断言一并清退）
     expect(repo('src/review/render.ts')).toContain('bz-q-fitem bz-touch-target--lg'); // issue 253 markup 单源 render.ts
     // --xl（原 -12px）：加密移动关闭/返回钮、复习三个关闭钮。
-    // diary 头行图标钮已反转退役（review-deep D-UI6：42×46 自身达标，紧凑头行外扩热区
-    // 两两重叠 16px 误触；触控档由移动端尺寸承接，wall-fix-c.test.ts 钉死）
+    // diary 头行图标钮已随回忆墙整域退役（ADR-0230）：书页界面没有紧凑头行图标钮，
+    // 本断言改为「不得回潮」——重开一版 42×46 外扩热区两两重叠 16px 的误触不再可能。
     expect(repo('src/diary/render.ts')).not.toContain('bz-diary-icon-btn bz-touch-target--xl');
     expect(repo('src/encrypt/ui.ts')).toContain('bz-vault-mobclose bz-touch-target--xl');
     expect(repo('src/encrypt/ui.ts')).toContain('back bz-touch-target--xl');

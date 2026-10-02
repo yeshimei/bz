@@ -41,7 +41,12 @@ describe('enh-sweep-c：.bz-panel-mtop 移动全屏顶距', () => {
     expect(clip).toContain('bz-clip-mob-detail bz-panel-mtop'); // 移动详情屏2 overlay 自带避让
     expect(src('src/encrypt/ui.ts')).toContain("classList.add('bz-panel-mtop')");
     expect(src('src/review/ui.ts')).toContain("classList.add('bz-panel-mtop')");
-    expect(src('src/diary/ui.ts')).toContain("'bz-diary-mob bz-panel-mtop'"); // ADR-0115：回忆墙升格日记本，挂载点类名同步
+    // diary 已随 ADR-0230 从 core 面板壳（.bz-diary-mob bz-panel-mtop）换成拟物全屏场景
+    // （.bz-diary-scene，position:fixed;inset:0）：域根不再是任何面板帧，与 cinema 的整屏
+    // 布局域同档，故不再挂 bz-panel-mtop（挂上去只会得到一份无用的顶距垫）。
+    const diaryUi = src('src/diary/ui.ts');
+    expect(diaryUi).toContain("root.className = 'bz-diary-scene'");
+    expect(diaryUi).not.toContain('bz-panel-mtop');
     // 番茄钟原「随 mfs 开关同挂摘」接线已随「移动端默认全屏」特性全链退役
   });
 

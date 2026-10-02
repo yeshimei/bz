@@ -31,6 +31,36 @@ export interface DiaryEntry {
   encrypted?: boolean;
   /** 对应的保险箱 SafeNote id（encrypted=true 时存在） */
   noteId?: string;
+  /** 附加元信息（ADR-0230 加性字段）：影视/书库的展示余项，见 DiaryEntryExtra */
+  extra?: DiaryEntryExtra;
+}
+
+/**
+ * 条目附加元信息（ADR-0230）——**加性可选字段**，只服务「桌上那本」的票根/藏书票渲染。
+ *
+ * 背景：本域 content 历来把影视/书库的 frontmatter 压平成 `影评 + ![[海报]]` /
+ * `**《书名》** + 书评 + ![[cover]]`——导演/类型/片长/上映/评分/作者/分类这些**解析时就被丢掉**。
+ * 票根的 `meta`/`score` 与藏书票的 `author`/`category` 要显示它们，故另辟一栏承载；
+ * **不改既有 content 语义**（存量解析结果与断言面不动）。
+ *
+ * 键名一律沿用 **frontmatter 原键**（`meta` 里放 `豆瓣评分`/`导演`/…，不另造一套词），
+ * 显示标签由渲染层负责。
+ */
+export interface DiaryEntryExtra {
+  /** 题名：影视片名 / 书书名（不含扩展名；影视已去《》） */
+  title?: string;
+  /** 正文评述原文：影视影评 / 书书评（content 里那段，票根/藏书票单独排版用） */
+  review?: string;
+  /** 影视：海报内链引用名——与 content 里那条 `![[海报]]` 同值；纸面渲染跳过该媒体段，改贴票根 */
+  poster?: string;
+  /** 影视：frontmatter 展示余项（原键：豆瓣评分/导演/类型/片长/上映日期），空白与缺失一律不收 */
+  meta?: Record<string, string>;
+  /** 书：封面内链引用名——同上，纸面渲染跳过该媒体段，改贴藏书票封面 */
+  cover?: string;
+  /** 书：作者（藏书票 `ex-author` 前段） */
+  author?: string;
+  /** 书：分类（藏书票 `ex-author` 后段，与作者以 ` · ` 相接） */
+  category?: string;
 }
 
 /**
@@ -73,7 +103,7 @@ export type WallSegment = { kind: 'text'; text: string } | { kind: 'media'; medi
 export interface WallEntry
   extends Pick<
     DiaryEntry,
-    'date' | 'time' | 'tags' | 'emoji' | 'content' | 'filename' | 'filePath' | 'lineNumber' | 'id' | 'noteId' | 'encrypted'
+    'date' | 'time' | 'tags' | 'emoji' | 'content' | 'filename' | 'filePath' | 'lineNumber' | 'id' | 'noteId' | 'encrypted' | 'extra'
   > {
   kind: WallEntryKind;
   media: WallMedia[];

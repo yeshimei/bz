@@ -387,7 +387,9 @@ describe('loadWallEntries 透传 diary 定位字段', () => {
     const e = entries[0];
     expect(e.filename).toBe('我的/日记/2401010800.md'); // filename = 完整路径（UI 跳转依据）
     expect(e.lineNumber).toBe(0); // 行号定位随条目文件化退场
-    expect(e.id).toBeUndefined(); // 日记条目无生成 id（非影视/信/书）
+    // 日记条目也有生成 id（ADR-0230）：书页 UI 按 data-eid 定位条目，
+    // 缺 id 会让全册日记塌成同一个空 eid、右键落到最后一篇上。口径与影视/信/书一致。
+    expect(e.id).toBe('diary-我的-日记-2401010800.md-2024-01-01');
     expect(e.noteId).toBeUndefined(); // 非加密条目无保险箱 id
     expect(e.kind).toBe('diary');
     // text 与 content 并存：content 保留原文（复制/跳转），text 供渲染

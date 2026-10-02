@@ -73,7 +73,7 @@ describe('core 旧硬编码遮罩两处（core/styles.css）', () => {
 });
 
 describe('域遮罩 blur 全量在位', () => {
-  it('非品牌域遮罩含 token blur（encrypt-lockscreen / review-quiz / password-vault×3；diary×2 已随壳收编）', () => {
+  it('非品牌域遮罩含 token blur（encrypt-lockscreen / review-quiz / password-vault×3）', () => {
     const cases: Array<[file: string, selector: string]> = [
       // 保险库解锁屏已收编为 core 共享组件（三域同源），遮罩随之落到 core 组件库
       ['src/core/ui/components.css', '.bz-lockscreen--mask'],
@@ -82,7 +82,8 @@ describe('域遮罩 blur 全量在位', () => {
       // .bz-vault-dlg-mask（密码添加/编辑弹窗遮罩）随 ADR-0158 密码视图退役，断言一并清退
       ['src/review/styles.css', '#quiz-mask'],
       // diary 写日记/标签选择器两遮罩已随一致#2 收编 core uiModal 壳（issue 365 同款）：
-      // 遮罩底色/blur 归 .bz-overlay-mask 单源（core 组断言覆盖），diary 域手绘 mask 退役
+      // 遮罩底色/blur 归 .bz-overlay-mask 单源（core 组断言覆盖），diary 域手绘 mask 退役；
+      // 书页界面的拟物浮层（纸条/贴纸册/台历/抽出的纸）走**有意例外**，见下方 diary 组
       ['src/password-vault/styles.css', '.bz-password-vault-mobpage'],
       ['src/password-vault/styles.css', '.bz-password-vault-modal'],
       ['src/password-vault/styles.css', '.bz-password-vault-pop2'],
@@ -92,12 +93,21 @@ describe('域遮罩 blur 全量在位', () => {
     }
   });
 
-  it('diary 日期筛选遮罩收编（.bz-diary-datefilter 走遮罩块断言——文件头部有同名 token 挂载块，通用 rule 会误取）', () => {
-    const m = repo('src/diary/styles.css').match(
-      /\.bz-diary-datefilter\s*\{[^}]*position: fixed;[^}]*backdrop-filter: blur\(var\(--bz-overlay-blur\)\)/
-    );
-    expect(m, '.bz-diary-datefilter 遮罩块缺 token 毛玻璃').not.toBeNull();
-    expect(m![0]).toContain('background: var(--bz-overlay)');
+  it('diary 拟物浮层不掺 token 遮罩（ADR-0230 有意例外；回忆墙那张日期筛选遮罩已随墙退役）', () => {
+    const css = repo('src/diary/styles.css');
+    // ADR-0230 决策 7：回忆墙整域退役，旧日期筛选遮罩（曾收编 .bz-diary-datefilter）随之消失
+    expect(css).not.toContain('.bz-diary-datefilter');
+    // 书桌上那几层纸（纸条 / 贴纸册 / 台历 / 抽出的纸）的压暗底是**拟物材料**：
+    // 域根自己就是一块固定的深色桌面，遮罩压的是桌面而不是宿主内容，
+    // 「底色随主题自适应」在这里没有可观察差别（ADR-0230 样式头注的有意例外）。
+    // 口径：半点不掺——既不挂 .bz-overlay-mask，也不带 backdrop-filter，
+    // 防「只抄底不抄 blur」的中间态。
+    for (const sel of ['.bz-diary-slip', '.bz-diary-album-pop', '.bz-diary-cal-pop', '.bz-diary-sheet']) {
+      const body = rule(css, sel);
+      expect(body, `${sel} 应保留域内拟物压暗底`).toMatch(/background: rgba\(20, 12, 5/);
+      expect(body, `${sel} 不应掺 token 遮罩`).not.toContain('backdrop-filter');
+      expect(body, `${sel} 不应掺 token 遮罩`).not.toContain('--bz-overlay');
+    }
   });
 
   it('品牌底色遮罩保留域底色只加 blur（secondbrain / settings-panel）', () => {

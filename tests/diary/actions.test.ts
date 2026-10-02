@@ -1,91 +1,156 @@
 /**
- * 日记本条目动作回归（ADR-0115 / ADR-0131 定位重构：filePath+time 谓词写层，行号退场）：
- * - 复制双链：普通条目由 entry-actions 本地拼锚点双链；影视/信/书按文件路径拼（无 diary state 依赖）；
- * - 删除：locator 对象传 entry-actions showConfirm（加密分支在 actions 内分流）；
- * - 加密：写层 findDiaryEntry 反查真实条目入库 + removeDiaryEntries 摘除原条目文件（文件实变断言）；
- * - 影视/信/书特殊条目：菜单与抽屉屏蔽「加密」「删除」（对齐旧面板 !special 语义）。
+ * 日记本书页界面（ADR-0230）· 条目动作与媒体回归。
+ *
+ * 与 `ui-book.test.ts` 的分工：那边管**结构**（分页/建书/文具/菜单分流），这边管**动作的细枝末节**——
+ * 复制双链的三种分流、加密/取出的守卫与失败分支、撕掉的确认对象、媒体失败态与显影、
+ * 录音卡「一次只放一段」、`[[双链]]` 跳转、那年今天的明信片、浮层 Esc 栈的顺序。
+ *
+ * 淘汰自回忆墙版的同名文件（ADR-0230 决策 7）：旧版整套断言挂在 `.bz-diary-desk` /
+ * `.bz-diary-mob` / `.bz-item-menu` / `openManager()` 上，那些对象已随墙退役。
  */
-import { describe, expect, it, beforeEach, afterEach, vi } from 'vitest';
+import { describe, expect, it, beforeEach, afterEach, beforeAll, vi } from 'vitest';
 import { setApp } from '../../src/core/app';
 import { applyDirectories } from '../../src/diary/config';
+import { serializeDiaryEntryFile } from '../../src/core/diary-format';
 import { MockVault, mockAppWithVault } from '../mock-vault';
-import { resetObsidianMocks, clearNotices, getNoticeMessages, Platform } from '../mock-obsidian-entry';
+import { resetObsidianMocks, clearNotices, getNoticeMessages } from '../mock-obsidian-entry';
 import { DiaryAppController } from '../../src/diary/ui';
+import { resetFlips, lastFlip } from './page-flip-fake';
+import type { WallEntry } from '../../src/diary/types';
+
+vi.mock('../../src/diary/vendor/page-flip.browser.js', async () => {
+  const mod = await import('./page-flip-fake');
+  return { PageFlip: mod.FakePageFlip };
+});
 
 const mocks = vi.hoisted(() => ({
-  mediaSrc: vi.fn((_app: any, name: string) => `https://example.com/vault/${encodeURI(name)}`),
   openAddDialog: vi.fn(),
   showTagPicker: vi.fn(),
-  jumpToEntry: vi.fn(),
+  hideAddDialog: vi.fn(),
+  hideTagPicker: vi.fn(),
   copyDiaryLink: vi.fn(async () => {}),
   showConfirm: vi.fn(),
   ensureSafeUnlocked: vi.fn(async () => true),
-  openEncrypt: vi.fn(),
+  openFlowDialog: vi.fn(async (): Promise<string | undefined> => 'ok'),
   isUnlocked: vi.fn(() => false),
   loadEncryptedEntries: vi.fn(async (): Promise<any[]> => []),
-  deleteEncryptedEntry: vi.fn(async () => {}),
-  encryptEntry: vi.fn(async (_e: any) => ({ encrypted: true })),
+  encryptEntry: vi.fn(async (): Promise<any> => ({ encrypted: true, noteId: 'note-1' })),
   reclassifyEntry: vi.fn(async (): Promise<boolean> => true),
-  // 效率#12：加密动作二次确认（ui.ts encryptEntryAction）——既有用例期望「确认后走完」，默认放行
-  openFlowDialog: vi.fn(async (): Promise<string | undefined> => 'ok'),
+  deleteEncryptedEntry: vi.fn(async () => {}),
 }));
-vi.mock('../../src/diary/data', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('../../src/diary/data')>();
-  return { ...actual, mediaSrc: mocks.mediaSrc };
-});
+
 vi.mock('../../src/diary/ui/dialogs', () => ({
   openAddDialog: mocks.openAddDialog,
   showTagPicker: mocks.showTagPicker,
+  hideAddDialog: mocks.hideAddDialog,
+  hideTagPicker: mocks.hideTagPicker,
 }));
 vi.mock('../../src/diary/ui/entry-actions', () => ({
-  jumpToDiaryEntry: mocks.jumpToEntry,
   copyDiaryLink: mocks.copyDiaryLink,
   showConfirm: mocks.showConfirm,
+  jumpToDiaryEntry: vi.fn(),
 }));
-// 效率#12：加密二次确认弹窗（ui.ts 静态 import openFlowDialog）——mock 放行，确认流回归在 wall-fix-c.test.ts
-vi.mock('../../src/core/flow-dialog', () => ({
-  openFlowDialog: mocks.openFlowDialog,
-}));
-// store 不 mock：真实写层（findDiaryEntry/removeDiaryEntries）直接跑在 MockVault 上
+vi.mock('../../src/core/flow-dialog', () => ({ openFlowDialog: mocks.openFlowDialog }));
 vi.mock('../../src/encrypt', () => ({
   ensureSafeUnlocked: mocks.ensureSafeUnlocked,
-  openEncrypt: mocks.openEncrypt,
+  openEncrypt: vi.fn(),
+  getSafeManager: () => ({ unlocked: false, manifest: null }),
 }));
 vi.mock('../../src/diary/encrypt', () => ({
+  ENCRYPT_TAG: '加密',
   isUnlocked: mocks.isUnlocked,
   loadEncryptedEntries: mocks.loadEncryptedEntries,
-  deleteEncryptedEntry: mocks.deleteEncryptedEntry,
   encryptEntry: mocks.encryptEntry,
   reclassifyEntry: mocks.reclassifyEntry,
+  deleteEncryptedEntry: mocks.deleteEncryptedEntry,
 }));
 
-let vault: MockVault;
+// ===== 夹具 =====
 
-async function waitFor(fn: () => boolean, timeout = 1000): Promise<void> {
-  await vi.waitFor(() => expect(fn()).toBe(true), { timeout });
+const DIARY_PATH = '我的/日记/2608192302.md';
+const MOVIE_PATH = '我的/影视/film.md';
+const NOTE_PATH = '笔记/某笔记.md';
+
+/** 「那年今天」需要一个**去年的今天**（跨年命中；当年写的条目会被 pickOnThisDay 排除） */
+function lastYearSameDay(): string {
+  const d = new Date();
+  return `${d.getFullYear() - 1}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 }
 
-beforeEach(async () => {
+/** 去年那则的**条目文件路径**：日记目录下一目一文件、题目是 `YYMMDDHHmm` 简写 */
+function lastYearSameDayPath(): string {
+  const [y, m, d] = lastYearSameDay().split('-');
+  return `我的/日记/${y.slice(2)}${m}${d}0900.md`;
+}
+
+let vault: MockVault;
+let openFile: ReturnType<typeof vi.fn>;
+
+function fixtureFiles(): Record<string, string> {
+  return {
+    // 正文里带「照片 + 录音 + 双链」，一条夹具覆盖后面几族断言
+    [DIARY_PATH]: serializeDiaryEntryFile(
+      { date: '2026-08-19', time: '23:02' },
+      ['日记'],
+      `被猫盯着\n\n![[cat.jpg]]\n\n![[voice.m4a]]\n\n见 [[${NOTE_PATH.replace(/\.md$/, '')}]]`
+    ),
+    [lastYearSameDayPath()]: serializeDiaryEntryFile({ date: lastYearSameDay(), time: '09:00' }, ['日记'], '去年的今天在下雨'),
+    // 双链的落点：`[[笔记/某笔记]]` 要真能解析到一篇笔记，才测得到 openFile 那条路
+    [NOTE_PATH]: ['---', 'title: 某笔记', '---', '', '落点'].join('\n'),
+    // 带海报的票根：`.bz-diary-tk-poster` 是 `img[data-media-err]`，是媒体失败态换类的样本
+    [MOVIE_PATH]: [
+      '---',
+      '影评: 好看',
+      '观影日期: 2026-08-19',
+      '海报: poster.png',
+      'tags: [电影]',
+      '---',
+      '',
+    ].join('\n'),
+  };
+}
+
+beforeAll(() => {
+  if (typeof Element.prototype.animate !== 'function') {
+    (Element.prototype as unknown as { animate: () => unknown }).animate = () => ({
+      finished: Promise.resolve(),
+      cancel: () => {},
+    });
+  }
+  // jsdom 不实现媒体播放：给桩，才能断言「一次只放一段」这类编排
+  HTMLMediaElement.prototype.play = vi.fn(async () => {}) as unknown as HTMLMediaElement['play'];
+  HTMLMediaElement.prototype.pause = vi.fn() as unknown as HTMLMediaElement['pause'];
+});
+
+beforeEach(() => {
   document.body.innerHTML = '';
   clearNotices();
   resetObsidianMocks();
+  resetFlips();
   applyDirectories({});
   for (const fn of Object.values(mocks)) fn.mockClear();
   mocks.ensureSafeUnlocked.mockResolvedValue(true);
+  mocks.openFlowDialog.mockResolvedValue('ok');
+  mocks.encryptEntry.mockResolvedValue({ encrypted: true, noteId: 'note-1' });
   mocks.isUnlocked.mockReturnValue(false);
-  mocks.encryptEntry.mockResolvedValue({ encrypted: true });
-  // 剪贴板 stub（特殊条目复制双链直写剪贴板）
+  mocks.loadEncryptedEntries.mockResolvedValue([]);
   Object.defineProperty(navigator, 'clipboard', {
     value: { writeText: vi.fn(async () => {}) },
     configurable: true,
   });
+
   vault = new MockVault();
-  vault.files.set(
-    '我的/日记/2608192302.md',
-    '---\ndate: 2026-08-19 23:02\ntype:\n  - 日记\n---\n\n被猫盯着\n'
-  );
-  vault.files.set('我的/影视/film.md', '---\n影评: 好看\n观影日期: 2026-08-19\ntags: [电影]\n---\n');
+  for (const [p, c] of Object.entries(fixtureFiles())) vault.files.set(p, c);
   const app = mockAppWithVault(vault);
+  // 共享 mock 未实现的两条 Obsidian API（双链跳转与资源路径）
+  (app.metadataCache as any).getFirstLinkpathDest = (link: string) => {
+    const exact = vault.getAbstractFileByPath(link.endsWith('.md') ? link : link + '.md');
+    if (exact && !exact.children) return exact;
+    const name = link.split('/').pop()!.toLowerCase();
+    return vault.getFiles().find((f: any) => (f.name || '').replace(/\.md$/, '').toLowerCase() === name) ?? null;
+  };
+  openFile = vi.fn(async () => {});
+  (app.workspace as any).getLeaf = () => ({ openFile });
   setApp(app);
 });
 
@@ -95,188 +160,388 @@ afterEach(() => {
   document.body.innerHTML = '';
 });
 
-async function openAndWait() {
+async function openBook(): Promise<DiaryAppController> {
   const c = DiaryAppController.getInstance();
-  await c.openManager();
-  await waitFor(() => !!document.querySelector('.bz-diary-day-head'));
+  c.show();
+  await vi.waitFor(() => expect(document.querySelectorAll('.bz-diary-page-item').length).toBeGreaterThan(0));
   return c;
 }
 
-function openMenu(item: HTMLElement): HTMLElement {
-  item.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, clientX: 50, clientY: 60 }));
-  const menu = document.querySelector('.bz-item-menu') as HTMLElement;
-  expect(menu).toBeTruthy();
-  return menu;
+const q = <T extends HTMLElement = HTMLElement>(sel: string): T => document.querySelector<T>(sel)!;
+
+/** 打开某则条目的便签（`data-eid` 落在块根上） */
+function openMenuFor(sel: string): void {
+  const block = q(sel).closest<HTMLElement>('[data-eid]')!;
+  block.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, clientX: 30, clientY: 30 }));
+  expect(q('.bz-diary-menu').hidden).toBe(false);
 }
 
-function menuButton(menu: HTMLElement, label: string): HTMLElement | null {
-  return Array.from(menu.querySelectorAll('button')).find((b) => b.textContent!.includes(label)) ?? null;
+function menuAct(act: string): HTMLElement {
+  return q(`.bz-diary-menu .bz-diary-mn-item[data-act="${act}"]`);
 }
 
-// 文件级假钟：等待一律可控快进（真实等待归零）
-beforeEach(() => {
-  vi.useFakeTimers({
-    toFake: ['setTimeout', 'clearTimeout', 'setInterval', 'clearInterval', 'Date',
-      'requestAnimationFrame', 'cancelAnimationFrame', 'performance'],
-  });
-});
-afterEach(() => {
-  vi.useRealTimers();
-});
+// ============================================================
+//  复制双链：三种分流
+// ============================================================
 
-describe('日记本条目动作（ADR-0115 定位重构）', () => {
-  it('普通日记条目「复制双链」：entry-actions 收到 filename+filePath+emoji+time（ADR-0131：filename 即条目文件路径）', async () => {
-    await openAndWait();
-    const item = document.querySelector('.bz-diary-desk .bz-diary-item') as HTMLElement;
-    const menu = openMenu(item);
-    const btn = menuButton(menu, '复制双链')!;
-    btn.click();
-    await waitFor(() => mocks.copyDiaryLink.mock.calls.length > 0);
+describe('誊录位置（复制双链）', () => {
+  it('普通日记条目 → 交本域 copyDiaryLink（带 filename/workfilePath/emoji/time）', async () => {
+    await openBook();
+    openMenuFor('.bz-diary-b-para');
+    menuAct('copylink').click();
+    await vi.waitFor(() => expect(mocks.copyDiaryLink).toHaveBeenCalledTimes(1));
     expect(mocks.copyDiaryLink).toHaveBeenCalledWith({
-      filename: '我的/日记/2608192302.md',
-      filePath: '我的/日记/2608192302.md',
+      filename: DIARY_PATH,
+      filePath: DIARY_PATH,
       emoji: '📖',
       time: '23:02',
     });
   });
 
-  it('普通日记条目「删除」：locator 对象传 showConfirm（加密分流在 actions 内）', async () => {
-    await openAndWait();
-    const item = document.querySelector('.bz-diary-desk .bz-diary-item') as HTMLElement;
-    const menu = openMenu(item);
-    menuButton(menu, '删除')!.click();
-    await waitFor(() => mocks.showConfirm.mock.calls.length > 0);
-    expect(mocks.showConfirm).toHaveBeenCalledTimes(1);
-    const loc = mocks.showConfirm.mock.calls[0][0];
-    expect(loc).toMatchObject({
-      filename: '我的/日记/2608192302.md',
-      filePath: '我的/日记/2608192302.md',
+  it('影视/信/书条目 → 本地拼文件级双链，不走 entry-actions（那边要日记 state）', async () => {
+    await openBook();
+    openMenuFor('.bz-diary-ticket');
+    menuAct('copylink').click();
+    await vi.waitFor(() => expect((navigator.clipboard.writeText as any).mock.calls.length).toBeGreaterThan(0));
+    expect((navigator.clipboard.writeText as any).mock.calls[0][0]).toBe('[[我的/影视/film]]');
+    expect(mocks.copyDiaryLink).not.toHaveBeenCalled();
+  });
+
+  it('加密条目无 md 锚点 → 复制正文本身', async () => {
+    const c = await openBook();
+    await (c as unknown as { copyLink: (e: WallEntry) => Promise<void> }).copyLink({
+      date: '2026-08-10',
+      time: '21:00',
+      tags: ['日记', '加密'],
+      emoji: '🔐',
+      content: '密文正文',
+      filename: 'vault/x',
+      lineNumber: 0,
+      kind: 'diary',
+      media: [],
+      text: '密文正文',
+      segments: [],
+      encrypted: true,
+      noteId: 'note-9',
+    });
+    expect((navigator.clipboard.writeText as any).mock.calls[0][0]).toBe('密文正文');
+    expect(getNoticeMessages().join('\n')).toContain('已复制加密日记正文');
+    expect(mocks.copyDiaryLink).not.toHaveBeenCalled();
+  });
+
+  it('找不到原文（无 filename / filePath）→ 只提示，不写剪贴板', async () => {
+    const c = await openBook();
+    await (c as unknown as { copyLink: (e: WallEntry) => Promise<void> }).copyLink({
+      date: '2026-08-19',
+      time: '00:00',
+      tags: ['日记'],
+      emoji: '📖',
+      content: 'x',
+      filename: '',
+      lineNumber: 0,
+      kind: 'diary',
+      media: [],
+      text: 'x',
+      segments: [],
+    });
+    expect(getNoticeMessages().join('\n')).toContain('找不到原文');
+    expect((navigator.clipboard.writeText as any).mock.calls.length).toBe(0);
+  });
+});
+
+// ============================================================
+//  收进信封 / 从信封取出：守卫与失败分支
+// ============================================================
+
+describe('收进信封（加密）的守卫与失败分支', () => {
+  it('非日记条目直接早退（影视/信/书没有加密入口，入库语义错位）', async () => {
+    const c = await openBook();
+    await (c as unknown as { encryptEntryAction: (e: WallEntry) => Promise<void> }).encryptEntryAction({
+      date: '2026-08-19',
+      time: '00:00',
+      tags: ['电影'],
+      emoji: '🎬',
+      content: 'x',
+      filename: MOVIE_PATH,
+      lineNumber: 0,
+      kind: 'movie',
+      media: [],
+      text: 'x',
+      segments: [],
+    });
+    expect(mocks.ensureSafeUnlocked).not.toHaveBeenCalled();
+    expect(mocks.openFlowDialog).not.toHaveBeenCalled();
+    expect(mocks.encryptEntry).not.toHaveBeenCalled();
+  });
+
+  it('保险箱没解锁就原地退出（没弹确认框、没动文件）', async () => {
+    const c = await openBook();
+    mocks.ensureSafeUnlocked.mockResolvedValue(false);
+    await (c as unknown as { encryptEntryAction: (e: WallEntry) => Promise<void> }).encryptEntryAction({
       date: '2026-08-19',
       time: '23:02',
+      tags: ['日记'],
+      emoji: '📖',
+      content: 'x',
+      filename: DIARY_PATH,
+      filePath: DIARY_PATH,
       lineNumber: 0,
+      kind: 'diary',
+      media: [],
+      text: 'x',
+      segments: [],
     });
+    expect(mocks.openFlowDialog).not.toHaveBeenCalled();
+    expect(vault.files.has(DIARY_PATH)).toBe(true);
   });
 
-  it('普通日记条目「加密」：写层反查条目入库 + removeDiaryEntries 摘除原条目文件（文件实变）', async () => {
-    await openAndWait();
-    const item = document.querySelector('.bz-diary-desk .bz-diary-item') as HTMLElement;
-    const menu = openMenu(item);
-    menuButton(menu, '加密')!.click();
-    await waitFor(() => vault.files.get('我的/日记/2608192302.md') === undefined);
-    expect(mocks.ensureSafeUnlocked).toHaveBeenCalled();
-    // encryptEntry 收到写层反查出的真实条目（filename=条目文件路径、time 与磁盘一致）
-    expect(mocks.encryptEntry.mock.calls[0][0]).toMatchObject({
-      filename: '我的/日记/2608192302.md',
-      time: '23:02',
+  it('磁盘上找不到原文条目 → 提示并不入库', async () => {
+    const c = await openBook();
+    await (c as unknown as { encryptEntryAction: (e: WallEntry) => Promise<void> }).encryptEntryAction({
+      date: '2026-01-01',
+      time: '00:00',
+      tags: ['日记'],
+      emoji: '📖',
+      content: 'x',
+      filename: '我的/日记/2601010000.md',
+      filePath: '我的/日记/2601010000.md',
       lineNumber: 0,
+      kind: 'diary',
+      media: [],
+      text: 'x',
+      segments: [],
     });
-    // 原条目文件已删除（一目一文件：摘除 = 删文件）
-    expect(vault.files.has('我的/日记/2608192302.md')).toBe(false);
-  });
-
-  it('加密反查失败（磁盘无对应文件）：提示找不到原文条目，不入库', async () => {
-    await openAndWait();
-    const c = DiaryAppController.instance as any;
-    const ghost = { date: '2026-01-01', time: '00:00', tags: ['日记'], emoji: '📖', content: '', filename: '2026-01-01', lineNumber: 0, kind: 'diary', media: [], text: '', segments: [] };
-    await c.encryptEntryAction(ghost);
     expect(mocks.encryptEntry).not.toHaveBeenCalled();
     expect(getNoticeMessages().join('\n')).toContain('找不到原文条目');
   });
 
-  it('D5 回归：原文摘除失败 → 回滚保险箱密文（deleteEncryptedEntry 收到 noteId）并弹失败提示', async () => {
-    await openAndWait();
-    // 密文入库后、摘除前原文件消失 → removeDiaryEntries 返回 0（旧实现只弹提示不回滚，
-    // 保险箱与原文双份并存，解锁后同条出现两次且重试越积越多）
-    mocks.encryptEntry.mockImplementation(async (entry: any) => {
-      vault.files.delete(entry.filePath || '我的/日记/2608192302.md');
-      return { encrypted: true, noteId: 'note-d5' };
+  it('密文入库失败（encryptEntry 返回 null）→ 不动原文', async () => {
+    const c = await openBook();
+    mocks.encryptEntry.mockResolvedValue(null);
+    await (c as unknown as { encryptEntryAction: (e: WallEntry) => Promise<void> }).encryptEntryAction({
+      date: '2026-08-19',
+      time: '23:02',
+      tags: ['日记'],
+      emoji: '📖',
+      content: 'x',
+      filename: DIARY_PATH,
+      filePath: DIARY_PATH,
+      lineNumber: 0,
+      kind: 'diary',
+      media: [],
+      text: 'x',
+      segments: [],
     });
-    const item = document.querySelector('.bz-diary-desk .bz-diary-item') as HTMLElement;
-    const menu = openMenu(item);
-    menuButton(menu, '加密')!.click();
-    await waitFor(() => getNoticeMessages().join('\n').includes('加密失败：原文块摘除未生效'));
-    expect(mocks.deleteEncryptedEntry).toHaveBeenCalledWith('note-d5');
+    expect(vault.files.has(DIARY_PATH)).toBe(true);
+    expect(mocks.deleteEncryptedEntry).not.toHaveBeenCalled();
   });
+});
 
-  it('影视条目菜单：无「加密」「删除」，改标签保留；动作兜底不触发解锁/删除', async () => {
-    const c = await openAndWait();
-    const items = document.querySelectorAll('.bz-diary-desk .bz-diary-item');
-    // 列表按时间倒序：日记 23:02 在前，影视（文件创建时间 12:00）在后
-    const movieItem = items[1] as HTMLElement;
-    const menu = openMenu(movieItem);
-    expect(menuButton(menu, '加密')).toBeNull();
-    expect(menuButton(menu, '删除')).toBeNull();
-    expect(menuButton(menu, '改标签')).toBeTruthy();
-    // 兜底：直接调动作也不触发解锁/删除链路
-    const movieEntry = (c as any)._wallEntries.find((e: any) => e.kind === 'movie');
-    expect(movieEntry).toBeTruthy();
-    await (c as any).encryptEntryAction(movieEntry);
-    await (c as any).deleteEntryAction(movieEntry);
-    expect(mocks.ensureSafeUnlocked).not.toHaveBeenCalled();
-    expect(mocks.showConfirm).not.toHaveBeenCalled();
-    expect(getNoticeMessages().join('\n')).toContain('对应面板');
-  });
-
-  it('底部抽屉同口径：影视条目抽屉无「加密/删除」，普通日记条目抽屉有', async () => {
-    await openAndWait();
-    // 长按开抽屉（2026-09-11 评审：单击入口取消，长按 = 唯一入口）；收尾复位 Platform 防泄漏
-    Platform.isMobile = true;
-    const press = async (el: HTMLElement) => {
-      const ts = new TouchEvent('touchstart', { bubbles: true, cancelable: true });
-      Object.defineProperty(ts, 'touches', { value: [{ clientX: 10, clientY: 10 }] });
-      el.dispatchEvent(ts);
-      await vi.advanceTimersByTimeAsync(550);
-      el.dispatchEvent(new TouchEvent('touchend', { bubbles: true }));
-    };
-    const mob = document.querySelector('.bz-diary-mob')!;
-    // 影视条目（第 2 个）抽屉（2026-09-11 换核：core openItemSheet 挂 body，全局判定）
-    await press(mob.querySelectorAll('.bz-diary-item')[1] as HTMLElement);
-    const movieSheet = document.querySelector('.bz-item-sheet') as HTMLElement;
-    expect(movieSheet).toBeTruthy();
-    expect(movieSheet.textContent).not.toContain('加密');
-    expect(movieSheet.textContent).not.toContain('删除');
-    // 普通日记条目（第 1 个）抽屉
-    await press(mob.querySelector('.bz-diary-item') as HTMLElement);
-    const diarySheet = document.querySelector('.bz-item-sheet') as HTMLElement;
-    expect(diarySheet).toBeTruthy();
-    expect(diarySheet.textContent).toContain('加密');
-    expect(diarySheet.textContent).toContain('删除');
-    Platform.isMobile = false;
-  });
-
-  it('移动端：长按 + contextmenu 同发时只出抽屉，不出桌面跟手菜单（影院 mobile-3fix B 同款回归）', async () => {
-    // 真机触屏长按的真实事件序列：touchstart →(~500ms)→ contextmenu（与 longPress 手势同到）。
-    // contextmenu 委托不按端分流就弹桌面跟手菜单盖住抽屉（2026-09-11 真机复现）。
-    Platform.isMobile = true;
-    await openAndWait();
-    const mob = document.querySelector('.bz-diary-mob')!;
-    const item = mob.querySelector('.bz-diary-item') as HTMLElement;
-    const r = item.getBoundingClientRect();
-    const ts = new TouchEvent('touchstart', { bubbles: true, cancelable: true });
-    Object.defineProperty(ts, 'touches', { value: [{ clientX: 10, clientY: 10 }] });
-    item.dispatchEvent(ts);
-    await vi.advanceTimersByTimeAsync(550);
-    item.dispatchEvent(new TouchEvent('touchend', { bubbles: true }));
-    const ctx = new MouseEvent('contextmenu', {
-      bubbles: true,
-      cancelable: true,
-      clientX: r.left + 10,
-      clientY: r.top + 10,
+describe('从信封取出（解密）的守卫', () => {
+  it('reclassifyEntry 抛错 → 提示主密码有问题且密文未受影响（不广播解密事件）', async () => {
+    const c = await openBook();
+    mocks.reclassifyEntry.mockRejectedValue(new Error('wrong password'));
+    await (c as unknown as { decryptEntryAction: (e: WallEntry) => Promise<void> }).decryptEntryAction({
+      date: '2026-08-10',
+      time: '21:00',
+      tags: ['日记', '加密'],
+      emoji: '🔐',
+      content: 'x',
+      filename: 'vault/x',
+      lineNumber: 0,
+      kind: 'diary',
+      media: [],
+      text: 'x',
+      segments: [],
+      encrypted: true,
+      noteId: 'note-9',
     });
-    item.dispatchEvent(ctx);
-    expect(ctx.defaultPrevented, '移动端条目 contextmenu 应被吞（让位给长按抽屉）').toBe(true);
-    expect(document.querySelector('.bz-item-sheet'), '长按抽屉应在').toBeTruthy();
-    expect(document.querySelector('.bz-item-menu'), '移动端不应出桌面跟手菜单').toBeNull();
-    Platform.isMobile = false;
+    expect(getNoticeMessages().join('\n')).toContain('取出失败：主密码可能不正确');
   });
 
-  it('特殊条目「复制双链」：按文件路径本地拼双链，不走 entry-actions', async () => {
-    await openAndWait();
-    const items = document.querySelectorAll('.bz-diary-desk .bz-diary-item');
-    const menu = openMenu(items[1] as HTMLElement);
-    menuButton(menu, '复制双链')!.click();
-    await waitFor(() => (navigator.clipboard.writeText as any).mock.calls.length > 0);
-    expect(navigator.clipboard.writeText).toHaveBeenCalledWith('[[我的/影视/film]]');
-    expect(mocks.copyDiaryLink).not.toHaveBeenCalled();
+  it('「拆信看」在册面上找不到信封（纸已被重排掉）→ 直接把全文摊在抽出的纸上', async () => {
+    const c = await openBook();
+    (c as unknown as { unsealEntry: (e: WallEntry) => void }).unsealEntry({
+      date: '2026-08-10',
+      time: '21:00',
+      tags: ['日记', '加密'],
+      emoji: '🔐',
+      content: '藏在信封里的话',
+      filename: 'vault/x',
+      lineNumber: 0,
+      kind: 'diary',
+      media: [],
+      text: '藏在信封里的话',
+      segments: [{ kind: 'text', text: '藏在信封里的话' }],
+      encrypted: true,
+      noteId: 'note-9',
+      id: 'enc-not-on-page',
+    });
+    expect(q('.bz-diary-sheet').hidden).toBe(false);
+    expect(q('.bz-diary-sheet-body').textContent).toContain('藏在信封里的话');
+  });
+});
+
+// ============================================================
+//  媒体：显影 / 失败态 / 录音卡 / 双链
+// ============================================================
+
+describe('媒体失败态与显影', () => {
+  it('票根海报加载失败 → 换成占位类并摘掉 src（走 data-media-err，零内联样式）', async () => {
+    await openBook();
+    const poster = q<HTMLImageElement>('.bz-diary-tk-poster');
+    expect(poster.tagName).toBe('IMG');
+    expect(poster.dataset.mediaErr).toBe('bz-diary-ph-empty');
+    poster.dispatchEvent(new Event('error'));
+    expect(poster.className).toBe('bz-diary-ph-empty');
+    expect(poster.getAttribute('src')).toBeNull();
+    expect(poster.hasAttribute('data-media-err')).toBe(false); // 只换一次
+  });
+
+  it('正文照片加载失败 → 相纸位留一句「相片未冲出」', async () => {
+    await openBook();
+    const img = q<HTMLImageElement>('.bz-diary-ph-media img');
+    img.dispatchEvent(new Event('error'));
+    expect(q('.bz-diary-ph-media .bz-diary-ph-empty').textContent).toBe('相片未冲出');
+    expect(q('.bz-diary-ph-media img')).toBeNull();
+  });
+
+  it('正文照片加载成功 → 加上显影类（药水里浮出来）', async () => {
+    await openBook();
+    const img = q<HTMLImageElement>('.bz-diary-ph-media img');
+    img.dispatchEvent(new Event('load'));
+    expect(img.classList.contains('bz-diary-develop')).toBe(true);
+  });
+
+  it('录音卡：自绘键驱动播/停，换一张卡前面那段自己停', async () => {
+    const c = await openBook();
+    // 另一则也带录音，凑出两张卡
+    vault.files.set(
+      '我的/日记/2608180900.md',
+      serializeDiaryEntryFile({ date: '2026-08-18', time: '09:00' }, ['日记'], '昨天\n\n![[another.m4a]]')
+    );
+    await (c as unknown as { loadAndRelayout: () => Promise<void> }).loadAndRelayout();
+
+    const cards = Array.from(document.querySelectorAll<HTMLElement>('.bz-diary-ba-card'));
+    expect(cards.length).toBe(2);
+    const audios = Array.from(document.querySelectorAll<HTMLAudioElement>('.bz-diary-b-audio audio'));
+    expect(audios.length).toBe(2);
+
+    cards[0].click(); // 播放第一张
+    expect(HTMLMediaElement.prototype.play).toHaveBeenCalledTimes(1);
+    // jsdom 不会真的播放，故手动补一发 play 事件：自绘键的换标与播放态由它驱动
+    audios[0].dispatchEvent(new Event('play'));
+    expect(cards[0].querySelector('.bz-diary-ba-play')!.textContent).toBe('❚❚');
+    expect(cards[0].closest('.bz-diary-b-audio')!.classList.contains('bz-diary-playing')).toBe(true);
+
+    cards[1].click(); // 换第二张：第一张应被暂停
+    expect(HTMLMediaElement.prototype.pause).toHaveBeenCalled();
+    expect(HTMLMediaElement.prototype.play).toHaveBeenCalledTimes(2);
+    audios[0].dispatchEvent(new Event('pause'));
+    expect(cards[0].closest('.bz-diary-b-audio')!.classList.contains('bz-diary-playing')).toBe(false);
+  });
+  it('「放不出」的录音：timeupdate 时（时长未知）只显示已播时长', async () => {
+    await openBook();
+    const audio = q<HTMLAudioElement>('.bz-diary-b-audio audio');
+    Object.defineProperty(audio, 'duration', { value: NaN, configurable: true });
+    Object.defineProperty(audio, 'currentTime', { value: 12, configurable: true });
+    audio.dispatchEvent(new Event('timeupdate'));
+    expect(q('.bz-diary-ba-time').textContent).toBe('0:12');
+
+    audio.dispatchEvent(new Event('error'));
+    expect(q('.bz-diary-ba-time').textContent).toBe('放不出');
+  });
+});
+
+describe('纸上的 [[双链]]', () => {
+  it('点它跳原文（workspace.getLeaf → openFile）', async () => {
+    await openBook();
+    const wl = q('.bz-diary-wikilink');
+    expect(wl.dataset.target).toBe('笔记/某笔记');
+    wl.click();
+    await vi.waitFor(() => expect(openFile).toHaveBeenCalledTimes(1));
+    expect(openFile.mock.calls[0][0].path).toBe(NOTE_PATH);
+  });
+
+  it('目标解析不到 → 只在纸上提示，不抛', async () => {
+    await openBook();
+    const wl = q('.bz-diary-wikilink');
+    wl.dataset.target = '不存在/的笔记';
+    wl.click();
+    expect(q('.bz-diary-toast').textContent).toContain('找不到');
+    expect(openFile).not.toHaveBeenCalled();
+  });
+});
+
+// ============================================================
+//  那年今天（明信片）
+// ============================================================
+
+describe('那年今天', () => {
+  it('去年同月同日有则 → 明信片自动摆出来；点「展信」翻到那一页并收回来', async () => {
+    const c = await openBook();
+    (c as unknown as { checkOnThisDay: () => void }).checkOnThisDay();
+    const pc = q('.bz-diary-postcard');
+    expect(pc.hidden).toBe(false);
+    expect(pc.querySelector('.bz-diary-pc-body')!.textContent).toContain('去年的今天在下雨');
+    expect(pc.querySelector('.bz-diary-pc-body')!.innerHTML).toContain('年的今天');
+
+    const before = lastFlip().page;
+    (pc.querySelector('.bz-diary-pc-open') as HTMLElement).click();
+    expect(pc.hidden).toBe(true);
+    expect(lastFlip().page).toBeGreaterThanOrEqual(before);
+  });
+
+  it('只有当年同月同日（不算「那年」）→ 明信片不出现', async () => {
+    const c = await openBook();
+    // 拿掉去年那则，只留当年的另一则
+    vault.files.delete(lastYearSameDayPath());
+    const today = new Date();
+    const key = `2026-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+    vault.files.set(
+      `我的/日记/${key.replace(/-/g, '').slice(2)}0900.md`,
+      serializeDiaryEntryFile({ date: key, time: '09:00' }, ['日记'], '今天写的')
+    );
+    await (c as unknown as { loadAndRelayout: () => Promise<void> }).loadAndRelayout();
+    q('.bz-diary-postcard').hidden = true; // 清掉前一轮可能摆出来的
+    (c as unknown as { checkOnThisDay: () => void }).checkOnThisDay();
+    expect(q('.bz-diary-postcard').hidden).toBe(true);
+    expect(q('.bz-diary-postcard').querySelector('.bz-diary-pc-body')!.textContent).toBe('');
+  });
+});
+
+// ============================================================
+//  Esc 栈：一个 Esc 只收一层
+// ============================================================
+
+describe('Esc 栈顺序', () => {
+  it('贴纸册 → 台历 → 抽出的纸 → 便签，各收一层；都收干净后翻回最新', async () => {
+    const c = await openBook();
+    const esc = () => document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+    const album = q('.bz-diary-album-pop');
+    const cal = q('.bz-diary-cal-pop');
+    const sheet = q('.bz-diary-sheet');
+    const menu = q('.bz-diary-menu');
+
+    (c as unknown as { openAlbum: () => void }).openAlbum();
+    (c as unknown as { openCal: () => void }).openCal();
+    (c as unknown as { openSheet: (t: string, s: string) => void }).openSheet('标题', '正文');
+    openMenuFor('.bz-diary-b-para');
+    expect([album.hidden, cal.hidden, sheet.hidden, menu.hidden]).toEqual([false, false, false, false]);
+
+    esc();
+    expect(album.hidden).toBe(true); // 贴纸册在最上
+    esc();
+    expect(cal.hidden).toBe(true);
+    esc();
+    expect(sheet.hidden).toBe(true);
+    esc();
+    expect(menu.hidden).toBe(true);
+
+    // 最后一个 Esc：没有浮层了 → 翻回最新那页
+    (c as unknown as { jumpToPage: (n: number) => void }).jumpToPage(2);
+    esc();
+    expect(lastFlip().page).toBe(0);
+    expect(q('.bz-diary-toast').textContent).toContain('翻到最新');
   });
 });

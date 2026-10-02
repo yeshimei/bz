@@ -26,6 +26,8 @@ export function isEncryptedEntry(entry: DiaryEntry): boolean {
  * - 标签：frontmatter `type`（标签名列表）；空缺回退 ['日记']；emoji 由标签派生（emoji 表只服务展示）；
  * - 正文：frontmatter 之后的原文（无一级标题概念）；
  * - filename/filePath = 完整 vault 路径，lineNumber 恒 0（行号定位随条目文件化退场）；
+ * - id = `makeEntryId('diary', …)`（与影视/信/书同口径）：书页 UI 按 `data-eid` 定位条目，
+ *   条目没有 id 会全部塌成 `data-eid=""`；
  * - 文件名非条目形状或日期非法且 frontmatter 不可信 → null（守卫拒写/加载跳过）。
  */
 export function parseEntryFile(content: string, filePath: string): DiaryEntry | null {
@@ -45,6 +47,10 @@ export function parseEntryFile(content: string, filePath: string): DiaryEntry | 
     filename: filePath,
     filePath,
     lineNumber: 0,
+    /* 稳定 id：书页 UI（ADR-0230）按 `data-eid` 定位条目（便签菜单 / 撕页 / 明信片展信），
+       没有 id 时所有日记条目都塌成 `data-eid=""`——右键哪一篇都会落到最后一篇上。
+       与影视/信/书同一套 `makeEntryId` 口径（一目一文件，路径即唯一）。 */
+    id: makeEntryId('diary', { path: filePath }, meta.date),
   };
 }
 
@@ -61,6 +67,19 @@ const FALLBACK_TIME_VALUE = 0;
 /** 生成特殊文件条目的稳定 id */
 function makeEntryId(prefix: string, file: any, dateStr: string): string {
   return `${prefix}-${file.path.replace(/\//g, '-')}-${dateStr}`;
+}
+
+/** 取 frontmatter 里非空的标量项（ADR-0230：票根/藏书票的展示余项）。
+ *  **键名原样保留**（`豆瓣评分`/`导演`/…），不另造一套词；空白与缺失一律不收。 */
+function pickFmStrings(fm: any, keys: string[]): Record<string, string> {
+  const out: Record<string, string> = {};
+  for (const k of keys) {
+    const v = fm?.[k];
+    if (v === undefined || v === null) continue;
+    const s = String(v).trim();
+    if (s) out[k] = s;
+  }
+  return out;
 }
 
 /**
@@ -125,6 +144,13 @@ export async function parseMovieFile(file: any, app: any): Promise<DiaryEntry | 
       filename: file.path,
       lineNumber: 0,
       id: makeEntryId('movie', file, dateStr),
+      // ADR-0230：票根渲染要的余项（content 里被压平丢掉的那部分 FM）
+      extra: {
+        title: fileNameWithoutExt.replace(/^《/, '').replace(/》$/, ''),
+        review: review.trim(),
+        poster: poster && String(poster).trim() !== '' ? String(poster).trim() : undefined,
+        meta: pickFmStrings(fm, ['豆瓣评分', '导演', '类型', '片长', '上映日期']),
+      },
     };
   } catch (err) {
     console.error(`解析影视文件失败 ${file.path}:`, err);
@@ -246,6 +272,14 @@ export async function parseBookFile(file: any, app: any): Promise<DiaryEntry | n
       filename: file.path,
       lineNumber: 0,
       id: makeEntryId('book', file, dateStr),
+      // ADR-0230：藏书票渲染要的余项（content 里被压平丢掉的那部分 FM）
+      extra: {
+        title,
+        review: String(review).trim(),
+        cover: cover && String(cover).trim() !== '' ? String(cover).trim() : undefined,
+        author: fm.author && String(fm.author).trim() ? String(fm.author).trim() : undefined,
+        category: fm.category && String(fm.category).trim() ? String(fm.category).trim() : undefined,
+      },
     };
   } catch (err) {
     console.error(`解析书文件失败 ${file.path}:`, err);

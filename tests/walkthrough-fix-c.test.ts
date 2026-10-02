@@ -267,12 +267,20 @@ describe('批 C-19：settings-panel 移动列表项名归档', () => {
   });
 });
 
-describe('批 C-20：diary 矮窗兜底（ADR-0115 回忆墙升格日记本）', () => {
-  it('桌面卡 max-height 压顶 + min-height 随视口收缩，矮窗不再溢出被裁', () => {
+describe('批 C-20：diary 矮窗兜底（ADR-0230 书页界面换代后口径）', () => {
+  it('矮窗把书高收到 min(700px, 100vh-180px)，窄屏收到 min(76vh, 660px)——书与案头文具都不被窗口下沿切掉', () => {
     const css = repo('src/diary/styles.css');
+    // 桌面矮窗：书高上限 700px，且底下留 180px 给「文具托」（它挂在桌上、按书沿定位，不是书的一部分）
+    expect(css).toMatch(
+      /@media \(min-width: 721px\) and \(max-height: 900px\)\s*\{\s*\.bz-diary-scene\s*\{\s*--bz-diary-pg-h: min\(700px, calc\(100vh - 180px\)\);\s*\}\s*\}/
+    );
+    // 窄屏单页档：书高跟视口走
+    expect(css).toMatch(/--bz-diary-pg-h: min\(76vh, 660px\)/);
+    // 回忆墙那张「自己压顶」的面板卡已退役：.bz-diary-desk 现在是桌面台面（铺满域根的背景层）
     const desk = rule(css, '.bz-diary-desk');
     expect(desk, '缺 .bz-diary-desk 规则').not.toBeNull();
-    expect(desk![1]).toContain('max-height: calc(100vh - 48px)');
-    expect(desk![1]).toContain('min-height: min(560px, calc(100vh - 48px))');
+    expect(desk![1]).toContain('position: absolute; inset: 0');
+    expect(desk![1]).not.toContain('max-height');
+    expect(desk![1]).not.toContain('min-height');
   });
 });
