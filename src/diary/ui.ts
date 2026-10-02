@@ -2867,12 +2867,14 @@ export class DiaryAppController {
    */
   openWrite(): void {
     const already = this.root?.style.display === 'flex';
-    const task = this.loadTask;
     this.show();
     if (already) {
       this.startWrite();
       return;
     }
+    /* 等**这一次** show 的读盘 + 成册落地（show() 刚把 loadTask 换成新任务）——
+       写作内页是书里的一张纸，书还没排出来就摆上去，读者会看到一张浮在空书壳上的纸 */
+    const task = this.loadTask;
     void (task ?? Promise.resolve()).then(() => {
       if (this.root?.style.display === 'flex') this.startWrite();
     });

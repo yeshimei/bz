@@ -1068,6 +1068,14 @@ async function openWritePage(c: DiaryAppController): Promise<HTMLTextAreaElement
 }
 
 describe('DiaryAppController · 写作内页（ADR-0233）', () => {
+  it('bz-diary-write 同链路：openWrite() 先摊开册子，书排好之后才摆出写作内页', async () => {
+    const c = DiaryAppController.getInstance();
+    c.openWrite();
+    await vi.waitFor(() => expect(q('.bz-diary-wsp').hidden).toBe(false));
+    expect(qa('.bz-diary-page-item').length).toBeGreaterThan(0); // 纸是摆在书上，不是浮在空书壳上
+    expect(q('.bz-diary-scene').style.display).toBe('flex');
+  });
+
   it('点「写」摊开一张素纸：日戳落在今天、贴纸列出来、不预选任何一类', async () => {
     const c = await openBook();
     const area = await openWritePage(c);
