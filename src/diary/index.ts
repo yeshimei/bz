@@ -9,14 +9,14 @@
  * 接口契约（main.ts 依赖）：
  * - ensureDiary(app)    懒加载幂等初始化
  * - openDiary(app)      打开日记本主窗口（ensure 后调 controller.show()）
- * - openDiaryWrite(app) 写日记命令回调（ensure 后开写日记弹窗，不拉起主窗口）
+ * - openDiaryWrite(app) 写日记命令回调（ensure 后摊开册子并摆出写作内页）
  * - prewarmDiary(app, isUnloaded) 启动后台预热墙数据（仅数据，不建 DOM，ADR-0003 兼容）
  * - unloadDiary()       卸载清理（幂等）
  */
 import type { App } from 'obsidian';
 import { DiaryAppController } from './ui';
 import { loadWallEntries, invalidateWallCache } from './data';
-import { createAddDialog, createTagPicker, openAddDialog } from './ui/dialogs';
+import { createTagPicker } from './ui/dialogs';
 
 let initialized = false;
 let prewarmed = false;
@@ -29,13 +29,12 @@ function getController(): DiaryAppController {
   return controller;
 }
 
-/** 懒加载幂等初始化（ADR-0003）：控制器 + 写链路弹窗 DOM（标签选择器/写日记弹窗，幂等重建） */
+/** 懒加载幂等初始化（ADR-0003）：控制器 + 写链路浮层 DOM（标签选择器，幂等重建） */
 export async function ensureDiary(_app: App): Promise<void> {
   if (initialized) return;
   initialized = true;
   getController();
   createTagPicker();
-  createAddDialog();
 }
 
 /** 打开日记本主窗口（命令回调；ensure 后 show——controller.show 内部惰性创建 DOM） */
@@ -43,10 +42,10 @@ export function openDiary(app: App): void {
   void ensureDiary(app).then(() => getController().show());
 }
 
-/** 写日记命令回调（bz-diary-write）：ensure 后直接开写日记弹窗；滚轮年份范围取自当前墙数据 */
+/** 写日记命令回调（bz-diary-write）：ensure 后摊开册子，排好了就在书上摆出写作内页 */
 export function openDiaryWrite(app: App): void {
   void ensureDiary(app).then(() => {
-    openAddDialog({ yearRange: getController().getYearRange() ?? undefined });
+    getController().openWrite();
   });
 }
 
@@ -69,8 +68,8 @@ export function prewarmDiary(app: App, isUnloaded: () => boolean = () => false):
 }
 
 /** 卸载清理（main.ts onunload 调用；未初始化调用为幂等空清理）。
- *  D15：标签选择器/写日记弹窗两个 body 级 mask 随懒加载常驻 body——不摘会成为
- *  不可见不可点的纯残留，卸载时按 id 移除。 */
+ *  D15：标签选择器的 body 级 mask 随懒加载常驻 body——不摘会成为不可见不可点的纯残留，
+ *  卸载时按 id 移除。 */
 export function unloadDiary(): void {
   if (controller) controller.cleanup();
   controller = null;
@@ -78,5 +77,4 @@ export function unloadDiary(): void {
   prewarmed = false;
   invalidateWallCache(); // ②：复位墙数据缓存 + 摘域事件失效订阅，重新启用插件时重新预热
   document.getElementById('diary-tag-selector-mask')?.remove();
-  document.getElementById('add-diary-mask')?.remove();
 }

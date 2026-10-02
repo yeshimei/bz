@@ -34,10 +34,11 @@ import { getApp } from '../core/app';
 import { onDomainEvent } from '../core/domain-bus';
 import { escapeHtml } from '../core/utils';
 import { openFlowDialog } from '../core/flow-dialog';
-import { DIARY_DIRECTORY, inWallDirs, getTagEmoji } from './config';
+import { DIARY_DIRECTORY, inWallDirs, getTagEmoji, getSortedTagsForAddDialog } from './config';
 import {
   loadWallEntries,
   invalidateWallCache,
+  onWallProgress,
   mediaSrc,
   extractMedia,
   extractSegments,
@@ -57,10 +58,12 @@ import {
   cnNum,
   pad2,
   weekdayOf,
+  writeDaystampHTML,
   WEEK,
   type RenderCtx,
 } from './render';
 import {
+  addEntry,
   findDiaryEntry,
   removeDiaryEntries,
   isUnparsedRefusal,
@@ -75,11 +78,13 @@ import {
   reclassifyEntry,
   deleteEncryptedEntry,
 } from './encrypt';
-import { openAddDialog, showTagPicker, hideAddDialog, hideTagPicker } from './ui/dialogs';
+import { showTagPicker, hideTagPicker } from './ui/dialogs';
 import { copyDiaryLink, showConfirm } from './ui/entry-actions';
+import { parseFlexibleDateTime } from './parser';
+import { MEDIA_PICK_MAX_MB, PICK_MEDIA_ACCEPT, writePickedMedia } from './media-import';
 /* 纯层只吐 data-lucide 占位（iconSpan），兑现统一在这里做一次：
    插件端走 setIcon（全 lucide 名），评审壳走 prototype-icons.js 的手写白名单。 */
-import { mountIcons } from '../core/ui';
+import { mountIcons, uiProgress } from '../core/ui';
 
 // ===== 常量 =====
 
@@ -95,6 +100,8 @@ const DAYSTAMP_KEEP_PX = 96;
 const REFRESH_DEBOUNCE_MS = 400;
 /** 滚轮翻页节流 */
 const WHEEL_LOCK_MS = 560;
+/** 进度纸条的显示延时：读得快（预热缓存命中）就不摆这一下，免得闪一闪 */
+const LOADING_SHOW_DELAY_MS = 120;
 
 // ===== 纯函数（可单测）=====
 
@@ -365,6 +372,16 @@ export class DiaryAppController {
   private lbCountEl!: HTMLElement;
   private toastEl!: HTMLElement;
   private fallbackEl!: HTMLElement;
+  /** 开册进度（纸条 + 进度条 + 读数）：读盘期间摆在桌上，成册即收 */
+  private loadingEl!: HTMLElement;
+  private loadingTitleEl!: HTMLElement;
+  private loadingBarEl!: HTMLElement;
+  private loadingCountEl!: HTMLElement;
+  /** 写作内页（ADR-0233）：一张素纸盖在书页上，正文写在这一页里 */
+  private wspEl!: HTMLElement;
+  private wspDayEl!: HTMLElement;
+  private wspAreaEl!: HTMLTextAreaElement;
+  private wspToolsEl!: HTMLElement;
   /** 右上角常驻的「收起」钮（整屏场景唯一可见出口） */
   private closeEl!: HTMLElement;
   /** 火漆密码框（域内自绘，主密码交给真保险箱校验） */
@@ -406,6 +423,23 @@ export class DiaryAppController {
   private encMediaCache = new Map<string, Promise<string | null>>();
   private lastSpreadCount = 0;
   private cal = { year: 2026, month: 1 };
+  /** 台历当前模式：跳日（文具「跳」）或写作内页的改日子·时辰 */
+  private calMode: 'jump' | 'write' = 'jump';
+  /** 写作模式下台历里选中的那天（未选回落草稿当前那天） */
+  private calDate: string | null = null;
+  /**
+   * 写作内页的草稿（ADR-0233）：点「写」时立，落笔/揉掉即销。
+   * 只存日子、时辰与已选贴纸——正文以 textarea 的 value 为准（不进状态，免得两份真相）。
+   */
+  private draft: { date: string; time: string; tags: string[] } | null = null;
+  /** 落笔进行中（防连点：写盘慢时双击「落笔」会在同刻落两篇） */
+  private saving = false;
+  /** 开册进度条的 `uiProgress` 句柄（每次 show 现建，成册随层一起摘） */
+  private loadBar: { el: HTMLElement; setValue: (n: number) => void } | null = null;
+  /** 进度条的显示延时器：读得快（缓存命中）就不闪这一下 */
+  private loadShowTimer: ReturnType<typeof setTimeout> | null = null;
+  /** 本次开册的读盘 + 成册任务（`bz-diary-write`：等它落地再摆写作内页） */
+  private loadTask: Promise<void> | null = null;
 
   // ---------- 生命周期标记 ----------
   private _initialized = false;
@@ -471,6 +505,14 @@ export class DiaryAppController {
     this.passEl = q('.bz-diary-pass');
     this.passInputEl = q<HTMLInputElement>('.bz-diary-pass-input');
     this.passErrEl = q('.bz-diary-pass-err');
+    this.loadingEl = q('.bz-diary-loading');
+    this.loadingTitleEl = q('.bz-diary-ld-title');
+    this.loadingBarEl = q('.bz-diary-ld-bar');
+    this.loadingCountEl = q('.bz-diary-ld-count');
+    this.wspEl = q('.bz-diary-wsp');
+    this.wspDayEl = q('.bz-diary-wsp-day');
+    this.wspAreaEl = q<HTMLTextAreaElement>('.bz-diary-wsp-area');
+    this.wspToolsEl = q('.bz-diary-wsp-tools');
 
     this.bindChrome();
     this.bindMenu();
@@ -481,6 +523,7 @@ export class DiaryAppController {
     this.bindSlip();
     this.bindPass();
     this.bindTools();
+    this.bindWrite();
 
     registerPanelEsc('diary', () => !!this.root && this.root.style.display === 'flex', () => this.escapeStack());
 
@@ -751,12 +794,14 @@ export class DiaryAppController {
 
   private turnPage(dir: 1 | -1): void {
     if (!this.flip) return;
+    if (this.writeGuard()) return; // 草稿在纸上：这一页还没写完，不该翻过去
     if (dir > 0) this.flip.flipNext();
     else this.flip.flipPrev();
   }
 
   private jumpToPage(pi: number): void {
     if (!this.flip || !this.pages.length) return;
+    if (this.writeGuard()) return; // 写作内页摊着：索引/台历的跳转也先让路（落笔后自会回到最新那页）
     this.flip.turnToPage(Math.max(0, Math.min(this.pages.length - 1, pi)));
   }
 
@@ -1044,7 +1089,10 @@ export class DiaryAppController {
     document.addEventListener('keydown', this.onKeydown);
 
     /* 常驻出口：右上角「收起」钮 */
-    this.closeEl.addEventListener('click', () => this.hide());
+    this.closeEl.addEventListener('click', () => {
+      if (this.writeGuard()) return; // 草稿在纸上：先落笔或揉掉
+      this.hide();
+    });
 
     /* 点遮罩空白处 = 收起整本（与其他域「点遮罩关闭」同口径）。
        书 / 文具 / 各浮层都是 desk 的子节点，点它们不会命中这层；
@@ -1064,6 +1112,7 @@ export class DiaryAppController {
       ) {
         return;
       }
+      if (this.writeGuard()) return; // 草稿在纸上：先落笔或揉掉
       this.hide();
     });
 
@@ -1128,7 +1177,7 @@ export class DiaryAppController {
     this.root.style.setProperty('--bz-diary-book-zoom', zoom.toFixed(4));
   }
 
-  /** Esc 分流：纸条 → 贴纸册 → 台历 → 抽出的一张纸 → 灯箱 → 便签 → 翻回最新 */
+  /** Esc 分流：纸条 → 贴纸册 → 台历 → 抽出的一张纸 → 灯箱 → 便签 → 写作内页 → 翻回最新 */
   private escapeStack(): void {
     if (!this.root || this.root.style.display !== 'flex') return;
     if (!this.passEl.hidden) {
@@ -1159,6 +1208,9 @@ export class DiaryAppController {
       this.closeMenu();
       return;
     }
+    /* 写作内页摊着：Esc 不关整本、也不翻页（草稿会跟着一起没），只提醒一句
+       —— 与原型同口径，纸上那两个动作才是出口 */
+    if (this.writeGuard()) return;
     /* 没有扉页可「合上」：ESC 分两步收尾——先翻回最新那一页，再关掉整本
        （此前只翻回第 0 页就停住，等于面板永远关不掉：整屏场景里再没有别的出口） */
     if (this.flip && this.cursor > 0) {
@@ -1839,20 +1891,35 @@ export class DiaryAppController {
   //  台历（跳日子）
   // ============================================================
 
-  private openCal(): void {
-    const newest = this.entries[0];
-    const base = newest ? newest.date : '2026-01-01';
+  /**
+   * 台历两种模式（原型同款）：
+   * - `jump`（默认，点「跳」文具）：点**落过笔**的日子 → 翻到那天；
+   * - `write`（写作内页的「改日子 · 时辰」）：**所有日子都可点**（给空白日子补写是常事），
+   *   底下多一行时辰输入——`parseFlexibleDateTime` 认 `21:30` / `1 分钟前` / `昨天 08:00`，
+   *   「就这天」一次性回写草稿的日子与时辰。
+   */
+  private openCal(mode: 'jump' | 'write' = 'jump'): void {
+    this.calMode = mode;
+    const d = this.draft;
+    const base = mode === 'write' && d ? d.date : this.entries[0]?.date || '2026-01-01';
     this.cal.year = Number(base.slice(0, 4));
     this.cal.month = Number(base.slice(5, 7));
-    this.calTimeRowEl.hidden = true; // 改日子·时辰属写作，已随写链路走 openAddDialog
-    this.calOkEl.hidden = true; // 纯跳日模式没有可提交的选中态，「合上」是唯一出口
+    this.calTimeRowEl.hidden = mode !== 'write';
+    this.calOkEl.hidden = mode !== 'write';
     this.calErrEl.textContent = '';
+    if (mode === 'write' && d) {
+      this.calInputEl.value = d.time;
+      this.calDate = d.date;
+    } else {
+      this.calDate = null;
+    }
     this.renderCal();
     this.calEl.hidden = false;
   }
 
   private renderCal(): void {
     const { year, month } = this.cal;
+    const writeMode = this.calMode === 'write';
     this.calYmEl.textContent = `${year} 年 ${month} 月`;
     const byDay = new Map<number, number>();
     for (const e of this.entries) {
@@ -1867,15 +1934,27 @@ export class DiaryAppController {
     for (let i = 0; i < first; i++) html += '<span class="bz-diary-cal-cell"></span>';
     for (let d = 1; d <= days; d++) {
       const n = byDay.get(d);
+      const sel = this.calDate === `${year}-${pad2(month)}-${pad2(d)}`;
       /* `data-n` 是角上那枚「当天几则」小字（原型同款）；不设就白留一条 ::after 规则 */
-      html += `<span class="bz-diary-cal-cell${n ? ' bz-diary-has' : ''}" data-d="${d}"${
-        n ? ` data-n="${n}"` : ''
-      }>${d}</span>`;
+      html += `<span class="bz-diary-cal-cell${n ? ' bz-diary-has' : ''}${
+        writeMode ? ' bz-diary-pickable' : ''
+      }${sel ? ' bz-diary-sel' : ''}" data-d="${d}"${n ? ` data-n="${n}"` : ''}>${d}</span>`;
     }
     this.calGridEl.innerHTML = html;
-    this.calGridEl.querySelectorAll<HTMLElement>('.bz-diary-cal-cell.bz-diary-has').forEach((c) => {
+    /* 写作模式所有日子都能点（选中只是标出来，「就这天」才提交）；
+       跳日模式只给落过笔的日子挂监听——点了空日子只会弹一句「那天没落笔」，白费一次点击 */
+    const pickable = writeMode ? '.bz-diary-cal-cell[data-d]' : '.bz-diary-cal-cell.bz-diary-has';
+    this.calGridEl.querySelectorAll<HTMLElement>(pickable).forEach((c) => {
       c.addEventListener('click', () => {
         const date = `${year}-${pad2(month)}-${pad2(Number(c.dataset.d))}`;
+        if (writeMode) {
+          this.calDate = date;
+          this.calGridEl
+            .querySelectorAll('.bz-diary-sel')
+            .forEach((x) => x.classList.remove('bz-diary-sel'));
+          c.classList.add('bz-diary-sel');
+          return;
+        }
         this.closeCal();
         this.jumpToDay(date);
       });
@@ -1897,11 +1976,54 @@ export class DiaryAppController {
     this.toast('这一册里，那天没落笔');
   }
 
+  /**
+   * 「就这天」：写作模式才有的提交。
+   *
+   * 分工与原型一致：**日子从格子来**（选中那天，没选就是草稿原来那天），**时辰从这行字来**——
+   * 所以这一行认的是「时辰」而不是完整时刻：`21:30` 直接认，`1 分钟前` / `昨天 21:30`
+   * 走 `parseFlexibleDateTime` 取它的时分。认不出来就留在框里报错，不猜。
+   */
+  private commitCalWrite(): void {
+    const d = this.draft;
+    if (!d) {
+      this.closeCal();
+      return;
+    }
+    const raw = this.calInputEl.value.trim();
+    const time = this.parseCalTime(raw);
+    if (!time) {
+      this.calErrEl.textContent = '这行时辰没认出来';
+      return;
+    }
+    d.date = this.calDate || d.date;
+    d.time = time;
+    this.renderWspDay();
+    this.closeCal();
+    this.toast(`写成 ${d.date} ${d.time}`);
+  }
+
+  /** 时辰输入 → `HH:mm`；`21:30` 这类直读，其余交自然语言解析取时分 */
+  private parseCalTime(raw: string): string | null {
+    const bare = raw.match(/^(\d{1,2})[:：](\d{1,2})$/);
+    if (bare) {
+      const hh = Number(bare[1]);
+      const mm = Number(bare[2]);
+      if (hh > 23 || mm > 59) return null;
+      return `${pad2(hh)}:${pad2(mm)}`;
+    }
+    const m = parseFlexibleDateTime(raw);
+    return m && m.isValid() ? m.format('HH:mm') : null;
+  }
+
   private bindCal(): void {
     this.calEl.addEventListener('click', (ev) => {
       const t = ev.target as HTMLElement;
       if (t.closest('.bz-diary-cal-cancel') || !t.closest('.bz-diary-cal')) {
         this.closeCal();
+        return;
+      }
+      if (t.closest('.bz-diary-cal-ok')) {
+        this.commitCalWrite();
         return;
       }
       const nav = t.closest<HTMLElement>('.bz-diary-cal-nav');
@@ -1917,6 +2039,11 @@ export class DiaryAppController {
         }
         this.renderCal();
       }
+    });
+    this.calInputEl.addEventListener('keydown', (ev) => {
+      if (ev.key !== 'Enter') return;
+      ev.preventDefault();
+      this.commitCalWrite();
     });
   }
 
@@ -2107,13 +2234,221 @@ export class DiaryAppController {
     }
   }
 
-  /** 写一篇：本域写链路（守卫 / 串行队列 / 加密分流 / 写后跳转都在那边），写完关册子去新笔记 */
+  // ============================================================
+  //  写作内页（ADR-0233）：点「写」在书上摊开一张素纸，正文写在这一页上
+  // ============================================================
+
+  /**
+   * 摊开写作内页（原型 `.scratch/diary-quill` 的「铅笔写」）。
+   *
+   * 与旧弹窗（`openAddDialog`）的分工：那边只剩「按类改标签」的标签选择器在用；
+   * 新建一篇现在全在这一页上——日子/时辰、正文、贴纸、落笔，四件都在纸面上，
+   * 落笔直接进写层（`store.addEntry` 的守卫 / 串行队列 / 同刻唯一一条都不绕）。
+   */
   private startWrite(): void {
-    try {
-      openAddDialog({ yearRange: this.getYearRange() ?? undefined, onSaved: () => this.hide() });
-    } catch (e) {
-      notice(`写日记暂不可用：${e instanceof Error ? e.message : String(e)}`, 'error');
+    if (this.draft) {
+      this.toast('先把这张纸写完，或揉掉');
+      this.focusWrite();
+      return;
     }
+    const now = new Date();
+    this.draft = {
+      date: `${now.getFullYear()}-${pad2(now.getMonth() + 1)}-${pad2(now.getDate())}`,
+      time: `${pad2(now.getHours())}:${pad2(now.getMinutes())}`,
+      tags: [],
+    };
+    this.wspAreaEl.value = '';
+    this.renderWspDay();
+    this.renderWspTools();
+    this.wspEl.hidden = false;
+    /* 等这一页摆稳再落焦点（原型同款）：摆的这一拍里元素还在被 CSS 定位，
+       立刻 focus 会把整本书滚进视口 */
+    setTimeout(() => this.focusWrite(), 60);
+  }
+
+  private focusWrite(): void {
+    const ta = this.wspAreaEl;
+    ta.focus();
+    ta.setSelectionRange(ta.value.length, ta.value.length);
+  }
+
+  /** 日戳（与正文日戳同源）+ 「改日子 · 时辰」小签 */
+  private renderWspDay(): void {
+    const d = this.draft;
+    if (!d) return;
+    this.wspDayEl.innerHTML = writeDaystampHTML(d.date);
+  }
+
+  /**
+   * 贴纸（标签）chips：口径与写日记弹窗同源（`getSortedTagsForAddDialog`，不含「加密」），
+   * 展开过的二级标签在此已是叶子名。选中态走 `bz-diary-on`。
+   */
+  private renderWspTools(): void {
+    const picked = new Set(this.draft?.tags || []);
+    const chips = getSortedTagsForAddDialog()
+      .map(
+        (t) =>
+          `<span class="bz-diary-wsp-chip${picked.has(t) ? ' bz-diary-on' : ''}" data-tag="${escapeHtml(
+            t
+          )}">${getTagEmoji(t)} ${escapeHtml(t)}</span>`
+      )
+      .join('');
+    this.wspToolsEl.innerHTML =
+      `<span class="bz-diary-wsp-media" title="从本机选照片 / 录音 / 视频，放进 vault 里引用">＋ 贴一件</span>` +
+      chips;
+  }
+
+  private bindWrite(): void {
+    this.wspEl.addEventListener('click', (ev) => {
+      const t = ev.target as HTMLElement;
+      if (t.closest('.bz-diary-wsp-datebtn')) {
+        this.openCal('write');
+        return;
+      }
+      if (t.closest('.bz-diary-wsp-media')) {
+        this.pickMedia();
+        return;
+      }
+      const chip = t.closest<HTMLElement>('.bz-diary-wsp-chip');
+      if (chip) {
+        this.toggleDraftTag(chip);
+        return;
+      }
+      const act = t.closest<HTMLElement>('[data-wact]');
+      if (!act) return;
+      if (act.dataset.wact === 'discard') this.discardWrite();
+      else if (act.dataset.wact === 'save') void this.saveWrite();
+    });
+  }
+
+  private toggleDraftTag(chip: HTMLElement): void {
+    const d = this.draft;
+    const tag = chip.dataset.tag || '';
+    if (!d || !tag) return;
+    const i = d.tags.indexOf(tag);
+    if (i >= 0) d.tags.splice(i, 1);
+    else d.tags.push(tag);
+    chip.classList.toggle('bz-diary-on', i < 0);
+  }
+
+  /** 揉掉这张纸。写过的字不静默丢：有正文先问一句（纸条层，本域自己的确认件）。 */
+  private discardWrite(): void {
+    if (!this.draft) return;
+    if (this.wspAreaEl.value.trim()) {
+      this.openSlip({
+        title: '这张纸还没落笔',
+        body: '揉掉就没了。',
+        ok: '揉掉',
+        cancelText: '接着写',
+        danger: true,
+        onSubmit: () => {
+          this.closeSlip();
+          this.dropWrite();
+          return null;
+        },
+      });
+      return;
+    }
+    this.dropWrite();
+  }
+
+  private dropWrite(): void {
+    this.draft = null;
+    this.wspAreaEl.value = '';
+    this.wspEl.hidden = true;
+  }
+
+  /**
+   * 落笔：正文、日子时辰、贴纸一并进写层（`store.addEntry`）。
+   *
+   * 落完之后只翻回第 0 页——新条目就是最新那一篇，而 `diary:entry-added` 的域事件会安排
+   * 一次防抖回刷把这一篇排进册子（此处不抢着重排，免得同一拍排两遍整册）。
+   */
+  private async saveWrite(): Promise<void> {
+    const d = this.draft;
+    if (!d || this.saving) return;
+    const text = this.wspAreaEl.value.trim();
+    if (!text) {
+      this.toast('一个字都没写呢');
+      this.focusWrite();
+      return;
+    }
+    this.saving = true;
+    try {
+      await addEntry(d.date, d.time, d.tags.length ? d.tags : ['日记'], text);
+      this.dropWrite();
+      this.jumpToPage(0);
+      this.toast('记下了，盖个章');
+    } catch (e) {
+      // 守卫拒写 / 读盘失败的人话通知已由写层发出，这里只兜底其余异常
+      if (!isUnparsedRefusal(e) && !isDiaryReadFailure(e)) {
+        console.error('落笔失败:', e);
+        notice(`落笔没成：${e instanceof Error ? e.message : String(e)}`, 'error');
+      }
+    } finally {
+      this.saving = false;
+    }
+  }
+
+  // ============================================================
+  //  内页媒体：从本机挑一件，写进 vault，正文里留一条 `![[名字]]`
+  // ============================================================
+
+  private pickMedia(): void {
+    if (!this.draft) return;
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = PICK_MEDIA_ACCEPT;
+    input.multiple = true;
+    input.addEventListener('change', () => {
+      const files = Array.from(input.files || []);
+      void this.importMedia(files);
+    });
+    input.click();
+  }
+
+  private async importMedia(files: File[]): Promise<void> {
+    if (!files.length) return;
+    const app = this.app();
+    const done: string[] = [];
+    const failed: string[] = [];
+    for (const f of files) {
+      if (f.size > MEDIA_PICK_MAX_MB * 1024 * 1024) {
+        failed.push(f.name);
+        continue;
+      }
+      try {
+        this.insertMediaRef(await writePickedMedia(app, f));
+        done.push(f.name);
+      } catch (e) {
+        console.warn('[diary] 媒体放进 vault 失败：', f.name, e);
+        failed.push(f.name);
+      }
+    }
+    if (done.length) {
+      notice(
+        `放进册子 ${done.length} 件${failed.length ? `（另有 ${failed.length} 件没成）` : ''}`,
+        failed.length ? 'warning' : 'success'
+      );
+    } else if (failed.length) {
+      notice(`这些没能放进册子：${failed.join('、')}`, 'error');
+    }
+  }
+
+  /** 在光标处插一条媒体引用（自占一行：省得排成「字![[图]]字」那种不成块的样子） */
+  private insertMediaRef(name: string): void {
+    const ta = this.wspAreaEl;
+    const ref = `![[${name}]]`;
+    const start = ta.selectionStart ?? ta.value.length;
+    const end = ta.selectionEnd ?? start;
+    const before = ta.value.slice(0, start);
+    const after = ta.value.slice(end);
+    const lead = before && !before.endsWith('\n') ? '\n' : '';
+    const block = `${lead}${ref}\n`;
+    ta.value = before + block + after;
+    const caret = before.length + block.length;
+    ta.setSelectionRange(caret, caret);
+    ta.focus();
   }
 
   // ============================================================
@@ -2482,7 +2817,14 @@ export class DiaryAppController {
   //  显示 / 隐藏 / 卸载
   // ============================================================
 
-  /** 打开日记本（命令路径：ensure 后 show） */
+  /**
+   * 打开日记本（命令路径：ensure 后 show）。
+   *
+   * 一条直路：**读全量 → 起进度条 → 读完一次成册**。
+   * 上千篇正文走磁盘读 + 每批 10，读完要好几秒；这段时间书还是空的，桌上摆一张
+   * 报进度的纸条（`showLoading`），读完换「正在装订」，成册即收——不再先排一小批顶着、
+   * 也不再读完之后在后台重排一遍（那两版真机上都只是「更卡 + 每次打开又整册重排」）。
+   */
   show(): void {
     if (!this._initialized) this.ensureElements();
     const reopen = this._shownOnce;
@@ -2493,12 +2835,104 @@ export class DiaryAppController {
     this._allowCacheNext = true;
     this.subscribeEvents();
     this.subscribeVault();
-    void (async () => {
+    this.loadTask = (async () => {
       await this.afterPaint();
-      await this.loadEntries(this._allowCacheNext);
-      this.relayout(false);
+      this.showLoading();
+      const off = onWallProgress((done, total) => this.updateLoading(done, total));
+      try {
+        await this.loadEntries(this._allowCacheNext);
+      } finally {
+        off();
+      }
+      // 读盘期间被收起（点了遮罩 / Esc）：这一册不必再排，下一次 show 重来
+      if (this.root?.style.display !== 'flex') {
+        this.hideLoading();
+        return;
+      }
+      this.setLoadingBinding();
+      /* 让「正在装订」先画出来：量高 + 切页 + 建书是原子的 O(篇数)，会把这台机器占住一会儿 */
+      await this.afterPaint();
+      try {
+        this.relayout(false);
+      } finally {
+        this.hideLoading();
+      }
       this.toast(reopen ? '又翻开了' : '翻开的是最新那篇');
     })();
+  }
+
+  /**
+   * 写一篇（命令面板 `bz-diary-write`）：先把册子摊开，等这一册排好再在书上摆出写作内页。
+   * 原先这条命令不拉主窗口（直接开旧弹窗）；写作内页是书里的一张纸，得先有书。
+   */
+  openWrite(): void {
+    const already = this.root?.style.display === 'flex';
+    const task = this.loadTask;
+    this.show();
+    if (already) {
+      this.startWrite();
+      return;
+    }
+    void (task ?? Promise.resolve()).then(() => {
+      if (this.root?.style.display === 'flex') this.startWrite();
+    });
+  }
+
+  // ============================================================
+  //  开册进度（读全量 → 一次成册）
+  // ============================================================
+
+  /** 摆出进度纸条。读得快（预热缓存命中）时不摆：先压一个 120ms 的延时，读完即撤。 */
+  private showLoading(): void {
+    this.loadingTitleEl.textContent = '正在翻找…';
+    this.loadingCountEl.textContent = '';
+    if (!this.loadBar) {
+      this.loadBar = uiProgress({ thin: true });
+      this.loadingBarEl.appendChild(this.loadBar.el);
+    }
+    this.loadBar.setValue(0);
+    if (this.loadShowTimer !== null) clearTimeout(this.loadShowTimer);
+    this.loadShowTimer = setTimeout(() => {
+      this.loadShowTimer = null;
+      if (this.root?.style.display === 'flex') this.loadingEl.hidden = false;
+    }, LOADING_SHOW_DELAY_MS);
+  }
+
+  /** 读盘进度（`done / total` = 日记正文篇数，一目一文件 ⇒ 读完就是全量到位） */
+  private updateLoading(done: number, total: number): void {
+    if (total > 0) this.loadBar?.setValue(Math.round((done / total) * 100));
+    this.loadingCountEl.textContent = total > 0 ? `${done} / ${total} 篇` : '';
+  }
+
+  /** 读齐了，换到「装订」这一段：这一段是同步的，进度条停在 100% 不动 */
+  private setLoadingBinding(): void {
+    if (this.loadShowTimer !== null) {
+      clearTimeout(this.loadShowTimer);
+      this.loadShowTimer = null;
+    }
+    this.loadingEl.hidden = false;
+    this.loadingTitleEl.textContent = '正在装订…';
+    this.loadBar?.setValue(100);
+    this.loadingCountEl.textContent = `共 ${this.entries.length} 则`;
+  }
+
+  private hideLoading(): void {
+    if (this.loadShowTimer !== null) {
+      clearTimeout(this.loadShowTimer);
+      this.loadShowTimer = null;
+    }
+    this.loadingEl.hidden = true;
+    this.loadBar?.setValue(0);
+  }
+
+  /**
+   * 「草稿在纸上」的统一门禁：翻页、点遮罩、点收起、Esc 都要先过这道。
+   * 与原型同款——写作页摊开时它不是「一个可以顺便翻过去的浮层」，而是当前唯一该处理的东西。
+   */
+  private writeGuard(): boolean {
+    if (!this.draft || this.wspEl.hidden) return false;
+    this.toast('先落笔，或把这张纸揉掉');
+    return true;
   }
 
   hide(): void {
@@ -2511,7 +2945,9 @@ export class DiaryAppController {
     this.closeCal();
     this.closeMenu();
     this.closePass(false);
-    hideAddDialog();
+    // 写作内页随书一起收：草稿不跨会话（下一次摊开是新的一张纸）
+    this.dropWrite();
+    this.hideLoading();
     hideTagPicker();
     this.pauseAllAudio();
     this.unsubscribeEvents();
@@ -2554,6 +2990,10 @@ export class DiaryAppController {
     if (this.modifyTimer !== null) {
       clearTimeout(this.modifyTimer);
       this.modifyTimer = null;
+    }
+    if (this.loadShowTimer !== null) {
+      clearTimeout(this.loadShowTimer);
+      this.loadShowTimer = null;
     }
     if (this.toolsRaf) cancelAnimationFrame(this.toolsRaf);
     this.unsubscribeEvents();

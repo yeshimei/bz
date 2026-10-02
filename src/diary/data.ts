@@ -94,6 +94,37 @@ export function stripMediaLinks(content: string): string {
 const READ_BATCH_SIZE = 10;
 
 /**
+ * 读盘进度订阅者：`(已读篇数, 总篇数)`。
+ *
+ * 只服务「开册进度条」（日记域 UI）——日记正文是 1243 篇走 `vault.read` 的磁盘读 + 每批 10 的
+ * 串行批次，读完要好几秒；这期间书还是空的，得让人看见「在读、读到哪儿了」。
+ *
+ * 用**模块级订阅**而不是 `loadWallEntries(app, onProgress)` 的入参：预热（`prewarmDiary`）可能
+ * 已经在读同一轮，UI 打开时命中的是**在途**那一个 promise，入参式回调用不上；订阅制对
+ * 「命中在途」与「新起一轮」一视同仁。缓存命中（同步返回全量）不报进度——那时没有等待可言。
+ */
+export type WallProgressFn = (done: number, total: number) => void;
+const progressSinks = new Set<WallProgressFn>();
+
+/** 订阅「当前/下一轮」读盘进度，返回退订函数 */
+export function onWallProgress(fn: WallProgressFn): () => void {
+  progressSinks.add(fn);
+  return () => {
+    progressSinks.delete(fn);
+  };
+}
+
+function emitWallProgress(done: number, total: number): void {
+  for (const fn of [...progressSinks]) {
+    try {
+      fn(done, total);
+    } catch {
+      /* 单个订阅者出错不拖垮读盘 */
+    }
+  }
+}
+
+/**
  * 批量读一个批次（D5' per-file 容错）：单个文件读取/解析失败只跳过该文件
  * （console.warn 一次汇总），不让整墙因一个坏文件空掉。返回成功解析的 WallEntry。
  */
@@ -221,7 +252,8 @@ function toWallEntry(e: DiaryEntry, kind: WallEntry['kind'], dir: string): WallE
 }
 
 /** 加载日记：diaryDir 下所有条目文件（ADR-0130/0131：一目一文件，题目 `YYMMDDHHmm(-N)`；含子目录递归）。
- *  每文件一条，filename=file.path（UI 跳转/写层定位依据）。 */
+ *  每文件一条，filename=file.path（UI 跳转/写层定位依据）。
+ *  每批读完报一次进度（`onWallProgress`）：开册进度条的唯一数据源。 */
 async function loadDiaryEntries(app: App, diaryDir: string): Promise<WallEntry[]> {
   const vault = app.vault;
   const mdFiles = await mdFilesUnder(app, diaryDir);
@@ -241,6 +273,7 @@ async function loadDiaryEntries(app: App, diaryDir: string): Promise<WallEntry[]
         failed
       ))
     );
+    if (progressSinks.size) emitWallProgress(Math.min(i + READ_BATCH_SIZE, mdFiles.length), mdFiles.length);
   }
   warnFailedBatch('日记', failed);
   return entries;

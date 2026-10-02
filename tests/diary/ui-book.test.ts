@@ -16,7 +16,7 @@
 import { describe, expect, it, beforeEach, afterEach, vi, beforeAll } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { setApp } from '../../src/core/app';
+import { setApp, getApp } from '../../src/core/app';
 import { applyDirectories } from '../../src/diary/config';
 import { serializeDiaryEntryFile } from '../../src/core/diary-format';
 import { MockVault, mockAppWithVault } from '../mock-vault';
@@ -441,11 +441,21 @@ describe('render 纯层：命名空间与零内联视觉样式', () => {
     expect(panel).not.toContain('data-tact="eraser"');
   });
 
-  it('ADR-0230 决策 8：书桌上没有书内写作页（写日记仍走本域 openAddDialog）', () => {
+  it('ADR-0233：书桌上摆着写作内页的空壳（正文区 / 贴纸槽 / 揉掉·落笔）', () => {
     const panel = bookPanelHTML();
-    expect(panel).not.toContain('bz-diary-write-pad');
-    expect(panel).not.toContain('bz-diary-wpage');
-    expect(panel).not.toContain('contenteditable');
+    expect(panel).toContain('bz-diary-wsp-area');
+    expect(panel).toContain('bz-diary-wsp-tools');
+    expect(panel).toContain('data-wact="discard"');
+    expect(panel).toContain('data-wact="save"');
+    // 旧写日记弹窗的挂点不再出现在书桌上（那条路已由内页接手）
+    expect(panel).not.toContain('add-diary-popup');
+  });
+
+  it('ADR-0233：开册进度纸条与进度条挂点在位（读全量之前书是空的）', () => {
+    const panel = bookPanelHTML();
+    expect(panel).toContain('bz-diary-loading');
+    expect(panel).toContain('bz-diary-ld-title');
+    expect(panel).toContain('bz-diary-ld-bar');
   });
 
   it('加密条目只出一枚火漆信封（全文不装在纸面上）', () => {
@@ -616,15 +626,16 @@ describe('DiaryAppController · 首屏与建书', () => {
 });
 
 describe('DiaryAppController · 文具四项接线', () => {
-  it('写 → 本域写链路（带年份范围）；找 → 放大镜纸条；跳 → 台历；类 → 贴纸册', async () => {
+  it('写 → 书内写作内页；找 → 放大镜纸条；跳 → 台历；类 → 贴纸册', async () => {
     const c = await openBook();
     const tact = (n: string) => q(`.bz-diary-tools [data-tact="${n}"]`);
     expect(qa('.bz-diary-tools [data-tact]').length).toBe(4);
 
     tact('pencil').click();
-    expect(mocks.openAddDialog).toHaveBeenCalledTimes(1);
-    const opts = mocks.openAddDialog.mock.calls[0][0] as { yearRange?: { min: number } };
-    expect(opts.yearRange?.min).toBe(2025); // 夹具里最早是 2025 年（getYearRange 的滚动范围）
+    expect(q('.bz-diary-wsp').hidden).toBe(false); // ADR-0233：不再开旧弹窗
+    expect(mocks.openAddDialog).not.toHaveBeenCalled();
+    q('[data-wact="discard"]').click(); // 空纸：直接揉掉，不留草稿
+    expect(q('.bz-diary-wsp').hidden).toBe(true);
 
     tact('lens').click();
     expect(q('.bz-diary-slip').hidden).toBe(false);
@@ -1025,3 +1036,232 @@ describe('DiaryAppController · 条目动作走真写层', () => {
     expect(getNoticeMessages().join('\n')).toContain('加载日记失败');
   });
 });
+
+// ============================================================
+//  六、写作内页（ADR-0233）与开册进度
+// ============================================================
+
+/** 内页里的私有件（本文件按「控制器接线」口径直取，不另造公开面） */
+type WriteInternals = {
+  draft: { date: string; time: string; tags: string[] } | null;
+  showLoading(): void;
+  updateLoading(done: number, total: number): void;
+  setLoadingBinding(): void;
+  hideLoading(): void;
+  importMedia(files: File[]): Promise<void>;
+};
+
+const inner = (c: DiaryAppController): WriteInternals => c as unknown as WriteInternals;
+
+/** 假 App 的 fileManager（mock-vault 只给了 processFrontMatter / renameFile；
+ *  「附件默认位置」这条 API 由用例按需补上，用来钉 mediaPathFor 的优先路） */
+function getAppMockFileManager(): { getAvailablePathForAttachment?: (n: string, src?: string) => Promise<string> } {
+  return (getApp() as unknown as { fileManager: Record<string, unknown> })
+    .fileManager as unknown as { getAvailablePathForAttachment?: (n: string, src?: string) => Promise<string> };
+}
+
+/** 摊开写作内页（点「写」文具），返回正文区 */
+async function openWritePage(c: DiaryAppController): Promise<HTMLTextAreaElement> {
+  q('.bz-diary-tools [data-tact="pencil"]').click();
+  await vi.waitFor(() => expect(q('.bz-diary-wsp').hidden).toBe(false));
+  return q<HTMLTextAreaElement>('.bz-diary-wsp-area');
+}
+
+describe('DiaryAppController · 写作内页（ADR-0233）', () => {
+  it('点「写」摊开一张素纸：日戳落在今天、贴纸列出来、不预选任何一类', async () => {
+    const c = await openBook();
+    const area = await openWritePage(c);
+
+    const today = new Date();
+    expect(q('.bz-diary-wsp-day .bz-diary-ds-day').textContent).toBe(String(today.getDate()));
+    expect(q('.bz-diary-wsp-day .bz-diary-ds-year').textContent).toBe(String(today.getFullYear()));
+    expect(q('.bz-diary-wsp-datebtn').textContent).toContain('改日子');
+    expect(qa('.bz-diary-wsp-chip').length).toBeGreaterThan(3);
+    expect(qa('.bz-diary-wsp-chip.bz-diary-on').length).toBe(0); // 与旧弹窗同口径：默认不选
+    // 这张纸不是 StPageFlip 的页：书里的页数一点没变
+    expect(lastFlip().items.length).toBe(3);
+    await vi.waitFor(() => expect(document.activeElement).toBe(area));
+  });
+
+  it('落笔：正文与贴纸进写层（落盘 + 域事件），内页收起、书翻回最新那页', async () => {
+    const c = await openBook();
+    const area = await openWritePage(c);
+    area.value = '今天猫又把杯子推下去了';
+    const chip = qa('.bz-diary-wsp-chip').find((el) => (el.textContent || '').includes('日记'))!;
+    chip.click();
+    expect(chip.classList.contains('bz-diary-on')).toBe(true);
+
+    const before = new Set(Object.keys(fixtureFiles()));
+    q('[data-wact="save"]').click();
+    await vi.waitFor(() => expect(q('.bz-diary-wsp').hidden).toBe(true));
+
+    const created = [...vault.files.entries()].filter(([p]) => p.startsWith('我的/日记/') && !before.has(p));
+    expect(created.length).toBe(1);
+    expect(created[0][1]).toContain('今天猫又把杯子推下去了');
+    expect(created[0][1]).toContain('日记');
+    expect(lastFlip().page).toBe(0); // 新条目是最新那篇：落回第 0 页等回刷把它排进来
+  });
+
+  it('空纸落笔 → 「一个字都没写呢」，不落盘、内页不关（字还在纸上等着）', async () => {
+    const c = await openBook();
+    await openWritePage(c);
+    const before = vault.files.size;
+    q('[data-wact="save"]').click();
+    await vi.waitFor(() => expect(q('.bz-diary-toast').textContent).toContain('一个字都没写呢'));
+    expect(vault.files.size).toBe(before);
+    expect(q('.bz-diary-wsp').hidden).toBe(false);
+  });
+
+  it('写了一半点「揉掉」：先在纸条层问一句，确认了才收纸', async () => {
+    const c = await openBook();
+    const area = await openWritePage(c);
+    area.value = '写了半句';
+    q('[data-wact="discard"]').click();
+    expect(q('.bz-diary-slip').hidden).toBe(false);
+    expect(q('.bz-diary-slip-title').textContent).toContain('还没落笔');
+    expect(q('.bz-diary-wsp').hidden).toBe(false); // 还没收：选择权在人手上
+
+    qa('.bz-diary-slip-btn')
+      .find((b) => b.textContent === '揉掉')!
+      .click();
+    expect(q('.bz-diary-wsp').hidden).toBe(true);
+    expect(q('.bz-diary-slip').hidden).toBe(true);
+    expect(inner(c).draft).toBeNull();
+  });
+
+  it('草稿在纸上：滚轮 / 索引行跳转都让路，Esc 只提醒不关册子', async () => {
+    const c = await openBook();
+    await openWritePage(c);
+    const rec = lastFlip();
+
+    q('.bz-diary-book').dispatchEvent(new WheelEvent('wheel', { deltaY: 120, bubbles: true, cancelable: true }));
+    expect(rec.page).toBe(0);
+
+    q('.bz-diary-bk-edge').click(); // 抽出册页索引
+    qa('.bz-diary-idx-row')[0].click(); // 点一行
+    expect(rec.page).toBe(0); // 没翻过去
+
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+    expect(q('.bz-diary-scene').style.display).toBe('flex'); // 册子还开着
+    expect(q('.bz-diary-wsp').hidden).toBe(false);
+    expect(q('.bz-diary-toast').textContent).toContain('先落笔');
+  });
+
+  it('改日子 · 时辰：台历进写作模式（空白日子也能点），「就这天」回写日戳', async () => {
+    const c = await openBook();
+    await openWritePage(c);
+    q('.bz-diary-wsp-datebtn').click();
+    expect(q('.bz-diary-cal-pop').hidden).toBe(false);
+    expect(q('.bz-diary-cal-time-row').hidden).toBe(false); // 写作模式才有时辰行
+    expect(q('.bz-diary-cal-ok').hidden).toBe(false);
+
+    const cells = qa('.bz-diary-cal-cell[data-d]');
+    expect(cells.length).toBeGreaterThanOrEqual(28);
+    // 写作模式：整月的格子都可点（补写空白日子是常事），跳日模式只给有落笔的那天挂监听
+    expect(qa('.bz-diary-cal-cell.bz-diary-pickable').length).toBe(cells.length);
+    const blank = cells.find((x) => !x.classList.contains('bz-diary-has'))!;
+    blank.click();
+    expect(blank.classList.contains('bz-diary-sel')).toBe(true);
+
+    q<HTMLInputElement>('.bz-diary-ct-input').value = '07:05';
+    q('.bz-diary-cal-ok').click();
+    expect(q('.bz-diary-cal-pop').hidden).toBe(true);
+    expect(q('.bz-diary-wsp-day .bz-diary-ds-day').textContent).toBe(String(Number(blank.dataset.d)));
+    expect(inner(c).draft?.time).toBe('07:05');
+  });
+
+  it('时辰那一行认不出就留在框里报错，日子与时辰都不动（不猜）', async () => {
+    const c = await openBook();
+    await openWritePage(c);
+    const before = inner(c).draft!.time;
+    q('.bz-diary-wsp-datebtn').click();
+    q<HTMLInputElement>('.bz-diary-ct-input').value = '晌午前后';
+    q('.bz-diary-cal-ok').click();
+    expect(q('.bz-diary-cal-pop').hidden).toBe(false);
+    expect(q('.bz-diary-ct-err').textContent).toContain('没认出来');
+    expect(inner(c).draft?.time).toBe(before);
+  });
+
+  it('台历跳日模式仍是「只有落过笔的日子可点」，且不显时辰行', async () => {
+    await openBook();
+    q('.bz-diary-tools [data-tact="calendar"]').click();
+    expect(q('.bz-diary-cal-time-row').hidden).toBe(true);
+    expect(q('.bz-diary-cal-ok').hidden).toBe(true);
+    expect(qa('.bz-diary-cal-cell.bz-diary-pickable').length).toBe(0);
+  });
+
+  it('添一件本机媒体：写进 vault 的附件位置，正文里留一条 ![[名字]]（自占一行）', async () => {
+    const c = await openBook();
+    const app = getAppMockFileManager();
+    app.getAvailablePathForAttachment = vi.fn(async (n: string) => `CONFIG/APPENDIX/${n}`);
+
+    const area = await openWritePage(c);
+    area.value = '先写一句';
+    area.setSelectionRange(area.value.length, area.value.length);
+
+    const file = {
+      name: '相纸.png',
+      size: 3,
+      arrayBuffer: async () => new Uint8Array([1, 2, 3]).buffer,
+    } as unknown as File;
+    await inner(c).importMedia([file]);
+
+    expect(app.getAvailablePathForAttachment).toHaveBeenCalledWith('相纸.png', '我的/日记/');
+    expect(vault.binaryFiles.has('CONFIG/APPENDIX/相纸.png')).toBe(true);
+    expect(area.value).toBe('先写一句\n![[相纸.png]]\n');
+    expect(getNoticeMessages().join('\n')).toContain('放进册子 1 件');
+  });
+
+  it('宿主没有 getAvailablePathForAttachment 时退到日记目录下的「附件/」，并自己避重名', async () => {
+    const c = await openBook();
+    const area = await openWritePage(c);
+    const file = (name: string) =>
+      ({ name, size: 1, arrayBuffer: async () => new Uint8Array([1]).buffer }) as unknown as File;
+
+    await inner(c).importMedia([file('相纸.png')]);
+    await inner(c).importMedia([file('相纸.png')]);
+    expect(vault.binaryFiles.has('我的/日记/附件/相纸.png')).toBe(true);
+    expect(vault.binaryFiles.has('我的/日记/附件/相纸_2.png')).toBe(true); // 不覆盖前一件
+    expect(area.value).toBe('![[相纸.png]]\n![[相纸_2.png]]\n');
+  });
+});
+
+describe('DiaryAppController · 开册进度（读全量 → 一次成册）', () => {
+  it('读盘进度一路报到 UI：读数与填充跟着 (已读, 总数) 走，装订那一段是 100%', async () => {
+    const c = await openBook();
+    const priv = inner(c);
+    priv.showLoading();
+    priv.updateLoading(30, 120);
+    expect(q('.bz-diary-ld-count').textContent).toBe('30 / 120 篇');
+    expect(q<HTMLElement>('.bz-diary-ld-bar .bz-progress i').style.width).toBe('25%');
+
+    priv.setLoadingBinding();
+    expect(q('.bz-diary-ld-title').textContent).toBe('正在装订…');
+    expect(q<HTMLElement>('.bz-diary-ld-bar .bz-progress i').style.width).toBe('100%');
+    expect(q('.bz-diary-ld-count').textContent).toContain('则');
+
+    priv.hideLoading();
+    expect(q('.bz-diary-loading').hidden).toBe(true);
+  });
+
+  it('读盘每批都向订阅者报一次进度，末次 = 读到的全量（进度条的唯一数据源）', async () => {
+    const { onWallProgress } = await import('../../src/diary/data');
+    const seen: [number, number][] = [];
+    const off = onWallProgress((done, total) => seen.push([done, total]));
+    try {
+      await openBook();
+    } finally {
+      off();
+    }
+    expect(seen.length).toBeGreaterThan(0);
+    const [done, total] = seen[seen.length - 1];
+    expect(total).toBeGreaterThan(0);
+    expect(done).toBe(total); // 末尾那一批读完 = 全量到位
+  });
+
+  it('成册之后进度纸条收起（不挡着书）', async () => {
+    await openBook();
+    expect(q('.bz-diary-loading').hidden).toBe(true);
+  });
+});
+
