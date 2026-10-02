@@ -29,6 +29,7 @@ import {
   plainTextOf,
   lastReachableCursor,
   SINGLE_MAX_W,
+  WIDEN_CAP,
   type FlowItem,
   type Page,
 } from '../../src/diary/ui';
@@ -207,10 +208,10 @@ async function openBook(): Promise<DiaryAppController> {
  * 掐掉后台续排（`ui.ts::scheduleWidenFull`）：本轮只想看**排版窗口**本身
  * （首屏那 30 则 / 书尾续叠 / 按需推宽）时用。
  *
- * 正常路径是读盘结束后 350ms 在后台一次排到全量——不掐掉的话窗口态只活 350ms，
- * 断言就退化成「机器快就过、机器慢就红」。掐掉后窗口停在首屏值，专测窗口那套逻辑；
+ * 正常路径是读盘结束后 350ms 在后台自动续排（目标 `min(全量, WIDEN_CAP)`）——不掐掉的话窗口态只活
+ * 350ms，断言就退化成「机器快就过、机器慢就红」。掐掉后窗口停在首屏值，专测窗口那套逻辑；
  * 要测后台续排本身（它才是主路），就**别**掐——见「首屏只排 30 则…」与
- * 「后台排到全量后…」两条。
+ * 「后台续排到位后…」两条。
  */
 function freezeWindow(c: DiaryAppController): void {
   const raw = c as unknown as { widenTimer: ReturnType<typeof setTimeout> | null };
@@ -293,10 +294,86 @@ describe('paginateFlow（块流 → 页）', () => {
     expect(pages.map((p) => p.length)).toEqual([1, 1]);
   });
 
+  it('可缩块（照片 / 视频）放不下时先等比缩到塞进剩余高度，不在页尾留白', () => {
+    // 症状（真机图一）：左页下半页整整一片白，照片独自挪到右页——
+    // 只差一点点就整块换页。规则 3a 让可缩块先缩，塞得下就留在本页。
+    const seen: number[] = [];
+    const items_ = items([80], [40]);
+    items_[1].fit = true;
+    const shrink = (e: HTMLElement, maxH: number): number | null => {
+      seen.push(maxH);
+      expect(e).toBe(items_[1].el);
+      return maxH - 5;
+    };
+    const pages = paginateFlow(items_, 100, noSplit, () => 0, shrink);
+    expect(seen).toEqual([20]); // 剩余 = 100 - 80
+    expect(pages.map((p) => p.length)).toEqual([2]); // 缩完仍同页
+  });
+
+  it('可缩块缩不动（到下限，shrink 返回 null）时照旧换页', () => {
+    const items_ = items([80], [40]);
+    items_[1].fit = true;
+    const pages = paginateFlow(items_, 100, noSplit, () => 0, () => null);
+    expect(pages.map((p) => p.length)).toEqual([1, 1]);
+  });
+
+  it('非可缩块不调 shrink——文字块走逐行续排，日戳必须整块起新纸', () => {
+    let called = 0;
+    const shrink = (): null => {
+      called++;
+      return null;
+    };
+    paginateFlow(items([80], [40]), 100, noSplit, () => 0, shrink);
+    expect(called).toBe(0);
+  });
+
+  it('缩到「塞得下」后不再按剩余高度续切：3a 命中即跳过 3b', () => {
+    // shrink 返回一个恰好 == 剩余高度的高，此时 3b 的 split 不该被触发——
+    // 否则会把一张照片再横切一刀（图的内容被切成两页）。
+    let splitCalled = 0;
+    const split = (): null => {
+      splitCalled++;
+      return null;
+    };
+    const items_ = items([80], [40]);
+    items_[1].fit = true;
+    const pages = paginateFlow(items_, 100, split, () => 0, (e, maxH) => maxH);
+    expect(splitCalled).toBe(0);
+    expect(pages.map((p) => p.length)).toEqual([2]); // 缩到刚好：仍在本页
+  });
+
   it('没有日戳时全部落在一页（块高为 0 的退化场景，jsdom 量尺即如此）', () => {
     const pages = paginateFlow(items([0], [0], [0]), 100, noSplit, () => 0);
     expect(pages.length).toBe(1);
     expect(pages[0].length).toBe(3);
+  });
+});
+
+describe('可缩媒体块（图一：照片放不下 → 页尾大片留白）· 接线守卫', () => {
+  // jsdom 没有排版引擎（offsetHeight 恒 0），缩块的真实几何量不出来，
+  // 但「接线有没有断」可以钉：照片块被标成 fit、分页吃到 shrink、样式消费收缩变量。
+  // 三者缺一，规则 3a 就是死代码——照片又会整块跳到下页、页尾留白。
+  const read = (p: string) => readFileSync(resolve(process.cwd(), p), 'utf8');
+
+  it('照片块（.bz-diary-b-photo）标成可缩块 fit:true', () => {
+    const src = read('src/diary/ui.ts');
+    const m = src.match(/flow\.push\(el\.classList\.contains\('bz-diary-b-photo'\)([\s\S]{0,120}?)\);/);
+    expect(m, 'pushEntryBlocks 里没找到照片块的分流').toBeTruthy();
+    expect(m![1]).toContain('fit: true');
+  });
+
+  it('排版尾段把 fitMedia 作为 shrink 传给 paginateFlow（第 5 个实参）', () => {
+    const src = read('src/diary/ui.ts');
+    const call = src.match(/this\.pages = paginateFlow\(([\s\S]*?)\);/);
+    expect(call, '没找到 paginateFlow 调用').toBeTruthy();
+    expect(call![1]).toContain('this.fitMedia(el, maxH)');
+  });
+
+  it('.bz-diary-b-photo 消费 --bz-diary-ph-w（不然缩块改了变量也没人读）', () => {
+    const css = read('src/diary/styles.css');
+    const block = css.match(/\.bz-diary-b-photo\s*\{([^}]*)\}/);
+    expect(block, '没找到 .bz-diary-b-photo 规则').toBeTruthy();
+    expect(block![1]).toContain('var(--bz-diary-ph-w');
   });
 });
 
@@ -1143,13 +1220,15 @@ describe('DiaryAppController · 排版窗口（ADR-0231）', () => {
     }
   }
 
-  it('首屏只把前 FIRST_PAINT_ENTRIES 则排成纸页，读盘结束后在后台一次排到全量', async () => {
+  it('首屏只把前 FIRST_PAINT_ENTRIES 则排成纸页，读盘结束后在后台自动续排到「盖住全量」', async () => {
     seedManyEntries(45);
     const c = await openBook();
     expect(qa('.bz-diary-b-seal').length).toBe(FIRST_PAINT_ENTRIES); // 上屏 = 窗口
     await vi.waitFor(() => expect(c.entries.length).toBe(45)); // 数据 = 全量
-    /* 后台续排（ADR-0231 决策 12 回修）：不必等用户去点索引/台历，书自己排到全量——
-       此后「点日期跳转」就只剩一次 turnToPage，不再当场付「从最新排到目标」的重排账。 */
+    /* 后台续排（ADR-0231 决策 12 回修 + 2026-10-03 封顶回修）：不必等用户去点索引/台历，
+       书自己在后台排到 `min(全量, WIDEN_CAP)`——此后「点日期跳转」就只剩一次 turnToPage。
+       本夹具 45 则 < WIDEN_CAP(120) ⇒ 这一条落在「全量也够小、一次排完」那支；
+       「条目超过 WIDEN_CAP 只排到封顶」由下面那条单测钉。 */
     await vi.waitFor(() => expect(qa('.bz-diary-b-seal').length).toBe(45));
   });
 
@@ -1312,18 +1391,29 @@ describe('DiaryAppController · 排版窗口（ADR-0231）', () => {
     expect(qa('.bz-diary-b-seal').length).toBe(60); // 书里真排到了那一则
   });
 
-  it('后台排到全量后，点窗口外的月份只是一次翻页（不再当场重排整册）', async () => {
+  it('后台续排到位后，点窗口外的月份只是一次翻页（不再当场重排整册）', async () => {
     seedManyEntries(90);
     const c = await openBook();
     await vi.waitFor(() => expect(c.entries.length).toBe(90));
     const raw = c as unknown as { shown: number };
-    await vi.waitFor(() => expect(raw.shown).toBe(90)); // 后台已一次排到全量，不必等用户去点
+    await vi.waitFor(() => expect(raw.shown).toBe(90)); // 90 < WIDEN_CAP ⇒ 后台已排到全量
     const booksBefore = flipRecords.length; // 每次重排都会 buildBook → 新建一本 StPageFlip 实例
     q('.bz-diary-bk-edge').click();
     qa('.bz-diary-idx-row')[2].click(); // 1 月，最旧那一段
     await vi.waitFor(() => expect(lastFlip().page).toBeGreaterThan(0)); // 真翻过去了
     expect(flipRecords.length).toBe(booksBefore); // 但没重建书 ⇒ 没重排 ⇒ 不卡
     expect(raw.shown).toBe(90);
+  });
+
+  it('后台续排封顶在 WIDEN_CAP：书不跟着条目数无限长（书一重，每次翻页都卡）', async () => {
+    const total = WIDEN_CAP + 60;
+    seedManyEntries(total);
+    const c = await openBook();
+    await vi.waitFor(() => expect(c.entries.length).toBe(total)); // 数据仍是全量
+    const raw = c as unknown as { shown: number };
+    await vi.waitFor(() => expect(raw.shown).toBe(WIDEN_CAP));
+    expect(raw.shown).toBeLessThan(total); // 没排到全量——排到全量的那一版真机上报「翻页也卡」
+    expect(qa('.bz-diary-b-seal').length).toBe(WIDEN_CAP); // 书里也只有这一段
   });
 
   it('现场不静时后台续排让路，静了自动接着排（开着的层吃不掉续排）', async () => {
