@@ -1,4 +1,4 @@
-/* 源指纹 a3f0b719e97d2933 · 仓内输入 2 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 d023b9e21371cb37 · 仓内输入 2 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["src/core/ui/str.ts","src/diary/render.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — src/diary/render.ts → window.BZR_diary（评审壳预览包，ADR-0104） */
 var BZR_diary = (() => {
@@ -24,6 +24,8 @@ var BZR_diary = (() => {
   var render_exports = {};
   __export(render_exports, {
     WEEK: () => WEEK,
+    blockPlainText: () => blockPlainText,
+    blockRootClass: () => blockRootClass,
     bookPanelHTML: () => bookPanelHTML,
     cnNum: () => cnNum,
     daystampHTML: () => daystampHTML,
@@ -327,6 +329,13 @@ var BZR_diary = (() => {
       }
     }
     return out;
+  }
+  function blockRootClass(html) {
+    const m = /^<[a-z][^>]*\sclass="([^"]*)"/i.exec(html);
+    return m ? m[1] : "";
+  }
+  function blockPlainText(html) {
+    return html.replace(/<[^>]*>/g, "").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&amp;/g, "&");
   }
   function daystampHTML(date, count) {
     const [y, m, dd] = date.split("-");
