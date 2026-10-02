@@ -29,6 +29,7 @@ import {
   pageDateOf,
   plainTextOf,
   lastReachableCursor,
+  SINGLE_MAX_W,
   type FlowItem,
   type Page,
 } from '../../src/diary/ui';
@@ -1065,6 +1066,24 @@ describe('lastReachableCursor（书尾判据）', () => {
     expect(lastReachableCursor(0, false)).toBe(0);
     expect(lastReachableCursor(0, true)).toBe(0);
     expect(lastReachableCursor(-3, false)).toBe(0);
+  });
+
+  /**
+   * `lastReachableCursor` 用 `this.single` **代理**库的端式，靠的是「单页档下库必判 portrait」。
+   * 库的 portrait 条件是「块宽 < 2×页宽」（`calculateBoundsRect`，不只看 `usePortrait`），而块宽
+   * ≤ 屏宽 ≤ `SINGLE_MAX_W` ⇒ 只要 `2 × pageWidth() > SINGLE_MAX_W` 就恒成立（页宽在屏宽 ≤ 522 时
+   * 是 0.92×屏宽、结构上必然更大，所以断点处就是最紧的一支）。
+   * 日后调断点或页宽上限若破了这条，判据会把偶数页数的跨页书当成单页 —— 本轮修掉的缺陷以反方向回来。
+   */
+  it('单页档下 2×页宽必大于断点宽（代理端式的条件 ② 守卫）', () => {
+    const c = DiaryAppController.getInstance() as unknown as { pageWidth: () => number };
+    const prev = window.innerWidth;
+    window.innerWidth = SINGLE_MAX_W; // 不等式最紧的一点
+    try {
+      expect(2 * c.pageWidth()).toBeGreaterThan(SINGLE_MAX_W);
+    } finally {
+      window.innerWidth = prev;
+    }
   });
 });
 

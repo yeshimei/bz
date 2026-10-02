@@ -85,8 +85,9 @@ import { mountIcons } from '../core/ui';
 
 // ===== 常量 =====
 
-/** 窄屏单页断点——**与 styles.css 的 `@media (max-width: 720px)` 必须一致**（两侧都改） */
-const SINGLE_MAX_W = 720;
+/** 窄屏单页断点——**与 styles.css 的 `@media (max-width: 720px)` 必须一致**（两侧都改）。
+ * 导出是给 `lastReachableCursor` 的条件 ② 守卫用（`ui-book.test.ts`：单页档下 2×页宽必须大于它）。 */
+export const SINGLE_MAX_W = 720;
 /** StPageFlip 翻页动画时长（原型 620ms 实测偏拖沓，收到 380ms） */
 const FLIP_TIME_MS = 380;
 /** 页尾能塞下一刀的最小剩余高度：比这更矮就不切，直接换页（切出来两行字没有意义） */
@@ -314,10 +315,17 @@ function writeClipboard(text: string, okMsg: string, failMsg: string): void {
  * 首屏那批翻完就到底了，后台读进来的一千多则再也翻不到。**奇数**页数时最后一跨是 `[n-1]`，
  * 左页号就是 `n-1`。单页（portrait）模式每页自成跨，最大恒为 `n-1`。
  *
- * 端式取本域自己那份判定（`ui.ts` 的 `this.single`，与 `pageWidth()` 同源）。库还会按块宽再叠
- * 一层判断（`size:'fixed'` 时 portrait ⟺ 块宽 < 2×页宽），所以「窗口很宽但书芯窄」时库可能已经
- * 是单页而我们按跨页算 —— 那只会在最后一个跨页**早一拍**续叠，不会漏（宁可早不可晚：晚了就是
- * 翻不动）。
+ * 端式参数取本域自己那份判定（`ui.ts` 的 `this.single`，与 `pageWidth()` 同源）。可达布局下它与
+ * 库的真实端式**恒等**，两个方向分头看：
+ * ① `single === false` ⇒ 建书时 `usePortrait: false` ⇒ 库不可能成 portrait，必 landscape；
+ * ② `single === true` ⇒ 屏宽 ≤ `SINGLE_MAX_W`，而 `pageWidth()` 此时 = min(0.92×屏宽, 480)
+ *    ⇒ 2×页宽 > 屏宽 ≥ 块宽 ⇒ 库 `calculateBoundsRect` 的 portrait 条件（块宽 < 2×页宽）必成立。
+ * 所以这里用 `this.single` 是安全的。（库另有一份「当前端式」的现成答案
+ * `this.flip.getOrientation()`——改用它可以免掉上面这条推导，但要给测试替身补上同一层语义。
+ * **若日后调 `SINGLE_MAX_W` 或 `pageWidth()` 的 480 上限，必须重核条件 ②**：库的 portrait
+ * 不是只看 `usePortrait`，多看一个「块宽 < 2×页宽」；条件 ② 一旦不成立，本判据会把偶数页数的
+ * landscape 书当成 portrait，`n-1` 又永远够不到——本轮修掉的缺陷就会以反方向回来。
+ * 条件 ② 已由 `ui-book.test.ts` 的「单页档下 2×页宽必大于断点宽」守卫看着，改坏会红。）
  */
 export function lastReachableCursor(pageCount: number, single: boolean): number {
   const n = pageCount;
