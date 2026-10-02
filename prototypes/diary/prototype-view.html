@@ -48,7 +48,11 @@
     }
     var B = window.BZW_diary;
     B.bootDiarySim();
-    B.openPanel();
+    /* ?write=1：直接落在写作内页上（打开册子 → 排好 → 在书上摊纸）。
+       写作页在书里，故走真 `openWrite()`（命令 bz-diary-write 同链路），不另造假入口；
+       它就是「摊开册子」那条路，不必先 openPanel 再开一次（那会排两遍书）。 */
+    if (q.indexOf('write=1') >= 0) B.openWrite();
+    else B.openPanel();
   })();
 </script>
 </body>
