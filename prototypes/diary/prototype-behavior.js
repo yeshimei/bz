@@ -1,5 +1,5 @@
-/* 源指纹 3bedb8f1389f0737 · 仓内输入 78 个（校验见 tests/preview-freshness.test.ts） */
-/*#preview-inputs=["prototypes/diary/fake-sim.ts","prototypes/diary/fake/fake-obsidian.ts","src/bookshelf/data.ts","src/bookshelf/state.ts","src/cinema/state.ts","src/core/app.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/settings-btn-state.ts","src/core/settings-common.ts","src/core/settings-modal.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/help-tip.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/data.ts","src/diary/encrypt.ts","src/diary/index.ts","src/diary/motion.ts","src/diary/parser.ts","src/diary/render.ts","src/diary/repair.ts","src/diary/store.ts","src/diary/ui.ts","src/diary/ui/datetime-picker.ts","src/diary/ui/dialogs.ts","src/diary/ui/entry-actions.ts","src/diary/ui/locator.ts","src/diary/vendor/page-flip.browser.js","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/motion.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/password-vault/data.ts"]*/
+/* 源指纹 a2637ad0c0d8c760 · 仓内输入 79 个（校验见 tests/preview-freshness.test.ts） */
+/*#preview-inputs=["prototypes/diary/fake-sim.ts","prototypes/diary/fake/fake-obsidian.ts","src/bookshelf/data.ts","src/bookshelf/state.ts","src/cinema/state.ts","src/core/app.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/notice.ts","src/core/paging.ts","src/core/path-picker.ts","src/core/settings-btn-state.ts","src/core/settings-common.ts","src/core/settings-modal.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/help-tip.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/data.ts","src/diary/encrypt.ts","src/diary/index.ts","src/diary/motion.ts","src/diary/parser.ts","src/diary/render.ts","src/diary/repair.ts","src/diary/store.ts","src/diary/ui.ts","src/diary/ui/datetime-picker.ts","src/diary/ui/dialogs.ts","src/diary/ui/entry-actions.ts","src/diary/ui/locator.ts","src/diary/vendor/page-flip.browser.js","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/motion.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/password-vault/data.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/diary/fake-sim.ts → window.BZW_diary（行为单源预览包，issue 245/ADR-0106） */
 var BZW_diary = (() => {
   var __create = Object.create;
@@ -5049,6 +5049,17 @@ var BZW_diary = (() => {
     };
     return wrapped;
   }
+  function yieldToMainThread(timeoutMs = 200) {
+    return new Promise((resolve) => {
+      if (typeof window === "undefined") {
+        resolve();
+        return;
+      }
+      const ric = window.requestIdleCallback;
+      if (typeof ric === "function") ric(() => resolve(), { timeout: timeoutMs });
+      else window.setTimeout(resolve, 0);
+    });
+  }
   function cancelClipboardClear() {
     if (clipboardClearTimer !== null) {
       clearTimeout(clipboardClearTimer);
@@ -5134,6 +5145,7 @@ var BZW_diary = (() => {
   __export(config_exports, {
     DIARY_DIRECTORY: () => DIARY_DIRECTORY,
     ENCRYPT_TAG: () => ENCRYPT_TAG,
+    FIRST_PAINT_ENTRIES: () => FIRST_PAINT_ENTRIES,
     LETTER_DIRECTORY: () => LETTER_DIRECTORY,
     applyDirectories: () => applyDirectories,
     bookDirectory: () => bookDirectory,
@@ -5240,13 +5252,14 @@ var BZW_diary = (() => {
     }
     return result;
   }
-  var DIARY_DIRECTORY, LETTER_DIRECTORY, ENCRYPT_TAG, DEFAULT_TAGS_CONFIG, PRIMARY_TAGS_CONFIG, tagToEmojiMap, emojiToTagMap;
+  var DIARY_DIRECTORY, LETTER_DIRECTORY, FIRST_PAINT_ENTRIES, ENCRYPT_TAG, DEFAULT_TAGS_CONFIG, PRIMARY_TAGS_CONFIG, tagToEmojiMap, emojiToTagMap;
   var init_config = __esm({
     "src/diary/config.ts"() {
       init_state();
       init_data();
       DIARY_DIRECTORY = "我的/日记";
       LETTER_DIRECTORY = "我的/信";
+      FIRST_PAINT_ENTRIES = 30;
       ENCRYPT_TAG = "加密";
       DEFAULT_TAGS_CONFIG = {
         日记: { emoji: "📖" },
@@ -15352,7 +15365,7 @@ ${entry.content.trim()}`;
       const dateFormatted = parsed.format("YYYY-MM-DD");
       const timeStr = parsed.format("HH:mm");
       const timeValue = parseInt(parsed.format("HHmm"), 10);
-      const fullContent = await app.vault.read(file);
+      const fullContent = await app.vault.cachedRead(file);
       const frontmatterRegex = /^---\n([\s\S]*?)\n---\n/;
       const match = fullContent.match(frontmatterRegex);
       let body = fullContent;
@@ -15468,6 +15481,12 @@ ${String(review).trim()}`;
   init_diary_format();
   init_config();
   init_domain_bus();
+
+  // src/core/paging.ts
+  var LIST_BATCH_SIZE = 50;
+
+  // src/diary/data.ts
+  init_utils();
   var MEDIA_EXT_KIND = {
     jpg: "img",
     jpeg: "img",
@@ -15513,7 +15532,7 @@ ${String(review).trim()}`;
       return MEDIA_EXT_KIND[name.slice(dot + 1).toLowerCase()] ? "" : whole;
     }).trim();
   }
-  var READ_BATCH_SIZE = 10;
+  var READ_BATCH_SIZE = LIST_BATCH_SIZE;
   async function readBatch(batch, readOne, failed) {
     const results = await Promise.all(
       batch.map(async (file) => {
@@ -15613,28 +15632,62 @@ ${String(review).trim()}`;
       extra: e.extra
     };
   }
-  async function loadDiaryEntries(app, diaryDir) {
-    const vault = app.vault;
-    const mdFiles = await mdFilesUnder(app, diaryDir);
-    const entries = [];
-    const failed = [];
-    for (let i = 0; i < mdFiles.length; i += READ_BATCH_SIZE) {
-      const batch = mdFiles.slice(i, i + READ_BATCH_SIZE);
-      entries.push(
-        ...await readBatch(
-          batch,
-          async (file) => {
-            if (!diaryMetaFromEntryPath(file.name)) return [];
-            const content = await vault.read(file);
-            const e = parseEntryFile(content, file.path);
-            return e ? [toWallEntry(e, "diary", diaryDir)] : [];
-          },
-          failed
-        )
-      );
-    }
-    warnFailedBatch("日记", failed);
+  async function readDiaryFile(app, file, diaryDir) {
+    if (!diaryMetaFromEntryPath(file.name)) return [];
+    const content = await app.vault.cachedRead(file);
+    const e = parseEntryFile(content, file.path);
+    return e ? [toWallEntry(e, "diary", diaryDir)] : [];
+  }
+  function mergeWallEntries(diary, specials) {
+    const entries = [...diary, ...specials];
+    entries.sort((a, b) => {
+      const dateCmp = b.date.localeCompare(a.date);
+      return dateCmp !== 0 ? dateCmp : b.time.localeCompare(a.time);
+    });
     return entries;
+  }
+  var progressSinks = /* @__PURE__ */ new Set();
+  function onWallProgress(fn) {
+    progressSinks.add(fn);
+    return () => {
+      progressSinks.delete(fn);
+    };
+  }
+  function emitWallProgress(partial) {
+    for (const fn of [...progressSinks]) {
+      try {
+        fn(partial);
+      } catch (e) {
+      }
+    }
+  }
+  async function readWallEntriesFresh(app) {
+    const specialsPromise = Promise.all([
+      loadSpecialEntries(app, movieDirectory(), "movie", parseMovieFile),
+      loadSpecialEntries(app, LETTER_DIRECTORY, "letter", parseLetterFile),
+      loadSpecialEntries(app, bookDirectory(), "book", parseBookFile)
+    ]).then(([movieE, letterE, bookE]) => [...movieE, ...letterE, ...bookE]);
+    const diaryPromise = (async () => {
+      const files = await mdFilesUnder(app, DIARY_DIRECTORY);
+      files.sort((a, b) => b.name.localeCompare(a.name));
+      const out = [];
+      const failed = [];
+      for (let i = 0; i < files.length; i += READ_BATCH_SIZE) {
+        if (i > 0) await yieldToMainThread();
+        out.push(
+          ...await readBatch(
+            files.slice(i, i + READ_BATCH_SIZE),
+            (file) => readDiaryFile(app, file, DIARY_DIRECTORY),
+            failed
+          )
+        );
+        if (progressSinks.size) emitWallProgress(mergeWallEntries(out, await specialsPromise));
+      }
+      warnFailedBatch("日记", failed);
+      return out;
+    })();
+    const [specials, diaryE] = await Promise.all([specialsPromise, diaryPromise]);
+    return mergeWallEntries(diaryE, specials);
   }
   async function loadSpecialEntries(app, dir, kind, parse) {
     const mdFiles = await mdFilesUnder(app, dir);
@@ -15654,20 +15707,6 @@ ${String(review).trim()}`;
       );
     }
     warnFailedBatch(kind, failed);
-    return entries;
-  }
-  async function readWallEntriesFresh(app) {
-    const [diaryE, movieE, letterE, bookE] = await Promise.all([
-      loadDiaryEntries(app, DIARY_DIRECTORY),
-      loadSpecialEntries(app, movieDirectory(), "movie", parseMovieFile),
-      loadSpecialEntries(app, LETTER_DIRECTORY, "letter", parseLetterFile),
-      loadSpecialEntries(app, bookDirectory(), "book", parseBookFile)
-    ]);
-    const entries = [...diaryE, ...movieE, ...letterE, ...bookE];
-    entries.sort((a, b) => {
-      const dateCmp = b.date.localeCompare(a.date);
-      return dateCmp !== 0 ? dateCmp : b.time.localeCompare(a.time);
-    });
     return entries;
   }
   var wallCacheApp = null;
@@ -17681,6 +17720,12 @@ ${x.review || ""}`;
       void navigator.clipboard.writeText(text).then(() => notice(okMsg, "success"), fallback);
     } else fallback();
   }
+  function lastReachableCursor(pageCount, single) {
+    const n = pageCount;
+    if (n <= 0) return 0;
+    if (single) return n - 1;
+    return n % 2 === 1 ? n - 1 : n - 2;
+  }
   var _DiaryAppController = class _DiaryAppController {
     constructor() {
       // ---------- DOM ----------
@@ -17690,6 +17735,18 @@ ${x.review || ""}`;
       // ---------- 状态 ----------
       /** 当前册子里的条目（只读聚合结果；加密条目在解锁时才并入） */
       this.entries = [];
+      /**
+       * 排版窗口（ADR-0231）：只把前这么多条排成纸页，其余**留在内存里但不排**。
+       * 排版是本域最贵的一步（全量块流测高 + 二分切段），1443 条全排会在开册时顿住；
+       * 首批按 `FIRST_PAINT_ENTRIES` 成册，用户翻到书尾才把窗口推宽一批（见 extendIfAtTail）。
+       */
+      this.shown = FIRST_PAINT_ENTRIES;
+      /** 本轮的「首批已成册」闸门：进度可能连发多次，只认第一次 */
+      this.firstPaintDone = false;
+      /** 续叠窗口的重入闸门（relayout → buildBook 会重挂 flip 事件） */
+      this.extending = false;
+      /** 延后一拍续叠的定时器（`flip` 钩子用；`relayout`/`hide` 复位的旁路遗物） */
+      this.extendTimer = null;
       this.byEid = /* @__PURE__ */ new Map();
       this.pages = [];
       this.cursor = 0;
@@ -17897,8 +17954,10 @@ ${x.review || ""}`;
     /**
      * 重排整册。`keepRatio`：视口变化/回刷时按上次页数比例保住阅读位置（跟手不跳回最新）；
      * 换筛选、写完一篇等场景传 false（落回第 0 页 = 最新那篇）。
+     * `keepPage`（ADR-0231）：钉住**当前页索引**不动——只往尾部续叠纸页时用（见 extendIfAtTail）：
+     * 那种场景下总页数变了，按比例映射会把读者往前推，而位置其实本该纹丝不动。
      */
-    relayout(keepRatio) {
+    relayout(keepRatio, keepPage = false) {
       const root = this.root;
       if (!root) return 0;
       const t0 = typeof performance !== "undefined" ? performance.now() : 0;
@@ -17913,9 +17972,10 @@ ${x.review || ""}`;
       const single = typeof window !== "undefined" && window.innerWidth <= SINGLE_MAX_W;
       this.single = single;
       root.classList.toggle("bz-diary-single", single);
-      const list = this.visibleEntries();
-      this.byEid = new Map(list.map((e) => [e.id || "", e]));
-      this.photoRefs = collectPhotoRefs(list);
+      const all = this.visibleEntries();
+      const list = all.slice(0, Math.max(0, this.shown));
+      this.byEid = new Map(all.map((e) => [e.id || "", e]));
+      this.photoRefs = collectPhotoRefs(all);
       this.photoIndex = new Map(this.photoRefs.map((p, i) => [p.media.name, i]));
       const probe = document.createElement("div");
       probe.className = "bz-diary-probe";
@@ -17928,7 +17988,7 @@ ${x.review || ""}`;
       const flow = [];
       let lastDate = null;
       const dayCount = /* @__PURE__ */ new Map();
-      for (const e of list) dayCount.set(e.date, (dayCount.get(e.date) || 0) + 1);
+      for (const e of all) dayCount.set(e.date, (dayCount.get(e.date) || 0) + 1);
       for (const e of list) {
         if (e.date !== lastDate) {
           lastDate = e.date;
@@ -17950,7 +18010,9 @@ ${x.review || ""}`;
       this.renderEdgeMarks();
       const last = Math.max(0, this.pages.length - 1);
       let target = 0;
-      if (keepRatio && this.lastSpreadCount > 1) {
+      if (keepPage) {
+        target = Math.max(0, Math.min(last, this.cursor));
+      } else if (keepRatio && this.lastSpreadCount > 1) {
         target = Math.round(this.cursor / (this.lastSpreadCount - 1) * last);
       }
       this.lastSpreadCount = this.pages.length;
@@ -18074,6 +18136,7 @@ ${x.review || ""}`;
       this.flip.turnToPage(Math.max(0, targetPage));
       this.flip.on("flip", (e) => {
         this.cursor = e.data;
+        this.scheduleExtend();
       });
       this.cursor = Math.max(0, targetPage);
       this.afterPagesBuilt(host);
@@ -18086,8 +18149,49 @@ ${x.review || ""}`;
     }
     turnPage(dir) {
       if (!this.flip) return;
-      if (dir > 0) this.flip.flipNext();
-      else this.flip.flipPrev();
+      if (dir > 0) {
+        if (this.extendIfAtTail()) return;
+        this.flip.flipNext();
+      } else this.flip.flipPrev();
+    }
+    /**
+     * 翻到书尾就推宽排版窗口一批（ADR-0231）。返回是否真的推宽了。
+     *
+     * 为什么必须「只往尾部追加」：`paginateFlow` 是从最新往最早**顺序**装页的，往流尾加条目
+     * 不会改动前面任何一页的边界 ⇒ 当前页索引语义不变、读者看到的那一页原地不动。
+     * `relayout(false, true)` 的 `keepPage` 就是为这条准备的。
+     *
+     * 代价（诚实版）：这是**整窗重排**——`paginateFlow` 对加宽后的窗口重跑一遍、一次 reflow 量高、
+     * `buildBook` 重建 StPageFlip 实例；**不是**「只测新增条目」。之所以可接受：成本以**窗口**为界
+     * （不是 1243 全量），且只在用户主动翻到书尾这一刻发生。StPageFlip v2.0.7 没有 `addPage`，
+     * 动态加页本就得整实例重建，所以这一次重建省不掉；真要省下重测，得按条目 id 缓存块高。
+     *
+     * 「书尾」的判据见 `lastReachableCursor()`——**不是** `pages.length - 1`，别改回去。
+     */
+    extendIfAtTail() {
+      if (this.extending) return false;
+      const all = this.visibleEntries();
+      if (this.shown >= all.length) return false;
+      if (!this.pages.length) return false;
+      if (this.cursor < lastReachableCursor(this.pages.length, this.single)) return false;
+      const next = Math.min(this.shown + LIST_BATCH_SIZE, all.length);
+      if (next <= this.shown) return false;
+      this.extending = true;
+      try {
+        this.shown = next;
+        this.relayout(false, true);
+        return true;
+      } finally {
+        this.extending = false;
+      }
+    }
+    /** 延后一拍再续叠（见 `buildBook` 的 `flip` 钩子）：合并同一拍内的多次 flip，不排队多份。 */
+    scheduleExtend() {
+      if (this.extendTimer !== null) return;
+      this.extendTimer = setTimeout(() => {
+        this.extendTimer = null;
+        this.extendIfAtTail();
+      }, 0);
     }
     jumpToPage(pi) {
       if (!this.flip || !this.pages.length) return;
@@ -19396,8 +19500,15 @@ ${x.review || ""}`;
     /**
      * 读盘。`allowCache`：开册路径命中预热/上次刷新后的缓存秒开；
      * 刷新/写后回刷/重试一律先作废回源（保持「每次刷新即读盘」语义，不赌缓存失效是否触发）。
+     *
+     * `onWindow`（ADR-0231）：攒够 `FIRST_PAINT_ENTRIES` 条就把**部分**结果交出来先成册——
+     * 首屏不必等 1243 篇正文读完。只有开册路径传它；刷新/写后回刷不传（那两条要的是完整一致，
+     * 中途成册反而会让正在读的那一页被重排）。缓存命中时不会有进度，由调用方在结算后补一次成册。
      */
-    async loadEntries(allowCache) {
+    async loadEntries(allowCache, onWindow) {
+      const off = onWindow ? onWallProgress((partial) => {
+        if (partial.length >= FIRST_PAINT_ENTRIES) onWindow(partial);
+      }) : null;
       try {
         if (allowCache) {
           this._allowCacheNext = false;
@@ -19410,6 +19521,8 @@ ${x.review || ""}`;
         this.entries = [];
         this._loadError = e instanceof Error ? e.message : String(e);
         notice(`加载日记失败：${this._loadError}`, "error");
+      } finally {
+        off == null ? void 0 : off();
       }
       await this.mergeEncryptedEntries();
       if (this._loadError) this.fallbackEl.hidden = false;
@@ -19584,8 +19697,20 @@ ${x.review || ""}`;
       this.subscribeVault();
       void (async () => {
         await this.afterPaint();
-        await this.loadEntries(this._allowCacheNext);
-        this.relayout(false);
+        this.firstPaintDone = false;
+        this.shown = FIRST_PAINT_ENTRIES;
+        await this.loadEntries(this._allowCacheNext, (partial) => {
+          if (this.firstPaintDone) return;
+          this.firstPaintDone = true;
+          this.entries = partial;
+          this.shown = Math.min(FIRST_PAINT_ENTRIES, partial.length);
+          this.relayout(false);
+        });
+        if (!this.firstPaintDone) {
+          this.firstPaintDone = true;
+          this.shown = Math.min(this.shown, this.entries.length);
+          this.relayout(false);
+        }
         this.toast(reopen ? "又翻开了" : "翻开的是最新那篇");
       })();
     }
@@ -19607,6 +19732,10 @@ ${x.review || ""}`;
       if (this.modifyTimer !== null) {
         clearTimeout(this.modifyTimer);
         this.modifyTimer = null;
+      }
+      if (this.extendTimer !== null) {
+        clearTimeout(this.extendTimer);
+        this.extendTimer = null;
       }
       this.setToolsShown(false);
       this._hideMotion = false;
@@ -19640,6 +19769,10 @@ ${x.review || ""}`;
       if (this.modifyTimer !== null) {
         clearTimeout(this.modifyTimer);
         this.modifyTimer = null;
+      }
+      if (this.extendTimer !== null) {
+        clearTimeout(this.extendTimer);
+        this.extendTimer = null;
       }
       if (this.toolsRaf) cancelAnimationFrame(this.toolsRaf);
       this.unsubscribeEvents();
