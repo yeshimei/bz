@@ -303,6 +303,30 @@ function writeClipboard(text: string, okMsg: string, failMsg: string): void {
 }
 
 /**
+ * 读者在当前端式下能翻到的**最后一个 `cursor` 值**（= 书尾判据）。抽成纯函数是因为它的正确性
+ * 完全由 StPageFlip 的 `flip` 语义决定、跟 DOM 量尺无关，必须能脱开书实例单测。
+ *
+ * 为什么**不能**用 `pageCount - 1`：跨页（landscape）模式下 StPageFlip 的 `flip` 事件给的是
+ * `currentPageIndex`，而库里它等于**当前跨页的左页号**（`showSpread()`：`currentPageIndex =
+ * spread[0]`）。`createSpread()` 把页两两配对；本域 `showCover: false`（无封面页）所以从 0 起配：
+ * **偶数页数**时最后一跨是 `[n-2, n-1]`，左页号最多到 `n-2` —— 永远到不了 `n-1`。若按
+ * `cursor === n-1` 判「已在书尾」，条件在偶数页数下恒不成立、续叠一次都不触发。真机症状：
+ * 首屏那批翻完就到底了，后台读进来的一千多则再也翻不到。**奇数**页数时最后一跨是 `[n-1]`，
+ * 左页号就是 `n-1`。单页（portrait）模式每页自成跨，最大恒为 `n-1`。
+ *
+ * 端式取本域自己那份判定（`ui.ts` 的 `this.single`，与 `pageWidth()` 同源）。库还会按块宽再叠
+ * 一层判断（`size:'fixed'` 时 portrait ⟺ 块宽 < 2×页宽），所以「窗口很宽但书芯窄」时库可能已经
+ * 是单页而我们按跨页算 —— 那只会在最后一个跨页**早一拍**续叠，不会漏（宁可早不可晚：晚了就是
+ * 翻不动）。
+ */
+export function lastReachableCursor(pageCount: number, single: boolean): number {
+  const n = pageCount;
+  if (n <= 0) return 0;
+  if (single) return n - 1;
+  return n % 2 === 1 ? n - 1 : n - 2;
+}
+
+/**
  * 回忆墙视图状态（增强 #11）——**已随 ADR-0230 退役**：书页界面没有筛选 chips / 章节栏 / 滚动位置，
  * 跳原文回首时只需重新摊开在同一篇上（`cursor` 由 `keepRatio` 保比例即可）。
  * 类型保留是为了不惊动外部引用面的编译；新代码不要用它。
@@ -797,13 +821,15 @@ export class DiaryAppController {
    * `buildBook` 重建 StPageFlip 实例；**不是**「只测新增条目」。之所以可接受：成本以**窗口**为界
    * （不是 1243 全量），且只在用户主动翻到书尾这一刻发生。StPageFlip v2.0.7 没有 `addPage`，
    * 动态加页本就得整实例重建，所以这一次重建省不掉；真要省下重测，得按条目 id 缓存块高。
+   *
+   * 「书尾」的判据见 `lastReachableCursor()`——**不是** `pages.length - 1`，别改回去。
    */
   private extendIfAtTail(): boolean {
     if (this.extending) return false;
     const all = this.visibleEntries();
     if (this.shown >= all.length) return false; // 窗口已覆盖全部已加载条目
     if (!this.pages.length) return false;
-    if (this.cursor < this.pages.length - 1) return false; // 还没到最后一页
+    if (this.cursor < lastReachableCursor(this.pages.length, this.single)) return false;
     const next = Math.min(this.shown + LIST_BATCH_SIZE, all.length);
     if (next <= this.shown) return false;
     this.extending = true;

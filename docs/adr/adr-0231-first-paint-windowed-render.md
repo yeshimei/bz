@@ -78,9 +78,14 @@ issue 539 · 调研：`.scratch/memo-suite-plugin/research/539-cinema-diary-firs
    旧 from 往后塞」）。日记本的窗口成册是一次性闸门（`firstPaintDone`），进度订阅在
    `loadEntries` 的 `finally` 里退订——**不做**常驻订阅，读盘结束就没有回调可能再触发重排。
 6. **日记本窗口化与页索引锁定。** `relayout` 只吃窗口内条目（`all.slice(0, shown)`），**计数类
-   一律按 `all`**（日戳「当天几则」、年份范围、灯箱索引、查找）。用户**翻到书尾**（`cursor`
-   落在最后一页）才把窗口推宽一批 50，`relayout(false, true)` 的 `keepPage` **钉住当前页索引**
+   一律按 `all`**（日戳「当天几则」、年份范围、灯箱索引、查找）。用户**翻到书尾**才把窗口推宽一批
+   50，`relayout(false, true)` 的 `keepPage` **钉住当前页索引**
    ——总页数变了，按比例映射会把读者往前推，而续叠时位置本该纹丝不动。
+   **「书尾」不是 `pages.length - 1`**（回修，见下）：StPageFlip 跨页模式的 `flip` 事件给的是
+   **当前跨页的左页号**（`showSpread()`：`currentPageIndex = spread[0]`），`showCover: false`
+   从 0 起配对 ⇒ **偶数页数**时最后一跨是 `[n-2, n-1]`、左页号止于 `n-2`，`n-1` 永远到不了；
+   奇数页数时最后一跨是 `[n-1]`；单页模式每页自成跨、恒 `n-1`。判据抽成纯函数
+   `lastReachableCursor(pageCount, single)`（`src/diary/ui.ts`，可脱开书实例单测）。
    代价要说清：续叠是**整窗重排**（`paginateFlow` 对加宽后的窗口重跑一次 + 一次 reflow 量高 +
    `buildBook` 重建 StPageFlip 实例），**不是**「只测新增部分」。之所以接受：① 成本以**窗口**
    为界（不是 1243 全量）；② 只在「用户主动翻到书尾」这一刻发生，不是后台自动；③ StPageFlip
@@ -133,3 +138,13 @@ issue 539 · 调研：`.scratch/memo-suite-plugin/research/539-cinema-diary-firs
   仍走**同步**扫描——纯内存、几十毫秒量级；若日后条目量涨到扫描进秒级，再考虑分片让出。
 - **门禁口径**：本次改到 `core`（新增 `paging.ts`）⇒ 增量选择器自行升格为全量。
   原型产物（`prototypes/**`）按仓内既有口径**在主仓库重出**，不在 worktree 重出。
+
+## 回修
+
+- **2026-10-02 · 书尾判据（决策 6 的缺陷修正）。** 原实现把「翻到书尾」落成
+  `this.cursor < this.pages.length - 1`。**偶数页数**下跨页最后一跨是 `[n-2, n-1]`、库报回来的
+  左页号止于 `n-2`，该条件恒成立 ⇒ 续叠一次都不触发。真机症状：日记本翻到首屏那批的末页就翻不动，
+  后台读进来的一千多则再也出不来（正是 issue 539 的验收 5「翻到书尾 → 窗口推宽一批」失效）。
+  修法：判据抽成纯函数 `lastReachableCursor(pageCount, single)`（决策 6 括注）。测试配
+  4 条纯函数用例（单页 / 跨页奇 / 跨页偶 / 空书）+ 1 条控制器级复现；**夹具（30 则窗口）实际排出
+  59 页即奇数**，旧判据在里面碰巧成立，故偶数页数那一支必须显式构造，不能靠夹具。

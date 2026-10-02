@@ -28,6 +28,7 @@ import {
   monthMarks,
   pageDateOf,
   plainTextOf,
+  lastReachableCursor,
   type FlowItem,
   type Page,
 } from '../../src/diary/ui';
@@ -1033,6 +1034,40 @@ describe('DiaryAppController · 条目动作走真写层', () => {
 //  只是开册又变慢，或者翻到第 30 则就见了底（后台读进来的一千多则永远不会出现）。
 // ============================================================
 
+// ------------------------------------------------------------
+//  书尾判据（纯函数）· issue 539「翻到 50 之后就没内容了」的根因所在
+//
+//  StPageFlip 跨页模式的 `flip` 事件给的是**当前跨页的左页号**，所以「读者能翻到的最后一个
+//  cursor」不是恒等于 `pageCount - 1`：偶数页数时最后一跨是 `[n-2, n-1]`、左页号止于 `n-2`。
+//  这里把这条库语义钉死——它是唯一一处「算法」且不依赖 DOM，必须脱开书实例单测。
+// ------------------------------------------------------------
+
+describe('lastReachableCursor（书尾判据）', () => {
+  it('单页模式：每页自成跨，书尾恒为 pageCount - 1', () => {
+    expect(lastReachableCursor(1, true)).toBe(0);
+    expect(lastReachableCursor(12, true)).toBe(11);
+    expect(lastReachableCursor(13, true)).toBe(12);
+  });
+
+  it('跨页模式 · 奇数页数：最后一跨是 [n-1]，书尾为 n-1', () => {
+    expect(lastReachableCursor(13, false)).toBe(12);
+    expect(lastReachableCursor(59, false)).toBe(58);
+  });
+
+  it('跨页模式 · 偶数页数：最后一跨是 [n-2, n-1]，书尾为 n-2（≠ pageCount - 1）', () => {
+    expect(lastReachableCursor(12, false)).toBe(10);
+    expect(lastReachableCursor(2, false)).toBe(0);
+    // 这一条就是缺陷本身：按 `pageCount - 1` 判书尾，在偶数页数下永远判不中
+    expect(lastReachableCursor(12, false)).not.toBe(11);
+  });
+
+  it('空书：书尾为 0（不能返回负数把判据带成恒真）', () => {
+    expect(lastReachableCursor(0, false)).toBe(0);
+    expect(lastReachableCursor(0, true)).toBe(0);
+    expect(lastReachableCursor(-3, false)).toBe(0);
+  });
+});
+
 describe('DiaryAppController · 排版窗口（ADR-0231）', () => {
   /** 清掉夹具里的既有条目（2 则日记 + 影视/书/信），换成 n 则连续日期的日记（一天一则） */
   function seedManyEntries(n: number): void {
@@ -1058,11 +1093,25 @@ describe('DiaryAppController · 排版窗口（ADR-0231）', () => {
     expect(qa('.bz-diary-b-seal').length).toBe(FIRST_PAINT_ENTRIES);
   });
 
-  /** 走真实路径翻到书尾：替身 `turnToPage` → 发 `flip` → ui 同步 cursor → 钩子推窗 */
+  /** 翻到「真机能到的那一页」。跨页模式（`showCover:false`）下 StPageFlip 的 `flip` 事件给的是
+   *  **当前跨页的左页号**，偶数页数时最后一跨是 `[n-2, n-1]` ⇒ 落点是 `n-2`，不是 `n-1`。
+   *  替身不做这层归一，所以这里显式算——若直接点名 `n-1`，就掩盖了「书尾判据写成 n-1」这类缺陷
+   *  （真机上表现为：首屏那批翻完就到底，后台读进来的条目再也翻不到）。
+   *
+   *  ⚠️ 本夹具（30 则窗口）实际排出的页数是**奇数**（59）⇒ 这条只覆盖真机的奇数页数一支；
+   *  偶数页数那一支由下面的「偶数页数的书尾是 n-2」单测直接构造。改夹具若把页数改成偶数，
+   *  记得那条单测仍要保留（它的价值在于**不依赖**夹具碰巧的奇偶）。 */
   function flipToTail(c: DiaryAppController): void {
-    const flip = (c as unknown as { flip: { turnToPage: (n: number) => void } }).flip;
-    flip.turnToPage(qa('.bz-diary-page-item').length - 1);
+    const n = qa('.bz-diary-page-item').length;
+    const landscape = window.innerWidth > 720;
+    const last = landscape && n % 2 === 0 ? n - 2 : n - 1;
+    const flip = (c as unknown as { flip: { turnToPage: (i: number) => void } }).flip;
+    flip.turnToPage(Math.max(0, last));
   }
+
+  beforeEach(() => {
+    window.innerWidth = 1024; // 本组默认桌面跨页；单页那条自己改窄（端式判据同 ui.ts 的 720）
+  });
 
   it('翻到书尾自动推宽一批；已覆盖全量后不再叠页', async () => {
     seedManyEntries(45);
@@ -1075,6 +1124,45 @@ describe('DiaryAppController · 排版窗口（ADR-0231）', () => {
     flipToTail(c); // 已覆盖全部 → 不再叠页
     await new Promise((r) => setTimeout(r, 20)); // 等延后那拍跑完（续叠是让一拍再做的）
     expect(qa('.bz-diary-page-item').length).toBe(pages);
+  });
+
+  it('窄屏单页模式同样能续叠（每页自成跨，最后一页就是书尾）', async () => {
+    window.innerWidth = 600;
+    seedManyEntries(45);
+    const c = await openBook();
+    await vi.waitFor(() => expect(c.entries.length).toBe(45));
+    expect(qa('.bz-diary-b-seal').length).toBe(FIRST_PAINT_ENTRIES);
+    flipToTail(c);
+    await vi.waitFor(() => expect(qa('.bz-diary-b-seal').length).toBe(45));
+  });
+
+  /**
+   * issue 539 真机症状的直接复现：「日记本翻页到 50 之后就没内容了」。
+   *
+   * 上面两条集成用例走的是**本夹具实际排出来的页数（59 页，奇数）**——奇数页数的真机书尾恰好是
+   * `n-1`，旧判据 `cursor < pages.length - 1` 在这组里会**碰巧**成立，测不出偶数页数那一支。
+   * 所以这条单列：把书芯摆成**偶数页数**、cursor 停在读者真机能到的最后一页（`n-2`），
+   * 此刻必须续叠。旧判据在这里会误判成「还没到书尾」，一条都叠不出来——红。
+   */
+  it('偶数页数的书尾是 n-2：停在那里也必须续叠（issue 539 根因）', async () => {
+    seedManyEntries(45);
+    const c = await openBook();
+    await vi.waitFor(() => expect(c.entries.length).toBe(45));
+    const raw = c as unknown as {
+      pages: Page[];
+      cursor: number;
+      single: boolean;
+      shown: number;
+      extending: boolean;
+      extendIfAtTail: () => boolean;
+    };
+    expect(raw.shown).toBe(FIRST_PAINT_ENTRIES); // 前提：还停在首屏窗口
+    // 造一本偶数页数的书芯（12 页）并让读者翻到最后一跨 ⇒ 库报回来的左页号 = 10 = n-2
+    raw.pages = Array.from({ length: 12 }, () => [] as Page);
+    raw.single = false;
+    raw.cursor = 10;
+    expect(raw.extendIfAtTail()).toBe(true); // 旧判据（cursor < 12-1）在此恒 false → 这条会红
+    await vi.waitFor(() => expect(qa('.bz-diary-b-seal').length).toBe(45));
   });
 
   it('不进书尾就不动窗口（光标不在最后一页时 extendIfAtTail 不生效）', async () => {
