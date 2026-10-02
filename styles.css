@@ -5127,7 +5127,11 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
    我先前自造的那些(相纸留白相框 / 骑在顶边的透明便利贴)全部撤掉:
    便利贴既难贴准(有的图没贴上),又在纸上多出一层"另一件东西",反倒更乱。
    外框高度仍固定 4/3 —— 分页只在重排时量一次,图后到不能改纸高 */
-.bz-diary-b-photo { margin: 12px auto 14px; width: min(300px, 78%); }
+/* 可缩：分页时若照片块只差一点点塞不进本页剩余高度，`fitMedia`（ui.ts）会把
+   `--bz-diary-ph-w` 内联成「按剩余高度反推的块宽」（几何值，非视觉样式），
+   块宽一收，下面的 4/3 相框与 img padding 跟着等比收，照片不压扁。
+   变量缺席时回落到自然宽 —— 也即「缩不动就整块换页」那条路。 */
+.bz-diary-b-photo { margin: 12px auto 14px; width: var(--bz-diary-ph-w, min(300px, 78%)); }
 .bz-diary-photo {
   position: relative; margin: 0;
   transform: rotate(-1.5deg);   /* 兜底角：tiltClassOf 未命中时也不正着贴 */

@@ -1,4 +1,4 @@
-/* 源指纹 80c3b2114c989ddd · 仓内输入 79 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 6c0fd5effe954974 · 仓内输入 79 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/diary/fake-sim.ts","prototypes/diary/fake/fake-obsidian.ts","src/bookshelf/data.ts","src/bookshelf/state.ts","src/cinema/state.ts","src/core/app.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/notice.ts","src/core/paging.ts","src/core/path-picker.ts","src/core/settings-btn-state.ts","src/core/settings-common.ts","src/core/settings-modal.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/help-tip.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/data.ts","src/diary/encrypt.ts","src/diary/index.ts","src/diary/motion.ts","src/diary/parser.ts","src/diary/render.ts","src/diary/repair.ts","src/diary/store.ts","src/diary/ui.ts","src/diary/ui/datetime-picker.ts","src/diary/ui/dialogs.ts","src/diary/ui/entry-actions.ts","src/diary/ui/locator.ts","src/diary/vendor/page-flip.browser.js","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/motion.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/password-vault/data.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/diary/fake-sim.ts → window.BZW_diary（行为单源预览包，issue 245/ADR-0106） */
 var BZW_diary = (() => {
@@ -17611,7 +17611,7 @@ ${String(review).trim()}`;
   var WIDEN_RETRY_MS = 400;
   var WIDEN_RETRY_MAX = 30;
   var WIDEN_CHUNK = 60;
-  var WIDEN_FULL_MAX = 2e3;
+  var WIDEN_CAP = 120;
   var SEARCH_SKIP_BLOCKS = [
     "bz-diary-b-photo",
     "bz-diary-b-audio",
@@ -17620,6 +17620,7 @@ ${String(review).trim()}`;
   ];
   var PAGE_CUT_MIN_PX = 84;
   var DAYSTAMP_KEEP_PX = 96;
+  var MEDIA_FIT_MIN_RATIO = 0.6;
   var REFRESH_DEBOUNCE_MS = 400;
   var WHEEL_LOCK_MS = 560;
   function collectPhotoRefs(entries) {
@@ -17637,8 +17638,8 @@ ${String(review).trim()}`;
     }
     return out;
   }
-  function paginateFlow(items, availH, split, heightOf) {
-    const metas = items.map((it) => ({ el: it.el, h: it.h, keep: !!it.keep }));
+  function paginateFlow(items, availH, split, heightOf, shrink) {
+    const metas = items.map((it) => ({ el: it.el, h: it.h, keep: !!it.keep, fit: !!it.fit }));
     const pages = [];
     let cur = null;
     let used = 0;
@@ -17659,21 +17660,27 @@ ${String(review).trim()}`;
         const c2 = split(it.el, availH - 4);
         if (c2) {
           it.h = heightOf(c2[0]);
-          metas.splice(i + 1, 0, { el: c2[1], h: c2[2], keep: false });
+          metas.splice(i + 1, 0, { el: c2[1], h: c2[2], keep: false, fit: false });
         }
       }
       if (used + it.h > availH && cur.length) {
         const remain = availH - used;
-        if (remain >= PAGE_CUT_MIN_PX) {
-          const cut = split(it.el, remain - 4);
-          if (cut) {
-            cur.push(cut[0]);
-            metas.splice(i + 1, 0, { el: cut[1], h: cut[2], keep: false });
-            used = availH;
-            continue;
-          }
+        if (it.fit && shrink) {
+          const nh = shrink(it.el, remain);
+          if (nh !== null && nh <= remain) it.h = nh;
         }
-        newPage();
+        if (used + it.h > availH) {
+          if (remain >= PAGE_CUT_MIN_PX) {
+            const cut = split(it.el, remain - 4);
+            if (cut) {
+              cur.push(cut[0]);
+              metas.splice(i + 1, 0, { el: cut[1], h: cut[2], keep: false, fit: false });
+              used = availH;
+              continue;
+            }
+          }
+          newPage();
+        }
       }
       if (it.keep && used + it.h + DAYSTAMP_KEEP_PX > availH && cur.length) newPage();
       cur.push(it.el);
@@ -17747,10 +17754,10 @@ ${x.review || ""}`;
       this.entries = [];
       /**
        * 排版窗口（ADR-0231）：只把前这么多条排成纸页，其余**留在内存里但不排**。
-       * 排版是本域最贵的一步（全量块流测高 + 二分切段），全量排会在开册时顿住；
-       * 首批按 `FIRST_PAINT_ENTRIES` 成册。读盘结束后 `widenFull()` 会在后台**一次排到全量**
-       * （此后索引 / 检索 / 台历的跳转就只剩一次 `turnToPage`）；没赶上（用户点得比后台快、或条目
-       * 超过 `WIDEN_FULL_MAX`）则由 `extendIfAtTail` / `widenToCover` 按需推宽兜底。
+       * 排版是本域最贵的一步（全量块流测高 + 二分切段），全量排会在开册时顿住，而且书一重
+       * **每次翻页**都跟着变卡（`WIDEN_CAP` 的注里有 StPageFlip 侧的成因）。
+       * 首批按 `FIRST_PAINT_ENTRIES` 成册。读盘结束后 `widenFull()` 会在后台把窗口推到 `WIDEN_CAP`；
+       * 更外的目标由 `widenToCover` 按需推宽、翻到书尾由 `extendIfAtTail` 续叠。
        */
       this.shown = FIRST_PAINT_ENTRIES;
       /** 本轮的「首批已成册」闸门：进度可能连发多次，只认第一次 */
@@ -17961,6 +17968,38 @@ ${x.review || ""}`;
       const cs = getComputedStyle(el);
       return el.offsetHeight + (parseFloat(cs.marginTop) || 0) + (parseFloat(cs.marginBottom) || 0);
     }
+    /**
+     * 可缩媒体块（照片 / 视频）等比缩到 `maxH` 以内，返回新的块高；缩不动返回 null。
+     *
+     * 为什么缩**块宽**而不是高度：相框是 img 自己的 padding、媒体盒是 `aspect-ratio: 4/3`，
+     * 宽度一缩两者按比例同步收，照片不会被压扁也不会有信封边（改高度只会把框拉成横条）。
+     * 缩幅按「内容高 ∝ 块宽」一次算到位——那圈白框与 margin 是常数项，所以算完**再用真的量一遍**
+     * 确认；量出来还超就撤回这次缩，交给换页（宁可留白也不要「缩过却仍换页」的怪尺寸）。
+     *
+     * 内联的是**几何值**（由页面剩余高度反推的块宽），与 `renderEdgeMarks` 的 top/height 同类：
+     * 行为性内联值，不是视觉样式——颜色、框体、落影仍全在 `styles.css`。
+     */
+    fitMedia(el, maxH) {
+      const cs = getComputedStyle(el);
+      const marg = (parseFloat(cs.marginTop) || 0) + (parseFloat(cs.marginBottom) || 0);
+      const h0 = this.blockHeightOf(el);
+      const w0 = el.offsetWidth;
+      const body = h0 - marg;
+      const room = maxH - marg;
+      if (!w0 || body <= 0 || room <= 0) return null;
+      const ratio = Math.min(1, room / body);
+      const w = Math.floor(w0 * ratio);
+      if (w < Math.ceil(w0 * MEDIA_FIT_MIN_RATIO)) return null;
+      const prev = el.style.getPropertyValue("--bz-diary-ph-w");
+      el.style.setProperty("--bz-diary-ph-w", w + "px");
+      const h = this.blockHeightOf(el);
+      if (h > maxH) {
+        if (prev) el.style.setProperty("--bz-diary-ph-w", prev);
+        else el.style.removeProperty("--bz-diary-ph-w");
+        return null;
+      }
+      return h;
+    }
     // ============================================================
     //  排版：块流 → 测量 → 切页 → 建书
     // ============================================================
@@ -18016,9 +18055,20 @@ ${x.review || ""}`;
           lastDate = e.date;
           flow.push({ el: elOf(daystampHTML(e.date, dayCount.get(e.date) || 1)), h: 0, keep: true });
         }
-        for (const html of entryBlockHTMLs(e, ctx)) flow.push({ el: elOf(html), h: 0 });
+        this.pushEntryBlocks(flow, e, ctx);
       }
       return flow;
+    }
+    /**
+     * 条目 → 块元素。`bz-diary-b-photo`（照片 / 视频）标成**可缩块**：放不下时先等比缩到塞进
+     * 剩余高度（见 `paginateFlow` 规则 3a），别为差几十像素就整块换页、在页尾留半页白。
+     * 日戳与文字块不缩——文字走逐行续排，日戳必须整块起新纸。
+     */
+    pushEntryBlocks(flow, e, ctx) {
+      for (const html of entryBlockHTMLs(e, ctx)) {
+        const el = elOf(html);
+        flow.push(el.classList.contains("bz-diary-b-photo") ? { el, h: 0, fit: true } : { el, h: 0 });
+      }
     }
     /**
      * 排版尾段：量高 → 切页 → 建书 → 定位。两条路共用——
@@ -18047,7 +18097,8 @@ ${x.review || ""}`;
         flow,
         availH,
         (el, avail) => this.splitParagraph(el, avail, probe),
-        (el) => this.blockHeightOf(el)
+        (el) => this.blockHeightOf(el),
+        (el, maxH) => this.fitMedia(el, maxH)
       );
       probe.innerHTML = "";
       probe.remove();
@@ -18238,30 +18289,28 @@ ${x.review || ""}`;
       }, 0);
     }
     // ============================================================
-    //  后台续排：首屏之后一次排到全量（ADR-0231 决策 12 回修）
+    //  后台续排：首屏之后把窗口推到「够用的一段」（ADR-0231 决策 12 回修）
     // ============================================================
     /**
-     * 首屏成册、读盘结束后，趁空闲把排版窗口**一次推到全量**。
+     * 首屏成册、读盘结束后，趁空闲把排版窗口**一次推到 `WIDEN_CAP` 则**。
      *
      * 为什么要有这一步：窗口外的索引 / 检索 / 台历跳转，原先都要当场付一次「从最新一路排到目标」
-     * 的重排——700 则的本子上那基本等于排全量，于是点一下卡一下，而且**每次点都卡**。提前在后台
-     * 排完，此后所有跳转都只剩一次 `turnToPage`。
+     * 的重排——上千则的本子上那基本等于排全量，于是点一下卡一下。提前在后台排到一段，绝大多数
+     * 近期的跳转就只剩一次 `turnToPage`。
      *
      * 为什么是「一次」而不是「分批续叠」：StPageFlip 没有 `addPage`，每批都得 destroy + 重建整本书
      * ——分批就是把读者正在看的书反复拆装十几遍。一次排完只重建一遍。
      *
-     * 不阻塞：建块流是唯一随条目数增长的账，分片做、片间让出主线程（`buildFlowChunked`）；
-     * 尾段的量高 + 切页 + 建书必须原子（库没有增量接口），但它只跟**页数**有关，是一小段。
+     * 为什么**封顶**而不是排到全量：见 `WIDEN_CAP` 的注（书一重，每次翻页都卡）。
+     * 不阻塞也只做了一半：建块流分片让出主线程，**尾段（量高 + 切页 + 建书）仍是原子的**——
+     * 所以封顶必须小到让那一段的代价可以忽略，而不是靠「分片」把全量摊平。
      *
      * 让路规矩（四条，缺一不可）：
      * 1. 场景不静（任一浮层开着 / 录音在放 / 拆信封动效在飞）不介入——重排会把现场拆掉；
      *    这种情况**不是放弃**而是过一拍再看（`rearmWiden`），有次数上限；
      * 2. 期间任何重排（`epoch` 变）或收起即作废，不把陈旧结果落地；
-     * 3. 条目超过 `WIDEN_FULL_MAX` 不自动续排（内存兜底），退回按需推宽；
+     * 3. 目标超过 `WIDEN_CAP` 的部分不自动续排，退回 `widenToCover` 按需推宽；
      * 4. 建流前后各查一次「静不静」：浮层/动效可能是**建流那几拍里**才开的。
-     *
-     * 顺带把「翻到书尾续叠」变成死路：窗口已是全量时 `extendIfAtTail` 恒假，
-     * 于是翻到书尾不再每批重建一次整本书。
      */
     scheduleWidenFull() {
       if (this.widenTimer !== null) return;
@@ -18275,16 +18324,20 @@ ${x.review || ""}`;
     async widenFull() {
       if (!this.root) return;
       const all = this.visibleEntries();
-      if (this.shown >= all.length) return;
-      if (all.length > WIDEN_FULL_MAX) return;
+      const target = Math.min(all.length, WIDEN_CAP);
+      if (this.shown >= target) return;
       if (!this.sceneQuiet()) return this.rearmWiden();
       const epoch = this.epoch;
       this.setScope(all);
-      const flow = await this.buildFlowChunked(all, this.dayCountOf(all), epoch);
+      const flow = await this.buildFlowChunked(
+        all.slice(0, target),
+        this.dayCountOf(all),
+        epoch
+      );
       if (!flow) return;
       if (epoch !== this.epoch) return;
       if (!this.sceneQuiet()) return this.rearmWiden();
-      this.shown = all.length;
+      this.shown = target;
       this.layoutBook(flow, false, true);
     }
     /**
@@ -18317,7 +18370,7 @@ ${x.review || ""}`;
             lastDate = e.date;
             flow.push({ el: elOf(daystampHTML(e.date, dayCount.get(e.date) || 1)), h: 0, keep: true });
           }
-          for (const html of entryBlockHTMLs(e, ctx)) flow.push({ el: elOf(html), h: 0 });
+          this.pushEntryBlocks(flow, e, ctx);
         }
         await new Promise((r) => setTimeout(r, 0));
         if (epoch !== this.epoch || !this.root || this.root.style.display === "none") return null;
@@ -18354,13 +18407,14 @@ ${x.review || ""}`;
      * 而索引与检索必须覆盖**全部已加载条目**（否则窗口外的月/词既看不见也翻不到）。于是目标落在
      * 窗口外时：把窗口一次性推到盖住它 → 重排 → 再定位到它那一页。
      *
-     * 正常情况下这条路已经很少走到：读盘结束后 `widenFull()` 会在后台把窗口排到全量，此后跳转
-     * 就只剩一次 `turnToPage`。它是**兜底**——用户点得比后台快、条目超过 `WIDEN_FULL_MAX`、
+     * 正常情况下这条路已经很少走到：读盘结束后 `widenFull()` 会把窗口推到 `WIDEN_CAP`，此后
+     * 那段之内的跳转只剩一次 `turnToPage`。它是**兜底**——目标落在 cap 之外、用户点得比后台快、
      * 或后台那一轮被作废（场景不静 / 起过重排）时才轮到它。
      *
      * 兜底时的成本（诚实版）：一次**整窗重排**（`paginateFlow` 重跑 + 一次 reflow 量高 + 重建
-     * StPageFlip），代价 = O(目标在 `all` 里的位置)——700 则的本子上跳最旧那一则基本等于排全量，
-     * 会顿一下。所以它只当兜底，不当主路。不改成滑窗：页码 / 书口年份带 / `keepPage` 保位都要重做。
+     * StPageFlip），代价 = O(目标在 `all` 里的位置)——上千则的本子上跳最旧那一则基本等于排全量，
+     * 会顿一下**而且之后书变重、每次翻页也跟着钝**（见 `WIDEN_CAP` 的注）。所以它只当兜底。
+     * 不改成滑窗：页码 / 书口年份带 / `keepPage` 保位都要重做——那要另立一次拍板。
      */
     indexInAllOf(eid) {
       if (!eid) return -1;
