@@ -26,17 +26,15 @@ import { tryGetSettings, panelSizePersist } from '../core/settings-provider';
 import { mountIcons, openLightbox, uiSuggest, uiResizable } from '../core/ui';
 import { syncSlidePills, type BzSlidePillTarget } from '../core/ui/slide-pill';
 import { iconSpan, esc } from '../core/ui/str';
-import { openExternalUrl } from '../core/utils';
+import { openExternalUrl, sleep } from '../core/utils';
 import { bindFormSubmit } from '../core/ui/modal';
 import {
   STATUS_WANT, STATUS_WATCHING, STATUS_WATCHED, DEFAULT_RATING,
   getGroupForTag, hasIllegalNameChar, ILLEGAL_NAME_HINT, rewatchCount, REWATCH_SHELF,
 } from './constants';
-import { M, type CinemaItem, type CinemaSortMode, FIRST_PAINT_CARDS } from './state';
+import { M, type CinemaItem, type CinemaSortMode } from './state';
 import { loadDoubanNameIndex, searchDoubanNameIndex, normName, type DoubanIndexRow } from '../core/douban-name-index';
-import { rebuildItems, whenMetaReady, hasCinemaFiles, getDisplayItems, normalizeTags, normalizeRewatches, normalizeLists, allLists, refreshDataAndView } from './data';
-import { LIST_BATCH_SIZE, nextBatchRange } from '../core/paging';
-import { yieldToMainThread, sleep } from '../core/utils';
+import { rebuildItems, getDisplayItems, normalizeTags, normalizeRewatches, normalizeLists, allLists, refreshDataAndView } from './data';
 import { localNow } from '../core/ui/str';
 import { runAIRecommend, runSimilarRecommend, buildTasteProfile, quickAddWant } from './recommend';
 import { bindYearbook, deriveYb, yearbookHtml, yearbookFixedHtml, yearbookOpenHtml, type YbHandle } from './yearbook';
@@ -48,7 +46,7 @@ import {
   detailModalHtml, seriesDetailModalHtml, formModalHtml, formBackHtml,
   formTagChipHtml, formStChipHtml, type FormPreviewData,
   aiPageHtml, sheetHeadHtml, seriesSheetHeadHtml, cardHtml, facePiecesHtml, starsHtml, starsLit, seriesStatus, type AiPageInput,
-  midnightDeskHtml, midnightMobHtml, renderMidnightDesk, renderMidnightMob, cardsRangeHtml,
+  midnightDeskHtml, midnightMobHtml, renderMidnightDesk, renderMidnightMob,
   type MidnightRenderInput,
 } from './render';
 import { mergeSeasonCards, isSeriesKey, cardFace, type SeriesCard } from './seasons';
@@ -2241,8 +2239,6 @@ function midnightInput(app: App): MidnightRenderInput {
       searchKeyword: M.searchKeyword,
     },
     cols: gridColumns(),
-    shown: M.shown,
-    loading: M.loading,
     lists: allLists(M.items),
     title: listTitle(),
     aiHtml: onList ? '' : aiPageHtml(aiInput()),
@@ -2643,32 +2639,9 @@ export function createOverlay(app: App): void {
     e.stopImmediatePropagation();
     clearSearchKeyword(app, root, t.classList.contains('j-mq'));
   });
-  // 滚动心跳：后台追加据此让路（capture 抓内层滚动容器 .d-scroll/.m-scroll 的 scroll）
-  root.addEventListener('scroll', () => { M.lastScrollAt = Date.now(); }, true);
 
-  // ---------- 打开（ADR-0231：同步扫描保持，渲染窗口化） ----------
-  //
-  // 账目澄清：820 次 `getFileCache` 是**纯内存查表**（实测量级几十毫秒），不是首屏的病根；
-  // 病根是 `renderAll` 一次拼 820 张卡的 HTML 再整写 DOM（外加 820 张海报的布局与绘制）。
-  // 所以这里保持同步扫描不动——同步语义是既有契约，测试与写后回刷都依赖它——
-  // 真正的改动落在渲染：只渲 FIRST_PAINT_CARDS 张，其余由 idleAppend 空闲补齐。
-  //
-  // 冷启动守卫须在**首次渲染之前**判定：目录里明明有 .md 却一条都解析不出来 ⇒ metadataCache
-  // 尚未就绪（不是「库是空的」）→ 落骨架页，就绪后重扫；真·空库则照常走空态页。
-  // （若把判定放在首渲之后，首渲会带着 loading=true 先出一帧骨架，而 else 分支又不重渲，
-  //   空库就会把骨架永久留在屏上——这正是 view-fix #1 回归的成因。）
   rebuildItems(app);
-  const coldStart = M.items.length === 0 && hasCinemaFiles(app);
-  M.loading = coldStart;
   renderAll(app);
-  if (coldStart) {
-    void whenMetaReady(app).then(() => {
-      if (M.currentOverlay !== overlay) return;
-      rebuildItems(app);
-      M.loading = false;
-      renderAll(app);
-    });
-  }
 }
 
 // ---------- 输入守护（打字不被整刷打断） ----------
@@ -2945,10 +2918,6 @@ export function renderAll(app: App): void {
   if (!overlay) return;
   const root = overlay.querySelector<HTMLElement>('[data-cinema-root]');
   if (!root) return;
-  // ADR-0231：只有**内容身份**变了才把渲染窗口收回首屏值。后台刷新（豆瓣落盘 / vault 事件）
-  // 走同一入口，若也重置窗口，用户已经滚出来的那几百张会被当场收走。
-  if (viewIdentity() !== lastViewIdentity) M.shown = FIRST_PAINT_CARDS;
-  appendSeq++; // 在飞的追加循环作废：本次整刷会重建网格，旧的 from 已无意义
   clearSoftRender(); // 已排期的顺延渲染作废，本次渲染已覆盖
   const snap = snapshotFocus(root);
   const beforeCards = measureGridCards(root); // 网格动效（issue 402）：渲染前量，渲染后就没机会了
@@ -2975,64 +2944,9 @@ export function renderAll(app: App): void {
   playGridMotion(root, beforeCards); // 滚位恢复之后再演：位移差要跟最终滚位一致
   flushCardFlash(root); // 刚变更的那张卡闪一下（issue 403）
   restoreFocus(root, snap);
-  void idleAppend(app); // ADR-0231：首屏 20 张已上屏，其余空闲时按批补齐
-}
-
-// ---------- 后台分片追加（ADR-0231） ----------
-//
-// 首屏只渲 FIRST_PAINT_CARDS 张；剩下的在**空闲**时每批 LIST_BATCH_SIZE 张追加到网格尾部。
-// 三条纪律：
-//   1) 只 append，绝不整刷——不走 renderAll，就不必付 scrollTop 复原与网格动效重算的钱；
-//   2) 用户一有动作就让路：打字静默期（M.lastInputAt）或滚轮刚动过（M.lastScrollAt）时先等，
-//      不是停止而是「等它静下来再续」，所以手一停内容就继续长出来；
-//   3) 条件一变（筛选/搜索/排序/关面板）旧循环按序号自灭——appendSeq 由 renderAll 与关闭递增。
-
-/** 滚动静默期（ms）：滚轮刚动过这么久内不追加，免得和用户的滚动抢主线程 */
-const SCROLL_QUIET_MS = 220;
-/** 让路时的轮询间隔（ms） */
-const BUSY_POLL_MS = 120;
-
-let appendSeq = 0;
-
-/** 用户正在用面板吗（打字 / 刚滚动） */
-function isBusy(): boolean {
-  const now = Date.now();
-  return now - M.lastInputAt < TYPING_GUARD_MS || now - M.lastScrollAt < SCROLL_QUIET_MS;
-}
-
-/** 追加循环让路（可被打断的等待，不是 sleep 阻塞语义） */
-function waitWhileBusy(): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, BUSY_POLL_MS));
-}
-
-async function idleAppend(app: App): Promise<void> {
-  const seq = ++appendSeq;
-  for (;;) {
-    await yieldToMainThread();
-    if (seq !== appendSeq) return;
-    while (isBusy()) {
-      await waitWhileBusy();
-      if (seq !== appendSeq) return;
-    }
-    const overlay = M.currentOverlay;
-    if (!overlay) return;
-    const root = overlay.querySelector<HTMLElement>('[data-cinema-root]');
-    if (!root || M.view !== 'list') return;
-    // 骨架页 / 空态页没有网格：无事可做（骨架期数据还没到，等重扫后的 renderAll 再起一轮）
-    const grid = root.querySelector<HTMLElement>('.grid, .m-grid');
-    if (!grid) return;
-    const inp = midnightInput(app);
-    // from 取**网格现有子元素数**，不另存计数：任何一次整刷都会让它自动对齐
-    const { from, to } = nextBatchRange(grid.children.length, inp.cards.length);
-    if (from >= to) return; // 已铺满
-    grid.insertAdjacentHTML('beforeend', cardsRangeHtml(inp, from, to));
-    mountIcons(grid);
-    M.shown = to;
-  }
 }
 
 export function closeOverlay(): void {
-  appendSeq++; // 面板已关：在飞的追加循环立即退场（overlay 已摘，继续追只是空转）
   clearSoftRender(); // 面板已关：顺延渲染不再补，免留下野定时器
   pendingFlash = null;      // 本次落位闪作废（面板都关了，没有卡可闪）
   lastViewIdentity = null;  // 下次开面板按「内容身份变了」处理 → 首屏排进场接力

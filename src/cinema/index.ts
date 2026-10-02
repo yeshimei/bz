@@ -53,8 +53,6 @@ function registerAutoRefresh(app: App): void {
     if (timer) clearTimeout(timer);
     timer = setTimeout(() => {
       if (!M.currentOverlay) return;
-      // ADR-0231：扫描是纯内存查表（820 次 getFileCache ≈ 几十毫秒），不是首屏的病根，
-      // 保持同步语义不变；真正的成本在渲染，已由渲染窗口承接（见 ui.ts createOverlay）。
       rebuildItems(app);
       renderSoft(app); // 后台通道：打字期间顺延，不抢搜索框焦点
     }, 300);

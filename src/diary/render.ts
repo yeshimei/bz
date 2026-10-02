@@ -528,39 +528,6 @@ export function entryBlockHTMLs(
   return out;
 }
 
-/**
- * 块 HTML 的根类名（首个标签上的 `class`）。
- *
- * 给**检索**用：判命中时要按块根类挑出「没有可读正文」的那几种（媒体 / 信封 / 日戳）跳过，
- * 而不是拿整串 HTML 去 `includes`——那会把内层同名类也算上。
- * 放在本文件是因为「块根长什么样」是 render 层的契约（`entryBlockHTMLs` 的产出形状）。
- */
-export function blockRootClass(html: string): string {
-  const m = /^<[a-z][^>]*\sclass="([^"]*)"/i.exec(html);
-  return m ? m[1] : '';
-}
-
-/**
- * 块 HTML → 纯文本（= 这块上屏后的 `textContent`）。
- *
- * 给**检索**用：判「哪几则命中」不能只扫窗口内已上屏的 DOM（那会漏掉还没排版的条目），
- * 又不能靠 `plainTextOf` 那种字段拼接——块里还会长出行内 md（wikilink / 标签 / 加粗）来，
- * 两边一对不上就会出现「说命中了 N 则、点过去却标不出荧光笔」。
- * 所以直接读块的产出串：去标签 + 反转义。
- *
- * **必须与 `esc` 严格互逆、且与 `entryBlockHTMLs` 同住一个文件**——转义表一旦在别处改了，
- * 检索的命中数就会与实际能标出的范围漂移。`&amp;` 放最后解，否则 `&amp;lt;` 会被拆两遍。
- */
-export function blockPlainText(html: string): string {
-  return html
-    .replace(/<[^>]*>/g, '')
-    .replace(/&lt;/g, '<')
-    .replace(/&gt;/g, '>')
-    .replace(/&quot;/g, '"')
-    .replace(/&#39;/g, "'")
-    .replace(/&amp;/g, '&');
-}
-
 /** 日戳（新的一天：大日号 + 月/星期/则数 + 年份 + 一道水纹） */
 export function daystampHTML(date: string, count: number): string {
   const [y, m, dd] = date.split('-');
@@ -582,6 +549,29 @@ export function daystampHTML(date: string, count: number): string {
     esc(y) +
     '</span></div>' +
     '<div class="bz-diary-ds-wave"></div></div>'
+  );
+}
+
+/**
+ * 写作内页的日戳（ADR-0233）：与正文日戳**同源同款**（大日号 + 月/星期 + 年份 + 一道水纹），
+ * 只把「N 则」那句换成「改日子 · 时辰」那枚小签——写作时它是可点的，读的时候它是计数。
+ */
+export function writeDaystampHTML(date: string): string {
+  const [y, m, dd] = date.split('-');
+  return (
+    '<div class="bz-diary-dstamp">' +
+    '<span class="bz-diary-ds-day">' +
+    Number(dd) +
+    '</span>' +
+    '<span class="bz-diary-ds-side"><b>' +
+    parseInt(m, 10) +
+    '月</b><i>' +
+    weekdayOf(date) +
+    '</i><em><span class="bz-diary-wsp-datebtn">改日子 · 时辰</span></em></span>' +
+    '<span class="bz-diary-ds-year">' +
+    esc(y) +
+    '</span></div>' +
+    '<div class="bz-diary-ds-wave"></div>'
   );
 }
 
@@ -621,6 +611,34 @@ export function bookPanelHTML(): string {
 
       <!-- 分类书签条（筛选态） -->
       <div class="bz-diary-filter-tab"><span class="bz-diary-ft-name"></span><span class="bz-diary-ft-x">取下</span></div>
+
+      <!-- 写作内页（ADR-0233）：点「写」就在书上摊开一张素纸，正文写在这一页上。
+           摆这一层（书页之上、书壳之内）而不是进 StPageFlip 的书页流：草稿不该被分页，
+           而它盖住书页的指针区，「草稿在时不翻页」也就落成了物理事实。
+           日戳由 ui 侧填（与 daystampHTML 同源），贴纸 chips 与正文区在这里只是空壳。 -->
+      <div class="bz-diary-wsp" hidden>
+        <div class="bz-diary-wsp-sheet">
+          <div class="bz-diary-wsp-day"></div>
+          <textarea class="bz-diary-wsp-area" spellcheck="false" placeholder="笔递给你了，写吧……"></textarea>
+          <div class="bz-diary-wsp-tools"></div>
+          <div class="bz-diary-wsp-acts">
+            <span class="bz-diary-wsp-act" data-wact="discard">揉掉</span>
+            <span class="bz-diary-wsp-act bz-diary-wsp-primary" data-wact="save">落笔</span>
+          </div>
+        </div>
+        <div class="bz-diary-wsp-pageno">— 新的一页 —</div>
+      </div>
+    </div>
+
+    <!-- 开册进度：读全量之前书还是空的（上千篇正文走磁盘读、每批 10），
+         桌上先摆一张「正在翻找」的纸条报读到哪儿了，读完换「正在装订」，成册即收。
+         不吃指针（pointer-events: none）：读盘期间点遮罩照样能收起整本。 -->
+    <div class="bz-diary-loading" hidden>
+      <div class="bz-diary-ld-paper">
+        <div class="bz-diary-ld-title"></div>
+        <div class="bz-diary-ld-bar"></div>
+        <div class="bz-diary-ld-count"></div>
+      </div>
     </div>
 
     <!-- 案头文具挂在桌上、不挂在书里：书在窄桌面下会被整体缩小，

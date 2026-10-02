@@ -253,9 +253,112 @@
 /* 书页:最上面一层。往右投一道浅影落到书口上 —— 读起来就是"这一摞纸压在书口前面" */
 .bz-diary-bk-block { position: absolute; inset: 0; z-index: 4; box-shadow: 5px 0 9px -2px rgba(40, 26, 10, .26); }
 
-/* 原型的「写作页」(.write-spread / .write-pad / .page.right / .wp-*) 已删：
-   ADR-0230 决策 8——写日记仍走本域既有的 openAddDialog（写层守卫 / 串行队列 / 加密分流都在那边），
-   书里不再自己装一张会写盘的纸 */
+/* ---------- 开册进度：桌上的一张纸条（读全量 → 一次成册） ---------- */
+/* 上千篇正文走磁盘读、每批 10，读完要好几秒；这段时间书还是空的，先摆这张纸条报进度。
+   不吃指针：读盘期间点遮罩照样能收起整本。 */
+.bz-diary-loading {
+  position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
+  z-index: 20; pointer-events: none;
+}
+.bz-diary-ld-paper {
+  width: min(340px, 66vw);
+  padding: 18px 20px 14px;
+  background: linear-gradient(180deg, #fdf6d8, #f2e6bd);
+  border-radius: 3px;
+  transform: rotate(-.6deg);
+  box-shadow: 0 10px 24px rgba(50, 30, 5, .42), 0 2px 5px rgba(50, 30, 5, .26);
+}
+.bz-diary-ld-title { font-size: 17px; letter-spacing: 2px; color: #5c4a26; }
+/* 进度条本体是 core 的 .bz-progress（章节 J）；这里只按纸的颜色换一换皮，
+   不另造一条 —— 四域同形制的基元不在本域另开一套 */
+.bz-diary-ld-bar { margin: 11px 0 7px; }
+.bz-diary-ld-bar .bz-progress { height: 5px; border-radius: 3px; background: rgba(120, 96, 52, .22); }
+.bz-diary-ld-bar .bz-progress i { border-radius: 3px; background: var(--bz-diary-seal-red); }
+.bz-diary-ld-count { font-size: 12px; color: #8a7550; text-align: right; letter-spacing: 1px; }
+
+/* ---------- 写作内页（ADR-0233）：书里摊开的一张素纸 ---------- */
+/* 摆位与书的纸页同构：桌面落在**右页**（跨页右半），单页档铺满。
+   层级在书这一层里（书自带 transform，是独立层叠上下文）：它盖住书页的指针区，
+   「草稿在时不许翻页」由此是物理事实，不靠事件拦截。 */
+.bz-diary-wsp {
+  position: absolute; inset: 0; z-index: 5;
+  display: flex; justify-content: flex-end;
+  cursor: text;
+}
+.bz-diary-wsp-sheet {
+  position: relative;
+  width: 50%; height: 100%;
+  padding: var(--bz-diary-pg-pad-t) var(--bz-diary-pg-pad-x) var(--bz-diary-pg-pad-b);
+  display: flex; flex-direction: column;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, .4), transparent 30px),
+    linear-gradient(90deg, var(--bz-diary-paper), var(--bz-diary-paper-2));
+  box-shadow: inset 0 0 46px rgba(120, 90, 40, .1), -8px 0 14px -8px rgba(40, 26, 10, .4);
+}
+.bz-diary-wsp-sheet::before {
+  content: ''; position: absolute; inset: 0;
+  background: var(--bz-diary-paper-noise); background-size: 180px;
+  opacity: .5; mix-blend-mode: multiply; pointer-events: none;
+}
+.bz-diary-scene.bz-diary-single .bz-diary-wsp-sheet { width: 100%; }
+.bz-diary-wsp-day { flex: none; }
+/* 素纸不铺格线：落笔前后不突变换版（原型口径） */
+.bz-diary-wsp-area {
+  flex: 1; margin-top: 12px; width: 100%;
+  border: 0; outline: 0; resize: none; background: transparent;
+  font-family: inherit; font-size: 17px; line-height: 27px;
+  color: var(--bz-diary-ink); caret-color: var(--bz-diary-seal-red);
+}
+.bz-diary-wsp-area::placeholder { color: var(--bz-diary-ink-faint); }
+.bz-diary-wsp-tools {
+  flex: none; display: flex; flex-wrap: wrap; gap: 6px; align-items: center;
+  padding: 8px 0 4px; max-height: 108px; overflow: auto;
+}
+.bz-diary-wsp-media {
+  font-size: 13px; padding: 3px 9px 4px; border-radius: 3px; cursor: pointer;
+  border: 1px dashed rgba(107, 95, 76, .65); color: var(--bz-diary-ink-soft);
+}
+@media (hover: hover) {
+
+.bz-diary-wsp-media:hover { border-color: var(--bz-diary-seal-red); color: var(--bz-diary-seal-red); }
+}
+.bz-diary-wsp-chip {
+  font-size: 13px; padding: 3px 9px 4px; border-radius: 3px; cursor: pointer;
+  background: linear-gradient(180deg, #fdf3cf, #f0e0ac); color: #5c4a26;
+  box-shadow: 0 2px 3px rgba(90, 60, 20, .22); user-select: none;
+  transform: rotate(-1deg); transition: transform .15s;
+}
+.bz-diary-wsp-chip:nth-child(2n) { transform: rotate(1.2deg); }
+.bz-diary-wsp-chip.bz-diary-on { background: linear-gradient(180deg, #cfe3bf, #b6d3a0); box-shadow: 0 2px 5px rgba(90, 60, 20, .35); }
+@media (hover: hover) {
+
+.bz-diary-wsp-chip:hover { transform: translateY(-2px) rotate(0); }
+}
+.bz-diary-wsp-acts { flex: none; display: flex; gap: 20px; justify-content: flex-end; padding-top: 4px; }
+.bz-diary-wsp-act {
+  font-size: 17px; cursor: pointer; color: var(--bz-diary-ink-soft);
+  border-bottom: 1px dashed rgba(107, 95, 76, .6); padding-bottom: 1px;
+}
+.bz-diary-wsp-act.bz-diary-wsp-primary {
+  color: var(--bz-diary-seal-red); border-bottom-color: rgba(178, 58, 42, .6); font-size: 19px;
+}
+@media (hover: hover) {
+
+.bz-diary-wsp-act:hover { opacity: .75; }
+}
+.bz-diary-wsp-datebtn { cursor: pointer; border-bottom: 1px dashed rgba(178, 58, 42, .5); }
+.bz-diary-wsp-pageno {
+  position: absolute; bottom: 18px; right: 40px;
+  font-size: 14px; color: var(--bz-diary-ink-faint); letter-spacing: 2px; user-select: none;
+}
+.bz-diary-scene.bz-diary-single .bz-diary-wsp-pageno { right: 0; left: 0; text-align: center; }
+/* 触屏档同书页：正文不许被系统文本选择浮标掐死长按（issue 217 同款教训）——
+   但写作这一页**是**输入面，选择必须留着，故只对纸上的非输入件收回选择 */
+@media (pointer: coarse) {
+  .bz-diary-wsp-day, .bz-diary-wsp-tools, .bz-diary-wsp-acts, .bz-diary-wsp-pageno {
+    user-select: none; -webkit-user-select: none;
+  }
+}
 .bz-diary-page-inner {
   position: absolute; inset: 0;
   padding: var(--bz-diary-pg-pad-t) var(--bz-diary-pg-pad-x) var(--bz-diary-pg-pad-b);
@@ -433,11 +536,7 @@
    我先前自造的那些(相纸留白相框 / 骑在顶边的透明便利贴)全部撤掉:
    便利贴既难贴准(有的图没贴上),又在纸上多出一层"另一件东西",反倒更乱。
    外框高度仍固定 4/3 —— 分页只在重排时量一次,图后到不能改纸高 */
-/* 可缩：分页时若照片块只差一点点塞不进本页剩余高度，`fitMedia`（ui.ts）会把
-   `--bz-diary-ph-w` 内联成「按剩余高度反推的块宽」（几何值，非视觉样式），
-   块宽一收，下面的 4/3 相框与 img padding 跟着等比收，照片不压扁。
-   变量缺席时回落到自然宽 —— 也即「缩不动就整块换页」那条路。 */
-.bz-diary-b-photo { margin: 12px auto 14px; width: var(--bz-diary-ph-w, min(300px, 78%)); }
+.bz-diary-b-photo { margin: 12px auto 14px; width: min(300px, 78%); }
 .bz-diary-photo {
   position: relative; margin: 0;
   transform: rotate(-1.5deg);   /* 兜底角：tiltClassOf 未命中时也不正着贴 */
@@ -898,9 +997,6 @@
 .bz-diary-ir-n { flex: none;  color: var(--bz-diary-ink-soft); }
 /* 宽到容得下「第 1243 页」——原来 64px 放不下三位数,「页」被挤到第二行 */
 .bz-diary-ir-p { flex: none; width: 92px; text-align: right;  color: var(--bz-diary-ink-faint); }
-/* 窗口外的月份：那一月还没排进书里，页码算不出来（ADR-0231 排版窗口）。这里不假装知道，
-   改标「未展开」，点它先按需推宽窗口再翻——所以要比页码再淡一档，读作「待定」而非「第 N 页」 */
-.bz-diary-ir-p.bz-diary-ir-pend { opacity: .62; font-style: italic; letter-spacing: .04em; }
 
 /* 灯箱:相片显影 */
 .bz-diary-lightbox {

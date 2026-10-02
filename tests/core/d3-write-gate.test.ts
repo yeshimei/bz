@@ -114,6 +114,10 @@ const WHITELIST: Array<{ file: RegExp; reason: string; /** 防回归哨兵：预
     file: /^src\/people\/me-avatar\.ts$/,
     reason: '「我」的头像图片二进制附件写（issue 529：adapter.writeBinary 至 CONFIG/FACES/我/avatar.<ext>，用户附件非插件私有数据，同 gameshelf/posters 与 cinema/douban-queue 先例）',
   },
+  {
+    file: /^src\/diary\/media-import\.ts$/,
+    reason: '写作内页「＋ 贴一件」的媒体入库（ADR-0233）：本机挑的照片/录音/视频经 vault.createBinary 写进附件位置（落点优先 fileManager.getAvailablePathForAttachment，退回 我的/日记/附件/），用户附件非插件私有数据，同 clipbook/image-save 与 gameshelf/posters 先例',
+  },
   // 467：src/people/datasource.ts 的 writeBinary 豁免随「头像入库明文目录」一并退役——
   // 头像现在作为密文附件进保库记录（写路径全在 SafeManager 内，encrypt/data.ts 自有豁免）。
 ];

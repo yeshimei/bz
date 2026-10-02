@@ -347,6 +347,52 @@ function assetManifest(): string[] {
 /** 真实 vault 媒体名判定：按扩展名识别（与 data.ts 的媒体扩展名同口径的超集） */
 const MEDIA_EXT_RE = /\.(png|jpe?g|gif|webp|avif|bmp|svg|mp4|m4v|webm|mov|ogv|mp3|m4a|aac|wav|flac|ogg|oga)$/i;
 
+/** 评审壳里「从本机添进来的媒体」的存放前缀（与 md 种子的 bz-sim: 分开：
+ *  一条 md 的文件名和一件二进制的键名可能同名，混在一起会被 adapter.list 当成笔记列出来） */
+const BIN_PREFIX = 'bz-sim-bin:';
+
+/** 小件顺手存成 data URL 的阈值：刷新之后照片还在；大件只留在内存里（localStorage 只有几 MB） */
+const BIN_PERSIST_MAX = 1.5 * 1024 * 1024;
+
+const BIN_MIME: Record<string, string> = {
+  jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png', gif: 'image/gif',
+  webp: 'image/webp', avif: 'image/avif', bmp: 'image/bmp', svg: 'image/svg+xml',
+  mp4: 'video/mp4', m4v: 'video/mp4', webm: 'video/webm', mov: 'video/quicktime', ogv: 'video/ogg',
+  mp3: 'audio/mpeg', m4a: 'audio/mp4', aac: 'audio/aac', wav: 'audio/wav', flac: 'audio/flac',
+  ogg: 'audio/ogg', oga: 'audio/ogg',
+};
+
+function binMimeOf(name: string): string {
+  const dot = name.lastIndexOf('.');
+  return (dot > 0 && BIN_MIME[name.slice(dot + 1).toLowerCase()]) || 'application/octet-stream';
+}
+
+/** 本机添进来的媒体：内存里的 objectURL（本次会话可见）+ 小件的 data URL（刷新后还在） */
+const binUrls = new Map<string, string>();
+
+/** 媒体名 → 可加载 URL（内存 → 落盘的 data URL → ''）。写真条目回刷时 mediaSrc 走这里。 */
+export function fakeBinaryUrl(name: string): string {
+  const base = (name || '').split('/').pop() || '';
+  if (!base) return '';
+  const live = binUrls.get(base);
+  if (live) return live;
+  try {
+    return localStorage.getItem(BIN_PREFIX + base) || '';
+  } catch {
+    return '';
+  }
+}
+
+function bytesToDataUrl(bytes: Uint8Array, mime: string): string {
+  let bin = '';
+  const CHUNK = 0x8000;
+  for (let i = 0; i < bytes.length; i += CHUNK) {
+    bin += String.fromCharCode.apply(null, Array.from(bytes.subarray(i, i + CHUNK)) as number[]);
+  }
+  return `data:${mime};base64,${btoa(bin)}`;
+}
+
+
 /**
  * 按需取流的服务端路由（preview-live.mjs 的 /__vault-media/<文件名>）：
  * 快照引用的媒体全量 1.8G，入库只留子集；其余由预览服务现场从真实 vault 取，
@@ -442,12 +488,39 @@ export class FakeVault {
     return undefined as never;
   }
 
-  /** 媒体资源 URL：入库子集命中 → assets/ 相对路径；否则按需走预览服务的真实 vault 取流；
-   *  file://（双击直开、无服务端）下两者都不可用 → ''（墙渐变占位语义）。 */
+  /**
+   * 二进制落盘（ADR-0233「贴一件」经 `vault.createBinary` 写进附件位置）。
+   * 评审壳不做真文件系统：小件存 data URL（刷新后照片还在），大件只留内存 objectURL。
+   */
+  async createBinary(path: string, data: ArrayBuffer): Promise<FakeFile> {
+    const bytes = new Uint8Array(data);
+    const base = path.split('/').pop() || path;
+    let url = '';
+    try {
+      url = URL.createObjectURL(new Blob([bytes], { type: binMimeOf(base) }));
+    } catch {
+      url = '';
+    }
+    if (url) binUrls.set(base, url);
+    if (bytes.byteLength <= BIN_PERSIST_MAX) {
+      try {
+        localStorage.setItem(BIN_PREFIX + base, bytesToDataUrl(bytes, binMimeOf(base)));
+      } catch {
+        /* 配额满：这一件刷新后退占位，本次会话仍能看 */
+      }
+    }
+    this.emit('create', { path });
+    return this.toFile(path, '');
+  }
+
+  /** 媒体资源 URL：本机添进来的先认（内存 / data URL）→ 入库子集走 assets/ → 否则按需走预览服务取真实 vault；
+   *  file://（双击直开、无服务端）下后者不可用 → ''（墙渐变占位语义）。 */
   getResourcePath(file: { path: string }): string {
     const base = file.path.split('/').pop() || '';
     if (!base) return '';
     if (assetManifest().includes(base)) return './assets/' + encodeURIComponent(base);
+    const added = fakeBinaryUrl(base);
+    if (added) return added;
     return vaultMediaUrl(base);
   }
 
@@ -520,11 +593,12 @@ export class FakeMetadataCache {
     return fm ? { frontmatter: fm } : null;
   }
 
-  /** 媒体链接解析（data.ts mediaSrc 优先路）：入库清单命中、或经预览服务可取真实 vault 媒体
+  /** 媒体链接解析（data.ts mediaSrc 优先路）：本机添进来的 / 入库清单命中 / 经预览服务可取的真实 vault 媒体
    *  （http 环境 + 媒体扩展名）→ 返回 TFile 形状；否则 null → mediaSrc 回退 '' 走渐变占位。 */
   getFirstLinkpathDest(ref: string, _sourcePath: string): { path: string } | null {
     const base = (ref || '').split('/').pop() || '';
     if (!base) return null;
+    if (fakeBinaryUrl(base)) return { path: base };
     if (assetManifest().includes(base)) return { path: base };
     return vaultMediaUrl(base) ? { path: base } : null;
   }
@@ -584,10 +658,25 @@ export function parseFrontmatter(content: string): Record<string, unknown> | nul
   return fm;
 }
 
-/** 评审壳 App：vault + metadataCache（日记本链完整读写面） */
+/** 评审壳 App：vault + metadataCache（日记本链完整读写面）+ fileManager（只补「附件落点」这一条） */
 export class FakeApp {
   vault = new FakeVault();
   metadataCache = new FakeMetadataCache();
+  fileManager = {
+    /**
+     * 「附件默认位置」：真宿主读用户设置的 attachmentFolderPath（本机 vault 是 `CONFIG/APPENDIX`），
+     * 壳里就按同一个口径回一个不重名的路径——ADR-0233 的 mediaPathFor 优先走这条。
+     */
+    getAvailablePathForAttachment: async (name: string, _sourcePath?: string): Promise<string> => {
+      const dir = 'CONFIG/APPENDIX';
+      const dot = name.lastIndexOf('.');
+      const base = dot > 0 ? name.slice(0, dot) : name;
+      const ext = dot > 0 ? name.slice(dot) : '';
+      let path = `${dir}/${name}`;
+      for (let i = 2; fakeBinaryUrl(path.split('/').pop() as string); i++) path = `${dir}/${base}_${i}${ext}`;
+      return path;
+    },
+  };
 }
 
 export type App = FakeApp;

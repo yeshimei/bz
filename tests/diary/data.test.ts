@@ -224,8 +224,8 @@ describe('loadWallEntries', () => {
       '我的/日记/2401022200.md': entry('2024-01-02', '22:00', ['日记'], '坏文件'),
     });
     // 单文件读失败（坏盘/同步冲突）：旧 Promise.all 链路整墙空，修复后只跳该文件
-    const realRead = app.vault.cachedRead.bind(app.vault);
-    vi.spyOn(app.vault, 'cachedRead').mockImplementation(async (f: any) => {
+    const realRead = app.vault.read.bind(app.vault);
+    vi.spyOn(app.vault, 'read').mockImplementation(async (f: any) => {
       if (f.path === '我的/日记/2401022200.md') throw new Error('读取失败');
       return realRead(f);
     });
@@ -241,8 +241,8 @@ describe('loadWallEntries', () => {
       '我的/信/好信.md': '---\ndate: 2024-03-09 09:00\n---\n好信正文\n',
       '我的/信/坏信.md': '---\ndate: 2024-03-09 10:00\n---\n坏信正文\n',
     });
-    const realRead = app.vault.cachedRead.bind(app.vault);
-    vi.spyOn(app.vault, 'cachedRead').mockImplementation(async (f: any) => {
+    const realRead = app.vault.read.bind(app.vault);
+    vi.spyOn(app.vault, 'read').mockImplementation(async (f: any) => {
       if (f.path === '我的/信/坏信.md') throw new Error('读取失败');
       return realRead(f);
     });
@@ -633,10 +633,8 @@ describe('loadWallEntries 聚合四类（日记+影视+信+书）', () => {
 describe('② 墙数据缓存（预热用，按 app 键控 + domain-bus 事件失效）', () => {
   const spyRead = (app: any) => {
     let n = 0;
-    // ADR-0231：展示路径改走 `cachedRead`（日记正文 + 信正文）——「读盘次数」须数这个 API；
-    // 若数 `read`，路径根本不经过它，计数恒为 0，缓存用例会假绿/假红。
-    const real = app.vault.cachedRead.bind(app.vault);
-    vi.spyOn(app.vault, 'cachedRead').mockImplementation(async (f: any) => {
+    const real = app.vault.read.bind(app.vault);
+    vi.spyOn(app.vault, 'read').mockImplementation(async (f: any) => {
       n++;
       return real(f);
     });

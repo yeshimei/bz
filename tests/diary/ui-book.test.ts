@@ -3,7 +3,7 @@
  *
  * 回忆墙 UI 已整域退役（ADR-0230 决策 7），本文件是换代后的第一条主线测试，覆盖三层：
  *
- * 1. **纯函数**（`collectPhotoRefs` / `paginateFlow` / `monthIndex` / `plainTextOf`）——
+ * 1. **纯函数**（`collectPhotoRefs` / `paginateFlow` / `monthMarks` / `pageDateOf` / `plainTextOf`）——
  *    分页与索引是这次换代里唯一「算法」所在，抽成纯函数就是为了能脱开 DOM 量尺直接测；
  * 2. **markup 守卫**（render 纯层）——类名一律 `bz-diary-` 前缀（21 域共用一个 document）、
  *    零内联视觉样式（倾角走 `bz-diary-tilt-N` 类）、失败态走 `data-media-err` 换类；
@@ -16,8 +16,8 @@
 import { describe, expect, it, beforeEach, afterEach, vi, beforeAll } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { setApp } from '../../src/core/app';
-import { applyDirectories, FIRST_PAINT_ENTRIES } from '../../src/diary/config';
+import { setApp, getApp } from '../../src/core/app';
+import { applyDirectories } from '../../src/diary/config';
 import { serializeDiaryEntryFile } from '../../src/core/diary-format';
 import { MockVault, mockAppWithVault } from '../mock-vault';
 import { resetObsidianMocks, clearNotices, getNoticeMessages, Platform } from '../mock-obsidian-entry';
@@ -25,11 +25,9 @@ import { DiaryAppController } from '../../src/diary/ui';
 import {
   collectPhotoRefs,
   paginateFlow,
-  monthIndex,
+  monthMarks,
+  pageDateOf,
   plainTextOf,
-  lastReachableCursor,
-  SINGLE_MAX_W,
-  WIDEN_CAP,
   type FlowItem,
   type Page,
 } from '../../src/diary/ui';
@@ -204,23 +202,6 @@ async function openBook(): Promise<DiaryAppController> {
   return c;
 }
 
-/**
- * 掐掉后台续排（`ui.ts::scheduleWidenFull`）：本轮只想看**排版窗口**本身
- * （首屏那 30 则 / 书尾续叠 / 按需推宽）时用。
- *
- * 正常路径是读盘结束后 350ms 在后台自动续排（目标 `min(全量, WIDEN_CAP)`）——不掐掉的话窗口态只活
- * 350ms，断言就退化成「机器快就过、机器慢就红」。掐掉后窗口停在首屏值，专测窗口那套逻辑；
- * 要测后台续排本身（它才是主路），就**别**掐——见「首屏只排 30 则…」与
- * 「后台续排到位后…」两条。
- */
-function freezeWindow(c: DiaryAppController): void {
-  const raw = c as unknown as { widenTimer: ReturnType<typeof setTimeout> | null };
-  if (raw.widenTimer !== null) {
-    clearTimeout(raw.widenTimer);
-    raw.widenTimer = null;
-  }
-}
-
 const q = <T extends HTMLElement = HTMLElement>(sel: string): T => document.querySelector<T>(sel)!;
 const qa = (sel: string): HTMLElement[] => Array.from(document.querySelectorAll<HTMLElement>(sel));
 
@@ -294,54 +275,6 @@ describe('paginateFlow（块流 → 页）', () => {
     expect(pages.map((p) => p.length)).toEqual([1, 1]);
   });
 
-  it('可缩块（照片 / 视频）放不下时先等比缩到塞进剩余高度，不在页尾留白', () => {
-    // 症状（真机图一）：左页下半页整整一片白，照片独自挪到右页——
-    // 只差一点点就整块换页。规则 3a 让可缩块先缩，塞得下就留在本页。
-    const seen: number[] = [];
-    const items_ = items([80], [40]);
-    items_[1].fit = true;
-    const shrink = (e: HTMLElement, maxH: number): number | null => {
-      seen.push(maxH);
-      expect(e).toBe(items_[1].el);
-      return maxH - 5;
-    };
-    const pages = paginateFlow(items_, 100, noSplit, () => 0, shrink);
-    expect(seen).toEqual([20]); // 剩余 = 100 - 80
-    expect(pages.map((p) => p.length)).toEqual([2]); // 缩完仍同页
-  });
-
-  it('可缩块缩不动（到下限，shrink 返回 null）时照旧换页', () => {
-    const items_ = items([80], [40]);
-    items_[1].fit = true;
-    const pages = paginateFlow(items_, 100, noSplit, () => 0, () => null);
-    expect(pages.map((p) => p.length)).toEqual([1, 1]);
-  });
-
-  it('非可缩块不调 shrink——文字块走逐行续排，日戳必须整块起新纸', () => {
-    let called = 0;
-    const shrink = (): null => {
-      called++;
-      return null;
-    };
-    paginateFlow(items([80], [40]), 100, noSplit, () => 0, shrink);
-    expect(called).toBe(0);
-  });
-
-  it('缩到「塞得下」后不再按剩余高度续切：3a 命中即跳过 3b', () => {
-    // shrink 返回一个恰好 == 剩余高度的高，此时 3b 的 split 不该被触发——
-    // 否则会把一张照片再横切一刀（图的内容被切成两页）。
-    let splitCalled = 0;
-    const split = (): null => {
-      splitCalled++;
-      return null;
-    };
-    const items_ = items([80], [40]);
-    items_[1].fit = true;
-    const pages = paginateFlow(items_, 100, split, () => 0, (e, maxH) => maxH);
-    expect(splitCalled).toBe(0);
-    expect(pages.map((p) => p.length)).toEqual([2]); // 缩到刚好：仍在本页
-  });
-
   it('没有日戳时全部落在一页（块高为 0 的退化场景，jsdom 量尺即如此）', () => {
     const pages = paginateFlow(items([0], [0], [0]), 100, noSplit, () => 0);
     expect(pages.length).toBe(1);
@@ -349,70 +282,33 @@ describe('paginateFlow（块流 → 页）', () => {
   });
 });
 
-describe('可缩媒体块（图一：照片放不下 → 页尾大片留白）· 接线守卫', () => {
-  // jsdom 没有排版引擎（offsetHeight 恒 0），缩块的真实几何量不出来，
-  // 但「接线有没有断」可以钉：照片块被标成 fit、分页吃到 shrink、样式消费收缩变量。
-  // 三者缺一，规则 3a 就是死代码——照片又会整块跳到下页、页尾留白。
-  const read = (p: string) => readFileSync(resolve(process.cwd(), p), 'utf8');
+describe('monthMarks / pageDateOf（册页索引口径）', () => {
+  const stamp = (date: string) => {
+    const t = document.createElement('template');
+    t.innerHTML = daystampHTML(date, 1);
+    return t.content.firstElementChild as HTMLElement;
+  };
 
-  it('照片块（.bz-diary-b-photo）标成可缩块 fit:true', () => {
-    const src = read('src/diary/ui.ts');
-    const m = src.match(/flow\.push\(el\.classList\.contains\('bz-diary-b-photo'\)([\s\S]{0,120}?)\);/);
-    expect(m, 'pushEntryBlocks 里没找到照片块的分流').toBeTruthy();
-    expect(m![1]).toContain('fit: true');
-  });
-
-  it('排版尾段把 fitMedia 作为 shrink 传给 paginateFlow（第 5 个实参）', () => {
-    const src = read('src/diary/ui.ts');
-    const call = src.match(/this\.pages = paginateFlow\(([\s\S]*?)\);/);
-    expect(call, '没找到 paginateFlow 调用').toBeTruthy();
-    expect(call![1]).toContain('this.fitMedia(el, maxH)');
-  });
-
-  it('.bz-diary-b-photo 消费 --bz-diary-ph-w（不然缩块改了变量也没人读）', () => {
-    const css = read('src/diary/styles.css');
-    const block = css.match(/\.bz-diary-b-photo\s*\{([^}]*)\}/);
-    expect(block, '没找到 .bz-diary-b-photo 规则').toBeTruthy();
-    expect(block![1]).toContain('var(--bz-diary-ph-w');
-  });
-});
-
-describe('monthIndex（册页索引口径）', () => {
-  it('按月汇总条目数，一条不漏；每月记该月最新那一则的 id 供跳转', () => {
+  it('每个月第一次出现的页（1 起），条目数按月份汇总', () => {
+    const pages: Page[] = [[stamp('2026-08-19')], [], [stamp('2026-07-02')], [], [stamp('2025-12-31')]];
     const entries = [
-      mk({ id: 'a', date: '2026-08-19', kind: 'diary' }),
-      mk({ id: 'b', date: '2026-08-01', kind: 'diary' }),
-      mk({ id: 'c', date: '2026-07-02', kind: 'diary' }),
-      mk({ id: 'd', date: '2025-12-31', kind: 'movie', time: '00:00' }),
+      mk({ date: '2026-08-19', kind: 'diary' }),
+      mk({ date: '2026-08-01', kind: 'diary' }),
+      mk({ date: '2026-07-02', kind: 'diary' }),
+      mk({ date: '2025-12-31', kind: 'movie', time: '00:00' }),
     ];
-    expect(monthIndex(entries)).toEqual([
-      { key: '2026-08', firstEid: 'a', n: 2 },
-      { key: '2026-07', firstEid: 'c', n: 1 },
-      { key: '2025-12', firstEid: 'd', n: 1 },
+    expect(monthMarks(pages, entries)).toEqual([
+      { key: '2026-08', page1: 1, n: 2 },
+      { key: '2026-07', page1: 3, n: 1 },
+      { key: '2025-12', page1: 5, n: 1 },
     ]);
   });
 
-  it('空集 → 空索引；缺 id 的条目记空串（跳转层会退化成找不到）', () => {
-    expect(monthIndex([])).toEqual([]);
-    expect(monthIndex([mk({ date: '2026-08-19', kind: 'diary' })])).toEqual([
-      { key: '2026-08', firstEid: '', n: 1 },
-    ]);
-  });
-
-  // 这是本次修的核心不变量：索引只吃条目，**不吃排版窗口**。
-  // 旧实现（monthMarks(pages, entries)）拿书页汇月份 ⇒ 书只排了首屏那 30 则时，
-  // 窗口外的月份整行消失（索引失真）。
-  it('不吃排版窗口：条目在、书页没排出来，月份照样在索引里', () => {
-    const entries = Array.from({ length: 40 }, (_, i) =>
-      mk({
-        id: `e${i}`,
-        date: `2026-0${i < 20 ? 8 : 7}-${String((i % 20) + 1).padStart(2, '0')}`,
-        kind: 'diary',
-      })
-    );
-    const idx = monthIndex(entries);
-    expect(idx.map((m) => m.key)).toEqual(['2026-08', '2026-07']);
-    expect(idx.reduce((s, m) => s + m.n, 0)).toBe(40);
+  it('没有日戳的页面不进索引，pageDateOf 返回 null', () => {
+    const pages: Page[] = [[stamp('2026-08-19')], []];
+    expect(monthMarks(pages, [])).toEqual([{ key: '2026-08', page1: 1, n: 0 }]);
+    expect(pageDateOf(pages[0])).toBe('2026-08-19');
+    expect(pageDateOf(pages[1])).toBeNull();
   });
 });
 
@@ -545,11 +441,21 @@ describe('render 纯层：命名空间与零内联视觉样式', () => {
     expect(panel).not.toContain('data-tact="eraser"');
   });
 
-  it('ADR-0230 决策 8：书桌上没有书内写作页（写日记仍走本域 openAddDialog）', () => {
+  it('ADR-0233：书桌上摆着写作内页的空壳（正文区 / 贴纸槽 / 揉掉·落笔）', () => {
     const panel = bookPanelHTML();
-    expect(panel).not.toContain('bz-diary-write-pad');
-    expect(panel).not.toContain('bz-diary-wpage');
-    expect(panel).not.toContain('contenteditable');
+    expect(panel).toContain('bz-diary-wsp-area');
+    expect(panel).toContain('bz-diary-wsp-tools');
+    expect(panel).toContain('data-wact="discard"');
+    expect(panel).toContain('data-wact="save"');
+    // 旧写日记弹窗的挂点不再出现在书桌上（那条路已由内页接手）
+    expect(panel).not.toContain('add-diary-popup');
+  });
+
+  it('ADR-0233：开册进度纸条与进度条挂点在位（读全量之前书是空的）', () => {
+    const panel = bookPanelHTML();
+    expect(panel).toContain('bz-diary-loading');
+    expect(panel).toContain('bz-diary-ld-title');
+    expect(panel).toContain('bz-diary-ld-bar');
   });
 
   it('加密条目只出一枚火漆信封（全文不装在纸面上）', () => {
@@ -720,15 +626,16 @@ describe('DiaryAppController · 首屏与建书', () => {
 });
 
 describe('DiaryAppController · 文具四项接线', () => {
-  it('写 → 本域写链路（带年份范围）；找 → 放大镜纸条；跳 → 台历；类 → 贴纸册', async () => {
+  it('写 → 书内写作内页；找 → 放大镜纸条；跳 → 台历；类 → 贴纸册', async () => {
     const c = await openBook();
     const tact = (n: string) => q(`.bz-diary-tools [data-tact="${n}"]`);
     expect(qa('.bz-diary-tools [data-tact]').length).toBe(4);
 
     tact('pencil').click();
-    expect(mocks.openAddDialog).toHaveBeenCalledTimes(1);
-    const opts = mocks.openAddDialog.mock.calls[0][0] as { yearRange?: { min: number } };
-    expect(opts.yearRange?.min).toBe(2025); // 夹具里最早是 2025 年（getYearRange 的滚动范围）
+    expect(q('.bz-diary-wsp').hidden).toBe(false); // ADR-0233：不再开旧弹窗
+    expect(mocks.openAddDialog).not.toHaveBeenCalled();
+    q('[data-wact="discard"]').click(); // 空纸：直接揉掉，不留草稿
+    expect(q('.bz-diary-wsp').hidden).toBe(true);
 
     tact('lens').click();
     expect(q('.bz-diary-slip').hidden).toBe(false);
@@ -764,21 +671,6 @@ describe('DiaryAppController · 文具四项接线', () => {
     q('.bz-diary-filter-tab').click();
     await vi.waitFor(() => expect(qa('.bz-diary-b-seal').length).toBe(5));
     expect(q('.bz-diary-filter-tab').classList.contains('bz-diary-on')).toBe(false);
-  });
-
-  it('筛选态下台历「当天几则」只数这本册子里有的（标着有，就得点得动）', async () => {
-    const c = await openBook();
-    // 夹具里 2026-08-19 有四则（日记 / 影视 / 书 / 信）；挂上「日记」标后册子里只剩两则
-    q('.bz-diary-tools [data-tact="stickers"]').click();
-    qa('.bz-diary-ap-sticker').find((el) => (el.textContent || '').includes('日记'))!.click();
-    await vi.waitFor(() => expect(qa('.bz-diary-b-seal').length).toBe(2));
-    (c as unknown as { closeAlbum: () => void }).closeAlbum();
-    q('.bz-diary-tools [data-tact="calendar"]').click();
-    const day = q('.bz-diary-cal-cell[data-d="19"]');
-    // 原先这枚角标读未过滤的 `this.entries` → 标 4 则，点下去却落到「那天没落笔」
-    expect(day.dataset.n).toBe('1');
-    expect(day.classList.contains('bz-diary-has')).toBe(true);
-    expect(qa('.bz-diary-cal-cell.bz-diary-has').length).toBe(1);
   });
 
   it('书口点一下抽出「册页索引」：一年一段、一月一行，行上带跳页号', async () => {
@@ -1146,315 +1038,230 @@ describe('DiaryAppController · 条目动作走真写层', () => {
 });
 
 // ============================================================
-//  六、排版窗口（ADR-0231 / issue 539）
-//
-//  守的是「首屏不排全量、其余留在内存、翻到书尾才叠页」这条链——它坏了页面不报错，
-//  只是开册又变慢，或者翻到第 30 则就见了底（后台读进来的一千多则永远不会出现）。
+//  六、写作内页（ADR-0233）与开册进度
 // ============================================================
 
-// ------------------------------------------------------------
-//  书尾判据（纯函数）· issue 539「翻到 50 之后就没内容了」的根因所在
-//
-//  StPageFlip 跨页模式的 `flip` 事件给的是**当前跨页的左页号**，所以「读者能翻到的最后一个
-//  cursor」不是恒等于 `pageCount - 1`：偶数页数时最后一跨是 `[n-2, n-1]`、左页号止于 `n-2`。
-//  这里把这条库语义钉死——它是唯一一处「算法」且不依赖 DOM，必须脱开书实例单测。
-// ------------------------------------------------------------
+/** 内页里的私有件（本文件按「控制器接线」口径直取，不另造公开面） */
+type WriteInternals = {
+  draft: { date: string; time: string; tags: string[] } | null;
+  showLoading(): void;
+  updateLoading(done: number, total: number): void;
+  setLoadingBinding(): void;
+  hideLoading(): void;
+  importMedia(files: File[]): Promise<void>;
+};
 
-describe('lastReachableCursor（书尾判据）', () => {
-  it('单页模式：每页自成跨，书尾恒为 pageCount - 1', () => {
-    expect(lastReachableCursor(1, true)).toBe(0);
-    expect(lastReachableCursor(12, true)).toBe(11);
-    expect(lastReachableCursor(13, true)).toBe(12);
+const inner = (c: DiaryAppController): WriteInternals => c as unknown as WriteInternals;
+
+/** 假 App 的 fileManager（mock-vault 只给了 processFrontMatter / renameFile；
+ *  「附件默认位置」这条 API 由用例按需补上，用来钉 mediaPathFor 的优先路） */
+function getAppMockFileManager(): { getAvailablePathForAttachment?: (n: string, src?: string) => Promise<string> } {
+  return (getApp() as unknown as { fileManager: Record<string, unknown> })
+    .fileManager as unknown as { getAvailablePathForAttachment?: (n: string, src?: string) => Promise<string> };
+}
+
+/** 摊开写作内页（点「写」文具），返回正文区 */
+async function openWritePage(c: DiaryAppController): Promise<HTMLTextAreaElement> {
+  q('.bz-diary-tools [data-tact="pencil"]').click();
+  await vi.waitFor(() => expect(q('.bz-diary-wsp').hidden).toBe(false));
+  return q<HTMLTextAreaElement>('.bz-diary-wsp-area');
+}
+
+describe('DiaryAppController · 写作内页（ADR-0233）', () => {
+  it('点「写」摊开一张素纸：日戳落在今天、贴纸列出来、不预选任何一类', async () => {
+    const c = await openBook();
+    const area = await openWritePage(c);
+
+    const today = new Date();
+    expect(q('.bz-diary-wsp-day .bz-diary-ds-day').textContent).toBe(String(today.getDate()));
+    expect(q('.bz-diary-wsp-day .bz-diary-ds-year').textContent).toBe(String(today.getFullYear()));
+    expect(q('.bz-diary-wsp-datebtn').textContent).toContain('改日子');
+    expect(qa('.bz-diary-wsp-chip').length).toBeGreaterThan(3);
+    expect(qa('.bz-diary-wsp-chip.bz-diary-on').length).toBe(0); // 与旧弹窗同口径：默认不选
+    // 这张纸不是 StPageFlip 的页：书里的页数一点没变
+    expect(lastFlip().items.length).toBe(3);
+    await vi.waitFor(() => expect(document.activeElement).toBe(area));
   });
 
-  it('跨页模式 · 奇数页数：最后一跨是 [n-1]，书尾为 n-1', () => {
-    expect(lastReachableCursor(13, false)).toBe(12);
-    expect(lastReachableCursor(59, false)).toBe(58);
+  it('落笔：正文与贴纸进写层（落盘 + 域事件），内页收起、书翻回最新那页', async () => {
+    const c = await openBook();
+    const area = await openWritePage(c);
+    area.value = '今天猫又把杯子推下去了';
+    const chip = qa('.bz-diary-wsp-chip').find((el) => (el.textContent || '').includes('日记'))!;
+    chip.click();
+    expect(chip.classList.contains('bz-diary-on')).toBe(true);
+
+    const before = new Set(Object.keys(fixtureFiles()));
+    q('[data-wact="save"]').click();
+    await vi.waitFor(() => expect(q('.bz-diary-wsp').hidden).toBe(true));
+
+    const created = [...vault.files.entries()].filter(([p]) => p.startsWith('我的/日记/') && !before.has(p));
+    expect(created.length).toBe(1);
+    expect(created[0][1]).toContain('今天猫又把杯子推下去了');
+    expect(created[0][1]).toContain('日记');
+    expect(lastFlip().page).toBe(0); // 新条目是最新那篇：落回第 0 页等回刷把它排进来
   });
 
-  it('跨页模式 · 偶数页数：最后一跨是 [n-2, n-1]，书尾为 n-2（≠ pageCount - 1）', () => {
-    expect(lastReachableCursor(12, false)).toBe(10);
-    expect(lastReachableCursor(2, false)).toBe(0);
-    // 这一条就是缺陷本身：按 `pageCount - 1` 判书尾，在偶数页数下永远判不中
-    expect(lastReachableCursor(12, false)).not.toBe(11);
+  it('空纸落笔 → 「一个字都没写呢」，不落盘、内页不关（字还在纸上等着）', async () => {
+    const c = await openBook();
+    await openWritePage(c);
+    const before = vault.files.size;
+    q('[data-wact="save"]').click();
+    await vi.waitFor(() => expect(q('.bz-diary-toast').textContent).toContain('一个字都没写呢'));
+    expect(vault.files.size).toBe(before);
+    expect(q('.bz-diary-wsp').hidden).toBe(false);
   });
 
-  it('空书：书尾为 0（不能返回负数把判据带成恒真）', () => {
-    expect(lastReachableCursor(0, false)).toBe(0);
-    expect(lastReachableCursor(0, true)).toBe(0);
-    expect(lastReachableCursor(-3, false)).toBe(0);
+  it('写了一半点「揉掉」：先在纸条层问一句，确认了才收纸', async () => {
+    const c = await openBook();
+    const area = await openWritePage(c);
+    area.value = '写了半句';
+    q('[data-wact="discard"]').click();
+    expect(q('.bz-diary-slip').hidden).toBe(false);
+    expect(q('.bz-diary-slip-title').textContent).toContain('还没落笔');
+    expect(q('.bz-diary-wsp').hidden).toBe(false); // 还没收：选择权在人手上
+
+    qa('.bz-diary-slip-btn')
+      .find((b) => b.textContent === '揉掉')!
+      .click();
+    expect(q('.bz-diary-wsp').hidden).toBe(true);
+    expect(q('.bz-diary-slip').hidden).toBe(true);
+    expect(inner(c).draft).toBeNull();
   });
 
-  /**
-   * `lastReachableCursor` 用 `this.single` **代理**库的端式，靠的是「单页档下库必判 portrait」。
-   * 库的 portrait 条件是「块宽 < 2×页宽」（`calculateBoundsRect`，不只看 `usePortrait`），而块宽
-   * ≤ 屏宽 ≤ `SINGLE_MAX_W` ⇒ 只要 `2 × pageWidth() > SINGLE_MAX_W` 就恒成立（页宽在屏宽 ≤ 522 时
-   * 是 0.92×屏宽、结构上必然更大，所以断点处就是最紧的一支）。
-   * 日后调断点或页宽上限若破了这条，判据会把偶数页数的跨页书当成单页 —— 本轮修掉的缺陷以反方向回来。
-   */
-  it('单页档下 2×页宽必大于断点宽（代理端式的条件 ② 守卫）', () => {
-    const c = DiaryAppController.getInstance() as unknown as { pageWidth: () => number };
-    const prev = window.innerWidth;
-    window.innerWidth = SINGLE_MAX_W; // 不等式最紧的一点
+  it('草稿在纸上：滚轮 / 索引行跳转都让路，Esc 只提醒不关册子', async () => {
+    const c = await openBook();
+    await openWritePage(c);
+    const rec = lastFlip();
+
+    q('.bz-diary-book').dispatchEvent(new WheelEvent('wheel', { deltaY: 120, bubbles: true, cancelable: true }));
+    expect(rec.page).toBe(0);
+
+    q('.bz-diary-bk-edge').click(); // 抽出册页索引
+    qa('.bz-diary-idx-row')[0].click(); // 点一行
+    expect(rec.page).toBe(0); // 没翻过去
+
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+    expect(q('.bz-diary-scene').style.display).toBe('flex'); // 册子还开着
+    expect(q('.bz-diary-wsp').hidden).toBe(false);
+    expect(q('.bz-diary-toast').textContent).toContain('先落笔');
+  });
+
+  it('改日子 · 时辰：台历进写作模式（空白日子也能点），「就这天」回写日戳', async () => {
+    const c = await openBook();
+    await openWritePage(c);
+    q('.bz-diary-wsp-datebtn').click();
+    expect(q('.bz-diary-cal-pop').hidden).toBe(false);
+    expect(q('.bz-diary-cal-time-row').hidden).toBe(false); // 写作模式才有时辰行
+    expect(q('.bz-diary-cal-ok').hidden).toBe(false);
+
+    const cells = qa('.bz-diary-cal-cell[data-d]');
+    expect(cells.length).toBeGreaterThanOrEqual(28);
+    // 写作模式：整月的格子都可点（补写空白日子是常事），跳日模式只给有落笔的那天挂监听
+    expect(qa('.bz-diary-cal-cell.bz-diary-pickable').length).toBe(cells.length);
+    const blank = cells.find((x) => !x.classList.contains('bz-diary-has'))!;
+    blank.click();
+    expect(blank.classList.contains('bz-diary-sel')).toBe(true);
+
+    q<HTMLInputElement>('.bz-diary-ct-input').value = '07:05';
+    q('.bz-diary-cal-ok').click();
+    expect(q('.bz-diary-cal-pop').hidden).toBe(true);
+    expect(q('.bz-diary-wsp-day .bz-diary-ds-day').textContent).toBe(String(Number(blank.dataset.d)));
+    expect(inner(c).draft?.time).toBe('07:05');
+  });
+
+  it('时辰那一行认不出就留在框里报错，日子与时辰都不动（不猜）', async () => {
+    const c = await openBook();
+    await openWritePage(c);
+    const before = inner(c).draft!.time;
+    q('.bz-diary-wsp-datebtn').click();
+    q<HTMLInputElement>('.bz-diary-ct-input').value = '晌午前后';
+    q('.bz-diary-cal-ok').click();
+    expect(q('.bz-diary-cal-pop').hidden).toBe(false);
+    expect(q('.bz-diary-ct-err').textContent).toContain('没认出来');
+    expect(inner(c).draft?.time).toBe(before);
+  });
+
+  it('台历跳日模式仍是「只有落过笔的日子可点」，且不显时辰行', async () => {
+    await openBook();
+    q('.bz-diary-tools [data-tact="calendar"]').click();
+    expect(q('.bz-diary-cal-time-row').hidden).toBe(true);
+    expect(q('.bz-diary-cal-ok').hidden).toBe(true);
+    expect(qa('.bz-diary-cal-cell.bz-diary-pickable').length).toBe(0);
+  });
+
+  it('添一件本机媒体：写进 vault 的附件位置，正文里留一条 ![[名字]]（自占一行）', async () => {
+    const c = await openBook();
+    const app = getAppMockFileManager();
+    app.getAvailablePathForAttachment = vi.fn(async (n: string) => `CONFIG/APPENDIX/${n}`);
+
+    const area = await openWritePage(c);
+    area.value = '先写一句';
+    area.setSelectionRange(area.value.length, area.value.length);
+
+    const file = {
+      name: '相纸.png',
+      size: 3,
+      arrayBuffer: async () => new Uint8Array([1, 2, 3]).buffer,
+    } as unknown as File;
+    await inner(c).importMedia([file]);
+
+    expect(app.getAvailablePathForAttachment).toHaveBeenCalledWith('相纸.png', '我的/日记/');
+    expect(vault.binaryFiles.has('CONFIG/APPENDIX/相纸.png')).toBe(true);
+    expect(area.value).toBe('先写一句\n![[相纸.png]]\n');
+    expect(getNoticeMessages().join('\n')).toContain('放进册子 1 件');
+  });
+
+  it('宿主没有 getAvailablePathForAttachment 时退到日记目录下的「附件/」，并自己避重名', async () => {
+    const c = await openBook();
+    const area = await openWritePage(c);
+    const file = (name: string) =>
+      ({ name, size: 1, arrayBuffer: async () => new Uint8Array([1]).buffer }) as unknown as File;
+
+    await inner(c).importMedia([file('相纸.png')]);
+    await inner(c).importMedia([file('相纸.png')]);
+    expect(vault.binaryFiles.has('我的/日记/附件/相纸.png')).toBe(true);
+    expect(vault.binaryFiles.has('我的/日记/附件/相纸_2.png')).toBe(true); // 不覆盖前一件
+    expect(area.value).toBe('![[相纸.png]]\n![[相纸_2.png]]\n');
+  });
+});
+
+describe('DiaryAppController · 开册进度（读全量 → 一次成册）', () => {
+  it('读盘进度一路报到 UI：读数与填充跟着 (已读, 总数) 走，装订那一段是 100%', async () => {
+    const c = await openBook();
+    const priv = inner(c);
+    priv.showLoading();
+    priv.updateLoading(30, 120);
+    expect(q('.bz-diary-ld-count').textContent).toBe('30 / 120 篇');
+    expect(q<HTMLElement>('.bz-diary-ld-bar .bz-progress i').style.width).toBe('25%');
+
+    priv.setLoadingBinding();
+    expect(q('.bz-diary-ld-title').textContent).toBe('正在装订…');
+    expect(q<HTMLElement>('.bz-diary-ld-bar .bz-progress i').style.width).toBe('100%');
+    expect(q('.bz-diary-ld-count').textContent).toContain('则');
+
+    priv.hideLoading();
+    expect(q('.bz-diary-loading').hidden).toBe(true);
+  });
+
+  it('读盘每批都向订阅者报一次进度，末次 = 读到的全量（进度条的唯一数据源）', async () => {
+    const { onWallProgress } = await import('../../src/diary/data');
+    const seen: [number, number][] = [];
+    const off = onWallProgress((done, total) => seen.push([done, total]));
     try {
-      expect(2 * c.pageWidth()).toBeGreaterThan(SINGLE_MAX_W);
+      await openBook();
     } finally {
-      window.innerWidth = prev;
+      off();
     }
+    expect(seen.length).toBeGreaterThan(0);
+    const [done, total] = seen[seen.length - 1];
+    expect(total).toBeGreaterThan(0);
+    expect(done).toBe(total); // 末尾那一批读完 = 全量到位
+  });
+
+  it('成册之后进度纸条收起（不挡着书）', async () => {
+    await openBook();
+    expect(q('.bz-diary-loading').hidden).toBe(true);
   });
 });
 
-describe('DiaryAppController · 排版窗口（ADR-0231）', () => {
-  /** 清掉夹具里的既有条目（2 则日记 + 影视/书/信），换成 n 则连续日期的日记（一天一则） */
-  function seedManyEntries(n: number): void {
-    for (const p of [DIARY_PATH, YOUNGER_PATH, MOVIE_PATH, BOOK_PATH, LETTER_PATH]) vault.files.delete(p);
-    for (let i = 0; i < n; i++) {
-      const d = new Date(Date.UTC(2026, 0, 1 + i));
-      const y = d.getUTCFullYear();
-      const mo = String(d.getUTCMonth() + 1).padStart(2, '0');
-      const da = String(d.getUTCDate()).padStart(2, '0');
-      vault.files.set(
-        `我的/日记/${String(y).slice(2)}${mo}${da}0800.md`,
-        serializeDiaryEntryFile({ date: `${y}-${mo}-${da}`, time: '08:00' }, ['日记'], `第 ${i + 1} 天`)
-      );
-    }
-  }
-
-  it('首屏只把前 FIRST_PAINT_ENTRIES 则排成纸页，读盘结束后在后台自动续排到「盖住全量」', async () => {
-    seedManyEntries(45);
-    const c = await openBook();
-    expect(qa('.bz-diary-b-seal').length).toBe(FIRST_PAINT_ENTRIES); // 上屏 = 窗口
-    await vi.waitFor(() => expect(c.entries.length).toBe(45)); // 数据 = 全量
-    /* 后台续排（ADR-0231 决策 12 回修 + 2026-10-03 封顶回修）：不必等用户去点索引/台历，
-       书自己在后台排到 `min(全量, WIDEN_CAP)`——此后「点日期跳转」就只剩一次 turnToPage。
-       本夹具 45 则 < WIDEN_CAP(120) ⇒ 这一条落在「全量也够小、一次排完」那支；
-       「条目超过 WIDEN_CAP 只排到封顶」由下面那条单测钉。 */
-    await vi.waitFor(() => expect(qa('.bz-diary-b-seal').length).toBe(45));
-  });
-
-  /** 翻到「真机能到的那一页」。跨页模式（`showCover:false`）下 StPageFlip 的 `flip` 事件给的是
-   *  **当前跨页的左页号**，偶数页数时最后一跨是 `[n-2, n-1]` ⇒ 落点是 `n-2`，不是 `n-1`。
-   *  替身不做这层归一，所以这里显式算——若直接点名 `n-1`，就掩盖了「书尾判据写成 n-1」这类缺陷
-   *  （真机上表现为：首屏那批翻完就到底，后台读进来的条目再也翻不到）。
-   *
-   *  ⚠️ 本夹具（30 则窗口）实际排出的页数是**奇数**（59）⇒ 这条只覆盖真机的奇数页数一支；
-   *  偶数页数那一支由下面的「偶数页数的书尾是 n-2」单测直接构造。改夹具若把页数改成偶数，
-   *  记得那条单测仍要保留（它的价值在于**不依赖**夹具碰巧的奇偶）。 */
-  function flipToTail(c: DiaryAppController): void {
-    const n = qa('.bz-diary-page-item').length;
-    const landscape = window.innerWidth > 720;
-    const last = landscape && n % 2 === 0 ? n - 2 : n - 1;
-    const flip = (c as unknown as { flip: { turnToPage: (i: number) => void } }).flip;
-    flip.turnToPage(Math.max(0, last));
-  }
-
-  beforeEach(() => {
-    window.innerWidth = 1024; // 本组默认桌面跨页；单页那条自己改窄（端式判据同 ui.ts 的 720）
-  });
-
-  it('翻到书尾自动推宽一批；已覆盖全量后不再叠页', async () => {
-    seedManyEntries(45);
-    const c = await openBook();
-    await vi.waitFor(() => expect(c.entries.length).toBe(45));
-    freezeWindow(c); // 专测「书尾续叠」这条兜底路径：掐掉后台续排，否则窗口已是全量、续叠恒假
-    expect(qa('.bz-diary-b-seal').length).toBe(FIRST_PAINT_ENTRIES); // 还没到书尾：只有窗口
-    flipToTail(c);
-    await vi.waitFor(() => expect(qa('.bz-diary-b-seal').length).toBe(45)); // 书尾 → 一批补到顶
-    const pages = qa('.bz-diary-page-item').length;
-    flipToTail(c); // 已覆盖全部 → 不再叠页
-    await new Promise((r) => setTimeout(r, 20)); // 等延后那拍跑完（续叠是让一拍再做的）
-    expect(qa('.bz-diary-page-item').length).toBe(pages);
-  });
-
-  it('窄屏单页模式同样能续叠（每页自成跨，最后一页就是书尾）', async () => {
-    window.innerWidth = 600;
-    seedManyEntries(45);
-    const c = await openBook();
-    await vi.waitFor(() => expect(c.entries.length).toBe(45));
-    freezeWindow(c); // 同上：续叠是兜底路径，先掐掉后台续排
-    expect(qa('.bz-diary-b-seal').length).toBe(FIRST_PAINT_ENTRIES);
-    flipToTail(c);
-    await vi.waitFor(() => expect(qa('.bz-diary-b-seal').length).toBe(45));
-  });
-
-  /**
-   * issue 539 真机症状的直接复现：「日记本翻页到 50 之后就没内容了」。
-   *
-   * 上面两条集成用例走的是**本夹具实际排出来的页数（59 页，奇数）**——奇数页数的真机书尾恰好是
-   * `n-1`，旧判据 `cursor < pages.length - 1` 在这组里会**碰巧**成立，测不出偶数页数那一支。
-   * 所以这条单列：把书芯摆成**偶数页数**、cursor 停在读者真机能到的最后一页（`n-2`），
-   * 此刻必须续叠。旧判据在这里会误判成「还没到书尾」，一条都叠不出来——红。
-   */
-  it('偶数页数的书尾是 n-2：停在那里也必须续叠（issue 539 根因）', async () => {
-    seedManyEntries(45);
-    const c = await openBook();
-    await vi.waitFor(() => expect(c.entries.length).toBe(45));
-    freezeWindow(c); // 前提：窗口停在首屏值——后台一续排就是全量，续叠这条就测不着了
-    const raw = c as unknown as {
-      pages: Page[];
-      cursor: number;
-      single: boolean;
-      shown: number;
-      extending: boolean;
-      extendIfAtTail: () => boolean;
-    };
-    expect(raw.shown).toBe(FIRST_PAINT_ENTRIES); // 前提：还停在首屏窗口
-    // 造一本偶数页数的书芯（12 页）并让读者翻到最后一跨 ⇒ 库报回来的左页号 = 10 = n-2
-    raw.pages = Array.from({ length: 12 }, () => [] as Page);
-    raw.single = false;
-    raw.cursor = 10;
-    expect(raw.extendIfAtTail()).toBe(true); // 旧判据（cursor < 12-1）在此恒 false → 这条会红
-    await vi.waitFor(() => expect(qa('.bz-diary-b-seal').length).toBe(45));
-  });
-
-  it('不进书尾就不动窗口（光标不在最后一页时 extendIfAtTail 不生效）', async () => {
-    seedManyEntries(45);
-    const c = await openBook();
-    await vi.waitFor(() => expect(c.entries.length).toBe(45));
-    freezeWindow(c); // 要断言「不动窗口」，先让后台续排别来动
-    const extend = (c as unknown as { extendIfAtTail: () => boolean }).extendIfAtTail.bind(c);
-    expect(extend()).toBe(false); // cursor=0，非书尾
-    expect(qa('.bz-diary-b-seal').length).toBe(FIRST_PAINT_ENTRIES);
-  });
-
-  it('重开册子窗口复位回首屏值（不沿用上次推宽的窗口）', async () => {
-    seedManyEntries(45);
-    const c = await openBook();
-    await vi.waitFor(() => expect(c.entries.length).toBe(45));
-    freezeWindow(c);
-    flipToTail(c);
-    await vi.waitFor(() => expect(qa('.bz-diary-b-seal').length).toBe(45));
-    c.hide();
-    c.show();
-    await vi.waitFor(() => expect(qa('.bz-diary-b-seal').length).toBe(FIRST_PAINT_ENTRIES));
-    freezeWindow(c); // show() 又排了一轮后台续排；别把它漏到用例之外
-  });
-
-  it('窗口已覆盖全量时 no-op（条目本就不足 30 则）', async () => {
-    const few = FIRST_PAINT_ENTRIES - 5;
-    seedManyEntries(few);
-    const c = await openBook();
-    await vi.waitFor(() => expect(c.entries.length).toBe(few));
-    const extend = (c as unknown as { extendIfAtTail: () => boolean }).extendIfAtTail.bind(c);
-    expect(extend()).toBe(false);
-    expect(qa('.bz-diary-b-seal').length).toBe(few);
-  });
-
-  // ------------------------------------------------------------
-  //  七、索引 / 检索 / 台历一律吃「已加载全量」，不吃排版窗口
-  //
-  //  守的是「窗口只决定排版多少，不决定数据边界」这条：索引与检索若跟着窗口走，
-  //  首屏那 30 则之外的月份会整行消失、老词会搜不到，而且界面还会**言之凿凿地说没有**
-  //  （「整本册子都翻了」「这一册里，那天没落笔」）。
-  //
-  //  夹具：seedManyEntries(90) = 2026-01-01 起连续 90 天 ⇒ 1 月 31 / 2 月 28 / 3 月 31。
-  //  条目最新在前 ⇒ 排版窗口（最新 30 条）= 3/31…3/2（3/1 恰落在窗口外），1 月与 2 月全在窗口外。
-  // ------------------------------------------------------------
-
-  it('册页索引按全量列月份：书里只排了 3 月，索引仍给出 1/2/3 三个月', async () => {
-    seedManyEntries(90);
-    const c = await openBook();
-    await vi.waitFor(() => expect(c.entries.length).toBe(90));
-    freezeWindow(c); // 前提：只排了首屏那批——后台一续排三个月就全进窗口，「未展开」那两支没了
-    expect(qa('.bz-diary-b-seal').length).toBe(FIRST_PAINT_ENTRIES); // 前提：只排了首屏那批
-    q('.bz-diary-bk-edge').click();
-    const rows = qa('.bz-diary-idx-row');
-    expect(rows.length).toBe(3); // 旧实现（拿书页汇月份）在这里只会给 1 行
-    expect(rows.map((r) => r.querySelector('.bz-diary-ir-m')!.textContent)).toEqual(['3 月', '2 月', '1 月']);
-    // 排进书里的那个月带页码；窗口外的两个月标「未展开」、改带条目 id 供按需推宽
-    expect(rows[0].dataset.jumpPage).toBe('0');
-    expect(rows[0].textContent).toContain('第 1 页');
-    expect(rows[1].dataset.jumpPage).toBeUndefined();
-    expect(rows[1].dataset.jumpEid).toBeTruthy();
-    expect(rows[1].textContent).toContain('未展开');
-    expect(rows[2].dataset.jumpEid).toBeTruthy();
-    // 表头三项同源：则数 / 月数都按全量（原先月数按窗口，跟「凡 N 则」自相矛盾）
-    const meta = q('.bz-diary-sheet-meta').textContent || '';
-    expect(meta).toContain('2026-03-31');
-    expect(meta).toContain('2026-01-01');
-    expect(meta).toContain('三 个月');
-  });
-
-  it('点窗口外那个月 → 按需推宽窗口再翻过去（只推到盖住它，不排全量）', async () => {
-    seedManyEntries(90);
-    const c = await openBook();
-    await vi.waitFor(() => expect(c.entries.length).toBe(90));
-    freezeWindow(c); // 前提：窗口停在首屏值——否则后台已排到 90，按需推宽的落点（60）就测不出来了
-    const raw = c as unknown as { shown: number };
-    expect(raw.shown).toBe(FIRST_PAINT_ENTRIES);
-    q('.bz-diary-bk-edge').click();
-    qa('.bz-diary-idx-row')[2].click(); // 1 月，窗口外
-    // 1 月最新那一则是第 60 条（3 月 31 条 + 2 月 28 条 + 1 条）⇒ 推宽到 60，不是 90
-    await vi.waitFor(() => expect(raw.shown).toBe(60));
-    expect(q('.bz-diary-sheet').hidden).toBe(true); // 纸收回去
-    expect(lastFlip().page).toBeGreaterThan(0); // 落到了页上，不是停在首页
-    expect(qa('.bz-diary-b-seal').length).toBe(60); // 书里真排到了那一则
-  });
-
-  it('后台续排到位后，点窗口外的月份只是一次翻页（不再当场重排整册）', async () => {
-    seedManyEntries(90);
-    const c = await openBook();
-    await vi.waitFor(() => expect(c.entries.length).toBe(90));
-    const raw = c as unknown as { shown: number };
-    await vi.waitFor(() => expect(raw.shown).toBe(90)); // 90 < WIDEN_CAP ⇒ 后台已排到全量
-    const booksBefore = flipRecords.length; // 每次重排都会 buildBook → 新建一本 StPageFlip 实例
-    q('.bz-diary-bk-edge').click();
-    qa('.bz-diary-idx-row')[2].click(); // 1 月，最旧那一段
-    await vi.waitFor(() => expect(lastFlip().page).toBeGreaterThan(0)); // 真翻过去了
-    expect(flipRecords.length).toBe(booksBefore); // 但没重建书 ⇒ 没重排 ⇒ 不卡
-    expect(raw.shown).toBe(90);
-  });
-
-  it('后台续排封顶在 WIDEN_CAP：书不跟着条目数无限长（书一重，每次翻页都卡）', async () => {
-    const total = WIDEN_CAP + 60;
-    seedManyEntries(total);
-    const c = await openBook();
-    await vi.waitFor(() => expect(c.entries.length).toBe(total)); // 数据仍是全量
-    const raw = c as unknown as { shown: number };
-    await vi.waitFor(() => expect(raw.shown).toBe(WIDEN_CAP));
-    expect(raw.shown).toBeLessThan(total); // 没排到全量——排到全量的那一版真机上报「翻页也卡」
-    expect(qa('.bz-diary-b-seal').length).toBe(WIDEN_CAP); // 书里也只有这一段
-  });
-
-  it('现场不静时后台续排让路，静了自动接着排（开着的层吃不掉续排）', async () => {
-    seedManyEntries(90);
-    const c = await openBook();
-    await vi.waitFor(() => expect(c.entries.length).toBe(90));
-    const raw = c as unknown as { shown: number; widenFull: () => Promise<void> };
-    freezeWindow(c); // 先按住自动那一拍，好由用例自己发令
-    q('.bz-diary-bk-edge').click(); // 册页索引摊开 = 现场不静
-    expect(q('.bz-diary-sheet').hidden).toBe(false); // 前提：那层真开着
-    await raw.widenFull();
-    expect(raw.shown).toBe(FIRST_PAINT_ENTRIES); // 让路：重排会把那张纸拆掉，窗口不动
-    q('.bz-diary-sheet').hidden = true; // 纸收回（等价于用户关掉那层）
-    // 让的那一拍已经排上了（sceneQuiet 是「过一拍再看」不是「放弃」）⇒ 静了自动接手
-    await vi.waitFor(() => expect(raw.shown).toBe(90));
-  });
-
-  it('检索吃全量：窗口外（最旧）那一则也搜得到、标得上', async () => {
-    seedManyEntries(90);
-    const c = await openBook();
-    await vi.waitFor(() => expect(c.entries.length).toBe(90));
-    const raw = c as unknown as { shown: number };
-    // 「第 1 天」是最旧那一则（i=0）——旧实现只扫已排版的 30 则，会弹「整本册子都翻了，没有」
-    (c as unknown as { runSearch: (k: string) => void }).runSearch('第 1 天');
-    await vi.waitFor(() => expect(raw.shown).toBe(90)); // 命中在最旧一则 ⇒ 推宽到全量
-    await vi.waitFor(() => expect(qa('.bz-diary-page-item mark.bz-diary-hl-on').length).toBeGreaterThan(0));
-    expect(q('.bz-diary-toast').textContent).toContain('寻得 1 则');
-    // 跨窗跳转走了一次 relayout（那里会把 this.search 换成空态）——检索态必须续回来，
-    // 否则将来接上「下一处」入口会从第 2 条起就断（去掉 nextHit 里的续回，这两条断言即红）
-    const st = (c as unknown as { search: { kw: string | null; hits: string[] } }).search;
-    expect(st.kw).toBe('第 1 天');
-    expect(st.hits.length).toBe(1);
-  });
-
-  it('台历点窗口外那天 → 推宽窗口再跳，不再假称「那天没落笔」', async () => {
-    seedManyEntries(90);
-    const c = await openBook();
-    await vi.waitFor(() => expect(c.entries.length).toBe(90));
-    const raw = c as unknown as { shown: number; jumpToDay: (d: string) => void };
-    raw.jumpToDay('2026-01-05'); // 窗口里只有 3 月；这天真的有日记
-    await vi.waitFor(() => expect(raw.shown).toBeGreaterThan(FIRST_PAINT_ENTRIES));
-    expect(q('.bz-diary-toast').textContent).not.toContain('没落笔');
-  });
-});
