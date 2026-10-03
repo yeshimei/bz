@@ -1,5 +1,5 @@
-/* 源指纹 ce2f5600f1079fcf · 仓内输入 296 个（校验见 tests/preview-freshness.test.ts） */
-/*#preview-inputs=["prototypes/settings-panel/fake-sim.ts","prototypes/settings-panel/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/keys.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/belongings/ai.ts","src/belongings/catalog-suggest.ts","src/belongings/category.ts","src/belongings/data.ts","src/belongings/layouts/poster/render.ts","src/belongings/motion.ts","src/belongings/render.ts","src/belongings/report-stats.ts","src/belongings/report.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/epub-notes.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/motion.ts","src/bookshelf/notes-ui.ts","src/bookshelf/notes.ts","src/bookshelf/render.ts","src/bookshelf/settings.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/bookshelf/ui.ts","src/checkup/checks-consistency.ts","src/checkup/checks-drift.ts","src/checkup/checks-json.ts","src/checkup/checks-orphans.ts","src/checkup/files.ts","src/checkup/index.ts","src/checkup/run.ts","src/checkup/ui.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/douban-fetcher.ts","src/cinema/seasons.ts","src/cinema/settings.ts","src/cinema/shared.ts","src/cinema/state.ts","src/clipbook/anchor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/file-sync.ts","src/clipbook/flow.ts","src/clipbook/image-save.ts","src/clipbook/index.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/motion.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/press/data.ts","src/clipbook/press/engine.ts","src/clipbook/press/index.ts","src/clipbook/press/motions.ts","src/clipbook/press/view.ts","src/clipbook/render.ts","src/clipbook/report-stats.ts","src/clipbook/report-ui.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai-models.ts","src/core/ai.ts","src/core/app.ts","src/core/asr-proofread.ts","src/core/category-table.ts","src/core/changelog.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/domain-icons.ts","src/core/douban-name-index.ts","src/core/download-manifest.ts","src/core/esc-manager.ts","src/core/external-tool.ts","src/core/file-sync.ts","src/core/flow-dialog.ts","src/core/gesture.ts","src/core/http.ts","src/core/item-actions.ts","src/core/jev-fallback.ts","src/core/jev.ts","src/core/json-store.ts","src/core/knowledge-boxes.ts","src/core/landscape.ts","src/core/link-now.ts","src/core/lock-stats.ts","src/core/manual.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/pomodoro-phase.ts","src/core/remote-asset.ts","src/core/remote-base.ts","src/core/rss-catalog.ts","src/core/settings-btn-state.ts","src/core/settings-common.ts","src/core/settings-main-schema.ts","src/core/settings-modal.ts","src/core/settings-model-picker.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/sha256.ts","src/core/skin-pack.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/flip.ts","src/core/ui/focus-trap.ts","src/core/ui/help-tip.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slide-pill.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/settings.ts","src/dock/data.ts","src/dock/declaration.ts","src/dock/registry.ts","src/dock/runner.ts","src/dock/schedule.ts","src/dock/schema.ts","src/dock/settings.ts","src/dock/ui.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/motion.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/favorites/ai.ts","src/favorites/app.ts","src/favorites/config.ts","src/favorites/data.ts","src/favorites/layouts/board/render.ts","src/favorites/motion.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/gameshelf/constants.ts","src/gameshelf/settings.ts","src/gameshelf/state.ts","src/home/entry-editor.ts","src/home/order.ts","src/home/settings.ts","src/home/shared.ts","src/knowledge/data.ts","src/knowledge/file-sync.ts","src/knowledge/index.ts","src/knowledge/motion.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/partial-json.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source-retire.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/memo/data.ts","src/memo/due.ts","src/memo/render.ts","src/memo/settings.ts","src/memo/state.ts","src/memo/ui.ts","src/password-vault/data.ts","src/password-vault/settings.ts","src/people/chat.ts","src/people/datasource.ts","src/people/insights.ts","src/people/me-avatar.ts","src/people/media.ts","src/people/parse.ts","src/people/render.ts","src/people/safe-store.ts","src/people/settings.ts","src/people/stats.ts","src/people/types.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/index.ts","src/pomodoro/motion.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts","src/reading-report/index.ts","src/reading-report/report.ts","src/reading-report/stats.ts","src/review/analysis/data.ts","src/review/analysis/engine.ts","src/review/analysis/index.ts","src/review/analysis/kits.ts","src/review/analysis/motions.ts","src/review/analysis/view.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/motion.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/quiz-panel-data.ts","src/review/quiz-panel.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts","src/secondbrain/ai.ts","src/secondbrain/chunk.ts","src/secondbrain/config.ts","src/secondbrain/link-agent/data.ts","src/secondbrain/link-agent/pipeline.ts","src/secondbrain/motion.ts","src/secondbrain/panel.ts","src/secondbrain/readonly.ts","src/secondbrain/render.ts","src/secondbrain/store-file.ts","src/secondbrain/tfidf.ts","src/secondbrain/vector-math.ts","src/secondbrain/weekly-ui.ts","src/secondbrain/weekly.ts","src/secondbrain/whitelist.ts","src/settings-panel/changelog.ts","src/settings-panel/index.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/manual-viewer.ts","src/settings-panel/motion.ts","src/settings-panel/online-resources.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/schema.ts","src/settings-panel/shared.ts","src/settings-panel/ui.ts","src/settings.ts","src/smartcat/belongings-source.ts","src/smartcat/character.ts","src/smartcat/config.ts","src/smartcat/data.ts","src/smartcat/favorites-source.ts","src/smartcat/motion.ts","src/smartcat/types.ts","src/smartcat/ui.ts"]*/
+/* 源指纹 ac5a3f8f867d321e · 仓内输入 297 个（校验见 tests/preview-freshness.test.ts） */
+/*#preview-inputs=["prototypes/settings-panel/fake-sim.ts","prototypes/settings-panel/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/keys.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/belongings/ai.ts","src/belongings/catalog-suggest.ts","src/belongings/category.ts","src/belongings/data.ts","src/belongings/layouts/poster/render.ts","src/belongings/motion.ts","src/belongings/render.ts","src/belongings/report-stats.ts","src/belongings/report.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/epub-notes.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/motion.ts","src/bookshelf/notes-ui.ts","src/bookshelf/notes.ts","src/bookshelf/render.ts","src/bookshelf/settings.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/bookshelf/ui.ts","src/checkup/checks-consistency.ts","src/checkup/checks-drift.ts","src/checkup/checks-json.ts","src/checkup/checks-orphans.ts","src/checkup/files.ts","src/checkup/index.ts","src/checkup/run.ts","src/checkup/ui.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/douban-fetcher.ts","src/cinema/seasons.ts","src/cinema/settings.ts","src/cinema/shared.ts","src/cinema/state.ts","src/clipbook/anchor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/file-sync.ts","src/clipbook/flow.ts","src/clipbook/image-save.ts","src/clipbook/index.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/motion.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/press/data.ts","src/clipbook/press/engine.ts","src/clipbook/press/index.ts","src/clipbook/press/motions.ts","src/clipbook/press/view.ts","src/clipbook/render.ts","src/clipbook/report-stats.ts","src/clipbook/report-ui.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai-models.ts","src/core/ai.ts","src/core/app.ts","src/core/asr-proofread.ts","src/core/category-table.ts","src/core/changelog.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/domain-icons.ts","src/core/douban-name-index.ts","src/core/download-manifest.ts","src/core/esc-manager.ts","src/core/external-tool.ts","src/core/file-sync.ts","src/core/flow-dialog.ts","src/core/gesture.ts","src/core/http.ts","src/core/item-actions.ts","src/core/jev-fallback.ts","src/core/jev.ts","src/core/json-store.ts","src/core/knowledge-boxes.ts","src/core/landscape.ts","src/core/link-now.ts","src/core/lock-stats.ts","src/core/manual.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/pomodoro-phase.ts","src/core/remote-asset.ts","src/core/remote-base.ts","src/core/rss-catalog.ts","src/core/settings-btn-state.ts","src/core/settings-common.ts","src/core/settings-main-schema.ts","src/core/settings-modal.ts","src/core/settings-model-picker.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/sha256.ts","src/core/skin-pack.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/flip.ts","src/core/ui/focus-trap.ts","src/core/ui/help-tip.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slide-pill.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/settings.ts","src/dock/data.ts","src/dock/declaration.ts","src/dock/registry.ts","src/dock/runner.ts","src/dock/schedule.ts","src/dock/scheduler.ts","src/dock/schema.ts","src/dock/settings.ts","src/dock/ui.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/motion.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/favorites/ai.ts","src/favorites/app.ts","src/favorites/config.ts","src/favorites/data.ts","src/favorites/layouts/board/render.ts","src/favorites/motion.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/gameshelf/constants.ts","src/gameshelf/settings.ts","src/gameshelf/state.ts","src/home/entry-editor.ts","src/home/order.ts","src/home/settings.ts","src/home/shared.ts","src/knowledge/data.ts","src/knowledge/file-sync.ts","src/knowledge/index.ts","src/knowledge/motion.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/partial-json.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source-retire.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/memo/data.ts","src/memo/due.ts","src/memo/render.ts","src/memo/settings.ts","src/memo/state.ts","src/memo/ui.ts","src/password-vault/data.ts","src/password-vault/settings.ts","src/people/chat.ts","src/people/datasource.ts","src/people/insights.ts","src/people/me-avatar.ts","src/people/media.ts","src/people/parse.ts","src/people/render.ts","src/people/safe-store.ts","src/people/settings.ts","src/people/stats.ts","src/people/types.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/index.ts","src/pomodoro/motion.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts","src/reading-report/index.ts","src/reading-report/report.ts","src/reading-report/stats.ts","src/review/analysis/data.ts","src/review/analysis/engine.ts","src/review/analysis/index.ts","src/review/analysis/kits.ts","src/review/analysis/motions.ts","src/review/analysis/view.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/motion.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/quiz-panel-data.ts","src/review/quiz-panel.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts","src/secondbrain/ai.ts","src/secondbrain/chunk.ts","src/secondbrain/config.ts","src/secondbrain/link-agent/data.ts","src/secondbrain/link-agent/pipeline.ts","src/secondbrain/motion.ts","src/secondbrain/panel.ts","src/secondbrain/readonly.ts","src/secondbrain/render.ts","src/secondbrain/store-file.ts","src/secondbrain/tfidf.ts","src/secondbrain/vector-math.ts","src/secondbrain/weekly-ui.ts","src/secondbrain/weekly.ts","src/secondbrain/whitelist.ts","src/settings-panel/changelog.ts","src/settings-panel/index.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/manual-viewer.ts","src/settings-panel/motion.ts","src/settings-panel/online-resources.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/schema.ts","src/settings-panel/shared.ts","src/settings-panel/ui.ts","src/settings.ts","src/smartcat/belongings-source.ts","src/smartcat/character.ts","src/smartcat/config.ts","src/smartcat/data.ts","src/smartcat/favorites-source.ts","src/smartcat/motion.ts","src/smartcat/types.ts","src/smartcat/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/settings-panel/fake-sim.ts → window.BZW_settings_panel（行为单源预览包，issue 245/ADR-0106） */
 var BZW_settings_panel = (() => {
   var __create = Object.create;
@@ -4549,8 +4549,8 @@ var BZW_settings_panel = (() => {
   });
 
   // src/core/app.ts
-  function setApp(app) {
-    _app = app;
+  function setApp(app2) {
+    _app = app2;
   }
   function getApp() {
     if (!_app) {
@@ -5246,15 +5246,15 @@ var BZW_settings_panel = (() => {
     }
     return [...out].sort();
   }
-  async function collectVaultFolders(app) {
+  async function collectVaultFolders(app2) {
     var _a2, _b2, _c, _d;
     const out = /* @__PURE__ */ new Set([""]);
     try {
-      const files = ((_c = (_b2 = (_a2 = app == null ? void 0 : app.vault) == null ? void 0 : _a2.getFiles) == null ? void 0 : _b2.call(_a2)) != null ? _c : []).map((f) => f.path);
+      const files = ((_c = (_b2 = (_a2 = app2 == null ? void 0 : app2.vault) == null ? void 0 : _a2.getFiles) == null ? void 0 : _b2.call(_a2)) != null ? _c : []).map((f) => f.path);
       for (const p of foldersFromFiles(files)) out.add(p);
     } catch (e) {
     }
-    const adapter = (_d = app == null ? void 0 : app.vault) == null ? void 0 : _d.adapter;
+    const adapter = (_d = app2 == null ? void 0 : app2.vault) == null ? void 0 : _d.adapter;
     if (adapter && typeof adapter.list === "function") {
       const walk = async (dir, depth) => {
         var _a3;
@@ -5435,7 +5435,7 @@ var BZW_settings_panel = (() => {
     var _a2, _b2, _c;
     closePathPicker();
     focusRestore = document.activeElement instanceof HTMLElement ? document.activeElement : null;
-    const app = getApp();
+    const app2 = getApp();
     const mode = opts.mode || "single";
     const selected = new Set(normalizePicked(opts.selected || []));
     const pinnedAtOpen = [...selected];
@@ -5511,7 +5511,7 @@ var BZW_settings_panel = (() => {
       const full = parent ? `${parent}/${name}` : name;
       void (async () => {
         if (!state3.folders.includes(full)) {
-          await app.vault.createFolder(full);
+          await app2.vault.createFolder(full);
           if (!state3.folders.includes(full)) state3.folders.push(full);
         }
         if (mode === "single") selected.clear();
@@ -5623,11 +5623,11 @@ var BZW_settings_panel = (() => {
       if (mode === "single") submit();
     });
     try {
-      const files = ((_c = (_b2 = (_a2 = app == null ? void 0 : app.vault) == null ? void 0 : _a2.getFiles) == null ? void 0 : _b2.call(_a2)) != null ? _c : []).map((f) => f.path);
+      const files = ((_c = (_b2 = (_a2 = app2 == null ? void 0 : app2.vault) == null ? void 0 : _a2.getFiles) == null ? void 0 : _b2.call(_a2)) != null ? _c : []).map((f) => f.path);
       state3.folders = foldersFromFiles(files);
     } catch (e) {
     }
-    void collectVaultFolders(app).then((folders) => {
+    void collectVaultFolders(app2).then((folders) => {
       if (!mask.isConnected) return;
       state3.folders = folders;
       popup.dataset.ready = "1";
@@ -6062,9 +6062,9 @@ var BZW_settings_panel = (() => {
       }
     }
   }
-  function openExternalUrl(app, url) {
+  function openExternalUrl(app2, url) {
     try {
-      const r = app.openUrl(url);
+      const r = app2.openUrl(url);
       if (r && typeof r.catch === "function") {
         r.catch(() => {
           if (!openViaElectron(url)) openViaWindow(url);
@@ -9361,9 +9361,9 @@ var BZW_settings_panel = (() => {
   }
   function pumpFrame(now) {
     pumpRaf = 0;
-    for (const tick of [...pumpTicks]) {
+    for (const tick2 of [...pumpTicks]) {
       try {
-        tick(now);
+        tick2(now);
       } catch (e) {
       }
     }
@@ -9381,12 +9381,12 @@ var BZW_settings_panel = (() => {
       }, 220);
     }
   }
-  function pumpAdd(tick) {
-    pumpTicks.add(tick);
+  function pumpAdd(tick2) {
+    pumpTicks.add(tick2);
     pumpStart();
   }
-  function pumpDel(tick) {
-    pumpTicks.delete(tick);
+  function pumpDel(tick2) {
+    pumpTicks.delete(tick2);
     if (!pumpTicks.size && pumpGuard) {
       clearInterval(pumpGuard);
       pumpGuard = 0;
@@ -12469,24 +12469,24 @@ var BZW_settings_panel = (() => {
   function baseNameOf(p) {
     return p.includes("/") ? p.slice(p.lastIndexOf("/") + 1) : p;
   }
-  async function backupOriginal(app, filePath, raw) {
+  async function backupOriginal(app2, filePath, raw) {
     try {
-      const f = app.vault.getAbstractFileByPath(filePath);
+      const f = app2.vault.getAbstractFileByPath(filePath);
       if (!f) return null;
-      const content = raw !== void 0 ? raw : await app.vault.read(f);
-      if (!app.vault.getAbstractFileByPath(CORRUPT_BACKUP_DIR)) {
+      const content = raw !== void 0 ? raw : await app2.vault.read(f);
+      if (!app2.vault.getAbstractFileByPath(CORRUPT_BACKUP_DIR)) {
         try {
-          await app.vault.createFolder(CORRUPT_BACKUP_DIR);
+          await app2.vault.createFolder(CORRUPT_BACKUP_DIR);
         } catch (e) {
         }
       }
       const base = baseNameOf(filePath);
       const stamp = corruptStamp();
       let backupPath = `${CORRUPT_BACKUP_DIR}/${base}.${stamp}.bak`;
-      for (let i = 2; app.vault.getAbstractFileByPath(backupPath); i++) {
+      for (let i = 2; app2.vault.getAbstractFileByPath(backupPath); i++) {
         backupPath = `${CORRUPT_BACKUP_DIR}/${base}.${stamp}-${i}.bak`;
       }
-      await app.vault.create(backupPath, content);
+      await app2.vault.create(backupPath, content);
       return backupPath;
     } catch (e) {
       console.warn("[storage] " + filePath + " 留档失败（" + CORRUPT_BACKUP_DIR + "），继续原流程", e);
@@ -12514,86 +12514,86 @@ var BZW_settings_panel = (() => {
       const d = opts.defaultValue;
       return typeof d === "function" ? d() : d === void 0 ? [] : d;
     };
-    async function ensureDir3(app) {
+    async function ensureDir3(app2) {
       const d = filePath.substring(0, filePath.lastIndexOf("/"));
-      if (d && !app.vault.getAbstractFileByPath(d)) await app.vault.createFolder(d);
+      if (d && !app2.vault.getAbstractFileByPath(d)) await app2.vault.createFolder(d);
     }
-    async function createIfMissing(app, content) {
-      await ensureDir3(app);
+    async function createIfMissing(app2, content) {
+      await ensureDir3(app2);
       try {
-        await app.vault.create(filePath, content);
+        await app2.vault.create(filePath, content);
         return true;
       } catch (e) {
-        if (isAlreadyExistsError(e) && app.vault.getAbstractFileByPath(filePath)) return false;
+        if (isAlreadyExistsError(e) && app2.vault.getAbstractFileByPath(filePath)) return false;
         throw e;
       }
     }
-    async function handleCorrupt(app, err, raw) {
+    async function handleCorrupt(app2, err, raw) {
       var _a2;
       if (((_a2 = opts.onCorrupt) == null ? void 0 : _a2.call(opts, filePath, err)) === false) {
         return null;
       }
-      const backupPath = await backupOriginal(app, filePath, raw);
+      const backupPath = await backupOriginal(app2, filePath, raw);
       if (backupPath && !opts.onCorrupt) notifyBackup(filePath, backupPath, "解析失败");
-      const f = app.vault.getAbstractFileByPath(filePath);
+      const f = app2.vault.getAbstractFileByPath(filePath);
       if (f) {
-        await app.vault.modify(f, serialize(resolveDefault()));
+        await app2.vault.modify(f, serialize(resolveDefault()));
       } else {
-        await createIfMissing(app, serialize(resolveDefault()));
+        await createIfMissing(app2, serialize(resolveDefault()));
       }
       return resolveDefault();
     }
-    async function modifyWithBackup(app, f, c) {
+    async function modifyWithBackup(app2, f, c) {
       try {
-        await app.vault.modify(f, c);
+        await app2.vault.modify(f, c);
       } catch (e) {
-        const backupPath = await backupOriginal(app, filePath);
+        const backupPath = await backupOriginal(app2, filePath);
         if (backupPath) notifyBackup(filePath, backupPath, "写入失败");
         throw e;
       }
     }
     return {
       async read() {
-        const app = resolveApp2();
-        let f = app.vault.getAbstractFileByPath(filePath);
+        const app2 = resolveApp2();
+        let f = app2.vault.getAbstractFileByPath(filePath);
         if (!f) {
-          const created = await createIfMissing(app, serialize(resolveDefault()));
+          const created = await createIfMissing(app2, serialize(resolveDefault()));
           if (created) return resolveDefault();
-          f = app.vault.getAbstractFileByPath(filePath);
+          f = app2.vault.getAbstractFileByPath(filePath);
           if (!f) return resolveDefault();
         }
-        const raw = await app.vault.read(f);
+        const raw = await app2.vault.read(f);
         try {
           return JSON.parse(raw);
         } catch (e) {
-          return await handleCorrupt(app, e, raw);
+          return await handleCorrupt(app2, e, raw);
         }
       },
       async write(data) {
-        const app = resolveApp2();
+        const app2 = resolveApp2();
         const c = serialize(data);
-        let f = app.vault.getAbstractFileByPath(filePath);
+        let f = app2.vault.getAbstractFileByPath(filePath);
         if (f) {
           if (opts.writeIfChanged) {
             try {
-              const cur2 = await app.vault.read(f);
+              const cur2 = await app2.vault.read(f);
               if (cur2 === c) return;
             } catch (e) {
             }
           }
-          await modifyWithBackup(app, f, c);
+          await modifyWithBackup(app2, f, c);
           return;
         }
-        const created = await createIfMissing(app, c);
+        const created = await createIfMissing(app2, c);
         if (created) return;
-        let cur = app.vault.getAbstractFileByPath(filePath);
+        let cur = app2.vault.getAbstractFileByPath(filePath);
         if (!cur) {
-          const retried = await createIfMissing(app, c);
+          const retried = await createIfMissing(app2, c);
           if (retried) return;
-          cur = app.vault.getAbstractFileByPath(filePath);
+          cur = app2.vault.getAbstractFileByPath(filePath);
           if (!cur) throw new Error("storage: create 竞态降级失败（" + filePath + "）");
         }
-        await modifyWithBackup(app, cur, c);
+        await modifyWithBackup(app2, cur, c);
       }
     };
   }
@@ -12750,9 +12750,9 @@ var BZW_settings_panel = (() => {
     }
     return Math.round(ms);
   }
-  function parseBookFile(file, app, folderPath, bookTag) {
+  function parseBookFile(file, app2, folderPath, bookTag) {
     var _a2, _b2, _c;
-    const metadata = app.metadataCache.getFileCache(file);
+    const metadata = app2.metadataCache.getFileCache(file);
     const fm = metadata == null ? void 0 : metadata.frontmatter;
     if (!fm) return null;
     let tags = fm.tags;
@@ -12796,10 +12796,10 @@ var BZW_settings_panel = (() => {
       epubVaultPath: null
     };
   }
-  function scanMarkdownBooks(app) {
+  function scanMarkdownBooks(app2) {
     const folderPath = resolveFolderPath();
     const bookTag = resolveBookTag();
-    const folder = app.vault.getAbstractFileByPath(folderPath);
+    const folder = app2.vault.getAbstractFileByPath(folderPath);
     const files = [];
     if (folder && Array.isArray(folder.children)) {
       const stack = [...folder.children];
@@ -12809,12 +12809,12 @@ var BZW_settings_panel = (() => {
         else if ((cur == null ? void 0 : cur.extension) === "md") files.push(cur);
       }
     } else {
-      files.push(...app.vault.getMarkdownFiles().filter((f) => isBookshelfPath(f.path, folderPath)));
+      files.push(...app2.vault.getMarkdownFiles().filter((f) => isBookshelfPath(f.path, folderPath)));
     }
     const items = [];
     for (const file of files) {
       try {
-        const item = parseBookFile(file, app, folderPath, bookTag);
+        const item = parseBookFile(file, app2, folderPath, bookTag);
         if (item) items.push(item);
       } catch (e) {
         console.warn("处理书目文件失败:", file.path, e);
@@ -12826,25 +12826,25 @@ var BZW_settings_panel = (() => {
     const raw = String(value || "").trim().replace(/^\/+|\/+$/g, "");
     return raw || "CONFIG/STORAGE";
   }
-  function resolveWeaveDataPath(app) {
+  function resolveWeaveDataPath(app2) {
     var _a2, _b2, _c;
-    const plugins = (_a2 = app.plugins) == null ? void 0 : _a2.plugins;
+    const plugins = (_a2 = app2.plugins) == null ? void 0 : _a2.plugins;
     const fromWeave = (_c = (_b2 = plugins == null ? void 0 : plugins[WEAVE_PLUGIN_ID]) == null ? void 0 : _b2.settings) == null ? void 0 : _c.dataPath;
     return normalizeWeaveDataPath(fromWeave);
   }
-  function isVaultImageFile(app, path) {
+  function isVaultImageFile(app2, path) {
     var _a2, _b2;
-    const file = (_b2 = (_a2 = app.vault) == null ? void 0 : _a2.getAbstractFileByPath) == null ? void 0 : _b2.call(_a2, path);
+    const file = (_b2 = (_a2 = app2.vault) == null ? void 0 : _a2.getAbstractFileByPath) == null ? void 0 : _b2.call(_a2, path);
     return Boolean(file) && /\.(png|jpe?g|gif|webp)$/i.test(file.name || path);
   }
-  function resolveEpubCoverPath(app, meta) {
+  function resolveEpubCoverPath(app2, meta) {
     const coverPath = typeof (meta == null ? void 0 : meta.coverPath) === "string" ? meta.coverPath.trim() : "";
-    if (coverPath && isVaultImageFile(app, coverPath)) return coverPath;
+    if (coverPath && isVaultImageFile(app2, coverPath)) return coverPath;
     const title = typeof (meta == null ? void 0 : meta.title) === "string" ? meta.title.trim() : "";
     if (title) {
       for (const ext of COVER_EXTENSIONS) {
         const candidate = `CONFIG/BOOK/EPUB COVER/${title}.${ext}`;
-        if (isVaultImageFile(app, candidate)) return candidate;
+        if (isVaultImageFile(app2, candidate)) return candidate;
       }
     }
     return null;
@@ -12872,7 +12872,7 @@ var BZW_settings_panel = (() => {
   function epubReadingDate(progress, lastReadTime) {
     return progress > 0 ? toDateString(lastReadTime) : null;
   }
-  function buildEpubItem(app, aggregate) {
+  function buildEpubItem(app2, aggregate) {
     var _a2, _b2, _c;
     const meta = aggregate == null ? void 0 : aggregate.meta;
     const fileRef = aggregate == null ? void 0 : aggregate.file;
@@ -12889,14 +12889,14 @@ var BZW_settings_panel = (() => {
     const totalReadTimeMs = Number.isFinite(stats == null ? void 0 : stats.totalReadTime) ? stats.totalReadTime : 0;
     const readingDate = epubReadingDate(progress, lastReadTime);
     const completionDate = toDateString(completedTime);
-    const vaultFile = (_c = (_b2 = app == null ? void 0 : app.vault) == null ? void 0 : _b2.getAbstractFileByPath) == null ? void 0 : _c.call(_b2, vaultPath);
+    const vaultFile = (_c = (_b2 = app2 == null ? void 0 : app2.vault) == null ? void 0 : _b2.getAbstractFileByPath) == null ? void 0 : _c.call(_b2, vaultPath);
     const epubCategoryValue = epubCategory(meta);
     return {
       file: vaultFile instanceof TFile ? vaultFile : null,
       title,
       author: typeof (meta == null ? void 0 : meta.author) === "string" && meta.author.trim() ? meta.author.trim() : "未知作者",
       category: epubCategoryValue,
-      cover: resolveEpubCoverPath(app, meta),
+      cover: resolveEpubCoverPath(app2, meta),
       bookReview: null,
       readingDate,
       completionDate,
@@ -12912,15 +12912,15 @@ var BZW_settings_panel = (() => {
       epubVaultPath: vaultPath
     };
   }
-  async function readWeaveAggregates(app) {
+  async function readWeaveAggregates(app2) {
     var _a2, _b2;
-    const dataPath = resolveWeaveDataPath(app);
+    const dataPath = resolveWeaveDataPath(app2);
     const dataFilePath = `${dataPath}/${WEAVE_DATA_FILE}`;
-    const file = (_b2 = (_a2 = app == null ? void 0 : app.vault) == null ? void 0 : _a2.getAbstractFileByPath) == null ? void 0 : _b2.call(_a2, dataFilePath);
+    const file = (_b2 = (_a2 = app2 == null ? void 0 : app2.vault) == null ? void 0 : _a2.getAbstractFileByPath) == null ? void 0 : _b2.call(_a2, dataFilePath);
     if (!file) return [];
     let parsed;
     try {
-      parsed = JSON.parse(await app.vault.adapter.read(dataFilePath));
+      parsed = JSON.parse(await app2.vault.adapter.read(dataFilePath));
     } catch (e) {
       console.warn("weave-data.json 读取/解析失败，EPUB 条目降级为空:", dataFilePath, e);
       if (!weaveCorruptWarned) {
@@ -12934,11 +12934,11 @@ var BZW_settings_panel = (() => {
     weaveCorruptWarned = false;
     return Object.values(books);
   }
-  async function loadEpubItems(app) {
-    const aggregates = await readWeaveAggregates(app);
+  async function loadEpubItems(app2) {
+    const aggregates = await readWeaveAggregates(app2);
     const items = [];
     for (const aggregate of aggregates) {
-      const item = buildEpubItem(app, aggregate);
+      const item = buildEpubItem(app2, aggregate);
       if (item) items.push(item);
     }
     return items;
@@ -12959,7 +12959,7 @@ var BZW_settings_panel = (() => {
   });
 
   // src/checkup/files.ts
-  function jsonScanTargets(app) {
+  function jsonScanTargets(app2) {
     const s = tryGetSettings();
     return [
       { file: storageFile("memo.json", storageDir()), label: "备忘录" },
@@ -12978,21 +12978,21 @@ var BZW_settings_panel = (() => {
       { file: storageFile("knowledge.json"), label: "知识盒" },
       { file: storageFile("secondbrain.json"), label: "第二大脑" },
       { file: storageFile("quiz.json"), label: "复习做题" },
-      { file: `${resolveWeaveDataPath(app)}/${WEAVE_DATA_FILE}`, label: "EPUB 阅读数据（书库）" }
+      { file: `${resolveWeaveDataPath(app2)}/${WEAVE_DATA_FILE}`, label: "EPUB 阅读数据（书库）" }
     ];
   }
-  function fileExists(app, path) {
-    return !!app.vault.getAbstractFileByPath(path);
+  function fileExists(app2, path) {
+    return !!app2.vault.getAbstractFileByPath(path);
   }
-  async function readRawFile(app, path) {
+  async function readRawFile(app2, path) {
     try {
-      return await app.vault.adapter.read(path);
+      return await app2.vault.adapter.read(path);
     } catch (e) {
       return null;
     }
   }
-  async function readRawJson(app, path) {
-    const raw = await readRawFile(app, path);
+  async function readRawJson(app2, path) {
+    const raw = await readRawFile(app2, path);
     if (raw === null) return null;
     try {
       return { ok: true, data: JSON.parse(raw) };
@@ -13000,14 +13000,14 @@ var BZW_settings_panel = (() => {
       return { ok: false, raw };
     }
   }
-  function listDirNames(app, dir) {
-    const f = app.vault.getAbstractFileByPath(dir);
+  function listDirNames(app2, dir) {
+    const f = app2.vault.getAbstractFileByPath(dir);
     if (!f || !Array.isArray(f.children)) return [];
     return f.children.map((c) => c && c.name || "").filter(Boolean);
   }
-  function corruptBackupsFor(app, filePath) {
+  function corruptBackupsFor(app2, filePath) {
     const base = filePath.includes("/") ? filePath.slice(filePath.lastIndexOf("/") + 1) : filePath;
-    return listDirNames(app, CORRUPT_DIR).filter((n) => n.startsWith(base + ".") && n.endsWith(".bak")).sort();
+    return listDirNames(app2, CORRUPT_DIR).filter((n) => n.startsWith(base + ".") && n.endsWith(".bak")).sort();
   }
   var CORRUPT_DIR;
   var init_files = __esm({
@@ -13060,16 +13060,16 @@ var BZW_settings_panel = (() => {
     const summary = bad.length ? `${existing.length} 个数据文件中 ${bad.length} 个无法解析` : stuck.length ? `${existing.length} 个数据文件中 ${stuck.length} 个读不动（请重新体检）` : `${existing.length} 个数据文件全部可解析`;
     return { summary, issues };
   }
-  async function checkJsonFiles(app, opts = {}) {
+  async function checkJsonFiles(app2, opts = {}) {
     var _a2, _b2;
-    const targets = jsonScanTargets(app);
+    const targets = jsonScanTargets(app2);
     const verdicts = [];
     for (let i = 0; i < targets.length; i++) {
       const t = targets[i];
       if ((_a2 = opts.isCancelled) == null ? void 0 : _a2.call(opts)) return null;
-      const parsed = await readRawJson(app, t.file);
-      const unreadable = parsed === null && fileExists(app, t.file);
-      verdicts.push(verdictOfJsonTarget(t.file, t.label, parsed, parsed && !parsed.ok ? corruptBackupsFor(app, t.file) : [], unreadable));
+      const parsed = await readRawJson(app2, t.file);
+      const unreadable = parsed === null && fileExists(app2, t.file);
+      verdicts.push(verdictOfJsonTarget(t.file, t.label, parsed, parsed && !parsed.ok ? corruptBackupsFor(app2, t.file) : [], unreadable));
       await ((_b2 = opts.tick) == null ? void 0 : _b2.call(opts, `${t.label}（${t.file}）`, { done: i + 1, total: targets.length }));
     }
     const { summary, issues } = jsonIssuesOf(verdicts);
@@ -13122,8 +13122,8 @@ var BZW_settings_panel = (() => {
   function countsToText(map) {
     return Object.entries(map).sort((a, b) => b[1] - a[1]).map(([k, n]) => `${k} ×${n}`).join("、");
   }
-  function driftPlans(app) {
-    const targets = new Map(jsonScanTargets(app).map((t) => [t.file, t.label]));
+  function driftPlans(app2) {
+    const targets = new Map(jsonScanTargets(app2).map((t) => [t.file, t.label]));
     const plans = [];
     const pathOf = (name) => {
       const hit = [...targets.keys()].find((f) => f.endsWith("/" + name) || f === name);
@@ -13234,14 +13234,14 @@ ${countsToText(s.missing)}
     const summary = drifted ? `${scannedDomains} 个数据文件中 ${drifted} 个存在字段漂移` : `${scannedDomains} 个数据文件字段形态与约定一致`;
     return { summary, issues };
   }
-  async function checkFieldDrift(app, opts = {}) {
+  async function checkFieldDrift(app2, opts = {}) {
     var _a2, _b2;
-    const plans = driftPlans(app);
+    const plans = driftPlans(app2);
     const results = [];
     for (let i = 0; i < plans.length; i++) {
       const plan = plans[i];
       if ((_a2 = opts.isCancelled) == null ? void 0 : _a2.call(opts)) return null;
-      const parsed = await readRawJson(app, plan.file);
+      const parsed = await readRawJson(app2, plan.file);
       if (parsed && parsed.ok) {
         if (plan.kind === "item") {
           const optional = plan.file.endsWith("favorites.json") ? OPTIONAL_ITEM_FIELDS["favorites.json"] : void 0;
@@ -13641,16 +13641,16 @@ ${countsToText(s.missing)}
     return `data:image/${extOfImageUrl(url)};base64,${btoa(bin)}`;
   }
   async function writeUniqueImage(dir, baseName2, ext, bytes) {
-    const app = getApp();
+    const app2 = getApp();
     const folder = String(dir || "").replace(/\\/g, "/").replace(/^\/+|\/+$/g, "");
     let path = `${folder}/${baseName2}.${ext}`;
-    for (let i = 2; app.vault.getAbstractFileByPath(path); i++) path = `${folder}/${baseName2}_${i}.${ext}`;
+    for (let i = 2; app2.vault.getAbstractFileByPath(path); i++) path = `${folder}/${baseName2}_${i}.${ext}`;
     try {
-      const exists = await app.vault.adapter.exists(folder);
-      if (!exists) await app.vault.createFolder(folder);
+      const exists = await app2.vault.adapter.exists(folder);
+      if (!exists) await app2.vault.createFolder(folder);
     } catch (e) {
     }
-    await app.vault.createBinary(path, bytes);
+    await app2.vault.createBinary(path, bytes);
     return path;
   }
   function splitName(name) {
@@ -13667,12 +13667,12 @@ ${countsToText(s.missing)}
     const name = splitName(imageNameFromUrl(url, 1, contentType));
     const local = await writeUniqueImage(clipbookImageDir(), name.base, name.ext, buf);
     if (opts.savedNotePath) {
-      const app = getApp();
-      const file = app.vault.getAbstractFileByPath(opts.savedNotePath);
+      const app2 = getApp();
+      const file = app2.vault.getAbstractFileByPath(opts.savedNotePath);
       if (file) {
-        const content = await app.vault.read(file);
+        const content = await app2.vault.read(file);
         const next = applyClipContentTransforms(content, [], [{ src: String(opts.src || "").trim(), local }]);
-        if (next !== content) await app.vault.modify(file, next);
+        if (next !== content) await app2.vault.modify(file, next);
       }
       notice("图片已保存并替换进笔记", "success");
       return { local, sidecar: null };
@@ -13975,11 +13975,11 @@ ${countsToText(s.missing)}
           if (this._legacyMigrated) return;
           this._legacyMigrated = true;
           try {
-            const app = getApp();
-            if (app.vault.getAbstractFileByPath(this.filePath)) return;
+            const app2 = getApp();
+            if (app2.vault.getAbstractFileByPath(this.filePath)) return;
             const legacyPath = this.filePath.replace(/knowledge\.json$/, "literature.json");
-            const legacy = app.vault.getAbstractFileByPath(legacyPath);
-            if (legacy) await app.vault.create(this.filePath, await app.vault.read(legacy));
+            const legacy = app2.vault.getAbstractFileByPath(legacyPath);
+            if (legacy) await app2.vault.create(this.filePath, await app2.vault.read(legacy));
           } catch (e) {
           }
         },
@@ -14654,11 +14654,11 @@ ${countsToText(s.missing)}
   function numOr(v, fallback) {
     return typeof v === "number" && Number.isFinite(v) ? v : fallback;
   }
-  function mountCtx(app) {
+  function mountCtx(app2) {
     var _a2;
     const s = (_a2 = tryGetSettings()) != null ? _a2 : {};
     return {
-      app: app != null ? app : safeApp(),
+      app: app2 != null ? app2 : safeApp(),
       cardboxDir: normDir(s == null ? void 0 : s.knowledgeCardboxDirectory, DEFAULT_CARDBOX) || DEFAULT_CARDBOX,
       litDir: normDir(s == null ? void 0 : s.knowledgeDirectory, DEFAULT_LIT) || DEFAULT_LIT
     };
@@ -14775,11 +14775,11 @@ ${countsToText(s.missing)}
   }
   function outboundTargetsViaCache(ctx, file) {
     var _a2, _b2, _c, _d, _e, _f, _g;
-    const app = (_a2 = ctx == null ? void 0 : ctx.app) != null ? _a2 : getApp();
+    const app2 = (_a2 = ctx == null ? void 0 : ctx.app) != null ? _a2 : getApp();
     const from = normSlashes(String((_b2 = file == null ? void 0 : file.path) != null ? _b2 : ""));
     if (!from) return [];
     const out = [];
-    const outs = (_d = (_c = app == null ? void 0 : app.metadataCache) == null ? void 0 : _c.resolvedLinks) == null ? void 0 : _d[from];
+    const outs = (_d = (_c = app2 == null ? void 0 : app2.metadataCache) == null ? void 0 : _c.resolvedLinks) == null ? void 0 : _d[from];
     if (outs && typeof outs === "object") {
       for (const to of Object.keys(outs)) {
         if (!outs[to]) continue;
@@ -14787,7 +14787,7 @@ ${countsToText(s.missing)}
         out.push(normSlashes(to));
       }
     }
-    const fm = (_g = (_f = (_e = app == null ? void 0 : app.metadataCache) == null ? void 0 : _e.getFileCache) == null ? void 0 : _f.call(_e, file)) == null ? void 0 : _g.frontmatter;
+    const fm = (_g = (_f = (_e = app2 == null ? void 0 : app2.metadataCache) == null ? void 0 : _e.getFileCache) == null ? void 0 : _f.call(_e, file)) == null ? void 0 : _g.frontmatter;
     for (const key of ["related", "mounted"]) {
       for (const item of fmValueList(fm == null ? void 0 : fm[key])) {
         const target = linkTargetOf(item);
@@ -14801,10 +14801,10 @@ ${countsToText(s.missing)}
   }
   function hasOutboundViaCache(ctx, file) {
     var _a2, _b2, _c, _d, _e, _f, _g;
-    const app = (_a2 = ctx == null ? void 0 : ctx.app) != null ? _a2 : getApp();
+    const app2 = (_a2 = ctx == null ? void 0 : ctx.app) != null ? _a2 : getApp();
     const from = normSlashes(String((_b2 = file == null ? void 0 : file.path) != null ? _b2 : ""));
     if (!from) return false;
-    const cache = (_d = (_c = app == null ? void 0 : app.metadataCache) == null ? void 0 : _c.getFileCache) == null ? void 0 : _d.call(_c, file);
+    const cache = (_d = (_c = app2 == null ? void 0 : app2.metadataCache) == null ? void 0 : _c.getFileCache) == null ? void 0 : _d.call(_c, file);
     const isSelf = (raw) => {
       const target = linkTargetOf(raw);
       if (!target) return true;
@@ -15508,24 +15508,24 @@ ${lines}`;
     return localNow();
   }
   async function writeUniqueNote(dir, baseName2, content) {
-    const app = getApp();
+    const app2 = getApp();
     const folder = String(dir || "文献盒").replace(/\\/g, "/").replace(/^\/+|\/+$/g, "");
     let path = `${folder}/${baseName2}.md`;
-    for (let i = 2; app.vault.getAbstractFileByPath(path); i++) path = `${folder}/${baseName2}_${i}.md`;
+    for (let i = 2; app2.vault.getAbstractFileByPath(path); i++) path = `${folder}/${baseName2}_${i}.md`;
     try {
-      const exists = await app.vault.adapter.exists(folder);
-      if (!exists) await app.vault.createFolder(folder);
+      const exists = await app2.vault.adapter.exists(folder);
+      if (!exists) await app2.vault.createFolder(folder);
     } catch (e) {
     }
-    await app.vault.create(path, content);
+    await app2.vault.create(path, content);
     return path;
   }
   function findDuplicateTermNote(term) {
-    const app = getApp();
+    const app2 = getApp();
     const s = tryGetSettings();
     const dir = String(s.knowledgeDirectory || "文献盒").replace(/\\/g, "/").replace(/^\/+|\/+$/g, "");
     const path = `${dir}/${sanitizeMdTitle(term)}.md`;
-    return app.vault.getAbstractFileByPath(path) ? path : null;
+    return app2.vault.getAbstractFileByPath(path) ? path : null;
   }
   async function generateVideoNote(opts) {
     const ai = createAI();
@@ -15664,16 +15664,16 @@ ${text2}`;
     return writeUniqueNote(String(s.knowledgeDirectory || "文献盒"), sanitizeMdTitle(title || summary), body);
   }
   async function writeUniqueBinary(dir, baseName2, ext, bytes) {
-    const app = getApp();
+    const app2 = getApp();
     const folder = String(dir || "文献盒").replace(/\\/g, "/").replace(/^\/+|\/+$/g, "");
     let path = `${folder}/${baseName2}.${ext}`;
-    for (let i = 2; app.vault.getAbstractFileByPath(path); i++) path = `${folder}/${baseName2}_${i}.${ext}`;
+    for (let i = 2; app2.vault.getAbstractFileByPath(path); i++) path = `${folder}/${baseName2}_${i}.${ext}`;
     try {
-      const exists = await app.vault.adapter.exists(folder);
-      if (!exists) await app.vault.createFolder(folder);
+      const exists = await app2.vault.adapter.exists(folder);
+      if (!exists) await app2.vault.createFolder(folder);
     } catch (e) {
     }
-    await app.vault.createBinary(path, bytes);
+    await app2.vault.createBinary(path, bytes);
     return path;
   }
   function imagePrompt(list, count, descs) {
@@ -15757,21 +15757,21 @@ ${notes.map((x) => `第 ${x.n} 张：${x.d}`).join("\n")}`;
     const body = [fm.join("\n"), summary, ...imageLines].filter(Boolean).join("\n\n");
     return writeUniqueNote(dir, name, body);
   }
-  async function upgradeNoteSourceInFile(app, notePath, internalLink) {
+  async function upgradeNoteSourceInFile(app2, notePath, internalLink) {
     const path = String(notePath || "").trim();
     const link = String(internalLink || "").trim();
     if (!path || !link) return false;
-    const file = app.vault.getAbstractFileByPath(path);
+    const file = app2.vault.getAbstractFileByPath(path);
     if (!file || file.isFolder) return false;
     let content;
     try {
-      content = await app.vault.read(file);
+      content = await app2.vault.read(file);
     } catch (e) {
       return false;
     }
     const upgraded = upgradeSourceLine(content, link);
     if (upgraded === null) return false;
-    if (upgraded !== content) await app.vault.modify(file, upgraded);
+    if (upgraded !== content) await app2.vault.modify(file, upgraded);
     return true;
   }
   function parseFrontmatter2(content) {
@@ -15867,24 +15867,24 @@ ${content || ""}`;
   }
   async function backfillNotes(opts = {}) {
     var _a2, _b2;
-    const app = getApp();
+    const app2 = getApp();
     const s = tryGetSettings();
     const aiTimeoutMs = (_a2 = opts.aiTimeoutMs) != null ? _a2 : BACKFILL_AI_TIMEOUT_MS;
     const dir = String(s.knowledgeDirectory || "文献盒").replace(/\\/g, "/").replace(/^\/+|\/+$/g, "");
-    const files = (app.vault.getFiles() || []).filter((f) => f.path.startsWith(dir + "/") && f.path.endsWith(".md"));
+    const files = (app2.vault.getFiles() || []).filter((f) => f.path.startsWith(dir + "/") && f.path.endsWith(".md"));
     const needDomain = [];
     let filled = 0;
     for (const f of files) {
-      let content = await app.vault.read(f);
+      let content = await app2.vault.read(f);
       const migrated = migrateVideoSourceKeys(content);
       if (migrated !== content) {
-        await app.vault.modify(f, migrated);
+        await app2.vault.modify(f, migrated);
         content = migrated;
         filled++;
       }
       const pruned = dropTermKeyIfTyped(content);
       if (pruned !== content) {
-        await app.vault.modify(f, pruned);
+        await app2.vault.modify(f, pruned);
         content = pruned;
         filled++;
       }
@@ -15901,7 +15901,7 @@ ${content || ""}`;
       if (patch.length) {
         const updated = dropTermKeyIfTyped(injectFrontmatter(content, patch));
         if (updated !== content) {
-          await app.vault.modify(f, updated);
+          await app2.vault.modify(f, updated);
           filled++;
         }
       }
@@ -15912,7 +15912,7 @@ ${content || ""}`;
       const list = parseDomainList(s.knowledgeDomainList);
       for (const { file } of needDomain) {
         try {
-          const latest = await app.vault.read(file);
+          const latest = await app2.vault.read(file);
           const sample = latest.replace(/^---[\s\S]*?---/, "").slice(0, 2e3);
           const raw = await withTimeout(
             ai.json(
@@ -15926,7 +15926,7 @@ ${sample}`
           );
           const domain = String(((_b2 = parseAiJson(raw)) == null ? void 0 : _b2.domain) || "").trim();
           if (domain) {
-            await app.vault.modify(file, injectFrontmatter(latest, [`domain:${domain}`]));
+            await app2.vault.modify(file, injectFrontmatter(latest, [`domain:${domain}`]));
             filled++;
           }
         } catch (e) {
@@ -17436,12 +17436,12 @@ ${sample}`
   function stripFrontmatter2(content) {
     return String(content != null ? content : "").replace(/^---\r?\n[\s\S]*?\r?\n---[ \t]*(?:\r?\n|$)/, "");
   }
-  async function readNoteText(app, path) {
+  async function readNoteText(app2, path) {
     var _a2, _b2, _c;
     try {
-      const file = (_b2 = (_a2 = app == null ? void 0 : app.vault) == null ? void 0 : _a2.getAbstractFileByPath) == null ? void 0 : _b2.call(_a2, path);
+      const file = (_b2 = (_a2 = app2 == null ? void 0 : app2.vault) == null ? void 0 : _a2.getAbstractFileByPath) == null ? void 0 : _b2.call(_a2, path);
       if (!file) return null;
-      return String((_c = await app.vault.read(file)) != null ? _c : "");
+      return String((_c = await app2.vault.read(file)) != null ? _c : "");
     } catch (e) {
       return null;
     }
@@ -17619,11 +17619,11 @@ ${sample}`
     }
     return text2;
   }
-  async function suggestionUnitMarkdown(app, s) {
+  async function suggestionUnitMarkdown(app2, s) {
     var _a2;
     const reason = String((_a2 = s == null ? void 0 : s.reason) != null ? _a2 : "").trim() || "AI 建议：这张卡与主卡有实质关联。";
     const head = `> ${reason}`;
-    const content = await readNoteText(app, s == null ? void 0 : s.target);
+    const content = await readNoteText(app2, s == null ? void 0 : s.target);
     if (content === null) return head;
     const unit = sliceUnitText(content, s);
     return unit ? `${head}
@@ -17634,15 +17634,15 @@ ${unit}` : head;
     return BLOCK_ID_PREFIX + hash8(`${idPath(path)}
 ${String(blockText != null ? blockText : "").trim()}`);
   }
-  async function ensureSuggestionBlockId(app, targetPath, quote) {
+  async function ensureSuggestionBlockId(app2, targetPath, quote) {
     const path = idPath(targetPath);
     if (!path || !String(quote != null ? quote : "").trim()) return { blockId: "", ok: false };
     try {
       return await enqueueFileTask(path, async () => {
         var _a2, _b2, _c;
-        const file = (_b2 = (_a2 = app == null ? void 0 : app.vault) == null ? void 0 : _a2.getAbstractFileByPath) == null ? void 0 : _b2.call(_a2, path);
+        const file = (_b2 = (_a2 = app2 == null ? void 0 : app2.vault) == null ? void 0 : _a2.getAbstractFileByPath) == null ? void 0 : _b2.call(_a2, path);
         if (!file) return { blockId: "", ok: false };
-        const text2 = String((_c = await app.vault.read(file)) != null ? _c : "");
+        const text2 = String((_c = await app2.vault.read(file)) != null ? _c : "");
         const hit = locateInText(text2, quote);
         if (!hit) return { blockId: "", ok: false };
         const block2 = expandBlock(text2, hit.at, hit.len);
@@ -17652,7 +17652,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
         const blockId = blockIdFor(path, blockText.replace(/\^([A-Za-z0-9-]+)\s*$/, "").trim());
         const trimmed = blockText.replace(/\s+$/, "");
         const next = text2.slice(0, block2.at) + `${trimmed} ^${blockId}` + text2.slice(block2.at + block2.len);
-        if (next !== text2) await app.vault.modify(file, next);
+        if (next !== text2) await app2.vault.modify(file, next);
         return { blockId, ok: true };
       });
     } catch (e) {
@@ -19092,15 +19092,15 @@ ${String(blockText != null ? blockText : "").trim()}`);
     var _a2, _b2;
     if (!id) return [];
     const byId2 = new Map(nodes.map((n) => [n.id, n]));
-    const chain2 = [];
+    const chain3 = [];
     const seen = /* @__PURE__ */ new Set();
     let cur = (_a2 = byId2.get(id)) != null ? _a2 : null;
     while (cur && !seen.has(cur.id)) {
       seen.add(cur.id);
-      chain2.unshift(cur);
+      chain3.unshift(cur);
       cur = cur.parent ? (_b2 = byId2.get(cur.parent)) != null ? _b2 : null : null;
     }
-    return chain2;
+    return chain3;
   }
   function lineageOf(edges, id) {
     const push = (map, key, val) => {
@@ -19718,9 +19718,9 @@ ${String(blockText != null ? blockText : "").trim()}`);
     var _a2, _b2, _c;
     const rootNode2 = (_a2 = st.tree.nodes.find((n) => n.id === st.tree.root)) != null ? _a2 : null;
     const crumbs = crumbTrail(st.tree.nodes, (_b2 = st.selected) != null ? _b2 : st.tree.root);
-    const chain2 = crumbs.length ? crumbs : rootNode2 ? [rootNode2] : [];
-    st.win.querySelector("#bz-kb-mt-crumbs").innerHTML = chain2.map((n, i) => {
-      const last = i === chain2.length - 1;
+    const chain3 = crumbs.length ? crumbs : rootNode2 ? [rootNode2] : [];
+    st.win.querySelector("#bz-kb-mt-crumbs").innerHTML = chain3.map((n, i) => {
+      const last = i === chain3.length - 1;
       const label = escapeHtml2(displayTitle(n));
       const sep = i === 0 ? "" : '<span class="bz-kb-mt-sep">›</span>';
       if (last && !st.selected) return `${sep}<span class="bz-kb-mt-crumb is-cur">${label}</span>`;
@@ -19748,9 +19748,9 @@ ${String(blockText != null ? blockText : "").trim()}`);
   function requestBuildIndex(st) {
     var _a2;
     try {
-      const app = getApp();
-      if (typeof ((_a2 = app == null ? void 0 : app.commands) == null ? void 0 : _a2.executeCommandById) === "function") {
-        app.commands.executeCommandById("bz-secondbrain-rebuild-index");
+      const app2 = getApp();
+      if (typeof ((_a2 = app2 == null ? void 0 : app2.commands) == null ? void 0 : _a2.executeCommandById) === "function") {
+        app2.commands.executeCommandById("bz-secondbrain-rebuild-index");
         st.deps.notice("已转交「重建索引」——建完回到白板点「重新生成」");
         return;
       }
@@ -19939,9 +19939,9 @@ ${String(blockText != null ? blockText : "").trim()}`);
       bodyEl4.innerHTML = `<div class="bz-kb-mt-ph">${escapeHtml2(node.path)}</div>`;
       return;
     }
-    const app = (_a2 = st.ctx.app) != null ? _a2 : getApp();
+    const app2 = (_a2 = st.ctx.app) != null ? _a2 : getApp();
     const ghost = st.ghosts.get(node.id);
-    const md = ghost ? await suggestionUnitMarkdown(app, ghost) : bodyMarkdown(st, node);
+    const md = ghost ? await suggestionUnitMarkdown(app2, ghost) : bodyMarkdown(st, node);
     if (md === null) {
       bodyEl4.innerHTML = '<div class="bz-kb-mt-ph">（无正文）</div>';
       return;
@@ -19951,10 +19951,10 @@ ${String(blockText != null ? blockText : "").trim()}`);
       return;
     }
     let ok = false;
-    if (app == null ? void 0 : app.vault) {
+    if (app2 == null ? void 0 : app2.vault) {
       try {
         const comp = new Component();
-        await MarkdownRenderer.render(app, md, bodyEl4, node.path, comp);
+        await MarkdownRenderer.render(app2, md, bodyEl4, node.path, comp);
         comp.unload();
         ok = true;
       } catch (e) {
@@ -20031,9 +20031,9 @@ ${String(blockText != null ? blockText : "").trim()}`);
   function ghostTargetExists(st, node) {
     var _a2, _b2, _c;
     if (!node.suggested) return true;
-    const app = (_a2 = st.ctx.app) != null ? _a2 : getApp();
+    const app2 = (_a2 = st.ctx.app) != null ? _a2 : getApp();
     try {
-      return !!((_c = (_b2 = app == null ? void 0 : app.vault) == null ? void 0 : _b2.getAbstractFileByPath) == null ? void 0 : _c.call(_b2, node.path));
+      return !!((_c = (_b2 = app2 == null ? void 0 : app2.vault) == null ? void 0 : _b2.getAbstractFileByPath) == null ? void 0 : _c.call(_b2, node.path));
     } catch (e) {
       return true;
     }
@@ -20439,11 +20439,11 @@ ${String(blockText != null ? blockText : "").trim()}`);
   async function pinSuggestion(st, ghost) {
     var _a2, _b2, _c, _d, _e;
     const rootPath = st.tree.root;
-    const app = (_a2 = st.ctx.app) != null ? _a2 : getApp();
+    const app2 = (_a2 = st.ctx.app) != null ? _a2 : getApp();
     let unit = ghost.unit === "heading" || ghost.unit === "paragraph" ? ghost.unit : "whole";
     let subpath = String((_b2 = ghost.subpath) != null ? _b2 : "").trim();
     if (unit === "paragraph") {
-      const got = ghost.quote ? await ensureSuggestionBlockId(app, ghost.target, ghost.quote) : { blockId: "", ok: false };
+      const got = ghost.quote ? await ensureSuggestionBlockId(app2, ghost.target, ghost.quote) : { blockId: "", ok: false };
       if (got.ok && got.blockId) subpath = got.blockId;
       else unit = "whole";
     } else if (unit === "heading" && !subpath) {
@@ -20458,15 +20458,15 @@ ${String(blockText != null ? blockText : "").trim()}`);
     try {
       await enqueueFileTask(rootPath, async () => {
         var _a3, _b3;
-        const file = (_b3 = (_a3 = app == null ? void 0 : app.vault) == null ? void 0 : _a3.getAbstractFileByPath) == null ? void 0 : _b3.call(_a3, rootPath);
+        const file = (_b3 = (_a3 = app2 == null ? void 0 : app2.vault) == null ? void 0 : _a3.getAbstractFileByPath) == null ? void 0 : _b3.call(_a3, rootPath);
         if (!file) return;
         found = true;
-        const text2 = await app.vault.read(file);
+        const text2 = await app2.vault.read(file);
         const aliasNext = replaceAnchorWithAlias(text2, ghost.anchor, ghost.target, suggestionSubpath(shape));
         if (aliasNext !== null) written = `[[${linkInner}|${anchorText}]]`;
         const next = aliasNext != null ? aliasNext : insertLinkAtAnchor(text2, ghost.anchor, linkInner);
         if (next !== text2) {
-          await app.vault.modify(file, next);
+          await app2.vault.modify(file, next);
           changed = true;
         }
       });
@@ -20479,7 +20479,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
       return;
     }
     try {
-      await markSuggestion(rootPath, ghost, "fixed", { app, cardboxDir: st.ctx.cardboxDir, litDir: st.ctx.litDir });
+      await markSuggestion(rootPath, ghost, "fixed", { app: app2, cardboxDir: st.ctx.cardboxDir, litDir: st.ctx.litDir });
     } catch (e) {
     }
     const gid = suggestionId(ghost);
@@ -20494,9 +20494,9 @@ ${String(blockText != null ? blockText : "").trim()}`);
   async function dismissSuggestion(st, ghost) {
     var _a2;
     const rootPath = st.tree.root;
-    const app = (_a2 = st.ctx.app) != null ? _a2 : getApp();
+    const app2 = (_a2 = st.ctx.app) != null ? _a2 : getApp();
     try {
-      await markSuggestion(rootPath, ghost, "dismissed", { app, cardboxDir: st.ctx.cardboxDir, litDir: st.ctx.litDir });
+      await markSuggestion(rootPath, ghost, "dismissed", { app: app2, cardboxDir: st.ctx.cardboxDir, litDir: st.ctx.litDir });
     } catch (e) {
     }
     if (st.run) st.run = { ...st.run, suggestions: st.run.suggestions.filter((s) => suggestionId(s) !== suggestionId(ghost)) };
@@ -21241,7 +21241,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
         return h > 0 ? `${h}:${String(m % 60).padStart(2, "0")}:${String(s % 60).padStart(2, "0")}` : `${m}:${String(s % 60).padStart(2, "0")}`;
       };
       UIManager = class {
-        constructor(app) {
+        constructor(app2) {
           // ---- 主壳（三部）----
           this.mask = null;
           this.popup = null;
@@ -21391,7 +21391,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
           /** 独立弹层宿主（issue 329 文献预览直达）：主面板不在场时预览弹层的全屏定位底座——
            *  纸墨变量随 .kb 作用域生效，topifyZ 发号；用完由 closeSheet 撤除，不常驻空壳节点 */
           this.previewHostEl = null;
-          this.app = app;
+          this.app = app2;
           this.createMainUI();
           this.createVideoUI();
           this.createAddDialog();
@@ -21571,10 +21571,10 @@ ${String(blockText != null ? blockText : "").trim()}`);
         }
         /** 部壹文献扫描：文献目录下全部 .md（含子目录），metadataCache 解析 frontmatter */
         async loadLiterature(dir) {
-          const app = getApp();
+          const app2 = getApp();
           this.loadedLitDir = dir;
           const prefix = dir + "/";
-          const mdFiles2 = (app.vault.getFiles() || []).filter((f) => f.path.startsWith(prefix) && f.extension === "md");
+          const mdFiles2 = (app2.vault.getFiles() || []).filter((f) => f.path.startsWith(prefix) && f.extension === "md");
           const entries = [];
           for (const f of mdFiles2) {
             const e = await this.parseNoteFile(f);
@@ -21584,9 +21584,9 @@ ${String(blockText != null ? blockText : "").trim()}`);
           this.allNotes = entries;
         }
         async parseNoteFile(file) {
-          const app = getApp();
+          const app2 = getApp();
           try {
-            const cache = app.metadataCache.getFileCache(file);
+            const cache = app2.metadataCache.getFileCache(file);
             const fm = cache && cache.frontmatter;
             const title = fm && fm.title ? String(fm.title) : file.basename;
             const date = fm && fm.date ? String(fm.date) : "";
@@ -21640,10 +21640,10 @@ ${String(blockText != null ? blockText : "").trim()}`);
         }
         /** 三部共用预览弹层（文献/卡片/主题同一样式）：正文真 Markdown 渲染（视频 ![[mp4]] 内嵌可播）+ 关联 + 可点来源（只读；关闭走 ✕/ESC） */
         async openPreview(n, kind = "lit") {
-          const app = getApp();
+          const app2 = getApp();
           let raw = "";
           try {
-            raw = await app.vault.read(n.file);
+            raw = await app2.vault.read(n.file);
           } catch (e) {
             raw = "";
           }
@@ -21714,14 +21714,14 @@ ${String(blockText != null ? blockText : "").trim()}`);
          *  它是历史别名，实测库里 0 张卡在用；写入侧唯一写 category 的落卡也已移除）。 */
         async loadCards(dir) {
           var _a2;
-          const app = getApp();
+          const app2 = getApp();
           this.loadedCardDir = dir;
           const prefix = dir + "/";
-          const mdFiles2 = (app.vault.getFiles() || []).filter((f) => f.path.startsWith(prefix) && f.extension === "md");
+          const mdFiles2 = (app2.vault.getFiles() || []).filter((f) => f.path.startsWith(prefix) && f.extension === "md");
           const out = [];
           for (const f of mdFiles2) {
             try {
-              const cache = app.metadataCache.getFileCache(f);
+              const cache = app2.metadataCache.getFileCache(f);
               const fm = cache && cache.frontmatter || {};
               let created = 0;
               try {
@@ -21935,10 +21935,10 @@ ${String(blockText != null ? blockText : "").trim()}`);
         }
         /** 部叁主题扫描（仅展示） */
         async loadTopics(dir) {
-          const app = getApp();
+          const app2 = getApp();
           this.loadedTopicDir = dir;
           const prefix = dir + "/";
-          const mdFiles2 = (app.vault.getFiles() || []).filter((f) => f.path.startsWith(prefix) && f.extension === "md");
+          const mdFiles2 = (app2.vault.getFiles() || []).filter((f) => f.path.startsWith(prefix) && f.extension === "md");
           const out = mdFiles2.map((f) => {
             var _a2;
             let created = 0;
@@ -23823,12 +23823,12 @@ ${String(blockText != null ? blockText : "").trim()}`);
         domainCandidates() {
           var _a2, _b2;
           const s = tryGetSettings();
-          const app = getApp();
+          const app2 = getApp();
           const prefix = litDirOf(s) + "/";
           const used = /* @__PURE__ */ new Map();
-          for (const f of app.vault.getFiles() || []) {
+          for (const f of app2.vault.getFiles() || []) {
             if (!f || f.extension !== "md" || !String(f.path).startsWith(prefix)) continue;
-            const fm = (_a2 = app.metadataCache.getFileCache(f)) == null ? void 0 : _a2.frontmatter;
+            const fm = (_a2 = app2.metadataCache.getFileCache(f)) == null ? void 0 : _a2.frontmatter;
             const d = fm && fm.domain ? String(fm.domain).trim() : "";
             if (d) used.set(d, ((_b2 = used.get(d)) != null ? _b2 : 0) + 1);
           }
@@ -24417,10 +24417,10 @@ ${String(blockText != null ? blockText : "").trim()}`);
         }
         // ==================== 通用小工具 ====================
         openNote(path) {
-          const app = getApp();
-          const file = app.vault.getAbstractFileByPath(path);
+          const app2 = getApp();
+          const file = app2.vault.getAbstractFileByPath(path);
           if (file) {
-            void app.workspace.getLeaf(false).openFile(file);
+            void app2.workspace.getLeaf(false).openFile(file);
             this.hideMain();
             this.hideVideo();
           } else {
@@ -24503,15 +24503,15 @@ ${String(blockText != null ? blockText : "").trim()}`);
     var _a2, _b2;
     return String((_b2 = (_a2 = tryGetSettings()) == null ? void 0 : _a2.knowledgeDirectory) != null ? _b2 : "").trim().replace(/\\/g, "/").replace(/^\/+|\/+$/g, "") || "文献盒";
   }
-  async function retireKnowledgeSources(app, retiredPath, fallbackUrl) {
+  async function retireKnowledgeSources(app2, retiredPath, fallbackUrl) {
     const target = String(retiredPath || "").trim();
     if (!target) return 0;
     const dir = knowledgeDirOf();
-    const files = (app.vault.getMarkdownFiles() || []).filter((f) => f.path.startsWith(dir + "/") && f.path.endsWith(".md"));
+    const files = (app2.vault.getMarkdownFiles() || []).filter((f) => f.path.startsWith(dir + "/") && f.path.endsWith(".md"));
     const hits = files.filter((f) => {
       var _a2, _b2, _c;
       try {
-        const fm = (_c = (_b2 = (_a2 = app.metadataCache) == null ? void 0 : _a2.getFileCache) == null ? void 0 : _b2.call(_a2, f)) == null ? void 0 : _c.frontmatter;
+        const fm = (_c = (_b2 = (_a2 = app2.metadataCache) == null ? void 0 : _a2.getFileCache) == null ? void 0 : _b2.call(_a2, f)) == null ? void 0 : _c.frontmatter;
         return !!fm && sourcePointsAt(fm.source, target);
       } catch (e) {
         return false;
@@ -24520,10 +24520,10 @@ ${String(blockText != null ? blockText : "").trim()}`);
     let changed = 0;
     for (const f of hits) {
       try {
-        const content = await app.vault.read(f);
+        const content = await app2.vault.read(f);
         const next = retireSourceLine(content, target, fallbackUrl);
         if (next !== null && next !== content) {
-          await app.vault.modify(f, next);
+          await app2.vault.modify(f, next);
           changed++;
         }
       } catch (e) {
@@ -24532,17 +24532,17 @@ ${String(blockText != null ? blockText : "").trim()}`);
     }
     return changed;
   }
-  async function retireKnowledgeSourcesForClip(app, clipPath, clipUrl) {
+  async function retireKnowledgeSourcesForClip(app2, clipPath, clipUrl) {
     const url = String(clipUrl != null ? clipUrl : "").trim();
-    const n = await retireKnowledgeSources(app, clipPath, url || null);
+    const n = await retireKnowledgeSources(app2, clipPath, url || null);
     if (n > 0) {
       if (url) notify(`已把 ${n} 张知识卡片来源回退为原链接`, { type: "success" });
       else notify(`已摘除 ${n} 张知识卡片的失效来源`, { type: "info" });
     }
     return n;
   }
-  async function retireSourcesOnMdDeleted(app, deletedPath) {
-    const n = await retireKnowledgeSources(app, deletedPath, null);
+  async function retireSourcesOnMdDeleted(app2, deletedPath) {
+    const n = await retireKnowledgeSources(app2, deletedPath, null);
     if (n > 0) notify(`已摘除 ${n} 张知识卡片的失效来源`, { type: "info" });
     return n;
   }
@@ -24606,7 +24606,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
     function inFolders(path, folders) {
       return folders.some((f) => path.startsWith(f + "/") || path === f);
     }
-    function createAgent(app) {
+    function createAgent(app2) {
       var _a2;
       const isMd = (file) => file && file.extension === "md" && inFolders(file.path, config.watchedFolders());
       const pseudoFile = (path) => ({
@@ -24642,17 +24642,17 @@ ${String(blockText != null ? blockText : "").trim()}`);
           if (isMd(file) || await config.referencedBy(evt.path)) {
             enqueue2(() => config.commit((data) => config.applyDelete(data, evt.path)));
           }
-          if (config.onMdDeleted) await config.onMdDeleted(app, evt.path);
+          if (config.onMdDeleted) await config.onMdDeleted(app2, evt.path);
         })();
       }));
     }
     return {
       /** 幂等初始化（main.ts onLayoutReady 调用；ADR-0003 同款幂等） */
-      ensure(app) {
+      ensure(app2) {
         if (initialized8) return;
         initialized8 = true;
         _cancelled = false;
-        createAgent(app);
+        createAgent(app2);
       },
       /** 卸载清理：置位 _cancelled 使积压任务首行短路并丢弃去抖窗口内未回放的事件，
        *  退订全部监听（总线退订幂等，重复卸载无双清风险）后重置模块状态。 */
@@ -24738,8 +24738,8 @@ ${String(blockText != null ? blockText : "").trim()}`);
       return false;
     }
   }
-  function ensureFileSync(app) {
-    agent.ensure(app);
+  function ensureFileSync(app2) {
+    agent.ensure(app2);
   }
   function unloadFileSync() {
     agent.unload();
@@ -24763,7 +24763,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
         applyDelete: syncDelete,
         /** source 退役消费者（ADR-0149 决策 2）：卡片 source 可指向任意笔记（不限目录），
          *  任何被删 md 都过一遍 metadataCache 预筛；已降级卡片天然幂等跳过 */
-        onMdDeleted: (app, path) => retireSourcesOnMdDeleted(app, path)
+        onMdDeleted: (app2, path) => retireSourcesOnMdDeleted(app2, path)
       });
     }
   });
@@ -24791,34 +24791,34 @@ ${String(blockText != null ? blockText : "").trim()}`);
     if (src.kind === "url") return { kind: "external", url: src.url, title: (_a2 = src.title) != null ? _a2 : null };
     return { kind: "note", path: src.path, name: src.name };
   }
-  function ensureKnowledge(app) {
+  function ensureKnowledge(app2) {
     var _a2;
     if (initialized) return;
     try {
       KnowledgeData.init({ storagePath: (_a2 = tryGetSettings()) == null ? void 0 : _a2.storagePath });
-      uiManager = new UIManager(app);
+      uiManager = new UIManager(app2);
       initialized = true;
     } catch (e) {
       console.error("bz: 文献盒初始化失败（下次打开命令将自动重试）", e);
       uiManager = null;
     }
   }
-  function openKnowledgePanel(app) {
-    ensureKnowledge(app);
+  function openKnowledgePanel(app2) {
+    ensureKnowledge(app2);
     uiManager == null ? void 0 : uiManager.showMain();
   }
-  function openKnowledgeAddTask(app, prefill) {
-    ensureKnowledge(app);
+  function openKnowledgeAddTask(app2, prefill) {
+    ensureKnowledge(app2);
     uiManager == null ? void 0 : uiManager.showVideoEntry(prefill);
   }
-  function openTermNote(app, term, opts) {
+  function openTermNote(app2, term, opts) {
     var _a2, _b2;
-    ensureKnowledge(app);
+    ensureKnowledge(app2);
     let t = term == null ? void 0 : term.trim();
     let src;
     if (opts == null ? void 0 : opts.source) src = prefillSource(opts.source);
     if (!t) {
-      const view2 = app.workspace.getActiveViewOfType(MarkdownView);
+      const view2 = app2.workspace.getActiveViewOfType(MarkdownView);
       t = ((_b2 = (_a2 = view2 == null ? void 0 : view2.editor) == null ? void 0 : _a2.getSelection()) == null ? void 0 : _b2.trim()) || void 0;
       if (!src) {
         const file = view2 == null ? void 0 : view2.file;
@@ -24827,15 +24827,15 @@ ${String(blockText != null ? blockText : "").trim()}`);
     }
     uiManager == null ? void 0 : uiManager.showTermEntry(t, src, opts);
   }
-  function openPassageNote(app, opts) {
+  function openPassageNote(app2, opts) {
     var _a2, _b2, _c;
-    ensureKnowledge(app);
+    ensureKnowledge(app2);
     let text2;
     let src;
     const explicit = String((_a2 = opts == null ? void 0 : opts.text) != null ? _a2 : "").trim();
     if (explicit) text2 = explicit;
     if (opts == null ? void 0 : opts.source) src = prefillSource(opts.source);
-    const view2 = app.workspace.getActiveViewOfType(MarkdownView);
+    const view2 = app2.workspace.getActiveViewOfType(MarkdownView);
     if (!text2) text2 = ((_c = (_b2 = view2 == null ? void 0 : view2.editor) == null ? void 0 : _b2.getSelection()) == null ? void 0 : _c.trim()) || void 0;
     if (!src) {
       const file = view2 == null ? void 0 : view2.file;
@@ -24843,19 +24843,19 @@ ${String(blockText != null ? blockText : "").trim()}`);
     }
     uiManager == null ? void 0 : uiManager.showPassageEntry(text2, src, opts);
   }
-  function openImageNote(app, opts) {
-    ensureKnowledge(app);
+  function openImageNote(app2, opts) {
+    ensureKnowledge(app2);
     let src;
     if (opts == null ? void 0 : opts.source) src = prefillSource(opts.source);
     if (!src) {
-      const view2 = app.workspace.getActiveViewOfType(MarkdownView);
+      const view2 = app2.workspace.getActiveViewOfType(MarkdownView);
       const file = view2 == null ? void 0 : view2.file;
       if (file && file.extension === "md") src = { kind: "note", path: file.path };
     }
     uiManager == null ? void 0 : uiManager.showImageEntry(src, opts);
   }
-  async function openKnowledgePreview(app, notePath) {
-    ensureKnowledge(app);
+  async function openKnowledgePreview(app2, notePath) {
+    ensureKnowledge(app2);
     const path = String(notePath || "").trim();
     if (uiManager && await uiManager.openPreviewByPath(path).catch(() => false)) return;
     if (!path) {
@@ -24864,14 +24864,14 @@ ${String(blockText != null ? blockText : "").trim()}`);
     }
     notice("不在知识盒文献目录，改用 Obsidian 打开：" + path, "info");
     try {
-      await app.workspace.openLinkText(path, "", false);
+      await app2.workspace.openLinkText(path, "", false);
     } catch (e) {
       console.warn("[knowledge] openLinkText 回退失败", e);
     }
   }
-  async function upgradeNoteSourceInternal(app, notePath, internalLink) {
-    ensureKnowledge(app);
-    return upgradeNoteSourceInFile(app, notePath, internalLink);
+  async function upgradeNoteSourceInternal(app2, notePath, internalLink) {
+    ensureKnowledge(app2);
+    return upgradeNoteSourceInFile(app2, notePath, internalLink);
   }
   function takeLinkBridge() {
     if (tryGetSettings().linkAgentEnabled === false) {
@@ -24885,9 +24885,9 @@ ${String(blockText != null ? blockText : "").trim()}`);
     }
     return bridge;
   }
-  async function relinkActiveNote(app) {
+  async function relinkActiveNote(app2) {
     var _a2, _b2;
-    const file = (_b2 = (_a2 = app.workspace).getActiveFile) == null ? void 0 : _b2.call(_a2);
+    const file = (_b2 = (_a2 = app2.workspace).getActiveFile) == null ? void 0 : _b2.call(_a2);
     if (!file) {
       notice("请先打开一个笔记", "info");
       return;
@@ -24971,18 +24971,18 @@ ${String(blockText != null ? blockText : "").trim()}`);
     return `${clipDir()}/${cleanClipTitleOf(title)}.md`;
   }
   async function writeClipNote(raw) {
-    const app = getApp();
+    const app2 = getApp();
     const cleanTitle = cleanClipTitleOf(raw && raw.title);
     if (!cleanTitle) {
       notice("标题为空", "error");
       return false;
     }
     let filePath = clipFilePathOf(cleanTitle);
-    if (app.vault.getAbstractFileByPath(filePath)) {
+    if (app2.vault.getAbstractFileByPath(filePath)) {
       const verdict = await confirmOverwrite(filePath);
       if (verdict === "rename") {
         let n = 2;
-        while (app.vault.getAbstractFileByPath(clipFilePathOf(`${cleanTitle} · ${n}`))) n++;
+        while (app2.vault.getAbstractFileByPath(clipFilePathOf(`${cleanTitle} · ${n}`))) n++;
         filePath = clipFilePathOf(`${cleanTitle} · ${n}`);
       } else if (verdict !== "ok") {
         return false;
@@ -25014,11 +25014,11 @@ await dv.view(\`CONFIG/SCRIPTS/DataView/摘要\`)
 ${body}`;
     try {
       const dir = clipDir();
-      const dirAf = app.vault.getAbstractFileByPath(dir);
-      if (!dirAf) await app.vault.createFolder(dir);
-      const existing = app.vault.getAbstractFileByPath(filePath);
-      if (existing) await app.vault.modify(existing, md);
-      else await app.vault.create(filePath, md);
+      const dirAf = app2.vault.getAbstractFileByPath(dir);
+      if (!dirAf) await app2.vault.createFolder(dir);
+      const existing = app2.vault.getAbstractFileByPath(filePath);
+      if (existing) await app2.vault.modify(existing, md);
+      else await app2.vault.create(filePath, md);
       notify(`已保存：${cleanTitle}`, {
         type: "success",
         action: {
@@ -25081,14 +25081,14 @@ ${body}`;
       if (p && !upgrades.includes(p)) upgrades.push(p);
     }
     if (!upgrades.length) return;
-    const app = getApp();
+    const app2 = getApp();
     try {
       const mod = await Promise.resolve().then(() => (init_knowledge(), knowledge_exports));
       if (typeof mod.upgradeNoteSourceInternal !== "function") return;
       const link = `[[${clipPath}|${linkAliasText(title)}]]`;
       for (const notePath of upgrades) {
         try {
-          await mod.upgradeNoteSourceInternal(app, notePath, link);
+          await mod.upgradeNoteSourceInternal(app2, notePath, link);
         } catch (e) {
           console.warn("[剪藏本] 回写文献来源失败（接受，静默）", notePath, e);
         }
@@ -25126,9 +25126,9 @@ ${body}`;
   function defaultCache(f) {
     var _a2;
     try {
-      const app = getApp();
-      if (app && typeof ((_a2 = app.metadataCache) == null ? void 0 : _a2.getFileCache) === "function") {
-        return app.metadataCache.getFileCache(f);
+      const app2 = getApp();
+      if (app2 && typeof ((_a2 = app2.metadataCache) == null ? void 0 : _a2.getFileCache) === "function") {
+        return app2.metadataCache.getFileCache(f);
       }
     } catch (e) {
     }
@@ -25569,9 +25569,9 @@ ${body}`;
   function normalizeLists(raw) {
     return normalizeTags2(raw).filter(Boolean);
   }
-  function parseMovieFile(file, app) {
+  function parseMovieFile(file, app2) {
     var _a2, _b2, _c, _d, _e, _f, _g, _h, _i, _j, _k, _l, _m, _n, _o, _p, _q, _r, _s, _t, _u, _v, _w, _x, _y, _z, _A, _B, _C;
-    const cache = app.metadataCache.getFileCache(file);
+    const cache = app2.metadataCache.getFileCache(file);
     if (!cache || !cache.frontmatter) return null;
     const fm = cache.frontmatter;
     const name = extractMovieName(file.basename);
@@ -25639,20 +25639,20 @@ ${body}`;
   function isLocalPath(v) {
     return typeof v === "string" && !!v.trim() && !/^(https?:)?\/\//i.test(v.trim()) && !v.trim().startsWith("data:");
   }
-  async function checkOrphans(app, opts = {}) {
+  async function checkOrphans(app2, opts = {}) {
     var _a2, _b2, _c, _d, _e, _f, _g, _h, _i, _j, _k, _l, _m, _n, _o, _p, _q, _r, _s, _t, _u, _v;
     const issues = [];
     let scanned = 0;
     {
       const folder = resolveCinemaFolderPath();
-      const files = app.vault.getMarkdownFiles().filter((f) => f.path.startsWith(folder + "/"));
+      const files = app2.vault.getMarkdownFiles().filter((f) => f.path.startsWith(folder + "/"));
       for (let i = 0; i < files.length; i++) {
         if ((_a2 = opts.isCancelled) == null ? void 0 : _a2.call(opts)) return null;
-        const item = parseMovieFile(files[i], app);
+        const item = parseMovieFile(files[i], app2);
         if (!item) continue;
         scanned += 1;
         const poster = (item.poster || "").trim();
-        if (poster && !fileExists(app, poster)) {
+        if (poster && !fileExists(app2, poster)) {
           issues.push({
             severity: "warn",
             title: `影视《${item.name}》的海报文件不存在`,
@@ -25665,13 +25665,13 @@ ${body}`;
       }
     }
     {
-      const mdBooks = scanMarkdownBooks(app);
+      const mdBooks = scanMarkdownBooks(app2);
       for (let i = 0; i < mdBooks.length; i++) {
         if ((_c = opts.isCancelled) == null ? void 0 : _c.call(opts)) return null;
         const b = mdBooks[i];
         scanned += 1;
         const cover = (b.cover || "").trim();
-        if (cover && !fileExists(app, cover)) {
+        if (cover && !fileExists(app2, cover)) {
           issues.push({
             severity: "warn",
             title: `书目《${b.title}》的封面文件不存在`,
@@ -25682,13 +25682,13 @@ ${body}`;
         }
         await ((_e = opts.tick) == null ? void 0 : _e.call(opts, `书库 · ${b.title}`, { done: i + 1, total: mdBooks.length }));
       }
-      const epubs = await loadEpubItems(app);
+      const epubs = await loadEpubItems(app2);
       for (let i = 0; i < epubs.length; i++) {
         if ((_f = opts.isCancelled) == null ? void 0 : _f.call(opts)) return null;
         const b = epubs[i];
         scanned += 1;
         const p = (b.epubVaultPath || "").trim();
-        if (p && !fileExists(app, p)) {
+        if (p && !fileExists(app2, p)) {
           issues.push({
             severity: "warn",
             title: `EPUB 书目《${b.title}》指向的文件不存在`,
@@ -25701,20 +25701,20 @@ ${body}`;
     }
     {
       const folder = resolveGameshelfFolderPath();
-      const files = app.vault.getMarkdownFiles().filter((f) => f.path.startsWith(folder + "/"));
+      const files = app2.vault.getMarkdownFiles().filter((f) => f.path.startsWith(folder + "/"));
       for (let i = 0; i < files.length; i++) {
         if ((_h = opts.isCancelled) == null ? void 0 : _h.call(opts)) return null;
         const f = files[i];
-        const cache = app.metadataCache.getFileCache(f);
+        const cache = app2.metadataCache.getFileCache(f);
         const fm = cache == null ? void 0 : cache.frontmatter;
         const cover = fm == null ? void 0 : fm[GS_FM.cover];
         scanned += 1;
         const rawShots = fm == null ? void 0 : fm[GS_FM.shots];
         const shots = Array.isArray(rawShots) ? rawShots : [];
         const missing = [];
-        if (isLocalPath(cover) && !fileExists(app, cover.trim())) missing.push(String(cover).trim());
+        if (isLocalPath(cover) && !fileExists(app2, cover.trim())) missing.push(String(cover).trim());
         for (const s of shots) {
-          if (isLocalPath(s) && !fileExists(app, String(s).trim())) missing.push(String(s).trim());
+          if (isLocalPath(s) && !fileExists(app2, String(s).trim())) missing.push(String(s).trim());
         }
         if (missing.length) {
           const name = f.basename || f.path;
@@ -25731,13 +25731,13 @@ ${missing.map((m) => `- ${m}`).join("\n")}
       }
     }
     {
-      const sidecarFile = ((_j = jsonScanTargets(app).find((t) => t.file.endsWith("/clipbook.json"))) == null ? void 0 : _j.file) || "CONFIG/STORAGE/clipbook.json";
-      const parsed = await readRawJson(app, sidecarFile);
+      const sidecarFile = ((_j = jsonScanTargets(app2).find((t) => t.file.endsWith("/clipbook.json"))) == null ? void 0 : _j.file) || "CONFIG/STORAGE/clipbook.json";
+      const parsed = await readRawJson(app2, sidecarFile);
       const data = parsed && parsed.ok && parsed.data && typeof parsed.data === "object" && !Array.isArray(parsed.data) ? parsed.data : null;
       if (data) {
         const savedArchive = data.savedArchive;
         if (Array.isArray(savedArchive)) {
-          const scannedNotes = await scanClipDirectory(clipDir(), { vault: app.vault }) || [];
+          const scannedNotes = await scanClipDirectory(clipDir(), { vault: app2.vault }) || [];
           const urls = clipUrlSet(scannedNotes);
           for (let i = 0; i < savedArchive.length; i++) {
             if ((_k = opts.isCancelled) == null ? void 0 : _k.call(opts)) return null;
@@ -25773,7 +25773,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
             if (!mk || typeof mk !== "object") continue;
             scanned += 1;
             const notePath = String(mk.notePath || "").trim();
-            if (notePath && !fileExists(app, notePath)) {
+            if (notePath && !fileExists(app2, notePath)) {
               const find = String(mk.find || "");
               issues.push({
                 severity: "warn",
@@ -25804,7 +25804,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
             pendingDone += 1;
             scanned += 1;
             const notePath = String(p || "").trim();
-            if (notePath && !fileExists(app, notePath)) {
+            if (notePath && !fileExists(app2, notePath)) {
               issues.push({
                 severity: "warn",
                 title: `剪藏待回写来源指向的笔记不存在（${notePath.split("/").pop() || notePath}）`,
@@ -25823,8 +25823,8 @@ ${missing.map((m) => `- ${m}`).join("\n")}
       }
     }
     {
-      const favFile = ((_q = jsonScanTargets(app).find((t) => t.file.endsWith("/favorites.json"))) == null ? void 0 : _q.file) || "CONFIG/STORAGE/favorites.json";
-      const parsed = await readRawJson(app, favFile);
+      const favFile = ((_q = jsonScanTargets(app2).find((t) => t.file.endsWith("/favorites.json"))) == null ? void 0 : _q.file) || "CONFIG/STORAGE/favorites.json";
+      const parsed = await readRawJson(app2, favFile);
       if (parsed && parsed.ok && Array.isArray(parsed.data)) {
         const list = parsed.data;
         for (let i = 0; i < list.length; i++) {
@@ -25833,7 +25833,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
           if (!it || typeof it !== "object") continue;
           scanned += 1;
           const note = String(it.linkedNote || "").trim();
-          if (note && !fileExists(app, note)) {
+          if (note && !fileExists(app2, note)) {
             issues.push({
               severity: "warn",
               title: `收藏「${String(it.title || it.url || "(无标题)")}」的关联笔记不存在`,
@@ -25850,8 +25850,8 @@ ${missing.map((m) => `- ${m}`).join("\n")}
       }
     }
     {
-      const kbFile = ((_t = jsonScanTargets(app).find((t) => t.file.endsWith("/knowledge.json"))) == null ? void 0 : _t.file) || "CONFIG/STORAGE/knowledge.json";
-      const parsed = await readRawJson(app, kbFile);
+      const kbFile = ((_t = jsonScanTargets(app2).find((t) => t.file.endsWith("/knowledge.json"))) == null ? void 0 : _t.file) || "CONFIG/STORAGE/knowledge.json";
+      const parsed = await readRawJson(app2, kbFile);
       if (parsed && parsed.ok && Array.isArray(parsed.data)) {
         const list = parsed.data;
         for (let i = 0; i < list.length; i++) {
@@ -25863,7 +25863,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
           const note = String(it.notePath || "").trim();
           const video = String(it.videoPath || "").trim();
           const title = String(it.title || it.url || "(无标题)");
-          if (note && !fileExists(app, note)) {
+          if (note && !fileExists(app2, note)) {
             issues.push({
               severity: "warn",
               title: `知识盒任务「${title}」的文献笔记不存在`,
@@ -25875,7 +25875,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
               fixLabel: "清除笔记引用"
             });
           }
-          if (video && !fileExists(app, video)) {
+          if (video && !fileExists(app2, video)) {
             issues.push({
               severity: "warn",
               title: `知识盒任务「${title}」的视频文件不存在`,
@@ -26103,11 +26103,11 @@ ${missing.map((m) => `- ${m}`).join("\n")}
         /** 公开课笔记（影视目录中含 公开课 标签的文件；结果走会话级缓存，见 _courseNotesCache 注） */
         async getCourseNotes() {
           if (this._courseNotesCache) return this._courseNotesCache;
-          const app = getApp();
+          const app2 = getApp();
           const result = [];
-          for (const file of app.vault.getFiles()) {
+          for (const file of app2.vault.getFiles()) {
             if (!isUnderFolder(this.cinemaFolderPath, file.path) || file.extension !== "md") continue;
-            const cache = app.metadataCache.getFileCache(file);
+            const cache = app2.metadataCache.getFileCache(file);
             if (!cache) continue;
             if (hasCourseTag(cache)) result.push({ name: file.basename, path: file.path });
           }
@@ -26250,11 +26250,11 @@ ${missing.map((m) => `- ${m}`).join("\n")}
     const summary = issues.some((i) => i.severity === "error") ? "发现结构异常" : bad > 0 ? `条数 ${stats.total} · 完成 ${stats.storeView.done}，双链口径一致，另有 ${bad} 处小问题` : `条数 ${stats.total} · 完成 ${stats.storeView.done}，双链口径一致`;
     return { summary, issues };
   }
-  async function checkSameSourceConsistency(app, opts = {}) {
+  async function checkSameSourceConsistency(app2, opts = {}) {
     var _a2, _b2, _c;
     if ((_a2 = opts.isCancelled) == null ? void 0 : _a2.call(opts)) return null;
-    const file = ((_b2 = jsonScanTargets(app).find((t) => t.file.endsWith("/memo.json"))) == null ? void 0 : _b2.file) || "CONFIG/STORAGE/memo.json";
-    const parsed = await readRawJson(app, file);
+    const file = ((_b2 = jsonScanTargets(app2).find((t) => t.file.endsWith("/memo.json"))) == null ? void 0 : _b2.file) || "CONFIG/STORAGE/memo.json";
+    const parsed = await readRawJson(app2, file);
     if (parsed === null) {
       return { id: "consistency", name: "同源一致性（备忘录）", summary: "memo.json 不存在（还没写过数据），跳过", issues: [], scanned: 0 };
     }
@@ -26274,7 +26274,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
   });
 
   // src/checkup/run.ts
-  async function runCheckup(app, opts = {}) {
+  async function runCheckup(app2, opts = {}) {
     var _a2, _b2;
     const total = CHECKS.length;
     const sections = [];
@@ -26282,7 +26282,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
       if ((_a2 = opts.isCancelled) == null ? void 0 : _a2.call(opts)) return null;
       (_b2 = opts.onProgress) == null ? void 0 : _b2.call(opts, { index: i, total, label: CHECKS[i].label });
       try {
-        const section2 = await CHECKS[i].runner(app, {
+        const section2 = await CHECKS[i].runner(app2, {
           tick: async (label, sub) => {
             var _a3;
             (_a3 = opts.onProgress) == null ? void 0 : _a3.call(opts, { index: i, total, label, subDone: sub == null ? void 0 : sub.done, subTotal: sub == null ? void 0 : sub.total });
@@ -26307,23 +26307,23 @@ ${missing.map((m) => `- ${m}`).join("\n")}
     }
     const report = { sections, finishedAt: (/* @__PURE__ */ new Date()).toLocaleString() };
     lastReport = report;
-    lastFingerprints = collectFingerprints(app);
+    lastFingerprints = collectFingerprints(app2);
     return report;
   }
-  function collectFingerprints(app) {
+  function collectFingerprints(app2) {
     var _a2;
     const fp = {};
-    const get = (_a2 = app.vault) == null ? void 0 : _a2.getAbstractFileByPath;
+    const get = (_a2 = app2.vault) == null ? void 0 : _a2.getAbstractFileByPath;
     if (typeof get !== "function") return fp;
-    for (const t of jsonScanTargets(app)) {
-      const f = get.call(app.vault, t.file);
+    for (const t of jsonScanTargets(app2)) {
+      const f = get.call(app2.vault, t.file);
       if (f && f.stat && typeof f.stat.mtime === "number") fp[t.file] = f.stat.mtime;
     }
     return fp;
   }
-  function cacheFreshness(app) {
+  function cacheFreshness(app2) {
     if (!lastFingerprints || Object.keys(lastFingerprints).length === 0) return "changed";
-    const now = collectFingerprints(app);
+    const now = collectFingerprints(app2);
     const oldKeys = Object.keys(lastFingerprints);
     if (oldKeys.length !== Object.keys(now).length) return "changed";
     for (const k of oldKeys) {
@@ -26337,15 +26337,15 @@ ${missing.map((m) => `- ${m}`).join("\n")}
   function fixKeysOf(issues, group) {
     return issues.filter((i) => i.fixGroup === group && i.fixKey).map((i) => i.fixKey);
   }
-  async function readJsonIfPresent(app, file, make) {
-    if (!app.vault.getAbstractFileByPath(file)) return null;
+  async function readJsonIfPresent(app2, file, make) {
+    if (!app2.vault.getAbstractFileByPath(file)) return null;
     return make().read();
   }
-  async function fixFavorites(app, file, ids) {
+  async function fixFavorites(app2, file, ids) {
     const restored = /* @__PURE__ */ new Map();
     const fixed = await enqueueFileTask(file, async () => {
       var _a2;
-      const data = await readJsonIfPresent(app, file, () => jsonFileStore(file, { defaultValue: [] }));
+      const data = await readJsonIfPresent(app2, file, () => jsonFileStore(file, { defaultValue: [] }));
       if (data === null) return 0;
       const want = new Set(ids);
       let n = 0;
@@ -26368,7 +26368,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
         if (!restored.size) return;
         await enqueueFileTask(file, async () => {
           var _a2;
-          const data = await readJsonIfPresent(app, file, () => jsonFileStore(file, { defaultValue: [] }));
+          const data = await readJsonIfPresent(app2, file, () => jsonFileStore(file, { defaultValue: [] }));
           if (data === null) return;
           for (const it of data) {
             if (!it || typeof it !== "object" || !restored.has(String(it.id))) continue;
@@ -26386,14 +26386,14 @@ ${missing.map((m) => `- ${m}`).join("\n")}
     data[key] = {};
     return data[key];
   }
-  async function fixClipbookBatch(app, file, urls, markKeys, srcKeys) {
+  async function fixClipbookBatch(app2, file, urls, markKeys, srcKeys) {
     const removedSaved = [];
     const removedMarks = [];
     const removedSrc = [];
     const hasWork = urls.length > 0 || markKeys.length > 0 || srcKeys.length > 0;
     const counts = await enqueueFileTask(file, async () => {
       if (!hasWork) return { saved: 0, marks: 0, src: 0 };
-      const data = await readJsonIfPresent(app, file, () => jsonFileStore(file, { defaultValue: emptySidecar }));
+      const data = await readJsonIfPresent(app2, file, () => jsonFileStore(file, { defaultValue: emptySidecar }));
       if (data === null) return { saved: 0, marks: 0, src: 0 };
       let cntSaved = 0;
       const list = Array.isArray(data.savedArchive) ? data.savedArchive : [];
@@ -26465,7 +26465,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
     const makeSavedUndo = () => async () => {
       if (!removedSaved.length) return;
       await enqueueFileTask(file, async () => {
-        const data = await readJsonIfPresent(app, file, () => jsonFileStore(file, { defaultValue: emptySidecar }));
+        const data = await readJsonIfPresent(app2, file, () => jsonFileStore(file, { defaultValue: emptySidecar }));
         if (data === null) return;
         const list = Array.isArray(data.savedArchive) ? data.savedArchive : [];
         for (const r of removedSaved) {
@@ -26479,7 +26479,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
     const makeMarksUndo = () => async () => {
       if (!removedMarks.length) return;
       await enqueueFileTask(file, async () => {
-        const data = await readJsonIfPresent(app, file, () => jsonFileStore(file, { defaultValue: emptySidecar }));
+        const data = await readJsonIfPresent(app2, file, () => jsonFileStore(file, { defaultValue: emptySidecar }));
         if (data === null) return;
         const marks = recordSectionOf(data, "marks");
         for (const r of removedMarks) {
@@ -26494,7 +26494,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
     const makeSrcUndo = () => async () => {
       if (!removedSrc.length) return;
       await enqueueFileTask(file, async () => {
-        const data = await readJsonIfPresent(app, file, () => jsonFileStore(file, { defaultValue: emptySidecar }));
+        const data = await readJsonIfPresent(app2, file, () => jsonFileStore(file, { defaultValue: emptySidecar }));
         if (data === null) return;
         const pending = recordSectionOf(data, "pendingSource");
         for (const r of removedSrc) {
@@ -26533,11 +26533,11 @@ ${missing.map((m) => `- ${m}`).join("\n")}
     }
     return outcomes;
   }
-  async function fixKnowledge(app, file, keys) {
+  async function fixKnowledge(app2, file, keys) {
     const restored = /* @__PURE__ */ new Map();
     const fixed = await enqueueFileTask(file, async () => {
       var _a2;
-      const data = await readJsonIfPresent(app, file, () => jsonFileStore(file, { defaultValue: [] }));
+      const data = await readJsonIfPresent(app2, file, () => jsonFileStore(file, { defaultValue: [] }));
       if (data === null) return 0;
       let n = 0;
       for (const key of keys) {
@@ -26565,7 +26565,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
       undo: async () => {
         if (!restored.size) return;
         await enqueueFileTask(file, async () => {
-          const data = await readJsonIfPresent(app, file, () => jsonFileStore(file, { defaultValue: [] }));
+          const data = await readJsonIfPresent(app2, file, () => jsonFileStore(file, { defaultValue: [] }));
           if (data === null) return;
           for (const it of Array.isArray(data) ? data : []) {
             if (!it || typeof it !== "object" || !restored.has(String(it.id))) continue;
@@ -26578,10 +26578,10 @@ ${missing.map((m) => `- ${m}`).join("\n")}
       }
     };
   }
-  async function fixOrphanIssues(app, issues) {
+  async function fixOrphanIssues(app2, issues) {
     const outcomes = [];
     const failures = [];
-    const targets = jsonScanTargets(app);
+    const targets = jsonScanTargets(app2);
     const fileOf = (suffix) => {
       var _a2;
       return ((_a2 = targets.find((t) => t.file.endsWith("/" + suffix))) == null ? void 0 : _a2.file) || storageFile(suffix);
@@ -26589,7 +26589,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
     const favIds = fixKeysOf(issues, "favorites");
     if (favIds.length) {
       try {
-        outcomes.push(await fixFavorites(app, fileOf("favorites.json"), favIds));
+        outcomes.push(await fixFavorites(app2, fileOf("favorites.json"), favIds));
       } catch (e) {
         failures.push("收藏关联");
       }
@@ -26599,7 +26599,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
     const srcKeys = fixKeysOf(issues, "clipbook-source");
     if (clipUrls.length || markKeys.length || srcKeys.length) {
       try {
-        outcomes.push(...await fixClipbookBatch(app, fileOf("clipbook.json"), clipUrls, markKeys, srcKeys));
+        outcomes.push(...await fixClipbookBatch(app2, fileOf("clipbook.json"), clipUrls, markKeys, srcKeys));
       } catch (e) {
         failures.push("剪藏残留/标注/待回写来源");
       }
@@ -26607,7 +26607,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
     const kbKeys = fixKeysOf(issues, "knowledge");
     if (kbKeys.length) {
       try {
-        outcomes.push(await fixKnowledge(app, fileOf("knowledge.json"), kbKeys));
+        outcomes.push(await fixKnowledge(app2, fileOf("knowledge.json"), kbKeys));
       } catch (e) {
         failures.push("知识盒任务引用");
       }
@@ -26641,10 +26641,10 @@ ${missing.map((m) => `- ${m}`).join("\n")}
   function isPanelVisible() {
     return !!overlay && overlay.style.display === "flex";
   }
-  function openDataCheckup(app) {
+  function openDataCheckup(app2) {
     var _a2;
-    hostApp = app;
-    if (!overlay) build(app);
+    hostApp = app2;
+    if (!overlay) build(app2);
     topifyZ(overlay);
     overlay.style.display = "flex";
     trapPanelFocus((_a2 = overlay.querySelector(`#${FRAME_ID}`)) != null ? _a2 : overlay);
@@ -26666,7 +26666,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
     overlay == null ? void 0 : overlay.remove();
     overlay = null;
   }
-  function build(app) {
+  function build(app2) {
     const ov = document.createElement("div");
     ov.id = OVERLAY_ID;
     ov.className = "bz-panel-overlay";
@@ -27246,17 +27246,17 @@ ${missing.map((m) => `- ${m}`).join("\n")}
   function remotesFor(fileName) {
     return downloadRemotesFor(fileName);
   }
-  function assetVaultPath(app, fileName) {
+  function assetVaultPath(app2, fileName) {
     var _a2;
-    const configDir = String(((_a2 = app.vault) == null ? void 0 : _a2.configDir) || ".obsidian");
+    const configDir = String(((_a2 = app2.vault) == null ? void 0 : _a2.configDir) || ".obsidian");
     return `${configDir}/plugins/bz/${fileName}`;
   }
-  function downloadsVaultPath(app, fileName) {
-    return assetVaultPath(app, `${DOWNLOADS_DIR}/${fileName}`);
+  function downloadsVaultPath(app2, fileName) {
+    return assetVaultPath(app2, `${DOWNLOADS_DIR}/${fileName}`);
   }
-  async function ensureDir(app, relPath) {
+  async function ensureDir(app2, relPath) {
     var _a2;
-    const adapter = (_a2 = app.vault) == null ? void 0 : _a2.adapter;
+    const adapter = (_a2 = app2.vault) == null ? void 0 : _a2.adapter;
     if (!(adapter == null ? void 0 : adapter.mkdir)) return;
     const slash = relPath.lastIndexOf("/");
     if (slash <= 0) return;
@@ -27264,7 +27264,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
     for (const part of relPath.slice(0, slash).split("/")) {
       cur = cur ? `${cur}/${part}` : part;
       try {
-        await adapter.mkdir(downloadsVaultPath(app, cur));
+        await adapter.mkdir(downloadsVaultPath(app2, cur));
       } catch (e) {
       }
     }
@@ -27286,14 +27286,14 @@ ${missing.map((m) => `- ${m}`).join("\n")}
     }
     throw new Error(`${label}下载失败：${lastErr}`);
   }
-  async function writeAssetText(app, fileName, text2) {
-    await ensureDir(app, fileName);
-    await app.vault.adapter.write(downloadsVaultPath(app, fileName), text2);
+  async function writeAssetText(app2, fileName, text2) {
+    await ensureDir(app2, fileName);
+    await app2.vault.adapter.write(downloadsVaultPath(app2, fileName), text2);
     emitDomainEvent(DOWNLOADS_CHANGED_EVENT, { fileName });
   }
-  async function ensureAssetWithHash(app, fileName, expected, label) {
+  async function ensureAssetWithHash(app2, fileName, expected, label) {
     const want = String(expected || "").toLowerCase();
-    const cached = await readAsset(app, fileName);
+    const cached = await readAsset(app2, fileName);
     if (cached !== null && (!want || textSha256(cached) === want)) return cached;
     let lastErr = "";
     for (const url of remotesFor(fileName)) {
@@ -27304,7 +27304,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
           lastErr = `${url} 内容 sha256 不匹配（可能被篡改或版本错位）`;
           continue;
         }
-        await writeAssetText(app, fileName, text2);
+        await writeAssetText(app2, fileName, text2);
         return text2;
       } catch (e) {
         lastErr = `${url} → ${(e == null ? void 0 : e.message) || String(e)}`;
@@ -27312,45 +27312,45 @@ ${missing.map((m) => `- ${m}`).join("\n")}
     }
     throw new Error(`${label}下载失败：${lastErr}`);
   }
-  async function hasAsset(app, fileName) {
+  async function hasAsset(app2, fileName) {
     try {
-      return await app.vault.adapter.exists(downloadsVaultPath(app, fileName));
+      return await app2.vault.adapter.exists(downloadsVaultPath(app2, fileName));
     } catch (e) {
       return false;
     }
   }
-  async function downloadAsset(app, fileName, validate, label) {
+  async function downloadAsset(app2, fileName, validate, label) {
     const text2 = await fetchAssetText(fileName, validate, label, "页");
-    await writeAssetText(app, fileName, text2);
+    await writeAssetText(app2, fileName, text2);
   }
-  async function readAsset(app, fileName) {
+  async function readAsset(app2, fileName) {
     try {
-      if (!await hasAsset(app, fileName)) return null;
-      return await app.vault.adapter.read(downloadsVaultPath(app, fileName));
+      if (!await hasAsset(app2, fileName)) return null;
+      return await app2.vault.adapter.read(downloadsVaultPath(app2, fileName));
     } catch (e) {
       return null;
     }
   }
-  async function ensureAssetReady(app, fileName, validate, label) {
-    let text2 = await readAsset(app, fileName);
+  async function ensureAssetReady(app2, fileName, validate, label) {
+    let text2 = await readAsset(app2, fileName);
     if (!text2) {
-      await downloadAsset(app, fileName, validate, label);
-      text2 = await readAsset(app, fileName);
+      await downloadAsset(app2, fileName, validate, label);
+      text2 = await readAsset(app2, fileName);
     }
     if (!text2) throw new Error(`${label}下载后读取失败：插件目录写入异常`);
     return text2;
   }
-  async function refreshAsset(app, fileName, validate, label, expectedSha256) {
+  async function refreshAsset(app2, fileName, validate, label, expectedSha256) {
     try {
       const want = String(expectedSha256 || "").toLowerCase();
       if (want) {
-        const local2 = await readAsset(app, fileName);
+        const local2 = await readAsset(app2, fileName);
         if (local2 !== null && textSha256(local2) === want) return null;
       }
       const text2 = await fetchAssetText(fileName, validate, label, "页");
-      const local = await readAsset(app, fileName);
+      const local = await readAsset(app2, fileName);
       if (local !== null && textSha256(text2) === textSha256(local)) return null;
-      await writeAssetText(app, fileName, text2);
+      await writeAssetText(app2, fileName, text2);
       return text2;
     } catch (e) {
       return null;
@@ -27429,17 +27429,17 @@ ${missing.map((m) => `- ${m}`).join("\n")}
     }
     return { version, docs, skins, rowOrder };
   }
-  async function cachedManifest(app) {
-    return parseDownloadManifest(await readAsset(app, MANIFEST_FILE));
+  async function cachedManifest(app2) {
+    return parseDownloadManifest(await readAsset(app2, MANIFEST_FILE));
   }
-  async function cachedSha256For(app, file) {
+  async function cachedSha256For(app2, file) {
     var _a2, _b2, _c, _d;
-    const m = await cachedManifest(app);
+    const m = await cachedManifest(app2);
     if (!m) return null;
     return (_d = (_c = (_a2 = m.docs.find((d) => d.file === file)) == null ? void 0 : _a2.sha256) != null ? _c : (_b2 = m.skins.find((s) => s.file === file)) == null ? void 0 : _b2.sha256) != null ? _d : null;
   }
-  async function refreshManifest(app) {
-    const previous = await cachedManifest(app);
+  async function refreshManifest(app2) {
+    const previous = await cachedManifest(app2);
     const text2 = await fetchAssetText(
       MANIFEST_FILE,
       (t) => parseDownloadManifest(t) !== null,
@@ -27447,11 +27447,11 @@ ${missing.map((m) => `- ${m}`).join("\n")}
       ""
     );
     const manifest = parseDownloadManifest(text2);
-    await writeAssetText(app, MANIFEST_FILE, text2);
+    await writeAssetText(app2, MANIFEST_FILE, text2);
     return { manifest, previous };
   }
-  async function docStatus(app, entry) {
-    const local = await readAsset(app, entry.file);
+  async function docStatus(app2, entry) {
+    const local = await readAsset(app2, entry.file);
     if (local === null) return "missing";
     return textSha256(local) === entry.sha256 ? "ready" : "updated";
   }
@@ -27514,12 +27514,12 @@ ${missing.map((m) => `- ${m}`).join("\n")}
     el3.textContent = css;
     document.head.appendChild(el3);
   }
-  async function readPluginVersion(app) {
+  async function readPluginVersion(app2) {
     var _a2, _b2;
     try {
-      const adapter = (_a2 = app.vault) == null ? void 0 : _a2.adapter;
+      const adapter = (_a2 = app2.vault) == null ? void 0 : _a2.adapter;
       if (!(adapter == null ? void 0 : adapter.read)) return "";
-      const text2 = await adapter.read(assetVaultPath(app, "manifest.json"));
+      const text2 = await adapter.read(assetVaultPath(app2, "manifest.json"));
       return String(((_b2 = JSON.parse(text2 || "{}")) == null ? void 0 : _b2.version) || "");
     } catch (e) {
       return "";
@@ -27536,10 +27536,10 @@ ${missing.map((m) => `- ${m}`).join("\n")}
     injectSkinPackStyles(items.map((it) => `/* bz skin-pack · ${it.entry.domain}/${it.entry.id} */
 ${it.text}`).join("\n"));
   }
-  async function readVerified(app, entries) {
+  async function readVerified(app2, entries) {
     const out = [];
     for (const e of entries) {
-      const text2 = await readAsset(app, e.file);
+      const text2 = await readAsset(app2, e.file);
       if (text2 === null) continue;
       if (textSha256(text2) !== e.sha256) continue;
       out.push({ entry: e, text: text2 });
@@ -27560,35 +27560,35 @@ ${it.text}`).join("\n"));
     });
     await Promise.all(workers);
   }
-  async function removeLegacyFile(app, file) {
+  async function removeLegacyFile(app2, file) {
     var _a2;
-    const adapter = (_a2 = app.vault) == null ? void 0 : _a2.adapter;
+    const adapter = (_a2 = app2.vault) == null ? void 0 : _a2.adapter;
     if (!(adapter == null ? void 0 : adapter.remove)) return;
     try {
-      await adapter.remove(assetVaultPath(app, file));
+      await adapter.remove(assetVaultPath(app2, file));
     } catch (e) {
     }
   }
-  async function skinStatus(app, manifest) {
-    const pluginVersion = await readPluginVersion(app);
+  async function skinStatus(app2, manifest) {
+    const pluginVersion = await readPluginVersion(app2);
     if (!pluginVersion) return { ready: 0, missing: 0, updated: 0 };
     const wanted = wantedEntries(manifest, pluginVersion);
-    const verified = await readVerified(app, wanted);
+    const verified = await readVerified(app2, wanted);
     const status = { ready: verified.length, missing: 0, updated: 0 };
     const goodFiles = new Set(verified.map((r) => r.entry.file));
     for (const e of wanted) {
       if (goodFiles.has(e.file)) continue;
-      if (await readAsset(app, e.file) !== null) status.updated++;
+      if (await readAsset(app2, e.file) !== null) status.updated++;
       else status.missing++;
     }
     return status;
   }
-  async function downloadSkinUpdates(app, manifest) {
+  async function downloadSkinUpdates(app2, manifest) {
     const result = { downloaded: 0, failed: 0 };
-    const pluginVersion = await readPluginVersion(app);
+    const pluginVersion = await readPluginVersion(app2);
     if (!pluginVersion) return result;
     const wanted = wantedEntries(manifest, pluginVersion);
-    const verified = await readVerified(app, wanted);
+    const verified = await readVerified(app2, wanted);
     const goodFiles = new Set(verified.map((r) => r.entry.file));
     const todo = wanted.filter((e) => !goodFiles.has(e.file));
     const byFile = /* @__PURE__ */ new Map();
@@ -27596,10 +27596,10 @@ ${it.text}`).join("\n"));
     for (const arr of ready.values()) for (const r of arr) byFile.set(r.entry.file, r);
     await mapLimit(todo, 4, async (e) => {
       try {
-        const text2 = await ensureAssetWithHash(app, e.file, e.sha256, `皮肤「${e.name}」`);
+        const text2 = await ensureAssetWithHash(app2, e.file, e.sha256, `皮肤「${e.name}」`);
         if (text2 !== null) {
           byFile.set(e.file, { entry: e, text: text2 });
-          await removeLegacyFile(app, e.file);
+          await removeLegacyFile(app2, e.file);
         }
         result.downloaded++;
       } catch (err) {
@@ -27656,8 +27656,8 @@ ${it.text}`).join("\n"));
     }
     return { version: o.version, groups };
   }
-  async function readLocalValidated(app) {
-    const text2 = await readAsset(app, CATEGORY_TABLE_FILE);
+  async function readLocalValidated(app2) {
+    const text2 = await readAsset(app2, CATEGORY_TABLE_FILE);
     if (text2 === null) return null;
     try {
       return validateCategoryTable(JSON.parse(text2));
@@ -27665,9 +27665,9 @@ ${it.text}`).join("\n"));
       return null;
     }
   }
-  async function loadCategoryTable(app) {
+  async function loadCategoryTable(app2) {
     if (memCache) return memCache;
-    const t = await readLocalValidated(app);
+    const t = await readLocalValidated(app2);
     if (t) memCache = t;
     return t;
   }
@@ -27884,8 +27884,8 @@ ${it.text}`).join("\n"));
     }
     return { version: o.version, updatedAt: o.updatedAt, meta: { sources }, categories: o.categories, feeds };
   }
-  async function readLocalValidated2(app) {
-    const text2 = await readAsset(app, RSS_CATALOG_FILE);
+  async function readLocalValidated2(app2) {
+    const text2 = await readAsset(app2, RSS_CATALOG_FILE);
     if (text2 === null) return null;
     try {
       return validateRssCatalog(JSON.parse(text2));
@@ -27893,33 +27893,33 @@ ${it.text}`).join("\n"));
       return null;
     }
   }
-  async function loadRssCatalog(app) {
+  async function loadRssCatalog(app2) {
     subscribeOnce();
     if (memCache2) return memCache2;
-    const c = await readLocalValidated2(app);
+    const c = await readLocalValidated2(app2);
     if (c) memCache2 = c;
     return c;
   }
-  async function manifestEntry(app) {
+  async function manifestEntry(app2) {
     var _a2;
-    let m = await cachedManifest(app);
+    let m = await cachedManifest(app2);
     if (!m) {
       try {
-        await refreshManifest(app);
-        m = await cachedManifest(app);
+        await refreshManifest(app2);
+        m = await cachedManifest(app2);
       } catch (e) {
         return null;
       }
     }
     return (_a2 = m == null ? void 0 : m.docs.find((d) => d && d.id === RSS_CATALOG_MANIFEST_ID)) != null ? _a2 : null;
   }
-  async function downloadRssCatalog(app) {
+  async function downloadRssCatalog(app2) {
     subscribeOnce();
-    const entry = await manifestEntry(app);
+    const entry = await manifestEntry(app2);
     if (!entry) {
       throw new Error("RSS 源库尚未登记到下载清单（可能网络不通，或插件版本过旧）");
     }
-    const text2 = await ensureAssetWithHash(app, entry.file, entry.sha256, "RSS 源库");
+    const text2 = await ensureAssetWithHash(app2, entry.file, entry.sha256, "RSS 源库");
     if (text2 === null) throw new Error("RSS 源库数据拉取失败");
     let parsed;
     try {
@@ -28023,8 +28023,8 @@ ${it.text}`).join("\n"));
       rows
     };
   }
-  async function readLocalValidated3(app) {
-    const text2 = await readAsset(app, DOUBAN_NAME_INDEX_FILE);
+  async function readLocalValidated3(app2) {
+    const text2 = await readAsset(app2, DOUBAN_NAME_INDEX_FILE);
     if (text2 === null) return null;
     try {
       return validateDoubanNameIndex(JSON.parse(text2));
@@ -28032,10 +28032,10 @@ ${it.text}`).join("\n"));
       return null;
     }
   }
-  async function loadDoubanNameIndex(app) {
+  async function loadDoubanNameIndex(app2) {
     subscribeOnce2();
     if (memCache3) return memCache3;
-    const idx = await readLocalValidated3(app);
+    const idx = await readLocalValidated3(app2);
     if (idx) memCache3 = idx;
     return idx;
   }
@@ -28096,11 +28096,11 @@ ${it.text}`).join("\n"));
     if (bytes >= 1024) return `${Math.round(bytes / 1024)} KB`;
     return "<1 KB";
   }
-  async function computeRowStates(app) {
+  async function computeRowStates(app2) {
     var _a2;
-    const manifest = await cachedManifest(app);
+    const manifest = await cachedManifest(app2);
     if (!manifest) return { rows: [], manifest: null };
-    const pluginVersion = await readPluginVersion(app);
+    const pluginVersion = await readPluginVersion(app2);
     const rows = [];
     for (const id of rowIdsOf(manifest)) {
       if (id === SKINS_ROW_ID) {
@@ -28108,7 +28108,7 @@ ${it.text}`).join("\n"));
           id,
           name: SKINS_ROW_NAME,
           doc: null,
-          skin: pluginVersion ? await skinStatus(app, manifest) : null,
+          skin: pluginVersion ? await skinStatus(app2, manifest) : null,
           extra: null,
           size: skinTotalSize(manifest, pluginVersion)
         });
@@ -28117,8 +28117,8 @@ ${it.text}`).join("\n"));
       const entry = manifest.docs.find((d) => d.id === id);
       if (!entry) continue;
       if (pluginVersion && !isInVersionRange(entry, pluginVersion)) continue;
-      const doc = await docStatus(app, entry);
-      const extra = doc === "ready" && DESC_EXTRAS[id] ? await DESC_EXTRAS[id](app, entry) : null;
+      const doc = await docStatus(app2, entry);
+      const extra = doc === "ready" && DESC_EXTRAS[id] ? await DESC_EXTRAS[id](app2, entry) : null;
       rows.push({ id, name: entry.name, doc, skin: null, extra, size: (_a2 = entry.size) != null ? _a2 : null });
     }
     return { rows, manifest };
@@ -28327,15 +28327,15 @@ ${it.text}`).join("\n"));
       });
     });
   }
-  async function downloadOne(app, manifest, id) {
+  async function downloadOne(app2, manifest, id) {
     if (id === SKINS_ROW_ID) {
-      const r = await downloadSkinUpdates(app, manifest);
+      const r = await downloadSkinUpdates(app2, manifest);
       if (r.failed > 0) throw new Error(`${r.failed} 套主题下载失败，可稍后重试`);
       return;
     }
     const entry = manifest.docs.find((d) => d.id === id);
     if (!entry) return;
-    await ensureAssetWithHash(app, entry.file, entry.sha256, entry.name);
+    await ensureAssetWithHash(app2, entry.file, entry.sha256, entry.name);
   }
   async function runAction(ctx, id) {
     var _a2, _b2, _c, _d;
@@ -28346,9 +28346,9 @@ ${it.text}`).join("\n"));
     setRowBtnState(btn, "busy", (_c = btn == null ? void 0 : btn.textContent) != null ? _c : "下载");
     if (row) row.disabled = true;
     try {
-      const app = getApp();
-      const manifest = await cachedManifest(app);
-      if (manifest) await downloadOne(app, manifest, id);
+      const app2 = getApp();
+      const manifest = await cachedManifest(app2);
+      if (manifest) await downloadOne(app2, manifest, id);
     } catch (e) {
       notice(e instanceof Error ? e.message : String(e), "error");
     }
@@ -28367,10 +28367,10 @@ ${it.text}`).join("\n"));
     if (allRow) allRow.disabled = true;
     let failed = 0;
     try {
-      const app = getApp();
-      const manifest = await cachedManifest(app);
+      const app2 = getApp();
+      const manifest = await cachedManifest(app2);
       if (manifest) {
-        const { rows: states } = await computeRowStates(app);
+        const { rows: states } = await computeRowStates(app2);
         for (const st of states) {
           if (busyIds.has(st.id)) continue;
           const isPending = st.skin ? st.skin.missing + st.skin.updated > 0 : st.doc === "missing" || st.doc === "updated";
@@ -28379,7 +28379,7 @@ ${it.text}`).join("\n"));
           const row = (_c = currentGroup == null ? void 0 : currentGroup.entries.find((e) => e.id === st.id)) == null ? void 0 : _c.row;
           if (row) row.disabled = true;
           try {
-            await downloadOne(app, manifest, st.id);
+            await downloadOne(app2, manifest, st.id);
           } catch (e) {
             failed++;
             console.warn(`[bz] 在线资源「${st.name}」下载失败:`, (e == null ? void 0 : e.message) || e);
@@ -28416,22 +28416,22 @@ ${it.text}`).join("\n"));
       SKINS_ROW_NAME = "主题";
       ALL_BUSY_ID = "__all__";
       DESC_EXTRAS = {
-        "belongings-categories": async (app) => {
-          const table = await loadCategoryTable(app);
+        "belongings-categories": async (app2) => {
+          const table = await loadCategoryTable(app2);
           if (!table) return null;
           const items = table.groups.reduce((n, g) => n + g.items.length, 0);
           return `${table.groups.length} 组 ${items} 条`;
         },
         // issue 495：RSS 源库就绪描述捎带「N 类 M 源」（只数非空大类，0 条的分类不冒充规模）
-        "rss-catalog": async (app) => {
-          const catalog = await loadRssCatalog(app);
+        "rss-catalog": async (app2) => {
+          const catalog = await loadRssCatalog(app2);
           if (!catalog) return null;
           const cats = catalogCategoryCounts(catalog).filter((c) => c.count > 0).length;
           return `${cats} 类 ${catalog.feeds.length} 源`;
         },
         // issue 498：豆瓣影视索引就绪描述捎带「N 条 · 各类型条数」（用户点名按类型给量级参考）
-        "cinema-douban-index": async (app) => {
-          const idx = await loadDoubanNameIndex(app);
+        "cinema-douban-index": async (app2) => {
+          const idx = await loadDoubanNameIndex(app2);
           if (!idx) return null;
           const parts = indexKindCounts(idx).map(({ k, count }) => `${k} ${thousand(count)}`);
           return `${thousand(idx.stats.total)} 条 · ${parts.join(" / ")}`;
@@ -28673,16 +28673,16 @@ ${it.text}`).join("\n"));
       hiddenMob: o.hiddenMob === void 0 ? legacy : strList(o.hiddenMob)
     };
   }
-  async function loadHomeOrder(app) {
+  async function loadHomeOrder(app2) {
     try {
-      return normalizeHomeOrder(await store(app).read());
+      return normalizeHomeOrder(await store(app2).read());
     } catch (e) {
       return emptyHomeOrder();
     }
   }
-  async function saveHomeConfig(order, app) {
+  async function saveHomeConfig(order, app2) {
     return enqueueFileTask(storageFile("home.json"), async () => {
-      await store(app).write({
+      await store(app2).write({
         version: HOME_ORDER_VERSION,
         desk: [...order.desk],
         mob: [...order.mob],
@@ -28696,12 +28696,12 @@ ${it.text}`).join("\n"));
     "src/home/order.ts"() {
       init_storage();
       HOME_ORDER_VERSION = 3;
-      store = (app) => jsonFileStore(storageFile("home.json"), { defaultValue: () => emptyHomeOrder(), app });
+      store = (app2) => jsonFileStore(storageFile("home.json"), { defaultValue: () => emptyHomeOrder(), app: app2 });
     }
   });
 
   // src/home/entry-editor.ts
-  function mountHomeEntryEditor(body, app) {
+  function mountHomeEntryEditor(body, app2) {
     blurController == null ? void 0 : blurController.abort();
     blurController = new AbortController();
     const scope = isMobileEnv() ? "mob" : "desk";
@@ -28724,7 +28724,7 @@ ${it.text}`).join("\n"));
     }
     function persist2() {
       if (!order) return;
-      void saveHomeConfig(order, app).catch((e) => {
+      void saveHomeConfig(order, app2).catch((e) => {
         notifySaveError(e, "入口顺序");
       });
     }
@@ -28915,7 +28915,7 @@ ${it.text}`).join("\n"));
       }
     });
     render3();
-    void loadHomeOrder(app).then((o) => {
+    void loadHomeOrder(app2).then((o) => {
       order = o;
       render3();
     });
@@ -30088,8 +30088,8 @@ ${it.text}`).join("\n"));
       init_state5();
       init_stats();
       PomodoroDataManager = class {
-        constructor(app) {
-          this.app = app;
+        constructor(app2) {
+          this.app = app2;
         }
         /**
          * 读取数据（统一数据读写层：不存在 → 建默认数据文件；坏 JSON → 原文件留档 CONFIG/.CORRUPT 后重建默认）。
@@ -32048,10 +32048,10 @@ ${it.text}`).join("\n"));
     });
     return initInflight;
   }
-  async function openPomodoro(app) {
-    appRef = app;
+  async function openPomodoro(app2) {
+    appRef = app2;
     disposed = false;
-    if (!dataManager) dataManager = new PomodoroDataManager(app);
+    if (!dataManager) dataManager = new PomodoroDataManager(app2);
     if (!maskEl) {
       openInflight != null ? openInflight : openInflight = (async () => {
         await initDataOnce();
@@ -32063,7 +32063,7 @@ ${it.text}`).join("\n"));
         await openInflight;
       } catch (e) {
         console.error("番茄钟打开失败:", e);
-        notifyActionError(e, "打开番茄钟", { onRetry: () => void openPomodoro(app) });
+        notifyActionError(e, "打开番茄钟", { onRetry: () => void openPomodoro(app2) });
         return;
       } finally {
         openInflight = null;
@@ -32072,16 +32072,16 @@ ${it.text}`).join("\n"));
     const popupEl2 = maskEl ? maskEl.querySelector("#pomodoro-popup") : null;
     popupEl2 == null ? void 0 : popupEl2.classList.add("bz-panel-mtop");
   }
-  async function ensurePomodoro(app) {
-    appRef = app;
+  async function ensurePomodoro(app2) {
+    appRef = app2;
     disposed = false;
-    if (!dataManager) dataManager = new PomodoroDataManager(app);
+    if (!dataManager) dataManager = new PomodoroDataManager(app2);
     if (!loaded) {
       try {
         await initDataOnce();
       } catch (e) {
         console.error("番茄钟数据加载失败:", e);
-        notifyActionError(e, "加载番茄钟数据", { onRetry: () => void ensurePomodoro(app) });
+        notifyActionError(e, "加载番茄钟数据", { onRetry: () => void ensurePomodoro(app2) });
         return;
       }
       if (disposed) return;
@@ -32092,7 +32092,7 @@ ${it.text}`).join("\n"));
         const remainSec = Math.max(0, Math.ceil((state2.endTime - Date.now()) / 1e3));
         notice(`番茄钟继续：${phaseText(state2.phase, state2.cycleFocusCount, durations())}，还剩 ${fmt(remainSec)}`);
         const s = tryGetSettings();
-        if (s.pomodoroRestoreMode === "popup") void openPomodoro(app);
+        if (s.pomodoroRestoreMode === "popup") void openPomodoro(app2);
       }
     }
   }
@@ -32109,8 +32109,8 @@ ${it.text}`).join("\n"));
     }
     lastStatsKey = "";
   }
-  async function startFocusForTask(app, taskTitle) {
-    await ensurePomodoro(app);
+  async function startFocusForTask(app2, taskTitle) {
+    await ensurePomodoro(app2);
     if (!loaded) return;
     const o = options();
     const d = durations();
@@ -32133,8 +32133,8 @@ ${it.text}`).join("\n"));
   function isFocusing() {
     return isFocusingPhase(menuPhase());
   }
-  async function toggleFocus(app) {
-    await ensurePomodoro(app);
+  async function toggleFocus(app2) {
+    await ensurePomodoro(app2);
     if (!loaded) return;
     if (isFocusing()) {
       const before = state2;
@@ -32156,8 +32156,8 @@ ${it.text}`).join("\n"));
     if (state2.paused) return "paused";
     return state2.endTime !== null ? "focusing" : "idle";
   }
-  async function skipBreak(app) {
-    await ensurePomodoro(app);
+  async function skipBreak(app2) {
+    await ensurePomodoro(app2);
     if (!loaded) return;
     if (state2.phase !== "short-break" && state2.phase !== "long-break") {
       notice("当前不在休息阶段", "warning");
@@ -32168,8 +32168,8 @@ ${it.text}`).join("\n"));
     render();
     applyAction("start");
   }
-  async function togglePause(app) {
-    await ensurePomodoro(app);
+  async function togglePause(app2) {
+    await ensurePomodoro(app2);
     if (!loaded) return;
     if (state2.endTime === null && !state2.paused) {
       notice("当前没有进行中的计时", "warning");
@@ -32691,30 +32691,30 @@ ${it.text}`).join("\n"));
     return head;
   }
   function openItem(it) {
-    const app = M5.appRef;
+    const app2 = M5.appRef;
     if (it.linkedNote) {
-      const file = app.vault.getAbstractFileByPath(it.linkedNote);
+      const file = app2.vault.getAbstractFileByPath(it.linkedNote);
       if (!file) {
         notice("关联笔记不存在");
         return;
       }
       closeMemoPanel();
-      void app.workspace.getLeaf().openFile(file);
+      void app2.workspace.getLeaf().openFile(file);
     } else if (it.url) {
       closeMemoPanel();
-      openExternalUrl(app, it.url);
+      openExternalUrl(app2, it.url);
     }
   }
   function jumpToNote(it) {
     if (!it.notePath) return;
-    const app = M5.appRef;
-    const file = app.vault.getAbstractFileByPath(it.notePath);
+    const app2 = M5.appRef;
+    const file = app2.vault.getAbstractFileByPath(it.notePath);
     if (!file) {
       notice("关联笔记不存在");
       return;
     }
     closeMemoPanel();
-    const leaf = app.workspace.getLeaf();
+    const leaf = app2.workspace.getLeaf();
     void (async () => {
       var _a2;
       await leaf.openFile(file);
@@ -33035,9 +33035,9 @@ ${it.text}`).join("\n"));
     await refresh();
   }
   function focusMemoItem(it) {
-    const app = M5.appRef;
-    if (!app) return;
-    void Promise.resolve().then(() => (init_pomodoro(), pomodoro_exports)).then((m) => m.startFocusForTask(app, it.title));
+    const app2 = M5.appRef;
+    if (!app2) return;
+    void Promise.resolve().then(() => (init_pomodoro(), pomodoro_exports)).then((m) => m.startFocusForTask(app2, it.title));
   }
   function buildCardActions(it) {
     const actions = [];
@@ -33503,10 +33503,10 @@ ${it.text}`).join("\n"));
     return actions;
   }
   function openMemoInSettings() {
-    const app = M5.appRef;
+    const app2 = M5.appRef;
     closeMemoPanel();
-    if (!app) return;
-    void Promise.resolve().then(() => (init_settings_panel(), settings_panel_exports)).then((m) => m.openSettingsPanel(app, "memo"));
+    if (!app2) return;
+    void Promise.resolve().then(() => (init_settings_panel(), settings_panel_exports)).then((m) => m.openSettingsPanel(app2, "memo"));
   }
   function commitScenarios(next, okMsg) {
     getSettings().memoScenarios = next.join(",");
@@ -34407,12 +34407,12 @@ ${it.text}`).join("\n"));
   function tween(dur, step, ease = (t) => 1 - Math.pow(1 - t, 3)) {
     if (typeof requestAnimationFrame !== "function" || reduced4()) return;
     const t0 = performance.now();
-    const tick = (now) => {
+    const tick2 = (now) => {
       const p = Math.min(1, (now - t0) / dur);
       step(ease(p));
-      if (p < 1) requestAnimationFrame(tick);
+      if (p < 1) requestAnimationFrame(tick2);
     };
-    requestAnimationFrame(tick);
+    requestAnimationFrame(tick2);
   }
   function after4(ms, fn) {
     const id = setTimeout(() => {
@@ -35572,10 +35572,10 @@ ${it.text}`).join("\n"));
       return null;
     }
   }
-  async function suggestCategoryByCatalog(app, name, history2, opts = {}) {
+  async function suggestCategoryByCatalog(app2, name, history2, opts = {}) {
     var _a2;
     if ((_a2 = opts.signal) == null ? void 0 : _a2.aborted) throw abortError3();
-    const table = await loadCategoryTable(app);
+    const table = await loadCategoryTable(app2);
     if (!table) return null;
     const local = matchByAlias(name, table);
     if (local) return local;
@@ -35687,15 +35687,15 @@ ${it.text}`).join("\n"));
     return { category, icon };
   }
   async function aiSuggestCategory(name, history2) {
-    let app = null;
+    let app2 = null;
     try {
-      app = getApp();
+      app2 = getApp();
     } catch (e) {
-      app = null;
+      app2 = null;
     }
-    if (app) {
+    if (app2) {
       try {
-        const fromTable = await suggestCategoryByCatalog(app, name, history2);
+        const fromTable = await suggestCategoryByCatalog(app2, name, history2);
         if (fromTable) return fromTable;
       } catch (e) {
         throw e;
@@ -36264,9 +36264,9 @@ ${it.text}`).join("\n"));
   }
   function startAutoRefresh() {
     stopAutoRefresh();
-    const app = getApp();
+    const app2 = getApp();
     const filePath = getDataFilePath();
-    const off = app.vault.on("modify", (file) => {
+    const off = app2.vault.on("modify", (file) => {
       if ((file == null ? void 0 : file.path) !== filePath) return;
       if (selfWritePending > 0) return;
       void (async () => {
@@ -36292,7 +36292,7 @@ ${it.text}`).join("\n"));
         }
       })();
     });
-    autoRefreshOff = () => app.vault.offref(off);
+    autoRefreshOff = () => app2.vault.offref(off);
   }
   function stopAutoRefresh() {
     if (autoRefreshOff) {
@@ -37146,11 +37146,11 @@ ${it.text}`).join("\n"));
   }
   async function migrateLegacyStats(data) {
     if (statsHasData(data.stats)) return data;
-    const app = getApp();
-    const af = app.vault.getAbstractFileByPath(STATS_JSON_PATH);
+    const app2 = getApp();
+    const af = app2.vault.getAbstractFileByPath(STATS_JSON_PATH);
     if (!af) return data;
     try {
-      const raw = await app.vault.read(af);
+      const raw = await app2.vault.read(af);
       const old = JSON.parse(raw);
       const merged = mergeStatsInto(data, old);
       return merged === data ? data : merged;
@@ -37559,21 +37559,21 @@ ${bodyText.substring(0, 6e3)}`;
     }
     return null;
   }
-  async function renameToTitle(app, file, title) {
+  async function renameToTitle(app2, file, title) {
     var _a2;
     const clean = String(title).replace(/[\\/:*?"<>|\r\n]/g, " ").replace(/\s+/g, " ").trim().slice(0, 80);
     if (!clean || clean === file.basename) return { target: file, renamed: false, failed: false };
     const dir = file.path.includes("/") ? file.path.slice(0, file.path.lastIndexOf("/")) : "/";
     let newPath = `${dir}/${clean}.md`;
     let n = 1;
-    while (app.vault.getAbstractFileByPath(newPath)) {
+    while (app2.vault.getAbstractFileByPath(newPath)) {
       newPath = `${dir}/${clean} (${n++}).md`;
     }
     try {
-      const fmRename = (_a2 = app == null ? void 0 : app.fileManager) == null ? void 0 : _a2.renameFile;
-      if (fmRename) await fmRename.call(app.fileManager, file, newPath);
-      else await app.vault.rename(file, newPath);
-      return { target: app.vault.getAbstractFileByPath(newPath) || file, renamed: true, failed: false };
+      const fmRename = (_a2 = app2 == null ? void 0 : app2.fileManager) == null ? void 0 : _a2.renameFile;
+      if (fmRename) await fmRename.call(app2.fileManager, file, newPath);
+      else await app2.vault.rename(file, newPath);
+      return { target: app2.vault.getAbstractFileByPath(newPath) || file, renamed: true, failed: false };
     } catch (e) {
       console.warn("[自动摘要] 重命名失败，仅写 frontmatter title:", e);
       return { target: file, renamed: false, failed: true };
@@ -37591,11 +37591,11 @@ ${bodyText.substring(0, 6e3)}`;
       action: { label: "重试", onClick: retry }
     });
   }
-  function retryViaQueue(app, ai, file, force) {
-    void Promise.resolve().then(() => (init_auto_summary(), auto_summary_exports)).then((m) => m.retrySummaryWithAI(app, ai, file, force)).catch(() => {
+  function retryViaQueue(app2, ai, file, force) {
+    void Promise.resolve().then(() => (init_auto_summary(), auto_summary_exports)).then((m) => m.retrySummaryWithAI(app2, ai, file, force)).catch(() => {
     });
   }
-  async function processFile(app, ai, file, opts = {}) {
+  async function processFile(app2, ai, file, opts = {}) {
     const force = opts.force === true;
     let h = null;
     let delivered = false;
@@ -37604,7 +37604,7 @@ ${bodyText.substring(0, 6e3)}`;
     const tagsEnabled = s[AUTO_SUMMARY_KEYS.tagsEnabled] !== false;
     const tagCount2 = String(s[AUTO_SUMMARY_KEYS.tagCount] || "3-6");
     try {
-      const content = await app.vault.read(file);
+      const content = await app2.vault.read(file);
       const { fm, body } = parseFrontmatter3(content);
       const bodyText = extractBodyForAI(body);
       if (!bodyText || bodyText.length < 100) {
@@ -37631,14 +37631,14 @@ ${bodyText.substring(0, 6e3)}`;
         const reason = await humanizeFailReason();
         if (h) h.hide();
         if (opts.quiet) console.warn("[自动摘要] AI 失败（批量批次，由收场汇总）:", reason);
-        else notifyRetryable(reason, () => retryViaQueue(app, ai, file, force));
+        else notifyRetryable(reason, () => retryViaQueue(app2, ai, file, force));
         return "ai-failed";
       }
       delivered = true;
       let targetFile = file;
       let renameFailed = false;
       if (missing.includes("title") && aiResult.title) {
-        const outcome = await renameToTitle(app, file, aiResult.title);
+        const outcome = await renameToTitle(app2, file, aiResult.title);
         targetFile = outcome.target;
         if (outcome.renamed) {
           notify(`已重命名为《${aiResult.title}》`, { type: "success" });
@@ -37646,7 +37646,7 @@ ${bodyText.substring(0, 6e3)}`;
           renameFailed = true;
         }
       }
-      const latest = await app.vault.read(targetFile);
+      const latest = await app2.vault.read(targetFile);
       const latestParsed = parseFrontmatter3(latest);
       const mergedFm = { ...latestParsed.fm || {} };
       if (missing.includes("title") && aiResult.title) mergedFm.title = aiResult.title;
@@ -37655,7 +37655,7 @@ ${bodyText.substring(0, 6e3)}`;
         mergedFm.tags = aiResult.tags;
       }
       const newContent = buildFrontmatter(mergedFm, latestParsed.extraLines) + "\n\n" + latestParsed.body;
-      await app.vault.modify(targetFile, newContent);
+      await app2.vault.modify(targetFile, newContent);
       if (renameFailed) {
         notify("自动改名失败，标题已写入笔记，请手动重命名", { type: "warning" });
       }
@@ -37668,7 +37668,7 @@ ${bodyText.substring(0, 6e3)}`;
         const missTxt = notDelivered.map((f) => FIELD_LABELS[f]).join("、");
         const msg = gotTxt ? `已写入${gotTxt}，${missTxt}未能生成` : `AI 未生成${missTxt}`;
         if (opts.quiet) console.warn(`[自动摘要] 部分补全（批量批次，由收场汇总）: ${msg}`);
-        else notifyRetryable(`${msg}，可重试`, () => retryViaQueue(app, ai, targetFile, force));
+        else notifyRetryable(`${msg}，可重试`, () => retryViaQueue(app2, ai, targetFile, force));
         return "partial";
       }
       if (!opts.quiet) {
@@ -37689,7 +37689,7 @@ ${bodyText.substring(0, 6e3)}`;
       if (h) h.hide();
       console.error(`[自动摘要] 处理失败: ${file.basename}`, e);
       if (delivered) {
-        notifyRetryable("摘要写入失败，请重试", () => retryViaQueue(app, ai, file, force));
+        notifyRetryable("摘要写入失败，请重试", () => retryViaQueue(app2, ai, file, force));
         return "write-failed";
       }
       return "error";
@@ -37836,66 +37836,66 @@ ${bodyText.substring(0, 6e3)}`;
       batchNotice = notify(msg, { type: "progress", dedupeKey: `auto-summary:batch#${++batchSeq}` });
     }
   }
-  function queueProcess(app, file) {
+  function queueProcess(app2, file) {
     if (!file || file.extension !== "md") return;
     if (!isWatchedTopLevel(file.path)) return;
     if (pendingPaths.has(file.path)) return;
     const timer = setTimeout(() => {
       pendingPaths.delete(file.path);
-      void enqueueJob({ app, ai: createAI(), file });
+      void enqueueJob({ app: app2, ai: createAI(), file });
     }, 1500);
     pendingPaths.set(file.path, timer);
   }
-  function regenerateSummary(app, file) {
+  function regenerateSummary(app2, file) {
     if (!file || file.extension !== "md") return Promise.resolve();
     if (processingPaths.has(file.path)) {
       notify("该篇正在处理中，请稍后再试", { type: "info" });
       return Promise.resolve();
     }
     if (draining) notify("已加入摘要队列，当前篇完成后优先处理", { type: "info" });
-    return enqueueJob({ app, ai: createAI(), file, force: true }, true);
+    return enqueueJob({ app: app2, ai: createAI(), file, force: true }, true);
   }
-  function retrySummaryWithAI(app, ai, file, force) {
+  function retrySummaryWithAI(app2, ai, file, force) {
     if (!file || file.extension !== "md") return Promise.resolve();
     if (processingPaths.has(file.path)) {
       notify("该篇正在处理中，请稍后再试", { type: "info" });
       return Promise.resolve();
     }
     if (draining) notify("已加入摘要队列，当前篇完成后优先处理", { type: "info" });
-    return enqueueJob({ app, ai, file, force }, true);
+    return enqueueJob({ app: app2, ai, file, force }, true);
   }
-  async function redoSummaryForActiveFile(app) {
-    const ws = app && app.workspace;
+  async function redoSummaryForActiveFile(app2) {
+    const ws = app2 && app2.workspace;
     const file = ws && typeof ws.getActiveFile === "function" ? ws.getActiveFile() : null;
     if (!file || file.extension !== "md" || !isWatchedTopLevel(String(file.path || ""))) {
       notify("当前打开的不是剪藏笔记，无法重新生成摘要", { type: "info" });
       return;
     }
-    await regenerateSummary(app, file);
+    await regenerateSummary(app2, file);
   }
-  function scheduleRegister(app) {
+  function scheduleRegister(app2) {
     registerTimer = setTimeout(() => {
       var _a2;
       registerTimer = null;
       if (!vaultRef) return;
       const timing = ((_a2 = tryGetSettings()) == null ? void 0 : _a2[AUTO_SUMMARY_KEYS.timing]) || "immediate";
       if (timing !== "lazy") {
-        fileListenerRef = vaultRef.on("create", (file) => queueProcess(app, file));
+        fileListenerRef = vaultRef.on("create", (file) => queueProcess(app2, file));
       }
       if (workspaceRef && typeof workspaceRef.on === "function") {
-        openListenerRef = workspaceRef.on("file-open", (file) => queueProcess(app, file));
+        openListenerRef = workspaceRef.on("file-open", (file) => queueProcess(app2, file));
       }
     }, 2e3);
   }
-  function ensureAutoSummary(app) {
+  function ensureAutoSummary(app2) {
     if (initialized2) {
-      if (!registerTimer && !openListenerRef) scheduleRegister(app);
+      if (!registerTimer && !openListenerRef) scheduleRegister(app2);
       return;
     }
     initialized2 = true;
-    vaultRef = app.vault;
-    workspaceRef = app.workspace;
-    scheduleRegister(app);
+    vaultRef = app2.vault;
+    workspaceRef = app2.workspace;
+    scheduleRegister(app2);
   }
   function isAutoSummaryInitialized() {
     return initialized2;
@@ -38935,12 +38935,12 @@ ${bodyText.substring(0, 6e3)}`;
       return;
     }
     const t0 = performance.now();
-    const tick = (now) => {
+    const tick2 = (now) => {
       const p = Math.min(1, (now - t0) / dur);
       step(ease(p));
-      if (p < 1) requestAnimationFrame(tick);
+      if (p < 1) requestAnimationFrame(tick2);
     };
-    requestAnimationFrame(tick);
+    requestAnimationFrame(tick2);
   }
   function after5(ms, fn) {
     if (typeof setTimeout !== "function") return;
@@ -41822,7 +41822,7 @@ ${bodyText.substring(0, 6e3)}`;
     function pump() {
       if (dead) return;
       clearTimeout(fallback);
-      tick(performance.now());
+      tick2(performance.now());
       raf = rafFn(() => {
         clearTimeout(fallback);
         pump();
@@ -41832,7 +41832,7 @@ ${bodyText.substring(0, 6e3)}`;
         pump();
       }, 220);
     }
-    function tick(now) {
+    function tick2(now) {
       var _a3;
       if (dead || cur < 0) return;
       const perf = perfs.get((_a3 = scenes[cur].getAttribute("data-id")) != null ? _a3 : "");
@@ -41932,7 +41932,7 @@ ${bodyText.substring(0, 6e3)}`;
     box.style.fontSize = `${base.toFixed(2)}px`;
     box.style.borderRadius = getComputedStyle(panel2).borderTopLeftRadius || "";
   }
-  async function openReadingPress(app) {
+  async function openReadingPress(app2) {
     var _a2, _b2, _c;
     const noStage = typeof requestAnimationFrame !== "function" || typeof HTMLElement === "undefined" || typeof HTMLElement.prototype.animate !== "function";
     if (pressOvl == null ? void 0 : pressOvl.isConnected) {
@@ -41948,7 +41948,7 @@ ${bodyText.substring(0, 6e3)}`;
     const sidecar = await readClipbookData();
     const log = sidecar.readLog || [];
     if (noStage || !log.length) {
-      await openClipbookReport(app);
+      await openClipbookReport(app2);
       return;
     }
     let raw = null;
@@ -42125,8 +42125,8 @@ ${bodyText.substring(0, 6e3)}`;
       return false;
     }
   }
-  function ensureFileSync2(app) {
-    agent2.ensure(app);
+  function ensureFileSync2(app2) {
+    agent2.ensure(app2);
   }
   function unloadFileSync2() {
     agent2.unload();
@@ -42166,12 +42166,12 @@ ${bodyText.substring(0, 6e3)}`;
     unloadClipbook: () => unloadClipbook,
     unloadClipbookFileSync: () => unloadFileSync2
   });
-  function openClipbook(app) {
+  function openClipbook(app2) {
     if (!initialized3) {
       initialized3 = true;
-      registerAutoRefresh(app);
+      registerAutoRefresh(app2);
       setNewsFetchDoneListener(() => reloadIfOpen());
-      initPanel(app, true);
+      initPanel(app2, true);
     } else {
       showPanel();
     }
@@ -42226,7 +42226,7 @@ ${bodyText.substring(0, 6e3)}`;
     setNewsFetchDoneListener(() => {
     });
   }
-  function registerAutoRefresh(app) {
+  function registerAutoRefresh(app2) {
     if (autoRefreshRegistered) return;
     autoRefreshRegistered = true;
     let timer = null;
@@ -43941,9 +43941,9 @@ ${c.trim()}
     showPanel: () => showPanel,
     unloadPanel: () => unloadPanel
   });
-  function initPanel(app, showNow = false) {
-    M9.appRef = app;
-    if (!overlayEl2) buildDom2(app);
+  function initPanel(app2, showNow = false) {
+    M9.appRef = app2;
+    if (!overlayEl2) buildDom2(app2);
     if (showNow) showPanel();
     else void loadIfNeeded();
   }
@@ -44113,7 +44113,7 @@ ${c.trim()}
     mobItemOrder = [];
     resetClipbookState();
   }
-  function buildDom2(app) {
+  function buildDom2(app2) {
     var _a2, _b2;
     overlayEl2 = document.createElement("div");
     overlayEl2.className = "bz-panel-overlay";
@@ -44142,17 +44142,17 @@ ${c.trim()}
       if (e.target === overlayEl2) closePanel2();
     });
     railFootEl.addEventListener("click", (e) => {
-      if (e.target.closest("[data-clp-rep-entry]")) void openReadingPress(app);
+      if (e.target.closest("[data-clp-rep-entry]")) void openReadingPress(app2);
     });
     railFootEl.addEventListener("keydown", (e) => {
       if (e.key !== "Enter" && e.key !== " ") return;
       if (e.target.closest("[data-clp-rep-entry]")) {
         e.preventDefault();
-        void openReadingPress(app);
+        void openReadingPress(app2);
       }
     });
     const mobReportBtn = overlayEl2.querySelector("[data-clip-mob-report]");
-    mobReportBtn.addEventListener("click", () => void openReadingPress(app));
+    mobReportBtn.addEventListener("click", () => void openReadingPress(app2));
     railListEl.addEventListener("click", (e) => {
       const row = e.target.closest("[data-src]");
       if (!row) return;
@@ -45573,12 +45573,12 @@ ${c.trim()}
     if (!notePath) return;
     try {
       if (a.origin === "clip" && a.notePath) {
-        const app = getApp();
-        const file = app.vault.getAbstractFileByPath(a.notePath);
+        const app2 = getApp();
+        const file = app2.vault.getAbstractFileByPath(a.notePath);
         if (file) {
-          const content = await app.vault.read(file);
+          const content = await app2.vault.read(file);
           const next = applyClipContentTransforms(content, [{ find: snap.text, notePath, kind }], []);
-          if (next !== content) await app.vault.modify(file, next);
+          if (next !== content) await app2.vault.modify(file, next);
           invalidateClipBodyCache(a.notePath);
         }
         await upgradeSourceFor(notePath, a);
@@ -45683,7 +45683,7 @@ ${c.trim()}
     return getKnowledgeBoxes(tryGetSettings()).lit;
   }
   function resolveInternalTarget(href) {
-    const app = getApp();
+    const app2 = getApp();
     let p = String(href || "").split("#")[0].trim().replace(/\\/g, "/");
     if (!p) return null;
     try {
@@ -45692,18 +45692,18 @@ ${c.trim()}
     }
     if (!p.toLowerCase().endsWith(".md")) {
       const withMd = p + ".md";
-      if (app.vault.getAbstractFileByPath(withMd)) p = withMd;
+      if (app2.vault.getAbstractFileByPath(withMd)) p = withMd;
     }
-    if (app.vault.getAbstractFileByPath(p)) return p;
+    if (app2.vault.getAbstractFileByPath(p)) return p;
     if (!p.includes("/")) {
       const inBox = knowledgeDir() + "/" + p + ".md";
-      if (app.vault.getAbstractFileByPath(inBox)) return inBox;
+      if (app2.vault.getAbstractFileByPath(inBox)) return inBox;
       try {
-        const mc = app.metadataCache;
+        const mc = app2.metadataCache;
         if (mc && typeof mc.getFirstLinkpathDest === "function") {
           const dest = mc.getFirstLinkpathDest(p, "");
           const destPath = dest && typeof dest === "object" ? dest.path : dest;
-          if (destPath && app.vault.getAbstractFileByPath(destPath)) return String(destPath);
+          if (destPath && app2.vault.getAbstractFileByPath(destPath)) return String(destPath);
         }
       } catch (e) {
       }
@@ -45816,7 +45816,7 @@ ${c.trim()}
       ]
     };
   }
-  async function openSettings(app) {
+  async function openSettings(app2) {
     const dataSource = await readDataSourceState();
     const schema = clipbookSettingsSchema(dataSource);
     openSettingsModal({
@@ -47091,16 +47091,16 @@ ${c.trim()}
           }
         }
         /** 打开收藏面板（toggle 语义在 ui.openPanel 内） */
-        async openPanel(app) {
+        async openPanel(app2) {
           await this.init();
           if (this.dataManager && this.aiService) {
-            openPanel2(app, this.dataManager, this.aiService);
+            openPanel2(app2, this.dataManager, this.aiService);
           }
         }
         /** 直接打开添加弹窗（bz-favorites-add 命令；无需先开面板） */
-        openAdd(app) {
+        openAdd(app2) {
           if (this.dataManager && this.aiService) {
-            initFavoritesUI(app, this.dataManager, this.aiService);
+            initFavoritesUI(app2, this.dataManager, this.aiService);
             openForm2(null);
           }
         }
@@ -47208,14 +47208,14 @@ ${c.trim()}
       }
     );
   }
-  function initFavoritesUI(app, dm, ai) {
-    _app2 = app;
+  function initFavoritesUI(app2, dm, ai) {
+    _app2 = app2;
     _dm = dm;
     _ai = ai;
   }
-  function openPanel2(app, dm, ai) {
+  function openPanel2(app2, dm, ai) {
     var _a2, _b2;
-    initFavoritesUI(app, dm, ai);
+    initFavoritesUI(app2, dm, ai);
     if (M12.overlay) {
       closePanel3();
       return;
@@ -48857,14 +48857,14 @@ GitHub 仓库：${ghInfo.title}
     const s = tryGetSettings();
     return storageFile("review-fit.json", s && s.storagePath || "CONFIG/STORAGE");
   }
-  async function loadFittedParams(app) {
+  async function loadFittedParams(app2) {
     const data = await jsonFileStore(getReviewFitFilePath()).read();
     if (!data || !Array.isArray(data.w) || data.w.length < 8) return null;
     if (data.version === FIT_PARAMS_VERSION.FULL && data.w.length < 19) return null;
     if (!data.w.every((x) => Number.isFinite(x))) return null;
     return { ...data, w: clipWToBounds(data.w) };
   }
-  async function saveFittedParams(app, fit3) {
+  async function saveFittedParams(app2, fit3) {
     await enqueueFileTask(getReviewFitFilePath(), () => jsonFileStore(getReviewFitFilePath()).write(fit3));
   }
   var ReviewDataManager, FIT_PARAMS_VERSION;
@@ -48876,8 +48876,8 @@ GitHub 仓库：${ghInfo.title}
       init_fsrs();
       init_fit();
       ReviewDataManager = class {
-        constructor(app) {
-          this.app = app;
+        constructor(app2) {
+          this.app = app2;
         }
         /** 加载条目（向后兼容旧字段；日期兼容 ISO 字符串与数字；非法 nextReviewDate 回退 reviewStart——见下）。
          *  走构造注入的 this.app.vault（A11 审查修复：注释如实——并非模块级 getApp）；
@@ -49243,11 +49243,11 @@ GitHub 仓库：${ghInfo.title}
       init_settings_provider();
       QuizManager = class {
         /** 加载（源码 L33-35；损坏 → {notes:{}}） */
-        async loadQuiz(app) {
+        async loadQuiz(app2) {
           try {
             const data = await jsonFileStore(getQuizFilePath(), {
               defaultValue: emptyQuiz(),
-              app
+              app: app2
             }).read();
             if (data && typeof data === "object" && data.notes) return data;
             return { notes: {} };
@@ -49255,8 +49255,8 @@ GitHub 仓库：${ghInfo.title}
             return { notes: {} };
           }
         }
-        async saveQuiz(app, quiz) {
-          await jsonFileStore(getQuizFilePath(), { app }).write(quiz);
+        async saveQuiz(app2, quiz) {
+          await jsonFileStore(getQuizFilePath(), { app: app2 }).write(quiz);
         }
         /**
          * G3：quiz.json 读改写事务（写路径唯一入口，纯读勿入——队列只为串行化「读→改→写」）。
@@ -49264,22 +49264,22 @@ GitHub 仓库：${ghInfo.title}
          * 队列不可重入：fn 内勿再调 mutateQuiz/enqueueFileTask 同路径（死锁）。
          * （session.ts 批量出题写回/清理非活跃键共用——AI 长耗时窗口内基于磁盘现值合并，不覆盖并发删题）
          */
-        mutateQuiz(app, fn) {
+        mutateQuiz(app2, fn) {
           return enqueueFileTask(getQuizFilePath(), async () => {
-            const quiz = await this.loadQuiz(app);
+            const quiz = await this.loadQuiz(app2);
             const result = await fn(quiz);
-            if (result !== false) await this.saveQuiz(app, quiz);
+            if (result !== false) await this.saveQuiz(app2, quiz);
             return result;
           });
         }
         /** 源码 L40-43 */
-        async getQuestionsForNote(app, notePath) {
-          const quiz = await this.loadQuiz(app);
+        async getQuestionsForNote(app2, notePath) {
+          const quiz = await this.loadQuiz(app2);
           return quiz.notes[notePath] || null;
         }
         /** 源码 L45-49（G3：RMW 入队，fn 内改现值） */
-        async saveQuestionsForNote(app, notePath, questions) {
-          await this.mutateQuiz(app, (quiz) => {
+        async saveQuestionsForNote(app2, notePath, questions) {
+          await this.mutateQuiz(app2, (quiz) => {
             quiz.notes[notePath] = questions.map((q3) => ({ ...q3 }));
           });
         }
@@ -49290,8 +49290,8 @@ GitHub 仓库：${ghInfo.title}
          *  同内容多题：每次删除首个匹配＝按未答优先逐个消费。
          *  目标题已不在库中（并发刷新等）→ 终态已达成，静默成功不写盘（fn 返回 false）；
          *  空键仍保留（源码语义）。G3：RMW 入队，与批量出题写回互斥串行。 */
-        async removeQuestion(app, notePath, target) {
-          await this.mutateQuiz(app, (quiz) => {
+        async removeQuestion(app2, notePath, target) {
+          await this.mutateQuiz(app2, (quiz) => {
             const list = quiz.notes[notePath];
             if (!list) return false;
             const idx = list.findIndex((q3) => sameQuestion(q3, target));
@@ -49477,12 +49477,12 @@ ${n.content.slice(0, 2e3)}
   }
   function tween3(dur, step, ease = (t) => 1 - Math.pow(1 - t, 3)) {
     const t0 = performance.now();
-    const tick = (now) => {
+    const tick2 = (now) => {
       const p = Math.min(1, (now - t0) / dur);
       step(ease(p));
-      if (p < 1) requestAnimationFrame(tick);
+      if (p < 1) requestAnimationFrame(tick2);
     };
-    requestAnimationFrame(tick);
+    requestAnimationFrame(tick2);
   }
   function after7(ms, fn) {
     const id = setTimeout(() => {
@@ -50119,8 +50119,8 @@ ${n.content.slice(0, 2e3)}
          *  quiz-core/index.quizUpdate → 本方法 → manager.loadActiveItems 整链生产死（仅测试直达）。 */
         /** 确保指定笔记都有题目（源码 L346-398 逐字） */
         async ensureQuestions(notePaths) {
-          const app = getApp();
-          const quiz = await this.manager.loadQuiz(app);
+          const app2 = getApp();
+          const quiz = await this.manager.loadQuiz(app2);
           const settings = _QuizMasterUI.settings || {};
           const enableMultipleChoice = settings.enableMultipleChoice !== false;
           const questionsPerNote = parseInt(settings.questionsPerNote) || 0;
@@ -50129,9 +50129,9 @@ ${n.content.slice(0, 2e3)}
           for (const path of notePaths) {
             const existing = quiz.notes[path];
             if (!existing || existing.length === 0) {
-              const file = app.vault.getAbstractFileByPath(path);
+              const file = app2.vault.getAbstractFileByPath(path);
               if (!file) continue;
-              const content = await app.vault.read(file);
+              const content = await app2.vault.read(file);
               if (content.trim()) missing.push({ id: path, content });
             }
           }
@@ -50141,7 +50141,7 @@ ${n.content.slice(0, 2e3)}
               const h = notify(`正在为 ${missing.length} 篇笔记批量生成题目…`, { type: "progress", dedupeKey: "quiz-generate" });
               const batchResult = await this.generator.generateBatch(missing, _QuizMasterUI.ai, enableMultipleChoice, questionsPerNote, difficulty);
               let batchOk = 0;
-              await this.manager.mutateQuiz(app, (quiz2) => {
+              await this.manager.mutateQuiz(app2, (quiz2) => {
                 for (const [path, qs] of Object.entries(batchResult)) {
                   if (qs.length) {
                     quiz2.notes[path] = qs;
@@ -50165,7 +50165,7 @@ ${n.content.slice(0, 2e3)}
               if (!_QuizMasterUI.ai) throw new Error("AI 未初始化");
               const qs = await this.generator.generate(note.content, _QuizMasterUI.ai, enableMultipleChoice, questionsPerNote, difficulty);
               if (qs.length) {
-                await this.manager.saveQuestionsForNote(app, note.id, qs);
+                await this.manager.saveQuestionsForNote(app2, note.id, qs);
                 okCount++;
               } else {
                 failCount++;
@@ -50307,7 +50307,7 @@ ${n.content.slice(0, 2e3)}
         _buildOptionButtons(q3, answeredRef, selectedIndices, optionsContainer) {
           const optionLabels = ["A", "B", "C", "D"];
           const isSingle = q3.correctIndices.length === 1;
-          const app = getApp();
+          const app2 = getApp();
           const optionElements = q3.options.map((opt, idx) => {
             const btn = document.createElement("button");
             btn.className = "quiz-option-btn";
@@ -50326,7 +50326,7 @@ ${n.content.slice(0, 2e3)}
                   });
                   const p = quizPopupEl();
                   if (p) motionQuizJudge(p, true);
-                  this._answerCorrect(q3, app, () => {
+                  this._answerCorrect(q3, app2, () => {
                     answeredRef.value = false;
                     optionElements.forEach((b) => b.classList.remove("disabled", "correct"));
                   });
@@ -50376,7 +50376,7 @@ ${n.content.slice(0, 2e3)}
               if (isCorrect) {
                 const p = quizPopupEl();
                 if (p) motionQuizJudge(p, true);
-                this._answerCorrect(q3, app, () => {
+                this._answerCorrect(q3, app2, () => {
                   answeredRef.value = false;
                   submitBtn.disabled = false;
                   optionElements.forEach((b) => b.classList.remove("disabled", "correct"));
@@ -50399,8 +50399,8 @@ ${n.content.slice(0, 2e3)}
          *  ticket 153：答对自动跳下一题（答对不出现「下一题」按钮，答错才由用户点按）；
          *  ticket 156：跳题延后 0.8s——亮绿正确选项让用户看到反馈再进入下一题；
          *  延时期间放弃做题/强制关闭 → 清除延时（回调内再校验会话态，防迟到渲染僵尸弹窗）。 */
-        _answerCorrect(q3, app, onFailRestore) {
-          this.manager.removeQuestion(app, q3.notePath, { question: q3.question, options: q3.options, correctIndices: q3.correctIndices }).then(() => {
+        _answerCorrect(q3, app2, onFailRestore) {
+          this.manager.removeQuestion(app2, q3.notePath, { question: q3.question, options: q3.options, correctIndices: q3.correctIndices }).then(() => {
             this.correctCount++;
             this.currentQuestions.splice(this.currentIndex, 1);
             this._clearJumpTimer();
@@ -50519,7 +50519,7 @@ ${n.content.slice(0, 2e3)}
     quizUI: () => quizUI,
     resetQuiz: () => resetQuiz
   });
-  function ensureQuiz(app) {
+  function ensureQuiz(app2) {
     if (initialized4) return;
     initialized4 = true;
     QuizMasterUI.ai = createAI();
@@ -50570,7 +50570,7 @@ ${n.content.slice(0, 2e3)}
       REVIEW_AUTO_ADD_MERGE_MS = 3e3;
       RENAME_MERGE_MS = 3e3;
       ReviewWatcher = class {
-        constructor(app, dataManager3) {
+        constructor(app2, dataManager3) {
           /** 删除确认防抖缓冲（多文件删除合并为一次确认） */
           this.deleteQueue = [];
           this.deleteTimer = null;
@@ -50580,7 +50580,7 @@ ${n.content.slice(0, 2e3)}
           /** ticket n2：改名通知合并缓冲（3 秒窗口收集；列表/文件树更新仍即时） */
           this.renameQueue = [];
           this.renameTimer = null;
-          this.app = app;
+          this.app = app2;
           this.dataManager = dataManager3;
         }
         get watchedFolders() {
@@ -53524,7 +53524,7 @@ ${n.content.slice(0, 2e3)}
     function pump() {
       if (dead) return;
       clearTimeout(fallback);
-      tick(performance.now());
+      tick2(performance.now());
       raf = rafFn2(() => {
         clearTimeout(fallback);
         pump();
@@ -53534,7 +53534,7 @@ ${n.content.slice(0, 2e3)}
         pump();
       }, 220);
     }
-    function tick(now) {
+    function tick2(now) {
       var _a2;
       if (dead || cur < 0) return;
       const perf = perfs.get((_a2 = scenes[cur].getAttribute("data-id")) != null ? _a2 : "");
@@ -53677,7 +53677,7 @@ ${n.content.slice(0, 2e3)}
     box.style.fontSize = `${base.toFixed(2)}px`;
     box.style.borderRadius = getComputedStyle(panel2).borderTopLeftRadius || "";
   }
-  async function openReviewAnalysis(app) {
+  async function openReviewAnalysis(app2) {
     var _a2;
     const noStage = typeof requestAnimationFrame !== "function" || typeof HTMLElement === "undefined" || typeof HTMLElement.prototype.animate !== "function";
     if (raOvl == null ? void 0 : raOvl.isConnected) {
@@ -53691,7 +53691,7 @@ ${n.content.slice(0, 2e3)}
     }
     let data;
     try {
-      ensureReview(app);
+      ensureReview(app2);
       const dm = dataManager2;
       if (!dm || noStage) throw new Error("no-stage");
       const items = await dm.loadItems();
@@ -53705,7 +53705,7 @@ ${n.content.slice(0, 2e3)}
       data = deriveAnalysis(items, { w });
     } catch (e) {
       const { openReviewReport: openReviewReport2 } = await Promise.resolve().then(() => (init_review(), review_exports));
-      await openReviewReport2(app);
+      await openReviewReport2(app2);
       return;
     }
     const panel2 = document.querySelector("#review-popup");
@@ -53858,7 +53858,7 @@ ${n.content.slice(0, 2e3)}
       <span class="top-val">${it.meta}</span>
     </div>`).join("");
   }
-  async function showStatsModal(app, dm) {
+  async function showStatsModal(app2, dm) {
     const items = await dm.loadItems();
     let w;
     let fit3 = null;
@@ -53869,9 +53869,9 @@ ${n.content.slice(0, 2e3)}
     } catch (e) {
       w = void 0;
     }
-    renderStatsModal(app, dm, items, w, fit3);
+    renderStatsModal(app2, dm, items, w, fit3);
   }
-  function renderStatsModal(app, dm, items, w, fit3) {
+  function renderStatsModal(app2, dm, items, w, fit3) {
     closeStatsModal();
     statsMask = document.createElement("div");
     statsMask.id = "review-stats-mask";
@@ -53895,7 +53895,7 @@ ${n.content.slice(0, 2e3)}
     document.body.appendChild(statsMask);
     document.body.appendChild(statsPopup);
     const stats = computeStats(items, { w });
-    body.innerHTML = buildStatsHTML(app, dm, items, stats, fit3);
+    body.innerHTML = buildStatsHTML(app2, dm, items, stats, fit3);
     mountIcons(body);
     motionStats(body);
     const openTimeline = (el3) => {
@@ -53906,7 +53906,7 @@ ${n.content.slice(0, 2e3)}
         const lb = ((_d = (_c = b.reviewHistory) == null ? void 0 : _c[b.reviewHistory.length - 1]) == null ? void 0 : _d.timestamp) || "";
         return lb.localeCompare(la);
       })[idx];
-      if (target) void showTimeline(app, dm, target);
+      if (target) void showTimeline(app2, dm, target);
     };
     body.querySelectorAll(".top-row[data-idx]").forEach((el3) => {
       el3.addEventListener("click", () => openTimeline(el3));
@@ -53922,7 +53922,7 @@ ${n.content.slice(0, 2e3)}
       close: closeStatsModal
     });
   }
-  function buildStatsHTML(app, dm, items, stats, fit3) {
+  function buildStatsHTML(app2, dm, items, stats, fit3) {
     var _a2, _b2;
     const cards = `
     <div class="stat-cards">
@@ -53995,7 +53995,7 @@ ${n.content.slice(0, 2e3)}
     const weekHTML = sectionHTML("最近 7 天复习量", "bar-chart-3", barRowHTML(daily7, "#E6DFF5"));
     return cards + fitChips + ratingHTML + loadHTML + timelineHTML + weekHTML;
   }
-  async function showTimeline(app, dm, item) {
+  async function showTimeline(app2, dm, item) {
     closeTimeline();
     let w;
     try {
@@ -54192,7 +54192,7 @@ ${n.content.slice(0, 2e3)}
       isPlayable2 = isPlayable;
       PANEL4 = { MIN_W: 640, MIN_H: 440, MAX_W: 1280, MAX_H: 880 };
       UIManager2 = class {
-        constructor(app, dataManager3) {
+        constructor(app2, dataManager3) {
           /** R 展示口径权重源（item 12：与调度排期同读拟合权重；ensureReview 注入 reviewApp.currentW，缺省回退默认） */
           this.wSource = () => DEFAULT_W;
           this.mask = null;
@@ -54209,7 +54209,7 @@ ${n.content.slice(0, 2e3)}
           this.motionBootPending = false;
           /** 桌面拖拽缩放句柄（ADR-0084/ADR-0094）：壳常驻 DOM，showMain 幂等挂 / hideMain 摘；null = 未挂 */
           this.panelResizeDetach = null;
-          this.app = app;
+          this.app = app2;
           this.dataManager = dataManager3;
           this.createMainUI();
           this.registerEscLayer();
@@ -54593,9 +54593,9 @@ ${n.content.slice(0, 2e3)}
   });
 
   // src/review/quiz-panel-data.ts
-  function listVaultNotes(app) {
+  function listVaultNotes(app2) {
     var _a2, _b2;
-    const files = ((_b2 = (_a2 = app == null ? void 0 : app.vault) == null ? void 0 : _a2.getMarkdownFiles) == null ? void 0 : _b2.call(_a2)) || [];
+    const files = ((_b2 = (_a2 = app2 == null ? void 0 : app2.vault) == null ? void 0 : _a2.getMarkdownFiles) == null ? void 0 : _b2.call(_a2)) || [];
     const out = [];
     for (const f of files) {
       const p = String((f == null ? void 0 : f.path) || "");
@@ -54604,8 +54604,8 @@ ${n.content.slice(0, 2e3)}
     }
     return out.sort();
   }
-  function notesInFolders(app, folders) {
-    const all = listVaultNotes(app);
+  function notesInFolders(app2, folders) {
+    const all = listVaultNotes(app2);
     if (folders.includes("")) return all;
     const picked = /* @__PURE__ */ new Set();
     for (const p of all) {
@@ -54618,14 +54618,14 @@ ${n.content.slice(0, 2e3)}
     }
     return [...picked].sort();
   }
-  function resolveScopeNotes(app, scope, folders, notePath) {
+  function resolveScopeNotes(app2, scope, folders, notePath) {
     var _a2, _b2;
-    if (scope === "folder") return notesInFolders(app, folders);
+    if (scope === "folder") return notesInFolders(app2, folders);
     if (scope === "note") {
-      const hit = notePath ? (_b2 = (_a2 = app == null ? void 0 : app.vault) == null ? void 0 : _a2.getAbstractFileByPath) == null ? void 0 : _b2.call(_a2, notePath) : null;
+      const hit = notePath ? (_b2 = (_a2 = app2 == null ? void 0 : app2.vault) == null ? void 0 : _a2.getAbstractFileByPath) == null ? void 0 : _b2.call(_a2, notePath) : null;
       return hit && hit.extension === "md" ? [notePath] : [];
     }
-    return listVaultNotes(app);
+    return listVaultNotes(app2);
   }
   async function collectQuestionsForNotes(bank, paths) {
     const notes = (bank == null ? void 0 : bank.notes) || {};
@@ -54690,13 +54690,13 @@ ${n.content.slice(0, 2e3)}
       return false;
     }
   }
-  async function openQuizPanel(app) {
+  async function openQuizPanel(app2) {
     if (quizUI._sessionActive) {
       notice("做题进行中，先完成或放弃当前这轮再开", "info");
       return;
     }
-    ensureQuiz(app);
-    if (!panel) panel = new QuizPracticePanel(app);
+    ensureQuiz(app2);
+    if (!panel) panel = new QuizPracticePanel(app2);
     panel.show();
   }
   function unloadQuizPanel() {
@@ -54725,7 +54725,7 @@ ${n.content.slice(0, 2e3)}
       DEFAULT_BATCH = 20;
       ENSURE_BATCH = 10;
       QuizPracticePanel = class {
-        constructor(app) {
+        constructor(app2) {
           this.escHandle = null;
           this.state = {
             scope: "all",
@@ -54744,7 +54744,7 @@ ${n.content.slice(0, 2e3)}
           /** E5：题库计数缓存键（scope+folders+notePath）——切「本轮题量」等纯本地档位不再重读整库 */
           this.bankCacheKey = "";
           this.bankCacheCount = null;
-          this.app = app;
+          this.app = app2;
           this.mask = document.createElement("div");
           this.mask.id = MASK_ID2;
           this.mask.classList.add("bz-panel-overlay");
@@ -54922,8 +54922,8 @@ ${n.content.slice(0, 2e3)}
           const startBtn = this.content.querySelector('[data-act="start"]');
           startBtn == null ? void 0 : startBtn.setAttribute("disabled", "");
           try {
-            const app = this.app;
-            const paths = resolveScopeNotes(app, this.state.scope, this.state.folders, this.state.notePath);
+            const app2 = this.app;
+            const paths = resolveScopeNotes(app2, this.state.scope, this.state.folders, this.state.notePath);
             if (!paths.length) {
               notice(
                 this.state.scope === "note" ? "找不到这篇笔记，可能已被移动或重命名，重新选一篇吧" : "当前范围没有可出题的笔记",
@@ -54944,7 +54944,7 @@ ${n.content.slice(0, 2e3)}
               progress.hide();
             }
             if (this.cancelled) return;
-            const bank = await quizUI.manager.loadQuiz(app);
+            const bank = await quizUI.manager.loadQuiz(app2);
             const collected = await collectQuestionsForNotes(bank, paths);
             const picked = pickRoundQuestions(collected, this.state.batch);
             if (!picked.length) {
@@ -55025,26 +55025,26 @@ ${n.content.slice(0, 2e3)}
     const base = path.split("/").pop() || "";
     return { path, basename: stripMdExt(base), extension: "md" };
   }
-  function ensureReview(app) {
+  function ensureReview(app2) {
     if (initialized5) return;
     initialized5 = true;
-    dataManager2 = new ReviewDataManager(app);
+    dataManager2 = new ReviewDataManager(app2);
     reviewApp.dataManager = dataManager2;
-    uiManager2 = new UIManager2(app, dataManager2);
+    uiManager2 = new UIManager2(app2, dataManager2);
     uiManager2.wSource = () => reviewApp.currentW();
-    reviewWatcher = new ReviewWatcher(app, dataManager2);
-    void reviewApp.loadFitParams(app).catch(() => {
+    reviewWatcher = new ReviewWatcher(app2, dataManager2);
+    void reviewApp.loadFitParams(app2).catch(() => {
     });
     firstCheckTimer = setTimeout(() => {
       firstCheckTimer = null;
       reviewApp.checkOverdueAndNotify();
       checkInterval = setInterval(() => reviewApp.checkOverdueAndNotify(), 6e4);
     }, 2e3);
-    listen(app.metadataCache, "resolved", async () => {
-      await reviewApp.applyReviewStyles(app);
+    listen(app2.metadataCache, "resolved", async () => {
+      await reviewApp.applyReviewStyles(app2);
     });
-    listen(app.vault, "modify", async (file) => {
-      if (file.extension === "md") await reviewApp.applyReviewStylesForFile(app, file);
+    listen(app2.vault, "modify", async (file) => {
+      if (file.extension === "md") await reviewApp.applyReviewStylesForFile(app2, file);
     });
     listenBus("vault:md-created", (evt) => {
       void (reviewWatcher == null ? void 0 : reviewWatcher.onVaultCreate(pseudoMdFile(evt.path)));
@@ -55057,33 +55057,33 @@ ${n.content.slice(0, 2e3)}
       file.oldPath = evt.oldPath;
       reviewWatcher == null ? void 0 : reviewWatcher.onVaultRename(file, evt.oldPath);
     });
-    listen(app.workspace, "quit", () => {
+    listen(app2.workspace, "quit", () => {
       if (checkInterval) {
         clearInterval(checkInterval);
         checkInterval = null;
       }
     });
   }
-  function openReviewPanel(app) {
-    ensureReview(app);
+  function openReviewPanel(app2) {
+    ensureReview(app2);
     uiManager2 == null ? void 0 : uiManager2.showMain();
   }
-  async function openReviewReport(app) {
-    ensureReview(app);
+  async function openReviewReport(app2) {
+    ensureReview(app2);
     const { showStatsModal: showStatsModal2 } = await Promise.resolve().then(() => (init_stats_ui(), stats_ui_exports));
-    await showStatsModal2(app, dataManager2);
+    await showStatsModal2(app2, dataManager2);
   }
-  async function openReviewAnalysis2(app) {
-    ensureReview(app);
+  async function openReviewAnalysis2(app2) {
+    ensureReview(app2);
     const mod = await Promise.resolve().then(() => (init_analysis(), analysis_exports));
-    await mod.openReviewAnalysis(app);
+    await mod.openReviewAnalysis(app2);
   }
-  function openQuizPractice(app) {
-    void openQuizPanel(app);
+  function openQuizPractice(app2) {
+    void openQuizPanel(app2);
   }
-  async function reviewAddCurrent(app) {
-    ensureReview(app);
-    const file = app.workspace.getActiveFile();
+  async function reviewAddCurrent(app2) {
+    ensureReview(app2);
+    const file = app2.workspace.getActiveFile();
     if (!file) {
       notice("请先打开一个笔记");
       return;
@@ -55091,14 +55091,14 @@ ${n.content.slice(0, 2e3)}
     try {
       await reviewApp.addCurrentToReview(file);
       await uiManager2.refreshPanel();
-      await reviewApp.applyReviewStyles(app);
+      await reviewApp.applyReviewStyles(app2);
     } catch (e) {
-      notifyActionError(e, "加入复习计划", { onRetry: () => void reviewAddCurrent(app) });
+      notifyActionError(e, "加入复习计划", { onRetry: () => void reviewAddCurrent(app2) });
     }
   }
-  async function reviewRemoveCurrent(app) {
-    ensureReview(app);
-    const file = app.workspace.getActiveFile();
+  async function reviewRemoveCurrent(app2) {
+    ensureReview(app2);
+    const file = app2.workspace.getActiveFile();
     if (!file) {
       notice("请先打开一个笔记");
       return;
@@ -55123,22 +55123,22 @@ ${n.content.slice(0, 2e3)}
         })();
       });
       await uiManager2.refreshPanel();
-      await reviewApp.applyReviewStyles(app);
+      await reviewApp.applyReviewStyles(app2);
     } catch (e) {
       notifySaveError(e, "移出复习条目");
     }
   }
-  async function reviewJumpOverdue(app) {
-    ensureReview(app);
+  async function reviewJumpOverdue(app2) {
+    ensureReview(app2);
     await reviewApp.autoJumpOverdue();
   }
-  async function reviewStart(app) {
-    ensureReview(app);
+  async function reviewStart(app2) {
+    ensureReview(app2);
     await reviewApp.autoJumpOverdue();
   }
-  async function reviewMarkDialog(app) {
-    ensureReview(app);
-    const file = app.workspace.getActiveFile();
+  async function reviewMarkDialog(app2) {
+    ensureReview(app2);
+    const file = app2.workspace.getActiveFile();
     if (!file) {
       notice("请先打开一个笔记");
       return;
@@ -55155,12 +55155,12 @@ ${n.content.slice(0, 2e3)}
     }
     uiManager2 == null ? void 0 : uiManager2.showDifficultyDialog(item, async (diff) => {
       await reviewApp.markReview(file.path, diff);
-      await reviewApp.applyReviewStyles(app);
+      await reviewApp.applyReviewStyles(app2);
     });
   }
-  async function reviewMarkRating(app, rating) {
-    ensureReview(app);
-    const file = app.workspace.getActiveFile();
+  async function reviewMarkRating(app2, rating) {
+    ensureReview(app2);
+    const file = app2.workspace.getActiveFile();
     if (!file) {
       notice("请先打开一个笔记");
       return;
@@ -55176,7 +55176,7 @@ ${n.content.slice(0, 2e3)}
       return;
     }
     await reviewApp.markReview(file.path, rating);
-    await reviewApp.applyReviewStyles(app);
+    await reviewApp.applyReviewStyles(app2);
   }
   function unloadReview() {
     var _a2, _b2;
@@ -55341,14 +55341,14 @@ ${n.content.slice(0, 2e3)}
           }
           return quiz;
         },
-        ensure(app) {
-          if (!this.dataManager) this.dataManager = new ReviewDataManager(app);
+        ensure(app2) {
+          if (!this.dataManager) this.dataManager = new ReviewDataManager(app2);
         },
         /** ADR-0077：加载拟合参数到 _fittedW（无则 null 回退默认）；ensureReview 启动时调用。
          *  issue 361：同时留存 _fitMeta（契约版本/样本数/档位），统计弹窗标注拟合档位用 */
-        async loadFitParams(app) {
+        async loadFitParams(app2) {
           try {
-            const fit3 = await loadFittedParams(app);
+            const fit3 = await loadFittedParams(app2);
             this._fitMeta = fit3;
             this._fittedW = fit3 ? mergeFittedW(fit3.w) : null;
           } catch (e) {
@@ -55365,7 +55365,7 @@ ${n.content.slice(0, 2e3)}
          * markReview 每次评级后调用（count+1）；达阈值且开关开 → 异步后台跑，完成后轻提示；
          * 样本不足/失败静默回退默认；防重入。
          */
-        async maybeRunFit(app) {
+        async maybeRunFit(app2) {
           const s = getSettings();
           if (s.reviewEnableFit === false) return;
           const n = Number(s.reviewFitEveryN) || 10;
@@ -55387,7 +55387,7 @@ ${n.content.slice(0, 2e3)}
                 full: result.fit.full,
                 version
               };
-              await saveFittedParams(app, meta);
+              await saveFittedParams(app2, meta);
               this._fitMeta = meta;
               this._fittedW = mergeFittedW(result.fit.w);
               notice(`已根据 ${result.count} 条复习记录拟合记忆参数`, "success");
@@ -55419,8 +55419,8 @@ ${n.content.slice(0, 2e3)}
           return dailyLimit > 0 ? sorted.slice(0, dailyLimit) : sorted;
         },
         async markReview(filePath, selectedDifficulty, opts) {
-          const app = getApp();
-          this.ensure(app);
+          const app2 = getApp();
+          this.ensure(app2);
           const dm = this.dataManager;
           const items = await dm.loadItems();
           const item = items.find((i) => i.filePath === filePath);
@@ -55540,25 +55540,25 @@ ${n.content.slice(0, 2e3)}
             notify("做题家未初始化（缺少 AI），已改用普通复习", { type: "warning", dedupeKey: "review-quiz-ai" });
             return {};
           }
-          const app = getApp();
+          const app2 = getApp();
           const leftovers = /* @__PURE__ */ new Map();
           for (const item of items) {
-            const cur = await quiz.manager.getQuestionsForNote(app, item.filePath) || [];
+            const cur = await quiz.manager.getQuestionsForNote(app2, item.filePath) || [];
             leftovers.set(item.filePath, cur);
-            await quiz.manager.saveQuestionsForNote(app, item.filePath, []);
+            await quiz.manager.saveQuestionsForNote(app2, item.filePath, []);
           }
           try {
             await quiz.ensureQuestions(items.map((i) => i.filePath));
           } catch (e) {
             for (const item of items) {
               const leftover = leftovers.get(item.filePath) || [];
-              if (leftover.length) await quiz.manager.saveQuestionsForNote(app, item.filePath, leftover);
+              if (leftover.length) await quiz.manager.saveQuestionsForNote(app2, item.filePath, leftover);
             }
             throw e;
           }
           const out = {};
           for (const item of items) {
-            const qs = await quiz.manager.getQuestionsForNote(app, item.filePath);
+            const qs = await quiz.manager.getQuestionsForNote(app2, item.filePath);
             if (qs && qs.length) {
               out[item.filePath] = qs.map((q3, i) => ({
                 ...q3,
@@ -55567,7 +55567,7 @@ ${n.content.slice(0, 2e3)}
               }));
             } else {
               const leftover = leftovers.get(item.filePath) || [];
-              if (leftover.length) await quiz.manager.saveQuestionsForNote(app, item.filePath, leftover);
+              if (leftover.length) await quiz.manager.saveQuestionsForNote(app2, item.filePath, leftover);
             }
           }
           return out;
@@ -55585,8 +55585,8 @@ ${n.content.slice(0, 2e3)}
             notice("本轮复习进行中，先完成当前轮次再做单条");
             return;
           }
-          const app = getApp();
-          this.ensure(app);
+          const app2 = getApp();
+          this.ensure(app2);
           emitDomainEvent("review", { kind: "started" });
           const quiz = await this.quizWithAI();
           if (!quiz || !quiz.ai || !await aiReady()) {
@@ -55605,8 +55605,8 @@ ${n.content.slice(0, 2e3)}
             notice("做题冲刺进行中，先结束当前会话再开始本轮");
             return;
           }
-          const app = getApp();
-          this.ensure(app);
+          const app2 = getApp();
+          this.ensure(app2);
           emitDomainEvent("review", { kind: "started" });
           let items = await this.dataManager.loadItems();
           const pend = this.pendingRedoItems(items);
@@ -55662,7 +55662,7 @@ ${n.content.slice(0, 2e3)}
          *  - redo：通过 → 仅清 pendingRedo（ADR-0044 不写 FSRS）；未通过 → 开笔记（保持待重做）
          */
         async runSprintSession(items, mode) {
-          const app = getApp();
+          const app2 = getApp();
           const { uiManager: uiManager3 } = await Promise.resolve().then(() => (init_review(), review_exports));
           if (!uiManager3) return;
           let streakDays2 = 0;
@@ -55689,7 +55689,7 @@ ${n.content.slice(0, 2e3)}
             streakDays: streakDays2,
             fetchQuestions: async (item) => {
               var _a2;
-              const qs = await ((_a2 = quiz == null ? void 0 : quiz.manager) == null ? void 0 : _a2.getQuestionsForNote(app, item.filePath));
+              const qs = await ((_a2 = quiz == null ? void 0 : quiz.manager) == null ? void 0 : _a2.getQuestionsForNote(app2, item.filePath));
               if (qs && qs.length) {
                 return qs.map((q3, i) => ({ ...q3, notePath: item.filePath, _index: i }));
               }
@@ -55714,7 +55714,7 @@ ${n.content.slice(0, 2e3)}
               }
               await this.markReview(item.filePath, rating, { autoPending: true });
               const fresh = await this.dataManager.loadItems();
-              await this.applyReviewStyles(app, void 0, fresh);
+              await this.applyReviewStyles(app2, void 0, fresh);
               const updated = fresh.find((i) => i.filePath === item.filePath);
               if (!updated || updated.lastReviewed !== item.lastReviewed) return void 0;
               return updated.nextReviewDate || void 0;
@@ -55722,17 +55722,17 @@ ${n.content.slice(0, 2e3)}
             onFailed: async (item, rating, entry) => {
               if (mode !== "redo") {
                 await this.markReview(item.filePath, rating, { autoPending: true });
-                await this.applyReviewStyles(app);
+                await this.applyReviewStyles(app2);
               }
-              const file = app.vault.getAbstractFileByPath(item.filePath);
+              const file = app2.vault.getAbstractFileByPath(item.filePath);
               if (file) {
-                const leaf = app.workspace.getLeaf(false);
+                const leaf = app2.workspace.getLeaf(false);
                 await leaf.openFile(file);
               }
             }
           });
           await this.refreshPanel();
-          await this.applyReviewStyles(app);
+          await this.applyReviewStyles(app2);
         },
         /** 顺序复习循环（源码 L686-709 逐字；item 4 悬浮评级条 + item 5 离篇宽限/断点可恢复）
          *  - 屏幕底部挂迷你评级条（忘了/困难/一般/简单 + 跳过）：点评级写盘 → 轮询检测翻篇；跳过不评级直接下一篇
@@ -55744,8 +55744,8 @@ ${n.content.slice(0, 2e3)}
             notice("本轮复习已在进行");
             return;
           }
-          const app = getApp();
-          this.ensure(app);
+          const app2 = getApp();
+          this.ensure(app2);
           const dm = this.dataManager;
           if (index >= overdueNotes.length) {
             this._pendingRound = null;
@@ -55760,14 +55760,14 @@ ${n.content.slice(0, 2e3)}
             return;
           }
           const item = overdueNotes[index];
-          const file = app.vault.getAbstractFileByPath(item.filePath);
+          const file = app2.vault.getAbstractFileByPath(item.filePath);
           if (!file) {
             await dm.removeItem(item.filePath);
             await this.reviewLoop(overdueNotes, index + 1);
             return;
           }
           this._pendingRound = { items: overdueNotes, index };
-          const leaf = app.workspace.getLeaf(false);
+          const leaf = app2.workspace.getLeaf(false);
           await leaf.openFile(file);
           const reviewMsg = `复习中 (${index + 1}/${overdueNotes.length}): ${item.name}`;
           if (this._reviewNotice && ((_a2 = this._reviewNotice.el) == null ? void 0 : _a2.isConnected)) {
@@ -55801,7 +55801,7 @@ ${n.content.slice(0, 2e3)}
           const storageMtime = () => {
             var _a3, _b2;
             try {
-              const f = app.vault.getAbstractFileByPath(getReviewFilePath());
+              const f = app2.vault.getAbstractFileByPath(getReviewFilePath());
               return (_b2 = (_a3 = f == null ? void 0 : f.stat) == null ? void 0 : _a3.mtime) != null ? _b2 : null;
             } catch (e) {
               return null;
@@ -55816,7 +55816,7 @@ ${n.content.slice(0, 2e3)}
           };
           const interval = setInterval(async () => {
             checkCount++;
-            const activeFile = app.workspace.getActiveFile();
+            const activeFile = app2.workspace.getActiveFile();
             if (!activeFile || activeFile.path !== item.filePath) {
               const nowMs = Date.now();
               if (awaySince === null) awaySince = nowMs;
@@ -55897,9 +55897,9 @@ ${n.content.slice(0, 2e3)}
          *   ticket 48 收敛：不再全库 getMarkdownFiles + 逐路径 querySelector——
          *   处理范围 = 复习条目路径 + 曾染色路径（移出计划后回退），树节点一次 querySelectorAll 建 Map 查找；
          *   可选 items 参数：checkOverdueAndNotify 传本轮已加载结果，避免每轮二次读盘。 */
-        async applyReviewStyles(app, changedFile, items) {
+        async applyReviewStyles(app2, changedFile, items) {
           if (getSettings().reviewTreeBadge === false) return;
-          this.ensure(app);
+          this.ensure(app2);
           const allItems = items || await this.dataManager.loadItems();
           this._lastItems = allItems;
           const itemByPath = /* @__PURE__ */ new Map();
@@ -55994,10 +55994,10 @@ ${n.content.slice(0, 2e3)}
         /** F9：单文件染色刷新（vault modify 高频路径）——优先复用最近快照（60s 轮询/全量刷维护，
          *  时效与原 60s 轮询同档），无快照才全量读盘；只处理该文件路径，
          *  不再每次保存任意 md 都全量读 review.json */
-        async applyReviewStylesForFile(app, file) {
-          this.ensure(app);
+        async applyReviewStylesForFile(app2, file) {
+          this.ensure(app2);
           const items = this._lastItems || await this.dataManager.loadItems();
-          await this.applyReviewStyles(app, file, items);
+          await this.applyReviewStyles(app2, file, items);
         },
         /** A3/U3：卸载回退文件树染色与徽标（按曾染色路径逐个 revert，与 applyReviewStyles 的
          *  缩范围回退同口径；幂等）——插件禁用后彩色节点/徽标不再残留文件树 */
@@ -56188,8 +56188,8 @@ ${n.content.slice(0, 2e3)}
   function hasFn(adapter, name) {
     return typeof (adapter == null ? void 0 : adapter[name]) === "function";
   }
-  async function readJsonIfExists(app, path) {
-    const adapter = app.vault.adapter;
+  async function readJsonIfExists(app2, path) {
+    const adapter = app2.vault.adapter;
     try {
       if (hasFn(adapter, "exists") && !await adapter.exists(path)) return null;
       if (!hasFn(adapter, "read")) return null;
@@ -56204,8 +56204,8 @@ ${n.content.slice(0, 2e3)}
       return null;
     }
   }
-  async function migrateLegacy(app) {
-    const adapter = app.vault.adapter;
+  async function migrateLegacy(app2) {
+    const adapter = app2.vault.adapter;
     const storePath = getSecondBrainStorePath();
     try {
       if (hasFn(adapter, "exists") && await adapter.exists(storePath)) return false;
@@ -56216,7 +56216,7 @@ ${n.content.slice(0, 2e3)}
     const store2 = emptyStore();
     for (const name of LEGACY_FILES) {
       const legacyPath = storeDir() + "/" + name;
-      const raw = await readJsonIfExists(app, legacyPath).catch(() => null);
+      const raw = await readJsonIfExists(app2, legacyPath).catch(() => null);
       if (raw === null) continue;
       anyLegacy = true;
       if (name === "secondbrain_meta.json" && raw && typeof raw === "object") store2.meta = raw;
@@ -56271,8 +56271,8 @@ ${n.content.slice(0, 2e3)}
     );
     return run;
   }
-  function resolveApp(app) {
-    return app != null ? app : getApp();
+  function resolveApp(app2) {
+    return app2 != null ? app2 : getApp();
   }
   function isConflictJsonName(name) {
     return /^secondbrain\.sync-conflict-.*\.json$/.test(name);
@@ -56507,9 +56507,9 @@ ${n.content.slice(0, 2e3)}
     if (conflictVec.length) await reconcileVecConflicts(a, primaryMeta, merged, conflictVec, conflictMetas);
     return merged;
   }
-  async function readStoreRawInner(app) {
+  async function readStoreRawInner(app2) {
     var _a2;
-    const a = resolveApp(app);
+    const a = resolveApp(app2);
     const adapter = (_a2 = a == null ? void 0 : a.vault) == null ? void 0 : _a2.adapter;
     if (!adapter) return emptyStore();
     const storePath = getSecondBrainStorePath();
@@ -56562,14 +56562,14 @@ ${n.content.slice(0, 2e3)}
       return emptyStore();
     }
   }
-  async function readStoreRaw(app) {
-    const a = resolveApp(app);
+  async function readStoreRaw(app2) {
+    const a = resolveApp(app2);
     const store2 = await readStoreRawInner(a);
     return reconcileConflicts(a, store2);
   }
-  async function saveStoreRaw(data, app) {
+  async function saveStoreRaw(data, app2) {
     var _a2;
-    const a = resolveApp(app);
+    const a = resolveApp(app2);
     const adapter = (_a2 = a == null ? void 0 : a.vault) == null ? void 0 : _a2.adapter;
     if (!adapter) return;
     const next = JSON.stringify(data);
@@ -56579,8 +56579,8 @@ ${n.content.slice(0, 2e3)}
     }
     await adapter.write(getSecondBrainStorePath(), next);
   }
-  async function loadStore(app) {
-    return enqueue(() => readStoreRaw(app));
+  async function loadStore(app2) {
+    return enqueue(() => readStoreRaw(app2));
   }
   var STORE_VERSION, CHAT_HISTORY_LIMIT, LEGACY_FILES, LEGACY_VEC, chain;
   var init_store_file = __esm({
@@ -57528,9 +57528,9 @@ ${n.content.slice(0, 2e3)}
     const legacyVector = c.mode === "vector" && digest.scale !== "cos";
     return Math.round((legacyVector ? unsharpenScore(c.score) : c.score) * 100);
   }
-  function ensureModal(app) {
+  function ensureModal(app2) {
     var _a2;
-    appRef2 = app;
+    appRef2 = app2;
     if (!overlayEl3) {
       const { mask, popup } = createOverlay({
         maskId: "bz-sb-weekly-mask",
@@ -57575,16 +57575,16 @@ ${n.content.slice(0, 2e3)}
     motionSeq++;
     motionWeeklyShellIn(overlayEl3);
   }
-  function openWeeklyDigest(app) {
+  function openWeeklyDigest(app2) {
     void (async () => {
       var _a2, _b2;
       try {
-        const store2 = await loadStore(app);
-        ensureModal(app);
+        const store2 = await loadStore(app2);
+        ensureModal(app2);
         showWeeklyModal((_b2 = (_a2 = store2.weekly) == null ? void 0 : _a2.digest) != null ? _b2 : null);
       } catch (e) {
         console.warn("[secondbrain] 每周动态读取失败", e);
-        ensureModal(app);
+        ensureModal(app2);
         showWeeklyModal(null, { loadFailed: true });
       }
     })();
@@ -57659,7 +57659,7 @@ ${n.content.slice(0, 2e3)}
     mountIcons(body);
     motionWeeklyContent(body);
   }
-  function renderPanelWeeklyCard(popup, app, digest) {
+  function renderPanelWeeklyCard(popup, app2, digest) {
     const card = popup.querySelector("#bz-sb-weekly-card");
     if (!card) return;
     if (!digest) {
@@ -57678,7 +57678,7 @@ ${n.content.slice(0, 2e3)}
     motionSummaryIn(card);
     if (!card.dataset.bound) {
       card.dataset.bound = "1";
-      const open = () => openWeeklyDigest(app);
+      const open = () => openWeeklyDigest(app2);
       card.addEventListener("click", open);
       card.addEventListener("keydown", (e) => {
         if (e.key === "Enter" || e.key === " ") {
@@ -57858,7 +57858,7 @@ ${n.content.slice(0, 2e3)}
       init_render13();
       PANEL5 = { MIN_W: 640, MIN_H: 440, MAX_W: 1280, MAX_H: 880 };
       SecondBrainPanel = class {
-        constructor(app, store2, opts) {
+        constructor(app2, store2, opts) {
           this.mask = null;
           this.popup = null;
           /** ESC 层级句柄（ticket 141 迁移：原私挂 document keydown 废弃） */
@@ -57876,7 +57876,7 @@ ${n.content.slice(0, 2e3)}
           this.motionSeq = 0;
           /** 桌面拖动缩放句柄（ADR-0084/0094）：open 挂、close 摘，与面板显隐成对 */
           this.panelResizeDetach = null;
-          this.app = app;
+          this.app = app2;
           this.store = store2;
           this.opts = opts;
         }
@@ -58840,21 +58840,21 @@ ${n.content.slice(0, 2e3)}
          * 还原写回原路径用；走 vault 使 Obsidian 认可目录）。
          */
         async ensureVaultParentFolder(filePath) {
-          const app = getApp();
+          const app2 = getApp();
           const idx = filePath.lastIndexOf("/");
           if (idx <= 0) return;
           let dir = filePath.slice(0, idx);
           const missing = [];
           let probe = dir;
           while (probe && probe !== "." && probe !== "/") {
-            if (app.vault.getAbstractFileByPath(probe)) break;
+            if (app2.vault.getAbstractFileByPath(probe)) break;
             missing.unshift(probe);
             const slash = probe.lastIndexOf("/");
             if (slash <= 0) break;
             probe = probe.slice(0, slash);
           }
           for (const p of missing) {
-            await app.vault.createFolder(p);
+            await app2.vault.createFolder(p);
           }
         }
         /**
@@ -58941,10 +58941,10 @@ ${n.content.slice(0, 2e3)}
         }
         /** 删除 vault 原文件（非点前缀，走 vault 使 Obsidian 认可删除；幂等） */
         async deleteVaultFile(path) {
-          const app = getApp();
-          const file = app.vault.getAbstractFileByPath(path);
+          const app2 = getApp();
+          const file = app2.vault.getAbstractFileByPath(path);
           if (file && file.isFolder !== true) {
-            await app.vault.delete(file);
+            await app2.vault.delete(file);
           }
         }
         /** 是否存在 vault 文件（非点前缀原路径判断用） */
@@ -59409,7 +59409,7 @@ ${n.content.slice(0, 2e3)}
         async restoreNoteSerial(noteId, onProgress) {
           var _a2, _b2;
           if (!this.unlocked || !this.password) throw new Error("未解锁，无法还原笔记");
-          const app = getApp();
+          const app2 = getApp();
           const note = this.manifest.notes.find((n) => n.id === noteId);
           if (!note) throw new Error("未找到该笔记");
           const conflicts = [];
@@ -59453,9 +59453,9 @@ ${n.content.slice(0, 2e3)}
               if (!mergeOk) throw new Error("日记块 merge 失败");
             } else {
               await this.ensureVaultParentFolder(note.path);
-              const file = await app.vault.create(note.path, plain);
+              const file = await app2.vault.create(note.path, plain);
               created.push(note.path);
-              (_b2 = (_a2 = app.metadataCache) == null ? void 0 : _a2.trigger) == null ? void 0 : _b2.call(_a2, "changed", file);
+              (_b2 = (_a2 = app2.metadataCache) == null ? void 0 : _a2.trigger) == null ? void 0 : _b2.call(_a2, "changed", file);
             }
           } catch (e) {
             for (const p of created) {
@@ -59480,10 +59480,10 @@ ${n.content.slice(0, 2e3)}
         /** 目标文件内容与待还原明文是否一致（归一化行尾；占用幂等放行判断用） */
         async isSameTextFile(path, plain) {
           try {
-            const app = getApp();
-            const f = app.vault.getAbstractFileByPath(path);
+            const app2 = getApp();
+            const f = app2.vault.getAbstractFileByPath(path);
             if (!f) return false;
-            const existing = await app.vault.read(f);
+            const existing = await app2.vault.read(f);
             return existing.replace(/\r\n/g, "\n") === plain.replace(/\r\n/g, "\n");
           } catch (e) {
             return false;
@@ -59585,7 +59585,7 @@ ${n.content.slice(0, 2e3)}
          */
         async mergeDiaryBlock(datePath, block2) {
           var _a2;
-          const app = getApp();
+          const app2 = getApp();
           if (!datePath || !block2) return false;
           const md = block2.replace(/\r\n/g, "\n");
           const lines = md.split("\n");
@@ -59618,22 +59618,22 @@ ${n.content.slice(0, 2e3)}
           await enqueueFileTask(targetPath, async () => {
             var _a3, _b2, _c, _d;
             const serialized = serializeDiaryEntryFile({ date, time }, tags, body);
-            const existing = app.vault.getAbstractFileByPath(targetPath);
+            const existing = app2.vault.getAbstractFileByPath(targetPath);
             if (existing && existing.isFolder !== true) {
-              const text2 = await app.vault.read(existing);
+              const text2 = await app2.vault.read(existing);
               if (text2.replace(/\n$/, "") === serialized.replace(/\n$/, "")) return;
               let seq = 2;
               let alt = diaryEntryPath(dir, date, time, seq);
-              while (app.vault.getAbstractFileByPath(alt)) {
+              while (app2.vault.getAbstractFileByPath(alt)) {
                 seq += 1;
                 alt = diaryEntryPath(dir, date, time, seq);
               }
-              const shifted = await app.vault.create(alt, serialized);
-              (_b2 = (_a3 = app.metadataCache) == null ? void 0 : _a3.trigger) == null ? void 0 : _b2.call(_a3, "changed", shifted);
+              const shifted = await app2.vault.create(alt, serialized);
+              (_b2 = (_a3 = app2.metadataCache) == null ? void 0 : _a3.trigger) == null ? void 0 : _b2.call(_a3, "changed", shifted);
               return;
             }
-            const file = await app.vault.create(targetPath, serialized);
-            (_d = (_c = app.metadataCache) == null ? void 0 : _c.trigger) == null ? void 0 : _d.call(_c, "changed", file);
+            const file = await app2.vault.create(targetPath, serialized);
+            (_d = (_c = app2.metadataCache) == null ? void 0 : _c.trigger) == null ? void 0 : _d.call(_c, "changed", file);
           });
           return true;
         }
@@ -59657,9 +59657,9 @@ ${n.content.slice(0, 2e3)}
           if (currentFp !== a.fingerprint) return null;
           if (this.fileExists(a.path)) {
             try {
-              const app = getApp();
-              const existing = app.vault.getAbstractFileByPath(a.path);
-              const buf = await app.vault.readBinary(existing);
+              const app2 = getApp();
+              const existing = app2.vault.getAbstractFileByPath(a.path);
+              const buf = await app2.vault.readBinary(existing);
               const existingFp = await fingerprintOf(bytesToBase64(new Uint8Array(buf)));
               if (existingFp !== a.fingerprint) return null;
             } catch (e) {
@@ -59674,17 +59674,17 @@ ${n.content.slice(0, 2e3)}
          */
         async commitRestoreAttachment(a, plainB64) {
           var _a2, _b2;
-          const app = getApp();
+          const app2 = getApp();
           const data = base64ToBytes(plainB64);
           const buf = data.buffer.slice(data.byteOffset, data.byteOffset + data.byteLength);
-          const existing = app.vault.getAbstractFileByPath(a.path);
+          const existing = app2.vault.getAbstractFileByPath(a.path);
           if (existing) {
-            await app.vault.writeBinary(existing, buf);
+            await app2.vault.writeBinary(existing, buf);
             return false;
           }
           await this.ensureVaultParentFolder(a.path);
-          const file = await app.vault.createBinary(a.path, buf);
-          (_b2 = (_a2 = app.metadataCache) == null ? void 0 : _a2.trigger) == null ? void 0 : _b2.call(_a2, "changed", file);
+          const file = await app2.vault.createBinary(a.path, buf);
+          (_b2 = (_a2 = app2.metadataCache) == null ? void 0 : _a2.trigger) == null ? void 0 : _b2.call(_a2, "changed", file);
           return true;
         }
         /**
@@ -61149,18 +61149,18 @@ ${n.content.slice(0, 2e3)}
     }
     return [...valid];
   }
-  function collectNoteAttachmentPaths(app, file, content) {
+  function collectNoteAttachmentPaths(app2, file, content) {
     var _a2, _b2, _c;
     const embedLinks = [];
     try {
-      const cache = (_b2 = (_a2 = app == null ? void 0 : app.metadataCache) == null ? void 0 : _a2.getFileCache) == null ? void 0 : _b2.call(_a2, file);
+      const cache = (_b2 = (_a2 = app2 == null ? void 0 : app2.metadataCache) == null ? void 0 : _a2.getFileCache) == null ? void 0 : _b2.call(_a2, file);
       const embeds = cache && Array.isArray(cache.embeds) ? cache.embeds : [];
       for (const e of embeds) {
         if (e && typeof e.link === "string") embedLinks.push(e.link);
       }
     } catch (e) {
     }
-    const vaultFiles = ((_c = app == null ? void 0 : app.vault) == null ? void 0 : _c.getFiles) && app.vault.getFiles() || [];
+    const vaultFiles = ((_c = app2 == null ? void 0 : app2.vault) == null ? void 0 : _c.getFiles) && app2.vault.getFiles() || [];
     return collectNoteAttachments(content, embedLinks, vaultFiles);
   }
   function findSharedAttachmentPaths(notePath, attPaths, others) {
@@ -61197,12 +61197,12 @@ ${n.content.slice(0, 2e3)}
     }
     return [...shared2];
   }
-  function collectSharedAttachmentPaths(app, notePath, attPaths) {
+  function collectSharedAttachmentPaths(app2, notePath, attPaths) {
     var _a2, _b2, _c;
     if (!attPaths.length) return [];
     let mds = [];
     try {
-      mds = ((_a2 = app == null ? void 0 : app.vault) == null ? void 0 : _a2.getMarkdownFiles) && app.vault.getMarkdownFiles() || [];
+      mds = ((_a2 = app2 == null ? void 0 : app2.vault) == null ? void 0 : _a2.getMarkdownFiles) && app2.vault.getMarkdownFiles() || [];
     } catch (e) {
       return [];
     }
@@ -61210,7 +61210,7 @@ ${n.content.slice(0, 2e3)}
     for (const f of mds) {
       const links = [];
       try {
-        const cache = (_c = (_b2 = app == null ? void 0 : app.metadataCache) == null ? void 0 : _b2.getFileCache) == null ? void 0 : _c.call(_b2, f);
+        const cache = (_c = (_b2 = app2 == null ? void 0 : app2.metadataCache) == null ? void 0 : _b2.getFileCache) == null ? void 0 : _c.call(_b2, f);
         const embeds = cache && Array.isArray(cache.embeds) ? cache.embeds : [];
         const mdLinks = cache && Array.isArray(cache.links) ? cache.links : [];
         for (const e of embeds) {
@@ -63290,11 +63290,11 @@ ${n.content.slice(0, 2e3)}
         /** 还原成功后打开该笔记（Obsidian 当前叶子页打开） */
         openRestoredNote(note) {
           var _a2, _b2;
-          const app = getApp();
+          const app2 = getApp();
           try {
-            const file = app.vault.getAbstractFileByPath(note.path);
+            const file = app2.vault.getAbstractFileByPath(note.path);
             if (file && file.isFolder !== true) {
-              (_b2 = (_a2 = app.workspace).openLinkText) == null ? void 0 : _b2.call(_a2, note.path, note.path);
+              (_b2 = (_a2 = app2.workspace).openLinkText) == null ? void 0 : _b2.call(_a2, note.path, note.path);
             }
           } catch (e) {
           }
@@ -63419,13 +63419,13 @@ ${n.content.slice(0, 2e3)}
          * 返回全新容器给调用方走纯文本兜底，正文不再「纯文本 + 迟到渲染」叠双份。
          * T13：返回渲染 Component，调用链在关窗/下一次填充前 unload 收掉生命周期。
          */
-        async renderWithTimeout(app, text2, path, timeoutMs = PREVIEW_RENDER_TIMEOUT_MS) {
+        async renderWithTimeout(app2, text2, path, timeoutMs = PREVIEW_RENDER_TIMEOUT_MS) {
           this.unloadPreviewComponent();
           const el3 = document.createElement("div");
           const component = new Component();
           this._previewComponent = component;
           let finished = false;
-          const render3 = MarkdownRenderer.render(app, text2, el3, path, component).then(
+          const render3 = MarkdownRenderer.render(app2, text2, el3, path, component).then(
             () => {
               finished = true;
             },
@@ -63617,21 +63617,21 @@ ${n.content.slice(0, 2e3)}
          * 读取附件原始内容并按设置生成预览层。
          * Q3-A：任一附件读取失败 → 整笔放弃（返回 null，不落任何东西、原文件不动）；预览失败不算失败（可选增强）。
          */
-        async readAttachmentInputs(app, attPaths) {
+        async readAttachmentInputs(app2, attPaths) {
           var _a2, _b2;
           const attachments = [];
           const size = this.config.previewSize || 384;
           const quality = this.config.previewQuality || 0.5;
           for (const p of attPaths) {
             try {
-              const f = app.vault.getAbstractFileByPath(p);
+              const f = app2.vault.getAbstractFileByPath(p);
               if (!f) throw new Error("附件不存在");
-              const buf = await app.vault.readBinary(f);
+              const buf = await app2.vault.readBinary(f);
               const data = bytesToBase64(new Uint8Array(buf));
               let previewData;
               if (this.config.previewEnabled) {
                 try {
-                  const resourceUrl = ((_b2 = (_a2 = app.vault).getResourcePath) == null ? void 0 : _b2.call(_a2, f)) || "";
+                  const resourceUrl = ((_b2 = (_a2 = app2.vault).getResourcePath) == null ? void 0 : _b2.call(_a2, f)) || "";
                   const result = kindOf(p) === "video" ? await videoFrame(resourceUrl, size, quality) : await compressImage(resourceUrl, size, quality);
                   if (result) previewData = result.dataUrl;
                 } catch (e) {
@@ -63654,8 +63654,8 @@ ${n.content.slice(0, 2e3)}
           }
           this._locking = true;
           try {
-            const app = getApp();
-            const file = app.workspace.getActiveFile();
+            const app2 = getApp();
+            const file = app2.workspace.getActiveFile();
             if (!file) {
               notice("请先打开要加密的笔记");
               return;
@@ -63667,11 +63667,11 @@ ${n.content.slice(0, 2e3)}
                 return;
               }
             }
-            const content = await app.vault.read(file);
-            const attPaths = collectNoteAttachmentPaths(app, file, content);
-            const sharedSet = new Set(collectSharedAttachmentPaths(app, file.path, attPaths));
+            const content = await app2.vault.read(file);
+            const attPaths = collectNoteAttachmentPaths(app2, file, content);
+            const sharedSet = new Set(collectSharedAttachmentPaths(app2, file.path, attPaths));
             if (!await this.confirmLockProceed(file, attPaths.length, sharedSet.size)) return;
-            const attachments = await this.readAttachmentInputs(app, attPaths);
+            const attachments = await this.readAttachmentInputs(app2, attPaths);
             if (!attachments) return;
             for (const a of attachments) {
               if (sharedSet.has(a.path)) a.keptShared = true;
@@ -64293,7 +64293,7 @@ ${n.content.slice(0, 2e3)}
     }
     return controller;
   }
-  async function ensureEncrypt(app) {
+  async function ensureEncrypt(app2) {
     if (initialized6) return;
     await getController().init();
     initialized6 = true;
@@ -64317,18 +64317,18 @@ ${n.content.slice(0, 2e3)}
       statusBarEl = null;
     }
   }
-  function openEncrypt(app) {
-    void ensureEncrypt(app).then(() => getController().openManager()).catch(() => notice("保险库初始化失败，请重试", "error"));
+  function openEncrypt(app2) {
+    void ensureEncrypt(app2).then(() => getController().openManager()).catch(() => notice("保险库初始化失败，请重试", "error"));
   }
-  function encryptCurrentNote(app) {
-    void ensureEncrypt(app).then(() => getController().lockCurrentNote()).catch(() => notice("保险库初始化失败，请重试", "error"));
+  function encryptCurrentNote(app2) {
+    void ensureEncrypt(app2).then(() => getController().lockCurrentNote()).catch(() => notice("保险库初始化失败，请重试", "error"));
   }
   function getSafeManager() {
     return getController().dataManager;
   }
-  async function lockSafe(app) {
+  async function lockSafe(app2) {
     try {
-      await ensureEncrypt(app);
+      await ensureEncrypt(app2);
     } catch (e) {
       return false;
     }
@@ -64336,14 +64336,14 @@ ${n.content.slice(0, 2e3)}
     getController().uiManager.lockNow(true);
     return true;
   }
-  async function lockEncrypt(app) {
-    const ok = await lockSafe(app);
+  async function lockEncrypt(app2) {
+    const ok = await lockSafe(app2);
     if (ok) notice("保险库已锁定", "success");
     else notice("保险库本来就是锁着的", "warning");
   }
-  async function changeSafePassword(app) {
+  async function changeSafePassword(app2) {
     try {
-      await ensureEncrypt(app);
+      await ensureEncrypt(app2);
     } catch (e) {
       notice("保险库初始化失败，请重试", "error");
       return;
@@ -65128,15 +65128,15 @@ ${n.content.slice(0, 2e3)}
       version: "2.0"
     };
   }
-  async function loadSmartCatData(app) {
+  async function loadSmartCatData(app2) {
     const raw = await jsonFileStore(getSmartcatFilePath(), {
       defaultValue: () => defaultSmartCatData(),
-      app
+      app: app2
     }).read();
     return normalizeData2(raw);
   }
-  async function saveSmartCatData(app, data) {
-    await jsonFileStore(getSmartcatFilePath(), { writeIfChanged: true, app }).write(data);
+  async function saveSmartCatData(app2, data) {
+    await jsonFileStore(getSmartcatFilePath(), { writeIfChanged: true, app: app2 }).write(data);
   }
   var SMARTCAT_FILE, SMARTCAT_VEC_FILE, DAY_MS2, MESSAGE_POOL_CAP;
   var init_data15 = __esm({
@@ -65728,6 +65728,21 @@ ${n.content.slice(0, 2e3)}
     if (options2) out.options = options2;
     return out;
   }
+  function parseSchedule(raw) {
+    if (!isPlainObject3(raw)) return void 0;
+    const kind = str2(raw.kind);
+    if (!kind || !SCHEDULE_KINDS.has(kind)) return void 0;
+    const s = { kind };
+    const note = nonEmptyStr(raw.note);
+    if (note) s.note = note;
+    const hour = intInRange(raw.hour, 0, 23);
+    if (hour !== void 0) s.hour = hour;
+    const weekday = intInRange(raw.weekday, 0, 6);
+    if (weekday !== void 0) s.weekday = weekday;
+    const everyHours = num2(raw.everyHours);
+    if (everyHours !== void 0 && everyHours > 0) s.everyHours = everyHours;
+    return s;
+  }
   function parseManifest(raw) {
     var _a2, _b2;
     if (!isPlainObject3(raw)) return null;
@@ -65777,25 +65792,9 @@ ${n.content.slice(0, 2e3)}
     } else {
       delete out.run;
     }
-    if (isPlainObject3(raw.schedule)) {
-      const kind = str2(raw.schedule.kind);
-      if (kind && SCHEDULE_KINDS.has(kind)) {
-        const s = { kind };
-        const note = nonEmptyStr(raw.schedule.note);
-        if (note) s.note = note;
-        const hour = intInRange(raw.schedule.hour, 0, 23);
-        if (hour !== void 0) s.hour = hour;
-        const weekday = intInRange(raw.schedule.weekday, 0, 6);
-        if (weekday !== void 0) s.weekday = weekday;
-        const everyHours = num2(raw.schedule.everyHours);
-        if (everyHours !== void 0 && everyHours > 0) s.everyHours = everyHours;
-        out.schedule = s;
-      } else {
-        delete out.schedule;
-      }
-    } else {
-      delete out.schedule;
-    }
+    const schedule = parseSchedule(raw.schedule);
+    if (schedule) out.schedule = schedule;
+    else delete out.schedule;
     if (isPlainObject3(raw.runtime)) {
       const estimatedSec = num2(raw.runtime.estimatedSec);
       out.runtime = estimatedSec !== void 0 && estimatedSec > 0 ? { estimatedSec } : {};
@@ -65990,6 +65989,14 @@ ${n.content.slice(0, 2e3)}
     if (typeof r.enabled === "boolean") out.enabled = r.enabled;
     if (typeof r.trustedAt === "string" && r.trustedAt.trim()) out.trustedAt = r.trustedAt.trim();
     if (typeof r.trustedRun === "string" && r.trustedRun !== "") out.trustedRun = r.trustedRun;
+    if (typeof r.autoRun === "boolean") out.autoRun = r.autoRun;
+    const override = parseSchedule(r.scheduleOverride);
+    if (override) {
+      out.scheduleOverride = override;
+      if (typeof r.overrideDeclSig === "string" && r.overrideDeclSig !== "") {
+        out.overrideDeclSig = r.overrideDeclSig;
+      }
+    }
     return out;
   }
   function parseToolEntries(raw) {
@@ -66007,6 +66014,7 @@ ${n.content.slice(0, 2e3)}
   var TOOL_ID_RE, TOOL_ID_MAX_LEN;
   var init_registry = __esm({
     "src/dock/registry.ts"() {
+      init_schema2();
       TOOL_ID_RE = /^[a-z0-9][a-z0-9-]*$/;
       TOOL_ID_MAX_LEN = 64;
     }
@@ -66051,6 +66059,9 @@ ${n.content.slice(0, 2e3)}
   }
   function settingsPathFor(declPath) {
     return joinPath(dirOf(declPath), SETTINGS_FILENAME);
+  }
+  function runsPathFor(declPath) {
+    return joinPath(dirOf(declPath), RUNS_FILENAME);
   }
   function resolveRun(manifest, declPath) {
     var _a2, _b2, _c;
@@ -66107,12 +66118,17 @@ ${n.content.slice(0, 2e3)}
       return false;
     }
   }
-  var DECLARATION_FILENAME, SETTINGS_FILENAME, DOCK_SETTINGS_VERSION, injectedFs;
+  function readRunsText(declPath, fs = currentFs()) {
+    if (!fs) return null;
+    return fs.readText(runsPathFor(declPath));
+  }
+  var DECLARATION_FILENAME, SETTINGS_FILENAME, RUNS_FILENAME, DOCK_SETTINGS_VERSION, injectedFs;
   var init_declaration = __esm({
     "src/dock/declaration.ts"() {
       init_schema2();
       DECLARATION_FILENAME = "dock.json";
       SETTINGS_FILENAME = "dock.settings.json";
+      RUNS_FILENAME = "dock.runs.json";
       DOCK_SETTINGS_VERSION = 1;
     }
   });
@@ -66121,6 +66137,67 @@ ${n.content.slice(0, 2e3)}
   function triggerOf(schedule) {
     if (!schedule) return "manual";
     return schedule.kind === "on-demand" || schedule.kind === "unknown" ? "manual" : "auto";
+  }
+  function effectiveSchedule(declared, override) {
+    return override != null ? override : declared;
+  }
+  function scheduleSignature(s) {
+    var _a2, _b2, _c;
+    if (!s) return "";
+    return [s.kind, (_a2 = s.hour) != null ? _a2 : "", (_b2 = s.weekday) != null ? _b2 : "", (_c = s.everyHours) != null ? _c : ""].join("|");
+  }
+  function scheduleFromDraft(kind, p) {
+    switch (kind) {
+      case "inherit":
+        return void 0;
+      case "daily":
+        return { kind: "daily", hour: p.hour };
+      case "weekly":
+        return { kind: "weekly", weekday: p.weekday };
+      case "interval":
+        return { kind: "interval", everyHours: p.everyHours };
+      case "on-demand":
+        return { kind: "on-demand" };
+    }
+  }
+  function isDueToRun(schedule, runs, now = Date.now()) {
+    if (!schedule || schedule.kind === "on-demand" || schedule.kind === "unknown") return false;
+    if (schedule.kind === "interval" && lastRun(runs) === void 0) return true;
+    return judgeDue(schedule, runs, now).state === "due";
+  }
+  function skipReasonOf(i) {
+    if (!i.enabled) return "disabled";
+    if (!i.trusted) return "untrusted";
+    if (i.trustStale) return "trust-stale";
+    if (!i.hasRun) return "no-run";
+    if (!i.autoKind) return "not-auto";
+    if (!i.autoOn) return "auto-off";
+    if (!i.paramsReady) return "params";
+    if (i.paused) return "paused";
+    if (i.running) return "running";
+    if (i.cooldown) return "cooldown";
+    if (!i.due) return "not-due";
+    return null;
+  }
+  function decideDue(inputs) {
+    const ready2 = [];
+    const skipped = [];
+    for (const i of inputs) {
+      const r = skipReasonOf(i);
+      if (r) skipped.push({ input: i, reason: r });
+      else ready2.push(i);
+    }
+    return { ready: ready2, skipped };
+  }
+  function missingRequiredParams(params, values) {
+    const out = [];
+    for (const p of params != null ? params : []) {
+      if (!p.required) continue;
+      const v = values[p.key];
+      const empty = v === void 0 || v === null || v === "" || Array.isArray(v) && v.length === 0;
+      if (empty) out.push(p.label || p.key);
+    }
+    return out;
   }
   function dayKey2(ts) {
     const d = new Date(ts);
@@ -66315,14 +66392,8 @@ ${n.content.slice(0, 2e3)}
   });
 
   // src/dock/data.ts
-  function dockDir() {
-    return `${storageDir()}/${DOCK_DIR_NAME}`;
-  }
-  function dockRunsDir() {
-    return `${dockDir()}/runs`;
-  }
-  function runsFilePath(id) {
-    return `${dockRunsDir()}/${id}.json`;
+  function runsPathOf(entry) {
+    return runsPathFor(entry.path);
   }
   function readToolEntries() {
     var _a2;
@@ -66339,22 +66410,66 @@ ${n.content.slice(0, 2e3)}
   function isEnabled(entry) {
     return entry.enabled !== false;
   }
-  async function readTextIfExists(app, path) {
-    try {
-      const f = app.vault.getAbstractFileByPath(path);
-      if (!f) return null;
-      const raw = await app.vault.read(f);
-      return typeof raw === "string" ? raw : null;
-    } catch (e) {
-      return null;
-    }
+  function isAutoRun(entry) {
+    return entry.autoRun !== false;
   }
-  async function readRunsFile(app, id) {
-    const path = runsFilePath(id);
-    const raw = await readTextIfExists(app, path);
+  async function updateToolEntry(id, patch) {
+    const entries = readToolEntries();
+    const i = entries.findIndex((e) => e.id === id);
+    if (i < 0) return;
+    const next = { ...entries[i] };
+    for (const [k, v] of Object.entries(patch)) {
+      if (v === void 0) delete next[k];
+      else next[k] = v;
+    }
+    entries[i] = next;
+    await saveToolEntries(entries);
+  }
+  function parseRunState(raw) {
+    if (!raw || typeof raw !== "object" || Array.isArray(raw)) return {};
+    const r = raw;
+    const out = {};
+    if (typeof r.lastAttemptAt === "string" && r.lastAttemptAt !== "") out.lastAttemptAt = r.lastAttemptAt;
+    if (typeof r.lastAttemptOk === "boolean") out.lastAttemptOk = r.lastAttemptOk;
+    if (typeof r.consecutiveFailures === "number" && Number.isInteger(r.consecutiveFailures) && r.consecutiveFailures > 0) {
+      out.consecutiveFailures = r.consecutiveFailures;
+    }
+    if (typeof r.pausedAt === "string" && r.pausedAt !== "") out.pausedAt = r.pausedAt;
+    return out;
+  }
+  function readRunStates() {
+    var _a2;
+    const raw = (_a2 = tryGetSettings()) == null ? void 0 : _a2.dockRunState;
+    if (!raw || typeof raw !== "object" || Array.isArray(raw)) return {};
+    const out = {};
+    for (const [id, v] of Object.entries(raw)) {
+      const st = parseRunState(v);
+      if (Object.keys(st).length) out[id] = st;
+    }
+    return out;
+  }
+  async function patchRunState(id, patch) {
+    const s = getSettings();
+    const all = readRunStates();
+    if (patch === null) {
+      delete all[id];
+    } else {
+      const next = { ...all[id] };
+      for (const [k, v] of Object.entries(patch)) {
+        if (v === void 0) delete next[k];
+        else next[k] = v;
+      }
+      const st = parseRunState(next);
+      if (Object.keys(st).length) all[id] = st;
+      else delete all[id];
+    }
+    s.dockRunState = all;
+    await saveSettings();
+  }
+  function readRunsFile(entry) {
+    const raw = readRunsText(entry.path);
     if (raw === null) return { file: null, existed: false };
-    const parsed = parseRunsFileText(raw, id);
-    return { file: parsed, existed: true };
+    return { file: parseRunsFileText(raw, entry.id), existed: true };
   }
   function readToolValues(entry) {
     return readSettings(entry.path, entry.id);
@@ -66375,24 +66490,28 @@ ${n.content.slice(0, 2e3)}
     return ((_a2 = view2.manifest) == null ? void 0 : _a2.icon) || "square-terminal";
   }
   function triggerOfView(view2) {
-    var _a2;
-    return triggerOf((_a2 = view2.manifest) == null ? void 0 : _a2.schedule);
+    return triggerOf(view2.schedule);
   }
   function isOverdue(state3) {
     return state3 === "due";
   }
-  async function loadToolViews(app) {
+  async function loadToolViews(app2) {
     const entries = readToolEntries();
-    return Promise.all(entries.map((entry) => loadToolView(app, entry)));
+    const states = readRunStates();
+    return Promise.all(entries.map((entry) => loadToolView(app2, entry, states)));
   }
-  async function loadToolView(app, entry) {
+  async function loadToolView(app2, entry, runStates = readRunStates()) {
     var _a2, _b2, _c, _d;
     const decl = readDeclaration(entry.path);
     const manifest = (_a2 = decl.manifest) != null ? _a2 : null;
     const run = resolveRun(manifest, entry.path);
     const trustStale = isTrusted(entry) && (run ? runSignature(run) : void 0) !== entry.trustedRun;
-    const runsRead = await readRunsFile(app, entry.id);
+    const runsRead = readRunsFile(entry);
     const runs = (_c = (_b2 = runsRead.file) == null ? void 0 : _b2.runs) != null ? _c : [];
+    const declaredSchedule = manifest == null ? void 0 : manifest.schedule;
+    const schedule = effectiveSchedule(declaredSchedule, entry.scheduleOverride);
+    const scheduleOverridden = entry.scheduleOverride !== void 0;
+    const declChangedSinceOverride = scheduleOverridden && entry.overrideDeclSig !== void 0 && entry.overrideDeclSig !== scheduleSignature(declaredSchedule);
     return {
       entry,
       manifest,
@@ -66404,9 +66523,17 @@ ${n.content.slice(0, 2e3)}
       trustStale,
       runs,
       runsUnreadable: runsRead.existed && runsRead.file === null,
-      due: judgeDue(manifest == null ? void 0 : manifest.schedule, runs),
+      due: judgeDue(schedule, runs),
+      dueToRun: isDueToRun(schedule, runs),
+      declaredSchedule,
+      schedule,
+      scheduleOverridden,
+      declChangedSinceOverride,
+      autoRun: isAutoRun(entry),
+      nextDue: nextDueAt(schedule, runs),
+      runState: runStates[entry.id],
       overLimit: runs.length > DOCK_RUNS_PER_TOOL_LIMIT,
-      runsPath: runsFilePath(entry.id)
+      runsPath: runsPathOf(entry)
     };
   }
   function summarize(views2) {
@@ -66424,30 +66551,24 @@ ${n.content.slice(0, 2e3)}
   }
   function overview(views2, now = Date.now()) {
     return overviewOf(
-      views2.map((v) => {
-        var _a2;
-        return {
-          trigger: triggerOfView(v),
-          name: displayName2(v),
-          schedule: (_a2 = v.manifest) == null ? void 0 : _a2.schedule,
-          runs: v.runs,
-          overdue: isOverdue(v.due.state)
-        };
-      }),
+      views2.map((v) => ({
+        trigger: triggerOfView(v),
+        name: displayName2(v),
+        schedule: v.schedule,
+        runs: v.runs,
+        overdue: isOverdue(v.due.state)
+      })),
       now
     );
   }
-  var DOCK_DIR_NAME;
   var init_data16 = __esm({
     "src/dock/data.ts"() {
-      init_storage();
       init_settings_provider();
       init_schema2();
       init_registry();
       init_declaration();
       init_schedule();
       init_registry();
-      DOCK_DIR_NAME = "dock";
     }
   });
 
@@ -66656,23 +66777,29 @@ ${n.content.slice(0, 2e3)}
   });
 
   // src/dock/runner.ts
-  function vaultBasePath(app) {
+  function vaultBasePath(app2) {
     var _a2;
-    const adapter = app.vault.adapter;
+    const adapter = app2.vault.adapter;
     try {
       return (_a2 = adapter == null ? void 0 : adapter.getBasePath) == null ? void 0 : _a2.call(adapter);
     } catch (e) {
       return void 0;
     }
   }
-  function dockEnvOf(entry, app) {
-    const vaultPath = vaultBasePath(app);
+  function dockEnvOf(entry, app2, trigger = "manual") {
+    const vaultPath = vaultBasePath(app2);
     const env = {
       BZ_DOCK_CONTRACT: "1",
       BZ_DOCK_TOOL: entry.id,
-      BZ_DOCK_RUNS_FILE: runsFilePath(entry.id)
+      // 本次是 bz 按节奏自动触发（auto）还是用户手动（manual）—— 工具据此给记录标 `trigger`。
+      // 工具**不需要**猜：bz 是父进程，它最清楚这次是被谁拉起来的。
+      BZ_DOCK_TRIGGER: trigger,
+      // 记录就写在工具目录里（与声明、参数值同一层）—— 路径从声明文件位置推出来，天然是绝对值。
+      // 从前这里是「vault 根 + vault 内相对路径」，而工具进程的 cwd 是它自己的目录，相对路径
+      // 会被解析到那儿去（记录写进了 `<工具目录>/CONFIG/...`，bz 在 vault 里找不到）。
+      BZ_DOCK_RUNS_FILE: runsPathFor(entry.path)
     };
-    if (vaultPath) env.BZ_DOCK_VAULT = vaultPath;
+    if (vaultPath) env.BZ_DOCK_VAULT = vaultPath.replace(/[\\/]+$/, "");
     return env;
   }
   function liveRunOf(toolId) {
@@ -66689,7 +66816,8 @@ ${n.content.slice(0, 2e3)}
     var _a2;
     (_a2 = live2.get(toolId)) == null ? void 0 : _a2.handle.stop();
   }
-  function runTool(app, entry, launch, manifest, values, cb = {}) {
+  function runTool(app2, entry, launch, manifest, values, cb = {}, opts = {}) {
+    var _a2;
     const startedAtDate = /* @__PURE__ */ new Date();
     const startedAt = startedAtDate.toISOString();
     const rawTail = [];
@@ -66698,7 +66826,7 @@ ${n.content.slice(0, 2e3)}
       args: [...launch.args, ...buildArgs(manifest != null ? manifest : { params: [] }, values)],
       shell: launch.shell,
       cwd: launch.cwd,
-      env: dockEnvOf(entry, app)
+      env: dockEnvOf(entry, app2, (_a2 = opts.trigger) != null ? _a2 : "manual")
     };
     const steps = [];
     const infos = [];
@@ -66708,25 +66836,25 @@ ${n.content.slice(0, 2e3)}
       spec,
       {
         onStep: (text2) => {
-          var _a2;
+          var _a3;
           steps.push({ text: text2, at: (/* @__PURE__ */ new Date()).toISOString(), status: "ok" });
-          (_a2 = cb.onStep) == null ? void 0 : _a2.call(cb, text2);
+          (_a3 = cb.onStep) == null ? void 0 : _a3.call(cb, text2);
         },
         onProgress: (phase, pct) => {
-          var _a2;
+          var _a3;
           myProgress.phase = phase;
           myProgress.pct = pct;
-          (_a2 = cb.onProgress) == null ? void 0 : _a2.call(cb, phase, pct);
+          (_a3 = cb.onProgress) == null ? void 0 : _a3.call(cb, phase, pct);
         },
         onInfo: (data) => {
-          var _a2;
+          var _a3;
           infos.push({ at: (/* @__PURE__ */ new Date()).toISOString(), data });
-          (_a2 = cb.onInfo) == null ? void 0 : _a2.call(cb, data);
+          (_a3 = cb.onInfo) == null ? void 0 : _a3.call(cb, data);
         },
         onResult: (data) => {
-          var _a2;
+          var _a3;
           result = data;
-          (_a2 = cb.onResult) == null ? void 0 : _a2.call(cb, data);
+          (_a3 = cb.onResult) == null ? void 0 : _a3.call(cb, data);
         },
         onRaw: (t) => {
           rawTail.push(t);
@@ -66747,7 +66875,7 @@ ${n.content.slice(0, 2e3)}
       done: void 0
     };
     run.done = handle.done.then((o) => {
-      var _a2;
+      var _a3;
       const finishedAt = (/* @__PURE__ */ new Date()).toISOString();
       const outcome = {
         ok: o.ok,
@@ -66761,7 +66889,7 @@ ${n.content.slice(0, 2e3)}
         durationMs: new Date(finishedAt).getTime() - startedAtDate.getTime()
       };
       live2.delete(entry.id);
-      (_a2 = cb.onDone) == null ? void 0 : _a2.call(cb, outcome, run);
+      (_a3 = cb.onDone) == null ? void 0 : _a3.call(cb, outcome, run);
       return outcome;
     });
     live2.set(entry.id, run);
@@ -66836,8 +66964,150 @@ ${n.content.slice(0, 2e3)}
       init_notice();
       init_external_tool();
       init_schema2();
-      init_data16();
+      init_declaration();
       live2 = /* @__PURE__ */ new Map();
+    }
+  });
+
+  // src/dock/scheduler.ts
+  function globalAutoOn() {
+    var _a2;
+    return ((_a2 = tryGetSettings()) == null ? void 0 : _a2.dockAutoRun) !== false;
+  }
+  function kickDockScheduler() {
+    if (app === null) return;
+    void tick();
+  }
+  function inputOf(v, now) {
+    var _a2, _b2, _c;
+    return {
+      id: v.entry.id,
+      name: displayName2(v),
+      enabled: isEnabled(v.entry),
+      trusted: isTrusted(v.entry),
+      trustStale: v.trustStale,
+      hasRun: v.run !== null,
+      autoKind: triggerOf(v.schedule) === "auto",
+      autoOn: v.autoRun,
+      due: v.dueToRun,
+      paramsReady: missingRequiredParams((_a2 = v.manifest) == null ? void 0 : _a2.params, v.values).length === 0,
+      paused: !!((_b2 = v.runState) == null ? void 0 : _b2.pausedAt),
+      cooldown: ((_c = cooldownUntil.get(v.entry.id)) != null ? _c : 0) > now,
+      running: inFlight.has(v.entry.id)
+    };
+  }
+  async function tick() {
+    if (app === null || isUnloaded === null) return;
+    if (isUnloaded()) return;
+    if (!globalAutoOn()) return;
+    let views2;
+    try {
+      views2 = await loadToolViews(app);
+    } catch (e) {
+      return;
+    }
+    if (isUnloaded()) return;
+    const now = Date.now();
+    const { ready: ready2, skipped } = decideDue(views2.map((v) => inputOf(v, now)));
+    for (const s of skipped) {
+      if (s.reason === "params" && !warnedParams.has(s.input.id)) {
+        warnedParams.add(s.input.id);
+        notify(`${s.input.name} 没自动跑：必填参数还没填`, { type: "warning" });
+      }
+    }
+    if (!ready2.length) return;
+    const batch = chain2.then(() => runBatch(ready2, views2));
+    chain2 = batch.catch(() => void 0);
+    await batch;
+  }
+  async function runBatch(ready2, views2) {
+    let ok = 0;
+    let fail = 0;
+    for (const input of ready2) {
+      if (isUnloaded == null ? void 0 : isUnloaded()) return;
+      const view2 = views2.find((v) => v.entry.id === input.id);
+      if (!view2) continue;
+      inFlight.add(input.id);
+      let result = "skip";
+      try {
+        result = await runOne(view2);
+      } catch (e) {
+        result = "fail";
+      } finally {
+        inFlight.delete(input.id);
+      }
+      if (result === "ok") ok += 1;
+      else if (result === "fail") fail += 1;
+    }
+    if (fail > 0) {
+      notify(`自动运行：${ok} 成 ${fail} 败`, { type: "warning" });
+    }
+  }
+  async function runOne(view2) {
+    var _a2, _b2;
+    const launch = view2.run;
+    if (app === null || !launch) return "skip";
+    const entry = view2.entry;
+    const handle = runTool(app, entry, launch, view2.manifest, view2.values, {}, { trigger: "auto" });
+    let timedOut = false;
+    const timer = setTimeout(() => {
+      timedOut = true;
+      stopRun(entry.id);
+    }, RUN_TIMEOUT_MS);
+    let outcome;
+    try {
+      outcome = await handle.done;
+    } finally {
+      clearTimeout(timer);
+    }
+    if (outcome.ok) {
+      await patchRunState(entry.id, {
+        lastAttemptAt: outcome.finishedAt,
+        lastAttemptOk: true,
+        consecutiveFailures: 0,
+        pausedAt: void 0
+        // 一次成功即恢复（清熔断）
+      });
+      return "ok";
+    }
+    if (outcome.stopped && !timedOut) return "skip";
+    const failures = ((_b2 = (_a2 = view2.runState) == null ? void 0 : _a2.consecutiveFailures) != null ? _b2 : 0) + 1;
+    const trip = failures >= BREAKER_THRESHOLD;
+    await patchRunState(entry.id, {
+      lastAttemptAt: outcome.finishedAt,
+      lastAttemptOk: false,
+      consecutiveFailures: failures,
+      ...trip ? { pausedAt: outcome.finishedAt } : {}
+    });
+    cooldownUntil.set(entry.id, Date.now() + FAIL_COOLDOWN_MS);
+    notify(`${displayName2(view2)} 自动运行失败：${errorHint(timedOut ? "timeout" : outcome.kind)}`, {
+      type: "error"
+    });
+    if (trip) {
+      notify(`${displayName2(view2)} 连续失败 ${failures} 次，已暂停自动运行（面板里可恢复）`, {
+        type: "warning"
+      });
+    }
+    return "fail";
+  }
+  var FAIL_COOLDOWN_MS, BREAKER_THRESHOLD, RUN_TIMEOUT_MS, app, isUnloaded, inFlight, cooldownUntil, chain2, warnedParams;
+  var init_scheduler = __esm({
+    "src/dock/scheduler.ts"() {
+      init_fake_obsidian();
+      init_notice();
+      init_settings_provider();
+      init_data16();
+      init_schedule();
+      init_runner();
+      FAIL_COOLDOWN_MS = 15 * 6e4;
+      BREAKER_THRESHOLD = 3;
+      RUN_TIMEOUT_MS = 10 * 6e4;
+      app = null;
+      isUnloaded = null;
+      inFlight = /* @__PURE__ */ new Set();
+      cooldownUntil = /* @__PURE__ */ new Map();
+      chain2 = Promise.resolve();
+      warnedParams = /* @__PURE__ */ new Set();
     }
   });
 
@@ -66913,10 +67183,10 @@ ${n.content.slice(0, 2e3)}
   function runLabel(v) {
     return triggerOfView(v) === "auto" ? "手动跑一次" : "运行";
   }
-  function openDock(app) {
+  function openDock(app2) {
     var _a2;
-    hostApp2 = app;
-    if (!overlay2) build2(app);
+    hostApp2 = app2;
+    if (!overlay2) build2(app2);
     topifyZ(overlay2);
     overlay2.classList.remove("is-off");
     trapPanelFocus((_a2 = overlay2.querySelector(`#${FRAME_ID2}`)) != null ? _a2 : overlay2);
@@ -66934,7 +67204,7 @@ ${n.content.slice(0, 2e3)}
   function isPanelVisible2() {
     return !!overlay2 && !overlay2.classList.contains("is-off");
   }
-  function build2(app) {
+  function build2(app2) {
     const ov = el2("div", "bz-panel-overlay bz-dock-mask is-off");
     ov.id = OVERLAY_ID2;
     const frame2 = el2("div", "bz-panel-frame bz-dock-panel bz-panel-mtop");
@@ -67011,6 +67281,7 @@ ${n.content.slice(0, 2e3)}
     for (const v of views) {
       if (!isEnabled(v.entry)) continue;
       if (v.due.state !== "due") continue;
+      if (willAutoRun(v)) continue;
       const key = `${v.entry.id}:${day}`;
       if (dueNotified.has(key)) continue;
       dueNotified.add(key);
@@ -67020,6 +67291,15 @@ ${n.content.slice(0, 2e3)}
         action: { label: "查看", onClick: () => openDock(hostApp2) }
       });
     }
+  }
+  function willAutoRun(v) {
+    var _a2, _b2;
+    if (tryGetSettings().dockAutoRun === false) return false;
+    if (!isEnabled(v.entry) || !isTrusted(v.entry) || v.trustStale) return false;
+    if (!v.run || !v.autoRun) return false;
+    if (triggerOfView(v) !== "auto") return false;
+    if ((_a2 = v.runState) == null ? void 0 : _a2.pausedAt) return false;
+    return missingRequiredParams((_b2 = v.manifest) == null ? void 0 : _b2.params, v.values).length === 0;
   }
   function render2() {
     renderHead();
@@ -67256,6 +67536,7 @@ ${n.content.slice(0, 2e3)}
     return sec;
   }
   function makeCard(v) {
+    var _a2;
     const id = v.entry.id;
     const card = el2("article", "bz-dock-card");
     card.dataset.tool = id;
@@ -67274,6 +67555,10 @@ ${n.content.slice(0, 2e3)}
     if (trustTag) tags.appendChild(el2("span", "bz-dock-tag bz-dock-tag--warn", trustTag));
     if (!v.manifest) tags.appendChild(el2("span", "bz-dock-tag bz-dock-tag--muted", "声明读不到"));
     if (v.manifest && !v.run) tags.appendChild(el2("span", "bz-dock-tag bz-dock-tag--muted", "只能看"));
+    if (triggerOfView(v) === "auto" && !v.autoRun) {
+      tags.appendChild(el2("span", "bz-dock-tag bz-dock-tag--muted", "自动已关"));
+    }
+    if ((_a2 = v.runState) == null ? void 0 : _a2.pausedAt) tags.appendChild(el2("span", "bz-dock-tag bz-dock-tag--warn", "自动已暂停"));
     idbox.append(name, tags);
     top.append(ic2, idbox);
     card.appendChild(top);
@@ -67428,8 +67713,186 @@ ${n.content.slice(0, 2e3)}
       openItemMenu(r.left, r.bottom + 4, actions);
     }
   }
+  function autoDraftOf(v) {
+    var _a2, _b2, _c;
+    const key = v.entry.id;
+    const existing = autoDraft.get(key);
+    if (existing) return existing;
+    const cur = v.schedule;
+    const k = cur == null ? void 0 : cur.kind;
+    const kind = !v.scheduleOverridden ? "inherit" : k === "daily" || k === "weekly" || k === "interval" || k === "on-demand" ? k : "daily";
+    const d = {
+      kind,
+      hour: (_a2 = cur == null ? void 0 : cur.hour) != null ? _a2 : 12,
+      weekday: (_b2 = cur == null ? void 0 : cur.weekday) != null ? _b2 : 1,
+      everyHours: (_c = cur == null ? void 0 : cur.everyHours) != null ? _c : 6
+    };
+    autoDraft.set(key, d);
+    return d;
+  }
+  async function saveAuto(v, d) {
+    const id = v.entry.id;
+    const next = scheduleFromDraft(d.kind, d);
+    if (!next) {
+      await updateToolEntry(id, { scheduleOverride: void 0, overrideDeclSig: void 0 });
+    } else {
+      await updateToolEntry(id, {
+        scheduleOverride: next,
+        overrideDeclSig: scheduleSignature(v.declaredSchedule)
+      });
+    }
+    autoDraft.delete(id);
+    kickDockScheduler();
+    await refresh2();
+  }
+  function autoRow(label, value) {
+    const row = el2("div", "bz-dock-autorow");
+    row.appendChild(el2("span", "bz-dock-autorow-label", label));
+    row.appendChild(el2("span", "bz-dock-autorow-val", value));
+    return row;
+  }
+  function clampInt(raw, lo, hi, fallback) {
+    const n = Number(raw);
+    if (!Number.isFinite(n)) return fallback;
+    return Math.min(hi, Math.max(lo, Math.round(n)));
+  }
+  function autoSection(v) {
+    var _a2, _b2, _c;
+    const sec = el2("section", "bz-dock-pane bz-dock-autopane");
+    const head = el2("div", "bz-dock-pane-head");
+    head.appendChild(el2("h3", "bz-dock-pane-title", "自动运行"));
+    sec.appendChild(head);
+    const id = v.entry.id;
+    sec.appendChild(
+      uiField({
+        label: "参与自动运行",
+        desc: "关掉后这个工具只手动跑（声明里的节奏仍在，只是 bz 不自动触发它）",
+        control: uiSwitch({
+          checked: v.autoRun,
+          onChange: (on) => {
+            void (async () => {
+              await updateToolEntry(id, { autoRun: on });
+              autoDraft.delete(id);
+              kickDockScheduler();
+              await refresh2();
+            })();
+          }
+        }).el
+      })
+    );
+    const facts = el2("div", "bz-dock-autorows");
+    facts.appendChild(autoRow("作者声明", scheduleTextOf(v.declaredSchedule)));
+    facts.appendChild(autoRow("当前生效", scheduleTextOf(v.schedule) + (v.scheduleOverridden ? "（你改的）" : "")));
+    facts.appendChild(
+      autoRow("下次预计", v.nextDue === null ? "算不出（未声明节奏，或缺运行基线）" : dueTimeText(v.nextDue))
+    );
+    if ((_a2 = v.runState) == null ? void 0 : _a2.pausedAt) {
+      facts.appendChild(
+        el2(
+          "div",
+          "bz-dock-autonote bz-dock-autonote--warn",
+          `连续失败 ${(_b2 = v.runState.consecutiveFailures) != null ? _b2 : 0} 次，自动运行已暂停`
+        )
+      );
+    }
+    if (v.declChangedSinceOverride) {
+      facts.appendChild(el2("div", "bz-dock-autonote", "作者后来改过声明里的节奏 —— 建议看一眼要不要跟着调"));
+    }
+    sec.appendChild(facts);
+    const d = autoDraftOf(v);
+    const editor = el2("div", "bz-dock-autoeditor");
+    editor.appendChild(
+      uiField({
+        label: "节奏",
+        control: uiSelect({
+          options: [
+            { value: "inherit", label: "跟随声明（清除我的改动）" },
+            { value: "daily", label: "每天" },
+            { value: "weekly", label: "每周" },
+            { value: "interval", label: "每隔若干小时" },
+            { value: "on-demand", label: "只手动（不自动）" }
+          ],
+          value: d.kind,
+          onChange: (val) => {
+            d.kind = val;
+            render2();
+          }
+        }).el
+      })
+    );
+    if (d.kind === "daily") {
+      const inp = uiInput({
+        type: "number",
+        value: String(d.hour),
+        onInput: (val) => {
+          d.hour = clampInt(val, 0, 23, 12);
+        }
+      });
+      inp.min = "0";
+      inp.max = "23";
+      editor.appendChild(uiField({ label: "当天几点前跑完", desc: "本地时间，0–23", control: inp }));
+    } else if (d.kind === "weekly") {
+      editor.appendChild(
+        uiField({
+          label: "每周哪天",
+          control: uiSelect({
+            options: ["周日", "周一", "周二", "周三", "周四", "周五", "周六"].map((l, i) => ({
+              value: String(i),
+              label: l
+            })),
+            value: String(d.weekday),
+            onChange: (val) => {
+              d.weekday = clampInt(val, 0, 6, 1);
+            }
+          }).el
+        })
+      );
+    } else if (d.kind === "interval") {
+      const inp = uiInput({
+        type: "number",
+        value: String(d.everyHours),
+        onInput: (val) => {
+          d.everyHours = clampInt(val, 1, 168, 6);
+        }
+      });
+      inp.min = "1";
+      inp.max = "168";
+      editor.appendChild(uiField({ label: "每隔几小时", desc: "1–168", control: inp }));
+    }
+    const btns = el2("div", "bz-dock-runbtns");
+    btns.appendChild(uiBtn({ label: "保存节奏", size: "sm", tone: "primary", onClick: () => void saveAuto(v, d) }));
+    if (v.scheduleOverridden) {
+      btns.appendChild(
+        uiBtn({
+          label: "恢复声明默认",
+          size: "sm",
+          onClick: () => {
+            autoDraft.delete(id);
+            void saveAuto(v, { ...d, kind: "inherit" });
+          }
+        })
+      );
+    }
+    if ((_c = v.runState) == null ? void 0 : _c.pausedAt) {
+      btns.appendChild(
+        uiBtn({
+          label: "恢复自动运行",
+          size: "sm",
+          onClick: () => {
+            void (async () => {
+              await patchRunState(id, null);
+              kickDockScheduler();
+              await refresh2();
+            })();
+          }
+        })
+      );
+    }
+    editor.appendChild(btns);
+    sec.appendChild(editor);
+    return sec;
+  }
   function renderDetail(body, v) {
-    var _a2;
     const wrap = el2("div", "bz-dock-detail");
     const head = el2("div", "bz-dock-detail-head");
     head.appendChild(uiIconBtn({ icon: "chevron-left", title: "返回列表", onClick: () => {
@@ -67485,8 +67948,7 @@ ${n.content.slice(0, 2e3)}
     meta.appendChild(
       metaRow("参数值文件", v.valuesPath, true, () => void copyText2(v.valuesPath, "参数值文件路径"))
     );
-    meta.appendChild(metaRow("数据文件", v.runsPath, true, () => void copyText2(v.runsPath, "数据文件路径")));
-    meta.appendChild(metaRow("节奏", ((_a2 = v.manifest) == null ? void 0 : _a2.schedule) ? scheduleText(v.manifest) : "工具未声明"));
+    meta.appendChild(metaRow("运行记录", v.runsPath, true, () => void copyText2(v.runsPath, "运行记录路径")));
     const rate = successRate(v.runs);
     meta.appendChild(metaRow("成功率", rate === null ? "暂无记录" : `${Math.round(rate * 100)}%（共 ${v.runs.length} 条）`));
     if (v.overLimit) {
@@ -67496,6 +67958,7 @@ ${n.content.slice(0, 2e3)}
       meta.appendChild(el2("div", "bz-dock-meta-warn", "运行记录文件读不懂（坏 JSON 或结构不符）；工具坞不打补丁、不改写，等工具自己修好"));
     }
     wrap.appendChild(meta);
+    wrap.appendChild(autoSection(v));
     const cols = el2("div", "bz-dock-cols");
     cols.appendChild(runPane(v));
     cols.appendChild(histPane(v));
@@ -67919,21 +68382,31 @@ ${n.content.slice(0, 2e3)}
     notice(`声明已重新读取：${m.params.length} 个参数`, "success");
     await refresh2();
   }
-  function scheduleText(m) {
+  function scheduleTextOf(s) {
     var _a2;
-    if (!m.schedule) return "未声明";
-    const s = m.schedule;
+    if (!s) return "未声明";
     const base = {
       daily: "每天一次",
       weekly: s.weekday !== void 0 ? `每周${"日一二三四五六"[s.weekday]}` : "每周一次",
       interval: s.everyHours !== void 0 ? `每 ${s.everyHours} 小时` : "按间隔",
-      "on-demand": "按需",
+      "on-demand": "按需（只手动）",
       unknown: "未声明"
     };
     const parts = [(_a2 = base[s.kind]) != null ? _a2 : s.kind];
     if (s.kind === "daily" && s.hour !== void 0) parts.push(`${String(s.hour).padStart(2, "0")}:00 前`);
     if (s.note) parts.push(`（${s.note}）`);
     return parts.join("");
+  }
+  function scheduleText(m) {
+    return scheduleTextOf(m.schedule);
+  }
+  function dueTimeText(ms) {
+    const d = new Date(ms);
+    const p = (n) => String(n).padStart(2, "0");
+    const now = /* @__PURE__ */ new Date();
+    const sameDay = d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth() && d.getDate() === now.getDate();
+    const hm = `${p(d.getHours())}:${p(d.getMinutes())}`;
+    return sameDay ? `今天 ${hm}` : `${d.getMonth() + 1}-${p(d.getDate())} ${hm}`;
   }
   function runTextOf(run) {
     if (!run) return "这份声明没写怎么跑（缺 run 段）";
@@ -67949,7 +68422,7 @@ ${n.content.slice(0, 2e3)}
       (run == null ? void 0 : run.cwd) ? `工作目录：${run.cwd}` : "",
       `声明文件：${declPath}`,
       "",
-      manifest.schedule ? `节奏：${scheduleText(manifest)}（自动化，bz 不调度）` : "节奏：未声明（手动）",
+      manifest.schedule ? `节奏：${scheduleText(manifest)}（自动化；bz 会在它开着时按节奏跑）` : "节奏：未声明（手动）",
       `参数：${manifest.params.length} 个`,
       "",
       "建立信任之后工具坞才会运行它（读声明不需要信任）。信任的对象是「那条命令」，",
@@ -68065,7 +68538,7 @@ ${n.content.slice(0, 2e3)}
     if (view.kind === "detail" && view.id === v.entry.id) view = { kind: "list" };
     await persist(entries, `已移除 ${displayName2(v)}`);
   }
-  var hostApp2, overlay2, escHandle6, view, query, searchOpen, refreshing, views, draftValues, valueSaveTimers, VALUE_SAVE_DEBOUNCE_MS, dueNotified, OVERLAY_ID2, FRAME_ID2;
+  var hostApp2, overlay2, escHandle6, view, query, searchOpen, refreshing, views, draftValues, valueSaveTimers, VALUE_SAVE_DEBOUNCE_MS, dueNotified, autoDraft, OVERLAY_ID2, FRAME_ID2;
   var init_ui13 = __esm({
     "src/dock/ui.ts"() {
       init_fake_obsidian();
@@ -68081,6 +68554,7 @@ ${n.content.slice(0, 2e3)}
       init_settings_provider();
       init_data16();
       init_runner();
+      init_scheduler();
       init_declaration();
       init_schedule();
       hostApp2 = null;
@@ -68095,6 +68569,7 @@ ${n.content.slice(0, 2e3)}
       valueSaveTimers = /* @__PURE__ */ new Map();
       VALUE_SAVE_DEBOUNCE_MS = 500;
       dueNotified = /* @__PURE__ */ new Set();
+      autoDraft = /* @__PURE__ */ new Map();
       OVERLAY_ID2 = "bz-dock-mask";
       FRAME_ID2 = "bz-dock-panel";
     }
@@ -68123,6 +68598,18 @@ ${n.content.slice(0, 2e3)}
                   onClick: () => openDock(getApp())
                 }
               ]
+            }
+          ]
+        },
+        {
+          icon: "rocket",
+          name: "自动运行",
+          rows: [
+            {
+              type: "toggle",
+              name: "启动后自动运行",
+              desc: "Obsidian 就绪后，bz 按各工具声明的节奏触发它：到点跑、该跑没跑就补跑。关掉则全部只手点",
+              binding: { key: "dockAutoRun" }
             }
           ]
         },
@@ -68159,27 +68646,27 @@ ${n.content.slice(0, 2e3)}
     readManual: () => readManual,
     refreshManual: () => refreshManual
   });
-  function manualVaultPath(app) {
-    return downloadsVaultPath(app, MANUAL_FILENAME);
+  function manualVaultPath(app2) {
+    return downloadsVaultPath(app2, MANUAL_FILENAME);
   }
   function looksLikeManual(text2) {
     const t = String(text2 || "");
     return /<!DOCTYPE/i.test(t) || /<html/i.test(t) || t.includes("包仔");
   }
-  function hasManual(app) {
-    return hasAsset(app, MANUAL_FILENAME);
+  function hasManual(app2) {
+    return hasAsset(app2, MANUAL_FILENAME);
   }
-  function downloadManual(app) {
-    return downloadAsset(app, MANUAL_FILENAME, looksLikeManual, "手册");
+  function downloadManual(app2) {
+    return downloadAsset(app2, MANUAL_FILENAME, looksLikeManual, "手册");
   }
-  function readManual(app) {
-    return readAsset(app, MANUAL_FILENAME);
+  function readManual(app2) {
+    return readAsset(app2, MANUAL_FILENAME);
   }
-  function ensureManualReady(app) {
-    return ensureAssetReady(app, MANUAL_FILENAME, looksLikeManual, "手册");
+  function ensureManualReady(app2) {
+    return ensureAssetReady(app2, MANUAL_FILENAME, looksLikeManual, "手册");
   }
-  async function refreshManual(app) {
-    return refreshAsset(app, MANUAL_FILENAME, looksLikeManual, "手册", await cachedSha256For(app, MANUAL_FILENAME));
+  async function refreshManual(app2) {
+    return refreshAsset(app2, MANUAL_FILENAME, looksLikeManual, "手册", await cachedSha256For(app2, MANUAL_FILENAME));
   }
   var MANUAL_FILENAME;
   var init_manual = __esm({
@@ -68272,18 +68759,18 @@ ${n.content.slice(0, 2e3)}
     ensureChangelogReady: () => ensureChangelogReady,
     refreshChangelog: () => refreshChangelog
   });
-  function changelogVaultPath(app) {
-    return downloadsVaultPath(app, CHANGELOG_FILENAME);
+  function changelogVaultPath(app2) {
+    return downloadsVaultPath(app2, CHANGELOG_FILENAME);
   }
   function looksLikeChangelog(text2) {
     const t = String(text2 || "");
     return (/<!DOCTYPE/i.test(t) || /<html/i.test(t)) && t.includes("const DATA =");
   }
-  function ensureChangelogReady(app) {
-    return ensureAssetReady(app, CHANGELOG_FILENAME, looksLikeChangelog, "更新日志");
+  function ensureChangelogReady(app2) {
+    return ensureAssetReady(app2, CHANGELOG_FILENAME, looksLikeChangelog, "更新日志");
   }
-  async function refreshChangelog(app) {
-    return refreshAsset(app, CHANGELOG_FILENAME, looksLikeChangelog, "更新日志", await cachedSha256For(app, CHANGELOG_FILENAME));
+  async function refreshChangelog(app2) {
+    return refreshAsset(app2, CHANGELOG_FILENAME, looksLikeChangelog, "更新日志", await cachedSha256For(app2, CHANGELOG_FILENAME));
   }
   var CHANGELOG_FILENAME;
   var init_changelog = __esm({
@@ -68614,9 +69101,11 @@ ${n.content.slice(0, 2e3)}
         pythonPath: "",
         ffmpegPath: "ffmpeg",
         ffprobePath: "ffprobe",
-        // 工具坞（dock 域）：空登记表起步（面板内添加）；漏跑提醒默认开
+        // 工具坞（dock 域）：空登记表起步（面板内添加）；漏跑提醒默认开；bz 自动运行默认开（ADR-0236）
         dockTools: [],
         dockNotifyMissed: true,
+        dockAutoRun: true,
+        dockRunState: {},
         // Jev 决策通道（ADR-0173；issue 424/ADR-0184 常开；issue 433/ADR-0190 起按服务商分存）：未填密钥时不接管任何判定
         jevProvider: "typesafe",
         jevApiKeys: {},
@@ -69039,9 +69528,9 @@ ${n.content.slice(0, 2e3)}
         review: async () => {
           const { reviewApp: reviewApp2 } = await Promise.resolve().then(() => (init_app3(), app_exports));
           const { reviewSettingsSchema: reviewSettingsSchema2 } = await Promise.resolve().then(() => (init_ui10(), ui_exports7));
-          const app = getApp();
-          reviewApp2.ensure(app);
-          return reviewSettingsSchema2({ app, dataManager: reviewApp2.dataManager });
+          const app2 = getApp();
+          reviewApp2.ensure(app2);
+          return reviewSettingsSchema2({ app: app2, dataManager: reviewApp2.dataManager });
         },
         secondbrain: async () => (await Promise.resolve().then(() => (init_panel(), panel_exports))).secondBrainSettingsSchema(),
         pomodoro: async () => (await Promise.resolve().then(() => (init_ui4(), ui_exports3))).pomodoroSettingsSchema(),
@@ -69080,12 +69569,12 @@ ${n.content.slice(0, 2e3)}
         smartcat: async () => {
           const { loadSmartCatData: loadSmartCatData2 } = await Promise.resolve().then(() => (init_data15(), data_exports));
           const { smartcatSettingsSchema: smartcatSettingsSchema2 } = await Promise.resolve().then(() => (init_ui12(), ui_exports9));
-          const app = getApp();
-          const data = await loadSmartCatData2(app);
+          const app2 = getApp();
+          const data = await loadSmartCatData2(app2);
           const saveConfig = async (config) => {
             const { saveSmartCatData: saveSmartCatData2 } = await Promise.resolve().then(() => (init_data15(), data_exports));
             data.config = config;
-            await saveSmartCatData2(app, data);
+            await saveSmartCatData2(app2, data);
           };
           return smartcatSettingsSchema2({
             getConfig: () => data.config,
@@ -69952,8 +70441,8 @@ ${n.content.slice(0, 2e3)}
     if (initialized7) return;
     initialized7 = true;
   }
-  function openSettingsPanel(app, domainId) {
-    void ensureSettingsPanel(app).then(() => getUI().open(domainId));
+  function openSettingsPanel(app2, domainId) {
+    void ensureSettingsPanel(app2).then(() => getUI().open(domainId));
   }
   function unloadSettingsPanel() {
     motionTeardown();
@@ -70087,9 +70576,9 @@ ${n.content.slice(0, 2e3)}
     localStorage.setItem(SEED_MARKER, "1");
   }
   function injectApp() {
-    const app = new FakeApp();
-    setApp(app);
-    simApp = app;
+    const app2 = new FakeApp();
+    setApp(app2);
+    simApp = app2;
   }
   function injectSettings() {
     try {

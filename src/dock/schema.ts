@@ -294,6 +294,35 @@ export function parseParam(raw: unknown): DockParam | null {
 }
 
 /**
+ * 节奏校验（从声明或 bz 的覆盖里读一段节奏）。
+ *
+ * 抽出来给**两处**共用：声明文件的 `schedule`（工具作者的默认值）与登记项里的
+ * `scheduleOverride`（用户改过的值）。两处必须同口径 —— 否则「用户改的和作者写的一样，
+ * 却被判成不同」这种幽灵差异迟早冒出来。
+ *
+ * 三条纪律沿用原本内联在 `parseManifest` 里的那套：
+ *  - 不认识的 `kind` → 整条作废（返回 undefined），不猜；
+ *  - 越界字段（`hour` 不在 0-23 等）→ **逐个丢字段**，节奏本身留下（判得粗一点，不是不判）；
+ *  - 永不抛。
+ */
+export function parseSchedule(raw: unknown): DockSchedule | undefined {
+  if (!isPlainObject(raw)) return undefined;
+  const kind = str(raw.kind);
+  if (!kind || !SCHEDULE_KINDS.has(kind)) return undefined;
+
+  const s: DockSchedule = { kind: kind as DockScheduleKind };
+  const note = nonEmptyStr(raw.note);
+  if (note) s.note = note;
+  const hour = intInRange(raw.hour, 0, 23);
+  if (hour !== undefined) s.hour = hour;
+  const weekday = intInRange(raw.weekday, 0, 6);
+  if (weekday !== undefined) s.weekday = weekday;
+  const everyHours = num(raw.everyHours);
+  if (everyHours !== undefined && everyHours > 0) s.everyHours = everyHours;
+  return s;
+}
+
+/**
  * 声明校验（工具目录里那份 `dock.json` 的正文）。
  * 返回 null 的情形：非对象 / `v` 不认识 / `id` 非法 / `name` 空。
  * `params` 里坏的单项**丢弃**而不是整份拒绝 —— 一个写错的参数不该让整个工具消失。
@@ -358,26 +387,10 @@ export function parseManifest(raw: unknown): DockManifest | null {
     delete out.run;
   }
 
-  if (isPlainObject(raw.schedule)) {
-    const kind = str(raw.schedule.kind);
-    if (kind && SCHEDULE_KINDS.has(kind)) {
-      const s: DockSchedule = { kind: kind as DockScheduleKind };
-      const note = nonEmptyStr(raw.schedule.note);
-      if (note) s.note = note;
-      // 越界字段逐个丢弃（不连累整条节奏）：判定只需要「够用的那一部分」
-      const hour = intInRange(raw.schedule.hour, 0, 23);
-      if (hour !== undefined) s.hour = hour;
-      const weekday = intInRange(raw.schedule.weekday, 0, 6);
-      if (weekday !== undefined) s.weekday = weekday;
-      const everyHours = num(raw.schedule.everyHours);
-      if (everyHours !== undefined && everyHours > 0) s.everyHours = everyHours;
-      out.schedule = s;
-    } else {
-      delete out.schedule; // 节奏形态不合法 → 视同未声明，退回「只展示最后运行时间」
-    }
-  } else {
-    delete out.schedule;
-  }
+  // schedule 抽到 parseSchedule（与登记项的 scheduleOverride 同口径）
+  const schedule = parseSchedule(raw.schedule);
+  if (schedule) out.schedule = schedule;
+  else delete out.schedule; // 形态不合法 / 未声明 → 视同无节奏（只展示最后运行时间）
 
   if (isPlainObject(raw.runtime)) {
     const estimatedSec = num(raw.runtime.estimatedSec);

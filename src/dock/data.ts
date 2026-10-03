@@ -8,19 +8,19 @@
  * | `data.json` → `dockTools` 段 | 插件设置 | **bz** | 读写（`readToolEntries` / `saveToolEntries`） |
  * | `dock.json`（声明） | **工具目录** | **工具作者** | **只读**（经 `declaration.ts`，不缓存） |
  * | `dock.settings.json`（参数值） | **工具目录** | **bz** | 读写（`readToolValues` / `saveToolValues`） |
- * | `CONFIG/STORAGE/dock/runs/<id>.json` | vault 内 | **工具** | **只读**（`readRunsFile` —— 永不创建、永不改写） |
+ * | `dock.runs.json`（运行记录） | **工具目录** | **工具** | **只读**（`readRunsFile` —— 永不创建、永不改写） |
  *
  * 运行记录那条尤其要紧：bz 一旦写回去就变成第二个写者，`news.json` 当年被这个问题逼出
- * 段级合并写（ADR-0128）、外部写者最后直接退役。所以读侧一律走
- * `vault.getAbstractFileByPath` + `vault.read`，**不用 `jsonFileStore`**（它会顺手把缺失的
- * 文件建出来 —— 那是写）。
+ * 段级合并写（ADR-0128）、外部写者最后直接退役。所以读侧走 fs 缝的 `readText`
+ * （桌面端 = `window.require('fs')`），**不用会顺手把缺失文件建出来的读法**（建文件就是写）。
+ * 记录改住工具目录（与声明、参数值同一层，spec D9/D10 修订）—— 一个工具的全部数据都在
+ * 它自己的目录里，bz 侧只剩一条登记项。
  *
  * 读侧对畸形输入一律容错：坏 JSON / 版本不符 / 结构不符 → `null`，由 UI 降级为
  * 「该工具记录不可读」，绝不连累整个面板打不开（同 `parseBzLine` 的「永不抛异常」精神）。
  */
 
 import type { App } from 'obsidian';
-import { storageDir } from '../core/storage';
 import { getSettings, saveSettings, tryGetSettings } from '../core/settings-provider';
 import {
   DOCK_RUNS_PER_TOOL_LIMIT,
@@ -29,21 +29,28 @@ import {
   type DockManifest,
   type DockRunsFile,
   type DockRunRecord,
+  type DockSchedule,
 } from './schema';
 import { parseToolEntries, runSignature, type DockToolEntry } from './registry';
 import {
   readDeclaration,
+  readRunsText,
   readSettings,
   resolveRun,
+  runsPathFor,
   settingsPathFor,
   writeSettings,
   type ResolvedRun,
 } from './declaration';
 import {
+  effectiveSchedule,
+  isDueToRun,
   judgeDue,
   lastRun,
+  nextDueAt,
   overviewOf,
   recentStrip,
+  scheduleSignature,
   successRate,
   triggerOf,
   type DockDueVerdict,
@@ -57,22 +64,14 @@ export { parseToolEntry, parseToolEntries, runSignature, TOOL_ID_RE } from './re
 
 // ==================== 路径 ====================
 
-/** 域数据目录名（挂在共享数据根下；共享数据根由 settings.storagePath 决定） */
-export const DOCK_DIR_NAME = 'dock';
-
-/** 域数据根：`<存储路径>/dock` —— 面板上「复制数据根路径」给的就是它 */
-export function dockDir(): string {
-  return `${storageDir()}/${DOCK_DIR_NAME}`;
-}
-
-/** 运行记录目录（**工具写**） */
-export function dockRunsDir(): string {
-  return `${dockDir()}/runs`;
-}
-
-/** 某工具的运行记录文件路径（约定路径，工具不声明 —— spec D10） */
-export function runsFilePath(id: string): string {
-  return `${dockRunsDir()}/${id}.json`;
+/**
+ * 某工具运行记录的路径 = **工具目录下**的 `dock.runs.json`（spec D10 修订）。
+ *
+ * vault 里**不再有** dock 数据目录：声明、参数值、运行记录三份都在工具自己的目录里，
+ * bz 侧只剩一条登记项。工具因此是自包含的 —— 把目录搬走就是搬走它的全部数据。
+ */
+export function runsPathOf(entry: DockToolEntry): string {
+  return runsPathFor(entry.path);
 }
 
 // ==================== 工具登记（插件设置 · 唯一写者是 bz） ====================
@@ -100,33 +99,116 @@ export function isEnabled(entry: DockToolEntry): boolean {
   return entry.enabled !== false;
 }
 
-// ==================== 读侧（运行记录：只读、不创建、不抛） ====================
-
-/** 读一个 vault 文本文件；不存在 / 读失败一律 null（不创建、不抛） */
-async function readTextIfExists(app: App, path: string): Promise<string | null> {
-  try {
-    const f = app.vault.getAbstractFileByPath(path);
-    if (!f) return null;
-    const raw = await app.vault.read(f as never);
-    return typeof raw === 'string' ? raw : null;
-  } catch {
-    return null;
-  }
+/** 自动运行总闸（缺省开）。关掉 = 声明了节奏也不自动跑，只在面板里手动点 */
+export function isAutoRun(entry: DockToolEntry): boolean {
+  return entry.autoRun !== false;
 }
 
 /**
- * 读某工具的运行记录（只读）。
- * 返回 null = 文件不存在或读不出；`ok:false` 表示「文件在但读不懂」（UI 要区分这两者）。
+ * 就地改一条登记（按 id 找、合并 patch、整表写回）。
+ *
+ * 走「读全表 → 改一条 → 写回」而不是「长命数组」：登记表是 bz 的账本，面板与调度器都要写它，
+ * 每次现读能最大限度避免「一方拿着过期快照把另一方的改动盖掉」。真正的并发窗口只剩「读与写
+ * 之间」那一段同步代码，窄到可以接受。
+ *
+ * `patch` 里值为 `undefined` 的键表示**清除**该键（不是设成 undefined）。
  */
-export async function readRunsFile(
-  app: App,
-  id: string,
-): Promise<{ file: DockRunsFile | null; existed: boolean }> {
-  const path = runsFilePath(id);
-  const raw = await readTextIfExists(app, path);
+export async function updateToolEntry(id: string, patch: Partial<DockToolEntry>): Promise<void> {
+  const entries = readToolEntries();
+  const i = entries.findIndex((e) => e.id === id);
+  if (i < 0) return;
+  const next = { ...entries[i] } as Record<string, unknown>;
+  for (const [k, v] of Object.entries(patch)) {
+    if (v === undefined) delete next[k];
+    else next[k] = v;
+  }
+  entries[i] = next as unknown as DockToolEntry;
+  await saveToolEntries(entries);
+}
+
+// ==================== bz 侧运行台账（自动运行的账） ====================
+
+/**
+ * bz 对某个工具**自动运行**的记账。
+ *
+ * **刻意不进工具的 `dock.runs.json`**（那是工具唯一写者的地盘，D8/D9）：这里只记 bz 自己看到的
+ * 事实 —— 「bz 什么时候试着自动跑了一次、成没成」。它的存在是为了两件工具记录兜不住的事：
+ * ① 工具崩了自己没落记录时，bz 仍知道「它跑过且失败」；② 连续失败熔断要有据可依。
+ * 工具自己那份记录仍是**权威**（含 `error.kind`），这里只服务调度决策。
+ */
+export interface DockToolRunState {
+  /** bz 最近一次自动尝试的时刻（ISO） */
+  lastAttemptAt?: string;
+  /** 那次尝试 bz 侧的判果（工具记录为权威，这里只判调度） */
+  lastAttemptOk?: boolean;
+  /** 连续自动失败次数（成功即清零）—— 熔断依据 */
+  consecutiveFailures?: number;
+  /** 熔断触发时刻（ISO）；非空 = 自动运行已暂停，等用户在面板里手动恢复 */
+  pausedAt?: string;
+}
+
+/** 从设置原始值规整一条台账（脏字段逐个丢，不抛） */
+function parseRunState(raw: unknown): DockToolRunState {
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return {};
+  const r = raw as Record<string, unknown>;
+  const out: DockToolRunState = {};
+  if (typeof r.lastAttemptAt === 'string' && r.lastAttemptAt !== '') out.lastAttemptAt = r.lastAttemptAt;
+  if (typeof r.lastAttemptOk === 'boolean') out.lastAttemptOk = r.lastAttemptOk;
+  if (typeof r.consecutiveFailures === 'number' && Number.isInteger(r.consecutiveFailures) && r.consecutiveFailures > 0) {
+    out.consecutiveFailures = r.consecutiveFailures;
+  }
+  if (typeof r.pausedAt === 'string' && r.pausedAt !== '') out.pausedAt = r.pausedAt;
+  return out;
+}
+
+/** 读全部台账（缺省空对象） */
+export function readRunStates(): Record<string, DockToolRunState> {
+  const raw = (tryGetSettings() as Record<string, unknown> | undefined)?.dockRunState;
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return {};
+  const out: Record<string, DockToolRunState> = {};
+  for (const [id, v] of Object.entries(raw as Record<string, unknown>)) {
+    const st = parseRunState(v);
+    if (Object.keys(st).length) out[id] = st;
+  }
+  return out;
+}
+
+/**
+ * 改一条台账（合并 patch；`patch` 里值为 `undefined` 的键 = 清除该键）。整表写回。
+ * 传 `null` = 删掉该工具的台账（重新开始）。
+ */
+export async function patchRunState(id: string, patch: Partial<DockToolRunState> | null): Promise<void> {
+  const s = getSettings() as unknown as Record<string, unknown>;
+  const all = readRunStates();
+  if (patch === null) {
+    delete all[id];
+  } else {
+    const next = { ...all[id] } as Record<string, unknown>;
+    for (const [k, v] of Object.entries(patch)) {
+      if (v === undefined) delete next[k];
+      else next[k] = v;
+    }
+    const st = parseRunState(next);
+    if (Object.keys(st).length) all[id] = st;
+    else delete all[id];
+  }
+  s.dockRunState = all;
+  await saveSettings();
+}
+
+// ==================== 读侧（运行记录：只读、不创建、不抛） ====================
+
+/**
+ * 读某工具的运行记录（只读）。
+ *
+ * 走 fs 直读工具目录 —— 记录不在 vault 里，所以用不上 vault API。这与 `readDeclaration`
+ * 是同一条路（同一个 fs 缝）：读文件不执行任何东西，也不创建任何东西。
+ * `existed: false` = 文件不存在；`{ existed: true, file: null }` = 文件在但读不懂（UI 要分这两者）。
+ */
+export function readRunsFile(entry: DockToolEntry): { file: DockRunsFile | null; existed: boolean } {
+  const raw = readRunsText(entry.path);
   if (raw === null) return { file: null, existed: false };
-  const parsed = parseRunsFileText(raw, id);
-  return { file: parsed, existed: true };
+  return { file: parseRunsFileText(raw, entry.id), existed: true };
 }
 
 // ==================== 参数值（工具侧设置文件） ====================
@@ -173,6 +255,22 @@ export interface DockToolView {
   /** 记录文件存在但读不懂（≠「还没跑过」） */
   runsUnreadable: boolean;
   due: DockDueVerdict;
+  /** 调度判据：现在该不该自动跑（`isDueToRun`；与 `due` 的告警口径刻意不同，interval 首次也跑） */
+  dueToRun: boolean;
+  /** 声明里的节奏（**作者默认值**） */
+  declaredSchedule: DockSchedule | undefined;
+  /** **生效节奏**（覆盖 ?? 声明）—— 分区、标红、调度一律用它 */
+  schedule: DockSchedule | undefined;
+  /** 是否被用户覆盖过 */
+  scheduleOverridden: boolean;
+  /** 覆盖之后**作者又改了声明**（C4 提示：建议重看一眼） */
+  declChangedSinceOverride: boolean;
+  /** 自动运行总闸（缺省开） */
+  autoRun: boolean;
+  /** 下一次「该跑」的时刻（ms）；判不出一律 `null`（绝不编假到期时间） */
+  nextDue: number | null;
+  /** bz 侧运行台账（缺省 undefined） */
+  runState: DockToolRunState | undefined;
   /** 记录条数超约定上限（**裁剪是工具的活**，bz 只检测、只在 UI 提示） */
   overLimit: boolean;
   runsPath: string;
@@ -198,9 +296,9 @@ export function displayIcon(view: DockToolView): string {
   return view.manifest?.icon || 'square-terminal';
 }
 
-/** 自动化 / 手动：**由声明的节奏推出**（`triggerOf` 是唯一判据，登记里没有第二个字段） */
+/** 自动化 / 手动：**由生效节奏推出**（覆盖优先；`triggerOf` 仍是唯一判据，登记里没有第二个字段） */
 export function triggerOfView(view: DockToolView): 'auto' | 'manual' {
-  return triggerOf(view.manifest?.schedule);
+  return triggerOf(view.schedule);
 }
 
 /** 健康态 → 是否要「标红」（due 才算欠；pending/unknown/none 都不标） */
@@ -211,19 +309,35 @@ export function isOverdue(state: DockRunHealth): boolean {
 /** 一次把全部工具的视图读出来（并行读，互不阻塞） */
 export async function loadToolViews(app: App): Promise<DockToolView[]> {
   const entries = readToolEntries();
-  return Promise.all(entries.map((entry) => loadToolView(app, entry)));
+  const states = readRunStates(); // 台账一次读全，别让每个工具各读一遍
+  return Promise.all(entries.map((entry) => loadToolView(app, entry, states)));
 }
 
 /** 读单个工具的视图 */
-export async function loadToolView(app: App, entry: DockToolEntry): Promise<DockToolView> {
+export async function loadToolView(
+  app: App,
+  entry: DockToolEntry,
+  runStates: Record<string, DockToolRunState> = readRunStates(),
+): Promise<DockToolView> {
   const decl = readDeclaration(entry.path);
   const manifest = decl.manifest ?? null;
   const run = resolveRun(manifest, entry.path);
   // 信任比对在**每次读视图时**做，不只在「重新读声明」那条路径上 —— 声明是文件，
   // 面板没开的时候也可能被人改掉；跑之前必须还能核出「这条命令我信过」。
   const trustStale = isTrusted(entry) && (run ? runSignature(run) : undefined) !== entry.trustedRun;
-  const runsRead = await readRunsFile(app, entry.id);
+  const runsRead = readRunsFile(entry);
   const runs = runsRead.file?.runs ?? [];
+
+  // 生效节奏 = 用户覆盖 ?? 声明默认。分区、标红、调度**一律从它出发**，声明那份只当默认值。
+  const declaredSchedule = manifest?.schedule;
+  const schedule = effectiveSchedule(declaredSchedule, entry.scheduleOverride);
+  const scheduleOverridden = entry.scheduleOverride !== undefined;
+  // 覆盖之后作者又改了声明？比对建立覆盖时留下的签名（没记签名 = 无从判断，不提示）
+  const declChangedSinceOverride =
+    scheduleOverridden &&
+    entry.overrideDeclSig !== undefined &&
+    entry.overrideDeclSig !== scheduleSignature(declaredSchedule);
+
   return {
     entry,
     manifest,
@@ -235,9 +349,17 @@ export async function loadToolView(app: App, entry: DockToolEntry): Promise<Dock
     trustStale,
     runs,
     runsUnreadable: runsRead.existed && runsRead.file === null,
-    due: judgeDue(manifest?.schedule, runs),
+    due: judgeDue(schedule, runs),
+    dueToRun: isDueToRun(schedule, runs),
+    declaredSchedule,
+    schedule,
+    scheduleOverridden,
+    declChangedSinceOverride,
+    autoRun: isAutoRun(entry),
+    nextDue: nextDueAt(schedule, runs),
+    runState: runStates[entry.id],
     overLimit: runs.length > DOCK_RUNS_PER_TOOL_LIMIT,
-    runsPath: runsFilePath(entry.id),
+    runsPath: runsPathOf(entry),
   };
 }
 
@@ -272,7 +394,7 @@ export function overview(views: readonly DockToolView[], now: number = Date.now(
     views.map((v) => ({
       trigger: triggerOfView(v),
       name: displayName(v),
-      schedule: v.manifest?.schedule,
+      schedule: v.schedule,
       runs: v.runs,
       overdue: isOverdue(v.due.state),
     })),

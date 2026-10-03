@@ -14,14 +14,14 @@
       bz 工具坞                                        你的工具目录
         │  ① 读声明：读 <工具目录>/dock.json   ───────────►  文件（你手写，bz 只读、不执行）
         │  ② 跑起来：<run.cmd> <run.args…> --<参数>=<值> … ►  stdout 逐行吐 [bz-*] 四行协议
-        │  ③ 事后读：只读 runs/<id>.json        ◄───────────  你自己原子写这份运行记录
+        │  ③ 事后读：只读 <工具目录>/dock.runs.json  ◄─────  你自己原子写这份运行记录
         ▼
    面板（列表 / 详情 / 历史 / KPI）
 ```
 
 - ① **不执行任何东西** —— 就是读一个文件。所以「看清它会跑什么」发生在你被信任**之前**：用户先看到命令、工作目录、参数表，再决定信不信。
 - ② ③ 是**实时 / 事后**的（bz 是你的父进程，能读你的 stdout；记录则永远由你自己落盘，bz **只读**）。
-- 自动化工具由系统计划任务在 Obsidian 关着时启动 —— 那种情况没有 ②，只剩 ③。**所以离场运行的结构化产出（`info` / `result`）只能靠记录带回来，否则就丢了。**
+- **自动化**工具由 bz 按声明的节奏自动拉起（Obsidian 开着的时候）；只有「Obsidian 关着也要跑」那类才需要你自己配系统计划任务 —— 那种情况没有 ②，只剩 ③。**所以离场运行的结构化产出（`info` / `result`）只能靠记录带回来，否则就丢了。**
 
 ---
 
@@ -159,7 +159,7 @@
 > 反面教材：`{ key: "signinUrl", label: "签到接口" }` —— 用户看到只会想「接口是啥？我怎么会知道？」。
 > 正确做法：脚本里写 `const SIGNIN_URL = 'https://…/e/extend/signin.php'`，参数表里**只留 Cookie**。
 
-### 2.5 `schedule`：声明了才判漏跑，也才归到「自动化」
+### 2.5 `schedule`：声明了才判漏跑、才归到「自动化」，**bz 也才替你触发**
 
 ```jsonc
 { "schedule": { "kind": "daily", "hour": 12, "note": "09:00 起随机 0~2 小时" } }
@@ -173,7 +173,13 @@
 
 **越界字段逐个丢弃，不连累整条节奏**（`hour: 30` 只是丢掉 `hour`，节奏还在，判得粗一点）。判定所需时刻全部按**本地时区**。
 
-**面板上的「自动化 / 手动」就是这个字段推出来的**（`triggerOf`）：`daily` / `weekly` / `interval` → 自动化；`on-demand` / `unknown` / 没写 → 手动。**没有第二个地方能改这个分类** —— 所以别指望用户在面板上把它改成「自动化」，那是你声明的。
+**面板上的「自动化 / 手动」就是这个字段推出来的**（`triggerOf`）：`daily` / `weekly` / `interval` → 自动化；`on-demand` / `unknown` / 没写 → 手动。**没有第二个地方能改这个分类** —— 用户可以在面板上**覆盖**节奏（保存进登记项，不动你的声明文件），但默认分类是你声明的。
+
+> **bz 会真的替你触发（ADR-0236）。** 声明了 `daily` / `weekly` / `interval`，Obsidian 开着时 bz 就按节奏把你拉起来：到点跑、漏跑补、失败重试（失败 15 分钟冷却、连续 3 次熔断暂停）。所以：
+>
+> - **不必**再去系统任务计划程序里给自己配一份 —— 那是老做法（只在「关着 Obsidian 也要跑」时才需要，见 §4.1）。
+> - bz 拉起你时会注入 `BZ_DOCK_TRIGGER=auto`，你据此给记录的 `trigger` 字段标 `auto`（§4.1）。
+> - 用户在「设置 → 工具坞 → 自动运行」可以一键关掉全部自动运行；也能在单个工具的详情页关掉它自己。
 
 > 漏跑提醒发不发，用户可以在「设置 → 工具坞 → 提醒」关掉。但**声明节奏本身**仍决定面板上那个工具卡会不会被标红。
 
@@ -217,10 +223,10 @@
 
 ### 4.1 写到哪儿
 
-**路径由 bz 约定，你不要自己声明路径**：`<存储路径>/dock/runs/<id>.json`，用户没改过设置时就是 `CONFIG/STORAGE/dock/runs/<id>.json`。
+**就写在你自己的目录里**：`dock.runs.json`，与 `dock.json` 同级。文件名是契约的一部分（`declaration.ts` 的 `RUNS_FILENAME`），**你不要自己另外声明路径** —— 也不需要知道 vault 在哪。
 
-- **在场运行**（bz 启动你）：环境变量里直接给好了绝对路径，用 `BZ_DOCK_RUNS_FILE`。
-- **离场运行**（系统计划任务启动你，Obsidian 关着）：拿不到那个变量，**必须自己在工具配置或任务定义里写死一次路径**（面板的「复制数据文件路径」就是为了让你少敲这几下）。
+- **在场运行**（bz 启动你，含它按节奏自动触发）：环境变量里给好了绝对路径，用 `BZ_DOCK_RUNS_FILE`。它由你的 `dock.json` 位置推出来，所以永远是绝对值，不会被你的 `cwd` 解析歪。
+- **离场运行**（你自己配的系统计划任务在 Obsidian 关着时启动你）：拿不到那个变量，但答案很简单 —— **还是写你自己目录里的 `dock.runs.json`**（脚本里由 `__dirname` / `import.meta.url` 定位即可）。从前那份要「写死一个 vault 内路径」的折磨没有了（记录已归工具目录）。
 
 bz 注入的环境变量（`dockEnvOf`）：
 
@@ -228,10 +234,11 @@ bz 注入的环境变量（`dockEnvOf`）：
 |---|---|
 | `BZ_DOCK_CONTRACT` | `1` |
 | `BZ_DOCK_TOOL` | 你的 id |
-| `BZ_DOCK_RUNS_FILE` | 记录文件的绝对路径 |
-| `BZ_DOCK_VAULT` | vault 根目录绝对路径 |
+| `BZ_DOCK_RUNS_FILE` | **记录文件的绝对路径**（= 你目录下的 `dock.runs.json`） |
+| `BZ_DOCK_VAULT` | vault 根目录绝对路径（通常用不上，留给你偶尔要读写 vault 时） |
+| `BZ_DOCK_TRIGGER` | `auto`（bz 按节奏自动触发）/ `manual`（用户在面板里点）。**给记录的 `trigger` 字段用**：bz 是父进程，它最清楚这次是谁拉起的，你不用猜。缺省按 `manual` 处理 |
 
-> ⚠️ **bz 只注入这四个变量，不继承宿主环境**（子进程的 env 被整体替换）。**不要依赖 `PATH` 或其他环境变量去找可执行文件** —— 需要什么就在脚本里写绝对路径，或自己读系统配置。这是当前实现的硬约束。
+> ⚠️ **bz 只注入这五个变量，不继承宿主环境**（子进程的 env 被整体替换）。**不要依赖 `PATH` 或其他环境变量去找可执行文件** —— 需要什么就在脚本里写绝对路径，或自己读系统配置。这是当前实现的硬约束。
 
 ### 4.2 文件形状
 
@@ -251,7 +258,7 @@ bz 注入的环境变量（`dockEnvOf`）：
 | `status` | ✅ | `ok` / `failed` / `stopped` / `running` / `timeout`。不认识 → **整条丢弃** |
 | `startedAt` | ✅ | 非空字符串，ISO 8601 带时区最稳 |
 | `runId` | | 缺省回落到 `startedAt`；建议 `${startedAt}-${pid}` 保证唯一 |
-| `trigger` | | `auto`（系统里自己跑）/ `manual`（工具坞启动）；**缺省 `manual`** |
+| `trigger` | | `auto`（bz 按节奏自动触发）/ `manual`（用户手动点）；**缺省 `manual`**。直接读 `BZ_DOCK_TRIGGER` 即可（§4.1），别自己猜 |
 | `finishedAt` / `durationMs` | | `running` 时可缺 |
 | `exitCode` | | number 或 `null`（`null` = 没起来） |
 | `message` | | **给人类看的一句话**，面板主文案。写「签到成功，+2 分」这种，别写「done」 |
@@ -303,15 +310,17 @@ bz 注入的环境变量（`dockEnvOf`）：
 
 ---
 
-## 5. 在场 vs 离场（必须分清）
+## 5. 在场 vs 离场（判据是**谁启动**，不是自动 / 手动）
 
 | | **在场** | **离场** |
 |---|---|---|
-| 谁启动 | bz（手动点 / 快捷键） | 系统（计划任务等） |
+| 谁启动 | **bz**（用户手动点 / 快捷键 / **bz 按节奏自动触发**） | 你自己配的系统计划任务（Obsidian 关着时） |
 | 四行协议 | **实时**回显 | 无（没有 stdout 可读） |
 | `info` / `result` | 协议即时进 UI，**同时**照写记录 | **只能**靠记录带回来 |
 | 停止 | bz 能中止你 | bz 管不到 |
 | 记录 | 你写 | 你写 |
+
+**关键区别**：bz 按节奏自动触发的运行**也是在场的**（bz 是父进程，有实时流、能停止）—— 「自动」不等于「离场」。唯一真「离场」的是「Obsidian 关着、由系统计划任务拉起」那一种。
 
 同一个脚本两种形态都要能跑 —— 这也是为什么**记录必须由你写**：离场时没人替你做这件事。
 
@@ -344,6 +353,7 @@ bz 注入的环境变量（`dockEnvOf`）：
 #!/usr/bin/env node
 import fs from 'node:fs';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 // 注意：这里不再需要任何 --manifest 分支 —— 声明就是上面那份 dock.json
 const ID = 'iamtxt-signin';
@@ -374,9 +384,14 @@ function params() {
 }
 
 // —— 契约 C：运行记录（原子写 + 自裁剪）——
+// 记录就写在自己目录里的 dock.runs.json：在场时用 bz 给的绝对路径，离场时由脚本自己定位。
+const RUNS_FILE = process.env.BZ_DOCK_RUNS_FILE
+  || path.join(path.dirname(fileURLToPath(import.meta.url)), 'dock.runs.json');
+// bz 是父进程，它告诉我们这次是自动触发还是手动点 —— 别自己猜
+const TRIGGER = process.env.BZ_DOCK_TRIGGER === 'auto' ? 'auto' : 'manual';
+
 function writeRun(rec) {
-  const file = process.env.BZ_DOCK_RUNS_FILE;
-  if (!file) return;                                  // 离场跑时改成你写死的路径
+  const file = RUNS_FILE;
   fs.mkdirSync(path.dirname(file), { recursive: true });
   let prev = { runs: [] };
   try { prev = JSON.parse(fs.readFileSync(file, 'utf8')); } catch { /* 首次或坏了 → 重来 */ }
@@ -394,7 +409,7 @@ async function main() {
   const info = [];
   const finish = (rec) => {
     const done = new Date();
-    writeRun({ runId: `${started.toISOString()}-${process.pid}`, trigger: 'auto',
+    writeRun({ runId: `${started.toISOString()}-${process.pid}`, trigger: TRIGGER,
       params: {},                                      // 参数只有 secret → 一律不落记录
       steps, startedAt: started.toISOString(), finishedAt: done.toISOString(),
       durationMs: done - started, ...rec });
@@ -468,12 +483,15 @@ ARGS = sys.argv[1:]
 
 def iso(): return datetime.now(timezone.utc).astimezone().isoformat()
 
+# 记录写在自己目录的 dock.runs.json：在场用 bz 给的路径，离场自己定位；trigger 读 bz 注入的
+RUNS_FILE = os.environ.get("BZ_DOCK_RUNS_FILE") or os.path.join(os.path.dirname(os.path.abspath(__file__)), "dock.runs.json")
+TRIGGER = "auto" if os.environ.get("BZ_DOCK_TRIGGER") == "auto" else "manual"
+
 def say(prefix, body):                                     # 契约 B
     print(f"[bz-{prefix}] {json.dumps(body, ensure_ascii=False) if not isinstance(body, str) else body}", flush=True)
 
 def write_run(rec):                                        # 契约 C
-    f = os.environ.get("BZ_DOCK_RUNS_FILE")
-    if not f: return
+    f = RUNS_FILE
     os.makedirs(os.path.dirname(f), exist_ok=True)
     try: prev = json.load(open(f, encoding="utf-8"))
     except Exception: prev = {"runs": []}
@@ -488,13 +506,13 @@ try:
     say("step", "检查登录态"); steps.append({"text": "检查登录态", "at": iso(), "status": "ok"})
     say("p", {"phase": "签到", "pct": None})                # 不可估 → null
     say("result", {"balance": 52})
-    write_run({"runId": f"{started}-{os.getpid()}", "trigger": "auto", "status": "ok",
+    write_run({"runId": f"{started}-{os.getpid()}", "trigger": TRIGGER, "status": "ok",
                "startedAt": started, "finishedAt": iso(), "durationMs": int((time.time() - t0) * 1000),
                "exitCode": 0, "message": "签到成功，+2 分", "steps": steps,
                "progress": {"phase": "签到", "pct": 100}, "result": {"balance": 52}})
     sys.exit(0)
 except Exception as e:
-    write_run({"runId": f"{started}-{os.getpid()}", "trigger": "auto", "status": "failed",
+    write_run({"runId": f"{started}-{os.getpid()}", "trigger": TRIGGER, "status": "failed",
                "startedAt": started, "finishedAt": iso(), "exitCode": 1, "message": "签到失败",
                "error": {"kind": "unknown", "detail": str(e), "stderr": str(e)[-2048:]}})
     print(str(e), file=sys.stderr, flush=True)
@@ -508,7 +526,9 @@ except Exception as e:
 - **不要在声明里编数字**：`runtime.estimatedSec` 写不准就别写（反正现在也没人消费）。
 - **不要把声明从 stdout 吐出来**：`--manifest` 通道已经取消，bz 不读你的 stdout 找声明。
 - **不要让 `id` 与记录文件里的 `tool` 不一致**（§1）。
-- **不要把 `secret` 写进运行记录的 `params`**（记录会落盘、会随 vault 同步）。
+- **不要把 `secret` 写进运行记录的 `params`**（记录会落盘、会随工具目录一起被备份/寄出）。
+- **不要给声明了 `daily`/`weekly`/`interval` 的工具再配一份系统计划任务** —— bz 已经按同一个节奏替你触发（ADR-0236）。两处都配 = 同一件事两个触发源，记录会翻倍。
+- **别在记录里给 `trigger` 写死** —— 读 `BZ_DOCK_TRIGGER`（bz 是父进程，它最清楚）。写死 `auto` 会让「用户手动点的那次」在面板上被当成自动运行。
 - **不要在记录里编数字**：拿不到的进度写 `null`，没跑的步别写。面板会把它当事实展示。
 - **不要直接覆写记录文件**（半截 JSON → bz 判「不可读」）；也不要指望 bz 替你裁剪。
 - **不要直接把「实现细节」做成参数**（§2.4）—— 最典型的就是把接口 URL 丢给用户填。用户不知道，也不该知道。
@@ -525,11 +545,11 @@ except Exception as e:
 3. `run.cmd` 能独立跑起来（顺手确认 `cwd` 缺省那个目录对不对 —— 它默认是你的工具目录）。
 4. 在面板里「导入声明」：核对框里显示的名字、命令、参数个数都对得上。
 5. 跑一次正常路径：能出 `[bz-step]` / `[bz-p]`（`pct` 拿不到就是 `null`）。
-6. 跑完 `runs/<id>.json` 里多了一条，`tool === id`，`status` 在枚举内，`secret` 已剔除。
+6. 跑完**你目录下的 `dock.runs.json`** 里多了一条，`tool === id`，`status` 在枚举内，`secret` 已剔除，`trigger` 取自 `BZ_DOCK_TRIGGER`（不是写死的）。
 7. 记录是 tmp + rename 写出来的（在写入瞬间被读不会出半截 JSON）。
 8. `runs` 数组已裁剪到 ≤ 200 条。
 9. 造一个失败（如断网）：`exit 1` + stderr 最后一行是原因 + 记录里 `error.kind` 是最贴切的分类。
-10. 如果声明了 `schedule`：`kind` 在枚举内，`hour` / `weekday` / `everyHours` 在范围内；顺带确认面板把它归到了「自动化」（还是「手动」）那一区，与你本意一致。
+10. 如果声明了 `schedule`：`kind` 在枚举内，`hour` / `weekday` / `everyHours` 在范围内；顺带确认面板把它归到了「自动化」（还是「手动」）那一区，与你本意一致。面板详情页的「自动运行」块里应能看到「作者声明」这一行正是你写的节奏。
 11. **参数表逐项自问**：用户看到这个框，能凭自己填对吗？填不对的（接口、路径、字段名、超时）回脚本里写死。
 
 ---
@@ -538,7 +558,9 @@ except Exception as e:
 
 - **参考实现（真跑得起来的样板）**：`E:\Obsidian\dock-tools\daily-signin\` —— iamtxt 每日签到，目录里就是 `dock.json` + `signin.mjs`，接口写死、参数只留 Cookie
 - 契约校验（真理源）：`src/dock/schema.ts`、`src/dock/registry.ts`
-- 声明文件与参数值：`src/dock/declaration.ts`
+- 声明文件 / 参数值 / 运行记录路径：`src/dock/declaration.ts`
 - 四行协议与进程生命周期：`src/core/external-tool.ts`
-- 拉起与回显：`src/dock/runner.ts`
+- 拉起与回显（含注入的环境变量）：`src/dock/runner.ts`
+- 自动运行（bz 按节奏替你触发）：`src/dock/scheduler.ts` + 判据 `src/dock/schedule.ts`
 - 设计决策（D1–D15、四份文件、明确不做的清单）：`.scratch/dock/spec.md`
+- 决策记录：ADR-0235（声明文件自描述）、**ADR-0236（bz 调度 + 运行记录归工具目录）**

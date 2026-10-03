@@ -40,6 +40,183 @@ export function triggerOf(schedule: DockSchedule | undefined): 'auto' | 'manual'
   return schedule.kind === 'on-demand' || schedule.kind === 'unknown' ? 'manual' : 'auto';
 }
 
+// ==================== 生效节奏（声明 ⊕ 用户覆盖） ====================
+
+/**
+ * 生效节奏 = 用户覆盖 ?? 声明里的默认值（spec D1 修订：bz 参与调度）。
+ *
+ * 覆盖是**整体替换**，不是字段级合并。字段级合并（只改 `hour`、其余借作者的）看着聪明，实则
+ * 是「改完发现还继承了作者一个自己没注意的 `weekday`」那种幽灵行为的温床。要覆盖，就在面板上
+ * 一次写全 —— 作者那份永远只当「没被覆盖时」的默认。
+ */
+export function effectiveSchedule(
+  declared: DockSchedule | undefined,
+  override: DockSchedule | undefined,
+): DockSchedule | undefined {
+  return override ?? declared;
+}
+
+/**
+ * 节奏签名 —— 只取**参与判定**的字段（`kind` + 三个参数），**不含 `note`**：
+ * 注释不参与判定，作者改个注释不该被当成「声明变了」去提示用户重看。
+ */
+export function scheduleSignature(s: DockSchedule | undefined): string {
+  if (!s) return '';
+  return [s.kind, s.hour ?? '', s.weekday ?? '', s.everyHours ?? ''].join('|');
+}
+
+/**
+ * 「节奏覆盖」编辑器草稿的 kind：比 `DockScheduleKind` 多一个 `inherit`（= 没改，跟随声明），
+ * 少一个 `unknown`（用户不会主动选「未知」）。
+ */
+export type DockScheduleDraftKind = 'inherit' | 'daily' | 'weekly' | 'interval' | 'on-demand';
+
+/**
+ * 编辑器草稿 → 生效覆盖节奏。`inherit` 返回 `undefined`（= 清除覆盖，回落声明默认）。
+ *
+ * **抽到这一层是为了可测**：这个映射有个隐蔽的错法 —— 漏掉一个 kind 就会掉进兜底的 `daily`，
+ * 于是「关掉自动」反而把工具排成了每天自动跑（方向刚好相反）。放在 `ui.ts` 里它进不了 node
+ * 测试（那份拖 `obsidian`），放这里就能钉住每个分支。
+ */
+export function scheduleFromDraft(
+  kind: DockScheduleDraftKind,
+  p: { hour: number; weekday: number; everyHours: number },
+): DockSchedule | undefined {
+  switch (kind) {
+    case 'inherit':
+      return undefined;
+    case 'daily':
+      return { kind: 'daily', hour: p.hour };
+    case 'weekly':
+      return { kind: 'weekly', weekday: p.weekday };
+    case 'interval':
+      return { kind: 'interval', everyHours: p.everyHours };
+    case 'on-demand':
+      return { kind: 'on-demand' };
+  }
+}
+
+/**
+ * 调度器判定「现在该跑吗」—— **与 `judgeDue` 的告警口径刻意分开**。
+ *
+ * 为什么不在 `judgeDue` 上挂个开关：告警回答「用户该被提醒吗」，调度回答「要不要现在跑」。
+ * 这两件事在 `interval` 首次时给出**相反**的答案 —— 告警不该「喊狼」（没有基线不许说「你该跑
+ * 没跑」，故 `unknown`），但调度**该跑一次**（工具刚装好，用户就是要它开工，D3 修订）。
+ *
+ * 判据：
+ *  - `on-demand` / `unknown` / 未声明 → 永不自动跑；
+ *  - `interval`：一条**终结**记录都没有 → 跑（首次）；否则同 `judgeDue`（`due` 才跑）；
+ *  - `daily` / `weekly`：同 `judgeDue`（`due` 才跑）。
+ */
+export function isDueToRun(
+  schedule: DockSchedule | undefined,
+  runs: readonly DockRunRecord[],
+  now: number = Date.now(),
+): boolean {
+  if (!schedule || schedule.kind === 'on-demand' || schedule.kind === 'unknown') return false;
+  if (schedule.kind === 'interval' && lastRun(runs) === undefined) return true; // 首次：没有基线也跑一次
+  return judgeDue(schedule, runs, now).state === 'due';
+}
+
+// ==================== 调度决策（bz 亲自调度自动化工具，D1 修订） ====================
+
+/** 某个工具这次为什么不跑（顺序即优先级；只用于解释，`decideDue` 只挑「该跑的」） */
+export type DockSkipReason =
+  | 'disabled' // 工具被停用
+  | 'untrusted' // 没建立信任
+  | 'trust-stale' // 声明里的命令改了，信任作废
+  | 'no-run' // 声明里没写怎么跑
+  | 'not-auto' // 生效节奏不是自动化（手动 / 未声明）
+  | 'auto-off' // 用户把自动运行总闸关了
+  | 'params' // 必填参数还没填
+  | 'paused' // 连续失败已熔断，等手动恢复
+  | 'cooldown' // 上次失败后还在冷却
+  | 'running' // 已经排上 / 在跑
+  | 'not-due'; // 还没到点
+
+/** 决策输入：一个工具此刻的全部相关事实（由 `DockToolView` 压出来，见 scheduler.ts） */
+export interface DockSchedInput {
+  id: string;
+  name: string;
+  enabled: boolean;
+  trusted: boolean;
+  trustStale: boolean;
+  hasRun: boolean;
+  /** 生效节奏是否为自动化（daily / weekly / interval） */
+  autoKind: boolean;
+  /** 用户总闸（`autoRun`） */
+  autoOn: boolean;
+  /** 该不该跑（`isDueToRun`） */
+  due: boolean;
+  /** 必填参数是否齐 */
+  paramsReady: boolean;
+  /** 是否已熔断暂停 */
+  paused: boolean;
+  /** 是否在冷却期内 */
+  cooldown: boolean;
+  /** 是否已排上 / 在跑 */
+  running: boolean;
+}
+
+export interface DockSchedDecision {
+  /** 该跑的（**保持输入顺序** —— 登记顺序即优先级） */
+  ready: DockSchedInput[];
+  skipped: { input: DockSchedInput; reason: DockSkipReason }[];
+}
+
+/**
+ * 第一个命中的不跑原因（`null` = 该跑）。**顺序即优先级**：先判硬门槛，最后判「到点」。
+ * 一个没信任的工具若报「还没到点」是误导（它压根跑不起来），所以 `untrusted` 排在 `not-due` 前。
+ */
+function skipReasonOf(i: DockSchedInput): DockSkipReason | null {
+  if (!i.enabled) return 'disabled';
+  if (!i.trusted) return 'untrusted';
+  if (i.trustStale) return 'trust-stale';
+  if (!i.hasRun) return 'no-run';
+  if (!i.autoKind) return 'not-auto';
+  if (!i.autoOn) return 'auto-off';
+  if (!i.paramsReady) return 'params';
+  if (i.paused) return 'paused';
+  if (i.running) return 'running';
+  if (i.cooldown) return 'cooldown';
+  if (!i.due) return 'not-due';
+  return null;
+}
+
+/**
+ * 纯决策：从一批工具事实里挑出「现在该跑的」，其余给出不跑的原因。**保持输入顺序**。
+ * 顺序稳定有意义：串行跑时它决定谁先跑，而登记顺序是用户排的。
+ */
+export function decideDue(inputs: readonly DockSchedInput[]): DockSchedDecision {
+  const ready: DockSchedInput[] = [];
+  const skipped: DockSchedDecision['skipped'] = [];
+  for (const i of inputs) {
+    const r = skipReasonOf(i);
+    if (r) skipped.push({ input: i, reason: r });
+    else ready.push(i);
+  }
+  return { ready, skipped };
+}
+
+/**
+ * 必填参数缺哪些（返回缺的 `label`，供提示）。
+ * `required` 且值为空（`undefined` / `null` / 空串 / 空数组）→ 算缺。用途：自动跑之前挡一下 ——
+ * 拿不到 Cookie 就白跑一次网络请求，还多一条失败记录，不如直接说「先填参数」。
+ */
+export function missingRequiredParams(
+  params: readonly { key: string; label: string; required?: boolean }[] | undefined,
+  values: Record<string, unknown>,
+): string[] {
+  const out: string[] = [];
+  for (const p of params ?? []) {
+    if (!p.required) continue;
+    const v = values[p.key];
+    const empty = v === undefined || v === null || v === '' || (Array.isArray(v) && v.length === 0);
+    if (empty) out.push(p.label || p.key);
+  }
+  return out;
+}
+
 /** 本地日键 YYYY-MM-DD（与 core/ui/str localDayKey 同口径；此处独立实现保零依赖） */
 function dayKey(ts: number): string {
   const d = new Date(ts);

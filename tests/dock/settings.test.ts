@@ -1,15 +1,16 @@
 // @vitest-environment node
 /**
- * 工具坞（dock）域设置 schema（ADR-0235）。
+ * 工具坞（dock）域设置 schema（ADR-0235 / ADR-0236）。
  *
  * 本域设置页有意「薄」：工具的参数、节奏、怎么跑都随工具目录里的声明文件（`dock.json`）
  * 住在工具侧，登记表（「导入哪份声明」）只走面板内「导入声明」——那是本插件权限最高的数据，
  * 一旦设置页也能改，「打开别人的 vault」就等于「在他机器上执行任意命令」（D5/D6 信任边界）。
  *
- * 守卫三件：
- *  1. 组序 = 工具（登记直达）→ 提醒；
+ * 守卫四件：
+ *  1. 组序 = 工具（登记直达）→ 自动运行 → 提醒；
  *  2. 登记行是 info + 单钮，且**没有任何行绑定 dockTools**（D6：登记不走设置页行编辑）；
- *  3. 「漏跑提醒」toggle 绑 dockNotifyMissed、默认值在 DEFAULT_SETTINGS 里，且域内**真的读它**
+ *  3. 「自动运行」toggle 绑 dockAutoRun、默认值在 DEFAULT_SETTINGS 里且为布尔，且域内**真的读它**；
+ *  4. 「漏跑提醒」toggle 绑 dockNotifyMissed、默认值在 DEFAULT_SETTINGS 里，且域内**真的读它**
  *     ——2026-10-04 发现该键曾是「只声明不消费」的死设置，这条文本断言防它再死一遍
  *     （同仓先例：一批守卫靠读源码文本断言，模块图里没有这条边）。
  */
@@ -27,13 +28,15 @@ const readRepoFile = (rel: string): string => readFileSync(fileURLToPath(new URL
 
 describe('工具坞设置 schema', () => {
   const schema = dockSettingsSchema();
-  const [tools, notice] = schema.groups;
+  const [tools, autoRun, notice] = schema.groups;
 
-  it('组序 = 工具（登记直达）→ 提醒，两行而已（配置的绝大多数在工具侧，不搬进设置页）', () => {
-    expect(schema.groups.map((g) => g.name)).toEqual(['工具', '提醒']);
+  it('组序 = 工具（登记直达）→ 自动运行 → 提醒，每组一行（配置的绝大多数在工具侧，不搬进设置页）', () => {
+    expect(schema.groups.map((g) => g.name)).toEqual(['工具', '自动运行', '提醒']);
     expect(tools.icon).toBe('container'); // 与域图标同源
+    expect(autoRun.icon).toBe('rocket');
     expect(notice.icon).toBe('bell');
     expect(tools.rows).toHaveLength(1);
+    expect(autoRun.rows).toHaveLength(1);
     expect(notice.rows).toHaveLength(1);
   });
 
@@ -59,6 +62,14 @@ describe('工具坞设置 schema', () => {
     expect(src).not.toContain('dockTools');
   });
 
+  it('自动运行 toggle 绑 dockAutoRun，默认值在 DEFAULT_SETTINGS 里且为布尔', () => {
+    const row = autoRun.rows[0] as ToggleRow;
+    expect(row.type).toBe('toggle');
+    expect(row.name).toBe('启动后自动运行');
+    expect((row.binding as { key?: string }).key).toBe('dockAutoRun');
+    expect(typeof DEFAULT_SETTINGS.dockAutoRun).toBe('boolean');
+  });
+
   it('漏跑提醒 toggle 绑 dockNotifyMissed，默认值在 DEFAULT_SETTINGS 里且为布尔', () => {
     const row = notice.rows[0] as ToggleRow;
     expect(row.type).toBe('toggle');
@@ -67,8 +78,9 @@ describe('工具坞设置 schema', () => {
     expect(typeof DEFAULT_SETTINGS.dockNotifyMissed).toBe('boolean');
   });
 
-  it('该开关域内真的被读（防「只声明不消费」的死设置复发）', () => {
-    const ui = readRepoFile('../../src/dock/ui.ts');
-    expect(ui).toContain('dockNotifyMissed');
+  it('两个开关域内都真的被读（防「只声明不消费」的死设置复发）', () => {
+    // 漏跑提醒的消费点在 ui.ts；自动运行总闸的消费点在调度器
+    expect(readRepoFile('../../src/dock/ui.ts')).toContain('dockNotifyMissed');
+    expect(readRepoFile('../../src/dock/scheduler.ts')).toContain('dockAutoRun');
   });
 });

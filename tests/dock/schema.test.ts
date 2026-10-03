@@ -15,6 +15,7 @@ import {
   parseRunRecord,
   parseRunsFile,
   parseRunsFileText,
+  parseSchedule,
   stripSecrets,
 } from '../../src/dock/schema';
 
@@ -124,6 +125,57 @@ describe('parseManifest', () => {
     expect(m.run).toEqual({ cmd: 'x.cmd', shell: true, cwd: 'C:/tools' });
     expect(parseManifest({ ...goodManifest, run: { cmd: 'x', shell: 'yes' } })!.run!.shell).toBeUndefined();
     expect(parseManifest({ ...goodManifest, run: { cmd: 'x', cwd: '  ' } })!.run!.cwd).toBeUndefined();
+  });
+});
+
+/**
+ * parseSchedule 被声明（工具作者的默认节奏）与登记项（用户改过的节奏）**两处共用**。
+ * 它的价值全在「同口径」上 —— 用户改的和作者写的一模一样时，必须解析出完全一致的结果，
+ * 否则会冒出「改回原样却被判成不同」的幽灵差异。所以这里逐条钉住口径。
+ */
+describe('parseSchedule', () => {
+  it('合法节奏：字段归一，note 仅非空保留', () => {
+    expect(parseSchedule({ kind: 'daily', hour: 9, note: '09:00 起随机 0~2 小时' })).toEqual({
+      kind: 'daily',
+      hour: 9,
+      note: '09:00 起随机 0~2 小时',
+    });
+    expect(parseSchedule({ kind: 'daily', hour: 9, note: '   ' })).toEqual({ kind: 'daily', hour: 9 });
+  });
+
+  it('kind 不认识 / 缺失 / 非字符串 → 整条作废（不猜，与 parseManifest 同口径）', () => {
+    for (const bad of [{ kind: '每分钟' }, { hour: 9 }, { kind: 1 }, { kind: '' }, 'daily', null, undefined, 42, []]) {
+      expect(parseSchedule(bad)).toBeUndefined();
+    }
+  });
+
+  it('越界字段逐个丢，节奏本身留下 —— 少一个字段只是判得粗一点', () => {
+    expect(parseSchedule({ kind: 'daily', hour: 99 })).toEqual({ kind: 'daily' });
+    expect(parseSchedule({ kind: 'daily', hour: -1 })).toEqual({ kind: 'daily' });
+    expect(parseSchedule({ kind: 'daily', hour: 9.5 })).toEqual({ kind: 'daily' }); // 非整数同样丢
+    expect(parseSchedule({ kind: 'weekly', weekday: 7 })).toEqual({ kind: 'weekly' });
+    expect(parseSchedule({ kind: 'weekly', weekday: -1 })).toEqual({ kind: 'weekly' });
+  });
+
+  it('everyHours 只认正有限数（0 / 负数 / 非数丢掉）', () => {
+    expect(parseSchedule({ kind: 'interval', everyHours: 6 })).toEqual({ kind: 'interval', everyHours: 6 });
+    for (const bad of [0, -3, '6', NaN, Infinity]) {
+      expect(parseSchedule({ kind: 'interval', everyHours: bad })).toEqual({ kind: 'interval' });
+    }
+  });
+
+  it('边界值 0 / 23 / 0 / 6 都能留下（闭区间两端不许误伤）', () => {
+    expect(parseSchedule({ kind: 'daily', hour: 0 })).toEqual({ kind: 'daily', hour: 0 });
+    expect(parseSchedule({ kind: 'daily', hour: 23 })).toEqual({ kind: 'daily', hour: 23 });
+    expect(parseSchedule({ kind: 'weekly', weekday: 0 })).toEqual({ kind: 'weekly', weekday: 0 });
+    expect(parseSchedule({ kind: 'weekly', weekday: 6 })).toEqual({ kind: 'weekly', weekday: 6 });
+  });
+
+  it('与 parseManifest 走的是同一条路（同一段节奏两处解析结果必须一致）', () => {
+    const sched = { kind: 'weekly', weekday: 3, hour: 8 };
+    expect(parseManifest({ v: 1, id: 'x', name: 'X', params: [], schedule: sched })!.schedule).toEqual(
+      parseSchedule(sched),
+    );
   });
 });
 

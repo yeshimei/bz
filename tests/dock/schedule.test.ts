@@ -6,19 +6,27 @@
  */
 import { describe, it, expect } from 'vitest';
 import {
+  decideDue,
   durationText,
+  effectiveSchedule,
+  isDueToRun,
   judgeDue,
   lastRun,
+  missingRequiredParams,
   nextDueAt,
   overviewOf,
   recentRuns,
   recentStrip,
+  scheduleFromDraft,
+  scheduleSignature,
   successRate,
   terminalRuns,
   timeOf,
   triggerOf,
+  type DockSchedInput,
 } from '../../src/dock/schedule';
-import type { DockRunRecord } from '../../src/dock/schema';
+import type { DockRunRecord, DockSchedule } from '../../src/dock/schema';
+import { parseSchedule } from '../../src/dock/schema';
 
 /** 造一条终结运行（默认本地时间语义用无时区串，便于按本地日判定） */
 function run(p: Partial<DockRunRecord> & { startedAt: string }): DockRunRecord {
@@ -331,5 +339,173 @@ describe('triggerOf', () => {
   it('只声明了 kind 没有细化字段，也算自动化（声明得粗只是判得粗，不是不算）', () => {
     expect(triggerOf({ kind: 'daily' })).toBe('auto'); // 没给 hour
     expect(triggerOf({ kind: 'interval' })).toBe('auto'); // 没给 everyHours
+  });
+});
+
+// ==================== D1 修订：生效节奏 / 调度判据 / 决策（ADR-0236） ====================
+
+describe('effectiveSchedule —— 覆盖优先，整体替换', () => {
+  const declared: DockSchedule = { kind: 'daily', hour: 12 };
+  it('没有覆盖 → 用声明那份', () => {
+    expect(effectiveSchedule(declared, undefined)).toBe(declared);
+  });
+  it('有覆盖 → 用覆盖那份（哪怕声明还在）', () => {
+    const ov: DockSchedule = { kind: 'interval', everyHours: 6 };
+    expect(effectiveSchedule(declared, ov)).toBe(ov);
+  });
+  it('声明没有、覆盖有 → 用覆盖（手动工具也能被排上节奏）', () => {
+    const ov: DockSchedule = { kind: 'weekly', weekday: 1 };
+    expect(effectiveSchedule(undefined, ov)).toBe(ov);
+  });
+  it('两边都没有 → undefined（未声明节奏）', () => {
+    expect(effectiveSchedule(undefined, undefined)).toBeUndefined();
+  });
+});
+
+describe('scheduleSignature —— 只取参与判定的字段，不含 note', () => {
+  it('同 kind 同参数 → 同签名（note 不同不影响）', () => {
+    expect(scheduleSignature({ kind: 'daily', hour: 12, note: '甲' })).toBe(
+      scheduleSignature({ kind: 'daily', hour: 12, note: '乙' }),
+    );
+  });
+  it('参数变了 → 签名变', () => {
+    expect(scheduleSignature({ kind: 'daily', hour: 12 })).not.toBe(
+      scheduleSignature({ kind: 'daily', hour: 9 }),
+    );
+  });
+  it('未声明 → 空串', () => {
+    expect(scheduleSignature(undefined)).toBe('');
+  });
+});
+
+describe('scheduleFromDraft —— 编辑器草稿 → 覆盖节奏（每个 kind 都要有去处）', () => {
+  const p = { hour: 9, weekday: 3, everyHours: 6 };
+
+  it('每个 kind 都映射到同名节奏；参数带过去', () => {
+    expect(scheduleFromDraft('daily', p)).toEqual({ kind: 'daily', hour: 9 });
+    expect(scheduleFromDraft('weekly', p)).toEqual({ kind: 'weekly', weekday: 3 });
+    expect(scheduleFromDraft('interval', p)).toEqual({ kind: 'interval', everyHours: 6 });
+  });
+
+  it('inherit → undefined（= 清除覆盖，回落声明默认）', () => {
+    expect(scheduleFromDraft('inherit', p)).toBeUndefined();
+  });
+
+  // 这条是回归钉：从前漏了 on-demand 分支，它会掉进兜底的 daily ——
+  // 于是用户在面板上选「只手动（不自动）」，保存后反而把工具排成了每天自动跑，方向刚好相反。
+  it('on-demand → 仍是 on-demand（绝不掉进 daily 兜底）', () => {
+    expect(scheduleFromDraft('on-demand', p)).toEqual({ kind: 'on-demand' });
+    expect(triggerOf(scheduleFromDraft('on-demand', p))).toBe('manual');
+  });
+
+  it('产出能被 parseSchedule 原样接受（编辑器不会造出声明校验不过的节奏）', () => {
+    for (const kind of ['daily', 'weekly', 'interval', 'on-demand'] as const) {
+      expect(parseSchedule(scheduleFromDraft(kind, p))).toEqual(scheduleFromDraft(kind, p));
+    }
+  });
+});
+
+describe('isDueToRun —— 与告警口径分开：interval 首次要跑', () => {
+  const now = local(2026, 10, 4, 15, 0);
+  it('未声明 / on-demand / unknown → 永不自动跑', () => {
+    expect(isDueToRun(undefined, [], now)).toBe(false);
+    expect(isDueToRun({ kind: 'on-demand' }, [], now)).toBe(false);
+    expect(isDueToRun({ kind: 'unknown' }, [], now)).toBe(false);
+  });
+  it('daily 当天还没有记录 → 跑；已有 → 不跑', () => {
+    const s: DockSchedule = { kind: 'daily', hour: 12 };
+    expect(isDueToRun(s, [], now)).toBe(true);
+    expect(isDueToRun(s, [run({ startedAt: '2026-10-04T13:00:00' })], now)).toBe(false);
+  });
+  it('daily 还没到点（hour 未到）→ 不跑（pending 不是 due）', () => {
+    const s: DockSchedule = { kind: 'daily', hour: 20 };
+    expect(isDueToRun(s, [], now)).toBe(false);
+  });
+  it('interval 一条记录都没有 → 跑一次（首次；告警那边是 unknown，这里刻意相反）', () => {
+    const s: DockSchedule = { kind: 'interval', everyHours: 6 };
+    expect(judgeDue(s, [], now).state).toBe('unknown'); // 告警不喊狼
+    expect(isDueToRun(s, [], now)).toBe(true); // 但调度该开工
+  });
+  it('interval 距上次未超间隔 → 不跑；超了 → 跑', () => {
+    const s: DockSchedule = { kind: 'interval', everyHours: 6 };
+    expect(isDueToRun(s, [run({ startedAt: '2026-10-04T12:00:00' })], now)).toBe(false); // 3h
+    expect(isDueToRun(s, [run({ startedAt: '2026-10-04T06:00:00' })], now)).toBe(true); // 9h
+  });
+});
+
+describe('missingRequiredParams', () => {
+  const params = [
+    { key: 'cookie', label: 'Cookie', required: true },
+    { key: 'tag', label: '标签', required: false },
+    { key: 'deep', label: '深度', required: true },
+  ];
+  it('必填缺失 / 空串 / 空数组都算缺（返回 label）', () => {
+    expect(missingRequiredParams(params, {})).toEqual(['Cookie', '深度']);
+    expect(missingRequiredParams(params, { cookie: '', deep: [] })).toEqual(['Cookie', '深度']);
+  });
+  it('选填缺失不算缺；填齐了不算缺', () => {
+    expect(missingRequiredParams(params, { cookie: 'x', deep: 1 })).toEqual([]);
+  });
+  it('没有 params → 空', () => {
+    expect(missingRequiredParams(undefined, {})).toEqual([]);
+  });
+});
+
+describe('decideDue —— 该跑的按登记顺序，其余给原因', () => {
+  const base: DockSchedInput = {
+    id: 'a',
+    name: 'A',
+    enabled: true,
+    trusted: true,
+    trustStale: false,
+    hasRun: true,
+    autoKind: true,
+    autoOn: true,
+    due: true,
+    paramsReady: true,
+    paused: false,
+    cooldown: false,
+    running: false,
+  };
+  const mk = (p: Partial<DockSchedInput>): DockSchedInput => ({ ...base, ...p });
+
+  it('全绿 → 全进 ready，保持输入顺序', () => {
+    const d = decideDue([mk({ id: 'a' }), mk({ id: 'b' })]);
+    expect(d.ready.map((i) => i.id)).toEqual(['a', 'b']);
+    expect(d.skipped).toEqual([]);
+  });
+
+  it('硬门槛优先于「到点」：未信任的工具报 untrusted，而不是 not-due', () => {
+    const d = decideDue([mk({ id: 'x', trusted: false, due: false })]);
+    expect(d.skipped[0].reason).toBe('untrusted');
+  });
+
+  it('各原因都能报出来（顺序即优先级）', () => {
+    const cases: Array<[Partial<DockSchedInput>, string]> = [
+      [{ enabled: false }, 'disabled'],
+      [{ trusted: false }, 'untrusted'],
+      [{ trustStale: true }, 'trust-stale'],
+      [{ hasRun: false }, 'no-run'],
+      [{ autoKind: false }, 'not-auto'],
+      [{ autoOn: false }, 'auto-off'],
+      [{ paramsReady: false }, 'params'],
+      [{ paused: true }, 'paused'],
+      [{ running: true }, 'running'],
+      [{ cooldown: true }, 'cooldown'],
+      [{ due: false }, 'not-due'],
+    ];
+    for (const [patch, reason] of cases) {
+      expect(decideDue([mk(patch)]).skipped[0]?.reason).toBe(reason);
+    }
+  });
+
+  it('混合输入：该跑的在 ready，不跑的带原因', () => {
+    const d = decideDue([mk({ id: 'a' }), mk({ id: 'b', due: false }), mk({ id: 'c', paused: true })]);
+    expect(d.ready.map((i) => i.id)).toEqual(['a']);
+    expect(d.skipped.map((s) => `${s.input.id}:${s.reason}`)).toEqual(['b:not-due', 'c:paused']);
+  });
+
+  it('空输入 → 都不跑', () => {
+    expect(decideDue([])).toEqual({ ready: [], skipped: [] });
   });
 });

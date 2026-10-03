@@ -6,7 +6,7 @@
  * （「导入哪份声明」）是本插件权限最高的数据，按 ADR-0235 决策只走面板内「导入声明」、
  * 不做设置页行编辑（一旦能从别处改，「打开别人的 vault」就等于「在他机器上执行任意命令」）。
  *
- * 于是本页只剩两件**全域**的事：去哪儿管工具，以及漏跑提不提醒。
+ * 于是本页只剩三件**全域**的事：去哪儿管工具、自动跑不跑、漏跑提不提醒。
  */
 import type { SettingsSchema } from '../core/settings-schema';
 import { getApp } from '../core/app';
@@ -30,6 +30,18 @@ export function dockSettingsSchema(): SettingsSchema {
                 onClick: () => openDock(getApp()),
               },
             ],
+          },
+        ],
+      },
+      {
+        icon: 'rocket',
+        name: '自动运行',
+        rows: [
+          {
+            type: 'toggle',
+            name: '启动后自动运行',
+            desc: 'Obsidian 就绪后，bz 按各工具声明的节奏触发它：到点跑、该跑没跑就补跑。关掉则全部只手点',
+            binding: { key: 'dockAutoRun' },
           },
         ],
       },

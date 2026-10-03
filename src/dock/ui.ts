@@ -17,8 +17,9 @@
  * 自动化 / 手动也不是字段，是 `triggerOfView(节奏声明)` 推出来的。
  *
  * 三条不可越界的 UI 约束（来自拍板决策，见 spec）：
- *  1) **自动化工具不画实时进度条** —— 它是**离场**运行，bz 不是父进程，画一个就是骗人。
- *     进度条只对 bz 亲手启动的（在场）运行出现。
+ *  1) **不给没被 bz 拉起的运行画进度条**。D1 修订后判据是「谁启动的」而非「自动还是手动」：
+ *     bz 亲手拉起（含调度器自动触发）的都是在场，照画；系统计划任务那种**离场**形态没有实时流，
+ *     不许画。`liveRunsAll()` 里有没有它，就是这条的判据。
  *  2) **移动端只读**：能看状态与历史，不能启动（`core/external-tool` 在非桌面端本就返回
  *     「仅桌面端可用」；这里连按钮都不给，免得点了才知道）。
  *  3) 「任务」二字一律不出现（该词已被备忘录与 people 的画谱任务引擎占用）——用「外部工具」。
@@ -45,13 +46,14 @@ import {
   isTrusted,
   loadToolViews,
   overview,
+  patchRunState,
   readToolEntries,
-  runsFilePath,
   runSignature,
   saveToolEntries,
   saveToolValues,
   summarize,
   triggerOfView,
+  updateToolEntry,
   type DockToolEntry,
   type DockToolView,
 } from './data';
@@ -66,6 +68,7 @@ import {
   stopRun,
   type DockLiveRun,
 } from './runner';
+import { kickDockScheduler } from './scheduler';
 import {
   DECLARATION_FILENAME,
   readDeclaration,
@@ -74,12 +77,16 @@ import {
 } from './declaration';
 import {
   durationText,
+  missingRequiredParams,
   recentRuns,
+  scheduleFromDraft,
+  scheduleSignature,
   successRate,
   timeOf,
   type DockRunHealth,
+  type DockScheduleDraftKind,
 } from './schedule';
-import type { DockManifest, DockParam, DockRunRecord } from './schema';
+import type { DockManifest, DockParam, DockRunRecord, DockSchedule } from './schema';
 
 // ==================== 模块状态 ====================
 
@@ -108,6 +115,18 @@ const valueSaveTimers = new Map<string, ReturnType<typeof setTimeout>>();
 const VALUE_SAVE_DEBOUNCE_MS = 500;
 /** 已就「该跑没跑」打过通知的（本会话内去重：`<id>:<日>`） */
 const dueNotified = new Set<string>();
+
+/**
+ * 「自动运行」编辑草稿（按工具 id）。
+ * 改了节奏但还没点「保存」时的暂存；保存/恢复默认后即清，重新从生效值初始化。
+ */
+interface AutoDraft {
+  kind: DockScheduleDraftKind;
+  hour: number;
+  weekday: number;
+  everyHours: number;
+}
+const autoDraft = new Map<string, AutoDraft>();
 
 const OVERLAY_ID = 'bz-dock-mask';
 const FRAME_ID = 'bz-dock-panel';
@@ -248,11 +267,13 @@ export function unloadDock(): void {
   for (const t of valueSaveTimers.values()) clearTimeout(t);
   valueSaveTimers.clear();
   dueNotified.clear();
+  autoDraft.clear();
 }
 
 /** 插件启动时的域初始化（当前无监听，占位以对齐各域 ensureXxx 范式） */
 export function ensureDock(_app: App): void {
-  /* dock 不常驻：无事件订阅、无后台任务（调度本就不归 bz，spec D1） */
+  /* 面板本身不常驻（懒建 DOM）；常驻的后台任务是调度器，由 main.ts 直接 startDockScheduler 起
+     （不在这里挂，免得 ensureDock 与调度器两处都能起、谁先谁后说不清）。 */
 }
 
 function isPanelVisible(): boolean {
@@ -343,6 +364,10 @@ async function refresh(): Promise<void> {
  * 只对**已声明节奏**且判定为 `due` 的工具发；同一会话内每个工具每天最多一条
  * （不落盘 —— ADR-0218 已拍 bz 不持久化队列/状态；重启后重来一次，可接受）。
  * 开关 = `dockNotifyMissed`（设置面板「工具坞 → 提醒」）；缺省开——键缺失视为开。
+ *
+ * **调度器会管的就不在这里喊**（ADR-0236）：能被自动跑的工具，它「该跑没跑」会被调度器直接
+ * 补跑，再发一条「该跑没跑」就是同一件事喊两遍。只有调度器够不着的（总闸关、参数没填、自动
+ * 已关、熔断暂停、未信任、没写 run）才轮到这条兜底提醒。
  */
 function runDueNotifications(): void {
   if (tryGetSettings().dockNotifyMissed === false) return;
@@ -350,6 +375,7 @@ function runDueNotifications(): void {
   for (const v of views) {
     if (!isEnabled(v.entry)) continue;
     if (v.due.state !== 'due') continue;
+    if (willAutoRun(v)) continue; // 调度器会补跑它，别重复喊
     const key = `${v.entry.id}:${day}`;
     if (dueNotified.has(key)) continue;
     dueNotified.add(key);
@@ -359,6 +385,20 @@ function runDueNotifications(): void {
       action: { label: '查看', onClick: () => openDock(hostApp as App) },
     });
   }
+}
+
+/**
+ * 这个工具是否在**调度器的覆盖范围内**（用来避免与「该跑没跑」通知重复出声）。
+ * 判据是调度资格的静态面（不含「到点没到点」与运行中的会话锁），与 `scheduler.decideDue`
+ * 的口径一致但不必那么细。
+ */
+function willAutoRun(v: DockToolView): boolean {
+  if (tryGetSettings().dockAutoRun === false) return false;
+  if (!isEnabled(v.entry) || !isTrusted(v.entry) || v.trustStale) return false;
+  if (!v.run || !v.autoRun) return false;
+  if (triggerOfView(v) !== 'auto') return false;
+  if (v.runState?.pausedAt) return false;
+  return missingRequiredParams(v.manifest?.params, v.values).length === 0;
 }
 
 // ==================== 渲染 ====================
@@ -455,7 +495,8 @@ function untilText(ms: number): { num: string; unit: string } {
  * 面板顶层执行进度。
  *
  * **只画在场运行**（`liveRunsAll()`）—— 也就是 bz 亲手启动、能真的收到 `onProgress` 的那些。
- * 自动化工具是离场跑（bz 不是父进程），永远不进这条，所以这里不会出现编造的百分比。
+ * D1 修订后，自动化工具由 bz 调度器亲手拉起，**于是它们也在这一条里**（有实时进度、能停止）；
+ * 只有系统计划任务那种**离场**形态不在（bz 不是父进程、拿不到实时流），所以这里也不会出现编造的百分比。
  * 一个在跑的都没有时整条隐藏：不留空行，也不为「可能有用」占位。
  */
 function renderRunbar(): void {
@@ -677,6 +718,10 @@ function makeCard(v: DockToolView): HTMLElement {
   if (trustTag) tags.appendChild(el('span', 'bz-dock-tag bz-dock-tag--warn', trustTag));
   if (!v.manifest) tags.appendChild(el('span', 'bz-dock-tag bz-dock-tag--muted', '声明读不到'));
   if (v.manifest && !v.run) tags.appendChild(el('span', 'bz-dock-tag bz-dock-tag--muted', '只能看'));
+  if (triggerOfView(v) === 'auto' && !v.autoRun) {
+    tags.appendChild(el('span', 'bz-dock-tag bz-dock-tag--muted', '自动已关'));
+  }
+  if (v.runState?.pausedAt) tags.appendChild(el('span', 'bz-dock-tag bz-dock-tag--warn', '自动已暂停'));
   idbox.append(name, tags);
   top.append(ic, idbox);
   card.appendChild(top);
@@ -692,8 +737,8 @@ function makeCard(v: DockToolView): HTMLElement {
   state.appendChild(el('span', 'bz-dock-card-msg', messageTextOf(v, last)));
   const rate = successRate(v.runs);
   if (rate !== null) {
-    // ⚠️ 必须带上「成功」二字：光一个百分比挨着时间轴，会被读成进度条 ——
-    //    而自动化工具**没有进度**可报（离场运行，bz 不是父进程）。
+    // ⚠️ 必须带上「成功」二字：光一个百分比挨着时间轴，会被读成进度条。
+    //    这个数字是「记录里成功了几条」，不是任何一次运行的进度 —— 别让它被误读。
     const rateEl = el('span', 'bz-dock-rate', `${Math.round(rate * 100)}% 成功`);
     rateEl.title = `${v.runs.length} 条记录里成功了几条`;
     if (rate < 1) rateEl.classList.add('is-warn');
@@ -849,6 +894,217 @@ function openCardActions(anchor: HTMLElement, v: DockToolView): void {
 
 // ==================== 详情 ====================
 
+// ---------- 自动运行（详情页；D1 修订后 bz 与调度器之间唯一的用户界面） ----------
+
+/** 取（或初始化）某工具的覆盖草稿：已有覆盖 → 从覆盖起；没有 → 从声明起，kind 记为 inherit */
+function autoDraftOf(v: DockToolView): AutoDraft {
+  const key = v.entry.id;
+  const existing = autoDraft.get(key);
+  if (existing) return existing;
+
+  const cur = v.schedule;
+  const k = cur?.kind;
+  const kind: AutoDraft['kind'] = !v.scheduleOverridden
+    ? 'inherit'
+    : k === 'daily' || k === 'weekly' || k === 'interval' || k === 'on-demand'
+      ? k
+      : 'daily';
+  const d: AutoDraft = {
+    kind,
+    hour: cur?.hour ?? 12,
+    weekday: cur?.weekday ?? 1,
+    everyHours: cur?.everyHours ?? 6,
+  };
+  autoDraft.set(key, d);
+  return d;
+}
+
+/** 保存覆盖（`inherit` = 清除覆盖，回落作者默认）。存完踢调度器一拍，让改动作立刻生效 */
+async function saveAuto(v: DockToolView, d: AutoDraft): Promise<void> {
+  const id = v.entry.id;
+  const next = scheduleFromDraft(d.kind, d);
+  if (!next) {
+    await updateToolEntry(id, { scheduleOverride: undefined, overrideDeclSig: undefined });
+  } else {
+    await updateToolEntry(id, {
+      scheduleOverride: next,
+      overrideDeclSig: scheduleSignature(v.declaredSchedule),
+    });
+  }
+  autoDraft.delete(id);
+  kickDockScheduler();
+  await refresh();
+}
+
+function autoRow(label: string, value: string): HTMLElement {
+  const row = el('div', 'bz-dock-autorow');
+  row.appendChild(el('span', 'bz-dock-autorow-label', label));
+  row.appendChild(el('span', 'bz-dock-autorow-val', value));
+  return row;
+}
+
+/** 取值并夹到 [lo, hi] 的整数（输入框删空 / 乱输时回落到 fallback） */
+function clampInt(raw: string, lo: number, hi: number, fallback: number): number {
+  const n = Number(raw);
+  if (!Number.isFinite(n)) return fallback;
+  return Math.min(hi, Math.max(lo, Math.round(n)));
+}
+
+/**
+ * 「自动运行」块（详情页）。
+ *
+ * 这是 D1 修订后 bz 与调度器之间**唯一的用户界面**：开关（`autoRun`）、节奏覆盖
+ * （`scheduleOverride`）、以及「下次什么时候跑」。作者的默认与用户的覆盖**都摆出来**
+ * （「作者声明 / 当前生效」两行），别让人以为自己改的是声明 —— 那是工具目录里的文件，bz 只读不写。
+ *
+ * 手动工具也渲染本块：想给一个手工工具排上节奏，就在这里改（覆盖一套 daily/weekly/interval）。
+ */
+function autoSection(v: DockToolView): HTMLElement {
+  const sec = el('section', 'bz-dock-pane bz-dock-autopane');
+  const head = el('div', 'bz-dock-pane-head');
+  head.appendChild(el('h3', 'bz-dock-pane-title', '自动运行'));
+  sec.appendChild(head);
+
+  const id = v.entry.id;
+
+  // 总闸（autoRun）
+  sec.appendChild(
+    uiField({
+      label: '参与自动运行',
+      desc: '关掉后这个工具只手动跑（声明里的节奏仍在，只是 bz 不自动触发它）',
+      control: uiSwitch({
+        checked: v.autoRun,
+        onChange: (on) => {
+          void (async () => {
+            await updateToolEntry(id, { autoRun: on });
+            autoDraft.delete(id);
+            kickDockScheduler();
+            await refresh();
+          })();
+        },
+      }).el,
+    }),
+  );
+
+  // 事实两行：作者声明 vs 当前生效
+  const facts = el('div', 'bz-dock-autorows');
+  facts.appendChild(autoRow('作者声明', scheduleTextOf(v.declaredSchedule)));
+  facts.appendChild(autoRow('当前生效', scheduleTextOf(v.schedule) + (v.scheduleOverridden ? '（你改的）' : '')));
+  facts.appendChild(
+    autoRow('下次预计', v.nextDue === null ? '算不出（未声明节奏，或缺运行基线）' : dueTimeText(v.nextDue)),
+  );
+  if (v.runState?.pausedAt) {
+    facts.appendChild(
+      el(
+        'div',
+        'bz-dock-autonote bz-dock-autonote--warn',
+        `连续失败 ${v.runState.consecutiveFailures ?? 0} 次，自动运行已暂停`,
+      ),
+    );
+  }
+  if (v.declChangedSinceOverride) {
+    facts.appendChild(el('div', 'bz-dock-autonote', '作者后来改过声明里的节奏 —— 建议看一眼要不要跟着调'));
+  }
+  sec.appendChild(facts);
+
+  // 节奏编辑（改的是**覆盖**）
+  const d = autoDraftOf(v);
+  const editor = el('div', 'bz-dock-autoeditor');
+  editor.appendChild(
+    uiField({
+      label: '节奏',
+      control: uiSelect<string>({
+        options: [
+          { value: 'inherit', label: '跟随声明（清除我的改动）' },
+          { value: 'daily', label: '每天' },
+          { value: 'weekly', label: '每周' },
+          { value: 'interval', label: '每隔若干小时' },
+          { value: 'on-demand', label: '只手动（不自动）' },
+        ],
+        value: d.kind,
+        onChange: (val) => {
+          d.kind = val as AutoDraft['kind'];
+          render(); // 切换形态要换下面那行输入，重渲染一次
+        },
+      }).el,
+    }),
+  );
+
+  if (d.kind === 'daily') {
+    const inp = uiInput({
+      type: 'number',
+      value: String(d.hour),
+      onInput: (val) => {
+        d.hour = clampInt(val, 0, 23, 12);
+      },
+    });
+    inp.min = '0';
+    inp.max = '23';
+    editor.appendChild(uiField({ label: '当天几点前跑完', desc: '本地时间，0–23', control: inp }));
+  } else if (d.kind === 'weekly') {
+    editor.appendChild(
+      uiField({
+        label: '每周哪天',
+        control: uiSelect<string>({
+          options: ['周日', '周一', '周二', '周三', '周四', '周五', '周六'].map((l, i) => ({
+            value: String(i),
+            label: l,
+          })),
+          value: String(d.weekday),
+          onChange: (val) => {
+            d.weekday = clampInt(val, 0, 6, 1);
+          },
+        }).el,
+      }),
+    );
+  } else if (d.kind === 'interval') {
+    const inp = uiInput({
+      type: 'number',
+      value: String(d.everyHours),
+      onInput: (val) => {
+        d.everyHours = clampInt(val, 1, 168, 6);
+      },
+    });
+    inp.min = '1';
+    inp.max = '168';
+    editor.appendChild(uiField({ label: '每隔几小时', desc: '1–168', control: inp }));
+  }
+
+  const btns = el('div', 'bz-dock-runbtns');
+  btns.appendChild(uiBtn({ label: '保存节奏', size: 'sm', tone: 'primary', onClick: () => void saveAuto(v, d) }));
+  if (v.scheduleOverridden) {
+    btns.appendChild(
+      uiBtn({
+        label: '恢复声明默认',
+        size: 'sm',
+        onClick: () => {
+          autoDraft.delete(id);
+          void saveAuto(v, { ...d, kind: 'inherit' });
+        },
+      }),
+    );
+  }
+  if (v.runState?.pausedAt) {
+    btns.appendChild(
+      uiBtn({
+        label: '恢复自动运行',
+        size: 'sm',
+        onClick: () => {
+          void (async () => {
+            await patchRunState(id, null);
+            kickDockScheduler();
+            await refresh();
+          })();
+        },
+      }),
+    );
+  }
+  editor.appendChild(btns);
+  sec.appendChild(editor);
+
+  return sec;
+}
+
 function renderDetail(body: HTMLElement, v: DockToolView): void {
   const wrap = el('div', 'bz-dock-detail');
 
@@ -910,8 +1166,7 @@ function renderDetail(body: HTMLElement, v: DockToolView): void {
   meta.appendChild(
     metaRow('参数值文件', v.valuesPath, true, () => void copyText(v.valuesPath, '参数值文件路径')),
   );
-  meta.appendChild(metaRow('数据文件', v.runsPath, true, () => void copyText(v.runsPath, '数据文件路径')));
-  meta.appendChild(metaRow('节奏', v.manifest?.schedule ? scheduleText(v.manifest) : '工具未声明'));
+  meta.appendChild(metaRow('运行记录', v.runsPath, true, () => void copyText(v.runsPath, '运行记录路径')));
   const rate = successRate(v.runs);
   meta.appendChild(metaRow('成功率', rate === null ? '暂无记录' : `${Math.round(rate * 100)}%（共 ${v.runs.length} 条）`));
   if (v.overLimit) {
@@ -921,6 +1176,7 @@ function renderDetail(body: HTMLElement, v: DockToolView): void {
     meta.appendChild(el('div', 'bz-dock-meta-warn', '运行记录文件读不懂（坏 JSON 或结构不符）；工具坞不打补丁、不改写，等工具自己修好'));
   }
   wrap.appendChild(meta);
+  wrap.appendChild(autoSection(v));
 
   const cols = el('div', 'bz-dock-cols');
   cols.appendChild(runPane(v));
@@ -1412,20 +1668,36 @@ async function reloadDeclaration(v: DockToolView): Promise<void> {
   await refresh();
 }
 
-function scheduleText(m: DockManifest): string {
-  if (!m.schedule) return '未声明';
-  const s = m.schedule;
+/** 节奏 → 人话（只认节奏对象本身；**声明那份与用户覆盖那份共用这一份口径**，免得两处措辞漂开） */
+function scheduleTextOf(s: DockSchedule | undefined): string {
+  if (!s) return '未声明';
   const base: Record<string, string> = {
     daily: '每天一次',
     weekly: s.weekday !== undefined ? `每周${'日一二三四五六'[s.weekday]}` : '每周一次',
     interval: s.everyHours !== undefined ? `每 ${s.everyHours} 小时` : '按间隔',
-    'on-demand': '按需',
+    'on-demand': '按需（只手动）',
     unknown: '未声明',
   };
   const parts = [base[s.kind] ?? s.kind];
   if (s.kind === 'daily' && s.hour !== undefined) parts.push(`${String(s.hour).padStart(2, '0')}:00 前`);
   if (s.note) parts.push(`（${s.note}）`);
   return parts.join('');
+}
+
+/** 声明里那份节奏的人话（保留旧签名，内部转调 `scheduleTextOf`） */
+function scheduleText(m: DockManifest): string {
+  return scheduleTextOf(m.schedule);
+}
+
+/** 到期时刻 → 人话（当天说「今天 HH:MM」，跨天说「M-D HH:MM」） */
+function dueTimeText(ms: number): string {
+  const d = new Date(ms);
+  const p = (n: number) => String(n).padStart(2, '0');
+  const now = new Date();
+  const sameDay =
+    d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth() && d.getDate() === now.getDate();
+  const hm = `${p(d.getHours())}:${p(d.getMinutes())}`;
+  return sameDay ? `今天 ${hm}` : `${d.getMonth() + 1}-${p(d.getDate())} ${hm}`;
 }
 
 /** 声明里「会跑什么」的人话摘要（信任确认框与详情页共用一份口径） */
@@ -1455,7 +1727,7 @@ async function confirmTrust(
     run?.cwd ? `工作目录：${run.cwd}` : '',
     `声明文件：${declPath}`,
     '',
-    manifest.schedule ? `节奏：${scheduleText(manifest)}（自动化，bz 不调度）` : '节奏：未声明（手动）',
+    manifest.schedule ? `节奏：${scheduleText(manifest)}（自动化；bz 会在它开着时按节奏跑）` : '节奏：未声明（手动）',
     `参数：${manifest.params.length} 个`,
     '',
     '建立信任之后工具坞才会运行它（读声明不需要信任）。信任的对象是「那条命令」，',

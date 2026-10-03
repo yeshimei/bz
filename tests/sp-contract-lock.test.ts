@@ -39,7 +39,7 @@ const COUNT_BASELINE: Record<string, number> = {
   'password-vault': 5,
   smartcat: 15,
   knowledge: 25, // 2026-09-26 issue 462：「外部工具」组回归知识盒页（Python/ffmpeg/ffprobe 三行，域无关键位）
-  dock: 2, // ADR-0235：登记直达 info 行（+1，action 钮不另计）+「漏跑提醒」toggle（+1）
+  dock: 3, // ADR-0235：登记直达 info 行（+1，action 钮不另计）+「漏跑提醒」toggle（+1）；ADR-0236：再加「启动后自动运行」toggle（+1）
 };
 
 describe('settings-panel 运行期契约锁', () => {

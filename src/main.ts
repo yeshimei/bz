@@ -90,8 +90,9 @@ import { ensureSmartCat, unloadSmartCat, openSmartCat, openSmartCatChat, hideSma
 import { openSettingsPanel, unloadSettingsPanel } from './settings-panel';
 // 数据体检（checkup 域，D4：全插件数据可靠层只读巡检面板）
 import { openDataCheckup, unloadDataCheckup } from './checkup';
-// 工具坞（dock 域，ADR-0235：外部工具的标准接口 + 集中观测台；不调度、不关心工具是什么）
-import { openDock, unloadDock } from './dock';
+// 工具坞（dock 域，ADR-0235 + ADR-0236：外部工具的标准接口 + 集中观测台 + **bz 调度**；
+// 不关心工具是什么。调度只在桌面端、且在 Obsidian 开着的期间生效）
+import { openDock, unloadDock, startDockScheduler, stopDockScheduler } from './dock';
 
 /** 命令表：id/name 统一命名（spec「命令 id 全清单」第 9 轮：bz-<域>-<动作>）。
  *  域入口命令 icon 一律从 core/domain-icons（DOMAIN_ICONS）取——与设置面板导航单一事实源（enh-sweep-a）；
@@ -259,8 +260,8 @@ const COMMANDS: { id: string; name: string; icon: string; callback: () => void }
   { id: 'bz-settings-panel-open', name: '设置面板', icon: DOMAIN_ICONS['settings-panel'], callback: () => openSettingsPanel(getApp()) },
   // 数据体检（checkup 域，D4：全插件数据可靠层只读巡检；icon 与保险库体检同为 stethoscope，语义一致）
   { id: 'bz-data-checkup-open', name: '数据体检', icon: 'stethoscope', callback: () => void openDataCheckup(getApp()) },
-  // 工具坞（dock 域，ADR-0235：外部工具的登记 / 启动 / 回显 / 留痕。bz 不调度——自动化工具的
-  // 节奏由它自己在系统里配好，工具坞只在它该跑没跑时提醒你）
+  // 工具坞（dock 域，ADR-0235 + ADR-0236：外部工具的登记 / 启动 / 回显 / 留痕 / **调度**；
+  // 面板是唯一入口，自动化工具由调度器在启动就绪后按节奏触发）
   { id: 'bz-dock-open', name: '工具坞', icon: DOMAIN_ICONS.dock, callback: () => openDock(getApp()) },
 ];
 
@@ -415,6 +416,9 @@ export default class BzPlugin extends Plugin {
       // 日记本后台预热（②）：延迟一拍到空闲只读数据填缓存、不建 DOM（ADR-0003 兼容），
       // 首开日记本命中缓存秒开；四目录任一 md 变更经 domain-bus 事件自动失效。禁用插件时不预热（C13）。
       prewarmDiary(this.app, () => this.unloaded);
+      // 工具坞调度（ADR-0236）：就绪后延迟首跑、之后轮询兜到点触发；只在桌面端起。
+      // 传卸载旗标进去 —— 插件禁用后到点的定时器必须短路，不能幽灵运行（同 C13）。
+      startDockScheduler(this.app, () => this.unloaded);
     });
   }
 
@@ -464,7 +468,9 @@ export default class BzPlugin extends Plugin {
     unloadSettingsPanel();
     // 数据体检（checkup 域，D4：作废在途体检 + 面板 DOM 清理 + esc 注销）
     unloadDataCheckup();
-    // 工具坞（dock 域，ADR-0235：面板 DOM 清理 + esc 注销 + 会话态复位）
+    // 工具坞（dock 域，ADR-0235 + ADR-0236：调度器先停机（清定时器 + 复位会话态）——
+    // 先于 unloadDock，免得停表前又 tick 一轮去碰已拆的面板；再清面板 DOM + esc 注销 + 会话态复位）
+    stopDockScheduler();
     unloadDock();
     // 第二大脑：窄窗/抽屉 DOM、5s 防抖定时器、DeepSeek 服务、模块单例复位（ticket 107 补接线——
     // 原先 unloadSecondBrain 导出但从未被调用，禁用插件后残留窗体且防抖 refresh 仍会触发）

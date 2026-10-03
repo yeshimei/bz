@@ -118,3 +118,50 @@ describe('parseToolEntries', () => {
     expect(parseToolEntries({ id: 'a', path: 'x' })).toEqual([]);
   });
 });
+
+describe('调度覆盖层（autoRun / scheduleOverride / overrideDeclSig，ADR-0236）', () => {
+  it('三个字段都合法 → 读进来（覆盖节奏与声明节奏**同一把尺子**校验）', () => {
+    const e = parseToolEntry({
+      ...good,
+      autoRun: false,
+      scheduleOverride: { kind: 'interval', everyHours: 6 },
+      overrideDeclSig: 'daily|12||',
+    });
+    expect(e?.autoRun).toBe(false);
+    expect(e?.scheduleOverride).toEqual({ kind: 'interval', everyHours: 6 });
+    expect(e?.overrideDeclSig).toBe('daily|12||');
+  });
+
+  it('autoRun 只认布尔；非布尔视同缺省（缺省 = 开）', () => {
+    expect(parseToolEntry({ ...good, autoRun: 'yes' })?.autoRun).toBeUndefined();
+    expect(parseToolEntry({ ...good, autoRun: true })?.autoRun).toBe(true);
+  });
+
+  it('覆盖节奏不合法 → 当没覆盖（连 overrideDeclSig 一起丢）', () => {
+    const e = parseToolEntry({
+      ...good,
+      scheduleOverride: { kind: 'cron', expr: '* * * * *' },
+      overrideDeclSig: 'x',
+    });
+    expect(e?.scheduleOverride).toBeUndefined();
+    expect(e?.overrideDeclSig).toBeUndefined();
+  });
+
+  it('覆盖节奏里越界字段逐个丢，节奏本身留下（与 parseSchedule 同口径）', () => {
+    const e = parseToolEntry({ ...good, scheduleOverride: { kind: 'daily', hour: 30 } });
+    expect(e?.scheduleOverride).toEqual({ kind: 'daily' });
+  });
+
+  it('没有覆盖时不记 overrideDeclSig（签名只随覆盖存在）', () => {
+    const e = parseToolEntry({ ...good, overrideDeclSig: 'daily|12||' });
+    expect(e?.scheduleOverride).toBeUndefined();
+    expect(e?.overrideDeclSig).toBeUndefined();
+  });
+
+  it('登记里依然不许出现声明侧元数据（name/cmd/trigger 写进来也不读）', () => {
+    const e = parseToolEntry({ ...good, name: '偷渡', cmd: 'rm -rf /', trigger: 'auto' });
+    expect(e).not.toHaveProperty('name');
+    expect(e).not.toHaveProperty('cmd');
+    expect(e).not.toHaveProperty('trigger');
+  });
+});

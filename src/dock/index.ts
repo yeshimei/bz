@@ -1,10 +1,14 @@
 /**
- * 工具坞域入口（dock）：外部工具的登记、启动、回显、留痕。
+ * 工具坞域入口（dock）：外部工具的登记、启动、回显、留痕、**调度**。
  *
  * 命令 `bz-dock-open` 在 main.ts 的 COMMANDS 表注册（域内不重复 addCommand）。
- * 本域**不常驻**：无事件订阅、无后台任务（调度本就不归 bz —— spec D1）。
+ *
+ * 本域**有一个常驻后台任务**：调度器（spec D1 修订 / ADR-0236）—— Obsidian 就绪后按各工具
+ * 声明的节奏触发它。它只在桌面端起，且每次 tick 都现查「自动运行」总闸，中途开关立刻生效。
  */
 export { openDock, closeDock, unloadDock, ensureDock } from './ui';
+/** 调度器（D1 修订：bz 亲自调度自动化工具；关着 Obsidian 时不会跑） */
+export { startDockScheduler, stopDockScheduler, kickDockScheduler } from './scheduler';
 /** 执行依赖注入缝（评审壳/测试塞假 child_process；插件侧不调用） */
 export { setDockRuntimeDeps } from './runner';
 /** fs 注入缝（评审壳/测试塞假 fs —— 声明文件与参数值住在工具目录，是 vault 外的路径） */

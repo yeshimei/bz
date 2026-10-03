@@ -6,11 +6,15 @@
  *     读它不执行任何东西，所以顺序是「先看清它会跑什么，再决定信不信任」。原先靠
  *     `<cmd> --manifest` 自描述时做不到这一点（要读清单就得先执行），D4 修订后成立。
  *  2) **bz 不写运行记录**（spec D8/D9）。本模块只负责「启动 + 把 stdout 的四行协议转给 UI +
- *     报告终结结果」；记录由工具自己写。这也意味着**手动跑一次若工具自己不落账，就没账**
+ *     报告终结结果」；记录由工具自己写。这也意味着**跑一次若工具自己不落账，就没账**
  *     —— 这是 D9 的直接后果，不是缺陷。
  *
- * 另一种形态（**离场**运行：系统计划任务在 Obsidian 关着时跑）不经过本模块 —— 那种情况下
- * bz 不是父进程，没有实时流可读，只能事后读运行记录。UI 上绝不能给自动化工具画假进度条。
+ * **在场 / 离场由「谁启动」定，不由「自动 / 手动」定**（D1 修订后尤其要记牢）：bz 亲手拉起的
+ * 都走本模块 —— 无论用户点的，还是调度器按节奏自动触发的，**都是在场**，都有实时流、都能停止。
+ * 唯一不经过本模块的是**离场**形态（系统计划任务在 Obsidian 关着时跑）：bz 不是父进程，没有
+ * 实时流，只能事后读运行记录。所以「有没有实时进度」的判据是**这个运行是不是 bz 拉的**
+ * （在不在 `liveRunsAll()` 里），而不是它声明的是自动还是手动。UI 上绝不能给没被 bz 拉起的
+ * 运行画假进度条。
  *
  * 依赖注入缝：`setDockRuntimeDeps({ cp })` 供评审壳/测试塞入假 `child_process`
  * （与 `runExternalTool` 的 `deps.cp` 同形）—— 插件侧恒为 null，走真身。
@@ -33,8 +37,8 @@ import {
   type DockProgress,
   type DockRunStep,
 } from './schema';
-import { runsFilePath, type DockToolEntry } from './data';
-import type { ResolvedRun } from './declaration';
+import type { DockToolEntry } from './data';
+import { runsPathFor, type ResolvedRun } from './declaration';
 
 /** 注入缝（插件侧 null = 真身） */
 let deps: ExternalToolDeps | undefined;
@@ -62,20 +66,24 @@ function vaultBasePath(app: App): string | undefined {
 }
 
 /** 工具的运行环境（规格见 spec §4.3）——**是便利，不是契约**：约定路径才是硬约定 */
-export function dockEnvOf(entry: DockToolEntry, app: App): Record<string, string> {
+export function dockEnvOf(
+  entry: DockToolEntry,
+  app: App,
+  trigger: 'auto' | 'manual' = 'manual',
+): Record<string, string> {
   const vaultPath = vaultBasePath(app);
   const env: Record<string, string> = {
     BZ_DOCK_CONTRACT: '1',
     BZ_DOCK_TOOL: entry.id,
+    // 本次是 bz 按节奏自动触发（auto）还是用户手动（manual）—— 工具据此给记录标 `trigger`。
+    // 工具**不需要**猜：bz 是父进程，它最清楚这次是被谁拉起来的。
+    BZ_DOCK_TRIGGER: trigger,
+    // 记录就写在工具目录里（与声明、参数值同一层）—— 路径从声明文件位置推出来，天然是绝对值。
+    // 从前这里是「vault 根 + vault 内相对路径」，而工具进程的 cwd 是它自己的目录，相对路径
+    // 会被解析到那儿去（记录写进了 `<工具目录>/CONFIG/...`，bz 在 vault 里找不到）。
+    BZ_DOCK_RUNS_FILE: runsPathFor(entry.path),
   };
-  if (vaultPath) {
-    const base = vaultPath.replace(/[\\/]+$/, '');
-    env.BZ_DOCK_VAULT = base;
-    // **必须给绝对路径**：工具进程的 cwd 是它自己的目录，vault 内的相对路径（`CONFIG/...`）
-    // 会被解析到工具目录底下去 —— 记录就这么写歪过一次（写进了 `<工具目录>/CONFIG/...`，
-    // 而 bz 在 vault 里找不到，表现为「跑完了却没有记录」）。
-    env.BZ_DOCK_RUNS_FILE = `${base}/${runsFilePath(entry.id)}`;
-  }
+  if (vaultPath) env.BZ_DOCK_VAULT = vaultPath.replace(/[\\/]+$/, '');
   return env;
 }
 
@@ -152,6 +160,22 @@ export function stopRun(toolId: string): void {
  * 经 `buildArgs` 拼成 `--key=value`（值另有一份落在工具目录的 `dock.settings.json`，
  * 那是 bz 的账本，下发通道始终是命令行）。`secret` 类型照发给工具，但**不落任何 bz 侧记录**。
  */
+/** `runTool` 的可选开关 */
+export interface DockRunOpts {
+  /** 谁触发的这次运行（注入给工具的 `BZ_DOCK_TRIGGER`）；缺省 `manual` */
+  trigger?: 'auto' | 'manual';
+}
+
+/**
+ * 启动一个工具（**在场**形态）。
+ *
+ * 前置条件由调用方保证（声明里有 `run`、已信任、桌面端）；`values` 是用户在参数表单里填的值，
+ * 经 `buildArgs` 拼成 `--key=value`（值另有一份落在工具目录的 `dock.settings.json`，
+ * 那是 bz 的账本，下发通道始终是命令行）。`secret` 类型照发给工具，但**不落任何 bz 侧记录**。
+ *
+ * `opts.trigger` 区分「用户手动点」与「调度器按节奏拉起」—— 只影响注入给工具的那个环境变量
+ * （工具据此给记录标 `trigger`）；对 bz 而言两者都是在场运行，走同一条路。
+ */
 export function runTool(
   app: App,
   entry: DockToolEntry,
@@ -159,6 +183,7 @@ export function runTool(
   manifest: Pick<DockManifest, 'params'> | null,
   values: Record<string, unknown>,
   cb: DockRunCallbacks = {},
+  opts: DockRunOpts = {},
 ): DockLiveRun {
   const startedAtDate = new Date();
   const startedAt = startedAtDate.toISOString();
@@ -169,7 +194,7 @@ export function runTool(
     args: [...launch.args, ...buildArgs(manifest ?? { params: [] }, values)],
     shell: launch.shell,
     cwd: launch.cwd,
-    env: dockEnvOf(entry, app),
+    env: dockEnvOf(entry, app, opts.trigger ?? 'manual'),
   };
 
   const steps: DockRunStep[] = [];

@@ -31,6 +31,9 @@ export const DECLARATION_FILENAME = 'dock.json';
 /** 参数值文件名（bz 写；固定在声明文件同目录） */
 export const SETTINGS_FILENAME = 'dock.settings.json';
 
+/** 运行记录文件名（**工具写、bz 只读**；固定在声明文件同目录 —— spec D10 修订） */
+export const RUNS_FILENAME = 'dock.runs.json';
+
 /** 设置文件版本（不认识的版本视为没有值，不猜） */
 export const DOCK_SETTINGS_VERSION = 1;
 
@@ -110,6 +113,11 @@ export function joinPath(dir: string, name: string): string {
 /** 设置文件路径 = 声明文件同目录 + `dock.settings.json` */
 export function settingsPathFor(declPath: string): string {
   return joinPath(dirOf(declPath), SETTINGS_FILENAME);
+}
+
+/** 运行记录路径 = 声明文件同目录 + `dock.runs.json` */
+export function runsPathFor(declPath: string): string {
+  return joinPath(dirOf(declPath), RUNS_FILENAME);
 }
 
 /** 工具目录（声明文件所在目录） */
@@ -238,4 +246,18 @@ export function writeSettings(
   } catch {
     return false;
   }
+}
+
+// ==================== 运行记录（工具写、bz 只读） ====================
+
+/**
+ * 读运行记录原文（**只读** —— 这里刻意没有 write 对应物，bz 一写就成了第二个写者）。
+ *
+ * 记录住**工具目录**（与声明、参数值同一层）：一个工具的全部数据都在它自己的目录里，
+ * 搬走目录就是搬走一切，bz 侧只剩下一条登记项（spec D9/D10 修订）。
+ * 读不到 / 读失败 = null，调用方降级为「该工具记录不可读」，绝不抛（同 `parseBzLine` 精神）。
+ */
+export function readRunsText(declPath: string, fs: DockFs | null = currentFs()): string | null {
+  if (!fs) return null;
+  return fs.readText(runsPathFor(declPath));
 }

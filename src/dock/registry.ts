@@ -1,5 +1,6 @@
 /**
- * 工具登记（registry）—— **零 import 的纯契约层**，node 可直接加载，便于单测。
+ * 工具登记（registry）—— 登记契约的类型与校验。只依赖同为纯函数的 `schema`（`parseSchedule`），
+ * node 照样可直接加载、直测。
  *
  * 一条登记**只记 bz 自己那份事实**：
  *
@@ -9,13 +10,22 @@
  * | `path` | 声明文件路径 —— **元数据的唯一真理源**。标题/描述/参数/节奏/怎么跑全在那边 |
  * | `enabled` | bz 侧状态（停用不等于删除） |
  * | `trustedAt` / `trustedRun` | bz 侧状态。信任的对象是**那条命令**，不是这个 id |
+ * | `autoRun` / `scheduleOverride` / `overrideDeclSig` | bz 侧状态 —— **用户对调度的覆盖层**（见下） |
  *
  * 刻意**不**记 `name` / `note` / `trigger` / `cmd` —— 那几项声明里都有。抄一份就多一个会和
  * 声明打架的事实源（曾经真的打起来过：脚本声明 `daily`、登记里 `trigger='manual'`，
  * 卡片标签与详情页各说各话）。所以这里连字段都不给。
  *
+ * **`scheduleOverride` 为什么不违反上面那条**：它跟声明里的 `schedule` **本来就允许不同** ——
+ * 那正是它的用途（作者写默认节奏，用户改成自己合适的）。它不是「抄的一份真值」，而是**用户的
+ * 覆盖层**，生效口径是「覆盖优先」（`effectiveSchedule`）。`overrideDeclSig` 只记下「做这次
+ * 覆盖时作者那份长什么样」，好在作者后来改了声明时提示一句「你可能想重看」。`autoRun` 是这套
+ * 覆盖的总闸（关掉 = 声明了节奏也不自动跑，只手动）。
+ *
  * 校验从严，因为 `path` 指向的声明里有 `run.cmd` —— 那是本插件权限最高的数据。
  */
+
+import { parseSchedule, type DockSchedule } from './schema';
 
 /** 工具 id 的合法形态（与 schema.ts 的 DOCK_ID_RE 同口径；此处独立定义以保零依赖） */
 export const TOOL_ID_RE = /^[a-z0-9][a-z0-9-]*$/;
@@ -36,6 +46,12 @@ export interface DockToolEntry {
   trustedAt?: string;
   /** 建立信任时的启动命令签名；与声明当前值不符 → 信任作废（见 `runSignature`） */
   trustedRun?: string;
+  /** 自动运行总闸（缺省 = 开）。关掉 = 即使声明了节奏也不自动跑，只在面板里手动点 */
+  autoRun?: boolean;
+  /** 节奏覆盖 —— 用户改过的节奏；缺省 = 用声明里的默认值（`effectiveSchedule`） */
+  scheduleOverride?: DockSchedule;
+  /** 建立覆盖时**声明那份节奏**的签名（`scheduleSignature`）—— 判断「作者后来改没改」用 */
+  overrideDeclSig?: string;
 }
 
 /**
@@ -61,6 +77,15 @@ export function parseToolEntry(raw: unknown): DockToolEntry | null {
   if (typeof r.enabled === 'boolean') out.enabled = r.enabled;
   if (typeof r.trustedAt === 'string' && r.trustedAt.trim()) out.trustedAt = r.trustedAt.trim();
   if (typeof r.trustedRun === 'string' && r.trustedRun !== '') out.trustedRun = r.trustedRun;
+  if (typeof r.autoRun === 'boolean') out.autoRun = r.autoRun;
+  // 覆盖节奏与声明节奏**同一把尺子**校验（parseSchedule）；不合法就当没覆盖，回落声明默认
+  const override = parseSchedule(r.scheduleOverride);
+  if (override) {
+    out.scheduleOverride = override;
+    if (typeof r.overrideDeclSig === 'string' && r.overrideDeclSig !== '') {
+      out.overrideDeclSig = r.overrideDeclSig;
+    }
+  }
   return out;
 }
 

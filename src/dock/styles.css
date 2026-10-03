@@ -391,6 +391,29 @@
 .bz-dock-trigrow { display: flex; gap: var(--bz-space-xs); }
 .bz-dock-runbtns { display: flex; align-items: center; gap: var(--bz-space-sm); }
 
+/* 自动运行（详情页；D1 修订后 bz 与调度器之间唯一的用户界面） */
+.bz-dock-autorows { display: flex; flex-direction: column; gap: 2px; }
+.bz-dock-autorow { display: flex; align-items: baseline; gap: var(--bz-space-sm); min-width: 0; padding: 1px 0; }
+.bz-dock-autorow-label { flex: none; width: 62px; font-size: var(--bz-font-meta); color: var(--bz-text-3); }
+.bz-dock-autorow-val {
+  flex: 1;
+  min-width: 0;
+  font-size: var(--bz-font-meta);
+  color: var(--bz-text-1);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.bz-dock-autonote { font-size: var(--bz-font-meta); color: var(--bz-text-3); }
+.bz-dock-autonote--warn { color: var(--bz-warning); }
+.bz-dock-autoeditor {
+  display: flex;
+  flex-direction: column;
+  gap: var(--bz-space-sm);
+  padding-top: var(--bz-space-sm);
+  border-top: 1px solid var(--bz-border);
+}
+
 /* 在场运行台 */
 .bz-dock-live {
   display: flex;
