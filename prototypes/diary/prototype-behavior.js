@@ -1,5 +1,5 @@
-/* 源指纹 6c0fd5effe954974 · 仓内输入 79 个（校验见 tests/preview-freshness.test.ts） */
-/*#preview-inputs=["prototypes/diary/fake-sim.ts","prototypes/diary/fake/fake-obsidian.ts","src/bookshelf/data.ts","src/bookshelf/state.ts","src/cinema/state.ts","src/core/app.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/notice.ts","src/core/paging.ts","src/core/path-picker.ts","src/core/settings-btn-state.ts","src/core/settings-common.ts","src/core/settings-modal.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/help-tip.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/data.ts","src/diary/encrypt.ts","src/diary/index.ts","src/diary/motion.ts","src/diary/parser.ts","src/diary/render.ts","src/diary/repair.ts","src/diary/store.ts","src/diary/ui.ts","src/diary/ui/datetime-picker.ts","src/diary/ui/dialogs.ts","src/diary/ui/entry-actions.ts","src/diary/ui/locator.ts","src/diary/vendor/page-flip.browser.js","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/motion.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/password-vault/data.ts"]*/
+/* 源指纹 5e6c37265c5c1a16 · 仓内输入 79 个（校验见 tests/preview-freshness.test.ts） */
+/*#preview-inputs=["prototypes/diary/fake-sim.ts","prototypes/diary/fake/fake-obsidian.ts","src/bookshelf/data.ts","src/bookshelf/state.ts","src/cinema/state.ts","src/core/app.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/settings-btn-state.ts","src/core/settings-common.ts","src/core/settings-modal.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/help-tip.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/data.ts","src/diary/encrypt.ts","src/diary/index.ts","src/diary/media-import.ts","src/diary/motion.ts","src/diary/parser.ts","src/diary/render.ts","src/diary/repair.ts","src/diary/store.ts","src/diary/ui.ts","src/diary/ui/datetime-picker.ts","src/diary/ui/dialogs.ts","src/diary/ui/entry-actions.ts","src/diary/ui/locator.ts","src/diary/vendor/page-flip.browser.js","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/motion.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/password-vault/data.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/diary/fake-sim.ts → window.BZW_diary（行为单源预览包，issue 245/ADR-0106） */
 var BZW_diary = (() => {
   var __create = Object.create;
@@ -4057,6 +4057,29 @@ var BZW_diary = (() => {
     const src = typeof window !== "undefined" && window.DIARY || window.parent && window.parent.DIARY || null;
     return (src == null ? void 0 : src.ASSETS) || [];
   }
+  function binMimeOf(name) {
+    const dot = name.lastIndexOf(".");
+    return dot > 0 && BIN_MIME[name.slice(dot + 1).toLowerCase()] || "application/octet-stream";
+  }
+  function fakeBinaryUrl(name) {
+    const base = (name || "").split("/").pop() || "";
+    if (!base) return "";
+    const live2 = binUrls.get(base);
+    if (live2) return live2;
+    try {
+      return localStorage.getItem(BIN_PREFIX + base) || "";
+    } catch (e) {
+      return "";
+    }
+  }
+  function bytesToDataUrl(bytes, mime) {
+    let bin = "";
+    const CHUNK = 32768;
+    for (let i = 0; i < bytes.length; i += CHUNK) {
+      bin += String.fromCharCode.apply(null, Array.from(bytes.subarray(i, i + CHUNK)));
+    }
+    return `data:${mime};base64,${btoa(bin)}`;
+  }
   function vaultMediaUrl(base) {
     if (typeof location === "undefined" || !/^https?:$/.test(location.protocol)) return "";
     if (!MEDIA_EXT_RE.test(base)) return "";
@@ -4099,7 +4122,7 @@ var BZW_diary = (() => {
     }
     return fm;
   }
-  var import_moment, Platform, MarkdownRenderer, MarkdownView, Component, Setting, KEY_PREFIX, MEDIA_EXT_RE, FakeVault, FakeMetadataCache, FakeApp;
+  var import_moment, Platform, MarkdownRenderer, Component, Setting, KEY_PREFIX, MEDIA_EXT_RE, BIN_PREFIX, BIN_PERSIST_MAX, BIN_MIME, binUrls, FakeVault, FakeMetadataCache, FakeApp;
   var init_fake_obsidian = __esm({
     "prototypes/diary/fake/fake-obsidian.ts"() {
       import_moment = __toESM(require_moment());
@@ -4115,8 +4138,6 @@ var BZW_diary = (() => {
         static renderMarkdown() {
           return Promise.resolve("");
         }
-      };
-      MarkdownView = class {
       };
       Component = class {
         load() {
@@ -4292,6 +4313,31 @@ var BZW_diary = (() => {
       };
       KEY_PREFIX = "bz-sim:";
       MEDIA_EXT_RE = /\.(png|jpe?g|gif|webp|avif|bmp|svg|mp4|m4v|webm|mov|ogv|mp3|m4a|aac|wav|flac|ogg|oga)$/i;
+      BIN_PREFIX = "bz-sim-bin:";
+      BIN_PERSIST_MAX = 1.5 * 1024 * 1024;
+      BIN_MIME = {
+        jpg: "image/jpeg",
+        jpeg: "image/jpeg",
+        png: "image/png",
+        gif: "image/gif",
+        webp: "image/webp",
+        avif: "image/avif",
+        bmp: "image/bmp",
+        svg: "image/svg+xml",
+        mp4: "video/mp4",
+        m4v: "video/mp4",
+        webm: "video/webm",
+        mov: "video/quicktime",
+        ogv: "video/ogg",
+        mp3: "audio/mpeg",
+        m4a: "audio/mp4",
+        aac: "audio/aac",
+        wav: "audio/wav",
+        flac: "audio/flac",
+        ogg: "audio/ogg",
+        oga: "audio/ogg"
+      };
+      binUrls = /* @__PURE__ */ new Map();
       FakeVault = class _FakeVault {
         constructor() {
           /** 事件订阅表（ref→cb 映射，offref 按 ref 摘单个监听，见 on/offref 注释） */
@@ -4384,12 +4430,37 @@ var BZW_diary = (() => {
         async createFolder(_path) {
           return void 0;
         }
-        /** 媒体资源 URL：入库子集命中 → assets/ 相对路径；否则按需走预览服务的真实 vault 取流；
-         *  file://（双击直开、无服务端）下两者都不可用 → ''（墙渐变占位语义）。 */
+        /**
+         * 二进制落盘（ADR-0233「贴一件」经 `vault.createBinary` 写进附件位置）。
+         * 评审壳不做真文件系统：小件存 data URL（刷新后照片还在），大件只留内存 objectURL。
+         */
+        async createBinary(path, data) {
+          const bytes = new Uint8Array(data);
+          const base = path.split("/").pop() || path;
+          let url = "";
+          try {
+            url = URL.createObjectURL(new Blob([bytes], { type: binMimeOf(base) }));
+          } catch (e) {
+            url = "";
+          }
+          if (url) binUrls.set(base, url);
+          if (bytes.byteLength <= BIN_PERSIST_MAX) {
+            try {
+              localStorage.setItem(BIN_PREFIX + base, bytesToDataUrl(bytes, binMimeOf(base)));
+            } catch (e) {
+            }
+          }
+          this.emit("create", { path });
+          return this.toFile(path, "");
+        }
+        /** 媒体资源 URL：本机添进来的先认（内存 / data URL）→ 入库子集走 assets/ → 否则按需走预览服务取真实 vault；
+         *  file://（双击直开、无服务端）下后者不可用 → ''（墙渐变占位语义）。 */
         getResourcePath(file) {
           const base = file.path.split("/").pop() || "";
           if (!base) return "";
           if (assetManifest().includes(base)) return "./assets/" + encodeURIComponent(base);
+          const added = fakeBinaryUrl(base);
+          if (added) return added;
           return vaultMediaUrl(base);
         }
         /** 事件订阅（core/app vault.on/offref 同形） */
@@ -4430,11 +4501,12 @@ var BZW_diary = (() => {
           const fm = this.cache.get(file.path);
           return fm ? { frontmatter: fm } : null;
         }
-        /** 媒体链接解析（data.ts mediaSrc 优先路）：入库清单命中、或经预览服务可取真实 vault 媒体
+        /** 媒体链接解析（data.ts mediaSrc 优先路）：本机添进来的 / 入库清单命中 / 经预览服务可取的真实 vault 媒体
          *  （http 环境 + 媒体扩展名）→ 返回 TFile 形状；否则 null → mediaSrc 回退 '' 走渐变占位。 */
         getFirstLinkpathDest(ref, _sourcePath) {
           const base = (ref || "").split("/").pop() || "";
           if (!base) return null;
+          if (fakeBinaryUrl(base)) return { path: base };
           if (assetManifest().includes(base)) return { path: base };
           return vaultMediaUrl(base) ? { path: base } : null;
         }
@@ -4453,6 +4525,21 @@ var BZW_diary = (() => {
         constructor() {
           this.vault = new FakeVault();
           this.metadataCache = new FakeMetadataCache();
+          this.fileManager = {
+            /**
+             * 「附件默认位置」：真宿主读用户设置的 attachmentFolderPath（本机 vault 是 `CONFIG/APPENDIX`），
+             * 壳里就按同一个口径回一个不重名的路径——ADR-0233 的 mediaPathFor 优先走这条。
+             */
+            getAvailablePathForAttachment: async (name, _sourcePath) => {
+              const dir = "CONFIG/APPENDIX";
+              const dot = name.lastIndexOf(".");
+              const base = dot > 0 ? name.slice(0, dot) : name;
+              const ext = dot > 0 ? name.slice(dot) : "";
+              let path = `${dir}/${name}`;
+              for (let i = 2; fakeBinaryUrl(path.split("/").pop()); i++) path = `${dir}/${base}_${i}${ext}`;
+              return path;
+            }
+          };
         }
       };
     }
@@ -4588,10 +4675,6 @@ var BZW_diary = (() => {
   }
   function stripMdExt(name) {
     return String(name || "").replace(/\.md$/i, "");
-  }
-  function localDayKey(ts = Date.now()) {
-    const d = ts instanceof Date ? ts : new Date(ts);
-    return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
   }
   var ESC_MAP;
   var init_str = __esm({
@@ -5049,17 +5132,6 @@ var BZW_diary = (() => {
     };
     return wrapped;
   }
-  function yieldToMainThread(timeoutMs = 200) {
-    return new Promise((resolve) => {
-      if (typeof window === "undefined") {
-        resolve();
-        return;
-      }
-      const ric = window.requestIdleCallback;
-      if (typeof ric === "function") ric(() => resolve(), { timeout: timeoutMs });
-      else window.setTimeout(resolve, 0);
-    });
-  }
   function cancelClipboardClear() {
     if (clipboardClearTimer !== null) {
       clearTimeout(clipboardClearTimer);
@@ -5145,7 +5217,6 @@ var BZW_diary = (() => {
   __export(config_exports, {
     DIARY_DIRECTORY: () => DIARY_DIRECTORY,
     ENCRYPT_TAG: () => ENCRYPT_TAG,
-    FIRST_PAINT_ENTRIES: () => FIRST_PAINT_ENTRIES,
     LETTER_DIRECTORY: () => LETTER_DIRECTORY,
     applyDirectories: () => applyDirectories,
     bookDirectory: () => bookDirectory,
@@ -5252,14 +5323,13 @@ var BZW_diary = (() => {
     }
     return result;
   }
-  var DIARY_DIRECTORY, LETTER_DIRECTORY, FIRST_PAINT_ENTRIES, ENCRYPT_TAG, DEFAULT_TAGS_CONFIG, PRIMARY_TAGS_CONFIG, tagToEmojiMap, emojiToTagMap;
+  var DIARY_DIRECTORY, LETTER_DIRECTORY, ENCRYPT_TAG, DEFAULT_TAGS_CONFIG, PRIMARY_TAGS_CONFIG, tagToEmojiMap, emojiToTagMap;
   var init_config = __esm({
     "src/diary/config.ts"() {
       init_state();
       init_data();
       DIARY_DIRECTORY = "我的/日记";
       LETTER_DIRECTORY = "我的/信";
-      FIRST_PAINT_ENTRIES = 30;
       ENCRYPT_TAG = "加密";
       DEFAULT_TAGS_CONFIG = {
         日记: { emoji: "📖" },
@@ -6772,10 +6842,6 @@ var BZW_diary = (() => {
     if (!m) return null;
     const date = `${m[1]}-${m[2]}-${m[3]}`;
     return isValidDiaryDate(date) ? date : null;
-  }
-  function diaryDateFromEntryPath(path) {
-    var _a, _b;
-    return (_b = (_a = diaryMetaFromEntryPath(path)) == null ? void 0 : _a.date) != null ? _b : null;
   }
   function resolveDiaryEntryMeta(path, parsed) {
     var _a;
@@ -15365,7 +15431,7 @@ ${entry.content.trim()}`;
       const dateFormatted = parsed.format("YYYY-MM-DD");
       const timeStr = parsed.format("HH:mm");
       const timeValue = parseInt(parsed.format("HHmm"), 10);
-      const fullContent = await app.vault.cachedRead(file);
+      const fullContent = await app.vault.read(file);
       const frontmatterRegex = /^---\n([\s\S]*?)\n---\n/;
       const match = fullContent.match(frontmatterRegex);
       let body = fullContent;
@@ -15481,12 +15547,6 @@ ${String(review).trim()}`;
   init_diary_format();
   init_config();
   init_domain_bus();
-
-  // src/core/paging.ts
-  var LIST_BATCH_SIZE = 50;
-
-  // src/diary/data.ts
-  init_utils();
   var MEDIA_EXT_KIND = {
     jpg: "img",
     jpeg: "img",
@@ -15532,7 +15592,22 @@ ${String(review).trim()}`;
       return MEDIA_EXT_KIND[name.slice(dot + 1).toLowerCase()] ? "" : whole;
     }).trim();
   }
-  var READ_BATCH_SIZE = LIST_BATCH_SIZE;
+  var READ_BATCH_SIZE = 10;
+  var progressSinks = /* @__PURE__ */ new Set();
+  function onWallProgress(fn) {
+    progressSinks.add(fn);
+    return () => {
+      progressSinks.delete(fn);
+    };
+  }
+  function emitWallProgress(done, total) {
+    for (const fn of [...progressSinks]) {
+      try {
+        fn(done, total);
+      } catch (e) {
+      }
+    }
+  }
   async function readBatch(batch, readOne, failed) {
     const results = await Promise.all(
       batch.map(async (file) => {
@@ -15632,62 +15707,29 @@ ${String(review).trim()}`;
       extra: e.extra
     };
   }
-  async function readDiaryFile(app, file, diaryDir) {
-    if (!diaryMetaFromEntryPath(file.name)) return [];
-    const content = await app.vault.cachedRead(file);
-    const e = parseEntryFile(content, file.path);
-    return e ? [toWallEntry(e, "diary", diaryDir)] : [];
-  }
-  function mergeWallEntries(diary, specials) {
-    const entries = [...diary, ...specials];
-    entries.sort((a, b) => {
-      const dateCmp = b.date.localeCompare(a.date);
-      return dateCmp !== 0 ? dateCmp : b.time.localeCompare(a.time);
-    });
-    return entries;
-  }
-  var progressSinks = /* @__PURE__ */ new Set();
-  function onWallProgress(fn) {
-    progressSinks.add(fn);
-    return () => {
-      progressSinks.delete(fn);
-    };
-  }
-  function emitWallProgress(partial) {
-    for (const fn of [...progressSinks]) {
-      try {
-        fn(partial);
-      } catch (e) {
-      }
+  async function loadDiaryEntries(app, diaryDir) {
+    const vault = app.vault;
+    const mdFiles = await mdFilesUnder(app, diaryDir);
+    const entries = [];
+    const failed = [];
+    for (let i = 0; i < mdFiles.length; i += READ_BATCH_SIZE) {
+      const batch = mdFiles.slice(i, i + READ_BATCH_SIZE);
+      entries.push(
+        ...await readBatch(
+          batch,
+          async (file) => {
+            if (!diaryMetaFromEntryPath(file.name)) return [];
+            const content = await vault.read(file);
+            const e = parseEntryFile(content, file.path);
+            return e ? [toWallEntry(e, "diary", diaryDir)] : [];
+          },
+          failed
+        )
+      );
+      if (progressSinks.size) emitWallProgress(Math.min(i + READ_BATCH_SIZE, mdFiles.length), mdFiles.length);
     }
-  }
-  async function readWallEntriesFresh(app) {
-    const specialsPromise = Promise.all([
-      loadSpecialEntries(app, movieDirectory(), "movie", parseMovieFile),
-      loadSpecialEntries(app, LETTER_DIRECTORY, "letter", parseLetterFile),
-      loadSpecialEntries(app, bookDirectory(), "book", parseBookFile)
-    ]).then(([movieE, letterE, bookE]) => [...movieE, ...letterE, ...bookE]);
-    const diaryPromise = (async () => {
-      const files = await mdFilesUnder(app, DIARY_DIRECTORY);
-      files.sort((a, b) => b.name.localeCompare(a.name));
-      const out = [];
-      const failed = [];
-      for (let i = 0; i < files.length; i += READ_BATCH_SIZE) {
-        if (i > 0) await yieldToMainThread();
-        out.push(
-          ...await readBatch(
-            files.slice(i, i + READ_BATCH_SIZE),
-            (file) => readDiaryFile(app, file, DIARY_DIRECTORY),
-            failed
-          )
-        );
-        if (progressSinks.size) emitWallProgress(mergeWallEntries(out, await specialsPromise));
-      }
-      warnFailedBatch("日记", failed);
-      return out;
-    })();
-    const [specials, diaryE] = await Promise.all([specialsPromise, diaryPromise]);
-    return mergeWallEntries(diaryE, specials);
+    warnFailedBatch("日记", failed);
+    return entries;
   }
   async function loadSpecialEntries(app, dir, kind, parse) {
     const mdFiles = await mdFilesUnder(app, dir);
@@ -15707,6 +15749,20 @@ ${String(review).trim()}`;
       );
     }
     warnFailedBatch(kind, failed);
+    return entries;
+  }
+  async function readWallEntriesFresh(app) {
+    const [diaryE, movieE, letterE, bookE] = await Promise.all([
+      loadDiaryEntries(app, DIARY_DIRECTORY),
+      loadSpecialEntries(app, movieDirectory(), "movie", parseMovieFile),
+      loadSpecialEntries(app, LETTER_DIRECTORY, "letter", parseLetterFile),
+      loadSpecialEntries(app, bookDirectory(), "book", parseBookFile)
+    ]);
+    const entries = [...diaryE, ...movieE, ...letterE, ...bookE];
+    entries.sort((a, b) => {
+      const dateCmp = b.date.localeCompare(a.date);
+      return dateCmp !== 0 ? dateCmp : b.time.localeCompare(a.time);
+    });
     return entries;
   }
   var wallCacheApp = null;
@@ -15755,6 +15811,9 @@ ${String(review).trim()}`;
     detachWallInvalidators();
     currentCtrl = null;
     wallCacheApp = null;
+  }
+  function wallCacheFresh(app) {
+    return wallCacheApp === app && !!currentCtrl && !currentCtrl.invalidated;
   }
   function mediaSrc(app, mediaName, sourcePath) {
     var _a, _b, _c;
@@ -16045,16 +16104,13 @@ ${String(review).trim()}`;
     }
     return out;
   }
-  function blockRootClass(html) {
-    const m = /^<[a-z][^>]*\sclass="([^"]*)"/i.exec(html);
-    return m ? m[1] : "";
-  }
-  function blockPlainText(html) {
-    return html.replace(/<[^>]*>/g, "").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&amp;/g, "&");
-  }
   function daystampHTML(date, count) {
     const [y, m, dd] = date.split("-");
     return '<div class="bz-diary-b-daystamp" data-date="' + esc(date) + '"><div class="bz-diary-dstamp"><span class="bz-diary-ds-day">' + Number(dd) + '</span><span class="bz-diary-ds-side"><b>' + parseInt(m, 10) + "月</b><i>" + weekdayOf(date) + "</i><em>" + cnNum(count) + ' 则</em></span><span class="bz-diary-ds-year">' + esc(y) + '</span></div><div class="bz-diary-ds-wave"></div></div>';
+  }
+  function writeDaystampHTML(date) {
+    const [y, m, dd] = date.split("-");
+    return '<div class="bz-diary-dstamp"><span class="bz-diary-ds-day">' + Number(dd) + '</span><span class="bz-diary-ds-side"><b>' + parseInt(m, 10) + "月</b><i>" + weekdayOf(date) + '</i><em><span class="bz-diary-wsp-datebtn">改日子 · 时辰</span></em></span><span class="bz-diary-ds-year">' + esc(y) + '</span></div><div class="bz-diary-ds-wave"></div>';
   }
   function basenameOf(p) {
     return String(p || "").split("/").pop().replace(/\.md$/, "");
@@ -16081,6 +16137,34 @@ ${String(review).trim()}`;
 
       <!-- 分类书签条（筛选态） -->
       <div class="bz-diary-filter-tab"><span class="bz-diary-ft-name"></span><span class="bz-diary-ft-x">取下</span></div>
+
+      <!-- 写作内页（ADR-0233）：点「写」就在书上摊开一张素纸，正文写在这一页上。
+           摆这一层（书页之上、书壳之内）而不是进 StPageFlip 的书页流：草稿不该被分页，
+           而它盖住书页的指针区，「草稿在时不翻页」也就落成了物理事实。
+           日戳由 ui 侧填（与 daystampHTML 同源），贴纸 chips 与正文区在这里只是空壳。 -->
+      <div class="bz-diary-wsp" hidden>
+        <div class="bz-diary-wsp-sheet">
+          <div class="bz-diary-wsp-day"></div>
+          <textarea class="bz-diary-wsp-area" spellcheck="false" placeholder="笔递给你了，写吧……"></textarea>
+          <div class="bz-diary-wsp-tools"></div>
+          <div class="bz-diary-wsp-acts">
+            <span class="bz-diary-wsp-act" data-wact="discard">揉掉</span>
+            <span class="bz-diary-wsp-act bz-diary-wsp-primary" data-wact="save">落笔</span>
+          </div>
+        </div>
+        <div class="bz-diary-wsp-pageno">— 新的一页 —</div>
+      </div>
+    </div>
+
+    <!-- 开册进度：读全量之前书还是空的（上千篇正文走磁盘读、每批 10），
+         桌上先摆一张「正在翻找」的纸条报读到哪儿了，读完换「正在装订」，成册即收。
+         不吃指针（pointer-events: none）：读盘期间点遮罩照样能收起整本。 -->
+    <div class="bz-diary-loading" hidden>
+      <div class="bz-diary-ld-paper">
+        <div class="bz-diary-ld-title"></div>
+        <div class="bz-diary-ld-bar"></div>
+        <div class="bz-diary-ld-count"></div>
+      </div>
     </div>
 
     <!-- 案头文具挂在桌上、不挂在书里：书在窄桌面下会被整体缩小，
@@ -16485,620 +16569,6 @@ ${String(review).trim()}`;
   init_app();
   init_diary_format();
   init_config();
-  var yearRangeProvider = null;
-  function setDateTimeYearRangeProvider(p) {
-    yearRangeProvider = p;
-  }
-  function createNumberItem(value, onSelect) {
-    const item = document.createElement("button");
-    item.type = "button";
-    item.className = "datetime-number-item";
-    item.dataset.value = String(value);
-    item.textContent = value < 10 ? `0${value}` : String(value);
-    item.style.cssText = `
-    padding: 12px 8px;
-    font-size: 18px;
-    font-weight: 400;
-    color: var(--text-muted);
-    cursor: pointer;
-    user-select: none;
-    width: 100%;
-    text-align: center;
-    border: none;
-    border-radius: 8px;
-    background: transparent;
-    font-family: inherit;
-    min-height: 44px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    box-sizing: border-box;
-  `;
-    item.addEventListener("click", onSelect);
-    return item;
-  }
-  function bindStepKeys(item, colIndex, picker, select) {
-    item.addEventListener("keydown", (e) => {
-      var _a;
-      if (e.key !== "ArrowUp" && e.key !== "ArrowDown") return;
-      e.preventDefault();
-      const field = picker.fields[colIndex];
-      const lo = typeof field.min === "function" ? field.min() : field.min;
-      const hi = typeof field.max === "function" ? field.max() : field.max;
-      const delta = e.key === "ArrowUp" ? -1 : 1;
-      const target = Math.min(hi, Math.max(lo, field.get(picker.tempMoment) + delta));
-      if (target === field.get(picker.tempMoment)) return;
-      select(target);
-      const next = (_a = picker.numberItems[colIndex]) == null ? void 0 : _a[target - lo];
-      if (next) next.focus();
-    });
-  }
-  function applyFieldValue(picker, field, newVal) {
-    if (field.unit === "year" || field.unit === "month") {
-      const origDay = picker.tempMoment.date();
-      picker.tempMoment.date(1);
-      field.set(picker.tempMoment, newVal);
-      const dayMax = picker.tempMoment.daysInMonth();
-      const dayField = picker.fields.find((f) => f.unit === "day");
-      if (dayField) dayField.set(picker.tempMoment, Math.min(origDay, dayMax));
-      regenerateDayNumbers(picker);
-    } else {
-      field.set(picker.tempMoment, newVal);
-    }
-  }
-  function createWheelColumn(field, colIndex, picker) {
-    const column = document.createElement("div");
-    column.style.cssText = `
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    min-width: 0;
-  `;
-    const label = document.createElement("div");
-    label.textContent = field.name;
-    label.style.cssText = `
-    text-align: center;
-    font-size: 13px;
-    color: var(--text-muted);
-    padding: 8px 4px;
-    font-weight: 500;
-    border-bottom: 1px solid var(--background-modifier-border);
-    flex-shrink: 0;
-  `;
-    column.appendChild(label);
-    const wheelScrollContainer = document.createElement("div");
-    wheelScrollContainer.className = "diary-datetime-scroll-container";
-    wheelScrollContainer.style.cssText = `
-    flex: 1;
-    overflow-y: auto;
-    overflow-x: hidden;
-    position: relative;
-  `;
-    column.appendChild(wheelScrollContainer);
-    const numbersContainer = document.createElement("div");
-    numbersContainer.className = "datetime-numbers-container";
-    numbersContainer.style.cssText = `
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    padding: 120px 0;
-  `;
-    wheelScrollContainer.appendChild(numbersContainer);
-    const items = [];
-    let min = typeof field.min === "function" ? field.min() : field.min;
-    let max = typeof field.max === "function" ? field.max() : field.max;
-    const selectValue = (newVal) => {
-      if (newVal === field.get(picker.tempMoment)) return;
-      applyFieldValue(picker, field, newVal);
-      updateSelection();
-    };
-    for (let i = min; i <= max; i++) {
-      const item = createNumberItem(i, () => selectValue(parseInt(item.dataset.value)));
-      bindStepKeys(item, colIndex, picker, selectValue);
-      items.push(item);
-      numbersContainer.appendChild(item);
-    }
-    picker.numberItems[colIndex] = items;
-    const updateSelection = () => {
-      const currentVal = field.get(picker.tempMoment);
-      let selected = null;
-      items.forEach((item) => {
-        const val = parseInt(item.dataset.value);
-        if (val === currentVal) {
-          item.style.color = "var(--text-on-accent)";
-          item.style.fontWeight = "700";
-          item.style.background = "var(--background-modifier-hover)";
-          selected = item;
-        } else {
-          item.style.color = "var(--text-muted)";
-          item.style.fontWeight = "400";
-          item.style.background = "transparent";
-        }
-      });
-      column.selectedEl = selected;
-    };
-    const scrollToSelected = () => {
-      const currentVal = field.get(picker.tempMoment);
-      const index = currentVal - min;
-      if (items[index]) {
-        const itemHeight = items[index].offsetHeight || 44;
-        const containerHeight = wheelScrollContainer.clientHeight;
-        const targetScrollTop = index * itemHeight - containerHeight / 2 + itemHeight / 2;
-        wheelScrollContainer.scrollTop = targetScrollTop;
-      }
-    };
-    wheelScrollContainer.addEventListener(
-      "wheel",
-      (e) => {
-        e.preventDefault();
-        wheelScrollContainer.scrollTop += e.deltaY * 0.5;
-      },
-      { passive: false }
-    );
-    let touchStartY = 0;
-    let scrollStartTop = 0;
-    let isScrolling = false;
-    wheelScrollContainer.addEventListener(
-      "touchstart",
-      (e) => {
-        if (e.touches.length !== 1) return;
-        touchStartY = e.touches[0].clientY;
-        scrollStartTop = wheelScrollContainer.scrollTop;
-        isScrolling = true;
-      },
-      { passive: true }
-    );
-    wheelScrollContainer.addEventListener(
-      "touchmove",
-      (e) => {
-        if (!isScrolling || e.touches.length !== 1) return;
-        e.preventDefault();
-        const touchY = e.touches[0].clientY;
-        const deltaY = touchStartY - touchY;
-        wheelScrollContainer.scrollTop = scrollStartTop + deltaY;
-      },
-      { passive: false }
-    );
-    wheelScrollContainer.addEventListener(
-      "touchend",
-      () => {
-        isScrolling = false;
-      },
-      { passive: true }
-    );
-    column.updateSelection = updateSelection;
-    column.scrollToSelected = scrollToSelected;
-    column.selectValue = selectValue;
-    return column;
-  }
-  function regenerateDayNumbers(picker) {
-    const dayField = picker.fields.find((f) => f.unit === "day");
-    const dayColIndex = picker.fields.findIndex((f) => f.unit === "day");
-    const dayItems = picker.numberItems[dayColIndex];
-    const dayMax = picker.tempMoment.daysInMonth();
-    const currentCount = dayItems.length;
-    const targetCount = dayMax;
-    if (targetCount < currentCount) {
-      for (let i = currentCount - 1; i >= targetCount; i--) {
-        dayItems[i].remove();
-        dayItems.pop();
-      }
-    } else if (targetCount > currentCount) {
-      const container = dayItems[0].parentElement;
-      const selectDay = (v) => picker.columns[dayColIndex].selectValue(v);
-      for (let i = currentCount + 1; i <= targetCount; i++) {
-        const item = createNumberItem(i, () => selectDay(parseInt(item.dataset.value)));
-        bindStepKeys(item, dayColIndex, picker, selectDay);
-        container.appendChild(item);
-        dayItems.push(item);
-      }
-    }
-    dayItems.forEach((item, index) => {
-      const value = index + 1;
-      item.dataset.value = String(value);
-      item.textContent = value < 10 ? `0${value}` : String(value);
-    });
-    picker.columns[dayColIndex].updateSelection();
-  }
-  function updateAllColumns(picker, shouldScroll = false) {
-    picker.columns.forEach((col) => {
-      if (col.updateSelection) {
-        col.updateSelection();
-        if (shouldScroll && col.scrollToSelected) {
-          col.scrollToSelected();
-        }
-      }
-    });
-  }
-  var earliestYearCache;
-  function probeEarliestYear() {
-    var _a, _b, _c, _d;
-    if (earliestYearCache !== void 0) return earliestYearCache;
-    earliestYearCache = null;
-    try {
-      const files = (_c = (_b = (_a = getApp().vault).getMarkdownFiles) == null ? void 0 : _b.call(_a)) != null ? _c : [];
-      const dir = DIARY_DIRECTORY.replace(/\/+$/, "");
-      let earliest = null;
-      for (const f of files) {
-        const p = String((_d = f == null ? void 0 : f.path) != null ? _d : "");
-        if (dir && !p.startsWith(dir + "/")) continue;
-        const date = diaryDateFromEntryPath(p);
-        if (!date) continue;
-        const y = parseInt(date.slice(0, 4), 10);
-        if (!Number.isNaN(y) && (earliest === null || y < earliest)) earliest = y;
-      }
-      earliestYearCache = earliest;
-    } catch (e) {
-    }
-    return earliestYearCache;
-  }
-  function getYearRange() {
-    if (yearRangeProvider) {
-      try {
-        const r = yearRangeProvider();
-        if (r && Number.isFinite(r.min) && Number.isFinite(r.max) && r.min <= r.max) return r;
-      } catch (e) {
-      }
-    }
-    const max = (/* @__PURE__ */ new Date()).getFullYear() + 1;
-    const earliest = probeEarliestYear();
-    return { min: Math.min(earliest != null ? earliest : 1900, max), max };
-  }
-  function showDateTimePicker(initialMoment, onConfirm, onManual) {
-    const existing = document.getElementById("unified-datetime-picker-mask");
-    if (existing) existing.remove();
-    const picker = {
-      tempMoment: initialMoment.clone(),
-      fields: [
-        {
-          name: "年",
-          unit: "year",
-          // UX-34：动态范围——min 数据最早年份（下限放宽至 1900）、max 当前年份+1
-          min: () => getYearRange().min,
-          max: () => getYearRange().max,
-          get: (m) => m.year(),
-          set: (m, v) => m.year(v)
-        },
-        {
-          name: "月",
-          unit: "month",
-          min: 1,
-          max: 12,
-          get: (m) => m.month() + 1,
-          set: (m, v) => m.month(v - 1)
-        },
-        {
-          name: "日",
-          unit: "day",
-          min: 1,
-          max: () => picker.tempMoment.daysInMonth(),
-          get: (m) => m.date(),
-          set: (m, v) => m.date(v)
-        },
-        {
-          name: "时",
-          unit: "hour",
-          min: 0,
-          max: 23,
-          get: (m) => m.hour(),
-          set: (m, v) => m.hour(v)
-        },
-        {
-          name: "分",
-          unit: "minute",
-          min: 0,
-          max: 59,
-          get: (m) => m.minute(),
-          set: (m, v) => m.minute(v)
-        }
-      ],
-      columns: [],
-      numberItems: []
-    };
-    const mask = document.createElement("div");
-    mask.id = "unified-datetime-picker-mask";
-    mask.style.cssText = `
-    position: fixed; top:0; left:0; right:0; bottom:0;
-    background: var(--background-modifier-cover);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  `;
-    const popup = document.createElement("div");
-    popup.style.cssText = `
-    background: var(--background-primary);
-    border-radius: 16px;
-    padding: 20px 24px 24px 24px;
-    width: 90%;
-    max-width: 600px;
-    max-height: 80vh;
-    box-shadow: var(--dw-shadow-lg);
-    display: flex;
-    flex-direction: column;
-  `;
-    popup.setAttribute("role", "dialog");
-    popup.setAttribute("aria-modal", "true");
-    popup.setAttribute("aria-label", "选择日期时间");
-    const title = document.createElement("h4");
-    title.textContent = "选择日期时间";
-    title.style.cssText = `
-    margin:0 0 20px 0;
-    font-size:18px;
-    font-weight:600;
-    color:var(--text-normal);
-    text-align:center;
-  `;
-    popup.appendChild(title);
-    const columnsContainer = document.createElement("div");
-    columnsContainer.style.cssText = `
-    display: flex;
-    flex: 1;
-    gap: 8px;
-    min-height: 320px;
-    overflow: hidden;
-  `;
-    picker.fields.forEach((field, colIndex) => {
-      const col = createWheelColumn(field, colIndex, picker);
-      columnsContainer.appendChild(col);
-      picker.columns.push(col);
-    });
-    popup.appendChild(columnsContainer);
-    const btnContainer = document.createElement("div");
-    btnContainer.style.cssText = `
-    display: flex;
-    justify-content: space-between;
-    gap: 12px;
-    margin-top: 20px;
-    padding-top: 16px;
-    border-top: 1px solid var(--background-modifier-border);
-  `;
-    const neutralBtnCss = `
-    padding: 10px 20px;
-    border-radius: 8px;
-    border: none;
-    background: var(--background-modifier-hover);
-    color: var(--text-normal);
-    cursor: pointer;
-    font-size: 14px;
-    font-weight: 500;
-    flex: 1;
-    font-family: inherit;
-  `;
-    const todayBtn = document.createElement("button");
-    todayBtn.type = "button";
-    todayBtn.textContent = "此刻";
-    todayBtn.style.cssText = neutralBtnCss;
-    todayBtn.onclick = () => {
-      picker.tempMoment = (0, import_moment.default)();
-      regenerateDayNumbers(picker);
-      updateAllColumns(picker, true);
-    };
-    btnContainer.appendChild(todayBtn);
-    if (onManual) {
-      const manualBtn = document.createElement("button");
-      manualBtn.type = "button";
-      manualBtn.textContent = "手输";
-      manualBtn.style.cssText = neutralBtnCss;
-      manualBtn.onclick = () => {
-        mask.remove();
-        onManual();
-      };
-      btnContainer.appendChild(manualBtn);
-    }
-    const okBtn = document.createElement("button");
-    okBtn.type = "button";
-    okBtn.textContent = "确定";
-    okBtn.style.cssText = `
-    padding: 10px 20px;
-    border-radius: 8px;
-    border: none;
-    background: var(--interactive-accent);
-    color: var(--text-on-accent);
-    cursor: pointer;
-    font-size: 14px;
-    font-weight: 500;
-    flex: 1;
-    font-family: inherit;
-  `;
-    okBtn.onclick = () => {
-      if (onConfirm) onConfirm(picker.tempMoment.clone());
-      mask.remove();
-    };
-    btnContainer.appendChild(okBtn);
-    popup.appendChild(btnContainer);
-    mask.appendChild(popup);
-    mask.style.zIndex = String(allocZ());
-    document.body.appendChild(mask);
-    updateAllColumns(picker, true);
-    for (const col of picker.columns) {
-      const el = col.selectedEl;
-      if (el) {
-        el.focus({ preventScroll: true });
-        break;
-      }
-    }
-    mask.addEventListener("click", (e) => {
-      if (e.target === mask) mask.remove();
-    });
-    escManager.register("bz-diary-datetime", { isVisible: () => mask.isConnected, close: () => mask.remove() });
-    return mask;
-  }
-  var activeMomentReset = null;
-  function resetDateTimeControl(m) {
-    if (activeMomentReset) activeMomentReset(m);
-  }
-  function setKeyboardUp(on) {
-    var _a;
-    (_a = document.getElementById("add-diary-popup")) == null ? void 0 : _a.classList.toggle("keyboard-up", on);
-  }
-  function createDateTimeControl() {
-    const container = document.createElement("div");
-    container.style.cssText = "margin-bottom:16px;";
-    container.classList.add("datetime-picker-container");
-    const label = document.createElement("label");
-    label.textContent = "日期";
-    label.style.cssText = "display:block;margin-bottom:6px;font-size:14px;color:var(--text-muted);font-weight:500;";
-    container.appendChild(label);
-    const displayArea = document.createElement("div");
-    displayArea.id = "datetime-display-area";
-    displayArea.style.cssText = `
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    font-size: 14px;
-    border: 1px solid var(--background-modifier-border);
-    border-radius: 6px;
-    padding: 8px 12px;
-    background: var(--background-primary);
-    cursor: pointer;
-    flex-wrap: wrap;
-  `;
-    displayArea.tabIndex = 0;
-    displayArea.setAttribute("role", "button");
-    displayArea.setAttribute("aria-label", "日期时间：回车或空格打开滚轮选择，滚轮内可切手输");
-    const yearSpan = document.createElement("span");
-    yearSpan.className = "dt-part";
-    yearSpan.setAttribute("data-part", "year");
-    yearSpan.style.cssText = "padding:2px 6px; border-radius:4px;";
-    yearSpan.textContent = "----";
-    const monthSpan = document.createElement("span");
-    monthSpan.className = "dt-part";
-    monthSpan.setAttribute("data-part", "month");
-    monthSpan.style.cssText = "padding:2px 6px; border-radius:4px;";
-    monthSpan.textContent = "--";
-    const daySpan = document.createElement("span");
-    daySpan.className = "dt-part";
-    daySpan.setAttribute("data-part", "day");
-    daySpan.style.cssText = "padding:2px 6px; border-radius:4px;";
-    daySpan.textContent = "--";
-    const hourSpan = document.createElement("span");
-    hourSpan.className = "dt-part";
-    hourSpan.setAttribute("data-part", "hour");
-    hourSpan.style.cssText = "padding:2px 6px; border-radius:4px;";
-    hourSpan.textContent = "--";
-    const minuteSpan = document.createElement("span");
-    minuteSpan.className = "dt-part";
-    minuteSpan.setAttribute("data-part", "minute");
-    minuteSpan.style.cssText = "padding:2px 6px; border-radius:4px;";
-    minuteSpan.textContent = "--";
-    const sep1 = document.createTextNode("-");
-    const sep2 = document.createTextNode("-");
-    const space = document.createTextNode(" ");
-    const colon = document.createTextNode(":");
-    displayArea.appendChild(yearSpan);
-    displayArea.appendChild(sep1);
-    displayArea.appendChild(monthSpan);
-    displayArea.appendChild(sep2);
-    displayArea.appendChild(daySpan);
-    displayArea.appendChild(space);
-    displayArea.appendChild(hourSpan);
-    displayArea.appendChild(colon);
-    displayArea.appendChild(minuteSpan);
-    const hiddenInput = document.createElement("input");
-    hiddenInput.type = "text";
-    hiddenInput.id = "add-diary-datetime";
-    hiddenInput.style.display = "none";
-    const manualInput = document.createElement("input");
-    manualInput.type = "text";
-    manualInput.placeholder = "YYYY-MM-DD HH:mm 或 1 分钟前";
-    manualInput.style.cssText = `
-    width: 100%;
-    border: 1px solid var(--background-modifier-border);
-    border-radius: 6px;
-    font-size: 14px;
-    box-sizing: border-box;
-    padding: 8px 12px;
-    display: none;
-  `;
-    let currentMoment = (0, import_moment.default)();
-    let isManualMode = false;
-    const setMoment = (m) => {
-      if (!m || typeof m.isValid !== "function" || !m.isValid()) return;
-      currentMoment = m.clone();
-      updateDisplay(currentMoment);
-    };
-    activeMomentReset = setMoment;
-    function updateDisplay(momentObj) {
-      if (!momentObj || !momentObj.isValid()) {
-        yearSpan.textContent = "----";
-        monthSpan.textContent = "--";
-        daySpan.textContent = "--";
-        hourSpan.textContent = "--";
-        minuteSpan.textContent = "--";
-        hiddenInput.value = "";
-        return;
-      }
-      yearSpan.textContent = momentObj.format("YYYY");
-      monthSpan.textContent = momentObj.format("MM");
-      daySpan.textContent = momentObj.format("DD");
-      hourSpan.textContent = momentObj.format("HH");
-      minuteSpan.textContent = momentObj.format("mm");
-      hiddenInput.value = momentObj.format("YYYY-MM-DD HH:mm");
-    }
-    updateDisplay(currentMoment);
-    function openUnifiedPicker() {
-      if (isManualMode) return;
-      showDateTimePicker(
-        currentMoment,
-        (newMoment) => {
-          if (newMoment && newMoment.isValid()) {
-            currentMoment = newMoment;
-            updateDisplay(currentMoment);
-          }
-        },
-        () => enterManualMode()
-        // 效率#4②：滚轮内「手输」钮承接显性入口
-      );
-    }
-    function enterManualMode() {
-      if (isManualMode) return;
-      isManualMode = true;
-      displayArea.style.display = "none";
-      manualInput.style.display = "block";
-      manualInput.value = hiddenInput.value;
-      manualInput.focus();
-      manualInput.select();
-    }
-    function exitManualMode() {
-      setKeyboardUp(false);
-      if (!isManualMode) return;
-      isManualMode = false;
-      manualInput.style.display = "none";
-      displayArea.style.display = "flex";
-    }
-    function commitManualEdit() {
-      const raw = manualInput.value.trim();
-      const newMoment = parseFlexibleDateTime(raw);
-      if (newMoment && newMoment.isValid()) {
-        currentMoment = newMoment;
-        updateDisplay(currentMoment);
-      } else {
-        manualInput.value = hiddenInput.value;
-        notice("日期时间格式无效，已恢复");
-      }
-      exitManualMode();
-    }
-    displayArea.addEventListener("click", openUnifiedPicker);
-    displayArea.addEventListener("dblclick", enterManualMode);
-    displayArea.addEventListener("keydown", (e) => {
-      if (e.key === "Enter" || e.key === " ") {
-        e.preventDefault();
-        openUnifiedPicker();
-      }
-    });
-    manualInput.addEventListener("focus", () => setKeyboardUp(true));
-    manualInput.addEventListener("blur", commitManualEdit);
-    manualInput.addEventListener("keypress", (e) => {
-      if (e.key === "Enter") {
-        e.preventDefault();
-        commitManualEdit();
-      }
-    });
-    container.appendChild(displayArea);
-    container.appendChild(manualInput);
-    container.appendChild(hiddenInput);
-    return container;
-  }
 
   // src/diary/ui/entry-actions.ts
   init_notice();
@@ -17116,19 +16586,6 @@ ${String(review).trim()}`;
   // src/diary/ui/entry-actions.ts
   function diaryEntryFilePath(entry) {
     return entry.filePath || entry.filename || null;
-  }
-  async function jumpToDiaryEntry(entry) {
-    const filePath = diaryEntryFilePath(entry);
-    if (!filePath) {
-      notice("找不到原文", "error");
-      return;
-    }
-    const file = getApp().vault.getAbstractFileByPath(filePath);
-    if (!file) {
-      notice("找不到日记文件");
-      return;
-    }
-    await getApp().workspace.openLinkText(stripMdExt(filePath), "", false, { active: true });
   }
   async function copyDiaryLink(entry) {
     const filePath = diaryEntryFilePath(entry);
@@ -17454,175 +16911,50 @@ ${String(review).trim()}`;
       return false;
     }
   }
-  var addDialogUi = null;
-  var addDialogDefaultDateTime = "";
-  var addDialogSaveBtn = null;
-  var activeAddDialogOnSaved = null;
-  function createAddDialog() {
+
+  // src/diary/media-import.ts
+  init_config();
+  var PICK_MEDIA_ACCEPT = "image/*,video/*,audio/*";
+  var MEDIA_PICK_MAX_MB = 64;
+  var FALLBACK_MEDIA_DIR = `${DIARY_DIRECTORY}/附件`;
+  async function writePickedMedia(app, file) {
+    const path = await mediaPathFor(app, file.name);
+    await app.vault.createBinary(path, await file.arrayBuffer());
+    return path.split("/").pop() || file.name;
   }
-  function addDialogDirty() {
-    const popup = document.getElementById("add-diary-popup");
-    if (!popup) return false;
-    if (collectSelectedTags(popup).length > 0) return true;
-    const datetimeInput = document.getElementById("add-diary-datetime");
-    return !!datetimeInput && datetimeInput.value !== addDialogDefaultDateTime;
-  }
-  function closeAddDialog() {
-    addDialogUi == null ? void 0 : addDialogUi.close();
-    addDialogUi = null;
-    addDialogSaveBtn = null;
-  }
-  function hideAddDialog() {
-    closeAddDialog();
-  }
-  function requestCloseAddDialog() {
-    if (addDialogDirty()) confirmDiscard(closeAddDialog, void 0, DIARY_FLOW_SKIN);
-    else closeAddDialog();
-  }
-  function setAddSavingUi(saving) {
+  async function mediaPathFor(app, name) {
     var _a;
-    const btn = addDialogSaveBtn;
-    if (!btn) return;
-    btn.disabled = saving;
-    const label = (_a = btn.querySelector("span")) != null ? _a : btn;
-    label.textContent = saving ? "保存中…" : "添加";
-  }
-  function openAddDialog(opts) {
-    var _a;
-    activeAddDialogOnSaved = (_a = opts == null ? void 0 : opts.onSaved) != null ? _a : null;
-    if (opts == null ? void 0 : opts.yearRange) {
-      const range = opts.yearRange;
-      setDateTimeYearRangeProvider(() => range);
-    } else {
-      setDateTimeYearRangeProvider(null);
+    const host = app;
+    const getPath = (_a = host.fileManager) == null ? void 0 : _a.getAvailablePathForAttachment;
+    if (typeof getPath === "function") {
+      return await getPath.call(host.fileManager, name, `${DIARY_DIRECTORY}/`);
     }
-    if (addDialogUi) closeAddDialog();
-    const content = document.createElement("div");
-    content.className = "bz-diary-form";
-    const dateTimePicker = createDateTimeControl();
-    content.appendChild(dateTimePicker);
-    const typeLabel = document.createElement("label");
-    typeLabel.className = "bz-diary-field-label";
-    typeLabel.textContent = "类型";
-    const typeContainer = document.createElement("div");
-    typeContainer.id = "add-diary-type-container";
-    typeContainer.className = "diary-tag-selector-buttons bz-diary-chip-scroll";
-    content.appendChild(typeLabel);
-    content.appendChild(typeContainer);
-    const foot = document.createElement("div");
-    foot.className = "bz-diary-dialog-foot";
-    const cancelBtn = uiBtn({ label: "取消", className: "bz-touch-target--xl", onClick: requestCloseAddDialog });
-    const saveBtn = uiBtn({
-      label: "添加",
-      // 一致#1：新建条目 = 添加口径（编辑既有条目的选择器保持「保存」）
-      tone: "primary",
-      className: "bz-touch-target--xl",
-      // D-UI15：保存/取消钮同批触控抬档
-      onClick: () => void saveNewEntry()
-    });
-    addDialogSaveBtn = saveBtn;
-    foot.appendChild(cancelBtn);
-    foot.appendChild(saveBtn);
-    content.appendChild(foot);
-    const { mask, popup, close } = uiModal({
-      content,
-      maxWidth: 400,
-      head: true,
-      title: "写日记",
-      className: "bz-diary-add-popup",
-      requestClose: requestCloseAddDialog
-      // ESC/遮罩关闭统一走脏拦截分流
-    });
-    mask.id = "add-diary-mask";
-    popup.id = "add-diary-popup";
-    addDialogUi = { mask, popup, close };
-    bindFormSubmit(popup, () => void saveNewEntry());
-    renderTagOptions(typeContainer, sortTagsByUsage(getSortedTagsForAddDialog()), /* @__PURE__ */ new Set());
-    motionSheetDialog(popup);
-    let defaultDateStr = localDayKey();
-    let defaultTimeStr = (0, import_moment.default)().format("HH:mm");
-    if (getUseFileDateTimeSetting()) {
-      const activeView = getApp().workspace.getActiveViewOfType(MarkdownView);
-      if (activeView && activeView.file) {
-        const file = activeView.file;
-        if (file.path.startsWith(DIARY_DIRECTORY)) {
-          const entryDate = diaryDateFromEntryPath(file.path);
-          if (entryDate) defaultDateStr = entryDate;
-        }
-      }
-    }
-    const defaultDateTime = `${defaultDateStr} ${defaultTimeStr}`;
-    resetDateTimeControl((0, import_moment.default)(defaultDateTime, "YYYY-MM-DD HH:mm", true));
-    const datetimeInput = document.getElementById("add-diary-datetime");
-    if (datetimeInput) {
-      datetimeInput.value = defaultDateTime;
-    }
-    addDialogDefaultDateTime = defaultDateTime;
-  }
-  function getUseFileDateTimeSetting() {
-    const s = tryGetSettings();
-    return (s == null ? void 0 : s.useFileDateTime) === true;
-  }
-  var savingNewEntry = false;
-  async function saveNewEntry() {
-    if (savingNewEntry) return;
-    const datetimeInput = document.getElementById("add-diary-datetime");
-    const typeContainer = document.getElementById("add-diary-type-container");
-    if (!datetimeInput || !typeContainer || !document.getElementById("add-diary-popup")) return;
-    const userInput = datetimeInput.value.trim();
-    const selTagNames = collectSelectedTags(typeContainer);
-    if (selTagNames.length === 0) {
-      notice("请至少选择一个类型");
-      return;
-    }
-    let targetMoment = parseFlexibleDateTime(userInput);
-    if (!targetMoment || !targetMoment.isValid()) {
-      notice("日期时间格式不正确");
-      return;
-    }
-    const dateStr = targetMoment.format("YYYY-MM-DD");
-    const timeStr = targetMoment.format("HH:mm");
-    savingNewEntry = true;
-    setAddSavingUi(true);
+    const dot = name.lastIndexOf(".");
+    const base = dot > 0 ? name.slice(0, dot) : name;
+    const ext = dot > 0 ? name.slice(dot) : "";
     try {
-      const entry = await addEntry(dateStr, timeStr, selTagNames, "");
-      closeAddDialog();
-      try {
-        await jumpToDiaryEntry(entry);
-        activeAddDialogOnSaved == null ? void 0 : activeAddDialogOnSaved();
-        activeAddDialogOnSaved = null;
-      } catch (e) {
+      if (!await app.vault.adapter.exists(FALLBACK_MEDIA_DIR)) {
+        await app.vault.createFolder(FALLBACK_MEDIA_DIR);
       }
-    } catch (error) {
-      if (isUnparsedRefusal(error) || isDiaryReadFailure(error)) return;
-      console.error("保存日记失败:", error);
-      notifySaveError(error, "日记");
-    } finally {
-      savingNewEntry = false;
-      setAddSavingUi(false);
+    } catch (e) {
     }
+    let path = `${FALLBACK_MEDIA_DIR}/${name}`;
+    for (let i = 2; app.vault.getAbstractFileByPath(path); i++) {
+      path = `${FALLBACK_MEDIA_DIR}/${base}_${i}${ext}`;
+    }
+    return path;
   }
 
   // src/diary/ui.ts
   init_ui();
   var SINGLE_MAX_W = 720;
   var FLIP_TIME_MS = 380;
-  var WIDEN_DELAY_MS = 350;
-  var WIDEN_RETRY_MS = 400;
-  var WIDEN_RETRY_MAX = 30;
-  var WIDEN_CHUNK = 60;
-  var WIDEN_CAP = 120;
-  var SEARCH_SKIP_BLOCKS = [
-    "bz-diary-b-photo",
-    "bz-diary-b-audio",
-    "bz-diary-b-envelope",
-    "bz-diary-b-daystamp"
-  ];
   var PAGE_CUT_MIN_PX = 84;
   var DAYSTAMP_KEEP_PX = 96;
-  var MEDIA_FIT_MIN_RATIO = 0.6;
   var REFRESH_DEBOUNCE_MS = 400;
   var WHEEL_LOCK_MS = 560;
+  var LOADING_SHOW_DELAY_MS = 120;
+  var MEDIA_FIT_MIN_RATIO = 0.6;
   function collectPhotoRefs(entries) {
     const out = [];
     const seen = /* @__PURE__ */ new Set();
@@ -17688,21 +17020,29 @@ ${String(review).trim()}`;
     }
     return pages;
   }
-  function monthIndex(entries) {
+  function monthMarks(pages, entries) {
     const out = [];
-    const byKey = /* @__PURE__ */ new Map();
-    for (const e of entries) {
-      const key = e.date.slice(0, 7);
-      const hit = byKey.get(key);
-      if (hit) {
-        hit.n++;
-        continue;
-      }
-      const m = { key, firstEid: e.id || "", n: 1 };
-      byKey.set(key, m);
-      out.push(m);
+    const seen = /* @__PURE__ */ new Set();
+    for (let pi = 0; pi < pages.length; pi++) {
+      const dayEl = pages[pi].find((el) => el.classList.contains("bz-diary-b-daystamp"));
+      const date = dayEl == null ? void 0 : dayEl.getAttribute("data-date");
+      if (!date) continue;
+      const key = date.slice(0, 7);
+      if (seen.has(key)) continue;
+      seen.add(key);
+      out.push({ key, page1: pi + 1, n: 0 });
     }
+    const byMonth = /* @__PURE__ */ new Map();
+    for (const e of entries) {
+      const k = e.date.slice(0, 7);
+      byMonth.set(k, (byMonth.get(k) || 0) + 1);
+    }
+    for (const m of out) m.n = byMonth.get(m.key) || 0;
     return out;
+  }
+  function pageDateOf(page) {
+    const el = page.find((n) => n.classList.contains("bz-diary-b-daystamp"));
+    return (el == null ? void 0 : el.getAttribute("data-date")) || null;
   }
   function elOf(html) {
     const t = document.createElement("template");
@@ -17737,12 +17077,6 @@ ${x.review || ""}`;
       void navigator.clipboard.writeText(text).then(() => notice(okMsg, "success"), fallback);
     } else fallback();
   }
-  function lastReachableCursor(pageCount, single) {
-    const n = pageCount;
-    if (n <= 0) return 0;
-    if (single) return n - 1;
-    return n % 2 === 1 ? n - 1 : n - 2;
-  }
   var _DiaryAppController = class _DiaryAppController {
     constructor() {
       // ---------- DOM ----------
@@ -17752,31 +17086,11 @@ ${x.review || ""}`;
       // ---------- 状态 ----------
       /** 当前册子里的条目（只读聚合结果；加密条目在解锁时才并入） */
       this.entries = [];
-      /**
-       * 排版窗口（ADR-0231）：只把前这么多条排成纸页，其余**留在内存里但不排**。
-       * 排版是本域最贵的一步（全量块流测高 + 二分切段），全量排会在开册时顿住，而且书一重
-       * **每次翻页**都跟着变卡（`WIDEN_CAP` 的注里有 StPageFlip 侧的成因）。
-       * 首批按 `FIRST_PAINT_ENTRIES` 成册。读盘结束后 `widenFull()` 会在后台把窗口推到 `WIDEN_CAP`；
-       * 更外的目标由 `widenToCover` 按需推宽、翻到书尾由 `extendIfAtTail` 续叠。
-       */
-      this.shown = FIRST_PAINT_ENTRIES;
-      /** 本轮的「首批已成册」闸门：进度可能连发多次，只认第一次 */
-      this.firstPaintDone = false;
-      /** 续叠窗口的重入闸门（relayout → buildBook 会重挂 flip 事件） */
-      this.extending = false;
-      /** 延后一拍续叠的定时器（`flip` 钩子用；`relayout`/`hide` 复位的旁路遗物） */
-      this.extendTimer = null;
-      /** 后台续排的定时器（见 `scheduleWidenFull`；`hide` / `cleanup` 要清） */
-      this.widenTimer = null;
-      /** 后台续排让路的重试计数（现场不静时累加；次数上限见 WIDEN_RETRY_MAX） */
-      this.widenRetry = 0;
       this.byEid = /* @__PURE__ */ new Map();
       this.pages = [];
       this.cursor = 0;
       this.single = false;
       this.filterTag = null;
-      /** 检索态：`hits` 存的是**命中条目的 id**（不是页内元素）——命中可能落在还没排版的窗口外，
-       *  得先按需推宽窗口才能定位，所以这一层记的是「哪几则」而不是「哪几个元素」。 */
       this.search = {
         kw: null,
         hits: [],
@@ -17801,6 +17115,33 @@ ${x.review || ""}`;
       this.encMediaCache = /* @__PURE__ */ new Map();
       this.lastSpreadCount = 0;
       this.cal = { year: 2026, month: 1 };
+      /** 台历当前模式：跳日（文具「跳」）或写作内页的改日子·时辰 */
+      this.calMode = "jump";
+      /** 写作模式下台历里选中的那天（未选回落草稿当前那天） */
+      this.calDate = null;
+      /**
+       * 写作内页的草稿（ADR-0233）：点「写」时立，落笔/揉掉即销。
+       * 只存日子、时辰与已选贴纸——正文以 textarea 的 value 为准（不进状态，免得两份真相）。
+       */
+      this.draft = null;
+      /** 落笔进行中（防连点：写盘慢时双击「落笔」会在同刻落两篇） */
+      this.saving = false;
+      /** 开册进度条的 `uiProgress` 句柄（首次开册建一次就复用，不随层出入栈——基元没有状态） */
+      this.loadBar = null;
+      /** 进度条的显示延时器：读得快（缓存命中）就不闪这一下 */
+      this.loadShowTimer = null;
+      /** 本次开册的读盘 + 成册任务（`bz-diary-write`：等它落地再摆写作内页） */
+      this.loadTask = null;
+      /** 本轮开册的身份牌：连点命令时旧那一轮在落地前对不上牌，自行让位（不重排第二遍） */
+      this.loadToken = null;
+      /**
+       * 书页是否就是「当前数据排出来的那一册」（`relayout` 落地即置真）。
+       * 配合 `bookStillValid()` 构成 `show()` 的快路：重开册子不重读、不重排
+       * （用户点名：「再次打开日记本，写的内容不会消失，也不会再重新渲染页面」）。
+       */
+      this.bookFresh = false;
+      /** 上次排版时的保险箱锁态：锁态一变，加密条目要重并 ⇒ 快路作废 */
+      this.layoutUnlocked = false;
       // ---------- 生命周期标记 ----------
       this._initialized = false;
       this._shownOnce = false;
@@ -17923,6 +17264,14 @@ ${x.review || ""}`;
       this.passEl = q(".bz-diary-pass");
       this.passInputEl = q(".bz-diary-pass-input");
       this.passErrEl = q(".bz-diary-pass-err");
+      this.loadingEl = q(".bz-diary-loading");
+      this.loadingTitleEl = q(".bz-diary-ld-title");
+      this.loadingBarEl = q(".bz-diary-ld-bar");
+      this.loadingCountEl = q(".bz-diary-ld-count");
+      this.wspEl = q(".bz-diary-wsp");
+      this.wspDayEl = q(".bz-diary-wsp-day");
+      this.wspAreaEl = q(".bz-diary-wsp-area");
+      this.wspToolsEl = q(".bz-diary-wsp-tools");
       this.bindChrome();
       this.bindMenu();
       this.bindBlockEvents();
@@ -17932,6 +17281,7 @@ ${x.review || ""}`;
       this.bindSlip();
       this.bindPass();
       this.bindTools();
+      this.bindWrite();
       registerPanelEsc("diary", () => !!this.root && this.root.style.display === "flex", () => this.escapeStack());
       window.__bzDiaryReplay = () => this.show();
     }
@@ -18011,10 +17361,8 @@ ${x.review || ""}`;
     /**
      * 重排整册。`keepRatio`：视口变化/回刷时按上次页数比例保住阅读位置（跟手不跳回最新）；
      * 换筛选、写完一篇等场景传 false（落回第 0 页 = 最新那篇）。
-     * `keepPage`（ADR-0231）：钉住**当前页索引**不动——只往尾部续叠纸页时用（见 extendIfAtTail）：
-     * 那种场景下总页数变了，按比例映射会把读者往前推，而位置其实本该纹丝不动。
      */
-    relayout(keepRatio, keepPage = false) {
+    relayout(keepRatio) {
       const root = this.root;
       if (!root) return 0;
       const t0 = typeof performance !== "undefined" ? performance.now() : 0;
@@ -18023,66 +17371,16 @@ ${x.review || ""}`;
       this.closeSheet();
       this.pauseAllAudio();
       this.search = { kw: null, hits: [], i: 0 };
-      const all = this.visibleEntries();
-      const list = all.slice(0, Math.max(0, this.shown));
-      this.setScope(all);
-      this.layoutBook(this.buildFlow(list, this.dayCountOf(all)), keepRatio, keepPage);
-      return (typeof performance !== "undefined" ? performance.now() : 0) - t0;
-    }
-    /** 排版要用的「全量视角」三件套：id → 条目、相片引用与索引。建块流**之前**必须就位——
-     *  `ctx()` 读 `photoIndex`，灯箱读 `photoRefs`。两条排版路都要先调它。 */
-    setScope(all) {
-      this.byEid = new Map(all.map((e) => [e.id || "", e]));
-      this.photoRefs = collectPhotoRefs(all);
-      this.photoIndex = new Map(this.photoRefs.map((p, i) => [p.media.name, i]));
-    }
-    /**
-     * 日戳「当天几则」：按**已加载的全部**算（含窗口外），只排窗口内的条目——
-     * 否则窗口边界那天会数少。条目数不参与排版成本，多算不亏。
-     */
-    dayCountOf(all) {
-      const dayCount = /* @__PURE__ */ new Map();
-      for (const e of all) dayCount.set(e.date, (dayCount.get(e.date) || 0) + 1);
-      return dayCount;
-    }
-    /** 块流：日戳 + 条目块（票根/藏书票/信封的归位由 render 层决定）。 */
-    buildFlow(list, dayCount) {
-      const ctx = this.ctx();
-      const flow = [];
-      let lastDate = null;
-      for (const e of list) {
-        if (e.date !== lastDate) {
-          lastDate = e.date;
-          flow.push({ el: elOf(daystampHTML(e.date, dayCount.get(e.date) || 1)), h: 0, keep: true });
-        }
-        this.pushEntryBlocks(flow, e, ctx);
-      }
-      return flow;
-    }
-    /**
-     * 条目 → 块元素。`bz-diary-b-photo`（照片 / 视频）标成**可缩块**：放不下时先等比缩到塞进
-     * 剩余高度（见 `paginateFlow` 规则 3a），别为差几十像素就整块换页、在页尾留半页白。
-     * 日戳与文字块不缩——文字走逐行续排，日戳必须整块起新纸。
-     */
-    pushEntryBlocks(flow, e, ctx) {
-      for (const html of entryBlockHTMLs(e, ctx)) {
-        const el = elOf(html);
-        flow.push(el.classList.contains("bz-diary-b-photo") ? { el, h: 0, fit: true } : { el, h: 0 });
-      }
-    }
-    /**
-     * 排版尾段：量高 → 切页 → 建书 → 定位。两条路共用——
-     * `relayout()`（同步：整窗重排，前奏清场）与 `widenFull()`（后台：只往尾部续叠，不清场）。
-     *
-     * 之所以抽出来是因为后台那条路的**前奏**必须不一样，而**尾段**必须逐字一样：
-     * 页边界、页码、`keepPage` 保位全在这里，两套实现必然漂移。
-     */
-    layoutBook(flow, keepRatio, keepPage) {
-      const root = this.root;
-      if (!root) return;
+      const fbHost = this.flipHost;
+      this.blockEl.innerHTML = "";
+      if (fbHost) this.blockEl.appendChild(fbHost);
       const single = typeof window !== "undefined" && window.innerWidth <= SINGLE_MAX_W;
       this.single = single;
       root.classList.toggle("bz-diary-single", single);
+      const list = this.visibleEntries();
+      this.byEid = new Map(list.map((e) => [e.id || "", e]));
+      this.photoRefs = collectPhotoRefs(list);
+      this.photoIndex = new Map(this.photoRefs.map((p, i) => [p.media.name, i]));
       const probe = document.createElement("div");
       probe.className = "bz-diary-probe";
       root.appendChild(probe);
@@ -18090,6 +17388,18 @@ ${x.review || ""}`;
       const padB = parseFloat(getComputedStyle(probe).paddingBottom) || 66;
       const bookH = this.bookEl.clientHeight || parseFloat(this.cssVar("--bz-diary-pg-h")) || 700;
       const availH = bookH - padT - padB;
+      const ctx = this.ctx();
+      const flow = [];
+      let lastDate = null;
+      const dayCount = /* @__PURE__ */ new Map();
+      for (const e of list) dayCount.set(e.date, (dayCount.get(e.date) || 0) + 1);
+      for (const e of list) {
+        if (e.date !== lastDate) {
+          lastDate = e.date;
+          flow.push({ el: elOf(daystampHTML(e.date, dayCount.get(e.date) || 1)), h: 0, keep: true });
+        }
+        this.pushEntryBlocks(flow, e, ctx);
+      }
       for (const f of flow) probe.appendChild(f.el);
       void probe.offsetHeight;
       for (const f of flow) f.h = this.blockHeightOf(f.el);
@@ -18105,14 +17415,26 @@ ${x.review || ""}`;
       this.renderEdgeMarks();
       const last = Math.max(0, this.pages.length - 1);
       let target = 0;
-      if (keepPage) {
-        target = Math.max(0, Math.min(last, this.cursor));
-      } else if (keepRatio && this.lastSpreadCount > 1) {
+      if (keepRatio && this.lastSpreadCount > 1) {
         target = Math.round(this.cursor / (this.lastSpreadCount - 1) * last);
       }
       this.lastSpreadCount = this.pages.length;
       this.buildBook(Math.max(0, Math.min(last, target)));
       this.refreshBookRect();
+      this.bookFresh = true;
+      this.layoutUnlocked = isUnlocked();
+      return (typeof performance !== "undefined" ? performance.now() : 0) - t0;
+    }
+    /**
+     * 条目 → 块元素。`bz-diary-b-photo`（照片 / 视频）标成**可缩块**：放不下时先等比缩到塞进
+     * 剩余高度（见 `paginateFlow` 规则 3a），别为差几十像素就整块换页、在页尾留半页白。
+     * 日戳与文字块不缩——文字走逐行续排，日戳必须整块起新纸。
+     */
+    pushEntryBlocks(flow, e, ctx) {
+      for (const html of entryBlockHTMLs(e, ctx)) {
+        const el = elOf(html);
+        flow.push(el.classList.contains("bz-diary-b-photo") ? { el, h: 0, fit: true } : { el, h: 0 });
+      }
     }
     /** 段落内第 idx 个字符落在哪个文本节点的哪个偏移 */
     textPos(root, idx) {
@@ -18184,7 +17506,6 @@ ${x.review || ""}`;
     /** 建 StPageFlip 书：页元素 → 库，翻页动画/拖拽/纸张弯曲全交库 */
     buildBook(targetPage) {
       const host = this.flipHost;
-      this.blockEl.innerHTML = "";
       if (this.flip) {
         try {
           this.flip.destroy();
@@ -18231,7 +17552,6 @@ ${x.review || ""}`;
       this.flip.turnToPage(Math.max(0, targetPage));
       this.flip.on("flip", (e) => {
         this.cursor = e.data;
-        this.scheduleExtend();
       });
       this.cursor = Math.max(0, targetPage);
       this.afterPagesBuilt(host);
@@ -18244,257 +17564,42 @@ ${x.review || ""}`;
     }
     turnPage(dir) {
       if (!this.flip) return;
-      if (dir > 0) {
-        if (this.extendIfAtTail()) return;
-        this.flip.flipNext();
-      } else this.flip.flipPrev();
-    }
-    /**
-     * 翻到书尾就推宽排版窗口一批（ADR-0231）。返回是否真的推宽了。
-     *
-     * 为什么必须「只往尾部追加」：`paginateFlow` 是从最新往最早**顺序**装页的，往流尾加条目
-     * 不会改动前面任何一页的边界 ⇒ 当前页索引语义不变、读者看到的那一页原地不动。
-     * `relayout(false, true)` 的 `keepPage` 就是为这条准备的。
-     *
-     * 代价（诚实版）：这是**整窗重排**——`paginateFlow` 对加宽后的窗口重跑一遍、一次 reflow 量高、
-     * `buildBook` 重建 StPageFlip 实例；**不是**「只测新增条目」。之所以可接受：成本以**窗口**为界
-     * （不是 1243 全量），且只在用户主动翻到书尾这一刻发生。StPageFlip v2.0.7 没有 `addPage`，
-     * 动态加页本就得整实例重建，所以这一次重建省不掉；真要省下重测，得按条目 id 缓存块高。
-     *
-     * 「书尾」的判据见 `lastReachableCursor()`——**不是** `pages.length - 1`，别改回去。
-     */
-    extendIfAtTail() {
-      if (this.extending) return false;
-      const all = this.visibleEntries();
-      if (this.shown >= all.length) return false;
-      if (!this.pages.length) return false;
-      if (this.cursor < lastReachableCursor(this.pages.length, this.single)) return false;
-      const next = Math.min(this.shown + LIST_BATCH_SIZE, all.length);
-      if (next <= this.shown) return false;
-      this.extending = true;
-      try {
-        this.shown = next;
-        this.relayout(false, true);
-        return true;
-      } finally {
-        this.extending = false;
-      }
-    }
-    /** 延后一拍再续叠（见 `buildBook` 的 `flip` 钩子）：合并同一拍内的多次 flip，不排队多份。 */
-    scheduleExtend() {
-      if (this.extendTimer !== null) return;
-      this.extendTimer = setTimeout(() => {
-        this.extendTimer = null;
-        this.extendIfAtTail();
-      }, 0);
-    }
-    // ============================================================
-    //  后台续排：首屏之后把窗口推到「够用的一段」（ADR-0231 决策 12 回修）
-    // ============================================================
-    /**
-     * 首屏成册、读盘结束后，趁空闲把排版窗口**一次推到 `WIDEN_CAP` 则**。
-     *
-     * 为什么要有这一步：窗口外的索引 / 检索 / 台历跳转，原先都要当场付一次「从最新一路排到目标」
-     * 的重排——上千则的本子上那基本等于排全量，于是点一下卡一下。提前在后台排到一段，绝大多数
-     * 近期的跳转就只剩一次 `turnToPage`。
-     *
-     * 为什么是「一次」而不是「分批续叠」：StPageFlip 没有 `addPage`，每批都得 destroy + 重建整本书
-     * ——分批就是把读者正在看的书反复拆装十几遍。一次排完只重建一遍。
-     *
-     * 为什么**封顶**而不是排到全量：见 `WIDEN_CAP` 的注（书一重，每次翻页都卡）。
-     * 不阻塞也只做了一半：建块流分片让出主线程，**尾段（量高 + 切页 + 建书）仍是原子的**——
-     * 所以封顶必须小到让那一段的代价可以忽略，而不是靠「分片」把全量摊平。
-     *
-     * 让路规矩（四条，缺一不可）：
-     * 1. 场景不静（任一浮层开着 / 录音在放 / 拆信封动效在飞）不介入——重排会把现场拆掉；
-     *    这种情况**不是放弃**而是过一拍再看（`rearmWiden`），有次数上限；
-     * 2. 期间任何重排（`epoch` 变）或收起即作废，不把陈旧结果落地；
-     * 3. 目标超过 `WIDEN_CAP` 的部分不自动续排，退回 `widenToCover` 按需推宽；
-     * 4. 建流前后各查一次「静不静」：浮层/动效可能是**建流那几拍里**才开的。
-     */
-    scheduleWidenFull() {
-      if (this.widenTimer !== null) return;
-      this.widenRetry = 0;
-      this.widenTimer = setTimeout(() => {
-        this.widenTimer = null;
-        void this.widenFull();
-      }, WIDEN_DELAY_MS);
-    }
-    /** 后台续排的执行体（`scheduleWidenFull` 的定时器里调；测试可直接 await 它） */
-    async widenFull() {
-      if (!this.root) return;
-      const all = this.visibleEntries();
-      const target = Math.min(all.length, WIDEN_CAP);
-      if (this.shown >= target) return;
-      if (!this.sceneQuiet()) return this.rearmWiden();
-      const epoch = this.epoch;
-      this.setScope(all);
-      const flow = await this.buildFlowChunked(
-        all.slice(0, target),
-        this.dayCountOf(all),
-        epoch
-      );
-      if (!flow) return;
-      if (epoch !== this.epoch) return;
-      if (!this.sceneQuiet()) return this.rearmWiden();
-      this.shown = target;
-      this.layoutBook(flow, false, true);
-    }
-    /**
-     * 现场没静、这一轮让开了：过一拍再看一眼。
-     *
-     * 为什么不能「让一次就放弃」：放开的时机恰恰是用户要去跳转的时机——刚开册就点开册页索引、
-     * 或正在拆一封加密信。这时放弃，索引 / 台历的跳转就落回同步重排那条路（就是这次要治的卡顿）。
-     *
-     * 耐心有上限：浮层一直开着不能无限空转。用尽后不再自动续排，退回按需推宽——**正确性不靠它**。
-     */
-    rearmWiden() {
-      if (this.widenTimer !== null) return;
-      if (this.widenRetry >= WIDEN_RETRY_MAX) return;
-      this.widenRetry++;
-      this.widenTimer = setTimeout(() => {
-        this.widenTimer = null;
-        void this.widenFull();
-      }, WIDEN_RETRY_MS);
-    }
-    /** 分片建块流：片间让出主线程；`epoch` 变、书收起即放弃（返回 null，别把陈旧结果落地） */
-    async buildFlowChunked(list, dayCount, epoch) {
-      const ctx = this.ctx();
-      const flow = [];
-      let lastDate = null;
-      for (let i = 0; i < list.length; i += WIDEN_CHUNK) {
-        const end = Math.min(list.length, i + WIDEN_CHUNK);
-        for (let k = i; k < end; k++) {
-          const e = list[k];
-          if (e.date !== lastDate) {
-            lastDate = e.date;
-            flow.push({ el: elOf(daystampHTML(e.date, dayCount.get(e.date) || 1)), h: 0, keep: true });
-          }
-          this.pushEntryBlocks(flow, e, ctx);
-        }
-        await new Promise((r) => setTimeout(r, 0));
-        if (epoch !== this.epoch || !this.root || this.root.style.display === "none") return null;
-      }
-      return flow;
-    }
-    /**
-     * 场景静不静：书没收起、任一浮层都没开、没有录音在放、没有页级动效在飞
-     * ——不静就不许动书（重排会把现场全拆掉）。
-     */
-    sceneQuiet() {
-      if (!this.root || this.root.style.display === "none") return false;
-      const layers = [
-        this.sheetEl,
-        this.slipEl,
-        this.lightboxEl,
-        this.albumEl,
-        this.calEl,
-        this.menuEl
-      ];
-      if (layers.some((el) => el && !el.hidden)) return false;
-      if (this.blockEl.querySelector(".bz-diary-opening")) return false;
-      const audios = Array.from(this.root.querySelectorAll("audio"));
-      return !audios.some((a) => !a.paused);
+      if (this.writeGuard()) return;
+      if (dir > 0) this.flip.flipNext();
+      else this.flip.flipPrev();
     }
     jumpToPage(pi) {
       if (!this.flip || !this.pages.length) return;
+      if (this.writeGuard()) return;
       this.flip.turnToPage(Math.max(0, Math.min(this.pages.length - 1, pi)));
-    }
-    /**
-     * 「按需推宽窗口再跳」——索引 / 检索 / 台历跳日三条共用。
-     *
-     * 为什么还需要这一步：`pages` 只覆盖「已加载全量」的前 `shown` 条（ADR-0231 的排版窗口），
-     * 而索引与检索必须覆盖**全部已加载条目**（否则窗口外的月/词既看不见也翻不到）。于是目标落在
-     * 窗口外时：把窗口一次性推到盖住它 → 重排 → 再定位到它那一页。
-     *
-     * 正常情况下这条路已经很少走到：读盘结束后 `widenFull()` 会把窗口推到 `WIDEN_CAP`，此后
-     * 那段之内的跳转只剩一次 `turnToPage`。它是**兜底**——目标落在 cap 之外、用户点得比后台快、
-     * 或后台那一轮被作废（场景不静 / 起过重排）时才轮到它。
-     *
-     * 兜底时的成本（诚实版）：一次**整窗重排**（`paginateFlow` 重跑 + 一次 reflow 量高 + 重建
-     * StPageFlip），代价 = O(目标在 `all` 里的位置)——上千则的本子上跳最旧那一则基本等于排全量，
-     * 会顿一下**而且之后书变重、每次翻页也跟着钝**（见 `WIDEN_CAP` 的注）。所以它只当兜底。
-     * 不改成滑窗：页码 / 书口年份带 / `keepPage` 保位都要重做——那要另立一次拍板。
-     */
-    indexInAllOf(eid) {
-      if (!eid) return -1;
-      return this.visibleEntries().findIndex((e) => (e.id || "") === eid);
-    }
-    /** 把排版窗口推到至少覆盖 `all` 的第 `idx` 条。返回是否真的推了。 */
-    widenToCover(idx) {
-      const all = this.visibleEntries();
-      if (idx < 0 || idx >= all.length) return false;
-      if (idx + 1 <= this.shown) return false;
-      this.shown = idx + 1;
-      this.relayout(false, true);
-      return true;
-    }
-    /** 条目 id → 它现在落在第几页（没排到 / 不在可见集 → -1） */
-    pageOfEid(eid) {
-      if (!eid) return -1;
-      for (let pi = 0; pi < this.pages.length; pi++) {
-        if (this.pages[pi].some((el) => el.dataset.eid === eid)) return pi;
-      }
-      return -1;
-    }
-    /**
-     * 跳到某一则：不在排版窗口里就先按需推宽窗口，再定位到它那一页。
-     * 返回是否真落到了页上（false = 这一则不在当前可见集里）。
-     */
-    revealEntry(eid) {
-      const idx = this.indexInAllOf(eid);
-      if (idx < 0) return false;
-      this.widenToCover(idx);
-      const pi = this.pageOfEid(eid);
-      if (pi < 0) return false;
-      this.jumpToPage(pi);
-      return true;
     }
     // ============================================================
     //  书口：年份染色 + 册页索引
     // ============================================================
-    /** 月份索引的**全量**口径（不吃排版窗口），见 `monthIndex()` */
-    monthIndexAll() {
-      return monthIndex(this.visibleEntries());
-    }
-    /**
-     * 某月落在第几页（**1 起**，与索引纸上印的页码同口径）；该月还没排进书里就返回 0。
-     * 定位的是该月最新那一则的页——日戳 `keep` 必开新纸，日戳与首条同页，所以那就是该月开头。
-     */
-    pageOfMonth(m) {
-      const idx = this.indexInAllOf(m.firstEid);
-      if (idx < 0 || idx + 1 > this.shown) return 0;
-      const pi = this.pageOfEid(m.firstEid);
-      return pi < 0 ? 0 : pi + 1;
+    monthMarksOf() {
+      return monthMarks(this.pages, this.visibleEntries());
     }
     /**
      * 书口年份染色带：只作「这几年各占多厚」的缩影（整条边缘才是那个大按钮——点开抽索引）。
      * 只有一年时不画：一条通高的色带等于没有信息，只是把整条书口刷成一块颜色。
      * `top`/`height` 是量出来的几何（行为性内联值）；颜色按年序轮转走 `.bz-diary-ey-N` 类。
-     *
-     * 占比按**已加载全量的条目数**算，不按页码：书口是给整本日记看的缩影，而书只排了窗口那段
-     * （ADR-0231）——按页码算的话色带会随窗口边长，且与索引纸列出的月份对不上。
-     * 顺带把「分几年」也搬到条目上，于是它不再依赖排版窗口。
      */
     renderEdgeMarks() {
       const edge = this.edgeEl;
       edge.querySelectorAll(".bz-diary-edge-year").forEach((b) => b.remove());
-      const all = this.visibleEntries();
-      if (!all.length) return;
+      const months = this.monthMarksOf();
+      if (!months.length) return;
+      const total = Math.max(1, this.pages.length);
       const years = [];
-      for (const e of all) {
-        const y = e.date.slice(0, 4);
-        const last = years[years.length - 1];
-        if (!last || last.y !== y) years.push({ y, n: 1 });
-        else last.n++;
+      for (const m of months) {
+        const y = m.key.slice(0, 4);
+        if (!years.length || years[years.length - 1].y !== y) years.push({ y, from: m.page1 });
       }
       if (years.length < 2) return;
-      const total = all.length;
-      let acc = 0;
       years.forEach((sg, i) => {
-        const top = acc / total * 100;
-        acc += sg.n;
-        let h = Math.max(1.2, sg.n / total * 100);
+        const top = (sg.from - 1) / total * 100;
+        const endFrom = i + 1 < years.length ? years[i + 1].from : total + 1;
+        let h = Math.max(1.2, (endFrom - 1) / total * 100 - top);
         h = Math.min(h, 100 - top);
         const b = document.createElement("div");
         b.className = `bz-diary-edge-year bz-diary-ey-${i % 8}`;
@@ -18503,19 +17608,11 @@ ${x.review || ""}`;
         edge.appendChild(b);
       });
     }
-    /**
-     * 点书口 → 抽出「册页索引」那张纸：一年一段、一月一行。
-     *
-     * 月份表与「凡 N 则」都按**已加载全量**（`visibleEntries()`）算，所以三项口径同源：
-     * 表头说凡 N 则，下面列出的月加起来就是 N 则，一个月也不会少。
-     * 行分两种：月已经排进书里 → 印「第 N 页」、点它直接翻页；还没排 → 印「未展开」、
-     * 点它先按需推宽窗口再翻（`revealEntry`）——页码只有排过版才知道，窗口外的月没排过，
-     * 这里就不假装知道，也不为了印页码去把全量排一遍。
-     */
+    /** 点书口 → 抽出「册页索引」那张纸：一年一段、一月一行 */
     openIndexSheet() {
+      const months = this.monthMarksOf();
       const list = this.visibleEntries();
-      const months = this.monthIndexAll();
-      if (!months.length) {
+      if (!months.length || !list.length) {
         this.toast("册页还空着");
         return;
       }
@@ -18531,10 +17628,7 @@ ${x.review || ""}`;
           curY = parts[0];
           open = true;
         }
-        const page = this.pageOfMonth(m);
-        const anchor = page ? `data-jump-page="${page - 1}"` : `data-jump-eid="${escapeHtml2(m.firstEid)}"`;
-        const tail = page ? `<span class="bz-diary-ir-p">第 ${page} 页</span>` : `<span class="bz-diary-ir-p bz-diary-ir-pend">未展开</span>`;
-        html += `<div class="bz-diary-idx-row" ${anchor}><span class="bz-diary-ir-m">${parseInt(parts[1], 10)} 月</span><span class="bz-diary-ir-dots"></span><span class="bz-diary-ir-n">${cnNum(m.n)} 则</span>${tail}</div>`;
+        html += `<div class="bz-diary-idx-row" data-jump-page="${m.page1 - 1}"><span class="bz-diary-ir-m">${parseInt(parts[1], 10)} 月</span><span class="bz-diary-ir-dots"></span><span class="bz-diary-ir-n">${cnNum(m.n)} 则</span><span class="bz-diary-ir-p">第 ${m.page1} 页</span></div>`;
       }
       if (open) html += "</div></div>";
       this.openSheet("册 页 索 引", html);
@@ -18716,7 +17810,9 @@ ${x.review || ""}`;
       this.bookEl.addEventListener(
         "wheel",
         (ev) => {
+          var _a, _b;
           if (!this.flip) return;
+          if ((_b = (_a = ev.target) == null ? void 0 : _a.closest) == null ? void 0 : _b.call(_a, ".bz-diary-wsp")) return;
           ev.preventDefault();
           const now = Date.now();
           if (now - this.wheelLock < WHEEL_LOCK_MS) return;
@@ -18726,7 +17822,9 @@ ${x.review || ""}`;
         { passive: false }
       );
       document.addEventListener("keydown", this.onKeydown);
-      this.closeEl.addEventListener("click", () => this.hide());
+      this.closeEl.addEventListener("click", () => {
+        void this.requestClose();
+      });
       const root = this.root;
       root == null ? void 0 : root.addEventListener("click", (ev) => {
         const t = ev.target;
@@ -18734,7 +17832,7 @@ ${x.review || ""}`;
         if (!this.lightboxEl.hidden || !this.sheetEl.hidden || !this.slipEl.hidden || !this.albumEl.hidden || !this.calEl.hidden || !this.menuEl.hidden || !this.passEl.hidden) {
           return;
         }
-        this.hide();
+        void this.requestClose();
       });
       this.lastSingle = typeof window !== "undefined" && window.innerWidth <= SINGLE_MAX_W;
       this.lastW = typeof window !== "undefined" ? window.innerWidth : 0;
@@ -18753,7 +17851,7 @@ ${x.review || ""}`;
       const zoom = w <= SINGLE_MAX_W ? 1 : Math.min(1, (w - 30) / 1072);
       this.root.style.setProperty("--bz-diary-book-zoom", zoom.toFixed(4));
     }
-    /** Esc 分流：纸条 → 贴纸册 → 台历 → 抽出的一张纸 → 灯箱 → 便签 → 翻回最新 */
+    /** Esc 分流：纸条 → 贴纸册 → 台历 → 抽出的一张纸 → 灯箱 → 便签 → 写作内页 → 翻回最新 */
     escapeStack() {
       if (!this.root || this.root.style.display !== "flex") return;
       if (!this.passEl.hidden) {
@@ -18782,6 +17880,10 @@ ${x.review || ""}`;
       }
       if (!this.menuEl.hidden) {
         this.closeMenu();
+        return;
+      }
+      if (this.hasDraft()) {
+        void this.requestClose();
         return;
       }
       if (this.flip && this.cursor > 0) {
@@ -18878,12 +17980,7 @@ ${x.review || ""}`;
         const row = t.closest(".bz-diary-idx-row");
         if (row) {
           this.closeSheet();
-          const eid = row.dataset.jumpEid;
-          if (eid) {
-            if (!this.revealEntry(eid)) this.toast("这一则翻不到页上");
-          } else {
-            this.jumpToPage(Number(row.dataset.jumpPage || 0));
-          }
+          this.jumpToPage(Number(row.dataset.jumpPage || 0));
           return;
         }
         if (t.closest(".bz-diary-sheet-paper") && !t.closest(".bz-diary-sh-close")) return;
@@ -19397,19 +18494,35 @@ ${x.review || ""}`;
     // ============================================================
     //  台历（跳日子）
     // ============================================================
-    openCal() {
-      const newest = this.visibleEntries()[0];
-      const base = newest ? newest.date : "2026-01-01";
+    /**
+     * 台历两种模式（原型同款）：
+     * - `jump`（默认，点「跳」文具）：点**落过笔**的日子 → 翻到那天；
+     * - `write`（写作内页的「改日子 · 时辰」）：**所有日子都可点**（给空白日子补写是常事），
+     *   底下多一行时辰输入——`parseFlexibleDateTime` 认 `21:30` / `1 分钟前` / `昨天 08:00`，
+     *   「就这天」一次性回写草稿的日子与时辰。
+     */
+    openCal(mode = "jump") {
+      var _a;
+      this.calMode = mode;
+      const d = this.draft;
+      const base = mode === "write" && d ? d.date : ((_a = this.visibleEntries()[0]) == null ? void 0 : _a.date) || "2026-01-01";
       this.cal.year = Number(base.slice(0, 4));
       this.cal.month = Number(base.slice(5, 7));
-      this.calTimeRowEl.hidden = true;
-      this.calOkEl.hidden = true;
+      this.calTimeRowEl.hidden = mode !== "write";
+      this.calOkEl.hidden = mode !== "write";
       this.calErrEl.textContent = "";
+      if (mode === "write" && d) {
+        this.calInputEl.value = d.time;
+        this.calDate = d.date;
+      } else {
+        this.calDate = null;
+      }
       this.renderCal();
       this.calEl.hidden = false;
     }
     renderCal() {
       const { year, month } = this.cal;
+      const writeMode = this.calMode === "write";
       this.calYmEl.textContent = `${year} 年 ${month} 月`;
       const byDay = /* @__PURE__ */ new Map();
       for (const e of this.visibleEntries()) {
@@ -19424,12 +18537,20 @@ ${x.review || ""}`;
       for (let i = 0; i < first; i++) html += '<span class="bz-diary-cal-cell"></span>';
       for (let d = 1; d <= days; d++) {
         const n = byDay.get(d);
-        html += `<span class="bz-diary-cal-cell${n ? " bz-diary-has" : ""}" data-d="${d}"${n ? ` data-n="${n}"` : ""}>${d}</span>`;
+        const sel = this.calDate === `${year}-${pad22(month)}-${pad22(d)}`;
+        html += `<span class="bz-diary-cal-cell${n ? " bz-diary-has" : ""}${writeMode ? " bz-diary-pickable" : ""}${sel ? " bz-diary-sel" : ""}" data-d="${d}"${n ? ` data-n="${n}"` : ""}>${d}</span>`;
       }
       this.calGridEl.innerHTML = html;
-      this.calGridEl.querySelectorAll(".bz-diary-cal-cell.bz-diary-has").forEach((c) => {
+      const pickable = writeMode ? ".bz-diary-cal-cell[data-d]" : ".bz-diary-cal-cell.bz-diary-has";
+      this.calGridEl.querySelectorAll(pickable).forEach((c) => {
         c.addEventListener("click", () => {
           const date = `${year}-${pad22(month)}-${pad22(Number(c.dataset.d))}`;
+          if (writeMode) {
+            this.calDate = date;
+            this.calGridEl.querySelectorAll(".bz-diary-sel").forEach((x) => x.classList.remove("bz-diary-sel"));
+            c.classList.add("bz-diary-sel");
+            return;
+          }
           this.closeCal();
           this.jumpToDay(date);
         });
@@ -19439,23 +18560,61 @@ ${x.review || ""}`;
       if (!this.calEl) return;
       this.calEl.hidden = true;
     }
-    /**
-     * 台历点某天 → 跳到那天。
-     *
-     * 在**已加载全量**里找那天，而不是只扫已排版的 `this.pages`：原先那圈只覆盖首屏那 30 则，
-     * 于是台历上明明标着「那天有 N 则」（标记读的是全量），点下去却说「这一册里，那天没落笔」
-     * ——一句话把自己否了。那天真的一条都没有时才说这句。
-     */
     jumpToDay(date) {
-      const hit = this.visibleEntries().find((e) => e.date === date);
-      if (hit && this.revealEntry(hit.id || "")) return;
+      for (let pi = 0; pi < this.pages.length; pi++) {
+        if (pageDateOf(this.pages[pi]) === date) {
+          this.jumpToPage(pi);
+          return;
+        }
+      }
       this.toast("这一册里，那天没落笔");
+    }
+    /**
+     * 「就这天」：写作模式才有的提交。
+     *
+     * 分工与原型一致：**日子从格子来**（选中那天，没选就是草稿原来那天），**时辰从这行字来**——
+     * 所以这一行认的是「时辰」而不是完整时刻：`21:30` 直接认，`1 分钟前` / `昨天 21:30`
+     * 走 `parseFlexibleDateTime` 取它的时分。认不出来就留在框里报错，不猜。
+     */
+    commitCalWrite() {
+      const d = this.draft;
+      if (!d) {
+        this.closeCal();
+        return;
+      }
+      const raw = this.calInputEl.value.trim();
+      const time = this.parseCalTime(raw);
+      if (!time) {
+        this.calErrEl.textContent = "这行时辰没认出来";
+        return;
+      }
+      d.date = this.calDate || d.date;
+      d.time = time;
+      this.renderWspDay();
+      this.closeCal();
+      this.toast(`写成 ${d.date} ${d.time}`);
+    }
+    /** 时辰输入 → `HH:mm`；`21:30` 这类直读，其余交自然语言解析取时分 */
+    parseCalTime(raw) {
+      const bare = raw.match(/^(\d{1,2})[:：](\d{1,2})$/);
+      if (bare) {
+        const hh = Number(bare[1]);
+        const mm = Number(bare[2]);
+        if (hh > 23 || mm > 59) return null;
+        return `${pad22(hh)}:${pad22(mm)}`;
+      }
+      const m = parseFlexibleDateTime(raw);
+      return m && m.isValid() ? m.format("HH:mm") : null;
     }
     bindCal() {
       this.calEl.addEventListener("click", (ev) => {
         const t = ev.target;
         if (t.closest(".bz-diary-cal-cancel") || !t.closest(".bz-diary-cal")) {
           this.closeCal();
+          return;
+        }
+        if (t.closest(".bz-diary-cal-ok")) {
+          this.commitCalWrite();
           return;
         }
         const nav = t.closest(".bz-diary-cal-nav");
@@ -19472,63 +18631,40 @@ ${x.review || ""}`;
           this.renderCal();
         }
       });
+      this.calInputEl.addEventListener("keydown", (ev) => {
+        if (ev.key !== "Enter") return;
+        ev.preventDefault();
+        this.commitCalWrite();
+      });
     }
     // ============================================================
     //  放大镜（检索：荧光笔）
     // ============================================================
-    /**
-     * 检索（荧光笔）。**吃已加载全量，不吃排版窗口**。
-     *
-     * 原先遍历 `this.pages`（= 只排了首屏那 30 则的书页），于是搜老词会一本正经地弹
-     * 「整本册子都翻了，没有「X」这个词」——而窗口外那 1200 多则根本没搜。搜索是**数据**问题，
-     * 不该受**排版**窗口限制（ADR-0231 的窗口是首屏提速手段，不是数据边界）。
-     *
-     * 判命中用 `entryBlockHTMLs` 现算块文本：不吃 DOM（不用先把条目排进书里）、
-     * 也不必拿字段拼一串近似文本来代替——那两边一旦对不上，就会出现「说命中了 N 则、
-     * 点过去却标不出荧光笔」。命中按**则**计，跳过去把它那几块一起标。
-     */
     runSearch(kw) {
       this.clearMarks();
-      const ctx = this.ctx();
-      const hits = [];
-      for (const e of this.visibleEntries()) {
-        if (this.entryMatches(e, kw, ctx)) hits.push(e.id || "");
+      this.search = { kw, hits: [], i: 0 };
+      for (let pi = 0; pi < this.pages.length; pi++) {
+        for (const el of this.pages[pi]) {
+          if (el.classList.contains("bz-diary-b-photo") || el.classList.contains("bz-diary-b-audio") || el.classList.contains("bz-diary-b-envelope") || el.classList.contains("bz-diary-b-daystamp")) {
+            continue;
+          }
+          if ((el.textContent || "").indexOf(kw) >= 0) this.search.hits.push({ pi, el });
+        }
       }
-      this.search = { kw, hits, i: 0 };
-      if (!hits.length) {
-        this.openSlip({ title: "没 找 到", body: `这本册子里没有「${escapeHtml2(kw)}」这个词。`, ok: "知道了" });
+      if (!this.search.hits.length) {
+        this.openSlip({ title: "没 找 到", body: `整本册子都翻了，没有「${escapeHtml2(kw)}」这个词。`, ok: "知道了" });
         return;
       }
-      this.toast(`寻得 ${hits.length} 则，荧光笔伺候`);
+      this.toast(`寻得 ${this.search.hits.length} 处，荧光笔伺候`);
       this.nextHit();
-    }
-    /** 一则是否命中：逐块判（跳过没有可读正文的那几类块），任一块的纯文本含 `kw` 即算 */
-    entryMatches(e, kw, ctx) {
-      for (const html of entryBlockHTMLs(e, ctx)) {
-        const cls = blockRootClass(html);
-        if (SEARCH_SKIP_BLOCKS.some((c) => cls.includes(c))) continue;
-        if (blockPlainText(html).indexOf(kw) >= 0) return true;
-      }
-      return false;
     }
     nextHit() {
       const s = this.search;
-      const kw = s.kw;
-      if (!s.hits.length || !kw) return;
-      const eid = s.hits[s.i % s.hits.length];
+      if (!s.hits.length) return;
+      const hit = s.hits[s.i % s.hits.length];
       s.i++;
-      if (!this.revealEntry(eid)) {
-        this.toast("这一则翻不到页上");
-        return;
-      }
-      if (this.search !== s) this.search = s;
-      setTimeout(() => this.markEntry(eid, kw), 80);
-    }
-    /** 给某一则上荧光笔：它在书里可能被切成多块、甚至跨两页，凡带同一 `data-eid` 的块都标 */
-    markEntry(eid, kw) {
-      for (const page of this.pages) {
-        for (const el of page) if (el.dataset.eid === eid) this.markHit(el, kw);
-      }
+      this.jumpToPage(hit.pi);
+      setTimeout(() => this.markHit(hit.el, s.kw || ""), 80);
     }
     markHit(el, kw) {
       var _a;
@@ -19663,14 +18799,222 @@ ${x.review || ""}`;
           break;
       }
     }
-    /** 写一篇：本域写链路（守卫 / 串行队列 / 加密分流 / 写后跳转都在那边），写完关册子去新笔记 */
+    // ============================================================
+    //  写作内页（ADR-0233）：点「写」在书上摊开一张素纸，正文写在这一页上
+    // ============================================================
+    /**
+     * 摊开写作内页（原型 `.scratch/diary-quill` 的「铅笔写」）。
+     *
+     * 与旧弹窗（`openAddDialog`）的分工：那边只剩「按类改标签」的标签选择器在用；
+     * 新建一篇现在全在这一页上——日子/时辰、正文、贴纸、落笔，四件都在纸面上，
+     * 落笔直接进写层（`store.addEntry` 的守卫 / 串行队列 / 同刻唯一一条都不绕）。
+     */
     startWrite() {
-      var _a;
-      try {
-        openAddDialog({ yearRange: (_a = this.getYearRange()) != null ? _a : void 0, onSaved: () => this.hide() });
-      } catch (e) {
-        notice(`写日记暂不可用：${e instanceof Error ? e.message : String(e)}`, "error");
+      if (this.draft) {
+        this.toast("先把这张纸写完，或揉掉");
+        this.focusWrite();
+        return;
       }
+      const now = /* @__PURE__ */ new Date();
+      this.draft = {
+        date: `${now.getFullYear()}-${pad22(now.getMonth() + 1)}-${pad22(now.getDate())}`,
+        time: `${pad22(now.getHours())}:${pad22(now.getMinutes())}`,
+        tags: []
+      };
+      this.wspAreaEl.value = "";
+      this.renderWspDay();
+      this.renderWspTools();
+      this.wspEl.hidden = false;
+      setTimeout(() => this.focusWrite(), 60);
+    }
+    focusWrite() {
+      const ta = this.wspAreaEl;
+      ta.focus();
+      ta.setSelectionRange(ta.value.length, ta.value.length);
+    }
+    /** 日戳（与正文日戳同源）+ 「改日子 · 时辰」小签 */
+    renderWspDay() {
+      const d = this.draft;
+      if (!d) return;
+      this.wspDayEl.innerHTML = writeDaystampHTML(d.date);
+    }
+    /**
+     * 贴纸（标签）chips：口径与写日记弹窗同源（`getSortedTagsForAddDialog`，不含「加密」），
+     * 展开过的二级标签在此已是叶子名。选中态走 `bz-diary-on`。
+     */
+    renderWspTools() {
+      var _a;
+      const picked = new Set(((_a = this.draft) == null ? void 0 : _a.tags) || []);
+      const chips = getSortedTagsForAddDialog().map(
+        (t) => `<span class="bz-diary-wsp-chip${picked.has(t) ? " bz-diary-on" : ""}" data-tag="${escapeHtml2(
+          t
+        )}">${getTagEmoji(t)} ${escapeHtml2(t)}</span>`
+      ).join("");
+      this.wspToolsEl.innerHTML = `<span class="bz-diary-wsp-media" title="从本机选照片 / 录音 / 视频，放进 vault 里引用">＋ 贴一件</span>` + chips;
+    }
+    bindWrite() {
+      this.wspEl.addEventListener("click", (ev) => {
+        const t = ev.target;
+        if (t.closest(".bz-diary-wsp-datebtn")) {
+          this.openCal("write");
+          return;
+        }
+        if (t.closest(".bz-diary-wsp-media")) {
+          this.pickMedia();
+          return;
+        }
+        const chip = t.closest(".bz-diary-wsp-chip");
+        if (chip) {
+          this.toggleDraftTag(chip);
+          return;
+        }
+        const act = t.closest("[data-wact]");
+        if (!act) return;
+        if (act.dataset.wact === "discard") this.discardWrite();
+        else if (act.dataset.wact === "save") void this.saveWrite();
+      });
+    }
+    toggleDraftTag(chip) {
+      const d = this.draft;
+      const tag = chip.dataset.tag || "";
+      if (!d || !tag) return;
+      const i = d.tags.indexOf(tag);
+      if (i >= 0) d.tags.splice(i, 1);
+      else d.tags.push(tag);
+      chip.classList.toggle("bz-diary-on", i < 0);
+    }
+    /** 揉掉这张纸。写过的字不静默丢：有正文先问一句（纸条层，本域自己的确认件）。 */
+    discardWrite() {
+      if (!this.draft) return;
+      if (this.saving) {
+        this.toast("正在落笔，等一下");
+        return;
+      }
+      if (this.wspAreaEl.value.trim()) {
+        this.openSlip({
+          title: "这张纸还没落笔",
+          body: "揉掉就没了。",
+          ok: "揉掉",
+          cancelText: "接着写",
+          danger: true,
+          onSubmit: () => {
+            this.closeSlip();
+            this.dropWrite();
+            return null;
+          }
+        });
+        return;
+      }
+      this.dropWrite();
+    }
+    dropWrite() {
+      this.draft = null;
+      this.wspAreaEl.value = "";
+      this.wspEl.hidden = true;
+    }
+    /**
+     * 落笔：正文、日子时辰、贴纸一并进写层（`store.addEntry`）。返回是否真写进去了。
+     *
+     * 落完之后只翻回第 0 页——新条目就是最新那一篇，而 `diary:entry-added` 的域事件会安排
+     * 一次防抖回刷把这一篇排进册子（此处不抢着重排，免得同一拍排两遍整册）。
+     *
+     * 写盘在途时把纸面锁住（`readOnly` + 「揉掉」让路）：`await` 期间用户接着敲的字，
+     * 会在成功那一刻被 `dropWrite()` 连纸一起清掉——条目已经落盘，那段字却没人收，静默丢。
+     */
+    async saveWrite() {
+      const d = this.draft;
+      if (!d || this.saving) return false;
+      const text = this.wspAreaEl.value.trim();
+      if (!text) {
+        this.toast("一个字都没写呢");
+        this.focusWrite();
+        return false;
+      }
+      this.saving = true;
+      this.wspAreaEl.readOnly = true;
+      try {
+        await addEntry(d.date, d.time, d.tags.length ? d.tags : ["日记"], text);
+        this.dropWrite();
+        this.jumpToPage(0);
+        this.toast("记下了，盖个章");
+        return true;
+      } catch (e) {
+        if (!isUnparsedRefusal(e) && !isDiaryReadFailure(e)) {
+          console.error("落笔失败:", e);
+          notice(`落笔没成：${e instanceof Error ? e.message : String(e)}`, "error");
+        }
+        return false;
+      } finally {
+        this.saving = false;
+        this.wspAreaEl.readOnly = false;
+      }
+    }
+    // ============================================================
+    //  内页媒体：从本机挑一件，写进 vault，正文里留一条 `![[名字]]`
+    // ============================================================
+    /**
+     * 唤起系统文件选择器。`<input type=file>` 挂在 body 上再点（仓内既有先例
+     * `core/path-picker.ts`）：游离节点在部分 WebView 里不保证唤起；settle 后自己摘掉。
+     */
+    pickMedia() {
+      if (!this.draft) return;
+      const input = document.createElement("input");
+      input.type = "file";
+      input.accept = PICK_MEDIA_ACCEPT;
+      input.multiple = true;
+      input.style.display = "none";
+      const cleanup = () => input.remove();
+      input.addEventListener("change", () => {
+        const files = Array.from(input.files || []);
+        cleanup();
+        void this.importMedia(files);
+      });
+      input.addEventListener("cancel", cleanup);
+      document.body.appendChild(input);
+      input.click();
+    }
+    async importMedia(files) {
+      if (!files.length) return;
+      const app = this.app();
+      const maxBytes = MEDIA_PICK_MAX_MB * 1024 * 1024;
+      const done = [];
+      const tooBig = [];
+      const failed = [];
+      for (const f of files) {
+        if (f.size > maxBytes) {
+          tooBig.push(f.name);
+          continue;
+        }
+        try {
+          this.insertMediaRef(await writePickedMedia(app, f));
+          done.push(f.name);
+        } catch (e) {
+          console.warn("[diary] 媒体放进 vault 失败：", f.name, e);
+          failed.push(f.name);
+        }
+      }
+      if (tooBig.length) notice(`超过 ${MEDIA_PICK_MAX_MB}MB，没放进册子：${tooBig.join("、")}`, "warning");
+      if (failed.length) notice(`这些写盘没成：${failed.join("、")}`, "error");
+      if (done.length) {
+        notice(`放进册子 ${done.length} 件`, tooBig.length || failed.length ? "warning" : "success");
+      }
+    }
+    /** 在光标处插一条媒体引用（自占一行：省得排成「字![[图]]字」那种不成块的样子） */
+    insertMediaRef(name) {
+      var _a, _b;
+      const ta = this.wspAreaEl;
+      const ref = `![[${name}]]`;
+      const start = (_a = ta.selectionStart) != null ? _a : ta.value.length;
+      const end = (_b = ta.selectionEnd) != null ? _b : start;
+      const before = ta.value.slice(0, start);
+      const after = ta.value.slice(end);
+      const lead = before && !before.endsWith("\n") ? "\n" : "";
+      const block = `${lead}${ref}
+`;
+      ta.value = before + block + after;
+      const caret = before.length + block.length;
+      ta.setSelectionRange(caret, caret);
+      ta.focus();
     }
     // ============================================================
     //  火漆密码框（域内自绘）+ 解锁守卫
@@ -19762,7 +19106,10 @@ ${x.review || ""}`;
           setTimeout(() => eh.classList.remove("bz-diary-peek"), 4e3);
         }
       }
-      this.edgeEl.addEventListener("click", () => this.openIndexSheet());
+      this.edgeEl.addEventListener("click", () => {
+        if (this.writeGuard()) return;
+        this.openIndexSheet();
+      });
     }
     setToolsShown(on) {
       if (on === this.toolsShown) return;
@@ -19818,15 +19165,8 @@ ${x.review || ""}`;
     /**
      * 读盘。`allowCache`：开册路径命中预热/上次刷新后的缓存秒开；
      * 刷新/写后回刷/重试一律先作废回源（保持「每次刷新即读盘」语义，不赌缓存失效是否触发）。
-     *
-     * `onWindow`（ADR-0231）：攒够 `FIRST_PAINT_ENTRIES` 条就把**部分**结果交出来先成册——
-     * 首屏不必等 1243 篇正文读完。只有开册路径传它；刷新/写后回刷不传（那两条要的是完整一致，
-     * 中途成册反而会让正在读的那一页被重排）。缓存命中时不会有进度，由调用方在结算后补一次成册。
      */
-    async loadEntries(allowCache, onWindow) {
-      const off = onWindow ? onWallProgress((partial) => {
-        if (partial.length >= FIRST_PAINT_ENTRIES) onWindow(partial);
-      }) : null;
+    async loadEntries(allowCache) {
       try {
         if (allowCache) {
           this._allowCacheNext = false;
@@ -19839,8 +19179,6 @@ ${x.review || ""}`;
         this.entries = [];
         this._loadError = e instanceof Error ? e.message : String(e);
         notice(`加载日记失败：${this._loadError}`, "error");
-      } finally {
-        off == null ? void 0 : off();
       }
       await this.mergeEncryptedEntries();
       if (this._loadError) this.fallbackEl.hidden = false;
@@ -19959,25 +19297,24 @@ ${x.review || ""}`;
       this._subs.forEach((off) => off());
       this._subs = [];
     }
-    /** vault modify/create 回刷（纯外部变更：其他工具写入条目文件时册子也要跟上） */
+    /** vault modify/create 回刷（纯外部变更：其他工具写入条目文件时册子也要跟上）。
+     *  **只认 `.md`**：册子只由条目笔记排出来，而 `我的/日记/附件/` 这类媒体落点也在目录命中面内
+     *  （写作内页退回落点时就会往那儿写真照片/录音）——不筛扩展名的话，贴一件媒体就换一次
+     *  防抖整册重读 + 重排，用户正写着字被卡一下。 */
     subscribeVault() {
       if (this._vaultRefs.length) return;
-      const schedule = () => {
+      const schedule = (p) => {
         var _a;
+        if (!p || !p.toLowerCase().endsWith(".md")) return;
+        if (!inWallDirs(p)) return;
         if (((_a = this.root) == null ? void 0 : _a.style.display) !== "flex") return;
         this.scheduleRelayout();
       };
       this._vaultRefs.push(
-        this.app().vault.on("modify", (file) => {
-          const p = file == null ? void 0 : file.path;
-          if (p && inWallDirs(p)) schedule();
-        })
+        this.app().vault.on("modify", (file) => schedule(file == null ? void 0 : file.path))
       );
       this._vaultRefs.push(
-        this.app().vault.on("create", (file) => {
-          const p = file == null ? void 0 : file.path;
-          if (p && inWallDirs(p)) schedule();
-        })
+        this.app().vault.on("create", (file) => schedule(file == null ? void 0 : file.path))
       );
     }
     unsubscribeVault() {
@@ -20002,7 +19339,17 @@ ${x.review || ""}`;
     // ============================================================
     //  显示 / 隐藏 / 卸载
     // ============================================================
-    /** 打开日记本（命令路径：ensure 后 show） */
+    /**
+     * 打开日记本（命令路径：ensure 后 show）。
+     *
+     * 两条路：
+     * - **快路**（`bookFresh` + 墙缓存还新 + 保险箱锁态没变）：这一册就是上次排好的那一册
+     *   （DOM 与 StPageFlip 实例都还在，`hide()` 只是 `display:none`），直接翻开——不重读、不重排、
+     *   纸上没落笔的草稿原样还在。用户点名：「再次打开日记本的时候，写的内容也不会消失，
+     *   也不会再重新渲染页面」。
+     * - **慢路**：读全量 → 进度条 → 读完一次成册。上千篇正文走磁盘读 + 每批 10，读完要好几秒；
+     *   这段时间书还是空的，桌上摆一张报进度的纸条（`showLoading`），读完换「正在装订」，成册即收。
+     */
     show() {
       if (!this._initialized) this.ensureElements();
       const reopen = this._shownOnce;
@@ -20013,27 +19360,171 @@ ${x.review || ""}`;
       this._allowCacheNext = true;
       this.subscribeEvents();
       this.subscribeVault();
-      void (async () => {
+      if (this.bookFresh && this.entries.length && !this._loadError && this.bookStillValid()) {
+        this.toast(reopen ? "又翻开了" : "翻开的是最新那篇");
+        return;
+      }
+      const token = {};
+      this.loadToken = token;
+      const task = (async () => {
+        var _a;
         await this.afterPaint();
-        this.firstPaintDone = false;
-        this.shown = FIRST_PAINT_ENTRIES;
-        await this.loadEntries(this._allowCacheNext, (partial) => {
-          if (this.firstPaintDone) return;
-          this.firstPaintDone = true;
-          this.entries = partial;
-          this.shown = Math.min(FIRST_PAINT_ENTRIES, partial.length);
-          this.relayout(false);
-        });
-        if (!this.firstPaintDone) {
-          this.firstPaintDone = true;
-          this.shown = Math.min(this.shown, this.entries.length);
-          this.relayout(false);
-        } else {
-          this.renderEdgeMarks();
+        this.showLoading();
+        const off = onWallProgress((done, total) => this.updateLoading(done, total));
+        try {
+          await this.loadEntries(this._allowCacheNext);
+        } finally {
+          off();
         }
-        this.scheduleWidenFull();
+        if (((_a = this.root) == null ? void 0 : _a.style.display) !== "flex") {
+          this.hideLoading();
+          return;
+        }
+        if (this.loadToken !== token) return;
+        if (this._loadError) {
+          this.hideLoading();
+          this.toast("这一册没读出来");
+          return;
+        }
+        this.setLoadingBinding();
+        await this.afterPaint();
+        try {
+          this.relayout(false);
+        } finally {
+          this.hideLoading();
+        }
         this.toast(reopen ? "又翻开了" : "翻开的是最新那篇");
       })();
+      this.loadTask = task;
+    }
+    /**
+     * 上一册还能用吗：书页排过 + 墙数据缓存没被外部改动作废 + 保险箱锁态与上次排版的相同
+     * （锁态变了要重并加密条目，必须重排）。
+     */
+    bookStillValid() {
+      if (!this.pages.length) return false;
+      if (!wallCacheFresh(this.app())) return false;
+      return isUnlocked() === this.layoutUnlocked;
+    }
+    /**
+     * 写一篇（命令面板 `bz-diary-write`）：先把册子摊开，等这一册排好再在书上摆出写作内页。
+     * 原先这条命令不拉主窗口（直接开旧弹窗）；写作内页是书里的一张纸，得先有书。
+     */
+    openWrite() {
+      var _a;
+      const already = ((_a = this.root) == null ? void 0 : _a.style.display) === "flex";
+      this.show();
+      if (already) {
+        this.startWrite();
+        return;
+      }
+      void Promise.resolve(this.loadTask).then(() => {
+        var _a2;
+        if (((_a2 = this.root) == null ? void 0 : _a2.style.display) === "flex") this.startWrite();
+      }).catch((e) => {
+        console.error("[diary] 写日记打开失败:", e);
+        notice(`写日记打开失败：${e instanceof Error ? e.message : String(e)}`, "error");
+      });
+    }
+    // ============================================================
+    //  开册进度（读全量 → 一次成册）
+    // ============================================================
+    /** 摆出进度纸条。读得快（预热缓存命中）时不摆：先压一个 120ms 的延时，读完即撤。 */
+    showLoading() {
+      this.loadingTitleEl.textContent = "正在翻找…";
+      this.loadingCountEl.textContent = "";
+      if (!this.loadBar) {
+        this.loadBar = uiProgress({ thin: true });
+        this.loadingBarEl.appendChild(this.loadBar.el);
+      }
+      this.loadBar.setValue(0);
+      if (this.loadShowTimer !== null) clearTimeout(this.loadShowTimer);
+      this.loadShowTimer = setTimeout(() => {
+        var _a;
+        this.loadShowTimer = null;
+        if (((_a = this.root) == null ? void 0 : _a.style.display) === "flex") this.loadingEl.hidden = false;
+      }, LOADING_SHOW_DELAY_MS);
+    }
+    /** 读盘进度（`done / total` = 日记正文篇数，一目一文件 ⇒ 读完就是全量到位） */
+    updateLoading(done, total) {
+      var _a;
+      if (total > 0) (_a = this.loadBar) == null ? void 0 : _a.setValue(Math.round(done / total * 100));
+      this.loadingCountEl.textContent = total > 0 ? `${done} / ${total} 篇` : "";
+    }
+    /** 读齐了，换到「装订」这一段：这一段是同步的，进度条停在 100% 不动 */
+    setLoadingBinding() {
+      var _a;
+      if (this.loadShowTimer !== null) {
+        clearTimeout(this.loadShowTimer);
+        this.loadShowTimer = null;
+      }
+      this.loadingEl.hidden = false;
+      this.loadingTitleEl.textContent = "正在装订…";
+      (_a = this.loadBar) == null ? void 0 : _a.setValue(100);
+      this.loadingCountEl.textContent = `共 ${this.entries.length} 则`;
+    }
+    hideLoading() {
+      var _a;
+      if (this.loadShowTimer !== null) {
+        clearTimeout(this.loadShowTimer);
+        this.loadShowTimer = null;
+      }
+      this.loadingEl.hidden = true;
+      (_a = this.loadBar) == null ? void 0 : _a.setValue(0);
+    }
+    /** 纸上摊着草稿吗（空纸也算摊着：那张纸还在书里） */
+    hasDraft() {
+      return !!this.draft && !this.wspEl.hidden;
+    }
+    /** 纸上有字吗（「写了东西」的唯一判据：正文非空白） */
+    draftHasText() {
+      return this.hasDraft() && !!this.wspAreaEl.value.trim();
+    }
+    /**
+     * 「草稿在纸上」的**翻页门禁**：翻页 / 索引行 / 台历跳日都要先过这道。
+     * 与原型同款——写作页摊开时它不是「一个可以顺便翻过去的浮层」，而是当前唯一该处理的东西。
+     */
+    writeGuard() {
+      if (!this.hasDraft()) return false;
+      this.toast("先落笔，或把这张纸揉掉");
+      return true;
+    }
+    /**
+     * 收起整本的统一入口（点遮罩 / 点收起钮 / Esc 三条路都走它）。
+     *
+     * 纸上有字 → **先问一句**（用户点名要求）：接着写 / 先收着 / 落笔。
+     * 「先收着」不是丢——草稿留在纸上，下次翻开还在（见 `hide()` 的注释）。
+     * 空纸直接收：纸上没东西可丢，不值得拦一道。
+     */
+    async requestClose() {
+      if (!this.root || this.root.style.display !== "flex") return;
+      if (!this.draftHasText()) {
+        this.dropWrite();
+        this.hide();
+        return;
+      }
+      let choice;
+      try {
+        choice = await openFlowDialog({
+          title: "这张纸还没落笔",
+          message: "先收着的话，下次翻开日记本还在这张纸上。",
+          actions: [
+            { label: "接着写", value: "stay" },
+            { label: "先收着", value: "hold" },
+            { label: "落笔", value: "save", cta: true }
+          ]
+        });
+      } catch (e) {
+        return;
+      }
+      if (choice === "save") {
+        const saved = await this.saveWrite();
+        if (!saved) return;
+        this.hide();
+        return;
+      }
+      if (choice !== "hold") return;
+      this.hide();
     }
     hide() {
       if (!this.root || this._hideMotion) return;
@@ -20045,7 +19536,8 @@ ${x.review || ""}`;
       this.closeCal();
       this.closeMenu();
       this.closePass(false);
-      hideAddDialog();
+      if (!this.draftHasText()) this.dropWrite();
+      this.hideLoading();
       hideTagPicker();
       this.pauseAllAudio();
       this.unsubscribeEvents();
@@ -20053,14 +19545,6 @@ ${x.review || ""}`;
       if (this.modifyTimer !== null) {
         clearTimeout(this.modifyTimer);
         this.modifyTimer = null;
-      }
-      if (this.extendTimer !== null) {
-        clearTimeout(this.extendTimer);
-        this.extendTimer = null;
-      }
-      if (this.widenTimer !== null) {
-        clearTimeout(this.widenTimer);
-        this.widenTimer = null;
       }
       this.setToolsShown(false);
       this._hideMotion = false;
@@ -20095,13 +19579,9 @@ ${x.review || ""}`;
         clearTimeout(this.modifyTimer);
         this.modifyTimer = null;
       }
-      if (this.extendTimer !== null) {
-        clearTimeout(this.extendTimer);
-        this.extendTimer = null;
-      }
-      if (this.widenTimer !== null) {
-        clearTimeout(this.widenTimer);
-        this.widenTimer = null;
+      if (this.loadShowTimer !== null) {
+        clearTimeout(this.loadShowTimer);
+        this.loadShowTimer = null;
       }
       if (this.toolsRaf) cancelAnimationFrame(this.toolsRaf);
       this.unsubscribeEvents();
@@ -20119,6 +19599,8 @@ ${x.review || ""}`;
       this.photoIndex.clear();
       this.pages = [];
       this.entries = [];
+      this.bookFresh = false;
+      this.draft = null;
       if (this.root) {
         this.root.remove();
         this.root = null;
@@ -20149,26 +19631,23 @@ ${x.review || ""}`;
     initialized2 = true;
     getController2();
     createTagPicker();
-    createAddDialog();
   }
   function openDiary(app) {
     void ensureDiary(app).then(() => getController2().show());
   }
   function openDiaryWrite(app) {
     void ensureDiary(app).then(() => {
-      var _a;
-      openAddDialog({ yearRange: (_a = getController2().getYearRange()) != null ? _a : void 0 });
+      getController2().openWrite();
     });
   }
   function unloadDiary() {
-    var _a, _b;
+    var _a;
     if (controller2) controller2.cleanup();
     controller2 = null;
     initialized2 = false;
     prewarmed = false;
     invalidateWallCache();
     (_a = document.getElementById("diary-tag-selector-mask")) == null ? void 0 : _a.remove();
-    (_b = document.getElementById("add-diary-mask")) == null ? void 0 : _b.remove();
   }
 
   // prototypes/diary/fake-sim.ts

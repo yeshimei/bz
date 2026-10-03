@@ -1,5 +1,5 @@
-/* 源指纹 1c300536fd9c0d39 · 仓内输入 80 个（校验见 tests/preview-freshness.test.ts） */
-/*#preview-inputs=["prototypes/cinema/fake-sim.ts","prototypes/cinema/fake/fake-obsidian.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/douban-fetcher.ts","src/cinema/douban-queue.ts","src/cinema/index.ts","src/cinema/layouts/midnight/render.ts","src/cinema/motion.ts","src/cinema/recommend.ts","src/cinema/render.ts","src/cinema/seasons.ts","src/cinema/shared.ts","src/cinema/state.ts","src/cinema/type-decide.ts","src/cinema/ui.ts","src/cinema/yearbook/data.ts","src/cinema/yearbook/engine.ts","src/cinema/yearbook/index.ts","src/cinema/yearbook/kits.ts","src/cinema/yearbook/motions.ts","src/cinema/yearbook/scenes.ts","src/core/ai.ts","src/core/app.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/douban-name-index.ts","src/core/download-manifest.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/gesture.ts","src/core/http.ts","src/core/item-actions.ts","src/core/jev-fallback.ts","src/core/jev.ts","src/core/landscape.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/paging.ts","src/core/path-classify.ts","src/core/remote-asset.ts","src/core/remote-base.ts","src/core/settings-provider.ts","src/core/sha256.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/help-tip.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slide-pill.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts"]*/
+/* 源指纹 89a4dc980e1cd25a · 仓内输入 79 个（校验见 tests/preview-freshness.test.ts） */
+/*#preview-inputs=["prototypes/cinema/fake-sim.ts","prototypes/cinema/fake/fake-obsidian.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/douban-fetcher.ts","src/cinema/douban-queue.ts","src/cinema/index.ts","src/cinema/layouts/midnight/render.ts","src/cinema/motion.ts","src/cinema/recommend.ts","src/cinema/render.ts","src/cinema/seasons.ts","src/cinema/shared.ts","src/cinema/state.ts","src/cinema/type-decide.ts","src/cinema/ui.ts","src/cinema/yearbook/data.ts","src/cinema/yearbook/engine.ts","src/cinema/yearbook/index.ts","src/cinema/yearbook/kits.ts","src/cinema/yearbook/motions.ts","src/cinema/yearbook/scenes.ts","src/core/ai.ts","src/core/app.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/douban-name-index.ts","src/core/download-manifest.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/gesture.ts","src/core/http.ts","src/core/item-actions.ts","src/core/jev-fallback.ts","src/core/jev.ts","src/core/landscape.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/remote-asset.ts","src/core/remote-base.ts","src/core/settings-provider.ts","src/core/sha256.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/help-tip.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slide-pill.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/cinema/fake-sim.ts → window.BZW_cinema（行为单源预览包，issue 245/ADR-0106） */
 var BZW_cinema = (() => {
   var __create = Object.create;
@@ -5291,7 +5291,6 @@ var BZW_cinema = (() => {
 
   // src/cinema/state.ts
   var DEFAULT_FOLDER = "我的/影视";
-  var FIRST_PAINT_CARDS = 20;
   function resolveCinemaFolderPath() {
     try {
       const s = tryGetSettings();
@@ -5314,9 +5313,6 @@ var BZW_cinema = (() => {
     appRef: null,
     folderPath: DEFAULT_FOLDER,
     renderFn: null,
-    shown: FIRST_PAINT_CARDS,
-    loading: true,
-    lastScrollAt: 0,
     aiRunning: false,
     aiWaitMsg: "",
     aiResult: null,
@@ -5788,17 +5784,6 @@ var BZW_cinema = (() => {
   }
   function sleep(ms) {
     return new Promise((resolve) => setTimeout(resolve, ms));
-  }
-  function yieldToMainThread(timeoutMs = 200) {
-    return new Promise((resolve) => {
-      if (typeof window === "undefined") {
-        resolve();
-        return;
-      }
-      const ric = window.requestIdleCallback;
-      if (typeof ric === "function") ric(() => resolve(), { timeout: timeoutMs });
-      else window.setTimeout(resolve, 0);
-    });
   }
   function openExternalUrl(app, url) {
     try {
@@ -6388,41 +6373,6 @@ var BZW_cinema = (() => {
     M.items.length = 0;
     M.items.push(...newItems);
     return newItems;
-  }
-  var META_READY_TIMEOUT_MS = 1500;
-  var metaReady = false;
-  function whenMetaReady(app) {
-    if (metaReady) return Promise.resolve();
-    return new Promise((resolve) => {
-      let settled = false;
-      let ref = null;
-      let armed = null;
-      const finish = () => {
-        if (settled) return;
-        settled = true;
-        metaReady = true;
-        if (ref && armed) {
-          try {
-            ref.offref(armed);
-          } catch (e) {
-          }
-        }
-        resolve();
-      };
-      try {
-        app.workspace.onLayoutReady(finish);
-      } catch (e) {
-      }
-      try {
-        ref = app.metadataCache;
-        armed = app.metadataCache.on("resolved", finish);
-      } catch (e) {
-      }
-      setTimeout(finish, META_READY_TIMEOUT_MS);
-    });
-  }
-  function hasCinemaFiles(app) {
-    return app.vault.getMarkdownFiles().some((f) => f.path.startsWith(M.folderPath + "/"));
   }
   function dateVal(it) {
     if (!it.watchDate) return 0;
@@ -7837,13 +7787,6 @@ var BZW_cinema = (() => {
     prefix.sort(byRank);
     contains.sort(byRank);
     return [...prefix, ...contains].slice(0, limit);
-  }
-
-  // src/core/paging.ts
-  var LIST_BATCH_SIZE = 50;
-  function nextBatchRange(rendered, total, size = LIST_BATCH_SIZE) {
-    const from = Math.max(0, Math.min(rendered, total));
-    return { from, to: Math.min(from + Math.max(1, size), total) };
   }
 
   // src/cinema/douban-queue.ts
@@ -12124,10 +12067,6 @@ tags:
     return `<div class="cn-empty-page"><div class="big">${filtered ? "无匹配影片" : "影片空空如也"}</div>
     ${filtered ? '<button class="dm-btn j-clear" data-cinema-clear style="margin-top:6px">清空筛选</button>' : '<span style="font-size:11.5px">点右上「添加影片」开始记录</span>'}</div>`;
   }
-  function skeletonPageHtml(cols) {
-    const cell = '<div class="cn-skel-card"><div class="cn-skel-pw"></div><div class="cn-skel-line"></div></div>';
-    return `<div class="cn-skel-grid" style="grid-template-columns:repeat(${cols},1fr)">${cell.repeat(Math.max(1, cols * 3))}</div>`;
-  }
   function spHeadHtml(title, cnt) {
     return `<div class="sp-head"><button class="sp-back">${iconSpan(ICON.back)}</button><span class="sp-title">${esc(title)}</span><span class="sp-cnt j-spcnt">${cnt}</span></div>`;
   }
@@ -12137,12 +12076,6 @@ tags:
       const face = cardFace(e);
       return cardHtml(e, inp.poster(face), (_b = (_a = inp.fetching) == null ? void 0 : _a.call(inp, face)) != null ? _b : false);
     }).join("");
-  }
-  function cardsRangeHtml(inp, from, to) {
-    return cardsHtml(inp.cards.slice(from, to), inp);
-  }
-  function visibleCards(inp) {
-    return inp.cards.slice(0, Math.max(0, inp.shown));
   }
   function listHeadHtml(inp) {
     return `<div class="d-head"><h2 class="j-title">${esc(inp.title)}</h2><span class="cnt j-cnt">· ${inp.cards.length} 部</span>
@@ -12167,15 +12100,7 @@ tags:
     if (v.view === "ai") {
       view.innerHTML = spHeadHtml("AI 荐片", inp.aiCount ? `· ${inp.aiCount} 部` : "") + `<div class="sp-body">${inp.aiHtml}</div>`;
     } else {
-      const win = visibleCards(inp);
-      let body;
-      if (win.length) {
-        body = `<div class="d-scroll"><div class="grid" style="grid-template-columns:repeat(${inp.cols},1fr)">${cardsHtml(win, inp)}</div></div>`;
-      } else if (inp.loading) {
-        body = `<div class="d-scroll">${skeletonPageHtml(inp.cols)}</div>`;
-      } else {
-        body = emptyPageHtml(viewFiltered(v));
-      }
+      const body = inp.cards.length ? `<div class="d-scroll"><div class="grid" style="grid-template-columns:repeat(${inp.cols},1fr)">${cardsHtml(inp.cards, inp)}</div></div>` : emptyPageHtml(viewFiltered(v));
       view.innerHTML = listHeadHtml(inp) + listToolsHtml(v) + body;
     }
   }
@@ -12193,10 +12118,8 @@ tags:
     const mv = root.querySelector(".j-mview");
     if (mv) {
       if (v.view === "list") {
-        const win = visibleCards(inp);
-        const empty = !inp.cards.length;
-        mv.className = empty && !inp.loading ? "m-scroll j-mview cn-mempty" : "m-scroll j-mview";
-        mv.innerHTML = empty ? inp.loading ? skeletonPageHtml(inp.cols) : emptyPageHtml(viewFiltered(v)) : `<div class="m-grid">${cardsHtml(win, inp)}</div>`;
+        mv.className = inp.cards.length ? "m-scroll j-mview" : "m-scroll j-mview cn-mempty";
+        mv.innerHTML = inp.cards.length ? `<div class="m-grid">${cardsHtml(inp.cards, inp)}</div>` : emptyPageHtml(viewFiltered(v));
       } else {
         mv.className = "sp-body j-mview";
         mv.innerHTML = inp.aiHtml;
@@ -13933,8 +13856,6 @@ tags:
         searchKeyword: M.searchKeyword
       },
       cols: gridColumns(),
-      shown: M.shown,
-      loading: M.loading,
       lists: allLists(M.items),
       title: listTitle(),
       aiHtml: onList ? "" : aiPageHtml(aiInput()),
@@ -14287,21 +14208,8 @@ tags:
       e.stopImmediatePropagation();
       clearSearchKeyword(app, root, t.classList.contains("j-mq"));
     });
-    root.addEventListener("scroll", () => {
-      M.lastScrollAt = Date.now();
-    }, true);
     rebuildItems(app);
-    const coldStart = M.items.length === 0 && hasCinemaFiles(app);
-    M.loading = coldStart;
     renderAll(app);
-    if (coldStart) {
-      void whenMetaReady(app).then(() => {
-        if (M.currentOverlay !== overlay) return;
-        rebuildItems(app);
-        M.loading = false;
-        renderAll(app);
-      });
-    }
   }
   var TYPING_GUARD_MS = 400;
   var SOFT_RENDER_DELAY_MS = 400;
@@ -14542,8 +14450,6 @@ tags:
     if (!overlay) return;
     const root = overlay.querySelector("[data-cinema-root]");
     if (!root) return;
-    if (viewIdentity() !== lastViewIdentity) M.shown = FIRST_PAINT_CARDS;
-    appendSeq++;
     clearSoftRender();
     const snap = snapshotFocus(root);
     const beforeCards = measureGridCards(root);
@@ -14567,43 +14473,8 @@ tags:
     playGridMotion(root, beforeCards);
     flushCardFlash(root);
     restoreFocus(root, snap);
-    void idleAppend(app);
-  }
-  var SCROLL_QUIET_MS = 220;
-  var BUSY_POLL_MS = 120;
-  var appendSeq = 0;
-  function isBusy() {
-    const now = Date.now();
-    return now - M.lastInputAt < TYPING_GUARD_MS || now - M.lastScrollAt < SCROLL_QUIET_MS;
-  }
-  function waitWhileBusy() {
-    return new Promise((resolve) => setTimeout(resolve, BUSY_POLL_MS));
-  }
-  async function idleAppend(app) {
-    const seq = ++appendSeq;
-    for (; ; ) {
-      await yieldToMainThread();
-      if (seq !== appendSeq) return;
-      while (isBusy()) {
-        await waitWhileBusy();
-        if (seq !== appendSeq) return;
-      }
-      const overlay = M.currentOverlay;
-      if (!overlay) return;
-      const root = overlay.querySelector("[data-cinema-root]");
-      if (!root || M.view !== "list") return;
-      const grid = root.querySelector(".grid, .m-grid");
-      if (!grid) return;
-      const inp = midnightInput(app);
-      const { from, to } = nextBatchRange(grid.children.length, inp.cards.length);
-      if (from >= to) return;
-      grid.insertAdjacentHTML("beforeend", cardsRangeHtml(inp, from, to));
-      mountIcons(grid);
-      M.shown = to;
-    }
   }
   function closeOverlay() {
-    appendSeq++;
     clearSoftRender();
     pendingFlash = null;
     lastViewIdentity = null;

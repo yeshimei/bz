@@ -1,4 +1,4 @@
-/* 源指纹 d023b9e21371cb37 · 仓内输入 2 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 de708bfdc0017041 · 仓内输入 2 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["src/core/ui/str.ts","src/diary/render.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — src/diary/render.ts → window.BZR_diary（评审壳预览包，ADR-0104） */
 var BZR_diary = (() => {
@@ -24,8 +24,6 @@ var BZR_diary = (() => {
   var render_exports = {};
   __export(render_exports, {
     WEEK: () => WEEK,
-    blockPlainText: () => blockPlainText,
-    blockRootClass: () => blockRootClass,
     bookPanelHTML: () => bookPanelHTML,
     cnNum: () => cnNum,
     daystampHTML: () => daystampHTML,
@@ -40,7 +38,8 @@ var BZR_diary = (() => {
     stripHashInto: () => stripHashInto,
     ticketHTML: () => ticketHTML,
     tiltClassOf: () => tiltClassOf,
-    weekdayOf: () => weekdayOf
+    weekdayOf: () => weekdayOf,
+    writeDaystampHTML: () => writeDaystampHTML
   });
 
   // src/core/ui/str.ts
@@ -330,16 +329,13 @@ var BZR_diary = (() => {
     }
     return out;
   }
-  function blockRootClass(html) {
-    const m = /^<[a-z][^>]*\sclass="([^"]*)"/i.exec(html);
-    return m ? m[1] : "";
-  }
-  function blockPlainText(html) {
-    return html.replace(/<[^>]*>/g, "").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&amp;/g, "&");
-  }
   function daystampHTML(date, count) {
     const [y, m, dd] = date.split("-");
     return '<div class="bz-diary-b-daystamp" data-date="' + esc(date) + '"><div class="bz-diary-dstamp"><span class="bz-diary-ds-day">' + Number(dd) + '</span><span class="bz-diary-ds-side"><b>' + parseInt(m, 10) + "月</b><i>" + weekdayOf(date) + "</i><em>" + cnNum(count) + ' 则</em></span><span class="bz-diary-ds-year">' + esc(y) + '</span></div><div class="bz-diary-ds-wave"></div></div>';
+  }
+  function writeDaystampHTML(date) {
+    const [y, m, dd] = date.split("-");
+    return '<div class="bz-diary-dstamp"><span class="bz-diary-ds-day">' + Number(dd) + '</span><span class="bz-diary-ds-side"><b>' + parseInt(m, 10) + "月</b><i>" + weekdayOf(date) + '</i><em><span class="bz-diary-wsp-datebtn">改日子 · 时辰</span></em></span><span class="bz-diary-ds-year">' + esc(y) + '</span></div><div class="bz-diary-ds-wave"></div>';
   }
   function basenameOf(p) {
     return String(p || "").split("/").pop().replace(/\.md$/, "");
@@ -366,6 +362,34 @@ var BZR_diary = (() => {
 
       <!-- 分类书签条（筛选态） -->
       <div class="bz-diary-filter-tab"><span class="bz-diary-ft-name"></span><span class="bz-diary-ft-x">取下</span></div>
+
+      <!-- 写作内页（ADR-0233）：点「写」就在书上摊开一张素纸，正文写在这一页上。
+           摆这一层（书页之上、书壳之内）而不是进 StPageFlip 的书页流：草稿不该被分页，
+           而它盖住书页的指针区，「草稿在时不翻页」也就落成了物理事实。
+           日戳由 ui 侧填（与 daystampHTML 同源），贴纸 chips 与正文区在这里只是空壳。 -->
+      <div class="bz-diary-wsp" hidden>
+        <div class="bz-diary-wsp-sheet">
+          <div class="bz-diary-wsp-day"></div>
+          <textarea class="bz-diary-wsp-area" spellcheck="false" placeholder="笔递给你了，写吧……"></textarea>
+          <div class="bz-diary-wsp-tools"></div>
+          <div class="bz-diary-wsp-acts">
+            <span class="bz-diary-wsp-act" data-wact="discard">揉掉</span>
+            <span class="bz-diary-wsp-act bz-diary-wsp-primary" data-wact="save">落笔</span>
+          </div>
+        </div>
+        <div class="bz-diary-wsp-pageno">— 新的一页 —</div>
+      </div>
+    </div>
+
+    <!-- 开册进度：读全量之前书还是空的（上千篇正文走磁盘读、每批 10），
+         桌上先摆一张「正在翻找」的纸条报读到哪儿了，读完换「正在装订」，成册即收。
+         不吃指针（pointer-events: none）：读盘期间点遮罩照样能收起整本。 -->
+    <div class="bz-diary-loading" hidden>
+      <div class="bz-diary-ld-paper">
+        <div class="bz-diary-ld-title"></div>
+        <div class="bz-diary-ld-bar"></div>
+        <div class="bz-diary-ld-count"></div>
+      </div>
     </div>
 
     <!-- 案头文具挂在桌上、不挂在书里：书在窄桌面下会被整体缩小，

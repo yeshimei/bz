@@ -1,4 +1,4 @@
-/* 源指纹 528995951939c4e0 · 仓内输入 65 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 bde68e71dd19c45d · 仓内输入 65 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/encrypt/fake-sim.ts","prototypes/encrypt/fake/fake-obsidian.ts","prototypes/password-vault/fake/fake-obsidian.ts","src/bookshelf/data.ts","src/bookshelf/state.ts","src/cinema/state.ts","src/core/app.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/settings-btn-state.ts","src/core/settings-common.ts","src/core/settings-modal.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/help-tip.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/motion.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/password-vault/data.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/encrypt/fake-sim.ts → window.BZW_encrypt（行为单源预览包，issue 245/ADR-0106） */
 var BZW_encrypt = (() => {
@@ -5038,7 +5038,6 @@ var BZW_encrypt = (() => {
   __export(config_exports, {
     DIARY_DIRECTORY: () => DIARY_DIRECTORY,
     ENCRYPT_TAG: () => ENCRYPT_TAG,
-    FIRST_PAINT_ENTRIES: () => FIRST_PAINT_ENTRIES,
     LETTER_DIRECTORY: () => LETTER_DIRECTORY,
     applyDirectories: () => applyDirectories,
     bookDirectory: () => bookDirectory,
@@ -5145,14 +5144,13 @@ var BZW_encrypt = (() => {
     }
     return result;
   }
-  var DIARY_DIRECTORY, LETTER_DIRECTORY, FIRST_PAINT_ENTRIES, ENCRYPT_TAG, DEFAULT_TAGS_CONFIG, PRIMARY_TAGS_CONFIG, tagToEmojiMap, emojiToTagMap;
+  var DIARY_DIRECTORY, LETTER_DIRECTORY, ENCRYPT_TAG, DEFAULT_TAGS_CONFIG, PRIMARY_TAGS_CONFIG, tagToEmojiMap, emojiToTagMap;
   var init_config = __esm({
     "src/diary/config.ts"() {
       init_state();
       init_data();
       DIARY_DIRECTORY = "我的/日记";
       LETTER_DIRECTORY = "我的/信";
-      FIRST_PAINT_ENTRIES = 30;
       ENCRYPT_TAG = "加密";
       DEFAULT_TAGS_CONFIG = {
         日记: { emoji: "📖" },

@@ -1,4 +1,4 @@
-/* 源指纹 123440ad64fc0ff1 · 仓内输入 6 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 aa35525a987ce428 · 仓内输入 6 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["src/cinema/constants.ts","src/cinema/layouts/midnight/render.ts","src/cinema/render.ts","src/cinema/seasons.ts","src/cinema/shared.ts","src/core/ui/str.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — src/cinema/render.ts → window.BZR_cinema（评审壳预览包，ADR-0104） */
 var BZR_cinema = (() => {
@@ -32,7 +32,6 @@ var BZR_cinema = (() => {
     cardHtml: () => cardHtml,
     cardInList: () => cardInList,
     cardStatus: () => cardStatus,
-    cardsRangeHtml: () => cardsRangeHtml,
     chipsHtml: () => chipsHtml,
     detailModalHtml: () => detailModalHtml,
     doubanSearchUrl: () => doubanSearchUrl,
@@ -602,10 +601,6 @@ var BZR_cinema = (() => {
     return `<div class="cn-empty-page"><div class="big">${filtered ? "无匹配影片" : "影片空空如也"}</div>
     ${filtered ? '<button class="dm-btn j-clear" data-cinema-clear style="margin-top:6px">清空筛选</button>' : '<span style="font-size:11.5px">点右上「添加影片」开始记录</span>'}</div>`;
   }
-  function skeletonPageHtml(cols) {
-    const cell = '<div class="cn-skel-card"><div class="cn-skel-pw"></div><div class="cn-skel-line"></div></div>';
-    return `<div class="cn-skel-grid" style="grid-template-columns:repeat(${cols},1fr)">${cell.repeat(Math.max(1, cols * 3))}</div>`;
-  }
   function spHeadHtml(title, cnt) {
     return `<div class="sp-head"><button class="sp-back">${iconSpan(ICON.back)}</button><span class="sp-title">${esc(title)}</span><span class="sp-cnt j-spcnt">${cnt}</span></div>`;
   }
@@ -615,12 +610,6 @@ var BZR_cinema = (() => {
       const face = cardFace(e);
       return cardHtml(e, inp.poster(face), (_b = (_a = inp.fetching) == null ? void 0 : _a.call(inp, face)) != null ? _b : false);
     }).join("");
-  }
-  function cardsRangeHtml(inp, from, to) {
-    return cardsHtml(inp.cards.slice(from, to), inp);
-  }
-  function visibleCards(inp) {
-    return inp.cards.slice(0, Math.max(0, inp.shown));
   }
   function listHeadHtml(inp) {
     return `<div class="d-head"><h2 class="j-title">${esc(inp.title)}</h2><span class="cnt j-cnt">· ${inp.cards.length} 部</span>
@@ -645,15 +634,7 @@ var BZR_cinema = (() => {
     if (v.view === "ai") {
       view.innerHTML = spHeadHtml("AI 荐片", inp.aiCount ? `· ${inp.aiCount} 部` : "") + `<div class="sp-body">${inp.aiHtml}</div>`;
     } else {
-      const win = visibleCards(inp);
-      let body;
-      if (win.length) {
-        body = `<div class="d-scroll"><div class="grid" style="grid-template-columns:repeat(${inp.cols},1fr)">${cardsHtml(win, inp)}</div></div>`;
-      } else if (inp.loading) {
-        body = `<div class="d-scroll">${skeletonPageHtml(inp.cols)}</div>`;
-      } else {
-        body = emptyPageHtml(viewFiltered(v));
-      }
+      const body = inp.cards.length ? `<div class="d-scroll"><div class="grid" style="grid-template-columns:repeat(${inp.cols},1fr)">${cardsHtml(inp.cards, inp)}</div></div>` : emptyPageHtml(viewFiltered(v));
       view.innerHTML = listHeadHtml(inp) + listToolsHtml(v) + body;
     }
   }
@@ -671,10 +652,8 @@ var BZR_cinema = (() => {
     const mv = root.querySelector(".j-mview");
     if (mv) {
       if (v.view === "list") {
-        const win = visibleCards(inp);
-        const empty = !inp.cards.length;
-        mv.className = empty && !inp.loading ? "m-scroll j-mview cn-mempty" : "m-scroll j-mview";
-        mv.innerHTML = empty ? inp.loading ? skeletonPageHtml(inp.cols) : emptyPageHtml(viewFiltered(v)) : `<div class="m-grid">${cardsHtml(win, inp)}</div>`;
+        mv.className = inp.cards.length ? "m-scroll j-mview" : "m-scroll j-mview cn-mempty";
+        mv.innerHTML = inp.cards.length ? `<div class="m-grid">${cardsHtml(inp.cards, inp)}</div>` : emptyPageHtml(viewFiltered(v));
       } else {
         mv.className = "sp-body j-mview";
         mv.innerHTML = inp.aiHtml;
