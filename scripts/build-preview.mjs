@@ -117,7 +117,11 @@ export const PREVIEW_DOMAINS = ["belongings", "bookshelf", "cinema", "clipbook",
 // gameshelf 行为产物（2026-09-17）：游戏架域 UI 全在 ui.ts 内拼（无 render.ts），加 V1 海报墙
 //   落域后接入评审壳——真 requestUrl 换 Steam 响应罐头（prototypes/gameshelf/fake/fake-obsidian.ts），
 //   数据 = 真实 vault 147 篇游戏笔记快照 + 真 appdetails/成就响应回放；同样只产行为包。
-export const BEHAVIOR_DOMAINS = ["belongings", "bookshelf", "cinema", "clipbook", "encrypt", "diary", "favorites", "gameshelf", "home", "knowledge", "memo", "password-vault", "people", "pomodoro", "review", "secondbrain", "settings-panel"];
+// dock 行为产物（2026-10-03）：工具坞域 UI 全在 ui.ts 内拼（无 render.ts），故只产行为包。
+//   真 ui.ts/data.ts/runner.ts 依赖链 + fake obsidian（vault 文件系统跑在 localStorage 上，
+//   清单缓存/运行记录都走 core/storage 的真读写）；「工具」那半边由假 child_process 演——
+//   按四行协议吐流并**自己**落账，钉住「bz 不是运行记录写者」这条不变量。
+export const BEHAVIOR_DOMAINS = ["belongings", "bookshelf", "cinema", "clipbook", "encrypt", "diary", "dock", "favorites", "gameshelf", "home", "knowledge", "memo", "password-vault", "people", "pomodoro", "review", "secondbrain", "settings-panel"];
 
 export async function buildBehavior(domain) {
   const entry = path.join(ROOT, "prototypes", domain, "fake-sim.ts");

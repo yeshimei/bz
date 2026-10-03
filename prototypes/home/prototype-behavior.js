@@ -1,5 +1,5 @@
-/* 源指纹 1dbb491a0b0c3b6a · 仓内输入 310 个（校验见 tests/preview-freshness.test.ts） */
-/*#preview-inputs=["prototypes/home/fake-sim.ts","prototypes/home/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/keys.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/belongings/ai.ts","src/belongings/catalog-suggest.ts","src/belongings/category.ts","src/belongings/data.ts","src/belongings/layouts/poster/render.ts","src/belongings/motion.ts","src/belongings/render.ts","src/belongings/report-stats.ts","src/belongings/report.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/epub-notes.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/motion.ts","src/bookshelf/notes-ui.ts","src/bookshelf/notes.ts","src/bookshelf/render.ts","src/bookshelf/settings.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/bookshelf/ui.ts","src/checkup/checks-consistency.ts","src/checkup/checks-drift.ts","src/checkup/checks-json.ts","src/checkup/checks-orphans.ts","src/checkup/files.ts","src/checkup/index.ts","src/checkup/run.ts","src/checkup/ui.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/douban-fetcher.ts","src/cinema/seasons.ts","src/cinema/settings.ts","src/cinema/shared.ts","src/cinema/state.ts","src/clipbook/anchor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/file-sync.ts","src/clipbook/flow.ts","src/clipbook/image-save.ts","src/clipbook/index.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/motion.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/press/data.ts","src/clipbook/press/engine.ts","src/clipbook/press/index.ts","src/clipbook/press/motions.ts","src/clipbook/press/view.ts","src/clipbook/render.ts","src/clipbook/report-stats.ts","src/clipbook/report-ui.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/abort.ts","src/core/ai-models.ts","src/core/ai.ts","src/core/app.ts","src/core/asr-proofread.ts","src/core/category-table.ts","src/core/changelog.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/domain-icons.ts","src/core/douban-name-index.ts","src/core/download-manifest.ts","src/core/esc-manager.ts","src/core/file-sync.ts","src/core/flow-dialog.ts","src/core/gesture.ts","src/core/http.ts","src/core/item-actions.ts","src/core/jev-fallback.ts","src/core/jev.ts","src/core/json-store.ts","src/core/knowledge-boxes.ts","src/core/landscape.ts","src/core/link-now.ts","src/core/lock-stats.ts","src/core/manual.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/pomodoro-phase.ts","src/core/remote-asset.ts","src/core/remote-base.ts","src/core/rss-catalog.ts","src/core/settings-btn-state.ts","src/core/settings-common.ts","src/core/settings-main-schema.ts","src/core/settings-modal.ts","src/core/settings-model-picker.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/sha256.ts","src/core/skin-pack.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/flip.ts","src/core/ui/focus-trap.ts","src/core/ui/help-tip.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slide-pill.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/parser.ts","src/diary/settings.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/motion.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/favorites/ai.ts","src/favorites/app.ts","src/favorites/config.ts","src/favorites/data.ts","src/favorites/layouts/board/render.ts","src/favorites/motion.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/gameshelf/constants.ts","src/gameshelf/notes.ts","src/gameshelf/reconcile.ts","src/gameshelf/settings.ts","src/gameshelf/state.ts","src/gameshelf/steam.ts","src/home/behavior-timeline.ts","src/home/domains.ts","src/home/entry-editor.ts","src/home/index.ts","src/home/layouts/river/render.ts","src/home/motion.ts","src/home/order.ts","src/home/render.ts","src/home/river.ts","src/home/settings.ts","src/home/shared.ts","src/home/state.ts","src/home/ui.ts","src/knowledge/data.ts","src/knowledge/file-sync.ts","src/knowledge/index.ts","src/knowledge/motion.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/partial-json.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source-retire.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/memo/data.ts","src/memo/due.ts","src/memo/render.ts","src/memo/settings.ts","src/memo/state.ts","src/memo/ui.ts","src/password-vault/data.ts","src/password-vault/settings.ts","src/people/chat.ts","src/people/datasource.ts","src/people/insights.ts","src/people/me-avatar.ts","src/people/media.ts","src/people/parse.ts","src/people/render.ts","src/people/safe-store.ts","src/people/settings.ts","src/people/stats.ts","src/people/types.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/index.ts","src/pomodoro/motion.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts","src/reading-report/index.ts","src/reading-report/report.ts","src/reading-report/stats.ts","src/recap/aggregate.ts","src/review/analysis/data.ts","src/review/analysis/engine.ts","src/review/analysis/index.ts","src/review/analysis/kits.ts","src/review/analysis/motions.ts","src/review/analysis/view.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/motion.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/quiz-panel-data.ts","src/review/quiz-panel.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts","src/secondbrain/ai.ts","src/secondbrain/chunk.ts","src/secondbrain/config.ts","src/secondbrain/link-agent/data.ts","src/secondbrain/link-agent/pipeline.ts","src/secondbrain/motion.ts","src/secondbrain/ollama.ts","src/secondbrain/panel.ts","src/secondbrain/readonly.ts","src/secondbrain/render.ts","src/secondbrain/store-file.ts","src/secondbrain/tfidf.ts","src/secondbrain/vector-math.ts","src/secondbrain/weekly-ui.ts","src/secondbrain/weekly.ts","src/secondbrain/whitelist.ts","src/settings-panel/changelog.ts","src/settings-panel/index.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/manual-viewer.ts","src/settings-panel/motion.ts","src/settings-panel/online-resources.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/schema.ts","src/settings-panel/shared.ts","src/settings-panel/ui.ts","src/settings.ts","src/smartcat/api.ts","src/smartcat/behavior-trim.ts","src/smartcat/behavior-wording.ts","src/smartcat/belongings-source.ts","src/smartcat/character.ts","src/smartcat/cognitive.ts","src/smartcat/config.ts","src/smartcat/data.ts","src/smartcat/favorites-source.ts","src/smartcat/insight-version.ts","src/smartcat/memory.ts","src/smartcat/motion.ts","src/smartcat/routing.ts","src/smartcat/types.ts","src/smartcat/ui.ts"]*/
+/* 源指纹 c9aa0361be5b97f1 · 仓内输入 319 个（校验见 tests/preview-freshness.test.ts） */
+/*#preview-inputs=["prototypes/home/fake-sim.ts","prototypes/home/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/keys.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/belongings/ai.ts","src/belongings/catalog-suggest.ts","src/belongings/category.ts","src/belongings/data.ts","src/belongings/layouts/poster/render.ts","src/belongings/motion.ts","src/belongings/render.ts","src/belongings/report-stats.ts","src/belongings/report.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/epub-notes.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/motion.ts","src/bookshelf/notes-ui.ts","src/bookshelf/notes.ts","src/bookshelf/render.ts","src/bookshelf/settings.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/bookshelf/ui.ts","src/checkup/checks-consistency.ts","src/checkup/checks-drift.ts","src/checkup/checks-json.ts","src/checkup/checks-orphans.ts","src/checkup/files.ts","src/checkup/index.ts","src/checkup/run.ts","src/checkup/ui.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/douban-fetcher.ts","src/cinema/seasons.ts","src/cinema/settings.ts","src/cinema/shared.ts","src/cinema/state.ts","src/clipbook/anchor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/file-sync.ts","src/clipbook/flow.ts","src/clipbook/image-save.ts","src/clipbook/index.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/motion.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/press/data.ts","src/clipbook/press/engine.ts","src/clipbook/press/index.ts","src/clipbook/press/motions.ts","src/clipbook/press/view.ts","src/clipbook/render.ts","src/clipbook/report-stats.ts","src/clipbook/report-ui.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/abort.ts","src/core/ai-models.ts","src/core/ai.ts","src/core/app.ts","src/core/asr-proofread.ts","src/core/category-table.ts","src/core/changelog.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/domain-icons.ts","src/core/douban-name-index.ts","src/core/download-manifest.ts","src/core/esc-manager.ts","src/core/external-tool.ts","src/core/file-sync.ts","src/core/flow-dialog.ts","src/core/gesture.ts","src/core/http.ts","src/core/item-actions.ts","src/core/jev-fallback.ts","src/core/jev.ts","src/core/json-store.ts","src/core/knowledge-boxes.ts","src/core/landscape.ts","src/core/link-now.ts","src/core/lock-stats.ts","src/core/manual.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/pomodoro-phase.ts","src/core/remote-asset.ts","src/core/remote-base.ts","src/core/rss-catalog.ts","src/core/settings-btn-state.ts","src/core/settings-common.ts","src/core/settings-main-schema.ts","src/core/settings-modal.ts","src/core/settings-model-picker.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/sha256.ts","src/core/skin-pack.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/flip.ts","src/core/ui/focus-trap.ts","src/core/ui/help-tip.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slide-pill.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/parser.ts","src/diary/settings.ts","src/dock/data.ts","src/dock/declaration.ts","src/dock/registry.ts","src/dock/runner.ts","src/dock/schedule.ts","src/dock/schema.ts","src/dock/settings.ts","src/dock/ui.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/motion.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/favorites/ai.ts","src/favorites/app.ts","src/favorites/config.ts","src/favorites/data.ts","src/favorites/layouts/board/render.ts","src/favorites/motion.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/gameshelf/constants.ts","src/gameshelf/notes.ts","src/gameshelf/reconcile.ts","src/gameshelf/settings.ts","src/gameshelf/state.ts","src/gameshelf/steam.ts","src/home/behavior-timeline.ts","src/home/domains.ts","src/home/entry-editor.ts","src/home/index.ts","src/home/layouts/river/render.ts","src/home/motion.ts","src/home/order.ts","src/home/render.ts","src/home/river.ts","src/home/settings.ts","src/home/shared.ts","src/home/state.ts","src/home/ui.ts","src/knowledge/data.ts","src/knowledge/file-sync.ts","src/knowledge/index.ts","src/knowledge/motion.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/partial-json.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source-retire.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/memo/data.ts","src/memo/due.ts","src/memo/render.ts","src/memo/settings.ts","src/memo/state.ts","src/memo/ui.ts","src/password-vault/data.ts","src/password-vault/settings.ts","src/people/chat.ts","src/people/datasource.ts","src/people/insights.ts","src/people/me-avatar.ts","src/people/media.ts","src/people/parse.ts","src/people/render.ts","src/people/safe-store.ts","src/people/settings.ts","src/people/stats.ts","src/people/types.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/index.ts","src/pomodoro/motion.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts","src/reading-report/index.ts","src/reading-report/report.ts","src/reading-report/stats.ts","src/recap/aggregate.ts","src/review/analysis/data.ts","src/review/analysis/engine.ts","src/review/analysis/index.ts","src/review/analysis/kits.ts","src/review/analysis/motions.ts","src/review/analysis/view.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/motion.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/quiz-panel-data.ts","src/review/quiz-panel.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts","src/secondbrain/ai.ts","src/secondbrain/chunk.ts","src/secondbrain/config.ts","src/secondbrain/link-agent/data.ts","src/secondbrain/link-agent/pipeline.ts","src/secondbrain/motion.ts","src/secondbrain/ollama.ts","src/secondbrain/panel.ts","src/secondbrain/readonly.ts","src/secondbrain/render.ts","src/secondbrain/store-file.ts","src/secondbrain/tfidf.ts","src/secondbrain/vector-math.ts","src/secondbrain/weekly-ui.ts","src/secondbrain/weekly.ts","src/secondbrain/whitelist.ts","src/settings-panel/changelog.ts","src/settings-panel/index.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/manual-viewer.ts","src/settings-panel/motion.ts","src/settings-panel/online-resources.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/schema.ts","src/settings-panel/shared.ts","src/settings-panel/ui.ts","src/settings.ts","src/smartcat/api.ts","src/smartcat/behavior-trim.ts","src/smartcat/behavior-wording.ts","src/smartcat/belongings-source.ts","src/smartcat/character.ts","src/smartcat/cognitive.ts","src/smartcat/config.ts","src/smartcat/data.ts","src/smartcat/favorites-source.ts","src/smartcat/insight-version.ts","src/smartcat/memory.ts","src/smartcat/motion.ts","src/smartcat/routing.ts","src/smartcat/types.ts","src/smartcat/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/home/fake-sim.ts → window.BZW_home（行为单源预览包，issue 245/ADR-0106） */
 var BZW_home = (() => {
   var __create = Object.create;
@@ -42,9 +42,9 @@ var BZW_home = (() => {
   ));
   var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
 
-  // node_modules/.pnpm/moment@2.30.1/node_modules/moment/moment.js
+  // ../../bz/node_modules/.pnpm/moment@2.30.1/node_modules/moment/moment.js
   var require_moment = __commonJS({
-    "node_modules/.pnpm/moment@2.30.1/node_modules/moment/moment.js"(exports, module) {
+    "../../bz/node_modules/.pnpm/moment@2.30.1/node_modules/moment/moment.js"(exports, module) {
       (function(global, factory) {
         typeof exports === "object" && typeof module !== "undefined" ? module.exports = factory() : typeof define === "function" && define.amd ? define(factory) : global.moment = factory();
       })(exports, function() {
@@ -4032,17 +4032,17 @@ var BZW_home = (() => {
   });
 
   // src/core/z-order.ts
-  function registerAlwaysOnTop(el2) {
-    alwaysOnTop.add(el2);
+  function registerAlwaysOnTop(el3) {
+    alwaysOnTop.add(el3);
     syncAlwaysOnTop();
   }
   function syncAlwaysOnTop() {
-    for (const el2 of alwaysOnTop) {
-      if (!el2.isConnected) {
-        alwaysOnTop.delete(el2);
+    for (const el3 of alwaysOnTop) {
+      if (!el3.isConnected) {
+        alwaysOnTop.delete(el3);
         continue;
       }
-      el2.style.zIndex = String(zCounter);
+      el3.style.zIndex = String(zCounter);
     }
   }
   function allocZBlock(n) {
@@ -4056,11 +4056,11 @@ var BZW_home = (() => {
     return allocZBlock(1);
   }
   function topifyZ(...els) {
-    const live2 = els.filter((el2) => !!el2);
-    if (live2.length === 0) return;
-    const base = allocZBlock(live2.length);
-    live2.forEach((el2, i) => {
-      el2.style.zIndex = String(base + i);
+    const live3 = els.filter((el3) => !!el3);
+    if (live3.length === 0) return;
+    const base = allocZBlock(live3.length);
+    live3.forEach((el3, i) => {
+      el3.style.zIndex = String(base + i);
     });
   }
   var zCounter, alwaysOnTop;
@@ -4359,7 +4359,7 @@ var BZW_home = (() => {
       setAction(actions) {
         const list = Array.isArray(actions) ? actions : [actions];
         const existing = new Set(
-          Array.from(n.el.querySelectorAll(".bz-notice-action")).map((el2) => el2.textContent || "")
+          Array.from(n.el.querySelectorAll(".bz-notice-action")).map((el3) => el3.textContent || "")
         );
         for (const a of list) {
           if (existing.has(a.label)) continue;
@@ -4403,10 +4403,10 @@ var BZW_home = (() => {
       recent[key] = { at: now, n: null };
     }
     evictOldest();
-    const el2 = document.createElement("div");
-    el2.className = "bz-notice bz-notice--" + (isProgress ? "progress" : type) + " bz-notice--in-" + variant;
-    el2.setAttribute("role", "status");
-    el2.setAttribute("aria-live", type === "error" ? "assertive" : "polite");
+    const el3 = document.createElement("div");
+    el3.className = "bz-notice bz-notice--" + (isProgress ? "progress" : type) + " bz-notice--in-" + variant;
+    el3.setAttribute("role", "status");
+    el3.setAttribute("aria-live", type === "error" ? "assertive" : "polite");
     const icon = document.createElement("div");
     icon.className = "bz-notice-icon";
     if (isProgress) {
@@ -4414,7 +4414,7 @@ var BZW_home = (() => {
     } else {
       icon.textContent = ICONS[type];
     }
-    el2.appendChild(icon);
+    el3.appendChild(icon);
     const body = document.createElement("div");
     body.className = "bz-notice-body";
     if (opts && opts.title) {
@@ -4427,14 +4427,14 @@ var BZW_home = (() => {
     msgEl.className = "bz-notice-msg";
     msgEl.textContent = msg;
     body.appendChild(msgEl);
-    el2.appendChild(body);
+    el3.appendChild(body);
     let progressEl = null;
     if (isProgress) {
       progressEl = document.createElement("div");
       progressEl.className = "bz-notice-progress";
-      el2.appendChild(progressEl);
+      el3.appendChild(progressEl);
     }
-    const n = { el: el2, timer: null, msgEl, progressEl, iconEl: icon, variant, isProgress, persistent: false };
+    const n = { el: el3, timer: null, msgEl, progressEl, iconEl: icon, variant, isProgress, persistent: false };
     const actions = [];
     if (opts && opts.action) actions.push(opts.action);
     if (opts && opts.actions) {
@@ -4443,9 +4443,9 @@ var BZW_home = (() => {
       }
     }
     for (const a of actions) appendActionBtn(n, a);
-    el2.addEventListener("click", () => hideNow(n));
+    el3.addEventListener("click", () => hideNow(n));
     container.style.zIndex = String(allocZ());
-    container.appendChild(el2);
+    container.appendChild(el3);
     live.push(n);
     if (opts && opts.dedupeKey) {
       const r = recent[opts.dedupeKey];
@@ -4676,8 +4676,8 @@ var BZW_home = (() => {
   function unescapeYamlText(s) {
     return s.replace(/\\(.)/g, (m, c) => c === '"' || c === "\\" ? c : m);
   }
-  function escapeHtml2(str2) {
-    return str2.replace(/[&<>"']/g, (m) => {
+  function escapeHtml2(str3) {
+    return str3.replace(/[&<>"']/g, (m) => {
       if (m === "&") return "&amp;";
       if (m === "<") return "&lt;";
       if (m === ">") return "&gt;";
@@ -4780,9 +4780,9 @@ var BZW_home = (() => {
     if (!f) return false;
     return path === f || path.startsWith(f + "/");
   }
-  function hash31(str2) {
+  function hash31(str3) {
     let h = 0;
-    const t = String(str2 || "");
+    const t = String(str3 || "");
     for (let i = 0; i < t.length; i++) h = h * 31 + t.charCodeAt(i) >>> 0;
     return h >>> 0;
   }
@@ -4918,8 +4918,8 @@ var BZW_home = (() => {
   });
 
   // src/core/ui/focus-trap.ts
-  function isHidden(el2) {
-    let cur = el2;
+  function isHidden(el3) {
+    let cur = el3;
     while (cur && cur !== document.body) {
       if (cur.classList.contains("bz-setting-hidden")) return true;
       if (cur.style.display === "none") return true;
@@ -4928,10 +4928,10 @@ var BZW_home = (() => {
     return false;
   }
   function firstFocusable(container) {
-    const list = Array.from(container.querySelectorAll(FOCUSABLE_SELECTOR)).filter((el2) => {
-      if (isHidden(el2)) return false;
+    const list = Array.from(container.querySelectorAll(FOCUSABLE_SELECTOR)).filter((el3) => {
+      if (isHidden(el3)) return false;
       if (isMobileEnv()) {
-        const tag = el2.tagName;
+        const tag = el3.tagName;
         if (tag === "INPUT" || tag === "TEXTAREA") return false;
       }
       return true;
@@ -4942,7 +4942,7 @@ var BZW_home = (() => {
     const onKeydown = (e) => {
       if (e.key !== "Tab") return;
       const items = Array.from(container.querySelectorAll(FOCUSABLE_SELECTOR)).filter(
-        (el2) => !isHidden(el2) && !el2.hasAttribute("disabled")
+        (el3) => !isHidden(el3) && !el3.hasAttribute("disabled")
       );
       if (!items.length) return;
       const first = items[0];
@@ -5034,7 +5034,7 @@ var BZW_home = (() => {
       popup.innerHTML = parts.html;
       mask.appendChild(popup);
       document.body.appendChild(mask);
-      const escHandle8 = escManager.register("q3-confirm", {
+      const escHandle9 = escManager.register("q3-confirm", {
         isVisible: () => mask.isConnected,
         close: () => settle(void 0)
       });
@@ -5050,7 +5050,7 @@ var BZW_home = (() => {
         settled = true;
         if (activeSettle === settle) activeSettle = null;
         releaseFocusTrap();
-        escHandle8.unregister();
+        escHandle9.unregister();
         mask.remove();
         restoreFocus();
         resolve2(v);
@@ -5468,14 +5468,14 @@ var BZW_home = (() => {
     return i;
   }
   function mountIcons(root) {
-    root.querySelectorAll("[data-lucide]").forEach((el2) => {
-      const name = el2.getAttribute("data-lucide") || "";
+    root.querySelectorAll("[data-lucide]").forEach((el3) => {
+      const name = el3.getAttribute("data-lucide") || "";
       if (!name) return;
       try {
         const fresh = uiIconSpan(name);
-        const cls = el2.className;
+        const cls = el3.className;
         if (cls && cls !== "bz-ic") fresh.className = cls;
-        el2.replaceWith(fresh);
+        el3.replaceWith(fresh);
       } catch (e) {
       }
     });
@@ -5720,23 +5720,23 @@ var BZW_home = (() => {
 
   // src/core/ui/slider.ts
   function uiRange(opts) {
-    const el2 = document.createElement("input");
-    el2.type = "range";
-    el2.className = "bz-range" + (opts.className ? " " + opts.className : "");
-    if (opts.min !== void 0) el2.min = String(opts.min);
-    if (opts.max !== void 0) el2.max = String(opts.max);
-    if (opts.step !== void 0) el2.step = String(opts.step);
-    if (opts.value !== void 0) el2.value = String(opts.value);
-    if (opts.disabled) el2.disabled = true;
-    if (opts.onInput) el2.addEventListener("input", () => {
+    const el3 = document.createElement("input");
+    el3.type = "range";
+    el3.className = "bz-range" + (opts.className ? " " + opts.className : "");
+    if (opts.min !== void 0) el3.min = String(opts.min);
+    if (opts.max !== void 0) el3.max = String(opts.max);
+    if (opts.step !== void 0) el3.step = String(opts.step);
+    if (opts.value !== void 0) el3.value = String(opts.value);
+    if (opts.disabled) el3.disabled = true;
+    if (opts.onInput) el3.addEventListener("input", () => {
       var _a2;
-      return (_a2 = opts.onInput) == null ? void 0 : _a2.call(opts, parseFloat(el2.value));
+      return (_a2 = opts.onInput) == null ? void 0 : _a2.call(opts, parseFloat(el3.value));
     });
-    if (opts.onChange) el2.addEventListener("change", () => {
+    if (opts.onChange) el3.addEventListener("change", () => {
       var _a2;
-      return (_a2 = opts.onChange) == null ? void 0 : _a2.call(opts, parseFloat(el2.value));
+      return (_a2 = opts.onChange) == null ? void 0 : _a2.call(opts, parseFloat(el3.value));
     });
-    return el2;
+    return el3;
   }
   var init_slider = __esm({
     "src/core/ui/slider.ts"() {
@@ -5745,25 +5745,25 @@ var BZW_home = (() => {
 
   // src/core/ui/empty.ts
   function uiEmpty(opts) {
-    const el2 = document.createElement("div");
-    el2.className = "bz-empty";
+    const el3 = document.createElement("div");
+    el3.className = "bz-empty";
     if (opts.icon) {
       const ic2 = uiIcon(opts.icon);
       ic2.classList.add("bz-empty-ic");
-      el2.appendChild(ic2);
+      el3.appendChild(ic2);
     }
     const t = document.createElement("div");
     t.className = "bz-empty-title";
     t.textContent = opts.title;
-    el2.appendChild(t);
+    el3.appendChild(t);
     if (opts.desc) {
       const d = document.createElement("div");
       d.className = "bz-empty-desc";
       d.textContent = opts.desc;
-      el2.appendChild(d);
+      el3.appendChild(d);
     }
-    if (opts.actions) el2.appendChild(opts.actions);
-    return el2;
+    if (opts.actions) el3.appendChild(opts.actions);
+    return el3;
   }
   var init_empty = __esm({
     "src/core/ui/empty.ts"() {
@@ -5773,10 +5773,10 @@ var BZW_home = (() => {
 
   // src/core/ui/segmented.ts
   function uiSegmented(opts) {
-    const el2 = document.createElement("div");
-    el2.className = "bz-segmented" + (opts.className ? " " + opts.className : "");
-    el2.setAttribute("role", "radiogroup");
-    el2.setAttribute("aria-label", opts.label || "");
+    const el3 = document.createElement("div");
+    el3.className = "bz-segmented" + (opts.className ? " " + opts.className : "");
+    el3.setAttribute("role", "radiogroup");
+    el3.setAttribute("aria-label", opts.label || "");
     const btns = /* @__PURE__ */ new Map();
     opts.options.forEach((o) => {
       const b = document.createElement("button");
@@ -5803,7 +5803,7 @@ var BZW_home = (() => {
         (_a2 = btns.get(vals[nextIdx])) == null ? void 0 : _a2.focus();
       });
       btns.set(o.value, b);
-      el2.appendChild(b);
+      el3.appendChild(b);
     });
     let cur = opts.value;
     function current2() {
@@ -5817,7 +5817,7 @@ var BZW_home = (() => {
         b.setAttribute("aria-checked", String(on));
       });
     }
-    return { el: el2, setValue };
+    return { el: el3, setValue };
   }
   var init_segmented = __esm({
     "src/core/ui/segmented.ts"() {
@@ -5826,10 +5826,10 @@ var BZW_home = (() => {
 
   // src/core/ui/choice.ts
   function uiChoice(opts) {
-    const el2 = document.createElement("div");
-    el2.className = "bz-choice" + (opts.float ? " bz-choice--float" : "") + (opts.className ? " " + opts.className : "");
-    el2.setAttribute("role", "radiogroup");
-    el2.setAttribute("aria-label", opts.label || "");
+    const el3 = document.createElement("div");
+    el3.className = "bz-choice" + (opts.float ? " bz-choice--float" : "") + (opts.className ? " " + opts.className : "");
+    el3.setAttribute("role", "radiogroup");
+    el3.setAttribute("aria-label", opts.label || "");
     const btns = /* @__PURE__ */ new Map();
     let cur = opts.value;
     const seg = document.createElement("span");
@@ -5838,11 +5838,11 @@ var BZW_home = (() => {
     let segTries = 0;
     const syncSeg = (animate) => {
       if (!opts.float) return;
-      const on = el2.querySelector(".bz-choice-btn.is-on");
+      const on = el3.querySelector(".bz-choice-btn.is-on");
       if (!on) return;
-      const tb = el2.getBoundingClientRect();
+      const tb = el3.getBoundingClientRect();
       const bb = on.getBoundingClientRect();
-      if (!el2.isConnected || !tb.width || !bb.width) {
+      if (!el3.isConnected || !tb.width || !bb.width) {
         if (segTries++ > 120) return;
         cancelAnimationFrame(segRAF);
         segRAF = requestAnimationFrame(() => syncSeg(false));
@@ -5858,7 +5858,7 @@ var BZW_home = (() => {
       }
     };
     const onWinResize = () => {
-      if (!el2.isConnected) {
+      if (!el3.isConnected) {
         window.removeEventListener("resize", onWinResize);
         return;
       }
@@ -5898,9 +5898,9 @@ var BZW_home = (() => {
         (_a2 = btns.get(vals[nextIdx])) == null ? void 0 : _a2.focus();
       });
       btns.set(o.value, b);
-      el2.appendChild(b);
+      el3.appendChild(b);
     });
-    if (opts.float) el2.appendChild(seg);
+    if (opts.float) el3.appendChild(seg);
     function setValue(v) {
       cur = v;
       btns.forEach((b, k) => {
@@ -5915,7 +5915,7 @@ var BZW_home = (() => {
       cancelAnimationFrame(segRAF);
       window.removeEventListener("resize", onWinResize);
     };
-    return { el: el2, setValue, detach };
+    return { el: el3, setValue, detach };
   }
   var init_choice = __esm({
     "src/core/ui/choice.ts"() {
@@ -5924,10 +5924,10 @@ var BZW_home = (() => {
 
   // src/core/ui/cardpick.ts
   function uiCardChoice(opts) {
-    const el2 = document.createElement("div");
-    el2.className = "bz-cardpick" + (opts.className ? " " + opts.className : "");
-    el2.setAttribute("role", "radiogroup");
-    if (opts.label) el2.setAttribute("aria-label", opts.label);
+    const el3 = document.createElement("div");
+    el3.className = "bz-cardpick" + (opts.className ? " " + opts.className : "");
+    el3.setAttribute("role", "radiogroup");
+    if (opts.label) el3.setAttribute("aria-label", opts.label);
     const btns = /* @__PURE__ */ new Map();
     let cur = opts.value;
     const sync = (v) => {
@@ -5959,9 +5959,9 @@ var BZW_home = (() => {
         opts.onChange(o.value);
       });
       btns.set(o.value, card);
-      el2.appendChild(card);
+      el3.appendChild(card);
     });
-    el2.addEventListener("keydown", (e) => {
+    el3.addEventListener("keydown", (e) => {
       var _a2;
       if (e.key !== "ArrowRight" && e.key !== "ArrowLeft") return;
       const list = opts.options.map((o) => o.value);
@@ -5970,7 +5970,7 @@ var BZW_home = (() => {
       (_a2 = btns.get(list[next])) == null ? void 0 : _a2.focus();
       e.preventDefault();
     });
-    return { el: el2, setValue: sync };
+    return { el: el3, setValue: sync };
   }
   var init_cardpick = __esm({
     "src/core/ui/cardpick.ts"() {
@@ -5979,37 +5979,37 @@ var BZW_home = (() => {
 
   // src/core/ui/switch.ts
   function uiSwitch(opts) {
-    const el2 = document.createElement("span");
-    el2.className = "bz-sw" + (opts.checked ? " on" : "") + (opts.disabled ? " is-disabled" : "");
-    el2.setAttribute("role", "switch");
-    el2.setAttribute("aria-checked", String(!!opts.checked));
-    el2.setAttribute("aria-disabled", String(!!opts.disabled));
-    el2.tabIndex = opts.disabled ? -1 : 0;
+    const el3 = document.createElement("span");
+    el3.className = "bz-sw" + (opts.checked ? " on" : "") + (opts.disabled ? " is-disabled" : "");
+    el3.setAttribute("role", "switch");
+    el3.setAttribute("aria-checked", String(!!opts.checked));
+    el3.setAttribute("aria-disabled", String(!!opts.disabled));
+    el3.tabIndex = opts.disabled ? -1 : 0;
     const setChecked = (v) => {
-      el2.classList.toggle("on", v);
-      el2.setAttribute("aria-checked", String(v));
+      el3.classList.toggle("on", v);
+      el3.setAttribute("aria-checked", String(v));
     };
     const setDisabled = (v) => {
-      el2.classList.toggle("is-disabled", v);
-      el2.setAttribute("aria-disabled", String(v));
-      el2.tabIndex = v ? -1 : 0;
+      el3.classList.toggle("is-disabled", v);
+      el3.setAttribute("aria-disabled", String(v));
+      el3.tabIndex = v ? -1 : 0;
     };
-    const enabled2 = () => !el2.classList.contains("is-disabled");
+    const enabled2 = () => !el3.classList.contains("is-disabled");
     const toggle = () => {
       var _a2;
       if (!enabled2()) return;
-      const next = !el2.classList.contains("on");
+      const next = !el3.classList.contains("on");
       setChecked(next);
       (_a2 = opts.onChange) == null ? void 0 : _a2.call(opts, next);
     };
-    el2.addEventListener("click", toggle);
-    el2.addEventListener("keydown", (e) => {
+    el3.addEventListener("click", toggle);
+    el3.addEventListener("keydown", (e) => {
       if (e.key === " " || e.key === "Enter") {
         e.preventDefault();
         toggle();
       }
     });
-    return { el: el2, setChecked, setDisabled };
+    return { el: el3, setChecked, setDisabled };
   }
   var init_switch = __esm({
     "src/core/ui/switch.ts"() {
@@ -6018,18 +6018,18 @@ var BZW_home = (() => {
 
   // src/core/ui/select.ts
   function uiSelect(opts) {
-    const el2 = document.createElement("div");
-    el2.className = "bz-select" + (opts.className ? " " + opts.className : "");
-    el2.setAttribute("role", "listbox");
-    el2.setAttribute("aria-expanded", "false");
-    el2.tabIndex = 0;
+    const el3 = document.createElement("div");
+    el3.className = "bz-select" + (opts.className ? " " + opts.className : "");
+    el3.setAttribute("role", "listbox");
+    el3.setAttribute("aria-expanded", "false");
+    el3.tabIndex = 0;
     const val = document.createElement("span");
     val.className = "bz-select-val";
-    el2.appendChild(val);
-    el2.appendChild(uiIcon("chevron-down", "bz-select-car"));
+    el3.appendChild(val);
+    el3.appendChild(uiIcon("chevron-down", "bz-select-car"));
     let current2 = opts.value;
     let menu = null;
-    let escHandle8 = null;
+    let escHandle9 = null;
     const labelOf = (v) => {
       const o = opts.options.find((x) => x.value === v);
       return o ? o.label : "";
@@ -6044,19 +6044,19 @@ var BZW_home = (() => {
         menu.remove();
         menu = null;
       }
-      if (escHandle8) {
-        escHandle8.unregister();
-        escHandle8 = null;
+      if (escHandle9) {
+        escHandle9.unregister();
+        escHandle9 = null;
       }
-      el2.classList.remove("open");
-      el2.setAttribute("aria-expanded", "false");
+      el3.classList.remove("open");
+      el3.setAttribute("aria-expanded", "false");
       if (notify2) (_a2 = opts.onOpenChange) == null ? void 0 : _a2.call(opts, false);
     };
     const open = () => {
       var _a2;
       close(false);
-      el2.classList.add("open");
-      el2.setAttribute("aria-expanded", "true");
+      el3.classList.add("open");
+      el3.setAttribute("aria-expanded", "true");
       (_a2 = opts.onOpenChange) == null ? void 0 : _a2.call(opts, true);
       const m = document.createElement("div");
       m.className = "bz-select-menu";
@@ -6081,7 +6081,7 @@ var BZW_home = (() => {
         });
         m.appendChild(b);
       });
-      el2.appendChild(m);
+      el3.appendChild(m);
       for (let round = 0; round < 3; round++) {
         let delta = 0;
         m.querySelectorAll(".bz-select-item > span").forEach((sp) => {
@@ -6106,7 +6106,7 @@ var BZW_home = (() => {
       if (need > 0 && spaceBelow < need && spaceBelow < mRect.top) {
         m.classList.add("is-flip-up");
       }
-      escHandle8 = escManager.register("bz-ui-select", {
+      escHandle9 = escManager.register("bz-ui-select", {
         isVisible: () => !!menu && menu.isConnected,
         close: () => close()
       });
@@ -6136,16 +6136,16 @@ var BZW_home = (() => {
         item.setAttribute("aria-selected", String(on));
       });
     };
-    el2.addEventListener("click", () => {
+    el3.addEventListener("click", () => {
       if (menu) close();
       else open();
     });
-    el2.addEventListener("keydown", (e) => {
+    el3.addEventListener("keydown", (e) => {
       if (e.key === "Enter" || e.key === " ") {
         e.preventDefault();
         if (menu) {
           const on = menu == null ? void 0 : menu.querySelector(".bz-select-item.is-on");
-          if (on && on !== el2) {
+          if (on && on !== el3) {
             const v = opts.options[Number(on.dataset.index)];
             if (v) {
               setValue(v.value);
@@ -6164,11 +6164,11 @@ var BZW_home = (() => {
       }
     });
     const onDocClick = (e) => {
-      if (menu && !el2.contains(e.target)) close();
+      if (menu && !el3.contains(e.target)) close();
     };
     document.addEventListener("click", onDocClick);
     return {
-      el: el2,
+      el: el3,
       setValue,
       detach: () => {
         document.removeEventListener("click", onDocClick);
@@ -6185,15 +6185,15 @@ var BZW_home = (() => {
 
   // src/core/ui/search.ts
   function uiSearch(opts) {
-    const el2 = document.createElement("div");
-    el2.className = "bz-search";
-    el2.appendChild(uiIcon("search"));
+    const el3 = document.createElement("div");
+    el3.className = "bz-search";
+    el3.appendChild(uiIcon("search"));
     const input = uiInput({
       placeholder: opts.placeholder,
       value: opts.value,
       onInput: opts.onInput
     });
-    el2.appendChild(input);
+    el3.appendChild(input);
     let clearBtn = null;
     if (opts.clearable !== false) {
       clearBtn = document.createElement("button");
@@ -6211,7 +6211,7 @@ var BZW_home = (() => {
       input.addEventListener("input", () => {
         if (clearBtn) clearBtn.hidden = !input.value.trim();
       });
-      el2.appendChild(clearBtn);
+      el3.appendChild(clearBtn);
     }
     const syncClear = () => {
       if (clearBtn) clearBtn.hidden = !input.value.trim();
@@ -6220,7 +6220,7 @@ var BZW_home = (() => {
       input.value = v;
       syncClear();
     };
-    return { el: el2, input, setValue, syncClear };
+    return { el: el3, input, setValue, syncClear };
   }
   var init_search = __esm({
     "src/core/ui/search.ts"() {
@@ -6231,20 +6231,20 @@ var BZW_home = (() => {
 
   // src/core/ui/mainhead.ts
   function uiMainHead(opts) {
-    const el2 = document.createElement("div");
-    el2.className = "bz-main-head";
+    const el3 = document.createElement("div");
+    el3.className = "bz-main-head";
     const title = document.createElement("span");
     title.className = "bz-main-title";
     title.textContent = opts.title;
-    el2.appendChild(title);
+    el3.appendChild(title);
     const count = document.createElement("span");
     count.className = "bz-main-count";
-    el2.appendChild(count);
+    el3.appendChild(count);
     const sp = document.createElement("span");
     sp.className = "bz-main-spacer";
-    el2.appendChild(sp);
+    el3.appendChild(sp);
     if (opts.action) {
-      el2.appendChild(uiBtn({
+      el3.appendChild(uiBtn({
         label: opts.action.label,
         icon: opts.action.icon,
         tone: "primary",
@@ -6263,7 +6263,7 @@ var BZW_home = (() => {
     };
     setCount(opts.count);
     return {
-      el: el2,
+      el: el3,
       setTitle: (t) => {
         title.textContent = t;
       },
@@ -6333,11 +6333,11 @@ var BZW_home = (() => {
     return b;
   }
   function uiRail(opts) {
-    const el2 = document.createElement("div");
-    el2.className = "bz-rail";
+    const el3 = document.createElement("div");
+    el3.className = "bz-rail";
     const scroll = document.createElement("div");
     scroll.className = "bz-rail-scroll";
-    el2.appendChild(scroll);
+    el3.appendChild(scroll);
     const rows = /* @__PURE__ */ new Map();
     const setActive = (id) => {
       var _a2;
@@ -6387,10 +6387,10 @@ var BZW_home = (() => {
       const foot = document.createElement("div");
       foot.className = "bz-rail-foot";
       foot.appendChild(opts.foot);
-      el2.appendChild(foot);
+      el3.appendChild(foot);
     }
     setActive(opts.activeId);
-    return { el: el2, setActive };
+    return { el: el3, setActive };
   }
   var init_rail = __esm({
     "src/core/ui/rail.ts"() {
@@ -6401,8 +6401,8 @@ var BZW_home = (() => {
 
   // src/core/ui/mobstrip.ts
   function uiMobStrip(opts) {
-    const el2 = document.createElement("div");
-    el2.className = "bz-mobstrip";
+    const el3 = document.createElement("div");
+    el3.className = "bz-mobstrip";
     const chips = /* @__PURE__ */ new Map();
     const setValue = (id) => {
       chips.forEach((chip2) => chip2.classList.toggle("is-on", chip2.dataset.id === id));
@@ -6425,10 +6425,10 @@ var BZW_home = (() => {
         (_a2 = opts.onChange) == null ? void 0 : _a2.call(opts, it.id);
       });
       chips.set(it.id, chip2);
-      el2.appendChild(chip2);
+      el3.appendChild(chip2);
     });
     setValue(opts.value);
-    return { el: el2, setValue };
+    return { el: el3, setValue };
   }
   var init_mobstrip = __esm({
     "src/core/ui/mobstrip.ts"() {
@@ -6437,38 +6437,38 @@ var BZW_home = (() => {
 
   // src/core/ui/stat.ts
   function uiStat(opts) {
-    const el2 = document.createElement("div");
+    const el3 = document.createElement("div");
     const cls = ["bz-stat"];
     if (opts.tone) cls.push(`bz-stat--${opts.tone}`);
     if (opts.click) cls.push("bz-stat--click");
-    el2.className = cls.join(" ");
+    el3.className = cls.join(" ");
     const label = document.createElement("span");
     label.className = "bz-stat-label";
     if (opts.icon) label.appendChild(uiIcon(opts.icon));
     label.appendChild(document.createTextNode(opts.label));
-    el2.appendChild(label);
-    const num2 = document.createElement("span");
-    num2.className = "bz-stat-num";
-    num2.textContent = String(opts.num);
-    el2.appendChild(num2);
+    el3.appendChild(label);
+    const num3 = document.createElement("span");
+    num3.className = "bz-stat-num";
+    num3.textContent = String(opts.num);
+    el3.appendChild(num3);
     if (opts.hint) {
       const hint = document.createElement("span");
       hint.className = "bz-stat-hint";
       hint.textContent = opts.hint;
-      el2.appendChild(hint);
+      el3.appendChild(hint);
     }
     if (opts.onClick) {
-      el2.setAttribute("role", "button");
-      el2.tabIndex = 0;
-      el2.addEventListener("click", opts.onClick);
-      el2.addEventListener("keydown", (e) => {
+      el3.setAttribute("role", "button");
+      el3.tabIndex = 0;
+      el3.addEventListener("click", opts.onClick);
+      el3.addEventListener("keydown", (e) => {
         var _a2;
         if (e.key !== "Enter" && e.key !== " ") return;
         e.preventDefault();
         (_a2 = opts.onClick) == null ? void 0 : _a2.call(opts);
       });
     }
-    return el2;
+    return el3;
   }
   var init_stat = __esm({
     "src/core/ui/stat.ts"() {
@@ -6478,19 +6478,19 @@ var BZW_home = (() => {
 
   // src/core/ui/progress.ts
   function uiProgress(opts = {}) {
-    const el2 = document.createElement("div");
+    const el3 = document.createElement("div");
     const cls = ["bz-progress"];
     if (opts.thin) cls.push("bz-progress--thin");
     if (opts.tone) cls.push(`bz-progress--${opts.tone}`);
-    el2.className = cls.join(" ");
+    el3.className = cls.join(" ");
     const fill = document.createElement("i");
-    el2.appendChild(fill);
+    el3.appendChild(fill);
     const setValue = (n) => {
       const v = Math.min(100, Math.max(0, Number(n) || 0));
       fill.style.width = v + "%";
     };
     if (opts.value !== void 0) setValue(opts.value);
-    return { el: el2, setValue };
+    return { el: el3, setValue };
   }
   var init_progress = __esm({
     "src/core/ui/progress.ts"() {
@@ -6504,7 +6504,7 @@ var BZW_home = (() => {
     let current2 = (_a2 = opts.value) != null ? _a2 : "";
     let items = opts.options;
     let layer = null;
-    let escHandle8 = null;
+    let escHandle9 = null;
     const onDocClick = (e) => {
       if (!layer) return;
       const t = e.target;
@@ -6553,7 +6553,7 @@ var BZW_home = (() => {
         m.classList.add("is-flip-up");
       }
       document.addEventListener("click", onDocClick);
-      escHandle8 = escManager.register("bz-ui-popover", {
+      escHandle9 = escManager.register("bz-ui-popover", {
         isVisible: () => !!layer && layer.isConnected,
         close: () => close()
       });
@@ -6563,9 +6563,9 @@ var BZW_home = (() => {
       layer.remove();
       layer = null;
       document.removeEventListener("click", onDocClick);
-      if (escHandle8) {
-        escHandle8.unregister();
-        escHandle8 = null;
+      if (escHandle9) {
+        escHandle9.unregister();
+        escHandle9 = null;
       }
     };
     const setValue = (id) => {
@@ -6614,17 +6614,17 @@ var BZW_home = (() => {
       const line = raw.trim();
       if (!line) continue;
       const isItem = line.startsWith("- ");
-      const el2 = document.createElement("div");
-      el2.className = isItem ? "bz-help-li" : "bz-help-p";
-      el2.textContent = isItem ? line.slice(2).trim() : line;
-      out.push(el2);
+      const el3 = document.createElement("div");
+      el3.className = isItem ? "bz-help-li" : "bz-help-p";
+      el3.textContent = isItem ? line.slice(2).trim() : line;
+      out.push(el3);
     }
     return out;
   }
   function attachHelpTip(anchor, opts) {
     anchor.classList.add("bz-help-anchor");
     let layer = null;
-    let escHandle8 = null;
+    let escHandle9 = null;
     let pinned = false;
     let overAnchor = false;
     let overLayer = false;
@@ -6671,8 +6671,8 @@ var BZW_home = (() => {
       document.removeEventListener("pointerdown", onOutside, true);
       document.removeEventListener("scroll", onScroll, true);
       window.removeEventListener("resize", place);
-      escHandle8 == null ? void 0 : escHandle8.unregister();
-      escHandle8 = null;
+      escHandle9 == null ? void 0 : escHandle9.unregister();
+      escHandle9 = null;
       layer == null ? void 0 : layer.remove();
       layer = null;
       anchor.classList.remove("is-open");
@@ -6701,7 +6701,7 @@ var BZW_home = (() => {
       document.addEventListener("pointerdown", onOutside, true);
       document.addEventListener("scroll", onScroll, true);
       window.addEventListener("resize", place);
-      escHandle8 = escManager.register("bz-help-tip", { isVisible: isOpen, close });
+      escHandle9 = escManager.register("bz-help-tip", { isVisible: isOpen, close });
       currentClose = close;
     }
     function scheduleClose() {
@@ -6997,21 +6997,21 @@ var BZW_home = (() => {
     document.body.appendChild(mask);
     lockBodyScroll(true);
     show(idx);
-    let escHandle8 = null;
+    let escHandle9 = null;
     function close() {
       if (current !== mask) return;
       mask.remove();
       detachNavKeys();
-      escHandle8 == null ? void 0 : escHandle8.unregister();
-      if (currentEscHandle === escHandle8) currentEscHandle = null;
+      escHandle9 == null ? void 0 : escHandle9.unregister();
+      if (currentEscHandle === escHandle9) currentEscHandle = null;
       current = null;
       lockBodyScroll(false);
     }
-    escHandle8 = escManager.register("bz-lightbox", {
+    escHandle9 = escManager.register("bz-lightbox", {
       isVisible: () => mask.isConnected,
       close
     });
-    currentEscHandle = escHandle8;
+    currentEscHandle = escHandle9;
     mask.addEventListener("click", (e) => {
       if (!e.target.closest(".bz-lightbox-media, .bz-lightbox-head, .bz-lightbox-foot, .bz-lightbox-nav")) close();
     });
@@ -7105,7 +7105,7 @@ var BZW_home = (() => {
     popup.appendChild(body);
     mask.appendChild(popup);
     let closed = false;
-    let escHandle8 = null;
+    let escHandle9 = null;
     const releaseTrap = focusEnabled ? trapFocus(popup) : null;
     function close() {
       var _a3;
@@ -7114,7 +7114,7 @@ var BZW_home = (() => {
       liveModals.delete(close);
       releaseTrap == null ? void 0 : releaseTrap();
       mask.remove();
-      escHandle8 == null ? void 0 : escHandle8.unregister();
+      escHandle9 == null ? void 0 : escHandle9.unregister();
       if (focusEnabled && prevActive instanceof HTMLElement && prevActive.isConnected) {
         prevActive.focus();
       }
@@ -7127,7 +7127,7 @@ var BZW_home = (() => {
     mask.addEventListener("click", (e) => {
       if (e.target === mask) attemptClose();
     });
-    escHandle8 = escManager.register("bz-modal", {
+    escHandle9 = escManager.register("bz-modal", {
       isVisible: () => mask.isConnected,
       close: attemptClose
     });
@@ -7147,7 +7147,7 @@ var BZW_home = (() => {
   });
 
   // src/core/dom.ts
-  function longPress(el2, cb, dur, filter) {
+  function longPress(el3, cb, dur, filter) {
     if (!dur) dur = 500;
     let timer = null, touching = false, fired = false, moved = false, sx = 0, sy = 0;
     let suppressClick = false;
@@ -7199,14 +7199,14 @@ var BZW_home = (() => {
         e.stopImmediatePropagation();
       }
     }
-    el2.addEventListener("mousedown", start);
-    el2.addEventListener("mouseup", endFromMouse);
-    el2.addEventListener("mouseleave", endFromMouse);
-    el2.addEventListener("touchstart", start, { passive: true });
-    el2.addEventListener("touchend", endFromTouch);
-    el2.addEventListener("touchmove", move, { passive: true });
-    el2.addEventListener("touchcancel", endFromTouch);
-    el2.addEventListener("click", onClick, true);
+    el3.addEventListener("mousedown", start);
+    el3.addEventListener("mouseup", endFromMouse);
+    el3.addEventListener("mouseleave", endFromMouse);
+    el3.addEventListener("touchstart", start, { passive: true });
+    el3.addEventListener("touchend", endFromTouch);
+    el3.addEventListener("touchmove", move, { passive: true });
+    el3.addEventListener("touchcancel", endFromTouch);
+    el3.addEventListener("click", onClick, true);
   }
   function swallowNextClick() {
     const swallow = (e) => {
@@ -7285,7 +7285,7 @@ var BZW_home = (() => {
     if (onS && !onN) return "s";
     return null;
   }
-  function uiResizable(el2, opts = {}) {
+  function uiResizable(el3, opts = {}) {
     var _a2, _b2, _c, _d, _e;
     const isCoarse = typeof matchMedia === "function" && matchMedia("(pointer: coarse)").matches;
     if (isCoarse) {
@@ -7305,20 +7305,20 @@ var BZW_home = (() => {
     let startW = 0;
     let startH = 0;
     const cap = (isW) => {
-      const view = (isW ? window.innerWidth : window.innerHeight) * 0.92;
-      return Math.floor(Math.min(isW ? maxW : maxH, view));
+      const view2 = (isW ? window.innerWidth : window.innerHeight) * 0.92;
+      return Math.floor(Math.min(isW ? maxW : maxH, view2));
     };
     let persistTimer = null;
     let wantW = 0;
     let wantH = 0;
     const renderSize = () => {
       if (wantW <= 0 || wantH <= 0) return;
-      el2.style.width = Math.min(Math.max(wantW, minW), cap(true)) + "px";
-      el2.style.height = Math.min(Math.max(wantH, minH), cap(false)) + "px";
+      el3.style.width = Math.min(Math.max(wantW, minW), cap(true)) + "px";
+      el3.style.height = Math.min(Math.max(wantH, minH), cap(false)) + "px";
     };
-    const persist = opts.persist;
-    if (persist == null ? void 0 : persist.load) {
-      const saved = persist.load();
+    const persist2 = opts.persist;
+    if (persist2 == null ? void 0 : persist2.load) {
+      const saved = persist2.load();
       if (saved && saved.w > 0 && saved.h > 0) {
         wantW = Math.min(Math.max(saved.w, minW), maxW);
         wantH = Math.min(Math.max(saved.h, minH), maxH);
@@ -7326,7 +7326,7 @@ var BZW_home = (() => {
       }
     }
     const onWinResize = () => {
-      if (!el2.isConnected) {
+      if (!el3.isConnected) {
         window.removeEventListener("resize", onWinResize);
         return;
       }
@@ -7334,18 +7334,18 @@ var BZW_home = (() => {
     };
     window.addEventListener("resize", onWinResize);
     const regionAt = (e) => {
-      const rect = el2.getBoundingClientRect();
+      const rect = el3.getBoundingClientRect();
       return hitRegion(rect, e.clientX - rect.left, e.clientY - rect.top, edge);
     };
     const setCursor = (d) => {
-      el2.style.cursor = d === "e" ? "ew-resize" : d === "s" ? "ns-resize" : d === "se" ? "nwse-resize" : "";
+      el3.style.cursor = d === "e" ? "ew-resize" : d === "s" ? "ns-resize" : d === "se" ? "nwse-resize" : "";
     };
     const onHover = (e) => {
       if (dragging) return;
       setCursor(regionAt(e));
     };
     const onDragMove = (e) => {
-      if (!el2.isConnected) {
+      if (!el3.isConnected) {
         document.removeEventListener("mousemove", onDragMove);
         document.removeEventListener("mouseup", onMouseUp);
         return;
@@ -7358,12 +7358,12 @@ var BZW_home = (() => {
       if (dir === "s" || dir === "se") wantH = Math.min(Math.max(startH + dy, minH), maxH);
       renderSize();
       if (opts.onChange) opts.onChange(wantW, wantH);
-      if (persist == null ? void 0 : persist.save) {
+      if (persist2 == null ? void 0 : persist2.save) {
         if (persistTimer !== null) clearTimeout(persistTimer);
         persistTimer = setTimeout(() => {
           var _a3;
           persistTimer = null;
-          (_a3 = persist.save) == null ? void 0 : _a3.call(persist, wantW, wantH);
+          (_a3 = persist2.save) == null ? void 0 : _a3.call(persist2, wantW, wantH);
         }, 300);
       }
     };
@@ -7378,7 +7378,7 @@ var BZW_home = (() => {
       dragging = true;
       startX = e.clientX;
       startY = e.clientY;
-      const rect = el2.getBoundingClientRect();
+      const rect = el3.getBoundingClientRect();
       startW = rect.width;
       startH = rect.height;
       if (wantW <= 0) wantW = Math.min(Math.max(startW, minW), maxW);
@@ -7386,7 +7386,7 @@ var BZW_home = (() => {
       document.body.style.userSelect = "none";
     };
     const onMouseUp = () => {
-      if (!el2.isConnected) {
+      if (!el3.isConnected) {
         document.removeEventListener("mousemove", onDragMove);
         document.removeEventListener("mouseup", onMouseUp);
         return;
@@ -7398,24 +7398,24 @@ var BZW_home = (() => {
       setCursor(null);
       swallowNextClick();
     };
-    el2.addEventListener("mousemove", onHover);
-    el2.addEventListener("mouseleave", onMouseLeave);
-    el2.addEventListener("mousedown", onMouseDown);
+    el3.addEventListener("mousemove", onHover);
+    el3.addEventListener("mouseleave", onMouseLeave);
+    el3.addEventListener("mousedown", onMouseDown);
     document.addEventListener("mousemove", onDragMove);
     document.addEventListener("mouseup", onMouseUp);
     const flush = () => {
       if (persistTimer === null) return;
       clearTimeout(persistTimer);
       persistTimer = null;
-      if ((persist == null ? void 0 : persist.save) && wantW > 0 && wantH > 0) persist.save(wantW, wantH);
+      if ((persist2 == null ? void 0 : persist2.save) && wantW > 0 && wantH > 0) persist2.save(wantW, wantH);
     };
     return {
       flush,
       detach: () => {
         flush();
-        el2.removeEventListener("mousemove", onHover);
-        el2.removeEventListener("mouseleave", onMouseLeave);
-        el2.removeEventListener("mousedown", onMouseDown);
+        el3.removeEventListener("mousemove", onHover);
+        el3.removeEventListener("mouseleave", onMouseLeave);
+        el3.removeEventListener("mousedown", onMouseDown);
         document.removeEventListener("mousemove", onDragMove);
         document.removeEventListener("mouseup", onMouseUp);
         window.removeEventListener("resize", onWinResize);
@@ -7436,15 +7436,15 @@ var BZW_home = (() => {
     const left = opts.left;
     const minLeft = (_a2 = opts.minLeft) != null ? _a2 : 220;
     const minRight = (_b2 = opts.minRight) != null ? _b2 : 320;
-    const persist = opts.persist;
-    const el2 = document.createElement("div");
-    el2.className = "bz-vsplit";
-    el2.setAttribute("role", "separator");
-    el2.setAttribute("aria-orientation", "vertical");
-    el2.title = "拖动调整两侧宽度";
+    const persist2 = opts.persist;
+    const el3 = document.createElement("div");
+    el3.className = "bz-vsplit";
+    el3.setAttribute("role", "separator");
+    el3.setAttribute("aria-orientation", "vertical");
+    el3.title = "拖动调整两侧宽度";
     const isCoarse = typeof matchMedia === "function" && matchMedia("(pointer: coarse)").matches;
     if (isCoarse) {
-      return { el: el2, restore: () => {
+      return { el: el3, restore: () => {
       }, flush: () => {
       }, detach: () => {
       } };
@@ -7459,7 +7459,7 @@ var BZW_home = (() => {
     const availW = () => {
       const parent = left.parentElement;
       if (!parent) return 0;
-      return parent.clientWidth - el2.offsetWidth;
+      return parent.clientWidth - el3.offsetWidth;
     };
     const clampW = (w) => {
       const avail = availW();
@@ -7470,18 +7470,18 @@ var BZW_home = (() => {
       left.style.width = w + "px";
     };
     const debSave = (w) => {
-      if (!(persist == null ? void 0 : persist.save)) return;
+      if (!(persist2 == null ? void 0 : persist2.save)) return;
       if (persistTimer !== null) clearTimeout(persistTimer);
       persistTimer = setTimeout(() => {
         var _a3;
         persistTimer = null;
-        (_a3 = persist.save) == null ? void 0 : _a3.call(persist, w);
+        (_a3 = persist2.save) == null ? void 0 : _a3.call(persist2, w);
       }, 300);
     };
     const restore = () => {
-      if (restored || !(persist == null ? void 0 : persist.load) || !el2.isConnected) return;
+      if (restored || !(persist2 == null ? void 0 : persist2.load) || !el3.isConnected) return;
       if (availW() <= 0) return;
-      const saved = persist.load();
+      const saved = persist2.load();
       restored = true;
       if (saved != null && saved > 0) {
         wantW = Math.max(saved, minLeft);
@@ -7513,7 +7513,7 @@ var BZW_home = (() => {
       dragging = true;
       startX = e.clientX;
       startW = left.getBoundingClientRect().width;
-      el2.classList.add("is-drag");
+      el3.classList.add("is-drag");
       document.body.style.userSelect = "none";
     };
     const onMouseUp = () => {
@@ -7524,30 +7524,30 @@ var BZW_home = (() => {
       }
       if (!dragging) return;
       dragging = false;
-      el2.classList.remove("is-drag");
+      el3.classList.remove("is-drag");
       document.body.style.userSelect = "";
       swallowNextClick();
     };
     document.addEventListener("mousemove", onDragMove);
-    el2.addEventListener("mousedown", onMouseDown);
+    el3.addEventListener("mousedown", onMouseDown);
     document.addEventListener("mouseup", onMouseUp);
     const flush = () => {
       if (persistTimer === null) return;
       clearTimeout(persistTimer);
       persistTimer = null;
-      if ((persist == null ? void 0 : persist.save) && wantW > 0) persist.save(wantW);
+      if ((persist2 == null ? void 0 : persist2.save) && wantW > 0) persist2.save(wantW);
     };
     return {
-      el: el2,
+      el: el3,
       restore,
       flush,
       detach: () => {
         flush();
         document.removeEventListener("mousemove", onDragMove);
-        el2.removeEventListener("mousedown", onMouseDown);
+        el3.removeEventListener("mousedown", onMouseDown);
         document.removeEventListener("mouseup", onMouseUp);
         document.body.style.userSelect = "";
-        el2.classList.remove("is-drag");
+        el3.classList.remove("is-drag");
       }
     };
   }
@@ -7642,11 +7642,11 @@ var BZW_home = (() => {
     } catch (e) {
     }
   }
-  function registerSheetCompanion(el2) {
-    sheetCompanions.add(el2);
+  function registerSheetCompanion(el3) {
+    sheetCompanions.add(el3);
   }
-  function unregisterSheetCompanion(el2) {
-    sheetCompanions.delete(el2);
+  function unregisterSheetCompanion(el3) {
+    sheetCompanions.delete(el3);
   }
   function inSheetCompanion(target) {
     for (const c of sheetCompanions) {
@@ -8050,6 +8050,9 @@ var BZW_home = (() => {
         "password-vault": "key",
         smartcat: "cat",
         knowledge: "list-video",
+        // 工具坞（dock 域）：外部工具的登记/启动/观测台（与 `square-terminal` 的「终端」语义错开，
+        // 用「插槽/坞」语义的 container）
+        dock: "container",
         // 命令专属域
         "settings-panel": "settings-2"
       };
@@ -8310,6 +8313,9 @@ var BZW_home = (() => {
         { id: "encrypt", commandId: "bz-encrypt-open", name: "保险库", sub: "加密笔记·加密日记", icon: iconOf("encrypt") },
         // 密码本（password-vault 域，ADR-0109 拆回独立域；id 沿用合并前磁贴 id，旧钉选自动复活）
         { id: "vault", commandId: "bz-password-vault-open", name: "密码本", sub: "密码与密钥", icon: iconOf("vault") },
+        // 工具坞（dock 域，ADR-0235）：外部工具的登记 / 启动 / 观测台。
+        // 2026-10-04 用户拍板补入首页入口；声明在「设置」之前 —— 它与设置同属「系统/工具」类，不掺进内容域。
+        { id: "dock", commandId: "bz-dock-open", name: "工具坞", sub: "外部工具的运行与观测", icon: iconOf("dock") },
         { id: "settings", commandId: "bz-settings-panel-open", name: "设置", sub: "全域设置", icon: iconOf("settings") }
       ];
       DOMAIN_MAP = new Map(DOMAINS.map((d) => [d.id, d]));
@@ -8330,6 +8336,7 @@ var BZW_home = (() => {
         encrypt: "#8a8f99",
         vault: "#c9a227",
         smartcat: "#e67341",
+        dock: "#5c7c9a",
         settings: "#8a8f99"
       };
       ALL_DOMAIN_IDS = DOMAINS.map((d) => d.id);
@@ -10450,10 +10457,10 @@ var BZW_home = (() => {
   function parseModelList(desc, data) {
     return desc.id === "ollama" ? ollamaModelIds(data) : openaiModelIds(data);
   }
-  async function fetchModelsJson(url, headers, timeoutMs, label, deps) {
+  async function fetchModelsJson(url, headers, timeoutMs, label, deps2) {
     var _a2;
-    const fetchFn = deps.fetchFn || ((u, init) => fetch(u, init));
-    const requestUrlFn = deps.requestUrlFn || requestUrl;
+    const fetchFn = deps2.fetchFn || ((u, init) => fetch(u, init));
+    const requestUrlFn = deps2.requestUrlFn || requestUrl;
     const fetchAttempt = async (signal) => {
       const resp2 = await fetchFn(url, { method: "GET", headers, signal });
       return { resp: resp2, via: "fetch" };
@@ -10495,7 +10502,7 @@ var BZW_home = (() => {
     }
     return resp.json();
   }
-  async function fetchProviderModels(providerId, deps = {}) {
+  async function fetchProviderModels(providerId, deps2 = {}) {
     const id = providerId || String(tryGetSettings().aiProvider || DEFAULT_AI_PROVIDER);
     const desc = providerDescriptorOf(id);
     const endpoint = desc.id === "ollama" ? OLLAMA_BASE_URL : endpointFor(id);
@@ -10507,7 +10514,7 @@ var BZW_home = (() => {
     const headers = {};
     if (key) headers["Authorization"] = `Bearer ${key}`;
     const timeoutMs = desc.id === "ollama" ? OLLAMA_TIMEOUT_MS : MODELS_TIMEOUT_MS;
-    const data = await fetchModelsJson(url, headers, timeoutMs, desc.label, deps);
+    const data = await fetchModelsJson(url, headers, timeoutMs, desc.label, deps2);
     const ids = parseModelList(desc, data);
     const seen = /* @__PURE__ */ new Set();
     return ids.filter((m) => seen.has(m) ? false : (seen.add(m), true)).map((m) => ({ id: m, detail: desc.label }));
@@ -10544,9 +10551,9 @@ var BZW_home = (() => {
     const remote = String(s.secondBrainRemoteOllamaUrl || "").trim();
     return isMobileEnv() && remote ? remote : local;
   }
-  async function fetchEmbeddingModels(deps = {}) {
+  async function fetchEmbeddingModels(deps2 = {}) {
     const url = `${embeddingServiceUrl().replace(/\/+$/, "")}/api/tags`;
-    const data = await fetchModelsJson(url, {}, OLLAMA_TIMEOUT_MS, "Ollama", deps);
+    const data = await fetchModelsJson(url, {}, OLLAMA_TIMEOUT_MS, "Ollama", deps2);
     const models = pickEmbeddingModels(data);
     if (!models.length) throw new Error("Ollama 未返回可用的向量化模型");
     return models;
@@ -10559,9 +10566,9 @@ var BZW_home = (() => {
     const rerank = tags.filter((t) => RERANK_NAME_RE.test(t.id));
     return (rerank.length ? rerank : tags).map((t) => ({ id: t.id, detail: t.detail }));
   }
-  async function fetchRerankModels(deps = {}) {
+  async function fetchRerankModels(deps2 = {}) {
     const url = `${embeddingServiceUrl().replace(/\/+$/, "")}/api/tags`;
-    const data = await fetchModelsJson(url, {}, OLLAMA_TIMEOUT_MS, "Ollama", deps);
+    const data = await fetchModelsJson(url, {}, OLLAMA_TIMEOUT_MS, "Ollama", deps2);
     const models = pickRerankModels(data);
     if (!models.length) throw new Error("Ollama 未返回可用的重排模型");
     return models;
@@ -11091,9 +11098,9 @@ var BZW_home = (() => {
               console.warn("[review] nextReviewDate 非法，回退 reviewStart：", item.filePath, String(item.nextReviewDate));
               item.nextReviewDate = nextReview ? nextReview.toISOString() : null;
             }
-            const isOverdue = !!nextReview && now > nextReview && !isCompleted;
+            const isOverdue2 = !!nextReview && now > nextReview && !isCompleted;
             item.isCompleted = isCompleted;
-            item.isOverdue = isOverdue;
+            item.isOverdue = isOverdue2;
             item.currentStage = item.stage + 1;
             item.totalStages = TOTAL_STAGES;
             valid.push(item);
@@ -11266,15 +11273,15 @@ var BZW_home = (() => {
     const days = /* @__PURE__ */ new Set();
     for (const h of history2) days.add(dateKey(new Date(h.timestamp)));
     const totalReviews = days.size;
-    const todayKey = dateKey(/* @__PURE__ */ new Date());
+    const todayKey2 = dateKey(/* @__PURE__ */ new Date());
     let streak = 0;
     let cursor = /* @__PURE__ */ new Date();
-    if (!days.has(todayKey)) cursor.setDate(cursor.getDate() - 1);
+    if (!days.has(todayKey2)) cursor.setDate(cursor.getDate() - 1);
     while (days.has(dateKey(cursor))) {
       streak++;
       cursor.setDate(cursor.getDate() - 1);
     }
-    const todayCount2 = history2.filter((h) => dateKey(new Date(h.timestamp)) === todayKey).length;
+    const todayCount2 = history2.filter((h) => dateKey(new Date(h.timestamp)) === todayKey2).length;
     const ratingDist = { again: 0, hard: 0, good: 0, easy: 0 };
     for (const h of history2) {
       if (h.rating in ratingDist) ratingDist[h.rating]++;
@@ -11678,10 +11685,10 @@ ${n.content.slice(0, 2e3)}
       return false;
     }
   }
-  function waapi(el2, frames, opts) {
-    if (!el2 || typeof el2.animate !== "function") return null;
+  function waapi(el3, frames, opts) {
+    if (!el3 || typeof el3.animate !== "function") return null;
     try {
-      return el2.animate(frames, opts);
+      return el3.animate(frames, opts);
     } catch (e) {
       return null;
     }
@@ -11709,8 +11716,8 @@ ${n.content.slice(0, 2e3)}
   function motionTeardown() {
     cancelPending();
   }
-  function ensureRelative(el2) {
-    if (getComputedStyle(el2).position === "static") el2.style.position = "relative";
+  function ensureRelative(el3) {
+    if (getComputedStyle(el3).position === "static") el3.style.position = "relative";
   }
   function seal(host, text2, big = false) {
     ensureRelative(host);
@@ -11732,11 +11739,11 @@ ${n.content.slice(0, 2e3)}
       after(360, () => s.remove());
     });
   }
-  function ringBurst(el2) {
-    const parent = el2.offsetParent instanceof HTMLElement ? el2.offsetParent : el2.parentElement;
+  function ringBurst(el3) {
+    const parent = el3.offsetParent instanceof HTMLElement ? el3.offsetParent : el3.parentElement;
     if (!parent) return;
     const pr = parent.getBoundingClientRect();
-    const r = el2.getBoundingClientRect();
+    const r = el3.getBoundingClientRect();
     const ring = document.createElement("i");
     ring.className = "bz-rv-ring";
     ring.setAttribute("aria-hidden", "true");
@@ -11800,8 +11807,8 @@ ${n.content.slice(0, 2e3)}
       }
     });
   }
-  function countUpNode(el2, dur) {
-    const node = el2.childNodes[0];
+  function countUpNode(el3, dur) {
+    const node = el3.childNodes[0];
     if (!node || node.nodeType !== Node.TEXT_NODE) return;
     const raw = node.textContent || "";
     const m = raw.match(/\d[\d,]*/);
@@ -11812,9 +11819,9 @@ ${n.content.slice(0, 2e3)}
       node.textContent = raw.replace(m[0], String(Math.round(target * v)));
     });
   }
-  function popCnt(el2) {
+  function popCnt(el3) {
     waapi(
-      el2,
+      el3,
       [
         { transform: "scale(.4)", opacity: 0 },
         { transform: "scale(1.18)", opacity: 1, offset: 0.7 },
@@ -11933,9 +11940,9 @@ ${n.content.slice(0, 2e3)}
       );
       const prog = host.querySelector(".bz-sprint-progress");
       if (prog) after(120, () => popCnt(prog));
-      host.querySelectorAll(".bz-sprint-opt").forEach((el2, i) => {
+      host.querySelectorAll(".bz-sprint-opt").forEach((el3, i) => {
         after(150 + i * STAG, () => waapi(
-          el2,
+          el3,
           [{ opacity: 0, transform: "translateX(-10px)" }, { opacity: 1, transform: "none" }],
           { duration: M3.base, easing: E.out, fill: "backwards" }
         ));
@@ -12162,17 +12169,17 @@ ${n.content.slice(0, 2e3)}
       });
     });
   }
-  function motionRatingBar(el2) {
+  function motionRatingBar(el3) {
     if (reduced()) return;
     waapi(
-      el2,
+      el3,
       [
         { opacity: 0, transform: "translateX(-50%) translateY(60px)" },
         { opacity: 1, transform: "translateX(-50%) translateY(0)" }
       ],
       { duration: 420, easing: "cubic-bezier(.22,.9,.32,1.15)", fill: "backwards" }
     );
-    el2.querySelectorAll(".bz-review-bar-btn").forEach((b, i) => {
+    el3.querySelectorAll(".bz-review-bar-btn").forEach((b, i) => {
       after(150 + i * STAG, () => popCnt(b));
     });
   }
@@ -12206,9 +12213,9 @@ ${n.content.slice(0, 2e3)}
       ],
       { duration: 380, easing: E.out, fill: "backwards" }
     );
-    popup.querySelectorAll(".quiz-option-btn").forEach((el2, i) => {
+    popup.querySelectorAll(".quiz-option-btn").forEach((el3, i) => {
       after(120 + i * STAG, () => waapi(
-        el2,
+        el3,
         [{ opacity: 0, transform: "translateY(8px)" }, { opacity: 1, transform: "none" }],
         { duration: M3.base, easing: E.out, fill: "backwards" }
       ));
@@ -12449,7 +12456,7 @@ ${n.content.slice(0, 2e3)}
           const selectedIndices = /* @__PURE__ */ new Set();
           const answeredRef = { value: false };
           const optionElements = this._buildOptionButtons(q3, answeredRef, selectedIndices, optionsContainer);
-          optionElements.forEach((el2) => optionsContainer.appendChild(el2));
+          optionElements.forEach((el3) => optionsContainer.appendChild(el3));
           if (this._pendingSubmitBtn) {
             optionsContainer.appendChild(this._pendingSubmitBtn);
             this._pendingSubmitBtn = null;
@@ -13768,10 +13775,10 @@ ${n.content.slice(0, 2e3)}
           (_c = this.opts.host.querySelector('[data-action="note"]')) == null ? void 0 : _c.addEventListener("click", () => {
             void this.finishNote();
           });
-          this.opts.host.querySelectorAll(".bz-sprint-opt").forEach((el2) => {
-            const activate = () => this.answer(Number(el2.dataset.i));
-            el2.addEventListener("click", activate);
-            el2.addEventListener("keydown", (e) => {
+          this.opts.host.querySelectorAll(".bz-sprint-opt").forEach((el3) => {
+            const activate = () => this.answer(Number(el3.dataset.i));
+            el3.addEventListener("click", activate);
+            el3.addEventListener("keydown", (e) => {
               if (e.key === "Enter" || e.key === " ") {
                 e.preventDefault();
                 activate();
@@ -13837,7 +13844,7 @@ ${n.content.slice(0, 2e3)}
   });
 
   // src/review/settings-schema.ts
-  function reviewSettingsSchema(deps) {
+  function reviewSettingsSchema(deps2) {
     return {
       groups: [
         {
@@ -13984,7 +13991,7 @@ ${n.content.slice(0, 2e3)}
                 const prev = [...getSettings().reviewWatchedFolders || []];
                 return (async () => {
                   const { ReviewWatcher: ReviewWatcher2 } = await Promise.resolve().then(() => (init_watch(), watch_exports));
-                  const watcher = new ReviewWatcher2(deps.app, deps.dataManager);
+                  const watcher = new ReviewWatcher2(deps2.app, deps2.dataManager);
                   const kept = [];
                   for (const folder of list) {
                     if (!folder) {
@@ -14022,7 +14029,7 @@ ${n.content.slice(0, 2e3)}
                   const removed = prev.filter((p) => !keys.includes(p));
                   if (removed.length === 0) return;
                   const { ReviewWatcher: ReviewWatcher2 } = await Promise.resolve().then(() => (init_watch(), watch_exports));
-                  const watcher = new ReviewWatcher2(deps.app, deps.dataManager);
+                  const watcher = new ReviewWatcher2(deps2.app, deps2.dataManager);
                   for (const path of removed) await watcher.removeExcludedNote(path);
                   notice("已解除排除", "success");
                 })();
@@ -14130,20 +14137,20 @@ ${n.content.slice(0, 2e3)}
         reviews: Array.isArray(it.reviewHistory) ? it.reviewHistory.length : 0
       };
     });
-    const live2 = embers.filter((e) => !e.done && !e.missing);
+    const live3 = embers.filter((e) => !e.done && !e.missing);
     const doneN = embers.filter((e) => e.done).length;
     const missingN = embers.filter((e) => e.missing).length;
-    const ladderN = live2.filter((e) => e.phase === "ladder").length;
-    const fsrsN = live2.filter((e) => e.phase === "fsrs").length;
+    const ladderN = live3.filter((e) => e.phase === "ladder").length;
+    const fsrsN = live3.filter((e) => e.phase === "fsrs").length;
     const stageDist = new Array(10).fill(0);
-    for (const e of live2) stageDist[e.phase === "fsrs" ? 9 : Math.min(8, e.stage)]++;
+    for (const e of live3) stageDist[e.phase === "fsrs" ? 9 : Math.min(8, e.stage)]++;
     const stagePeak = stageDist.some((n) => n > 0) ? stageDist.indexOf(Math.max(...stageDist)) : -1;
     const cols = partitionQueue(items, 0.9, w);
-    const rs = live2.map((e) => e.r).filter((v) => v != null);
+    const rs = live3.map((e) => e.r).filter((v) => v != null);
     const rHist = new Array(10).fill(0);
     for (const v of rs) rHist[Math.max(0, Math.min(9, Math.floor(v * 10)))]++;
     const avgR = rs.length ? rs.reduce((a, b) => a + b, 0) / rs.length : null;
-    const fsrsList = live2.filter((e) => e.phase === "fsrs" && e.s > 0);
+    const fsrsList = live3.filter((e) => e.phase === "fsrs" && e.s > 0);
     const sBuckets = sBucketsOf(fsrsList.map((e) => e.s));
     const sMax = fsrsList.reduce((m, e) => Math.max(m, e.s), 0);
     const dAvg = fsrsList.length ? fsrsList.reduce((a, e) => a + e.d, 0) / fsrsList.length : null;
@@ -14204,11 +14211,11 @@ ${n.content.slice(0, 2e3)}
     }
     const tomorrowN = (_c = (_b2 = next8[1]) == null ? void 0 : _b2.count) != null ? _c : 0;
     const againN = ratingDist["again"] || 0;
-    const redoN = live2.filter((e) => e.redo).length;
+    const redoN = live3.filter((e) => e.redo).length;
     const confList = items.map((it) => Number(it.averageConfidence)).filter((v) => Number.isFinite(v) && v > 0);
     return {
       total: embers.length,
-      active: live2.length,
+      active: live3.length,
       doneN,
       missingN,
       ladderN,
@@ -14216,8 +14223,8 @@ ${n.content.slice(0, 2e3)}
       stageDist,
       stagePeak,
       embers,
-      liveEmbers: live2,
-      overdueList: live2.filter((e) => e.overdue).sort((a, b) => b.overdueDays - a.overdueDays).map((e) => ({ name: e.name, days: e.overdueDays })),
+      liveEmbers: live3,
+      overdueList: live3.filter((e) => e.overdue).sort((a, b) => b.overdueDays - a.overdueDays).map((e) => ({ name: e.name, days: e.overdueDays })),
       overdueN: cols.overdue.length,
       todayN: cols.today.length,
       futureN: cols.future.length,
@@ -14573,23 +14580,23 @@ ${n.content.slice(0, 2e3)}
     };
   }
   function canvas(host, key) {
-    const el2 = host.querySelector(`canvas[data-cv="${key}"]`);
-    if (!el2) return null;
-    const ctx = typeof el2.getContext === "function" ? el2.getContext("2d") : null;
+    const el3 = host.querySelector(`canvas[data-cv="${key}"]`);
+    if (!el3) return null;
+    const ctx = typeof el3.getContext === "function" ? el3.getContext("2d") : null;
     if (!ctx) return null;
     const cv = {
-      el: el2,
+      el: el3,
       ctx,
       w: 0,
       h: 0,
       fit() {
         const dpr = Math.min(2, globalThis.devicePixelRatio || 1);
-        const w = Math.max(1, el2.offsetWidth), h = Math.max(1, el2.offsetHeight);
+        const w = Math.max(1, el3.offsetWidth), h = Math.max(1, el3.offsetHeight);
         if (w === cv.w && h === cv.h) return false;
         cv.w = w;
         cv.h = h;
-        el2.width = Math.round(w * dpr);
-        el2.height = Math.round(h * dpr);
+        el3.width = Math.round(w * dpr);
+        el3.height = Math.round(h * dpr);
         ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
         return true;
       },
@@ -14648,26 +14655,26 @@ ${n.content.slice(0, 2e3)}
     }
   }
   function tip(root, html, cx = 0, cy = 0) {
-    let el2 = tipNode.get(root);
-    if (!el2) {
+    let el3 = tipNode.get(root);
+    if (!el3) {
       if (typeof document === "undefined") return;
-      el2 = document.createElement("span");
-      el2.className = "ra-tip";
-      el2.setAttribute("aria-hidden", "true");
-      root.appendChild(el2);
-      tipNode.set(root, el2);
+      el3 = document.createElement("span");
+      el3.className = "ra-tip";
+      el3.setAttribute("aria-hidden", "true");
+      root.appendChild(el3);
+      tipNode.set(root, el3);
     }
     if (!html) {
-      if (el2.style.opacity !== "0") el2.style.opacity = "0";
+      if (el3.style.opacity !== "0") el3.style.opacity = "0";
       return;
     }
-    if (el2.dataset.h !== html) {
-      el2.dataset.h = html;
-      el2.innerHTML = html;
+    if (el3.dataset.h !== html) {
+      el3.dataset.h = html;
+      el3.innerHTML = html;
     }
-    el2.style.left = `${cx.toFixed(1)}px`;
-    el2.style.top = `${cy.toFixed(1)}px`;
-    el2.style.opacity = "1";
+    el3.style.left = `${cx.toFixed(1)}px`;
+    el3.style.top = `${cy.toFixed(1)}px`;
+    el3.style.opacity = "1";
   }
   var clamp01, lerp, at, easeOut, easeInOut, easeBack, spring, stagger, rollTo, cssVar, luma, rgba, qsa, localAt, tipNode, toward;
   var init_kits = __esm({
@@ -14714,10 +14721,10 @@ ${n.content.slice(0, 2e3)}
   });
 
   // src/review/analysis/motions.ts
-  function S(el2, v) {
+  function S(el3, v) {
     var _a2;
-    if (!el2 || lastStyle.get(el2) === v) return;
-    const prev = (_a2 = el2.getAttribute("style")) != null ? _a2 : "";
+    if (!el3 || lastStyle.get(el3) === v) return;
+    const prev = (_a2 = el3.getAttribute("style")) != null ? _a2 : "";
     if (prev) {
       const vars = prev.match(/--[\w-]+\s*:[^;]*/g);
       if (vars) {
@@ -14725,21 +14732,21 @@ ${n.content.slice(0, 2e3)}
         if (keep.length) v = `${keep.join(";")};${v}`;
       }
     }
-    lastStyle.set(el2, v);
-    el2.setAttribute("style", v);
+    lastStyle.set(el3, v);
+    el3.setAttribute("style", v);
   }
-  function T(el2, v) {
-    if (!el2 || lastText.get(el2) === v) return;
-    lastText.set(el2, v);
-    el2.textContent = v;
+  function T(el3, v) {
+    if (!el3 || lastText.get(el3) === v) return;
+    lastText.set(el3, v);
+    el3.textContent = v;
   }
   function buildPerfs(root, data, host = root) {
     const out = /* @__PURE__ */ new Map();
     const scn = (id) => root.querySelector(`[data-id="${id}"]`);
     if (!scn("open")) return out;
-    const vOf = (el2, name, fallback = 0) => {
+    const vOf = (el3, name, fallback = 0) => {
       var _a2;
-      const v = parseFloat(String((_a2 = el2 == null ? void 0 : el2.style.getPropertyValue(name)) != null ? _a2 : ""));
+      const v = parseFloat(String((_a2 = el3 == null ? void 0 : el3.style.getPropertyValue(name)) != null ? _a2 : ""));
       return Number.isFinite(v) ? v : fallback;
     };
     {
@@ -14995,10 +15002,10 @@ ${n.content.slice(0, 2e3)}
               }
             }
           }
-          dots.forEach((el2, i) => {
+          dots.forEach((el3, i) => {
             const p = at(t, 0.5, 1.4 + i * 0.028);
             const on = i === hotI && t > 2;
-            S(el2, `opacity:${(p * (on ? 1 : hotI >= 0 ? 0.4 : 0.9)).toFixed(3)};transform:translate(-50%,-50%) scale(${(on ? 2.1 : 0.55 + 0.45 * easeBack(p)).toFixed(3)})` + (on ? ";z-index:3" : ""));
+            S(el3, `opacity:${(p * (on ? 1 : hotI >= 0 ? 0.4 : 0.9)).toFixed(3)};transform:translate(-50%,-50%) scale(${(on ? 2.1 : 0.55 + 0.45 * easeBack(p)).toFixed(3)})` + (on ? ";z-index:3" : ""));
           });
           if (oncliff) {
             const p = at(t, 0.6, 2.2);
@@ -15089,25 +15096,25 @@ ${n.content.slice(0, 2e3)}
     {
       const s = scn("debts");
       const debts = qsa(s, ".ra-debt");
-      const rots = debts.map((el2) => vOf(el2, "--rot", 0));
-      const swings = debts.map((el2) => vOf(el2, "--sw", 0));
+      const rots = debts.map((el3) => vOf(el3, "--rot", 0));
+      const swings = debts.map((el3) => vOf(el3, "--sw", 0));
       const total = s.querySelector(".ra-debt-total");
       let hotDebt = -1;
       out.set("debts", {
         dur: 2.8,
         move(p) {
           var _a2;
-          const el2 = under(p, ".ra-debt");
-          hotDebt = el2 ? Number((_a2 = el2.dataset.i) != null ? _a2 : -1) : -1;
-          if (el2 == null ? void 0 : el2.dataset.tip) tip(host, el2.dataset.tip, p.cx, p.cy);
+          const el3 = under(p, ".ra-debt");
+          hotDebt = el3 ? Number((_a2 = el3.dataset.i) != null ? _a2 : -1) : -1;
+          if (el3 == null ? void 0 : el3.dataset.tip) tip(host, el3.dataset.tip, p.cx, p.cy);
           else tip(host, "");
         },
         update({ t }) {
-          debts.forEach((el2, i) => {
+          debts.forEach((el3, i) => {
             const p = at(t, 0.5, 0.2 + i * 0.09);
             const on = i === hotDebt && t > 1.2;
             const swing = Math.sin(t * 1.15 + i * 1.9 + swings[i] * 6.28) * (1.6 + swings[i]);
-            S(el2, `opacity:${Math.min(1, p * 1.6).toFixed(3)};transform:translate(-50%,${((1 - easeBack(p)) * -26).toFixed(1)}px) rotate(${(rots[i] * easeOut(p) + swing * (on ? 0.2 : 1)).toFixed(2)}deg)` + (on ? ";z-index:3;filter:brightness(1.14)" : ""));
+            S(el3, `opacity:${Math.min(1, p * 1.6).toFixed(3)};transform:translate(-50%,${((1 - easeBack(p)) * -26).toFixed(1)}px) rotate(${(rots[i] * easeOut(p) + swing * (on ? 0.2 : 1)).toFixed(2)}deg)` + (on ? ";z-index:3;filter:brightness(1.14)" : ""));
           });
           if (total) {
             const p = at(t, 0.6, 1.2);
@@ -15119,27 +15126,27 @@ ${n.content.slice(0, 2e3)}
     {
       const s = scn("steppath");
       const steps = qsa(s, ".ra-step");
-      const bars = steps.map((el2) => el2.querySelector('[data-r="stepbar"]'));
-      const nums = steps.map((el2) => el2.querySelector('[data-r="stepn"]'));
+      const bars = steps.map((el3) => el3.querySelector('[data-r="stepbar"]'));
+      const nums = steps.map((el3) => el3.querySelector('[data-r="stepn"]'));
       const fly = s.querySelector('[data-r="fly"]');
-      const phs = steps.map((el2) => vOf(el2.querySelector('[data-r="stepbar"]'), "--ph", 0));
+      const phs = steps.map((el3) => vOf(el3.querySelector('[data-r="stepbar"]'), "--ph", 0));
       const row = s.querySelector('[data-r="steps"]');
       let hotStep = -1;
       out.set("steppath", {
         dur: 3,
         move(p) {
           var _a2;
-          const el2 = under(p, ".ra-step");
-          hotStep = el2 ? Number((_a2 = el2.dataset.i) != null ? _a2 : -1) : -1;
-          if (el2 == null ? void 0 : el2.dataset.tip) tip(host, el2.dataset.tip, p.cx, p.cy);
+          const el3 = under(p, ".ra-step");
+          hotStep = el3 ? Number((_a2 = el3.dataset.i) != null ? _a2 : -1) : -1;
+          if (el3 == null ? void 0 : el3.dataset.tip) tip(host, el3.dataset.tip, p.cx, p.cy);
           else tip(host, "");
         },
         update({ t }) {
-          steps.forEach((el2, i) => {
+          steps.forEach((el3, i) => {
             const p = stagger(t, i, 0.12, 0.8);
             const on = i === hotStep && t > 1.6;
             S(bars[i], `height:${phs[i].toFixed(2)}%;transform:scaleY(${easeOut(p).toFixed(4)});transform-origin:bottom center`);
-            S(el2, `opacity:${(at(t, 0.4, i * 0.12) * (hotStep >= 0 && !on ? 0.55 : 1)).toFixed(3)}`);
+            S(el3, `opacity:${(at(t, 0.4, i * 0.12) * (hotStep >= 0 && !on ? 0.55 : 1)).toFixed(3)}`);
             T(nums[i], String(Math.round((data.stageDist[i] || 0) * easeOut(p))));
           });
           if (fly && row) {
@@ -15161,27 +15168,27 @@ ${n.content.slice(0, 2e3)}
       const blocks = qsa(s, ".ra-crystal");
       const cvs = blocks.map((_, i) => canvas(s, `crystal${i}`));
       const ns = data.sBuckets.map((b) => b.n);
-      const weights = blocks.map((el2) => vOf(el2, "--w", 0));
+      const weights = blocks.map((el3) => vOf(el3, "--w", 0));
       const crow = s.querySelector('[data-r="crow"]');
-      const numsEls = blocks.map((el2) => el2.querySelector('[data-r="cn"]'));
+      const numsEls = blocks.map((el3) => el3.querySelector('[data-r="cn"]'));
       let hotC = -1;
       out.set("crystal", {
         dur: 3.2,
         move(p) {
           var _a2;
-          const el2 = under(p, ".ra-crystal");
-          hotC = el2 ? Number((_a2 = el2.dataset.i) != null ? _a2 : -1) : -1;
-          if (el2 == null ? void 0 : el2.dataset.tip) tip(host, el2.dataset.tip, p.cx, p.cy);
+          const el3 = under(p, ".ra-crystal");
+          hotC = el3 ? Number((_a2 = el3.dataset.i) != null ? _a2 : -1) : -1;
+          if (el3 == null ? void 0 : el3.dataset.tip) tip(host, el3.dataset.tip, p.cx, p.cy);
           else tip(host, "");
         },
         update({ t, pal, px, py }) {
           if (crow && t > 1.8) {
             S(crow, `transform:perspective(1100px) rotateX(${(-py * 2.6).toFixed(2)}deg) rotateY(${(px * 3).toFixed(2)}deg)`);
           }
-          blocks.forEach((el2, i) => {
+          blocks.forEach((el3, i) => {
             const p = at(t, 0.7, i * 0.16);
             const on = i === hotC && t > 1.6;
-            S(el2, `opacity:${(at(t, 0.3, i * 0.16) * (hotC >= 0 && !on ? 0.5 : 1)).toFixed(3)};transform:translateY(${((1 - easeOut(p)) * 14 - (on ? 6 : 0)).toFixed(1)}px)`);
+            S(el3, `opacity:${(at(t, 0.3, i * 0.16) * (hotC >= 0 && !on ? 0.5 : 1)).toFixed(3)};transform:translateY(${((1 - easeOut(p)) * 14 - (on ? 6 : 0)).toFixed(1)}px)`);
             T(numsEls[i], String(Math.round(ns[i] * easeOut(p))));
             const cv = cvs[i];
             if (!cv) return;
@@ -15225,8 +15232,8 @@ ${n.content.slice(0, 2e3)}
     {
       const s = scn("strata");
       const strata = qsa(s, ".ra-stratum");
-      const phs = strata.map((el2) => vOf(el2, "--ph", 0));
-      const nsEls = strata.map((el2) => el2.querySelector('[data-r="stn"]'));
+      const phs = strata.map((el3) => vOf(el3, "--ph", 0));
+      const nsEls = strata.map((el3) => el3.querySelector('[data-r="stn"]'));
       const ns = data.dBuckets.map((b) => b.n);
       const bed = s.querySelector('[data-r="bed"]');
       let hotSt = -1;
@@ -15234,16 +15241,16 @@ ${n.content.slice(0, 2e3)}
         dur: 2.6,
         move(p) {
           var _a2;
-          const el2 = under(p, ".ra-stratum");
-          hotSt = el2 ? Number((_a2 = el2.dataset.i) != null ? _a2 : -1) : -1;
-          if (el2 == null ? void 0 : el2.dataset.tip) tip(host, el2.dataset.tip, p.cx, p.cy);
+          const el3 = under(p, ".ra-stratum");
+          hotSt = el3 ? Number((_a2 = el3.dataset.i) != null ? _a2 : -1) : -1;
+          if (el3 == null ? void 0 : el3.dataset.tip) tip(host, el3.dataset.tip, p.cx, p.cy);
           else tip(host, "");
         },
         update({ t }) {
-          strata.forEach((el2, i) => {
+          strata.forEach((el3, i) => {
             const p = stagger(t, i, 0.16, 0.7);
             const on = i === hotSt && t > 1.2;
-            S(el2, `--scan:${(t > 1 ? (t - 1) % 4.4 / 4.4 : -1).toFixed(4)};transform:scaleX(${(easeOut(p) * (on ? 1.02 : 1)).toFixed(4)});transform-origin:left center;opacity:${(at(t, 0.4, i * 0.16) * (hotSt >= 0 && !on ? 0.5 : 1)).toFixed(3)}`);
+            S(el3, `--scan:${(t > 1 ? (t - 1) % 4.4 / 4.4 : -1).toFixed(4)};transform:scaleX(${(easeOut(p) * (on ? 1.02 : 1)).toFixed(4)});transform-origin:left center;opacity:${(at(t, 0.4, i * 0.16) * (hotSt >= 0 && !on ? 0.5 : 1)).toFixed(3)}`);
             T(nsEls[i], String(Math.round(ns[i] * easeOut(p))));
           });
           if (bed) S(bed, `transform:perspective(1100px) rotateY(${0 .toFixed(2)}deg)`);
@@ -15253,29 +15260,29 @@ ${n.content.slice(0, 2e3)}
     {
       const s = scn("dailies");
       const woods = qsa(s, ".ra-wood");
-      const bars = woods.map((el2) => el2.querySelector('[data-r="woodbar"]'));
-      const flames = woods.map((el2) => el2.querySelector('[data-r="flame"]'));
-      const phs = woods.map((el2) => vOf(el2, "--ph", 0));
+      const bars = woods.map((el3) => el3.querySelector('[data-r="woodbar"]'));
+      const flames = woods.map((el3) => el3.querySelector('[data-r="flame"]'));
+      const phs = woods.map((el3) => vOf(el3, "--ph", 0));
       const wTotal = s.querySelector('[data-r="woodTotal"]');
       let hotW = -1;
       out.set("dailies", {
         dur: 2.8,
         move(p) {
           var _a2;
-          const el2 = under(p, ".ra-wood");
-          hotW = el2 ? Number((_a2 = el2.dataset.i) != null ? _a2 : -1) : -1;
-          if (el2 == null ? void 0 : el2.dataset.tip) tip(host, el2.dataset.tip, p.cx, p.cy);
+          const el3 = under(p, ".ra-wood");
+          hotW = el3 ? Number((_a2 = el3.dataset.i) != null ? _a2 : -1) : -1;
+          if (el3 == null ? void 0 : el3.dataset.tip) tip(host, el3.dataset.tip, p.cx, p.cy);
           else tip(host, "");
         },
         update({ t }) {
-          woods.forEach((el2, i) => {
+          woods.forEach((el3, i) => {
             const p = stagger(t, i, 0.09, 0.6);
             const on = i === hotW && t > 1.4;
             S(bars[i], `height:${phs[i].toFixed(2)}%;transform:scaleY(${easeOut(p).toFixed(4)});transform-origin:bottom center`);
             const alive = phs[i] > 0 && p > 0.9 ? 1 : 0;
             const breath = 0.45 + 0.55 * Math.sin(t * 2.3 + i * 1.4);
             S(flames[i], `opacity:${(alive * (0.35 + 0.65 * breath) * (on ? 1.4 : 1)).toFixed(3)};transform:translateX(-50%) scale(${(on ? 1.5 : 0.8 + 0.3 * breath).toFixed(3)})`);
-            S(el2, `opacity:${(at(t, 0.3, i * 0.09) * (hotW >= 0 && !on ? 0.55 : 1)).toFixed(3)}`);
+            S(el3, `opacity:${(at(t, 0.3, i * 0.09) * (hotW >= 0 && !on ? 0.55 : 1)).toFixed(3)}`);
           });
           if (wTotal) {
             const p = easeOut(at(t, 1.4, 0.6));
@@ -15292,11 +15299,11 @@ ${n.content.slice(0, 2e3)}
       out.set("vigil", {
         dur: 3.4,
         update({ t, pal, px, py }) {
-          beads.forEach((el2, i) => {
+          beads.forEach((el3, i) => {
             const p = at(t, 0.3, 0.4 + i * 0.075);
             const lit = p > 0 ? 1 : 0;
             const pulse = i === beads.length - 1 && p >= 1 ? 0.4 + 0.6 * Math.abs(Math.sin(t * 1.8)) : 1;
-            S(el2, `opacity:${(lit * (i === beads.length - 1 ? pulse : 0.3 + 0.7 * p)).toFixed(3)};transform:scale(${(0.4 + 0.6 * easeBack(p)).toFixed(3)})`);
+            S(el3, `opacity:${(lit * (i === beads.length - 1 ? pulse : 0.3 + 0.7 * p)).toFixed(3)};transform:scale(${(0.4 + 0.6 * easeBack(p)).toFixed(3)})`);
           });
           if (streakN) {
             const p = easeOut(at(t, 1.6, 0.8));
@@ -15425,26 +15432,26 @@ ${n.content.slice(0, 2e3)}
     {
       const s = scn("bedrock");
       const rows = qsa(s, ".ra-bed");
-      const bars = rows.map((el2) => el2.querySelector('[data-r="bedbar"]'));
-      const shines = rows.map((el2) => el2.querySelector('[data-r="shine"]'));
-      const phs = rows.map((el2) => vOf(el2, "--ph", 0));
+      const bars = rows.map((el3) => el3.querySelector('[data-r="bedbar"]'));
+      const shines = rows.map((el3) => el3.querySelector('[data-r="shine"]'));
+      const phs = rows.map((el3) => vOf(el3, "--ph", 0));
       let hotB = -1;
       out.set("bedrock", {
         dur: 3,
         move(p) {
           var _a2;
-          const el2 = under(p, ".ra-bed");
-          hotB = el2 ? Number((_a2 = el2.dataset.i) != null ? _a2 : -1) : -1;
-          if (el2 == null ? void 0 : el2.dataset.tip) tip(host, el2.dataset.tip, p.cx, p.cy);
+          const el3 = under(p, ".ra-bed");
+          hotB = el3 ? Number((_a2 = el3.dataset.i) != null ? _a2 : -1) : -1;
+          if (el3 == null ? void 0 : el3.dataset.tip) tip(host, el3.dataset.tip, p.cx, p.cy);
           else tip(host, "");
         },
         update({ t }) {
-          rows.forEach((el2, i) => {
+          rows.forEach((el3, i) => {
             const p = stagger(t, i, 0.14, 0.9);
             const on = i === hotB && t > 1.5;
             S(bars[i], `width:${phs[i].toFixed(2)}%;transform:scaleX(${easeOut(p).toFixed(4)});transform-origin:left center;filter:${on ? "brightness(1.18)" : "none"}`);
             S(shines[i], `opacity:${(p >= 1 ? 0.4 + 0.5 * Math.max(0, Math.sin(t * 1.1 + i * 0.9)) : 0).toFixed(3)};transform:translateX(${((t * 22 + i * 60) % 160 - 30).toFixed(1)}px)`);
-            S(el2, `opacity:${(at(t, 0.3, i * 0.14) * (hotB >= 0 && !on ? 0.5 : 1)).toFixed(3)};transform:translateX(${(on ? 8 : 0).toFixed(1)}px)`);
+            S(el3, `opacity:${(at(t, 0.3, i * 0.14) * (hotB >= 0 && !on ? 0.5 : 1)).toFixed(3)};transform:translateX(${(on ? 8 : 0).toFixed(1)}px)`);
           });
         }
       });
@@ -15452,23 +15459,23 @@ ${n.content.slice(0, 2e3)}
     {
       const s = scn("portide");
       const bars = qsa(s, ".ra-tidebar");
-      const columns = bars.map((el2) => el2.querySelector('[data-r="tidebar"]'));
-      const numsEls = bars.map((el2) => el2.querySelector('[data-r="tidebarN"]'));
-      const flies = bars.map((el2) => el2.querySelector('[data-r="tidefly"]'));
-      const phs = bars.map((el2) => vOf(el2, "--ph", 0));
+      const columns = bars.map((el3) => el3.querySelector('[data-r="tidebar"]'));
+      const numsEls = bars.map((el3) => el3.querySelector('[data-r="tidebarN"]'));
+      const flies = bars.map((el3) => el3.querySelector('[data-r="tidefly"]'));
+      const phs = bars.map((el3) => vOf(el3, "--ph", 0));
       const counts = data.next8.map((d) => d.count);
       let hotT = -1;
       out.set("portide", {
         dur: 2.8,
         move(p) {
           var _a2;
-          const el2 = under(p, ".ra-tidebar");
-          hotT = el2 ? Number((_a2 = el2.dataset.i) != null ? _a2 : -1) : -1;
-          if (el2 == null ? void 0 : el2.dataset.tip) tip(host, el2.dataset.tip, p.cx, p.cy);
+          const el3 = under(p, ".ra-tidebar");
+          hotT = el3 ? Number((_a2 = el3.dataset.i) != null ? _a2 : -1) : -1;
+          if (el3 == null ? void 0 : el3.dataset.tip) tip(host, el3.dataset.tip, p.cx, p.cy);
           else tip(host, "");
         },
         update({ t }) {
-          bars.forEach((el2, i) => {
+          bars.forEach((el3, i) => {
             const p = stagger(t, i, 0.11, 0.7);
             const on = i === hotT && t > 1.4;
             S(columns[i], `height:${phs[i].toFixed(2)}%;transform:scaleY(${easeOut(p).toFixed(4)});transform-origin:bottom center;filter:${on ? "brightness(1.2)" : "none"}`);
@@ -15476,7 +15483,7 @@ ${n.content.slice(0, 2e3)}
             const alive = (counts[i] || 0) > 0 && p >= 1 ? 1 : 0;
             const blink = 0.3 + 0.7 * Math.abs(Math.sin(t * 1.7 + i * 1.1));
             S(flies[i], `opacity:${(alive * blink * (on ? 1 : 0.8)).toFixed(3)};transform:translate(-50%,${(-4 - 3 * Math.sin(t * 2 + i)).toFixed(1)}px) scale(${(on ? 1.5 : 1).toFixed(2)})`);
-            S(el2, `opacity:${(at(t, 0.3, i * 0.11) * (hotT >= 0 && !on ? 0.55 : 1)).toFixed(3)}`);
+            S(el3, `opacity:${(at(t, 0.3, i * 0.11) * (hotT >= 0 && !on ? 0.55 : 1)).toFixed(3)}`);
           });
         }
       });
@@ -15484,25 +15491,25 @@ ${n.content.slice(0, 2e3)}
     {
       const s = scn("quarters");
       const quarters = qsa(s, ".ra-quarter");
-      const lamps = quarters.map((el2) => el2.querySelector('[data-r="qlamp"]'));
-      const numsEls = quarters.map((el2) => el2.querySelector('[data-r="qn"]'));
-      const phs = quarters.map((el2) => vOf(el2, "--ph", 0));
+      const lamps = quarters.map((el3) => el3.querySelector('[data-r="qlamp"]'));
+      const numsEls = quarters.map((el3) => el3.querySelector('[data-r="qn"]'));
+      const phs = quarters.map((el3) => vOf(el3, "--ph", 0));
       const counts = [data.overdueN, data.todayN, data.futureN, data.doneColN];
       let hotQ = -1;
       out.set("quarters", {
         dur: 2.8,
         move(p) {
           var _a2;
-          const el2 = under(p, ".ra-quarter");
-          hotQ = el2 ? Number((_a2 = el2.dataset.i) != null ? _a2 : -1) : -1;
-          if (el2 == null ? void 0 : el2.dataset.tip) tip(host, el2.dataset.tip, p.cx, p.cy);
+          const el3 = under(p, ".ra-quarter");
+          hotQ = el3 ? Number((_a2 = el3.dataset.i) != null ? _a2 : -1) : -1;
+          if (el3 == null ? void 0 : el3.dataset.tip) tip(host, el3.dataset.tip, p.cx, p.cy);
           else tip(host, "");
         },
         update({ t }) {
-          quarters.forEach((el2, i) => {
+          quarters.forEach((el3, i) => {
             const p = stagger(t, i, 0.16, 0.8);
             const on = i === hotQ && t > 1.5;
-            S(el2, `opacity:${(at(t, 0.3, i * 0.16) * (hotQ >= 0 && !on ? 0.5 : 1)).toFixed(3)};transform:translateY(${((1 - easeOut(p)) * 16 - (on ? 6 : 0)).toFixed(1)}px);--breathe:${(0.5 + 0.5 * Math.sin(t * 1.4 + i * 1.6)).toFixed(3)}`);
+            S(el3, `opacity:${(at(t, 0.3, i * 0.16) * (hotQ >= 0 && !on ? 0.5 : 1)).toFixed(3)};transform:translateY(${((1 - easeOut(p)) * 16 - (on ? 6 : 0)).toFixed(1)}px);--breathe:${(0.5 + 0.5 * Math.sin(t * 1.4 + i * 1.6)).toFixed(3)}`);
             S(lamps[i], `transform:scaleY(${easeOut(p).toFixed(4)});transform-origin:bottom center;filter:brightness(${(on ? 1.4 : 0.8 + 0.45 * Math.abs(Math.sin(t * 1.4 + i * 1.6))).toFixed(3)})`);
             T(numsEls[i], String(Math.round((counts[i] || 0) * easeOut(p))));
           });
@@ -15512,9 +15519,9 @@ ${n.content.slice(0, 2e3)}
     {
       const s = scn("marks");
       const marks = qsa(s, ".ra-mark");
-      const cuts = marks.map((el2) => el2.querySelector('[data-r="cut"]'));
-      const numsEls = marks.map((el2) => el2.querySelector('[data-r="markn"]'));
-      const phs = marks.map((el2) => vOf(el2, "--ph", 0));
+      const cuts = marks.map((el3) => el3.querySelector('[data-r="cut"]'));
+      const numsEls = marks.map((el3) => el3.querySelector('[data-r="markn"]'));
+      const phs = marks.map((el3) => vOf(el3, "--ph", 0));
       const mrow = s.querySelector('[data-r="mrow"]');
       const counts = RA_RATING_ORDER.map((k) => data.lastDiffDist[k] || 0);
       let hotM = -1;
@@ -15522,21 +15529,21 @@ ${n.content.slice(0, 2e3)}
         dur: 2.8,
         move(p) {
           var _a2;
-          const el2 = under(p, ".ra-mark");
-          hotM = el2 ? Number((_a2 = el2.dataset.i) != null ? _a2 : -1) : -1;
-          if (el2 == null ? void 0 : el2.dataset.tip) tip(host, el2.dataset.tip, p.cx, p.cy);
+          const el3 = under(p, ".ra-mark");
+          hotM = el3 ? Number((_a2 = el3.dataset.i) != null ? _a2 : -1) : -1;
+          if (el3 == null ? void 0 : el3.dataset.tip) tip(host, el3.dataset.tip, p.cx, p.cy);
           else tip(host, "");
         },
         update({ t, px, py }) {
           if (mrow && t > 1.6) {
             S(mrow, `transform:perspective(1100px) rotateY(${(px * 2.4).toFixed(2)}deg) rotateX(${(-py * 1.8).toFixed(2)}deg)`);
           }
-          marks.forEach((el2, i) => {
+          marks.forEach((el3, i) => {
             const p = stagger(t, i, 0.14, 0.55);
             const on = i === hotM && t > 1.4;
             S(cuts[i], `transform:scaleX(${easeBack(p).toFixed(4)});transform-origin:left center;filter:${on ? "brightness(1.3)" : "none"}`);
             const sheen2 = p >= 1 ? Math.max(0, Math.sin(t * 0.9 + i * 1.3)) : 0;
-            S(el2, `opacity:${(at(t, 0.3, i * 0.14) * (hotM >= 0 && !on ? 0.5 : 1)).toFixed(3)};--sheen:${sheen2.toFixed(3)}`);
+            S(el3, `opacity:${(at(t, 0.3, i * 0.14) * (hotM >= 0 && !on ? 0.5 : 1)).toFixed(3)};--sheen:${sheen2.toFixed(3)}`);
             T(numsEls[i], String(Math.round((counts[i] || 0) * easeOut(p))));
           });
         }
@@ -15614,7 +15621,7 @@ ${n.content.slice(0, 2e3)}
   });
 
   // src/core/gesture.ts
-  function bindSwipeTurn(el2, go) {
+  function bindSwipeTurn(el3, go) {
     const TH = 46;
     let x0 = 0, y0 = 0, on = false, fired = false;
     const start = (e) => {
@@ -15639,15 +15646,15 @@ ${n.content.slice(0, 2e3)}
     const end = () => {
       on = false;
     };
-    el2.addEventListener("touchstart", start, { passive: true });
-    el2.addEventListener("touchmove", move, { passive: false });
-    el2.addEventListener("touchend", end, { passive: true });
-    el2.addEventListener("touchcancel", end, { passive: true });
+    el3.addEventListener("touchstart", start, { passive: true });
+    el3.addEventListener("touchmove", move, { passive: false });
+    el3.addEventListener("touchend", end, { passive: true });
+    el3.addEventListener("touchcancel", end, { passive: true });
     return () => {
-      el2.removeEventListener("touchstart", start);
-      el2.removeEventListener("touchmove", move);
-      el2.removeEventListener("touchend", end);
-      el2.removeEventListener("touchcancel", end);
+      el3.removeEventListener("touchstart", start);
+      el3.removeEventListener("touchmove", move);
+      el3.removeEventListener("touchend", end);
+      el3.removeEventListener("touchcancel", end);
     };
   }
   var init_gesture = __esm({
@@ -16200,8 +16207,8 @@ ${n.content.slice(0, 2e3)}
     body.innerHTML = buildStatsHTML(app, dm, items, stats, fit3);
     mountIcons(body);
     motionStats(body);
-    const openTimeline = (el2) => {
-      const idx = Number(el2.dataset.idx);
+    const openTimeline = (el3) => {
+      const idx = Number(el3.dataset.idx);
       const target = items.filter((i) => (i.reviewHistory || []).length).sort((a, b) => {
         var _a2, _b2, _c, _d;
         const la = ((_b2 = (_a2 = a.reviewHistory) == null ? void 0 : _a2[a.reviewHistory.length - 1]) == null ? void 0 : _b2.timestamp) || "";
@@ -16210,12 +16217,12 @@ ${n.content.slice(0, 2e3)}
       })[idx];
       if (target) void showTimeline(app, dm, target);
     };
-    body.querySelectorAll(".top-row[data-idx]").forEach((el2) => {
-      el2.addEventListener("click", () => openTimeline(el2));
-      el2.addEventListener("keydown", (e) => {
+    body.querySelectorAll(".top-row[data-idx]").forEach((el3) => {
+      el3.addEventListener("click", () => openTimeline(el3));
+      el3.addEventListener("keydown", (e) => {
         if (e.key === "Enter" || e.key === " ") {
           e.preventDefault();
-          openTimeline(el2);
+          openTimeline(el3);
         }
       });
     });
@@ -16257,13 +16264,13 @@ ${n.content.slice(0, 2e3)}
     const dist = loadDistribution(items, 14);
     const tmr = /* @__PURE__ */ new Date();
     tmr.setDate(tmr.getDate() + 1);
-    const todayKey = dateKey(/* @__PURE__ */ new Date());
+    const todayKey2 = dateKey(/* @__PURE__ */ new Date());
     const tmrKey = dateKey(tmr);
-    const todayCnt = ((_a2 = dist.find((d) => d.date === todayKey)) == null ? void 0 : _a2.count) || 0;
+    const todayCnt = ((_a2 = dist.find((d) => d.date === todayKey2)) == null ? void 0 : _a2.count) || 0;
     const tmrCnt = ((_b2 = dist.find((d) => d.date === tmrKey)) == null ? void 0 : _b2.count) || 0;
     const maxDist = Math.max(1, ...dist.map((d) => d.count));
     const distBars = dist.map((d) => ({
-      label: d.date === todayKey ? "今" : `+${dist.indexOf(d)}`,
+      label: d.date === todayKey2 ? "今" : `+${dist.indexOf(d)}`,
       value: d.count
     }));
     const loadHTML = sectionHTML(
@@ -16414,33 +16421,33 @@ ${n.content.slice(0, 2e3)}
     reviewSettingsSchema: () => reviewSettingsSchema
   });
   function captureFocusKey(scope) {
-    const el2 = document.activeElement;
-    if (!(el2 instanceof HTMLElement) || !scope.contains(el2)) return null;
+    const el3 = document.activeElement;
+    if (!(el3 instanceof HTMLElement) || !scope.contains(el3)) return null;
     for (const attr of ["data-id", "data-act"]) {
-      const v = el2.getAttribute(attr);
+      const v = el3.getAttribute(attr);
       if (v != null) return `${attr}=${v}`;
     }
     return null;
   }
   function restoreFocusKey(scope, key) {
     const eq = key.indexOf("=");
-    const el2 = scope.querySelector(`[${key.slice(0, eq)}="${CSS.escape(key.slice(eq + 1))}"]`);
-    el2 == null ? void 0 : el2.focus({ preventScroll: true });
+    const el3 = scope.querySelector(`[${key.slice(0, eq)}="${CSS.escape(key.slice(eq + 1))}"]`);
+    el3 == null ? void 0 : el3.focus({ preventScroll: true });
   }
   function mountFloatingRatingBar(opts) {
-    const el2 = document.createElement("div");
-    el2.className = "bz-review-bar";
-    el2.style.zIndex = String(allocZ());
-    el2.innerHTML = reviewBarHtml(opts);
-    el2.tabIndex = -1;
+    const el3 = document.createElement("div");
+    el3.className = "bz-review-bar";
+    el3.style.zIndex = String(allocZ());
+    el3.innerHTML = reviewBarHtml(opts);
+    el3.tabIndex = -1;
     let closed = false;
     const close = () => {
       if (closed) return;
       closed = true;
       document.removeEventListener("keydown", onDigitKey);
-      el2.remove();
+      el3.remove();
     };
-    el2.querySelectorAll(".bz-review-bar-btn").forEach((btn) => {
+    el3.querySelectorAll(".bz-review-bar-btn").forEach((btn) => {
       btn.addEventListener("click", () => {
         const r = btn.dataset.rating;
         if (r === "skip") opts.onSkip();
@@ -16454,7 +16461,7 @@ ${n.content.slice(0, 2e3)}
       if (t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.isContentEditable)) return;
       const i = ["1", "2", "3", "4"].indexOf(e.key);
       if (i < 0) return;
-      const btn = el2.querySelectorAll(".bz-review-bar-btn")[i];
+      const btn = el3.querySelectorAll(".bz-review-bar-btn")[i];
       if (btn) {
         e.preventDefault();
         btn.click();
@@ -16462,16 +16469,16 @@ ${n.content.slice(0, 2e3)}
     };
     document.addEventListener("keydown", onDigitKey);
     const prevFocus2 = document.activeElement;
-    el2.addEventListener("keydown", (e) => {
+    el3.addEventListener("keydown", (e) => {
       if (e.key !== "Escape") return;
       e.preventDefault();
       e.stopPropagation();
       if (prevFocus2 && typeof prevFocus2.focus === "function" && prevFocus2 !== document.body) prevFocus2.focus();
-      else el2.blur();
+      else el3.blur();
     });
-    document.body.appendChild(el2);
-    motionRatingBar(el2);
-    el2.focus({ preventScroll: true });
+    document.body.appendChild(el3);
+    motionRatingBar(el3);
+    el3.focus({ preventScroll: true });
     return { close };
   }
   var isPlayable2, PANEL, UIManager;
@@ -17048,7 +17055,7 @@ ${n.content.slice(0, 2e3)}
         void apply(list);
       }
     });
-    const render2 = () => renderPathChips(chipsWrap, current2, (next) => {
+    const render3 = () => renderPathChips(chipsWrap, current2, (next) => {
       void apply(next);
     }, "", openPicker);
     let btn = null;
@@ -17070,14 +17077,14 @@ ${n.content.slice(0, 2e3)}
     };
     const renderAll6 = () => {
       syncBtn();
-      render2();
+      render3();
     };
-    const refresh2 = () => {
+    const refresh3 = () => {
       current2 = readValue();
       renderAll6();
     };
     renderAll6();
-    return { refresh: refresh2, settingEl: setting.settingEl };
+    return { refresh: refresh3, settingEl: setting.settingEl };
   }
   function closePathPicker() {
     if (currentMask) {
@@ -17097,9 +17104,9 @@ ${n.content.slice(0, 2e3)}
       focusTimer = null;
     }
     if (focusRestore) {
-      const el2 = focusRestore;
+      const el3 = focusRestore;
       focusRestore = null;
-      if (el2.isConnected) el2.focus();
+      if (el3.isConnected) el3.focus();
     }
   }
   function openPathPicker(opts) {
@@ -17166,7 +17173,7 @@ ${n.content.slice(0, 2e3)}
     };
     if (mode === "multi") mkBtn("清空", false, () => {
       selected.clear();
-      renderList2();
+      renderList3();
       updateSel();
     });
     const submit = () => {
@@ -17187,7 +17194,7 @@ ${n.content.slice(0, 2e3)}
         }
         if (mode === "single") selected.clear();
         selected.add(full);
-        renderList2();
+        renderList3();
         updateSel();
       })().catch((e) => notifyActionError(e, `新建文件夹 ${full}`));
     });
@@ -17206,7 +17213,7 @@ ${n.content.slice(0, 2e3)}
       rest.reverse();
       return [...pinned, ...root === null ? [] : [root], ...rest];
     }
-    function renderList2() {
+    function renderList3() {
       listEl2.innerHTML = "";
       const q3 = state3.q.trim().toLowerCase();
       const exact = !!q3 && state3.folders.includes(q3);
@@ -17242,7 +17249,7 @@ ${n.content.slice(0, 2e3)}
           } else {
             selected.add(folder);
           }
-          renderList2();
+          renderList3();
           updateSel();
         };
         row.tabIndex = 0;
@@ -17283,7 +17290,7 @@ ${n.content.slice(0, 2e3)}
     search.oninput = () => {
       state3.q = search.value;
       newBtn.disabled = !state3.q.trim();
-      renderList2();
+      renderList3();
     };
     search.addEventListener("keydown", (ev) => {
       if (ev.key !== "Enter") return;
@@ -17302,9 +17309,9 @@ ${n.content.slice(0, 2e3)}
       if (!mask.isConnected) return;
       state3.folders = folders;
       popup.dataset.ready = "1";
-      renderList2();
+      renderList3();
     });
-    renderList2();
+    renderList3();
     updateSel();
     popup.append(head, search, listEl2, foot);
     document.body.appendChild(mask);
@@ -17333,6 +17340,82 @@ ${n.content.slice(0, 2e3)}
     const s = String(p != null ? p : "").trim().replace(/\\/g, "/");
     return s.length > 1 ? s.replace(/\/+$/, "") : s;
   }
+  function parentDirOf(filePath) {
+    const s = String(filePath).replace(/\\/g, "/");
+    const i = s.lastIndexOf("/");
+    return i <= 0 ? s : s.slice(0, i);
+  }
+  function fileDiskPath(f) {
+    var _a2, _b2;
+    const legacy = f.path;
+    if (typeof legacy === "string" && legacy) return legacy;
+    const webUtils = (_a2 = requireNode("electron")) == null ? void 0 : _a2.webUtils;
+    if (webUtils == null ? void 0 : webUtils.getPathForFile) {
+      try {
+        return String((_b2 = webUtils.getPathForFile(f)) != null ? _b2 : "");
+      } catch (e) {
+      }
+    }
+    return "";
+  }
+  function pickDirViaInput() {
+    return new Promise((resolve2) => {
+      const input = document.createElement("input");
+      input.type = "file";
+      input.setAttribute("webkitdirectory", "");
+      input.setAttribute("directory", "");
+      input.style.display = "none";
+      document.body.appendChild(input);
+      let settled = false;
+      const finish = (v) => {
+        if (settled) return;
+        settled = true;
+        window.removeEventListener("focus", onFocus);
+        input.remove();
+        resolve2(v);
+      };
+      const onFocus = () => {
+        window.setTimeout(() => {
+          var _a2;
+          const f = (_a2 = input.files) == null ? void 0 : _a2[0];
+          if (!f) finish(null);
+        }, 200);
+      };
+      input.addEventListener("change", () => {
+        var _a2;
+        const f = (_a2 = input.files) == null ? void 0 : _a2[0];
+        const p = f ? fileDiskPath(f) : "";
+        finish(p ? parentDirOf(p) : null);
+      });
+      window.addEventListener("focus", onFocus);
+      input.click();
+    });
+  }
+  async function nativePickSystemFolder() {
+    var _a2, _b2, _c, _d;
+    const remote = (_c = (_b2 = requireNode("@electron/remote")) != null ? _b2 : (_a2 = requireNode("electron")) == null ? void 0 : _a2.remote) != null ? _c : null;
+    const dialog = remote == null ? void 0 : remote.dialog;
+    if (dialog == null ? void 0 : dialog.showOpenDialog) {
+      const res = await dialog.showOpenDialog({
+        title: "选择文件夹",
+        properties: ["openDirectory", "dontAddToRecent"]
+      });
+      const picked = (_d = res == null ? void 0 : res.filePaths) == null ? void 0 : _d[0];
+      if (picked && !(res == null ? void 0 : res.canceled)) return normalizeSystemPath(picked);
+      return null;
+    }
+    return pickDirViaInput();
+  }
+  async function pickSystemFolder() {
+    try {
+      const pick = systemPickerImpl != null ? systemPickerImpl : nativePickSystemFolder;
+      const dir = await pick();
+      return dir ? normalizeSystemPath(dir) : null;
+    } catch (e) {
+      notifyActionError(e, "选择文件夹");
+      return null;
+    }
+  }
   async function pickSystemFiles(title, filters) {
     var _a2, _b2, _c, _d;
     const remote = (_c = (_b2 = requireNode("@electron/remote")) != null ? _b2 : (_a2 = requireNode("electron")) == null ? void 0 : _a2.remote) != null ? _c : null;
@@ -17352,7 +17435,7 @@ ${n.content.slice(0, 2e3)}
       return [];
     }
   }
-  var EXCLUDED_DIR_NAMES, currentMask, currentPopup, currentHandle, focusTimer, focusRestore;
+  var EXCLUDED_DIR_NAMES, currentMask, currentPopup, currentHandle, focusTimer, focusRestore, systemPickerImpl;
   var init_path_picker = __esm({
     "src/core/path-picker.ts"() {
       init_fake_obsidian();
@@ -17366,6 +17449,7 @@ ${n.content.slice(0, 2e3)}
       currentHandle = null;
       focusTimer = null;
       focusRestore = null;
+      systemPickerImpl = null;
     }
   });
 
@@ -17458,40 +17542,40 @@ ${n.content.slice(0, 2e3)}
     if (/JSON|解析|answers|畸形|回复为空/.test(msg)) return "响应异常";
     return "请求失败";
   }
-  function clearResetTimer(el2) {
-    const prev = resetTimers.get(el2);
+  function clearResetTimer(el3) {
+    const prev = resetTimers.get(el3);
     if (prev !== void 0) {
       clearTimeout(prev);
-      resetTimers.delete(el2);
+      resetTimers.delete(el3);
     }
   }
-  function setRowBtnState(el2, state3, label, failText) {
-    if (!el2) return;
-    el2.classList.remove("bz-rowbtn--busy", "bz-rowbtn--ok", "bz-rowbtn--fail");
-    el2.disabled = state3 === "busy";
+  function setRowBtnState(el3, state3, label, failText) {
+    if (!el3) return;
+    el3.classList.remove("bz-rowbtn--busy", "bz-rowbtn--ok", "bz-rowbtn--fail");
+    el3.disabled = state3 === "busy";
     if (state3 === "busy") {
-      el2.classList.add("bz-rowbtn--busy");
-      clearResetTimer(el2);
+      el3.classList.add("bz-rowbtn--busy");
+      clearResetTimer(el3);
     } else if (state3 === "ok") {
-      el2.classList.add("bz-rowbtn--ok");
-      el2.textContent = ROW_BTN_OK_TEXT;
+      el3.classList.add("bz-rowbtn--ok");
+      el3.textContent = ROW_BTN_OK_TEXT;
     } else if (state3 === "fail") {
-      el2.classList.add("bz-rowbtn--fail");
-      el2.textContent = (failText || "失败").slice(0, 6);
+      el3.classList.add("bz-rowbtn--fail");
+      el3.textContent = (failText || "失败").slice(0, 6);
     } else {
-      el2.textContent = label;
+      el3.textContent = label;
     }
   }
-  function armRowBtnReset(el2, label) {
-    if (!el2) return;
-    const prev = resetTimers.get(el2);
+  function armRowBtnReset(el3, label) {
+    if (!el3) return;
+    const prev = resetTimers.get(el3);
     if (prev !== void 0) clearTimeout(prev);
     const t = setTimeout(() => {
-      resetTimers.delete(el2);
-      setRowBtnState(el2, "idle", label);
-      el2.disabled = false;
+      resetTimers.delete(el3);
+      setRowBtnState(el3, "idle", label);
+      el3.disabled = false;
     }, ROW_BTN_RESET_MS);
-    resetTimers.set(el2, t);
+    resetTimers.set(el3, t);
   }
   var ROW_BTN_RESET_MS, ROW_BTN_OK_TEXT, resetTimers;
   var init_settings_btn_state = __esm({
@@ -17524,8 +17608,8 @@ ${n.content.slice(0, 2e3)}
     container.appendChild(group);
     return body;
   }
-  function isItemHidden(el2) {
-    let cur = el2;
+  function isItemHidden(el3) {
+    let cur = el3;
     while (cur && cur !== document.body) {
       if (cur.classList.contains("bz-setting-hidden")) return true;
       if (cur.style.display === "none") return true;
@@ -17538,8 +17622,8 @@ ${n.content.slice(0, 2e3)}
       const body = g.querySelector(".bz-settings-group-body");
       const countEl = g.querySelector(".bz-settings-group-count");
       if (!body || !countEl) return;
-      const n = [...body.querySelectorAll(".setting-item")].filter((el2) => {
-        const h = el2;
+      const n = [...body.querySelectorAll(".setting-item")].filter((el3) => {
+        const h = el3;
         return !h.classList.contains("bz-setting-action-row") && !isItemHidden(h);
       }).length;
       countEl.textContent = `${n} 项`;
@@ -17547,10 +17631,10 @@ ${n.content.slice(0, 2e3)}
     });
   }
   function markSettingSplitRows(container) {
-    container.querySelectorAll(".setting-item").forEach((el2) => {
-      if (el2.classList.contains("bz-path-picker-setting-row")) return;
-      const ctl = el2.querySelector(".setting-item-control");
-      el2.classList.toggle("bz-setting-split", !!ctl && ctl.children.length >= 2);
+    container.querySelectorAll(".setting-item").forEach((el3) => {
+      if (el3.classList.contains("bz-path-picker-setting-row")) return;
+      const ctl = el3.querySelector(".setting-item-control");
+      el3.classList.toggle("bz-setting-split", !!ctl && ctl.children.length >= 2);
     });
   }
   function closeSettingsModal() {
@@ -17586,7 +17670,7 @@ ${n.content.slice(0, 2e3)}
     content.className = "bz-settings-content";
     renderSettingsInto(content, (_a2 = opts.schema) != null ? _a2 : { groups: [] });
     const hasVisibleItem = Array.from(content.querySelectorAll(".setting-item")).some(
-      (el2) => !el2.classList.contains("bz-setting-action-row") && !isItemHidden(el2)
+      (el3) => !el3.classList.contains("bz-setting-action-row") && !isItemHidden(el3)
     );
     if (!hasVisibleItem) {
       content.innerHTML = "";
@@ -17609,10 +17693,10 @@ ${n.content.slice(0, 2e3)}
     popup.style.display = "flex";
     popup.setAttribute("role", "dialog");
     popup.setAttribute("aria-modal", "true");
-    const firstFocusable2 = Array.from(popup.querySelectorAll(FOCUSABLE_SELECTOR2)).find((el2) => {
-      if (isItemHidden(el2)) return false;
+    const firstFocusable2 = Array.from(popup.querySelectorAll(FOCUSABLE_SELECTOR2)).find((el3) => {
+      if (isItemHidden(el3)) return false;
       if (isMobileEnv()) {
-        const tag = el2.tagName;
+        const tag = el3.tagName;
         if (tag === "INPUT" || tag === "TEXTAREA") return false;
       }
       return true;
@@ -17677,9 +17761,9 @@ ${n.content.slice(0, 2e3)}
     }
     return { read: () => binding.get(), write: (v) => binding.set(v), persist: () => binding.save() };
   }
-  function safePersist(persist, what) {
+  function safePersist(persist2, what) {
     try {
-      Promise.resolve(persist()).catch((e) => notifySaveError(e, what));
+      Promise.resolve(persist2()).catch((e) => notifySaveError(e, what));
     } catch (e) {
       notifySaveError(e, what);
     }
@@ -17703,7 +17787,7 @@ ${n.content.slice(0, 2e3)}
     if (max !== void 0) out = Math.min(max, out);
     return out;
   }
-  function wireSecretEye(setting, el2) {
+  function wireSecretEye(setting, el3) {
     let revealed = false;
     setting.addExtraButton((b) => {
       b.setIcon("eye").setTooltip("显示 / 隐藏");
@@ -17711,7 +17795,7 @@ ${n.content.slice(0, 2e3)}
       b.extraSettingsEl.setAttribute("aria-pressed", "false");
       b.onClick(() => {
         revealed = !revealed;
-        el2.type = revealed ? "text" : "password";
+        el3.type = revealed ? "text" : "password";
         b.setIcon(revealed ? "eye-off" : "eye");
         b.extraSettingsEl.setAttribute("aria-pressed", String(revealed));
         b.extraSettingsEl.setAttribute("aria-label", revealed ? "隐藏密钥" : "显示密钥");
@@ -17851,18 +17935,18 @@ ${n.content.slice(0, 2e3)}
         const inputEl = t.inputEl;
         if (inputEl) {
           if (isNumber) {
-            const num2 = row;
+            const num3 = row;
             inputEl.type = "number";
             const applyBounds = () => {
               const snap = currentSnapshot();
-              const lo = resolveNumberBound(num2.min, snap);
-              const hi = resolveNumberBound(num2.max, snap);
+              const lo = resolveNumberBound(num3.min, snap);
+              const hi = resolveNumberBound(num3.max, snap);
               inputEl.min = lo === void 0 ? "" : String(lo);
               inputEl.max = hi === void 0 ? "" : String(hi);
             };
             applyBounds();
-            if (typeof num2.max === "function") customRefreshes.push(applyBounds);
-            if (num2.step !== void 0) inputEl.step = String(num2.step);
+            if (typeof num3.max === "function") customRefreshes.push(applyBounds);
+            if (num3.step !== void 0) inputEl.step = String(num3.step);
           }
           if (row.type === "secret") {
             inputEl.type = "password";
@@ -17908,16 +17992,16 @@ ${n.content.slice(0, 2e3)}
             b.setButtonText(a.text).onClick(() => {
               void (async () => {
                 var _a4;
-                const el2 = b.buttonEl;
+                const el3 = b.buttonEl;
                 try {
-                  if (a.stateful) setRowBtnState(el2, "busy", a.text);
+                  if (a.stateful) setRowBtnState(el3, "busy", a.text);
                   await a.onClick(last, ctx);
-                  if (a.stateful) setRowBtnState(el2, "ok", a.text);
+                  if (a.stateful) setRowBtnState(el3, "ok", a.text);
                 } catch (e) {
-                  if (a.stateful) setRowBtnState(el2, "fail", a.text, shortFailReason(e));
+                  if (a.stateful) setRowBtnState(el3, "fail", a.text, shortFailReason(e));
                   else throw e;
                 } finally {
-                  if (a.stateful) armRowBtnReset(el2, a.text);
+                  if (a.stateful) armRowBtnReset(el3, a.text);
                 }
                 if (currentText && currentText.setValue) {
                   dirty2 = false;
@@ -18400,20 +18484,20 @@ ${n.content.slice(0, 2e3)}
       return false;
     }
   }
-  function waapi2(el2, frames, opts) {
-    if (!el2 || reduced3() || typeof el2.animate !== "function") {
+  function waapi2(el3, frames, opts) {
+    if (!el3 || reduced3() || typeof el3.animate !== "function") {
       const last = frames[frames.length - 1];
-      if (el2 && last) for (const k of Object.keys(last)) {
+      if (el3 && last) for (const k of Object.keys(last)) {
         if (k === "offset") continue;
         try {
-          el2.style[k] = String(last[k]);
+          el3.style[k] = String(last[k]);
         } catch (e) {
         }
       }
       return null;
     }
     try {
-      return el2.animate(frames, opts);
+      return el3.animate(frames, opts);
     } catch (e) {
       return null;
     }
@@ -18494,9 +18578,9 @@ ${n.content.slice(0, 2e3)}
     if (reduced3()) return;
     const head = pane.querySelector(".bz-sp-page-head");
     if (head) {
-      [...head.children].forEach((el2, i) => {
+      [...head.children].forEach((el3, i) => {
         waapi2(
-          el2,
+          el3,
           [{ opacity: 0, transform: "translateY(-5px)", filter: "blur(2px)" }, { opacity: 1, transform: "none", filter: "blur(0px)" }],
           { duration: M4.base, delay: i * 40, easing: E2.out, fill: "backwards" }
         );
@@ -18534,10 +18618,10 @@ ${n.content.slice(0, 2e3)}
   function motionMobList(list) {
     if (!list || !list.isConnected || reduced3()) return;
     const items = [...list.querySelectorAll(".bz-sp-mob-item")];
-    items.forEach((el2, i) => {
+    items.forEach((el3, i) => {
       if (i >= 12) return;
       waapi2(
-        el2,
+        el3,
         [{ opacity: 0, transform: "translateY(8px)", filter: "blur(2px)" }, { opacity: 1, transform: "none", filter: "blur(0px)" }],
         { duration: M4.base, delay: Math.min(i, 11) * STAG2, easing: E2.out, fill: "backwards" }
       );
@@ -18549,18 +18633,18 @@ ${n.content.slice(0, 2e3)}
     if (!side) return;
     let st = cursorStates.get(nav);
     if (!st) {
-      const el2 = document.createElement("span");
-      el2.className = "bz-spm-cursor";
-      el2.setAttribute("aria-hidden", "true");
+      const el3 = document.createElement("span");
+      el3.className = "bz-spm-cursor";
+      el3.setAttribute("aria-hidden", "true");
       try {
-        side.prepend(el2);
+        side.prepend(el3);
       } catch (e) {
         return;
       }
       st = {
         side,
         nav,
-        el: el2,
+        el: el3,
         x: 0,
         y: 0,
         vx: 0,
@@ -18881,15 +18965,15 @@ ${n.content.slice(0, 2e3)}
     popup.addEventListener("pointerdown", (e) => {
       var _a2, _b2;
       if (reduced3()) return;
-      const el2 = (_b2 = (_a2 = e.target).closest) == null ? void 0 : _b2.call(_a2, PRESS_SEL);
-      if (!el2 || !popup.contains(el2)) return;
-      pressed.set(el2, Date.now());
-      waapi2(el2, [{ transform: "scale(1)" }, { transform: "scale(.955)" }], { duration: 110, easing: E2.out, fill: "forwards" });
+      const el3 = (_b2 = (_a2 = e.target).closest) == null ? void 0 : _b2.call(_a2, PRESS_SEL);
+      if (!el3 || !popup.contains(el3)) return;
+      pressed.set(el3, Date.now());
+      waapi2(el3, [{ transform: "scale(1)" }, { transform: "scale(.955)" }], { duration: 110, easing: E2.out, fill: "forwards" });
     });
     const release = (e) => {
       var _a2, _b2;
-      const el2 = (_b2 = (_a2 = e.target).closest) == null ? void 0 : _b2.call(_a2, PRESS_SEL);
-      const target = el2 && pressed.has(el2) ? el2 : null;
+      const el3 = (_b2 = (_a2 = e.target).closest) == null ? void 0 : _b2.call(_a2, PRESS_SEL);
+      const target = el3 && pressed.has(el3) ? el3 : null;
       if (!target) return;
       pressed.delete(target);
       waapi2(target, [{ transform: "scale(.955)" }, { transform: "scale(1.02)", offset: 0.6 }, { transform: "none" }], { duration: M4.move + 40, easing: E2.out });
@@ -19136,7 +19220,7 @@ ${n.content.slice(0, 2e3)}
     renderChips();
     return ctrl;
   }
-  function mountTextActions(ctrlEl, input, acc, actions, ctx, refresh2) {
+  function mountTextActions(ctrlEl, input, acc, actions, ctx, refresh3) {
     for (const a of actions != null ? actions : []) {
       const holder = document.createElement("div");
       holder.innerHTML = rowBtnHtml(a.text, a.cta);
@@ -19155,13 +19239,13 @@ ${n.content.slice(0, 2e3)}
             if (a.stateful) armRowBtnReset(btn, a.text);
           }
           (_b2 = displaySetters.get(input)) == null ? void 0 : _b2(String((_a2 = acc.read()) != null ? _a2 : ""));
-          refresh2();
+          refresh3();
         })();
       });
       ctrlEl.appendChild(btn);
     }
   }
-  function renderRow(row, refresh2, regRefresh) {
+  function renderRow(row, refresh3, regRefresh) {
     var _a2, _b2, _c, _d, _e, _f, _g, _h, _i, _j, _k, _l, _m, _n, _o, _p, _q;
     const rowName = row.name;
     const bindKey = (_a2 = row.binding) == null ? void 0 : _a2.key;
@@ -19181,15 +19265,15 @@ ${n.content.slice(0, 2e3)}
       desc: row.desc,
       note: row.note
     });
-    const el2 = holder.firstElementChild;
+    const el3 = holder.firstElementChild;
     const helpText = row.help;
     if (helpText) {
-      const nameEl = el2.querySelector(".bz-sp-set-name");
+      const nameEl = el3.querySelector(".bz-sp-set-name");
       if (nameEl) attachHelpTip(nameEl, { text: helpText, skinClassName: "bz-sp-skin" });
     }
-    const ctx = makeCtx(el2, refresh2);
-    ctx.rowEl = el2;
-    const ctrlEl = isCustom ? el2 : el2.querySelector(isCardsRow ? ".bz-sp-set-cards" : ".bz-sp-set-ctrl");
+    const ctx = makeCtx(el3, refresh3);
+    ctx.rowEl = el3;
+    const ctrlEl = isCustom ? el3 : el3.querySelector(isCardsRow ? ".bz-sp-set-cards" : ".bz-sp-set-ctrl");
     switch (row.type) {
       case "toggle": {
         const acc = bindValue(row.binding);
@@ -19209,7 +19293,7 @@ ${n.content.slice(0, 2e3)}
           motionSwitchFlip(sw, v);
           safePersist(() => acc.persist(), rowName || "开关设置");
           (_a3 = row.onChange) == null ? void 0 : _a3.call(row, v, ctx);
-          refresh2();
+          refresh3();
         });
         break;
       }
@@ -19230,10 +19314,10 @@ ${n.content.slice(0, 2e3)}
             safePersist(() => acc.persist(), rowName || "文本设置");
             (_a3 = row.onChange) == null ? void 0 : _a3.call(row, v, ctx);
             warn.fire(v);
-            refresh2();
+            refresh3();
           }
         });
-        mountTextActions(ctrlEl, input, acc, row.actions, ctx, refresh2);
+        mountTextActions(ctrlEl, input, acc, row.actions, ctx, refresh3);
         ctrlEl.appendChild(input);
         regRefreshDisplay(regRefresh, row.refreshKey, input);
         break;
@@ -19250,10 +19334,10 @@ ${n.content.slice(0, 2e3)}
             motionInputSaved(input.querySelector(".bz-sp-secret-input"));
             safePersist(() => acc.persist(), rowName || "密钥设置");
             (_a3 = sec.onChange) == null ? void 0 : _a3.call(sec, v, ctx);
-            refresh2();
+            refresh3();
           }
         });
-        mountTextActions(ctrlEl, input.querySelector(".bz-sp-secret-input"), acc, sec.actions, ctx, refresh2);
+        mountTextActions(ctrlEl, input.querySelector(".bz-sp-secret-input"), acc, sec.actions, ctx, refresh3);
         ctrlEl.appendChild(input);
         regRefreshDisplay(regRefresh, sec.refreshKey, input.querySelector(".bz-sp-secret-input"));
         break;
@@ -19274,7 +19358,7 @@ ${n.content.slice(0, 2e3)}
           motionInputSaved(ta);
           safePersist(() => acc.persist(), rowName || "多行文本设置");
           warn.fire(ta.value);
-          refresh2();
+          refresh3();
         };
         ta.addEventListener("input", () => {
           dirty2 = true;
@@ -19295,7 +19379,7 @@ ${n.content.slice(0, 2e3)}
             (_a3 = displaySetters.get(ta)) == null ? void 0 : _a3(String(fresh != null ? fresh : ""));
           });
         }
-        mountTextActions(ctrlEl, ta, acc, row.actions, ctx, refresh2);
+        mountTextActions(ctrlEl, ta, acc, row.actions, ctx, refresh3);
         ctrlEl.appendChild(ctrl);
         break;
       }
@@ -19325,12 +19409,12 @@ ${n.content.slice(0, 2e3)}
             safePersist(() => acc.persist(), rowName || "数字设置");
             (_b3 = row.onChange) == null ? void 0 : _b3.call(row, v, ctx);
             warn.fire(raw);
-            refresh2();
+            refresh3();
             return String(v) !== raw.trim() ? String(v) : void 0;
           }
         });
         input.step = String((_i = row.step) != null ? _i : 1);
-        mountTextActions(ctrlEl, input, acc, row.actions, ctx, refresh2);
+        mountTextActions(ctrlEl, input, acc, row.actions, ctx, refresh3);
         ctrlEl.appendChild(input);
         regRefreshDisplay(regRefresh, row.refreshKey, input);
         if (typeof row.max === "function") {
@@ -19409,7 +19493,7 @@ ${n.content.slice(0, 2e3)}
             motionSelectPick(sel);
             safePersist(() => acc.persist(), rowName || "下拉设置");
             (_a3 = row.onChange) == null ? void 0 : _a3.call(row, o.value, ctx);
-            refresh2();
+            refresh3();
           };
           const openMenu = () => {
             if (sel.querySelector(".bz-select-menu")) return;
@@ -19500,7 +19584,7 @@ ${n.content.slice(0, 2e3)}
           acc.write(v);
           safePersist(() => acc.persist(), rowName || "滑条设置");
           (_a3 = row.onChange) == null ? void 0 : _a3.call(row, v, ctx);
-          refresh2();
+          refresh3();
         });
         for (const a of (_m = row.actions) != null ? _m : []) {
           const holder2 = document.createElement("div");
@@ -19537,7 +19621,7 @@ ${n.content.slice(0, 2e3)}
             safePersist(() => acc.persist(), rowName || "路径设置");
             const res = (_a3 = row.onChange) == null ? void 0 : _a3.call(row, list, ctx);
             warn.fire(multi ? JSON.stringify(v) : String(v));
-            refresh2();
+            refresh3();
             if (res && typeof res.then === "function") {
               return Promise.resolve(res).then(
                 (final) => Array.isArray(final) ? final : list
@@ -19584,7 +19668,7 @@ ${n.content.slice(0, 2e3)}
                 } catch (e) {
                   notifySaveError(e, rowName || "列表项");
                 } finally {
-                  refresh2();
+                  refresh3();
                 }
               })();
             }
@@ -19629,7 +19713,7 @@ ${n.content.slice(0, 2e3)}
             motionCardChoose(c);
             safePersist(() => acc.persist(), rowName || "卡片设置");
             (_c2 = row.onChange) == null ? void 0 : _c2.call(row, (_b3 = c.dataset.spCard) != null ? _b3 : "", ctx);
-            refresh2();
+            refresh3();
           });
         });
         break;
@@ -19637,7 +19721,7 @@ ${n.content.slice(0, 2e3)}
       case "custom": {
         const slot = document.createElement("div");
         slot.className = "bz-sp-custom-slot bz-sp-custom-slot--full";
-        el2.appendChild(slot);
+        el3.appendChild(slot);
         try {
           row.render(slot, ctx);
         } catch (e) {
@@ -19655,9 +19739,9 @@ ${n.content.slice(0, 2e3)}
       default:
         break;
     }
-    return el2;
+    return el3;
   }
-  function renderGroup(container, group, refresh2, regRefresh) {
+  function renderGroup(container, group, refresh3, regRefresh) {
     const cardHolder = document.createElement("div");
     cardHolder.innerHTML = groupCardHtml(group.icon, group.name, `${group.rows.length} 项`);
     const card = cardHolder.firstElementChild;
@@ -19665,7 +19749,7 @@ ${n.content.slice(0, 2e3)}
     const body = card.querySelector(".bz-sp-group-body");
     const rowEls2 = [];
     group.rows.forEach((r) => {
-      const rowEl = renderRow(r, refresh2, regRefresh);
+      const rowEl = renderRow(r, refresh3, regRefresh);
       rowEls2.push(rowEl);
       body.appendChild(rowEl);
     });
@@ -19676,8 +19760,8 @@ ${n.content.slice(0, 2e3)}
       if (!groupHidden) {
         group.rows.forEach((r, i) => {
           if (r.type === "button") return;
-          const el2 = rowEls2[i];
-          if (el2 && el2.style.display !== "none") n++;
+          const el3 = rowEls2[i];
+          if (el3 && el3.style.display !== "none") n++;
         });
       }
       count.textContent = `${n} 项`;
@@ -19690,24 +19774,24 @@ ${n.content.slice(0, 2e3)}
   function renderPanelSchema(container, schema) {
     const visibleConditions = /* @__PURE__ */ new WeakMap();
     const valueRefreshes = [];
-    const applyCond = (el2, cond) => {
+    const applyCond = (el3, cond) => {
       let visible = true;
       try {
         visible = cond(snapshot());
       } catch (e) {
       }
-      el2.style.display = visible ? "" : "none";
+      el3.style.display = visible ? "" : "none";
     };
-    const refresh2 = () => {
-      container.querySelectorAll("[data-sp-row]").forEach((el2) => {
-        const cond = visibleConditions.get(el2);
+    const refresh3 = () => {
+      container.querySelectorAll("[data-sp-row]").forEach((el3) => {
+        const cond = visibleConditions.get(el3);
         if (!cond) return;
-        applyCond(el2, cond);
+        applyCond(el3, cond);
       });
-      container.querySelectorAll("[data-sp-group]").forEach((el2) => {
-        const cond = visibleConditions.get(el2);
+      container.querySelectorAll("[data-sp-group]").forEach((el3) => {
+        const cond = visibleConditions.get(el3);
         if (!cond) return;
-        applyCond(el2, cond);
+        applyCond(el3, cond);
       });
       container.querySelectorAll(".bz-sp-group").forEach((card) => {
         var _a2;
@@ -19717,7 +19801,7 @@ ${n.content.slice(0, 2e3)}
     };
     schema.groups.forEach((g) => {
       var _a2, _b2;
-      const card = renderGroup(container, g, refresh2, (fn) => valueRefreshes.push(fn));
+      const card = renderGroup(container, g, refresh3, (fn) => valueRefreshes.push(fn));
       card.dataset.spGroup = g.name;
       const groupVw = g.visibleWhen;
       if (groupVw) {
@@ -19748,7 +19832,7 @@ ${n.content.slice(0, 2e3)}
       });
     });
     mountIcons(container);
-    return { refresh: refresh2 };
+    return { refresh: refresh3 };
   }
   function closeAllSelectMenus(root) {
     root.querySelectorAll(".bz-select").forEach((sel) => {
@@ -19829,13 +19913,13 @@ ${n.content.slice(0, 2e3)}
     }
     return out;
   }
-  async function fetchJevModels(deps = {}) {
+  async function fetchJevModels(deps2 = {}) {
     var _a2, _b2, _c;
     const s = tryGetSettings();
     const cfg = resolveJevConfig();
     const desc = getJevProviderDescriptor(String((_a2 = s == null ? void 0 : s.jevProvider) != null ? _a2 : "") || DEFAULT_JEV_PROVIDER);
     if (!cfg.apiKey) throw new Error(`未配置 ${desc.label} 密钥（插件设置 → AI → JEV）`);
-    const requestUrlFn = deps.requestUrlFn || requestUrl;
+    const requestUrlFn = deps2.requestUrlFn || requestUrl;
     const resp = await requestUrlFn({
       url: desc.modelsUrl,
       method: "GET",
@@ -20898,8 +20982,8 @@ ${n.content.slice(0, 2e3)}
       await ((_b2 = opts.tick) == null ? void 0 : _b2.call(opts, `${t.label}（${t.file}）`, { done: i + 1, total: targets.length }));
     }
     const { summary, issues } = jsonIssuesOf(verdicts);
-    const section = { id: "json", name: "数据文件可解析", summary, issues, scanned: verdicts.filter((v) => v.state !== "missing").length };
-    return section;
+    const section2 = { id: "json", name: "数据文件可解析", summary, issues, scanned: verdicts.filter((v) => v.state !== "missing").length };
+    return section2;
   }
   var init_checks_json = __esm({
     "src/checkup/checks-json.ts"() {
@@ -21599,15 +21683,15 @@ ${countsToText(s.missing)}
     const s = cleanUrlText(input);
     const m = s.match(/^(https?:\/\/)([^/?#]+)([^?#]*)(\?[^#]*)?(#.*)?$/i);
     if (!m) return s;
-    const [, scheme, host, path, query, hash] = m;
+    const [, scheme, host, path, query2, hash] = m;
     const bare = host.toLowerCase().replace(/^www\./, "");
     if (bare === "b23.tv") return scheme + host + path;
     if (bare.endsWith("bilibili.com") && /^\/video\//.test(path)) {
-      const keep = (query != null ? query : "").slice(1).split("&").filter((kv) => /^(p|t)=/.test(kv));
+      const keep = (query2 != null ? query2 : "").slice(1).split("&").filter((kv) => /^(p|t)=/.test(kv));
       return scheme + host + path + (keep.length ? "?" + keep.join("&") : "");
     }
-    if (!query) return s;
-    const kept = query.slice(1).split("&").filter(Boolean).filter((kv) => {
+    if (!query2) return s;
+    const kept = query2.slice(1).split("&").filter(Boolean).filter((kv) => {
       const k = kv.split("=")[0].toLowerCase();
       return !k.startsWith("utm_") && !k.startsWith("spm_") && !TRACK_KEYS.has(k);
     });
@@ -24963,8 +25047,8 @@ ${sample}`
     if (unit === "paragraph") {
       const hit = String((_b2 = s == null ? void 0 : s.quote) != null ? _b2 : "").trim() ? locateInText(text2, String(s.quote)) : null;
       if (!hit) return text2;
-      const block = expandBlock(text2, hit.at, hit.len);
-      return text2.slice(block.at, block.at + block.len).trim();
+      const block2 = expandBlock(text2, hit.at, hit.len);
+      return text2.slice(block2.at, block2.at + block2.len).trim();
     }
     return text2;
   }
@@ -24994,13 +25078,13 @@ ${String(blockText != null ? blockText : "").trim()}`);
         const text2 = String((_c = await app.vault.read(file)) != null ? _c : "");
         const hit = locateInText(text2, quote);
         if (!hit) return { blockId: "", ok: false };
-        const block = expandBlock(text2, hit.at, hit.len);
-        const blockText = text2.slice(block.at, block.at + block.len);
+        const block2 = expandBlock(text2, hit.at, hit.len);
+        const blockText = text2.slice(block2.at, block2.at + block2.len);
         const existing = /\^([A-Za-z0-9-]+)\s*$/.exec(blockText);
         if (existing && existing[1].startsWith(BLOCK_ID_PREFIX)) return { blockId: existing[1], ok: true };
         const blockId = blockIdFor(path, blockText.replace(/\^([A-Za-z0-9-]+)\s*$/, "").trim());
         const trimmed = blockText.replace(/\s+$/, "");
-        const next = text2.slice(0, block.at) + `${trimmed} ^${blockId}` + text2.slice(block.at + block.len);
+        const next = text2.slice(0, block2.at) + `${trimmed} ^${blockId}` + text2.slice(block2.at + block2.len);
         if (next !== text2) await app.vault.modify(file, next);
         return { blockId, ok: true };
       });
@@ -25484,11 +25568,11 @@ ${String(blockText != null ? blockText : "").trim()}`);
     for (let i = SUGGEST_MAX_LOCATE_NOTES; i < adopted.length; i++) {
       suggestions.push(buildSuggestion(ctx, adopted[i], null, null));
     }
-    const filtered2 = filterSuggestions(suggestions, { dismissed, existing, minScore: SUGGEST_MIN_SCORE });
+    const filtered3 = filterSuggestions(suggestions, { dismissed, existing, minScore: SUGGEST_MIN_SCORE });
     tell("save");
     const generatedAt = Date.now();
-    await persistCardCache(cardPath, bodyHash, generatedAt, filtered2);
-    return { status: "fresh", suggestions: filtered2, generatedAt };
+    await persistCardCache(cardPath, bodyHash, generatedAt, filtered3);
+    return { status: "fresh", suggestions: filtered3, generatedAt };
   }
   function buildSuggestion(ctx, ad, pick, targetText) {
     var _a2, _b2, _c, _d, _e, _f;
@@ -25656,10 +25740,10 @@ ${String(blockText != null ? blockText : "").trim()}`);
       return false;
     }
   }
-  function waapi3(el2, frames, opts) {
-    if (!el2 || reduced4() || typeof el2.animate !== "function") return null;
+  function waapi3(el3, frames, opts) {
+    if (!el3 || reduced4() || typeof el3.animate !== "function") return null;
     try {
-      return el2.animate(frames, opts);
+      return el3.animate(frames, opts);
     } catch (e) {
       return null;
     }
@@ -25675,36 +25759,36 @@ ${String(blockText != null ? blockText : "").trim()}`);
     timers3.forEach(clearTimeout);
     timers3.clear();
   }
-  function motionClosing(el2) {
-    return !!el2 && el2.dataset.bzMotionClosing === "1";
+  function motionClosing(el3) {
+    return !!el3 && el3.dataset.bzMotionClosing === "1";
   }
-  function abortOut(el2) {
-    const run = outRuns.get(el2);
+  function abortOut(el3) {
+    const run = outRuns.get(el3);
     if (!run) return;
-    outRuns.delete(el2);
+    outRuns.delete(el3);
     run.abort();
   }
-  function sweepExit(el2, id) {
+  function sweepExit(el3, id) {
     try {
-      if (typeof el2.getAnimations !== "function") return;
-      for (const a of el2.getAnimations()) if (a.id === id) a.cancel();
+      if (typeof el3.getAnimations !== "function") return;
+      for (const a of el3.getAnimations()) if (a.id === id) a.cancel();
     } catch (e) {
     }
   }
-  function runOut(el2, id, frames, opts, done) {
+  function runOut(el3, id, frames, opts, done) {
     var _a2;
-    if (!el2) {
+    if (!el3) {
       done();
       return;
     }
-    if (motionClosing(el2)) return;
-    el2.dataset.bzMotionClosing = "1";
+    if (motionClosing(el3)) return;
+    el3.dataset.bzMotionClosing = "1";
     let finished = false;
     let anim = null;
     const run = {
       abort: () => {
         run.aborted = true;
-        delete el2.dataset.bzMotionClosing;
+        delete el3.dataset.bzMotionClosing;
         try {
           anim == null ? void 0 : anim.cancel();
         } catch (e) {
@@ -25712,19 +25796,19 @@ ${String(blockText != null ? blockText : "").trim()}`);
       },
       aborted: false
     };
-    outRuns.set(el2, run);
+    outRuns.set(el3, run);
     const finish = () => {
       if (finished || run.aborted) return;
       finished = true;
-      outRuns.delete(el2);
-      delete el2.dataset.bzMotionClosing;
+      outRuns.delete(el3);
+      delete el3.dataset.bzMotionClosing;
       try {
         anim == null ? void 0 : anim.cancel();
       } catch (e) {
       }
       done();
     };
-    anim = waapi3(el2, frames, { ...opts, fill: "forwards", id });
+    anim = waapi3(el3, frames, { ...opts, fill: "forwards", id });
     if (!anim) {
       finish();
       return;
@@ -25950,10 +26034,10 @@ ${String(blockText != null ? blockText : "").trim()}`);
     if (!ovl || reduced4()) return;
     const body = ovl.querySelector("#bz-kb-preview-body");
     if (body) {
-      [...body.children].forEach((el2, i) => {
+      [...body.children].forEach((el3, i) => {
         if (i >= 12) return;
         waapi3(
-          el2,
+          el3,
           [
             { opacity: 0, transform: "translateY(6px)", filter: "blur(3px)" },
             { opacity: 1, transform: "none", filter: "blur(0px)" }
@@ -26169,10 +26253,10 @@ ${String(blockText != null ? blockText : "").trim()}`);
     for (const pen of penPool) pen.remove();
     penPool.clear();
   }
-  function motionMetaSetValue(el2) {
-    if (!el2 || reduced4()) return;
+  function motionMetaSetValue(el3) {
+    if (!el3 || reduced4()) return;
     waapi3(
-      el2,
+      el3,
       [
         { opacity: 0.25, transform: "translateY(3px)", filter: "blur(3px)" },
         { opacity: 1, transform: "none", filter: "blur(0px)" }
@@ -26180,10 +26264,10 @@ ${String(blockText != null ? blockText : "").trim()}`);
       { duration: M5.fast + 80, easing: E3.out, fill: "backwards" }
     );
   }
-  function motionContentArrive(el2) {
-    if (!el2 || reduced4()) return;
+  function motionContentArrive(el3) {
+    if (!el3 || reduced4()) return;
     waapi3(
-      el2,
+      el3,
       [{ filter: "blur(1.5px)" }, { filter: "blur(0px)" }],
       { duration: M5.fast + 60, easing: E3.out, fill: "backwards" }
     );
@@ -26356,8 +26440,8 @@ ${String(blockText != null ? blockText : "").trim()}`);
   }
   function motionTeardown3() {
     cancelPending3();
-    for (const [el2, run] of [...outRuns.entries()]) {
-      outRuns.delete(el2);
+    for (const [el3, run] of [...outRuns.entries()]) {
+      outRuns.delete(el3);
       run.abort();
     }
     motionPenOff();
@@ -26545,7 +26629,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
   function defaultDeps(over) {
     var _a2, _b2, _c, _d;
     return {
-      measure: (_a2 = over == null ? void 0 : over.measure) != null ? _a2 : (el2) => ({ w: el2.offsetWidth || 0, h: el2.offsetHeight || 0 }),
+      measure: (_a2 = over == null ? void 0 : over.measure) != null ? _a2 : (el3) => ({ w: el3.offsetWidth || 0, h: el3.offsetHeight || 0 }),
       notice: (_b2 = over == null ? void 0 : over.notice) != null ? _b2 : (msg, type) => notice(msg, type != null ? type : "info"),
       openNote: (_c = over == null ? void 0 : over.openNote) != null ? _c : (path) => {
         var _a3, _b3, _c2;
@@ -26801,24 +26885,24 @@ ${String(blockText != null ? blockText : "").trim()}`);
     });
     st.win.addEventListener("mouseover", (e) => {
       var _a2, _b2, _c;
-      const el2 = e.target;
-      const dot = (_a2 = el2 == null ? void 0 : el2.closest) == null ? void 0 : _a2.call(el2, "[data-mt-edge]");
+      const el3 = e.target;
+      const dot = (_a2 = el3 == null ? void 0 : el3.closest) == null ? void 0 : _a2.call(el3, "[data-mt-edge]");
       if (dot) {
         setHover(st, dot.getAttribute("data-mt-edge") || "", true);
         return;
       }
-      const edgeEl = (_b2 = el2 == null ? void 0 : el2.closest) == null ? void 0 : _b2.call(el2, ".bz-kb-mt-edge");
+      const edgeEl = (_b2 = el3 == null ? void 0 : el3.closest) == null ? void 0 : _b2.call(el3, ".bz-kb-mt-edge");
       if (edgeEl) {
         setHover(st, edgeEl.getAttribute("data-mt-key") || "", true);
         return;
       }
-      const nodeEl = (_c = el2 == null ? void 0 : el2.closest) == null ? void 0 : _c.call(el2, ".bz-kb-mt-node");
+      const nodeEl = (_c = el3 == null ? void 0 : el3.closest) == null ? void 0 : _c.call(el3, ".bz-kb-mt-node");
       if (nodeEl) setHover(st, edgeKeyTo(st, nodeEl.getAttribute("data-mt-id") || ""), true);
     });
     st.win.addEventListener("mouseout", (e) => {
       var _a2;
-      const el2 = e.target;
-      if ((_a2 = el2 == null ? void 0 : el2.closest) == null ? void 0 : _a2.call(el2, "[data-mt-edge], .bz-kb-mt-edge, .bz-kb-mt-node")) setHover(st, "", false);
+      const el3 = e.target;
+      if ((_a2 = el3 == null ? void 0 : el3.closest) == null ? void 0 : _a2.call(el3, "[data-mt-edge], .bz-kb-mt-edge, .bz-kb-mt-node")) setHover(st, "", false);
     });
   }
   function num(v) {
@@ -27007,8 +27091,8 @@ ${String(blockText != null ? blockText : "").trim()}`);
     if (st.progressTimer) st.progressTimer.textContent = "0s";
     stopTimer(st);
     st.timerId = setInterval(() => {
-      const el2 = st.progressTimer;
-      if (el2) el2.textContent = `${Math.round((Date.now() - st.startedAt) / 1e3)}s`;
+      const el3 = st.progressTimer;
+      if (el3) el3.textContent = `${Math.round((Date.now() - st.startedAt) / 1e3)}s`;
     }, 500);
   }
   function setProgress(st, p) {
@@ -27025,7 +27109,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
     st.timerId = null;
   }
   function clearCanvas(st) {
-    for (const el2 of Array.from(st.worldEl.querySelectorAll(".bz-kb-mt-node"))) el2.remove();
+    for (const el3 of Array.from(st.worldEl.querySelectorAll(".bz-kb-mt-node"))) el3.remove();
     st.svg.innerHTML = "";
     st.cards.clear();
     st.sizes.clear();
@@ -27110,7 +27194,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
   async function renderCanvas(st, motionFresh) {
     var _a2, _b2, _c, _d, _e, _f, _g, _h;
     const worldEl = st.worldEl;
-    for (const el2 of Array.from(worldEl.querySelectorAll(".bz-kb-mt-node"))) el2.remove();
+    for (const el3 of Array.from(worldEl.querySelectorAll(".bz-kb-mt-node"))) el3.remove();
     st.svg.innerHTML = "";
     st.cards.clear();
     st.sizes.clear();
@@ -27125,17 +27209,17 @@ ${String(blockText != null ? blockText : "").trim()}`);
     const rootId = st.tree.root;
     const jobs = [];
     for (const node of nodes) {
-      const el2 = buildCard(st, node, rootId);
-      worldEl.appendChild(el2);
-      st.cards.set(node.id, el2);
-      jobs.push(fillBody(st, node, el2));
+      const el3 = buildCard(st, node, rootId);
+      worldEl.appendChild(el3);
+      st.cards.set(node.id, el3);
+      jobs.push(fillBody(st, node, el3));
     }
     worldEl.appendChild(st.svg);
     await Promise.all(jobs);
     for (const node of nodes) {
-      const el2 = st.cards.get(node.id);
-      if (!el2) continue;
-      const raw = st.deps.measure(el2, node.kind);
+      const el3 = st.cards.get(node.id);
+      if (!el3) continue;
+      const raw = st.deps.measure(el3, node.kind);
       const w = (raw == null ? void 0 : raw.w) && raw.w > 0 ? raw.w : widthOf(st, node);
       const h = (raw == null ? void 0 : raw.h) && raw.h > 0 ? raw.h : (_b2 = HEIGHT_BY_KIND[node.kind]) != null ? _b2 : HEIGHT_BY_KIND.card;
       st.sizes.set(node.id, { w, h });
@@ -27154,14 +27238,14 @@ ${String(blockText != null ? blockText : "").trim()}`);
     st.pos = layout.pos;
     st.world = { w: layout.world.w, h: layout.world.h };
     for (const n of laid) {
-      const el2 = st.cards.get(n.id);
+      const el3 = st.cards.get(n.id);
       const p = layout.pos[n.id];
       if (!p) {
-        el2.style.display = "none";
+        el3.style.display = "none";
         continue;
       }
-      el2.style.left = `${p.x}px`;
-      el2.style.top = `${p.y}px`;
+      el3.style.left = `${p.x}px`;
+      el3.style.top = `${p.y}px`;
     }
     const dockGroups = /* @__PURE__ */ new Map();
     for (const n of nodes) {
@@ -27174,8 +27258,8 @@ ${String(blockText != null ? blockText : "").trim()}`);
       const parentEl = st.cards.get(parentId);
       if (!parentPos || !parentEl || parentEl.style.display === "none") {
         for (const n of group) {
-          const el2 = st.cards.get(n.id);
-          if (el2) el2.style.display = "none";
+          const el3 = st.cards.get(n.id);
+          if (el3) el3.style.display = "none";
         }
         continue;
       }
@@ -27184,12 +27268,12 @@ ${String(blockText != null ? blockText : "").trim()}`);
       let top = parentPos.y + ph + DOCK_GAP;
       let right = parentPos.x + pw;
       for (const n of group) {
-        const el2 = st.cards.get(n.id);
+        const el3 = st.cards.get(n.id);
         const size = st.sizes.get(n.id);
-        if (!el2) continue;
-        el2.style.left = `${parentPos.x}px`;
-        el2.style.top = `${top}px`;
-        el2.style.width = `${pw}px`;
+        if (!el3) continue;
+        el3.style.left = `${parentPos.x}px`;
+        el3.style.top = `${top}px`;
+        el3.style.width = `${pw}px`;
         if (size) size.w = pw;
         top += ((_h = size == null ? void 0 : size.h) != null ? _h : HEIGHT_BY_KIND.note) + DOCK_GAP;
         if (top > st.world.h) st.world.h = top;
@@ -27218,7 +27302,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
   }
   function buildCard(st, node, rootId) {
     var _a2, _b2, _c;
-    const el2 = document.createElement("div");
+    const el3 = document.createElement("div");
     const ghost = st.ghosts.has(node.id);
     const stale = !!node.missing || ghost && !ghostTargetExists(st, node);
     const classes = ["bz-kb-mt-node", `is-${node.kind}`];
@@ -27228,11 +27312,11 @@ ${String(blockText != null ? blockText : "").trim()}`);
     if (ghost) classes.push("is-ghost");
     if (node.id === rootId) classes.push("is-root");
     if (st.folded.has(node.id)) classes.push("is-folded");
-    el2.className = classes.join(" ");
-    el2.setAttribute("data-mt-id", node.id);
-    el2.setAttribute("data-mt-kind", node.kind);
-    el2.setAttribute("data-mt-source", node.source);
-    el2.style.width = `${widthOf(st, node)}px`;
+    el3.className = classes.join(" ");
+    el3.setAttribute("data-mt-id", node.id);
+    el3.setAttribute("data-mt-kind", node.kind);
+    el3.setAttribute("data-mt-source", node.source);
+    el3.style.width = `${widthOf(st, node)}px`;
     const head = document.createElement("div");
     head.className = "bz-kb-mt-head";
     const ttl = document.createElement("span");
@@ -27253,20 +27337,20 @@ ${String(blockText != null ? blockText : "").trim()}`);
         head.appendChild(why);
       }
     }
-    el2.appendChild(head);
+    el3.appendChild(head);
     const body = document.createElement("div");
     body.className = "bz-kb-mt-body";
-    el2.appendChild(body);
+    el3.appendChild(body);
     ttl.addEventListener("click", (e) => {
       e.stopPropagation();
       if (st.folded.has(node.id)) st.folded.delete(node.id);
       else st.folded.add(node.id);
       const folded = st.folded.has(node.id);
-      el2.classList.toggle("is-folded", folded);
-      const body2 = el2.querySelector(".bz-kb-mt-body");
-      if (!folded && body2 && !body2.querySelector("*")) void fillBody(st, node, el2);
+      el3.classList.toggle("is-folded", folded);
+      const body2 = el3.querySelector(".bz-kb-mt-body");
+      if (!folded && body2 && !body2.querySelector("*")) void fillBody(st, node, el3);
     });
-    return el2;
+    return el3;
   }
   function chip(text2, kind) {
     const s = document.createElement("span");
@@ -27276,54 +27360,54 @@ ${String(blockText != null ? blockText : "").trim()}`);
   }
   async function fillBody(st, node, cardEl) {
     var _a2;
-    const bodyEl3 = cardEl.querySelector(".bz-kb-mt-body");
-    if (!bodyEl3) return;
+    const bodyEl4 = cardEl.querySelector(".bz-kb-mt-body");
+    if (!bodyEl4) return;
     if (node.attached && st.folded.has(node.id)) return;
     const stale = !!node.missing || st.ghosts.has(node.id) && !ghostTargetExists(st, node);
     if (stale) {
-      bodyEl3.innerHTML = '<div class="bz-kb-mt-ph is-missing">失效：目标已不存在（改名或删除后残留）</div>';
+      bodyEl4.innerHTML = '<div class="bz-kb-mt-ph is-missing">失效：目标已不存在（改名或删除后残留）</div>';
       return;
     }
     if (node.kind === "image" || node.kind === "video") {
-      bodyEl3.innerHTML = `<div class="bz-kb-mt-ph">${escapeHtml2(node.path)}</div>`;
+      bodyEl4.innerHTML = `<div class="bz-kb-mt-ph">${escapeHtml2(node.path)}</div>`;
       return;
     }
     const app = (_a2 = st.ctx.app) != null ? _a2 : getApp();
     const ghost = st.ghosts.get(node.id);
     const md = ghost ? await suggestionUnitMarkdown(app, ghost) : bodyMarkdown(st, node);
     if (md === null) {
-      bodyEl3.innerHTML = '<div class="bz-kb-mt-ph">（无正文）</div>';
+      bodyEl4.innerHTML = '<div class="bz-kb-mt-ph">（无正文）</div>';
       return;
     }
     if (!md.trim()) {
-      bodyEl3.innerHTML = '<div class="bz-kb-mt-ph">（无正文）</div>';
+      bodyEl4.innerHTML = '<div class="bz-kb-mt-ph">（无正文）</div>';
       return;
     }
     let ok = false;
     if (app == null ? void 0 : app.vault) {
       try {
         const comp = new Component();
-        await MarkdownRenderer.render(app, md, bodyEl3, node.path, comp);
+        await MarkdownRenderer.render(app, md, bodyEl4, node.path, comp);
         comp.unload();
         ok = true;
       } catch (e) {
         ok = false;
       }
     }
-    if (ok && bodyEl3.querySelector("*")) {
-      tagBodyLinks(st, node, bodyEl3);
+    if (ok && bodyEl4.querySelector("*")) {
+      tagBodyLinks(st, node, bodyEl4);
       return;
     }
-    bodyEl3.textContent = "";
+    bodyEl4.textContent = "";
     for (const part of md.split(/\r?\n\r?\n+/)) {
       const t = part.trim();
       if (!t) continue;
       const p = document.createElement("div");
       p.className = "bz-kb-mt-ptext";
       p.textContent = t;
-      bodyEl3.appendChild(p);
+      bodyEl4.appendChild(p);
     }
-    tagBodyLinks(st, node, bodyEl3);
+    tagBodyLinks(st, node, bodyEl4);
   }
   function normRef(v) {
     return String(v != null ? v : "").trim().replace(/\\/g, "/").replace(/^\.\//, "").replace(/\.md$/i, "").replace(/^\/+/, "").toLowerCase();
@@ -27346,9 +27430,9 @@ ${String(blockText != null ? blockText : "").trim()}`);
     }
     return out;
   }
-  function tagBodyLinks(st, node, bodyEl3) {
+  function tagBodyLinks(st, node, bodyEl4) {
     var _a2;
-    const links = Array.from(bodyEl3.querySelectorAll("a.internal-link, a[data-href]"));
+    const links = Array.from(bodyEl4.querySelectorAll("a.internal-link, a[data-href]"));
     if (!links.length) return;
     const outgoing = ((_a2 = st.tree.edges) != null ? _a2 : []).filter(
       (e) => (st.direction === "downstream" ? e.from : e.to) === node.id
@@ -27407,23 +27491,23 @@ ${String(blockText != null ? blockText : "").trim()}`);
       const colorKind = (_b2 = kindById.get(st.direction === "downstream" ? e.to : e.from)) != null ? _b2 : "para";
       const cardEl = st.cards.get(bearerId);
       if (!cardEl || cardEl.style.display === "none") continue;
-      const bodyEl3 = cardEl.querySelector(".bz-kb-mt-body");
-      if (!bodyEl3) continue;
+      const bodyEl4 = cardEl.querySelector(".bz-kb-mt-body");
+      if (!bodyEl4) continue;
       const anchor = (_d = (_c = st.tree.nodes.find((n) => n.id === e.to)) == null ? void 0 : _c.anchor) != null ? _d : null;
-      const point = measureDot(st, cardEl, bodyEl3, anchor, key, colorKind, cursor, !!e.suggested);
+      const point = measureDot(st, cardEl, bodyEl4, anchor, key, colorKind, cursor, !!e.suggested);
       if (point) out.set(id, point);
     }
     return out;
   }
-  function measureDot(st, cardEl, bodyEl3, anchor, key, colorKind, cursor, highlight = false) {
+  function measureDot(st, cardEl, bodyEl4, anchor, key, colorKind, cursor, highlight = false) {
     var _a2;
     if (!anchor) return null;
     const needles = anchorNeedles(anchor);
     if (needles.length === 0) return null;
     const color = mountKindColor(colorKind);
-    const dot = insertAnchorDot(bodyEl3, needles, key, (_a2 = cursor.get(bodyEl3)) != null ? _a2 : 0, highlight, color);
+    const dot = insertAnchorDot(bodyEl4, needles, key, (_a2 = cursor.get(bodyEl4)) != null ? _a2 : 0, highlight, color);
     if (!dot) return null;
-    cursor.set(bodyEl3, Number(dot.getAttribute("data-mt-at") || 0));
+    cursor.set(bodyEl4, Number(dot.getAttribute("data-mt-at") || 0));
     dot.style.color = color;
     const nodeId = cardEl.getAttribute("data-mt-id") || "";
     const base = st.pos[nodeId];
@@ -27435,9 +27519,9 @@ ${String(blockText != null ? blockText : "").trim()}`);
       y: base.y + dot.offsetTop + dot.offsetHeight / 2
     };
   }
-  function insertAnchorDot(bodyEl3, needles, key, from, highlight = false, color = "") {
+  function insertAnchorDot(bodyEl4, needles, key, from, highlight = false, color = "") {
     var _a2, _b2;
-    const idx = textIndexOf(bodyEl3);
+    const idx = textIndexOf(bodyEl4);
     const hit = locateInText2(idx.text, needles, from);
     if (!hit) return null;
     const dot = document.createElement("i");
@@ -27519,8 +27603,8 @@ ${String(blockText != null ? blockText : "").trim()}`);
       if (n.attached) continue;
       const p = st.pos[n.id];
       const s = st.sizes.get(n.id);
-      const el2 = st.cards.get(n.id);
-      if (!p || !s || !el2 || el2.style.display === "none") continue;
+      const el3 = st.cards.get(n.id);
+      if (!p || !s || !el3 || el3.style.display === "none") continue;
       boxes.push({ id: n.id, x: p.x, y: p.y, w: s.w, h: s.h });
     }
     const boxIds = new Set(boxes.map((b) => b.id));
@@ -27551,8 +27635,8 @@ ${String(blockText != null ? blockText : "").trim()}`);
       const key = (_a3 = keys.get(id)) != null ? _a3 : `e${i}`;
       const bearerId = st.direction === "downstream" ? r.from : r.to;
       const otherId = st.direction === "downstream" ? r.to : r.from;
-      (_b2 = st.cards.get(bearerId)) == null ? void 0 : _b2.querySelectorAll("[data-mt-to]").forEach((el2) => {
-        if (el2.getAttribute("data-mt-to") === otherId) el2.setAttribute("data-mt-edge", key);
+      (_b2 = st.cards.get(bearerId)) == null ? void 0 : _b2.querySelectorAll("[data-mt-to]").forEach((el3) => {
+        if (el3.getAttribute("data-mt-to") === otherId) el3.setAttribute("data-mt-edge", key);
       });
       const colorKind = (_c = kindById.get(st.direction === "downstream" ? r.to : r.from)) != null ? _c : "para";
       const color = mountKindColor(colorKind);
@@ -27589,13 +27673,13 @@ ${String(blockText != null ? blockText : "").trim()}`);
     const sel = st.selected;
     const dockSelected = !!sel && !!((_a2 = st.cards.get(sel)) == null ? void 0 : _a2.classList.contains("is-dock"));
     const set = sel && !dockSelected ? lineageOf((_b2 = st.tree.edges) != null ? _b2 : [], sel) : null;
-    for (const [id, el2] of st.cards) {
-      el2.classList.remove("is-sel", "is-anc", "is-desc", "is-dim");
-      if (!set || el2.classList.contains("is-dock")) continue;
-      if (id === sel) el2.classList.add("is-sel");
-      else if (set.anc.has(id)) el2.classList.add("is-anc");
-      else if (set.desc.has(id)) el2.classList.add("is-desc");
-      else el2.classList.add("is-dim");
+    for (const [id, el3] of st.cards) {
+      el3.classList.remove("is-sel", "is-anc", "is-desc", "is-dim");
+      if (!set || el3.classList.contains("is-dock")) continue;
+      if (id === sel) el3.classList.add("is-sel");
+      else if (set.anc.has(id)) el3.classList.add("is-anc");
+      else if (set.desc.has(id)) el3.classList.add("is-desc");
+      else el3.classList.add("is-dim");
     }
     for (const e of st.edges) {
       const path = st.svg.querySelector(`.bz-kb-mt-edge[data-mt-key="${cssEscape(e.key)}"]`);
@@ -27612,7 +27696,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
   function setHover(st, key, on) {
     var _a2;
     if (!key) {
-      st.win.querySelectorAll(".is-hot").forEach((el2) => el2.classList.remove("is-hot"));
+      st.win.querySelectorAll(".is-hot").forEach((el3) => el3.classList.remove("is-hot"));
       return;
     }
     const edge = st.edges.find((e) => e.key === key);
@@ -27624,9 +27708,9 @@ ${String(blockText != null ? blockText : "").trim()}`);
       ...Array.from(st.win.querySelectorAll(`[data-mt-edge="${cssEscape(key)}"]`)),
       (_a2 = st.cards.get(otherId)) != null ? _a2 : null
     ];
-    for (const el2 of list) {
-      if (!el2) continue;
-      el2.classList.toggle("is-hot", on);
+    for (const el3 of list) {
+      if (!el3) continue;
+      el3.classList.toggle("is-hot", on);
     }
   }
   function cssEscape(s) {
@@ -29012,21 +29096,21 @@ ${String(blockText != null ? blockText : "").trim()}`);
       ${srcHtml}`));
           motionSheetIn(ovl);
           this._previewNote = n;
-          const bodyEl3 = ovl ? q(ovl, "#bz-kb-preview-body") : null;
-          if (bodyEl3) {
-            bodyEl3.textContent = "";
+          const bodyEl4 = ovl ? q(ovl, "#bz-kb-preview-body") : null;
+          if (bodyEl4) {
+            bodyEl4.textContent = "";
             if (body) {
               try {
                 const comp = new Component();
-                await MarkdownRenderer.render(this.app, body, bodyEl3, n.path, comp);
+                await MarkdownRenderer.render(this.app, body, bodyEl4, n.path, comp);
                 comp.unload();
               } catch (e) {
               }
-              if (!bodyEl3.querySelector("*")) {
-                bodyEl3.innerHTML = parasHtml;
+              if (!bodyEl4.querySelector("*")) {
+                bodyEl4.innerHTML = parasHtml;
               }
             } else {
-              bodyEl3.innerHTML = parasHtml;
+              bodyEl4.innerHTML = parasHtml;
             }
           }
           const srcLinks = ovl ? ovl.querySelectorAll("[data-lit-src-url]") : [];
@@ -29522,8 +29606,8 @@ ${String(blockText != null ? blockText : "").trim()}`);
           if (title) title.textContent = inHistory ? "历 史" : "影 像";
           if (top) top.textContent = inHistory ? "VIDEO · ARCHIVE" : "VIDEO · TO LITERATURE";
           const show = (sel, v) => {
-            const el2 = q(p, sel);
-            if (el2) el2.style.display = v ? "" : "none";
+            const el3 = q(p, sel);
+            if (el3) el3.style.display = v ? "" : "none";
           };
           show("#lit-btn-video-add", !inHistory);
           show("#lit-btn-video-run", !inHistory && !mobile);
@@ -29556,8 +29640,8 @@ ${String(blockText != null ? blockText : "").trim()}`);
           this._showVideoWindow();
         }
         /** 面板内视图切换（处理 ⇄ 历史） */
-        switchVideoView(view) {
-          this.videoView = view;
+        switchVideoView(view2) {
+          this.videoView = view2;
           void this.refreshVideoPanel();
         }
         /** 面板显示 + 按当前视图重绘（两个入口共用的收尾） */
@@ -29649,14 +29733,14 @@ ${String(blockText != null ? blockText : "").trim()}`);
           this._syncRunButton(active2);
         }
         _syncStatusCounts(tasks) {
-          const el2 = this.videoPopup ? q(this.videoPopup, "#lit-video-counts") : null;
-          if (!el2) return;
+          const el3 = this.videoPopup ? q(this.videoPopup, "#lit-video-counts") : null;
+          if (!el3) return;
           const count = (s) => tasks.filter((t) => t.status === s).length;
           const parts = [];
           if (count("pending")) parts.push(`${count("pending")} 待处理`);
           if (count("processing")) parts.push(`${count("processing")} 处理中`);
           if (count("failed")) parts.push(`${count("failed")} 失败`);
-          el2.textContent = parts.join(" · ");
+          el3.textContent = parts.join(" · ");
         }
         /** 单钮态机：空闲 play / 运行中 square（终止靠 title hover 区分），移动端整钮隐藏 */
         _syncRunButton(tasks) {
@@ -30082,8 +30166,8 @@ ${String(blockText != null ? blockText : "").trim()}`);
             sel.innerHTML = pages.map((p) => `<option value="${p.page}">${esc3(this._pageLabel(p))}</option>`).join("");
             sel.value = String(this.addPage);
           }
-          const num2 = q(popup, "#lit-add-page-num");
-          if (num2 && !pages.length) num2.value = this.addPage > 1 ? String(this.addPage) : "";
+          const num3 = q(popup, "#lit-add-page-num");
+          if (num3 && !pages.length) num3.value = this.addPage > 1 ? String(this.addPage) : "";
           this._rebuildBar();
           this._paintRange();
           this._renderQualitySelect(prevQuality);
@@ -30221,11 +30305,11 @@ ${String(blockText != null ? blockText : "").trim()}`);
         }
         /** 解析态提示行（解析中/失败原因；null = 隐藏） */
         _setResolveState(text2, kind = "error") {
-          const el2 = this.addPopup ? q(this.addPopup, "#lit-add-rstate") : null;
-          if (!el2) return;
-          el2.style.display = text2 ? "" : "none";
-          el2.textContent = text2 || "";
-          el2.classList.toggle("is-error", !!text2 && kind === "error");
+          const el3 = this.addPopup ? q(this.addPopup, "#lit-add-rstate") : null;
+          if (!el3) return;
+          el3.style.display = text2 ? "" : "none";
+          el3.textContent = text2 || "";
+          el3.classList.toggle("is-error", !!text2 && kind === "error");
         }
         /** 分P 切换（ADR-0133）：量程与范围重置为全选，档位按该 P 的 cid 静默重查（未登录/失败 → 清档回落固定列表） */
         async _switchAddPage(p) {
@@ -31052,50 +31136,50 @@ ${String(blockText != null ? blockText : "").trim()}`);
          * 值没变就不动 DOM——每帧都写会让流式期间的排版反复重排。
          */
         setTermContent(text2, pending) {
-          const el2 = this.termPopup ? q(this.termPopup, "#lit-term-content") : null;
-          if (!el2) return;
-          if (el2.textContent === text2 && el2.classList.contains("bz-lit-term-pending") === pending) return;
-          const wasPending = el2.classList.contains("bz-lit-term-pending");
-          el2.classList.toggle("bz-lit-term-pending", pending);
-          el2.textContent = text2;
-          if (wasPending && !pending && text2) motionContentArrive(el2);
+          const el3 = this.termPopup ? q(this.termPopup, "#lit-term-content") : null;
+          if (!el3) return;
+          if (el3.textContent === text2 && el3.classList.contains("bz-lit-term-pending") === pending) return;
+          const wasPending = el3.classList.contains("bz-lit-term-pending");
+          el3.classList.toggle("bz-lit-term-pending", pending);
+          el3.textContent = text2;
+          if (wasPending && !pending && text2) motionContentArrive(el3);
         }
         /**
          * 属性行的「分析中…」占位（ADR-0152 决策 4）：领域 / 标题这类 AI 产出的行，
          * 在值到达之前统一挂这一句灰字，与正文区的「正在生成…」同语气。
          */
         setTermMetaPending(sel, text2 = "分析中…") {
-          const el2 = this.termPopup ? q(this.termPopup, sel) : null;
-          if (!el2) return;
-          el2.innerHTML = `<span class="bz-lit-rel-bar" aria-hidden="true"></span>${text2}`;
-          el2.classList.add("bz-lit-meta-pending");
+          const el3 = this.termPopup ? q(this.termPopup, sel) : null;
+          if (!el3) return;
+          el3.innerHTML = `<span class="bz-lit-rel-bar" aria-hidden="true"></span>${text2}`;
+          el3.classList.add("bz-lit-meta-pending");
         }
         /** 属性行落值（到达即填）：值与占位同一出口，填完去掉占位灰；从「分析中…」落到真值时播「墨字落纸」 */
         setTermMetaValue(sel, text2) {
-          const el2 = this.termPopup ? q(this.termPopup, sel) : null;
-          if (!el2) return;
-          const wasPending = el2.classList.contains("bz-lit-meta-pending");
-          el2.textContent = text2;
-          el2.classList.remove("bz-lit-meta-pending");
-          if (wasPending) motionMetaSetValue(el2);
+          const el3 = this.termPopup ? q(this.termPopup, sel) : null;
+          if (!el3) return;
+          const wasPending = el3.classList.contains("bz-lit-meta-pending");
+          el3.textContent = text2;
+          el3.classList.remove("bz-lit-meta-pending");
+          if (wasPending) motionMetaSetValue(el3);
         }
         /* ---------- 属性行就地编辑（建议 5 / ADR-0152 决策 16-19） ---------- */
         /**
          * 进入编辑态：展示态 span **就地**换成同字号输入框（不跳布局），回车 / 失焦提交、ESC 放弃。
          * 领域行额外挂联想候选（见 domainCandidates）。已在编辑态（里面有 input）时不再套一层。
          */
-        beginMetaEdit(el2, field) {
+        beginMetaEdit(el3, field) {
           var _a2;
-          if (!this.termPopup || el2.querySelector("input")) return;
-          const cur = ((_a2 = el2.textContent) != null ? _a2 : "").trim();
-          el2.classList.remove("is-editable");
-          el2.textContent = "";
+          if (!this.termPopup || el3.querySelector("input")) return;
+          const cur = ((_a2 = el3.textContent) != null ? _a2 : "").trim();
+          el3.classList.remove("is-editable");
+          el3.textContent = "";
           const input = document.createElement("input");
           input.type = "text";
           input.className = "bz-lit-term-meta-edit";
           input.value = cur === "—" ? "" : cur;
           input.placeholder = field === "term" ? "术语" : field === "title" ? "标题" : "领域";
-          el2.appendChild(input);
+          el3.appendChild(input);
           let done = false;
           const finish = (commit) => {
             var _a3, _b2;
@@ -31105,8 +31189,8 @@ ${String(blockText != null ? blockText : "").trim()}`);
             (_b2 = this.termDomainSuggest) == null ? void 0 : _b2.close();
             this.termDomainSuggest = null;
             const raw = input.value.trim();
-            el2.textContent = "";
-            el2.classList.add("is-editable");
+            el3.textContent = "";
+            el3.classList.add("is-editable");
             if (commit) this.commitMetaEdit(field, raw);
             else this.paintMetaField(field);
           };
@@ -31193,8 +31277,8 @@ ${String(blockText != null ? blockText : "").trim()}`);
          * 面板必须让「正在跑」这件事看得见（而不是一行静止的灰字）。
          */
         entryRelRefresh() {
-          const el2 = this.termPopup ? q(this.termPopup, "#lit-term-meta-rel") : null;
-          if (!el2) return;
+          const el3 = this.termPopup ? q(this.termPopup, "#lit-term-meta-rel") : null;
+          if (!el3) return;
           const st = this.entryRelState;
           const row = this.termPopup ? q(this.termPopup, "#lit-term-meta-relrow") : null;
           if (row) {
@@ -31202,47 +31286,47 @@ ${String(blockText != null ? blockText : "").trim()}`);
             row.style.display = st === "idle" ? "none" : "";
             if (wasHidden && st !== "idle") motionRelRowIn(row);
           }
-          el2.className = "bz-lit-term-meta-v";
+          el3.className = "bz-lit-term-meta-v";
           if (st === "loading") {
-            el2.classList.add("bz-lit-rel-idle");
-            el2.innerHTML = '<span class="bz-lit-rel-bar" aria-hidden="true"></span>分析中…';
+            el3.classList.add("bz-lit-rel-idle");
+            el3.innerHTML = '<span class="bz-lit-rel-bar" aria-hidden="true"></span>分析中…';
             return;
           }
           if (st === "done") {
-            el2.classList.add("bz-lit-rel-ok");
+            el3.classList.add("bz-lit-rel-ok");
             const items = this.entryPreviewItems;
             if (!items.length) {
-              el2.textContent = this.entryRelText || "已建立关联";
+              el3.textContent = this.entryRelText || "已建立关联";
               return;
             }
-            el2.innerHTML = items.map(
+            el3.innerHTML = items.map(
               (it, i) => `<span class="bz-lit-rel-chip"><span>${esc3(it.title)}</span><button type="button" data-rel-drop="${i}" title="这条不写入">✕</button></span>`
             ).join("");
-            motionRelChips(el2);
+            motionRelChips(el3);
             return;
           }
           if (st === "empty") {
-            el2.classList.add("bz-lit-rel-idle");
-            el2.textContent = "暂无关联";
+            el3.classList.add("bz-lit-rel-idle");
+            el3.textContent = "暂无关联";
             return;
           }
           if (st === "queued") {
-            el2.classList.add("bz-lit-rel-idle");
-            el2.textContent = "检索服务不可用，延后至桌面端处理";
+            el3.classList.add("bz-lit-rel-idle");
+            el3.textContent = "检索服务不可用，延后至桌面端处理";
             return;
           }
           if (st === "failed") {
-            el2.classList.add("bz-lit-rel-err");
-            el2.textContent = "关联失败";
+            el3.classList.add("bz-lit-rel-err");
+            el3.textContent = "关联失败";
             return;
           }
           if (st === "off") {
-            el2.classList.add("bz-lit-rel-idle");
-            el2.textContent = "自动双链未开启";
+            el3.classList.add("bz-lit-rel-idle");
+            el3.textContent = "自动双链未开启";
             return;
           }
-          el2.classList.add("bz-lit-rel-idle");
-          el2.textContent = "—";
+          el3.classList.add("bz-lit-rel-idle");
+          el3.textContent = "—";
         }
         /**
          * 点掉一条关联候选（建议 5）：本轮不写它——`entryPreviewPicks`（写入用）与
@@ -31745,8 +31829,8 @@ ${String(blockText != null ? blockText : "").trim()}`);
           if (!this.termPopup) return false;
           if (this.termBusy || this.termPreview || this.termDraftBroken) return true;
           if (this.entryMode === "image") return this.entryImages.length > 0;
-          const el2 = this.entryMode === "passage" ? q(this.termPopup, "#lit-passage-input") : q(this.termPopup, "#lit-term-input");
-          return !!(el2 && el2.value.trim());
+          const el3 = this.entryMode === "passage" ? q(this.termPopup, "#lit-passage-input") : q(this.termPopup, "#lit-term-input");
+          return !!(el3 && el3.value.trim());
         }
         /** 录入面板关闭请求（issue 326）：脏 → 风格化二次确认（ADR-0125 统一壳 + 知识盒域皮）；干净态直关。
          *  遮罩点击与 ESC 都走这里；确认写入成功路径直接调 hideTermEntry（不自带确认）。 */
@@ -31828,8 +31912,8 @@ ${String(blockText != null ? blockText : "").trim()}`);
           this.termPreview = null;
           this.entryImages = [];
           this.entryOnCreated = null;
-          for (const el2 of [this.mask, this.popup, this.videoMask, this.videoPopup, this.addMask, this.addPopup, this.termMask, this.termPopup, this.previewHostEl]) {
-            if (el2 && el2.parentNode) el2.parentNode.removeChild(el2);
+          for (const el3 of [this.mask, this.popup, this.videoMask, this.videoPopup, this.addMask, this.addPopup, this.termMask, this.termPopup, this.previewHostEl]) {
+            if (el3 && el3.parentNode) el3.parentNode.removeChild(el3);
           }
           this.previewHostEl = null;
           this.mask = null;
@@ -32167,10 +32251,10 @@ ${String(blockText != null ? blockText : "").trim()}`);
     let src;
     if (opts == null ? void 0 : opts.source) src = prefillSource(opts.source);
     if (!t) {
-      const view = app.workspace.getActiveViewOfType(MarkdownView);
-      t = ((_b2 = (_a2 = view == null ? void 0 : view.editor) == null ? void 0 : _a2.getSelection()) == null ? void 0 : _b2.trim()) || void 0;
+      const view2 = app.workspace.getActiveViewOfType(MarkdownView);
+      t = ((_b2 = (_a2 = view2 == null ? void 0 : view2.editor) == null ? void 0 : _a2.getSelection()) == null ? void 0 : _b2.trim()) || void 0;
       if (!src) {
-        const file = view == null ? void 0 : view.file;
+        const file = view2 == null ? void 0 : view2.file;
         if (file && file.extension === "md") src = { kind: "note", path: file.path };
       }
     }
@@ -32184,10 +32268,10 @@ ${String(blockText != null ? blockText : "").trim()}`);
     const explicit = String((_a2 = opts == null ? void 0 : opts.text) != null ? _a2 : "").trim();
     if (explicit) text2 = explicit;
     if (opts == null ? void 0 : opts.source) src = prefillSource(opts.source);
-    const view = app.workspace.getActiveViewOfType(MarkdownView);
-    if (!text2) text2 = ((_c = (_b2 = view == null ? void 0 : view.editor) == null ? void 0 : _b2.getSelection()) == null ? void 0 : _c.trim()) || void 0;
+    const view2 = app.workspace.getActiveViewOfType(MarkdownView);
+    if (!text2) text2 = ((_c = (_b2 = view2 == null ? void 0 : view2.editor) == null ? void 0 : _b2.getSelection()) == null ? void 0 : _c.trim()) || void 0;
     if (!src) {
-      const file = view == null ? void 0 : view.file;
+      const file = view2 == null ? void 0 : view2.file;
       if (file && file.extension === "md") src = { kind: "note", path: file.path };
     }
     uiManager == null ? void 0 : uiManager.showPassageEntry(text2, src, opts);
@@ -32197,8 +32281,8 @@ ${String(blockText != null ? blockText : "").trim()}`);
     let src;
     if (opts == null ? void 0 : opts.source) src = prefillSource(opts.source);
     if (!src) {
-      const view = app.workspace.getActiveViewOfType(MarkdownView);
-      const file = view == null ? void 0 : view.file;
+      const view2 = app.workspace.getActiveViewOfType(MarkdownView);
+      const file = view2 == null ? void 0 : view2.file;
       if (file && file.extension === "md") src = { kind: "note", path: file.path };
     }
     uiManager == null ? void 0 : uiManager.showImageEntry(src, opts);
@@ -32518,11 +32602,11 @@ ${body}`;
       domain
     };
   }
-  async function scanClipDirectory(dirPath, deps) {
-    const dir = deps.vault.getAbstractFileByPath(dirPath);
+  async function scanClipDirectory(dirPath, deps2) {
+    const dir = deps2.vault.getAbstractFileByPath(dirPath);
     if (!dir || !Array.isArray(dir.children)) return null;
     const mdFiles2 = dir.children.filter((f) => f && f.extension === "md");
-    const parse = deps.parse || ((f) => parseClipFile(f));
+    const parse = deps2.parse || ((f) => parseClipFile(f));
     const notes = [];
     const rejectedPaths = [];
     for (const f of mdFiles2) {
@@ -33102,8 +33186,8 @@ ${missing.map((m) => `- ${m}`).join("\n")}
       }
     }
     const summary = issues.length ? `扫描 ${scanned} 个条目，发现 ${issues.length} 处指向缺失` : `扫描 ${scanned} 个条目，未发现指向缺失`;
-    const section = { id: "orphan", name: "孤儿条目", summary, issues, scanned };
-    return section;
+    const section2 = { id: "orphan", name: "孤儿条目", summary, issues, scanned };
+    return section2;
   }
   var init_checks_orphans = __esm({
     "src/checkup/checks-orphans.ts"() {
@@ -33492,7 +33576,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
       if ((_a2 = opts.isCancelled) == null ? void 0 : _a2.call(opts)) return null;
       (_b2 = opts.onProgress) == null ? void 0 : _b2.call(opts, { index: i, total, label: CHECKS[i].label });
       try {
-        const section = await CHECKS[i].runner(app, {
+        const section2 = await CHECKS[i].runner(app, {
           tick: async (label, sub) => {
             var _a3;
             (_a3 = opts.onProgress) == null ? void 0 : _a3.call(opts, { index: i, total, label, subDone: sub == null ? void 0 : sub.done, subTotal: sub == null ? void 0 : sub.total });
@@ -33503,8 +33587,8 @@ ${missing.map((m) => `- ${m}`).join("\n")}
             return !!((_a3 = opts.isCancelled) == null ? void 0 : _a3.call(opts));
           }
         });
-        if (section === null) return null;
-        sections.push(section);
+        if (section2 === null) return null;
+        sections.push(section2);
       } catch (e) {
         sections.push({
           id: CHECKS[i].id,
@@ -34321,15 +34405,15 @@ ${missing.map((m) => `- ${m}`).join("\n")}
     padded.set(bytes);
     padded[dataLen] = 128;
     const bitLen = dataLen * 8;
-    const view = new DataView(padded.buffer);
-    view.setUint32(padded.length - 8, Math.floor(bitLen / 4294967296), false);
-    view.setUint32(padded.length - 4, bitLen >>> 0, false);
+    const view2 = new DataView(padded.buffer);
+    view2.setUint32(padded.length - 8, Math.floor(bitLen / 4294967296), false);
+    view2.setUint32(padded.length - 4, bitLen >>> 0, false);
     let h0 = 1779033703, h1 = 3144134277, h2 = 1013904242, h3 = 2773480762;
     let h4 = 1359893119, h5 = 2600822924, h6 = 528734635, h7 = 1541459225;
     const w = new Uint32Array(64);
     const rotr = (x, n) => (x >>> n | x << 32 - n) >>> 0;
     for (let off = 0; off < padded.length; off += 64) {
-      for (let i = 0; i < 16; i++) w[i] = view.getUint32(off + i * 4, false);
+      for (let i = 0; i < 16; i++) w[i] = view2.getUint32(off + i * 4, false);
       for (let i = 16; i < 64; i++) {
         const s0 = (rotr(w[i - 15], 7) ^ rotr(w[i - 15], 18) ^ w[i - 15] >>> 3) >>> 0;
         const s1 = (rotr(w[i - 2], 17) ^ rotr(w[i - 2], 19) ^ w[i - 2] >>> 10) >>> 0;
@@ -34719,10 +34803,10 @@ ${missing.map((m) => `- ${m}`).join("\n")}
       existing.textContent = css;
       return;
     }
-    const el2 = document.createElement("style");
-    el2.id = STYLE_ID;
-    el2.textContent = css;
-    document.head.appendChild(el2);
+    const el3 = document.createElement("style");
+    el3.id = STYLE_ID;
+    el3.textContent = css;
+    document.head.appendChild(el3);
   }
   async function readPluginVersion(app) {
     var _a2, _b2;
@@ -35517,11 +35601,11 @@ ${it.text}`).join("\n"));
       const domRows = card.querySelectorAll(".bz-sp-group-body > .bz-sp-set-row");
       meta.rows.forEach((row, i) => {
         var _a2;
-        const el2 = domRows[i];
-        if (!el2) return;
+        const el3 = domRows[i];
+        if (!el3) return;
         const btnRow = row;
-        if (row === meta.retryRow && el2.dataset.spHitHidden !== "1") el2.style.display = meta.retryVisible ? "" : "none";
-        const desc = el2.querySelector(".bz-sp-set-desc");
+        if (row === meta.retryRow && el3.dataset.spHitHidden !== "1") el3.style.display = meta.retryVisible ? "" : "none";
+        const desc = el3.querySelector(".bz-sp-set-desc");
         if (desc) {
           const text2 = (_a2 = btnRow.desc) != null ? _a2 : "";
           if (desc.textContent !== text2) {
@@ -35529,7 +35613,7 @@ ${it.text}`).join("\n"));
             if (desc.dataset.spOrig !== void 0) desc.dataset.spOrig = text2;
           }
         }
-        const btn = el2.querySelector(".bz-sp-btn");
+        const btn = el3.querySelector(".bz-sp-btn");
         if (btn && !btn.classList.contains("bz-rowbtn--busy")) {
           setRowBtnState(btn, "idle", btnRow.buttonText);
           btn.disabled = btnRow.disabled === true;
@@ -35725,7 +35809,7 @@ ${it.text}`).join("\n"));
       if (!order) return;
       order = scope === "mob" ? { ...order, mob: ids } : { ...order, desk: ids };
     }
-    function persist() {
+    function persist2() {
       if (!order) return;
       void saveHomeConfig(order, app).catch((e) => {
         notifySaveError(e, "入口顺序");
@@ -35739,17 +35823,17 @@ ${it.text}`).join("\n"));
     function applyShift(c) {
       for (let i = 0; i < c.total; i++) {
         if (i === c.from) continue;
-        const el2 = c.rows[i];
-        if (!el2) continue;
+        const el3 = c.rows[i];
+        if (!el3) continue;
         let shift = 0;
         if (c.to > c.from && i > c.from && i <= c.to) shift = -1;
         else if (c.to < c.from && i >= c.to && i < c.from) shift = 1;
         if (shift) {
-          el2.style.transform = `translateY(${shift * c.step}px)`;
-          el2.classList.add(SHIFT_CLS);
+          el3.style.transform = `translateY(${shift * c.step}px)`;
+          el3.classList.add(SHIFT_CLS);
         } else {
-          el2.style.transform = "";
-          el2.classList.remove(SHIFT_CLS);
+          el3.style.transform = "";
+          el3.classList.remove(SHIFT_CLS);
         }
       }
     }
@@ -35764,9 +35848,9 @@ ${it.text}`).join("\n"));
       window.removeEventListener("touchmove", onTouchMove);
       c.el.classList.remove(DRAG_CLS);
       c.el.style.transform = "";
-      for (const el2 of c.rows) {
-        el2.style.transform = "";
-        el2.classList.remove(SHIFT_CLS);
+      for (const el3 of c.rows) {
+        el3.style.transform = "";
+        el3.classList.remove(SHIFT_CLS);
       }
     }
     function onMove(e) {
@@ -35797,20 +35881,20 @@ ${it.text}`).join("\n"));
       if (!active2) return;
       suppressClickUntil = Date.now() + 300;
       if (!order || to === from || !id) {
-        render2();
+        render3();
         return;
       }
       setScopeOrder(reorderTo(order[scope], id, to, hiddenOf(order, scope)));
-      persist();
-      render2(id || void 0);
+      persist2();
+      render3(id || void 0);
     }
-    function attachDrag(el2, listEl2, rows) {
+    function attachDrag(el3, listEl2, rows) {
       const total = rows.length;
-      el2.addEventListener("pointerdown", (e) => {
+      el3.addEventListener("pointerdown", (e) => {
         var _a2, _b2;
         if (e.button) return;
         if (e.target.closest("[data-ent-remove]")) return;
-        const from = rows.indexOf(el2);
+        const from = rows.indexOf(el3);
         if (from < 0 || total < 2) return;
         let step = ((_b2 = (_a2 = rows[0]) == null ? void 0 : _a2.offsetHeight) != null ? _b2 : 40) + 6;
         if (rows.length >= 2) {
@@ -35818,7 +35902,7 @@ ${it.text}`).join("\n"));
           if (d > 0) step = d;
         }
         const c = {
-          el: el2,
+          el: el3,
           listEl: listEl2,
           rows,
           startY: e.clientY,
@@ -35848,7 +35932,7 @@ ${it.text}`).join("\n"));
       const grip = isHidden2 ? '<span class="bz-home-ent-grip" aria-hidden="true">' + iconSpan("grip-vertical") + "</span>" : '<span class="bz-home-ent-grip" role="button" tabindex="0" data-ent-grip="' + d.id + '" aria-label="调整' + d.name + '顺序（上/下方向键）">' + iconSpan("grip-vertical") + "</span>";
       return '<div class="bz-home-ent-row' + (isHidden2 ? " bz-home-ent-row--off" : "") + '" data-ent-row="' + d.id + '">' + grip + '<span class="bz-home-ent-ic" style="color:' + domainColor(d.id) + '">' + iconSpan(d.icon) + '</span><span class="bz-home-ent-nm">' + esc(d.name) + "</span>" + btn + "</div>";
     }
-    function render2(refocusId) {
+    function render3(refocusId) {
       if (!order) return;
       const ids = hiddenOf(order, scope);
       const visible = visibleDomains(order[scope], ids);
@@ -35859,7 +35943,7 @@ ${it.text}`).join("\n"));
       if (!listEl2) return;
       const rows = Array.from(listEl2.querySelectorAll(ROW_SEL));
       const movable = rows.slice(0, visible.length);
-      for (const el2 of movable) attachDrag(el2, listEl2, movable);
+      for (const el3 of movable) attachDrag(el3, listEl2, movable);
       if (refocusId) {
         const target = listEl2.querySelector(`[data-ent-row="${refocusId}"] button, [data-ent-row="${refocusId}"] [data-ent-grip]`);
         target == null ? void 0 : target.focus();
@@ -35877,8 +35961,8 @@ ${it.text}`).join("\n"));
       if (to < 0 || to >= visibleNow.length) return;
       e.preventDefault();
       setScopeOrder(reorderTo(order[scope], id, to, hiddenOf(order, scope)));
-      persist();
-      render2(id);
+      persist2();
+      render3(id);
     });
     root.addEventListener("contextmenu", (e) => {
       if (drag) e.preventDefault();
@@ -35904,8 +35988,8 @@ ${it.text}`).join("\n"));
         const ids = hiddenOf(order, scope);
         if (id && !ids.includes(id)) {
           setHidden([...ids, id]);
-          persist();
-          render2(id);
+          persist2();
+          render3(id);
         }
         return;
       }
@@ -35913,14 +35997,14 @@ ${it.text}`).join("\n"));
       if (rs) {
         const id = rs.dataset.entRestore || "";
         setHidden(hiddenOf(order, scope).filter((x) => x !== id));
-        persist();
-        render2(id);
+        persist2();
+        render3(id);
       }
     });
-    render2();
+    render3();
     void loadHomeOrder(app).then((o) => {
       order = o;
-      render2();
+      render3();
     });
   }
   var ROW_SEL, DRAG_PX, TOUCH_ARM_MS, TOUCH_SLOP_PX, SHIFT_CLS, DRAG_CLS, FLUSH_CLS, blurController;
@@ -36124,9 +36208,9 @@ ${it.text}`).join("\n"));
       return false;
     }
   }
-  function pillKeyOf(el2, keys) {
+  function pillKeyOf(el3, keys) {
     for (const k of keys) {
-      const v = el2.dataset[k];
+      const v = el3.dataset[k];
       if (v) return v;
     }
     return "";
@@ -36138,9 +36222,9 @@ ${it.text}`).join("\n"));
     if (hoverable) {
       box.addEventListener("mouseover", (e) => {
         var _a2;
-        const el2 = (_a2 = e.target) == null ? void 0 : _a2.closest(t.item);
-        if (!el2 || !box.contains(el2)) return;
-        const k = pillKeyOf(el2, t.keys);
+        const el3 = (_a2 = e.target) == null ? void 0 : _a2.closest(t.item);
+        if (!el3 || !box.contains(el3)) return;
+        const k = pillKeyOf(el3, t.keys);
         if (!k || box.dataset.pillHover === k) return;
         box.dataset.pillHover = k;
         resync(true);
@@ -36167,8 +36251,8 @@ ${it.text}`).join("\n"));
     }
     const items = [...box.querySelectorAll(t.item)];
     const hoverKey = (_b2 = box.dataset.pillHover) != null ? _b2 : "";
-    const hovered = hoverKey ? items.find((el2) => pillKeyOf(el2, t.keys) === hoverKey) : void 0;
-    const target = hovered != null ? hovered : items.find((el2) => el2.classList.contains(onClass));
+    const hovered = hoverKey ? items.find((el3) => pillKeyOf(el3, t.keys) === hoverKey) : void 0;
+    const target = hovered != null ? hovered : items.find((el3) => el3.classList.contains(onClass));
     if (!target) {
       pill.classList.remove("is-visible");
       return;
@@ -36209,10 +36293,10 @@ ${it.text}`).join("\n"));
   });
 
   // src/core/ui/flip.ts
-  function safeAnimate(el2, frames, opts) {
-    if (typeof el2.animate !== "function") return null;
+  function safeAnimate(el3, frames, opts) {
+    if (typeof el3.animate !== "function") return null;
     try {
-      return el2.animate(frames, opts);
+      return el3.animate(frames, opts);
     } catch (e) {
       console.error("[flip] 动画不可用，跳过：", e);
       return null;
@@ -36283,26 +36367,26 @@ ${it.text}`).join("\n"));
       const stagger2 = (_d = opts.enter.stagger) != null ? _d : 26;
       const from = (_e = opts.enter.from) != null ? _e : "bottom";
       let idx = 0;
-      nodes.forEach((el2) => {
-        const k = el2.dataset[opts.key];
+      nodes.forEach((el3) => {
+        const k = el3.dataset[opts.key];
         if (!k || (before == null ? void 0 : before.has(k))) return;
         if (idx >= n) {
-          el2.style.opacity = "";
+          el3.style.opacity = "";
           return;
         }
         const delay = idx * stagger2;
         idx++;
         const fromCss = from === "right" ? "translateX(22px) scale(0.96)" : "translateY(6px) scale(0.99)";
-        const ea = safeAnimate(el2, [
+        const ea = safeAnimate(el3, [
           { opacity: 0, transform: fromCss, filter: "blur(3px)" },
           { opacity: 1, transform: "none", filter: "blur(0px)" }
         ], { duration: 300, delay, easing: EASE_OUT, fill: "both" });
         if (!ea) {
-          el2.style.opacity = "";
+          el3.style.opacity = "";
           return;
         }
         ea.onfinish = () => {
-          el2.style.opacity = "";
+          el3.style.opacity = "";
         };
       });
     }
@@ -37079,28 +37163,28 @@ ${it.text}`).join("\n"));
       return false;
     }
   }
-  function waapi4(el2, frames, opts) {
-    if (!el2 || reduced5() || typeof el2.animate !== "function") {
+  function waapi4(el3, frames, opts) {
+    if (!el3 || reduced5() || typeof el3.animate !== "function") {
       const last = frames[frames.length - 1];
-      if (el2 && last) for (const k of Object.keys(last)) {
+      if (el3 && last) for (const k of Object.keys(last)) {
         if (k === "offset") continue;
         try {
-          el2.style[k] = String(last[k]);
+          el3.style[k] = String(last[k]);
         } catch (e) {
         }
       }
       return null;
     }
     try {
-      return el2.animate(frames, opts);
+      return el3.animate(frames, opts);
     } catch (e) {
       return null;
     }
   }
-  function waapiLoop(el2, frames, opts) {
-    if (!el2 || reduced5() || typeof el2.animate !== "function") return null;
+  function waapiLoop(el3, frames, opts) {
+    if (!el3 || reduced5() || typeof el3.animate !== "function") return null;
     try {
-      return el2.animate(frames, opts);
+      return el3.animate(frames, opts);
     } catch (e) {
       return null;
     }
@@ -37262,26 +37346,26 @@ ${it.text}`).join("\n"));
     const c = [0, 1, 2].map((i) => Math.round(a[i] + (target[i] - a[i]) * t));
     return `rgb(${c[0]}, ${c[1]}, ${c[2]})`;
   }
-  function varRgb(el2, name) {
+  function varRgb(el3, name) {
     try {
-      const v = el2 ? getComputedStyle(el2).getPropertyValue(name).trim() : "";
+      const v = el3 ? getComputedStyle(el3).getPropertyValue(name).trim() : "";
       return v ? parseRgb(v) : null;
     } catch (e) {
       return null;
     }
   }
-  function timeBoxOf(el2) {
+  function timeBoxOf(el3) {
     var _a2;
-    return (_a2 = el2 == null ? void 0 : el2.closest(".pomodoro-time-box")) != null ? _a2 : el2;
+    return (_a2 = el3 == null ? void 0 : el3.closest(".pomodoro-time-box")) != null ? _a2 : el3;
   }
-  function timeVisualOf(el2) {
-    if (!el2) return el2;
-    const box = el2.closest(".pomodoro-time-box");
+  function timeVisualOf(el3) {
+    if (!el3) return el3;
+    const box = el3.closest(".pomodoro-time-box");
     if (box && box.classList.contains("reel-on")) {
       const reel = box.querySelector(".pomodoro-time-reel");
       if (reel) return reel;
     }
-    return el2;
+    return el3;
   }
   function ensureFlowGrad(svg) {
     if (!svg) return null;
@@ -37600,10 +37684,10 @@ ${it.text}`).join("\n"));
       ],
       { duration: 480, easing: E4.out, delay: 50, fill: "backwards" }
     ));
-    const reveal = (el2, delay, dy = 5) => {
-      if (!el2) return;
+    const reveal = (el3, delay, dy = 5) => {
+      if (!el3) return;
       trackFx(waapi4(
-        el2,
+        el3,
         [
           { opacity: 0, transform: `translateY(${dy}px)`, filter: "blur(4px)" },
           { opacity: 1, transform: "none", filter: "blur(0px)" }
@@ -37769,10 +37853,10 @@ ${it.text}`).join("\n"));
     }
   }
   function revealTime(timeEl) {
-    const el2 = timeBoxOf(timeEl);
-    if (!el2) return;
+    const el3 = timeBoxOf(timeEl);
+    if (!el3) return;
     trackFx(waapi4(
-      el2,
+      el3,
       [
         { opacity: 0, transform: "translateY(7px) scale(.97)", filter: "blur(5px)" },
         { opacity: 1, transform: "none", filter: "blur(0px)" }
@@ -37891,8 +37975,8 @@ ${it.text}`).join("\n"));
     revealTime(byId("pomodoro-time"));
   }
   function motionTimeTick(timeEl, remain, running2) {
-    const el2 = timeBoxOf(timeEl);
-    if (!el2) {
+    const el3 = timeBoxOf(timeEl);
+    if (!el3) {
       lastRemain = -1;
       return;
     }
@@ -37902,20 +37986,20 @@ ${it.text}`).join("\n"));
     }
     const delta = lastRemain - remain;
     if (Math.abs(delta) > 2) {
-      revealTime(el2);
+      revealTime(el3);
     } else if (running2 && delta === 1 && remain > 0 && remain % 60 === 0) {
       trackFx(waapi4(
-        el2,
+        el3,
         [{ transform: "scale(1)" }, { transform: "scale(1.035)" }, { transform: "scale(1)" }],
         { duration: M8.fast + 120, easing: E4.out }
       ));
     }
     lastRemain = remain;
   }
-  function motionPhaseLabelSwap(el2) {
-    if (!el2) return;
+  function motionPhaseLabelSwap(el3) {
+    if (!el3) return;
     trackFx(waapi4(
-      el2,
+      el3,
       [
         { opacity: 0, transform: "translateY(4px)", filter: "blur(3px)" },
         { opacity: 1, transform: "none", filter: "blur(0px)" }
@@ -37923,14 +38007,14 @@ ${it.text}`).join("\n"));
       { duration: M8.base, easing: E4.out }
     ));
   }
-  function motionTaskLine(el2, has) {
-    if (!el2) {
+  function motionTaskLine(el3, has) {
+    if (!el3) {
       taskShown = false;
       return;
     }
     if (has && !taskShown) {
       trackFx(waapi4(
-        el2,
+        el3,
         [{ opacity: 0, transform: "translateY(3px)" }, { opacity: 1, transform: "none" }],
         { duration: M8.base, easing: E4.out }
       ));
@@ -37976,14 +38060,14 @@ ${it.text}`).join("\n"));
     if (!box || performance.now() < bootUntil) return;
     riseBars(box);
   }
-  function motionTodayBlip(el2, text2) {
-    if (!el2) {
+  function motionTodayBlip(el3, text2) {
+    if (!el3) {
       todayText = "";
       return;
     }
     if (todayText && text2 && text2 !== todayText) {
       trackFx(waapi4(
-        el2,
+        el3,
         [{ opacity: 0.35, transform: "translateY(3px)" }, { opacity: 1, transform: "none" }],
         { duration: M8.base, easing: E4.out }
       ));
@@ -38028,10 +38112,10 @@ ${it.text}`).join("\n"));
       btn.addEventListener("pointerleave", up);
     });
   }
-  function motionStatusbarPop(el2, sig, first) {
-    if (!el2 || first || reduced5()) return;
+  function motionStatusbarPop(el3, sig, first) {
+    if (!el3 || first || reduced5()) return;
     trackFx(waapi4(
-      el2,
+      el3,
       [{ transform: "scale(1)" }, { transform: "scale(1.14)" }, { transform: "scale(1)" }],
       { duration: M8.fast + 80, easing: E4.out }
     ));
@@ -38187,16 +38271,16 @@ ${it.text}`).join("\n"));
   }
   function durations() {
     const s = tryGetSettings();
-    const num2 = (v, def) => {
+    const num3 = (v, def) => {
       const n = parseInt(v != null ? v : "", 10);
       return Number.isFinite(n) && n > 0 ? n : def;
     };
     const preset = s.pomodoroPreset && s.pomodoroPreset !== CUSTOM_PRESET_ID ? PRESETS[s.pomodoroPreset] : null;
     return {
-      workMin: preset ? preset.workMin : num2(s.pomodoroWorkMin, 25),
-      shortBreakMin: preset ? preset.shortBreakMin : num2(s.pomodoroShortBreakMin, 5),
-      longBreakMin: preset ? preset.longBreakMin : num2(s.pomodoroLongBreakMin, 15),
-      longBreakInterval: num2(s.pomodoroLongBreakInterval, 4)
+      workMin: preset ? preset.workMin : num3(s.pomodoroWorkMin, 25),
+      shortBreakMin: preset ? preset.shortBreakMin : num3(s.pomodoroShortBreakMin, 5),
+      longBreakMin: preset ? preset.longBreakMin : num3(s.pomodoroLongBreakMin, 15),
+      longBreakInterval: num3(s.pomodoroLongBreakInterval, 4)
     };
   }
   function options() {
@@ -38314,10 +38398,10 @@ ${it.text}`).join("\n"));
       col.className = "pomodoro-stat-col";
       const numText = (_a3 = opts.valueLabel) == null ? void 0 : _a3.call(opts, r);
       if (numText) {
-        const num2 = document.createElement("span");
-        num2.className = "pomodoro-stat-num";
-        num2.textContent = numText;
-        col.appendChild(num2);
+        const num3 = document.createElement("span");
+        num3.className = "pomodoro-stat-num";
+        num3.textContent = numText;
+        col.appendChild(num3);
       }
       const h = document.createElement("div");
       h.className = "pomodoro-stat-bar";
@@ -38417,8 +38501,8 @@ ${it.text}`).join("\n"));
       timeReels = Array.from(layer.querySelectorAll(".pomodoro-rinn"));
     }
     const text2 = `${pad2(Math.floor(remain / 60))}${pad2(remain % 60)}`;
-    timeReels.forEach((el2, i) => {
-      el2.style.transform = `translateY(calc(var(--pomodoro-reel-cell) * -${Number(text2[i])}))`;
+    timeReels.forEach((el3, i) => {
+      el3.style.transform = `translateY(calc(var(--pomodoro-reel-cell) * -${Number(text2[i])}))`;
     });
   }
   function tickBeep(remain, running2) {
@@ -38914,9 +38998,9 @@ ${it.text}`).join("\n"));
   function closePomodoro(immediate = false) {
     if (armedBtn !== null) disarmConfirm();
     if (maskEl) {
-      const el2 = maskEl;
+      const el3 = maskEl;
       maskEl = null;
-      motionPanelClose(el2, () => el2.remove(), immediate);
+      motionPanelClose(el3, () => el3.remove(), immediate);
     }
     if (escHandle2) {
       escHandle2.unregister();
@@ -39226,16 +39310,16 @@ ${it.text}`).join("\n"));
   function skinClass() {
     return `bz-memo-skin-${normalizeMemoSkin(tryGetSettings().memoSkin)}`;
   }
-  function enterLayer(el2, delay, dy) {
-    if (!el2) return;
-    el2.style.opacity = "0";
-    el2.style.transform = `translateY(${dy}px)`;
+  function enterLayer(el3, delay, dy) {
+    if (!el3) return;
+    el3.style.opacity = "0";
+    el3.style.transform = `translateY(${dy}px)`;
     window.setTimeout(() => {
-      el2.style.transition = "opacity 300ms var(--bz-ease-out), transform 300ms var(--bz-ease-out)";
-      el2.style.opacity = "";
-      el2.style.transform = "";
+      el3.style.transition = "opacity 300ms var(--bz-ease-out), transform 300ms var(--bz-ease-out)";
+      el3.style.opacity = "";
+      el3.style.transform = "";
       window.setTimeout(() => {
-        el2.style.transition = "";
+        el3.style.transition = "";
       }, 340);
     }, delay);
   }
@@ -39245,13 +39329,13 @@ ${it.text}`).join("\n"));
       enterLayer(c, 20 + i * 34, 14);
     });
   }
-  function playPanelExit(overlay4) {
+  function playPanelExit(overlay5) {
     const wrap2 = document.createElement("div");
     wrap2.className = "bz-memo-exit";
     const mask = document.createElement("div");
     mask.className = "bz-memo-exit-mask";
     wrap2.appendChild(mask);
-    const panel2 = overlay4.querySelector(".bz-memo-panel");
+    const panel2 = overlay5.querySelector(".bz-memo-panel");
     if (panel2) {
       const r = panel2.getBoundingClientRect();
       if (r.width >= 4 && r.height >= 4) {
@@ -39321,9 +39405,9 @@ ${it.text}`).join("\n"));
     }
   }
   function renderMainHead(items) {
-    const overlay4 = M7.overlay;
-    const titleEl = overlay4.querySelector("[data-memo-main-title]");
-    const countEl = overlay4.querySelector("[data-memo-main-count]");
+    const overlay5 = M7.overlay;
+    const titleEl = overlay5.querySelector("[data-memo-main-title]");
+    const countEl = overlay5.querySelector("[data-memo-main-count]");
     if (!titleEl || !countEl) return;
     titleEl.textContent = sceneLabel(M7.activeScene);
     const undone = items.filter((i) => !i.completed).length;
@@ -39337,9 +39421,9 @@ ${it.text}`).join("\n"));
       ...MemoData.getScenarios().map((s) => ({ scene: s, dot: sceneDot(s) }))
     ];
   }
-  function attachSceneActions(el2, scene) {
+  function attachSceneActions(el3, scene) {
     if (scene === "全部" || scene === "今日" || scene === "重要") return;
-    attachItemActions(el2, buildSceneActions(scene), { sheetTitle: scene, sheetSub: "场景", menuClass: skinClass() || void 0 });
+    attachItemActions(el3, buildSceneActions(scene), { sheetTitle: scene, sheetSub: "场景", menuClass: skinClass() || void 0 });
   }
   function renderNav() {
     const nav = M7.overlay.querySelector("[data-memo-nav]");
@@ -39347,8 +39431,8 @@ ${it.text}`).join("\n"));
     const counts = sceneCounts();
     nav.innerHTML = sceneOptions().map((o) => navBtnHtml(o, M7.activeScene === o.scene, counts.get(o.scene) || 0)).join("");
     mountIcons(nav);
-    nav.querySelectorAll("[data-memo-scene]").forEach((el2) => {
-      attachSceneActions(el2, el2.dataset.memoScene);
+    nav.querySelectorAll("[data-memo-scene]").forEach((el3) => {
+      attachSceneActions(el3, el3.dataset.memoScene);
     });
   }
   function renderMobScenes() {
@@ -39359,8 +39443,8 @@ ${it.text}`).join("\n"));
     wrap2.innerHTML = sceneOptions().map((o) => mobChipHtml(o, M7.activeScene === o.scene)).join("") + mobAddSceneChipHtml();
     wrap2.scrollLeft = keepLeft;
     mountIcons(wrap2);
-    wrap2.querySelectorAll("[data-memo-scene]").forEach((el2) => {
-      attachSceneActions(el2, el2.dataset.memoScene);
+    wrap2.querySelectorAll("[data-memo-scene]").forEach((el3) => {
+      attachSceneActions(el3, el3.dataset.memoScene);
     });
   }
   function metaDueOf(it) {
@@ -39448,18 +39532,18 @@ ${it.text}`).join("\n"));
       spin: flipSpin
     });
     doneJustOpened = false;
-    content.querySelectorAll("[data-memo-openitem]").forEach((el2) => {
-      el2.addEventListener("click", (e) => {
+    content.querySelectorAll("[data-memo-openitem]").forEach((el3) => {
+      el3.addEventListener("click", (e) => {
         e.preventDefault();
         e.stopPropagation();
-        const it = M7.items.find((i) => i.id === el2.dataset.memoOpenitem);
+        const it = M7.items.find((i) => i.id === el3.dataset.memoOpenitem);
         if (it) openItem(it);
       });
     });
-    content.querySelectorAll("[data-memo-pos]").forEach((el2) => {
-      el2.addEventListener("click", (e) => {
+    content.querySelectorAll("[data-memo-pos]").forEach((el3) => {
+      el3.addEventListener("click", (e) => {
         e.stopPropagation();
-        const it = M7.items.find((i) => i.id === el2.dataset.memoPos);
+        const it = M7.items.find((i) => i.id === el3.dataset.memoPos);
         if (it) jumpToNote(it);
       });
     });
@@ -39545,9 +39629,9 @@ ${it.text}`).join("\n"));
   function syncPendingCheck(id, pending) {
     document.querySelectorAll(
       `.bz-memo-card[data-memo-id="${id}"] [data-memo-check], .bz-memo-sheet-entry [data-memo-check]`
-    ).forEach((el2) => {
-      el2.classList.toggle("bz-memo-pending", pending);
-      const ring = el2.querySelector(":scope > .bz-memo-ring");
+    ).forEach((el3) => {
+      el3.classList.toggle("bz-memo-pending", pending);
+      const ring = el3.querySelector(":scope > .bz-memo-ring");
       if (pending && !ring) {
         const NS = "http://www.w3.org/2000/svg";
         const svg = document.createElementNS(NS, "svg");
@@ -39559,7 +39643,7 @@ ${it.text}`).join("\n"));
         c.setAttribute("cy", "10");
         c.setAttribute("r", "8.5");
         svg.appendChild(c);
-        el2.appendChild(svg);
+        el3.appendChild(svg);
       } else if (!pending && ring) {
         ring.remove();
       }
@@ -39645,9 +39729,9 @@ ${it.text}`).join("\n"));
   }
   function rollAway(id, away) {
     var _a2;
-    const overlay4 = M7.overlay;
-    const card = (_a2 = overlay4 == null ? void 0 : overlay4.querySelector(`.bz-memo-panel .bz-memo-card[data-memo-id="${id}"]`)) != null ? _a2 : null;
-    if (!overlay4 || !card) return;
+    const overlay5 = M7.overlay;
+    const card = (_a2 = overlay5 == null ? void 0 : overlay5.querySelector(`.bz-memo-panel .bz-memo-card[data-memo-id="${id}"]`)) != null ? _a2 : null;
+    if (!overlay5 || !card) return;
     const cr = card.getBoundingClientRect();
     if (cr.width < 4 || cr.height < 4) return;
     const EASE_FLY = "cubic-bezier(.4, 0, .3, 1)";
@@ -39671,7 +39755,7 @@ ${it.text}`).join("\n"));
         }, 240);
       });
     });
-    overlay4.appendChild(card);
+    overlay5.appendChild(card);
     card.classList.add("bz-memo-rollcard");
     card.style.left = `${cr.left}px`;
     card.style.top = `${cr.top}px`;
@@ -39705,7 +39789,7 @@ ${it.text}`).join("\n"));
           const g = document.createElement("div");
           g.className = "bz-memo-rollghost";
           g.style.cssText = `left:${cr.right - ROLL_CURL_W}px;top:${cr.top}px;width:${ROLL_CURL_W}px;height:${cr.height}px;opacity:${0.34 - i * 0.13};filter:blur(${(i + 1) * 1.5}px)`;
-          overlay4.appendChild(g);
+          overlay5.appendChild(g);
           const ga = safeAnimate(g, [
             { transform: `translate(0px, 0px) scaleY(1)`, opacity: 0.34 - i * 0.13 },
             { transform: `translate(${dx * 0.5}px, ${dy * 0.5 - 62}px) scaleY(1.14)`, opacity: 0.22 - i * 0.13 },
@@ -39716,7 +39800,7 @@ ${it.text}`).join("\n"));
         });
         window.setTimeout(() => {
           var _a3, _b2, _c;
-          const panel2 = overlay4.querySelector(".bz-memo-panel");
+          const panel2 = overlay5.querySelector(".bz-memo-panel");
           const bar = (_a3 = panel2 == null ? void 0 : panel2.querySelector("[data-memo-donebar]")) != null ? _a3 : null;
           if (bar) {
             bar.classList.remove("bz-memo-donebar-hit");
@@ -39728,7 +39812,7 @@ ${it.text}`).join("\n"));
           rp.className = "bz-memo-ripple";
           rp.style.left = `${Math.round(target.x)}px`;
           rp.style.top = `${Math.round(target.y)}px`;
-          overlay4.appendChild(rp);
+          overlay5.appendChild(rp);
           window.setTimeout(() => rp.remove(), 620);
           const cntEl = (_b2 = panel2 == null ? void 0 : panel2.querySelector("[data-memo-donebar] .bz-memo-donebar-cnt")) != null ? _b2 : null;
           const shown = Number(((_c = cntEl == null ? void 0 : cntEl.textContent) != null ? _c : "").trim());
@@ -40883,18 +40967,18 @@ ${it.text}`).join("\n"));
   function statusCount(items, label) {
     return items.filter((i) => i.current_status === label).length;
   }
-  function filtered(items, view) {
+  function filtered(items, view2) {
     return items.filter((i) => {
-      if (!view.status) return true;
-      if (view.status === "asset") return inStock(i);
-      return i.current_status === statusOf(view.status).label;
-    }).filter((i) => view.year ? String(i.purchase_date || "").startsWith(view.year) : true).filter((i) => {
-      if (!view.q) return true;
-      const q3 = view.q.toLowerCase();
+      if (!view2.status) return true;
+      if (view2.status === "asset") return inStock(i);
+      return i.current_status === statusOf(view2.status).label;
+    }).filter((i) => view2.year ? String(i.purchase_date || "").startsWith(view2.year) : true).filter((i) => {
+      if (!view2.q) return true;
+      const q3 = view2.q.toLowerCase();
       return [i.name, i.category, i.description].join(" ").toLowerCase().includes(q3);
     }).sort((a, b) => {
-      if (view.sort === "price") return (Number(b.purchase_price) || 0) - (Number(a.purchase_price) || 0);
-      if (view.sort === "daily") return dailyCostOf(b) - dailyCostOf(a);
+      if (view2.sort === "price") return (Number(b.purchase_price) || 0) - (Number(a.purchase_price) || 0);
+      if (view2.sort === "daily") return dailyCostOf(b) - dailyCostOf(a);
       return String(b.purchase_date || "").localeCompare(String(a.purchase_date || "")) || String(a.name || "").localeCompare(String(b.name || ""), "zh");
     });
   }
@@ -40909,13 +40993,13 @@ ${it.text}`).join("\n"));
   function resolveYear(items, year) {
     return year && yearsAvailable(items).includes(year) ? year : "";
   }
-  function heroTitleText(view) {
-    if (!view.status) return "全部";
-    if (view.status === "asset") return "资产";
-    return statusOf(view.status).label;
+  function heroTitleText(view2) {
+    if (!view2.status) return "全部";
+    if (view2.status === "asset") return "资产";
+    return statusOf(view2.status).label;
   }
-  function heroSubText(items, view) {
-    return view.status ? `归物本 — ${filtered(items, view).length} 件在列 · FILTERED VIEW` : "归物本 — NOTHING MORE, NOTHING LESS";
+  function heroSubText(items, view2) {
+    return view2.status ? `归物本 — ${filtered(items, view2).length} 件在列 · FILTERED VIEW` : "归物本 — NOTHING MORE, NOTHING LESS";
   }
   function belDetailHtml(it, unit = "cny") {
     var _a2;
@@ -41201,20 +41285,20 @@ ${it.text}`).join("\n"));
       return false;
     }
   }
-  function waapi5(el2, frames, opts) {
-    if (!el2 || reduced6() || typeof el2.animate !== "function") {
+  function waapi5(el3, frames, opts) {
+    if (!el3 || reduced6() || typeof el3.animate !== "function") {
       const last = frames[frames.length - 1];
-      if (el2 && last) for (const k of Object.keys(last)) {
+      if (el3 && last) for (const k of Object.keys(last)) {
         if (k === "offset") continue;
         try {
-          el2.style[k] = String(last[k]);
+          el3.style[k] = String(last[k]);
         } catch (e) {
         }
       }
       return null;
     }
     try {
-      return el2.animate(frames, opts);
+      return el3.animate(frames, opts);
     } catch (e) {
       return null;
     }
@@ -41244,10 +41328,10 @@ ${it.text}`).join("\n"));
     cancelPending5();
     flipBook = null;
   }
-  function stageable(el2) {
-    if (!el2) return false;
+  function stageable(el3) {
+    if (!el3) return false;
     try {
-      const r = el2.getBoundingClientRect();
+      const r = el3.getBoundingClientRect();
       if (r.width <= 2 || r.height <= 2) return false;
       const vh = typeof window !== "undefined" && window.innerHeight || 900;
       return r.top < vh + 120 && r.bottom > -120;
@@ -41265,8 +41349,8 @@ ${it.text}`).join("\n"));
     host.appendChild(d);
     return d;
   }
-  function motionPanelIn2(overlay4) {
-    const panel2 = overlay4.querySelector(".bz-bel-panel");
+  function motionPanelIn2(overlay5) {
+    const panel2 = overlay5.querySelector(".bz-bel-panel");
     if (!panel2) return;
     panel2.style.opacity = "";
     panel2.style.transform = "";
@@ -41279,8 +41363,8 @@ ${it.text}`).join("\n"));
       { duration: M9.base + 140, easing: E5.out }
     );
   }
-  function motionPanelOut(overlay4, done) {
-    const panel2 = overlay4.querySelector(".bz-bel-panel");
+  function motionPanelOut(overlay5, done) {
+    const panel2 = overlay5.querySelector(".bz-bel-panel");
     if (!panel2) {
       done();
       return;
@@ -41333,9 +41417,9 @@ ${it.text}`).join("\n"));
     }
     if (book) flipRepaint(panel2, book);
   }
-  function rollText(el2, dur) {
+  function rollText(el3, dur) {
     var _a2;
-    const finalText = (_a2 = el2.textContent) != null ? _a2 : "";
+    const finalText = (_a2 = el3.textContent) != null ? _a2 : "";
     const m = /^(\D*?)(\d[\d,]*(?:\.\d+)?)(\D*)$/.exec(finalText);
     if (!m) return;
     const prefix = m[1], target = parseFloat(m[2].replace(/,/g, "")), suffix = m[3];
@@ -41343,9 +41427,9 @@ ${it.text}`).join("\n"));
     const decimals = (m[2].split(".")[1] || "").length;
     const fmt2 = (v) => (target * v).toLocaleString("zh-CN", { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
     if (reduced6() || typeof requestAnimationFrame !== "function") return;
-    el2.textContent = prefix + fmt2(0) + suffix;
+    el3.textContent = prefix + fmt2(0) + suffix;
     tween2(dur, (v) => {
-      el2.textContent = v >= 1 ? finalText : prefix + fmt2(v) + suffix;
+      el3.textContent = v >= 1 ? finalText : prefix + fmt2(v) + suffix;
     });
   }
   function bootReveal(panel2) {
@@ -41394,8 +41478,8 @@ ${it.text}`).join("\n"));
         ],
         { duration: M9.base, delay: 140 + i * STAG5, easing: E5.out, fill: "backwards" }
       );
-      const num2 = kpi.querySelector("b");
-      if (num2 && stageable(num2)) rollText(num2, M9.impulse);
+      const num3 = kpi.querySelector("b");
+      if (num3 && stageable(num3)) rollText(num3, M9.impulse);
     });
     const stampN = panel2.querySelector("[data-bel-stampn]");
     if (stageable(stampN)) rollText(stampN, M9.impulse);
@@ -41604,10 +41688,10 @@ ${it.text}`).join("\n"));
     );
   }
   function relay(els, base, step = STAG5) {
-    els.forEach((el2, i) => {
-      if (!stageable(el2)) return;
+    els.forEach((el3, i) => {
+      if (!stageable(el3)) return;
       waapi5(
-        el2,
+        el3,
         [
           { opacity: 0, transform: "translateY(7px)" },
           { opacity: 1, transform: "none" }
@@ -41873,13 +41957,13 @@ ${it.text}`).join("\n"));
       }
       const sections = buildReportSections(stats);
       body.innerHTML = "";
-      for (const section of sections) {
+      for (const section2 of sections) {
         if (!alive()) return finishAbort();
         await yieldToMainThread2();
         if (!alive()) return finishAbort();
-        body.insertAdjacentHTML("beforeend", section.generate());
+        body.insertAdjacentHTML("beforeend", section2.generate());
         motionReportSection(body.lastElementChild);
-        progress.setMessage(`正在生成${section.label}…`);
+        progress.setMessage(`正在生成${section2.label}…`);
       }
       if (alive()) {
         mountIcons(body);
@@ -41939,8 +42023,8 @@ ${it.text}`).join("\n"));
     return `<div class="bz-belr-sec-head"><span class="bz-belr-sec-title">${esc(title)}</span>${note ? `<span class="bz-belr-sec-note">${esc(note)}</span>` : ""}</div>`;
   }
   function summaryHtml(stats) {
-    const card = (num2, label, color) => `<div class="bz-belr-hero" style="background:${color};color:${CHART_INK}">
-      <b>${esc(num2)}</b><span>${esc(label)}</span>
+    const card = (num3, label, color) => `<div class="bz-belr-hero" style="background:${color};color:${CHART_INK}">
+      <b>${esc(num3)}</b><span>${esc(label)}</span>
     </div>`;
     return `<div class="bz-belr-sec">
   ${secHead(`${stats.year} 年购入与离场`)}
@@ -41958,10 +42042,10 @@ ${it.text}`).join("\n"));
   ${cols.map((c) => {
       const height = !c.future && c.value > 0 && max > 0 ? 12 + Math.round(c.value / max * 48) : 3;
       const bg = c.future ? "transparent" : c.accent ? CHART_HIGHLIGHT : CHART_PASTEL_SERIES[0];
-      const num2 = !c.future && c.value > 0 ? `<span class="bz-belr-col-num">${esc(c.display)}</span>` : "";
+      const num3 = !c.future && c.value > 0 ? `<span class="bz-belr-col-num">${esc(c.display)}</span>` : "";
       const cls = ["bz-belr-col", c.future ? "bz-belr-col--future" : "", c.accent ? "bz-belr-col--accent" : ""].filter(Boolean).join(" ");
       return `<div class="${cls}"${c.title ? ` title="${esc(c.title)}"` : ""}>
-        ${num2}
+        ${num3}
         <div class="bz-belr-col-bar" style="height:${height}px;${c.future ? "" : `background:${bg}`}"></div>
         <div class="bz-belr-col-label">${esc(c.label)}</div>
       </div>`;
@@ -42135,24 +42219,24 @@ ${it.text}`).join("\n"));
   </div>
 </div>`;
   }
-  function chipsHtml(items, view) {
+  function chipsHtml(items, view2) {
     const defs = [
       { key: "__all", label: "全部", cnt: items.length },
       { key: "asset", label: "资产", cnt: stockCount(items) },
       ...STATUS_ORDER.map((s) => ({ key: s.key, label: s.label, cnt: statusCount(items, s.label) }))
     ];
     return defs.map((d) => {
-      const active2 = d.key === "__all" ? view.status === null : view.status === d.key;
+      const active2 = d.key === "__all" ? view2.status === null : view2.status === d.key;
       return `<button type="button" class="bz-chip${active2 ? " bz-chip--on" : ""}" data-bel-st="${d.key}"><span>${esc(d.label)}</span><span class="bz-chip-cnt">${d.cnt}</span></button>`;
     }).join("");
   }
-  function mobChipsHtml(items, view) {
+  function mobChipsHtml(items, view2) {
     const defs = [
       { key: "__all", label: "全部", cnt: items.length },
       ...STATUS_ORDER.map((s) => ({ key: s.key, label: s.label, cnt: statusCount(items, s.label) }))
     ];
     return defs.map((d) => {
-      const active2 = d.key === "__all" ? view.status === null : view.status === d.key;
+      const active2 = d.key === "__all" ? view2.status === null : view2.status === d.key;
       return `<button class="bz-mobstrip-chip${active2 ? " is-on" : ""}" data-bel-st="${d.key}"><span>${esc(d.label)}</span><span class="bz-chip-cnt">${d.cnt}</span></button>`;
     }).join("");
   }
@@ -42171,7 +42255,7 @@ ${it.text}`).join("\n"));
       (s, i) => s + (i.current_status === "已转卖" && Number(i.sold_price) > 0 ? Number(i.sold_price) : 0),
       0
     );
-    const kpi = (num2, label, opts = {}) => `<div class="bz-bel-kpi${opts.hero ? " bz-bel-kpi--hero" : ""}${opts.click ? " bz-bel-kpi--click" : ""}"${opts.click ? ' data-bel-statclick="asset" title="只看在库（使用中与闲置）"' : ""}><b>${num2}</b><span>${esc(label)}</span></div>`;
+    const kpi = (num3, label, opts = {}) => `<div class="bz-bel-kpi${opts.hero ? " bz-bel-kpi--hero" : ""}${opts.click ? " bz-bel-kpi--click" : ""}"${opts.click ? ' data-bel-statclick="asset" title="只看在库（使用中与闲置）"' : ""}><b>${num3}</b><span>${esc(label)}</span></div>`;
     return kpi(String(stockCount(items)), "在库件数", { hero: true, click: true }) + kpi(moneyShort(totalAssets(items), unit), "在库投入", { click: true }) + kpi(moneyWith(avgDailyCost(items).toFixed(2), unit), "日均成本") + kpi(`${gone.length} 件 · ${moneyShort(recover2, unit)}`, "已离场 · 回收");
   }
   function stampCount(items) {
@@ -42209,26 +42293,26 @@ ${it.text}`).join("\n"));
     <span class="bz-bel-mut">${mut}</span>
   </div>`;
   }
-  function gridHtml(items, view, unit = "cny", list) {
-    return `<div class="bz-bel-grid" data-bel-grid>${(list != null ? list : filtered(items, view)).map((it, idx) => cellHtml(it, idx, unit)).join("")}</div>`;
+  function gridHtml(items, view2, unit = "cny", list) {
+    return `<div class="bz-bel-grid" data-bel-grid>${(list != null ? list : filtered(items, view2)).map((it, idx) => cellHtml(it, idx, unit)).join("")}</div>`;
   }
-  function renderPanelView(root, items, view, hooks, unit = "cny") {
+  function renderPanelView(root, items, view2, hooks, unit = "cny") {
     var _a2;
     const q3 = (sel) => root.querySelector(sel);
     const title = q3("[data-bel-herotitle]");
-    if (title) title.textContent = heroTitleText(view);
+    if (title) title.textContent = heroTitleText(view2);
     const sub = q3("[data-bel-herosub]");
-    if (sub) sub.textContent = heroSubText(items, view);
+    if (sub) sub.textContent = heroSubText(items, view2);
     const chips = q3("[data-bel-chips]");
-    if (chips) chips.innerHTML = chipsHtml(items, view);
+    if (chips) chips.innerHTML = chipsHtml(items, view2);
     const mob = q3("[data-bel-mobstatus]");
-    if (mob) mob.innerHTML = mobChipsHtml(items, view);
-    view.year = resolveYear(items, view.year);
+    if (mob) mob.innerHTML = mobChipsHtml(items, view2);
+    view2.year = resolveYear(items, view2.year);
     const yearSel = q3("[data-bel-year]");
     if (yearSel) {
-      yearSel.querySelector(".bz-bel-select-label").textContent = view.year || "全部年份";
+      yearSel.querySelector(".bz-bel-select-label").textContent = view2.year || "全部年份";
       const menu = q3("[data-bel-yearmenu]");
-      if (menu) menu.innerHTML = yearsOptionsHtml(items, view.year);
+      if (menu) menu.innerHTML = yearsOptionsHtml(items, view2.year);
     }
     const wrap2 = q3("[data-bel-kpis]");
     if (wrap2) wrap2.innerHTML = kpisHtml(items, unit);
@@ -42237,21 +42321,21 @@ ${it.text}`).join("\n"));
     const mobStats = q3("[data-bel-mobstats]");
     if (mobStats) mobStats.textContent = mobStatsText(items, unit);
     const sortHost = q3("[data-bel-sort]");
-    if (sortHost) sortHost.innerHTML = segmentedHtml(view.sort);
+    if (sortHost) sortHost.innerHTML = segmentedHtml(view2.sort);
     const mobSortSel = q3("[data-bel-mobsortsel]");
     if (mobSortSel) {
-      mobSortSel.querySelector(".bz-bel-select-label").textContent = ((_a2 = SORT_OPTS.find((o) => o.v === view.sort)) != null ? _a2 : SORT_OPTS[0]).label;
+      mobSortSel.querySelector(".bz-bel-select-label").textContent = ((_a2 = SORT_OPTS.find((o) => o.v === view2.sort)) != null ? _a2 : SORT_OPTS[0]).label;
       const menu = q3("[data-bel-mobsortmenu]");
-      if (menu) menu.innerHTML = sortOptionsHtml(view.sort);
+      if (menu) menu.innerHTML = sortOptionsHtml(view2.sort);
     }
     const content = q3("[data-bel-content]");
     if (!content) return;
-    const list = filtered(items, view);
+    const list = filtered(items, view2);
     if (!list.length) {
-      const noMatch = !!view.q || view.status !== null || view.year !== "";
+      const noMatch = !!view2.q || view2.status !== null || view2.year !== "";
       content.innerHTML = emptyHtml(noMatch);
     } else {
-      content.innerHTML = gridHtml(items, view, unit, list);
+      content.innerHTML = gridHtml(items, view2, unit, list);
       const gridEl = content.querySelector("[data-bel-grid]");
       const cols = (getComputedStyle(gridEl).gridTemplateColumns || "").split(" ").filter(Boolean).length || 1;
       const rem = list.length % cols;
@@ -42834,19 +42918,19 @@ ${it.text}`).join("\n"));
     M10.sort = SORT_OPTS.some((o) => o.v === srt) ? srt : "recent";
     M10.year = "";
     M10.db = await loadDatabase();
-    const overlay4 = document.createElement("div");
-    overlay4.className = "bz-panel-overlay";
-    overlay4.innerHTML = panelHtml();
-    document.body.appendChild(overlay4);
-    topifyZ(overlay4);
-    M10.overlay = overlay4;
+    const overlay5 = document.createElement("div");
+    overlay5.className = "bz-panel-overlay";
+    overlay5.innerHTML = panelHtml();
+    document.body.appendChild(overlay5);
+    topifyZ(overlay5);
+    M10.overlay = overlay5;
     M10.renderFn = () => renderAll2();
-    mountIcons(overlay4);
-    motionPanelIn2(overlay4);
+    mountIcons(overlay5);
+    motionPanelIn2(overlay5);
     ensureBelongingsEsc();
-    trapPanelFocus((_a2 = overlay4.querySelector(".bz-bel-panel")) != null ? _a2 : overlay4);
+    trapPanelFocus((_a2 = overlay5.querySelector(".bz-bel-panel")) != null ? _a2 : overlay5);
     if (!isMobileEnv()) {
-      const panelEl = overlay4.querySelector(".bz-bel-panel");
+      const panelEl = overlay5.querySelector(".bz-bel-panel");
       if (panelEl) {
         panelResizeDetach2 = uiResizable(panelEl, {
           minW: PANEL3.MIN_W,
@@ -42897,7 +42981,7 @@ ${it.text}`).join("\n"));
     const onDropKey = (e) => {
       var _a3;
       const t = e.target;
-      const openWrap = overlay4.querySelector(".bz-bel-yearsel.is-open");
+      const openWrap = overlay5.querySelector(".bz-bel-yearsel.is-open");
       if (e.key === "ArrowDown" || e.key === "ArrowUp") {
         if (openWrap) {
           e.preventDefault();
@@ -42923,11 +43007,11 @@ ${it.text}`).join("\n"));
       }
     };
     document.addEventListener("click", onDocClick);
-    overlay4.addEventListener("keydown", onDropKey);
+    overlay5.addEventListener("keydown", onDropKey);
     dropDocClick = onDocClick;
-    overlay4.addEventListener("click", (e) => {
+    overlay5.addEventListener("click", (e) => {
       const t = e.target;
-      if (e.target === overlay4) {
+      if (e.target === overlay5) {
         closePanel();
         return;
       }
@@ -42964,11 +43048,11 @@ ${it.text}`).join("\n"));
     });
     const bindSearch = (inp) => {
       const debounced = debounce(() => {
-        if (M10.overlay !== overlay4) return;
+        if (M10.overlay !== overlay5) return;
         M10.q = inp.value.trim();
         renderAll2();
       }, SEARCH_DEBOUNCE_MS2);
-      const clearBtn = overlay4.querySelector("[data-bel-search-clear]");
+      const clearBtn = overlay5.querySelector("[data-bel-search-clear]");
       const syncClear = () => {
         if (clearBtn) clearBtn.hidden = !inp.value;
       };
@@ -42994,8 +43078,8 @@ ${it.text}`).join("\n"));
         inp.blur();
       });
     };
-    bindSearch(overlay4.querySelector("[data-bel-search]"));
-    const content = overlay4.querySelector("[data-bel-content]");
+    bindSearch(overlay5.querySelector("[data-bel-search]"));
+    const content = overlay5.querySelector("[data-bel-content]");
     content.addEventListener("click", (e) => {
       const cell = e.target.closest("[data-bel-id]");
       if (!cell) return;
@@ -45432,13 +45516,13 @@ ${bodyText.substring(0, 6e3)}`;
     const shown = tags.slice(0, 2).map((t) => `#${esc(t)}`).join(" ");
     return `<span class="bz-clip-item-tags">${shown}${tags.length > 2 ? " …" : ""}</span>`;
   }
-  function tocListHtml(list, curId, timeOf, kw = "") {
+  function tocListHtml(list, curId, timeOf2, kw = "") {
     return list.map((a, i) => `
     <div class="bz-clip-item bz-clip-item--${a.st}${curId && curId === a.id ? " on" : ""}" role="button" tabindex="0" data-id="${esc(a.id)}">
       <span class="bz-clip-no">${pad2(i + 1)}</span>
       <div class="bz-clip-item-main">
         <div class="bz-clip-item-t"><span>${highlightTitleHtml(a.title, kw)}</span></div>
-        <div class="bz-clip-item-meta">${esc(siteShort(a.srcName))} · ${esc(timeOf(a))}${tocTagsHtml(a.tags)}</div>
+        <div class="bz-clip-item-meta">${esc(siteShort(a.srcName))} · ${esc(timeOf2(a))}${tocTagsHtml(a.tags)}</div>
       </div>
     </div>`).join("");
   }
@@ -45477,13 +45561,13 @@ ${bodyText.substring(0, 6e3)}`;
     ${openNoteFoot}
   `;
   }
-  function mobListHtml(list, timeOf) {
+  function mobListHtml(list, timeOf2) {
     return list.map((a) => `
     <div class="bz-clip-mob-item ${a.st}" data-id="${esc(a.id)}">
       <span class="bz-clip-mob-dot ${a.st}"></span>
       <span class="bz-clip-mob-ttl">${esc(a.title)}</span>
       ${a.st === "reading" ? '<span class="bz-clip-mob-tag">在读</span>' : ""}
-      <span class="bz-clip-mob-time">${esc(timeOf(a))}</span>
+      <span class="bz-clip-mob-time">${esc(timeOf2(a))}</span>
     </div>`).join("");
   }
   function mobChHeadHtml(site, unread, readN, savedN, markAllN = 0) {
@@ -45726,20 +45810,20 @@ ${bodyText.substring(0, 6e3)}`;
   function canAnimate() {
     return !reduced7() && typeof document !== "undefined" && typeof HTMLElement !== "undefined" && typeof HTMLElement.prototype.animate === "function";
   }
-  function waapi6(el2, frames, opts) {
-    if (!el2 || reduced7() || typeof el2.animate !== "function") {
+  function waapi6(el3, frames, opts) {
+    if (!el3 || reduced7() || typeof el3.animate !== "function") {
       const last = frames[frames.length - 1];
-      if (el2 && last) for (const k of Object.keys(last)) {
+      if (el3 && last) for (const k of Object.keys(last)) {
         if (k === "offset") continue;
         try {
-          el2.style[k] = String(last[k]);
+          el3.style[k] = String(last[k]);
         } catch (e) {
         }
       }
       return null;
     }
     try {
-      return el2.animate(frames, opts);
+      return el3.animate(frames, opts);
     } catch (e) {
       return null;
     }
@@ -45774,23 +45858,23 @@ ${bodyText.substring(0, 6e3)}`;
     }
     panelAnim = null;
   }
-  function sweep2(el2, from, to, opts = {}) {
-    if (!el2 || !canAnimate()) return;
+  function sweep2(el3, from, to, opts = {}) {
+    if (!el3 || !canAnimate()) return;
     const { delay = 0, dur = M12.base, easing = E6.out, origin } = opts;
-    if (origin) el2.style.transformOrigin = origin;
-    el2.style.willChange = "transform,opacity,filter";
+    if (origin) el3.style.transformOrigin = origin;
+    el3.style.willChange = "transform,opacity,filter";
     let a = null;
     try {
-      a = el2.animate([from, to], { duration: dur, delay, easing, fill: "backwards" });
+      a = el3.animate([from, to], { duration: dur, delay, easing, fill: "backwards" });
     } catch (e) {
       a = null;
     }
     if (!a) {
-      cleanSweep(el2, from, to, !!origin);
+      cleanSweep(el3, from, to, !!origin);
       return;
     }
     const done = () => {
-      cleanSweep(el2, from, to, !!origin);
+      cleanSweep(el3, from, to, !!origin);
       try {
         a.cancel();
       } catch (e) {
@@ -45798,7 +45882,7 @@ ${bodyText.substring(0, 6e3)}`;
     };
     a.finished.then(done).catch(done);
   }
-  function cleanSweep(el2, from, to, hadOrigin) {
+  function cleanSweep(el3, from, to, hadOrigin) {
     const keys = /* @__PURE__ */ new Set([...Object.keys(from), ...Object.keys(to)]);
     if (hadOrigin) keys.add("transformOrigin");
     keys.add("willChange");
@@ -45806,14 +45890,14 @@ ${bodyText.substring(0, 6e3)}`;
       if (k === "offset" || k === "easing" || k === "composite") continue;
       const css = CSS_PROP[k] || k.replace(/[A-Z]/g, (m) => "-" + m.toLowerCase());
       try {
-        el2.style.removeProperty(css);
+        el3.style.removeProperty(css);
       } catch (e) {
       }
     }
   }
-  function cancelAnimsBy(el2, ids) {
-    if (typeof el2.getAnimations !== "function") return;
-    for (const a of el2.getAnimations()) {
+  function cancelAnimsBy(el3, ids) {
+    if (typeof el3.getAnimations !== "function") return;
+    for (const a of el3.getAnimations()) {
       if (ids.includes(a.id)) {
         try {
           a.cancel();
@@ -45822,8 +45906,8 @@ ${bodyText.substring(0, 6e3)}`;
       }
     }
   }
-  function motionPanelIn3(overlay4, reopen) {
-    const frame2 = overlay4.querySelector(".bz-clip-frame");
+  function motionPanelIn3(overlay5, reopen) {
+    const frame2 = overlay5.querySelector(".bz-clip-frame");
     if (!frame2) return;
     try {
       panelAnim == null ? void 0 : panelAnim.cancel();
@@ -45831,12 +45915,12 @@ ${bodyText.substring(0, 6e3)}`;
     }
     panelAnim = null;
     cancelAnimsBy(frame2, [EXIT_ANIM_ID]);
-    cancelAnimsBy(overlay4, [EXIT_MASK_ANIM_ID]);
+    cancelAnimsBy(overlay5, [EXIT_MASK_ANIM_ID]);
     frame2.style.opacity = "";
     frame2.style.transform = "";
     frame2.style.filter = "";
-    if (!overlay4.style.opacity) overlay4.style.opacity = "0";
-    waapi6(overlay4, [{ opacity: 0 }, { opacity: 1 }], { duration: M12.fast + 40, easing: E6.out });
+    if (!overlay5.style.opacity) overlay5.style.opacity = "0";
+    waapi6(overlay5, [{ opacity: 0 }, { opacity: 1 }], { duration: M12.fast + 40, easing: E6.out });
     const a = waapi6(
       frame2,
       [
@@ -45849,19 +45933,19 @@ ${bodyText.substring(0, 6e3)}`;
       panelAnim = a;
       a.finished.then(() => {
         if (panelAnim === a) panelAnim = null;
-        overlay4.style.opacity = "";
+        overlay5.style.opacity = "";
         frame2.style.opacity = "";
         frame2.style.transform = "";
         frame2.style.filter = "";
       }).catch(() => {
-        overlay4.style.opacity = "";
+        overlay5.style.opacity = "";
       });
     } else {
-      overlay4.style.opacity = "";
+      overlay5.style.opacity = "";
     }
   }
-  function motionPanelOut2(overlay4, done) {
-    const frame2 = overlay4.querySelector(".bz-clip-frame");
+  function motionPanelOut2(overlay5, done) {
+    const frame2 = overlay5.querySelector(".bz-clip-frame");
     if (!frame2) {
       done();
       return;
@@ -45895,28 +45979,28 @@ ${bodyText.substring(0, 6e3)}`;
       { duration: M12.move + 40, easing: E6.out, fill: "forwards", id: EXIT_ANIM_ID }
     );
     maskAnim = waapi6(
-      overlay4,
+      overlay5,
       [{ opacity: 1 }, { opacity: 0 }],
       { duration: M12.move + 40, easing: E6.out, id: EXIT_MASK_ANIM_ID }
     );
     if (!a) {
-      overlay4.style.opacity = "";
+      overlay5.style.opacity = "";
       finish();
       return;
     }
     panelAnim = a;
     a.finished.then(() => {
-      overlay4.style.opacity = "";
+      overlay5.style.opacity = "";
       finish();
     }).catch(() => {
-      overlay4.style.opacity = "";
+      overlay5.style.opacity = "";
       finish();
     });
     after6(M12.move + 200, finish);
   }
-  function motionHeadRevealed(overlay4) {
+  function motionHeadRevealed(overlay5) {
     var _a2, _b2, _c;
-    const head = overlay4.querySelector(".bz-clip-desk .bz-panel-head");
+    const head = overlay5.querySelector(".bz-clip-desk .bz-panel-head");
     if (!head || head.offsetParent === null) return;
     const wire = head.querySelector("[data-clip-title-wire]");
     const strip = head.querySelector(".bz-clip-head-strip");
@@ -46200,11 +46284,11 @@ ${bodyText.substring(0, 6e3)}`;
       );
     });
   }
-  function motionMobSearchbarIn(barEl) {
-    sweep2(barEl, { opacity: 0, transform: "translateY(-7px)" }, { opacity: 1, transform: "none" }, { dur: M12.fast + 40 });
+  function motionMobSearchbarIn(barEl2) {
+    sweep2(barEl2, { opacity: 0, transform: "translateY(-7px)" }, { opacity: 1, transform: "none" }, { dur: M12.fast + 40 });
   }
-  function motionSelbarIn(barEl) {
-    sweep2(barEl, { opacity: 0, transform: "translateY(5px) scale(.96)" }, { opacity: 1, transform: "none" }, { dur: M12.fast + 20 });
+  function motionSelbarIn(barEl2) {
+    sweep2(barEl2, { opacity: 0, transform: "translateY(5px) scale(.96)" }, { opacity: 1, transform: "none" }, { dur: M12.fast + 20 });
   }
   function motionArchStamp(host) {
     if (!host || !canAnimate() || host.querySelector(":scope > .bz-clm-stamp")) return;
@@ -46285,11 +46369,11 @@ ${bodyText.substring(0, 6e3)}`;
     if (a) a.finished.then(remove).catch(remove);
     else after6(M12.impulse, remove);
   }
-  function motionReportIn(overlay4) {
-    const frame2 = overlay4.querySelector(".bz-clip-report-frame");
+  function motionReportIn(overlay5) {
+    const frame2 = overlay5.querySelector(".bz-clip-report-frame");
     if (!frame2) return;
-    if (!overlay4.style.opacity) overlay4.style.opacity = "0";
-    waapi6(overlay4, [{ opacity: 0 }, { opacity: 1 }], { duration: M12.fast + 40, easing: E6.out });
+    if (!overlay5.style.opacity) overlay5.style.opacity = "0";
+    waapi6(overlay5, [{ opacity: 0 }, { opacity: 1 }], { duration: M12.fast + 40, easing: E6.out });
     const a = waapi6(
       frame2,
       [
@@ -46299,7 +46383,7 @@ ${bodyText.substring(0, 6e3)}`;
       { duration: M12.base + 60, easing: E6.out }
     );
     const clear = () => {
-      overlay4.style.opacity = "";
+      overlay5.style.opacity = "";
     };
     if (a) a.finished.then(clear).catch(clear);
     else clear();
@@ -46337,10 +46421,10 @@ ${bodyText.substring(0, 6e3)}`;
     sweep2(sec.querySelector(".bz-clp-rep-hours-note"), { opacity: 0 }, { opacity: 1 }, { delay: base + 460, dur: M12.base - 40 });
     sweep2(sec.querySelector(".bz-clp-rep-none"), { opacity: 0 }, { opacity: 1 }, { delay: base + 120, dur: M12.base - 40 });
   }
-  function motionLoadingPulse(el2) {
-    if (!el2 || reduced7() || typeof el2.animate !== "function") return;
+  function motionLoadingPulse(el3) {
+    if (!el3 || reduced7() || typeof el3.animate !== "function") return;
     try {
-      el2.animate([{ opacity: 1 }, { opacity: 0.45 }, { opacity: 1 }], { duration: 1400, iterations: Infinity, easing: "ease-in-out" });
+      el3.animate([{ opacity: 1 }, { opacity: 0.45 }, { opacity: 1 }], { duration: 1400, iterations: Infinity, easing: "ease-in-out" });
     } catch (e) {
     }
   }
@@ -46589,13 +46673,13 @@ ${bodyText.substring(0, 6e3)}`;
       }
       body.innerHTML = "";
       let secIdx = 0;
-      for (const section of buildClipReportSections(data, { availableKeys: availKeys, library, busiest })) {
+      for (const section2 of buildClipReportSections(data, { availableKeys: availKeys, library, busiest })) {
         if (!alive()) return finishAbort();
         await yieldToMainThread(YIELD_MS);
         if (!alive()) return finishAbort();
-        body.insertAdjacentHTML("beforeend", section.generate());
+        body.insertAdjacentHTML("beforeend", section2.generate());
         motionReportSection2(body.lastElementChild, secIdx++);
-        progress == null ? void 0 : progress.setMessage(`正在生成${section.label}…`);
+        progress == null ? void 0 : progress.setMessage(`正在生成${section2.label}…`);
       }
       if (alive()) {
         mountIcons(body);
@@ -46692,14 +46776,14 @@ ${bodyText.substring(0, 6e3)}`;
     const days = /* @__PURE__ */ new Set();
     const perDay = /* @__PURE__ */ new Map();
     let totalMinutes = 0;
-    const todayKey = dayKeyOf2(now.getTime());
+    const todayKey2 = dayKeyOf2(now.getTime());
     let todayMinutes2 = 0;
     let todaySessions = 0;
     let deepMinutes = 0;
     for (const e of valid) {
       const m = Math.round(Number(e.minutes) || 0);
       totalMinutes += m;
-      if (dayKeyOf2(e.ts) === todayKey) {
+      if (dayKeyOf2(e.ts) === todayKey2) {
         todayMinutes2 += m;
         todaySessions += 1;
       }
@@ -47178,10 +47262,10 @@ ${bodyText.substring(0, 6e3)}`;
       return s / 4294967296;
     };
   }
-  function S2(el2, v) {
+  function S2(el3, v) {
     var _a2;
-    if (!el2 || lastStyle2.get(el2) === v) return;
-    const he = el2;
+    if (!el3 || lastStyle2.get(el3) === v) return;
+    const he = el3;
     const prev = (_a2 = he.getAttribute("style")) != null ? _a2 : "";
     if (prev) {
       const incoming = new Set(v.split(";").map((d) => d.split(":")[0].trim()).filter(Boolean));
@@ -47194,10 +47278,10 @@ ${bodyText.substring(0, 6e3)}`;
     he.setAttribute("style", v);
     lastStyle2.set(he, v);
   }
-  function T2(el2, v) {
-    if (!el2 || lastText2.get(el2) === v) return;
-    el2.textContent = v;
-    lastText2.set(el2, v);
+  function T2(el3, v) {
+    if (!el3 || lastText2.get(el3) === v) return;
+    el3.textContent = v;
+    lastText2.set(el3, v);
   }
   function fit2(cv) {
     const ctx = cv.getContext("2d");
@@ -47227,10 +47311,10 @@ ${bodyText.substring(0, 6e3)}`;
     const f = (1 - dist / R) * force;
     return { dx: dx / dist * f, dy: dy / dist * f };
   }
-  function dolly(el2, t, from, dur = 1.1, delay = 0) {
-    if (!el2) return;
+  function dolly(el3, t, from, dur = 1.1, delay = 0) {
+    if (!el3) return;
     const rest = 1 - easeOut2(at2(t, dur, delay));
-    S2(el2, rest <= 5e-4 ? "transform:none" : `transform:${from(rest)}`);
+    S2(el3, rest <= 5e-4 ? "transform:none" : `transform:${from(rest)}`);
   }
   function drawTip(ctx, x, y, text2, pal) {
     ctx.font = `12px ${HEI}`;
@@ -47370,8 +47454,8 @@ ${bodyText.substring(0, 6e3)}`;
       return i === 0 ? 0 : (_a2 = sideBeat[i - 1]) != null ? _a2 : 0;
     };
     const rollDur = (i) => {
-      const el2 = nums[i];
-      const n = Math.round(Number((el2 == null ? void 0 : el2.dataset.n) || 0));
+      const el3 = nums[i];
+      const n = Math.round(Number((el3 == null ? void 0 : el3.dataset.n) || 0));
       return 0.9 + Math.min(6, String(n).length) * 0.12;
     };
     const dur = 4.4 + Math.min(1.2, String(Math.round(d.totalMinutes)).length * 0.18);
@@ -47386,10 +47470,10 @@ ${bodyText.substring(0, 6e3)}`;
           const dir = i === 0 ? `translateY(${((1 - p) * -22).toFixed(1)}px)` : `translateX(${((1 - p) * 30).toFixed(1)}px)`;
           S2(c, `opacity:${clamp013(p * 1.5).toFixed(3)};transform:${par} ${dir}`);
         });
-        nums.forEach((el2, i) => {
-          const n = Number(el2.dataset.n || 0);
+        nums.forEach((el3, i) => {
+          const n = Number(el3.dataset.n || 0);
           const p = easeOutExpo(at2(t, rollDur(i), 0.4 + beatOf(i) + 0.15));
-          T2(el2, el2.getAttribute("data-fmt") === "min" ? humanish(roll(n, p)) : comma(roll(n, p)));
+          T2(el3, el3.getAttribute("data-fmt") === "min" ? humanish(roll(n, p)) : comma(roll(n, p)));
         });
         S2(line, `transform:scaleX(${easeInOut2(at2(t, 1, 0.3)).toFixed(4)})`);
         if (brow) {
@@ -48151,10 +48235,10 @@ ${bodyText.substring(0, 6e3)}`;
           if (ringv) T2(ringv, `${Math.round(rate * clamp013(p))}%`);
         }
         cells.forEach((c, i) => {
-          const el2 = q2(c, '[data-r="num"]');
-          const n = Number((el2 == null ? void 0 : el2.dataset.n) || 0);
+          const el3 = q2(c, '[data-r="num"]');
+          const n = Number((el3 == null ? void 0 : el3.dataset.n) || 0);
           const p = easeOutExpo(at2(t, 1.1, 0.7 + i * 0.22));
-          T2(el2, comma(roll(n, p)));
+          T2(el3, comma(roll(n, p)));
           const depth = 0.6 + i * 0.4;
           S2(c, `opacity:${clamp013(p * 1.6).toFixed(3)};transform:translate(${(px * depth * 6).toFixed(1)}px, ${(py * depth * 4 + (1 - p) * 20).toFixed(1)}px)`);
         });
@@ -48249,10 +48333,10 @@ ${bodyText.substring(0, 6e3)}`;
         }
         cells.forEach((c, i) => {
           var _a2, _b2;
-          const el2 = (_a2 = nums[i]) != null ? _a2 : null;
-          const n = Number((el2 == null ? void 0 : el2.dataset.n) || 0);
+          const el3 = (_a2 = nums[i]) != null ? _a2 : null;
+          const n = Number((el3 == null ? void 0 : el3.dataset.n) || 0);
           const p = easeOutExpo(at2(t, 1.3, 0.4 + i * 0.28));
-          T2(el2, comma(roll(n, p)));
+          T2(el3, comma(roll(n, p)));
           const depth = (_b2 = depths[i]) != null ? _b2 : 1;
           const dip = i === 1 ? 12 : 0;
           S2(c, `opacity:${clamp013(p * 1.6).toFixed(3)};transform:translate(${(px * depth * 9).toFixed(1)}px, ${(py * depth * 6 + (1 - p) * 18).toFixed(1)}px) translateY(${dip}px)`);
@@ -49119,9 +49203,9 @@ ${c.trim()}
   function decodeXmlEntities(s) {
     return s.replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"').replace(/&#39;|&apos;/g, "'").replace(/&nbsp;/g, " ").replace(/&#x([0-9a-fA-F]+);/g, (_, h) => String.fromCharCode(parseInt(h, 16))).replace(/&#(\d+);/g, (_, n) => String.fromCharCode(Number(n))).replace(/&amp;/g, "&");
   }
-  function tagText(block, tag) {
+  function tagText(block2, tag) {
     const re = new RegExp(`<${tag}(?:\\s[^>]*)?>([\\s\\S]*?)<\\/${tag}>`, "i");
-    const m = block.match(re);
+    const m = block2.match(re);
     if (!m) return null;
     const cdata = m[1].match(/^\s*<!\[CDATA\[([\s\S]*?)\]\]>\s*$/);
     const raw = cdata ? cdata[1] : m[1].replace(/<[^>]+>/g, "");
@@ -49130,17 +49214,17 @@ ${c.trim()}
   function parseRssXml(xml) {
     const out = [];
     const blocks = String(xml || "").match(/<(?:item|entry)[\s>][\s\S]*?<\/(?:item|entry)>/gi) || [];
-    for (const block of blocks) {
-      const title = tagText(block, "title") || "";
-      let link = tagText(block, "link") || "";
+    for (const block2 of blocks) {
+      const title = tagText(block2, "title") || "";
+      let link = tagText(block2, "link") || "";
       if (!link) {
-        const hrefM = block.match(/<link[^>]*href=["']([^"']+)["']/i);
+        const hrefM = block2.match(/<link[^>]*href=["']([^"']+)["']/i);
         link = hrefM ? decodeXmlEntities(hrefM[1]).trim() : "";
       }
-      const guid = tagText(block, "guid") || tagText(block, "id") || "";
-      const pubDate = tagText(block, "pubDate") || tagText(block, "published") || tagText(block, "updated") || "";
-      const content = tagText(block, "content:encoded") || tagText(block, "content") || "";
-      const summary = tagText(block, "description") || tagText(block, "summary") || "";
+      const guid = tagText(block2, "guid") || tagText(block2, "id") || "";
+      const pubDate = tagText(block2, "pubDate") || tagText(block2, "published") || tagText(block2, "updated") || "";
+      const content = tagText(block2, "content:encoded") || tagText(block2, "content") || "";
+      const summary = tagText(block2, "description") || tagText(block2, "summary") || "";
       if (!title && !link) continue;
       out.push({ title, link, guid, pubDate, content, summary });
     }
@@ -49429,10 +49513,10 @@ ${c.trim()}
     }
     return { articles, perFeed, titleUpdates, requestFailed: attempted > 0 && failedRequests === attempted };
   }
-  async function runNewsFetchRound(deps) {
-    const httpGet = deps.httpGet;
-    const now = deps.now || Date.now;
-    const disk = await deps.store.read();
+  async function runNewsFetchRound(deps2) {
+    const httpGet = deps2.httpGet;
+    const now = deps2.now || Date.now;
+    const disk = await deps2.store.read();
     if (!disk) {
       return { added: 0, prunedBilibili: 0, prunedRss: 0, failedSources: ["读取 news.json 失败"], needsCookieNotice: false };
     }
@@ -49487,7 +49571,7 @@ ${c.trim()}
       seenRemoveKeys.add(k);
       removeArticleKeys.push(k);
     }
-    await deps.store.write({
+    await deps2.store.write({
       set: {
         articles: newArticles,
         ...allFailed ? {} : { lastFetchAt: now() }
@@ -49509,14 +49593,14 @@ ${c.trim()}
   function setNewsFetchDoneListener(fn) {
     onFetched = fn;
   }
-  async function executeFetchRound(deps, opts) {
+  async function executeFetchRound(deps2, opts) {
     if (fetching) return null;
     fetching = true;
     try {
       const r = await runNewsFetchRound({
-        httpGet: (deps == null ? void 0 : deps.httpGet) || requestUrlHttpGet(),
-        store: (deps == null ? void 0 : deps.store) || defaultFetchStore(),
-        now: deps == null ? void 0 : deps.now
+        httpGet: (deps2 == null ? void 0 : deps2.httpGet) || requestUrlHttpGet(),
+        store: (deps2 == null ? void 0 : deps2.store) || defaultFetchStore(),
+        now: deps2 == null ? void 0 : deps2.now
       });
       if (r.failedSources.length > 0) {
         notice(`聚合讯抓取部分失败：${r.failedSources.join("、")}`, "warning");
@@ -49537,9 +49621,9 @@ ${c.trim()}
       fetching = false;
     }
   }
-  async function maybeFetchNews(deps) {
+  async function maybeFetchNews(deps2) {
     if (fetching) return null;
-    const store2 = (deps == null ? void 0 : deps.store) || defaultFetchStore();
+    const store2 = (deps2 == null ? void 0 : deps2.store) || defaultFetchStore();
     let disk;
     try {
       disk = await store2.read();
@@ -49549,9 +49633,9 @@ ${c.trim()}
     }
     if (!disk) return null;
     const intervalMin = normalizeFetchIntervalMin(disk.fetchIntervalMin);
-    const now = (deps == null ? void 0 : deps.now) || Date.now;
+    const now = (deps2 == null ? void 0 : deps2.now) || Date.now;
     if (now() - disk.lastFetchAt < intervalMin * 60 * 1e3) return null;
-    return executeFetchRound(deps, { silent: true });
+    return executeFetchRound(deps2, { silent: true });
   }
   function notifyManualFetchResult(r) {
     if (!r) {
@@ -49569,8 +49653,8 @@ ${c.trim()}
       }
     });
   }
-  async function fetchNowNews(deps) {
-    return executeFetchRound(deps);
+  async function fetchNowNews(deps2) {
+    return executeFetchRound(deps2);
   }
   var WINDOW_MS, RSS_MAX_PER_FEED, FETCH_TIMEOUT_MS, HEADERS, BILIBILI_API, BILIBILI_HOME, fetching, onFetched;
   var init_news_fetcher = __esm({
@@ -49737,8 +49821,8 @@ ${c.trim()}
     ];
   }
   function setRowDesc(ctx, text2) {
-    const el2 = ctx.rowEl.querySelector(".bz-sp-set-desc") || ctx.rowEl.querySelector(".setting-item-description");
-    if (el2) el2.textContent = text2;
+    const el3 = ctx.rowEl.querySelector(".bz-sp-set-desc") || ctx.rowEl.querySelector(".setting-item-description");
+    if (el3) el3.textContent = text2;
   }
   function notifyWriteFailed(what) {
     notifySaveError(new Error("news.json 不可读或已损坏"), what);
@@ -49813,7 +49897,7 @@ ${c.trim()}
   function upDisplayName(uid, info) {
     return info && info.name ? info.name : `UP ${uid}`;
   }
-  async function backfillUpProfiles(uids, box, refresh2) {
+  async function backfillUpProfiles(uids, box, refresh3) {
     var _a2, _b2;
     let filled = false;
     let writeFailed = false;
@@ -49833,7 +49917,7 @@ ${c.trim()}
       box.upInfo[uid] = { ...box.upInfo[uid], ...info };
       filled = true;
     }
-    if (filled) refresh2();
+    if (filled) refresh3();
     if (filled) return "filled";
     return writeFailed ? "write-failed" : "none";
   }
@@ -49906,8 +49990,8 @@ ${c.trim()}
     const box = { inputValue: "", ups: [...opts.ups], upInfo: { ...opts.upInfo } };
     try {
       const { renderPanelSchema: renderPanelSchema2 } = await Promise.resolve().then(() => (init_renderer(), renderer_exports));
-      const { refresh: refresh2 } = renderPanelSchema2(content, upManagerSettingsSchema(opts, box));
-      void backfillUpProfiles(box.ups, box, refresh2);
+      const { refresh: refresh3 } = renderPanelSchema2(content, upManagerSettingsSchema(opts, box));
+      void backfillUpProfiles(box.ups, box, refresh3);
     } catch (e) {
       close();
       throw e;
@@ -50197,11 +50281,11 @@ ${c.trim()}
       close
     });
   }
-  function createRssCatalogPane(root, deps) {
+  function createRssCatalogPane(root, deps2) {
     let catalog = null;
     let subscribed4 = /* @__PURE__ */ new Set();
     let instance = RSS_HUB_DEFAULT_INSTANCE;
-    let query = "";
+    let query2 = "";
     let activeCat = "";
     let searchTimer = null;
     const readSubscribed = async () => {
@@ -50219,7 +50303,7 @@ ${c.trim()}
         subscribed4.add(url);
         btn.textContent = "已订阅";
         notice(`已订阅 ${feed.title || url}`, "success");
-        deps.onChanged();
+        deps2.onChanged();
         return;
       }
       if (outcome === "exists") {
@@ -50273,7 +50357,7 @@ ${c.trim()}
       if (!isSub) {
         btn.addEventListener("click", () => {
           if (parametrized) {
-            openRssRouteFormModal({ feed, instance, onSubscribed: deps.onChanged });
+            openRssRouteFormModal({ feed, instance, onSubscribed: deps2.onChanged });
             return;
           }
           void subscribeFeed(feed, btn);
@@ -50282,9 +50366,9 @@ ${c.trim()}
       row.append(info, tags, btn);
       return row;
     };
-    const renderList2 = (hit, list) => {
+    const renderList3 = (hit, list) => {
       if (!catalog) return;
-      const all = filterCatalogFeeds(catalog, { query, cat: activeCat });
+      const all = filterCatalogFeeds(catalog, { query: query2, cat: activeCat });
       hit.textContent = all.length === catalog.feeds.length ? `共 ${all.length} 个源` : `命中 ${all.length} / ${catalog.feeds.length} 个源`;
       const shown = all.slice(0, RSS_CAT_RENDER_LIMIT);
       if (all.length === 0) {
@@ -50323,7 +50407,7 @@ ${c.trim()}
             catalog = c;
             await readSubscribed();
             notice(`源库已就绪，共收录 ${c.feeds.length} 个源`, "success");
-            render2();
+            render3();
           } catch (e) {
             notice(e instanceof Error ? e.message : String(e), "error");
             btn.disabled = false;
@@ -50348,13 +50432,13 @@ ${c.trim()}
       search.type = "text";
       search.className = "bz-rss-cat-search";
       search.placeholder = "搜索名称、域名、标签或路由…";
-      search.value = query;
+      search.value = query2;
       search.addEventListener("input", () => {
         if (searchTimer) clearTimeout(searchTimer);
         searchTimer = setTimeout(() => {
           searchTimer = null;
-          query = search.value;
-          renderList2(hit, list);
+          query2 = search.value;
+          renderList3(hit, list);
         }, RSS_CAT_SEARCH_DEBOUNCE_MS);
       });
       const chips = document.createElement("div");
@@ -50373,7 +50457,7 @@ ${c.trim()}
           chip2.addEventListener("click", () => {
             activeCat = cat;
             renderChips();
-            renderList2(hit, list);
+            renderList3(hit, list);
           });
           chips.appendChild(chip2);
         };
@@ -50383,10 +50467,10 @@ ${c.trim()}
         }
       };
       renderChips();
-      renderList2(hit, list);
+      renderList3(hit, list);
       root.replaceChildren(meta, src, search, chips, hit, list);
     };
-    const render2 = () => {
+    const render3 = () => {
       if (catalog) renderReady();
       else renderEmpty();
     };
@@ -50394,14 +50478,14 @@ ${c.trim()}
       reload: async () => {
         catalog = await loadRssCatalog(getApp());
         await readSubscribed();
-        render2();
+        render3();
       },
       refreshSubscribed: async () => {
         await readSubscribed();
         if (catalog) {
           const hit = root.querySelector(".bz-rss-cat-hit");
           const list = root.querySelector(".bz-rss-cat-list");
-          if (hit && list) renderList2(hit, list);
+          if (hit && list) renderList3(hit, list);
         }
       },
       dispose: () => {
@@ -51138,8 +51222,8 @@ ${c.trim()}
   }
   function renderHeadIssue() {
     if (!overlayEl2) return;
-    overlayEl2.querySelectorAll("[data-clip-issue]").forEach((el2) => {
-      el2.textContent = `第 ${M11.articles.length} 期`;
+    overlayEl2.querySelectorAll("[data-clip-issue]").forEach((el3) => {
+      el3.textContent = `第 ${M11.articles.length} 期`;
     });
   }
   function currentSrc() {
@@ -51173,9 +51257,9 @@ ${c.trim()}
     return snap;
   }
   function resolveSnap(snap, src) {
-    const live2 = /* @__PURE__ */ new Map();
-    for (const a of queryBySourceFull(M11.articles, M11.sidecar, M11.clipUrls, M11.clipNotes || [], src, M11.upInfo)) live2.set(a.id, a);
-    const pick = (ids) => ids.map((id) => live2.get(id)).filter((a) => !!a);
+    const live3 = /* @__PURE__ */ new Map();
+    for (const a of queryBySourceFull(M11.articles, M11.sidecar, M11.clipUrls, M11.clipNotes || [], src, M11.upInfo)) live3.set(a.id, a);
+    const pick = (ids) => ids.map((id) => live3.get(id)).filter((a) => !!a);
     return { unread: pick(snap.unread), read: pick(snap.read), saved: pick(snap.saved) };
   }
   function dirFor(src) {
@@ -51383,7 +51467,7 @@ ${c.trim()}
     if (!flat.some((a) => a.id === (M11.cur && M11.cur.id))) {
       M11.cur = flat[0];
     }
-    const timeOf = (a) => relTime2(a.timeTs);
+    const timeOf2 = (a) => relTime2(a.timeTs);
     const curId = M11.cur ? M11.cur.id : null;
     if (searchKw) {
       const hit = flat.filter(matchesSearch);
@@ -51395,23 +51479,23 @@ ${c.trim()}
         M11.list = [];
         return;
       }
-      listEl.innerHTML = tocListHtml(hit, curId, timeOf, searchKw);
+      listEl.innerHTML = tocListHtml(hit, curId, timeOf2, searchKw);
       M11.list = hit;
       bindItemMenus();
       return;
     }
     const b = dirFor(src);
     const snapUnreadN = b.unread.length;
-    let html = tocListHtml(b.unread, curId, timeOf, searchKw);
+    let html = tocListHtml(b.unread, curId, timeOf2, searchKw);
     if (b.read.length) {
       const open = deskFoldIsOpen("read", b.read.length, b.saved.length, snapUnreadN);
       html += deskFoldRowHtml("read", b.read.length, open);
-      html += foldBodyHtml(tocListHtml(b.read, curId, timeOf, searchKw), open);
+      html += foldBodyHtml(tocListHtml(b.read, curId, timeOf2, searchKw), open);
     }
     if (b.saved.length) {
       const open = deskFoldIsOpen("saved", b.saved.length, b.saved.length, snapUnreadN);
       html += deskFoldRowHtml("saved", b.saved.length, open);
-      html += foldBodyHtml(tocListHtml(b.saved, curId, timeOf, searchKw), open);
+      html += foldBodyHtml(tocListHtml(b.saved, curId, timeOf2, searchKw), open);
     }
     listEl.innerHTML = html;
     M11.list = flat;
@@ -51501,17 +51585,17 @@ ${c.trim()}
     out.push({ icon: "trash-2", label: "删除", kind: "danger", title: "从收件流删除", onClick: () => deleteNewsItem(a) });
     return out;
   }
-  async function hydrateArticleMarkdown(el2, md, sourcePath, alive) {
+  async function hydrateArticleMarkdown(el3, md, sourcePath, alive) {
     var _a2;
     try {
       const comp = new Component();
-      await MarkdownRenderer.render(getApp(), md, el2, sourcePath, comp);
+      await MarkdownRenderer.render(getApp(), md, el3, sourcePath, comp);
       comp.unload();
     } catch (e) {
     }
     if (!alive()) return;
-    if (!el2.querySelector("*") || !((_a2 = el2.textContent) == null ? void 0 : _a2.trim())) el2.textContent = md;
-    bindImgFallback(el2);
+    if (!el3.querySelector("*") || !((_a2 = el3.textContent) == null ? void 0 : _a2.trim())) el3.textContent = md;
+    bindImgFallback(el3);
   }
   function transformBodyForRead(a, body) {
     var _a2, _b2;
@@ -51866,7 +51950,7 @@ ${c.trim()}
     const clipNotes = M11.clipNotes || [];
     const savedUrls = new Set((M11.sidecar.savedArchive || []).map((x) => x.url));
     const searching = !!searchKw;
-    const timeOf = (a) => relTime2(a.timeTs);
+    const timeOf2 = (a) => relTime2(a.timeTs);
     const chapters = [];
     const byId2 = /* @__PURE__ */ new Map();
     const order = [];
@@ -51897,9 +51981,9 @@ ${c.trim()}
         readN: read.length,
         savedN: saved.length,
         markAllN: markN,
-        activeHtml: mobListHtml(unread, timeOf),
-        readHtml: read.length ? mobListHtml(read, timeOf) : "",
-        savedHtml: saved.length ? mobListHtml(saved, timeOf) : ""
+        activeHtml: mobListHtml(unread, timeOf2),
+        readHtml: read.length ? mobListHtml(read, timeOf2) : "",
+        savedHtml: saved.length ? mobListHtml(saved, timeOf2) : ""
       });
       [...unread, ...read, ...saved].forEach((a) => {
         byId2.set(a.id, a);
@@ -52105,8 +52189,8 @@ ${c.trim()}
     if (!text2) return null;
     const range = sel.getRangeAt(0);
     const node = range.commonAncestorContainer;
-    const el2 = node && node.nodeType === 3 ? node.parentElement : node;
-    const container = el2 && typeof el2.closest === "function" ? el2.closest("[data-clip-md],[data-clip-mob-md]") : null;
+    const el3 = node && node.nodeType === 3 ? node.parentElement : node;
+    const container = el3 && typeof el3.closest === "function" ? el3.closest("[data-clip-md],[data-clip-mob-md]") : null;
     if (!container) return null;
     const r = typeof range.getBoundingClientRect === "function" ? range.getBoundingClientRect() : null;
     return { text: text2, rect: r || { top: 0, left: 0, bottom: 0, right: 0 } };
@@ -52698,17 +52782,17 @@ ${c.trim()}
   function archivedItems(items) {
     return items.filter((i) => !!i.archived);
   }
-  function poolOf(items, view) {
-    return view.archived ? archivedItems(items) : visibleItems(items);
+  function poolOf(items, view2) {
+    return view2.archived ? archivedItems(items) : visibleItems(items);
   }
   function tagCount(items, label) {
     return visibleItems(items).filter((i) => (i.tags || []).includes(label)).length;
   }
-  function filteredItems(items, view) {
-    let list = poolOf(items, view);
-    if (!view.archived && view.tag) list = list.filter((i) => (i.tags || []).includes(view.tag));
+  function filteredItems(items, view2) {
+    let list = poolOf(items, view2);
+    if (!view2.archived && view2.tag) list = list.filter((i) => (i.tags || []).includes(view2.tag));
     const byTimeDesc = (a, b) => (b.created || "").localeCompare(a.created || "") || (b.id || "").localeCompare(a.id || "");
-    const cmp = view.sort === "old" ? (a, b) => (a.created || "").localeCompare(b.created || "") || (a.id || "").localeCompare(b.id || "") : view.sort === "title" ? (a, b) => (a.title || "").localeCompare(b.title || "", "zh-CN") || byTimeDesc(a, b) : byTimeDesc;
+    const cmp = view2.sort === "old" ? (a, b) => (a.created || "").localeCompare(b.created || "") || (a.id || "").localeCompare(b.id || "") : view2.sort === "title" ? (a, b) => (a.title || "").localeCompare(b.title || "", "zh-CN") || byTimeDesc(a, b) : byTimeDesc;
     const base = [...list].sort(cmp);
     const pinned = base.filter((i) => i.pinned);
     const rest = base.filter((i) => !i.pinned);
@@ -52732,13 +52816,13 @@ ${c.trim()}
       <span>${esc(relTime(it.created))}</span></div>
   </div>`;
   }
-  function emptyHtml2(view, items) {
-    if (view && items) {
-      if (view.archived) {
+  function emptyHtml2(view2, items) {
+    if (view2 && items) {
+      if (view2.archived) {
         return `<div class="bz-fav-empty">${emptyHtmlStr("archive", "归档箱是空的", "归档的收藏会冷存在这里，可随时恢复")}</div>`;
       }
-      if (view.tag && !visibleItems(items).some((i) => (i.tags || []).includes(view.tag))) {
-        return `<div class="bz-fav-empty">${emptyHtmlStr("inbox", `「${view.tag}」标签下还没有收藏`, "换个标签看看，或添加一条试试")}</div>`;
+      if (view2.tag && !visibleItems(items).some((i) => (i.tags || []).includes(view2.tag))) {
+        return `<div class="bz-fav-empty">${emptyHtmlStr("inbox", `「${view2.tag}」标签下还没有收藏`, "换个标签看看，或添加一条试试")}</div>`;
       }
     }
     return `<div class="bz-fav-empty">${emptyHtmlStr("inbox", "这块板上还没有卡片", "添加第一条收藏试试")}</div>`;
@@ -52822,41 +52906,41 @@ ${c.trim()}
   <div class="bz-fav-board" data-fav-content></div>
 </div>`;
   }
-  function chipsHtml2(items, view, mobile) {
+  function chipsHtml2(items, view2, mobile) {
     const mk = (dataVal, display, ic2, cnt, active2, grey = false, empty = false) => `<button class="bz-fav-chip${active2 ? " bz-fav-on" : ""}${grey ? " bz-fav-chip--grey" : ""}${empty ? " bz-fav-chip--empty" : ""}" data-fav-tag="${esc(dataVal)}"${active2 ? ' aria-pressed="true"' : ' aria-pressed="false"'}>${ic2 ? iconSpan(ic2, "bz-ic--xs") : ""}<span>${esc(display)} ${cnt}</span></button>`;
     const add = `<button class="bz-fav-chip-add" data-fav-add title="添加收藏" aria-label="添加收藏">${iconSpan(ICON2.add, "bz-ic--xs")}<span>新收藏</span></button>`;
-    const chips = mk(VIEW_ALL, "全部", "", visibleItems(items).length, !view.archived && view.tag === null) + mk(VIEW_ARCHIVED, "已归档", "archive", archivedItems(items).length, view.archived, true) + getTags().map((t) => {
+    const chips = mk(VIEW_ALL, "全部", "", visibleItems(items).length, !view2.archived && view2.tag === null) + mk(VIEW_ARCHIVED, "已归档", "archive", archivedItems(items).length, view2.archived, true) + getTags().map((t) => {
       const n = tagCount(items, t.label);
-      const active2 = !view.archived && view.tag === t.label;
+      const active2 = !view2.archived && view2.tag === t.label;
       if (!n && !active2) return "";
       return mk(t.label, t.label, safeTagIcon(t.ic), n, active2, false, !n);
     }).join("");
     return mobile ? add + chips : chips + add;
   }
-  function boardHtml(items, view) {
-    const list = filteredItems(items, view);
-    if (!list.length) return emptyHtml2(view, items);
+  function boardHtml(items, view2) {
+    const list = filteredItems(items, view2);
+    if (!list.length) return emptyHtml2(view2, items);
     const idxMap = new Map(items.map((it, i) => [it, i]));
     return list.map((it) => {
       var _a2;
       return cardHtml3(it, (_a2 = idxMap.get(it)) != null ? _a2 : 0);
     }).join("");
   }
-  function renderTagsInto(mount, items, view, hooks) {
-    mount.innerHTML = chipsHtml2(items, view, hooks.mobile);
+  function renderTagsInto(mount, items, view2, hooks) {
+    mount.innerHTML = chipsHtml2(items, view2, hooks.mobile);
     hooks.mountIcons(mount);
   }
-  function renderBoardInto(board, items, view, hooks) {
+  function renderBoardInto(board, items, view2, hooks) {
     const keep = board.scrollTop;
-    board.innerHTML = boardHtml(items, view);
+    board.innerHTML = boardHtml(items, view2);
     board.scrollTop = keep;
     hooks.mountIcons(board);
   }
-  function renderPanelView2(panel2, items, view, hooks) {
+  function renderPanelView2(panel2, items, view2, hooks) {
     const tags = panel2.querySelector("[data-fav-tags]");
-    if (tags) renderTagsInto(tags, items, view, hooks);
+    if (tags) renderTagsInto(tags, items, view2, hooks);
     const board = panel2.querySelector("[data-fav-content]");
-    if (board) renderBoardInto(board, items, view, hooks);
+    if (board) renderBoardInto(board, items, view2, hooks);
   }
   var init_render9 = __esm({
     "src/favorites/layouts/board/render.ts"() {
@@ -53212,20 +53296,20 @@ ${c.trim()}
       return false;
     }
   }
-  function waapi7(el2, frames, opts) {
-    if (!el2 || reduced8() || typeof el2.animate !== "function") {
+  function waapi7(el3, frames, opts) {
+    if (!el3 || reduced8() || typeof el3.animate !== "function") {
       const last = frames[frames.length - 1];
-      if (el2 && last) for (const k of Object.keys(last)) {
+      if (el3 && last) for (const k of Object.keys(last)) {
         if (k === "offset") continue;
         try {
-          el2.style[k] = String(last[k]);
+          el3.style[k] = String(last[k]);
         } catch (e) {
         }
       }
       return null;
     }
     try {
-      return el2.animate(frames, opts);
+      return el3.animate(frames, opts);
     } catch (e) {
       return null;
     }
@@ -53249,9 +53333,9 @@ ${c.trim()}
     }
     return board.querySelector(`.bz-fav-card[data-fav-id="${id.replace(/"/g, "")}"]`);
   }
-  function cancelAnimsBy2(el2, ids) {
-    if (typeof el2.getAnimations !== "function") return;
-    for (const a of el2.getAnimations()) {
+  function cancelAnimsBy2(el3, ids) {
+    if (typeof el3.getAnimations !== "function") return;
+    for (const a of el3.getAnimations()) {
       if (ids.includes(a.id)) {
         try {
           a.cancel();
@@ -53260,15 +53344,15 @@ ${c.trim()}
       }
     }
   }
-  function motionPanelIn4(overlay4) {
-    const panel2 = overlay4.querySelector(".bz-fav-panel");
+  function motionPanelIn4(overlay5) {
+    const panel2 = overlay5.querySelector(".bz-fav-panel");
     if (!panel2) return;
     cancelAnimsBy2(panel2, [EXIT_ANIM_ID2]);
-    cancelAnimsBy2(overlay4, [EXIT_MASK_ANIM_ID2]);
+    cancelAnimsBy2(overlay5, [EXIT_MASK_ANIM_ID2]);
     panel2.style.opacity = "";
     panel2.style.transform = "";
     panel2.style.filter = "";
-    waapi7(overlay4, [{ opacity: 0 }, { opacity: 1 }], { duration: M13.move + 40, easing: E7.out });
+    waapi7(overlay5, [{ opacity: 0 }, { opacity: 1 }], { duration: M13.move + 40, easing: E7.out });
     waapi7(
       panel2,
       [
@@ -53279,8 +53363,8 @@ ${c.trim()}
       { duration: 460, easing: E7.out }
     );
   }
-  function motionPanelOut3(overlay4, done) {
-    const panel2 = overlay4.querySelector(".bz-fav-panel");
+  function motionPanelOut3(overlay5, done) {
+    const panel2 = overlay5.querySelector(".bz-fav-panel");
     if (!panel2) {
       done();
       return;
@@ -53300,7 +53384,7 @@ ${c.trim()}
       done();
     };
     let maskAnim = waapi7(
-      overlay4,
+      overlay5,
       [{ opacity: 1 }, { opacity: 0 }],
       { duration: M13.fast + 40, easing: E7.out, fill: "forwards", id: EXIT_MASK_ANIM_ID2 }
     );
@@ -53319,12 +53403,12 @@ ${c.trim()}
     a.finished.then(finish).catch(finish);
     setTimeout(finish, M13.fast + 120);
   }
-  function motionRendered3(overlay4, boot) {
+  function motionRendered3(overlay5, boot) {
     var _a2, _b2;
     cancelPending6();
-    const panel2 = overlay4.querySelector(".bz-fav-panel");
+    const panel2 = overlay5.querySelector(".bz-fav-panel");
     if (!panel2) return;
-    const board = overlay4.querySelector("[data-fav-content]");
+    const board = overlay5.querySelector("[data-fav-content]");
     if (!boot) {
       if (board) ensureEmptyFloat(board);
       return;
@@ -53648,9 +53732,9 @@ ${c.trim()}
     const rows = [
       ...popup.querySelectorAll(":scope > h2, :scope > .bz-fav-fld, :scope > .bz-fav-err, :scope > .bz-fav-btns")
     ];
-    rows.forEach((el2, i) => {
+    rows.forEach((el3, i) => {
       waapi7(
-        el2,
+        el3,
         [
           { opacity: 0, transform: "translateY(8px)", filter: "blur(2px)" },
           { opacity: 1, transform: "none", filter: "blur(0px)" }
@@ -53659,10 +53743,10 @@ ${c.trim()}
       );
     });
   }
-  function motionSwitchPop(el2) {
+  function motionSwitchPop(el3) {
     if (reduced8()) return;
     waapi7(
-      el2,
+      el3,
       [{ transform: "scale(1)" }, { transform: "scale(1.16)", offset: 0.42 }, { transform: "none" }],
       { duration: M13.base - 40, easing: E7.out }
     );
@@ -53707,9 +53791,9 @@ ${c.trim()}
   }
   function motionTagMgrRows(wrap2) {
     if (reduced8()) return;
-    [...wrap2.querySelectorAll(".bz-fav-tagmgr-row, .bz-fav-tagmgr-add")].forEach((el2, i) => {
+    [...wrap2.querySelectorAll(".bz-fav-tagmgr-row, .bz-fav-tagmgr-add")].forEach((el3, i) => {
       waapi7(
-        el2,
+        el3,
         [{ opacity: 0, transform: "translateY(6px)" }, { opacity: 1, transform: "none" }],
         { duration: M13.base, delay: Math.min(i, 10) * STAG7, easing: E7.out, fill: "both" }
       );
@@ -53743,7 +53827,7 @@ ${c.trim()}
     }
     aiAnims.clear();
     try {
-      document.querySelectorAll(".bz-favm-sheen").forEach((el2) => el2.remove());
+      document.querySelectorAll(".bz-favm-sheen").forEach((el3) => el3.remove());
     } catch (e) {
     }
   }
@@ -53944,12 +54028,12 @@ ${c.trim()}
       closePanel3();
       return;
     }
-    const overlay4 = document.createElement("div");
-    overlay4.className = "bz-panel-overlay";
-    overlay4.innerHTML = panelHtml3(isMobileEnv());
-    document.body.appendChild(overlay4);
-    topifyZ(overlay4);
-    M14.overlay = overlay4;
+    const overlay5 = document.createElement("div");
+    overlay5.className = "bz-panel-overlay";
+    overlay5.innerHTML = panelHtml3(isMobileEnv());
+    document.body.appendChild(overlay5);
+    topifyZ(overlay5);
+    M14.overlay = overlay5;
     M14.renderFn = (reveal) => renderAll4(reveal);
     M14.stage = "placeholder";
     motionTeardown7();
@@ -53957,11 +54041,11 @@ ${c.trim()}
     M14.tag = openFilter.tag;
     M14.archived = openFilter.archived;
     M14.sort = normalizeFavSort((_a2 = tryGetSettings()) == null ? void 0 : _a2.favoritesDefaultSort);
-    mountIcons(overlay4);
+    mountIcons(overlay5);
     ensureFavoritesEsc();
-    trapPanelFocus((_b2 = overlay4.querySelector(".bz-fav-panel")) != null ? _b2 : overlay4);
+    trapPanelFocus((_b2 = overlay5.querySelector(".bz-fav-panel")) != null ? _b2 : overlay5);
     if (!isMobileEnv()) {
-      const panelEl = overlay4.querySelector(".bz-fav-panel");
+      const panelEl = overlay5.querySelector(".bz-fav-panel");
       if (panelEl) {
         panelResizeDetach4 = uiResizable(panelEl, {
           minW: PANEL4.MIN_W,
@@ -53972,16 +54056,16 @@ ${c.trim()}
         });
       }
     }
-    motionPanelIn4(overlay4);
+    motionPanelIn4(overlay5);
     window.__bzFavReplay = () => {
-      if (M14.overlay !== overlay4) return;
-      motionPanelIn4(overlay4);
+      if (M14.overlay !== overlay5) return;
+      motionPanelIn4(overlay5);
       M14.stage = "boot";
       renderAll4();
     };
-    overlay4.addEventListener("click", (e) => {
+    overlay5.addEventListener("click", (e) => {
       const t = e.target;
-      if (e.target === overlay4) {
+      if (e.target === overlay5) {
         closePanel3();
         return;
       }
@@ -53994,13 +54078,13 @@ ${c.trim()}
         return;
       }
     });
-    const stickers = overlay4.querySelector("[data-fav-tags]");
+    const stickers = overlay5.querySelector("[data-fav-tags]");
     stickers.addEventListener("click", (e) => {
       const b = e.target.closest("[data-fav-tag]");
       if (!b) return;
       applyTagFilter(b.dataset.favTag);
     });
-    const content = overlay4.querySelector("[data-fav-content]");
+    const content = overlay5.querySelector("[data-fav-content]");
     const openCardDefault = (it, card) => {
       if (card) motionCardPick(card);
       if (isMobileEnv()) {
@@ -54414,8 +54498,8 @@ ${c.trim()}
       if (!data) throw new Error("AI 返回格式错误");
       const res = normalizeAiOrganizeResult(data);
       const setVal = (id, v) => {
-        const el2 = popup.querySelector(id);
-        if (el2 && !el2.value.trim() && v) el2.value = String(v);
+        const el3 = popup.querySelector(id);
+        if (el3 && !el3.value.trim() && v) el3.value = String(v);
       };
       if (ghInfo == null ? void 0 : ghInfo.fetched) setVal("#fz-title", ghInfo.title);
       setVal("#fz-title", res.title);
@@ -56064,28 +56148,28 @@ GitHub 仓库：${ghInfo.title}
       return false;
     }
   }
-  function baseTransformOf(el2) {
+  function baseTransformOf(el3) {
     try {
-      const t = getComputedStyle(el2).transform;
+      const t = getComputedStyle(el3).transform;
       return t && t !== "none" ? t : "";
     } catch (e) {
       return "";
     }
   }
-  function waapi8(el2, frames, opts) {
-    if (!el2 || reduced9() || typeof el2.animate !== "function") {
+  function waapi8(el3, frames, opts) {
+    if (!el3 || reduced9() || typeof el3.animate !== "function") {
       const last = frames[frames.length - 1];
-      if (el2 && last) for (const k of Object.keys(last)) {
+      if (el3 && last) for (const k of Object.keys(last)) {
         if (k === "offset") continue;
         try {
-          el2.style[k] = String(last[k]);
+          el3.style[k] = String(last[k]);
         } catch (e) {
         }
       }
       return null;
     }
     try {
-      return el2.animate(frames, opts);
+      return el3.animate(frames, opts);
     } catch (e) {
       return null;
     }
@@ -56101,14 +56185,14 @@ GitHub 仓库：${ghInfo.title}
     timers8.forEach(clearTimeout);
     timers8.clear();
   }
-  function cancelExit(el2, id) {
+  function cancelExit(el3, id) {
     try {
-      if (typeof el2.getAnimations !== "function") return;
-      for (const a of el2.getAnimations()) if (a.id === id) a.cancel();
+      if (typeof el3.getAnimations !== "function") return;
+      for (const a of el3.getAnimations()) if (a.id === id) a.cancel();
     } catch (e) {
     }
   }
-  function playExit(el2, id, frames, dur, done) {
+  function playExit(el3, id, frames, dur, done) {
     let finished = false;
     const finish = () => {
       if (finished) return;
@@ -56119,7 +56203,7 @@ GitHub 仓库：${ghInfo.title}
       }
       done();
     };
-    const a = waapi8(el2, frames, { duration: dur, easing: E8.out, fill: "forwards", id });
+    const a = waapi8(el3, frames, { duration: dur, easing: E8.out, fill: "forwards", id });
     if (!a) {
       finish();
       return;
@@ -56127,10 +56211,10 @@ GitHub 仓库：${ghInfo.title}
     a.finished.then(finish).catch(finish);
     after8(dur + 160, finish);
   }
-  function synapseLoop(el2) {
-    stopLoop(el2);
-    if (reduced9() || typeof el2.animate !== "function") return;
-    const a = el2.animate(
+  function synapseLoop(el3) {
+    stopLoop(el3);
+    if (reduced9() || typeof el3.animate !== "function") return;
+    const a = el3.animate(
       [
         { transform: "scale(1)", filter: "drop-shadow(0 0 0px rgba(163,61,42,0))" },
         { transform: "scale(1.055)", filter: "drop-shadow(0 0 7px rgba(163,61,42,.45))" },
@@ -56138,18 +56222,18 @@ GitHub 仓库：${ghInfo.title}
       ],
       { duration: 2400, iterations: Infinity, easing: "ease-in-out" }
     );
-    loops2.set(el2, () => {
+    loops2.set(el3, () => {
       try {
         a.cancel();
       } catch (e) {
       }
     });
   }
-  function stopLoop(el2) {
-    const stop = loops2.get(el2);
+  function stopLoop(el3) {
+    const stop = loops2.get(el3);
     if (stop) {
       stop();
-      loops2.delete(el2);
+      loops2.delete(el3);
     }
   }
   function stopAllLoops() {
@@ -56160,10 +56244,10 @@ GitHub 仓库：${ghInfo.title}
     cancelPending7();
     stopAllLoops();
   }
-  function ensureRelative2(el2) {
-    if (!el2) return;
+  function ensureRelative2(el3) {
+    if (!el3) return;
     try {
-      if (getComputedStyle(el2).position === "static") el2.style.position = "relative";
+      if (getComputedStyle(el3).position === "static") el3.style.position = "relative";
     } catch (e) {
     }
   }
@@ -56428,9 +56512,9 @@ GitHub 仓库：${ghInfo.title}
     const foot = content.querySelector(".bz-sb-foot");
     if (foot) after8(700, () => {
       if (!foot.isConnected) return;
-      [...foot.children].forEach((el2, i) => {
+      [...foot.children].forEach((el3, i) => {
         waapi8(
-          el2,
+          el3,
           [{ opacity: 0, transform: "translateY(6px)" }, { opacity: 1, transform: "none" }],
           { duration: M15.base, easing: E8.out, fill: "backwards", delay: i * 40 }
         );
@@ -56457,12 +56541,12 @@ GitHub 仓库：${ghInfo.title}
     if (icon) synapseLoop(icon);
     const seq = [".bz-sb-onboard-title", ".bz-sb-onboard-desc", ".bz-sb-init-btn"];
     seq.forEach((sel, i) => {
-      const el2 = onboard.querySelector(sel);
-      if (!el2) return;
+      const el3 = onboard.querySelector(sel);
+      if (!el3) return;
       after8(80 + i * 90, () => {
-        if (!el2.isConnected) return;
+        if (!el3.isConnected) return;
         waapi8(
-          el2,
+          el3,
           [
             { opacity: 0, transform: "translateY(8px)", filter: "blur(4px)" },
             { opacity: 1, transform: "none", filter: "blur(0px)" }
@@ -56503,16 +56587,16 @@ GitHub 仓库：${ghInfo.title}
       { duration: M15.base + 60, easing: E8.out }
     );
   }
-  function motionWeeklyShellIn(overlay4) {
-    if (!overlay4) return;
-    overlay4.style.opacity = "";
-    overlay4.style.transform = "";
-    overlay4.style.filter = "";
-    cancelExit(overlay4, WEEKLY_EXIT);
-    const base = baseTransformOf(overlay4);
+  function motionWeeklyShellIn(overlay5) {
+    if (!overlay5) return;
+    overlay5.style.opacity = "";
+    overlay5.style.transform = "";
+    overlay5.style.filter = "";
+    cancelExit(overlay5, WEEKLY_EXIT);
+    const base = baseTransformOf(overlay5);
     const withBase = (extra) => base ? `${base} ${extra}` : extra;
     waapi8(
-      overlay4,
+      overlay5,
       [
         { opacity: 0, transform: withBase("scale(.965) translateY(10px)"), filter: "blur(6px)" },
         { opacity: 1, transform: base || "none", filter: "blur(0px)" }
@@ -56600,15 +56684,15 @@ GitHub 仓库：${ghInfo.title}
       });
     });
   }
-  function motionWeeklyOut(overlay4, done) {
-    if (!overlay4) {
+  function motionWeeklyOut(overlay5, done) {
+    if (!overlay5) {
       done();
       return;
     }
-    const base = baseTransformOf(overlay4);
+    const base = baseTransformOf(overlay5);
     const withBase = (extra) => base ? `${base} ${extra}` : extra;
     playExit(
-      overlay4,
+      overlay5,
       WEEKLY_EXIT,
       [
         { opacity: 1, transform: base || "none", filter: "blur(0px)" },
@@ -56684,15 +56768,15 @@ GitHub 仓库：${ghInfo.title}
         else notice("文件不存在或已被移动", "info");
       };
       body == null ? void 0 : body.addEventListener("click", (e) => {
-        const el2 = e.target.closest("[data-path]");
-        if (el2 == null ? void 0 : el2.dataset.path) jump(el2.dataset.path);
+        const el3 = e.target.closest("[data-path]");
+        if (el3 == null ? void 0 : el3.dataset.path) jump(el3.dataset.path);
       });
       body == null ? void 0 : body.addEventListener("keydown", (e) => {
         if (e.key !== "Enter" && e.key !== " ") return;
-        const el2 = e.target.closest("[data-path]");
-        if (el2 == null ? void 0 : el2.dataset.path) {
+        const el3 = e.target.closest("[data-path]");
+        if (el3 == null ? void 0 : el3.dataset.path) {
           e.preventDefault();
-          jump(el2.dataset.path);
+          jump(el3.dataset.path);
         }
       });
       escHandle5 = escManager.register("bz-sb-weekly-modal", {
@@ -58642,11 +58726,11 @@ GitHub 仓库：${ghInfo.title}
          * - note.path 为旧格式日期文件路径时兜底换算为条目文件路径（历史清单兼容）。
          * @returns 成功写入（或幂等跳过）返回 true；路径无法换算日期返回 false。
          */
-        async mergeDiaryBlock(datePath, block) {
+        async mergeDiaryBlock(datePath, block2) {
           var _a2;
           const app = getApp();
-          if (!datePath || !block) return false;
-          const md = block.replace(/\r\n/g, "\n");
+          if (!datePath || !block2) return false;
+          const md = block2.replace(/\r\n/g, "\n");
           const lines = md.split("\n");
           const head = parseDiaryBlockHeader((_a2 = lines[0]) != null ? _a2 : "");
           if (!head) return false;
@@ -59418,9 +59502,9 @@ GitHub 仓库：${ghInfo.title}
 
   // src/core/ui/lock-screen.ts
   function uiLockScreen(opts) {
-    const el2 = document.createElement("div");
-    el2.className = `bz-lockscreen bz-lockscreen--${opts.kind}` + (opts.inline ? " bz-lockscreen--inline" : " bz-lockscreen--mask");
-    el2.dataset.ls = opts.inline ? "box" : "mask";
+    const el3 = document.createElement("div");
+    el3.className = `bz-lockscreen bz-lockscreen--${opts.kind}` + (opts.inline ? " bz-lockscreen--inline" : " bz-lockscreen--mask");
+    el3.dataset.ls = opts.inline ? "box" : "mask";
     const box = document.createElement("div");
     box.className = "bz-lockscreen-box";
     box.dataset.ls = "box";
@@ -59447,13 +59531,13 @@ GitHub 仓库：${ghInfo.title}
       (list || []).forEach((s) => {
         const card = document.createElement("div");
         card.className = "bz-lockscreen-stat";
-        const num2 = document.createElement("b");
-        num2.className = "bz-lockscreen-num";
-        num2.textContent = s.num;
+        const num3 = document.createElement("b");
+        num3.className = "bz-lockscreen-num";
+        num3.textContent = s.num;
         const lab = document.createElement("span");
         lab.className = "bz-lockscreen-label";
         lab.textContent = s.label;
-        card.appendChild(num2);
+        card.appendChild(num3);
         card.appendChild(lab);
         statsWrap.appendChild(card);
       });
@@ -59534,8 +59618,8 @@ GitHub 仓库：${ghInfo.title}
     hint.textContent = opts.hint || "";
     hint.style.display = opts.hint ? "" : "none";
     box.appendChild(hint);
-    if (!opts.inline) el2.style.display = "flex";
-    el2.appendChild(box);
+    if (!opts.inline) el3.style.display = "flex";
+    el3.appendChild(box);
     const focus = () => {
       try {
         input.focus({ preventScroll: true });
@@ -59544,7 +59628,7 @@ GitHub 仓库：${ghInfo.title}
       }
     };
     return {
-      el: el2,
+      el: el3,
       input,
       input2,
       ackBox,
@@ -59579,7 +59663,7 @@ GitHub 仓库：${ghInfo.title}
       },
       focus,
       close: () => {
-        el2.remove();
+        el3.remove();
       }
     };
   }
@@ -59626,20 +59710,20 @@ GitHub 仓库：${ghInfo.title}
       return false;
     }
   }
-  function motionWaapi(el2, frames, opts) {
-    if (!el2 || motionReduced() || typeof el2.animate !== "function") {
+  function motionWaapi(el3, frames, opts) {
+    if (!el3 || motionReduced() || typeof el3.animate !== "function") {
       const last = frames[frames.length - 1];
-      if (el2 && last) for (const k of Object.keys(last)) {
+      if (el3 && last) for (const k of Object.keys(last)) {
         if (k === "offset") continue;
         try {
-          el2.style[k] = String(last[k]);
+          el3.style[k] = String(last[k]);
         } catch (e) {
         }
       }
       return null;
     }
     try {
-      return el2.animate(frames, opts);
+      return el3.animate(frames, opts);
     } catch (e) {
       return null;
     }
@@ -59699,8 +59783,8 @@ GitHub 仓库：${ghInfo.title}
     if (anim) anim.finished.then(gone).catch(gone);
     motionShellAfter(dur + 150, gone);
   }
-  function motionVisible(el2) {
-    return !!el2 && el2.offsetWidth > 0 && el2.offsetHeight > 0;
+  function motionVisible(el3) {
+    return !!el3 && el3.offsetWidth > 0 && el3.offsetHeight > 0;
   }
   function motionArmBoot() {
     intent = "boot";
@@ -59711,14 +59795,14 @@ GitHub 仓库：${ghInfo.title}
   function motionArmSearch() {
     if (!intent) intent = "search";
   }
-  function rise(el2, delay, dur = M16.base, from = {}) {
+  function rise(el3, delay, dur = M16.base, from = {}) {
     var _a2, _b2, _c;
     const y = (_a2 = from.y) != null ? _a2 : 8;
     const blur = (_b2 = from.blur) != null ? _b2 : 4;
     const scale = (_c = from.scale) != null ? _c : 1;
     motionAfter(delay, () => {
       motionWaapi(
-        el2,
+        el3,
         [
           { opacity: 0, transform: `translateY(${y}px)${scale !== 1 ? ` scale(${scale})` : ""}`, filter: `blur(${blur}px)` },
           { opacity: 1, transform: "none", filter: "blur(0px)" }
@@ -59751,22 +59835,22 @@ GitHub 仓库：${ghInfo.title}
           ],
           { duration: 380, easing: E9.out, fill: "backwards" }
         ));
-        items.forEach((el2, i) => rise(el2, 90 + i * 45, M16.base, { y: 6 }));
-        side.forEach((el2, i) => {
-          if (el2) rise(el2, 240 + i * 60, M16.base, { y: 6 });
+        items.forEach((el3, i) => rise(el3, 90 + i * 45, M16.base, { y: 6 }));
+        side.forEach((el3, i) => {
+          if (el3) rise(el3, 240 + i * 60, M16.base, { y: 6 });
         });
         const title = desk.querySelector("[data-vault-title]");
         if (title) rise(title, 60, M16.base, { y: 5 });
         motionBootSweep(popup);
       }
-      if (phase === "boot") rows.forEach((el2, i) => {
-        if (i < 14) rise(el2, 300 + i * STAG9, M16.base, { y: 7 });
+      if (phase === "boot") rows.forEach((el3, i) => {
+        if (i < 14) rise(el3, 300 + i * STAG9, M16.base, { y: 7 });
       });
-      else if (phase === "switch") rows.forEach((el2, i) => {
-        if (i < 12) rise(el2, i * 20, M16.fast + 60, { y: 6, blur: 3 });
+      else if (phase === "switch") rows.forEach((el3, i) => {
+        if (i < 12) rise(el3, i * 20, M16.fast + 60, { y: 6, blur: 3 });
       });
-      else if (phase === "search") rows.forEach((el2, i) => {
-        if (i < 10) rise(el2, i * 14, M16.fast + 40, { y: 4, blur: 2 });
+      else if (phase === "search") rows.forEach((el3, i) => {
+        if (i < 10) rise(el3, i * 14, M16.fast + 40, { y: 4, blur: 2 });
       });
       if (detail) {
         if (phase === "boot" || phase === "switch") revealDetail(detail, phase === "boot" ? 220 : 40);
@@ -59776,14 +59860,14 @@ GitHub 仓库：${ghInfo.title}
     }
     if (motionVisible(mob) && mob) {
       const rows = [...mob.querySelectorAll("[data-mob-body] > .bz-vault-row")];
-      if (phase === "boot") rows.forEach((el2, i) => {
-        if (i < 12) rise(el2, 260 + i * STAG9, M16.base, { y: 7 });
+      if (phase === "boot") rows.forEach((el3, i) => {
+        if (i < 12) rise(el3, 260 + i * STAG9, M16.base, { y: 7 });
       });
-      else if (phase === "switch") rows.forEach((el2, i) => {
-        if (i < 10) rise(el2, i * 20, M16.fast + 60, { y: 6, blur: 3 });
+      else if (phase === "switch") rows.forEach((el3, i) => {
+        if (i < 10) rise(el3, i * 20, M16.fast + 60, { y: 6, blur: 3 });
       });
-      else if (phase === "search") rows.forEach((el2, i) => {
-        if (i < 8) rise(el2, i * 14, M16.fast + 40, { y: 4, blur: 2 });
+      else if (phase === "search") rows.forEach((el3, i) => {
+        if (i < 8) rise(el3, i * 14, M16.fast + 40, { y: 4, blur: 2 });
       });
     }
   }
@@ -59940,11 +60024,11 @@ GitHub 仓库：${ghInfo.title}
     );
     const lines = ['[data-ls="title"]', '[data-ls="sub"]', '[data-ls="row"]'];
     lines.forEach((sel, i) => {
-      const el2 = lsEl.querySelector(sel);
-      if (el2) {
+      const el3 = lsEl.querySelector(sel);
+      if (el3) {
         motionShellAfter(120 + i * 70, () => {
           motionWaapi(
-            el2,
+            el3,
             [
               { opacity: 0, transform: "translateY(6px)", filter: "blur(3px)" },
               { opacity: 1, transform: "none", filter: "blur(0px)" }
@@ -59955,10 +60039,10 @@ GitHub 仓库：${ghInfo.title}
       }
     });
     const stats = [...lsEl.querySelectorAll('[data-ls="stats"] .bz-lockscreen-stat')];
-    stats.forEach((el2, i) => {
+    stats.forEach((el3, i) => {
       motionShellAfter(200 + i * 60, () => {
         motionWaapi(
-          el2,
+          el3,
           [
             { opacity: 0, transform: "translateY(6px)", filter: "blur(3px)" },
             { opacity: 1, transform: "none", filter: "blur(0px)" }
@@ -60029,10 +60113,10 @@ GitHub 仓库：${ghInfo.title}
     );
     motionBootSweep(popup);
   }
-  function motionRevealBody(el2) {
-    if (!el2 || motionReduced() || !motionVisible(el2)) return;
+  function motionRevealBody(el3) {
+    if (!el3 || motionReduced() || !motionVisible(el3)) return;
     motionWaapi(
-      el2,
+      el3,
       [
         { opacity: 0.3, filter: "blur(7px) brightness(1.35)" },
         { opacity: 1, filter: "blur(0px) brightness(1)" }
@@ -60096,8 +60180,8 @@ GitHub 仓库：${ghInfo.title}
       { duration: M16.base, easing: E9.out, fill: "backwards" }
     );
     const secs = [...body.querySelectorAll(".bz-encrypt-health-section, .bz-encrypt-health-item, .bz-encrypt-health-hint")];
-    secs.forEach((el2, i) => {
-      if (i < 12) rise(el2, 90 + i * 35, M16.base, { y: 4, blur: 2 });
+    secs.forEach((el3, i) => {
+      if (i < 12) rise(el3, 90 + i * 35, M16.base, { y: 4, blur: 2 });
     });
   }
   function motionFindRowIn(row) {
@@ -60111,9 +60195,9 @@ GitHub 仓库：${ghInfo.title}
       { duration: M16.fast + 40, easing: E9.out, fill: "backwards" }
     );
   }
-  function motionStatusbarSpin(el2) {
-    if (!el2 || motionReduced()) return;
-    const ic2 = el2.querySelector(".bz-vault-ic");
+  function motionStatusbarSpin(el3) {
+    if (!el3 || motionReduced()) return;
+    const ic2 = el3.querySelector(".bz-vault-ic");
     if (!ic2) return;
     motionWaapi(
       ic2,
@@ -60719,11 +60803,11 @@ GitHub 仓库：${ghInfo.title}
             motionArmSwitch();
             this.renderAll();
           };
-          this.desk.nav.querySelectorAll(".bz-vault-item").forEach((el2) => {
-            el2.addEventListener("click", () => setAsset(el2.getAttribute("data-asset") || "overview"));
+          this.desk.nav.querySelectorAll(".bz-vault-item").forEach((el3) => {
+            el3.addEventListener("click", () => setAsset(el3.getAttribute("data-asset") || "overview"));
           });
-          this.mob.seg.querySelectorAll(".sg").forEach((el2) => {
-            el2.addEventListener("click", () => setAsset(el2.getAttribute("data-masset") || "overview"));
+          this.mob.seg.querySelectorAll(".sg").forEach((el3) => {
+            el3.addEventListener("click", () => setAsset(el3.getAttribute("data-masset") || "overview"));
           });
           (_a2 = this.popup.querySelector('[data-act="lock"]')) == null ? void 0 : _a2.addEventListener("click", () => this.lockNow());
           (_b2 = this.popup.querySelector('[data-act="mob-close"]')) == null ? void 0 : _b2.addEventListener("click", () => this.hide());
@@ -60906,18 +60990,18 @@ GitHub 仓库：${ghInfo.title}
         /** 左栏「立即上锁」旁的已解锁时长（mm:ss，超 1 小时 h:mm:ss） */
         updateUnlockDuration() {
           var _a2;
-          const el2 = (_a2 = this.popup) == null ? void 0 : _a2.querySelector("[data-unlock-dur]");
-          if (!el2) return;
+          const el3 = (_a2 = this.popup) == null ? void 0 : _a2.querySelector("[data-unlock-dur]");
+          if (!el3) return;
           if (!this.dataManager.unlocked || this.unlockedAt === null) {
-            el2.textContent = "";
+            el3.textContent = "";
             return;
           }
           const s = Math.max(0, Math.floor((Date.now() - this.unlockedAt) / 1e3));
           const mm = String(Math.floor(s / 60) % 60).padStart(2, "0");
           const ss = String(s % 60).padStart(2, "0");
           const h = Math.floor(s / 3600);
-          el2.textContent = h > 0 ? `${h}:${mm}:${ss}` : `${mm}:${ss}`;
-          el2.title = "已解锁时长";
+          el3.textContent = h > 0 ? `${h}:${mm}:${ss}` : `${mm}:${ss}`;
+          el3.title = "已解锁时长";
         }
         bumpIdleLock() {
           this.clearIdleLock();
@@ -61035,13 +61119,13 @@ GitHub 仓库：${ghInfo.title}
             bar.el.classList.add("bz-encrypt-health-bar");
             body.appendChild(progress);
             body.appendChild(bar.el);
-            const live2 = document.createElement("div");
-            live2.className = "bz-encrypt-health-live";
+            const live3 = document.createElement("div");
+            live3.className = "bz-encrypt-health-live";
             const liveTitle = document.createElement("div");
             liveTitle.className = "bz-encrypt-health-section-title";
             liveTitle.textContent = "发现的异常";
-            live2.appendChild(liveTitle);
-            body.appendChild(live2);
+            live3.appendChild(liveTitle);
+            body.appendChild(live3);
             motionScanStart(this.healthPopup);
             try {
               const report = await this.dataManager.scanHealth((p) => {
@@ -61051,7 +61135,7 @@ GitHub 仓库：${ghInfo.title}
                   const row = document.createElement("div");
                   row.className = "bz-encrypt-health-item " + (item.cat === "corrupted-body" || item.cat === "corrupted-attachment" ? "bz-encrypt-health-item--bad" : item.cat === "missing-attachment" ? "bz-encrypt-health-item--warn" : "");
                   row.textContent = item.label;
-                  live2.appendChild(row);
+                  live3.appendChild(row);
                   motionFindRowIn(row);
                 }
               });
@@ -61652,21 +61736,21 @@ GitHub 仓库：${ghInfo.title}
         renderNav() {
           const c = this.counts();
           const setCnt = (a, v) => {
-            const el2 = this.popup.querySelector(`[data-cnt="${a}"]`);
-            if (el2) el2.textContent = String(v);
+            const el3 = this.popup.querySelector(`[data-cnt="${a}"]`);
+            if (el3) el3.textContent = String(v);
           };
           setCnt("overview", c.note + c.diary);
           setCnt("note", c.note);
           setCnt("diary", c.diary);
-          this.desk.nav.querySelectorAll(".bz-vault-item").forEach((el2) => {
-            const on = el2.getAttribute("data-asset") === this.asset;
-            el2.classList.toggle("on", on);
-            el2.setAttribute("aria-current", on ? "true" : "false");
+          this.desk.nav.querySelectorAll(".bz-vault-item").forEach((el3) => {
+            const on = el3.getAttribute("data-asset") === this.asset;
+            el3.classList.toggle("on", on);
+            el3.setAttribute("aria-current", on ? "true" : "false");
           });
-          this.mob.seg.querySelectorAll(".sg").forEach((el2) => {
-            const on = el2.getAttribute("data-masset") === this.asset;
-            el2.classList.toggle("on", on);
-            el2.setAttribute("aria-current", on ? "true" : "false");
+          this.mob.seg.querySelectorAll(".sg").forEach((el3) => {
+            const on = el3.getAttribute("data-masset") === this.asset;
+            el3.classList.toggle("on", on);
+            el3.setAttribute("aria-current", on ? "true" : "false");
           });
           const ht = this.popup.querySelector("[data-health-t]");
           const hd = this.popup.querySelector("[data-health-d]");
@@ -61760,21 +61844,21 @@ GitHub 仓库：${ghInfo.title}
           var _a2, _b2;
           mountIcons(area);
           area.querySelectorAll(".card[data-nav]").forEach(
-            (el2) => el2.addEventListener("click", () => this.setAssetFromNav(el2.getAttribute("data-nav")))
+            (el3) => el3.addEventListener("click", () => this.setAssetFromNav(el3.getAttribute("data-nav")))
           );
           (_a2 = area.querySelector('[data-hero="lock-note"]')) == null ? void 0 : _a2.addEventListener("click", () => {
             var _a3;
             return (_a3 = this.onLockCurrentNote) == null ? void 0 : _a3.call(this);
           });
           area.querySelectorAll('[data-hero="health"]').forEach(
-            (el2) => el2.addEventListener("click", () => void this.openHealthDialog())
+            (el3) => el3.addEventListener("click", () => void this.openHealthDialog())
           );
           (_b2 = area.querySelector('[data-hero="recent-all"]')) == null ? void 0 : _b2.addEventListener("click", () => this.setAssetFromNav("note"));
           area.querySelectorAll(".bz-vault-minirow[data-recent]").forEach(
-            (el2) => el2.addEventListener("click", () => {
-              const rid = el2.getAttribute("data-recent-id");
+            (el3) => el3.addEventListener("click", () => {
+              const rid = el3.getAttribute("data-recent-id");
               if (rid) this._selNoteId = rid;
-              this.setAssetFromNav(el2.getAttribute("data-recent"));
+              this.setAssetFromNav(el3.getAttribute("data-recent"));
             })
           );
         }
@@ -61829,17 +61913,17 @@ GitHub 仓库：${ghInfo.title}
           for (const n of notes) {
             const row = document.createElement("div");
             row.innerHTML = noteRowHTML(n, kind, n.id === selId);
-            const el2 = row.firstElementChild;
-            el2.addEventListener("click", () => {
+            const el3 = row.firstElementChild;
+            el3.addEventListener("click", () => {
               this._selNoteId = n.id;
               this.renderDesktop();
             });
-            el2.addEventListener("dblclick", () => {
+            el3.addEventListener("dblclick", () => {
               if (this.previewMask) registerSheetCompanion(this.previewMask);
               void this.openPreview(n);
             });
-            this.attachNoteDrawer(el2, n, kind);
-            listBody.appendChild(el2);
+            this.attachNoteDrawer(el3, n, kind);
+            listBody.appendChild(el3);
           }
           mountIcons(listBody);
           if (keepHead) listBody.scrollTop = prevScroll;
@@ -61920,9 +62004,9 @@ GitHub 仓库：${ghInfo.title}
           return { actions, opts: { sheetHead: this.buildSheetHead(note, isDiary) } };
         }
         /** 笔记行/详情统一右键抽屉（预览/还原/删除） */
-        attachNoteDrawer(el2, note, kind) {
+        attachNoteDrawer(el3, note, kind) {
           const { actions, opts } = this.noteDrawerActions(note, kind);
-          attachItemActions(el2, actions, opts);
+          attachItemActions(el3, actions, opts);
         }
         buildSheetHead(note, isDiary = false) {
           const head = document.createElement("div");
@@ -61959,10 +62043,10 @@ GitHub 仓库：${ghInfo.title}
           var _a2;
           if (activeUnlock && ((_a2 = activeUnlock.el) == null ? void 0 : _a2.isConnected)) activeUnlock.cancel();
           this.activeChangePw = null;
-          document.querySelectorAll("body > .bz-vault-dlg-mask").forEach((el2) => el2.remove());
-          document.querySelectorAll("body > .bz-lockscreen--mask").forEach((el2) => {
-            if (el2.classList.contains("bz-lockscreen--password-vault") || el2.classList.contains("bz-lockscreen--diary")) return;
-            el2.remove();
+          document.querySelectorAll("body > .bz-vault-dlg-mask").forEach((el3) => el3.remove());
+          document.querySelectorAll("body > .bz-lockscreen--mask").forEach((el3) => {
+            if (el3.classList.contains("bz-lockscreen--password-vault") || el3.classList.contains("bz-lockscreen--diary")) return;
+            el3.remove();
           });
           this.hideHealthDialog();
           cancelActiveFlowDialog();
@@ -61992,10 +62076,10 @@ GitHub 仓库：${ghInfo.title}
           this.asset = a;
           lastVisitedAsset = a;
           this.desk.nav.querySelectorAll(".bz-vault-item").forEach(
-            (el2) => el2.classList.toggle("on", el2.getAttribute("data-asset") === a)
+            (el3) => el3.classList.toggle("on", el3.getAttribute("data-asset") === a)
           );
           this.mob.seg.querySelectorAll(".sg").forEach(
-            (el2) => el2.classList.toggle("on", el2.getAttribute("data-masset") === a)
+            (el3) => el3.classList.toggle("on", el3.getAttribute("data-masset") === a)
           );
           motionArmSwitch();
           this.renderAll();
@@ -62091,8 +62175,8 @@ GitHub 仓库：${ghInfo.title}
           const kind = this.asset;
           const notes = [...this.dataManager.manifest.notes].filter((n) => kind === "diary" ? n.kind === "diary-entry" : n.kind !== "diary-entry" && n.kind !== "password-vault" && n.kind !== "people").sort((a, b) => (b.createdAt || "").localeCompare(a.createdAt || ""));
           const kw = this.searchKw;
-          const filtered2 = kw ? notes.filter((n) => (n.title || "").toLowerCase().includes(kw.toLowerCase()) || (n.path || "").toLowerCase().includes(kw.toLowerCase())) : notes;
-          if (!filtered2.length) {
+          const filtered3 = kw ? notes.filter((n) => (n.title || "").toLowerCase().includes(kw.toLowerCase()) || (n.path || "").toLowerCase().includes(kw.toLowerCase())) : notes;
+          if (!filtered3.length) {
             body.replaceChildren(
               uiEmpty(
                 kind === "diary" ? { title: "还没有加密日记", desc: "日记面板把条目改分类为「加密」后移入这里" } : { title: "还没有笔记", desc: "用「加密当前笔记」把整篇笔记移入保险库" }
@@ -62100,16 +62184,16 @@ GitHub 仓库：${ghInfo.title}
             );
             return;
           }
-          for (const n of filtered2) {
+          for (const n of filtered3) {
             const row = document.createElement("div");
             row.innerHTML = noteRowHTML(n, kind, false);
-            const el2 = row.firstElementChild;
-            el2.addEventListener("click", () => {
+            const el3 = row.firstElementChild;
+            el3.addEventListener("click", () => {
               this._selNoteId = n.id;
               this.openNoteMobPage(n, kind);
             });
-            this.attachNoteDrawer(el2, n, kind);
-            body.appendChild(el2);
+            this.attachNoteDrawer(el3, n, kind);
+            body.appendChild(el3);
           }
         }
         /** 移动端二级页骨架：顶栏（返回 + 标题 + ⋮）+ 内容体；back/menu 绑定由调用方接 */
@@ -62412,12 +62496,12 @@ GitHub 仓库：${ghInfo.title}
             const [plain, previewResults] = await Promise.all([bodyP, Promise.all(previewP)]);
             const dataUrls = /* @__PURE__ */ new Map();
             for (const r of previewResults) dataUrls.set(r.path, r.du);
-            let bodyEl3;
+            let bodyEl4;
             let inlined = /* @__PURE__ */ new Set();
             if (plain === null) {
               const err = document.createElement("div");
               err.textContent = "正文解密失败";
-              bodyEl3 = err;
+              bodyEl4 = err;
             } else {
               const { text: text2, slots, inlined: inl } = collectMediaSlots(plain, note.attachments);
               inlined = inl;
@@ -62434,11 +62518,11 @@ GitHub 仓库：${ghInfo.title}
               } else {
                 mdEl.textContent = plain;
               }
-              bodyEl3 = mdEl;
+              bodyEl4 = mdEl;
             }
             body.innerHTML = "";
-            body.appendChild(bodyEl3);
-            motionRevealBody(bodyEl3);
+            body.appendChild(bodyEl4);
+            motionRevealBody(bodyEl4);
             const residuals = note.attachments.filter((a) => !inlined.has(a.path));
             if (residuals.length) {
               const gallery = document.createElement("div");
@@ -62480,11 +62564,11 @@ GitHub 仓库：${ghInfo.title}
          */
         async renderWithTimeout(app, text2, path, timeoutMs = PREVIEW_RENDER_TIMEOUT_MS) {
           this.unloadPreviewComponent();
-          const el2 = document.createElement("div");
+          const el3 = document.createElement("div");
           const component = new Component();
           this._previewComponent = component;
           let finished = false;
-          const render2 = MarkdownRenderer.render(app, text2, el2, path, component).then(
+          const render3 = MarkdownRenderer.render(app, text2, el3, path, component).then(
             () => {
               finished = true;
             },
@@ -62492,9 +62576,9 @@ GitHub 仓库：${ghInfo.title}
               finished = true;
             }
           );
-          await Promise.race([render2, new Promise((r) => setTimeout(r, timeoutMs))]);
+          await Promise.race([render3, new Promise((r) => setTimeout(r, timeoutMs))]);
           if (!finished) return { ok: false, el: document.createElement("div"), component };
-          return { ok: true, el: el2, component };
+          return { ok: true, el: el3, component };
         }
         /** 预览窗内所有缩略图/占位 slot 绑定点击：只加载被点的那一张原始层 */
         bindMediaClicks(root, attachments) {
@@ -62627,8 +62711,8 @@ GitHub 仓库：${ghInfo.title}
          * 状态栏挂载（main.ts onload 调用）：初始为锁定态；订阅解锁态变化刷新，
          * 点击打开统一保险库面板（openEncrypt 有解锁引导）。
          */
-        attachStatusBar(el2) {
-          this.statusBarEl = el2;
+        attachStatusBar(el3) {
+          this.statusBarEl = el3;
           this.dataManager.onUnlockChange = (unlocked) => {
             var _a2, _b2;
             if (this.statusBarEl) {
@@ -62777,8 +62861,8 @@ GitHub 仓库：${ghInfo.title}
           this.uiManager.captureForUnload();
           const ids = ["bz-encrypt-mask", "bz-encrypt-popup", "bz-encrypt-preview-mask", "bz-encrypt-preview-popup", "bz-encrypt-health-mask", "bz-encrypt-health-popup"];
           for (const id of ids) {
-            const el2 = document.getElementById(id);
-            if (el2) el2.remove();
+            const el3 = document.getElementById(id);
+            if (el3) el3.remove();
           }
           this.uiManager.closeAllDialogs();
           this.uiManager.detachGlobalListeners();
@@ -63359,15 +63443,15 @@ GitHub 仓库：${ghInfo.title}
   }
   function mountEncryptStatusBar(container) {
     if (statusBarEl) return;
-    const el2 = document.createElement("span");
-    el2.className = "bz-encrypt-statusbar";
-    el2.title = "保险库：点击打开";
-    el2.innerHTML = statusbarHtml(false);
-    mountIcons(el2);
-    el2.addEventListener("click", () => openEncrypt(getApp()));
-    container.appendChild(el2);
-    statusBarEl = el2;
-    void ensureEncrypt(getApp()).then(() => getController().attachStatusBar(el2)).catch(() => {
+    const el3 = document.createElement("span");
+    el3.className = "bz-encrypt-statusbar";
+    el3.title = "保险库：点击打开";
+    el3.innerHTML = statusbarHtml(false);
+    mountIcons(el3);
+    el3.addEventListener("click", () => openEncrypt(getApp()));
+    container.appendChild(el3);
+    statusBarEl = el3;
+    void ensureEncrypt(getApp()).then(() => getController().attachStatusBar(el3)).catch(() => {
     });
   }
   function unmountEncryptStatusBar() {
@@ -63843,14 +63927,14 @@ GitHub 仓库：${ghInfo.title}
       return false;
     }
   }
-  function waapi9(el2, frames, opts) {
-    if (!el2 || reduced10() || typeof el2.animate !== "function") {
+  function waapi9(el3, frames, opts) {
+    if (!el3 || reduced10() || typeof el3.animate !== "function") {
       const last = frames[frames.length - 1];
-      if (el2 && reduced10() && last) {
+      if (el3 && reduced10() && last) {
         for (const k of Object.keys(last)) {
           if (k === "offset") continue;
           try {
-            el2.style[k] = String(last[k]);
+            el3.style[k] = String(last[k]);
           } catch (e) {
           }
         }
@@ -63858,7 +63942,7 @@ GitHub 仓库：${ghInfo.title}
       return null;
     }
     try {
-      return el2.animate(frames, {
+      return el3.animate(frames, {
         duration: opts.duration,
         delay: opts.delay,
         easing: opts.easing,
@@ -63891,9 +63975,9 @@ GitHub 仓库：${ghInfo.title}
     }
     orchestra.clear();
   }
-  function cancelById(el2, id) {
-    if (!el2 || typeof el2.getAnimations !== "function") return;
-    for (const a of el2.getAnimations()) {
+  function cancelById(el3, id) {
+    if (!el3 || typeof el3.getAnimations !== "function") return;
+    for (const a of el3.getAnimations()) {
       if (a.id === id) {
         try {
           a.cancel();
@@ -64017,8 +64101,8 @@ GitHub 仓库：${ghInfo.title}
   function unmountCatContainer() {
     const ids = [CAT_CONTAINER_ID, "settings-panel", "chat-panel", "panel-mask"];
     for (const id of ids) {
-      const el2 = document.getElementById(id);
-      if (el2 && el2.parentNode) el2.parentNode.removeChild(el2);
+      const el3 = document.getElementById(id);
+      if (el3 && el3.parentNode) el3.parentNode.removeChild(el3);
     }
   }
   function applyAppearance(container, appearance) {
@@ -64331,6 +64415,2500 @@ GitHub 仓库：${ghInfo.title}
     }
   });
 
+  // src/dock/schema.ts
+  function isPlainObject3(v) {
+    return !!v && typeof v === "object" && !Array.isArray(v);
+  }
+  function str2(v) {
+    return typeof v === "string" ? v : void 0;
+  }
+  function num2(v) {
+    return typeof v === "number" && Number.isFinite(v) ? v : void 0;
+  }
+  function bool2(v) {
+    return typeof v === "boolean" ? v : void 0;
+  }
+  function nonEmptyStr(v) {
+    const s = str2(v);
+    return s !== void 0 && s.trim() !== "" ? s : void 0;
+  }
+  function intInRange(v, lo, hi) {
+    return typeof v === "number" && Number.isInteger(v) && v >= lo && v <= hi ? v : void 0;
+  }
+  function parseJsonObjectText(text2) {
+    if (typeof text2 !== "string") return null;
+    const trimmed = text2.charCodeAt(0) === 65279 ? text2.slice(1) : text2;
+    if (trimmed.trim() === "") return null;
+    try {
+      const v = JSON.parse(trimmed);
+      return isPlainObject3(v) ? v : null;
+    } catch (e) {
+      return null;
+    }
+  }
+  function parseParam(raw) {
+    var _a2;
+    if (!isPlainObject3(raw)) return null;
+    const key = nonEmptyStr(raw.key);
+    const label = nonEmptyStr(raw.label);
+    const type = str2(raw.type);
+    if (!key || !label || !type || !PARAM_TYPES.has(type)) return null;
+    let options2;
+    if (type === "choice" || type === "multichoice") {
+      if (Array.isArray(raw.options)) {
+        const kept = [];
+        for (const o of raw.options) {
+          if (!isPlainObject3(o)) continue;
+          const value = str2(o.value);
+          if (value === void 0) continue;
+          kept.push({ value, label: (_a2 = nonEmptyStr(o.label)) != null ? _a2 : value });
+        }
+        options2 = kept;
+      }
+    }
+    const out = { key, label, type };
+    if ("default" in raw) out.default = raw.default;
+    const help = nonEmptyStr(raw.help);
+    if (help) out.help = help;
+    const placeholder = nonEmptyStr(raw.placeholder);
+    if (placeholder) out.placeholder = placeholder;
+    const required = bool2(raw.required);
+    if (required !== void 0) out.required = required;
+    const min = num2(raw.min);
+    if (min !== void 0) out.min = min;
+    const max = num2(raw.max);
+    if (max !== void 0) out.max = max;
+    const step = num2(raw.step);
+    if (step !== void 0) out.step = step;
+    const rows = num2(raw.rows);
+    if (rows !== void 0) out.rows = rows;
+    if (type === "path") {
+      const mode = str2(raw.mode);
+      out.mode = mode === "file" || mode === "dir" ? mode : "file";
+    }
+    if (options2) out.options = options2;
+    return out;
+  }
+  function parseManifest(raw) {
+    var _a2, _b2;
+    if (!isPlainObject3(raw)) return null;
+    if (raw.v !== DOCK_CONTRACT_VERSION) return null;
+    const id = str2(raw.id);
+    if (!id || id.length > DOCK_ID_MAX_LEN || !DOCK_ID_RE.test(id)) return null;
+    const name = nonEmptyStr(raw.name);
+    if (!name) return null;
+    const params = [];
+    if (Array.isArray(raw.params)) {
+      const seen = /* @__PURE__ */ new Set();
+      for (const p of raw.params) {
+        const parsed = parseParam(p);
+        if (!parsed) continue;
+        if (seen.has(parsed.key)) continue;
+        seen.add(parsed.key);
+        params.push(parsed);
+      }
+    }
+    const out = { ...raw, v: DOCK_CONTRACT_VERSION, id, name, params };
+    out.description = nonEmptyStr(raw.description);
+    out.author = nonEmptyStr(raw.author);
+    out.toolVersion = nonEmptyStr(raw.toolVersion);
+    out.icon = nonEmptyStr(raw.icon);
+    out.group = nonEmptyStr(raw.group);
+    out.docs = nonEmptyStr(raw.docs);
+    out.desktopOnly = bool2(raw.desktopOnly);
+    if (Array.isArray(raw.produces)) {
+      out.produces = raw.produces.filter((x) => typeof x === "string");
+    }
+    if (isPlainObject3(raw.run)) {
+      const cmd = (_a2 = nonEmptyStr(raw.run.cmd)) == null ? void 0 : _a2.trim();
+      if (cmd) {
+        const r = { cmd };
+        if (Array.isArray(raw.run.args)) {
+          const args = raw.run.args.filter((x) => typeof x === "string");
+          if (args.length) r.args = args;
+        }
+        const cwd = (_b2 = nonEmptyStr(raw.run.cwd)) == null ? void 0 : _b2.trim();
+        if (cwd) r.cwd = cwd;
+        const shell = bool2(raw.run.shell);
+        if (shell !== void 0) r.shell = shell;
+        out.run = r;
+      } else {
+        delete out.run;
+      }
+    } else {
+      delete out.run;
+    }
+    if (isPlainObject3(raw.schedule)) {
+      const kind = str2(raw.schedule.kind);
+      if (kind && SCHEDULE_KINDS.has(kind)) {
+        const s = { kind };
+        const note = nonEmptyStr(raw.schedule.note);
+        if (note) s.note = note;
+        const hour = intInRange(raw.schedule.hour, 0, 23);
+        if (hour !== void 0) s.hour = hour;
+        const weekday = intInRange(raw.schedule.weekday, 0, 6);
+        if (weekday !== void 0) s.weekday = weekday;
+        const everyHours = num2(raw.schedule.everyHours);
+        if (everyHours !== void 0 && everyHours > 0) s.everyHours = everyHours;
+        out.schedule = s;
+      } else {
+        delete out.schedule;
+      }
+    } else {
+      delete out.schedule;
+    }
+    if (isPlainObject3(raw.runtime)) {
+      const estimatedSec = num2(raw.runtime.estimatedSec);
+      out.runtime = estimatedSec !== void 0 && estimatedSec > 0 ? { estimatedSec } : {};
+    } else {
+      delete out.runtime;
+    }
+    return out;
+  }
+  function parseRunRecord(raw) {
+    var _a2, _b2;
+    if (!isPlainObject3(raw)) return null;
+    const startedAt = nonEmptyStr(raw.startedAt);
+    const status = str2(raw.status);
+    if (!startedAt || !status || !RUN_STATUSES.has(status)) return null;
+    const runId = (_a2 = nonEmptyStr(raw.runId)) != null ? _a2 : startedAt;
+    const trigger = str2(raw.trigger) === "auto" ? "auto" : "manual";
+    const out = { ...raw, runId, trigger, status, startedAt };
+    out.finishedAt = nonEmptyStr(raw.finishedAt);
+    if (raw.exitCode === null) out.exitCode = null;
+    else out.exitCode = num2(raw.exitCode);
+    out.durationMs = num2(raw.durationMs);
+    out.message = nonEmptyStr(raw.message);
+    if (isPlainObject3(raw.params)) out.params = raw.params;
+    else delete out.params;
+    if (Array.isArray(raw.steps)) {
+      const steps = [];
+      for (const s of raw.steps) {
+        if (!isPlainObject3(s)) continue;
+        const text2 = nonEmptyStr(s.text);
+        if (!text2) continue;
+        const step = { text: text2 };
+        const at4 = nonEmptyStr(s.at);
+        if (at4) step.at = at4;
+        const st = nonEmptyStr(s.status);
+        if (st) step.status = st;
+        steps.push(step);
+      }
+      if (steps.length) out.steps = steps;
+      else delete out.steps;
+    } else {
+      delete out.steps;
+    }
+    if (isPlainObject3(raw.progress)) {
+      const phase = (_b2 = nonEmptyStr(raw.progress.phase)) != null ? _b2 : null;
+      const pctRaw = raw.progress.pct;
+      const pct = typeof pctRaw === "number" && Number.isFinite(pctRaw) ? pctRaw : null;
+      out.progress = { phase, pct };
+    } else {
+      delete out.progress;
+    }
+    if (!Array.isArray(raw.info)) delete out.info;
+    if (!("result" in raw)) delete out.result;
+    if (isPlainObject3(raw.metrics)) {
+      const metrics = {};
+      for (const [k, v] of Object.entries(raw.metrics)) {
+        const n = num2(v);
+        if (n !== void 0) metrics[k] = n;
+      }
+      if (Object.keys(metrics).length) out.metrics = metrics;
+      else delete out.metrics;
+    } else {
+      delete out.metrics;
+    }
+    if (Array.isArray(raw.artifacts)) {
+      const artifacts = [];
+      for (const a of raw.artifacts) {
+        if (!isPlainObject3(a)) continue;
+        const path = nonEmptyStr(a.path);
+        if (!path) continue;
+        const label = nonEmptyStr(a.label);
+        artifacts.push(label ? { path, label } : { path });
+      }
+      if (artifacts.length) out.artifacts = artifacts;
+      else delete out.artifacts;
+    } else {
+      delete out.artifacts;
+    }
+    if (isPlainObject3(raw.error)) {
+      const kindRaw = str2(raw.error.kind);
+      const kind = kindRaw && ERROR_KINDS.has(kindRaw) ? kindRaw : "unknown";
+      const error = { kind };
+      const detail = nonEmptyStr(raw.error.detail);
+      if (detail) error.detail = detail;
+      const stderr = nonEmptyStr(raw.error.stderr);
+      if (stderr) error.stderr = stderr;
+      out.error = error;
+    } else {
+      delete out.error;
+    }
+    return out;
+  }
+  function parseRunsFile(raw, expectToolId) {
+    if (!isPlainObject3(raw)) return null;
+    if (raw.v !== DOCK_CONTRACT_VERSION) return null;
+    const tool = str2(raw.tool);
+    if (!tool) return null;
+    if (expectToolId !== void 0 && tool !== expectToolId) return null;
+    const runs = [];
+    if (Array.isArray(raw.runs)) {
+      for (const r of raw.runs) {
+        const parsed = parseRunRecord(r);
+        if (parsed) runs.push(parsed);
+      }
+    }
+    const out = { ...raw, v: DOCK_CONTRACT_VERSION, tool, runs };
+    const updatedAt = nonEmptyStr(raw.updatedAt);
+    if (updatedAt) out.updatedAt = updatedAt;
+    else delete out.updatedAt;
+    return out;
+  }
+  function parseRunsFileText(text2, expectToolId) {
+    return parseRunsFile(parseJsonObjectText(text2), expectToolId);
+  }
+  function buildArgs(manifest, values) {
+    const args = [];
+    for (const p of manifest.params) {
+      const v = values[p.key];
+      if (v === void 0 || v === null) continue;
+      if (p.type === "bool") {
+        if (v === true) args.push(`--${p.key}`);
+        continue;
+      }
+      if (p.type === "multichoice") {
+        const list = Array.isArray(v) ? v : [v];
+        for (const item of list) {
+          const s2 = String(item);
+          if (s2 !== "") args.push(`--${p.key}=${s2}`);
+        }
+        continue;
+      }
+      const s = String(v);
+      if (s === "" && !p.required) continue;
+      args.push(`--${p.key}=${s}`);
+    }
+    return args;
+  }
+  var DOCK_CONTRACT_VERSION, DOCK_ID_RE, DOCK_ID_MAX_LEN, PARAM_TYPES, SCHEDULE_KINDS, RUN_STATUSES, ERROR_KINDS, DOCK_RUNS_PER_TOOL_LIMIT;
+  var init_schema2 = __esm({
+    "src/dock/schema.ts"() {
+      DOCK_CONTRACT_VERSION = 1;
+      DOCK_ID_RE = /^[a-z0-9][a-z0-9-]*$/;
+      DOCK_ID_MAX_LEN = 64;
+      PARAM_TYPES = /* @__PURE__ */ new Set([
+        "text",
+        "multiline",
+        "number",
+        "bool",
+        "choice",
+        "multichoice",
+        "path",
+        "secret"
+      ]);
+      SCHEDULE_KINDS = /* @__PURE__ */ new Set([
+        "daily",
+        "weekly",
+        "interval",
+        "on-demand",
+        "unknown"
+      ]);
+      RUN_STATUSES = /* @__PURE__ */ new Set([
+        "ok",
+        "failed",
+        "stopped",
+        "running",
+        "timeout"
+      ]);
+      ERROR_KINDS = /* @__PURE__ */ new Set([
+        "auth",
+        "network",
+        "config",
+        "timeout",
+        "aborted",
+        "unknown"
+      ]);
+      DOCK_RUNS_PER_TOOL_LIMIT = 200;
+    }
+  });
+
+  // src/dock/registry.ts
+  function runSignature(run) {
+    var _a2;
+    return [run.cmd, run.shell ? "shell" : "raw", ...(_a2 = run.args) != null ? _a2 : []].join("\0");
+  }
+  function parseToolEntry(raw) {
+    if (!raw || typeof raw !== "object" || Array.isArray(raw)) return null;
+    const r = raw;
+    const id = typeof r.id === "string" ? r.id.trim() : "";
+    const path = typeof r.path === "string" ? r.path.trim() : "";
+    if (!id || id.length > TOOL_ID_MAX_LEN || !TOOL_ID_RE.test(id)) return null;
+    if (!path) return null;
+    const out = { id, path };
+    if (typeof r.enabled === "boolean") out.enabled = r.enabled;
+    if (typeof r.trustedAt === "string" && r.trustedAt.trim()) out.trustedAt = r.trustedAt.trim();
+    if (typeof r.trustedRun === "string" && r.trustedRun !== "") out.trustedRun = r.trustedRun;
+    return out;
+  }
+  function parseToolEntries(raw) {
+    if (!Array.isArray(raw)) return [];
+    const out = [];
+    const seen = /* @__PURE__ */ new Set();
+    for (const item of raw) {
+      const parsed = parseToolEntry(item);
+      if (!parsed || seen.has(parsed.id)) continue;
+      seen.add(parsed.id);
+      out.push(parsed);
+    }
+    return out;
+  }
+  var TOOL_ID_RE, TOOL_ID_MAX_LEN;
+  var init_registry = __esm({
+    "src/dock/registry.ts"() {
+      TOOL_ID_RE = /^[a-z0-9][a-z0-9-]*$/;
+      TOOL_ID_MAX_LEN = 64;
+    }
+  });
+
+  // src/dock/declaration.ts
+  function defaultDockFs() {
+    if (typeof window === "undefined") return null;
+    const w = window;
+    if (!w.require) return null;
+    try {
+      const fs = w.require("fs");
+      return {
+        readText: (p) => {
+          try {
+            return fs.readFileSync(p, "utf8");
+          } catch (e) {
+            return null;
+          }
+        },
+        writeText: (p, d) => fs.writeFileSync(p, d),
+        rename: typeof fs.renameSync === "function" ? (a, b) => fs.renameSync(a, b) : void 0
+      };
+    } catch (e) {
+      return null;
+    }
+  }
+  function currentFs() {
+    return injectedFs !== void 0 ? injectedFs : defaultDockFs();
+  }
+  function dirOf(p) {
+    const s = p.replace(/\\/g, "/");
+    const i = s.lastIndexOf("/");
+    if (i < 0) return "";
+    if (i === 0) return "/";
+    if (s[i - 1] === ":") return s.slice(0, i + 1);
+    return s.slice(0, i);
+  }
+  function joinPath(dir, name) {
+    const d = dir.replace(/\\/g, "/").replace(/\/+$/, "");
+    return d === "" ? name : `${d}/${name}`;
+  }
+  function settingsPathFor(declPath) {
+    return joinPath(dirOf(declPath), SETTINGS_FILENAME);
+  }
+  function resolveRun(manifest, declPath) {
+    var _a2, _b2, _c;
+    const run = manifest == null ? void 0 : manifest.run;
+    if (!run || !run.cmd) return null;
+    return {
+      cmd: run.cmd,
+      args: [...(_a2 = run.args) != null ? _a2 : []],
+      cwd: (_b2 = run.cwd) != null ? _b2 : dirOf(declPath) || void 0,
+      shell: (_c = run.shell) != null ? _c : /\.(cmd|bat)$/i.test(run.cmd)
+    };
+  }
+  function readDeclaration(declPath, fs = currentFs()) {
+    if (!fs) return { ok: false, error: "读声明需要桌面端（移动端只读面板）" };
+    const text2 = fs.readText(declPath);
+    if (text2 === null) return { ok: false, error: `声明文件读不到：${declPath}` };
+    const raw = parseJsonObjectText(text2);
+    if (raw === null) return { ok: false, error: `声明文件不是合法 JSON：${declPath}` };
+    const manifest = parseManifest(raw);
+    if (!manifest) {
+      return {
+        ok: false,
+        error: `声明文件校验不过（v 须为 1、id 只能小写字母数字连字符、name 不能空）：${declPath}`
+      };
+    }
+    return { ok: true, manifest };
+  }
+  function isPlainObject4(v) {
+    return !!v && typeof v === "object" && !Array.isArray(v);
+  }
+  function readSettings(declPath, toolId, fs = currentFs()) {
+    if (!fs) return {};
+    const raw = parseJsonObjectText(fs.readText(settingsPathFor(declPath)));
+    if (!raw) return {};
+    if (raw.v !== DOCK_SETTINGS_VERSION) return {};
+    if (raw.tool !== toolId) return {};
+    return isPlainObject4(raw.values) ? { ...raw.values } : {};
+  }
+  function writeSettings(declPath, toolId, values, fs = currentFs()) {
+    if (!fs) return false;
+    const target = settingsPathFor(declPath);
+    const payload = { v: DOCK_SETTINGS_VERSION, tool: toolId, values };
+    const text2 = JSON.stringify(payload, null, 2);
+    try {
+      if (fs.rename) {
+        const tmp = `${target}.tmp`;
+        fs.writeText(tmp, text2);
+        fs.rename(tmp, target);
+      } else {
+        fs.writeText(target, text2);
+      }
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+  var DECLARATION_FILENAME, SETTINGS_FILENAME, DOCK_SETTINGS_VERSION, injectedFs;
+  var init_declaration = __esm({
+    "src/dock/declaration.ts"() {
+      init_schema2();
+      DECLARATION_FILENAME = "dock.json";
+      SETTINGS_FILENAME = "dock.settings.json";
+      DOCK_SETTINGS_VERSION = 1;
+    }
+  });
+
+  // src/dock/schedule.ts
+  function triggerOf(schedule) {
+    if (!schedule) return "manual";
+    return schedule.kind === "on-demand" || schedule.kind === "unknown" ? "manual" : "auto";
+  }
+  function dayKey2(ts) {
+    const d = new Date(ts);
+    const p = (n) => String(n).padStart(2, "0");
+    return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
+  }
+  function timeOf(s) {
+    if (!s) return void 0;
+    const t = new Date(s.replace(" ", "T")).getTime();
+    return Number.isFinite(t) ? t : void 0;
+  }
+  function terminalRuns(runs) {
+    return runs.filter((r) => TERMINAL.has(r.status)).slice().sort((a, b) => {
+      var _a2, _b2;
+      return ((_a2 = timeOf(b.startedAt)) != null ? _a2 : 0) - ((_b2 = timeOf(a.startedAt)) != null ? _b2 : 0);
+    });
+  }
+  function lastRun(runs) {
+    return terminalRuns(runs)[0];
+  }
+  function judgeDue(schedule, runs, now = Date.now()) {
+    if (!schedule || schedule.kind === "on-demand" || schedule.kind === "unknown") {
+      return { state: "none", detail: "未声明节奏" };
+    }
+    const latest = lastRun(runs);
+    const latestAt = latest ? timeOf(latest.startedAt) : void 0;
+    const d = new Date(now);
+    const DAY = 864e5;
+    switch (schedule.kind) {
+      case "daily": {
+        if (schedule.hour !== void 0 && d.getHours() < schedule.hour) {
+          return { state: "pending", detail: `今天 ${String(schedule.hour).padStart(2, "0")}:00 之后应有记录` };
+        }
+        if (latestAt !== void 0 && dayKey2(latestAt) === dayKey2(now)) {
+          return { state: "ok", detail: "今天已有记录" };
+        }
+        return { state: "due", detail: "今天还没有记录" };
+      }
+      case "weekly": {
+        if (schedule.weekday !== void 0) {
+          const back = (d.getDay() - schedule.weekday + 7) % 7;
+          const expected = new Date(d.getFullYear(), d.getMonth(), d.getDate() - back).getTime();
+          if (latestAt !== void 0 && latestAt >= expected) {
+            return { state: "ok", detail: "本周这份记录已到位" };
+          }
+          return { state: "due", detail: "本周该跑的还没跑" };
+        }
+        const weekAgo = now - 7 * DAY;
+        if (latestAt !== void 0 && latestAt >= weekAgo) {
+          return { state: "ok", detail: "最近 7 天内有记录" };
+        }
+        return { state: "due", detail: "最近 7 天没有任何记录" };
+      }
+      case "interval": {
+        if (schedule.everyHours === void 0) return { state: "none", detail: "未声明间隔时长" };
+        if (latestAt === void 0) {
+          return { state: "unknown", detail: "还没有任何运行记录，无法判定" };
+        }
+        const gap = now - latestAt;
+        const limit = schedule.everyHours * 36e5;
+        if (gap <= limit) return { state: "ok", detail: `距上次 ${Math.round(gap / 6e4)} 分钟` };
+        const overdueH = Math.floor(gap / 36e5);
+        return { state: "due", detail: `距上次已 ${overdueH} 小时，超过声明的 ${schedule.everyHours} 小时` };
+      }
+      default:
+        return { state: "none", detail: "未声明节奏" };
+    }
+  }
+  function overviewOf(items, now = Date.now()) {
+    var _a2, _b2, _c;
+    const d = new Date(now);
+    const dayStart = new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
+    const weekAgo = now - 7 * 864e5;
+    let autoTotal = 0;
+    let autoDoneToday = 0;
+    let runs7d = 0;
+    let ok7d = 0;
+    let alarms = 0;
+    let alarmHint = null;
+    let nextDue = null;
+    for (const it of items) {
+      if (it.trigger === "auto") {
+        autoTotal += 1;
+        const done = terminalRuns(it.runs).some(
+          (r) => {
+            var _a3;
+            return r.status === "ok" && ((_a3 = timeOf(r.startedAt)) != null ? _a3 : 0) >= dayStart;
+          }
+        );
+        if (done) autoDoneToday += 1;
+      }
+      for (const r of terminalRuns(it.runs)) {
+        const at4 = timeOf(r.startedAt);
+        if (at4 === void 0 || at4 < weekAgo) continue;
+        runs7d += 1;
+        if (r.status === "ok") ok7d += 1;
+      }
+      const last = lastRun(it.runs);
+      const lastBad = !!last && (last.status === "failed" || last.status === "timeout");
+      if (it.overdue || lastBad) {
+        alarms += 1;
+        if (!alarmHint) {
+          alarmHint = {
+            name: it.name,
+            reason: it.overdue ? "该跑没跑" : (_c = ERROR_KIND_LABEL[(_b2 = (_a2 = last == null ? void 0 : last.error) == null ? void 0 : _a2.kind) != null ? _b2 : "unknown"]) != null ? _c : "未知错误"
+          };
+        }
+      }
+      const dueAt = nextDueAt(it.schedule, it.runs, now);
+      if (dueAt !== null && dueAt > now && (nextDue === null || dueAt < nextDue.at)) {
+        nextDue = { at: dueAt, name: it.name };
+      }
+    }
+    return {
+      autoDoneToday,
+      autoTotal,
+      runs7d,
+      ok7d,
+      rate7d: runs7d ? ok7d / runs7d : null,
+      alarms,
+      alarmHint,
+      nextDue
+    };
+  }
+  function nextDueAt(schedule, runs, now = Date.now()) {
+    var _a2;
+    if (!schedule) return null;
+    const d = new Date(now);
+    const DAY = 864e5;
+    switch (schedule.kind) {
+      case "daily": {
+        const hour = (_a2 = schedule.hour) != null ? _a2 : 0;
+        const todayAt = new Date(d.getFullYear(), d.getMonth(), d.getDate(), hour).getTime();
+        return todayAt > now ? todayAt : todayAt + DAY;
+      }
+      case "weekly": {
+        if (schedule.weekday === void 0) return null;
+        const back = (d.getDay() - schedule.weekday + 7) % 7;
+        const slot = new Date(d.getFullYear(), d.getMonth(), d.getDate() - back).getTime();
+        return slot > now ? slot : slot + 7 * DAY;
+      }
+      case "interval": {
+        if (schedule.everyHours === void 0) return null;
+        const latest = lastRun(runs);
+        const latestAt = latest ? timeOf(latest.startedAt) : void 0;
+        if (latestAt === void 0) return null;
+        return latestAt + schedule.everyHours * 36e5;
+      }
+      default:
+        return null;
+    }
+  }
+  function recentRuns(runs, n = 7) {
+    const list = terminalRuns(runs).slice(0, n).reverse();
+    const out = [];
+    for (let i = 0; i < n - list.length; i++) out.push(null);
+    for (const r of list) out.push(r);
+    return out;
+  }
+  function successRate(runs) {
+    const list = terminalRuns(runs);
+    if (!list.length) return null;
+    return list.filter((r) => r.status === "ok").length / list.length;
+  }
+  function durationText(run) {
+    let ms = run.durationMs;
+    if (ms === void 0) {
+      const a = timeOf(run.startedAt);
+      const b = timeOf(run.finishedAt);
+      if (a !== void 0 && b !== void 0 && b >= a) ms = b - a;
+    }
+    if (ms === void 0) return "";
+    if (ms < 1e3) return `${ms} 毫秒`;
+    const s = ms / 1e3;
+    if (s < 60) return `${s.toFixed(s < 10 ? 1 : 0)} 秒`;
+    const m = Math.floor(s / 60);
+    return `${m} 分 ${Math.round(s - m * 60)} 秒`;
+  }
+  var TERMINAL, ERROR_KIND_LABEL;
+  var init_schedule = __esm({
+    "src/dock/schedule.ts"() {
+      TERMINAL = /* @__PURE__ */ new Set(["ok", "failed", "stopped", "timeout"]);
+      ERROR_KIND_LABEL = {
+        auth: "认证失效",
+        network: "网络异常",
+        config: "配置不对",
+        timeout: "超时",
+        aborted: "被中止",
+        unknown: "未知错误"
+      };
+    }
+  });
+
+  // src/dock/data.ts
+  function dockDir() {
+    return `${storageDir()}/${DOCK_DIR_NAME}`;
+  }
+  function dockRunsDir() {
+    return `${dockDir()}/runs`;
+  }
+  function runsFilePath(id) {
+    return `${dockRunsDir()}/${id}.json`;
+  }
+  function readToolEntries() {
+    var _a2;
+    return parseToolEntries((_a2 = tryGetSettings()) == null ? void 0 : _a2.dockTools);
+  }
+  async function saveToolEntries(entries) {
+    const s = getSettings();
+    s.dockTools = entries;
+    await saveSettings();
+  }
+  function isTrusted(entry) {
+    return typeof entry.trustedAt === "string" && entry.trustedAt !== "";
+  }
+  function isEnabled(entry) {
+    return entry.enabled !== false;
+  }
+  async function readTextIfExists(app, path) {
+    try {
+      const f = app.vault.getAbstractFileByPath(path);
+      if (!f) return null;
+      const raw = await app.vault.read(f);
+      return typeof raw === "string" ? raw : null;
+    } catch (e) {
+      return null;
+    }
+  }
+  async function readRunsFile(app, id) {
+    const path = runsFilePath(id);
+    const raw = await readTextIfExists(app, path);
+    if (raw === null) return { file: null, existed: false };
+    const parsed = parseRunsFileText(raw, id);
+    return { file: parsed, existed: true };
+  }
+  function readToolValues(entry) {
+    return readSettings(entry.path, entry.id);
+  }
+  function saveToolValues(entry, values) {
+    return writeSettings(entry.path, entry.id, values);
+  }
+  function displayName2(view2) {
+    var _a2;
+    return ((_a2 = view2.manifest) == null ? void 0 : _a2.name) || view2.entry.id;
+  }
+  function displayDesc(view2) {
+    var _a2;
+    return ((_a2 = view2.manifest) == null ? void 0 : _a2.description) || "";
+  }
+  function displayIcon(view2) {
+    var _a2;
+    return ((_a2 = view2.manifest) == null ? void 0 : _a2.icon) || "square-terminal";
+  }
+  function triggerOfView(view2) {
+    var _a2;
+    return triggerOf((_a2 = view2.manifest) == null ? void 0 : _a2.schedule);
+  }
+  function isOverdue(state3) {
+    return state3 === "due";
+  }
+  async function loadToolViews(app) {
+    const entries = readToolEntries();
+    return Promise.all(entries.map((entry) => loadToolView(app, entry)));
+  }
+  async function loadToolView(app, entry) {
+    var _a2, _b2, _c, _d;
+    const decl = readDeclaration(entry.path);
+    const manifest = (_a2 = decl.manifest) != null ? _a2 : null;
+    const run = resolveRun(manifest, entry.path);
+    const trustStale = isTrusted(entry) && (run ? runSignature(run) : void 0) !== entry.trustedRun;
+    const runsRead = await readRunsFile(app, entry.id);
+    const runs = (_c = (_b2 = runsRead.file) == null ? void 0 : _b2.runs) != null ? _c : [];
+    return {
+      entry,
+      manifest,
+      declError: manifest ? null : (_d = decl.error) != null ? _d : "声明读不到",
+      declPath: entry.path,
+      valuesPath: settingsPathFor(entry.path),
+      run,
+      values: readToolValues(entry),
+      trustStale,
+      runs,
+      runsUnreadable: runsRead.existed && runsRead.file === null,
+      due: judgeDue(manifest == null ? void 0 : manifest.schedule, runs),
+      overLimit: runs.length > DOCK_RUNS_PER_TOOL_LIMIT,
+      runsPath: runsFilePath(entry.id)
+    };
+  }
+  function summarize(views2) {
+    let auto = 0;
+    let manual = 0;
+    let overdue = 0;
+    let totalRuns = 0;
+    for (const v of views2) {
+      if (triggerOfView(v) === "auto") auto += 1;
+      else manual += 1;
+      if (isOverdue(v.due.state)) overdue += 1;
+      totalRuns += v.runs.length;
+    }
+    return { total: views2.length, auto, manual, overdue, totalRuns };
+  }
+  function overview(views2, now = Date.now()) {
+    return overviewOf(
+      views2.map((v) => {
+        var _a2;
+        return {
+          trigger: triggerOfView(v),
+          name: displayName2(v),
+          schedule: (_a2 = v.manifest) == null ? void 0 : _a2.schedule,
+          runs: v.runs,
+          overdue: isOverdue(v.due.state)
+        };
+      }),
+      now
+    );
+  }
+  var DOCK_DIR_NAME;
+  var init_data16 = __esm({
+    "src/dock/data.ts"() {
+      init_storage();
+      init_settings_provider();
+      init_schema2();
+      init_registry();
+      init_declaration();
+      init_schedule();
+      init_registry();
+      DOCK_DIR_NAME = "dock";
+    }
+  });
+
+  // src/core/external-tool.ts
+  function parseBzLine(line) {
+    const text2 = line.endsWith("\r") ? line.slice(0, -1) : line;
+    const m = text2.match(BZ_LINE_PREFIX_RE);
+    if (!m) {
+      if (!text2.trim()) return null;
+      return { kind: "raw", text: text2 };
+    }
+    const body = text2.slice(m[0].length).trim();
+    switch (m[1]) {
+      case "step":
+        return body ? { kind: "step", text: body } : null;
+      case "p": {
+        const p = parseJsonObject(body);
+        if (!p) return null;
+        return {
+          kind: "progress",
+          phase: typeof p.phase === "string" ? p.phase : null,
+          // pct 允许 null = 该阶段不可估；缺失/非有限数一律归 null（绝不假报）
+          pct: Number.isFinite(p.pct) ? Number(p.pct) : null
+        };
+      }
+      case "info": {
+        const info = parseJsonObject(body);
+        return info ? { kind: "info", data: info } : null;
+      }
+      default: {
+        const r = parseJsonObject(body);
+        return r ? { kind: "result", data: r } : null;
+      }
+    }
+  }
+  function parseJsonObject(body) {
+    try {
+      const v = JSON.parse(body);
+      return v && typeof v === "object" && !Array.isArray(v) ? v : null;
+    } catch (e) {
+      return null;
+    }
+  }
+  function defaultChildProcess() {
+    if (typeof window === "undefined") return null;
+    const w = window;
+    if (!w.require) return null;
+    try {
+      return w.require("child_process");
+    } catch (e) {
+      return null;
+    }
+  }
+  function runExternalTool(spec, cb, deps2) {
+    var _a2, _b2;
+    const cp = deps2 && deps2.cp ? deps2.cp : defaultChildProcess();
+    const splitter = new BzLineSplitter();
+    let stderrTail = "";
+    let settled = false;
+    let stopped = false;
+    let child = null;
+    let resolveDone;
+    const done = new Promise((r) => {
+      resolveDone = r;
+    });
+    const settle = (o) => {
+      if (settled) return;
+      settled = true;
+      resolveDone(o);
+    };
+    const collectStderr = (d) => {
+      stderrTail += String(d);
+      if (stderrTail.length > STDERR_TAIL_CHARS) stderrTail = stderrTail.slice(-STDERR_TAIL_CHARS);
+    };
+    const dispatchLine = (line) => {
+      const ev = parseBzLine(line);
+      if (!ev) return;
+      switch (ev.kind) {
+        case "step":
+          cb.onStep(ev.text);
+          break;
+        case "progress":
+          cb.onProgress(ev.phase, ev.pct);
+          break;
+        case "info":
+          cb.onInfo(ev.data);
+          break;
+        case "result":
+          cb.onResult(ev.data);
+          break;
+        case "raw":
+          if (cb.onRaw) cb.onRaw(ev.text);
+          break;
+      }
+    };
+    if (!cp) {
+      settle({ ok: false, stopped: false, code: null, stderr: "", error: new Error("仅桌面端可用：外部工具需要 Node.js 子进程") });
+      return { stop: () => {
+      }, done };
+    }
+    const spawnOpts = { shell: !!spec.shell, windowsHide: true, stdio: ["ignore", "pipe", "pipe"] };
+    if (spec.cwd) spawnOpts.cwd = spec.cwd;
+    if (spec.env) spawnOpts.env = spec.env;
+    try {
+      child = cp.spawn(spec.cmd, spec.args || [], spawnOpts);
+    } catch (e) {
+      settle({ ok: false, stopped: false, code: null, stderr: stderrTail.trim(), error: new Error(`外部工具启动失败：${(e == null ? void 0 : e.message) || String(e)}`) });
+      return { stop: () => {
+      }, done };
+    }
+    (_a2 = child.stdout) == null ? void 0 : _a2.on("data", (d) => {
+      for (const line of splitter.push(d)) dispatchLine(line);
+    });
+    (_b2 = child.stderr) == null ? void 0 : _b2.on("data", collectStderr);
+    child.on("error", (e) => {
+      if (settled) return;
+      settle({ ok: false, stopped: false, code: null, stderr: stderrTail.trim(), error: new Error(`外部工具启动失败：${e.message}`) });
+    });
+    child.on("close", (code) => {
+      if (settled) return;
+      const rest = splitter.flush();
+      if (rest !== null) dispatchLine(rest);
+      const stderr = stderrTail.trim();
+      if (stopped) {
+        settle({ ok: false, stopped: true, code, stderr, error: null });
+        return;
+      }
+      if (code === 0) {
+        settle({ ok: true, stopped: false, code: 0, stderr, error: null });
+        return;
+      }
+      const err = new Error(code === null ? `外部工具异常退出（无退出码）${stderr ? "：" + stderr : ""}` : `外部工具异常退出（退出码 ${code}）${stderr ? "：" + stderr : ""}`);
+      err.stderr = stderr;
+      settle({ ok: false, stopped: false, code, stderr, error: err });
+    });
+    return {
+      stop: () => {
+        var _a3;
+        if (settled || stopped) return;
+        stopped = true;
+        try {
+          (_a3 = child == null ? void 0 : child.kill) == null ? void 0 : _a3.call(child);
+        } catch (e) {
+        }
+      },
+      done
+    };
+  }
+  var BZ_LINE_PREFIX_RE, MAX_LINE_BYTES, BzLineSplitter, STDERR_TAIL_CHARS;
+  var init_external_tool = __esm({
+    "src/core/external-tool.ts"() {
+      BZ_LINE_PREFIX_RE = /^\[bz-(step|p|info|result)\]/;
+      MAX_LINE_BYTES = 1024 * 1024;
+      BzLineSplitter = class {
+        constructor(maxLineBytes = MAX_LINE_BYTES) {
+          this.maxLineBytes = maxLineBytes;
+          this.parts = [];
+          this.len = 0;
+          this.overflowed = false;
+        }
+        /** 喂一段 stdout（Buffer 或 string），返回其中切出的完整行（不含行尾符） */
+        push(chunk) {
+          const buf = typeof chunk === "string" ? Buffer.from(chunk, "utf8") : chunk;
+          const lines = [];
+          let pos = 0;
+          while (pos < buf.length) {
+            const nl = buf.indexOf(10, pos);
+            if (nl === -1) {
+              this.accumulate(buf.subarray(pos));
+              break;
+            }
+            this.accumulate(buf.subarray(pos, nl));
+            lines.push(this.takeLine());
+            pos = nl + 1;
+          }
+          return lines;
+        }
+        /** 进程终结时冲刷残留半行（无残留返回 null）——无尾换行的最后一行靠这里出列 */
+        flush() {
+          return this.len > 0 || this.overflowed ? this.takeLine() : null;
+        }
+        /** 累积字节；超出单行上限后丢弃后续字节（截断语义，待换行时一并出列） */
+        accumulate(part) {
+          if (this.overflowed) return;
+          const room = this.maxLineBytes - this.len;
+          if (part.length <= room) {
+            this.parts.push(part);
+            this.len += part.length;
+          } else {
+            this.parts.push(part.subarray(0, room));
+            this.len = this.maxLineBytes;
+            this.overflowed = true;
+          }
+        }
+        /** 出列一行（overflow 时为截断行）；CRLF 的 \r 在此剥除 */
+        takeLine() {
+          const s = Buffer.concat(this.parts).toString("utf8");
+          this.parts = [];
+          this.len = 0;
+          this.overflowed = false;
+          return s.endsWith("\r") ? s.slice(0, -1) : s;
+        }
+      };
+      STDERR_TAIL_CHARS = 2048;
+    }
+  });
+
+  // src/dock/runner.ts
+  function vaultBasePath(app) {
+    var _a2;
+    const adapter = app.vault.adapter;
+    try {
+      return (_a2 = adapter == null ? void 0 : adapter.getBasePath) == null ? void 0 : _a2.call(adapter);
+    } catch (e) {
+      return void 0;
+    }
+  }
+  function dockEnvOf(entry, app) {
+    const vaultPath = vaultBasePath(app);
+    const env = {
+      BZ_DOCK_CONTRACT: "1",
+      BZ_DOCK_TOOL: entry.id,
+      BZ_DOCK_RUNS_FILE: runsFilePath(entry.id)
+    };
+    if (vaultPath) env.BZ_DOCK_VAULT = vaultPath;
+    return env;
+  }
+  function liveRunOf(toolId) {
+    return live2.get(toolId);
+  }
+  function liveRunsAll() {
+    const at4 = (r) => {
+      const t = Date.parse(r.startedAt);
+      return Number.isFinite(t) ? t : 0;
+    };
+    return Array.from(live2.values()).sort((a, b) => at4(a) - at4(b));
+  }
+  function stopRun(toolId) {
+    var _a2;
+    (_a2 = live2.get(toolId)) == null ? void 0 : _a2.handle.stop();
+  }
+  function runTool(app, entry, launch, manifest, values, cb = {}) {
+    const startedAtDate = /* @__PURE__ */ new Date();
+    const startedAt = startedAtDate.toISOString();
+    const rawTail = [];
+    const spec = {
+      cmd: launch.cmd,
+      args: [...launch.args, ...buildArgs(manifest != null ? manifest : { params: [] }, values)],
+      shell: launch.shell,
+      cwd: launch.cwd,
+      env: dockEnvOf(entry, app)
+    };
+    const steps = [];
+    const infos = [];
+    let result;
+    const myProgress = { phase: null, pct: null };
+    const handle = runExternalTool(
+      spec,
+      {
+        onStep: (text2) => {
+          var _a2;
+          steps.push({ text: text2, at: (/* @__PURE__ */ new Date()).toISOString(), status: "ok" });
+          (_a2 = cb.onStep) == null ? void 0 : _a2.call(cb, text2);
+        },
+        onProgress: (phase, pct) => {
+          var _a2;
+          myProgress.phase = phase;
+          myProgress.pct = pct;
+          (_a2 = cb.onProgress) == null ? void 0 : _a2.call(cb, phase, pct);
+        },
+        onInfo: (data) => {
+          var _a2;
+          infos.push({ at: (/* @__PURE__ */ new Date()).toISOString(), data });
+          (_a2 = cb.onInfo) == null ? void 0 : _a2.call(cb, data);
+        },
+        onResult: (data) => {
+          var _a2;
+          result = data;
+          (_a2 = cb.onResult) == null ? void 0 : _a2.call(cb, data);
+        },
+        onRaw: (t) => {
+          rawTail.push(t);
+          if (rawTail.length > 200) rawTail.shift();
+        }
+      },
+      deps
+    );
+    const run = {
+      toolId: entry.id,
+      startedAt,
+      steps,
+      progress: myProgress,
+      infos,
+      result,
+      rawTail,
+      handle,
+      done: void 0
+    };
+    run.done = handle.done.then((o) => {
+      var _a2;
+      const finishedAt = (/* @__PURE__ */ new Date()).toISOString();
+      const outcome = {
+        ok: o.ok,
+        stopped: o.stopped,
+        code: o.code,
+        stderr: o.stderr,
+        error: o.error,
+        kind: classify(o),
+        startedAt,
+        finishedAt,
+        durationMs: new Date(finishedAt).getTime() - startedAtDate.getTime()
+      };
+      live2.delete(entry.id);
+      (_a2 = cb.onDone) == null ? void 0 : _a2.call(cb, outcome, run);
+      return outcome;
+    });
+    live2.set(entry.id, run);
+    return run;
+  }
+  function classify(o) {
+    if (o.stopped) return "aborted";
+    if (o.ok) return "unknown";
+    if (o.code === null) return "config";
+    return "unknown";
+  }
+  function statusText(status) {
+    switch (status) {
+      case "ok":
+        return "成功";
+      case "failed":
+        return "失败";
+      case "stopped":
+        return "已中止";
+      case "timeout":
+        return "超时";
+      case "running":
+        return "运行中";
+      default:
+        return status;
+    }
+  }
+  function errorHint(kind) {
+    switch (kind) {
+      case "auth":
+        return "登录态已失效，去重新导出凭据（cookie / token）";
+      case "network":
+        return "网络不通，检查代理或稍后重试";
+      case "config":
+        return "命令或参数配错了，检查工具的命令路径与工作目录";
+      case "timeout":
+        return "执行超时，可能是网络慢或任务量变大";
+      case "aborted":
+        return "被手动中止";
+      default:
+        return "查看运行记录里的 stderr 尾部定位";
+    }
+  }
+  function notifyRunOutcome(name, outcome, onView) {
+    const secs = (outcome.durationMs / 1e3).toFixed(outcome.durationMs < 1e4 ? 1 : 0);
+    const action = onView ? { label: "查看", onClick: onView } : void 0;
+    if (outcome.ok) {
+      notify(`${name} 完成（${secs} 秒）`, { type: "success", action });
+      return;
+    }
+    if (outcome.stopped) {
+      notify(`${name} 已中止`, { type: "warning", action });
+      return;
+    }
+    notify(`${name} 失败：${errorHint(outcome.kind)}`, { type: "error", action });
+  }
+  function initialValuesOf(params, stored = {}) {
+    const out = {};
+    for (const p of params != null ? params : []) {
+      if (p.default !== void 0) out[p.key] = p.default;
+      else if (p.type === "bool") out[p.key] = false;
+      else if (p.type === "multichoice") out[p.key] = [];
+    }
+    for (const p of params != null ? params : []) {
+      if (Object.prototype.hasOwnProperty.call(stored, p.key)) out[p.key] = stored[p.key];
+    }
+    return out;
+  }
+  var deps, live2;
+  var init_runner = __esm({
+    "src/dock/runner.ts"() {
+      init_notice();
+      init_external_tool();
+      init_schema2();
+      init_data16();
+      live2 = /* @__PURE__ */ new Map();
+    }
+  });
+
+  // src/dock/ui.ts
+  function el2(tag, cls, text2) {
+    const n = document.createElement(tag);
+    if (cls) n.className = cls;
+    if (text2 !== void 0) n.textContent = text2;
+    return n;
+  }
+  function todayKey() {
+    const d = /* @__PURE__ */ new Date();
+    const p = (n) => String(n).padStart(2, "0");
+    return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
+  }
+  async function copyText2(text2, what) {
+    try {
+      await navigator.clipboard.writeText(text2);
+      notice(`已复制${what}`);
+    } catch (e) {
+      notice(`复制失败，请手动复制：${text2}`, "warning");
+    }
+  }
+  function dotClass(health) {
+    switch (health) {
+      case "ok":
+        return "bz-dock-dot bz-dock-dot--ok";
+      case "due":
+      case "failed":
+      case "timeout":
+        return "bz-dock-dot bz-dock-dot--bad";
+      case "pending":
+      case "running":
+      case "stopped":
+        return "bz-dock-dot bz-dock-dot--warn";
+      default:
+        return "bz-dock-dot bz-dock-dot--idle";
+    }
+  }
+  function whenTextOf(v, last) {
+    if (v.runsUnreadable) return "记录读不懂";
+    if (!last) return "还没有运行过";
+    return relTime(last.startedAt.replace("T", " "));
+  }
+  function messageTextOf(v, last) {
+    if (v.runsUnreadable) return "文件在，但内容不合契约";
+    const live3 = liveRunOf(v.entry.id);
+    if (live3) return live3.progress.phase ? `正在${live3.progress.phase}…` : "正在运行…";
+    if (!v.manifest) return "声明文件读不到，先把路径修好";
+    if (!v.run) return "声明里没写怎么跑（缺 run 段）";
+    if (!last) return "等它按自己的节奏跑一次";
+    return last.message || statusText(last.status);
+  }
+  function failHintOf(last) {
+    if (!last || !last.error) return null;
+    if (last.status === "ok" || last.status === "running") return null;
+    return errorHint(last.error.kind);
+  }
+  function viewById(id) {
+    return views.find((v) => v.entry.id === id);
+  }
+  function canRun() {
+    return !Platform.isMobile;
+  }
+  function canStart(v) {
+    return canRun() && isTrusted(v.entry) && !v.trustStale && !!v.run;
+  }
+  function trustTagOf(v) {
+    if (!isTrusted(v.entry)) return "未信任";
+    if (v.trustStale) return "命令已变，待重新确认";
+    return null;
+  }
+  function runLabel(v) {
+    return triggerOfView(v) === "auto" ? "手动跑一次" : "运行";
+  }
+  function openDock(app) {
+    var _a2;
+    hostApp2 = app;
+    if (!overlay2) build2(app);
+    topifyZ(overlay2);
+    overlay2.classList.remove("is-off");
+    trapPanelFocus((_a2 = overlay2.querySelector(`#${FRAME_ID2}`)) != null ? _a2 : overlay2);
+    escHandle6 == null ? void 0 : escHandle6.unregister();
+    escHandle6 = escManager.register("bz-dock", {
+      isVisible: () => isPanelVisible2(),
+      close: () => closeDock()
+    });
+    render2();
+    void refresh2();
+  }
+  function closeDock() {
+    overlay2 == null ? void 0 : overlay2.classList.add("is-off");
+  }
+  function isPanelVisible2() {
+    return !!overlay2 && !overlay2.classList.contains("is-off");
+  }
+  function build2(app) {
+    const ov = el2("div", "bz-panel-overlay bz-dock-mask is-off");
+    ov.id = OVERLAY_ID2;
+    const frame2 = el2("div", "bz-panel-frame bz-dock-panel bz-panel-mtop");
+    frame2.id = FRAME_ID2;
+    const head = el2("div", "bz-panel-head");
+    const brand = el2("div", "bz-panel-brand");
+    brand.appendChild(uiIcon("square-terminal"));
+    const title = el2("div", "bz-panel-title", "工具坞");
+    const pipe = el2("div", "bz-panel-head-pipe");
+    const sub = el2("div", "bz-panel-head-sub");
+    sub.id = "bz-dock-headsub";
+    const sp = el2("div", "bz-panel-head-sp");
+    const btns = el2("div", "bz-panel-head-btns");
+    btns.id = "bz-dock-headbtns";
+    head.append(brand, title, pipe, sub, sp, btns);
+    const kpi = el2("div", "bz-dock-kpi");
+    kpi.id = "bz-dock-kpi";
+    const runbar = el2("div", "bz-dock-runbar");
+    runbar.id = "bz-dock-runbar";
+    const bar = el2("div", "bz-dock-bar");
+    bar.id = "bz-dock-bar";
+    const body = el2("div", "bz-dock-body");
+    body.id = "bz-dock-body";
+    frame2.append(head, kpi, runbar, bar, body);
+    ov.appendChild(frame2);
+    ov.addEventListener("click", (e) => {
+      if (e.target === ov) closeDock();
+    });
+    document.body.appendChild(ov);
+    overlay2 = ov;
+  }
+  function headSubEl() {
+    var _a2;
+    return (_a2 = overlay2 == null ? void 0 : overlay2.querySelector("#bz-dock-headsub")) != null ? _a2 : null;
+  }
+  function headBtnsEl() {
+    var _a2;
+    return (_a2 = overlay2 == null ? void 0 : overlay2.querySelector("#bz-dock-headbtns")) != null ? _a2 : null;
+  }
+  function kpiEl() {
+    var _a2;
+    return (_a2 = overlay2 == null ? void 0 : overlay2.querySelector("#bz-dock-kpi")) != null ? _a2 : null;
+  }
+  function runbarEl() {
+    var _a2;
+    return (_a2 = overlay2 == null ? void 0 : overlay2.querySelector("#bz-dock-runbar")) != null ? _a2 : null;
+  }
+  function barEl() {
+    var _a2;
+    return (_a2 = overlay2 == null ? void 0 : overlay2.querySelector("#bz-dock-bar")) != null ? _a2 : null;
+  }
+  function bodyEl3() {
+    var _a2;
+    return (_a2 = overlay2 == null ? void 0 : overlay2.querySelector("#bz-dock-body")) != null ? _a2 : null;
+  }
+  async function refresh2() {
+    if (!hostApp2 || refreshing) return;
+    refreshing = true;
+    renderHead();
+    try {
+      views = await loadToolViews(hostApp2);
+      runDueNotifications();
+    } catch (e) {
+      console.warn("[dock] 载入工具视图失败", e);
+      notice("工具坞载入失败，详见控制台", "error");
+    } finally {
+      refreshing = false;
+      render2();
+    }
+  }
+  function runDueNotifications() {
+    if (tryGetSettings().dockNotifyMissed === false) return;
+    const day = todayKey();
+    for (const v of views) {
+      if (!isEnabled(v.entry)) continue;
+      if (v.due.state !== "due") continue;
+      const key = `${v.entry.id}:${day}`;
+      if (dueNotified.has(key)) continue;
+      dueNotified.add(key);
+      notify(`${displayName2(v)} 今天该跑没跑：${v.due.detail}`, {
+        type: "warning",
+        dedupeKey: `dock-due-${key}`,
+        action: { label: "查看", onClick: () => openDock(hostApp2) }
+      });
+    }
+  }
+  function render2() {
+    renderHead();
+    renderKpi();
+    renderRunbar();
+    renderBar();
+    renderBody3();
+  }
+  function renderKpi() {
+    const host = kpiEl();
+    if (!host) return;
+    host.innerHTML = "";
+    if (!views.length) {
+      host.classList.add("is-off");
+      return;
+    }
+    host.classList.remove("is-off");
+    const o = overview(views);
+    const tile = (num3, unit, label, sub, tone) => {
+      const t = el2("div", tone ? `bz-dock-kpi-tile is-${tone}` : "bz-dock-kpi-tile");
+      const v = el2("div", "bz-dock-kpi-v", num3);
+      if (unit) v.appendChild(el2("small", void 0, unit));
+      t.appendChild(v);
+      t.appendChild(el2("div", "bz-dock-kpi-l", label));
+      t.appendChild(el2("div", tone === "up" ? "bz-dock-kpi-d is-up" : "bz-dock-kpi-d", sub));
+      return t;
+    };
+    const left = o.autoTotal - o.autoDoneToday;
+    host.appendChild(
+      tile(
+        String(o.autoDoneToday),
+        ` / ${o.autoTotal}`,
+        "今日自动化达标",
+        o.autoTotal === 0 ? "还没有自动化工具" : left > 0 ? `还差 ${left} 个` : "今天都跑成了",
+        o.autoTotal > 0 && left > 0 ? "warn" : void 0
+      )
+    );
+    host.appendChild(
+      tile(
+        o.rate7d === null ? "—" : String(Math.round(o.rate7d * 100)),
+        o.rate7d === null ? "" : "%",
+        "近 7 天成功率",
+        o.runs7d ? `${o.runs7d} 次里成功 ${o.ok7d} 次` : "还没有可比的记录"
+      )
+    );
+    host.appendChild(
+      tile(
+        String(o.alarms),
+        "",
+        "待处理异常",
+        o.alarmHint ? `${o.alarmHint.name} · ${o.alarmHint.reason}` : "没有要管的事",
+        o.alarms ? "bad" : void 0
+      )
+    );
+    if (o.nextDue) {
+      const left2 = untilText(o.nextDue.at - Date.now());
+      host.appendChild(tile(left2.num, left2.unit, "距下次到期", o.nextDue.name));
+    } else {
+      host.appendChild(tile("—", "", "距下次到期", "没有能算出下次到期的工具"));
+    }
+  }
+  function untilText(ms) {
+    const m = ms / 6e4;
+    if (m < 60) return { num: String(Math.max(1, Math.round(m))), unit: "m" };
+    const h = m / 60;
+    if (h < 24) return { num: String(Math.round(h)), unit: "h" };
+    return { num: String(Math.round(h / 24)), unit: "d" };
+  }
+  function renderRunbar() {
+    const host = runbarEl();
+    if (!host) return;
+    host.innerHTML = "";
+    const runs = liveRunsAll();
+    if (!runs.length) {
+      host.classList.add("is-off");
+      return;
+    }
+    host.classList.remove("is-off");
+    for (const run of runs) host.appendChild(makeRunbarRow(run));
+  }
+  function makeRunbarRow(run) {
+    var _a2;
+    const row = el2("div", "bz-dock-rb");
+    row.dataset.tool = run.toolId;
+    row.appendChild(el2("span", "bz-dock-rb-pulse"));
+    const v = viewById(run.toolId);
+    row.appendChild(el2("span", "bz-dock-rb-name", v ? displayName2(v) : run.toolId));
+    row.appendChild(
+      el2("span", "bz-dock-rb-phase", run.progress.phase ? `正在${run.progress.phase}…` : "运行中…")
+    );
+    const lastStep = run.steps.length ? run.steps[run.steps.length - 1].text : "";
+    row.appendChild(el2("span", "bz-dock-rb-step", lastStep));
+    const bar = uiProgress({ value: (_a2 = run.progress.pct) != null ? _a2 : 0 });
+    bar.el.classList.add("bz-dock-rb-track");
+    if (run.progress.pct === null) bar.el.classList.add("is-indeterminate");
+    row.appendChild(bar.el);
+    row.appendChild(el2("span", "bz-dock-rb-pct", run.progress.pct === null ? "—" : `${Math.round(run.progress.pct)}%`));
+    if (canRun()) {
+      row.appendChild(
+        uiBtn({
+          label: "停止",
+          icon: "square",
+          tone: "danger",
+          size: "sm",
+          onClick: () => stopRun(run.toolId)
+        })
+      );
+    }
+    return row;
+  }
+  function renderHead() {
+    const sub = headSubEl();
+    const btns = headBtnsEl();
+    if (!sub || !btns) return;
+    const s = summarize(views);
+    sub.textContent = views.length ? `${s.total} 个工具 · 自动化 ${s.auto} · 手动 ${s.manual}${s.overdue ? ` · ${s.overdue} 个待关注` : ""}` : "还没有登记任何外部工具";
+    btns.innerHTML = "";
+    btns.append(
+      uiIconBtn({
+        icon: "search",
+        title: "搜索工具",
+        on: searchOpen,
+        onClick: () => {
+          searchOpen = !searchOpen;
+          render2();
+        }
+      }),
+      uiIconBtn({
+        icon: "refresh-cw",
+        title: "重新读取运行记录",
+        disabled: refreshing,
+        onClick: () => void refresh2()
+      }),
+      uiIconBtn({
+        icon: "plus",
+        title: "导入工具声明",
+        onClick: () => importToolFlow()
+      }),
+      uiIconBtn({
+        icon: "x",
+        title: "关闭",
+        // ⚠️ 刻意**不**传 close:true —— 那个标记会带上 `bz-icon-btn--close`，而 core/styles.css 有
+        // `button.bz-icon-btn--close { display: none !important }`（「非真全屏一律隐藏关闭钮」），
+        // 域内后置的移动端 display 覆盖不动 !important。桌面对齐：关闭钮显隐由本域自己管。
+        className: "bz-dock-close",
+        onClick: () => closeDock()
+      })
+    );
+  }
+  function renderBar() {
+    const bar = barEl();
+    if (!bar) return;
+    bar.innerHTML = "";
+    if (refreshing) bar.classList.add("is-loading");
+    else bar.classList.remove("is-loading");
+    if (!searchOpen) {
+      bar.classList.add("is-off");
+      return;
+    }
+    bar.classList.remove("is-off");
+    const sp = el2("div", "bz-dock-search");
+    const search = uiSearch({
+      placeholder: "搜工具名 / 描述 / 命令",
+      value: query,
+      onInput: (v) => {
+        query = v;
+        renderBody3();
+      }
+    });
+    sp.appendChild(search.el);
+    bar.appendChild(sp);
+    if (!Platform.isMobile) queueMicrotask(() => search.input.focus());
+  }
+  function filtered2() {
+    const q3 = query.trim().toLowerCase();
+    if (!q3) return views.slice();
+    return views.filter((v) => {
+      var _a2, _b2;
+      const hay = [v.entry.id, displayName2(v), displayDesc(v), (_b2 = (_a2 = v.run) == null ? void 0 : _a2.cmd) != null ? _b2 : v.declPath].join(" ").toLowerCase();
+      return hay.includes(q3);
+    });
+  }
+  function renderBody3() {
+    const body = bodyEl3();
+    if (!body) return;
+    body.innerHTML = "";
+    if (view.kind === "detail") {
+      const v = viewById(view.id);
+      if (v) {
+        renderDetail(body, v);
+        return;
+      }
+      view = { kind: "list" };
+    }
+    renderList2(body);
+  }
+  function renderList2(body) {
+    if (!views.length) {
+      body.appendChild(
+        uiEmpty({
+          icon: "square-terminal",
+          title: "还没有外部工具",
+          desc: "选一个工具的声明文件（dock.json），工具坞就知道它叫什么、有哪些参数、该怎么跑；运行记录也归它收口",
+          actions: uiBtnRow(
+            [uiBtn({ label: "导入声明文件", icon: "file-input", tone: "primary", onClick: () => importToolFlow() })],
+            { center: true }
+          )
+        })
+      );
+      return;
+    }
+    const list = filtered2();
+    if (!list.length) {
+      body.appendChild(
+        uiEmpty({ icon: "search-x", title: "没有匹配的工具", desc: "换个词试试" })
+      );
+      return;
+    }
+    const auto = list.filter((v) => triggerOfView(v) === "auto");
+    const manual = list.filter((v) => triggerOfView(v) === "manual");
+    if (auto.length) body.appendChild(section("自动化", "由系统自己按你配好的节奏跑（bz 不调度）", auto));
+    if (manual.length) body.appendChild(section("手动", "想起来才点一次", manual));
+  }
+  function section(title, hint, list) {
+    const sec = el2("section", "bz-dock-sec");
+    const head = el2("div", "bz-dock-sec-head");
+    head.appendChild(el2("span", "bz-dock-sec-title", title));
+    head.appendChild(el2("span", "bz-dock-sec-count", String(list.length)));
+    head.appendChild(el2("span", "bz-dock-sec-hint", hint));
+    sec.appendChild(head);
+    const grid = el2("div", "bz-dock-grid");
+    for (const v of list) grid.appendChild(makeCard(v));
+    sec.appendChild(grid);
+    return sec;
+  }
+  function makeCard(v) {
+    const id = v.entry.id;
+    const card = el2("article", "bz-dock-card");
+    card.dataset.tool = id;
+    if (isOverdue(v.due.state)) card.classList.add("is-due");
+    if (!isEnabled(v.entry)) card.classList.add("is-disabled");
+    if (liveRunOf(id)) card.classList.add("is-running");
+    const top = el2("div", "bz-dock-card-top");
+    const ic2 = el2("span", "bz-dock-card-ic");
+    ic2.appendChild(uiIcon(displayIcon(v), "bz-ic--md"));
+    const idbox = el2("div", "bz-dock-card-idbox");
+    const name = el2("div", "bz-dock-card-name", displayName2(v));
+    const tags = el2("div", "bz-dock-card-tags");
+    tags.appendChild(el2("span", "bz-dock-tag", triggerOfView(v) === "auto" ? "自动化" : "手动"));
+    if (isOverdue(v.due.state)) tags.appendChild(el2("span", "bz-dock-tag bz-dock-tag--due", "今日未跑"));
+    const trustTag = trustTagOf(v);
+    if (trustTag) tags.appendChild(el2("span", "bz-dock-tag bz-dock-tag--warn", trustTag));
+    if (!v.manifest) tags.appendChild(el2("span", "bz-dock-tag bz-dock-tag--muted", "声明读不到"));
+    if (v.manifest && !v.run) tags.appendChild(el2("span", "bz-dock-tag bz-dock-tag--muted", "只能看"));
+    idbox.append(name, tags);
+    top.append(ic2, idbox);
+    card.appendChild(top);
+    const desc = displayDesc(v);
+    if (desc) card.appendChild(el2("div", "bz-dock-card-desc", desc));
+    const state3 = el2("div", "bz-dock-card-state");
+    const last = lastOf(v);
+    state3.appendChild(el2("span", dotClass(last ? last.status : v.due.state)));
+    state3.appendChild(el2("span", "bz-dock-card-when", whenTextOf(v, last)));
+    state3.appendChild(el2("span", "bz-dock-card-msg", messageTextOf(v, last)));
+    const rate = successRate(v.runs);
+    if (rate !== null) {
+      const rateEl = el2("span", "bz-dock-rate", `${Math.round(rate * 100)}% 成功`);
+      rateEl.title = `${v.runs.length} 条记录里成功了几条`;
+      if (rate < 1) rateEl.classList.add("is-warn");
+      state3.appendChild(rateEl);
+    }
+    card.appendChild(state3);
+    const hint = failHintOf(last);
+    if (hint) {
+      const box = el2("div", "bz-dock-card-fail");
+      box.appendChild(uiIcon("alert-triangle", "bz-ic--xs"));
+      box.appendChild(el2("span", "bz-dock-card-failtext", hint));
+      card.appendChild(box);
+    }
+    const strip = el2("div", "bz-dock-strip");
+    strip.title = "最近 7 次运行（左旧右新）";
+    for (const r of recentRuns(v.runs, 7)) {
+      const cell = el2("i", "bz-dock-pip");
+      if (r) {
+        cell.classList.add(`bz-dock-pip--${r.status}`);
+        cell.title = `${relTime(r.startedAt.replace("T", " "))} · ${statusText(r.status)}${r.message ? ` · ${r.message}` : ""}`;
+      } else {
+        cell.title = "这一次没有运行记录";
+      }
+      strip.appendChild(cell);
+    }
+    card.appendChild(strip);
+    const foot = el2("div", "bz-dock-card-foot");
+    if (canRun()) {
+      const live3 = liveRunOf(id);
+      if (live3) {
+        foot.appendChild(
+          uiBtn({
+            label: "停止",
+            icon: "square",
+            tone: "danger",
+            size: "sm",
+            onClick: () => {
+              stopRun(id);
+            }
+          })
+        );
+      } else {
+        foot.appendChild(
+          uiBtn({
+            label: runLabel(v),
+            icon: "play",
+            tone: "primary",
+            size: "sm",
+            disabled: !canStart(v),
+            onClick: () => void runFlow(v)
+          })
+        );
+      }
+    } else {
+      foot.appendChild(el2("span", "bz-dock-mobilehint", "移动端仅查看"));
+    }
+    foot.appendChild(
+      uiBtn({
+        label: "详情",
+        icon: "chevron-right",
+        size: "sm",
+        className: "bz-dock-foot-detail",
+        onClick: () => {
+          view = { kind: "detail", id };
+          render2();
+        }
+      })
+    );
+    const more = uiIconBtn({
+      icon: "more-horizontal",
+      title: "更多操作",
+      xs: true,
+      onClick: () => openCardActions(more, v)
+    });
+    foot.appendChild(more);
+    card.appendChild(foot);
+    attachItemActions(card, cardActions(v));
+    card.addEventListener("click", (e) => {
+      const t = e.target;
+      if (t.closest("button")) return;
+      view = { kind: "detail", id };
+      render2();
+    });
+    return card;
+  }
+  function lastOf(v) {
+    return v.runs.slice().sort((a, b) => {
+      var _a2, _b2;
+      return ((_a2 = timeOf(b.startedAt)) != null ? _a2 : 0) - ((_b2 = timeOf(a.startedAt)) != null ? _b2 : 0);
+    })[0];
+  }
+  function cardActions(v) {
+    const id = v.entry.id;
+    const acts = [
+      {
+        icon: "chevron-right",
+        label: "打开详情",
+        onClick: () => {
+          view = { kind: "detail", id };
+          render2();
+        }
+      },
+      {
+        icon: "refresh-cw",
+        label: "重新读声明",
+        onClick: () => void reloadDeclaration(v)
+      }
+    ];
+    if (canStart(v)) {
+      acts.push({
+        icon: "play",
+        label: runLabel(v),
+        onClick: () => void runFlow(v)
+      });
+    }
+    acts.push({ icon: "pencil", label: "重新导入声明", onClick: () => void importToolFlow(v.entry) });
+    acts.push({
+      icon: "trash-2",
+      label: v.entry.enabled === false ? "启用" : "停用",
+      onClick: () => void toggleEnabled(v.entry)
+    });
+    acts.push({
+      icon: "x-circle",
+      label: "移除登记",
+      kind: "danger",
+      onClick: () => void removeToolFlow(v)
+    });
+    return acts;
+  }
+  function openCardActions(anchor, v) {
+    const actions = cardActions(v);
+    const head = el2("div", "bz-dock-sheet-head");
+    const sub = el2("div", "bz-dock-sheet-sub");
+    sub.textContent = v.declPath;
+    head.append(el2("div", "bz-dock-sheet-name", displayName2(v)), sub);
+    if (Platform.isMobile) {
+      openItemSheet(actions, { sheetHead: head });
+    } else {
+      const r = anchor.getBoundingClientRect();
+      openItemMenu(r.left, r.bottom + 4, actions);
+    }
+  }
+  function renderDetail(body, v) {
+    var _a2;
+    const wrap2 = el2("div", "bz-dock-detail");
+    const head = el2("div", "bz-dock-detail-head");
+    head.appendChild(uiIconBtn({ icon: "chevron-left", title: "返回列表", onClick: () => {
+      view = { kind: "list" };
+      render2();
+    } }));
+    const ic2 = el2("span", "bz-dock-detail-ic");
+    ic2.appendChild(uiIcon(displayIcon(v), "bz-ic--lg"));
+    const idbox = el2("div", "bz-dock-detail-idbox");
+    idbox.appendChild(el2("div", "bz-dock-detail-name", displayName2(v)));
+    const tags = el2("div", "bz-dock-detail-tags");
+    tags.appendChild(el2("span", "bz-dock-tag", triggerOfView(v) === "auto" ? "自动化" : "手动"));
+    if (isOverdue(v.due.state)) tags.appendChild(el2("span", "bz-dock-tag bz-dock-tag--due", v.due.detail));
+    const trustTag = trustTagOf(v);
+    if (trustTag) tags.appendChild(el2("span", "bz-dock-tag bz-dock-tag--warn", trustTag));
+    idbox.appendChild(tags);
+    head.append(ic2, idbox);
+    const sp = el2("div", "bz-dock-detail-sp");
+    head.appendChild(sp);
+    if (canStart(v)) {
+      const live3 = liveRunOf(v.entry.id);
+      head.appendChild(
+        live3 ? uiBtn({ label: "停止", icon: "square", tone: "danger", onClick: () => stopRun(v.entry.id) }) : uiBtn({
+          label: runLabel(v),
+          icon: "play",
+          tone: "primary",
+          onClick: () => void runFlow(v)
+        })
+      );
+    }
+    head.appendChild(uiIconBtn({ icon: "refresh-cw", title: "重新读取记录", onClick: () => void refresh2() }));
+    head.appendChild(uiIconBtn({ icon: "more-horizontal", title: "更多操作", onClick: () => openCardActions(head, v) }));
+    wrap2.appendChild(head);
+    const desc = displayDesc(v);
+    if (desc) wrap2.appendChild(el2("div", "bz-dock-detail-desc", desc));
+    if (v.declError) {
+      const box = el2("div", "bz-dock-meta-warn");
+      box.textContent = v.declError;
+      wrap2.appendChild(box);
+    }
+    const meta = el2("div", "bz-dock-meta");
+    meta.appendChild(
+      metaRow("声明文件", v.declPath, true, () => void copyText2(v.declPath, "声明文件路径"))
+    );
+    if (v.run) {
+      meta.appendChild(metaRow("命令", v.run.cmd, true));
+      if (v.run.args.length) meta.appendChild(metaRow("固定参数", v.run.args.join(" "), true));
+      if (v.run.cwd) meta.appendChild(metaRow("工作目录", v.run.cwd, true));
+      if (v.run.shell) meta.appendChild(metaRow("经 shell 启动", "是"));
+    } else {
+      meta.appendChild(metaRow("命令", "声明里没写怎么跑（缺 run 段）"));
+    }
+    meta.appendChild(
+      metaRow("参数值文件", v.valuesPath, true, () => void copyText2(v.valuesPath, "参数值文件路径"))
+    );
+    meta.appendChild(metaRow("数据文件", v.runsPath, true, () => void copyText2(v.runsPath, "数据文件路径")));
+    meta.appendChild(metaRow("节奏", ((_a2 = v.manifest) == null ? void 0 : _a2.schedule) ? scheduleText(v.manifest) : "工具未声明"));
+    const rate = successRate(v.runs);
+    meta.appendChild(metaRow("成功率", rate === null ? "暂无记录" : `${Math.round(rate * 100)}%（共 ${v.runs.length} 条）`));
+    if (v.overLimit) {
+      meta.appendChild(el2("div", "bz-dock-meta-warn", "记录条数已超约定上限 —— 裁剪是工具自己的活，去检查它的 GC"));
+    }
+    if (v.runsUnreadable) {
+      meta.appendChild(el2("div", "bz-dock-meta-warn", "运行记录文件读不懂（坏 JSON 或结构不符）；工具坞不打补丁、不改写，等工具自己修好"));
+    }
+    wrap2.appendChild(meta);
+    const cols = el2("div", "bz-dock-cols");
+    cols.appendChild(runPane(v));
+    cols.appendChild(histPane(v));
+    wrap2.appendChild(cols);
+    body.appendChild(wrap2);
+  }
+  function metaRow(label, value, mono = false, onCopy) {
+    const row = el2("div", "bz-dock-meta-row");
+    row.appendChild(el2("span", "bz-dock-meta-label", label));
+    const val = el2("span", "bz-dock-meta-val" + (mono ? " is-mono" : ""), value);
+    val.title = value;
+    row.appendChild(val);
+    if (onCopy) {
+      row.appendChild(uiIconBtn({ icon: "copy", title: "复制", xs: true, onClick: onCopy }));
+    }
+    return row;
+  }
+  function runPane(v) {
+    var _a2, _b2;
+    const pane = el2("section", "bz-dock-pane bz-dock-runpane");
+    pane.appendChild(el2("h3", "bz-dock-pane-title", "运行台"));
+    if (!v.manifest) {
+      const box = el2("div", "bz-dock-noManifest");
+      box.appendChild(el2("div", "bz-dock-note", (_a2 = v.declError) != null ? _a2 : "声明文件读不到。"));
+      box.appendChild(
+        uiBtn({
+          label: "重新读声明",
+          icon: "refresh-cw",
+          onClick: () => void reloadDeclaration(v)
+        })
+      );
+      pane.appendChild(box);
+      pane.appendChild(liveHost(v.entry.id));
+      return pane;
+    }
+    const params = (_b2 = v.manifest.params) != null ? _b2 : [];
+    if (params.length) {
+      const form = el2("div", "bz-dock-form");
+      const values = valuesOf(v);
+      for (const p of params) form.appendChild(paramRow(p, values, v));
+      pane.appendChild(form);
+    } else {
+      pane.appendChild(el2("div", "bz-dock-note", "这个工具没有参数。"));
+    }
+    if (!v.run) {
+      pane.appendChild(
+        el2("div", "bz-dock-meta-warn", "这份声明没写 run 段 —— 能看它的记录，但不知道该怎么跑。")
+      );
+    }
+    const btns = el2("div", "bz-dock-runbtns");
+    if (canRun()) {
+      const live3 = liveRunOf(v.entry.id);
+      btns.appendChild(
+        live3 ? uiBtn({ label: "停止", icon: "square", tone: "danger", onClick: () => stopRun(v.entry.id) }) : uiBtn({
+          label: runLabel(v),
+          icon: "play",
+          tone: "primary",
+          disabled: !canStart(v),
+          onClick: () => void runFlow(v)
+        })
+      );
+      if (params.length) {
+        btns.appendChild(
+          uiBtn({ label: "重置参数", size: "sm", onClick: () => resetValues(v) })
+        );
+      }
+    } else {
+      btns.appendChild(el2("span", "bz-dock-mobilehint", "移动端不能启动进程，只能看"));
+    }
+    pane.appendChild(btns);
+    pane.appendChild(liveHost(v.entry.id));
+    return pane;
+  }
+  function liveHost(id) {
+    const host = el2("div", "bz-dock-live");
+    host.dataset.tool = id;
+    renderLiveInto(host, id);
+    return host;
+  }
+  function renderLiveInto(host, id) {
+    var _a2;
+    host.innerHTML = "";
+    const run = liveRunOf(id);
+    if (!run) {
+      host.classList.add("is-off");
+      return;
+    }
+    host.classList.remove("is-off");
+    host.appendChild(el2("div", "bz-dock-live-head", "正在跑（bz 亲手启动的，所以有实时进度）"));
+    const ptxt = run.progress.phase ? `${run.progress.phase}${run.progress.pct === null ? "" : ` ${Math.round(run.progress.pct)}%`}` : "进行中";
+    host.appendChild(el2("div", "bz-dock-live-phase", ptxt));
+    const bar = uiProgress({ value: (_a2 = run.progress.pct) != null ? _a2 : 0 });
+    if (run.progress.pct === null) bar.el.classList.add("is-indeterminate");
+    host.appendChild(bar.el);
+    const steps = el2("ol", "bz-dock-steps");
+    for (const s of run.steps.slice(-8)) {
+      const li = el2("li", "bz-dock-step");
+      li.appendChild(el2("span", "bz-dock-step-dot"));
+      li.appendChild(el2("span", "bz-dock-step-text", s.text));
+      steps.appendChild(li);
+    }
+    host.appendChild(steps);
+    if (run.rawTail.length) {
+      const tail = el2("pre", "bz-dock-raw");
+      tail.textContent = run.rawTail.slice(-12).join("\n");
+      host.appendChild(tail);
+    }
+  }
+  function valuesOf(v) {
+    var _a2;
+    const id = v.entry.id;
+    if (!draftValues.has(id)) {
+      draftValues.set(id, initialValuesOf((_a2 = v.manifest) == null ? void 0 : _a2.params, v.values));
+    }
+    return draftValues.get(id);
+  }
+  function queueValueSave(v) {
+    const id = v.entry.id;
+    const prev = valueSaveTimers.get(id);
+    if (prev) clearTimeout(prev);
+    valueSaveTimers.set(
+      id,
+      setTimeout(() => {
+        valueSaveTimers.delete(id);
+        saveValuesNow(v);
+      }, VALUE_SAVE_DEBOUNCE_MS)
+    );
+  }
+  function saveValuesNow(v) {
+    const id = v.entry.id;
+    const t = valueSaveTimers.get(id);
+    if (t) {
+      clearTimeout(t);
+      valueSaveTimers.delete(id);
+    }
+    const draft = draftValues.get(id);
+    if (!draft) return;
+    if (!saveToolValues(v.entry, draft)) {
+      notice("参数没存住（写不进工具目录），检查那个目录是否能写", "warning");
+    }
+  }
+  function resetValues(v) {
+    var _a2;
+    draftValues.set(v.entry.id, initialValuesOf((_a2 = v.manifest) == null ? void 0 : _a2.params));
+    saveValuesNow(v);
+    render2();
+  }
+  function paramRow(p, values, v) {
+    var _a2, _b2, _c, _d;
+    const set = (val) => {
+      values[p.key] = val;
+      queueValueSave(v);
+    };
+    let control;
+    switch (p.type) {
+      case "bool": {
+        const sw = uiSwitch({ checked: values[p.key] === true, onChange: (c) => set(c) });
+        control = sw.el;
+        break;
+      }
+      case "choice": {
+        const opts = ((_a2 = p.options) != null ? _a2 : []).map((o) => ({ value: o.value, label: o.label }));
+        if (!opts.length) opts.push({ value: "", label: "（无选项）" });
+        const seed = values[p.key] !== void 0 ? String(values[p.key]) : String((_b2 = p.default) != null ? _b2 : opts[0].value);
+        const picked = opts.some((o) => o.value === seed) ? seed : opts[0].value;
+        set(picked);
+        const sel = uiSelect({
+          options: opts,
+          value: picked,
+          placeholder: "请选择",
+          onChange: (val) => set(val)
+        });
+        control = sel.el;
+        break;
+      }
+      case "multichoice": {
+        const box = el2("div", "bz-dock-multichoice");
+        const cur = new Set(Array.isArray(values[p.key]) ? values[p.key] : []);
+        for (const o of (_c = p.options) != null ? _c : []) {
+          box.appendChild(
+            uiChip({
+              label: o.label,
+              selectedSoft: cur.has(o.value),
+              onClick: () => {
+                if (cur.has(o.value)) cur.delete(o.value);
+                else cur.add(o.value);
+                set([...cur]);
+                render2();
+              }
+            })
+          );
+        }
+        control = box;
+        break;
+      }
+      case "number": {
+        const inp = uiInput({
+          type: "number",
+          value: values[p.key] === void 0 ? "" : String(values[p.key]),
+          placeholder: p.placeholder,
+          onInput: (val) => set(val === "" ? void 0 : Number(val))
+        });
+        if (p.min !== void 0) inp.min = String(p.min);
+        if (p.max !== void 0) inp.max = String(p.max);
+        if (p.step !== void 0) inp.step = String(p.step);
+        control = inp;
+        break;
+      }
+      case "multiline": {
+        const ta = el2("textarea", "bz-dock-textarea");
+        ta.rows = (_d = p.rows) != null ? _d : 4;
+        ta.value = values[p.key] === void 0 ? "" : String(values[p.key]);
+        if (p.placeholder) ta.placeholder = p.placeholder;
+        ta.addEventListener("input", () => set(ta.value));
+        control = ta;
+        break;
+      }
+      case "path": {
+        const row = el2("div", "bz-dock-pathrow");
+        const inp = uiInput({
+          value: values[p.key] === void 0 ? "" : String(values[p.key]),
+          placeholder: p.placeholder,
+          onInput: (val) => set(val)
+        });
+        row.appendChild(inp);
+        row.appendChild(
+          uiIconBtn({
+            icon: "folder-open",
+            title: p.mode === "dir" ? "选择文件夹" : "选择文件",
+            onClick: () => {
+              void (async () => {
+                if (p.mode === "dir") {
+                  const dir = await pickSystemFolder();
+                  if (dir) {
+                    inp.value = dir;
+                    set(dir);
+                  }
+                } else {
+                  const files = await pickSystemFiles(`选择${p.label}`, []);
+                  if (files.length) {
+                    inp.value = files[0];
+                    set(files[0]);
+                  }
+                }
+              })();
+            }
+          })
+        );
+        control = row;
+        break;
+      }
+      case "secret": {
+        const inp = uiInput({
+          type: "password",
+          value: values[p.key] === void 0 ? "" : String(values[p.key]),
+          placeholder: p.placeholder || "只存在本机工具目录",
+          onInput: (val) => set(val)
+        });
+        control = inp;
+        break;
+      }
+      default: {
+        const inp = uiInput({
+          value: values[p.key] === void 0 ? "" : String(values[p.key]),
+          placeholder: p.placeholder,
+          onInput: (val) => set(val)
+        });
+        control = inp;
+        break;
+      }
+    }
+    const desc = p.help || (p.type === "secret" ? "存在本机工具目录里，不进 vault、不写运行记录" : void 0);
+    return uiField({ label: p.label + (p.required ? " *" : ""), desc, control });
+  }
+  function histPane(v) {
+    const pane = el2("section", "bz-dock-pane bz-dock-histpane");
+    const head = el2("div", "bz-dock-pane-head");
+    head.appendChild(el2("h3", "bz-dock-pane-title", "运行记录"));
+    head.appendChild(el2("span", "bz-dock-pane-count", `${v.runs.length} 条`));
+    pane.appendChild(head);
+    if (!v.runs.length) {
+      pane.appendChild(
+        uiEmpty({
+          icon: "history",
+          title: v.runsUnreadable ? "记录读不懂" : "还没有运行记录",
+          desc: v.runsUnreadable ? "文件在，但内容不合契约；工具坞只读不改" : "跑一次，或等系统按它自己的节奏跑完，记录就会出现"
+        })
+      );
+      return pane;
+    }
+    const list = el2("div", "bz-dock-histlist");
+    for (const r of v.runs.slice(0, 60)) list.appendChild(histRow(r));
+    pane.appendChild(list);
+    if (v.runs.length > 60) pane.appendChild(el2("div", "bz-dock-note", "只显示最近 60 条"));
+    return pane;
+  }
+  function histRow(r) {
+    var _a2, _b2, _c, _d, _e;
+    const row = el2("article", "bz-dock-histrow");
+    const head = el2("div", "bz-dock-histhead");
+    head.appendChild(el2("span", dotClass(r.status)));
+    head.appendChild(el2("span", "bz-dock-histtime", relTime(r.startedAt.replace("T", " "))));
+    head.appendChild(el2("span", "bz-dock-histstatus", statusText(r.status)));
+    const dur = durationText(r);
+    if (dur) head.appendChild(el2("span", "bz-dock-histdur", dur));
+    head.appendChild(el2("span", "bz-dock-histtrig", r.trigger === "auto" ? "系统" : "手动"));
+    row.appendChild(head);
+    if (r.message) row.appendChild(el2("div", "bz-dock-histmsg", r.message));
+    if (r.error) {
+      const box = el2("div", "bz-dock-histerr");
+      box.appendChild(el2("div", "bz-dock-histerr-hint", errorHint(r.error.kind)));
+      if (r.error.detail) box.appendChild(el2("div", "bz-dock-histerr-detail", r.error.detail));
+      row.appendChild(box);
+    }
+    const hasMore = r.steps && r.steps.length > 0 || r.info && r.info.length > 0 || r.result !== void 0 || r.metrics !== void 0 || r.artifacts && r.artifacts.length > 0 || ((_a2 = r.error) == null ? void 0 : _a2.stderr);
+    if (hasMore) {
+      const btn = uiBtn({
+        label: "展开",
+        size: "sm",
+        className: "bz-dock-histtoggle",
+        onClick: () => {
+          const open = row.classList.toggle("is-open");
+          btn.querySelector("span").textContent = open ? "收起" : "展开";
+        }
+      });
+      row.appendChild(btn);
+      const more = el2("div", "bz-dock-histmore");
+      if ((_b2 = r.steps) == null ? void 0 : _b2.length) more.appendChild(block("步骤", r.steps.map((s) => s.text).join("\n")));
+      if (r.metrics) more.appendChild(block("指标", JSON.stringify(r.metrics, null, 2)));
+      if ((_c = r.artifacts) == null ? void 0 : _c.length) {
+        more.appendChild(block("产物", r.artifacts.map((a) => `${a.label ? a.label + " · " : ""}${a.path}`).join("\n")));
+      }
+      if (r.result !== void 0) more.appendChild(block("结果", JSON.stringify(r.result, null, 2)));
+      if ((_d = r.info) == null ? void 0 : _d.length) more.appendChild(block("信息", JSON.stringify(r.info, null, 2)));
+      if ((_e = r.error) == null ? void 0 : _e.stderr) more.appendChild(block("stderr 尾部", r.error.stderr));
+      row.appendChild(more);
+    }
+    if (r.startedAt) {
+      const exact = el2("div", "bz-dock-histexact", r.startedAt.replace("T", " ").replace(/\..*$/, ""));
+      row.appendChild(exact);
+    }
+    return row;
+  }
+  function block(label, text2) {
+    const b = el2("div", "bz-dock-block");
+    b.appendChild(el2("div", "bz-dock-block-label", label));
+    const pre = el2("pre", "bz-dock-json");
+    pre.textContent = text2;
+    b.appendChild(pre);
+    return b;
+  }
+  async function runFlow(v) {
+    var _a2, _b2;
+    if (!hostApp2) return;
+    if (!canRun()) {
+      notice("移动端不能启动本机进程", "warning");
+      return;
+    }
+    if (!v.run) {
+      notice("这份声明没写怎么跑（缺 run 段），先在声明文件里补上", "warning");
+      return;
+    }
+    if (!isTrusted(v.entry) || v.trustStale) {
+      const ok = await applyTrust(v.entry, v.manifest, v.declPath, v.run, {
+        title: v.trustStale ? "启动命令变了，重新确认信任" : "信任此命令",
+        accept: "信任"
+      });
+      if (!ok) return;
+    }
+    saveValuesNow(v);
+    const values = valuesOf(v);
+    const missing = ((_b2 = (_a2 = v.manifest) == null ? void 0 : _a2.params) != null ? _b2 : []).filter((p) => p.required && (values[p.key] === void 0 || values[p.key] === ""));
+    if (missing.length) {
+      notice(`还差必填参数：${missing.map((p) => p.label).join("、")}`, "warning");
+      return;
+    }
+    const run = runTool(hostApp2, v.entry, v.run, v.manifest, values, {
+      onStep: () => updateLive(v.entry.id),
+      onProgress: () => updateLive(v.entry.id),
+      onInfo: () => updateLive(v.entry.id),
+      onResult: () => updateLive(v.entry.id),
+      onDone: (outcome) => {
+        notifyRunOutcome(displayName2(v), outcome, () => openDock(hostApp2));
+        void refresh2();
+        updateLive(v.entry.id);
+      }
+    });
+    render2();
+  }
+  function updateLive(id) {
+    const hosts = overlay2 == null ? void 0 : overlay2.querySelectorAll(`.bz-dock-live[data-tool="${id}"]`);
+    hosts == null ? void 0 : hosts.forEach((h) => renderLiveInto(h, id));
+    renderRunbar();
+  }
+  async function reloadDeclaration(v) {
+    var _a2;
+    const res = readDeclaration(v.entry.path);
+    if (!res.ok || !res.manifest) {
+      notice((_a2 = res.error) != null ? _a2 : "声明读不到", "error");
+      return;
+    }
+    const m = res.manifest;
+    if (m.id !== v.entry.id) {
+      notice(
+        `声明里的 id 是「${m.id}」，与登记的「${v.entry.id}」不一致 —— 当两个工具看，或移除后重新导入`,
+        "warning"
+      );
+    }
+    const run = resolveRun(m, v.entry.path);
+    const sig = run ? runSignature(run) : void 0;
+    if (isTrusted(v.entry) && sig !== v.entry.trustedRun) {
+      if (await applyTrust(v.entry, m, v.entry.path, run, {
+        title: "启动命令变了，重新确认信任",
+        accept: "信任"
+      })) {
+        return;
+      }
+      notice("已保留原样 —— 但这条命令在你重新确认之前不会被运行", "warning");
+      return;
+    }
+    notice(`声明已重新读取：${m.params.length} 个参数`, "success");
+    await refresh2();
+  }
+  function scheduleText(m) {
+    var _a2;
+    if (!m.schedule) return "未声明";
+    const s = m.schedule;
+    const base = {
+      daily: "每天一次",
+      weekly: s.weekday !== void 0 ? `每周${"日一二三四五六"[s.weekday]}` : "每周一次",
+      interval: s.everyHours !== void 0 ? `每 ${s.everyHours} 小时` : "按间隔",
+      "on-demand": "按需",
+      unknown: "未声明"
+    };
+    const parts = [(_a2 = base[s.kind]) != null ? _a2 : s.kind];
+    if (s.kind === "daily" && s.hour !== void 0) parts.push(`${String(s.hour).padStart(2, "0")}:00 前`);
+    if (s.note) parts.push(`（${s.note}）`);
+    return parts.join("");
+  }
+  function runTextOf(run) {
+    if (!run) return "这份声明没写怎么跑（缺 run 段）";
+    return [run.cmd, ...run.args].join(" ");
+  }
+  async function confirmTrust(manifest, declPath, run, title, accept) {
+    var _a2;
+    const lines = [
+      manifest.name,
+      (_a2 = manifest.description) != null ? _a2 : "",
+      "",
+      `会跑：${runTextOf(run)}`,
+      (run == null ? void 0 : run.cwd) ? `工作目录：${run.cwd}` : "",
+      `声明文件：${declPath}`,
+      "",
+      manifest.schedule ? `节奏：${scheduleText(manifest)}（自动化，bz 不调度）` : "节奏：未声明（手动）",
+      `参数：${manifest.params.length} 个`,
+      "",
+      "建立信任之后工具坞才会运行它（读声明不需要信任）。信任的对象是「那条命令」，",
+      "建立一次长期有效；以后命令变了会重新问一次。"
+    ].filter((s) => s !== "");
+    const v = await openFlowDialog({
+      title,
+      message: lines.join("\n"),
+      actions: [
+        { label: "取消", value: "cancel" },
+        { label: accept, value: "ok", cta: true }
+      ]
+    });
+    return v === "ok";
+  }
+  async function applyTrust(entry, manifest, declPath, run, opts) {
+    const ok = await confirmTrust(manifest, declPath, run, opts.title, opts.accept);
+    if (!ok) return false;
+    const next = { ...entry, trustedAt: (/* @__PURE__ */ new Date()).toISOString() };
+    if (run) next.trustedRun = runSignature(run);
+    else delete next.trustedRun;
+    await persist(readToolEntries().map((e) => e.id === entry.id ? next : e), `已信任 ${manifest.name}`);
+    return true;
+  }
+  async function importToolFlow(entry) {
+    var _a2, _b2;
+    if (!canRun()) {
+      notice("导入声明需要桌面端（要读本机文件）", "warning");
+      return;
+    }
+    const picked = await pickSystemFiles(
+      entry ? "重新选择该工具的声明文件" : `选择工具声明（${DECLARATION_FILENAME}）`,
+      [{ name: "工具声明", ext: ["json"] }]
+    );
+    if (!picked.length) return;
+    const declPath = picked[0];
+    const res = readDeclaration(declPath);
+    if (!res.ok || !res.manifest) {
+      notice((_a2 = res.error) != null ? _a2 : "声明读不到", "error");
+      return;
+    }
+    const manifest = res.manifest;
+    const run = resolveRun(manifest, declPath);
+    const entries = readToolEntries();
+    if (entries.some((e) => e.id === manifest.id && e.id !== (entry == null ? void 0 : entry.id))) {
+      notice(`id「${manifest.id}」已被另一个登记占用 —— 改声明里的 id，或先移除那个`, "warning");
+      return;
+    }
+    const next = { id: (_b2 = entry == null ? void 0 : entry.id) != null ? _b2 : manifest.id, path: declPath };
+    if (entry) {
+      if (entry.enabled !== void 0) next.enabled = entry.enabled;
+      const sig = run ? runSignature(run) : void 0;
+      if (sig !== void 0 && sig === entry.trustedRun) {
+        next.trustedAt = entry.trustedAt;
+        next.trustedRun = entry.trustedRun;
+      }
+    }
+    if (!isTrusted(next)) {
+      const ok = await confirmTrust(
+        manifest,
+        declPath,
+        run,
+        entry ? "重新导入声明" : "导入工具声明",
+        entry ? "确认并信任" : "信任并登记"
+      );
+      if (!ok) return;
+      next.trustedAt = (/* @__PURE__ */ new Date()).toISOString();
+      const sig = run ? runSignature(run) : void 0;
+      if (sig !== void 0) next.trustedRun = sig;
+    }
+    const list = entry ? entries.map((e) => e.id === entry.id ? next : e) : [...entries, next];
+    await persist(list, entry ? `已更新 ${manifest.name}` : `已登记 ${manifest.name}`);
+  }
+  function nameOfEntry(id) {
+    const v = viewById(id);
+    return v ? displayName2(v) : id;
+  }
+  async function persist(list, msg) {
+    var _a2;
+    for (const v of views) saveValuesNow(v);
+    try {
+      await saveToolEntries(list);
+      notice(msg, "success");
+    } catch (e) {
+      notice(`保存失败：${(_a2 = e == null ? void 0 : e.message) != null ? _a2 : e}`, "error");
+      return;
+    }
+    draftValues.clear();
+    await refresh2();
+  }
+  async function toggleEnabled(entry) {
+    const entries = readToolEntries();
+    const next = { ...entry, enabled: entry.enabled === false };
+    const name = nameOfEntry(entry.id);
+    await persist(
+      entries.map((e) => e.id === entry.id ? next : e),
+      next.enabled ? `已启用 ${name}` : `已停用 ${name}`
+    );
+  }
+  async function removeToolFlow(v) {
+    const res = await openFlowDialog({
+      title: "移除登记",
+      message: `确定把「${displayName2(v)}」从工具坞移除？
+
+只移除 bz 这边的登记 —— 声明文件、参数值文件、运行记录文件都不会被删（前两个是工具目录里的，后一个是工具的账本）。`,
+      actions: [
+        { label: "取消", value: "cancel" },
+        { label: "移除", value: "ok", cta: true, danger: true }
+      ]
+    });
+    if (res !== "ok") return;
+    const entries = readToolEntries().filter((e) => e.id !== v.entry.id);
+    if (view.kind === "detail" && view.id === v.entry.id) view = { kind: "list" };
+    await persist(entries, `已移除 ${displayName2(v)}`);
+  }
+  var hostApp2, overlay2, escHandle6, view, query, searchOpen, refreshing, views, draftValues, valueSaveTimers, VALUE_SAVE_DEBOUNCE_MS, dueNotified, OVERLAY_ID2, FRAME_ID2;
+  var init_ui13 = __esm({
+    "src/dock/ui.ts"() {
+      init_fake_obsidian();
+      init_z_order();
+      init_esc_manager();
+      init_focus_trap();
+      init_notice();
+      init_ui();
+      init_flow_dialog();
+      init_path_picker();
+      init_item_actions();
+      init_str();
+      init_settings_provider();
+      init_data16();
+      init_runner();
+      init_declaration();
+      init_schedule();
+      hostApp2 = null;
+      overlay2 = null;
+      escHandle6 = null;
+      view = { kind: "list" };
+      query = "";
+      searchOpen = false;
+      refreshing = false;
+      views = [];
+      draftValues = /* @__PURE__ */ new Map();
+      valueSaveTimers = /* @__PURE__ */ new Map();
+      VALUE_SAVE_DEBOUNCE_MS = 500;
+      dueNotified = /* @__PURE__ */ new Set();
+      OVERLAY_ID2 = "bz-dock-mask";
+      FRAME_ID2 = "bz-dock-panel";
+    }
+  });
+
+  // src/dock/settings.ts
+  var settings_exports9 = {};
+  __export(settings_exports9, {
+    dockSettingsSchema: () => dockSettingsSchema
+  });
+  function dockSettingsSchema() {
+    return {
+      groups: [
+        {
+          icon: "container",
+          name: "工具",
+          rows: [
+            {
+              type: "info",
+              name: "外部工具登记",
+              desc: "添加、编辑、信任与运行都在工具坞面板里",
+              actions: [
+                {
+                  text: "打开工具坞",
+                  cta: true,
+                  onClick: () => openDock(getApp())
+                }
+              ]
+            }
+          ]
+        },
+        {
+          icon: "bell",
+          name: "提醒",
+          rows: [
+            {
+              type: "toggle",
+              name: "漏跑提醒",
+              desc: "工具声明了节奏、当天却没有记录时发一条通知",
+              binding: { key: "dockNotifyMissed" }
+            }
+          ]
+        }
+      ]
+    };
+  }
+  var init_settings9 = __esm({
+    "src/dock/settings.ts"() {
+      init_app();
+      init_ui13();
+    }
+  });
+
   // src/core/manual.ts
   var manual_exports = {};
   __export(manual_exports, {
@@ -64382,41 +66960,41 @@ GitHub 仓库：${ghInfo.title}
     unloadManualViewer: () => unloadManualViewer
   });
   function isVisible() {
-    return !!overlay2 && overlay2.style.display === "flex";
+    return !!overlay3 && overlay3.style.display === "flex";
   }
   function hide2() {
-    if (!overlay2) return;
-    overlay2.style.display = "none";
-    const frame2 = overlay2.querySelector(`#${FRAME_ID2} iframe`);
+    if (!overlay3) return;
+    overlay3.style.display = "none";
+    const frame2 = overlay3.querySelector(`#${FRAME_ID3} iframe`);
     if (frame2) frame2.srcdoc = "";
   }
   function isManualViewerOpen() {
     return isVisible();
   }
   function unloadManualViewer() {
-    escHandle6 == null ? void 0 : escHandle6.unregister();
-    escHandle6 = null;
-    overlay2 == null ? void 0 : overlay2.remove();
-    overlay2 = null;
+    escHandle7 == null ? void 0 : escHandle7.unregister();
+    escHandle7 = null;
+    overlay3 == null ? void 0 : overlay3.remove();
+    overlay3 = null;
   }
   function openManualViewer(html) {
     var _a2;
-    if (!overlay2) build2();
-    topifyZ(overlay2);
-    overlay2.style.display = "flex";
-    trapPanelFocus((_a2 = overlay2.querySelector(`#${FRAME_ID2}`)) != null ? _a2 : overlay2);
-    escHandle6 == null ? void 0 : escHandle6.unregister();
-    escHandle6 = escManager.register("bz-manual-viewer", { isVisible, close: hide2 });
-    const frame2 = overlay2.querySelector(`#${FRAME_ID2} iframe`);
+    if (!overlay3) build3();
+    topifyZ(overlay3);
+    overlay3.style.display = "flex";
+    trapPanelFocus((_a2 = overlay3.querySelector(`#${FRAME_ID3}`)) != null ? _a2 : overlay3);
+    escHandle7 == null ? void 0 : escHandle7.unregister();
+    escHandle7 = escManager.register("bz-manual-viewer", { isVisible, close: hide2 });
+    const frame2 = overlay3.querySelector(`#${FRAME_ID3} iframe`);
     frame2.srcdoc = html;
   }
-  function build2() {
+  function build3() {
     var _a2;
     const ov = document.createElement("div");
-    ov.id = OVERLAY_ID2;
+    ov.id = OVERLAY_ID3;
     ov.className = "bz-panel-overlay";
     const frame2 = document.createElement("div");
-    frame2.id = FRAME_ID2;
+    frame2.id = FRAME_ID3;
     frame2.className = "bz-panel-frame bz-sp-skin bz-panel-mtop bz-manv-popup";
     frame2.innerHTML = shellHtml();
     (_a2 = frame2.querySelector(".bz-manv-close")) == null ? void 0 : _a2.addEventListener("click", hide2);
@@ -64425,21 +67003,21 @@ GitHub 仓库：${ghInfo.title}
       if (e.target === ov) hide2();
     });
     document.body.appendChild(ov);
-    overlay2 = ov;
+    overlay3 = ov;
   }
   function shellHtml() {
     return `${CLOSE_BTN}<div class="bz-manv-body"><iframe class="bz-manv-frame" title="使用手册"></iframe></div>`;
   }
-  var OVERLAY_ID2, FRAME_ID2, overlay2, escHandle6, CLOSE_BTN;
+  var OVERLAY_ID3, FRAME_ID3, overlay3, escHandle7, CLOSE_BTN;
   var init_manual_viewer = __esm({
     "src/settings-panel/manual-viewer.ts"() {
       init_z_order();
       init_esc_manager();
       init_focus_trap();
-      OVERLAY_ID2 = "bz-manual-overlay";
-      FRAME_ID2 = "bz-manual-popup";
-      overlay2 = null;
-      escHandle6 = null;
+      OVERLAY_ID3 = "bz-manual-overlay";
+      FRAME_ID3 = "bz-manual-popup";
+      overlay3 = null;
+      escHandle7 = null;
       CLOSE_BTN = `<button class="bz-manv-close" type="button" aria-label="关闭使用手册" title="关闭">
   <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"
     stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
@@ -64485,41 +67063,41 @@ GitHub 仓库：${ghInfo.title}
     unloadChangelog: () => unloadChangelog
   });
   function isVisible2() {
-    return !!overlay3 && overlay3.style.display === "flex";
+    return !!overlay4 && overlay4.style.display === "flex";
   }
   function hide3() {
-    if (!overlay3) return;
-    overlay3.style.display = "none";
-    const frame2 = overlay3.querySelector(`#${FRAME_ID3} iframe`);
+    if (!overlay4) return;
+    overlay4.style.display = "none";
+    const frame2 = overlay4.querySelector(`#${FRAME_ID4} iframe`);
     if (frame2) frame2.srcdoc = "";
   }
   function isChangelogOpen() {
     return isVisible2();
   }
   function unloadChangelog() {
-    escHandle7 == null ? void 0 : escHandle7.unregister();
-    escHandle7 = null;
-    overlay3 == null ? void 0 : overlay3.remove();
-    overlay3 = null;
+    escHandle8 == null ? void 0 : escHandle8.unregister();
+    escHandle8 = null;
+    overlay4 == null ? void 0 : overlay4.remove();
+    overlay4 = null;
   }
   function openChangelogModal(html) {
     var _a2;
-    if (!overlay3) build3();
-    topifyZ(overlay3);
-    overlay3.style.display = "flex";
-    trapPanelFocus((_a2 = overlay3.querySelector(`#${FRAME_ID3}`)) != null ? _a2 : overlay3);
-    escHandle7 == null ? void 0 : escHandle7.unregister();
-    escHandle7 = escManager.register("bz-changelog", { isVisible: isVisible2, close: hide3 });
-    const frame2 = overlay3.querySelector(`#${FRAME_ID3} iframe`);
+    if (!overlay4) build4();
+    topifyZ(overlay4);
+    overlay4.style.display = "flex";
+    trapPanelFocus((_a2 = overlay4.querySelector(`#${FRAME_ID4}`)) != null ? _a2 : overlay4);
+    escHandle8 == null ? void 0 : escHandle8.unregister();
+    escHandle8 = escManager.register("bz-changelog", { isVisible: isVisible2, close: hide3 });
+    const frame2 = overlay4.querySelector(`#${FRAME_ID4} iframe`);
     frame2.srcdoc = html;
   }
-  function build3() {
+  function build4() {
     var _a2;
     const ov = document.createElement("div");
-    ov.id = OVERLAY_ID3;
+    ov.id = OVERLAY_ID4;
     ov.className = "bz-panel-overlay";
     const frame2 = document.createElement("div");
-    frame2.id = FRAME_ID3;
+    frame2.id = FRAME_ID4;
     frame2.className = "bz-panel-frame bz-sp-skin bz-panel-mtop bz-chg-popup";
     frame2.innerHTML = shellHtml2();
     (_a2 = frame2.querySelector(".bz-chg-close")) == null ? void 0 : _a2.addEventListener("click", hide3);
@@ -64528,21 +67106,21 @@ GitHub 仓库：${ghInfo.title}
       if (e.target === ov) hide3();
     });
     document.body.appendChild(ov);
-    overlay3 = ov;
+    overlay4 = ov;
   }
   function shellHtml2() {
     return `${CLOSE_BTN2}<div class="bz-chg-body"><iframe class="bz-chg-frame" title="更新日志"></iframe></div>`;
   }
-  var OVERLAY_ID3, FRAME_ID3, overlay3, escHandle7, CLOSE_BTN2;
+  var OVERLAY_ID4, FRAME_ID4, overlay4, escHandle8, CLOSE_BTN2;
   var init_changelog2 = __esm({
     "src/settings-panel/changelog.ts"() {
       init_z_order();
       init_esc_manager();
       init_focus_trap();
-      OVERLAY_ID3 = "bz-changelog-overlay";
-      FRAME_ID3 = "bz-changelog-popup";
-      overlay3 = null;
-      escHandle7 = null;
+      OVERLAY_ID4 = "bz-changelog-overlay";
+      FRAME_ID4 = "bz-changelog-popup";
+      overlay4 = null;
+      escHandle8 = null;
       CLOSE_BTN2 = `<button class="bz-chg-close" type="button" aria-label="关闭更新日志" title="关闭">
   <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"
     stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
@@ -64551,8 +67129,8 @@ GitHub 仓库：${ghInfo.title}
   });
 
   // src/settings.ts
-  var settings_exports9 = {};
-  __export(settings_exports9, {
+  var settings_exports10 = {};
+  __export(settings_exports10, {
     DEFAULT_SETTINGS: () => DEFAULT_SETTINGS,
     migrateAsrKeys: () => migrateAsrKeys,
     migrateAutoLinkSettings: () => migrateAutoLinkSettings,
@@ -64729,7 +67307,7 @@ GitHub 仓库：${ghInfo.title}
     return migrated;
   }
   var MEMO_KEY_MIGRATIONS, RETIRED_AI_KEYS, AI_OVERRIDE_MAPS, RETIRED_SECONDBRAIN_KEYS, EXTERNAL_TOOL_KEY_MIGRATIONS, RETIRED_JEV_KEYS, LEGACY_JEV_DEFAULT_MODEL, legacyTargetOf, DEFAULT_SETTINGS;
-  var init_settings9 = __esm({
+  var init_settings10 = __esm({
     "src/settings.ts"() {
       init_knowledge_boxes();
       init_data15();
@@ -64797,6 +67375,9 @@ GitHub 仓库：${ghInfo.title}
         pythonPath: "",
         ffmpegPath: "ffmpeg",
         ffprobePath: "ffprobe",
+        // 工具坞（dock 域）：空登记表起步（面板内添加）；漏跑提醒默认开
+        dockTools: [],
+        dockNotifyMissed: true,
         // Jev 决策通道（ADR-0173；issue 424/ADR-0184 常开；issue 433/ADR-0190 起按服务商分存）：未填密钥时不接管任何判定
         jevProvider: "typesafe",
         jevApiKeys: {},
@@ -65155,7 +67736,7 @@ GitHub 仓库：${ghInfo.title}
     return n;
   }
   var SEARCH_DEBOUNCE_MS4, PANEL7, spMatch, DOC_ENTRY_NAMES, schemaLoaders, DOMAINS2, NAV_SECS, schemaRowCache, schemaCache, loadedCounts, listableDomains, navBadges, SettingsPanelUI;
-  var init_ui13 = __esm({
+  var init_ui14 = __esm({
     "src/settings-panel/ui.ts"() {
       init_fake_obsidian();
       init_dom();
@@ -65274,7 +67855,9 @@ GitHub 仓库：${ghInfo.title}
               enabled: tryGetSettings().smartcatEnabled !== false
             }
           });
-        }
+        },
+        // 工具坞（dock 域，ADR-0235）：大部分配置在工具自己的清单里，本页只放登记入口 + 漏跑提醒开关
+        dock: async () => (await Promise.resolve().then(() => (init_settings9(), settings_exports9))).dockSettingsSchema()
       };
       DOMAINS2 = [
         // 通用含通知组（2026-09-27 issue 479：通知页退役并回，撤销 2026-09-12 拆分）
@@ -65302,6 +67885,7 @@ GitHub 仓库：${ghInfo.title}
         { id: "encrypt", name: "保险库", icon: DOMAIN_ICONS.encrypt, desc: "密码、加密笔记与加密日记", schemaLoader: schemaLoaders.encrypt },
         { id: "password-vault", name: "密码本", icon: DOMAIN_ICONS["password-vault"], desc: "密码条目与生成器", schemaLoader: schemaLoaders["password-vault"] },
         { id: "smartcat", name: "小橘陪伴猫", icon: DOMAIN_ICONS.smartcat, desc: "桌面宠物陪伴", schemaLoader: schemaLoaders.smartcat },
+        { id: "dock", name: "工具坞", icon: DOMAIN_ICONS.dock, desc: "外部工具的登记、启动与观测", schemaLoader: schemaLoaders.dock },
         { id: "knowledge", name: "知识盒", icon: DOMAIN_ICONS.knowledge, desc: "文献录入、卡片与主题管理", schemaLoader: schemaLoaders.knowledge }
       ];
       NAV_SECS = [
@@ -65310,7 +67894,7 @@ GitHub 仓库：${ghInfo.title}
         { title: "记录", ids: ["diary", "memo", "belongings", "people"] },
         { title: "收集", ids: ["clipping", "favorites"] },
         { title: "媒体与阅读", ids: ["cinema", "bookshelf", "gameshelf", "review", "knowledge"] },
-        { title: "工具", ids: ["pomodoro", "smartcat"] },
+        { title: "工具", ids: ["pomodoro", "smartcat", "dock"] },
         { title: "安全", ids: ["encrypt", "password-vault"] }
       ];
       schemaRowCache = /* @__PURE__ */ new Map();
@@ -65454,10 +68038,10 @@ GitHub 仓库：${ghInfo.title}
             items[next].focus();
           });
           const renderNav2 = (q3) => {
-            const query = q3.trim();
+            const query2 = q3.trim();
             nav.innerHTML = "";
             const visible = listableDomains();
-            const matches = (d) => !query || spMatch(d.name, query) || spMatch(d.desc, query) || (schemaRowCache.get(d.id) || []).some((r) => spMatch(r.name, query));
+            const matches = (d) => !query2 || spMatch(d.name, query2) || spMatch(d.desc, query2) || (schemaRowCache.get(d.id) || []).some((r) => spMatch(r.name, query2));
             const secs = groupDomains(visible, matches);
             for (const sec of secs) {
               if (!sec.domains.length) continue;
@@ -65468,12 +68052,12 @@ GitHub 仓库：${ghInfo.title}
                   icon: d.icon,
                   name: d.name,
                   count: badgeOf(d),
-                  on: d.id === this.activeDomainId && !query
+                  on: d.id === this.activeDomainId && !query2
                 });
               });
               nav.insertAdjacentHTML("beforeend", navSecHtml(sec.title, itemsHtml));
             }
-            if (!query || DOC_ENTRY_NAMES.some((n) => spMatch(n, query))) {
+            if (!query2 || DOC_ENTRY_NAMES.some((n) => spMatch(n, query2))) {
               nav.insertAdjacentHTML("beforeend", navDocSecHtml());
             }
             mountIcons(nav);
@@ -65595,9 +68179,9 @@ GitHub 仓库：${ghInfo.title}
         /** 文档资产后台核对（issue 476）：`refresh` 返回新文本才调 `swap` 换内容；
          *  同版 / 离线 / 任何异常一律静默——后台动作失败不是用户的操作失败，
          *  不出通知、不转圈，保持本地已存的那一版即可。 */
-        async refreshDocInBackground(refresh2, swap) {
+        async refreshDocInBackground(refresh3, swap) {
           try {
-            const fresh = await refresh2();
+            const fresh = await refresh3();
             if (fresh) swap(fresh);
           } catch (e) {
           }
@@ -65795,13 +68379,13 @@ GitHub 仓库：${ghInfo.title}
          */
         markHitText(row, q3) {
           const needle = q3.trim().toLowerCase();
-          row.querySelectorAll(".bz-sp-set-name, .bz-sp-set-desc").forEach((el2) => {
+          row.querySelectorAll(".bz-sp-set-name, .bz-sp-set-desc").forEach((el3) => {
             var _a2, _b2;
-            if (el2.dataset.spOrig === void 0) el2.dataset.spOrig = (_a2 = el2.textContent) != null ? _a2 : "";
-            const text2 = (_b2 = el2.dataset.spOrig) != null ? _b2 : "";
-            el2.textContent = "";
+            if (el3.dataset.spOrig === void 0) el3.dataset.spOrig = (_a2 = el3.textContent) != null ? _a2 : "";
+            const text2 = (_b2 = el3.dataset.spOrig) != null ? _b2 : "";
+            el3.textContent = "";
             if (!needle) {
-              el2.textContent = text2;
+              el3.textContent = text2;
               return;
             }
             const lower = text2.toLowerCase();
@@ -65809,14 +68393,14 @@ GitHub 仓库：${ghInfo.title}
             for (; ; ) {
               const at4 = lower.indexOf(needle, cursor);
               if (at4 < 0) break;
-              if (at4 > cursor) el2.append(document.createTextNode(text2.slice(cursor, at4)));
+              if (at4 > cursor) el3.append(document.createTextNode(text2.slice(cursor, at4)));
               const mark = document.createElement("mark");
               mark.className = "bz-sp-mark";
               mark.textContent = text2.slice(at4, at4 + needle.length);
-              el2.append(mark);
+              el3.append(mark);
               cursor = at4 + needle.length;
             }
-            if (cursor < text2.length) el2.append(document.createTextNode(text2.slice(cursor)));
+            if (cursor < text2.length) el3.append(document.createTextNode(text2.slice(cursor)));
           });
         }
         /**
@@ -65850,8 +68434,8 @@ GitHub 仓库：${ghInfo.title}
         }
         /** 搜索命中域集（导航视觉序；↑↓ 切域与 Enter 首跳共用同一口径，F-6 不漂移） */
         matchedDomains(q3) {
-          const query = q3.trim();
-          const matches = (d) => !query || spMatch(d.name, query) || spMatch(d.desc, query) || (schemaRowCache.get(d.id) || []).some((r) => spMatch(r.name, query));
+          const query2 = q3.trim();
+          const matches = (d) => !query2 || spMatch(d.name, query2) || spMatch(d.desc, query2) || (schemaRowCache.get(d.id) || []).some((r) => spMatch(r.name, query2));
           return groupDomains(listableDomains(), matches).flatMap((s) => s.domains);
         }
         /**
@@ -65893,7 +68477,7 @@ GitHub 仓库：${ghInfo.title}
             ]
           });
           if (ans !== "ok") return;
-          const { DEFAULT_SETTINGS: DEFAULT_SETTINGS2 } = await Promise.resolve().then(() => (init_settings9(), settings_exports9));
+          const { DEFAULT_SETTINGS: DEFAULT_SETTINGS2 } = await Promise.resolve().then(() => (init_settings10(), settings_exports10));
           const defaults = DEFAULT_SETTINGS2;
           const s = getSettings();
           let n = 0;
@@ -65925,10 +68509,10 @@ GitHub 仓库：${ghInfo.title}
           mountIcons(popup);
           const list = popup.querySelector(".bz-sp-mob-list");
           const searchIn = popup.querySelector(".bz-sp-mob-search .bz-input");
-          const render2 = (q3) => {
-            const query = q3.trim();
+          const render3 = (q3) => {
+            const query2 = q3.trim();
             list.innerHTML = "";
-            if (!query) {
+            if (!query2) {
               const secs = groupDomains(listableDomains());
               for (const sec of secs) {
                 if (!sec.domains.length) continue;
@@ -65940,13 +68524,13 @@ GitHub 仓库：${ghInfo.title}
               }
               list.insertAdjacentHTML("beforeend", mobDocSecHtml());
             } else {
-              const doms = listableDomains().filter((d) => spMatch(d.name, query) || spMatch(d.desc, query));
+              const doms = listableDomains().filter((d) => spMatch(d.name, query2) || spMatch(d.desc, query2));
               const rows = [];
               schemaRowCache.forEach((rowsOf, did) => {
                 const d = DOMAINS2.find((x) => x.id === did);
                 if (!d) return;
                 rowsOf.forEach((r) => {
-                  if (spMatch(r.name, query) || r.desc && spMatch(r.desc, query)) rows.push({ domain: d, name: r.name, desc: r.desc || d.name });
+                  if (spMatch(r.name, query2) || r.desc && spMatch(r.desc, query2)) rows.push({ domain: d, name: r.name, desc: r.desc || d.name });
                 });
               });
               let html = "";
@@ -65956,14 +68540,14 @@ GitHub 仓库：${ghInfo.title}
                   html += mobItemHtml({ id: d.id, icon: d.icon, name: d.name, desc: d.desc });
                 });
               }
-              if (DOC_ENTRY_NAMES.some((n) => spMatch(n, query))) html += mobDocSecHtml();
+              if (DOC_ENTRY_NAMES.some((n) => spMatch(n, query2))) html += mobDocSecHtml();
               if (rows.length) {
                 html += `<div class="bz-sp-mob-sec">设置项（${rows.length}）</div>`;
                 rows.forEach((r) => {
                   html += mobItemHtml({ id: r.domain.id, icon: r.domain.icon, name: r.name, desc: `${r.domain.name} · ${r.desc}`, kind: "设置", row: r.name });
                 });
               }
-              if (!doms.length && !rows.length) html = `<div class="bz-sp-mob-empty">没有匹配「${esc(query)}」的设置或域</div>`;
+              if (!doms.length && !rows.length) html = `<div class="bz-sp-mob-empty">没有匹配「${esc(query2)}」的设置或域</div>`;
               list.innerHTML = html;
             }
             list.querySelectorAll(".bz-sp-mob-item").forEach((b) => {
@@ -65977,7 +68561,7 @@ GitHub 仓库：${ghInfo.title}
             mountIcons(list);
             motionMobList(list);
           };
-          const applySearch = debounce(() => render2(searchIn.value), SEARCH_DEBOUNCE_MS4);
+          const applySearch = debounce(() => render3(searchIn.value), SEARCH_DEBOUNCE_MS4);
           searchIn.addEventListener("input", () => applySearch());
           searchIn.addEventListener("keydown", (e) => {
             const q3 = searchIn.value.trim();
@@ -65985,7 +68569,7 @@ GitHub 仓库：${ghInfo.title}
               e.preventDefault();
               e.stopImmediatePropagation();
               searchIn.value = "";
-              render2("");
+              render3("");
               searchIn.focus();
               return;
             }
@@ -66011,12 +68595,12 @@ GitHub 仓库：${ghInfo.title}
               }
             }
           });
-          render2("");
+          render3("");
           motionPanelIn(popup, this.mask);
           motionBindPressFeel(popup);
           motionEnsureDust(popup);
           this.rerenderList = () => {
-            if (!this.mobPushed) render2(searchIn.value);
+            if (!this.mobPushed) render3(searchIn.value);
           };
         }
         /** 推入域设置页（全屏页切换；返回/ESC 弹回首页）。
@@ -66044,9 +68628,9 @@ GitHub 仓库：${ghInfo.title}
         /** 滚动定位到指定行并高亮（行名匹配 .bz-sp-set-name；找不到静默跳过）。 */
         focusRowIn(body, rowName) {
           const target = [...body.querySelectorAll(".bz-sp-set-row")].find(
-            (el2) => {
+            (el3) => {
               var _a2;
-              return ((_a2 = el2.querySelector(".bz-sp-set-name")) == null ? void 0 : _a2.textContent) === rowName;
+              return ((_a2 = el3.querySelector(".bz-sp-set-name")) == null ? void 0 : _a2.textContent) === rowName;
             }
           );
           if (!target) return;
@@ -66143,7 +68727,7 @@ GitHub 仓库：${ghInfo.title}
   var initialized6, ui;
   var init_settings_panel = __esm({
     "src/settings-panel/index.ts"() {
-      init_ui13();
+      init_ui14();
       init_motion2();
       init_changelog2();
       init_manual_viewer();
@@ -66297,20 +68881,20 @@ GitHub 仓库：${ghInfo.title}
         }
         /** E5：面板内焦点控件 → data-* 特征键，null = 面板外/无可记忆焦点 */
         captureFocusKey() {
-          const el2 = document.activeElement;
-          if (!(el2 instanceof HTMLElement) || !this.content.contains(el2)) return null;
+          const el3 = document.activeElement;
+          if (!(el3 instanceof HTMLElement) || !this.content.contains(el3)) return null;
           for (const attr of ["data-scope", "data-batch", "data-rm-folder", "data-act", "data-role"]) {
-            const v = el2.getAttribute(attr);
+            const v = el3.getAttribute(attr);
             if (v != null) return `${attr}=${v}`;
           }
           return null;
         }
         restoreFocus(key) {
           const eq = key.indexOf("=");
-          const el2 = this.content.querySelector(
+          const el3 = this.content.querySelector(
             `[${key.slice(0, eq)}="${CSS.escape(key.slice(eq + 1))}"]`
           );
-          el2 == null ? void 0 : el2.focus();
+          el3 == null ? void 0 : el3.focus();
         }
         /** 范围内现有题数（一次读题库文件内存账，null = 读取失败不挡开面板）。
          *  E5：按 scope+folders+notePath 键缓存，仅范围变化重算——题库读盘不再跟随每次档位点击。 */
@@ -67397,18 +69981,18 @@ GitHub 仓库：${ghInfo.title}
             for (const p of this._styledPaths) paths.add(p);
           }
           const els = /* @__PURE__ */ new Map();
-          for (const el2 of Array.from(document.querySelectorAll("div[data-path]"))) {
-            const p = el2.getAttribute("data-path");
-            if (p && !els.has(p)) els.set(p, el2);
+          for (const el3 of Array.from(document.querySelectorAll("div[data-path]"))) {
+            const p = el3.getAttribute("data-path");
+            if (p && !els.has(p)) els.set(p, el3);
           }
           const fsrs = new FSRS(this.currentW());
           for (const path of paths) {
-            const el2 = els.get(path);
-            if (!el2) {
+            const el3 = els.get(path);
+            if (!el3) {
               this._styledPaths.delete(path);
               continue;
             }
-            const target = el2.querySelector("div.tree-item-inner");
+            const target = el3.querySelector("div.tree-item-inner");
             if (!target) continue;
             const badge = target.querySelector(".review-stage-badge");
             if (badge) badge.remove();
@@ -67487,9 +70071,9 @@ GitHub 仓库：${ghInfo.title}
         revertReviewStyles() {
           var _a2, _b2;
           const els = /* @__PURE__ */ new Map();
-          for (const el2 of Array.from(document.querySelectorAll("div[data-path]"))) {
-            const p = el2.getAttribute("data-path");
-            if (p && !els.has(p)) els.set(p, el2);
+          for (const el3 of Array.from(document.querySelectorAll("div[data-path]"))) {
+            const p = el3.getAttribute("data-path");
+            if (p && !els.has(p)) els.set(p, el3);
           }
           for (const path of this._styledPaths) {
             const target = (_a2 = els.get(path)) == null ? void 0 : _a2.querySelector("div.tree-item-inner");
@@ -68151,8 +70735,8 @@ GitHub 仓库：${ghInfo.title}
       indexMap.set(lines.length + 1, s.m.id);
       lines.push(line);
     }
-    const block = lines.length ? "\n\n你既有的相关洞察（仅供对照，避免得出重复结论）：\n" + lines.join("\n") + '\n若本批结论推翻了某条旧洞察，在 JSON 顶层加 "supersede": 候选编号（如 2，最多 1 个）；没有则省略该字段。' : "";
-    return { block, count: lines.length, indexMap };
+    const block2 = lines.length ? "\n\n你既有的相关洞察（仅供对照，避免得出重复结论）：\n" + lines.join("\n") + '\n若本批结论推翻了某条旧洞察，在 JSON 顶层加 "supersede": 候选编号（如 2，最多 1 个）；没有则省略该字段。' : "";
+    return { block: block2, count: lines.length, indexMap };
   }
 
   // src/smartcat/routing.ts
@@ -68540,15 +71124,15 @@ GitHub 仓库：${ghInfo.title}
       s = (_a2 = tryGetSettings()) != null ? _a2 : {};
     } catch (e) {
     }
-    const num2 = (raw, fallback) => {
+    const num3 = (raw, fallback) => {
       const v = Number(raw);
       return Number.isFinite(v) && v >= 0 ? v : fallback;
     };
     return {
-      reflectMinNew: num2(s.smartcatReflectMinNew, 20),
-      refExcerptLimit: num2(s.smartcatRefExcerptLimit, 400),
+      reflectMinNew: num3(s.smartcatReflectMinNew, 20),
+      refExcerptLimit: num3(s.smartcatRefExcerptLimit, 400),
       // ticket 163：洞察条数上限（默认 3；下限 1——0 无意义，防设置误填）
-      maxInsights: Math.max(1, num2(s.smartcatReflectMaxInsights, 3))
+      maxInsights: Math.max(1, num3(s.smartcatReflectMaxInsights, 3))
     };
   }
   function getUserNickname() {
@@ -69174,14 +71758,14 @@ GitHub 仓库：${ghInfo.title}
     /** 检索相关记忆：三因子评分 → 降序 → top N；更新 lastAccessed（自增强）
     *  ADR-0025：opts.lexicalQuery 供词法降级模式使用（纯用户消息，不带「情绪/时段」索引词——
     *  语义模式仍用完整 query 受益于情绪/时段上下文；词法模式免去噪音 token 稀释命中率） */
-    async retrieve(query, topN = MEMORY_CONFIG.retrievalTopN, opts = {}) {
+    async retrieve(query2, topN = MEMORY_CONFIG.retrievalTopN, opts = {}) {
       const now = Date.now();
       const useSemantic = await this.useSemanticMode();
       let queryVec = null;
-      if (useSemantic && query.trim()) {
-        queryVec = await this.queryEmbeddingSafe(query);
+      if (useSemantic && query2.trim()) {
+        queryVec = await this.queryEmbeddingSafe(query2);
       }
-      const lexicalQ = (opts.lexicalQuery != null ? opts.lexicalQuery : query).trim();
+      const lexicalQ = (opts.lexicalQuery != null ? opts.lexicalQuery : query2).trim();
       const pool = this.stream.filter((m) => !isSupersededInsight(m) && !isInvalidatedMemory(m));
       const scored = pool.map((m) => {
         var _a2, _b2;
@@ -69205,13 +71789,13 @@ GitHub 仓库：${ghInfo.title}
       return top;
     }
     /** 词法相关度（无时间项——时间归 recency；关键词×0.7 + 主题命中×0.3 归一） */
-    lexicalRelevance(memory, query) {
-      if (!query.trim()) return 0;
+    lexicalRelevance(memory, query2) {
+      if (!query2.trim()) return 0;
       const content = memory.description.toLowerCase();
-      const queryKeywords = query.toLowerCase().split(/\s+/).filter((k) => k.length > 0);
+      const queryKeywords = query2.toLowerCase().split(/\s+/).filter((k) => k.length > 0);
       let hit = 0;
       for (const kw of queryKeywords) if (content.includes(kw)) hit++;
-      return Math.min(1, hit / queryKeywords.length * 0.7 + (content.includes(query.toLowerCase()) ? 0.3 : 0));
+      return Math.min(1, hit / queryKeywords.length * 0.7 + (content.includes(query2.toLowerCase()) ? 0.3 : 0));
     }
     // ---------------- 语义模式（bge-m3 via Ollama） ----------------
     async probeSemantic() {
@@ -69228,9 +71812,9 @@ GitHub 仓库：${ghInfo.title}
       const ok = await this.probeSemantic();
       return ok && this.dim > 0 && !!this.vectors;
     }
-    async queryEmbeddingSafe(query) {
+    async queryEmbeddingSafe(query2) {
       try {
-        const vec = await getEmbedding(query, true);
+        const vec = await getEmbedding(query2, true);
         if (!vec.length) return null;
         if (!this.dim) this.dim = vec.length;
         return vec;
@@ -70746,20 +73330,20 @@ ${piece}` : piece;
       return false;
     }
   }
-  function waapi10(el2, frames, opts) {
-    if (!el2 || reduced11() || typeof el2.animate !== "function") {
+  function waapi10(el3, frames, opts) {
+    if (!el3 || reduced11() || typeof el3.animate !== "function") {
       const last = frames[frames.length - 1];
-      if (el2 && last) for (const k of Object.keys(last)) {
+      if (el3 && last) for (const k of Object.keys(last)) {
         if (k === "offset") continue;
         try {
-          el2.style[k] = String(last[k]);
+          el3.style[k] = String(last[k]);
         } catch (e) {
         }
       }
       return null;
     }
     try {
-      return el2.animate(frames, opts);
+      return el3.animate(frames, opts);
     } catch (e) {
       return null;
     }
@@ -70788,9 +73372,9 @@ ${piece}` : piece;
   }
   var EXIT_ANIM_ID3 = "bz-home-panel-exit";
   var EXIT_MASK_ANIM_ID3 = "bz-home-mask-exit";
-  function cancelAnimsBy3(el2, ids) {
-    if (typeof el2.getAnimations !== "function") return;
-    for (const a of el2.getAnimations()) {
+  function cancelAnimsBy3(el3, ids) {
+    if (typeof el3.getAnimations !== "function") return;
+    for (const a of el3.getAnimations()) {
       if (ids.includes(a.id)) {
         try {
           a.cancel();
@@ -70799,14 +73383,14 @@ ${piece}` : piece;
       }
     }
   }
-  function motionPanelIn8(overlay4, reopen) {
-    const panel2 = overlay4.querySelector(".bz-home-panel");
+  function motionPanelIn8(overlay5, reopen) {
+    const panel2 = overlay5.querySelector(".bz-home-panel");
     if (!panel2) return;
     panel2.style.opacity = "";
     panel2.style.transform = "";
     panel2.style.filter = "";
     cancelAnimsBy3(panel2, [EXIT_ANIM_ID3]);
-    cancelAnimsBy3(overlay4, [EXIT_MASK_ANIM_ID3]);
+    cancelAnimsBy3(overlay5, [EXIT_MASK_ANIM_ID3]);
     waapi10(
       panel2,
       [
@@ -70815,11 +73399,11 @@ ${piece}` : piece;
       ],
       { duration: reopen ? 300 : 480, easing: E11.out }
     );
-    bindParallax(overlay4);
+    bindParallax(overlay5);
   }
-  function motionPanelOut6(overlay4, done) {
-    const panel2 = overlay4.querySelector(".bz-home-panel");
-    stopParallax(overlay4);
+  function motionPanelOut6(overlay5, done) {
+    const panel2 = overlay5.querySelector(".bz-home-panel");
+    stopParallax(overlay5);
     if (!panel2) {
       done();
       return;
@@ -70848,7 +73432,7 @@ ${piece}` : piece;
       { duration: M18.move + 40, easing: E11.out, fill: "forwards", id: EXIT_ANIM_ID3 }
     );
     maskAnim = waapi10(
-      overlay4,
+      overlay5,
       [{ opacity: 1 }, { opacity: 0 }],
       { duration: M18.move + 40, easing: E11.out, id: EXIT_MASK_ANIM_ID3 }
     );
@@ -70859,15 +73443,15 @@ ${piece}` : piece;
     a.finished.then(finish).catch(finish);
     after10(M18.move + 200, finish);
   }
-  function motionRendered5(overlay4, boot) {
+  function motionRendered5(overlay5, boot) {
     cancelPending8();
-    const panel2 = overlay4.querySelector(".bz-home-panel");
+    const panel2 = overlay5.querySelector(".bz-home-panel");
     if (!panel2) return;
     const narrow = panel2.clientWidth > 0 && panel2.clientWidth <= 768;
-    const week = overlay4.querySelector("[data-home-week]");
-    const entries = overlay4.querySelector("[data-home-entries]");
-    const flow = overlay4.querySelector("[data-home-flow]");
-    const next = overlay4.querySelector("[data-home-next]");
+    const week = overlay5.querySelector("[data-home-week]");
+    const entries = overlay5.querySelector("[data-home-entries]");
+    const flow = overlay5.querySelector("[data-home-flow]");
+    const next = overlay5.querySelector("[data-home-next]");
     bindNextTilt(next, narrow);
     if (!boot) {
       if (flow) {
@@ -70879,10 +73463,10 @@ ${piece}` : piece;
     if (reduced11()) return;
     if (week) {
       const cells = [...week.querySelectorAll(".bz-home-wk")];
-      cells.forEach((el2, i) => {
+      cells.forEach((el3, i) => {
         after10(140 + i * 46, () => {
           waapi10(
-            el2,
+            el3,
             [
               { opacity: 0, transform: "rotateX(-64deg) translateY(6px)" },
               { opacity: 1, transform: "none" }
@@ -70896,11 +73480,11 @@ ${piece}` : piece;
     }
     if (entries) {
       const rows = [...entries.querySelectorAll(".bz-home-erow")];
-      rows.forEach((el2, i) => {
+      rows.forEach((el3, i) => {
         if (i >= 14) return;
         after10(260 + i * STAG11, () => {
           waapi10(
-            el2,
+            el3,
             [
               { opacity: 0, transform: "translateY(8px)", filter: "blur(4px)" },
               { opacity: 1, transform: "none", filter: "blur(0px)" }
@@ -70926,10 +73510,10 @@ ${piece}` : piece;
         [{ opacity: 0, transform: "translateY(5px)" }, { opacity: 1, transform: "none" }],
         { duration: M18.base, easing: E11.out, fill: "backwards" }
       );
-      next.querySelectorAll(".bz-home-pr").forEach((el2, i) => {
+      next.querySelectorAll(".bz-home-pr").forEach((el3, i) => {
         after10(640 + i * 90, () => {
           waapi10(
-            el2,
+            el3,
             [
               { opacity: 0, clipPath: "inset(0 0 100% 0)", transform: "translateY(7px)" },
               { opacity: 1, clipPath: "inset(0 0 -8% 0)", transform: "none" }
@@ -71155,9 +73739,9 @@ ${piece}` : piece;
     if (sparkPools.size) fxRaf = requestAnimationFrame(fxTick);
   }
   var parallax = /* @__PURE__ */ new Map();
-  function bindParallax(overlay4) {
-    const panel2 = overlay4.querySelector(".bz-home-panel");
-    if (!panel2 || parallax.has(overlay4)) return;
+  function bindParallax(overlay5) {
+    const panel2 = overlay5.querySelector(".bz-home-panel");
+    if (!panel2 || parallax.has(overlay5)) return;
     if (reduced11() || !canHover3() || panel2.clientWidth <= 768) return;
     const layers = [
       { el: panel2.querySelector(".bz-home-head"), d: 2 },
@@ -71166,7 +73750,7 @@ ${piece}` : piece;
       { el: panel2.querySelector("[data-home-next]"), d: 3 }
     ].filter((l) => !!l.el);
     const st = {
-      overlay: overlay4,
+      overlay: overlay5,
       layers,
       tx: 0,
       ty: 0,
@@ -71187,7 +73771,7 @@ ${piece}` : piece;
     };
     panel2.addEventListener("pointermove", st.onMove);
     panel2.addEventListener("pointerleave", st.onLeave);
-    parallax.set(overlay4, st);
+    parallax.set(overlay5, st);
   }
   function parallaxTick() {
     let active2 = false;
@@ -71206,14 +73790,14 @@ ${piece}` : piece;
       for (const st of parallax.values()) if (!st.raf) st.raf = requestAnimationFrame(parallaxTick);
     }
   }
-  function stopParallax(overlay4) {
-    const st = parallax.get(overlay4);
+  function stopParallax(overlay5) {
+    const st = parallax.get(overlay5);
     if (!st) return;
     st.overlay.removeEventListener("pointermove", st.onMove);
     st.overlay.removeEventListener("pointerleave", st.onLeave);
     if (st.raf) cancelAnimationFrame(st.raf);
     for (const l of st.layers) l.el.style.transform = "";
-    parallax.delete(overlay4);
+    parallax.delete(overlay5);
   }
   function bindTilt(card) {
     if (card.dataset.hmTilt) return;
@@ -71312,12 +73896,12 @@ ${piece}` : piece;
       return '<div role="button" tabindex="0" class="bz-home-erow" data-home-go="' + d.id + '"><span class="bz-home-dot bz-home-dot--' + dot + '"></span><span class="bz-home-eic" style="color:' + domainColor(d.id) + '">' + iconSpan(d.icon) + '</span><span class="bz-home-enm">' + esc(d.name) + '</span><span class="bz-home-ect">' + esc(ct) + "</span></div>";
     }).join("");
   }
-  function flowHtml(data, view, opts = {}) {
+  function flowHtml(data, view2, opts = {}) {
     var _a2, _b2, _c;
     const filter = (_a2 = opts.filter) != null ? _a2 : DEFAULT_TIMELINE_FILTER;
     const showTime = opts.showTime !== false;
     const size = (_b2 = opts.size) != null ? _b2 : "normal";
-    const day = (_c = data.days.find((d) => d.dateStr === view)) != null ? _c : data.today;
+    const day = (_c = data.days.find((d) => d.dateStr === view2)) != null ? _c : data.today;
     const isToday = day.dateStr === data.today.dateStr;
     const wrap2 = (inner) => '<div class="bz-home-timeline" data-tl-size="' + size + '" data-tl-time="' + (showTime ? "1" : "0") + '">' + inner + "</div>";
     const notes = isToday && filter.notes ? buildNotes(data) : [];
@@ -71358,27 +73942,27 @@ ${piece}` : piece;
   function readHomeSettings() {
     var _a2, _b2, _c;
     const s = tryGetSettings();
-    const bool2 = (v, def) => typeof v === "boolean" ? v : def;
-    const str2 = (v) => typeof v === "string" && v ? v : void 0;
+    const bool3 = (v, def) => typeof v === "boolean" ? v : def;
+    const str3 = (v) => typeof v === "string" && v ? v : void 0;
     const filter = {
-      produce: bool2(s.homeTimelineProduce, DEFAULT_TIMELINE_FILTER.produce),
-      progress: bool2(s.homeTimelineProgress, DEFAULT_TIMELINE_FILTER.progress),
-      notes: bool2(s.homeTimelineNotes, DEFAULT_TIMELINE_FILTER.notes),
-      skipped: bool2(s.homeTimelineSkipped, DEFAULT_TIMELINE_FILTER.skipped)
+      produce: bool3(s.homeTimelineProduce, DEFAULT_TIMELINE_FILTER.produce),
+      progress: bool3(s.homeTimelineProgress, DEFAULT_TIMELINE_FILTER.progress),
+      notes: bool3(s.homeTimelineNotes, DEFAULT_TIMELINE_FILTER.notes),
+      skipped: bool3(s.homeTimelineSkipped, DEFAULT_TIMELINE_FILTER.skipped)
     };
-    const range = (_a2 = str2(s.homeTimelineRange)) != null ? _a2 : "week";
+    const range = (_a2 = str3(s.homeTimelineRange)) != null ? _a2 : "week";
     const TL_SIZES = ["compact", "normal", "loose"];
-    const sizeRaw = (_b2 = str2(s.homeTimelineSize)) != null ? _b2 : "normal";
+    const sizeRaw = (_b2 = str3(s.homeTimelineSize)) != null ? _b2 : "normal";
     return {
       filter,
       flow: {
         filter,
-        showTime: bool2(s.homeTimelineTime, true),
+        showTime: bool3(s.homeTimelineTime, true),
         size: TL_SIZES.includes(sizeRaw) ? sizeRaw : "normal"
       },
       rangeDays: timelineRangeDays(range),
-      defaultDay: (_c = str2(s.homeDefaultDay)) != null ? _c : "today",
-      next: bool2(s.homeNextCards, true)
+      defaultDay: (_c = str3(s.homeDefaultDay)) != null ? _c : "today",
+      next: bool3(s.homeNextCards, true)
     };
   }
   function pickInitialView(river, defaultDay, rangeDays) {
@@ -71388,24 +73972,24 @@ ${piece}` : piece;
     const hit = window2.find((d) => d.events.length > 0);
     return hit && hit.dateStr !== today ? hit.dateStr : null;
   }
-  function saveScroll(overlay4) {
-    const body = overlay4.querySelector(".bz-home-body");
-    const flow = overlay4.querySelector(".bz-home-flow");
+  function saveScroll(overlay5) {
+    const body = overlay5.querySelector(".bz-home-body");
+    const flow = overlay5.querySelector(".bz-home-flow");
     H.scroll.body = body ? body.scrollTop : 0;
     H.scroll.flow = flow ? flow.scrollTop : 0;
   }
-  function restoreScroll(overlay4) {
+  function restoreScroll(overlay5) {
     if (!H.overlayVisible) return;
-    const body = overlay4.querySelector(".bz-home-body");
-    const flow = overlay4.querySelector(".bz-home-flow");
+    const body = overlay5.querySelector(".bz-home-body");
+    const flow = overlay5.querySelector(".bz-home-flow");
     if (body) body.scrollTop = H.scroll.body;
     if (flow) flow.scrollTop = H.scroll.flow;
   }
   var PANEL8 = { MIN_W: 640, MIN_H: 420, MAX_W: 1200, MAX_H: 820 };
   var panelResizeDetach5 = null;
-  function mountPanelResize(overlay4) {
+  function mountPanelResize(overlay5) {
     if (isMobileEnv() || panelResizeDetach5) return;
-    const panel2 = overlay4.querySelector(".bz-home-panel");
+    const panel2 = overlay5.querySelector(".bz-home-panel");
     if (!panel2) return;
     panelResizeDetach5 = uiResizable(panel2, {
       minW: PANEL8.MIN_W,
@@ -71421,23 +74005,23 @@ ${piece}` : piece;
     panelResizeDetach5 = null;
   }
   function createOverlay2(app) {
-    const overlay4 = document.createElement("div");
-    overlay4.className = "bz-panel-overlay bz-home-overlay";
-    overlay4.innerHTML = panelFrameHtml();
-    document.body.appendChild(overlay4);
-    topifyZ(overlay4);
-    H.currentOverlay = overlay4;
+    const overlay5 = document.createElement("div");
+    overlay5.className = "bz-panel-overlay bz-home-overlay";
+    overlay5.innerHTML = panelFrameHtml();
+    document.body.appendChild(overlay5);
+    topifyZ(overlay5);
+    H.currentOverlay = overlay5;
     H.overlayVisible = true;
-    mountIcons(overlay4);
-    bindEvents2(overlay4, app);
+    mountIcons(overlay5);
+    bindEvents2(overlay5, app);
     renderAll5();
-    motionPanelIn8(overlay4, false);
+    motionPanelIn8(overlay5, false);
     window.__bzHomeReplay = () => {
-      motionPanelIn8(overlay4, false);
-      motionRendered5(overlay4, true);
+      motionPanelIn8(overlay5, false);
+      motionRendered5(overlay5, true);
     };
-    trapPanelFocus(overlay4);
-    mountPanelResize(overlay4);
+    trapPanelFocus(overlay5);
+    mountPanelResize(overlay5);
     void refreshRiverAndRender();
   }
   async function readPomodoroPhase(app) {
@@ -71452,14 +74036,14 @@ ${piece}` : piece;
   var refreshSeq = 0;
   async function refreshRiverAndRender() {
     if (!H.currentOverlay || !H.appRef) return;
-    const overlay4 = H.currentOverlay;
+    const overlay5 = H.currentOverlay;
     const seq = ++refreshSeq;
     const [river, order, phase] = await Promise.all([
       collectRiver(H.appRef).catch(() => null),
       loadHomeOrder(H.appRef),
       readPomodoroPhase(H.appRef)
     ]);
-    if (H.currentOverlay !== overlay4) return;
+    if (H.currentOverlay !== overlay5) return;
     if (seq !== refreshSeq) return;
     const focusing = isFocusingPhase(phase);
     if (river) river.pomodoroFocusing = focusing;
@@ -71476,38 +74060,38 @@ ${piece}` : piece;
   }
   function closeOverlay() {
     if (!H.currentOverlay || !H.overlayVisible) return;
-    const overlay4 = H.currentOverlay;
-    saveScroll(overlay4);
+    const overlay5 = H.currentOverlay;
+    saveScroll(overlay5);
     unmountPanelResize();
     H.overlayVisible = false;
-    motionPanelOut6(overlay4, () => {
-      if (!H.overlayVisible && H.currentOverlay === overlay4) overlay4.style.display = "none";
+    motionPanelOut6(overlay5, () => {
+      if (!H.overlayVisible && H.currentOverlay === overlay5) overlay5.style.display = "none";
     });
   }
   function showOverlay() {
-    const overlay4 = H.currentOverlay;
-    if (!overlay4 || H.overlayVisible) return;
-    overlay4.style.display = "";
-    topifyZ(overlay4);
+    const overlay5 = H.currentOverlay;
+    if (!overlay5 || H.overlayVisible) return;
+    overlay5.style.display = "";
+    topifyZ(overlay5);
     H.overlayVisible = true;
-    restoreScroll(overlay4);
-    motionPanelIn8(overlay4, true);
-    mountPanelResize(overlay4);
+    restoreScroll(overlay5);
+    motionPanelIn8(overlay5, true);
+    mountPanelResize(overlay5);
     void refreshRiverAndRender();
   }
-  function bindEvents2(overlay4, app) {
-    overlay4.addEventListener("keydown", (e) => {
+  function bindEvents2(overlay5, app) {
+    overlay5.addEventListener("keydown", (e) => {
       if (e.key !== "Enter" && e.key !== " ") return;
       const t = e.target;
-      const el2 = t.closest('[role="button"]');
-      if (el2) {
+      const el3 = t.closest('[role="button"]');
+      if (el3) {
         e.preventDefault();
-        el2.click();
+        el3.click();
       }
     });
-    overlay4.addEventListener("click", (e) => {
+    overlay5.addEventListener("click", (e) => {
       const t = e.target;
-      if (e.target === overlay4) {
+      if (e.target === overlay5) {
         closeOverlay();
         return;
       }
@@ -71593,8 +74177,8 @@ ${piece}` : piece;
   function rowEls(container) {
     return Array.from(container.querySelectorAll(".bz-home-erow, .bz-home-m-tile"));
   }
-  function attachRowMenu(el2, app, river) {
-    const d = DOMAIN_MAP.get(el2.dataset.homeGo || "");
+  function attachRowMenu(el3, app, river) {
+    const d = DOMAIN_MAP.get(el3.dataset.homeGo || "");
     if (!d) return;
     const menu = DOMAIN_MENU[d.id];
     if (!menu || !menu.length) return;
@@ -71623,7 +74207,7 @@ ${piece}` : piece;
     const head = document.createElement("div");
     head.innerHTML = sheetHeadHtml(d, river);
     mountIcons(head);
-    attachItemActions(el2, actions, {
+    attachItemActions(el3, actions, {
       sheetHead: head,
       // 桌面菜单另给一行版盒头（B 方案 2026-09-11）：跨 21 个域，右键后要知道自己点的是哪个域
       menuHeadHtml: menuHeadHtml(d, river),
@@ -71631,43 +74215,43 @@ ${piece}` : piece;
       sheetClass: "bz-home-menu"
     });
   }
-  function mountRowInteractions(overlay4, app, river) {
+  function mountRowInteractions(overlay5, app, river) {
     var _a2;
-    const panel2 = overlay4.querySelector(".bz-home-panel");
+    const panel2 = overlay5.querySelector(".bz-home-panel");
     const w = (_a2 = panel2 == null ? void 0 : panel2.clientWidth) != null ? _a2 : 0;
     const narrow = w > 0 && w <= 768;
     if (w === 0 || !narrow) {
-      const entries = overlay4.querySelector("[data-home-entries]");
-      if (entries) for (const el2 of rowEls(entries)) attachRowMenu(el2, app, river);
+      const entries = overlay5.querySelector("[data-home-entries]");
+      if (entries) for (const el3 of rowEls(entries)) attachRowMenu(el3, app, river);
     }
     if (w === 0 || narrow) {
-      const tiles = overlay4.querySelector("[data-home-tiles]");
-      if (tiles) for (const el2 of rowEls(tiles)) attachRowMenu(el2, app, river);
+      const tiles = overlay5.querySelector("[data-home-tiles]");
+      if (tiles) for (const el3 of rowEls(tiles)) attachRowMenu(el3, app, river);
     }
   }
-  function focusKeyOf(el2) {
-    if (!el2) return null;
-    const go = el2.closest("[data-home-go]");
+  function focusKeyOf(el3) {
+    if (!el3) return null;
+    const go = el3.closest("[data-home-go]");
     if (go) return { attr: "data-home-go", value: go.dataset.homeGo || "" };
-    const wk = el2.closest("[data-home-weekday]");
+    const wk = el3.closest("[data-home-weekday]");
     if (wk) return { attr: "data-home-weekday", value: wk.dataset.homeWeekday || "" };
     return null;
   }
   function renderAll5() {
-    const overlay4 = H.currentOverlay;
-    if (!overlay4) return;
-    const date = overlay4.querySelector("[data-home-date]");
+    const overlay5 = H.currentOverlay;
+    if (!overlay5) return;
+    const date = overlay5.querySelector("[data-home-date]");
     if (date) date.textContent = headDateText();
-    const preGrid = overlay4.querySelector(".bz-home-grid");
-    saveScroll(overlay4);
+    const preGrid = overlay5.querySelector(".bz-home-grid");
+    saveScroll(overlay5);
     const active2 = document.activeElement;
-    const fk = active2 && overlay4.contains(active2) ? focusKeyOf(active2) : null;
+    const fk = active2 && overlay5.contains(active2) ? focusKeyOf(active2) : null;
     if (!H.river) {
       const { next: nextOn } = readHomeSettings();
       preGrid == null ? void 0 : preGrid.classList.toggle("bz-home-grid--no-next", !nextOn);
-      const entries2 = overlay4.querySelector("[data-home-entries]");
-      const flow2 = overlay4.querySelector("[data-home-flow]");
-      const next2 = overlay4.querySelector("[data-home-next]");
+      const entries2 = overlay5.querySelector("[data-home-entries]");
+      const flow2 = overlay5.querySelector("[data-home-flow]");
+      const next2 = overlay5.querySelector("[data-home-next]");
       if (H.riverFailed) {
         const empty = uiEmpty({
           icon: "alert-circle",
@@ -71692,40 +74276,40 @@ ${piece}` : piece;
         flow2.innerHTML = loadingFlowHtml();
       }
       next2.innerHTML = "";
-      overlay4.querySelector("[data-home-tiles]").innerHTML = "";
-      overlay4.querySelector("[data-home-week]").innerHTML = "";
+      overlay5.querySelector("[data-home-tiles]").innerHTML = "";
+      overlay5.querySelector("[data-home-week]").innerHTML = "";
       return;
     }
     const river = H.river;
     const cfg = readHomeSettings();
     const windowDays = river.days.slice(0, cfg.rangeDays);
-    const view = H.riverView && windowDays.some((d) => d.dateStr === H.riverView) ? H.riverView : null;
-    H.riverView = view;
+    const view2 = H.riverView && windowDays.some((d) => d.dateStr === H.riverView) ? H.riverView : null;
+    H.riverView = view2;
     const today = river.today.dateStr;
-    const week = overlay4.querySelector("[data-home-week]");
-    const entries = overlay4.querySelector("[data-home-entries]");
-    const flow = overlay4.querySelector("[data-home-flow]");
+    const week = overlay5.querySelector("[data-home-week]");
+    const entries = overlay5.querySelector("[data-home-entries]");
+    const flow = overlay5.querySelector("[data-home-flow]");
     const flowBoot = !!flow.querySelector(".bz-home-sk-line, .bz-home-flow-empty");
-    if (week) week.innerHTML = weekHtml(river.week.slice(0, cfg.rangeDays), today, view != null ? view : today);
-    const next = overlay4.querySelector("[data-home-next]");
+    if (week) week.innerHTML = weekHtml(river.week.slice(0, cfg.rangeDays), today, view2 != null ? view2 : today);
+    const next = overlay5.querySelector("[data-home-next]");
     entries.innerHTML = entriesHtml(river, H.order.desk, H.order.hiddenDesk);
-    flow.innerHTML = flowHtml(river, view != null ? view : today, cfg.flow);
+    flow.innerHTML = flowHtml(river, view2 != null ? view2 : today, cfg.flow);
     next.innerHTML = nextHtml(river, cfg.next);
     const nextOff = !cfg.next;
     next.style.display = nextOff ? "none" : "";
     preGrid == null ? void 0 : preGrid.classList.toggle("bz-home-grid--no-next", nextOff);
-    const tiles = overlay4.querySelector("[data-home-tiles]");
+    const tiles = overlay5.querySelector("[data-home-tiles]");
     tiles.innerHTML = tilesHtml(river, H.order.mob, H.order.hiddenMob);
     mountIcons(week);
     mountIcons(entries);
     mountIcons(flow);
     mountIcons(next);
     mountIcons(tiles);
-    mountRowInteractions(overlay4, H.appRef, river);
-    restoreScroll(overlay4);
-    motionRendered5(overlay4, flowBoot);
+    mountRowInteractions(overlay5, H.appRef, river);
+    restoreScroll(overlay5);
+    motionRendered5(overlay5, flowBoot);
     if (fk && fk.value && H.overlayVisible) {
-      const target = overlay4.querySelector(`[${fk.attr}="${fk.value}"]`);
+      const target = overlay5.querySelector(`[${fk.attr}="${fk.value}"]`);
       target == null ? void 0 : target.focus();
     }
   }

@@ -1,4 +1,4 @@
-/* 源指纹 528a73d7a3187529 · 仓内输入 5 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 581fc81d42771449 · 仓内输入 5 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["src/core/domain-icons.ts","src/core/ui/str.ts","src/home/layouts/river/render.ts","src/home/render.ts","src/home/shared.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — src/home/render.ts → window.BZR_home（评审壳预览包，ADR-0104） */
 var BZR_home = (() => {
@@ -109,6 +109,9 @@ var BZR_home = (() => {
     "password-vault": "key",
     smartcat: "cat",
     knowledge: "list-video",
+    // 工具坞（dock 域）：外部工具的登记/启动/观测台（与 `square-terminal` 的「终端」语义错开，
+    // 用「插槽/坞」语义的 container）
+    dock: "container",
     // 命令专属域
     "settings-panel": "settings-2"
   };
@@ -146,6 +149,9 @@ var BZR_home = (() => {
     { id: "encrypt", commandId: "bz-encrypt-open", name: "保险库", sub: "加密笔记·加密日记", icon: iconOf("encrypt") },
     // 密码本（password-vault 域，ADR-0109 拆回独立域；id 沿用合并前磁贴 id，旧钉选自动复活）
     { id: "vault", commandId: "bz-password-vault-open", name: "密码本", sub: "密码与密钥", icon: iconOf("vault") },
+    // 工具坞（dock 域，ADR-0235）：外部工具的登记 / 启动 / 观测台。
+    // 2026-10-04 用户拍板补入首页入口；声明在「设置」之前 —— 它与设置同属「系统/工具」类，不掺进内容域。
+    { id: "dock", commandId: "bz-dock-open", name: "工具坞", sub: "外部工具的运行与观测", icon: iconOf("dock") },
     { id: "settings", commandId: "bz-settings-panel-open", name: "设置", sub: "全域设置", icon: iconOf("settings") }
   ];
   var DOMAIN_MAP = new Map(DOMAINS.map((d) => [d.id, d]));
@@ -166,6 +172,7 @@ var BZR_home = (() => {
     encrypt: "#8a8f99",
     vault: "#c9a227",
     smartcat: "#e67341",
+    dock: "#5c7c9a",
     settings: "#8a8f99"
   };
   var ALL_DOMAIN_IDS = DOMAINS.map((d) => d.id);

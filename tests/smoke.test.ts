@@ -146,6 +146,8 @@ const EXPECTED_COMMAND_IDS = [
   'bz-settings-panel-open',
   // 数据体检（checkup 域，D4）
   'bz-data-checkup-open',
+  // 工具坞（dock 域，ADR-0235）
+  'bz-dock-open',
 ];
 
 /** 内存"磁盘"存储：模拟 Obsidian 插件的 data.json 持久层 */

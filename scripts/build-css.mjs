@@ -64,6 +64,8 @@ const SOURCES = [
   "src/smartcat/styles.css",
   // 数据体检（checkup 域，D4）：全插件只读巡检面板
   "src/checkup/styles.css",
+  // 工具坞（dock 域，ADR-0235）：外部工具的登记/启动/观测台（卡片墙）
+  "src/dock/styles.css",
 ];
 
 const HEADER = [

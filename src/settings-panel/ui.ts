@@ -170,6 +170,8 @@ const schemaLoaders: Record<string, () => Promise<SettingsSchema>> = {
       },
     });
   },
+  // 工具坞（dock 域，ADR-0235）：大部分配置在工具自己的清单里，本页只放登记入口 + 漏跑提醒开关
+  dock: async () => (await import('../dock/settings')).dockSettingsSchema(),
 };
 
 /** 域清单（图标 = core/domain-icons 单一事实源，与命令面板/内容首页同源——enh-sweep-a 收敛；
@@ -202,6 +204,7 @@ export const DOMAINS: DomainDef[] = [
   { id: 'encrypt', name: '保险库', icon: DOMAIN_ICONS.encrypt, desc: '密码、加密笔记与加密日记', schemaLoader: schemaLoaders.encrypt },
   { id: 'password-vault', name: '密码本', icon: DOMAIN_ICONS['password-vault'], desc: '密码条目与生成器', schemaLoader: schemaLoaders['password-vault'] },
   { id: 'smartcat', name: '小橘陪伴猫', icon: DOMAIN_ICONS.smartcat, desc: '桌面宠物陪伴', schemaLoader: schemaLoaders.smartcat },
+  { id: 'dock', name: '工具坞', icon: DOMAIN_ICONS.dock, desc: '外部工具的登记、启动与观测', schemaLoader: schemaLoaders.dock },
   { id: 'knowledge', name: '知识盒', icon: DOMAIN_ICONS.knowledge, desc: '文献录入、卡片与主题管理', schemaLoader: schemaLoaders.knowledge },
 ];
 
@@ -215,7 +218,7 @@ export const NAV_SECS: Array<{ title: string; ids: string[] }> = [
   { title: '记录', ids: ['diary', 'memo', 'belongings', 'people'] },
   { title: '收集', ids: ['clipping', 'favorites'] },
   { title: '媒体与阅读', ids: ['cinema', 'bookshelf', 'gameshelf', 'review', 'knowledge'] },
-  { title: '工具', ids: ['pomodoro', 'smartcat'] },
+  { title: '工具', ids: ['pomodoro', 'smartcat', 'dock'] },
   { title: '安全', ids: ['encrypt', 'password-vault'] },
 ];
 

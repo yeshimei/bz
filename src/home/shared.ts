@@ -66,6 +66,9 @@ export const DOMAINS: HomeDomain[] = [
   { id: 'encrypt', commandId: 'bz-encrypt-open', name: '保险库', sub: '加密笔记·加密日记', icon: iconOf('encrypt') },
   // 密码本（password-vault 域，ADR-0109 拆回独立域；id 沿用合并前磁贴 id，旧钉选自动复活）
   { id: 'vault', commandId: 'bz-password-vault-open', name: '密码本', sub: '密码与密钥', icon: iconOf('vault') },
+  // 工具坞（dock 域，ADR-0235）：外部工具的登记 / 启动 / 观测台。
+  // 2026-10-04 用户拍板补入首页入口；声明在「设置」之前 —— 它与设置同属「系统/工具」类，不掺进内容域。
+  { id: 'dock', commandId: 'bz-dock-open', name: '工具坞', sub: '外部工具的运行与观测', icon: iconOf('dock') },
   { id: 'settings', commandId: 'bz-settings-panel-open', name: '设置', sub: '全域设置', icon: iconOf('settings') },
 ];
 
@@ -89,6 +92,7 @@ export const DOMAIN_DOT: Record<string, string> = {
   encrypt: '#8a8f99',
   vault: '#c9a227',
   smartcat: '#e67341',
+  dock: '#5c7c9a',
   settings: '#8a8f99',
 };
 

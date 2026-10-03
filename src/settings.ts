@@ -8,6 +8,8 @@ import { getKnowledgeBoxes, isBoxDir, parseDirList } from './core/knowledge-boxe
 import { DEFAULT_PW_CHARSET } from './password-vault/data';
 import { AUTO_SUMMARY_KEYS } from './auto-summary/keys';
 import { unsharpenScore } from './secondbrain/vector-math';
+// 工具坞（dock 域）登记条目类型 —— **type-only**：类型层引用，运行时零依赖（不拖 dock 侧的 core/storage）
+import type { DockToolEntry } from './dock/data';
 // AI 注册表/档位表（issue 411/ADR-0179）：迁移须与注册表同源判定「在册服务商」，防两处字面量漂移
 import { AI_PROVIDER_REGISTRY, DEFAULT_AI_PROVIDER, thinkingLevelsOf } from './core/ai';
 
@@ -65,6 +67,16 @@ export default interface BzSettings {
   /** ffprobe 可执行文件路径；缺省 'ffprobe' = 走 PATH。
    *  旧键 knowledgeFfprobePath 已一次性迁移到本键（migrateExternalToolKeys） */
   ffprobePath: string;
+
+  // ===== 🧰 工具坞（dock 域，2026-10-04：外部工具的登记、启动、观测）=====
+  /** 外部工具登记表 —— 「要执行什么」的**唯一真理源**，也是本插件权限最高的数据。
+   *  只存在插件设置（`.obsidian/plugins/bz/data.json`，不随 vault 分享）里：若允许从 vault
+   *  内文件读，「打开别人给的 vault」就等于「在他机器上执行任意命令」（ADR-0235 决策）。
+   *  管理入口 = 工具坞面板内的「添加工具」（不走设置页行编辑）。 */
+  dockTools: DockToolEntry[];
+  /** 🔔 漏跑提醒（默认开）：工具自己声明了节奏、而当天该有记录却没有时，标红之外再发一条通知。
+   *  只有**声明了节奏**才判；声明缺失时退回「只展示最后运行时间」，不猜（ADR-0235 决策 D11）。 */
+  dockNotifyMissed: boolean;
 
   // ===== 📂 数据存储路径（ADR-0009 共享数据路径）=====
   /** 共享 JSON 数据目录（memo/belongings/passwords/favorites/review/quiz/闪念 meta+vec 统一存放） */
@@ -900,6 +912,10 @@ export const DEFAULT_SETTINGS: BzSettings = {
   pythonPath: '',
   ffmpegPath: 'ffmpeg',
   ffprobePath: 'ffprobe',
+
+  // 工具坞（dock 域）：空登记表起步（面板内添加）；漏跑提醒默认开
+  dockTools: [],
+  dockNotifyMissed: true,
 
   // Jev 决策通道（ADR-0173；issue 424/ADR-0184 常开；issue 433/ADR-0190 起按服务商分存）：未填密钥时不接管任何判定
   jevProvider: 'typesafe',

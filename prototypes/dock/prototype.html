@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>工具坞 · 原型预览（真行为单源）</title>
+<!--
+  ┌────────────────────────────────────────────────────────────────────────┐
+  │ 本文件 = 工具坞域 UI 的评审壳（行为单源版，issue 245/ADR-0106 范式）。     │
+  │ 组件样式零内联，全部来自（与 build-css SOURCES 同序）：                    │
+  │   ../host-theme.css（真实宿主 token）                                     │
+  │   → ../core/styles.css → ../core/ui/tokens.css → ./ui/components.css     │
+  │   → ../dock/styles.css                                                  │
+  │ 行为单源：交互逻辑全部是插件同款 ui.ts / data.ts / runner.ts 依赖链——      │
+  │   经 ./prototype-behavior.js（prototypes/dock/fake-sim.ts 构建，          │
+  │   alias obsidian→fake 假层）在两个 iframe 视图里跑真行为：                 │
+  │   桌面 iframe 1280×900 = 1180px 面板居中；移动 iframe 412×915 =           │
+  │   Platform 视口判定 → 移动布局（物理 1:1，见 ../mob-1to1.js）。            │
+  │ 数据 = 工具目录里的**声明文件**（dock.json：标题 / 描述 / 参数 / 节奏 / 怎么跑，        │
+  │   工具作者手写、bz 只读不缓存）与 `dock.settings.json`（用户填过的参数值），             │
+  │   外加 vault 里「工具的账本」（runs/<id>.json，工具写、bz 只读）；                       │
+  │   执行走假 child_process，它按四行协议吐流并**自己**落账——bz 永远不是运行记录的写者。     │
+  │ 主题：默认亮色，按钮切暗色（宿主体 theme-light/theme-dark 三端同步）。       │
+  │ 壳内只允许：外景容器样式、评审徽牌、演示钩子与自检。                        │
+  └────────────────────────────────────────────────────────────────────────┘
+-->
+<link rel="stylesheet" href="../mob-1to1.css">
+<script src="../mob-1to1.js"></script>
+<style>
+  /* ===== 以下全部是演示壳，禁止放组件样式 ===== */
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { min-height: 100vh; display: flex; flex-direction: column; align-items: center; gap: 26px;
+    padding: 28px 20px 60px; background: #dcd8cd;
+    font-family: system-ui, 'Segoe UI', 'Microsoft YaHei', sans-serif; }
+  /* 模拟 Obsidian 宿主变量（core 弹层/菜单取值用；插件内由主题提供） */
+  body {
+    --background-primary: #fbf9f3; --text-normal: #171512; --text-muted: #8b8474; --text-faint: #b3ab99;
+    --text-error: #b3564d; --background-modifier-hover: rgba(23,21,18,.06); --color-green: #3d8f5d;
+    --background-modifier-border: rgba(23,21,18,.12); --background-modifier-cover: rgba(0,0,0,.32);
+    --interactive-normal: #fff; --interactive-accent: #e67341; --shadow-s: 0 1px 3px rgba(0,0,0,.1);
+  }
+  body.theme-dark {
+    background: #17171b;
+    --background-primary: #1e1e24; --text-normal: #e8e8ec; --text-muted: #9a9aa5; --text-faint: #6c6c78;
+    --background-modifier-hover: rgba(255,255,255,.07); --background-modifier-border: rgba(255,255,255,.12);
+    --background-modifier-cover: rgba(0,0,0,.6);
+  }
+  * { scrollbar-width: none; } *::-webkit-scrollbar { display: none; }
+
+  .title { font-size: 13px; color: #7c7566; }
+  body.theme-dark .title { color: #8f8f9a; }
+
+  /* 桌面外景（真行为 iframe：面板 append iframe body，视口宽决定面板宽度） */
+  .demo-dt { flex: none; width: 1280px; height: 900px; }
+  /* 移动外景 412×915 → 物理 1:1（缩放只走 transform，不改 iframe 尺寸，见 mob-1to1.css）。
+     ⚠️ 边框用 box-shadow 画（border 会吃掉 2px 内容宽 → iframe 视口变 410，移动端
+     「满幅」断言与真机 412 对不上；shadow 不参与布局）。 */
+  .demo-mob { width: 412px; height: 915px; border-radius: 26px; overflow: hidden; flex: none;
+    box-shadow: 0 0 0 1px #b8b0a0, 0 8px 30px rgba(0,0,0,.16); background: #f5f2ec; }
+  body.theme-dark .demo-mob { box-shadow: 0 0 0 1px #3a3a44, 0 8px 30px rgba(0,0,0,.5); background: #22222a; }
+  .demo-frame { width: 100%; height: 100%; border: 0; display: block; }
+
+  /* 评审徽牌（演示壳自用） */
+  .vbadge { position: fixed; right: 16px; bottom: 12px; font-size: 11px; color: #6d6659; display: flex; gap: 10px; align-items: center;
+    background: rgba(255,255,255,.94); border: 1px solid #c9c2b2; padding: 4px 9px; z-index: 900; border-radius: 6px; }
+  body.theme-dark .vbadge { background: rgba(34,34,42,.95); border-color: #43434f; color: #a9a9b4; }
+  .vbadge button { border: none; background: none; color: #a8402f; font: 11px 'Microsoft YaHei'; cursor: pointer; padding: 0; }
+  body.theme-dark .vbadge button { color: #e9a08a; }
+  .vbadge .ok { color: #2f7d4d; }
+  .vbadge .bad { color: #b3564d; }
+</style>
+</head>
+<body class="theme-light">
+  <div class="title" id="title">工具坞 · 真行为单源预览（桌面 1280×900 · 移动 412×915 物理 1:1 · 默认亮色）</div>
+  <div id="dtHost" class="demo-dt"><iframe class="demo-frame" title="工具坞·桌面"></iframe></div>
+  <div id="mobHost" class="demo-mob-wrap"><div class="demo-mob"><iframe class="demo-frame" title="工具坞·移动"></iframe></div></div>
+
+  <div class="vbadge">
+    <button id="themeToggle">切到暗色</button>
+    <button id="mobToggle">隐藏移动端</button>
+    <button id="reset">重置演示数据</button>
+    <span id="stResult"></span>
+  </div>
+
+<script src="./prototype-icons.js"></script>
+<script>
+(function () {
+  /* ==================== 壳基座（仅外景）：两个真行为 iframe ====================
+   * 行为全部在 iframe 内跑真 ui.ts（prototype-behavior.js）；本页只做：
+   *  - 亮暗切换（默认亮色；三端同步 body 主题类）
+   *  - 重置演示数据（清 localStorage bz-sim:* 后重载）
+   *  - 自检（?selftest=1）：经 iframe contentDocument 访问真 DOM 断言
+   */
+  /* 评审口径透传（演示钩子）：主文档 query 原样交给行为 iframe；iframe 无静态 src，
+   * 在此一次性赋值，只加载一次。 */
+  document.querySelectorAll('.demo-frame').forEach((f) => {
+    f.src = './prototype-view.html' + location.search;
+  });
+
+  const resetSim = () => {
+    const kill = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      if (k && k.startsWith('bz-sim:')) kill.push(k);
+    }
+    kill.forEach((k) => localStorage.removeItem(k));
+  };
+
+  const dtFrame = () => document.querySelector('#dtHost iframe');
+  const mobFrame = () => document.querySelector('#mobHost iframe');
+  const dtDoc = () => dtFrame().contentDocument;
+  const mobDoc = () => mobFrame().contentDocument;
+  // 轮询现取 contentDocument：iframe 加载前后 document 引用会替换（about:blank → 真实文档），
+  // 不能缓存旧引用等面板——每次现查，跨文档访问本身同源安全。
+  const waitFrame = (getDoc, sel) => new Promise((res, rej) => {
+    const started = Date.now();
+    const tries = () => {
+      try {
+        const doc = getDoc();
+        if (doc && doc.querySelector(sel)) return res(doc);
+        if (Date.now() - started > 25000) return rej(new Error('iframe 面板超时'));
+        setTimeout(tries, 150);
+      } catch (e) { setTimeout(tries, 150); }
+    };
+    tries();
+  });
+
+  /* ---------- 亮暗切换（缺省亮色；文案按当前态，不做三态跟随系统） ---------- */
+  const applyTheme = () => {
+    const dark = document.documentElement.classList.contains('theme-dark');
+    document.body.className = dark ? 'theme-dark' : 'theme-light';
+    for (const f of [dtFrame(), mobFrame()]) {
+      try {
+        const d = f && f.contentDocument;
+        if (d && d.body) d.body.className = dark ? 'theme-dark' : 'theme-light';
+      } catch (e) { /* 未加载跳过 */ }
+    }
+    document.querySelector('#themeToggle').textContent = dark ? '切回亮色' : '切到暗色';
+  };
+  document.querySelector('#themeToggle').addEventListener('click', () => {
+    document.documentElement.classList.toggle('theme-dark');
+    applyTheme();
+  });
+  // iframe 首载晚于壳脚本：加载完成后补一次主题
+  for (const sel of ['#dtHost iframe', '#mobHost iframe']) {
+    const f = document.querySelector(sel);
+    if (f) f.addEventListener('load', () => { try { applyTheme(); } catch (e) { /* noop */ } });
+  }
+  applyTheme();
+
+  document.querySelector('#mobToggle').addEventListener('click', () => {
+    const m = document.querySelector('#mobHost');
+    const hidden = m.style.display === 'none';
+    m.style.display = hidden ? '' : 'none';
+    document.querySelector('#mobToggle').textContent = hidden ? '隐藏移动端' : '显示移动端';
+  });
+
+  document.querySelector('#reset').addEventListener('click', () => {
+    resetSim();
+    location.reload();
+  });
+
+  /* ==================== 自检（?selftest=1）：真行为 DOM 断言（经 iframe） ==================== */
+  if (location.search.includes('selftest')) {
+    window.__st = { pass: 0, fail: [] };
+    const t = (name, cond) => cond ? window.__st.pass++ : window.__st.fail.push(name);
+    const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+    (async () => {
+      const res = document.querySelector('#stResult');
+      try {
+        const dd0 = await waitFrame(dtDoc, '.bz-dock-panel');
+        const md0 = await waitFrame(mobDoc, '.bz-dock-panel');
+        // 种子事实（fake-sim 外露，避免壳里硬编码一份会漂的数字）
+        const SEED = (dtFrame().contentWindow || {}).DOCK_SEED || {};
+        res.textContent = '…';
+        const dt = (sel) => dd0.querySelector(sel);
+        const mob = (sel) => md0.querySelector(sel);
+        const cards = (doc) => doc.querySelectorAll('.bz-dock-card').length;
+        // KPI 的值节点 textContent 是「数字 + 单位」（"2 / 3"、"91%"）——取前导数字再比
+        const lead = (s) => Number((String(s).match(/^\d+/) || ['0'])[0]);
+
+        t('桌面面板开', !!dt('.bz-dock-panel') && !!dt('#bz-dock-headsub'));
+        t('移动面板开', !!mob('.bz-dock-panel') && !!mob('#bz-dock-headsub'));
+        t('面板挂 bz-panel-mtop', dt('.bz-dock-panel').classList.contains('bz-panel-mtop'));
+        // 回归钉：frame 必须是遮罩的子节点（挂错位置在空壳里「看着居中」，真机被顶到视口外）
+        {
+          const dMask = dt('.bz-dock-mask');
+          const dFrame = dt('.bz-dock-panel');
+          t('面板在遮罩内（父子关系）', dFrame.parentElement === dMask && dMask.parentElement === dd0.body);
+          const vw = dd0.documentElement.clientWidth / 2;
+          const r = dFrame.getBoundingClientRect();
+          t('面板水平居中', Math.abs((r.left + r.right) / 2 - vw) < 2);
+          t('面板在视口内 top=' + Math.round(r.top), r.top >= 0 && r.top < dd0.documentElement.clientHeight);
+        }
+        // view 页 CSS 链生效（曾因 ../../ 深度写错静默 404 → 面板透明）
+        const cssAlive = (doc) => {
+          const sec = doc.querySelector('.bz-dock-panel');
+          const bg = getComputedStyle(sec).backgroundColor;
+          let sheets = 0;
+          for (const s of doc.styleSheets) { try { if (s.cssRules.length > 0) sheets++; } catch (e) { /* 跨域忽略 */ } }
+          return bg !== 'rgba(0, 0, 0, 0)' && sheets >= 5;
+        };
+        t('view页CSS链生效', cssAlive(dd0) && cssAlive(md0));
+
+        t('桌面 ' + SEED.total + ' 卡', cards(dd0) === SEED.total);
+        t('移动 ' + SEED.total + ' 卡', cards(md0) === SEED.total);
+        t('两分区（自动化 / 手动）', dd0.querySelectorAll('.bz-dock-sec').length === 2
+          && dd0.querySelector('.bz-dock-sec .bz-dock-sec-title').textContent === '自动化');
+        t('区块计数=' + dd0.querySelector('.bz-dock-sec-count').textContent,
+          Number(dd0.querySelector('.bz-dock-sec-count').textContent) === SEED.auto);
+        t('头行汇总数字', (dt('#bz-dock-headsub').textContent || '').includes(SEED.total + ' 个工具'));
+
+        // ---- 顶部 KPI 四格（口径在 data.ts 的 overview()；这里校验 DOM 与它同源） ----
+        {
+          const kpi = dt('#bz-dock-kpi');
+          const tiles = dd0.querySelectorAll('#bz-dock-kpi .bz-dock-kpi-tile');
+          t('KPI 条四格', !!kpi && tiles.length === 4 && !kpi.classList.contains('is-off'));
+          const labels = Array.from(tiles).map((x) => (x.querySelector('.bz-dock-kpi-l') || {}).textContent);
+          t('KPI 标签齐', labels.join('/') === '今日自动化达标/近 7 天成功率/待处理异常/距下次到期');
+          const valOf = (i) => (tiles[i].querySelector('.bz-dock-kpi-v') || {}).textContent || '';
+          t('KPI 达标分母=' + SEED.auto + ' 分子=' + lead(valOf(0)),
+            valOf(0).includes('/ ' + SEED.auto) && lead(valOf(0)) <= SEED.auto);
+          const r7 = valOf(1);
+          t('KPI 成功率是 n% 或 —（不假报）', r7 === '—' || /^\d+%$/.test(r7));
+          const alarms = lead(valOf(2));
+          const dueCards = dd0.querySelectorAll('.bz-dock-card.is-due').length;
+          t('KPI 待处理异常=' + alarms + ' ≥ 欠跑卡=' + dueCards,
+            /^\d+$/.test(valOf(2)) && alarms >= dueCards);
+          t('KPI 距下次到期有归属',
+            !!((tiles[3].querySelector('.bz-dock-kpi-d') || {}).textContent || '').length);
+        }
+
+        // ---- 过滤条已撤：不再有「全部 / 自动化 / 手动 / 待关注」那排点击 chip ----
+        t('无过滤 chip', dd0.querySelectorAll('.bz-dock-chips').length === 0);
+        t('搜索行未展开时整条隐藏', dt('.bz-dock-bar').classList.contains('is-off'));
+
+        // ---- 顶层执行进度：没有在场运行时整条隐藏（不留空横杠） ----
+        t('无在场运行时顶层进度条隐藏',
+          !!dt('#bz-dock-runbar') && dt('#bz-dock-runbar').classList.contains('is-off')
+          && dt('#bz-dock-runbar').children.length === 0);
+
+        // 卡片内容口径：未信任 / 声明读不到两条标签各自只出现在该有的卡上
+        t('未信任标签 ' + SEED.untrusted + ' 个',
+          dd0.querySelectorAll('.bz-dock-tag--warn').length === SEED.untrusted);
+        t('声明读不到标签 ' + SEED.noDecl + ' 个',
+          dd0.querySelectorAll('.bz-dock-tag--muted').length === SEED.noDecl);
+        t('未信任卡运行钮禁用', (() => {
+          const c = dt('.bz-dock-card[data-tool="imported-tool"]');
+          const b = c && c.querySelector('.bz-dock-card-foot .bz-btn');
+          return !!b && b.disabled;
+        })());
+        // 点阵恒为 7 格（不足的补空格）——所以数「点亮了几格」，不是数 elemen 个数
+        const litPips = (id) => dd0.querySelectorAll(`.bz-dock-card[data-tool="${id}"] .bz-dock-strip .bz-dock-pip[class*="--"]`).length;
+        t('点阵全 7 格', dd0.querySelectorAll('.bz-dock-card[data-tool="clipping-export"] .bz-dock-strip .bz-dock-pip').length === 7);
+        t('点阵点亮数 = 该工具记录数 ' + litPips('clipping-export'), litPips('clipping-export') === SEED.runs['clipping-export']);
+        t('成功率文案贴右', dt('.bz-dock-card[data-tool="iamtxt-signin"] .bz-dock-rate').textContent === '75% 成功');
+        // 上次失败 → 卡面直接给「怎么办」（可操作提示不藏在详情里）
+        t('上次失败的卡面给出「怎么办」',
+          dd0.querySelectorAll('.bz-dock-card-fail').length === 1
+          && ((dt('.bz-dock-card[data-tool="drive-backup"] .bz-dock-card-fail') || {}).textContent || '').includes('重新导出凭据'));
+        // 点阵单格是「哪一次」：有记录才有 tooltip，空格就是空格
+        {
+          const pips = dd0.querySelectorAll('.bz-dock-card[data-tool="iamtxt-signin"] .bz-dock-strip .bz-dock-pip');
+          const filled = Array.from(pips).filter((p) => (p.title || '').includes('·'));
+          t('点阵单格带「哪一次」的 tooltip ' + filled.length + '/' + pips.length,
+            pips.length === 7 && filled.length === SEED.runs['iamtxt-signin']);
+        }
+
+        // 搜索：命中名 / 命令 / 描述，无命中给空态
+        dt('#bz-dock-headbtns .bz-icon-btn').click(); // 头行第一个 = 搜索
+        await sleep(150);
+        const q = dt('.bz-dock-search input');
+        t('搜索框展开', !!q);
+        q.value = '签到';
+        q.dispatchEvent(new Event('input', { bubbles: true }));
+        await sleep(120);
+        t('搜「签到」1 卡', cards(dd0) === 1);
+        // 搜索也扫「会跑什么」——命令不再住登记表，但来自声明 run 段的命令照样可搜
+        q.value = String(SEED.clippingCmd).split('/').pop();
+        q.dispatchEvent(new Event('input', { bubbles: true }));
+        await sleep(120);
+        t('搜命令片段命中 1 卡（命令来自声明的 run 段）', cards(dd0) === 1
+          && !!dt('.bz-dock-card[data-tool="clipping-export"]'));
+        q.value = 'zzzz';
+        q.dispatchEvent(new Event('input', { bubbles: true }));
+        await sleep(120);
+        t('无命中给空态', !!dt('.bz-empty') && cards(dd0) === 0);
+        q.value = '';
+        q.dispatchEvent(new Event('input', { bubbles: true }));
+        await sleep(120);
+        dt('#bz-dock-headbtns .bz-icon-btn').click(); // 收起搜索
+        await sleep(120);
+        t('收起搜索后回列表', cards(dd0) === SEED.total && !dt('.bz-dock-search'));
+
+        // 详情：参数表单 + 历史账本
+        dt('.bz-dock-card[data-tool="clipping-export"]').click();
+        await sleep(200);
+        t('进详情页', !!dt('.bz-dock-detail') && dt('.bz-dock-detail-name').textContent === '剪藏导出 Markdown');
+        t('参数表单按声明长出来 2 行', dd0.querySelectorAll('.bz-dock-form .bz-field').length === 2);
+        t('历史账本 ' + SEED.runs['clipping-export'] + ' 行',
+          dd0.querySelectorAll('.bz-dock-histrow').length === SEED.runs['clipping-export']);
+        t('历史里失败带指令性提示', !!dt('.bz-dock-histerr') && dd0.body.textContent.includes('--tags'));
+        // 参数值住在工具目录的 dock.settings.json 里 —— 面板该把上次填过的读回来
+        t('参数初值来自工具侧设置文件（2 个标签已选）',
+          dd0.querySelectorAll('.bz-dock-multichoice .bz-chip--sel').length === 2);
+        {
+          const metaTxt = (dt('.bz-dock-meta') || {}).textContent || '';
+          t('meta 含声明文件与数据文件',
+            metaTxt.includes(SEED.clippingDeclPath) && metaTxt.includes('runs/clipping-export.json'));
+          t('meta 含命令（来自声明的 run 段）', metaTxt.includes(SEED.clippingCmd));
+          t('meta 含参数值文件', metaTxt.includes('dock.settings.json'));
+          // 未声明节奏的工具不该有「待关注」，详情也不该给节奏文案
+          t('未声明节奏 → 面板「工具未声明」', metaTxt.includes('工具未声明'));
+        }
+
+        // ---- 跑一次：假 child_process 按四行协议吐流，跑完**自己**落账 ----
+        const runBtn = Array.from(dd0.querySelectorAll('.bz-dock-runbtns .bz-btn'))
+          .find((b) => (b.textContent || '').includes('运行'));
+        t('运行钮在位', !!runBtn);
+        runBtn.click();
+        let live = null;
+        for (let i = 0; i < 20 && !live; i++) {
+          await sleep(120);
+          live = dt('.bz-dock-live .bz-dock-live-head');
+        }
+        t('运行中：实时步骤回显出现', !!live);
+        t('运行中：卡片/详情给出「停止」', Array.from(dd0.querySelectorAll('.bz-dock-runbtns .bz-btn'))
+          .some((b) => (b.textContent || '').includes('停止')));
+        // 「执行进度显示在面板上」的落点：在场运行抬到面板顶层，说出是哪个工具、跑到哪一步
+        t('顶层进度条出现并给出工具名与进度',
+          !!dt('#bz-dock-runbar') && !dt('#bz-dock-runbar').classList.contains('is-off')
+          && ((dt('.bz-dock-rb-name') || {}).textContent || '').includes('剪藏')
+          && !!dt('.bz-dock-rb-track'));
+        t('顶层进度条可停止',
+          !!dt('.bz-dock-rb .bz-btn') && ((dt('.bz-dock-rb .bz-btn') || {}).textContent || '').includes('停止'));
+        // 回列表看一眼「在跑的卡」：左沿标色 + 自己说出在干什么（不是干巴巴「运行中」）
+        dd0.querySelector('.bz-dock-detail-head .bz-icon-btn').click();
+        await sleep(120);
+        {
+          const rc = dt('.bz-dock-card[data-tool="clipping-export"]');
+          t('运行中的卡标色并说出当前阶段', !!rc && rc.classList.contains('is-running')
+            && ((rc.querySelector('.bz-dock-card-msg') || {}).textContent || '').includes('正在'));
+        }
+        // 回详情等它落账
+        dt('.bz-dock-card[data-tool="clipping-export"] .bz-dock-foot-detail').click();
+        await sleep(150);
+        let grew = false;
+        for (let i = 0; i < 40 && !grew; i++) {
+          await sleep(200);
+          grew = dd0.querySelectorAll('.bz-dock-histrow').length === SEED.runs['clipping-export'] + 1;
+        }
+        t('跑完后账本多一条（工具自己落的）', grew);
+        t('跑完运行台回到「运行」钮', Array.from(dd0.querySelectorAll('.bz-dock-runbtns .bz-btn'))
+          .some((b) => (b.textContent || '').includes('运行')));
+        t('跑完顶层进度条收回', dt('#bz-dock-runbar').classList.contains('is-off')
+          && dt('#bz-dock-runbar').children.length === 0);
+        t('新记录状态为成功', (dt('.bz-dock-histrow .bz-dock-histstatus') || {}).textContent.includes('成功'));
+
+        // 返回列表：卡片点阵随之更新
+        dd0.querySelector('.bz-dock-detail-head .bz-icon-btn').click();
+        await sleep(200);
+        t('返回列表', cards(dd0) === SEED.total);
+        t('卡片点阵吸收新记录',
+          litPips('clipping-export') === SEED.runs['clipping-export'] + 1);
+
+        // ---- 导入声明：唯一的登记入口，而且只有一个输入（声明文件在哪） ----
+        // 这一步是本轮的重点：标题 / 描述 / 参数 / 节奏 / 怎么跑全从文件读，**没有表单要填**；
+        // 而且读文件不执行任何东西，所以「会跑什么」是在建立信任**之前**摆出来的。
+        {
+          const plusBtn = Array.from(dd0.querySelectorAll('#bz-dock-headbtns .bz-icon-btn'))
+            .find((b) => (b.title || '').includes('导入工具声明'));
+          t('头行有「导入工具声明」入口', !!plusBtn);
+          plusBtn.click();
+          for (let i = 0; i < 30 && !dd0.querySelector('#__shared_confirm_popup__'); i++) await sleep(120);
+          const pop = dd0.querySelector('#__shared_confirm_popup__');
+          t('导入前先弹「它会跑什么」的核对框（不是填空表单）', !!pop);
+          const ptxt = (pop || {}).textContent || '';
+          t('核对框里有声明里的工具名', ptxt.includes(SEED.pendingImport.name));
+          t('核对框里有声明里的命令', ptxt.includes(SEED.pendingImport.cmd));
+          t('核对框里有声明文件路径', ptxt.includes(SEED.pendingImport.id + '/dock.json'));
+          t('核对框里报出参数个数', ptxt.includes('参数：' + SEED.pendingImport.params + ' 个'));
+          t('核对框里不该出现任何输入框', (pop || {}).querySelectorAll('input, textarea').length === 0);
+          dd0.querySelector('#__shared_confirm_ok__').click(); // 信任并登记（confirmTrust → openFlowDialog 的 ok 钮）
+          let added = false;
+          for (let i = 0; i < 30 && !added; i++) {
+            await sleep(150);
+            added = cards(dd0) === SEED.total + 1;
+          }
+          t('导入后多一张卡（' + SEED.total + ' → ' + (SEED.total + 1) + '）', added);
+          t('导入的卡用声明里的名字', (dd0.body.textContent || '').includes(SEED.pendingImport.name));
+        }
+
+        // ---- 移动端（412×915）：能看不能跑 ----
+        {
+          const mPanel = mob('.bz-dock-panel');
+          const mRect = mPanel.getBoundingClientRect();
+          t('移动面板满幅 ' + Math.round(mRect.width) + 'px', Math.abs(mRect.width - 412) < 1);
+          const mvh = md0.documentElement.clientHeight;
+          t('移动端整屏无底部空隙', Math.abs(mRect.height - mvh) < 1.5 && Math.abs(mRect.bottom - mvh) < 1.5);
+          t('移动端无运行钮', md0.querySelectorAll('.bz-dock-runbtns .bz-btn').length === 0
+            && md0.querySelectorAll('.bz-dock-card-foot .bz-btn').length === SEED.total);
+          t('移动端给「仅查看」提示', (md0.body.textContent || '').includes('移动端仅查看'));
+          t('移动端有关闭钮', getComputedStyle(mob('.bz-dock-close')).display !== 'none');
+          t('移动端卡片两列或单列（不横溢出）',
+            mob('.bz-dock-grid').getBoundingClientRect().right <= mRect.right + 0.5);
+        }
+
+        // ---- ESC 逐层收口 ----
+        // ⚠️ dock 的遮罩是 hide 型常驻层：closeDock() 只加 .is-off（frame 元素仍挂在 DOM 上），
+        // 所以断言要看遮罩算出来的 display，不能断言元素消失。
+        const maskHidden = (doc) => {
+          const m = doc.querySelector('.bz-dock-mask');
+          return !!m && m.classList.contains('is-off') && getComputedStyle(m).display === 'none';
+        };
+        dd0.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+        await sleep(400);
+        t('ESC 关面板（遮罩 is-off + 不显示）', maskHidden(dd0));
+        md0.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+        await sleep(400);
+        t('移动端 ESC 也关面板', maskHidden(md0));
+
+        document.title = window.__st.fail.length
+          ? 'SELFTEST FAIL ' + window.__st.fail.join(',')
+          : 'SELFTEST OK ' + window.__st.pass + '/' + (window.__st.pass + window.__st.fail.length);
+        res.textContent = window.__st.fail.length ? '自检失败' : '自检通过 ' + window.__st.pass;
+        res.className = window.__st.fail.length ? 'bad' : 'ok';
+      } catch (err) {
+        // 带上已通过的断言数：pass+1 就是挂掉的那条（省得再来一次二分排查）
+        const msg = (err && err.message) || err;
+        document.title = 'SELFTEST ERR@' + window.__st.pass + ' ' + msg;
+        res.textContent = '自检异常 @' + window.__st.pass + ' ' + msg;
+        res.className = 'bad';
+      }
+    })();
+  }
+})();
+</script>
+</body>
+</html>

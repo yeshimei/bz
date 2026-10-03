@@ -90,6 +90,8 @@ import { ensureSmartCat, unloadSmartCat, openSmartCat, openSmartCatChat, hideSma
 import { openSettingsPanel, unloadSettingsPanel } from './settings-panel';
 // 数据体检（checkup 域，D4：全插件数据可靠层只读巡检面板）
 import { openDataCheckup, unloadDataCheckup } from './checkup';
+// 工具坞（dock 域，ADR-0235：外部工具的标准接口 + 集中观测台；不调度、不关心工具是什么）
+import { openDock, unloadDock } from './dock';
 
 /** 命令表：id/name 统一命名（spec「命令 id 全清单」第 9 轮：bz-<域>-<动作>）。
  *  域入口命令 icon 一律从 core/domain-icons（DOMAIN_ICONS）取——与设置面板导航单一事实源（enh-sweep-a）；
@@ -257,6 +259,9 @@ const COMMANDS: { id: string; name: string; icon: string; callback: () => void }
   { id: 'bz-settings-panel-open', name: '设置面板', icon: DOMAIN_ICONS['settings-panel'], callback: () => openSettingsPanel(getApp()) },
   // 数据体检（checkup 域，D4：全插件数据可靠层只读巡检；icon 与保险库体检同为 stethoscope，语义一致）
   { id: 'bz-data-checkup-open', name: '数据体检', icon: 'stethoscope', callback: () => void openDataCheckup(getApp()) },
+  // 工具坞（dock 域，ADR-0235：外部工具的登记 / 启动 / 回显 / 留痕。bz 不调度——自动化工具的
+  // 节奏由它自己在系统里配好，工具坞只在它该跑没跑时提醒你）
+  { id: 'bz-dock-open', name: '工具坞', icon: DOMAIN_ICONS.dock, callback: () => openDock(getApp()) },
 ];
 
 /** 应用日记本设置到运行时常量（目录唯一真理跨域化：影视/书库由 diary/config 内部跨域解析） */
@@ -459,6 +464,8 @@ export default class BzPlugin extends Plugin {
     unloadSettingsPanel();
     // 数据体检（checkup 域，D4：作废在途体检 + 面板 DOM 清理 + esc 注销）
     unloadDataCheckup();
+    // 工具坞（dock 域，ADR-0235：面板 DOM 清理 + esc 注销 + 会话态复位）
+    unloadDock();
     // 第二大脑：窄窗/抽屉 DOM、5s 防抖定时器、DeepSeek 服务、模块单例复位（ticket 107 补接线——
     // 原先 unloadSecondBrain 导出但从未被调用，禁用插件后残留窗体且防抖 refresh 仍会触发）
     unloadSecondBrain();

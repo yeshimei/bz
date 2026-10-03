@@ -40,5 +40,6 @@ Conventional Commits，**提交信息即更新日志正文**（写法 `docs/chan
 | 域职责、术语、口径 | `CONTEXT.md` |
 | 单源域名单 | `build-preview.mjs` 的 `PREVIEW_DOMAINS` / `BEHAVIOR_DOMAINS` |
 | 皮肤清单 | `scripts/skins.catalog.json` |
+| 写一个接入工具坞的外部脚本 | `docs/dock-tool-guide.md`（声明文件 / 参数值文件 / 四行协议 / 运行记录） |
 
 本文与代码冲突时以代码为准，并顺手改这里。历史注释里的「铁律 N」是旧编号，按内容找，别按号找。
