@@ -22,14 +22,14 @@
 |---|---|---|
 | vault 文件系统 | `FakeVault`（localStorage 后端，`core/storage` 真实现跑在上面） | 真实 vault |
 | 运行记录 `runs/<id>.json` | **种子里预置** + 假子进程跑完追加 | 工具自己写 |
-| 清单缓存 `manifests/<id>.json` | 种子预置（`local-report` 故意不给） | bz 经 `--manifest` 拉取后写 |
+| 工具目录两份文件 | 种子：localStorage 里预置 `dock.json` + 参数值 | 工具目录里的真文件（声明由作者手写、参数值由 bz 写） |
 | 子进程 | 假 `child_process`（四行协议吐流 + 自己落账） | 真 `cp.spawn` |
 | 系统选择器 | 假 `@electron/remote` dialog + `setSystemFolderPicker` | 真系统对话框 |
 | 图标 | `prototype-icons.js` 内联 SVG | `setIcon` + lucide |
 | 主题 | 壳按钮切 `body.theme-dark` | 跟随 Obsidian |
 
 **钉住的不变量**：假子进程跑完是**由它自己**往 `runs/<id>.json` 追加记录的——bz 全程没写过这份文件。
-这正是本域的核心约束（spec D9：三份文件、三个互斥写者），壳把这条不变量演出来，防止将来「顺手补一刀」。
+这正是本域的核心约束（spec D9：四份文件、四个互斥写者），壳把这条不变量演出来，防止将来「顺手补一刀」。
 
 ## 铁流程
 
@@ -49,5 +49,5 @@
   「停止」会让运行永远停在 running（真机上被 kill 的进程是会 `close` 的）。
 - **壳内自检按 `window.DOCK_SEED` 现算期望值**（`fake-sim.ts` 外露种子事实），别在壳里硬编码
   一份会漂的数字——尤其「待关注」的档位数是日期相关的，只能与 DOM 里的 `.is-due` 互校。
-- **两分区是 UI 概念，不是模型概念**：`trigger` 一个字段区分（spec D2）。所以筛「自动化」后
+- **两分区是 UI 概念，不是模型概念**：由声明的节奏现推（`triggerOf`，spec D2），不是登记里的字段。所以筛「自动化」后
   `.bz-dock-sec` 只剩一个——这不是 bug。
