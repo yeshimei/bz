@@ -1,4 +1,4 @@
-/* 源指纹 89a4dc980e1cd25a · 仓内输入 79 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 bee2604e3e5b0393 · 仓内输入 79 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/cinema/fake-sim.ts","prototypes/cinema/fake/fake-obsidian.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/douban-fetcher.ts","src/cinema/douban-queue.ts","src/cinema/index.ts","src/cinema/layouts/midnight/render.ts","src/cinema/motion.ts","src/cinema/recommend.ts","src/cinema/render.ts","src/cinema/seasons.ts","src/cinema/shared.ts","src/cinema/state.ts","src/cinema/type-decide.ts","src/cinema/ui.ts","src/cinema/yearbook/data.ts","src/cinema/yearbook/engine.ts","src/cinema/yearbook/index.ts","src/cinema/yearbook/kits.ts","src/cinema/yearbook/motions.ts","src/cinema/yearbook/scenes.ts","src/core/ai.ts","src/core/app.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/douban-name-index.ts","src/core/download-manifest.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/gesture.ts","src/core/http.ts","src/core/item-actions.ts","src/core/jev-fallback.ts","src/core/jev.ts","src/core/landscape.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/remote-asset.ts","src/core/remote-base.ts","src/core/settings-provider.ts","src/core/sha256.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/help-tip.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slide-pill.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/cinema/fake-sim.ts → window.BZW_cinema（行为单源预览包，issue 245/ADR-0106） */
 var BZW_cinema = (() => {
@@ -5972,7 +5972,7 @@ var BZW_cinema = (() => {
       const fmLines = ["---"];
       for (const [k, spec] of Object.entries(fields)) {
         const v = typeof spec === "string" ? spec : spec.value;
-        if (v) fmLines.push(`${k}: ${formatYamlValue(v)}`);
+        if (v) fmLines.push(`${k}: ${yamlScalarOf(v)}`);
       }
       fmLines.push("---");
       return fmLines.join("\n") + "\n" + content;
@@ -5999,25 +5999,22 @@ var BZW_cinema = (() => {
     const newLines = [];
     for (const [key, spec] of Object.entries(fields)) {
       const val = typeof spec === "string" ? spec : spec.value;
-      if (!val || val === "") continue;
+      if (!val) continue;
       if (existingKeys.has(key)) {
         if (typeof spec !== "string" && spec.ifMissing && lineValue(key)) continue;
         const lineKey = existingKeys.get(key);
         for (let i = 0; i < lines.length; i++) {
           if (lines[i].match(new RegExp(`^${lineKey}:`))) {
-            lines[i] = `${lineKey}: ${formatYamlValue(val)}`;
+            lines[i] = `${lineKey}: ${yamlScalarOf(val)}`;
             break;
           }
         }
       } else {
-        newLines.push(`${key}: ${formatYamlValue(val)}`);
+        newLines.push(`${key}: ${yamlScalarOf(val)}`);
       }
     }
     if (newLines.length > 0) lines.splice(insertIdx, 0, ...newLines);
     return header + lines.join("\n") + footer + rest;
-  }
-  function formatYamlValue(val) {
-    return yamlScalarOf(val);
   }
   function insertPosterEmbed(content, posterPath) {
     const embedLink = `![[${posterPath}]]`;
@@ -6037,29 +6034,39 @@ var BZW_cinema = (() => {
     const v = m[1].trim().replace(/^"(.*)"$/, "$1").replace(/^'(.*)'$/, "$1").trim();
     return v || null;
   }
-  async function probeSuggest(name, deps) {
-    const headers = { Referer: "https://movie.douban.com/", "Accept-Language": "zh-CN,zh;q=0.9" };
+  function doubanHeaders(referer, deps, withLang = false) {
+    const headers = withLang ? { Referer: referer, "Accept-Language": "zh-CN,zh;q=0.9" } : { Referer: referer };
     if (deps.doubanCookie) headers.Cookie = deps.doubanCookie;
+    return headers;
+  }
+  async function probeSuggest(name, deps) {
+    const headers = doubanHeaders("https://movie.douban.com/", deps, true);
     const json = await deps.httpGet(`https://movie.douban.com/j/subject_suggest?q=${encodeURIComponent(name)}`, headers);
     if (suggestLooksBlocked(json)) return { kind: "blocked" };
     const results = parseSuggestResults(json);
     return results.length > 0 ? { kind: "hit", results } : { kind: "empty" };
   }
   async function probeRexxarSearch(name, deps) {
-    const headers = { Referer: "https://m.douban.com/movie/" };
-    if (deps.doubanCookie) headers.Cookie = deps.doubanCookie;
+    const headers = doubanHeaders("https://m.douban.com/movie/", deps);
     const json = await deps.httpGet(`https://m.douban.com/rexxar/api/v2/search?q=${encodeURIComponent(name)}&count=5`, headers);
     if (!json) return { kind: "blocked" };
     const results = parseRexxarSearch(json);
     return results.length > 0 ? { kind: "hit", results } : { kind: "empty" };
   }
   async function probeSearchPage(name, deps) {
-    const headers = { Referer: "https://movie.douban.com/", "Accept-Language": "zh-CN,zh;q=0.9" };
-    if (deps.doubanCookie) headers.Cookie = deps.doubanCookie;
+    const headers = doubanHeaders("https://movie.douban.com/", deps, true);
     const html = await deps.httpGet(`https://www.douban.com/search?cat=1002&q=${encodeURIComponent(name)}`, headers);
     if (searchPageLooksBlocked(html)) return { kind: "blocked" };
     const results = parseSearchResults(html);
     return results.length > 0 ? { kind: "hit", results } : { kind: "empty" };
+  }
+  async function celebritiesIfMissing(sid, az, deps) {
+    try {
+      if (!az || !az.director || !az.actor) return await fetchCelebrities(sid, deps.httpGet, deps.doubanCookie);
+    } catch (e) {
+      return null;
+    }
+    return null;
   }
   async function queryDoubanByName(name, deps) {
     let first = null;
@@ -6081,14 +6088,7 @@ var BZW_cinema = (() => {
     if (!sid) return { ok: false, reason: "notfound" };
     let az = null;
     if (deps.apizeroKey) az = await fetchApizeroInfo(sid, deps.apizeroKey, deps.httpGet);
-    let celebrities = null;
-    try {
-      if (!az || !az.director || !az.actor) {
-        celebrities = await fetchCelebrities(sid, deps.httpGet, deps.doubanCookie);
-      }
-    } catch (e) {
-      celebrities = null;
-    }
+    const celebrities = await celebritiesIfMissing(sid, az, deps);
     return { ok: true, data: { title: first.title, detailUrl: first.detailUrl, sid, posterUrl: first.posterUrl, apizero: az, celebrities } };
   }
   async function queryDoubanBySid(sid, name, deps) {
@@ -6099,14 +6099,7 @@ var BZW_cinema = (() => {
       return { ok: false, reason: "network" };
     }
     if (!az) return { ok: false, reason: "notfound" };
-    let celebrities = null;
-    try {
-      if (!az.director || !az.actor) {
-        celebrities = await fetchCelebrities(sid, deps.httpGet, deps.doubanCookie);
-      }
-    } catch (e) {
-      celebrities = null;
-    }
+    const celebrities = await celebritiesIfMissing(sid, az, deps);
     return {
       ok: true,
       data: {
@@ -6148,14 +6141,14 @@ var BZW_cinema = (() => {
     } catch (e) {
       return { ok: false, reason: "network" };
     }
-    const hasPoster = !!fieldValue(content, "海报");
+    let posterRelative = fieldValue(content, "海报");
+    const hasPoster = !!posterRelative;
     const doubanUrlRaw = fieldValue(content, "豆瓣链接");
     const hasDoubanInfo = !!doubanUrlRaw && /^https?:\/\//.test(doubanUrlRaw);
     if (hasPoster && hasDoubanInfo) return { ok: true, skipped: true };
     const q = sid ? await queryDoubanBySid(sid, name, deps) : await queryDoubanByName(name, deps);
     if (!q.ok) return { ok: false, reason: q.reason };
     const { detailUrl, posterUrl: posterUrl2, apizero: az, celebrities: cel } = q.data;
-    let posterRelative = fieldValue(content, "海报");
     if (!hasPoster && posterUrl2) {
       const dl = await downloadPosterToVault(name, posterUrl2, deps);
       if (!dl.ok) return { ok: false, reason: dl.reason };
@@ -6254,6 +6247,516 @@ var BZW_cinema = (() => {
     return { entries: all, firstPageEmpty, listTitle: listTitle2 };
   }
 
+  // src/cinema/seasons.ts
+  var MERGE_GROUPS = ["剧集", "动漫"];
+  var CN_NUM = { 零: 0, 一: 1, 二: 2, 三: 3, 四: 4, 五: 5, 六: 6, 七: 7, 八: 8, 九: 9 };
+  function seasonNumber(raw) {
+    if (/^\d+$/.test(raw)) return Number(raw);
+    if (raw === "十") return 10;
+    const m = raw.match(/^(.)?十(.)?$/);
+    if (m) {
+      const tens = m[1] ? CN_NUM[m[1]] : 1;
+      const ones = m[2] ? CN_NUM[m[2]] : 0;
+      return tens == null || ones == null ? null : tens * 10 + ones;
+    }
+    return raw.length === 1 && CN_NUM[raw] != null ? CN_NUM[raw] : null;
+  }
+  var SEASON_RE = /(?:第\s*([0-9]+|[零一二三四五六七八九十]+)\s*季)|(?:season\s*([0-9]+))/i;
+  function parseSeasonName(name) {
+    var _a, _b;
+    const m = SEASON_RE.exec(name);
+    if (!m) return null;
+    const season = seasonNumber((_b = (_a = m[1]) != null ? _a : m[2]) != null ? _b : "");
+    if (season == null || season <= 0) return null;
+    const base = (name.slice(0, m.index) + name.slice(m.index + m[0].length)).replace(/[\s\-–—·:：]+$/, "").replace(/[\s\-–—·:：]{2,}/g, " ").replace(/\s{2,}/g, " ").trim();
+    return base ? { base, season } : null;
+  }
+  function cmpByRelease(a, b) {
+    var _a, _b, _c, _d;
+    const ra = (_b = (_a = a.releaseDate) != null ? _a : a.year) != null ? _b : "";
+    const rb = (_d = (_c = b.releaseDate) != null ? _c : b.year) != null ? _d : "";
+    if (ra === rb) return 0;
+    if (!ra) return 1;
+    if (!rb) return -1;
+    return ra < rb ? -1 : 1;
+  }
+  function seasonsByRelease(slots) {
+    return [...slots].sort((a, b) => cmpByRelease(a.item, b.item) || a.no - b.no);
+  }
+  var SPECIAL_SEP_RE = /^[\s:：·\-—－]+/;
+  function seriesKeyOf(group, base) {
+    return `series:${group}:${base}`;
+  }
+  function isSeriesKey(key) {
+    return !!key && key.startsWith("series:");
+  }
+  function cardFace(e) {
+    return e.kind === "series" ? e.face : e.item;
+  }
+  function cardGroup(e) {
+    return e.kind === "series" ? e.group : e.item.group;
+  }
+  function watchTs(it) {
+    if (!it.watchDate) return 0;
+    const t = new Date(it.watchDate).getTime();
+    return Number.isNaN(t) ? 0 : t;
+  }
+  function pickFace(slots) {
+    let best = slots[0];
+    for (const s of slots) {
+      const t = watchTs(s.item);
+      const bt = watchTs(best.item);
+      if (t > bt || t === bt && s.no > best.no) best = s;
+    }
+    return best.item;
+  }
+  function latestRated(items) {
+    const rated = items.filter((it) => it.rating != null && it.rating > 0);
+    if (!rated.length) return null;
+    return rated.reduce((best, it) => watchTs(it) >= watchTs(best) ? it : best, rated[0]).rating;
+  }
+  function specialHostOf(name, cards) {
+    let hit = null;
+    for (const c of cards) {
+      if (!c.name || name.length <= c.name.length) continue;
+      if (hit && c.name.length <= hit.name.length) continue;
+      if (!name.startsWith(c.name)) continue;
+      const rest = name.slice(c.name.length);
+      const sep = SPECIAL_SEP_RE.exec(rest);
+      if (!sep || !rest.slice(sep[0].length).trim()) continue;
+      hit = c;
+    }
+    return hit;
+  }
+  function mergeSeasonCards(list, merge) {
+    if (!merge) return list.map((item) => ({ kind: "single", item }));
+    const grouped = /* @__PURE__ */ new Map();
+    for (const it of list) {
+      if (!MERGE_GROUPS.includes(it.group)) continue;
+      const parsed = parseSeasonName(it.name);
+      if (!parsed) continue;
+      const key = seriesKeyOf(it.group, parsed.base);
+      const slots = grouped.get(key);
+      if (slots) {
+        if (!slots.some((s) => s.no === parsed.season)) slots.push({ no: parsed.season, item: it });
+      } else {
+        grouped.set(key, [{ no: parsed.season, item: it }]);
+      }
+    }
+    const merged = /* @__PURE__ */ new Map();
+    for (const [key, slots] of grouped) {
+      if (slots.length < 2) continue;
+      slots.sort((a, b) => a.no - b.no);
+      merged.set(key, {
+        kind: "series",
+        key,
+        name: parseSeasonName(slots[0].item.name).base,
+        group: slots[0].item.group,
+        seasons: slots,
+        specials: [],
+        face: pickFace(slots),
+        rating: null
+        // 统一在特别篇并入后算（口径含特别篇）
+      });
+    }
+    const cards = [...merged.values()];
+    const absorbed = /* @__PURE__ */ new Set();
+    for (const it of list) {
+      if (MERGE_GROUPS.includes(it.group) && parseSeasonName(it.name)) continue;
+      const host = specialHostOf(it.name, cards);
+      if (!host) continue;
+      host.specials.push(it);
+      absorbed.add(it);
+    }
+    const allItemsOf = (c) => c.seasons.map((s) => s.item).concat(c.specials);
+    for (const c of cards) c.rating = latestRated(allItemsOf(c));
+    const out = [];
+    const emitted = /* @__PURE__ */ new Set();
+    for (const it of list) {
+      if (absorbed.has(it)) continue;
+      let key = null;
+      if (MERGE_GROUPS.includes(it.group)) {
+        const parsed = parseSeasonName(it.name);
+        key = parsed ? seriesKeyOf(it.group, parsed.base) : null;
+      }
+      const card = key ? merged.get(key) : void 0;
+      if (card) {
+        if (!emitted.has(card.key)) {
+          out.push(card);
+          emitted.add(card.key);
+        }
+        continue;
+      }
+      out.push({ kind: "single", item: it });
+    }
+    return out;
+  }
+
+  // src/cinema/shared.ts
+  var ICON = {
+    ai: "bot",
+    stat: "bar-chart-3",
+    close: "x",
+    search: "search",
+    add: "plus",
+    edit: "pencil",
+    del: "trash-2",
+    back: "chevron-left",
+    grid: "layout-grid",
+    eye: "eye",
+    play: "play",
+    globe: "globe",
+    repeat: "rotate-ccw",
+    shelf: "bookmark",
+    listPlus: "list-plus",
+    import: "download"
+  };
+  function typeColor(group) {
+    var _a;
+    return group === "其他" ? "#8a8578" : (_a = TYPE_COLORS[group]) != null ? _a : "#8a8578";
+  }
+  var ST_COLOR = { 想看: "#98917f", 在看: "#d97c1d", 已看: "#4a9a5c" };
+  function statusNum(status) {
+    if (typeof status === "number") return status;
+    return status === "想看" ? STATUS_WANT : status === "在看" ? STATUS_WATCHING : STATUS_WATCHED;
+  }
+  function statusColor(status) {
+    const v = statusNum(status);
+    return v === STATUS_WANT ? ST_COLOR["想看"] : v === STATUS_WATCHING ? ST_COLOR["在看"] : ST_COLOR["已看"];
+  }
+  function statusText(status) {
+    const v = statusNum(status);
+    return v === STATUS_WANT ? "想看" : v === STATUS_WATCHING ? "在看" : "已看";
+  }
+  function doubanSearchUrl(name) {
+    return "https://movie.douban.com/search?q=" + encodeURIComponent(name);
+  }
+  function itemKey(it) {
+    var _a, _b;
+    return (_b = (_a = it.file) == null ? void 0 : _a.path) != null ? _b : `new:${it.name}`;
+  }
+  function itemByKey(items, key) {
+    if (!key) return void 0;
+    return items.find((it) => itemKey(it) === key);
+  }
+  function posterInner(item, url) {
+    var _a, _b;
+    const ph = `<div class="ph">${esc((_a = item.name[0]) != null ? _a : "")}</div>`;
+    if (!url) return ph;
+    return `<img loading="lazy" src="${esc(url)}" onerror="this.outerHTML='<div class=\\'ph\\'>${esc((_b = item.name[0]) != null ? _b : "")}</div>'">`;
+  }
+  function seasonSegState(item) {
+    const st = statusNum(item.status);
+    return st === STATUS_WATCHED ? "watched" : st === STATUS_WATCHING ? "watching" : "empty";
+  }
+  function seriesStatus(seasons, extra = []) {
+    const states = seasons.map((s) => statusNum(s.item.status)).concat(extra.map((it) => statusNum(it.status)));
+    if (states.includes(STATUS_WATCHING)) return STATUS_WATCHING;
+    if (states.includes(STATUS_WANT)) return STATUS_WANT;
+    return STATUS_WATCHED;
+  }
+  function cardStatus(e) {
+    return e.kind === "series" ? seriesStatus(e.seasons, e.specials) : statusNum(e.item.status);
+  }
+  function seasonDotsHtml(seasons) {
+    const n = { watched: 0, watching: 0, empty: 0 };
+    const dots = seasons.map((s) => {
+      const st = seasonSegState(s.item);
+      n[st]++;
+      return `<i class="${st}" data-cinema-season-key="${esc(itemKey(s.item))}"></i>`;
+    }).join("");
+    const label = `各季进度：共 ${seasons.length} 季，已看 ${n.watched}、在看 ${n.watching}、未看 ${n.empty}`;
+    return `<span class="season-dots" role="img" aria-label="${esc(label)}">${dots}</span>`;
+  }
+  function facePiecesHtml(it, posterUrl2, opts = {}) {
+    var _a;
+    const r = opts.rating !== void 0 ? opts.rating : it.rating;
+    return {
+      poster: posterInner(it, posterUrl2),
+      name: esc((_a = opts.name) != null ? _a : it.name),
+      meta: esc([it.year || "", it.director || ""].filter(Boolean).join(" · ")),
+      stars: r && r > 0 ? starsHtml(r) + `<span class="num">${Number(r).toFixed(1)}</span>` : '<span class="star-none">未评分</span>'
+    };
+  }
+  function starsHtml(rating) {
+    const lit = starsLit(rating);
+    return Array.from({ length: 5 }, (_, i) => i < lit ? '<i class="is-on">★</i>' : "<i>☆</i>").join("");
+  }
+  function starsLit(rating) {
+    var _a;
+    return ((_a = getStarString(rating).match(/★/g)) != null ? _a : []).length;
+  }
+  function cardHtml(e, posterUrl2, fetching = false) {
+    const it = e.kind === "series" ? e.face : e.item;
+    const st = cardStatus(e);
+    const p = facePiecesHtml(it, posterUrl2, e.kind === "series" ? { name: e.name, rating: e.rating } : {});
+    const label = `${e.kind === "series" ? e.name : it.name}，${statusText(st)}`;
+    return `<div class="pcard${e.kind === "series" ? " pcard-series" : ""}" data-cinema-key="${esc(e.kind === "series" ? e.key : itemKey(it))}" tabindex="0" role="button" aria-label="${esc(label)}"><div class="pw"><div class="pw-face">${p.poster}</div>${fetching ? '<div class="pw-fetch"><span class="pw-spin"></span></div>' : ""}
+    ${st !== STATUS_WATCHED ? `<span class="badge" style="background:${statusColor(st)}">${statusText(st)}</span>` : ""}${it.rewatches.length ? `<span class="badge badge--re" role="img" aria-label="共看过 ${rewatchCount(it)} 刷">${rewatchCount(it)}刷</span>` : ""}${e.kind === "series" ? seasonDotsHtml(e.seasons) : ""}</div>
+    <div class="pname">${p.name}</div>
+    <div class="pmeta">${p.meta}</div>
+    <div class="pstars">${p.stars}</div></div>`;
+  }
+  function viewFiltered(view) {
+    return !!(view.typeFilter || view.statusFilter || view.listFilter || view.searchKeyword);
+  }
+  function cardInList(e, list) {
+    const members = e.kind === "series" ? [...e.seasons.map((s) => s.item), ...e.specials] : [e.item];
+    return members.some((m) => m.lists.includes(list));
+  }
+  var HOT_FOLD_MIN = 120;
+  function detailModalHtml(it, posterUrl2) {
+    var _a, _b, _c, _d, _e, _f, _g, _h, _i;
+    const badge = (color, text) => `<span class="dm-chip" style="background:${color}">${esc(text)}</span>`;
+    const rows = [
+      ["类型", (_a = it.genre) != null ? _a : ""],
+      ["导演", (_b = it.director) != null ? _b : ""],
+      ["主演", (_c = it.actors) != null ? _c : ""],
+      ["制片国家/地区", (_d = it.region) != null ? _d : ""],
+      ["上映日期", (_f = (_e = it.releaseDate) != null ? _e : it.year) != null ? _f : ""],
+      // 完整年月日（year 只留年，卡片/统计用）
+      ["片长", (_g = it.duration) != null ? _g : ""],
+      ["季集", it.seasonText ? `${it.seasonText} 集` : ""],
+      ["豆瓣评分", (_h = it.doubanRating) != null ? _h : ""]
+    ].filter(([, v]) => v !== "");
+    const hot = ((_i = it.hotComment) != null ? _i : "").trim();
+    const hotFold = hot.length > HOT_FOLD_MIN;
+    const rewatched = it.rewatches.length > 0;
+    const firstDate = (it.watchedDate || "").slice(0, 10);
+    const wantD = (it.wantDate || "").slice(0, 10);
+    const watchingD = (it.watchingDate || "").slice(0, 10);
+    const nodes = [];
+    if (wantD) nodes.push({ d: wantD, tag: "想看" });
+    if (watchingD) nodes.push({ d: watchingD, tag: "在看" });
+    if (firstDate) nodes.push({ d: firstDate, tag: rewatched ? "首看" : "已看", first: true });
+    for (const r of [...it.rewatches].sort()) nodes.push({ d: r.slice(0, 16), tag: "" });
+    nodes.sort((a, b) => a.d.localeCompare(b.d));
+    const timeline = nodes.length ? `<div class="dm-tl">${nodes.map((n) => `<div class="dm-tl-row${n.first ? " is-first" : ""}"><i></i><span class="d">${esc(n.d)}</span>${n.tag ? `<span class="tag">${esc(n.tag)}</span>` : ""}</div>`).join("")}</div>` : "";
+    const listChips = [...it.lists].sort((a, b) => a === REWATCH_SHELF ? -1 : b === REWATCH_SHELF ? 1 : 0).map((l) => `<span class="dm-chip dm-chip--shelf">${esc(l)}</span>`).join("");
+    return `<div class="cn-modal cn-modal--detail">
+    <div class="dm-head"><div class="dm-poster">${posterUrl2 ? `<img src="${esc(posterUrl2)}" onerror="this.remove()">` : ""}</div>
+      <div style="flex:1;min-width:0"><div class="dm-title">${esc(it.name)}</div>
+        <div class="dm-badges">${badge(typeColor(it.group), it.typeTag)}
+          ${(() => {
+      const st = statusNum(it.status);
+      return st !== STATUS_WATCHED ? badge(statusColor(st), statusText(st)) : "";
+    })()}
+          ${rewatched ? `<span class="dm-chip dm-chip--re">${rewatchCount(it)} 刷</span>` : ""}
+          ${listChips}
+          ${it.rating && it.rating > 0 ? `<span class="dm-stars">${getStarString(it.rating)}</span><span class="dm-rating">${Number(it.rating).toFixed(1)}</span>` : ""}</div>
+        ${it.review ? `<div class="dm-review">${esc(it.review)}</div>` : ""}
+        ${timeline}</div></div>
+    ${rows.length ? '<div class="dm-sec">豆 瓣 信 息</div>' + rows.map(([k, v]) => `<div class="dm-kv"><span class="dm-kv-k">${k}</span><span class="dm-kv-v">${esc(v)}</span></div>`).join("") : ""}
+    ${it.doubanUrl ? `<div class="dm-kv"><span class="dm-kv-k">豆瓣链接</span><span class="dm-kv-v"><a href="${esc(it.doubanUrl)}" target="_blank" rel="noopener">${esc(it.doubanUrl)}</a></span></div>` : ""}
+    ${hot ? `<div class="dm-sec">热 门 短 评</div><div class="dm-quote${hotFold ? " is-fold" : ""}" data-dm-quote>${esc(hot)}</div>${hotFold ? `<button type="button" class="dm-fold j-quote-fold" data-dm-fold>展开全文（${hot.length} 字）</button>` : ""}` : ""}
+    ${it.synopsis ? `<div class="dm-sec">简 介</div><div class="dm-synopsis">${esc(it.synopsis)}</div>` : ""}
+    <div class="dm-actions">${statusNum(it.status) === STATUS_WATCHED ? `<button class="dm-btn j-rewatch">${iconSpan(ICON.repeat)}重温 +1</button>` : ""}<button class="dm-btn j-similar">${iconSpan(ICON.ai)}找同类</button><button class="dm-btn j-edit">${iconSpan(ICON.edit)}编辑</button><button class="dm-btn danger j-del">${iconSpan(ICON.del)}删除</button></div>
+  </div>`;
+  }
+  function seriesCountsText(card) {
+    var _a;
+    const byType = /* @__PURE__ */ new Map();
+    for (const it of card.specials) {
+      const t = it.typeTag || it.group;
+      byType.set(t, ((_a = byType.get(t)) != null ? _a : 0) + 1);
+    }
+    const extra = [...byType].map(([t, n]) => `${n} 部${t}`).join(" · ");
+    return `共 ${card.seasons.length} 季` + (extra ? ` · ${extra}` : "");
+  }
+  function seriesDetailModalHtml(card, posterOf) {
+    var _a;
+    const face = card.face;
+    const url = posterOf(face);
+    const st = seriesStatus(card.seasons, card.specials);
+    const badge = (color, text) => `<span class="dm-chip" style="background:${color}">${esc(text)}</span>`;
+    const thumb = (it) => {
+      const t = posterOf(it);
+      return `<div class="s-thumb">${t ? `<img src="${esc(t)}" alt="" onerror="this.remove()">` : ""}</div>`;
+    };
+    const rowOf = (it, cls) => {
+      const sub = [
+        it.group !== card.group ? esc(it.group) : "",
+        // 特别篇常是电影/纪录片：标出组，免得看着像「某一季」
+        it.watchedDate ? `观影 ${esc(it.watchedDate.slice(0, 10))}` : "",
+        // 同时间线口径：读已看日期，非排序用的观影日期（issue 536）
+        it.seasonText ? esc(it.seasonText) : ""
+        // 深审批 B #6：季集原文自带单位（「2季」），不再拼「 集」出「2季 集」叠字
+      ].filter(Boolean).join(" · ");
+      const r = it.rating;
+      return `<div class="s-row${cls}" data-cinema-season-key="${esc(itemKey(it))}">${thumb(it)}
+      <div class="s-mid"><div class="s-name">${esc(it.name)}</div>${sub ? `<div class="s-sub">${sub}</div>` : ""}</div>
+      ${it.rewatches.length ? `<span class="s-chip s-chip--re" role="img" aria-label="共看过 ${rewatchCount(it)} 刷">${rewatchCount(it)}刷</span>` : ""}
+      <span class="s-chip" style="background:${statusColor(it.status)}">${statusText(it.status)}</span>
+      <span class="s-rate${r && r > 0 ? "" : " none"}">${r && r > 0 ? Number(r).toFixed(1) : "—"}</span></div>`;
+    };
+    const rowSrc = [
+      ...seasonsByRelease(card.seasons).map((s) => ({ it: s.item, special: false })),
+      ...card.specials.map((it) => ({ it, special: true }))
+    ].sort((a, b) => cmpByRelease(a.it, b.it) || (a.special === b.special ? 0 : a.special ? 1 : -1));
+    const rows = rowSrc.map(({ it, special }) => rowOf(it, special ? " s-row-special" : "")).join("");
+    const watchedDays = rowSrc.map(({ it }) => it.watchedDate).filter((d) => !!d).sort();
+    const lastWatched = ((_a = watchedDays[watchedDays.length - 1]) != null ? _a : "").slice(0, 10);
+    return `<div class="cn-modal cn-modal--detail">
+    <div class="dm-head"><div class="dm-poster">${url ? `<img src="${esc(url)}" onerror="this.remove()">` : ""}</div>
+      <div style="flex:1;min-width:0"><div class="dm-title">${esc(card.name)}<span class="dm-n">${seriesCountsText(card)}</span></div>
+        <div class="dm-badges">${badge(typeColor(card.group), face.typeTag)}
+          ${st !== STATUS_WATCHED ? badge(statusColor(st), statusText(st)) : ""}
+          ${card.rating && card.rating > 0 ? `<span class="dm-stars">${getStarString(card.rating)}</span><span class="dm-rating">${Number(card.rating).toFixed(1)}</span>` : ""}
+          ${lastWatched ? `<span class="dm-date">${esc(lastWatched)}</span>` : ""}</div></div></div>
+    <div class="s-list">${rows}</div>
+  </div>`;
+  }
+  var GROUP_SUBS_OF = {
+    电影: [],
+    剧集: ["国产剧", "美剧", "英剧", "德剧", "日剧", "韩剧", "哥伦比亚剧"],
+    动漫: ["日漫", "国漫", "美漫"],
+    纪录片: [],
+    公开课: ["公开课"]
+  };
+  function formAllTags() {
+    const out = [];
+    for (const g of GROUP_ORDER) {
+      if (g === "其他") continue;
+      const subs = GROUP_SUBS_OF[g];
+      if (subs.length) subs.forEach((t) => out.push(t));
+      else out.push(g);
+    }
+    return out;
+  }
+  function formChoicesHtml(values, cur, attr) {
+    return values.map((v) => {
+      var _a, _b;
+      return `<button type="button" class="f-choice-btn${v === cur ? " is-on" : ""}" data-${attr}="${v}"><span class="dot" style="background:${attr === "f-tag" ? typeColor((_a = getGroupForTag(v)) != null ? _a : "其他") : (_b = ST_COLOR[v]) != null ? _b : "#888"}"></span>${v}</button>`;
+    }).join("");
+  }
+  function formModalHtml(opts) {
+    const { editing } = opts;
+    const initSt = opts.stText;
+    const nameField = `<div class="f-field f-field--name"><span class="f-label">名 称</span><input class="f-input j-name" value="${esc(opts.name)}" placeholder="影视名称"></div>`;
+    const stField = `<div class="f-field"><span class="f-label">状 态</span><div class="f-choice j-sts">${formChoicesHtml(["想看", "在看", "已看"], initSt, "f-st")}</div></div>`;
+    const ratingField = `<div class="f-field j-rating" style="display:${initSt === "已看" ? "" : "none"}"><span class="f-label">评 分</span>
+      <div class="f-range-row"><input type="range" class="f-range j-range" min="1" max="10" step="0.1" value="${opts.rating}"><span class="f-range-val j-rval">${Number(opts.rating).toFixed(1)}</span><span class="f-stars j-stars" data-lit="${starsLit(opts.rating)}">${starsHtml(opts.rating)}</span></div></div>`;
+    const reviewField = `<div class="f-field j-review" style="display:${initSt === "已看" ? "" : "none"}"><span class="f-label">影 评</span><textarea class="f-input j-review-t" placeholder="写点什么…">${esc(opts.review)}</textarea></div>`;
+    if (editing) {
+      return `<div class="cn-modal" style="width:100%">
+    <div class="cn-modal-title">编辑影视</div>
+    ${nameField}
+    <div class="f-field"><span class="f-label">类 型</span><div class="f-choice j-tags">${formChoicesHtml(formAllTags(), opts.typeTag, "f-tag")}</div></div>
+    ${stField}${ratingField}${reviewField}
+    <div class="dm-actions"><button class="dm-btn gold j-save">保存</button></div>
+  </div>`;
+    }
+    return `<div class="cn-modal cn-modal--flip" style="width:100%">
+    <div class="form-flip j-flip">
+      <div class="form-face form-face--front">
+        <div class="cn-modal-title">添加影视</div>
+        ${nameField}${stField}${ratingField}${reviewField}
+        <div class="dm-actions"><button class="dm-btn gold j-parse"><span class="f-spin"></span><span class="j-parse-text">解析</span></button></div>
+      </div>
+      <div class="form-face form-face--back">
+        <div class="j-back"></div>
+        <div class="dm-actions"><button class="dm-btn gold j-save">保存</button></div>
+      </div>
+    </div>
+  </div>`;
+  }
+  function formTagChipHtml(typeTag, pending2 = false) {
+    var _a;
+    if (pending2) return '<span class="dm-chip dm-chip--pick is-pending"><span class="dm-skel"></span></span>';
+    return `<button type="button" class="dm-chip dm-chip--pick" data-pick="tag" style="background:${typeColor((_a = getGroupForTag(typeTag)) != null ? _a : "其他")}">${esc(typeTag)}</button>`;
+  }
+  function formStChipHtml(stText) {
+    var _a;
+    return `<button type="button" class="dm-chip dm-chip--pick" data-pick="st" style="background:${(_a = ST_COLOR[stText]) != null ? _a : "#888"}">${esc(stText)}</button>`;
+  }
+  function formBackHtml(d, o) {
+    var _a, _b, _c, _d;
+    if (!d) return "";
+    const rows = [
+      ["豆瓣类型", d.genre],
+      ["导演", d.director],
+      ["主演", d.actors],
+      ["制片国家/地区", d.region],
+      ["上映日期", d.releaseDate],
+      ["片长", d.duration],
+      ["豆瓣评分", d.doubanRating]
+    ].filter(([, v]) => v !== "");
+    const hot = ((_a = d.hotComment) != null ? _a : "").trim();
+    const rc = ((_b = o.rating) != null ? _b : 0) > 0 ? o.rating : 0;
+    const dateText = ((_c = o.watchDate) != null ? _c : "").slice(0, 10);
+    const reviewText = ((_d = o.review) != null ? _d : "").trim();
+    const tagItems = formAllTags().map((t) => {
+      var _a2;
+      return `<button type="button" class="dm-pick-item${t === o.typeTag ? " is-on" : ""}" data-f-tag="${esc(t)}"><span class="dot" style="background:${typeColor((_a2 = getGroupForTag(t)) != null ? _a2 : "其他")}"></span>${esc(t)}</button>`;
+    }).join("");
+    const stItems = ["想看", "在看", "已看"].map((s) => {
+      var _a2;
+      return `<button type="button" class="dm-pick-item${s === o.stText ? " is-on" : ""}" data-f-st="${esc(s)}"><span class="dot" style="background:${(_a2 = ST_COLOR[s]) != null ? _a2 : "#888"}"></span>${esc(s)}</button>`;
+    }).join("");
+    return `
+    <div class="dm-head">
+      <div class="dm-poster">${d.posterUrl ? `<img src="${esc(d.posterUrl)}" alt="" onload="this.parentNode.classList.add('is-ready')" onerror="this.remove()">` : ""}</div>
+      <div style="flex:1;min-width:0">
+        <div class="dm-title">${esc(d.title)}</div>
+        <div class="dm-badges">${formTagChipHtml(o.typeTag, !!o.classifying)}${formStChipHtml(o.stText)}</div>
+        ${rc || dateText ? `<div class="dm-record">
+          ${rc ? `<span class="dm-stars">${getStarString(rc)}</span><span class="dm-rating">${Number(rc).toFixed(1)}</span>` : ""}
+          ${dateText ? `<span class="dm-date">${esc(dateText)}</span>` : ""}</div>` : ""}
+        ${reviewText ? `<div class="dm-review">${esc(reviewText)}</div>` : ""}
+      </div>
+    </div>
+    <div class="dm-pick-list" data-pick-list="tag">${tagItems}</div>
+    <div class="dm-pick-list" data-pick-list="st">${stItems}</div>
+    ${rows.length ? '<div class="dm-sec">豆 瓣 信 息</div>' + rows.map(([k, v]) => `<div class="dm-kv"><span class="dm-kv-k">${k}</span><span class="dm-kv-v">${esc(v)}</span></div>`).join("") : ""}
+    ${d.doubanUrl ? `<div class="dm-kv"><span class="dm-kv-k">豆瓣链接</span><span class="dm-kv-v"><a href="${esc(d.doubanUrl)}" target="_blank" rel="noopener">${esc(d.doubanUrl)}</a></span></div>` : ""}
+    ${hot ? `<div class="dm-sec">热 门 短 评</div><div class="dm-quote">${esc(hot)}</div>` : ""}
+  `;
+  }
+  function aiRecName(r) {
+    return (r == null ? void 0 : r.title) || (r == null ? void 0 : r.name) || "未命名";
+  }
+  function aiRecMeta(r) {
+    return (r == null ? void 0 : r.meta) || [r == null ? void 0 : r.type, r == null ? void 0 : r.director].filter(Boolean).join(" · ");
+  }
+  function aiPageHtml(inp) {
+    if (inp.running) {
+      return `<div class="ai-guide"><div class="ai-spin"></div>
+      <span class="ai-ic">${iconSpan(ICON.ai)}</span><div class="ai-title">${esc(inp.waitMsg || "AI 正在分析你的观影口味…")}</div>
+      <div class="ai-sub">正在生成推荐，请稍候</div></div>`;
+    }
+    if (inp.error) {
+      return `<div class="ai-guide"><span class="ai-ic ai-err-ic">${iconSpan(ICON.ai)}</span>
+      <div class="ai-title">AI 分析失败</div><div class="ai-sub">${esc(inp.error)}</div>
+      <button class="ai-start j-ai-start" data-cinema-ai-start>重试</button></div>`;
+    }
+    if (inp.results && inp.results.length > 0) {
+      const cards = inp.results.map((rec, i) => {
+        const name = aiRecName(rec);
+        const inLib = inp.inLibrary(name);
+        return `<div class="rec-card"><div class="rec-main"><div class="rec-name">${esc(name)}
+        <a href="${esc(doubanSearchUrl(name))}" target="_blank" rel="noopener" title="在豆瓣搜索">${iconSpan(ICON.globe)}</a></div>
+        <div class="rec-meta">${esc(aiRecMeta(rec))}</div><div class="rec-reason">${esc((rec == null ? void 0 : rec.reason) || "")}</div></div>
+        <button class="rec-add" data-rec-add="${i}"${inLib ? " disabled" : ""}>${inLib ? "已在库中" : "＋ 想看"}</button></div>`;
+      }).join("");
+      return `<div class="ai-pref">偏好：<b>${esc(inp.pref)}</b></div>
+      <div class="rec-list">${cards}</div>
+      <div style="text-align:center;margin-top:14px"><button class="dm-btn j-ai-more" data-cinema-ai-start>${iconSpan(ICON.ai)}换一批</button></div>`;
+    }
+    return `<div class="ai-pref">偏好：<b>${esc(inp.pref)}</b></div>
+    <div class="ai-guide">
+      <div class="ai-title">让 AI 读懂你的片库</div>
+      <div class="ai-sub">基于你的评分、影评与偏好标签生成荐片，<br>结果可直接加入想看清单</div>
+      <button class="ai-start j-ai-start" data-cinema-ai-start>${iconSpan(ICON.ai)}开始推荐</button></div>`;
+  }
+  function sheetHeadHtml(it, posterUrl2) {
+    return `<div class="cn-sheet-head">${posterUrl2 ? `<img class="cn-sheet-poster" src="${esc(posterUrl2)}" onerror="this.remove()">` : ""}
+    <div><div class="cn-sheet-name">${esc(it.name)}</div><div class="cn-sheet-sub">${esc(it.year || "")} · ${esc(it.director || it.group)} · ${statusText(it.status)}</div></div></div>`;
+  }
+  function seriesSheetHeadHtml(card, posterUrl2) {
+    return `<div class="cn-sheet-head">${posterUrl2 ? `<img class="cn-sheet-poster" src="${esc(posterUrl2)}" onerror="this.remove()">` : ""}
+    <div><div class="cn-sheet-name">${esc(card.name)}</div><div class="cn-sheet-sub">${esc(seriesCountsText(card))}</div></div></div>`;
+  }
+
   // src/cinema/data.ts
   function normalizeTags(raw) {
     if (Array.isArray(raw)) return raw.map((t) => String(t));
@@ -6298,7 +6801,7 @@ var BZW_cinema = (() => {
     const stRaw = typeof fm["状态"] === "string" ? fm["状态"].trim() : "";
     let status;
     if (stRaw === "想看" || stRaw === "在看" || stRaw === "已看") {
-      status = stRaw === "想看" ? STATUS_WANT : stRaw === "在看" ? STATUS_WATCHING : STATUS_WATCHED;
+      status = statusNum(stRaw);
     } else {
       status = ratingNum === -1 ? STATUS_WANT : ratingNum === 0 ? STATUS_WATCHING : STATUS_WATCHED;
     }
@@ -6406,7 +6909,8 @@ var BZW_cinema = (() => {
   function getDisplayItems() {
     let list = [...M.items];
     if (M.typeFilter) list = list.filter((it) => it.group === M.typeFilter);
-    if (M.statusFilter) list = list.filter((it) => it.status === (M.statusFilter === "想看" ? STATUS_WANT : M.statusFilter === "在看" ? STATUS_WATCHING : STATUS_WATCHED));
+    const sf = M.statusFilter;
+    if (sf) list = list.filter((it) => it.status === statusNum(sf));
     if (M.listFilter) list = list.filter((it) => it.lists.includes(M.listFilter));
     else list = list.filter((it) => !it.shelvedOnly);
     if (M.searchKeyword) {
@@ -8050,27 +8554,22 @@ var BZW_cinema = (() => {
   var RECOMMEND_ASK = 20;
   var RECOMMEND_TAKE = 5;
   var FOLLOWUP_ASK = 10;
-  function buildRecommendPrompt(profile, recent2) {
-    return `你是资深影视推荐官。用户已看 ${profile.total} 部影视，以下是其口味画像（个人评分1~10加权统计，数值为加权分）：
+  var profileSection = (profile, recent2) => `你是资深影视推荐官。用户已看 ${profile.total} 部影视，以下是其口味画像（个人评分1~10加权统计，数值为加权分）：
 品类分布：${profile.groups.join("、") || "无"}
 类型偏好：${profile.genres.join("、") || "无"}
 导演偏好：${profile.directors.join("、") || "无"}
 主演偏好：${profile.actors.join("、") || "无"}
 地区偏好：${profile.regions.join("、") || "无"}
-最近看的10部：${recent2.join("；")}
+最近看的10部：${recent2.join("；")}`;
+  function buildRecommendPrompt(profile, recent2) {
+    return `${profileSection(profile, recent2)}
 
 请基于画像推荐 ${RECOMMEND_ASK} 部用户可能喜欢的影视（电影/剧集/动漫/纪录片/公开课均可），按与口味的匹配度从高到低排序。推荐理由必须具体引用画像中的偏好信号（如"你偏爱X导演的Y风格"）。只推荐真实存在的影视，避免编造。
 
 严格输出 JSON（不要输出其他内容）：{"recommendations":[{"title":"片名","year":"年份","director":"导演","type":"电影|剧集|动漫|纪录片|公开课","reason":"推荐理由"}]}`;
   }
   function buildFollowupPrompt(profile, recent2, excludeNames) {
-    return `你是资深影视推荐官。用户已看 ${profile.total} 部影视，以下是其口味画像（个人评分1~10加权统计，数值为加权分）：
-品类分布：${profile.groups.join("、") || "无"}
-类型偏好：${profile.genres.join("、") || "无"}
-导演偏好：${profile.directors.join("、") || "无"}
-主演偏好：${profile.actors.join("、") || "无"}
-地区偏好：${profile.regions.join("、") || "无"}
-最近看的10部：${recent2.join("；")}
+    return `${profileSection(profile, recent2)}
 
 刚才已经向你推荐过以下影片（不要重复推荐）：${excludeNames.join("、")}
 
@@ -8367,12 +8866,11 @@ tags:
       if (y !== null) relCount.set(y, ((_e = relCount.get(y)) != null ? _e : 0) + 1);
     }
     const releaseYears = [...relCount.entries()].map(([y, n]) => ({ y, n })).sort((a, b) => a.y - b.y);
-    let oldest = null, newest = null;
+    let oldest = null;
     for (const it of items) {
       const y = relYear(it);
       if (y === null) continue;
       if (!oldest || y < Number(oldest.year)) oldest = it;
-      if (!newest || y > Number(newest.year)) newest = it;
     }
     const TOOLS = [["当年", (a) => a <= 0], ["1–3 年", (a) => a > 0 && a <= 3], ["4–10 年", (a) => a > 3 && a <= 10], ["≥10 年", (a) => a > 10]];
     const ageBuckets = TOOLS.map(([label, hit]) => ({
@@ -8489,7 +8987,6 @@ tags:
       yearMin: years.length ? years[0].y : 0,
       yearMax: years.length ? years[years.length - 1].y : 0,
       months,
-      peakMonth: months.indexOf(Math.max(...months)),
       weekN,
       peakDay: weekN.indexOf(Math.max(...weekN)),
       weekendN: weekN[5] + weekN[6],
@@ -8511,7 +9008,6 @@ tags:
       matrix,
       releaseYears,
       oldest,
-      newest,
       ageBuckets,
       avgAge,
       rated,
@@ -8525,10 +9021,6 @@ tags:
       disappoint,
       top3,
       nineUp,
-      tenUp: rated.filter((it) => {
-        var _a2;
-        return ((_a2 = it.rating) != null ? _a2 : 0) >= 10;
-      }).length,
       directors: people("director"),
       actors: people("actors"),
       series,
@@ -8537,7 +9029,6 @@ tags:
       epTotal,
       reviews,
       hotComments,
-      posters: items.filter((it) => !!it.poster),
       scatter,
       ageDots,
       genrePairs,
@@ -9823,7 +10314,6 @@ tags:
         const key = `-${String(mi + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
         return { el, n: (_d = dayCount.get(key)) != null ? _d : 0, o: (_e = orderOf.get(key)) != null ? _e : -1, tipTxt: (_f = el.dataset.tip) != null ? _f : "" };
       });
-      const months = qsa(s, ".yb-month");
       let hotCell = -1;
       out.set("days", {
         dur: 3,
@@ -10234,7 +10724,7 @@ tags:
             ctx.lineTo(w * g, h - padB);
             ctx.stroke();
             const yOf = (i, j, which) => {
-              const acc = series[j][i] + (which === "bot" ? 0 : 0);
+              const acc = series[j][i];
               const below = series.slice(0, j).reduce((s2, arr) => s2 + arr[i], 0);
               const up = (below + acc) / maxTotal;
               const dn = below / maxTotal;
@@ -10620,7 +11110,7 @@ tags:
               const shine = ((t - 2.2 + i * 0.7) % 4.2 / 4.2).toFixed(4);
               const float = Math.sin((t - 2.2) * 1.2 + i) * 1.8;
               const on = i === hotPod;
-              S(card, `opacity:1;transform:translate(${(-px * 5 + (on ? 0 : 0)).toFixed(2)}px,${(float - py * 3.4 - (on ? 10 : 0)).toFixed(2)}px) scale(${on ? 1.045 : 1});--shine:${shine}` + (on ? ";z-index:3" : ""));
+              S(card, `opacity:1;transform:translate(${(-px * 5).toFixed(2)}px,${(float - py * 3.4 - (on ? 10 : 0)).toFixed(2)}px) scale(${on ? 1.045 : 1});--shine:${shine}` + (on ? ";z-index:3" : ""));
             } else {
               S(card, `opacity:${Math.min(1, cp * 1.9).toFixed(3)};transform:translate3d(0,${((1 - ck) * 30).toFixed(1)}px,${((1 - ck) * -170).toFixed(0)}px) scale(${(1.3 - 0.3 * ck).toFixed(3)})`);
             }
@@ -10687,7 +11177,6 @@ tags:
       const cards = qsa(s, ".yb-acard");
       const arc = s.querySelector('[data-r="arc"]');
       const attlChars = qsa(s, ".yb-attl i");
-      const mid = (cards.length - 1) / 2;
       let hotCard = -1;
       out.set("actors", {
         dur: 3,
@@ -11471,517 +11960,6 @@ tags:
     });
   }
 
-  // src/cinema/seasons.ts
-  var MERGE_GROUPS = ["剧集", "动漫"];
-  var CN_NUM = { 零: 0, 一: 1, 二: 2, 三: 3, 四: 4, 五: 5, 六: 6, 七: 7, 八: 8, 九: 9 };
-  function seasonNumber(raw) {
-    if (/^\d+$/.test(raw)) return Number(raw);
-    if (raw === "十") return 10;
-    const m = raw.match(/^(.)?十(.)?$/);
-    if (m) {
-      const tens = m[1] ? CN_NUM[m[1]] : 1;
-      const ones = m[2] ? CN_NUM[m[2]] : 0;
-      return tens == null || ones == null ? null : tens * 10 + ones;
-    }
-    return raw.length === 1 && CN_NUM[raw] != null ? CN_NUM[raw] : null;
-  }
-  var SEASON_RE = /(?:第\s*([0-9]+|[零一二三四五六七八九十]+)\s*季)|(?:season\s*([0-9]+))/i;
-  function parseSeasonName(name) {
-    var _a, _b;
-    const m = SEASON_RE.exec(name);
-    if (!m) return null;
-    const season = seasonNumber((_b = (_a = m[1]) != null ? _a : m[2]) != null ? _b : "");
-    if (season == null || season <= 0) return null;
-    const base = (name.slice(0, m.index) + name.slice(m.index + m[0].length)).replace(/[\s\-–—·:：]+$/, "").replace(/[\s\-–—·:：]{2,}/g, " ").replace(/\s{2,}/g, " ").trim();
-    return base ? { base, season } : null;
-  }
-  function cmpByRelease(a, b) {
-    var _a, _b, _c, _d;
-    const ra = (_b = (_a = a.releaseDate) != null ? _a : a.year) != null ? _b : "";
-    const rb = (_d = (_c = b.releaseDate) != null ? _c : b.year) != null ? _d : "";
-    if (ra === rb) return 0;
-    if (!ra) return 1;
-    if (!rb) return -1;
-    return ra < rb ? -1 : 1;
-  }
-  function seasonsByRelease(slots) {
-    return [...slots].sort((a, b) => cmpByRelease(a.item, b.item) || a.no - b.no);
-  }
-  var SPECIAL_SEP_RE = /^[\s:：·\-—－]+/;
-  function seriesKeyOf(group, base) {
-    return `series:${group}:${base}`;
-  }
-  function isSeriesKey(key) {
-    return !!key && key.startsWith("series:");
-  }
-  function cardFace(e) {
-    return e.kind === "series" ? e.face : e.item;
-  }
-  function cardGroup(e) {
-    return e.kind === "series" ? e.group : e.item.group;
-  }
-  function watchTs(it) {
-    if (!it.watchDate) return 0;
-    const t = new Date(it.watchDate).getTime();
-    return Number.isNaN(t) ? 0 : t;
-  }
-  function pickFace(slots) {
-    let best = slots[0];
-    for (const s of slots) {
-      const t = watchTs(s.item);
-      const bt = watchTs(best.item);
-      if (t > bt || t === bt && s.no > best.no) best = s;
-    }
-    return best.item;
-  }
-  function latestRated(items) {
-    const rated = items.filter((it) => it.rating != null && it.rating > 0);
-    if (!rated.length) return null;
-    return rated.reduce((best, it) => watchTs(it) >= watchTs(best) ? it : best, rated[0]).rating;
-  }
-  function specialHostOf(name, cards) {
-    let hit = null;
-    for (const c of cards) {
-      if (!c.name || name.length <= c.name.length) continue;
-      if (hit && c.name.length <= hit.name.length) continue;
-      if (!name.startsWith(c.name)) continue;
-      const rest = name.slice(c.name.length);
-      const sep = SPECIAL_SEP_RE.exec(rest);
-      if (!sep || !rest.slice(sep[0].length).trim()) continue;
-      hit = c;
-    }
-    return hit;
-  }
-  function mergeSeasonCards(list, merge) {
-    if (!merge) return list.map((item) => ({ kind: "single", item }));
-    const grouped = /* @__PURE__ */ new Map();
-    for (const it of list) {
-      if (!MERGE_GROUPS.includes(it.group)) continue;
-      const parsed = parseSeasonName(it.name);
-      if (!parsed) continue;
-      const key = seriesKeyOf(it.group, parsed.base);
-      const slots = grouped.get(key);
-      if (slots) {
-        if (!slots.some((s) => s.no === parsed.season)) slots.push({ no: parsed.season, item: it });
-      } else {
-        grouped.set(key, [{ no: parsed.season, item: it }]);
-      }
-    }
-    const merged = /* @__PURE__ */ new Map();
-    for (const [key, slots] of grouped) {
-      if (slots.length < 2) continue;
-      slots.sort((a, b) => a.no - b.no);
-      merged.set(key, {
-        kind: "series",
-        key,
-        name: parseSeasonName(slots[0].item.name).base,
-        group: slots[0].item.group,
-        seasons: slots,
-        specials: [],
-        face: pickFace(slots),
-        rating: null
-        // 统一在特别篇并入后算（口径含特别篇）
-      });
-    }
-    const cards = [...merged.values()];
-    const absorbed = /* @__PURE__ */ new Set();
-    for (const it of list) {
-      if (MERGE_GROUPS.includes(it.group) && parseSeasonName(it.name)) continue;
-      const host = specialHostOf(it.name, cards);
-      if (!host) continue;
-      host.specials.push(it);
-      absorbed.add(it);
-    }
-    const allItemsOf = (c) => c.seasons.map((s) => s.item).concat(c.specials);
-    for (const c of cards) c.rating = latestRated(allItemsOf(c));
-    const out = [];
-    const emitted = /* @__PURE__ */ new Set();
-    for (const it of list) {
-      if (absorbed.has(it)) continue;
-      let key = null;
-      if (MERGE_GROUPS.includes(it.group)) {
-        const parsed = parseSeasonName(it.name);
-        key = parsed ? seriesKeyOf(it.group, parsed.base) : null;
-      }
-      const card = key ? merged.get(key) : void 0;
-      if (card) {
-        if (!emitted.has(card.key)) {
-          out.push(card);
-          emitted.add(card.key);
-        }
-        continue;
-      }
-      out.push({ kind: "single", item: it });
-    }
-    return out;
-  }
-
-  // src/cinema/shared.ts
-  var ICON = {
-    ai: "bot",
-    stat: "bar-chart-3",
-    close: "x",
-    search: "search",
-    add: "plus",
-    edit: "pencil",
-    del: "trash-2",
-    confirm: "alert-circle",
-    back: "chevron-left",
-    grid: "layout-grid",
-    eye: "eye",
-    play: "play",
-    globe: "globe",
-    repeat: "rotate-ccw",
-    shelf: "bookmark",
-    listPlus: "list-plus",
-    import: "download"
-  };
-  function typeColor(group) {
-    var _a;
-    return group === "其他" ? "#8a8578" : (_a = TYPE_COLORS[group]) != null ? _a : "#8a8578";
-  }
-  var ST_COLOR = { 想看: "#98917f", 在看: "#d97c1d", 已看: "#4a9a5c" };
-  function statusNum(status) {
-    if (typeof status === "number") return status;
-    return status === "想看" ? STATUS_WANT : status === "在看" ? STATUS_WATCHING : STATUS_WATCHED;
-  }
-  function statusColor(status) {
-    const v = statusNum(status);
-    return v === STATUS_WANT ? ST_COLOR["想看"] : v === STATUS_WATCHING ? ST_COLOR["在看"] : ST_COLOR["已看"];
-  }
-  function statusText(status) {
-    const v = statusNum(status);
-    return v === STATUS_WANT ? "想看" : v === STATUS_WATCHING ? "在看" : "已看";
-  }
-  function doubanSearchUrl(name) {
-    return "https://movie.douban.com/search?q=" + encodeURIComponent(name);
-  }
-  function itemKey(it) {
-    var _a, _b;
-    return (_b = (_a = it.file) == null ? void 0 : _a.path) != null ? _b : `new:${it.name}`;
-  }
-  function itemByKey(items, key) {
-    if (!key) return void 0;
-    return items.find((it) => itemKey(it) === key);
-  }
-  function posterInner(item, url) {
-    var _a, _b;
-    const ph = `<div class="ph">${esc((_a = item.name[0]) != null ? _a : "")}</div>`;
-    if (!url) return ph;
-    return `<img loading="lazy" src="${esc(url)}" onerror="this.outerHTML='<div class=\\'ph\\'>${esc((_b = item.name[0]) != null ? _b : "")}</div>'">`;
-  }
-  function seasonSegState(item) {
-    const st = statusNum(item.status);
-    return st === STATUS_WATCHED ? "watched" : st === STATUS_WATCHING ? "watching" : "empty";
-  }
-  function seriesStatus(seasons, extra = []) {
-    const states = seasons.map((s) => statusNum(s.item.status)).concat(extra.map((it) => statusNum(it.status)));
-    if (states.includes(STATUS_WATCHING)) return STATUS_WATCHING;
-    if (states.includes(STATUS_WANT)) return STATUS_WANT;
-    return STATUS_WATCHED;
-  }
-  function cardStatus(e) {
-    return e.kind === "series" ? seriesStatus(e.seasons, e.specials) : statusNum(e.item.status);
-  }
-  function seasonDotsHtml(seasons) {
-    const n = { watched: 0, watching: 0, empty: 0 };
-    const dots = seasons.map((s) => {
-      const st = seasonSegState(s.item);
-      n[st]++;
-      return `<i class="${st}" data-cinema-season-key="${esc(itemKey(s.item))}"></i>`;
-    }).join("");
-    const label = `各季进度：共 ${seasons.length} 季，已看 ${n.watched}、在看 ${n.watching}、未看 ${n.empty}`;
-    return `<span class="season-dots" role="img" aria-label="${esc(label)}">${dots}</span>`;
-  }
-  function facePiecesHtml(it, posterUrl2, opts = {}) {
-    var _a;
-    const r = opts.rating !== void 0 ? opts.rating : it.rating;
-    return {
-      poster: posterInner(it, posterUrl2),
-      name: esc((_a = opts.name) != null ? _a : it.name),
-      meta: esc([it.year || "", it.director || ""].filter(Boolean).join(" · ")),
-      stars: r && r > 0 ? starsHtml(r) + `<span class="num">${Number(r).toFixed(1)}</span>` : '<span class="star-none">未评分</span>'
-    };
-  }
-  function starsHtml(rating) {
-    const lit = starsLit(rating);
-    return Array.from({ length: 5 }, (_, i) => i < lit ? '<i class="is-on">★</i>' : "<i>☆</i>").join("");
-  }
-  function starsLit(rating) {
-    var _a;
-    return ((_a = getStarString(rating).match(/★/g)) != null ? _a : []).length;
-  }
-  function cardHtml(e, posterUrl2, fetching = false) {
-    const it = e.kind === "series" ? e.face : e.item;
-    const st = cardStatus(e);
-    const p = facePiecesHtml(it, posterUrl2, e.kind === "series" ? { name: e.name, rating: e.rating } : {});
-    const label = `${e.kind === "series" ? e.name : it.name}，${statusText(st)}`;
-    return `<div class="pcard${e.kind === "series" ? " pcard-series" : ""}" data-cinema-key="${esc(e.kind === "series" ? e.key : itemKey(it))}" tabindex="0" role="button" aria-label="${esc(label)}"><div class="pw"><div class="pw-face">${p.poster}</div>${fetching ? '<div class="pw-fetch"><span class="pw-spin"></span></div>' : ""}
-    ${st !== STATUS_WATCHED ? `<span class="badge" style="background:${statusColor(st)}">${statusText(st)}</span>` : ""}${it.rewatches.length ? `<span class="badge badge--re" role="img" aria-label="共看过 ${rewatchCount(it)} 刷">${rewatchCount(it)}刷</span>` : ""}${e.kind === "series" ? seasonDotsHtml(e.seasons) : ""}</div>
-    <div class="pname">${p.name}</div>
-    <div class="pmeta">${p.meta}</div>
-    <div class="pstars">${p.stars}</div></div>`;
-  }
-  function viewFiltered(view) {
-    return !!(view.typeFilter || view.statusFilter || view.listFilter || view.searchKeyword);
-  }
-  function cardInList(e, list) {
-    const members = e.kind === "series" ? [...e.seasons.map((s) => s.item), ...e.specials] : [e.item];
-    return members.some((m) => m.lists.includes(list));
-  }
-  var HOT_FOLD_MIN = 120;
-  function detailModalHtml(it, posterUrl2) {
-    var _a, _b, _c, _d, _e, _f, _g, _h, _i;
-    const badge = (color, text) => `<span class="dm-chip" style="background:${color}">${esc(text)}</span>`;
-    const rows = [
-      ["类型", (_a = it.genre) != null ? _a : ""],
-      ["导演", (_b = it.director) != null ? _b : ""],
-      ["主演", (_c = it.actors) != null ? _c : ""],
-      ["制片国家/地区", (_d = it.region) != null ? _d : ""],
-      ["上映日期", (_f = (_e = it.releaseDate) != null ? _e : it.year) != null ? _f : ""],
-      // 完整年月日（year 只留年，卡片/统计用）
-      ["片长", (_g = it.duration) != null ? _g : ""],
-      ["季集", it.seasonText ? `${it.seasonText} 集` : ""],
-      ["豆瓣评分", (_h = it.doubanRating) != null ? _h : ""]
-    ].filter(([, v]) => v !== "");
-    const hot = ((_i = it.hotComment) != null ? _i : "").trim();
-    const hotFold = hot.length > HOT_FOLD_MIN;
-    const rewatched = it.rewatches.length > 0;
-    const firstDate = (it.watchedDate || "").slice(0, 10);
-    const wantD = (it.wantDate || "").slice(0, 10);
-    const watchingD = (it.watchingDate || "").slice(0, 10);
-    const nodes = [];
-    if (wantD) nodes.push({ d: wantD, tag: "想看" });
-    if (watchingD) nodes.push({ d: watchingD, tag: "在看" });
-    if (firstDate) nodes.push({ d: firstDate, tag: rewatched ? "首看" : "已看", first: true });
-    for (const r of [...it.rewatches].sort()) nodes.push({ d: r.slice(0, 16), tag: "" });
-    nodes.sort((a, b) => a.d.localeCompare(b.d));
-    const timeline = nodes.length ? `<div class="dm-tl">${nodes.map((n) => `<div class="dm-tl-row${n.first ? " is-first" : ""}"><i></i><span class="d">${esc(n.d)}</span>${n.tag ? `<span class="tag">${esc(n.tag)}</span>` : ""}</div>`).join("")}</div>` : "";
-    const listChips = [...it.lists].sort((a, b) => a === REWATCH_SHELF ? -1 : b === REWATCH_SHELF ? 1 : 0).map((l) => `<span class="dm-chip dm-chip--shelf">${esc(l)}</span>`).join("");
-    return `<div class="cn-modal cn-modal--detail">
-    <div class="dm-head"><div class="dm-poster">${posterUrl2 ? `<img src="${esc(posterUrl2)}" onerror="this.remove()">` : ""}</div>
-      <div style="flex:1;min-width:0"><div class="dm-title">${esc(it.name)}</div>
-        <div class="dm-badges">${badge(typeColor(it.group), it.typeTag)}
-          ${(() => {
-      const st = statusNum(it.status);
-      return st !== STATUS_WATCHED ? badge(statusColor(st), statusText(st)) : "";
-    })()}
-          ${rewatched ? `<span class="dm-chip dm-chip--re">${rewatchCount(it)} 刷</span>` : ""}
-          ${listChips}
-          ${it.rating && it.rating > 0 ? `<span class="dm-stars">${getStarString(it.rating)}</span><span class="dm-rating">${Number(it.rating).toFixed(1)}</span>` : ""}</div>
-        ${it.review ? `<div class="dm-review">${esc(it.review)}</div>` : ""}
-        ${timeline}</div></div>
-    ${rows.length ? '<div class="dm-sec">豆 瓣 信 息</div>' + rows.map(([k, v]) => `<div class="dm-kv"><span class="dm-kv-k">${k}</span><span class="dm-kv-v">${esc(v)}</span></div>`).join("") : ""}
-    ${it.doubanUrl ? `<div class="dm-kv"><span class="dm-kv-k">豆瓣链接</span><span class="dm-kv-v"><a href="${esc(it.doubanUrl)}" target="_blank" rel="noopener">${esc(it.doubanUrl)}</a></span></div>` : ""}
-    ${hot ? `<div class="dm-sec">热 门 短 评</div><div class="dm-quote${hotFold ? " is-fold" : ""}" data-dm-quote>${esc(hot)}</div>${hotFold ? `<button type="button" class="dm-fold j-quote-fold" data-dm-fold>展开全文（${hot.length} 字）</button>` : ""}` : ""}
-    ${it.synopsis ? `<div class="dm-sec">简 介</div><div class="dm-synopsis">${esc(it.synopsis)}</div>` : ""}
-    <div class="dm-actions">${statusNum(it.status) === STATUS_WATCHED ? `<button class="dm-btn j-rewatch">${iconSpan(ICON.repeat)}重温 +1</button>` : ""}<button class="dm-btn j-similar">${iconSpan(ICON.ai)}找同类</button><button class="dm-btn j-edit">${iconSpan(ICON.edit)}编辑</button><button class="dm-btn danger j-del">${iconSpan(ICON.del)}删除</button></div>
-  </div>`;
-  }
-  function seriesCountsText(card) {
-    var _a;
-    const byType = /* @__PURE__ */ new Map();
-    for (const it of card.specials) {
-      const t = it.typeTag || it.group;
-      byType.set(t, ((_a = byType.get(t)) != null ? _a : 0) + 1);
-    }
-    const extra = [...byType].map(([t, n]) => `${n} 部${t}`).join(" · ");
-    return `共 ${card.seasons.length} 季` + (extra ? ` · ${extra}` : "");
-  }
-  function seriesDetailModalHtml(card, posterOf) {
-    var _a;
-    const face = card.face;
-    const url = posterOf(face);
-    const st = seriesStatus(card.seasons, card.specials);
-    const badge = (color, text) => `<span class="dm-chip" style="background:${color}">${esc(text)}</span>`;
-    const thumb = (it) => {
-      const t = posterOf(it);
-      return `<div class="s-thumb">${t ? `<img src="${esc(t)}" alt="" onerror="this.remove()">` : ""}</div>`;
-    };
-    const rowOf = (it, cls) => {
-      const sub = [
-        it.group !== card.group ? esc(it.group) : "",
-        // 特别篇常是电影/纪录片：标出组，免得看着像「某一季」
-        it.watchedDate ? `观影 ${esc(it.watchedDate.slice(0, 10))}` : "",
-        // 同时间线口径：读已看日期，非排序用的观影日期（issue 536）
-        it.seasonText ? esc(it.seasonText) : ""
-        // 深审批 B #6：季集原文自带单位（「2季」），不再拼「 集」出「2季 集」叠字
-      ].filter(Boolean).join(" · ");
-      const r = it.rating;
-      return `<div class="s-row${cls}" data-cinema-season-key="${esc(itemKey(it))}">${thumb(it)}
-      <div class="s-mid"><div class="s-name">${esc(it.name)}</div>${sub ? `<div class="s-sub">${sub}</div>` : ""}</div>
-      ${it.rewatches.length ? `<span class="s-chip s-chip--re" role="img" aria-label="共看过 ${rewatchCount(it)} 刷">${rewatchCount(it)}刷</span>` : ""}
-      <span class="s-chip" style="background:${statusColor(it.status)}">${statusText(it.status)}</span>
-      <span class="s-rate${r && r > 0 ? "" : " none"}">${r && r > 0 ? Number(r).toFixed(1) : "—"}</span></div>`;
-    };
-    const rowSrc = [
-      ...seasonsByRelease(card.seasons).map((s) => ({ it: s.item, special: false })),
-      ...card.specials.map((it) => ({ it, special: true }))
-    ].sort((a, b) => cmpByRelease(a.it, b.it) || (a.special === b.special ? 0 : a.special ? 1 : -1));
-    const rows = rowSrc.map(({ it, special }) => rowOf(it, special ? " s-row-special" : "")).join("");
-    const watchedDays = rowSrc.map(({ it }) => it.watchedDate).filter((d) => !!d).sort();
-    const lastWatched = ((_a = watchedDays[watchedDays.length - 1]) != null ? _a : "").slice(0, 10);
-    return `<div class="cn-modal cn-modal--detail">
-    <div class="dm-head"><div class="dm-poster">${url ? `<img src="${esc(url)}" onerror="this.remove()">` : ""}</div>
-      <div style="flex:1;min-width:0"><div class="dm-title">${esc(card.name)}<span class="dm-n">${seriesCountsText(card)}</span></div>
-        <div class="dm-badges">${badge(typeColor(card.group), face.typeTag)}
-          ${st !== STATUS_WATCHED ? badge(statusColor(st), statusText(st)) : ""}
-          ${card.rating && card.rating > 0 ? `<span class="dm-stars">${getStarString(card.rating)}</span><span class="dm-rating">${Number(card.rating).toFixed(1)}</span>` : ""}
-          ${lastWatched ? `<span class="dm-date">${esc(lastWatched)}</span>` : ""}</div></div></div>
-    <div class="s-list">${rows}</div>
-  </div>`;
-  }
-  var GROUP_SUBS_OF = {
-    电影: [],
-    剧集: ["国产剧", "美剧", "英剧", "德剧", "日剧", "韩剧", "哥伦比亚剧"],
-    动漫: ["日漫", "国漫", "美漫"],
-    纪录片: [],
-    公开课: ["公开课"]
-  };
-  function formAllTags() {
-    const out = [];
-    for (const g of GROUP_ORDER) {
-      if (g === "其他") continue;
-      const subs = GROUP_SUBS_OF[g];
-      if (subs.length) subs.forEach((t) => out.push(t));
-      else out.push(g);
-    }
-    return out;
-  }
-  function formChoicesHtml(values, cur, attr) {
-    return values.map((v) => {
-      var _a, _b;
-      return `<button type="button" class="f-choice-btn${v === cur ? " is-on" : ""}" data-${attr}="${v}"><span class="dot" style="background:${attr === "f-tag" ? typeColor((_a = getGroupForTag(v)) != null ? _a : "其他") : (_b = ST_COLOR[v]) != null ? _b : "#888"}"></span>${v}</button>`;
-    }).join("");
-  }
-  function formModalHtml(opts) {
-    const { editing } = opts;
-    const initSt = opts.stText;
-    const nameField = `<div class="f-field f-field--name"><span class="f-label">名 称</span><input class="f-input j-name" value="${esc(opts.name)}" placeholder="影视名称"></div>`;
-    const stField = `<div class="f-field"><span class="f-label">状 态</span><div class="f-choice j-sts">${formChoicesHtml(["想看", "在看", "已看"], initSt, "f-st")}</div></div>`;
-    const ratingField = `<div class="f-field j-rating" style="display:${initSt === "已看" ? "" : "none"}"><span class="f-label">评 分</span>
-      <div class="f-range-row"><input type="range" class="f-range j-range" min="1" max="10" step="0.1" value="${opts.rating}"><span class="f-range-val j-rval">${Number(opts.rating).toFixed(1)}</span><span class="f-stars j-stars" data-lit="${starsLit(opts.rating)}">${starsHtml(opts.rating)}</span></div></div>`;
-    const reviewField = `<div class="f-field j-review" style="display:${initSt === "已看" ? "" : "none"}"><span class="f-label">影 评</span><textarea class="f-input j-review-t" placeholder="写点什么…">${esc(opts.review)}</textarea></div>`;
-    if (editing) {
-      return `<div class="cn-modal" style="width:100%">
-    <div class="cn-modal-title">编辑影视</div>
-    ${nameField}
-    <div class="f-field"><span class="f-label">类 型</span><div class="f-choice j-tags">${formChoicesHtml(formAllTags(), opts.typeTag, "f-tag")}</div></div>
-    ${stField}${ratingField}${reviewField}
-    <div class="dm-actions"><button class="dm-btn gold j-save">保存</button></div>
-  </div>`;
-    }
-    return `<div class="cn-modal cn-modal--flip" style="width:100%">
-    <div class="form-flip j-flip">
-      <div class="form-face form-face--front">
-        <div class="cn-modal-title">添加影视</div>
-        ${nameField}${stField}${ratingField}${reviewField}
-        <div class="dm-actions"><button class="dm-btn gold j-parse"><span class="f-spin"></span><span class="j-parse-text">解析</span></button></div>
-      </div>
-      <div class="form-face form-face--back">
-        <div class="j-back"></div>
-        <div class="dm-actions"><button class="dm-btn gold j-save">保存</button></div>
-      </div>
-    </div>
-  </div>`;
-  }
-  function formTagChipHtml(typeTag, pending2 = false) {
-    var _a;
-    if (pending2) return '<span class="dm-chip dm-chip--pick is-pending"><span class="dm-skel"></span></span>';
-    return `<button type="button" class="dm-chip dm-chip--pick" data-pick="tag" style="background:${typeColor((_a = getGroupForTag(typeTag)) != null ? _a : "其他")}">${esc(typeTag)}</button>`;
-  }
-  function formStChipHtml(stText) {
-    var _a;
-    return `<button type="button" class="dm-chip dm-chip--pick" data-pick="st" style="background:${(_a = ST_COLOR[stText]) != null ? _a : "#888"}">${esc(stText)}</button>`;
-  }
-  function formBackHtml(d, o) {
-    var _a, _b, _c, _d;
-    if (!d) return "";
-    const rows = [
-      ["豆瓣类型", d.genre],
-      ["导演", d.director],
-      ["主演", d.actors],
-      ["制片国家/地区", d.region],
-      ["上映日期", d.releaseDate],
-      ["片长", d.duration],
-      ["豆瓣评分", d.doubanRating]
-    ].filter(([, v]) => v !== "");
-    const hot = ((_a = d.hotComment) != null ? _a : "").trim();
-    const rc = ((_b = o.rating) != null ? _b : 0) > 0 ? o.rating : 0;
-    const dateText = ((_c = o.watchDate) != null ? _c : "").slice(0, 10);
-    const reviewText = ((_d = o.review) != null ? _d : "").trim();
-    const tagItems = formAllTags().map((t) => {
-      var _a2;
-      return `<button type="button" class="dm-pick-item${t === o.typeTag ? " is-on" : ""}" data-f-tag="${esc(t)}"><span class="dot" style="background:${typeColor((_a2 = getGroupForTag(t)) != null ? _a2 : "其他")}"></span>${esc(t)}</button>`;
-    }).join("");
-    const stItems = ["想看", "在看", "已看"].map((s) => {
-      var _a2;
-      return `<button type="button" class="dm-pick-item${s === o.stText ? " is-on" : ""}" data-f-st="${esc(s)}"><span class="dot" style="background:${(_a2 = ST_COLOR[s]) != null ? _a2 : "#888"}"></span>${esc(s)}</button>`;
-    }).join("");
-    return `
-    <div class="dm-head">
-      <div class="dm-poster">${d.posterUrl ? `<img src="${esc(d.posterUrl)}" alt="" onload="this.parentNode.classList.add('is-ready')" onerror="this.remove()">` : ""}</div>
-      <div style="flex:1;min-width:0">
-        <div class="dm-title">${esc(d.title)}</div>
-        <div class="dm-badges">${formTagChipHtml(o.typeTag, !!o.classifying)}${formStChipHtml(o.stText)}</div>
-        ${rc || dateText ? `<div class="dm-record">
-          ${rc ? `<span class="dm-stars">${getStarString(rc)}</span><span class="dm-rating">${Number(rc).toFixed(1)}</span>` : ""}
-          ${dateText ? `<span class="dm-date">${esc(dateText)}</span>` : ""}</div>` : ""}
-        ${reviewText ? `<div class="dm-review">${esc(reviewText)}</div>` : ""}
-      </div>
-    </div>
-    <div class="dm-pick-list" data-pick-list="tag">${tagItems}</div>
-    <div class="dm-pick-list" data-pick-list="st">${stItems}</div>
-    ${rows.length ? '<div class="dm-sec">豆 瓣 信 息</div>' + rows.map(([k, v]) => `<div class="dm-kv"><span class="dm-kv-k">${k}</span><span class="dm-kv-v">${esc(v)}</span></div>`).join("") : ""}
-    ${d.doubanUrl ? `<div class="dm-kv"><span class="dm-kv-k">豆瓣链接</span><span class="dm-kv-v"><a href="${esc(d.doubanUrl)}" target="_blank" rel="noopener">${esc(d.doubanUrl)}</a></span></div>` : ""}
-    ${hot ? `<div class="dm-sec">热 门 短 评</div><div class="dm-quote">${esc(hot)}</div>` : ""}
-  `;
-  }
-  function aiRecName(r) {
-    return (r == null ? void 0 : r.title) || (r == null ? void 0 : r.name) || "未命名";
-  }
-  function aiRecMeta(r) {
-    return (r == null ? void 0 : r.meta) || [r == null ? void 0 : r.type, r == null ? void 0 : r.director].filter(Boolean).join(" · ");
-  }
-  function aiPageHtml(inp) {
-    if (inp.running) {
-      return `<div class="ai-guide"><div class="ai-spin"></div>
-      <span class="ai-ic">${iconSpan(ICON.ai)}</span><div class="ai-title">${esc(inp.waitMsg || "AI 正在分析你的观影口味…")}</div>
-      <div class="ai-sub">正在生成推荐，请稍候</div></div>`;
-    }
-    if (inp.error) {
-      return `<div class="ai-guide"><span class="ai-ic ai-err-ic">${iconSpan(ICON.ai)}</span>
-      <div class="ai-title">AI 分析失败</div><div class="ai-sub">${esc(inp.error)}</div>
-      <button class="ai-start j-ai-start" data-cinema-ai-start>重试</button></div>`;
-    }
-    if (inp.results && inp.results.length > 0) {
-      const cards = inp.results.map((rec, i) => {
-        const name = aiRecName(rec);
-        const inLib = inp.inLibrary(name);
-        return `<div class="rec-card"><div class="rec-main"><div class="rec-name">${esc(name)}
-        <a href="${esc(doubanSearchUrl(name))}" target="_blank" rel="noopener" title="在豆瓣搜索">${iconSpan(ICON.globe)}</a></div>
-        <div class="rec-meta">${esc(aiRecMeta(rec))}</div><div class="rec-reason">${esc((rec == null ? void 0 : rec.reason) || "")}</div></div>
-        <button class="rec-add" data-rec-add="${i}"${inLib ? " disabled" : ""}>${inLib ? "已在库中" : "＋ 想看"}</button></div>`;
-      }).join("");
-      return `<div class="ai-pref">偏好：<b>${esc(inp.pref)}</b></div>
-      <div class="rec-list">${cards}</div>
-      <div style="text-align:center;margin-top:14px"><button class="dm-btn j-ai-more" data-cinema-ai-start>${iconSpan(ICON.ai)}换一批</button></div>`;
-    }
-    return `<div class="ai-pref">偏好：<b>${esc(inp.pref)}</b></div>
-    <div class="ai-guide">
-      <div class="ai-title">让 AI 读懂你的片库</div>
-      <div class="ai-sub">基于你的评分、影评与偏好标签生成荐片，<br>结果可直接加入想看清单</div>
-      <button class="ai-start j-ai-start" data-cinema-ai-start>${iconSpan(ICON.ai)}开始推荐</button></div>`;
-  }
-  function sheetHeadHtml(it, posterUrl2) {
-    return `<div class="cn-sheet-head">${posterUrl2 ? `<img class="cn-sheet-poster" src="${esc(posterUrl2)}" onerror="this.remove()">` : ""}
-    <div><div class="cn-sheet-name">${esc(it.name)}</div><div class="cn-sheet-sub">${esc(it.year || "")} · ${esc(it.director || it.group)} · ${statusText(it.status)}</div></div></div>`;
-  }
-  function seriesSheetHeadHtml(card, posterUrl2) {
-    return `<div class="cn-sheet-head">${posterUrl2 ? `<img class="cn-sheet-poster" src="${esc(posterUrl2)}" onerror="this.remove()">` : ""}
-    <div><div class="cn-sheet-name">${esc(card.name)}</div><div class="cn-sheet-sub">${esc(seriesCountsText(card))}</div></div></div>`;
-  }
-
   // src/cinema/layouts/midnight/render.ts
   function midnightDeskHtml() {
     return `<section class="bz-cinema--midnight" data-cinema-root="midnight">
@@ -12145,8 +12123,9 @@ tags:
     const url = item.doubanUrl || doubanSearchUrl(item.name);
     openExternalUrl(M.appRef, url);
   }
+  var stToken = (n) => n === STATUS_WANT ? "want" : n === STATUS_WATCHING ? "watching" : "watched";
   async function markStatus(item, target, app) {
-    const fromSt = item.status === STATUS_WANT ? "want" : item.status === STATUS_WATCHING ? "watching" : "watched";
+    const fromSt = stToken(item.status);
     const prevRating = item.rating && item.rating > 0 ? item.rating : null;
     const prev = { status: item.status, rating: item.rating, watchDate: item.watchDate, watchingDate: item.watchingDate, watchedDate: item.watchedDate };
     item.status = target === "已看" ? STATUS_WATCHED : STATUS_WATCHING;
@@ -12570,9 +12549,8 @@ tags:
     item.shelvedOnly = item.status === STATUS_WANT && item.shelvedOnly;
   }
   function openAddModalDirect(app) {
-    var _a;
     if (!M.currentOverlay) createOverlay(app);
-    const root = (_a = M.currentOverlay) == null ? void 0 : _a.querySelector("[data-cinema-root]");
+    const root = cinemaRoot();
     if (root) openForm(root, null, app);
   }
   function listTitle() {
@@ -12648,7 +12626,7 @@ tags:
     };
     liveOvlCloses.add(close);
     el.addEventListener("click", (e) => {
-      if (e.target === el && !opts.sticky) close();
+      if (e.target === el) close();
     });
     el.addEventListener("wheel", (e) => {
       var _a, _b;
@@ -12738,12 +12716,14 @@ tags:
       peekStates.set(card, st);
     }
     st.gen++;
-    if (isFaceSeason(card, dot)) {
-      if (card.classList.contains("is-peek") || pw.querySelector(".pw-in")) collapsePeek(card);
-      const p2 = facePiecesHtml(it, posterUrl(it, app));
+    const putFaceText = (p2) => {
       slots[1].innerHTML = p2.name;
       slots[2].innerHTML = p2.meta;
       slots[3].innerHTML = p2.stars;
+    };
+    if (isFaceSeason(card, dot)) {
+      if (card.classList.contains("is-peek") || pw.querySelector(".pw-in")) collapsePeek(card);
+      putFaceText(facePiecesHtml(it, posterUrl(it, app)));
       card.classList.add("is-peek");
       return true;
     }
@@ -12756,9 +12736,7 @@ tags:
     layer.style.clipPath = `circle(${o.r.toFixed(1)}px at ${o.x.toFixed(1)}px ${o.y.toFixed(1)}px)`;
     const p = facePiecesHtml(it, posterUrl(it, app));
     layer.innerHTML = p.poster;
-    slots[1].innerHTML = p.name;
-    slots[2].innerHTML = p.meta;
-    slots[3].innerHTML = p.stars;
+    putFaceText(p);
     peekTextFade(slots.slice(1));
     card.classList.add("is-peek");
     try {
@@ -13010,8 +12988,25 @@ tags:
       return { el: c, dx: before[i].left - now.left, dy: before[i].top - now.top, before: before[i], now };
     });
   }
+  function nearViewport(viewport, r) {
+    return r.width > 0 && r.top < viewport.bottom + 120 && r.bottom > viewport.top - 120 && r.left < viewport.right + 120 && r.right > viewport.left - 120;
+  }
+  function foldInsetOf(frame2, target) {
+    return `inset(${Math.max(0, target.top - frame2.top)}px ${Math.max(0, frame2.right - target.right)}px ${Math.max(0, frame2.bottom - target.bottom)}px ${Math.max(0, target.left - frame2.left)}px round 8px)`;
+  }
+  function playFold(el, radius, inset, duration) {
+    try {
+      el.animate([
+        { clipPath: `inset(-64px round ${radius}px)`, backgroundColor: "rgba(20,16,8,.45)" },
+        { clipPath: inset, backgroundColor: "rgba(20,16,8,0)" }
+      ], { duration, easing: EASE.out });
+      return el.getAnimations().pop();
+    } catch (e) {
+      return void 0;
+    }
+  }
   function playFlip(deltas, viewport, duration = SE_FLIGHT) {
-    const near = (r) => r.width > 0 && r.top < viewport.bottom + 120 && r.bottom > viewport.top - 120 && r.left < viewport.right + 120 && r.right > viewport.left - 120;
+    const near = (r) => nearViewport(viewport, r);
     for (const d of deltas) {
       if (typeof d.el.animate !== "function") continue;
       if (Math.abs(d.dx) < 1 && Math.abs(d.dy) < 1 || !near(d.now) && !near(d.before)) continue;
@@ -13121,7 +13116,7 @@ tags:
         const or = ov.getBoundingClientRect();
         const posterR = t.getBoundingClientRect();
         const panelRadius = parseFloat(getComputedStyle(modal).borderTopLeftRadius) || 12;
-        const foldInset = `inset(${Math.max(0, posterR.top - or.top)}px ${Math.max(0, or.right - posterR.right)}px ${Math.max(0, or.bottom - posterR.bottom)}px ${Math.max(0, posterR.left - or.left)}px round 8px)`;
+        const foldInset = foldInsetOf(or, posterR);
         let handed = false;
         const handOver = () => {
           var _a2;
@@ -13146,16 +13141,7 @@ tags:
           };
           fly.finished.then(done).catch(done);
         };
-        let fold;
-        try {
-          ov.animate([
-            { clipPath: `inset(-64px round ${panelRadius}px)`, backgroundColor: "rgba(20,16,8,.45)" },
-            { clipPath: foldInset, backgroundColor: "rgba(20,16,8,0)" }
-          ], { duration: SE_GROW, easing: EASE.out });
-          fold = ov.getAnimations().pop();
-        } catch (e) {
-          fold = void 0;
-        }
+        const fold = playFold(ov, panelRadius, foldInset, SE_GROW);
         if (fold) fold.finished.then(handOver).catch(handOver);
         else handOver();
         window.setTimeout(handOver, SE_GROW + 1200);
@@ -13299,7 +13285,6 @@ tags:
     box.style.borderRadius = getComputedStyle(panel).borderTopLeftRadius || "";
   }
   function openYearbookOverlay(app) {
-    var _a, _b;
     if (ybOvl == null ? void 0 : ybOvl.isConnected) {
       const box2 = ybOvl.querySelector(".bz-yb-box");
       if (box2) {
@@ -13311,7 +13296,7 @@ tags:
     }
     rebuildItems(app);
     const data = deriveYb(M.items);
-    const panel = (_b = (_a = M.currentOverlay) == null ? void 0 : _a.querySelector("[data-cinema-root]")) != null ? _b : null;
+    const panel = cinemaRoot();
     const ovl2 = document.createElement("div");
     ovl2.className = "bz-yb";
     ovl2.innerHTML = `
@@ -13561,7 +13546,7 @@ tags:
       refreshFormState();
     }
     const watchDateOf = () => {
-      const stChanged = !editing || !item || item.status !== (cur.st === "想看" ? STATUS_WANT : cur.st === "在看" ? STATUS_WATCHING : STATUS_WATCHED);
+      const stChanged = !editing || !item || item.status !== statusNum(cur.st);
       return stChanged ? localNow() : item.watchDate || localNow();
     };
     function renderBack() {
@@ -13705,7 +13690,7 @@ tags:
       return;
     }
     const group = (_a = getGroupForTag(p.tag)) != null ? _a : "其他";
-    const st = p.st === "想看" ? STATUS_WANT : p.st === "在看" ? STATUS_WATCHING : STATUS_WATCHED;
+    const st = statusNum(p.st);
     const today = localNow().slice(0, 10);
     const it = { file: null, name: p.name, typeTag: p.tag, group, status: st, rating: p.rating, watchDate: p.date, wantDate: st === STATUS_WANT ? today : null, watchingDate: st === STATUS_WATCHING ? today : null, watchedDate: st === STATUS_WATCHED ? today : null, rewatches: [], lists: [], shelvedOnly: false, review: p.review, poster: null, genre: null, director: null, actors: null, region: null, year: null, releaseDate: null, doubanRating: null, doubanUrl: null, synopsis: null, duration: null, seasonText: null, hotComment: null };
     try {
@@ -13717,7 +13702,7 @@ tags:
       const posterRel = (_c = p.posterRel) != null ? _c : ((_b = p.douban) == null ? void 0 : _b.posterUrl) ? await downloadPreviewPoster(app, p.name, p.douban.posterUrl) : null;
       await persistItem(it, app, void 0, p.douban, posterRel);
       if (posterRel) it.poster = posterRel;
-      emitDomainEvent("movie", { kind: "created", name: p.name, status: st === STATUS_WANT ? "want" : st === STATUS_WATCHING ? "watching" : "watched", rating: p.rating, review: p.review || null });
+      emitDomainEvent("movie", { kind: "created", name: p.name, status: stToken(st), rating: p.rating, review: p.review || null });
       if (it.file && !posterRel) enqueueDoubanFetch(it.file, it.name);
       notice(`已添加「${p.name}」`, "success");
       markCardFlash(itemKey(it), p.rating !== null && p.rating > 0);
@@ -13736,7 +13721,7 @@ tags:
   async function saveEdit(item, p, app, form) {
     var _a, _b, _c;
     const group = (_a = getGroupForTag(p.tag)) != null ? _a : "其他";
-    const st = p.st === "想看" ? STATUS_WANT : p.st === "在看" ? STATUS_WATCHING : STATUS_WATCHED;
+    const st = statusNum(p.st);
     const prev = { name: item.name, typeTag: item.typeTag, group: item.group, status: item.status, rating: item.rating, watchDate: item.watchDate, wantDate: item.wantDate, watchingDate: item.watchingDate, watchedDate: item.watchedDate, review: item.review, file: item.file, filePath: (_c = (_b = item.file) == null ? void 0 : _b.path) != null ? _c : null };
     if (p.name !== item.name) {
       if (hasIllegalNameChar(p.name)) {
@@ -13762,9 +13747,9 @@ tags:
     }
     try {
       await persistItem(item, app, { prevName: prev.name, prevTag: prev.typeTag });
-      const fromSt = prev.status === STATUS_WANT ? "want" : prev.status === STATUS_WATCHING ? "watching" : "watched";
+      const fromSt = stToken(prev.status);
       if (st !== prev.status) {
-        const toSt = st === STATUS_WANT ? "want" : st === STATUS_WATCHING ? "watching" : "watched";
+        const toSt = stToken(st);
         emitDomainEvent("movie", { kind: "status", name: item.name, from: fromSt, to: toSt });
       }
       const prevRating = prev.rating && prev.rating > 0 ? prev.rating : null;
@@ -13963,7 +13948,8 @@ tags:
     });
     return best;
   }
-  function bindMidnight(sec, app, hoverable = hoverCapable2()) {
+  function bindMidnight(sec, app) {
+    const hoverable = hoverCapable2();
     const nearestSeasonDot = (target, e) => {
       var _a;
       const el = target;
@@ -14174,7 +14160,7 @@ tags:
     const root = overlay.querySelector("[data-cinema-root]");
     if (!root) return;
     trapPanelFocus(root);
-    if (!mobile && !panelResizeDetach && root) {
+    if (!mobile && !panelResizeDetach) {
       panelResizeDetach = uiResizable(root, {
         minW: PANEL.MIN_W,
         minH: PANEL.MIN_H,
@@ -14259,10 +14245,12 @@ tags:
       softRenderTimer = null;
     }
   }
+  function cinemaRoot() {
+    var _a, _b;
+    return (_b = (_a = M.currentOverlay) == null ? void 0 : _a.querySelector("[data-cinema-root]")) != null ? _b : null;
+  }
   function renderSoft(app) {
-    const overlay = M.currentOverlay;
-    if (!overlay) return;
-    const root = overlay.querySelector("[data-cinema-root]");
+    const root = cinemaRoot();
     if (!root) return;
     if (isTyping(root)) {
       if (softRenderTimer) clearTimeout(softRenderTimer);
@@ -14341,18 +14329,12 @@ tags:
     }
     const o = el.getBoundingClientRect();
     const radius = parseFloat(getComputedStyle(modal).borderTopLeftRadius) || 12;
-    const inset = `inset(${Math.max(0, r.top - o.top)}px ${Math.max(0, o.right - r.right)}px ${Math.max(0, o.bottom - r.bottom)}px ${Math.max(0, r.left - o.left)}px round 8px)`;
-    try {
-      const a = el.animate([
-        { clipPath: `inset(-64px round ${radius}px)`, backgroundColor: "rgba(20,16,8,.45)" },
-        { clipPath: inset, backgroundColor: "rgba(20,16,8,0)" }
-      ], { duration: MOTION.base, easing: EASE.out });
-      const done = () => close();
+    const a = playFold(el, radius, foldInsetOf(o, r), MOTION.base);
+    const done = () => close();
+    if (a) {
       a.finished.then(done).catch(done);
       window.setTimeout(done, MOTION.base + 400);
-    } catch (e) {
-      close();
-    }
+    } else close();
   }
   function measureGridCards(root) {
     const out = /* @__PURE__ */ new Map();
@@ -14381,7 +14363,7 @@ tags:
     const frame2 = grid.getBoundingClientRect();
     if (!frame2.width || !frame2.height) return;
     const viewport = ((_a = grid.closest(".d-scroll, .m-scroll")) != null ? _a : grid).getBoundingClientRect();
-    const near = (r) => r.width > 0 && r.top < viewport.bottom + 120 && r.bottom > viewport.top - 120 && r.left < viewport.right + 120 && r.right > viewport.left - 120;
+    const near = (r) => nearViewport(viewport, r);
     const animate = (el, frames, opts) => {
       if (typeof el.animate !== "function") return null;
       try {
@@ -14446,9 +14428,7 @@ tags:
     }
   }
   function renderAll(app) {
-    const overlay = M.currentOverlay;
-    if (!overlay) return;
-    const root = overlay.querySelector("[data-cinema-root]");
+    const root = cinemaRoot();
     if (!root) return;
     clearSoftRender();
     const snap = snapshotFocus(root);

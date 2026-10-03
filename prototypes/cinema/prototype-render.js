@@ -1,4 +1,4 @@
-/* 源指纹 aa35525a987ce428 · 仓内输入 6 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 f34be01b6f24820e · 仓内输入 6 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["src/cinema/constants.ts","src/cinema/layouts/midnight/render.ts","src/cinema/render.ts","src/cinema/seasons.ts","src/cinema/shared.ts","src/core/ui/str.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — src/cinema/render.ts → window.BZR_cinema（评审壳预览包，ADR-0104） */
 var BZR_cinema = (() => {
@@ -27,8 +27,6 @@ var BZR_cinema = (() => {
     ICON: () => ICON,
     ST_COLOR: () => ST_COLOR,
     aiPageHtml: () => aiPageHtml,
-    aiRecMeta: () => aiRecMeta,
-    aiRecName: () => aiRecName,
     cardHtml: () => cardHtml,
     cardInList: () => cardInList,
     cardStatus: () => cardStatus,
@@ -156,7 +154,6 @@ var BZR_cinema = (() => {
     add: "plus",
     edit: "pencil",
     del: "trash-2",
-    confirm: "alert-circle",
     back: "chevron-left",
     grid: "layout-grid",
     eye: "eye",
