@@ -25,6 +25,7 @@ import {
   upgradePosterUrl, extractSid, parseCelebrities,
   extractMovieName, normalizeListValue, updateFrontmatterFields, insertPosterEmbed,
   fetchApizeroInfo, fetchNoteDouban, queryDoubanByName, queryDoubanBySid,
+  parseRexxarSubjectPic, fetchSubjectPoster,
   POSTER_FOLDER, type HttpGet, type DoubanFetchDeps,
 } from '../../src/cinema/douban-fetcher';
 
@@ -119,8 +120,11 @@ describe('parseSearchResults / searchPageLooksBlocked（ADR-0178 三路复活，
 });
 
 describe('upgradePosterUrl / extractSid / extractMovieName', () => {
-  it('海报升级 s→l；sid 提取；片名剥离书名号', () => {
-    expect(upgradePosterUrl('https://img9.doubanio.com/view/photo/s_ratio_poster/public/p1.jpg')).toContain('l_ratio_poster');
+  it('海报升级 s/m→l（无该片段原样）；sid 提取；片名剥离书名号', () => {
+    expect(upgradePosterUrl('https://img9.doubanio.com/view/photo/s_ratio_poster/public/p1.jpg')).toBe('https://img9.doubanio.com/view/photo/l_ratio_poster/public/p1.jpg');
+    // m 来自 rexxar subject 的 pic.large（issue 540）：升 l 后与 suggest 路径同一张图
+    expect(upgradePosterUrl('https://img2.doubanio.com/view/photo/m_ratio_poster/public/p1.jpg')).toBe('https://img2.doubanio.com/view/photo/l_ratio_poster/public/p1.jpg');
+    expect(upgradePosterUrl('https://img1.doubanio.com/view/photo/large/public/p1.jpg')).toBe('https://img1.doubanio.com/view/photo/large/public/p1.jpg');
     expect(extractSid('https://movie.douban.com/subject/35267208/')).toBe('35267208');
     expect(extractSid('https://movie.douban.com/')).toBeNull();
     expect(extractMovieName('《流浪地球2》.md')).toBe('流浪地球2');
@@ -628,6 +632,82 @@ describe('fetchNoteDouban 端到端（fake 注入）', () => {
   });
 });
 
+// ---------- sid 直取的补图腿（issue 540）：rexxar subject 详情取海报 ----------
+
+// 夹具对齐真接口形态（2026-10-03 实测 rexxar /v2/movie/<sid>）：pic.large 是 m_ratio_poster、
+// pic.normal 是 s_ratio_poster；剧集 sid 的 /tv/<sid> 返回 404 体（含 msg）
+const REXXAR_SUBJECT_JSON = JSON.stringify({
+  title: '录像信',
+  pic: {
+    large: 'https://img2.doubanio.com/view/photo/m_ratio_poster/public/p2510495981.jpg',
+    normal: 'https://img2.doubanio.com/view/photo/s_ratio_poster/public/p2510495981.jpg',
+  },
+  cover_url: 'https://img2.doubanio.com/view/photo/m_ratio_poster/public/p2510495981.jpg',
+});
+const REXXAR_MISS_JSON = JSON.stringify({ request: 'GET /v2/tv/3022655', msg: 'traversal_error', code: 404 });
+
+describe('parseRexxarSubjectPic（rexxar subject JSON → 海报 URL）', () => {
+  it('pic.large 优先；normal 兜底；cover_url 再兜底', () => {
+    expect(parseRexxarSubjectPic(REXXAR_SUBJECT_JSON)).toContain('m_ratio_poster');
+    expect(parseRexxarSubjectPic(JSON.stringify({ pic: { normal: 'https://x/s_ratio_poster.jpg' } }))).toBe('https://x/s_ratio_poster.jpg');
+    expect(parseRexxarSubjectPic(JSON.stringify({ cover_url: 'https://x/c.jpg' }))).toBe('https://x/c.jpg');
+  });
+
+  it('404 体 / 非 JSON / 空 / 无 pic → 空串', () => {
+    expect(parseRexxarSubjectPic(REXXAR_MISS_JSON)).toBe('');
+    expect(parseRexxarSubjectPic('<html>拦截页</html>')).toBe('');
+    expect(parseRexxarSubjectPic(null)).toBe('');
+    expect(parseRexxarSubjectPic(JSON.stringify({ title: '无图' }))).toBe('');
+  });
+
+  it('字符串哨兵（"0"/"null"）与相对路径 → 空串（只认 http(s) 真地址）', () => {
+    expect(parseRexxarSubjectPic(JSON.stringify({ pic: { large: '0' } }))).toBe('');
+    expect(parseRexxarSubjectPic(JSON.stringify({ pic: { large: 'null', normal: 'undefined' } }))).toBe('');
+    expect(parseRexxarSubjectPic(JSON.stringify({ cover_url: '/view/photo/x.jpg' }))).toBe('');
+    // 逐候选过守卫：哨兵占着 large 不吃掉正常的 normal（`||` 链会丢）
+    expect(parseRexxarSubjectPic(JSON.stringify({ pic: { large: '0', normal: 'https://x/s.jpg' } }))).toBe('https://x/s.jpg');
+  });
+});
+
+describe('fetchSubjectPoster（按 sid 精确取图；movie → tv 兜底）', () => {
+  it('movie 命中即用（只发一次请求）；带 Cookie 注入', async () => {
+    const calls: { url: string; headers?: Record<string, string> }[] = [];
+    const httpGet: HttpGet = async (url, headers) => { calls.push({ url, headers }); return REXXAR_SUBJECT_JSON; };
+    const url = await fetchSubjectPoster('3022655', httpGet, 'bid=abc');
+    expect(url).toContain('m_ratio_poster');
+    expect(calls).toHaveLength(1);
+    expect(calls[0].url).toContain('/api/v2/movie/3022655');
+    expect(calls[0].headers?.Referer).toBe('https://m.douban.com/movie/subject/3022655/');
+    expect(calls[0].headers?.Cookie).toBe('bid=abc');
+  });
+
+  it('movie 无 pic（404 体）→ tv 兜底；两类型都空 → 空串', async () => {
+    const tried: string[] = [];
+    const fallback: HttpGet = async (url) => {
+      tried.push(url);
+      return url.includes('/movie/') ? REXXAR_MISS_JSON : REXXAR_SUBJECT_JSON;
+    };
+    expect(await fetchSubjectPoster('27093536', fallback)).toContain('m_ratio_poster');
+    expect(tried.some((u) => u.includes('/tv/'))).toBe(true);
+
+    // 生产形态：非 2xx 时适配器回 null（不是 404 body）——movie 落空同样要换 tv
+    const nullFirst: HttpGet = async (url) => (url.includes('/movie/') ? null : REXXAR_SUBJECT_JSON);
+    expect(await fetchSubjectPoster('27093536', nullFirst)).toContain('m_ratio_poster');
+
+    const none: HttpGet = async () => REXXAR_MISS_JSON;
+    expect(await fetchSubjectPoster('3022655', none)).toBe('');
+  });
+
+  it('请求异常 → 空串（不抛；图缺就缺，不抬走整条解析）', async () => {
+    const boom: HttpGet = async () => { throw new Error('network'); };
+    expect(await fetchSubjectPoster('3022655', boom)).toBe('');
+  });
+
+  it('httpGet 返回 null（超时/非 2xx）→ 空串', async () => {
+    expect(await fetchSubjectPoster('3022655', async () => null)).toBe('');
+  });
+});
+
 // ---------- sid 直取（issue 498 / ADR-0210）：名称索引命中后跳过三路检索 ----------
 
 describe('queryDoubanBySid', () => {
@@ -657,9 +737,45 @@ describe('queryDoubanBySid', () => {
       expect(q.data.sid).toBe('1292052');
       expect(q.data.title).toBe('肖申克的救赎');
       expect(q.data.detailUrl).toBe('https://movie.douban.com/subject/1292052/');
-      expect(q.data.posterUrl).toBe(''); // ApiZero 无海报字段，恒空（队列按名补抓兜底）
+      expect(q.data.posterUrl).toBe(''); // 补图腿本 mock 非 ApiZero 一律 null → 空串（保存/队列路径兜底）
     }
     expect(hits.some((u) => u.includes('subject_suggest'))).toBe(false); // 不走三路检索
+  });
+
+  it('rexxar subject 补海报（issue 540）→ posterUrl 非空，仍不触达三路检索', async () => {
+    const hits: string[] = [];
+    const deps: DoubanFetchDeps = {
+      ...depsBase,
+      httpGet: async (url) => {
+        hits.push(url);
+        if (url.includes('apizero.cn')) {
+          return JSON.stringify({ code: 0, data: { name: '录像信', director: '谷川俊太郎', actor: '寺山修司', score: '8.2' } });
+        }
+        if (url.includes('/api/v2/movie/3022655')) return REXXAR_SUBJECT_JSON;
+        return null;
+      },
+    };
+    const q = await queryDoubanBySid('3022655', '录像信', deps);
+    expect(q.ok).toBe(true);
+    if (q.ok) {
+      expect(q.data.posterUrl).toContain('m_ratio_poster');
+      // 下载侧 upgradePosterUrl 会把 m 升成 l（口径与 suggest 路径同一张图）
+      expect(upgradePosterUrl(q.data.posterUrl)).toContain('l_ratio_poster');
+    }
+    expect(hits.some((u) => u.includes('subject_suggest') || u.includes('/search'))).toBe(false);
+  });
+
+  it('补图腿失败（网络异常/两类型都无 pic）→ posterUrl 空串但解析仍 ok', async () => {
+    const boom: DoubanFetchDeps = {
+      ...depsBase,
+      httpGet: async (url) => {
+        if (url.includes('apizero.cn')) return JSON.stringify({ code: 0, data: { name: '录像信', director: '谷川俊太郎', actor: '寺山修司' } });
+        throw new Error('network');
+      },
+    };
+    const q = await queryDoubanBySid('3022655', '录像信', boom);
+    expect(q.ok).toBe(true);
+    if (q.ok) expect(q.data.posterUrl).toBe('');
   });
 
   it('ApiZero 缺导演/主演 → rexxar celebrities 兜底', async () => {

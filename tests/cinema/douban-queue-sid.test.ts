@@ -30,17 +30,24 @@ beforeEach(() => {
 });
 
 describe('queryDoubanForPreview 生产通道（previewFn 未注入）', () => {
-  it('sid 命中：直取 ApiZero，三路检索零调用', async () => {
+  it('sid 命中：直取 ApiZero，三路检索零调用；海报走 rexxar subject 补图腿（issue 540）', async () => {
     const calls: string[] = [];
     vi.mocked(requestUrl).mockImplementation((async (req: { url: string }) => {
       calls.push(req.url);
       if (req.url.includes('apizero.cn')) return { status: 200, text: AZ_OK } as any;
+      if (req.url.includes('/api/v2/movie/26647087')) {
+        return { status: 200, text: JSON.stringify({ pic: { large: 'https://img2.doubanio.com/view/photo/m_ratio_poster/public/p1.jpg' } }) } as any;
+      }
       throw new Error('不应触达: ' + req.url);
     }) as any);
     const r = await queryDoubanForPreview(makeApp(new MockVault()), '三体', '26647087');
     expect(r.ok).toBe(true);
-    if (r.ok) expect(r.data.sid).toBe('26647087');
+    if (r.ok) {
+      expect(r.data.sid).toBe('26647087');
+      expect(r.data.posterUrl).toContain('m_ratio_poster'); // 补图腿拿到海报（原来恒空）
+    }
     expect(calls.some((u) => u.includes('subject_suggest'))).toBe(false);
+    expect(calls.some((u) => u.includes('/search'))).toBe(false);
   });
 
   it('sid 直取失败（ApiZero 无数据）→ 回落按名三路检索', async () => {

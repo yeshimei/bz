@@ -166,7 +166,7 @@ export function parseRecommendJson(raw: string): any[] | null {
   }
 }
 
-/** 加入想看（AI 推荐条目 → 建笔记，评分 -1） */
+/** 加入想看（AI 推荐条目 → 建笔记，状态键想看） */
 export async function quickAddWant(app: App, name: string, type: string, opts?: { silent?: boolean; sid?: string }): Promise<boolean> {
   // 返回「是否实际建档」——批量导入按它汇总（跳过/失败为 false，调用方区分口径）
   // silent（豆瓣片单批量导入用）：不出逐条 toast、不逐条刷新——调用方统一统计 + 最后一次刷
