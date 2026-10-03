@@ -2186,6 +2186,26 @@ describe('录入面板关闭二次确认 + 生成后开笔记（issue 326）', (
     expect(signals[0]?.aborted).toBe(true);
   });
 
+  it('issue 541：被接住的那一轮抛错 → 由通知收口（面板已关，不回写关联行）', async () => {
+    let rejectPreview!: (e: unknown) => void;
+    setLinkBridge({
+      backfill: async () => ({ status: 'done' as const, processed: 0, created: 0 }),
+      preview: () => new Promise((_r, rej) => { rejectPreview = rej; }),
+      apply: async (_p: string, picks: string[]) => ({ status: 'done' as const, created: picks.length }),
+      now: async () => ({ status: 'done' as const, created: 0 }),
+    });
+    noteGen.generateTermNote.mockResolvedValueOnce('文献盒/松果体.md');
+    ui.showTermEntry();
+    await vi.waitFor(() => expect(document.getElementById('knowledge-term-popup')!.style.display).toBe('flex'));
+    (document.getElementById('lit-term-input') as HTMLInputElement).value = '褪黑素';
+    await (ui as any).onTermGenerate();
+    (document.getElementById('lit-term-save') as HTMLElement).click();
+    await vi.waitFor(() => expect(document.getElementById('knowledge-term-popup')!.style.display).toBe('none'));
+    rejectPreview(new Error('网络断了'));
+    await vi.waitFor(() => expect(getNoticeMessages().join('\n')).toContain('知识盒关联失败：网络断了'));
+    expect(document.getElementById('lit-term-meta-rel')!.textContent).toBe('—'); // 面板已关：关联行不被回写成「关联失败」
+  });
+
   it('建议 5：属性行点一下才变可编辑（回车提交 / ESC 放弃）；关联行 idle 不显示、chip 可点掉且不可恢复', async () => {
     const applies: Array<[string, string[]]> = [];
     setLinkBridge({
