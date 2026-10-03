@@ -105,7 +105,9 @@ for (const f of files) {
   const name = f.replace(/\.md$/, "").replace(/^《/, "").replace(/》$/, "");
   const ratingRaw = fm["评分"];
   const rating = ratingRaw === undefined || ratingRaw === null || ratingRaw === "" ? null : Number(ratingRaw);
-  const status = rating === -1 ? "想看" : rating === 0 ? "在看" : "已看";
+  // 状态单源键「状态」（评分编码 -1/0 已退役，2026-10-03 起与插件 data.ts 同口径）：缺键/非法值落已看
+  const stRaw = typeof fm["状态"] === "string" ? fm["状态"].trim() : "";
+  const status = stRaw === "想看" || stRaw === "在看" ? stRaw : "已看";
   const posterRel = fm["海报"] ? String(fm["海报"]) : null;
   const release = fm["上映日期"] ? String(fm["上映日期"]) : null;
   items.push({

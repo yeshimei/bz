@@ -296,8 +296,8 @@ describe('collectRiver（只读采集集成）', () => {
   });
 
   it('计数接通：影院评分三分 / 书库状态三分 / news 未读 / 坏 JSON 容错', async () => {
-    vault.files.set('我的/影视/《想看》.md', '---\ntags:\n- 电影\n评分: -1\n---\n');
-    vault.files.set('我的/影视/《在看》.md', '---\ntags:\n- 电影\n评分: 0\n---\n');
+    vault.files.set('我的/影视/《想看》.md', '---\ntags:\n- 电影\n状态: 想看\n---\n');
+    vault.files.set('我的/影视/《在看》.md', '---\ntags:\n- 电影\n状态: 在看\n---\n');
     vault.files.set('书库/在读一本.md', '---\ntags:\n- book\nreadingDate: 2026-09-01\ncompletionDate: \n---\n');
     vault.files.set('书库/读完一本.md', '---\ntags:\n- book\nreadingDate: 2026-08-01\ncompletionDate: 2026-09-01\n---\n');
     vault.files.set('CONFIG/STORAGE/news.json', JSON.stringify({ articles: [{ read: false }, { read: false }, { read: true }] }));
@@ -428,7 +428,7 @@ describe('collectRiver（只读采集集成）', () => {
 
   it('eff P2-1：重复读盘收敛——vault.read 调用数随窗口档裁剪（防回退计数守卫）', async () => {
     for (let i = 0; i < 4; i++) {
-      vault.files.set(`我的/影视/《片${i}》.md`, '---\ntags:\n- 电影\n评分: 0\n---\n');
+      vault.files.set(`我的/影视/《片${i}》.md`, '---\ntags:\n- 电影\n状态: 在看\n---\n');
     }
     vault.files.set('CONFIG/STORAGE/memo.json', JSON.stringify([{ title: 'a', created: '2026-09-01 09:00:00', completed: null }]));
     vault.files.set('CONFIG/STORAGE/pomodoro.json', JSON.stringify({ version: 1, state: {}, history: [], archived: [] }));

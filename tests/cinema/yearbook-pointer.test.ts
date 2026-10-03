@@ -20,8 +20,8 @@ function item(p: Partial<CinemaItem> & { name: string }): CinemaItem {
   return {
     file: null, name: p.name, typeTag: p.typeTag ?? '电影', group: p.group ?? '电影',
     watchDate: p.watchDate ?? null,
-    // 已看日期（issue 536）：年书各轴读它，夹具按 data.ts 口径补（已看态缺省回落观影日期）
-    watchedDate: p.watchedDate ?? ((p.status ?? STATUS_WATCHED) === STATUS_WATCHED ? p.watchDate ?? null : null), rating: p.rating ?? null, status: p.status ?? STATUS_WATCHED,
+    // 已看日期（issue 536）：年书各轴读它，夹具显式给值（data.ts 只认「已看日期」键，回落已随兼容层移除）
+    watchedDate: p.watchedDate ?? null, rating: p.rating ?? null, status: p.status ?? STATUS_WATCHED,
     rewatches: p.rewatches ?? [],
     lists: p.lists ?? [],
     shelvedOnly: p.shelvedOnly ?? false,
@@ -36,11 +36,11 @@ function item(p: Partial<CinemaItem> & { name: string }): CinemaItem {
 }
 
 const FIXTURE: CinemaItem[] = [
-  item({ name: '长片', watchDate: '2024-04-08', rating: 9.5, doubanRating: '8.5', duration: '124分钟', genre: '剧情 / 科幻', region: '美国 / 日本', director: '甲', actors: 'A / B', year: '2023', review: '喜欢这部片子的每一个镜头', hotComment: '这条短评够长了可以进弹幕' }),
-  item({ name: '短片', watchDate: '2024-04-09', rating: 5, doubanRating: '8.6', duration: '4分钟', genre: '剧情', region: '美国', director: '甲', actors: 'B', year: '2020' }),
-  item({ name: '老片', watchDate: '2024-04-10', rating: 3, doubanRating: '9.1', duration: '201分钟', genre: '动画', region: '日本', director: '乙', actors: 'C', year: '1915' }),
-  item({ name: '剧集 第一季', watchDate: '2024-05-01', rating: 8, doubanRating: '7.9', duration: '45分钟/集', seasonText: '13', genre: '剧情', region: '中国大陆', director: '丙', actors: 'A', typeTag: '美剧', group: '美剧' }),
-  item({ name: '没片长', watchDate: '2024-06-01', rating: 7, genre: '喜剧', region: '法国' }),
+  item({ name: '长片', watchDate: '2024-04-08', watchedDate: '2024-04-08', rating: 9.5, doubanRating: '8.5', duration: '124分钟', genre: '剧情 / 科幻', region: '美国 / 日本', director: '甲', actors: 'A / B', year: '2023', review: '喜欢这部片子的每一个镜头', hotComment: '这条短评够长了可以进弹幕' }),
+  item({ name: '短片', watchDate: '2024-04-09', watchedDate: '2024-04-09', rating: 5, doubanRating: '8.6', duration: '4分钟', genre: '剧情', region: '美国', director: '甲', actors: 'B', year: '2020' }),
+  item({ name: '老片', watchDate: '2024-04-10', watchedDate: '2024-04-10', rating: 3, doubanRating: '9.1', duration: '201分钟', genre: '动画', region: '日本', director: '乙', actors: 'C', year: '1915' }),
+  item({ name: '剧集 第一季', watchDate: '2024-05-01', watchedDate: '2024-05-01', rating: 8, doubanRating: '7.9', duration: '45分钟/集', seasonText: '13', genre: '剧情', region: '中国大陆', director: '丙', actors: 'A', typeTag: '美剧', group: '美剧' }),
+  item({ name: '没片长', watchDate: '2024-06-01', watchedDate: '2024-06-01', rating: 7, genre: '喜剧', region: '法国' }),
 ];
 
 const HTML = yearbookHtml(deriveYb(FIXTURE), () => null);

@@ -2034,8 +2034,8 @@ function openForm(sec: HTMLElement, item: CinemaItem | null, app: App, presetSt?
     if (!name) { notice('请输入名称', 'warning'); return; }
     if (isDuplicateName(name, item?.name)) { notice(DUP_NAME_HINT_FULL, 'warning'); return; }
     const date = watchDateOf();
-    // 评分编码退役（2026-09-30 拍板）：状态走独立键落盘，评分只在「已看」态有真值
-    // （想看/在看给 null，parseMovieFile 对 -1/0 旧编码也清洗成 null）——不会再被兜底成编码值弹回。
+    // 评分编码退役（2026-09-30 拍板，兼容推断 2026-10-03 移除）：状态走独立键落盘，评分只在「已看」态有真值
+    // （想看/在看给 null，不会再被兜底成编码值弹回）。
     // 评分/影评在正面状态下方（2026-09-21 用户拍板）——编辑/新增两态同一个框，querySelector 直取。
     const ratingBox = el.querySelector<HTMLInputElement>('.j-range');
     const rating = cur.st === '已看'

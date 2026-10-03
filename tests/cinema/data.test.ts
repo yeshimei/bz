@@ -80,17 +80,22 @@ tags: [美剧]
     expect(it.hotComment).toBe('第一季的剧情比较单纯');
   });
 
-  it('状态推断：-1=想看 / 0=在看 / 正数=已看', () => {
+  it('状态单源键直读；评分编码兼容已移除——无「状态」键一律落已看，评分只当分值', () => {
     const vault = new MockVault();
-    vault.files.set('我的/影视/《A》.md', '---\ntags: [电影]\n评分: -1\n---');
-    vault.files.set('我的/影视/《B》.md', '---\ntags: [电影]\n评分: 0\n---');
+    vault.files.set('我的/影视/《A》.md', '---\ntags: [电影]\n状态: 想看\n---');
+    vault.files.set('我的/影视/《B》.md', '---\ntags: [电影]\n状态: 在看\n评分: 0\n---');
     vault.files.set('我的/影视/《C》.md', '---\ntags: [电影]\n评分: 8.2\n---');
+    vault.files.set('我的/影视/《D》.md', '---\ntags: [电影]\n评分: 8\n观影日期: 2026-01-01\n---');
     const app = makeApp(vault);
     const items = rebuildItems(app);
     const byName = Object.fromEntries(items.map((i) => [i.name, i]));
-    expect(byName['A'].status).toBe(0); // STATUS_WANT
+    expect(byName['A'].status).toBe(0); // STATUS_WANT：状态键直读
     expect(byName['B'].status).toBe(1); // STATUS_WATCHING
-    expect(byName['C'].status).toBe(2); // STATUS_WATCHED
+    expect(byName['B'].rating).toBe(0); // 评分 0 不再被清洗，就是分值 0
+    expect(byName['C'].status).toBe(2); // STATUS_WATCHED：无状态键一律落已看（-1/0 推断已随兼容层移除）
+    expect(byName['C'].rating).toBe(8.2); // 评分只当分值，不承担状态语义
+    expect(byName['D'].status).toBe(2);
+    expect(byName['D'].watchedDate).toBeNull(); // 已看日期只读新键：旧档回落观影日期已随兼容层移除
   });
 
   it('无 frontmatter 跳过；无 tag 跳过', () => {
@@ -177,9 +182,9 @@ describe('cinema 排序与筛选', () => {
 
   it('状态筛选', () => {
     const vault = new MockVault();
-    vault.files.set('我的/影视/《想看》.md', '---\ntags: [电影]\n评分: -1\n---');
-    vault.files.set('我的/影视/《在看》.md', '---\ntags: [电影]\n评分: 0\n---');
-    vault.files.set('我的/影视/《已看》.md', '---\ntags: [电影]\n评分: 8\n---');
+    vault.files.set('我的/影视/《想看》.md', '---\ntags: [电影]\n状态: 想看\n---');
+    vault.files.set('我的/影视/《在看》.md', '---\ntags: [电影]\n状态: 在看\n---');
+    vault.files.set('我的/影视/《已看》.md', '---\ntags: [电影]\n评分: 8\n---'); // 无状态键 → 默认已看
     const app = makeApp(vault);
     rebuildItems(app);
     M.statusFilter = '想看';
@@ -233,8 +238,8 @@ describe('cinema 工具函数', () => {
 
   it('片单收纳条目只在片单视图出现：无片单筛选整体排除；片单筛选命中显示', () => {
     const vault = new MockVault();
-    vault.files.set('我的/影视/《普通想看》.md', '---\ntags: [电影]\n评分: -1\n---');
-    vault.files.set('我的/影视/《收纳片》.md', '---\ntags: [电影]\n评分: -1\n片单收纳: true\n片单:\n- 豆列合集\n---');
+    vault.files.set('我的/影视/《普通想看》.md', '---\ntags: [电影]\n状态: 想看\n---');
+    vault.files.set('我的/影视/《收纳片》.md', '---\ntags: [电影]\n状态: 想看\n片单收纳: true\n片单:\n- 豆列合集\n---');
     const app = makeApp(vault);
     M.folderPath = '我的/影视';
     // 前序用例可能残留筛选态（本文件无全局 reset），显式清场再断「正常视图」

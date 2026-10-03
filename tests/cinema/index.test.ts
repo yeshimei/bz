@@ -220,7 +220,7 @@ describe('cinema 卸载清理（unloadCinema，审查批 C 补断言）', () => 
 
   it('卸载三态：overlay 摘除 / renderFn 置空 / 队列与去重集清空', () => {
     const vault = new MockVault();
-    vault.files.set('我的/影视/《卸载片》.md', '---\ntags: [电影]\n评分: -1\n---');
+    vault.files.set('我的/影视/《卸载片》.md', '---\ntags: [电影]\n状态: 想看\n---');
     const app = makeApp(vault);
     const overlay = document.createElement('div');
     M.currentOverlay = overlay;

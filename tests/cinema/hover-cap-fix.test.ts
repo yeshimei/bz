@@ -33,8 +33,8 @@ function clickEl(el: Element | null | undefined): void {
 function seedSeasons(): ReturnType<typeof mockAppWithVault> {
   const vault = new MockVault();
   vault.files.set('我的/影视/《老友记 第一季》.md', md('---\ntags: [美剧]\n评分: 9.2\n观影日期: 2026-06-18\n---'));
-  vault.files.set('我的/影视/《老友记 第二季》.md', md('---\ntags: [美剧]\n评分: 0\n观影日期: 2026-08-18\n---'));
-  vault.files.set('我的/影视/《老友记 第三季》.md', md('---\ntags: [美剧]\n评分: -1\n观影日期:\n---'));
+  vault.files.set('我的/影视/《老友记 第二季》.md', md('---\ntags: [美剧]\n状态: 在看\n观影日期: 2026-08-18\n---'));
+  vault.files.set('我的/影视/《老友记 第三季》.md', md('---\ntags: [美剧]\n状态: 想看\n观影日期:\n---'));
   const app = mockAppWithVault(vault);
   setApp(app);
   ensureCinema(app);

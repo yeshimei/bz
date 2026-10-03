@@ -35,21 +35,24 @@ function seedVault(): { vault: MockVault; app: ReturnType<typeof mockAppWithVaul
 tags: [电影]
 评分: 9.6
 观影日期: 2026-08-01
+已看日期: 2026-08-01
 ---`));
   vault.files.set('我的/影视/《想看片》.md', md(`---
 tags: [电影]
-评分: -1
+状态: 想看
 观影日期: 2026-05-01
 ---`));
   vault.files.set('我的/影视/《老友记 第一季》.md', md(`---
 tags: [美剧]
 评分: 9
 观影日期: 2026-07-01
+已看日期: 2026-07-01
 ---`));
   vault.files.set('我的/影视/《老友记 第二季》.md', md(`---
 tags: [美剧]
 评分: 9.5
 观影日期: 2026-08-15
+已看日期: 2026-08-15
 季集: "2季"
 ---`));
   const app = makeApp(vault);

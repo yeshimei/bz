@@ -2,7 +2,7 @@
  * 影院（cinema）域数据层：扫描笔记 → 条目；排序（观影日期倒序）；筛选
  */
 import type { App, TFile } from 'obsidian';
-import { ALL_TAGS, getGroupSafe, REWATCH_SHELF, STATUS_WANT, STATUS_WATCHING, STATUS_WATCHED } from './constants';
+import { ALL_TAGS, getGroupSafe, REWATCH_SHELF } from './constants';
 import { extractMovieName } from './douban-fetcher';
 import { statusNum } from './shared';
 import type { CinemaItem } from './state';
@@ -66,24 +66,18 @@ export function parseMovieFile(file: TFile, app: App): CinemaItem | null {
   }
 
   const watchDate = fm['观影日期']?.toString() ?? null;
-  const watchedRaw = fm['已看日期']?.toString() ?? null;
   const rawRating = fm['评分'];
   const ratingNum =
     rawRating === undefined || rawRating === null || rawRating === ''
       ? null
       : Number(rawRating);
 
-  // 状态单源键「状态」（2026-09-30 拍板：评分编码 -1/0 退役，评分从此只当评分）。
-  // 旧笔记无「状态」键 → 回落评分推断（-1=想看 / 0=在看 / 其余=已看），迁移/落盘即补键。
-  // 评分清洗：-1/0 是旧编码不是分值 → 内存归 null（真分恒 >0），未评分（含无键）同为 null
-  const stRaw = typeof fm['状态'] === 'string' ? (fm['状态'] as string).trim() : '';
-  let status: number;
-  if (stRaw === '想看' || stRaw === '在看' || stRaw === '已看') {
-    status = statusNum(stRaw);
-  } else {
-    status = ratingNum === -1 ? STATUS_WANT : ratingNum === 0 ? STATUS_WATCHING : STATUS_WATCHED;
-  }
-  const rating = ratingNum !== null && ratingNum > 0 ? ratingNum : null;
+  // 状态单源键「状态」：评分只当分值，不承担状态语义。评分编码 -1/0 于 2026-09-30 退役，
+  // 兼容期结束（2026-10-03 拍板）：旧档评分推断与 -1/0 清洗移除——库已全量迁移且零残留
+  // （扫描核过：0 篇缺「状态」键、0 处 -1/0）。缺键/非法值经 statusNum 一律落已看
+  // （想看/在看建档必带此键，无键即旧档视为已看）。
+  const status = statusNum(typeof fm['状态'] === 'string' ? (fm['状态'] as string).trim() : '');
+  const rating = ratingNum;
 
   return {
     file,
@@ -96,10 +90,9 @@ export function parseMovieFile(file: TFile, app: App): CinemaItem | null {
     // 状态日期（想看日期/在看日期）：旧笔记无键 = null，不参与显示
     wantDate: fm['想看日期']?.toString() ?? null,
     watchingDate: fm['在看日期']?.toString() ?? null,
-    // 已看日期（issue 536）：新键优先；旧笔记无键但状态已是已看 → 回落观影日期
-    //（那时观影日期就是当初标记已看盖的章），故未迁移的老笔记/手写笔记照旧显示得出已看日。
-    // 非已看态一律 null：一条刚导入的在看条目不该凭空冒出一个「已看」日（幽灵节点的根）
-    watchedDate: watchedRaw ?? (status === STATUS_WATCHED ? watchDate : null),
+    // 已看日期（issue 536）只读新键；观影日期回落已随兼容层移除（2026-10-03，库核验 665 篇已看笔记均已带此键，零回填）。
+    // 非已看态无键自然为 null——一条没看过的条目不许凭空出「已看」日（幽灵节点教训保留）
+    watchedDate: fm['已看日期']?.toString() ?? null,
     rewatches: normalizeRewatches(fm['重看']),
     lists: normalizeLists(fm['片单']),
     shelvedOnly: fm['片单收纳'] === true,
