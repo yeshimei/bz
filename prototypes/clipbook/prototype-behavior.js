@@ -1,4 +1,4 @@
-/* 源指纹 b8661fb80e84a6d1 · 仓内输入 123 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 bcbcb6d27c57b24a · 仓内输入 123 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/clipbook/fake-sim.ts","prototypes/clipbook/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/keys.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/clipbook/anchor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/file-sync.ts","src/clipbook/flow.ts","src/clipbook/image-save.ts","src/clipbook/index.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/motion.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/press/data.ts","src/clipbook/press/engine.ts","src/clipbook/press/index.ts","src/clipbook/press/motions.ts","src/clipbook/press/view.ts","src/clipbook/render.ts","src/clipbook/report-stats.ts","src/clipbook/report-ui.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai.ts","src/core/app.ts","src/core/asr-proofread.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/download-manifest.ts","src/core/esc-manager.ts","src/core/file-sync.ts","src/core/flow-dialog.ts","src/core/gesture.ts","src/core/http.ts","src/core/item-actions.ts","src/core/knowledge-boxes.ts","src/core/landscape.ts","src/core/link-now.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/path-picker.ts","src/core/remote-asset.ts","src/core/remote-base.ts","src/core/rss-catalog.ts","src/core/settings-btn-state.ts","src/core/settings-common.ts","src/core/settings-modal.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/sha256.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/help-tip.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/knowledge/data.ts","src/knowledge/file-sync.ts","src/knowledge/index.ts","src/knowledge/motion.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/partial-json.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source-retire.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/secondbrain/readonly.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/motion.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/shared.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/clipbook/fake-sim.ts → window.BZW_clipbook（行为单源预览包，issue 245/ADR-0106） */
 var BZW_clipbook = (() => {
@@ -840,9 +840,9 @@ var BZW_clipbook = (() => {
     }
   });
 
-  // ../../bz/node_modules/.pnpm/moment@2.30.1/node_modules/moment/moment.js
+  // node_modules/.pnpm/moment@2.30.1/node_modules/moment/moment.js
   var require_moment = __commonJS({
-    "../../bz/node_modules/.pnpm/moment@2.30.1/node_modules/moment/moment.js"(exports, module) {
+    "node_modules/.pnpm/moment@2.30.1/node_modules/moment/moment.js"(exports, module) {
       (function(global, factory) {
         typeof exports === "object" && typeof module !== "undefined" ? module.exports = factory() : typeof define === "function" && define.amd ? define(factory) : global.moment = factory();
       })(exports, function() {
@@ -15599,8 +15599,13 @@ ${String(blockText != null ? blockText : "").trim()}`);
           this.entryPreviewItems = [];
           /** 预演是否已给出确定结果（done）——确定过就连「0 命中」也算结论，写入时不再重跑管线 */
           this.entryPreviewDone = false;
-          /** 在跑预演的中断器（issue 327）：重新生成 / 总结 / 关面板 / 确认写入转后台时 abort 在途裁判请求 */
-          this.entryRelAbort = null;
+          /**
+           * 在跑的这一轮预演（issue 327 起存中断器；issue 541 起再存"是否已被接住"）。
+           * `commitPath` 非空 = 用户已点确认写入、这一轮的结果要落盘：此后面板生命周期（复位 / 关窗）
+           * 不得 abort 它，写盘与通知由这一轮自己收口——点确认写入因此不再产生第二遍。
+           * `seq` 用于确认字段还指着这一轮（面板可能又起了新一轮）。
+           */
+          this.entryRelInflight = null;
           /** 预演序号：重新生成 / 关闭面板让在途结果作废（晚到的响应不得覆盖新状态） */
           this.entryRelSeq = 0;
           this.termSrcSuggest = null;
@@ -18145,13 +18150,19 @@ ${String(blockText != null ? blockText : "").trim()}`);
         resetEntryRel() {
           var _a;
           this.entryRelSeq++;
-          (_a = this.entryRelAbort) == null ? void 0 : _a.abort();
-          this.entryRelAbort = null;
+          if (!((_a = this.entryRelInflight) == null ? void 0 : _a.commitPath)) this.abortEntryRelInflight();
           this.entryPreviewPicks = [];
           this.entryPreviewItems = [];
           this.entryPreviewDone = false;
           this.entryRelText = "";
           this.setEntryRel("idle");
+        }
+        /** 断掉在途预演并摘除句柄（内容变了 / 明确放弃用）；已被接住的那一轮不受影响（写盘由它自己收口） */
+        abortEntryRelInflight() {
+          const h = this.entryRelInflight;
+          if (!h || h.commitPath) return;
+          h.ac.abort();
+          this.entryRelInflight = null;
         }
         /** 关联行状态切换（单一出口，避免各处直接改字段后忘记重绘） */
         setEntryRel(st) {
@@ -18163,10 +18174,11 @@ ${String(blockText != null ? blockText : "").trim()}`);
          * 故走 preview 而非 now）。属性区「关联」行就地走 loading → 关联名，这正是「生成完就看得到过程」。
          * 序号守卫：重新生成 / 关面板让在途结果作废，晚到的响应不得覆盖新状态。
          * issue 327：起跑前 abort 上一轮（真中断，不白烧 token）；分析期间**不锁任何按钮**——
-         * 重新生成 / 总结随点随断随重跑，确认写入转后台。
+         * 重新生成 / 总结随点随断随重跑。
+         * issue 541：确认写入不再让这一轮作废——分析中点确认 = 把路径**接住**（`commitPath`），
+         * 结果出栈后直接落盘；面板侧只在这一轮仍是当前时才回写状态。**一次预演只算一遍**。
          */
         async runEntryRelPreview(content, title) {
-          var _a;
           const bridge = getLinkBridge();
           const seq = ++this.entryRelSeq;
           this.entryPreviewPicks = [];
@@ -18175,13 +18187,15 @@ ${String(blockText != null ? blockText : "").trim()}`);
             this.setEntryRel("off");
             return;
           }
-          (_a = this.entryRelAbort) == null ? void 0 : _a.abort();
+          this.abortEntryRelInflight();
           const ac = new AbortController();
-          this.entryRelAbort = ac;
+          const inflight = { seq, ac, commitPath: null };
+          this.entryRelInflight = inflight;
           this.entryRelText = "";
           this.setEntryRel("loading");
           try {
             const out = await bridge.preview(content, title, { signal: ac.signal });
+            if (inflight.commitPath) await this.settleEntryRelCommit(inflight.commitPath, out);
             if (seq !== this.entryRelSeq) return;
             if (out.status === "done") {
               this.entryPreviewDone = true;
@@ -18193,7 +18207,13 @@ ${String(blockText != null ? blockText : "").trim()}`);
             else if (out.status === "skipped") this.setEntryRel("off");
             else this.setEntryRel("failed");
           } catch (e) {
-            if (seq === this.entryRelSeq) this.setEntryRel("failed");
+            if (inflight.commitPath) {
+              notify(`知识盒关联失败：${e instanceof Error ? e.message : String(e)}`, { type: "error", dedupeKey: REL_BG_NOTICE_KEY });
+            } else if (seq === this.entryRelSeq) {
+              this.setEntryRel("failed");
+            }
+          } finally {
+            if (this.entryRelInflight === inflight) this.entryRelInflight = null;
           }
         }
         /**
@@ -18201,18 +18221,21 @@ ${String(blockText != null ? blockText : "").trim()}`);
          * 不把行打回 loading（那会被读成「又在重新分析」，实际只是本地写 related）。
          * - 预演 done 有命中 → apply 落库（不重跑检索与裁判）；
          * - 预演 done 零命中（确定「无关联」）→ 无可写；
-         * - 预演仍在分析 → 作废面板绑定的这次（省 token），后台重起 预演→apply，挂动态通知；
-         * - 预演 failed → 兜底 now 同样转后台；
+         * - 预演仍在分析 → **接住**（issue 541）：把刚落盘的路径交给这一轮，它出结果后直接写盘；
+         * - 预演 failed → 兜底 now 转后台；
          * - 通道未接线 / off → 无可写。
          */
         async commitEntryLinks(path) {
-          var _a, _b, _c;
+          var _a, _b;
           const bridge = getLinkBridge();
           if (!bridge) return;
           if (this.entryRelState === "loading") {
-            (_a = this.entryRelAbort) == null ? void 0 : _a.abort();
-            this.entryRelAbort = null;
-            void this.backgroundRelCommit(path, (_c = (_b = this.termPreview) == null ? void 0 : _b.body) != null ? _c : "", this.entryHeadTitle());
+            const inflight = this.entryRelInflight;
+            if (inflight) {
+              inflight.commitPath = path;
+              return;
+            }
+            void this.backgroundRelCommit(path, (_b = (_a = this.termPreview) == null ? void 0 : _a.body) != null ? _b : "", this.entryHeadTitle());
             return;
           }
           if (this.entryPreviewDone && !this.entryPreviewPicks.length) return;
@@ -18223,31 +18246,44 @@ ${String(blockText != null ? blockText : "").trim()}`);
           if (this.entryRelState === "failed") void this.backgroundRelNow(path);
         }
         /**
-         * 后台建链（issue 327）：分析中确认写入 / 预演失败兜底共用——不占面板，动态通知（同键原地更新）
-         * 报进度与结果：分析中… → 已写入 N 条 / 未发现实质关联 / 已入队 / 失败原因。
+         * 后台建链兜底（issue 327）：预演结果**接不住**（句柄缺失的错位态）时从头跑一轮 preview → 落盘。
+         * issue 541 起正常路径已不再走它——分析中点确认是把在途那一轮接住（见 commitEntryLinks），
+         * 不再「abort 再重跑」。落盘与通知与接住路径共用 settleEntryRelCommit（用户视角同一条）。
          */
         async backgroundRelCommit(path, content, title) {
           const bridge = getLinkBridge();
           if (!bridge) return;
           notify("知识盒关联：后台分析中…", { type: "progress", dedupeKey: REL_BG_NOTICE_KEY });
           try {
-            const out = await bridge.preview(content, title);
-            if (out.status === "skipped") {
-              notify("知识盒关联：自动关联未开启，未写入", { type: "info", dedupeKey: REL_BG_NOTICE_KEY });
-              return;
-            }
-            if (out.status === "queued") {
-              notify("知识盒关联：检索服务不可用，已入队，服务可达后自动处理", { type: "info", dedupeKey: REL_BG_NOTICE_KEY });
-              return;
-            }
-            if (out.status === "failed") {
-              notify(`知识盒关联失败：${out.error || "未知错误"}`, { type: "error", dedupeKey: REL_BG_NOTICE_KEY });
-              return;
-            }
-            if (!out.picks.length) {
-              notify("知识盒关联：未发现实质关联", { type: "info", dedupeKey: REL_BG_NOTICE_KEY });
-              return;
-            }
+            await this.settleEntryRelCommit(path, await bridge.preview(content, title));
+          } catch (e) {
+            notify(`知识盒关联失败：${e instanceof Error ? e.message : String(e)}`, { type: "error", dedupeKey: REL_BG_NOTICE_KEY });
+          }
+        }
+        /**
+         * 把一次预演结果落盘并通知（issue 541 单源）：被接住的那一轮（结果现成）与后台兜底（结果刚算出来）
+         * 共用这一段——**都不重跑检索与裁判**，差别只在结果从哪来。通知同键原地更新，可读作一条。
+         */
+        async settleEntryRelCommit(path, out) {
+          const bridge = getLinkBridge();
+          if (!bridge) return;
+          if (out.status === "skipped") {
+            notify("知识盒关联：自动关联未开启，未写入", { type: "info", dedupeKey: REL_BG_NOTICE_KEY });
+            return;
+          }
+          if (out.status === "queued") {
+            notify("知识盒关联：检索服务不可用，已入队，服务可达后自动处理", { type: "info", dedupeKey: REL_BG_NOTICE_KEY });
+            return;
+          }
+          if (out.status === "failed") {
+            notify(`知识盒关联失败：${out.error || "未知错误"}`, { type: "error", dedupeKey: REL_BG_NOTICE_KEY });
+            return;
+          }
+          if (!out.picks.length) {
+            notify("知识盒关联：未发现实质关联", { type: "info", dedupeKey: REL_BG_NOTICE_KEY });
+            return;
+          }
+          try {
             const r = await bridge.apply(path, out.picks.map((p) => p.path));
             notify(r.status === "done" ? `知识盒关联：已写入 ${r.created} 条关联` : "知识盒关联：自动关联未开启，未写入", {
               type: r.status === "done" ? "success" : "info",
