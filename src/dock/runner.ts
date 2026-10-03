@@ -67,9 +67,15 @@ export function dockEnvOf(entry: DockToolEntry, app: App): Record<string, string
   const env: Record<string, string> = {
     BZ_DOCK_CONTRACT: '1',
     BZ_DOCK_TOOL: entry.id,
-    BZ_DOCK_RUNS_FILE: runsFilePath(entry.id),
   };
-  if (vaultPath) env.BZ_DOCK_VAULT = vaultPath;
+  if (vaultPath) {
+    const base = vaultPath.replace(/[\\/]+$/, '');
+    env.BZ_DOCK_VAULT = base;
+    // **必须给绝对路径**：工具进程的 cwd 是它自己的目录，vault 内的相对路径（`CONFIG/...`）
+    // 会被解析到工具目录底下去 —— 记录就这么写歪过一次（写进了 `<工具目录>/CONFIG/...`，
+    // 而 bz 在 vault 里找不到，表现为「跑完了却没有记录」）。
+    env.BZ_DOCK_RUNS_FILE = `${base}/${runsFilePath(entry.id)}`;
+  }
   return env;
 }
 
