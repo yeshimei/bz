@@ -7,7 +7,8 @@
  * 全空且有路被拦 → blocked、全空无拦 → notfound
  * → **ApiZero 豆瓣电影信息接口**（评分/导演/主演/类型/地区/片长首选 + 上映日期←year/热门短评，
  * key 设置项）→ rexxar 演职员兜底（缺导演/主演或需编剧时）；
- * 海报走豆瓣（检索路提 URL → upgradePosterUrl 高清 → writeBinary 写盘）。
+ * 海报走豆瓣（检索路提 URL / sid 直取走 rexxar subject 详情 → upgradePosterUrl 高清 →
+ * writeBinary 写盘）。
  * 豆瓣详情页 HTML 退役；移动端同源可用。
  * 写回口径（审查 C8/C9 拍板）：除豆瓣链接（修正脏值）外一律「缺失才填」——已有值
  * （含用户手工修正）不覆盖；ApiZero 逗号列表值写入前归一化为消费端的 ` / ` 切分口径（C2）。
@@ -171,9 +172,11 @@ type SearchProbe =
   | { kind: 'empty' }
   | { kind: 'blocked' };
 
-/** 纯函数：s_ratio_poster → l_ratio_poster（高清） */
+/** 纯函数：海报规格升到 l（原图档）——s_ratio_poster / m_ratio_poster → l_ratio_poster。
+ *  s 来自 suggest（缩略）、m 来自 rexxar subject 的 pic.large，两路都要能升到同一张图；
+ *  无该片段的 URL（如 `large/public/p*.jpg`）原样返回，无害。 */
 export function upgradePosterUrl(url: string): string {
-  return url.replace('s_ratio_poster', 'l_ratio_poster');
+  return url.replace(/[sm]_ratio_poster/, 'l_ratio_poster');
 }
 
 /** 纯函数：列表值归一化（审查 C2）——ApiZero 的 actor/genre/director/area 是逗号分隔，
@@ -279,6 +282,42 @@ export async function fetchCelebrities(sid: string, httpGet: HttpGet, cookie?: s
     }
   }
   return null;
+}
+
+/** 纯函数：rexxar subject 详情 JSON → 海报 URL（pic.large 优先、pic.normal 兜底，
+ *  再退 cover_url）。404 体（traversal_error）/非 JSON/无 pic → 空串。
+ *  只认 http(s) 开头的真地址：畸形 JSON 可能给字符串哨兵（"0"/"null"），照单收下会让
+ *  下游拿它当 URL 去下载——预览卡换了个注定失败的图源，队列还会把它记成 network 失败
+ *  反复重抓。 */
+export function parseRexxarSubjectPic(json: string | null): string {
+  if (!json) return '';
+  try {
+    const d = JSON.parse(json);
+    // 逐个候选过守卫（不用 `||` 链）：哨兵占了 pic.large 时不该连带丢掉正常的 pic.normal
+    for (const c of [d?.pic?.large, d?.pic?.normal, d?.cover_url]) {
+      if (typeof c === 'string' && /^https?:\/\//.test(c)) return c;
+    }
+    return '';
+  } catch {
+    return '';
+  }
+}
+
+/** rexxar subject 详情取海报 URL（issue 540）：sid 直取路径的补图腿。
+ *  ApiZero 接口不返回海报，名称索引命中后跳过三路检索就再没有别的图源——预览卡与后台抓取
+ *  都只能停在骨架 / 缺图。按 sid 精确取（不依赖名称匹配，比回流按名检索更准也更省）；
+ *  movie 接口对剧集 sid 也返回数据（实测），故先 movie 后 tv 兜底——与 fetchCelebrities
+ *  的 404 探测同款。任何异常/空 → 空串（图缺就缺，不抬走整条解析）。 */
+export async function fetchSubjectPoster(sid: string, httpGet: HttpGet, cookie?: string): Promise<string> {
+  for (const type of ['movie', 'tv'] as const) {
+    const headers: Record<string, string> = { Referer: `https://m.douban.com/movie/subject/${sid}/` };
+    if (cookie) headers.Cookie = cookie;
+    try {
+      const url = parseRexxarSubjectPic(await httpGet(`https://m.douban.com/rexxar/api/v2/${type}/${sid}`, headers));
+      if (url) return url;
+    } catch { /* 异常/空 → 换下一类型 */ }
+  }
+  return '';
 }
 
 export type DoubanFetchOutcome =
@@ -479,8 +518,10 @@ export async function queryDoubanByName(name: string, deps: DoubanFetchDeps): Pr
 /**
  * 带 sid 直取（issue 498 / ADR-0210）：本地名称索引命中后跳过三路检索，ApiZero 按 ID 拿字段。
  * 与 queryDoubanByName 的字段段完全同构（ApiZero → 缺导演/主演时 rexxar celebrities 兜底），
- * 差异只有两点：sid 来自索引而非检索产物；海报 URL 恒空（ApiZero 无此字段）——
- * 落到 `DoubanQuery.posterUrl = ''`，表单/保存路径对空海报已有兜底（保存后队列按名补抓）。
+ * 差异只有两点：sid 来自索引而非检索产物；海报 URL 由 **rexxar subject 详情**补
+ * （issue 540——ApiZero 无此字段，原来落到 `posterUrl = ''`，预览卡永远停在骨架、
+ * 片单导入的条目也永远缺图，且队列按「缺海报」反复重抓；补图腿失败仍是空串，
+ * 由保存/队列路径兜底，不抬走整条解析）。
  * ApiZero 不可用（key 未配/额度尽/网络空文）→ `{ ok: false, reason: 'notfound' }`，
  * 调用方（queryDoubanForPreview）据此回落按名全链，不在本层静默吞掉。
  */
@@ -493,13 +534,15 @@ export async function queryDoubanBySid(sid: string, name: string, deps: DoubanFe
   }
   if (!az) return { ok: false, reason: 'notfound' };
   const celebrities = await celebritiesIfMissing(sid, az, deps);
+  // 补图腿串行在字段之后（不并发：同域两次请求，避频控；一次 RTT 在解析流程里无感）
+  const posterUrl = await fetchSubjectPoster(sid, deps.httpGet, deps.doubanCookie);
   return {
     ok: true,
     data: {
       title: az.name || name,
       detailUrl: `https://movie.douban.com/subject/${sid}/`,
       sid,
-      posterUrl: '',
+      posterUrl,
       apizero: az,
       celebrities,
     },
