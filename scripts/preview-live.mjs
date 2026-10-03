@@ -47,6 +47,44 @@ let vaultRoot = '';
     } catch { /* 构建配置读不到：本路由退化为 404，其余功能不受影响 */ }
   }
 }
+/** vault 内按【相对路径】直取媒体（.scratch/diary-real/ 的纸页用它显示正文里引用的真照片/视频）。
+ *  与 /__vault-media/ 的区别：那条按 basename 全库找（重名取先命中的），这条按相对路径精确命中，
+ *  既保真又能显示「同一个文件名的不同目录版本」。只读，且必须落在 vault 内。 */
+function serveVaultRelMedia(req, res, rawRel) {
+  const send = (code, msg) => res.writeHead(code, { 'Content-Type': 'text/plain; charset=utf-8' }).end(msg);
+  if (!vaultRoot || !fs.existsSync(vaultRoot)) return send(404, 'vault not located');
+  let rel = rawRel.replace(/\\/g, '/').replace(/^\/+/, '');
+  try { rel = decodeURIComponent(rel); } catch { /* 已解码则原样用 */ }
+  if (!rel || rel.includes('..')) return send(403, 'forbidden');
+  const base = path.normalize(vaultRoot);
+  const target = path.normalize(path.join(base, rel));
+  if (!target.toLowerCase().startsWith(base.toLowerCase())) return send(403, 'forbidden');
+  if (!fs.existsSync(target) || !fs.statSync(target).isFile()) return send(404, 'not found: ' + rel);
+  const size = fs.statSync(target).size;
+  const type = MIME[path.extname(target).toLowerCase()] || 'application/octet-stream';
+  const range = req.headers.range;
+  if (range) {  // 视频/音频要能拖拽
+    const m = /^bytes=(\d*)-(\d*)$/.exec(range.trim());
+    if (m) {
+      let start = m[1] ? Number(m[1]) : 0;
+      let end = m[2] ? Number(m[2]) : size - 1;
+      if (Number.isNaN(start) || Number.isNaN(end) || start > end || start >= size) {
+        res.writeHead(416, { 'Content-Range': `bytes */${size}` }).end();
+        return;
+      }
+      end = Math.min(end, size - 1);
+      res.writeHead(206, {
+        'Content-Type': type, 'Accept-Ranges': 'bytes',
+        'Content-Range': `bytes ${start}-${end}/${size}`, 'Content-Length': end - start + 1,
+        'Cache-Control': 'no-store',
+      });
+      fs.createReadStream(target, { start, end }).pipe(res);
+      return;
+    }
+  }
+  res.writeHead(200, { 'Content-Type': type, 'Accept-Ranges': 'bytes', 'Content-Length': size, 'Cache-Control': 'no-store' });
+  fs.createReadStream(target).pipe(res);
+}
 let vaultIndexCache = null;
 function vaultIndex() {
   if (vaultIndexCache) return vaultIndexCache;
@@ -115,6 +153,63 @@ function serveVaultMedia(req, res, rawName) {  const name = decodeURIComponent(r
   }
   res.writeHead(200, { 'Content-Type': type, 'Accept-Ranges': 'bytes', 'Content-Length': size, 'Cache-Control': 'no-store' });
   fs.createReadStream(file).pipe(res);
+}
+
+/**
+ * 日记本探索稿的写回通道（POST /__diary-write）：把「写日记」真写进 vault。
+ * 仅服务 `.scratch/diary-real/` 那个原型页（ADR 未立，属探索期便利通道）：
+ *   body = { path: '我的/日记/YYMMDDHHmm.md', content, mode: 'write'|'overwrite'|'delete' }
+ * 护栏：只允许写在 vault 内、且路径必须以「我的/」开头（够用即可，别当通用文件 API）。
+ * 未定位 vault 时返回 503，原型侧提示「改动留在本子里」，不影响其余功能。
+ */
+const WRITE_LIMIT = 2 * 1024 * 1024;
+function serveDiaryWrite(req, res) {
+  const send = (code, obj) => {
+    res.writeHead(code, { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store' });
+    res.end(JSON.stringify(obj));
+  };
+  if (req.method !== 'POST') return send(405, { ok: false, error: 'POST only' });
+  let body = '';
+  let tooBig = false;
+  req.on('data', (c) => {
+    body += c;
+    if (body.length > WRITE_LIMIT) { tooBig = true; req.destroy(); }
+  });
+  req.on('end', () => {
+    if (tooBig) return send(413, { ok: false, error: 'too big' });
+    let data;
+    try { data = JSON.parse(body || '{}'); } catch { return send(400, { ok: false, error: 'bad json' }); }
+    if (!data.path) return send(400, { ok: false, error: 'path required' }); // 探测请求（原型 detectDisk）走这条
+    if (!vaultRoot || !fs.existsSync(vaultRoot)) return send(503, { ok: false, error: 'vault not located' });
+    const rel = String(data.path).replace(/\\/g, '/').replace(/^\/+/, '');
+    if (!rel.startsWith('我的/') || rel.includes('..')) return send(403, { ok: false, error: 'path not allowed' });
+    const target = path.normalize(path.join(vaultRoot, rel));
+    if (!target.startsWith(path.normalize(vaultRoot))) return send(403, { ok: false, error: 'outside vault' });
+    try {
+      if (data.mode === 'delete') {
+        if (fs.existsSync(target)) fs.unlinkSync(target);
+        console.log(`[preview-live] 日记写回 · 删除 ${rel}`);
+        return send(200, { ok: true, deleted: rel });
+      }
+      fs.mkdirSync(path.dirname(target), { recursive: true });
+      const existed = fs.existsSync(target);
+      if (!existed) {
+        // 条目文件名同刻撞车才加 -N（与 core/diary-format 的 diaryEntryBaseName 同义）
+        let n = 1;
+        let final = target;
+        while (fs.existsSync(final)) { n += 1; final = target.replace(/\.md$/, `-${n}.md`); }
+        fs.writeFileSync(final, String(data.content || ''), 'utf8');
+        console.log(`[preview-live] 日记写回 · 新建 ${path.relative(vaultRoot, final).replace(/\\/g, '/')}`);
+        return send(200, { ok: true, created: path.relative(vaultRoot, final).replace(/\\/g, '/') });
+      }
+      fs.writeFileSync(target, String(data.content || ''), 'utf8');
+      console.log(`[preview-live] 日记写回 · 覆盖 ${rel}`);
+      return send(200, { ok: true, overwritten: rel });
+    } catch (e) {
+      console.error('[preview-live] 日记写回失败：', e.message);
+      return send(500, { ok: false, error: e.message });
+    }
+  });
 }
 
 // 监听两棵源树（相对仓库根的 rel 前缀区分）：src/ = 插件源码；prototypes/ = 评审工件
@@ -285,6 +380,16 @@ a.card.off{opacity:.45}
     let rest = url.pathname.slice('/__real-media/'.length);
     try { rest = decodeURIComponent(rest); } catch { /* 已是原始字节则原样用 */ }
     serveRealMedia(res, rest);
+    return;
+  }
+  // 日记本探索稿的写回通道（见 serveDiaryWrite 注释）
+  if (url.pathname === '/__diary-write') {
+    serveDiaryWrite(req, res);
+    return;
+  }
+  // vault 内按相对路径取媒体（日记本探索稿的纸页显示正文里引用的真照片/视频）
+  if (url.pathname.startsWith('/__vault-file/')) {
+    serveVaultRelMedia(req, res, url.pathname.slice('/__vault-file/'.length));
     return;
   }
   let file = path.normalize(path.join(ROOT, decodeURIComponent(url.pathname)));
