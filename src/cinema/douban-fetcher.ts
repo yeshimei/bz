@@ -15,18 +15,18 @@
  */
 import type { App, TFile } from 'obsidian';
 import { stripMdExt } from '../core/ui/str';
+// YAML 值序列化单源 core/utils（含特殊字符/空格双引号包裹并转义；换行先行单行化——
+// 审查 C3：裸 \n/\r 进 frontmatter 会破坏 YAML 解析、影片从面板消失）
 import { yamlScalarOf } from '../core/utils';
 import { ILLEGAL_NAME_RE_GLOBAL } from './constants';
 
 /** 海报目录（对齐 CLI config 默认值） */
 export const POSTER_FOLDER = 'CONFIG/MOVIE POSTER';
 
-const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36';
-
 // ---------- 依赖注入 ----------
 
 export type HttpGet = (url: string, headers?: Record<string, string>) => Promise<string | null>;
-export type DownloadBinary = (url: string, headers?: Record<string, string>) => Promise<ArrayBuffer | null>;
+type DownloadBinary = (url: string, headers?: Record<string, string>) => Promise<ArrayBuffer | null>;
 
 export interface DoubanFetchDeps {
   httpGet: HttpGet;
@@ -55,7 +55,7 @@ export function extractMovieName(filename: string): string {
   return m ? m[1] : basename;
 }
 
-export interface DoubanSearchResult {
+interface DoubanSearchResult {
   title: string;
   detailUrl: string;
   posterUrl: string;
@@ -166,7 +166,7 @@ export function searchPageLooksBlocked(html: string | null): boolean {
 
 /** 单路检索探测结果：hit = 命中结果；empty = 服务端正常应答但无结果（可能是软拒绝，
  *  交下一路）；blocked = 明确被拦（null/非 JSON/风控页）。任一路网络异常上抛 → network（C6） */
-export type SearchProbe =
+type SearchProbe =
   | { kind: 'hit'; results: DoubanSearchResult[] }
   | { kind: 'empty' }
   | { kind: 'blocked' };
@@ -189,7 +189,7 @@ export function extractSid(detailUrl: string): string | null {
   return m ? m[1] : null;
 }
 
-export interface CelebritiesInfo {
+interface CelebritiesInfo {
   directors: string;
   writers: string;
   casts: string;
@@ -211,7 +211,7 @@ export function parseCelebrities(data: any): { directors: string; writers: strin
 
 // ---------- ApiZero 客户端 ----------
 
-export interface ApizeroInfo {
+interface ApizeroInfo {
   name: string;
   year: string;
   score: string;
@@ -287,7 +287,7 @@ export type DoubanFetchOutcome =
 
 /** 字段值形态：string = 已有则原地更新；{ value, ifMissing } = 仅当字段缺失时写入（审查
  *  C8/C9 拍板口径：防重抓覆盖用户手工修正，缺失才填） */
-export type FmFieldSpec = string | { value: string; ifMissing: boolean };
+type FmFieldSpec = string | { value: string; ifMissing: boolean };
 
 /** frontmatter 更新（纯函数，照搬 note-processor updateFrontmatterFields 的行级口径）：
  *  string 字段已有则原地更新、新字段插到 tags 列表后；ifMissing 字段已有则跳过；空值跳过。
@@ -299,7 +299,7 @@ export function updateFrontmatterFields(content: string, fields: Record<string, 
     const fmLines = ['---'];
     for (const [k, spec] of Object.entries(fields)) {
       const v = typeof spec === 'string' ? spec : spec.value;
-      if (v) fmLines.push(`${k}: ${formatYamlValue(v)}`);
+      if (v) fmLines.push(`${k}: ${yamlScalarOf(v)}`);
     }
     fmLines.push('---');
     return fmLines.join('\n') + '\n' + content;
@@ -328,7 +328,7 @@ export function updateFrontmatterFields(content: string, fields: Record<string, 
   const newLines: string[] = [];
   for (const [key, spec] of Object.entries(fields)) {
     const val = typeof spec === 'string' ? spec : spec.value;
-    if (!val || val === '') continue;
+    if (!val) continue;
     if (existingKeys.has(key)) {
       // 缺失才填（C8/C9）：已有**非空**值不动，保留用户手改与存量；
       // 空值键（如模板预置的 `海报:`）视为缺失照写——否则属性永不回填，
@@ -337,23 +337,16 @@ export function updateFrontmatterFields(content: string, fields: Record<string, 
       const lineKey = existingKeys.get(key)!;
       for (let i = 0; i < lines.length; i++) {
         if (lines[i].match(new RegExp(`^${lineKey}:`))) {
-          lines[i] = `${lineKey}: ${formatYamlValue(val)}`;
+          lines[i] = `${lineKey}: ${yamlScalarOf(val)}`;
           break;
         }
       }
     } else {
-      newLines.push(`${key}: ${formatYamlValue(val)}`);
+      newLines.push(`${key}: ${yamlScalarOf(val)}`);
     }
   }
   if (newLines.length > 0) lines.splice(insertIdx, 0, ...newLines);
   return header + lines.join('\n') + footer + rest;
-}
-
-/** YAML 值序列化：含特殊字符/空格双引号包裹并转义。
- *  换行先行单行化（审查 C3）：裸 \n/\r 进 frontmatter 会破坏 YAML 解析、影片从面板消失。
- *  一致#1 收编：转义单源 core/utils（escapeYamlText），条件包裹策略保留在本地（两出口一原语） */
-function formatYamlValue(val: string): string {
-  return yamlScalarOf(val);
 }
 
 /** 正文 frontmatter 后插入海报 embed（纯函数，照搬 insertPosterEmbed；已存在跳过）。
@@ -402,10 +395,19 @@ export type DoubanQueryOutcome =
 
 // ---------- 检索三路（ADR-0178：suggest → rexxar search → 搜索页） ----------
 
+/** 检索公共头：各路自带业务 Referer（withLang = 附 Accept-Language）；配了 Cookie 就带
+ *  （登录态提高过风控率——单一写点，三路共用） */
+function doubanHeaders(referer: string, deps: DoubanFetchDeps, withLang = false): Record<string, string> {
+  const headers: Record<string, string> = withLang
+    ? { Referer: referer, 'Accept-Language': 'zh-CN,zh;q=0.9' }
+    : { Referer: referer };
+  if (deps.doubanCookie) headers.Cookie = deps.doubanCookie;
+  return headers;
+}
+
 /** 三路单发：suggest 补全（主路，JSON、信息全）。软拒绝（200+空数组）归 empty 交下一路 */
 async function probeSuggest(name: string, deps: DoubanFetchDeps): Promise<SearchProbe> {
-  const headers: Record<string, string> = { Referer: 'https://movie.douban.com/', 'Accept-Language': 'zh-CN,zh;q=0.9' };
-  if (deps.doubanCookie) headers.Cookie = deps.doubanCookie;
+  const headers = doubanHeaders('https://movie.douban.com/', deps, true);
   const json = await deps.httpGet(`https://movie.douban.com/j/subject_suggest?q=${encodeURIComponent(name)}`, headers);
   if (suggestLooksBlocked(json)) return { kind: 'blocked' };
   const results = parseSuggestResults(json!);
@@ -414,8 +416,7 @@ async function probeSuggest(name: string, deps: DoubanFetchDeps): Promise<Search
 
 /** 三路单发：rexxar 移动搜索（二路；与 suggest 频控池独立，实测 suggest 全空时仍命中） */
 async function probeRexxarSearch(name: string, deps: DoubanFetchDeps): Promise<SearchProbe> {
-  const headers: Record<string, string> = { Referer: 'https://m.douban.com/movie/' };
-  if (deps.doubanCookie) headers.Cookie = deps.doubanCookie;
+  const headers = doubanHeaders('https://m.douban.com/movie/', deps);
   const json = await deps.httpGet(`https://m.douban.com/rexxar/api/v2/search?q=${encodeURIComponent(name)}&count=5`, headers);
   if (!json) return { kind: 'blocked' };
   const results = parseRexxarSearch(json);
@@ -424,12 +425,22 @@ async function probeRexxarSearch(name: string, deps: DoubanFetchDeps): Promise<S
 
 /** 三路单发：搜索页 HTML（末路兜底；体积大、风控面最宽，仅供最后一级） */
 async function probeSearchPage(name: string, deps: DoubanFetchDeps): Promise<SearchProbe> {
-  const headers: Record<string, string> = { Referer: 'https://movie.douban.com/', 'Accept-Language': 'zh-CN,zh;q=0.9' };
-  if (deps.doubanCookie) headers.Cookie = deps.doubanCookie;
+  const headers = doubanHeaders('https://movie.douban.com/', deps, true);
   const html = await deps.httpGet(`https://www.douban.com/search?cat=1002&q=${encodeURIComponent(name)}`, headers);
   if (searchPageLooksBlocked(html)) return { kind: 'blocked' };
   const results = parseSearchResults(html!);
   return results.length > 0 ? { kind: 'hit', results } : { kind: 'empty' };
+}
+
+/** rexxar 演职员兜底：ApiZero 缺导演/主演时补（口径同 fetchNoteDouban C9）。
+ *  异常收口（评审 P1-2）：rexxar 腿网络异常不抬走整体——字段缺就缺，解析照常成功 */
+async function celebritiesIfMissing(sid: string, az: ApizeroInfo | null, deps: DoubanFetchDeps): Promise<CelebritiesInfo | null> {
+  try {
+    if (!az || !az.director || !az.actor) return await fetchCelebrities(sid, deps.httpGet, deps.doubanCookie);
+  } catch {
+    return null;
+  }
+  return null;
 }
 
 /**
@@ -461,16 +472,7 @@ export async function queryDoubanByName(name: string, deps: DoubanFetchDeps): Pr
   // 字段：ApiZero 首选（key 未配/失败 → null，交 rexxar 兜底）
   let az: ApizeroInfo | null = null;
   if (deps.apizeroKey) az = await fetchApizeroInfo(sid, deps.apizeroKey, deps.httpGet);
-  // rexxar 演职员兜底：ApiZero 拿不到导演/主演时补（口径同 fetchNoteDouban C9）。
-  // 异常收口（评审 P1-2）：rexxar 网络异常不抬走整体——字段缺就缺，解析照常成功
-  let celebrities: CelebritiesInfo | null = null;
-  try {
-    if (!az || !az.director || !az.actor) {
-      celebrities = await fetchCelebrities(sid, deps.httpGet, deps.doubanCookie);
-    }
-  } catch {
-    celebrities = null;
-  }
+  const celebrities = await celebritiesIfMissing(sid, az, deps);
   return { ok: true, data: { title: first.title, detailUrl: first.detailUrl, sid, posterUrl: first.posterUrl, apizero: az, celebrities } };
 }
 
@@ -490,14 +492,7 @@ export async function queryDoubanBySid(sid: string, name: string, deps: DoubanFe
     return { ok: false, reason: 'network' };
   }
   if (!az) return { ok: false, reason: 'notfound' };
-  let celebrities: CelebritiesInfo | null = null;
-  try {
-    if (!az.director || !az.actor) {
-      celebrities = await fetchCelebrities(sid, deps.httpGet, deps.doubanCookie);
-    }
-  } catch {
-    celebrities = null; // rexxar 腿异常不抬走整体：字段缺就缺（评审 P1-2），解析照常成功
-  }
+  const celebrities = await celebritiesIfMissing(sid, az, deps);
   return {
     ok: true,
     data: {
@@ -559,7 +554,9 @@ export async function fetchNoteDouban(app: App, file: TFile, deps: DoubanFetchDe
   } catch {
     return { ok: false, reason: 'network' };
   }
-  const hasPoster = !!(fieldValue(content, '海报'));
+  // 海报只读一次：hasPoster 与下面的相对路径同源（同快照，读两次白读）
+  let posterRelative = fieldValue(content, '海报');
+  const hasPoster = !!posterRelative;
   const doubanUrlRaw = fieldValue(content, '豆瓣链接');
   const hasDoubanInfo = !!doubanUrlRaw && /^https?:\/\//.test(doubanUrlRaw);
   if (hasPoster && hasDoubanInfo) return { ok: true, skipped: true };
@@ -572,7 +569,6 @@ export async function fetchNoteDouban(app: App, file: TFile, deps: DoubanFetchDe
 
   // 2. 海报（无海报时：高清 URL → 二进制 → 写盘 → frontmatter + 正文 embed）。
   //  保存目录/下载失败语义都在 downloadPosterToVault 里（与表单保存同一份实现）
-  let posterRelative = fieldValue(content, '海报');
   if (!hasPoster && posterUrl) {
     const dl = await downloadPosterToVault(name, posterUrl, deps);
     if (!dl.ok) return { ok: false, reason: dl.reason };

@@ -34,7 +34,6 @@ export const ICON = {
   add: 'plus',
   edit: 'pencil',
   del: 'trash-2',
-  confirm: 'alert-circle',
   back: 'chevron-left',
   grid: 'layout-grid',
   eye: 'eye',
@@ -97,7 +96,7 @@ export function posterInner(item: CinemaItem, url: string | null): string {
 // ---------- 剧集按季合并（cinemaMergeSeasons；分组口径在 ./seasons 单源） ----------
 
 /** 季段状态三态：已看=金实 / 在看=橙斜纹 / 未看·想看=空段（用户 2026-09-18 拍板口径） */
-export type SeasonSegState = 'watched' | 'watching' | 'empty';
+type SeasonSegState = 'watched' | 'watching' | 'empty';
 
 export function seasonSegState(item: CinemaItem): SeasonSegState {
   const st = statusNum(item.status);
@@ -139,7 +138,7 @@ export function seasonDotsHtml(seasons: SeasonSlot[]): string {
 }
 
 /** 卡片正脸四件（海报内芯 / 名字 / meta / 星级；`name`/`rating` 可覆盖 = 合并卡口径） */
-export interface CardFacePieces { poster: string; name: string; meta: string; stars: string }
+interface CardFacePieces { poster: string; name: string; meta: string; stars: string }
 
 /**
  * 卡片正脸件**唯一出口**：卡面渲染与「悬浮季圆点换脸」共用它——行为层不许自己拼第二套
@@ -440,7 +439,7 @@ export interface FormPreviewData {
 }
 
 /** 背面里需要由行为层回填的当前值（分类与状态可点改，见下方下拉） */
-export interface FormBackOpts {
+interface FormBackOpts {
   typeTag: string;
   stText: string;
   /** 分类仍在判定中（2026-09-21）：徽标显示占位骨架，出结果后由行为层就地替换 */
@@ -520,10 +519,10 @@ export function formBackHtml(d: FormPreviewData | null, o: FormBackOpts): string
 // ---------- AI 荐片页（共享页；画像/结果状态显式入参） ----------
 
 /** AI 推荐结果条目（插件 smartcat 返回与壳演示池字段不同，取兼容回退） */
-export function aiRecName(r: any): string {
+function aiRecName(r: any): string {
   return r?.title || r?.name || '未命名';
 }
-export function aiRecMeta(r: any): string {
+function aiRecMeta(r: any): string {
   return r?.meta || [r?.type, r?.director].filter(Boolean).join(' · ');
 }
 

@@ -48,7 +48,6 @@ export interface YbData {
   yearMin: number;
   yearMax: number;
   months: number[];
-  peakMonth: number;
   weekN: number[];
   peakDay: number;
   weekendN: number;
@@ -74,7 +73,6 @@ export interface YbData {
   matrix: YbMatrix;
   releaseYears: { y: number; n: number }[];
   oldest: CinemaItem | null;
-  newest: CinemaItem | null;
   ageBuckets: YbTool[];
   avgAge: string;
 
@@ -90,7 +88,6 @@ export interface YbData {
   disappoint: CinemaItem[];
   top3: CinemaItem[];
   nineUp: CinemaItem[];
-  tenUp: number;
 
   /* 人 */
   directors: YbRank[];
@@ -105,9 +102,6 @@ export interface YbData {
   /* 文字 */
   reviews: YbText[];
   hotComments: YbText[];
-
-  /* 海报 */
-  posters: CinemaItem[];
 
   /* 升级批新增（布局/动效要用） */
   /** 评分散点（有日期 + 有分的已看） */
@@ -250,11 +244,10 @@ export function deriveYb(items: CinemaItem[]): YbData {
   const relCount = new Map<number, number>();
   for (const it of items) { const y = relYear(it); if (y !== null) relCount.set(y, (relCount.get(y) ?? 0) + 1); }
   const releaseYears = [...relCount.entries()].map(([y, n]) => ({ y, n })).sort((a, b) => a.y - b.y);
-  let oldest: CinemaItem | null = null, newest: CinemaItem | null = null;
+  let oldest: CinemaItem | null = null;
   for (const it of items) {
     const y = relYear(it); if (y === null) continue;
     if (!oldest || y < Number(oldest.year)) oldest = it;
-    if (!newest || y > Number(newest.year)) newest = it;
   }
   const TOOLS: [string, (a: number) => boolean][] = [['当年', (a) => a <= 0], ['1–3 年', (a) => a > 0 && a <= 3], ['4–10 年', (a) => a > 3 && a <= 10], ['≥10 年', (a) => a > 10]];
   const ageBuckets: YbTool[] = TOOLS.map(([label, hit]) => ({
@@ -361,19 +354,17 @@ export function deriveYb(items: CinemaItem[]): YbData {
     total: items.length, watchedCount: watched.length, wantCount: want.length, watchingCount: watching.length,
     typeGroups: rankOf(groupMap), ratedCount: rated.length,
     years, yearMin: years.length ? years[0].y : 0, yearMax: years.length ? years[years.length - 1].y : 0,
-    months, peakMonth: months.indexOf(Math.max(...months)), weekN, peakDay: weekN.indexOf(Math.max(...weekN)),
+    months, weekN, peakDay: weekN.indexOf(Math.max(...weekN)),
     weekendN: weekN[5] + weekN[6],
     days, busiest, streak, spanDays, monthFreq,
     minutes, totalMinutes, avgMinutes: minutes.length ? totalMinutes / minutes.length : 0,
     bins, longest, longestMin, shortest, shortestMin,
     genres, regions, matrix, releaseYears, oldest,
-    newest, ageBuckets, avgAge,
+    ageBuckets, avgAge,
     rated, myHist, dbHist, avgMine, avgDb, avgDiff, diffs, treasure, disappoint, top3, nineUp,
-    tenUp: rated.filter((it) => (it.rating ?? 0) >= 10).length,
     directors: people('director'), actors: people('actors'), series, episodes,
     epItems: epVals.length, epTotal,
     reviews, hotComments,
-    posters: items.filter((it) => !!it.poster),
     scatter, ageDots, genrePairs, durFilms,
   };
 }

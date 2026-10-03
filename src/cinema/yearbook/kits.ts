@@ -11,14 +11,12 @@
 export const clamp01 = (x: number): number => (x < 0 ? 0 : x > 1 ? 1 : x);
 export const clamp = (x: number, lo: number, hi: number): number => (x < lo ? lo : x > hi ? hi : x);
 export const lerp = (a: number, b: number, t: number): number => a + (b - a) * t;
-export const inv = (x: number): number => 1 - clamp01(x);
 
 /** 时间轴推进：t 秒 → 0..1（dur 秒内走完，超出即 1） */
 export const at = (t: number, dur: number, delay = 0): number => clamp01((t - delay) / Math.max(dur, 1e-4));
 
 /* ─────────── 缓动 ─────────── */
 export const easeOut = (x: number): number => 1 - Math.pow(1 - x, 3);
-export const easeIn = (x: number): number => x * x * x;
 export const easeInOut = (x: number): number => (x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2);
 export const easeBack = (x: number): number => {
   const c1 = 1.70158, c3 = c1 + 1;
@@ -38,14 +36,6 @@ export const spring = (x: number, damp = 6, freq = 3): number =>
 export const stagger = (t: number, i: number, step = .07, dur = .7): number => at(t, dur, i * step);
 
 /* ─────────── 数字与格式 ─────────── */
-/** 里程表数字：0 → n（含小数位），带位宽（前面补 0 到 width） */
-export const rollTo = (n: number, x: number, digits = 0, width = 0): string => {
-  const v = n * clamp01(x);
-  const s = digits > 0 ? v.toFixed(digits) : String(Math.round(v));
-  return width > 0 ? s.padStart(width, '0') : s;
-};
-/** 千分位（总分钟这种大数要分组） */
-export const comma = (n: number): string => String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
 /** 「X 天 Y 小时」 */
 export const humanDur = (min: number): string => {
   const d = Math.floor(min / 1440), h = Math.floor((min % 1440) / 60);
@@ -58,11 +48,6 @@ export const humanDurShort = (min: number): string => {
 };
 /** 2022-08-10 → 2022.08.10 */
 export const dotted = (d: string): string => d.replace(/-/g, '.');
-/** 只留月日 */
-export const monthDay = (d: string): string => {
-  const [, m, dd] = d.split('-');
-  return `${Number(m)} 月 ${Number(dd)} 日`;
-};
 
 /* ─────────── 取色（画布与 DOM 同源） ─────────── */
 export interface Palette {
@@ -166,19 +151,8 @@ export function sampleText(text: string, fontPx: number, weight = 800, gap = 5):
 }
 
 /* ─────────── DOM 小工具 ─────────── */
-export const qs = <T extends HTMLElement = HTMLElement>(host: ParentNode, sel: string): T | null =>
-  host.querySelector<T>(sel);
-
 export const qsa = <T extends Element = HTMLElement>(host: ParentNode, sel: string): T[] =>
   Array.from(host.querySelectorAll<T>(sel));
-/** 一次取好的一场（每幕 perf 都长这样，避免逐帧 querySelector） */
-export const refs = <T extends HTMLElement = HTMLElement>(host: ParentNode, names: string[]): Record<string, T | null> => {
-  const out: Record<string, T | null> = {};
-  for (const n of names) out[n] = host.querySelector<T>(`[data-r="${n}"]`);
-  return out;
-};
-/** 主题/明暗变化时重取色（MutationObserver 在 engine 里挂一次） */
-export const setVar = (el: HTMLElement, name: string, v: string): void => { el.style.setProperty(name, v); };
 
 /* ─────────── 指针（鼠标那一层：命中判定 + 跟随浮签） ───────────
    引擎把指针交给**当前这一幕**：`cx/cy` 是客户端坐标（命中判定、浮签定位用），

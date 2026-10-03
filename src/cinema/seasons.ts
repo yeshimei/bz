@@ -44,7 +44,7 @@ export function seasonNumber(raw: string): number | null {
 const SEASON_RE = /(?:第\s*([0-9]+|[零一二三四五六七八九十]+)\s*季)|(?:season\s*([0-9]+))/i;
 
 /** 名称归一结果：base = 剥掉季标记后的片名，season = 季号 */
-export interface SeasonNameParts {
+interface SeasonNameParts {
   base: string;
   season: number;
 }
@@ -129,7 +129,7 @@ export interface SeriesCard {
 }
 
 /** 普通卡（电影/单季剧/未参与合并的一切条目） */
-export interface SingleCard {
+interface SingleCard {
   kind: 'single';
   item: CinemaItem;
 }

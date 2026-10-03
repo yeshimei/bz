@@ -4,6 +4,7 @@
 import type { App, TFile } from 'obsidian';
 import { ALL_TAGS, getGroupSafe, REWATCH_SHELF, STATUS_WANT, STATUS_WATCHING, STATUS_WATCHED } from './constants';
 import { extractMovieName } from './douban-fetcher';
+import { statusNum } from './shared';
 import type { CinemaItem } from './state';
 import { M } from './state';
 
@@ -78,7 +79,7 @@ export function parseMovieFile(file: TFile, app: App): CinemaItem | null {
   const stRaw = typeof fm['状态'] === 'string' ? (fm['状态'] as string).trim() : '';
   let status: number;
   if (stRaw === '想看' || stRaw === '在看' || stRaw === '已看') {
-    status = stRaw === '想看' ? STATUS_WANT : stRaw === '在看' ? STATUS_WATCHING : STATUS_WATCHED;
+    status = statusNum(stRaw);
   } else {
     status = ratingNum === -1 ? STATUS_WANT : ratingNum === 0 ? STATUS_WATCHING : STATUS_WATCHED;
   }
@@ -206,7 +207,8 @@ export function applySortMode(list: CinemaItem[], mode: string): CinemaItem[] {
 export function getDisplayItems(): CinemaItem[] {
   let list = [...M.items];
   if (M.typeFilter) list = list.filter((it) => it.group === M.typeFilter);
-  if (M.statusFilter) list = list.filter((it) => it.status === (M.statusFilter === '想看' ? STATUS_WANT : M.statusFilter === '在看' ? STATUS_WATCHING : STATUS_WATCHED));
+  const sf = M.statusFilter;
+  if (sf) list = list.filter((it) => it.status === statusNum(sf));
   if (M.listFilter) list = list.filter((it) => it.lists.includes(M.listFilter as string));
   // 片单收纳条目只在片单视图出现（2026-09-30 拍板：一键导入不混入正常影视视图）——
   // 无片单筛选时（全部/类型/状态/搜索）整体排除

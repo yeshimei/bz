@@ -104,7 +104,7 @@ function fetchDepsFromSettings(app: App): DoubanFetchDeps {
 }
 
 /** 表单「解析」查询器类型（测试注入面）。sid 可选：本地名称索引命中时携带（issue 498） */
-export type PreviewQuery = (app: App, name: string, sid?: string) => Promise<DoubanQueryOutcome>;
+type PreviewQuery = (app: App, name: string, sid?: string) => Promise<DoubanQueryOutcome>;
 /** 测试注入：解析查询器（默认走真 queryDoubanByName） */
 let previewFn: PreviewQuery | null = null;
 
@@ -123,7 +123,7 @@ export async function queryDoubanForPreview(app: App, name: string, sid?: string
 }
 
 /** 保存海报的注入面（测试用；默认走真下载） */
-export type PreviewPosterSave = (app: App, name: string, posterUrl: string) => Promise<string | null>;
+type PreviewPosterSave = (app: App, name: string, posterUrl: string) => Promise<string | null>;
 /** 测试注入：保存海报落库（默认走真 downloadPosterToVault） */
 let posterFn: PreviewPosterSave | null = null;
 
