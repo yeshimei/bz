@@ -332,8 +332,8 @@ describe('G8：删除影片出队豆瓣抓取队列', () => {
   });
 
   function seedTwo(vault: MockVault) {
-    vault.files.set('我的/影视/《甲》.md', '---\ntags: [电影]\n评分: -1\n---');
-    vault.files.set('我的/影视/《乙》.md', '---\ntags: [电影]\n评分: -1\n---');
+    vault.files.set('我的/影视/《甲》.md', '---\ntags: [电影]\n状态: 想看\n---');
+    vault.files.set('我的/影视/《乙》.md', '---\ntags: [电影]\n状态: 想看\n---');
     const app = mockAppWithVault(vault);
     rebuildItems(app);
     return M.items.slice();
@@ -428,7 +428,7 @@ describe('G8：删除影片出队豆瓣抓取队列', () => {
     expect(getNoticeMessages()).toEqual([]); // 静默：不进失败聚合（外部删除是用户意图，文案「会自动重试」对它不成立）
     expect(isFetching(path)).toBe(false);
     // attempted 已清：同名重建（同路径）可重新入队补抓（对齐 G8/C10 语义）
-    vault.files.set(path, '---\ntags: [电影]\n评分: -1\n---');
+    vault.files.set(path, '---\ntags: [电影]\n状态: 想看\n---');
     const rebuilt = M.appRef!.vault.getAbstractFileByPath(path) as any;
     expect(enqueueDoubanFetch(rebuilt, '甲')).toBe(true);
   });

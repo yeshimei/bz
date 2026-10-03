@@ -21,10 +21,10 @@ function item(p: Partial<CinemaItem> & { name: string }): CinemaItem {
     typeTag: p.typeTag ?? '电影',
     group: p.group ?? '电影',
     watchDate: p.watchDate ?? null,
-    // 已看日期（issue 536）：年书各轴读它。夹具按 data.ts 的口径补——**已看态**缺省回落观影日期
-    //（老笔记就是这么被兜住的）；想看/在看条目一律 null，下面那两条「有日期却没看过」的老毛病照留，
+    // 已看日期（issue 536）：年书各轴读它。data.ts 只认「已看日期」键（观影日期回落已随兼容层移除），
+    // 夹具按新契约显式给值；想看/在看条目一律 null，下面那两条「有日期却没看过」的老毛病照留，
     // 用来钉「年书只收已看」
-    watchedDate: p.watchedDate ?? ((p.status ?? STATUS_WATCHED) === STATUS_WATCHED ? p.watchDate ?? null : null),
+    watchedDate: p.watchedDate ?? null,
     rating: p.rating ?? null,
     status: p.status ?? STATUS_WATCHED,
     wantDate: p.wantDate ?? null,
@@ -50,14 +50,14 @@ function item(p: Partial<CinemaItem> & { name: string }): CinemaItem {
 }
 
 const FIXTURE: CinemaItem[] = [
-  item({ name: '长片', watchDate: '2024-04-08', rating: 9.5, doubanRating: '8.5', duration: '124分钟', genre: '剧情 / 科幻', region: '美国 / 日本', director: '甲', actors: 'A / B', year: '2023', review: '喜欢这部片子的每一个镜头', hotComment: '这条短评够长了可以进弹幕' }),
-  item({ name: '短片', watchDate: '2024-04-09', rating: 5, doubanRating: '8.6', duration: '4分钟', genre: '剧情', region: '美国', director: '甲', actors: 'B', year: '2020' }),
-  item({ name: '老片', watchDate: '2024-04-10', rating: 3, doubanRating: '9.1', duration: '201分钟', genre: '动画', region: '日本', director: '乙', actors: 'C', year: '1915' }),
-  item({ name: '剧集 第一季', watchDate: '2024-05-01', rating: 8, doubanRating: '7.9', duration: '45分钟/集', seasonText: '13', genre: '剧情', region: '中国大陆', director: '丙', actors: 'A', typeTag: '美剧', group: '美剧' }),
-  item({ name: '剧集 第二季', watchDate: '2024-05-02', rating: 8.5, doubanRating: '8.1', duration: '45分钟/集', seasonText: '10X', genre: '剧情', region: '中国大陆', director: '丙', actors: 'A', typeTag: '美剧', group: '美剧' }),
+  item({ name: '长片', watchDate: '2024-04-08', watchedDate: '2024-04-08', rating: 9.5, doubanRating: '8.5', duration: '124分钟', genre: '剧情 / 科幻', region: '美国 / 日本', director: '甲', actors: 'A / B', year: '2023', review: '喜欢这部片子的每一个镜头', hotComment: '这条短评够长了可以进弹幕' }),
+  item({ name: '短片', watchDate: '2024-04-09', watchedDate: '2024-04-09', rating: 5, doubanRating: '8.6', duration: '4分钟', genre: '剧情', region: '美国', director: '甲', actors: 'B', year: '2020' }),
+  item({ name: '老片', watchDate: '2024-04-10', watchedDate: '2024-04-10', rating: 3, doubanRating: '9.1', duration: '201分钟', genre: '动画', region: '日本', director: '乙', actors: 'C', year: '1915' }),
+  item({ name: '剧集 第一季', watchDate: '2024-05-01', watchedDate: '2024-05-01', rating: 8, doubanRating: '7.9', duration: '45分钟/集', seasonText: '13', genre: '剧情', region: '中国大陆', director: '丙', actors: 'A', typeTag: '美剧', group: '美剧' }),
+  item({ name: '剧集 第二季', watchDate: '2024-05-02', watchedDate: '2024-05-02', rating: 8.5, doubanRating: '8.1', duration: '45分钟/集', seasonText: '10X', genre: '剧情', region: '中国大陆', director: '丙', actors: 'A', typeTag: '美剧', group: '美剧' }),
   item({ name: '想看片', status: STATUS_WANT, rating: -1, watchDate: '2024-05-03', genre: '喜剧' }),
   item({ name: '在看片', status: STATUS_WATCHING, rating: 0, watchDate: '2024-05-04', genre: '喜剧' }),
-  item({ name: '没片长', watchDate: '2024-06-01', rating: 7, genre: '喜剧', region: '法国' }),
+  item({ name: '没片长', watchDate: '2024-06-01', watchedDate: '2024-06-01', rating: 7, genre: '喜剧', region: '法国' }),
 ];
 
 describe('观影志 · 片长/季集解析（只认字段里真有的数）', () => {
@@ -87,7 +87,7 @@ describe('观影志 · 片长/季集解析（只认字段里真有的数）', ()
   it('dayOf 只取日期位（已看日期带时刻的）；没看过的条目给 null（观影日期是排序戳，不算数）', () => {
     expect(dayOf(item({ name: 'x', watchedDate: '2026-09-22 02:39:25' }))).toBe('2026-09-22');
     expect(dayOf(item({ name: 'x' }))).toBeNull();
-    expect(dayOf(item({ name: 'x', watchDate: '2026-09-22' }))).toBe('2026-09-22'); // 已看态缺新键 → 回落观影日期
+    expect(dayOf(item({ name: 'x', watchDate: '2026-09-22' }))).toBeNull(); // 无已看日期键 → null（观影日期回落已随兼容层移除）
   });
 });
 
@@ -214,7 +214,7 @@ describe('观影志 · 版式（25 幕共用一套骨架）', () => {
 
   it('用户文本一律转义（片名/影评/短评/导演都不许漏标签进来）', () => {
     const nasty = deriveYb([
-      item({ name: '<img src=x onerror=alert(1)>', watchDate: '2024-01-01', rating: 8, review: '<b>粗</b>', hotComment: '<script>alert(1)</script> 够长的短评', director: 'a<b>', genre: '<i>怪</i>', region: 'x&y', duration: '90分钟' }),
+      item({ name: '<img src=x onerror=alert(1)>', watchDate: '2024-01-01', watchedDate: '2024-01-01', rating: 8, review: '<b>粗</b>', hotComment: '<script>alert(1)</script> 够长的短评', director: 'a<b>', genre: '<i>怪</i>', region: 'x&y', duration: '90分钟' }),
     ]);
     const out = yearbookHtml(nasty, () => null);
     expect(out).not.toContain('<script>alert(1)</script>');
@@ -232,9 +232,9 @@ describe('观影志 · 版式（25 幕共用一套骨架）', () => {
   });
 
   it('海报位：有海报出 img，没有出散列色块（不留空框）', () => {
-    const withPoster = yearbookHtml(deriveYb([item({ name: '有图', watchDate: '2024-01-01', rating: 8, poster: 'CONFIG/x.jpg' })]), () => 'app://x.jpg');
+    const withPoster = yearbookHtml(deriveYb([item({ name: '有图', watchDate: '2024-01-01', watchedDate: '2024-01-01', rating: 8, poster: 'CONFIG/x.jpg' })]), () => 'app://x.jpg');
     expect(withPoster).toContain('<img');
-    const noPoster = yearbookHtml(deriveYb([item({ name: '没图', watchDate: '2024-01-01', rating: 8 })]), () => null);
+    const noPoster = yearbookHtml(deriveYb([item({ name: '没图', watchDate: '2024-01-01', watchedDate: '2024-01-01', rating: 8 })]), () => null);
     expect(noPoster).toContain('class="yb-ph"');
   });
 });

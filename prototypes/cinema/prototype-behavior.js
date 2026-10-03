@@ -1,4 +1,4 @@
-/* 源指纹 af9e889c173d0770 · 仓内输入 79 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 2f0ea86087e432ae · 仓内输入 79 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/cinema/fake-sim.ts","prototypes/cinema/fake/fake-obsidian.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/douban-fetcher.ts","src/cinema/douban-queue.ts","src/cinema/index.ts","src/cinema/layouts/midnight/render.ts","src/cinema/motion.ts","src/cinema/recommend.ts","src/cinema/render.ts","src/cinema/seasons.ts","src/cinema/shared.ts","src/cinema/state.ts","src/cinema/type-decide.ts","src/cinema/ui.ts","src/cinema/yearbook/data.ts","src/cinema/yearbook/engine.ts","src/cinema/yearbook/index.ts","src/cinema/yearbook/kits.ts","src/cinema/yearbook/motions.ts","src/cinema/yearbook/scenes.ts","src/core/ai.ts","src/core/app.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/douban-name-index.ts","src/core/download-manifest.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/gesture.ts","src/core/http.ts","src/core/item-actions.ts","src/core/jev-fallback.ts","src/core/jev.ts","src/core/landscape.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/remote-asset.ts","src/core/remote-base.ts","src/core/settings-provider.ts","src/core/sha256.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/help-tip.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slide-pill.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/cinema/fake-sim.ts → window.BZW_cinema（行为单源预览包，issue 245/ADR-0106） */
 var BZW_cinema = (() => {
@@ -39,9 +39,9 @@ var BZW_cinema = (() => {
   ));
   var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
 
-  // node_modules/.pnpm/moment@2.30.1/node_modules/moment/moment.js
+  // ../../bz/node_modules/.pnpm/moment@2.30.1/node_modules/moment/moment.js
   var require_moment = __commonJS({
-    "node_modules/.pnpm/moment@2.30.1/node_modules/moment/moment.js"(exports, module) {
+    "../../bz/node_modules/.pnpm/moment@2.30.1/node_modules/moment/moment.js"(exports, module) {
       (function(global, factory) {
         typeof exports === "object" && typeof module !== "undefined" ? module.exports = factory() : typeof define === "function" && define.amd ? define(factory) : global.moment = factory();
       })(exports, function() {
@@ -6821,17 +6821,10 @@ var BZW_cinema = (() => {
       typeTag = tags[0];
     }
     const watchDate = (_b = (_a = fm["观影日期"]) == null ? void 0 : _a.toString()) != null ? _b : null;
-    const watchedRaw = (_d = (_c = fm["已看日期"]) == null ? void 0 : _c.toString()) != null ? _d : null;
     const rawRating = fm["评分"];
     const ratingNum = rawRating === void 0 || rawRating === null || rawRating === "" ? null : Number(rawRating);
-    const stRaw = typeof fm["状态"] === "string" ? fm["状态"].trim() : "";
-    let status;
-    if (stRaw === "想看" || stRaw === "在看" || stRaw === "已看") {
-      status = statusNum(stRaw);
-    } else {
-      status = ratingNum === -1 ? STATUS_WANT : ratingNum === 0 ? STATUS_WATCHING : STATUS_WATCHED;
-    }
-    const rating = ratingNum !== null && ratingNum > 0 ? ratingNum : null;
+    const status = statusNum(typeof fm["状态"] === "string" ? fm["状态"].trim() : "");
+    const rating = ratingNum;
     return {
       file,
       name,
@@ -6841,12 +6834,11 @@ var BZW_cinema = (() => {
       rating,
       status,
       // 状态日期（想看日期/在看日期）：旧笔记无键 = null，不参与显示
-      wantDate: (_f = (_e = fm["想看日期"]) == null ? void 0 : _e.toString()) != null ? _f : null,
-      watchingDate: (_h = (_g = fm["在看日期"]) == null ? void 0 : _g.toString()) != null ? _h : null,
-      // 已看日期（issue 536）：新键优先；旧笔记无键但状态已是已看 → 回落观影日期
-      //（那时观影日期就是当初标记已看盖的章），故未迁移的老笔记/手写笔记照旧显示得出已看日。
-      // 非已看态一律 null：一条刚导入的在看条目不该凭空冒出一个「已看」日（幽灵节点的根）
-      watchedDate: watchedRaw != null ? watchedRaw : status === STATUS_WATCHED ? watchDate : null,
+      wantDate: (_d = (_c = fm["想看日期"]) == null ? void 0 : _c.toString()) != null ? _d : null,
+      watchingDate: (_f = (_e = fm["在看日期"]) == null ? void 0 : _e.toString()) != null ? _f : null,
+      // 已看日期（issue 536）只读新键；观影日期回落已随兼容层移除（2026-10-03，库核验 665 篇已看笔记均已带此键，零回填）。
+      // 非已看态无键自然为 null——一条没看过的条目不许凭空出「已看」日（幽灵节点教训保留）
+      watchedDate: (_h = (_g = fm["已看日期"]) == null ? void 0 : _g.toString()) != null ? _h : null,
       rewatches: normalizeRewatches(fm["重看"]),
       lists: normalizeLists(fm["片单"]),
       shelvedOnly: fm["片单收纳"] === true,

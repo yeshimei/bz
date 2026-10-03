@@ -10,8 +10,8 @@
  *     create/modify/delete/rename 转译为 vault:md-* / cinema:file-* 域事件——
  *     跨 iframe storage 桥 + 防抖自动刷新与插件同一条链；
  *   - 种子数据：window.CINEMA_DATA（prototype-data.js，真实库 50 部同构快照）或评审壳
- *     父页同名全局，首启转写成 fake vault 的 `我的/影视/《片名》.md`（状态 → 评分口径：
- *     想看=-1 / 在看=0 / 已看=评分值；ctime 按导出序递减 → 「加入先后」排序 = 导出序）；
+ *     父页同名全局，首启转写成 fake vault 的 `我的/影视/《片名》.md`（状态单源键「状态」，
+ *     评分只在已看真分值落键，与下方 mdOf 同口径；ctime 按导出序递减 → 「加入先后」排序 = 导出序）；
  *   - 设置注入：setSettingsProvider（真 settings-provider 实现可用，注入 cinema 实际键）；
  *     AI 设置同一 store（无密钥 → AI 荐片走页内降级，原型不碰真 AI）。
  *

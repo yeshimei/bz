@@ -70,12 +70,12 @@ tags: [美剧]
 ---`));
   vault.files.set('我的/影视/《瑞克和莫蒂》.md', md(`---
 tags: [美漫]
-评分: 0
+状态: 在看
 观影日期: 2026-06-01
 ---`));
   vault.files.set('我的/影视/《想看片》.md', md(`---
 tags: [电影]
-评分: -1
+状态: 想看
 观影日期: 2026-05-01
 ---`));
   const app = makeApp(vault);
@@ -1239,12 +1239,12 @@ tags: [美剧]
 ---`));
     vault.files.set('我的/影视/《老友记 第二季》.md', md(`---
 tags: [美剧]
-评分: 0
+状态: 在看
 观影日期: 2026-08-18
 ---`));
     vault.files.set('我的/影视/《老友记 第三季》.md', md(`---
 tags: [美剧]
-评分: -1
+状态: 想看
 观影日期:
 ---`));
     vault.files.set('我的/影视/《奥本海默》.md', md(`---
@@ -1340,11 +1340,11 @@ tags: [电影]
     expect(root.querySelectorAll('.s-row')).toHaveLength(3);
   });
 
-  /** 老友记两季（已看 9.2 / 在看 0）+ 电影版特别篇 = 3 篇笔记 → 合并后 1 张合集卡 */
+  /** 老友记两季（已看 9.2 / 在看）+ 电影版特别篇 = 3 篇笔记 → 合并后 1 张合集卡 */
   function seedSpecial(): { app: ReturnType<typeof mockAppWithVault> } {
     const vault = new MockVault();
     vault.files.set('我的/影视/《老友记 第一季》.md', md('---\ntags: [美剧]\n评分: 9.2\n观影日期: 2026-06-18\n---'));
-    vault.files.set('我的/影视/《老友记 第二季》.md', md('---\ntags: [美剧]\n评分: 0\n观影日期: 2026-08-18\n---'));
+    vault.files.set('我的/影视/《老友记 第二季》.md', md('---\ntags: [美剧]\n状态: 在看\n观影日期: 2026-08-18\n---'));
     vault.files.set('我的/影视/《老友记：重聚特辑》.md', md('---\ntags: [电影]\n评分: 8.6\n观影日期: 2026-09-19\n---'));
     const app = makeApp(vault);
     ensureCinema(app);
@@ -1726,7 +1726,7 @@ tags: [电影]
     Platform.isMobile = true;
     const vault = new MockVault();
     vault.files.set('我的/影视/《老友记 第一季》.md', md('---\ntags: [美剧]\n评分: 9.2\n观影日期: 2026-06-18\n---'));
-    vault.files.set('我的/影视/《老友记 第二季》.md', md('---\ntags: [美剧]\n评分: 0\n观影日期: 2026-08-18\n---'));
+    vault.files.set('我的/影视/《老友记 第二季》.md', md('---\ntags: [美剧]\n状态: 在看\n观影日期: 2026-08-18\n---'));
     const app = makeApp(vault);
     ensureCinema(app);
     rebuildItems(app);
@@ -2269,7 +2269,7 @@ tags: [美剧]
 ---`));
     vault.files.set('我的/影视/《老友记 第二季》.md', md(`---
 tags: [美剧]
-评分: 0
+状态: 在看
 观影日期: 2026-08-18
 上映日期: 1996-09-19
 ---`));
@@ -3269,8 +3269,8 @@ tags: [电影]
   it('合并卡未看、成员也不在架 → 无重映厅行（沿用单条目已看门控）', () => {
     setSettingsProvider(() => ({ cinemaMergeSeasons: true } as any));
     const vault = new MockVault();
-    vault.files.set('我的/影视/《老友记 第一季》.md', md('---\ntags: [美剧]\n评分: 0\n观影日期: 2026-01-18\n---'));
-    vault.files.set('我的/影视/《老友记 第二季》.md', md('---\ntags: [美剧]\n评分: 0\n观影日期: 2026-02-18\n---'));
+    vault.files.set('我的/影视/《老友记 第一季》.md', md('---\ntags: [美剧]\n状态: 在看\n观影日期: 2026-01-18\n---'));
+    vault.files.set('我的/影视/《老友记 第二季》.md', md('---\ntags: [美剧]\n状态: 在看\n观影日期: 2026-02-18\n---'));
     const app = makeApp(vault);
     ensureCinema(app);
     rebuildItems(app);
@@ -3283,8 +3283,8 @@ tags: [电影]
     setSettingsProvider(() => ({ cinemaMergeSeasons: true } as any));
     const { app } = (() => {
       const vault = new MockVault();
-      vault.files.set('我的/影视/《老友记 第一季》.md', md('---\ntags: [美剧]\n评分: 0\n观影日期: 2026-01-18\n片单:\n- 重映厅\n---'));
-      vault.files.set('我的/影视/《老友记 第二季》.md', md('---\ntags: [美剧]\n评分: 0\n观影日期: 2026-02-18\n---'));
+      vault.files.set('我的/影视/《老友记 第一季》.md', md('---\ntags: [美剧]\n状态: 在看\n观影日期: 2026-01-18\n片单:\n- 重映厅\n---'));
+      vault.files.set('我的/影视/《老友记 第二季》.md', md('---\ntags: [美剧]\n状态: 在看\n观影日期: 2026-02-18\n---'));
       const app = makeApp(vault);
       ensureCinema(app);
       rebuildItems(app);
@@ -3330,7 +3330,7 @@ tags: [电影]
     put('《星际穿越》.md', '电影', '9.6', inList);
     put('《盗梦空间》.md', '电影', '9.2', inList);
     put('《绝命毒师》.md', '美剧', '9.4');
-    put('《想看片》.md', '电影', '-1');
+    vault.files.set('我的/影视/《想看片》.md', md(`---\ntags: [电影]\n状态: 想看\n观影日期: 2026-08-01\n---`));
     const app = makeApp(vault);
     ensureCinema(app);
     rebuildItems(app);
@@ -3368,7 +3368,7 @@ tags: [电影]
  * 根因：frontmatter「观影日期」兼着**排序时间戳**（建档/导入/标记在看都会刷），渲染层却拿它当
  * 「哪天看的」——一条刚导入的在看条目于是凭空多出一行「已看」。修法 = 拆分：观影日期继续当排序戳，
  * 真看过的日子记在独立的「已看日期」键上（只增不删，同另两个状态日期）。这一段钉三条链路：
- * 写盘不误落 / 解析能兜住老笔记 / 手动建档带上。
+ * 写盘不误落 / 解析只认显式键（回落观影日期已随兼容层移除）/ 手动建档带上。
  */
 describe('已看日期（issue 536）', () => {
   beforeEach(() => { resetObsidianMocks(); resetCinemaState(); document.body.innerHTML = ''; });
@@ -3397,7 +3397,7 @@ describe('已看日期（issue 536）', () => {
     const { app, vault } = seedVault();
     createOverlay(app);
     const root = document.querySelector('[data-cinema-root]') as HTMLElement;
-    clickEl(pcardByName(root, '瑞克和莫蒂')); // 评分 0 → 在看，无已看日期
+    clickEl(pcardByName(root, '瑞克和莫蒂')); // 在看态：无已看日期
     clickEl((root.querySelector('.cn-modal') as HTMLElement).querySelector('.j-edit'));
     let form = root.querySelector('.cn-modal') as HTMLElement;
     clickEl(form.querySelector('[data-f-st="已看"]'));
@@ -3419,10 +3419,10 @@ describe('已看日期（issue 536）', () => {
     expect(M.items.find((i) => i.name === '瑞克和莫蒂')!.watchedDate).toBe(stamped);
   });
 
-  it('解析：已看态无新键回落观影日期（老笔记兜住），非已看态即便带日期也不算看过', () => {
+  it('解析：已看日期只认显式键（回落观影日期已随兼容层移除），非已看态即便带日期也不算看过', () => {
     const { app, vault } = seedVault();
     const byName = (n: string): string | null => M.items.find((i) => i.name === n)!.watchedDate;
-    expect(byName('星际穿越')).toBe('2026-08-01'); // 已看（评分编码）无新键 → 回落观影日期
+    expect(byName('星际穿越')).toBeNull();         // 已看（无状态键默认）无已看日期键 → null：回落已移除
     expect(byName('瑞克和莫蒂')).toBeNull();       // 在看：观影日期只是排序戳
     expect(byName('想看片')).toBeNull();
 

@@ -310,7 +310,7 @@ async function runOn(vault: MockVault, deps: DoubanFetchDeps) {
 describe('fetchNoteDouban 端到端（fake 注入）', () => {
   it('主链：suggest 检索 + ApiZero 字段 + 海报写盘 + embed + frontmatter 落盘', async () => {
     const vault = new MockVault();
-    vault.files.set(FILE_PATH, '---\ntags:\n  - 电影\n评分: -1\n---');
+    vault.files.set(FILE_PATH, '---\ntags:\n  - 电影\n状态: 想看\n---');
     const { deps } = makeDeps({ vault, apizeroKey: 'sk_test', posterBytes: new ArrayBuffer(1024) });
     const r = await runOn(vault, deps);
     expect(r).toEqual({ ok: true });
@@ -340,7 +340,7 @@ describe('fetchNoteDouban 端到端（fake 注入）', () => {
 
   it('自定义海报文件夹（cinemaPosterFolder）：mkdir/写盘/海报键/embed 全走该目录；空白回落默认', async () => {
     const vault = new MockVault();
-    vault.files.set(FILE_PATH, '---\ntags:\n  - 电影\n评分: -1\n---');
+    vault.files.set(FILE_PATH, '---\ntags:\n  - 电影\n状态: 想看\n---');
     const { deps } = makeDeps({ vault, apizeroKey: 'sk_test', posterBytes: new ArrayBuffer(8), posterFolder: '我的/海报墙' });
     const r = await runOn(vault, deps);
     expect(r).toEqual({ ok: true });
@@ -353,7 +353,7 @@ describe('fetchNoteDouban 端到端（fake 注入）', () => {
 
     // 空白串 → 回落默认目录
     const vault2 = new MockVault();
-    vault2.files.set(FILE_PATH, '---\ntags: [电影]\n评分: -1\n---');
+    vault2.files.set(FILE_PATH, '---\ntags: [电影]\n状态: 想看\n---');
     const { deps: deps2 } = makeDeps({ vault: vault2, posterBytes: new ArrayBuffer(8), posterFolder: '   ' });
     await runOn(vault2, deps2);
     expect(vault2.files.get(FILE_PATH)).toContain(`海报: "${POSTER_FOLDER}/流浪地球2_1700000000000.jpg"`);
@@ -361,7 +361,7 @@ describe('fetchNoteDouban 端到端（fake 注入）', () => {
 
   it('无 key：字段落 rexxar 兜底（导演/编剧/主演），无评分', async () => {
     const vault = new MockVault();
-    vault.files.set(FILE_PATH, '---\ntags: [电影]\n评分: -1\n---');
+    vault.files.set(FILE_PATH, '---\ntags: [电影]\n状态: 想看\n---');
     const { deps } = makeDeps({ vault, posterBytes: new ArrayBuffer(1) });
     const r = await runOn(vault, deps);
     expect(r).toEqual({ ok: true });
@@ -374,7 +374,7 @@ describe('fetchNoteDouban 端到端（fake 注入）', () => {
 
   it('有 key 但 ApiZero 缺导演/主演 → rexxar 补齐（编剧仍出）', async () => {
     const vault = new MockVault();
-    vault.files.set(FILE_PATH, '---\ntags: [电影]\n评分: -1\n---');
+    vault.files.set(FILE_PATH, '---\ntags: [电影]\n状态: 想看\n---');
     const vaultDeps = makeDeps({ vault, apizeroKey: 'sk_test', posterBytes: new ArrayBuffer(1) });
     // ApiZero 只回评分，无导演/主演
     vaultDeps.deps.httpGet = async (url) => {
@@ -418,7 +418,7 @@ describe('fetchNoteDouban 端到端（fake 注入）', () => {
 
   it('三路检索链（回归「让子弹飞」）：suggest 软拒绝空 → rexxar search 命中', async () => {
     const vault = new MockVault();
-    vault.files.set(FILE_PATH, '---\ntags: [电影]\n评分: -1\n---');
+    vault.files.set(FILE_PATH, '---\ntags: [电影]\n状态: 想看\n---');
     const { deps } = makeDeps({ vault, apizeroKey: 'k', posterBytes: new ArrayBuffer(1) });
     deps.httpGet = async (url) => {
       if (url.includes('subject_suggest')) return '[]'; // 200+空数组软拒绝（频控形态）
@@ -435,7 +435,7 @@ describe('fetchNoteDouban 端到端（fake 注入）', () => {
 
   it('三路检索链：前两路空 → 搜索页命中；全空 → notfound', async () => {
     const vault = new MockVault();
-    vault.files.set(FILE_PATH, '---\ntags: [电影]\n评分: -1\n---');
+    vault.files.set(FILE_PATH, '---\ntags: [电影]\n状态: 想看\n---');
     const { deps } = makeDeps({ vault, apizeroKey: 'k', posterBytes: new ArrayBuffer(1) });
     deps.httpGet = async (url) => {
       if (url.includes('subject_suggest')) return '[]';
@@ -450,7 +450,7 @@ describe('fetchNoteDouban 端到端（fake 注入）', () => {
 
     // 全空（无一路被拦）→ notfound（搜索页用空态页表达「真没有」——短响应会被判 blocked）
     const vault2 = new MockVault();
-    vault2.files.set(FILE_PATH, '---\ntags: [电影]\n评分: -1\n---');
+    vault2.files.set(FILE_PATH, '---\ntags: [电影]\n状态: 想看\n---');
     const d2 = makeDeps({ vault: vault2, apizeroKey: 'k' });
     d2.deps.httpGet = async (url) => {
       if (url.includes('subject_suggest')) return '[]';
@@ -464,7 +464,7 @@ describe('fetchNoteDouban 端到端（fake 注入）', () => {
 
   it('三路检索链：前路被拦后路命中 → 成功；全被拦 → blocked', async () => {
     const vault = new MockVault();
-    vault.files.set(FILE_PATH, '---\ntags: [电影]\n评分: -1\n---');
+    vault.files.set(FILE_PATH, '---\ntags: [电影]\n状态: 想看\n---');
     const { deps } = makeDeps({ vault, apizeroKey: 'k', posterBytes: new ArrayBuffer(1) });
     // suggest null（明确被拦）→ rexxar search 命中：blocked 不短路
     deps.httpGet = async (url) => {
@@ -477,14 +477,14 @@ describe('fetchNoteDouban 端到端（fake 注入）', () => {
 
     // 全路 null → blocked（有路被拦，提示「稍后再试」）
     const vault2 = new MockVault();
-    vault2.files.set(FILE_PATH, '---\ntags: [电影]\n评分: -1\n---');
+    vault2.files.set(FILE_PATH, '---\ntags: [电影]\n状态: 想看\n---');
     const d2 = makeDeps({ vault: vault2, apizeroKey: 'k' });
     d2.deps.httpGet = async () => null;
     expect(await runOn(vault2, d2.deps)).toEqual({ ok: false, reason: 'blocked' });
 
     // 全路风控页/风控形态 → blocked
     const vault3 = new MockVault();
-    vault3.files.set(FILE_PATH, '---\ntags: [电影]\n评分: -1\n---');
+    vault3.files.set(FILE_PATH, '---\ntags: [电影]\n状态: 想看\n---');
     const d3 = makeDeps({ vault: vault3, apizeroKey: 'k' });
     d3.deps.httpGet = async () => '<html><title>豆瓣</title>有异常请求</html>';
     expect(await runOn(vault3, d3.deps)).toEqual({ ok: false, reason: 'blocked' });
@@ -492,7 +492,7 @@ describe('fetchNoteDouban 端到端（fake 注入）', () => {
 
   it('检索被拦/失败形态 + 海报下载失败 → network、写盘失败 → write（C6 拆分）', async () => {
     const vault = new MockVault();
-    vault.files.set(FILE_PATH, '---\ntags: [电影]\n评分: -1\n---');
+    vault.files.set(FILE_PATH, '---\ntags: [电影]\n状态: 想看\n---');
     const { deps } = makeDeps({ vault, apizeroKey: 'k' });
 
     deps.httpGet = async () => SUGGEST_JSON;
@@ -509,7 +509,7 @@ describe('fetchNoteDouban 端到端（fake 注入）', () => {
 
   it('C6：检索 httpGet reject → network（不误报风控）', async () => {
     const vault = new MockVault();
-    vault.files.set(FILE_PATH, '---\ntags: [电影]\n评分: -1\n---');
+    vault.files.set(FILE_PATH, '---\ntags: [电影]\n状态: 想看\n---');
     const { deps } = makeDeps({ vault, apizeroKey: 'k' });
 
     deps.httpGet = async () => { throw new Error('ECONNREFUSED'); };
@@ -547,7 +547,7 @@ describe('fetchNoteDouban 端到端（fake 注入）', () => {
 
   it('存量退役字段（语言/又名/IMDb/简介）不被清除；已有上映日期/季集不被覆盖', async () => {
     const vault = new MockVault();
-    vault.files.set(FILE_PATH, '---\ntags: [电影]\n评分: -1\n语言: 汉语\n又名: 流浪地球贰\nIMDb: tt123\n简介: 旧简介\n上映日期: 2023-01-22\n季集: "3"\n---');
+    vault.files.set(FILE_PATH, '---\ntags: [电影]\n状态: 想看\n语言: 汉语\n又名: 流浪地球贰\nIMDb: tt123\n简介: 旧简介\n上映日期: 2023-01-22\n季集: "3"\n---');
     const { deps } = makeDeps({ vault, apizeroKey: 'sk_test', posterBytes: new ArrayBuffer(1) });
     await runOn(vault, deps);
     const content = vault.files.get(FILE_PATH)!;
@@ -561,7 +561,7 @@ describe('fetchNoteDouban 端到端（fake 注入）', () => {
 
   it('C1：is_tv 剧集不写季集（ApiZero episodes 是总集数非季数，撤回该扩展）', async () => {
     const vault = new MockVault();
-    vault.files.set(FILE_PATH, '---\ntags: [电影]\n评分: -1\n---');
+    vault.files.set(FILE_PATH, '---\ntags: [电影]\n状态: 想看\n---');
     const vaultDeps = makeDeps({ vault, apizeroKey: 'sk_test', posterBytes: new ArrayBuffer(1) });
     vaultDeps.deps.httpGet = async (url) => {
       if (url.includes('subject_suggest')) return SUGGEST_JSON;
@@ -579,7 +579,7 @@ describe('fetchNoteDouban 端到端（fake 注入）', () => {
 
   it('C3：ApiZero 热门短评含换行 → 写回单行化，frontmatter 可解析、值可读回', async () => {
     const vault = new MockVault();
-    vault.files.set(FILE_PATH, '---\ntags: [电影]\n评分: -1\n---');
+    vault.files.set(FILE_PATH, '---\ntags: [电影]\n状态: 想看\n---');
     const vaultDeps = makeDeps({ vault, apizeroKey: 'sk_test', posterBytes: new ArrayBuffer(1) });
     vaultDeps.deps.httpGet = async (url) => {
       if (url.includes('subject_suggest')) return SUGGEST_JSON;
@@ -597,7 +597,7 @@ describe('fetchNoteDouban 端到端（fake 注入）', () => {
 
   it('C8：抓取中途文件被用户手改（补填字段/贴海报）→ 写回基于 fresh 内容复核，用户值保留', async () => {
     const vault = new MockVault();
-    vault.files.set(FILE_PATH, '---\ntags: [电影]\n评分: -1\n---');
+    vault.files.set(FILE_PATH, '---\ntags: [电影]\n状态: 想看\n---');
     const vaultDeps = makeDeps({ vault, apizeroKey: 'sk_test', posterBytes: new ArrayBuffer(1) });
     // 在搜索之后、写回之前（ApiZero 响应时机）模拟用户手改：补填上映日期/热门短评/贴海报
     const baseGet = vaultDeps.deps.httpGet;
@@ -622,7 +622,7 @@ describe('fetchNoteDouban 端到端（fake 注入）', () => {
 
   it('C9：六字段缺失才填——已有豆瓣评分/导演/主演不被 ApiZero 覆盖', async () => {
     const vault = new MockVault();
-    vault.files.set(FILE_PATH, '---\ntags: [电影]\n评分: -1\n豆瓣评分: 9.9\n导演: 用户手改\n主演: "用户 / 手选"\n---');
+    vault.files.set(FILE_PATH, '---\ntags: [电影]\n状态: 想看\n豆瓣评分: 9.9\n导演: 用户手改\n主演: "用户 / 手选"\n---');
     const { deps } = makeDeps({ vault, apizeroKey: 'sk_test', posterBytes: new ArrayBuffer(1) });
     await runOn(vault, deps);
     const content = vault.files.get(FILE_PATH)!;

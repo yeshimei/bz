@@ -16,7 +16,7 @@ import { setApp } from '../../src/core/app';
 function seedProfile(vault: MockVault) {
   vault.files.set('我的/影视/《A》.md', '---\ntags: [电影]\n评分: 5\n观影日期: 2025-06-01T10:00:00\n类型: 剧情/悬疑\n导演: 诺兰\n主演: A/B\n---');
   vault.files.set('我的/影视/《B》.md', '---\ntags: [电影]\n评分: 4\n观影日期: 2025-05-01T10:00:00\n类型: 科幻\n导演: 诺兰\n---');
-  vault.files.set('我的/影视/《C》.md', '---\ntags: [美剧]\n评分: -1\n---');
+  vault.files.set('我的/影视/《C》.md', '---\ntags: [美剧]\n状态: 想看\n---');
 }
 
 describe('cinema buildTasteProfile / prompt / parse', () => {
