@@ -165,7 +165,8 @@ export interface DockProgress {
 
 export interface DockRunRecord {
   runId: string;
-  /** auto = 系统里自己跑（离场）；manual = dock 启动（在场） */
+  /** auto = 按节奏自动跑（bz 调度器或系统计划任务拉的）；manual = 用户在面板里点的。
+   *  注意：在场/离场（有没有实时流）由「谁启动」定，与这个字段无关 —— 见 runner.ts 顶部说明。 */
   trigger: 'auto' | 'manual';
   status: DockRunStatus;
   startedAt: string;

@@ -267,6 +267,9 @@ export function closeDock(): void {
 }
 
 export function unloadDock(): void {
+  // 先把还没落盘的参数草稿写掉再拆 —— 卸载恰好在去抖窗口内时，clearTimeout 会把
+  // 最后一次输入静默丢掉（写盘是同步 fs，卸载路径里照常能完成）
+  for (const v of views) saveValuesNow(v);
   hostApp = null;
   escHandle?.unregister();
   escHandle = null;
@@ -689,7 +692,7 @@ function renderList(body: HTMLElement): void {
   }
   const auto = list.filter((v) => triggerOfView(v) === 'auto');
   const manual = list.filter((v) => triggerOfView(v) === 'manual');
-  if (auto.length) body.appendChild(section('自动化', '由系统自己按你配好的节奏跑（bz 不调度）', auto));
+  if (auto.length) body.appendChild(section('自动化', '由 bz 按你配好的节奏自动跑（到点触发、漏跑补跑）', auto));
   if (manual.length) body.appendChild(section('手动', '想起来才点一次', manual));
 }
 
@@ -968,6 +971,8 @@ function autoRow(label: string, value: string): HTMLElement {
 
 /** 取值并夹到 [lo, hi] 的整数（输入框删空 / 乱输时回落到 fallback） */
 function clampInt(raw: string, lo: number, hi: number, fallback: number): number {
+  // '' 必须先拦：Number('') === 0，会假装成合法的 0 溜过 Number.isFinite，把「删空」变成「设成下限」
+  if (raw.trim() === '') return fallback;
   const n = Number(raw);
   if (!Number.isFinite(n)) return fallback;
   return Math.min(hi, Math.max(lo, Math.round(n)));
@@ -1533,13 +1538,17 @@ function histPane(v: DockToolView): HTMLElement {
         title: v.runsUnreadable ? '记录读不懂' : '还没有运行记录',
         desc: v.runsUnreadable
           ? '文件在，但内容不合契约；工具坞只读不改'
-          : '跑一次，或等系统按它自己的节奏跑完，记录就会出现',
+          : '跑一次，或等它按声明的节奏自动跑完，记录就会出现',
       }),
     );
     return pane;
   }
   const list = el('div', 'bz-dock-histlist');
-  for (const r of v.runs.slice(0, 60)) list.appendChild(histRow(r));
+  // 文件顺序不是契约（schedule.ts 全部先按时间排再判）；「最近 60 条」得自己排，不能信落盘顺序
+  const newestFirst = [...v.runs].sort(
+    (a, b) => (timeOf(b.startedAt) ?? 0) - (timeOf(a.startedAt) ?? 0),
+  );
+  for (const r of newestFirst.slice(0, 60)) list.appendChild(histRow(r));
   pane.appendChild(list);
   if (v.runs.length > 60) pane.appendChild(el('div', 'bz-dock-note', '只显示最近 60 条'));
   return pane;
@@ -1553,7 +1562,7 @@ function histRow(r: DockRunRecord): HTMLElement {
   head.appendChild(el('span', 'bz-dock-histstatus', statusText(r.status)));
   const dur = durationText(r);
   if (dur) head.appendChild(el('span', 'bz-dock-histdur', dur));
-  head.appendChild(el('span', 'bz-dock-histtrig', r.trigger === 'auto' ? '系统' : '手动'));
+  head.appendChild(el('span', 'bz-dock-histtrig', r.trigger === 'auto' ? '自动' : '手动'));
   row.appendChild(head);
   if (r.message) row.appendChild(el('div', 'bz-dock-histmsg', r.message));
 
@@ -1634,9 +1643,11 @@ async function runFlow(v: DockToolView): Promise<void> {
   // 值先落盘再启动：工具坞发的参数与设置文件里那份必须一致，否则用户下次看到的和这次跑的不是一回事
   saveValuesNow(v);
   const values = valuesOf(v);
-  const missing = (v.manifest?.params ?? []).filter((p) => p.required && (values[p.key] === undefined || values[p.key] === ''));
+  // 与调度器同一条口径（missingRequiredParams）：手动这边放行、自动那边却报「必填参数没填」，
+  // 同一个状态两处说法不一样，人就没法对账。`null` / 空数组（multichoice 全不选）都算缺。
+  const missing = missingRequiredParams(v.manifest?.params, values);
   if (missing.length) {
-    notice(`还差必填参数：${missing.map((p) => p.label).join('、')}`, 'warning');
+    notice(`还差必填参数：${missing.join('、')}`, 'warning');
     return;
   }
 
@@ -1754,20 +1765,23 @@ async function confirmTrust(
   title: string,
   accept: string,
 ): Promise<boolean> {
-  const lines = [
-    manifest.name,
-    manifest.description ?? '',
-    '',
-    `会跑：${runTextOf(run)}`,
-    run?.cwd ? `工作目录：${run.cwd}` : '',
-    `声明文件：${declPath}`,
-    '',
-    manifest.schedule ? `节奏：${scheduleText(manifest)}（自动化；bz 会在它开着时按节奏跑）` : '节奏：未声明（手动）',
-    `参数：${manifest.params.length} 个`,
-    '',
+  // 增量构造：只跳过**缺席的可选行**（描述 / cwd），刻意的空行分段必须活着 ——
+  // 一把梭的 `.filter(s => s !== '')` 会把分隔空行一并吃掉，核对信息挤成一坨
+  const lines: string[] = [manifest.name];
+  if (manifest.description) lines.push(manifest.description);
+  lines.push('', `会跑：${runTextOf(run)}`);
+  if (run?.cwd) lines.push(`工作目录：${run.cwd}`);
+  lines.push(`声明文件：${declPath}`, '');
+  lines.push(
+    manifest.schedule
+      ? `节奏：${scheduleText(manifest)}（自动化；bz 会在它开着时按节奏跑）`
+      : '节奏：未声明（手动）',
+  );
+  lines.push(`参数：${manifest.params.length} 个`, '');
+  lines.push(
     '建立信任之后工具坞才会运行它（读声明不需要信任）。信任的对象是「那条命令」，',
     '建立一次长期有效；以后命令变了会重新问一次。',
-  ].filter((s) => s !== '');
+  );
   const v = await openFlowDialog({
     title,
     message: lines.join('\n'),
@@ -1842,6 +1856,11 @@ async function importToolFlow(entry?: DockToolEntry): Promise<void> {
   const next: DockToolEntry = { id: entry?.id ?? manifest.id, path: declPath };
   if (entry) {
     if (entry.enabled !== undefined) next.enabled = entry.enabled;
+    // bz 侧的调度状态一并沿用：重新导入是「换文件 / 刷新」，不是「重置我的配置」——
+    // 尤其 autoRun 缺省即开，丢了它等于用户特意关掉的自动化悄悄复活
+    if (entry.autoRun !== undefined) next.autoRun = entry.autoRun;
+    if (entry.scheduleOverride !== undefined) next.scheduleOverride = entry.scheduleOverride;
+    if (entry.overrideDeclSig !== undefined) next.overrideDeclSig = entry.overrideDeclSig;
     // 命令没变就沿用旧信任；变了则不带 trustedAt（下面重新问）
     const sig = run ? runSignature(run) : undefined;
     if (sig !== undefined && sig === entry.trustedRun) {
