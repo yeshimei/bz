@@ -175,7 +175,7 @@ function makeWorld(opts: WorldOpts = {}) {
   setApp(app as any);
   const store = {
     refresh: vi.fn(async () => {}),
-    vectorSearch: vi.fn(async (_query: string) => opts.hits ?? []),
+    vectorSearch: vi.fn(async (_query: string, _topK?: number, _baseUrl?: string, _signal?: AbortSignal, _opts?: { skipRerank?: boolean }) => opts.hits ?? []),
   };
   const agent = new LinkAgent({
     app: app as any,
@@ -343,6 +343,8 @@ describe('管线：related 幂等写入与可达性门', () => {
     const q1 = store.vectorSearch.mock.calls[0][0] as string;
     expect(q1.length).toBeGreaterThan(1500);
     expect(q1).toContain('论述段落。');
+    // issue 541：建链检索显式跳过重排（本链路只消费 score，重排换出的顺序与 rerankScore 在此全部作废）
+    expect(store.vectorSearch.mock.calls[0][4]).toEqual({ skipRerank: true });
     // 超长笔记：截尾到上限
     const huge = 'x'.repeat(20000);
     await agent.findCandidates('文献盒/A.md', huge);

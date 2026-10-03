@@ -666,8 +666,17 @@ export class VectorStore {
    * （零向量距离恒 1.0 → 旧公式反推 0.5 → 锐化后 78%，见 ADR-0185）。分数即原始余弦 [0,1]，
    * 与参考面板百分比同尺，不再做幂次锐化——阈值型调用方（自动关联下限 / 每周撞车）已同步换算。
    * signal（issue 428）：面板换新查询即中断本轮（嵌入请求中断 + 全扫/重排检查点让出）。
+   * opts.skipRerank（issue 541）：调用方显式声明不重排——成员集在重排前已按余弦锁死，重排只换顺序
+   * 与挂 `rerankScore`，凡是只读 `score` 的链路（建链）拿到的结果与「重排失败回退余弦序」逐条相同，
+   * 那一轮重排纯属白付耗时。判别权交给调用方，不再靠列表长度隐式区分前后台。
    */
-  async vectorSearch(query: string, topK = 20, baseUrl?: string, signal?: AbortSignal): Promise<SearchHit[]> {
+  async vectorSearch(
+    query: string,
+    topK = 20,
+    baseUrl?: string,
+    signal?: AbortSignal,
+    opts?: { skipRerank?: boolean }
+  ): Promise<SearchHit[]> {
     throwIfAborted(signal);
     const queryEmbedding = await getEmbedding(query, true, baseUrl, undefined, signal);
     throwIfAborted(signal);
@@ -713,15 +722,15 @@ export class VectorStore {
       deduped.push(item);
       if (deduped.length >= topK) break;
     }
-    return this.applyRerank(query, deduped, baseUrl, signal);
+    return this.applyRerank(query, deduped, baseUrl, signal, opts?.skipRerank === true);
   }
 
   /**
    * 重排接线（issue 427/ADR-0186 建本地通道；issue 431/ADR-0189 起双通道二选一）：列表整体交
    * 当前生效通道打分，重排分另记 `hit.rerankScore`（issue 429），显示层据此让百分比与名次同尺；
    * **hit.score 不动**——阈值仍走 ADR-0185 的单一余弦尺。**要么整体重排、要么维持余弦序**
-   * （ADR-0186 不变量）：列表超过 RERANK_MAX_DOCS 即整轮不重排（见下方早退）——已重排头部 +
-   * 只有余弦分的尾部混排，正是 issue 429 要消灭的两把尺观感；面板侧 TopK 上限（1–50）保证
+   * （ADR-0186 不变量）：skip 或列表超过 RERANK_MAX_DOCS 即整轮不重排（见下方两处早退）——
+   * 已重排头部 + 只有余弦分的尾部混排，正是 issue 429 要消灭的两把尺观感；面板侧 TopK 上限（1–50）保证
    * 交互检索永远走整列重排。通道由 `rerankChannel()` 单源决定（off / local / jev）：
    * local = Qwen3-Reranker 交叉编码（Ollama，绑 8B 嵌入门）；jev = Jev noul 云端判定
    * （不绑 8B 门；返回 null 即 Jev 不可用——未配密钥 / 超时 / 畸形 / 缺题键都在这一路回落）。
@@ -729,13 +738,20 @@ export class VectorStore {
    * 不打断检索链路，也不触发 search() 的文本降级（那是向量链路故障的降级）。
    * 取消（AbortError）例外：直抛——发起方已换成新查询，这里回填旧序只会盖掉新结果。
    */
-  private async applyRerank(query: string, hits: SearchHit[], baseUrl?: string, signal?: AbortSignal): Promise<SearchHit[]> {
+  private async applyRerank(
+    query: string,
+    hits: SearchHit[],
+    baseUrl?: string,
+    signal?: AbortSignal,
+    skip = false
+  ): Promise<SearchHit[]> {
+    if (skip) return hits; // issue 541：调用方声明不重排（建链只要成员集与余弦分）
     if (hits.length < 2) return hits;
     const channel: RerankChannel = rerankChannel();
     if (channel === 'off') return hits;
-    // 超长列表（建链管线候选池 = max(TopK×3, 24)，TopK 上限 50 → 可达 150）整轮不重排：
-    // 那些链路自己会按 score 重排/取 max，重排对它们的产出零影响，只付耗时——
-    // 而半重排会让本函数的「整轮同尺」不变量失守（多数 > 50 的场景恰是后台链路）。
+    // 未声明 skip 的长列表兜底：半重排会让本函数的「整轮同尺」不变量失守。
+    // issue 541 起建链不再靠这条判别——它的池 = max(TopK×3, 24)，TopK ≤ 16 时 ≤ 48，
+    // 本就够不到这里，白跑一整轮（现由 findCandidates 显式传 skipRerank）。
     if (hits.length > RERANK_MAX_DOCS) return hits;
     try {
       if (channel === 'jev') {

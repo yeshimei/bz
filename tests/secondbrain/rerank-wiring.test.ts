@@ -3,7 +3,7 @@
  * 重排接线测试（issue 427/ADR-0186）：vectorSearch 末尾的 applyRerank——
  * 开关 / 模型门槛（qwen3-embedding:8b 才生效）、重排分定名次而 score 仍为余弦、
  * 整列重排（列表 ≤ RERANK_MAX_DOCS）与超长列表整轮跳过（> RERANK_MAX_DOCS，不半重排）、
- * 失败静默回退 + console.warn。
+ * 调用方显式跳过（issue 541 opts.skipRerank）、失败静默回退 + console.warn。
  * ollama 与 rerank 两模块均经 vi.mock 替身（不碰网络）。
  */
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
@@ -102,6 +102,22 @@ describe('vectorSearch 重排接线（issue 427/ADR-0186）', () => {
     expect(res.map((r) => r.path)).toEqual(['a.md', 'b.md', 'c.md', 'd.md']); // 纯余弦序
     expect(res.map((r) => r.rerankScore)).toEqual([undefined, undefined, undefined, undefined]);
     expect(vi.mocked(rerankScores)).not.toHaveBeenCalled(); // 一对都不发（也不白付 GPU 耗时）
+  });
+
+  it('opts.skipRerank（issue 541）：调用方声明不重排 —— 一对都不发，产出与「重排失败回退余弦序」逐条一致', async () => {
+    const vs = seedStore();
+    vi.mocked(rerankScores).mockResolvedValue([0.1, 0.9, 0.05]); // 若被调用就会换序
+
+    const res = await vs.vectorSearch('q', 10, undefined, undefined, { skipRerank: true });
+    expect(res.map((r) => r.path)).toEqual(['a.md', 'b.md', 'c.md']); // 纯余弦序
+    expect(res.map((r) => r.rerankScore)).toEqual([undefined, undefined, undefined]);
+    expect(vi.mocked(rerankScores)).not.toHaveBeenCalled(); // 一对都不发（建链只要成员集与余弦分）
+
+    // 同一列表不跳过但重排失败 → 回退余弦序：成员 / 顺序 / score 三项与跳过时逐条一致
+    // （这条一致性正是「跳过对只读 score 的链路零行为变化」的判据）
+    vi.mocked(rerankScores).mockRejectedValue(new Error('模型未装'));
+    const fallback = await vs.vectorSearch('q', 10);
+    expect(fallback.map((r) => [r.path, r.score])).toEqual(res.map((r) => [r.path, r.score]));
   });
 
   it('重排同分：保持原余弦序（稳定排序，不抖动）', async () => {

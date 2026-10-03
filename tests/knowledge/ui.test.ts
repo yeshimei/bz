@@ -2134,7 +2134,7 @@ describe('录入面板关闭二次确认 + 生成后开笔记（issue 326）', (
     await vi.waitFor(() => expect(applies).toEqual([['文献盒/松果体.md', ['卡片盒/睡眠卫生.md']]]));
   });
 
-  it('分析中确认写入：面板立关 + 笔记照开 + 后台重起预演并 apply + 动态通知报结果', async () => {
+  it('分析中确认写入（issue 541）：面板立关 + 笔记照开 + 在途那一轮被接住（不重跑）', async () => {
     vault.files.set('文献盒/松果体.md', noteMd({ title: '松果体' }));
     const applies: Array<[string, string[]]> = [];
     const signals: Array<AbortSignal | undefined> = [];
@@ -2157,13 +2157,33 @@ describe('录入面板关闭二次确认 + 生成后开笔记（issue 326）', (
     // 面板不等分析：立关 + 笔记照开
     await vi.waitFor(() => expect(document.getElementById('knowledge-term-popup')!.style.display).toBe('none'));
     expect(openFile).toHaveBeenCalledWith(expect.objectContaining({ path: '文献盒/松果体.md' }));
-    // 面板绑定的在途那次被作废（省 token），后台重起一轮
-    expect(signals[0]?.aborted).toBe(true);
-    expect(signals.length).toBe(2);
-    await vi.waitFor(() => expect(getNoticeMessages().join('\n')).toContain('知识盒关联：后台分析中'));
+    // issue 541：在途那一轮**不再作废、也不再重起**——它被接住，出结果直接落进刚落盘的笔记
+    expect(signals[0]?.aborted).toBe(false);
+    expect(signals.length).toBe(1);
     releasePreview({ status: 'done', picks: [{ path: '卡片盒/睡眠卫生.md', title: '睡眠卫生' }] });
     await vi.waitFor(() => expect(applies).toEqual([['文献盒/松果体.md', ['卡片盒/睡眠卫生.md']]]));
     await vi.waitFor(() => expect(getNoticeMessages().join('\n')).toContain('知识盒关联：已写入 1 条关联'));
+    expect(getNoticeMessages().join('\n')).not.toContain('后台分析中'); // 没有第二条命，也就没有"重起"这一步
+  });
+
+  it('issue 541：没点确认就关面板 → 在途预演照旧作废（abort 只让给「内容变了」与「明确放弃」）', async () => {
+    const signals: Array<AbortSignal | undefined> = [];
+    setLinkBridge({
+      backfill: async () => ({ status: 'done' as const, processed: 0, created: 0 }),
+      preview: (_c: string, _t: string | undefined, opts?: { signal?: AbortSignal }) => {
+        signals.push(opts?.signal);
+        return new Promise(() => {});
+      },
+      apply: async (_p: string, picks: string[]) => ({ status: 'done' as const, created: picks.length }),
+      now: async () => ({ status: 'done' as const, created: 0 }),
+    });
+    ui.showTermEntry();
+    await vi.waitFor(() => expect(document.getElementById('knowledge-term-popup')!.style.display).toBe('flex'));
+    (document.getElementById('lit-term-input') as HTMLInputElement).value = '褪黑素';
+    await (ui as any).onTermGenerate();
+    expect(signals.length).toBe(1);
+    ui.hideTermEntry(); // 关窗但没点确认 = 明确放弃
+    expect(signals[0]?.aborted).toBe(true);
   });
 
   it('建议 5：属性行点一下才变可编辑（回车提交 / ESC 放弃）；关联行 idle 不显示、chip 可点掉且不可恢复', async () => {

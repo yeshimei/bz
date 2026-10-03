@@ -26,7 +26,7 @@ import { isMobileEnv } from '../core/mobile';
 import { tryGetSettings, getSettings, saveSettings, panelSizePersist } from '../core/settings-provider';
 import { uiResizable } from '../core/ui/resize';
 import { getKnowledgeBoxes } from '../core/knowledge-boxes';
-import { getLinkBridge } from '../core/link-now';
+import { getLinkBridge, type LinkPreviewOutcome } from '../core/link-now';
 import { attachItemActions, type ItemAction } from '../core/item-actions';
 import { confirmDiscard, openFlowDialog } from '../core/flow-dialog';
 import { notice, notify } from '../core/notice';
@@ -551,8 +551,13 @@ export class UIManager {
   private entryPreviewItems: { path: string; title: string }[] = [];
   /** 预演是否已给出确定结果（done）——确定过就连「0 命中」也算结论，写入时不再重跑管线 */
   private entryPreviewDone = false;
-  /** 在跑预演的中断器（issue 327）：重新生成 / 总结 / 关面板 / 确认写入转后台时 abort 在途裁判请求 */
-  private entryRelAbort: AbortController | null = null;
+  /**
+   * 在跑的这一轮预演（issue 327 起存中断器；issue 541 起再存"是否已被接住"）。
+   * `commitPath` 非空 = 用户已点确认写入、这一轮的结果要落盘：此后面板生命周期（复位 / 关窗）
+   * 不得 abort 它，写盘与通知由这一轮自己收口——点确认写入因此不再产生第二遍。
+   * `seq` 用于确认字段还指着这一轮（面板可能又起了新一轮）。
+   */
+  private entryRelInflight: { seq: number; ac: AbortController; commitPath: string | null } | null = null;
   /** 预演序号：重新生成 / 关闭面板让在途结果作废（晚到的响应不得覆盖新状态） */
   private entryRelSeq = 0;
   private termSrcSuggest: ReturnType<typeof uiSuggest> | null = null;
@@ -3167,13 +3172,22 @@ export class UIManager {
   /** 关联行与预演状态整体复位（打开/关闭面板、出新草稿、重生成/总结点下时共用）：abort 在途请求、结果清空、回到起点 */
   private resetEntryRel(): void {
     this.entryRelSeq++; // 在途预演的晚到响应据此丢弃
-    this.entryRelAbort?.abort(); // issue 327：真中断在途裁判请求（不再白烧 token）
-    this.entryRelAbort = null;
+    // issue 541：已被接住的那一轮（点确认写入后仍在跑）不在此列——它已摘出面板生命周期，
+    // abort 只会白扔已经付掉的算力（判定通道走 requestUrl，底层请求撤不回）。
+    if (!this.entryRelInflight?.commitPath) this.abortEntryRelInflight();
     this.entryPreviewPicks = [];
     this.entryPreviewItems = [];
     this.entryPreviewDone = false;
     this.entryRelText = '';
     this.setEntryRel('idle');
+  }
+
+  /** 断掉在途预演并摘除句柄（内容变了 / 明确放弃用）；已被接住的那一轮不受影响（写盘由它自己收口） */
+  private abortEntryRelInflight(): void {
+    const h = this.entryRelInflight;
+    if (!h || h.commitPath) return;
+    h.ac.abort();
+    this.entryRelInflight = null;
   }
 
   /** 关联行状态切换（单一出口，避免各处直接改字段后忘记重绘） */
@@ -3187,7 +3201,9 @@ export class UIManager {
    * 故走 preview 而非 now）。属性区「关联」行就地走 loading → 关联名，这正是「生成完就看得到过程」。
    * 序号守卫：重新生成 / 关面板让在途结果作废，晚到的响应不得覆盖新状态。
    * issue 327：起跑前 abort 上一轮（真中断，不白烧 token）；分析期间**不锁任何按钮**——
-   * 重新生成 / 总结随点随断随重跑，确认写入转后台。
+   * 重新生成 / 总结随点随断随重跑。
+   * issue 541：确认写入不再让这一轮作废——分析中点确认 = 把路径**接住**（`commitPath`），
+   * 结果出栈后直接落盘；面板侧只在这一轮仍是当前时才回写状态。**一次预演只算一遍**。
    */
   private async runEntryRelPreview(content: string, title: string): Promise<void> {
     const bridge = getLinkBridge();
@@ -3195,13 +3211,16 @@ export class UIManager {
     this.entryPreviewPicks = [];
     this.entryPreviewItems = [];
     if (!bridge) { this.setEntryRel('off'); return; }
-    this.entryRelAbort?.abort(); // 上一轮还在跑 → 先断（新内容一到即重新分析，旧的不再要）
+    this.abortEntryRelInflight(); // 上一轮还在跑 → 先断（新内容一到即重新分析，旧的不再要）
     const ac = new AbortController();
-    this.entryRelAbort = ac;
+    const inflight = { seq, ac, commitPath: null as string | null };
+    this.entryRelInflight = inflight;
     this.entryRelText = '';
     this.setEntryRel('loading');
     try {
       const out = await bridge.preview(content, title, { signal: ac.signal });
+      // 已被接住（分析中点确认写入）：结果直接落盘——仍是这一轮算出的 picks，不重跑检索与裁判
+      if (inflight.commitPath) await this.settleEntryRelCommit(inflight.commitPath, out);
       if (seq !== this.entryRelSeq) return; // 已有更新的预演（重新生成）/ 面板已重置
       if (out.status === 'done') {
         this.entryPreviewDone = true;
@@ -3212,8 +3231,15 @@ export class UIManager {
       } else if (out.status === 'queued') this.setEntryRel('queued');
       else if (out.status === 'skipped') this.setEntryRel('off');
       else this.setEntryRel('failed');
-    } catch {
-      if (seq === this.entryRelSeq) this.setEntryRel('failed');
+    } catch (e) {
+      // 已接住的那一轮出栈只剩失败一途（真异常）：面板多半已关，改由通知收口
+      if (inflight.commitPath) {
+        notify(`知识盒关联失败：${e instanceof Error ? e.message : String(e)}`, { type: 'error', dedupeKey: REL_BG_NOTICE_KEY });
+      } else if (seq === this.entryRelSeq) {
+        this.setEntryRel('failed');
+      }
+    } finally {
+      if (this.entryRelInflight === inflight) this.entryRelInflight = null;
     }
   }
 
@@ -3222,16 +3248,22 @@ export class UIManager {
    * 不把行打回 loading（那会被读成「又在重新分析」，实际只是本地写 related）。
    * - 预演 done 有命中 → apply 落库（不重跑检索与裁判）；
    * - 预演 done 零命中（确定「无关联」）→ 无可写；
-   * - 预演仍在分析 → 作废面板绑定的这次（省 token），后台重起 预演→apply，挂动态通知；
-   * - 预演 failed → 兜底 now 同样转后台；
+   * - 预演仍在分析 → **接住**（issue 541）：把刚落盘的路径交给这一轮，它出结果后直接写盘；
+   * - 预演 failed → 兜底 now 转后台；
    * - 通道未接线 / off → 无可写。
    */
   private async commitEntryLinks(path: string): Promise<void> {
     const bridge = getLinkBridge();
     if (!bridge) return; // 关联行已显示「自动双链未开启」
     if (this.entryRelState === 'loading') {
-      this.entryRelAbort?.abort();
-      this.entryRelAbort = null;
+      const inflight = this.entryRelInflight;
+      // issue 541：这里曾经 abort 在途轮 + 后台重跑一整轮。abort 是假的——判定通道走 requestUrl，
+      // 撤不回已发出的请求，算力照付；一次操作因此付两遍。改为接住：结果直接写进这篇笔记。
+      if (inflight) {
+        inflight.commitPath = path;
+        return;
+      }
+      // 句柄缺失（状态错位的罕见态）：没有可接的结果，才从头算一遍
       void this.backgroundRelCommit(path, this.termPreview?.body ?? '', this.entryHeadTitle());
       return;
     }
@@ -3244,31 +3276,45 @@ export class UIManager {
   }
 
   /**
-   * 后台建链（issue 327）：分析中确认写入 / 预演失败兜底共用——不占面板，动态通知（同键原地更新）
-   * 报进度与结果：分析中… → 已写入 N 条 / 未发现实质关联 / 已入队 / 失败原因。
+   * 后台建链兜底（issue 327）：预演结果**接不住**（句柄缺失的错位态）时从头跑一轮 preview → 落盘。
+   * issue 541 起正常路径已不再走它——分析中点确认是把在途那一轮接住（见 commitEntryLinks），
+   * 不再「abort 再重跑」。落盘与通知与接住路径共用 settleEntryRelCommit（用户视角同一条）。
    */
   private async backgroundRelCommit(path: string, content: string, title: string): Promise<void> {
     const bridge = getLinkBridge();
     if (!bridge) return;
     notify('知识盒关联：后台分析中…', { type: 'progress', dedupeKey: REL_BG_NOTICE_KEY });
     try {
-      const out = await bridge.preview(content, title);
-      if (out.status === 'skipped') {
-        notify('知识盒关联：自动关联未开启，未写入', { type: 'info', dedupeKey: REL_BG_NOTICE_KEY });
-        return;
-      }
-      if (out.status === 'queued') {
-        notify('知识盒关联：检索服务不可用，已入队，服务可达后自动处理', { type: 'info', dedupeKey: REL_BG_NOTICE_KEY });
-        return;
-      }
-      if (out.status === 'failed') {
-        notify(`知识盒关联失败：${out.error || '未知错误'}`, { type: 'error', dedupeKey: REL_BG_NOTICE_KEY });
-        return;
-      }
-      if (!out.picks.length) {
-        notify('知识盒关联：未发现实质关联', { type: 'info', dedupeKey: REL_BG_NOTICE_KEY });
-        return;
-      }
+      await this.settleEntryRelCommit(path, await bridge.preview(content, title));
+    } catch (e) {
+      notify(`知识盒关联失败：${e instanceof Error ? e.message : String(e)}`, { type: 'error', dedupeKey: REL_BG_NOTICE_KEY });
+    }
+  }
+
+  /**
+   * 把一次预演结果落盘并通知（issue 541 单源）：被接住的那一轮（结果现成）与后台兜底（结果刚算出来）
+   * 共用这一段——**都不重跑检索与裁判**，差别只在结果从哪来。通知同键原地更新，可读作一条。
+   */
+  private async settleEntryRelCommit(path: string, out: LinkPreviewOutcome): Promise<void> {
+    const bridge = getLinkBridge();
+    if (!bridge) return;
+    if (out.status === 'skipped') {
+      notify('知识盒关联：自动关联未开启，未写入', { type: 'info', dedupeKey: REL_BG_NOTICE_KEY });
+      return;
+    }
+    if (out.status === 'queued') {
+      notify('知识盒关联：检索服务不可用，已入队，服务可达后自动处理', { type: 'info', dedupeKey: REL_BG_NOTICE_KEY });
+      return;
+    }
+    if (out.status === 'failed') {
+      notify(`知识盒关联失败：${out.error || '未知错误'}`, { type: 'error', dedupeKey: REL_BG_NOTICE_KEY });
+      return;
+    }
+    if (!out.picks.length) {
+      notify('知识盒关联：未发现实质关联', { type: 'info', dedupeKey: REL_BG_NOTICE_KEY });
+      return;
+    }
+    try {
       const r = await bridge.apply(path, out.picks.map((p) => p.path));
       notify(r.status === 'done' ? `知识盒关联：已写入 ${r.created} 条关联` : '知识盒关联：自动关联未开启，未写入', {
         type: r.status === 'done' ? 'success' : 'info',

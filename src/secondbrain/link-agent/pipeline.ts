@@ -72,7 +72,14 @@ export const LINK_NOTE_NOW_NOTICE_KEY = 'bz-sb-link-agent-note';
 /** 管线依赖的向量库最小面（只调用公开方法，不修改 vector-store） */
 export interface LinkStoreLike {
   refresh(updateProgress?: (msg: string) => void): Promise<void>;
-  vectorSearch(query: string, topK?: number, baseUrl?: string): Promise<SearchHit[]>;
+  /** 参数位与 VectorStore.vectorSearch 同序（signal 与 opts 都要占位；issue 541 起消费 opts.skipRerank） */
+  vectorSearch(
+    query: string,
+    topK?: number,
+    baseUrl?: string,
+    signal?: AbortSignal,
+    opts?: { skipRerank?: boolean }
+  ): Promise<SearchHit[]>;
 }
 
 export interface LinkAgentDeps {
@@ -484,6 +491,8 @@ export class LinkAgent {
    * 盒外笔记（日记、剪藏、旧卡片盒）即便已进索引也不会被召回，保证关联结果永远指向盒内。
    * 查询端（ticket 118）：**全文嵌入**——正文全文（剥 frontmatter、去空白，超长按 LINK_QUERY_MAX_CHARS 安全截尾）
    * 送向量模型生成查询向量，而非 800 字摘要，提高召回。
+   * issue 541：检索显式 skipRerank——本函数只消费 `hit.score`（下方过滤 / 排序 / 截断），
+   * 重排换出的顺序与 `rerankScore` 在这里全部作废，故不付那一轮后台重排的耗时。
    */
   async findCandidates(selfPath: string, content: string, opts?: { rethrowSearchFailure?: boolean }): Promise<SearchHit[]> {
     const topK = this.maxTopK;
@@ -493,7 +502,12 @@ export class LinkAgent {
     const pool = Math.max(topK * 3, CANDIDATE_POOL_MIN);
     let hits: SearchHit[] = [];
     try {
-      hits = await this.store.vectorSearch(bodyExcerpt(content, LINK_QUERY_MAX_CHARS), pool, baseUrl);
+      // skipRerank（issue 541）：本链路只消费 hit.score（下方过滤 / 排序 / 截断），重排改的只是顺序
+      // 与 rerankScore，产出与「重排失败回退余弦序」逐条相同；而建链池 = max(TopK×3, 24) 在
+      // TopK ≤ 16 时 ≤ 48，落不进 applyRerank 的 >50 早退 —— 每篇白付一轮串行 4B（2–6s）。
+      hits = await this.store.vectorSearch(bodyExcerpt(content, LINK_QUERY_MAX_CHARS), pool, baseUrl, undefined, {
+        skipRerank: true,
+      });
     } catch (e) {
       // 预演（previewLinks）要区分「真空候选」与「检索不可达」——后者是 queued 不是「暂无关联」
       if (opts?.rethrowSearchFailure) throw e;
