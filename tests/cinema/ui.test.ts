@@ -334,6 +334,47 @@ describe('cinema 风格化面板（issue 236）', () => {
     expect(M.items.find((i) => i.name === '星际穿越')!.rating).toBe(7.7);
   });
 
+  // 2026-10-03 用户点名：**未评分**的条目打开编辑面板，评分滑杆直接拿「豆瓣评分」当默认值
+  it('编辑弹窗评分预填：未评分回落豆瓣分、已评分保我的原值、豆瓣分不可用才落默认分', async () => {
+    const { app, vault } = seedVault();
+    vault.files.set('我的/影视/《未评文艺片》.md', md(`---
+tags: [电影]
+状态: 已看
+豆瓣评分: 8.7
+---`));
+    vault.files.set('我的/影视/《已评片》.md', md(`---
+tags: [电影]
+评分: 6.5
+豆瓣评分: 9.1
+---`));
+    vault.files.set('我的/影视/《豆瓣无分》.md', md(`---
+tags: [电影]
+状态: 已看
+豆瓣评分: 0
+---`));
+    rebuildItems(app);
+    createOverlay(app);
+    const root = document.querySelector('[data-cinema-root]') as HTMLElement;
+    /** 走真实入口：点卡片开详情 → 点编辑 → 拿编辑面板（预填口径的唯一出口） */
+    const openEdit = (name: string): HTMLElement => {
+      clickEl(pcardByName(root, name));
+      clickEl((root.querySelector('.cn-modal') as HTMLElement).querySelector('.j-edit'));
+      return root.querySelector('.cn-modal') as HTMLElement;
+    };
+    const rangeOf = (name: string): HTMLInputElement => openEdit(name).querySelector('.j-range') as HTMLInputElement;
+    expect(rangeOf('已评片').value, '已评分条目 → 我的原值优先，不被豆瓣分顶掉').toBe('6.5');
+    closeOverlay();
+    expect(rangeOf('豆瓣无分').value, '豆瓣分不可用（0）→ 回落默认分').toBe('5');
+    closeOverlay();
+    // 未评分：滑杆预填豆瓣分，且**不动滑杆直接保存**就落成我的评分（预填默认值的既定口径）
+    const form = openEdit('未评文艺片');
+    expect((form.querySelector('.j-range') as HTMLInputElement).value, '未评分 → 预填豆瓣分').toBe('8.7');
+    expect(form.querySelector('.j-rval')?.textContent).toBe('8.7'); // 读数与星级同步同一初值
+    clickEl(form.querySelector('.j-save'));
+    await vi.waitFor(() => expect(hasNotice(/已保存「/)).toBe(true));
+    expect(M.items.find((i) => i.name === '未评文艺片')!.rating).toBe(8.7);
+  });
+
   // 回归（memo item-1789722741019）：编辑改「想看」保存后弹回在看——想看曾被收集成 null，
   // persistItem `?? 0` 兜底写 0（=在看），落盘自动刷新重解析当场翻回
   it('编辑已看条目改「想看」→ 落盘状态键想看（评分编码退役，摘评分键）；重建解析仍想看 + status 域事件', async () => {

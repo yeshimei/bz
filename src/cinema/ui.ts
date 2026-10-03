@@ -1649,13 +1649,26 @@ function isDuplicateName(name: string, selfName?: string): boolean {
   return name !== (selfName ?? '') && M.items.some((x) => x.name === name);
 }
 
+/** 评分滑杆初值（2026-10-03 用户点名）：已评过 → 我的原值；**还没评分 → 拿豆瓣评分兜底**
+ *  （打开编辑面板就是它，省得自己对着豆瓣回忆），豆瓣分缺失 / 非数值 / 落在滑杆域（1~10）
+ *  之外 → 才回落 DEFAULT_RATING。
+ *  ⚠ 它只是**预填默认值**：用户不动滑杆点保存才会写成我的评分（与原「默认分」口径同源，
+ *  所以判断逻辑必须留在这一处，别在保存路径再抄一份）。 */
+function formInitRating(item: CinemaItem | null): number {
+  if (item && item.rating && item.rating > 0) return item.rating;
+  const db = item?.doubanRating ? Number.parseFloat(item.doubanRating) : Number.NaN;
+  if (Number.isFinite(db) && db >= 1 && db <= 10) return Math.round(db * 10) / 10; // 对齐滑杆 step 0.1
+  return DEFAULT_RATING;
+}
+
 /** 添加/编辑表单弹窗。presetSt：预选状态（中文口径，如「已看」）——「标记已看」入口传入，
- *  状态 chip 预选、评分滑杆（预填当前评分，无则默认分）与影评框自动展开；弹窗本身不落盘，保存才生效 */
+ *  状态 chip 预选、评分滑杆（预填当前评分，未评分回落豆瓣分、再回默认分）与影评框自动展开；
+ *  弹窗本身不落盘，保存才生效 */
 function openForm(sec: HTMLElement, item: CinemaItem | null, app: App, presetSt?: string): void {
   const editing = !!item;
   const initTag = item ? item.typeTag : '电影';
   const initSt = presetSt ?? (item ? statusText(item.status) : '想看');
-  const ratingVal = item && item.rating && item.rating > 0 ? item.rating : DEFAULT_RATING;
+  const ratingVal = formInitRating(item);
   const { el, close } = ovl(sec, formModalHtml({
     editing, name: item ? item.name : '', typeTag: initTag, stText: initSt,
     rating: ratingVal, review: item ? item.review ?? '' : '',
