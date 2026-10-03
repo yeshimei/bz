@@ -14,8 +14,6 @@ Obsidian 插件。域 = `src/<域>/`，`core` 是共享层。中文输出。
 ## 硬约束（看见就是错）
 - 样式源只有 `src/<域>/styles.css`（根 `styles.css` 是聚合产物）。域内禁 `scrollbar-width: thin/auto`、禁自绘 thumb、禁运行时注入 `<style>`、禁内联视觉样式。唯一例外：远端皮肤包只在 `src/core/skin-pack.ts` 单一注入点（ADR-0199），要扩先开 ADR。
 - 域 UI 的唯一真理源是与评审壳共用的实现源码；两侧不一致 = 缺陷，改源码，别改壳、别改产物。未定稿的探索稿只写 `.scratch/<名>/`。
-- UI 动手前读 `docs/ui-design-manual.md`（取值）与 `docs/ui-kit-manual.md`（分层、工厂）；域内不自造按钮 / chip / 输入基线，要新视觉先扩库并回写手册。
-- 已上线 JSON 的字段名与结构只增不改——老数据得能读。
 - 不手改生成物：根 `main.js` / `styles.css`、`changelog-data.ts`、`prototypes/**/prototype-*.js`、`downloads/manifest.json`、`downloads/skins/`。
 - 命令 ID `bz-<域>-<动作>`；通知正文不带 emoji（新语义查 `src/core/notice.ts` 的 ICONS）。
 - 改动走 worktree（仓库外，从最新 master 分叉）；**worktree 内不构建**——产物直出本机 vault（`esbuild.config.mjs` 硬编码）与仓库根。
@@ -42,6 +40,5 @@ Conventional Commits，**提交信息即更新日志正文**（写法 `docs/chan
 | 域职责、术语、口径 | `CONTEXT.md` |
 | 单源域名单 | `build-preview.mjs` 的 `PREVIEW_DOMAINS` / `BEHAVIOR_DOMAINS` |
 | 皮肤清单 | `scripts/skins.catalog.json` |
-| 原型约定与高频坑 | `docs/prototype-first.md` |
 
 本文与代码冲突时以代码为准，并顺手改这里。历史注释里的「铁律 N」是旧编号，按内容找，别按号找。
