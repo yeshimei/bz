@@ -6,6 +6,7 @@
  */
 import { describe, it, expect } from 'vitest';
 import {
+  EDITABLE_SCHEDULE_KINDS,
   decideDue,
   durationText,
   effectiveSchedule,
@@ -391,8 +392,9 @@ describe('scheduleFromDraft —— 编辑器草稿 → 覆盖节奏（每个 kin
     expect(scheduleFromDraft('inherit', p)).toBeUndefined();
   });
 
-  // 这条是回归钉：从前漏了 on-demand 分支，它会掉进兜底的 daily ——
-  // 于是用户在面板上选「只手动（不自动）」，保存后反而把工具排成了每天自动跑，方向刚好相反。
+  // 这条仍是回归钉：映射漏一支就会掉进兜底的 daily，方向刚好相反。
+  // 编辑器已不再提供「只手动」（开 / 不开归总闸，ADR-0236 §补记），但 on-demand 是合法的**声明**
+  // 形态、也在本映射器的输入域里 —— 少一支就会被静默换成「每天跑」。
   it('on-demand → 仍是 on-demand（绝不掉进 daily 兜底）', () => {
     expect(scheduleFromDraft('on-demand', p)).toEqual({ kind: 'on-demand' });
     expect(triggerOf(scheduleFromDraft('on-demand', p))).toBe('manual');
@@ -401,6 +403,28 @@ describe('scheduleFromDraft —— 编辑器草稿 → 覆盖节奏（每个 kin
   it('产出能被 parseSchedule 原样接受（编辑器不会造出声明校验不过的节奏）', () => {
     for (const kind of ['daily', 'weekly', 'interval', 'on-demand'] as const) {
       expect(parseSchedule(scheduleFromDraft(kind, p))).toEqual(scheduleFromDraft(kind, p));
+    }
+  });
+});
+
+describe('EDITABLE_SCHEDULE_KINDS —— 面板节奏下拉的唯一来源', () => {
+  it('只有 daily / weekly / interval', () => {
+    expect([...EDITABLE_SCHEDULE_KINDS]).toEqual(['daily', 'weekly', 'interval']);
+  });
+
+  // 回归钉：「只手动（不自动）」不该爬回节奏下拉里。
+  // 「开 / 不开」只有总闸（autoRun）一个控件说了算；节奏下拉里再放一个「不自动」，
+  // 用户选完必然要问「到底哪个算数」—— 两个控件说同一件事就是打架（ADR-0236 §补记）。
+  it('不含 on-demand / unknown / inherit（都不是用户会主动选的节奏）', () => {
+    for (const bad of ['on-demand', 'unknown', 'inherit']) {
+      expect(EDITABLE_SCHEDULE_KINDS as readonly string[]).not.toContain(bad);
+    }
+  });
+
+  it('每个选项都能被 scheduleFromDraft 映射成同名节奏', () => {
+    const p = { hour: 9, weekday: 3, everyHours: 6 };
+    for (const kind of EDITABLE_SCHEDULE_KINDS) {
+      expect(scheduleFromDraft(kind, p)?.kind).toBe(kind);
     }
   });
 });

@@ -76,6 +76,7 @@ import {
   type ResolvedRun,
 } from './declaration';
 import {
+  EDITABLE_SCHEDULE_KINDS,
   durationText,
   missingRequiredParams,
   recentRuns,
@@ -84,7 +85,7 @@ import {
   successRate,
   timeOf,
   type DockRunHealth,
-  type DockScheduleDraftKind,
+  type EditableScheduleKind,
 } from './schedule';
 import type { DockManifest, DockParam, DockRunRecord, DockSchedule } from './schema';
 
@@ -117,16 +118,26 @@ const VALUE_SAVE_DEBOUNCE_MS = 500;
 const dueNotified = new Set<string>();
 
 /**
- * 「自动运行」编辑草稿（按工具 id）。
- * 改了节奏但还没点「保存」时的暂存；保存/恢复默认后即清，重新从生效值初始化。
+ * 节奏编辑草稿（按工具 id）。改完未点「保存节奏」时的暂存；保存/恢复脚本默认后即清，
+ * 下次重新从**当前生效值**初始化。
+ *
+ * `kind` 刻意**不含 `on-demand`**：类型上就写死「编辑器产不出『只手动』」，「不开自动」由总闸表达
+ * （ADR-0236 §补记）。`'inherit'` 也不给用户选 —— 它是「恢复脚本默认」按钮内部用的哨兵（= 清除覆盖）。
  */
 interface AutoDraft {
-  kind: DockScheduleDraftKind;
+  kind: EditableScheduleKind | 'inherit';
   hour: number;
   weekday: number;
   everyHours: number;
 }
 const autoDraft = new Map<string, AutoDraft>();
+
+/** 节奏形态的中文名（面板用）；选项清单来自 `EDITABLE_SCHEDULE_KINDS`，这里只管怎么念 */
+const SCHEDULE_KIND_LABEL: Record<EditableScheduleKind, string> = {
+  daily: '每天',
+  weekly: '每周',
+  interval: '每隔若干小时',
+};
 
 const OVERLAY_ID = 'bz-dock-mask';
 const FRAME_ID = 'bz-dock-panel';
@@ -896,7 +907,12 @@ function openCardActions(anchor: HTMLElement, v: DockToolView): void {
 
 // ---------- 自动运行（详情页；D1 修订后 bz 与调度器之间唯一的用户界面） ----------
 
-/** 取（或初始化）某工具的覆盖草稿：已有覆盖 → 从覆盖起；没有 → 从声明起，kind 记为 inherit */
+/**
+ * 取（或初始化）某工具的节奏草稿。**初值 = 当前生效值**（覆盖 ?? 默认），不是「跟随脚本」那种占位——
+ * 用户要的是「打开就能直接改」，而不是先选一个「我要改了」才能看见可填的字段（ADR-0236 §补记）。
+ * 脚本没给节奏（手动工具）或给的是 `on-demand` 时，落到一组能用的默认（每天 12:00），
+ * 让人能就地把它排成自动化 —— 编辑器不提供「只手动」，那是总闸的事。
+ */
 function autoDraftOf(v: DockToolView): AutoDraft {
   const key = v.entry.id;
   const existing = autoDraft.get(key);
@@ -904,11 +920,9 @@ function autoDraftOf(v: DockToolView): AutoDraft {
 
   const cur = v.schedule;
   const k = cur?.kind;
-  const kind: AutoDraft['kind'] = !v.scheduleOverridden
-    ? 'inherit'
-    : k === 'daily' || k === 'weekly' || k === 'interval' || k === 'on-demand'
-      ? k
-      : 'daily';
+  // 只有 daily/weekly/interval 是可编辑的「节奏」；`on-demand`/`unknown`/未声明都落到默认形态
+  const kind: AutoDraft['kind'] =
+    k === 'daily' || k === 'weekly' || k === 'interval' ? k : 'daily';
   const d: AutoDraft = {
     kind,
     hour: cur?.hour ?? 12,
@@ -919,11 +933,20 @@ function autoDraftOf(v: DockToolView): AutoDraft {
   return d;
 }
 
-/** 保存覆盖（`inherit` = 清除覆盖，回落作者默认）。存完踢调度器一拍，让改动作立刻生效 */
+/**
+ * 保存节奏。存完踢调度器一拍，让改动作立刻生效。
+ *
+ * 两条口径：
+ *  - `kind: 'inherit'`（「恢复脚本默认」按钮）→ **清除覆盖**，回落脚本那份默认（含它日后的改动）。
+ *  - 改出来的节奏**与脚本默认一模一样** → 也清除覆盖。用户把值调回原样，意思就是「照脚本的来」，
+ *    这时还留着一份覆盖只会让工具从此不再跟随脚本的后续改动 —— 那是隐坑，不是意图。
+ */
 async function saveAuto(v: DockToolView, d: AutoDraft): Promise<void> {
   const id = v.entry.id;
   const next = scheduleFromDraft(d.kind, d);
-  if (!next) {
+  const sameAsDeclared =
+    next !== undefined && scheduleSignature(next) === scheduleSignature(v.declaredSchedule);
+  if (!next || sameAsDeclared) {
     await updateToolEntry(id, { scheduleOverride: undefined, overrideDeclSig: undefined });
   } else {
     await updateToolEntry(id, {
@@ -953,11 +976,19 @@ function clampInt(raw: string, lo: number, hi: number, fallback: number): number
 /**
  * 「自动运行」块（详情页）。
  *
- * 这是 D1 修订后 bz 与调度器之间**唯一的用户界面**：开关（`autoRun`）、节奏覆盖
- * （`scheduleOverride`）、以及「下次什么时候跑」。作者的默认与用户的覆盖**都摆出来**
- * （「作者声明 / 当前生效」两行），别让人以为自己改的是声明 —— 那是工具目录里的文件，bz 只读不写。
+ * **模型一句话**（ADR-0236 §补记）：**自动化是 bz 这一侧的事** —— 开不开、怎么排，都在这里（用户）定；
+ * 脚本声明里的节奏只是**初始默认值**。所以本块不是「让这个工具参与自动化」，而是「给这个工具配一个
+ * bz 的定时任务」。措辞上别用「参与 / 授权 / 覆盖作者」那套 —— 会让人以为主动权在脚本那边。
  *
- * 手动工具也渲染本块：想给一个手工工具排上节奏，就在这里改（覆盖一套 daily/weekly/interval）。
+ * 三件事实摆出来：**脚本默认**（`declaredSchedule`）、**当前生效**（`scheduleOverride ?? declared`）、
+ * 下次什么时候跑。改的永远是 bz 这一份覆盖，脚本那份只读不写（它在工具目录里，bz 不碰）。
+ *
+ * 「开 / 不开」**只有总闸一个控件**（`autoRun`）；节奏编辑器只管「多久一次」。故编辑器**不再**摆
+ * 「只手动（不自动）」这种选项 —— 那是把开关的意思在第二个控件里又说了一遍，两个控件说同一件事
+ * 只会互相打架（选了「只手动」却发现总闸还开着，或者反过来，谁说话算数？）。
+ *
+ * 编辑器直接预填当前生效值、就地可改（不是「先声明我要覆盖，才露出字段」）：打开面板就能把自动化
+ * 配成要的样子。手动工具（脚本没排节奏）也渲染本块，在这里选一套节奏就等于给它排上了自动化。
  */
 function autoSection(v: DockToolView): HTMLElement {
   const sec = el('section', 'bz-dock-pane bz-dock-autopane');
@@ -967,11 +998,11 @@ function autoSection(v: DockToolView): HTMLElement {
 
   const id = v.entry.id;
 
-  // 总闸（autoRun）
+  // 总闸（autoRun）：开 / 不开，就这一个控件说了算
   sec.appendChild(
     uiField({
-      label: '参与自动运行',
-      desc: '关掉后这个工具只手动跑（声明里的节奏仍在，只是 bz 不自动触发它）',
+      label: '自动运行',
+      desc: '由 bz 按下面的节奏自动触发；关掉就只在面板里手动点。脚本里那份是默认值，不是定死的',
       control: uiSwitch({
         checked: v.autoRun,
         onChange: (on) => {
@@ -986,12 +1017,12 @@ function autoSection(v: DockToolView): HTMLElement {
     }),
   );
 
-  // 事实两行：作者声明 vs 当前生效
+  // 事实三行：脚本默认 vs 当前生效 vs 下次预计
   const facts = el('div', 'bz-dock-autorows');
-  facts.appendChild(autoRow('作者声明', scheduleTextOf(v.declaredSchedule)));
+  facts.appendChild(autoRow('脚本默认', scheduleTextOf(v.declaredSchedule)));
   facts.appendChild(autoRow('当前生效', scheduleTextOf(v.schedule) + (v.scheduleOverridden ? '（你改的）' : '')));
   facts.appendChild(
-    autoRow('下次预计', v.nextDue === null ? '算不出（未声明节奏，或缺运行基线）' : dueTimeText(v.nextDue)),
+    autoRow('下次预计', v.nextDue === null ? '算不出（没有节奏，或缺运行基线）' : dueTimeText(v.nextDue)),
   );
   if (v.runState?.pausedAt) {
     facts.appendChild(
@@ -1003,25 +1034,29 @@ function autoSection(v: DockToolView): HTMLElement {
     );
   }
   if (v.declChangedSinceOverride) {
-    facts.appendChild(el('div', 'bz-dock-autonote', '作者后来改过声明里的节奏 —— 建议看一眼要不要跟着调'));
+    facts.appendChild(el('div', 'bz-dock-autonote', '脚本改过默认节奏了 —— 看一眼要不要跟着调'));
+  }
+  if (!v.autoRun) {
+    facts.appendChild(
+      el(
+        'div',
+        'bz-dock-autonote',
+        '自动运行已关 —— 下面排的节奏不会生效，要它自己跑起来得先打开上面的开关',
+      ),
+    );
   }
   sec.appendChild(facts);
 
-  // 节奏编辑（改的是**覆盖**）
+  // 节奏编辑：bz 这一侧的「多久一次」。预填「当前生效」，改完即成为 bz 的覆盖节奏
   const d = autoDraftOf(v);
   const editor = el('div', 'bz-dock-autoeditor');
   editor.appendChild(
     uiField({
       label: '节奏',
       control: uiSelect<string>({
-        options: [
-          { value: 'inherit', label: '跟随声明（清除我的改动）' },
-          { value: 'daily', label: '每天' },
-          { value: 'weekly', label: '每周' },
-          { value: 'interval', label: '每隔若干小时' },
-          { value: 'on-demand', label: '只手动（不自动）' },
-        ],
-        value: d.kind,
+        // 选项来自 schedule.ts 的 EDITABLE_SCHEDULE_KINDS（唯一来源，不带「只手动」）
+        options: EDITABLE_SCHEDULE_KINDS.map((k) => ({ value: k, label: SCHEDULE_KIND_LABEL[k] })),
+        value: d.kind === 'inherit' ? 'daily' : d.kind,
         onChange: (val) => {
           d.kind = val as AutoDraft['kind'];
           render(); // 切换形态要换下面那行输入，重渲染一次
@@ -1075,7 +1110,7 @@ function autoSection(v: DockToolView): HTMLElement {
   if (v.scheduleOverridden) {
     btns.appendChild(
       uiBtn({
-        label: '恢复声明默认',
+        label: '恢复脚本默认',
         size: 'sm',
         onClick: () => {
           autoDraft.delete(id);

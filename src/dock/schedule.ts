@@ -66,16 +66,34 @@ export function scheduleSignature(s: DockSchedule | undefined): string {
 }
 
 /**
- * 「节奏覆盖」编辑器草稿的 kind：比 `DockScheduleKind` 多一个 `inherit`（= 没改，跟随声明），
+ * 用户能在面板里选的「节奏」形态 —— **编辑器选项的唯一来源**。
+ *
+ * 刻意**不含** `on-demand`：「开 / 不开」是总闸（`autoRun`）的语义，在节奏下拉里再放一个
+ * 「只手动（不自动）」就是两个控件说同一件事（ADR-0236 §补记）。也不含 `unknown`/`inherit`：
+ * 前者是「读不懂的声明」，后者是「恢复脚本默认」按钮内部用的哨兵，都不是用户会主动选的节奏。
+ *
+ * 做成常量而不是散在 `ui.ts` 里，是为了让「别把只手动加回来」这条有地方钉（`ui.ts` 拖 obsidian，
+ * 进不了 node 测试）。
+ */
+export const EDITABLE_SCHEDULE_KINDS = ['daily', 'weekly', 'interval'] as const;
+
+/** 面板可编辑的节奏形态 */
+export type EditableScheduleKind = (typeof EDITABLE_SCHEDULE_KINDS)[number];
+
+/**
+ * 「节奏覆盖」编辑器草稿的 kind：比 `DockScheduleKind` 多一个 `inherit`（= 没改，跟随脚本默认），
  * 少一个 `unknown`（用户不会主动选「未知」）。
+ *
+ * 注：`on-demand` 仍在本类型里（它是合法的节奏形态，`scheduleFromDraft` 得能映射），但编辑器的
+ * 节奏下拉**不再提供**它 —— 见 `EDITABLE_SCHEDULE_KINDS`。
  */
 export type DockScheduleDraftKind = 'inherit' | 'daily' | 'weekly' | 'interval' | 'on-demand';
 
 /**
- * 编辑器草稿 → 生效覆盖节奏。`inherit` 返回 `undefined`（= 清除覆盖，回落声明默认）。
+ * 编辑器草稿 → 生效覆盖节奏。`inherit` 返回 `undefined`（= 清除覆盖，回落脚本默认）。
  *
  * **抽到这一层是为了可测**：这个映射有个隐蔽的错法 —— 漏掉一个 kind 就会掉进兜底的 `daily`，
- * 于是「关掉自动」反而把工具排成了每天自动跑（方向刚好相反）。放在 `ui.ts` 里它进不了 node
+ * 于是用户选的那个形态被静默换成「每天跑」（方向刚好相反）。放在 `ui.ts` 里它进不了 node
  * 测试（那份拖 `obsidian`），放这里就能钉住每个分支。
  */
 export function scheduleFromDraft(

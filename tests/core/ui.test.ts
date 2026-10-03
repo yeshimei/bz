@@ -162,6 +162,31 @@ describe('bz ui 组件库', () => {
       inp.dispatchEvent(new Event('input'));
       expect(fn).toHaveBeenCalledWith('abc');
     });
+
+    // 根标签自适应（ADR-0236 §补记）：可标记控件用 <label>，自绘控件用 <div>。
+    // 反例是「把 uiSelect 放进 <label>」—— 标签的激活行为会向第一个可标记后代（下拉展开后
+    // 菜单里的选项 <button>）派发合成点击，于是点一下控件就被当成「点了第一个选项」，
+    // 下拉根本换不了值（工具坞「自动运行」的节奏下拉曾因此完全用不了）。
+    //
+    // 注：这条坑**只有真浏览器复现**（Chromium 的 label 激活行为），jsdom 不实现转发，
+    // 所以这里只能钉**结构**（根标签名）—— 它是唯一能在这个环境里挡住回归的断言。
+    it('可标记控件（input）→ 根是 <label>，保留「点标签即聚焦」', () => {
+      const f = uiField({ label: '平台', control: uiInput({}) });
+      expect(f.tagName).toBe('LABEL');
+      expect(f.classList.contains('bz-field')).toBe(true);
+    });
+
+    it('自绘控件（uiSelect / uiSwitch）→ 根是 <div>，绝不用 <label> 包', () => {
+      const sel = uiField({
+        label: '节奏',
+        control: uiSelect({ options: [{ value: 'a', label: '甲' }], value: 'a', onChange: () => {} }).el,
+      });
+      expect(sel.tagName).not.toBe('LABEL');
+      expect(sel.classList.contains('bz-field')).toBe(true);
+
+      const sw = uiField({ label: '开关', control: uiSwitch({ checked: false }).el });
+      expect(sw.tagName).not.toBe('LABEL');
+    });
   });
 
   describe('uiEmpty', () => {

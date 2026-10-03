@@ -1,4 +1,4 @@
-/* 源指纹 5734faec8803034e · 仓内输入 53 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 cca1517baf22d550 · 仓内输入 53 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/dock/fake-sim.ts","prototypes/dock/fake/fake-obsidian.ts","src/core/app.ts","src/core/dom.ts","src/core/esc-manager.ts","src/core/external-tool.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/mobile.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/settings-provider.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/help-tip.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/dock/data.ts","src/dock/declaration.ts","src/dock/index.ts","src/dock/registry.ts","src/dock/runner.ts","src/dock/schedule.ts","src/dock/scheduler.ts","src/dock/schema.ts","src/dock/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/dock/fake-sim.ts → window.BZW_dock（行为单源预览包，issue 245/ADR-0106） */
 var BZW_dock = (() => {
@@ -4913,8 +4913,14 @@ var BZW_dock = (() => {
     });
     return inp;
   }
+  function isLabelable(ctrl) {
+    const tag = ctrl.tagName;
+    if (tag === "BUTTON" || tag === "SELECT" || tag === "TEXTAREA") return true;
+    if (tag === "INPUT") return ctrl.type !== "hidden";
+    return false;
+  }
   function uiField(opts) {
-    const wrap = document.createElement("label");
+    const wrap = isLabelable(opts.control) ? document.createElement("label") : document.createElement("div");
     wrap.className = "bz-field";
     if (opts.label) {
       const l = document.createElement("span");
@@ -6168,6 +6174,7 @@ var BZW_dock = (() => {
     if (!s) return "";
     return [s.kind, (_a = s.hour) != null ? _a : "", (_b = s.weekday) != null ? _b : "", (_c = s.everyHours) != null ? _c : ""].join("|");
   }
+  var EDITABLE_SCHEDULE_KINDS = ["daily", "weekly", "interval"];
   function scheduleFromDraft(kind, p) {
     switch (kind) {
       case "inherit":
@@ -7110,6 +7117,11 @@ var BZW_dock = (() => {
   var VALUE_SAVE_DEBOUNCE_MS = 500;
   var dueNotified = /* @__PURE__ */ new Set();
   var autoDraft = /* @__PURE__ */ new Map();
+  var SCHEDULE_KIND_LABEL = {
+    daily: "每天",
+    weekly: "每周",
+    interval: "每隔若干小时"
+  };
   var OVERLAY_ID = "bz-dock-mask";
   var FRAME_ID = "bz-dock-panel";
   function el(tag, cls, text) {
@@ -7734,7 +7746,7 @@ var BZW_dock = (() => {
     if (existing) return existing;
     const cur = v.schedule;
     const k = cur == null ? void 0 : cur.kind;
-    const kind = !v.scheduleOverridden ? "inherit" : k === "daily" || k === "weekly" || k === "interval" || k === "on-demand" ? k : "daily";
+    const kind = k === "daily" || k === "weekly" || k === "interval" ? k : "daily";
     const d = {
       kind,
       hour: (_a = cur == null ? void 0 : cur.hour) != null ? _a : 12,
@@ -7747,7 +7759,8 @@ var BZW_dock = (() => {
   async function saveAuto(v, d) {
     const id = v.entry.id;
     const next = scheduleFromDraft(d.kind, d);
-    if (!next) {
+    const sameAsDeclared = next !== void 0 && scheduleSignature(next) === scheduleSignature(v.declaredSchedule);
+    if (!next || sameAsDeclared) {
       await updateToolEntry(id, { scheduleOverride: void 0, overrideDeclSig: void 0 });
     } else {
       await updateToolEntry(id, {
@@ -7779,8 +7792,8 @@ var BZW_dock = (() => {
     const id = v.entry.id;
     sec.appendChild(
       uiField({
-        label: "参与自动运行",
-        desc: "关掉后这个工具只手动跑（声明里的节奏仍在，只是 bz 不自动触发它）",
+        label: "自动运行",
+        desc: "由 bz 按下面的节奏自动触发；关掉就只在面板里手动点。脚本里那份是默认值，不是定死的",
         control: uiSwitch({
           checked: v.autoRun,
           onChange: (on) => {
@@ -7795,10 +7808,10 @@ var BZW_dock = (() => {
       })
     );
     const facts = el("div", "bz-dock-autorows");
-    facts.appendChild(autoRow("作者声明", scheduleTextOf(v.declaredSchedule)));
+    facts.appendChild(autoRow("脚本默认", scheduleTextOf(v.declaredSchedule)));
     facts.appendChild(autoRow("当前生效", scheduleTextOf(v.schedule) + (v.scheduleOverridden ? "（你改的）" : "")));
     facts.appendChild(
-      autoRow("下次预计", v.nextDue === null ? "算不出（未声明节奏，或缺运行基线）" : dueTimeText(v.nextDue))
+      autoRow("下次预计", v.nextDue === null ? "算不出（没有节奏，或缺运行基线）" : dueTimeText(v.nextDue))
     );
     if ((_a = v.runState) == null ? void 0 : _a.pausedAt) {
       facts.appendChild(
@@ -7810,7 +7823,16 @@ var BZW_dock = (() => {
       );
     }
     if (v.declChangedSinceOverride) {
-      facts.appendChild(el("div", "bz-dock-autonote", "作者后来改过声明里的节奏 —— 建议看一眼要不要跟着调"));
+      facts.appendChild(el("div", "bz-dock-autonote", "脚本改过默认节奏了 —— 看一眼要不要跟着调"));
+    }
+    if (!v.autoRun) {
+      facts.appendChild(
+        el(
+          "div",
+          "bz-dock-autonote",
+          "自动运行已关 —— 下面排的节奏不会生效，要它自己跑起来得先打开上面的开关"
+        )
+      );
     }
     sec.appendChild(facts);
     const d = autoDraftOf(v);
@@ -7819,14 +7841,9 @@ var BZW_dock = (() => {
       uiField({
         label: "节奏",
         control: uiSelect({
-          options: [
-            { value: "inherit", label: "跟随声明（清除我的改动）" },
-            { value: "daily", label: "每天" },
-            { value: "weekly", label: "每周" },
-            { value: "interval", label: "每隔若干小时" },
-            { value: "on-demand", label: "只手动（不自动）" }
-          ],
-          value: d.kind,
+          // 选项来自 schedule.ts 的 EDITABLE_SCHEDULE_KINDS（唯一来源，不带「只手动」）
+          options: EDITABLE_SCHEDULE_KINDS.map((k) => ({ value: k, label: SCHEDULE_KIND_LABEL[k] })),
+          value: d.kind === "inherit" ? "daily" : d.kind,
           onChange: (val) => {
             d.kind = val;
             render();
@@ -7878,7 +7895,7 @@ var BZW_dock = (() => {
     if (v.scheduleOverridden) {
       btns.appendChild(
         uiBtn({
-          label: "恢复声明默认",
+          label: "恢复脚本默认",
           size: "sm",
           onClick: () => {
             autoDraft.delete(id);
