@@ -39,7 +39,7 @@ const JEV_INSTRUCTIONS =
   `根据下面这部影视的豆瓣信息，从候选清单里选出最贴切的分类标签。候选值的说明是该标签所属的组。${DECIDE_HINTS}若都不贴切，请选「${TYPE_SENTINEL}」。`;
 
 /** 判定所需的豆瓣字段（够用即可；Jev 官方：塞太多无关内容掉精度） */
-export interface TypeDecideInfo {
+interface TypeDecideInfo {
   /** 片名 */
   title?: string | null;
   /** 是否剧集（ApiZero is_tv / rexxar mediaType）——区分电影与各剧种的唯一依据 */

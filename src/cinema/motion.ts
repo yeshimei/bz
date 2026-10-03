@@ -27,11 +27,3 @@ export const EASE = {
   out: 'cubic-bezier(.22,.82,.3,1)',
   move: 'cubic-bezier(.34,.06,.16,1)',
 } as const;
-
-/** CSS token 名（门禁测试与注释引用用；CSS 侧定义见 styles.css 的台账段） */
-export const MOTION_VARS = {
-  fast: '--cn-m-fast',
-  move: '--cn-m-move',
-  base: '--cn-m-base',
-  impulse: '--cn-m-impulse',
-} as const;

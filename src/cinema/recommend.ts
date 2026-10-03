@@ -68,17 +68,21 @@ const RECOMMEND_ASK = 20;
 const RECOMMEND_TAKE = 5;
 const FOLLOWUP_ASK = 10;
 
-/** 构建推荐提示词（2026-09-11 方案 A：不再打包全量片名做排除清单——
- *  prompt 只发正向信号（画像 + 最近已看），要求多给（20 部按匹配度排序），
- *  「不荐库内已有」职责移到结果层去重；token 从库规模线性降为常量级） */
-export function buildRecommendPrompt(profile: any, recent: string[]): string {
-  return `你是资深影视推荐官。用户已看 ${profile.total} 部影视，以下是其口味画像（个人评分1~10加权统计，数值为加权分）：
+/** 两个提示词共用的画像头（推荐/补问同一段字节；改文案两边同步变） */
+const profileSection = (profile: any, recent: string[]): string =>
+  `你是资深影视推荐官。用户已看 ${profile.total} 部影视，以下是其口味画像（个人评分1~10加权统计，数值为加权分）：
 品类分布：${profile.groups.join('、') || '无'}
 类型偏好：${profile.genres.join('、') || '无'}
 导演偏好：${profile.directors.join('、') || '无'}
 主演偏好：${profile.actors.join('、') || '无'}
 地区偏好：${profile.regions.join('、') || '无'}
-最近看的10部：${recent.join('；')}
+最近看的10部：${recent.join('；')}`;
+
+/** 构建推荐提示词（2026-09-11 方案 A：不再打包全量片名做排除清单——
+ *  prompt 只发正向信号（画像 + 最近已看），要求多给（20 部按匹配度排序），
+ *  「不荐库内已有」职责移到结果层去重；token 从库规模线性降为常量级） */
+export function buildRecommendPrompt(profile: any, recent: string[]): string {
+  return `${profileSection(profile, recent)}
 
 请基于画像推荐 ${RECOMMEND_ASK} 部用户可能喜欢的影视（电影/剧集/动漫/纪录片/公开课均可），按与口味的匹配度从高到低排序。推荐理由必须具体引用画像中的偏好信号（如"你偏爱X导演的Y风格"）。只推荐真实存在的影视，避免编造。
 
@@ -88,13 +92,7 @@ export function buildRecommendPrompt(profile: any, recent: string[]): string {
 /** 补问提示词（方案 A 第二轮）：只排除「已经推荐过的名字」（≤20 个，常量级），
  *  在库去重仍由结果层承担；凑不满 5 部就按实际所得展示 */
 export function buildFollowupPrompt(profile: any, recent: string[], excludeNames: string[]): string {
-  return `你是资深影视推荐官。用户已看 ${profile.total} 部影视，以下是其口味画像（个人评分1~10加权统计，数值为加权分）：
-品类分布：${profile.groups.join('、') || '无'}
-类型偏好：${profile.genres.join('、') || '无'}
-导演偏好：${profile.directors.join('、') || '无'}
-主演偏好：${profile.actors.join('、') || '无'}
-地区偏好：${profile.regions.join('、') || '无'}
-最近看的10部：${recent.join('；')}
+  return `${profileSection(profile, recent)}
 
 刚才已经向你推荐过以下影片（不要重复推荐）：${excludeNames.join('、')}
 

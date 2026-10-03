@@ -25,7 +25,7 @@ import {
 } from './kits';
 
 /** `px/py` = 指针位置（归一化 -1..1，指针不在画面里时是 0）；各幕自己决定要不要跟着走 */
-export interface PerfCtx { t: number; pal: Palette; px: number; py: number; pin: number }
+interface PerfCtx { t: number; pal: Palette; px: number; py: number; pin: number }
 export interface Perf {
   dur: number;
   update(ctx: PerfCtx): void;
@@ -58,12 +58,6 @@ function T(el: HTMLElement | null | undefined, v: string): void {
   if (!el || lastText.get(el) === v) return;
   lastText.set(el, v);
   el.textContent = v;
-}
-/** 数字位（逐位 `<i>`）：只在整个字符串变了时重建 */
-function DGS(el: HTMLElement | null | undefined, v: string): void {
-  if (!el || lastText.get(el) === v) return;
-  lastText.set(el, v);
-  el.innerHTML = [...v].map((ch) => (/\d/.test(ch) ? `<i>${ch}</i>` : `<i class="lit">${ch === ' ' ? '&nbsp;' : ch}</i>`)).join('');
 }
 const esc0 = (s: string): string => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
@@ -527,8 +521,6 @@ export function buildPerfs(root: HTMLElement, data: YbData, host: HTMLElement = 
       const key = `-${String(mi + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
       return { el, n: dayCount.get(key) ?? 0, o: orderOf.get(key) ?? -1, tipTxt: el.dataset.tip ?? '' };
     });
-    const months = qsa(s, '.yb-month');
-    void months;
     // 悬停某天：那格凸起 + 报出那天看的片（一年 366 格，光看颜色深浅读不出内容）
     let hotCell = -1;
     out.set('days', {
@@ -929,7 +921,7 @@ export function buildPerfs(root: HTMLElement, data: YbData, host: HTMLElement = 
           ctx.lineWidth = 1;
           ctx.beginPath(); ctx.moveTo(0, h - padB); ctx.lineTo(w * g, h - padB); ctx.stroke();
           const yOf = (i: number, j: number, which: 'top' | 'bot'): number => {
-            const acc = series[j][i] + (which === 'bot' ? 0 : 0);
+            const acc = series[j][i];
             const below = series.slice(0, j).reduce((s2, arr) => s2 + arr[i], 0);
             const up = (below + acc) / maxTotal;
             const dn = below / maxTotal;
@@ -1327,7 +1319,7 @@ export function buildPerfs(root: HTMLElement, data: YbData, host: HTMLElement = 
             const shine = (((t - 2.2 + i * .7) % 4.2) / 4.2).toFixed(4);
             const float = Math.sin((t - 2.2) * 1.2 + i) * 1.8;
             const on = i === hotPod;
-            S(card, `opacity:1;transform:translate(${(-px * 5 + (on ? 0 : 0)).toFixed(2)}px,${(float - py * 3.4 - (on ? 10 : 0)).toFixed(2)}px)`
+            S(card, `opacity:1;transform:translate(${(-px * 5).toFixed(2)}px,${(float - py * 3.4 - (on ? 10 : 0)).toFixed(2)}px)`
               + ` scale(${on ? 1.045 : 1});--shine:${shine}` + (on ? ';z-index:3' : ''));
           } else {
             S(card, `opacity:${Math.min(1, cp * 1.9).toFixed(3)};transform:translate3d(0,${((1 - ck) * 30).toFixed(1)}px,${((1 - ck) * -170).toFixed(0)}px) scale(${(1.3 - .3 * ck).toFixed(3)})`);
@@ -1407,7 +1399,6 @@ export function buildPerfs(root: HTMLElement, data: YbData, host: HTMLElement = 
     const cards = qsa(s, '.yb-acard');
     const arc = s.querySelector<HTMLElement>('[data-r="arc"]');
     const attlChars = qsa(s, '.yb-attl i');
-    const mid = (cards.length - 1) / 2;
     // 指针左右横move：整条弧转一点（像转头看这一排人）；停在哪张卡上，它沿弧升起来
     let hotCard = -1;
     out.set('actors', {
@@ -1435,7 +1426,6 @@ export function buildPerfs(root: HTMLElement, data: YbData, host: HTMLElement = 
           S(c, `opacity:${Math.min(1, p * 1.5).toFixed(3)};--dy:${((1 - k) * 16 + stand).toFixed(2)}em;--br:${breath.toFixed(2)}em`
             + (p >= 1 ? '' : `;transform:scale(${(.9 + .1 * k).toFixed(3)})`)
             + (d === 0 ? ';z-index:3' : ''));
-          void mid;
         });
       },
     });
