@@ -36,7 +36,7 @@ import type { DockManifest } from '../../src/dock/schema';
 /** 内存 fs：rename / exists / unlink 可选 —— 用与不用各条路都要能走 */
 function memFs(
   files: Record<string, string> = {},
-  opts: { rename?: boolean; unlink?: boolean } = {},
+  opts: { rename?: boolean; unlink?: boolean; exists?: boolean } = {},
 ): DockFs & { files: Record<string, string> } {
   const store: Record<string, string> = { ...files };
   const fs: DockFs & { files: Record<string, string> } = {
@@ -45,8 +45,8 @@ function memFs(
     writeText: (p, d) => {
       store[p] = d;
     },
-    exists: (p) => p in store,
   };
+  if (opts.exists !== false) fs.exists = (p) => p in store;
   if (opts.rename !== false) {
     fs.rename = (from, to) => {
       if (!(from in store)) throw new Error('no such tmp');
@@ -211,6 +211,13 @@ describe('readDeclaration —— 旧名回落（ADR-0237）', () => {
     expect(res.ok).toBe(false);
     expect(res.error).toContain(DECL_LEGACY);
   });
+
+  it('新名在但坏 JSON、旧名有效 → 不翻旧名（回落只救「文件不在」）', () => {
+    const fs = memFs({ [DECL]: '{ not json', [DECL_LEGACY]: decl({ name: '旧版' }) });
+    const res = readDeclaration(DECL, fs);
+    expect(res.ok).toBe(false);
+    expect(res.error).toContain('JSON');
+  });
 });
 
 describe('readDeclaration —— 约定入口 main.mjs（ADR-0237）', () => {
@@ -244,6 +251,18 @@ describe('readDeclaration —— 约定入口 main.mjs（ADR-0237）', () => {
   it('约定入口只认 main.mjs —— main.js 不算（.js 在无 package.json 的目录里按 CommonJS 解析）', () => {
     const fs = memFs({ [DECL]: decl(), [`${DIR}/main.js`]: 'x' });
     expect(readDeclaration(DECL, fs).conventionalRun).toBeUndefined();
+  });
+
+  it('回落命中旧名时，约定入口按实际读到声明的那份目录探测（同一目录，口径一致）', () => {
+    const fs = memFs({ [DECL_LEGACY]: decl(), [`${DIR}/main.mjs`]: 'x' });
+    const res = readDeclaration(DECL, fs); // 新名不在 → 回落旧名
+    expect(res.path).toBe(DECL_LEGACY);
+    expect(res.conventionalRun).toEqual({ cmd: 'node', args: ['main.mjs'] });
+  });
+
+  it('没有 exists 面的桩 → 探测退回「读一下试试」，约定入口照常发现', () => {
+    const fs = memFs({ [DECL]: decl(), [`${DIR}/main.mjs`]: 'x' }, { exists: false });
+    expect(readDeclaration(DECL, fs).conventionalRun).toEqual({ cmd: 'node', args: ['main.mjs'] });
   });
 });
 
@@ -335,6 +354,13 @@ describe('参数值 —— 旧名回落与迁移（ADR-0237）', () => {
     writeSettings(DECL, 'signin', { cookie: '新值' }, fs);
     expect(fs.files[legacyPath]).toBe('x');
     expect(readSettings(DECL, 'signin', fs)).toEqual({ cookie: '新值' });
+  });
+
+  it('没有 exists 面的桩 → 清理退回「读一下试试」探测，照常清掉旧名', () => {
+    const fs = memFs({ [legacyPath]: '旧值' }, { exists: false });
+    writeSettings(DECL, 'signin', { cookie: '新值' }, fs);
+    expect(fs.files[legacyPath]).toBeUndefined();
+    expect(fs.files[path]).toBeDefined();
   });
 
   it('写失败（目录不可写）不动旧名 —— 旧值是用户唯一的凭据，不能在写失败时丢', () => {

@@ -1695,8 +1695,8 @@ async function reloadDeclaration(v: DockToolView): Promise<void> {
       'warning',
     );
   }
-  // 回落命中旧名时以实际路径为准；没写 run 段时带上约定入口的探测结果
-  const run = resolveRun(m, v.entry.path, res.conventionalRun);
+  // 回落命中旧名时以实际路径为准（cwd 等缺省都从它算）；没写 run 段时带上约定入口的探测结果
+  const run = resolveRun(m, res.path ?? v.entry.path, res.conventionalRun);
   const sig = run ? runSignature(run) : undefined;
   if (isTrusted(v.entry) && sig !== v.entry.trustedRun) {
     // 声明改了「怎么跑」→ 信任作废：信任的对象是那条命令，不是这个 id
@@ -1846,7 +1846,9 @@ async function importToolFlow(entry?: DockToolEntry): Promise<void> {
     return;
   }
   const manifest = res.manifest;
-  const run = resolveRun(manifest, declPath);
+  // 约定入口必须带上：导入是登记的主路，信任框与 trustedRun 都按「真实会跑的命令」算，
+  // 漏了它，三行最薄声明（guide §2.3）登记完立即 trustStale，自动运行永远跑不起来
+  const run = resolveRun(manifest, declPath, res.conventionalRun);
 
   const entries = readToolEntries();
   if (entries.some((e) => e.id === manifest.id && e.id !== entry?.id)) {

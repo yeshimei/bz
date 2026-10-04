@@ -69,6 +69,9 @@ ADR-0236 之后，一个工具的全部数据都住在它自己的目录里。�
   `.obsidian/plugins/<id>/` 同构。
 - `declaration.ts` 新增三个 `_LEGACY` 常量与 `DockFs` 的 `exists` / `unlink` 可选面；
   `DeclarationRead` 新增 `path`（回落时 ≠ 登记路径）与 `conventionalRun`。
+- **runs 历史有一次性断档（要认）**：按 env 写记录的既有工具第一次写出新名 `runs.json`
+  后，读侧「新名优先」即生效，旧 `dock.runs.json` 里的历史从面板隐去（文件还在）。
+  bz 不代写合并（D9 只读），文档（guide §4.1）明示这一事实，迁移与否归工具/用户。
 - 两个 `data.json` 同名不同处（插件目录的登记表 vs 工具目录的参数值账本），文档口径
   已在 CONTEXT.md 与 `data.ts` 头注标明，别混。
 - 参考实现 `E:\Obsidian\dock-tools\daily-signin\` 已随本条迁移

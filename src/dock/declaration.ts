@@ -92,6 +92,7 @@ function defaultDockFs(): DockFs | null {
       readFileSync(p: string, enc: string): string;
       writeFileSync(p: string, d: string): void;
       existsSync(p: string): boolean;
+      statSync?(p: string): { isFile(): boolean };
       renameSync?(a: string, b: string): void;
       unlinkSync?(p: string): void;
     };
@@ -108,7 +109,18 @@ function defaultDockFs(): DockFs | null {
         typeof fs.renameSync === 'function'
           ? (a, b) => fs.renameSync!(a, b)
           : undefined,
-      exists: typeof fs.existsSync === 'function' ? (p) => fs.existsSync(p) : undefined,
+      exists:
+        typeof fs.existsSync === 'function'
+          ? (p) => {
+              try {
+                if (!fs.existsSync(p)) return false;
+                // 名为 main.mjs 的目录不是入口 —— existsSync 对目录也答 true，用 stat 拦掉
+                return fs.statSync ? fs.statSync(p).isFile() : true;
+              } catch {
+                return false;
+              }
+            }
+          : undefined,
       unlink: typeof fs.unlinkSync === 'function' ? (p) => fs.unlinkSync!(p) : undefined,
     };
   } catch {
@@ -327,16 +339,15 @@ export function writeSettings(
   } catch {
     return false;
   }
-  // 迁移尾巴：旧名里的旧值已经被新名盖过（读侧新名优先），留着就是凭据多落一处
+  // 迁移尾巴：旧名里的旧值已经被新名盖过（读侧新名优先），留着就是凭据多落一处。
+  // 整段包住 —— 探测或删除出任何岔子都不影响「这次已写成功」的事实
   const legacy = joinPath(dirOf(declPath), SETTINGS_FILENAME_LEGACY);
   if (fs.unlink) {
-    const gone = fs.exists ? fs.exists(legacy) : fs.readText(legacy) !== null;
-    if (gone) {
-      try {
-        fs.unlink(legacy);
-      } catch {
-        /* 删不掉就留着 —— 读侧永远新名优先，无实害 */
-      }
+    try {
+      const gone = fs.exists ? fs.exists(legacy) : fs.readText(legacy) !== null;
+      if (gone) fs.unlink(legacy);
+    } catch {
+      /* 删不掉就留着 —— 读侧永远新名优先，无实害 */
     }
   }
   return true;
