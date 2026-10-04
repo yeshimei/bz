@@ -29,7 +29,10 @@ import {
   type DockToolView,
 } from './data';
 import { decideDue, missingRequiredParams, type DockSchedInput } from './schedule';
-import { errorHint, runTool, stopRun, type DockRunOutcome } from './runner';
+// ui 与 scheduler 互相引用（ui 里改完节奏会 kick 调度器；这里的通知要直达工具详情）——
+// 双方都只在函数体内调用对方，模块顶层互不取值，ESM 循环在此安全
+import { openDockTool } from './ui';
+import { errorHint, liveRunOf, runTool, stopRun, type DockRunOutcome } from './runner';
 
 // ==================== 参数 ====================
 
@@ -122,7 +125,9 @@ function inputOf(v: DockToolView, now: number): DockSchedInput {
     paramsReady: missingRequiredParams(v.manifest?.params, v.values).length === 0,
     paused: !!v.runState?.pausedAt,
     cooldown: (cooldownUntil.get(v.entry.id) ?? 0) > now,
-    running: inFlight.has(v.entry.id),
+    // 「在跑」的唯一事实源是执行层的名册（live 表）：用户手动点的那次不进 inFlight，
+    // 只看自己的集合，会在手动跑到一半时把同一个工具再拉起一个进程
+    running: inFlight.has(v.entry.id) || liveRunOf(v.entry.id) !== undefined,
   };
 }
 
@@ -234,6 +239,8 @@ async function runOne(view: DockToolView): Promise<RunResult> {
 
   notify(`${displayName(view)} 自动运行失败：${errorHint(timedOut ? 'timeout' : outcome.kind)}`, {
     type: 'error',
+    // 失败通知是死的，用户就得自己开面板找是哪个工具 —— 点了直达它的详情页
+    action: { label: '查看', onClick: () => openDockTool(app!, view.entry.id) },
   });
   if (trip) {
     notify(`${displayName(view)} 连续失败 ${failures} 次，已暂停自动运行（面板里可恢复）`, {

@@ -66,6 +66,33 @@
 .bz-dock-kpi-d.is-up { color: var(--bz-success); }
 .bz-dock-kpi-tile.is-warn .bz-dock-kpi-v { color: var(--bz-warning); }
 .bz-dock-kpi-tile.is-bad .bz-dock-kpi-v { color: var(--bz-danger); }
+/* 带口径的格可点（点哪格看哪类，再点回全部）——视觉只补「可以点」与「选中了」，不做第二套配色 */
+.bz-dock-kpi-tile.is-click { cursor: pointer; transition: background-color 120ms ease; }
+.bz-dock-kpi-tile.is-selected { box-shadow: inset 0 -2px 0 var(--bz-accent, currentColor); }
+@media (hover: hover) {
+  .bz-dock-kpi-tile.is-click:hover { background-color: var(--bz-bg-hover, rgba(0, 0, 0, 0.04)); }
+}
+
+/* ---------- 上次现场输出（运行结束后保留在内存里的尾部，不落盘） ---------- */
+.bz-dock-lastraw { margin-top: var(--bz-space-md); }
+.bz-dock-lastraw-head {
+  font-size: var(--bz-font-caption);
+  color: var(--bz-text-3);
+  margin-bottom: 4px;
+}
+
+/* ---------- 产物行（历史展开里：路径 + 打开/定位） ---------- */
+.bz-dock-artrow { display: flex; align-items: center; gap: 6px; padding: 2px 0; }
+.bz-dock-artrow-path {
+  flex: 1;
+  min-width: 0;
+  font-family: var(--bz-font-mono);
+  font-size: var(--bz-font-caption);
+  color: var(--bz-text-2);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 
 /* ---------- 面板顶层执行进度 ----------
    只画**在场**运行（bz 亲手启动的）。自动化工具是离场跑，永远不进这里 ——
