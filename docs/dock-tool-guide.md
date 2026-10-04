@@ -2,19 +2,19 @@
 
 给谁看：**要写一个能被 bz「工具坞」登记、运行、观测的外部脚本**的人或 agent。
 
-一句话：**你写一个普通命令行程序，旁边放一份 `dock.json` 声明自己是谁、有哪些参数、该怎么跑；运行时按四行协议往 stdout 说话，再自己往约定路径写一份运行记录。做完这三件事就能无缝接入 —— 你不 import 任何 bz 代码，bz 也不关心你的脚本里是什么。**
+一句话：**你写一个普通命令行程序，旁边放一份 `manifest.json` 声明自己是谁、有哪些参数、该怎么跑；运行时按四行协议往 stdout 说话，再自己往约定路径写一份运行记录。做完这三件事就能无缝接入 —— 你不 import 任何 bz 代码，bz 也不关心你的脚本里是什么。**
 
 ## 先把分工划清（最容易搞错的一条）
 
 | 东西 | 住哪 | 谁写 |
 |---|---|---|
-| 声明 `dock.json` | 你的工具目录 | **你**（手写） |
-| 运行记录 `dock.runs.json` | 你的工具目录 | **你**（脚本运行时写） |
-| 参数值 `dock.settings.json` | 你的工具目录 | **bz** |
+| 声明 `manifest.json` | 你的工具目录 | **你**（手写） |
+| 运行记录 `runs.json` | 你的工具目录 | **你**（脚本运行时写） |
+| 参数值 `data.json` | 你的工具目录 | **bz** |
 | 登记项（id / 路径 / 信任 / 调度状态） | bz 的 `data.json` | **bz** |
 | **自动化：开不开、多久跑一次** | bz 这一侧 | **用户**（在面板上定） |
 
-- 你写的 `schedule` **只是给一个默认节奏**，不是「宣布我被怎么调度」。用户在面板上可以改成别的节奏，也可以整个关掉 —— **bz 不会回写你的 `dock.json`**（§5）。
+- 你写的 `schedule` **只是给一个默认节奏**，不是「宣布我被怎么调度」。用户在面板上可以改成别的节奏，也可以整个关掉 —— **bz 不会回写你的 `manifest.json`**（§5）。
 - 你唯一会感知到的「自动化的存在」，是环境变量 `BZ_DOCK_TRIGGER=auto`（§4.1）。你不参与调度，也不需要知道用户把它设成了什么。
 
 本文的真理源是 `src/dock/schema.ts`（契约校验）、`src/dock/declaration.ts`（声明文件与参数值）、`src/core/external-tool.ts`（四行协议）、`src/dock/runner.ts`（怎么拉起你）。**本文与代码冲突时以代码为准**，并顺手改这里。
@@ -25,9 +25,9 @@
 
 ```
       bz 工具坞                                        你的工具目录
-        │  ① 读声明：读 <工具目录>/dock.json   ───────────►  文件（你手写，bz 只读、不执行）
+        │  ① 读声明：读 <工具目录>/manifest.json   ───────────►  文件（你手写，bz 只读、不执行）
         │  ② 跑起来：<run.cmd> <run.args…> --<参数>=<值> … ►  stdout 逐行吐 [bz-*] 四行协议
-        │  ③ 事后读：只读 <工具目录>/dock.runs.json  ◄─────  你自己原子写这份运行记录
+        │  ③ 事后读：只读 <工具目录>/runs.json  ◄─────  你自己原子写这份运行记录
         ▼
    面板（列表 / 详情 / 历史 / KPI）
 ```
@@ -47,7 +47,7 @@
 
 | # | 位置 | 谁写 |
 |---|---|---|
-| 1 | `dock.json` 的 `id` | 你 |
+| 1 | `manifest.json` 的 `id` | 你 |
 | 2 | 运行记录文件的 `tool` 字段 | 你 |
 
 （登记表里那个 id 是 bz 导入声明时**从声明抄下来的**，用户不用填，所以不存在第三处 —— 这正是把「三处一致」压成「两处」的地方。）
@@ -56,13 +56,14 @@
 
 ---
 
-## 2. 契约 A：声明文件（`dock.json`）
+## 2. 契约 A：声明文件（`manifest.json`）
 
-放在**工具目录**里（与你脚本同级的 `dock.json`），bz 直接读这个文件。
+放在**工具目录**里（与你脚本同级的 `manifest.json`），bz 直接读这个文件。
 
 ### 2.1 它在哪、怎么被读
 
-- **文件名固定** `dock.json`，位置固定 = 你脚本所在的那个目录。整个目录搬到哪都不用改配置。
+- **文件名固定** `manifest.json`，位置固定 = 你脚本所在的那个目录。整个目录搬到哪都不用改配置。命名按 Obsidian 插件惯例（ADR-0237）：manifest 自我介绍、`main.mjs` 是约定入口、`data.json` 是参数值、`runs.json` 留痕 —— 工具目录与 `.obsidian/plugins/<id>/` 同构。
+- **旧名 `dock.json` 仍被认**（读侧回落）：ADR-0237 之前登记的工具不用改名照常工作；新工具一律用 `manifest.json`。
 - bz **不缓存**它 —— 每次打开面板 / 点「重新读声明」都现读。所以「改了声明但面板还是旧的」这种事不会发生。手边改了想立刻生效点一下「重新读声明」即可。
 - 读取**永不抛**：文件不存在 / 不是合法 JSON / 必填缺 → 面板显示一条人话原因（「声明文件读不到：<路径>」），不会连累别的工具。
 - 容忍 UTF-8 BOM（用 PowerShell 写文件很常见）。
@@ -83,7 +84,7 @@
 |---|---|---|
 | `description` | string | 可换行；面板卡面与详情都显示 ✅ |
 | `icon` | string | **lucide 图标名**，卡片与详情用；未知名回落域图标 ✅ |
-| `run` | object | **怎么跑**，见 §2.3。缺省 = 这份声明只能看、不能跑（面板上标「只能看」） ✅ |
+| `run` | object | **怎么跑**，见 §2.3。缺省 = 看目录里有没有约定入口 `main.mjs`：有就当 `node main.mjs`，没有这份声明只能看、不能跑（面板上标「只能看」） ✅ |
 | `params` | array | 参数表，见 §2.4。缺省 = 空数组 ✅ |
 | `schedule` | object | **默认节奏**，见 §2.5。缺省 = 手动（面板归到「手动」分区，不判漏跑；用户仍可给它排上自动化） ✅ |
 | `author` / `toolVersion` | string | ⚠️ 只解析，**当前不渲染** |
@@ -102,13 +103,18 @@
 ### 2.3 `run`：连怎么跑都在声明里
 
 ```jsonc
-{ "run": { "cmd": "node", "args": ["signin.mjs"] } }
+{ "run": { "cmd": "node", "args": ["main.mjs"] } }
 ```
 
 - `cmd`（必填）：可执行文件路径，或 PATH 上的名字。**空则整段丢弃**（该工具退化为「只能看」）。
 - `args`（选填）：固定参数表，按原样传给进程；参数表单里的值会**另拼在后面**（见 §2.4）。
-- `cwd`（选填）：**缺省 = 声明文件所在目录**。所以 `args` 里直接写相对文件名就行（`signin.mjs`），整个工具目录搬到哪都不用改。
+- `cwd`（选填）：**缺省 = 声明文件所在目录**。所以 `args` 里直接写相对文件名就行（`main.mjs`），整个工具目录搬到哪都不用改。
 - `shell`（选填）：经 shell 启动。**缺省按 `cmd` 扩展名自动判** —— `.cmd` / `.bat` 结尾自动开（Windows 上不经 shell 起不来），其余自动关。想强制就显式写。
+- **整段缺省时还有一条约定（ADR-0237）**：目录里有 `main.mjs` 就视为 `node main.mjs`（cwd = 工具目录）。最薄的声明可以不写 `run`：
+  ```jsonc
+  { "v": 1, "id": "iamtxt-signin", "name": "iamtxt 每日签到" }
+  ```
+  **为什么只认 `main.mjs` 这一个名字**：`.mjs` 让 Node 无条件按 ES Module 解析，不依赖目录里有没有 `package.json`（`main.js` 在没有 package.json 的目录里按 CommonJS 解析，`import` 语法直接报错）。**python 等其他运行时不享受这条约定** —— 写 `run` 段，别让 bz 猜。写了 `run` 就以声明为准，约定只在缺省时生效。
 
 > **为什么把「怎么跑」也放进声明**：这样登记动作就只剩「选一个文件」。从前靠 `<cmd> --manifest` 子命令自描述，要读清单就得**先执行**那条命令 —— 于是用户只能在「还不知道它会跑什么」的前提下点信任。改成文件之后，读它不执行任何东西，顺序天然反过来了。那个子命令通道已取消，别再往 stdout 吐声明（§3）。
 
@@ -148,7 +154,7 @@
 
 > 参数**只在启动时**下发。bz 不开 stdin 管道、不做运行中注入（这是刻意的：零真实场景，开了会把协议复杂度抬高一整档）。
 
-**参数值住在哪**：用户填完存在 `<工具目录>/dock.settings.json`（bz 写、bz 读，形状见 §4.5）。位置在**你这边**，不进 vault、不随 vault 同步、不进 git。你**不需要**读它 —— 每次运行时值都会经 argv 发给你。想让用户在别处也改就自己读，随你。
+**参数值住在哪**：用户填完存在 `<工具目录>/data.json`（bz 写、bz 读，形状见 §4.5）。位置在**你这边**，不进 vault、不随 vault 同步、不进 git。你**不需要**读它 —— 每次运行时值都会经 argv 发给你。想让用户在别处也改就自己读，随你。
 
 #### 参数表里该放什么（**最容易做错的一节**）
 
@@ -189,7 +195,7 @@
 **它决定的是「默认」**。写在这里的节奏会被当成这个工具的**初始节奏**：
 - 默认归到面板的「自动化」分区，并按它自动跑；
 - 用户在详情页能看到一行「**脚本默认**」正是你写的那条，另有一行「当前生效」；
-- 用户想要别的节奏（或者干脆关掉自动运行）就在面板上改 —— 改的是 bz 那一侧的一份设置，**你的 `dock.json` 一个字节都不会被动**。以后你改了这条默认节奏，面板会提示用户「脚本改过默认节奏了」，但**不会**擅自把用户设的那份推翻。
+- 用户想要别的节奏（或者干脆关掉自动运行）就在面板上改 —— 改的是 bz 那一侧的一份设置，**你的 `manifest.json` 一个字节都不会被动**。以后你改了这条默认节奏，面板会提示用户「脚本改过默认节奏了」，但**不会**擅自把用户设的那份推翻。
 
 **面板上「自动化 / 手动」两区由生效节奏派生**（`triggerOf`）：`daily` / `weekly` / `interval` → 自动化；`on-demand` / `unknown` / 没写 → 手动。**没有第二个地方能改这个分类** —— 分类是派生的，不是另存一个字段。用户给一个手动工具排上节奏，它就进了自动化区；这不需要你配合。
 
@@ -241,10 +247,10 @@
 
 ### 4.1 写到哪儿
 
-**就写在你自己的目录里**：`dock.runs.json`，与 `dock.json` 同级。文件名是契约的一部分（`declaration.ts` 的 `RUNS_FILENAME`），**你不要自己另外声明路径** —— 也不需要知道 vault 在哪。
+**就写在你自己的目录里**：`runs.json`，与 `manifest.json` 同级。文件名是契约的一部分（`declaration.ts` 的 `RUNS_FILENAME`），**你不要自己另外声明路径** —— 也不需要知道 vault 在哪。
 
-- **在场运行**（bz 启动你，含它按节奏自动触发）：环境变量里给好了绝对路径，用 `BZ_DOCK_RUNS_FILE`。它由你的 `dock.json` 位置推出来，所以永远是绝对值，不会被你的 `cwd` 解析歪。
-- **离场运行**（你自己配的系统计划任务在 Obsidian 关着时启动你）：拿不到那个变量，但答案很简单 —— **还是写你自己目录里的 `dock.runs.json`**（脚本里由 `__dirname` / `import.meta.url` 定位即可）。
+- **在场运行**（bz 启动你，含它按节奏自动触发）：环境变量里给好了绝对路径，用 `BZ_DOCK_RUNS_FILE`。它由你的 `manifest.json` 位置推出来，所以永远是绝对值，不会被你的 `cwd` 解析歪。
+- **离场运行**（你自己配的系统计划任务在 Obsidian 关着时启动你）：拿不到那个变量，但答案很简单 —— **还是写你自己目录里的 `runs.json`**（脚本里由 `__dirname` / `import.meta.url` 定位即可）。
 
 bz 注入的环境变量（`dockEnvOf`）：
 
@@ -252,7 +258,7 @@ bz 注入的环境变量（`dockEnvOf`）：
 |---|---|
 | `BZ_DOCK_CONTRACT` | `1` |
 | `BZ_DOCK_TOOL` | 你的 id |
-| `BZ_DOCK_RUNS_FILE` | **记录文件的绝对路径**（= 你目录下的 `dock.runs.json`） |
+| `BZ_DOCK_RUNS_FILE` | **记录文件的绝对路径**（= 你目录下的 `runs.json`） |
 | `BZ_DOCK_VAULT` | vault 根目录绝对路径（通常用不上，留给你偶尔要读写 vault 时） |
 | `BZ_DOCK_TRIGGER` | `auto`（bz 按节奏自动触发）/ `manual`（用户在面板里点）。**给记录的 `trigger` 字段用**：bz 是父进程，它最清楚这次是谁拉起的，你不用猜。缺省按 `manual` 处理 |
 
@@ -316,7 +322,7 @@ bz 注入的环境变量（`dockEnvOf`）：
 
 ### 4.5 参数值文件（bz 写，你可以不看）
 
-`<工具目录>/dock.settings.json`：
+`<工具目录>/data.json`：
 
 ```jsonc
 { "v": 1, "tool": "iamtxt-signin", "values": { "cookie": "…" } }
@@ -324,7 +330,7 @@ bz 注入的环境变量（`dockEnvOf`）：
 
 - **写者只有 bz**（面板参数表单，停手 500ms 后落盘）。你不需要写它，通常也不需要读它 —— 值每次都会经 argv 发给你。
 - 这是凭据的家：它**不在 vault 里**，所以不随 vault 同步、不进 git、不落运行记录。
-- 顺带一提：如果你的工具目录在某个 git 仓库里，记得把 `dock.settings.json` 加进 `.gitignore`。
+- 顺带一提：如果你的工具目录在某个 git 仓库里，记得把 `data.json` 加进 `.gitignore`。
 
 ---
 
@@ -343,7 +349,7 @@ bz 注入的环境变量（`dockEnvOf`）：
 面板上的「自动运行」块有三个部分，**开关与节奏是两个控件各管一件事**：
 
 - **总闸开关**（「自动运行」）：bz 要不要自动触发这个工具。关掉 = 只手动跑。
-- **脚本默认 / 当前生效**：两行事实。前者是你 `dock.json` 里写的那条，后者是实际生效的（用户改过就标「你改的」）。
+- **脚本默认 / 当前生效**：两行事实。前者是你 `manifest.json` 里写的那条，后者是实际生效的（用户改过就标「你改的」）。
 - **节奏编辑器**：每天 / 每周 / 每隔若干小时。**没有「只手动」这一项** —— 「不自动」已经由总闸开关表达，不在第二个地方重复。
 
 所以你作为脚本作者要做的只有三件事：
@@ -380,7 +386,7 @@ bz 注入的环境变量（`dockEnvOf`）：
 
 ## 7. 最小可跑示例
 
-### `dock.json`（放在你脚本同级目录）
+### `manifest.json`（放在你脚本同级目录）
 
 ```jsonc
 {
@@ -390,7 +396,7 @@ bz 注入的环境变量（`dockEnvOf`）：
   "description": "在 iamtxt 签到领积分；失败原因写进运行记录",
   "icon": "calendar-check",
   "schedule": { "kind": "daily", "hour": 12, "note": "当天哪天跑都算" },
-  "run": { "cmd": "node", "args": ["signin.mjs"] },
+  "run": { "cmd": "node", "args": ["main.mjs"] },
   "params": [
     // 只有凭据。用户除了 Cookie 没别的可填 —— 接口、body、超时全在脚本里写死
     { "key": "cookie", "label": "Cookie", "type": "secret",
@@ -407,7 +413,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-// 注意：这里不需要任何 --manifest 分支 —— 声明就是上面那份 dock.json
+// 注意：这里不需要任何 --manifest 分支 —— 声明就是上面那份 manifest.json
 const ID = 'iamtxt-signin';
 const V = 1;
 const ARGS = process.argv.slice(2);
@@ -436,9 +442,9 @@ function params() {
 }
 
 // —— 契约 C：运行记录（原子写 + 自裁剪）——
-// 记录就写在自己目录里的 dock.runs.json：在场时用 bz 给的绝对路径，离场时由脚本自己定位。
+// 记录就写在自己目录里的 runs.json：在场时用 bz 给的绝对路径，离场时由脚本自己定位。
 const RUNS_FILE = process.env.BZ_DOCK_RUNS_FILE
-  || path.join(path.dirname(fileURLToPath(import.meta.url)), 'dock.runs.json');
+  || path.join(path.dirname(fileURLToPath(import.meta.url)), 'runs.json');
 // bz 是父进程，它告诉我们这次是自动触发还是手动点 —— 别自己猜（§5）
 const TRIGGER = process.env.BZ_DOCK_TRIGGER === 'auto' ? 'auto' : 'manual';
 
@@ -523,7 +529,7 @@ async function main() {
 main().catch((e) => { process.stderr.write(String(e?.stack ?? e) + '\n'); process.exitCode = 1; });
 ```
 
-### Python（同样三件事；`dock.json` 同上一份）
+### Python（同样三件事；`manifest.json` 同上一份）
 
 ```python
 #!/usr/bin/env python3
@@ -535,8 +541,8 @@ ARGS = sys.argv[1:]
 
 def iso(): return datetime.now(timezone.utc).astimezone().isoformat()
 
-# 记录写在自己目录的 dock.runs.json：在场用 bz 给的路径，离场自己定位；trigger 读 bz 注入的
-RUNS_FILE = os.environ.get("BZ_DOCK_RUNS_FILE") or os.path.join(os.path.dirname(os.path.abspath(__file__)), "dock.runs.json")
+# 记录写在自己目录的 runs.json：在场用 bz 给的路径，离场自己定位；trigger 读 bz 注入的
+RUNS_FILE = os.environ.get("BZ_DOCK_RUNS_FILE") or os.path.join(os.path.dirname(os.path.abspath(__file__)), "runs.json")
 TRIGGER = "auto" if os.environ.get("BZ_DOCK_TRIGGER") == "auto" else "manual"
 
 def say(prefix, body):                                     # 契约 B
@@ -593,16 +599,16 @@ except Exception as e:
 
 ## 9. 提交前自检
 
-1. `dock.json` 能被 `JSON.parse`，且 `v===1`、`id` 合法、`name` 非空。
+1. `manifest.json` 能被 `JSON.parse`，且 `v===1`、`id` 合法、`name` 非空。
 2. 声明里的 `id` 与运行记录里的 `tool` 逐字一致。
 3. `run.cmd` 能独立跑起来（顺手确认 `cwd` 缺省那个目录对不对 —— 它默认是你的工具目录）。
 4. 在面板里「导入声明」：核对框里显示的名字、命令、参数个数都对得上。
 5. 跑一次正常路径：能出 `[bz-step]` / `[bz-p]`（`pct` 拿不到就是 `null`）。
-6. 跑完**你目录下的 `dock.runs.json`** 里多了一条，`tool === id`，`status` 在枚举内，`secret` 已剔除，`trigger` 取自 `BZ_DOCK_TRIGGER`（不是写死的）。
+6. 跑完**你目录下的 `runs.json`** 里多了一条，`tool === id`，`status` 在枚举内，`secret` 已剔除，`trigger` 取自 `BZ_DOCK_TRIGGER`（不是写死的）。
 7. 记录是 tmp + rename 写出来的（在写入瞬间被读不会出半截 JSON）。
 8. `runs` 数组已裁剪到 ≤ 200 条。
 9. 造一个失败（如断网）：`exit 1` + stderr 最后一行是原因 + 记录里 `error.kind` 是最贴切的分类。
-10. 如果声明了 `schedule`：`kind` 在枚举内，`hour` / `weekday` / `everyHours` 在范围内，且它**符合你希望用户默认看到的节奏**。面板详情页「自动运行」块里应看到「脚本默认」一行正是它 —— 旁边那行「当前生效」才是真正在跑的（用户改过就会有「你改的」标记）。**改用户那份不是你的活，bz 不会回写你的 `dock.json`。**
+10. 如果声明了 `schedule`：`kind` 在枚举内，`hour` / `weekday` / `everyHours` 在范围内，且它**符合你希望用户默认看到的节奏**。面板详情页「自动运行」块里应看到「脚本默认」一行正是它 —— 旁边那行「当前生效」才是真正在跑的（用户改过就会有「你改的」标记）。**改用户那份不是你的活，bz 不会回写你的 `manifest.json`。**
 11. 把工具的自动化**关掉再跑一次**（详情页总闸开关）—— 手动路径也该跑通，因为用户随时可能这么用（§5）。
 12. **参数表逐项自问**：用户看到这个框，能凭自己填对吗？填不对的（接口、路径、字段名、超时）回脚本里写死。
 
@@ -610,11 +616,11 @@ except Exception as e:
 
 ## 10. 相关
 
-- **参考实现（真跑得起来的样板）**：`E:\Obsidian\dock-tools\daily-signin\` —— iamtxt 每日签到，目录里就是 `dock.json` + `signin.mjs`，接口写死、参数只留 Cookie
+- **参考实现（真跑得起来的样板）**：`E:\Obsidian\dock-tools\daily-signin\` —— iamtxt 每日签到，目录里就是 `manifest.json` + `main.mjs`，接口写死、参数只留 Cookie
 - 契约校验（真理源）：`src/dock/schema.ts`、`src/dock/registry.ts`
 - 声明文件 / 参数值 / 运行记录路径：`src/dock/declaration.ts`
 - 四行协议与进程生命周期：`src/core/external-tool.ts`
 - 拉起与回显（含注入的环境变量）：`src/dock/runner.ts`
 - 自动运行（bz 按节奏替你触发）：`src/dock/scheduler.ts` + 判据 `src/dock/schedule.ts`
 - 设计决策（D1–D15、四份文件、明确不做的清单）：`.scratch/dock/spec.md`（§14 调度、§15 措辞与下拉）
-- 决策记录：ADR-0235（声明文件自描述）、**ADR-0236（bz 调度 + 运行记录归工具目录，含 §补记「主动权在 bz 这一侧」）**
+- 决策记录：ADR-0235（声明文件自描述）、**ADR-0236（bz 调度 + 运行记录归工具目录，含 §补记「主动权在 bz 这一侧」）**、ADR-0237（文件名对齐 Obsidian 插件惯例 + `main.mjs` 约定入口）

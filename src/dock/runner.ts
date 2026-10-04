@@ -157,7 +157,7 @@ export function stopRun(toolId: string): void {
  * 启动一个工具（**在场**形态）。
  *
  * 前置条件由调用方保证（声明里有 `run`、已信任、桌面端）；`values` 是用户在参数表单里填的值，
- * 经 `buildArgs` 拼成 `--key=value`（值另有一份落在工具目录的 `dock.settings.json`，
+ * 经 `buildArgs` 拼成 `--key=value`（值另有一份落在工具目录的 `data.json`，
  * 那是 bz 的账本，下发通道始终是命令行）。`secret` 类型照发给工具，但**不落任何 bz 侧记录**。
  */
 /** `runTool` 的可选开关 */
@@ -170,7 +170,7 @@ export interface DockRunOpts {
  * 启动一个工具（**在场**形态）。
  *
  * 前置条件由调用方保证（声明里有 `run`、已信任、桌面端）；`values` 是用户在参数表单里填的值，
- * 经 `buildArgs` 拼成 `--key=value`（值另有一份落在工具目录的 `dock.settings.json`，
+ * 经 `buildArgs` 拼成 `--key=value`（值另有一份落在工具目录的 `data.json`，
  * 那是 bz 的账本，下发通道始终是命令行）。`secret` 类型照发给工具，但**不落任何 bz 侧记录**。
  *
  * `opts.trigger` 区分「用户手动点」与「调度器按节奏拉起」—— 只影响注入给工具的那个环境变量

@@ -5,10 +5,13 @@
  *
  * | 文件 | 位置 | 唯一写者 | 本模块的角色 |
  * |---|---|---|---|
- * | `data.json` → `dockTools` 段 | 插件设置 | **bz** | 读写（`readToolEntries` / `saveToolEntries`） |
- * | `dock.json`（声明） | **工具目录** | **工具作者** | **只读**（经 `declaration.ts`，不缓存） |
- * | `dock.settings.json`（参数值） | **工具目录** | **bz** | 读写（`readToolValues` / `saveToolValues`） |
- * | `dock.runs.json`（运行记录） | **工具目录** | **工具** | **只读**（`readRunsFile` —— 永不创建、永不改写） |
+ * | 插件 `data.json` → `dockTools` 段 | 插件设置 | **bz** | 读写（`readToolEntries` / `saveToolEntries`） |
+ * | `manifest.json`（声明） | **工具目录** | **工具作者** | **只读**（经 `declaration.ts`，不缓存；旧名 `dock.json` 回落认） |
+ * | `data.json`（参数值） | **工具目录** | **bz** | 读写（`readToolValues` / `saveToolValues`；旧名 `dock.settings.json` 回落认） |
+ * | `runs.json`（运行记录） | **工具目录** | **工具** | **只读**（`readRunsFile` —— 永不创建、永不改写；旧名 `dock.runs.json` 回落认） |
+ *
+ * 两个 `data.json` 同名不同处，别混：**插件设置**那份在 vault 的插件目录里（登记表），
+ * **参数值**那份在每个工具目录里（bz 的账本，ADR-0237 起按 Obsidian 插件惯例命名）。
  *
  * 运行记录那条尤其要紧：bz 一旦写回去就变成第二个写者，`news.json` 当年被这个问题逼出
  * 段级合并写（ADR-0128）、外部写者最后直接退役。所以读侧走 fs 缝的 `readText`
@@ -65,7 +68,7 @@ export { parseToolEntry, parseToolEntries, runSignature, TOOL_ID_RE } from './re
 // ==================== 路径 ====================
 
 /**
- * 某工具运行记录的路径 = **工具目录下**的 `dock.runs.json`（spec D10 修订）。
+ * 某工具运行记录的路径 = **工具目录下**的 `runs.json`（spec D10 修订；旧名 `dock.runs.json` 读侧回落认）。
  *
  * vault 里**不再有** dock 数据目录：声明、参数值、运行记录三份都在工具自己的目录里，
  * bz 侧只剩一条登记项。工具因此是自包含的 —— 把目录搬走就是搬走它的全部数据。
@@ -131,7 +134,7 @@ export async function updateToolEntry(id: string, patch: Partial<DockToolEntry>)
 /**
  * bz 对某个工具**自动运行**的记账。
  *
- * **刻意不进工具的 `dock.runs.json`**（那是工具唯一写者的地盘，D8/D9）：这里只记 bz 自己看到的
+ * **刻意不进工具的 `runs.json`**（那是工具唯一写者的地盘，D8/D9）：这里只记 bz 自己看到的
  * 事实 —— 「bz 什么时候试着自动跑了一次、成没成」。它的存在是为了两件工具记录兜不住的事：
  * ① 工具崩了自己没落记录时，bz 仍知道「它跑过且失败」；② 连续失败熔断要有据可依。
  * 工具自己那份记录仍是**权威**（含 `error.kind`），这里只服务调度决策。
@@ -213,7 +216,7 @@ export function readRunsFile(entry: DockToolEntry): { file: DockRunsFile | null;
 
 // ==================== 参数值（工具侧设置文件） ====================
 
-/** 读某工具的参数值（工具目录里的 `dock.settings.json`；读不到 = 空对象） */
+/** 读某工具的参数值（工具目录里的 `data.json`；新名不在回落认旧名 `dock.settings.json`，都没有 = 空对象） */
 export function readToolValues(entry: DockToolEntry): Record<string, unknown> {
   return readSettings(entry.path, entry.id);
 }
@@ -321,7 +324,9 @@ export async function loadToolView(
 ): Promise<DockToolView> {
   const decl = readDeclaration(entry.path);
   const manifest = decl.manifest ?? null;
-  const run = resolveRun(manifest, entry.path);
+  // 回落命中旧名（dock.json）时用实际读到的路径 —— 参数值 / 运行记录 / 展示都以它为基准
+  const declPath = decl.path ?? entry.path;
+  const run = resolveRun(manifest, declPath, decl.conventionalRun);
   // 信任比对在**每次读视图时**做，不只在「重新读声明」那条路径上 —— 声明是文件，
   // 面板没开的时候也可能被人改掉；跑之前必须还能核出「这条命令我信过」。
   const trustStale = isTrusted(entry) && (run ? runSignature(run) : undefined) !== entry.trustedRun;
@@ -342,8 +347,8 @@ export async function loadToolView(
     entry,
     manifest,
     declError: manifest ? null : (decl.error ?? '声明读不到'),
-    declPath: entry.path,
-    valuesPath: settingsPathFor(entry.path),
+    declPath,
+    valuesPath: settingsPathFor(declPath),
     run,
     values: readToolValues(entry),
     trustStale,

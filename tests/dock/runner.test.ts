@@ -13,7 +13,7 @@ import { describe, expect, it } from 'vitest';
 import type { App } from 'obsidian';
 import { dockEnvOf } from '../../src/dock/runner';
 
-const ENTRY = { id: 'iamtxt-signin', path: 'E:/tools/daily-signin/dock.json' };
+const ENTRY = { id: 'iamtxt-signin', path: 'E:/tools/daily-signin/manifest.json' };
 
 /** 只兑现 runner 用到的那一个面：`vault.adapter.getBasePath` */
 function fakeApp(basePath?: string): App {
@@ -23,14 +23,14 @@ function fakeApp(basePath?: string): App {
 }
 
 describe('dockEnvOf —— 注入给工具进程的环境', () => {
-  it('运行记录路径 = 声明文件同目录下的 dock.runs.json（绝对、工具侧）', () => {
+  it('运行记录路径 = 声明文件同目录下的 runs.json（绝对、工具侧）', () => {
     const env = dockEnvOf(ENTRY, fakeApp('E:/Obsidian/叫我包仔'));
-    expect(env.BZ_DOCK_RUNS_FILE).toBe('E:/tools/daily-signin/dock.runs.json');
+    expect(env.BZ_DOCK_RUNS_FILE).toBe('E:/tools/daily-signin/runs.json');
   });
 
   it('记录路径不靠 vault 推 —— 拿不到 vault 根也照给', () => {
     const env = dockEnvOf(ENTRY, fakeApp(undefined));
-    expect(env.BZ_DOCK_RUNS_FILE).toBe('E:/tools/daily-signin/dock.runs.json');
+    expect(env.BZ_DOCK_RUNS_FILE).toBe('E:/tools/daily-signin/runs.json');
   });
 
   it('vault 根可用时仍暴露 BZ_DOCK_VAULT（便利面，去掉尾分隔符）', () => {

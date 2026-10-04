@@ -16,12 +16,12 @@ import {
   runSignature,
 } from '../../src/dock/registry';
 
-const good = { id: 'iamtxt-signin', path: 'E:/Obsidian/dock-tools/daily-signin/dock.json' };
+const good = { id: 'iamtxt-signin', path: 'E:/Obsidian/dock-tools/daily-signin/manifest.json' };
 
 describe('parseToolEntry', () => {
   it('合法条目归一成两条事实（id + path）', () => {
     expect(parseToolEntry(good)).toEqual({ id: 'iamtxt-signin', path: good.path });
-    expect(parseToolEntry({ id: 'a', path: 'C:/t/dock.json' })).toEqual({ id: 'a', path: 'C:/t/dock.json' });
+    expect(parseToolEntry({ id: 'a', path: 'C:/t/manifest.json' })).toEqual({ id: 'a', path: 'C:/t/manifest.json' });
   });
 
   it('id 必须能安全拼文件名（防 ../ 与盘符）', () => {
@@ -44,7 +44,7 @@ describe('parseToolEntry', () => {
   it('旧形态（cmd/args/trigger/name/note/shell）一律不进登记 —— 元数据的源只有声明文件', () => {
     const legacy = {
       id: 'a',
-      path: 'C:/t/dock.json',
+      path: 'C:/t/manifest.json',
       cmd: 'C:/scripts/signin.cmd',
       args: ['--quiet'],
       cwd: 'C:/scripts',
@@ -53,7 +53,7 @@ describe('parseToolEntry', () => {
       name: '兜底名',
       note: '备注',
     };
-    expect(parseToolEntry(legacy)).toEqual({ id: 'a', path: 'C:/t/dock.json' });
+    expect(parseToolEntry(legacy)).toEqual({ id: 'a', path: 'C:/t/manifest.json' });
     // 连「只写旧字段、没有 path」的条目也留不下 —— 没有声明文件路径就不知道它是什么
     expect(parseToolEntry({ id: 'a', cmd: 'x', trigger: 'auto' })).toBeNull();
   });
@@ -103,14 +103,14 @@ describe('runSignature', () => {
 describe('parseToolEntries', () => {
   it('逐条校验、重复 id 只留第一条', () => {
     const list = parseToolEntries([
-      { id: 'a', path: 'C:/a/dock.json' },
-      { id: '../bad', path: 'C:/b/dock.json' },
-      { id: 'a', path: 'C:/z/dock.json' },
-      { id: 'b', path: 'C:/w/dock.json' },
+      { id: 'a', path: 'C:/a/manifest.json' },
+      { id: '../bad', path: 'C:/b/manifest.json' },
+      { id: 'a', path: 'C:/z/manifest.json' },
+      { id: 'b', path: 'C:/w/manifest.json' },
       null,
     ]);
     expect(list.map((e) => e.id)).toEqual(['a', 'b']);
-    expect(list[0].path).toBe('C:/a/dock.json');
+    expect(list[0].path).toBe('C:/a/manifest.json');
   });
 
   it('非数组 → 空表（不抛）', () => {

@@ -11,7 +11,7 @@
  *  - **详情**：左栏参数表单 + 运行台（在场运行的实时进度），右栏历史时间线（展开可看
  *    `steps` / `info` / `result` / `stderr` 尾部）。
  *
- * **元数据一律来自工具目录的声明文件**（`dock.json`）：标题、描述、图标、参数定义、节奏、
+ * **元数据一律来自工具目录的声明文件**（`manifest.json`）：标题、描述、图标、参数定义、节奏、
  * 以及怎么跑。所以登记只有一个动作 —— 选那个文件。这里不提供「填表单说这个工具叫什么、
  * 什么参数、是自动化还是手动」的入口：那些事实声明里已经有了，抄一份就多一个会和它打架的源。
  * 自动化 / 手动也不是字段，是 `triggerOfView(节奏声明)` 推出来的。
@@ -106,7 +106,7 @@ let refreshing = false;
 let views: DockToolView[] = [];
 /**
  * 参数表单草稿（按工具 id 记住，重渲不丢）。
- * 值的**家**是工具目录里的 `dock.settings.json`（`view.values`），这里只是编辑期的副本 ——
+ * 值的**家**是工具目录里的 `data.json`（`view.values`），这里只是编辑期的副本 ——
  * 每敲一下都写盘太吵，停手后再落（`queueValueSave`）。
  */
 const draftValues = new Map<string, Record<string, unknown>>();
@@ -202,7 +202,7 @@ function messageTextOf(v: DockToolView, last: DockRunRecord | undefined): string
   const live = liveRunOf(v.entry.id);
   if (live) return live.progress.phase ? `正在${live.progress.phase}…` : '正在运行…';
   if (!v.manifest) return '声明文件读不到，先把路径修好';
-  if (!v.run) return '声明里没写怎么跑（缺 run 段）';
+  if (!v.run) return '没写怎么跑（既无 run 段，目录里也没有 main.mjs）';
   if (!last) return '等它按自己的节奏跑一次';
   return last.message || statusText(last.status);
 }
@@ -674,7 +674,7 @@ function renderList(body: HTMLElement): void {
       uiEmpty({
         icon: 'square-terminal',
         title: '还没有外部工具',
-        desc: '选一个工具的声明文件（dock.json），工具坞就知道它叫什么、有哪些参数、该怎么跑；运行记录也归它收口',
+        desc: '选一个工具的声明文件（manifest.json），工具坞就知道它叫什么、有哪些参数、该怎么跑；运行记录也归它收口',
         actions: uiBtnRow(
           [uiBtn({ label: '导入声明文件', icon: 'file-input', tone: 'primary', onClick: () => importToolFlow() })],
           { center: true },
@@ -1201,7 +1201,7 @@ function renderDetail(body: HTMLElement, v: DockToolView): void {
     if (v.run.cwd) meta.appendChild(metaRow('工作目录', v.run.cwd, true));
     if (v.run.shell) meta.appendChild(metaRow('经 shell 启动', '是'));
   } else {
-    meta.appendChild(metaRow('命令', '声明里没写怎么跑（缺 run 段）'));
+    meta.appendChild(metaRow('命令', '没写怎么跑（既无 run 段，目录里也没有 main.mjs）'));
   }
   meta.appendChild(
     metaRow('参数值文件', v.valuesPath, true, () => void copyText(v.valuesPath, '参数值文件路径')),
@@ -1346,7 +1346,7 @@ function renderLiveInto(host: HTMLElement, id: string): void {
 /**
  * 参数表单草稿。
  *
- * 初值 = 声明默认值叠加**工具目录里已存的值**（`view.values`，来自 `dock.settings.json`）；
+ * 初值 = 声明默认值叠加**工具目录里已存的值**（`view.values`，来自 `data.json`）；
  * 之后每次改动只落在草稿上，去抖后写回那个文件（`queueValueSave`）。
  * 草稿按工具 id 在会话内保留 —— 重渲（切视图、刷新）不该把用户正在填的东西冲掉。
  */
@@ -1629,7 +1629,7 @@ async function runFlow(v: DockToolView): Promise<void> {
     return;
   }
   if (!v.run) {
-    notice('这份声明没写怎么跑（缺 run 段），先在声明文件里补上', 'warning');
+    notice('这份声明没写怎么跑：既无 run 段，目录里也没有 main.mjs', 'warning');
     return;
   }
   if (!isTrusted(v.entry) || v.trustStale) {
@@ -1695,12 +1695,13 @@ async function reloadDeclaration(v: DockToolView): Promise<void> {
       'warning',
     );
   }
-  const run = resolveRun(m, v.entry.path);
+  // 回落命中旧名时以实际路径为准；没写 run 段时带上约定入口的探测结果
+  const run = resolveRun(m, v.entry.path, res.conventionalRun);
   const sig = run ? runSignature(run) : undefined;
   if (isTrusted(v.entry) && sig !== v.entry.trustedRun) {
     // 声明改了「怎么跑」→ 信任作废：信任的对象是那条命令，不是这个 id
     if (
-      await applyTrust(v.entry, m, v.entry.path, run, {
+      await applyTrust(v.entry, m, res.path ?? v.entry.path, run, {
         title: '启动命令变了，重新确认信任',
         accept: '信任',
       })
@@ -1748,7 +1749,7 @@ function dueTimeText(ms: number): string {
 
 /** 声明里「会跑什么」的人话摘要（信任确认框与详情页共用一份口径） */
 function runTextOf(run: ResolvedRun | null): string {
-  if (!run) return '这份声明没写怎么跑（缺 run 段）';
+  if (!run) return '没写怎么跑（既无 run 段，目录里也没有 main.mjs）';
   return [run.cmd, ...run.args].join(' ');
 }
 

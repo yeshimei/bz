@@ -25,7 +25,7 @@ export const DOCK_ID_RE = /^[a-z0-9][a-z0-9-]*$/;
 /** id 长度上限（防超长文件名） */
 export const DOCK_ID_MAX_LEN = 64;
 
-/** ---------- 声明（工具目录里的 `dock.json`） ---------- */
+/** ---------- 声明（工具目录里的 `manifest.json`） ---------- */
 
 /** 参数类型 → UI 控件的映射见 spec §4.1 */
 export type DockParamType =
@@ -324,7 +324,7 @@ export function parseSchedule(raw: unknown): DockSchedule | undefined {
 }
 
 /**
- * 声明校验（工具目录里那份 `dock.json` 的正文）。
+ * 声明校验（工具目录里那份 `manifest.json` 的正文）。
  * 返回 null 的情形：非对象 / `v` 不认识 / `id` 非法 / `name` 空。
  * `params` 里坏的单项**丢弃**而不是整份拒绝 —— 一个写错的参数不该让整个工具消失。
  * `run` 段不合法只丢那段（该工具退化为「只能看，不能跑」），不影响其余元数据。

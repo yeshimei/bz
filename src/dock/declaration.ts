@@ -3,10 +3,16 @@
  *
  * | 文件 | 位置 | 谁写 | 内容 |
  * |---|---|---|---|
- * | `dock.json` | 工具目录 | **工具作者**（手写） | 标题 / 描述 / 参数定义 / 节奏 / 启动命令 |
- * | `dock.settings.json` | 工具目录 | **bz**（面板表单） | 用户填的参数**值** |
+ * | `manifest.json` | 工具目录 | **工具作者**（手写） | 标题 / 描述 / 参数定义 / 节奏 / 启动命令 |
+ * | `data.json` | 工具目录 | **bz**（面板表单） | 用户填的参数**值** |
  *
- * 两条设计意图：
+ * 文件名按 Obsidian 插件惯例（ADR-0237）：工具目录与 `.obsidian/plugins/<id>/` 同构 ——
+ * manifest 自我介绍、`main.mjs` 是约定入口、`data.json` 是 bz 的账本、`runs.json` 留痕。
+ * **旧名（`dock.json` / `dock.settings.json` / `dock.runs.json`）读侧一律回落认**：
+ * 已有工具零迁移；回落只救「新名文件不在」，新名在但无效时以新名为准（不绕过它说的话）。
+ * bz 的**写**只落新名；参数值写成功后顺手清掉旧名残留（凭据不两处落盘）。
+ *
+ * 三条设计意图：
  *
  * 1) **声明文件是元数据的唯一真理源**。bz 不缓存它 —— 缓存会过期，而「过期」这件事本身
  *    就是缺陷的来源（曾经真的发生过：脚本改了声明，vault 里那份旧缓存还在，面板照着旧
@@ -19,6 +25,11 @@
  *    不落运行记录。bz 只负责按声明的参数表渲染表单、把值写回这个文件，运行前再通过
  *    `--key=value` 下发给进程（工具不必读这个文件 —— 它是 bz 的账本，住得离工具近而已）。
  *
+ * 3) **约定优于配置只此一条**：声明没写 `run` 段、目录里有 `main.mjs`，就视为
+ *    `node main.mjs`。只认这一个名字 —— `.mjs` 让 Node 无条件按 ES Module 解析，
+ *    不依赖目录里有没有 `package.json`（`.js` 在没有 package.json 的目录里默认 CommonJS，
+ *    ESM 语法直接报错）。其它运行时（python 等）必须自己写 `run` 段 —— 不猜。
+ *
  * fs 走注入缝：插件侧 `window.require('fs')`，评审壳 / node 测试塞假件（本仓既有范式，
  * 见 `people/prep.ts` 的 `PrepFs`）。
  */
@@ -26,13 +37,25 @@
 import { parseJsonObjectText, parseManifest, type DockManifest, type DockRunSpec } from './schema';
 
 /** 声明文件名（固定在工具目录下；名字是契约的一部分） */
-export const DECLARATION_FILENAME = 'dock.json';
+export const DECLARATION_FILENAME = 'manifest.json';
+
+/** 声明文件旧名（ADR-0237 之前；读侧回落认，bz 不再往这个名字写任何东西） */
+export const DECLARATION_FILENAME_LEGACY = 'dock.json';
 
 /** 参数值文件名（bz 写；固定在声明文件同目录） */
-export const SETTINGS_FILENAME = 'dock.settings.json';
+export const SETTINGS_FILENAME = 'data.json';
+
+/** 参数值文件旧名（ADR-0237 之前；读侧回落认；写参数值成功后会被清掉） */
+export const SETTINGS_FILENAME_LEGACY = 'dock.settings.json';
 
 /** 运行记录文件名（**工具写、bz 只读**；固定在声明文件同目录 —— spec D10 修订） */
-export const RUNS_FILENAME = 'dock.runs.json';
+export const RUNS_FILENAME = 'runs.json';
+
+/** 运行记录文件旧名（ADR-0237 之前；工具还没跟新契约写新名时，读侧回落认） */
+export const RUNS_FILENAME_LEGACY = 'dock.runs.json';
+
+/** 约定入口文件名：声明没写 `run` 段时，目录里有它就视为 `node main.mjs`（ADR-0237） */
+export const MAIN_ENTRY_FILENAME = 'main.mjs';
 
 /** 设置文件版本（不认识的版本视为没有值，不猜） */
 export const DOCK_SETTINGS_VERSION = 1;
@@ -47,6 +70,10 @@ export interface DockFs {
   writeText(path: string, data: string): void;
   /** 原子换名（可选；缺省实现带 renameSync，测试桩可不给 —— 调用方退回直写） */
   rename?(from: string, to: string): void;
+  /** 存在性探测（可选；缺省实现带 existsSync，桩可不给 —— 调用方退回「读一下试试」） */
+  exists?(path: string): boolean;
+  /** 删除文件（可选；缺省实现带 unlinkSync，桩可不给 —— 调用方跳过旧名清理） */
+  unlink?(path: string): void;
 }
 
 let injectedFs: DockFs | null | undefined;
@@ -81,6 +108,8 @@ function defaultDockFs(): DockFs | null {
         typeof fs.renameSync === 'function'
           ? (a, b) => fs.renameSync!(a, b)
           : undefined,
+      exists: typeof fs.existsSync === 'function' ? (p) => fs.existsSync(p) : undefined,
+      unlink: typeof fs.unlinkSync === 'function' ? (p) => fs.unlinkSync!(p) : undefined,
     };
   } catch {
     return null;
@@ -110,12 +139,12 @@ export function joinPath(dir: string, name: string): string {
   return d === '' ? name : `${d}/${name}`;
 }
 
-/** 设置文件路径 = 声明文件同目录 + `dock.settings.json` */
+/** 设置文件路径 = 声明文件同目录 + `data.json` */
 export function settingsPathFor(declPath: string): string {
   return joinPath(dirOf(declPath), SETTINGS_FILENAME);
 }
 
-/** 运行记录路径 = 声明文件同目录 + `dock.runs.json` */
+/** 运行记录路径 = 声明文件同目录 + `runs.json`（`BZ_DOCK_RUNS_FILE` 注入的就是它） */
 export function runsPathFor(declPath: string): string {
   return joinPath(dirOf(declPath), RUNS_FILENAME);
 }
@@ -123,6 +152,13 @@ export function runsPathFor(declPath: string): string {
 /** 工具目录（声明文件所在目录） */
 export function toolDirOf(declPath: string): string {
   return dirOf(declPath);
+}
+
+/** 尾名是 `from` → 同目录换成 `to`；尾名不认识 → null（不回落） */
+function aliasOf(p: string, from: string, to: string): string | null {
+  const base = p.replace(/\\/g, '/').split('/').pop() ?? '';
+  if (base !== from) return null;
+  return joinPath(dirOf(p), to);
 }
 
 // ==================== 启动方式 ====================
@@ -137,16 +173,22 @@ export interface ResolvedRun {
 }
 
 /**
- * 声明 → 可直接执行的启动方式。`run` 缺省返回 null（声明只能看、不能跑）。
+ * 声明 → 可直接执行的启动方式。声明没写 `run`、也没有约定入口 → null（只能看、不能跑）。
  *
- * 两处补缺省，都**只看声明本身能确定的东西**，不猜：
- *  - `cwd` 缺省 = 声明文件所在目录（工具目录就是这个目录，所以声明里直接写 `signin.mjs` 即可，
+ * 三处补缺省，都**只看现有信息能确定的东西**，不猜：
+ *  - 声明 `run` 优先；没有 `run` 段时用 `conventional`（`readDeclaration` 探测出的
+ *    `node main.mjs`，ADR-0237）—— 约定优于配置只此一条，其它运行时必须写 `run`；
+ *  - `cwd` 缺省 = 声明文件所在目录（工具目录就是这个目录，所以声明里直接写 `main.mjs` 即可，
  *    整个目录搬到哪都不用改）；
  *  - `shell` 缺省按 `cmd` 扩展名判 —— Windows 的 `.cmd` / `.bat` 不经 shell 起不来
  *    （见 `core/external-tool.ts`），这是「不猜」里唯一一条能从现有信息推出来的。
  */
-export function resolveRun(manifest: DockManifest | null, declPath: string): ResolvedRun | null {
-  const run: DockRunSpec | undefined = manifest?.run;
+export function resolveRun(
+  manifest: DockManifest | null,
+  declPath: string,
+  conventional?: DockRunSpec,
+): ResolvedRun | null {
+  const run: DockRunSpec | undefined = manifest?.run ?? conventional;
   if (!run || !run.cmd) return null;
   return {
     cmd: run.cmd,
@@ -163,28 +205,58 @@ export interface DeclarationRead {
   manifest?: DockManifest;
   /** 失败原因（人话；直接进 UI / 通知） */
   error?: string;
+  /** 实际读到声明的路径（回落命中旧名时 ≠ 入参；调用方拿它当 declPath 用） */
+  path?: string;
+  /** 声明没写 `run` 段、目录里有 `main.mjs` → 这条约定启动方式（ADR-0237） */
+  conventionalRun?: DockRunSpec;
+}
+
+/** 目录里有约定入口吗（真身 existsSync；桩退回「读一下试试」） */
+function hasMainEntry(dir: string, fs: DockFs): boolean {
+  const p = joinPath(dir, MAIN_ENTRY_FILENAME);
+  return fs.exists ? fs.exists(p) : fs.readText(p) !== null;
 }
 
 /**
  * 读并校验一份声明。**不执行任何东西** —— 所以未建立信任的工具也能先看清它声明了什么。
- * 永不抛：读不到 / 坏 JSON / 版本不认识 / 必填缺失 → `{ ok:false, error }`。
+ * 永不抛。新名 `manifest.json` 读不到时回落认旧名 `dock.json`（已有工具零迁移）；
+ * 两名都在时新名优先。声明没写 `run` 段时顺手探测约定入口 `main.mjs`。
  */
 export function readDeclaration(declPath: string, fs: DockFs | null = currentFs()): DeclarationRead {
   if (!fs) return { ok: false, error: '读声明需要桌面端（移动端只读面板）' };
-  const text = fs.readText(declPath);
+  let text = fs.readText(declPath);
+  let usedPath = declPath;
+  if (text === null) {
+    const alias =
+      aliasOf(declPath, DECLARATION_FILENAME, DECLARATION_FILENAME_LEGACY) ??
+      aliasOf(declPath, DECLARATION_FILENAME_LEGACY, DECLARATION_FILENAME);
+    if (alias !== null) {
+      const alt = fs.readText(alias);
+      if (alt !== null) {
+        text = alt;
+        usedPath = alias;
+      }
+    }
+  }
   if (text === null) return { ok: false, error: `声明文件读不到：${declPath}` };
 
   const raw = parseJsonObjectText(text);
-  if (raw === null) return { ok: false, error: `声明文件不是合法 JSON：${declPath}` };
+  if (raw === null) return { ok: false, error: `声明文件不是合法 JSON：${usedPath}` };
 
   const manifest = parseManifest(raw);
   if (!manifest) {
     return {
       ok: false,
-      error: `声明文件校验不过（v 须为 1、id 只能小写字母数字连字符、name 不能空）：${declPath}`,
+      error: `声明文件校验不过（v 须为 1、id 只能小写字母数字连字符、name 不能空）：${usedPath}`,
     };
   }
-  return { ok: true, manifest };
+
+  // 约定优于配置：声明没写怎么跑，目录里有 main.mjs 就当 `node main.mjs`（其余运行时不猜）
+  const conventionalRun =
+    manifest.run || !hasMainEntry(dirOf(usedPath), fs)
+      ? undefined
+      : { cmd: 'node', args: [MAIN_ENTRY_FILENAME] };
+  return { ok: true, manifest, path: usedPath, conventionalRun };
 }
 
 // ==================== 参数值（工具侧设置文件） ====================
@@ -200,27 +272,37 @@ function isPlainObject(v: unknown): v is Record<string, unknown> {
 }
 
 /**
- * 读参数值。
- *
- * 读不到 / 坏 JSON / 版本不认识 / `tool` 与调用方期望不符 → 空对象。
- * 最后那一条是**防串台**：设置文件是手可改的，`tool` 不符说明这文件不是给这个工具用的，
- * 拿了就会把别人的凭据发给它。这里宁可为空（用户重填一次），不冒这个险。
+ * 解析一份参数值文本。`null` = 文件不存在（调用方可回落旧名）；
+ * `{}` = 文件在但无效（坏 JSON / 版本不认识 / `tool` 串台 —— 宁可为空让人重填，
+ * 也不把可能属于别人的凭据发出去，也不绕过它去翻旧名）。
  */
-export function readSettings(
-  declPath: string,
-  toolId: string,
-  fs: DockFs | null = currentFs(),
-): Record<string, unknown> {
-  if (!fs) return {};
-  const raw = parseJsonObjectText(fs.readText(settingsPathFor(declPath)));
+function parseSettingsText(text: string | null, toolId: string): Record<string, unknown> | null {
+  if (text === null) return null;
+  const raw = parseJsonObjectText(text);
   if (!raw) return {};
   if (raw.v !== DOCK_SETTINGS_VERSION) return {};
   if (raw.tool !== toolId) return {};
   return isPlainObject(raw.values) ? { ...raw.values } : {};
 }
 
+/** 读参数值：新名 `data.json` 不在时回落认旧名 `dock.settings.json`；两名都在新名说了算 */
+export function readSettings(
+  declPath: string,
+  toolId: string,
+  fs: DockFs | null = currentFs(),
+): Record<string, unknown> {
+  if (!fs) return {};
+  const direct = parseSettingsText(fs.readText(settingsPathFor(declPath)), toolId);
+  if (direct !== null) return direct;
+  const legacy = parseSettingsText(fs.readText(joinPath(dirOf(declPath), SETTINGS_FILENAME_LEGACY)), toolId);
+  return legacy ?? {};
+}
+
 /**
  * 写参数值（tmp + rename 原子换名 —— 面板边填边存，写坏一次就等于丢凭据）。
+ *
+ * 落盘只写新名 `data.json`；成功后若旧名 `dock.settings.json` 还在就清掉 ——
+ * 那是同一份凭据的残留，不该跟着工具目录到处走（删除尽力而为，失败不碍这次写入）。
  *
  * 返回是否写成功；失败不抛（面板要照常可用，最多是这次没存住）。
  */
@@ -242,10 +324,22 @@ export function writeSettings(
     } else {
       fs.writeText(target, text);
     }
-    return true;
   } catch {
     return false;
   }
+  // 迁移尾巴：旧名里的旧值已经被新名盖过（读侧新名优先），留着就是凭据多落一处
+  const legacy = joinPath(dirOf(declPath), SETTINGS_FILENAME_LEGACY);
+  if (fs.unlink) {
+    const gone = fs.exists ? fs.exists(legacy) : fs.readText(legacy) !== null;
+    if (gone) {
+      try {
+        fs.unlink(legacy);
+      } catch {
+        /* 删不掉就留着 —— 读侧永远新名优先，无实害 */
+      }
+    }
+  }
+  return true;
 }
 
 // ==================== 运行记录（工具写、bz 只读） ====================
@@ -255,9 +349,13 @@ export function writeSettings(
  *
  * 记录住**工具目录**（与声明、参数值同一层）：一个工具的全部数据都在它自己的目录里，
  * 搬走目录就是搬走一切，bz 侧只剩下一条登记项（spec D9/D10 修订）。
+ * 新名 `runs.json` 读不到时回落认旧名 `dock.runs.json`（工具还没跟新契约时历史不丢）。
  * 读不到 / 读失败 = null，调用方降级为「该工具记录不可读」，绝不抛（同 `parseBzLine` 精神）。
  */
 export function readRunsText(declPath: string, fs: DockFs | null = currentFs()): string | null {
   if (!fs) return null;
-  return fs.readText(runsPathFor(declPath));
+  return (
+    fs.readText(runsPathFor(declPath)) ??
+    fs.readText(joinPath(dirOf(declPath), RUNS_FILENAME_LEGACY))
+  );
 }

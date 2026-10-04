@@ -38,7 +38,7 @@ export type DockTrigger = 'auto' | 'manual';
 export interface DockToolEntry {
   /** 稳定标识；决定运行记录文件名，须匹配 TOOL_ID_RE */
   id: string;
-  /** 声明文件（`dock.json`）路径 —— 标题 / 描述 / 参数 / 节奏 / 启动命令的唯一来源 */
+  /** 声明文件（`manifest.json`）路径 —— 标题 / 描述 / 参数 / 节奏 / 启动命令的唯一来源 */
   path: string;
   /** 停用的工具仍登记在册，但面板不给运行入口 */
   enabled?: boolean;
