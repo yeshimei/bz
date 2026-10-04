@@ -23,14 +23,35 @@
   overflow: hidden;
 }
 
+/* ---------- 列表头行 ----------
+   core 的 .bz-panel-head 是 44px（影院域那条），在这个 1120px 宽的面板上显得又细又挤：
+   抬到 60px、标题升到 17px、品牌块与钮组各放大一档，头行才撑得住这屏的体量。
+   （详情页用 .bz-dock-toolhead 覆盖回 auto 高度，不受这条影响） */
+.bz-dock-panel .bz-panel-head {
+  height: 60px;
+  padding: 0 var(--bz-space-xl);
+  gap: var(--bz-space-md);
+}
+.bz-dock-panel .bz-panel-brand { width: 32px; height: 32px; }
+.bz-dock-panel .bz-panel-brand .bz-ic { width: 18px; height: 18px; }
+.bz-dock-panel .bz-panel-title { font-size: var(--bz-font-title); }
+.bz-dock-panel .bz-panel-head-sub { font-size: var(--bz-font-meta); }
+.bz-dock-panel .bz-panel-head-btns .bz-icon-btn { width: 32px; height: 32px; }
+.bz-dock-panel .bz-panel-head-btns .bz-icon-btn .bz-ic { width: 18px; height: 18px; }
+
 /* ---------- 顶部 KPI 四格 ----------
    口径全在 data.ts 的 overview() 里，这里只管画。数字走等宽 + tabular-nums：
-   四格的数在一行里对齐，扫的时候不用横着找小数点。 */
+   四格的数在一行里对齐，扫的时候不用横着找小数点。
+   形态与详情页的统计条**同一套**：铺满内容宽度的圆角卡（不再是一条贴着面板边缘的通栏）。 */
 .bz-dock-kpi {
   flex: none;
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  border-bottom: 1px solid var(--bz-border);
+  /* 横向边距 = body 的内边距（lg），与下面的卡片网格**同一对齐线** */
+  margin: var(--bz-space-md) var(--bz-space-lg) 0;
+  border: 1px solid var(--bz-border);
+  border-radius: var(--bz-radius-md);
+  overflow: hidden;
 }
 .bz-dock-kpi.is-off { display: none; }
 .bz-dock-kpi-tile {
@@ -156,22 +177,6 @@
   overflow-y: auto;
   padding: var(--bz-space-lg);
 }
-
-/* ---------- 分区 ---------- */
-.bz-dock-sec + .bz-dock-sec { margin-top: var(--bz-space-xl); }
-.bz-dock-sec-head { display: flex; align-items: baseline; gap: var(--bz-space-sm); flex-wrap: wrap; margin-bottom: var(--bz-space-md); }
-.bz-dock-sec-title { font-size: var(--bz-font-emphasis); font-weight: var(--bz-weight-semibold); color: var(--bz-text-1); }
-.bz-dock-sec-count {
-  font-size: var(--bz-font-caption);
-  color: var(--bz-text-2);
-  background: var(--bz-surface-3);
-  border: 1px solid var(--bz-border);
-  border-radius: var(--bz-radius-full);
-  padding: 0 6px;
-  min-width: 18px;
-  text-align: center;
-}
-.bz-dock-sec-hint { font-size: var(--bz-font-caption); color: var(--bz-text-3); }
 
 /* ---------- 卡片网格 ---------- */
 .bz-dock-grid {
@@ -330,13 +335,63 @@
 .bz-dock-rate.is-warn { color: var(--bz-warning); }
 
 .bz-dock-card-foot { display: flex; align-items: center; gap: var(--bz-space-sm); margin-top: auto; }
-/* 「详情」贴右端（不靠 nth-last-child 定位——将来脚部加减按钮不会把它带歪） */
-.bz-dock-card-foot .bz-dock-foot-detail { margin-left: auto; }
 .bz-dock-mobilehint { font-size: var(--bz-font-caption); color: var(--bz-text-3); }
 
 /* ---------- 详情 ---------- */
 .bz-dock-detail { display: flex; flex-direction: column; gap: var(--bz-space-md); }
-.bz-dock-detail-head { display: flex; align-items: center; gap: var(--bz-space-sm); }
+/* 详情页头行换装：同一条 .bz-panel-head，只是内容变成工具自己 —— 高度放开让描述挂进来 */
+/* 详情页头部 = 封面式：顶行只有返回，下面大图标 + 名 + 描述，留白拉开（约 96px 高） */
+.bz-panel-head.bz-dock-toolhead {
+  height: auto;
+  min-height: 0;
+  padding: var(--bz-space-md) var(--bz-space-xl) var(--bz-space-lg);
+}
+/* 返回与封面同一行：站在图标左边、竖向居中对齐封面图标（不是浮在左上角的一颗小钮） */
+.bz-dock-covermain { display: flex; align-items: center; gap: var(--bz-space-sm); }
+.bz-dock-back {
+  flex: none;
+  width: 36px;
+  height: 36px;
+  border: 1px solid var(--bz-border);
+  background: var(--bz-surface-1);
+  color: var(--bz-text-1);
+}
+.bz-dock-back:hover { background: var(--bz-surface-3); color: var(--bz-text-1); }
+.bz-dock-back .bz-ic { width: 20px; height: 20px; }
+.bz-dock-coveric {
+  flex: none;
+  width: 48px;
+  height: 48px;
+  border-radius: var(--bz-radius-md);
+  background: var(--bz-brand-soft);
+  color: var(--bz-brand);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.bz-dock-coveric .bz-ic { width: 24px; height: 24px; }
+.bz-dock-covertxt { min-width: 0; flex: 1; display: flex; flex-direction: column; gap: 4px; padding-top: 2px; }
+.bz-dock-coverline { display: flex; align-items: center; gap: var(--bz-space-sm); flex-wrap: wrap; min-width: 0; }
+.bz-dock-covertxt .bz-dock-detail-name { font-size: var(--bz-font-display); line-height: 1.2; }
+.bz-dock-covertxt .bz-dock-detail-tags { margin-top: 0; }
+.bz-dock-covertxt .bz-dock-detail-desc {
+  font-size: var(--bz-font-label);
+  color: var(--bz-text-2);
+  line-height: var(--bz-leading-normal);
+}
+
+/* 详情页的统计条：当前脚本的三格（复用全局 KPI 瓦片） */
+.bz-dock-toolstats {
+  /* 它长在 body 的内边距里（.bz-dock-detail 内），不吃 KPI 通栏的那圈 margin —— 否则比下面的 meta 缩进一截 */
+  margin: 0;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  border: 1px solid var(--bz-border);
+  border-radius: var(--bz-radius-md);
+  border-bottom: 1px solid var(--bz-border);
+  overflow: hidden;
+}
+.bz-dock-toolstats .bz-dock-kpi-tile { padding: var(--bz-space-sm) var(--bz-space-md); }
+.bz-dock-toolstats .bz-dock-kpi-v { font-size: 18px; }
 .bz-dock-detail-ic {
   flex: none;
   width: 34px;
@@ -433,6 +488,62 @@
 }
 .bz-dock-autonote { font-size: var(--bz-font-meta); color: var(--bz-text-3); }
 .bz-dock-autonote--warn { color: var(--bz-warning); }
+
+/* 规则表（v2）：面板上一条 = 只读摘要，整行点开弹窗改 */
+.bz-dock-autopane .bz-dock-pane-head { display: flex; align-items: center; gap: var(--bz-space-sm); }
+.bz-dock-rulelist { display: flex; flex-direction: column; gap: var(--bz-space-xs); padding-top: var(--bz-space-sm); }
+.bz-dock-rule {
+  display: flex;
+  align-items: center;
+  gap: var(--bz-space-sm);
+  min-width: 0;
+  padding: var(--bz-space-sm) var(--bz-space-md);
+  border: 1px solid var(--bz-border);
+  border-radius: var(--bz-radius-sm);
+  background: var(--bz-surface-1);
+  cursor: pointer;
+  transition: background var(--bz-dur-fast) var(--bz-ease-out);
+}
+.bz-dock-rule:hover { background: var(--bz-surface-2); }
+.bz-dock-rule:focus-visible { outline: var(--bz-focus-ring); outline-offset: 1px; }
+.bz-dock-rulemain { flex: 1 1 auto; min-width: 0; }
+.bz-dock-ruleline { font-size: var(--bz-font-label); color: var(--bz-text-1); }
+.bz-dock-rulemeta { font-size: var(--bz-font-meta); color: var(--bz-text-3); margin-top: 2px; }
+.bz-dock-rulearrow { flex: none; font-size: var(--bz-font-emphasis); color: var(--bz-text-3); }
+.bz-dock-ruleempty { font-size: var(--bz-font-meta); color: var(--bz-text-3); }
+
+/* 规则编辑弹窗：三节（触发条件 / 执行 / 随机延迟）+ 一行人话回显 */
+.bz-dock-rulemodal .bz-dialog-body { padding: var(--bz-space-lg); }
+.bz-dock-ruleform { display: flex; flex-direction: column; gap: var(--bz-space-lg); }
+.bz-dock-ruleformsec { display: flex; flex-direction: column; gap: var(--bz-space-sm); }
+.bz-dock-ruleformlegend {
+  font-size: var(--bz-font-meta);
+  font-weight: var(--bz-weight-semibold);
+  color: var(--bz-text-3);
+  letter-spacing: 0.04em;
+}
+.bz-dock-ruleparams { display: flex; flex-direction: column; gap: var(--bz-space-sm); }
+.bz-dock-ruleparams:empty { display: none; }
+.bz-dock-rulegrid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--bz-space-sm); }
+.bz-dock-rulequick { display: flex; flex-wrap: wrap; gap: var(--bz-space-xs); }
+.bz-dock-ruleformhint { font-size: var(--bz-font-meta); color: var(--bz-text-3); }
+.bz-dock-rulepreview {
+  padding: var(--bz-space-sm) var(--bz-space-md);
+  border-radius: var(--bz-radius-sm);
+  background: var(--bz-brand-soft);
+  color: var(--bz-text-1);
+  font-size: var(--bz-font-label);
+}
+.bz-dock-ruleformerr { font-size: var(--bz-font-meta); color: var(--bz-danger); min-height: 1em; }
+.bz-dock-ruleformerr:empty { display: none; }
+.bz-dock-ruleformfoot {
+  display: flex;
+  align-items: center;
+  gap: var(--bz-space-sm);
+  padding-top: var(--bz-space-md);
+  border-top: 1px solid var(--bz-border);
+}
+.bz-dock-ruleformsp { flex: 1 1 auto; }
 .bz-dock-autoeditor {
   display: flex;
   flex-direction: column;
@@ -555,8 +666,9 @@
     border: 0;
   }
   .bz-dock-panel .bz-dock-close { display: inline-flex; }
+  .bz-dock-panel .bz-panel-head { height: 52px; padding: 0 var(--bz-space-md); }
   /* KPI 挤成两列（四格在 390 宽里会各自被压到读不出数） */
-  .bz-dock-kpi { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .bz-dock-kpi { grid-template-columns: repeat(2, minmax(0, 1fr)); margin: var(--bz-space-sm) var(--bz-space-md) 0; }
   .bz-dock-kpi-tile { border-bottom: 1px solid var(--bz-border); }
   .bz-dock-kpi-tile:nth-child(2n) { border-right: 0; }
   .bz-dock-kpi-tile:nth-last-child(-n + 2) { border-bottom: 0; }
@@ -571,4 +683,14 @@
   .bz-dock-cols { grid-template-columns: 1fr; }
   .bz-dock-meta { grid-template-columns: 1fr; }
   .bz-dock-meta-label { width: 56px; }
+  /* 详情头（换装后的面板头行）窄一档，统计条三格保持一行 */
+  .bz-panel-head.bz-dock-toolhead { padding: var(--bz-space-sm) var(--bz-space-md) var(--bz-space-md); }
+  .bz-dock-back { width: 32px; height: 32px; }
+  .bz-dock-coveric { width: 40px; height: 40px; }
+  .bz-dock-coveric .bz-ic { width: 20px; height: 20px; }
+  .bz-dock-covertxt .bz-dock-detail-name { font-size: var(--bz-font-emphasis); }
+  .bz-dock-toolstats { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .bz-dock-toolstats .bz-dock-kpi-tile:nth-child(2n) { border-right: 1px solid var(--bz-border); }
+  .bz-dock-toolstats .bz-dock-kpi-tile:last-child { border-right: 0; }
+  .bz-dock-toolstats .bz-dock-kpi-tile { border-bottom: 0; }
 }

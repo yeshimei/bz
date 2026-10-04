@@ -13,8 +13,8 @@
  *
  * **元数据一律来自工具目录的声明文件**（`manifest.json`）：标题、描述、图标、参数定义、节奏、
  * 以及怎么跑。所以登记只有一个动作 —— 选那个文件。这里不提供「填表单说这个工具叫什么、
- * 什么参数、是自动化还是手动」的入口：那些事实声明里已经有了，抄一份就多一个会和它打架的源。
- * 自动化 / 手动也不是字段，是 `triggerOfView(节奏声明)` 推出来的。
+ * 什么参数、什么时候该跑」的入口：那些事实声明里已经有了，抄一份就多一个会和它打架的源。
+ * 跑不跑由**规则表**说了算（`rules`），不再有「自动化 / 手动」的两分。
  *
  * 三条不可越界的 UI 约束（来自拍板决策，见 spec）：
  *  1) **不给没被 bz 拉起的运行画进度条**。D1 修订后判据是「谁启动的」而非「自动还是手动」：
@@ -31,7 +31,8 @@ import { topifyZ } from '../core/z-order';
 import { escManager } from '../core/esc-manager';
 import { trapPanelFocus } from '../core/ui/focus-trap';
 import { notice, notify } from '../core/notice';
-import { uiBtn, uiIconBtn, uiBtnRow, uiChip, uiEmpty, uiField, uiInput, uiModal, uiProgress, uiSearch, uiSelect, uiSwitch, uiIcon } from '../core/ui';
+import { uiBtn, uiIconBtn, uiBtnRow, uiChip, uiChoice, uiEmpty, uiField, uiInput, uiModal, uiProgress, uiSearch, uiSelect, uiSwitch, uiIcon } from '../core/ui';
+import { bindFormSubmit } from '../core/ui/modal';
 import { openFlowDialog } from '../core/flow-dialog';
 import { pickSystemFiles, pickSystemFolder } from '../core/path-picker';
 import { attachItemActions, openItemMenu, openItemSheet, type ItemAction } from '../core/item-actions';
@@ -54,7 +55,6 @@ import {
   saveToolEntries,
   saveToolValues,
   summarize,
-  triggerOfView,
   updateToolEntry,
   type DockToolEntry,
   type DockToolView,
@@ -74,7 +74,21 @@ import {
   type DockLiveRun,
   type DockRunCallbacks,
 } from './runner';
-import { kickDockScheduler } from './scheduler';
+import { kickDockScheduler, notifyDockEvent } from './scheduler';
+import {
+  TRIGGER_KINDS,
+  TRIGGER_LABEL,
+  actionText,
+  atSecondsOf,
+  durationText as minutesText, // 与 schedule 的「跑多久」同名，故取别名
+  hasActiveRule,
+  newRuleId,
+  todayAt,
+  triggerText,
+  type DockRule,
+  type DockTrigger,
+  type DockTriggerKind,
+} from './rules';
 import {
   DECLARATION_FILENAME,
   readDeclaration,
@@ -281,11 +295,6 @@ function trustTagOf(v: DockToolView): string | null {
   return null;
 }
 
-/** 启动按钮文案：自动化工具的按钮是「补一次」而不是「运行」，语义不同 */
-function runLabel(v: DockToolView): string {
-  return triggerOfView(v) === 'auto' ? '手动跑一次' : '运行';
-}
-
 // ==================== 打开 / 卸载 ====================
 
 export function openDock(app: App): void {
@@ -302,6 +311,8 @@ export function openDock(app: App): void {
   });
   render();
   void refresh();
+  // 「打开工具坞」本身也是一个触发条件（规则里的 panel-open）—— 通知调度器判一轮
+  notifyDockEvent({ kind: 'panel-open' });
 }
 
 export function closeDock(): void {
@@ -387,12 +398,6 @@ function build(app: App): void {
   void app;
 }
 
-function headSubEl(): HTMLElement | null {
-  return overlay?.querySelector<HTMLElement>('#bz-dock-headsub') ?? null;
-}
-function headBtnsEl(): HTMLElement | null {
-  return overlay?.querySelector<HTMLElement>('#bz-dock-headbtns') ?? null;
-}
 function kpiEl(): HTMLElement | null {
   return overlay?.querySelector<HTMLElement>('#bz-dock-kpi') ?? null;
 }
@@ -464,8 +469,7 @@ function runDueNotifications(): void {
 function willAutoRun(v: DockToolView): boolean {
   if (!readDockSwitch('autoRun')) return false;
   if (!isEnabled(v.entry) || !isTrusted(v.entry) || v.trustStale) return false;
-  if (!v.run || !v.autoRun) return false;
-  if (triggerOfView(v) !== 'auto') return false;
+  if (!v.run || !hasActiveRule(v.rules)) return false;
   if (v.runState?.pausedAt) return false;
   return missingRequiredParams(v.manifest?.params, v.values).length === 0;
 }
@@ -488,7 +492,8 @@ function renderKpi(): void {
   const host = kpiEl();
   if (!host) return;
   host.innerHTML = '';
-  if (!views.length) {
+  // 详情页的统计是「当前脚本」的，由 renderDetail 画在工具头部下面 —— 全局四格让位
+  if (!views.length || view.kind === 'detail') {
     host.classList.add('is-off');
     return;
   }
@@ -586,7 +591,8 @@ function renderRunbar(): void {
   if (!host) return;
   host.innerHTML = '';
   const runs = liveRunsAll();
-  if (!runs.length) {
+  // 详情页不画：运行台（左栏）已经有同一条运行的实时进度，头顶再挂一条就是同一件事说两遍
+  if (!runs.length || view.kind === 'detail') {
     host.classList.add('is-off');
     return;
   }
@@ -630,12 +636,43 @@ function makeRunbarRow(run: DockLiveRun): HTMLElement {
 }
 
 function renderHead(): void {
-  const sub = headSubEl();
-  const btns = headBtnsEl();
-  if (!sub || !btns) return;
+  const headEl = overlay?.querySelector<HTMLElement>('.bz-panel-head') ?? null;
+  if (!headEl) return;
+  // 详情页：头行整条换装成工具自己的（返回 + 封面），「工具坞」标题让位。
+  // 换的是**同一条 .bz-panel-head** —— 它本来就在面板最顶端，这样头部才真的顶到头，
+  // 不用在滚动区里靠负边距去凑。
+  if (view.kind === 'detail') {
+    const v = viewById(view.id);
+    if (v) {
+      renderToolHead(headEl, v);
+      return;
+    }
+  }
+  // 列表态。换装时 `innerHTML = ''` 会把 sub / btns 连节点一起摘走 —— 所以这里**重建**，
+  // 不能信「查询不到就当骨架还在」：那正是「回列表头没换回来」这个 bug 的根因。
+  headEl.classList.remove('bz-dock-toolhead');
+  let sub = headEl.querySelector<HTMLElement>('#bz-dock-headsub');
+  let btns = headEl.querySelector<HTMLElement>('#bz-dock-headbtns');
+  if (!sub || !btns) {
+    headEl.innerHTML = '';
+    const brand = el('div', 'bz-panel-brand');
+    brand.appendChild(uiIcon('square-terminal'));
+    sub = el('div', 'bz-panel-head-sub');
+    sub.id = 'bz-dock-headsub';
+    btns = el('div', 'bz-panel-head-btns');
+    btns.id = 'bz-dock-headbtns';
+    headEl.append(
+      brand,
+      el('div', 'bz-panel-title', '工具坞'),
+      el('div', 'bz-panel-head-pipe'),
+      sub,
+      el('div', 'bz-panel-head-sp'),
+      btns,
+    );
+  }
   const s = summarize(views);
   sub.textContent = views.length
-    ? `${s.total} 个工具 · 自动化 ${s.auto} · 手动 ${s.manual}${s.overdue ? ` · ${s.overdue} 个待关注` : ''}`
+    ? `${s.total} 个工具${s.overdue ? ` · ${s.overdue} 个待关注` : ''}`
     : '还没有登记任何外部工具';
   btns.innerHTML = '';
   btns.append(
@@ -672,6 +709,48 @@ function renderHead(): void {
 }
 
 /**
+ * 详情页的头部（画进 `.bz-panel-head`）：返回 + 图标 + 名 + 状态标签 + 描述。
+ *
+ * 刻意**不摆运行按钮**：运行的入口与实时进度都在下面的「运行台」里，头顶再来一个
+ * 就是把同一件事说两遍（旧的顶层进度条同理，详情页不画 —— 见 `renderRunbar`）。
+ */
+function renderToolHead(host: HTMLElement, v: DockToolView): void {
+  host.innerHTML = '';
+  host.classList.add('bz-dock-toolhead');
+
+  // 返回和封面**同一行**：36px 的点击面，与封面图标垂直居中对齐
+  const back = uiIconBtn({
+    icon: 'chevron-left',
+    title: '返回列表',
+    className: 'bz-dock-back',
+    onClick: () => {
+      view = { kind: 'list' };
+      render();
+    },
+  });
+
+  // 封面：大图标 + 名 + 状态标签 + 描述，留白拉开
+  const main = el('div', 'bz-dock-covermain');
+  const ic = el('div', 'bz-dock-coveric');
+  ic.appendChild(uiIcon(displayIcon(v), 'bz-ic--lg'));
+
+  const txt = el('div', 'bz-dock-covertxt');
+  const line = el('div', 'bz-dock-coverline');
+  line.appendChild(el('div', 'bz-dock-detail-name', displayName(v)));
+  const tags = el('div', 'bz-dock-detail-tags');
+  if (isOverdue(v.due.state)) tags.appendChild(el('span', 'bz-dock-tag bz-dock-tag--due', v.due.detail));
+  const trustTag = trustTagOf(v);
+  if (trustTag) tags.appendChild(el('span', 'bz-dock-tag bz-dock-tag--warn', trustTag));
+  if (tags.children.length) line.appendChild(tags);
+  txt.appendChild(line);
+  const desc = displayDesc(v);
+  if (desc) txt.appendChild(el('div', 'bz-dock-detail-desc', desc));
+
+  main.append(back, ic, txt);
+  host.appendChild(main);
+}
+
+/**
  * 搜索行。这一条只剩搜索 —— 原先把「全部 / 自动化 / 手动 / 待关注」四档也放这里，
  * 但那四档要说的两件事（自动化 vs 手动、有几个待关注）现在分别由分区标题和顶部 KPI 说过了。
  * 没展开搜索时整条隐藏，面板上不留一条空横杠。
@@ -682,7 +761,8 @@ function renderBar(): void {
   bar.innerHTML = '';
   if (refreshing) bar.classList.add('is-loading');
   else bar.classList.remove('is-loading');
-  if (!searchOpen) {
+  // 详情页没有搜索（搜索钮在列表头里，详情头让位给工具自己的头部）
+  if (!searchOpen || view.kind === 'detail') {
     bar.classList.add('is-off');
     return;
   }
@@ -771,23 +851,10 @@ function renderList(body: HTMLElement): void {
     );
     return;
   }
-  const auto = list.filter((v) => triggerOfView(v) === 'auto');
-  const manual = list.filter((v) => triggerOfView(v) === 'manual');
-  if (auto.length) body.appendChild(section('自动化', '由 bz 按你配好的节奏自动跑（到点触发、漏跑补跑）', auto));
-  if (manual.length) body.appendChild(section('手动', '想起来才点一次', manual));
-}
-
-function section(title: string, hint: string, list: DockToolView[]): HTMLElement {
-  const sec = el('section', 'bz-dock-sec');
-  const head = el('div', 'bz-dock-sec-head');
-  head.appendChild(el('span', 'bz-dock-sec-title', title));
-  head.appendChild(el('span', 'bz-dock-sec-count', String(list.length)));
-  head.appendChild(el('span', 'bz-dock-sec-hint', hint));
-  sec.appendChild(head);
+  // 一张平铺的表：跑不跑、什么时候跑，都由规则表自己说，不再分「自动化 / 手动」两区
   const grid = el('div', 'bz-dock-grid');
   for (const v of list) grid.appendChild(makeCard(v));
-  sec.appendChild(grid);
-  return sec;
+  body.appendChild(grid);
 }
 
 // ==================== 卡片 ====================
@@ -807,15 +874,11 @@ function makeCard(v: DockToolView): HTMLElement {
   const idbox = el('div', 'bz-dock-card-idbox');
   const name = el('div', 'bz-dock-card-name', displayName(v));
   const tags = el('div', 'bz-dock-card-tags');
-  tags.appendChild(el('span', 'bz-dock-tag', triggerOfView(v) === 'auto' ? '自动化' : '手动'));
   if (isOverdue(v.due.state)) tags.appendChild(el('span', 'bz-dock-tag bz-dock-tag--due', '今日未跑'));
   const trustTag = trustTagOf(v);
   if (trustTag) tags.appendChild(el('span', 'bz-dock-tag bz-dock-tag--warn', trustTag));
   if (!v.manifest) tags.appendChild(el('span', 'bz-dock-tag bz-dock-tag--muted', '声明读不到'));
   if (v.manifest && !v.run) tags.appendChild(el('span', 'bz-dock-tag bz-dock-tag--muted', '只能看'));
-  if (triggerOfView(v) === 'auto' && !v.autoRun) {
-    tags.appendChild(el('span', 'bz-dock-tag bz-dock-tag--muted', '自动已关'));
-  }
   if (v.runState?.pausedAt) tags.appendChild(el('span', 'bz-dock-tag bz-dock-tag--warn', '自动已暂停'));
   idbox.append(name, tags);
   top.append(ic, idbox);
@@ -865,7 +928,7 @@ function makeCard(v: DockToolView): HTMLElement {
   }
   card.appendChild(strip);
 
-  // 动作行
+  // 动作行：只留运行 —— 详情整卡点开，管理动作在详情页与右键菜单里
   const foot = el('div', 'bz-dock-card-foot');
   if (canRun()) {
     const live = liveRunOf(id);
@@ -884,7 +947,7 @@ function makeCard(v: DockToolView): HTMLElement {
     } else {
       foot.appendChild(
         uiBtn({
-          label: runLabel(v),
+          label: '运行',
           icon: 'play',
           tone: 'primary',
           size: 'sm',
@@ -896,25 +959,6 @@ function makeCard(v: DockToolView): HTMLElement {
   } else {
     foot.appendChild(el('span', 'bz-dock-mobilehint', '移动端仅查看'));
   }
-  foot.appendChild(
-    uiBtn({
-      label: '详情',
-      icon: 'chevron-right',
-      size: 'sm',
-      className: 'bz-dock-foot-detail',
-      onClick: () => {
-        view = { kind: 'detail', id };
-        render();
-      },
-    }),
-  );
-  const more = uiIconBtn({
-    icon: 'more-horizontal',
-    title: '更多操作',
-    xs: true,
-    onClick: () => openCardActions(more, v),
-  });
-  foot.appendChild(more);
   card.appendChild(foot);
 
   // 菜单（右键 / 长按）+ 左键开详情
@@ -954,7 +998,7 @@ function cardActions(v: DockToolView): ItemAction[] {
   if (canStart(v)) {
     acts.push({
       icon: 'play',
-      label: runLabel(v),
+      label: '运行',
       onClick: () => void runFlow(v),
     });
   }
@@ -1072,12 +1116,410 @@ function clampInt(raw: string, lo: number, hi: number, fallback: number): number
  * 三件事实摆出来：**脚本默认**（`declaredSchedule`）、**当前生效**（`scheduleOverride ?? declared`）、
  * 下次什么时候跑。改的永远是 bz 这一份覆盖，脚本那份只读不写（它在工具目录里，bz 不碰）。
  *
- * 「开 / 不开」**只有总闸一个控件**（`autoRun`）；节奏编辑器只管「多久一次」。故编辑器**不再**摆
- * 「只手动（不自动）」这种选项 —— 那是把开关的意思在第二个控件里又说了一遍，两个控件说同一件事
- * 只会互相打架（选了「只手动」却发现总闸还开着，或者反过来，谁说话算数？）。
+ * 没有「自动运行开关」这种东西：有生效规则就自动跑，没有就不跑 —— 规则表是唯一事实源，
+ * 不摆第二个控件跟它说同一件事（两个开关互相打架的老坑不再挖）。
+ */
+// ---------- 自动运行（详情页）：规则表 —— 触发条件 → 执行 ----------
+
+/** 新建 / 换类型时的默认触发条件（打开就能改，不用先选类型才看见字段） */
+function defaultTriggerOf(kind: DockTriggerKind): DockTrigger {
+  switch (kind) {
+    case 'daily':
+      return { kind: 'daily', at: '12:00' };
+    case 'interval':
+      return { kind: 'interval', everyMin: 60 };
+    case 'on-launch':
+      return { kind: 'on-launch', delayMin: 5 };
+    case 'panel-open':
+      return { kind: 'panel-open' };
+    case 'tool-ok':
+      return { kind: 'tool-ok', toolId: '' };
+    case 'tool-fail':
+      return { kind: 'tool-fail', toolId: '' };
+    case 'domain-event':
+      return { kind: 'domain-event', channel: '' };
+    case 'vault-file':
+      return { kind: 'vault-file', target: '' };
+    case 'data-threshold':
+      return { kind: 'data-threshold', path: '', key: '', op: '>', value: 0 };
+  }
+}
+
+/** 写回规则表（规则唯一写入口）：整表重写，落盘前由 `parseRules` 把关 */
+async function saveRules(v: DockToolView, next: DockRule[]): Promise<void> {
+  await updateToolEntry(v.entry.id, { rules: next });
+  kickDockScheduler();
+  await refresh();
+}
+
+/** 删一条规则 */
+async function removeRule(v: DockToolView, ruleId: string): Promise<void> {
+  await saveRules(v, v.rules.filter((r) => r.id !== ruleId));
+}
+
+/**
+ * 规则编辑器 —— 一个**弹窗**装下整条规则（触发条件 → 执行 → 随机延迟）。
  *
- * 编辑器直接预填当前生效值、就地可改（不是「先声明我要覆盖，才露出字段」）：打开面板就能把自动化
- * 配成要的样子。手动工具（脚本没排节奏）也渲染本块，在这里选一套节奏就等于给它排上了自动化。
+ * 为什么不在行内摆控件：九个触发条件各有各的参数，行内摆等于把整张表挤成一条横向滚动条，
+ * 且每改一次类型都要重排整行。弹窗里改的是**草稿**，保存才落盘 —— 中途换类型不留残骸。
+ */
+function openRuleEditor(v: DockToolView, rule: DockRule | null): void {
+  const draft: DockRule = rule
+    ? { ...rule, trigger: { ...rule.trigger }, action: { ...rule.action } }
+    : { id: newRuleId(), trigger: defaultTriggerOf('daily'), action: { kind: 'run', notify: 'fail' } };
+
+  const form = el('div', 'bz-dock-ruleform');
+  const params = el('div', 'bz-dock-ruleparams');
+  const err = el('div', 'bz-dock-ruleformerr');
+  const preview = el('div', 'bz-dock-rulepreview');
+
+  /** 底行这句话是整条规则的**人话回显**：改哪儿它跟到哪儿，保存前能自己核对一遍 */
+  const syncPreview = (): void => {
+    const jit = draft.jitterMin ? ` · 抖 ${minutesText(draft.jitterMin)}` : '';
+    preview.textContent = `${triggerText(draft.trigger)} → ${actionText(draft.action)}${jit}`;
+  };
+  /** 参数区重建（换触发类型 / 点快捷值都要重画） */
+  const rebuild = (): void => {
+    params.replaceChildren(...triggerFields(draft, rebuild));
+    syncPreview();
+  };
+
+  const triggerPick = uiChoice<DockTriggerKind>({
+    options: TRIGGER_KINDS.map((k) => ({ value: k, label: TRIGGER_LABEL[k] })),
+    value: draft.trigger.kind,
+    label: '触发条件',
+    onChange: (kind) => {
+      draft.trigger = defaultTriggerOf(kind);
+      rebuild();
+    },
+  });
+
+  const actionPick = uiChoice<string>({
+    options: [
+      { value: 'run', label: '运行' },
+      { value: 'run-notify', label: '运行并提醒' },
+      { value: 'remind', label: '只提醒' },
+    ],
+    value: draft.action.kind === 'remind' ? 'remind' : draft.action.notify === 'always' ? 'run-notify' : 'run',
+    label: '执行',
+    onChange: (val) => {
+      draft.action =
+        val === 'remind'
+          ? { kind: 'remind' }
+          : { kind: 'run', notify: val === 'run-notify' ? 'always' : 'fail' };
+      syncPreview();
+    },
+  });
+
+  const jitter = uiInput({
+    type: 'number',
+    value: String(draft.jitterMin ?? 0),
+    onInput: (val) => {
+      draft.jitterMin = clampInt(val, 0, 720, 0);
+      syncPreview();
+    },
+  });
+  jitter.min = '0';
+
+  form.appendChild(sectionOf('触发条件', [triggerPick.el, params]));
+  form.appendChild(sectionOf('执行', [actionPick.el]));
+  form.appendChild(
+    sectionOf('随机延迟（错峰用）', [
+      uiField({ label: '到点后再等', desc: '0 = 不抖', control: jitter }),
+      quickRow(
+        [
+          { label: '不抖', value: 0 },
+          { label: '2 分', value: 2 },
+          { label: '10 分', value: 10 },
+          { label: '30 分', value: 30 },
+        ],
+        (n) => {
+          draft.jitterMin = n;
+          jitter.value = String(n);
+          syncPreview();
+        },
+      ),
+    ]),
+  );
+  form.appendChild(preview);
+  form.appendChild(err);
+
+  rebuild();
+
+  const { popup, close } = uiModal({
+    head: true,
+    title: rule ? '编辑规则' : '新建规则',
+    content: form,
+    maxWidth: 480,
+    className: 'bz-dock-rulemodal',
+  });
+
+  /** 缺参数的规则跑不起来 —— 说清缺什么，比让它静默生效强 */
+  const problem = (): string | null => {
+    const t = draft.trigger;
+    if (t.kind === 'tool-ok' || t.kind === 'tool-fail') return t.toolId ? null : '还没选工具';
+    if (t.kind === 'domain-event') return t.channel.trim() ? null : '还没填事件通道';
+    if (t.kind === 'vault-file') return t.target.trim() ? null : '还没填目录';
+    if (t.kind === 'data-threshold') return t.path.trim() && t.key.trim() ? null : '还没填文件与键';
+    return null;
+  };
+
+  const commit = (): void => {
+    const next = rule
+      ? v.rules.map((r) => (r.id === rule.id ? draft : r))
+      : [...v.rules, draft];
+    close();
+    void saveRules(v, next);
+  };
+
+  const ok = uiBtn({
+    label: '保存',
+    tone: 'primary',
+    size: 'sm',
+    onClick: () => {
+      const p = problem();
+      if (p) {
+        err.textContent = p;
+        return;
+      }
+      err.textContent = '';
+      commit();
+    },
+  });
+  const foot = el('div', 'bz-dock-ruleformfoot');
+  foot.appendChild(
+    uiBtn({
+      label: '取消',
+      size: 'sm',
+      onClick: () => close(),
+    }),
+  );
+  foot.appendChild(el('div', 'bz-dock-ruleformsp'));
+  if (rule) {
+    foot.appendChild(
+      uiBtn({
+        label: '删除',
+        size: 'sm',
+        danger: true,
+        onClick: () => {
+          close();
+          void removeRule(v, rule.id);
+        },
+      }),
+    );
+  }
+  foot.appendChild(ok);
+  form.appendChild(foot);
+  // 回车提交（弹窗表单的通用手感）：Ctrl/⌘+Enter 恒提交，单行 input 里回车也提交
+  bindFormSubmit(popup, () => ok.click());
+}
+
+/** 弹窗里的一节：小标题 + 内容 */
+function sectionOf(title: string, children: HTMLElement[]): HTMLElement {
+  const sec = el('div', 'bz-dock-ruleformsec');
+  sec.appendChild(el('div', 'bz-dock-ruleformlegend', title));
+  for (const c of children) sec.appendChild(c);
+  return sec;
+}
+
+/** 快捷值一行（点一下就填）—— 数值字段不用人人手敲 */
+function quickRow(items: { label: string; value: number }[], onPick: (n: number) => void): HTMLElement {
+  const row = el('div', 'bz-dock-rulequick');
+  for (const it of items) {
+    row.appendChild(uiBtn({ label: it.label, size: 'sm', onClick: () => onPick(it.value) }));
+  }
+  return row;
+}
+
+/** 触发条件的参数字段（草稿就地改；换值要重画时走 `rebuild`） */
+function triggerFields(draft: DockRule, rebuild: () => void): HTMLElement[] {
+  const t = draft.trigger;
+  switch (t.kind) {
+    case 'daily': {
+      const inp = uiInput({
+        type: 'time',
+        value: atSecondsOf(t.at) === undefined ? '' : t.at,
+        onInput: (val) => {
+          draft.trigger = { kind: 'daily', at: val || '12:00' };
+        },
+      });
+      return [
+        uiField({ label: '时刻', control: inp }),
+        quickRow(
+          [
+            { label: '08:00', value: 8 * 60 },
+            { label: '12:00', value: 12 * 60 },
+            { label: '20:00', value: 20 * 60 },
+          ],
+          (mins) => {
+            const at = `${String(Math.floor(mins / 60)).padStart(2, '0')}:${String(mins % 60).padStart(2, '0')}`;
+            draft.trigger = { kind: 'daily', at };
+            rebuild();
+          },
+        ),
+      ];
+    }
+    case 'interval': {
+      const inp = uiInput({
+        type: 'number',
+        value: String(t.everyMin),
+        onInput: (val) => {
+          draft.trigger = { kind: 'interval', everyMin: clampInt(val, 1, 43200, 60) };
+        },
+      });
+      inp.min = '1';
+      return [
+        uiField({ label: '每隔（分钟）', control: inp }),
+        quickRow(
+          [
+            { label: '30 分', value: 30 },
+            { label: '1 小时', value: 60 },
+            { label: '6 小时', value: 360 },
+            { label: '1 天', value: 1440 },
+          ],
+          (n) => {
+            draft.trigger = { kind: 'interval', everyMin: n };
+            rebuild();
+          },
+        ),
+      ];
+    }
+    case 'on-launch': {
+      const inp = uiInput({
+        type: 'number',
+        value: String(t.delayMin),
+        onInput: (val) => {
+          draft.trigger = { kind: 'on-launch', delayMin: clampInt(val, 0, 1440, 5) };
+        },
+      });
+      inp.min = '0';
+      return [
+        uiField({ label: '启动后等（分钟）', control: inp }),
+        quickRow(
+          [
+            { label: '立刻', value: 0 },
+            { label: '1 分', value: 1 },
+            { label: '5 分', value: 5 },
+            { label: '30 分', value: 30 },
+          ],
+          (n) => {
+            draft.trigger = { kind: 'on-launch', delayMin: n };
+            rebuild();
+          },
+        ),
+      ];
+    }
+    case 'panel-open':
+      return [el('div', 'bz-dock-ruleformhint', '打开工具坞面板时触发，没有要填的')];
+    case 'tool-ok':
+    case 'tool-fail': {
+      const sel = uiSelect<string>({
+        options: [{ value: '', label: '选一个工具' }, ...toolOptions()],
+        value: t.toolId,
+        onChange: (val) => {
+          draft.trigger = { kind: t.kind, toolId: val };
+        },
+      });
+      return [uiField({ label: t.kind === 'tool-ok' ? '哪个工具成功后' : '哪个工具失败后', control: sel.el })];
+    }
+    case 'domain-event': {
+      const inp = uiInput({
+        type: 'text',
+        value: t.channel,
+        placeholder: '域名:事件',
+        onInput: (val) => {
+          draft.trigger = { kind: 'domain-event', channel: val };
+        },
+      });
+      return [uiField({ label: '事件通道', desc: '如 people:changed', control: inp })];
+    }
+    case 'vault-file': {
+      const inp = uiInput({
+        type: 'text',
+        value: t.target,
+        placeholder: 'vault 里的目录',
+        onInput: (val) => {
+          draft.trigger = { kind: 'vault-file', target: val };
+        },
+      });
+      return [uiField({ label: '哪个目录有变动', control: inp })];
+    }
+    case 'data-threshold': {
+      const path = uiInput({
+        type: 'text',
+        value: t.path,
+        placeholder: '数据文件',
+        onInput: (val) => {
+          draft.trigger = { ...t, path: val };
+        },
+      });
+      const key = uiInput({
+        type: 'text',
+        value: t.key,
+        placeholder: '键',
+        onInput: (val) => {
+          draft.trigger = { ...t, key: val };
+        },
+      });
+      const op = uiSelect<string>({
+        options: [
+          { value: '>', label: '大于' },
+          { value: '<', label: '小于' },
+          { value: '=', label: '等于' },
+        ],
+        value: t.op,
+        onChange: (val) => {
+          draft.trigger = { ...t, op: val as '>' | '<' | '=' };
+        },
+      });
+      const num = uiInput({
+        type: 'number',
+        value: String(t.value),
+        onInput: (val) => {
+          draft.trigger = { ...t, value: Number(val) || 0 };
+        },
+      });
+      const grid = el('div', 'bz-dock-rulegrid');
+      grid.append(uiField({ label: '文件', control: path }), uiField({ label: '键', control: key }));
+      grid.append(uiField({ label: '比较', control: op.el }), uiField({ label: '阈值', control: num }));
+      return [grid];
+    }
+  }
+}
+
+/**
+ * 面板上一条规则 —— **只读摘要**，点一下进弹窗改。
+ *
+ * 摘要不摆控件：行内九个下拉加参数会把这一行撑爆，且「点哪儿都在改数据」让人不敢点。
+ */
+function ruleRow(v: DockToolView, rule: DockRule): HTMLElement {
+  const row = el('div', 'bz-dock-rule');
+  row.tabIndex = 0;
+  row.setAttribute('role', 'button');
+  const main = el('div', 'bz-dock-rulemain');
+  main.appendChild(el('div', 'bz-dock-ruleline', triggerText(rule.trigger)));
+  main.appendChild(el('div', 'bz-dock-rulemeta', actionText(rule.action) + (rule.jitterMin ? ` · 抖 ${minutesText(rule.jitterMin)}` : '')));
+  row.append(main, el('span', 'bz-dock-rulearrow', '›'));
+  const open = (): void => openRuleEditor(v, rule);
+  row.addEventListener('click', open);
+  row.addEventListener('keydown', (e: KeyboardEvent) => {
+    if (e.key !== 'Enter' && e.key !== ' ') return;
+    e.preventDefault();
+    open();
+  });
+  return row;
+}
+
+/** 工具下拉的选项（已登记的 id；标题得读声明，这里不为了列表好看去读一遍磁盘） */
+function toolOptions(): { value: string; label: string }[] {
+  return readToolEntries().map((e) => ({ value: e.id, label: e.id }));
+}
+
+
+/**
+ * 「自动运行」块（详情页）—— **规则表**：一行一条「触发条件 → 执行」。
+ *
+ * 开关只有总闸一个；规则的增删改全在下面。**不写说明文字**（不留 desc、不留提示段落）。
  */
 function autoSection(v: DockToolView): HTMLElement {
   const sec = el('section', 'bz-dock-pane bz-dock-autopane');
@@ -1085,192 +1527,44 @@ function autoSection(v: DockToolView): HTMLElement {
   head.appendChild(el('h3', 'bz-dock-pane-title', '自动运行'));
   sec.appendChild(head);
 
-  const id = v.entry.id;
-
-  // 总闸（autoRun）：开 / 不开，就这一个控件说了算
-  sec.appendChild(
-    uiField({
-      label: '自动运行',
-      desc: '由 bz 按下面的节奏自动触发；关掉就只在面板里手动点。脚本里那份是默认值，不是定死的',
-      control: uiSwitch({
-        checked: v.autoRun,
-        onChange: (on) => {
-          void (async () => {
-            await updateToolEntry(id, { autoRun: on });
-            autoDraft.delete(id);
-            kickDockScheduler();
-            await refresh();
-          })();
-        },
-      }).el,
-    }),
-  );
-
-  // 事实三行：脚本默认 vs 当前生效 vs 下次预计
-  const facts = el('div', 'bz-dock-autorows');
-  facts.appendChild(autoRow('脚本默认', scheduleTextOf(v.declaredSchedule)));
-  facts.appendChild(autoRow('当前生效', scheduleTextOf(v.schedule) + (v.scheduleOverridden ? '（你改的）' : '')));
-  facts.appendChild(
-    autoRow('下次预计', v.nextDue === null ? '算不出（没有节奏，或缺运行基线）' : dueTimeText(v.nextDue)),
-  );
   if (v.runState?.pausedAt) {
-    // 重试前顺手把上次失败原因摆出来（#8）：失败分类就在最近一条记录里，不该让用户点了重试才知道死因
     const last = lastRun(v.runs);
     const hint = last?.error ? errorHint(last.error.kind) : null;
-    facts.appendChild(
-      el(
-        'div',
-        'bz-dock-autonote bz-dock-autonote--warn',
-        `连续失败 ${v.runState.consecutiveFailures ?? 0} 次，自动运行已暂停${hint ? ` —— 上次：${hint}` : ''}`,
-      ),
-    );
-  }
-  if (v.declChangedSinceOverride) {
-    facts.appendChild(el('div', 'bz-dock-autonote', '脚本改过默认节奏了 —— 看一眼要不要跟着调'));
-  }
-  if (!v.autoRun) {
-    facts.appendChild(
-      el(
-        'div',
-        'bz-dock-autonote',
-        '自动运行已关 —— 下面排的节奏不会生效，要它自己跑起来得先打开上面的开关',
-      ),
-    );
-  }
-  sec.appendChild(facts);
-
-  // 节奏编辑：bz 这一侧的「多久一次」。预填「当前生效」，改完即成为 bz 的覆盖节奏
-  const d = autoDraftOf(v);
-  const editor = el('div', 'bz-dock-autoeditor');
-  editor.appendChild(
-    uiField({
-      label: '节奏',
-      control: uiSelect<string>({
-        // 选项来自 schedule.ts 的 EDITABLE_SCHEDULE_KINDS（唯一来源，不带「只手动」）
-        options: EDITABLE_SCHEDULE_KINDS.map((k) => ({ value: k, label: SCHEDULE_KIND_LABEL[k] })),
-        value: d.kind === 'inherit' ? 'daily' : d.kind,
-        onChange: (val) => {
-          d.kind = val as AutoDraft['kind'];
-          render(); // 切换形态要换下面那行输入，重渲染一次
-        },
-      }).el,
-    }),
-  );
-
-  if (d.kind === 'daily') {
-    const inp = uiInput({
-      type: 'number',
-      value: String(d.hour),
-      onInput: (val) => {
-        d.hour = clampInt(val, 0, 23, 12);
-      },
-    });
-    inp.min = '0';
-    inp.max = '23';
-    editor.appendChild(uiField({ label: '当天几点前跑完', desc: '本地时间，0–23', control: inp }));
-  } else if (d.kind === 'weekly') {
-    editor.appendChild(
-      uiField({
-        label: '每周哪天',
-        control: uiSelect<string>({
-          options: ['周日', '周一', '周二', '周三', '周四', '周五', '周六'].map((l, i) => ({
-            value: String(i),
-            label: l,
-          })),
-          value: String(d.weekday),
-          onChange: (val) => {
-            d.weekday = clampInt(val, 0, 6, 1);
-          },
-        }).el,
-      }),
-    );
-  } else if (d.kind === 'interval') {
-    const inp = uiInput({
-      type: 'number',
-      value: String(d.everyHours),
-      onInput: (val) => {
-        d.everyHours = clampInt(val, 1, 168, 6);
-      },
-    });
-    inp.min = '1';
-    inp.max = '168';
-    editor.appendChild(uiField({ label: '每隔几小时', desc: '1–168', control: inp }));
-  }
-
-  const btns = el('div', 'bz-dock-runbtns');
-  btns.appendChild(uiBtn({ label: '保存节奏', size: 'sm', tone: 'primary', onClick: () => void saveAuto(v, d) }));
-  if (v.scheduleOverridden) {
-    btns.appendChild(
+    const bar = el('div', 'bz-dock-runbtns');
+    bar.appendChild(
       uiBtn({
-        label: '恢复脚本默认',
-        size: 'sm',
-        onClick: () => {
-          autoDraft.delete(id);
-          void saveAuto(v, { ...d, kind: 'inherit' });
-        },
-      }),
-    );
-  }
-  if (v.runState?.pausedAt) {
-    btns.appendChild(
-      uiBtn({
-        label: '恢复并立即重试',
+        label: hint ? `恢复并重试（上次：${hint}）` : '恢复并重试',
         size: 'sm',
         tone: 'primary',
         onClick: () => void resumeAndRetry(v),
       }),
     );
+    sec.appendChild(bar);
   }
-  editor.appendChild(btns);
-  sec.appendChild(editor);
 
+  const list = el('div', 'bz-dock-rulelist');
+  if (v.rules.length) for (const rule of v.rules) list.appendChild(ruleRow(v, rule));
+  else list.appendChild(el('div', 'bz-dock-ruleempty', '没有规则 —— 加一条就有了'));
+  sec.appendChild(list);
+
+  sec.appendChild(
+    uiBtn({ label: '添加规则', size: 'sm', onClick: () => openRuleEditor(v, null) }),
+  );
   return sec;
 }
 
 function renderDetail(body: HTMLElement, v: DockToolView): void {
+  // 头部在 `.bz-panel-head` 里（renderToolHead），这里从「当前脚本的统计」开始
   const wrap = el('div', 'bz-dock-detail');
-
-  // 头：返回 + 图标 + 名 + 标签
-  const head = el('div', 'bz-dock-detail-head');
-  head.appendChild(uiIconBtn({ icon: 'chevron-left', title: '返回列表', onClick: () => { view = { kind: 'list' }; render(); } }));
-  const ic = el('span', 'bz-dock-detail-ic');
-  ic.appendChild(uiIcon(displayIcon(v), 'bz-ic--lg'));
-  const idbox = el('div', 'bz-dock-detail-idbox');
-  idbox.appendChild(el('div', 'bz-dock-detail-name', displayName(v)));
-  const tags = el('div', 'bz-dock-detail-tags');
-  tags.appendChild(el('span', 'bz-dock-tag', triggerOfView(v) === 'auto' ? '自动化' : '手动'));
-  if (isOverdue(v.due.state)) tags.appendChild(el('span', 'bz-dock-tag bz-dock-tag--due', v.due.detail));
-  const trustTag = trustTagOf(v);
-  if (trustTag) tags.appendChild(el('span', 'bz-dock-tag bz-dock-tag--warn', trustTag));
-  idbox.appendChild(tags);
-  head.append(ic, idbox);
-  const sp = el('div', 'bz-dock-detail-sp');
-  head.appendChild(sp);
-  if (canStart(v)) {
-    const live = liveRunOf(v.entry.id);
-    head.appendChild(
-      live
-        ? uiBtn({ label: '停止', icon: 'square', tone: 'danger', onClick: () => stopRun(v.entry.id) })
-        : uiBtn({
-            label: runLabel(v),
-            icon: 'play',
-            tone: 'primary',
-            onClick: () => void runFlow(v),
-          }),
-    );
-  }
-  head.appendChild(uiIconBtn({ icon: 'refresh-cw', title: '重新读取记录', onClick: () => void refresh() }));
-  head.appendChild(uiIconBtn({ icon: 'more-horizontal', title: '更多操作', onClick: () => openCardActions(head, v) }));
-  wrap.appendChild(head);
-
-  const desc = displayDesc(v);
-  if (desc) wrap.appendChild(el('div', 'bz-dock-detail-desc', desc));
 
   if (v.declError) {
     const box = el('div', 'bz-dock-meta-warn');
     box.textContent = v.declError;
     wrap.appendChild(box);
   }
+
+  // 统计：**当前脚本**的（全局四格只在列表页有）
+  wrap.appendChild(toolStats(v));
 
   // meta 行：怎么跑 / 在哪 —— 命令不再由登记给，而是声明文件里那份
   const meta = el('div', 'bz-dock-meta');
@@ -1307,8 +1601,6 @@ function renderDetail(body: HTMLElement, v: DockToolView): void {
     metaRow('参数值文件', v.valuesPath, true, () => void copyText(v.valuesPath, '参数值文件路径')),
   );
   meta.appendChild(metaRow('运行记录', v.runsPath, true, () => void copyText(v.runsPath, '运行记录路径')));
-  const rate = successRate(v.runs);
-  meta.appendChild(metaRow('成功率', rate === null ? '暂无记录' : `${Math.round(rate * 100)}%（共 ${v.runs.length} 条）`));
   if (v.overLimit) {
     meta.appendChild(el('div', 'bz-dock-meta-warn', '记录条数已超约定上限 —— 裁剪是工具自己的活，去检查它的 GC'));
   }
@@ -1323,6 +1615,79 @@ function renderDetail(body: HTMLElement, v: DockToolView): void {
   cols.appendChild(histPane(v));
   wrap.appendChild(cols);
   body.appendChild(wrap);
+}
+
+/**
+ * 详情页的统计条 —— **当前脚本**的三格：成功率 / 最近一次 / 下次预计。
+ * 复用全局 KPI 的瓦片样式，但不带点击过滤（口径只有这一个工具，没什么可筛的）。
+ */
+function toolStats(v: DockToolView): HTMLElement {
+  const host = el('div', 'bz-dock-kpi bz-dock-toolstats');
+  const tile = (num: string, unit: string, label: string, sub: string, tone?: 'warn' | 'bad'): HTMLElement => {
+    const t = el('div', tone ? `bz-dock-kpi-tile is-${tone}` : 'bz-dock-kpi-tile');
+    const v2 = el('div', 'bz-dock-kpi-v', num);
+    if (unit) v2.appendChild(el('small', undefined, unit));
+    t.appendChild(v2);
+    t.appendChild(el('div', 'bz-dock-kpi-l', label));
+    t.appendChild(el('div', 'bz-dock-kpi-d', sub));
+    return t;
+  };
+
+  const rate = successRate(v.runs);
+  host.appendChild(
+    tile(
+      rate === null ? '—' : String(Math.round(rate * 100)),
+      rate === null ? '' : '%',
+      '成功率',
+      rate === null ? '还没有运行记录' : `共 ${v.runs.length} 条记录`,
+      rate !== null && rate < 1 ? 'warn' : undefined,
+    ),
+  );
+
+  const last = lastOf(v);
+  host.appendChild(
+    tile(
+      last ? relTime(last.startedAt.replace('T', ' ')) : '—',
+      '',
+      '最近一次',
+      last ? statusText(last.status) + (last.message ? ` · ${last.message}` : '') : '这个脚本还没跑过',
+      last?.status === 'failed' ? 'bad' : undefined,
+    ),
+  );
+
+  const next = nextDueOfView(v);
+  if (next) {
+    const left = untilText(next.at - Date.now());
+    host.appendChild(tile(left.num, left.unit, '下次预计', next.sub, next.at < Date.now() ? 'warn' : undefined));
+  } else {
+    host.appendChild(tile('—', '', '下次预计', '没有基于时间的规则（事件触发不算钟点）'));
+  }
+  return host;
+}
+
+/**
+ * 这条工具**下一次会自动跑**的钟点（`规则表 v2` 的读侧估算）：
+ * 只算时间类规则（daily / interval）里**最早**的那个；事件类规则没有钟点，不算。
+ * 记账读 `ruleFiredAt`（规则级），与调度器同一副账本 —— 它跑没跑过，这里不另猜。
+ */
+function nextDueOfView(v: DockToolView): { at: number; sub: string } | null {
+  const now = Date.now();
+  let best: { at: number; sub: string } | null = null;
+  for (const r of v.rules) {
+    if (r.enabled === false) continue;
+    const last = v.ruleFiredAt[r.id];
+    let at: number | undefined;
+    if (r.trigger.kind === 'daily') {
+      const t = todayAt(r.trigger, now);
+      if (t === undefined) continue;
+      at = now < t && (last ?? 0) < t ? t : t + 86400000;
+    } else if (r.trigger.kind === 'interval' && r.trigger.everyMin > 0) {
+      at = (last ?? now) + r.trigger.everyMin * 60000;
+    }
+    if (at === undefined) continue;
+    if (!best || at < best.at) best = { at, sub: triggerText(r.trigger) };
+  }
+  return best;
 }
 
 function metaRow(label: string, value: string, mono = false, onCopy?: () => void): HTMLElement {
@@ -1382,7 +1747,7 @@ function runPane(v: DockToolView): HTMLElement {
       live
         ? uiBtn({ label: '停止', icon: 'square', tone: 'danger', onClick: () => stopRun(v.entry.id) })
         : uiBtn({
-            label: runLabel(v),
+            label: '运行',
             icon: 'play',
             tone: 'primary',
             disabled: !canStart(v),
@@ -2085,9 +2450,7 @@ async function importToolFlow(entry?: DockToolEntry): Promise<void> {
   const next: DockToolEntry = { id: entry?.id ?? manifest.id, path: declPath };
   if (entry) {
     if (entry.enabled !== undefined) next.enabled = entry.enabled;
-    // bz 侧的调度状态一并沿用：重新导入是「换文件 / 刷新」，不是「重置我的配置」——
-    // 尤其 autoRun 缺省即开，丢了它等于用户特意关掉的自动化悄悄复活
-    if (entry.autoRun !== undefined) next.autoRun = entry.autoRun;
+    // bz 侧的调度状态一并沿用：重新导入是「换文件 / 刷新」，不是「重置我的配置」
     if (entry.scheduleOverride !== undefined) next.scheduleOverride = entry.scheduleOverride;
     if (entry.overrideDeclSig !== undefined) next.overrideDeclSig = entry.overrideDeclSig;
     // 命令没变就沿用旧信任；变了则不带 trustedAt（下面重新问）

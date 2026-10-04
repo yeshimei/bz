@@ -1,5 +1,5 @@
-/* 源指纹 cf1e24cfe010534f · 仓内输入 56 个（校验见 tests/preview-freshness.test.ts） */
-/*#preview-inputs=["prototypes/dock/fake-sim.ts","prototypes/dock/fake/fake-obsidian.ts","src/core/app.ts","src/core/dom.ts","src/core/esc-manager.ts","src/core/external-tool.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/mobile.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/settings-provider.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/help-tip.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/dock/command.ts","src/dock/data.ts","src/dock/declaration.ts","src/dock/index.ts","src/dock/registry.ts","src/dock/runner.ts","src/dock/schedule.ts","src/dock/scheduler.ts","src/dock/schema.ts","src/dock/store.ts","src/dock/ui.ts"]*/
+/* 源指纹 5d7b58143bf56403 · 仓内输入 58 个（校验见 tests/preview-freshness.test.ts） */
+/*#preview-inputs=["prototypes/dock/fake-sim.ts","prototypes/dock/fake/fake-obsidian.ts","src/core/app.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/external-tool.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/mobile.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/settings-provider.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/help-tip.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/dock/command.ts","src/dock/data.ts","src/dock/declaration.ts","src/dock/index.ts","src/dock/registry.ts","src/dock/rules.ts","src/dock/runner.ts","src/dock/schedule.ts","src/dock/scheduler.ts","src/dock/schema.ts","src/dock/store.ts","src/dock/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/dock/fake-sim.ts → window.BZW_dock（行为单源预览包，issue 245/ADR-0106） */
 var BZW_dock = (() => {
   var __create = Object.create;
@@ -4748,6 +4748,17 @@ var BZW_dock = (() => {
     }
     return false;
   }
+  function firstFocusable(container) {
+    const list = Array.from(container.querySelectorAll(FOCUSABLE_SELECTOR)).filter((el2) => {
+      if (isHidden(el2)) return false;
+      if (isMobileEnv()) {
+        const tag = el2.tagName;
+        if (tag === "INPUT" || tag === "TEXTAREA") return false;
+      }
+      return true;
+    });
+    return list[0] || null;
+  }
   function trapFocus(container) {
     const onKeydown = (e) => {
       if (e.key !== "Tab") return;
@@ -4965,6 +4976,100 @@ var BZW_dock = (() => {
     }
     if (opts.actions) el2.appendChild(opts.actions);
     return el2;
+  }
+
+  // src/core/ui/choice.ts
+  function uiChoice(opts) {
+    const el2 = document.createElement("div");
+    el2.className = "bz-choice" + (opts.float ? " bz-choice--float" : "") + (opts.className ? " " + opts.className : "");
+    el2.setAttribute("role", "radiogroup");
+    el2.setAttribute("aria-label", opts.label || "");
+    const btns = /* @__PURE__ */ new Map();
+    let cur = opts.value;
+    const seg = document.createElement("span");
+    seg.className = "bz-choice-seg";
+    let segRAF = 0;
+    let segTries = 0;
+    const syncSeg = (animate) => {
+      if (!opts.float) return;
+      const on = el2.querySelector(".bz-choice-btn.is-on");
+      if (!on) return;
+      const tb = el2.getBoundingClientRect();
+      const bb = on.getBoundingClientRect();
+      if (!el2.isConnected || !tb.width || !bb.width) {
+        if (segTries++ > 120) return;
+        cancelAnimationFrame(segRAF);
+        segRAF = requestAnimationFrame(() => syncSeg(false));
+        return;
+      }
+      segTries = 0;
+      if (!animate) seg.style.transition = "none";
+      seg.style.width = `${bb.width}px`;
+      seg.style.transform = `translateX(${bb.left - tb.left}px)`;
+      if (!animate) {
+        void seg.offsetWidth;
+        seg.style.transition = "";
+      }
+    };
+    const onWinResize = () => {
+      if (!el2.isConnected) {
+        window.removeEventListener("resize", onWinResize);
+        return;
+      }
+      syncSeg(false);
+    };
+    if (opts.float) {
+      window.addEventListener("resize", onWinResize);
+    }
+    opts.options.forEach((o) => {
+      const b = document.createElement("button");
+      b.type = "button";
+      b.className = "bz-choice-btn" + (o.value === opts.value ? " is-on" : "");
+      b.dataset.value = String(o.value);
+      b.setAttribute("role", "radio");
+      b.setAttribute("aria-checked", String(o.value === opts.value));
+      if (o.dot) {
+        const d = document.createElement("span");
+        d.className = "bz-choice-dot";
+        d.style.background = o.dot;
+        b.appendChild(d);
+      }
+      b.appendChild(document.createTextNode(o.label));
+      b.addEventListener("click", () => {
+        setValue(o.value);
+        opts.onChange(o.value);
+      });
+      b.addEventListener("keydown", (e) => {
+        var _a;
+        if (e.key !== "ArrowLeft" && e.key !== "ArrowRight" && e.key !== "ArrowUp" && e.key !== "ArrowDown") return;
+        e.preventDefault();
+        const vals = opts.options.map((x) => x.value);
+        const curIdx = vals.indexOf(cur);
+        const delta = e.key === "ArrowRight" || e.key === "ArrowDown" ? 1 : -1;
+        const nextIdx = (curIdx + delta + vals.length) % vals.length;
+        setValue(vals[nextIdx]);
+        opts.onChange(vals[nextIdx]);
+        (_a = btns.get(vals[nextIdx])) == null ? void 0 : _a.focus();
+      });
+      btns.set(o.value, b);
+      el2.appendChild(b);
+    });
+    if (opts.float) el2.appendChild(seg);
+    function setValue(v) {
+      cur = v;
+      btns.forEach((b, k) => {
+        const on = k === v;
+        b.classList.toggle("is-on", on);
+        b.setAttribute("aria-checked", String(on));
+      });
+      if (opts.float) syncSeg(true);
+    }
+    syncSeg(false);
+    const detach = () => {
+      cancelAnimationFrame(segRAF);
+      window.removeEventListener("resize", onWinResize);
+    };
+    return { el: el2, setValue, detach };
   }
 
   // src/core/ui/switch.ts
@@ -5220,6 +5325,87 @@ var BZW_dock = (() => {
     return { el: el2, setValue };
   }
 
+  // src/core/ui/modal.ts
+  function bindFormSubmit(popup, onSubmit) {
+    popup.addEventListener("keydown", (e) => {
+      if (e.defaultPrevented || e.isComposing) return;
+      if (e.key !== "Enter") return;
+      if (!(e.ctrlKey || e.metaKey)) return;
+      e.preventDefault();
+      onSubmit();
+    });
+    popup.addEventListener("keypress", (e) => {
+      if (e.defaultPrevented) return;
+      if (e.key !== "Enter" || e.ctrlKey || e.metaKey) return;
+      const t = e.target;
+      if (!(t instanceof HTMLInputElement)) return;
+      if (t.dataset.bzNoFormSubmit !== void 0) return;
+      e.preventDefault();
+      onSubmit();
+    });
+  }
+  var liveModals = /* @__PURE__ */ new Set();
+  function uiModal(opts) {
+    var _a;
+    const prevActive = document.activeElement;
+    const focusEnabled = opts.autofocus !== false;
+    const mask = document.createElement("div");
+    mask.className = "bz-overlay-mask";
+    mask.style.zIndex = String(allocZ());
+    const popup = document.createElement("div");
+    popup.className = "bz-overlay-popup" + (opts.className ? " " + opts.className : "");
+    if (opts.maxWidth) popup.style.maxWidth = `min(${opts.maxWidth}px, calc(100vw - 32px))`;
+    popup.setAttribute("role", "dialog");
+    popup.setAttribute("aria-modal", "true");
+    if (opts.title) popup.setAttribute("aria-label", opts.title);
+    if (opts.head) {
+      const head = document.createElement("div");
+      head.className = "bz-dialog-head";
+      const title = document.createElement("span");
+      title.className = "bz-dialog-title";
+      title.textContent = opts.title || "";
+      head.appendChild(title);
+      popup.appendChild(head);
+    }
+    const body = document.createElement("div");
+    body.className = "bz-dialog-body";
+    if (typeof opts.content === "string") body.innerHTML = opts.content;
+    else body.appendChild(opts.content);
+    popup.appendChild(body);
+    mask.appendChild(popup);
+    let closed = false;
+    let escHandle2 = null;
+    const releaseTrap = focusEnabled ? trapFocus(popup) : null;
+    function close() {
+      var _a2;
+      if (closed) return;
+      closed = true;
+      liveModals.delete(close);
+      releaseTrap == null ? void 0 : releaseTrap();
+      mask.remove();
+      escHandle2 == null ? void 0 : escHandle2.unregister();
+      if (focusEnabled && prevActive instanceof HTMLElement && prevActive.isConnected) {
+        prevActive.focus();
+      }
+      (_a2 = opts.onClose) == null ? void 0 : _a2.call(opts);
+    }
+    const attemptClose = () => {
+      if (opts.requestClose) opts.requestClose();
+      else close();
+    };
+    mask.addEventListener("click", (e) => {
+      if (e.target === mask) attemptClose();
+    });
+    escHandle2 = escManager.register("bz-modal", {
+      isVisible: () => mask.isConnected,
+      close: attemptClose
+    });
+    document.body.appendChild(mask);
+    if (focusEnabled) (_a = firstFocusable(popup)) == null ? void 0 : _a.focus();
+    liveModals.add(close);
+    return { mask, popup, close };
+  }
+
   // src/core/utils.ts
   var import_moment = __toESM(require_moment());
 
@@ -5241,8 +5427,8 @@ var BZW_dock = (() => {
   }
 
   // src/core/utils.ts
-  function escapeHtml(str2) {
-    return str2.replace(/[&<>"']/g, (m) => {
+  function escapeHtml(str3) {
+    return str3.replace(/[&<>"']/g, (m) => {
       if (m === "&") return "&amp;";
       if (m === "<") return "&lt;";
       if (m === ">") return "&gt;";
@@ -6309,6 +6495,267 @@ var BZW_dock = (() => {
     return args;
   }
 
+  // src/dock/rules.ts
+  var TRIGGER_KINDS = [
+    "daily",
+    "interval",
+    "on-launch",
+    "panel-open",
+    "tool-ok",
+    "tool-fail",
+    "domain-event",
+    "vault-file",
+    "data-threshold"
+  ];
+  var TRIGGER_LABEL = {
+    daily: "每天某时",
+    interval: "每隔一段时间",
+    "on-launch": "启动 Obsidian 后",
+    "panel-open": "打开工具坞时",
+    "tool-ok": "某个工具成功后",
+    "tool-fail": "某个工具失败后",
+    "domain-event": "某个事件发生时",
+    "vault-file": "某个目录有变动",
+    "data-threshold": "某个数值达到条件"
+  };
+  function atSecondsOf(at) {
+    if (!at) return void 0;
+    const m = /^(\d{1,2}):(\d{1,2})(?::(\d{1,2}))?$/.exec(at.trim());
+    if (!m) return void 0;
+    const h = Number(m[1]);
+    const mi = Number(m[2]);
+    const s = m[3] === void 0 ? 0 : Number(m[3]);
+    if (h > 23 || mi > 59 || s > 59) return void 0;
+    return h * 3600 + mi * 60 + s;
+  }
+  function startOfDay(ts) {
+    const d = new Date(ts);
+    d.setHours(0, 0, 0, 0);
+    return d.getTime();
+  }
+  function todayAt(trigger, now) {
+    const sec = atSecondsOf(trigger.at);
+    if (sec === void 0) return void 0;
+    return startOfDay(now) + sec * 1e3;
+  }
+  function ruleDue(rule, ctx) {
+    var _a, _b, _c, _d, _e, _f, _g, _h;
+    const t = rule.trigger;
+    switch (t.kind) {
+      case "daily": {
+        const at = todayAt(t, ctx.now);
+        if (at === void 0) return false;
+        if (ctx.now < at) return false;
+        return ((_a = ctx.lastFiredAt) != null ? _a : 0) < at;
+      }
+      case "interval": {
+        if (!(t.everyMin > 0)) return false;
+        if (ctx.lastFiredAt === void 0) return true;
+        return ctx.now - ctx.lastFiredAt >= t.everyMin * 6e4;
+      }
+      case "on-launch": {
+        const base = ctx.sessionStart;
+        if (base === void 0) return false;
+        if (ctx.now < base + t.delayMin * 6e4) return false;
+        return ((_b = ctx.lastFiredAt) != null ? _b : 0) < base;
+      }
+      case "panel-open":
+        return ((_c = ctx.event) == null ? void 0 : _c.kind) === "panel-open";
+      case "tool-ok":
+        return ((_d = ctx.event) == null ? void 0 : _d.kind) === "tool-ok" && ctx.event.toolId === t.toolId;
+      case "tool-fail":
+        return ((_e = ctx.event) == null ? void 0 : _e.kind) === "tool-fail" && ctx.event.toolId === t.toolId;
+      case "domain-event":
+        return ((_f = ctx.event) == null ? void 0 : _f.kind) === "domain-event" && ctx.event.channel === t.channel;
+      case "vault-file": {
+        if (((_g = ctx.event) == null ? void 0 : _g.kind) !== "vault-file") return false;
+        const p = (_h = ctx.event.path) != null ? _h : "";
+        if (!p) return false;
+        const target = t.target.replace(/\/+$/, "");
+        return p === target || p.startsWith(target + "/");
+      }
+      case "data-threshold": {
+        if (ctx.value === void 0) return false;
+        if (t.op === ">") return ctx.value > t.value;
+        if (t.op === "<") return ctx.value < t.value;
+        return ctx.value === t.value;
+      }
+    }
+  }
+  var pad22 = (n) => String(n).padStart(2, "0");
+  function clockText(at) {
+    const sec = atSecondsOf(at);
+    if (sec === void 0) return at;
+    return `${pad22(Math.floor(sec / 3600))}:${pad22(Math.floor(sec % 3600 / 60))}`;
+  }
+  function durationText(min) {
+    if (min % 60 === 0 && min >= 60) return `${min / 60} 小时`;
+    return `${min} 分钟`;
+  }
+  function triggerText(t, toolNameOf) {
+    const name = (id) => toolNameOf ? toolNameOf(id) : id;
+    switch (t.kind) {
+      case "daily":
+        return `每天 ${clockText(t.at)}`;
+      case "interval":
+        return `每 ${durationText(t.everyMin)}`;
+      case "on-launch":
+        return `启动后 ${durationText(t.delayMin)}`;
+      case "panel-open":
+        return "打开工具坞时";
+      case "tool-ok":
+        return `${name(t.toolId)} 成功后`;
+      case "tool-fail":
+        return `${name(t.toolId)} 失败后`;
+      case "domain-event":
+        return `事件 ${t.channel}`;
+      case "vault-file":
+        return `${t.target} 有变动`;
+      case "data-threshold":
+        return `${t.path} ${t.key} ${t.op} ${t.value}`;
+    }
+  }
+  function actionText(a) {
+    if (a.kind === "remind") return a.open ? "只提醒（通知可跳转）" : "只提醒";
+    return a.notify === "always" ? "运行并提醒" : a.notify === "fail" ? "运行（失败才提醒）" : "运行";
+  }
+  function newRuleId(now = Date.now()) {
+    return `r${now.toString(36)}${Math.floor(Math.random() * 1296).toString(36)}`;
+  }
+  function defaultAction() {
+    return { kind: "run", notify: "fail" };
+  }
+  function seedRuleFromSchedule(s, id) {
+    var _a;
+    if (!s) return null;
+    if (s.kind === "daily") {
+      const h = (_a = s.hour) != null ? _a : 12;
+      return { id, trigger: { kind: "daily", at: `${pad22(h)}:00` }, action: defaultAction() };
+    }
+    if (s.kind === "interval" && s.everyHours) {
+      return {
+        id,
+        trigger: { kind: "interval", everyMin: s.everyHours * 60 },
+        action: defaultAction()
+      };
+    }
+    return null;
+  }
+  function effectiveRules(rules, override, declared) {
+    var _a;
+    if (rules && rules.length) return rules.slice();
+    const seed = (_a = seedRuleFromSchedule(override, "seed")) != null ? _a : seedRuleFromSchedule(declared, "seed");
+    return seed ? [seed] : [];
+  }
+  function hasActiveRule(rules) {
+    return rules.some((r) => r.enabled !== false);
+  }
+  function str2(v) {
+    return typeof v === "string" ? v.trim() : void 0;
+  }
+  function intOf(v, min, max) {
+    if (typeof v !== "number" || !Number.isFinite(v)) return void 0;
+    const n = Math.floor(v);
+    if (n < min || n > max) return void 0;
+    return n;
+  }
+  function parseTrigger(raw) {
+    var _a, _b, _c, _d, _e, _f;
+    if (!raw || typeof raw !== "object" || Array.isArray(raw)) return null;
+    const r = raw;
+    switch (r.kind) {
+      case "daily": {
+        const at = str2(r.at);
+        if (!at || atSecondsOf(at) === void 0) return null;
+        return { kind: "daily", at: clockText(at) };
+      }
+      case "interval": {
+        const everyMin = intOf(r.everyMin, 1, 43200);
+        return everyMin === void 0 ? null : { kind: "interval", everyMin };
+      }
+      case "on-launch": {
+        const delayMin = intOf(r.delayMin, 0, 1440);
+        return delayMin === void 0 ? null : { kind: "on-launch", delayMin };
+      }
+      case "panel-open":
+        return { kind: "panel-open" };
+      case "tool-ok":
+        return { kind: "tool-ok", toolId: (_a = str2(r.toolId)) != null ? _a : "" };
+      case "tool-fail":
+        return { kind: "tool-fail", toolId: (_b = str2(r.toolId)) != null ? _b : "" };
+      case "domain-event":
+        return { kind: "domain-event", channel: (_c = str2(r.channel)) != null ? _c : "" };
+      case "vault-file":
+        return { kind: "vault-file", target: (_d = str2(r.target)) != null ? _d : "" };
+      case "data-threshold": {
+        const op = r.op;
+        if (op !== ">" && op !== "<" && op !== "=") return null;
+        const value = typeof r.value === "number" && Number.isFinite(r.value) ? r.value : 0;
+        return {
+          kind: "data-threshold",
+          path: (_e = str2(r.path)) != null ? _e : "",
+          key: (_f = str2(r.key)) != null ? _f : "",
+          op,
+          value
+        };
+      }
+      default:
+        return null;
+    }
+  }
+  function parseAction(raw) {
+    if (!raw || typeof raw !== "object" || Array.isArray(raw)) return null;
+    const r = raw;
+    if (r.kind === "remind") {
+      const open = str2(r.open);
+      return open ? { kind: "remind", open } : { kind: "remind" };
+    }
+    if (r.kind !== "run") return null;
+    const n = r.notify;
+    return { kind: "run", notify: n === "always" || n === "fail" || n === "never" ? n : "fail" };
+  }
+  function parseRule(raw) {
+    var _a;
+    if (!raw || typeof raw !== "object" || Array.isArray(raw)) return null;
+    const r = raw;
+    const id = str2(r.id);
+    if (!id) return null;
+    const trigger = parseTrigger(r.trigger);
+    if (!trigger) return null;
+    const out = { id, trigger, action: (_a = parseAction(r.action)) != null ? _a : defaultAction() };
+    const name = str2(r.name);
+    if (name) out.name = name;
+    if (typeof r.enabled === "boolean") out.enabled = r.enabled;
+    const jit = intOf(r.jitterMin, 0, 720);
+    if (jit !== void 0) out.jitterMin = jit;
+    return out;
+  }
+  function parseRules(raw) {
+    if (!Array.isArray(raw)) return [];
+    const out = [];
+    const seen = /* @__PURE__ */ new Set();
+    for (const item of raw) {
+      const parsed = parseRule(item);
+      if (!parsed || seen.has(parsed.id)) continue;
+      seen.add(parsed.id);
+      out.push(parsed);
+    }
+    return out;
+  }
+  function parseRuleState(raw) {
+    if (!raw || typeof raw !== "object" || Array.isArray(raw)) return void 0;
+    const out = {};
+    let any = false;
+    for (const [k, v] of Object.entries(raw)) {
+      if (!v || typeof v !== "object" || Array.isArray(v)) continue;
+      const at = str2(v.lastFiredAt);
+      if (!at) continue;
+      out[k] = { lastFiredAt: at };
+      any = true;
+    }
+    return any ? out : void 0;
+  }
+
   // src/dock/registry.ts
   var TOOL_ID_RE = /^[a-z0-9][a-z0-9-]*$/;
   var TOOL_ID_MAX_LEN = 64;
@@ -6328,6 +6775,10 @@ var BZW_dock = (() => {
     if (typeof r.trustedAt === "string" && r.trustedAt.trim()) out.trustedAt = r.trustedAt.trim();
     if (typeof r.trustedRun === "string" && r.trustedRun !== "") out.trustedRun = r.trustedRun;
     if (typeof r.autoRun === "boolean") out.autoRun = r.autoRun;
+    const rules = parseRules(r.rules);
+    if (rules.length) out.rules = rules;
+    const ruleState = parseRuleState(r.ruleState);
+    if (ruleState) out.ruleState = ruleState;
     const override = parseSchedule(r.scheduleOverride);
     if (override) {
       out.scheduleOverride = override;
@@ -6527,49 +6978,10 @@ var BZW_dock = (() => {
     if (!s) return "";
     return [s.kind, (_a = s.hour) != null ? _a : "", (_b = s.weekday) != null ? _b : "", (_c = s.everyHours) != null ? _c : ""].join("|");
   }
-  var EDITABLE_SCHEDULE_KINDS = ["daily", "weekly", "interval"];
-  function scheduleFromDraft(kind, p) {
-    switch (kind) {
-      case "inherit":
-        return void 0;
-      case "daily":
-        return { kind: "daily", hour: p.hour };
-      case "weekly":
-        return { kind: "weekly", weekday: p.weekday };
-      case "interval":
-        return { kind: "interval", everyHours: p.everyHours };
-      case "on-demand":
-        return { kind: "on-demand" };
-    }
-  }
   function isDueToRun(schedule, runs, now = Date.now()) {
     if (!schedule || schedule.kind === "on-demand" || schedule.kind === "unknown") return false;
     if (schedule.kind === "interval" && lastRun(runs) === void 0) return true;
     return judgeDue(schedule, runs, now).state === "due";
-  }
-  function skipReasonOf(i) {
-    if (!i.enabled) return "disabled";
-    if (!i.trusted) return "untrusted";
-    if (i.trustStale) return "trust-stale";
-    if (!i.hasRun) return "no-run";
-    if (!i.autoKind) return "not-auto";
-    if (!i.autoOn) return "auto-off";
-    if (!i.paramsReady) return "params";
-    if (i.paused) return "paused";
-    if (i.running) return "running";
-    if (i.cooldown) return "cooldown";
-    if (!i.due) return "not-due";
-    return null;
-  }
-  function decideDue(inputs) {
-    const ready = [];
-    const skipped = [];
-    for (const i of inputs) {
-      const r = skipReasonOf(i);
-      if (r) skipped.push({ input: i, reason: r });
-      else ready.push(i);
-    }
-    return { ready, skipped };
   }
   function missingRequiredParams(params, values) {
     const out = [];
@@ -6724,8 +7136,8 @@ var BZW_dock = (() => {
     switch (schedule.kind) {
       case "daily": {
         const hour = (_a = schedule.hour) != null ? _a : 0;
-        const todayAt = new Date(d.getFullYear(), d.getMonth(), d.getDate(), hour).getTime();
-        return todayAt > now ? todayAt : todayAt + DAY2;
+        const todayAt2 = new Date(d.getFullYear(), d.getMonth(), d.getDate(), hour).getTime();
+        return todayAt2 > now ? todayAt2 : todayAt2 + DAY2;
       }
       case "weekly": {
         if (schedule.weekday === void 0) return null;
@@ -6756,7 +7168,7 @@ var BZW_dock = (() => {
     if (!list.length) return null;
     return list.filter((r) => r.status === "ok").length / list.length;
   }
-  function durationText(run) {
+  function durationText2(run) {
     let ms = run.durationMs;
     if (ms === void 0) {
       const a = timeOf(run.startedAt);
@@ -6816,9 +7228,6 @@ var BZW_dock = (() => {
   function isEnabled(entry) {
     return entry.enabled !== false;
   }
-  function isAutoRun(entry) {
-    return entry.autoRun !== false;
-  }
   async function updateToolEntry(id, patch) {
     const entries = readToolEntries();
     const i = entries.findIndex((e) => e.id === id);
@@ -6830,6 +7239,14 @@ var BZW_dock = (() => {
     }
     entries[i] = next;
     await saveToolEntries(entries);
+  }
+  async function patchRuleFired(toolId, ruleId, at) {
+    var _a;
+    const entry = readToolEntries().find((e) => e.id === toolId);
+    if (!entry) return;
+    const state = { ...(_a = entry.ruleState) != null ? _a : {} };
+    state[ruleId] = { lastFiredAt: new Date(at).toISOString() };
+    await updateToolEntry(toolId, { ruleState: state });
   }
   function parseRunState(raw) {
     if (!raw || typeof raw !== "object" || Array.isArray(raw)) return {};
@@ -6913,6 +7330,15 @@ var BZW_dock = (() => {
     const states = readRunStates();
     return Promise.all(entries.map((entry) => loadToolView(app2, entry, states)));
   }
+  function firedAtMapOf(entry) {
+    var _a;
+    const out = {};
+    for (const [key, v] of Object.entries((_a = entry.ruleState) != null ? _a : {})) {
+      const t = (v == null ? void 0 : v.lastFiredAt) ? Date.parse(v.lastFiredAt) : NaN;
+      if (Number.isFinite(t)) out[key] = t;
+    }
+    return out;
+  }
   async function loadToolView(app2, entry, runStates = readRunStates()) {
     var _a, _b, _c, _d, _e;
     const decl = readDeclaration(entry.path);
@@ -6943,7 +7369,8 @@ var BZW_dock = (() => {
       schedule,
       scheduleOverridden,
       declChangedSinceOverride,
-      autoRun: isAutoRun(entry),
+      rules: effectiveRules(entry.rules, entry.scheduleOverride, declaredSchedule),
+      ruleFiredAt: firedAtMapOf(entry),
       nextDue: nextDueAt(schedule, runs),
       runState: runStates[entry.id],
       overLimit: runs.length > DOCK_RUNS_PER_TOOL_LIMIT,
@@ -7419,16 +7846,42 @@ var BZW_dock = (() => {
     return out;
   }
 
+  // src/core/domain-bus.ts
+  var channels = /* @__PURE__ */ new Map();
+  function onDomainEvent(channel, handler) {
+    let set = channels.get(channel);
+    if (!set) {
+      set = /* @__PURE__ */ new Set();
+      channels.set(channel, set);
+    }
+    set.add(handler);
+    let offed = false;
+    return () => {
+      if (offed) return;
+      offed = true;
+      const cur = channels.get(channel);
+      if (!cur) return;
+      cur.delete(handler);
+      if (cur.size === 0) channels.delete(channel);
+    };
+  }
+
   // src/dock/scheduler.ts
   var FAIL_COOLDOWN_MS = 15 * 6e4;
   var BREAKER_THRESHOLD = 3;
   var RUN_TIMEOUT_MS = 10 * 6e4;
+  var VAULT_CHANNELS = ["vault:md-created", "vault:md-modified", "vault:md-deleted"];
   var app = null;
   var isUnloaded = null;
+  var sessionStart = 0;
   var inFlight = /* @__PURE__ */ new Set();
   var cooldownUntil = /* @__PURE__ */ new Map();
   var chain = Promise.resolve();
   var warnedParams = /* @__PURE__ */ new Set();
+  var pendingEvents = [];
+  var subscriptions = /* @__PURE__ */ new Map();
+  var ticking = false;
+  var kickQueued = false;
   function globalAutoOn() {
     return readDockSwitch("autoRun");
   }
@@ -7436,82 +7889,143 @@ var BZW_dock = (() => {
     if (app === null) return;
     void tick();
   }
-  function inputOf(v, now) {
+  function notifyDockEvent(ev) {
+    if (app === null) return;
+    pendingEvents.push(ev);
+    if (ticking) {
+      kickQueued = true;
+      return;
+    }
+    kickDockScheduler();
+  }
+  function pathOfPayload(evt) {
+    var _a;
+    const e = evt;
+    if (!e) return "";
+    if (typeof e.path === "string") return e.path;
+    const p = (_a = e.file) == null ? void 0 : _a.path;
+    return typeof p === "string" ? p : "";
+  }
+  function fromBus(channel, evt) {
+    if (channel.startsWith("vault:")) return { kind: "vault-file", path: pathOfPayload(evt) };
+    return { kind: "domain-event", channel };
+  }
+  function syncSubscriptions(views2) {
+    const wanted = /* @__PURE__ */ new Set();
+    for (const v of views2) {
+      for (const r of v.rules) {
+        if (r.enabled === false) continue;
+        if (r.trigger.kind === "domain-event") wanted.add(r.trigger.channel);
+        else if (r.trigger.kind === "vault-file") for (const c of VAULT_CHANNELS) wanted.add(c);
+      }
+    }
+    for (const [ch, off] of [...subscriptions]) {
+      if (!wanted.has(ch)) {
+        off();
+        subscriptions.delete(ch);
+      }
+    }
+    for (const ch of wanted) {
+      if (subscriptions.has(ch)) continue;
+      subscriptions.set(
+        ch,
+        onDomainEvent(ch, (evt) => notifyDockEvent(fromBus(ch, evt)))
+      );
+    }
+  }
+  function runGate(v, now) {
     var _a, _b, _c;
-    return {
-      id: v.entry.id,
-      name: displayName(v),
-      enabled: isEnabled(v.entry),
-      trusted: isTrusted(v.entry),
-      trustStale: v.trustStale,
-      hasRun: v.run !== null,
-      autoKind: triggerOf(v.schedule) === "auto",
-      autoOn: v.autoRun,
-      due: v.dueToRun,
-      paramsReady: missingRequiredParams((_a = v.manifest) == null ? void 0 : _a.params, v.values).length === 0,
-      paused: !!((_b = v.runState) == null ? void 0 : _b.pausedAt),
-      cooldown: ((_c = cooldownUntil.get(v.entry.id)) != null ? _c : 0) > now,
-      // 「在跑」的唯一事实源是执行层的名册（live 表）：用户手动点的那次不进 inFlight，
-      // 只看自己的集合，会在手动跑到一半时把同一个工具再拉起一个进程
-      running: inFlight.has(v.entry.id) || liveRunOf(v.entry.id) !== void 0
-    };
+    if (!isEnabled(v.entry)) return "disabled";
+    if (!isTrusted(v.entry)) return "untrusted";
+    if (v.trustStale) return "trust-stale";
+    if (!v.run) return "no-run";
+    if ((_a = v.runState) == null ? void 0 : _a.pausedAt) return "paused";
+    if (inFlight.has(v.entry.id) || liveRunOf(v.entry.id) !== void 0) return "running";
+    if (((_b = cooldownUntil.get(v.entry.id)) != null ? _b : 0) > now) return "cooldown";
+    if (missingRequiredParams((_c = v.manifest) == null ? void 0 : _c.params, v.values).length > 0) return "params";
+    return null;
+  }
+  function remindGate(v) {
+    return isEnabled(v.entry) ? null : "disabled";
   }
   async function tick() {
     if (app === null || isUnloaded === null) return;
     if (isUnloaded()) return;
+    if (ticking) return;
+    ticking = true;
     try {
-      await loadDockStore();
-    } catch (e) {
-    }
-    if (!globalAutoOn()) return;
-    let views2;
-    try {
-      views2 = await loadToolViews(app);
-    } catch (e) {
-      return;
-    }
-    if (isUnloaded()) return;
-    const now = Date.now();
-    const { ready, skipped } = decideDue(views2.map((v) => inputOf(v, now)));
-    for (const s of skipped) {
-      if (s.reason === "params" && !warnedParams.has(s.input.id)) {
-        warnedParams.add(s.input.id);
-        notify(`${s.input.name} 没自动跑：必填参数还没填`, { type: "warning" });
-      }
-    }
-    if (!ready.length) return;
-    const batch = chain.then(() => runBatch(ready, views2));
-    chain = batch.catch(() => void 0);
-    await batch;
-  }
-  async function runBatch(ready, views2) {
-    let ok = 0;
-    let fail = 0;
-    for (const input of ready) {
-      if (isUnloaded == null ? void 0 : isUnloaded()) return;
-      const view2 = views2.find((v) => v.entry.id === input.id);
-      if (!view2) continue;
-      inFlight.add(input.id);
-      let result = "skip";
       try {
-        result = await runOne(view2);
+        await loadDockStore();
       } catch (e) {
-        result = "fail";
-      } finally {
-        inFlight.delete(input.id);
       }
-      if (result === "ok") ok += 1;
-      else if (result === "fail") fail += 1;
+      if (!globalAutoOn()) return;
+      let views2;
+      try {
+        views2 = await loadToolViews(app);
+      } catch (e) {
+        return;
+      }
+      if (isUnloaded()) return;
+      syncSubscriptions(views2);
+      const now = Date.now();
+      const events = pendingEvents;
+      pendingEvents = [];
+      for (const v of views2) {
+        if (!v.rules.length) continue;
+        for (const rule of v.rules) {
+          if (rule.enabled === false) continue;
+          const lastFiredAt = v.ruleFiredAt[rule.id];
+          const base = { now, lastFiredAt, sessionStart };
+          const hit = ruleDue(rule, base) || events.some((e) => ruleDue(rule, { ...base, event: e }));
+          if (!hit) continue;
+          const isRemind = rule.action.kind === "remind";
+          const gate = isRemind ? remindGate(v) : runGate(v, now);
+          if (gate === "params" && !warnedParams.has(v.entry.id)) {
+            warnedParams.add(v.entry.id);
+            notify(`${displayName(v)} 没自动跑：必填参数还没填`, { type: "warning" });
+          }
+          if (gate) continue;
+          await patchRuleFired(v.entry.id, rule.id, now);
+          if (isRemind) remindOf(v, rule);
+          else scheduleRun(v, rule);
+        }
+      }
+    } finally {
+      ticking = false;
+      if (kickQueued) {
+        kickQueued = false;
+        void tick();
+      }
     }
-    if (fail > 0) {
-      notify(`自动运行：${ok} 成 ${fail} 败`, { type: "warning" });
-    }
+  }
+  function remindOf(v, rule) {
+    var _a;
+    const why = ((_a = rule.name) == null ? void 0 : _a.trim()) ? rule.name.trim() : "规则";
+    notify(`${displayName(v)}：该手动跑一次了（${why}）`, {
+      type: "info",
+      action: { label: "查看", onClick: () => openDockTool(app, v.entry.id) }
+    });
+  }
+  function scheduleRun(v, rule) {
+    var _a;
+    const min = (_a = rule.jitterMin) != null ? _a : 0;
+    const delayMs = min > 0 ? Math.floor(Math.random() * min * 6e4) : 0;
+    const go = () => {
+      const batch = chain.then(() => runOne(v));
+      chain = batch.then(
+        () => void 0,
+        () => void 0
+      );
+    };
+    if (delayMs > 0) setTimeout(go, delayMs);
+    else go();
   }
   async function runOne(view2) {
     var _a, _b;
     const launch = view2.run;
     if (app === null || !launch) return "skip";
     const entry = view2.entry;
+    inFlight.add(entry.id);
     const handle = runTool(app, entry, launch, view2.manifest, view2.values, {}, { trigger: "auto" });
     let timedOut = false;
     const timer = setTimeout(() => {
@@ -7523,9 +8037,11 @@ var BZW_dock = (() => {
       outcome = await handle.done;
     } finally {
       clearTimeout(timer);
+      inFlight.delete(entry.id);
     }
     if (outcome.ok) {
       await recordRunSuccess(entry.id, outcome.finishedAt);
+      notifyDockEvent({ kind: "tool-ok", toolId: entry.id });
       return "ok";
     }
     if (outcome.stopped && !timedOut) return "skip";
@@ -7540,7 +8056,6 @@ var BZW_dock = (() => {
     cooldownUntil.set(entry.id, Date.now() + FAIL_COOLDOWN_MS);
     notify(`${displayName(view2)} 自动运行失败：${errorHint(timedOut ? "timeout" : outcome.kind)}`, {
       type: "error",
-      // 失败通知是死的，用户就得自己开面板找是哪个工具 —— 点了直达它的详情页
       action: { label: "查看", onClick: () => openDockTool(app, view2.entry.id) }
     });
     if (trip) {
@@ -7548,6 +8063,7 @@ var BZW_dock = (() => {
         type: "warning"
       });
     }
+    notifyDockEvent({ kind: "tool-fail", toolId: entry.id });
     return "fail";
   }
 
@@ -7566,11 +8082,6 @@ var BZW_dock = (() => {
   var VALUE_SAVE_DEBOUNCE_MS = 500;
   var dueNotified = /* @__PURE__ */ new Set();
   var autoDraft = /* @__PURE__ */ new Map();
-  var SCHEDULE_KIND_LABEL = {
-    daily: "每天",
-    weekly: "每周",
-    interval: "每隔若干小时"
-  };
   var OVERLAY_ID = "bz-dock-mask";
   var FRAME_ID = "bz-dock-panel";
   function el(tag, cls, text) {
@@ -7661,9 +8172,6 @@ var BZW_dock = (() => {
     if (v.trustStale) return "命令已变，待重新确认";
     return null;
   }
-  function runLabel(v) {
-    return triggerOfView(v) === "auto" ? "手动跑一次" : "运行";
-  }
   function openDock(app2) {
     var _a;
     hostApp = app2;
@@ -7678,6 +8186,7 @@ var BZW_dock = (() => {
     });
     render();
     void refresh();
+    notifyDockEvent({ kind: "panel-open" });
   }
   function closeDock() {
     overlay == null ? void 0 : overlay.classList.add("is-off");
@@ -7736,14 +8245,6 @@ var BZW_dock = (() => {
     document.body.appendChild(ov);
     overlay = ov;
   }
-  function headSubEl() {
-    var _a;
-    return (_a = overlay == null ? void 0 : overlay.querySelector("#bz-dock-headsub")) != null ? _a : null;
-  }
-  function headBtnsEl() {
-    var _a;
-    return (_a = overlay == null ? void 0 : overlay.querySelector("#bz-dock-headbtns")) != null ? _a : null;
-  }
   function kpiEl() {
     var _a;
     return (_a = overlay == null ? void 0 : overlay.querySelector("#bz-dock-kpi")) != null ? _a : null;
@@ -7797,8 +8298,7 @@ var BZW_dock = (() => {
     var _a, _b;
     if (!readDockSwitch("autoRun")) return false;
     if (!isEnabled(v.entry) || !isTrusted(v.entry) || v.trustStale) return false;
-    if (!v.run || !v.autoRun) return false;
-    if (triggerOfView(v) !== "auto") return false;
+    if (!v.run || !hasActiveRule(v.rules)) return false;
     if ((_a = v.runState) == null ? void 0 : _a.pausedAt) return false;
     return missingRequiredParams((_b = v.manifest) == null ? void 0 : _b.params, v.values).length === 0;
   }
@@ -7813,7 +8313,7 @@ var BZW_dock = (() => {
     const host = kpiEl();
     if (!host) return;
     host.innerHTML = "";
-    if (!views.length) {
+    if (!views.length || view.kind === "detail") {
       host.classList.add("is-off");
       return;
     }
@@ -7884,7 +8384,7 @@ var BZW_dock = (() => {
     if (!host) return;
     host.innerHTML = "";
     const runs = liveRunsAll();
-    if (!runs.length) {
+    if (!runs.length || view.kind === "detail") {
       host.classList.add("is-off");
       return;
     }
@@ -7922,11 +8422,38 @@ var BZW_dock = (() => {
     return row;
   }
   function renderHead() {
-    const sub = headSubEl();
-    const btns = headBtnsEl();
-    if (!sub || !btns) return;
+    var _a;
+    const headEl = (_a = overlay == null ? void 0 : overlay.querySelector(".bz-panel-head")) != null ? _a : null;
+    if (!headEl) return;
+    if (view.kind === "detail") {
+      const v = viewById(view.id);
+      if (v) {
+        renderToolHead(headEl, v);
+        return;
+      }
+    }
+    headEl.classList.remove("bz-dock-toolhead");
+    let sub = headEl.querySelector("#bz-dock-headsub");
+    let btns = headEl.querySelector("#bz-dock-headbtns");
+    if (!sub || !btns) {
+      headEl.innerHTML = "";
+      const brand = el("div", "bz-panel-brand");
+      brand.appendChild(uiIcon("square-terminal"));
+      sub = el("div", "bz-panel-head-sub");
+      sub.id = "bz-dock-headsub";
+      btns = el("div", "bz-panel-head-btns");
+      btns.id = "bz-dock-headbtns";
+      headEl.append(
+        brand,
+        el("div", "bz-panel-title", "工具坞"),
+        el("div", "bz-panel-head-pipe"),
+        sub,
+        el("div", "bz-panel-head-sp"),
+        btns
+      );
+    }
     const s = summarize(views);
-    sub.textContent = views.length ? `${s.total} 个工具 · 自动化 ${s.auto} · 手动 ${s.manual}${s.overdue ? ` · ${s.overdue} 个待关注` : ""}` : "还没有登记任何外部工具";
+    sub.textContent = views.length ? `${s.total} 个工具${s.overdue ? ` · ${s.overdue} 个待关注` : ""}` : "还没有登记任何外部工具";
     btns.innerHTML = "";
     btns.append(
       uiIconBtn({
@@ -7960,13 +8487,42 @@ var BZW_dock = (() => {
       })
     );
   }
+  function renderToolHead(host, v) {
+    host.innerHTML = "";
+    host.classList.add("bz-dock-toolhead");
+    const back = uiIconBtn({
+      icon: "chevron-left",
+      title: "返回列表",
+      className: "bz-dock-back",
+      onClick: () => {
+        view = { kind: "list" };
+        render();
+      }
+    });
+    const main = el("div", "bz-dock-covermain");
+    const ic = el("div", "bz-dock-coveric");
+    ic.appendChild(uiIcon(displayIcon(v), "bz-ic--lg"));
+    const txt = el("div", "bz-dock-covertxt");
+    const line = el("div", "bz-dock-coverline");
+    line.appendChild(el("div", "bz-dock-detail-name", displayName(v)));
+    const tags = el("div", "bz-dock-detail-tags");
+    if (isOverdue(v.due.state)) tags.appendChild(el("span", "bz-dock-tag bz-dock-tag--due", v.due.detail));
+    const trustTag = trustTagOf(v);
+    if (trustTag) tags.appendChild(el("span", "bz-dock-tag bz-dock-tag--warn", trustTag));
+    if (tags.children.length) line.appendChild(tags);
+    txt.appendChild(line);
+    const desc = displayDesc(v);
+    if (desc) txt.appendChild(el("div", "bz-dock-detail-desc", desc));
+    main.append(back, ic, txt);
+    host.appendChild(main);
+  }
   function renderBar() {
     const bar = barEl();
     if (!bar) return;
     bar.innerHTML = "";
     if (refreshing) bar.classList.add("is-loading");
     else bar.classList.remove("is-loading");
-    if (!searchOpen) {
+    if (!searchOpen || view.kind === "detail") {
       bar.classList.add("is-off");
       return;
     }
@@ -8040,22 +8596,9 @@ var BZW_dock = (() => {
       );
       return;
     }
-    const auto = list.filter((v) => triggerOfView(v) === "auto");
-    const manual = list.filter((v) => triggerOfView(v) === "manual");
-    if (auto.length) body.appendChild(section("自动化", "由 bz 按你配好的节奏自动跑（到点触发、漏跑补跑）", auto));
-    if (manual.length) body.appendChild(section("手动", "想起来才点一次", manual));
-  }
-  function section(title, hint, list) {
-    const sec = el("section", "bz-dock-sec");
-    const head = el("div", "bz-dock-sec-head");
-    head.appendChild(el("span", "bz-dock-sec-title", title));
-    head.appendChild(el("span", "bz-dock-sec-count", String(list.length)));
-    head.appendChild(el("span", "bz-dock-sec-hint", hint));
-    sec.appendChild(head);
     const grid = el("div", "bz-dock-grid");
     for (const v of list) grid.appendChild(makeCard(v));
-    sec.appendChild(grid);
-    return sec;
+    body.appendChild(grid);
   }
   function makeCard(v) {
     var _a;
@@ -8071,15 +8614,11 @@ var BZW_dock = (() => {
     const idbox = el("div", "bz-dock-card-idbox");
     const name = el("div", "bz-dock-card-name", displayName(v));
     const tags = el("div", "bz-dock-card-tags");
-    tags.appendChild(el("span", "bz-dock-tag", triggerOfView(v) === "auto" ? "自动化" : "手动"));
     if (isOverdue(v.due.state)) tags.appendChild(el("span", "bz-dock-tag bz-dock-tag--due", "今日未跑"));
     const trustTag = trustTagOf(v);
     if (trustTag) tags.appendChild(el("span", "bz-dock-tag bz-dock-tag--warn", trustTag));
     if (!v.manifest) tags.appendChild(el("span", "bz-dock-tag bz-dock-tag--muted", "声明读不到"));
     if (v.manifest && !v.run) tags.appendChild(el("span", "bz-dock-tag bz-dock-tag--muted", "只能看"));
-    if (triggerOfView(v) === "auto" && !v.autoRun) {
-      tags.appendChild(el("span", "bz-dock-tag bz-dock-tag--muted", "自动已关"));
-    }
     if ((_a = v.runState) == null ? void 0 : _a.pausedAt) tags.appendChild(el("span", "bz-dock-tag bz-dock-tag--warn", "自动已暂停"));
     idbox.append(name, tags);
     top.append(ic, idbox);
@@ -8137,7 +8676,7 @@ var BZW_dock = (() => {
       } else {
         foot.appendChild(
           uiBtn({
-            label: runLabel(v),
+            label: "运行",
             icon: "play",
             tone: "primary",
             size: "sm",
@@ -8149,25 +8688,6 @@ var BZW_dock = (() => {
     } else {
       foot.appendChild(el("span", "bz-dock-mobilehint", "移动端仅查看"));
     }
-    foot.appendChild(
-      uiBtn({
-        label: "详情",
-        icon: "chevron-right",
-        size: "sm",
-        className: "bz-dock-foot-detail",
-        onClick: () => {
-          view = { kind: "detail", id };
-          render();
-        }
-      })
-    );
-    const more = uiIconBtn({
-      icon: "more-horizontal",
-      title: "更多操作",
-      xs: true,
-      onClick: () => openCardActions(more, v)
-    });
-    foot.appendChild(more);
     card.appendChild(foot);
     attachItemActions(card, cardActions(v));
     card.addEventListener("click", (e) => {
@@ -8205,7 +8725,7 @@ var BZW_dock = (() => {
     if (canStart(v)) {
       acts.push({
         icon: "play",
-        label: runLabel(v),
+        label: "运行",
         onClick: () => void runFlow(v)
       });
     }
@@ -8226,243 +8746,396 @@ var BZW_dock = (() => {
     });
     return acts;
   }
-  function openCardActions(anchor, v) {
-    const actions = cardActions(v);
-    const head = el("div", "bz-dock-sheet-head");
-    const sub = el("div", "bz-dock-sheet-sub");
-    sub.textContent = v.declPath;
-    head.append(el("div", "bz-dock-sheet-name", displayName(v)), sub);
-    if (Platform.isMobile) {
-      openItemSheet(actions, { sheetHead: head });
-    } else {
-      const r = anchor.getBoundingClientRect();
-      openItemMenu(r.left, r.bottom + 4, actions);
-    }
-  }
-  function autoDraftOf(v) {
-    var _a, _b, _c;
-    const key = v.entry.id;
-    const existing = autoDraft.get(key);
-    if (existing) return existing;
-    const cur = v.schedule;
-    const k = cur == null ? void 0 : cur.kind;
-    const kind = k === "daily" || k === "weekly" || k === "interval" ? k : "daily";
-    const d = {
-      kind,
-      hour: (_a = cur == null ? void 0 : cur.hour) != null ? _a : 12,
-      weekday: (_b = cur == null ? void 0 : cur.weekday) != null ? _b : 1,
-      everyHours: (_c = cur == null ? void 0 : cur.everyHours) != null ? _c : 6
-    };
-    autoDraft.set(key, d);
-    return d;
-  }
-  async function saveAuto(v, d) {
-    const id = v.entry.id;
-    const next = scheduleFromDraft(d.kind, d);
-    const sameAsDeclared = next !== void 0 && scheduleSignature(next) === scheduleSignature(v.declaredSchedule);
-    if (!next || sameAsDeclared) {
-      await updateToolEntry(id, { scheduleOverride: void 0, overrideDeclSig: void 0 });
-    } else {
-      await updateToolEntry(id, {
-        scheduleOverride: next,
-        overrideDeclSig: scheduleSignature(v.declaredSchedule)
-      });
-    }
-    autoDraft.delete(id);
-    kickDockScheduler();
-    await refresh();
-  }
-  function autoRow(label, value) {
-    const row = el("div", "bz-dock-autorow");
-    row.appendChild(el("span", "bz-dock-autorow-label", label));
-    row.appendChild(el("span", "bz-dock-autorow-val", value));
-    return row;
-  }
   function clampInt(raw, lo, hi, fallback) {
     if (raw.trim() === "") return fallback;
     const n = Number(raw);
     if (!Number.isFinite(n)) return fallback;
     return Math.min(hi, Math.max(lo, Math.round(n)));
   }
+  function defaultTriggerOf(kind) {
+    switch (kind) {
+      case "daily":
+        return { kind: "daily", at: "12:00" };
+      case "interval":
+        return { kind: "interval", everyMin: 60 };
+      case "on-launch":
+        return { kind: "on-launch", delayMin: 5 };
+      case "panel-open":
+        return { kind: "panel-open" };
+      case "tool-ok":
+        return { kind: "tool-ok", toolId: "" };
+      case "tool-fail":
+        return { kind: "tool-fail", toolId: "" };
+      case "domain-event":
+        return { kind: "domain-event", channel: "" };
+      case "vault-file":
+        return { kind: "vault-file", target: "" };
+      case "data-threshold":
+        return { kind: "data-threshold", path: "", key: "", op: ">", value: 0 };
+    }
+  }
+  async function saveRules(v, next) {
+    await updateToolEntry(v.entry.id, { rules: next });
+    kickDockScheduler();
+    await refresh();
+  }
+  async function removeRule(v, ruleId) {
+    await saveRules(v, v.rules.filter((r) => r.id !== ruleId));
+  }
+  function openRuleEditor(v, rule) {
+    var _a;
+    const draft = rule ? { ...rule, trigger: { ...rule.trigger }, action: { ...rule.action } } : { id: newRuleId(), trigger: defaultTriggerOf("daily"), action: { kind: "run", notify: "fail" } };
+    const form = el("div", "bz-dock-ruleform");
+    const params = el("div", "bz-dock-ruleparams");
+    const err = el("div", "bz-dock-ruleformerr");
+    const preview = el("div", "bz-dock-rulepreview");
+    const syncPreview = () => {
+      const jit = draft.jitterMin ? ` · 抖 ${durationText(draft.jitterMin)}` : "";
+      preview.textContent = `${triggerText(draft.trigger)} → ${actionText(draft.action)}${jit}`;
+    };
+    const rebuild = () => {
+      params.replaceChildren(...triggerFields(draft, rebuild));
+      syncPreview();
+    };
+    const triggerPick = uiChoice({
+      options: TRIGGER_KINDS.map((k) => ({ value: k, label: TRIGGER_LABEL[k] })),
+      value: draft.trigger.kind,
+      label: "触发条件",
+      onChange: (kind) => {
+        draft.trigger = defaultTriggerOf(kind);
+        rebuild();
+      }
+    });
+    const actionPick = uiChoice({
+      options: [
+        { value: "run", label: "运行" },
+        { value: "run-notify", label: "运行并提醒" },
+        { value: "remind", label: "只提醒" }
+      ],
+      value: draft.action.kind === "remind" ? "remind" : draft.action.notify === "always" ? "run-notify" : "run",
+      label: "执行",
+      onChange: (val) => {
+        draft.action = val === "remind" ? { kind: "remind" } : { kind: "run", notify: val === "run-notify" ? "always" : "fail" };
+        syncPreview();
+      }
+    });
+    const jitter = uiInput({
+      type: "number",
+      value: String((_a = draft.jitterMin) != null ? _a : 0),
+      onInput: (val) => {
+        draft.jitterMin = clampInt(val, 0, 720, 0);
+        syncPreview();
+      }
+    });
+    jitter.min = "0";
+    form.appendChild(sectionOf("触发条件", [triggerPick.el, params]));
+    form.appendChild(sectionOf("执行", [actionPick.el]));
+    form.appendChild(
+      sectionOf("随机延迟（错峰用）", [
+        uiField({ label: "到点后再等", desc: "0 = 不抖", control: jitter }),
+        quickRow(
+          [
+            { label: "不抖", value: 0 },
+            { label: "2 分", value: 2 },
+            { label: "10 分", value: 10 },
+            { label: "30 分", value: 30 }
+          ],
+          (n) => {
+            draft.jitterMin = n;
+            jitter.value = String(n);
+            syncPreview();
+          }
+        )
+      ])
+    );
+    form.appendChild(preview);
+    form.appendChild(err);
+    rebuild();
+    const { popup, close } = uiModal({
+      head: true,
+      title: rule ? "编辑规则" : "新建规则",
+      content: form,
+      maxWidth: 480,
+      className: "bz-dock-rulemodal"
+    });
+    const problem = () => {
+      const t = draft.trigger;
+      if (t.kind === "tool-ok" || t.kind === "tool-fail") return t.toolId ? null : "还没选工具";
+      if (t.kind === "domain-event") return t.channel.trim() ? null : "还没填事件通道";
+      if (t.kind === "vault-file") return t.target.trim() ? null : "还没填目录";
+      if (t.kind === "data-threshold") return t.path.trim() && t.key.trim() ? null : "还没填文件与键";
+      return null;
+    };
+    const commit = () => {
+      const next = rule ? v.rules.map((r) => r.id === rule.id ? draft : r) : [...v.rules, draft];
+      close();
+      void saveRules(v, next);
+    };
+    const ok = uiBtn({
+      label: "保存",
+      tone: "primary",
+      size: "sm",
+      onClick: () => {
+        const p = problem();
+        if (p) {
+          err.textContent = p;
+          return;
+        }
+        err.textContent = "";
+        commit();
+      }
+    });
+    const foot = el("div", "bz-dock-ruleformfoot");
+    foot.appendChild(
+      uiBtn({
+        label: "取消",
+        size: "sm",
+        onClick: () => close()
+      })
+    );
+    foot.appendChild(el("div", "bz-dock-ruleformsp"));
+    if (rule) {
+      foot.appendChild(
+        uiBtn({
+          label: "删除",
+          size: "sm",
+          danger: true,
+          onClick: () => {
+            close();
+            void removeRule(v, rule.id);
+          }
+        })
+      );
+    }
+    foot.appendChild(ok);
+    form.appendChild(foot);
+    bindFormSubmit(popup, () => ok.click());
+  }
+  function sectionOf(title, children) {
+    const sec = el("div", "bz-dock-ruleformsec");
+    sec.appendChild(el("div", "bz-dock-ruleformlegend", title));
+    for (const c of children) sec.appendChild(c);
+    return sec;
+  }
+  function quickRow(items, onPick) {
+    const row = el("div", "bz-dock-rulequick");
+    for (const it of items) {
+      row.appendChild(uiBtn({ label: it.label, size: "sm", onClick: () => onPick(it.value) }));
+    }
+    return row;
+  }
+  function triggerFields(draft, rebuild) {
+    const t = draft.trigger;
+    switch (t.kind) {
+      case "daily": {
+        const inp = uiInput({
+          type: "time",
+          value: atSecondsOf(t.at) === void 0 ? "" : t.at,
+          onInput: (val) => {
+            draft.trigger = { kind: "daily", at: val || "12:00" };
+          }
+        });
+        return [
+          uiField({ label: "时刻", control: inp }),
+          quickRow(
+            [
+              { label: "08:00", value: 8 * 60 },
+              { label: "12:00", value: 12 * 60 },
+              { label: "20:00", value: 20 * 60 }
+            ],
+            (mins) => {
+              const at = `${String(Math.floor(mins / 60)).padStart(2, "0")}:${String(mins % 60).padStart(2, "0")}`;
+              draft.trigger = { kind: "daily", at };
+              rebuild();
+            }
+          )
+        ];
+      }
+      case "interval": {
+        const inp = uiInput({
+          type: "number",
+          value: String(t.everyMin),
+          onInput: (val) => {
+            draft.trigger = { kind: "interval", everyMin: clampInt(val, 1, 43200, 60) };
+          }
+        });
+        inp.min = "1";
+        return [
+          uiField({ label: "每隔（分钟）", control: inp }),
+          quickRow(
+            [
+              { label: "30 分", value: 30 },
+              { label: "1 小时", value: 60 },
+              { label: "6 小时", value: 360 },
+              { label: "1 天", value: 1440 }
+            ],
+            (n) => {
+              draft.trigger = { kind: "interval", everyMin: n };
+              rebuild();
+            }
+          )
+        ];
+      }
+      case "on-launch": {
+        const inp = uiInput({
+          type: "number",
+          value: String(t.delayMin),
+          onInput: (val) => {
+            draft.trigger = { kind: "on-launch", delayMin: clampInt(val, 0, 1440, 5) };
+          }
+        });
+        inp.min = "0";
+        return [
+          uiField({ label: "启动后等（分钟）", control: inp }),
+          quickRow(
+            [
+              { label: "立刻", value: 0 },
+              { label: "1 分", value: 1 },
+              { label: "5 分", value: 5 },
+              { label: "30 分", value: 30 }
+            ],
+            (n) => {
+              draft.trigger = { kind: "on-launch", delayMin: n };
+              rebuild();
+            }
+          )
+        ];
+      }
+      case "panel-open":
+        return [el("div", "bz-dock-ruleformhint", "打开工具坞面板时触发，没有要填的")];
+      case "tool-ok":
+      case "tool-fail": {
+        const sel = uiSelect({
+          options: [{ value: "", label: "选一个工具" }, ...toolOptions()],
+          value: t.toolId,
+          onChange: (val) => {
+            draft.trigger = { kind: t.kind, toolId: val };
+          }
+        });
+        return [uiField({ label: t.kind === "tool-ok" ? "哪个工具成功后" : "哪个工具失败后", control: sel.el })];
+      }
+      case "domain-event": {
+        const inp = uiInput({
+          type: "text",
+          value: t.channel,
+          placeholder: "域名:事件",
+          onInput: (val) => {
+            draft.trigger = { kind: "domain-event", channel: val };
+          }
+        });
+        return [uiField({ label: "事件通道", desc: "如 people:changed", control: inp })];
+      }
+      case "vault-file": {
+        const inp = uiInput({
+          type: "text",
+          value: t.target,
+          placeholder: "vault 里的目录",
+          onInput: (val) => {
+            draft.trigger = { kind: "vault-file", target: val };
+          }
+        });
+        return [uiField({ label: "哪个目录有变动", control: inp })];
+      }
+      case "data-threshold": {
+        const path = uiInput({
+          type: "text",
+          value: t.path,
+          placeholder: "数据文件",
+          onInput: (val) => {
+            draft.trigger = { ...t, path: val };
+          }
+        });
+        const key = uiInput({
+          type: "text",
+          value: t.key,
+          placeholder: "键",
+          onInput: (val) => {
+            draft.trigger = { ...t, key: val };
+          }
+        });
+        const op = uiSelect({
+          options: [
+            { value: ">", label: "大于" },
+            { value: "<", label: "小于" },
+            { value: "=", label: "等于" }
+          ],
+          value: t.op,
+          onChange: (val) => {
+            draft.trigger = { ...t, op: val };
+          }
+        });
+        const num2 = uiInput({
+          type: "number",
+          value: String(t.value),
+          onInput: (val) => {
+            draft.trigger = { ...t, value: Number(val) || 0 };
+          }
+        });
+        const grid = el("div", "bz-dock-rulegrid");
+        grid.append(uiField({ label: "文件", control: path }), uiField({ label: "键", control: key }));
+        grid.append(uiField({ label: "比较", control: op.el }), uiField({ label: "阈值", control: num2 }));
+        return [grid];
+      }
+    }
+  }
+  function ruleRow(v, rule) {
+    const row = el("div", "bz-dock-rule");
+    row.tabIndex = 0;
+    row.setAttribute("role", "button");
+    const main = el("div", "bz-dock-rulemain");
+    main.appendChild(el("div", "bz-dock-ruleline", triggerText(rule.trigger)));
+    main.appendChild(el("div", "bz-dock-rulemeta", actionText(rule.action) + (rule.jitterMin ? ` · 抖 ${durationText(rule.jitterMin)}` : "")));
+    row.append(main, el("span", "bz-dock-rulearrow", "›"));
+    const open = () => openRuleEditor(v, rule);
+    row.addEventListener("click", open);
+    row.addEventListener("keydown", (e) => {
+      if (e.key !== "Enter" && e.key !== " ") return;
+      e.preventDefault();
+      open();
+    });
+    return row;
+  }
+  function toolOptions() {
+    return readToolEntries().map((e) => ({ value: e.id, label: e.id }));
+  }
   function autoSection(v) {
-    var _a, _b, _c;
+    var _a;
     const sec = el("section", "bz-dock-pane bz-dock-autopane");
     const head = el("div", "bz-dock-pane-head");
     head.appendChild(el("h3", "bz-dock-pane-title", "自动运行"));
     sec.appendChild(head);
-    const id = v.entry.id;
-    sec.appendChild(
-      uiField({
-        label: "自动运行",
-        desc: "由 bz 按下面的节奏自动触发；关掉就只在面板里手动点。脚本里那份是默认值，不是定死的",
-        control: uiSwitch({
-          checked: v.autoRun,
-          onChange: (on) => {
-            void (async () => {
-              await updateToolEntry(id, { autoRun: on });
-              autoDraft.delete(id);
-              kickDockScheduler();
-              await refresh();
-            })();
-          }
-        }).el
-      })
-    );
-    const facts = el("div", "bz-dock-autorows");
-    facts.appendChild(autoRow("脚本默认", scheduleTextOf(v.declaredSchedule)));
-    facts.appendChild(autoRow("当前生效", scheduleTextOf(v.schedule) + (v.scheduleOverridden ? "（你改的）" : "")));
-    facts.appendChild(
-      autoRow("下次预计", v.nextDue === null ? "算不出（没有节奏，或缺运行基线）" : dueTimeText(v.nextDue))
-    );
     if ((_a = v.runState) == null ? void 0 : _a.pausedAt) {
       const last = lastRun(v.runs);
       const hint = (last == null ? void 0 : last.error) ? errorHint(last.error.kind) : null;
-      facts.appendChild(
-        el(
-          "div",
-          "bz-dock-autonote bz-dock-autonote--warn",
-          `连续失败 ${(_b = v.runState.consecutiveFailures) != null ? _b : 0} 次，自动运行已暂停${hint ? ` —— 上次：${hint}` : ""}`
-        )
-      );
-    }
-    if (v.declChangedSinceOverride) {
-      facts.appendChild(el("div", "bz-dock-autonote", "脚本改过默认节奏了 —— 看一眼要不要跟着调"));
-    }
-    if (!v.autoRun) {
-      facts.appendChild(
-        el(
-          "div",
-          "bz-dock-autonote",
-          "自动运行已关 —— 下面排的节奏不会生效，要它自己跑起来得先打开上面的开关"
-        )
-      );
-    }
-    sec.appendChild(facts);
-    const d = autoDraftOf(v);
-    const editor = el("div", "bz-dock-autoeditor");
-    editor.appendChild(
-      uiField({
-        label: "节奏",
-        control: uiSelect({
-          // 选项来自 schedule.ts 的 EDITABLE_SCHEDULE_KINDS（唯一来源，不带「只手动」）
-          options: EDITABLE_SCHEDULE_KINDS.map((k) => ({ value: k, label: SCHEDULE_KIND_LABEL[k] })),
-          value: d.kind === "inherit" ? "daily" : d.kind,
-          onChange: (val) => {
-            d.kind = val;
-            render();
-          }
-        }).el
-      })
-    );
-    if (d.kind === "daily") {
-      const inp = uiInput({
-        type: "number",
-        value: String(d.hour),
-        onInput: (val) => {
-          d.hour = clampInt(val, 0, 23, 12);
-        }
-      });
-      inp.min = "0";
-      inp.max = "23";
-      editor.appendChild(uiField({ label: "当天几点前跑完", desc: "本地时间，0–23", control: inp }));
-    } else if (d.kind === "weekly") {
-      editor.appendChild(
-        uiField({
-          label: "每周哪天",
-          control: uiSelect({
-            options: ["周日", "周一", "周二", "周三", "周四", "周五", "周六"].map((l, i) => ({
-              value: String(i),
-              label: l
-            })),
-            value: String(d.weekday),
-            onChange: (val) => {
-              d.weekday = clampInt(val, 0, 6, 1);
-            }
-          }).el
-        })
-      );
-    } else if (d.kind === "interval") {
-      const inp = uiInput({
-        type: "number",
-        value: String(d.everyHours),
-        onInput: (val) => {
-          d.everyHours = clampInt(val, 1, 168, 6);
-        }
-      });
-      inp.min = "1";
-      inp.max = "168";
-      editor.appendChild(uiField({ label: "每隔几小时", desc: "1–168", control: inp }));
-    }
-    const btns = el("div", "bz-dock-runbtns");
-    btns.appendChild(uiBtn({ label: "保存节奏", size: "sm", tone: "primary", onClick: () => void saveAuto(v, d) }));
-    if (v.scheduleOverridden) {
-      btns.appendChild(
+      const bar = el("div", "bz-dock-runbtns");
+      bar.appendChild(
         uiBtn({
-          label: "恢复脚本默认",
-          size: "sm",
-          onClick: () => {
-            autoDraft.delete(id);
-            void saveAuto(v, { ...d, kind: "inherit" });
-          }
-        })
-      );
-    }
-    if ((_c = v.runState) == null ? void 0 : _c.pausedAt) {
-      btns.appendChild(
-        uiBtn({
-          label: "恢复并立即重试",
+          label: hint ? `恢复并重试（上次：${hint}）` : "恢复并重试",
           size: "sm",
           tone: "primary",
           onClick: () => void resumeAndRetry(v)
         })
       );
+      sec.appendChild(bar);
     }
-    editor.appendChild(btns);
-    sec.appendChild(editor);
+    const list = el("div", "bz-dock-rulelist");
+    if (v.rules.length) for (const rule of v.rules) list.appendChild(ruleRow(v, rule));
+    else list.appendChild(el("div", "bz-dock-ruleempty", "没有规则 —— 加一条就有了"));
+    sec.appendChild(list);
+    sec.appendChild(
+      uiBtn({ label: "添加规则", size: "sm", onClick: () => openRuleEditor(v, null) })
+    );
     return sec;
   }
   function renderDetail(body, v) {
     var _a, _b, _c;
     const wrap = el("div", "bz-dock-detail");
-    const head = el("div", "bz-dock-detail-head");
-    head.appendChild(uiIconBtn({ icon: "chevron-left", title: "返回列表", onClick: () => {
-      view = { kind: "list" };
-      render();
-    } }));
-    const ic = el("span", "bz-dock-detail-ic");
-    ic.appendChild(uiIcon(displayIcon(v), "bz-ic--lg"));
-    const idbox = el("div", "bz-dock-detail-idbox");
-    idbox.appendChild(el("div", "bz-dock-detail-name", displayName(v)));
-    const tags = el("div", "bz-dock-detail-tags");
-    tags.appendChild(el("span", "bz-dock-tag", triggerOfView(v) === "auto" ? "自动化" : "手动"));
-    if (isOverdue(v.due.state)) tags.appendChild(el("span", "bz-dock-tag bz-dock-tag--due", v.due.detail));
-    const trustTag = trustTagOf(v);
-    if (trustTag) tags.appendChild(el("span", "bz-dock-tag bz-dock-tag--warn", trustTag));
-    idbox.appendChild(tags);
-    head.append(ic, idbox);
-    const sp = el("div", "bz-dock-detail-sp");
-    head.appendChild(sp);
-    if (canStart(v)) {
-      const live3 = liveRunOf(v.entry.id);
-      head.appendChild(
-        live3 ? uiBtn({ label: "停止", icon: "square", tone: "danger", onClick: () => stopRun(v.entry.id) }) : uiBtn({
-          label: runLabel(v),
-          icon: "play",
-          tone: "primary",
-          onClick: () => void runFlow(v)
-        })
-      );
-    }
-    head.appendChild(uiIconBtn({ icon: "refresh-cw", title: "重新读取记录", onClick: () => void refresh() }));
-    head.appendChild(uiIconBtn({ icon: "more-horizontal", title: "更多操作", onClick: () => openCardActions(head, v) }));
-    wrap.appendChild(head);
-    const desc = displayDesc(v);
-    if (desc) wrap.appendChild(el("div", "bz-dock-detail-desc", desc));
     if (v.declError) {
       const box = el("div", "bz-dock-meta-warn");
       box.textContent = v.declError;
       wrap.appendChild(box);
     }
+    wrap.appendChild(toolStats(v));
     const meta = el("div", "bz-dock-meta");
     const who = [(_a = v.manifest) == null ? void 0 : _a.author, (_b = v.manifest) == null ? void 0 : _b.toolVersion].filter(Boolean).join(" · ");
     if (who) meta.appendChild(metaRow("作者", who));
@@ -8495,8 +9168,6 @@ var BZW_dock = (() => {
       metaRow("参数值文件", v.valuesPath, true, () => void copyText(v.valuesPath, "参数值文件路径"))
     );
     meta.appendChild(metaRow("运行记录", v.runsPath, true, () => void copyText(v.runsPath, "运行记录路径")));
-    const rate = successRate(v.runs);
-    meta.appendChild(metaRow("成功率", rate === null ? "暂无记录" : `${Math.round(rate * 100)}%（共 ${v.runs.length} 条）`));
     if (v.overLimit) {
       meta.appendChild(el("div", "bz-dock-meta-warn", "记录条数已超约定上限 —— 裁剪是工具自己的活，去检查它的 GC"));
     }
@@ -8510,6 +9181,65 @@ var BZW_dock = (() => {
     cols.appendChild(histPane(v));
     wrap.appendChild(cols);
     body.appendChild(wrap);
+  }
+  function toolStats(v) {
+    const host = el("div", "bz-dock-kpi bz-dock-toolstats");
+    const tile = (num2, unit, label, sub, tone) => {
+      const t = el("div", tone ? `bz-dock-kpi-tile is-${tone}` : "bz-dock-kpi-tile");
+      const v2 = el("div", "bz-dock-kpi-v", num2);
+      if (unit) v2.appendChild(el("small", void 0, unit));
+      t.appendChild(v2);
+      t.appendChild(el("div", "bz-dock-kpi-l", label));
+      t.appendChild(el("div", "bz-dock-kpi-d", sub));
+      return t;
+    };
+    const rate = successRate(v.runs);
+    host.appendChild(
+      tile(
+        rate === null ? "—" : String(Math.round(rate * 100)),
+        rate === null ? "" : "%",
+        "成功率",
+        rate === null ? "还没有运行记录" : `共 ${v.runs.length} 条记录`,
+        rate !== null && rate < 1 ? "warn" : void 0
+      )
+    );
+    const last = lastOf(v);
+    host.appendChild(
+      tile(
+        last ? relTime(last.startedAt.replace("T", " ")) : "—",
+        "",
+        "最近一次",
+        last ? statusText(last.status) + (last.message ? ` · ${last.message}` : "") : "这个脚本还没跑过",
+        (last == null ? void 0 : last.status) === "failed" ? "bad" : void 0
+      )
+    );
+    const next = nextDueOfView(v);
+    if (next) {
+      const left = untilText(next.at - Date.now());
+      host.appendChild(tile(left.num, left.unit, "下次预计", next.sub, next.at < Date.now() ? "warn" : void 0));
+    } else {
+      host.appendChild(tile("—", "", "下次预计", "没有基于时间的规则（事件触发不算钟点）"));
+    }
+    return host;
+  }
+  function nextDueOfView(v) {
+    const now = Date.now();
+    let best = null;
+    for (const r of v.rules) {
+      if (r.enabled === false) continue;
+      const last = v.ruleFiredAt[r.id];
+      let at;
+      if (r.trigger.kind === "daily") {
+        const t = todayAt(r.trigger, now);
+        if (t === void 0) continue;
+        at = now < t && (last != null ? last : 0) < t ? t : t + 864e5;
+      } else if (r.trigger.kind === "interval" && r.trigger.everyMin > 0) {
+        at = (last != null ? last : now) + r.trigger.everyMin * 6e4;
+      }
+      if (at === void 0) continue;
+      if (!best || at < best.at) best = { at, sub: triggerText(r.trigger) };
+    }
+    return best;
   }
   function metaRow(label, value, mono = false, onCopy) {
     const row = el("div", "bz-dock-meta-row");
@@ -8559,7 +9289,7 @@ var BZW_dock = (() => {
       const live3 = liveRunOf(v.entry.id);
       btns.appendChild(
         live3 ? uiBtn({ label: "停止", icon: "square", tone: "danger", onClick: () => stopRun(v.entry.id) }) : uiBtn({
-          label: runLabel(v),
+          label: "运行",
           icon: "play",
           tone: "primary",
           disabled: !canStart(v),
@@ -8825,7 +9555,7 @@ var BZW_dock = (() => {
     head.appendChild(el("span", dotClass(r.status)));
     head.appendChild(el("span", "bz-dock-histtime", relTime(r.startedAt.replace("T", " "))));
     head.appendChild(el("span", "bz-dock-histstatus", statusText(r.status)));
-    const dur = durationText(r);
+    const dur = durationText2(r);
     if (dur) head.appendChild(el("span", "bz-dock-histdur", dur));
     head.appendChild(el("span", "bz-dock-histtrig", r.trigger === "auto" ? "自动" : "手动"));
     row.appendChild(head);
@@ -8986,14 +9716,6 @@ var BZW_dock = (() => {
   function scheduleText(m) {
     return scheduleTextOf(m.schedule);
   }
-  function dueTimeText(ms) {
-    const d = new Date(ms);
-    const p = (n) => String(n).padStart(2, "0");
-    const now = /* @__PURE__ */ new Date();
-    const sameDay = d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth() && d.getDate() === now.getDate();
-    const hm = `${p(d.getHours())}:${p(d.getMinutes())}`;
-    return sameDay ? `今天 ${hm}` : `${d.getMonth() + 1}-${p(d.getDate())} ${hm}`;
-  }
   function runTextOf(run) {
     if (!run) return "没写怎么跑（既无 run 段，目录里也没有 main.mjs）";
     return [run.cmd, ...run.args].join(" ");
@@ -9058,7 +9780,6 @@ var BZW_dock = (() => {
     const next = { id: (_b = entry == null ? void 0 : entry.id) != null ? _b : manifest.id, path: declPath };
     if (entry) {
       if (entry.enabled !== void 0) next.enabled = entry.enabled;
-      if (entry.autoRun !== void 0) next.autoRun = entry.autoRun;
       if (entry.scheduleOverride !== void 0) next.scheduleOverride = entry.scheduleOverride;
       if (entry.overrideDeclSig !== void 0) next.overrideDeclSig = entry.overrideDeclSig;
       const sig = run ? runSignature(run) : void 0;
@@ -9183,7 +9904,7 @@ var BZW_dock = (() => {
       toolVersion: "1.0.2",
       icon: "calendar-check",
       produces: ["info", "result"],
-      schedule: { kind: "daily", hour: 9, note: "09:00 起随机 0~2 小时" },
+      schedule: { kind: "daily", hour: 9, note: "09:00 起随机 0~2 分钟" },
       runtime: { estimatedSec: 25 },
       run: { cmd: `${TOOLS_DIR}/iamtxt-signin/run.cmd` },
       params: [{ key: "cookie", label: "Cookie", type: "secret", help: "登录后在浏览器里复制整串 Cookie" }]
@@ -9313,10 +10034,37 @@ var BZW_dock = (() => {
     // 一条都没有：记录文件的「空账本」（工具写过、但还没跑过）
     "local-report": []
   };
+  function seedRulesOf(id) {
+    if (id === "iamtxt-signin") {
+      return {
+        rules: [
+          {
+            id: "r1",
+            trigger: { kind: "daily", at: "09:00" },
+            action: { kind: "run", notify: "fail" },
+            jitterMin: 2
+          },
+          { id: "r2", trigger: { kind: "on-launch", delayMin: 1 }, action: { kind: "remind" } }
+        ]
+      };
+    }
+    if (id === "rss-fetch") {
+      return {
+        rules: [
+          {
+            id: "r1",
+            trigger: { kind: "interval", everyMin: 360 },
+            action: { kind: "run", notify: "fail" }
+          }
+        ]
+      };
+    }
+    return {};
+  }
   function seedEntries() {
     const list = [];
     for (const [id, decl] of Object.entries(DECLARATIONS)) {
-      list.push({ id, path: declPathOf(id) });
+      list.push({ id, path: declPathOf(id), ...seedRulesOf(id) });
     }
     list.push({ id: "local-report", path: declPathOf("local-report") });
     return list;

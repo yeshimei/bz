@@ -37,6 +37,7 @@ import { resolveRun, runsPathFor, settingsPathFor, type DockFs } from '../../src
 import { dockStorePath } from '../../src/dock/store';
 import { runSignature, type DockToolEntry } from '../../src/dock/registry';
 import { triggerOf } from '../../src/dock/schedule';
+import type { DockRule } from '../../src/dock/rules';
 import type { DockSchedule } from '../../src/dock/schema';
 
 /** 壳内的「工具目录」——真机上是用户自己的脚本目录，这里只是几个好看点的假路径 */
@@ -143,7 +144,7 @@ const DECLARATIONS: Record<string, Record<string, unknown>> = {
     toolVersion: '1.0.2',
     icon: 'calendar-check',
     produces: ['info', 'result'],
-    schedule: { kind: 'daily', hour: 9, note: '09:00 起随机 0~2 小时' },
+    schedule: { kind: 'daily', hour: 9, note: '09:00 起随机 0~2 分钟' },
     runtime: { estimatedSec: 25 },
     run: { cmd: `${TOOLS_DIR}/iamtxt-signin/run.cmd` },
     params: [{ key: 'cookie', label: 'Cookie', type: 'secret', help: '登录后在浏览器里复制整串 Cookie' }],
@@ -287,10 +288,39 @@ const RUNS: Record<string, SeedRun[]> = {
  * 信任字段（trustedAt/trustedRun）自 ADR-0239 起不进 dock.json（读侧见字段即剥），
  * 种子里就别带 —— 带了也会被实现侧剥掉，壳里全渲染成「未信任」。
  */
+/** 壳里预置的规则表（演「触发条件 → 执行」两段：含只提醒与随机延迟） */
+function seedRulesOf(id: string): { rules?: DockRule[] } {
+  if (id === 'iamtxt-signin') {
+    return {
+      rules: [
+        {
+          id: 'r1',
+          trigger: { kind: 'daily', at: '09:00' },
+          action: { kind: 'run', notify: 'fail' },
+          jitterMin: 2,
+        },
+        { id: 'r2', trigger: { kind: 'on-launch', delayMin: 1 }, action: { kind: 'remind' } },
+      ],
+    };
+  }
+  if (id === 'rss-fetch') {
+    return {
+      rules: [
+        {
+          id: 'r1',
+          trigger: { kind: 'interval', everyMin: 360 },
+          action: { kind: 'run', notify: 'fail' },
+        },
+      ],
+    };
+  }
+  return {};
+}
+
 function seedEntries(): DockToolEntry[] {
   const list: DockToolEntry[] = [];
   for (const [id, decl] of Object.entries(DECLARATIONS)) {
-    list.push({ id, path: declPathOf(id) });
+    list.push({ id, path: declPathOf(id), ...seedRulesOf(id) });
   }
   // 声明文件故意缺失的那个：登记在册，但读不到声明
   list.push({ id: 'local-report', path: declPathOf('local-report') });
