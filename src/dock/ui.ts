@@ -62,6 +62,7 @@ import { judgeDirectRun, missingParamsMessage } from './command';
 import {
   errorHint,
   initialValuesOf,
+  lastRawTailOf,
   liveRunOf,
   liveRunsAll,
   notifyRunOutcome,
@@ -102,6 +103,12 @@ let view: { kind: 'list' } | { kind: 'detail'; id: string } = { kind: 'list' };
 let query = '';
 /** 搜索行是否展开 */
 let searchOpen = false;
+/**
+ * KPI 格点出来的过滤口径（增强 #15）：点哪格看哪类，再点一次回全部。
+ * 只是列表的**视图**开关 —— KPI 数字本身的口径在 `overviewOf`，这里不另算一套。
+ */
+type KpiFilter = 'all' | 'alarms';
+let kpiFilter: KpiFilter = 'all';
 /** 正在刷新（读声明 + 读运行记录） */
 let refreshing = false;
 /** 打开面板时读出来的视图（渲染输入） */
@@ -162,6 +169,34 @@ function todayKey(): string {
   const d = new Date();
   const p = (n: number) => String(n).padStart(2, '0');
   return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
+}
+
+/**
+ * 打开 / 定位产物（增强 #16）：vault 里真有这个相对路径 → 用 Obsidian 打开；
+ * 其余（绝对路径、vault 找不到的）→ 系统文件管理器定位。移动端没有 shell → 降级复制路径。
+ */
+function openArtifact(p: string): void {
+  const w = window as unknown as {
+    require?: (id: string) => { shell?: { showItemInFolder(p: string): void } };
+  };
+  const shell = w.require?.('electron')?.shell;
+  if (!shell) {
+    void copyText(p, '产物路径');
+    return;
+  }
+  const norm = p.replace(/\\/g, '/');
+  const isAbsolute = /^[a-zA-Z]:\//.test(norm) || norm.startsWith('//') || norm.startsWith('/');
+  if (!isAbsolute && hostApp) {
+    const file = hostApp.vault.getAbstractFileByPath(norm);
+    if (file) {
+      void hostApp.workspace.openLinkText(norm, '', true);
+      return;
+    }
+  }
+  const base = hostApp
+    ? (hostApp.vault as unknown as { adapter?: { getBasePath?: () => string } }).adapter?.getBasePath?.()
+    : undefined;
+  shell.showItemInFolder(isAbsolute || !base ? p : `${base}/${norm}`);
 }
 
 async function copyText(text: string, what: string): Promise<void> {
@@ -266,6 +301,15 @@ export function openDock(app: App): void {
 
 export function closeDock(): void {
   overlay?.classList.add('is-off');
+}
+
+/**
+ * 通知 / 命令的「直达」入口：开面板并定位到该工具详情（面板已开着就只切换定位）。
+ * 失败通知这类场景，用户要的不是「面板」而是「那个工具」。
+ */
+export function openDockTool(app: App, id: string): void {
+  view = { kind: 'detail', id };
+  openDock(app);
 }
 
 export function unloadDock(): void {
@@ -398,7 +442,7 @@ function runDueNotifications(): void {
     notify(`${displayName(v)} 今天该跑没跑：${v.due.detail}`, {
       type: 'warning',
       dedupeKey: `dock-due-${key}`,
-      action: { label: '查看', onClick: () => openDock(hostApp as App) },
+      action: { label: '查看', onClick: () => openDockTool(hostApp as App, v.entry.id) },
     });
   }
 }
@@ -448,6 +492,7 @@ function renderKpi(): void {
     label: string,
     sub: string,
     tone?: 'warn' | 'bad' | 'up',
+    key?: KpiFilter,
   ): HTMLElement => {
     const t = el('div', tone ? `bz-dock-kpi-tile is-${tone}` : 'bz-dock-kpi-tile');
     const v = el('div', 'bz-dock-kpi-v', num);
@@ -455,6 +500,17 @@ function renderKpi(): void {
     t.appendChild(v);
     t.appendChild(el('div', 'bz-dock-kpi-l', label));
     t.appendChild(el('div', tone === 'up' ? 'bz-dock-kpi-d is-up' : 'bz-dock-kpi-d', sub));
+    // 带口径的格可以点（增强 #15）：点下去列表只看那一类，再点一次回全部。
+    // 过滤本身在 filtered() 里做，KPI 数字仍从 overviewOf 来 —— 两处不各算一套。
+    if (key) {
+      t.classList.add('is-click');
+      if (kpiFilter === key) t.classList.add('is-selected');
+      t.addEventListener('click', () => {
+        kpiFilter = kpiFilter === key ? 'all' : key;
+        renderKpi();
+        renderBody();
+      });
+    }
     return t;
   };
 
@@ -485,6 +541,7 @@ function renderKpi(): void {
       '待处理异常',
       o.alarmHint ? `${o.alarmHint.name} · ${o.alarmHint.reason}` : '没有要管的事',
       o.alarms ? 'bad' : undefined,
+      'alarms',
     ),
   );
 
@@ -644,15 +701,26 @@ function renderBar(): void {
  * 顶上四格 KPI 已经回答了「有几个要管」，再摆一排 chip 只是让人多一次点击、还多一处会跟 KPI 对不上的计数。
  * 要缩小范围就用搜索。
  */
+/** KPI「待处理异常」的同一口径（与 `overviewOf` 一致）：已逾期，或最近一次收尾是失败 / 超时 */
+function isAlarmView(v: DockToolView): boolean {
+  if (isOverdue(v.due.state)) return true;
+  const last = lastOf(v);
+  return !!last && (last.status === 'failed' || last.status === 'timeout');
+}
+
 function filtered(): DockToolView[] {
+  let list = views.slice();
   const q = query.trim().toLowerCase();
-  if (!q) return views.slice();
-  return views.filter((v) => {
-    const hay = [v.entry.id, displayName(v), displayDesc(v), v.run?.cmd ?? v.declPath]
-      .join(' ')
-      .toLowerCase();
-    return hay.includes(q);
-  });
+  if (q) {
+    list = list.filter((v) => {
+      const hay = [v.entry.id, displayName(v), displayDesc(v), v.run?.cmd ?? v.declPath]
+        .join(' ')
+        .toLowerCase();
+      return hay.includes(q);
+    });
+  }
+  if (kpiFilter === 'alarms') list = list.filter(isAlarmView);
+  return list;
 }
 
 function renderBody(): void {
@@ -688,7 +756,11 @@ function renderList(body: HTMLElement): void {
   const list = filtered();
   if (!list.length) {
     body.appendChild(
-      uiEmpty({ icon: 'search-x', title: '没有匹配的工具', desc: '换个词试试' }),
+      uiEmpty({
+        icon: 'search-x',
+        title: '没有匹配的工具',
+        desc: kpiFilter === 'alarms' ? '这个口径下没有 —— 点顶上的 KPI 格回到全部' : '换个词试试',
+      }),
     );
     return;
   }
@@ -878,6 +950,9 @@ function cardActions(v: DockToolView): ItemAction[] {
       label: runLabel(v),
       onClick: () => void runFlow(v),
     });
+  }
+  if (v.runState?.pausedAt) {
+    acts.push({ icon: 'play', label: '恢复并立即重试', onClick: () => void resumeAndRetry(v) });
   }
   acts.push({ icon: 'pencil', label: '重新导入声明', onClick: () => void importToolFlow(v.entry) });
   acts.push({
@@ -1129,15 +1204,10 @@ function autoSection(v: DockToolView): HTMLElement {
   if (v.runState?.pausedAt) {
     btns.appendChild(
       uiBtn({
-        label: '恢复自动运行',
+        label: '恢复并立即重试',
         size: 'sm',
-        onClick: () => {
-          void (async () => {
-            await patchRunState(id, null);
-            kickDockScheduler();
-            await refresh();
-          })();
-        },
+        tone: 'primary',
+        onClick: () => void resumeAndRetry(v),
       }),
     );
   }
@@ -1194,6 +1264,24 @@ function renderDetail(body: HTMLElement, v: DockToolView): void {
 
   // meta 行：怎么跑 / 在哪 —— 命令不再由登记给，而是声明文件里那份
   const meta = el('div', 'bz-dock-meta');
+  // 作者 / 版本 / 文档（增强 #2）：声明里写了才显示，没写不占位
+  const who = [v.manifest?.author, v.manifest?.toolVersion].filter(Boolean).join(' · ');
+  if (who) meta.appendChild(metaRow('作者', who));
+  if (v.manifest?.docs) {
+    const docs = v.manifest.docs;
+    const row = el('div', 'bz-dock-meta-row');
+    row.appendChild(el('span', 'bz-dock-meta-label', '文档'));
+    row.appendChild(el('span', 'bz-dock-meta-val', docs));
+    // 只放行 http(s) —— 声明是外部文件，docs 写什么都可能，别把它当任意跳转的入口
+    if (/^https?:\/\//i.test(docs)) {
+      row.appendChild(
+        uiIconBtn({ icon: 'external-link', title: '打开文档', xs: true, onClick: () => window.open(docs, '_blank') }),
+      );
+    } else {
+      row.appendChild(uiIconBtn({ icon: 'copy', title: '复制', xs: true, onClick: () => void copyText(docs, '文档地址') }));
+    }
+    meta.appendChild(row);
+  }
   meta.appendChild(
     metaRow('声明文件', v.declPath, true, () => void copyText(v.declPath, '声明文件路径')),
   );
@@ -1300,6 +1388,18 @@ function runPane(v: DockToolView): HTMLElement {
     btns.appendChild(el('span', 'bz-dock-mobilehint', '移动端不能启动进程，只能看'));
   }
   pane.appendChild(btns);
+  // 上一次现场运行的原始输出尾部（增强 #17）：跑完不清，下次运行覆盖；只在内存，不落盘
+  if (!liveRunOf(v.entry.id)) {
+    const lastTail = lastRawTailOf(v.entry.id);
+    if (lastTail?.length) {
+      const box = el('div', 'bz-dock-lastraw');
+      box.appendChild(el('div', 'bz-dock-lastraw-head', '上次现场输出（尾部）'));
+      const tail = el('pre', 'bz-dock-raw');
+      tail.textContent = lastTail.slice(-12).join('\n');
+      box.appendChild(tail);
+      pane.appendChild(box);
+    }
+  }
   pane.appendChild(liveHost(v.entry.id));
   return pane;
 }
@@ -1598,7 +1698,18 @@ function histRow(r: DockRunRecord): HTMLElement {
     if (r.steps?.length) more.appendChild(block('步骤', r.steps.map((s) => s.text).join('\n')));
     if (r.metrics) more.appendChild(block('指标', JSON.stringify(r.metrics, null, 2)));
     if (r.artifacts?.length) {
-      more.appendChild(block('产物', r.artifacts.map((a) => `${a.label ? a.label + ' · ' : ''}${a.path}`).join('\n')));
+      // 产物路径可点（增强 #16）：vault 里的用 Obsidian 打开，外面的在文件管理器定位
+      const box = el('div', 'bz-dock-block');
+      box.appendChild(el('div', 'bz-dock-block-label', '产物'));
+      for (const a of r.artifacts) {
+        const row = el('div', 'bz-dock-artrow');
+        row.appendChild(el('span', 'bz-dock-artrow-path', `${a.label ? a.label + ' · ' : ''}${a.path}`));
+        row.appendChild(
+          uiIconBtn({ icon: 'external-link', title: '打开 / 定位产物', xs: true, onClick: () => openArtifact(a.path) }),
+        );
+        box.appendChild(row);
+      }
+      more.appendChild(box);
     }
     if (r.result !== undefined) more.appendChild(block('结果', JSON.stringify(r.result, null, 2)));
     if (r.info?.length) more.appendChild(block('信息', JSON.stringify(r.info, null, 2)));
@@ -1659,13 +1770,32 @@ async function runFlow(v: DockToolView): Promise<void> {
     onInfo: () => updateLive(v.entry.id),
     onResult: () => updateLive(v.entry.id),
     onDone: (outcome) => {
-      notifyRunOutcome(displayName(v), outcome, () => openDock(hostApp as App));
+      notifyRunOutcome(displayName(v), outcome, () => openDockTool(hostApp as App, v.entry.id));
+      // 手动成功也给熔断记账：手动成功是「工具活着」的直接证据，连续失败清零、熔断解除。
+      // 手动失败**不动**台账 —— 熔断保护的是没人盯着时的自动运行，别让人手动试错把它搞停。
+      if (outcome.ok) {
+        void patchRunState(v.entry.id, {
+          lastAttemptAt: outcome.finishedAt,
+          lastAttemptOk: true,
+          consecutiveFailures: 0,
+          pausedAt: undefined,
+        });
+      }
       void refresh();
       updateLive(v.entry.id);
     },
   });
   void run;
   render();
+}
+
+/** 熔断恢复 + 立即补跑，一步到位：恢复是清台账，补跑走手动同一条路（全部门槛照过） */
+async function resumeAndRetry(v: DockToolView): Promise<void> {
+  await patchRunState(v.entry.id, null);
+  kickDockScheduler();
+  await refresh();
+  const nv = viewById(v.entry.id);
+  if (nv && canStart(nv)) await runFlow(nv);
 }
 
 function updateLive(id: string): void {
@@ -2016,7 +2146,7 @@ async function removeToolFlow(v: DockToolView): Promise<void> {
     message:
       `确定把「${displayName(v)}」从工具坞移除？\n\n` +
       '只移除 bz 这边的登记 —— 声明文件、参数值文件、运行记录文件都不会被删' +
-      '（前两个是工具目录里的，后一个是工具的账本）。',
+      '（前两个是工具目录里的，后一个是工具的账本）。调度台账（失败计数 / 熔断标记）一并清掉。',
     actions: [
       { label: '取消', value: 'cancel' },
       { label: '移除', value: 'ok', cta: true, danger: true },
@@ -2025,5 +2155,7 @@ async function removeToolFlow(v: DockToolView): Promise<void> {
   if (res !== 'ok') return;
   const entries = readToolEntries().filter((e) => e.id !== v.entry.id);
   if (view.kind === 'detail' && view.id === v.entry.id) view = { kind: 'list' };
+  // 台账一并清（增强 #19）：失败计数 / 熔断标记不留孤儿（重导同 id 会从头记，正该如此）
+  await patchRunState(v.entry.id, null);
   await persist(entries, `已移除 ${displayName(v)}`);
 }

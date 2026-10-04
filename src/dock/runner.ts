@@ -128,6 +128,20 @@ export interface DockRunCallbacks {
 /** 在场运行中的会话（toolId → 内存态）—— 面板重建后可重新挂上，不丢进度 */
 const live = new Map<string, DockLiveRun>();
 
+/**
+ * 上一次现场运行的原始输出尾部（toolId → 尾部若干行）。
+ *
+ * rawTail 只活在运行期间：一结束现场态就被清掉，工具要是没写运行记录，跑完什么痕迹都不剩
+ * （stderr 尾巴只在失败时有）。这里把尾部留一份在内存里给详情页回看，**下次运行覆盖**；
+ * 只进内存、不落盘 —— 「不存 stdout 原文」的口径（D12）指的是运行记录，这里同样不破。
+ */
+const lastRawTails = new Map<string, string[]>();
+
+/** 详情页回看用：该工具上一次现场运行的原始输出尾部；这个会话里还没在场地跑过 = undefined */
+export function lastRawTailOf(toolId: string): string[] | undefined {
+  return lastRawTails.get(toolId);
+}
+
 /** 当前是否在跑（UI 用） */
 export function liveRunOf(toolId: string): DockLiveRun | undefined {
   return live.get(toolId);
@@ -256,6 +270,7 @@ export function runTool(
       durationMs: new Date(finishedAt).getTime() - startedAtDate.getTime(),
     };
     live.delete(entry.id);
+    if (rawTail.length) lastRawTails.set(entry.id, rawTail.slice(-50)); // 尾部留给详情页回看
     cb.onDone?.(outcome, run);
     return outcome;
   });
