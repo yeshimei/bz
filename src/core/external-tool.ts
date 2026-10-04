@@ -7,7 +7,7 @@
  *   [bz-info] {...}                         → 解析信息行：JSON 体原样交给 onInfo
  *   [bz-result] {...}                       → 交付结果行：JSON 体原样交给 onResult
  *
- * 本模块职责：进程生命周期（spawn / stop / 终结分流）、stdout 逐行解析（跨 chunk 行缓冲、
+ * 本模块职责：进程生命周期（spawn / stop（含 3 秒未退升级强杀整树）/ 终结分流）、stdout 逐行解析（跨 chunk 行缓冲、
  * 多字节安全、超长行截断）、畸形行容错（坏协议行忽略、非协议行透传）、stderr 尾部收集
  * （2KB 滑窗）与退出码语义（code 0=成功；经 stop()=中止；其余=失败且错误带 stderr）。
  * 知识盒本次不动（继续用自己的实现，src/knowledge/processor.ts）；后续外部工具集成
@@ -179,7 +179,7 @@ export interface ExternalToolOutcome {
 }
 
 export interface ExternalToolHandle {
-  /** 停止在跑进程（幂等）；停止后的终结一律按 stopped 算 */
+  /** 停止在跑进程（幂等）；温和 kill 约 3 秒（FORCE_KILL_GRACE_MS）没退干净会升级强杀整棵树；停止后的终结一律按 stopped 算 */
   stop(): void;
   /** 进程终结 Promise（永不 reject） */
   done: Promise<ExternalToolOutcome>;
@@ -192,6 +192,12 @@ export interface ExternalToolDeps {
 
 /** stderr 尾部滑窗字符数（同知识盒口径：留尾不留头，失败原因取最后可见内容） */
 const STDERR_TAIL_CHARS = 2048;
+
+/**
+ * 强杀宽限：温和 kill 之后给工具这么久自己退，到点还没退干净才升级强杀整棵树。
+ * 导出常量是为了测试与调用方对得上「约 3 秒」这个数，不另立口径。
+ */
+export const FORCE_KILL_GRACE_MS = 3000;
 
 /** 桌面端专属（同知识盒 processor）：非桌面端返回 null */
 function defaultChildProcess(): any {
@@ -216,6 +222,11 @@ export function runExternalTool(spec: ExternalToolSpec, cb: ExternalToolCallback
   let settled = false;
   let stopped = false;
   let child: any = null;
+  /** 直属进程是否已退（exit 事件到过）；强杀到点时靠它分辨「赖着不走」与「根死了、孤儿压着管道」 */
+  let exitSeen = false;
+  let exitCode: number | null = null;
+  /** 强杀宽限定时器；终结（close / error / 强制结算）即摘，绝不悬挂（摘除收口在 settle） */
+  let forceTimer: ReturnType<typeof setTimeout> | null = null;
 
   let resolveDone!: (o: ExternalToolOutcome) => void;
   const done = new Promise<ExternalToolOutcome>((r) => {
@@ -224,6 +235,11 @@ export function runExternalTool(spec: ExternalToolSpec, cb: ExternalToolCallback
   const settle = (o: ExternalToolOutcome): void => {
     if (settled) return; // 幂等护栏：error/close/重复 close 只取第一个终结
     settled = true;
+    // 任何终结都意味着不再需要强杀（进程自然退干净，或已按 stopped 强制结算）
+    if (forceTimer !== null) {
+      clearTimeout(forceTimer);
+      forceTimer = null;
+    }
     resolveDone(o);
   };
 
@@ -279,6 +295,11 @@ export function runExternalTool(spec: ExternalToolSpec, cb: ExternalToolCallback
     if (settled) return;
     settle({ ok: false, stopped: false, code: null, stderr: stderrTail.trim(), error: new Error(`外部工具启动失败：${e.message}`) });
   });
+  child.on('exit', (code: number | null) => {
+    // 只记账不结算：终结分流仍归 close（stdio 收尾、残留行冲刷都在那边）
+    exitSeen = true;
+    exitCode = code;
+  });
   child.on('close', (code: number | null) => {
     if (settled) return;
     const rest = splitter.flush();
@@ -298,15 +319,93 @@ export function runExternalTool(spec: ExternalToolSpec, cb: ExternalToolCallback
     settle({ ok: false, stopped: false, code, stderr, error: err });
   });
 
-  return {
-    stop: () => {
-      if (settled || stopped) return; // 幂等：重复 stop 不再补 kill
-      stopped = true;
+  // ---------- 停止的强杀升级（进程树） ----------
+
+  const isWindows = (): boolean => process.platform === 'win32';
+
+  /**
+   * 起一个 fire-and-forget 的强杀辅助进程（taskkill，裸名即可：System32 恒在 PATH，
+   * 干净 env 也起得来）。起失败 / 异步 error 都静默——强杀是升级手段，不能反过来把调用方炸了
+   * （ChildProcess 没有 error 监听器时，'error' 事件会抛成未处理异常）。
+   */
+  const spawnSuppressed = (cmd: string, args: string[]): void => {
+    try {
+      const killer = cp.spawn(cmd, args, { stdio: 'ignore', windowsHide: true });
+      killer.on?.('error', () => {});
+    } catch {
+      /* 起不来就放弃这一手 */
+    }
+  };
+
+  /**
+   * 宽限到点、close 仍没来 → 强杀升级。
+   *
+   * 为什么是「升级」而不是「替换」：温和 kill 给工具收拾尾巴的机会（POSIX 的 SIGTERM 可被
+   * 捕获，工具能冲缓存、删临时件、写完最后一行账），强杀不给；3 秒是宽限——正常工具被掐断
+   * 后毫秒级就退了，强杀那步几乎永远轮不到，轮到就说明真有进程赖着。close 是「到点没退」的
+   * 判据而不是 exit：经 shell 启动时被杀的就是壳，exit 照发，close 却被攥着 stdio 管道的
+   * 孤儿真身压住——那正是要强杀的信号。
+   *
+   * 手段：Windows 用 `taskkill /pid <pid> /T /F` 整树收割（/T 连子进程、/F 强制）；非 Windows
+   * 用 `process.kill(pid, 'SIGKILL')` 兜底——SIGKILL 只及直属进程、**非树**，壳下的真身够不着，
+   * 这是没有进程组可用时的已知局限（别把这一步当成整树保证）。
+   *
+   * 还有一类死法强杀也够不着：直属进程已 exit、close 没来——树根没了，`taskkill /T` 无根可寻
+   * （实测对死 pid 直接报「没有找到进程」），孤儿真身是盲区。这时能做的只有**立刻按 stopped
+   * 结算**：dock 调度器串行跑批，一次悬挂 = 整个队列停摆，「不堵队列」比「杀干净」更不能让。
+   */
+  const escalateForceKill = (): void => {
+    forceTimer = null;
+    if (settled) return; // 宽限期内进程已退干净：什么也不做（settle 已摘表，这里双保险）
+    const pid = child?.pid;
+    if (typeof pid !== 'number' || pid <= 0) return;
+    if (exitSeen) {
+      // 根已死、管道被孤儿攥着：放弃收割，按 stopped 结算（退出码用 exit 记下的那份）
+      settle({ ok: false, stopped: true, code: exitCode, stderr: stderrTail.trim(), error: null });
+      return;
+    }
+    if (isWindows()) {
+      spawnSuppressed('taskkill', ['/pid', String(pid), '/T', '/F']);
+      return; // 强杀已出手：给内核一点时间收管道，close 照常走自然终结分流
+    }
+    try {
+      process.kill(pid, 'SIGKILL');
+    } catch {
+      /* 已退出（ESRCH） */
+    }
+  };
+
+  /**
+   * 温和一步。经 shell 启动的（Windows .cmd/.bat，dock 域对这类命令自动开 shell）有个特别的坑，
+   * 也是这次升级的由来：child.kill() 只杀 cmd.exe 壳，真身（node/python）变孤儿继续跑——
+   * close 永远不来、done 永不结算。而且 TerminateProcess 本就没有「收拾尾巴」可言，杀壳这一下
+   * 既不温和，还把树根提前杀掉（taskkill /T 需要活根才能整树收割，见 escalateForceKill）。
+   * 所以 shell 场景的温和一步改用**不带 /F 的 taskkill /T**：控制台进程杀不动（根活着留给强杀
+   * 那步整树收割），带窗口的进程则得到一次体面收尾的机会；宽限时长由上面的定时器统一给。
+   * 非 shell 的照旧 child.kill()——直属进程没有「壳」可绕，POSIX 上它就是可捕获的 SIGTERM。
+   */
+  const stopChild = (): void => {
+    const pid = child?.pid;
+    if (spec.shell && isWindows() && typeof pid === 'number' && pid > 0) {
+      spawnSuppressed('taskkill', ['/pid', String(pid), '/T']);
+    } else {
       try {
         child?.kill?.();
       } catch {
         /* 已退出 */
       }
+    }
+    // 3 秒宽限：到点没退干净才升级。pid 拿不到（测试假件/异常形态）就没有可杀对象，不排程
+    if (typeof pid === 'number' && pid > 0) {
+      forceTimer = setTimeout(escalateForceKill, FORCE_KILL_GRACE_MS);
+    }
+  };
+
+  return {
+    stop: () => {
+      if (settled || stopped) return; // 幂等：重复 stop 不再补 kill、不重排强杀
+      stopped = true;
+      stopChild();
     },
     done,
   };

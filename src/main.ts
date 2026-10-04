@@ -92,7 +92,15 @@ import { openSettingsPanel, unloadSettingsPanel } from './settings-panel';
 import { openDataCheckup, unloadDataCheckup } from './checkup';
 // 工具坞（dock 域，ADR-0235 + ADR-0236：外部工具的标准接口 + 集中观测台 + **bz 调度**；
 // 不关心工具是什么。调度只在桌面端、且在 Obsidian 开着的期间生效）
-import { openDock, unloadDock, startDockScheduler, stopDockScheduler } from './dock';
+import {
+  openDock,
+  unloadDock,
+  startDockScheduler,
+  stopDockScheduler,
+  runToolDirect,
+  dockToolLabel,
+  readToolEntries,
+} from './dock';
 
 /** 命令表：id/name 统一命名（spec「命令 id 全清单」第 9 轮：bz-<域>-<动作>）。
  *  域入口命令 icon 一律从 core/domain-icons（DOMAIN_ICONS）取——与设置面板导航单一事实源（enh-sweep-a）；
@@ -354,6 +362,23 @@ export default class BzPlugin extends Plugin {
     for (const c of COMMANDS) {
       (this.app as any).commands.addCommand({ id: c.id, name: c.name, icon: c.icon, callback: c.callback });
       this.registeredCommandIds.push(c.id);
+    }
+
+    // 已登记工具的直达运行命令（bz-dock-run-<工具id>；ADR-0235 原列「缓做」，后拍板补上）：
+    // 每个启用的工具注册一条、可挂快捷键，不打开面板直接跑（门槛与面板同口径，见 dock 域
+    // runToolDirect；未信任时命令里弹既有信任确认，D7 语义不变）。登记在这里读的是启动
+    // 快照 —— 之后导入 / 移除 / 停用的工具**重启后生效**：Obsidian 命令表没有安全的运行时
+    // 增删口子，为「改完立刻生效」开动态注册的复杂度不值得。
+    for (const entry of readToolEntries()) {
+      if (entry.enabled === false) continue; // 停用的不注册（命令面板里也不出现）
+      const cmdId = `bz-dock-run-${entry.id}`;
+      (this.app as any).commands.addCommand({
+        id: cmdId,
+        name: `运行工具：${dockToolLabel(entry)}`,
+        icon: DOMAIN_ICONS.dock,
+        callback: () => void runToolDirect(getApp(), entry.id),
+      });
+      this.registeredCommandIds.push(cmdId); // 卸载随 registeredCommandIds 一并摘除
     }
 
     // 附件搬移：文件右键菜单入口（md 笔记 →「搬移此笔记附件」，与命令同链路）

@@ -4,12 +4,19 @@
  * 四类协议行（[bz-step]/[bz-p]/[bz-info]/[bz-result]）各返回结构化事件（pct 允许 null
  * =该阶段不可估）、畸形行/空行/非协议输出/超长行不抛异常（忽略或透传）、
  * 跨 chunk 行缓冲与多字节安全、喂预录 stdout 行断言事件序列、mock 进程断言
- * 停止语义与退出码分流（close(0)=ok / close(非0)=失败带 stderr / stop()=中止）。
+ * 停止语义与退出码分流（close(0)=ok / close(非0)=失败带 stderr / stop()=中止）、
+ * 停止的强杀升级（3 秒宽限到点 taskkill /T /F 整树收割 / 自然退出不升级 / 根死孤儿
+ * 压管道时按 stopped 强制结算）与真实进程验证（长跑子进程 stop 后树消失、shell 孤儿
+ * 真身被强杀收割后 close 回落）。
  * child_process 经 deps.cp 注入打桩（纯数据层 node 环境，不经 window.require）。
  */
 import { describe, it, expect, vi } from 'vitest';
 import { EventEmitter } from 'events';
-import { parseBzLine, BzLineSplitter, runExternalTool } from '../../src/core/external-tool';
+import * as nodeCp from 'node:child_process';
+import { mkdtempSync, writeFileSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import path from 'node:path';
+import { FORCE_KILL_GRACE_MS, parseBzLine, BzLineSplitter, runExternalTool } from '../../src/core/external-tool';
 import type { ExternalToolCallbacks } from '../../src/core/external-tool';
 
 /** 假子进程（同知识盒 processor.test.ts 口径）：stdout/stderr 可 emit；kill 可断言 */
@@ -290,4 +297,177 @@ describe('调用壳 runExternalTool', () => {
     await tick();
     expect(await h.done).toBe(first); // 同一个已定结果（Promise 已 resolve，不再变）
   });
+});
+
+describe('停止的强杀升级（进程树）', () => {
+  /** 带真实 pid 形参的假子进程（强杀排程需要 pid；没有 pid = 没有可杀对象，不排程） */
+  function fakeChildWithPid(pid = 4242): FakeChild {
+    const c = new FakeChild();
+    (c as { pid?: number }).pid = pid;
+    return c;
+  }
+
+  it('stop（shell）后 3 秒未退 → 温和步 taskkill /T 保活根 + 宽限到点 taskkill /pid /T /F 整树收割', () => {
+    if (process.platform !== 'win32') return; // 非 Windows 分支见「SIGKILL 兜底」用例
+    vi.useFakeTimers();
+    try {
+      const child = fakeChildWithPid();
+      const cp = { spawn: vi.fn(() => child) };
+      const h = runExternalTool({ cmd: 'bz-face.cmd', shell: true }, makeRecorder().cb, { cp });
+      h.stop();
+      h.stop(); // 幂等：温和步只做一次
+      // shell 场景刻意不 child.kill()：杀壳会把树根提前送走，宽限到点的 /T /F 就没根可收割了
+      expect(child.kill).not.toHaveBeenCalled();
+      expect(cp.spawn).toHaveBeenCalledWith('taskkill', ['/pid', '4242', '/T'], expect.anything());
+      vi.advanceTimersByTime(FORCE_KILL_GRACE_MS);
+      expect(cp.spawn).toHaveBeenCalledWith('taskkill', ['/pid', '4242', '/T', '/F'], expect.anything());
+      expect(cp.spawn).toHaveBeenCalledTimes(3); // 工具本尊 + 温和 taskkill + 强杀 taskkill，没有多余调用
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('stop（非 shell）后 3 秒未退 → 温和 child.kill 之后仍升级强杀（taskkill /pid /T /F）', () => {
+    if (process.platform !== 'win32') return;
+    vi.useFakeTimers();
+    try {
+      const child = fakeChildWithPid();
+      const cp = { spawn: vi.fn(() => child) };
+      const h = runExternalTool({ cmd: 'bz-face' }, makeRecorder().cb, { cp });
+      h.stop();
+      expect(child.kill).toHaveBeenCalledTimes(1); // 非 shell：直属进程没有壳可绕，温和步照旧
+      vi.advanceTimersByTime(FORCE_KILL_GRACE_MS);
+      expect(cp.spawn).toHaveBeenCalledWith('taskkill', ['/pid', '4242', '/T', '/F'], expect.anything());
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('非 Windows：宽限到点用 process.kill(pid, SIGKILL) 兜底（非树，注释即契约）', () => {
+    if (process.platform === 'win32') return;
+    vi.useFakeTimers();
+    const killSpy = vi.spyOn(process, 'kill').mockImplementation(() => true);
+    try {
+      const child = fakeChildWithPid();
+      const cp = { spawn: vi.fn(() => child) };
+      const h = runExternalTool({ cmd: 'bz-face' }, makeRecorder().cb, { cp });
+      h.stop();
+      expect(child.kill).toHaveBeenCalledTimes(1); // 温和步 = SIGTERM
+      vi.advanceTimersByTime(FORCE_KILL_GRACE_MS);
+      expect(killSpy).toHaveBeenCalledWith(4242, 'SIGKILL');
+    } finally {
+      killSpy.mockRestore();
+      vi.useRealTimers();
+    }
+  });
+
+  it('进程自然退出（close 到了）→ 强杀定时器摘除，宽限过后也不升级、不悬挂', async () => {
+    vi.useFakeTimers();
+    try {
+      const child = fakeChildWithPid();
+      const cp = { spawn: vi.fn(() => child) };
+      const h = runExternalTool({ cmd: 'bz-face' }, makeRecorder().cb, { cp });
+      h.stop();
+      child.emit('close', 0);
+      const out = await h.done;
+      expect(out).toEqual({ ok: false, stopped: true, code: 0, stderr: '', error: null });
+      vi.advanceTimersByTime(FORCE_KILL_GRACE_MS * 3);
+      expect(cp.spawn).toHaveBeenCalledTimes(1); // 只有工具本尊那次 spawn，没有 taskkill
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('根已死（exit 到了）close 被孤儿压住 → 到点按 stopped 强制结算：不空杀死根、done 不悬挂', async () => {
+    vi.useFakeTimers();
+    try {
+      const child = fakeChildWithPid();
+      const cp = { spawn: vi.fn(() => child) };
+      const h = runExternalTool({ cmd: 'bz-face' }, makeRecorder().cb, { cp });
+      h.stop();
+      child.emit('exit', null, 'SIGTERM'); // 直属进程死了；close 因孤儿攥着管道迟迟不来
+      vi.advanceTimersByTime(FORCE_KILL_GRACE_MS);
+      const out = await h.done;
+      // 调度器串行跑批，done 悬挂 = 队列停摆——宁可按 stopped 结算也不能等一个不会来的 close
+      expect(out).toEqual({ ok: false, stopped: true, code: null, stderr: '', error: null });
+      expect(cp.spawn).toHaveBeenCalledTimes(1); // 树根没了，taskkill /T 无根可寻：不对死 pid 空放
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('宽限期内进程退了（close 在到点前到）→ 不升级；迟到 close 不改已定终态', async () => {
+    vi.useFakeTimers();
+    try {
+      const child = fakeChildWithPid();
+      const cp = { spawn: vi.fn(() => child) };
+      const h = runExternalTool({ cmd: 'bz-face' }, makeRecorder().cb, { cp });
+      h.stop();
+      vi.advanceTimersByTime(FORCE_KILL_GRACE_MS - 1); // 还差 1ms 到点
+      child.emit('close', 0); // 赶在宽限内退了
+      vi.advanceTimersByTime(10);
+      expect(cp.spawn).toHaveBeenCalledTimes(1);
+      expect((await h.done).stopped).toBe(true);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+});
+
+describe('停止的真实进程验证（桌面 node 环境真起子进程）', () => {
+  it('长跑子进程 stop() 后树在宽限内消失、done 按 stopped 结算（等 close 事件）', async () => {
+    const h = runExternalTool(
+      { cmd: process.execPath, args: ['-e', 'setInterval(()=>{},1000)'] },
+      makeRecorder().cb,
+      { cp: nodeCp },
+    );
+    await new Promise((r) => setTimeout(r, 300)); // 让它真跑起来
+    const t0 = Date.now();
+    h.stop();
+    const out = await h.done;
+    // close 到来 = 攥着 stdio 管道的进程全灭 = 这棵树（就一个直属进程）已消失；
+    // 直属进程一杀即退，用不到强杀宽限
+    expect(out.stopped).toBe(true);
+    expect(Date.now() - t0).toBeLessThan(FORCE_KILL_GRACE_MS);
+  });
+
+  it('Windows shell 场景（.cmd 的真实形态）：杀壳后孤儿真身由宽限到点的强杀整树收割，close 正常回落', async () => {
+    if (process.platform !== 'win32') return; // shell 温和步/整树收割是 Windows 路径
+    const dir = mkdtempSync(path.join(tmpdir(), 'bz-external-tool-'));
+    // .cmd shim + node 真身 —— dock 域对 .cmd 自动开 shell 的那类工具就是这两层结构。
+    // 真身用脚本文件而非 -e 内联（内联式经 cmd 转述会被引号规则啃坏）；shim 里路径带引号
+    // （execPath 的 Program Files 有空格，不引号 cmd 会把它啃成 C:\Program）
+    const js = path.join(dir, 'payload.js');
+    const shim = path.join(dir, 'payload.cmd');
+    writeFileSync(js, 'setInterval(() => {}, 1000);\nconsole.log("payload-up");\n');
+    writeFileSync(shim, `@echo off\r\n"${process.execPath}" "%~dp0payload.js"\r\n`);
+    let up!: () => void;
+    const upPromise = new Promise<void>((r) => {
+      up = r;
+    });
+    const cb: ExternalToolCallbacks = {
+      onStep: () => {},
+      onProgress: () => {},
+      onInfo: () => {},
+      onResult: () => {},
+      onRaw: (t) => {
+        if (t.trim() === 'payload-up') up(); // 真身已起：此刻杀壳才杀得出「孤儿」这个课题
+      },
+    };
+    const h = runExternalTool({ cmd: shim, args: [], shell: true }, cb, { cp: nodeCp });
+    await Promise.race([upPromise, new Promise((r) => setTimeout(r, 5000))]);
+    const t0 = Date.now();
+    h.stop(); // 温和步杀不动控制台壳（保住活根），宽限到点 taskkill /T /F 整树收割
+    const out = await h.done;
+    const elapsed = Date.now() - t0;
+    expect(out.stopped).toBe(true);
+    expect(elapsed).toBeGreaterThanOrEqual(FORCE_KILL_GRACE_MS - 200); // 真身由强杀收割，宽限是认真的
+    expect(elapsed).toBeLessThan(FORCE_KILL_GRACE_MS + 5000);
+    // close 能到来本身就是树灭的证明：管道写端全关了（壳与真身都死了），孤儿无处存活
+    try {
+      rmSync(dir, { recursive: true, force: true });
+    } catch {
+      /* 清不掉就留给系统临时目录自清 */
+    }
+  }, 20000);
 });
