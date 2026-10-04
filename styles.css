@@ -25859,3 +25859,577 @@ canvas { display: block; }
     padding-right: var(--bz-space-md);
   }
 }
+/* ==================== 工具坞域样式（src/dock/styles.css） ====================
+   形态 = 卡片墙（spec §7 UI 定稿）。自上而下四层：
+     ① 顶部 KPI 四格（今日达标 / 近 7 天成功率 / 待处理异常 / 距下次到期），口径在 data.ts 的 overview()；
+     ② 面板顶层执行进度（**只有在场运行才出现** —— 离场跑拿不到实时进度，就不画进度条）；
+     ③ 搜索行（只剩搜索，未展开即隐藏）；
+     ④ 主体：两分区（自动化 / 手动）+ 卡片网格，一张卡 = 一个外部工具，
+        卡面自带「最近 7 次点阵」；欠跑的卡整卡标色。
+   视觉基调 = 线性精密：卡面无底色、无投影，靠 1px 发丝线 + 间距分层。
+   基座全部复用 core：面板壳 .bz-panel-overlay/.bz-panel-frame/.bz-panel-mtop、
+   头行 .bz-panel-head 族、搜索 .bz-search、空态 .bz-empty、
+   进度条 .bz-progress、表单 .bz-field/.bz-input、弹窗 .bz-overlay-popup/.bz-dialog-*。
+   本文件只写域内布局与细节。
+   亮暗：全部消费 --bz token（.theme-dark/.theme-light 双组）。
+   不造滚动条（ADR-0122：滚动功能保留、条由 core 统一隐藏）。 */
+
+/* ---------- 面板壳 ---------- */
+.bz-dock-mask.is-off { display: none; }
+.bz-dock-panel {
+  width: min(1120px, 94vw);
+  height: min(88vh, 860px);
+  max-height: calc(100vh - 40px);
+  background: var(--bz-surface-1);
+  overflow: hidden;
+}
+
+/* ---------- 顶部 KPI 四格 ----------
+   口径全在 data.ts 的 overview() 里，这里只管画。数字走等宽 + tabular-nums：
+   四格的数在一行里对齐，扫的时候不用横着找小数点。 */
+.bz-dock-kpi {
+  flex: none;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  border-bottom: 1px solid var(--bz-border);
+}
+.bz-dock-kpi.is-off { display: none; }
+.bz-dock-kpi-tile {
+  min-width: 0;
+  padding: var(--bz-space-md) var(--bz-space-lg);
+  border-right: 1px solid var(--bz-border);
+}
+.bz-dock-kpi-tile:last-child { border-right: 0; }
+.bz-dock-kpi-v {
+  font-family: var(--bz-font-mono);
+  font-size: 24px;
+  font-weight: var(--bz-weight-semibold);
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+  color: var(--bz-text-1);
+}
+.bz-dock-kpi-v small {
+  font-size: 13px;
+  font-weight: var(--bz-weight-regular);
+  letter-spacing: 0;
+  color: var(--bz-text-3);
+}
+.bz-dock-kpi-l { margin-top: 5px; font-size: var(--bz-font-caption); color: var(--bz-text-2); }
+.bz-dock-kpi-d {
+  margin-top: 4px;
+  font-size: var(--bz-font-caption);
+  color: var(--bz-text-3);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.bz-dock-kpi-d.is-up { color: var(--bz-success); }
+.bz-dock-kpi-tile.is-warn .bz-dock-kpi-v { color: var(--bz-warning); }
+.bz-dock-kpi-tile.is-bad .bz-dock-kpi-v { color: var(--bz-danger); }
+/* 带口径的格可点（点哪格看哪类，再点回全部）——视觉只补「可以点」与「选中了」，不做第二套配色 */
+.bz-dock-kpi-tile.is-click { cursor: pointer; transition: background-color 120ms ease; }
+.bz-dock-kpi-tile.is-selected { box-shadow: inset 0 -2px 0 var(--bz-accent, currentColor); }
+@media (hover: hover) {
+  .bz-dock-kpi-tile.is-click:hover { background-color: var(--bz-bg-hover, rgba(0, 0, 0, 0.04)); }
+}
+
+/* ---------- 上次现场输出（运行结束后保留在内存里的尾部，不落盘） ---------- */
+.bz-dock-lastraw { margin-top: var(--bz-space-md); }
+.bz-dock-lastraw-head {
+  font-size: var(--bz-font-caption);
+  color: var(--bz-text-3);
+  margin-bottom: 4px;
+}
+
+/* ---------- 产物行（历史展开里：路径 + 打开/定位） ---------- */
+.bz-dock-artrow { display: flex; align-items: center; gap: 6px; padding: 2px 0; }
+.bz-dock-artrow-path {
+  flex: 1;
+  min-width: 0;
+  font-family: var(--bz-font-mono);
+  font-size: var(--bz-font-caption);
+  color: var(--bz-text-2);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ---------- 面板顶层执行进度 ----------
+   只画**在场**运行（bz 亲手启动的）。自动化工具是离场跑，永远不进这里 ——
+   拿不到实时进度就不画进度条，这条是 UI 约束，不是样式偏好。 */
+.bz-dock-runbar { flex: none; display: flex; flex-direction: column; }
+.bz-dock-runbar.is-off { display: none; }
+.bz-dock-rb {
+  display: flex;
+  align-items: center;
+  gap: var(--bz-space-sm);
+  padding: var(--bz-space-sm) var(--bz-space-lg);
+  border-bottom: 1px solid var(--bz-border);
+  background: var(--bz-brand-soft);
+}
+.bz-dock-rb-pulse {
+  flex: none;
+  width: 7px;
+  height: 7px;
+  border-radius: var(--bz-radius-full);
+  background: var(--bz-brand);
+}
+.bz-dock-rb-name { flex: none; font-size: var(--bz-font-label); font-weight: var(--bz-weight-semibold); color: var(--bz-text-1); }
+.bz-dock-rb-phase { flex: none; font-size: var(--bz-font-meta); color: var(--bz-text-1); }
+.bz-dock-rb-step {
+  flex: 1;
+  min-width: 0;
+  font-size: var(--bz-font-caption);
+  color: var(--bz-text-2);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.bz-dock-rb-track { flex: none; width: 180px; }
+.bz-dock-rb-pct {
+  flex: none;
+  width: 40px;
+  text-align: right;
+  font-family: var(--bz-font-mono);
+  font-size: var(--bz-font-caption);
+  color: var(--bz-brand);
+}
+
+/* ---------- 搜索行 ----------
+   这一条只剩搜索：自动化 / 手动由分区标题说，待关注由顶部 KPI 说，
+   再摆一排 chip 只是让人多一次点击。未展开时整条隐藏。 */
+.bz-dock-bar {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: var(--bz-space-md);
+  padding: var(--bz-space-sm) var(--bz-space-lg);
+  border-bottom: 1px solid var(--bz-border);
+}
+.bz-dock-bar.is-off { display: none; }
+.bz-dock-search { flex: 1; min-width: 0; }
+
+/* ---------- 内容区（唯一滚动容器） ---------- */
+.bz-dock-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: var(--bz-space-lg);
+}
+
+/* ---------- 分区 ---------- */
+.bz-dock-sec + .bz-dock-sec { margin-top: var(--bz-space-xl); }
+.bz-dock-sec-head { display: flex; align-items: baseline; gap: var(--bz-space-sm); flex-wrap: wrap; margin-bottom: var(--bz-space-md); }
+.bz-dock-sec-title { font-size: var(--bz-font-emphasis); font-weight: var(--bz-weight-semibold); color: var(--bz-text-1); }
+.bz-dock-sec-count {
+  font-size: var(--bz-font-caption);
+  color: var(--bz-text-2);
+  background: var(--bz-surface-3);
+  border: 1px solid var(--bz-border);
+  border-radius: var(--bz-radius-full);
+  padding: 0 6px;
+  min-width: 18px;
+  text-align: center;
+}
+.bz-dock-sec-hint { font-size: var(--bz-font-caption); color: var(--bz-text-3); }
+
+/* ---------- 卡片网格 ---------- */
+.bz-dock-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: var(--bz-space-sm);
+}
+
+/* ---------- 卡片 ----------
+   视觉走「线性精密」：**卡面无底色、无投影**，靠 1px 发丝线 + 间距分层，
+   圆角降一档（md → sm）。悬停只把线提亮一档、底色压到最淡的 surface-2 —— 
+   不是靠阴影浮起来。 */
+/* 左沿那条「状态条」走自定义属性：欠跑 / 在跑 / 悬停投影三者要叠在同一个 box-shadow 上，
+   直接各写各的会互相覆盖（悬停时正好把警示条抹掉——最该看见的时候看不见）。 */
+.bz-dock-card {
+  --bz-dock-edge: 0 0 0 0 transparent;
+  display: flex;
+  flex-direction: column;
+  gap: var(--bz-space-sm);
+  padding: var(--bz-space-md);
+  background: transparent;
+  border: 1px solid var(--bz-border);
+  border-radius: var(--bz-radius-sm);
+  box-shadow: var(--bz-dock-edge);
+  cursor: pointer;
+  transition: border-color var(--bz-dur-fast) var(--bz-ease-out),
+    background var(--bz-dur-fast) var(--bz-ease-out),
+    box-shadow var(--bz-dur-fast) var(--bz-ease-out);
+}@media (hover: hover) {
+
+.bz-dock-card:hover {
+  border-color: var(--bz-border-hover);
+  background: var(--bz-surface-2);
+  box-shadow: var(--bz-dock-edge);
+}
+}
+/* 欠跑整卡标色（左沿一条警示色）——比只在角落点个黄点更容易扫到 */
+.bz-dock-card.is-due {
+  border-color: color-mix(in srgb, var(--bz-warning) 46%, var(--bz-border));
+  --bz-dock-edge: inset 3px 0 0 var(--bz-warning);
+}
+/* 在跑的卡 */
+.bz-dock-card.is-running { --bz-dock-edge: inset 3px 0 0 var(--bz-brand); }
+/* 停用的卡 */
+.bz-dock-card.is-disabled { opacity: 0.55; }
+
+.bz-dock-card-top { display: flex; align-items: flex-start; gap: var(--bz-space-sm); }
+.bz-dock-card-ic {
+  flex: none;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--bz-radius-sm);
+  background: var(--bz-brand-soft);
+  color: var(--bz-brand);
+}
+.bz-dock-card-idbox { min-width: 0; flex: 1; }
+.bz-dock-card-name {
+  font-size: var(--bz-font-label);
+  font-weight: var(--bz-weight-semibold);
+  color: var(--bz-text-1);
+  line-height: var(--bz-leading-tight);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.bz-dock-card-tags { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 3px; }
+
+.bz-dock-tag {
+  font-size: var(--bz-font-caption);
+  line-height: 1.6;
+  padding: 0 6px;
+  border-radius: var(--bz-radius-xs);
+  background: var(--bz-surface-3);
+  border: 1px solid var(--bz-border);
+  color: var(--bz-text-2);
+  white-space: nowrap;
+}
+.bz-dock-tag--due { background: color-mix(in srgb, var(--bz-warning) 20%, transparent); border-color: color-mix(in srgb, var(--bz-warning) 42%, transparent); color: var(--bz-warning); }
+.bz-dock-tag--warn { background: color-mix(in srgb, var(--bz-danger) 16%, transparent); border-color: color-mix(in srgb, var(--bz-danger) 40%, transparent); color: var(--bz-danger); }
+.bz-dock-tag--muted { color: var(--bz-text-3); }
+
+/* 描述：两行截断（卡片高度才整齐） */
+.bz-dock-card-desc {
+  font-size: var(--bz-font-meta);
+  color: var(--bz-text-2);
+  line-height: var(--bz-leading-normal);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  min-height: 2.6em;
+}
+
+/* 状态行：时间（主）→ 结果（次）→ 成功率（贴右） */
+.bz-dock-card-state { display: flex; align-items: center; gap: 6px; min-width: 0; }
+.bz-dock-card-when {
+  flex: none;
+  font-size: var(--bz-font-meta);
+  font-weight: var(--bz-weight-medium);
+  color: var(--bz-text-1);
+}
+.bz-dock-card-msg {
+  flex: 1;
+  min-width: 0;
+  font-size: var(--bz-font-meta);
+  color: var(--bz-text-2);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* 上次失败：卡面直接给「怎么办」（可操作提示不该藏在详情里） */
+/* 尺寸走 core 的 .bz-ic--xs 通用修饰（不再域内手写 px），这里只做与首行文字的视觉对齐 */
+.bz-dock-card-fail {
+  display: flex;
+  align-items: flex-start;
+  gap: 5px;
+  font-size: var(--bz-font-caption);
+  line-height: var(--bz-leading-tight);
+  color: var(--bz-danger);
+}
+.bz-dock-card-fail .bz-ic { margin-top: 2px; }
+.bz-dock-card-failtext {
+  min-width: 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* 色点 */
+.bz-dock-dot { flex: none; width: 7px; height: 7px; border-radius: var(--bz-radius-full); background: var(--bz-text-3); }
+.bz-dock-dot--ok { background: var(--bz-success); }
+.bz-dock-dot--bad { background: var(--bz-danger); }
+.bz-dock-dot--warn { background: var(--bz-warning); }
+.bz-dock-dot--idle { background: var(--bz-text-3); }
+
+/* 最近 7 次：通栏迷你时间轴（格子等分撑满一行；空格 = 那一次没有记录） */
+.bz-dock-strip { display: flex; align-items: center; gap: 3px; }
+.bz-dock-pip {
+  flex: 1 1 0;
+  min-width: 6px;
+  height: 7px;
+  border-radius: 2px;
+  background: var(--bz-track);
+}
+.bz-dock-pip--ok { background: var(--bz-success); }
+.bz-dock-pip--failed { background: var(--bz-danger); }
+.bz-dock-pip--timeout { background: var(--bz-warning); }
+/* 中止：空心格——与「没跑过」的空档区分开（实心底 vs 描边），否则两种状态在灰阶上几乎同色 */
+.bz-dock-pip--stopped { background: transparent; box-shadow: inset 0 0 0 1px var(--bz-text-3); }
+.bz-dock-rate { flex: none; font-size: var(--bz-font-caption); color: var(--bz-text-3); }
+.bz-dock-rate.is-warn { color: var(--bz-warning); }
+
+.bz-dock-card-foot { display: flex; align-items: center; gap: var(--bz-space-sm); margin-top: auto; }
+/* 「详情」贴右端（不靠 nth-last-child 定位——将来脚部加减按钮不会把它带歪） */
+.bz-dock-card-foot .bz-dock-foot-detail { margin-left: auto; }
+.bz-dock-mobilehint { font-size: var(--bz-font-caption); color: var(--bz-text-3); }
+
+/* ---------- 详情 ---------- */
+.bz-dock-detail { display: flex; flex-direction: column; gap: var(--bz-space-md); }
+.bz-dock-detail-head { display: flex; align-items: center; gap: var(--bz-space-sm); }
+.bz-dock-detail-ic {
+  flex: none;
+  width: 34px;
+  height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--bz-radius-sm);
+  background: var(--bz-brand-soft);
+  color: var(--bz-brand);
+}
+.bz-dock-detail-idbox { min-width: 0; }
+.bz-dock-detail-name { font-size: var(--bz-font-title); font-weight: var(--bz-weight-semibold); color: var(--bz-text-1); }
+.bz-dock-detail-tags { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 2px; }
+.bz-dock-detail-sp { flex: 1; }
+.bz-dock-detail-desc { font-size: var(--bz-font-body); color: var(--bz-text-2); line-height: var(--bz-leading-normal); }
+
+/* meta 行 */
+.bz-dock-meta {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 2px var(--bz-space-lg);
+  padding: var(--bz-space-sm) var(--bz-space-md);
+  background: var(--bz-surface-2);
+  border: 1px solid var(--bz-border);
+  border-radius: var(--bz-radius-md);
+}
+.bz-dock-meta-row { display: flex; align-items: center; gap: var(--bz-space-sm); min-width: 0; padding: 1px 0; }
+.bz-dock-meta-label { flex: none; width: 62px; font-size: var(--bz-font-meta); color: var(--bz-text-3); }
+.bz-dock-meta-val {
+  flex: 1;
+  min-width: 0;
+  font-size: var(--bz-font-meta);
+  color: var(--bz-text-1);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.bz-dock-meta-val.is-mono { font-family: var(--bz-font-mono); font-size: var(--bz-font-caption); }
+.bz-dock-meta-warn {
+  grid-column: 1 / -1;
+  font-size: var(--bz-font-meta);
+  color: var(--bz-warning);
+}
+
+/* 两栏 */
+.bz-dock-cols { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: var(--bz-space-md); align-items: start; }
+.bz-dock-pane {
+  display: flex;
+  flex-direction: column;
+  gap: var(--bz-space-sm);
+  padding: var(--bz-space-md);
+  background: var(--bz-surface-2);
+  border: 1px solid var(--bz-border);
+  border-radius: var(--bz-radius-md);
+}
+.bz-dock-pane-head { display: flex; align-items: baseline; gap: var(--bz-space-sm); }
+.bz-dock-pane-title { font-size: var(--bz-font-label); font-weight: var(--bz-weight-semibold); color: var(--bz-text-1); margin: 0; }
+.bz-dock-pane-count { font-size: var(--bz-font-caption); color: var(--bz-text-3); }
+.bz-dock-note { font-size: var(--bz-font-meta); color: var(--bz-text-3); line-height: var(--bz-leading-normal); }
+.bz-dock-noManifest { display: flex; flex-direction: column; gap: var(--bz-space-sm); align-items: flex-start; }
+
+/* 表单 */
+.bz-dock-form { display: flex; flex-direction: column; gap: var(--bz-space-sm); }
+.bz-dock-textarea {
+  width: 100%;
+  font-family: var(--bz-font-ui);
+  font-size: var(--bz-font-body);
+  color: var(--bz-text-1);
+  background: var(--bz-surface-1);
+  border: 1px solid var(--bz-border-strong);
+  border-radius: var(--bz-radius-sm);
+  padding: 6px var(--bz-space-sm);
+  resize: vertical;
+}
+.bz-dock-pathrow { display: flex; align-items: center; gap: var(--bz-space-xs); }
+.bz-dock-pathrow .bz-input { flex: 1; min-width: 0; }
+.bz-dock-multichoice { display: flex; flex-wrap: wrap; gap: var(--bz-space-xs); }
+.bz-dock-trigrow { display: flex; gap: var(--bz-space-xs); }
+.bz-dock-runbtns { display: flex; align-items: center; gap: var(--bz-space-sm); }
+
+/* 自动运行（详情页；D1 修订后 bz 与调度器之间唯一的用户界面） */
+.bz-dock-autorows { display: flex; flex-direction: column; gap: 2px; }
+.bz-dock-autorow { display: flex; align-items: baseline; gap: var(--bz-space-sm); min-width: 0; padding: 1px 0; }
+.bz-dock-autorow-label { flex: none; width: 62px; font-size: var(--bz-font-meta); color: var(--bz-text-3); }
+.bz-dock-autorow-val {
+  flex: 1;
+  min-width: 0;
+  font-size: var(--bz-font-meta);
+  color: var(--bz-text-1);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.bz-dock-autonote { font-size: var(--bz-font-meta); color: var(--bz-text-3); }
+.bz-dock-autonote--warn { color: var(--bz-warning); }
+.bz-dock-autoeditor {
+  display: flex;
+  flex-direction: column;
+  gap: var(--bz-space-sm);
+  padding-top: var(--bz-space-sm);
+  border-top: 1px solid var(--bz-border);
+}
+
+/* 在场运行台 */
+.bz-dock-live {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: var(--bz-space-sm);
+  background: var(--bz-brand-soft);
+  border-radius: var(--bz-radius-sm);
+}
+.bz-dock-live.is-off { display: none; }
+.bz-dock-live-head { font-size: var(--bz-font-caption); color: var(--bz-brand); }
+.bz-dock-live-phase { font-size: var(--bz-font-meta); color: var(--bz-text-1); }
+.bz-dock-steps { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 2px; }
+.bz-dock-step { display: flex; align-items: center; gap: 6px; font-size: var(--bz-font-meta); color: var(--bz-text-2); }
+.bz-dock-step-dot { flex: none; width: 5px; height: 5px; border-radius: var(--bz-radius-full); background: var(--bz-brand); }
+.bz-dock-step-text { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* pct=null（该阶段不可估）—— 不确定态条纹，绝不假报百分比 */
+.bz-progress.is-indeterminate i {
+  width: 35% !important;
+  animation: bz-dock-indet 1.1s linear infinite;
+}
+@keyframes bz-dock-indet {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(300%); }
+}
+.bz-dock-raw {
+  margin: 0;
+  max-height: 96px;
+  overflow-y: auto;
+  font-family: var(--bz-font-mono);
+  font-size: var(--bz-font-caption);
+  color: var(--bz-text-3);
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+/* 历史 */
+.bz-dock-histlist { display: flex; flex-direction: column; gap: 6px; }
+.bz-dock-histrow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  padding: 6px var(--bz-space-sm);
+  background: var(--bz-surface-1);
+  border: 1px solid var(--bz-border);
+  border-radius: var(--bz-radius-sm);
+}
+.bz-dock-histhead { display: flex; align-items: center; gap: var(--bz-space-sm); flex: 1; min-width: 0; }
+.bz-dock-histtime { font-size: var(--bz-font-meta); color: var(--bz-text-1); }
+.bz-dock-histstatus { font-size: var(--bz-font-caption); color: var(--bz-text-2); }
+.bz-dock-histdur { font-size: var(--bz-font-caption); color: var(--bz-text-3); }
+.bz-dock-histtrig {
+  margin-left: auto;
+  font-size: var(--bz-font-caption);
+  color: var(--bz-text-3);
+  border: 1px solid var(--bz-border);
+  border-radius: var(--bz-radius-xs);
+  padding: 0 5px;
+}
+.bz-dock-histmsg {
+  flex-basis: 100%;
+  font-size: var(--bz-font-meta);
+  color: var(--bz-text-1);
+  line-height: var(--bz-leading-normal);
+}
+.bz-dock-histerr {
+  flex-basis: 100%;
+  padding: 6px var(--bz-space-sm);
+  border-radius: var(--bz-radius-sm);
+  background: color-mix(in srgb, var(--bz-danger) 12%, transparent);
+}
+.bz-dock-histerr-hint { font-size: var(--bz-font-meta); color: var(--bz-danger); }
+.bz-dock-histerr-detail { font-size: var(--bz-font-caption); color: var(--bz-text-2); margin-top: 2px; }
+.bz-dock-histmore { flex-basis: 100%; display: none; flex-direction: column; gap: 6px; padding-top: 6px; }
+.bz-dock-histrow.is-open .bz-dock-histmore { display: flex; }
+/* 「展开」贴行尾（行是 flex-wrap 的，不 pin 的话它会跟着弹到下一行最左） */
+.bz-dock-histtoggle { margin-left: auto; }
+.bz-dock-histexact { flex-basis: 100%; font-size: var(--bz-font-caption); color: var(--bz-text-3); }
+.bz-dock-block-label { font-size: var(--bz-font-caption); color: var(--bz-text-3); margin-bottom: 2px; }
+.bz-dock-json {
+  margin: 0;
+  padding: 6px var(--bz-space-sm);
+  max-height: 200px;
+  overflow-y: auto;
+  background: var(--bz-code-bg);
+  border-radius: var(--bz-radius-sm);
+  font-family: var(--bz-font-mono);
+  font-size: var(--bz-font-caption);
+  color: var(--bz-text-1);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+/* ---------- 弹窗内（登记表单） ---------- */
+.bz-dock-toolform { display: flex; flex-direction: column; gap: var(--bz-space-sm); }
+.bz-dock-modal-actions { margin-top: var(--bz-space-md); }
+.bz-dock-sheet-head { display: flex; flex-direction: column; gap: 2px; }
+.bz-dock-sheet-name { font-size: var(--bz-font-emphasis); font-weight: var(--bz-weight-semibold); color: var(--bz-text-1); }
+.bz-dock-sheet-sub { font-family: var(--bz-font-mono); font-size: var(--bz-font-caption); color: var(--bz-text-3); word-break: break-all; }
+
+/* 关闭钮：桌面走点遮罩 / ESC，移动端全屏面板遮不住，只在那里露出来 */
+.bz-dock-panel .bz-dock-close { display: none; }
+
+/* ---------- 移动端（≤768px：全屏 + 单列 + 只读） ---------- */
+@media (max-width: 768px) {
+  .bz-dock-panel {
+    width: 100vw;
+    height: 100vh;
+    max-height: none;
+    border-radius: 0;
+    border: 0;
+  }
+  .bz-dock-panel .bz-dock-close { display: inline-flex; }
+  /* KPI 挤成两列（四格在 390 宽里会各自被压到读不出数） */
+  .bz-dock-kpi { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .bz-dock-kpi-tile { border-bottom: 1px solid var(--bz-border); }
+  .bz-dock-kpi-tile:nth-child(2n) { border-right: 0; }
+  .bz-dock-kpi-tile:nth-last-child(-n + 2) { border-bottom: 0; }
+  /* 进度条在窄屏让位给「谁在跑 + 跑到哪一步」 */
+  .bz-dock-rb { flex-wrap: wrap; }
+  .bz-dock-rb-step { flex-basis: 100%; }
+  .bz-dock-rb-track { width: auto; flex: 1; }
+  .bz-dock-bar { flex-wrap: wrap; }
+  .bz-dock-search { max-width: none; flex-basis: 100%; }
+  .bz-dock-body { padding: var(--bz-space-md); }
+  .bz-dock-grid { grid-template-columns: 1fr; }
+  .bz-dock-cols { grid-template-columns: 1fr; }
+  .bz-dock-meta { grid-template-columns: 1fr; }
+  .bz-dock-meta-label { width: 56px; }
+}

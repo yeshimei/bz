@@ -1,5 +1,5 @@
-/* 源指纹 11d4f7f354eec481 · 仓内输入 298 个（校验见 tests/preview-freshness.test.ts） */
-/*#preview-inputs=["prototypes/review/fake-sim.ts","prototypes/review/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/keys.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/belongings/ai.ts","src/belongings/catalog-suggest.ts","src/belongings/category.ts","src/belongings/data.ts","src/belongings/layouts/poster/render.ts","src/belongings/motion.ts","src/belongings/render.ts","src/belongings/report-stats.ts","src/belongings/report.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/epub-notes.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/motion.ts","src/bookshelf/notes-ui.ts","src/bookshelf/notes.ts","src/bookshelf/render.ts","src/bookshelf/settings.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/bookshelf/ui.ts","src/checkup/checks-consistency.ts","src/checkup/checks-drift.ts","src/checkup/checks-json.ts","src/checkup/checks-orphans.ts","src/checkup/files.ts","src/checkup/index.ts","src/checkup/run.ts","src/checkup/ui.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/douban-fetcher.ts","src/cinema/seasons.ts","src/cinema/settings.ts","src/cinema/shared.ts","src/cinema/state.ts","src/clipbook/anchor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/file-sync.ts","src/clipbook/flow.ts","src/clipbook/image-save.ts","src/clipbook/index.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/motion.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/press/data.ts","src/clipbook/press/engine.ts","src/clipbook/press/index.ts","src/clipbook/press/motions.ts","src/clipbook/press/view.ts","src/clipbook/render.ts","src/clipbook/report-stats.ts","src/clipbook/report-ui.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai-models.ts","src/core/ai.ts","src/core/app.ts","src/core/asr-proofread.ts","src/core/category-table.ts","src/core/changelog.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/domain-icons.ts","src/core/douban-name-index.ts","src/core/download-manifest.ts","src/core/esc-manager.ts","src/core/external-tool.ts","src/core/file-sync.ts","src/core/flow-dialog.ts","src/core/gesture.ts","src/core/http.ts","src/core/item-actions.ts","src/core/jev-fallback.ts","src/core/jev.ts","src/core/json-store.ts","src/core/knowledge-boxes.ts","src/core/landscape.ts","src/core/link-now.ts","src/core/lock-stats.ts","src/core/manual.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/pomodoro-phase.ts","src/core/remote-asset.ts","src/core/remote-base.ts","src/core/rss-catalog.ts","src/core/settings-btn-state.ts","src/core/settings-common.ts","src/core/settings-main-schema.ts","src/core/settings-modal.ts","src/core/settings-model-picker.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/sha256.ts","src/core/skin-pack.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/flip.ts","src/core/ui/focus-trap.ts","src/core/ui/help-tip.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slide-pill.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/settings.ts","src/dock/command.ts","src/dock/data.ts","src/dock/declaration.ts","src/dock/registry.ts","src/dock/runner.ts","src/dock/schedule.ts","src/dock/scheduler.ts","src/dock/schema.ts","src/dock/settings.ts","src/dock/ui.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/motion.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/favorites/ai.ts","src/favorites/app.ts","src/favorites/config.ts","src/favorites/data.ts","src/favorites/layouts/board/render.ts","src/favorites/motion.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/gameshelf/constants.ts","src/gameshelf/settings.ts","src/gameshelf/state.ts","src/home/entry-editor.ts","src/home/order.ts","src/home/settings.ts","src/home/shared.ts","src/knowledge/data.ts","src/knowledge/file-sync.ts","src/knowledge/index.ts","src/knowledge/motion.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/partial-json.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source-retire.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/memo/data.ts","src/memo/due.ts","src/memo/render.ts","src/memo/settings.ts","src/memo/state.ts","src/memo/ui.ts","src/password-vault/data.ts","src/password-vault/settings.ts","src/people/chat.ts","src/people/datasource.ts","src/people/insights.ts","src/people/me-avatar.ts","src/people/media.ts","src/people/parse.ts","src/people/render.ts","src/people/safe-store.ts","src/people/settings.ts","src/people/stats.ts","src/people/types.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/index.ts","src/pomodoro/motion.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts","src/reading-report/index.ts","src/reading-report/report.ts","src/reading-report/stats.ts","src/review/analysis/data.ts","src/review/analysis/engine.ts","src/review/analysis/index.ts","src/review/analysis/kits.ts","src/review/analysis/motions.ts","src/review/analysis/view.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/motion.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/quiz-panel-data.ts","src/review/quiz-panel.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts","src/secondbrain/ai.ts","src/secondbrain/chunk.ts","src/secondbrain/config.ts","src/secondbrain/link-agent/data.ts","src/secondbrain/link-agent/pipeline.ts","src/secondbrain/motion.ts","src/secondbrain/panel.ts","src/secondbrain/readonly.ts","src/secondbrain/render.ts","src/secondbrain/store-file.ts","src/secondbrain/tfidf.ts","src/secondbrain/vector-math.ts","src/secondbrain/weekly-ui.ts","src/secondbrain/weekly.ts","src/secondbrain/whitelist.ts","src/settings-panel/changelog.ts","src/settings-panel/index.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/manual-viewer.ts","src/settings-panel/motion.ts","src/settings-panel/online-resources.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/schema.ts","src/settings-panel/shared.ts","src/settings-panel/ui.ts","src/settings.ts","src/smartcat/belongings-source.ts","src/smartcat/character.ts","src/smartcat/config.ts","src/smartcat/data.ts","src/smartcat/favorites-source.ts","src/smartcat/motion.ts","src/smartcat/types.ts","src/smartcat/ui.ts"]*/
+/* 源指纹 a090b87e076e80d0 · 仓内输入 299 个（校验见 tests/preview-freshness.test.ts） */
+/*#preview-inputs=["prototypes/review/fake-sim.ts","prototypes/review/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/keys.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/belongings/ai.ts","src/belongings/catalog-suggest.ts","src/belongings/category.ts","src/belongings/data.ts","src/belongings/layouts/poster/render.ts","src/belongings/motion.ts","src/belongings/render.ts","src/belongings/report-stats.ts","src/belongings/report.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/epub-notes.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/motion.ts","src/bookshelf/notes-ui.ts","src/bookshelf/notes.ts","src/bookshelf/render.ts","src/bookshelf/settings.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/bookshelf/ui.ts","src/checkup/checks-consistency.ts","src/checkup/checks-drift.ts","src/checkup/checks-json.ts","src/checkup/checks-orphans.ts","src/checkup/files.ts","src/checkup/index.ts","src/checkup/run.ts","src/checkup/ui.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/douban-fetcher.ts","src/cinema/seasons.ts","src/cinema/settings.ts","src/cinema/shared.ts","src/cinema/state.ts","src/clipbook/anchor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/file-sync.ts","src/clipbook/flow.ts","src/clipbook/image-save.ts","src/clipbook/index.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/motion.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/press/data.ts","src/clipbook/press/engine.ts","src/clipbook/press/index.ts","src/clipbook/press/motions.ts","src/clipbook/press/view.ts","src/clipbook/render.ts","src/clipbook/report-stats.ts","src/clipbook/report-ui.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai-models.ts","src/core/ai.ts","src/core/app.ts","src/core/asr-proofread.ts","src/core/category-table.ts","src/core/changelog.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/domain-icons.ts","src/core/douban-name-index.ts","src/core/download-manifest.ts","src/core/esc-manager.ts","src/core/external-tool.ts","src/core/file-sync.ts","src/core/flow-dialog.ts","src/core/gesture.ts","src/core/http.ts","src/core/item-actions.ts","src/core/jev-fallback.ts","src/core/jev.ts","src/core/json-store.ts","src/core/knowledge-boxes.ts","src/core/landscape.ts","src/core/link-now.ts","src/core/lock-stats.ts","src/core/manual.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/pomodoro-phase.ts","src/core/remote-asset.ts","src/core/remote-base.ts","src/core/rss-catalog.ts","src/core/settings-btn-state.ts","src/core/settings-common.ts","src/core/settings-main-schema.ts","src/core/settings-modal.ts","src/core/settings-model-picker.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/sha256.ts","src/core/skin-pack.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/flip.ts","src/core/ui/focus-trap.ts","src/core/ui/help-tip.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slide-pill.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/settings.ts","src/dock/command.ts","src/dock/data.ts","src/dock/declaration.ts","src/dock/registry.ts","src/dock/runner.ts","src/dock/schedule.ts","src/dock/scheduler.ts","src/dock/schema.ts","src/dock/settings.ts","src/dock/store.ts","src/dock/ui.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/motion.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/favorites/ai.ts","src/favorites/app.ts","src/favorites/config.ts","src/favorites/data.ts","src/favorites/layouts/board/render.ts","src/favorites/motion.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/gameshelf/constants.ts","src/gameshelf/settings.ts","src/gameshelf/state.ts","src/home/entry-editor.ts","src/home/order.ts","src/home/settings.ts","src/home/shared.ts","src/knowledge/data.ts","src/knowledge/file-sync.ts","src/knowledge/index.ts","src/knowledge/motion.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/partial-json.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source-retire.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/memo/data.ts","src/memo/due.ts","src/memo/render.ts","src/memo/settings.ts","src/memo/state.ts","src/memo/ui.ts","src/password-vault/data.ts","src/password-vault/settings.ts","src/people/chat.ts","src/people/datasource.ts","src/people/insights.ts","src/people/me-avatar.ts","src/people/media.ts","src/people/parse.ts","src/people/render.ts","src/people/safe-store.ts","src/people/settings.ts","src/people/stats.ts","src/people/types.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/index.ts","src/pomodoro/motion.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts","src/reading-report/index.ts","src/reading-report/report.ts","src/reading-report/stats.ts","src/review/analysis/data.ts","src/review/analysis/engine.ts","src/review/analysis/index.ts","src/review/analysis/kits.ts","src/review/analysis/motions.ts","src/review/analysis/view.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/motion.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/quiz-panel-data.ts","src/review/quiz-panel.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts","src/secondbrain/ai.ts","src/secondbrain/chunk.ts","src/secondbrain/config.ts","src/secondbrain/link-agent/data.ts","src/secondbrain/link-agent/pipeline.ts","src/secondbrain/motion.ts","src/secondbrain/panel.ts","src/secondbrain/readonly.ts","src/secondbrain/render.ts","src/secondbrain/store-file.ts","src/secondbrain/tfidf.ts","src/secondbrain/vector-math.ts","src/secondbrain/weekly-ui.ts","src/secondbrain/weekly.ts","src/secondbrain/whitelist.ts","src/settings-panel/changelog.ts","src/settings-panel/index.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/manual-viewer.ts","src/settings-panel/motion.ts","src/settings-panel/online-resources.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/schema.ts","src/settings-panel/shared.ts","src/settings-panel/ui.ts","src/settings.ts","src/smartcat/belongings-source.ts","src/smartcat/character.ts","src/smartcat/config.ts","src/smartcat/data.ts","src/smartcat/favorites-source.ts","src/smartcat/motion.ts","src/smartcat/types.ts","src/smartcat/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/review/fake-sim.ts → window.BZW_review（行为单源预览包，issue 245/ADR-0106） */
 var BZW_review = (() => {
   var __create = Object.create;
@@ -42,9 +42,9 @@ var BZW_review = (() => {
   ));
   var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
 
-  // ../../bz/node_modules/.pnpm/moment@2.30.1/node_modules/moment/moment.js
+  // node_modules/.pnpm/moment@2.30.1/node_modules/moment/moment.js
   var require_moment = __commonJS({
-    "../../bz/node_modules/.pnpm/moment@2.30.1/node_modules/moment/moment.js"(exports, module) {
+    "node_modules/.pnpm/moment@2.30.1/node_modules/moment/moment.js"(exports, module) {
       (function(global, factory) {
         typeof exports === "object" && typeof module !== "undefined" ? module.exports = factory() : typeof define === "function" && define.amd ? define(factory) : global.moment = factory();
       })(exports, function() {
@@ -1891,7 +1891,7 @@ var BZW_review = (() => {
             config._d = /* @__PURE__ */ new Date(config._i + (config._useUTC ? " UTC" : ""));
           }
         );
-        function defaults(a, b, c) {
+        function defaults2(a, b, c) {
           if (a != null) {
             return a;
           }
@@ -1921,7 +1921,7 @@ var BZW_review = (() => {
             dayOfYearFromWeekInfo(config);
           }
           if (config._dayOfYear != null) {
-            yearToUse = defaults(config._a[YEAR], currentDate[YEAR]);
+            yearToUse = defaults2(config._a[YEAR], currentDate[YEAR]);
             if (config._dayOfYear > daysInYear(yearToUse) || config._dayOfYear === 0) {
               getParsingFlags(config)._overflowDayOfYear = true;
             }
@@ -1960,13 +1960,13 @@ var BZW_review = (() => {
           if (w.GG != null || w.W != null || w.E != null) {
             dow = 1;
             doy = 4;
-            weekYear = defaults(
+            weekYear = defaults2(
               w.GG,
               config._a[YEAR],
               weekOfYear(createLocal(), 1, 4).year
             );
-            week = defaults(w.W, 1);
-            weekday = defaults(w.E, 1);
+            week = defaults2(w.W, 1);
+            weekday = defaults2(w.E, 1);
             if (weekday < 1 || weekday > 7) {
               weekdayOverflow = true;
             }
@@ -1974,8 +1974,8 @@ var BZW_review = (() => {
             dow = config._locale._week.dow;
             doy = config._locale._week.doy;
             curWeek = weekOfYear(createLocal(), dow, doy);
-            weekYear = defaults(w.gg, config._a[YEAR], curWeek.year);
-            week = defaults(w.w, curWeek.week);
+            weekYear = defaults2(w.gg, config._a[YEAR], curWeek.year);
+            week = defaults2(w.w, curWeek.week);
             if (w.d != null) {
               weekday = w.d;
               if (weekday < 0 || weekday > 6) {
@@ -5790,17 +5790,25 @@ var BZW_review = (() => {
   function updateFileSections(filePath, writer, opts = {}) {
     return enqueueFileTask(filePath, async () => {
       var _a2;
-      const store2 = jsonFileStore(filePath, { ...opts, defaultValue: (_a2 = opts.defaultValue) != null ? _a2 : {} });
-      const current2 = assertPlainObject(filePath, await store2.read());
+      const store3 = jsonFileStore(filePath, { ...opts, defaultValue: (_a2 = opts.defaultValue) != null ? _a2 : {} });
+      const current2 = assertPlainObject(filePath, await store3.read());
       const set = await writer(current2) || {};
       const next = { ...current2, ...set };
-      await store2.write(next);
+      await store3.write(next);
       return next;
     });
   }
   function isAlreadyExistsError(e) {
     const msg = e instanceof Error ? e.message : String(e);
     return /already exist/i.test(msg);
+  }
+  async function diskPathExists(app2, p) {
+    var _a2, _b2, _c;
+    try {
+      return !!await ((_c = (_b2 = (_a2 = app2.vault) == null ? void 0 : _a2.adapter) == null ? void 0 : _b2.exists) == null ? void 0 : _c.call(_b2, p));
+    } catch (e) {
+      return false;
+    }
   }
   function corruptStamp(d = /* @__PURE__ */ new Date()) {
     const p = (n) => String(n).padStart(2, "0");
@@ -5812,8 +5820,8 @@ var BZW_review = (() => {
   async function backupOriginal(app2, filePath, raw) {
     try {
       const f = app2.vault.getAbstractFileByPath(filePath);
-      if (!f) return null;
-      const content = raw !== void 0 ? raw : await app2.vault.read(f);
+      const content = raw !== void 0 ? raw : f ? await app2.vault.read(f) : void 0;
+      if (content === void 0) return null;
       if (!app2.vault.getAbstractFileByPath(CORRUPT_BACKUP_DIR)) {
         try {
           await app2.vault.createFolder(CORRUPT_BACKUP_DIR);
@@ -5848,6 +5856,10 @@ var BZW_review = (() => {
   function serialize(v) {
     return JSON.stringify(v, null, 2);
   }
+  async function readFromDisk(app2, filePath) {
+    const raw = await app2.vault.adapter.read(filePath);
+    return raw.charCodeAt(0) === 65279 ? raw.substring(1) : raw;
+  }
   function jsonFileStore(filePath, opts = {}) {
     const resolveApp2 = () => opts.app || getApp();
     const resolveDefault = () => {
@@ -5856,7 +5868,14 @@ var BZW_review = (() => {
     };
     async function ensureDir3(app2) {
       const d = filePath.substring(0, filePath.lastIndexOf("/"));
-      if (d && !app2.vault.getAbstractFileByPath(d)) await app2.vault.createFolder(d);
+      if (!d || app2.vault.getAbstractFileByPath(d)) return;
+      if (await diskPathExists(app2, d)) return;
+      try {
+        await app2.vault.createFolder(d);
+      } catch (e) {
+        if (await diskPathExists(app2, d)) return;
+        throw e;
+      }
     }
     async function createIfMissing(app2, content) {
       await ensureDir3(app2);
@@ -5864,7 +5883,8 @@ var BZW_review = (() => {
         await app2.vault.create(filePath, content);
         return true;
       } catch (e) {
-        if (isAlreadyExistsError(e) && app2.vault.getAbstractFileByPath(filePath)) return false;
+        if (isAlreadyExistsError(e) && (app2.vault.getAbstractFileByPath(filePath) || await diskPathExists(app2, filePath)))
+          return false;
         throw e;
       }
     }
@@ -5878,6 +5898,8 @@ var BZW_review = (() => {
       const f = app2.vault.getAbstractFileByPath(filePath);
       if (f) {
         await app2.vault.modify(f, serialize(resolveDefault()));
+      } else if (await diskPathExists(app2, filePath)) {
+        await app2.vault.adapter.write(filePath, serialize(resolveDefault()));
       } else {
         await createIfMissing(app2, serialize(resolveDefault()));
       }
@@ -5892,6 +5914,13 @@ var BZW_review = (() => {
         throw e;
       }
     }
+    async function parseRaw(app2, raw) {
+      try {
+        return JSON.parse(raw);
+      } catch (e) {
+        return await handleCorrupt(app2, e, raw);
+      }
+    }
     return {
       async read() {
         const app2 = resolveApp2();
@@ -5900,14 +5929,12 @@ var BZW_review = (() => {
           const created = await createIfMissing(app2, serialize(resolveDefault()));
           if (created) return resolveDefault();
           f = app2.vault.getAbstractFileByPath(filePath);
+          if (!f && await diskPathExists(app2, filePath)) {
+            return parseRaw(app2, await readFromDisk(app2, filePath));
+          }
           if (!f) return resolveDefault();
         }
-        const raw = await app2.vault.read(f);
-        try {
-          return JSON.parse(raw);
-        } catch (e) {
-          return await handleCorrupt(app2, e, raw);
-        }
+        return parseRaw(app2, await app2.vault.read(f));
       },
       async write(data) {
         const app2 = resolveApp2();
@@ -5927,6 +5954,22 @@ var BZW_review = (() => {
         const created = await createIfMissing(app2, c);
         if (created) return;
         let cur = app2.vault.getAbstractFileByPath(filePath);
+        if (!cur && await diskPathExists(app2, filePath)) {
+          try {
+            if (opts.writeIfChanged) {
+              try {
+                if (await readFromDisk(app2, filePath) === c) return;
+              } catch (e) {
+              }
+            }
+            await app2.vault.adapter.write(filePath, c);
+            return;
+          } catch (e) {
+            const backupPath = await backupOriginal(app2, filePath);
+            if (backupPath) notifyBackup(filePath, backupPath, "写入失败");
+            throw e;
+          }
+        }
         if (!cur) {
           const retried = await createIfMissing(app2, c);
           if (retried) return;
@@ -16646,8 +16689,8 @@ ${n.content.slice(0, 2e3)}
   });
 
   // src/core/settings-schema.ts
-  function selectOptionsOf(options2, snapshot2) {
-    return typeof options2 === "function" ? options2(snapshot2) : options2;
+  function selectOptionsOf(options2, snapshot3) {
+    return typeof options2 === "function" ? options2(snapshot3) : options2;
   }
   function selectOptionsSignature(opts) {
     return opts.map((o) => o.value).join("");
@@ -16680,10 +16723,10 @@ ${n.content.slice(0, 2e3)}
   function currentSnapshot() {
     return tryGetSettings();
   }
-  function resolveNumberBound(bound, snapshot2) {
+  function resolveNumberBound(bound, snapshot3) {
     if (bound === void 0) return void 0;
     if (typeof bound !== "function") return bound;
-    const v = bound(snapshot2);
+    const v = bound(snapshot3);
     return typeof v === "number" && Number.isFinite(v) ? v : void 0;
   }
   function parseClampedNumber(raw, min, max) {
@@ -19427,7 +19470,7 @@ ${n.content.slice(0, 2e3)}
         desc: p.apiKeyDesc,
         binding: { key: p.apiKeyKey },
         placeholder: "粘贴密钥",
-        visibleWhen: (snapshot2) => snapshot2.aiProvider === p.id,
+        visibleWhen: (snapshot3) => snapshot3.aiProvider === p.id,
         actions: [{
           text: "测试",
           // issue 434 拍板：状态长在按钮上——点击转圈、成功绿✓、失败红✕，不弹通知不显详情
@@ -19642,7 +19685,7 @@ ${n.content.slice(0, 2e3)}
       desc: "改用 Jev 模型云端重排",
       help: "重排有两个通道：本地 rerank 模型，或 Jev 判定通道（云端）。开启即改用 Jev，下面本地「重排模型」一行随之隐藏。Jev 未配密钥时运行期自动回落余弦相似度排序，不报错。",
       binding: { key: "secondBrainRerankJev" },
-      visibleWhen: (snapshot2) => snapshot2.secondBrainRerank !== false
+      visibleWhen: (snapshot3) => snapshot3.secondBrainRerank !== false
     };
   }
   function rerankModelRow() {
@@ -19653,7 +19696,7 @@ ${n.content.slice(0, 2e3)}
       help: "本地 rerank 模型，留空回落内置的 Qwen3-Reranker-4B。本地重排只在嵌入模型是 Qwen3-Embedding-8B 时可用：换成别的嵌入模型后，即便总闸开着，重排通道判定为 off，这一行也不会出现。",
       placeholder: "dengcao/Qwen3-Reranker-4B:Q4_K_M",
       binding: { key: "secondBrainRerankModel" },
-      visibleWhen: (snapshot2) => isQwen3Embedding8b(snapshot2.secondBrainEmbeddingModel) && snapshot2.secondBrainRerank !== false && snapshot2.secondBrainRerankJev !== true,
+      visibleWhen: (snapshot3) => isQwen3Embedding8b(snapshot3.secondBrainEmbeddingModel) && snapshot3.secondBrainRerank !== false && snapshot3.secondBrainRerankJev !== true,
       actions: [{
         text: "获取模型",
         onClick: async (_value, ctx) => {
@@ -19739,7 +19782,7 @@ ${n.content.slice(0, 2e3)}
           { value: "large-v2", label: "large-v2" },
           { value: "large-v3", label: "large-v3（最准）" }
         ],
-        visibleWhen: (snapshot2) => snapshot2.asrEngine === "faster-whisper"
+        visibleWhen: (snapshot3) => snapshot3.asrEngine === "faster-whisper"
       },
       {
         type: "toggle",
@@ -40662,17 +40705,17 @@ ${it.text}`).join("\n"));
   });
 
   // src/smartcat/belongings-source.ts
-  function belongingsEditChanges(snapshot2, next) {
+  function belongingsEditChanges(snapshot3, next) {
     var _a2, _b2, _c, _d;
     const changes = [];
-    if (snapshot2.name !== next.name) changes.push("改了名称");
-    if (snapshot2.category !== next.category) changes.push("改了分类");
-    if (snapshot2.purchase_price !== next.purchase_price) changes.push("改了价格");
-    if (snapshot2.purchase_date !== next.purchase_date) changes.push("改了购买日期");
-    if (snapshot2.current_status !== next.current_status) changes.push("改了状态");
-    if (snapshot2.description !== next.description) changes.push("改了描述");
-    if (((_a2 = snapshot2.sold_price) != null ? _a2 : null) !== ((_b2 = next.sold_price) != null ? _b2 : null)) changes.push("改了售价");
-    if (((_c = snapshot2.exit_date) != null ? _c : null) !== ((_d = next.exit_date) != null ? _d : null)) changes.push("改了出离日期");
+    if (snapshot3.name !== next.name) changes.push("改了名称");
+    if (snapshot3.category !== next.category) changes.push("改了分类");
+    if (snapshot3.purchase_price !== next.purchase_price) changes.push("改了价格");
+    if (snapshot3.purchase_date !== next.purchase_date) changes.push("改了购买日期");
+    if (snapshot3.current_status !== next.current_status) changes.push("改了状态");
+    if (snapshot3.description !== next.description) changes.push("改了描述");
+    if (((_a2 = snapshot3.sold_price) != null ? _a2 : null) !== ((_b2 = next.sold_price) != null ? _b2 : null)) changes.push("改了售价");
+    if (((_c = snapshot3.exit_date) != null ? _c : null) !== ((_d = next.exit_date) != null ? _d : null)) changes.push("改了出离日期");
     return changes;
   }
   var init_belongings_source = __esm({
@@ -43339,7 +43382,7 @@ ${it.text}`).join("\n"));
       (_a2 = M9.renderFn) == null ? void 0 : _a2.call(M9);
       return;
     }
-    const snapshot2 = { ...M9.db.items[it.id] };
+    const snapshot3 = { ...M9.db.items[it.id] };
     const strikeCell = (_b2 = M9.overlay) == null ? void 0 : _b2.querySelector(`[data-bel-id="${CSS.escape(it.id)}"]`);
     if (strikeCell) motionCellStrike(strikeCell);
     delete M9.db.items[it.id];
@@ -43347,7 +43390,7 @@ ${it.text}`).join("\n"));
     try {
       await saveAndRender();
     } catch (e) {
-      M9.db.items[snapshot2.id] = snapshot2;
+      M9.db.items[snapshot3.id] = snapshot3;
       notifySaveError(e, "删除物品");
       M9.db = await loadDatabase().catch(() => null);
       (_c = M9.renderFn) == null ? void 0 : _c.call(M9);
@@ -43359,13 +43402,13 @@ ${it.text}`).join("\n"));
         var _a3;
         try {
           if (!M9.db) M9.db = await loadDatabase();
-          if (M9.db.items[snapshot2.id]) {
-            notice(`已存在同 id 物品（${snapshot2.id}），跳过恢复`, "warning");
+          if (M9.db.items[snapshot3.id]) {
+            notice(`已存在同 id 物品（${snapshot3.id}），跳过恢复`, "warning");
             return;
           }
-          M9.db.items[snapshot2.id] = snapshot2;
+          M9.db.items[snapshot3.id] = snapshot3;
           await saveAndRender();
-          notice(`已恢复「${snapshot2.name}」`, "success");
+          notice(`已恢复「${snapshot3.name}」`, "success");
         } catch (e) {
           notifySaveError(e, "撤销删除");
           M9.db = await loadDatabase().catch(() => null);
@@ -43603,7 +43646,7 @@ ${it.text}`).join("\n"));
               closeBelForm();
               return;
             }
-            const snapshot2 = { ...cur };
+            const snapshot3 = { ...cur };
             cur.name = name;
             cur.category = category;
             cur.icon = formIcon;
@@ -43622,11 +43665,11 @@ ${it.text}`).join("\n"));
               if (redrew) openBelDetail(redrew);
             }
             if (isBelReportOpen()) void openBelongingsReportView();
-            if (snapshot2.current_status !== curStatus) {
+            if (snapshot3.current_status !== curStatus) {
               const editCell = (_a3 = M9.overlay) == null ? void 0 : _a3.querySelector(`[data-bel-id="${CSS.escape(cur.id)}"]`);
               if (editCell) motionCellFlow(editCell, exitedStatus(curStatus));
             }
-            emitDomainEvent("belongings", { kind: "edit", title: name, changes: belongingsEditChanges(snapshot2, cur) });
+            emitDomainEvent("belongings", { kind: "edit", title: name, changes: belongingsEditChanges(snapshot3, cur) });
           } else {
             if (!M9.db) throw new Error("数据库未加载");
             const newItem = {
@@ -44970,11 +45013,11 @@ ${bodyText.substring(0, 6e3)}`;
       if (!s.byPlatform) s.byPlatform = {};
       if (!s.byDate) s.byDate = {};
       let bumped = 0;
-      const snapshot2 = [];
+      const snapshot3 = [];
       const list = (res.data.articles || []).map((a) => {
         if (a.read === true || !keys.has(articleKeyOf(a))) return a;
         bumped++;
-        snapshot2.push({ ...a });
+        snapshot3.push({ ...a });
         const next = { ...a, read: true, state: "skipped" };
         const platform = a.platform || "未知";
         s.byPlatform[platform] = (Number(s.byPlatform[platform]) || 0) + 1;
@@ -44985,13 +45028,13 @@ ${bodyText.substring(0, 6e3)}`;
       s.totalRead = (Number(s.totalRead) || 0) + bumped;
       s.totalSkipped = (Number(s.totalSkipped) || 0) + bumped;
       await writeNewsDataMerged({ set: { articles: list, stats: s } });
-      return { bumped, snapshot: snapshot2 };
+      return { bumped, snapshot: snapshot3 };
     });
   }
-  async function flowUndoMarkAllRead(snapshot2) {
-    if (!snapshot2 || !snapshot2.length) return;
+  async function flowUndoMarkAllRead(snapshot3) {
+    if (!snapshot3 || !snapshot3.length) return;
     const beforeByKey = /* @__PURE__ */ new Map();
-    for (const r of snapshot2) if (r) beforeByKey.set(articleKeyOf(r), r);
+    for (const r of snapshot3) if (r) beforeByKey.set(articleKeyOf(r), r);
     if (!beforeByKey.size) return;
     await enqueueNewsWrite(async () => {
       const res = await readNewsData();
@@ -48920,13 +48963,13 @@ ${bodyText.substring(0, 6e3)}`;
       ]
     });
     if (ok !== "ok") return;
-    const { bumped, snapshot: snapshot2 } = await flowMarkAllRead(unread);
+    const { bumped, snapshot: snapshot3 } = await flowMarkAllRead(unread);
     if (!bumped) {
       void reloadIfOpen();
       return;
     }
     notifyUndo(`已把 ${bumped} 篇标为已读`, () => void (async () => {
-      await flowUndoMarkAllRead(snapshot2);
+      await flowUndoMarkAllRead(snapshot3);
       notice("已撤销：条目恢复未读", "success");
       void reloadIfOpen();
     })());
@@ -49105,8 +49148,8 @@ ${c.trim()}
       if (j > i) {
         try {
           const raw = html.slice(i + "window.INITIAL_STORE=".length, j).trim().replace(/;\s*$/, "");
-          const store2 = JSON.parse(raw);
-          const art = store2.articleStore && store2.articleStore.article;
+          const store3 = JSON.parse(raw);
+          const art = store3.articleStore && store3.articleStore.article;
           if (art && art.content) return art.content;
         } catch (e) {
         }
@@ -49537,10 +49580,10 @@ ${c.trim()}
   }
   async function maybeFetchNews(deps2) {
     if (fetching) return null;
-    const store2 = (deps2 == null ? void 0 : deps2.store) || defaultFetchStore();
+    const store3 = (deps2 == null ? void 0 : deps2.store) || defaultFetchStore();
     let disk;
     try {
-      disk = await store2.read();
+      disk = await store3.read();
     } catch (e) {
       console.warn("[剪藏本] 聚合讯抓取失败", e);
       return null;
@@ -50071,7 +50114,7 @@ ${c.trim()}
     registerClose(close);
     const instance = (_a2 = normalizeRsshubInstance(opts.instance)) != null ? _a2 : RSS_HUB_DEFAULT_INSTANCE;
     const templateParams = parseRouteTemplate(feed.via);
-    const defaults = feed.viaExample ? reverseTemplateExample(feed.via, feed.viaExample) : {};
+    const defaults2 = feed.viaExample ? reverseTemplateExample(feed.via, feed.viaExample) : {};
     const header = document.createElement("div");
     header.className = "bz-settings-header";
     const title = document.createElement("h3");
@@ -50110,7 +50153,7 @@ ${c.trim()}
       input.type = "text";
       input.className = "bz-rss-route-input";
       input.placeholder = ((_b2 = feed.params) == null ? void 0 : _b2[p.name]) || "参数值";
-      input.value = defaults[p.name] || "";
+      input.value = defaults2[p.name] || "";
       values[p.name] = input.value;
       input.addEventListener("input", () => {
         values[p.name] = input.value;
@@ -51313,13 +51356,13 @@ ${c.trim()}
       ]
     });
     if (ok !== "ok") return;
-    const { bumped, snapshot: snapshot2 } = await flowMarkAllRead(items.map((a) => a.raw).filter(Boolean));
+    const { bumped, snapshot: snapshot3 } = await flowMarkAllRead(items.map((a) => a.raw).filter(Boolean));
     if (!bumped) {
       await refreshAfterAction();
       return;
     }
     notifyUndo(`已把 ${bumped} 篇标为已读`, () => void (async () => {
-      await flowUndoMarkAllRead(snapshot2);
+      await flowUndoMarkAllRead(snapshot3);
       notice("已撤销：条目恢复未读", "success");
       await refreshAfterAction();
     })());
@@ -54232,7 +54275,7 @@ ${c.trim()}
     }
   }
   async function deleteItem2(it) {
-    const snapshot2 = it;
+    const snapshot3 = it;
     try {
       const depart = motionCardDepart(boardEl(), it.id, "del");
       await Promise.all([dataManagerOf().delete(it.id), depart]);
@@ -54241,9 +54284,9 @@ ${c.trim()}
       notifyUndo(`已删除收藏「${it.title}」`, () => {
         void (async () => {
           try {
-            await dataManagerOf().restoreItem(snapshot2);
+            await dataManagerOf().restoreItem(snapshot3);
             emitDomainEvent("favorites", { kind: "restored", title: it.title });
-            await reload2({ id: snapshot2.id, kind: "restore" });
+            await reload2({ id: snapshot3.id, kind: "restore" });
           } catch (e) {
             notifySaveError(e, "恢复收藏");
           }
@@ -55391,22 +55434,22 @@ GitHub 仓库：${ghInfo.title}
       return false;
     }
     let anyLegacy = false;
-    const store2 = emptyStore();
+    const store3 = emptyStore();
     for (const name of LEGACY_FILES) {
       const legacyPath = storeDir() + "/" + name;
       const raw = await readJsonIfExists(app2, legacyPath).catch(() => null);
       if (raw === null) continue;
       anyLegacy = true;
-      if (name === "secondbrain_meta.json" && raw && typeof raw === "object") store2.meta = raw;
-      else if (name === "secondbrain_panel.json" && raw && typeof raw === "object") store2.panel = raw;
+      if (name === "secondbrain_meta.json" && raw && typeof raw === "object") store3.meta = raw;
+      else if (name === "secondbrain_panel.json" && raw && typeof raw === "object") store3.panel = raw;
       else if (name === "secondbrain_link_queue.json") {
-        if (Array.isArray(raw)) store2.link.queue = raw;
+        if (Array.isArray(raw)) store3.link.queue = raw;
       } else if (name === "secondbrain_link_state.json") {
-        if (raw && typeof raw === "object" && !Array.isArray(raw)) store2.link.state = raw;
+        if (raw && typeof raw === "object" && !Array.isArray(raw)) store3.link.state = raw;
       }
     }
     if (!anyLegacy) return false;
-    await adapter.write(storePath, JSON.stringify(store2));
+    await adapter.write(storePath, JSON.stringify(store3));
     for (const name of LEGACY_FILES) {
       const legacyPath = storeDir() + "/" + name;
       try {
@@ -55643,23 +55686,23 @@ GitHub 仓库：${ghInfo.title}
       }
     }
   }
-  async function reconcileConflicts(a, store2) {
+  async function reconcileConflicts(a, store3) {
     var _a2;
     const adapter = (_a2 = a == null ? void 0 : a.vault) == null ? void 0 : _a2.adapter;
-    if (!adapter || typeof adapter.list !== "function") return store2;
+    if (!adapter || typeof adapter.list !== "function") return store3;
     let listed = [];
     try {
       const r = await adapter.list(storeDir());
       listed = Array.isArray(r == null ? void 0 : r.files) ? r.files : [];
     } catch (e) {
-      return store2;
+      return store3;
     }
     const conflictJson = listed.filter((f) => isConflictJsonName(f.split("/").pop() || f));
     const conflictVec = listed.filter((f) => isConflictVecName(f.split("/").pop() || f));
-    if (!conflictJson.length && !conflictVec.length) return store2;
-    const primaryMeta = store2.meta;
+    if (!conflictJson.length && !conflictVec.length) return store3;
+    const primaryMeta = store3.meta;
     const conflictMetas = [];
-    let merged = store2;
+    let merged = store3;
     let jsonMerged = false;
     for (const name of conflictJson) {
       try {
@@ -55742,8 +55785,8 @@ GitHub 仓库：${ghInfo.title}
   }
   async function readStoreRaw(app2) {
     const a = resolveApp(app2);
-    const store2 = await readStoreRawInner(a);
-    return reconcileConflicts(a, store2);
+    const store3 = await readStoreRawInner(a);
+    return reconcileConflicts(a, store3);
   }
   async function saveStoreRaw(data, app2) {
     var _a2;
@@ -56757,9 +56800,9 @@ GitHub 仓库：${ghInfo.title}
     void (async () => {
       var _a2, _b2;
       try {
-        const store2 = await loadStore(app2);
+        const store3 = await loadStore(app2);
         ensureModal(app2);
-        showWeeklyModal((_b2 = (_a2 = store2.weekly) == null ? void 0 : _a2.digest) != null ? _b2 : null);
+        showWeeklyModal((_b2 = (_a2 = store3.weekly) == null ? void 0 : _a2.digest) != null ? _b2 : null);
       } catch (e) {
         console.warn("[secondbrain] 每周动态读取失败", e);
         ensureModal(app2);
@@ -57036,7 +57079,7 @@ GitHub 仓库：${ghInfo.title}
       init_render13();
       PANEL5 = { MIN_W: 640, MIN_H: 440, MAX_W: 1280, MAX_H: 880 };
       SecondBrainPanel = class {
-        constructor(app2, store2, opts) {
+        constructor(app2, store3, opts) {
           this.mask = null;
           this.popup = null;
           /** ESC 层级句柄（ticket 141 迁移：原私挂 document keydown 废弃） */
@@ -57055,7 +57098,7 @@ GitHub 仓库：${ghInfo.title}
           /** 桌面拖动缩放句柄（ADR-0084/0094）：open 挂、close 摘，与面板显隐成对 */
           this.panelResizeDetach = null;
           this.app = app2;
-          this.store = store2;
+          this.store = store3;
           this.opts = opts;
         }
         /** 设置页「重新索引」调用（index.ts 入口转发）：标记意图后打开面板自动跑 */
@@ -57508,18 +57551,18 @@ GitHub 仓库：${ghInfo.title}
         async loadSummaryAndLinks() {
           var _a2, _b2, _c, _d, _e;
           try {
-            const store2 = await loadStore(this.app);
+            const store3 = await loadStore(this.app);
             const popup = this.popup;
             if (!popup || !popup.isConnected) return;
-            const summary = ((_a2 = store2.panel) == null ? void 0 : _a2.summary) || "";
+            const summary = ((_a2 = store3.panel) == null ? void 0 : _a2.summary) || "";
             const aiCard = popup.querySelector("#bz-sb-ai-card");
             const aiTxt = popup.querySelector("#bz-sb-ai-txt");
             if (aiCard) aiCard.style.display = summary ? "" : "none";
             if (aiTxt && summary) {
-              aiTxt.innerHTML = panelSummaryHtml(summary, ((_b2 = store2.panel) == null ? void 0 : _b2.generatedAt) ? formatRelativeTime(store2.panel.generatedAt) : "");
+              aiTxt.innerHTML = panelSummaryHtml(summary, ((_b2 = store3.panel) == null ? void 0 : _b2.generatedAt) ? formatRelativeTime(store3.panel.generatedAt) : "");
               motionSummaryIn(aiCard);
             }
-            const linkedTotal = Object.keys(((_c = store2.link) == null ? void 0 : _c.state) || {}).length;
+            const linkedTotal = Object.keys(((_c = store3.link) == null ? void 0 : _c.state) || {}).length;
             const log = popup.querySelector("#bz-sb-log");
             if (log && linkedTotal) {
               log.insertAdjacentHTML(
@@ -57527,7 +57570,7 @@ GitHub 仓库：${ghInfo.title}
                 `<span class="bz-sb-log-sep">·</span>${panelLogHtml([{ text: `自动建链 ${linkedTotal} 条` }])}`
               );
             }
-            renderPanelWeeklyCard(popup, this.app, (_e = (_d = store2.weekly) == null ? void 0 : _d.digest) != null ? _e : null);
+            renderPanelWeeklyCard(popup, this.app, (_e = (_d = store3.weekly) == null ? void 0 : _d.digest) != null ? _e : null);
           } catch (e) {
           }
         }
@@ -63598,7 +63641,7 @@ GitHub 仓库：${ghInfo.title}
       imports: Array.isArray(personRaw.imports) ? personRaw.imports : []
     };
     const storeRaw = raw.store && typeof raw.store === "object" ? raw.store : {};
-    const store2 = {
+    const store3 = {
       ...storeRaw,
       msgs: Array.isArray(storeRaw.msgs) ? storeRaw.msgs : [],
       watermarkSid: Number((_d = storeRaw.watermarkSid) != null ? _d : 0) || 0,
@@ -63606,7 +63649,7 @@ GitHub 仓库：${ghInfo.title}
       updatedAt: String((_e = storeRaw.updatedAt) != null ? _e : "")
     };
     const job = raw.job && typeof raw.job === "object" ? raw.job : null;
-    return { version: 1, person, store: store2, job };
+    return { version: 1, person, store: store3, job };
   }
   function stashRecordRecovery(talker, json, avatar) {
     pendingRecordRecovery.push({ talker, json, avatar });
@@ -63619,11 +63662,11 @@ GitHub 仓库：${ghInfo.title}
     });
   }
   async function flushRecordRecovery() {
-    const store2 = await getPeopleSafeStore();
+    const store3 = await getPeopleSafeStore();
     for (let i = pendingRecordRecovery.length - 1; i >= 0; i--) {
       const it = pendingRecordRecovery[i];
       try {
-        await store2.lockNoteFresh(it.talker, JSON.parse(it.json), it.avatar);
+        await store3.lockNoteFresh(it.talker, JSON.parse(it.json), it.avatar);
         pendingRecordRecovery.splice(i, 1);
         notice(`「${it.talker}」的记录已在解锁后自动恢复`, "success");
       } catch (e) {
@@ -63631,9 +63674,9 @@ GitHub 仓库：${ghInfo.title}
       }
     }
   }
-  function setPeopleSafeStoreForTests(store2) {
+  function setPeopleSafeStoreForTests(store3) {
     shared == null ? void 0 : shared.destroy();
-    shared = store2;
+    shared = store3;
   }
   async function getPeopleSafeStore() {
     if (!shared) {
@@ -64832,8 +64875,98 @@ GitHub 仓库：${ghInfo.title}
     }
   });
 
-  // src/dock/schema.ts
+  // src/dock/store.ts
+  function defaults() {
+    return { v: DOCK_STORE_VERSION, tools: [], runState: {}, autoRun: true, notifyMissed: true };
+  }
   function isPlainObject3(v) {
+    return !!v && typeof v === "object" && !Array.isArray(v);
+  }
+  function normalizeDockStore(raw) {
+    if (!isPlainObject3(raw)) return defaults();
+    if (raw.v !== DOCK_STORE_VERSION) return defaults();
+    return {
+      v: DOCK_STORE_VERSION,
+      tools: Array.isArray(raw.tools) ? raw.tools : [],
+      runState: isPlainObject3(raw.runState) ? raw.runState : {},
+      // 两个开关缺省都是「开」：键缺失/形态不对一律视为开，与旧口径（`!== false` 即开）一致
+      autoRun: raw.autoRun !== false,
+      notifyMissed: raw.notifyMissed !== false
+    };
+  }
+  function dockStorePath() {
+    return storageFile(DOCK_STORE_FILENAME);
+  }
+  function readTrustMap() {
+    var _a2;
+    const raw = (_a2 = tryGetSettings()) == null ? void 0 : _a2[DOCK_TRUST_SETTINGS_KEY];
+    if (!isPlainObject3(raw)) return {};
+    const out = {};
+    for (const [id, v] of Object.entries(raw)) {
+      if (!isPlainObject3(v)) continue;
+      const at3 = v.at;
+      if (typeof at3 !== "string" || at3 === "") continue;
+      const run = typeof v.run === "string" && v.run !== "" ? v.run : void 0;
+      out[id] = run !== void 0 ? { at: at3, run } : { at: at3 };
+    }
+    return out;
+  }
+  async function writeTrustMap(map) {
+    const before = JSON.stringify(readTrustMap());
+    const after10 = JSON.stringify(map);
+    if (before === after10) return false;
+    const s = tryGetSettings();
+    s[DOCK_TRUST_SETTINGS_KEY] = map;
+    await saveSettings();
+    return true;
+  }
+  function dockStoreSnapshot() {
+    return snapshot2 != null ? snapshot2 : defaults();
+  }
+  function store2() {
+    return jsonFileStore(dockStorePath(), {
+      defaultValue: defaults,
+      // 写前比对：面板开关反复点、台账无变化时不刷 mtime（Syncthing 止血）
+      writeIfChanged: true
+    });
+  }
+  async function loadDockStore(seed) {
+    const path = dockStorePath();
+    const app2 = getApp();
+    const existed = !!app2.vault.getAbstractFileByPath(path) || await diskPathExists(app2, path);
+    const raw = await store2().read();
+    const next = !existed && seed ? seed : normalizeDockStore(raw);
+    if (!existed && seed) await store2().write(next);
+    snapshot2 = next;
+    return next;
+  }
+  function setDockStoreMemory(patch) {
+    snapshot2 = { ...dockStoreSnapshot(), ...patch, v: DOCK_STORE_VERSION };
+  }
+  async function persistDockStore() {
+    await enqueueFileTask(dockStorePath(), async () => {
+      await store2().write(dockStoreSnapshot());
+    });
+  }
+  async function mutateDockStore(patch) {
+    setDockStoreMemory(patch);
+    await persistDockStore();
+  }
+  var DOCK_STORE_VERSION, DOCK_STORE_FILENAME, DOCK_TRUST_SETTINGS_KEY, snapshot2;
+  var init_store2 = __esm({
+    "src/dock/store.ts"() {
+      init_app();
+      init_storage();
+      init_settings_provider();
+      DOCK_STORE_VERSION = 1;
+      DOCK_STORE_FILENAME = "dock.json";
+      DOCK_TRUST_SETTINGS_KEY = "dockTrust";
+      snapshot2 = null;
+    }
+  });
+
+  // src/dock/schema.ts
+  function isPlainObject4(v) {
     return !!v && typeof v === "object" && !Array.isArray(v);
   }
   function str2(v) {
@@ -64858,14 +64991,14 @@ GitHub 仓库：${ghInfo.title}
     if (trimmed.trim() === "") return null;
     try {
       const v = JSON.parse(trimmed);
-      return isPlainObject3(v) ? v : null;
+      return isPlainObject4(v) ? v : null;
     } catch (e) {
       return null;
     }
   }
   function parseParam(raw) {
     var _a2;
-    if (!isPlainObject3(raw)) return null;
+    if (!isPlainObject4(raw)) return null;
     const key = nonEmptyStr(raw.key);
     const label = nonEmptyStr(raw.label);
     const type = str2(raw.type);
@@ -64875,7 +65008,7 @@ GitHub 仓库：${ghInfo.title}
       if (Array.isArray(raw.options)) {
         const kept = [];
         for (const o of raw.options) {
-          if (!isPlainObject3(o)) continue;
+          if (!isPlainObject4(o)) continue;
           const value = str2(o.value);
           if (value === void 0) continue;
           kept.push({ value, label: (_a2 = nonEmptyStr(o.label)) != null ? _a2 : value });
@@ -64907,7 +65040,7 @@ GitHub 仓库：${ghInfo.title}
     return out;
   }
   function parseSchedule(raw) {
-    if (!isPlainObject3(raw)) return void 0;
+    if (!isPlainObject4(raw)) return void 0;
     const kind = str2(raw.kind);
     if (!kind || !SCHEDULE_KINDS.has(kind)) return void 0;
     const s = { kind };
@@ -64923,7 +65056,7 @@ GitHub 仓库：${ghInfo.title}
   }
   function parseManifest(raw) {
     var _a2, _b2;
-    if (!isPlainObject3(raw)) return null;
+    if (!isPlainObject4(raw)) return null;
     if (raw.v !== DOCK_CONTRACT_VERSION) return null;
     const id = str2(raw.id);
     if (!id || id.length > DOCK_ID_MAX_LEN || !DOCK_ID_RE.test(id)) return null;
@@ -64951,7 +65084,7 @@ GitHub 仓库：${ghInfo.title}
     if (Array.isArray(raw.produces)) {
       out.produces = raw.produces.filter((x) => typeof x === "string");
     }
-    if (isPlainObject3(raw.run)) {
+    if (isPlainObject4(raw.run)) {
       const cmd = (_a2 = nonEmptyStr(raw.run.cmd)) == null ? void 0 : _a2.trim();
       if (cmd) {
         const r = { cmd };
@@ -64973,7 +65106,7 @@ GitHub 仓库：${ghInfo.title}
     const schedule = parseSchedule(raw.schedule);
     if (schedule) out.schedule = schedule;
     else delete out.schedule;
-    if (isPlainObject3(raw.runtime)) {
+    if (isPlainObject4(raw.runtime)) {
       const estimatedSec = num2(raw.runtime.estimatedSec);
       out.runtime = estimatedSec !== void 0 && estimatedSec > 0 ? { estimatedSec } : {};
     } else {
@@ -64983,7 +65116,7 @@ GitHub 仓库：${ghInfo.title}
   }
   function parseRunRecord(raw) {
     var _a2, _b2;
-    if (!isPlainObject3(raw)) return null;
+    if (!isPlainObject4(raw)) return null;
     const startedAt = nonEmptyStr(raw.startedAt);
     const status = str2(raw.status);
     if (!startedAt || !status || !RUN_STATUSES.has(status)) return null;
@@ -64995,12 +65128,12 @@ GitHub 仓库：${ghInfo.title}
     else out.exitCode = num2(raw.exitCode);
     out.durationMs = num2(raw.durationMs);
     out.message = nonEmptyStr(raw.message);
-    if (isPlainObject3(raw.params)) out.params = raw.params;
+    if (isPlainObject4(raw.params)) out.params = raw.params;
     else delete out.params;
     if (Array.isArray(raw.steps)) {
       const steps = [];
       for (const s of raw.steps) {
-        if (!isPlainObject3(s)) continue;
+        if (!isPlainObject4(s)) continue;
         const text2 = nonEmptyStr(s.text);
         if (!text2) continue;
         const step = { text: text2 };
@@ -65015,7 +65148,7 @@ GitHub 仓库：${ghInfo.title}
     } else {
       delete out.steps;
     }
-    if (isPlainObject3(raw.progress)) {
+    if (isPlainObject4(raw.progress)) {
       const phase = (_b2 = nonEmptyStr(raw.progress.phase)) != null ? _b2 : null;
       const pctRaw = raw.progress.pct;
       const pct = typeof pctRaw === "number" && Number.isFinite(pctRaw) ? pctRaw : null;
@@ -65025,7 +65158,7 @@ GitHub 仓库：${ghInfo.title}
     }
     if (!Array.isArray(raw.info)) delete out.info;
     if (!("result" in raw)) delete out.result;
-    if (isPlainObject3(raw.metrics)) {
+    if (isPlainObject4(raw.metrics)) {
       const metrics = {};
       for (const [k, v] of Object.entries(raw.metrics)) {
         const n = num2(v);
@@ -65039,7 +65172,7 @@ GitHub 仓库：${ghInfo.title}
     if (Array.isArray(raw.artifacts)) {
       const artifacts = [];
       for (const a of raw.artifacts) {
-        if (!isPlainObject3(a)) continue;
+        if (!isPlainObject4(a)) continue;
         const path = nonEmptyStr(a.path);
         if (!path) continue;
         const label = nonEmptyStr(a.label);
@@ -65050,7 +65183,7 @@ GitHub 仓库：${ghInfo.title}
     } else {
       delete out.artifacts;
     }
-    if (isPlainObject3(raw.error)) {
+    if (isPlainObject4(raw.error)) {
       const kindRaw = str2(raw.error.kind);
       const kind = kindRaw && ERROR_KINDS.has(kindRaw) ? kindRaw : "unknown";
       const error = { kind };
@@ -65065,7 +65198,7 @@ GitHub 仓库：${ghInfo.title}
     return out;
   }
   function parseRunsFile(raw, expectToolId) {
-    if (!isPlainObject3(raw)) return null;
+    if (!isPlainObject4(raw)) return null;
     if (raw.v !== DOCK_CONTRACT_VERSION) return null;
     const tool = str2(raw.tool);
     if (!tool) return null;
@@ -65299,7 +65432,7 @@ GitHub 仓库：${ghInfo.title}
     const conventionalRun = manifest.run || !hasMainEntry(dirOf(usedPath), fs) ? void 0 : { cmd: "node", args: [MAIN_ENTRY_FILENAME] };
     return { ok: true, manifest, path: usedPath, conventionalRun };
   }
-  function isPlainObject4(v) {
+  function isPlainObject5(v) {
     return !!v && typeof v === "object" && !Array.isArray(v);
   }
   function parseSettingsText(text2, toolId) {
@@ -65308,7 +65441,7 @@ GitHub 仓库：${ghInfo.title}
     if (!raw) return {};
     if (raw.v !== DOCK_SETTINGS_VERSION) return {};
     if (raw.tool !== toolId) return {};
-    return isPlainObject4(raw.values) ? { ...raw.values } : {};
+    return isPlainObject5(raw.values) ? { ...raw.values } : {};
   }
   function readSettings(declPath, toolId, fs = currentFs()) {
     if (!fs) return {};
@@ -65630,14 +65763,49 @@ GitHub 仓库：${ghInfo.title}
   function runsPathOf(entry) {
     return runsPathFor(entry.path);
   }
+  function stripTrustFields(e) {
+    delete e.trustedAt;
+    delete e.trustedRun;
+    return e;
+  }
+  function entriesFromFile(raw) {
+    return parseToolEntries(raw).map(stripTrustFields);
+  }
+  function entriesToFile(entries) {
+    return entries.map((e) => stripTrustFields({ ...e }));
+  }
+  function trustFromEntries(entries) {
+    const trust = {};
+    for (const e of entries) {
+      if (typeof e.trustedAt !== "string" || e.trustedAt === "") continue;
+      const t = { at: e.trustedAt };
+      if (typeof e.trustedRun === "string") t.run = e.trustedRun;
+      trust[e.id] = t;
+    }
+    return trust;
+  }
   function readToolEntries() {
-    var _a2;
-    return parseToolEntries((_a2 = tryGetSettings()) == null ? void 0 : _a2.dockTools);
+    const trust = readTrustMap();
+    return entriesFromFile(dockStoreSnapshot().tools).map((e) => {
+      const t = trust[e.id];
+      if (!t) return e;
+      e.trustedAt = t.at;
+      if (t.run !== void 0) e.trustedRun = t.run;
+      return e;
+    });
   }
   async function saveToolEntries(entries) {
-    const s = getSettings();
-    s.dockTools = entries;
-    await saveSettings();
+    await mutateDockStore({ tools: entriesToFile(entries) });
+    await writeTrustMap(trustFromEntries(entries));
+  }
+  function readTrustRecords() {
+    return readTrustMap();
+  }
+  async function untrustTool(id) {
+    const trust = readTrustMap();
+    if (!(id in trust)) return;
+    delete trust[id];
+    await writeTrustMap(trust);
   }
   function isTrusted(entry) {
     return typeof entry.trustedAt === "string" && entry.trustedAt !== "";
@@ -65673,9 +65841,7 @@ GitHub 仓库：${ghInfo.title}
     return out;
   }
   function readRunStates() {
-    var _a2;
-    const raw = (_a2 = tryGetSettings()) == null ? void 0 : _a2.dockRunState;
-    if (!raw || typeof raw !== "object" || Array.isArray(raw)) return {};
+    const raw = dockStoreSnapshot().runState;
     const out = {};
     for (const [id, v] of Object.entries(raw)) {
       const st = parseRunState(v);
@@ -65684,7 +65850,6 @@ GitHub 仓库：${ghInfo.title}
     return out;
   }
   async function patchRunState(id, patch) {
-    const s = getSettings();
     const all = readRunStates();
     if (patch === null) {
       delete all[id];
@@ -65698,8 +65863,7 @@ GitHub 仓库：${ghInfo.title}
       if (Object.keys(st).length) all[id] = st;
       else delete all[id];
     }
-    s.dockRunState = all;
-    await saveSettings();
+    await mutateDockStore({ runState: all });
   }
   async function recordRunSuccess(id, finishedAt) {
     await patchRunState(id, {
@@ -65708,6 +65872,13 @@ GitHub 仓库：${ghInfo.title}
       consecutiveFailures: 0,
       pausedAt: void 0
     });
+  }
+  function readDockSwitch(key) {
+    return dockStoreSnapshot()[key] !== false;
+  }
+  function setDockSwitch(key, value) {
+    const patch = { [key]: value === true };
+    setDockStoreMemory(patch);
   }
   function readRunsFile(entry) {
     const raw = readRunsText(entry.path);
@@ -65807,7 +65978,7 @@ GitHub 仓库：${ghInfo.title}
   }
   var init_data16 = __esm({
     "src/dock/data.ts"() {
-      init_settings_provider();
+      init_store2();
       init_schema2();
       init_registry();
       init_declaration();
@@ -66280,8 +66451,7 @@ GitHub 仓库：${ghInfo.title}
 
   // src/dock/scheduler.ts
   function globalAutoOn() {
-    var _a2;
-    return ((_a2 = tryGetSettings()) == null ? void 0 : _a2.dockAutoRun) !== false;
+    return readDockSwitch("autoRun");
   }
   function kickDockScheduler() {
     if (app === null) return;
@@ -66310,6 +66480,10 @@ GitHub 仓库：${ghInfo.title}
   async function tick() {
     if (app === null || isUnloaded === null) return;
     if (isUnloaded()) return;
+    try {
+      await loadDockStore();
+    } catch (e) {
+    }
     if (!globalAutoOn()) return;
     let views2;
     try {
@@ -66402,8 +66576,8 @@ GitHub 仓库：${ghInfo.title}
     "src/dock/scheduler.ts"() {
       init_fake_obsidian();
       init_notice();
-      init_settings_provider();
       init_data16();
+      init_store2();
       init_schedule();
       init_ui13();
       init_runner();
@@ -66597,6 +66771,7 @@ GitHub 仓库：${ghInfo.title}
     refreshing = true;
     renderHead();
     try {
+      await loadDockStore();
       views = await loadToolViews(hostApp2);
       runDueNotifications();
     } catch (e) {
@@ -66608,7 +66783,7 @@ GitHub 仓库：${ghInfo.title}
     }
   }
   function runDueNotifications() {
-    if (tryGetSettings().dockNotifyMissed === false) return;
+    if (!readDockSwitch("notifyMissed")) return;
     const day = todayKey();
     for (const v of views) {
       if (!isEnabled(v.entry)) continue;
@@ -66626,7 +66801,7 @@ GitHub 仓库：${ghInfo.title}
   }
   function willAutoRun(v) {
     var _a2, _b2;
-    if (tryGetSettings().dockAutoRun === false) return false;
+    if (!readDockSwitch("autoRun")) return false;
     if (!isEnabled(v.entry) || !isTrusted(v.entry) || v.trustStale) return false;
     if (!v.run || !v.autoRun) return false;
     if (triggerOfView(v) !== "auto") return false;
@@ -67970,8 +68145,8 @@ GitHub 仓库：${ghInfo.title}
       init_path_picker();
       init_item_actions();
       init_str();
-      init_settings_provider();
       init_data16();
+      init_store2();
       init_command();
       init_runner();
       init_scheduler();
@@ -68006,6 +68181,91 @@ GitHub 仓库：${ghInfo.title}
   __export(settings_exports9, {
     dockSettingsSchema: () => dockSettingsSchema
   });
+  function switchBinding(key) {
+    return {
+      get: () => readDockSwitch(key),
+      set: (v) => setDockSwitch(key, v),
+      // 落盘前先对齐盘上现值：外部（同步盘）改过 dock.json 的窗口内，不拿过期快照整文件覆盖
+      // （persist 是整文件写）。顺序关键 —— 先取用户本次拨的值（还在内存快照里），重载
+      // （会用盘上现值覆盖快照），再把本次拨动补回去，最后整文件落盘
+      save: async () => {
+        const v = readDockSwitch(key);
+        await loadDockStore();
+        setDockSwitch(key, v);
+        await persistDockStore();
+      }
+    };
+  }
+  function resolvedRunOf(entry) {
+    var _a2, _b2;
+    const decl = readDeclaration(entry.path);
+    return resolveRun((_a2 = decl.manifest) != null ? _a2 : null, (_b2 = decl.path) != null ? _b2 : entry.path, decl.conventionalRun);
+  }
+  function commandTextOf(entry, run) {
+    if (run) return [run.cmd, ...run.args].join(" ");
+    return readDeclaration(entry.path).ok ? "声明里没写怎么跑" : "声明文件读不到";
+  }
+  function trustItemOf(entry) {
+    var _a2;
+    const run = resolvedRunOf(entry);
+    return {
+      key: entry.id,
+      label: ((_a2 = readDeclaration(entry.path).manifest) == null ? void 0 : _a2.name) || entry.id,
+      sub: commandTextOf(entry, run)
+    };
+  }
+  function trustItems(wantTrusted) {
+    const trust = readTrustRecords();
+    return readToolEntries().filter((e) => e.id in trust === wantTrusted).map(trustItemOf);
+  }
+  function trustRows() {
+    if (readToolEntries().length === 0) {
+      return [{ type: "info", name: "还没有登记工具", desc: "在工具坞面板里「导入声明」登记一个外部脚本" }];
+    }
+    return [
+      {
+        type: "list",
+        name: "已信任的命令",
+        desc: "信任绑的是这条启动命令；声明里的命令一改，信任自动作废",
+        variant: "dense",
+        removeLabel: "撤销信任",
+        emptyText: "还没有授权过任何命令",
+        items: () => trustItems(true),
+        onChange: async (rest) => {
+          const revoked = Object.keys(readTrustRecords()).filter((id) => !rest.includes(id));
+          for (const id of revoked) await untrustTool(id);
+          if (revoked.length) notice(`已撤销 ${revoked.length} 个工具的信任`, "success");
+        }
+      },
+      {
+        type: "list",
+        name: "还没确认的命令",
+        desc: "确认后才自动运行；点「信任这条命令」即按上面这条命令授权",
+        variant: "dense",
+        removeLabel: "信任这条命令",
+        emptyText: "没有待确认的工具",
+        items: () => trustItems(false),
+        onChange: async (rest) => {
+          var _a2;
+          const trust = readTrustRecords();
+          const granted = readToolEntries().filter((e) => !(e.id in trust) && !rest.includes(e.id));
+          const skipped = [];
+          let ok = 0;
+          for (const e of granted) {
+            const run = resolvedRunOf(e);
+            if (!run) {
+              skipped.push(((_a2 = readDeclaration(e.path).manifest) == null ? void 0 : _a2.name) || e.id);
+              continue;
+            }
+            await updateToolEntry(e.id, { trustedAt: (/* @__PURE__ */ new Date()).toISOString(), trustedRun: runSignature(run) });
+            ok += 1;
+          }
+          if (ok) notice(`已信任 ${ok} 个工具的命令`, "success");
+          if (skipped.length) notice(`${skipped.join("、")} 的声明读不到命令，去工具坞面板里确认`, "warning");
+        }
+      }
+    ];
+  }
   function dockSettingsSchema() {
     return {
       groups: [
@@ -68035,7 +68295,7 @@ GitHub 仓库：${ghInfo.title}
               type: "toggle",
               name: "启动后自动运行",
               desc: "Obsidian 就绪后，bz 按各工具声明的节奏触发它：到点跑、该跑没跑就补跑。关掉则全部只手点",
-              binding: { key: "dockAutoRun" }
+              binding: switchBinding("autoRun")
             }
           ]
         },
@@ -68047,9 +68307,14 @@ GitHub 仓库：${ghInfo.title}
               type: "toggle",
               name: "漏跑提醒",
               desc: "工具声明了节奏、当天却没有记录时发一条通知",
-              binding: { key: "dockNotifyMissed" }
+              binding: switchBinding("notifyMissed")
             }
           ]
+        },
+        {
+          icon: "shield-check",
+          name: "信任",
+          rows: trustRows()
         }
       ]
     };
@@ -68057,7 +68322,11 @@ GitHub 仓库：${ghInfo.title}
   var init_settings9 = __esm({
     "src/dock/settings.ts"() {
       init_app();
+      init_notice();
       init_ui13();
+      init_data16();
+      init_declaration();
+      init_store2();
     }
   });
 
@@ -68527,11 +68796,9 @@ GitHub 仓库：${ghInfo.title}
         pythonPath: "",
         ffmpegPath: "ffmpeg",
         ffprobePath: "ffprobe",
-        // 工具坞（dock 域）：空登记表起步（面板内添加）；漏跑提醒默认开；bz 自动运行默认开（ADR-0236）
-        dockTools: [],
-        dockNotifyMissed: true,
-        dockAutoRun: true,
-        dockRunState: {},
+        // 工具坞（dock 域）：面板数据（登记表 / 台账 / 两个开关）自 ADR-0239 起住数据目录的
+        // dock.json，旧键由 main.ts 的迁移读取并清除；这里只留**信任表**（刻意不随 vault 走）
+        dockTrust: {},
         // Jev 决策通道（ADR-0173；issue 424/ADR-0184 常开；issue 433/ADR-0190 起按服务商分存）：未填密钥时不接管任何判定
         jevProvider: "typesafe",
         jevApiKeys: {},
@@ -69632,11 +69899,11 @@ GitHub 仓库：${ghInfo.title}
           });
           if (ans !== "ok") return;
           const { DEFAULT_SETTINGS: DEFAULT_SETTINGS2 } = await Promise.resolve().then(() => (init_settings10(), settings_exports10));
-          const defaults = DEFAULT_SETTINGS2;
+          const defaults2 = DEFAULT_SETTINGS2;
           const s = getSettings();
           let n = 0;
           for (const k of keys) {
-            const def = defaults[k];
+            const def = defaults2[k];
             if (def === void 0) continue;
             s[k] = Array.isArray(def) ? [...def] : def;
             n++;

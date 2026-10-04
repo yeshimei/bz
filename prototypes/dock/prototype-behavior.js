@@ -1,5 +1,5 @@
-/* 源指纹 4eb508381cd817bc · 仓内输入 54 个（校验见 tests/preview-freshness.test.ts） */
-/*#preview-inputs=["prototypes/dock/fake-sim.ts","prototypes/dock/fake/fake-obsidian.ts","src/core/app.ts","src/core/dom.ts","src/core/esc-manager.ts","src/core/external-tool.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/mobile.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/settings-provider.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/help-tip.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/dock/command.ts","src/dock/data.ts","src/dock/declaration.ts","src/dock/index.ts","src/dock/registry.ts","src/dock/runner.ts","src/dock/schedule.ts","src/dock/scheduler.ts","src/dock/schema.ts","src/dock/ui.ts"]*/
+/* 源指纹 cf1e24cfe010534f · 仓内输入 56 个（校验见 tests/preview-freshness.test.ts） */
+/*#preview-inputs=["prototypes/dock/fake-sim.ts","prototypes/dock/fake/fake-obsidian.ts","src/core/app.ts","src/core/dom.ts","src/core/esc-manager.ts","src/core/external-tool.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/mobile.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/settings-provider.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/help-tip.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/dock/command.ts","src/dock/data.ts","src/dock/declaration.ts","src/dock/index.ts","src/dock/registry.ts","src/dock/runner.ts","src/dock/schedule.ts","src/dock/scheduler.ts","src/dock/schema.ts","src/dock/store.ts","src/dock/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/dock/fake-sim.ts → window.BZW_dock（行为单源预览包，issue 245/ADR-0106） */
 var BZW_dock = (() => {
   var __create = Object.create;
@@ -39,9 +39,9 @@ var BZW_dock = (() => {
   ));
   var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
 
-  // ../../bz/node_modules/.pnpm/moment@2.30.1/node_modules/moment/moment.js
+  // node_modules/.pnpm/moment@2.30.1/node_modules/moment/moment.js
   var require_moment = __commonJS({
-    "../../bz/node_modules/.pnpm/moment@2.30.1/node_modules/moment/moment.js"(exports, module) {
+    "node_modules/.pnpm/moment@2.30.1/node_modules/moment/moment.js"(exports, module) {
       (function(global, factory) {
         typeof exports === "object" && typeof module !== "undefined" ? module.exports = factory() : typeof define === "function" && define.amd ? define(factory) : global.moment = factory();
       })(exports, function() {
@@ -1888,7 +1888,7 @@ var BZW_dock = (() => {
             config._d = /* @__PURE__ */ new Date(config._i + (config._useUTC ? " UTC" : ""));
           }
         );
-        function defaults(a, b, c) {
+        function defaults2(a, b, c) {
           if (a != null) {
             return a;
           }
@@ -1918,7 +1918,7 @@ var BZW_dock = (() => {
             dayOfYearFromWeekInfo(config);
           }
           if (config._dayOfYear != null) {
-            yearToUse = defaults(config._a[YEAR], currentDate[YEAR]);
+            yearToUse = defaults2(config._a[YEAR], currentDate[YEAR]);
             if (config._dayOfYear > daysInYear(yearToUse) || config._dayOfYear === 0) {
               getParsingFlags(config)._overflowDayOfYear = true;
             }
@@ -1957,13 +1957,13 @@ var BZW_dock = (() => {
           if (w.GG != null || w.W != null || w.E != null) {
             dow = 1;
             doy = 4;
-            weekYear = defaults(
+            weekYear = defaults2(
               w.GG,
               config._a[YEAR],
               weekOfYear(createLocal(), 1, 4).year
             );
-            week = defaults(w.W, 1);
-            weekday = defaults(w.E, 1);
+            week = defaults2(w.W, 1);
+            weekday = defaults2(w.E, 1);
             if (weekday < 1 || weekday > 7) {
               weekdayOverflow = true;
             }
@@ -1971,8 +1971,8 @@ var BZW_dock = (() => {
             dow = config._locale._week.dow;
             doy = config._locale._week.doy;
             curWeek = weekOfYear(createLocal(), dow, doy);
-            weekYear = defaults(w.gg, config._a[YEAR], curWeek.year);
-            week = defaults(w.w, curWeek.week);
+            weekYear = defaults2(w.gg, config._a[YEAR], curWeek.year);
+            week = defaults2(w.w, curWeek.week);
             if (w.d != null) {
               weekday = w.d;
               if (weekday < 0 || weekday > 6) {
@@ -4115,6 +4115,12 @@ var BZW_dock = (() => {
   function setApp(app2) {
     _app = app2;
   }
+  function getApp() {
+    if (!_app) {
+      throw new Error("bz: app 未初始化（setApp 未调用）");
+    }
+    return _app;
+  }
 
   // src/core/settings-provider.ts
   var _provider = null;
@@ -4127,12 +4133,6 @@ var BZW_dock = (() => {
   }
   function saveSettings() {
     return _saver ? _saver() : Promise.resolve();
-  }
-  function getSettings() {
-    if (!_provider) {
-      throw new Error("bz: 设置提供者未注入（main.ts onload 应调用 setSettingsProvider）");
-    }
-    return _provider();
   }
   function tryGetSettings() {
     return _provider ? _provider() : {};
@@ -5694,6 +5694,307 @@ var BZW_dock = (() => {
     );
   }
 
+  // src/core/storage.ts
+  var DEFAULT_STORAGE_DIR = "CONFIG/STORAGE";
+  function normalizeStorageDir(value) {
+    let dir = (value || DEFAULT_STORAGE_DIR).trim().replace(/\/+$/, "");
+    if (/\.json$/i.test(dir)) {
+      const idx = dir.lastIndexOf("/");
+      dir = idx >= 0 ? dir.slice(0, idx) : "";
+    }
+    return dir || DEFAULT_STORAGE_DIR;
+  }
+  function storageDir() {
+    const s = tryGetSettings();
+    return normalizeStorageDir(s && s.storagePath);
+  }
+  function storageFile(name, base) {
+    const dir = (base || storageDir()).trim().replace(/\/+$/, "");
+    return `${dir}/${name}`;
+  }
+  var fileTaskQueues = /* @__PURE__ */ new Map();
+  function enqueueFileTask(filePath, task) {
+    var _a;
+    const prev = (_a = fileTaskQueues.get(filePath)) != null ? _a : Promise.resolve();
+    const run = prev.then(task, task);
+    const tail = run.then(
+      () => void 0,
+      () => void 0
+    );
+    fileTaskQueues.set(filePath, tail);
+    void tail.then(() => {
+      if (fileTaskQueues.get(filePath) === tail) fileTaskQueues.delete(filePath);
+    });
+    return run;
+  }
+  function isAlreadyExistsError(e) {
+    const msg = e instanceof Error ? e.message : String(e);
+    return /already exist/i.test(msg);
+  }
+  async function diskPathExists(app2, p) {
+    var _a, _b, _c;
+    try {
+      return !!await ((_c = (_b = (_a = app2.vault) == null ? void 0 : _a.adapter) == null ? void 0 : _b.exists) == null ? void 0 : _c.call(_b, p));
+    } catch (e) {
+      return false;
+    }
+  }
+  var CORRUPT_BACKUP_DIR = "CONFIG/.CORRUPT";
+  var CORRUPT_NOTIFY_DEDUPE_MS = 3e4;
+  var corruptNotifyAt = /* @__PURE__ */ new Map();
+  function corruptStamp(d = /* @__PURE__ */ new Date()) {
+    const p = (n) => String(n).padStart(2, "0");
+    return `${d.getFullYear()}${p(d.getMonth() + 1)}${p(d.getDate())}-${p(d.getHours())}${p(d.getMinutes())}${p(d.getSeconds())}`;
+  }
+  function baseNameOf(p) {
+    return p.includes("/") ? p.slice(p.lastIndexOf("/") + 1) : p;
+  }
+  async function backupOriginal(app2, filePath, raw) {
+    try {
+      const f = app2.vault.getAbstractFileByPath(filePath);
+      const content = raw !== void 0 ? raw : f ? await app2.vault.read(f) : void 0;
+      if (content === void 0) return null;
+      if (!app2.vault.getAbstractFileByPath(CORRUPT_BACKUP_DIR)) {
+        try {
+          await app2.vault.createFolder(CORRUPT_BACKUP_DIR);
+        } catch (e) {
+        }
+      }
+      const base = baseNameOf(filePath);
+      const stamp = corruptStamp();
+      let backupPath = `${CORRUPT_BACKUP_DIR}/${base}.${stamp}.bak`;
+      for (let i = 2; app2.vault.getAbstractFileByPath(backupPath); i++) {
+        backupPath = `${CORRUPT_BACKUP_DIR}/${base}.${stamp}-${i}.bak`;
+      }
+      await app2.vault.create(backupPath, content);
+      return backupPath;
+    } catch (e) {
+      console.warn("[storage] " + filePath + " 留档失败（" + CORRUPT_BACKUP_DIR + "），继续原流程", e);
+      return null;
+    }
+  }
+  function notifyBackup(filePath, backupPath, cause) {
+    var _a;
+    const now = Date.now();
+    if (now - ((_a = corruptNotifyAt.get(filePath)) != null ? _a : 0) < CORRUPT_NOTIFY_DEDUPE_MS) return;
+    corruptNotifyAt.set(filePath, now);
+    try {
+      const name = baseNameOf(filePath);
+      const msg = cause === "解析失败" ? `数据文件 ${name} 解析失败，原内容已留档到 ${backupPath}，数据不会丢，已重建默认文件继续使用` : `数据文件 ${name} 写入失败，原内容已留档到 ${backupPath}，数据不会丢，请稍后重试`;
+      notify(msg, { type: "warning" });
+    } catch (e) {
+    }
+  }
+  function serialize(v) {
+    return JSON.stringify(v, null, 2);
+  }
+  async function readFromDisk(app2, filePath) {
+    const raw = await app2.vault.adapter.read(filePath);
+    return raw.charCodeAt(0) === 65279 ? raw.substring(1) : raw;
+  }
+  function jsonFileStore(filePath, opts = {}) {
+    const resolveApp = () => opts.app || getApp();
+    const resolveDefault = () => {
+      const d = opts.defaultValue;
+      return typeof d === "function" ? d() : d === void 0 ? [] : d;
+    };
+    async function ensureDir(app2) {
+      const d = filePath.substring(0, filePath.lastIndexOf("/"));
+      if (!d || app2.vault.getAbstractFileByPath(d)) return;
+      if (await diskPathExists(app2, d)) return;
+      try {
+        await app2.vault.createFolder(d);
+      } catch (e) {
+        if (await diskPathExists(app2, d)) return;
+        throw e;
+      }
+    }
+    async function createIfMissing(app2, content) {
+      await ensureDir(app2);
+      try {
+        await app2.vault.create(filePath, content);
+        return true;
+      } catch (e) {
+        if (isAlreadyExistsError(e) && (app2.vault.getAbstractFileByPath(filePath) || await diskPathExists(app2, filePath)))
+          return false;
+        throw e;
+      }
+    }
+    async function handleCorrupt(app2, err, raw) {
+      var _a;
+      if (((_a = opts.onCorrupt) == null ? void 0 : _a.call(opts, filePath, err)) === false) {
+        return null;
+      }
+      const backupPath = await backupOriginal(app2, filePath, raw);
+      if (backupPath && !opts.onCorrupt) notifyBackup(filePath, backupPath, "解析失败");
+      const f = app2.vault.getAbstractFileByPath(filePath);
+      if (f) {
+        await app2.vault.modify(f, serialize(resolveDefault()));
+      } else if (await diskPathExists(app2, filePath)) {
+        await app2.vault.adapter.write(filePath, serialize(resolveDefault()));
+      } else {
+        await createIfMissing(app2, serialize(resolveDefault()));
+      }
+      return resolveDefault();
+    }
+    async function modifyWithBackup(app2, f, c) {
+      try {
+        await app2.vault.modify(f, c);
+      } catch (e) {
+        const backupPath = await backupOriginal(app2, filePath);
+        if (backupPath) notifyBackup(filePath, backupPath, "写入失败");
+        throw e;
+      }
+    }
+    async function parseRaw(app2, raw) {
+      try {
+        return JSON.parse(raw);
+      } catch (e) {
+        return await handleCorrupt(app2, e, raw);
+      }
+    }
+    return {
+      async read() {
+        const app2 = resolveApp();
+        let f = app2.vault.getAbstractFileByPath(filePath);
+        if (!f) {
+          const created = await createIfMissing(app2, serialize(resolveDefault()));
+          if (created) return resolveDefault();
+          f = app2.vault.getAbstractFileByPath(filePath);
+          if (!f && await diskPathExists(app2, filePath)) {
+            return parseRaw(app2, await readFromDisk(app2, filePath));
+          }
+          if (!f) return resolveDefault();
+        }
+        return parseRaw(app2, await app2.vault.read(f));
+      },
+      async write(data) {
+        const app2 = resolveApp();
+        const c = serialize(data);
+        let f = app2.vault.getAbstractFileByPath(filePath);
+        if (f) {
+          if (opts.writeIfChanged) {
+            try {
+              const cur2 = await app2.vault.read(f);
+              if (cur2 === c) return;
+            } catch (e) {
+            }
+          }
+          await modifyWithBackup(app2, f, c);
+          return;
+        }
+        const created = await createIfMissing(app2, c);
+        if (created) return;
+        let cur = app2.vault.getAbstractFileByPath(filePath);
+        if (!cur && await diskPathExists(app2, filePath)) {
+          try {
+            if (opts.writeIfChanged) {
+              try {
+                if (await readFromDisk(app2, filePath) === c) return;
+              } catch (e) {
+              }
+            }
+            await app2.vault.adapter.write(filePath, c);
+            return;
+          } catch (e) {
+            const backupPath = await backupOriginal(app2, filePath);
+            if (backupPath) notifyBackup(filePath, backupPath, "写入失败");
+            throw e;
+          }
+        }
+        if (!cur) {
+          const retried = await createIfMissing(app2, c);
+          if (retried) return;
+          cur = app2.vault.getAbstractFileByPath(filePath);
+          if (!cur) throw new Error("storage: create 竞态降级失败（" + filePath + "）");
+        }
+        await modifyWithBackup(app2, cur, c);
+      }
+    };
+  }
+
+  // src/dock/store.ts
+  var DOCK_STORE_VERSION = 1;
+  var DOCK_STORE_FILENAME = "dock.json";
+  var DOCK_TRUST_SETTINGS_KEY = "dockTrust";
+  function defaults() {
+    return { v: DOCK_STORE_VERSION, tools: [], runState: {}, autoRun: true, notifyMissed: true };
+  }
+  function isPlainObject(v) {
+    return !!v && typeof v === "object" && !Array.isArray(v);
+  }
+  function normalizeDockStore(raw) {
+    if (!isPlainObject(raw)) return defaults();
+    if (raw.v !== DOCK_STORE_VERSION) return defaults();
+    return {
+      v: DOCK_STORE_VERSION,
+      tools: Array.isArray(raw.tools) ? raw.tools : [],
+      runState: isPlainObject(raw.runState) ? raw.runState : {},
+      // 两个开关缺省都是「开」：键缺失/形态不对一律视为开，与旧口径（`!== false` 即开）一致
+      autoRun: raw.autoRun !== false,
+      notifyMissed: raw.notifyMissed !== false
+    };
+  }
+  function dockStorePath() {
+    return storageFile(DOCK_STORE_FILENAME);
+  }
+  function readTrustMap() {
+    var _a;
+    const raw = (_a = tryGetSettings()) == null ? void 0 : _a[DOCK_TRUST_SETTINGS_KEY];
+    if (!isPlainObject(raw)) return {};
+    const out = {};
+    for (const [id, v] of Object.entries(raw)) {
+      if (!isPlainObject(v)) continue;
+      const at = v.at;
+      if (typeof at !== "string" || at === "") continue;
+      const run = typeof v.run === "string" && v.run !== "" ? v.run : void 0;
+      out[id] = run !== void 0 ? { at, run } : { at };
+    }
+    return out;
+  }
+  async function writeTrustMap(map) {
+    const before = JSON.stringify(readTrustMap());
+    const after = JSON.stringify(map);
+    if (before === after) return false;
+    const s = tryGetSettings();
+    s[DOCK_TRUST_SETTINGS_KEY] = map;
+    await saveSettings();
+    return true;
+  }
+  var snapshot = null;
+  function dockStoreSnapshot() {
+    return snapshot != null ? snapshot : defaults();
+  }
+  function store() {
+    return jsonFileStore(dockStorePath(), {
+      defaultValue: defaults,
+      // 写前比对：面板开关反复点、台账无变化时不刷 mtime（Syncthing 止血）
+      writeIfChanged: true
+    });
+  }
+  async function loadDockStore(seed) {
+    const path = dockStorePath();
+    const app2 = getApp();
+    const existed = !!app2.vault.getAbstractFileByPath(path) || await diskPathExists(app2, path);
+    const raw = await store().read();
+    const next = !existed && seed ? seed : normalizeDockStore(raw);
+    if (!existed && seed) await store().write(next);
+    snapshot = next;
+    return next;
+  }
+  function setDockStoreMemory(patch) {
+    snapshot = { ...dockStoreSnapshot(), ...patch, v: DOCK_STORE_VERSION };
+  }
+  async function persistDockStore() {
+    await enqueueFileTask(dockStorePath(), async () => {
+      await store().write(dockStoreSnapshot());
+    });
+  }
+  async function mutateDockStore(patch) {
+    setDockStoreMemory(patch);
+    await persistDockStore();
+  }
+
   // src/dock/schema.ts
   var DOCK_CONTRACT_VERSION = 1;
   var DOCK_ID_RE = /^[a-z0-9][a-z0-9-]*$/;
@@ -5731,7 +6032,7 @@ var BZW_dock = (() => {
     "unknown"
   ]);
   var DOCK_RUNS_PER_TOOL_LIMIT = 200;
-  function isPlainObject(v) {
+  function isPlainObject2(v) {
     return !!v && typeof v === "object" && !Array.isArray(v);
   }
   function str(v) {
@@ -5756,14 +6057,14 @@ var BZW_dock = (() => {
     if (trimmed.trim() === "") return null;
     try {
       const v = JSON.parse(trimmed);
-      return isPlainObject(v) ? v : null;
+      return isPlainObject2(v) ? v : null;
     } catch (e) {
       return null;
     }
   }
   function parseParam(raw) {
     var _a;
-    if (!isPlainObject(raw)) return null;
+    if (!isPlainObject2(raw)) return null;
     const key = nonEmptyStr(raw.key);
     const label = nonEmptyStr(raw.label);
     const type = str(raw.type);
@@ -5773,7 +6074,7 @@ var BZW_dock = (() => {
       if (Array.isArray(raw.options)) {
         const kept = [];
         for (const o of raw.options) {
-          if (!isPlainObject(o)) continue;
+          if (!isPlainObject2(o)) continue;
           const value = str(o.value);
           if (value === void 0) continue;
           kept.push({ value, label: (_a = nonEmptyStr(o.label)) != null ? _a : value });
@@ -5805,7 +6106,7 @@ var BZW_dock = (() => {
     return out;
   }
   function parseSchedule(raw) {
-    if (!isPlainObject(raw)) return void 0;
+    if (!isPlainObject2(raw)) return void 0;
     const kind = str(raw.kind);
     if (!kind || !SCHEDULE_KINDS.has(kind)) return void 0;
     const s = { kind };
@@ -5821,7 +6122,7 @@ var BZW_dock = (() => {
   }
   function parseManifest(raw) {
     var _a, _b;
-    if (!isPlainObject(raw)) return null;
+    if (!isPlainObject2(raw)) return null;
     if (raw.v !== DOCK_CONTRACT_VERSION) return null;
     const id = str(raw.id);
     if (!id || id.length > DOCK_ID_MAX_LEN || !DOCK_ID_RE.test(id)) return null;
@@ -5849,7 +6150,7 @@ var BZW_dock = (() => {
     if (Array.isArray(raw.produces)) {
       out.produces = raw.produces.filter((x) => typeof x === "string");
     }
-    if (isPlainObject(raw.run)) {
+    if (isPlainObject2(raw.run)) {
       const cmd = (_a = nonEmptyStr(raw.run.cmd)) == null ? void 0 : _a.trim();
       if (cmd) {
         const r = { cmd };
@@ -5871,7 +6172,7 @@ var BZW_dock = (() => {
     const schedule = parseSchedule(raw.schedule);
     if (schedule) out.schedule = schedule;
     else delete out.schedule;
-    if (isPlainObject(raw.runtime)) {
+    if (isPlainObject2(raw.runtime)) {
       const estimatedSec = num(raw.runtime.estimatedSec);
       out.runtime = estimatedSec !== void 0 && estimatedSec > 0 ? { estimatedSec } : {};
     } else {
@@ -5881,7 +6182,7 @@ var BZW_dock = (() => {
   }
   function parseRunRecord(raw) {
     var _a, _b;
-    if (!isPlainObject(raw)) return null;
+    if (!isPlainObject2(raw)) return null;
     const startedAt = nonEmptyStr(raw.startedAt);
     const status = str(raw.status);
     if (!startedAt || !status || !RUN_STATUSES.has(status)) return null;
@@ -5893,12 +6194,12 @@ var BZW_dock = (() => {
     else out.exitCode = num(raw.exitCode);
     out.durationMs = num(raw.durationMs);
     out.message = nonEmptyStr(raw.message);
-    if (isPlainObject(raw.params)) out.params = raw.params;
+    if (isPlainObject2(raw.params)) out.params = raw.params;
     else delete out.params;
     if (Array.isArray(raw.steps)) {
       const steps = [];
       for (const s of raw.steps) {
-        if (!isPlainObject(s)) continue;
+        if (!isPlainObject2(s)) continue;
         const text = nonEmptyStr(s.text);
         if (!text) continue;
         const step = { text };
@@ -5913,7 +6214,7 @@ var BZW_dock = (() => {
     } else {
       delete out.steps;
     }
-    if (isPlainObject(raw.progress)) {
+    if (isPlainObject2(raw.progress)) {
       const phase = (_b = nonEmptyStr(raw.progress.phase)) != null ? _b : null;
       const pctRaw = raw.progress.pct;
       const pct = typeof pctRaw === "number" && Number.isFinite(pctRaw) ? pctRaw : null;
@@ -5923,7 +6224,7 @@ var BZW_dock = (() => {
     }
     if (!Array.isArray(raw.info)) delete out.info;
     if (!("result" in raw)) delete out.result;
-    if (isPlainObject(raw.metrics)) {
+    if (isPlainObject2(raw.metrics)) {
       const metrics = {};
       for (const [k, v] of Object.entries(raw.metrics)) {
         const n = num(v);
@@ -5937,7 +6238,7 @@ var BZW_dock = (() => {
     if (Array.isArray(raw.artifacts)) {
       const artifacts = [];
       for (const a of raw.artifacts) {
-        if (!isPlainObject(a)) continue;
+        if (!isPlainObject2(a)) continue;
         const path = nonEmptyStr(a.path);
         if (!path) continue;
         const label = nonEmptyStr(a.label);
@@ -5948,7 +6249,7 @@ var BZW_dock = (() => {
     } else {
       delete out.artifacts;
     }
-    if (isPlainObject(raw.error)) {
+    if (isPlainObject2(raw.error)) {
       const kindRaw = str(raw.error.kind);
       const kind = kindRaw && ERROR_KINDS.has(kindRaw) ? kindRaw : "unknown";
       const error = { kind };
@@ -5963,7 +6264,7 @@ var BZW_dock = (() => {
     return out;
   }
   function parseRunsFile(raw, expectToolId) {
-    if (!isPlainObject(raw)) return null;
+    if (!isPlainObject2(raw)) return null;
     if (raw.v !== DOCK_CONTRACT_VERSION) return null;
     const tool = str(raw.tool);
     if (!tool) return null;
@@ -6162,7 +6463,7 @@ var BZW_dock = (() => {
     const conventionalRun = manifest.run || !hasMainEntry(dirOf(usedPath), fs) ? void 0 : { cmd: "node", args: [MAIN_ENTRY_FILENAME] };
     return { ok: true, manifest, path: usedPath, conventionalRun };
   }
-  function isPlainObject2(v) {
+  function isPlainObject3(v) {
     return !!v && typeof v === "object" && !Array.isArray(v);
   }
   function parseSettingsText(text, toolId) {
@@ -6171,7 +6472,7 @@ var BZW_dock = (() => {
     if (!raw) return {};
     if (raw.v !== DOCK_SETTINGS_VERSION) return {};
     if (raw.tool !== toolId) return {};
-    return isPlainObject2(raw.values) ? { ...raw.values } : {};
+    return isPlainObject3(raw.values) ? { ...raw.values } : {};
   }
   function readSettings(declPath, toolId, fs = currentFs()) {
     if (!fs) return {};
@@ -6474,14 +6775,40 @@ var BZW_dock = (() => {
   function runsPathOf(entry) {
     return runsPathFor(entry.path);
   }
+  function stripTrustFields(e) {
+    delete e.trustedAt;
+    delete e.trustedRun;
+    return e;
+  }
+  function entriesFromFile(raw) {
+    return parseToolEntries(raw).map(stripTrustFields);
+  }
+  function entriesToFile(entries) {
+    return entries.map((e) => stripTrustFields({ ...e }));
+  }
+  function trustFromEntries(entries) {
+    const trust = {};
+    for (const e of entries) {
+      if (typeof e.trustedAt !== "string" || e.trustedAt === "") continue;
+      const t = { at: e.trustedAt };
+      if (typeof e.trustedRun === "string") t.run = e.trustedRun;
+      trust[e.id] = t;
+    }
+    return trust;
+  }
   function readToolEntries() {
-    var _a;
-    return parseToolEntries((_a = tryGetSettings()) == null ? void 0 : _a.dockTools);
+    const trust = readTrustMap();
+    return entriesFromFile(dockStoreSnapshot().tools).map((e) => {
+      const t = trust[e.id];
+      if (!t) return e;
+      e.trustedAt = t.at;
+      if (t.run !== void 0) e.trustedRun = t.run;
+      return e;
+    });
   }
   async function saveToolEntries(entries) {
-    const s = getSettings();
-    s.dockTools = entries;
-    await saveSettings();
+    await mutateDockStore({ tools: entriesToFile(entries) });
+    await writeTrustMap(trustFromEntries(entries));
   }
   function isTrusted(entry) {
     return typeof entry.trustedAt === "string" && entry.trustedAt !== "";
@@ -6517,9 +6844,7 @@ var BZW_dock = (() => {
     return out;
   }
   function readRunStates() {
-    var _a;
-    const raw = (_a = tryGetSettings()) == null ? void 0 : _a.dockRunState;
-    if (!raw || typeof raw !== "object" || Array.isArray(raw)) return {};
+    const raw = dockStoreSnapshot().runState;
     const out = {};
     for (const [id, v] of Object.entries(raw)) {
       const st = parseRunState(v);
@@ -6528,7 +6853,6 @@ var BZW_dock = (() => {
     return out;
   }
   async function patchRunState(id, patch) {
-    const s = getSettings();
     const all = readRunStates();
     if (patch === null) {
       delete all[id];
@@ -6542,8 +6866,7 @@ var BZW_dock = (() => {
       if (Object.keys(st).length) all[id] = st;
       else delete all[id];
     }
-    s.dockRunState = all;
-    await saveSettings();
+    await mutateDockStore({ runState: all });
   }
   async function recordRunSuccess(id, finishedAt) {
     await patchRunState(id, {
@@ -6552,6 +6875,9 @@ var BZW_dock = (() => {
       consecutiveFailures: 0,
       pausedAt: void 0
     });
+  }
+  function readDockSwitch(key) {
+    return dockStoreSnapshot()[key] !== false;
   }
   function readRunsFile(entry) {
     const raw = readRunsText(entry.path);
@@ -7104,8 +7430,7 @@ var BZW_dock = (() => {
   var chain = Promise.resolve();
   var warnedParams = /* @__PURE__ */ new Set();
   function globalAutoOn() {
-    var _a;
-    return ((_a = tryGetSettings()) == null ? void 0 : _a.dockAutoRun) !== false;
+    return readDockSwitch("autoRun");
   }
   function kickDockScheduler() {
     if (app === null) return;
@@ -7134,6 +7459,10 @@ var BZW_dock = (() => {
   async function tick() {
     if (app === null || isUnloaded === null) return;
     if (isUnloaded()) return;
+    try {
+      await loadDockStore();
+    } catch (e) {
+    }
     if (!globalAutoOn()) return;
     let views2;
     try {
@@ -7436,6 +7765,7 @@ var BZW_dock = (() => {
     refreshing = true;
     renderHead();
     try {
+      await loadDockStore();
       views = await loadToolViews(hostApp);
       runDueNotifications();
     } catch (e) {
@@ -7447,7 +7777,7 @@ var BZW_dock = (() => {
     }
   }
   function runDueNotifications() {
-    if (tryGetSettings().dockNotifyMissed === false) return;
+    if (!readDockSwitch("notifyMissed")) return;
     const day = todayKey();
     for (const v of views) {
       if (!isEnabled(v.entry)) continue;
@@ -7465,7 +7795,7 @@ var BZW_dock = (() => {
   }
   function willAutoRun(v) {
     var _a, _b;
-    if (tryGetSettings().dockAutoRun === false) return false;
+    if (!readDockSwitch("autoRun")) return false;
     if (!isEnabled(v.entry) || !isTrusted(v.entry) || v.trustStale) return false;
     if (!v.run || !v.autoRun) return false;
     if (triggerOfView(v) !== "auto") return false;
@@ -8798,10 +9128,9 @@ var BZW_dock = (() => {
   }
 
   // prototypes/dock/fake-sim.ts
-  var STORE = "CONFIG/STORAGE/dock";
   var TOOLS_DIR = "C:/Users/PC/scripts";
   var KEY = "bz-sim:";
-  var SEED_MARK = "bz-sim:__dock_seed_v2";
+  var SEED_MARK = "bz-sim:__dock_seed_v3";
   var declPathOf = (id) => `${TOOLS_DIR}/${id}/dock.json`;
   var MiniBuffer = class _MiniBuffer {
     constructor(bytes) {
@@ -8985,21 +9314,22 @@ var BZW_dock = (() => {
     "local-report": []
   };
   function seedEntries() {
-    const trustedAt = iso(30 * DAY);
     const list = [];
     for (const [id, decl] of Object.entries(DECLARATIONS)) {
-      const path = declPathOf(id);
-      const run = resolveRun(decl, path);
-      const trusted = id !== "imported-tool";
-      list.push({
-        id,
-        path,
-        ...trusted ? { trustedAt } : {},
-        ...trusted && run ? { trustedRun: runSignature(run) } : {}
-      });
+      list.push({ id, path: declPathOf(id) });
     }
-    list.push({ id: "local-report", path: declPathOf("local-report"), trustedAt });
+    list.push({ id: "local-report", path: declPathOf("local-report") });
     return list;
+  }
+  function seedTrust() {
+    const trustedAt = iso(30 * DAY);
+    const trust = {};
+    for (const id of Object.keys(DECLARATIONS).concat("local-report")) {
+      if (id === "imported-tool") continue;
+      const run = id in DECLARATIONS ? resolveRun(DECLARATIONS[id], declPathOf(id)) : null;
+      trust[id] = run ? { at: trustedAt, run: runSignature(run) } : { at: trustedAt };
+    }
+    return trust;
   }
   function wipeSimFiles() {
     const doomed = [];
@@ -9030,9 +9360,14 @@ var BZW_dock = (() => {
       fileKeyOf(declPathOf(PENDING_DECL_ID)),
       JSON.stringify(PENDING_DECLARATION, null, 2)
     );
+    localStorage.setItem(
+      fileKeyOf(dockStorePath()),
+      JSON.stringify({ v: 1, tools: seedEntries(), runState: {}, autoRun: true, notifyMissed: true }, null, 2)
+    );
     for (const id of Object.keys(DECLARATIONS).concat("local-report")) {
+      const runsFile = runsPathFor(declPathOf(id));
       localStorage.setItem(
-        `${KEY}${STORE}/runs/${id}.json`,
+        fileKeyOf(runsFile),
         JSON.stringify({ v: 1, tool: id, updatedAt, runs: (_a = RUNS[id]) != null ? _a : [] }, null, 2)
       );
     }
@@ -9178,8 +9513,9 @@ var BZW_dock = (() => {
   }
   var settingsStore = {
     storagePath: "CONFIG/STORAGE",
-    dockTools: seedEntries(),
-    dockNotifyMissed: true
+    // 面板数据（登记表 / 台账 / 两个开关）自 ADR-0239 起住数据目录的 dock.json —— 见 seedStore()
+    // 里的种子；信任这份住**这里**（dockTrust，ADR-0239），与实现侧同一份合并结果
+    dockTrust: seedTrust()
   };
   var simApp = null;
   function installPathPickers() {
@@ -9221,7 +9557,7 @@ var BZW_dock = (() => {
       auto: entries.filter((e) => triggerOf(scheduleOf(e.id)) === "auto").length,
       manual: entries.filter((e) => triggerOf(scheduleOf(e.id)) === "manual").length,
       noDecl: entries.filter((e) => !(e.id in DECLARATIONS)).length,
-      untrusted: entries.filter((e) => !e.trustedAt).length,
+      untrusted: entries.filter((e) => !(e.id in seedTrust())).length,
       runs: Object.fromEntries(
         Object.keys(DECLARATIONS).concat("local-report").map((id) => {
           var _a2;

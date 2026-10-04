@@ -1,4 +1,4 @@
-/* 源指纹 0bca3cf04bf9d025 · 仓内输入 69 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 d926f1d65d763d57 · 仓内输入 69 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/password-vault/fake-sim.ts","prototypes/password-vault/fake/fake-obsidian.ts","src/bookshelf/data.ts","src/bookshelf/state.ts","src/cinema/state.ts","src/core/app.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/settings-btn-state.ts","src/core/settings-common.ts","src/core/settings-modal.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/help-tip.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/motion.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/password-vault/data.ts","src/password-vault/index.ts","src/password-vault/motion.ts","src/password-vault/quick-pick.ts","src/password-vault/render.ts","src/password-vault/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/password-vault/fake-sim.ts → window.BZW_password_vault（行为单源预览包，issue 245/ADR-0106） */
 var BZW_password_vault = (() => {
@@ -746,9 +746,9 @@ var BZW_password_vault = (() => {
     }
   });
 
-  // ../../bz/node_modules/.pnpm/moment@2.30.1/node_modules/moment/moment.js
+  // node_modules/.pnpm/moment@2.30.1/node_modules/moment/moment.js
   var require_moment = __commonJS({
-    "../../bz/node_modules/.pnpm/moment@2.30.1/node_modules/moment/moment.js"(exports, module) {
+    "node_modules/.pnpm/moment@2.30.1/node_modules/moment/moment.js"(exports, module) {
       (function(global, factory) {
         typeof exports === "object" && typeof module !== "undefined" ? module.exports = factory() : typeof define === "function" && define.amd ? define(factory) : global.moment = factory();
       })(exports, function() {
@@ -5290,6 +5290,14 @@ var BZW_password_vault = (() => {
     const msg = e instanceof Error ? e.message : String(e);
     return /already exist/i.test(msg);
   }
+  async function diskPathExists(app, p) {
+    var _a, _b, _c;
+    try {
+      return !!await ((_c = (_b = (_a = app.vault) == null ? void 0 : _a.adapter) == null ? void 0 : _b.exists) == null ? void 0 : _c.call(_b, p));
+    } catch (e) {
+      return false;
+    }
+  }
   var CORRUPT_BACKUP_DIR = "CONFIG/.CORRUPT";
   var CORRUPT_NOTIFY_DEDUPE_MS = 3e4;
   var corruptNotifyAt = /* @__PURE__ */ new Map();
@@ -5303,8 +5311,8 @@ var BZW_password_vault = (() => {
   async function backupOriginal(app, filePath, raw) {
     try {
       const f = app.vault.getAbstractFileByPath(filePath);
-      if (!f) return null;
-      const content = raw !== void 0 ? raw : await app.vault.read(f);
+      const content = raw !== void 0 ? raw : f ? await app.vault.read(f) : void 0;
+      if (content === void 0) return null;
       if (!app.vault.getAbstractFileByPath(CORRUPT_BACKUP_DIR)) {
         try {
           await app.vault.createFolder(CORRUPT_BACKUP_DIR);
@@ -5339,6 +5347,10 @@ var BZW_password_vault = (() => {
   function serialize(v) {
     return JSON.stringify(v, null, 2);
   }
+  async function readFromDisk(app, filePath) {
+    const raw = await app.vault.adapter.read(filePath);
+    return raw.charCodeAt(0) === 65279 ? raw.substring(1) : raw;
+  }
   function jsonFileStore(filePath, opts = {}) {
     const resolveApp = () => opts.app || getApp();
     const resolveDefault = () => {
@@ -5347,7 +5359,14 @@ var BZW_password_vault = (() => {
     };
     async function ensureDir(app) {
       const d = filePath.substring(0, filePath.lastIndexOf("/"));
-      if (d && !app.vault.getAbstractFileByPath(d)) await app.vault.createFolder(d);
+      if (!d || app.vault.getAbstractFileByPath(d)) return;
+      if (await diskPathExists(app, d)) return;
+      try {
+        await app.vault.createFolder(d);
+      } catch (e) {
+        if (await diskPathExists(app, d)) return;
+        throw e;
+      }
     }
     async function createIfMissing(app, content) {
       await ensureDir(app);
@@ -5355,7 +5374,8 @@ var BZW_password_vault = (() => {
         await app.vault.create(filePath, content);
         return true;
       } catch (e) {
-        if (isAlreadyExistsError(e) && app.vault.getAbstractFileByPath(filePath)) return false;
+        if (isAlreadyExistsError(e) && (app.vault.getAbstractFileByPath(filePath) || await diskPathExists(app, filePath)))
+          return false;
         throw e;
       }
     }
@@ -5369,6 +5389,8 @@ var BZW_password_vault = (() => {
       const f = app.vault.getAbstractFileByPath(filePath);
       if (f) {
         await app.vault.modify(f, serialize(resolveDefault()));
+      } else if (await diskPathExists(app, filePath)) {
+        await app.vault.adapter.write(filePath, serialize(resolveDefault()));
       } else {
         await createIfMissing(app, serialize(resolveDefault()));
       }
@@ -5383,6 +5405,13 @@ var BZW_password_vault = (() => {
         throw e;
       }
     }
+    async function parseRaw(app, raw) {
+      try {
+        return JSON.parse(raw);
+      } catch (e) {
+        return await handleCorrupt(app, e, raw);
+      }
+    }
     return {
       async read() {
         const app = resolveApp();
@@ -5391,14 +5420,12 @@ var BZW_password_vault = (() => {
           const created = await createIfMissing(app, serialize(resolveDefault()));
           if (created) return resolveDefault();
           f = app.vault.getAbstractFileByPath(filePath);
+          if (!f && await diskPathExists(app, filePath)) {
+            return parseRaw(app, await readFromDisk(app, filePath));
+          }
           if (!f) return resolveDefault();
         }
-        const raw = await app.vault.read(f);
-        try {
-          return JSON.parse(raw);
-        } catch (e) {
-          return await handleCorrupt(app, e, raw);
-        }
+        return parseRaw(app, await app.vault.read(f));
       },
       async write(data) {
         const app = resolveApp();
@@ -5418,6 +5445,22 @@ var BZW_password_vault = (() => {
         const created = await createIfMissing(app, c);
         if (created) return;
         let cur = app.vault.getAbstractFileByPath(filePath);
+        if (!cur && await diskPathExists(app, filePath)) {
+          try {
+            if (opts.writeIfChanged) {
+              try {
+                if (await readFromDisk(app, filePath) === c) return;
+              } catch (e) {
+              }
+            }
+            await app.vault.adapter.write(filePath, c);
+            return;
+          } catch (e) {
+            const backupPath = await backupOriginal(app, filePath);
+            if (backupPath) notifyBackup(filePath, backupPath, "写入失败");
+            throw e;
+          }
+        }
         if (!cur) {
           const retried = await createIfMissing(app, c);
           if (retried) return;
