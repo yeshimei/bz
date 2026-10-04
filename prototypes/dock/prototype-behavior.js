@@ -1,4 +1,4 @@
-/* 源指纹 85523e32839f5fb3 · 仓内输入 54 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 4eb508381cd817bc · 仓内输入 54 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/dock/fake-sim.ts","prototypes/dock/fake/fake-obsidian.ts","src/core/app.ts","src/core/dom.ts","src/core/esc-manager.ts","src/core/external-tool.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/mobile.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/settings-provider.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/help-tip.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/dock/command.ts","src/dock/data.ts","src/dock/declaration.ts","src/dock/index.ts","src/dock/registry.ts","src/dock/runner.ts","src/dock/schedule.ts","src/dock/scheduler.ts","src/dock/schema.ts","src/dock/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/dock/fake-sim.ts → window.BZW_dock（行为单源预览包，issue 245/ADR-0106） */
 var BZW_dock = (() => {
@@ -6299,6 +6299,11 @@ var BZW_dock = (() => {
   function lastRun(runs) {
     return terminalRuns(runs)[0];
   }
+  function isAlarm(runs, overdue) {
+    if (overdue) return true;
+    const last = lastRun(runs);
+    return !!last && (last.status === "failed" || last.status === "timeout");
+  }
   function judgeDue(schedule, runs, now = Date.now()) {
     if (!schedule || schedule.kind === "on-demand" || schedule.kind === "unknown") {
       return { state: "none", detail: "未声明节奏" };
@@ -6385,8 +6390,7 @@ var BZW_dock = (() => {
         if (r.status === "ok") ok7d += 1;
       }
       const last = lastRun(it.runs);
-      const lastBad = !!last && (last.status === "failed" || last.status === "timeout");
-      if (it.overdue || lastBad) {
+      if (isAlarm(it.runs, it.overdue)) {
         alarms += 1;
         if (!alarmHint) {
           alarmHint = {
@@ -6540,6 +6544,14 @@ var BZW_dock = (() => {
     }
     s.dockRunState = all;
     await saveSettings();
+  }
+  async function recordRunSuccess(id, finishedAt) {
+    await patchRunState(id, {
+      lastAttemptAt: finishedAt,
+      lastAttemptOk: true,
+      consecutiveFailures: 0,
+      pausedAt: void 0
+    });
   }
   function readRunsFile(entry) {
     const raw = readRunsText(entry.path);
@@ -7184,13 +7196,7 @@ var BZW_dock = (() => {
       clearTimeout(timer);
     }
     if (outcome.ok) {
-      await patchRunState(entry.id, {
-        lastAttemptAt: outcome.finishedAt,
-        lastAttemptOk: true,
-        consecutiveFailures: 0,
-        pausedAt: void 0
-        // 一次成功即恢复（清熔断）
-      });
+      await recordRunSuccess(entry.id, outcome.finishedAt);
       return "ok";
     }
     if (outcome.stopped && !timedOut) return "skip";
@@ -7649,9 +7655,7 @@ var BZW_dock = (() => {
     if (!Platform.isMobile) queueMicrotask(() => search.input.focus());
   }
   function isAlarmView(v) {
-    if (isOverdue(v.due.state)) return true;
-    const last = lastOf(v);
-    return !!last && (last.status === "failed" || last.status === "timeout");
+    return isAlarm(v.runs, isOverdue(v.due.state));
   }
   function filtered() {
     let list = views.slice();
@@ -7981,11 +7985,13 @@ var BZW_dock = (() => {
       autoRow("下次预计", v.nextDue === null ? "算不出（没有节奏，或缺运行基线）" : dueTimeText(v.nextDue))
     );
     if ((_a = v.runState) == null ? void 0 : _a.pausedAt) {
+      const last = lastRun(v.runs);
+      const hint = (last == null ? void 0 : last.error) ? errorHint(last.error.kind) : null;
       facts.appendChild(
         el(
           "div",
           "bz-dock-autonote bz-dock-autonote--warn",
-          `连续失败 ${(_b = v.runState.consecutiveFailures) != null ? _b : 0} 次，自动运行已暂停`
+          `连续失败 ${(_b = v.runState.consecutiveFailures) != null ? _b : 0} 次，自动运行已暂停${hint ? ` —— 上次：${hint}` : ""}`
         )
       );
     }
@@ -8573,25 +8579,23 @@ var BZW_dock = (() => {
       return;
     }
     const run = runTool(hostApp, v.entry, v.run, v.manifest, values, {
-      onStep: () => updateLive(v.entry.id),
-      onProgress: () => updateLive(v.entry.id),
-      onInfo: () => updateLive(v.entry.id),
-      onResult: () => updateLive(v.entry.id),
+      ...liveCallbacks(v.entry.id),
       onDone: (outcome) => {
         notifyRunOutcome(displayName(v), outcome, () => openDockTool(hostApp, v.entry.id));
-        if (outcome.ok) {
-          void patchRunState(v.entry.id, {
-            lastAttemptAt: outcome.finishedAt,
-            lastAttemptOk: true,
-            consecutiveFailures: 0,
-            pausedAt: void 0
-          });
-        }
+        if (outcome.ok) void recordRunSuccess(v.entry.id, outcome.finishedAt);
         void refresh();
         updateLive(v.entry.id);
       }
     });
     render();
+  }
+  function liveCallbacks(id) {
+    return {
+      onStep: () => updateLive(id),
+      onProgress: () => updateLive(id),
+      onInfo: () => updateLive(id),
+      onResult: () => updateLive(id)
+    };
   }
   async function resumeAndRetry(v) {
     await patchRunState(v.entry.id, null);

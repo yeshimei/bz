@@ -49,6 +49,7 @@ import {
   overview,
   patchRunState,
   readToolEntries,
+  recordRunSuccess,
   runSignature,
   saveToolEntries,
   saveToolValues,
@@ -70,6 +71,7 @@ import {
   statusText,
   stopRun,
   type DockLiveRun,
+  type DockRunCallbacks,
 } from './runner';
 import { kickDockScheduler } from './scheduler';
 import {
@@ -81,6 +83,8 @@ import {
 import {
   EDITABLE_SCHEDULE_KINDS,
   durationText,
+  isAlarm,
+  lastRun,
   missingRequiredParams,
   recentRuns,
   scheduleFromDraft,
@@ -701,11 +705,9 @@ function renderBar(): void {
  * 顶上四格 KPI 已经回答了「有几个要管」，再摆一排 chip 只是让人多一次点击、还多一处会跟 KPI 对不上的计数。
  * 要缩小范围就用搜索。
  */
-/** KPI「待处理异常」的同一口径（与 `overviewOf` 一致）：已逾期，或最近一次收尾是失败 / 超时 */
+/** KPI「待处理异常」同一口径（`schedule.isAlarm` 导出的谓词，勿手抄）：已逾期，或最近一次**终结**运行失败 / 超时 */
 function isAlarmView(v: DockToolView): boolean {
-  if (isOverdue(v.due.state)) return true;
-  const last = lastOf(v);
-  return !!last && (last.status === 'failed' || last.status === 'timeout');
+  return isAlarm(v.runs, isOverdue(v.due.state));
 }
 
 function filtered(): DockToolView[] {
@@ -1107,11 +1109,14 @@ function autoSection(v: DockToolView): HTMLElement {
     autoRow('下次预计', v.nextDue === null ? '算不出（没有节奏，或缺运行基线）' : dueTimeText(v.nextDue)),
   );
   if (v.runState?.pausedAt) {
+    // 重试前顺手把上次失败原因摆出来（#8）：失败分类就在最近一条记录里，不该让用户点了重试才知道死因
+    const last = lastRun(v.runs);
+    const hint = last?.error ? errorHint(last.error.kind) : null;
     facts.appendChild(
       el(
         'div',
         'bz-dock-autonote bz-dock-autonote--warn',
-        `连续失败 ${v.runState.consecutiveFailures ?? 0} 次，自动运行已暂停`,
+        `连续失败 ${v.runState.consecutiveFailures ?? 0} 次，自动运行已暂停${hint ? ` —— 上次：${hint}` : ''}`,
       ),
     );
   }
@@ -1765,28 +1770,27 @@ async function runFlow(v: DockToolView): Promise<void> {
   }
 
   const run = runTool(hostApp, v.entry, v.run, v.manifest, values, {
-    onStep: () => updateLive(v.entry.id),
-    onProgress: () => updateLive(v.entry.id),
-    onInfo: () => updateLive(v.entry.id),
-    onResult: () => updateLive(v.entry.id),
+    ...liveCallbacks(v.entry.id),
     onDone: (outcome) => {
       notifyRunOutcome(displayName(v), outcome, () => openDockTool(hostApp as App, v.entry.id));
-      // 手动成功也给熔断记账：手动成功是「工具活着」的直接证据，连续失败清零、熔断解除。
-      // 手动失败**不动**台账 —— 熔断保护的是没人盯着时的自动运行，别让人手动试错把它搞停。
-      if (outcome.ok) {
-        void patchRunState(v.entry.id, {
-          lastAttemptAt: outcome.finishedAt,
-          lastAttemptOk: true,
-          consecutiveFailures: 0,
-          pausedAt: undefined,
-        });
-      }
+      // 手动成功也给熔断记账（与调度器同一把笔 recordRunSuccess）；手动失败不动台账
+      if (outcome.ok) void recordRunSuccess(v.entry.id, outcome.finishedAt);
       void refresh();
       updateLive(v.entry.id);
     },
   });
   void run;
   render();
+}
+
+/** 四行协议 → 现场视图刷新：runFlow 与直跑命令共用一份回调形状（onDone 各自不同） */
+function liveCallbacks(id: string): Pick<DockRunCallbacks, 'onStep' | 'onProgress' | 'onInfo' | 'onResult'> {
+  return {
+    onStep: () => updateLive(id),
+    onProgress: () => updateLive(id),
+    onInfo: () => updateLive(id),
+    onResult: () => updateLive(id),
+  };
 }
 
 /** 熔断恢复 + 立即补跑，一步到位：恢复是清台账，补跑走手动同一条路（全部门槛照过） */
@@ -1870,12 +1874,11 @@ export async function runToolDirect(app: App, id: string): Promise<void> {
   const name = displayName(v);
   notice(`${name} 已开始运行`, 'info'); // 命令触发没有就地反馈（面板可能没开），起跑说一声
   runTool(app, v.entry, v.run, v.manifest, v.values, {
-    onStep: () => updateLive(id),
-    onProgress: () => updateLive(id),
-    onInfo: () => updateLive(id),
-    onResult: () => updateLive(id),
+    ...liveCallbacks(id),
     onDone: (outcome) => {
       notifyRunOutcome(name, outcome, () => locateDetail(id));
+      // 命令手动跑成功与面板手动同账（recordRunSuccess），两条手动路径不分叉
+      if (outcome.ok) void recordRunSuccess(id, outcome.finishedAt);
       updateLive(id);
       if (isPanelVisible()) void refresh();
     },

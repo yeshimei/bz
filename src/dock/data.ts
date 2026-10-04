@@ -129,22 +129,24 @@ export async function updateToolEntry(id: string, patch: Partial<DockToolEntry>)
   await saveToolEntries(entries);
 }
 
-// ==================== bz 侧运行台账（自动运行的账） ====================
+// ==================== bz 侧运行台账（调度的账） ====================
 
 /**
- * bz 对某个工具**自动运行**的记账。
+ * bz 对某个工具**调度视角**的记账 —— 自动尝试全记；手动侧只记**成功**（失败不入账）。
  *
  * **刻意不进工具的 `runs.json`**（那是工具唯一写者的地盘，D8/D9）：这里只记 bz 自己看到的
- * 事实 —— 「bz 什么时候试着自动跑了一次、成没成」。它的存在是为了两件工具记录兜不住的事：
+ * 事实 —— 「bz 什么时候试着跑了一次、成没成」。它的存在是为了两件工具记录兜不住的事：
  * ① 工具崩了自己没落记录时，bz 仍知道「它跑过且失败」；② 连续失败熔断要有据可依。
  * 工具自己那份记录仍是**权威**（含 `error.kind`），这里只服务调度决策。
+ * 手动成功同样入账（`recordRunSuccess`）：成功是「工具活着」的证据，不分谁拉起的；
+ * 手动失败不入 —— 熔断保护的是没人盯着时的自动运行，别让人手动试错把它搞停。
  */
 export interface DockToolRunState {
-  /** bz 最近一次自动尝试的时刻（ISO） */
+  /** bz 最近一次尝试的时刻（ISO）—— 自动尝试，或手动成功 */
   lastAttemptAt?: string;
   /** 那次尝试 bz 侧的判果（工具记录为权威，这里只判调度） */
   lastAttemptOk?: boolean;
-  /** 连续自动失败次数（成功即清零）—— 熔断依据 */
+  /** 连续自动失败次数（任一次成功即清零）—— 熔断依据；手动失败不计入 */
   consecutiveFailures?: number;
   /** 熔断触发时刻（ISO）；非空 = 自动运行已暂停，等用户在面板里手动恢复 */
   pausedAt?: string;
@@ -197,6 +199,19 @@ export async function patchRunState(id: string, patch: Partial<DockToolRunState>
   }
   s.dockRunState = all;
   await saveSettings();
+}
+
+/**
+ * 一次**成功**收尾的台账入账，自动（scheduler）与手动（runFlow / 直跑命令）共用这一把笔：
+ * 记本次尝试、清零连续失败、解除熔断。入账口径只有这一份 —— 两处手写必漂。
+ */
+export async function recordRunSuccess(id: string, finishedAt: string): Promise<void> {
+  await patchRunState(id, {
+    lastAttemptAt: finishedAt,
+    lastAttemptOk: true,
+    consecutiveFailures: 0,
+    pausedAt: undefined,
+  });
 }
 
 // ==================== 读侧（运行记录：只读、不创建、不抛） ====================

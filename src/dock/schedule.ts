@@ -263,6 +263,17 @@ export function lastRun(runs: readonly DockRunRecord[]): DockRunRecord | undefin
 }
 
 /**
+ * 「待处理异常」的**唯一口径**（KPI 与面板下钻共用，勿在别处手抄）：已逾期，
+ * 或最近一次**终结**运行是失败 / 超时。running 不算 —— 没收尾不下结论，
+ * 「最新一条还在跑、上一条失败了」按失败计（KPI 数字与点格下钻因此永远对得上）。
+ */
+export function isAlarm(runs: readonly DockRunRecord[], overdue: boolean): boolean {
+  if (overdue) return true;
+  const last = lastRun(runs);
+  return !!last && (last.status === 'failed' || last.status === 'timeout');
+}
+
+/**
  * 漏跑判定。
  * @param schedule 清单声明的节奏（未声明传 undefined）
  * @param runs     运行记录（乱序/含 running 都行 —— 内部自己筛）
@@ -407,8 +418,7 @@ export function overviewOf(
     }
 
     const last = lastRun(it.runs);
-    const lastBad = !!last && (last.status === 'failed' || last.status === 'timeout');
-    if (it.overdue || lastBad) {
+    if (isAlarm(it.runs, it.overdue)) {
       alarms += 1;
       if (!alarmHint) {
         alarmHint = {

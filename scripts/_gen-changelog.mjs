@@ -47,6 +47,7 @@ const SCOPE2DOMAIN = {
   'password-vault': 'password-vault', vault: 'password-vault',
   smartcat: 'smartcat', knowledge: 'knowledge', literature: 'knowledge',
   core: 'core', ui: 'ui', components: 'ui', styles: 'ui',
+  dock: 'dock', external: 'dock',
   checkup: 'checkup',
 };
 const KEYWORDS = [

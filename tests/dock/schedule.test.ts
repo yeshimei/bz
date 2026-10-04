@@ -10,6 +10,7 @@ import {
   decideDue,
   durationText,
   effectiveSchedule,
+  isAlarm,
   isDueToRun,
   judgeDue,
   lastRun,
@@ -531,5 +532,51 @@ describe('decideDue —— 该跑的按登记顺序，其余给原因', () => {
 
   it('空输入 → 都不跑', () => {
     expect(decideDue([])).toEqual({ ready: [], skipped: [] });
+  });
+});
+
+describe('isAlarm —— 「待处理异常」唯一口径（KPI 与下钻共用）', () => {
+  it('已逾期短路：不管记录如何都算异常', () => {
+    expect(isAlarm([run({ startedAt: '2026-10-04T10:00:00', status: 'ok' })], true)).toBe(true);
+    expect(isAlarm([], true)).toBe(true);
+  });
+
+  it('最近一次终结运行失败 / 超时 → 异常', () => {
+    expect(
+      isAlarm(
+        [
+          run({ startedAt: '2026-10-04T10:00:00', status: 'failed' }),
+          run({ startedAt: '2026-10-04T09:00:00', status: 'ok' }),
+        ],
+        false,
+      ),
+    ).toBe(true);
+    expect(isAlarm([run({ startedAt: '2026-10-04T10:00:00', status: 'timeout' })], false)).toBe(true);
+  });
+
+  it('running 不算收尾：「最新还在跑、上一条失败」按上一条失败计（与 overviewOf 对得上）', () => {
+    expect(
+      isAlarm(
+        [
+          run({ startedAt: '2026-10-04T11:00:00', status: 'running' }),
+          run({ startedAt: '2026-10-04T10:00:00', status: 'failed' }),
+        ],
+        false,
+      ),
+    ).toBe(true);
+    expect(
+      isAlarm(
+        [
+          run({ startedAt: '2026-10-04T11:00:00', status: 'running' }),
+          run({ startedAt: '2026-10-04T10:00:00', status: 'ok' }),
+        ],
+        false,
+      ),
+    ).toBe(false);
+  });
+
+  it('无记录 / 最近成功 → 不是异常', () => {
+    expect(isAlarm([], false)).toBe(false);
+    expect(isAlarm([run({ startedAt: '2026-10-04T10:00:00', status: 'ok' })], false)).toBe(false);
   });
 });

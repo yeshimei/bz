@@ -25,6 +25,7 @@ import {
   isTrusted,
   loadToolViews,
   patchRunState,
+  recordRunSuccess,
   triggerOf,
   type DockToolView,
 } from './data';
@@ -219,12 +220,7 @@ async function runOne(view: DockToolView): Promise<RunResult> {
   }
 
   if (outcome.ok) {
-    await patchRunState(entry.id, {
-      lastAttemptAt: outcome.finishedAt,
-      lastAttemptOk: true,
-      consecutiveFailures: 0,
-      pausedAt: undefined, // 一次成功即恢复（清熔断）
-    });
+    await recordRunSuccess(entry.id, outcome.finishedAt); // 一次成功即恢复（清熔断）
     return 'ok';
   }
 
