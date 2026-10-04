@@ -35,7 +35,7 @@ import { uiBtn, uiIconBtn, uiBtnRow, uiChip, uiChoice, uiEmpty, uiField, uiInput
 import { bindFormSubmit } from '../core/ui/modal';
 import { openFlowDialog } from '../core/flow-dialog';
 import { pickSystemFiles, pickSystemFolder } from '../core/path-picker';
-import { attachItemActions, openItemMenu, openItemSheet, type ItemAction } from '../core/item-actions';
+import { attachItemActions, type ItemAction } from '../core/item-actions';
 import { relTime } from '../core/ui/str';
 import {
   displayDesc,
@@ -1018,20 +1018,6 @@ function cardActions(v: DockToolView): ItemAction[] {
     onClick: () => void removeToolFlow(v),
   });
   return acts;
-}
-
-function openCardActions(anchor: HTMLElement, v: DockToolView): void {
-  const actions = cardActions(v);
-  const head = el('div', 'bz-dock-sheet-head');
-  const sub = el('div', 'bz-dock-sheet-sub');
-  sub.textContent = v.declPath;
-  head.append(el('div', 'bz-dock-sheet-name', displayName(v)), sub);
-  if (Platform.isMobile) {
-    openItemSheet(actions, { sheetHead: head });
-  } else {
-    const r = anchor.getBoundingClientRect();
-    openItemMenu(r.left, r.bottom + 4, actions);
-  }
 }
 
 // ==================== 详情 ====================
