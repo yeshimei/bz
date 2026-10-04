@@ -25,7 +25,7 @@ Obsidian 插件。域 = `src/<域>/`，`core` 是共享层。中文输出。
 
 ## 坑
 - Git Bash 里 pnpm 起不来（shim 把路径解析成 `D:\d\...`）→ 用 PowerShell，或 `node node_modules/<包>/…` 直调。
-- `git worktree remove` 后常残留 `node_modules`，要另删。
+- `git worktree remove` 后常残留 `node_modules`，要另删。**删前必须先 `cmd /c rmdir` 掉 worktree 里的 `node_modules` junction**——worktree 的 junction 指向主仓 node_modules 时，remove/remove --force 会穿透删除主仓 `.pnpm` 里的包（表层包还在、深处依赖悬空，测试报 Cannot find module）；穿透后 `pnpm install` 修不回（workspace 状态文件误判 up to date），要 `rm -rf node_modules && pnpm install` 整体重建（store 硬链接，很快）。
 - 皮肤顺序固定：`skin-pack → changelog → manifest`（`manifest` 对已出版的 css 现算 sha256，顺序错则插件端校验不过）。
 
 ## 提交
