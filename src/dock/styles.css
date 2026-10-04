@@ -356,7 +356,9 @@
   background: var(--bz-surface-1);
   color: var(--bz-text-1);
 }
-.bz-dock-back:hover { background: var(--bz-surface-3); color: var(--bz-text-1); }
+@media (hover: hover) {
+  .bz-dock-back:hover { background: var(--bz-surface-3); color: var(--bz-text-1); }
+}
 .bz-dock-back .bz-ic { width: 20px; height: 20px; }
 .bz-dock-coveric {
   flex: none;
@@ -504,7 +506,9 @@
   cursor: pointer;
   transition: background var(--bz-dur-fast) var(--bz-ease-out);
 }
-.bz-dock-rule:hover { background: var(--bz-surface-2); }
+@media (hover: hover) {
+  .bz-dock-rule:hover { background: var(--bz-surface-2); }
+}
 .bz-dock-rule:focus-visible { outline: var(--bz-focus-ring); outline-offset: 1px; }
 .bz-dock-rulemain { flex: 1 1 auto; min-width: 0; }
 .bz-dock-ruleline { font-size: var(--bz-font-label); color: var(--bz-text-1); }

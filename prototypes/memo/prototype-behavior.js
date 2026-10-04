@@ -1,5 +1,5 @@
-/* 源指纹 56099cff361ca7c0 · 仓内输入 303 个（校验见 tests/preview-freshness.test.ts） */
-/*#preview-inputs=["prototypes/memo/fake-sim.ts","prototypes/memo/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/keys.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/belongings/ai.ts","src/belongings/catalog-suggest.ts","src/belongings/category.ts","src/belongings/data.ts","src/belongings/layouts/poster/render.ts","src/belongings/motion.ts","src/belongings/render.ts","src/belongings/report-stats.ts","src/belongings/report.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/epub-notes.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/motion.ts","src/bookshelf/notes-ui.ts","src/bookshelf/notes.ts","src/bookshelf/render.ts","src/bookshelf/settings.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/bookshelf/ui.ts","src/checkup/checks-consistency.ts","src/checkup/checks-drift.ts","src/checkup/checks-json.ts","src/checkup/checks-orphans.ts","src/checkup/files.ts","src/checkup/index.ts","src/checkup/run.ts","src/checkup/ui.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/douban-fetcher.ts","src/cinema/seasons.ts","src/cinema/settings.ts","src/cinema/shared.ts","src/cinema/state.ts","src/clipbook/anchor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/file-sync.ts","src/clipbook/flow.ts","src/clipbook/image-save.ts","src/clipbook/index.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/motion.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/press/data.ts","src/clipbook/press/engine.ts","src/clipbook/press/index.ts","src/clipbook/press/motions.ts","src/clipbook/press/view.ts","src/clipbook/render.ts","src/clipbook/report-stats.ts","src/clipbook/report-ui.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai-models.ts","src/core/ai.ts","src/core/app.ts","src/core/asr-proofread.ts","src/core/category-table.ts","src/core/changelog.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/domain-icons.ts","src/core/douban-name-index.ts","src/core/download-manifest.ts","src/core/esc-manager.ts","src/core/external-tool.ts","src/core/file-sync.ts","src/core/flow-dialog.ts","src/core/gesture.ts","src/core/http.ts","src/core/item-actions.ts","src/core/jev-fallback.ts","src/core/jev.ts","src/core/json-store.ts","src/core/knowledge-boxes.ts","src/core/landscape.ts","src/core/link-now.ts","src/core/lock-stats.ts","src/core/manual.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/path-picker.ts","src/core/pomodoro-phase.ts","src/core/remote-asset.ts","src/core/remote-base.ts","src/core/rss-catalog.ts","src/core/settings-btn-state.ts","src/core/settings-common.ts","src/core/settings-main-schema.ts","src/core/settings-modal.ts","src/core/settings-model-picker.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/sha256.ts","src/core/skin-pack.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/flip.ts","src/core/ui/focus-trap.ts","src/core/ui/help-tip.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slide-pill.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/settings.ts","src/dock/command.ts","src/dock/data.ts","src/dock/declaration.ts","src/dock/registry.ts","src/dock/runner.ts","src/dock/schedule.ts","src/dock/scheduler.ts","src/dock/schema.ts","src/dock/settings.ts","src/dock/store.ts","src/dock/ui.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/motion.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/favorites/ai.ts","src/favorites/app.ts","src/favorites/config.ts","src/favorites/data.ts","src/favorites/layouts/board/render.ts","src/favorites/motion.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/gameshelf/constants.ts","src/gameshelf/settings.ts","src/gameshelf/state.ts","src/home/entry-editor.ts","src/home/order.ts","src/home/settings.ts","src/home/shared.ts","src/knowledge/data.ts","src/knowledge/file-sync.ts","src/knowledge/index.ts","src/knowledge/motion.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/partial-json.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source-retire.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/memo/data.ts","src/memo/due.ts","src/memo/file-sync.ts","src/memo/reminder.ts","src/memo/render.ts","src/memo/settings.ts","src/memo/state.ts","src/memo/ui.ts","src/password-vault/data.ts","src/password-vault/settings.ts","src/people/chat.ts","src/people/datasource.ts","src/people/insights.ts","src/people/me-avatar.ts","src/people/media.ts","src/people/parse.ts","src/people/render.ts","src/people/safe-store.ts","src/people/settings.ts","src/people/stats.ts","src/people/types.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/index.ts","src/pomodoro/motion.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts","src/reading-report/index.ts","src/reading-report/report.ts","src/reading-report/stats.ts","src/review/analysis/data.ts","src/review/analysis/engine.ts","src/review/analysis/index.ts","src/review/analysis/kits.ts","src/review/analysis/motions.ts","src/review/analysis/view.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/motion.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/quiz-panel-data.ts","src/review/quiz-panel.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts","src/secondbrain/ai.ts","src/secondbrain/chunk.ts","src/secondbrain/config.ts","src/secondbrain/link-agent/data.ts","src/secondbrain/link-agent/pipeline.ts","src/secondbrain/motion.ts","src/secondbrain/panel.ts","src/secondbrain/readonly.ts","src/secondbrain/render.ts","src/secondbrain/store-file.ts","src/secondbrain/tfidf.ts","src/secondbrain/vector-math.ts","src/secondbrain/weekly-ui.ts","src/secondbrain/weekly.ts","src/secondbrain/whitelist.ts","src/settings-panel/changelog.ts","src/settings-panel/index.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/manual-viewer.ts","src/settings-panel/motion.ts","src/settings-panel/online-resources.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/schema.ts","src/settings-panel/shared.ts","src/settings-panel/ui.ts","src/settings.ts","src/smartcat/belongings-source.ts","src/smartcat/character.ts","src/smartcat/config.ts","src/smartcat/data.ts","src/smartcat/favorites-source.ts","src/smartcat/motion.ts","src/smartcat/types.ts","src/smartcat/ui.ts"]*/
+/* 源指纹 26386d9e0dc44795 · 仓内输入 304 个（校验见 tests/preview-freshness.test.ts） */
+/*#preview-inputs=["prototypes/memo/fake-sim.ts","prototypes/memo/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/keys.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/belongings/ai.ts","src/belongings/catalog-suggest.ts","src/belongings/category.ts","src/belongings/data.ts","src/belongings/layouts/poster/render.ts","src/belongings/motion.ts","src/belongings/render.ts","src/belongings/report-stats.ts","src/belongings/report.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/epub-notes.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/motion.ts","src/bookshelf/notes-ui.ts","src/bookshelf/notes.ts","src/bookshelf/render.ts","src/bookshelf/settings.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/bookshelf/ui.ts","src/checkup/checks-consistency.ts","src/checkup/checks-drift.ts","src/checkup/checks-json.ts","src/checkup/checks-orphans.ts","src/checkup/files.ts","src/checkup/index.ts","src/checkup/run.ts","src/checkup/ui.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/douban-fetcher.ts","src/cinema/seasons.ts","src/cinema/settings.ts","src/cinema/shared.ts","src/cinema/state.ts","src/clipbook/anchor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/file-sync.ts","src/clipbook/flow.ts","src/clipbook/image-save.ts","src/clipbook/index.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/motion.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/press/data.ts","src/clipbook/press/engine.ts","src/clipbook/press/index.ts","src/clipbook/press/motions.ts","src/clipbook/press/view.ts","src/clipbook/render.ts","src/clipbook/report-stats.ts","src/clipbook/report-ui.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai-models.ts","src/core/ai.ts","src/core/app.ts","src/core/asr-proofread.ts","src/core/category-table.ts","src/core/changelog.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/domain-icons.ts","src/core/douban-name-index.ts","src/core/download-manifest.ts","src/core/esc-manager.ts","src/core/external-tool.ts","src/core/file-sync.ts","src/core/flow-dialog.ts","src/core/gesture.ts","src/core/http.ts","src/core/item-actions.ts","src/core/jev-fallback.ts","src/core/jev.ts","src/core/json-store.ts","src/core/knowledge-boxes.ts","src/core/landscape.ts","src/core/link-now.ts","src/core/lock-stats.ts","src/core/manual.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/path-picker.ts","src/core/pomodoro-phase.ts","src/core/remote-asset.ts","src/core/remote-base.ts","src/core/rss-catalog.ts","src/core/settings-btn-state.ts","src/core/settings-common.ts","src/core/settings-main-schema.ts","src/core/settings-modal.ts","src/core/settings-model-picker.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/sha256.ts","src/core/skin-pack.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/flip.ts","src/core/ui/focus-trap.ts","src/core/ui/help-tip.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slide-pill.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/settings.ts","src/dock/command.ts","src/dock/data.ts","src/dock/declaration.ts","src/dock/registry.ts","src/dock/rules.ts","src/dock/runner.ts","src/dock/schedule.ts","src/dock/scheduler.ts","src/dock/schema.ts","src/dock/settings.ts","src/dock/store.ts","src/dock/ui.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/motion.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/favorites/ai.ts","src/favorites/app.ts","src/favorites/config.ts","src/favorites/data.ts","src/favorites/layouts/board/render.ts","src/favorites/motion.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/gameshelf/constants.ts","src/gameshelf/settings.ts","src/gameshelf/state.ts","src/home/entry-editor.ts","src/home/order.ts","src/home/settings.ts","src/home/shared.ts","src/knowledge/data.ts","src/knowledge/file-sync.ts","src/knowledge/index.ts","src/knowledge/motion.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/partial-json.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source-retire.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/memo/data.ts","src/memo/due.ts","src/memo/file-sync.ts","src/memo/reminder.ts","src/memo/render.ts","src/memo/settings.ts","src/memo/state.ts","src/memo/ui.ts","src/password-vault/data.ts","src/password-vault/settings.ts","src/people/chat.ts","src/people/datasource.ts","src/people/insights.ts","src/people/me-avatar.ts","src/people/media.ts","src/people/parse.ts","src/people/render.ts","src/people/safe-store.ts","src/people/settings.ts","src/people/stats.ts","src/people/types.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/index.ts","src/pomodoro/motion.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts","src/reading-report/index.ts","src/reading-report/report.ts","src/reading-report/stats.ts","src/review/analysis/data.ts","src/review/analysis/engine.ts","src/review/analysis/index.ts","src/review/analysis/kits.ts","src/review/analysis/motions.ts","src/review/analysis/view.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/motion.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/quiz-panel-data.ts","src/review/quiz-panel.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts","src/secondbrain/ai.ts","src/secondbrain/chunk.ts","src/secondbrain/config.ts","src/secondbrain/link-agent/data.ts","src/secondbrain/link-agent/pipeline.ts","src/secondbrain/motion.ts","src/secondbrain/panel.ts","src/secondbrain/readonly.ts","src/secondbrain/render.ts","src/secondbrain/store-file.ts","src/secondbrain/tfidf.ts","src/secondbrain/vector-math.ts","src/secondbrain/weekly-ui.ts","src/secondbrain/weekly.ts","src/secondbrain/whitelist.ts","src/settings-panel/changelog.ts","src/settings-panel/index.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/manual-viewer.ts","src/settings-panel/motion.ts","src/settings-panel/online-resources.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/schema.ts","src/settings-panel/shared.ts","src/settings-panel/ui.ts","src/settings.ts","src/smartcat/belongings-source.ts","src/smartcat/character.ts","src/smartcat/config.ts","src/smartcat/data.ts","src/smartcat/favorites-source.ts","src/smartcat/motion.ts","src/smartcat/types.ts","src/smartcat/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/memo/fake-sim.ts → window.BZW_memo（行为单源预览包，issue 245/ADR-0106） */
 var BZW_memo = (() => {
   var __create = Object.create;
@@ -4874,8 +4874,8 @@ var BZW_memo = (() => {
   function unescapeYamlText(s) {
     return s.replace(/\\(.)/g, (m, c) => c === '"' || c === "\\" ? c : m);
   }
-  function escapeHtml2(str3) {
-    return str3.replace(/[&<>"']/g, (m) => {
+  function escapeHtml2(str4) {
+    return str4.replace(/[&<>"']/g, (m) => {
       if (m === "&") return "&amp;";
       if (m === "<") return "&lt;";
       if (m === ">") return "&gt;";
@@ -4969,9 +4969,9 @@ var BZW_memo = (() => {
     if (!f) return false;
     return path === f || path.startsWith(f + "/");
   }
-  function hash31(str3) {
+  function hash31(str4) {
     let h = 0;
-    const t = String(str3 || "");
+    const t = String(str4 || "");
     for (let i = 0; i < t.length; i++) h = h * 31 + t.charCodeAt(i) >>> 0;
     return h >>> 0;
   }
@@ -17139,8 +17139,8 @@ ${it.text}`).join("\n"));
       await ((_b2 = opts.tick) == null ? void 0 : _b2.call(opts, `${t.label}（${t.file}）`, { done: i + 1, total: targets.length }));
     }
     const { summary, issues } = jsonIssuesOf(verdicts);
-    const section2 = { id: "json", name: "数据文件可解析", summary, issues, scanned: verdicts.filter((v) => v.state !== "missing").length };
-    return section2;
+    const section = { id: "json", name: "数据文件可解析", summary, issues, scanned: verdicts.filter((v) => v.state !== "missing").length };
+    return section;
   }
   var init_checks_json = __esm({
     "src/checkup/checks-json.ts"() {
@@ -29395,8 +29395,8 @@ ${missing.map((m) => `- ${m}`).join("\n")}
       }
     }
     const summary = issues.length ? `扫描 ${scanned} 个条目，发现 ${issues.length} 处指向缺失` : `扫描 ${scanned} 个条目，未发现指向缺失`;
-    const section2 = { id: "orphan", name: "孤儿条目", summary, issues, scanned };
-    return section2;
+    const section = { id: "orphan", name: "孤儿条目", summary, issues, scanned };
+    return section;
   }
   var init_checks_orphans = __esm({
     "src/checkup/checks-orphans.ts"() {
@@ -29573,7 +29573,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
       if ((_a2 = opts.isCancelled) == null ? void 0 : _a2.call(opts)) return null;
       (_b2 = opts.onProgress) == null ? void 0 : _b2.call(opts, { index: i, total, label: CHECKS[i].label });
       try {
-        const section2 = await CHECKS[i].runner(app2, {
+        const section = await CHECKS[i].runner(app2, {
           tick: async (label, sub) => {
             var _a3;
             (_a3 = opts.onProgress) == null ? void 0 : _a3.call(opts, { index: i, total, label, subDone: sub == null ? void 0 : sub.done, subTotal: sub == null ? void 0 : sub.total });
@@ -29584,8 +29584,8 @@ ${missing.map((m) => `- ${m}`).join("\n")}
             return !!((_a3 = opts.isCancelled) == null ? void 0 : _a3.call(opts));
           }
         });
-        if (section2 === null) return null;
-        sections.push(section2);
+        if (section === null) return null;
+        sections.push(section);
       } catch (e) {
         sections.push({
           id: CHECKS[i].id,
@@ -33426,13 +33426,13 @@ ${missing.map((m) => `- ${m}`).join("\n")}
       }
       const sections = buildReportSections(stats);
       body.innerHTML = "";
-      for (const section2 of sections) {
+      for (const section of sections) {
         if (!alive()) return finishAbort();
         await yieldToMainThread2();
         if (!alive()) return finishAbort();
-        body.insertAdjacentHTML("beforeend", section2.generate());
+        body.insertAdjacentHTML("beforeend", section.generate());
         motionReportSection(body.lastElementChild);
-        progress.setMessage(`正在生成${section2.label}…`);
+        progress.setMessage(`正在生成${section.label}…`);
       }
       if (alive()) {
         mountIcons(body);
@@ -38142,13 +38142,13 @@ ${bodyText.substring(0, 6e3)}`;
       }
       body.innerHTML = "";
       let secIdx = 0;
-      for (const section2 of buildClipReportSections(data, { availableKeys: availKeys, library, busiest })) {
+      for (const section of buildClipReportSections(data, { availableKeys: availKeys, library, busiest })) {
         if (!alive()) return finishAbort();
         await yieldToMainThread(YIELD_MS);
         if (!alive()) return finishAbort();
-        body.insertAdjacentHTML("beforeend", section2.generate());
+        body.insertAdjacentHTML("beforeend", section.generate());
         motionReportSection2(body.lastElementChild, secIdx++);
-        progress == null ? void 0 : progress.setMessage(`正在生成${section2.label}…`);
+        progress == null ? void 0 : progress.setMessage(`正在生成${section.label}…`);
       }
       if (alive()) {
         mountIcons(body);
@@ -64359,6 +64359,272 @@ ${n.content.slice(0, 2e3)}
     }
   });
 
+  // src/dock/rules.ts
+  function atSecondsOf(at3) {
+    if (!at3) return void 0;
+    const m = /^(\d{1,2}):(\d{1,2})(?::(\d{1,2}))?$/.exec(at3.trim());
+    if (!m) return void 0;
+    const h = Number(m[1]);
+    const mi = Number(m[2]);
+    const s = m[3] === void 0 ? 0 : Number(m[3]);
+    if (h > 23 || mi > 59 || s > 59) return void 0;
+    return h * 3600 + mi * 60 + s;
+  }
+  function startOfDay(ts) {
+    const d = new Date(ts);
+    d.setHours(0, 0, 0, 0);
+    return d.getTime();
+  }
+  function todayAt(trigger, now) {
+    const sec = atSecondsOf(trigger.at);
+    if (sec === void 0) return void 0;
+    return startOfDay(now) + sec * 1e3;
+  }
+  function ruleDue(rule, ctx) {
+    var _a2, _b2, _c, _d, _e, _f, _g, _h;
+    const t = rule.trigger;
+    switch (t.kind) {
+      case "daily": {
+        const at3 = todayAt(t, ctx.now);
+        if (at3 === void 0) return false;
+        if (ctx.now < at3) return false;
+        return ((_a2 = ctx.lastFiredAt) != null ? _a2 : 0) < at3;
+      }
+      case "interval": {
+        if (!(t.everyMin > 0)) return false;
+        if (ctx.lastFiredAt === void 0) return true;
+        return ctx.now - ctx.lastFiredAt >= t.everyMin * 6e4;
+      }
+      case "on-launch": {
+        const base = ctx.sessionStart;
+        if (base === void 0) return false;
+        if (ctx.now < base + t.delayMin * 6e4) return false;
+        return ((_b2 = ctx.lastFiredAt) != null ? _b2 : 0) < base;
+      }
+      case "panel-open":
+        return ((_c = ctx.event) == null ? void 0 : _c.kind) === "panel-open";
+      case "tool-ok":
+        return ((_d = ctx.event) == null ? void 0 : _d.kind) === "tool-ok" && ctx.event.toolId === t.toolId;
+      case "tool-fail":
+        return ((_e = ctx.event) == null ? void 0 : _e.kind) === "tool-fail" && ctx.event.toolId === t.toolId;
+      case "domain-event":
+        return ((_f = ctx.event) == null ? void 0 : _f.kind) === "domain-event" && ctx.event.channel === t.channel;
+      case "vault-file": {
+        if (((_g = ctx.event) == null ? void 0 : _g.kind) !== "vault-file") return false;
+        const p = (_h = ctx.event.path) != null ? _h : "";
+        if (!p) return false;
+        const target = t.target.replace(/\/+$/, "");
+        return p === target || p.startsWith(target + "/");
+      }
+      case "data-threshold": {
+        if (ctx.value === void 0) return false;
+        if (t.op === ">") return ctx.value > t.value;
+        if (t.op === "<") return ctx.value < t.value;
+        return ctx.value === t.value;
+      }
+    }
+  }
+  function clockText(at3) {
+    const sec = atSecondsOf(at3);
+    if (sec === void 0) return at3;
+    return `${pad23(Math.floor(sec / 3600))}:${pad23(Math.floor(sec % 3600 / 60))}`;
+  }
+  function durationText(min) {
+    if (min % 60 === 0 && min >= 60) return `${min / 60} 小时`;
+    return `${min} 分钟`;
+  }
+  function triggerText(t, toolNameOf) {
+    const name = (id) => toolNameOf ? toolNameOf(id) : id;
+    switch (t.kind) {
+      case "daily":
+        return `每天 ${clockText(t.at)}`;
+      case "interval":
+        return `每 ${durationText(t.everyMin)}`;
+      case "on-launch":
+        return `启动后 ${durationText(t.delayMin)}`;
+      case "panel-open":
+        return "打开工具坞时";
+      case "tool-ok":
+        return `${name(t.toolId)} 成功后`;
+      case "tool-fail":
+        return `${name(t.toolId)} 失败后`;
+      case "domain-event":
+        return `事件 ${t.channel}`;
+      case "vault-file":
+        return `${t.target} 有变动`;
+      case "data-threshold":
+        return `${t.path} ${t.key} ${t.op} ${t.value}`;
+    }
+  }
+  function actionText(a) {
+    if (a.kind === "remind") return a.open ? "只提醒（通知可跳转）" : "只提醒";
+    return a.notify === "always" ? "运行并提醒" : a.notify === "fail" ? "运行（失败才提醒）" : "运行";
+  }
+  function newRuleId(now = Date.now()) {
+    return `r${now.toString(36)}${Math.floor(Math.random() * 1296).toString(36)}`;
+  }
+  function defaultAction() {
+    return { kind: "run", notify: "fail" };
+  }
+  function seedRuleFromSchedule(s, id) {
+    var _a2;
+    if (!s) return null;
+    if (s.kind === "daily") {
+      const h = (_a2 = s.hour) != null ? _a2 : 12;
+      return { id, trigger: { kind: "daily", at: `${pad23(h)}:00` }, action: defaultAction() };
+    }
+    if (s.kind === "interval" && s.everyHours) {
+      return {
+        id,
+        trigger: { kind: "interval", everyMin: s.everyHours * 60 },
+        action: defaultAction()
+      };
+    }
+    return null;
+  }
+  function effectiveRules(rules, override, declared) {
+    var _a2;
+    if (rules && rules.length) return rules.slice();
+    const seed = (_a2 = seedRuleFromSchedule(override, "seed")) != null ? _a2 : seedRuleFromSchedule(declared, "seed");
+    return seed ? [seed] : [];
+  }
+  function hasActiveRule(rules) {
+    return rules.some((r) => r.enabled !== false);
+  }
+  function str3(v) {
+    return typeof v === "string" ? v.trim() : void 0;
+  }
+  function intOf(v, min, max) {
+    if (typeof v !== "number" || !Number.isFinite(v)) return void 0;
+    const n = Math.floor(v);
+    if (n < min || n > max) return void 0;
+    return n;
+  }
+  function parseTrigger(raw) {
+    var _a2, _b2, _c, _d, _e, _f;
+    if (!raw || typeof raw !== "object" || Array.isArray(raw)) return null;
+    const r = raw;
+    switch (r.kind) {
+      case "daily": {
+        const at3 = str3(r.at);
+        if (!at3 || atSecondsOf(at3) === void 0) return null;
+        return { kind: "daily", at: clockText(at3) };
+      }
+      case "interval": {
+        const everyMin = intOf(r.everyMin, 1, 43200);
+        return everyMin === void 0 ? null : { kind: "interval", everyMin };
+      }
+      case "on-launch": {
+        const delayMin = intOf(r.delayMin, 0, 1440);
+        return delayMin === void 0 ? null : { kind: "on-launch", delayMin };
+      }
+      case "panel-open":
+        return { kind: "panel-open" };
+      case "tool-ok":
+        return { kind: "tool-ok", toolId: (_a2 = str3(r.toolId)) != null ? _a2 : "" };
+      case "tool-fail":
+        return { kind: "tool-fail", toolId: (_b2 = str3(r.toolId)) != null ? _b2 : "" };
+      case "domain-event":
+        return { kind: "domain-event", channel: (_c = str3(r.channel)) != null ? _c : "" };
+      case "vault-file":
+        return { kind: "vault-file", target: (_d = str3(r.target)) != null ? _d : "" };
+      case "data-threshold": {
+        const op = r.op;
+        if (op !== ">" && op !== "<" && op !== "=") return null;
+        const value = typeof r.value === "number" && Number.isFinite(r.value) ? r.value : 0;
+        return {
+          kind: "data-threshold",
+          path: (_e = str3(r.path)) != null ? _e : "",
+          key: (_f = str3(r.key)) != null ? _f : "",
+          op,
+          value
+        };
+      }
+      default:
+        return null;
+    }
+  }
+  function parseAction(raw) {
+    if (!raw || typeof raw !== "object" || Array.isArray(raw)) return null;
+    const r = raw;
+    if (r.kind === "remind") {
+      const open = str3(r.open);
+      return open ? { kind: "remind", open } : { kind: "remind" };
+    }
+    if (r.kind !== "run") return null;
+    const n = r.notify;
+    return { kind: "run", notify: n === "always" || n === "fail" || n === "never" ? n : "fail" };
+  }
+  function parseRule(raw) {
+    var _a2;
+    if (!raw || typeof raw !== "object" || Array.isArray(raw)) return null;
+    const r = raw;
+    const id = str3(r.id);
+    if (!id) return null;
+    const trigger = parseTrigger(r.trigger);
+    if (!trigger) return null;
+    const out = { id, trigger, action: (_a2 = parseAction(r.action)) != null ? _a2 : defaultAction() };
+    const name = str3(r.name);
+    if (name) out.name = name;
+    if (typeof r.enabled === "boolean") out.enabled = r.enabled;
+    const jit = intOf(r.jitterMin, 0, 720);
+    if (jit !== void 0) out.jitterMin = jit;
+    return out;
+  }
+  function parseRules(raw) {
+    if (!Array.isArray(raw)) return [];
+    const out = [];
+    const seen = /* @__PURE__ */ new Set();
+    for (const item of raw) {
+      const parsed = parseRule(item);
+      if (!parsed || seen.has(parsed.id)) continue;
+      seen.add(parsed.id);
+      out.push(parsed);
+    }
+    return out;
+  }
+  function parseRuleState(raw) {
+    if (!raw || typeof raw !== "object" || Array.isArray(raw)) return void 0;
+    const out = {};
+    let any = false;
+    for (const [k, v] of Object.entries(raw)) {
+      if (!v || typeof v !== "object" || Array.isArray(v)) continue;
+      const at3 = str3(v.lastFiredAt);
+      if (!at3) continue;
+      out[k] = { lastFiredAt: at3 };
+      any = true;
+    }
+    return any ? out : void 0;
+  }
+  var TRIGGER_KINDS, TRIGGER_LABEL, pad23;
+  var init_rules = __esm({
+    "src/dock/rules.ts"() {
+      TRIGGER_KINDS = [
+        "daily",
+        "interval",
+        "on-launch",
+        "panel-open",
+        "tool-ok",
+        "tool-fail",
+        "domain-event",
+        "vault-file",
+        "data-threshold"
+      ];
+      TRIGGER_LABEL = {
+        daily: "每天某时",
+        interval: "每隔一段时间",
+        "on-launch": "启动 Obsidian 后",
+        "panel-open": "打开工具坞时",
+        "tool-ok": "某个工具成功后",
+        "tool-fail": "某个工具失败后",
+        "domain-event": "某个事件发生时",
+        "vault-file": "某个目录有变动",
+        "data-threshold": "某个数值达到条件"
+      };
+      pad23 = (n) => String(n).padStart(2, "0");
+    }
+  });
+
   // src/dock/registry.ts
   function runSignature(run) {
     var _a2;
@@ -64376,6 +64642,10 @@ ${n.content.slice(0, 2e3)}
     if (typeof r.trustedAt === "string" && r.trustedAt.trim()) out.trustedAt = r.trustedAt.trim();
     if (typeof r.trustedRun === "string" && r.trustedRun !== "") out.trustedRun = r.trustedRun;
     if (typeof r.autoRun === "boolean") out.autoRun = r.autoRun;
+    const rules = parseRules(r.rules);
+    if (rules.length) out.rules = rules;
+    const ruleState = parseRuleState(r.ruleState);
+    if (ruleState) out.ruleState = ruleState;
     const override = parseSchedule(r.scheduleOverride);
     if (override) {
       out.scheduleOverride = override;
@@ -64401,6 +64671,7 @@ ${n.content.slice(0, 2e3)}
   var init_registry = __esm({
     "src/dock/registry.ts"() {
       init_schema2();
+      init_rules();
       TOOL_ID_RE = /^[a-z0-9][a-z0-9-]*$/;
       TOOL_ID_MAX_LEN = 64;
     }
@@ -64584,48 +64855,10 @@ ${n.content.slice(0, 2e3)}
     if (!s) return "";
     return [s.kind, (_a2 = s.hour) != null ? _a2 : "", (_b2 = s.weekday) != null ? _b2 : "", (_c = s.everyHours) != null ? _c : ""].join("|");
   }
-  function scheduleFromDraft(kind, p) {
-    switch (kind) {
-      case "inherit":
-        return void 0;
-      case "daily":
-        return { kind: "daily", hour: p.hour };
-      case "weekly":
-        return { kind: "weekly", weekday: p.weekday };
-      case "interval":
-        return { kind: "interval", everyHours: p.everyHours };
-      case "on-demand":
-        return { kind: "on-demand" };
-    }
-  }
   function isDueToRun(schedule, runs, now = Date.now()) {
     if (!schedule || schedule.kind === "on-demand" || schedule.kind === "unknown") return false;
     if (schedule.kind === "interval" && lastRun(runs) === void 0) return true;
     return judgeDue(schedule, runs, now).state === "due";
-  }
-  function skipReasonOf(i) {
-    if (!i.enabled) return "disabled";
-    if (!i.trusted) return "untrusted";
-    if (i.trustStale) return "trust-stale";
-    if (!i.hasRun) return "no-run";
-    if (!i.autoKind) return "not-auto";
-    if (!i.autoOn) return "auto-off";
-    if (!i.paramsReady) return "params";
-    if (i.paused) return "paused";
-    if (i.running) return "running";
-    if (i.cooldown) return "cooldown";
-    if (!i.due) return "not-due";
-    return null;
-  }
-  function decideDue(inputs) {
-    const ready2 = [];
-    const skipped = [];
-    for (const i of inputs) {
-      const r = skipReasonOf(i);
-      if (r) skipped.push({ input: i, reason: r });
-      else ready2.push(i);
-    }
-    return { ready: ready2, skipped };
   }
   function missingRequiredParams(params, values) {
     const out = [];
@@ -64772,8 +65005,8 @@ ${n.content.slice(0, 2e3)}
     switch (schedule.kind) {
       case "daily": {
         const hour = (_a2 = schedule.hour) != null ? _a2 : 0;
-        const todayAt = new Date(d.getFullYear(), d.getMonth(), d.getDate(), hour).getTime();
-        return todayAt > now ? todayAt : todayAt + DAY;
+        const todayAt2 = new Date(d.getFullYear(), d.getMonth(), d.getDate(), hour).getTime();
+        return todayAt2 > now ? todayAt2 : todayAt2 + DAY;
       }
       case "weekly": {
         if (schedule.weekday === void 0) return null;
@@ -64804,7 +65037,7 @@ ${n.content.slice(0, 2e3)}
     if (!list.length) return null;
     return list.filter((r) => r.status === "ok").length / list.length;
   }
-  function durationText(run) {
+  function durationText2(run) {
     let ms = run.durationMs;
     if (ms === void 0) {
       const a = timeOf(run.startedAt);
@@ -64818,11 +65051,10 @@ ${n.content.slice(0, 2e3)}
     const m = Math.floor(s / 60);
     return `${m} 分 ${Math.round(s - m * 60)} 秒`;
   }
-  var TERMINAL, EDITABLE_SCHEDULE_KINDS, ERROR_KIND_LABEL;
+  var TERMINAL, ERROR_KIND_LABEL;
   var init_schedule = __esm({
     "src/dock/schedule.ts"() {
       TERMINAL = /* @__PURE__ */ new Set(["ok", "failed", "stopped", "timeout"]);
-      EDITABLE_SCHEDULE_KINDS = ["daily", "weekly", "interval"];
       ERROR_KIND_LABEL = {
         auth: "认证失效",
         network: "网络异常",
@@ -64888,9 +65120,6 @@ ${n.content.slice(0, 2e3)}
   function isEnabled(entry) {
     return entry.enabled !== false;
   }
-  function isAutoRun(entry) {
-    return entry.autoRun !== false;
-  }
   async function updateToolEntry(id, patch) {
     const entries = readToolEntries();
     const i = entries.findIndex((e) => e.id === id);
@@ -64902,6 +65131,14 @@ ${n.content.slice(0, 2e3)}
     }
     entries[i] = next;
     await saveToolEntries(entries);
+  }
+  async function patchRuleFired(toolId, ruleId, at3) {
+    var _a2;
+    const entry = readToolEntries().find((e) => e.id === toolId);
+    if (!entry) return;
+    const state3 = { ...(_a2 = entry.ruleState) != null ? _a2 : {} };
+    state3[ruleId] = { lastFiredAt: new Date(at3).toISOString() };
+    await updateToolEntry(toolId, { ruleState: state3 });
   }
   function parseRunState(raw) {
     if (!raw || typeof raw !== "object" || Array.isArray(raw)) return {};
@@ -64989,6 +65226,15 @@ ${n.content.slice(0, 2e3)}
     const states = readRunStates();
     return Promise.all(entries.map((entry) => loadToolView(app2, entry, states)));
   }
+  function firedAtMapOf(entry) {
+    var _a2;
+    const out = {};
+    for (const [key, v] of Object.entries((_a2 = entry.ruleState) != null ? _a2 : {})) {
+      const t = (v == null ? void 0 : v.lastFiredAt) ? Date.parse(v.lastFiredAt) : NaN;
+      if (Number.isFinite(t)) out[key] = t;
+    }
+    return out;
+  }
   async function loadToolView(app2, entry, runStates = readRunStates()) {
     var _a2, _b2, _c, _d, _e;
     const decl = readDeclaration(entry.path);
@@ -65019,7 +65265,8 @@ ${n.content.slice(0, 2e3)}
       schedule,
       scheduleOverridden,
       declChangedSinceOverride,
-      autoRun: isAutoRun(entry),
+      rules: effectiveRules(entry.rules, entry.scheduleOverride, declaredSchedule),
+      ruleFiredAt: firedAtMapOf(entry),
       nextDue: nextDueAt(schedule, runs),
       runState: runStates[entry.id],
       overLimit: runs.length > DOCK_RUNS_PER_TOOL_LIMIT,
@@ -65058,6 +65305,7 @@ ${n.content.slice(0, 2e3)}
       init_registry();
       init_declaration();
       init_schedule();
+      init_rules();
       init_registry();
     }
   });
@@ -65532,82 +65780,143 @@ ${n.content.slice(0, 2e3)}
     if (app === null) return;
     void tick();
   }
-  function inputOf(v, now) {
+  function notifyDockEvent(ev) {
+    if (app === null) return;
+    pendingEvents.push(ev);
+    if (ticking) {
+      kickQueued = true;
+      return;
+    }
+    kickDockScheduler();
+  }
+  function pathOfPayload(evt) {
+    var _a2;
+    const e = evt;
+    if (!e) return "";
+    if (typeof e.path === "string") return e.path;
+    const p = (_a2 = e.file) == null ? void 0 : _a2.path;
+    return typeof p === "string" ? p : "";
+  }
+  function fromBus(channel, evt) {
+    if (channel.startsWith("vault:")) return { kind: "vault-file", path: pathOfPayload(evt) };
+    return { kind: "domain-event", channel };
+  }
+  function syncSubscriptions(views2) {
+    const wanted = /* @__PURE__ */ new Set();
+    for (const v of views2) {
+      for (const r of v.rules) {
+        if (r.enabled === false) continue;
+        if (r.trigger.kind === "domain-event") wanted.add(r.trigger.channel);
+        else if (r.trigger.kind === "vault-file") for (const c of VAULT_CHANNELS) wanted.add(c);
+      }
+    }
+    for (const [ch, off] of [...subscriptions]) {
+      if (!wanted.has(ch)) {
+        off();
+        subscriptions.delete(ch);
+      }
+    }
+    for (const ch of wanted) {
+      if (subscriptions.has(ch)) continue;
+      subscriptions.set(
+        ch,
+        onDomainEvent(ch, (evt) => notifyDockEvent(fromBus(ch, evt)))
+      );
+    }
+  }
+  function runGate(v, now) {
     var _a2, _b2, _c;
-    return {
-      id: v.entry.id,
-      name: displayName2(v),
-      enabled: isEnabled(v.entry),
-      trusted: isTrusted(v.entry),
-      trustStale: v.trustStale,
-      hasRun: v.run !== null,
-      autoKind: triggerOf(v.schedule) === "auto",
-      autoOn: v.autoRun,
-      due: v.dueToRun,
-      paramsReady: missingRequiredParams((_a2 = v.manifest) == null ? void 0 : _a2.params, v.values).length === 0,
-      paused: !!((_b2 = v.runState) == null ? void 0 : _b2.pausedAt),
-      cooldown: ((_c = cooldownUntil.get(v.entry.id)) != null ? _c : 0) > now,
-      // 「在跑」的唯一事实源是执行层的名册（live 表）：用户手动点的那次不进 inFlight，
-      // 只看自己的集合，会在手动跑到一半时把同一个工具再拉起一个进程
-      running: inFlight.has(v.entry.id) || liveRunOf(v.entry.id) !== void 0
-    };
+    if (!isEnabled(v.entry)) return "disabled";
+    if (!isTrusted(v.entry)) return "untrusted";
+    if (v.trustStale) return "trust-stale";
+    if (!v.run) return "no-run";
+    if ((_a2 = v.runState) == null ? void 0 : _a2.pausedAt) return "paused";
+    if (inFlight.has(v.entry.id) || liveRunOf(v.entry.id) !== void 0) return "running";
+    if (((_b2 = cooldownUntil.get(v.entry.id)) != null ? _b2 : 0) > now) return "cooldown";
+    if (missingRequiredParams((_c = v.manifest) == null ? void 0 : _c.params, v.values).length > 0) return "params";
+    return null;
+  }
+  function remindGate(v) {
+    return isEnabled(v.entry) ? null : "disabled";
   }
   async function tick() {
     if (app === null || isUnloaded === null) return;
     if (isUnloaded()) return;
+    if (ticking) return;
+    ticking = true;
     try {
-      await loadDockStore();
-    } catch (e) {
-    }
-    if (!globalAutoOn()) return;
-    let views2;
-    try {
-      views2 = await loadToolViews(app);
-    } catch (e) {
-      return;
-    }
-    if (isUnloaded()) return;
-    const now = Date.now();
-    const { ready: ready2, skipped } = decideDue(views2.map((v) => inputOf(v, now)));
-    for (const s of skipped) {
-      if (s.reason === "params" && !warnedParams.has(s.input.id)) {
-        warnedParams.add(s.input.id);
-        notify(`${s.input.name} 没自动跑：必填参数还没填`, { type: "warning" });
-      }
-    }
-    if (!ready2.length) return;
-    const batch = chain2.then(() => runBatch(ready2, views2));
-    chain2 = batch.catch(() => void 0);
-    await batch;
-  }
-  async function runBatch(ready2, views2) {
-    let ok = 0;
-    let fail = 0;
-    for (const input of ready2) {
-      if (isUnloaded == null ? void 0 : isUnloaded()) return;
-      const view2 = views2.find((v) => v.entry.id === input.id);
-      if (!view2) continue;
-      inFlight.add(input.id);
-      let result = "skip";
       try {
-        result = await runOne(view2);
+        await loadDockStore();
       } catch (e) {
-        result = "fail";
-      } finally {
-        inFlight.delete(input.id);
       }
-      if (result === "ok") ok += 1;
-      else if (result === "fail") fail += 1;
+      if (!globalAutoOn()) return;
+      let views2;
+      try {
+        views2 = await loadToolViews(app);
+      } catch (e) {
+        return;
+      }
+      if (isUnloaded()) return;
+      syncSubscriptions(views2);
+      const now = Date.now();
+      const events = pendingEvents;
+      pendingEvents = [];
+      for (const v of views2) {
+        if (!v.rules.length) continue;
+        for (const rule of v.rules) {
+          if (rule.enabled === false) continue;
+          const lastFiredAt = v.ruleFiredAt[rule.id];
+          const base = { now, lastFiredAt, sessionStart };
+          const hit = ruleDue(rule, base) || events.some((e) => ruleDue(rule, { ...base, event: e }));
+          if (!hit) continue;
+          const isRemind = rule.action.kind === "remind";
+          const gate = isRemind ? remindGate(v) : runGate(v, now);
+          if (gate === "params" && !warnedParams.has(v.entry.id)) {
+            warnedParams.add(v.entry.id);
+            notify(`${displayName2(v)} 没自动跑：必填参数还没填`, { type: "warning" });
+          }
+          if (gate) continue;
+          await patchRuleFired(v.entry.id, rule.id, now);
+          if (isRemind) remindOf(v, rule);
+          else scheduleRun(v, rule);
+        }
+      }
+    } finally {
+      ticking = false;
+      if (kickQueued) {
+        kickQueued = false;
+        void tick();
+      }
     }
-    if (fail > 0) {
-      notify(`自动运行：${ok} 成 ${fail} 败`, { type: "warning" });
-    }
+  }
+  function remindOf(v, rule) {
+    var _a2;
+    const why = ((_a2 = rule.name) == null ? void 0 : _a2.trim()) ? rule.name.trim() : "规则";
+    notify(`${displayName2(v)}：该手动跑一次了（${why}）`, {
+      type: "info",
+      action: { label: "查看", onClick: () => openDockTool(app, v.entry.id) }
+    });
+  }
+  function scheduleRun(v, rule) {
+    var _a2;
+    const min = (_a2 = rule.jitterMin) != null ? _a2 : 0;
+    const delayMs = min > 0 ? Math.floor(Math.random() * min * 6e4) : 0;
+    const go = () => {
+      const batch = chain2.then(() => runOne(v));
+      chain2 = batch.then(
+        () => void 0,
+        () => void 0
+      );
+    };
+    if (delayMs > 0) setTimeout(go, delayMs);
+    else go();
   }
   async function runOne(view2) {
     var _a2, _b2;
     const launch = view2.run;
     if (app === null || !launch) return "skip";
     const entry = view2.entry;
+    inFlight.add(entry.id);
     const handle = runTool(app, entry, launch, view2.manifest, view2.values, {}, { trigger: "auto" });
     let timedOut = false;
     const timer = setTimeout(() => {
@@ -65619,9 +65928,11 @@ ${n.content.slice(0, 2e3)}
       outcome = await handle.done;
     } finally {
       clearTimeout(timer);
+      inFlight.delete(entry.id);
     }
     if (outcome.ok) {
       await recordRunSuccess(entry.id, outcome.finishedAt);
+      notifyDockEvent({ kind: "tool-ok", toolId: entry.id });
       return "ok";
     }
     if (outcome.stopped && !timedOut) return "skip";
@@ -65636,7 +65947,6 @@ ${n.content.slice(0, 2e3)}
     cooldownUntil.set(entry.id, Date.now() + FAIL_COOLDOWN_MS);
     notify(`${displayName2(view2)} 自动运行失败：${errorHint(timedOut ? "timeout" : outcome.kind)}`, {
       type: "error",
-      // 失败通知是死的，用户就得自己开面板找是哪个工具 —— 点了直达它的详情页
       action: { label: "查看", onClick: () => openDockTool(app, view2.entry.id) }
     });
     if (trip) {
@@ -65644,27 +65954,36 @@ ${n.content.slice(0, 2e3)}
         type: "warning"
       });
     }
+    notifyDockEvent({ kind: "tool-fail", toolId: entry.id });
     return "fail";
   }
-  var FAIL_COOLDOWN_MS, BREAKER_THRESHOLD, RUN_TIMEOUT_MS, app, isUnloaded, inFlight, cooldownUntil, chain2, warnedParams;
+  var FAIL_COOLDOWN_MS, BREAKER_THRESHOLD, RUN_TIMEOUT_MS, VAULT_CHANNELS, app, isUnloaded, sessionStart, inFlight, cooldownUntil, chain2, warnedParams, pendingEvents, subscriptions, ticking, kickQueued;
   var init_scheduler = __esm({
     "src/dock/scheduler.ts"() {
       init_fake_obsidian();
       init_notice();
+      init_domain_bus();
       init_data16();
       init_store2();
       init_schedule();
+      init_rules();
       init_ui12();
       init_runner();
       FAIL_COOLDOWN_MS = 15 * 6e4;
       BREAKER_THRESHOLD = 3;
       RUN_TIMEOUT_MS = 10 * 6e4;
+      VAULT_CHANNELS = ["vault:md-created", "vault:md-modified", "vault:md-deleted"];
       app = null;
       isUnloaded = null;
+      sessionStart = 0;
       inFlight = /* @__PURE__ */ new Set();
       cooldownUntil = /* @__PURE__ */ new Map();
       chain2 = Promise.resolve();
       warnedParams = /* @__PURE__ */ new Set();
+      pendingEvents = [];
+      subscriptions = /* @__PURE__ */ new Map();
+      ticking = false;
+      kickQueued = false;
     }
   });
 
@@ -65757,9 +66076,6 @@ ${n.content.slice(0, 2e3)}
     if (v.trustStale) return "命令已变，待重新确认";
     return null;
   }
-  function runLabel(v) {
-    return triggerOfView(v) === "auto" ? "手动跑一次" : "运行";
-  }
   function openDock(app2) {
     var _a2;
     hostApp2 = app2;
@@ -65774,6 +66090,7 @@ ${n.content.slice(0, 2e3)}
     });
     render2();
     void refresh();
+    notifyDockEvent({ kind: "panel-open" });
   }
   function closeDock() {
     overlay2 == null ? void 0 : overlay2.classList.add("is-off");
@@ -65816,14 +66133,6 @@ ${n.content.slice(0, 2e3)}
     });
     document.body.appendChild(ov);
     overlay2 = ov;
-  }
-  function headSubEl() {
-    var _a2;
-    return (_a2 = overlay2 == null ? void 0 : overlay2.querySelector("#bz-dock-headsub")) != null ? _a2 : null;
-  }
-  function headBtnsEl() {
-    var _a2;
-    return (_a2 = overlay2 == null ? void 0 : overlay2.querySelector("#bz-dock-headbtns")) != null ? _a2 : null;
   }
   function kpiEl() {
     var _a2;
@@ -65878,8 +66187,7 @@ ${n.content.slice(0, 2e3)}
     var _a2, _b2;
     if (!readDockSwitch("autoRun")) return false;
     if (!isEnabled(v.entry) || !isTrusted(v.entry) || v.trustStale) return false;
-    if (!v.run || !v.autoRun) return false;
-    if (triggerOfView(v) !== "auto") return false;
+    if (!v.run || !hasActiveRule(v.rules)) return false;
     if ((_a2 = v.runState) == null ? void 0 : _a2.pausedAt) return false;
     return missingRequiredParams((_b2 = v.manifest) == null ? void 0 : _b2.params, v.values).length === 0;
   }
@@ -65894,7 +66202,7 @@ ${n.content.slice(0, 2e3)}
     const host = kpiEl();
     if (!host) return;
     host.innerHTML = "";
-    if (!views.length) {
+    if (!views.length || view.kind === "detail") {
       host.classList.add("is-off");
       return;
     }
@@ -65965,7 +66273,7 @@ ${n.content.slice(0, 2e3)}
     if (!host) return;
     host.innerHTML = "";
     const runs = liveRunsAll();
-    if (!runs.length) {
+    if (!runs.length || view.kind === "detail") {
       host.classList.add("is-off");
       return;
     }
@@ -66003,11 +66311,38 @@ ${n.content.slice(0, 2e3)}
     return row;
   }
   function renderHead() {
-    const sub = headSubEl();
-    const btns = headBtnsEl();
-    if (!sub || !btns) return;
+    var _a2;
+    const headEl = (_a2 = overlay2 == null ? void 0 : overlay2.querySelector(".bz-panel-head")) != null ? _a2 : null;
+    if (!headEl) return;
+    if (view.kind === "detail") {
+      const v = viewById(view.id);
+      if (v) {
+        renderToolHead(headEl, v);
+        return;
+      }
+    }
+    headEl.classList.remove("bz-dock-toolhead");
+    let sub = headEl.querySelector("#bz-dock-headsub");
+    let btns = headEl.querySelector("#bz-dock-headbtns");
+    if (!sub || !btns) {
+      headEl.innerHTML = "";
+      const brand = el2("div", "bz-panel-brand");
+      brand.appendChild(uiIcon("square-terminal"));
+      sub = el2("div", "bz-panel-head-sub");
+      sub.id = "bz-dock-headsub";
+      btns = el2("div", "bz-panel-head-btns");
+      btns.id = "bz-dock-headbtns";
+      headEl.append(
+        brand,
+        el2("div", "bz-panel-title", "工具坞"),
+        el2("div", "bz-panel-head-pipe"),
+        sub,
+        el2("div", "bz-panel-head-sp"),
+        btns
+      );
+    }
     const s = summarize(views);
-    sub.textContent = views.length ? `${s.total} 个工具 · 自动化 ${s.auto} · 手动 ${s.manual}${s.overdue ? ` · ${s.overdue} 个待关注` : ""}` : "还没有登记任何外部工具";
+    sub.textContent = views.length ? `${s.total} 个工具${s.overdue ? ` · ${s.overdue} 个待关注` : ""}` : "还没有登记任何外部工具";
     btns.innerHTML = "";
     btns.append(
       uiIconBtn({
@@ -66041,13 +66376,42 @@ ${n.content.slice(0, 2e3)}
       })
     );
   }
+  function renderToolHead(host, v) {
+    host.innerHTML = "";
+    host.classList.add("bz-dock-toolhead");
+    const back = uiIconBtn({
+      icon: "chevron-left",
+      title: "返回列表",
+      className: "bz-dock-back",
+      onClick: () => {
+        view = { kind: "list" };
+        render2();
+      }
+    });
+    const main = el2("div", "bz-dock-covermain");
+    const ic2 = el2("div", "bz-dock-coveric");
+    ic2.appendChild(uiIcon(displayIcon(v), "bz-ic--lg"));
+    const txt = el2("div", "bz-dock-covertxt");
+    const line = el2("div", "bz-dock-coverline");
+    line.appendChild(el2("div", "bz-dock-detail-name", displayName2(v)));
+    const tags = el2("div", "bz-dock-detail-tags");
+    if (isOverdue(v.due.state)) tags.appendChild(el2("span", "bz-dock-tag bz-dock-tag--due", v.due.detail));
+    const trustTag = trustTagOf(v);
+    if (trustTag) tags.appendChild(el2("span", "bz-dock-tag bz-dock-tag--warn", trustTag));
+    if (tags.children.length) line.appendChild(tags);
+    txt.appendChild(line);
+    const desc = displayDesc(v);
+    if (desc) txt.appendChild(el2("div", "bz-dock-detail-desc", desc));
+    main.append(back, ic2, txt);
+    host.appendChild(main);
+  }
   function renderBar() {
     const bar = barEl();
     if (!bar) return;
     bar.innerHTML = "";
     if (refreshing) bar.classList.add("is-loading");
     else bar.classList.remove("is-loading");
-    if (!searchOpen) {
+    if (!searchOpen || view.kind === "detail") {
       bar.classList.add("is-off");
       return;
     }
@@ -66121,22 +66485,9 @@ ${n.content.slice(0, 2e3)}
       );
       return;
     }
-    const auto = list.filter((v) => triggerOfView(v) === "auto");
-    const manual = list.filter((v) => triggerOfView(v) === "manual");
-    if (auto.length) body.appendChild(section("自动化", "由 bz 按你配好的节奏自动跑（到点触发、漏跑补跑）", auto));
-    if (manual.length) body.appendChild(section("手动", "想起来才点一次", manual));
-  }
-  function section(title, hint, list) {
-    const sec = el2("section", "bz-dock-sec");
-    const head = el2("div", "bz-dock-sec-head");
-    head.appendChild(el2("span", "bz-dock-sec-title", title));
-    head.appendChild(el2("span", "bz-dock-sec-count", String(list.length)));
-    head.appendChild(el2("span", "bz-dock-sec-hint", hint));
-    sec.appendChild(head);
     const grid = el2("div", "bz-dock-grid");
     for (const v of list) grid.appendChild(makeCard(v));
-    sec.appendChild(grid);
-    return sec;
+    body.appendChild(grid);
   }
   function makeCard(v) {
     var _a2;
@@ -66152,15 +66503,11 @@ ${n.content.slice(0, 2e3)}
     const idbox = el2("div", "bz-dock-card-idbox");
     const name = el2("div", "bz-dock-card-name", displayName2(v));
     const tags = el2("div", "bz-dock-card-tags");
-    tags.appendChild(el2("span", "bz-dock-tag", triggerOfView(v) === "auto" ? "自动化" : "手动"));
     if (isOverdue(v.due.state)) tags.appendChild(el2("span", "bz-dock-tag bz-dock-tag--due", "今日未跑"));
     const trustTag = trustTagOf(v);
     if (trustTag) tags.appendChild(el2("span", "bz-dock-tag bz-dock-tag--warn", trustTag));
     if (!v.manifest) tags.appendChild(el2("span", "bz-dock-tag bz-dock-tag--muted", "声明读不到"));
     if (v.manifest && !v.run) tags.appendChild(el2("span", "bz-dock-tag bz-dock-tag--muted", "只能看"));
-    if (triggerOfView(v) === "auto" && !v.autoRun) {
-      tags.appendChild(el2("span", "bz-dock-tag bz-dock-tag--muted", "自动已关"));
-    }
     if ((_a2 = v.runState) == null ? void 0 : _a2.pausedAt) tags.appendChild(el2("span", "bz-dock-tag bz-dock-tag--warn", "自动已暂停"));
     idbox.append(name, tags);
     top.append(ic2, idbox);
@@ -66218,7 +66565,7 @@ ${n.content.slice(0, 2e3)}
       } else {
         foot.appendChild(
           uiBtn({
-            label: runLabel(v),
+            label: "运行",
             icon: "play",
             tone: "primary",
             size: "sm",
@@ -66230,25 +66577,6 @@ ${n.content.slice(0, 2e3)}
     } else {
       foot.appendChild(el2("span", "bz-dock-mobilehint", "移动端仅查看"));
     }
-    foot.appendChild(
-      uiBtn({
-        label: "详情",
-        icon: "chevron-right",
-        size: "sm",
-        className: "bz-dock-foot-detail",
-        onClick: () => {
-          view = { kind: "detail", id };
-          render2();
-        }
-      })
-    );
-    const more = uiIconBtn({
-      icon: "more-horizontal",
-      title: "更多操作",
-      xs: true,
-      onClick: () => openCardActions(more, v)
-    });
-    foot.appendChild(more);
     card.appendChild(foot);
     attachItemActions(card, cardActions(v));
     card.addEventListener("click", (e) => {
@@ -66286,7 +66614,7 @@ ${n.content.slice(0, 2e3)}
     if (canStart(v)) {
       acts.push({
         icon: "play",
-        label: runLabel(v),
+        label: "运行",
         onClick: () => void runFlow(v)
       });
     }
@@ -66307,243 +66635,396 @@ ${n.content.slice(0, 2e3)}
     });
     return acts;
   }
-  function openCardActions(anchor, v) {
-    const actions = cardActions(v);
-    const head = el2("div", "bz-dock-sheet-head");
-    const sub = el2("div", "bz-dock-sheet-sub");
-    sub.textContent = v.declPath;
-    head.append(el2("div", "bz-dock-sheet-name", displayName2(v)), sub);
-    if (Platform.isMobile) {
-      openItemSheet(actions, { sheetHead: head });
-    } else {
-      const r = anchor.getBoundingClientRect();
-      openItemMenu(r.left, r.bottom + 4, actions);
-    }
-  }
-  function autoDraftOf(v) {
-    var _a2, _b2, _c;
-    const key = v.entry.id;
-    const existing = autoDraft.get(key);
-    if (existing) return existing;
-    const cur = v.schedule;
-    const k = cur == null ? void 0 : cur.kind;
-    const kind = k === "daily" || k === "weekly" || k === "interval" ? k : "daily";
-    const d = {
-      kind,
-      hour: (_a2 = cur == null ? void 0 : cur.hour) != null ? _a2 : 12,
-      weekday: (_b2 = cur == null ? void 0 : cur.weekday) != null ? _b2 : 1,
-      everyHours: (_c = cur == null ? void 0 : cur.everyHours) != null ? _c : 6
-    };
-    autoDraft.set(key, d);
-    return d;
-  }
-  async function saveAuto(v, d) {
-    const id = v.entry.id;
-    const next = scheduleFromDraft(d.kind, d);
-    const sameAsDeclared = next !== void 0 && scheduleSignature(next) === scheduleSignature(v.declaredSchedule);
-    if (!next || sameAsDeclared) {
-      await updateToolEntry(id, { scheduleOverride: void 0, overrideDeclSig: void 0 });
-    } else {
-      await updateToolEntry(id, {
-        scheduleOverride: next,
-        overrideDeclSig: scheduleSignature(v.declaredSchedule)
-      });
-    }
-    autoDraft.delete(id);
-    kickDockScheduler();
-    await refresh();
-  }
-  function autoRow(label, value) {
-    const row = el2("div", "bz-dock-autorow");
-    row.appendChild(el2("span", "bz-dock-autorow-label", label));
-    row.appendChild(el2("span", "bz-dock-autorow-val", value));
-    return row;
-  }
   function clampInt(raw, lo, hi, fallback) {
     if (raw.trim() === "") return fallback;
     const n = Number(raw);
     if (!Number.isFinite(n)) return fallback;
     return Math.min(hi, Math.max(lo, Math.round(n)));
   }
+  function defaultTriggerOf(kind) {
+    switch (kind) {
+      case "daily":
+        return { kind: "daily", at: "12:00" };
+      case "interval":
+        return { kind: "interval", everyMin: 60 };
+      case "on-launch":
+        return { kind: "on-launch", delayMin: 5 };
+      case "panel-open":
+        return { kind: "panel-open" };
+      case "tool-ok":
+        return { kind: "tool-ok", toolId: "" };
+      case "tool-fail":
+        return { kind: "tool-fail", toolId: "" };
+      case "domain-event":
+        return { kind: "domain-event", channel: "" };
+      case "vault-file":
+        return { kind: "vault-file", target: "" };
+      case "data-threshold":
+        return { kind: "data-threshold", path: "", key: "", op: ">", value: 0 };
+    }
+  }
+  async function saveRules(v, next) {
+    await updateToolEntry(v.entry.id, { rules: next });
+    kickDockScheduler();
+    await refresh();
+  }
+  async function removeRule(v, ruleId) {
+    await saveRules(v, v.rules.filter((r) => r.id !== ruleId));
+  }
+  function openRuleEditor(v, rule) {
+    var _a2;
+    const draft = rule ? { ...rule, trigger: { ...rule.trigger }, action: { ...rule.action } } : { id: newRuleId(), trigger: defaultTriggerOf("daily"), action: { kind: "run", notify: "fail" } };
+    const form = el2("div", "bz-dock-ruleform");
+    const params = el2("div", "bz-dock-ruleparams");
+    const err = el2("div", "bz-dock-ruleformerr");
+    const preview = el2("div", "bz-dock-rulepreview");
+    const syncPreview = () => {
+      const jit = draft.jitterMin ? ` · 抖 ${durationText(draft.jitterMin)}` : "";
+      preview.textContent = `${triggerText(draft.trigger)} → ${actionText(draft.action)}${jit}`;
+    };
+    const rebuild = () => {
+      params.replaceChildren(...triggerFields(draft, rebuild));
+      syncPreview();
+    };
+    const triggerPick = uiChoice({
+      options: TRIGGER_KINDS.map((k) => ({ value: k, label: TRIGGER_LABEL[k] })),
+      value: draft.trigger.kind,
+      label: "触发条件",
+      onChange: (kind) => {
+        draft.trigger = defaultTriggerOf(kind);
+        rebuild();
+      }
+    });
+    const actionPick = uiChoice({
+      options: [
+        { value: "run", label: "运行" },
+        { value: "run-notify", label: "运行并提醒" },
+        { value: "remind", label: "只提醒" }
+      ],
+      value: draft.action.kind === "remind" ? "remind" : draft.action.notify === "always" ? "run-notify" : "run",
+      label: "执行",
+      onChange: (val) => {
+        draft.action = val === "remind" ? { kind: "remind" } : { kind: "run", notify: val === "run-notify" ? "always" : "fail" };
+        syncPreview();
+      }
+    });
+    const jitter = uiInput({
+      type: "number",
+      value: String((_a2 = draft.jitterMin) != null ? _a2 : 0),
+      onInput: (val) => {
+        draft.jitterMin = clampInt(val, 0, 720, 0);
+        syncPreview();
+      }
+    });
+    jitter.min = "0";
+    form.appendChild(sectionOf("触发条件", [triggerPick.el, params]));
+    form.appendChild(sectionOf("执行", [actionPick.el]));
+    form.appendChild(
+      sectionOf("随机延迟（错峰用）", [
+        uiField({ label: "到点后再等", desc: "0 = 不抖", control: jitter }),
+        quickRow(
+          [
+            { label: "不抖", value: 0 },
+            { label: "2 分", value: 2 },
+            { label: "10 分", value: 10 },
+            { label: "30 分", value: 30 }
+          ],
+          (n) => {
+            draft.jitterMin = n;
+            jitter.value = String(n);
+            syncPreview();
+          }
+        )
+      ])
+    );
+    form.appendChild(preview);
+    form.appendChild(err);
+    rebuild();
+    const { popup, close } = uiModal({
+      head: true,
+      title: rule ? "编辑规则" : "新建规则",
+      content: form,
+      maxWidth: 480,
+      className: "bz-dock-rulemodal"
+    });
+    const problem = () => {
+      const t = draft.trigger;
+      if (t.kind === "tool-ok" || t.kind === "tool-fail") return t.toolId ? null : "还没选工具";
+      if (t.kind === "domain-event") return t.channel.trim() ? null : "还没填事件通道";
+      if (t.kind === "vault-file") return t.target.trim() ? null : "还没填目录";
+      if (t.kind === "data-threshold") return t.path.trim() && t.key.trim() ? null : "还没填文件与键";
+      return null;
+    };
+    const commit = () => {
+      const next = rule ? v.rules.map((r) => r.id === rule.id ? draft : r) : [...v.rules, draft];
+      close();
+      void saveRules(v, next);
+    };
+    const ok = uiBtn({
+      label: "保存",
+      tone: "primary",
+      size: "sm",
+      onClick: () => {
+        const p = problem();
+        if (p) {
+          err.textContent = p;
+          return;
+        }
+        err.textContent = "";
+        commit();
+      }
+    });
+    const foot = el2("div", "bz-dock-ruleformfoot");
+    foot.appendChild(
+      uiBtn({
+        label: "取消",
+        size: "sm",
+        onClick: () => close()
+      })
+    );
+    foot.appendChild(el2("div", "bz-dock-ruleformsp"));
+    if (rule) {
+      foot.appendChild(
+        uiBtn({
+          label: "删除",
+          size: "sm",
+          danger: true,
+          onClick: () => {
+            close();
+            void removeRule(v, rule.id);
+          }
+        })
+      );
+    }
+    foot.appendChild(ok);
+    form.appendChild(foot);
+    bindFormSubmit(popup, () => ok.click());
+  }
+  function sectionOf(title, children) {
+    const sec = el2("div", "bz-dock-ruleformsec");
+    sec.appendChild(el2("div", "bz-dock-ruleformlegend", title));
+    for (const c of children) sec.appendChild(c);
+    return sec;
+  }
+  function quickRow(items, onPick) {
+    const row = el2("div", "bz-dock-rulequick");
+    for (const it of items) {
+      row.appendChild(uiBtn({ label: it.label, size: "sm", onClick: () => onPick(it.value) }));
+    }
+    return row;
+  }
+  function triggerFields(draft, rebuild) {
+    const t = draft.trigger;
+    switch (t.kind) {
+      case "daily": {
+        const inp = uiInput({
+          type: "time",
+          value: atSecondsOf(t.at) === void 0 ? "" : t.at,
+          onInput: (val) => {
+            draft.trigger = { kind: "daily", at: val || "12:00" };
+          }
+        });
+        return [
+          uiField({ label: "时刻", control: inp }),
+          quickRow(
+            [
+              { label: "08:00", value: 8 * 60 },
+              { label: "12:00", value: 12 * 60 },
+              { label: "20:00", value: 20 * 60 }
+            ],
+            (mins) => {
+              const at3 = `${String(Math.floor(mins / 60)).padStart(2, "0")}:${String(mins % 60).padStart(2, "0")}`;
+              draft.trigger = { kind: "daily", at: at3 };
+              rebuild();
+            }
+          )
+        ];
+      }
+      case "interval": {
+        const inp = uiInput({
+          type: "number",
+          value: String(t.everyMin),
+          onInput: (val) => {
+            draft.trigger = { kind: "interval", everyMin: clampInt(val, 1, 43200, 60) };
+          }
+        });
+        inp.min = "1";
+        return [
+          uiField({ label: "每隔（分钟）", control: inp }),
+          quickRow(
+            [
+              { label: "30 分", value: 30 },
+              { label: "1 小时", value: 60 },
+              { label: "6 小时", value: 360 },
+              { label: "1 天", value: 1440 }
+            ],
+            (n) => {
+              draft.trigger = { kind: "interval", everyMin: n };
+              rebuild();
+            }
+          )
+        ];
+      }
+      case "on-launch": {
+        const inp = uiInput({
+          type: "number",
+          value: String(t.delayMin),
+          onInput: (val) => {
+            draft.trigger = { kind: "on-launch", delayMin: clampInt(val, 0, 1440, 5) };
+          }
+        });
+        inp.min = "0";
+        return [
+          uiField({ label: "启动后等（分钟）", control: inp }),
+          quickRow(
+            [
+              { label: "立刻", value: 0 },
+              { label: "1 分", value: 1 },
+              { label: "5 分", value: 5 },
+              { label: "30 分", value: 30 }
+            ],
+            (n) => {
+              draft.trigger = { kind: "on-launch", delayMin: n };
+              rebuild();
+            }
+          )
+        ];
+      }
+      case "panel-open":
+        return [el2("div", "bz-dock-ruleformhint", "打开工具坞面板时触发，没有要填的")];
+      case "tool-ok":
+      case "tool-fail": {
+        const sel = uiSelect({
+          options: [{ value: "", label: "选一个工具" }, ...toolOptions()],
+          value: t.toolId,
+          onChange: (val) => {
+            draft.trigger = { kind: t.kind, toolId: val };
+          }
+        });
+        return [uiField({ label: t.kind === "tool-ok" ? "哪个工具成功后" : "哪个工具失败后", control: sel.el })];
+      }
+      case "domain-event": {
+        const inp = uiInput({
+          type: "text",
+          value: t.channel,
+          placeholder: "域名:事件",
+          onInput: (val) => {
+            draft.trigger = { kind: "domain-event", channel: val };
+          }
+        });
+        return [uiField({ label: "事件通道", desc: "如 people:changed", control: inp })];
+      }
+      case "vault-file": {
+        const inp = uiInput({
+          type: "text",
+          value: t.target,
+          placeholder: "vault 里的目录",
+          onInput: (val) => {
+            draft.trigger = { kind: "vault-file", target: val };
+          }
+        });
+        return [uiField({ label: "哪个目录有变动", control: inp })];
+      }
+      case "data-threshold": {
+        const path = uiInput({
+          type: "text",
+          value: t.path,
+          placeholder: "数据文件",
+          onInput: (val) => {
+            draft.trigger = { ...t, path: val };
+          }
+        });
+        const key = uiInput({
+          type: "text",
+          value: t.key,
+          placeholder: "键",
+          onInput: (val) => {
+            draft.trigger = { ...t, key: val };
+          }
+        });
+        const op = uiSelect({
+          options: [
+            { value: ">", label: "大于" },
+            { value: "<", label: "小于" },
+            { value: "=", label: "等于" }
+          ],
+          value: t.op,
+          onChange: (val) => {
+            draft.trigger = { ...t, op: val };
+          }
+        });
+        const num3 = uiInput({
+          type: "number",
+          value: String(t.value),
+          onInput: (val) => {
+            draft.trigger = { ...t, value: Number(val) || 0 };
+          }
+        });
+        const grid = el2("div", "bz-dock-rulegrid");
+        grid.append(uiField({ label: "文件", control: path }), uiField({ label: "键", control: key }));
+        grid.append(uiField({ label: "比较", control: op.el }), uiField({ label: "阈值", control: num3 }));
+        return [grid];
+      }
+    }
+  }
+  function ruleRow(v, rule) {
+    const row = el2("div", "bz-dock-rule");
+    row.tabIndex = 0;
+    row.setAttribute("role", "button");
+    const main = el2("div", "bz-dock-rulemain");
+    main.appendChild(el2("div", "bz-dock-ruleline", triggerText(rule.trigger)));
+    main.appendChild(el2("div", "bz-dock-rulemeta", actionText(rule.action) + (rule.jitterMin ? ` · 抖 ${durationText(rule.jitterMin)}` : "")));
+    row.append(main, el2("span", "bz-dock-rulearrow", "›"));
+    const open = () => openRuleEditor(v, rule);
+    row.addEventListener("click", open);
+    row.addEventListener("keydown", (e) => {
+      if (e.key !== "Enter" && e.key !== " ") return;
+      e.preventDefault();
+      open();
+    });
+    return row;
+  }
+  function toolOptions() {
+    return readToolEntries().map((e) => ({ value: e.id, label: e.id }));
+  }
   function autoSection(v) {
-    var _a2, _b2, _c;
+    var _a2;
     const sec = el2("section", "bz-dock-pane bz-dock-autopane");
     const head = el2("div", "bz-dock-pane-head");
     head.appendChild(el2("h3", "bz-dock-pane-title", "自动运行"));
     sec.appendChild(head);
-    const id = v.entry.id;
-    sec.appendChild(
-      uiField({
-        label: "自动运行",
-        desc: "由 bz 按下面的节奏自动触发；关掉就只在面板里手动点。脚本里那份是默认值，不是定死的",
-        control: uiSwitch({
-          checked: v.autoRun,
-          onChange: (on) => {
-            void (async () => {
-              await updateToolEntry(id, { autoRun: on });
-              autoDraft.delete(id);
-              kickDockScheduler();
-              await refresh();
-            })();
-          }
-        }).el
-      })
-    );
-    const facts = el2("div", "bz-dock-autorows");
-    facts.appendChild(autoRow("脚本默认", scheduleTextOf(v.declaredSchedule)));
-    facts.appendChild(autoRow("当前生效", scheduleTextOf(v.schedule) + (v.scheduleOverridden ? "（你改的）" : "")));
-    facts.appendChild(
-      autoRow("下次预计", v.nextDue === null ? "算不出（没有节奏，或缺运行基线）" : dueTimeText(v.nextDue))
-    );
     if ((_a2 = v.runState) == null ? void 0 : _a2.pausedAt) {
       const last = lastRun(v.runs);
       const hint = (last == null ? void 0 : last.error) ? errorHint(last.error.kind) : null;
-      facts.appendChild(
-        el2(
-          "div",
-          "bz-dock-autonote bz-dock-autonote--warn",
-          `连续失败 ${(_b2 = v.runState.consecutiveFailures) != null ? _b2 : 0} 次，自动运行已暂停${hint ? ` —— 上次：${hint}` : ""}`
-        )
-      );
-    }
-    if (v.declChangedSinceOverride) {
-      facts.appendChild(el2("div", "bz-dock-autonote", "脚本改过默认节奏了 —— 看一眼要不要跟着调"));
-    }
-    if (!v.autoRun) {
-      facts.appendChild(
-        el2(
-          "div",
-          "bz-dock-autonote",
-          "自动运行已关 —— 下面排的节奏不会生效，要它自己跑起来得先打开上面的开关"
-        )
-      );
-    }
-    sec.appendChild(facts);
-    const d = autoDraftOf(v);
-    const editor = el2("div", "bz-dock-autoeditor");
-    editor.appendChild(
-      uiField({
-        label: "节奏",
-        control: uiSelect({
-          // 选项来自 schedule.ts 的 EDITABLE_SCHEDULE_KINDS（唯一来源，不带「只手动」）
-          options: EDITABLE_SCHEDULE_KINDS.map((k) => ({ value: k, label: SCHEDULE_KIND_LABEL[k] })),
-          value: d.kind === "inherit" ? "daily" : d.kind,
-          onChange: (val) => {
-            d.kind = val;
-            render2();
-          }
-        }).el
-      })
-    );
-    if (d.kind === "daily") {
-      const inp = uiInput({
-        type: "number",
-        value: String(d.hour),
-        onInput: (val) => {
-          d.hour = clampInt(val, 0, 23, 12);
-        }
-      });
-      inp.min = "0";
-      inp.max = "23";
-      editor.appendChild(uiField({ label: "当天几点前跑完", desc: "本地时间，0–23", control: inp }));
-    } else if (d.kind === "weekly") {
-      editor.appendChild(
-        uiField({
-          label: "每周哪天",
-          control: uiSelect({
-            options: ["周日", "周一", "周二", "周三", "周四", "周五", "周六"].map((l, i) => ({
-              value: String(i),
-              label: l
-            })),
-            value: String(d.weekday),
-            onChange: (val) => {
-              d.weekday = clampInt(val, 0, 6, 1);
-            }
-          }).el
-        })
-      );
-    } else if (d.kind === "interval") {
-      const inp = uiInput({
-        type: "number",
-        value: String(d.everyHours),
-        onInput: (val) => {
-          d.everyHours = clampInt(val, 1, 168, 6);
-        }
-      });
-      inp.min = "1";
-      inp.max = "168";
-      editor.appendChild(uiField({ label: "每隔几小时", desc: "1–168", control: inp }));
-    }
-    const btns = el2("div", "bz-dock-runbtns");
-    btns.appendChild(uiBtn({ label: "保存节奏", size: "sm", tone: "primary", onClick: () => void saveAuto(v, d) }));
-    if (v.scheduleOverridden) {
-      btns.appendChild(
+      const bar = el2("div", "bz-dock-runbtns");
+      bar.appendChild(
         uiBtn({
-          label: "恢复脚本默认",
-          size: "sm",
-          onClick: () => {
-            autoDraft.delete(id);
-            void saveAuto(v, { ...d, kind: "inherit" });
-          }
-        })
-      );
-    }
-    if ((_c = v.runState) == null ? void 0 : _c.pausedAt) {
-      btns.appendChild(
-        uiBtn({
-          label: "恢复并立即重试",
+          label: hint ? `恢复并重试（上次：${hint}）` : "恢复并重试",
           size: "sm",
           tone: "primary",
           onClick: () => void resumeAndRetry(v)
         })
       );
+      sec.appendChild(bar);
     }
-    editor.appendChild(btns);
-    sec.appendChild(editor);
+    const list = el2("div", "bz-dock-rulelist");
+    if (v.rules.length) for (const rule of v.rules) list.appendChild(ruleRow(v, rule));
+    else list.appendChild(el2("div", "bz-dock-ruleempty", "没有规则 —— 加一条就有了"));
+    sec.appendChild(list);
+    sec.appendChild(
+      uiBtn({ label: "添加规则", size: "sm", onClick: () => openRuleEditor(v, null) })
+    );
     return sec;
   }
   function renderDetail(body, v) {
     var _a2, _b2, _c;
     const wrap = el2("div", "bz-dock-detail");
-    const head = el2("div", "bz-dock-detail-head");
-    head.appendChild(uiIconBtn({ icon: "chevron-left", title: "返回列表", onClick: () => {
-      view = { kind: "list" };
-      render2();
-    } }));
-    const ic2 = el2("span", "bz-dock-detail-ic");
-    ic2.appendChild(uiIcon(displayIcon(v), "bz-ic--lg"));
-    const idbox = el2("div", "bz-dock-detail-idbox");
-    idbox.appendChild(el2("div", "bz-dock-detail-name", displayName2(v)));
-    const tags = el2("div", "bz-dock-detail-tags");
-    tags.appendChild(el2("span", "bz-dock-tag", triggerOfView(v) === "auto" ? "自动化" : "手动"));
-    if (isOverdue(v.due.state)) tags.appendChild(el2("span", "bz-dock-tag bz-dock-tag--due", v.due.detail));
-    const trustTag = trustTagOf(v);
-    if (trustTag) tags.appendChild(el2("span", "bz-dock-tag bz-dock-tag--warn", trustTag));
-    idbox.appendChild(tags);
-    head.append(ic2, idbox);
-    const sp = el2("div", "bz-dock-detail-sp");
-    head.appendChild(sp);
-    if (canStart(v)) {
-      const live3 = liveRunOf(v.entry.id);
-      head.appendChild(
-        live3 ? uiBtn({ label: "停止", icon: "square", tone: "danger", onClick: () => stopRun(v.entry.id) }) : uiBtn({
-          label: runLabel(v),
-          icon: "play",
-          tone: "primary",
-          onClick: () => void runFlow(v)
-        })
-      );
-    }
-    head.appendChild(uiIconBtn({ icon: "refresh-cw", title: "重新读取记录", onClick: () => void refresh() }));
-    head.appendChild(uiIconBtn({ icon: "more-horizontal", title: "更多操作", onClick: () => openCardActions(head, v) }));
-    wrap.appendChild(head);
-    const desc = displayDesc(v);
-    if (desc) wrap.appendChild(el2("div", "bz-dock-detail-desc", desc));
     if (v.declError) {
       const box = el2("div", "bz-dock-meta-warn");
       box.textContent = v.declError;
       wrap.appendChild(box);
     }
+    wrap.appendChild(toolStats(v));
     const meta = el2("div", "bz-dock-meta");
     const who = [(_a2 = v.manifest) == null ? void 0 : _a2.author, (_b2 = v.manifest) == null ? void 0 : _b2.toolVersion].filter(Boolean).join(" · ");
     if (who) meta.appendChild(metaRow("作者", who));
@@ -66576,8 +67057,6 @@ ${n.content.slice(0, 2e3)}
       metaRow("参数值文件", v.valuesPath, true, () => void copyText2(v.valuesPath, "参数值文件路径"))
     );
     meta.appendChild(metaRow("运行记录", v.runsPath, true, () => void copyText2(v.runsPath, "运行记录路径")));
-    const rate = successRate(v.runs);
-    meta.appendChild(metaRow("成功率", rate === null ? "暂无记录" : `${Math.round(rate * 100)}%（共 ${v.runs.length} 条）`));
     if (v.overLimit) {
       meta.appendChild(el2("div", "bz-dock-meta-warn", "记录条数已超约定上限 —— 裁剪是工具自己的活，去检查它的 GC"));
     }
@@ -66591,6 +67070,65 @@ ${n.content.slice(0, 2e3)}
     cols.appendChild(histPane(v));
     wrap.appendChild(cols);
     body.appendChild(wrap);
+  }
+  function toolStats(v) {
+    const host = el2("div", "bz-dock-kpi bz-dock-toolstats");
+    const tile = (num3, unit, label, sub, tone) => {
+      const t = el2("div", tone ? `bz-dock-kpi-tile is-${tone}` : "bz-dock-kpi-tile");
+      const v2 = el2("div", "bz-dock-kpi-v", num3);
+      if (unit) v2.appendChild(el2("small", void 0, unit));
+      t.appendChild(v2);
+      t.appendChild(el2("div", "bz-dock-kpi-l", label));
+      t.appendChild(el2("div", "bz-dock-kpi-d", sub));
+      return t;
+    };
+    const rate = successRate(v.runs);
+    host.appendChild(
+      tile(
+        rate === null ? "—" : String(Math.round(rate * 100)),
+        rate === null ? "" : "%",
+        "成功率",
+        rate === null ? "还没有运行记录" : `共 ${v.runs.length} 条记录`,
+        rate !== null && rate < 1 ? "warn" : void 0
+      )
+    );
+    const last = lastOf(v);
+    host.appendChild(
+      tile(
+        last ? relTime(last.startedAt.replace("T", " ")) : "—",
+        "",
+        "最近一次",
+        last ? statusText(last.status) + (last.message ? ` · ${last.message}` : "") : "这个脚本还没跑过",
+        (last == null ? void 0 : last.status) === "failed" ? "bad" : void 0
+      )
+    );
+    const next = nextDueOfView(v);
+    if (next) {
+      const left = untilText(next.at - Date.now());
+      host.appendChild(tile(left.num, left.unit, "下次预计", next.sub, next.at < Date.now() ? "warn" : void 0));
+    } else {
+      host.appendChild(tile("—", "", "下次预计", "没有基于时间的规则（事件触发不算钟点）"));
+    }
+    return host;
+  }
+  function nextDueOfView(v) {
+    const now = Date.now();
+    let best = null;
+    for (const r of v.rules) {
+      if (r.enabled === false) continue;
+      const last = v.ruleFiredAt[r.id];
+      let at3;
+      if (r.trigger.kind === "daily") {
+        const t = todayAt(r.trigger, now);
+        if (t === void 0) continue;
+        at3 = now < t && (last != null ? last : 0) < t ? t : t + 864e5;
+      } else if (r.trigger.kind === "interval" && r.trigger.everyMin > 0) {
+        at3 = (last != null ? last : now) + r.trigger.everyMin * 6e4;
+      }
+      if (at3 === void 0) continue;
+      if (!best || at3 < best.at) best = { at: at3, sub: triggerText(r.trigger) };
+    }
+    return best;
   }
   function metaRow(label, value, mono = false, onCopy) {
     const row = el2("div", "bz-dock-meta-row");
@@ -66640,7 +67178,7 @@ ${n.content.slice(0, 2e3)}
       const live3 = liveRunOf(v.entry.id);
       btns.appendChild(
         live3 ? uiBtn({ label: "停止", icon: "square", tone: "danger", onClick: () => stopRun(v.entry.id) }) : uiBtn({
-          label: runLabel(v),
+          label: "运行",
           icon: "play",
           tone: "primary",
           disabled: !canStart(v),
@@ -66906,7 +67444,7 @@ ${n.content.slice(0, 2e3)}
     head.appendChild(el2("span", dotClass(r.status)));
     head.appendChild(el2("span", "bz-dock-histtime", relTime(r.startedAt.replace("T", " "))));
     head.appendChild(el2("span", "bz-dock-histstatus", statusText(r.status)));
-    const dur = durationText(r);
+    const dur = durationText2(r);
     if (dur) head.appendChild(el2("span", "bz-dock-histdur", dur));
     head.appendChild(el2("span", "bz-dock-histtrig", r.trigger === "auto" ? "自动" : "手动"));
     row.appendChild(head);
@@ -67067,14 +67605,6 @@ ${n.content.slice(0, 2e3)}
   function scheduleText(m) {
     return scheduleTextOf(m.schedule);
   }
-  function dueTimeText(ms) {
-    const d = new Date(ms);
-    const p = (n) => String(n).padStart(2, "0");
-    const now = /* @__PURE__ */ new Date();
-    const sameDay = d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth() && d.getDate() === now.getDate();
-    const hm = `${p(d.getHours())}:${p(d.getMinutes())}`;
-    return sameDay ? `今天 ${hm}` : `${d.getMonth() + 1}-${p(d.getDate())} ${hm}`;
-  }
   function runTextOf(run) {
     if (!run) return "没写怎么跑（既无 run 段，目录里也没有 main.mjs）";
     return [run.cmd, ...run.args].join(" ");
@@ -67139,7 +67669,6 @@ ${n.content.slice(0, 2e3)}
     const next = { id: (_b2 = entry == null ? void 0 : entry.id) != null ? _b2 : manifest.id, path: declPath };
     if (entry) {
       if (entry.enabled !== void 0) next.enabled = entry.enabled;
-      if (entry.autoRun !== void 0) next.autoRun = entry.autoRun;
       if (entry.scheduleOverride !== void 0) next.scheduleOverride = entry.scheduleOverride;
       if (entry.overrideDeclSig !== void 0) next.overrideDeclSig = entry.overrideDeclSig;
       const sig = run ? runSignature(run) : void 0;
@@ -67207,7 +67736,7 @@ ${n.content.slice(0, 2e3)}
     await patchRunState(v.entry.id, null);
     await persist(entries, `已移除 ${displayName2(v)}`);
   }
-  var hostApp2, overlay2, escHandle6, view, query, searchOpen, kpiFilter, refreshing, views, draftValues, valueSaveTimers, VALUE_SAVE_DEBOUNCE_MS, dueNotified, autoDraft, SCHEDULE_KIND_LABEL, OVERLAY_ID2, FRAME_ID2;
+  var hostApp2, overlay2, escHandle6, view, query, searchOpen, kpiFilter, refreshing, views, draftValues, valueSaveTimers, VALUE_SAVE_DEBOUNCE_MS, dueNotified, OVERLAY_ID2, FRAME_ID2;
   var init_ui12 = __esm({
     "src/dock/ui.ts"() {
       init_fake_obsidian();
@@ -67216,6 +67745,7 @@ ${n.content.slice(0, 2e3)}
       init_focus_trap();
       init_notice();
       init_ui();
+      init_modal();
       init_flow_dialog();
       init_path_picker();
       init_item_actions();
@@ -67225,6 +67755,7 @@ ${n.content.slice(0, 2e3)}
       init_command();
       init_runner();
       init_scheduler();
+      init_rules();
       init_declaration();
       init_schedule();
       hostApp2 = null;
@@ -67240,12 +67771,6 @@ ${n.content.slice(0, 2e3)}
       valueSaveTimers = /* @__PURE__ */ new Map();
       VALUE_SAVE_DEBOUNCE_MS = 500;
       dueNotified = /* @__PURE__ */ new Set();
-      autoDraft = /* @__PURE__ */ new Map();
-      SCHEDULE_KIND_LABEL = {
-        daily: "每天",
-        weekly: "每周",
-        interval: "每隔若干小时"
-      };
       OVERLAY_ID2 = "bz-dock-mask";
       FRAME_ID2 = "bz-dock-panel";
     }
