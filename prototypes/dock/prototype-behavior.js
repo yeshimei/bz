@@ -1,5 +1,5 @@
-/* 源指纹 cca1517baf22d550 · 仓内输入 53 个（校验见 tests/preview-freshness.test.ts） */
-/*#preview-inputs=["prototypes/dock/fake-sim.ts","prototypes/dock/fake/fake-obsidian.ts","src/core/app.ts","src/core/dom.ts","src/core/esc-manager.ts","src/core/external-tool.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/mobile.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/settings-provider.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/help-tip.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/dock/data.ts","src/dock/declaration.ts","src/dock/index.ts","src/dock/registry.ts","src/dock/runner.ts","src/dock/schedule.ts","src/dock/scheduler.ts","src/dock/schema.ts","src/dock/ui.ts"]*/
+/* 源指纹 1d98e6e00b80996c · 仓内输入 54 个（校验见 tests/preview-freshness.test.ts） */
+/*#preview-inputs=["prototypes/dock/fake-sim.ts","prototypes/dock/fake/fake-obsidian.ts","src/core/app.ts","src/core/dom.ts","src/core/esc-manager.ts","src/core/external-tool.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/mobile.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/settings-provider.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/help-tip.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/dock/command.ts","src/dock/data.ts","src/dock/declaration.ts","src/dock/index.ts","src/dock/registry.ts","src/dock/runner.ts","src/dock/schedule.ts","src/dock/scheduler.ts","src/dock/schema.ts","src/dock/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/dock/fake-sim.ts → window.BZW_dock（行为单源预览包，issue 245/ADR-0106） */
 var BZW_dock = (() => {
   var __create = Object.create;
@@ -6050,9 +6050,13 @@ var BZW_dock = (() => {
   }
 
   // src/dock/declaration.ts
-  var DECLARATION_FILENAME = "dock.json";
-  var SETTINGS_FILENAME = "dock.settings.json";
-  var RUNS_FILENAME = "dock.runs.json";
+  var DECLARATION_FILENAME = "manifest.json";
+  var DECLARATION_FILENAME_LEGACY = "dock.json";
+  var SETTINGS_FILENAME = "data.json";
+  var SETTINGS_FILENAME_LEGACY = "dock.settings.json";
+  var RUNS_FILENAME = "runs.json";
+  var RUNS_FILENAME_LEGACY = "dock.runs.json";
+  var MAIN_ENTRY_FILENAME = "main.mjs";
   var DOCK_SETTINGS_VERSION = 1;
   var injectedFs;
   function setDockFs(fs) {
@@ -6073,7 +6077,16 @@ var BZW_dock = (() => {
           }
         },
         writeText: (p, d) => fs.writeFileSync(p, d),
-        rename: typeof fs.renameSync === "function" ? (a, b) => fs.renameSync(a, b) : void 0
+        rename: typeof fs.renameSync === "function" ? (a, b) => fs.renameSync(a, b) : void 0,
+        exists: typeof fs.existsSync === "function" ? (p) => {
+          try {
+            if (!fs.existsSync(p)) return false;
+            return fs.statSync ? fs.statSync(p).isFile() : true;
+          } catch (e) {
+            return false;
+          }
+        } : void 0,
+        unlink: typeof fs.unlinkSync === "function" ? (p) => fs.unlinkSync(p) : void 0
       };
     } catch (e) {
       return null;
@@ -6100,42 +6113,72 @@ var BZW_dock = (() => {
   function runsPathFor(declPath) {
     return joinPath(dirOf(declPath), RUNS_FILENAME);
   }
-  function resolveRun(manifest, declPath) {
-    var _a, _b, _c;
-    const run = manifest == null ? void 0 : manifest.run;
+  function aliasOf(p, from, to) {
+    var _a;
+    const base = (_a = p.replace(/\\/g, "/").split("/").pop()) != null ? _a : "";
+    if (base !== from) return null;
+    return joinPath(dirOf(p), to);
+  }
+  function resolveRun(manifest, declPath, conventional) {
+    var _a, _b, _c, _d;
+    const run = (_a = manifest == null ? void 0 : manifest.run) != null ? _a : conventional;
     if (!run || !run.cmd) return null;
     return {
       cmd: run.cmd,
-      args: [...(_a = run.args) != null ? _a : []],
-      cwd: (_b = run.cwd) != null ? _b : dirOf(declPath) || void 0,
-      shell: (_c = run.shell) != null ? _c : /\.(cmd|bat)$/i.test(run.cmd)
+      args: [...(_b = run.args) != null ? _b : []],
+      cwd: (_c = run.cwd) != null ? _c : dirOf(declPath) || void 0,
+      shell: (_d = run.shell) != null ? _d : /\.(cmd|bat)$/i.test(run.cmd)
     };
   }
+  function hasMainEntry(dir, fs) {
+    const p = joinPath(dir, MAIN_ENTRY_FILENAME);
+    return fs.exists ? fs.exists(p) : fs.readText(p) !== null;
+  }
   function readDeclaration(declPath, fs = currentFs()) {
+    var _a;
     if (!fs) return { ok: false, error: "读声明需要桌面端（移动端只读面板）" };
-    const text = fs.readText(declPath);
+    let text = fs.readText(declPath);
+    let usedPath = declPath;
+    if (text === null) {
+      const alias = (_a = aliasOf(declPath, DECLARATION_FILENAME, DECLARATION_FILENAME_LEGACY)) != null ? _a : aliasOf(declPath, DECLARATION_FILENAME_LEGACY, DECLARATION_FILENAME);
+      if (alias !== null) {
+        const alt = fs.readText(alias);
+        if (alt !== null) {
+          text = alt;
+          usedPath = alias;
+        }
+      }
+    }
     if (text === null) return { ok: false, error: `声明文件读不到：${declPath}` };
     const raw = parseJsonObjectText(text);
-    if (raw === null) return { ok: false, error: `声明文件不是合法 JSON：${declPath}` };
+    if (raw === null) return { ok: false, error: `声明文件不是合法 JSON：${usedPath}` };
     const manifest = parseManifest(raw);
     if (!manifest) {
       return {
         ok: false,
-        error: `声明文件校验不过（v 须为 1、id 只能小写字母数字连字符、name 不能空）：${declPath}`
+        error: `声明文件校验不过（v 须为 1、id 只能小写字母数字连字符、name 不能空）：${usedPath}`
       };
     }
-    return { ok: true, manifest };
+    const conventionalRun = manifest.run || !hasMainEntry(dirOf(usedPath), fs) ? void 0 : { cmd: "node", args: [MAIN_ENTRY_FILENAME] };
+    return { ok: true, manifest, path: usedPath, conventionalRun };
   }
   function isPlainObject2(v) {
     return !!v && typeof v === "object" && !Array.isArray(v);
   }
-  function readSettings(declPath, toolId, fs = currentFs()) {
-    if (!fs) return {};
-    const raw = parseJsonObjectText(fs.readText(settingsPathFor(declPath)));
+  function parseSettingsText(text, toolId) {
+    if (text === null) return null;
+    const raw = parseJsonObjectText(text);
     if (!raw) return {};
     if (raw.v !== DOCK_SETTINGS_VERSION) return {};
     if (raw.tool !== toolId) return {};
     return isPlainObject2(raw.values) ? { ...raw.values } : {};
+  }
+  function readSettings(declPath, toolId, fs = currentFs()) {
+    if (!fs) return {};
+    const direct = parseSettingsText(fs.readText(settingsPathFor(declPath)), toolId);
+    if (direct !== null) return direct;
+    const legacy = parseSettingsText(fs.readText(joinPath(dirOf(declPath), SETTINGS_FILENAME_LEGACY)), toolId);
+    return legacy != null ? legacy : {};
   }
   function writeSettings(declPath, toolId, values, fs = currentFs()) {
     if (!fs) return false;
@@ -6150,14 +6193,23 @@ var BZW_dock = (() => {
       } else {
         fs.writeText(target, text);
       }
-      return true;
     } catch (e) {
       return false;
     }
+    const legacy = joinPath(dirOf(declPath), SETTINGS_FILENAME_LEGACY);
+    if (fs.unlink) {
+      try {
+        const gone = fs.exists ? fs.exists(legacy) : fs.readText(legacy) !== null;
+        if (gone) fs.unlink(legacy);
+      } catch (e) {
+      }
+    }
+    return true;
   }
   function readRunsText(declPath, fs = currentFs()) {
+    var _a;
     if (!fs) return null;
-    return fs.readText(runsPathFor(declPath));
+    return (_a = fs.readText(runsPathFor(declPath))) != null ? _a : fs.readText(joinPath(dirOf(declPath), RUNS_FILENAME_LEGACY));
   }
 
   // src/dock/schedule.ts
@@ -6524,13 +6576,14 @@ var BZW_dock = (() => {
     return Promise.all(entries.map((entry) => loadToolView(app2, entry, states)));
   }
   async function loadToolView(app2, entry, runStates = readRunStates()) {
-    var _a, _b, _c, _d;
+    var _a, _b, _c, _d, _e;
     const decl = readDeclaration(entry.path);
     const manifest = (_a = decl.manifest) != null ? _a : null;
-    const run = resolveRun(manifest, entry.path);
+    const declPath = (_b = decl.path) != null ? _b : entry.path;
+    const run = resolveRun(manifest, declPath, decl.conventionalRun);
     const trustStale = isTrusted(entry) && (run ? runSignature(run) : void 0) !== entry.trustedRun;
     const runsRead = readRunsFile(entry);
-    const runs = (_c = (_b = runsRead.file) == null ? void 0 : _b.runs) != null ? _c : [];
+    const runs = (_d = (_c = runsRead.file) == null ? void 0 : _c.runs) != null ? _d : [];
     const declaredSchedule = manifest == null ? void 0 : manifest.schedule;
     const schedule = effectiveSchedule(declaredSchedule, entry.scheduleOverride);
     const scheduleOverridden = entry.scheduleOverride !== void 0;
@@ -6538,9 +6591,9 @@ var BZW_dock = (() => {
     return {
       entry,
       manifest,
-      declError: manifest ? null : (_d = decl.error) != null ? _d : "声明读不到",
-      declPath: entry.path,
-      valuesPath: settingsPathFor(entry.path),
+      declError: manifest ? null : (_e = decl.error) != null ? _e : "声明读不到",
+      declPath,
+      valuesPath: settingsPathFor(declPath),
       run,
       values: readToolValues(entry),
       trustStale,
@@ -6678,6 +6731,7 @@ var BZW_dock = (() => {
     }
   };
   var STDERR_TAIL_CHARS = 2048;
+  var FORCE_KILL_GRACE_MS = 3e3;
   function defaultChildProcess() {
     if (typeof window === "undefined") return null;
     const w = window;
@@ -6696,6 +6750,9 @@ var BZW_dock = (() => {
     let settled = false;
     let stopped = false;
     let child = null;
+    let exitSeen = false;
+    let exitCode = null;
+    let forceTimer = null;
     let resolveDone;
     const done = new Promise((r) => {
       resolveDone = r;
@@ -6703,6 +6760,10 @@ var BZW_dock = (() => {
     const settle = (o) => {
       if (settled) return;
       settled = true;
+      if (forceTimer !== null) {
+        clearTimeout(forceTimer);
+        forceTimer = null;
+      }
       resolveDone(o);
     };
     const collectStderr = (d) => {
@@ -6753,6 +6814,10 @@ var BZW_dock = (() => {
       if (settled) return;
       settle({ ok: false, stopped: false, code: null, stderr: stderrTail.trim(), error: new Error(`外部工具启动失败：${e.message}`) });
     });
+    child.on("exit", (code) => {
+      exitSeen = true;
+      exitCode = code;
+    });
     child.on("close", (code) => {
       if (settled) return;
       const rest = splitter.flush();
@@ -6770,15 +6835,54 @@ var BZW_dock = (() => {
       err.stderr = stderr;
       settle({ ok: false, stopped: false, code, stderr, error: err });
     });
-    return {
-      stop: () => {
-        var _a2;
-        if (settled || stopped) return;
-        stopped = true;
+    const isWindows = () => process.platform === "win32";
+    const spawnSuppressed = (cmd, args) => {
+      var _a2;
+      try {
+        const killer = cp.spawn(cmd, args, { stdio: "ignore", windowsHide: true });
+        (_a2 = killer.on) == null ? void 0 : _a2.call(killer, "error", () => {
+        });
+      } catch (e) {
+      }
+    };
+    const escalateForceKill = () => {
+      forceTimer = null;
+      if (settled) return;
+      const pid = child == null ? void 0 : child.pid;
+      if (typeof pid !== "number" || pid <= 0) return;
+      if (exitSeen) {
+        settle({ ok: false, stopped: true, code: exitCode, stderr: stderrTail.trim(), error: null });
+        return;
+      }
+      if (isWindows()) {
+        spawnSuppressed("taskkill", ["/pid", String(pid), "/T", "/F"]);
+        return;
+      }
+      try {
+        process.kill(pid, "SIGKILL");
+      } catch (e) {
+      }
+    };
+    const stopChild = () => {
+      var _a2;
+      const pid = child == null ? void 0 : child.pid;
+      if (spec.shell && isWindows() && typeof pid === "number" && pid > 0) {
+        spawnSuppressed("taskkill", ["/pid", String(pid), "/T"]);
+      } else {
         try {
           (_a2 = child == null ? void 0 : child.kill) == null ? void 0 : _a2.call(child);
         } catch (e) {
         }
+      }
+      if (typeof pid === "number" && pid > 0) {
+        forceTimer = setTimeout(escalateForceKill, FORCE_KILL_GRACE_MS);
+      }
+    };
+    return {
+      stop: () => {
+        if (settled || stopped) return;
+        stopped = true;
+        stopChild();
       },
       done
     };
@@ -7169,7 +7273,7 @@ var BZW_dock = (() => {
     const live3 = liveRunOf(v.entry.id);
     if (live3) return live3.progress.phase ? `正在${live3.progress.phase}…` : "正在运行…";
     if (!v.manifest) return "声明文件读不到，先把路径修好";
-    if (!v.run) return "声明里没写怎么跑（缺 run 段）";
+    if (!v.run) return "没写怎么跑（既无 run 段，目录里也没有 main.mjs）";
     if (!last) return "等它按自己的节奏跑一次";
     return last.message || statusText(last.status);
   }
@@ -7214,6 +7318,7 @@ var BZW_dock = (() => {
     overlay == null ? void 0 : overlay.classList.add("is-off");
   }
   function unloadDock() {
+    for (const v of views) saveValuesNow(v);
     hostApp = null;
     escHandle == null ? void 0 : escHandle.unregister();
     escHandle = null;
@@ -7528,7 +7633,7 @@ var BZW_dock = (() => {
         uiEmpty({
           icon: "square-terminal",
           title: "还没有外部工具",
-          desc: "选一个工具的声明文件（dock.json），工具坞就知道它叫什么、有哪些参数、该怎么跑；运行记录也归它收口",
+          desc: "选一个工具的声明文件（manifest.json），工具坞就知道它叫什么、有哪些参数、该怎么跑；运行记录也归它收口",
           actions: uiBtnRow(
             [uiBtn({ label: "导入声明文件", icon: "file-input", tone: "primary", onClick: () => importToolFlow() })],
             { center: true }
@@ -7546,7 +7651,7 @@ var BZW_dock = (() => {
     }
     const auto = list.filter((v) => triggerOfView(v) === "auto");
     const manual = list.filter((v) => triggerOfView(v) === "manual");
-    if (auto.length) body.appendChild(section("自动化", "由系统自己按你配好的节奏跑（bz 不调度）", auto));
+    if (auto.length) body.appendChild(section("自动化", "由 bz 按你配好的节奏自动跑（到点触发、漏跑补跑）", auto));
     if (manual.length) body.appendChild(section("手动", "想起来才点一次", manual));
   }
   function section(title, hint, list) {
@@ -7779,6 +7884,7 @@ var BZW_dock = (() => {
     return row;
   }
   function clampInt(raw, lo, hi, fallback) {
+    if (raw.trim() === "") return fallback;
     const n = Number(raw);
     if (!Number.isFinite(n)) return fallback;
     return Math.min(hi, Math.max(lo, Math.round(n)));
@@ -7974,7 +8080,7 @@ var BZW_dock = (() => {
       if (v.run.cwd) meta.appendChild(metaRow("工作目录", v.run.cwd, true));
       if (v.run.shell) meta.appendChild(metaRow("经 shell 启动", "是"));
     } else {
-      meta.appendChild(metaRow("命令", "声明里没写怎么跑（缺 run 段）"));
+      meta.appendChild(metaRow("命令", "没写怎么跑（既无 run 段，目录里也没有 main.mjs）"));
     }
     meta.appendChild(
       metaRow("参数值文件", v.valuesPath, true, () => void copyText(v.valuesPath, "参数值文件路径"))
@@ -8275,13 +8381,19 @@ var BZW_dock = (() => {
         uiEmpty({
           icon: "history",
           title: v.runsUnreadable ? "记录读不懂" : "还没有运行记录",
-          desc: v.runsUnreadable ? "文件在，但内容不合契约；工具坞只读不改" : "跑一次，或等系统按它自己的节奏跑完，记录就会出现"
+          desc: v.runsUnreadable ? "文件在，但内容不合契约；工具坞只读不改" : "跑一次，或等它按声明的节奏自动跑完，记录就会出现"
         })
       );
       return pane;
     }
     const list = el("div", "bz-dock-histlist");
-    for (const r of v.runs.slice(0, 60)) list.appendChild(histRow(r));
+    const newestFirst = [...v.runs].sort(
+      (a, b) => {
+        var _a, _b;
+        return ((_a = timeOf(b.startedAt)) != null ? _a : 0) - ((_b = timeOf(a.startedAt)) != null ? _b : 0);
+      }
+    );
+    for (const r of newestFirst.slice(0, 60)) list.appendChild(histRow(r));
     pane.appendChild(list);
     if (v.runs.length > 60) pane.appendChild(el("div", "bz-dock-note", "只显示最近 60 条"));
     return pane;
@@ -8295,7 +8407,7 @@ var BZW_dock = (() => {
     head.appendChild(el("span", "bz-dock-histstatus", statusText(r.status)));
     const dur = durationText(r);
     if (dur) head.appendChild(el("span", "bz-dock-histdur", dur));
-    head.appendChild(el("span", "bz-dock-histtrig", r.trigger === "auto" ? "系统" : "手动"));
+    head.appendChild(el("span", "bz-dock-histtrig", r.trigger === "auto" ? "自动" : "手动"));
     row.appendChild(head);
     if (r.message) row.appendChild(el("div", "bz-dock-histmsg", r.message));
     if (r.error) {
@@ -8342,14 +8454,14 @@ var BZW_dock = (() => {
     return b;
   }
   async function runFlow(v) {
-    var _a, _b;
+    var _a;
     if (!hostApp) return;
     if (!canRun()) {
       notice("移动端不能启动本机进程", "warning");
       return;
     }
     if (!v.run) {
-      notice("这份声明没写怎么跑（缺 run 段），先在声明文件里补上", "warning");
+      notice("这份声明没写怎么跑：既无 run 段，目录里也没有 main.mjs", "warning");
       return;
     }
     if (!isTrusted(v.entry) || v.trustStale) {
@@ -8361,9 +8473,9 @@ var BZW_dock = (() => {
     }
     saveValuesNow(v);
     const values = valuesOf(v);
-    const missing = ((_b = (_a = v.manifest) == null ? void 0 : _a.params) != null ? _b : []).filter((p) => p.required && (values[p.key] === void 0 || values[p.key] === ""));
+    const missing = missingRequiredParams((_a = v.manifest) == null ? void 0 : _a.params, values);
     if (missing.length) {
-      notice(`还差必填参数：${missing.map((p) => p.label).join("、")}`, "warning");
+      notice(`还差必填参数：${missing.join("、")}`, "warning");
       return;
     }
     const run = runTool(hostApp, v.entry, v.run, v.manifest, values, {
@@ -8385,7 +8497,7 @@ var BZW_dock = (() => {
     renderRunbar();
   }
   async function reloadDeclaration(v) {
-    var _a;
+    var _a, _b, _c;
     const res = readDeclaration(v.entry.path);
     if (!res.ok || !res.manifest) {
       notice((_a = res.error) != null ? _a : "声明读不到", "error");
@@ -8398,10 +8510,10 @@ var BZW_dock = (() => {
         "warning"
       );
     }
-    const run = resolveRun(m, v.entry.path);
+    const run = resolveRun(m, (_b = res.path) != null ? _b : v.entry.path, res.conventionalRun);
     const sig = run ? runSignature(run) : void 0;
     if (isTrusted(v.entry) && sig !== v.entry.trustedRun) {
-      if (await applyTrust(v.entry, m, v.entry.path, run, {
+      if (await applyTrust(v.entry, m, (_c = res.path) != null ? _c : v.entry.path, run, {
         title: "启动命令变了，重新确认信任",
         accept: "信任"
       })) {
@@ -8440,25 +8552,23 @@ var BZW_dock = (() => {
     return sameDay ? `今天 ${hm}` : `${d.getMonth() + 1}-${p(d.getDate())} ${hm}`;
   }
   function runTextOf(run) {
-    if (!run) return "这份声明没写怎么跑（缺 run 段）";
+    if (!run) return "没写怎么跑（既无 run 段，目录里也没有 main.mjs）";
     return [run.cmd, ...run.args].join(" ");
   }
   async function confirmTrust(manifest, declPath, run, title, accept) {
-    var _a;
-    const lines = [
-      manifest.name,
-      (_a = manifest.description) != null ? _a : "",
-      "",
-      `会跑：${runTextOf(run)}`,
-      (run == null ? void 0 : run.cwd) ? `工作目录：${run.cwd}` : "",
-      `声明文件：${declPath}`,
-      "",
-      manifest.schedule ? `节奏：${scheduleText(manifest)}（自动化；bz 会在它开着时按节奏跑）` : "节奏：未声明（手动）",
-      `参数：${manifest.params.length} 个`,
-      "",
+    const lines = [manifest.name];
+    if (manifest.description) lines.push(manifest.description);
+    lines.push("", `会跑：${runTextOf(run)}`);
+    if (run == null ? void 0 : run.cwd) lines.push(`工作目录：${run.cwd}`);
+    lines.push(`声明文件：${declPath}`, "");
+    lines.push(
+      manifest.schedule ? `节奏：${scheduleText(manifest)}（自动化；bz 会在它开着时按节奏跑）` : "节奏：未声明（手动）"
+    );
+    lines.push(`参数：${manifest.params.length} 个`, "");
+    lines.push(
       "建立信任之后工具坞才会运行它（读声明不需要信任）。信任的对象是「那条命令」，",
       "建立一次长期有效；以后命令变了会重新问一次。"
-    ].filter((s) => s !== "");
+    );
     const v = await openFlowDialog({
       title,
       message: lines.join("\n"),
@@ -8496,7 +8606,7 @@ var BZW_dock = (() => {
       return;
     }
     const manifest = res.manifest;
-    const run = resolveRun(manifest, declPath);
+    const run = resolveRun(manifest, declPath, res.conventionalRun);
     const entries = readToolEntries();
     if (entries.some((e) => e.id === manifest.id && e.id !== (entry == null ? void 0 : entry.id))) {
       notice(`id「${manifest.id}」已被另一个登记占用 —— 改声明里的 id，或先移除那个`, "warning");
@@ -8505,6 +8615,9 @@ var BZW_dock = (() => {
     const next = { id: (_b = entry == null ? void 0 : entry.id) != null ? _b : manifest.id, path: declPath };
     if (entry) {
       if (entry.enabled !== void 0) next.enabled = entry.enabled;
+      if (entry.autoRun !== void 0) next.autoRun = entry.autoRun;
+      if (entry.scheduleOverride !== void 0) next.scheduleOverride = entry.scheduleOverride;
+      if (entry.overrideDeclSig !== void 0) next.overrideDeclSig = entry.overrideDeclSig;
       const sig = run ? runSignature(run) : void 0;
       if (sig !== void 0 && sig === entry.trustedRun) {
         next.trustedAt = entry.trustedAt;

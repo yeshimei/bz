@@ -1,5 +1,5 @@
-/* 源指纹 526ec5e1784eba15 · 仓内输入 297 个（校验见 tests/preview-freshness.test.ts） */
-/*#preview-inputs=["prototypes/settings-panel/fake-sim.ts","prototypes/settings-panel/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/keys.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/belongings/ai.ts","src/belongings/catalog-suggest.ts","src/belongings/category.ts","src/belongings/data.ts","src/belongings/layouts/poster/render.ts","src/belongings/motion.ts","src/belongings/render.ts","src/belongings/report-stats.ts","src/belongings/report.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/epub-notes.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/motion.ts","src/bookshelf/notes-ui.ts","src/bookshelf/notes.ts","src/bookshelf/render.ts","src/bookshelf/settings.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/bookshelf/ui.ts","src/checkup/checks-consistency.ts","src/checkup/checks-drift.ts","src/checkup/checks-json.ts","src/checkup/checks-orphans.ts","src/checkup/files.ts","src/checkup/index.ts","src/checkup/run.ts","src/checkup/ui.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/douban-fetcher.ts","src/cinema/seasons.ts","src/cinema/settings.ts","src/cinema/shared.ts","src/cinema/state.ts","src/clipbook/anchor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/file-sync.ts","src/clipbook/flow.ts","src/clipbook/image-save.ts","src/clipbook/index.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/motion.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/press/data.ts","src/clipbook/press/engine.ts","src/clipbook/press/index.ts","src/clipbook/press/motions.ts","src/clipbook/press/view.ts","src/clipbook/render.ts","src/clipbook/report-stats.ts","src/clipbook/report-ui.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai-models.ts","src/core/ai.ts","src/core/app.ts","src/core/asr-proofread.ts","src/core/category-table.ts","src/core/changelog.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/domain-icons.ts","src/core/douban-name-index.ts","src/core/download-manifest.ts","src/core/esc-manager.ts","src/core/external-tool.ts","src/core/file-sync.ts","src/core/flow-dialog.ts","src/core/gesture.ts","src/core/http.ts","src/core/item-actions.ts","src/core/jev-fallback.ts","src/core/jev.ts","src/core/json-store.ts","src/core/knowledge-boxes.ts","src/core/landscape.ts","src/core/link-now.ts","src/core/lock-stats.ts","src/core/manual.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/pomodoro-phase.ts","src/core/remote-asset.ts","src/core/remote-base.ts","src/core/rss-catalog.ts","src/core/settings-btn-state.ts","src/core/settings-common.ts","src/core/settings-main-schema.ts","src/core/settings-modal.ts","src/core/settings-model-picker.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/sha256.ts","src/core/skin-pack.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/flip.ts","src/core/ui/focus-trap.ts","src/core/ui/help-tip.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slide-pill.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/settings.ts","src/dock/data.ts","src/dock/declaration.ts","src/dock/registry.ts","src/dock/runner.ts","src/dock/schedule.ts","src/dock/scheduler.ts","src/dock/schema.ts","src/dock/settings.ts","src/dock/ui.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/motion.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/favorites/ai.ts","src/favorites/app.ts","src/favorites/config.ts","src/favorites/data.ts","src/favorites/layouts/board/render.ts","src/favorites/motion.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/gameshelf/constants.ts","src/gameshelf/settings.ts","src/gameshelf/state.ts","src/home/entry-editor.ts","src/home/order.ts","src/home/settings.ts","src/home/shared.ts","src/knowledge/data.ts","src/knowledge/file-sync.ts","src/knowledge/index.ts","src/knowledge/motion.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/partial-json.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source-retire.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/memo/data.ts","src/memo/due.ts","src/memo/render.ts","src/memo/settings.ts","src/memo/state.ts","src/memo/ui.ts","src/password-vault/data.ts","src/password-vault/settings.ts","src/people/chat.ts","src/people/datasource.ts","src/people/insights.ts","src/people/me-avatar.ts","src/people/media.ts","src/people/parse.ts","src/people/render.ts","src/people/safe-store.ts","src/people/settings.ts","src/people/stats.ts","src/people/types.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/index.ts","src/pomodoro/motion.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts","src/reading-report/index.ts","src/reading-report/report.ts","src/reading-report/stats.ts","src/review/analysis/data.ts","src/review/analysis/engine.ts","src/review/analysis/index.ts","src/review/analysis/kits.ts","src/review/analysis/motions.ts","src/review/analysis/view.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/motion.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/quiz-panel-data.ts","src/review/quiz-panel.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts","src/secondbrain/ai.ts","src/secondbrain/chunk.ts","src/secondbrain/config.ts","src/secondbrain/link-agent/data.ts","src/secondbrain/link-agent/pipeline.ts","src/secondbrain/motion.ts","src/secondbrain/panel.ts","src/secondbrain/readonly.ts","src/secondbrain/render.ts","src/secondbrain/store-file.ts","src/secondbrain/tfidf.ts","src/secondbrain/vector-math.ts","src/secondbrain/weekly-ui.ts","src/secondbrain/weekly.ts","src/secondbrain/whitelist.ts","src/settings-panel/changelog.ts","src/settings-panel/index.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/manual-viewer.ts","src/settings-panel/motion.ts","src/settings-panel/online-resources.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/schema.ts","src/settings-panel/shared.ts","src/settings-panel/ui.ts","src/settings.ts","src/smartcat/belongings-source.ts","src/smartcat/character.ts","src/smartcat/config.ts","src/smartcat/data.ts","src/smartcat/favorites-source.ts","src/smartcat/motion.ts","src/smartcat/types.ts","src/smartcat/ui.ts"]*/
+/* 源指纹 87452753bbd4d49e · 仓内输入 298 个（校验见 tests/preview-freshness.test.ts） */
+/*#preview-inputs=["prototypes/settings-panel/fake-sim.ts","prototypes/settings-panel/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/keys.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/belongings/ai.ts","src/belongings/catalog-suggest.ts","src/belongings/category.ts","src/belongings/data.ts","src/belongings/layouts/poster/render.ts","src/belongings/motion.ts","src/belongings/render.ts","src/belongings/report-stats.ts","src/belongings/report.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/epub-notes.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/motion.ts","src/bookshelf/notes-ui.ts","src/bookshelf/notes.ts","src/bookshelf/render.ts","src/bookshelf/settings.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/bookshelf/ui.ts","src/checkup/checks-consistency.ts","src/checkup/checks-drift.ts","src/checkup/checks-json.ts","src/checkup/checks-orphans.ts","src/checkup/files.ts","src/checkup/index.ts","src/checkup/run.ts","src/checkup/ui.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/douban-fetcher.ts","src/cinema/seasons.ts","src/cinema/settings.ts","src/cinema/shared.ts","src/cinema/state.ts","src/clipbook/anchor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/file-sync.ts","src/clipbook/flow.ts","src/clipbook/image-save.ts","src/clipbook/index.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/motion.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/press/data.ts","src/clipbook/press/engine.ts","src/clipbook/press/index.ts","src/clipbook/press/motions.ts","src/clipbook/press/view.ts","src/clipbook/render.ts","src/clipbook/report-stats.ts","src/clipbook/report-ui.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai-models.ts","src/core/ai.ts","src/core/app.ts","src/core/asr-proofread.ts","src/core/category-table.ts","src/core/changelog.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/domain-icons.ts","src/core/douban-name-index.ts","src/core/download-manifest.ts","src/core/esc-manager.ts","src/core/external-tool.ts","src/core/file-sync.ts","src/core/flow-dialog.ts","src/core/gesture.ts","src/core/http.ts","src/core/item-actions.ts","src/core/jev-fallback.ts","src/core/jev.ts","src/core/json-store.ts","src/core/knowledge-boxes.ts","src/core/landscape.ts","src/core/link-now.ts","src/core/lock-stats.ts","src/core/manual.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/pomodoro-phase.ts","src/core/remote-asset.ts","src/core/remote-base.ts","src/core/rss-catalog.ts","src/core/settings-btn-state.ts","src/core/settings-common.ts","src/core/settings-main-schema.ts","src/core/settings-modal.ts","src/core/settings-model-picker.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/sha256.ts","src/core/skin-pack.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/flip.ts","src/core/ui/focus-trap.ts","src/core/ui/help-tip.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slide-pill.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/settings.ts","src/dock/command.ts","src/dock/data.ts","src/dock/declaration.ts","src/dock/registry.ts","src/dock/runner.ts","src/dock/schedule.ts","src/dock/scheduler.ts","src/dock/schema.ts","src/dock/settings.ts","src/dock/ui.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/motion.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/favorites/ai.ts","src/favorites/app.ts","src/favorites/config.ts","src/favorites/data.ts","src/favorites/layouts/board/render.ts","src/favorites/motion.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/gameshelf/constants.ts","src/gameshelf/settings.ts","src/gameshelf/state.ts","src/home/entry-editor.ts","src/home/order.ts","src/home/settings.ts","src/home/shared.ts","src/knowledge/data.ts","src/knowledge/file-sync.ts","src/knowledge/index.ts","src/knowledge/motion.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/partial-json.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source-retire.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/memo/data.ts","src/memo/due.ts","src/memo/render.ts","src/memo/settings.ts","src/memo/state.ts","src/memo/ui.ts","src/password-vault/data.ts","src/password-vault/settings.ts","src/people/chat.ts","src/people/datasource.ts","src/people/insights.ts","src/people/me-avatar.ts","src/people/media.ts","src/people/parse.ts","src/people/render.ts","src/people/safe-store.ts","src/people/settings.ts","src/people/stats.ts","src/people/types.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/index.ts","src/pomodoro/motion.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts","src/reading-report/index.ts","src/reading-report/report.ts","src/reading-report/stats.ts","src/review/analysis/data.ts","src/review/analysis/engine.ts","src/review/analysis/index.ts","src/review/analysis/kits.ts","src/review/analysis/motions.ts","src/review/analysis/view.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/motion.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/quiz-panel-data.ts","src/review/quiz-panel.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts","src/secondbrain/ai.ts","src/secondbrain/chunk.ts","src/secondbrain/config.ts","src/secondbrain/link-agent/data.ts","src/secondbrain/link-agent/pipeline.ts","src/secondbrain/motion.ts","src/secondbrain/panel.ts","src/secondbrain/readonly.ts","src/secondbrain/render.ts","src/secondbrain/store-file.ts","src/secondbrain/tfidf.ts","src/secondbrain/vector-math.ts","src/secondbrain/weekly-ui.ts","src/secondbrain/weekly.ts","src/secondbrain/whitelist.ts","src/settings-panel/changelog.ts","src/settings-panel/index.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/manual-viewer.ts","src/settings-panel/motion.ts","src/settings-panel/online-resources.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/schema.ts","src/settings-panel/shared.ts","src/settings-panel/ui.ts","src/settings.ts","src/smartcat/belongings-source.ts","src/smartcat/character.ts","src/smartcat/config.ts","src/smartcat/data.ts","src/smartcat/favorites-source.ts","src/smartcat/motion.ts","src/smartcat/types.ts","src/smartcat/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/settings-panel/fake-sim.ts → window.BZW_settings_panel（行为单源预览包，issue 245/ADR-0106） */
 var BZW_settings_panel = (() => {
   var __create = Object.create;
@@ -66042,7 +66042,16 @@ ${n.content.slice(0, 2e3)}
           }
         },
         writeText: (p, d) => fs.writeFileSync(p, d),
-        rename: typeof fs.renameSync === "function" ? (a, b) => fs.renameSync(a, b) : void 0
+        rename: typeof fs.renameSync === "function" ? (a, b) => fs.renameSync(a, b) : void 0,
+        exists: typeof fs.existsSync === "function" ? (p) => {
+          try {
+            if (!fs.existsSync(p)) return false;
+            return fs.statSync ? fs.statSync(p).isFile() : true;
+          } catch (e) {
+            return false;
+          }
+        } : void 0,
+        unlink: typeof fs.unlinkSync === "function" ? (p) => fs.unlinkSync(p) : void 0
       };
     } catch (e) {
       return null;
@@ -66069,42 +66078,72 @@ ${n.content.slice(0, 2e3)}
   function runsPathFor(declPath) {
     return joinPath(dirOf(declPath), RUNS_FILENAME);
   }
-  function resolveRun(manifest, declPath) {
-    var _a2, _b2, _c;
-    const run = manifest == null ? void 0 : manifest.run;
+  function aliasOf(p, from, to) {
+    var _a2;
+    const base = (_a2 = p.replace(/\\/g, "/").split("/").pop()) != null ? _a2 : "";
+    if (base !== from) return null;
+    return joinPath(dirOf(p), to);
+  }
+  function resolveRun(manifest, declPath, conventional) {
+    var _a2, _b2, _c, _d;
+    const run = (_a2 = manifest == null ? void 0 : manifest.run) != null ? _a2 : conventional;
     if (!run || !run.cmd) return null;
     return {
       cmd: run.cmd,
-      args: [...(_a2 = run.args) != null ? _a2 : []],
-      cwd: (_b2 = run.cwd) != null ? _b2 : dirOf(declPath) || void 0,
-      shell: (_c = run.shell) != null ? _c : /\.(cmd|bat)$/i.test(run.cmd)
+      args: [...(_b2 = run.args) != null ? _b2 : []],
+      cwd: (_c = run.cwd) != null ? _c : dirOf(declPath) || void 0,
+      shell: (_d = run.shell) != null ? _d : /\.(cmd|bat)$/i.test(run.cmd)
     };
   }
+  function hasMainEntry(dir, fs) {
+    const p = joinPath(dir, MAIN_ENTRY_FILENAME);
+    return fs.exists ? fs.exists(p) : fs.readText(p) !== null;
+  }
   function readDeclaration(declPath, fs = currentFs()) {
+    var _a2;
     if (!fs) return { ok: false, error: "读声明需要桌面端（移动端只读面板）" };
-    const text2 = fs.readText(declPath);
+    let text2 = fs.readText(declPath);
+    let usedPath = declPath;
+    if (text2 === null) {
+      const alias = (_a2 = aliasOf(declPath, DECLARATION_FILENAME, DECLARATION_FILENAME_LEGACY)) != null ? _a2 : aliasOf(declPath, DECLARATION_FILENAME_LEGACY, DECLARATION_FILENAME);
+      if (alias !== null) {
+        const alt = fs.readText(alias);
+        if (alt !== null) {
+          text2 = alt;
+          usedPath = alias;
+        }
+      }
+    }
     if (text2 === null) return { ok: false, error: `声明文件读不到：${declPath}` };
     const raw = parseJsonObjectText(text2);
-    if (raw === null) return { ok: false, error: `声明文件不是合法 JSON：${declPath}` };
+    if (raw === null) return { ok: false, error: `声明文件不是合法 JSON：${usedPath}` };
     const manifest = parseManifest(raw);
     if (!manifest) {
       return {
         ok: false,
-        error: `声明文件校验不过（v 须为 1、id 只能小写字母数字连字符、name 不能空）：${declPath}`
+        error: `声明文件校验不过（v 须为 1、id 只能小写字母数字连字符、name 不能空）：${usedPath}`
       };
     }
-    return { ok: true, manifest };
+    const conventionalRun = manifest.run || !hasMainEntry(dirOf(usedPath), fs) ? void 0 : { cmd: "node", args: [MAIN_ENTRY_FILENAME] };
+    return { ok: true, manifest, path: usedPath, conventionalRun };
   }
   function isPlainObject4(v) {
     return !!v && typeof v === "object" && !Array.isArray(v);
   }
-  function readSettings(declPath, toolId, fs = currentFs()) {
-    if (!fs) return {};
-    const raw = parseJsonObjectText(fs.readText(settingsPathFor(declPath)));
+  function parseSettingsText(text2, toolId) {
+    if (text2 === null) return null;
+    const raw = parseJsonObjectText(text2);
     if (!raw) return {};
     if (raw.v !== DOCK_SETTINGS_VERSION) return {};
     if (raw.tool !== toolId) return {};
     return isPlainObject4(raw.values) ? { ...raw.values } : {};
+  }
+  function readSettings(declPath, toolId, fs = currentFs()) {
+    if (!fs) return {};
+    const direct = parseSettingsText(fs.readText(settingsPathFor(declPath)), toolId);
+    if (direct !== null) return direct;
+    const legacy = parseSettingsText(fs.readText(joinPath(dirOf(declPath), SETTINGS_FILENAME_LEGACY)), toolId);
+    return legacy != null ? legacy : {};
   }
   function writeSettings(declPath, toolId, values, fs = currentFs()) {
     if (!fs) return false;
@@ -66119,22 +66158,35 @@ ${n.content.slice(0, 2e3)}
       } else {
         fs.writeText(target, text2);
       }
-      return true;
     } catch (e) {
       return false;
     }
+    const legacy = joinPath(dirOf(declPath), SETTINGS_FILENAME_LEGACY);
+    if (fs.unlink) {
+      try {
+        const gone = fs.exists ? fs.exists(legacy) : fs.readText(legacy) !== null;
+        if (gone) fs.unlink(legacy);
+      } catch (e) {
+      }
+    }
+    return true;
   }
   function readRunsText(declPath, fs = currentFs()) {
+    var _a2;
     if (!fs) return null;
-    return fs.readText(runsPathFor(declPath));
+    return (_a2 = fs.readText(runsPathFor(declPath))) != null ? _a2 : fs.readText(joinPath(dirOf(declPath), RUNS_FILENAME_LEGACY));
   }
-  var DECLARATION_FILENAME, SETTINGS_FILENAME, RUNS_FILENAME, DOCK_SETTINGS_VERSION, injectedFs;
+  var DECLARATION_FILENAME, DECLARATION_FILENAME_LEGACY, SETTINGS_FILENAME, SETTINGS_FILENAME_LEGACY, RUNS_FILENAME, RUNS_FILENAME_LEGACY, MAIN_ENTRY_FILENAME, DOCK_SETTINGS_VERSION, injectedFs;
   var init_declaration = __esm({
     "src/dock/declaration.ts"() {
       init_schema2();
-      DECLARATION_FILENAME = "dock.json";
-      SETTINGS_FILENAME = "dock.settings.json";
-      RUNS_FILENAME = "dock.runs.json";
+      DECLARATION_FILENAME = "manifest.json";
+      DECLARATION_FILENAME_LEGACY = "dock.json";
+      SETTINGS_FILENAME = "data.json";
+      SETTINGS_FILENAME_LEGACY = "dock.settings.json";
+      RUNS_FILENAME = "runs.json";
+      RUNS_FILENAME_LEGACY = "dock.runs.json";
+      MAIN_ENTRY_FILENAME = "main.mjs";
       DOCK_SETTINGS_VERSION = 1;
     }
   });
@@ -66508,13 +66560,14 @@ ${n.content.slice(0, 2e3)}
     return Promise.all(entries.map((entry) => loadToolView(app2, entry, states)));
   }
   async function loadToolView(app2, entry, runStates = readRunStates()) {
-    var _a2, _b2, _c, _d;
+    var _a2, _b2, _c, _d, _e;
     const decl = readDeclaration(entry.path);
     const manifest = (_a2 = decl.manifest) != null ? _a2 : null;
-    const run = resolveRun(manifest, entry.path);
+    const declPath = (_b2 = decl.path) != null ? _b2 : entry.path;
+    const run = resolveRun(manifest, declPath, decl.conventionalRun);
     const trustStale = isTrusted(entry) && (run ? runSignature(run) : void 0) !== entry.trustedRun;
     const runsRead = readRunsFile(entry);
-    const runs = (_c = (_b2 = runsRead.file) == null ? void 0 : _b2.runs) != null ? _c : [];
+    const runs = (_d = (_c = runsRead.file) == null ? void 0 : _c.runs) != null ? _d : [];
     const declaredSchedule = manifest == null ? void 0 : manifest.schedule;
     const schedule = effectiveSchedule(declaredSchedule, entry.scheduleOverride);
     const scheduleOverridden = entry.scheduleOverride !== void 0;
@@ -66522,9 +66575,9 @@ ${n.content.slice(0, 2e3)}
     return {
       entry,
       manifest,
-      declError: manifest ? null : (_d = decl.error) != null ? _d : "声明读不到",
-      declPath: entry.path,
-      valuesPath: settingsPathFor(entry.path),
+      declError: manifest ? null : (_e = decl.error) != null ? _e : "声明读不到",
+      declPath,
+      valuesPath: settingsPathFor(declPath),
       run,
       values: readToolValues(entry),
       trustStale,
@@ -66576,6 +66629,15 @@ ${n.content.slice(0, 2e3)}
       init_declaration();
       init_schedule();
       init_registry();
+    }
+  });
+
+  // src/dock/command.ts
+  var init_command = __esm({
+    "src/dock/command.ts"() {
+      init_declaration();
+      init_data16();
+      init_schedule();
     }
   });
 
@@ -66637,6 +66699,9 @@ ${n.content.slice(0, 2e3)}
     let settled = false;
     let stopped = false;
     let child = null;
+    let exitSeen = false;
+    let exitCode = null;
+    let forceTimer = null;
     let resolveDone;
     const done = new Promise((r) => {
       resolveDone = r;
@@ -66644,6 +66709,10 @@ ${n.content.slice(0, 2e3)}
     const settle = (o) => {
       if (settled) return;
       settled = true;
+      if (forceTimer !== null) {
+        clearTimeout(forceTimer);
+        forceTimer = null;
+      }
       resolveDone(o);
     };
     const collectStderr = (d) => {
@@ -66694,6 +66763,10 @@ ${n.content.slice(0, 2e3)}
       if (settled) return;
       settle({ ok: false, stopped: false, code: null, stderr: stderrTail.trim(), error: new Error(`外部工具启动失败：${e.message}`) });
     });
+    child.on("exit", (code) => {
+      exitSeen = true;
+      exitCode = code;
+    });
     child.on("close", (code) => {
       if (settled) return;
       const rest = splitter.flush();
@@ -66711,20 +66784,59 @@ ${n.content.slice(0, 2e3)}
       err.stderr = stderr;
       settle({ ok: false, stopped: false, code, stderr, error: err });
     });
-    return {
-      stop: () => {
-        var _a3;
-        if (settled || stopped) return;
-        stopped = true;
+    const isWindows = () => process.platform === "win32";
+    const spawnSuppressed = (cmd, args) => {
+      var _a3;
+      try {
+        const killer = cp.spawn(cmd, args, { stdio: "ignore", windowsHide: true });
+        (_a3 = killer.on) == null ? void 0 : _a3.call(killer, "error", () => {
+        });
+      } catch (e) {
+      }
+    };
+    const escalateForceKill = () => {
+      forceTimer = null;
+      if (settled) return;
+      const pid = child == null ? void 0 : child.pid;
+      if (typeof pid !== "number" || pid <= 0) return;
+      if (exitSeen) {
+        settle({ ok: false, stopped: true, code: exitCode, stderr: stderrTail.trim(), error: null });
+        return;
+      }
+      if (isWindows()) {
+        spawnSuppressed("taskkill", ["/pid", String(pid), "/T", "/F"]);
+        return;
+      }
+      try {
+        process.kill(pid, "SIGKILL");
+      } catch (e) {
+      }
+    };
+    const stopChild = () => {
+      var _a3;
+      const pid = child == null ? void 0 : child.pid;
+      if (spec.shell && isWindows() && typeof pid === "number" && pid > 0) {
+        spawnSuppressed("taskkill", ["/pid", String(pid), "/T"]);
+      } else {
         try {
           (_a3 = child == null ? void 0 : child.kill) == null ? void 0 : _a3.call(child);
         } catch (e) {
         }
+      }
+      if (typeof pid === "number" && pid > 0) {
+        forceTimer = setTimeout(escalateForceKill, FORCE_KILL_GRACE_MS);
+      }
+    };
+    return {
+      stop: () => {
+        if (settled || stopped) return;
+        stopped = true;
+        stopChild();
       },
       done
     };
   }
-  var BZ_LINE_PREFIX_RE, MAX_LINE_BYTES, BzLineSplitter, STDERR_TAIL_CHARS;
+  var BZ_LINE_PREFIX_RE, MAX_LINE_BYTES, BzLineSplitter, STDERR_TAIL_CHARS, FORCE_KILL_GRACE_MS;
   var init_external_tool = __esm({
     "src/core/external-tool.ts"() {
       BZ_LINE_PREFIX_RE = /^\[bz-(step|p|info|result)\]/;
@@ -66780,6 +66892,7 @@ ${n.content.slice(0, 2e3)}
         }
       };
       STDERR_TAIL_CHARS = 2048;
+      FORCE_KILL_GRACE_MS = 3e3;
     }
   });
 
@@ -67164,7 +67277,7 @@ ${n.content.slice(0, 2e3)}
     const live3 = liveRunOf(v.entry.id);
     if (live3) return live3.progress.phase ? `正在${live3.progress.phase}…` : "正在运行…";
     if (!v.manifest) return "声明文件读不到，先把路径修好";
-    if (!v.run) return "声明里没写怎么跑（缺 run 段）";
+    if (!v.run) return "没写怎么跑（既无 run 段，目录里也没有 main.mjs）";
     if (!last) return "等它按自己的节奏跑一次";
     return last.message || statusText(last.status);
   }
@@ -67509,7 +67622,7 @@ ${n.content.slice(0, 2e3)}
         uiEmpty({
           icon: "square-terminal",
           title: "还没有外部工具",
-          desc: "选一个工具的声明文件（dock.json），工具坞就知道它叫什么、有哪些参数、该怎么跑；运行记录也归它收口",
+          desc: "选一个工具的声明文件（manifest.json），工具坞就知道它叫什么、有哪些参数、该怎么跑；运行记录也归它收口",
           actions: uiBtnRow(
             [uiBtn({ label: "导入声明文件", icon: "file-input", tone: "primary", onClick: () => importToolFlow() })],
             { center: true }
@@ -67527,7 +67640,7 @@ ${n.content.slice(0, 2e3)}
     }
     const auto = list.filter((v) => triggerOfView(v) === "auto");
     const manual = list.filter((v) => triggerOfView(v) === "manual");
-    if (auto.length) body.appendChild(section("自动化", "由系统自己按你配好的节奏跑（bz 不调度）", auto));
+    if (auto.length) body.appendChild(section("自动化", "由 bz 按你配好的节奏自动跑（到点触发、漏跑补跑）", auto));
     if (manual.length) body.appendChild(section("手动", "想起来才点一次", manual));
   }
   function section(title, hint, list) {
@@ -67760,6 +67873,7 @@ ${n.content.slice(0, 2e3)}
     return row;
   }
   function clampInt(raw, lo, hi, fallback) {
+    if (raw.trim() === "") return fallback;
     const n = Number(raw);
     if (!Number.isFinite(n)) return fallback;
     return Math.min(hi, Math.max(lo, Math.round(n)));
@@ -67955,7 +68069,7 @@ ${n.content.slice(0, 2e3)}
       if (v.run.cwd) meta.appendChild(metaRow("工作目录", v.run.cwd, true));
       if (v.run.shell) meta.appendChild(metaRow("经 shell 启动", "是"));
     } else {
-      meta.appendChild(metaRow("命令", "声明里没写怎么跑（缺 run 段）"));
+      meta.appendChild(metaRow("命令", "没写怎么跑（既无 run 段，目录里也没有 main.mjs）"));
     }
     meta.appendChild(
       metaRow("参数值文件", v.valuesPath, true, () => void copyText2(v.valuesPath, "参数值文件路径"))
@@ -68256,13 +68370,19 @@ ${n.content.slice(0, 2e3)}
         uiEmpty({
           icon: "history",
           title: v.runsUnreadable ? "记录读不懂" : "还没有运行记录",
-          desc: v.runsUnreadable ? "文件在，但内容不合契约；工具坞只读不改" : "跑一次，或等系统按它自己的节奏跑完，记录就会出现"
+          desc: v.runsUnreadable ? "文件在，但内容不合契约；工具坞只读不改" : "跑一次，或等它按声明的节奏自动跑完，记录就会出现"
         })
       );
       return pane;
     }
     const list = el2("div", "bz-dock-histlist");
-    for (const r of v.runs.slice(0, 60)) list.appendChild(histRow(r));
+    const newestFirst = [...v.runs].sort(
+      (a, b) => {
+        var _a2, _b2;
+        return ((_a2 = timeOf(b.startedAt)) != null ? _a2 : 0) - ((_b2 = timeOf(a.startedAt)) != null ? _b2 : 0);
+      }
+    );
+    for (const r of newestFirst.slice(0, 60)) list.appendChild(histRow(r));
     pane.appendChild(list);
     if (v.runs.length > 60) pane.appendChild(el2("div", "bz-dock-note", "只显示最近 60 条"));
     return pane;
@@ -68276,7 +68396,7 @@ ${n.content.slice(0, 2e3)}
     head.appendChild(el2("span", "bz-dock-histstatus", statusText(r.status)));
     const dur = durationText(r);
     if (dur) head.appendChild(el2("span", "bz-dock-histdur", dur));
-    head.appendChild(el2("span", "bz-dock-histtrig", r.trigger === "auto" ? "系统" : "手动"));
+    head.appendChild(el2("span", "bz-dock-histtrig", r.trigger === "auto" ? "自动" : "手动"));
     row.appendChild(head);
     if (r.message) row.appendChild(el2("div", "bz-dock-histmsg", r.message));
     if (r.error) {
@@ -68323,14 +68443,14 @@ ${n.content.slice(0, 2e3)}
     return b;
   }
   async function runFlow(v) {
-    var _a2, _b2;
+    var _a2;
     if (!hostApp2) return;
     if (!canRun()) {
       notice("移动端不能启动本机进程", "warning");
       return;
     }
     if (!v.run) {
-      notice("这份声明没写怎么跑（缺 run 段），先在声明文件里补上", "warning");
+      notice("这份声明没写怎么跑：既无 run 段，目录里也没有 main.mjs", "warning");
       return;
     }
     if (!isTrusted(v.entry) || v.trustStale) {
@@ -68342,9 +68462,9 @@ ${n.content.slice(0, 2e3)}
     }
     saveValuesNow(v);
     const values = valuesOf(v);
-    const missing = ((_b2 = (_a2 = v.manifest) == null ? void 0 : _a2.params) != null ? _b2 : []).filter((p) => p.required && (values[p.key] === void 0 || values[p.key] === ""));
+    const missing = missingRequiredParams((_a2 = v.manifest) == null ? void 0 : _a2.params, values);
     if (missing.length) {
-      notice(`还差必填参数：${missing.map((p) => p.label).join("、")}`, "warning");
+      notice(`还差必填参数：${missing.join("、")}`, "warning");
       return;
     }
     const run = runTool(hostApp2, v.entry, v.run, v.manifest, values, {
@@ -68366,7 +68486,7 @@ ${n.content.slice(0, 2e3)}
     renderRunbar();
   }
   async function reloadDeclaration(v) {
-    var _a2;
+    var _a2, _b2, _c;
     const res = readDeclaration(v.entry.path);
     if (!res.ok || !res.manifest) {
       notice((_a2 = res.error) != null ? _a2 : "声明读不到", "error");
@@ -68379,10 +68499,10 @@ ${n.content.slice(0, 2e3)}
         "warning"
       );
     }
-    const run = resolveRun(m, v.entry.path);
+    const run = resolveRun(m, (_b2 = res.path) != null ? _b2 : v.entry.path, res.conventionalRun);
     const sig = run ? runSignature(run) : void 0;
     if (isTrusted(v.entry) && sig !== v.entry.trustedRun) {
-      if (await applyTrust(v.entry, m, v.entry.path, run, {
+      if (await applyTrust(v.entry, m, (_c = res.path) != null ? _c : v.entry.path, run, {
         title: "启动命令变了，重新确认信任",
         accept: "信任"
       })) {
@@ -68421,25 +68541,23 @@ ${n.content.slice(0, 2e3)}
     return sameDay ? `今天 ${hm}` : `${d.getMonth() + 1}-${p(d.getDate())} ${hm}`;
   }
   function runTextOf(run) {
-    if (!run) return "这份声明没写怎么跑（缺 run 段）";
+    if (!run) return "没写怎么跑（既无 run 段，目录里也没有 main.mjs）";
     return [run.cmd, ...run.args].join(" ");
   }
   async function confirmTrust(manifest, declPath, run, title, accept) {
-    var _a2;
-    const lines = [
-      manifest.name,
-      (_a2 = manifest.description) != null ? _a2 : "",
-      "",
-      `会跑：${runTextOf(run)}`,
-      (run == null ? void 0 : run.cwd) ? `工作目录：${run.cwd}` : "",
-      `声明文件：${declPath}`,
-      "",
-      manifest.schedule ? `节奏：${scheduleText(manifest)}（自动化；bz 会在它开着时按节奏跑）` : "节奏：未声明（手动）",
-      `参数：${manifest.params.length} 个`,
-      "",
+    const lines = [manifest.name];
+    if (manifest.description) lines.push(manifest.description);
+    lines.push("", `会跑：${runTextOf(run)}`);
+    if (run == null ? void 0 : run.cwd) lines.push(`工作目录：${run.cwd}`);
+    lines.push(`声明文件：${declPath}`, "");
+    lines.push(
+      manifest.schedule ? `节奏：${scheduleText(manifest)}（自动化；bz 会在它开着时按节奏跑）` : "节奏：未声明（手动）"
+    );
+    lines.push(`参数：${manifest.params.length} 个`, "");
+    lines.push(
       "建立信任之后工具坞才会运行它（读声明不需要信任）。信任的对象是「那条命令」，",
       "建立一次长期有效；以后命令变了会重新问一次。"
-    ].filter((s) => s !== "");
+    );
     const v = await openFlowDialog({
       title,
       message: lines.join("\n"),
@@ -68477,7 +68595,7 @@ ${n.content.slice(0, 2e3)}
       return;
     }
     const manifest = res.manifest;
-    const run = resolveRun(manifest, declPath);
+    const run = resolveRun(manifest, declPath, res.conventionalRun);
     const entries = readToolEntries();
     if (entries.some((e) => e.id === manifest.id && e.id !== (entry == null ? void 0 : entry.id))) {
       notice(`id「${manifest.id}」已被另一个登记占用 —— 改声明里的 id，或先移除那个`, "warning");
@@ -68486,6 +68604,9 @@ ${n.content.slice(0, 2e3)}
     const next = { id: (_b2 = entry == null ? void 0 : entry.id) != null ? _b2 : manifest.id, path: declPath };
     if (entry) {
       if (entry.enabled !== void 0) next.enabled = entry.enabled;
+      if (entry.autoRun !== void 0) next.autoRun = entry.autoRun;
+      if (entry.scheduleOverride !== void 0) next.scheduleOverride = entry.scheduleOverride;
+      if (entry.overrideDeclSig !== void 0) next.overrideDeclSig = entry.overrideDeclSig;
       const sig = run ? runSignature(run) : void 0;
       if (sig !== void 0 && sig === entry.trustedRun) {
         next.trustedAt = entry.trustedAt;
@@ -68565,6 +68686,7 @@ ${n.content.slice(0, 2e3)}
       init_str();
       init_settings_provider();
       init_data16();
+      init_command();
       init_runner();
       init_scheduler();
       init_declaration();

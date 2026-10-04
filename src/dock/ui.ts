@@ -44,6 +44,7 @@ import {
   isEnabled,
   isOverdue,
   isTrusted,
+  loadToolView,
   loadToolViews,
   overview,
   patchRunState,
@@ -57,6 +58,7 @@ import {
   type DockToolEntry,
   type DockToolView,
 } from './data';
+import { judgeDirectRun, missingParamsMessage } from './command';
 import {
   errorHint,
   initialValuesOf,
@@ -1670,6 +1672,92 @@ function updateLive(id: string): void {
   const hosts = overlay?.querySelectorAll<HTMLElement>(`.bz-dock-live[data-tool="${id}"]`);
   hosts?.forEach((h) => renderLiveInto(h, id));
   renderRunbar(); // 顶层进度条与详情里的运行台是同一次运行的两个视角，一起动
+}
+
+// ==================== 直达运行命令（bz-dock-run-<id>） ====================
+
+/**
+ * 命令直达运行：不开面板，直接把某个已登记工具跑起来（main.ts 为每个启用的工具注册一条
+ * `bz-dock-run-<id>`，可挂快捷键）。
+ *
+ * 门槛与面板同一条口径（`judgeDirectRun`，与 runFlow 逐条对应）：声明有 `run`、未信任 /
+ * 信任过期走既有信任确认（确认框展示将跑的命令，D7）、必填参数缺失 notify 后返回。
+ * 参数值取工具目录 `data.json` 那份——这里没有表单草稿可冲，与调度器同源。
+ *
+ * 完成通知带「查看」动作，落到该工具的详情视图（面板没开就先开）；跑完只在面板开着时
+ * refresh（关着的面板没有可刷的 DOM）。
+ */
+export async function runToolDirect(app: App, id: string): Promise<void> {
+  if (!canRun()) {
+    notice('移动端不能启动本机进程', 'warning');
+    return;
+  }
+  hostApp = app; // 命令路径可能先于面板存在：把宿主记上，「查看」才开得了面板（openDock 同款赋值）
+  const entry = readToolEntries().find((e) => e.id === id);
+  if (!entry) {
+    notice('这个工具已经不在登记表里（可能刚被移除）', 'warning');
+    return;
+  }
+  // 视图现读，不吃面板的快照：信任态、声明、参数值都以盘上此刻为准（面板可能压根没开过）
+  let v: DockToolView;
+  try {
+    v = await loadToolView(app, entry);
+  } catch (e) {
+    console.warn('[dock] 直达运行载入视图失败', e);
+    notice('工具视图载入失败，详见控制台', 'error');
+    return;
+  }
+  if (liveRunOf(id)) {
+    // 已经在跑：面板里那颗运行钮这时是「停止」，命令这边不再叠跑一份（live 表会被顶掉）
+    notice(`${displayName(v)} 已经在运行`, 'info');
+    locateDetail(id);
+    return;
+  }
+  const verdict = judgeDirectRun(v);
+  if (!verdict.pass && 'needTrust' in verdict) {
+    if (!v.manifest) {
+      notice(v.declError ?? '声明读不到', 'error');
+      return;
+    }
+    // 与 runFlow 同序：先信任后参数——确认框核对的是「会跑什么」，参数缺不缺是下一件事。
+    // 信任建立后**不重跑整份判定**（applyTrust 写的是新登记项，手里这份旧视图的 entry 还是
+    // 未信任的旧账），照 runFlow 接着只查必填参数——确认期间值不会变
+    const ok = await applyTrust(v.entry, v.manifest, v.declPath, v.run, {
+      title: v.trustStale ? '启动命令变了，重新确认信任' : '信任此命令',
+      accept: '信任',
+    });
+    if (!ok) return;
+    const msg = missingParamsMessage(v.manifest?.params, v.values);
+    if (msg !== null) {
+      notice(msg, 'warning');
+      return;
+    }
+  } else if (!verdict.pass) {
+    notice(verdict.message, 'warning');
+    return;
+  }
+  if (!v.run) return; // 判定放行则必有 run，这里只做类型窄化
+  const name = displayName(v);
+  notice(`${name} 已开始运行`, 'info'); // 命令触发没有就地反馈（面板可能没开），起跑说一声
+  runTool(app, v.entry, v.run, v.manifest, v.values, {
+    onStep: () => updateLive(id),
+    onProgress: () => updateLive(id),
+    onInfo: () => updateLive(id),
+    onResult: () => updateLive(id),
+    onDone: (outcome) => {
+      notifyRunOutcome(name, outcome, () => locateDetail(id));
+      updateLive(id);
+      if (isPanelVisible()) void refresh();
+    },
+  });
+}
+
+/** 「查看」的落点：开面板（没开就先开）并切到该工具的详情页 */
+function locateDetail(id: string): void {
+  if (!hostApp) return;
+  openDock(hostApp); // 幂等：开着就顶置重渲，没开就地建（内含一次异步 refresh）
+  view = { kind: 'detail', id };
+  render();
 }
 
 // ==================== 声明 ====================
