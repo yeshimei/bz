@@ -1,4 +1,4 @@
-/* 源指纹 c0f18541b5eb631b · 仓内输入 58 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 175c9410ccdee87f · 仓内输入 58 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/dock/fake-sim.ts","prototypes/dock/fake/fake-obsidian.ts","src/core/app.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/external-tool.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/mobile.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/settings-provider.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/help-tip.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/dock/command.ts","src/dock/data.ts","src/dock/declaration.ts","src/dock/index.ts","src/dock/registry.ts","src/dock/rules.ts","src/dock/runner.ts","src/dock/schedule.ts","src/dock/scheduler.ts","src/dock/schema.ts","src/dock/store.ts","src/dock/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/dock/fake-sim.ts → window.BZW_dock（行为单源预览包，issue 245/ADR-0106） */
 var BZW_dock = (() => {
@@ -6690,7 +6690,8 @@ var BZW_dock = (() => {
       case "data-threshold": {
         const op = r.op;
         if (op !== ">" && op !== "<" && op !== "=") return null;
-        const value = typeof r.value === "number" && Number.isFinite(r.value) ? r.value : 0;
+        const value = r.value;
+        if (typeof value !== "number" || !Number.isFinite(value)) return null;
         return {
           kind: "data-threshold",
           path: (_e = str2(r.path)) != null ? _e : "",
@@ -7948,6 +7949,33 @@ var BZW_dock = (() => {
   function remindGate(v) {
     return isEnabled(v.entry) ? null : "disabled";
   }
+  var valueCache = /* @__PURE__ */ new Map();
+  var VALUE_TTL_MS = 1e4;
+  async function readJsonNumber(a, path, key) {
+    try {
+      const raw = await a.vault.adapter.read(path);
+      const obj = JSON.parse(raw);
+      const v = key.split(".").reduce(
+        (o, k) => typeof o === "object" && o !== null ? o[k] : void 0,
+        obj
+      );
+      return typeof v === "number" ? v : void 0;
+    } catch (e) {
+      return void 0;
+    }
+  }
+  async function cachedValue(key, read) {
+    const hit = valueCache.get(key);
+    const now = Date.now();
+    if (hit && now - hit.at < VALUE_TTL_MS) return hit.v;
+    const v = await read();
+    valueCache.set(key, { at: now, v });
+    return v;
+  }
+  async function thresholdValueOf(a, t) {
+    if (t.kind !== "data-threshold") return void 0;
+    return cachedValue(`${t.path}#${t.key}`, () => readJsonNumber(a, t.path, t.key));
+  }
   async function tick() {
     if (app === null || isUnloaded === null) return;
     if (isUnloaded()) return;
@@ -7976,7 +8004,14 @@ var BZW_dock = (() => {
           if (rule.enabled === false) continue;
           const lastFiredAt = v.ruleFiredAt[rule.id];
           const base = { now, lastFiredAt, sessionStart };
-          const hit = ruleDue(rule, base) || events.some((e) => ruleDue(rule, { ...base, event: e }));
+          const value = rule.trigger.kind === "data-threshold" ? await thresholdValueOf(app, rule.trigger) : void 0;
+          const ctx = value === void 0 ? base : { ...base, value };
+          const hit = ruleDue(rule, ctx) || events.some((e) => {
+            if ((e.kind === "tool-ok" || e.kind === "tool-fail") && e.toolId === v.entry.id) {
+              return false;
+            }
+            return ruleDue(rule, { ...ctx, event: e });
+          });
           if (!hit) continue;
           const isRemind = rule.action.kind === "remind";
           const gate = isRemind ? remindGate(v) : runGate(v, now);

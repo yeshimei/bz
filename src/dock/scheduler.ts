@@ -281,8 +281,22 @@ async function tick(): Promise<void> {
         if (rule.enabled === false) continue;
         const lastFiredAt = v.ruleFiredAt[rule.id];
         const base = { now, lastFiredAt, sessionStart };
+        // 只有 data-threshold 需要现值（读文件，走 TTL 缓存）；其余触发不读盘
+        const value =
+          rule.trigger.kind === 'data-threshold'
+            ? await thresholdValueOf(app, rule.trigger)
+            : undefined;
+        const ctx = value === undefined ? base : { ...base, value };
         // 时间类看时钟；事件类看本拍收到的事件。两者都可能命中（同一拍里只跑一次）
-        const hit = ruleDue(rule, base) || events.some((e) => ruleDue(rule, { ...base, event: e }));
+        const hit =
+          ruleDue(rule, ctx) ||
+          events.some((e) => {
+            // 自触发防环：「本工具跑完 → 再跑本工具」会无限套娃（事件触发不看记账）
+            if ((e.kind === 'tool-ok' || e.kind === 'tool-fail') && e.toolId === v.entry.id) {
+              return false;
+            }
+            return ruleDue(rule, { ...ctx, event: e });
+          });
         if (!hit) continue;
 
         const isRemind = rule.action.kind === 'remind';

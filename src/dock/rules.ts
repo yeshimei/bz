@@ -407,7 +407,9 @@ function parseTrigger(raw: unknown): DockTrigger | null {
     case 'data-threshold': {
       const op = r.op;
       if (op !== '>' && op !== '<' && op !== '=') return null;
-      const value = typeof r.value === 'number' && Number.isFinite(r.value) ? r.value : 0;
+      // 阈值读不出就整条丢：回落成 0 会让「< 0」「= 0」这类规则自己点火
+      const value = r.value;
+      if (typeof value !== 'number' || !Number.isFinite(value)) return null;
       return {
         kind: 'data-threshold',
         path: str(r.path) ?? '',
