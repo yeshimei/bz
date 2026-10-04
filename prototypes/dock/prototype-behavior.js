@@ -1,4 +1,4 @@
-/* 源指纹 1d98e6e00b80996c · 仓内输入 54 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 85523e32839f5fb3 · 仓内输入 54 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/dock/fake-sim.ts","prototypes/dock/fake/fake-obsidian.ts","src/core/app.ts","src/core/dom.ts","src/core/esc-manager.ts","src/core/external-tool.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/mobile.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/settings-provider.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/help-tip.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/dock/command.ts","src/dock/data.ts","src/dock/declaration.ts","src/dock/index.ts","src/dock/registry.ts","src/dock/runner.ts","src/dock/schedule.ts","src/dock/scheduler.ts","src/dock/schema.ts","src/dock/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/dock/fake-sim.ts → window.BZW_dock（行为单源预览包，issue 245/ADR-0106） */
 var BZW_dock = (() => {
@@ -6919,6 +6919,10 @@ var BZW_dock = (() => {
     return env;
   }
   var live2 = /* @__PURE__ */ new Map();
+  var lastRawTails = /* @__PURE__ */ new Map();
+  function lastRawTailOf(toolId) {
+    return lastRawTails.get(toolId);
+  }
   function liveRunOf(toolId) {
     return live2.get(toolId);
   }
@@ -7006,6 +7010,7 @@ var BZW_dock = (() => {
         durationMs: new Date(finishedAt).getTime() - startedAtDate.getTime()
       };
       live2.delete(entry.id);
+      if (rawTail.length) lastRawTails.set(entry.id, rawTail.slice(-50));
       (_a2 = cb.onDone) == null ? void 0 : _a2.call(cb, outcome, run);
       return outcome;
     });
@@ -7109,7 +7114,9 @@ var BZW_dock = (() => {
       paramsReady: missingRequiredParams((_a = v.manifest) == null ? void 0 : _a.params, v.values).length === 0,
       paused: !!((_b = v.runState) == null ? void 0 : _b.pausedAt),
       cooldown: ((_c = cooldownUntil.get(v.entry.id)) != null ? _c : 0) > now,
-      running: inFlight.has(v.entry.id)
+      // 「在跑」的唯一事实源是执行层的名册（live 表）：用户手动点的那次不进 inFlight，
+      // 只看自己的集合，会在手动跑到一半时把同一个工具再拉起一个进程
+      running: inFlight.has(v.entry.id) || liveRunOf(v.entry.id) !== void 0
     };
   }
   async function tick() {
@@ -7197,7 +7204,9 @@ var BZW_dock = (() => {
     });
     cooldownUntil.set(entry.id, Date.now() + FAIL_COOLDOWN_MS);
     notify(`${displayName(view2)} 自动运行失败：${errorHint(timedOut ? "timeout" : outcome.kind)}`, {
-      type: "error"
+      type: "error",
+      // 失败通知是死的，用户就得自己开面板找是哪个工具 —— 点了直达它的详情页
+      action: { label: "查看", onClick: () => openDockTool(app, view2.entry.id) }
     });
     if (trip) {
       notify(`${displayName(view2)} 连续失败 ${failures} 次，已暂停自动运行（面板里可恢复）`, {
@@ -7214,6 +7223,7 @@ var BZW_dock = (() => {
   var view = { kind: "list" };
   var query = "";
   var searchOpen = false;
+  var kpiFilter = "all";
   var refreshing = false;
   var views = [];
   var draftValues = /* @__PURE__ */ new Map();
@@ -7238,6 +7248,26 @@ var BZW_dock = (() => {
     const d = /* @__PURE__ */ new Date();
     const p = (n) => String(n).padStart(2, "0");
     return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
+  }
+  function openArtifact(p) {
+    var _a, _b, _c, _d;
+    const w = window;
+    const shell = (_b = (_a = w.require) == null ? void 0 : _a.call(w, "electron")) == null ? void 0 : _b.shell;
+    if (!shell) {
+      void copyText(p, "产物路径");
+      return;
+    }
+    const norm = p.replace(/\\/g, "/");
+    const isAbsolute = /^[a-zA-Z]:\//.test(norm) || norm.startsWith("//") || norm.startsWith("/");
+    if (!isAbsolute && hostApp) {
+      const file = hostApp.vault.getAbstractFileByPath(norm);
+      if (file) {
+        void hostApp.workspace.openLinkText(norm, "", true);
+        return;
+      }
+    }
+    const base = hostApp ? (_d = (_c = hostApp.vault.adapter) == null ? void 0 : _c.getBasePath) == null ? void 0 : _d.call(_c) : void 0;
+    shell.showItemInFolder(isAbsolute || !base ? p : `${base}/${norm}`);
   }
   async function copyText(text, what) {
     try {
@@ -7316,6 +7346,10 @@ var BZW_dock = (() => {
   }
   function closeDock() {
     overlay == null ? void 0 : overlay.classList.add("is-off");
+  }
+  function openDockTool(app2, id) {
+    view = { kind: "detail", id };
+    openDock(app2);
   }
   function unloadDock() {
     for (const v of views) saveValuesNow(v);
@@ -7419,7 +7453,7 @@ var BZW_dock = (() => {
       notify(`${displayName(v)} 今天该跑没跑：${v.due.detail}`, {
         type: "warning",
         dedupeKey: `dock-due-${key}`,
-        action: { label: "查看", onClick: () => openDock(hostApp) }
+        action: { label: "查看", onClick: () => openDockTool(hostApp, v.entry.id) }
       });
     }
   }
@@ -7449,13 +7483,22 @@ var BZW_dock = (() => {
     }
     host.classList.remove("is-off");
     const o = overview(views);
-    const tile = (num2, unit, label, sub, tone) => {
+    const tile = (num2, unit, label, sub, tone, key) => {
       const t = el("div", tone ? `bz-dock-kpi-tile is-${tone}` : "bz-dock-kpi-tile");
       const v = el("div", "bz-dock-kpi-v", num2);
       if (unit) v.appendChild(el("small", void 0, unit));
       t.appendChild(v);
       t.appendChild(el("div", "bz-dock-kpi-l", label));
       t.appendChild(el("div", tone === "up" ? "bz-dock-kpi-d is-up" : "bz-dock-kpi-d", sub));
+      if (key) {
+        t.classList.add("is-click");
+        if (kpiFilter === key) t.classList.add("is-selected");
+        t.addEventListener("click", () => {
+          kpiFilter = kpiFilter === key ? "all" : key;
+          renderKpi();
+          renderBody();
+        });
+      }
       return t;
     };
     const left = o.autoTotal - o.autoDoneToday;
@@ -7482,7 +7525,8 @@ var BZW_dock = (() => {
         "",
         "待处理异常",
         o.alarmHint ? `${o.alarmHint.name} · ${o.alarmHint.reason}` : "没有要管的事",
-        o.alarms ? "bad" : void 0
+        o.alarms ? "bad" : void 0,
+        "alarms"
       )
     );
     if (o.nextDue) {
@@ -7604,14 +7648,23 @@ var BZW_dock = (() => {
     bar.appendChild(sp);
     if (!Platform.isMobile) queueMicrotask(() => search.input.focus());
   }
+  function isAlarmView(v) {
+    if (isOverdue(v.due.state)) return true;
+    const last = lastOf(v);
+    return !!last && (last.status === "failed" || last.status === "timeout");
+  }
   function filtered() {
+    let list = views.slice();
     const q = query.trim().toLowerCase();
-    if (!q) return views.slice();
-    return views.filter((v) => {
-      var _a, _b;
-      const hay = [v.entry.id, displayName(v), displayDesc(v), (_b = (_a = v.run) == null ? void 0 : _a.cmd) != null ? _b : v.declPath].join(" ").toLowerCase();
-      return hay.includes(q);
-    });
+    if (q) {
+      list = list.filter((v) => {
+        var _a, _b;
+        const hay = [v.entry.id, displayName(v), displayDesc(v), (_b = (_a = v.run) == null ? void 0 : _a.cmd) != null ? _b : v.declPath].join(" ").toLowerCase();
+        return hay.includes(q);
+      });
+    }
+    if (kpiFilter === "alarms") list = list.filter(isAlarmView);
+    return list;
   }
   function renderBody() {
     const body = bodyEl();
@@ -7645,7 +7698,11 @@ var BZW_dock = (() => {
     const list = filtered();
     if (!list.length) {
       body.appendChild(
-        uiEmpty({ icon: "search-x", title: "没有匹配的工具", desc: "换个词试试" })
+        uiEmpty({
+          icon: "search-x",
+          title: "没有匹配的工具",
+          desc: kpiFilter === "alarms" ? "这个口径下没有 —— 点顶上的 KPI 格回到全部" : "换个词试试"
+        })
       );
       return;
     }
@@ -7794,6 +7851,7 @@ var BZW_dock = (() => {
     })[0];
   }
   function cardActions(v) {
+    var _a;
     const id = v.entry.id;
     const acts = [
       {
@@ -7816,6 +7874,9 @@ var BZW_dock = (() => {
         label: runLabel(v),
         onClick: () => void runFlow(v)
       });
+    }
+    if ((_a = v.runState) == null ? void 0 : _a.pausedAt) {
+      acts.push({ icon: "play", label: "恢复并立即重试", onClick: () => void resumeAndRetry(v) });
     }
     acts.push({ icon: "pencil", label: "重新导入声明", onClick: () => void importToolFlow(v.entry) });
     acts.push({
@@ -8013,15 +8074,10 @@ var BZW_dock = (() => {
     if ((_c = v.runState) == null ? void 0 : _c.pausedAt) {
       btns.appendChild(
         uiBtn({
-          label: "恢复自动运行",
+          label: "恢复并立即重试",
           size: "sm",
-          onClick: () => {
-            void (async () => {
-              await patchRunState(id, null);
-              kickDockScheduler();
-              await refresh();
-            })();
-          }
+          tone: "primary",
+          onClick: () => void resumeAndRetry(v)
         })
       );
     }
@@ -8030,6 +8086,7 @@ var BZW_dock = (() => {
     return sec;
   }
   function renderDetail(body, v) {
+    var _a, _b, _c;
     const wrap = el("div", "bz-dock-detail");
     const head = el("div", "bz-dock-detail-head");
     head.appendChild(uiIconBtn({ icon: "chevron-left", title: "返回列表", onClick: () => {
@@ -8071,6 +8128,22 @@ var BZW_dock = (() => {
       wrap.appendChild(box);
     }
     const meta = el("div", "bz-dock-meta");
+    const who = [(_a = v.manifest) == null ? void 0 : _a.author, (_b = v.manifest) == null ? void 0 : _b.toolVersion].filter(Boolean).join(" · ");
+    if (who) meta.appendChild(metaRow("作者", who));
+    if ((_c = v.manifest) == null ? void 0 : _c.docs) {
+      const docs = v.manifest.docs;
+      const row = el("div", "bz-dock-meta-row");
+      row.appendChild(el("span", "bz-dock-meta-label", "文档"));
+      row.appendChild(el("span", "bz-dock-meta-val", docs));
+      if (/^https?:\/\//i.test(docs)) {
+        row.appendChild(
+          uiIconBtn({ icon: "external-link", title: "打开文档", xs: true, onClick: () => window.open(docs, "_blank") })
+        );
+      } else {
+        row.appendChild(uiIconBtn({ icon: "copy", title: "复制", xs: true, onClick: () => void copyText(docs, "文档地址") }));
+      }
+      meta.appendChild(row);
+    }
     meta.appendChild(
       metaRow("声明文件", v.declPath, true, () => void copyText(v.declPath, "声明文件路径"))
     );
@@ -8166,6 +8239,17 @@ var BZW_dock = (() => {
       btns.appendChild(el("span", "bz-dock-mobilehint", "移动端不能启动进程，只能看"));
     }
     pane.appendChild(btns);
+    if (!liveRunOf(v.entry.id)) {
+      const lastTail = lastRawTailOf(v.entry.id);
+      if (lastTail == null ? void 0 : lastTail.length) {
+        const box = el("div", "bz-dock-lastraw");
+        box.appendChild(el("div", "bz-dock-lastraw-head", "上次现场输出（尾部）"));
+        const tail = el("pre", "bz-dock-raw");
+        tail.textContent = lastTail.slice(-12).join("\n");
+        box.appendChild(tail);
+        pane.appendChild(box);
+      }
+    }
     pane.appendChild(liveHost(v.entry.id));
     return pane;
   }
@@ -8432,7 +8516,17 @@ var BZW_dock = (() => {
       if ((_b = r.steps) == null ? void 0 : _b.length) more.appendChild(block("步骤", r.steps.map((s) => s.text).join("\n")));
       if (r.metrics) more.appendChild(block("指标", JSON.stringify(r.metrics, null, 2)));
       if ((_c = r.artifacts) == null ? void 0 : _c.length) {
-        more.appendChild(block("产物", r.artifacts.map((a) => `${a.label ? a.label + " · " : ""}${a.path}`).join("\n")));
+        const box = el("div", "bz-dock-block");
+        box.appendChild(el("div", "bz-dock-block-label", "产物"));
+        for (const a of r.artifacts) {
+          const row2 = el("div", "bz-dock-artrow");
+          row2.appendChild(el("span", "bz-dock-artrow-path", `${a.label ? a.label + " · " : ""}${a.path}`));
+          row2.appendChild(
+            uiIconBtn({ icon: "external-link", title: "打开 / 定位产物", xs: true, onClick: () => openArtifact(a.path) })
+          );
+          box.appendChild(row2);
+        }
+        more.appendChild(box);
       }
       if (r.result !== void 0) more.appendChild(block("结果", JSON.stringify(r.result, null, 2)));
       if ((_d = r.info) == null ? void 0 : _d.length) more.appendChild(block("信息", JSON.stringify(r.info, null, 2)));
@@ -8484,12 +8578,27 @@ var BZW_dock = (() => {
       onInfo: () => updateLive(v.entry.id),
       onResult: () => updateLive(v.entry.id),
       onDone: (outcome) => {
-        notifyRunOutcome(displayName(v), outcome, () => openDock(hostApp));
+        notifyRunOutcome(displayName(v), outcome, () => openDockTool(hostApp, v.entry.id));
+        if (outcome.ok) {
+          void patchRunState(v.entry.id, {
+            lastAttemptAt: outcome.finishedAt,
+            lastAttemptOk: true,
+            consecutiveFailures: 0,
+            pausedAt: void 0
+          });
+        }
         void refresh();
         updateLive(v.entry.id);
       }
     });
     render();
+  }
+  async function resumeAndRetry(v) {
+    await patchRunState(v.entry.id, null);
+    kickDockScheduler();
+    await refresh();
+    const nv = viewById(v.entry.id);
+    if (nv && canStart(nv)) await runFlow(nv);
   }
   function updateLive(id) {
     const hosts = overlay == null ? void 0 : overlay.querySelectorAll(`.bz-dock-live[data-tool="${id}"]`);
@@ -8671,7 +8780,7 @@ var BZW_dock = (() => {
       title: "移除登记",
       message: `确定把「${displayName(v)}」从工具坞移除？
 
-只移除 bz 这边的登记 —— 声明文件、参数值文件、运行记录文件都不会被删（前两个是工具目录里的，后一个是工具的账本）。`,
+只移除 bz 这边的登记 —— 声明文件、参数值文件、运行记录文件都不会被删（前两个是工具目录里的，后一个是工具的账本）。调度台账（失败计数 / 熔断标记）一并清掉。`,
       actions: [
         { label: "取消", value: "cancel" },
         { label: "移除", value: "ok", cta: true, danger: true }
@@ -8680,6 +8789,7 @@ var BZW_dock = (() => {
     if (res !== "ok") return;
     const entries = readToolEntries().filter((e) => e.id !== v.entry.id);
     if (view.kind === "detail" && view.id === v.entry.id) view = { kind: "list" };
+    await patchRunState(v.entry.id, null);
     await persist(entries, `已移除 ${displayName(v)}`);
   }
 
