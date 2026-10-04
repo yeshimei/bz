@@ -100,6 +100,8 @@ import {
   runToolDirect,
   dockToolLabel,
   readToolEntries,
+  loadDockStore,
+  migrateLegacyDockSettings,
 } from './dock';
 
 /** 命令表：id/name 统一命名（spec「命令 id 全清单」第 9 轮：bz-<域>-<动作>）。
@@ -313,7 +315,25 @@ export default class BzPlugin extends Plugin {
     const asrKeysMigrated = migrateAsrKeys(loaded);
     // issue 462/ADR-0195：knowledge 三路径键 → 外部工具组（pythonPath/ffmpegPath/ffprobePath）
     const externalToolKeysMigrated = migrateExternalToolKeys(loaded);
+    // ADR-0239：工具坞面板数据（登记表 / 台账 / 两个开关）搬出插件设置 → 数据目录的 dock.json；
+    // 信任（trustedAt/trustedRun）刻意留在设置里（`dockTrust`），故本条同时把老登记项里的信任摘出来
+    const dockMigrated = migrateLegacyDockSettings(loaded);
     this.settings = Object.assign({}, DEFAULT_SETTINGS, loaded);
+    setApp(this.app);
+    // AI 设置注入（Q3 的 _q3Settings 语义 → 插件设置）
+    setAISettingsProvider(() => this.settings);
+    resetAIProviderCache();
+    // 通用设置访问器（各域经 getSettings 读取）
+    setSettingsProvider(() => this.settings);
+    // 设置保存通道（域设置弹窗写回后持久化）
+    setSettingsSaver(() => this.saveSettings());
+    // 工具坞面板数据装载（ADR-0239）：登记表 / 调度台账 / 两个开关自本轮起住数据目录的
+    // `dock.json`（跟其他域一样跟着 storagePath 走），而下面的直达运行命令注册与调度器都是
+    // **同步**读它 —— 所以在这里先装载一次。迁移种子只在文件此前不存在时落盘（老库搬一次家）。
+    await loadDockStore(dockMigrated?.seed ?? null);
+    // 迁移落盘（读旧写新删旧的「删旧」一步）刻意排在 loadDockStore 之后：种子先落进
+    // dock.json、再删旧键落盘设置 —— 反过来的话（saveSettings 与种子写入并发竞速），
+    // 「设置已存下去（旧键没了）但种子没写成」之间崩溃一次，登记表与台账就静默丢失
     if (
       memoKeysMigrated ||
       autoLinkMigrated ||
@@ -323,18 +343,11 @@ export default class BzPlugin extends Plugin {
       retiredSecondBrainKeysMigrated ||
       retiredJevKeysMigrated ||
       asrKeysMigrated ||
-      externalToolKeysMigrated
+      externalToolKeysMigrated ||
+      dockMigrated
     ) {
       void this.saveSettings().catch((e) => console.error('[bz] 设置键迁移落盘失败:', e));
     }
-    setApp(this.app);
-    // AI 设置注入（Q3 的 _q3Settings 语义 → 插件设置）
-    setAISettingsProvider(() => this.settings);
-    resetAIProviderCache();
-    // 通用设置访问器（各域经 getSettings 读取）
-    setSettingsProvider(() => this.settings);
-    // 设置保存通道（域设置弹窗写回后持久化）
-    setSettingsSaver(() => this.saveSettings());
     // 移动端远程地址自动跟随本机 IP（issue 424/ADR-0184；原 issue 423 只补空值）：桌面端启动时
     // 探测本机局域网 IP，插件自己写下的旧值随 IP 漂移刷新（手机端读同步值，自身探测不到电脑 IP）；
     // 人填值（指向他机的地址）与探测不到两种情况一律不动，静默无提示。

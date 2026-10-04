@@ -618,11 +618,12 @@ except Exception as e:
 
 ## 10. 相关
 
-- **参考实现（真跑得起来的样板）**：`E:\Obsidian\dock-tools\daily-signin\` —— iamtxt 每日签到，目录里就是 `manifest.json` + `main.mjs`，接口写死、参数只留 Cookie
+- **参考实现（真跑得起来的样板）**：`E:\Obsidian\叫我包仔\CONFIG\SCRIPTS\DockTools\iamtxt-signin\` —— iamtxt 每日签到，目录里就是 `manifest.json` + `main.mjs`，接口写死、参数只留 Cookie。**工具放在 vault 内 `CONFIG/SCRIPTS/` 只是这位用户的习惯** —— 声明 / 参数值 / 运行记录都住工具目录，放 vault 外（比如 `E:\` 下）一样能被登记，bz 不要求工具在 vault 里
 - 契约校验（真理源）：`src/dock/schema.ts`、`src/dock/registry.ts`
 - 声明文件 / 参数值 / 运行记录路径：`src/dock/declaration.ts`
 - 四行协议与进程生命周期：`src/core/external-tool.ts`
 - 拉起与回显（含注入的环境变量）：`src/dock/runner.ts`
 - 自动运行（bz 按节奏替你触发）：`src/dock/scheduler.ts` + 判据 `src/dock/schedule.ts`
+- 面板数据（登记表 / 调度台账 / 两个开关）住**数据目录**的 `dock.json`（ADR-0239）；**信任不在那里** —— 它住本机插件设置，换 vault / 换机器后每个工具都要重新确认一次（刻意的：不让一份分享来的 vault 顺带带来「已授权执行这条命令」）
 - 设计决策（D1–D15、四份文件、明确不做的清单）：`.scratch/dock/spec.md`（§14 调度、§15 措辞与下拉）
-- 决策记录：ADR-0235（声明文件自描述）、**ADR-0236（bz 调度 + 运行记录归工具目录，含 §补记「主动权在 bz 这一侧」）**、ADR-0237（文件名对齐 Obsidian 插件惯例 + `main.mjs` 约定入口）
+- 决策记录：ADR-0235（声明文件自描述）、**ADR-0236（bz 调度 + 运行记录归工具目录，含 §补记「主动权在 bz 这一侧」）**、ADR-0237（文件名对齐 Obsidian 插件惯例 + `main.mjs` 约定入口）、ADR-0239（面板数据搬出插件设置、信任留在本机）

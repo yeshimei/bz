@@ -5,13 +5,14 @@
  *
  * | 文件 | 位置 | 唯一写者 | 本模块的角色 |
  * |---|---|---|---|
- * | 插件 `data.json` → `dockTools` 段 | 插件设置 | **bz** | 读写（`readToolEntries` / `saveToolEntries`） |
+ * | `dock.json`（面板数据） | **数据目录** | **bz** | 读写（经 `store.ts`：登记表 / 调度台账 / 两个全域开关） |
+ * | 插件设置 `dockTrust`（信任） | 插件设置 | **bz** | 读写（经 `store.ts`；**刻意不随 vault 走** —— 见 ADR-0239） |
  * | `manifest.json`（声明） | **工具目录** | **工具作者** | **只读**（经 `declaration.ts`，不缓存；旧名 `dock.json` 回落认） |
  * | `data.json`（参数值） | **工具目录** | **bz** | 读写（`readToolValues` / `saveToolValues`；旧名 `dock.settings.json` 回落认） |
  * | `runs.json`（运行记录） | **工具目录** | **工具** | **只读**（`readRunsFile` —— 永不创建、永不改写；旧名 `dock.runs.json` 回落认） |
  *
- * 两个 `data.json` 同名不同处，别混：**插件设置**那份在 vault 的插件目录里（登记表），
- * **参数值**那份在每个工具目录里（bz 的账本，ADR-0237 起按 Obsidian 插件惯例命名）。
+ * 两个 `data.json` 同名不同处，别混：**参数值**那份在每个工具目录里（bz 的账本，ADR-0237 起按
+ * Obsidian 插件惯例命名）；**面板数据**那份在数据目录的 `dock.json`（ADR-0239 从插件设置搬出）。
  *
  * 运行记录那条尤其要紧：bz 一旦写回去就变成第二个写者，`news.json` 当年被这个问题逼出
  * 段级合并写（ADR-0128）、外部写者最后直接退役。所以读侧走 fs 缝的 `readText`
@@ -24,7 +25,16 @@
  */
 
 import type { App } from 'obsidian';
-import { getSettings, saveSettings, tryGetSettings } from '../core/settings-provider';
+import {
+  dockStoreSnapshot,
+  mutateDockStore,
+  persistDockStore,
+  readTrustMap,
+  setDockStoreMemory,
+  writeTrustMap,
+  type DockSwitchKey,
+  type DockTrustRecord,
+} from './store';
 import {
   DOCK_RUNS_PER_TOOL_LIMIT,
   parseManifest,
@@ -79,17 +89,79 @@ export function runsPathOf(entry: DockToolEntry): string {
 
 // ==================== 工具登记（插件设置 · 唯一写者是 bz） ====================
 
-/** 读全部登记（脏值逐条丢弃；缺省空数组）。
- *  校验本体在 registry.ts（零依赖、可单测）；这里只负责从设置取原始值。 */
-export function readToolEntries(): DockToolEntry[] {
-  return parseToolEntries((tryGetSettings() as Record<string, unknown> | undefined)?.dockTools);
+/** 剥掉信任字段（就地改并返回；调用方保证拿到的是新对象） */
+function stripTrustFields(e: DockToolEntry): DockToolEntry {
+  delete e.trustedAt;
+  delete e.trustedRun;
+  return e;
 }
 
-/** 写回全部登记（**唯一的登记写入口**；bump 落盘） */
+/**
+ * 文件里的条目 → 登记项。**文件里带的信任字段一律剥掉** ——
+ * 信任的唯一真理源是插件设置里的 `dockTrust`（ADR-0239）：`dock.json` 住在 vault 里，
+ * 谁都能塞一份进来，照收就等于「别人的 vault 替我授权」。
+ */
+function entriesFromFile(raw: unknown[]): DockToolEntry[] {
+  return parseToolEntries(raw).map(stripTrustFields);
+}
+
+/** 登记项 → 写进文件（同样剥信任） */
+function entriesToFile(entries: DockToolEntry[]): unknown[] {
+  return entries.map((e) => stripTrustFields({ ...e }));
+}
+
+/** 登记项 → 信任表（把 `trustedAt` / `trustedRun` 摘出来单独存） */
+function trustFromEntries(entries: DockToolEntry[]): Record<string, DockTrustRecord> {
+  const trust: Record<string, DockTrustRecord> = {};
+  for (const e of entries) {
+    if (typeof e.trustedAt !== 'string' || e.trustedAt === '') continue;
+    const t: DockTrustRecord = { at: e.trustedAt };
+    if (typeof e.trustedRun === 'string') t.run = e.trustedRun;
+    trust[e.id] = t;
+  }
+  return trust;
+}
+
+/**
+ * 读全部登记（脏值逐条丢弃；缺省空数组；信任从设置里并回来）。
+ *
+ * 走**内存快照**（`store.ts`）—— 同步读：设置行的 `get`、启动时的命令注册、调度器每轮判据
+ * 都要它。快照由 `loadDockStore()` 在 onload、每次打开面板与每轮调度 tick 刷新。
+ */
+export function readToolEntries(): DockToolEntry[] {
+  const trust = readTrustMap();
+  return entriesFromFile(dockStoreSnapshot().tools).map((e) => {
+    const t = trust[e.id];
+    if (!t) return e;
+    e.trustedAt = t.at;
+    if (t.run !== undefined) e.trustedRun = t.run;
+    return e;
+  });
+}
+
+/**
+ * 写回全部登记（**唯一的登记写入口**）：登记表进 `dock.json`（剥信任）、信任回插件设置 ——
+ * 分家写在 `store.ts` 顶部讲了理由（信任不随 vault 走）。
+ */
 export async function saveToolEntries(entries: DockToolEntry[]): Promise<void> {
-  const s = getSettings() as unknown as Record<string, unknown>;
-  s.dockTools = entries;
-  await saveSettings();
+  await mutateDockStore({ tools: entriesToFile(entries) });
+  await writeTrustMap(trustFromEntries(entries));
+}
+
+/** 读信任表（设置面板「信任」组渲染用；同步读） */
+export function readTrustRecords(): Record<string, DockTrustRecord> {
+  return readTrustMap();
+}
+
+/**
+ * 撤销信任 —— 只动设置里的 `dockTrust`，**不碰 `dock.json`**（撤销 = 本机取消授权，
+ * 跟「这个工具登记在册」是两件事）。不存在则什么都不做。
+ */
+export async function untrustTool(id: string): Promise<void> {
+  const trust = readTrustMap();
+  if (!(id in trust)) return;
+  delete trust[id];
+  await writeTrustMap(trust);
 }
 
 /** 是否已建立过信任 */
@@ -166,12 +238,11 @@ function parseRunState(raw: unknown): DockToolRunState {
   return out;
 }
 
-/** 读全部台账（缺省空对象） */
+/** 读全部台账（缺省空对象；走内存快照，同 `readToolEntries`） */
 export function readRunStates(): Record<string, DockToolRunState> {
-  const raw = (tryGetSettings() as Record<string, unknown> | undefined)?.dockRunState;
-  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return {};
+  const raw = dockStoreSnapshot().runState;
   const out: Record<string, DockToolRunState> = {};
-  for (const [id, v] of Object.entries(raw as Record<string, unknown>)) {
+  for (const [id, v] of Object.entries(raw)) {
     const st = parseRunState(v);
     if (Object.keys(st).length) out[id] = st;
   }
@@ -183,7 +254,6 @@ export function readRunStates(): Record<string, DockToolRunState> {
  * 传 `null` = 删掉该工具的台账（重新开始）。
  */
 export async function patchRunState(id: string, patch: Partial<DockToolRunState> | null): Promise<void> {
-  const s = getSettings() as unknown as Record<string, unknown>;
   const all = readRunStates();
   if (patch === null) {
     delete all[id];
@@ -197,8 +267,7 @@ export async function patchRunState(id: string, patch: Partial<DockToolRunState>
     if (Object.keys(st).length) all[id] = st;
     else delete all[id];
   }
-  s.dockRunState = all;
-  await saveSettings();
+  await mutateDockStore({ runState: all as Record<string, unknown> });
 }
 
 /**
@@ -212,6 +281,31 @@ export async function recordRunSuccess(id: string, finishedAt: string): Promise<
     consecutiveFailures: 0,
     pausedAt: undefined,
   });
+}
+
+// ==================== 全域开关（面板数据 · 住 `dock.json`） ====================
+
+/**
+ * 读一个全域开关 —— `autoRun` = 自动运行总闸（关掉 = 声明了节奏也只手动），
+ * `notifyMissed` = 漏跑提醒。两者缺省都是**开**（键缺失/形态不对即开）。
+ *
+ * 同步读（走内存快照）：设置行的 `get` 与调度器每轮的判据都是同步口径，
+ * 不能为了两个布尔把这两处都改成异步链。
+ */
+export function readDockSwitch(key: DockSwitchKey): boolean {
+  return dockStoreSnapshot()[key] !== false;
+}
+
+/** 改开关（同步改内存 —— 设置行三函数绑定的 `set` 位） */
+export function setDockSwitch(key: DockSwitchKey, value: boolean): void {
+  const patch: Partial<Record<DockSwitchKey, boolean>> = { [key]: value === true };
+  setDockStoreMemory(patch);
+}
+
+/** 改并落盘（设置行三函数绑定的 `save` 位，也是别处改开关的常规形态） */
+export async function saveDockSwitch(key: DockSwitchKey, value: boolean): Promise<void> {
+  setDockSwitch(key, value);
+  await persistDockStore();
 }
 
 // ==================== 读侧（运行记录：只读、不创建、不抛） ====================

@@ -250,6 +250,27 @@ export class MockVault {
   }
 }
 
+/**
+ * 索引滞后假层（Obsidian 启动扫描未完成窗口）：fileMap 全瞎（getAbstractFileByPath 恒 null），
+ * 磁盘（files/dirs/adapter）照常；create/createFolder 对齐真机「按**磁盘**判重」——盘上有即抛
+ * already exists。MockVault 本体索引=磁盘且 create 不判重，看不见「索引滞后」类缺陷
+ * （盲区对盲区）；2026-10-04「Folder already exists.」炸 onload 的回归假层（core/storage）。
+ */
+export class IndexLagVault extends MockVault {
+  /** 启动扫描没扫到：索引全瞎（盘上 files/dirs 不变） */
+  override getAbstractFileByPath(_path: string): any {
+    return null;
+  }
+  override async createFolder(path: string): Promise<void> {
+    if (await this.adapter.exists(path)) throw new Error('Folder already exists.');
+    this.dirs.add(path);
+  }
+  override async create(path: string, content: string): Promise<any> {
+    if (await this.adapter.exists(path)) throw new Error('File already exists.');
+    return super.create(path, content);
+  }
+}
+
 /** 解析 frontmatter（简易 YAML 子集：key: value 行 + `  - ` 列表项）。
  *  fail-closed（深审批A T2）：值含「: 」与「key: 值后裸行」两种破损形态返回 null——
  *  真机 js-yaml 对两者整体解析失效（Obsidian 视为无 frontmatter），mock 原先 fail-open

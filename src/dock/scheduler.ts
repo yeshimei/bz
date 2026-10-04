@@ -7,7 +7,7 @@
  * 进程就无从调度）。这是要认的硬后果（「要不要另留系统计划任务兜底」是后续单独议题）。
  *
  * 一次 tick 做四件事：读全部视图 → 用纯函数 `decideDue` 算出「现在该跑哪些」→ 串行跑 →
- * 记 bz 侧台账（`dockRunState`）+ 只对失败发通知。判据本体在 `decideDue`（零依赖纯函数，
+ * 记 bz 侧台账（面板数据 `dock.json` 的 `runState`）+ 只对失败发通知。判据本体在 `decideDue`（零依赖纯函数，
  * node 可直测）；本文件剩下的部分是薄薄的运行时。
  *
  * 四条纪律：
@@ -18,17 +18,18 @@
  */
 import { Platform, type App } from 'obsidian';
 import { notify } from '../core/notice';
-import { tryGetSettings } from '../core/settings-provider';
 import {
   displayName,
   isEnabled,
   isTrusted,
   loadToolViews,
   patchRunState,
+  readDockSwitch,
   recordRunSuccess,
   triggerOf,
   type DockToolView,
 } from './data';
+import { loadDockStore } from './store';
 import { decideDue, missingRequiredParams, type DockSchedInput } from './schedule';
 // ui 与 scheduler 互相引用（ui 里改完节奏会 kick 调度器；这里的通知要直达工具详情）——
 // 双方都只在函数体内调用对方，模块顶层互不取值，ESM 循环在此安全
@@ -67,9 +68,9 @@ let chain: Promise<void> = Promise.resolve();
 /** 本会话已就「参数没填」提示过的（去重，免得每 tick 说一遍） */
 const warnedParams = new Set<string>();
 
-/** 自动运行总闸是否开着（缺省开，只有显式 false 才算关） */
+/** 自动运行总闸是否开着（缺省开，只有显式 false 才算关；读面板数据 `dock.json`） */
 function globalAutoOn(): boolean {
-  return (tryGetSettings() as Record<string, unknown> | undefined)?.dockAutoRun !== false;
+  return readDockSwitch('autoRun');
 }
 
 /**
@@ -139,6 +140,13 @@ function inputOf(v: DockToolView, now: number): DockSchedInput {
 async function tick(): Promise<void> {
   if (app === null || isUnloaded === null) return;
   if (isUnloaded()) return;
+  // 面板数据（含总闸）现读：外部改了 `dock.json` 也在下一轮生效。读不到就用现有快照继续，
+  // 绝不把异常抛给宿主（同下面 loadToolViews 的处置）。
+  try {
+    await loadDockStore();
+  } catch {
+    /* 用现有快照 */
+  }
   if (!globalAutoOn()) return;
 
   let views: DockToolView[];

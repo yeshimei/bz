@@ -7,9 +7,10 @@
  *     运行记录的读路径全真；
  *   - **假 fs 注入 declaration 的 fs 缝**（`setDockFs`）：声明文件与参数值住在**工具目录**
  *     （vault 外），壳里用一张 localStorage 表模拟那片磁盘；
- *   - **种子**：往两处摆文件——工具目录里的 `dock.json`（各工具自己声明「我是谁、有什么参数、
- *     怎么跑」）与 `dock.settings.json`（用户填过的参数值），以及约定路径下的
- *     `CONFIG/STORAGE/dock/runs/<id>.json`（工具侧账本，由「工具」写，bz 只读）。
+ *   - **种子**：往三处摆文件——工具目录里的 `manifest.json`（各工具自己声明「我是谁、有什么参数、
+ *     怎么跑」）与 `data.json`（用户填过的参数值）、工具目录里的 `runs.json`（工具侧账本，由
+ *     「工具」写，bz 只读），以及**数据目录的 `dock.json`**（bz 的面板数据：登记表 / 调度台账 /
+ *     两个开关 —— ADR-0239 起住这儿，不再寄在插件设置里）。
  *     刻意摆齐几种形态：当天已跑 / 逾期未跑 / 失败带 error.kind / 只有手动记录 / 声明文件
  *     读不到 / 未建立信任；
  *   - **执行注入**：`setDockRuntimeDeps({ cp })` 塞一个**假 child_process**——它按四行协议
@@ -32,17 +33,16 @@ import { setSettingsProvider, setSettingsSaver } from '../../src/core/settings-p
 import { setSystemFolderPicker } from '../../src/core/path-picker';
 import { openDock, closeDock, unloadDock, setDockFs } from '../../src/dock/index';
 import { setDockRuntimeDeps } from '../../src/dock/runner';
-import { resolveRun, settingsPathFor, type DockFs } from '../../src/dock/declaration';
+import { resolveRun, runsPathFor, settingsPathFor, type DockFs } from '../../src/dock/declaration';
+import { dockStorePath } from '../../src/dock/store';
 import { runSignature, type DockToolEntry } from '../../src/dock/registry';
 import { triggerOf } from '../../src/dock/schedule';
 import type { DockSchedule } from '../../src/dock/schema';
 
-/** 共享数据根（插件默认 storagePath；所有路径都由它派生） */
-const STORE = 'CONFIG/STORAGE/dock';
 /** 壳内的「工具目录」——真机上是用户自己的脚本目录，这里只是几个好看点的假路径 */
 const TOOLS_DIR = 'C:/Users/PC/scripts';
 const KEY = 'bz-sim:';
-const SEED_MARK = 'bz-sim:__dock_seed_v2';
+const SEED_MARK = 'bz-sim:__dock_seed_v3';
 
 declare global {
   interface Window {
@@ -283,26 +283,33 @@ const RUNS: Record<string, SeedRun[]> = {
 };
 
 /**
- * 工具登记 —— **只记 bz 自己那份事实**（id + 声明文件路径 + 信任/启用）。
- * `trustedRun` 是「建立信任时那条命令」的签名：声明文件改了命令，它就对不上，面板会重新问一次。
+ * 工具登记 —— **只记 bz 自己那份事实**（id + 声明文件路径）。
+ * 信任字段（trustedAt/trustedRun）自 ADR-0239 起不进 dock.json（读侧见字段即剥），
+ * 种子里就别带 —— 带了也会被实现侧剥掉，壳里全渲染成「未信任」。
  */
 function seedEntries(): DockToolEntry[] {
-  const trustedAt = iso(30 * DAY);
   const list: DockToolEntry[] = [];
   for (const [id, decl] of Object.entries(DECLARATIONS)) {
-    const path = declPathOf(id);
-    const run = resolveRun(decl as never, path);
-    const trusted = id !== 'imported-tool';
-    list.push({
-      id,
-      path,
-      ...(trusted ? { trustedAt } : {}),
-      ...(trusted && run ? { trustedRun: runSignature(run) } : {}),
-    });
+    list.push({ id, path: declPathOf(id) });
   }
   // 声明文件故意缺失的那个：登记在册，但读不到声明
-  list.push({ id: 'local-report', path: declPathOf('local-report'), trustedAt });
+  list.push({ id: 'local-report', path: declPathOf('local-report') });
   return list;
+}
+
+/**
+ * 信任那份（住**插件设置**的 `dockTrust`，ADR-0239）：除 imported-tool 外都已授权，
+ * 壳里才演得出「已信任 / 待确认」两半 —— 与实现侧的合并结果一致（登记项 + 设置信任）。
+ */
+function seedTrust(): Record<string, { at: string; run?: string }> {
+  const trustedAt = iso(30 * DAY);
+  const trust: Record<string, { at: string; run?: string }> = {};
+  for (const id of Object.keys(DECLARATIONS).concat('local-report')) {
+    if (id === 'imported-tool') continue; // 留一个「还没确认」的，演设置页授权流程
+    const run = id in DECLARATIONS ? resolveRun(DECLARATIONS[id] as never, declPathOf(id)) : null;
+    trust[id] = run ? { at: trustedAt, run: runSignature(run) } : { at: trustedAt };
+  }
+  return trust;
 }
 
 function wipeSimFiles(): void {
@@ -340,10 +347,18 @@ function seedStore(): void {
     JSON.stringify(PENDING_DECLARATION, null, 2),
   );
 
-  // vault 内：运行记录（工具写的那份账本）
+  // 数据目录：**面板数据**（登记表 / 调度台账 / 两个开关 —— ADR-0239 起住这里，
+  // 不再寄在插件设置里；信任不进这份文件，住设置里的 dockTrust —— 见 seedTrust()）
+  localStorage.setItem(
+    fileKeyOf(dockStorePath()),
+    JSON.stringify({ v: 1, tools: seedEntries(), runState: {}, autoRun: true, notifyMissed: true }, null, 2),
+  );
+
+  // 工具目录：运行记录（工具写的那份账本）—— 与声明、参数值同一层（ADR-0237 修订后）
   for (const id of Object.keys(DECLARATIONS).concat('local-report')) {
+    const runsFile = runsPathFor(declPathOf(id));
     localStorage.setItem(
-      `${KEY}${STORE}/runs/${id}.json`,
+      fileKeyOf(runsFile),
       JSON.stringify({ v: 1, tool: id, updatedAt, runs: RUNS[id] ?? [] }, null, 2),
     );
   }
@@ -513,8 +528,9 @@ function makeFakeFs(): DockFs {
 
 const settingsStore: Record<string, unknown> = {
   storagePath: 'CONFIG/STORAGE',
-  dockTools: seedEntries(),
-  dockNotifyMissed: true,
+  // 面板数据（登记表 / 台账 / 两个开关）自 ADR-0239 起住数据目录的 dock.json —— 见 seedStore()
+  // 里的种子；信任这份住**这里**（dockTrust，ADR-0239），与实现侧同一份合并结果
+  dockTrust: seedTrust(),
 };
 
 let simApp: FakeApp | null = null;
@@ -566,7 +582,7 @@ export function bootDockSim(): void {
     auto: entries.filter((e) => triggerOf(scheduleOf(e.id)) === 'auto').length,
     manual: entries.filter((e) => triggerOf(scheduleOf(e.id)) === 'manual').length,
     noDecl: entries.filter((e) => !(e.id in DECLARATIONS)).length,
-    untrusted: entries.filter((e) => !e.trustedAt).length,
+    untrusted: entries.filter((e) => !(e.id in seedTrust())).length,
     runs: Object.fromEntries(
       Object.keys(DECLARATIONS)
         .concat('local-report')

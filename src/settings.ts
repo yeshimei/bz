@@ -9,7 +9,7 @@ import { DEFAULT_PW_CHARSET } from './password-vault/data';
 import { AUTO_SUMMARY_KEYS } from './auto-summary/keys';
 import { unsharpenScore } from './secondbrain/vector-math';
 // 工具坞（dock 域）登记条目类型 —— **type-only**：类型层引用，运行时零依赖（不拖 dock 侧的 core/storage）
-import type { DockToolEntry, DockToolRunState } from './dock/data';
+import type { DockTrustRecord } from './dock/store';
 // AI 注册表/档位表（issue 411/ADR-0179）：迁移须与注册表同源判定「在册服务商」，防两处字面量漂移
 import { AI_PROVIDER_REGISTRY, DEFAULT_AI_PROVIDER, thinkingLevelsOf } from './core/ai';
 
@@ -69,20 +69,15 @@ export default interface BzSettings {
   ffprobePath: string;
 
   // ===== 🧰 工具坞（dock 域，2026-10-04：外部工具的登记、启动、观测）=====
-  /** 外部工具登记表 —— 「要执行什么」的**唯一真理源**，也是本插件权限最高的数据。
-   *  只存在插件设置（`.obsidian/plugins/bz/data.json`，不随 vault 分享）里：若允许从 vault
-   *  内文件读，「打开别人给的 vault」就等于「在他机器上执行任意命令」（ADR-0235 决策）。
-   *  管理入口 = 工具坞面板内的「添加工具」（不走设置页行编辑）。 */
-  dockTools: DockToolEntry[];
-  /** 🔔 漏跑提醒（默认开）：工具自己声明了节奏、而当天该有记录却没有时，标红之外再发一条通知。
-   *  只有**声明了节奏**才判；声明缺失时退回「只展示最后运行时间」，不猜（ADR-0235 决策 D11）。 */
-  dockNotifyMissed: boolean;
-  /** 🚀 自动运行（默认开，ADR-0236）：Obsidian 启动就绪后，bz 亲自按各工具声明的节奏触发它 ——
-   *  到点跑、该跑没跑就补跑、失败提醒。关掉 = 全部退回「只手点」。移动端恒不生效（起不了进程）。 */
-  dockAutoRun: boolean;
-  /** bz 侧自动运行台账（每工具：最近一次尝试 / 连续失败数 / 是否熔断暂停）。
-   *  **不是**工具的运行记录 —— 那份归工具自己写（D8/D9）；这里只是 bz 的调度账（`DockToolRunState`）。 */
-  dockRunState: Record<string, DockToolRunState>;
+  /** 已登记工具的**信任表**（工具 id → 授权时刻 + 被授权那条启动命令的签名）。
+   *
+   *  工具坞的面板数据（登记表 / 调度台账 / 自动运行总闸 / 漏跑提醒）都已搬进**数据目录**的
+   *  `dock.json`（ADR-0239：跟其他域一样住 `storagePath`）；**唯独信任留在这里**，理由是安全：
+   *  信任 =「我授权在本机执行这条命令」，而 `dock.json` 住在 vault 里（同步 / 进 git / 能整个
+   *  分享出去）。若信任也跟着走，别人给一份 vault 就同时带走了登记项与信任签名 —— 对上一个
+   *  同样签名的声明即判「已信任」，调度器到点替他跑起来，正是 ADR-0235 要挡的那件事。
+   *  管理入口 = 设置面板「工具坞 → 信任」；面板内「重新导入声明」也会写到它。 */
+  dockTrust: Record<string, DockTrustRecord>;
 
   // ===== 📂 数据存储路径（ADR-0009 共享数据路径）=====
   /** 共享 JSON 数据目录（memo/belongings/passwords/favorites/review/quiz/闪念 meta+vec 统一存放） */
@@ -919,11 +914,9 @@ export const DEFAULT_SETTINGS: BzSettings = {
   ffmpegPath: 'ffmpeg',
   ffprobePath: 'ffprobe',
 
-  // 工具坞（dock 域）：空登记表起步（面板内添加）；漏跑提醒默认开；bz 自动运行默认开（ADR-0236）
-  dockTools: [],
-  dockNotifyMissed: true,
-  dockAutoRun: true,
-  dockRunState: {},
+  // 工具坞（dock 域）：面板数据（登记表 / 台账 / 两个开关）自 ADR-0239 起住数据目录的
+  // dock.json，旧键由 main.ts 的迁移读取并清除；这里只留**信任表**（刻意不随 vault 走）
+  dockTrust: {},
 
   // Jev 决策通道（ADR-0173；issue 424/ADR-0184 常开；issue 433/ADR-0190 起按服务商分存）：未填密钥时不接管任何判定
   jevProvider: 'typesafe',

@@ -16,5 +16,12 @@ export { startDockScheduler, stopDockScheduler, kickDockScheduler } from './sche
 export { setDockRuntimeDeps } from './runner';
 /** fs 注入缝（评审壳/测试塞假 fs —— 声明文件与参数值住在工具目录，是 vault 外的路径） */
 export { setDockFs } from './declaration';
-/** 登记表读取（main.ts 启动时按它注册直达运行命令） */
-export { readToolEntries } from './data';
+/** 登记表读取（main.ts 启动时按它注册直达运行命令）+ 两个全域开关（设置行 / 调度器） */
+export { readToolEntries, readDockSwitch, saveDockSwitch } from './data';
+/** 面板数据（`<数据目录>/dock.json`）：装载 / 迁移种子 / 路径 —— ADR-0239 */
+export {
+  loadDockStore,
+  migrateLegacyDockSettings,
+  dockStorePath,
+  DOCK_STORE_FILENAME,
+} from './store';

@@ -36,7 +36,6 @@ import { openFlowDialog } from '../core/flow-dialog';
 import { pickSystemFiles, pickSystemFolder } from '../core/path-picker';
 import { attachItemActions, openItemMenu, openItemSheet, type ItemAction } from '../core/item-actions';
 import { relTime } from '../core/ui/str';
-import { tryGetSettings } from '../core/settings-provider';
 import {
   displayDesc,
   displayIcon,
@@ -48,6 +47,7 @@ import {
   loadToolViews,
   overview,
   patchRunState,
+  readDockSwitch,
   readToolEntries,
   recordRunSuccess,
   runSignature,
@@ -59,6 +59,7 @@ import {
   type DockToolEntry,
   type DockToolView,
 } from './data';
+import { loadDockStore } from './store';
 import { judgeDirectRun, missingParamsMessage } from './command';
 import {
   errorHint,
@@ -412,6 +413,9 @@ async function refresh(): Promise<void> {
   refreshing = true;
   renderHead();
   try {
+    // 面板数据（登记表 / 台账 / 开关）先装载再读视图 —— 每次打开都现读，外部改了 dock.json
+    // 也能在下次打开时生效（ADR-0239；与声明文件的「不缓存」同一条精神）
+    await loadDockStore();
     views = await loadToolViews(hostApp);
     runDueNotifications();
   } catch (e) {
@@ -427,14 +431,15 @@ async function refresh(): Promise<void> {
  * 「该跑没跑」通知（spec D11）。
  * 只对**已声明节奏**且判定为 `due` 的工具发；同一会话内每个工具每天最多一条
  * （不落盘 —— ADR-0218 已拍 bz 不持久化队列/状态；重启后重来一次，可接受）。
- * 开关 = `dockNotifyMissed`（设置面板「工具坞 → 提醒」）；缺省开——键缺失视为开。
+ * 开关 = `dock.json` 里的 `notifyMissed`（面板数据；设置面板「工具坞 → 提醒」那一行）；
+ * 缺省开——键缺失视为开。
  *
  * **调度器会管的就不在这里喊**（ADR-0236）：能被自动跑的工具，它「该跑没跑」会被调度器直接
  * 补跑，再发一条「该跑没跑」就是同一件事喊两遍。只有调度器够不着的（总闸关、参数没填、自动
  * 已关、熔断暂停、未信任、没写 run）才轮到这条兜底提醒。
  */
 function runDueNotifications(): void {
-  if (tryGetSettings().dockNotifyMissed === false) return;
+  if (!readDockSwitch('notifyMissed')) return;
   const day = todayKey();
   for (const v of views) {
     if (!isEnabled(v.entry)) continue;
@@ -457,7 +462,7 @@ function runDueNotifications(): void {
  * 的口径一致但不必那么细。
  */
 function willAutoRun(v: DockToolView): boolean {
-  if (tryGetSettings().dockAutoRun === false) return false;
+  if (!readDockSwitch('autoRun')) return false;
   if (!isEnabled(v.entry) || !isTrusted(v.entry) || v.trustStale) return false;
   if (!v.run || !v.autoRun) return false;
   if (triggerOfView(v) !== 'auto') return false;

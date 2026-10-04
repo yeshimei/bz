@@ -2,8 +2,10 @@
  * 统一 JSON 数据读写层（统一数据读写重构）
  *
  * 语义统一为 jsonStore 现状（P1-31 并发首建竞态 / P1-32 损坏留档，语义保留、留档位置升级为 D1 契约）：
- *  - read：不存在 → 建目录建初始值文件（默认 []）；解析失败 → 原文件原样留档 CONFIG/.CORRUPT/<名>.<yyyymmdd-hhmmss>.bak 后重建初始值
- *  - write：存在 modify / 不存在 create（建目录）；并发首建竞态（create 撞「已存在」）降级为重读/modify，数据不丢；写失败先把盘上原内容留档再照抛原错误
+ *  - read：不存在 → 建目录建初始值文件（默认 []）；解析失败 → 原文件原样留档 CONFIG/.CORRUPT/<名>.<yyyymmdd-hhmmss>.bak 后重建初始值；
+ *    索引看不见但盘上在（启动扫描滞后窗口）→ adapter 直读，绝不拿默认值顶替
+ *  - write：存在 modify / 不存在 create（目录索引看不见但盘上在就不建）；并发首建竞态（create 撞「已存在」）降级为重读/modify，
+ *    索引滞后时降级为 adapter 直写，数据不丢；写失败先把盘上原内容留档再照抛原错误
  *
  * D1 可靠写契约（三原语，全部域数据层统一走；D2/D3 迁移依据，词条见 CONTEXT.md「可靠写契约」）：
  *  1. enqueueFileTask(path, task)——同文件「读→改→写」任务 FIFO 串行（消灭并发互相覆盖）、异文件并行；
@@ -166,6 +168,20 @@ function isAlreadyExistsError(e: unknown): boolean {
   return /already exist/i.test(msg);
 }
 
+/**
+ * 盘上存在性（绕过索引）。Obsidian 的 create/createFolder 判重问的是 adapter.exists（磁盘）而非
+ * 索引；桌面端启动时 adapter.watch 先挂监视、listAll() 异步排队全量扫描，插件 onload 跑在扫描
+ * 完成之前 —— 此窗口内盘上已有的文件/目录在索引里查不到，判「存在」必须盘上也算数
+ * （2026-10-04「Folder already exists.」炸 onload 的根因；dock loadDockStore 的种子判定同用）。
+ */
+export async function diskPathExists(app: any, p: string): Promise<boolean> {
+  try {
+    return !!(await app.vault?.adapter?.exists?.(p));
+  } catch {
+    return false; // adapter 不支持/查询失败：退回只信索引（调用方按「不存在」走原路）
+  }
+}
+
 // ---------- 冲突留档（D1 可靠写契约原语 3） ----------
 
 /** 留档目录（与 CONFIG/.ENCRYPT 同级的插件保留目录）：坏文件/写失败前内容原样留档，永不静默丢数据 */
@@ -200,8 +216,9 @@ function baseNameOf(p: string): string {
 export async function backupOriginal(app: any, filePath: string, raw?: string): Promise<string | null> {
   try {
     const f = app.vault.getAbstractFileByPath(filePath);
-    if (!f) return null;
-    const content = raw !== undefined ? raw : await app.vault.read(f);
+    // 索引滞后（启动扫描未完成）时 f 查不到，但 raw（读侧当场取到的原文）照样能留档 —— 留档以内容为准，不以索引为准
+    const content = raw !== undefined ? raw : f ? await app.vault.read(f) : undefined;
+    if (content === undefined) return null;
     if (!app.vault.getAbstractFileByPath(CORRUPT_BACKUP_DIR)) {
       try {
         await app.vault.createFolder(CORRUPT_BACKUP_DIR);
@@ -243,6 +260,12 @@ function serialize(v: unknown): string {
   return JSON.stringify(v, null, 2);
 }
 
+/** 盘上直读（索引滞后时 fileMap 查不到 TFile 只能走 adapter；对齐 vault.read 剥 BOM） */
+async function readFromDisk(app: any, filePath: string): Promise<string> {
+  const raw = (await app.vault.adapter.read(filePath)) as string;
+  return raw.charCodeAt(0) === 65279 ? raw.substring(1) : raw;
+}
+
 export function jsonFileStore<T>(filePath: string, opts: JsonFileStoreOptions<T> = {}): JsonFileStore<T> {
   /** app 解析：注入优先，回退模块级 getApp()（域传 app 参数时显式注入） */
   const resolveApp = () => opts.app || getApp();
@@ -251,15 +274,27 @@ export function jsonFileStore<T>(filePath: string, opts: JsonFileStoreOptions<T>
     return typeof d === 'function' ? (d as () => T)() : d === undefined ? ([] as unknown as T) : d;
   };
 
-  /** 首建前确保父目录存在（目录不存在才创建，保持原行为） */
+  /**
+   * 首建前确保父目录存在。判据 = 索引**或盘上**任一在就不建：Obsidian 的 createFolder 判重问的
+   * 是 adapter.exists（磁盘），启动扫描未完成的窗口内索引查不到盘上已有的目录，只问索引必撞
+   * 「Folder already exists.」炸整条读链（2026-10-04 onload 事故）。
+   */
   async function ensureDir(app: any): Promise<void> {
     const d = filePath.substring(0, filePath.lastIndexOf('/'));
-    if (d && !app.vault.getAbstractFileByPath(d)) await app.vault.createFolder(d);
+    if (!d || app.vault.getAbstractFileByPath(d)) return;
+    if (await diskPathExists(app, d)) return;
+    try {
+      await app.vault.createFolder(d);
+    } catch (e) {
+      if (await diskPathExists(app, d)) return; // 并发建目录竞态：已建则继续，真建不了才上抛
+      throw e;
+    }
   }
 
   /**
-   * 容错首建：create 成功返回 true；撞「已存在」且文件确已出现（并发首建竞态，P1-31）
-   * 返回 false 由调用方降级为重读/modify；其余错误照抛。
+   * 容错首建：create 成功返回 true；撞「已存在」且文件确已出现（并发首建竞态，P1-31）返回
+   * false 由调用方降级为重读/modify；「已出现」索引**或盘上**任一算数（判据与 Obsidian create
+   * 的磁盘判重同口径）；其余错误照抛。
    */
   async function createIfMissing(app: any, content: string): Promise<boolean> {
     await ensureDir(app);
@@ -267,7 +302,8 @@ export function jsonFileStore<T>(filePath: string, opts: JsonFileStoreOptions<T>
       await app.vault.create(filePath, content);
       return true;
     } catch (e) {
-      if (isAlreadyExistsError(e) && app.vault.getAbstractFileByPath(filePath)) return false;
+      if (isAlreadyExistsError(e) && (app.vault.getAbstractFileByPath(filePath) || (await diskPathExists(app, filePath))))
+        return false;
       throw e;
     }
   }
@@ -287,6 +323,10 @@ export function jsonFileStore<T>(filePath: string, opts: JsonFileStoreOptions<T>
     const f = app.vault.getAbstractFileByPath(filePath);
     if (f) {
       await app.vault.modify(f as any, serialize(resolveDefault()));
+    } else if (await diskPathExists(app, filePath)) {
+      // 索引滞后窗口：坏文件拿不到句柄 → adapter 直写重建（留档已完成）；
+      // 不重建的话滞后期内每读一次就留一次档
+      await app.vault.adapter.write(filePath, serialize(resolveDefault()));
     } else {
       await createIfMissing(app, serialize(resolveDefault()));
     }
@@ -307,6 +347,15 @@ export function jsonFileStore<T>(filePath: string, opts: JsonFileStoreOptions<T>
     }
   }
 
+  /** 原文 → 解析（损坏走留档重建），read 的索引/盘上两种读法共用 */
+  async function parseRaw(app: any, raw: string): Promise<T> {
+    try {
+      return JSON.parse(raw) as T;
+    } catch (e) {
+      return (await handleCorrupt(app, e, raw)) as T;
+    }
+  }
+
   return {
     async read() {
       const app = resolveApp();
@@ -316,14 +365,13 @@ export function jsonFileStore<T>(filePath: string, opts: JsonFileStoreOptions<T>
         if (created) return resolveDefault();
         // 并发降级（P1-31）：抢先写入方已建好文件 → 读取其真实内容，不用空库覆盖
         f = app.vault.getAbstractFileByPath(filePath);
+        if (!f && (await diskPathExists(app, filePath))) {
+          // 索引滞后（启动扫描未完成）：盘上有真数据 → adapter 直读，绝不拿默认值顶替
+          return parseRaw(app, await readFromDisk(app, filePath));
+        }
         if (!f) return resolveDefault();
       }
-      const raw = await app.vault.read(f as any);
-      try {
-        return JSON.parse(raw) as T;
-      } catch (e) {
-        return (await handleCorrupt(app, e, raw)) as T;
-      }
+      return parseRaw(app, await app.vault.read(f as any));
     },
     async write(data) {
       const app = resolveApp();
@@ -346,6 +394,24 @@ export function jsonFileStore<T>(filePath: string, opts: JsonFileStoreOptions<T>
       // 极低概率下文件仍不存在（目录权限/瞬时消失）→ 重试 create 一次；仍失败抛出，
       // 由调用方捕获提示（避免静默丢写入——P2-3）
       let cur = app.vault.getAbstractFileByPath(filePath);
+      if (!cur && (await diskPathExists(app, filePath))) {
+        // 索引滞后（启动扫描未完成）：句柄拿不到但盘上有文件 → adapter 直写（等价 modify），
+        // 否则会掉进下面「重试 create → 竞态降级失败」的假错误。写失败先留档再照抛
+        // （与 modifyWithBackup 同款兜底——P2-3 不静默吞）
+        try {
+          if (opts.writeIfChanged) {
+            try {
+              if ((await readFromDisk(app, filePath)) === c) return;
+            } catch { /* 读盘失败照常写 */ }
+          }
+          await app.vault.adapter.write(filePath, c);
+          return;
+        } catch (e) {
+          const backupPath = await backupOriginal(app, filePath);
+          if (backupPath) notifyBackup(filePath, backupPath, '写入失败');
+          throw e;
+        }
+      }
       if (!cur) {
         const retried = await createIfMissing(app, c);
         if (retried) return;
