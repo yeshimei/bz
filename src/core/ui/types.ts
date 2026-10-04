@@ -48,7 +48,7 @@ export interface BzChipOpts {
 }
 
 export interface BzInputOpts {
-  type?: 'text' | 'password' | 'number' | 'date';
+  type?: 'text' | 'password' | 'number' | 'date' | 'time';
   placeholder?: string;
   value?: string;
   error?: boolean;

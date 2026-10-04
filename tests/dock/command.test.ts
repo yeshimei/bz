@@ -42,11 +42,12 @@ function makeView(patch: Partial<DockToolView> = {}): DockToolView {
     schedule: undefined,
     scheduleOverridden: false,
     declChangedSinceOverride: false,
-    autoRun: true,
     nextDue: null,
     runState: undefined,
     overLimit: false,
     runsPath: 'E:/tools/daily-signin/runs.json',
+    rules: [],
+    ruleFiredAt: {},
     ...patch,
   };
 }

@@ -26,14 +26,11 @@
  */
 
 import { parseSchedule, type DockSchedule } from './schema';
+import { parseRules, parseRuleState, type DockRule } from './rules';
 
 /** 工具 id 的合法形态（与 schema.ts 的 DOCK_ID_RE 同口径；此处独立定义以保零依赖） */
 export const TOOL_ID_RE = /^[a-z0-9][a-z0-9-]*$/;
 export const TOOL_ID_MAX_LEN = 64;
-
-/** 触发方式（模型上是一个实体，只有这一个字段不同 —— spec D2）。**由声明的节奏推出**，
- *  不是登记里的字段：有 `schedule` = 自动化，没有 = 手动（`scheduleOfTrigger`）。 */
-export type DockTrigger = 'auto' | 'manual';
 
 export interface DockToolEntry {
   /** 稳定标识；决定运行记录文件名，须匹配 TOOL_ID_RE */
@@ -52,6 +49,13 @@ export interface DockToolEntry {
   scheduleOverride?: DockSchedule;
   /** 建立覆盖时**声明那份节奏**的签名（`scheduleSignature`）—— 判断「作者后来改没改」用 */
   overrideDeclSig?: string;
+  /**
+   * **规则表 v2**：触发条件 → 执行。非空时它是唯一的调度事实源；`scheduleOverride`
+   * 与声明里的 `schedule` 只在规则表为空时充当种子（读侧映射，不写盘迁移）。
+   */
+  rules?: DockRule[];
+  /** 每条规则各自的记账（规则 id → 上次命中时刻 ISO）。调度器写，判据读 */
+  ruleState?: Record<string, { lastFiredAt?: string }>;
 }
 
 /**
@@ -78,6 +82,11 @@ export function parseToolEntry(raw: unknown): DockToolEntry | null {
   if (typeof r.trustedAt === 'string' && r.trustedAt.trim()) out.trustedAt = r.trustedAt.trim();
   if (typeof r.trustedRun === 'string' && r.trustedRun !== '') out.trustedRun = r.trustedRun;
   if (typeof r.autoRun === 'boolean') out.autoRun = r.autoRun;
+  // 规则表 v2：与节奏同一条纪律 —— 校验不过的整条丢（脏值不连累其余，不抛）
+  const rules = parseRules(r.rules);
+  if (rules.length) out.rules = rules;
+  const ruleState = parseRuleState(r.ruleState);
+  if (ruleState) out.ruleState = ruleState;
   // 覆盖节奏与声明节奏**同一把尺子**校验（parseSchedule）；不合法就当没覆盖，回落声明默认
   const override = parseSchedule(r.scheduleOverride);
   if (override) {

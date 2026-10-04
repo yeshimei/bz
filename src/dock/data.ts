@@ -70,9 +70,11 @@ import {
   type DockOverview,
   type DockRunHealth,
 } from './schedule';
+import { effectiveRules, type DockRule } from './rules';
 
 // 登记契约（类型 + 校验）住在零依赖的 registry.ts；此处转出，消费方仍然只 import './data'
-export type { DockToolEntry, DockTrigger } from './registry';
+export type { DockToolEntry } from './registry';
+export type { DockRule, DockTrigger, DockAction } from './rules';
 export { parseToolEntry, parseToolEntries, runSignature, TOOL_ID_RE } from './registry';
 
 // ==================== 路径 ====================
@@ -174,11 +176,6 @@ export function isEnabled(entry: DockToolEntry): boolean {
   return entry.enabled !== false;
 }
 
-/** 自动运行总闸（缺省开）。关掉 = 声明了节奏也不自动跑，只在面板里手动点 */
-export function isAutoRun(entry: DockToolEntry): boolean {
-  return entry.autoRun !== false;
-}
-
 /**
  * 就地改一条登记（按 id 找、合并 patch、整表写回）。
  *
@@ -199,6 +196,21 @@ export async function updateToolEntry(id: string, patch: Partial<DockToolEntry>)
   }
   entries[i] = next as unknown as DockToolEntry;
   await saveToolEntries(entries);
+}
+
+/**
+ * 记一条规则「这次命中了」—— **规则级记账的唯一写入口**（调度器用）。
+ *
+ * 必须在**真跑之前**写：命中后若不记账，下一拍会再命中一次
+ * （daily / interval / on-launch 的判据都靠 `lastFiredAt` 收口）。随机延迟只推迟「跑」，
+ * 不推迟记账 —— 否则延迟窗口内会被反复命中。
+ */
+export async function patchRuleFired(toolId: string, ruleId: string, at: number): Promise<void> {
+  const entry = readToolEntries().find((e) => e.id === toolId);
+  if (!entry) return;
+  const state = { ...(entry.ruleState ?? {}) };
+  state[ruleId] = { lastFiredAt: new Date(at).toISOString() };
+  await updateToolEntry(toolId, { ruleState: state });
 }
 
 // ==================== bz 侧运行台账（调度的账） ====================
@@ -377,8 +389,10 @@ export interface DockToolView {
   scheduleOverridden: boolean;
   /** 覆盖之后**作者又改了声明**（C4 提示：建议重看一眼） */
   declChangedSinceOverride: boolean;
-  /** 自动运行总闸（缺省开） */
-  autoRun: boolean;
+  /** **生效规则表**（v2）：登记项的规则表非空就用它，否则由旧节奏折一条种子，再否则空 */
+  rules: DockRule[];
+  /** 规则级记账：规则 id → 上次命中时刻（ms）。缺 = 这条规则还没跑过 */
+  ruleFiredAt: Record<string, number>;
   /** 下一次「该跑」的时刻（ms）；判不出一律 `null`（绝不编假到期时间） */
   nextDue: number | null;
   /** bz 侧运行台账（缺省 undefined） */
@@ -425,6 +439,16 @@ export async function loadToolViews(app: App): Promise<DockToolView[]> {
   return Promise.all(entries.map((entry) => loadToolView(app, entry, states)));
 }
 
+/** 规则级记账（登记项里的 ISO 串 → ms）。解析不出的条目丢掉，不让它污染判据 */
+function firedAtMapOf(entry: DockToolEntry): Record<string, number> {
+  const out: Record<string, number> = {};
+  for (const [key, v] of Object.entries(entry.ruleState ?? {})) {
+    const t = v?.lastFiredAt ? Date.parse(v.lastFiredAt) : NaN;
+    if (Number.isFinite(t)) out[key] = t;
+  }
+  return out;
+}
+
 /** 读单个工具的视图 */
 export async function loadToolView(
   app: App,
@@ -469,7 +493,8 @@ export async function loadToolView(
     schedule,
     scheduleOverridden,
     declChangedSinceOverride,
-    autoRun: isAutoRun(entry),
+    rules: effectiveRules(entry.rules, entry.scheduleOverride, declaredSchedule),
+    ruleFiredAt: firedAtMapOf(entry),
     nextDue: nextDueAt(schedule, runs),
     runState: runStates[entry.id],
     overLimit: runs.length > DOCK_RUNS_PER_TOOL_LIMIT,
