@@ -576,16 +576,26 @@ function listExitActs(items: CinemaItem[], app: App, who = ''): MenuAct[] {
     }));
 }
 
-/** 打开条目对应的笔记（右键出口）：跳 Obsidian 编辑器；vault 里定位不到时提示——
+/** 打开条目对应的笔记（右键出口）：跳 Obsidian 编辑器并**收起影院面板**
+ *  （2026-10-05 用户拍板：转跳后不留在影院界面上——面板是浮在 workspace 之上的
+ *  body 层，不关就压着刚打开的笔记）；vault 里定位不到时只提示、面板不动。
  *  口径同 diary 的打开日记（openLinkText + stripMdExt）；未落盘条目（file 为空）直接跳过 */
 function openNoteFile(it: CinemaItem, app: App): void {
   const path = it.file?.path;
   if (!path) return;
   if (!app.vault.getAbstractFileByPath(path)) { notice(`找不到笔记：${it.name}`, 'warning'); return; }
-  void app.workspace.openLinkText(stripMdExt(path), '', false, { active: true });
+  // 跳转成功后再收面板：先关再开会让新叶子在面板移除过程中被重排（移动端全屏壳尤其明显）
+  void app.workspace.openLinkText(stripMdExt(path), '', false, { active: true }).then(() => closeOverlay());
 }
 
-function itemActions(it: CinemaItem, sec: HTMLElement, app: App): MenuAct[] {
+/**
+ * 条目动作集。
+ * @param opts.inSeries 条目正处在**自动合并卡内**（各季明细行 / 该行的移动抽屉）：
+ *   「归入合集…」不再出现（2026-10-05 用户拍板——它本来就在合集里，再给它一个「归入合集」
+ *   既是废话也容易误改归属）；真声明过的（`合集` 键）仍留「移出合集「X」」这个唯一出口，
+ *   因为条目被并入后网格里已没有它自己的卡，这一行就是它唯一的落点。
+ */
+function itemActions(it: CinemaItem, sec: HTMLElement, app: App, opts: { inSeries?: boolean } = {}): MenuAct[] {
   const out: MenuAct[] = [{ icon: ICON.eye, label: '打开详情', run: () => openDetail(sec, it, app) }];
   if (it.status !== STATUS_WATCHING && it.status !== STATUS_WATCHED) {
     out.push({ icon: ICON.play, label: '标记在看', run: () => void markStatus(it, '在看', app) });
@@ -608,10 +618,11 @@ function itemActions(it: CinemaItem, sec: HTMLElement, app: App): MenuAct[] {
   out.push(...listExitActs([it], app));
   // 手动归入合集（ADR-0241）：前缀匹配不上的特别篇/外传手动挂到同名合并卡下。
   // 合集是**单归属**，故两条互斥、按状态只出一条（互斥动作不并列）：
-  // 未并入 → 「归入合集…」；已并入 → 「移出合集「X」」（改挂别的先移出再归入）
+  // 已并入 → 「移出合集「X」」（改挂别的先移出再归入）；未并入且不在合并卡内 → 「归入合集…」
+  // （opts.inSeries 见函数头：合并卡内的行不再给「归入」）
   if (it.mergeInto) {
     out.push({ icon: ICON.merge, label: `移出合集「${it.mergeInto}」`, run: () => void setMergeInto(it, null, app) });
-  } else {
+  } else if (!opts.inSeries) {
     out.push({ icon: ICON.merge, label: '归入合集…', run: () => openSeriesPick(sec, it, app) });
   }
   out.push(
@@ -1152,9 +1163,9 @@ function attachLongPress(sec: HTMLElement, app: App): void {
 /** 抽屉目标：动作集 + 头部节点（单条目 / 合并卡两种来源，禁在调用处各拼一套） */
 interface SheetTarget { acts: MenuAct[]; head: HTMLElement }
 
-/** 单条目抽屉目标：该条目的单条动作 + 该条目信息 */
-function itemSheetTarget(it: CinemaItem, sec: HTMLElement, app: App): SheetTarget {
-  return { acts: itemActions(it, sec, app), head: sheetHeadEl(it, posterUrl(it, app)) };
+/** 单条目抽屉目标：该条目的单条动作 + 该条目信息（inSeries 同 itemActions：合并卡内的行不给「归入合集…」） */
+function itemSheetTarget(it: CinemaItem, sec: HTMLElement, app: App, opts: { inSeries?: boolean } = {}): SheetTarget {
+  return { acts: itemActions(it, sec, app, opts), head: sheetHeadEl(it, posterUrl(it, app)) };
 }
 
 /** 合并卡抽屉目标：片级动作集（查看全部 + 片单归属，issue 535）+ 剧名（正脸季海报）+ 共 N 季 · M 部电影 */
@@ -1642,13 +1653,14 @@ function openSeriesDetail(sec: HTMLElement, key: string, app: App, opts: { from?
       e.preventDefault();
       const it = rowItem(row);
       if (!it || !hoverCapable()) return;
-      openItemMenu(e.clientX, e.clientY, toItemActions(deferClose(itemActions(it, sec, app), close)), true, MENU_SKIN);
+      // inSeries：行已在合并卡内——「归入合集…」不出（函数头），只留声明的「移出合集」
+      openItemMenu(e.clientX, e.clientY, toItemActions(deferClose(itemActions(it, sec, app, { inSeries: true }), close)), true, MENU_SKIN);
       resetItemMenuClickGuard();
     });
     if (mobile) {
       longPress(row, () => {
         const it = rowItem(row);
-        if (it) openSheet(sec, itemSheetTarget(it, sec, app), close); // 弹窗不关（见上），点抽屉动作时再收
+        if (it) openSheet(sec, itemSheetTarget(it, sec, app, { inSeries: true }), close); // 弹窗不关（见上），点抽屉动作时再收
       });
     }
   });

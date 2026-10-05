@@ -1440,7 +1440,8 @@ tags: [电影]
     expect(menu).toBeTruthy();
     // 动作集 = **第二季** 的（在看 → 无「标记在看」，有「标记已看」）
     // 归入片单为全状态通用动作（在看 → 无「标记在看」，有「标记已看」）
-    expect(menuLabels(menu)).toEqual(['打开详情', '标记已看', '归入片单…', '归入合集…', '找同类', '打开笔记', '在豆瓣打开', '编辑', '删除']);
+    // 无「归入合集…」：行已在合并卡内（2026-10-05 用户拍板，见 itemActions opts.inSeries）
+    expect(menuLabels(menu)).toEqual(['打开详情', '标记已看', '归入片单…', '找同类', '打开笔记', '在豆瓣打开', '编辑', '删除']);
     // 菜单是独立浮层：弹窗留着（ESC / 点外部关掉菜单后还能接着操作别的季）
     expect(root.querySelectorAll('.s-row')).toHaveLength(3);
     clickEl(menuBtn(menu, '编辑'));
@@ -1460,10 +1461,39 @@ tags: [电影]
     spRow.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true, clientX: 60, clientY: 60 }));
     const menu = document.querySelector('.bz-item-menu') as HTMLElement;
     // 已看 + 有评分：无「标记在看 / 标记已看」
-    // 已看：重温 +1 / 放入重映厅 / 归入片单…（无「标记在看 / 标记已看」）
-    expect(menuLabels(menu)).toEqual(['打开详情', '重温 +1', '放入重映厅', '归入片单…', '归入合集…', '找同类', '打开笔记', '在豆瓣打开', '编辑', '删除']);
+    // 已看：重温 +1 / 放入重映厅 / 归入片单…（无「标记在看 / 标记已看」）；行在合并卡内 → 无「归入合集…」
+    expect(menuLabels(menu)).toEqual(['打开详情', '重温 +1', '放入重映厅', '归入片单…', '找同类', '打开笔记', '在豆瓣打开', '编辑', '删除']);
     clickEl(menuBtn(menu, '编辑'));
     expect((root.querySelector('.j-name') as HTMLInputElement).value).toBe('老友记：重聚特辑');
+  });
+
+  it('合并卡内不给「归入合集…」：季行没有合集动作；靠「合集」声明并入的行才给「移出合集」出口', () => {
+    setSettingsProvider(() => ({ cinemaMergeSeasons: true } as any));
+    stubHover(true); // 右键分流走 hoverCapable：桌面用例显式开
+    const vault = new MockVault();
+    vault.files.set('我的/影视/《老友记 第一季》.md', md('---\ntags: [美剧]\n评分: 9.2\n观影日期: 2026-06-18\n---'));
+    vault.files.set('我的/影视/《老友记 第二季》.md', md('---\ntags: [美剧]\n状态: 在看\n观影日期: 2026-08-18\n---'));
+    // 前缀对不上的外传：只能靠 frontmatter「合集」声明挂进合并卡（ADR-0241）
+    vault.files.set('我的/影视/《重聚：十年之后》.md', md('---\ntags: [电影]\n评分: 8.6\n合集: 老友记\n观影日期: 2026-09-19\n---'));
+    const app = makeApp(vault);
+    ensureCinema(app);
+    rebuildItems(app);
+    createOverlay(app);
+    const root = document.querySelector('[data-cinema-root]') as HTMLElement;
+    clickEl(root.querySelector('.pcard-series'));
+    const rows = Array.from(root.querySelectorAll<HTMLElement>('.s-row'));
+    expect(rows.map((r) => r.querySelector('.s-name')?.textContent))
+      .toEqual(['老友记 第一季', '老友记 第二季', '重聚：十年之后']);
+    const menuOfRow = (row: HTMLElement): HTMLElement => {
+      row.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true, clientX: 40, clientY: 40 }));
+      return document.querySelector('.bz-item-menu') as HTMLElement;
+    };
+    // 季行：已在合并卡里 → 菜单里一条合集动作都没有（不给「归入」，也没声明可「移出」）
+    expect(menuLabels(menuOfRow(rows[0])).filter((l) => l?.includes('合集'))).toEqual([]);
+    // 声明过的行：「移出合集「老友记」」——条目并入后网格里已没有它自己的卡，这一行是唯一出口
+    const spMenu = menuOfRow(rows[2]);
+    expect(menuLabels(spMenu)).toContain('移出合集「老友记」');
+    expect(menuLabels(spMenu).some((l) => l?.includes('归入合集'))).toBe(false);
   });
 
   it('移动端：季行右键只拦原生菜单（不出桌面菜单）；长按出抽屉且弹窗不关，点动作才收', () => {
@@ -3304,6 +3334,20 @@ tags: [电影]
     createOverlay(app);
     const root = document.querySelector('[data-cinema-root]') as HTMLElement;
     expect(menuLabelsOf(openMenu(root, '星际穿越')).some((l) => l?.startsWith('移出'))).toBe(false);
+  });
+
+  it('点「打开笔记」→ 跳笔记（openLinkText 去 .md 后缀）并收起影院面板', async () => {
+    const { app } = seedVault();
+    const open = vi.fn(async () => {});
+    (app.workspace as any).openLinkText = open;
+    createOverlay(app);
+    const root = document.querySelector('[data-cinema-root]') as HTMLElement;
+    clickEl(menuButton(openMenu(root, '星际穿越'), '打开笔记'));
+    await vi.waitFor(() =>
+      expect(open).toHaveBeenCalledWith('我的/影视/《星际穿越》', '', false, { active: true }));
+    // 面板是浮在 workspace 之上的 body 层：跳转成功后必须收掉，否则压着刚打开的笔记
+    await vi.waitFor(() => expect(document.querySelector('[data-cinema-root]')).toBeNull());
+    expect(document.querySelector('.bz-item-menu')).toBeNull();
   });
 
   it('合并卡（已看）：出「放入重映厅」与「归入片单…」；点放入 → 全部季一起入架', async () => {
