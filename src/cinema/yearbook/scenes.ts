@@ -9,6 +9,7 @@
  * 动效一律由 motions.ts 驱动，这里只出静态 DOM 与 `data-r` 引用点。
  */
 import type { CinemaItem } from '../state';
+import { avgRating } from '../constants';
 import { escapeHtml as esc } from '../../core/utils';
 import { flapHtml, humanDurShort, dotted } from './kits';
 import { humanMinutes, YB_TITLE } from './data';
@@ -408,7 +409,7 @@ export function yearbookHtml(data: YbData, posterOf: (it: CinemaItem) => string 
       <div class="yb-hist-side">
         <div class="yb-kv"><span class="yb-k">打过分</span><b>${data.ratedCount} 部</b></div>
         <div class="yb-kv"><span class="yb-k">9 分以上</span><b>${data.nineUp.length} 部</b></div>
-        <div class="yb-kv"><span class="yb-k">最低</span><b>${data.rated.length ? (data.rated[data.rated.length - 1].rating ?? 0).toFixed(1) : '—'}</b></div>
+        <div class="yb-kv"><span class="yb-k">最低</span><b>${data.rated.length ? (avgRating(data.rated[data.rated.length - 1]) ?? 0).toFixed(1) : '—'}</b></div>
       </div>
     </div>`, `评分 × 观影年 · ${data.scatter.length} 个点（每部片一枚）· 红 = 9 分以上`));
 
@@ -434,8 +435,9 @@ export function yearbookHtml(data: YbData, posterOf: (it: CinemaItem) => string 
   const tilt = Math.max(-1, Math.min(1, data.avgDiff / 2));
   const diffRow = (it: CinemaItem): string => {
     const db = parseFloat(it.doubanRating ?? '0');
+    const mr = avgRating(it) ?? 0;
     return `<li class="yb-drow" data-r="drow"><span class="yb-dname">《${esc(it.name)}》</span>
-      <span class="yb-dvals">我 ${(it.rating ?? 0).toFixed(1)} · 豆 ${db.toFixed(1)} · <em>${((it.rating ?? 0) - db >= 0 ? '+' : '') + ((it.rating ?? 0) - db).toFixed(1)}</em></span></li>`;
+      <span class="yb-dvals">我 ${mr.toFixed(1)} · 豆 ${db.toFixed(1)} · <em>${mr - db >= 0 ? '+' : ''}${(mr - db).toFixed(1)}</em></span></li>`;
   };
   S.push(frame(15, '打分天平', '评分 · 豆瓣评分', `
     <div class="yb-bal">
@@ -476,7 +478,7 @@ export function yearbookHtml(data: YbData, posterOf: (it: CinemaItem) => string 
   const wallLimit = 35;
   const high = data.nineUp.slice(0, wallLimit);
   const wallTiles = high.map((it, i) =>
-    `<figure class="yb-tile" data-r="tile" data-i="${i}">${poster(it, posterOf)}<figcaption><b>${(it.rating ?? 0).toFixed(1)}</b><span>${esc(it.name)}</span></figcaption></figure>`).join('');
+    `<figure class="yb-tile" data-r="tile" data-i="${i}">${poster(it, posterOf)}<figcaption><b>${(avgRating(it) ?? 0).toFixed(1)}</b><span>${esc(it.name)}</span></figcaption></figure>`).join('');
   S.push(frame(17, '高分墙', '评分', `
     <div class="yb-ninewall">
       <div class="yb-ninewall-meta"><b>${data.nineUp.length}</b><span>部 ≥ 9 分</span></div>

@@ -1344,6 +1344,8 @@ function movieActionKey(evt: MovieActionEvent): string {
     case 'created': return `${evt.name}|${evt.status}`;
     case 'status': return `${evt.name}|${evt.from}|${evt.to}`;
     case 'rated': return `${evt.name}|${evt.fromRating}|${evt.toRating}`;
+    // 刷次进键：同一部片连刷两次同分也是两件事，不该被防重吃掉
+    case 'rerated': return `${evt.name}|${evt.brushNo}|${evt.rating}`;
     case 'review': return `${evt.name}|${evt.fromReview || ''}|${evt.toReview || ''}`;
     case 'deleted': return evt.name;
   }
@@ -1396,6 +1398,13 @@ function movieEventToStructured(evt: MovieActionEvent): StructuredMeta {
         name: evt.name,
         rating: evt.toRating,
         extras: { fromRating: evt.fromRating },
+      };
+    case 'rerated':
+      return {
+        entityType: 'movie', action: 'rerated',
+        name: evt.name,
+        rating: evt.rating,
+        extras: { brushNo: evt.brushNo, fromAvgRating: evt.fromAvgRating, toAvgRating: evt.toAvgRating },
       };
     case 'review':
       return {

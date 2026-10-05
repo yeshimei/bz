@@ -1440,7 +1440,7 @@ tags: [电影]
     expect(menu).toBeTruthy();
     // 动作集 = **第二季** 的（在看 → 无「标记在看」，有「标记已看」）
     // 归入片单为全状态通用动作（在看 → 无「标记在看」，有「标记已看」）
-    expect(menuLabels(menu)).toEqual(['打开详情', '标记已看', '归入片单…', '找同类', '在豆瓣打开', '编辑', '删除']);
+    expect(menuLabels(menu)).toEqual(['打开详情', '标记已看', '归入片单…', '归入合集…', '找同类', '打开笔记', '在豆瓣打开', '编辑', '删除']);
     // 菜单是独立浮层：弹窗留着（ESC / 点外部关掉菜单后还能接着操作别的季）
     expect(root.querySelectorAll('.s-row')).toHaveLength(3);
     clickEl(menuBtn(menu, '编辑'));
@@ -1461,7 +1461,7 @@ tags: [电影]
     const menu = document.querySelector('.bz-item-menu') as HTMLElement;
     // 已看 + 有评分：无「标记在看 / 标记已看」
     // 已看：重温 +1 / 放入重映厅 / 归入片单…（无「标记在看 / 标记已看」）
-    expect(menuLabels(menu)).toEqual(['打开详情', '重温 +1', '放入重映厅', '归入片单…', '找同类', '在豆瓣打开', '编辑', '删除']);
+    expect(menuLabels(menu)).toEqual(['打开详情', '重温 +1', '放入重映厅', '归入片单…', '归入合集…', '找同类', '打开笔记', '在豆瓣打开', '编辑', '删除']);
     clickEl(menuBtn(menu, '编辑'));
     expect((root.querySelector('.j-name') as HTMLInputElement).value).toBe('老友记：重聚特辑');
   });
@@ -3164,28 +3164,56 @@ describe('重温 +1：时刻粒度 + 重映厅自动移出', () => {
     return { app, vault, item: M.items.find((i) => i.name === '星际穿越')!, root };
   }
 
-  it('「重看」记日期+时刻；重映厅自动移出（唯一片单 → 删键）', async () => {
+  it('「重看」记时刻+当刷评分，观影日期刷成此刻（置顶），重映厅自动移出（唯一片单 → 删键）', async () => {
     const { vault, item, root } = await seedOnShelf();
     expect(item.lists).toEqual(['重映厅']); // 前置就位
     clickEl(pcardByName(root, '星际穿越'));
     clickEl((root.querySelector('.cn-modal') as HTMLElement).querySelector('.j-rewatch'));
+    // 二次打分框（ADR-0240）：确认才落盘；预填首评分 9.6
+    const ok = root.querySelector('.j-rr-ok');
+    expect(ok).toBeTruthy();
+    expect((root.querySelector('.j-rr-val') as HTMLElement).textContent).toBe('9.6');
+    clickEl(ok);
     await vi.waitFor(() => expect(hasNotice(/记下第 2 刷/)).toBe(true)); // rewatchCount 口径 = 首看 + 重温数
     const fm = vault.files.get('我的/影视/《星际穿越》.md') as string;
     expect(fm).not.toContain('片单');
-    expect(fm).toMatch(/重看: \[\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\]/); // 时刻粒度（mock 序列化为流式数组）
+    // 块式 YAML：一刷一条，时刻 + 当刷评分（真机 js-yaml 同形）
+    expect(fm).toMatch(/重看:\n {2}- at: "\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}"\n {4}rating: 9\.6/);
+    // 观影日期（排序戳）同步刷新 —— 重温即最近一次活动，按日期排序时顶到最前
+    expect(fm).toMatch(/观影日期: "\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}"/);
     expect(item.lists).toEqual([]);
     expect(item.rewatches).toHaveLength(1);
+    expect(item.rewatches[0].rating).toBe(9.6);
+    // 已看日期（真看过日）不动 —— 年书按它归档，跟着刷会把一部片算进两年
+    expect(item.watchedDate).toBeNull();
   });
 
-  it('落盘失败 → 重温数组与片单一起回滚（面板与磁盘一致）', async () => {
-    const { app, item, root } = await seedOnShelf();
-    const spy = vi.spyOn(app.fileManager, 'processFrontMatter').mockRejectedValue(new Error('磁盘占用'));
+  it('不打分即取消：ESC / 取消钮 / 点遮罩 三条出路都不落盘（+1 完全不生效）', async () => {
+    const { app, vault, item, root } = await seedOnShelf();
+    const spy = vi.spyOn(app.fileManager, 'processFrontMatter');
     clickEl(pcardByName(root, '星际穿越'));
     clickEl((root.querySelector('.cn-modal') as HTMLElement).querySelector('.j-rewatch'));
+    clickEl(root.querySelector('.j-rr-cancel'));
+    await new Promise((r) => setTimeout(r, 0));
+    expect(spy).not.toHaveBeenCalled(); // 一个字都没写
+    expect(item.rewatches).toHaveLength(0);
+    expect(item.lists).toEqual(['重映厅']); // 重映厅也没动
+    expect(hasNotice(/记下第/)).toBe(false);
+    expect(vault.files.get('我的/影视/《星际穿越》.md')).not.toContain('重看');
+  });
+
+  it('落盘失败 → 刷次 / 观影日期 / 片单一起回滚（面板与磁盘一致）', async () => {
+    const { app, item, root } = await seedOnShelf();
+    const spy = vi.spyOn(app.fileManager, 'processFrontMatter').mockRejectedValue(new Error('磁盘占用'));
+    const before = item.watchDate;
+    clickEl(pcardByName(root, '星际穿越'));
+    clickEl((root.querySelector('.cn-modal') as HTMLElement).querySelector('.j-rewatch'));
+    clickEl(root.querySelector('.j-rr-ok'));
     await vi.waitFor(() => expect(spy).toHaveBeenCalled());
     await new Promise((r) => setTimeout(r, 0));
     expect(item.rewatches).toHaveLength(0);
     expect(item.lists).toEqual(['重映厅']);
+    expect(item.watchDate).toBe(before); // 排序戳也回滚，不留半截状态
   });
 });
 
@@ -3246,8 +3274,8 @@ tags: [电影]
     const labels = menuLabelsOf(openMenu(root, '星际穿越'));
     // 顺序：… 重温 +1 / 移出重映厅（专用 toggle 行）/ 归入片单… / 移出诺兰补完计划（直出行）…
     expect(labels).toEqual([
-      '打开详情', '重温 +1', '移出重映厅', '归入片单…', '移出诺兰补完计划',
-      '找同类', '在豆瓣打开', '编辑', '删除',
+      '打开详情', '重温 +1', '移出重映厅', '归入片单…', '移出诺兰补完计划', '归入合集…',
+      '找同类', '打开笔记', '在豆瓣打开', '编辑', '删除',
     ]);
     // 重映厅只出现一次：listExitActs 把它排除了（专用行已经是一条完整入口）
     expect(labels.filter((l) => l === '移出重映厅')).toHaveLength(1);

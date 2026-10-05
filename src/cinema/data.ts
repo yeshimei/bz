@@ -2,7 +2,7 @@
  * 影院（cinema）域数据层：扫描笔记 → 条目；排序（观影日期倒序）；筛选
  */
 import type { App, TFile } from 'obsidian';
-import { ALL_TAGS, getGroupSafe, REWATCH_SHELF } from './constants';
+import { ALL_TAGS, getGroupSafe, REWATCH_SHELF, avgRating, type Rewatch } from './constants';
 import { extractMovieName } from './douban-fetcher';
 import { statusNum } from './shared';
 import type { CinemaItem } from './state';
@@ -17,10 +17,31 @@ export function normalizeTags(raw: unknown): string[] {
   return [];
 }
 
-/** frontmatter `重看` → string[]（重温时刻列表，新档日期+时刻、旧档 date-only；兼容数组 / 单字符串 / 缺失，口径同 normalizeTags）。
- *  建档/编辑不写此键——只有「重温 +1」与未来的删除入口落盘，旧笔记无键照旧 */
-export function normalizeRewatches(raw: unknown): string[] {
-  return normalizeTags(raw).filter(Boolean);
+/** frontmatter `重看` → Rewatch[]（ADR-0240：一刷一条，带时刻与当刷评分）。
+ *  兼容三种落盘形态（磁盘零迁移，读取层一次性归一）：
+ *   - 对象数组 `{ at, rating }`（新档，2026-10-05 起）
+ *   - 字符串数组（旧档，只有时刻）——评分补 null，该刷不进平均分母
+ *   - 单字符串 / 缺失 / 畸形项——单串收一条，其余跳过
+ *  不能走 normalizeTags：它 String() 化每项，会把对象整条吞成 "[object Object]"。
+ *  建档/编辑不写此键——只有「重温 +1」落盘。 */
+export function normalizeRewatches(raw: unknown): Rewatch[] {
+  const list = Array.isArray(raw) ? raw : typeof raw === 'string' && raw ? [raw] : [];
+  const out: Rewatch[] = [];
+  for (const v of list) {
+    if (typeof v === 'string') {
+      if (v) out.push({ at: v, rating: null });
+      continue;
+    }
+    if (!v || typeof v !== 'object') continue;
+    const o = v as Record<string, unknown>;
+    const at = typeof o.at === 'string' ? o.at : String(o.at ?? '');
+    if (!at) continue; // 无时刻的条目无从定位，跳过而不是塞一条空 at
+    const n = Number(o.rating);
+    const rating =
+      o.rating === undefined || o.rating === null || o.rating === '' || Number.isNaN(n) ? null : n;
+    out.push({ at, rating });
+  }
+  return out;
 }
 
 /** frontmatter `片单` → string[]（自建片单；兼容数组 / 单字符串 / 缺失，口径同 normalizeTags）。
@@ -96,6 +117,7 @@ export function parseMovieFile(file: TFile, app: App): CinemaItem | null {
     rewatches: normalizeRewatches(fm['重看']),
     lists: normalizeLists(fm['片单']),
     shelvedOnly: fm['片单收纳'] === true,
+    mergeInto: fm['合集']?.toString().trim() || null,
     poster: fm['海报']?.toString() ?? null,
     review: fm['影评']?.toString() ?? null,
     genre: fm['类型']?.toString() ?? null,
@@ -157,10 +179,14 @@ export function rebuildItems(app: App): CinemaItem[] {
   return newItems;
 }
 
-/** 观影日期时间戳（无日期 → 0，排最后） */
+/** 观影日期时间戳（无日期 → 0，排最后）。
+ *  date-only 旧档（`"2026-03-08"`）先补 `T00:00:00` 再解析——否则它被当成 **UTC 午夜**，
+ *  与带时刻的新档（本地时刻）混排时会平白偏出整个时区差（ADR-0240 决策 6）。
+ *  已带时刻的值原样解析，行为不变。 */
 export function dateVal(it: CinemaItem): number {
   if (!it.watchDate) return 0;
-  const t = new Date(it.watchDate).getTime();
+  const raw = it.watchDate.trim();
+  const t = new Date(/\d{1,2}:\d{2}/.test(raw) ? raw : `${raw}T00:00:00`).getTime();
   return isNaN(t) ? 0 : t;
 }
 
@@ -179,11 +205,12 @@ export function sortByCreatedDesc(list: CinemaItem[]): CinemaItem[] {
   });
 }
 
-/** 按评分倒序：已看（评分>0）降序；未看（未评分/想看/在看）排最后（其内部按日期倒序） */
+/** 排序：按评分降序（ADR-0240 决策 3：评分排序走平均评分口径，与界面显示一致——
+ *  否则「卡片显示 7.5、按评分排序却按首评分 9.0 排」自打脸）；未评分（平均为 null）排最后 */
 export function sortByRatingDesc(list: CinemaItem[]): CinemaItem[] {
   return [...list].sort((a, b) => {
-    const ar = a.rating && a.rating > 0 ? a.rating : -1;
-    const br = b.rating && b.rating > 0 ? b.rating : -1;
+    const ar = avgRating(a) ?? -1;
+    const br = avgRating(b) ?? -1;
     if (ar !== br) return br - ar;
     return dateVal(b) - dateVal(a);
   });
@@ -196,16 +223,13 @@ export function applySortMode(list: CinemaItem[], mode: string): CinemaItem[] {
   return sortByDateDesc(list);
 }
 
-/** 当前筛选（类型/状态/片单/搜索）+ 当前排序模式（先筛选后排序，保证列表正确） */
+/** 当前筛选（类型/状态/片单/搜索）+ 当前排序模式（先筛选后排序，保证列表正确）。
+ *
+ *  搜索是**全局**的（2026-10-05 拍板）：有搜索词时直接在全库（M.items）里匹配——不叠加
+ *  类型/状态/片单筛选、也不排片单收纳。即「一键导入的片单条目浏览时不混入正常视图，
+ *  但主动搜它要能搜到」。调用侧（onSearchInput）进搜索时已清筛选态，此处再短路一次兜底。 */
 export function getDisplayItems(): CinemaItem[] {
   let list = [...M.items];
-  if (M.typeFilter) list = list.filter((it) => it.group === M.typeFilter);
-  const sf = M.statusFilter;
-  if (sf) list = list.filter((it) => it.status === statusNum(sf));
-  if (M.listFilter) list = list.filter((it) => it.lists.includes(M.listFilter as string));
-  // 片单收纳条目只在片单视图出现（2026-09-30 拍板：一键导入不混入正常影视视图）——
-  // 无片单筛选时（全部/类型/状态/搜索）整体排除
-  else list = list.filter((it) => !it.shelvedOnly);
   if (M.searchKeyword) {
     const kw = M.searchKeyword.toLowerCase();
     list = list.filter((it) => {
@@ -217,7 +241,15 @@ export function getDisplayItems(): CinemaItem[] {
         (it.actors && it.actors.toLowerCase().includes(kw))
       );
     });
+    return applySortMode(list, M.sortMode);
   }
+  if (M.typeFilter) list = list.filter((it) => it.group === M.typeFilter);
+  const sf = M.statusFilter;
+  if (sf) list = list.filter((it) => it.status === statusNum(sf));
+  if (M.listFilter) list = list.filter((it) => it.lists.includes(M.listFilter as string));
+  // 片单收纳条目只在片单视图出现（2026-09-30 拍板：一键导入不混入正常影视视图）——
+  // 仅浏览态（全部/类型/状态）整体排除；搜索已在上方短路，不受此限
+  else list = list.filter((it) => !it.shelvedOnly);
   return applySortMode(list, M.sortMode);
 }
 

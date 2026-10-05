@@ -10,10 +10,34 @@ export const STATUS_WANT = 0;
 export const STATUS_WATCHING = 1;
 export const STATUS_WATCHED = 2;
 
+/** 一刷记录（`重看` 数组的一项；ADR-0240）。
+ *  at = 重温时刻（新档 `YYYY-MM-DD HH:mm:ss`，旧 date-only 档照旧）；
+ *  rating = 这一刷的评分（10 分制；null = 该刷没打分，不进平均分母）。
+ *  **首看不属于本数组**——它占第 1 刷，评分落在条目 `rating`（首评分）里，永不被重温覆盖。 */
+export interface Rewatch {
+  at: string;
+  rating: number | null;
+}
+
 /** 刷数口径（唯一真理）：首看占 1 刷 + 重温次数。卡片「N刷」角标 / 详情「N 刷」徽标 /
  *  重温通知共用——禁各处再拼第二套算法。放 constants（shared.ts 纯层白名单内可值导入） */
-export function rewatchCount(it: { rewatches: string[] }): number {
+export function rewatchCount(it: { rewatches: Rewatch[] }): number {
   return 1 + it.rewatches.length;
+}
+
+/** 平均评分（ADR-0240，界面显示与一切下游的唯一评分口径）：首评分 + 各次重温打分的算术平均，一位小数。
+ *  **等权**——不做近因加权，第 2 刷的分与第 9 刷的分分量相同。
+ *  分母只数**真的打过分的刷次**：某一刷没打分就不进分母，不以首评分或上一刷分兜底填充
+ *  （宁可样本数少于刷数，不伪造数据）。首评分与每刷评分全缺席 → null（界面回落「未评分」）。
+ *  自然推论：每刷都打出与首评分相同的分时，平均值恰好等于首评分，界面零跳变。 */
+export function avgRating(it: { rating: number | null; rewatches: Rewatch[] }): number | null {
+  const vals: number[] = [];
+  if (typeof it.rating === 'number' && it.rating > 0) vals.push(it.rating);
+  for (const r of it.rewatches) {
+    if (typeof r.rating === 'number' && r.rating > 0) vals.push(r.rating);
+  }
+  if (!vals.length) return null;
+  return Math.round((vals.reduce((a, b) => a + b, 0) / vals.length) * 10) / 10;
 }
 
 /** 内置片单：重温候补架（「想重温」语义归堆，不动三状态机——就是一枚预置片单）。

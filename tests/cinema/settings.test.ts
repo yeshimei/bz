@@ -41,10 +41,10 @@ describe('cinema 设置 schema', () => {
     expect(status.type).toBe('select');
     expect(status.binding).toMatchObject({ key: 'cinemaStatusFilter' });
     expect(status.options.map((o: any) => o.value)).toEqual(['', '想看', '在看', '已看']);
-    // 剧集按季合并（issue 376 / ADR-0168）：toggle 行 + 布尔键；2026-09-20 用户拍板默认**开**
+    // 按季合并（issue 376 / ADR-0168）：toggle 行 + 布尔键；2026-09-20 用户拍板默认**开**
     const merge = view.rows[2] as any;
     expect(merge.type).toBe('toggle');
-    expect(merge.name).toBe('剧集按季合并');
+    expect(merge.name).toBe('按季合并');
     expect(merge.binding.key).toBe('cinemaMergeSeasons');
     expect(DEFAULT_SETTINGS.cinemaMergeSeasons).toBe(true);
     // 默认值与选项集一致

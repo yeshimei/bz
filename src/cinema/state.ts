@@ -3,6 +3,7 @@
  * 自 ADR-0087 起接管原 movie 域（旧 src/movie 已退役），数据仍是 `我的/影视/*.md`。
  */
 import type { CinemaViewKind } from './shared';
+import type { Rewatch } from './constants';
 import type { App, TFile } from 'obsidian';
 import { tryGetSettings } from '../core/settings-provider';
 
@@ -40,17 +41,24 @@ export interface CinemaItem {
    *  合集行副行、年书各轴），一律读本键。
    *  只增不删（同另两个状态日期）；旧笔记无键 = 读取层在已看态回落观影日期（data.ts 单点兜底）。 */
   watchedDate: string | null;
-  /** 重温时刻列表（frontmatter「重看」数组，每项一次重温；2026-09-30 起记日期+时刻，旧档 date-only 照旧；建档/编辑不写此键）。
-   *  「N 刷」口径唯一落点 rewatchCount（constants），卡片角标 / 详情徽标 / 重温通知共用 */
-  rewatches: string[];
+  /** 重温（刷次）记录（frontmatter「重看」数组，每项一次重温；ADR-0240 起每项带当刷评分）。
+   *  刷数 = 1 + 本数组长度（首看占第 1 刷，不入数组）；界面评分取平均评分 avgRating（constants）。
+   *  建档/编辑不写此键，只有「重温 +1」落盘；旧档为纯时刻字符串，解析层补 rating: null。 */
+  rewatches: Rewatch[];
   /** 自建片单（frontmatter「片单」数组；建档/编辑不写，归入/移出时落盘）。
    *  含内置片单「重映厅」（constants REWATCH_SHELF）。侧栏片单区 / 片单筛选 / 归入弹层消费 */
   lists: string[];
   /** 片单收纳（frontmatter「片单收纳」= true）：豆瓣片单一键导入的新片专属——只在其
-   *  片单里呈现，不混入正常影视视图（全部/类型/状态/搜索都排除，片单筛选命中时显示）。
+   *  片单里呈现，不混入正常影视视图（浏览态：全部/类型/状态排除；片单筛选命中时显示）。
+   *  **搜索不受此限**（2026-10-05 拍板）：全局搜索在全库匹配，收纳条目也能搜到。
    *  状态离开「想看」（标记在看/已看，persistItem 汇合）即摘除——用户开始正式管理就回归
    *  正常视图。在库旧档归片单不打此标，一切照旧 */
   shelvedOnly: boolean;
+  /** 手动归入的合集名（frontmatter「合集」= 目标合并卡的归一名称，如「绝命毒师」）。
+   *  自动并入靠片名前缀（seasons.specialHostOf），前缀对不上的（「续命之徒：绝命毒师电影」）
+   *  用本键手动挂——ADR-0241（2026-10-05）：合并从「纯渲染层分组」放开到允许这一条声明键。
+   *  声明的卡不存在 = 悬空声明 → 条目回落普通卡（不报错、不吞条目）；建档/编辑不写此键。 */
+  mergeInto: string | null;
   poster: string | null;
   review: string | null;
   genre: string | null;

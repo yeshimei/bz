@@ -22,7 +22,7 @@ function item(name: string, opts: Partial<CinemaItem> = {}): CinemaItem {
   return {
     file: null, name, typeTag: '美剧', group: '剧集', watchDate: null, rating: null, status: 2,
     poster: null, review: null, genre: null, director: null, actors: null, region: null, year: null, releaseDate: null,
-    doubanRating: null, doubanUrl: null, synopsis: null, duration: null, seasonText: null, hotComment: null,
+    doubanRating: null, doubanUrl: null, synopsis: null, duration: null, seasonText: null, hotComment: null, mergeInto: null,
     ...opts,
     rewatches: opts.rewatches ?? [],
     lists: opts.lists ?? [],
@@ -114,6 +114,16 @@ describe('cinema 按季分组合并（mergeSeasonCards）', () => {
     expect(mergeSeasonCards([item('心灵猎人 第一季')], true).map((c) => c.kind)).toEqual(['single']);
     const films = [item('X 第一季', { group: '电影', typeTag: '电影' }), item('X 第二季', { group: '电影', typeTag: '电影' })];
     expect(mergeSeasonCards(films, true).map((c) => c.kind)).toEqual(['single', 'single']);
+  });
+
+  it('纪录片分季同样合并（2026-10-05 拍板）；单季纪录片照旧单卡', () => {
+    const doc = (n: string) => item(n, { group: '纪录片', typeTag: '纪录片' });
+    const cards = mergeSeasonCards([doc('守护解放西 第一季'), doc('守护解放西 第二季')], true);
+    expect(cards).toHaveLength(1);
+    expect((cards[0] as SeriesCard).name).toBe('守护解放西');
+    expect((cards[0] as SeriesCard).seasons.map((s) => s.no)).toEqual([1, 2]);
+    // 加组只是「允许合并」：认不出季号的单条纪录片仍出普通卡
+    expect(mergeSeasonCards([doc('人生一串 第一季')], true).map((c) => c.kind)).toEqual(['single']);
   });
 
   it('同一季的两种写法（第一季 / 第1季）按季号去重，不足 2 季则不合并', () => {
@@ -280,6 +290,33 @@ describe('cinema 特别篇前缀并入（只按片名前缀认）', () => {
     expect(cards).toHaveLength(1); // 重复季与特别篇都不出卡
   });
 
+  it('手动归入合集（ADR-0241）：frontmatter「合集」指名哪张卡就进哪张，前缀对不上也能挂', () => {
+    // 「续命之徒：绝命毒师电影」首字是「续」，前缀判断挂不上「绝命毒师」——靠声明键手动挂
+    const movie = film('续命之徒：绝命毒师电影', { mergeInto: '绝命毒师' });
+    const cards = mergeSeasonCards([item('绝命毒师 第一季'), item('绝命毒师 第二季'), movie], true);
+    expect(cards).toHaveLength(1);
+    const card = cards[0] as SeriesCard;
+    expect(card.name).toBe('绝命毒师');
+    expect(card.specials.map((x) => x.name)).toEqual(['续命之徒：绝命毒师电影']);
+  });
+
+  it('手动声明优先于前缀判断：显式挂到别的卡就进别的卡', () => {
+    const sp = film('乙剧 外传', { mergeInto: '甲剧' });
+    const cards = mergeSeasonCards(
+      [item('甲剧 第一季'), item('甲剧 第二季'), item('乙剧 第一季'), item('乙剧 第二季'), sp], true);
+    const jia = cards.find((c): c is SeriesCard => c.kind === 'series' && c.name === '甲剧');
+    const yi = cards.find((c): c is SeriesCard => c.kind === 'series' && c.name === '乙剧');
+    expect(jia?.specials.map((x) => x.name)).toEqual(['乙剧 外传']);
+    expect(yi?.specials).toEqual([]);
+  });
+
+  it('悬空声明（目标卡不存在）→ 条目回落普通卡，不报错也不吞条目', () => {
+    const orphan = film('无名外传', { mergeInto: '库里没有的剧' });
+    const cards = mergeSeasonCards([item('绝命毒师 第一季'), item('绝命毒师 第二季'), orphan], true);
+    expect(cards.map((c) => (c.kind === 'series' ? `series:${c.name}` : c.item.name)))
+      .toEqual(['series:绝命毒师', '无名外传']);
+  });
+
   it('最长 base 优先：同名更长的那张合并卡吃特别篇', () => {
     const rm3 = item('瑞克和莫蒂 第三季');
     const rm4 = item('瑞克和莫蒂 第四季');
@@ -399,7 +436,7 @@ describe('详情弹窗足迹时间线（detailModalHtml）', () => {
   it('有重温：首看改标「首看」；重温升序在后且带时刻（旧 date-only 档原样）', () => {
     const html = detailModalHtml(item('示例子二', {
       wantDate: '2026-09-01', watchDate: '2026-09-16 20:00:00', watchedDate: '2026-09-16',
-      rewatches: ['2026-09-24 07:30:15', '2026-09-20'], lists: [],
+      rewatches: [{ at: '2026-09-24 07:30:15', rating: null }, { at: '2026-09-20', rating: null }], lists: [],
     }), null);
     expect(rowsOf(html)).toEqual(['2026-09-01|想看', '2026-09-16|首看', '2026-09-20|', '2026-09-24 07:30|']);
   });

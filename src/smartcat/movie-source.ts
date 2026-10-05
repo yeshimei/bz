@@ -14,6 +14,9 @@ export type MovieActionEvent =
   | { kind: 'created'; name: string; status: MovieStatus; rating: number | null; review: string | null }
   | { kind: 'status'; name: string; from: MovieStatus; to: MovieStatus }
   | { kind: 'rated'; name: string; fromRating: number | null; toRating: number }
+  /** 重温打分（ADR-0240）：**又刷了一遍**，与 `rated`（改分）是两个动作——
+   *  小橘据此能说出「你第三刷给了 6 分，比首刷低」这类话，而这正是它该观察的东西 */
+  | { kind: 'rerated'; name: string; brushNo: number; rating: number; fromAvgRating: number | null; toAvgRating: number | null }
   | { kind: 'review'; name: string; fromReview: string | null; toReview: string | null }
   | { kind: 'deleted'; name: string };
 
@@ -58,6 +61,18 @@ export function movieReviewText(name: string, fromReview: string | null, toRevie
   return `你删掉了《${name}》的影评`;
 }
 
+/**
+ * 重温打分观察文案（ADR-0240）：第 N 刷给了多少分，顺带说清均分怎么动。
+ * 均分变动只在真的有分可比、且差出一档（≥0.05）时才补一句——每刷都打同样分时不会画蛇添足。
+ */
+export function movieReratedText(
+  name: string, brushNo: number, rating: number, fromAvg: number | null, toAvg: number | null,
+): string {
+  const base = `你第 ${brushNo} 刷《${name}》，给了 ${rating} 分`;
+  const moved = fromAvg !== null && fromAvg > 0 && toAvg !== null && toAvg > 0 && Math.abs(toAvg - fromAvg) >= 0.05;
+  return moved ? `${base}，均分从 ${fromAvg.toFixed(1)} 变成 ${toAvg.toFixed(1)}` : base;
+}
+
 /** 删除观察文案 */
 export function movieDeletedText(name: string): string {
   return `你删除了《${name}》的影视记录`;
@@ -72,6 +87,8 @@ export function buildMovieActionText(evt: MovieActionEvent): string | null {
       return movieStatusChangeText(evt.name, evt.from, evt.to);
     case 'rated':
       return movieRatedText(evt.name, evt.fromRating, evt.toRating);
+    case 'rerated':
+      return movieReratedText(evt.name, evt.brushNo, evt.rating, evt.fromAvgRating, evt.toAvgRating);
     case 'review':
       return movieReviewText(evt.name, evt.fromReview, evt.toReview);
     case 'deleted':

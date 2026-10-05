@@ -7,8 +7,8 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import { MockVault, mockAppWithVault } from '../mock-vault';
 import { resetObsidianMocks } from '../mock-obsidian-entry';
 import { M, resetCinemaState, type CinemaItem } from '../../src/cinema/state';
-import { rebuildItems, getDisplayItems, sortByDateDesc, sortByCreatedDesc, dateVal } from '../../src/cinema/data';
-import { getStarString, getGroupForTag, getGroupSafe } from '../../src/cinema/constants';
+import { rebuildItems, getDisplayItems, sortByDateDesc, sortByCreatedDesc, dateVal, normalizeRewatches } from '../../src/cinema/data';
+import { getStarString, getGroupForTag, getGroupSafe, avgRating, rewatchCount, type Rewatch } from '../../src/cinema/constants';
 
 
 function md(content: string): string {
@@ -125,7 +125,7 @@ tags: [美剧]
     const handItem: CinemaItem = {
       file: tfile, name: '缓存未就绪', typeTag: '电影', group: '电影', watchDate: null, rating: null,
       status: 2, wantDate: null, watchingDate: null, watchedDate: null, rewatches: [], lists: [], shelvedOnly: false, poster: null, review: null, genre: null, director: null, actors: null,
-      region: null, year: null, releaseDate: null, doubanRating: null, doubanUrl: null, synopsis: null, duration: null, seasonText: null, hotComment: null,
+      region: null, year: null, releaseDate: null, doubanRating: null, doubanUrl: null, synopsis: null, duration: null, seasonText: null, hotComment: null, mergeInto: null,
     };
     M.items.push(handItem);
     const items = rebuildItems(app);
@@ -141,7 +141,7 @@ tags: [美剧]
     M.items.push({
       file: tfile, name: '无效', typeTag: '电影', group: '电影', watchDate: null, rating: null,
       status: 2, wantDate: null, watchingDate: null, watchedDate: null, rewatches: [], lists: [], shelvedOnly: false, poster: null, review: null, genre: null, director: null, actors: null,
-      region: null, year: null, releaseDate: null, doubanRating: null, doubanUrl: null, synopsis: null, duration: null, seasonText: null, hotComment: null,
+      region: null, year: null, releaseDate: null, doubanRating: null, doubanUrl: null, synopsis: null, duration: null, seasonText: null, hotComment: null, mergeInto: null,
     });
     rebuildItems(app);
     expect(M.items).toHaveLength(0);
@@ -200,7 +200,7 @@ describe('cinema 排序与筛选', () => {
       name, typeTag: '电影', group: '电影',
       watchDate: null, rating: null, status: 2, wantDate: null, watchingDate: null, watchedDate: null, rewatches: [], lists: [], shelvedOnly: false, poster: null, review: null,
       genre: null, director: null, actors: null, region: null, year: null, releaseDate: null,
-      doubanRating: null, doubanUrl: null, synopsis: null, duration: null, seasonText: null, hotComment: null,
+      doubanRating: null, doubanUrl: null, synopsis: null, duration: null, seasonText: null, hotComment: null, mergeInto: null,
     });
     const t0 = 1000;
     const old = mk('旧片', t0, 9000); // 先创建，后被编辑 → mtime 最大
@@ -222,6 +222,17 @@ describe('cinema 排序与筛选', () => {
     M.searchKeyword = '三体';
     expect(getDisplayItems().map((i) => i.name)).toEqual(['三体']);
   });
+
+  it('frontmatter「合集」→ mergeInto（缺键、空串都归 null）', () => {
+    const vault = new MockVault();
+    vault.files.set('我的/影视/《续命之徒：绝命毒师电影》.md', '---\ntags: [电影]\n合集: 绝命毒师\n---');
+    vault.files.set('我的/影视/《普通片》.md', '---\ntags: [电影]\n合集: ""\n---');
+    const app = makeApp(vault);
+    rebuildItems(app);
+    const byName = new Map(M.items.map((i) => [i.name, i]));
+    expect(byName.get('续命之徒：绝命毒师电影')?.mergeInto).toBe('绝命毒师');
+    expect(byName.get('普通片')?.mergeInto).toBeNull();
+  });
 });
 
 describe('cinema 工具函数', () => {
@@ -236,7 +247,7 @@ describe('cinema 工具函数', () => {
     expect(getStarString(-1)).toBe('');
   });
 
-  it('片单收纳条目只在片单视图出现：无片单筛选整体排除；片单筛选命中显示', () => {
+  it('片单收纳条目浏览时不混入正常视图；片单筛选命中显示', () => {
     const vault = new MockVault();
     vault.files.set('我的/影视/《普通想看》.md', '---\ntags: [电影]\n状态: 想看\n---');
     vault.files.set('我的/影视/《收纳片》.md', '---\ntags: [电影]\n状态: 想看\n片单收纳: true\n片单:\n- 豆列合集\n---');
@@ -248,21 +259,111 @@ describe('cinema 工具函数', () => {
     M.listFilter = null;
     M.searchKeyword = '';
     rebuildItems(app);
-    // 正常视图（无筛选/类型/状态/搜索共用同一条链）排除收纳条目
+    // 浏览态（无筛选/类型/状态）排除收纳条目
     expect(getDisplayItems().map((i) => i.name)).toEqual(['普通想看']);
-    M.searchKeyword = '收纳';
-    expect(getDisplayItems()).toHaveLength(0); // 搜索也排除（去片单里找）
-    M.searchKeyword = '';
     // 片单筛选命中 → 收纳条目出现
     M.listFilter = '豆列合集';
     expect(getDisplayItems().map((i) => i.name)).toEqual(['收纳片']);
     M.listFilter = null;
   });
 
+  it('搜索是全局的（2026-10-05 拍板）：忽略类型/状态/片单筛选，片单收纳条目也能命中', () => {
+    const vault = new MockVault();
+    vault.files.set('我的/影视/《普通想看》.md', '---\ntags: [电影]\n状态: 想看\n---');
+    vault.files.set('我的/影视/《收纳片》.md', '---\ntags: [电影]\n状态: 想看\n片单收纳: true\n片单:\n- 豆列合集\n---');
+    vault.files.set('我的/影视/《已看剧集》.md', '---\ntags: [国产剧]\n状态: 已看\n---');
+    const app = makeApp(vault);
+    M.folderPath = '我的/影视';
+    M.typeFilter = null;
+    M.statusFilter = null;
+    M.listFilter = null;
+    M.searchKeyword = '';
+    rebuildItems(app);
+    // ① 收纳条目不因 shelvedOnly 被排除（旧口径「搜索也排除」已废，搜得到）
+    M.searchKeyword = '收纳';
+    expect(getDisplayItems().map((i) => i.name)).toEqual(['收纳片']);
+    // ② 叠加类型/状态筛选也照样全库命中（数据层短路，不依赖 UI 清筛选）
+    M.typeFilter = '电影';
+    M.statusFilter = '想看';
+    M.searchKeyword = '剧集';
+    expect(getDisplayItems().map((i) => i.name)).toEqual(['已看剧集']);
+    // ③ 片单筛选同理不设限
+    M.typeFilter = null;
+    M.statusFilter = null;
+    M.listFilter = '豆列合集';
+    M.searchKeyword = '普通';
+    expect(getDisplayItems().map((i) => i.name)).toEqual(['普通想看']);
+    // 收尾清场，不污染后续用例
+    M.typeFilter = null;
+    M.statusFilter = null;
+    M.listFilter = null;
+    M.searchKeyword = '';
+  });
+
   it('组映射', () => {
     expect(getGroupForTag('美剧')).toBe('剧集');
     expect(getGroupForTag('日漫')).toBe('动漫');
     expect(getGroupSafe('未知tag')).toBe('其他');
+  });
+
+  it('avgRating（ADR-0240）：首评 + 各刷等权平均、一位小数；缺分刷次不进分母', () => {
+    // 基本平均：首评 9 + 重温 8 → 8.5
+    expect(avgRating({ rating: 9, rewatches: [{ at: '2026-03-08', rating: 8 }] })).toBe(8.5);
+    // 一位小数四舍五入：(9.6+7.6+7.5)/3 = 8.233… → 8.2
+    expect(avgRating({ rating: 9.6, rewatches: [{ at: 'a', rating: 7.6 }, { at: 'b', rating: 7.5 }] })).toBe(8.2);
+    // 某刷没打分（rating: null）不进分母：(9+7)/2 = 8，而不是 (9+null+7) 兜底
+    expect(avgRating({ rating: 9, rewatches: [{ at: 'a', rating: null }, { at: 'b', rating: 7 }] })).toBe(8);
+    // 只重温打分、首评缺席（想看建档后从未评过）：只平均有分的刷次
+    expect(avgRating({ rating: null, rewatches: [{ at: 'a', rating: 6 }] })).toBe(6);
+    // 全缺席 → null（界面回落「未评分」）
+    expect(avgRating({ rating: null, rewatches: [] })).toBeNull();
+    expect(avgRating({ rating: null, rewatches: [{ at: 'a', rating: null }] })).toBeNull();
+    // 0 / 负值不是真分（未评分占位），不进分母
+    expect(avgRating({ rating: 0, rewatches: [{ at: 'a', rating: 8 }] })).toBe(8);
+    // 等权语义：第 2 刷与第 9 刷分量相同，不做近因加权
+    expect(avgRating({ rating: 5, rewatches: Array.from({ length: 8 }, (_, i) => ({ at: `刷${i}`, rating: 9 })) })).toBe(8.6);
+  });
+
+  it('rewatchCount：首看占 1 刷 + 重温次数（新结构口径不变）', () => {
+    expect(rewatchCount({ rewatches: [] })).toBe(1);
+    expect(rewatchCount({ rewatches: [{ at: 'a', rating: 8 }, { at: 'b', rating: null }] })).toBe(3);
+  });
+
+  it('normalizeRewatches 兼容旧字符串数组（ADR-0240 前存量：缺分记 null，不伪造历史分）', () => {
+    // 旧档：纯时间戳字符串数组（date-only / 时刻粒度混存）→ 逐项补 rating: null
+    expect(normalizeRewatches(['2026-03-08', '2026-10-01 19:57:46'])).toEqual([
+      { at: '2026-03-08', rating: null },
+      { at: '2026-10-01 19:57:46', rating: null },
+    ]);
+    // 旧档单字符串（流式）同样兼容
+    expect(normalizeRewatches('2026-03-08')).toEqual([{ at: '2026-03-08', rating: null }]);
+    // 新档对象数组照收；rating 非法（空串/NaN）归 null
+    expect(normalizeRewatches([{ at: '2026-10-05 01:11:50', rating: 9 }])).toEqual([
+      { at: '2026-10-05 01:11:50', rating: 9 },
+    ]);
+    expect(normalizeRewatches([{ at: 'a', rating: '' }, { at: 'b', rating: 'x' }])).toEqual([
+      { at: 'a', rating: null },
+      { at: 'b', rating: null },
+    ]);
+    // 无 at 的条目无从定位，跳过；缺失/非数组 → 空
+    expect(normalizeRewatches([{ rating: 8 }, '2026-03-08'])).toEqual([{ at: '2026-03-08', rating: null }]);
+    expect(normalizeRewatches(undefined)).toEqual([]);
+    expect(normalizeRewatches(null)).toEqual([]);
+    // 混合旧新（手工编辑中间态）：各自归位
+    expect(normalizeRewatches(['2026-01-01', { at: '2026-02-02', rating: 7 }])).toEqual([
+      { at: '2026-01-01', rating: null },
+      { at: '2026-02-02', rating: 7 },
+    ]);
+  });
+
+  it('dateVal：date-only 归一化为当日 0 点（与同日 00:00:00 等值，避免同日重温排到老记录后）', () => {
+    const base = { name: 'x', tag: '电影', status: 2, created: 0, rewatches: [] as Rewatch[] } as unknown as CinemaItem;
+    expect(dateVal({ ...base, watchDate: '2026-03-08' })).toBe(dateVal({ ...base, watchDate: '2026-03-08 00:00:00' }));
+    // 带时刻的下午场晚于同日 0 点
+    expect(dateVal({ ...base, watchDate: '2026-03-08 14:30:00' })).toBeGreaterThan(dateVal({ ...base, watchDate: '2026-03-08' }));
+    // 无日期 / 非法 → 0（排最后）
+    expect(dateVal({ ...base, watchDate: '' })).toBe(0);
+    expect(dateVal({ ...base, watchDate: '垃圾值' })).toBe(0);
   });
 
 });

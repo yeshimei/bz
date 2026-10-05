@@ -1,5 +1,5 @@
 /**
- * 影院（cinema）域·剧集按季合并（设置 cinemaMergeSeasons，2026-09-18 用户选定「D1 分段条」）。
+ * 影院（cinema）域·分季作品合并（设置 cinemaMergeSeasons，2026-09-18 用户选定「D1 分段条」）。
  *
  * 纯加工层：条目列表 + 合并开关显式入参，**不读设置、不读 M、不碰盘**——合并是渲染层分组，
  * 不新增任何存储、不改笔记、不动数据契约（ADR-0168）。
@@ -7,18 +7,26 @@
  * 故 shared.ts / layouts 可直接消费本模块产出的 CardEntry。
  *
  * 判定口径（唯一真理源，禁第二套）：
- *   可合并组 = 剧集 / 动漫；名称剥掉「第X季 / Season N」后**完全相同**才归一部；
+ *   可合并组 = 剧集 / 动漫 / 纪录片；名称剥掉「第X季 / Season N」后**完全相同**才归一部；
  *   ≥2 季才合并，单季回退普通卡（不为了统一而把单季塞进合集里）。
  *
  * 特别篇并入（2026-09-20 用户拍板「只按前缀认」）：
  *   「<剧名>：<副标题>」这类电影版 / 特别篇 / 外传并入同名剧集的合并卡（specials），
  *   不看组、不看豆瓣「相关书影音」、不做 is_tv 落盘兜底——片名前缀是唯一信号。
  *   同一套「≥2 季才建卡」的门槛：库内没有同名 ≥2 季剧集的孤立特别篇照旧出普通卡。
+ *
+ * 手动归入（ADR-0241，2026-10-05）：条目 frontmatter「合集」= 目标合并卡归一名称时，
+ *   不做前缀判断、直接进那张卡——「续命之徒：绝命毒师电影」这类前缀对不上的兜底。
+ *   声明的卡不存在（悬空）→ 条目回落普通卡，不报错、不吞条目。
  */
 import type { CinemaItem } from './state';
+// avgRating 是纯函数常量模块（零 import），与 shared.ts 白名单同源，不破本层纯加工契约
+import { avgRating } from './constants';
 
-/** 参与合并的组（电影/纪录片/公开课不参与——它们没有「季」语义） */
-const MERGE_GROUPS: readonly string[] = ['剧集', '动漫'];
+/** 参与合并的组（纪录片 2026-10-05 并入——《守护解放西》这类分季纪录片与剧集同理，
+ *  加组只是「允许合并」，认不出「第X季」的纪录片照旧单卡）；
+ *  电影/公开课不参与——「第X季」在它们身上不是季语义 */
+const MERGE_GROUPS: readonly string[] = ['剧集', '动漫', '纪录片'];
 
 /** 中文数字（一~九） */
 const CN_NUM: Record<string, number> = { 零: 0, 一: 1, 二: 2, 三: 3, 四: 4, 五: 5, 六: 6, 七: 7, 八: 8, 九: 9 };
@@ -112,7 +120,7 @@ export interface SeriesCard {
   key: string;
   /** 归一名称（卡片标题） */
   name: string;
-  /** 所属组（剧集/动漫；rail 计数与类型筛选用） */
+  /** 所属组（剧集/动漫/纪录片；rail 计数与类型筛选用） */
   group: string;
   /** 各季（季号升序） */
   seasons: SeasonSlot[];
@@ -159,7 +167,8 @@ export function cardGroup(e: CardEntry): string {
 /** 观影日期时间戳（无日期 → 0；与 data.ts::dateVal 同口径，此处本地化避免纯层引入 data.ts 的模块态） */
 function watchTs(it: CinemaItem): number {
   if (!it.watchDate) return 0;
-  const t = new Date(it.watchDate).getTime();
+  const raw = it.watchDate.trim();
+  const t = new Date(/\d{1,2}:\d{2}/.test(raw) ? raw : `${raw}T00:00:00`).getTime();
   return Number.isNaN(t) ? 0 : t;
 }
 
@@ -179,9 +188,9 @@ function pickFace(slots: SeasonSlot[]): CinemaItem {
  * 「你最近在追的那部」——电影版特别篇刚看完打了分，正脸季还在看不评分，取特别篇的才不空）。
  */
 function latestRated(items: CinemaItem[]): number | null {
-  const rated = items.filter((it) => it.rating != null && it.rating > 0);
+  const rated = items.filter((it) => (avgRating(it) ?? 0) > 0);
   if (!rated.length) return null;
-  return rated.reduce((best, it) => (watchTs(it) >= watchTs(best) ? it : best), rated[0]).rating;
+  return avgRating(rated.reduce((best, it) => (watchTs(it) >= watchTs(best) ? it : best), rated[0]));
 }
 
 /**
@@ -249,14 +258,17 @@ export function mergeSeasonCards(list: CinemaItem[], merge: boolean): CardEntry[
   }
 
   // 第二遍半：特别篇前缀并入（最长 base 优先）
-  // 候选 = **没走季路径**的条目：非剧集/动漫组的一切（电影版/纪录片版特别篇），
-  // 以及剧集/动漫组里认不出「第X季」的（如「老友记 特别篇」）——认得出季号的条目一律归季路径
+  // 候选 = **没走季路径**的条目：非合并组的一切（电影版特别篇），
+  // 以及合并组里认不出「第X季」的（如「老友记 特别篇」「守护解放西 幕后」）——认得出季号的条目一律归季路径
   // （它们已在第一遍入表，哪怕因季号重复被去重丢掉也不当特别篇）。
   const cards = [...merged.values()];
+  const byName = new Map(cards.map((c) => [c.name, c]));
   const absorbed = new Set<CinemaItem>();
   for (const it of list) {
     if (MERGE_GROUPS.includes(it.group) && parseSeasonName(it.name)) continue;
-    const host = specialHostOf(it.name, cards);
+    // 手动声明优先（ADR-0241）：frontmatter「合集」指名哪张卡就进哪张；没声明才走前缀判断。
+    // 声明的卡不存在（悬空）→ host 为 null，条目回落普通卡（不报错、不吞条目）
+    const host = it.mergeInto ? byName.get(it.mergeInto) ?? null : specialHostOf(it.name, cards);
     if (!host) continue;
     host.specials.push(it);
     absorbed.add(it);

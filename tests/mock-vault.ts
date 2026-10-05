@@ -271,7 +271,11 @@ export class IndexLagVault extends MockVault {
   }
 }
 
-/** 解析 frontmatter（简易 YAML 子集：key: value 行 + `  - ` 列表项）。
+/** 解析 frontmatter（简易 YAML 子集：key: value 行 + `  - ` 列表项 + 块式列表映射）。
+ *  列表映射（ADR-0240「重看」的对象数组）形如：
+ *    重看:
+ *       - at: "2026-10-05 01:11:50"
+ *         rating: 9
  *  fail-closed（深审批A T2）：值含「: 」与「key: 值后裸行」两种破损形态返回 null——
  *  真机 js-yaml 对两者整体解析失效（Obsidian 视为无 frontmatter），mock 原先 fail-open
  *  照收导致 FM 破坏类缺陷在测试环境不可见。 */
@@ -279,11 +283,21 @@ export function parseFrontmatter(content: string): Record<string, any> | null {
   const m = content.match(/^---\n([\s\S]*?)\n---\s*(?:\n|$)/);
   if (!m) return null;
   const fm: Record<string, any> = {};
+  /** 标量还原（引号 / 数字），列表项与续行共用 */
+  const coerce = (s: string): any => {
+    let v: any = s.trim();
+    if ((v.startsWith('"') && v.endsWith('"')) || (v.startsWith("'") && v.endsWith("'"))) v = v.slice(1, -1);
+    if (/^-?\d+(\.\d+)?$/.test(v)) v = Number(v);
+    return v;
+  };
+  // 当前块式列表项（`- at: …` 开的那个对象）：后续缩进行 `rating: …` 挂到它身上
+  let curObj: Record<string, any> | null = null;
   for (const line of m[1].split('\n')) {
     const idx = line.indexOf(':');
     if (idx > 0) {
       const key = line.slice(0, idx).trim();
       let value: any = line.slice(idx + 1).trim();
+      curObj = null; // 新顶层键出现，块式列表项结束
       // 简单数组解析 [电影]
       const arrMatch = value.match(/^\[(.*)\]$/);
       if (arrMatch) {
@@ -326,11 +340,22 @@ export function parseFrontmatter(content: string): Record<string, any> | null {
       const lastKey = Object.keys(fm).pop();
       if (lastKey && !Array.isArray(fm[lastKey])) fm[lastKey] = [];
       if (lastKey) {
-        let v: any = line.replace(/^\s*-\s+/, '').trim();
-        if ((v.startsWith('"') && v.endsWith('"')) || (v.startsWith("'") && v.endsWith("'"))) v = v.slice(1, -1);
-        if (/^-?\d+(\.\d+)?$/.test(v)) v = Number(v);
-        fm[lastKey].push(v);
+        const raw = line.replace(/^\s*-\s+/, '').trim();
+        const subIdx = raw.indexOf(':');
+        if (subIdx > 0) {
+          // 列表项本身是映射（`- at: …`）——对象数组的一项，后续缩进行挂到它身上
+          const obj: Record<string, any> = { [raw.slice(0, subIdx).trim()]: coerce(raw.slice(subIdx + 1)) };
+          fm[lastKey].push(obj);
+          curObj = obj;
+        } else {
+          fm[lastKey].push(coerce(raw));
+          curObj = null;
+        }
       }
+    } else if (curObj && /^\s+\S/.test(line) && line.includes(':')) {
+      // 块式列表映射的续行（`    rating: 9`）：挂到上一个 `- ` 开的那个对象
+      const i2 = line.indexOf(':');
+      curObj[line.slice(0, i2).trim()] = coerce(line.slice(i2 + 1));
     } else if (line.trim() !== '') {
       // fail-closed（深审批A T2）：无冒号且非列表项的裸行（多行文本裸插 frontmatter 的
       // 第二行起，如旧建档模板把多行影评直拼进 YAML）——真机 js-yaml 报 bad indentation
@@ -458,7 +483,26 @@ export function mockAppWithVault(vault: MockVault) {
         const fm = parseFrontmatter(content) ?? {};
         cb(fm);
         const lines = ['---'];
+        /** 标量序列化（与下方字符串分支同口径：该加引号的加引号） */
+        const scalarOf = (x: unknown): string =>
+          typeof x === 'string' && (/[\r\n]/.test(x) || /:\s/.test(x) || /^\d{4}-\d{2}-\d{2}/.test(x))
+            ? JSON.stringify(x)
+            : String(x);
         for (const [k, v] of Object.entries(fm)) {
+          // 对象数组（ADR-0240「重看」的 `{at, rating}`）走**块式**——真机 js-yaml 就是块式；
+          // 流式 `{at: …, rating: …}` 里的逗号会与数组分隔打架，回读必炸。
+          if (Array.isArray(v) && v.some((x) => x && typeof x === 'object')) {
+            lines.push(`${k}:`);
+            for (const x of v) {
+              if (!x || typeof x !== 'object') { lines.push(`  - ${scalarOf(x)}`); continue; }
+              let first = true;
+              for (const [k2, v2] of Object.entries(x as Record<string, unknown>)) {
+                lines.push(`${first ? '  - ' : '    '}${k2}: ${scalarOf(v2)}`);
+                first = false;
+              }
+            }
+            continue;
+          }
           if (Array.isArray(v)) lines.push(`${k}: [${v.join(', ')}]`);
           // 字符串值序列化保真（T2 配套）：多行 / 含「: 」/ date-like 的裸值要么写破 YAML、
           // 要么被真机 YAML 重新解析成 timestamp（Moment 对象 → 英文星期）——真机

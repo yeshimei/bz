@@ -16,8 +16,8 @@
  */
 import { esc, iconSpan } from '../core/ui/str';
 import {
-  STATUS_WANT, STATUS_WATCHING, STATUS_WATCHED,
-  GROUP_ORDER, TYPE_COLORS, getGroupForTag, getStarString, rewatchCount, REWATCH_SHELF,
+  STATUS_WANT, STATUS_WATCHING, STATUS_WATCHED, DEFAULT_RATING,
+  GROUP_ORDER, TYPE_COLORS, getGroupForTag, getStarString, rewatchCount, avgRating, REWATCH_SHELF,
 } from './constants';
 import type { CinemaItem } from './state';
 import type { CardEntry, SeasonSlot, SeriesCard } from './seasons';
@@ -43,6 +43,8 @@ export const ICON = {
   shelf: 'bookmark',
   listPlus: 'list-plus',
   import: 'download',
+  note: 'file-text',
+  merge: 'combine',
 } as const;
 
 // ---------- 格式化/口径 ----------
@@ -145,11 +147,13 @@ interface CardFacePieces { poster: string; name: string; meta: string; stars: st
  * 名字/meta/星级 格式（否则悬浮前后的排版口径会漂）。
  * opts.name：合并卡正脸写归一名称（老友记）而非该季全名；opts.rating：合并卡评分取**最新已评季**
  * （正脸季可能是在看不评分），普通卡留空即用条目自身评分。
+ * **评分一律走平均评分**（ADR-0240）：卡片星级与数字读 avgRating，不读首评分——
+ * 否则会出现「卡片显示 7.5、按评分排序却按首评分 9.0 排」的自相矛盾。
  */
 export function facePiecesHtml(
   it: CinemaItem, posterUrl: string | null, opts: { name?: string; rating?: number | null } = {},
 ): CardFacePieces {
-  const r = opts.rating !== undefined ? opts.rating : it.rating;
+  const r = opts.rating !== undefined ? opts.rating : avgRating(it);
   return {
     poster: posterInner(it, posterUrl),
     name: esc(opts.name ?? it.name),
@@ -252,21 +256,34 @@ export function detailModalHtml(it: CinemaItem, posterUrl: string | null): strin
   const firstDate = (it.watchedDate || '').slice(0, 10);
   const wantD = (it.wantDate || '').slice(0, 10);
   const watchingD = (it.watchingDate || '').slice(0, 10);
-  const nodes: { d: string; tag: string; first?: boolean }[] = [];
+  // 每行可带一个分值标签（ADR-0240）：平均分的来源要看得见——首看行挂首评分、每刷行挂当刷分，
+  // 没打分的行如实留空（与「缺分不进分母」同一口径，不拿首评分顶替）。
+  const nodes: { d: string; tag: string; score?: string; first?: boolean }[] = [];
   if (wantD) nodes.push({ d: wantD, tag: '想看' });
   if (watchingD) nodes.push({ d: watchingD, tag: '在看' });
-  if (firstDate) nodes.push({ d: firstDate, tag: rewatched ? '首看' : '已看', first: true });
-  for (const r of [...it.rewatches].sort()) nodes.push({ d: r.slice(0, 16), tag: '' });
+  if (firstDate) {
+    nodes.push({
+      d: firstDate,
+      tag: rewatched ? '首看' : '已看',
+      score: it.rating && it.rating > 0 ? it.rating.toFixed(1) : '',
+      first: true,
+    });
+  }
+  for (const r of [...it.rewatches].sort((a, b) => a.at.localeCompare(b.at))) {
+    nodes.push({ d: r.at.slice(0, 16), tag: '', score: r.rating && r.rating > 0 ? r.rating.toFixed(1) : '' });
+  }
   nodes.sort((a, b) => a.d.localeCompare(b.d));
   // is-first = 首看节点金色高亮（非 DOM 首行——想看/在看日期可能更早排在前面）
   const timeline = nodes.length
-    ? `<div class="dm-tl">${nodes.map((n) => `<div class="dm-tl-row${n.first ? ' is-first' : ''}"><i></i><span class="d">${esc(n.d)}</span>${n.tag ? `<span class="tag">${esc(n.tag)}</span>` : ''}</div>`).join('')}</div>`
+    ? `<div class="dm-tl">${nodes.map((n) => `<div class="dm-tl-row${n.first ? ' is-first' : ''}"><i></i><span class="d">${esc(n.d)}</span>${n.tag ? `<span class="tag">${esc(n.tag)}</span>` : ''}${n.score ? `<span class="tag">${esc(n.score)}</span>` : ''}</div>`).join('')}</div>`
     : '';
   // 所有片单徽章（重映厅恒排最前；金实底与原重映厅 chip 同款），列在评分前
   const listChips = [...it.lists]
     .sort((a, b) => (a === REWATCH_SHELF ? -1 : b === REWATCH_SHELF ? 1 : 0))
     .map((l) => `<span class="dm-chip dm-chip--shelf">${esc(l)}</span>`)
     .join('');
+  // 详情头部评分 = 平均评分（ADR-0240）；首评分与每刷分在时间线里逐行可查
+  const avg = avgRating(it);
   return `<div class="cn-modal cn-modal--detail">
     <div class="dm-head"><div class="dm-poster">${posterUrl ? `<img src="${esc(posterUrl)}" onerror="this.remove()">` : ''}</div>
       <div style="flex:1;min-width:0"><div class="dm-title">${esc(it.name)}</div>
@@ -274,7 +291,7 @@ export function detailModalHtml(it: CinemaItem, posterUrl: string | null): strin
           ${(() => { const st = statusNum(it.status); return st !== STATUS_WATCHED ? badge(statusColor(st), statusText(st)) : ''; })()}
           ${rewatched ? `<span class="dm-chip dm-chip--re">${rewatchCount(it)} 刷</span>` : ''}
           ${listChips}
-          ${it.rating && it.rating > 0 ? `<span class="dm-stars">${getStarString(it.rating)}</span><span class="dm-rating">${Number(it.rating).toFixed(1)}</span>` : ''}</div>
+          ${avg && avg > 0 ? `<span class="dm-stars">${getStarString(avg)}</span><span class="dm-rating">${avg.toFixed(1)}</span>` : ''}</div>
         ${it.review ? `<div class="dm-review">${esc(it.review)}</div>` : ''}
         ${timeline}</div></div>
     ${rows.length ? '<div class="dm-sec">豆 瓣 信 息</div>' + rows.map(([k, v]) => `<div class="dm-kv"><span class="dm-kv-k">${k}</span><span class="dm-kv-v">${esc(v)}</span></div>`).join('') : ''}
@@ -282,6 +299,25 @@ export function detailModalHtml(it: CinemaItem, posterUrl: string | null): strin
     ${hot ? `<div class="dm-sec">热 门 短 评</div><div class="dm-quote${hotFold ? ' is-fold' : ''}" data-dm-quote>${esc(hot)}</div>${hotFold ? `<button type="button" class="dm-fold j-quote-fold" data-dm-fold>展开全文（${hot.length} 字）</button>` : ''}` : ''}
     ${it.synopsis ? `<div class="dm-sec">简 介</div><div class="dm-synopsis">${esc(it.synopsis)}</div>` : ''}
     <div class="dm-actions">${statusNum(it.status) === STATUS_WATCHED ? `<button class="dm-btn j-rewatch">${iconSpan(ICON.repeat)}重温 +1</button>` : ''}<button class="dm-btn j-similar">${iconSpan(ICON.ai)}找同类</button><button class="dm-btn j-edit">${iconSpan(ICON.edit)}编辑</button><button class="dm-btn danger j-del">${iconSpan(ICON.del)}删除</button></div>
+  </div>`;
+}
+
+// ---------- 重温评分弹窗（ADR-0240） ----------
+
+/**
+ * 重温 +1 的二次打分弹窗（markup 单源；滑块联动 / 确定取消接线留 ui.ts）。
+ * **只有评分一项**——重温是高频快操作，不该退化成填表。预填**首评分**（多数情况下这一刷与首看
+ * 观感一致，拖一下就能提交），无首评分时回落 DEFAULT_RATING。
+ * 出口三条（ESC / 点遮罩 / 取消钮）**一律不落盘**：不打分即取消，这次 +1 完全不生效
+ * （`重看` 不追加、观影日期不刷新）。确定后分进该刷的 rating，界面评分随即按平均显示。
+ */
+export function rewatchRatingHtml(it: CinemaItem, nextBrush: number): string {
+  const init = it.rating && it.rating > 0 ? it.rating : DEFAULT_RATING;
+  return `<div class="cn-modal">
+    <div class="cn-modal-title">《${esc(it.name)}》第 ${nextBrush} 刷</div>
+    <div class="f-field"><span class="f-label">这次的评分</span>
+      <div class="f-range-row"><input type="range" class="f-range j-rr-range" min="1" max="10" step="0.1" value="${init}"><span class="f-range-val j-rr-val">${Number(init).toFixed(1)}</span><span class="f-stars j-rr-stars" data-lit="${starsLit(init)}">${starsHtml(init)}</span></div></div>
+    <div class="dm-actions"><button class="dm-btn gold j-rr-ok">记下这一刷</button><button class="dm-btn j-rr-cancel">取消</button></div>
   </div>`;
 }
 
@@ -327,7 +363,7 @@ export function seriesDetailModalHtml(card: SeriesCard, posterOf: (it: CinemaIte
       it.watchedDate ? `观影 ${esc(it.watchedDate.slice(0, 10))}` : '', // 同时间线口径：读已看日期，非排序用的观影日期（issue 536）
       it.seasonText ? esc(it.seasonText) : '', // 深审批 B #6：季集原文自带单位（「2季」），不再拼「 集」出「2季 集」叠字
     ].filter(Boolean).join(' · ');
-    const r = it.rating;
+    const r = avgRating(it); // 各季行同样显示平均评分（ADR-0240，与卡片/详情同一口径）
     return `<div class="s-row${cls}" data-cinema-season-key="${esc(itemKey(it))}">${thumb(it)}
       <div class="s-mid"><div class="s-name">${esc(it.name)}</div>${sub ? `<div class="s-sub">${sub}</div>` : ''}</div>
       ${it.rewatches.length ? `<span class="s-chip s-chip--re" role="img" aria-label="共看过 ${rewatchCount(it)} 刷">${rewatchCount(it)}刷</span>` : ''}

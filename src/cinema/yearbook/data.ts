@@ -8,7 +8,7 @@
  * 与 analysis 的旧口径无关：本层是新写的，字段解析在 data.ts parseMovieFile 之后。
  */
 import type { CinemaItem } from '../state';
-import { STATUS_WANT, STATUS_WATCHING, STATUS_WATCHED } from '../constants';
+import { STATUS_WANT, STATUS_WATCHING, STATUS_WATCHED, avgRating } from '../constants';
 
 /* ─────────── 类型 ─────────── */
 
@@ -262,22 +262,24 @@ export function deriveYb(items: CinemaItem[]): YbData {
   for (const it of watched) { const y = relYear(it), d = dayOf(it); if (y !== null && d) ageVals.push(Number(d.slice(0, 4)) - y); }
   const avgAge = ageVals.length ? (ageVals.reduce((s, a) => s + a, 0) / ageVals.length).toFixed(1) : '0';
 
-  /* 评分 */
-  const rated = items.filter((it) => it.status === STATUS_WATCHED && (it.rating ?? 0) > 0)
-    .sort((a, b) => (b.rating ?? 0) - (a.rating ?? 0) || byDate(a, b));
+  /* 评分（ADR-0240 决策 3：观影分析是平均评分下游——「我的评分」一律走 avgRating，
+   *  首评分 it.rating 只留作数据，不再直接进统计。myR：参与统计的分值（未评 → 0 档外） */
+  const myR = (it: CinemaItem): number => avgRating(it) ?? 0;
+  const rated = items.filter((it) => it.status === STATUS_WATCHED && avgRating(it) !== null)
+    .sort((a, b) => myR(b) - myR(a) || byDate(a, b));
   const myHist = Array<number>(11).fill(0), dbHist = Array<number>(11).fill(0);
-  for (const it of rated) myHist[Math.max(0, Math.min(10, Math.round(it.rating ?? 0)))]++;
+  for (const it of rated) myHist[Math.max(0, Math.min(10, Math.round(myR(it))))]++;
   const withDb = rated.filter((it) => it.doubanRating && Number.isFinite(parseFloat(it.doubanRating)));
   for (const it of withDb) dbHist[Math.max(0, Math.min(10, Math.round(parseFloat(it.doubanRating!))))]++;
-  const avgMine = rated.length ? rated.reduce((s, it) => s + (it.rating ?? 0), 0) / rated.length : 0;
+  const avgMine = rated.length ? rated.reduce((s, it) => s + myR(it), 0) / rated.length : 0;
   const avgDb = withDb.length ? withDb.reduce((s, it) => s + parseFloat(it.doubanRating!), 0) / withDb.length : 0;
-  const diffs: YbDiff[] = withDb.map((it) => ({ it, diff: (it.rating ?? 0) - parseFloat(it.doubanRating!) }))
+  const diffs: YbDiff[] = withDb.map((it) => ({ it, diff: myR(it) - parseFloat(it.doubanRating!) }))
     .sort((a, b) => b.diff - a.diff);
   const avgDiff = diffs.length ? diffs.reduce((s, d) => s + d.diff, 0) / diffs.length : 0;
   const treasure = diffs.filter((d) => d.diff >= 0.9).slice(0, 4).map((d) => d.it);
   const disappoint = diffs.filter((d) => d.diff <= -1.5).slice(-4).reverse().map((d) => d.it);
   const top3 = rated.slice(0, 3);
-  const nineUp = rated.filter((it) => (it.rating ?? 0) >= 9);
+  const nineUp = rated.filter((it) => myR(it) >= 9);
 
   /* 人 */
   const people = (field: 'director' | 'actors'): YbRank[] => {
@@ -310,15 +312,15 @@ export function deriveYb(items: CinemaItem[]): YbData {
   /* 文字（影评取有正文的；短评取 20~90 字，长了放不下） */
   const reviews: YbText[] = items.filter((it) => it.review && String(it.review).trim().length >= 8)
     .sort((a, b) => String(b.review).length - String(a.review).length)
-    .slice(0, 8).map((it) => ({ name: it.name, text: String(it.review).trim(), rating: it.rating }));
+    .slice(0, 8).map((it) => ({ name: it.name, text: String(it.review).trim(), rating: avgRating(it) }));
   const hotComments: YbText[] = items.filter((it) => it.hotComment && String(it.hotComment).trim().length >= 10)
-    .map((it) => ({ name: it.name, text: String(it.hotComment).trim(), rating: it.rating }))
+    .map((it) => ({ name: it.name, text: String(it.hotComment).trim(), rating: avgRating(it) }))
     .filter((c) => c.text.length <= 120).slice(0, 60);
 
   /* 散点 / 片龄点 / 共现对 / 单片片长（升级批） */
   const scatter: YbScatter[] = rated
     .filter((it) => !!dayOf(it))
-    .map((it) => ({ y: Number(dayOf(it)!.slice(0, 4)), r: it.rating ?? 0, it }))
+    .map((it) => ({ y: Number(dayOf(it)!.slice(0, 4)), r: myR(it), it }))
     .sort((a, b) => a.y - b.y);
   const ageDots: YbAgeDot[] = [];
   for (const it of watched) {

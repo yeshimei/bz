@@ -209,7 +209,7 @@ export default interface BzSettings {
   cinemaSortMode: string;
   /** 🎬 影院：默认状态筛选（空串=全部，其余为想看/在看/已看；非法值回落全部。issue 194） */
   cinemaStatusFilter: string;
-  /** 🎬 影院：剧集按季合并（同一部剧的各季在片库里合并成一张卡；issue 376 / ADR-0168）。
+  /** 🎬 影院：按季合并（同一部剧/纪录片的各季在片库里合并成一张卡；issue 376 / ADR-0168）。
    *  纯渲染层分组——不改笔记、不加存储，关掉即逐季一卡 */
   cinemaMergeSeasons: boolean;
   /** 面板风格（issue 236 / ADR-0103）：midnight/gazette/booth */

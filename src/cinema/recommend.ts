@@ -11,7 +11,7 @@ import { notice, notifySaveError } from '../core/notice';
 import { localNow } from '../core/ui/str';
 import { createAI } from '../core/ai';
 import { emitDomainEvent } from '../core/domain-bus';
-import { STATUS_WATCHED, hasIllegalNameChar, ILLEGAL_NAME_HINT } from './constants';
+import { STATUS_WATCHED, hasIllegalNameChar, ILLEGAL_NAME_HINT, avgRating } from './constants';
 import type { CinemaItem } from './state';
 import { M } from './state';
 import { refreshDataAndView } from './data';
@@ -26,10 +26,11 @@ const GROUP_DEFAULT_TAG: Record<string, string> = {
   公开课: '公开课',
 };
 
-/** 构建口味画像（加权：评分即权重；最近 10 部带影评摘要） */
+/** 构建口味画像（加权：评分即权重；最近 10 部带影评摘要）。
+ *  评分口径 ADR-0240 决策 3：推荐是「平均评分」下游，权重与提示词一律走平均，与界面显示一致 */
 export function buildTasteProfile(): any {
-  const watched = M.items.filter((i) => i.status === STATUS_WATCHED && i.rating !== null && i.rating > 0);
-  const weight = (i: CinemaItem) => i.rating as number;
+  const watched = M.items.filter((i) => i.status === STATUS_WATCHED && avgRating(i) !== null);
+  const weight = (i: CinemaItem) => avgRating(i) ?? 0;
 
   const topBy = (key: (i: CinemaItem) => string | null) => {
     const acc: Record<string, number> = {};
@@ -50,7 +51,7 @@ export function buildTasteProfile(): any {
       return db - da;
     })
     .slice(0, 10)
-    .map((i) => `${i.name}(${i.group},评分${i.rating}${i.review ? '，影评：' + i.review.slice(0, 60) : ''})`);
+    .map((i) => `${i.name}(${i.group},评分${avgRating(i) ?? '未评'}${i.review ? '，影评：' + i.review.slice(0, 60) : ''})`);
 
   return {
     total: watched.length,
@@ -315,9 +316,9 @@ export function runSimilarRecommend(item: CinemaItem, app: App): Promise<void> {
 
 /** 找同类提示词：以基准影片 + 已看库为输入，要求推荐未看过的同类佳作（输出结构与其他 AI 保持一致） */
 export function buildSimilarPrompt(item: CinemaItem, watched: CinemaItem[]): string {
-  const self = `片名《${item.name}》（${item.typeTag || '未知类型'}${item.rating !== null && item.rating > 0 ? `，我的评分 ${item.rating}` : ''}${item.review ? `，我的影评「${item.review.slice(0, 80)}」` : ''}${item.director ? `，导演 ${item.director}` : ''}）`;
+  const self = `片名《${item.name}》（${item.typeTag || '未知类型'}${avgRating(item) !== null ? `，我的评分 ${avgRating(item)?.toFixed(1)}` : ''}${item.review ? `，我的影评「${item.review.slice(0, 80)}」` : ''}${item.director ? `，导演 ${item.director}` : ''}）`;
   const list = watched
-    .map((i) => `${i.name}（${i.typeTag || ''}${i.rating !== null && i.rating > 0 ? `，评分${i.rating}` : ''}）`)
+    .map((i) => `${i.name}（${i.typeTag || ''}${avgRating(i) !== null ? `，评分${avgRating(i)?.toFixed(1)}` : ''}）`)
     .join('、');
   return `你是资深影视推荐官。以下是我的影视库里的「基准影片」和我「已看过的影片清单」。
 基准影片：${self}

@@ -28,9 +28,10 @@ import { syncSlidePills, type BzSlidePillTarget } from '../core/ui/slide-pill';
 import { iconSpan, esc, localNow } from '../core/ui/str';
 import { openExternalUrl, sleep } from '../core/utils';
 import { bindFormSubmit } from '../core/ui/modal';
+import { stripMdExt } from '../core/ui/str';
 import {
   STATUS_WANT, STATUS_WATCHING, STATUS_WATCHED, DEFAULT_RATING,
-  getGroupForTag, hasIllegalNameChar, ILLEGAL_NAME_HINT, rewatchCount, REWATCH_SHELF,
+  getGroupForTag, hasIllegalNameChar, ILLEGAL_NAME_HINT, rewatchCount, avgRating, REWATCH_SHELF,
 } from './constants';
 import { M, type CinemaItem, type CinemaSortMode } from './state';
 import { loadDoubanNameIndex, searchDoubanNameIndex, normName, type DoubanIndexRow } from '../core/douban-name-index';
@@ -42,7 +43,7 @@ import { normalizeListValue, insertPosterEmbed, type DoubanQuery } from './douba
 import { decideCinemaType } from './type-decide';
 import {
   ICON, statusText, statusNum, itemByKey, doubanSearchUrl, itemKey,
-  detailModalHtml, seriesDetailModalHtml, formModalHtml, formBackHtml,
+  detailModalHtml, seriesDetailModalHtml, formModalHtml, formBackHtml, rewatchRatingHtml,
   formTagChipHtml, formStChipHtml, type FormPreviewData,
   aiPageHtml, sheetHeadHtml, seriesSheetHeadHtml, cardHtml, facePiecesHtml, starsHtml, starsLit, seriesStatus, type AiPageInput,
   midnightDeskHtml, midnightMobHtml, renderMidnightDesk, renderMidnightMob,
@@ -119,32 +120,87 @@ async function markStatus(item: CinemaItem, target: '在看' | '已看', app: Ap
   }
 }
 
-/** 重温 +1：现在（日期+时刻）追加进 frontmatter「重看」（2026-09-30 拍板升级为时刻粒度，
- *  同日多刷各成一条可辨；旧 date-only 档照旧）。若影片在「重映厅」，重温即自动移出
- *  （候补架语义：重温了就该出来）——同一笔 processFrontMatter 里同步改「片单」键。
+/** 二次打分框（ADR-0240）：解析出分值才 resolve；取消 / ESC / 点遮罩一律 resolve(null)——
+ *  「不打分即取消」由调用方解释成「这次 +1 完全不生效」，盘上一个字都不写。
+ *  预填首评分（多数情况下这一刷与首看观感一致，拖一下就能提交）。
+ *  ESC 走 ovl 在 escManager 注册的那条 close，Promise 拿不到回调，故用 MutationObserver
+ *  观测节点被摘除当作取消出口（三个出口最终都落到 DOM 移除这一件事上，判定唯一）。 */
+function promptRewatchRating(sec: HTMLElement, it: CinemaItem, nextBrush: number): Promise<number | null> {
+  return new Promise((resolve) => {
+    const { el, close } = ovl(sec, rewatchRatingHtml(it, nextBrush));
+    const range = el.querySelector<HTMLInputElement>('.j-rr-range');
+    const val = el.querySelector<HTMLElement>('.j-rr-val');
+    const stars = el.querySelector<HTMLElement>('.j-rr-stars');
+    const sync = (v: number): void => {
+      if (val) val.textContent = v.toFixed(1);
+      if (stars) { stars.innerHTML = starsHtml(v); stars.dataset.lit = String(starsLit(v)); }
+    };
+    range?.addEventListener('input', () => sync(Number(range.value)));
+    let settled = false;
+    const settle = (v: number | null): void => { if (settled) return; settled = true; if (poll !== null) window.clearInterval(poll); resolve(v); };
+    /** 取消判定唯一落点 = 节点被摘除（ESC/遮罩/显式 close 三条路径都汇到 el.remove()）。
+     *  MutationObserver 为主；环境没有 MO 时退化成 250ms 轮询——保证 Promise 必然 settle，不悬挂 */
+    let poll: number | null = null;
+    const host = el.parentNode;
+    if (host && typeof MutationObserver === 'function') {
+      const mo = new MutationObserver(() => {
+        if (el.isConnected) return;
+        mo.disconnect();
+        settle(null);
+      });
+      mo.observe(host, { childList: true });
+    } else {
+      poll = window.setInterval(() => { if (!el.isConnected) settle(null); }, 250);
+    }
+    el.querySelector('.j-rr-ok')?.addEventListener('click', () => {
+      settle(range ? Number(range.value) : null);
+      close({ skipReturn: true });
+    });
+    el.querySelector('.j-rr-cancel')?.addEventListener('click', () => { settle(null); close({ skipReturn: true }); });
+  });
+}
+
+/** 重温 +1（ADR-0240）：**先弹二次打分框，确认才落盘**。
+ *  落盘三件事：追加一刷 `{at: now, rating}`、把「观影日期」刷成 now（排序戳 → 置顶）、
+ *  若影片在「重映厅」则移出（候补架语义：重温了就该出来）。
+ *  **「已看日期」一律不动**——它是真看过日，年书按它归档年份，跟着刷会把一部片算进两年。
+ *  界面评分随即改按平均显示（avgRating），首评分原样留在「评分」键里不被覆盖。
  *  内存先行——processFrontMatter 落盘后 metadataCache 就绪是异步的，紧跟的 renderAll
- *  要拿到新值（markStatus 同模式）；写盘失败回滚内存快照（重温数组 + 片单一起回）。 */
-async function markRewatch(it: CinemaItem, app: App): Promise<void> {
+ *  要拿到新值（markStatus 同模式）；写盘失败回滚内存快照（刷次 + 观影日期 + 片单一起回）。 */
+async function markRewatch(it: CinemaItem, app: App, sec: HTMLElement): Promise<void> {
   if (!it.file) return;
+  const nextBrush = rewatchCount(it) + 1;
+  const rating = await promptRewatchRating(sec, it, nextBrush);
+  if (rating === null) return; // 取消：什么都不发生（不 +1、不写盘、不刷排序戳）
   const now = localNow();
-  const prev = { rewatches: it.rewatches, lists: it.lists };
-  it.rewatches = [...prev.rewatches, now];
+  const prev = { rewatches: it.rewatches, watchDate: it.watchDate, lists: it.lists };
+  const fromAvg = avgRating(it);
+  it.rewatches = [...prev.rewatches, { at: now, rating }];
+  it.watchDate = now;
   const wasOnShelf = it.lists.includes(REWATCH_SHELF);
   if (wasOnShelf) it.lists = it.lists.filter((l) => l !== REWATCH_SHELF);
   try {
     await app.fileManager.processFrontMatter(it.file, (fm: Record<string, unknown>) => {
-      fm['重看'] = normalizeRewatches(fm['重看']).concat(now);
+      fm['重看'] = normalizeRewatches(fm['重看']).concat({ at: now, rating });
+      fm['观影日期'] = now; // 排序戳：重温即最近一次活动，按观影日期排序时顶到最前
       if (wasOnShelf) {
         const rest = normalizeLists(fm['片单']).filter((l) => l !== REWATCH_SHELF);
         if (rest.length) fm['片单'] = rest;
         else delete fm['片单'];
       }
     });
-    notice(`「${it.name}」记下第 ${rewatchCount(it)} 刷（${now.slice(0, 16)}）${wasOnShelf ? `，已移出「${REWATCH_SHELF}」` : ''}`, 'success');
+    const toAvg = avgRating(it);
+    notice(`「${it.name}」记下第 ${rewatchCount(it)} 刷（${now.slice(0, 16)}，本次 ${rating.toFixed(1)}${toAvg !== null ? `，均分 ${toAvg.toFixed(1)}` : ''}）${wasOnShelf ? `，已移出「${REWATCH_SHELF}」` : ''}`, 'success');
+    // 域事件与「改分」分开：这是「又刷了一遍」，不是「把分改了」（ADR-0240 决策 6）
+    emitDomainEvent('movie', {
+      kind: 'rerated', name: it.name, brushNo: rewatchCount(it),
+      rating, fromAvgRating: fromAvg, toAvgRating: toAvg,
+    });
     markCardFlash(itemKey(it));
     renderAll(app);
   } catch (e) {
     it.rewatches = prev.rewatches;
+    it.watchDate = prev.watchDate;
     it.lists = prev.lists;
     notifySaveError(e);
     console.error(e);
@@ -202,6 +258,53 @@ async function setListMembership(items: CinemaItem[], list: string, on: boolean,
 /** 单条目片单 toggle（调用点语义不变：入参条目当前不在 → 归入，在 → 移出） */
 async function toggleListMembership(it: CinemaItem, list: string, app: App): Promise<void> {
   await setListMembership([it], list, !it.lists.includes(list), app);
+}
+
+/** 手动归入/移出合集落盘（ADR-0241）：frontmatter「合集」写目标合并卡的归一名称，
+ *  target=null 时删键（不留空串）。内存先行 + 失败回滚（setListMembership 同模式）。
+ *  悬空声明（目标卡后来不成立）不在这里管——渲染层回落普通卡，不报错。 */
+async function setMergeInto(it: CinemaItem, target: string | null, app: App): Promise<void> {
+  if (!it.file || it.mergeInto === target) return;
+  const prev = it.mergeInto;
+  it.mergeInto = target;
+  try {
+    await app.fileManager.processFrontMatter(it.file, (fm: Record<string, unknown>) => {
+      if (target) fm['合集'] = target;
+      else delete fm['合集'];
+    });
+  } catch (e) {
+    it.mergeInto = prev;
+    notifySaveError(e);
+    console.error(e);
+    renderAll(app);
+    return;
+  }
+  notice(target ? `已把「${it.name}」归入合集「${target}」` : `已把「${it.name}」移出合集`, 'success');
+  markCardFlash(itemKey(it));
+  renderAll(app);
+}
+
+/** 归入合集弹层（ADR-0241）：列出库里现有合并卡（≥2 季的剧集/动漫/纪录片）供**单选**，
+ *  把前缀匹配不上的特别篇/外传手动挂到某张卡下。复用片单弹层的 .lp-* 形态（零新样式）。
+ *  无候选（库里还没任何 ≥2 季作品）→ 空态说明为什么挂不上，而不是给一个空弹层。 */
+function openSeriesPick(sec: HTMLElement, it: CinemaItem, app: App): void {
+  const cards = mergeSeasonCards(M.items, true).filter((c): c is SeriesCard => c.kind === 'series');
+  const rowHtml = (c: SeriesCard): string =>
+    `<button type="button" class="lp-item${it.mergeInto === c.name ? ' is-on' : ''}" data-sp="${esc(c.name)}"><span class="lp-check">${iconSpan('check')}</span><span class="lp-label">${esc(c.name)}</span><span class="lp-n">${c.seasons.length + c.specials.length}</span></button>`;
+  const url = posterUrl(it, app);
+  const { el, close } = ovl(sec, `<div class="cn-modal cn-modal--listpick">
+    <div class="lp-head"><div class="lp-poster">${url ? `<img src="${esc(url)}" onerror="this.remove()">` : ''}</div>
+      <div class="lp-head-txt"><span class="lp-kicker">归入合集</span><span class="lp-name">${esc(it.name)}</span></div></div>
+    <div class="lp-body" data-sp-body>${cards.map(rowHtml).join('') || '<div class="lp-empty">库里还没有合集——同一部作品至少两季才会成卡</div>'}</div>
+  </div>`);
+  mountIcons(el);
+  // 单选：点一行即落盘并关层（renderAll 在外层重建面板；弹层挂 ovHost，不随整刷换血）
+  el.querySelector<HTMLElement>('[data-sp-body]')?.addEventListener('click', (e) => {
+    const btn = (e.target as HTMLElement).closest('[data-sp]') as HTMLElement | null;
+    if (!btn) return;
+    void setMergeInto(it, btn.dataset.sp as string, app);
+    close();
+  });
 }
 
 /** 片单改名（归入弹层行尾铅笔钮，2026-09-30 拍板补改名途径）：全库扫含旧名的笔记
@@ -473,6 +576,15 @@ function listExitActs(items: CinemaItem[], app: App, who = ''): MenuAct[] {
     }));
 }
 
+/** 打开条目对应的笔记（右键出口）：跳 Obsidian 编辑器；vault 里定位不到时提示——
+ *  口径同 diary 的打开日记（openLinkText + stripMdExt）；未落盘条目（file 为空）直接跳过 */
+function openNoteFile(it: CinemaItem, app: App): void {
+  const path = it.file?.path;
+  if (!path) return;
+  if (!app.vault.getAbstractFileByPath(path)) { notice(`找不到笔记：${it.name}`, 'warning'); return; }
+  void app.workspace.openLinkText(stripMdExt(path), '', false, { active: true });
+}
+
 function itemActions(it: CinemaItem, sec: HTMLElement, app: App): MenuAct[] {
   const out: MenuAct[] = [{ icon: ICON.eye, label: '打开详情', run: () => openDetail(sec, it, app) }];
   if (it.status !== STATUS_WATCHING && it.status !== STATUS_WATCHED) {
@@ -483,7 +595,7 @@ function itemActions(it: CinemaItem, sec: HTMLElement, app: App): MenuAct[] {
     out.push({ icon: 'check', label: '标记已看', run: () => openForm(sec, it, app, '已看') });
   } else {
     // 重温只对已看成立（想看/在看没有「再来一遍」语义）；当前时刻入列 frontmatter「重看」
-    out.push({ icon: ICON.repeat, label: '重温 +1', run: () => void markRewatch(it, app) });
+    out.push({ icon: ICON.repeat, label: '重温 +1', run: () => void markRewatch(it, app, sec) });
     // 重温候补架（内置片单，不动三状态机）：看过想再看的归堆，侧栏「重映厅」直达
     out.push({
       icon: ICON.shelf,
@@ -494,8 +606,17 @@ function itemActions(it: CinemaItem, sec: HTMLElement, app: App): MenuAct[] {
   out.push({ icon: ICON.listPlus, label: '归入片单…', run: () => openListPick(sec, [it], app, { name: it.name, face: it }) });
   // 已在的片单各出一条「移出<片单名>」（issue 535）；无归属时零条，不占位
   out.push(...listExitActs([it], app));
+  // 手动归入合集（ADR-0241）：前缀匹配不上的特别篇/外传手动挂到同名合并卡下。
+  // 合集是**单归属**，故两条互斥、按状态只出一条（互斥动作不并列）：
+  // 未并入 → 「归入合集…」；已并入 → 「移出合集「X」」（改挂别的先移出再归入）
+  if (it.mergeInto) {
+    out.push({ icon: ICON.merge, label: `移出合集「${it.mergeInto}」`, run: () => void setMergeInto(it, null, app) });
+  } else {
+    out.push({ icon: ICON.merge, label: '归入合集…', run: () => openSeriesPick(sec, it, app) });
+  }
   out.push(
     { icon: ICON.ai, label: '找同类', run: () => void runSimilarRecommend(it, app) },
+    { icon: ICON.note, label: '打开笔记', run: () => openNoteFile(it, app) },
     { icon: ICON.globe, label: '在豆瓣打开', run: () => openDouban(it) },
     { icon: ICON.edit, label: '编辑', run: () => openForm(sec, it, app) },
     { icon: ICON.del, label: '删除', danger: true, run: () => openConfirm(it, app) },
@@ -607,8 +728,10 @@ export function openAddModalDirect(app: App): void {
 
 // ---------- 面板标题 ----------
 
-/** 列表标题 = 筛选名（片单 + 组 + 状态叠加；全空回落「全部」） */
+/** 列表标题 = 筛选名（片单 + 组 + 状态叠加；全空回落「全部」）。
+ *  搜索态改显 `搜索·<词>`——搜索走全库、筛选已被清，若还报「全部」就是骗人 */
 function listTitle(): string {
+  if (M.searchKeyword) return `搜索·${M.searchKeyword}`;
   const parts = [
     M.listFilter ? `片单·${M.listFilter}` : '',
     M.typeFilter || '',
@@ -1070,7 +1193,7 @@ function openDetail(sec: HTMLElement, it: CinemaItem, app: App, opts: { from?: H
   el.querySelector('.j-similar')?.addEventListener('click', () => { close({ skipReturn: true }); void runSimilarRecommend(it, app); });
   // 重温 +1：关弹窗走面板级动作（同上面三钮语义——动作后 N 刷徽标/角标由整刷带新），
   // skipReturn 跳过返程动效，卡片闪一下 + toast 就是落点
-  el.querySelector('.j-rewatch')?.addEventListener('click', () => { close({ skipReturn: true }); void markRewatch(it, app); });
+  el.querySelector('.j-rewatch')?.addEventListener('click', () => { close({ skipReturn: true }); void markRewatch(it, app, sec); });
   // 热门短评展开/收起（纯层对超阈值长评打 .is-fold 收 3 行；短评无按钮）
   const foldBtn = el.querySelector<HTMLElement>('[data-dm-fold]');
   const quote = el.querySelector<HTMLElement>('[data-dm-quote]');
@@ -2086,7 +2209,7 @@ async function saveNew(p: FormPayload, app: App, form: FormHandle): Promise<void
   const group = getGroupForTag(p.tag) ?? '其他';
   const st = statusNum(p.st);
   const today = localNow().slice(0, 10);
-  const it: CinemaItem = { file: null, name: p.name, typeTag: p.tag, group, status: st, rating: p.rating, watchDate: p.date, wantDate: st === STATUS_WANT ? today : null, watchingDate: st === STATUS_WATCHING ? today : null, watchedDate: st === STATUS_WATCHED ? today : null, rewatches: [], lists: [], shelvedOnly: false, review: p.review, poster: null, genre: null, director: null, actors: null, region: null, year: null, releaseDate: null, doubanRating: null, doubanUrl: null, synopsis: null, duration: null, seasonText: null, hotComment: null };
+  const it: CinemaItem = { file: null, name: p.name, typeTag: p.tag, group, status: st, rating: p.rating, watchDate: p.date, wantDate: st === STATUS_WANT ? today : null, watchingDate: st === STATUS_WATCHING ? today : null, watchedDate: st === STATUS_WATCHED ? today : null, rewatches: [], lists: [], shelvedOnly: false, review: p.review, poster: null, genre: null, director: null, actors: null, region: null, year: null, releaseDate: null, doubanRating: null, doubanUrl: null, synopsis: null, duration: null, seasonText: null, hotComment: null, mergeInto: null };
   try {
     if (app.vault.getAbstractFileByPath(`${M.folderPath}/《${p.name}》.md`)) {
       notice(DUP_NAME_HINT_FULL, 'warning');
@@ -2286,6 +2409,13 @@ function onSearchInput(app: App, sec: HTMLElement, isMob: boolean, raw: string):
   M.searchDebounceTimer = setTimeout(() => {
     M.searchKeyword = raw.trim();
     M.view = 'list';
+    // 搜索 = 全局搜（2026-10-05 拍板）：进搜索即清类型/状态/片单筛选——否则下拉还亮着
+    // 「电影」、结果里却出现剧集，状态不一致。清空搜索词后回落全库列表，不恢复旧筛选。
+    if (M.searchKeyword) {
+      M.typeFilter = null;
+      M.statusFilter = null;
+      M.listFilter = null;
+    }
     if (isMob) {
       renderAll(app);
       const el = sec.querySelector('.j-mq') as HTMLInputElement | null;
@@ -2491,7 +2621,7 @@ function bindMidnight(sec: HTMLElement, app: App): void {
       // （与 clearSearchKeyword 的清词段对齐；框值/状态词清空口径不变）
       if (M.searchDebounceTimer) clearTimeout(M.searchDebounceTimer);
       M.searchDebounceTimer = null;
-      M.typeFilter = null; M.statusFilter = null; M.searchKeyword = '';
+      M.typeFilter = null; M.statusFilter = null; M.listFilter = null; M.searchKeyword = '';
       // 效率#12 全域口径：✕ 点击 = 框值同清 + ✕ 即隐（mob 框常驻不随 renderAll 重建）
       const inp = clear.closest('label')?.querySelector('input') as HTMLInputElement | null;
       if (inp) inp.value = '';
