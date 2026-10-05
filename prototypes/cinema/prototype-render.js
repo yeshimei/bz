@@ -1,4 +1,4 @@
-/* 源指纹 6437dfcb702818cf · 仓内输入 6 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 9625a1493178b6b6 · 仓内输入 6 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["src/cinema/constants.ts","src/cinema/layouts/midnight/render.ts","src/cinema/render.ts","src/cinema/seasons.ts","src/cinema/shared.ts","src/core/ui/str.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — src/cinema/render.ts → window.BZR_cinema（评审壳预览包，ADR-0104） */
 var BZR_cinema = (() => {
@@ -52,6 +52,7 @@ var BZR_cinema = (() => {
     railHtml: () => railHtml,
     renderMidnightDesk: () => renderMidnightDesk,
     renderMidnightMob: () => renderMidnightMob,
+    rewatchRatingHtml: () => rewatchRatingHtml,
     seasonDotsHtml: () => seasonDotsHtml,
     seasonSegState: () => seasonSegState,
     seriesCountsText: () => seriesCountsText,
@@ -88,7 +89,17 @@ var BZR_cinema = (() => {
   function rewatchCount(it) {
     return 1 + it.rewatches.length;
   }
+  function avgRating(it) {
+    const vals = [];
+    if (typeof it.rating === "number" && it.rating > 0) vals.push(it.rating);
+    for (const r of it.rewatches) {
+      if (typeof r.rating === "number" && r.rating > 0) vals.push(r.rating);
+    }
+    if (!vals.length) return null;
+    return Math.round(vals.reduce((a, b) => a + b, 0) / vals.length * 10) / 10;
+  }
   var REWATCH_SHELF = "重映厅";
+  var DEFAULT_RATING = 5;
   var ILLEGAL_NAME_CHARS = '\\\\/:*?"<>|';
   var ILLEGAL_NAME_RE = new RegExp(`[${ILLEGAL_NAME_CHARS}]`);
   var ILLEGAL_NAME_RE_GLOBAL = new RegExp(`[${ILLEGAL_NAME_CHARS}]`, "g");
@@ -162,7 +173,9 @@ var BZR_cinema = (() => {
     repeat: "rotate-ccw",
     shelf: "bookmark",
     listPlus: "list-plus",
-    import: "download"
+    import: "download",
+    note: "file-text",
+    merge: "combine"
   };
   function typeColor(group) {
     var _a;
@@ -223,7 +236,7 @@ var BZR_cinema = (() => {
   }
   function facePiecesHtml(it, posterUrl, opts = {}) {
     var _a;
-    const r = opts.rating !== void 0 ? opts.rating : it.rating;
+    const r = opts.rating !== void 0 ? opts.rating : avgRating(it);
     return {
       poster: posterInner(it, posterUrl),
       name: esc((_a = opts.name) != null ? _a : it.name),
@@ -284,11 +297,21 @@ var BZR_cinema = (() => {
     const nodes = [];
     if (wantD) nodes.push({ d: wantD, tag: "想看" });
     if (watchingD) nodes.push({ d: watchingD, tag: "在看" });
-    if (firstDate) nodes.push({ d: firstDate, tag: rewatched ? "首看" : "已看", first: true });
-    for (const r of [...it.rewatches].sort()) nodes.push({ d: r.slice(0, 16), tag: "" });
+    if (firstDate) {
+      nodes.push({
+        d: firstDate,
+        tag: rewatched ? "首看" : "已看",
+        score: it.rating && it.rating > 0 ? it.rating.toFixed(1) : "",
+        first: true
+      });
+    }
+    for (const r of [...it.rewatches].sort((a, b) => a.at.localeCompare(b.at))) {
+      nodes.push({ d: r.at.slice(0, 16), tag: "", score: r.rating && r.rating > 0 ? r.rating.toFixed(1) : "" });
+    }
     nodes.sort((a, b) => a.d.localeCompare(b.d));
-    const timeline = nodes.length ? `<div class="dm-tl">${nodes.map((n) => `<div class="dm-tl-row${n.first ? " is-first" : ""}"><i></i><span class="d">${esc(n.d)}</span>${n.tag ? `<span class="tag">${esc(n.tag)}</span>` : ""}</div>`).join("")}</div>` : "";
+    const timeline = nodes.length ? `<div class="dm-tl">${nodes.map((n) => `<div class="dm-tl-row${n.first ? " is-first" : ""}"><i></i><span class="d">${esc(n.d)}</span>${n.tag ? `<span class="tag">${esc(n.tag)}</span>` : ""}${n.score ? `<span class="tag">${esc(n.score)}</span>` : ""}</div>`).join("")}</div>` : "";
     const listChips = [...it.lists].sort((a, b) => a === REWATCH_SHELF ? -1 : b === REWATCH_SHELF ? 1 : 0).map((l) => `<span class="dm-chip dm-chip--shelf">${esc(l)}</span>`).join("");
+    const avg = avgRating(it);
     return `<div class="cn-modal cn-modal--detail">
     <div class="dm-head"><div class="dm-poster">${posterUrl ? `<img src="${esc(posterUrl)}" onerror="this.remove()">` : ""}</div>
       <div style="flex:1;min-width:0"><div class="dm-title">${esc(it.name)}</div>
@@ -299,7 +322,7 @@ var BZR_cinema = (() => {
     })()}
           ${rewatched ? `<span class="dm-chip dm-chip--re">${rewatchCount(it)} 刷</span>` : ""}
           ${listChips}
-          ${it.rating && it.rating > 0 ? `<span class="dm-stars">${getStarString(it.rating)}</span><span class="dm-rating">${Number(it.rating).toFixed(1)}</span>` : ""}</div>
+          ${avg && avg > 0 ? `<span class="dm-stars">${getStarString(avg)}</span><span class="dm-rating">${avg.toFixed(1)}</span>` : ""}</div>
         ${it.review ? `<div class="dm-review">${esc(it.review)}</div>` : ""}
         ${timeline}</div></div>
     ${rows.length ? '<div class="dm-sec">豆 瓣 信 息</div>' + rows.map(([k, v]) => `<div class="dm-kv"><span class="dm-kv-k">${k}</span><span class="dm-kv-v">${esc(v)}</span></div>`).join("") : ""}
@@ -307,6 +330,15 @@ var BZR_cinema = (() => {
     ${hot ? `<div class="dm-sec">热 门 短 评</div><div class="dm-quote${hotFold ? " is-fold" : ""}" data-dm-quote>${esc(hot)}</div>${hotFold ? `<button type="button" class="dm-fold j-quote-fold" data-dm-fold>展开全文（${hot.length} 字）</button>` : ""}` : ""}
     ${it.synopsis ? `<div class="dm-sec">简 介</div><div class="dm-synopsis">${esc(it.synopsis)}</div>` : ""}
     <div class="dm-actions">${statusNum(it.status) === STATUS_WATCHED ? `<button class="dm-btn j-rewatch">${iconSpan(ICON.repeat)}重温 +1</button>` : ""}<button class="dm-btn j-similar">${iconSpan(ICON.ai)}找同类</button><button class="dm-btn j-edit">${iconSpan(ICON.edit)}编辑</button><button class="dm-btn danger j-del">${iconSpan(ICON.del)}删除</button></div>
+  </div>`;
+  }
+  function rewatchRatingHtml(it, nextBrush) {
+    const init = it.rating && it.rating > 0 ? it.rating : DEFAULT_RATING;
+    return `<div class="cn-modal">
+    <div class="cn-modal-title">《${esc(it.name)}》第 ${nextBrush} 刷</div>
+    <div class="f-field"><span class="f-label">这次的评分</span>
+      <div class="f-range-row"><input type="range" class="f-range j-rr-range" min="1" max="10" step="0.1" value="${init}"><span class="f-range-val j-rr-val">${Number(init).toFixed(1)}</span><span class="f-stars j-rr-stars" data-lit="${starsLit(init)}">${starsHtml(init)}</span></div></div>
+    <div class="dm-actions"><button class="dm-btn gold j-rr-ok">记下这一刷</button><button class="dm-btn j-rr-cancel">取消</button></div>
   </div>`;
   }
   function seriesCountsText(card) {
@@ -338,7 +370,7 @@ var BZR_cinema = (() => {
         it.seasonText ? esc(it.seasonText) : ""
         // 深审批 B #6：季集原文自带单位（「2季」），不再拼「 集」出「2季 集」叠字
       ].filter(Boolean).join(" · ");
-      const r = it.rating;
+      const r = avgRating(it);
       return `<div class="s-row${cls}" data-cinema-season-key="${esc(itemKey(it))}">${thumb(it)}
       <div class="s-mid"><div class="s-name">${esc(it.name)}</div>${sub ? `<div class="s-sub">${sub}</div>` : ""}</div>
       ${it.rewatches.length ? `<span class="s-chip s-chip--re" role="img" aria-label="共看过 ${rewatchCount(it)} 刷">${rewatchCount(it)}刷</span>` : ""}

@@ -1,4 +1,4 @@
-/* 源指纹 c477a8ef158d8bf4 · 仓内输入 79 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 089d7bddbdfab6a3 · 仓内输入 79 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/cinema/fake-sim.ts","prototypes/cinema/fake/fake-obsidian.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/douban-fetcher.ts","src/cinema/douban-queue.ts","src/cinema/index.ts","src/cinema/layouts/midnight/render.ts","src/cinema/motion.ts","src/cinema/recommend.ts","src/cinema/render.ts","src/cinema/seasons.ts","src/cinema/shared.ts","src/cinema/state.ts","src/cinema/type-decide.ts","src/cinema/ui.ts","src/cinema/yearbook/data.ts","src/cinema/yearbook/engine.ts","src/cinema/yearbook/index.ts","src/cinema/yearbook/kits.ts","src/cinema/yearbook/motions.ts","src/cinema/yearbook/scenes.ts","src/core/ai.ts","src/core/app.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/douban-name-index.ts","src/core/download-manifest.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/gesture.ts","src/core/http.ts","src/core/item-actions.ts","src/core/jev-fallback.ts","src/core/jev.ts","src/core/landscape.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/remote-asset.ts","src/core/remote-base.ts","src/core/settings-provider.ts","src/core/sha256.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/help-tip.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slide-pill.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/cinema/fake-sim.ts → window.BZW_cinema（行为单源预览包，issue 245/ADR-0106） */
 var BZW_cinema = (() => {
@@ -5327,6 +5327,15 @@ var BZW_cinema = (() => {
   function rewatchCount(it) {
     return 1 + it.rewatches.length;
   }
+  function avgRating(it) {
+    const vals = [];
+    if (typeof it.rating === "number" && it.rating > 0) vals.push(it.rating);
+    for (const r of it.rewatches) {
+      if (typeof r.rating === "number" && r.rating > 0) vals.push(r.rating);
+    }
+    if (!vals.length) return null;
+    return Math.round(vals.reduce((a, b) => a + b, 0) / vals.length * 10) / 10;
+  }
   var REWATCH_SHELF = "重映厅";
   var DEFAULT_RATING = 5;
   var ILLEGAL_NAME_CHARS = '\\\\/:*?"<>|';
@@ -6274,7 +6283,7 @@ var BZW_cinema = (() => {
   }
 
   // src/cinema/seasons.ts
-  var MERGE_GROUPS = ["剧集", "动漫"];
+  var MERGE_GROUPS = ["剧集", "动漫", "纪录片"];
   var CN_NUM = { 零: 0, 一: 1, 二: 2, 三: 3, 四: 4, 五: 5, 六: 6, 七: 7, 八: 8, 九: 9 };
   function seasonNumber(raw) {
     if (/^\d+$/.test(raw)) return Number(raw);
@@ -6324,7 +6333,8 @@ var BZW_cinema = (() => {
   }
   function watchTs(it) {
     if (!it.watchDate) return 0;
-    const t = new Date(it.watchDate).getTime();
+    const raw = it.watchDate.trim();
+    const t = new Date(/\d{1,2}:\d{2}/.test(raw) ? raw : `${raw}T00:00:00`).getTime();
     return Number.isNaN(t) ? 0 : t;
   }
   function pickFace(slots) {
@@ -6337,9 +6347,12 @@ var BZW_cinema = (() => {
     return best.item;
   }
   function latestRated(items) {
-    const rated = items.filter((it) => it.rating != null && it.rating > 0);
+    const rated = items.filter((it) => {
+      var _a;
+      return ((_a = avgRating(it)) != null ? _a : 0) > 0;
+    });
     if (!rated.length) return null;
-    return rated.reduce((best, it) => watchTs(it) >= watchTs(best) ? it : best, rated[0]).rating;
+    return avgRating(rated.reduce((best, it) => watchTs(it) >= watchTs(best) ? it : best, rated[0]));
   }
   function specialHostOf(name, cards) {
     let hit = null;
@@ -6355,6 +6368,7 @@ var BZW_cinema = (() => {
     return hit;
   }
   function mergeSeasonCards(list, merge) {
+    var _a;
     if (!merge) return list.map((item) => ({ kind: "single", item }));
     const grouped = /* @__PURE__ */ new Map();
     for (const it of list) {
@@ -6386,10 +6400,11 @@ var BZW_cinema = (() => {
       });
     }
     const cards = [...merged.values()];
+    const byName = new Map(cards.map((c) => [c.name, c]));
     const absorbed = /* @__PURE__ */ new Set();
     for (const it of list) {
       if (MERGE_GROUPS.includes(it.group) && parseSeasonName(it.name)) continue;
-      const host = specialHostOf(it.name, cards);
+      const host = it.mergeInto ? (_a = byName.get(it.mergeInto)) != null ? _a : null : specialHostOf(it.name, cards);
       if (!host) continue;
       host.specials.push(it);
       absorbed.add(it);
@@ -6435,7 +6450,9 @@ var BZW_cinema = (() => {
     repeat: "rotate-ccw",
     shelf: "bookmark",
     listPlus: "list-plus",
-    import: "download"
+    import: "download",
+    note: "file-text",
+    merge: "combine"
   };
   function typeColor(group) {
     var _a;
@@ -6496,7 +6513,7 @@ var BZW_cinema = (() => {
   }
   function facePiecesHtml(it, posterUrl2, opts = {}) {
     var _a;
-    const r = opts.rating !== void 0 ? opts.rating : it.rating;
+    const r = opts.rating !== void 0 ? opts.rating : avgRating(it);
     return {
       poster: posterInner(it, posterUrl2),
       name: esc((_a = opts.name) != null ? _a : it.name),
@@ -6554,11 +6571,21 @@ var BZW_cinema = (() => {
     const nodes = [];
     if (wantD) nodes.push({ d: wantD, tag: "想看" });
     if (watchingD) nodes.push({ d: watchingD, tag: "在看" });
-    if (firstDate) nodes.push({ d: firstDate, tag: rewatched ? "首看" : "已看", first: true });
-    for (const r of [...it.rewatches].sort()) nodes.push({ d: r.slice(0, 16), tag: "" });
+    if (firstDate) {
+      nodes.push({
+        d: firstDate,
+        tag: rewatched ? "首看" : "已看",
+        score: it.rating && it.rating > 0 ? it.rating.toFixed(1) : "",
+        first: true
+      });
+    }
+    for (const r of [...it.rewatches].sort((a, b) => a.at.localeCompare(b.at))) {
+      nodes.push({ d: r.at.slice(0, 16), tag: "", score: r.rating && r.rating > 0 ? r.rating.toFixed(1) : "" });
+    }
     nodes.sort((a, b) => a.d.localeCompare(b.d));
-    const timeline = nodes.length ? `<div class="dm-tl">${nodes.map((n) => `<div class="dm-tl-row${n.first ? " is-first" : ""}"><i></i><span class="d">${esc(n.d)}</span>${n.tag ? `<span class="tag">${esc(n.tag)}</span>` : ""}</div>`).join("")}</div>` : "";
+    const timeline = nodes.length ? `<div class="dm-tl">${nodes.map((n) => `<div class="dm-tl-row${n.first ? " is-first" : ""}"><i></i><span class="d">${esc(n.d)}</span>${n.tag ? `<span class="tag">${esc(n.tag)}</span>` : ""}${n.score ? `<span class="tag">${esc(n.score)}</span>` : ""}</div>`).join("")}</div>` : "";
     const listChips = [...it.lists].sort((a, b) => a === REWATCH_SHELF ? -1 : b === REWATCH_SHELF ? 1 : 0).map((l) => `<span class="dm-chip dm-chip--shelf">${esc(l)}</span>`).join("");
+    const avg = avgRating(it);
     return `<div class="cn-modal cn-modal--detail">
     <div class="dm-head"><div class="dm-poster">${posterUrl2 ? `<img src="${esc(posterUrl2)}" onerror="this.remove()">` : ""}</div>
       <div style="flex:1;min-width:0"><div class="dm-title">${esc(it.name)}</div>
@@ -6569,7 +6596,7 @@ var BZW_cinema = (() => {
     })()}
           ${rewatched ? `<span class="dm-chip dm-chip--re">${rewatchCount(it)} 刷</span>` : ""}
           ${listChips}
-          ${it.rating && it.rating > 0 ? `<span class="dm-stars">${getStarString(it.rating)}</span><span class="dm-rating">${Number(it.rating).toFixed(1)}</span>` : ""}</div>
+          ${avg && avg > 0 ? `<span class="dm-stars">${getStarString(avg)}</span><span class="dm-rating">${avg.toFixed(1)}</span>` : ""}</div>
         ${it.review ? `<div class="dm-review">${esc(it.review)}</div>` : ""}
         ${timeline}</div></div>
     ${rows.length ? '<div class="dm-sec">豆 瓣 信 息</div>' + rows.map(([k, v]) => `<div class="dm-kv"><span class="dm-kv-k">${k}</span><span class="dm-kv-v">${esc(v)}</span></div>`).join("") : ""}
@@ -6577,6 +6604,15 @@ var BZW_cinema = (() => {
     ${hot ? `<div class="dm-sec">热 门 短 评</div><div class="dm-quote${hotFold ? " is-fold" : ""}" data-dm-quote>${esc(hot)}</div>${hotFold ? `<button type="button" class="dm-fold j-quote-fold" data-dm-fold>展开全文（${hot.length} 字）</button>` : ""}` : ""}
     ${it.synopsis ? `<div class="dm-sec">简 介</div><div class="dm-synopsis">${esc(it.synopsis)}</div>` : ""}
     <div class="dm-actions">${statusNum(it.status) === STATUS_WATCHED ? `<button class="dm-btn j-rewatch">${iconSpan(ICON.repeat)}重温 +1</button>` : ""}<button class="dm-btn j-similar">${iconSpan(ICON.ai)}找同类</button><button class="dm-btn j-edit">${iconSpan(ICON.edit)}编辑</button><button class="dm-btn danger j-del">${iconSpan(ICON.del)}删除</button></div>
+  </div>`;
+  }
+  function rewatchRatingHtml(it, nextBrush) {
+    const init = it.rating && it.rating > 0 ? it.rating : DEFAULT_RATING;
+    return `<div class="cn-modal">
+    <div class="cn-modal-title">《${esc(it.name)}》第 ${nextBrush} 刷</div>
+    <div class="f-field"><span class="f-label">这次的评分</span>
+      <div class="f-range-row"><input type="range" class="f-range j-rr-range" min="1" max="10" step="0.1" value="${init}"><span class="f-range-val j-rr-val">${Number(init).toFixed(1)}</span><span class="f-stars j-rr-stars" data-lit="${starsLit(init)}">${starsHtml(init)}</span></div></div>
+    <div class="dm-actions"><button class="dm-btn gold j-rr-ok">记下这一刷</button><button class="dm-btn j-rr-cancel">取消</button></div>
   </div>`;
   }
   function seriesCountsText(card) {
@@ -6608,7 +6644,7 @@ var BZW_cinema = (() => {
         it.seasonText ? esc(it.seasonText) : ""
         // 深审批 B #6：季集原文自带单位（「2季」），不再拼「 集」出「2季 集」叠字
       ].filter(Boolean).join(" · ");
-      const r = it.rating;
+      const r = avgRating(it);
       return `<div class="s-row${cls}" data-cinema-season-key="${esc(itemKey(it))}">${thumb(it)}
       <div class="s-mid"><div class="s-name">${esc(it.name)}</div>${sub ? `<div class="s-sub">${sub}</div>` : ""}</div>
       ${it.rewatches.length ? `<span class="s-chip s-chip--re" role="img" aria-label="共看过 ${rewatchCount(it)} 刷">${rewatchCount(it)}刷</span>` : ""}
@@ -6790,7 +6826,23 @@ var BZW_cinema = (() => {
     return [];
   }
   function normalizeRewatches(raw) {
-    return normalizeTags(raw).filter(Boolean);
+    var _a;
+    const list = Array.isArray(raw) ? raw : typeof raw === "string" && raw ? [raw] : [];
+    const out = [];
+    for (const v of list) {
+      if (typeof v === "string") {
+        if (v) out.push({ at: v, rating: null });
+        continue;
+      }
+      if (!v || typeof v !== "object") continue;
+      const o = v;
+      const at2 = typeof o.at === "string" ? o.at : String((_a = o.at) != null ? _a : "");
+      if (!at2) continue;
+      const n = Number(o.rating);
+      const rating = o.rating === void 0 || o.rating === null || o.rating === "" || Number.isNaN(n) ? null : n;
+      out.push({ at: at2, rating });
+    }
+    return out;
   }
   function normalizeLists(raw) {
     return normalizeTags(raw).filter(Boolean);
@@ -6803,7 +6855,7 @@ var BZW_cinema = (() => {
     return count.has(REWATCH_SHELF) ? [REWATCH_SHELF, ...rest] : rest;
   }
   function parseMovieFile(file, app) {
-    var _a, _b, _c, _d, _e, _f, _g, _h, _i, _j, _k, _l, _m, _n, _o, _p, _q, _r, _s, _t, _u, _v, _w, _x, _y, _z, _A, _B, _C;
+    var _a, _b, _c, _d, _e, _f, _g, _h, _i, _j, _k, _l, _m, _n, _o, _p, _q, _r, _s, _t, _u, _v, _w, _x, _y, _z, _A, _B, _C, _D;
     const cache = app.metadataCache.getFileCache(file);
     if (!cache || !cache.frontmatter) return null;
     const fm = cache.frontmatter;
@@ -6842,21 +6894,22 @@ var BZW_cinema = (() => {
       rewatches: normalizeRewatches(fm["重看"]),
       lists: normalizeLists(fm["片单"]),
       shelvedOnly: fm["片单收纳"] === true,
-      poster: (_j = (_i = fm["海报"]) == null ? void 0 : _i.toString()) != null ? _j : null,
-      review: (_l = (_k = fm["影评"]) == null ? void 0 : _k.toString()) != null ? _l : null,
-      genre: (_n = (_m = fm["类型"]) == null ? void 0 : _m.toString()) != null ? _n : null,
-      director: (_p = (_o = fm["导演"]) == null ? void 0 : _o.toString()) != null ? _p : null,
-      actors: (_r = (_q = fm["主演"]) == null ? void 0 : _q.toString()) != null ? _r : null,
-      region: (_t = (_s = fm["制片国家/地区"]) == null ? void 0 : _s.toString()) != null ? _t : null,
+      mergeInto: ((_i = fm["合集"]) == null ? void 0 : _i.toString().trim()) || null,
+      poster: (_k = (_j = fm["海报"]) == null ? void 0 : _j.toString()) != null ? _k : null,
+      review: (_m = (_l = fm["影评"]) == null ? void 0 : _l.toString()) != null ? _m : null,
+      genre: (_o = (_n = fm["类型"]) == null ? void 0 : _n.toString()) != null ? _o : null,
+      director: (_q = (_p = fm["导演"]) == null ? void 0 : _p.toString()) != null ? _q : null,
+      actors: (_s = (_r = fm["主演"]) == null ? void 0 : _r.toString()) != null ? _s : null,
+      region: (_u = (_t = fm["制片国家/地区"]) == null ? void 0 : _t.toString()) != null ? _u : null,
       year: fm["上映日期"] ? String(fm["上映日期"]).slice(0, 4) : null,
       releaseDate: fm["上映日期"] ? String(fm["上映日期"]) : null,
       doubanRating: fm["豆瓣评分"] !== void 0 && fm["豆瓣评分"] !== "" ? String(fm["豆瓣评分"]) : null,
-      doubanUrl: /^https?:\/\//.test(String((_u = fm["豆瓣链接"]) != null ? _u : "")) ? String(fm["豆瓣链接"]) : null,
-      synopsis: (_w = (_v = fm["简介"]) == null ? void 0 : _v.toString()) != null ? _w : null,
+      doubanUrl: /^https?:\/\//.test(String((_v = fm["豆瓣链接"]) != null ? _v : "")) ? String(fm["豆瓣链接"]) : null,
+      synopsis: (_x = (_w = fm["简介"]) == null ? void 0 : _w.toString()) != null ? _x : null,
       // 片长/季集：原独立观影报告的两项统计源字段（ADR-0090 并入内嵌分析页）
-      duration: (_y = (_x = fm["片长"]) == null ? void 0 : _x.toString()) != null ? _y : null,
-      seasonText: (_A = (_z = fm["季集"]) == null ? void 0 : _z.toString()) != null ? _A : null,
-      hotComment: (_C = (_B = fm["热门短评"]) == null ? void 0 : _B.toString()) != null ? _C : null
+      duration: (_z = (_y = fm["片长"]) == null ? void 0 : _y.toString()) != null ? _z : null,
+      seasonText: (_B = (_A = fm["季集"]) == null ? void 0 : _A.toString()) != null ? _B : null,
+      hotComment: (_D = (_C = fm["热门短评"]) == null ? void 0 : _C.toString()) != null ? _D : null
     };
   }
   function findPosterRenameTargets(app, oldPath) {
@@ -6897,7 +6950,8 @@ var BZW_cinema = (() => {
   }
   function dateVal(it) {
     if (!it.watchDate) return 0;
-    const t = new Date(it.watchDate).getTime();
+    const raw = it.watchDate.trim();
+    const t = new Date(/\d{1,2}:\d{2}/.test(raw) ? raw : `${raw}T00:00:00`).getTime();
     return isNaN(t) ? 0 : t;
   }
   function sortByDateDesc(list) {
@@ -6913,8 +6967,9 @@ var BZW_cinema = (() => {
   }
   function sortByRatingDesc(list) {
     return [...list].sort((a, b) => {
-      const ar = a.rating && a.rating > 0 ? a.rating : -1;
-      const br = b.rating && b.rating > 0 ? b.rating : -1;
+      var _a, _b;
+      const ar = (_a = avgRating(a)) != null ? _a : -1;
+      const br = (_b = avgRating(b)) != null ? _b : -1;
       if (ar !== br) return br - ar;
       return dateVal(b) - dateVal(a);
     });
@@ -6926,17 +6981,18 @@ var BZW_cinema = (() => {
   }
   function getDisplayItems() {
     let list = [...M.items];
-    if (M.typeFilter) list = list.filter((it) => it.group === M.typeFilter);
-    const sf = M.statusFilter;
-    if (sf) list = list.filter((it) => it.status === statusNum(sf));
-    if (M.listFilter) list = list.filter((it) => it.lists.includes(M.listFilter));
-    else list = list.filter((it) => !it.shelvedOnly);
     if (M.searchKeyword) {
       const kw = M.searchKeyword.toLowerCase();
       list = list.filter((it) => {
         return it.name && it.name.toLowerCase().includes(kw) || it.typeTag && it.typeTag.toLowerCase().includes(kw) || it.review && it.review.toLowerCase().includes(kw) || it.director && it.director.toLowerCase().includes(kw) || it.actors && it.actors.toLowerCase().includes(kw);
       });
+      return applySortMode(list, M.sortMode);
     }
+    if (M.typeFilter) list = list.filter((it) => it.group === M.typeFilter);
+    const sf = M.statusFilter;
+    if (sf) list = list.filter((it) => it.status === statusNum(sf));
+    if (M.listFilter) list = list.filter((it) => it.lists.includes(M.listFilter));
+    else list = list.filter((it) => !it.shelvedOnly);
     return applySortMode(list, M.sortMode);
   }
   function refreshDataAndView(app) {
@@ -8541,8 +8597,11 @@ var BZW_cinema = (() => {
     公开课: "公开课"
   };
   function buildTasteProfile() {
-    const watched = M.items.filter((i) => i.status === STATUS_WATCHED && i.rating !== null && i.rating > 0);
-    const weight = (i) => i.rating;
+    const watched = M.items.filter((i) => i.status === STATUS_WATCHED && avgRating(i) !== null);
+    const weight = (i) => {
+      var _a;
+      return (_a = avgRating(i)) != null ? _a : 0;
+    };
     const topBy = (key) => {
       const acc = {};
       watched.forEach((i) => {
@@ -8558,7 +8617,10 @@ var BZW_cinema = (() => {
       const da = a.watchDate ? new Date(a.watchDate).getTime() : 0;
       const db = b.watchDate ? new Date(b.watchDate).getTime() : 0;
       return db - da;
-    }).slice(0, 10).map((i) => `${i.name}(${i.group},评分${i.rating}${i.review ? "，影评：" + i.review.slice(0, 60) : ""})`);
+    }).slice(0, 10).map((i) => {
+      var _a;
+      return `${i.name}(${i.group},评分${(_a = avgRating(i)) != null ? _a : "未评"}${i.review ? "，影评：" + i.review.slice(0, 60) : ""})`;
+    });
     return {
       total: watched.length,
       groups: topBy((i) => i.group),
@@ -8751,8 +8813,12 @@ tags:
     });
   }
   function buildSimilarPrompt(item, watched) {
-    const self = `片名《${item.name}》（${item.typeTag || "未知类型"}${item.rating !== null && item.rating > 0 ? `，我的评分 ${item.rating}` : ""}${item.review ? `，我的影评「${item.review.slice(0, 80)}」` : ""}${item.director ? `，导演 ${item.director}` : ""}）`;
-    const list = watched.map((i) => `${i.name}（${i.typeTag || ""}${i.rating !== null && i.rating > 0 ? `，评分${i.rating}` : ""}）`).join("、");
+    var _a;
+    const self = `片名《${item.name}》（${item.typeTag || "未知类型"}${avgRating(item) !== null ? `，我的评分 ${(_a = avgRating(item)) == null ? void 0 : _a.toFixed(1)}` : ""}${item.review ? `，我的影评「${item.review.slice(0, 80)}」` : ""}${item.director ? `，导演 ${item.director}` : ""}）`;
+    const list = watched.map((i) => {
+      var _a2;
+      return `${i.name}（${i.typeTag || ""}${avgRating(i) !== null ? `，评分${(_a2 = avgRating(i)) == null ? void 0 : _a2.toFixed(1)}` : ""}）`;
+    }).join("、");
     return `你是资深影视推荐官。以下是我的影视库里的「基准影片」和我「已看过的影片清单」。
 基准影片：${self}
 我已看过：${list || "（暂无）"}
@@ -8785,7 +8851,7 @@ tags:
   var rankOf = (m) => [...m.entries()].map(([name, films]) => ({ name, films })).sort((a, b) => b.films.length - a.films.length || a.name.localeCompare(b.name, "zh"));
   var splitList = (raw) => String(raw != null ? raw : "").split(/\s*\/\s*/).map((s) => s.trim()).filter(Boolean);
   function deriveYb(items) {
-    var _a, _b, _c, _d, _e, _f, _g, _h;
+    var _a, _b, _c, _d, _e, _f, _g;
     const watched = items.filter((it) => it.status === STATUS_WATCHED);
     const want = items.filter((it) => it.status === STATUS_WANT);
     const watching = items.filter((it) => it.status === STATUS_WATCHING);
@@ -8905,34 +8971,23 @@ tags:
       if (y !== null && d) ageVals.push(Number(d.slice(0, 4)) - y);
     }
     const avgAge = ageVals.length ? (ageVals.reduce((s, a) => s + a, 0) / ageVals.length).toFixed(1) : "0";
-    const rated = items.filter((it) => {
+    const myR = (it) => {
       var _a2;
-      return it.status === STATUS_WATCHED && ((_a2 = it.rating) != null ? _a2 : 0) > 0;
-    }).sort((a, b) => {
-      var _a2, _b2;
-      return ((_a2 = b.rating) != null ? _a2 : 0) - ((_b2 = a.rating) != null ? _b2 : 0) || byDate(a, b);
-    });
+      return (_a2 = avgRating(it)) != null ? _a2 : 0;
+    };
+    const rated = items.filter((it) => it.status === STATUS_WATCHED && avgRating(it) !== null).sort((a, b) => myR(b) - myR(a) || byDate(a, b));
     const myHist = Array(11).fill(0), dbHist = Array(11).fill(0);
-    for (const it of rated) myHist[Math.max(0, Math.min(10, Math.round((_f = it.rating) != null ? _f : 0)))]++;
+    for (const it of rated) myHist[Math.max(0, Math.min(10, Math.round(myR(it))))]++;
     const withDb = rated.filter((it) => it.doubanRating && Number.isFinite(parseFloat(it.doubanRating)));
     for (const it of withDb) dbHist[Math.max(0, Math.min(10, Math.round(parseFloat(it.doubanRating))))]++;
-    const avgMine = rated.length ? rated.reduce((s, it) => {
-      var _a2;
-      return s + ((_a2 = it.rating) != null ? _a2 : 0);
-    }, 0) / rated.length : 0;
+    const avgMine = rated.length ? rated.reduce((s, it) => s + myR(it), 0) / rated.length : 0;
     const avgDb = withDb.length ? withDb.reduce((s, it) => s + parseFloat(it.doubanRating), 0) / withDb.length : 0;
-    const diffs = withDb.map((it) => {
-      var _a2;
-      return { it, diff: ((_a2 = it.rating) != null ? _a2 : 0) - parseFloat(it.doubanRating) };
-    }).sort((a, b) => b.diff - a.diff);
+    const diffs = withDb.map((it) => ({ it, diff: myR(it) - parseFloat(it.doubanRating) })).sort((a, b) => b.diff - a.diff);
     const avgDiff = diffs.length ? diffs.reduce((s, d) => s + d.diff, 0) / diffs.length : 0;
     const treasure = diffs.filter((d) => d.diff >= 0.9).slice(0, 4).map((d) => d.it);
     const disappoint = diffs.filter((d) => d.diff <= -1.5).slice(-4).reverse().map((d) => d.it);
     const top3 = rated.slice(0, 3);
-    const nineUp = rated.filter((it) => {
-      var _a2;
-      return ((_a2 = it.rating) != null ? _a2 : 0) >= 9;
-    });
+    const nineUp = rated.filter((it) => myR(it) >= 9);
     const people = (field) => {
       var _a2;
       const m = /* @__PURE__ */ new Map();
@@ -8943,7 +8998,7 @@ tags:
     for (const it of items) {
       const m = String(it.name).match(/^(.*?)\s*第[一二三四五六七八九十0-9]+\s*[季部集]/);
       if (!m || !m[1]) continue;
-      ((_g = seriesMap.get(m[1])) != null ? _g : seriesMap.set(m[1], []).get(m[1])).push(it);
+      ((_f = seriesMap.get(m[1])) != null ? _f : seriesMap.set(m[1], []).get(m[1])).push(it);
     }
     const series = [...seriesMap.entries()].map(([base, films]) => ({ base, films })).filter((s) => s.films.length >= 2).sort((a, b) => b.films.length - a.films.length).slice(0, 4);
     const epsMap = /* @__PURE__ */ new Map();
@@ -8960,12 +9015,9 @@ tags:
     const episodes = [...epsMap.entries()].map(([base, v]) => ({ base, ep: v.ep, films: v.films })).sort((a, b) => b.ep - a.ep);
     const epVals = items.map((it) => parseEpisodes(it.seasonText)).filter((n) => n !== null);
     const epTotal = epVals.reduce((s2, n) => s2 + n, 0);
-    const reviews = items.filter((it) => it.review && String(it.review).trim().length >= 8).sort((a, b) => String(b.review).length - String(a.review).length).slice(0, 8).map((it) => ({ name: it.name, text: String(it.review).trim(), rating: it.rating }));
-    const hotComments = items.filter((it) => it.hotComment && String(it.hotComment).trim().length >= 10).map((it) => ({ name: it.name, text: String(it.hotComment).trim(), rating: it.rating })).filter((c) => c.text.length <= 120).slice(0, 60);
-    const scatter = rated.filter((it) => !!dayOf(it)).map((it) => {
-      var _a2;
-      return { y: Number(dayOf(it).slice(0, 4)), r: (_a2 = it.rating) != null ? _a2 : 0, it };
-    }).sort((a, b) => a.y - b.y);
+    const reviews = items.filter((it) => it.review && String(it.review).trim().length >= 8).sort((a, b) => String(b.review).length - String(a.review).length).slice(0, 8).map((it) => ({ name: it.name, text: String(it.review).trim(), rating: avgRating(it) }));
+    const hotComments = items.filter((it) => it.hotComment && String(it.hotComment).trim().length >= 10).map((it) => ({ name: it.name, text: String(it.hotComment).trim(), rating: avgRating(it) })).filter((c) => c.text.length <= 120).slice(0, 60);
+    const scatter = rated.filter((it) => !!dayOf(it)).map((it) => ({ y: Number(dayOf(it).slice(0, 4)), r: myR(it), it })).sort((a, b) => a.y - b.y);
     const ageDots = [];
     for (const it of watched) {
       const y = relYear(it), d = dayOf(it);
@@ -8980,7 +9032,7 @@ tags:
         for (let j = i + 1; j < gs.length; j++) {
           const [a, b] = gs[i] < gs[j] ? [gs[i], gs[j]] : [gs[j], gs[i]];
           const k = `${a}|${b}`;
-          pairMap.set(k, ((_h = pairMap.get(k)) != null ? _h : 0) + 1);
+          pairMap.set(k, ((_g = pairMap.get(k)) != null ? _g : 0) + 1);
         }
       }
     }
@@ -9656,7 +9708,7 @@ tags:
       <div class="yb-hist-side">
         <div class="yb-kv"><span class="yb-k">打过分</span><b>${data.ratedCount} 部</b></div>
         <div class="yb-kv"><span class="yb-k">9 分以上</span><b>${data.nineUp.length} 部</b></div>
-        <div class="yb-kv"><span class="yb-k">最低</span><b>${data.rated.length ? ((_p = data.rated[data.rated.length - 1].rating) != null ? _p : 0).toFixed(1) : "—"}</b></div>
+        <div class="yb-kv"><span class="yb-k">最低</span><b>${data.rated.length ? ((_p = avgRating(data.rated[data.rated.length - 1])) != null ? _p : 0).toFixed(1) : "—"}</b></div>
       </div>
     </div>`, `评分 × 观影年 · ${data.scatter.length} 个点（每部片一枚）· 红 = 9 分以上`));
     const maxHist = Math.max(1, ...data.myHist, ...data.dbHist);
@@ -9675,10 +9727,11 @@ tags:
     </div>`, `同一批片的两套分 · ${data.diffs.length} 部两边都有分`));
     const tilt = Math.max(-1, Math.min(1, data.avgDiff / 2));
     const diffRow = (it) => {
-      var _a2, _b2, _c2, _d2;
+      var _a2, _b2;
       const db = parseFloat((_a2 = it.doubanRating) != null ? _a2 : "0");
+      const mr = (_b2 = avgRating(it)) != null ? _b2 : 0;
       return `<li class="yb-drow" data-r="drow"><span class="yb-dname">《${escapeHtml2(it.name)}》</span>
-      <span class="yb-dvals">我 ${((_b2 = it.rating) != null ? _b2 : 0).toFixed(1)} · 豆 ${db.toFixed(1)} · <em>${(((_c2 = it.rating) != null ? _c2 : 0) - db >= 0 ? "+" : "") + (((_d2 = it.rating) != null ? _d2 : 0) - db).toFixed(1)}</em></span></li>`;
+      <span class="yb-dvals">我 ${mr.toFixed(1)} · 豆 ${db.toFixed(1)} · <em>${mr - db >= 0 ? "+" : ""}${(mr - db).toFixed(1)}</em></span></li>`;
     };
     S2.push(frame(15, "打分天平", "评分 · 豆瓣评分", `
     <div class="yb-bal">
@@ -9722,7 +9775,7 @@ tags:
     const high = data.nineUp.slice(0, wallLimit);
     const wallTiles = high.map((it, i) => {
       var _a2;
-      return `<figure class="yb-tile" data-r="tile" data-i="${i}">${poster(it, posterOf)}<figcaption><b>${((_a2 = it.rating) != null ? _a2 : 0).toFixed(1)}</b><span>${escapeHtml2(it.name)}</span></figcaption></figure>`;
+      return `<figure class="yb-tile" data-r="tile" data-i="${i}">${poster(it, posterOf)}<figcaption><b>${((_a2 = avgRating(it)) != null ? _a2 : 0).toFixed(1)}</b><span>${escapeHtml2(it.name)}</span></figcaption></figure>`;
     }).join("");
     S2.push(frame(17, "高分墙", "评分", `
     <div class="yb-ninewall">
@@ -12170,27 +12223,89 @@ tags:
       renderAll(app);
     }
   }
-  async function markRewatch(it, app) {
+  function promptRewatchRating(sec, it, nextBrush) {
+    return new Promise((resolve) => {
+      var _a, _b;
+      const { el, close } = ovl(sec, rewatchRatingHtml(it, nextBrush));
+      const range = el.querySelector(".j-rr-range");
+      const val = el.querySelector(".j-rr-val");
+      const stars = el.querySelector(".j-rr-stars");
+      const sync = (v) => {
+        if (val) val.textContent = v.toFixed(1);
+        if (stars) {
+          stars.innerHTML = starsHtml(v);
+          stars.dataset.lit = String(starsLit(v));
+        }
+      };
+      range == null ? void 0 : range.addEventListener("input", () => sync(Number(range.value)));
+      let settled = false;
+      const settle = (v) => {
+        if (settled) return;
+        settled = true;
+        if (poll !== null) window.clearInterval(poll);
+        resolve(v);
+      };
+      let poll = null;
+      const host = el.parentNode;
+      if (host && typeof MutationObserver === "function") {
+        const mo = new MutationObserver(() => {
+          if (el.isConnected) return;
+          mo.disconnect();
+          settle(null);
+        });
+        mo.observe(host, { childList: true });
+      } else {
+        poll = window.setInterval(() => {
+          if (!el.isConnected) settle(null);
+        }, 250);
+      }
+      (_a = el.querySelector(".j-rr-ok")) == null ? void 0 : _a.addEventListener("click", () => {
+        settle(range ? Number(range.value) : null);
+        close({ skipReturn: true });
+      });
+      (_b = el.querySelector(".j-rr-cancel")) == null ? void 0 : _b.addEventListener("click", () => {
+        settle(null);
+        close({ skipReturn: true });
+      });
+    });
+  }
+  async function markRewatch(it, app, sec) {
     if (!it.file) return;
+    const nextBrush = rewatchCount(it) + 1;
+    const rating = await promptRewatchRating(sec, it, nextBrush);
+    if (rating === null) return;
     const now = localNow();
-    const prev = { rewatches: it.rewatches, lists: it.lists };
-    it.rewatches = [...prev.rewatches, now];
+    const prev = { rewatches: it.rewatches, watchDate: it.watchDate, lists: it.lists };
+    const fromAvg = avgRating(it);
+    it.rewatches = [...prev.rewatches, { at: now, rating }];
+    it.watchDate = now;
     const wasOnShelf = it.lists.includes(REWATCH_SHELF);
     if (wasOnShelf) it.lists = it.lists.filter((l) => l !== REWATCH_SHELF);
     try {
       await app.fileManager.processFrontMatter(it.file, (fm) => {
-        fm["重看"] = normalizeRewatches(fm["重看"]).concat(now);
+        fm["重看"] = normalizeRewatches(fm["重看"]).concat({ at: now, rating });
+        fm["观影日期"] = now;
         if (wasOnShelf) {
           const rest = normalizeLists(fm["片单"]).filter((l) => l !== REWATCH_SHELF);
           if (rest.length) fm["片单"] = rest;
           else delete fm["片单"];
         }
       });
-      notice(`「${it.name}」记下第 ${rewatchCount(it)} 刷（${now.slice(0, 16)}）${wasOnShelf ? `，已移出「${REWATCH_SHELF}」` : ""}`, "success");
+      const toAvg = avgRating(it);
+      notice(`「${it.name}」记下第 ${rewatchCount(it)} 刷（${now.slice(0, 16)}，本次 ${rating.toFixed(1)}${toAvg !== null ? `，均分 ${toAvg.toFixed(1)}` : ""}）${wasOnShelf ? `，已移出「${REWATCH_SHELF}」` : ""}`, "success");
+      emitDomainEvent("movie", {
+        kind: "rerated",
+        name: it.name,
+        brushNo: rewatchCount(it),
+        rating,
+        fromAvgRating: fromAvg,
+        toAvgRating: toAvg
+      });
       markCardFlash(itemKey(it));
       renderAll(app);
     } catch (e) {
       it.rewatches = prev.rewatches;
+      it.watchDate = prev.watchDate;
       it.lists = prev.lists;
       notifySaveError(e);
       console.error(e);
@@ -12231,6 +12346,44 @@ tags:
   }
   async function toggleListMembership(it, list, app) {
     await setListMembership([it], list, !it.lists.includes(list), app);
+  }
+  async function setMergeInto(it, target, app) {
+    if (!it.file || it.mergeInto === target) return;
+    const prev = it.mergeInto;
+    it.mergeInto = target;
+    try {
+      await app.fileManager.processFrontMatter(it.file, (fm) => {
+        if (target) fm["合集"] = target;
+        else delete fm["合集"];
+      });
+    } catch (e) {
+      it.mergeInto = prev;
+      notifySaveError(e);
+      console.error(e);
+      renderAll(app);
+      return;
+    }
+    notice(target ? `已把「${it.name}」归入合集「${target}」` : `已把「${it.name}」移出合集`, "success");
+    markCardFlash(itemKey(it));
+    renderAll(app);
+  }
+  function openSeriesPick(sec, it, app) {
+    var _a;
+    const cards = mergeSeasonCards(M.items, true).filter((c) => c.kind === "series");
+    const rowHtml = (c) => `<button type="button" class="lp-item${it.mergeInto === c.name ? " is-on" : ""}" data-sp="${esc(c.name)}"><span class="lp-check">${iconSpan("check")}</span><span class="lp-label">${esc(c.name)}</span><span class="lp-n">${c.seasons.length + c.specials.length}</span></button>`;
+    const url = posterUrl(it, app);
+    const { el, close } = ovl(sec, `<div class="cn-modal cn-modal--listpick">
+    <div class="lp-head"><div class="lp-poster">${url ? `<img src="${esc(url)}" onerror="this.remove()">` : ""}</div>
+      <div class="lp-head-txt"><span class="lp-kicker">归入合集</span><span class="lp-name">${esc(it.name)}</span></div></div>
+    <div class="lp-body" data-sp-body>${cards.map(rowHtml).join("") || '<div class="lp-empty">库里还没有合集——同一部作品至少两季才会成卡</div>'}</div>
+  </div>`);
+    mountIcons(el);
+    (_a = el.querySelector("[data-sp-body]")) == null ? void 0 : _a.addEventListener("click", (e) => {
+      const btn = e.target.closest("[data-sp]");
+      if (!btn) return;
+      void setMergeInto(it, btn.dataset.sp, app);
+      close();
+    });
   }
   async function renameList(oldName, newName, app) {
     const targets = M.items.filter((x) => x.lists.includes(oldName) && x.file);
@@ -12459,6 +12612,16 @@ tags:
       run: () => void setListMembership(items, l, false, app, who)
     }));
   }
+  function openNoteFile(it, app) {
+    var _a;
+    const path = (_a = it.file) == null ? void 0 : _a.path;
+    if (!path) return;
+    if (!app.vault.getAbstractFileByPath(path)) {
+      notice(`找不到笔记：${it.name}`, "warning");
+      return;
+    }
+    void app.workspace.openLinkText(stripMdExt(path), "", false, { active: true });
+  }
   function itemActions(it, sec, app) {
     const out = [{ icon: ICON.eye, label: "打开详情", run: () => openDetail(sec, it, app) }];
     if (it.status !== STATUS_WATCHING && it.status !== STATUS_WATCHED) {
@@ -12467,7 +12630,7 @@ tags:
     if (it.status !== STATUS_WATCHED) {
       out.push({ icon: "check", label: "标记已看", run: () => openForm(sec, it, app, "已看") });
     } else {
-      out.push({ icon: ICON.repeat, label: "重温 +1", run: () => void markRewatch(it, app) });
+      out.push({ icon: ICON.repeat, label: "重温 +1", run: () => void markRewatch(it, app, sec) });
       out.push({
         icon: ICON.shelf,
         label: it.lists.includes(REWATCH_SHELF) ? "移出重映厅" : "放入重映厅",
@@ -12476,8 +12639,14 @@ tags:
     }
     out.push({ icon: ICON.listPlus, label: "归入片单…", run: () => openListPick(sec, [it], app, { name: it.name, face: it }) });
     out.push(...listExitActs([it], app));
+    if (it.mergeInto) {
+      out.push({ icon: ICON.merge, label: `移出合集「${it.mergeInto}」`, run: () => void setMergeInto(it, null, app) });
+    } else {
+      out.push({ icon: ICON.merge, label: "归入合集…", run: () => openSeriesPick(sec, it, app) });
+    }
     out.push(
       { icon: ICON.ai, label: "找同类", run: () => void runSimilarRecommend(it, app) },
+      { icon: ICON.note, label: "打开笔记", run: () => openNoteFile(it, app) },
       { icon: ICON.globe, label: "在豆瓣打开", run: () => openDouban(it) },
       { icon: ICON.edit, label: "编辑", run: () => openForm(sec, it, app) },
       { icon: ICON.del, label: "删除", danger: true, run: () => openConfirm(it, app) }
@@ -12572,6 +12741,7 @@ tags:
     if (root) openForm(root, null, app);
   }
   function listTitle() {
+    if (M.searchKeyword) return `搜索·${M.searchKeyword}`;
     const parts = [
       M.listFilter ? `片单·${M.listFilter}` : "",
       M.typeFilter || "",
@@ -12915,7 +13085,7 @@ tags:
     });
     (_f = el.querySelector(".j-rewatch")) == null ? void 0 : _f.addEventListener("click", () => {
       close({ skipReturn: true });
-      void markRewatch(it, app);
+      void markRewatch(it, app, sec);
     });
     const foldBtn = el.querySelector("[data-dm-fold]");
     const quote = el.querySelector("[data-dm-quote]");
@@ -13716,7 +13886,7 @@ tags:
     const group = (_a = getGroupForTag(p.tag)) != null ? _a : "其他";
     const st = statusNum(p.st);
     const today = localNow().slice(0, 10);
-    const it = { file: null, name: p.name, typeTag: p.tag, group, status: st, rating: p.rating, watchDate: p.date, wantDate: st === STATUS_WANT ? today : null, watchingDate: st === STATUS_WATCHING ? today : null, watchedDate: st === STATUS_WATCHED ? today : null, rewatches: [], lists: [], shelvedOnly: false, review: p.review, poster: null, genre: null, director: null, actors: null, region: null, year: null, releaseDate: null, doubanRating: null, doubanUrl: null, synopsis: null, duration: null, seasonText: null, hotComment: null };
+    const it = { file: null, name: p.name, typeTag: p.tag, group, status: st, rating: p.rating, watchDate: p.date, wantDate: st === STATUS_WANT ? today : null, watchingDate: st === STATUS_WATCHING ? today : null, watchedDate: st === STATUS_WATCHED ? today : null, rewatches: [], lists: [], shelvedOnly: false, review: p.review, poster: null, genre: null, director: null, actors: null, region: null, year: null, releaseDate: null, doubanRating: null, doubanUrl: null, synopsis: null, duration: null, seasonText: null, hotComment: null, mergeInto: null };
     try {
       if (app.vault.getAbstractFileByPath(`${M.folderPath}/《${p.name}》.md`)) {
         notice(DUP_NAME_HINT_FULL, "warning");
@@ -13883,6 +14053,11 @@ tags:
     M.searchDebounceTimer = setTimeout(() => {
       M.searchKeyword = raw.trim();
       M.view = "list";
+      if (M.searchKeyword) {
+        M.typeFilter = null;
+        M.statusFilter = null;
+        M.listFilter = null;
+      }
       if (isMob) {
         renderAll(app);
         const el = sec.querySelector(".j-mq");
@@ -14063,6 +14238,7 @@ tags:
         M.searchDebounceTimer = null;
         M.typeFilter = null;
         M.statusFilter = null;
+        M.listFilter = null;
         M.searchKeyword = "";
         const inp = (_b = clear.closest("label")) == null ? void 0 : _b.querySelector("input");
         if (inp) inp.value = "";
