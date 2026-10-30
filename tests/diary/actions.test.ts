@@ -10,6 +10,7 @@
  */
 import { describe, expect, it, beforeEach, afterEach, beforeAll, vi } from 'vitest';
 import { setApp } from '../../src/core/app';
+import { setSettingsProvider } from '../../src/core/settings-provider';
 import { applyDirectories } from '../../src/diary/config';
 import { serializeDiaryEntryFile } from '../../src/core/diary-format';
 import { MockVault, mockAppWithVault } from '../mock-vault';
@@ -127,6 +128,8 @@ beforeEach(() => {
   resetObsidianMocks();
   resetFlips();
   applyDirectories({});
+  // 未配置目录时走引导卡（ADR-0273）；本文件验的是「已配好四目录」的册子行为
+  setSettingsProvider(() => ({ diaryDirectory: '我的/日记', letterDirectory: '我的/信', cinemaFolderPath: '我的/影视', bookshelfFolderPath: '书库' }) as never);
   for (const fn of Object.values(mocks)) fn.mockClear();
   mocks.openFlowDialog.mockResolvedValue('ok');
   // mockClear 不清 mockReturnValue：解锁态默认值每用例复位（「没解锁」那条会临时翻 false）

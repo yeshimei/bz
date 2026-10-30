@@ -50,7 +50,8 @@ beforeEach(() => {
   resetCinemaState();
   M.folderPath = '我的/影视';
   document.body.innerHTML = '';
-  setSettingsProvider(() => ({}) as any);
+  // 目录缺省留空（ADR-0273）：本文件验「已配好影视目录」的表单/季圆点，须显式补上目录
+  setSettingsProvider(() => ({ cinemaFolderPath: '我的/影视' }) as any);
 });
 
 afterEach(() => {
@@ -112,7 +113,7 @@ describe('呈报#14（C3）：季圆点等效热区（外观不动，落点取�
   });
 
   it('落点在容器衬底/间隙：取几何最近圆点换脸（修复前 mousemove 无监听，不换脸）', () => {
-    setSettingsProvider(() => ({ cinemaMergeSeasons: true } as any));
+    setSettingsProvider(() => ({ cinemaFolderPath: '我的/影视', cinemaMergeSeasons: true } as any));
     stubHoverCapable(true);
     const app = seedSeasons();
     createOverlay(app);
@@ -145,7 +146,7 @@ describe('呈报#14（C3）：季圆点等效热区（外观不动，落点取�
   });
 
   it('圆点本体直击与容器内滑动不误换季：近处圆点优先且不打回静息态', () => {
-    setSettingsProvider(() => ({ cinemaMergeSeasons: true } as any));
+    setSettingsProvider(() => ({ cinemaFolderPath: '我的/影视', cinemaMergeSeasons: true } as any));
     stubHoverCapable(true);
     const app = seedSeasons();
     createOverlay(app);

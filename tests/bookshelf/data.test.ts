@@ -53,6 +53,8 @@ describe('bookshelf 数据层', () => {
   beforeEach(() => {
     resetObsidianMocks();
     resetBookshelfState();
+    // 目录缺省已留空（ADR-0273）：未配置就不扫任何东西，本文件验的是「已配好书库」的解析行为
+    setSettingsProvider(() => ({ bookshelfFolderPath: '书库' }) as any);
   });
   afterEach(() => {
     setSettingsProvider(null as any);
@@ -103,10 +105,17 @@ describe('bookshelf 数据层', () => {
     expect(it?.cover).toBe('CONFIG/BOOK/x/1.jpg');
   });
 
-  it('目录回落：新键优先 → libraryFolderPath → 书库', () => {
-    expect(resolveFolderPath()).toBe('书库');
-    setSettingsProvider(() => ({ libraryFolderPath: '旧书库' } as any));
+  it('目录解析：两口都空 = 未配置；旧键一次性迁进新键；新键优先', () => {
+    // 未配置 = 空串（不再回落字面量「书库」，ADR-0273）
+    setSettingsProvider(() => ({}) as any);
+    expect(resolveFolderPath()).toBe('');
+
+    // 旧键有值：读出来并**就地写进新键**（否则老用户会被当成没配置，明明他早有书架）
+    const store: Record<string, unknown> = { libraryFolderPath: '旧书库' };
+    setSettingsProvider(() => store as any);
     expect(resolveFolderPath()).toBe('旧书库');
+    expect(store.bookshelfFolderPath).toBe('旧书库');
+
     setSettingsProvider(() => ({ bookshelfFolderPath: '我的书', libraryFolderPath: '旧书库' } as any));
     expect(resolveFolderPath()).toBe('我的书');
   });
@@ -124,7 +133,8 @@ describe('bookshelf 数据层', () => {
     const vault = new MockVault();
     vault.files.set('书库/三体.md', '---\ntags: [读书]\nauthor: 刘慈欣\n---');
     vault.files.set('书库/不匹配.md', '---\ntags: [novel]\n---');
-    setSettingsProvider(() => ({ bookTag: '读书' } as any));
+    // 目录缺省已留空（ADR-0273）：覆盖 provider 时把书库目录一起带上，否则一条都扫不到
+    setSettingsProvider(() => ({ bookshelfFolderPath: '书库', bookTag: '读书' }) as any);
     const items = scanMarkdownBooks(makeApp(vault));
     expect(items.length).toBe(1);
     expect(items[0].title).toBe('三体');

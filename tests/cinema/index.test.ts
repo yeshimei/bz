@@ -139,6 +139,8 @@ describe('cinema 打开面板触发豆瓣抓取队列（ADR-0113）', () => {
     clearNotices();
     shutdownDoubanQueue();
     document.body.innerHTML = '';
+    // 本块验「已配置影视目录」的抓取入队语义；目录缺省留空后须显式补上（ADR-0273 未配置走引导态）
+    setSettingsProvider(() => ({ cinemaFolderPath: '我的/影视' }) as any);
     M.folderPath = '我的/影视';
   });
   afterEach(() => {
@@ -159,7 +161,7 @@ describe('cinema 打开面板触发豆瓣抓取队列（ADR-0113）', () => {
   }
 
   it('openCinema → 有海报缺链接的笔记入队抓取并清 pending（静默无通知）', async () => {
-    setSettingsProvider(() => ({} as any));
+    setSettingsProvider(() => ({ cinemaFolderPath: '我的/影视' }) as any);
     const vault = new MockVault();
     vault.files.set(
       '我的/影视/《缺信息》.md',
@@ -180,7 +182,7 @@ describe('cinema 打开面板触发豆瓣抓取队列（ADR-0113）', () => {
   // 观影分析（覆盖影院面板的一层，ADR-0175）语义：只看不抓——面板没开就先开面板（层得有落脚处），
   // 但**不**走 openCinema 的扫尾入队；补抓只由 openCinema（打开影院）那条路径负责（上一条用例钉着）。
   it('openCinemaAnalysis（覆盖层）：面板没开先开面板再盖层，不触发抓取入队，影片照常渲染', async () => {
-    setSettingsProvider(() => ({} as any));
+    setSettingsProvider(() => ({ cinemaFolderPath: '我的/影视' }) as any);
     const vault = new MockVault();
     vault.files.set(
       '我的/影视/《缺信息》.md',

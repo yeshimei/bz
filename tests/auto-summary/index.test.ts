@@ -75,6 +75,8 @@ describe('auto-summary 入口', () => {
     vi.useFakeTimers();
     resetObsidianMocks();
     document.body.innerHTML = '';
+    // 目录缺省留空（ADR-0273）：本块验「已配好剪藏目录」的自动摘要，须显式补上 articleDirectory
+    setSettingsProvider(() => ({ articleDirectory: '归档/网页剪藏' }) as any);
     vault = new MockVault();
     workspace = makeWorkspace();
     setApp(makeApp(vault, workspace));
@@ -207,7 +209,7 @@ describe('auto-summary 入口', () => {
   });
 
   it('stopAutoSummary（P1-22）：关闭 → 新建剪藏不触发 AI；再开启恢复监听与处理', async () => {
-    setSettingsProvider(() => ({}) as any); // 重置前面用例残留的 articleDirectory
+    setSettingsProvider(() => ({ articleDirectory: '归档/网页剪藏' }) as any); // 重置前面用例残留的 articleDirectory
     const fetchSpy = mockAIResponse('{"summary":"S","tags":["a"]}');
     ensureAutoSummary(makeApp(vault, workspace));
     await vi.advanceTimersByTimeAsync(2000);
@@ -238,7 +240,7 @@ describe('auto-summary 入口', () => {
   });
 
   it('处理中集合（P2）：processFile 完成前重复触发直接忽略，完成后恢复可处理', async () => {
-    setSettingsProvider(() => ({}) as any); // 重置前面用例残留的 articleDirectory
+    setSettingsProvider(() => ({ articleDirectory: '归档/网页剪藏' }) as any); // 重置前面用例残留的 articleDirectory
     const encoder = new TextEncoder();
     const makeRes = (json: string) => ({
       ok: true,
@@ -318,7 +320,7 @@ describe('auto-summary 入口', () => {
   });
 
   it('stopAutoSummary 撤销已排队任务：停用后 clearTimeout，延迟窗内的文件不再触发 AI（审计修复）', async () => {
-    setSettingsProvider(() => ({}) as any); // 重置残留 articleDirectory
+    setSettingsProvider(() => ({ articleDirectory: '归档/网页剪藏' }) as any); // 重置残留 articleDirectory
     const fetchSpy = mockAIResponse('{"summary":"S","tags":["a"]}');
     ensureAutoSummary(makeApp(vault, workspace));
     await vi.advanceTimersByTimeAsync(2000);
@@ -377,7 +379,7 @@ describe('auto-summary 入口', () => {
   }
 
   it('enh 包 2：多篇并发收敛为串行 FIFO——严格按入队顺序逐个处理', async () => {
-    setSettingsProvider(() => ({}) as any); // 重置残留 articleDirectory
+    setSettingsProvider(() => ({ articleDirectory: '归档/网页剪藏' }) as any); // 重置残留 articleDirectory
     const fetchSpy = gateFetch();
     ensureAutoSummary(makeApp(vault, workspace));
     await vi.advanceTimersByTimeAsync(2000);
@@ -414,7 +416,7 @@ describe('auto-summary 入口', () => {
   });
 
   it('enh 包 2：批量进度聚合为单条「正在生成摘要 k/N…」逐个更新，不再逐篇叠 progress', async () => {
-    setSettingsProvider(() => ({}) as any);
+    setSettingsProvider(() => ({ articleDirectory: '归档/网页剪藏' }) as any);
     const fetchSpy = gateFetch();
     ensureAutoSummary(makeApp(vault, workspace));
     await vi.advanceTimersByTimeAsync(2000);
@@ -446,7 +448,7 @@ describe('auto-summary 入口', () => {
   });
 
   it('enh 包 2：单篇仍走逐篇进度通知（聚合只在 >1 篇时出现）', async () => {
-    setSettingsProvider(() => ({}) as any);
+    setSettingsProvider(() => ({ articleDirectory: '归档/网页剪藏' }) as any);
     mockAIResponse('{"summary":"S","tags":["a"]}');
     ensureAutoSummary(makeApp(vault, workspace));
     await vi.advanceTimersByTimeAsync(2000);
@@ -460,7 +462,7 @@ describe('auto-summary 入口', () => {
   });
 
   it('enh 包 2：stopAutoSummary 清空待处理队列——进行中任务完成，未开工任务丢弃', async () => {
-    setSettingsProvider(() => ({}) as any);
+    setSettingsProvider(() => ({ articleDirectory: '归档/网页剪藏' }) as any);
     const fetchSpy = gateFetch();
     ensureAutoSummary(makeApp(vault, workspace));
     await vi.advanceTimersByTimeAsync(2000);
@@ -482,7 +484,7 @@ describe('auto-summary 入口', () => {
   // ===== enh-autosum 包 1：手动重跑入口 =====
 
   it('enh 包 1：regenerateSummary——字段齐全文件强制重建，title 不动、不重命名', async () => {
-    setSettingsProvider(() => ({}) as any);
+    setSettingsProvider(() => ({ articleDirectory: '归档/网页剪藏' }) as any);
     const fetchSpy = mockAIResponse('{"summary":"新S","tags":["新"]}');
     vault.files.set('归档/网页剪藏/manual.md', `---\ntitle: "用户标题"\nsummary: "旧S"\ntags:\n  - "旧"\n---\n\n${LONG_BODY}`);
     const done = regenerateSummary(makeApp(vault, workspace), vault.file('归档/网页剪藏/manual.md'));
@@ -512,7 +514,7 @@ describe('auto-summary 入口', () => {
   });
 
   it('enh 包 1：redoSummaryForActiveFile——剪藏笔记 force 重建走串行队列', async () => {
-    setSettingsProvider(() => ({}) as any);
+    setSettingsProvider(() => ({ articleDirectory: '归档/网页剪藏' }) as any);
     const fetchSpy = mockAIResponse('{"summary":"新S","tags":["新"]}');
     vault.files.set('归档/网页剪藏/act.md', `---\ntitle: "T"\nsummary: "旧S"\n---\n\n${LONG_BODY}`);
     workspace.setActiveFile(vault.file('归档/网页剪藏/act.md'));

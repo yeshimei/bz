@@ -167,6 +167,8 @@ beforeEach(() => {
   resetObsidianMocks();
   resetFlips();
   applyDirectories({});
+  // 未配置目录时走引导卡（ADR-0273）；本文件验的是「已配好四目录」的册子行为
+  setSettingsProvider(() => ({ diaryDirectory: '我的/日记', letterDirectory: '我的/信', cinemaFolderPath: '我的/影视', bookshelfFolderPath: '书库' }) as never);
   for (const fn of Object.values(mocks)) fn.mockClear();
   mocks.isUnlocked.mockReturnValue(false);
   mocks.encryptEntry.mockResolvedValue({ encrypted: true, noteId: 'note-1' });
@@ -1764,7 +1766,7 @@ describe('两个真机 bug 的守卫（书页层的 hidden / 宿主表单皮）'
 });
 
 describe('DiaryAppController · 分卷（ADR-0259：一册只摊开一卷）', () => {
-  const withCap = (n: number) => setSettingsProvider(() => ({ diaryPageSize: n }) as never);
+  const withCap = (n: number) => setSettingsProvider(() => ({ diaryPageSize: n, ...{ diaryDirectory: '我的/日记', letterDirectory: '我的/信', cinemaFolderPath: '我的/影视', bookshelfFolderPath: '书库' } }) as never);
 
   /** 三个月各两则、容量 3 ⇒ 卷一 = 8 月 + 7 月（4 则），卷二 = 6 月（2 则） */
   const threeMonths = (): void => {
@@ -1806,7 +1808,7 @@ describe('DiaryAppController · 分卷（ADR-0259：一册只摊开一卷）', (
       ]);
       expect(c.entries).toHaveLength(6); // 六则都在内存里：索引与检索要用，只是没全排进书
     } finally {
-      setSettingsProvider(() => ({}) as never);
+      setSettingsProvider(() => ({ diaryDirectory: '我的/日记', letterDirectory: '我的/信', cinemaFolderPath: '我的/影视', bookshelfFolderPath: '书库' }) as never);
     }
   });
 
@@ -1820,7 +1822,7 @@ describe('DiaryAppController · 分卷（ADR-0259：一册只摊开一卷）', (
       expect(lastFlip().page).toBe(0);
       expect(q('.bz-diary-toast').textContent).toContain('最新的一卷');
     } finally {
-      setSettingsProvider(() => ({}) as never);
+      setSettingsProvider(() => ({ diaryDirectory: '我的/日记', letterDirectory: '我的/信', cinemaFolderPath: '我的/影视', bookshelfFolderPath: '书库' }) as never);
     }
   });
 
@@ -1838,7 +1840,7 @@ describe('DiaryAppController · 分卷（ADR-0259：一册只摊开一卷）', (
       expect(document.querySelector('.bz-diary-day-on')?.textContent).toContain('六月三十');
     } finally {
       window.innerWidth = 1024;
-      setSettingsProvider(() => ({}) as never);
+      setSettingsProvider(() => ({ diaryDirectory: '我的/日记', letterDirectory: '我的/信', cinemaFolderPath: '我的/影视', bookshelfFolderPath: '书库' }) as never);
     }
   });
 
@@ -1867,7 +1869,7 @@ describe('DiaryAppController · 分卷（ADR-0259：一册只摊开一卷）', (
         '2026-06-05',
       ]);
     } finally {
-      setSettingsProvider(() => ({}) as never);
+      setSettingsProvider(() => ({ diaryDirectory: '我的/日记', letterDirectory: '我的/信', cinemaFolderPath: '我的/影视', bookshelfFolderPath: '书库' }) as never);
     }
   });
 
@@ -1886,7 +1888,7 @@ describe('DiaryAppController · 分卷（ADR-0259：一册只摊开一卷）', (
       expect(flipRecords).toHaveLength(2); // 换卷 = 重排
       expect(lastFlip().page).toBe(0); // 落在新卷第一页
     } finally {
-      setSettingsProvider(() => ({}) as never);
+      setSettingsProvider(() => ({ diaryDirectory: '我的/日记', letterDirectory: '我的/信', cinemaFolderPath: '我的/影视', bookshelfFolderPath: '书库' }) as never);
     }
   });
 
@@ -1899,7 +1901,7 @@ describe('DiaryAppController · 分卷（ADR-0259：一册只摊开一卷）', (
       if (box.pages.length % 2 === 0) box.pages.pop(); // 凑成奇数页数
       expect(box.lastSpreadStart()).toBe(box.pages.length - 1);
     } finally {
-      setSettingsProvider(() => ({}) as never);
+      setSettingsProvider(() => ({ diaryDirectory: '我的/日记', letterDirectory: '我的/信', cinemaFolderPath: '我的/影视', bookshelfFolderPath: '书库' }) as never);
     }
   });
 
@@ -1913,7 +1915,7 @@ describe('DiaryAppController · 分卷（ADR-0259：一册只摊开一卷）', (
       await vi.waitFor(() => expect(qa('.bz-diary-page-item mark').length).toBeGreaterThan(0), { timeout: 2000 });
       expect(q('.bz-diary-page-item mark').textContent).toContain('六月五日');
     } finally {
-      setSettingsProvider(() => ({}) as never);
+      setSettingsProvider(() => ({ diaryDirectory: '我的/日记', letterDirectory: '我的/信', cinemaFolderPath: '我的/影视', bookshelfFolderPath: '书库' }) as never);
     }
   });
 

@@ -12,6 +12,8 @@
  * 图片类目录（剪藏配图 / 影院海报 / 游戏封面 / 知识盒配图）不单独逼用户填：解析顺序是
  * 设置值 → Obsidian「默认新附件位置」→ 域内缺省（见 core/attachment-dir.ts）。用户在
  * Obsidian 里设过附件目录，这一项就算已就绪，空态里也不再提它。
+ *
+ * 决策与代价见 docs/adr/adr-0273-folder-defaults-and-guides.md。
  */
 import { getApp } from './app';
 import { notice } from './notice';

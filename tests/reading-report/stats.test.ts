@@ -395,7 +395,7 @@ describe('analyzeReadingTrends 趋势修复（P1-17）', () => {
 
 describe('getAllBookNotes 集成', () => {
   it('mock vault：tags 数组项/整串精确等值 bookTag（子串不再误判，P2）', () => {
-    setSettingsProvider(() => ({}) as any); // bookTag 缺省 'book'
+    setSettingsProvider(() => ({ bookshelfFolderPath: '书库' }) as any); // bookTag 缺省 'book'
     const files = [
       { path: '书库/A.md' },   // ['book'] → 收
       { path: '书库/B.md' },   // 'book' 整串 → 收
@@ -421,7 +421,7 @@ describe('getAllBookNotes 集成', () => {
   });
 
   it('读取 bookTag 设置：自定义标签精确等值', () => {
-    setSettingsProvider(() => ({ bookTag: '读书' }) as any);
+    setSettingsProvider(() => ({ bookTag: '读书', bookshelfFolderPath: '书库' }) as any);
     const files = [{ path: '书库/A.md' }, { path: '书库/B.md' }];
     const app = {
       vault: { getMarkdownFiles: () => files },
@@ -436,7 +436,7 @@ describe('getAllBookNotes 集成', () => {
   });
 
   it('口径：只统计书库目录——库外 book 标签笔记不混入报告（对齐书架墙 scanMarkdownBooks）', () => {
-    setSettingsProvider(() => ({}) as any); // 目录缺省回落「书库」
+    setSettingsProvider(() => ({ bookshelfFolderPath: '书库' }) as any); // 目录缺省回落「书库」
     const files = [
       { path: '书库/库内.md' },     // 书库目录 + book → 收
       { path: '书库/子/嵌套.md' },  // 书库子目录 + book → 收

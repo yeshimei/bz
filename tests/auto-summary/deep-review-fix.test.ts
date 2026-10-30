@@ -126,6 +126,8 @@ describe('processor 深审修复（A2/N-UI5/N-UI2/N3/N4/N5/A5/T6）', () => {
     resetObsidianMocks();
     resetAIProviderCache();
     setAISettingsProvider(() => ({})); // 默认未配 AI：失败原因走「未配置」文案
+    // 目录缺省留空（ADR-0273）：本块验「已配好剪藏目录」的写盘/处理，须显式补上 articleDirectory
+    setSettingsProvider(() => ({ articleDirectory: '归档/网页剪藏' }) as any);
     document.body.innerHTML = '';
     vault = new MockVault();
     setApp(makeApp(vault));
@@ -264,6 +266,8 @@ describe('index 深审修复（N1/A3/N-UI1/EFF-1/EFF-2/EFF-3/N6/A4/AS3/T4/T5）'
     vi.useFakeTimers();
     resetObsidianMocks();
     document.body.innerHTML = '';
+    // 目录缺省留空（ADR-0273）：本块验「已配好剪藏目录」的自动摘要，须显式补上 articleDirectory
+    setSettingsProvider(() => ({ articleDirectory: '归档/网页剪藏' }) as any);
     vault = new MockVault();
     workspace = makeWorkspace();
     setApp(makeApp(vault, workspace));
@@ -307,7 +311,7 @@ describe('index 深审修复（N1/A3/N-UI1/EFF-1/EFF-2/EFF-3/N6/A4/AS3/T4/T5）'
   });
 
   it('N-UI1：两批间隔 <30s → 第二批聚合进度仍出现（批次键带序号，不再撞 core 去重窗）', async () => {
-    setSettingsProvider(() => ({}) as any);
+    setSettingsProvider(() => ({ articleDirectory: '归档/网页剪藏' }) as any);
     const fetchSpy = gateFetch();
     ensureAutoSummary(makeApp(vault, workspace));
     await vi.advanceTimersByTimeAsync(2000);
@@ -339,7 +343,7 @@ describe('index 深审修复（N1/A3/N-UI1/EFF-1/EFF-2/EFF-3/N6/A4/AS3/T4/T5）'
   });
 
   it('EFF-1：批量 3 篇全成功 → 逐篇「已完成」0 条 + 收场单条「已生成 3 篇摘要」', async () => {
-    setSettingsProvider(() => ({}) as any);
+    setSettingsProvider(() => ({ articleDirectory: '归档/网页剪藏' }) as any);
     const fetchSpy = gateFetch();
     ensureAutoSummary(makeApp(vault, workspace));
     await vi.advanceTimersByTimeAsync(2000);
@@ -360,7 +364,7 @@ describe('index 深审修复（N1/A3/N-UI1/EFF-1/EFF-2/EFF-3/N6/A4/AS3/T4/T5）'
   });
 
   it('EFF-3：连续失败 3 篇 → 熔断暂停（第 4 篇不发起）+ 「继续」续跑 + 收场失败汇总', async () => {
-    setSettingsProvider(() => ({}) as any);
+    setSettingsProvider(() => ({ articleDirectory: '归档/网页剪藏' }) as any);
     const fetchSpy = vi.fn().mockRejectedValue(new Error('网络挂了'));
     (global as any).fetch = fetchSpy;
     setAISettingsProvider(() => ({ aiProvider: 'deepseek', deepseekApiKey: 'sk-test' }));
@@ -387,7 +391,7 @@ describe('index 深审修复（N1/A3/N-UI1/EFF-1/EFF-2/EFF-3/N6/A4/AS3/T4/T5）'
   });
 
   it('EFF-2：批量排队中手动重跑 → 插队队头 + 入队反馈（修复前 FIFO 队尾长等无感知）', async () => {
-    setSettingsProvider(() => ({}) as any);
+    setSettingsProvider(() => ({ articleDirectory: '归档/网页剪藏' }) as any);
     const fetchSpy = gateFetch();
     ensureAutoSummary(makeApp(vault, workspace));
     await vi.advanceTimersByTimeAsync(2000);
@@ -414,7 +418,7 @@ describe('index 深审修复（N1/A3/N-UI1/EFF-1/EFF-2/EFF-3/N6/A4/AS3/T4/T5）'
   });
 
   it('N-UI3：目标在处理中 → 手动重跑给「正在处理中」反馈 + 不双跑（修复前静默吞）', async () => {
-    setSettingsProvider(() => ({}) as any);
+    setSettingsProvider(() => ({ articleDirectory: '归档/网页剪藏' }) as any);
     const fetchSpy = gateFetch();
     ensureAutoSummary(makeApp(vault, workspace));
     await vi.advanceTimersByTimeAsync(2000);
@@ -432,7 +436,7 @@ describe('index 深审修复（N1/A3/N-UI1/EFF-1/EFF-2/EFF-3/N6/A4/AS3/T4/T5）'
   });
 
   it('N6：排队任务遇 stop → await 的 regenerateSummary resolve（修复前 Promise 永挂）', async () => {
-    setSettingsProvider(() => ({}) as any);
+    setSettingsProvider(() => ({ articleDirectory: '归档/网页剪藏' }) as any);
     gateFetch();
     ensureAutoSummary(makeApp(vault, workspace));
     await vi.advanceTimersByTimeAsync(2000);
@@ -455,7 +459,7 @@ describe('index 深审修复（N1/A3/N-UI1/EFF-1/EFF-2/EFF-3/N6/A4/AS3/T4/T5）'
   });
 
   it('A4：stop → ensure 后对 in-flight 同篇手动重跑 → 去重仍拦截（修复前双跑 AI）', async () => {
-    setSettingsProvider(() => ({}) as any);
+    setSettingsProvider(() => ({ articleDirectory: '归档/网页剪藏' }) as any);
     const fetchSpy = gateFetch();
     ensureAutoSummary(makeApp(vault, workspace));
     await vi.advanceTimersByTimeAsync(2000);
@@ -484,7 +488,7 @@ describe('index 深审修复（N1/A3/N-UI1/EFF-1/EFF-2/EFF-3/N6/A4/AS3/T4/T5）'
   });
 
   it('T4 防线：AI 请求永挂起 → core 60s 空闲超时兜底，泵继续下一篇（不卡死队列）', async () => {
-    setSettingsProvider(() => ({}) as any);
+    setSettingsProvider(() => ({ articleDirectory: '归档/网页剪藏' }) as any);
     const encoder = new TextEncoder();
     // 永挂 fetch（不主动回包）：监听 core 传入的 abort signal（idle 超时 abort → reject，
     // 复刻真实 fetch 语义）；resolver 存 gate.pending 供 afterEach 兜底放行防跨用例滞留
@@ -528,7 +532,7 @@ describe('index 深审修复（N1/A3/N-UI1/EFF-1/EFF-2/EFF-3/N6/A4/AS3/T4/T5）'
   });
 
   it('T5：__resetForTest 冲洗后队列可复用（draining 不跨用例滞留）', async () => {
-    setSettingsProvider(() => ({}) as any);
+    setSettingsProvider(() => ({ articleDirectory: '归档/网页剪藏' }) as any);
     gateFetch();
     ensureAutoSummary(makeApp(vault, workspace));
     await vi.advanceTimersByTimeAsync(2000);

@@ -69,7 +69,13 @@ describe('obsidian-adapter', () => {
   beforeEach(() => {
     clearDomainEvents();
     detachObsidianAdapter();
-    setSettingsProvider(() => ({}) as any); // 空设置：分类走内置默认目录
+    // 目录缺省留空（ADR-0273）：本文件验各域语义事件，须显式补上对应域目录
+    setSettingsProvider(() => ({
+      diaryDirectory: '我的/日记',
+      cinemaFolderPath: '我的/影视',
+      articleDirectory: '归档/网页剪藏',
+      letterDirectory: '我的/信',
+    }) as any);
     vault = makeFakeVault();
   });
 

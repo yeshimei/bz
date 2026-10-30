@@ -13,18 +13,20 @@ afterEach(() => {
 });
 
 describe('classifyFilePath（默认目录）', () => {
-  it('默认目录命中六域（ADR-0087：影视目录归 cinema）', () => {
-    expect(classifyFilePath('我的/日记/2026-08-23.md')).toBe('diary');
+  it('未配置目录：可配置域一概不归类，仅硬编码域（卡片盒/现代诗）命中（ADR-0273）', () => {
+    // 目录缺省留空（2026-10-30）：未配置就是未配置，旧默认目录不再兜底识别
+    expect(classifyFilePath('我的/日记/2026-08-23.md')).toBeNull();
+    expect(classifyFilePath('归档/网页剪藏/某文章.md')).toBeNull();
+    expect(classifyFilePath('我的/影视/《楚门的世界》观后感.md')).toBeNull();
+    expect(classifyFilePath('我的/信/给未来的自己.md')).toBeNull();
+    // 硬编码域无设置键，不受缺省留空影响
     expect(classifyFilePath('卡片盒/TDD.md')).toBe('flash');
-    expect(classifyFilePath('归档/网页剪藏/某文章.md')).toBe('clipping');
-    expect(classifyFilePath('我的/影视/《楚门的世界》观后感.md')).toBe('cinema');
     expect(classifyFilePath('我的/现代诗/夜航.md')).toBe('poem');
-    expect(classifyFilePath('我的/信/给未来的自己.md')).toBe('letter');
   });
 
-  it('子目录递归命中（isUnderFolder 语义）', () => {
-    expect(classifyFilePath('我的/日记/2024/旧篇.md')).toBe('diary');
-    expect(classifyFilePath('归档/网页剪藏/科技/深度报道.md')).toBe('clipping');
+  it('未配置目录：子目录同样不命中（isUnderFolder 语义仅在配置后生效）', () => {
+    expect(classifyFilePath('我的/日记/2024/旧篇.md')).toBeNull();
+    expect(classifyFilePath('归档/网页剪藏/科技/深度报道.md')).toBeNull();
   });
 
   it('未命中返回 null；非 md 不识别', () => {
@@ -45,9 +47,11 @@ describe('classifyFilePath（默认目录）', () => {
 });
 
 describe('classifyFilePath（反斜杠归一）', () => {
-  it('反斜杠路径归一为正斜杠后再匹配', () => {
-    expect(classifyFilePath('我的\\日记\\2026-08-23.md')).toBe('diary');
-    expect(classifyFilePath('归档\\网页剪藏\\a.md')).toBe('clipping');
+  it('反斜杠路径归一为正斜杠后再匹配（仅硬编码域命中，可配置域未配置不命中）', () => {
+    // 可配置域未配置：反斜杠路径同样不归类
+    expect(classifyFilePath('我的\\日记\\2026-08-23.md')).toBeNull();
+    expect(classifyFilePath('归档\\网页剪藏\\a.md')).toBeNull();
+    // 硬编码域（现代诗）仍按反斜杠归一命中
     expect(classifyFilePath('我的\\现代诗\\a.md')).toBe('poem');
   });
 
@@ -76,6 +80,7 @@ describe('classifyFilePath（settings 注入自定义目录）', () => {
   });
 
   it('每次调用实时读设置：两次调用之间改 provider，同一路径结果即时翻转', () => {
+    setSettingsProvider(() => ({ diaryDirectory: '我的/日记' } as any));
     expect(classifyFilePath('我的/日记/a.md')).toBe('diary');
     setSettingsProvider(() => ({ diaryDirectory: 'Elsewhere' } as any));
     expect(classifyFilePath('我的/日记/a.md')).toBeNull();
@@ -89,15 +94,15 @@ describe('classifyFilePath（settings 注入自定义目录）', () => {
     expect(classifyFilePath('F1/a.md')).toBeNull();
     setSettingsProvider(() => ({ movieDirectory: 'F2' } as any));
     expect(classifyFilePath('F2/b.md')).toBeNull();
-    // 两键都缺 → 影视目录归 cinema（cinemaFolderPath 缺省回落 '我的/影视'）
+    // 两键都缺且未配置 cinemaFolderPath → 影视目录不归类（目录缺省留空，不回退旧默认「我的/影视」）
     setSettingsProvider(() => ({}) as any);
-    expect(classifyFilePath('我的/影视/c.md')).toBe('cinema');
+    expect(classifyFilePath('我的/影视/c.md')).toBeNull();
   });
 
-  it('cinema 分支：显式配置生效且优先；缺省回落影视目录归 cinema（ADR-0087）', () => {
-    // 缺省：我的/影视 归 cinema（cinema 接管影视；ADR-0115 起 diary 影视目录同读本键）
+  it('cinema 分支：显式配置生效且优先；未配置则不归类（ADR-0087 / ADR-0273）', () => {
+    // 缺省（未配置 cinemaFolderPath）：影视目录不归类（目录缺省留空，不回退旧默认「我的/影视」）
     setSettingsProvider(() => ({} as any));
-    expect(classifyFilePath('我的/影视/c.md')).toBe('cinema');
+    expect(classifyFilePath('我的/影视/c.md')).toBeNull();
     // 显式配置 cinemaFolderPath → 该目录归 cinema
     setSettingsProvider(() => ({ cinemaFolderPath: '我的/影视' } as any));
     expect(classifyFilePath('我的/影视/c.md')).toBe('cinema');
@@ -106,13 +111,16 @@ describe('classifyFilePath（settings 注入自定义目录）', () => {
     setSettingsProvider(() => ({ cinemaFolderPath: '我的/影院' } as any));
     expect(classifyFilePath('我的/影院/c.md')).toBe('cinema');
     expect(classifyFilePath('我的/影视/c.md')).toBeNull();
-    // 空白值 → 回落默认影视目录 → cinema
+    // 空白值 → 视为未配置 → 不归类（目录缺省留空，不再回退旧默认）
     setSettingsProvider(() => ({ cinemaFolderPath: '   ' } as any));
-    expect(classifyFilePath('我的/影视/c.md')).toBe('cinema');
+    expect(classifyFilePath('我的/影视/c.md')).toBeNull();
   });
 
-  it('settings 值为空白字符串时回退默认目录（对齐现有 || 兜底习惯）', () => {
+  it('settings 值为空白字符串时视为未配置（不回退旧默认目录，ADR-0273）', () => {
     setSettingsProvider(() => ({ diaryDirectory: '   ' } as any));
+    expect(classifyFilePath('我的/日记/a.md')).toBeNull();
+    // 配置有效目录后才命中
+    setSettingsProvider(() => ({ diaryDirectory: '我的/日记' } as any));
     expect(classifyFilePath('我的/日记/a.md')).toBe('diary');
   });
 });

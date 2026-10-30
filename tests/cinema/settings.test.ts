@@ -27,7 +27,8 @@ describe('cinema 设置 schema', () => {
 
   it('DEFAULT_SETTINGS 不再声明 cinemaPageSize 默认值', () => {
     expect('cinemaPageSize' in DEFAULT_SETTINGS).toBe(false);
-    expect(DEFAULT_SETTINGS.cinemaFolderPath).toBe('我的/影视');
+    // 目录缺省留空（2026-10-30 ADR-0273）：新库不替用户猜位置，未配置走引导态
+    expect(DEFAULT_SETTINGS.cinemaFolderPath).toBe('');
   });
 
   it('显示组：默认排序/默认状态筛选/剧集按季合并（issue 194 + issue 376，键与契约）', () => {

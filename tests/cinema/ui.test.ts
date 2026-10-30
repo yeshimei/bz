@@ -51,7 +51,11 @@ function cannedPreview(_app: unknown, name: string): Promise<DoubanQueryOutcome>
 }
 
 // 文件级注入：本文件所有新增流程用例都走解析罐头（翻面 → 背面才有保存按钮与影评框）
-beforeEach(() => { configureFetchQueue({ preview: cannedPreview }); });
+beforeEach(() => {
+  // 未配置目录时各域走引导卡（ADR-0273）；本文件验的是「已配好影院」的业务行为
+  setSettingsProvider(() => ({ cinemaFolderPath: '我的/影视' }) as any);
+  configureFetchQueue({ preview: cannedPreview });
+});
 afterEach(() => { configureFetchQueue({ preview: null }); });
 
 function seedVault(): { vault: MockVault; app: ReturnType<typeof mockAppWithVault> } {
@@ -123,7 +127,7 @@ describe('cinema 风格化面板（issue 236）', () => {
     Platform.isMobile = false;
     unloadCinema();
     document.body.innerHTML = '';
-    setSettingsProvider(() => ({}) as any);
+    setSettingsProvider(() => ({ cinemaFolderPath: '我的/影视' }) as any);
     delete (window as any).matchMedia; // 悬浮能力 stub 清理（右键菜单改能力判定后防串用例）
   });
 
@@ -1046,7 +1050,7 @@ tags: [电影]
 
   // ======================= 移动端（mob 壳） ================
   it('移动端：mob 壳渲染（m-head 添加/导入/AI/分析/关闭 + chips 10 + m-grid）', () => {
-    setSettingsProvider(() => ({  } as any));
+    setSettingsProvider(() => ({ cinemaFolderPath: '我的/影视' }) as any);
     const { app } = seedMobile();
     createOverlay(app);
     const root = document.querySelector('section.mob.bz-cinema--midnight') as HTMLElement;
@@ -1261,7 +1265,7 @@ tags: [电影]
   });
 
   it('非法 cinemaStyle 回默认午夜场（风格键扩展口，本批仅午夜场上岸）', () => {
-    setSettingsProvider(() => ({ cinemaStyle: 'nope' } as any));
+    setSettingsProvider(() => ({ cinemaFolderPath: '我的/影视', cinemaStyle: 'nope' } as any));
     const { app } = seedVault();
     createOverlay(app);
     expect(document.querySelector('section.bz-cinema--midnight')).toBeTruthy();
@@ -1375,7 +1379,7 @@ describe('cinema 剧集按季合并（issue 376）', () => {
     Platform.isMobile = false;
     unloadCinema();
     document.body.innerHTML = '';
-    setSettingsProvider(() => ({}) as any);
+    setSettingsProvider(() => ({ cinemaFolderPath: '我的/影视' }) as any);
     delete (window as any).matchMedia; // 悬浮能力 stub 清理（季圆点通道改能力判定后防串用例）
   });
 
@@ -1411,7 +1415,7 @@ tags: [电影]
   }
 
   it('关掉开关：逐季一卡（现状不变）', () => {
-    setSettingsProvider(() => ({}) as any);
+    setSettingsProvider(() => ({ cinemaFolderPath: '我的/影视' }) as any);
     const { app } = seedSeasons();
     createOverlay(app);
     const root = document.querySelector('[data-cinema-root]') as HTMLElement;
@@ -1421,7 +1425,7 @@ tags: [电影]
   });
 
   it('开启：三季合成一张合集卡（进度条 3 段 + 在看注释），计数随卡片走', () => {
-    setSettingsProvider(() => ({ cinemaMergeSeasons: true } as any));
+    setSettingsProvider(() => ({ cinemaFolderPath: '我的/影视', cinemaMergeSeasons: true } as any));
     const { app } = seedSeasons();
     createOverlay(app);
     const root = document.querySelector('[data-cinema-root]') as HTMLElement;
@@ -1444,7 +1448,7 @@ tags: [电影]
   });
 
   it('点合集卡开各季明细；点某一季钻进单季详情（合集弹窗留着，详情叠在它之上）', () => {
-    setSettingsProvider(() => ({ cinemaMergeSeasons: true } as any));
+    setSettingsProvider(() => ({ cinemaFolderPath: '我的/影视', cinemaMergeSeasons: true } as any));
     const { app } = seedSeasons();
     createOverlay(app);
     const root = document.querySelector('[data-cinema-root]') as HTMLElement;
@@ -1473,7 +1477,7 @@ tags: [电影]
   });
 
   it('合集卡右键 → 「查看全部」+ 片级动作（查看全部开合集弹窗），不放笔记级动作', () => {
-    setSettingsProvider(() => ({ cinemaMergeSeasons: true } as any));
+    setSettingsProvider(() => ({ cinemaFolderPath: '我的/影视', cinemaMergeSeasons: true } as any));
     stubHover(true); // 右键分流走 hoverCapable：桌面用例显式开
     const { app } = seedSeasons();
     createOverlay(app);
@@ -1510,7 +1514,7 @@ tags: [电影]
     [...menu.querySelectorAll<HTMLElement>('.bz-item-menu-item')].find((b) => b.textContent?.includes(label)) as HTMLElement;
 
   it('合并卡弹窗：特别篇单列一段（不进季圆点、不单独出卡），点特别篇行钻该条详情', () => {
-    setSettingsProvider(() => ({ cinemaMergeSeasons: true } as any));
+    setSettingsProvider(() => ({ cinemaFolderPath: '我的/影视', cinemaMergeSeasons: true } as any));
     const { app } = seedSpecial();
     createOverlay(app);
     const root = document.querySelector('[data-cinema-root]') as HTMLElement;
@@ -1537,7 +1541,7 @@ tags: [电影]
   });
 
   it('弹窗季行右键 → 该季跟手菜单（弹窗留着）；点动作先收弹窗再执行', () => {
-    setSettingsProvider(() => ({ cinemaMergeSeasons: true } as any));
+    setSettingsProvider(() => ({ cinemaFolderPath: '我的/影视', cinemaMergeSeasons: true } as any));
     stubHover(true); // 右键分流走 hoverCapable：桌面用例显式开
     const { app } = seedSpecial();
     createOverlay(app);
@@ -1562,7 +1566,7 @@ tags: [电影]
   });
 
   it('弹窗特别篇行右键 → 出的是该特别篇的动作（行级落点按行取条目，不是某一季）', () => {
-    setSettingsProvider(() => ({ cinemaMergeSeasons: true } as any));
+    setSettingsProvider(() => ({ cinemaFolderPath: '我的/影视', cinemaMergeSeasons: true } as any));
     stubHover(true); // 右键分流走 hoverCapable：桌面用例显式开
     const { app } = seedSpecial();
     createOverlay(app);
@@ -1579,7 +1583,7 @@ tags: [电影]
   });
 
   it('合并卡内不给「归入合集…」：季行没有合集动作；靠「合集」声明并入的行才给「移出合集」出口', () => {
-    setSettingsProvider(() => ({ cinemaMergeSeasons: true } as any));
+    setSettingsProvider(() => ({ cinemaFolderPath: '我的/影视', cinemaMergeSeasons: true } as any));
     stubHover(true); // 右键分流走 hoverCapable：桌面用例显式开
     const vault = new MockVault();
     vault.files.set('我的/影视/《老友记 第一季》.md', md('---\ntags: [美剧]\n评分: 9.2\n观影日期: 2026-06-18\n---'));
@@ -1610,7 +1614,7 @@ tags: [电影]
   it('移动端：季行右键只拦原生菜单（不出桌面菜单）；长按出抽屉且弹窗不关，点动作才收', () => {
     vi.useFakeTimers();
     try {
-      setSettingsProvider(() => ({ cinemaMergeSeasons: true } as any));
+      setSettingsProvider(() => ({ cinemaFolderPath: '我的/影视', cinemaMergeSeasons: true } as any));
       Platform.isMobile = true;
       const { app } = seedSpecial();
       createOverlay(app);
@@ -1649,7 +1653,7 @@ tags: [电影]
   it('移动端长按合集卡 → 抽屉 = 查看全部 + 片级动作（头 = 剧名 + 共 N 季 · M 部电影）', () => {
     vi.useFakeTimers();
     try {
-      setSettingsProvider(() => ({ cinemaMergeSeasons: true } as any));
+      setSettingsProvider(() => ({ cinemaFolderPath: '我的/影视', cinemaMergeSeasons: true } as any));
       Platform.isMobile = true;
       const { app } = seedSpecial();
       createOverlay(app);
@@ -1674,7 +1678,7 @@ tags: [电影]
   });
 
   it('鼠标落在季圆点上：卡片正脸换成该季（海报 + 名字/meta/星级），离开复原', () => {
-    setSettingsProvider(() => ({ cinemaMergeSeasons: true } as any));
+    setSettingsProvider(() => ({ cinemaFolderPath: '我的/影视', cinemaMergeSeasons: true } as any));
     // 悬浮通道改能力判定（gameshelf hoverCapable 同口径）：jsdom 无真 hover 能力，桌面用例显式开
     (window as any).matchMedia = (q: string) => ({
       matches: q === '(hover: hover) and (pointer: fine)',
@@ -1707,7 +1711,7 @@ tags: [电影]
   });
 
   it('涟漪揭示：来片层从被悬浮的那枚圆点扩散，打断冻结底盘、离开折回并清层', () => {
-    setSettingsProvider(() => ({ cinemaMergeSeasons: true } as any));
+    setSettingsProvider(() => ({ cinemaFolderPath: '我的/影视', cinemaMergeSeasons: true } as any));
     (window as any).matchMedia = (q: string) => ({
       matches: q === '(hover: hover) and (pointer: fine)',
       media: q, addEventListener() {}, removeEventListener() {}, addListener() {}, removeListener() {},
@@ -1752,7 +1756,7 @@ tags: [电影]
   });
 
   it('悬停正脸那一季的圆点不换脸；从别的季折回时层下已是静息态（issue 404）', async () => {
-    setSettingsProvider(() => ({ cinemaMergeSeasons: true } as any));
+    setSettingsProvider(() => ({ cinemaFolderPath: '我的/影视', cinemaMergeSeasons: true } as any));
     (window as any).matchMedia = (q: string) => ({
       matches: q === '(hover: hover) and (pointer: fine)',
       media: q, addEventListener() {}, removeEventListener() {}, addListener() {}, removeListener() {},
@@ -1846,7 +1850,7 @@ tags: [电影]
   });
 
   it('折回收尾只收一次：动画 finished 与兜底定时器都到期，文案淡入不重播（issue 409）', async () => {
-    setSettingsProvider(() => ({ cinemaMergeSeasons: true } as any));
+    setSettingsProvider(() => ({ cinemaFolderPath: '我的/影视', cinemaMergeSeasons: true } as any));
     stubHover(true);
     const { app } = seedSeasons();
     createOverlay(app);
@@ -1883,7 +1887,7 @@ tags: [电影]
   });
 
   it('开合集/详情前先收掉换脸（否则「看到 A、飞的是 B」：飞行取的是静息态那一季的海报）', () => {
-    setSettingsProvider(() => ({ cinemaMergeSeasons: true } as any));
+    setSettingsProvider(() => ({ cinemaFolderPath: '我的/影视', cinemaMergeSeasons: true } as any));
     (window as any).matchMedia = (q: string) => ({
       matches: q === '(hover: hover) and (pointer: fine)',
       media: q, addEventListener() {}, removeEventListener() {}, addListener() {}, removeListener() {},
@@ -1904,7 +1908,7 @@ tags: [电影]
   });
 
   it('移动端不挂悬浮换脸（触屏 tap 只发 mouseover 不发 mouseout，换脸会滞留）', () => {
-    setSettingsProvider(() => ({ cinemaMergeSeasons: true } as any));
+    setSettingsProvider(() => ({ cinemaFolderPath: '我的/影视', cinemaMergeSeasons: true } as any));
     Platform.isMobile = true;
     const vault = new MockVault();
     vault.files.set('我的/影视/《老友记 第一季》.md', md('---\ntags: [美剧]\n评分: 9.2\n观影日期: 2026-06-18\n---'));
@@ -1942,7 +1946,7 @@ describe('深审批A：写路径与 ui 行为回归', () => {
     unloadCinema();
     vi.restoreAllMocks();
     document.body.innerHTML = '';
-    setSettingsProvider(() => ({}) as any);
+    setSettingsProvider(() => ({ cinemaFolderPath: '我的/影视' }) as any);
     delete (window as any).matchMedia; // 悬浮能力 stub 清理（右键菜单改能力判定后防串用例）
   });
 
@@ -2233,7 +2237,7 @@ describe('cinema 详情弹窗字段（片长 / 季集 / 完整上映日期 / 热
     Platform.isMobile = false;
     unloadCinema();
     document.body.innerHTML = '';
-    setSettingsProvider(() => ({}) as any);
+    setSettingsProvider(() => ({ cinemaFolderPath: '我的/影视' }) as any);
   });
 
   /** 造一部带全套豆瓣字段的剧集并开详情弹窗 */
@@ -2305,7 +2309,7 @@ describe('cinema 搜索框输入守护（后台整刷不打断打字）', () => 
     Platform.isMobile = false;
     unloadCinema();
     document.body.innerHTML = '';
-    setSettingsProvider(() => ({}) as any);
+    setSettingsProvider(() => ({ cinemaFolderPath: '我的/影视' }) as any);
   });
 
   /** 桌面面板 + 搜索框已聚焦且键入了一个字（模拟打字中，不派发 input 以免触发搜索防抖） */
@@ -2365,7 +2369,7 @@ describe('cinema 详情弹窗字段（片长 / 季集 / 完整上映日期 / 热
     Platform.isMobile = false;
     unloadCinema();
     document.body.innerHTML = '';
-    setSettingsProvider(() => ({}) as any);
+    setSettingsProvider(() => ({ cinemaFolderPath: '我的/影视' }) as any);
   });
 
   /** 造一部带全套豆瓣字段的剧集并开详情弹窗 */
@@ -2437,11 +2441,11 @@ describe('cinema 合并卡行序（各季 + 特别篇统一按上映日期升序
     Platform.isMobile = false;
     unloadCinema();
     document.body.innerHTML = '';
-    setSettingsProvider(() => ({}) as any);
+    setSettingsProvider(() => ({ cinemaFolderPath: '我的/影视' }) as any);
   });
 
   it('季与特别篇同一口径：按上映日期升序，最早的在前（不再先排季后排特别篇）', () => {
-    setSettingsProvider(() => ({ cinemaMergeSeasons: true } as any));
+    setSettingsProvider(() => ({ cinemaFolderPath: '我的/影视', cinemaMergeSeasons: true } as any));
     const vault = new MockVault();
     vault.files.set('我的/影视/《老友记 第一季》.md', md(`---
 tags: [美剧]
@@ -2499,7 +2503,7 @@ describe('cinema 添加影视：解析即落盘，不再后台抓取（issue 397
     configureFetchQueue({ poster: null, fetch: undefined });
     shutdownDoubanQueue();
     document.body.innerHTML = '';
-    setSettingsProvider(() => ({}) as any);
+    setSettingsProvider(() => ({ cinemaFolderPath: '我的/影视' }) as any);
   });
 
   /** 解析罐头带海报 URL（文件级罐头 posterUrl 为空串，这里单开一份能落海报的） */
@@ -2617,7 +2621,7 @@ describe('cinema 滑动高亮：侧栏与排序钮（issue 397）', () => {
   afterEach(() => {
     unloadCinema();
     document.body.innerHTML = '';
-    setSettingsProvider(() => ({}) as any);
+    setSettingsProvider(() => ({ cinemaFolderPath: '我的/影视' }) as any);
     delete (window as any).matchMedia;
   });
 
@@ -2826,7 +2830,7 @@ describe('影院动效整合（issue 400-403）', () => {
     restoreLayout();
     unloadCinema();
     document.body.innerHTML = '';
-    setSettingsProvider(() => ({}) as any);
+    setSettingsProvider(() => ({ cinemaFolderPath: '我的/影视' }) as any);
   });
 
   it('飞行途中关闭：面板撤、海报折返、卡归位（issue 401）', async () => {
@@ -3056,7 +3060,7 @@ describe('影院覆盖层与跟手（issue 409）', () => {
     clearDomainEvents();
     M.folderPath = '我的/影视';
     document.body.innerHTML = '';
-    setSettingsProvider(() => ({}) as any);
+    setSettingsProvider(() => ({ cinemaFolderPath: '我的/影视' }) as any);
   });
   afterEach(() => {
     Platform.isMobile = false;
@@ -3256,7 +3260,7 @@ describe('面板拖拽缩放 + 尺寸记忆（ADR-0084/0094）', () => {
     Platform.isMobile = false;
     unloadCinema();
     document.body.innerHTML = '';
-    setSettingsProvider(() => ({}) as any);
+    setSettingsProvider(() => ({ cinemaFolderPath: '我的/影视' }) as any);
     delete (window as any).matchMedia; // 悬浮能力 stub 清理（同上方 describe 口径）
   });
 
@@ -3270,7 +3274,7 @@ describe('面板拖拽缩放 + 尺寸记忆（ADR-0084/0094）', () => {
   });
 
   it('0 = 未拖过 → 不写内联尺寸（走 CSS 默认，persist 语义）', () => {
-    setSettingsProvider(() => ({}) as any);
+    setSettingsProvider(() => ({ cinemaFolderPath: '我的/影视' }) as any);
     const { app } = seedVault();
     createOverlay(app);
     const root = document.querySelector('[data-cinema-root]') as HTMLElement;
@@ -3462,7 +3466,7 @@ tags: [电影]
   });
 
   it('合并卡（已看）：出「放入重映厅」与「归入片单…」；点放入 → 全部季一起入架', async () => {
-    setSettingsProvider(() => ({ cinemaMergeSeasons: true } as any));
+    setSettingsProvider(() => ({ cinemaFolderPath: '我的/影视', cinemaMergeSeasons: true } as any));
     const { app } = seedSeries();
     createOverlay(app);
     const root = document.querySelector('[data-cinema-root]') as HTMLElement;
@@ -3476,7 +3480,7 @@ tags: [电影]
   });
 
   it('合并卡：任一季在片单里就出「移出<片单名>」，点了全部季一起移出', async () => {
-    setSettingsProvider(() => ({ cinemaMergeSeasons: true } as any));
+    setSettingsProvider(() => ({ cinemaFolderPath: '我的/影视', cinemaMergeSeasons: true } as any));
     const { app } = seedSeries({ s1: '片单:\n- 诺兰补完计划\n', s3: '片单:\n- 诺兰补完计划\n' });
     createOverlay(app);
     const root = document.querySelector('[data-cinema-root]') as HTMLElement;
@@ -3491,7 +3495,7 @@ tags: [电影]
   });
 
   it('合并卡未看、成员也不在架 → 无重映厅行（沿用单条目已看门控）', () => {
-    setSettingsProvider(() => ({ cinemaMergeSeasons: true } as any));
+    setSettingsProvider(() => ({ cinemaFolderPath: '我的/影视', cinemaMergeSeasons: true } as any));
     const vault = new MockVault();
     vault.files.set('我的/影视/《老友记 第一季》.md', md('---\ntags: [美剧]\n状态: 在看\n观影日期: 2026-01-18\n---'));
     vault.files.set('我的/影视/《老友记 第二季》.md', md('---\ntags: [美剧]\n状态: 在看\n观影日期: 2026-02-18\n---'));
@@ -3504,7 +3508,7 @@ tags: [电影]
   });
 
   it('合并卡未看但成员已在重映厅 → 仍出「移出重映厅」（门控挡入口，不困住已归入的成员）', () => {
-    setSettingsProvider(() => ({ cinemaMergeSeasons: true } as any));
+    setSettingsProvider(() => ({ cinemaFolderPath: '我的/影视', cinemaMergeSeasons: true } as any));
     const { app } = (() => {
       const vault = new MockVault();
       vault.files.set('我的/影视/《老友记 第一季》.md', md('---\ntags: [美剧]\n状态: 在看\n观影日期: 2026-01-18\n片单:\n- 重映厅\n---'));
@@ -3520,7 +3524,7 @@ tags: [电影]
   });
 
   it('归入片单弹层（合并卡）：勾选态 = 任一季命中；点一下把全部季一起归入', async () => {
-    setSettingsProvider(() => ({ cinemaMergeSeasons: true } as any));
+    setSettingsProvider(() => ({ cinemaFolderPath: '我的/影视', cinemaMergeSeasons: true } as any));
     const { app } = seedSeries({ s1: '片单:\n- 诺兰补完计划\n' });
     createOverlay(app);
     const root = document.querySelector('[data-cinema-root]') as HTMLElement;

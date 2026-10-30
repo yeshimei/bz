@@ -173,7 +173,8 @@ describe('runSync 同步链路（issue 368）', () => {
 
 describe('面板 UI（core 面板壳 + 引导态 + 游戏墙）', () => {
   it('未配置：打开即引导态（两键），同步按钮禁用', () => {
-    setup({});
+    // 文件夹已配（未配是另一张引导卡，见 core/folder-setup ADR-0273）但 Steam 凭据没填 → 走「接上 Steam」引导
+    setup({ gameshelfFolderPath: '我的/游戏' });
     const app = makeApp();
     openGameshelf(app);
     expect(document.querySelector('.bz-gs-panel')).toBeTruthy();

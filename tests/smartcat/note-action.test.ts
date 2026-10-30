@@ -54,7 +54,7 @@ beforeEach(() => {
   });
   resetObsidianMocks();
   document.body.innerHTML = '';
-  settings = { storagePath: 'CONFIG/STORAGE', smartcatEnabled: true };
+  settings = { storagePath: 'CONFIG/STORAGE', smartcatEnabled: true, diaryDirectory: '我的/日记', letterDirectory: '我的/信', articleDirectory: '归档/网页剪藏'};
   unloadSmartCat();
   __setNoteSettleMsForTests(60); // 注入短计时（unload 会复位，须在 unload 之后设置）
 });

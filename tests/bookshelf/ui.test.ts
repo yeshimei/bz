@@ -93,6 +93,8 @@ describe('bookshelf 书脊墙（issue 218）', () => {
   beforeEach(() => {
     resetObsidianMocks();
     resetBookshelfState();
+    // 未配置目录时走引导卡（ADR-0273）；本文件验的是「已配好书库」的墙体行为
+    setSettingsProvider(() => ({ bookshelfFolderPath: '书库' }) as never);
     clearNotices();
     document.body.innerHTML = '';
   });
@@ -501,13 +503,15 @@ describe('bookshelf 面板皮肤（issue 216）', () => {
   beforeEach(() => {
     resetObsidianMocks();
     resetBookshelfState();
+    // 未配置目录时走引导卡（ADR-0273）；本文件验的是「已配好书库」的墙体行为
+    setSettingsProvider(() => ({ bookshelfFolderPath: '书库' }) as never);
     clearNotices();
     document.body.innerHTML = '';
     resetSkinPackState();
   });
   afterEach(() => {
     unloadBookshelf();
-    setSettingsProvider(() => ({} as never));
+    setSettingsProvider(() => ({ bookshelfFolderPath: '书库' } as never));
     document.body.innerHTML = '';
   });
 
@@ -554,7 +558,7 @@ describe('bookshelf 面板皮肤（issue 216）', () => {
     expect(bsSkinClass()).toBe('bz-bs-skin-nordic bz-bs-mode-light');
     setSettingsProvider(() => ({ bookshelfSkin: 'whatever' }) as never);
     expect(bsSkinClass()).toBe('bz-bs-skin-nordic bz-bs-mode-light');
-    setSettingsProvider(() => ({} as never));
+    setSettingsProvider(() => ({ bookshelfFolderPath: '书库' } as never));
     expect(bsSkinClass()).toBe('bz-bs-skin-nordic bz-bs-mode-light');
   });
 
@@ -653,6 +657,8 @@ describe('面板拖拽缩放 + 尺寸记忆（ADR-0084/0094）', () => {
   beforeEach(() => {
     resetObsidianMocks();
     resetBookshelfState();
+    // 未配置目录时走引导卡（ADR-0273）；本文件验的是「已配好书库」的墙体行为
+    setSettingsProvider(() => ({ bookshelfFolderPath: '书库' }) as never);
     clearNotices();
     document.body.innerHTML = '';
   });
