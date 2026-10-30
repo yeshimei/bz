@@ -54,7 +54,7 @@ describe('锁家族修复批（encrypt UI）', () => {
     const p = ui.showPasswordDialog();
     await waitFor(() => !!findDialog());
     const dialog = findDialog()!;
-    const inputs = dialog.querySelectorAll('input[type="password"]');
+    const inputs = dialog.querySelectorAll('.bz-lockscreen-input');
     const confirmBtn = dialog.querySelector('.bz-lockscreen-action') as HTMLElement;
     // 两遍一致但只有 3 位 → 拒绝
     (inputs[0] as HTMLInputElement).value = 'abc';

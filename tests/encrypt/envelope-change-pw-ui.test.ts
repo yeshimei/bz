@@ -68,7 +68,9 @@ describe('UIManager 修改主密码（ADR-0211 两屏接力）', () => {
       const d = findDialog();
       return !!d && d.textContent!.includes('设置新主密码');
     });
-    expect(findDialog()!.querySelectorAll('input[type="password"]').length).toBe(2); // 首设式双输入
+    const inputs = findDialog()!.querySelectorAll('.bz-lockscreen-input');
+    expect(inputs.length).toBe(2); // 首设式双输入
+    expect((inputs[0] as HTMLInputElement).type).toBe('text'); // 定密码要看得见：首设明文
   });
 
   it('屏2：一致性/当前相同/勾选三道闸；通过后改密成功（旧密码失效、数据可读）', async () => {
@@ -83,7 +85,7 @@ describe('UIManager 修改主密码（ADR-0211 两屏接力）', () => {
       return !!d && d.textContent!.includes('设置新主密码');
     });
     dialog = findDialog()!;
-    const inputs = [...dialog.querySelectorAll('input[type="password"]')] as HTMLInputElement[];
+    const inputs = [...dialog.querySelectorAll('.bz-lockscreen-input')] as HTMLInputElement[];
     const act = () => (dialog.querySelector('.bz-lockscreen-action') as HTMLElement).click();
     // 两次不一致
     inputs[0].value = 'new-pw';

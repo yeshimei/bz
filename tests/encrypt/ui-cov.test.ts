@@ -417,7 +417,7 @@ describe('解锁弹窗覆盖补测', () => {
     const p = ui.showPasswordDialog();
     await waitFor(() => !!findDialog());
     const dialog = findDialog()!;
-    const inputs = dialog.querySelectorAll('input[type="password"]');
+    const inputs = dialog.querySelectorAll('.bz-lockscreen-input');
     (inputs[0] as HTMLInputElement).value = 'master';
     (inputs[1] as HTMLInputElement).value = 'master';
     const ack = dialog.querySelector('[data-ls="ack"] input') as HTMLInputElement;

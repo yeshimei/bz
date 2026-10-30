@@ -58,8 +58,10 @@ describe('UIManager 解锁弹窗', () => {
     const dialog = findDialog()!;
     expect(dialog.textContent).toContain('设置主密码');
     expect(dialog.textContent).toContain('重要提醒');
-    const inputs = dialog.querySelectorAll('input[type="password"]');
+    const inputs = dialog.querySelectorAll('.bz-lockscreen-input');
     expect(inputs.length).toBe(2);
+    expect((inputs[0] as HTMLInputElement).type).toBe('text'); // 首设明文：掩码下输错只能等提交才知道
+    expect((inputs[1] as HTMLInputElement).type).toBe('text');
     expect(dialog.querySelector('[data-ls="ack"]')).toBeTruthy(); // 硬警告确认勾选（仅首设显示）
     const confirmBtn = dialog.querySelector('.bz-lockscreen-action') as HTMLElement;
     // 两次不一致
@@ -470,7 +472,7 @@ describe('EncryptAppController', () => {
     await waitFor(() => !!findDialog());
     // 首设两次一致 + 勾选风险确认
     const dialog = findDialog()!;
-    const inputs = dialog.querySelectorAll('input[type="password"]');
+    const inputs = dialog.querySelectorAll('.bz-lockscreen-input');
     const confirmBtn = dialog.querySelector('.bz-lockscreen-action') as HTMLElement;
     (inputs[0] as HTMLInputElement).value = 'pw12';
     confirmBtn.click();
@@ -1200,7 +1202,7 @@ describe('解锁弹窗：清单损坏重设确认 + 首设写失败（雷 1/4 UI
     const p = ui.showPasswordDialog();
     await waitFor(() => !!findDialog());
     const dialog = findDialog()!;
-    const inputs = dialog.querySelectorAll('input[type="password"]');
+    const inputs = dialog.querySelectorAll('.bz-lockscreen-input');
     expect(document.activeElement).toBe(inputs[0]);
     // 取消关闭
     const cancelBtn = dialog; // 新解锁屏无取消钮：点遮罩即取消
@@ -1229,7 +1231,7 @@ describe('解锁弹窗：清单损坏重设确认 + 首设写失败（雷 1/4 UI
       const p = ui.showPasswordDialog();
       await waitFor(() => !!findDialog());
       const dialog = findDialog()!;
-      const inputs = dialog.querySelectorAll('input[type="password"]');
+      const inputs = dialog.querySelectorAll('.bz-lockscreen-input');
       const confirmBtn = dialog.querySelector('.bz-lockscreen-action') as HTMLElement;
       (inputs[0] as HTMLInputElement).value = 'pw12';
       confirmBtn.click();

@@ -41,7 +41,10 @@ export interface LockScreenOpts {
    * 故不传 `cancel` 的域渲染与既有一模一样。
    */
   cancel?: string;
-  /** 首设模式：双输入 + 风险告知 + 勾选确认 */
+  /**
+   * 首设模式：双输入（明文、上下排列）+ 风险告知 + 勾选确认。
+   * 明文是有意为之：首设没有「对不对」的参照，掩码下输错了只能等提交才报「两次不一致」。
+   */
   firstSetup?: boolean;
   warningHtml?: string;
   ackText?: string;
@@ -127,12 +130,14 @@ export function uiLockScreen(opts: LockScreenOpts): LockScreenHandle {
   setStats(opts.stats || []);
   box.appendChild(statsWrap);
 
+  const firstSetup = !!opts.firstSetup;
+
   // 首设风险告知（仅首设显示）
   const warning = document.createElement('div');
   warning.className = 'bz-lockscreen-warning';
   warning.dataset.ls = 'warning';
   warning.innerHTML = opts.warningHtml || '';
-  warning.style.display = opts.firstSetup ? '' : 'none';
+  warning.style.display = firstSetup ? '' : 'none';
   box.appendChild(warning);
 
   // 首设勾选确认
@@ -143,25 +148,33 @@ export function uiLockScreen(opts: LockScreenOpts): LockScreenHandle {
   ackBox.type = 'checkbox';
   ack.appendChild(ackBox);
   ack.appendChild(document.createTextNode(opts.ackText || '我已了解：主密码无法找回，遗忘将导致密文永久无法恢复'));
-  ack.style.display = opts.firstSetup ? '' : 'none';
+  ack.style.display = firstSetup ? '' : 'none';
   box.appendChild(ack);
 
   // 输入 + 主按钮
   const row = document.createElement('div');
-  row.className = 'bz-lockscreen-row';
+  // 首设两遍输入上下排（并排各占半行，明文也看不全），排法见 components.css 的 --stack
+  row.className = 'bz-lockscreen-row' + (firstSetup ? ' bz-lockscreen-row--stack' : '');
   const input = document.createElement('input');
-  input.type = 'password';
+  input.type = firstSetup ? 'text' : 'password';
   input.className = 'bz-lockscreen-input';
   input.dataset.ls = 'p1';
   input.placeholder = opts.placeholder || '主密码';
-  input.autocomplete = 'off';
   const input2 = document.createElement('input');
-  input2.type = 'password';
+  input2.type = firstSetup ? 'text' : 'password';
   input2.className = 'bz-lockscreen-input';
   input2.dataset.ls = 'p2';
   input2.placeholder = '再次输入';
-  input2.autocomplete = 'off';
-  input2.style.display = opts.firstSetup ? '' : 'none';
+  input2.style.display = firstSetup ? '' : 'none';
+  // 首设是「定密码」不是「验密码」：两遍都明文——掩码下输错了只能等提交才报「不一致」。
+  // 明文档顺手关掉拼写/首字母大写纠正（否则密码会被 IME / 输入法改写）。
+  for (const inp of [input, input2]) {
+    inp.autocomplete = firstSetup ? 'new-password' : 'off';
+    if (!firstSetup) continue;
+    inp.spellcheck = false;
+    inp.setAttribute('autocapitalize', 'off');
+    inp.setAttribute('autocorrect', 'off');
+  }
   const actionBtn = document.createElement('button');
   actionBtn.className = 'bz-lockscreen-action';
   actionBtn.dataset.ls = 'go';

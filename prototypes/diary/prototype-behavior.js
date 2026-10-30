@@ -1,4 +1,4 @@
-/* 源指纹 11ec18574b8e686a · 仓内输入 84 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 46f3a94889c4c8a3 · 仓内输入 84 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/diary/fake-sim.ts","prototypes/diary/fake/fake-obsidian.ts","src/bookshelf/data.ts","src/bookshelf/state.ts","src/cinema/state.ts","src/core/app.ts","src/core/attachment-dir.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/folder-setup.ts","src/core/http.ts","src/core/item-actions.ts","src/core/lock-stats.ts","src/core/mask-dismiss.ts","src/core/mobile.ts","src/core/note-trash.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/plugin-path.ts","src/core/settings-btn-state.ts","src/core/settings-common.ts","src/core/settings-modal.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage-path.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/help-tip.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/data.ts","src/diary/encrypt.ts","src/diary/flip-idle-guard.ts","src/diary/index.ts","src/diary/media-import.ts","src/diary/parser.ts","src/diary/render.ts","src/diary/repair.ts","src/diary/store.ts","src/diary/ui.ts","src/diary/ui/entry-actions.ts","src/diary/ui/locator.ts","src/diary/vendor/page-flip.browser.js","src/diary/volume.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/motion.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/password-vault/data.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/diary/fake-sim.ts → window.BZW_diary（行为单源预览包，issue 245/ADR-0106） */
 var BZW_diary = (() => {
@@ -42,9 +42,9 @@ var BZW_diary = (() => {
   ));
   var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
 
-  // node_modules/.pnpm/moment@2.30.1/node_modules/moment/moment.js
+  // ../bz/node_modules/.pnpm/moment@2.30.1/node_modules/moment/moment.js
   var require_moment = __commonJS({
-    "node_modules/.pnpm/moment@2.30.1/node_modules/moment/moment.js"(exports, module) {
+    "../bz/node_modules/.pnpm/moment@2.30.1/node_modules/moment/moment.js"(exports, module) {
       (function(global, factory) {
         typeof exports === "object" && typeof module !== "undefined" ? module.exports = factory() : typeof define === "function" && define.amd ? define(factory) : global.moment = factory();
       })(exports, function() {
@@ -11765,11 +11765,12 @@ var BZW_diary = (() => {
     };
     setStats(opts.stats || []);
     box.appendChild(statsWrap);
+    const firstSetup = !!opts.firstSetup;
     const warning = document.createElement("div");
     warning.className = "bz-lockscreen-warning";
     warning.dataset.ls = "warning";
     warning.innerHTML = opts.warningHtml || "";
-    warning.style.display = opts.firstSetup ? "" : "none";
+    warning.style.display = firstSetup ? "" : "none";
     box.appendChild(warning);
     const ack = document.createElement("label");
     ack.className = "bz-lockscreen-ack";
@@ -11778,23 +11779,28 @@ var BZW_diary = (() => {
     ackBox.type = "checkbox";
     ack.appendChild(ackBox);
     ack.appendChild(document.createTextNode(opts.ackText || "我已了解：主密码无法找回，遗忘将导致密文永久无法恢复"));
-    ack.style.display = opts.firstSetup ? "" : "none";
+    ack.style.display = firstSetup ? "" : "none";
     box.appendChild(ack);
     const row = document.createElement("div");
-    row.className = "bz-lockscreen-row";
+    row.className = "bz-lockscreen-row" + (firstSetup ? " bz-lockscreen-row--stack" : "");
     const input = document.createElement("input");
-    input.type = "password";
+    input.type = firstSetup ? "text" : "password";
     input.className = "bz-lockscreen-input";
     input.dataset.ls = "p1";
     input.placeholder = opts.placeholder || "主密码";
-    input.autocomplete = "off";
     const input2 = document.createElement("input");
-    input2.type = "password";
+    input2.type = firstSetup ? "text" : "password";
     input2.className = "bz-lockscreen-input";
     input2.dataset.ls = "p2";
     input2.placeholder = "再次输入";
-    input2.autocomplete = "off";
-    input2.style.display = opts.firstSetup ? "" : "none";
+    input2.style.display = firstSetup ? "" : "none";
+    for (const inp of [input, input2]) {
+      inp.autocomplete = firstSetup ? "new-password" : "off";
+      if (!firstSetup) continue;
+      inp.spellcheck = false;
+      inp.setAttribute("autocapitalize", "off");
+      inp.setAttribute("autocorrect", "off");
+    }
     const actionBtn = document.createElement("button");
     actionBtn.className = "bz-lockscreen-action";
     actionBtn.dataset.ls = "go";

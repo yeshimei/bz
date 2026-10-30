@@ -2708,6 +2708,18 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   gap: 8px;
   margin-top: 16px;
 }
+/* 首设（.bz-lockscreen-row--stack）：两遍密码框上下排列、各占满一行——并排时每框只剩半宽，
+ * 明文也看不全自己输了什么。按钮自动落到最后一行：只有主按钮则独占整行，带次按钮则对半分。 */
+.bz-lockscreen-row--stack {
+  flex-wrap: wrap;
+}
+.bz-lockscreen-row--stack .bz-lockscreen-input {
+  flex: 1 1 100%;
+}
+.bz-lockscreen-row--stack .bz-lockscreen-action,
+.bz-lockscreen-row--stack .bz-lockscreen-cancel {
+  flex: 1 1 0;
+}
 .bz-lockscreen-input {
   flex: 1;
   min-width: 0;

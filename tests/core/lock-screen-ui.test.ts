@@ -1,7 +1,7 @@
 /**
  * uiLockScreen 共享解锁屏测试（审查缺口架#4 + 修复批 B 效率13）：
  * - 结构槽位（dataset.ls）与 kind 作用域类；
- * - firstSetup 三态显隐与 showSecondInput 切换；
+ * - firstSetup 三态显隐与 showSecondInput 切换；首设两遍输入明文且上下排列（row--stack）；
  * - setBusy 文案交换与控件 disabled 对称；
  * - setSec tone 先清后挂、空文案隐藏；
  * - inline 不挂 mask 类、close() 移除根节点；
@@ -75,6 +75,22 @@ describe('uiLockScreen 首设三态与显隐切换', () => {
     expect((normal.el.querySelector('[data-ls="warning"]') as HTMLElement).style.display).toBe('none');
     expect((normal.el.querySelector('[data-ls="ack"]') as HTMLElement).style.display).toBe('none');
     expect(normal.input2.style.display).toBe('none');
+    normal.close();
+  });
+
+  it('首设两遍输入明文 + 上下排列（row--stack）；解锁屏仍掩码、仍同排', () => {
+    const first = uiLockScreen({ kind: 'vault', title: '设置主密码', action: '设置并解锁', firstSetup: true });
+    // 明文：首设没有可对照的正确密码，掩码下输错只能等提交才报「两次不一致」
+    expect(first.input.type).toBe('text');
+    expect(first.input2.type).toBe('text');
+    // 上下排列：两个框各占满一行（并排只剩半宽，明文也看不全）
+    expect(first.el.querySelector('.bz-lockscreen-row')!.classList.contains('bz-lockscreen-row--stack')).toBe(true);
+    first.close();
+
+    const normal = uiLockScreen({ kind: 'vault', title: '保险库已上锁', action: '解锁' });
+    expect(normal.input.type).toBe('password');
+    expect(normal.input2.type).toBe('password');
+    expect(normal.el.querySelector('.bz-lockscreen-row')!.classList.contains('bz-lockscreen-row--stack')).toBe(false);
     normal.close();
   });
 
