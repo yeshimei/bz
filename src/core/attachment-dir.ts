@@ -14,7 +14,7 @@
  *   4) './子目录'       → 当前笔记旁的子目录，同上，视为未设；
  *   5) '附件' / '归档/附件' → 固定文件夹，直接采用（这才是能跟随的那种设置）。
  *
- * 拿不到（老版本宿主没有 getConfig、或它抛错）一律返回 null，由调用方回落域内缺省。
+ * 拿不到（老版本宿主没有 getConfig、或它抛错）一律返回 null，由调用方回落 `<本域主目录>/assets`。
  *
  * 为什么不走 `vault.getAvailablePathForAttachment()`：那是 async（要 sourcePath 才能解
  * './' 与 './子'），会把六个域里一堆同步的目录解析函数全部染成 async；而能跟随的形态
@@ -56,9 +56,19 @@ export function obsidianAttachmentDir(): string | null {
 }
 
 /**
- * 目录解析单一入口：显式设置 → Obsidian 附件目录 → 域内缺省。
+ * 域内缺省 = **本域主目录下的 assets**（2026-10-31 用户拍板：不再有任何写死的海报/封面目录）。
+ * 主目录没配（域还进不去）→ 空串：调用方据此不写盘，绝不落到库根。
+ * @param mainDir 本域主目录当前值（剪藏文件夹 / 卡片盒 / 影视目录 / 游戏目录）
+ */
+export function domainAssetsDir(mainDir: unknown): string {
+  const m = cleanDir(mainDir);
+  return m ? `${m}/assets` : '';
+}
+
+/**
+ * 目录解析单一入口：显式设置 → Obsidian 附件目录 → 本域主目录下的 assets。
  * @param configured 设置键现值（空 = 没设过）
- * @param fallback 域内缺省（如 `<剪藏文件夹>/assets`）
+ * @param fallback 本域缺省（用 domainAssetsDir(<主目录>) 现算；可能为空串）
  */
 export function resolveAssetDir(configured: unknown, fallback: string): AssetDir {
   const c = cleanDir(configured);

@@ -52,7 +52,7 @@ function cannedPreview(_app: unknown, name: string): Promise<DoubanQueryOutcome>
 
 // 文件级注入：本文件所有新增流程用例都走解析罐头（翻面 → 背面才有保存按钮与影评框）
 beforeEach(() => {
-  // 未配置目录时各域走引导卡（ADR-0273）；本文件验的是「已配好影院」的业务行为
+  // 未配置目录时各域走引导卡（ADR-0274）；本文件验的是「已配好影院」的业务行为
   setSettingsProvider(() => ({ cinemaFolderPath: '我的/影视' }) as any);
   configureFetchQueue({ preview: cannedPreview });
 });

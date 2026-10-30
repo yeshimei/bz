@@ -1,4 +1,4 @@
-/* 源指纹 23dba27cd8184323 · 仓内输入 84 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 1e33dd81154c263f · 仓内输入 84 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/diary/fake-sim.ts","prototypes/diary/fake/fake-obsidian.ts","src/bookshelf/data.ts","src/bookshelf/state.ts","src/cinema/state.ts","src/core/app.ts","src/core/attachment-dir.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/folder-setup.ts","src/core/http.ts","src/core/item-actions.ts","src/core/lock-stats.ts","src/core/mask-dismiss.ts","src/core/mobile.ts","src/core/note-trash.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/plugin-path.ts","src/core/settings-btn-state.ts","src/core/settings-common.ts","src/core/settings-modal.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage-path.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/help-tip.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/data.ts","src/diary/encrypt.ts","src/diary/flip-idle-guard.ts","src/diary/index.ts","src/diary/media-import.ts","src/diary/parser.ts","src/diary/render.ts","src/diary/repair.ts","src/diary/store.ts","src/diary/ui.ts","src/diary/ui/entry-actions.ts","src/diary/ui/locator.ts","src/diary/vendor/page-flip.browser.js","src/diary/volume.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/motion.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/password-vault/data.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/diary/fake-sim.ts → window.BZW_diary（行为单源预览包，issue 245/ADR-0106） */
 var BZW_diary = (() => {
@@ -42,9 +42,9 @@ var BZW_diary = (() => {
   ));
   var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
 
-  // node_modules/.pnpm/moment@2.30.1/node_modules/moment/moment.js
+  // ../bz/node_modules/.pnpm/moment@2.30.1/node_modules/moment/moment.js
   var require_moment = __commonJS({
-    "node_modules/.pnpm/moment@2.30.1/node_modules/moment/moment.js"(exports, module) {
+    "../bz/node_modules/.pnpm/moment@2.30.1/node_modules/moment/moment.js"(exports, module) {
       (function(global, factory) {
         typeof exports === "object" && typeof module !== "undefined" ? module.exports = factory() : typeof define === "function" && define.amd ? define(factory) : global.moment = factory();
       })(exports, function() {
@@ -4569,6 +4569,16 @@ var BZW_diary = (() => {
   function saveSettings() {
     return _saver ? _saver() : Promise.resolve();
   }
+  function requestSettingsPanel(domainId, anchorKey) {
+    if (!_panelOpener) return false;
+    try {
+      _panelOpener(domainId, anchorKey);
+      return true;
+    } catch (e) {
+      console.error("[bz] 设置面板打开失败", e);
+      return false;
+    }
+  }
   function getSettings() {
     if (!_provider) {
       throw new Error("bz: 设置提供者未注入（main.ts onload 应调用 setSettingsProvider）");
@@ -4595,11 +4605,12 @@ var BZW_diary = (() => {
       }
     };
   }
-  var _provider, _saver;
+  var _provider, _saver, _panelOpener;
   var init_settings_provider = __esm({
     "src/core/settings-provider.ts"() {
       _provider = null;
       _saver = null;
+      _panelOpener = null;
     }
   });
 
@@ -7731,6 +7742,56 @@ var BZW_diary = (() => {
   });
 
   // src/core/ui/chip.ts
+  function uiChip(opts) {
+    const c = document.createElement("button");
+    c.type = "button";
+    const cls = ["bz-chip"];
+    const pressed = opts.selected !== void 0 ? !!opts.selected : opts.selectedSoft !== void 0 ? !!opts.selectedSoft : null;
+    if (opts.selected) cls.push("bz-chip--on");
+    else if (opts.selectedSoft) cls.push("bz-chip--sel");
+    if (opts.locked) cls.push("bz-chip--locked");
+    c.className = cls.join(" ");
+    if (pressed !== null) c.setAttribute("aria-pressed", String(pressed));
+    if (opts.title) c.title = opts.title;
+    if (opts.disabled) c.disabled = true;
+    if (opts.icon) c.appendChild(uiIcon(opts.icon));
+    const label = document.createElement("span");
+    label.textContent = opts.label;
+    c.appendChild(label);
+    if (typeof opts.count === "number") {
+      const cnt = document.createElement("span");
+      cnt.className = "bz-chip-cnt";
+      cnt.textContent = String(opts.count);
+      c.appendChild(cnt);
+    }
+    if (opts.removable && !opts.locked) {
+      const x = document.createElement("span");
+      x.className = "bz-chip-x";
+      x.setAttribute("role", "button");
+      x.setAttribute("aria-label", `移除 ${opts.label}`);
+      x.tabIndex = 0;
+      x.appendChild(uiIcon("x"));
+      x.addEventListener("click", (e) => {
+        var _a;
+        e.stopPropagation();
+        (_a = opts.onRemove) == null ? void 0 : _a.call(opts);
+      });
+      x.addEventListener("keydown", (e) => {
+        var _a;
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          e.stopPropagation();
+          (_a = opts.onRemove) == null ? void 0 : _a.call(opts);
+        }
+      });
+      c.appendChild(x);
+    }
+    if (opts.onClick) c.addEventListener("click", () => {
+      var _a;
+      return (_a = opts.onClick) == null ? void 0 : _a.call(opts);
+    });
+    return c;
+  }
   var init_chip = __esm({
     "src/core/ui/chip.ts"() {
       init_icon();
@@ -8563,9 +8624,21 @@ var BZW_diary = (() => {
         void apply(list);
       }
     });
-    const render = () => renderPathChips(chipsWrap, current, (next) => {
-      void apply(next);
-    }, "", openPicker);
+    const render = () => {
+      renderPathChips(chipsWrap, current, (next) => {
+        void apply(next);
+      }, "", openPicker);
+      if (current.length === 0 && opts.fallbackChip) {
+        chipsWrap.appendChild(
+          uiChip({
+            label: opts.fallbackChip,
+            locked: true,
+            title: "未单独设置时的实际生效目录（点击可改为显式设置）",
+            onClick: openPicker
+          })
+        );
+      }
+    };
     let btn = null;
     setting.addButton((b) => {
       b.setButtonText(opts.buttonText || (opts.mode === "multi" ? "添加…" : "选择…")).onClick(openPicker);
@@ -8843,6 +8916,7 @@ var BZW_diary = (() => {
       init_dom();
       init_esc_manager();
       init_notice();
+      init_chip();
       EXCLUDED_DIR_NAMES = /* @__PURE__ */ new Set([".obsidian", ".trash", "node_modules", ".git"]);
       currentMask = null;
       currentPopup = null;
@@ -9173,6 +9247,8 @@ var BZW_diary = (() => {
             buttonText: row.buttonText,
             okText: row.okText,
             emptyText: row.emptyText,
+            // 空值回落 chip（与设置面板 renderer 同口径）：显示「没单独设时实际存哪」
+            fallbackChip: typeof row.fallbackValue === "function" ? row.fallbackValue() : "",
             onChange: (list) => {
               var _a3;
               const v = multi ? list : (list[0] || "").trim().replace(/^\/+|\/+$/g, "");
@@ -16942,7 +17018,6 @@ ${entry.content.trim()}`;
   init_ui();
 
   // src/core/folder-setup.ts
-  init_app();
   init_notice();
   init_settings_provider();
 
@@ -16965,6 +17040,10 @@ ${entry.content.trim()}`;
     if (v.startsWith("./")) return null;
     const dir = cleanDir(v);
     return dir || null;
+  }
+  function domainAssetsDir(mainDir) {
+    const m = cleanDir(mainDir);
+    return m ? `${m}/assets` : "";
   }
   function resolveAssetDir(configured, fallback) {
     const c = cleanDir(configured);
@@ -16994,7 +17073,7 @@ ${entry.content.trim()}`;
       desc: "抓到的网页要存成笔记，正文得有个固定的落脚处。",
       fields: [
         { key: "articleDirectory", label: "剪藏文件夹", reco: "归档/网页剪藏" },
-        { key: "clipbookImageFolder", label: "图片文件夹", reco: "", image: true, imageFallback: (main) => `${main}/assets` }
+        { key: "clipbookImageFolder", label: "图片文件夹", reco: "", image: true, imageBaseKey: "articleDirectory" }
       ]
     },
     cinema: {
@@ -17005,7 +17084,7 @@ ${entry.content.trim()}`;
       desc: "影视条目一部一条，存在影视目录里。",
       fields: [
         { key: "cinemaFolderPath", label: "影视目录", reco: "我的/影视" },
-        { key: "cinemaPosterFolder", label: "海报文件夹", reco: "", image: true, imageFallback: (main) => `${main}/封面` }
+        { key: "cinemaPosterFolder", label: "海报文件夹", reco: "", image: true, imageBaseKey: "cinemaFolderPath" }
       ]
     },
     bookshelf: {
@@ -17014,10 +17093,10 @@ ${entry.content.trim()}`;
       settingsId: "bookshelf",
       title: "书库还没定文件夹",
       desc: "书库读的是这个文件夹里带书标签的笔记；已有书的笔记放进去就能认出来。",
-      fields: [
-        { key: "bookshelfFolderPath", label: "书库目录", reco: "书库" },
-        { key: "bookshelfPosterFolder", label: "封面文件夹", reco: "", image: true, imageFallback: (main) => `${main}/封面` }
-      ]
+      // 书库没有可写的图片目录：封面是**读**用户笔记里的 `cover` / `coverPath`（CONFIG/BOOK/<书名>/…），
+      // 插件不往任何地方落封面图。以前这里挂着 bookshelfPosterFolder 这个没有设置行、没有消费点的
+      // 幽灵键，等于空态替一个改不动的字段算 missing——2026-10-31 摘掉。
+      fields: [{ key: "bookshelfFolderPath", label: "书库目录", reco: "书库" }]
     },
     gameshelf: {
       name: "游戏库",
@@ -17029,7 +17108,7 @@ ${entry.content.trim()}`;
       hint: "同步还要在设置里填好 SteamID64 与 Web API 密钥。",
       fields: [
         { key: "gameshelfFolderPath", label: "游戏目录", reco: "我的/游戏" },
-        { key: "gameshelfPosterFolder", label: "海报文件夹", reco: "", image: true, imageFallback: (main) => `${main}/封面` }
+        { key: "gameshelfPosterFolder", label: "海报文件夹", reco: "", image: true, imageBaseKey: "gameshelfFolderPath" }
       ]
     },
     knowledge: {
@@ -17042,7 +17121,7 @@ ${entry.content.trim()}`;
         { key: "knowledgeDirectory", label: "文献文件夹", reco: "文献盒" },
         { key: "knowledgeCardboxDirectory", label: "卡片文件夹", reco: "卡片盒" },
         { key: "knowledgeTopicDirectory", label: "主题文件夹", reco: "主题盒" },
-        { key: "knowledgeImageFolder", label: "图片文件夹", reco: "", image: true, imageFallback: (main) => `${main}/assets` }
+        { key: "knowledgeImageFolder", label: "图片文件夹", reco: "", image: true, imageBaseKey: "knowledgeCardboxDirectory" }
       ]
     }
   };
@@ -17052,15 +17131,11 @@ ${entry.content.trim()}`;
   }
   function folderState(domain) {
     const plan = FOLDER_PLANS[domain];
-    const mainDir = (() => {
-      const first = plan.fields.find((f) => !f.image);
-      return first ? settingValue(first.key) : "";
-    })();
     const fields = plan.fields.map((field) => {
       if (field.image) {
-        const fallback = field.imageFallback ? field.imageFallback(mainDir || field.reco) : mainDir;
-        const r = resolveAssetDir(settingValue(field.key), fallback);
-        return { field, dir: r.dir, source: r.source, missing: !r.dir };
+        const base = field.imageBaseKey ? settingValue(field.imageBaseKey) : "";
+        const r = resolveAssetDir(settingValue(field.key), domainAssetsDir(base));
+        return { field, dir: r.dir, source: r.source, missing: false };
       }
       const v = settingValue(field.key);
       return { field, dir: v, source: v ? "setting" : "fallback", missing: !v };
@@ -17079,13 +17154,9 @@ ${entry.content.trim()}`;
       closeBefore == null ? void 0 : closeBefore();
     } catch (e) {
     }
-    const spec = ["..", "settings-panel"].join("/");
-    void import(
-      /* webpackIgnore: true */
-      spec
-    ).then((m) => m.openSettingsPanel(getApp(), plan.settingsId, key)).catch(() => {
+    if (!requestSettingsPanel(plan.settingsId, key)) {
       notice("设置面板没能打开，可以从「设置 → 包仔」进入", "warning");
-    });
+    }
   }
 
   // src/diary/ui.ts

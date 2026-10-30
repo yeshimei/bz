@@ -139,7 +139,7 @@ describe('cinema 打开面板触发豆瓣抓取队列（ADR-0113）', () => {
     clearNotices();
     shutdownDoubanQueue();
     document.body.innerHTML = '';
-    // 本块验「已配置影视目录」的抓取入队语义；目录缺省留空后须显式补上（ADR-0273 未配置走引导态）
+    // 本块验「已配置影视目录」的抓取入队语义；目录缺省留空后须显式补上（ADR-0274 未配置走引导态）
     setSettingsProvider(() => ({ cinemaFolderPath: '我的/影视' }) as any);
     M.folderPath = '我的/影视';
   });

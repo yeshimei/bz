@@ -1,4 +1,4 @@
-/* 源指纹 2400125270ef57d4 · 仓内输入 312 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 085e7ff042c831b6 · 仓内输入 312 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/settings-panel/fake-sim.ts","prototypes/settings-panel/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/keys.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/belongings/ai.ts","src/belongings/catalog-suggest.ts","src/belongings/category.ts","src/belongings/data.ts","src/belongings/layouts/poster/render.ts","src/belongings/motion.ts","src/belongings/render.ts","src/belongings/report-stats.ts","src/belongings/report.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/epub-notes.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/motion.ts","src/bookshelf/notes-ui.ts","src/bookshelf/notes.ts","src/bookshelf/render.ts","src/bookshelf/settings.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/bookshelf/ui.ts","src/checkup/checks-consistency.ts","src/checkup/checks-drift.ts","src/checkup/checks-json.ts","src/checkup/checks-orphans.ts","src/checkup/files.ts","src/checkup/index.ts","src/checkup/run.ts","src/checkup/ui.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/douban-fetcher.ts","src/cinema/seasons.ts","src/cinema/settings.ts","src/cinema/shared.ts","src/cinema/state.ts","src/clipbook/anchor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/file-sync.ts","src/clipbook/flow.ts","src/clipbook/image-save.ts","src/clipbook/index.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/motion.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/press/data.ts","src/clipbook/press/engine.ts","src/clipbook/press/index.ts","src/clipbook/press/motions.ts","src/clipbook/press/view.ts","src/clipbook/render.ts","src/clipbook/report-stats.ts","src/clipbook/report-ui.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/about-group.ts","src/core/ai-models.ts","src/core/ai.ts","src/core/app.ts","src/core/asr-proofread.ts","src/core/assets/reward-code.png","src/core/attachment-dir.ts","src/core/bundle-asset.ts","src/core/category-table.ts","src/core/changelog.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/domain-icons.ts","src/core/douban-name-index.ts","src/core/download-manifest.ts","src/core/env-check.ts","src/core/esc-manager.ts","src/core/file-sync.ts","src/core/flow-dialog.ts","src/core/folder-setup.ts","src/core/gesture.ts","src/core/http.ts","src/core/item-actions.ts","src/core/jev-fallback.ts","src/core/jev.ts","src/core/json-store.ts","src/core/knowledge-boxes.ts","src/core/landscape.ts","src/core/link-now.ts","src/core/lock-stats.ts","src/core/manual.ts","src/core/mask-dismiss.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/net-progress.ts","src/core/node-runtime-install.ts","src/core/note-trash.ts","src/core/notice.ts","src/core/offline-source.ts","src/core/path-picker.ts","src/core/plugin-path.ts","src/core/pomodoro-phase.ts","src/core/remote-asset.ts","src/core/remote-base.ts","src/core/reward-dialog.ts","src/core/rss-catalog.ts","src/core/self-update.ts","src/core/settings-btn-state.ts","src/core/settings-common.ts","src/core/settings-main-schema.ts","src/core/settings-modal.ts","src/core/settings-model-picker.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/setup-state.ts","src/core/setup-wizard.ts","src/core/sha256.ts","src/core/skin-pack.ts","src/core/storage-path.ts","src/core/storage.ts","src/core/tar.ts","src/core/tool-hint.ts","src/core/tool-runtime.ts","src/core/tool-setup.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/flip.ts","src/core/ui/focus-trap.ts","src/core/ui/help-tip.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slide-pill.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/vault-key.ts","src/core/z-order.ts","src/core/zip.ts","src/diary/config.ts","src/diary/settings.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/motion.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/favorites/ai.ts","src/favorites/app.ts","src/favorites/config.ts","src/favorites/data.ts","src/favorites/layouts/board/render.ts","src/favorites/motion.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/gameshelf/constants.ts","src/gameshelf/settings.ts","src/gameshelf/state.ts","src/home/entry-editor.ts","src/home/order.ts","src/home/settings.ts","src/home/shared.ts","src/knowledge/data.ts","src/knowledge/file-sync.ts","src/knowledge/index.ts","src/knowledge/motion.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-edit.ts","src/knowledge/note-gen.ts","src/knowledge/partial-json.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/relink.ts","src/knowledge/source-retire.ts","src/knowledge/source.ts","src/knowledge/tack.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/memo/data.ts","src/memo/due.ts","src/memo/render.ts","src/memo/settings.ts","src/memo/state.ts","src/memo/ui.ts","src/password-vault/data.ts","src/password-vault/settings.ts","src/people/chat.ts","src/people/datasource.ts","src/people/insights.ts","src/people/me-avatar.ts","src/people/media.ts","src/people/parse.ts","src/people/render.ts","src/people/safe-store.ts","src/people/settings.ts","src/people/stats.ts","src/people/types.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/index.ts","src/pomodoro/motion.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts","src/reading-report/index.ts","src/reading-report/report.ts","src/reading-report/stats.ts","src/review/analysis/data.ts","src/review/analysis/engine.ts","src/review/analysis/index.ts","src/review/analysis/kits.ts","src/review/analysis/motions.ts","src/review/analysis/view.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/motion.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/quiz-panel-data.ts","src/review/quiz-panel.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts","src/secondbrain/ai.ts","src/secondbrain/chunk.ts","src/secondbrain/config.ts","src/secondbrain/link-agent/data.ts","src/secondbrain/link-agent/pipeline.ts","src/secondbrain/motion.ts","src/secondbrain/panel.ts","src/secondbrain/readonly.ts","src/secondbrain/render.ts","src/secondbrain/store-file.ts","src/secondbrain/tfidf.ts","src/secondbrain/vector-math.ts","src/secondbrain/weekly-ui.ts","src/secondbrain/weekly.ts","src/secondbrain/whitelist.ts","src/settings-panel/changelog.ts","src/settings-panel/index.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/manual-viewer.ts","src/settings-panel/motion.ts","src/settings-panel/online-resources.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/shared.ts","src/settings-panel/ui.ts","src/settings.ts","src/smartcat/belongings-source.ts","src/smartcat/character.ts","src/smartcat/config.ts","src/smartcat/data.ts","src/smartcat/favorites-source.ts","src/smartcat/motion.ts","src/smartcat/types.ts","src/smartcat/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/settings-panel/fake-sim.ts → window.BZW_settings_panel（行为单源预览包，issue 245/ADR-0106） */
 var BZW_settings_panel = (() => {
@@ -42,9 +42,9 @@ var BZW_settings_panel = (() => {
   ));
   var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
 
-  // node_modules/.pnpm/moment@2.30.1/node_modules/moment/moment.js
+  // ../bz/node_modules/.pnpm/moment@2.30.1/node_modules/moment/moment.js
   var require_moment = __commonJS({
-    "node_modules/.pnpm/moment@2.30.1/node_modules/moment/moment.js"(exports, module) {
+    "../bz/node_modules/.pnpm/moment@2.30.1/node_modules/moment/moment.js"(exports, module) {
       (function(global, factory) {
         typeof exports === "object" && typeof module !== "undefined" ? module.exports = factory() : typeof define === "function" && define.amd ? define(factory) : global.moment = factory();
       })(exports, function() {
@@ -4570,7 +4570,9 @@ var BZW_settings_panel = (() => {
   __export(settings_provider_exports, {
     getSettings: () => getSettings,
     panelSizePersist: () => panelSizePersist,
+    requestSettingsPanel: () => requestSettingsPanel,
     saveSettings: () => saveSettings,
+    setSettingsPanelOpener: () => setSettingsPanelOpener,
     setSettingsProvider: () => setSettingsProvider,
     setSettingsSaver: () => setSettingsSaver,
     tryGetSettings: () => tryGetSettings
@@ -4583,6 +4585,19 @@ var BZW_settings_panel = (() => {
   }
   function saveSettings() {
     return _saver ? _saver() : Promise.resolve();
+  }
+  function setSettingsPanelOpener(fn) {
+    _panelOpener = fn;
+  }
+  function requestSettingsPanel(domainId, anchorKey) {
+    if (!_panelOpener) return false;
+    try {
+      _panelOpener(domainId, anchorKey);
+      return true;
+    } catch (e) {
+      console.error("[bz] 设置面板打开失败", e);
+      return false;
+    }
   }
   function getSettings() {
     if (!_provider) {
@@ -4610,11 +4625,12 @@ var BZW_settings_panel = (() => {
       }
     };
   }
-  var _provider, _saver;
+  var _provider, _saver, _panelOpener;
   var init_settings_provider = __esm({
     "src/core/settings-provider.ts"() {
       _provider = null;
       _saver = null;
+      _panelOpener = null;
     }
   });
 
@@ -5313,6 +5329,76 @@ var BZW_settings_panel = (() => {
     }
   });
 
+  // src/core/ui/icon.ts
+  function uiIcon(name, extraClass = "") {
+    const i = document.createElement("span");
+    i.className = "bz-ic" + (extraClass ? " " + extraClass : "");
+    setIcon(i, name);
+    return i;
+  }
+  var init_icon = __esm({
+    "src/core/ui/icon.ts"() {
+      init_fake_obsidian();
+    }
+  });
+
+  // src/core/ui/chip.ts
+  function uiChip(opts) {
+    const c = document.createElement("button");
+    c.type = "button";
+    const cls = ["bz-chip"];
+    const pressed = opts.selected !== void 0 ? !!opts.selected : opts.selectedSoft !== void 0 ? !!opts.selectedSoft : null;
+    if (opts.selected) cls.push("bz-chip--on");
+    else if (opts.selectedSoft) cls.push("bz-chip--sel");
+    if (opts.locked) cls.push("bz-chip--locked");
+    c.className = cls.join(" ");
+    if (pressed !== null) c.setAttribute("aria-pressed", String(pressed));
+    if (opts.title) c.title = opts.title;
+    if (opts.disabled) c.disabled = true;
+    if (opts.icon) c.appendChild(uiIcon(opts.icon));
+    const label = document.createElement("span");
+    label.textContent = opts.label;
+    c.appendChild(label);
+    if (typeof opts.count === "number") {
+      const cnt = document.createElement("span");
+      cnt.className = "bz-chip-cnt";
+      cnt.textContent = String(opts.count);
+      c.appendChild(cnt);
+    }
+    if (opts.removable && !opts.locked) {
+      const x = document.createElement("span");
+      x.className = "bz-chip-x";
+      x.setAttribute("role", "button");
+      x.setAttribute("aria-label", `移除 ${opts.label}`);
+      x.tabIndex = 0;
+      x.appendChild(uiIcon("x"));
+      x.addEventListener("click", (e) => {
+        var _a2;
+        e.stopPropagation();
+        (_a2 = opts.onRemove) == null ? void 0 : _a2.call(opts);
+      });
+      x.addEventListener("keydown", (e) => {
+        var _a2;
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          e.stopPropagation();
+          (_a2 = opts.onRemove) == null ? void 0 : _a2.call(opts);
+        }
+      });
+      c.appendChild(x);
+    }
+    if (opts.onClick) c.addEventListener("click", () => {
+      var _a2;
+      return (_a2 = opts.onClick) == null ? void 0 : _a2.call(opts);
+    });
+    return c;
+  }
+  var init_chip = __esm({
+    "src/core/ui/chip.ts"() {
+      init_icon();
+    }
+  });
+
   // src/core/path-picker.ts
   function isExcludedPath(p) {
     if (!p) return false;
@@ -5467,9 +5553,21 @@ var BZW_settings_panel = (() => {
         void apply(list);
       }
     });
-    const render2 = () => renderPathChips(chipsWrap, current2, (next) => {
-      void apply(next);
-    }, "", openPicker);
+    const render2 = () => {
+      renderPathChips(chipsWrap, current2, (next) => {
+        void apply(next);
+      }, "", openPicker);
+      if (current2.length === 0 && opts.fallbackChip) {
+        chipsWrap.appendChild(
+          uiChip({
+            label: opts.fallbackChip,
+            locked: true,
+            title: "未单独设置时的实际生效目录（点击可改为显式设置）",
+            onClick: openPicker
+          })
+        );
+      }
+    };
     let btn = null;
     setting.addButton((b) => {
       b.setButtonText(opts.buttonText || (opts.mode === "multi" ? "添加…" : "选择…")).onClick(openPicker);
@@ -5782,6 +5880,7 @@ var BZW_settings_panel = (() => {
       init_dom();
       init_esc_manager();
       init_notice();
+      init_chip();
       EXCLUDED_DIR_NAMES = /* @__PURE__ */ new Set([".obsidian", ".trash", "node_modules", ".git"]);
       currentMask = null;
       currentPopup = null;
@@ -6546,19 +6645,6 @@ var BZW_settings_panel = (() => {
     }
   });
 
-  // src/core/ui/icon.ts
-  function uiIcon(name, extraClass = "") {
-    const i = document.createElement("span");
-    i.className = "bz-ic" + (extraClass ? " " + extraClass : "");
-    setIcon(i, name);
-    return i;
-  }
-  var init_icon = __esm({
-    "src/core/ui/icon.ts"() {
-      init_fake_obsidian();
-    }
-  });
-
   // src/core/ui/icons.ts
   function uiIconSpan(name, extraClass = "") {
     const i = document.createElement("span");
@@ -6650,63 +6736,6 @@ var BZW_settings_panel = (() => {
   }
   var init_button = __esm({
     "src/core/ui/button.ts"() {
-      init_icon();
-    }
-  });
-
-  // src/core/ui/chip.ts
-  function uiChip(opts) {
-    const c = document.createElement("button");
-    c.type = "button";
-    const cls = ["bz-chip"];
-    const pressed = opts.selected !== void 0 ? !!opts.selected : opts.selectedSoft !== void 0 ? !!opts.selectedSoft : null;
-    if (opts.selected) cls.push("bz-chip--on");
-    else if (opts.selectedSoft) cls.push("bz-chip--sel");
-    if (opts.locked) cls.push("bz-chip--locked");
-    c.className = cls.join(" ");
-    if (pressed !== null) c.setAttribute("aria-pressed", String(pressed));
-    if (opts.title) c.title = opts.title;
-    if (opts.disabled) c.disabled = true;
-    if (opts.icon) c.appendChild(uiIcon(opts.icon));
-    const label = document.createElement("span");
-    label.textContent = opts.label;
-    c.appendChild(label);
-    if (typeof opts.count === "number") {
-      const cnt = document.createElement("span");
-      cnt.className = "bz-chip-cnt";
-      cnt.textContent = String(opts.count);
-      c.appendChild(cnt);
-    }
-    if (opts.removable && !opts.locked) {
-      const x = document.createElement("span");
-      x.className = "bz-chip-x";
-      x.setAttribute("role", "button");
-      x.setAttribute("aria-label", `移除 ${opts.label}`);
-      x.tabIndex = 0;
-      x.appendChild(uiIcon("x"));
-      x.addEventListener("click", (e) => {
-        var _a2;
-        e.stopPropagation();
-        (_a2 = opts.onRemove) == null ? void 0 : _a2.call(opts);
-      });
-      x.addEventListener("keydown", (e) => {
-        var _a2;
-        if (e.key === "Enter" || e.key === " ") {
-          e.preventDefault();
-          e.stopPropagation();
-          (_a2 = opts.onRemove) == null ? void 0 : _a2.call(opts);
-        }
-      });
-      c.appendChild(x);
-    }
-    if (opts.onClick) c.addEventListener("click", () => {
-      var _a2;
-      return (_a2 = opts.onClick) == null ? void 0 : _a2.call(opts);
-    });
-    return c;
-  }
-  var init_chip = __esm({
-    "src/core/ui/chip.ts"() {
       init_icon();
     }
   });
@@ -8922,6 +8951,8 @@ var BZW_settings_panel = (() => {
             buttonText: row.buttonText,
             okText: row.okText,
             emptyText: row.emptyText,
+            // 空值回落 chip（与设置面板 renderer 同口径）：显示「没单独设时实际存哪」
+            fallbackChip: typeof row.fallbackValue === "function" ? row.fallbackValue() : "",
             onChange: (list) => {
               var _a4;
               const v = multi ? list : (list[0] || "").trim().replace(/^\/+|\/+$/g, "");
@@ -13768,6 +13799,10 @@ ${countsToText(s.missing)}
     const dir = cleanDir(v);
     return dir || null;
   }
+  function domainAssetsDir(mainDir) {
+    const m = cleanDir(mainDir);
+    return m ? `${m}/assets` : "";
+  }
   function resolveAssetDir(configured, fallback) {
     const c = cleanDir(configured);
     if (c) return { dir: c, source: "setting" };
@@ -13788,15 +13823,11 @@ ${countsToText(s.missing)}
   }
   function folderState(domain) {
     const plan = FOLDER_PLANS[domain];
-    const mainDir = (() => {
-      const first = plan.fields.find((f) => !f.image);
-      return first ? settingValue(first.key) : "";
-    })();
     const fields = plan.fields.map((field) => {
       if (field.image) {
-        const fallback = field.imageFallback ? field.imageFallback(mainDir || field.reco) : mainDir;
-        const r = resolveAssetDir(settingValue(field.key), fallback);
-        return { field, dir: r.dir, source: r.source, missing: !r.dir };
+        const base = field.imageBaseKey ? settingValue(field.imageBaseKey) : "";
+        const r = resolveAssetDir(settingValue(field.key), domainAssetsDir(base));
+        return { field, dir: r.dir, source: r.source, missing: false };
       }
       const v = settingValue(field.key);
       return { field, dir: v, source: v ? "setting" : "fallback", missing: !v };
@@ -13815,18 +13846,13 @@ ${countsToText(s.missing)}
       closeBefore == null ? void 0 : closeBefore();
     } catch (e) {
     }
-    const spec = ["..", "settings-panel"].join("/");
-    void import(
-      /* webpackIgnore: true */
-      spec
-    ).then((m) => m.openSettingsPanel(getApp(), plan.settingsId, key)).catch(() => {
+    if (!requestSettingsPanel(plan.settingsId, key)) {
       notice("设置面板没能打开，可以从「设置 → 包仔」进入", "warning");
-    });
+    }
   }
   var FOLDER_PLANS;
   var init_folder_setup = __esm({
     "src/core/folder-setup.ts"() {
-      init_app();
       init_notice();
       init_settings_provider();
       init_attachment_dir();
@@ -13849,7 +13875,7 @@ ${countsToText(s.missing)}
           desc: "抓到的网页要存成笔记，正文得有个固定的落脚处。",
           fields: [
             { key: "articleDirectory", label: "剪藏文件夹", reco: "归档/网页剪藏" },
-            { key: "clipbookImageFolder", label: "图片文件夹", reco: "", image: true, imageFallback: (main) => `${main}/assets` }
+            { key: "clipbookImageFolder", label: "图片文件夹", reco: "", image: true, imageBaseKey: "articleDirectory" }
           ]
         },
         cinema: {
@@ -13860,7 +13886,7 @@ ${countsToText(s.missing)}
           desc: "影视条目一部一条，存在影视目录里。",
           fields: [
             { key: "cinemaFolderPath", label: "影视目录", reco: "我的/影视" },
-            { key: "cinemaPosterFolder", label: "海报文件夹", reco: "", image: true, imageFallback: (main) => `${main}/封面` }
+            { key: "cinemaPosterFolder", label: "海报文件夹", reco: "", image: true, imageBaseKey: "cinemaFolderPath" }
           ]
         },
         bookshelf: {
@@ -13869,10 +13895,10 @@ ${countsToText(s.missing)}
           settingsId: "bookshelf",
           title: "书库还没定文件夹",
           desc: "书库读的是这个文件夹里带书标签的笔记；已有书的笔记放进去就能认出来。",
-          fields: [
-            { key: "bookshelfFolderPath", label: "书库目录", reco: "书库" },
-            { key: "bookshelfPosterFolder", label: "封面文件夹", reco: "", image: true, imageFallback: (main) => `${main}/封面` }
-          ]
+          // 书库没有可写的图片目录：封面是**读**用户笔记里的 `cover` / `coverPath`（CONFIG/BOOK/<书名>/…），
+          // 插件不往任何地方落封面图。以前这里挂着 bookshelfPosterFolder 这个没有设置行、没有消费点的
+          // 幽灵键，等于空态替一个改不动的字段算 missing——2026-10-31 摘掉。
+          fields: [{ key: "bookshelfFolderPath", label: "书库目录", reco: "书库" }]
         },
         gameshelf: {
           name: "游戏库",
@@ -13884,7 +13910,7 @@ ${countsToText(s.missing)}
           hint: "同步还要在设置里填好 SteamID64 与 Web API 密钥。",
           fields: [
             { key: "gameshelfFolderPath", label: "游戏目录", reco: "我的/游戏" },
-            { key: "gameshelfPosterFolder", label: "海报文件夹", reco: "", image: true, imageFallback: (main) => `${main}/封面` }
+            { key: "gameshelfPosterFolder", label: "海报文件夹", reco: "", image: true, imageBaseKey: "gameshelfFolderPath" }
           ]
         },
         knowledge: {
@@ -13897,7 +13923,7 @@ ${countsToText(s.missing)}
             { key: "knowledgeDirectory", label: "文献文件夹", reco: "文献盒" },
             { key: "knowledgeCardboxDirectory", label: "卡片文件夹", reco: "卡片盒" },
             { key: "knowledgeTopicDirectory", label: "主题文件夹", reco: "主题盒" },
-            { key: "knowledgeImageFolder", label: "图片文件夹", reco: "", image: true, imageFallback: (main) => `${main}/assets` }
+            { key: "knowledgeImageFolder", label: "图片文件夹", reco: "", image: true, imageBaseKey: "knowledgeCardboxDirectory" }
           ]
         }
       };
@@ -13918,8 +13944,8 @@ ${countsToText(s.missing)}
     saveClipImage: () => saveClipImage
   });
   function clipbookImageDir() {
-    const s = tryGetSettings();
-    return resolveAssetDir(s && s.clipbookImageFolder, `${clipDir()}/assets`).dir;
+    const s = tryGetSettings() || {};
+    return resolveAssetDir(s.clipbookImageFolder, domainAssetsDir(s.articleDirectory)).dir;
   }
   function normalizeImageSrc(src) {
     const s = String(src || "").trim();
@@ -14001,6 +14027,7 @@ ${countsToText(s.missing)}
   async function writeUniqueImage(dir, baseName2, ext, bytes) {
     const app = getApp();
     const folder = String(dir || "").replace(/\\/g, "/").replace(/^\/+|\/+$/g, "");
+    if (!folder) throw new Error("还没定图片存哪：先在设置里配好剪藏文件夹");
     let path = `${folder}/${baseName2}.${ext}`;
     for (let i = 2; app.vault.getAbstractFileByPath(path); i++) path = `${folder}/${baseName2}_${i}.${ext}`;
     try {
@@ -14092,7 +14119,6 @@ ${countsToText(s.missing)}
       init_attachment_dir();
       init_settings_provider();
       init_notice();
-      init_save();
       init_anchor();
       HTTP_TIMEOUT_MS = 15e3;
       UA_HEADERS = { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36" };
@@ -17143,7 +17169,8 @@ ${text2}`;
   }
   async function writeUniqueBinary(dir, baseName2, ext, bytes) {
     const app = getApp();
-    const folder = String(dir || "文献盒").replace(/\\/g, "/").replace(/^\/+|\/+$/g, "");
+    const folder = String(dir || "").replace(/\\/g, "/").replace(/^\/+|\/+$/g, "");
+    if (!folder) throw new Error("还没定图片存哪：先在设置里配好卡片文件夹");
     let path = `${folder}/${baseName2}.${ext}`;
     for (let i = 2; app.vault.getAbstractFileByPath(path); i++) path = `${folder}/${baseName2}_${i}.${ext}`;
     try {
@@ -17195,8 +17222,7 @@ ${notes.map((x) => `第 ${x.n} 张：${x.d}`).join("\n")}`;
     };
   }
   function resolveImageDir(settings) {
-    const dir = String((settings == null ? void 0 : settings.knowledgeDirectory) || "文献盒").replace(/\\/g, "/").replace(/^\/+|\/+$/g, "") || "文献盒";
-    return resolveAssetDir(settings == null ? void 0 : settings.knowledgeImageFolder, `${dir}/${IMAGE_ASSETS_DIR}`).dir;
+    return resolveAssetDir(settings == null ? void 0 : settings.knowledgeImageFolder, domainAssetsDir(settings == null ? void 0 : settings.knowledgeCardboxDirectory)).dir;
   }
   async function generateImageNote(opts) {
     var _a2, _b2;
@@ -17412,7 +17438,7 @@ ${sample}`
     }
     return { scanned: files.length, filled, aiSkipped };
   }
-  var BACKFILL_AI_TIMEOUT_MS, META_EXCERPT_MAX, IMAGE_ASSETS_DIR;
+  var BACKFILL_AI_TIMEOUT_MS, META_EXCERPT_MAX;
   var init_note_gen = __esm({
     "src/knowledge/note-gen.ts"() {
       init_ai();
@@ -17427,7 +17453,6 @@ ${sample}`
       init_source();
       BACKFILL_AI_TIMEOUT_MS = 25e3;
       META_EXCERPT_MAX = 4e3;
-      IMAGE_ASSETS_DIR = "assets";
     }
   });
 
@@ -22807,9 +22832,9 @@ ${String(blockText != null ? blockText : "").trim()}`);
               type: "path",
               mode: "single",
               name: "图版图片文件夹",
-              desc: "图版录入的图片保存位置",
+              desc: "图版录入的图片保存位置，留空跟随 Obsidian 的默认附件位置",
               binding: { key: "knowledgeImageFolder" },
-              // 空值 = 回落到文献文件夹下的 assets（把「实际会落到哪」显式显示出来，不让人猜）
+              // 空值 = 回落到**卡片文件夹**下的 assets（2026-10-31 用户拍板；此前读的是文献文件夹）
               fallbackValue: () => resolveImageDir(tryGetSettings() || {})
             },
             { type: "path", mode: "single", name: "卡片文件夹", desc: "自己写的卡片笔记所在文件夹", binding: { key: "knowledgeCardboxDirectory" } },
@@ -28031,13 +28056,11 @@ ${body}`;
     const m = basename.match(/《(.+)》/);
     return m ? m[1] : basename;
   }
-  var POSTER_FOLDER;
   var init_douban_fetcher = __esm({
     "src/cinema/douban-fetcher.ts"() {
       init_str();
       init_utils();
       init_constants3();
-      POSTER_FOLDER = "CONFIG/MOVIE POSTER";
     }
   });
 
@@ -50050,8 +50073,16 @@ ${c.trim()}
           name: "目录",
           rows: [
             { type: "path", mode: "single", name: "剪藏文件夹", desc: "存放网页剪藏文章的文件夹", binding: { key: "articleDirectory" } },
-            // issue 329：保存正文图片的落地目录（留空回落剪藏目录 assets）
-            { type: "path", mode: "single", name: "图片文件夹", desc: "网页图片的保存文件夹", binding: { key: "clipbookImageFolder" } }
+            // issue 329：保存正文图片的落地目录（留空 = 跟随 Obsidian 附件位置 → 剪藏目录 assets）
+            {
+              type: "path",
+              mode: "single",
+              name: "图片文件夹",
+              desc: "网页图片的保存文件夹，留空跟随 Obsidian 的默认附件位置",
+              binding: { key: "clipbookImageFolder" },
+              // 空值时显示**实际生效目录**（与写入侧同一个解析函数，不另抄一条回落链）
+              fallbackValue: () => clipbookImageDir()
+            }
           ]
         },
         {
@@ -52444,7 +52475,19 @@ GitHub 仓库：${ghInfo.title}
           name: "目录",
           rows: [
             { type: "path", mode: "single", name: "影视文件夹", desc: "影院读取的影视文件夹，日记本也共用", binding: { key: "cinemaFolderPath" } },
-            { type: "path", mode: "single", name: "海报文件夹", desc: "豆瓣抓取的海报图片保存位置", binding: { key: "cinemaPosterFolder" }, fallbackValue: () => POSTER_FOLDER }
+            {
+              type: "path",
+              mode: "single",
+              name: "海报文件夹",
+              desc: "豆瓣抓取的海报图片保存位置，留空跟随 Obsidian 的默认附件位置",
+              binding: { key: "cinemaPosterFolder" },
+              // 空值时显示**实际生效目录**：设置 → Obsidian 附件位置 → <影视文件夹>/assets
+              // （2026-10-31 起不再有任何写死的海报目录）
+              fallbackValue: () => {
+                const s = tryGetSettings();
+                return resolveAssetDir(s.cinemaPosterFolder, domainAssetsDir(s.cinemaFolderPath)).dir;
+              }
+            }
             // 旧「每批加载数量」（cinemaPageSize）已删除：全仓无消费点（列表一次全量渲染），属死配置
           ]
         },
@@ -52493,7 +52536,8 @@ GitHub 仓库：${ghInfo.title}
   }
   var init_settings4 = __esm({
     "src/cinema/settings.ts"() {
-      init_douban_fetcher();
+      init_attachment_dir();
+      init_settings_provider();
     }
   });
 
@@ -52541,8 +52585,13 @@ GitHub 仓库：${ghInfo.title}
               type: "path",
               mode: "single",
               name: "海报文件夹",
-              desc: "游戏封面与图标缓存到本地的文件夹",
-              binding: { key: "gameshelfPosterFolder" }
+              desc: "游戏封面与图标缓存到本地的文件夹，留空跟随 Obsidian 的默认附件位置",
+              binding: { key: "gameshelfPosterFolder" },
+              // 空值时显示**实际生效目录**（设置值 → Obsidian 附件位置 → <游戏目录>/assets）
+              fallbackValue: () => {
+                const s = tryGetSettings();
+                return resolveAssetDir(s.gameshelfPosterFolder, domainAssetsDir(s.gameshelfFolderPath)).dir;
+              }
             }
           ]
         },
@@ -52582,6 +52631,8 @@ GitHub 仓库：${ghInfo.title}
   }
   var init_settings5 = __esm({
     "src/gameshelf/settings.ts"() {
+      init_attachment_dir();
+      init_settings_provider();
     }
   });
 

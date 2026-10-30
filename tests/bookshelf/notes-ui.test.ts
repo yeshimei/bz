@@ -103,7 +103,7 @@ describe('书架墙详情弹窗只读化（issue 223）', () => {
     closeBookNoteModals();
     document.body.innerHTML = '';
     vault = new MockVault();
-    // 书库目录缺省留空（ADR-0273）：不显式配置，书架墙扫不到夹具里写进「书库」的书
+    // 书库目录缺省留空（ADR-0274）：不显式配置，书架墙扫不到夹具里写进「书库」的书
     setSettingsProvider(() => ({ bookTag: 'book', bookshelfFolderPath: '书库' }) as any);
   });
 

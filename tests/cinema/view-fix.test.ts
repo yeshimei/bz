@@ -106,7 +106,7 @@ describe('cinema 深审批 B #1/#2/#3/#4/#6/#7/#8：视图层', () => {
     resetObsidianMocks();
     resetCinemaState();
     clearDomainEvents();
-    // 目录缺省留空（ADR-0273）：本块验「已配好影视目录」的视图层语义，须显式补上目录
+    // 目录缺省留空（ADR-0274）：本块验「已配好影视目录」的视图层语义，须显式补上目录
     setSettingsProvider(() => ({ cinemaFolderPath: '我的/影视', cinemaMergeSeasons: true }) as any); // 合并开：老友记两季合一张卡
     M.folderPath = '我的/影视';
     document.body.innerHTML = '';

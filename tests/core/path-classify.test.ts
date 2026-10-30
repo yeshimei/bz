@@ -13,7 +13,7 @@ afterEach(() => {
 });
 
 describe('classifyFilePath（默认目录）', () => {
-  it('未配置目录：可配置域一概不归类，仅硬编码域（卡片盒/现代诗）命中（ADR-0273）', () => {
+  it('未配置目录：可配置域一概不归类，仅硬编码域（卡片盒/现代诗）命中（ADR-0274）', () => {
     // 目录缺省留空（2026-10-30）：未配置就是未配置，旧默认目录不再兜底识别
     expect(classifyFilePath('我的/日记/2026-08-23.md')).toBeNull();
     expect(classifyFilePath('归档/网页剪藏/某文章.md')).toBeNull();
@@ -99,7 +99,7 @@ describe('classifyFilePath（settings 注入自定义目录）', () => {
     expect(classifyFilePath('我的/影视/c.md')).toBeNull();
   });
 
-  it('cinema 分支：显式配置生效且优先；未配置则不归类（ADR-0087 / ADR-0273）', () => {
+  it('cinema 分支：显式配置生效且优先；未配置则不归类（ADR-0087 / ADR-0274）', () => {
     // 缺省（未配置 cinemaFolderPath）：影视目录不归类（目录缺省留空，不回退旧默认「我的/影视」）
     setSettingsProvider(() => ({} as any));
     expect(classifyFilePath('我的/影视/c.md')).toBeNull();
@@ -116,7 +116,7 @@ describe('classifyFilePath（settings 注入自定义目录）', () => {
     expect(classifyFilePath('我的/影视/c.md')).toBeNull();
   });
 
-  it('settings 值为空白字符串时视为未配置（不回退旧默认目录，ADR-0273）', () => {
+  it('settings 值为空白字符串时视为未配置（不回退旧默认目录，ADR-0274）', () => {
     setSettingsProvider(() => ({ diaryDirectory: '   ' } as any));
     expect(classifyFilePath('我的/日记/a.md')).toBeNull();
     // 配置有效目录后才命中

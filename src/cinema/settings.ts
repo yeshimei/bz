@@ -4,9 +4,8 @@
  */
 import { numStrBinding } from '../core/settings-common'; // eslint-disable-line @typescript-eslint/no-unused-vars -- 保留：列数行退役后本域暂无消费者
 import type { SettingsSchema } from '../core/settings-schema';
-import { resolveAssetDir } from '../core/attachment-dir';
+import { resolveAssetDir, domainAssetsDir } from '../core/attachment-dir';
 import { tryGetSettings } from '../core/settings-provider';
-import { POSTER_FOLDER } from './douban-fetcher';
 
 export function cinemaSettingsSchema(): SettingsSchema {
   return {
@@ -42,8 +41,12 @@ export function cinemaSettingsSchema(): SettingsSchema {
         rows: [
           { type: 'path', mode: 'single', name: '影视文件夹', desc: '影院读取的影视文件夹，日记本也共用', binding: { key: 'cinemaFolderPath' } },
           { type: 'path', mode: 'single', name: '海报文件夹', desc: '豆瓣抓取的海报图片保存位置，留空跟随 Obsidian 的默认附件位置', binding: { key: 'cinemaPosterFolder' },
-            // 空值时显示**实际生效目录**：此前只给域内缺省常量，Obsidian 设了附件位置时页面显示与真实落点不一致
-            fallbackValue: () => resolveAssetDir(tryGetSettings().cinemaPosterFolder, POSTER_FOLDER).dir },
+            // 空值时显示**实际生效目录**：设置 → Obsidian 附件位置 → <影视文件夹>/assets
+            // （2026-10-31 起不再有任何写死的海报目录）
+            fallbackValue: () => {
+              const s = tryGetSettings();
+              return resolveAssetDir(s.cinemaPosterFolder, domainAssetsDir(s.cinemaFolderPath)).dir;
+            } },
           // 旧「每批加载数量」（cinemaPageSize）已删除：全仓无消费点（列表一次全量渲染），属死配置
         ],
       },

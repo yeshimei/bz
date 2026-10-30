@@ -65,10 +65,3 @@ export const GS_LEGACY_FM = {
  */
 export const QUEUE_HALTED_NOTICE = '网络不畅，游戏库自动补全已暂停，下次打开会继续';
 export const QUEUE_HALTED_DEDUPE_KEY = 'bz-gameshelf-autofill-halt';
-
-/**
- * 海报/图标/截图缺省目录（设置键 gameshelfPosterFolder 留空时的域内缺省）。
- * 住在常量表里而不是 posters.ts：设置页要拿它算「留空时实际存哪」，而 posters.ts 会拖进
- * notes / state / steam 整条下载链——为一行提示把它们打进设置面板不值。
- */
-export const DEFAULT_POSTER_FOLDER = 'CONFIG/游戏海报';

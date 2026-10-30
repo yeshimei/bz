@@ -1,4 +1,4 @@
-/* 源指纹 cf434882a013cde5 · 仓内输入 71 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 3697073111abc7a5 · 仓内输入 71 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/bookshelf/fake-sim.ts","prototypes/bookshelf/fake/fake-obsidian.ts","prototypes/preview-mode.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/epub-notes.ts","src/bookshelf/index.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/motion.ts","src/bookshelf/notes-ui.ts","src/bookshelf/notes.ts","src/bookshelf/render.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/bookshelf/ui.ts","src/core/app.ts","src/core/attachment-dir.ts","src/core/chart-palette.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/download-manifest.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/folder-setup.ts","src/core/http.ts","src/core/mask-dismiss.ts","src/core/mobile.ts","src/core/notice.ts","src/core/offline-source.ts","src/core/plugin-path.ts","src/core/remote-asset.ts","src/core/remote-base.ts","src/core/settings-provider.ts","src/core/sha256.ts","src/core/skin-pack.ts","src/core/storage-path.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/help-tip.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/reading-report/index.ts","src/reading-report/report.ts","src/reading-report/stats.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/bookshelf/fake-sim.ts → window.BZW_bookshelf（行为单源预览包，issue 245/ADR-0106） */
 var BZW_bookshelf = (() => {
@@ -39,9 +39,9 @@ var BZW_bookshelf = (() => {
   ));
   var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
 
-  // node_modules/.pnpm/moment@2.30.1/node_modules/moment/moment.js
+  // ../bz/node_modules/.pnpm/moment@2.30.1/node_modules/moment/moment.js
   var require_moment = __commonJS({
-    "node_modules/.pnpm/moment@2.30.1/node_modules/moment/moment.js"(exports, module) {
+    "../bz/node_modules/.pnpm/moment@2.30.1/node_modules/moment/moment.js"(exports, module) {
       (function(global, factory) {
         typeof exports === "object" && typeof module !== "undefined" ? module.exports = factory() : typeof define === "function" && define.amd ? define(factory) : global.moment = factory();
       })(exports, function() {
@@ -4232,6 +4232,17 @@ var BZW_bookshelf = (() => {
   function saveSettings() {
     return _saver ? _saver() : Promise.resolve();
   }
+  var _panelOpener = null;
+  function requestSettingsPanel(domainId, anchorKey) {
+    if (!_panelOpener) return false;
+    try {
+      _panelOpener(domainId, anchorKey);
+      return true;
+    } catch (e) {
+      console.error("[bz] 设置面板打开失败", e);
+      return false;
+    }
+  }
   function tryGetSettings() {
     return _provider ? _provider() : {};
   }
@@ -8272,6 +8283,10 @@ var BZW_bookshelf = (() => {
     const dir = cleanDir(v);
     return dir || null;
   }
+  function domainAssetsDir(mainDir) {
+    const m = cleanDir(mainDir);
+    return m ? `${m}/assets` : "";
+  }
   function resolveAssetDir(configured, fallback) {
     const c = cleanDir(configured);
     if (c) return { dir: c, source: "setting" };
@@ -8298,7 +8313,7 @@ var BZW_bookshelf = (() => {
       desc: "抓到的网页要存成笔记，正文得有个固定的落脚处。",
       fields: [
         { key: "articleDirectory", label: "剪藏文件夹", reco: "归档/网页剪藏" },
-        { key: "clipbookImageFolder", label: "图片文件夹", reco: "", image: true, imageFallback: (main) => `${main}/assets` }
+        { key: "clipbookImageFolder", label: "图片文件夹", reco: "", image: true, imageBaseKey: "articleDirectory" }
       ]
     },
     cinema: {
@@ -8309,7 +8324,7 @@ var BZW_bookshelf = (() => {
       desc: "影视条目一部一条，存在影视目录里。",
       fields: [
         { key: "cinemaFolderPath", label: "影视目录", reco: "我的/影视" },
-        { key: "cinemaPosterFolder", label: "海报文件夹", reco: "", image: true, imageFallback: (main) => `${main}/封面` }
+        { key: "cinemaPosterFolder", label: "海报文件夹", reco: "", image: true, imageBaseKey: "cinemaFolderPath" }
       ]
     },
     bookshelf: {
@@ -8318,10 +8333,10 @@ var BZW_bookshelf = (() => {
       settingsId: "bookshelf",
       title: "书库还没定文件夹",
       desc: "书库读的是这个文件夹里带书标签的笔记；已有书的笔记放进去就能认出来。",
-      fields: [
-        { key: "bookshelfFolderPath", label: "书库目录", reco: "书库" },
-        { key: "bookshelfPosterFolder", label: "封面文件夹", reco: "", image: true, imageFallback: (main) => `${main}/封面` }
-      ]
+      // 书库没有可写的图片目录：封面是**读**用户笔记里的 `cover` / `coverPath`（CONFIG/BOOK/<书名>/…），
+      // 插件不往任何地方落封面图。以前这里挂着 bookshelfPosterFolder 这个没有设置行、没有消费点的
+      // 幽灵键，等于空态替一个改不动的字段算 missing——2026-10-31 摘掉。
+      fields: [{ key: "bookshelfFolderPath", label: "书库目录", reco: "书库" }]
     },
     gameshelf: {
       name: "游戏库",
@@ -8333,7 +8348,7 @@ var BZW_bookshelf = (() => {
       hint: "同步还要在设置里填好 SteamID64 与 Web API 密钥。",
       fields: [
         { key: "gameshelfFolderPath", label: "游戏目录", reco: "我的/游戏" },
-        { key: "gameshelfPosterFolder", label: "海报文件夹", reco: "", image: true, imageFallback: (main) => `${main}/封面` }
+        { key: "gameshelfPosterFolder", label: "海报文件夹", reco: "", image: true, imageBaseKey: "gameshelfFolderPath" }
       ]
     },
     knowledge: {
@@ -8346,7 +8361,7 @@ var BZW_bookshelf = (() => {
         { key: "knowledgeDirectory", label: "文献文件夹", reco: "文献盒" },
         { key: "knowledgeCardboxDirectory", label: "卡片文件夹", reco: "卡片盒" },
         { key: "knowledgeTopicDirectory", label: "主题文件夹", reco: "主题盒" },
-        { key: "knowledgeImageFolder", label: "图片文件夹", reco: "", image: true, imageFallback: (main) => `${main}/assets` }
+        { key: "knowledgeImageFolder", label: "图片文件夹", reco: "", image: true, imageBaseKey: "knowledgeCardboxDirectory" }
       ]
     }
   };
@@ -8356,15 +8371,11 @@ var BZW_bookshelf = (() => {
   }
   function folderState(domain) {
     const plan = FOLDER_PLANS[domain];
-    const mainDir = (() => {
-      const first = plan.fields.find((f) => !f.image);
-      return first ? settingValue(first.key) : "";
-    })();
     const fields = plan.fields.map((field) => {
       if (field.image) {
-        const fallback = field.imageFallback ? field.imageFallback(mainDir || field.reco) : mainDir;
-        const r = resolveAssetDir(settingValue(field.key), fallback);
-        return { field, dir: r.dir, source: r.source, missing: !r.dir };
+        const base = field.imageBaseKey ? settingValue(field.imageBaseKey) : "";
+        const r = resolveAssetDir(settingValue(field.key), domainAssetsDir(base));
+        return { field, dir: r.dir, source: r.source, missing: false };
       }
       const v = settingValue(field.key);
       return { field, dir: v, source: v ? "setting" : "fallback", missing: !v };
@@ -8383,13 +8394,9 @@ var BZW_bookshelf = (() => {
       closeBefore == null ? void 0 : closeBefore();
     } catch (e) {
     }
-    const spec = ["..", "settings-panel"].join("/");
-    void import(
-      /* webpackIgnore: true */
-      spec
-    ).then((m) => m.openSettingsPanel(getApp(), plan.settingsId, key)).catch(() => {
+    if (!requestSettingsPanel(plan.settingsId, key)) {
       notice("设置面板没能打开，可以从「设置 → 包仔」进入", "warning");
-    });
+    }
   }
   function folderSetupEmpty(domain, closeBefore) {
     const st = folderState(domain);

@@ -57,7 +57,7 @@ describe('RR-U13：报告视图宿主搜索行为收窄', () => {
     resetObsidianMocks();
     document.body.innerHTML = '';
     resetBookshelfState();
-    // 书库目录缺省留空（ADR-0273）：resolveFolderPath 已不再回落「书库」，夹具要显式配置
+    // 书库目录缺省留空（ADR-0274）：resolveFolderPath 已不再回落「书库」，夹具要显式配置
     setSettingsProvider(() => ({ bookTag: 'book', bookshelfFolderPath: '书库' }) as never);
   });
 

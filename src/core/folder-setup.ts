@@ -17,7 +17,7 @@
  */
 import { notice } from './notice';
 import { requestSettingsPanel, tryGetSettings } from './settings-provider';
-import { cleanDir, resolveAssetDir, type AssetDir } from './attachment-dir';
+import { cleanDir, resolveAssetDir, domainAssetsDir, type AssetDir } from './attachment-dir';
 // 从组件文件的深路径取，别走 './ui' 的桶文件：桶会把 settings-schema / path-picker 一并
 // 拖进来，而那些壳的假 obsidian 层没有 Setting / MarkdownRenderer，行为包直接构建失败。
 import { uiEmpty } from './ui/empty';
@@ -32,10 +32,10 @@ interface FolderField {
   label: string;
   /** 推荐值（设置页 fallbackValue 与空态文案共用） */
   reco: string;
-  /** 图片类：走 resolveAssetDir（设置 → Obsidian 附件位置 → 缺省），不强制人填 */
+  /** 图片类：走 resolveAssetDir（设置 → Obsidian 附件位置 → `<主目录>/assets`），不强制人填 */
   image?: boolean;
-  /** 图片类的域内缺省，参数 = 本域主目录当前值 */
-  imageFallback?: (main: string) => string;
+  /** 图片类的主目录键（缺省落 `<该键当前值>/assets`；剪藏=剪藏文件夹、知识盒=卡片文件夹、影院/游戏库=本域目录） */
+  imageBaseKey?: string;
   /** 空态里的一句话（只在未配置时展示） */
   note?: string;
 }
@@ -71,7 +71,7 @@ export const FOLDER_PLANS: Record<FolderDomainId, FolderPlan> = {
     desc: '抓到的网页要存成笔记，正文得有个固定的落脚处。',
     fields: [
       { key: 'articleDirectory', label: '剪藏文件夹', reco: '归档/网页剪藏' },
-      { key: 'clipbookImageFolder', label: '图片文件夹', reco: '', image: true, imageFallback: (main) => `${main}/assets` },
+      { key: 'clipbookImageFolder', label: '图片文件夹', reco: '', image: true, imageBaseKey: 'articleDirectory' },
     ],
   },
   cinema: {
@@ -82,7 +82,7 @@ export const FOLDER_PLANS: Record<FolderDomainId, FolderPlan> = {
     desc: '影视条目一部一条，存在影视目录里。',
     fields: [
       { key: 'cinemaFolderPath', label: '影视目录', reco: '我的/影视' },
-      { key: 'cinemaPosterFolder', label: '海报文件夹', reco: '', image: true, imageFallback: (main) => `${main}/封面` },
+      { key: 'cinemaPosterFolder', label: '海报文件夹', reco: '', image: true, imageBaseKey: 'cinemaFolderPath' },
     ],
   },
   bookshelf: {
@@ -106,7 +106,7 @@ export const FOLDER_PLANS: Record<FolderDomainId, FolderPlan> = {
     hint: '同步还要在设置里填好 SteamID64 与 Web API 密钥。',
     fields: [
       { key: 'gameshelfFolderPath', label: '游戏目录', reco: '我的/游戏' },
-      { key: 'gameshelfPosterFolder', label: '海报文件夹', reco: '', image: true, imageFallback: (main) => `${main}/封面` },
+      { key: 'gameshelfPosterFolder', label: '海报文件夹', reco: '', image: true, imageBaseKey: 'gameshelfFolderPath' },
     ],
   },
   knowledge: {
@@ -119,7 +119,7 @@ export const FOLDER_PLANS: Record<FolderDomainId, FolderPlan> = {
       { key: 'knowledgeDirectory', label: '文献文件夹', reco: '文献盒' },
       { key: 'knowledgeCardboxDirectory', label: '卡片文件夹', reco: '卡片盒' },
       { key: 'knowledgeTopicDirectory', label: '主题文件夹', reco: '主题盒' },
-      { key: 'knowledgeImageFolder', label: '图片文件夹', reco: '', image: true, imageFallback: (main) => `${main}/assets` },
+      { key: 'knowledgeImageFolder', label: '图片文件夹', reco: '', image: true, imageBaseKey: 'knowledgeCardboxDirectory' },
     ],
   },
 };
@@ -149,20 +149,16 @@ function settingValue(key: string): string {
 
 /**
  * 某域的文件夹就绪情况（唯一判定入口，空态/设置页/域内写盘前都问它）。
- * 图片类不参与「必填」：显式设置或 Obsidian 附件位置任一可用即算就绪。
+ * 图片类不参与「必填」：它的空值是合法状态（三跳全空时写盘侧会拒绝，不会落库根）。
  */
 export function folderState(domain: FolderDomainId): FolderState {
   const plan = FOLDER_PLANS[domain];
-  // 主目录先行：图片类的域内缺省要挂在主目录下（如 <剪藏>/assets）
-  const mainDir = (() => {
-    const first = plan.fields.find((f) => !f.image);
-    return first ? settingValue(first.key) : '';
-  })();
   const fields: FolderFieldState[] = plan.fields.map((field) => {
     if (field.image) {
-      const fallback = field.imageFallback ? field.imageFallback(mainDir || field.reco) : mainDir;
-      const r = resolveAssetDir(settingValue(field.key), fallback);
-      return { field, dir: r.dir, source: r.source, missing: !r.dir };
+      // 图片类**永不 gate**：主目录没配时它只能是空（不落库根），但挡人进域的是主目录，不是它
+      const base = field.imageBaseKey ? settingValue(field.imageBaseKey) : '';
+      const r = resolveAssetDir(settingValue(field.key), domainAssetsDir(base));
+      return { field, dir: r.dir, source: r.source, missing: false };
     }
     const v = settingValue(field.key);
     return { field, dir: v, source: v ? 'setting' : 'fallback', missing: !v };

@@ -401,7 +401,7 @@ export function knowledgeSettingsSchema(opts?: { onClearHistory?: () => void | P
           { type: 'path', mode: 'single', name: '文献文件夹', desc: '文献笔记所在文件夹，部壹扫描这里', binding: { key: 'knowledgeDirectory' } },
           { type: 'path', mode: 'single', name: '图版图片文件夹', desc: '图版录入的图片保存位置，留空跟随 Obsidian 的默认附件位置',
             binding: { key: 'knowledgeImageFolder' },
-            // 空值 = 回落到文献文件夹下的 assets（把「实际会落到哪」显式显示出来，不让人猜）
+            // 空值 = 回落到**卡片文件夹**下的 assets（2026-10-31 用户拍板；此前读的是文献文件夹）
             fallbackValue: () => resolveImageDir(tryGetSettings() || {}) },
           { type: 'path', mode: 'single', name: '卡片文件夹', desc: '自己写的卡片笔记所在文件夹', binding: { key: 'knowledgeCardboxDirectory' } },
           { type: 'path', mode: 'single', name: '主题文件夹', desc: '主题笔记所在文件夹', binding: { key: 'knowledgeTopicDirectory' } },

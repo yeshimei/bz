@@ -313,7 +313,7 @@ describe('bz 骨架冒烟', () => {
   });
 
   it('日记本后台预热（②）：启动调度真实读盘填缓存、只热数据不建 DOM；unload 复位（ADR-0003 兼容）', async () => {
-    // 预热闸（ADR-0273）：日记目录未配置时预热整段跳过。本用例验的是「已配置库」的预热行为，
+    // 预热闸（ADR-0274）：日记目录未配置时预热整段跳过。本用例验的是「已配置库」的预热行为，
     // 先在 data.json 里放一个显式目录（用完清掉，不给后续用例留值）
     diskData['bz'] = { diaryDirectory: '我的/日记' };
     const app = makeMockApp();
@@ -374,7 +374,7 @@ describe('bz 骨架冒烟', () => {
     const plugin = await createPlugin(makeMockApp());
 
     const s = plugin.settings;
-    // 目录缺省一律留空 = 未配置（ADR-0273）：新库不替用户猜位置，未配置走各域引导卡
+    // 目录缺省一律留空 = 未配置（ADR-0274）：新库不替用户猜位置，未配置走各域引导卡
     expect(s.articleDirectory).toBe('');
     expect(s.cinemaFolderPath).toBe(''); // ADR-0087 起接管影视目录（旧 movieFolderPath 键退役）
     expect(s.bookshelfFolderPath).toBe('');
@@ -487,7 +487,7 @@ ${failures.join('\n')}`).toEqual([]);
     // 重新加载时合并默认值
     const plugin2 = await createPlugin(makeMockApp());
     expect(plugin2.settings.memoFilePath).toBe('自定义/路径');
-    expect(plugin2.settings.cinemaFolderPath).toBe(''); // 缺省留空（ADR-0273），往返不失值
+    expect(plugin2.settings.cinemaFolderPath).toBe(''); // 缺省留空（ADR-0274），往返不失值
   });
 
   it('语音转写设置（issue 444 冒烟）：新键默认值 + knowledgeWhisperModel 一次性迁移到 asrWhisperModel', async () => {

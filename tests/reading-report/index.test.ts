@@ -105,7 +105,7 @@ describe('报告视图渲染（面板内容区）', () => {
     document.body.innerHTML = '';
     document.body.classList.remove('theme-dark');
     __resetNoticeForTests();
-    // 目录缺省留空（ADR-0273）：本文件验「已配好书库」的阅读报告，须显式补上 bookshelfFolderPath
+    // 目录缺省留空（ADR-0274）：本文件验「已配好书库」的阅读报告，须显式补上 bookshelfFolderPath
     setSettingsProvider(() => ({ bookshelfFolderPath: '书库' }) as any);
     unloadReadingReport();
   });

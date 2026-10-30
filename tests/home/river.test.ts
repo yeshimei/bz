@@ -19,7 +19,7 @@ import type { RiverData } from '../../src/home/river';
 const NOW = new Date(2026, 8, 7, 21, 36).getTime(); // 2026-09-07 周一晚
 const DAY = 86400000;
 
-/** 域目录缺省留空（ADR-0273）后，夹具要显式配置目录才采集得到；
+/** 域目录缺省留空（ADR-0274）后，夹具要显式配置目录才采集得到；
  *  值取夹具实际写入的目录，断言仍走「已配置库」口径。 */
 const DIRS = { diaryDirectory: '我的/日记', cinemaFolderPath: '我的/影视', bookshelfFolderPath: '书库' };
 

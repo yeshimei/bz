@@ -25,7 +25,7 @@ vi.mock('../../src/gameshelf/sync', () => ({
   autoSyncOnOpen: vi.fn(async () => {}),
 }));
 
-// 未配置目录时走引导卡（ADR-0273）；本文件验的是「已配好游戏库」的行为
+// 未配置目录时走引导卡（ADR-0274）；本文件验的是「已配好游戏库」的行为
 const CONFIG = { gameshelfFolderPath: '我的/游戏', gameshelfSteamId: '76561198366147295', gameshelfSteamApiKey: 'k'.repeat(32) };
 
 function item(appid: number, name: string, playtimeMin: number, lastPlayed = ''): GameItem {

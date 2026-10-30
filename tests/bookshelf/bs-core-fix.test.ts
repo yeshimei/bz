@@ -74,7 +74,7 @@ describe('书库深审修复批：continueReading（C1 死锁 / E6 新鲜度）'
     resetBookshelfState();
     clearNotices();
     document.body.innerHTML = '';
-    // 未配置目录时走引导卡（ADR-0273）；本文件验的是「已配好书库」的行为
+    // 未配置目录时走引导卡（ADR-0274）；本文件验的是「已配好书库」的行为
     setSettingsProvider(() => ({ bookshelfFolderPath: '书库' }) as never);
   });
   afterEach(() => {
@@ -135,7 +135,7 @@ describe('书库深审修复批：报告返回书库兜底重画（ui F1/F2）',
     resetBookshelfState();
     clearNotices();
     document.body.innerHTML = '';
-    // 未配置目录时走引导卡（ADR-0273）；本文件验的是「已配好书库」的行为
+    // 未配置目录时走引导卡（ADR-0274）；本文件验的是「已配好书库」的行为
     setSettingsProvider(() => ({ bookshelfFolderPath: '书库' }) as never);
   });
   afterEach(() => {
@@ -180,7 +180,7 @@ describe('书库深审修复批：检索 ESC 二段清词 + 尾 ✕（eff E2 定
     resetBookshelfState();
     clearNotices();
     document.body.innerHTML = '';
-    // 未配置目录时走引导卡（ADR-0273）；本文件验的是「已配好书库」的行为
+    // 未配置目录时走引导卡（ADR-0274）；本文件验的是「已配好书库」的行为
     setSettingsProvider(() => ({ bookshelfFolderPath: '书库' }) as never);
   });
   afterEach(() => {
