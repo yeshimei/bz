@@ -301,6 +301,7 @@ export default class BzPlugin extends Plugin {
   private registeredCommandIds: string[] = [];
   /** 设置落盘串行队列（C15）：并发 saveSettings 排队写入 */
   private saveQueue: Promise<void> = Promise.resolve();
+
   /** 卸载旗标（C13）：onLayoutReady 回调 / 延迟初始化定时器不随插件卸载摘除，
    *  启动窗口期内禁用插件后布局就绪（或 setTimeout 到点）须短路，防幽灵初始化且无卸载路径 */
   private unloaded = false;
@@ -470,6 +471,9 @@ export default class BzPlugin extends Plugin {
       // 移动端不弹引导（openSetupWizard 直接劝退）→ 也就不存在「先弹它」这回事，别误压备忘录。
       const needSetup =
         !isMobileEnv() && !setupAlreadyDone(this.settings, vaultBasePathOf(this.app), setupDoneSaved);
+      // 新版本启动即弹更新日志（用户拍板 2026-10-31）：manifest 版本 ≠ 上次记录 = 升级了。
+      // 新装（这轮要弹引导）只记录不弹；移动端无引导概念，照常走弹窗检测。
+      this.checkChangelogOnStart(needSetup);
       // 备忘录提醒后台：启动自动弹出 + 打开笔记提醒（落点=备忘录面板；设置键 autoPopupOnStart/openNoteReminder）。
       // 要弹引导时只跳过「启动自动弹出」——事件监听照挂，引导背后不该先蹦出一个备忘录面板。
       ensureMemoReminders(this.app, { skipStartPopup: needSetup });
@@ -688,6 +692,44 @@ export default class BzPlugin extends Plugin {
     }
     if (on) void ensureSmartCat(this.app);
     else unloadSmartCat();
+  }
+
+  /** 新版本启动自动弹更新日志（用户拍板 2026-10-31）：onLayoutReady 调用。
+   *  口径：settings.changelogSeenVersion ≠ manifest.version = 升级了 → 弹。
+   *  - 新装（needSetup）：首次引导是这轮启动的第一个界面，只记录当前版不弹——
+   *    新装用户还没用过插件，没有「更新了什么」可看。
+   *  - seen 为空且不需要引导 = 本功能上线前老库的升级 → 也弹（这次升级就是新版本）。
+   *  - 弹窗内容走 core/changelog 的强制口径：先向远端拿与新版配套的日志（自更新装新版时
+   *    已同步拉过一次，这里再核对兜底），离线回落本地已存版；打开成功才落盘 seen，
+   *    失败（离线且本地从没下载过）不记录、下次启动再试。自动弹失败**不出通知**——
+   *    没人主动要求看日志，弹个错误脸比不弹更吵。 */
+  private checkChangelogOnStart(needSetup: boolean): void {
+    const current = String(this.manifest?.version || '');
+    const seen = this.settings.changelogSeenVersion;
+    if (!current || seen === current) return;
+    if (needSetup) {
+      this.settings.changelogSeenVersion = current;
+      void this.saveSettings().catch((e) => console.error('[bz] 更新日志版本记录落盘失败:', e));
+      return;
+    }
+    // 延到事件循环：onLayoutReady 回调里不抢引导/备忘录那批同步动作的时序
+    setTimeout(() => {
+      if (this.unloaded) return;
+      void (async () => {
+        try {
+          const [core, modal] = await Promise.all([
+            import('./core/changelog'),
+            import('./settings-panel/changelog'),
+          ]);
+          const html = await core.fetchChangelogForStartup(getApp());
+          modal.openChangelogModal(html, current);
+          this.settings.changelogSeenVersion = current;
+          await this.saveSettings();
+        } catch {
+          /* 静默：离线且无本地日志 → 不落记录，下次启动再试 */
+        }
+      })();
+    }, 0);
   }
 }
 

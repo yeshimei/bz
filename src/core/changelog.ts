@@ -52,3 +52,20 @@ export function ensureChangelogReady(app: unknown): Promise<string> {
 export async function refreshChangelog(app: unknown): Promise<string | null> {
   return refreshAsset(app, CHANGELOG_FILENAME, looksLikeChangelog, '更新日志', await cachedSha256For(app, CHANGELOG_FILENAME));
 }
+
+/**
+ * 新版本启动弹窗的取内容口径（用户拍板 2026-10-31：发版必带日志）：
+ * 检测到升级 = 远端**必然**有一份与新版本配套的日志（自更新装新版时强制同更，见
+ * core/self-update.ts 安装落盘点），所以先 refreshChangelog 强制向远端核对拿新版
+ * （不能用本地旧版的缓存糊弄）；离线/失败回落 ensureChangelogReady 的本地已存版——都没有（离线且从未下载过）则抛错，
+ * 调用方静默跳过、不落版本记录，下次启动再试。
+ */
+export async function fetchChangelogForStartup(app: unknown): Promise<string> {
+  try {
+    const fresh = await refreshChangelog(app);
+    if (fresh) return fresh;
+  } catch (e) {
+    /* 静默：refreshAsset 内部已收口，这里只兜意外——落回本地版 */
+  }
+  return ensureChangelogReady(app);
+}

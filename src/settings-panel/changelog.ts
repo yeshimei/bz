@@ -54,8 +54,14 @@ export function unloadChangelog(): void {
   overlay = null;
 }
 
-/** 打开更新日志弹窗（html = 更新日志完整 HTML 文本；重复打开 = 抬顶 + 换内容） */
-export function openChangelogModal(html: string): void {
+/**
+ * 打开更新日志弹窗（html = 更新日志完整 HTML 文本；重复打开 = 抬顶 + 换内容）。
+ * initVersion = 启动自动弹（新版本检测）要落到的版本：日志页缺省显示 DATA.current，
+ * 升级弹窗要让人看到的是**这一版**的内容——往 srcdoc 里补一段自选脚本，等版本栏
+ * 渲染出来就替用户点一下对应那颗导航钮（对旧分发的日志 HTML 同样生效；找不到那颗钮
+ * ——比如远端日志还没跟上——就停在缺省的「当前」版，不算错）。
+ */
+export function openChangelogModal(html: string, initVersion?: string): void {
   if (!overlay) build();
   topifyZ(overlay!); // ADR-0067：显示即发号（重开抬顶，谁后显示谁在上）
   overlay!.style.display = 'flex';
@@ -64,7 +70,18 @@ export function openChangelogModal(html: string): void {
   escHandle?.unregister();
   escHandle = escManager.register('bz-changelog', { isVisible, close: hide });
   const frame = overlay!.querySelector<HTMLIFrameElement>(`#${FRAME_ID} iframe`)!;
-  frame.srcdoc = html;
+  frame.srcdoc = initVersion ? injectVersionPick(html, initVersion) : html;
+}
+
+/* 版本自选脚本（拼进 srcdoc，随文档加载执行）：轮询等版本栏出现后点对应导航钮；
+ * 40 次 ×100ms 还没有（旧 HTML / 该版本不在列表）就放弃，停在缺省「当前」版。 */
+function injectVersionPick(html: string, version: string): string {
+  const v = JSON.stringify(String(version));
+  const snippet =
+    '<script>(function(){var v=' + v + ',n=0;' +
+    'var t=setInterval(function(){var b=document.querySelector(\'.cg-nav[data-v="\'+v+\'"]\');' +
+    'if(b){clearInterval(t);b.click();return}if(++n>40)clearInterval(t)},100)})();</scr' + 'ipt>';
+  return html.includes('</body>') ? html.replace('</body>', snippet + '</body>') : html + snippet;
 }
 
 function build(): void {
