@@ -586,8 +586,13 @@ describe('设置面板（settings-panel）', () => {
         seedRemoteSkins('pomodoro', ['ink', 'grid', 'moss', 'mist', 'sand', 'citrus', 'sakura', 'latte', 'night']);
       }
       const schema = await load();
-      const look = schema.groups[0];
-      expect(look.name, `${name} 组[0] 应为外观组`).toBe('外观');
+      // 2026-10-30：剪藏本把「关于」组（视频教程）提到最前（用户拍板：新用户卡住的是怎么用）。
+      // 契约随之放宽成「外观组是第一个非关于组」——其余域仍必须以外观组开头，不许随便插队。
+      const look = schema.groups.find((g) => g.name === '外观')!;
+      expect(look, `${name} 应有外观组`).toBeTruthy();
+      if (schema.groups[0] !== look) {
+        expect(schema.groups[0].name, `${name} 只允许「关于」组置顶`).toBe('关于');
+      }
       expect(look.rows, `${name} 外观组应两行`).toHaveLength(2);
       const [layout, theme] = look.rows as any[];
       expect(layout.type, `${name} 布局行`).toBe('choiceCards');

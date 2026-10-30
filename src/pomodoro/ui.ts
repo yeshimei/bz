@@ -423,6 +423,9 @@ function syncTimeReels(remain: number): void {
   const layer = box.querySelector<HTMLElement>('.pomodoro-time-reel');
   if (!layer) return;
   box.classList.add('reel-on');
+  // 缓存的滚动位必须还在**本次**这个 layer 里：关窗后 DOM 被移除，缓存仍指着旧节点，
+  // 重开时新人家的 layer 是空的、而文本层被 .reel-on 隐藏 → 倒计时整个消失（2026-10-30 报障）。
+  if (timeReels && timeReels.length && !layer.contains(timeReels[0])) timeReels = null;
   if (!timeReels || timeReels.length === 0) {
     const col = `<span class="pomodoro-rcol"><span class="pomodoro-rinn">${
       Array.from({ length: 10 }, (_, d) => `<span>${d}</span>`).join('')
@@ -1039,6 +1042,9 @@ export function closePomodoro(immediate = false): void {
   // 深审 PF1：重开时 render.ts 骨架是全新空容器，不清键则 renderStats 同键早退 → 柱区空白
   //（与 setStatMode/unloadPomodoro 的清键点对齐）
   lastStatsKey = '';
+  // 同 PF1 口径：翻牌机的滚动位缓存的是**上一个** DOM 的节点，重开时必须在新建骨架里重建，
+  // 否则 .reel-on 把文本层藏了、滚动层却是空的（倒计时数字整个不见了）
+  timeReels = null;
 }
 
 /**

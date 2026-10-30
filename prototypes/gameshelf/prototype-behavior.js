@@ -1,4 +1,4 @@
-/* 源指纹 ea9e0bf6aed01cc5 · 仓内输入 326 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 3e0e46e1b4d40cfa · 仓内输入 326 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/gameshelf/fake-sim.ts","prototypes/gameshelf/fake/fake-obsidian.ts","prototypes/preview-mode.ts","src/auto-summary/index.ts","src/auto-summary/keys.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/belongings/ai.ts","src/belongings/catalog-suggest.ts","src/belongings/category.ts","src/belongings/data.ts","src/belongings/layouts/poster/render.ts","src/belongings/motion.ts","src/belongings/render.ts","src/belongings/report-stats.ts","src/belongings/report.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/epub-notes.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/motion.ts","src/bookshelf/notes-ui.ts","src/bookshelf/notes.ts","src/bookshelf/render.ts","src/bookshelf/settings.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/bookshelf/ui.ts","src/checkup/checks-consistency.ts","src/checkup/checks-drift.ts","src/checkup/checks-json.ts","src/checkup/checks-orphans.ts","src/checkup/files.ts","src/checkup/index.ts","src/checkup/run.ts","src/checkup/ui.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/douban-fetcher.ts","src/cinema/seasons.ts","src/cinema/settings.ts","src/cinema/shared.ts","src/cinema/state.ts","src/clipbook/anchor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/file-sync.ts","src/clipbook/flow.ts","src/clipbook/image-save.ts","src/clipbook/index.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/motion.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/press/data.ts","src/clipbook/press/engine.ts","src/clipbook/press/index.ts","src/clipbook/press/motions.ts","src/clipbook/press/view.ts","src/clipbook/render.ts","src/clipbook/report-stats.ts","src/clipbook/report-ui.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/about-group.ts","src/core/ai-models.ts","src/core/ai.ts","src/core/app.ts","src/core/asr-proofread.ts","src/core/assets/reward-code.png","src/core/attachment-dir.ts","src/core/bundle-asset.ts","src/core/category-table.ts","src/core/changelog.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/domain-icons.ts","src/core/douban-name-index.ts","src/core/download-manifest.ts","src/core/env-check.ts","src/core/esc-manager.ts","src/core/file-sync.ts","src/core/flow-dialog.ts","src/core/folder-setup.ts","src/core/gesture.ts","src/core/http.ts","src/core/item-actions.ts","src/core/jev-fallback.ts","src/core/jev.ts","src/core/json-store.ts","src/core/knowledge-boxes.ts","src/core/landscape.ts","src/core/link-now.ts","src/core/lock-stats.ts","src/core/manual.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/net-progress.ts","src/core/node-runtime-install.ts","src/core/note-trash.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/offline-source.ts","src/core/path-classify.ts","src/core/path-picker.ts","src/core/plugin-path.ts","src/core/pomodoro-phase.ts","src/core/remote-asset.ts","src/core/remote-base.ts","src/core/reward-dialog.ts","src/core/rss-catalog.ts","src/core/self-update.ts","src/core/settings-btn-state.ts","src/core/settings-common.ts","src/core/settings-main-schema.ts","src/core/settings-modal.ts","src/core/settings-model-picker.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/setup-state.ts","src/core/setup-wizard.ts","src/core/sha256.ts","src/core/skin-pack.ts","src/core/storage-path.ts","src/core/storage.ts","src/core/tar.ts","src/core/tool-hint.ts","src/core/tool-runtime.ts","src/core/tool-setup.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/flip.ts","src/core/ui/focus-trap.ts","src/core/ui/help-tip.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slide-pill.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/vault-key.ts","src/core/z-order.ts","src/core/zip.ts","src/diary/config.ts","src/diary/settings.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/motion.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/favorites/ai.ts","src/favorites/app.ts","src/favorites/config.ts","src/favorites/data.ts","src/favorites/layouts/board/render.ts","src/favorites/motion.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/gameshelf/backfill.ts","src/gameshelf/constants.ts","src/gameshelf/detail.ts","src/gameshelf/index.ts","src/gameshelf/motion.ts","src/gameshelf/names.ts","src/gameshelf/notes.ts","src/gameshelf/posters.ts","src/gameshelf/reconcile.ts","src/gameshelf/report.ts","src/gameshelf/settings.ts","src/gameshelf/state.ts","src/gameshelf/steam.ts","src/gameshelf/sync.ts","src/gameshelf/ui.ts","src/home/entry-editor.ts","src/home/order.ts","src/home/settings.ts","src/home/shared.ts","src/knowledge/data.ts","src/knowledge/file-sync.ts","src/knowledge/index.ts","src/knowledge/motion.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-edit.ts","src/knowledge/note-gen.ts","src/knowledge/partial-json.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/relink.ts","src/knowledge/source-retire.ts","src/knowledge/source.ts","src/knowledge/tack.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/memo/data.ts","src/memo/due.ts","src/memo/render.ts","src/memo/settings.ts","src/memo/state.ts","src/memo/ui.ts","src/password-vault/data.ts","src/password-vault/settings.ts","src/people/chat.ts","src/people/datasource.ts","src/people/insights.ts","src/people/me-avatar.ts","src/people/media.ts","src/people/parse.ts","src/people/render.ts","src/people/safe-store.ts","src/people/settings.ts","src/people/stats.ts","src/people/types.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/index.ts","src/pomodoro/motion.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts","src/reading-report/index.ts","src/reading-report/report.ts","src/reading-report/stats.ts","src/review/analysis/data.ts","src/review/analysis/engine.ts","src/review/analysis/index.ts","src/review/analysis/kits.ts","src/review/analysis/motions.ts","src/review/analysis/view.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/motion.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/quiz-panel-data.ts","src/review/quiz-panel.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts","src/secondbrain/ai.ts","src/secondbrain/chunk.ts","src/secondbrain/config.ts","src/secondbrain/link-agent/data.ts","src/secondbrain/link-agent/pipeline.ts","src/secondbrain/motion.ts","src/secondbrain/panel.ts","src/secondbrain/readonly.ts","src/secondbrain/render.ts","src/secondbrain/store-file.ts","src/secondbrain/tfidf.ts","src/secondbrain/vector-math.ts","src/secondbrain/weekly-ui.ts","src/secondbrain/weekly.ts","src/secondbrain/whitelist.ts","src/settings-panel/changelog.ts","src/settings-panel/index.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/manual-viewer.ts","src/settings-panel/motion.ts","src/settings-panel/online-resources.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/shared.ts","src/settings-panel/ui.ts","src/settings.ts","src/smartcat/belongings-source.ts","src/smartcat/character.ts","src/smartcat/config.ts","src/smartcat/data.ts","src/smartcat/favorites-source.ts","src/smartcat/motion.ts","src/smartcat/types.ts","src/smartcat/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/gameshelf/fake-sim.ts → window.BZW_gameshelf（行为单源预览包，issue 245/ADR-0106） */
 var BZW_gameshelf = (() => {
@@ -16839,6 +16839,12 @@ ${countsToText(s.missing)}
   function remotesFor(fileName) {
     return rankRemotes(downloadRemotesFor(fileName));
   }
+  function contentTimeoutFor(sizeBytes) {
+    const size = Number(sizeBytes) || 0;
+    if (size <= 0) return CHANNEL_TIMEOUT_MS;
+    const ms = Math.round(size / CONTENT_BYTES_PER_SEC * 1e3);
+    return Math.min(CONTENT_TIMEOUT_CAP_MS, Math.max(CONTENT_TIMEOUT_MIN_MS, ms));
+  }
   function baseOfUrl(url) {
     return url.replace(/\/downloads\/.*$/, "");
   }
@@ -16851,12 +16857,12 @@ ${countsToText(s.missing)}
     const front = urls.filter((u) => u.startsWith(preferredBase));
     return front.length ? [...front, ...urls.filter((u) => !u.startsWith(preferredBase))] : urls;
   }
-  async function requestText(url) {
+  async function requestText(url, timeoutMs = CHANNEL_TIMEOUT_MS) {
     let timer = null;
     try {
       const req = requestUrl({ url, method: "GET", throw: false });
       const timeout = new Promise((_, reject) => {
-        timer = setTimeout(() => reject(new Error(`超时（${CHANNEL_TIMEOUT_MS} ms 内没有响应）`)), CHANNEL_TIMEOUT_MS);
+        timer = setTimeout(() => reject(new Error(`超时（${timeoutMs} ms 内没有响应）`)), timeoutMs);
       });
       const res = await Promise.race([req, timeout]);
       const text2 = String((res == null ? void 0 : res.text) || "");
@@ -16949,7 +16955,7 @@ ${countsToText(s.missing)}
     await app.vault.adapter.write(downloadsVaultPath(app, fileName), text2);
     emitDomainEvent(DOWNLOADS_CHANGED_EVENT, { fileName });
   }
-  async function ensureAssetWithHash(app, fileName, expected, label) {
+  async function ensureAssetWithHash(app, fileName, expected, label, sizeBytes) {
     const want = String(expected || "").toLowerCase();
     const cached = await readAsset(app, fileName);
     if (cached !== null && (!want || textSha256(cached) === want)) return cached;
@@ -16965,9 +16971,10 @@ ${countsToText(s.missing)}
       }
     } catch (e) {
     }
+    const timeoutMs = contentTimeoutFor(sizeBytes);
     for (const url of remotesFor(fileName)) {
       try {
-        const text2 = await requestText(url);
+        const text2 = await requestText(url, timeoutMs);
         if (want && textSha256(text2) !== want) {
           lastErr = `${hostOf(url)} 内容 sha256 不匹配（可能被篡改或版本错位）`;
           continue;
@@ -17024,7 +17031,7 @@ ${countsToText(s.missing)}
       return null;
     }
   }
-  var DOWNLOADS_CHANGED_EVENT, CHANNEL_TIMEOUT_MS, preferredBase, DOWNLOADS_DIR;
+  var DOWNLOADS_CHANGED_EVENT, CHANNEL_TIMEOUT_MS, CONTENT_TIMEOUT_MIN_MS, CONTENT_TIMEOUT_CAP_MS, CONTENT_BYTES_PER_SEC, preferredBase, DOWNLOADS_DIR;
   var init_remote_asset = __esm({
     "src/core/remote-asset.ts"() {
       init_fake_obsidian();
@@ -17035,6 +17042,9 @@ ${countsToText(s.missing)}
       init_offline_source();
       DOWNLOADS_CHANGED_EVENT = "downloads:asset-changed";
       CHANNEL_TIMEOUT_MS = 8e3;
+      CONTENT_TIMEOUT_MIN_MS = CHANNEL_TIMEOUT_MS;
+      CONTENT_TIMEOUT_CAP_MS = 18e4;
+      CONTENT_BYTES_PER_SEC = 40 * 1024;
       preferredBase = "";
       DOWNLOADS_DIR = "downloads";
     }
@@ -30744,7 +30754,7 @@ ${it.text}`).join("\n"));
     for (const arr of ready.values()) for (const r of arr) byFile.set(r.entry.file, r);
     await mapLimit(todo, 4, async (e) => {
       try {
-        const text2 = await ensureAssetWithHash(app, e.file, e.sha256, `皮肤「${e.name}」`);
+        const text2 = await ensureAssetWithHash(app, e.file, e.sha256, `皮肤「${e.name}」`, e.size);
         if (text2 !== null) {
           byFile.set(e.file, { entry: e, text: text2 });
           await removeLegacyFile(app, e.file);
@@ -30796,10 +30806,18 @@ ${it.text}`).join("\n"));
     return new Uint8Array(out.buffer, out.byteOffset, out.byteLength);
   }
   async function defaultFetchBytes2(url) {
-    const res = await requestUrl({ url, method: "GET", throw: true });
-    const ab = res.arrayBuffer;
-    if (!ab) throw new Error("响应没有二进制体");
-    return new Uint8Array(ab);
+    let timer = null;
+    try {
+      const timeout = new Promise((_, reject) => {
+        timer = setTimeout(() => reject(new Error(`超时（${BUNDLE_FETCH_TIMEOUT_MS} ms 内没有下完）`)), BUNDLE_FETCH_TIMEOUT_MS);
+      });
+      const res = await Promise.race([requestUrl({ url, method: "GET", throw: true }), timeout]);
+      const ab = res.arrayBuffer;
+      if (!ab) throw new Error("响应没有二进制体");
+      return new Uint8Array(ab);
+    } finally {
+      if (timer) clearTimeout(timer);
+    }
   }
   async function readTextRel(app, rel) {
     return readAsset(app, rel);
@@ -30956,7 +30974,7 @@ ${it.text}`).join("\n"));
     emitDomainEvent(DOWNLOADS_CHANGED_EVENT, { fileName: entry.file });
     return { dir, files: files.length, bytes };
   }
-  var BUNDLE_MARKER, inFlight;
+  var BUNDLE_MARKER, BUNDLE_FETCH_TIMEOUT_MS, inFlight;
   var init_bundle_asset = __esm({
     "src/core/bundle-asset.ts"() {
       init_fake_obsidian();
@@ -30968,6 +30986,7 @@ ${it.text}`).join("\n"));
       init_offline_source();
       init_plugin_path();
       BUNDLE_MARKER = ".bz-bundle.json";
+      BUNDLE_FETCH_TIMEOUT_MS = 18e4;
       inFlight = /* @__PURE__ */ new Map();
     }
   });
@@ -31906,7 +31925,7 @@ ${other}
       if (isToolBundleId(toolId)) await setupAfterInstall(app, toolId);
       return;
     }
-    await ensureAssetWithHash(app, entry.file, entry.sha256, entry.name);
+    await ensureAssetWithHash(app, entry.file, entry.sha256, entry.name, entry.size);
   }
   function allBusyId(scope) {
     return `${ALL_BUSY_ID}:${scope}`;
@@ -32056,23 +32075,23 @@ ${other}
       );
     });
   }
-  async function fetchText(url) {
-    const res = await withTimeout2(requestUrl({ url, method: "GET", throw: true }), FETCH_TIMEOUT_MS, url);
+  async function fetchText(url, timeoutMs = FETCH_TIMEOUT_MS) {
+    const res = await withTimeout2(requestUrl({ url, method: "GET", throw: true }), timeoutMs, url);
     return String(res.text || "");
   }
-  async function fetchFirst(urls) {
+  async function fetchFirst(urls, timeoutMs = FETCH_TIMEOUT_MS) {
     const [head, ...rest] = urls;
     let lastErr = null;
     if (head) {
       try {
-        return { text: await fetchText(head), url: head };
+        return { text: await fetchText(head, timeoutMs), url: head };
       } catch (e) {
         lastErr = e;
       }
     }
     if (rest.length) {
       try {
-        return await Promise.any(rest.map(async (url) => ({ text: await fetchText(url), url })));
+        return await Promise.any(rest.map(async (url) => ({ text: await fetchText(url, timeoutMs), url })));
       } catch (e) {
         const errs = e == null ? void 0 : e.errors;
         lastErr = errs && errs[0] || e;
@@ -32218,9 +32237,9 @@ ${other}
     lastAvailable = { version: pointer.version, tag: pointer.tag, at: now };
     writeStore(AVAILABLE_KEY, lastAvailable);
     if (!apply) return "available";
-    const js = await fetchFirst(repoRemotesForTag(pointer.tag, "main.js"));
-    const css = await fetchFirst(repoRemotesForTag(pointer.tag, "styles.css"));
-    const mf = await fetchFirst(repoRemotesForTag(pointer.tag, "manifest.json"));
+    const js = await fetchFirst(repoRemotesForTag(pointer.tag, "main.js"), FETCH_ASSET_TIMEOUT_MS);
+    const css = await fetchFirst(repoRemotesForTag(pointer.tag, "styles.css"), FETCH_ASSET_TIMEOUT_MS);
+    const mf = await fetchFirst(repoRemotesForTag(pointer.tag, "manifest.json"), FETCH_ASSET_TIMEOUT_MS);
     if (!looksLikeBundle(js.text)) throw new Error("远端 main.js 内容异常，放弃覆盖");
     let mfOk = false;
     try {
@@ -32238,7 +32257,7 @@ ${other}
     if (!opts.silent) notice(`bz 已更新到 v${pointer.version}：重载插件（或重启 Obsidian）后生效`, "success");
     return "installed";
   }
-  var CHECK_INTERVAL_MS, CHECK_DELAY_MS, FETCH_TIMEOUT_MS, LAST_CHECK_KEY, PENDING_KEY, AVAILABLE_KEY, BACKUP_DIR, lastError, lastCheckedAt, lastAvailable;
+  var CHECK_INTERVAL_MS, CHECK_DELAY_MS, FETCH_TIMEOUT_MS, FETCH_ASSET_TIMEOUT_MS, LAST_CHECK_KEY, PENDING_KEY, AVAILABLE_KEY, BACKUP_DIR, lastError, lastCheckedAt, lastAvailable;
   var init_self_update = __esm({
     "src/core/self-update.ts"() {
       init_fake_obsidian();
@@ -32248,6 +32267,7 @@ ${other}
       CHECK_INTERVAL_MS = 24 * 3600 * 1e3;
       CHECK_DELAY_MS = 15 * 1e3;
       FETCH_TIMEOUT_MS = 6e3;
+      FETCH_ASSET_TIMEOUT_MS = 90 * 1e3;
       LAST_CHECK_KEY = "bz-selfupdate:last-check";
       PENDING_KEY = "bz-selfupdate:pending";
       AVAILABLE_KEY = "bz-selfupdate:available";
@@ -32723,7 +32743,7 @@ ${other}
       size: (_a2 = e.size) != null ? _a2 : null,
       ...lazy ? { optional: true } : {},
       run: async () => {
-        await ensureAssetWithHash(app, e.file, e.sha256, e.name);
+        await ensureAssetWithHash(app, e.file, e.sha256, e.name, e.size);
       }
     };
   }
@@ -32910,9 +32930,11 @@ ${other}
         closeModal(ui2);
         (_a3 = ctx.onFinish) == null ? void 0 : _a3.call(ctx);
       };
+      const help = button("bz-setup-link", "连不上？看这个视频 →");
+      help.onclick = () => openExternalUrl(ctx.app, NET_HELP_VIDEO);
       const retry = button("bz-setup-btn bz-setup-btn--cta", "重新检测");
       retry.onclick = rescan;
-      ui2.foot.append(later, retry);
+      ui2.foot.append(later, help, retry);
       return;
     }
     const again = button("bz-setup-btn bz-setup-btn--back", "重新检测");
@@ -33338,10 +33360,11 @@ ${other}
   function openEnvironmentCheck(app = getApp()) {
     openSetupWizard(app, { firstRun: false });
   }
-  var NODE_SIZE_HINT, MANIFEST_TIMEOUT_MS, LAZY_DOC_IDS, activeClose;
+  var NODE_SIZE_HINT, MANIFEST_TIMEOUT_MS, LAZY_DOC_IDS, NET_HELP_VIDEO, activeClose;
   var init_setup_wizard = __esm({
     "src/core/setup-wizard.ts"() {
       init_notice();
+      init_utils();
       init_modal();
       init_env_check();
       init_download_manifest();
@@ -33363,6 +33386,7 @@ ${other}
       NODE_SIZE_HINT = 36.4 * 1024 * 1024;
       MANIFEST_TIMEOUT_MS = 12e3;
       LAZY_DOC_IDS = /* @__PURE__ */ new Set(["cinema-douban-index"]);
+      NET_HELP_VIDEO = "https://www.bilibili.com/video/BV1vNsZ6pE7i/?p=2";
       activeClose = null;
     }
   });
@@ -33410,8 +33434,8 @@ ${other}
     const autoUpdateRow = {
       type: "toggle",
       name: "自动更新",
-      desc: "启动时自动检查并安装新版本",
-      help: "关闭时只在打开这个面板时提示有没有新版本，不会动插件文件。开启后每次启动会在后台静默检查一次（24 小时内不重复），发现新版本直接安装。",
+      desc: "启动时自动更新插件、外部工具与在线资源",
+      help: "关闭时只在打开这个面板时提示有没有新版本，不会动插件文件。开启后每次启动会在后台静默检查一次（24 小时内不重复）：插件本体有新版本直接安装；皮肤、索引数据表与三个外部工具包（知识盒 / 工具坞 / 脸谱）缺的或过期的也会一并下好。",
       binding: { key: "autoUpdate" }
     };
     const feedbackRow = {
@@ -36662,6 +36686,7 @@ ${other}
     const layer = box.querySelector(".pomodoro-time-reel");
     if (!layer) return;
     box.classList.add("reel-on");
+    if (timeReels && timeReels.length && !layer.contains(timeReels[0])) timeReels = null;
     if (!timeReels || timeReels.length === 0) {
       const col = `<span class="pomodoro-rcol"><span class="pomodoro-rinn">${Array.from({ length: 10 }, (_, d) => `<span>${d}</span>`).join("")}</span></span>`;
       layer.innerHTML = col + col + '<span class="pomodoro-rdot">:</span>' + col + col;
@@ -37174,6 +37199,7 @@ ${other}
       escHandle2 = null;
     }
     lastStatsKey = "";
+    timeReels = null;
   }
   async function startFocusForTask(app, taskTitle) {
     await ensurePomodoro(app);
@@ -71028,6 +71054,7 @@ ${n.content.slice(0, 2e3)}
     DEFAULT_SETTINGS: () => DEFAULT_SETTINGS,
     migrateAsrKeys: () => migrateAsrKeys,
     migrateAutoLinkSettings: () => migrateAutoLinkSettings,
+    migrateAutoUpdateDefault: () => migrateAutoUpdateDefault,
     migrateExternalToolKeys: () => migrateExternalToolKeys,
     migrateLinkMinScoreScale: () => migrateLinkMinScoreScale,
     migrateMemoSettingKeys: () => migrateMemoSettingKeys,
@@ -71036,6 +71063,14 @@ ${n.content.slice(0, 2e3)}
     migrateRetiredJevKeys: () => migrateRetiredJevKeys,
     migrateRetiredSecondBrainKeys: () => migrateRetiredSecondBrainKeys
   });
+  function migrateAutoUpdateDefault(raw) {
+    if (!raw || typeof raw !== "object") return false;
+    const rec = raw;
+    if (rec.autoUpdateDefaultedOn === true) return false;
+    rec.autoUpdateDefaultedOn = true;
+    rec.autoUpdate = true;
+    return true;
+  }
   function migrateMemoSettingKeys(raw) {
     if (!raw || typeof raw !== "object") return false;
     const rec = raw;
@@ -71281,8 +71316,8 @@ ${n.content.slice(0, 2e3)}
         // 共享数据路径（ADR-0009）：空 = 还没定过，首次启动时由 core/storage.bootstrapStorageDir 写成
         // `<插件目录>/storage`（2026-10-29，小写；老库则认领原 CONFIG/STORAGE）。
         storagePath: "",
-        // 自动更新：缺省关（2026-10-28 对外分发拍板）——见 interface 里的说明
-        autoUpdate: false,
+        // 自动更新：缺省开（2026-10-30 用户拍板；含插件本体 + 在线资源 + 外部工具包）——见 interface 说明
+        autoUpdate: true,
         // 首次引导没走过（首次启动会弹；走完或被跳过后置 true）
         setupDone: false,
         // 自定义镜像源（空 = 只用官方通道）

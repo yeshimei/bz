@@ -1,4 +1,4 @@
-/* 源指纹 9eeb9655a88a0a1e · 仓内输入 33 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 e703a7d6fe5f8d3a · 仓内输入 33 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/pomodoro/fake-sim.ts","prototypes/pomodoro/fake/fake-obsidian.ts","src/core/app.ts","src/core/domain-bus.ts","src/core/download-manifest.ts","src/core/esc-manager.ts","src/core/http.ts","src/core/mobile.ts","src/core/notice.ts","src/core/offline-source.ts","src/core/plugin-path.ts","src/core/pomodoro-phase.ts","src/core/remote-asset.ts","src/core/remote-base.ts","src/core/settings-common.ts","src/core/settings-provider.ts","src/core/sha256.ts","src/core/skin-pack.ts","src/core/storage-path.ts","src/core/storage.ts","src/core/ui/focus-trap.ts","src/core/ui/str.ts","src/core/utils.ts","src/core/z-order.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/motion.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/pomodoro/fake-sim.ts → window.BZW_pomodoro（行为单源预览包，issue 245/ADR-0106） */
 var BZW_pomodoro = (() => {
@@ -4885,6 +4885,7 @@ var BZW_pomodoro = (() => {
   });
 
   // src/core/remote-asset.ts
+  var CONTENT_BYTES_PER_SEC;
   var init_remote_asset = __esm({
     "src/core/remote-asset.ts"() {
       init_fake_obsidian();
@@ -4893,6 +4894,7 @@ var BZW_pomodoro = (() => {
       init_remote_base();
       init_plugin_path();
       init_offline_source();
+      CONTENT_BYTES_PER_SEC = 40 * 1024;
     }
   });
 
@@ -7006,6 +7008,7 @@ var BZW_pomodoro = (() => {
     const layer = box.querySelector(".pomodoro-time-reel");
     if (!layer) return;
     box.classList.add("reel-on");
+    if (timeReels && timeReels.length && !layer.contains(timeReels[0])) timeReels = null;
     if (!timeReels || timeReels.length === 0) {
       const col = `<span class="pomodoro-rcol"><span class="pomodoro-rinn">${Array.from({ length: 10 }, (_, d) => `<span>${d}</span>`).join("")}</span></span>`;
       layer.innerHTML = col + col + '<span class="pomodoro-rdot">:</span>' + col + col;
@@ -7353,6 +7356,7 @@ var BZW_pomodoro = (() => {
       escHandle = null;
     }
     lastStatsKey = "";
+    timeReels = null;
   }
   function menuPhase() {
     if (state.phase === "short-break" || state.phase === "long-break") return "break";

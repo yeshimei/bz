@@ -1,4 +1,4 @@
-/* 源指纹 08f9f306222660d5 · 仓内输入 139 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 c8d72978a821f1dd · 仓内输入 139 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/clipbook/fake-sim.ts","prototypes/clipbook/fake/fake-obsidian.ts","prototypes/preview-mode.ts","src/auto-summary/index.ts","src/auto-summary/keys.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/clipbook/anchor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/file-sync.ts","src/clipbook/flow.ts","src/clipbook/image-save.ts","src/clipbook/index.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/motion.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/press/data.ts","src/clipbook/press/engine.ts","src/clipbook/press/index.ts","src/clipbook/press/motions.ts","src/clipbook/press/view.ts","src/clipbook/render.ts","src/clipbook/report-stats.ts","src/clipbook/report-ui.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai.ts","src/core/app.ts","src/core/asr-proofread.ts","src/core/attachment-dir.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/download-manifest.ts","src/core/esc-manager.ts","src/core/file-sync.ts","src/core/flow-dialog.ts","src/core/folder-setup.ts","src/core/gesture.ts","src/core/http.ts","src/core/item-actions.ts","src/core/knowledge-boxes.ts","src/core/landscape.ts","src/core/link-now.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/net-progress.ts","src/core/node-runtime-install.ts","src/core/note-trash.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/offline-source.ts","src/core/path-classify.ts","src/core/path-picker.ts","src/core/plugin-path.ts","src/core/remote-asset.ts","src/core/remote-base.ts","src/core/rss-catalog.ts","src/core/settings-btn-state.ts","src/core/settings-common.ts","src/core/settings-modal.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/sha256.ts","src/core/storage-path.ts","src/core/storage.ts","src/core/tar.ts","src/core/tool-hint.ts","src/core/tool-runtime.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/help-tip.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/core/zip.ts","src/knowledge/data.ts","src/knowledge/file-sync.ts","src/knowledge/index.ts","src/knowledge/motion.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-edit.ts","src/knowledge/note-gen.ts","src/knowledge/partial-json.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/relink.ts","src/knowledge/source-retire.ts","src/knowledge/source.ts","src/knowledge/tack.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/secondbrain/readonly.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/motion.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/shared.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/clipbook/fake-sim.ts → window.BZW_clipbook（行为单源预览包，issue 245/ADR-0106） */
 var BZW_clipbook = (() => {
@@ -5790,6 +5790,12 @@ var BZW_clipbook = (() => {
   function remotesFor(fileName) {
     return rankRemotes(downloadRemotesFor(fileName));
   }
+  function contentTimeoutFor(sizeBytes) {
+    const size = Number(sizeBytes) || 0;
+    if (size <= 0) return CHANNEL_TIMEOUT_MS;
+    const ms = Math.round(size / CONTENT_BYTES_PER_SEC * 1e3);
+    return Math.min(CONTENT_TIMEOUT_CAP_MS, Math.max(CONTENT_TIMEOUT_MIN_MS, ms));
+  }
   function baseOfUrl(url) {
     return url.replace(/\/downloads\/.*$/, "");
   }
@@ -5802,12 +5808,12 @@ var BZW_clipbook = (() => {
     const front = urls.filter((u) => u.startsWith(preferredBase));
     return front.length ? [...front, ...urls.filter((u) => !u.startsWith(preferredBase))] : urls;
   }
-  async function requestText(url) {
+  async function requestText(url, timeoutMs = CHANNEL_TIMEOUT_MS) {
     let timer = null;
     try {
       const req = requestUrl({ url, method: "GET", throw: false });
       const timeout = new Promise((_, reject) => {
-        timer = setTimeout(() => reject(new Error(`超时（${CHANNEL_TIMEOUT_MS} ms 内没有响应）`)), CHANNEL_TIMEOUT_MS);
+        timer = setTimeout(() => reject(new Error(`超时（${timeoutMs} ms 内没有响应）`)), timeoutMs);
       });
       const res = await Promise.race([req, timeout]);
       const text = String((res == null ? void 0 : res.text) || "");
@@ -5900,7 +5906,7 @@ var BZW_clipbook = (() => {
     await app.vault.adapter.write(downloadsVaultPath(app, fileName), text);
     emitDomainEvent(DOWNLOADS_CHANGED_EVENT, { fileName });
   }
-  async function ensureAssetWithHash(app, fileName, expected, label) {
+  async function ensureAssetWithHash(app, fileName, expected, label, sizeBytes) {
     const want = String(expected || "").toLowerCase();
     const cached = await readAsset(app, fileName);
     if (cached !== null && (!want || textSha256(cached) === want)) return cached;
@@ -5916,9 +5922,10 @@ var BZW_clipbook = (() => {
       }
     } catch (e) {
     }
+    const timeoutMs = contentTimeoutFor(sizeBytes);
     for (const url of remotesFor(fileName)) {
       try {
-        const text = await requestText(url);
+        const text = await requestText(url, timeoutMs);
         if (want && textSha256(text) !== want) {
           lastErr = `${hostOf(url)} 内容 sha256 不匹配（可能被篡改或版本错位）`;
           continue;
@@ -5946,7 +5953,7 @@ var BZW_clipbook = (() => {
       return null;
     }
   }
-  var DOWNLOADS_CHANGED_EVENT, CHANNEL_TIMEOUT_MS, preferredBase, DOWNLOADS_DIR;
+  var DOWNLOADS_CHANGED_EVENT, CHANNEL_TIMEOUT_MS, CONTENT_TIMEOUT_MIN_MS, CONTENT_TIMEOUT_CAP_MS, CONTENT_BYTES_PER_SEC, preferredBase, DOWNLOADS_DIR;
   var init_remote_asset = __esm({
     "src/core/remote-asset.ts"() {
       init_fake_obsidian();
@@ -5957,6 +5964,9 @@ var BZW_clipbook = (() => {
       init_offline_source();
       DOWNLOADS_CHANGED_EVENT = "downloads:asset-changed";
       CHANNEL_TIMEOUT_MS = 8e3;
+      CONTENT_TIMEOUT_MIN_MS = CHANNEL_TIMEOUT_MS;
+      CONTENT_TIMEOUT_CAP_MS = 18e4;
+      CONTENT_BYTES_PER_SEC = 40 * 1024;
       preferredBase = "";
       DOWNLOADS_DIR = "downloads";
     }

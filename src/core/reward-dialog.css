@@ -392,18 +392,26 @@
   }
 }
 
-/* ---------- 窄屏（全屏 + 右上角关闭钮，距顶 44px 对齐日记本口径） ---------- */
-@media (max-width: 560px) {
+/* ---------- 移动端：真全屏（与各域面板同口径：100vw + core 可视视口 --bz-vvh） ----------
+   断点跟各域面板一致用 768（原先 560：平板竖屏 / 大屏手机 600~760 落在缝里，
+   那时走的是桌面居中卡——面板顶上就空出一条 44px 的缝，用户看到的是「没全屏」）。
+   uiModal 会内联 maxWidth=min(520px, 100vw-32px)，不压过它就会右侧缺一条纸。 */
+@media (max-width: 768px) {
   .bz-overlay-popup.bz-rw-modal {
     position: fixed;
     top: 0;
     left: 0;
     transform: none;
-    width: 100%;
-    height: 100vh;
-    max-height: 100vh;
+    width: 100vw;
+    max-width: 100vw !important;
+    height: var(--bz-vvh, 100vh);
+    max-height: var(--bz-vvh, 100vh);
     border-radius: 0;
   }
+}
+
+/* ---------- 窄屏内容缩距（全屏壳之上，只管字号与留白） ---------- */
+@media (max-width: 560px) {
 
   .bz-rw-head { padding: 26px 24px 0; }
   .bz-rw-code { padding: 20px 24px 18px; }

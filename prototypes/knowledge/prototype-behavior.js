@@ -1,4 +1,4 @@
-/* 源指纹 e5fc807498484afc · 仓内输入 65 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 20767d5bffb869c8 · 仓内输入 65 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/knowledge/fake-sim.ts","prototypes/knowledge/fake/ai-index.ts","prototypes/knowledge/fake/fake-obsidian.ts","prototypes/preview-mode.ts","src/core/ai.ts","src/core/app.ts","src/core/asr-proofread.ts","src/core/attachment-dir.ts","src/core/crypto.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/folder-setup.ts","src/core/http.ts","src/core/item-actions.ts","src/core/knowledge-boxes.ts","src/core/link-now.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/net-progress.ts","src/core/node-runtime-install.ts","src/core/note-trash.ts","src/core/notice.ts","src/core/offline-source.ts","src/core/plugin-path.ts","src/core/remote-asset.ts","src/core/remote-base.ts","src/core/settings-provider.ts","src/core/sha256.ts","src/core/storage-path.ts","src/core/storage.ts","src/core/tar.ts","src/core/tool-hint.ts","src/core/tool-runtime.ts","src/core/ui/button.ts","src/core/ui/empty.ts","src/core/ui/focus-trap.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/resize.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/utils.ts","src/core/z-order.ts","src/core/zip.ts","src/knowledge/data.ts","src/knowledge/motion.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-edit.ts","src/knowledge/note-gen.ts","src/knowledge/partial-json.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/relink.ts","src/knowledge/source.ts","src/knowledge/tack.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/secondbrain/readonly.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/knowledge/fake-sim.ts → window.BZW_knowledge（行为单源预览包，issue 245/ADR-0106） */
 var BZW_knowledge = (() => {
@@ -7919,6 +7919,7 @@ var BZW_knowledge = (() => {
   ];
 
   // src/core/remote-asset.ts
+  var CONTENT_BYTES_PER_SEC = 40 * 1024;
   var DOWNLOADS_DIR = "downloads";
 
   // src/core/tar.ts

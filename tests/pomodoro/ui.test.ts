@@ -1176,6 +1176,22 @@ describe('深审修复批回归（bz-fix-pomo-core）', () => {
     expect(document.querySelectorAll('.pomodoro-stat-day').length).toBe(7); // 修复前重开为 0
   });
 
+  it('PF7：关闭再打开弹窗，倒计时翻牌必须重建（修复前滚动层空着、文本层被隐藏 → 数字消失）', async () => {
+    const { app } = setup();
+    await openPomodoro(app);
+    const first = document.getElementById('pomodoro-time-box')!;
+    expect(first.querySelectorAll('.pomodoro-rinn').length).toBe(4);
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+    expect(document.getElementById('pomodoro-mask')).toBeNull();
+
+    await openPomodoro(app);
+    const second = document.getElementById('pomodoro-time-box')!;
+    // 修复前：缓存还指着上一个已移除的 DOM，新人家的 layer 是空的（.reel-on 又把文本层藏了）
+    expect(second.querySelectorAll('.pomodoro-rinn').length).toBe(4);
+    expect(second.querySelector('.pomodoro-rinn > span')).not.toBeNull();
+    expect(document.getElementById('pomodoro-time')!.textContent).toMatch(/^[0-9]{2}:[0-9]{2}$/);
+  });
+
   it('PE3：空闲态「跳过」禁用且点击不产生意外短休息态（静默落盘一并消）', async () => {
     const { app, vault } = setup();
     await openPomodoro(app);

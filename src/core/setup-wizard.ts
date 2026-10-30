@@ -18,6 +18,7 @@
  *  - 与「设置 → 关于 → 环境自检」共用同一套行渲染与补齐队列；自检模式跳过 ②④ 两屏。
  * ============================================================ */
 import { notice } from './notice';
+import { openExternalUrl } from './utils';
 import { uiModal } from './ui/modal';
 import { environmentCheck, probeNetwork, probeWritableDir, type EnvCheckRow, type NetworkProbe } from './env-check';
 import { docStatus, refreshManifest } from './download-manifest';
@@ -151,7 +152,7 @@ function docItem(app: unknown, e: ManifestDocEntry): Omit<SetupItem, 'ready'> {
     size: e.size ?? null,
     ...(lazy ? { optional: true } : {}),
     run: async () => {
-      await ensureAssetWithHash(app, e.file, e.sha256, e.name);
+      await ensureAssetWithHash(app, e.file, e.sha256, e.name, e.size);
     },
   };
 }
@@ -252,6 +253,12 @@ function setSub(ui: Ui, text: string): void {
   ui.sub.textContent = text;
   ui.sub.classList.toggle('is-hidden', !text);
 }
+
+/**
+ * 网络全断时的视频指引（B 站，第 2P 专讲连不上资源站怎么处理）。
+ * 放在「重新检测」左边：自检能说的是「不通」，说不清「怎么办」——而这一步靠文字讲不明白。
+ */
+const NET_HELP_VIDEO = 'https://www.bilibili.com/video/BV1vNsZ6pE7i/?p=2';
 
 function button(cls: string, text: string): HTMLButtonElement {
   const b = document.createElement('button');
@@ -464,9 +471,12 @@ async function stageProbe(ctx: WizardCtx, st: WizardState, ui: Ui): Promise<void
       closeModal(ui);
       ctx.onFinish?.();
     };
+    // 重试钮前面挂一条视频出口：连不上时再点几次也是同样的结果，得先告诉人该去改什么
+    const help = button('bz-setup-link', '连不上？看这个视频 →');
+    help.onclick = () => openExternalUrl(ctx.app, NET_HELP_VIDEO);
     const retry = button('bz-setup-btn bz-setup-btn--cta', '重新检测');
     retry.onclick = rescan;
-    ui.foot.append(later, retry);
+    ui.foot.append(later, help, retry);
     return;
   }
 
