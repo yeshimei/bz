@@ -1,5 +1,5 @@
-/* 源指纹 6b09caec4d5bb827 · 仓内输入 105 个（校验见 tests/preview-freshness.test.ts） */
-/*#preview-inputs=["prototypes/people/fake-sim.ts","prototypes/people/fake/fake-obsidian.ts","src/bookshelf/data.ts","src/bookshelf/state.ts","src/cinema/state.ts","src/core/ai.ts","src/core/app.ts","src/core/asr-proofread.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/external-tool.ts","src/core/flow-dialog.ts","src/core/gesture.ts","src/core/http.ts","src/core/item-actions.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/net-progress.ts","src/core/node-runtime-install.ts","src/core/notice.ts","src/core/offline-source.ts","src/core/path-picker.ts","src/core/plugin-path.ts","src/core/remote-asset.ts","src/core/remote-base.ts","src/core/settings-btn-state.ts","src/core/settings-common.ts","src/core/settings-modal.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/sha256.ts","src/core/storage-path.ts","src/core/storage.ts","src/core/tar.ts","src/core/tool-hint.ts","src/core/tool-runtime.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/help-tip.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/core/zip.ts","src/diary/config.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/motion.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/password-vault/data.ts","src/people/chat.ts","src/people/data.ts","src/people/datasource.ts","src/people/describe.ts","src/people/digest.ts","src/people/export.ts","src/people/heavy-gate.ts","src/people/incremental.ts","src/people/insights.ts","src/people/jobs.ts","src/people/me-avatar.ts","src/people/media.ts","src/people/migrate.ts","src/people/parse.ts","src/people/prep.ts","src/people/recording.ts","src/people/render.ts","src/people/safe-store.ts","src/people/settings.ts","src/people/stats.ts","src/people/sync.ts","src/people/thumbs.ts","src/people/types.ts","src/people/ui.ts"]*/
+/* 源指纹 ab47146feb0615a5 · 仓内输入 106 个（校验见 tests/preview-freshness.test.ts） */
+/*#preview-inputs=["prototypes/people/fake-sim.ts","prototypes/people/fake/fake-obsidian.ts","src/bookshelf/data.ts","src/bookshelf/state.ts","src/cinema/state.ts","src/core/ai.ts","src/core/app.ts","src/core/asr-proofread.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/external-tool.ts","src/core/flow-dialog.ts","src/core/gesture.ts","src/core/http.ts","src/core/item-actions.ts","src/core/lock-stats.ts","src/core/mask-dismiss.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/net-progress.ts","src/core/node-runtime-install.ts","src/core/notice.ts","src/core/offline-source.ts","src/core/path-picker.ts","src/core/plugin-path.ts","src/core/remote-asset.ts","src/core/remote-base.ts","src/core/settings-btn-state.ts","src/core/settings-common.ts","src/core/settings-modal.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/sha256.ts","src/core/storage-path.ts","src/core/storage.ts","src/core/tar.ts","src/core/tool-hint.ts","src/core/tool-runtime.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/help-tip.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/core/zip.ts","src/diary/config.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/motion.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/password-vault/data.ts","src/people/chat.ts","src/people/data.ts","src/people/datasource.ts","src/people/describe.ts","src/people/digest.ts","src/people/export.ts","src/people/heavy-gate.ts","src/people/incremental.ts","src/people/insights.ts","src/people/jobs.ts","src/people/me-avatar.ts","src/people/media.ts","src/people/migrate.ts","src/people/parse.ts","src/people/prep.ts","src/people/recording.ts","src/people/render.ts","src/people/safe-store.ts","src/people/settings.ts","src/people/stats.ts","src/people/sync.ts","src/people/thumbs.ts","src/people/types.ts","src/people/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/people/fake-sim.ts → window.BZW_people（行为单源预览包，issue 245/ADR-0106） */
 var BZW_people = (() => {
   var __create = Object.create;
@@ -4653,6 +4653,88 @@ var BZW_people = (() => {
     }
   });
 
+  // src/core/mask-dismiss.ts
+  function bindMaskDismiss(mask, onDismiss) {
+    let armed = null;
+    let dragged = false;
+    let upOnMask = false;
+    let downX = 0;
+    let downY = 0;
+    const pointOf = (e) => {
+      var _a2;
+      if (typeof TouchEvent !== "undefined" && e instanceof TouchEvent) {
+        const t = (_a2 = e.changedTouches[0]) != null ? _a2 : e.touches[0];
+        return t ? { x: t.clientX, y: t.clientY } : null;
+      }
+      const m = e;
+      if (typeof m.clientX !== "number" || typeof m.clientY !== "number") return null;
+      return { x: m.clientX, y: m.clientY };
+    };
+    const onDown = (e) => {
+      const m = e;
+      if (typeof m.button === "number" && m.button !== 0) {
+        armed = null;
+        return;
+      }
+      armed = e.target === mask;
+      dragged = false;
+      upOnMask = false;
+      const p = pointOf(e);
+      if (p) {
+        downX = p.x;
+        downY = p.y;
+      }
+    };
+    const onUp = (e) => {
+      upOnMask = e.target === mask;
+    };
+    const onMove = (e) => {
+      if (armed !== true || dragged) return;
+      const p = pointOf(e);
+      if (!p) return;
+      if (Math.abs(p.x - downX) > MASK_DISMISS_SLOP || Math.abs(p.y - downY) > MASK_DISMISS_SLOP) dragged = true;
+    };
+    const onCancel = () => {
+      armed = false;
+      dragged = true;
+    };
+    const onClick = (e) => {
+      const wasArmed = armed;
+      const wasDragged = dragged;
+      const wasUpOnMask = upOnMask;
+      armed = null;
+      dragged = false;
+      upOnMask = false;
+      if (wasArmed === false) return;
+      if (wasArmed === true && (wasDragged || !wasUpOnMask)) return;
+      if (e.target === mask) onDismiss();
+    };
+    mask.addEventListener("mousedown", onDown, true);
+    mask.addEventListener("mouseup", onUp, true);
+    mask.addEventListener("mousemove", onMove, true);
+    mask.addEventListener("touchstart", onDown, { capture: true, passive: true });
+    mask.addEventListener("touchend", onUp, { capture: true, passive: true });
+    mask.addEventListener("touchmove", onMove, { capture: true, passive: true });
+    mask.addEventListener("touchcancel", onCancel, true);
+    mask.addEventListener("click", onClick);
+    return () => {
+      mask.removeEventListener("mousedown", onDown, true);
+      mask.removeEventListener("mouseup", onUp, true);
+      mask.removeEventListener("mousemove", onMove, true);
+      mask.removeEventListener("touchstart", onDown, true);
+      mask.removeEventListener("touchend", onUp, true);
+      mask.removeEventListener("touchmove", onMove, true);
+      mask.removeEventListener("touchcancel", onCancel, true);
+      mask.removeEventListener("click", onClick);
+    };
+  }
+  var MASK_DISMISS_SLOP;
+  var init_mask_dismiss = __esm({
+    "src/core/mask-dismiss.ts"() {
+      MASK_DISMISS_SLOP = 8;
+    }
+  });
+
   // src/core/esc-manager.ts
   function registerPanelEsc(id, isVisible, close) {
     if (panelEscHandles.has(id)) return;
@@ -5005,9 +5087,7 @@ var BZW_people = (() => {
       const mask = document.createElement("div");
       mask.id = "__shared_confirm_mask__";
       mask.style.zIndex = String(allocZ());
-      mask.onclick = (e) => {
-        if (e.target === mask) settle(void 0);
-      };
+      bindMaskDismiss(mask, () => settle(void 0));
       const popup = document.createElement("div");
       popup.id = "__shared_confirm_popup__";
       popup.className = "bz-overlay-popup bz-flow-dialog" + (parts.dangerPrimary ? " bz-flow-dialog--danger" : "");
@@ -5056,6 +5136,7 @@ var BZW_people = (() => {
   var init_flow_dialog = __esm({
     "src/core/flow-dialog.ts"() {
       init_esc_manager();
+      init_mask_dismiss();
       init_utils();
       init_z_order();
       init_focus_trap();
@@ -7101,9 +7182,7 @@ var BZW_people = (() => {
     mask.id = opts.maskId;
     mask.className = "bz-overlay-mask";
     mask.style.display = "none";
-    mask.onclick = function(e) {
-      if (e.target === mask && typeof opts.onMaskClick === "function") opts.onMaskClick();
-    };
+    if (typeof opts.onMaskClick === "function") bindMaskDismiss(mask, opts.onMaskClick);
     const popup = document.createElement("div");
     popup.id = opts.popupId;
     popup.className = "bz-overlay-popup";
@@ -7138,6 +7217,7 @@ var BZW_people = (() => {
   var liveOverlays;
   var init_dom = __esm({
     "src/core/dom.ts"() {
+      init_mask_dismiss();
       init_notice();
       init_z_order();
       liveOverlays = /* @__PURE__ */ new Set();
@@ -8080,9 +8160,7 @@ var BZW_people = (() => {
       close
     });
     currentEscHandle = escHandle;
-    mask.addEventListener("click", (e) => {
-      if (!e.target.closest(".bz-lightbox-media, .bz-lightbox-head, .bz-lightbox-foot, .bz-lightbox-nav")) close();
-    });
+    bindMaskDismiss(mask, close);
     closeBtn.addEventListener("click", close);
     if (multi) {
       const onKey = (e) => {
@@ -8118,6 +8196,7 @@ var BZW_people = (() => {
     "src/core/ui/lightbox.ts"() {
       init_icon();
       init_esc_manager();
+      init_mask_dismiss();
       init_z_order();
       current = null;
       currentEscHandle = null;
@@ -8129,6 +8208,7 @@ var BZW_people = (() => {
   var init_modal = __esm({
     "src/core/ui/modal.ts"() {
       init_esc_manager();
+      init_mask_dismiss();
       init_z_order();
       init_focus_trap();
     }
@@ -11341,6 +11421,7 @@ var BZW_people = (() => {
     "src/encrypt/ui.ts"() {
       init_fake_obsidian();
       init_notice();
+      init_mask_dismiss();
       init_app();
       init_esc_manager();
       init_focus_trap();
@@ -11640,7 +11721,7 @@ var BZW_people = (() => {
             }
           });
           this.bindSearchInput(this.mob.search, true);
-          this.mask.addEventListener("click", () => {
+          bindMaskDismiss(this.mask, () => {
             if (this.mask.style.display === "block") this.hide();
           });
           this._idleBump = () => this.bumpIdleLock();
@@ -11885,9 +11966,7 @@ var BZW_people = (() => {
           popup.appendChild(foot);
           mask.appendChild(popup);
           document.body.appendChild(mask);
-          mask.onclick = (e) => {
-            if (e.target === mask) this.hideHealthDialog();
-          };
+          bindMaskDismiss(mask, () => this.hideHealthDialog());
           escManager.register("encrypt-health", {
             isVisible: () => !!(this.healthMask && this.healthMask.style.display === "flex"),
             close: () => this.hideHealthDialog()
@@ -12290,9 +12369,7 @@ var BZW_people = (() => {
               notifyActionError(e, "解锁");
             }
           };
-          ls.el.addEventListener("click", (e) => {
-            if (e.target === ls.el) done(false);
-          });
+          bindMaskDismiss(ls.el, () => done(false));
           ls.focus();
           setTimeout(() => ls.focus(), 150);
           activeUnlock = { el: ls.el, promise, cancel: () => done(false) };
@@ -12326,9 +12403,7 @@ var BZW_people = (() => {
             close: () => done()
           });
           if (ls.cancelBtn) ls.cancelBtn.onclick = () => done();
-          ls.el.addEventListener("click", (e) => {
-            if (e.target === ls.el) done();
-          });
+          bindMaskDismiss(ls.el, () => done());
           ls.focus();
           setTimeout(() => ls.focus(), 150);
           this.activeChangePw = { el: ls.el };
@@ -13112,9 +13187,7 @@ var BZW_people = (() => {
             }
           };
           ls.actionBtn.addEventListener("click", () => void submit());
-          ls.el.addEventListener("click", (e) => {
-            if (e.target === ls.el) done(false);
-          });
+          bindMaskDismiss(ls.el, () => done(false));
           ls.focus();
           setTimeout(() => ls.focus(), 150);
         }
@@ -13925,6 +13998,7 @@ var BZW_people = (() => {
 
   // src/people/ui.ts
   init_notice();
+  init_mask_dismiss();
   init_flow_dialog();
   init_z_order();
   init_esc_manager();
@@ -23214,6 +23288,7 @@ ${lines}`;
     });
     trapPanelFocus((_a2 = overlay.querySelector(".bz-people-panel")) != null ? _a2 : overlay);
     overlay.addEventListener("click", onOverlayClick);
+    bindMaskDismiss(overlay, closePeoplePanel);
     overlay.addEventListener("change", (e) => {
       var _a3;
       const tgt = e.target instanceof HTMLInputElement || e.target instanceof HTMLSelectElement ? e.target : null;
@@ -24454,10 +24529,6 @@ ${lines}`;
   function onOverlayClick(e) {
     var _a2, _b2, _c2, _d2, _e, _f, _g, _h, _i, _j, _k, _l, _m, _n, _o, _p, _q, _r, _s, _t, _u, _v, _w, _x, _y, _z, _A, _B, _C, _D, _E, _F, _G;
     const t = e.target;
-    if (e.target === overlay) {
-      closePeoplePanel();
-      return;
-    }
     const pocket = t.closest("[data-people-pocket]");
     if (pocket) {
       if (mergeFromId) {

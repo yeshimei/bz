@@ -1,5 +1,5 @@
-/* 源指纹 065d4b6d2c60dc96 · 仓内输入 139 个（校验见 tests/preview-freshness.test.ts） */
-/*#preview-inputs=["prototypes/clipbook/fake-sim.ts","prototypes/clipbook/fake/fake-obsidian.ts","prototypes/preview-mode.ts","src/auto-summary/index.ts","src/auto-summary/keys.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/clipbook/anchor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/file-sync.ts","src/clipbook/flow.ts","src/clipbook/image-save.ts","src/clipbook/index.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/motion.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/press/data.ts","src/clipbook/press/engine.ts","src/clipbook/press/index.ts","src/clipbook/press/motions.ts","src/clipbook/press/view.ts","src/clipbook/render.ts","src/clipbook/report-stats.ts","src/clipbook/report-ui.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai.ts","src/core/app.ts","src/core/asr-proofread.ts","src/core/attachment-dir.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/download-manifest.ts","src/core/esc-manager.ts","src/core/file-sync.ts","src/core/flow-dialog.ts","src/core/folder-setup.ts","src/core/gesture.ts","src/core/http.ts","src/core/item-actions.ts","src/core/knowledge-boxes.ts","src/core/landscape.ts","src/core/link-now.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/net-progress.ts","src/core/node-runtime-install.ts","src/core/note-trash.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/offline-source.ts","src/core/path-classify.ts","src/core/path-picker.ts","src/core/plugin-path.ts","src/core/remote-asset.ts","src/core/remote-base.ts","src/core/rss-catalog.ts","src/core/settings-btn-state.ts","src/core/settings-common.ts","src/core/settings-modal.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/sha256.ts","src/core/storage-path.ts","src/core/storage.ts","src/core/tar.ts","src/core/tool-hint.ts","src/core/tool-runtime.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/help-tip.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/core/zip.ts","src/knowledge/data.ts","src/knowledge/file-sync.ts","src/knowledge/index.ts","src/knowledge/motion.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-edit.ts","src/knowledge/note-gen.ts","src/knowledge/partial-json.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/relink.ts","src/knowledge/source-retire.ts","src/knowledge/source.ts","src/knowledge/tack.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/secondbrain/readonly.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/motion.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/shared.ts"]*/
+/* 源指纹 273cef4f0edbcd4d · 仓内输入 140 个（校验见 tests/preview-freshness.test.ts） */
+/*#preview-inputs=["prototypes/clipbook/fake-sim.ts","prototypes/clipbook/fake/fake-obsidian.ts","prototypes/preview-mode.ts","src/auto-summary/index.ts","src/auto-summary/keys.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/clipbook/anchor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/file-sync.ts","src/clipbook/flow.ts","src/clipbook/image-save.ts","src/clipbook/index.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/motion.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/press/data.ts","src/clipbook/press/engine.ts","src/clipbook/press/index.ts","src/clipbook/press/motions.ts","src/clipbook/press/view.ts","src/clipbook/render.ts","src/clipbook/report-stats.ts","src/clipbook/report-ui.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai.ts","src/core/app.ts","src/core/asr-proofread.ts","src/core/attachment-dir.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/download-manifest.ts","src/core/esc-manager.ts","src/core/file-sync.ts","src/core/flow-dialog.ts","src/core/folder-setup.ts","src/core/gesture.ts","src/core/http.ts","src/core/item-actions.ts","src/core/knowledge-boxes.ts","src/core/landscape.ts","src/core/link-now.ts","src/core/mask-dismiss.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/net-progress.ts","src/core/node-runtime-install.ts","src/core/note-trash.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/offline-source.ts","src/core/path-classify.ts","src/core/path-picker.ts","src/core/plugin-path.ts","src/core/remote-asset.ts","src/core/remote-base.ts","src/core/rss-catalog.ts","src/core/settings-btn-state.ts","src/core/settings-common.ts","src/core/settings-modal.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/sha256.ts","src/core/storage-path.ts","src/core/storage.ts","src/core/tar.ts","src/core/tool-hint.ts","src/core/tool-runtime.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/help-tip.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/core/zip.ts","src/knowledge/data.ts","src/knowledge/file-sync.ts","src/knowledge/index.ts","src/knowledge/motion.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-edit.ts","src/knowledge/note-gen.ts","src/knowledge/partial-json.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/relink.ts","src/knowledge/source-retire.ts","src/knowledge/source.ts","src/knowledge/tack.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/secondbrain/readonly.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/motion.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/shared.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/clipbook/fake-sim.ts → window.BZW_clipbook（行为单源预览包，issue 245/ADR-0106） */
 var BZW_clipbook = (() => {
   var __create = Object.create;
@@ -843,6 +843,88 @@ var BZW_clipbook = (() => {
           }
         };
       })();
+    }
+  });
+
+  // src/core/mask-dismiss.ts
+  function bindMaskDismiss(mask, onDismiss) {
+    let armed = null;
+    let dragged = false;
+    let upOnMask = false;
+    let downX = 0;
+    let downY = 0;
+    const pointOf = (e) => {
+      var _a;
+      if (typeof TouchEvent !== "undefined" && e instanceof TouchEvent) {
+        const t = (_a = e.changedTouches[0]) != null ? _a : e.touches[0];
+        return t ? { x: t.clientX, y: t.clientY } : null;
+      }
+      const m = e;
+      if (typeof m.clientX !== "number" || typeof m.clientY !== "number") return null;
+      return { x: m.clientX, y: m.clientY };
+    };
+    const onDown = (e) => {
+      const m = e;
+      if (typeof m.button === "number" && m.button !== 0) {
+        armed = null;
+        return;
+      }
+      armed = e.target === mask;
+      dragged = false;
+      upOnMask = false;
+      const p = pointOf(e);
+      if (p) {
+        downX = p.x;
+        downY = p.y;
+      }
+    };
+    const onUp = (e) => {
+      upOnMask = e.target === mask;
+    };
+    const onMove = (e) => {
+      if (armed !== true || dragged) return;
+      const p = pointOf(e);
+      if (!p) return;
+      if (Math.abs(p.x - downX) > MASK_DISMISS_SLOP || Math.abs(p.y - downY) > MASK_DISMISS_SLOP) dragged = true;
+    };
+    const onCancel = () => {
+      armed = false;
+      dragged = true;
+    };
+    const onClick = (e) => {
+      const wasArmed = armed;
+      const wasDragged = dragged;
+      const wasUpOnMask = upOnMask;
+      armed = null;
+      dragged = false;
+      upOnMask = false;
+      if (wasArmed === false) return;
+      if (wasArmed === true && (wasDragged || !wasUpOnMask)) return;
+      if (e.target === mask) onDismiss();
+    };
+    mask.addEventListener("mousedown", onDown, true);
+    mask.addEventListener("mouseup", onUp, true);
+    mask.addEventListener("mousemove", onMove, true);
+    mask.addEventListener("touchstart", onDown, { capture: true, passive: true });
+    mask.addEventListener("touchend", onUp, { capture: true, passive: true });
+    mask.addEventListener("touchmove", onMove, { capture: true, passive: true });
+    mask.addEventListener("touchcancel", onCancel, true);
+    mask.addEventListener("click", onClick);
+    return () => {
+      mask.removeEventListener("mousedown", onDown, true);
+      mask.removeEventListener("mouseup", onUp, true);
+      mask.removeEventListener("mousemove", onMove, true);
+      mask.removeEventListener("touchstart", onDown, true);
+      mask.removeEventListener("touchend", onUp, true);
+      mask.removeEventListener("touchmove", onMove, true);
+      mask.removeEventListener("touchcancel", onCancel, true);
+      mask.removeEventListener("click", onClick);
+    };
+  }
+  var MASK_DISMISS_SLOP;
+  var init_mask_dismiss = __esm({
+    "src/core/mask-dismiss.ts"() {
+      MASK_DISMISS_SLOP = 8;
     }
   });
 
@@ -5187,9 +5269,7 @@ var BZW_clipbook = (() => {
       const mask = document.createElement("div");
       mask.id = "__shared_confirm_mask__";
       mask.style.zIndex = String(allocZ());
-      mask.onclick = (e) => {
-        if (e.target === mask) settle(void 0);
-      };
+      bindMaskDismiss(mask, () => settle(void 0));
       const popup = document.createElement("div");
       popup.id = "__shared_confirm_popup__";
       popup.className = "bz-overlay-popup bz-flow-dialog" + (parts.dangerPrimary ? " bz-flow-dialog--danger" : "");
@@ -5248,6 +5328,7 @@ var BZW_clipbook = (() => {
   var init_flow_dialog = __esm({
     "src/core/flow-dialog.ts"() {
       init_esc_manager();
+      init_mask_dismiss();
       init_utils();
       init_z_order();
       init_focus_trap();
@@ -8791,9 +8872,7 @@ ${c.trim()}
     mask.id = opts.maskId;
     mask.className = "bz-overlay-mask";
     mask.style.display = "none";
-    mask.onclick = function(e) {
-      if (e.target === mask && typeof opts.onMaskClick === "function") opts.onMaskClick();
-    };
+    if (typeof opts.onMaskClick === "function") bindMaskDismiss(mask, opts.onMaskClick);
     const popup = document.createElement("div");
     popup.id = opts.popupId;
     popup.className = "bz-overlay-popup";
@@ -8828,6 +8907,7 @@ ${c.trim()}
   var liveOverlays;
   var init_dom = __esm({
     "src/core/dom.ts"() {
+      init_mask_dismiss();
       init_notice();
       init_z_order();
       liveOverlays = /* @__PURE__ */ new Set();
@@ -14341,7 +14421,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
     mask.id = MASK_ID;
     mask.className = "bz-overlay-mask bz-kb-mask bz-kb-mt-mask";
     mask.style.display = "none";
-    mask.addEventListener("click", () => closeMountTree());
+    bindMaskDismiss(mask, () => closeMountTree());
     const win = document.createElement("div");
     win.id = WIN_ID;
     win.className = "bz-kb-window kb bz-kb-mt-window";
@@ -15613,6 +15693,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
     "src/knowledge/mount-canvas.ts"() {
       init_fake_obsidian();
       init_app();
+      init_mask_dismiss();
       init_esc_manager();
       init_flow_dialog();
       init_mobile();
@@ -16408,6 +16489,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
     "src/knowledge/ui.ts"() {
       init_fake_obsidian();
       init_ai();
+      init_mask_dismiss();
       init_str();
       init_mobile();
       init_settings_provider();
@@ -16656,7 +16738,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
           mask.id = "knowledge-mask";
           mask.className = "bz-overlay-mask bz-kb-mask";
           mask.style.display = "none";
-          mask.onclick = () => this.hideMain();
+          bindMaskDismiss(mask, () => this.hideMain());
           const popup = document.createElement("div");
           popup.id = "knowledge-popup";
           popup.className = "bz-kb-window kb";
@@ -17247,14 +17329,13 @@ ${String(blockText != null ? blockText : "").trim()}`);
             closed = true;
             ovl.remove();
           };
+          bindMaskDismiss(ovl, () => {
+            close();
+            opts.onCancel();
+          });
           ovl.addEventListener("click", (e) => {
             var _a;
             const t = e.target;
-            if (t === ovl) {
-              close();
-              opts.onCancel();
-              return;
-            }
             const btn = (_a = t.closest) == null ? void 0 : _a.call(t, "[data-edit]");
             if (!btn) return;
             if (btn.getAttribute("data-edit") === "cancel") {
@@ -17986,9 +18067,10 @@ ${String(blockText != null ? blockText : "").trim()}`);
           const ovl = document.createElement("div");
           ovl.className = "bz-kb-ovl";
           ovl.innerHTML = `<div class="bz-kb-sheet">${html}</div>`;
+          bindMaskDismiss(ovl, () => this.closeSheet());
           ovl.addEventListener("click", (e) => {
             const t = e.target.closest("[data-kb-act],[data-kb-close]");
-            if (e.target === ovl || t && t.hasAttribute("data-kb-close")) {
+            if (t && t.hasAttribute("data-kb-close")) {
               this.closeSheet();
               return;
             }
@@ -18114,7 +18196,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
           mask.id = "knowledge-video-mask";
           mask.className = "bz-overlay-mask bz-kb-mask";
           mask.style.display = "none";
-          mask.onclick = () => this.hideVideo();
+          bindMaskDismiss(mask, () => this.hideVideo());
           const popup = document.createElement("div");
           popup.id = "knowledge-video-popup";
           popup.className = "bz-kb-window kb";
@@ -18525,7 +18607,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
           addMask.id = "knowledge-add-mask";
           addMask.className = "bz-overlay-mask bz-kb-mask";
           addMask.style.display = "none";
-          addMask.onclick = () => this.requestAddClose();
+          bindMaskDismiss(addMask, () => this.requestAddClose());
           const popup = document.createElement("div");
           popup.id = "knowledge-add-popup";
           popup.className = "bz-lit-dialog kb";
@@ -19183,7 +19265,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
           mask.id = "knowledge-term-mask";
           mask.className = "bz-overlay-mask bz-kb-mask";
           mask.style.display = "none";
-          mask.onclick = () => this.requestTermClose();
+          bindMaskDismiss(mask, () => this.requestTermClose());
           const popup = document.createElement("div");
           popup.id = "knowledge-term-popup";
           popup.className = "bz-lit-dialog bz-lit-term-dialog kb";
@@ -21820,6 +21902,7 @@ ${body}`;
     "src/core/ui/lightbox.ts"() {
       init_icon();
       init_esc_manager();
+      init_mask_dismiss();
       init_z_order();
     }
   });
@@ -21828,6 +21911,7 @@ ${body}`;
   var init_modal = __esm({
     "src/core/ui/modal.ts"() {
       init_esc_manager();
+      init_mask_dismiss();
       init_z_order();
       init_focus_trap();
     }
@@ -27826,11 +27910,8 @@ ${bodyText.substring(0, 6e3)}`;
     overlayEl.innerHTML = clipReportShellHtml();
     document.body.appendChild(overlayEl);
     mountIcons(overlayEl);
+    bindMaskDismiss(overlayEl, closeClipbookReport);
     overlayEl.addEventListener("click", (e) => {
-      if (e.target === overlayEl) {
-        closeClipbookReport();
-        return;
-      }
       const t = e.target;
       if (t.closest("[data-clp-rep-close]")) {
         closeClipbookReport();
@@ -28001,6 +28082,7 @@ ${bodyText.substring(0, 6e3)}`;
   var init_report_ui = __esm({
     "src/clipbook/report-ui.ts"() {
       init_notice();
+      init_mask_dismiss();
       init_ui2();
       init_dom();
       init_app();
@@ -30426,9 +30508,7 @@ ${bodyText.substring(0, 6e3)}`;
     const mobInput = overlayEl2.querySelector("[data-clip-mob-input]");
     mobSearchEl = mobInput;
     deskSearchEl = overlayEl2.querySelector("[data-clip-desk-search]");
-    overlayEl2.addEventListener("click", (e) => {
-      if (e.target === overlayEl2) closePanel();
-    });
+    bindMaskDismiss(overlayEl2, closePanel);
     railFootEl.addEventListener("click", (e) => {
       if (e.target.closest("[data-clp-rep-entry]")) void openReadingPress(app);
     });
@@ -32258,6 +32338,7 @@ ${bodyText.substring(0, 6e3)}`;
     "src/clipbook/ui.ts"() {
       init_fake_obsidian();
       init_app();
+      init_mask_dismiss();
       init_note_trash();
       init_notice();
       init_ui2();

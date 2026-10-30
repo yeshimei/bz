@@ -1,5 +1,5 @@
-/* 源指纹 515cb267ba63b84a · 仓内输入 100 个（校验见 tests/preview-freshness.test.ts） */
-/*#preview-inputs=["prototypes/secondbrain/fake-sim.ts","prototypes/secondbrain/fake/fake-obsidian.ts","src/bookshelf/data.ts","src/bookshelf/state.ts","src/cinema/state.ts","src/core/abort.ts","src/core/ai-models.ts","src/core/ai.ts","src/core/app.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/jev-fallback.ts","src/core/jev.ts","src/core/knowledge-boxes.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/plugin-path.ts","src/core/settings-btn-state.ts","src/core/settings-common.ts","src/core/settings-modal.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage-path.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/help-tip.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/motion.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/password-vault/data.ts","src/secondbrain/ai.ts","src/secondbrain/binary.ts","src/secondbrain/chat-panel.ts","src/secondbrain/chunk.ts","src/secondbrain/config.ts","src/secondbrain/context.ts","src/secondbrain/float-window.ts","src/secondbrain/link-agent/data.ts","src/secondbrain/link-agent/pipeline.ts","src/secondbrain/mobile-panel.ts","src/secondbrain/motion.ts","src/secondbrain/ollama.ts","src/secondbrain/panel.ts","src/secondbrain/parallel.ts","src/secondbrain/reference-panel.ts","src/secondbrain/render.ts","src/secondbrain/rerank-jev.ts","src/secondbrain/rerank.ts","src/secondbrain/store-file.ts","src/secondbrain/text-search.ts","src/secondbrain/tfidf.ts","src/secondbrain/ui-tools.ts","src/secondbrain/vector-math.ts","src/secondbrain/vector-store.ts","src/secondbrain/weekly-ui.ts","src/secondbrain/weekly.ts","src/secondbrain/whitelist.ts"]*/
+/* 源指纹 94479c122eb37ff3 · 仓内输入 101 个（校验见 tests/preview-freshness.test.ts） */
+/*#preview-inputs=["prototypes/secondbrain/fake-sim.ts","prototypes/secondbrain/fake/fake-obsidian.ts","src/bookshelf/data.ts","src/bookshelf/state.ts","src/cinema/state.ts","src/core/abort.ts","src/core/ai-models.ts","src/core/ai.ts","src/core/app.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/jev-fallback.ts","src/core/jev.ts","src/core/knowledge-boxes.ts","src/core/lock-stats.ts","src/core/mask-dismiss.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/plugin-path.ts","src/core/settings-btn-state.ts","src/core/settings-common.ts","src/core/settings-modal.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage-path.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/help-tip.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/motion.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/password-vault/data.ts","src/secondbrain/ai.ts","src/secondbrain/binary.ts","src/secondbrain/chat-panel.ts","src/secondbrain/chunk.ts","src/secondbrain/config.ts","src/secondbrain/context.ts","src/secondbrain/float-window.ts","src/secondbrain/link-agent/data.ts","src/secondbrain/link-agent/pipeline.ts","src/secondbrain/mobile-panel.ts","src/secondbrain/motion.ts","src/secondbrain/ollama.ts","src/secondbrain/panel.ts","src/secondbrain/parallel.ts","src/secondbrain/reference-panel.ts","src/secondbrain/render.ts","src/secondbrain/rerank-jev.ts","src/secondbrain/rerank.ts","src/secondbrain/store-file.ts","src/secondbrain/text-search.ts","src/secondbrain/tfidf.ts","src/secondbrain/ui-tools.ts","src/secondbrain/vector-math.ts","src/secondbrain/vector-store.ts","src/secondbrain/weekly-ui.ts","src/secondbrain/weekly.ts","src/secondbrain/whitelist.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/secondbrain/fake-sim.ts → window.BZW_secondbrain（行为单源预览包，issue 245/ADR-0106） */
 var BZW_secondbrain = (() => {
   var __create = Object.create;
@@ -1086,6 +1086,88 @@ var BZW_secondbrain = (() => {
     }
   });
 
+  // src/core/mask-dismiss.ts
+  function bindMaskDismiss(mask, onDismiss) {
+    let armed = null;
+    let dragged = false;
+    let upOnMask = false;
+    let downX = 0;
+    let downY = 0;
+    const pointOf = (e) => {
+      var _a2;
+      if (typeof TouchEvent !== "undefined" && e instanceof TouchEvent) {
+        const t = (_a2 = e.changedTouches[0]) != null ? _a2 : e.touches[0];
+        return t ? { x: t.clientX, y: t.clientY } : null;
+      }
+      const m = e;
+      if (typeof m.clientX !== "number" || typeof m.clientY !== "number") return null;
+      return { x: m.clientX, y: m.clientY };
+    };
+    const onDown = (e) => {
+      const m = e;
+      if (typeof m.button === "number" && m.button !== 0) {
+        armed = null;
+        return;
+      }
+      armed = e.target === mask;
+      dragged = false;
+      upOnMask = false;
+      const p = pointOf(e);
+      if (p) {
+        downX = p.x;
+        downY = p.y;
+      }
+    };
+    const onUp = (e) => {
+      upOnMask = e.target === mask;
+    };
+    const onMove = (e) => {
+      if (armed !== true || dragged) return;
+      const p = pointOf(e);
+      if (!p) return;
+      if (Math.abs(p.x - downX) > MASK_DISMISS_SLOP || Math.abs(p.y - downY) > MASK_DISMISS_SLOP) dragged = true;
+    };
+    const onCancel = () => {
+      armed = false;
+      dragged = true;
+    };
+    const onClick = (e) => {
+      const wasArmed = armed;
+      const wasDragged = dragged;
+      const wasUpOnMask = upOnMask;
+      armed = null;
+      dragged = false;
+      upOnMask = false;
+      if (wasArmed === false) return;
+      if (wasArmed === true && (wasDragged || !wasUpOnMask)) return;
+      if (e.target === mask) onDismiss();
+    };
+    mask.addEventListener("mousedown", onDown, true);
+    mask.addEventListener("mouseup", onUp, true);
+    mask.addEventListener("mousemove", onMove, true);
+    mask.addEventListener("touchstart", onDown, { capture: true, passive: true });
+    mask.addEventListener("touchend", onUp, { capture: true, passive: true });
+    mask.addEventListener("touchmove", onMove, { capture: true, passive: true });
+    mask.addEventListener("touchcancel", onCancel, true);
+    mask.addEventListener("click", onClick);
+    return () => {
+      mask.removeEventListener("mousedown", onDown, true);
+      mask.removeEventListener("mouseup", onUp, true);
+      mask.removeEventListener("mousemove", onMove, true);
+      mask.removeEventListener("touchstart", onDown, true);
+      mask.removeEventListener("touchend", onUp, true);
+      mask.removeEventListener("touchmove", onMove, true);
+      mask.removeEventListener("touchcancel", onCancel, true);
+      mask.removeEventListener("click", onClick);
+    };
+  }
+  var MASK_DISMISS_SLOP;
+  var init_mask_dismiss = __esm({
+    "src/core/mask-dismiss.ts"() {
+      MASK_DISMISS_SLOP = 8;
+    }
+  });
+
   // src/core/ui/icon.ts
   var init_icon = __esm({
     "src/core/ui/icon.ts"() {
@@ -1315,6 +1397,7 @@ var BZW_secondbrain = (() => {
     "src/core/ui/lightbox.ts"() {
       init_icon();
       init_esc_manager();
+      init_mask_dismiss();
       init_z_order();
     }
   });
@@ -1375,6 +1458,7 @@ var BZW_secondbrain = (() => {
   var init_modal = __esm({
     "src/core/ui/modal.ts"() {
       init_esc_manager();
+      init_mask_dismiss();
       init_z_order();
       init_focus_trap();
     }
@@ -1404,9 +1488,7 @@ var BZW_secondbrain = (() => {
     mask.id = opts.maskId;
     mask.className = "bz-overlay-mask";
     mask.style.display = "none";
-    mask.onclick = function(e) {
-      if (e.target === mask && typeof opts.onMaskClick === "function") opts.onMaskClick();
-    };
+    if (typeof opts.onMaskClick === "function") bindMaskDismiss(mask, opts.onMaskClick);
     const popup = document.createElement("div");
     popup.id = opts.popupId;
     popup.className = "bz-overlay-popup";
@@ -1441,6 +1523,7 @@ var BZW_secondbrain = (() => {
   var liveOverlays;
   var init_dom = __esm({
     "src/core/dom.ts"() {
+      init_mask_dismiss();
       init_notice();
       init_z_order();
       liveOverlays = /* @__PURE__ */ new Set();
@@ -5770,9 +5853,7 @@ var BZW_secondbrain = (() => {
       const mask = document.createElement("div");
       mask.id = "__shared_confirm_mask__";
       mask.style.zIndex = String(allocZ());
-      mask.onclick = (e) => {
-        if (e.target === mask) settle(void 0);
-      };
+      bindMaskDismiss(mask, () => settle(void 0));
       const popup = document.createElement("div");
       popup.id = "__shared_confirm_popup__";
       popup.className = "bz-overlay-popup bz-flow-dialog" + (parts.dangerPrimary ? " bz-flow-dialog--danger" : "");
@@ -5818,6 +5899,7 @@ var BZW_secondbrain = (() => {
   var init_flow_dialog = __esm({
     "src/core/flow-dialog.ts"() {
       init_esc_manager();
+      init_mask_dismiss();
       init_utils();
       init_z_order();
       init_focus_trap();
@@ -6607,6 +6689,7 @@ var BZW_secondbrain = (() => {
 
   // src/secondbrain/panel.ts
   init_notice();
+  init_mask_dismiss();
   init_z_order();
   init_ui();
   init_flow_dialog();
@@ -8226,7 +8309,7 @@ var BZW_secondbrain = (() => {
       if (this.mask && document.body.contains(this.mask)) return;
       const mask = document.createElement("div");
       mask.className = "bz-sb-panel-mask";
-      mask.onclick = () => this.close();
+      bindMaskDismiss(mask, () => this.close());
       const popup = document.createElement("div");
       popup.className = "bz-sb-panel bz-panel-mtop";
       popup.innerHTML = panelShellHtml();

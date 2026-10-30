@@ -1,5 +1,5 @@
-/* 源指纹 65e63561254212c7 · 仓内输入 85 个（校验见 tests/preview-freshness.test.ts） */
-/*#preview-inputs=["prototypes/cinema/fake-sim.ts","prototypes/cinema/fake/fake-obsidian.ts","prototypes/preview-mode.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/douban-fetcher.ts","src/cinema/douban-queue.ts","src/cinema/index.ts","src/cinema/layouts/midnight/render.ts","src/cinema/motion.ts","src/cinema/recommend.ts","src/cinema/render.ts","src/cinema/seasons.ts","src/cinema/shared.ts","src/cinema/state.ts","src/cinema/type-decide.ts","src/cinema/ui.ts","src/cinema/yearbook/data.ts","src/cinema/yearbook/engine.ts","src/cinema/yearbook/index.ts","src/cinema/yearbook/kits.ts","src/cinema/yearbook/motions.ts","src/cinema/yearbook/scenes.ts","src/core/ai.ts","src/core/app.ts","src/core/attachment-dir.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/douban-name-index.ts","src/core/download-manifest.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/folder-setup.ts","src/core/gesture.ts","src/core/http.ts","src/core/item-actions.ts","src/core/jev-fallback.ts","src/core/jev.ts","src/core/landscape.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/note-trash.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/offline-source.ts","src/core/path-classify.ts","src/core/plugin-path.ts","src/core/remote-asset.ts","src/core/remote-base.ts","src/core/settings-provider.ts","src/core/sha256.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/help-tip.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slide-pill.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts"]*/
+/* 源指纹 73ef0065bade8bdc · 仓内输入 86 个（校验见 tests/preview-freshness.test.ts） */
+/*#preview-inputs=["prototypes/cinema/fake-sim.ts","prototypes/cinema/fake/fake-obsidian.ts","prototypes/preview-mode.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/douban-fetcher.ts","src/cinema/douban-queue.ts","src/cinema/index.ts","src/cinema/layouts/midnight/render.ts","src/cinema/motion.ts","src/cinema/recommend.ts","src/cinema/render.ts","src/cinema/seasons.ts","src/cinema/shared.ts","src/cinema/state.ts","src/cinema/type-decide.ts","src/cinema/ui.ts","src/cinema/yearbook/data.ts","src/cinema/yearbook/engine.ts","src/cinema/yearbook/index.ts","src/cinema/yearbook/kits.ts","src/cinema/yearbook/motions.ts","src/cinema/yearbook/scenes.ts","src/core/ai.ts","src/core/app.ts","src/core/attachment-dir.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/douban-name-index.ts","src/core/download-manifest.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/folder-setup.ts","src/core/gesture.ts","src/core/http.ts","src/core/item-actions.ts","src/core/jev-fallback.ts","src/core/jev.ts","src/core/landscape.ts","src/core/mask-dismiss.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/note-trash.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/offline-source.ts","src/core/path-classify.ts","src/core/plugin-path.ts","src/core/remote-asset.ts","src/core/remote-base.ts","src/core/settings-provider.ts","src/core/sha256.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/help-tip.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slide-pill.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/cinema/fake-sim.ts → window.BZW_cinema（行为单源预览包，issue 245/ADR-0106） */
 var BZW_cinema = (() => {
   var __create = Object.create;
@@ -7022,6 +7022,83 @@ var BZW_cinema = (() => {
     (_b = (_a = M).renderFn) == null ? void 0 : _b.call(_a);
   }
 
+  // src/core/mask-dismiss.ts
+  var MASK_DISMISS_SLOP = 8;
+  function bindMaskDismiss(mask, onDismiss) {
+    let armed = null;
+    let dragged = false;
+    let upOnMask = false;
+    let downX = 0;
+    let downY = 0;
+    const pointOf = (e) => {
+      var _a;
+      if (typeof TouchEvent !== "undefined" && e instanceof TouchEvent) {
+        const t = (_a = e.changedTouches[0]) != null ? _a : e.touches[0];
+        return t ? { x: t.clientX, y: t.clientY } : null;
+      }
+      const m = e;
+      if (typeof m.clientX !== "number" || typeof m.clientY !== "number") return null;
+      return { x: m.clientX, y: m.clientY };
+    };
+    const onDown = (e) => {
+      const m = e;
+      if (typeof m.button === "number" && m.button !== 0) {
+        armed = null;
+        return;
+      }
+      armed = e.target === mask;
+      dragged = false;
+      upOnMask = false;
+      const p = pointOf(e);
+      if (p) {
+        downX = p.x;
+        downY = p.y;
+      }
+    };
+    const onUp = (e) => {
+      upOnMask = e.target === mask;
+    };
+    const onMove = (e) => {
+      if (armed !== true || dragged) return;
+      const p = pointOf(e);
+      if (!p) return;
+      if (Math.abs(p.x - downX) > MASK_DISMISS_SLOP || Math.abs(p.y - downY) > MASK_DISMISS_SLOP) dragged = true;
+    };
+    const onCancel = () => {
+      armed = false;
+      dragged = true;
+    };
+    const onClick = (e) => {
+      const wasArmed = armed;
+      const wasDragged = dragged;
+      const wasUpOnMask = upOnMask;
+      armed = null;
+      dragged = false;
+      upOnMask = false;
+      if (wasArmed === false) return;
+      if (wasArmed === true && (wasDragged || !wasUpOnMask)) return;
+      if (e.target === mask) onDismiss();
+    };
+    mask.addEventListener("mousedown", onDown, true);
+    mask.addEventListener("mouseup", onUp, true);
+    mask.addEventListener("mousemove", onMove, true);
+    mask.addEventListener("touchstart", onDown, { capture: true, passive: true });
+    mask.addEventListener("touchend", onUp, { capture: true, passive: true });
+    mask.addEventListener("touchmove", onMove, { capture: true, passive: true });
+    mask.addEventListener("touchcancel", onCancel, true);
+    mask.addEventListener("click", onClick);
+    return () => {
+      mask.removeEventListener("mousedown", onDown, true);
+      mask.removeEventListener("mouseup", onUp, true);
+      mask.removeEventListener("mousemove", onMove, true);
+      mask.removeEventListener("touchstart", onDown, true);
+      mask.removeEventListener("touchend", onUp, true);
+      mask.removeEventListener("touchmove", onMove, true);
+      mask.removeEventListener("touchcancel", onCancel, true);
+      mask.removeEventListener("click", onClick);
+    };
+  }
+
   // src/core/note-trash.ts
   async function trashNote(app, file) {
     await app.vault.trash(file, false);
@@ -7132,9 +7209,7 @@ var BZW_cinema = (() => {
       const mask = document.createElement("div");
       mask.id = "__shared_confirm_mask__";
       mask.style.zIndex = String(allocZ());
-      mask.onclick = (e) => {
-        if (e.target === mask) settle(void 0);
-      };
+      bindMaskDismiss(mask, () => settle(void 0));
       const popup = document.createElement("div");
       popup.id = "__shared_confirm_popup__";
       popup.className = "bz-overlay-popup bz-flow-dialog" + (parts.dangerPrimary ? " bz-flow-dialog--danger" : "");
@@ -7908,9 +7983,7 @@ var BZW_cinema = (() => {
       close
     });
     currentEscHandle = escHandle;
-    mask.addEventListener("click", (e) => {
-      if (!e.target.closest(".bz-lightbox-media, .bz-lightbox-head, .bz-lightbox-foot, .bz-lightbox-nav")) close();
-    });
+    bindMaskDismiss(mask, close);
     closeBtn.addEventListener("click", close);
     if (multi) {
       const onKey = (e) => {
@@ -13011,9 +13084,7 @@ tags:
       finish();
     };
     liveOvlCloses.add(close);
-    el.addEventListener("click", (e) => {
-      if (e.target === el) close();
-    });
+    bindMaskDismiss(el, close);
     el.addEventListener("wheel", (e) => {
       var _a, _b;
       if (!((_b = (_a = e.target) == null ? void 0 : _a.closest) == null ? void 0 : _b.call(_a, ".cn-modal"))) e.preventDefault();
@@ -14567,9 +14638,7 @@ tags:
         persist: panelSizePersist("cinemaPanelWidth", "cinemaPanelHeight", PANEL.MIN_W, PANEL.MIN_H)
       });
     }
-    overlay.addEventListener("click", (e) => {
-      if (e.target === overlay) closeOverlay();
-    });
+    bindMaskDismiss(overlay, closeOverlay);
     bindMidnight(root, app);
     root.addEventListener("input", (e) => {
       M.lastInputAt = Date.now();

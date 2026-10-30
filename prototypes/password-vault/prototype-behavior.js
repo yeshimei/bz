@@ -1,5 +1,5 @@
-/* 源指纹 9f03c6a5ba39361a · 仓内输入 71 个（校验见 tests/preview-freshness.test.ts） */
-/*#preview-inputs=["prototypes/password-vault/fake-sim.ts","prototypes/password-vault/fake/fake-obsidian.ts","src/bookshelf/data.ts","src/bookshelf/state.ts","src/cinema/state.ts","src/core/app.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/plugin-path.ts","src/core/settings-btn-state.ts","src/core/settings-common.ts","src/core/settings-modal.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage-path.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/help-tip.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/motion.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/password-vault/data.ts","src/password-vault/index.ts","src/password-vault/motion.ts","src/password-vault/quick-pick.ts","src/password-vault/render.ts","src/password-vault/ui.ts"]*/
+/* 源指纹 b3d5f0cbcef5104e · 仓内输入 72 个（校验见 tests/preview-freshness.test.ts） */
+/*#preview-inputs=["prototypes/password-vault/fake-sim.ts","prototypes/password-vault/fake/fake-obsidian.ts","src/bookshelf/data.ts","src/bookshelf/state.ts","src/cinema/state.ts","src/core/app.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/lock-stats.ts","src/core/mask-dismiss.ts","src/core/mobile.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/plugin-path.ts","src/core/settings-btn-state.ts","src/core/settings-common.ts","src/core/settings-modal.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage-path.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/help-tip.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/motion.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/password-vault/data.ts","src/password-vault/index.ts","src/password-vault/motion.ts","src/password-vault/quick-pick.ts","src/password-vault/render.ts","src/password-vault/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/password-vault/fake-sim.ts → window.BZW_password_vault（行为单源预览包，issue 245/ADR-0106） */
 var BZW_password_vault = (() => {
   var __create = Object.create;
@@ -5490,6 +5490,85 @@ var BZW_password_vault = (() => {
   // src/encrypt/ui.ts
   init_fake_obsidian();
   init_notice();
+
+  // src/core/mask-dismiss.ts
+  var MASK_DISMISS_SLOP = 8;
+  function bindMaskDismiss(mask, onDismiss) {
+    let armed = null;
+    let dragged = false;
+    let upOnMask = false;
+    let downX = 0;
+    let downY = 0;
+    const pointOf = (e) => {
+      var _a;
+      if (typeof TouchEvent !== "undefined" && e instanceof TouchEvent) {
+        const t = (_a = e.changedTouches[0]) != null ? _a : e.touches[0];
+        return t ? { x: t.clientX, y: t.clientY } : null;
+      }
+      const m = e;
+      if (typeof m.clientX !== "number" || typeof m.clientY !== "number") return null;
+      return { x: m.clientX, y: m.clientY };
+    };
+    const onDown = (e) => {
+      const m = e;
+      if (typeof m.button === "number" && m.button !== 0) {
+        armed = null;
+        return;
+      }
+      armed = e.target === mask;
+      dragged = false;
+      upOnMask = false;
+      const p = pointOf(e);
+      if (p) {
+        downX = p.x;
+        downY = p.y;
+      }
+    };
+    const onUp = (e) => {
+      upOnMask = e.target === mask;
+    };
+    const onMove = (e) => {
+      if (armed !== true || dragged) return;
+      const p = pointOf(e);
+      if (!p) return;
+      if (Math.abs(p.x - downX) > MASK_DISMISS_SLOP || Math.abs(p.y - downY) > MASK_DISMISS_SLOP) dragged = true;
+    };
+    const onCancel = () => {
+      armed = false;
+      dragged = true;
+    };
+    const onClick = (e) => {
+      const wasArmed = armed;
+      const wasDragged = dragged;
+      const wasUpOnMask = upOnMask;
+      armed = null;
+      dragged = false;
+      upOnMask = false;
+      if (wasArmed === false) return;
+      if (wasArmed === true && (wasDragged || !wasUpOnMask)) return;
+      if (e.target === mask) onDismiss();
+    };
+    mask.addEventListener("mousedown", onDown, true);
+    mask.addEventListener("mouseup", onUp, true);
+    mask.addEventListener("mousemove", onMove, true);
+    mask.addEventListener("touchstart", onDown, { capture: true, passive: true });
+    mask.addEventListener("touchend", onUp, { capture: true, passive: true });
+    mask.addEventListener("touchmove", onMove, { capture: true, passive: true });
+    mask.addEventListener("touchcancel", onCancel, true);
+    mask.addEventListener("click", onClick);
+    return () => {
+      mask.removeEventListener("mousedown", onDown, true);
+      mask.removeEventListener("mouseup", onUp, true);
+      mask.removeEventListener("mousemove", onMove, true);
+      mask.removeEventListener("touchstart", onDown, true);
+      mask.removeEventListener("touchend", onUp, true);
+      mask.removeEventListener("touchmove", onMove, true);
+      mask.removeEventListener("touchcancel", onCancel, true);
+      mask.removeEventListener("click", onClick);
+    };
+  }
+
+  // src/encrypt/ui.ts
   init_app();
 
   // src/core/esc-manager.ts
@@ -5650,9 +5729,7 @@ var BZW_password_vault = (() => {
       const mask = document.createElement("div");
       mask.id = "__shared_confirm_mask__";
       mask.style.zIndex = String(allocZ());
-      mask.onclick = (e) => {
-        if (e.target === mask) settle(void 0);
-      };
+      bindMaskDismiss(mask, () => settle(void 0));
       const popup = document.createElement("div");
       popup.id = "__shared_confirm_popup__";
       popup.className = "bz-overlay-popup bz-flow-dialog" + (parts.dangerPrimary ? " bz-flow-dialog--danger" : "");
@@ -5847,9 +5924,7 @@ var BZW_password_vault = (() => {
     mask.id = opts.maskId;
     mask.className = "bz-overlay-mask";
     mask.style.display = "none";
-    mask.onclick = function(e) {
-      if (e.target === mask && typeof opts.onMaskClick === "function") opts.onMaskClick();
-    };
+    if (typeof opts.onMaskClick === "function") bindMaskDismiss(mask, opts.onMaskClick);
     const popup = document.createElement("div");
     popup.id = opts.popupId;
     popup.className = "bz-overlay-popup";
@@ -11365,7 +11440,7 @@ var BZW_password_vault = (() => {
         }
       });
       this.bindSearchInput(this.mob.search, true);
-      this.mask.addEventListener("click", () => {
+      bindMaskDismiss(this.mask, () => {
         if (this.mask.style.display === "block") this.hide();
       });
       this._idleBump = () => this.bumpIdleLock();
@@ -11610,9 +11685,7 @@ var BZW_password_vault = (() => {
       popup.appendChild(foot);
       mask.appendChild(popup);
       document.body.appendChild(mask);
-      mask.onclick = (e) => {
-        if (e.target === mask) this.hideHealthDialog();
-      };
+      bindMaskDismiss(mask, () => this.hideHealthDialog());
       escManager.register("encrypt-health", {
         isVisible: () => !!(this.healthMask && this.healthMask.style.display === "flex"),
         close: () => this.hideHealthDialog()
@@ -12015,9 +12088,7 @@ var BZW_password_vault = (() => {
           notifyActionError(e, "解锁");
         }
       };
-      ls.el.addEventListener("click", (e) => {
-        if (e.target === ls.el) done(false);
-      });
+      bindMaskDismiss(ls.el, () => done(false));
       ls.focus();
       setTimeout(() => ls.focus(), 150);
       activeUnlock = { el: ls.el, promise, cancel: () => done(false) };
@@ -12051,9 +12122,7 @@ var BZW_password_vault = (() => {
         close: () => done()
       });
       if (ls.cancelBtn) ls.cancelBtn.onclick = () => done();
-      ls.el.addEventListener("click", (e) => {
-        if (e.target === ls.el) done();
-      });
+      bindMaskDismiss(ls.el, () => done());
       ls.focus();
       setTimeout(() => ls.focus(), 150);
       this.activeChangePw = { el: ls.el };
@@ -12837,9 +12906,7 @@ var BZW_password_vault = (() => {
         }
       };
       ls.actionBtn.addEventListener("click", () => void submit());
-      ls.el.addEventListener("click", (e) => {
-        if (e.target === ls.el) done(false);
-      });
+      bindMaskDismiss(ls.el, () => done(false));
       ls.focus();
       setTimeout(() => ls.focus(), 150);
     }
@@ -14180,10 +14247,8 @@ var BZW_password_vault = (() => {
         this.clearSearch();
         this.desk.search.focus();
       });
-      root.addEventListener("click", (e) => {
-        if (e.target === root && this.root.style.display === "flex") {
-          this.hide();
-        }
+      bindMaskDismiss(root, () => {
+        if (this.root.style.display === "flex") this.hide();
       });
     }
     bindMob() {
@@ -14203,9 +14268,7 @@ var BZW_password_vault = (() => {
       (_c = root.querySelector(".bz-password-vault-fab")) == null ? void 0 : _c.addEventListener("click", () => this.openEntryDialog(null));
       (_d = root.querySelector('[data-act="mob-close"]')) == null ? void 0 : _d.addEventListener("click", () => this.hide());
       (_e = root.querySelector(".bz-password-vault-back")) == null ? void 0 : _e.addEventListener("click", () => this.mob.page.classList.remove("open"));
-      this.mob.page.addEventListener("click", (e) => {
-        if (e.target === this.mob.page) this.mob.page.classList.remove("open");
-      });
+      bindMaskDismiss(this.mob.page, () => this.mob.page.classList.remove("open"));
       (_f = root.querySelector('.bz-password-vault-mobpage .head [data-act="menu"]')) == null ? void 0 : _f.addEventListener("click", () => {
         const cur = this.mobPagePlatform;
         if (cur) {
@@ -14229,9 +14292,7 @@ var BZW_password_vault = (() => {
         const dlg = modal.querySelector(".bz-password-vault-dialog");
         const errEl = dlg.querySelector("[data-f-err]");
         const get = (f) => dlg.querySelector(`[data-f="${f}"]`).value.trim();
-        modal.addEventListener("click", (e) => {
-          if (e.target === modal) this.closeEntryDialog();
-        });
+        bindMaskDismiss(modal, () => this.closeEntryDialog());
         (_a = dlg.querySelector('[data-act="gen"]')) == null ? void 0 : _a.addEventListener("click", () => {
           const pwInput = dlg.querySelector('[data-f="password"]');
           if (pwInput.value) {
@@ -14308,9 +14369,7 @@ var BZW_password_vault = (() => {
         const card = el;
         const errEl = card.querySelector(".err");
         let currentPlatform = null;
-        card.addEventListener("click", (e) => {
-          if (e.target === card) card.classList.remove("open");
-        });
+        bindMaskDismiss(card, () => card.classList.remove("open"));
         (_a = card.querySelector('[data-act="cancel"]')) == null ? void 0 : _a.addEventListener("click", () => {
           card.classList.remove("open");
         });
