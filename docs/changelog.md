@@ -24,9 +24,13 @@ pnpm changelog          # = node scripts/_gen-changelog.mjs，仓库根执行
 | `manifest.json` | 最新版本号回写（版本号单一事实源在生成器，勿手改） |
 
 发版时另有一个口子：`--note=<release-note.md>`——Release note 的「更新日志」节经用户
-修订后，以 note 口径**覆盖最新版本块**再重出 html（在线资源的更新日志与 Release 页同稿）。
-解析只认 `- **标签** ：说明` 条目行，✨ 新增→added、🐛 修复→fixed、⚡ 优化→improved，
-标签原样作域标签（DOMAIN_NAMES 没有的键直出原文），条目数不受 CAPS 裁剪。
+修订后，以 note 口径**覆盖对应版本块**再重出 html（在线资源的更新日志与 Release 页同稿）。
+默认覆盖最新版本块；`--note-version=x.y.z` 指定历史版本，多份定稿逗号分隔一并回灌
+（`--note=a.md,b.md --note-version=1.36.0,1.35.0`）——生成器每次从 git 全量重建，
+历史版本的用户定稿不会被记住，重跑日志时要把所有定稿文件（留档在 `docs/note-*.md`）
+全部带上。解析只认 `- **标签** ：说明` 条目行，✨ 新增→added、🐛 修复→fixed、
+⚡ 优化→improved，标签原样作域标签（DOMAIN_NAMES 没有的键直出原文），
+条目数不受 CAPS 裁剪。
 
 生成器只写这两个文件，其余不动。
 
