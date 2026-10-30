@@ -183,6 +183,8 @@ export async function quickAddWant(app: App, name: string, type: string, opts?: 
     return false;
   }
   const tag = GROUP_DEFAULT_TAG[type] || '电影';
+  // 影视目录没定（空串）→ 不落盘：createFolder('') 会落到库根
+  if (!M.folderPath) return false;
   let folderObj = app.vault.getAbstractFileByPath(M.folderPath);
   if (!folderObj) await app.vault.createFolder(M.folderPath);
   const filePath = `${M.folderPath}/《${trimmedName}》.md`;

@@ -12,6 +12,22 @@ import { readClipbookData, updateClipbookData, emptySidecar } from '../../src/cl
 import { getNewsFilePath } from '../../src/clipbook/news-data';
 import { drainNewsWritesForTests } from '../../src/clipbook/write-queue';
 
+/**
+ * 设置注入必须早于「种数据」。
+ *
+ * 这些用例在模块顶层/`before*` 里先 `vault.files.set(getXxxFilePath(), ...)` 再注入设置，
+ * 而路径由 `storagePath` 决定：注入前算出来的是缺省 `<插件>/storage`，跟下面注入的
+ * `CONFIG/STORAGE` 不是同一个文件——表现为**整个文件的第一条用例读到 0 条**，
+ * 靠 `retry` 重跑（此时上一轮的注入还留着）才绿。这里先注入一次，把顺序钉正。
+ */
+setSettingsProvider(() => ({
+      storagePath: 'CONFIG/STORAGE',
+      articleDirectory: '归档/网页剪藏',
+      knowledgeDirectory: '文献盒',
+      clipbookImageFolder: '',
+      newsRetentionUnsavedDays: '30',
+    } as any));
+
 const KEY = 'url:https://guokr.com/expired';
 
 function seed(): MockVault {

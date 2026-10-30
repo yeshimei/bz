@@ -1,4 +1,4 @@
-/* 源指纹 11ec18574b8e686a · 仓内输入 84 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 5eefe2853675c3f9 · 仓内输入 84 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/diary/fake-sim.ts","prototypes/diary/fake/fake-obsidian.ts","src/bookshelf/data.ts","src/bookshelf/state.ts","src/cinema/state.ts","src/core/app.ts","src/core/attachment-dir.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/folder-setup.ts","src/core/http.ts","src/core/item-actions.ts","src/core/lock-stats.ts","src/core/mask-dismiss.ts","src/core/mobile.ts","src/core/note-trash.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/plugin-path.ts","src/core/settings-btn-state.ts","src/core/settings-common.ts","src/core/settings-modal.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage-path.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/help-tip.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/data.ts","src/diary/encrypt.ts","src/diary/flip-idle-guard.ts","src/diary/index.ts","src/diary/media-import.ts","src/diary/parser.ts","src/diary/render.ts","src/diary/repair.ts","src/diary/store.ts","src/diary/ui.ts","src/diary/ui/entry-actions.ts","src/diary/ui/locator.ts","src/diary/vendor/page-flip.browser.js","src/diary/volume.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/motion.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/password-vault/data.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/diary/fake-sim.ts → window.BZW_diary（行为单源预览包，issue 245/ADR-0106） */
 var BZW_diary = (() => {
@@ -4798,6 +4798,7 @@ var BZW_diary = (() => {
     return Math.min(base + extra, 15e3);
   }
   function ensureContainer() {
+    if (typeof document === "undefined" || !(document == null ? void 0 : document.body)) return null;
     let container = document.getElementById("bz-notice-container");
     if (!container) {
       container = document.createElement("div");
@@ -4964,6 +4965,7 @@ var BZW_diary = (() => {
     const type = isProgress ? "info" : kind;
     const variant = opts && opts.variant || defaultVariant();
     const container = ensureContainer();
+    if (!container) return noopHandle();
     applyPositionClass(container);
     if (opts && opts.dedupeKey) {
       const key = opts.dedupeKey;
@@ -6478,6 +6480,8 @@ var BZW_diary = (() => {
 
   // src/core/mask-dismiss.ts
   function bindMaskDismiss(mask, onDismiss) {
+    const existing = unbinders.get(mask);
+    if (existing) return existing;
     let armed = null;
     let dragged = false;
     let upOnMask = false;
@@ -6540,7 +6544,7 @@ var BZW_diary = (() => {
     mask.addEventListener("touchmove", onMove, { capture: true, passive: true });
     mask.addEventListener("touchcancel", onCancel, true);
     mask.addEventListener("click", onClick);
-    return () => {
+    const unbind = () => {
       mask.removeEventListener("mousedown", onDown, true);
       mask.removeEventListener("mouseup", onUp, true);
       mask.removeEventListener("mousemove", onMove, true);
@@ -6549,12 +6553,16 @@ var BZW_diary = (() => {
       mask.removeEventListener("touchmove", onMove, true);
       mask.removeEventListener("touchcancel", onCancel, true);
       mask.removeEventListener("click", onClick);
+      unbinders.delete(mask);
     };
+    unbinders.set(mask, unbind);
+    return unbind;
   }
-  var MASK_DISMISS_SLOP;
+  var MASK_DISMISS_SLOP, unbinders;
   var init_mask_dismiss = __esm({
     "src/core/mask-dismiss.ts"() {
       MASK_DISMISS_SLOP = 8;
+      unbinders = /* @__PURE__ */ new WeakMap();
     }
   });
 
@@ -15613,7 +15621,8 @@ ${String(review).trim()}`;
   }
   async function collectMdPaths(app, dirPath) {
     const out = [];
-    const stack = [dirPath.replace(/\/+$/, "") || "/"];
+    if (!dirPath || !dirPath.trim()) return out;
+    const stack = [dirPath.replace(/\/+$/, "") || dirPath];
     const seen = /* @__PURE__ */ new Set();
     while (stack.length) {
       const dir = stack.pop();
@@ -17063,7 +17072,8 @@ ${entry.content.trim()}`;
       settingsId: "diary",
       title: "日记本还没定文件夹",
       desc: "写下的每一篇都会存进日记文件夹。定了之后才有地方落笔。",
-      fields: [{ key: "diaryDirectory", label: "日记文件夹", reco: "我的/日记", note: "信件文件夹可选，用到时才问" }]
+      hint: "信件文件夹可选，用到时才问。",
+      fields: [{ key: "diaryDirectory", label: "日记文件夹", reco: "我的/日记" }]
     },
     clipbook: {
       name: "剪藏本",
@@ -20121,15 +20131,17 @@ ${x.review || ""}`;
       const paper = (_a = this.fallbackEl) == null ? void 0 : _a.querySelector(".bz-diary-fb-paper");
       if (!paper) return;
       const st = folderState("diary");
+      const plan = st.plan;
       const missing = st.missing.map((f) => f.field.label).join("、") || "日记文件夹";
+      const reco = st.missing.map((f) => f.field.reco).find((r) => !!r);
       paper.textContent = "";
       paper.classList.add("bz-diary-fb-lead");
       const title = document.createElement("div");
       title.className = "bz-diary-fb-lead-title";
-      title.textContent = "这本册子还没定文件夹";
+      title.textContent = plan.title;
       const desc = document.createElement("div");
       desc.className = "bz-diary-fb-lead-desc";
-      desc.textContent = `写下的每一篇都要落进${missing}，先把位置定一下。`;
+      desc.textContent = `${plan.desc}要填${missing}${reco ? `（推荐 ${reco}）` : ""}。`;
       const act = document.createElement("div");
       act.className = "bz-diary-fb-lead-act";
       act.appendChild(

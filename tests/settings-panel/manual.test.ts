@@ -77,8 +77,9 @@ describe('使用手册 footer 入口 + OB 内弹窗（issue 473）', () => {
     man.click();
     // 下载已在途：按钮带 loading 态（防重入口径）
     expect(man.classList.contains('is-loading')).toBe(true);
-    await tick(50);
-    expect(vault.files.get(STORED)).toBe(MANUAL_HTML);
+    // 下载 → 落盘 → 打开弹窗是异步链：机器有负载时 50ms 不够（并发跑假红）。
+    // 用轮询等落盘，而不是固定 sleep。
+    await vi.waitFor(() => expect(vault.files.get(STORED)).toBe(MANUAL_HTML));
     const popup = document.getElementById('bz-manual-popup')!;
     expect(popup.classList.contains('bz-panel-frame')).toBe(true);
     expect(popup.classList.contains('bz-sp-skin')).toBe(true);
@@ -99,7 +100,11 @@ describe('使用手册 footer 入口 + OB 内弹窗（issue 473）', () => {
     man.click(); // 途中的第二次点击应被吞掉
     await tick(50);
     // 本地已有 → 内容来自本地，不再走「下载」通道；这一次请求 = 后台新鲜度核对（issue 476）
-    expect(requestUrl).toHaveBeenCalledTimes(1);
+    // 只数手册本身：清单镜像（manifest.json × 5 条通道）与在线资源预载共用这条 mock，
+    // 按总次数断言会在机器有负载时假红。
+    const manCalls = vi.mocked(requestUrl).mock.calls
+      .filter((c: any[]) => String((c[0] as { url?: string })?.url || '').includes('bz-manual.html'));
+    expect(manCalls.length).toBe(1);
     expect(document.getElementById('bz-manual-popup')).toBeTruthy();
     expect(man.classList.contains('is-loading')).toBe(false);
   });
@@ -108,7 +113,11 @@ describe('使用手册 footer 入口 + OB 内弹窗（issue 473）', () => {
     vault.files.set(STORED, MANUAL_HTML);
     // 挂起的远端响应：把「秒开」与「热替换」两个时点钉开，避免只能看终态
     let release!: (v: unknown) => void;
-    vi.mocked(requestUrl).mockImplementation(() => new Promise((r) => { release = r; }) as any);
+    // 只接管手册那条请求：设置面板同时会拉清单镜像（manifest.json × 5 通道），
+    // 单一 release 会被它们覆盖掉，进而「放行」错的那条 → 手册永远等不到响应（并发假红）
+    vi.mocked(requestUrl).mockImplementation(((req: { url?: string }) => new Promise((r) => {
+      if (String(req?.url || '').includes('bz-manual.html')) release = r;
+    })) as any);
     const ui = new SettingsPanelUI();
     ui.open();
     await tick();
@@ -127,7 +136,11 @@ describe('使用手册 footer 入口 + OB 内弹窗（issue 473）', () => {
   it('后台核对回来时弹窗已关闭 → 只落盘不重开（不打扰已结束的阅读）', async () => {
     vault.files.set(STORED, MANUAL_HTML);
     let release!: (v: unknown) => void;
-    vi.mocked(requestUrl).mockImplementation(() => new Promise((r) => { release = r; }) as any);
+    // 只接管手册那条请求：设置面板同时会拉清单镜像（manifest.json × 5 通道），
+    // 单一 release 会被它们覆盖掉，进而「放行」错的那条 → 手册永远等不到响应（并发假红）
+    vi.mocked(requestUrl).mockImplementation(((req: { url?: string }) => new Promise((r) => {
+      if (String(req?.url || '').includes('bz-manual.html')) release = r;
+    })) as any);
     const ui = new SettingsPanelUI();
     ui.open();
     await tick();
@@ -137,9 +150,9 @@ describe('使用手册 footer 入口 + OB 内弹窗（issue 473）', () => {
     const overlay = document.getElementById('bz-manual-overlay')!;
     expect(overlay.style.display).toBe('none');
     release({ status: 200, text: MANUAL_HTML_V2 });
-    await tick(30);
+    // 落盘是异步尾链：并发跑时 30ms 可能还没写完，用轮询等
+    await vi.waitFor(() => expect(vault.files.get(STORED)).toBe(MANUAL_HTML_V2)); // 磁盘已更新
     expect(overlay.style.display).toBe('none'); // 没被后台任务重新弹出来
-    expect(vault.files.get(STORED)).toBe(MANUAL_HTML_V2); // 但磁盘已更新
   });
 
   it('后台核对失败（离线）→ 静默：不出通知、内容保持本地那一版', async () => {

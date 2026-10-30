@@ -1,4 +1,4 @@
-/* 源指纹 111e6cddc0b1d50b · 仓内输入 71 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 f6277a705f558c77 · 仓内输入 71 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/bookshelf/fake-sim.ts","prototypes/bookshelf/fake/fake-obsidian.ts","prototypes/preview-mode.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/epub-notes.ts","src/bookshelf/index.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/motion.ts","src/bookshelf/notes-ui.ts","src/bookshelf/notes.ts","src/bookshelf/render.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/bookshelf/ui.ts","src/core/app.ts","src/core/attachment-dir.ts","src/core/chart-palette.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/download-manifest.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/folder-setup.ts","src/core/http.ts","src/core/mask-dismiss.ts","src/core/mobile.ts","src/core/notice.ts","src/core/offline-source.ts","src/core/plugin-path.ts","src/core/remote-asset.ts","src/core/remote-base.ts","src/core/settings-provider.ts","src/core/sha256.ts","src/core/skin-pack.ts","src/core/storage-path.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/help-tip.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/reading-report/index.ts","src/reading-report/report.ts","src/reading-report/stats.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/bookshelf/fake-sim.ts → window.BZW_bookshelf（行为单源预览包，issue 245/ADR-0106） */
 var BZW_bookshelf = (() => {
@@ -4412,6 +4412,7 @@ var BZW_bookshelf = (() => {
     return Math.min(base + extra, 15e3);
   }
   function ensureContainer() {
+    if (typeof document === "undefined" || !(document == null ? void 0 : document.body)) return null;
     let container = document.getElementById("bz-notice-container");
     if (!container) {
       container = document.createElement("div");
@@ -4580,6 +4581,7 @@ var BZW_bookshelf = (() => {
     const type = isProgress ? "info" : kind;
     const variant = opts && opts.variant || defaultVariant();
     const container = ensureContainer();
+    if (!container) return noopHandle();
     applyPositionClass(container);
     if (opts && opts.dedupeKey) {
       const key = opts.dedupeKey;
@@ -5134,7 +5136,10 @@ var BZW_bookshelf = (() => {
 
   // src/core/mask-dismiss.ts
   var MASK_DISMISS_SLOP = 8;
+  var unbinders = /* @__PURE__ */ new WeakMap();
   function bindMaskDismiss(mask, onDismiss) {
+    const existing = unbinders.get(mask);
+    if (existing) return existing;
     let armed = null;
     let dragged = false;
     let upOnMask = false;
@@ -5197,7 +5202,7 @@ var BZW_bookshelf = (() => {
     mask.addEventListener("touchmove", onMove, { capture: true, passive: true });
     mask.addEventListener("touchcancel", onCancel, true);
     mask.addEventListener("click", onClick);
-    return () => {
+    const unbind = () => {
       mask.removeEventListener("mousedown", onDown, true);
       mask.removeEventListener("mouseup", onUp, true);
       mask.removeEventListener("mousemove", onMove, true);
@@ -5206,7 +5211,10 @@ var BZW_bookshelf = (() => {
       mask.removeEventListener("touchmove", onMove, true);
       mask.removeEventListener("touchcancel", onCancel, true);
       mask.removeEventListener("click", onClick);
+      unbinders.delete(mask);
     };
+    unbinders.set(mask, unbind);
+    return unbind;
   }
 
   // src/core/mobile.ts
@@ -8303,7 +8311,8 @@ var BZW_bookshelf = (() => {
       settingsId: "diary",
       title: "日记本还没定文件夹",
       desc: "写下的每一篇都会存进日记文件夹。定了之后才有地方落笔。",
-      fields: [{ key: "diaryDirectory", label: "日记文件夹", reco: "我的/日记", note: "信件文件夹可选，用到时才问" }]
+      hint: "信件文件夹可选，用到时才问。",
+      fields: [{ key: "diaryDirectory", label: "日记文件夹", reco: "我的/日记" }]
     },
     clipbook: {
       name: "剪藏本",
@@ -8414,6 +8423,13 @@ var BZW_bookshelf = (() => {
       { center: true }
     );
     const el = uiEmpty({ icon: plan.icon, title: plan.title, desc, actions: acts });
+    const need = st.missing.filter((f) => !f.field.image).map((f) => f.field.reco ? `${f.field.label}（推荐 ${f.field.reco}）` : f.field.label).join("、");
+    if (need) {
+      const n = document.createElement("div");
+      n.className = "bz-empty-note";
+      n.textContent = `要填：${need}`;
+      el.insertBefore(n, acts);
+    }
     if (plan.hint) {
       const n = document.createElement("div");
       n.className = "bz-empty-note";

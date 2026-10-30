@@ -159,6 +159,8 @@ export function scanSnapshots(app: App, folder: string): NoteSnapshot[] {
  * - offShelf 只翻布尔，不删文件（票 368：退款/隐藏的游戏笔记保留）。
  */
 export async function applySyncPlan(app: App, folder: string, owned: SteamOwnedGame[], nowIso: string): Promise<{ added: number; updated: number; offShelf: number }> {
+  // 目录没定 = 没地方落笔记：一句空话，绝不 createFolder('')（那是库根）
+  if (!folder) return { added: 0, updated: 0, offShelf: 0 };
   const plan = buildSyncPlan(owned, scanSnapshots(app, folder));
   if (plan.toCreate.length > 0 && !app.vault.getAbstractFileByPath(folder)) {
     await app.vault.createFolder(folder);

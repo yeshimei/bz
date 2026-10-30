@@ -1,4 +1,4 @@
-/* 源指纹 1eb6cf6e4b7a2dd9 · 仓内输入 34 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 21a8583854c19daf · 仓内输入 34 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/pomodoro/fake-sim.ts","prototypes/pomodoro/fake/fake-obsidian.ts","src/core/app.ts","src/core/domain-bus.ts","src/core/download-manifest.ts","src/core/esc-manager.ts","src/core/http.ts","src/core/mask-dismiss.ts","src/core/mobile.ts","src/core/notice.ts","src/core/offline-source.ts","src/core/plugin-path.ts","src/core/pomodoro-phase.ts","src/core/remote-asset.ts","src/core/remote-base.ts","src/core/settings-common.ts","src/core/settings-provider.ts","src/core/sha256.ts","src/core/skin-pack.ts","src/core/storage-path.ts","src/core/storage.ts","src/core/ui/focus-trap.ts","src/core/ui/str.ts","src/core/utils.ts","src/core/z-order.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/motion.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/pomodoro/fake-sim.ts → window.BZW_pomodoro（行为单源预览包，issue 245/ADR-0106） */
 var BZW_pomodoro = (() => {
@@ -4332,6 +4332,8 @@ var BZW_pomodoro = (() => {
 
   // src/core/mask-dismiss.ts
   function bindMaskDismiss(mask, onDismiss) {
+    const existing = unbinders.get(mask);
+    if (existing) return existing;
     let armed = null;
     let dragged = false;
     let upOnMask = false;
@@ -4394,7 +4396,7 @@ var BZW_pomodoro = (() => {
     mask.addEventListener("touchmove", onMove, { capture: true, passive: true });
     mask.addEventListener("touchcancel", onCancel, true);
     mask.addEventListener("click", onClick);
-    return () => {
+    const unbind = () => {
       mask.removeEventListener("mousedown", onDown, true);
       mask.removeEventListener("mouseup", onUp, true);
       mask.removeEventListener("mousemove", onMove, true);
@@ -4403,12 +4405,16 @@ var BZW_pomodoro = (() => {
       mask.removeEventListener("touchmove", onMove, true);
       mask.removeEventListener("touchcancel", onCancel, true);
       mask.removeEventListener("click", onClick);
+      unbinders.delete(mask);
     };
+    unbinders.set(mask, unbind);
+    return unbind;
   }
-  var MASK_DISMISS_SLOP;
+  var MASK_DISMISS_SLOP, unbinders;
   var init_mask_dismiss = __esm({
     "src/core/mask-dismiss.ts"() {
       MASK_DISMISS_SLOP = 8;
+      unbinders = /* @__PURE__ */ new WeakMap();
     }
   });
 
@@ -4561,6 +4567,7 @@ var BZW_pomodoro = (() => {
     return Math.min(base + extra, 15e3);
   }
   function ensureContainer() {
+    if (typeof document === "undefined" || !(document == null ? void 0 : document.body)) return null;
     let container = document.getElementById("bz-notice-container");
     if (!container) {
       container = document.createElement("div");
@@ -4727,6 +4734,7 @@ var BZW_pomodoro = (() => {
     const type = isProgress ? "info" : kind;
     const variant = opts && opts.variant || defaultVariant();
     const container = ensureContainer();
+    if (!container) return noopHandle();
     applyPositionClass(container);
     if (opts && opts.dedupeKey) {
       const key = opts.dedupeKey;

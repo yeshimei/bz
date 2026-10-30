@@ -1,32 +1,30 @@
 /* ============================================================
- * bz · 启动后台自动更新「在线资源 + 外部工具」（core/auto-assets.ts）
+ * bz · 启动后台自动更新「外部工具包」（core/auto-assets.ts）
  *
  * 与 core/self-update.ts 分工：
  *  - self-update 管**插件本体**（releases/<tag>/ 三件套）；
- *  - 本模块管**插件目录里其余的下载物**：`downloads/` 下的文档/数据表/皮肤
- *    （单文件资源）与 `downloads/tools/*.tar.gz`（三个外部工具目录包）。
+ *  - 本模块只管 `downloads/tools/*.tar.gz` 这几个**外部工具目录包**（bili-downloader /
+ *    dock-watch / obsidian-face）。
  *
- * 为什么要有它：设置里「自动更新」原先只管插件本体。用户的理解是「打开了就自动
- * 更新」，实际结果是插件换了新代码、它依赖的索引/皮肤/工具包还停在旧版本——
- * 表现成「更新了但还是不好用」，比不更新更难查（2026-10-30 用户点名）。
+ * **在线资源（手册、更新日志、各类索引与数据表、皮肤）不在这里自动下**（2026-10-31 用户拍板）：
+ * 那些是「用到才需要」的东西，一次性拉 10MB 里 9.7MB 都是两个索引（豆瓣索引 7.16MB、
+ * RSS 目录 1.91MB），首启静默下几分钟、慢链还会超时失败。它们仍在设置 → 通用 → 在线资源
+ * 里按需下载，失败态与重试入口也在那里。工具包不同：它们是**功能依赖**——用户在设置里装了
+ * 「B站下载」或工具坞值守，缺了包那几个功能就是坏的，所以跟着本体一起自动补齐。
  *
  * 三条约束：
- *  - **只有开关打开才动手**（`autoUpdate`）。关着时这里一个字节都不下——它做的是「装」，
- *    不是「查」；「查」由设置面板的「检查更新」负责。
- *  - **清单取一次，全程复用**：启动链已经为了皮肤拉过一份 manifest，这里接着用，
- *    不为同一次启动拉第二遍。
- *  - **失败一律静默**：启动期网络问题不该弹脸；失败项留给「设置 → 通用 → 在线资源」
- *    自己呈状态与重试入口。只有真下成了才发一条通知。
+ *  - **只有开关打开才动手**（`autoUpdate`）。关着时这里一个字节都不下。
+ *  - **清单取一次，全程复用**：启动链已经拉过一份 manifest，这里接着用，不为同一次启动拉第二遍。
+ *  - **失败一律静默**：启动期网络问题不该弹脸；失败项留到下次启动，或由设置面板自己呈状态。
  *
- * 节流 24h（与 self-update 同口径）：逐文件 sha256 要读几十 MB 本地文件，
- * 每次启动都做一遍不值当；新装的用户首次启动那次本来就没有标记，照跑。
+ * 节流 24h（与 self-update 同口径）：逐文件 sha256 要读本地文件，每次启动都做一遍不值当；
+ * 新装的用户首次启动那次本来就没有标记，照跑。
  * ============================================================ */
 import { notice } from './notice';
 import { tryGetSettings } from './settings-provider';
-import { docStatus, refreshManifest, type DownloadManifest } from './download-manifest';
+import { refreshManifest, type DownloadManifest } from './download-manifest';
 import { bundleStatus, installBundle } from './bundle-asset';
-import { ensureAssetWithHash } from './remote-asset';
-import { applySkinManifest, downloadSkinUpdates, skinStatus } from './skin-pack';
+import { isMobileEnv } from './mobile';
 
 /** 最近一次自动更新时刻（localStorage；跨重启） */
 const LAST_RUN_KEY = 'bz-auto-assets:last-run';
@@ -37,7 +35,7 @@ const THROTTLE_MS = 24 * 3600 * 1000;
 export interface AutoAssetResult {
   /** 本次是否因节流/开关关闭而整段跳过 */
   skipped: boolean;
-  /** 实际下载成功并落盘的项目数（目录包按 1 项计、皮肤按套计） */
+  /** 实际安装成功并落盘的工具包数 */
   done: number;
   /** 失败项目数（本地已有的不动，下次再试） */
   failed: number;
@@ -70,19 +68,38 @@ export function resetAutoAssetsThrottle(): void {
   }
 }
 
+/** 同一次启动里并发调用（启动链 + 面板显式动作）只跑一遍，后到的复用前一次的结果 */
+let inFlight: Promise<AutoAssetResult> | null = null;
+
 /**
- * 把「清单里有、但本地不是最新」的资源全部拉一遍。
+ * 把清单里「缺的/不是最新」的**外部工具包**装一遍。在线资源不碰（见文件头）。
  *
  * @param manifest 本次启动已拉的清单；不传则自己拉（独立调用/测试）
  * @param opts.throttle 缺省 true。面板/自检的显式动作传 false——人在场点的不该被节流挡。
  */
-export async function autoUpdateAssets(
+export function autoUpdateAssets(
   app: unknown,
   manifest?: DownloadManifest | null,
   opts: { throttle?: boolean } = {},
 ): Promise<AutoAssetResult> {
+  if (inFlight) return inFlight;
+  const run = runAutoUpdateAssets(app, manifest, opts).finally(() => {
+    inFlight = null;
+  });
+  inFlight = run;
+  return run;
+}
+
+async function runAutoUpdateAssets(
+  app: unknown,
+  manifest: DownloadManifest | null | undefined,
+  opts: { throttle?: boolean },
+): Promise<AutoAssetResult> {
   const empty: AutoAssetResult = { skipped: true, done: 0, failed: 0, pending: 0 };
   if (tryGetSettings()?.autoUpdate !== true) return empty;
+  // 移动端没有 Node：这些工具包（ffmpeg / python / whisper）下下来也 exec 不了，纯占空间。
+  // 插件本体照旧走 Obsidian 自己的更新通道，与这里无关。
+  if (isMobileEnv()) return empty;
 
   const now = Date.now();
   if (opts.throttle !== false) {
@@ -105,33 +122,12 @@ export async function autoUpdateAssets(
   let failed = 0;
   let pending = 0;
 
-  // 1) 皮肤：先按新清单重灌本地就绪表（这一步不下载，离线也能用已有的），
-  //    再把区间内「缺的/有更新」的套数拉一遍，最后重灌一次让新下的当场生效。
-  try {
-    await applySkinManifest(app, mf);
-    const st = await skinStatus(app, mf);
-    if (st.missing + st.updated > 0) {
-      pending += st.missing + st.updated;
-      const r = await downloadSkinUpdates(app, mf);
-      done += r.downloaded;
-      failed += r.failed;
-      if (r.downloaded > 0) await applySkinManifest(app, mf);
-    }
-  } catch (e) {
-    console.warn('[bz] 自动更新：皮肤处理失败（已静默）:', (e as Error)?.message || e);
-    failed++;
-  }
-
-  // 2) 文档 / 数据表 / 外部工具包：逐条按磁盘事实判，只处理非就绪的
   for (const entry of mf.docs) {
-    if (!entry?.file) continue;
+    if (!entry?.file || entry.kind !== 'bundle') continue; // 只管工具包，在线资源按需下载
     try {
-      const isBundle = entry.kind === 'bundle';
-      const state = isBundle ? await bundleStatus(app, entry) : await docStatus(app, entry);
-      if (state === 'ready') continue;
+      if ((await bundleStatus(app, entry)) === 'ready') continue;
       pending++;
-      if (isBundle) await installBundle(app, entry);
-      else await ensureAssetWithHash(app, entry.file, entry.sha256, entry.name, entry.size);
+      await installBundle(app, entry);
       done++;
     } catch (e) {
       failed++;
@@ -139,10 +135,10 @@ export async function autoUpdateAssets(
     }
   }
 
-  // 3) 记账 + 说一句（只在真装了东西时说；失败留给面板自己呈状态）
+  // 记账 + 说一句（只在真装了东西时说；失败留给下次启动）
   writeLastRun(now);
   if (done > 0) {
-    notice(`已自动更新 ${done} 项在线资源与工具包，相关功能即刻可用`, 'success');
+    notice(`已自动更新 ${done} 个外部工具包，相关功能即刻可用`, 'success');
   }
   return { skipped: false, done, failed, pending };
 }

@@ -27,6 +27,16 @@ import { readDataSourceState } from '../../src/clipbook/news-source-settings';
 import { dataSourceGroupRows } from '../../src/clipbook/news-sources-group';
 import type { SettingsRow } from '../../src/core/settings-schema';
 
+/**
+ * 设置注入必须早于「种数据」。
+ *
+ * 这些用例在模块顶层/`before*` 里先 `vault.files.set(getXxxFilePath(), ...)` 再注入设置，
+ * 而路径由 `storagePath` 决定：注入前算出来的是缺省 `<插件>/storage`，跟下面注入的
+ * `CONFIG/STORAGE` 不是同一个文件——表现为**整个文件的第一条用例读到 0 条**，
+ * 靠 `retry` 重跑（此时上一轮的注入还留着）才绿。这里先注入一次，把顺序钉正。
+ */
+setSettingsProvider(() => ({ storagePath: 'CONFIG/STORAGE', articleDirectory: '归档/网页剪藏' } as any));
+
 /** 【期望配置】见文件头「可配置期望约定」：现状全部 false（钉旧基线行为），批 A 合并后翻转 */
 const OVERLAY_SWEEP_ON_UNLOAD = true; // 批 A 已合并：unloadClipbook 收口三类自建浮层（A1）
 const UNSUBSCRIBE_ON_UNLOAD = true; // 批 A 已合并：域事件订阅随 unloadClipbook 退订（A7）

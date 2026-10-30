@@ -197,10 +197,17 @@ describe('深审修复批 C（password-vault 渲染/列表/弹窗面）', () => 
     await sm.unlock('pw');
     await dm.addItem({ platform: 'GitHub', account: 'me', password: 'x' });
     ui.show();
-    await flush(10);
-    (document.querySelector('.bz-password-vault-mobcard') as HTMLElement).click();
-    await flush(10);
-    expect(document.querySelector('.bz-password-vault-mobpage')!.classList.contains('open')).toBe(true);
+    // 渲染是异步链：机器有负载时 10ms 不够，卡片还没出来就点 → null.click()（并发假红）。
+    // 等卡片真的出现再点。
+    const mobcard = await vi.waitFor(() => {
+      const el = document.querySelector('.bz-password-vault-mobcard') as HTMLElement | null;
+      expect(el, '移动端卡片应已渲染').toBeTruthy();
+      return el!;
+    });
+    mobcard.click();
+    await vi.waitFor(() =>
+      expect(document.querySelector('.bz-password-vault-mobpage')!.classList.contains('open')).toBe(true)
+    );
     // 模拟别域写入同清单后重载完成：内存多一条 + 触发外部回调
     dm.pwData.unshift(entryOf('GitHub', 'ext-account'));
     dm.onExternalChange?.();

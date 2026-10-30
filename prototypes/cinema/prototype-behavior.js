@@ -1,4 +1,4 @@
-/* 源指纹 c535262244d2ca5c · 仓内输入 86 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 b8d1001ecc5b233f · 仓内输入 86 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/cinema/fake-sim.ts","prototypes/cinema/fake/fake-obsidian.ts","prototypes/preview-mode.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/douban-fetcher.ts","src/cinema/douban-queue.ts","src/cinema/index.ts","src/cinema/layouts/midnight/render.ts","src/cinema/motion.ts","src/cinema/recommend.ts","src/cinema/render.ts","src/cinema/seasons.ts","src/cinema/shared.ts","src/cinema/state.ts","src/cinema/type-decide.ts","src/cinema/ui.ts","src/cinema/yearbook/data.ts","src/cinema/yearbook/engine.ts","src/cinema/yearbook/index.ts","src/cinema/yearbook/kits.ts","src/cinema/yearbook/motions.ts","src/cinema/yearbook/scenes.ts","src/core/ai.ts","src/core/app.ts","src/core/attachment-dir.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/douban-name-index.ts","src/core/download-manifest.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/folder-setup.ts","src/core/gesture.ts","src/core/http.ts","src/core/item-actions.ts","src/core/jev-fallback.ts","src/core/jev.ts","src/core/landscape.ts","src/core/mask-dismiss.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/note-trash.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/offline-source.ts","src/core/path-classify.ts","src/core/plugin-path.ts","src/core/remote-asset.ts","src/core/remote-base.ts","src/core/settings-provider.ts","src/core/sha256.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/help-tip.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slide-pill.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/cinema/fake-sim.ts → window.BZW_cinema（行为单源预览包，issue 245/ADR-0106） */
 var BZW_cinema = (() => {
@@ -5144,9 +5144,40 @@ var BZW_cinema = (() => {
     return Number(m[1]) <= 23 && Number(m[2]) <= 59;
   }
 
+  // src/core/attachment-dir.ts
+  function cleanDir(v) {
+    return String(v != null ? v : "").trim().replace(/\\/g, "/").replace(/^\/+|\/+$/g, "");
+  }
+  function obsidianAttachmentDir() {
+    var _a, _b;
+    let raw = "";
+    try {
+      const vault = getApp().vault;
+      raw = String((_b = (_a = vault == null ? void 0 : vault.getConfig) == null ? void 0 : _a.call(vault, "attachmentFolderPath")) != null ? _b : "");
+    } catch (e) {
+      return null;
+    }
+    const v = raw.trim().replace(/\\/g, "/");
+    if (!v || v === "/") return null;
+    if (v.startsWith("./")) return null;
+    const dir = cleanDir(v);
+    return dir || null;
+  }
+  function domainAssetsDir(mainDir) {
+    const m = cleanDir(mainDir);
+    return m ? `${m}/assets` : "";
+  }
+  function resolveAssetDir(configured, fallback) {
+    const c = cleanDir(configured);
+    if (c) return { dir: c, source: "setting" };
+    const o = obsidianAttachmentDir();
+    if (o) return { dir: o, source: "obsidian" };
+    return { dir: cleanDir(fallback), source: "fallback" };
+  }
+
   // src/core/path-classify.ts
   function normalizeDir(dir) {
-    return (dir || "").trim().replace(/\\/g, "/").replace(/\/+$/, "");
+    return cleanDir(dir);
   }
   function isUnderDir(dir, p) {
     const d = normalizeDir(dir);
@@ -5557,6 +5588,7 @@ var BZW_cinema = (() => {
     return Math.min(base + extra, 15e3);
   }
   function ensureContainer() {
+    if (typeof document === "undefined" || !(document == null ? void 0 : document.body)) return null;
     let container = document.getElementById("bz-notice-container");
     if (!container) {
       container = document.createElement("div");
@@ -5725,6 +5757,7 @@ var BZW_cinema = (() => {
     const type = isProgress ? "info" : kind;
     const variant = opts && opts.variant || defaultVariant();
     const container = ensureContainer();
+    if (!container) return noopHandle();
     applyPositionClass(container);
     if (opts && opts.dedupeKey) {
       const key = opts.dedupeKey;
@@ -7035,7 +7068,10 @@ var BZW_cinema = (() => {
 
   // src/core/mask-dismiss.ts
   var MASK_DISMISS_SLOP = 8;
+  var unbinders = /* @__PURE__ */ new WeakMap();
   function bindMaskDismiss(mask, onDismiss) {
+    const existing = unbinders.get(mask);
+    if (existing) return existing;
     let armed = null;
     let dragged = false;
     let upOnMask = false;
@@ -7098,7 +7134,7 @@ var BZW_cinema = (() => {
     mask.addEventListener("touchmove", onMove, { capture: true, passive: true });
     mask.addEventListener("touchcancel", onCancel, true);
     mask.addEventListener("click", onClick);
-    return () => {
+    const unbind = () => {
       mask.removeEventListener("mousedown", onDown, true);
       mask.removeEventListener("mouseup", onUp, true);
       mask.removeEventListener("mousemove", onMove, true);
@@ -7107,7 +7143,10 @@ var BZW_cinema = (() => {
       mask.removeEventListener("touchmove", onMove, true);
       mask.removeEventListener("touchcancel", onCancel, true);
       mask.removeEventListener("click", onClick);
+      unbinders.delete(mask);
     };
+    unbinders.set(mask, unbind);
+    return unbind;
   }
 
   // src/core/note-trash.ts
@@ -8504,37 +8543,6 @@ var BZW_cinema = (() => {
     return [...prefix, ...contains].slice(0, limit);
   }
 
-  // src/core/attachment-dir.ts
-  function cleanDir(v) {
-    return String(v != null ? v : "").trim().replace(/\\/g, "/").replace(/^\/+|\/+$/g, "");
-  }
-  function obsidianAttachmentDir() {
-    var _a, _b;
-    let raw = "";
-    try {
-      const vault = getApp().vault;
-      raw = String((_b = (_a = vault == null ? void 0 : vault.getConfig) == null ? void 0 : _a.call(vault, "attachmentFolderPath")) != null ? _b : "");
-    } catch (e) {
-      return null;
-    }
-    const v = raw.trim().replace(/\\/g, "/");
-    if (!v || v === "/") return null;
-    if (v.startsWith("./")) return null;
-    const dir = cleanDir(v);
-    return dir || null;
-  }
-  function domainAssetsDir(mainDir) {
-    const m = cleanDir(mainDir);
-    return m ? `${m}/assets` : "";
-  }
-  function resolveAssetDir(configured, fallback) {
-    const c = cleanDir(configured);
-    if (c) return { dir: c, source: "setting" };
-    const o = obsidianAttachmentDir();
-    if (o) return { dir: o, source: "obsidian" };
-    return { dir: cleanDir(fallback), source: "fallback" };
-  }
-
   // src/cinema/douban-queue.ts
   var FETCH_GAP_MS = 15e3;
   var FETCH_TIMEOUT_MS = 3 * 60 * 1e3;
@@ -8885,6 +8893,7 @@ var BZW_cinema = (() => {
       return false;
     }
     const tag = GROUP_DEFAULT_TAG[type] || "电影";
+    if (!M.folderPath) return false;
     let folderObj = app.vault.getAbstractFileByPath(M.folderPath);
     if (!folderObj) await app.vault.createFolder(M.folderPath);
     const filePath = `${M.folderPath}/《${trimmedName}》.md`;
@@ -12354,7 +12363,8 @@ tags:
       settingsId: "diary",
       title: "日记本还没定文件夹",
       desc: "写下的每一篇都会存进日记文件夹。定了之后才有地方落笔。",
-      fields: [{ key: "diaryDirectory", label: "日记文件夹", reco: "我的/日记", note: "信件文件夹可选，用到时才问" }]
+      hint: "信件文件夹可选，用到时才问。",
+      fields: [{ key: "diaryDirectory", label: "日记文件夹", reco: "我的/日记" }]
     },
     clipbook: {
       name: "剪藏本",
@@ -12933,6 +12943,7 @@ tags:
   async function persistItem(item, app, edit, douban, posterRel) {
     if (!item.file) {
       const folder = M.folderPath;
+      if (!folder) return;
       if (!app.vault.getAbstractFileByPath(folder)) {
         await app.vault.createFolder(folder);
       }

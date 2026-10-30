@@ -1,5 +1,5 @@
 /**
- * 测试 worker 数决策 —— 独占吃满、并发自动折半。
+ * 测试 worker 数 / 重试次数决策 —— 独占吃满、并发折半并开重试。
  *
  * 为什么需要它：全量用例 586 文件里 ~91% 的耗时是**每个文件构建一次 jsdom 环境**
  * （node 环境 0.19s/文件，jsdom 1.5s/文件），这份开销不随用例多少变化，只能靠
@@ -100,6 +100,11 @@ export function claimTestRun(pid = process.pid, lockDir = LOCK_DIR) {
   return release;
 }
 
+/** 当前存活的全量测试会话数（含自己，故恒 ≥ 1）。**调用前应先 claim 自己**。 */
+export function resolveLiveRuns(lockDir = LOCK_DIR) {
+  return Math.max(1, pruneStale(lockDir).length);
+}
+
 /**
  * 算出本次该开几个 worker。
  * 优先级：显式 env > 独占吃满 > 按并发会话数均分。
@@ -109,8 +114,24 @@ export function resolveWorkerCount(env = process.env, lockDir = LOCK_DIR) {
   if (Number.isFinite(explicit) && explicit >= 1) return Math.floor(explicit);
 
   const max = Math.max(MIN_WORKERS, os.availableParallelism());
-  const runs = Math.max(1, pruneStale(lockDir).length);
-  return Math.max(MIN_WORKERS, Math.floor(max / runs));
+  return Math.max(MIN_WORKERS, Math.floor(max / resolveLiveRuns(lockDir)));
+}
+
+/**
+ * 失败用例的重试次数 —— 与 worker 数同一个信号：**只按并发会话数决定**。
+ *
+ * 重试的唯一用途是吸收「多会话抢 CPU」造成的假红（失败集合漂移那种）。独占时 CPU 空闲，
+ * 假红无从产生，重试就只剩代价：每条失败用例多等两轮，而单轮的成本是「用例里最深的
+ * 那个 waitFor 超时」——全仓 1500+ 处 waitFor 默认 5s，于是**一条真失败要白等 15s 左右**，
+ * 几十条同时红时整轮从几十秒变成十几分钟，且这段时间 CPU 是闲的（风扇不响）。
+ *
+ * 所以：独占 → 0（失败立刻可见），有并发 → 2（抖动照旧吸收）。
+ * 显式 `BZ_TEST_RETRY=2` 仍然优先（CI / 复现抖动时用）。
+ */
+export function resolveRetryCount(env = process.env, lockDir = LOCK_DIR) {
+  const explicit = Number(env?.BZ_TEST_RETRY);
+  if (Number.isFinite(explicit) && explicit >= 0) return Math.floor(explicit);
+  return resolveLiveRuns(lockDir) > 1 ? 2 : 0;
 }
 
 export const _internals = { LOCK_DIR, HEARTBEAT_MS, FRESH_MS, MIN_WORKERS, pruneStale };

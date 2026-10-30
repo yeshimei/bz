@@ -2,15 +2,17 @@
 /**
  * scripts/test-workers.mjs —— worker 数自适应回归测试。
  *
- * 这块逻辑决定「全量测试开几路」，错判的代价不是红而是**静默变慢**：独占时误判成并发
- * 就白丢 31% 墙钟，并发时误判成独占就两边互拖到 3~4 倍。所以把三条判据（显式覆盖优先、
- * 独占吃满、并发均分）与两条安全线（心跳锁幂等、死会话剔除）都钉死。
+ * 这块逻辑决定「全量测试开几路 / 失败重试几次」，错判的代价不是红而是**静默变慢**：
+ * 独占时误判成并发就白丢 31% 墙钟，并发时误判成独占就两边互拖到 3~4 倍；
+ * 重试则只管失败场景——多试一轮就多等一整个 waitFor 预算（一条真失败 2 轮 ≈ 多花 5~10s），
+ * 几十条同时红能把一轮从 40s 拖到十几分钟，且全程 CPU 闲着。所以把三条判据（显式覆盖优先、
+ * 独占吃满、并发均分）与两条安全线（心跳锁幂等、死会话剔除）都钉死，重试数单独钉一组。
  */
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
-import { _internals, claimTestRun, resolveWorkerCount } from '../../scripts/test-workers.mjs';
+import { _internals, claimTestRun, resolveRetryCount, resolveWorkerCount } from '../../scripts/test-workers.mjs';
 
 const MAX = Math.max(_internals.MIN_WORKERS, os.availableParallelism());
 
@@ -78,6 +80,32 @@ describe('resolveWorkerCount', () => {
 
   it('锁目录不存在时不抛错，按独占处理', () => {
     expect(resolveWorkerCount({}, path.join(os.tmpdir(), 'bz-test-workers-not-exist-xyz'))).toBe(MAX);
+  });
+});
+
+describe('resolveRetryCount', () => {
+  it('独占不重试（失败立刻可见，不为「不可能发生的假红」白等两轮）', () => {
+    expect(resolveRetryCount({}, tmpLockDir())).toBe(0);
+  });
+
+  it('两个并发会话各开 2 次重试（抢 CPU 抖动照旧吸收）', () => {
+    const dir = tmpLockDir();
+    seedLock(dir, '1.lock');
+    seedLock(dir, '2.lock');
+    expect(resolveRetryCount({}, dir)).toBe(2);
+  });
+
+  it('显式 BZ_TEST_RETRY 优先（CI / 复现抖动时用），0 也算显式值', () => {
+    const dir = tmpLockDir();
+    seedLock(dir, '1.lock');
+    seedLock(dir, '2.lock');
+    expect(resolveRetryCount({ BZ_TEST_RETRY: '0' }, dir)).toBe(0);
+    expect(resolveRetryCount({ BZ_TEST_RETRY: '3' }, dir)).toBe(3);
+  });
+
+  it('非法 / 负值回落到自动判断', () => {
+    expect(resolveRetryCount({ BZ_TEST_RETRY: 'abc' }, tmpLockDir())).toBe(0);
+    expect(resolveRetryCount({ BZ_TEST_RETRY: '-1' }, tmpLockDir())).toBe(0);
   });
 });
 

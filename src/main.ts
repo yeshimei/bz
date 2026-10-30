@@ -235,7 +235,9 @@ const COMMANDS: { id: string; name: string; icon: string; callback: () => void }
   // 为未关联笔记批量补链：启动自动补链的显式兜底入口（三个盒子内缺关联的笔记）
   { id: 'bz-knowledge-link-all', name: '为未关联笔记批量补链', icon: 'link-2', callback: () => {
     ensureSecondBrain(getApp());
-    void linkAllInBoxes();
+    // 命令回调里的 promise 没人 await：补链失败已经由 linkAllInBoxes 自己 notice 过，
+    // 这里只兜底吞掉 rejection，别让它在没有 DOM 的宿主/卸载后变成 unhandled
+    void linkAllInBoxes().catch(() => undefined);
   } },
   // 看挂载树（issue 319）：主卡 = 当前打开的笔记；没有打开的笔记就只提示（不猜主卡）
   { id: 'bz-knowledge-mount-tree', name: '看挂载树', icon: 'network', callback: () => {

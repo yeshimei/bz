@@ -665,6 +665,8 @@ async function writeFm(app: App, file: TFile, cb: (fm: Record<string, unknown>) 
 async function persistItem(item: CinemaItem, app: App, edit?: { prevName: string; prevTag: string }, douban?: DoubanQuery | null, posterRel?: string | null): Promise<void> {
   if (!item.file) {
     const folder = M.folderPath;
+    // 目录没定（空串）→ 不落盘：createFolder('') 会落到库根
+    if (!folder) return;
     if (!app.vault.getAbstractFileByPath(folder)) {
       await app.vault.createFolder(folder);
     }
@@ -3103,9 +3105,11 @@ function playGridMotion(root: HTMLElement, before: Map<string, GridCardSnap>): v
 
 /** 渲染总入口：按面板根的风格/端分发（vault 自动刷新与 M.renderFn 都走这里） */
 export function renderAll(app: App): void {
+  // 引导态必须排在渲染**之后**：它替换的是渲染产出的 `.cn-empty-page` / `.d-scroll` / `.m-scroll`
+  // 容器，没有容器就无处可挂（影院的面板骨架由本域渲染自己长出，core 给不了）。
+  // 代价是未配置时会白跑一遍渲染管线（读目录、量卡片、动效、滚位恢复），产出随即整块换掉——
+  // 用户看到的是引导页，看不到那批内容；数据层对空目录的守卫在 state / 写盘入口，不在这里。
   renderAllInner(app);
-  // 影视目录没配 → 内容区给引导态。放在渲染之后定位内容容器：
-  // 根容器带着整条头行（标题/筛选/搜索），整块换掉会让面板失去骨架
   mountFolderGateCinema();
 }
 

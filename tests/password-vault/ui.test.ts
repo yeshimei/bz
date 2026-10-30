@@ -74,7 +74,10 @@ describe('PasswordVaultUIManager', () => {
     await sm.unlock('pw');
     await dm.addItem({ platform: 'GitHub', account: 'me', password: 'x', fav: true });
     ui.show();
-    await new Promise((r) => setTimeout(r, 10));
+    // 装配 fire-and-forget（show() 末尾 void loadAndRender()）：等平台聚合行渲出来再断言
+    await vi.waitFor(() =>
+      expect(document.querySelector('.bz-password-vault-rows')?.textContent ?? '').toContain('GitHub')
+    );
     // 锁屏应关闭（已解锁）
     expect(document.querySelectorAll('.bz-password-vault-lock.open').length).toBe(0);
     // 列表渲染平台聚合行
@@ -88,17 +91,24 @@ describe('PasswordVaultUIManager', () => {
     await sm.unlock('pw');
     sm.lock();
     ui.show();
-    await new Promise((r) => setTimeout(r, 20));
+    // 锁屏是异步装配的：open 类先挂上、标题随后才填——等文案就位再取 DOM
+    await vi.waitFor(() => {
+      const ls = document.querySelectorAll('.bz-password-vault-lock.open');
+      expect(ls.length).toBe(2);
+      expect(ls[0].querySelector('[data-ls="title"]')?.textContent).toBe('密码本已上锁');
+    });
     const locks = document.querySelectorAll('.bz-password-vault-lock.open');
-    expect(locks.length).toBe(2);
     expect(locks[0].querySelector('[data-ls="title"]')!.textContent).toBe('密码本已上锁');
   });
 
   it('首设：无清单 → 锁屏标题「设置主密码」', async () => {
     ui.show();
-    await new Promise((r) => setTimeout(r, 20));
+    await vi.waitFor(() => {
+      const ls = document.querySelectorAll('.bz-password-vault-lock.open');
+      expect(ls.length).toBe(2);
+      expect(ls[0].querySelector('[data-ls="title"]')?.textContent).toBe('设置主密码');
+    });
     const locks = document.querySelectorAll('.bz-password-vault-lock.open');
-    expect(locks.length).toBe(2);
     expect(locks[0].querySelector('[data-ls="title"]')!.textContent).toBe('设置主密码');
   });
 
@@ -141,9 +151,12 @@ describe('PasswordVaultUIManager', () => {
     // 模拟真实重启：锁定后内存数据也清空（新会话从磁盘重载）
     dm.pwData = [];
     ui.show();
-    await new Promise((r) => setTimeout(r, 20));
+    await vi.waitFor(() => {
+      const ls = document.querySelectorAll<HTMLElement>('.bz-password-vault-lock.open');
+      expect(ls.length).toBe(2);
+      expect(ls[0].querySelector('[data-ls="title"]')?.textContent).toBe('密码本已上锁');
+    });
     const locks = document.querySelectorAll<HTMLElement>('.bz-password-vault-lock.open');
-    expect(locks.length).toBe(2);
     expect(locks[0].querySelector('[data-ls="title"]')!.textContent).toBe('密码本已上锁');
     // 输入正确密码 → 解锁 → 锁屏关闭 + 数据从磁盘重载后列表渲染
     (locks[0].querySelector('[data-ls="p1"]') as HTMLInputElement).value = 'correct-pw';
@@ -162,18 +175,19 @@ describe('PasswordVaultUIManager', () => {
     await dm.addItem({ platform: 'GitHub', account: 'me', password: 'x' });
     await dm.addItem({ platform: '微信', account: 'wx', password: 'y' });
     ui.show();
-    await new Promise((r) => setTimeout(r, 10));
+    await vi.waitFor(() => expect(document.querySelector('.bz-password-vault-rows')?.childElementCount).toBeGreaterThan(0));
     const search = document.querySelector('.bz-password-vault-search input') as HTMLInputElement;
     search.value = 'GitHub';
     search.dispatchEvent(new Event('input'));
-    await new Promise((r) => setTimeout(r, 250)); // 防抖 180ms
+    // 防抖 180ms 后重绘：等目标行出现，不赌固定时长
+    await vi.waitFor(() => expect(document.querySelectorAll('.bz-password-vault-rows .bz-password-vault-row').length).toBe(1));
     const rows = document.querySelector('.bz-password-vault-rows')!;
     expect(rows.querySelectorAll('.bz-password-vault-row').length).toBe(1);
     expect(rows.textContent).toContain('GitHub');
     // 空结果
     search.value = 'zzz';
     search.dispatchEvent(new Event('input'));
-    await new Promise((r) => setTimeout(r, 250));
+    await vi.waitFor(() => expect(document.querySelector('.bz-password-vault-rows .bz-password-vault-empty')).toBeTruthy());
     expect(document.querySelector('.bz-password-vault-rows .bz-password-vault-empty')).toBeTruthy();
   });
 
@@ -182,7 +196,7 @@ describe('PasswordVaultUIManager', () => {
     await dm.addItem({ platform: 'GitHub', account: 'me', password: 'x' });
     await dm.addItem({ platform: '微信', account: 'wx', password: 'y' });
     ui.show();
-    await new Promise((r) => setTimeout(r, 10));
+    await vi.waitFor(() => expect(document.querySelector('.bz-password-vault-rows')?.childElementCount).toBeGreaterThan(0));
     const search = document.querySelector('.bz-password-vault-search input') as HTMLInputElement;
     const btn = document.querySelector('.bz-password-vault-search [data-pwv-search-clear]') as HTMLElement;
     expect(btn).toBeTruthy();
@@ -193,7 +207,12 @@ describe('PasswordVaultUIManager', () => {
     btn.click();
     expect(search.value).toBe('');
     expect(btn.hidden).toBe(true);
-    await new Promise((r) => setTimeout(r, 250)); // 清词立即重绘，防抖尾触已 cancel
+    // 清词回平台聚合视图（非展平行），两条平台都在场 = 全量恢复；等它俩同时出现，不赌防抖时长
+    await vi.waitFor(() => {
+      const t = document.querySelector('.bz-password-vault-rows')?.textContent ?? '';
+      expect(t).toContain('GitHub');
+      expect(t).toContain('微信');
+    });
     const rows = document.querySelector('.bz-password-vault-rows')!;
     // 清词回平台聚合视图（非展平行），两条平台都在场 = 全量恢复
     expect(rows.textContent).toContain('GitHub');
@@ -213,11 +232,11 @@ describe('PasswordVaultUIManager', () => {
     await sm.unlock('pw');
     await dm.addItem({ platform: 'GitHub', url: 'https://github.com', account: 'me', password: 'p@ss', note: '主号' });
     ui.show();
-    await new Promise((r) => setTimeout(r, 10));
+    await vi.waitFor(() => expect(document.querySelector('.bz-password-vault-rows .bz-password-vault-plrow')).toBeTruthy());
     // 选中平台 → 详情区渲染账号卡
     const row = document.querySelector('.bz-password-vault-rows .bz-password-vault-plrow')!;
     (row as HTMLElement).click();
-    await new Promise((r) => setTimeout(r, 10));
+    await vi.waitFor(() => expect(document.querySelector('.bz-password-vault-acctcard')).toBeTruthy());
     const card = document.querySelector('.bz-password-vault-acctcard')!;
     expect(card).toBeTruthy();
     // 复制账号按钮常驻（data-act="copy-ac"）
@@ -239,7 +258,7 @@ describe('PasswordVaultUIManager', () => {
   it('添加弹窗：字段填充 + fav 默认 false + 保存落盘', async () => {
     await sm.unlock('pw');
     ui.show();
-    await new Promise((r) => setTimeout(r, 10));
+    await vi.waitFor(() => expect(document.querySelector('.bz-password-vault-rows')?.childElementCount).toBeGreaterThan(0));
     ui.openEntryDialog(null);
     const modal = document.querySelector('.bz-password-vault-modal.open .bz-password-vault-dialog')!;
     expect(modal).toBeTruthy();
@@ -252,7 +271,7 @@ describe('PasswordVaultUIManager', () => {
     set('password', 'p@ss');
     set('note', '主号');
     (modal.querySelector('[data-act="save"]') as HTMLButtonElement).click();
-    await new Promise((r) => setTimeout(r, 20));
+    await vi.waitFor(() => expect(dm.pwData.length).toBe(1));
     expect(dm.pwData.length).toBe(1);
     expect(dm.pwData[0]).toMatchObject({ platform: 'GitHub', account: 'me', password: 'p@ss', fav: false });
   });
@@ -261,7 +280,11 @@ describe('PasswordVaultUIManager', () => {
     await sm.unlock('pw');
     await dm.addItem({ platform: 'GitHub', account: 'me', password: 'x' });
     ui.show();
-    await new Promise((r) => setTimeout(r, 10));
+    // show() 末尾是 void loadAndRender()：装配异步、且它用盘面重建 pwData——抢在它前面改 fav
+    // 会被随后的重建覆盖回去（并发下必现、单跑不现）。等列表渲出条目再动手，不赌固定 sleep。
+    await vi.waitFor(() =>
+      expect(document.querySelector('.bz-password-vault-rows')?.textContent ?? '').toContain('GitHub')
+    );
     await dm.toggleFav(dm.pwData[0].id);
     expect(dm.pwData[0].fav).toBe(true);
     ui.renderAll();
@@ -292,7 +315,7 @@ describe('PasswordVaultUIManager', () => {
   it('遮罩点击关闭窗口', async () => {
     await sm.unlock('pw');
     ui.show();
-    await new Promise((r) => setTimeout(r, 10));
+    await vi.waitFor(() => expect(document.querySelectorAll('.bz-password-vault-lock.open').length).toBe(0));
     expect(ui.root!.style.display).toBe('flex');
     // 点击根容器（卡片外遮罩）
     ui.root!.dispatchEvent(new MouseEvent('click', { bubbles: true }));
@@ -303,7 +326,7 @@ describe('PasswordVaultUIManager', () => {
     await sm.unlock('pw');
     await dm.addItem({ platform: 'GitHub', url: 'https://github.com', account: 'me', password: 'x' });
     ui.show();
-    await new Promise((r) => setTimeout(r, 10));
+    await vi.waitFor(() => expect(document.querySelector('.bz-password-vault-rows .bz-password-vault-plrow')).toBeTruthy());
     ui.openEntryDialog(null, { platform: 'GitHub', url: 'https://github.com' });
     const dlg = document.querySelector('.bz-password-vault-modal.open .bz-password-vault-dialog')!;
     expect((dlg.querySelector('[data-f="platform"]') as HTMLInputElement).value).toBe('GitHub');
@@ -313,7 +336,7 @@ describe('PasswordVaultUIManager', () => {
   it('移动端顶栏关闭按钮：点击 → 关闭窗口', async () => {
     await sm.unlock('pw');
     ui.show();
-    await new Promise((r) => setTimeout(r, 10));
+    await vi.waitFor(() => expect(document.querySelector('[data-act="mob-close"]')).toBeTruthy());
     expect(ui.root!.style.display).toBe('flex');
     (ui.root!.querySelector('[data-act="mob-close"]') as HTMLButtonElement).click();
     expect(ui.root!.style.display).toBe('none');
@@ -344,7 +367,7 @@ describe('PasswordVaultUIManager', () => {
   // 弹窗挂 body —— 必须自带 bz-pwv-flow-dialog 域类，否则金色/材质掉回 core 裸皮。
   it('首设风险确认框挂 bz-pwv-flow-dialog（域皮随行，与统一壳类共存）', async () => {
     ui.show(); // 无清单 → 首设态锁屏（双输入）
-    await new Promise((r) => setTimeout(r, 20));
+    await vi.waitFor(() => expect(document.querySelector('.bz-password-vault-lock.open [data-ls="p1"]')).toBeTruthy());
     const lock = document.querySelector('.bz-password-vault-lock.open') as HTMLElement;
     expect(lock).toBeTruthy();
     (lock.querySelector('[data-ls="p1"]') as HTMLInputElement).value = 'abcd';
@@ -386,7 +409,7 @@ describe('PasswordVaultUIManager', () => {
     expect(popup.classList.contains('bz-flow-dialog--danger')).toBe(true);
     // 收尾：取消（不重设，避免污染后续用例）
     (document.getElementById('__shared_confirm_cancel__') as HTMLButtonElement).click();
-    await new Promise((r) => setTimeout(r, 20));
+    await vi.waitFor(() => expect(document.getElementById('__shared_confirm_mask__')).toBeNull());
   });
 });
 

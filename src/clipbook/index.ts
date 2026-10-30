@@ -130,6 +130,7 @@ function registerAutoRefresh(app: App): void {
     if (path) invalidateClipBodyCache(path); // 正文缓存失效（enh 包 3：clipping:file-modified 等）
     if (stalePath) invalidateClipBodyCache(stalePath);
     const d = clipDir();
+    if (!d) return; // 未配置：没有剪藏目录，谈不上「目录内变更」
     const inDir = (p?: string) => !!p && p.startsWith(d + '/');
     if (!inDir(path) && !inDir(stalePath)) return;
     if (timer) clearTimeout(timer);

@@ -30,14 +30,12 @@ interface FolderField {
   key: string;
   /** 设置页/空态里的名字（与设置项同名，别另造一套说法） */
   label: string;
-  /** 推荐值（设置页 fallbackValue 与空态文案共用） */
+  /** 推荐值（空态里直接告诉用户填什么；留空 = 图片类，由三跳决定） */
   reco: string;
   /** 图片类：走 resolveAssetDir（设置 → Obsidian 附件位置 → `<主目录>/assets`），不强制人填 */
   image?: boolean;
   /** 图片类的主目录键（缺省落 `<该键当前值>/assets`；剪藏=剪藏文件夹、知识盒=卡片文件夹、影院/游戏库=本域目录） */
   imageBaseKey?: string;
-  /** 空态里的一句话（只在未配置时展示） */
-  note?: string;
 }
 
 interface FolderPlan {
@@ -61,7 +59,8 @@ export const FOLDER_PLANS: Record<FolderDomainId, FolderPlan> = {
     settingsId: 'diary',
     title: '日记本还没定文件夹',
     desc: '写下的每一篇都会存进日记文件夹。定了之后才有地方落笔。',
-    fields: [{ key: 'diaryDirectory', label: '日记文件夹', reco: '我的/日记', note: '信件文件夹可选，用到时才问' }],
+    hint: '信件文件夹可选，用到时才问。',
+    fields: [{ key: 'diaryDirectory', label: '日记文件夹', reco: '我的/日记' }],
   },
   clipbook: {
     name: '剪藏本',
@@ -172,6 +171,16 @@ export function needsFolderSetup(domain: FolderDomainId): boolean {
   return !folderState(domain).ok;
 }
 
+/**
+ * 单个必备目录是否还没配（2026-10-31 发版 review #1 的闸门判据）。
+ *
+ * 录入类命令只依赖**它自己那一处**：知识盒的「存为名词」写进文献文件夹，主题盒/卡片盒
+ * 空着不该挡人。用整域的 `needsFolderSetup` 会要求三个盒子齐备才让存一条名词，属于误拦。
+ */
+export function needsFolderKey(domain: FolderDomainId, key: string): boolean {
+  return !!folderState(domain).fields.find((f) => f.field.key === key)?.missing;
+}
+
 /** 打开设置面板并定位到该域第一个未配置的行。
  *  面板由 main.ts 经 settings-provider 注入（`setSettingsPanelOpener`）：core 里既不能
  *  字面量 import（会把整块面板打进各域行为包，评审壳的假 obsidian 缺 Setting/Component）、
@@ -212,6 +221,17 @@ export function folderSetupEmpty(domain: FolderDomainId, closeBefore?: () => voi
     { center: true }
   );
   const el = uiEmpty({ icon: plan.icon, title: plan.title, desc, actions: acts });
+  // 要填什么 + 推荐填什么（`reco` 以前只活在代码里，用户点开设置面对的是空框）
+  const need = st.missing
+    .filter((f) => !f.field.image)
+    .map((f) => (f.field.reco ? `${f.field.label}（推荐 ${f.field.reco}）` : f.field.label))
+    .join('、');
+  if (need) {
+    const n = document.createElement('div');
+    n.className = 'bz-empty-note';
+    n.textContent = `要填：${need}`;
+    el.insertBefore(n, acts);
+  }
   if (plan.hint) {
     const n = document.createElement('div');
     n.className = 'bz-empty-note';

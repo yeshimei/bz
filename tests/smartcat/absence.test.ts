@@ -351,11 +351,14 @@ describe('MemorySystem 在场钩子（观察路径 → 缺席状态机触发源�
 describe('dashboard 缺席状态卡 + 读侧依恋视图', () => {
   let settings: any;
   function makeApp(fixture: SmartCatData) {
+    // 设置必须先注入再种数据：getSmartcatFilePath() 由 storagePath 决定，
+    // 注入前算出来的是缺省 `<插件>/storage`，跟这里写的 CONFIG/STORAGE 不是同一个文件
+    // （症状：文件里第一条碰 UI 的用例读到空数据，靠 retry 才绿）
+    setSettingsProvider(() => settings);
     const vault = new MockVault();
     vault.create(getSmartcatFilePath(), JSON.stringify(fixture));
     const app = mockAppWithVault(vault);
     setApp(app);
-    setSettingsProvider(() => settings);
     return app;
   }
 

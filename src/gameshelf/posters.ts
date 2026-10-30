@@ -50,14 +50,21 @@ export function resolvePosterFolder(): string {
   }
 }
 
-/** 本地封面路径（vault 相对；写进 frontmatter `封面` 的就是它） */
+/** 本地媒体路径（vault 相对）。目录为空 = 还没定位置 → 空串，绝不拼成 `/123.jpg` 那种库根路径：
+ *  这类字符串一旦流到 getAbstractFileByPath / writeBinary，就是往 vault 根堆文件。 */
+function mediaPath(name: string): string {
+  const dir = resolvePosterFolder();
+  return dir ? `${dir}/${name}` : '';
+}
+
+/** 本地封面路径（写进 frontmatter `封面` 的就是它） */
 export function localCoverPath(appid: number): string {
-  return `${resolvePosterFolder()}/${appid}.jpg`;
+  return mediaPath(`${appid}.jpg`);
 }
 
 /** 本地图标路径（与封面同文件夹，`-icon` 后缀区分） */
 export function localIconPath(appid: number): string {
-  return `${resolvePosterFolder()}/${appid}-icon.jpg`;
+  return mediaPath(`${appid}-icon.jpg`);
 }
 
 /** 值是不是远端地址（不是 → 当本地 vault 路径看待） */
@@ -90,7 +97,7 @@ function resourceUrl(app: App, path: string): string {
  * （四种状态都兜得住，UI 侧只管调这一个函数。）
  */
 export function coverDisplayUrl(app: App, appid: number, value: string | null, src?: string | null): string {
-  const local = resourceUrl(app, `${resolvePosterFolder()}/${appid}.jpg`);
+  const local = resourceUrl(app, localCoverPath(appid));
   if (local) return local;
   if (isRemote(value)) return value as string;
   if (isRemote(src)) return src as string;
@@ -99,7 +106,7 @@ export function coverDisplayUrl(app: App, appid: number, value: string | null, s
 
 /** 图标显示 URL（无本地文件且属性里也没有远端值 → ''，UI 不渲染图标） */
 export function iconDisplayUrl(app: App, appid: number, value: string | null, src?: string | null): string {
-  const local = resourceUrl(app, `${resolvePosterFolder()}/${appid}-icon.jpg`);
+  const local = resourceUrl(app, localIconPath(appid));
   if (local) return local;
   if (isRemote(value)) return value as string;
   return isRemote(src) ? (src as string) : '';
@@ -142,11 +149,11 @@ let rerenderTimer: ReturnType<typeof setTimeout> | null = null;
 
 /** 该条目还有没有活要干（本地文件齐 + 属性已指本地 → 无事可做，别排队） */
 function needsWork(app: App, it: MediaItem): boolean {
-  const cover = `${resolvePosterFolder()}/${it.appid}.jpg`;
+  const cover = localCoverPath(it.appid);
   if (!hasFile(app, cover)) return true;
   if (it.cover !== cover) return true;
   if (isRemote(it.iconSrc)) {
-    const icon = `${resolvePosterFolder()}/${it.appid}-icon.jpg`;
+    const icon = localIconPath(it.appid);
     if (!hasFile(app, icon)) return true;
     if (it.icon !== icon) return true;
   }
@@ -204,7 +211,7 @@ async function runQueue(): Promise<void> {
     try {
       const wrote: Record<string, unknown> = {};
       // 封面：本地文件优先；没有则按「封面源」（缺省 CDN 直拼）下载
-      const coverPath = `${resolvePosterFolder()}/${item.appid}.jpg`;
+      const coverPath = localCoverPath(item.appid);
       if (hasFile(app, coverPath)) {
         if (item.cover !== coverPath) wrote[GS_FM.cover] = coverPath;
       } else if (await download(app, coverPath, item.coverSrc || steamCoverUrl(item.appid))) {
@@ -212,7 +219,7 @@ async function runQueue(): Promise<void> {
       }
       // 图标：只认「图标源」（hash 拼不出，没源就跳过——下次同步会补上）
       if (isRemote(item.iconSrc)) {
-        const iconPath = `${resolvePosterFolder()}/${item.appid}-icon.jpg`;
+        const iconPath = localIconPath(item.appid);
         if (hasFile(app, iconPath)) {
           if (item.icon !== iconPath) wrote[GS_FM.icon] = iconPath;
         } else if (await download(app, iconPath, item.iconSrc as string)) {
@@ -244,7 +251,7 @@ async function runQueue(): Promise<void> {
 
 /** 本地截图路径（与「截图源」同序，index 0 基 → 文件名 1 基） */
 export function localShotPath(appid: number, index: number): string {
-  return `${resolvePosterFolder()}/${appid}-shot-${index + 1}.jpg`;
+  return mediaPath(`${appid}-shot-${index + 1}.jpg`);
 }
 
 /**

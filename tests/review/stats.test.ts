@@ -121,7 +121,10 @@ describe('computeStats', () => {
     expect(r1).not.toBeNull();
     expect(r2).not.toBeNull();
     expect(stats.avgR).not.toBeNull();
-    expect(stats.avgR!).toBeCloseTo((r1 + r2) / 2, 12);
+    // currentR 是**随时间衰减**的可提取率：computeStats 内部算一次、这里再算一次，中间过了几毫秒
+    // 就会差 1e-9 量级（机器有负载时更明显）。6 位小数足够钉住「avgR = 逐条 currentR 的均值」，
+    // 12 位只在同一次求值内成立，外面比不出来。
+    expect(stats.avgR!).toBeCloseTo((r1 + r2) / 2, 6);
     // 无可算条目 → null（原口径）
     expect(computeStats([ladder]).avgR).toBeNull();
   });

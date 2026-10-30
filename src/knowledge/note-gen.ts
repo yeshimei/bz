@@ -18,8 +18,20 @@ import { notice } from '../core/notice';
 import { localNow } from '../core/ui/str';
 import { withTimeout } from '../core/http';
 import { getApp } from '../core/app';
-import { resolveAssetDir, domainAssetsDir } from '../core/attachment-dir';
+import { resolveAssetDir, domainAssetsDir, cleanDir } from '../core/attachment-dir';
 import { tryGetSettings } from '../core/settings-provider';
+
+/**
+ * 文献目录（设置值；未配置 = 空串）。
+ *
+ * 刻意不再回落 `文献盒` 字面量（2026-10-31 发版 review #1）：回落让「未配置」只在界面上成立，
+ * 命令入口一旦绕过引导态，笔记就写进一个用户没选过的目录——面板仍显示「未配置」，
+ * 他之后再配成别的文件夹，这批笔记在界面里永远不出现。空串交给写盘侧明确拒绝。
+ */
+function litDir(): string {
+  return cleanDir(tryGetSettings()?.knowledgeDirectory);
+}
+
 import type { App } from 'obsidian';
 import { partialStringField } from './partial-json';
 import { quoteYaml, serializeTermSource, upgradeSourceLine, type TermSource } from './source';
@@ -130,7 +142,9 @@ const BACKFILL_AI_TIMEOUT_MS = 25000;
 /** 写唯一路径笔记（永不覆盖；目录不存在自动建） */
 export async function writeUniqueNote(dir: string, baseName: string, content: string): Promise<string> {
   const app = getApp();
-  const folder = String(dir || '文献盒').replace(/\\/g, '/').replace(/^\/+|\/+$/g, '');
+  const folder = String(dir || '').replace(/\\/g, '/').replace(/^\/+|\/+$/g, '');
+  // 目录没定就不写：落进库根或某个用户没选过的目录，那篇笔记他根本找不到
+  if (!folder) throw new Error('知识盒还没定文献文件夹：先在设置里选一个');
   let path = `${folder}/${baseName}.md`;
   for (let i = 2; app.vault.getAbstractFileByPath(path); i++) path = `${folder}/${baseName}_${i}.md`;
   try {
@@ -149,8 +163,8 @@ export async function writeUniqueNote(dir: string, baseName: string, content: st
  */
 export function findDuplicateTermNote(term: string): string | null {
   const app = getApp();
-  const s = tryGetSettings();
-  const dir = String(s.knowledgeDirectory || '文献盒').replace(/\\/g, '/').replace(/^\/+|\/+$/g, '');
+  const dir = litDir();
+  if (!dir) return null; // 未配置：没有可比对的目录，交给入口的引导态
   const path = `${dir}/${sanitizeMdTitle(term)}.md`;
   return app.vault.getAbstractFileByPath(path) ? path : null;
 }
@@ -253,7 +267,7 @@ export async function generateVideoNote(opts: {
     '---',
   ].join('\n');
   const body = [fm, whole, videoSection].filter(Boolean).join('\n\n');
-  return writeUniqueNote(String(s.knowledgeDirectory || '文献盒'), sanitizeMdTitle(title), body);
+  return writeUniqueNote(litDir(), sanitizeMdTitle(title), body);
 }
 
 /** 术语 AI 简介提示词（预览/落盘共用同一指令，领域词表一致）。
@@ -342,7 +356,7 @@ export async function generateTermNote(opts: {
   }
   fm.push('---');
   const body = [fm.join('\n'), summary].filter(Boolean).join('\n\n');
-  return writeUniqueNote(String(s.knowledgeDirectory || '文献盒'), sanitizeMdTitle(term), body);
+  return writeUniqueNote(litDir(), sanitizeMdTitle(term), body);
 }
 
 /** 段落 AI 整理提示词（预览/落盘共用；issue 309）。
@@ -408,7 +422,7 @@ export async function generatePassageNote(opts: {
   }
   fm.push('---');
   const body = [fm.join('\n'), summary].filter(Boolean).join('\n\n');
-  return writeUniqueNote(String(s.knowledgeDirectory || '文献盒'), sanitizeMdTitle(title || summary), body);
+  return writeUniqueNote(litDir(), sanitizeMdTitle(title || summary), body);
 }
 
 // ---------- 图版（issue 312：图片 → 读图成文；图片本体与笔记同域落盘） ----------
@@ -514,7 +528,7 @@ export async function generateImageNote(opts: {
   if (!title && !summary) throw new Error('图版为空');
   const images = (Array.isArray(opts.images) ? opts.images : []).filter((im) => im && im.bytes);
   if (!images.length) throw new Error('图版没有图片');
-  const dir = String(s.knowledgeDirectory || '文献盒');
+  const dir = litDir();
   const name = sanitizeMdTitle(title || summary.slice(0, 30));
   const imageRoot = resolveImageDir(s);
   const imagePaths: string[] = [];
@@ -671,9 +685,10 @@ export function dropTermKeyIfTyped(content: string): string {
  */
 export async function backfillNotes(opts: { aiTimeoutMs?: number } = {}): Promise<{ scanned: number; filled: number; aiSkipped: boolean }> {
   const app = getApp();
-  const s = tryGetSettings();
   const aiTimeoutMs = opts.aiTimeoutMs ?? BACKFILL_AI_TIMEOUT_MS;
-  const dir = String(s.knowledgeDirectory || '文献盒').replace(/\\/g, '/').replace(/^\/+|\/+$/g, '');
+  const dir = litDir();
+  // 未配置 = 没有要补的目录：直接空跑，别拿空串去 startsWith('/')
+  if (!dir) return { scanned: 0, filled: 0, aiSkipped: false };
   const files = (app.vault.getFiles() || []).filter((f) => f.path.startsWith(dir + '/') && f.path.endsWith('.md'));
   const needDomain: { file: any }[] = [];
   let filled = 0;
@@ -718,7 +733,7 @@ export async function backfillNotes(opts: { aiTimeoutMs?: number } = {}): Promis
     // createAI 不因缺 key 抛错；未配置在 ai.json() 时才抛（getAIProvider），由内层 catch 的
     // /API Key|AI 配置/ 识别为整体跳过（aiSkipped），单条失败/超时静默不阻塞。
     const ai = createAI();
-    const list = parseDomainList(s.knowledgeDomainList);
+    const list = parseDomainList(tryGetSettings()?.knowledgeDomainList);
     for (const { file } of needDomain) {
       try {
         // P1-2：现读最新内容（type 启发式补丁已写盘），domain 注入不会回滚 type

@@ -1,6 +1,6 @@
 import { defineConfig } from 'vitest/config';
 import path from 'path';
-import { claimTestRun, resolveWorkerCount } from './scripts/test-workers.mjs';
+import { claimTestRun, resolveLiveRuns, resolveRetryCount, resolveWorkerCount } from './scripts/test-workers.mjs';
 
 // worker 数自适应（独占吃满、并发折半），决策逻辑与实测数据见 scripts/test-workers.mjs。
 //
@@ -11,6 +11,12 @@ import { claimTestRun, resolveWorkerCount } from './scripts/test-workers.mjs';
 // 显式 `BZ_TEST_MAX_WORKERS=8 pnpm test` 仍然优先（CI / 复现特定并发时用）。
 claimTestRun();
 const maxWorkers = resolveWorkerCount();
+const liveRuns = resolveLiveRuns();
+// waitFor 预算跟并发走：并发时 CPU 被分掉，5s 是防假红的底；独占时 CPU 空闲，
+// 一次正常刷新几毫秒就成立，5s 只是**失败用例白等的时长**。2.5s 仍高于
+// tests/core/waitfor-default-timeout.test.ts 那条「1.4s 慢响应必须等到」的守卫。
+// 由配置写进 env 再传下去：setupFiles 在 worker 里跑，读不到这里的局部变量。
+process.env.BZ_TEST_WAIT_FOR_MS ||= String(liveRuns > 1 ? 5000 : 2500);
 
 export default defineConfig({
   resolve: {
@@ -45,9 +51,13 @@ export default defineConfig({
     // 注意这只管用例整体上限——`vi.waitFor` 自己的默认超时是另一路，由 tests/setup.ts
     // 统一抬到 5s（vitest 4 没有全局配置键；假红的大头在那边，见 setup.ts 注释）。
     testTimeout: 20000,
-    // 多个 worktree 同时跑测试（并发 agent 会话）时 CPU 争抢会让用例偶发假失败。
-    // retry 只重试失败的用例：真 bug 重试仍失败照常红，flaky 抖动自动吸收。
-    retry: 2,
+    // 重试只吸收「多会话抢 CPU」的假红，所以与 worker 数同一个信号：独占 0、并发 2
+    // （判定在 scripts/test-workers.mjs 的 resolveRetryCount；BZ_TEST_RETRY 可显式覆盖）。
+    //
+    // 2026-10-31 改：原来恒 2。红的时候它是纯代价——失败用例每条多等两轮，单轮成本 = 用例里
+    // 最深的那个 waitFor 超时（默认 5s），一条真失败白等 15s；几十条同时红，整轮从 40s 拖到
+    // 十几分钟，而全程 CPU 闲着（用户原话「风扇都不响」）。独占时不会有假红，没必要买这份保险。
+    retry: resolveRetryCount(process.env),
   },
   // 转译/模块求值结果落盘复用。**vitest 5 迁移点**：v4 里它挂在 `test.experimental.fsModuleCache`，
   // v5 转正为配置顶层同名项（沿用旧写法会打 DEPRECATED 且不再生效）；默认缓存目录也随之从

@@ -1,4 +1,4 @@
-/* 源指纹 91ea06e52c74d7c1 · 仓内输入 70 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 46d00dbb87c189a5 · 仓内输入 70 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/belongings/fake-sim.ts","prototypes/belongings/fake/fake-obsidian.ts","src/belongings/ai.ts","src/belongings/catalog-suggest.ts","src/belongings/category.ts","src/belongings/data.ts","src/belongings/layouts/poster/render.ts","src/belongings/motion.ts","src/belongings/render.ts","src/belongings/report-stats.ts","src/belongings/report.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/core/ai.ts","src/core/app.ts","src/core/category-table.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/download-manifest.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/jev.ts","src/core/mask-dismiss.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/offline-source.ts","src/core/plugin-path.ts","src/core/remote-asset.ts","src/core/remote-base.ts","src/core/settings-provider.ts","src/core/sha256.ts","src/core/storage-path.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/help-tip.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/smartcat/belongings-source.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/belongings/fake-sim.ts → window.BZW_belongings（行为单源预览包，issue 245/ADR-0106） */
 var BZW_belongings = (() => {
@@ -4290,6 +4290,7 @@ var BZW_belongings = (() => {
     return Math.min(base + extra, 15e3);
   }
   function ensureContainer() {
+    if (typeof document === "undefined" || !(document == null ? void 0 : document.body)) return null;
     let container = document.getElementById("bz-notice-container");
     if (!container) {
       container = document.createElement("div");
@@ -4458,6 +4459,7 @@ var BZW_belongings = (() => {
     const type = isProgress ? "info" : kind;
     const variant = opts && opts.variant || defaultVariant();
     const container = ensureContainer();
+    if (!container) return noopHandle();
     applyPositionClass(container);
     if (opts && opts.dedupeKey) {
       const key = opts.dedupeKey;
@@ -4537,7 +4539,10 @@ var BZW_belongings = (() => {
 
   // src/core/mask-dismiss.ts
   var MASK_DISMISS_SLOP = 8;
+  var unbinders = /* @__PURE__ */ new WeakMap();
   function bindMaskDismiss(mask, onDismiss) {
+    const existing = unbinders.get(mask);
+    if (existing) return existing;
     let armed = null;
     let dragged = false;
     let upOnMask = false;
@@ -4600,7 +4605,7 @@ var BZW_belongings = (() => {
     mask.addEventListener("touchmove", onMove, { capture: true, passive: true });
     mask.addEventListener("touchcancel", onCancel, true);
     mask.addEventListener("click", onClick);
-    return () => {
+    const unbind = () => {
       mask.removeEventListener("mousedown", onDown, true);
       mask.removeEventListener("mouseup", onUp, true);
       mask.removeEventListener("mousemove", onMove, true);
@@ -4609,7 +4614,10 @@ var BZW_belongings = (() => {
       mask.removeEventListener("touchmove", onMove, true);
       mask.removeEventListener("touchcancel", onCancel, true);
       mask.removeEventListener("click", onClick);
+      unbinders.delete(mask);
     };
+    unbinders.set(mask, unbind);
+    return unbind;
   }
 
   // src/core/esc-manager.ts
