@@ -16,6 +16,28 @@ function makeApp(vault: MockVault) {
   return trigger;
 }
 
+/**
+ * 严格 rename 适配器：源不存在即抛错 —— 真机 FileSystemAdapter.rename 走 fs.rename，
+ * 对缺失源抛 ENOENT。MockVault.rename 对缺失源静默返回，正是「首设清单不存在时 S2
+ * rename 空源」这类整条路径不可用的 bug 一直被测试判绿的原因（见下方回归用例）。
+ */
+function strictRenameAdapter(adapter: any): any {
+  return new Proxy(adapter, {
+    get(target, prop) {
+      if (prop === 'rename') {
+        return async (from: string, to: string) => {
+          if (!(await target.exists(from))) {
+            throw new Error(`ENOENT: no such file or directory, rename '${from}' -> '${to}'`);
+          }
+          return target.rename(from, to);
+        };
+      }
+      const v = Reflect.get(target, prop);
+      return typeof v === 'function' ? v.bind(target) : v;
+    },
+  });
+}
+
 /** 简便加锁：把一篇笔记 + 若干二进制附件移入保险箱 */
 async function lockSample(sm: SafeManager, opts?: {
   notePath?: string;
@@ -1006,8 +1028,24 @@ describe('SafeManager 清单损坏与首设回滚（雷 1/4）', () => {
     expect(sm2.manifest.notes.length).toBe(1);
   });
 
-  it('原子写中断恢复：S2 后崩溃（tmp+bak 在、正位缺）→ unlock 用 tmp 恢复最新清单并删 bak', async () => {
-    makeApp(vault);
+  it('回归：全新库首设主密码（真机 rename 语义）——清单不存在时 S2 不得 rename 空源', async () => {
+    // 真实 adapter 从磁盘说话：rename 源缺失 → ENOENT。修复前此处 unlock 返回 false，
+    // 盘上只留 .ENCRYPT/.safe.enc.tmp（新装用户设主密码永远失败、密码本同样锁死）
+    setApp({ vault: { adapter: strictRenameAdapter(vault.adapter), metadataCache: { trigger: vi.fn() } } } as any);
+    const sm = new SafeManager('CONFIG/.ENCRYPT');
+    expect(await sm.unlock('pw1234')).toBe(true);
+    expect(sm.unlocked).toBe(true);
+    expect(vault.files.has('CONFIG/.ENCRYPT/.safe.enc')).toBe(true);
+    expect(vault.files.has('CONFIG/.ENCRYPT/.safe.enc.tmp')).toBe(false);
+    sm.lock();
+    // 二次打开（此后清单已在，S2 正常走 bak 三段式）
+    const sm2 = new SafeManager('CONFIG/.ENCRYPT');
+    expect(await sm2.unlock('pw1234')).toBe(true);
+    await sm2.lockNote({ path: 'a.md', title: 'a', content: '# A', attachments: [] });
+    expect(vault.files.has('CONFIG/.ENCRYPT/.safe.enc.bak')).toBe(false);
+  });
+
+  it('原子写中断恢复：S2 后崩溃（tmp+bak 在、正位缺）→ unlock 用 tmp 恢复最新清单并删 bak', async () => {    makeApp(vault);
     const sm = new SafeManager('CONFIG/.ENCRYPT');
     await sm.unlock('pw');
     await sm.lockNote({ path: 'a.md', title: 'a', content: '# A', attachments: [] });

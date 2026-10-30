@@ -576,17 +576,24 @@ export class SafeManager {
         /* 幂等 */
       }
       await this.adapter.write(tmp, encrypted);
-      // S2 旧清单挪走（目标 .bak 恒不存在，rename 无冲突）
-      await this.adapter.rename(this.manifestPath, bak);
+      // S2 旧清单挪走（目标 .bak 恒不存在，rename 无冲突）。
+      // 首设（清单还不存在）必须跳过：Obsidian 的 adapter.rename 走 fs.rename，
+      // 源缺失直接抛 ENOENT——此前无此判定，全新库设主密码必失败（新装用户完全进不去），
+      // 而 MockVault.rename 对缺失源静默返回，测试一直是绿的。与 replaceMirrorAtomic
+      // 的 hasOld 判定同口径。
+      const hasOld = await this.adapter.exists(this.manifestPath);
+      if (hasOld) await this.adapter.rename(this.manifestPath, bak);
       try {
         // S3 新清单搬入正位（目标已挪走，rename 无冲突）
         await this.adapter.rename(tmp, this.manifestPath);
       } catch (e) {
-        // 搬入失败：回滚旧清单（.bak → 正位），保持可用
-        try {
-          await this.adapter.rename(bak, this.manifestPath);
-        } catch (err) {
-          /* 回滚失败留待解锁恢复（tmp+bak 均在，可自愈） */
+        // 搬入失败：回滚旧清单（.bak → 正位），保持可用（首设无旧清单，跳过回滚）
+        if (hasOld) {
+          try {
+            await this.adapter.rename(bak, this.manifestPath);
+          } catch (err) {
+            /* 回滚失败留待解锁恢复（tmp+bak 均在，可自愈） */
+          }
         }
         throw e;
       }

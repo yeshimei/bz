@@ -63,7 +63,12 @@ export class MockVault {
         this.binaryFiles.delete(oldPath);
         this.binaryFiles.set(newPath, b);
         this.modifiedPaths.push(newPath);
+        return;
       }
+      // 真机 FileSystemAdapter.rename 走 fs.rename：源缺失抛 ENOENT。此前静默返回，
+      // 曾掩盖「首设清单不存在时 S2 rename 空源」这类整条路径不可用的 bug（新装用户
+      // 设不了主密码，而测试全绿）。判定与真机一致，让缺失源当场变红。
+      throw new Error(`ENOENT: no such file or directory, rename '${oldPath}' -> '${newPath}'`);
     },
     list: async (path: string): Promise<{ files: string[]; folders: string[] }> => {
       // 根目录（'' 或 '/'）→ prefix 为空（否则 '' + '/' = '/' 匹配不到任何库内路径）
