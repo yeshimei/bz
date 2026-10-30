@@ -5,6 +5,9 @@
  * （标题 4-8 字零符号、描述自然句不带符号花样）。
  */
 import type { SettingsSchema } from '../core/settings-schema';
+import { resolveAssetDir } from '../core/attachment-dir';
+import { tryGetSettings } from '../core/settings-provider';
+import { DEFAULT_POSTER_FOLDER } from './constants';
 
 export function gameshelfSettingsSchema(): SettingsSchema {
   return {
@@ -45,8 +48,10 @@ export function gameshelfSettingsSchema(): SettingsSchema {
             type: 'path',
             mode: 'single',
             name: '海报文件夹',
-            desc: '游戏封面与图标缓存到本地的文件夹',
+            desc: '游戏封面与图标缓存到本地的文件夹，留空跟随 Obsidian 的默认附件位置',
             binding: { key: 'gameshelfPosterFolder' },
+            // 空值时显示**实际生效目录**（设置值 → Obsidian 附件位置 → 域内缺省），别让人对着空行猜
+            fallbackValue: () => resolveAssetDir(tryGetSettings().gameshelfPosterFolder, DEFAULT_POSTER_FOLDER).dir,
           },
         ],
       },

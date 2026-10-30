@@ -399,7 +399,7 @@ export function knowledgeSettingsSchema(opts?: { onClearHistory?: () => void | P
         icon: 'folder-open', name: '目录与分类',
         rows: [
           { type: 'path', mode: 'single', name: '文献文件夹', desc: '文献笔记所在文件夹，部壹扫描这里', binding: { key: 'knowledgeDirectory' } },
-          { type: 'path', mode: 'single', name: '图版图片文件夹', desc: '图版录入的图片保存位置',
+          { type: 'path', mode: 'single', name: '图版图片文件夹', desc: '图版录入的图片保存位置，留空跟随 Obsidian 的默认附件位置',
             binding: { key: 'knowledgeImageFolder' },
             // 空值 = 回落到文献文件夹下的 assets（把「实际会落到哪」显式显示出来，不让人猜）
             fallbackValue: () => resolveImageDir(tryGetSettings() || {}) },

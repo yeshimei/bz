@@ -822,6 +822,8 @@ export function renderSettingsInto(container: HTMLElement, schema: SettingsSchem
           buttonText: row.buttonText,
           okText: row.okText,
           emptyText: row.emptyText,
+          // 空值回落 chip（与设置面板 renderer 同口径）：显示「没单独设时实际存哪」
+          fallbackChip: typeof row.fallbackValue === 'function' ? row.fallbackValue() : '',
           onChange: (list) => {
             const v = multi ? list : (list[0] || '').trim().replace(/^\/+|\/+$/g, '');
             acc.write(v as string | string[]);

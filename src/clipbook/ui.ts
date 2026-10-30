@@ -66,7 +66,7 @@ import { readNewsData } from './news-data';
 import { writeClipNote } from './save';
 import { getKnowledgeBoxes } from '../core/knowledge-boxes';
 import { applyBodyTransforms, applyClipContentTransforms, addArticleMark, addPendingSourceNote, clearArticleTracking, linkAliasText, type ClipMark } from './anchor';
-import { saveClipImage, fetchImageDataUrl } from './image-save';
+import { saveClipImage, fetchImageDataUrl, clipbookImageDir } from './image-save';
 import {
   flowSave, flowMarkRead, flowDeleteNews, setReadingSession, pauseReadingSession, flushReadingSession,
   flowMarkAllRead, flowUndoHandled, flowUndoDeleteNews, flowUndoMarkAllRead,
@@ -2556,8 +2556,10 @@ export function clipbookSettingsSchema(dataSource: DataSourceState): SettingsSch
         name: '目录',
         rows: [
           { type: 'path', mode: 'single', name: '剪藏文件夹', desc: '存放网页剪藏文章的文件夹', binding: { key: 'articleDirectory' } },
-          // issue 329：保存正文图片的落地目录（留空回落剪藏目录 assets）
-          { type: 'path', mode: 'single', name: '图片文件夹', desc: '网页图片的保存文件夹', binding: { key: 'clipbookImageFolder' } },
+          // issue 329：保存正文图片的落地目录（留空 = 跟随 Obsidian 附件位置 → 剪藏目录 assets）
+          { type: 'path', mode: 'single', name: '图片文件夹', desc: '网页图片的保存文件夹，留空跟随 Obsidian 的默认附件位置', binding: { key: 'clipbookImageFolder' },
+            // 空值时显示**实际生效目录**（与写入侧同一个解析函数，不另抄一条回落链）
+            fallbackValue: () => clipbookImageDir() },
         ],
       },
       {

@@ -30,9 +30,10 @@ import { resolveAssetDir } from '../core/attachment-dir';
 import { upsertDetail } from './notes';
 import { M, type GameItem } from './state';
 import { steamCoverUrl } from './steam';
-import { GS_FM } from './constants';
+import { GS_FM, DEFAULT_POSTER_FOLDER } from './constants';
 
-export const DEFAULT_POSTER_FOLDER = 'CONFIG/游戏海报';
+// 常量搬到 constants.ts（设置页也要用它算「留空时实际存哪」），此处保留导出口不影响既有引用方
+export { DEFAULT_POSTER_FOLDER };
 
 /**
  * 单张媒体下载超时（深审 F8）：对照本域 steam 通道 withTimeout(…, 20s)。此前裸 requestUrl，

@@ -91,10 +91,10 @@ export const FOLDER_PLANS: Record<FolderDomainId, FolderPlan> = {
     settingsId: 'bookshelf',
     title: '书库还没定文件夹',
     desc: '书库读的是这个文件夹里带书标签的笔记；已有书的笔记放进去就能认出来。',
-    fields: [
-      { key: 'bookshelfFolderPath', label: '书库目录', reco: '书库' },
-      { key: 'bookshelfPosterFolder', label: '封面文件夹', reco: '', image: true, imageFallback: (main) => `${main}/封面` },
-    ],
+    // 书库没有可写的图片目录：封面是**读**用户笔记里的 `cover` / `coverPath`（CONFIG/BOOK/<书名>/…），
+    // 插件不往任何地方落封面图。以前这里挂着 bookshelfPosterFolder 这个没有设置行、没有消费点的
+    // 幽灵键，等于空态替一个改不动的字段算 missing——2026-10-31 摘掉。
+    fields: [{ key: 'bookshelfFolderPath', label: '书库目录', reco: '书库' }],
   },
   gameshelf: {
     name: '游戏库',

@@ -23,6 +23,7 @@ import { getApp } from './app';
 import { createOverlay } from './dom';
 import { escManager, type EscHandle } from './esc-manager';
 import { notifySaveError, notifyActionError } from './notice';
+import { uiChip } from './ui/chip';
 
 export interface PathPickerOptions {
   /** 弹窗标题（缺省「选择文件夹」） */
@@ -214,6 +215,10 @@ export interface PathSettingRowOptions {
   buttonText?: string;
   /** 确定按钮文案（透传选择器） */
   okText?: string;
+  /** 绑定值为空时的回落展示 chip（锁定态，只显示实际生效目录、不落盘；点击重开选择器改显式值）。
+   *  与设置面板 settings-panel/renderer.ts 的 fallbackChip 同一语义——两个渲染器必须同口径，
+   *  否则同一个 schema 在「域内 ⚙️ 弹窗」和「设置面板」显示两种样子（2026-10-31 图片目录行踩到）。 */
+  fallbackChip?: string;
   /** 空态文案（ticket 133 起废弃：设置行空态只显示按钮、不渲染占位文字；字段保留兼容 schema 传参，实现不再读取） */
   emptyText?: string;
   /** 选择器确定 / chip ✕ 移除后的统一回调（list = 最新目录清单；单值 [] = 未选择）。
@@ -277,10 +282,23 @@ export function renderPathSettingRow(opts: PathSettingRowOptions): { refresh: ()
       },
     });
 
-  const render = () =>
+  const render = () => {
     renderPathChips(chipsWrap, current, (next) => {
       void apply(next);
     }, '', openPicker);
+    // 空值 + 有回落值：挂「实际生效目录」锁定 chip（不可移除，点击可直接去设显式值）。
+    // 与设置面板 renderer 的 fallbackChip 同形同义——用户不该因为入口不同就看到两种样子。
+    if (current.length === 0 && opts.fallbackChip) {
+      chipsWrap.appendChild(
+        uiChip({
+          label: opts.fallbackChip,
+          locked: true,
+          title: '未单独设置时的实际生效目录（点击可改为显式设置）',
+          onClick: openPicker,
+        })
+      );
+    }
+  };
 
   let btn: HTMLButtonElement | null = null;
   setting.addButton((b) => {
