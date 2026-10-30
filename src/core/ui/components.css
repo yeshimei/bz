@@ -3063,6 +3063,66 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 /* 输入框隐藏时（Ollama 不需要密钥）它不再是 grid item，行内按钮会落进 1fr 那格被
    拉满整行——让它始终贴右。 */
 .bz-setup-row .bz-setup-link { justify-self: end; }
+/* 底栏里的文字链（⑥ 完成屏「看使用教程」）：贴左、与按钮同高同一档字号——
+   它是行内按钮的尺寸，直接放进底栏会矮一头，看起来像漏了个控件。 */
+.bz-setup-link--foot {
+  height: var(--bz-control-h);
+  margin-right: auto;
+  font-size: var(--bz-font-label);
+}
+
+/* ── 引导页里的流程框（core/setup-wizard.ts） ──
+   默认流程框是 400px 窄卡 + 居中正文 + 灰底胶囊按钮：单独看没问题，摆在 720px 宽的
+   引导页里就像另一个插件弹出来的（2026-10-31 用户截图指出）。这里把它拉回引导页那套形制——
+   左对齐正文、按内容定宽的描边按钮、居右排布，跟 `.bz-setup-foot` 同一个样子。
+   选择器带 id 是必需的：popup 的 `align-items/text-align:center` 写在 `#__shared_confirm_popup__`
+   上（1,0,0），只靠两个类（0,2,0）压不住。
+   两种用法都走这套皮：关闭确认（右键=危险）、跳视频确认（右键=主要动作，保持品牌实底）。 */
+#__shared_confirm_popup__.bz-setup-flow {
+  width: min(460px, calc(100vw - 32px));
+  align-items: stretch;
+  text-align: left;
+}
+#__shared_confirm_popup__.bz-setup-flow h4 {
+  margin: 0 0 var(--bz-space-sm) 0;
+  font-size: var(--bz-font-emphasis);
+}
+#__shared_confirm_popup__.bz-setup-flow p {
+  margin: 0 0 var(--bz-space-lg) 0;
+  font-size: var(--bz-font-meta);
+  line-height: 1.55;
+  color: var(--bz-text-2);
+}
+#__shared_confirm_popup__.bz-setup-flow .confirm-actions {
+  justify-content: flex-end;
+  gap: var(--bz-space-sm);
+}
+/* 按钮按文字定宽（底栏按钮不拉伸），左键统一 .bz-setup-btn 形制：透明底 + 1px 描边 */
+#__shared_confirm_popup__.bz-setup-flow #__shared_confirm_cancel__,
+#__shared_confirm_popup__.bz-setup-flow #__shared_confirm_ok__ {
+  flex: 0 0 auto;
+  font-weight: var(--bz-weight-regular);
+}
+#__shared_confirm_popup__.bz-setup-flow #__shared_confirm_cancel__ {
+  border: 1px solid var(--bz-border);
+  background: transparent;
+  color: var(--bz-text-1);
+}
+/* 危险右键（关闭确认）：描边透明 + 只染字色，不给实底高亮。
+   core/styles.css 的 `.bz-flow-dialog--danger` 会给右键压一套中性次级形制（灰底），
+   与这里同特异性——靠文件顺序定胜负不可靠，多带一个类（1,3,0）压回来。 */
+#__shared_confirm_popup__.bz-flow-dialog.bz-flow-dialog--danger.bz-setup-flow #__shared_confirm_ok__ {
+  border: 1px solid var(--bz-border);
+  background: transparent;
+  box-shadow: none;
+  color: var(--bz-danger);
+}
+@media (hover: hover) {
+  #__shared_confirm_popup__.bz-setup-flow #__shared_confirm_cancel__:hover,
+  #__shared_confirm_popup__.bz-flow-dialog--danger.bz-setup-flow #__shared_confirm_ok__:hover {
+    background: var(--bz-surface-hover);
+  }
+}
 
 /* 可勾选行：勾选框占状态点那一格 */
 .bz-setup-row--pick { grid-template-columns: 14px minmax(0, 1fr) auto; align-items: center; }

@@ -33,8 +33,12 @@ export const FEEDBACK_URL = `https://github.com/${REPO_SLUG}/issues`;
 /** 项目主页（GitHub 仓库首页；与反馈、下载通道同一 slug，不另立字面量） */
 export const REPO_URL = `https://github.com/${REPO_SLUG}`;
 
-/** 视频版使用教程（B 站，2026-10-29 用户给定）。改地址只改这一处，文案与测试都从这里取 */
-export const VIDEO_URL = 'https://www.bilibili.com/video/BV1vNsZ6pE7i';
+/** 视频版使用教程（B 站，2026-10-29 用户给定）。改地址只改这一处，文案与测试都从这里取。
+ *
+ *  2026-10-31：这是**多 P 视频**，要落到的不是第 1 P，而是 `?p=3` 那一集 ——
+ *  少了这个参数，点进去停在目录页第 1 集，用户还得自己找。分享链接里的
+ *  `vd_source` / `spm_id_from` 是追踪参数，不进常量（换个环境分享就变）。 */
+export const VIDEO_URL = 'https://www.bilibili.com/video/BV1vNsZ6pE7i/?p=3';
 
 /** 版本行的描述文案（一句自然句，无符号花样——设置项文案规范） */
 export function versionDesc(st: SelfUpdateState): string {

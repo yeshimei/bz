@@ -20,6 +20,7 @@
 import { notice } from './notice';
 import { openExternalUrl } from './utils';
 import { uiModal } from './ui/modal';
+import { openFlowDialog } from './flow-dialog';
 import { environmentCheck, probeNetwork, probeWritableDir, type EnvCheckRow, type NetworkProbe } from './env-check';
 import { docStatus, refreshManifest } from './download-manifest';
 import type { DownloadManifest, ManifestDocEntry } from './download-manifest';
@@ -37,6 +38,8 @@ import { isMobileEnv } from './mobile';
 import { getApp } from './app';
 import { getSettings, saveSettings, tryGetSettings } from './settings-provider';
 import { AI_PROVIDER_REGISTRY, DEFAULT_AI_PROVIDER, getProviderDescriptor, testAIConnectivity } from './ai';
+// 使用教程的地址只有一处事实源（设置 → 关于 → 使用教程 用的也是它），别在这里再写一遍字面量
+import { VIDEO_URL } from './about-group';
 
 /** Node 归档的估算体积（只在清单里显示，真实体积看服务端） */
 const NODE_SIZE_HINT = 36.4 * 1024 * 1024;
@@ -210,9 +213,8 @@ interface WizardCtx {
   firstRun: boolean;
   /** 自检模式：跳过「存放 / AI」两屏，直奔清单 */
   checkOnly: boolean;
-  /** 首次引导**结束**后的回调：main.ts 用它打开首页。三条结束路径都触发——
-   *  「开始使用」「以后再说」「稍后再说」。只有「收起来，后台继续」不触发：
-   *  那是把弹窗收走让下载在后台跑，不是结束。 */
+  /** 首次引导**结束**后的回调：main.ts 用它打开首页。结束路径都触发——
+   *  「开始使用」「以后再说」「稍后再说」，以及下载屏点遮罩确认关掉那条。 */
   onFinish?: () => void;
 }
 
@@ -368,6 +370,31 @@ function closeModal(ui: Ui): void {
     return;
   }
   (ui.body.closest('.bz-overlay-mask') as HTMLElement | null)?.remove();
+}
+
+/**
+ * 首次引导没走完就被点遮罩 / 按 ESC 时，先拦一道再关。
+ *
+ * 早前这里是「整段不挂」——点遮罩毫无反应，用户以为插件卡了；而直接关掉更糟：
+ * 引导是这次启动唯一的界面，屏幕上什么都没有，他既不知道刚才关掉了什么，也不知道去哪找回来。
+ * 所以改成「问一句」：说清关掉后不会再自动弹、去哪重开（设置 → 关于 → 环境自检），
+ * 默认聚焦「继续准备」（关掉是危险动作，Enter 不该替他做这个决定）。
+ */
+function confirmLeaveWizard(onLeave: () => void): void {
+  void openFlowDialog({
+    // 皮肤类：默认流程框是 400px 窄卡 + 居中正文 + 灰底胶囊按钮，放在 720px 宽的引导页里
+    // 像另一个插件弹出的框。挂上 bz-setup-flow 让它在 components.css 里对齐引导页那套形制。
+    className: 'bz-setup-flow',
+    title: '引导还没走完，先关掉？',
+    message:
+      '下载和环境设置都还没完成。关掉后这次启动不会再自动弹出——\n要接着弄，去「设置 → 关于 → 环境自检」重新打开。',
+    actions: [
+      { label: '继续准备', value: 'stay' },
+      { label: '关掉', value: 'leave', danger: true },
+    ],
+  }).then((v) => {
+    if (v === 'leave') onLeave();
+  });
 }
 
 /* ---------- ① 检测 ---------- */
@@ -830,7 +857,10 @@ async function saveAi(st: WizardState): Promise<void> {
 
 /* ---------- ⑤ 安装 ---------- */
 async function stageInstall(ctx: WizardCtx, st: WizardState, ui: Ui, tasks: SetupItem[]): Promise<void> {
-  setSub(ui, '自动完成，可以收起来先去忙别的。');
+  // 下载屏不给「收起来，后台继续」（2026-10-31 用户拍板）：点了之后弹窗消失、下载在后台跑，
+  // 用户看不到进度也等不到「完成」那一屏，回来只发现东西装上了 —— 首次引导等于半途而废。
+  // 这里就是让它跑完：跑完自动进 ⑥，还没装齐的会在完成屏列出来，去「在线资源」重试。
+  setSub(ui, '正在下载，跑完自动进入下一步。');
   ui.body.innerHTML = '';
   ui.foot.innerHTML = '';
 
@@ -839,10 +869,6 @@ async function stageInstall(ctx: WizardCtx, st: WizardState, ui: Ui, tasks: Setu
   bar.innerHTML = '<i></i>';
   const box = setupGroup();
   ui.body.append(bar, box.group);
-
-  const collapse = button('bz-setup-btn', '收起来，后台继续');
-  collapse.onclick = () => closeModal(ui);
-  ui.foot.appendChild(collapse);
 
   const total = tasks.reduce((n, t) => n + (t.size || 0), 0);
   // 余量预检：解压瞬时占用按 1.5 倍估，再留 64MB 给插件自己写
@@ -926,7 +952,29 @@ async function stageDone(ctx: WizardCtx, st: WizardState, ui: Ui): Promise<void>
     closeModal(ui);
     ctx.onFinish?.();
   };
-  ui.foot.appendChild(enter);
+  // 东西齐了，下一步是「怎么用」：把教程摆在这一屏，用户不必先摸到设置面板再找回来。
+  // 左边贴一条文字链（与「开始使用」同一行，不抢主行动），点了开浏览器、引导不关。
+  const tutorial = button('bz-setup-link bz-setup-link--foot', '看使用教程 →');
+  tutorial.onclick = () => {
+    if (!VIDEO_URL) {
+      notice('使用教程还没发布，发布后这里会直连');
+      return;
+    }
+    // 跳外链前先问一句（2026-10-31 用户要求）：这一步会离开插件去浏览器，
+    // 不是点了才发现跳走。同一套 bz-setup-flow 皮，和关闭确认一个样子。
+    void openFlowDialog({
+      className: 'bz-setup-flow',
+      title: '去 B 站看使用教程？',
+      message: '会在浏览器里打开视频。看的时候可以随时回来，引导不会关。',
+      actions: [
+        { label: '取消', value: 'cancel' },
+        { label: '继续', value: 'go' },
+      ],
+    }).then((v) => {
+      if (v === 'go') openExternalUrl(ctx.app, VIDEO_URL);
+    });
+  };
+  ui.foot.append(tutorial, enter);
 }
 
 /* ---------- 杂项 ---------- */
@@ -958,9 +1006,9 @@ async function markDone(app: unknown): Promise<void> {
  * @returns 弹窗是否真的打开了。移动端直接劝退、返回 false —— main.ts 据此决定
  *   要不要把「启动自动弹面板」压回去（没弹引导就不该压）。
  *
- * 首次引导**不可点遮罩 / ESC 关**（closable: false）：它是这次启动唯一的界面，
- * 点空白就关掉等于静默中断，用户看到的是「插件打不开」。要走开只有按钮：
- * 「稍后再说」「以后再说」或「收起来，后台继续」。
+ * 首次引导点遮罩 / 按 ESC **不直接关**，先弹确认（confirmLeaveWizard）：它是这次启动
+ * 唯一的界面，点空白就消失等于静默中断，用户看到的是「插件打不开」；而直接关掉也可以，
+ * 只是他得知道去哪重开。确认里那句「设置 → 关于 → 环境自检」就是这个去处。
  */
 export function openSetupWizard(
   app: unknown = getApp(),
@@ -972,6 +1020,9 @@ export function openSetupWizard(
   }
   const firstRun = opts.firstRun === true;
   const content = document.createElement('div');
+  // 先建骨架再开弹窗：requestClose 里要用 closeModal(ui) 走同一条关闭路径
+  // （存活登记表与 ESC 注册跟着注销，直接 remove 遮罩会留下悬挂的登记项）
+  const ui = skeleton(content);
   const modal = uiModal({
     head: true,
     title: firstRun ? 'bz · 首次准备' : '环境自检',
@@ -984,8 +1035,18 @@ export function openSetupWizard(
     // 高度预算提到整屏、让长清单只滚内容区而不齐切一行。
     className: 'bz-setup-modal',
     autofocus: false,
-    // 首次引导只能由按钮结束（点遮罩/ESC 关掉 = 流程静默中断）；环境自检照旧可关
-    closable: !firstRun,
+    // 关闭意图：首次引导拦一道确认（关掉 = 这次不再自动弹，得告诉他去哪重开）；
+    // 环境自检照旧点遮罩 / ESC 直接关。
+    ...(firstRun
+      ? {
+          requestClose: () =>
+            confirmLeaveWizard(() => {
+              void markDone(app);
+              closeModal(ui);
+              opts.onFinish?.();
+            }),
+        }
+      : {}),
   });
   activeClose = modal.close;
   const ctx: WizardCtx = { app, firstRun, checkOnly: !firstRun, onFinish: opts.onFinish };
@@ -1000,7 +1061,7 @@ export function openSetupWizard(
     aiTest: { state: 'idle', text: '' },
     failed: [],
   };
-  void stageProbe(ctx, st, skeleton(content));
+  void stageProbe(ctx, st, ui);
   return true;
 }
 

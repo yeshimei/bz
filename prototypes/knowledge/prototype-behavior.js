@@ -1,4 +1,4 @@
-/* 源指纹 d7b72c189586f4a6 · 仓内输入 66 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 357afaca25db35c6 · 仓内输入 66 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/knowledge/fake-sim.ts","prototypes/knowledge/fake/ai-index.ts","prototypes/knowledge/fake/fake-obsidian.ts","prototypes/preview-mode.ts","src/core/ai.ts","src/core/app.ts","src/core/asr-proofread.ts","src/core/attachment-dir.ts","src/core/crypto.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/folder-setup.ts","src/core/http.ts","src/core/item-actions.ts","src/core/knowledge-boxes.ts","src/core/link-now.ts","src/core/mask-dismiss.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/net-progress.ts","src/core/node-runtime-install.ts","src/core/note-trash.ts","src/core/notice.ts","src/core/offline-source.ts","src/core/plugin-path.ts","src/core/remote-asset.ts","src/core/remote-base.ts","src/core/settings-provider.ts","src/core/sha256.ts","src/core/storage-path.ts","src/core/storage.ts","src/core/tar.ts","src/core/tool-hint.ts","src/core/tool-runtime.ts","src/core/ui/button.ts","src/core/ui/empty.ts","src/core/ui/focus-trap.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/resize.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/utils.ts","src/core/z-order.ts","src/core/zip.ts","src/knowledge/data.ts","src/knowledge/motion.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-edit.ts","src/knowledge/note-gen.ts","src/knowledge/partial-json.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/relink.ts","src/knowledge/source.ts","src/knowledge/tack.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/secondbrain/readonly.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/knowledge/fake-sim.ts → window.BZW_knowledge（行为单源预览包，issue 245/ADR-0106） */
 var BZW_knowledge = (() => {
@@ -4635,6 +4635,17 @@ var BZW_knowledge = (() => {
   }
   function saveSettings() {
     return _saver ? _saver() : Promise.resolve();
+  }
+  var _panelOpener = null;
+  function requestSettingsPanel(domainId, anchorKey) {
+    if (!_panelOpener) return false;
+    try {
+      _panelOpener(domainId, anchorKey);
+      return true;
+    } catch (e) {
+      console.error("[bz] 设置面板打开失败", e);
+      return false;
+    }
   }
   function tryGetSettings() {
     return _provider ? _provider() : {};
@@ -13903,10 +13914,10 @@ ${String(blockText != null ? blockText : "").trim()}`);
       settingsId: "bookshelf",
       title: "书库还没定文件夹",
       desc: "书库读的是这个文件夹里带书标签的笔记；已有书的笔记放进去就能认出来。",
-      fields: [
-        { key: "bookshelfFolderPath", label: "书库目录", reco: "书库" },
-        { key: "bookshelfPosterFolder", label: "封面文件夹", reco: "", image: true, imageFallback: (main) => `${main}/封面` }
-      ]
+      // 书库没有可写的图片目录：封面是**读**用户笔记里的 `cover` / `coverPath`（CONFIG/BOOK/<书名>/…），
+      // 插件不往任何地方落封面图。以前这里挂着 bookshelfPosterFolder 这个没有设置行、没有消费点的
+      // 幽灵键，等于空态替一个改不动的字段算 missing——2026-10-31 摘掉。
+      fields: [{ key: "bookshelfFolderPath", label: "书库目录", reco: "书库" }]
     },
     gameshelf: {
       name: "游戏库",
@@ -13968,13 +13979,9 @@ ${String(blockText != null ? blockText : "").trim()}`);
       closeBefore == null ? void 0 : closeBefore();
     } catch (e) {
     }
-    const spec = ["..", "settings-panel"].join("/");
-    void import(
-      /* webpackIgnore: true */
-      spec
-    ).then((m) => m.openSettingsPanel(getApp(), plan.settingsId, key2)).catch(() => {
+    if (!requestSettingsPanel(plan.settingsId, key2)) {
       notice("设置面板没能打开，可以从「设置 → 包仔」进入", "warning");
-    });
+    }
   }
 
   // src/knowledge/ui.ts

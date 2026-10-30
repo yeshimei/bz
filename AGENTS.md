@@ -16,6 +16,7 @@ Obsidian 插件。域 = `src/<域>/`，`core` 是共享层。中文输出。
 - 域 UI 的唯一真理源是与评审壳共用的实现源码；两侧不一致 = 缺陷，改源码，别改壳、别改产物。未定稿的探索稿只写 `.scratch/<名>/`。
 - 不手改生成物：根 `main.js` / `styles.css`、`changelog-data.ts`、`prototypes/**/prototype-*.js`、`downloads/manifest.json`、`downloads/skins/`、`tools/dock-watch/dock-core.cjs`（+ 同目录 `core-version.json`）。
 - 命令 ID `bz-<域>-<动作>`；通知正文不带 emoji（新语义查 `src/core/notice.ts` 的 ICONS）。
+- **新增弹窗必须穿本域的皮。** `uiModal` / `openFlowDialog` 只给中性壳（400px 窄卡、居中正文、灰底胶囊按钮），直接裸用就是「另一个插件弹出来的框」——2026-10-31 引导页的关闭确认就这么翻车过。做法：`uiModal` 传 `className`、`openFlowDialog` 传 `className`，皮肤规则写进该域的 `styles.css`（`#__shared_confirm_popup__.<皮肤类> …` 起手，因为壳的居中/宽度挂在 id 上，两个类压不住）；本域已有弹窗体就复用，不要另起一套。
 - 改动走 worktree（仓库外，从最新 master 分叉）；**worktree 内不构建**——产物直出本机 vault（`esbuild.config.mjs` 硬编码）与仓库根。
 
 ## 「走快速原型」= 不许验证
