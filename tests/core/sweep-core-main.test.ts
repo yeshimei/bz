@@ -78,8 +78,10 @@ function makeApp() {
 
 /** 数据目录初值：2026-10-29 起「首次启动没有 storagePath」会写一次值（core/storage.bootstrapStorageDir），
  *  data.json 里是老缺省 CONFIG/STORAGE 时也会被改写。C15/C16 盯的是「一次保存」与「有没有额外落盘」，
- *  所以夹具给一个**非老缺省**的显式值，把那条首启落盘摘掉。 */
-const LOADED_WITH_STORAGE = { storagePath: 'DATA/STORAGE' };
+ *  所以夹具给一个**非老缺省**的显式值，把那条首启落盘摘掉。
+ *  同理 autoUpdateDefaultedOn：2026-10-30 起的「自动更新缺省改开」迁移只要缺这个哨兵就会落盘一次，
+ *  夹具先把它标成已迁移，C15/C16 才数得准自己的写入。 */
+const LOADED_WITH_STORAGE = { storagePath: 'DATA/STORAGE', autoUpdateDefaultedOn: true };
 
 async function createPlugin(loadData: unknown, saveDataImpl?: (data: any) => Promise<void>) {
   const { app, state } = makeApp();

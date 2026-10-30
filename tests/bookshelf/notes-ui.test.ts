@@ -103,6 +103,8 @@ describe('书架墙详情弹窗只读化（issue 223）', () => {
     closeBookNoteModals();
     document.body.innerHTML = '';
     vault = new MockVault();
+    // 书库目录缺省留空（ADR-0273）：不显式配置，书架墙扫不到夹具里写进「书库」的书
+    setSettingsProvider(() => ({ bookTag: 'book', bookshelfFolderPath: '书库' }) as any);
   });
 
   it('详情卡不再提供读书笔记入口按钮（issue 223 只读化：划线/想法为纯展示文字）', async () => {
@@ -130,7 +132,7 @@ describe('读书笔记弹窗（md 书）', () => {
     MockPlatform.isMobile = false;
     vault = new MockVault();
     setApp(makeApp(vault));
-    setSettingsProvider(() => ({ bookTag: 'book' }) as any);
+    setSettingsProvider(() => ({ bookTag: 'book', bookshelfFolderPath: '书库' }) as any);
     resetSkinPackState();
   });
 
@@ -248,7 +250,7 @@ describe('读书笔记弹窗（md 书）', () => {
   it('长按日期 → 先关壳弹确认框；确认删除划线并重开（B2），取消则原样重开', async () => {
     vault.files.set('书库/活着.md', NOTE_MD);
     seedRemoteSkins('bookshelf', ['noir']); // noir 远端化：就绪后才挂得上（issue 291 噪声肤）
-    setSettingsProvider(() => ({ bookTag: 'book', bookshelfSkin: 'noir' }) as any); // issue 291：噪声肤验皮肤类随行
+    setSettingsProvider(() => ({ bookTag: 'book', bookshelfFolderPath: '书库', bookshelfSkin: 'noir' }) as any); // issue 291：噪声肤验皮肤类随行
     const app = makeApp(vault);
     showBookNotes(app, '书库/活着.md');
     await new Promise((r) => setTimeout(r, 20));
@@ -301,7 +303,7 @@ describe('读书笔记弹窗（EPUB）', () => {
     MockPlatform.isMobile = false;
     vault = new MockVault();
     setApp(makeApp(vault));
-    setSettingsProvider(() => ({ bookTag: 'book' }) as any);
+    setSettingsProvider(() => ({ bookTag: 'book', bookshelfFolderPath: '书库' }) as any);
     resetSkinPackState();
   });
 
@@ -355,7 +357,7 @@ describe('读书笔记弹窗（EPUB）', () => {
   it('长按日期 → 确认删除整条划线（weave-data.json 移除）+ 失败重开壳（B2）', async () => {
     vault.files.set('CONFIG/STORAGE/weave-data.json', EPUB_WEAVE());
     seedRemoteSkins('bookshelf', ['kraft']); // kraft 远端化：就绪后才挂得上
-    setSettingsProvider(() => ({ bookTag: 'book', bookshelfSkin: 'kraft' }) as any); // issue 291：EPUB 路径同样验皮肤类
+    setSettingsProvider(() => ({ bookTag: 'book', bookshelfFolderPath: '书库', bookshelfSkin: 'kraft' }) as any); // issue 291：EPUB 路径同样验皮肤类
     const app = makeApp(vault);
     showEpubBookNotes(app, '书库/悉达多.epub', '悉达多');
     await new Promise((r) => setTimeout(r, 30));

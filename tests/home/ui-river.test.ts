@@ -69,7 +69,14 @@ describe('home 活动河 UI（issue 232）', () => {
   beforeEach(() => {
     vault = new MockVault();
     setApp(mockAppWithVault(vault) as any);
-    setSettingsProvider(() => ({ ...DEFAULT_SETTINGS, storagePath: 'CONFIG/STORAGE' }));
+    // 域目录缺省留空（ADR-0273）：日志/影视目录显式指到夹具实际写入的位置，
+    // 否则入口彩点拿不到「今日有动静」的信号
+    setSettingsProvider(() => ({
+      ...DEFAULT_SETTINGS,
+      storagePath: 'CONFIG/STORAGE',
+      diaryDirectory: '我的/日记',
+      cinemaFolderPath: '我的/影视',
+    }));
     resetHomeState();
   });
 

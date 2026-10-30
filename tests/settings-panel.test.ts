@@ -639,7 +639,7 @@ describe('设置面板（settings-panel）', () => {
     ui.cleanup();
   });
 
-  it('桌面端：路径行回落显示（bookshelfFolderPath 空值时 chip 显示实际生效目录，旧 library 键存量值优先）', async () => {
+  it('桌面端：路径行回落显示（bookshelfFolderPath 空值时旧 library 键存量值优先；都没设给空态）', async () => {
     // 场景 1：新键未设 + 旧 libraryFolderPath 存量值 → 回落 chip 显示旧目录
     (panelState as any).libraryFolderPath = '旧书库';
     const ui1 = new SettingsPanelUI();
@@ -670,8 +670,11 @@ describe('设置面板（settings-panel）', () => {
     expect(document.querySelector('#bz-path-picker-mask')).toBeNull();
     ui1.cleanup();
     delete (panelState as any).libraryFolderPath;
+    // 场景 1 读过一次路径行，旧键迁移已把值写回 bookshelfFolderPath —— 场景 2 要的是「都没设」，先清干净
+    delete (panelState as any).bookshelfFolderPath;
 
-    // 场景 2：新旧键都未设 → 回落缺省「书库」
+    // 场景 2：新旧键都未设 → 未配置态（ADR-0273：域目录缺省留空，不再回落「书库」；
+    // 空态 = 选择按钮，不出回落锁定 chip）
     const ui2 = new SettingsPanelUI();
     ui2.open();
     const popup2 = document.getElementById('bz-settings-panel-popup')!;
@@ -682,7 +685,8 @@ describe('设置面板（settings-panel）', () => {
     const row2 = Array.from(popup2.querySelectorAll('.bz-sp-set-row')).find(
       (el) => el.querySelector('.bz-sp-set-name')?.textContent === '书库文件夹'
     ) as HTMLElement;
-    expect(row2.querySelector('.bz-chip--locked')?.textContent).toContain('书库');
+    expect(row2.querySelector('.bz-chip--locked'), '未配置不出回落 chip').toBeNull();
+    expect(row2.querySelector('.bz-sp-path-btn'), '未配置 → 空态选择按钮').toBeTruthy();
     ui2.cleanup();
 
     // 场景 3：显式设置后回落 chip 消失（值 chip 接管，可移除）

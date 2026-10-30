@@ -191,8 +191,11 @@ describe('挂载树白板（317 渲染与交互 / 319 壳与入口）', () => {
     clearNotices();
     settings = {
       storagePath: 'CONFIG/STORAGE',
+      // 三盒目录必须配齐，否则 refreshCurrent 走 mountKnowledgeFolderGate 的引导态、
+      // 内容区被换成「去设置里配目录」（ADR-0273：域目录缺省留空）
       knowledgeCardboxDirectory: '卡片盒',
       knowledgeDirectory: '文献盒',
+      knowledgeTopicDirectory: '主题盒',
       knowledgeMountAutoSuggest: true,
     };
     setSettingsProvider(() => settings as any);
