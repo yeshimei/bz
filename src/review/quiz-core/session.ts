@@ -8,6 +8,7 @@
  */
 import type { App } from 'obsidian';
 import { notice, notify, notifyActionError } from '../../core/notice';
+import { bindMaskDismiss } from '../../core/mask-dismiss';
 import { openFlowDialog } from '../../core/flow-dialog';
 import { escManager } from '../../core/esc-manager';
 import { allocZ } from '../../core/z-order';
@@ -267,9 +268,8 @@ export class QuizMasterUI {
       close: () => this.finishQuiz(),
     });
     this._bindKeyboard();
-    mask.addEventListener('click', (e) => {
-      if (e.target === mask) this.finishQuiz();
-    });
+    // 点遮罩关闭：手势配对判据（core/mask-dismiss）——跨元素松手不算点击
+    bindMaskDismiss(mask, () => this.finishQuiz());
   }
 
   /**

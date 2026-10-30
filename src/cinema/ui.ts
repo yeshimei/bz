@@ -14,6 +14,7 @@
 import type { App, IconName } from 'obsidian';
 import { TFile } from 'obsidian';
 import { notice, notifySaveError } from '../core/notice';
+import { bindMaskDismiss } from '../core/mask-dismiss';
 import { trashNote } from '../core/note-trash';
 import { openFlowDialog } from '../core/flow-dialog';
 import { emitDomainEvent } from '../core/domain-bus';
@@ -872,7 +873,8 @@ function ovl(sec: HTMLElement, html: string, opts: { onWillClose?: (finish: () =
     finish();
   };
   liveOvlCloses.add(close);
-  el.addEventListener('click', (e) => { if (e.target === el) close(); });
+  // 点遮罩关闭：手势配对判据（core/mask-dismiss）——跨元素松手不算点击
+  bindMaskDismiss(el, close);
   // 遮罩区整段不吃滚轮（2026-10-01 用户反馈：在遮罩上滚鼠标会滚动弹窗卡片/把背后页面也滚了）——
   // 滚轮只在卡片（.cn-modal 内容树）上生效：落在遮罩空区的滚轮直接吞掉，既不滚卡片，
   // 也不把默认滚动链递给背后页面。passive:false 才允许 preventDefault（元素级监听虽默认非 passive，
@@ -2800,10 +2802,8 @@ export function createOverlay(app: App): void {
       persist: panelSizePersist('cinemaPanelWidth', 'cinemaPanelHeight', PANEL.MIN_W, PANEL.MIN_H),
     });
   }
-  // 点遮罩 = 关闭主面板（桌面；移动全屏无遮罩）
-  overlay.addEventListener('click', (e) => {
-    if (e.target === overlay) closeOverlay();
-  });
+  // 点遮罩 = 关闭主面板（桌面；移动全屏无遮罩）；判据走 bindMaskDismiss 防跨元素松手误关
+  bindMaskDismiss(overlay, closeOverlay);
 
   bindMidnight(root, app);
   // 搜索/滑杆输入（委托；input 冒泡）

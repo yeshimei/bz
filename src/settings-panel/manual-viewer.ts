@@ -13,6 +13,7 @@
  * 桌面端形态不变：居中弹窗、无头行、钮不出现（点遮罩 / ESC 关闭）。
  */
 import { topifyZ } from '../core/z-order';
+import { bindMaskDismiss } from '../core/mask-dismiss';
 import { escManager } from '../core/esc-manager';
 import { trapPanelFocus } from '../core/ui/focus-trap';
 
@@ -70,9 +71,8 @@ function build(): void {
   frame.innerHTML = shellHtml();
   frame.querySelector<HTMLElement>('.bz-manv-close')?.addEventListener('click', hide);
   ov.appendChild(frame);
-  ov.addEventListener('click', (e) => {
-    if (e.target === ov) hide();
-  });
+  // 点遮罩关闭：手势配对判据（core/mask-dismiss）——跨元素松手不算点击
+  bindMaskDismiss(ov, hide);
   document.body.appendChild(ov);
   overlay = ov;
 }

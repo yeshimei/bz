@@ -34,6 +34,7 @@
 import type { App, EventRef } from 'obsidian';
 import moment from 'moment';
 import { notice, notify, notifyUndo, notifySaveError, notifyActionError } from '../core/notice';
+import { bindMaskDismiss } from '../core/mask-dismiss';
 import { escManager, registerPanelEsc, unregisterPanelEsc } from '../core/esc-manager';
 import { trapPanelFocus } from '../core/ui/focus-trap';
 import { topifyZ } from '../core/dom';
@@ -456,13 +457,10 @@ export function openMemoPanel(app: App, opts?: { notePath?: string }): void {
   }
 
   // 事件委托
+  // 点遮罩 = 关闭主面板（无关闭按钮，靠遮罩/ESC）；手势配对判据防跨元素松手误关
+  bindMaskDismiss(overlay, closeMemoPanel);
   overlay.addEventListener('click', (e) => {
     const t = e.target as HTMLElement;
-    // 点遮罩 = 关闭主面板（无关闭按钮，靠遮罩/ESC）
-    if (e.target === overlay) {
-      closeMemoPanel();
-      return;
-    }
     // 头行钮组：关闭（设置钮已随 memo2-ui M3-7 退役——皮肤段恒 display:none 死 UI，
     // 设置入口保留在场景菜单「在设置中编辑」）
     const headClose = t.closest('[data-memo-head-close]');

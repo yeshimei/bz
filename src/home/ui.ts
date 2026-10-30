@@ -23,6 +23,7 @@
  */
 import type { IconName } from 'obsidian';
 import { registerPanelEsc, unregisterPanelEsc } from '../core/esc-manager';
+import { bindMaskDismiss } from '../core/mask-dismiss';
 import { trapPanelFocus } from '../core/ui/focus-trap';
 import { notice } from '../core/notice';
 import { mountIcons, uiEmpty, uiBtn, uiResizable } from '../core/ui';
@@ -276,12 +277,10 @@ function bindEvents(overlay: HTMLElement, app: any): void {
       el.click();
     }
   });
+  // 点遮罩关闭：手势配对判据（core/mask-dismiss）——跨元素松手（弹窗内选字划出）不算点击
+  bindMaskDismiss(overlay, closeOverlay);
   overlay.addEventListener('click', (e) => {
     const t = e.target as HTMLElement;
-    if (e.target === overlay) {
-      closeOverlay();
-      return;
-    }
     if (t.closest('[data-home-close]')) {
       closeOverlay();
       return;

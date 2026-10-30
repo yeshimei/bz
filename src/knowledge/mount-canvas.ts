@@ -32,6 +32,7 @@
  */
 import { Component, MarkdownRenderer } from 'obsidian';
 import { getApp } from '../core/app';
+import { bindMaskDismiss } from '../core/mask-dismiss';
 import { escManager, type EscHandle } from '../core/esc-manager';
 import { openFlowDialog } from '../core/flow-dialog';
 import { isMobileEnv } from '../core/mobile';
@@ -460,7 +461,8 @@ function buildShell(): CanvasState | null {
   mask.id = MASK_ID;
   mask.className = 'bz-overlay-mask bz-kb-mask bz-kb-mt-mask'; // issue 365：底/blur 归 core 单源
   mask.style.display = 'none';
-  mask.addEventListener('click', () => closeMountTree());
+  // 点遮罩关闭：手势配对判据（core/mask-dismiss）
+  bindMaskDismiss(mask, () => closeMountTree());
 
   const win = document.createElement('div');
   win.id = WIN_ID;

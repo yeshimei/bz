@@ -27,6 +27,7 @@
  */
 import { Component, MarkdownRenderer, TFile } from 'obsidian';
 import { getApp } from '../core/app';
+import { bindMaskDismiss } from '../core/mask-dismiss';
 import { trashNote } from '../core/note-trash';
 import { notice, notifyActionError, notifySaveError, notifyUndo } from '../core/notice';
 import { uiBtn, uiEmpty, uiResizable, uiVSplitter, mountIcons } from '../core/ui';
@@ -372,9 +373,7 @@ function buildDom(app: any): void {
 
   // 头行无按钮（issue 214 三轮用户拍板：去 ⚙/✕，关闭 = 点遮罩/ESC）；设置走命令/设置面板
   // 点遮罩关闭（桌面无关闭钮）
-  overlayEl.addEventListener('click', (e) => {
-    if (e.target === overlayEl) closePanel();
-  });
+  bindMaskDismiss(overlayEl, closePanel);
   // rail 脚注·阅读报告入口（issue 358；2026-09-23 重做）：「我读了什么」→ 读报特刊（press/）
   railFootEl!.addEventListener('click', (e) => {
     if ((e.target as HTMLElement).closest('[data-clp-rep-entry]')) void openReadingPress(app);

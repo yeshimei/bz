@@ -28,6 +28,7 @@
  */
 import { type App, type TFile } from 'obsidian';
 import { topifyZ, allocZ } from '../core/z-order';
+import { bindMaskDismiss } from '../core/mask-dismiss';
 import { trapPanelFocus } from '../core/ui/focus-trap';
 import { notice, notifyUndo, notifySaveError, notifyActionError } from '../core/notice';
 import { openFlowDialog } from '../core/flow-dialog';
@@ -126,9 +127,11 @@ export class UIManager {
     this.mask.classList.add('bz-panel-overlay');
     this.mask.style.display = 'none';
     // C15（ADR-0067）：构造期不发号——display:none 壳不占号，showMain 时 topifyZ 统一发号
-    this.mask.onclick = () => {
+    // 点遮罩关闭：手势配对判据（core/mask-dismiss）——遮罩与面板并列挂 body，
+    // 套上判据是防以后把面板挪进遮罩时静默回退（届时不再误关）
+    bindMaskDismiss(this.mask, () => {
       if (!this.sprint) this.hideMain();
-    };
+    });
 
     this.popup = document.createElement('div');
     this.popup.id = 'review-popup';

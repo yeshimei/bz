@@ -9,6 +9,7 @@
  * ============================================================ */
 import { uiIcon } from './icon';
 import { escManager } from '../esc-manager';
+import { bindMaskDismiss } from '../mask-dismiss';
 import { allocZ } from '../z-order';
 
 /** 多图模式的一张（单图模式即长度 1 的特例） */
@@ -176,10 +177,9 @@ export function openLightbox(opts: BzLightboxOpts): { close: () => void } {
     close,
   });
   currentEscHandle = escHandle;
-  // 点背景（非媒体/头部/底部/箭头）关闭
-  mask.addEventListener('click', (e) => {
-    if (!(e.target as HTMLElement).closest('.bz-lightbox-media, .bz-lightbox-head, .bz-lightbox-foot, .bz-lightbox-nav')) close();
-  });
+  // 点背景关闭：判据走 bindMaskDismiss（遮罩本体 + 手势配对）——媒体/头部/底部/箭头都是
+  // mask 子元素，落点不在本体上自然不关；同时挡掉「在说明文字上选字划到背景松手」的误关
+  bindMaskDismiss(mask, close);
   closeBtn.addEventListener('click', close);
   // ←→ 翻图（多图模式；焦点在输入框里时不抢，组合输入中不抢）
   if (multi) {

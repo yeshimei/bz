@@ -18,6 +18,7 @@
  */
 import type { App } from 'obsidian';
 import { topifyZ } from '../core/dom';
+import { bindMaskDismiss } from '../core/mask-dismiss';
 import { registerPanelEsc, unregisterPanelEsc } from '../core/esc-manager';
 import { trapPanelFocus } from '../core/ui/focus-trap';
 import { isMobileEnv } from '../core/mobile';
@@ -952,9 +953,8 @@ function createUI(app: App): void {
   if (maskEl && document.body.contains(maskEl)) return;
   const mask = document.createElement('div');
   mask.className = 'bz-panel-overlay';
-  mask.addEventListener('click', (e) => {
-    if (e.target === mask) closePanel();
-  });
+  // 点遮罩关闭：手势配对判据（core/mask-dismiss）——跨元素松手不算点击
+  bindMaskDismiss(mask, closePanel);
   const frame = document.createElement('div');
   frame.className = 'bz-panel-frame bz-gs-panel bz-panel-mtop';
   frame.setAttribute('role', 'dialog');
