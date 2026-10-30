@@ -41,89 +41,11 @@ Conventional Commits。**提交信息即更新日志正文**，只有 `feat` / `
 
 ## 发布
 
-只有在**发版**时才走这五步。跟日常提交推送是两回事。
+发版全流程（前置 review → 七步 → tag → Release → 收尾）在 skill **bz-release**：
+`.workbuddy/skills/release/SKILL.md`。用户说「发布」才进；两道硬闸——用户明确说
+「发布」才对外、note 先给用户过目——在 skill 开头，缺一不可。日常提交推送不进这条流程。
 
-**两道硬闸，缺一不可：**
-
-1. **必须用户明确说「发布」。** 「准备一下」「顺手发个版」「提交完顺便发吧」都不算。没听到这两个字，跑完七步就停。
-2. **发布前先把 Release note 正文贴给用户看，等他看完点头。** 在 `gh release create` 之前停住——note 没被看过就发出去，等于替用户对外承诺内容。
-
-提交、推送、打 tag 都是本地/仓库内动作；**对外发布**（Release、分发仓库、市场 PR）必须过这两道闸。
-
-### 0. 发布前置 review（不跳）
-
-从上一个 tag 到 HEAD 整段改动走一遍 review，四个维度：代码 / 样式 UI / 稳定性 / 增强建议。
-出一张**编号清单**（编号给了就不再变），然后停住等用户挑号——他选哪些才修哪些，修完才进第 1 步。
-P0 没修完不发版；清单没给过他，不许跑七步。检查点与清单格式见
-[docs/pre-release-review.md](docs/pre-release-review.md)。
-
-### 1. 主仓跑七步
-
-```
-tools-pack → skin-pack → changelog → catalog → manifest → build → assets
-```
-
-顺序固定：前四步出产物，`manifest` 对产物现算 sha256，`build` 出插件本体，`assets` 把 `downloads/**` 与 `releases/<tag>/` 镜像到分发仓库。`pnpm assets` 与 `node scripts/push-assets.mjs` 是同一件事，Git Bash 里用后者。
-
-生成日志要带目标版本：`node scripts/_gen-changelog.mjs --next=<版本>`。日志按 **git tag** 切块（不是按天），这一刻 tag 还没打，不传 `--next` 最新一版就不会出现在日志里，`manifest.json` 也不会回写成新版本。
-
-三个「少跑一步」的后果，都静默：
-
-| 少跑 | 症状 |
-|---|---|
-| `manifest` | 清单停在上一版，页面重出了、sha256 没跟着算；只有门禁里 `skin-pack-split-guard` 会说话 |
-| `tools-pack` | 旧 tar.gz 还在，用户端显示「已是最新」但内容没更新 |
-| `assets` | 下载通道只认分发仓库，客户端拿到的还是上一版 |
-
-### 2. 打 tag 并校验
-
-`git tag -a v<版本>` 并 push。tag 名 = `manifest.json` 的 `version`，一个字符都不能差。
-
-打完 tag 跑一次 `node scripts/_gen-changelog.mjs --check`：它对账「最新 tag / manifest 版本 / 日志顶部版本」三项，不一致就非零退出。
-
-**先 tag 再发布**：tag 不存在时 `gh` 会自建一个轻量 tag，跟已 push 的标注 tag 对不上。
-
-### 3. GitHub Release
-
-**note 定稿先回灌在线资源日志（不跳）**：Release note 的「更新日志」节经用户修订后，
-`node scripts/_gen-changelog.mjs --note=<note路径>` 以 note 口径覆盖最新版本块、重出
-`downloads/bz-changelog.html`（在线资源的更新日志与 Release 页同源同稿），再重打离线
-zip（包里的 downloads 也带这份日志）与 SHA256SUMS。**这些都是本地准备**——推分发仓库、
-`gh release create` / `upload --clobber` 一律等用户修订完 note、明确说「发布」才执行。
-生成器只认 `- **标签** ：说明` 条目行，✨ 新增→added、🐛 修复→fixed、⚡ 优化→improved，
-条目数不裁剪——用户拍板的定稿。
-
-七个资产，缺一不可：
-
-| 资产 | 从哪来 |
-|---|---|
-| `bz-<版本>.zip` | 根目录 `main.js` / `manifest.json` / `styles.css`，包内必须留一层 `bz/` |
-| `bz-offline-<版本>.zip` | `downloads/` 整目录，包内路径 `bz-offline/downloads/<file>` |
-| `SHA256SUMS.txt` | `sha256sum *.zip \| sed 's/\*/ /'`（msys 会输出 `hash *file`，那个 `*` 要去掉） |
-| `main.js` `manifest.json` `styles.css` | 平铺单挂。**社区市场只认这三个**，zip 里的不算——漏了市场里永远装不上，而 Release 页看起来一切正常 |
-
-正文 = **更新日志 + 固定三节**（`# 安装` / `# 离线资源包` / `# 反馈`），照抄 [docs/release-note-template.md](docs/release-note-template.md)，三节不要改措辞。标题层级按模板：四个一级标题并列，
-「新增 / 修复」是 `# 更新日志` 下的二级标题——少写「更新日志」这个一级标题，前两块就会和「安装」「反馈」平级，看不出它们是一组。
-离线包按模板写成「解压出的 `downloads/` 整个放进插件目录」，并注明插件本体升级仍要手动覆盖三件套。
-
-正文条目**不照搬 changelog**：照模板写成 `- **标签** ：说明`，标签说人话（赞赏 / 关于组 / 剪藏本），
-不写脚本域名（`core` / `global` / `other`）——后者会出现三个「其他」。条目可删可合并，
-同一处功能一版内改了又改的，正文里说最终态；插件内更新日志页面仍是脚本口径，不必逐条对齐。
-Release 正文里**自定义 CSS 无效**（GitHub 会剥掉 `style` / `class` / `<style>`），
-要颜色只能用分组标题上的 emoji（✨ 🐛 ⚡）。
-
-```bash
-gh release create v<版本> -R yeshimei/bz --title "bz v<版本>" --notes-file note.md \
-  bz-<版本>.zip bz-offline-<版本>.zip SHA256SUMS.txt main.js manifest.json styles.css
-```
-
-打包用 PowerShell `Compress-Archive`（Windows 没有 `zip`/`7z`；别用 `Add-Type`，安全策略直接拦）。
-
-### 4. 收尾
-子代理 review → 清 worktree。
-
-### 一条例外
-- **分发仓库**：下载走 `yeshimei/bz-assets`（ADR-0269）——主仓 `.git` 超 jsDelivr 的 50 MB 上限，未缓存文件一律 403，国内 raw 又不通。`push-assets` 只留最近 3 份发布，`.git` 超 25 MB 自动压平历史。主仓仍是唯一产出地，分发仓库随时可删可重建；基址只改 `src/core/remote-base.ts`，别在两处各写一份 slug。
+发版前的 review 查什么：docs/pre-release-review.md。
 
 ## 坑
 - Git Bash 里 pnpm 起不来（shim 把路径解析成 `D:\d\...`）→ 用 PowerShell，或 `node node_modules/<包>/…` 直调。
