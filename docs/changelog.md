@@ -28,9 +28,14 @@ pnpm changelog          # = node scripts/_gen-changelog.mjs，仓库根执行
 默认覆盖最新版本块；`--note-version=x.y.z` 指定历史版本，多份定稿逗号分隔一并回灌
 （`--note=a.md,b.md --note-version=1.36.0,1.35.0`）——生成器每次从 git 全量重建，
 历史版本的用户定稿不会被记住，重跑日志时要把所有定稿文件（留档在 `docs/note-*.md`）
-全部带上。解析只认 `- **标签** ：说明` 条目行，✨ 新增→added、🐛 修复→fixed、
-⚡ 优化→improved，标签原样作域标签（DOMAIN_NAMES 没有的键直出原文），
+全部带上。解析只认 `- **标签** ：说明` 条目行（`## 新功能`→added、`## 问题修复`→fixed、
+`## 体验优化`→improved，✨ 新增 / 🐛 修复 / ⚡ 优化 旧标题也认；解析不了的条目行报错
+退出，不静默丢），标签原样作域标签（DOMAIN_NAMES 没有的键直出原文），
 条目数不受 CAPS 裁剪。
+
+回灌收尾**自动跑一次 build-manifest** 重算清单 docs sha256——html 重出了清单不跟就是
+「用户端 sha256 不匹配」翻车（2026-10-31），不再靠人补跑。`--check` 相应对账四项：
+最新 tag / manifest 版本 / 日志顶部版本 / 清单 docs sha256 与 downloads/ 现产文件一致。
 
 生成器只写这两个文件，其余不动。
 

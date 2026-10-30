@@ -5,8 +5,8 @@
       "id": "changelog",
       "name": "更新日志",
       "file": "bz-changelog.html",
-      "sha256": "100cccc7665b10838cb15f44303386a2bfe0db99d60fc9557891a29fe022a547",
-      "size": 11874
+      "sha256": "2349c81237b94b671152e804f8b70b0e791a1e57daaf203c29e9de1c2c327896",
+      "size": 12685
     },
     {
       "id": "manual",
@@ -49,7 +49,7 @@
       "name": "工具坞工具包",
       "file": "tools/dock-watch.tar.gz",
       "kind": "bundle",
-      "sha256": "703b3ed5f30573004cb16ade24bf0046c6acc0ad5dd5235df2c4b6edbf0077e2",
+      "sha256": "30fb003b30c3f01420f94bf7274c6dc77c783f4ec62bb012a6dfab2eeff646f7",
       "size": 49646
     },
     {

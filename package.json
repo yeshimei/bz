@@ -1,6 +1,6 @@
 {
   "name": "bz",
-  "version": "1.35.0",
+  "version": "1.36.0",
   "description": "装在笔记库里的个人管理插件：日记、备忘、读书观影、复习、密码，21 个模块共用一个首页，数据只存本地。",
   "main": "src/main.ts",
   "author": "叫我包仔",
@@ -15,7 +15,6 @@
   "homepage": "https://github.com/yeshimei/bz#readme",
   "scripts": {
     "dev": "node esbuild.config.mjs",
-    "build": "node esbuild.config.mjs production",
     "changelog": "node scripts/_gen-changelog.mjs",
     "skin-pack": "node scripts/build-skin-pack.mjs",
     "catalog": "node scripts/build-catalog.mjs",
@@ -32,7 +31,10 @@
     "test:changed:vitest": "node node_modules/vitest/vitest.mjs run --changed master",
     "test:watch": "node node_modules/vitest/vitest.mjs",
     "test:coverage": "node node_modules/vitest/vitest.mjs run --coverage --maxWorkers=2",
-    "assets": "node scripts/push-assets.mjs"
+    "assets": "node scripts/push-assets.mjs",
+    "release-steps": "node scripts/release-steps.mjs",
+    "pack-release": "node scripts/pack-release.mjs",
+    "pre-review": "node scripts/pre-release-review.mjs"
   },
   "keywords": [
     "obsidian",

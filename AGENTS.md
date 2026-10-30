@@ -29,8 +29,6 @@ Obsidian 插件。域 = `src/<域>/`，`core` 是共享层。中文输出。
 
 ## 提交
 
-日常改动就到这里为止，**不跑发布七步**。
-
 Conventional Commits。**提交信息即更新日志正文**，只有 `feat` / `fix` / `perf` 进日志；标题主句（`——` 之前那段）至少 4 个字，短了会被 `_gen-changelog.mjs` 的 `rewrite()` 静默丢弃（提交照样成功，日志里没这条）。
 
 同一版里修自己刚加、还没发出去的东西，**并回那条 `feat`**（squash 进主句，主题句写修复后的最终态），别让日志出现「新功能 + 修复它」两条——日志是给用户看的（[docs/changelog.md](docs/changelog.md)）。只有修上一版已发布行为、或升版后引入的回归，才单独留 `fix`。
@@ -38,19 +36,6 @@ Conventional Commits。**提交信息即更新日志正文**，只有 `feat` / `
 流程：worktree → `git merge master` → 门禁全绿（`test-affected --since master` + `tsc --noEmit` + 自审 + diff 审查）→ 合回主仓 → 推送。
 
 占 issues / ADR 编号前先查主仓库最新号；拍板结论进 `.scratch/memo-suite-plugin/spec.md`，决策进 `docs/adr/` 并同步 `CONTEXT.md`。
-
-## 发布
-
-发版全流程（前置 review → 七步 → tag → Release → 收尾）在 skill **bz-release**：
-`.workbuddy/skills/release/SKILL.md`。用户说「发布」才进；两道硬闸——用户明确说
-「发布」才对外、note 先给用户过目——在 skill 开头，缺一不可。日常提交推送不进这条流程。
-
-发版前的 review 查什么：docs/pre-release-review.md。
-
-## 坑
-- Git Bash 里 pnpm 起不来（shim 把路径解析成 `D:\d\...`）→ 用 PowerShell，或 `node node_modules/<包>/…` 直调。
-- `git worktree remove` 后常残留 `node_modules`，要另删。**删前必须先 `cmd /c rmdir` 掉 worktree 里的 `node_modules` junction**——junction 指向主仓 node_modules 时，remove 会穿透删除主仓 `.pnpm` 里的包（表层包还在、深处依赖悬空，测试报 Cannot find module）；穿透后 `pnpm install` 修不回（workspace 状态文件误判 up to date），要 `rm -rf node_modules && pnpm install` 整体重建（store 硬链接，很快）。
-- 改了工具坞的**判据**（`src/dock/rules.ts` / `schema.ts` / `registry.ts` / `declaration.ts` 的读侧）要重跑 `node scripts/build-dock-watch.mjs` —— 值守进程用的 `dock-core.cjs` 是这么打出来的，不重打它就还在按旧判据决定「该不该跑」（`pnpm run build` 已含这一步）。
 
 ## 去哪儿查
 | 要什么 | 去哪 |

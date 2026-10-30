@@ -19,8 +19,9 @@
  * 重跑：`pnpm changelog`（仓库根执行，**只在主仓库跑**——worktree 里跑会生成残缺版本）。
  * 只写 downloads/bz-changelog.html 与 manifest.json。
  */
-import { execSync } from 'node:child_process';
-import { readFileSync, writeFileSync } from 'node:fs';
+import { execSync, spawnSync } from 'node:child_process';
+import { createHash } from 'node:crypto';
+import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 
@@ -275,7 +276,9 @@ const latestTag = allTags.length ? allTags[allTags.length - 1] : '';
 const current = releases.length ? releases[releases.length - 1].version : manifest.version;
 const targetVersion = nextArg || current;
 
-/* --check：发布前的三项对账。版本号的事实源是 tag，manifest 与日志都必须跟它一致。 */
+/* --check：发布前的四项对账。版本号的事实源是 tag，manifest 与日志都必须跟它一致；
+ * 第四项守「清单与文件同一版」：清单 docs 条目的 sha256 必须与 downloads/ 现产文件一致
+ * ——漏跑 manifest 步的翻车（2026-10-31）就是这一项没对账，--check 却报绿。 */
 if (process.argv.includes('--check')) {
   const problems = [];
   if (!latestTag) {
@@ -291,12 +294,33 @@ if (process.argv.includes('--check')) {
       problems.push(`日志顶部版本是 ${releases[releases.length - 1].version}，最新 tag 是 ${latestTag}`);
     }
   }
+  const distManifestPath = join(ROOT, 'downloads', 'manifest.json');
+  if (existsSync(distManifestPath)) {
+    const distManifest = JSON.parse(readFileSync(distManifestPath, 'utf8'));
+    /* 与 build-manifest 同口径：tar.gz 目录包按字节算，文本产物归一换行后算 */
+    const shaOf = (abs) => {
+      const buf = readFileSync(abs);
+      if (abs.endsWith('.tar.gz')) return createHash('sha256').update(buf).digest('hex');
+      return createHash('sha256').update(Buffer.from(buf.toString('utf8').replace(/\r\n/g, '\n'), 'utf8')).digest('hex');
+    };
+    for (const d of distManifest.docs || []) {
+      const abs = join(ROOT, 'downloads', d.file);
+      if (!existsSync(abs)) {
+        problems.push(`清单声明了 downloads/${d.file}，文件不在（先跑产物步骤）`);
+        continue;
+      }
+      const got = shaOf(abs);
+      if (got !== d.sha256) {
+        problems.push(`downloads/${d.file} 与清单不是同一版（清单 ${d.sha256.slice(0, 8)}…，实际 ${got.slice(0, 8)}…）——重灌产物后漏跑 manifest 步`);
+      }
+    }
+  }
   if (problems.length) {
     console.error('更新日志与版本不一致：');
     for (const p of problems) console.error('  - ' + p);
     process.exit(1);
   }
-  console.log(`更新日志与 tag 一致 ✓（最新 ${latestTag}，共 ${releases.length} 个版本块）`);
+  console.log(`更新日志与 tag 一致 ✓（最新 ${latestTag}，共 ${releases.length} 个版本块；docs sha256 对账 ${JSON.parse(readFileSync(distManifestPath, 'utf8')).docs.length} 条）`);
   process.exit(0);
 }
 
@@ -304,6 +328,17 @@ let manifestSynced = false;
 if (targetVersion && manifest.version !== targetVersion) {
   manifest.version = targetVersion;
   writeFileSync(manifestPath, JSON.stringify(manifest, null, 2) + '\n', 'utf8');
+  /* package.json 版本跟着同步——manifest-meta 守卫比对两者，漂移就是红的
+     （v1.36.0 发布时只回写了 manifest.json，package.json 停在 1.35.0 翻过车） */
+  const pkgPath = join(ROOT, 'package.json');
+  if (existsSync(pkgPath)) {
+    const pkg = JSON.parse(readFileSync(pkgPath, 'utf8'));
+    if (pkg.version !== targetVersion) {
+      pkg.version = targetVersion;
+      writeFileSync(pkgPath, JSON.stringify(pkg, null, 2) + '\n', 'utf8');
+      console.log(`package.json 版本同步为 ${targetVersion}`);
+    }
+  }
   manifestSynced = true;
 }
 
@@ -346,7 +381,10 @@ if (noteFiles.length) {
     }
     if (!cur || !line.startsWith('- ')) continue;
     const m = line.slice(2).match(/^\*\*(.+?)\*\*\s*：\s*(.+)$/);
-    if (!m) continue;
+    if (!m) {
+      console.error(`note ${noteFile} 里有一条解析不了的条目（格式必须是 \`- **标签** ：说明\`）：\n  ${line}`);
+      process.exit(1);
+    }
     items[cur].push({ domain: m[1].trim(), text: m[2].trim(), sub: '' });
   }
   const total = items.added.length + items.fixed.length + items.improved.length;
@@ -369,6 +407,14 @@ if (noteFiles.length) {
   rel.improved = items.improved;
   console.log(`note 覆盖 v${rel.version}：新增 ${items.added.length} / 修复 ${items.fixed.length} / 优化 ${items.improved.length}`);
   });
+  /* 回灌重出了 bz-changelog.html，清单里 docs 条目的 sha256 必须跟着现算——漏跑
+   * manifest 步的翻车（2026-10-31 用户端 sha256 不匹配）就出在这里，所以自动带上，
+   * 不再靠人记住补跑。build-manifest 对全部 docs/skins 现算，幂等。 */
+  const manifestRun = spawnSync(process.execPath, [join(ROOT, 'scripts', 'build-manifest.mjs')], { stdio: 'inherit' });
+  if (manifestRun.status !== 0) {
+    console.error('回灌后的清单重算（build-manifest）失败，见上方输出');
+    process.exit(1);
+  }
 }
 
 /* ==================== 产出单文件 HTML（issue 474） ====================
