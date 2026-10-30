@@ -3011,7 +3011,11 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   display: flex;
   align-items: center;
   justify-content: flex-end;
+  /* 窄屏可能要摆三个动作（稍后 / 视频 / 重新检测）：不换行就会挤出容器 */
+  flex-wrap: wrap;
   gap: var(--bz-space-sm);
+  /* 换行后的行距（gap 会重置 row-gap，必须写在它后面） */
+  row-gap: var(--bz-space-xs);
   flex: none;
   padding-top: var(--bz-space-xs);
 }

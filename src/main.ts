@@ -490,11 +490,14 @@ export default class BzPlugin extends Plugin {
           console.warn('[bz] 下载清单拉取失败（已静默，等下次启动/手动重试）:', (e as Error)?.message || e);
         }
         // 自动更新开着时，插件本体之外的东西也一起跟上：皮肤、索引、数据表、三个外部工具包
-        //（2026-10-30 用户拍板：开了自动更新就不该只换插件本体）。清单复用上一段已拉的那份。
-        try {
-          await autoUpdateAssets(getApp(), manifest);
-        } catch (e) {
-          console.warn('[bz] 自动更新在线资源失败（已静默）:', (e as Error)?.message || e);
+        //（2026-10-30 用户拍板：开了自动更新就不该只换插件本体）。清单复用上一段已拉的那份——
+        // 上一段没拉到时（离线）本轮就不做：同一趟启动再撞一次同样的墙只是白等。
+        if (manifest) {
+          try {
+            await autoUpdateAssets(getApp(), manifest);
+          } catch (e) {
+            console.warn('[bz] 自动更新在线资源失败（已静默）:', (e as Error)?.message || e);
+          }
         }
       });
       // 知识盒/剪藏本引用同步无条件常驻（issue 336 / ADR-0149：knowledge.json、clipbook.json

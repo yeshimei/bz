@@ -472,7 +472,7 @@ async function stageProbe(ctx: WizardCtx, st: WizardState, ui: Ui): Promise<void
       ctx.onFinish?.();
     };
     // 重试钮前面挂一条视频出口：连不上时再点几次也是同样的结果，得先告诉人该去改什么
-    const help = button('bz-setup-link', '连不上？看这个视频 →');
+    const help = button('bz-setup-link', '连不上？看视频 →');
     help.onclick = () => openExternalUrl(ctx.app, NET_HELP_VIDEO);
     const retry = button('bz-setup-btn bz-setup-btn--cta', '重新检测');
     retry.onclick = rescan;
