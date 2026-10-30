@@ -19,7 +19,7 @@
 </p>
 
 <p align="center">
-  What it looks like, how to install it, and how each module works — walked through end to end — <a href="https://www.bilibili.com/video/BV1vNsZ6pE7i/"><b>▶ Watch it here</b></a>
+  What it looks like, how to install it, and how each module works — <a href="https://www.bilibili.com/video/BV1vNsZ6pE7i/"><b>▶ Watch it here</b></a>
 </p>
 
 <p align="center">

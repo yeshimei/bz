@@ -19,7 +19,7 @@
 </p>
 
 <p align="center">
-  长什么样、怎么装、每个功能怎么用，视频里从头走了一遍 —— <a href="https://www.bilibili.com/video/BV1vNsZ6pE7i/"><b>▶ 点这里看视频</b></a>
+  长什么样、怎么装、每个功能怎么用 —— <a href="https://www.bilibili.com/video/BV1vNsZ6pE7i/"><b>▶ 点这里看视频</b></a>
 </p>
 
 <p align="center">
