@@ -1,7 +1,7 @@
 /**
  * 备忘录渲染纯层（ADR-0104 markup 单源）：面板壳/主头行计数/场景 nav/移动 chips/
- * 条目卡/meta 行/分区标签/完成折叠条的 markup 全部在此，ui.ts 与评审壳共用同一份。
- * 纯度：禁 obsidian/moment/core 服务（tests/core/render-purity 守卫 import 图）——
+ * 条目卡/meta 行/分区标签/完成折叠条的 markup 全部在此，ui.ts 消费同一份。
+ * 纯度：禁 obsidian/moment/core 服务（纯度现为约定）——
  * 时间类（due 状态/文案、相对时间）由调用方计算后以参数注入，本层只拼字符串。
  */
 import { escapeHtml as esc, iconSpan } from '../core/ui/str';

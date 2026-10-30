@@ -2,7 +2,7 @@
  * 游戏库（gameshelf）域 UI v3（2026-09-17：V1 海报墙方向落域 + 数据统计面板 + 全量详情弹窗）。
  *
  * 单源约定：markup 纯函数（heroHtml/shelfHtml/shotReelHtml/statsHtml/详情三段）与行为层同文件，
- * 插件面板与评审壳消费同一份——改一处两侧生效（docs/prototype-first.md）。
+ * 插件面板 markup 单源在 ./render——改一处即生效。
  * HTML 转义亦走 core 单源（cons C1 收编）：文本位 esc / 双引号属性位 escAttr（core/ui/str），
  * CSS url('…') 单引号上下文单独 escCssUrl——域内不再自留转义实现。
  * 面板基座 = core .bz-panel-overlay / .bz-panel-frame / .bz-panel-mtop（13 域同款）。
@@ -11,9 +11,9 @@
  * 统计卡 = uiStat，空态 = uiEmpty，筛选 = uiChip，排序 = uiSegmented，搜索 = uiSearch。
  *
  * 亮暗：全部消费 --bz token（tokens.css 的 .theme-dark/.theme-light 双组），零固定色——
- * 评审壳默认亮色、可切暗色，插件内跟随宿主主题。
+ * 旧评审壳（已退役）默认亮色、可切暗色，插件内跟随宿主主题。
  * 移动端：≤768px 真全屏（100dvh，**显式不用 --bz-vvh**——本面板无贴底输入条，且 --bz-vvh
- * 在评审壳里被模拟成「短 88px」会留底缝，理由详见 styles.css 移动端段）+ .bz-panel-mtop 44px 顶部避让。
+ * 在旧评审壳（已退役）里被模拟成「短 88px」会留底缝，理由详见 styles.css 移动端段）+ .bz-panel-mtop 44px 顶部避让。
  * 无入场动效；滚动条不自造（ADR-0122 界面级单源隐藏）。
  */
 import type { App } from 'obsidian';
@@ -480,7 +480,7 @@ function hoverCapable(): boolean {
 /**
  * 悬浮预览委托（host = #bz-gs-body，面板生命周期内绑一次；网格重渲染不换 host）：
  * mouseover 进卡片 → 轮播 + 门面换脸；mouseout 相关目标仍在卡内（子元素间移动）不算离开。
- * 测试/评审壳环境经 hoverable 参数显式开（jsdom 无真 hover 能力，默认关）。
+ * 测试环境经 hoverable 参数显式开（jsdom 无真 hover 能力，默认关）。
  */
 export function bindShotReel(app: App, host: HTMLElement, hoverable = hoverCapable()): void {
   if (!hoverable) return;
@@ -1474,7 +1474,7 @@ export function openPanel(app: App, view: GameshelfViewKind = 'shelf'): void {
 
 /**
  * 关闭（toggle 语义的关分支）：ESC 注销 + 定时器/状态清理（下次打开不背旧账）+ DOM 摘除。
- * 动效层：有 WAAPI 宿主先演 120ms 关机断电再摘 DOM（帧拍点压在评审壳自检的 150ms 断言内）；
+ * 动效层：有 WAAPI 宿主先演 120ms 关机断电再摘 DOM（帧拍点短于测试的 150ms 断言窗）；
  * jsdom / 无 WAAPI 同步摘除，测试零感知。状态清理恒同步——退场途中队列/回调已无从触达面板。
  */
 export function closePanel(): void {

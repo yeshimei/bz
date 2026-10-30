@@ -2,7 +2,7 @@
  * 影院（cinema）域 UI：风格化面板·行为层（issue 236 / ADR-0103）
  * markup 单源已迁 render 纯层（ADR-0104/0105）：共享件（详情/表单/菜单/抽屉/确认/AI/设置
  * 弹窗）在 shared.ts，午夜场 desk/mob 壳与渲染胶水在 layouts/midnight/——ui.ts 经域入口
- * render.ts 消费同一份（与原型壳 prototype-render.js 同源）。本文件只留：
+ * render.ts 消费同一份。本文件只留：
  * 事件绑定 / core 服务（落盘、通知、域事件、ESC、全屏、图标物化）/ AI·分析·海报守护接线。
  * 三风格单键 = cinemaStyle 设置键（settings.ts，深审批A P3-17 措辞修正：无 CINEMA_STYLES
  * 清单常量，风格枚举即该设置键的合法值域）；共享弹窗宿主为 display:contents 的

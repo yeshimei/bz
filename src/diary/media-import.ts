@@ -7,7 +7,7 @@
  *
  * 落点规矩：**优先交宿主**——`fileManager.getAvailablePathForAttachment` 按用户设的「附件默认位置」
  * 给一个不重名的路径（本机 vault = `CONFIG/APPENDIX`，与用户在 Obsidian 里拖图入笔记的落点一致）；
- * 旧宿主 / 评审壳没有这条 API 时退到日记目录下的 `附件/`，自己避重名（`_2` 后缀，永不覆盖）。
+ * 旧宿主 / 旧评审壳（已退役）没有这条 API 时退到日记目录下的 `附件/`，自己避重名（`_2` 后缀，永不覆盖）。
  */
 import type { App } from 'obsidian';
 import { DIARY_DIRECTORY } from './config';
@@ -23,7 +23,7 @@ export const MEDIA_PICK_MAX_MB = 64;
 /** 退回的附件目录（宿主没有 getAvailablePathForAttachment 时用） */
 const FALLBACK_MEDIA_DIR = `${DIARY_DIRECTORY}/附件`;
 
-/** 宿主侧「附件默认位置」的窄接口（旧宿主 / 评审壳可能没有，故按可选能力探测） */
+/** 宿主侧「附件默认位置」的窄接口（旧宿主 / 旧评审壳（已退役）可能没有，故按可选能力探测） */
 type AttachmentPathHost = {
   fileManager?: { getAvailablePathForAttachment?: (name: string, sourcePath?: string) => Promise<string> };
 };

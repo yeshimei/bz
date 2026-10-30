@@ -11,9 +11,9 @@
  *    .bz-panel-overlay/.bz-panel-frame（ADR-0094）；内容区三区队列渲染
  *  - 整窗冲刺由 SprintSession 驱动，宿主为 #review-entries-container 内容区
  *
- * issue 253（V1 原型为真理，评审壳行为单源化）：
+ * issue 253（V1 原型为真理，旧评审壳（已退役）行为单源化）：
  *  - markup 全部出自 ./render（queueViewHtml / 冲刺视图 / 难度弹窗 / 评级条），本文件只做
- *    生命周期/事件委托/数据流；评审壳经 prototype-behavior.js 跑同一份 ui.ts
+ *    生命周期/事件委托/数据流；旧评审壳（已退役）经 prototype-behavior.js 跑同一份 ui.ts
  *  - V1 增量落地：卡片「待重做」红 tag 显性化；归档态状态条改绿点「已完成复习」；
  *    列内排序 置顶 → R 升序 → 到期（render.sortColumn）
  *

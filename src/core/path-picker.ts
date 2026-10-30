@@ -642,11 +642,11 @@ export function openPathPicker(opts: PathPickerOptions): void {
  * 3. 都不行（移动端 / 浏览器）→ null，调用侧按「用户取消」处理，不弹错。
  *
  * 返回值统一正斜杠归一（域侧一律 `${dir}/${name}` 拼接，Windows 反斜杠混拼易漏）。
- * 评审壳无 Electron：fake-sim 经 setSystemFolderPicker 注入构造目录演示同一交互。
+ * （历史）旧评审壳曾经 setSystemFolderPicker 注入构造目录演示同一交互。
  */
 export type SystemFolderPicker = () => Promise<string | null>;
 
-/** 注入点（仅评审壳 / 测试用；插件端不注入 = 原生链） */
+/** 注入点（仅测试用；插件端不注入 = 原生链） */
 let systemPickerImpl: SystemFolderPicker | null = null;
 
 /** 注入演示级选择器（传 null 复原原生链） */

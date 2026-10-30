@@ -1,5 +1,5 @@
 /* ==================== 归物本域样式（src/belongings/styles.css，P20「瑞士大字报」） ====================
- * 单源：本文件同时是域内 prototype.html（评审壳）的唯一组件样式来源——先改原型评审、再落这里。
+ * 本文件是域内组件样式的唯一来源（旧评审壳已退役，ADR-0276）。
  * 视觉基准 = 拍板原型 .zcode/ui-prototypes/belongings-redesign20/p20-full.html（issue 230 方向纠正：
  * 原型 → 域，禁止拿域现状反向生成原型）。p20 的 CSS 值逐字回灌（面板 920×640 相对原型整页海报
  * 等比缩档：h1 56→40 / hero KPI 56→42 / cell em 44→40 / name 20→19 / price 25→23）。
@@ -8,7 +8,7 @@
  * 「双主题恒定纸面」旧口径）+ .bz-bel-* 装饰类；通用件继续消费组件库
  * （chips/segmented/搜索/按钮/字段），在其上做海报皮作用域覆盖（方角/墨框/下划线）。
  * 移动端：印章头 + 常驻工具行（搜索/年份/排序/记一笔）→ 单列网格（页脚与横滑 chips 已拍板
- * 退役，issue 356 报告页另有三钮）；判定走容器查询（评审壳手机框与真机全屏同源，见文末）。
+ * 退役，issue 356 报告页另有三钮）；判定走容器查询（旧评审壳（已退役）手机框与真机全屏同源，见文末）。
  * 口径：标签/徽章字号 ≥11px；不持静态 z-index；触控 44px 档走 .bz-touch-target / min-height。
  */
 
@@ -563,7 +563,7 @@
 }
 
 /* ---- 移动端（≤768px = p20 手机壳）----
-   容器查询基座：面板与年度报告遮罩各为容器（原型评审壳 .demo-mob 396px 由此触发移动端样式，
+   容器查询基座：面板与年度报告遮罩各为容器（窄视口由此触发移动端样式，
    单源双端）。表单/详情遮罩容器档已随壳收编 uiModal 退役——其内容无容器查询规则（此前为陪跑挂名）。
    真实端语义与原 @media(max-width:768px) 等价：移动全屏面板宽 = 100vw、报告页全屏。
    面板自身尺寸规则仍走 @media（容器查询不能命中容器自己）。 */
@@ -616,7 +616,7 @@
   .bz-bel-addbtn { display: none; }
   .bz-bel-mobsortsel-wrap { display: block; flex-shrink: 0; min-width: 0; }
   .bz-bel-mobsortsel-wrap .bz-bel-select { min-width: 0; }
-  /* 横滑条显示本体在 core @media(视口)；评审壳视口不窄，容器内补同效规则（真实移动端两处同值不冲突）。
+  /* 横滑条显示本体在 core @media(视口)；桌面视口不窄，容器内补同效规则（真实移动端两处同值不冲突）。
      用户拍板缩小（去资产后五枚放一行），44px 触控档让位（enh-sweep-c 守卫已同步改口径） */
   .bz-bel-panel .bz-mobstrip { display: flex; margin-top: 10px; gap: var(--bz-space-xs); }
   .bz-bel-panel .bz-mobstrip-chip { flex: 1 1 0; min-width: 0; justify-content: center; padding: 5px var(--bz-space-xs); font-size: var(--bz-font-caption); }

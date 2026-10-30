@@ -5,7 +5,7 @@
  * （旧实现 listeners.clear() 会掩盖原型端的重复订阅泄漏）。
  */
 import { describe, it, expect } from 'vitest';
-import { FakeVault } from '../../prototypes/diary/fake/fake-obsidian';
+import { FakeVault } from '../helpers/fake-obsidian';
 
 describe('FakeVault offref（宿主同语义：按 ref 摘单个监听）', () => {
   it('offref 只摘对应 ref 的回调，其余监听不受影响', () => {

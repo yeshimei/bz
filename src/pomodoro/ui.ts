@@ -35,7 +35,7 @@ import { numStrBinding } from '../core/settings-common';
 import type { SettingsSchema } from '../core/settings-schema';
 import { isRemoteSkinReady, skinPackOptions } from '../core/skin-pack';
 import { PomodoroDataManager, trimWithArchive } from './data';
-// 面板主题清单 / 弹窗骨架：单源在 ./render（ui.ts 与评审壳皮肤页共用）
+// 面板主题清单 / 弹窗骨架：单源在 ./render
 import {
   DEFAULT_POMODORO_SKIN_THEME,
   POMODORO_SKIN_THEMES,

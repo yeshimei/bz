@@ -6,10 +6,10 @@
  * 确认框与 toast 已收编 core（issue 365：openFlowDialog / 全局通知），域内不再出 markup。
  * 原型 × 插件 markup 单源：
  *   - 插件侧：ui.ts 直接 import（事件绑定/core 服务/数据读写留 ui.ts）；
- *   - 评审壳侧：esbuild 打成 IIFE → 同目录 prototype-render.js（window.BZR_password_vault）；
+ *   - （旧评审壳曾打成 prototype-render.js 消费同一份，已退役 ADR-0276。）
  *     行为单源（ADR-0106）后壳直接跑真 ui.ts，markup 天然同源。
  *
- * 纯度契约（tests/core/render-purity.test.ts 守卫，违者门禁红）：
+ * 纯度契约（纯度现为约定，守卫已随旧评审壳（已退役）退役）：
  *   - import 白名单：`../core/ui/str`（零依赖字符串工具）；`./data` 仅 type-only（编译期擦除）；
  *   - 禁 obsidian / moment / core 服务 / 组件库 barrel；
  *   - 禁模块级可变状态：条目与视图状态一律显式入参。
@@ -21,7 +21,7 @@
 import { colorOf, esc, escAttr, relTime } from '../core/ui/str';
 import type { PasswordVaultEntry, PlatformGroup } from './data';
 
-/** esc/colorOf/escAttr 再导出：行为层与评审壳演示 markup 同源（收口 core/ui/str，批次 G） */
+/** esc/colorOf/escAttr 再导出：行为层与旧评审壳（已退役）演示 markup 同源（收口 core/ui/str，批次 G） */
 export { esc, colorOf, escAttr };
 /** 条目类型再导出（type-only，编译期擦除——render 产物不拖数据层依赖链） */
 export type { PasswordVaultEntry, PlatformGroup } from './data';

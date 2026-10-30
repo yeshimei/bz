@@ -179,7 +179,7 @@ export function gridHtml(items: BelongingsItem[], view: BelViewState, unit: Mone
 // ==================== 面板渲染胶水（六步全量重渲；对入参 root 写 innerHTML） ====================
 
 export interface RenderHooks {
-  /** 图标兑现（插件 = core mountIcons/setIcon；评审壳 = prototype-icons.js 内联 SVG） */
+  /** 图标兑现（插件 = core mountIcons/setIcon；旧评审壳（已退役） = prototype-icons.js 内联 SVG） */
   mountIcons(root: HTMLElement): void;
 }
 

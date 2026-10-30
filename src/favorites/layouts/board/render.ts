@@ -16,7 +16,7 @@ import {
 } from '../../shared';
 import type { FavoritesItem } from '../../types';
 
-/** 渲染钩子（两侧差异表：插件 = core mountIcons/setIcon + isMobileEnv；评审壳 = 内联 SVG + 手机框） */
+/** 渲染钩子（两侧差异表：插件 = core mountIcons/setIcon + isMobileEnv；旧评审壳（已退役） = 内联 SVG + 手机框） */
 export interface FavRenderHooks {
   /** 图标兑现（`<i data-lucide>` 占位 → SVG） */
   mountIcons(root: HTMLElement): void;

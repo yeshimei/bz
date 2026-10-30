@@ -83,7 +83,7 @@ export interface DateFilter {
 }
 
 // ===== 媒体墙条目类型（issue 255 起 WallEntry 家族自 data.ts 上移；render 纯层经此引用，
-// 不触 data.ts 的 obsidian 依赖，render-purity 守卫要求） =====
+// 不触 data.ts 的 obsidian 依赖，纯度约定要求） =====
 
 /** 媒体文件（从正文 `![[...]]` 内链提取） */
 export interface WallMedia {

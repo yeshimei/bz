@@ -5,10 +5,9 @@
  * 任何布局不得私有一份口径。布局差异层见 layouts/poster/；域入口仍是 render.ts。
  * 原型 × 插件 markup 单源（ADR-0104）：
  *   - 插件侧：ui.ts 直接 import（面板/网格/详情/表单的 innerHTML 全部出自这里）；
- *   - 评审壳侧：esbuild 打成 IIFE → 同目录 prototype-render.js（window.BZR_belongings），
- *     prototype.html 壳脚本消费同一批函数。
+ *   - （旧评审壳曾打成 prototype-render.js 消费同一批函数，已退役 ADR-0276。）
  *
- * 纯度契约（tests/core/render-purity.test.ts 守卫，违者门禁红）：
+ * 纯度契约（纯度现为约定，守卫已随旧评审壳（已退役）退役）：
  *   - import 白名单：`../core/ui/str`（零依赖字符串工具）、`./types`；
  *   - 禁 obsidian / moment / core 服务 / 组件库 barrel；
  *   - 禁模块级可变状态：数据与视图状态一律显式入参（items + BelViewState）；
@@ -22,7 +21,7 @@
 import { esc, iconSpan, localDayKey } from '../core/ui/str';
 import type { BelongingsItem } from './types';
 
-/** esc/iconSpan 再导出：评审壳演示层 markup（toast/确认框/菜单/抽屉动作串）与插件同源 */
+/** esc/iconSpan 再导出：旧评审壳（已退役）演示层 markup（toast/确认框/菜单/抽屉动作串）与插件同源 */
 export { esc, iconSpan } from '../core/ui/str';
 
 // ==================== 常量 ====================
@@ -69,7 +68,7 @@ export const SORT_OPTS: { v: string; label: string }[] = [
  *  由本常量单点承接——空分类的视觉不变，且不因此复活任何表。 */
 const EMPTY_CATEGORY_ICON = 'package';
 
-/** 视图状态切片（面板内会话态；ui.ts 的 BelState 与评审壳的 M 均结构兼容于此） */
+/** 视图状态切片（面板内会话态；ui.ts 的 BelState 与旧评审壳（已退役）的 M 均结构兼容于此） */
 export interface BelViewState {
   /** 状态筛选 key（null = 全部；asset = 在库合成） */
   status: string | null;
@@ -144,7 +143,7 @@ export function statusOf(keyOrLabel: string): { key: string; label: string } {
   return byLabel || { key: 'using', label: '使用中' };
 }
 
-// ==================== 计算口径（items 显式入参；唯一实现，data.ts/ui.ts/评审壳共用） ====================
+// ==================== 计算口径（items 显式入参；唯一实现，data.ts/ui.ts/旧评审壳（已退役）共用） ====================
 
 /** 是否出离态串（转卖/丢弃）——B4：流转前旧状态也按此判定，出离内流转保留原封口 */
 export function exitedStatus(st: string): boolean {
@@ -398,7 +397,7 @@ export function sheetHeadHtml(it: BelongingsItem, unit: MoneyUnit = 'cny'): stri
 export interface BelActionSpec {
   icon: string;
   label: string;
-  /** 流转/编辑/删除（onClick 行为两侧各自实现——插件走 core 服务，评审壳自绘演示） */
+  /** 流转/编辑/删除（onClick 行为两侧各自实现——插件走 core 服务，旧评审壳（已退役）自绘演示） */
   act: 'flow' | 'edit' | 'del';
   /** 流转目标态（act=flow 专有） */
   status?: string;

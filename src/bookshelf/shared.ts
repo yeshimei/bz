@@ -4,8 +4,8 @@
  * 本文件是「原型 × 插件」markup 的唯一事实源：面板骨架/头行标签/排序 segmented/
  * 书脊墙装箱/空态/借书卡 HTML 与筛选排序管道全部出自这里——
  *   - 插件侧：ui.ts 直接 import（事件绑定/core 服务/数据读写留 ui.ts）；
- *   - 原型侧：dev watch 打成 prototype-render.js（IIFE，挂 window.BZR_bookshelf），壳消费同一份。
- * 纯层契约（tests/core/render-purity.test.ts 守卫）：import 白名单仅 `../core/ui/str`
+ *   - （旧评审壳曾打成 prototype-render.js 消费同一份，已退役 ADR-0276。）
+ * 纯层契约（纯度现为约定）：import 白名单仅 `../core/ui/str`
  * 与域内 constants/types（state 仅 type-only，编译期擦除）。
  * ADR-0105：本文件 = 跨布局共享层（口径计算/管道/借书卡）；布局差异层在 layouts/<布局>/。
  * 域入口仍是 render.ts（聚合共享层与各布局，对外 API 不变）。；禁 obsidian/moment/core 服务/

@@ -1,9 +1,8 @@
 /**
  * 日记本（diary）渲染纯层 · markup 单源（ADR-0104 / ADR-0230）。
  *
- * 「桌上那本」：一本书落在台灯下的桌面上，翻页即翻日记。原型评审壳
- * （prototypes/diary/prototype.html，经 fake-sim.ts 跑真 ui.ts）与插件 ui.ts 消费同一份 markup：
- * 改这里一处两侧生效；**禁 obsidian / moment / core 服务 import**（render-purity 守卫强制），
+ * 「桌上那本」：一本书落在台灯下的桌面上，翻页即翻日记。与插件 ui.ts
+ * 同域同源：改这里一处即生效；**禁 obsidian / moment / core 服务 import**（纯度现为约定），
  * 类型一律取 ./types（零依赖）。行为（分页测量 / StPageFlip 建书 / 事件 / 懒加载 / markdown 水合）在 ui.ts。
  *
  * 移植来源：`.scratch/diary-quill/`（v43 探索稿）的纯渲染部分，**按单源口径重写**——数据不再是

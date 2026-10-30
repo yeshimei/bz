@@ -1,4 +1,4 @@
-// 第二大脑评审壳 CDP 自检（issue 251；书架-10 先例：CDP 逐页打开 view 页，?selftest=1
+// 第二大脑旧评审壳（已退役） CDP 自检（issue 251；书架-10 先例：CDP 逐页打开 view 页，?selftest=1
 // 断言结果写 document.title）。Node >= 22 原生 WebSocket；CDP 走 Target.createTarget +
 // Page.navigate（/json/new 端点创建的 target 无 captureScreenshot）。
 import { spawn, execSync } from 'node:child_process';
@@ -80,7 +80,7 @@ try {
     await send('Target.disposeTarget', { targetId: created.targetId }).catch(() => {});
   }
   // 参考界面截图（ref 在自检后补一张，浮窗+密度切换态已过）
-  console.log('=== 第二大脑评审壳自检 ===');
+  console.log('=== 第二大脑测试 ===');
   let fail = 0;
   for (const [iface, st, title] of results) {
     if (st !== 'PASS') fail++;

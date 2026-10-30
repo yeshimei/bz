@@ -550,9 +550,9 @@ describe('真实仓库：不许回到「命中 0 个」的假绿', () => {
     expect(plan.files.length).toBeLessThan(walkTests(ROOT).length);
   });
 
-  it('扫树守卫在任何 src 变更下都必须被选中（依赖方向/渲染纯度/聚合清单）', () => {
+  it('扫树守卫在任何 src 变更下都必须被选中（依赖方向/聚合清单）', () => {
     const plan = realPick(REPO.memoData);
-    for (const guard of [GUARD.depsDirection, GUARD.renderPurity, GUARD.cssAggregationManifest]) {
+    for (const guard of [GUARD.depsDirection, GUARD.cssAggregationManifest]) {
       expect(plan.files, guard).toContain(guard);
     }
   });

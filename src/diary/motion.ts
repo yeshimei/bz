@@ -12,7 +12,7 @@
  * - 只动 `transform/opacity/filter`，几何从不改写；终态与无动效版逐像素一致。
  * - `?rm=1` 显式模拟 reduced-motion（直达终态）；jsdom / 无 WAAPI 环境同样直达终态，
  *   内容已由渲染层落定，域内测试零感知。
- * - 禁 import obsidian / core 服务（纯浏览器 API，评审壳同跑）。
+ * - 禁 import obsidian / core 服务（纯浏览器 API）。
  */
 
 /* ================= 台账与口径 ================= */

@@ -18,7 +18,7 @@
       放映室暗为默认氛围 → 变量组方向反转（本体=暗组，.theme-light 下回退亮组）。
    皮肤层已拍板砍去：每风格仅此一套视觉；若未来加副肤，扩展口是
    .bz-cinema-skin--<id> 纯 token 覆盖块（亮暗成对），不写结构规则。
-   清单唯一事实源：CINEMA_STYLES（评审壳 JS 内嵌；落域上岸 constants.ts）。
+   清单唯一事实源：CINEMA_STYLES（constants.ts）。
    ==================================================================== */
 
 /* ---------- 午夜场 midnight（探索稿 p1-midnight.html） ---------- */
@@ -54,7 +54,7 @@
 .bz-cinema--midnight .rail-label{font-size:10.5px;letter-spacing:.3em;color:var(--ink-3);padding:0 var(--bz-space-sm) 6px}
 /* 通栏按钮（rail-item / cn-menu-item / cn-sheet-item）必须显式 justify-content:flex-start：
    宿主 app.css 的裸 button 基线是 display:inline-flex + justify-content:center，本类只把
-   display 改成 flex、不动 justify-content → 真机里图标+文字被整行居中（评审壳不载宿主
+   display 改成 flex、不动 justify-content → 真机里图标+文字被整行居中（部分主题不载宿主
    app.css，故此坑只在真机显形）。同 core 的 .bz-popover-item「钉死 button 宿主基线」处置。 */
 .bz-cinema--midnight .rail-item{display:flex;align-items:center;justify-content:flex-start;gap:var(--bz-space-sm);width:100%;padding:7px var(--bz-space-sm);border:0;background:none;border-radius:var(--bz-radius-sm);cursor:pointer;font-size:var(--bz-font-label);color:var(--ink-2);font-family:inherit;text-align:left;position:relative}@media (hover: hover) {
 

@@ -1,7 +1,7 @@
 /**
  * 脸谱渲染纯层（issue 447 / 450 / 451 / 455 / ADR-0104 markup 单源）：面板壳 / 折子封面墙 / 详情折页册 /
- * 数据源弹窗 / 统计与档案弹窗 / 档案与随手记 / 互动数据的 markup 全部在此，ui.ts 与评审壳共用同一份。
- * 纯度：import 图只进域内零依赖模块（types.ts 兼容读单源 personOf/bondOf；render-purity 守卫同口径）——
+ * 数据源弹窗 / 统计与档案弹窗 / 档案与随手记 / 互动数据的 markup 全部在此，ui.ts 消费同一份。
+ * 纯度：import 图只进域内零依赖模块（types.ts 兼容读单源 personOf/bondOf；纯度约定同口径）——
  * DOM 构建走本文件自持 helper；时间文案由调用方算好注入，本层只拼字符串。
  * 折子语义（G 案拍板）：一人一册——封面竖排姓名 + 修复印章；详情折页册 issue 455 起为三折
  * （卷一《其人》/ 卷二《相交》/ 《纪事》；原画像折拆双卷、编年史并入纪事折，数据与档案两页改独立弹窗），
@@ -139,7 +139,6 @@ export function formatDuration(sec: number): string {
 }
 
 /** 路径 → 可加载的资源 URI。
- *  - 评审壳：window.BZW_MEDIA_BASE 有值时（预览服务注入）走服务路由；
  *  - 库内相对路径：走 vault getResourcePath（app://<id>/...，必可加载）；
  *  - 库外绝对路径：app://local/ 兜底（467 起库内不再存明文头像——保库记录头像走 avatarUri 的 data URL，
  *    本兜底仅供数据源行的库外字节路径等历史形态）。 */
@@ -147,8 +146,6 @@ export function localResourceUri(path: string): string {
   const norm = path.replace(/\\/g, '/');
   const escape = (s: string): string => s.replace(/#/g, '%23').replace(/\?/g, '%3F');
   if (typeof window !== 'undefined') {
-    const base = (window as { BZW_MEDIA_BASE?: string }).BZW_MEDIA_BASE;
-    if (base) return base + escape(encodeURI(norm));
     const w = window as unknown as {
       app?: { vault?: { adapter?: { getResourcePath?: (p: string) => string } } };
     };

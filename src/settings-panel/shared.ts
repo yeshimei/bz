@@ -1,21 +1,21 @@
 /**
  * 设置面板渲染纯层 · 共享层（settings-panel，ADR-0104 markup 单源 + ADR-0105 布局分层）。
  *
- * 本文件是「插件 × 评审壳」控件级 markup 的唯一实现（ADR-0104/0105 markup 单源；
- * 2026-09-07 拍板 ADR-0106：行为唯一真理 = 域 ui.ts，原型壳退化为双 iframe 评审壳，
+ * 本文件是插件控件级 markup 的唯一实现（
+ * 2026-09-07 拍板 ADR-0106：行为唯一真理 = 域 ui.ts（旧评审壳已退役，ADR-0276），
  * 旧 prototype.app.js 自绘脚本退役删除——本层不再以壳脚本为真理，两侧 markup 均由
  * 真 ui.ts / renderer.ts 消费同一份）：
  *   - 插件侧：renderer.ts / ui.ts 消费串工厂后按契约类绑事件（core 服务/落盘留行为层）；
- *   - 原型侧：prototype-behavior.js（fake-sim 构建）跑同一依赖链，壳零自绘。
+ *   - （旧评审壳曾跑同一依赖链，已退役 ADR-0276。）
  * 本域 schema 驱动，纯层收「输入 schema 节点视图 + 值 → 输出 HTML 串」的工厂，schema 本体不进纯层。
  *
- * 纯层契约（tests/core/render-purity.test.ts 守卫）：import 白名单仅 `../core/ui/str`；
+ * 纯层契约（纯度现为约定）：import 白名单仅 `../core/ui/str`；
  * settings-schema 仅 type-only（编译期剥除）；禁 obsidian/moment/core 服务/组件库 barrel；
  * 禁模块级可变状态；图标一律 `<i data-lucide>` 占位（iconSpan），由各端 mountIcons 物化。
  */
 import { esc, iconSpan } from '../core/ui/str';
 
-// 再出口（壳经 window.BZR_settings_panel 取用；插件 renderer/ui 亦统一从这里取）
+// 再出口（插件 renderer/ui 统一从这里取）
 export { esc, iconSpan };
 
 /* ==================== 控件级工厂（跨布局/跨面板复用；源出原型定稿 renderCtl 口径） ==================== */

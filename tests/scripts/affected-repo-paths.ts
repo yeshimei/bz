@@ -28,7 +28,7 @@ export const REPO = {
   downloadsManifest: 'downloads/manifest.json',
   downloadsSkinCss: 'downloads/skins/bookshelf/kraft.css',
   toolsRecCore: 'tools/obsidian-face/lib/rec-core.js',
-  prototypesFakeObsidian: 'prototypes/diary/fake/fake-obsidian.ts',
+  fakeObsidianHelper: 'tests/helpers/fake-obsidian.ts',
   docChangelog: 'docs/changelog.md',
   issueFile: 'issues/534-test-affected-incremental.md',
   /** 本套测试自己（「不许有自指边」那条守卫要用它指自己） */
@@ -51,7 +51,7 @@ export const GUARD = {
   memoSkinDark: 'tests/memo/skin-dark.test.ts',
   uiScrollbar: 'tests/core/ui-scrollbar.test.ts',
   depsDirection: 'tests/home/deps-direction.test.ts',
-  renderPurity: 'tests/core/render-purity.test.ts',
+
   cssAggregationManifest: 'tests/core/css-aggregation-manifest.test.ts',
   skinPackCatalog: 'tests/core/skin-pack-catalog.test.ts',
   skinPackSplitGuard: 'tests/core/skin-pack-split-guard.test.ts',

@@ -150,7 +150,7 @@ export function bindYearbook(root: HTMLElement, data: YbData): YbHandle {
   }
 
   /** 心跳：优先 rAF；**rAF 被节流时用定时器兜底**。
-   *  实测（2026-09-22 评审壳）：窗口被遮挡 / 标签被盖住时，iframe 的 rAF 一帧都不来，
+   *  实测（2026-09-22，旧评审壳）：窗口被遮挡 / 标签被盖住时，iframe 的 rAF 一帧都不来，
    *  连 scroll 事件都跟着冻——时间驱动的表演会整幕僵在起始帧。观影志是「按秒演」的，
    *  所以补一条定时器心跳：rAF 220ms 没来就自己推进（绘制仍按真实时钟算 t，画面不会错位）。 */
   const rafFn = typeof requestAnimationFrame === 'function'

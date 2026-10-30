@@ -69,7 +69,7 @@ export interface BehaviorItem {
 
 /** 外观皮肤枚举（13 种：基础 5 + 高级 8）。
  *  ⚠️ ADR-0199 起除首套「orange」外全部远端化——本清单是**已知取值全集**
- *  （校验存量设置、评审壳清单用），**不代表可用**：能不能挂类看 core/skin-pack 就绪表。 */
+ *  （校验存量设置用），**不代表可用**：能不能挂类看 core/skin-pack 就绪表。 */
 export const ALL_APPEARANCES = [
   'orange', 'gray', 'black', 'white', 'calico',
   'neon', 'galaxy', 'liquidMetal', 'fire', 'crystal',

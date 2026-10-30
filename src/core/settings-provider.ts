@@ -27,7 +27,7 @@ export function saveSettings(): Promise<void> {
  *
  * 为什么不在 core 里直接拿设置面板（2026-10-30 用户实机踩过，两种写法都不行）：
  *  - 字面量 `import('../settings-panel')` 会被 esbuild 静态打进**每个**引用方：影院 / 书库 /
- *    知识盒 的行为包因此整块背上面板，而评审壳的假 obsidian 层没有 Setting / Component，
+ *    知识盒 的行为包因此整块背上面板，而旧评审壳（已退役）的假 obsidian 层没有 Setting / Component，
  *    构建当场失败；
  *  - 换成变量拼出的动态 import 看着两全，实则 CJS 产物里它退化成原生 `import()`，
  *    插件运行时解析不到那个相对路径 → 按钮点了只弹一句「设置面板没能打开」。
@@ -42,7 +42,7 @@ export function setSettingsPanelOpener(fn: (domainId?: string, anchorKey?: strin
 
 /**
  * 请求打开设置面板（可定位到某域、某设置项）。
- * 返回 false = 没人接管（测试 / 评审壳里没有面板），调用方自己给兜底文案。
+ * 返回 false = 没人接管（测试 / 旧评审壳（已退役）里没有面板），调用方自己给兜底文案。
  */
 export function requestSettingsPanel(domainId?: string, anchorKey?: string): boolean {
   if (!_panelOpener) return false;

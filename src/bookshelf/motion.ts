@@ -103,7 +103,7 @@ let lastHint = '';
 let bootPending = false;
 
 /** 演出进行中（busyUntil 前）：墙编排尚未落定。此间「数据签名未变的自动刷新」不该
- *  把正在演的墙换血（评审壳双 iframe 同源共享 localStorage，另一 iframe 重灌种子会
+ *  把正在演的墙换血（测试重灌种子会
  *  触发本侧 autoRefresh；插件侧 boot 演出中的数据落盘同理）——由 ui.ts renderWall
  *  藉此跳过本次重渲染（签名变了照常渲染，数据真变绝不因为演出而丢失）。 */
 let busyUntil = 0;

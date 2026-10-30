@@ -19,17 +19,17 @@
  *   读盘旋转   motionSyncSpin       同步进行中刷新钮常驻旋转（句柄池，停即收）
  *   播报滑入   motionStatusLine     状态行文案变化时轻滑入
  *   开始键     motionGuideIn        引导态浮现 + 手柄图标摇一摇
- *   关机断电   motionPanelOut       120ms 快速收黑后交还摘除（评审壳自检在关后
+ *   关机断电   motionPanelOut       120ms 快速收黑后交还摘除（测试在关后
  *                               150ms 断言面板不在 DOM——退场必须短于这个拍点）
  *
  * 原则（与 home/motion.ts 同款铁律）：
- *  - 禁 import obsidian / core——纯浏览器 API，插件与评审壳两侧都能跑；
+ *  - 禁 import obsidian / core——纯浏览器 API，插件里照常跑；
  *  - 台账对齐：fast 160 / move 200 / base 280 / impulse 740，接力 30ms；
  *    揭示用 out 曲线，位移用 move 曲线；
  *  - reduced() 只认 ?rm=1（评审期默认无视系统 RM 放完整演出）；无 WAAPI 宿主落终态；
  *  - 注入件（扫描线/扫光/纸屑画布）一律 absolute + pointer-events:none + aria-hidden，
  *    演出完自毁；进度条/柱条的「点亮/长出」只走 transform / clip-path——
- *    clip-path 裁剪不改 getBoundingClientRect（评审壳自检按布局宽断言进度条可见），
+ *    clip-path 裁剪不改 getBoundingClientRect（测试按布局宽断言进度条可见），
  *    scaleY/scaleX 不参与布局——几何一字不动，终态 UI 与今天完全一致；
  *  - 长驻循环只有读盘旋转一处，句柄池集中管理；motionTeardown 全收。
  */
@@ -127,7 +127,7 @@ const EXIT_ANIM_ID = 'bz-gs-panel-exit';
 
 /**
  * 关机断电 = 快速收黑 120ms 再交还摘除（done 由调用方收口）。
- * 120ms 是硬拍点：评审壳自检 ESC 后 sleep(150) 即断言面板不在 DOM——退场必须短于它。
+ * 120ms 是硬拍点：测试 ESC 后 sleep(150) 即断言面板不在 DOM——退场必须短于它。
  * 无 WAAPI 宿主同步收口，绝不让摘除晚到（jsdom 测试零感知）。
  */
 export function motionPanelOut(panel: HTMLElement, done: () => void): void {
@@ -168,7 +168,7 @@ function scanline(frame: HTMLElement): void {
 }
 
 /**
- * 上电开机：面板壳从黑到亮聚焦（纯 opacity/filter——评审壳自检在入场期间断言
+ * 上电开机：面板壳从黑到亮聚焦（纯 opacity/filter——测试在入场期间断言
  * 「移动满幅 412±1px / 贴底 ±1.5px」，位移与缩放都会踩断言，壳入场一律不动几何）。
  * boot 一次：扫描线掠过 + 海报头「卡带插入」。
  */

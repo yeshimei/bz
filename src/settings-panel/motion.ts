@@ -33,7 +33,7 @@
  *   空层        空态：轻浮一次（一次性揭示，克制）。
  *
  * ── 纪律（与 cinema/favorites/home 动效批同口径） ──
- *  - 纯浏览器 API，不 import obsidian / core 服务（评审壳与插件两侧同跑）。
+ *  - 纯浏览器 API，不 import obsidian / core 服务（插件里照常跑）。
  *  - 台账 fast 160 / move 200 / base 280 / impulse 740，接力 30ms；揭示 out 曲线、
  *    位移 move 曲线。
  *  - reduced-motion（评审期口径）：默认无视系统「减少动态效果」放完整演出；?rm=1 显式
