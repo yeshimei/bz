@@ -85,12 +85,28 @@ function defaultGunzip(bytes: Uint8Array): Uint8Array {
   return new Uint8Array(out.buffer, out.byteOffset, out.byteLength);
 }
 
-/** 缺省下载：requestUrl 的 arrayBuffer（别用 text——二进制过一遍 UTF-8 会当场坏掉） */
+/**
+ * 缺省下载：requestUrl 的 arrayBuffer（别用 text——二进制过一遍 UTF-8 会当场坏掉）。
+ *
+ * 带 3 分钟硬时限：目录包是 MB 级（国内 jsDelivr 边缘实测约 40~110 KB/s），
+ * 全程不给时限的话，一条卡死的通道会把整趟自动更新挂在那儿——用户看到的是
+ * 「自动更新开着，但它一直没动静」（2026-10-30 与 self-update 的大文件时限同批补）。
+ */
+const BUNDLE_FETCH_TIMEOUT_MS = 180_000;
+
 async function defaultFetchBytes(url: string): Promise<Uint8Array> {
-  const res = await requestUrl({ url, method: 'GET', throw: true });
-  const ab = (res as { arrayBuffer?: ArrayBuffer }).arrayBuffer;
-  if (!ab) throw new Error('响应没有二进制体');
-  return new Uint8Array(ab);
+  let timer: ReturnType<typeof setTimeout> | null = null;
+  try {
+    const timeout = new Promise<never>((_, reject) => {
+      timer = setTimeout(() => reject(new Error(`超时（${BUNDLE_FETCH_TIMEOUT_MS} ms 内没有下完）`)), BUNDLE_FETCH_TIMEOUT_MS);
+    });
+    const res = await Promise.race([requestUrl({ url, method: 'GET', throw: true }), timeout]);
+    const ab = (res as { arrayBuffer?: ArrayBuffer }).arrayBuffer;
+    if (!ab) throw new Error('响应没有二进制体');
+    return new Uint8Array(ab);
+  } finally {
+    if (timer) clearTimeout(timer);
+  }
 }
 
 /** 读一份相对 downloads/ 的文本（不存在/坏读 → null） */

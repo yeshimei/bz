@@ -85,9 +85,11 @@ export default interface BzSettings {
   dockTrust: Record<string, DockTrustRecord>;
 
   // ===== ℹ️ 关于（通用页首组，2026-10-28 对外分发）=====
-  /** 自动更新：开 = 启动 15 秒后静默检查并安装新版本（24h 节流）；关（缺省）= 只手动检查，
-   *  发现新版也**不自动覆盖**。对外分发的缺省必须是关 —— 自动更新意味着作者每推一次主干，
-   *  所有用户当场换代码；自用顺手，给别人用是事故面（core/self-update.ts 消费）。
+  /** 自动更新：开（缺省）= 启动 15 秒后静默检查并安装新版本（24h 节流），
+   *  并**一并更新插件依赖的下载物**（皮肤、索引/数据表、三个外部工具包，见 core/auto-assets.ts）；
+   *  关 = 只手动检查，发现新版也**不自动覆盖**。
+   *  2026-10-30 用户拍板缺省改为开：分发给别人之后，「更新了但还是不好用」多半是资源停在旧版，
+   *  比「不更新」更难查。装之前照旧备份旧三件套，坏包可回滚。
    *  注意它只管「装不装」，不管「查不查」：关着也仍会在面板里看到「有新版」。 */
   autoUpdate: boolean;
   /** 首次引导是否走完（含「以后再说」）：false = 下次启动还会弹（core/setup-wizard）。
@@ -633,6 +635,21 @@ const MEMO_KEY_MIGRATIONS: Array<[string, string]> = [
 /** onload 对 loadData 原始对象就地迁移，随后才与 DEFAULT_SETTINGS 合并。
  *  返回是否发生了迁移（旧键存在即算，含新键已在的场景）——C16：调用方据此调度落盘，
  *  否则 data.json 旧键长期残留、每次启动重复迁移 */
+/**
+ * 自动更新缺省翻牌（2026-10-30 用户拍板：缺省从关改开）。
+ * 只改 DEFAULT_SETTINGS 不够——已装用户的 data.json 里存着显式的 `false`，
+ * 合并默认值时永远被覆盖，他们一辈子走不到新缺省。这里做**一次性**迁移：
+ * 迁过打标记，此后用户自己关掉的保持关掉，不会被下次启动又打开。
+ */
+export function migrateAutoUpdateDefault(raw: unknown): boolean {
+  if (!raw || typeof raw !== 'object') return false;
+  const rec = raw as Record<string, unknown>;
+  if (rec.autoUpdateDefaultedOn === true) return false;
+  rec.autoUpdateDefaultedOn = true;
+  rec.autoUpdate = true;
+  return true;
+}
+
 export function migrateMemoSettingKeys(raw: unknown): boolean {
   if (!raw || typeof raw !== 'object') return false;
   const rec = raw as Record<string, unknown>;
@@ -956,8 +973,8 @@ export const DEFAULT_SETTINGS: BzSettings = {
   // `<插件目录>/storage`（2026-10-29，小写；老库则认领原 CONFIG/STORAGE）。
   storagePath: '',
 
-  // 自动更新：缺省关（2026-10-28 对外分发拍板）——见 interface 里的说明
-  autoUpdate: false,
+  // 自动更新：缺省开（2026-10-30 用户拍板；含插件本体 + 在线资源 + 外部工具包）——见 interface 说明
+  autoUpdate: true,
   // 首次引导没走过（首次启动会弹；走完或被跳过后置 true）
   setupDone: false,
   // 自定义镜像源（空 = 只用官方通道）

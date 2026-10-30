@@ -351,7 +351,7 @@ export async function downloadSkinUpdates(app: unknown, manifest: DownloadManife
 
   await mapLimit(todo, 4, async (e) => {
     try {
-      const text = await ensureAssetWithHash(app, e.file, e.sha256, `皮肤「${e.name}」`);
+      const text = await ensureAssetWithHash(app, e.file, e.sha256, `皮肤「${e.name}」`, e.size);
       if (text !== null) {
         byFile.set(e.file, { entry: e, text });
         await removeLegacyFile(app, e.file); // 旧落位副本（plugins/bz/skins/ 时代）顺手清掉

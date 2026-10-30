@@ -59,6 +59,24 @@ export function remotesFor(fileName: string): string[] {
  */
 const CHANNEL_TIMEOUT_MS = 8000;
 
+/* 正文下载时限（2026-10-30 实测补）：8 s 那条是给**清单**这种几 KB 的小文件定的。
+ * 正文完全不是一回事——国内直连 jsDelivr 边缘实测约 40~110 KB/s：
+ * 手册 154 KB / 2.6 s 没问题，但「豆瓣影视索引」5.5 MB 要 **51 s**、main.js 2.8 MB 要 18~48 s。
+ * 用 8 s 给正文封顶，结果是「自动更新开了也永远下不完」，面板却说有新版。
+ * 所以正文按体积估时限（40 KB/s 下限，封顶 3 分钟）：知道体积就按体积算，
+ * 不知道体积就退回 8 s（保持小文件的快速失败）。 */
+const CONTENT_TIMEOUT_MIN_MS = CHANNEL_TIMEOUT_MS;
+const CONTENT_TIMEOUT_CAP_MS = 180_000;
+const CONTENT_BYTES_PER_SEC = 40 * 1024;
+
+/** 正文下载的单通道时限：体积已知按体积估，未知退回 8 s */
+function contentTimeoutFor(sizeBytes?: number): number {
+  const size = Number(sizeBytes) || 0;
+  if (size <= 0) return CHANNEL_TIMEOUT_MS;
+  const ms = Math.round((size / CONTENT_BYTES_PER_SEC) * 1000);
+  return Math.min(CONTENT_TIMEOUT_CAP_MS, Math.max(CONTENT_TIMEOUT_MIN_MS, ms));
+}
+
 /** 最近一次成功拿到内容的通道基址（空 = 还不知道） */
 let preferredBase = '';
 
@@ -93,12 +111,12 @@ export function resetChannelPreferenceForTests(): void {
  * 未缓存的文件一律被拒）。用 throw:true 只能拿到一句 `status 403`，把「通道拒绝分发」
  * 误读成「网络不通」，排查方向整个跑偏。
  */
-async function requestText(url: string): Promise<string> {
+async function requestText(url: string, timeoutMs: number = CHANNEL_TIMEOUT_MS): Promise<string> {
   let timer: ReturnType<typeof setTimeout> | null = null;
   try {
     const req = requestUrl({ url, method: 'GET', throw: false });
     const timeout = new Promise<never>((_, reject) => {
-      timer = setTimeout(() => reject(new Error(`超时（${CHANNEL_TIMEOUT_MS} ms 内没有响应）`)), CHANNEL_TIMEOUT_MS);
+      timer = setTimeout(() => reject(new Error(`超时（${timeoutMs} ms 内没有响应）`)), timeoutMs);
     });
     const res = await Promise.race([req, timeout]);
     const text = String(res?.text || '');
@@ -275,6 +293,8 @@ export async function ensureAssetWithHash(
   fileName: string,
   expected: string,
   label: string,
+  /** 体积（清单条目 size）：给了就按它放大单通道时限，避免大文件被 8 s 判死 */
+  sizeBytes?: number,
 ): Promise<string | null> {
   const want = String(expected || '').toLowerCase();
   const cached = await readAsset(app, fileName);
@@ -297,9 +317,10 @@ export async function ensureAssetWithHash(
     /* 没有离线包：走网络 */
   }
 
+  const timeoutMs = contentTimeoutFor(sizeBytes);
   for (const url of remotesFor(fileName)) {
     try {
-      const text = await requestText(url);
+      const text = await requestText(url, timeoutMs);
       if (want && textSha256(text) !== want) {
         lastErr = `${hostOf(url)} 内容 sha256 不匹配（可能被篡改或版本错位）`;
         continue;

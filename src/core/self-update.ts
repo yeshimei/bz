@@ -6,7 +6,8 @@
  *  2. 产物：该 tag 下的三件套 manifest.json / main.js / styles.css。
  * 两段分开的理由见 core/remote-base.ts 文件头——指针必须恒可达，产物必须是冻结的提交。
  *
- * 行为分两档（设置键 `autoUpdate`，缺省**关**）：
+ * 行为分两档（设置键 `autoUpdate`，缺省**开**；2026-10-30 用户拍板）：
+ *  开着时同一趟启动链还会更新插件依赖的下载物，见 core/auto-assets.ts。
  *  - 关：仍会检查（启动 15 秒后 / 打开设置面板时），发现新版只记账 + 面板呈现
  *        「有新版 vX」；**不下载、不覆盖**。要不要装由人点「更新」。
  *  - 开：检查到新版直接装（备份旧版 → 覆盖三件套 → 通知重载）。
@@ -37,6 +38,15 @@ const CHECK_DELAY_MS = 15 * 1000;
  * 五条通道最坏也不会超过十几秒——先说话，再等结果。
  */
 const FETCH_TIMEOUT_MS = 6000;
+/**
+ * 大文件（main.js / styles.css）的单通道时限。
+ *
+ * 与指针的 6 秒分开：指针是几百字节，慢到 6 秒就是网络真有问题；而三件套里 main.js 有
+ * **2.8 MB**，2026-10-30 实测国内直连 jsDelivr 边缘 **18～48 秒**（fastly 48s / gcore 18s）。
+ * 用同一个 6 秒等于给本体判死刑：检查能过、下载永远超时，面板还显示「有新版」——
+ * 用户看到的是「自动更新开着，但从来没更新过」。慢就慢，让它下完。
+ */
+export const FETCH_ASSET_TIMEOUT_MS = 90 * 1000;
 const LAST_CHECK_KEY = 'bz-selfupdate:last-check';
 /** 已下载待重载的版本（`{"version":"1.34.0"}`）：磁盘已是新版、运行中还是旧的 */
 const PENDING_KEY = 'bz-selfupdate:pending';
@@ -107,8 +117,8 @@ function withTimeout<T>(p: Promise<T>, ms: number, label: string): Promise<T> {
   });
 }
 
-async function fetchText(url: string): Promise<string> {
-  const res = await withTimeout(requestUrl({ url, method: 'GET', throw: true }), FETCH_TIMEOUT_MS, url);
+async function fetchText(url: string, timeoutMs: number = FETCH_TIMEOUT_MS): Promise<string> {
+  const res = await withTimeout(requestUrl({ url, method: 'GET', throw: true }), timeoutMs, url);
   return String(res.text || '');
 }
 
@@ -118,19 +128,22 @@ async function fetchText(url: string): Promise<string> {
  * 第一个单独试（raw 最新鲜），失败了把**其余通道并发**打出去：串行试五条时，
  * 国内半通网络下用户要盯着转圈半分钟才看到「网络不通」。
  */
-async function fetchFirst(urls: string[]): Promise<{ text: string; url: string }> {
+async function fetchFirst(
+  urls: string[],
+  timeoutMs: number = FETCH_TIMEOUT_MS,
+): Promise<{ text: string; url: string }> {
   const [head, ...rest] = urls;
   let lastErr: unknown = null;
   if (head) {
     try {
-      return { text: await fetchText(head), url: head };
+      return { text: await fetchText(head, timeoutMs), url: head };
     } catch (e) {
       lastErr = e;
     }
   }
   if (rest.length) {
     try {
-      return await Promise.any(rest.map(async (url) => ({ text: await fetchText(url), url })));
+      return await Promise.any(rest.map(async (url) => ({ text: await fetchText(url, timeoutMs), url })));
     } catch (e) {
       // AggregateError：里面才是各通道真正的原因
       const errs = (e as { errors?: unknown[] })?.errors;
@@ -270,7 +283,7 @@ async function backupCurrent(app: unknown, version: string): Promise<void> {
 
 export interface SelfUpdateOptions {
   /**
-   * 发现新版时是否直接安装。缺省 = 跟随设置 `autoUpdate`（缺省关）。
+   * 发现新版时是否直接安装。缺省 = 跟随设置 `autoUpdate`（缺省开）。
    * 面板「更新」按钮显式传 true：人点了才装，与开关无关。
    */
   apply?: boolean;
@@ -338,9 +351,10 @@ export async function checkSelfUpdate(app: unknown, opts: SelfUpdateOptions = {}
   if (!apply) return 'available';
 
   // 有新版本才拉大文件（省流量）：三件套全部来自**该 tag**，不是 master
-  const js = await fetchFirst(repoRemotesForTag(pointer.tag, 'main.js'));
-  const css = await fetchFirst(repoRemotesForTag(pointer.tag, 'styles.css'));
-  const mf = await fetchFirst(repoRemotesForTag(pointer.tag, 'manifest.json'));
+  // 三件套按「大文件」时限拉：2.8 MB 的 main.js 在慢速边缘上要几十秒（见 FETCH_ASSET_TIMEOUT_MS）
+  const js = await fetchFirst(repoRemotesForTag(pointer.tag, 'main.js'), FETCH_ASSET_TIMEOUT_MS);
+  const css = await fetchFirst(repoRemotesForTag(pointer.tag, 'styles.css'), FETCH_ASSET_TIMEOUT_MS);
+  const mf = await fetchFirst(repoRemotesForTag(pointer.tag, 'manifest.json'), FETCH_ASSET_TIMEOUT_MS);
   if (!looksLikeBundle(js.text)) throw new Error('远端 main.js 内容异常，放弃覆盖');
   // manifest.json 只有几百字节，不能拿 looksLikeBundle 的「>1000 字节」去卡它——
   // 那份校验是为 main.js 设的（防 CDN 回 HTML 错误页）。清单的可信判据是「能解析且 id 对得上」。

@@ -20,6 +20,7 @@ import { setPluginRelDir, vaultBasePathOf } from './core/plugin-path';
 import { scheduleSelfUpdateCheck } from './core/self-update';
 import { applySkinManifest, loadLocalSkinPack } from './core/skin-pack';
 import { refreshManifest } from './core/download-manifest';
+import { autoUpdateAssets } from './core/auto-assets';
 import { setAISettingsProvider, resetAIProviderCache } from './core/ai';
 import { setSettingsProvider, setSettingsSaver } from './core/settings-provider';
 import { bindMobileViewport, unbindMobileViewport } from './core/viewport';
@@ -30,7 +31,7 @@ import { attachObsidianAdapter, detachObsidianAdapter } from './core/obsidian-ad
 import { bootstrapStorageDir } from './core/storage';
 import { setupAlreadyDone } from './core/setup-state';
 import { isMobileEnv } from './core/mobile';
-import BzSettings, { DEFAULT_SETTINGS, migrateMemoSettingKeys, migrateAutoLinkSettings, migrateRetiredAIKeys, migrateRetiredFavoritesSortKey, migrateLinkMinScoreScale, migrateRetiredSecondBrainKeys, migrateRetiredJevKeys, migrateAsrKeys, migrateExternalToolKeys } from './settings';
+import BzSettings, { DEFAULT_SETTINGS, migrateAutoUpdateDefault, migrateMemoSettingKeys, migrateAutoLinkSettings, migrateRetiredAIKeys, migrateRetiredFavoritesSortKey, migrateLinkMinScoreScale, migrateRetiredSecondBrainKeys, migrateRetiredJevKeys, migrateAsrKeys, migrateExternalToolKeys } from './settings';
 
 // 备忘录（memo 域，ADR-0092 旧备忘录域退役后 memo.json 唯一属主，ADR-0117 正名：UI/交互/写盘/引用同步归本域；
 // 被动捕获入口——启动自动弹出/file-open 提醒/侧栏图标——落点=备忘录面板）
@@ -319,6 +320,8 @@ export default class BzPlugin extends Plugin {
     // issue 260 正名迁移：旧 todo* 面板设置键就地改名（读旧写新删旧）；
     // C16：发生迁移即调度落盘——原先只改内存，data.json 旧键长期残留、每次启动重复迁移
     const memoKeysMigrated = migrateMemoSettingKeys(loaded);
+    // 2026-10-30 用户拍板：「自动更新」缺省改开；老库 data.json 里躺着的显式 false 一次性翻过来
+    const autoUpdateMigrated = migrateAutoUpdateDefault(loaded);
     // ADR-0141 迁移：自动关联范围键退役（恒为三盒）+ 索引白名单里的三盒条目剔除
     const autoLinkMigrated = migrateAutoLinkSettings(loaded);
     // issue 342 后续：「上下文窗口」设置行删除（模型固有属性、零消费点），aiContextOverrides 键退役
@@ -373,6 +376,7 @@ export default class BzPlugin extends Plugin {
       retiredJevKeysMigrated ||
       asrKeysMigrated ||
       externalToolKeysMigrated ||
+      autoUpdateMigrated ||
       storageDirBootstrapped
     ) {
       void this.saveSettings().catch((e) => console.error('[bz] 设置键迁移落盘失败:', e));
@@ -477,11 +481,20 @@ export default class BzPlugin extends Plugin {
       // 下载只听用户的，在设置面板「在线资源」组或手册/日志入口触发）；失败静默等下次启动，
       // 组内失败态由 UI 自行呈现。
       scheduleSelfUpdateCheck(getApp, () => this.unloaded, async () => {
+        let manifest: Parameters<typeof applySkinManifest>[1] | null = null;
         try {
-          const { manifest, previous } = await refreshManifest(getApp());
-          await applySkinManifest(getApp(), manifest, previous);
+          const fetched = await refreshManifest(getApp());
+          manifest = fetched.manifest;
+          await applySkinManifest(getApp(), manifest, fetched.previous);
         } catch (e) {
           console.warn('[bz] 下载清单拉取失败（已静默，等下次启动/手动重试）:', (e as Error)?.message || e);
+        }
+        // 自动更新开着时，插件本体之外的东西也一起跟上：皮肤、索引、数据表、三个外部工具包
+        //（2026-10-30 用户拍板：开了自动更新就不该只换插件本体）。清单复用上一段已拉的那份。
+        try {
+          await autoUpdateAssets(getApp(), manifest);
+        } catch (e) {
+          console.warn('[bz] 自动更新在线资源失败（已静默）:', (e as Error)?.message || e);
         }
       });
       // 知识盒/剪藏本引用同步无条件常驻（issue 336 / ADR-0149：knowledge.json、clipbook.json

@@ -613,7 +613,7 @@ async function downloadOne(app: unknown, manifest: DownloadManifest, id: string)
     return;
   }
   // 走 sha256 校验通道（与皮肤同口径）：清单 hash 对不上即拒收，不把坏内容写进本地
-  await ensureAssetWithHash(app, entry.file, entry.sha256, entry.name);
+  await ensureAssetWithHash(app, entry.file, entry.sha256, entry.name, entry.size);
 }
 
 /** 组级动作的忙位（两组各一枚：同时点两组的「全部更新」互不阻塞，自己重入仍被拦） */

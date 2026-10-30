@@ -13,6 +13,7 @@ import { requestUrl } from 'obsidian';
 import { resetObsidianMocks } from '../mock-obsidian-entry';
 import { MockVault } from '../mock-vault';
 import { checkSelfUpdate, resetSelfUpdateState, selfUpdateState } from '../../src/core/self-update';
+import { setSettingsProvider } from '../../src/core/settings-provider';
 
 const LOCAL = '1.33.0';
 const NEW = '1.34.0';
@@ -117,6 +118,31 @@ describe('checkSelfUpdate：安装', () => {
     const st = await selfUpdateState(app);
     expect(st.pending).toBe(NEW);
     expect(st.onDisk).toBe(NEW);
+  });
+
+  it('没传 apply 时跟随设置：autoUpdate 打开（缺省）→ 自动装', async () => {
+    const app = appWithPlugin();
+    const { vault } = app;
+    setSettingsProvider(() => ({ autoUpdate: true }) as never);
+    stubRemote();
+
+    const r = await checkSelfUpdate(app, { throttle: false });
+
+    expect(r).toBe('installed');
+    expect(vault.files.get('.obsidian/plugins/bz/manifest.json')).toContain(NEW);
+  });
+
+  it('没传 apply 时跟随设置：autoUpdate 关着 → 只记账不装', async () => {
+    const app = appWithPlugin();
+    const { vault } = app;
+    setSettingsProvider(() => ({ autoUpdate: false }) as never);
+    stubRemote();
+    const before = vault.files.get('.obsidian/plugins/bz/manifest.json');
+
+    const r = await checkSelfUpdate(app, { throttle: false });
+
+    expect(r).toBe('available');
+    expect(vault.files.get('.obsidian/plugins/bz/manifest.json')).toBe(before);
   });
 
   it('main.js 像 HTML 错误页（CDN 被墙的常见形态）→ 拒收，不覆盖', async () => {
