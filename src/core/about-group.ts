@@ -129,14 +129,14 @@ export async function aboutGroup(): Promise<GroupDecl> {
     onClick: () => void import('./setup-wizard').then((m) => m.openEnvironmentCheck(getApp())),
   };
 
-  // 赞赏（2026-10-30 落地）：按钮文案叫「留言」而不是「打赏/赞赏」——用户点进来是想说两句，
-  // 赞赏是顺带的（用户拍板）。弹窗见 core/reward-dialog.ts：微信赞赏码内置（esbuild dataurl，
+  // 赞赏（2026-10-30 落地）：按钮文案先叫「留言」，同日改口径为「支持作者」，行名再改「打赏」——
+  // 点进来是为了支持作者，留言是顺带的。弹窗见 core/reward-dialog.ts：微信赞赏码内置（esbuild dataurl，
   // 68KB 图不走远端资产通道），下面挂留名名单，名单空时显示信笺空态。
   // 收款码不塞 main.js 的旧口径据此作废：固定不变的小图走远端要多一条二进制通道，不值。
   const rewardRow: SettingsRow = {
     type: 'button',
-    name: '赞赏',
-    buttonText: '留言',
+    name: '打赏',
+    buttonText: '支持作者',
     onClick: () => openRewardDialog(),
   };
 

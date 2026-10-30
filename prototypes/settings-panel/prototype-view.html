@@ -15,6 +15,10 @@
 <link rel="stylesheet" href="../../src/core/styles.css">
 <link rel="stylesheet" href="../../src/core/ui/tokens.css">
 <link rel="stylesheet" href="../../src/core/ui/components.css">
+<!-- 赞赏弹窗（core/reward-dialog.ts）：聚合次序里紧跟 components（build-css SOURCES）。
+     ⚠️ 必须链在本 iframe 文档——弹窗真身在这里跑，只挂外景壳 prototype.html 等于没链
+     （2026-10-30 实测：外景链了、iframe 没链，弹窗裸奔；同 2026-09-23 番茄钟预览卡之症） -->
+<link rel="stylesheet" href="../../src/core/reward-dialog.css">
 <link rel="stylesheet" href="../../src/home/styles.css">
 <!-- 收藏本域样式：本面板「收藏本 → 标签管理」是 custom 行（域内自绘列表），行骨架
      .bz-fav-tagmgr-* 与图标尺寸（.bz-fav-tagmgr-ic/-btn svg）全在 favorites/styles.css，
