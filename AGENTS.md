@@ -17,6 +17,7 @@ Obsidian 插件。域 = `src/<域>/`，`core` 是共享层。中文输出。
 - 不手改生成物：根 `main.js` / `styles.css`、`changelog-data.ts`、`prototypes/**/prototype-*.js`、`downloads/manifest.json`、`downloads/skins/`、`tools/dock-watch/dock-core.cjs`（+ 同目录 `core-version.json`）。
 - 命令 ID `bz-<域>-<动作>`；通知正文不带 emoji（新语义查 `src/core/notice.ts` 的 ICONS）。
 - **新增弹窗必须穿本域的皮。** `uiModal` / `openFlowDialog` 只给中性壳（400px 窄卡、居中正文、灰底胶囊按钮），直接裸用就是「另一个插件弹出来的框」——2026-10-31 引导页的关闭确认就这么翻车过。做法：`uiModal` 传 `className`、`openFlowDialog` 传 `className`，皮肤规则写进该域的 `styles.css`（`#__shared_confirm_popup__.<皮肤类> …` 起手，因为壳的居中/宽度挂在 id 上，两个类压不住）；本域已有弹窗体就复用，不要另起一套。
+- **遮罩之上不许再压一层可点的铺满层。** 点遮罩关闭的判据是「click 的 target 是遮罩本体」，再叠一层 `position: fixed; inset: 0` 的可点容器，target 就永远落在那层上，遮罩点了没反应（2026-10-31 日记兜底纸：没设文件夹时整张桌被 `.bz-diary-fallback` 盖住，只剩右上角 X 能关）。两种正确做法：那层 `pointer-events: none`，或把它的节点一起写进遮罩的命中判据（日记取的是后者，见 ADR-0230 补记）。全屏面板（本身就铺满、没有遮罩空白）不受这条约束。
 - 改动走 worktree（仓库外，从最新 master 分叉）；**worktree 内不构建**——产物直出本机 vault（`esbuild.config.mjs` 硬编码）与仓库根。
 
 ## 「走快速原型」= 不许验证
