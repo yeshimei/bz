@@ -1,14 +1,17 @@
 /* ============================================================
  * bz · 赞赏弹窗（core/reward-dialog.ts）
  *
- * 设置 → 关于 → 「留言」按钮打开的独立弹窗：一张微信赞赏码 + 一份留名名单。
+ * 设置 → 关于 → 「支持作者」按钮打开的独立弹窗：一张微信赞赏码 + 一份留名名单。
  * 版式一比一来自 `.scratch/reward/empty.html` 定稿（2026-10-30 用户逐轮确认：
- * 米白纸、金色、衬线题赠、信笺横线空态、底部金弧落款），**样式值不随设计 token 改**——
+ * 米白纸、金色、衬线题赠、信笺横线空态、底部金弧），**样式值不随设计 token 改**——
  * 这里不是通用组件，是一张「纸」，明暗主题下都保持纸的样子。
  *
- * 为什么叫「留言」不叫「赞赏」：用户点进来的动机是「我用了，想说两句」，
- * 赞赏是顺带的（2026-10-30 用户拍板）。入口按钮就叫「留言」；本版未注册命令，
- * 真要挂命令时走 `bz-core-reward` 口径，名字照旧用「留言」。
+ * 入口文案：2026-10-30 先挂「留言」，同日用户改口径为「支持作者」（点进来是为了支持作者，
+ * 留言是顺带的）。按钮文案跟口径走；本版未注册命令，真要挂命令时走 `bz-core-reward` 口径。
+ * 同日二轮收紧：码下那句「请务必留下一句话」删掉（不再逼人留言）、底部金弧上的落款字
+ * （「谁来过，我记得」+ `bz`）也删只留弧、空态改「还没有人打赏」、关于组行名「赞赏」改「打赏」。
+ * 引言句换稿：原客套话（先说声谢谢）删掉，换成作者处境的实话说白——开发维护与教程视频
+ * 都是作者一个人、完全免费、无广告、无其他渠道收益（2026-10-30 用户定稿）。
  *
  * 赞赏码为什么内置：图固定不变、68KB，走 downloads/ 远端要等一次网络往返，
  * 且清单层只支持单文件文本与 tar.gz 目录包，为此单开一条二进制通道不划算。
@@ -83,7 +86,7 @@ export function renderRewardList(names: readonly RewardName[]): HTMLOListElement
 export function renderRewardEmpty(): HTMLDivElement {
   const el = document.createElement('div');
   el.className = 'bz-rw-empty';
-  el.innerHTML = '<div class="bz-rw-mark"></div><p>还没有人留名。</p>';
+  el.innerHTML = '<div class="bz-rw-mark"></div><p>还没有人打赏。</p>';
   return el;
 }
 
@@ -113,7 +116,7 @@ export function buildRewardBody(names: readonly RewardName[], onClose: () => voi
   head.className = 'bz-rw-head';
   head.innerHTML =
     '<div class="bz-rw-kicker">题赠</div>' +
-    '<p class="bz-rw-lead">如果愿意支持一下，<br>多少都是心意，先说声谢谢。</p>';
+    '<p class="bz-rw-lead">插件的开发维护和教程视频制作都是作者一个人，<br>完全免费、无广告，也没有任何其他渠道的收益。</p>';
   root.appendChild(head);
 
   const code = document.createElement('div');
@@ -125,10 +128,6 @@ export function buildRewardBody(names: readonly RewardName[], onClose: () => voi
   img.alt = '微信赞赏码';
   box.appendChild(img);
   code.appendChild(box);
-  const note = document.createElement('p');
-  note.className = 'bz-rw-note';
-  note.innerHTML = '请务必<em>留下一句话</em>。';
-  code.appendChild(note);
   const ways = document.createElement('p');
   ways.className = 'bz-rw-ways';
   ways.textContent = '微信扫码';
@@ -142,13 +141,13 @@ export function buildRewardBody(names: readonly RewardName[], onClose: () => voi
 
   const foot = document.createElement('div');
   foot.className = 'bz-rw-foot';
-  foot.innerHTML = FOOT_ARC + '<p>谁来过，我记得</p><div class="bz-rw-seal">bz</div>';
+  foot.innerHTML = FOOT_ARC;
   root.appendChild(foot);
 
   return root;
 }
 
-/** 打开赞赏弹窗（设置「关于」组 → 「留言」）。
+/** 打开赞赏弹窗（设置「关于」组 → 「支持作者」）。
  *  关闭钮要拿 close 句柄，而 content 在 open 之前就得建好——先建 body、占位一个闭包，
  *  open 返回后再把句柄填进去（点击发生在返回之后，闭包读到的一定是真句柄）。 */
 export function openRewardDialog(): void {
