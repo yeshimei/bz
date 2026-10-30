@@ -33,7 +33,7 @@ function findDialog(): HTMLElement | null {
 
 /** 首设面板（三域共用 setup-screen，挂 body 的全屏遮罩） */
 function findSetup(): HTMLElement | null {
-  return [...document.querySelectorAll('div')].find((d) => d.classList.contains('bz-setup--mask')) as HTMLElement | null;
+  return [...document.querySelectorAll('div')].find((d) => d.classList.contains('bz-su--mask')) as HTMLElement | null;
 }
 
 describe('UIManager 解锁弹窗', () => {
@@ -65,12 +65,12 @@ describe('UIManager 解锁弹窗', () => {
     // 同一块面板要讲清「一把密码管三处」——从日记/密码本进来的用户才知道自己在设全局主密码
     expect(dialog.textContent).toContain('保险库');
     expect(dialog.textContent).toContain('密码本');
-    const inputs = dialog.querySelectorAll('.bz-setup-input');
+    const inputs = dialog.querySelectorAll('.bz-su-input');
     expect(inputs.length).toBe(2);
     expect((inputs[0] as HTMLInputElement).type).toBe('text'); // 首设明文：掩码下输错只能等提交才知道
     expect((inputs[1] as HTMLInputElement).type).toBe('text');
     // 两框各占一个 field：上下排列，不并排
-    expect(dialog.querySelectorAll('.bz-setup-field').length).toBe(2);
+    expect(dialog.querySelectorAll('.bz-su-field').length).toBe(2);
     const confirmBtn = dialog.querySelector('[data-su="go"]') as HTMLElement;
     // 两次不一致
     (inputs[0] as HTMLInputElement).value = 'pw123';
@@ -481,7 +481,7 @@ describe('EncryptAppController', () => {
     await waitFor(() => !!findSetup());
     // 首设：三域共用面板，两遍明文 + 勾选
     const dialog = findSetup()!;
-    const inputs = dialog.querySelectorAll('.bz-setup-input');
+    const inputs = dialog.querySelectorAll('.bz-su-input');
     const confirmBtn = dialog.querySelector('[data-su="go"]') as HTMLElement;
     (inputs[0] as HTMLInputElement).value = 'pw12';
     (inputs[1] as HTMLInputElement).value = 'pw12';
@@ -1246,7 +1246,7 @@ describe('解锁弹窗：清单损坏重设确认 + 首设写失败（雷 1/4 UI
       const p = ui.showPasswordDialog();
       await waitFor(() => !!findSetup());
       const dialog = findSetup()!;
-      const inputs = dialog.querySelectorAll('.bz-setup-input');
+      const inputs = dialog.querySelectorAll('.bz-su-input');
       const confirmBtn = dialog.querySelector('[data-su="go"]') as HTMLElement;
       (inputs[0] as HTMLInputElement).value = 'pw12';
       (inputs[1] as HTMLInputElement).value = 'pw12';

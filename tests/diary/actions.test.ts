@@ -354,10 +354,10 @@ describe('收进信封（加密）的守卫与失败分支', () => {
       text: 'x',
       segments: [],
     });
-    await vi.waitFor(() => expect(document.querySelector('.bz-setup--mask')).toBeTruthy());
+    await vi.waitFor(() => expect(document.querySelector('.bz-su--mask')).toBeTruthy());
     // 本域火漆框不出现：它只有 unlock()，没有清单时输什么都解不开
     expect(q('.bz-diary-pass').hidden).toBe(true);
-    const su = document.querySelector('.bz-setup--mask') as HTMLElement;
+    const su = document.querySelector('.bz-su--mask') as HTMLElement;
     (su.querySelector('[data-su="p1"]') as HTMLInputElement).value = '主密码-123';
     (su.querySelector('[data-su="p2"]') as HTMLInputElement).value = '主密码-123';
     const ack = su.querySelector('[data-su="ack"] input') as HTMLInputElement;
@@ -392,7 +392,7 @@ describe('收进信封（加密）的守卫与失败分支', () => {
       text: 'x',
       segments: [],
     });
-    await vi.waitFor(() => expect(document.querySelector('.bz-setup--mask')).toBeTruthy());
+    await vi.waitFor(() => expect(document.querySelector('.bz-su--mask')).toBeTruthy());
     (document.querySelector('[data-su="cancel"]') as HTMLButtonElement).click();
     await p;
     expect(mocks.safeUnlock).not.toHaveBeenCalled();

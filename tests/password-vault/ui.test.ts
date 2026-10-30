@@ -110,7 +110,7 @@ describe('PasswordVaultUIManager', () => {
     });
     const locks = document.querySelectorAll('.bz-password-vault-lock.open');
     expect(locks.length).toBe(2); // desk/mob 双实例
-    expect(locks[0].querySelector('.bz-setup')).toBeTruthy();
+    expect(locks[0].querySelector('.bz-su')).toBeTruthy();
     expect(locks[1].querySelector('[data-su="title"]')!.textContent).toBe('设置主密码');
   });
 
@@ -375,7 +375,7 @@ describe('PasswordVaultUIManager', () => {
     await vi.waitFor(() => expect(document.querySelector('.bz-password-vault-lock.open [data-su="p1"]')).toBeTruthy());
     const lock = document.querySelector('.bz-password-vault-lock.open') as HTMLElement;
     expect(lock).toBeTruthy();
-    expect(lock.querySelector('.bz-setup')).toBeTruthy();
+    expect(lock.querySelector('.bz-su')).toBeTruthy();
     (lock.querySelector('[data-su="p1"]') as HTMLInputElement).value = 'abcd';
     (lock.querySelector('[data-su="p2"]') as HTMLInputElement).value = 'abcd';
     const ack = lock.querySelector('[data-su="ack"] input') as HTMLInputElement;

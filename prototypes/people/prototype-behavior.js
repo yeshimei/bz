@@ -1,4 +1,4 @@
-/* 源指纹 c6a23e2c5d567621 · 仓内输入 107 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 32718fffe48ac52d · 仓内输入 107 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/people/fake-sim.ts","prototypes/people/fake/fake-obsidian.ts","src/bookshelf/data.ts","src/bookshelf/state.ts","src/cinema/state.ts","src/core/ai.ts","src/core/app.ts","src/core/asr-proofread.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/external-tool.ts","src/core/flow-dialog.ts","src/core/gesture.ts","src/core/http.ts","src/core/item-actions.ts","src/core/lock-stats.ts","src/core/mask-dismiss.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/net-progress.ts","src/core/node-runtime-install.ts","src/core/notice.ts","src/core/offline-source.ts","src/core/path-picker.ts","src/core/plugin-path.ts","src/core/remote-asset.ts","src/core/remote-base.ts","src/core/settings-btn-state.ts","src/core/settings-common.ts","src/core/settings-modal.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/sha256.ts","src/core/storage-path.ts","src/core/storage.ts","src/core/tar.ts","src/core/tool-hint.ts","src/core/tool-runtime.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/help-tip.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/setup-screen.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/core/zip.ts","src/diary/config.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/motion.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/password-vault/data.ts","src/people/chat.ts","src/people/data.ts","src/people/datasource.ts","src/people/describe.ts","src/people/digest.ts","src/people/export.ts","src/people/heavy-gate.ts","src/people/incremental.ts","src/people/insights.ts","src/people/jobs.ts","src/people/me-avatar.ts","src/people/media.ts","src/people/migrate.ts","src/people/parse.ts","src/people/prep.ts","src/people/recording.ts","src/people/render.ts","src/people/safe-store.ts","src/people/settings.ts","src/people/stats.ts","src/people/sync.ts","src/people/thumbs.ts","src/people/types.ts","src/people/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/people/fake-sim.ts → window.BZW_people（行为单源预览包，issue 245/ADR-0106） */
 var BZW_people = (() => {
@@ -42,9 +42,9 @@ var BZW_people = (() => {
   ));
   var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
 
-  // ../bz/node_modules/.pnpm/moment@2.30.1/node_modules/moment/moment.js
+  // node_modules/.pnpm/moment@2.30.1/node_modules/moment/moment.js
   var require_moment = __commonJS({
-    "../bz/node_modules/.pnpm/moment@2.30.1/node_modules/moment/moment.js"(exports, module) {
+    "node_modules/.pnpm/moment@2.30.1/node_modules/moment/moment.js"(exports, module) {
       (function(global, factory) {
         typeof exports === "object" && typeof module !== "undefined" ? module.exports = factory() : typeof define === "function" && define.amd ? define(factory) : global.moment = factory();
       })(exports, function() {
@@ -10435,25 +10435,25 @@ var BZW_people = (() => {
   // src/core/ui/setup-screen.ts
   function uiSetupScreen(opts) {
     const el2 = document.createElement("div");
-    el2.className = "bz-setup" + (opts.inline ? " bz-setup--inline" : " bz-setup--mask");
+    el2.className = "bz-su" + (opts.inline ? " bz-su--inline" : " bz-su--mask");
     el2.dataset.su = opts.inline ? "box" : "mask";
     const box = document.createElement("div");
-    box.className = "bz-setup-box";
+    box.className = "bz-su-box";
     box.dataset.su = "box";
     const head = document.createElement("div");
-    head.className = "bz-setup-head";
+    head.className = "bz-su-head";
     const badge = document.createElement("div");
-    badge.className = "bz-setup-badge";
+    badge.className = "bz-su-badge";
     badge.dataset.su = "badge";
-    badge.appendChild(uiIcon(opts.icon || "key-round", "bz-setup-badge-ic"));
+    badge.appendChild(uiIcon(opts.icon || "key-round", "bz-su-badge-ic"));
     head.appendChild(badge);
     const headText = document.createElement("div");
     const title = document.createElement("h4");
-    title.className = "bz-setup-title";
+    title.className = "bz-su-title";
     title.dataset.su = "title";
     title.textContent = opts.title || "设置主密码";
     const sub = document.createElement("p");
-    sub.className = "bz-setup-sub";
+    sub.className = "bz-su-sub";
     sub.dataset.su = "sub";
     if (opts.sub) sub.textContent = opts.sub;
     else sub.innerHTML = DEFAULT_SUB;
@@ -10464,7 +10464,7 @@ var BZW_people = (() => {
     const makeInput = (id, placeholder) => {
       const inp = document.createElement("input");
       inp.type = "text";
-      inp.className = "bz-setup-input";
+      inp.className = "bz-su-input";
       inp.dataset.su = id;
       inp.placeholder = placeholder;
       inp.spellcheck = false;
@@ -10474,27 +10474,27 @@ var BZW_people = (() => {
       return inp;
     };
     const field1 = document.createElement("div");
-    field1.className = "bz-setup-field";
+    field1.className = "bz-su-field";
     const label1 = document.createElement("label");
-    label1.className = "bz-setup-label";
+    label1.className = "bz-su-label";
     label1.textContent = "主密码";
-    const uid = "bz-setup-" + ++SEQ + "-";
+    const uid = "bz-su-" + ++SEQ + "-";
     const input = makeInput("p1", "输入要设置的主密码");
     label1.htmlFor = input.id = uid + "p1";
     field1.appendChild(label1);
     field1.appendChild(input);
     box.appendChild(field1);
     const field2 = document.createElement("div");
-    field2.className = "bz-setup-field";
+    field2.className = "bz-su-field";
     const label2 = document.createElement("label");
-    label2.className = "bz-setup-label";
+    label2.className = "bz-su-label";
     label2.textContent = "再输一遍";
     const wrap2 = document.createElement("div");
-    wrap2.className = "bz-setup-control";
+    wrap2.className = "bz-su-control";
     const input2 = makeInput("p2", "重复输入，确认没有打错");
     label2.htmlFor = input2.id = uid + "p2";
     const mark = document.createElement("span");
-    mark.className = "bz-setup-mark";
+    mark.className = "bz-su-mark";
     mark.dataset.su = "mark";
     wrap2.appendChild(input2);
     wrap2.appendChild(mark);
@@ -10502,15 +10502,15 @@ var BZW_people = (() => {
     field2.appendChild(wrap2);
     box.appendChild(field2);
     const warn = document.createElement("div");
-    warn.className = "bz-setup-warn";
+    warn.className = "bz-su-warn";
     warn.dataset.su = "warn";
-    warn.appendChild(uiIcon("triangle-alert", "bz-setup-warn-ic"));
+    warn.appendChild(uiIcon("triangle-alert", "bz-su-warn-ic"));
     const warnText = document.createElement("p");
     warnText.innerHTML = WARN_TEXT;
     warn.appendChild(warnText);
     box.appendChild(warn);
     const ack = document.createElement("label");
-    ack.className = "bz-setup-ack";
+    ack.className = "bz-su-ack";
     ack.dataset.su = "ack";
     const ackBox = document.createElement("input");
     ackBox.type = "checkbox";
@@ -10520,17 +10520,17 @@ var BZW_people = (() => {
     ack.appendChild(ackText);
     box.appendChild(ack);
     const err = document.createElement("div");
-    err.className = "bz-setup-err";
+    err.className = "bz-su-err";
     err.dataset.su = "err";
     box.appendChild(err);
     const actionBtn = document.createElement("button");
-    actionBtn.className = "bz-setup-go";
+    actionBtn.className = "bz-su-go";
     actionBtn.dataset.su = "go";
     actionBtn.type = "button";
     actionBtn.textContent = opts.action || "设置并解锁";
     box.appendChild(actionBtn);
     const cancelBtn = document.createElement("button");
-    cancelBtn.className = "bz-setup-later";
+    cancelBtn.className = "bz-su-later";
     cancelBtn.dataset.su = "cancel";
     cancelBtn.type = "button";
     cancelBtn.textContent = opts.cancel || "暂不设置";
@@ -10544,14 +10544,14 @@ var BZW_people = (() => {
     };
     const setMark = (state2) => {
       mark.textContent = "";
-      mark.classList.remove("is-shown", "bz-setup-mark--ok", "bz-setup-mark--bad");
+      mark.classList.remove("is-shown", "bz-su-mark--ok", "bz-su-mark--bad");
       wrap2.classList.remove("is-bad");
       if (state2 === "none") return;
-      mark.appendChild(uiIcon(state2 === "ok" ? "check" : "x", "bz-setup-mark-ic"));
+      mark.appendChild(uiIcon(state2 === "ok" ? "check" : "x", "bz-su-mark-ic"));
       const t = document.createElement("span");
       t.textContent = state2 === "ok" ? "一致" : "不一致";
       mark.appendChild(t);
-      mark.classList.add("is-shown", state2 === "ok" ? "bz-setup-mark--ok" : "bz-setup-mark--bad");
+      mark.classList.add("is-shown", state2 === "ok" ? "bz-su-mark--ok" : "bz-su-mark--bad");
       if (state2 === "bad") wrap2.classList.add("is-bad");
     };
     const sync = () => {
@@ -10642,7 +10642,7 @@ var BZW_people = (() => {
     };
     if (!opts.inline) {
       unDismiss = bindMaskDismiss(el2, cancel);
-      esc2 = escManager.register("bz-setup-screen", {
+      esc2 = escManager.register("bz-su-screen", {
         isVisible: () => el2.isConnected,
         close: cancel
       });
@@ -10666,8 +10666,8 @@ var BZW_people = (() => {
       init_mask_dismiss();
       init_esc_manager();
       init_icon();
-      DEFAULT_SUB = "只设这一次。<b>保险库</b>、<b>加密日记</b>、<b>密码本</b>共用这一把密码。";
-      WARN_TEXT = "密码<b>不会保存</b>，也无法找回。忘记它，加密的笔记、日记与口令将永久打不开。";
+      DEFAULT_SUB = "只设这一次。<b>保险库</b>、<b>加密日记</b>、<b>密码本</b>、<b>脸谱</b>共用这一把密码。";
+      WARN_TEXT = "密码<b>不会保存</b>，也无法找回。忘记它，加密的笔记、日记、口令与脸谱将永久打不开。";
       SEQ = 0;
     }
   });

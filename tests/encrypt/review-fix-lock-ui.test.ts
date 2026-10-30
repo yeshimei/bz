@@ -25,7 +25,7 @@ function findDialog(): HTMLElement | null {
 
 /** 首设面板（三域共用 setup-screen，挂 body 的全屏遮罩） */
 function findSetup(): HTMLElement | null {
-  return [...document.querySelectorAll('div')].find((d) => d.classList.contains('bz-setup--mask')) as HTMLElement | null;
+  return [...document.querySelectorAll('div')].find((d) => d.classList.contains('bz-su--mask')) as HTMLElement | null;
 }
 
 describe('锁家族修复批（encrypt UI）', () => {
@@ -59,7 +59,7 @@ describe('锁家族修复批（encrypt UI）', () => {
     const p = ui.showPasswordDialog();
     await waitFor(() => !!findSetup());
     const dialog = findSetup()!;
-    const inputs = dialog.querySelectorAll('.bz-setup-input');
+    const inputs = dialog.querySelectorAll('.bz-su-input');
     const confirmBtn = dialog.querySelector('[data-su="go"]') as HTMLElement;
     (inputs[0] as HTMLInputElement).value = 'abc';
     (inputs[1] as HTMLInputElement).value = 'abc';

@@ -52,35 +52,35 @@ export interface SetupScreenHandle {
  * 副题：这里是唯一一处告诉用户「一把密码管三处」的地方——
  * 从日记或密码本触发时，用户并不知道自己正在设的是全局主密码。
  */
-const DEFAULT_SUB = '只设这一次。<b>保险库</b>、<b>加密日记</b>、<b>密码本</b>共用这一把密码。';
-const WARN_TEXT = '密码<b>不会保存</b>，也无法找回。忘记它，加密的笔记、日记与口令将永久打不开。';
+const DEFAULT_SUB = '只设这一次。<b>保险库</b>、<b>加密日记</b>、<b>密码本</b>、<b>脸谱</b>共用这一把密码。';
+const WARN_TEXT = '密码<b>不会保存</b>，也无法找回。忘记它，加密的笔记、日记、口令与脸谱将永久打不开。';
 let SEQ = 0;
 
 export function uiSetupScreen(opts: SetupScreenOpts): SetupScreenHandle {
   const el = document.createElement('div');
-  el.className = 'bz-setup' + (opts.inline ? ' bz-setup--inline' : ' bz-setup--mask');
+  el.className = 'bz-su' + (opts.inline ? ' bz-su--inline' : ' bz-su--mask');
   el.dataset.su = opts.inline ? 'box' : 'mask';
 
   const box = document.createElement('div');
-  box.className = 'bz-setup-box';
+  box.className = 'bz-su-box';
   box.dataset.su = 'box';
 
   // ── 头部：小徽 + 标题 + 覆盖范围 ────────────────────────────
   const head = document.createElement('div');
-  head.className = 'bz-setup-head';
+  head.className = 'bz-su-head';
   const badge = document.createElement('div');
-  badge.className = 'bz-setup-badge';
+  badge.className = 'bz-su-badge';
   badge.dataset.su = 'badge';
-  badge.appendChild(uiIcon(opts.icon || 'key-round', 'bz-setup-badge-ic'));
+  badge.appendChild(uiIcon(opts.icon || 'key-round', 'bz-su-badge-ic'));
   head.appendChild(badge);
 
   const headText = document.createElement('div');
   const title = document.createElement('h4');
-  title.className = 'bz-setup-title';
+  title.className = 'bz-su-title';
   title.dataset.su = 'title';
   title.textContent = opts.title || '设置主密码';
   const sub = document.createElement('p');
-  sub.className = 'bz-setup-sub';
+  sub.className = 'bz-su-sub';
   sub.dataset.su = 'sub';
   if (opts.sub) sub.textContent = opts.sub;
   else sub.innerHTML = DEFAULT_SUB;
@@ -95,7 +95,7 @@ export function uiSetupScreen(opts: SetupScreenOpts): SetupScreenHandle {
   const makeInput = (id: string, placeholder: string): HTMLInputElement => {
     const inp = document.createElement('input');
     inp.type = 'text';
-    inp.className = 'bz-setup-input';
+    inp.className = 'bz-su-input';
     inp.dataset.su = id;
     inp.placeholder = placeholder;
     inp.spellcheck = false;
@@ -106,12 +106,12 @@ export function uiSetupScreen(opts: SetupScreenOpts): SetupScreenHandle {
   };
 
   const field1 = document.createElement('div');
-  field1.className = 'bz-setup-field';
+  field1.className = 'bz-su-field';
   const label1 = document.createElement('label');
-  label1.className = 'bz-setup-label';
+  label1.className = 'bz-su-label';
   label1.textContent = '主密码';
   // id 逐实例唯一：密码本桌面/移动两份内联屏同存时，重名会让 label 的 htmlFor 指到先建的那份
-  const uid = 'bz-setup-' + ++SEQ + '-';
+  const uid = 'bz-su-' + ++SEQ + '-';
   const input = makeInput('p1', '输入要设置的主密码');
   label1.htmlFor = input.id = uid + 'p1';
   field1.appendChild(label1);
@@ -119,16 +119,16 @@ export function uiSetupScreen(opts: SetupScreenOpts): SetupScreenHandle {
   box.appendChild(field1);
 
   const field2 = document.createElement('div');
-  field2.className = 'bz-setup-field';
+  field2.className = 'bz-su-field';
   const label2 = document.createElement('label');
-  label2.className = 'bz-setup-label';
+  label2.className = 'bz-su-label';
   label2.textContent = '再输一遍';
   const wrap2 = document.createElement('div');
-  wrap2.className = 'bz-setup-control';
+  wrap2.className = 'bz-su-control';
   const input2 = makeInput('p2', '重复输入，确认没有打错');
   label2.htmlFor = input2.id = uid + 'p2';
   const mark = document.createElement('span');
-  mark.className = 'bz-setup-mark';
+  mark.className = 'bz-su-mark';
   mark.dataset.su = 'mark';
   wrap2.appendChild(input2);
   wrap2.appendChild(mark);
@@ -138,9 +138,9 @@ export function uiSetupScreen(opts: SetupScreenOpts): SetupScreenHandle {
 
   // ── 风险告知（首次唯一一次，不重复念叨）──────────────────────
   const warn = document.createElement('div');
-  warn.className = 'bz-setup-warn';
+  warn.className = 'bz-su-warn';
   warn.dataset.su = 'warn';
-  warn.appendChild(uiIcon('triangle-alert', 'bz-setup-warn-ic'));
+  warn.appendChild(uiIcon('triangle-alert', 'bz-su-warn-ic'));
   const warnText = document.createElement('p');
   warnText.innerHTML = WARN_TEXT;
   warn.appendChild(warnText);
@@ -148,7 +148,7 @@ export function uiSetupScreen(opts: SetupScreenOpts): SetupScreenHandle {
 
   // ── 勾选确认 ────────────────────────────────────────────────
   const ack = document.createElement('label');
-  ack.className = 'bz-setup-ack';
+  ack.className = 'bz-su-ack';
   ack.dataset.su = 'ack';
   const ackBox = document.createElement('input');
   ackBox.type = 'checkbox';
@@ -160,20 +160,20 @@ export function uiSetupScreen(opts: SetupScreenOpts): SetupScreenHandle {
 
   // ── 错误行 ──────────────────────────────────────────────────
   const err = document.createElement('div');
-  err.className = 'bz-setup-err';
+  err.className = 'bz-su-err';
   err.dataset.su = 'err';
   box.appendChild(err);
 
   // ── 动作 ────────────────────────────────────────────────────
   const actionBtn = document.createElement('button');
-  actionBtn.className = 'bz-setup-go';
+  actionBtn.className = 'bz-su-go';
   actionBtn.dataset.su = 'go';
   actionBtn.type = 'button';
   actionBtn.textContent = opts.action || '设置并解锁';
   box.appendChild(actionBtn);
 
   const cancelBtn = document.createElement('button');
-  cancelBtn.className = 'bz-setup-later';
+  cancelBtn.className = 'bz-su-later';
   cancelBtn.dataset.su = 'cancel';
   cancelBtn.type = 'button';
   cancelBtn.textContent = opts.cancel || '暂不设置';
@@ -192,14 +192,14 @@ export function uiSetupScreen(opts: SetupScreenOpts): SetupScreenHandle {
 
   const setMark = (state: 'none' | 'ok' | 'bad') => {
     mark.textContent = '';
-    mark.classList.remove('is-shown', 'bz-setup-mark--ok', 'bz-setup-mark--bad');
+    mark.classList.remove('is-shown', 'bz-su-mark--ok', 'bz-su-mark--bad');
     wrap2.classList.remove('is-bad');
     if (state === 'none') return;
-    mark.appendChild(uiIcon(state === 'ok' ? 'check' : 'x', 'bz-setup-mark-ic'));
+    mark.appendChild(uiIcon(state === 'ok' ? 'check' : 'x', 'bz-su-mark-ic'));
     const t = document.createElement('span');
     t.textContent = state === 'ok' ? '一致' : '不一致';
     mark.appendChild(t);
-    mark.classList.add('is-shown', state === 'ok' ? 'bz-setup-mark--ok' : 'bz-setup-mark--bad');
+    mark.classList.add('is-shown', state === 'ok' ? 'bz-su-mark--ok' : 'bz-su-mark--bad');
     if (state === 'bad') wrap2.classList.add('is-bad');
   };
 
@@ -285,7 +285,7 @@ export function uiSetupScreen(opts: SetupScreenOpts): SetupScreenHandle {
   let unDismiss: () => void = () => {};
   if (!opts.inline) {
     unDismiss = bindMaskDismiss(el, cancel);
-    esc = escManager.register('bz-setup-screen', {
+    esc = escManager.register('bz-su-screen', {
       isVisible: () => el.isConnected,
       close: cancel,
     });

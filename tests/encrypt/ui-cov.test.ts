@@ -80,7 +80,7 @@ function findDialog(): HTMLElement | null {
 /** 首设面板（三域共用 setup-screen） */
 function findSetup(): HTMLElement | null {
   return [...document.querySelectorAll('div')].find(
-    (d) => d.classList.contains('bz-setup--mask')
+    (d) => d.classList.contains('bz-su--mask')
   ) as HTMLElement | null;
 }
 
@@ -424,7 +424,7 @@ describe('解锁弹窗覆盖补测', () => {
     const p = ui.showPasswordDialog();
     await waitFor(() => !!findSetup());
     const dialog = findSetup()!;
-    const inputs = dialog.querySelectorAll('.bz-setup-input');
+    const inputs = dialog.querySelectorAll('.bz-su-input');
     (inputs[0] as HTMLInputElement).value = 'master';
     (inputs[1] as HTMLInputElement).value = 'master';
     const ack = dialog.querySelector('[data-su="ack"] input') as HTMLInputElement;

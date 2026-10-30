@@ -91,7 +91,7 @@ describe('uiSetupScreen 两遍输入是明文', () => {
 
   it('两个框各自一个 field，上下排列（不在同一行里并排）', () => {
     const su = mk();
-    const fields = su.el.querySelectorAll('.bz-setup-field');
+    const fields = su.el.querySelectorAll('.bz-su-field');
     expect(fields.length).toBe(2);
     expect(fields[0].contains(su.input)).toBe(true);
     expect(fields[1].contains(su.input2)).toBe(true);
@@ -118,12 +118,12 @@ describe('uiSetupScreen 实时一致性', () => {
     su.input2.value = 'abc';
     su.input2.dispatchEvent(new Event('input'));
     expect(mark.classList.contains('is-shown')).toBe(true);
-    expect(mark.classList.contains('bz-setup-mark--ok')).toBe(true);
+    expect(mark.classList.contains('bz-su-mark--ok')).toBe(true);
     expect(mark.textContent).toContain('一致');
 
     su.input2.value = 'abd';
     su.input2.dispatchEvent(new Event('input'));
-    expect(mark.classList.contains('bz-setup-mark--bad')).toBe(true);
+    expect(mark.classList.contains('bz-su-mark--bad')).toBe(true);
     expect(mark.textContent).toContain('不一致');
     expect(su.input2.parentElement!.classList.contains('is-bad')).toBe(true);
     su.close();
@@ -268,13 +268,13 @@ describe('uiSetupScreen 收场', () => {
 
   it('全屏实例挂遮罩类；inline 不挂', () => {
     const full = mk();
-    expect(full.el.classList.contains('bz-setup--mask')).toBe(true);
-    expect(full.el.classList.contains('bz-setup--inline')).toBe(false);
+    expect(full.el.classList.contains('bz-su--mask')).toBe(true);
+    expect(full.el.classList.contains('bz-su--inline')).toBe(false);
     full.close();
 
     const inline = mk({ inline: true });
-    expect(inline.el.classList.contains('bz-setup--inline')).toBe(true);
-    expect(inline.el.classList.contains('bz-setup--mask')).toBe(false);
+    expect(inline.el.classList.contains('bz-su--inline')).toBe(true);
+    expect(inline.el.classList.contains('bz-su--mask')).toBe(false);
     inline.close();
   });
 

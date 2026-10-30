@@ -2808,25 +2808,26 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 
 
 /* ═══════════ 首次设置主密码（三域共用：保险库 / 加密日记 / 密码本） ═══════════
- * 与解锁屏分开：解锁各域各穿各的皮，首设是同一件事，故一套中性皮、不按域分。
- * 结构（对齐 setup-screen.ts）：徽 + 标题 + 覆盖范围 → 两遍明文 → 风险条 → 勾选 → 整行主按钮。
- * 组件变量：--su-accent（缺省跟随宿主 accent）
+ * 与解锁屏分开：解锁各域各穿各的皮，首设是同一件事，故一套皮、不按域分。
+ * 皮与解锁屏（.bz-lockscreen，保险库缺省金印）同一语系：居中大徽 + 居中标题 +
+ * surface 输入框 + accent 整行主按钮 + 描边次按钮。变量名沿用 --su-*。
  */
-.bz-setup {
+.bz-su {
   --su-accent: var(--interactive-accent, var(--bz-brand));
+  --su-accent-soft: var(--interactive-accent, var(--bz-brand));
   /* 弹层挂 body，够不着域作用域 token —— 一律引宿主主题变量并写兜底链（同 .bz-lockscreen） */
-  --su-bg: var(--background-secondary, var(--background-primary, #242424));
-  --su-surface: var(--background-primary, var(--background-secondary, #1b1b1b));
+  --su-bg: var(--background-secondary, var(--background-primary, #1e1e1e));
+  --su-surface: var(--background-primary, var(--background-secondary, #262626));
   --su-line: var(--background-modifier-border, rgba(255, 255, 255, 0.12));
   --su-ink: var(--text-normal, #dadada);
-  --su-muted: var(--text-muted, #a1a1a1);
-  --su-faint: var(--text-faint, #6d6d6d);
-  --su-bad: var(--text-error, #e06464);
+  --su-muted: var(--text-muted, #9a9aa5);
+  --su-faint: var(--text-faint, #5f5f6b);
+  --su-bad: var(--text-error, #e35d5d);
   --su-ok: var(--color-green, #5db97a);
-  --su-warn: var(--color-orange, #d59035);
+  --su-warn: var(--color-orange, #d08b2c);
 }
 /* 全屏遮罩实例（挂 body；层级由显示路径 topifyZ 一次性发号，样式源不留静态 z 规则） */
-.bz-setup--mask {
+.bz-su--mask {
   position: fixed;
   inset: 0;
   display: flex;
@@ -2837,98 +2838,96 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   backdrop-filter: blur(var(--bz-overlay-blur));
 }
 /* 内联实例（密码本锁层：面板内覆盖，不另起遮罩） */
-.bz-setup--inline {
+.bz-su--inline {
   width: 100%;
   height: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
 }
-.bz-setup-box {
-  width: 424px;
+.bz-su-box {
+  width: 380px;
   max-width: 100%;
   max-height: 100%;
   overflow: auto;
   box-sizing: border-box;
-  padding: 24px;
-  border-radius: var(--bz-radius-md);
+  padding: 30px 28px 24px;
+  border-radius: var(--bz-radius-lg);
   background: var(--su-bg);
   border: 1px solid var(--su-line);
   box-shadow: var(--shadow-s, 0 10px 40px rgba(0, 0, 0, 0.45));
-  text-align: left;
-  animation: bz-setup-in 0.16s ease both;
+  text-align: center;
+  animation: bz-su-in 0.16s ease both;
 }
-@keyframes bz-setup-in {
+@keyframes bz-su-in {
   from { opacity: 0; transform: translateY(4px); }
 }
 @media (prefers-reduced-motion: reduce) {
-  .bz-setup-box { animation: none; }
+  .bz-su-box { animation: none; }
 }
-.bz-setup--inline .bz-setup-box {
+.bz-su--inline .bz-su-box {
   background: transparent;
   border: none;
   box-shadow: none;
 }
-/* 头部：小徽 + 标题 + 覆盖范围（左对齐——这是表单，不是仪式） */
-.bz-setup-head {
-  display: flex;
-  gap: 12px;
-  align-items: flex-start;
+/* 头部：金印大徽居中压顶（同解锁屏 seal 语汇），标题副题随居中 */
+.bz-su-head {
+  display: block;
 }
-.bz-setup-badge {
-  flex: none;
-  width: 38px;
-  height: 38px;
-  margin-top: 1px;
-  border-radius: 11px;
+.bz-su-badge {
+  width: 72px;
+  height: 72px;
+  margin: 0 auto 14px;
+  border-radius: 22px;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: color-mix(in srgb, var(--su-accent) 13%, transparent);
-  color: var(--su-accent);
+  background: var(--su-accent-soft);
+  color: #fff;
 }
-.bz-setup-badge-ic {
-  width: 19px;
-  height: 19px;
+.bz-su-badge-ic {
+  width: 36px;
+  height: 36px;
   display: flex;
 }
-.bz-setup-badge-ic svg {
-  width: 19px;
-  height: 19px;
+.bz-su-badge-ic svg {
+  width: 36px;
+  height: 36px;
 }
-.bz-setup-title {
+.bz-su-title {
   margin: 0;
   font-size: var(--bz-font-title);
-  font-weight: 650;
+  font-weight: 700;
   line-height: 1.35;
   color: var(--su-ink);
 }
-.bz-setup-sub {
-  margin: 5px 0 0;
-  font-size: var(--bz-font-label);
+.bz-su-sub {
+  margin: 4px 0 0;
+  font-size: var(--bz-font-meta);
   line-height: 1.6;
   color: var(--su-muted);
 }
-.bz-setup-sub b {
+.bz-su-sub b {
   color: var(--su-ink);
   font-weight: 600;
 }
-/* 字段 */
-.bz-setup-field {
-  margin-top: 18px;
+/* 字段：表单区左对齐（可读性优先），框同解锁屏 input */
+.bz-su-field {
+  margin-top: 16px;
+  text-align: left;
 }
-.bz-setup-label {
+.bz-su-label {
   display: block;
   margin-bottom: 6px;
-  font-size: var(--bz-font-meta);
+  font-size: var(--bz-font-caption);
   font-weight: 500;
   letter-spacing: 0.02em;
   color: var(--su-muted);
 }
-.bz-setup-control {
+.bz-su-control {
   position: relative;
 }
-.bz-setup-input {
+.bz-su-input {
   width: 100%;
   box-sizing: border-box;
   height: 40px;
@@ -2941,24 +2940,20 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   outline: none;
   transition: border-color 0.14s ease, box-shadow 0.14s ease;
 }
-.bz-setup-input::placeholder {
+.bz-su-input::placeholder {
   color: var(--su-faint);
 }
-.bz-setup-input:focus {
+.bz-su-input:focus {
   border-color: var(--su-accent);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--su-accent) 13%, transparent);
 }
 /* 第二框右侧留出状态位 */
-.bz-setup-control .bz-setup-input {
-  padding-right: 62px;
+.bz-su-control .bz-su-input {
+  padding-right: 64px;
 }
-.bz-setup-control.is-bad .bz-setup-input {
+.bz-su-control.is-bad .bz-su-input {
   border-color: var(--su-bad);
 }
-.bz-setup-control.is-bad .bz-setup-input:focus {
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--su-bad) 13%, transparent);
-}
-.bz-setup-mark {
+.bz-su-mark {
   position: absolute;
   right: 12px;
   top: 50%;
@@ -2972,70 +2967,72 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   transition: opacity 0.14s ease;
   pointer-events: none;
 }
-.bz-setup-mark.is-shown {
+.bz-su-mark.is-shown {
   opacity: 1;
 }
-.bz-setup-mark--ok {
+.bz-su-mark--ok {
   color: var(--su-ok);
 }
-.bz-setup-mark--bad {
+.bz-su-mark--bad {
   color: var(--su-bad);
 }
-.bz-setup-mark-ic {
+.bz-su-mark-ic {
   width: 12px;
   height: 12px;
   display: flex;
 }
-.bz-setup-mark-ic svg {
+.bz-su-mark-ic svg {
   width: 12px;
   height: 12px;
 }
-/* 风险告知：一条够用的话，不与勾选重复念叨 */
-.bz-setup-warn {
+/* 风险告知：同解锁屏 warning 块（surface 底 + 描边），不抢戏 */
+.bz-su-warn {
   display: flex;
   gap: 8px;
   align-items: flex-start;
-  margin-top: 18px;
-  padding: 11px 12px;
+  margin-top: 16px;
+  padding: 10px 12px;
   border-radius: var(--bz-radius-sm);
-  border-left: 2px solid var(--su-warn);
-  background: color-mix(in srgb, var(--su-warn) 9%, transparent);
+  background: var(--su-surface);
+  border: 1px solid var(--su-line);
+  text-align: left;
 }
-.bz-setup-warn-ic {
+.bz-su-warn-ic {
   flex: none;
   width: 14px;
   height: 14px;
-  margin-top: 2px;
+  margin-top: 3px;
   color: var(--su-warn);
   display: flex;
 }
-.bz-setup-warn-ic svg {
+.bz-su-warn-ic svg {
   width: 14px;
   height: 14px;
 }
-.bz-setup-warn p {
+.bz-su-warn p {
   margin: 0;
   font-size: var(--bz-font-meta);
   line-height: 1.7;
   color: var(--su-muted);
 }
-.bz-setup-warn p b {
+.bz-su-warn p b {
   color: var(--su-ink);
   font-weight: 600;
 }
 /* 勾选 */
-.bz-setup-ack {
+.bz-su-ack {
   display: flex;
   align-items: flex-start;
   gap: 8px;
   margin-top: 12px;
-  font-size: var(--bz-font-label);
-  line-height: 1.5;
+  font-size: var(--bz-font-meta);
+  line-height: 1.6;
   color: var(--su-muted);
+  text-align: left;
   cursor: pointer;
   user-select: none;
 }
-.bz-setup-ack input {
+.bz-su-ack input {
   flex: none;
   width: 15px;
   height: 15px;
@@ -3043,65 +3040,69 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   accent-color: var(--su-accent);
   cursor: pointer;
 }
-.bz-setup-ack.is-on {
+.bz-su-ack.is-on {
   color: var(--su-ink);
 }
-.bz-setup-err {
-  min-height: 17px;
-  margin-top: 10px;
+.bz-su-err {
+  min-height: 18px;
+  margin-top: 8px;
   font-size: var(--bz-font-meta);
   line-height: 1.4;
   color: var(--su-bad);
+  text-align: left;
   opacity: 0;
   transition: opacity 0.12s ease;
 }
-.bz-setup-err.is-shown {
+.bz-su-err.is-shown {
   opacity: 1;
 }
-/* 主按钮整行——首设是这块面板唯一要人下决心的地方 */
-.bz-setup-go {
+/* 主按钮整行——同解锁屏 action：accent 实底白字；次按钮同 cancel：描边幽灵钮。
+   特异性用 .bz-su button.*（0,2,1）：主题常用 .theme-light button（0,1,1）把按钮刷成 ghost，
+   单类压不住；accent 链再加一层字面保底，主题没给 --interactive-accent 时也不至于透明。 */
+.bz-su button.bz-su-go {
   width: 100%;
   height: 40px;
-  margin-top: 2px;
+  margin-top: 12px;
   font-family: inherit;
   font-size: var(--bz-font-label);
   font-weight: 600;
   letter-spacing: 0.02em;
   color: #fff;
-  background: var(--su-accent);
-  border: 0;
+  background: var(--su-accent-soft, var(--bz-brand, #e2571c));
+  border: none;
   border-radius: var(--bz-radius-sm);
   cursor: pointer;
-  transition: filter 0.14s ease, opacity 0.14s ease;
+  transition: opacity 0.14s ease;
 }
 @media (hover: hover) {
-  .bz-setup-go:hover {
-    filter: brightness(1.08);
+  .bz-su button.bz-su-go:hover {
+    opacity: 0.92;
   }
 }
-.bz-setup-go:disabled {
-  opacity: 0.6;
-  cursor: default;
-  filter: none;
+.bz-su button.bz-su-go:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
 }
-.bz-setup-later {
+.bz-su button.bz-su-later {
   width: 100%;
-  margin-top: 10px;
-  padding: 4px;
+  height: 38px;
+  margin-top: 8px;
   font-family: inherit;
-  font-size: var(--bz-font-meta);
-  color: var(--su-faint);
-  background: none;
-  border: 0;
+  font-size: var(--bz-font-label);
+  color: var(--su-muted);
+  background: transparent;
+  border: 1px solid var(--su-line);
+  border-radius: var(--bz-radius-sm);
   cursor: pointer;
-  transition: color 0.14s ease;
+  transition: color 0.14s ease, border-color 0.14s ease;
 }
 @media (hover: hover) {
-  .bz-setup-later:hover {
-    color: var(--su-muted);
+  .bz-su button.bz-su-later:hover {
+    color: var(--su-ink);
+    border-color: var(--su-ink);
   }
 }
-.bz-setup-later:disabled {
+.bz-su button.bz-su-later:disabled {
   opacity: 0.55;
   cursor: not-allowed;
 }
