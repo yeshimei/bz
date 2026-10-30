@@ -1604,11 +1604,16 @@ export class DiaryAppController {
 
     /* 点遮罩空白处 = 收起整本（与其他域「点遮罩关闭」同口径）。
        书 / 文具 / 各浮层都是 desk 的子节点，点它们不会命中这层；
-       有浮层开着时交给浮层自己的 click-outside，此处不抢。 */
+       有浮层开着时交给浮层自己的 click-outside，此处不抢。
+
+       兜底纸（`.bz-diary-fallback`）也要算命中：它是 `position: fixed; inset: 0` 铺满屏的
+       一层，没设日记文件夹（引导纸）或读盘失败时桌面被它整块盖住，点哪儿 target 都是它自己——
+       不认它，这一册就只剩右上角 X 能关（2026-10-31 用户报「测试库没设文件夹，点遮罩关不掉，
+       有内容的库能关」）。纸上那几个节点照旧不认，点纸不会误收起。 */
     const root = this.root;
     root?.addEventListener('click', (ev) => {
       const t = ev.target as HTMLElement;
-      if (t !== root && !t.classList.contains('bz-diary-desk')) return;
+      if (t !== root && t !== this.fallbackEl && !t.classList.contains('bz-diary-desk')) return;
       if (
         !this.lightboxEl.hidden ||
         !this.sheetEl.hidden ||

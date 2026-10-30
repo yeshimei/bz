@@ -93,10 +93,12 @@ const skinEntry = (id: string, text: string, size?: number) => ({
   ...(size ? { size } : {}),
 });
 
-/** requestUrl 按 URL 分发的桩（未命中的 URL 抛错，暴露漏配） */
+/** requestUrl 按 URL 分发的桩（未命中的 URL 抛错，暴露漏配）。
+ *  清单请求会带一次性破缓存参数（`?t=<时间戳>`，见 FetchAssetOpts.bust），
+ *  所以先精确匹配、再去掉 query 兜底——测试表里仍写干净的 URL。 */
 function routeFetch(map: Record<string, string | Error>): void {
   vi.mocked(requestUrl).mockImplementation((async (req: { url: string }) => {
-    const hit = map[req.url];
+    const hit = map[req.url] ?? map[req.url.replace(/\?.*$/, '')];
     if (hit === undefined) throw new Error('unmocked url: ' + req.url);
     if (hit instanceof Error) throw hit;
     return { status: 200, text: hit } as any;
@@ -469,9 +471,11 @@ describe('失败态（半自动铁则的 UI 面）', () => {
     // 首次核对失败（无缓存），重试时拉到
     let calls = 0;
     vi.mocked(requestUrl).mockImplementation((async (req: { url: string }) => {
-      if (req.url === REMOTE_MANIFEST && calls++ === 0) throw new Error('ENOTFOUND');
-      if (req.url === BACKUP_MANIFEST) throw new Error('ETIMEDOUT');
-      if (req.url === REMOTE_MANIFEST) return { status: 200, text: manifestJson([docEntry('changelog', HTML_V1)], []) } as any;
+      // 清单请求带破缓存参数（?t=…）：归一化后再比对，测试里仍按干净 URL 写分支
+      const u = req.url.replace(/\?.*$/, '');
+      if (u === REMOTE_MANIFEST && calls++ === 0) throw new Error('ENOTFOUND');
+      if (u === BACKUP_MANIFEST) throw new Error('ETIMEDOUT');
+      if (u === REMOTE_MANIFEST) return { status: 200, text: manifestJson([docEntry('changelog', HTML_V1)], []) } as any;
       throw new Error('unmocked url: ' + req.url);
     }) as any);
 

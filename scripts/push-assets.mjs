@@ -17,6 +17,9 @@
 // 体积守卫：`.git` 超过 SQUASH_AT_BYTES 就压成单提交历史再强推。否则每次发布多几十 MB
 // 历史，早晚重新撞上 50 MB 上限——而那个失败是「下载全挂」，不是慢慢变差。
 //
+// CDN 刷新：推送后按本次变更逐个清 jsDelivr 的 `@master` 缓存，再核对一次边缘清单。
+// 不清的症状不是 404，而是清单里的 sha256 还是上一版 —— 客户端每一项下载都校验失败。
+//
 // 发布顺序：manifest → **build** → push-assets → 打 tag。
 //   （清单由 manifest 出、main.js 由 build 出，两者都要在推送前就位）
 //
@@ -29,6 +32,7 @@
 // 目标目录：`<主仓同级>/bz-assets`，可用环境变量 BZ_ASSETS_DIR 覆盖。
 import fs from 'node:fs';
 import path from 'node:path';
+import { createHash } from 'node:crypto';
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 
@@ -198,7 +202,7 @@ function compactIfNeeded() {
   return true;
 }
 
-/** 提交 + 推送 */
+/** 提交 + 推送；返回本次提交里变化的路径（清 CDN 缓存只清这些） */
 function commitAndPush(tag, squashed) {
   const status = DRY ? '' : run('git', ['status', '--porcelain']);
   const msg = `release: ${tag} 资源镜像`;
@@ -213,10 +217,65 @@ function commitAndPush(tag, squashed) {
   }
   if (NO_PUSH || DRY) {
     log('跳过推送（--dry-run / --no-push）');
-    return;
+    return [];
   }
   if (squashed) run('git', ['push', '-f', 'origin', 'master']);
   else run('git', ['push', '-u', 'origin', 'master']);
+  return status
+    ? status
+        .split('\n')
+        .map((l) => l.slice(3).trim().replace(/^.* -> /, ''))
+        .filter(Boolean)
+    : [];
+}
+
+/**
+ * 主动清 jsDelivr 的 `@master` 缓存（按本次真正变了的文件逐个清）。
+ *
+ * 不清会怎样：jsDelivr 对 `@master` 的缓存按小时到天算，推完它可能还在发**上一版**的
+ * `downloads/manifest.json`。用户端看到的不是「404」，而是清单里的 sha256 与产物不是同一版——
+ * 每一项下载都以校验失败收场（2026-10-31 报障：工具改名后引导页仍显示旧名字，下载行全红）。
+ * 清单和它指向的产物必须一起换，所以按变更清单清，而不是只清清单一个。
+ *
+ * 清缓存失败不算发布失败（内容已经推上去了，边缘自己也会过期），但要说出来——
+ * 那是「用户今天可能还看不到新版」的唯一线索。
+ */
+async function purgeCdn(changed) {
+  const files = changed.filter((p) => p.startsWith('downloads/') && fs.existsSync(path.join(TARGET, p)));
+  if (!files.length) {
+    log('没有 downloads/ 变更，跳过清缓存');
+    return;
+  }
+  if (DRY || NO_PUSH) {
+    log(`跳过清缓存（${files.length} 个文件）`);
+    return;
+  }
+  let ok = 0;
+  for (const rel of files) {
+    try {
+      const res = await fetch(`https://purge.jsdelivr.net/gh/${SLUG}@master/${rel}`, { signal: AbortSignal.timeout(15000) });
+      if (res.ok) ok++;
+      else log(`清缓存失败 ${rel}（HTTP ${res.status}）——边缘可能还在发旧内容`);
+    } catch (e) {
+      log(`清缓存失败 ${rel}（${(e && e.message) || e}）——边缘可能还在发旧内容`);
+    }
+  }
+  log(`已清 jsDelivr 缓存：${ok}/${files.length} 个文件`);
+  await verifyManifest();
+}
+
+/** 清完缓存核对一次：边缘拿到的清单必须与本地逐字一致，否则客户端会拿到旧 hash */
+async function verifyManifest() {
+  const want = createHash('sha256').update(fs.readFileSync(path.join(ROOT, 'downloads/manifest.json'), 'utf8')).digest('hex');
+  try {
+    const res = await fetch(`https://fastly.jsdelivr.net/gh/${SLUG}@master/downloads/manifest.json`, {
+      signal: AbortSignal.timeout(20000),
+    });
+    const got = createHash('sha256').update(await res.text()).digest('hex');
+    log(got === want ? '边缘清单已刷新 ✓' : '⚠ 边缘清单还是旧的：过几分钟重跑本脚本再清一次，再发版');
+  } catch (e) {
+    log(`⚠ 清单核对没成功（${(e && e.message) || e}）；已推送的内容不受影响`);
+  }
 }
 
 const { version, tag } = readVersion();
@@ -227,7 +286,8 @@ ensureRepo();
 syncFiles(tag);
 pruneReleases();
 const squashed = compactIfNeeded();
-commitAndPush(tag, squashed);
+const changed = commitAndPush(tag, squashed);
+await purgeCdn(changed);
 
 const base = `https://fastly.jsdelivr.net/gh/${SLUG}@master`;
 console.log(`\n完成。客户端取用地址：`);

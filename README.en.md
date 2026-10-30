@@ -174,7 +174,9 @@ Both of those are in Chinese — open an issue if you need them translated.
 
 <p align="center"><sub>Scan with WeChat to buy the author a coffee</sub></p>
 
-Development, maintenance, and the tutorial videos are all done by one person — completely free, ad-free, with no revenue from any other channel. You can find the donor list in the plugin's Settings → General → About → Support the author.
+Development, maintenance, and the tutorial videos are all done by one person — completely free, ad-free, with no revenue from any other channel.
+
+You can find the donor list in the plugin's Settings → General → About → Support the author.
 
 ## License
 

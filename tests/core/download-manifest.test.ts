@@ -54,10 +54,12 @@ const goodManifest = (): DownloadManifest => ({
   ],
 });
 
-/** requestUrl 按 URL 分发的桩（未命中的 URL 抛错，暴露漏配） */
+/** requestUrl 按 URL 分发的桩（未命中的 URL 抛错，暴露漏配）。
+ *  清单请求会带一次性破缓存参数（`?t=<时间戳>`，见 FetchAssetOpts.bust），
+ *  所以先精确匹配、再去掉 query 兜底——测试表里仍写干净的 URL。 */
 function routeFetch(map: Record<string, string | Error>): void {
   vi.mocked(requestUrl).mockImplementation((async (req: { url: string }) => {
-    const hit = map[req.url];
+    const hit = map[req.url] ?? map[req.url.replace(/\?.*$/, '')];
     if (hit === undefined) throw new Error('unmocked url: ' + req.url);
     if (hit instanceof Error) throw hit;
     return { status: 200, text: hit } as any;

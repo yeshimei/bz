@@ -1,4 +1,4 @@
-/* 源指纹 3b665dbf6dddeba6 · 仓内输入 327 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 6f12175e60df9b25 · 仓内输入 327 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/home/fake-sim.ts","prototypes/home/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/keys.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/belongings/ai.ts","src/belongings/catalog-suggest.ts","src/belongings/category.ts","src/belongings/data.ts","src/belongings/layouts/poster/render.ts","src/belongings/motion.ts","src/belongings/render.ts","src/belongings/report-stats.ts","src/belongings/report.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/epub-notes.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/motion.ts","src/bookshelf/notes-ui.ts","src/bookshelf/notes.ts","src/bookshelf/render.ts","src/bookshelf/settings.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/bookshelf/ui.ts","src/checkup/checks-consistency.ts","src/checkup/checks-drift.ts","src/checkup/checks-json.ts","src/checkup/checks-orphans.ts","src/checkup/files.ts","src/checkup/index.ts","src/checkup/run.ts","src/checkup/ui.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/douban-fetcher.ts","src/cinema/seasons.ts","src/cinema/settings.ts","src/cinema/shared.ts","src/cinema/state.ts","src/clipbook/anchor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/file-sync.ts","src/clipbook/flow.ts","src/clipbook/image-save.ts","src/clipbook/index.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/motion.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/press/data.ts","src/clipbook/press/engine.ts","src/clipbook/press/index.ts","src/clipbook/press/motions.ts","src/clipbook/press/view.ts","src/clipbook/render.ts","src/clipbook/report-stats.ts","src/clipbook/report-ui.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/about-group.ts","src/core/ai-models.ts","src/core/ai.ts","src/core/app.ts","src/core/asr-proofread.ts","src/core/assets/reward-code.png","src/core/attachment-dir.ts","src/core/bundle-asset.ts","src/core/category-table.ts","src/core/changelog.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/domain-icons.ts","src/core/douban-name-index.ts","src/core/download-manifest.ts","src/core/env-check.ts","src/core/esc-manager.ts","src/core/file-sync.ts","src/core/flow-dialog.ts","src/core/folder-setup.ts","src/core/gesture.ts","src/core/http.ts","src/core/item-actions.ts","src/core/jev-fallback.ts","src/core/jev.ts","src/core/json-store.ts","src/core/knowledge-boxes.ts","src/core/landscape.ts","src/core/link-now.ts","src/core/lock-stats.ts","src/core/manual.ts","src/core/mask-dismiss.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/net-progress.ts","src/core/node-runtime-install.ts","src/core/note-trash.ts","src/core/notice.ts","src/core/offline-source.ts","src/core/path-picker.ts","src/core/plugin-path.ts","src/core/pomodoro-phase.ts","src/core/remote-asset.ts","src/core/remote-base.ts","src/core/reward-dialog.ts","src/core/rss-catalog.ts","src/core/self-update.ts","src/core/settings-btn-state.ts","src/core/settings-common.ts","src/core/settings-main-schema.ts","src/core/settings-modal.ts","src/core/settings-model-picker.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/setup-state.ts","src/core/setup-wizard.ts","src/core/sha256.ts","src/core/skin-pack.ts","src/core/storage-path.ts","src/core/storage.ts","src/core/tar.ts","src/core/tool-hint.ts","src/core/tool-runtime.ts","src/core/tool-setup.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/flip.ts","src/core/ui/focus-trap.ts","src/core/ui/help-tip.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slide-pill.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/vault-key.ts","src/core/z-order.ts","src/core/zip.ts","src/diary/config.ts","src/diary/parser.ts","src/diary/settings.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/motion.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/favorites/ai.ts","src/favorites/app.ts","src/favorites/config.ts","src/favorites/data.ts","src/favorites/layouts/board/render.ts","src/favorites/motion.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/gameshelf/constants.ts","src/gameshelf/notes.ts","src/gameshelf/reconcile.ts","src/gameshelf/settings.ts","src/gameshelf/state.ts","src/gameshelf/steam.ts","src/home/domains.ts","src/home/entry-editor.ts","src/home/index.ts","src/home/layouts/river/render.ts","src/home/motion.ts","src/home/order.ts","src/home/render.ts","src/home/river.ts","src/home/settings.ts","src/home/shared.ts","src/home/state.ts","src/home/timeline-collect.ts","src/home/timeline-copy.ts","src/home/ui.ts","src/knowledge/data.ts","src/knowledge/file-sync.ts","src/knowledge/index.ts","src/knowledge/motion.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-edit.ts","src/knowledge/note-gen.ts","src/knowledge/partial-json.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/relink.ts","src/knowledge/source-retire.ts","src/knowledge/source.ts","src/knowledge/tack.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/memo/data.ts","src/memo/due.ts","src/memo/render.ts","src/memo/settings.ts","src/memo/state.ts","src/memo/ui.ts","src/password-vault/data.ts","src/password-vault/settings.ts","src/people/chat.ts","src/people/datasource.ts","src/people/insights.ts","src/people/me-avatar.ts","src/people/media.ts","src/people/parse.ts","src/people/render.ts","src/people/safe-store.ts","src/people/settings.ts","src/people/stats.ts","src/people/types.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/index.ts","src/pomodoro/motion.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts","src/reading-report/index.ts","src/reading-report/report.ts","src/reading-report/stats.ts","src/recap/aggregate.ts","src/review/analysis/data.ts","src/review/analysis/engine.ts","src/review/analysis/index.ts","src/review/analysis/kits.ts","src/review/analysis/motions.ts","src/review/analysis/view.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/motion.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/quiz-panel-data.ts","src/review/quiz-panel.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts","src/secondbrain/ai.ts","src/secondbrain/chunk.ts","src/secondbrain/config.ts","src/secondbrain/link-agent/data.ts","src/secondbrain/link-agent/pipeline.ts","src/secondbrain/motion.ts","src/secondbrain/panel.ts","src/secondbrain/readonly.ts","src/secondbrain/render.ts","src/secondbrain/store-file.ts","src/secondbrain/tfidf.ts","src/secondbrain/vector-math.ts","src/secondbrain/weekly-ui.ts","src/secondbrain/weekly.ts","src/secondbrain/whitelist.ts","src/settings-panel/changelog.ts","src/settings-panel/index.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/manual-viewer.ts","src/settings-panel/motion.ts","src/settings-panel/online-resources.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/shared.ts","src/settings-panel/ui.ts","src/settings.ts","src/smartcat/belongings-source.ts","src/smartcat/character.ts","src/smartcat/config.ts","src/smartcat/data.ts","src/smartcat/favorites-source.ts","src/smartcat/motion.ts","src/smartcat/types.ts","src/smartcat/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/home/fake-sim.ts → window.BZW_home（行为单源预览包，issue 245/ADR-0106） */
 var BZW_home = (() => {
@@ -23362,7 +23362,9 @@ ${countsToText(s.missing)}
       } catch (e) {
       }
     }
-    const urls = remotesFor(fileName);
+    const raw = remotesFor(fileName);
+    const stamp = (opts == null ? void 0 : opts.bust) ? Date.now() : 0;
+    const urls = stamp ? raw.map((u) => `${u}${u.includes("?") ? "&" : "?"}t=${stamp}`) : raw;
     if ((opts == null ? void 0 : opts.concurrent) && urls.length > 1) return fetchConcurrently(urls, validate, label, unit);
     let lastErr = "";
     for (const url of urls) {
@@ -36851,8 +36853,10 @@ ${missing.map((m) => `- ${m}`).join("\n")}
       "下载清单",
       "",
       app,
-      // 清单 9 KB：并发试通道（串行时只要第一条通道卡住，后面能用的全被外层超时砍掉）
-      { concurrent: true }
+      // 清单 9 KB：并发试通道（串行时只要第一条通道卡住，后面能用的全被外层超时砍掉）；
+      // 再带破缓存参数——jsDelivr 的 `@master` 缓存逐 POP 各自为政，不清掉的话可能长期
+      // 拿到改名前的旧清单（见 FetchAssetOpts.bust）。
+      { concurrent: true, bust: true }
     );
     const manifest = parseDownloadManifest(text2);
     await writeAssetText(app, MANIFEST_FILE, text2);
@@ -39105,6 +39109,21 @@ ${other}
     }
     (_a2 = ui2.body.closest(".bz-overlay-mask")) == null ? void 0 : _a2.remove();
   }
+  function confirmLeaveWizard(onLeave) {
+    void openFlowDialog({
+      // 皮肤类：默认流程框是 400px 窄卡 + 居中正文 + 灰底胶囊按钮，放在 720px 宽的引导页里
+      // 像另一个插件弹出的框。挂上 bz-setup-flow 让它在 components.css 里对齐引导页那套形制。
+      className: "bz-setup-flow",
+      title: "引导还没走完，先关掉？",
+      message: "下载和环境设置都还没完成。关掉后这次启动不会再自动弹出——\n要接着弄，去「设置 → 关于 → 环境自检」重新打开。",
+      actions: [
+        { label: "继续准备", value: "stay" },
+        { label: "关掉", value: "leave", danger: true }
+      ]
+    }).then((v) => {
+      if (v === "leave") onLeave();
+    });
+  }
   async function stageProbe(ctx, st, ui2) {
     var _a2;
     setSub(ui2, ctx.firstRun ? "先看看这台机器缺什么。不会改动笔记。" : "检查运行环境。");
@@ -39463,7 +39482,7 @@ ${other}
     }
   }
   async function stageInstall(ctx, st, ui2, tasks) {
-    setSub(ui2, "自动完成，可以收起来先去忙别的。");
+    setSub(ui2, "正在下载，跑完自动进入下一步。");
     ui2.body.innerHTML = "";
     ui2.foot.innerHTML = "";
     const bar = document.createElement("div");
@@ -39471,9 +39490,6 @@ ${other}
     bar.innerHTML = "<i></i>";
     const box = setupGroup();
     ui2.body.append(bar, box.group);
-    const collapse = button("bz-setup-btn", "收起来，后台继续");
-    collapse.onclick = () => closeModal(ui2);
-    ui2.foot.appendChild(collapse);
     const total = tasks.reduce((n, t) => n + (t.size || 0), 0);
     const free = freeSpaceBytes(ctx.app);
     if (free !== null && free < total * 1.5 + 64 * 1024 * 1024) {
@@ -39550,7 +39566,25 @@ ${other}
       closeModal(ui2);
       (_a2 = ctx.onFinish) == null ? void 0 : _a2.call(ctx);
     };
-    ui2.foot.appendChild(enter);
+    const tutorial = button("bz-setup-link bz-setup-link--foot", "看使用教程 →");
+    tutorial.onclick = () => {
+      if (!VIDEO_URL) {
+        notice("使用教程还没发布，发布后这里会直连");
+        return;
+      }
+      void openFlowDialog({
+        className: "bz-setup-flow",
+        title: "去 B 站看使用教程？",
+        message: "会在浏览器里打开视频。看的时候可以随时回来，引导不会关。",
+        actions: [
+          { label: "取消", value: "cancel" },
+          { label: "继续", value: "go" }
+        ]
+      }).then((v) => {
+        if (v === "go") openExternalUrl(ctx.app, VIDEO_URL);
+      });
+    };
+    ui2.foot.append(tutorial, enter);
   }
   async function markDone(app) {
     try {
@@ -39572,6 +39606,7 @@ ${other}
     }
     const firstRun = opts.firstRun === true;
     const content = document.createElement("div");
+    const ui2 = skeleton(content);
     const modal = uiModal({
       head: true,
       title: firstRun ? "bz · 首次准备" : "环境自检",
@@ -39584,8 +39619,16 @@ ${other}
       // 高度预算提到整屏、让长清单只滚内容区而不齐切一行。
       className: "bz-setup-modal",
       autofocus: false,
-      // 首次引导只能由按钮结束（点遮罩/ESC 关掉 = 流程静默中断）；环境自检照旧可关
-      closable: !firstRun
+      // 关闭意图：首次引导拦一道确认（关掉 = 这次不再自动弹，得告诉他去哪重开）；
+      // 环境自检照旧点遮罩 / ESC 直接关。
+      ...firstRun ? {
+        requestClose: () => confirmLeaveWizard(() => {
+          var _a2;
+          void markDone(app);
+          closeModal(ui2);
+          (_a2 = opts.onFinish) == null ? void 0 : _a2.call(opts);
+        })
+      } : {}
     });
     activeClose = modal.close;
     const ctx = { app, firstRun, checkOnly: !firstRun, onFinish: opts.onFinish };
@@ -39600,7 +39643,7 @@ ${other}
       aiTest: { state: "idle", text: "" },
       failed: []
     };
-    void stageProbe(ctx, st, skeleton(content));
+    void stageProbe(ctx, st, ui2);
     return true;
   }
   function openEnvironmentCheck(app = getApp()) {
@@ -39612,6 +39655,7 @@ ${other}
       init_notice();
       init_utils();
       init_modal();
+      init_flow_dialog();
       init_env_check();
       init_download_manifest();
       init_bundle_asset();
@@ -39628,6 +39672,7 @@ ${other}
       init_app();
       init_settings_provider();
       init_ai();
+      init_about_group();
       init_setup_state();
       NODE_SIZE_HINT = 36.4 * 1024 * 1024;
       MANIFEST_TIMEOUT_MS = 12e3;
@@ -39778,7 +39823,7 @@ ${other}
       init_reward_dialog();
       FEEDBACK_URL = `https://github.com/${REPO_SLUG}/issues`;
       REPO_URL = `https://github.com/${REPO_SLUG}`;
-      VIDEO_URL = "https://www.bilibili.com/video/BV1vNsZ6pE7i";
+      VIDEO_URL = "https://www.bilibili.com/video/BV1vNsZ6pE7i/?p=3";
     }
   });
 

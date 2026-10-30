@@ -1577,6 +1577,21 @@ describe('DiaryAppController · 写作内页（ADR-0233）', () => {
     expect(mocks.openFlowDialog).not.toHaveBeenCalled();
   });
 
+  /* 2026-10-31 用户报障：测试库没设日记文件夹时，桌上那张「这本册子还没定文件夹」是
+     `.bz-diary-fallback`（fixed; inset:0 铺满整屏），点哪儿 target 都落在它自己身上；
+     收起判据只认根与 `.bz-diary-desk`，于是只剩右上角 X 能关（有内容的库正常）。
+     判据把 fallbackEl 也算命中后，点纸外空白就该收起。 */
+  it('未设日记文件夹：引导纸铺满整屏，点纸外空白也能收起', () => {
+    setSettingsProvider(() => ({}) as never); // 目录空着 → needsFolderSetup 真
+    const c = DiaryAppController.getInstance();
+    c.show();
+    const fb = q('.bz-diary-fallback');
+    expect(fb.hidden).toBe(false);
+    expect(q('.bz-diary-fb-lead-title').textContent).toContain('还没定文件夹');
+    fb.click(); // 点在铺满屏的容器本体上 = 用户眼里的「纸外空白」
+    expect(q('.bz-diary-scene').style.display).toBe('none');
+  });
+
   it('重开册子：草稿还在，且不重新渲染（书页与实例都复用）', async () => {
     const c = await openBook();
     const area = await openWritePage(c);

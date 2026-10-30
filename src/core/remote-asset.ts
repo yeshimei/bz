@@ -232,6 +232,16 @@ export async function ensureDir(app: unknown, relPath: string): Promise<void> {
 export interface FetchAssetOpts {
   /** 并发试通道（**只给清单这类 KB 级小文件用**；下载正文是 MB 级，并发既费流量又费带宽） */
   concurrent?: boolean;
+  /** 给 URL 追加一次性破缓存参数（`?t=<时间戳>`）。
+   *
+   *  为什么需要（2026-10-31 报障）：jsDelivr 对 `@master` 的缓存是**逐 POP**的。`push-assets`
+   *  purge 之后，清掉的是回源时打到的那台边缘，用户机器可能落在另一台还拿着旧副本的边缘上——
+   *  清单里的 sha256 与已发布的包不是同一版，症状是「名字还是旧的、每一项下载都校验失败」，
+   *  而且**再启动几次也不会自愈**（每次刷新都命中同一个旧边缘，还把旧清单写回本地缓存）。
+   *  带上变化的时间戳等于换一个缓存键，强制回源。
+   *
+   *  只给清单用：它 9 KB，回源代价可忽略；正文资源带不带都一样（体积大，本来就难命中）。 */
+  bust?: boolean;
 }
 
 /** 双源取文本（不落盘）；全失败抛人话错误
@@ -255,7 +265,11 @@ export async function fetchAssetText(
       /* 走网络 */
     }
   }
-  const urls = remotesFor(fileName);
+  const raw = remotesFor(fileName);
+  // 破缓存参数（见 FetchAssetOpts.bust）：每个通道各加一个同一时刻的时间戳——
+  // 同一轮请求用同一个值，既是新的缓存键，也不至于让同一份清单的几条通道各算一次代价。
+  const stamp = opts?.bust ? Date.now() : 0;
+  const urls = stamp ? raw.map((u) => `${u}${u.includes('?') ? '&' : '?'}t=${stamp}`) : raw;
   if (opts?.concurrent && urls.length > 1) return fetchConcurrently(urls, validate, label, unit);
 
   let lastErr = '';
