@@ -307,6 +307,52 @@ if (targetVersion && manifest.version !== targetVersion) {
   manifestSynced = true;
 }
 
+/* ==================== note 覆盖（`--note=<release-note.md>`） ====================
+ * Release note 的「更新日志」节经用户改定后，才是给用户看的最终口径——发版前把它
+ * 喂回生成器，覆盖最新版本块、重出 bz-changelog.html（在线资源的更新日志与 Release
+ * 页同源同稿）。解析只认 `- **标签** ：说明` 条目行；`## ✨ 新增`→added、
+ * `## 🐛 修复`→fixed、`## ⚡ 优化`→improved；标签原样作 domain（DOMAIN_NAMES 没有
+ * 的键渲染端直出原文）。条目数不受 CAPS 裁剪——这是用户拍板的定稿。 */
+const noteArg = (process.argv.find((a) => a.startsWith('--note=')) || '').slice('--note='.length);
+if (noteArg) {
+  const notePath = join(ROOT, noteArg);
+  const md = readFileSync(notePath, 'utf8');
+  const logStart = md.indexOf('# 更新日志');
+  const logEnd = md.indexOf('\n# ', logStart + 1);
+  if (logStart < 0 || logEnd < 0) {
+    console.error('note 里找不到「# 更新日志」一级标题节（到 # 安装 之前）');
+    process.exit(1);
+  }
+  const secMap = { '✨ 新增': 'added', '🐛 修复': 'fixed', '⚡ 优化': 'improved' };
+  const items = { added: [], fixed: [], improved: [] };
+  let cur = null;
+  for (const lineRaw of md.slice(logStart, logEnd).split('\n')) {
+    const line = lineRaw.trim();
+    if (line.startsWith('## ')) {
+      cur = secMap[line.slice(3).trim()] || null;
+      continue;
+    }
+    if (!cur || !line.startsWith('- ')) continue;
+    const m = line.slice(2).match(/^\*\*(.+?)\*\*\s*：\s*(.+)$/);
+    if (!m) continue;
+    items[cur].push({ domain: m[1].trim(), text: m[2].trim(), sub: '' });
+  }
+  const total = items.added.length + items.fixed.length + items.improved.length;
+  if (!total) {
+    console.error('note 更新日志节里没解析出条目（格式：`- **标签** ：说明`）');
+    process.exit(1);
+  }
+  const rel = releases[releases.length - 1];
+  if (!rel) {
+    console.error('没有可覆盖的版本块（先打 tag 生成基线，或带 --next）');
+    process.exit(1);
+  }
+  rel.added = items.added;
+  rel.fixed = items.fixed;
+  rel.improved = items.improved;
+  console.log(`note 覆盖 v${rel.version}：新增 ${items.added.length} / 修复 ${items.fixed.length} / 优化 ${items.improved.length}`);
+}
+
 /* ==================== 产出单文件 HTML（issue 474） ====================
  * 更新日志不再随构建打进 main.js（旧产物 changelog-data.ts 已退役）：改为发布
  * downloads/bz-changelog.html——单文件自包含（样式 + 数据 + 脚本全内联），由插件在

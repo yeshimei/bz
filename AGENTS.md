@@ -85,6 +85,14 @@ tools-pack → skin-pack → changelog → catalog → manifest → build → as
 
 ### 3. GitHub Release
 
+**note 定稿先回灌在线资源日志（不跳）**：Release note 的「更新日志」节经用户修订后，
+`node scripts/_gen-changelog.mjs --note=<note路径>` 以 note 口径覆盖最新版本块、重出
+`downloads/bz-changelog.html`（在线资源的更新日志与 Release 页同源同稿），再重打离线
+zip（包里的 downloads 也带这份日志）与 SHA256SUMS。**这些都是本地准备**——推分发仓库、
+`gh release create` / `upload --clobber` 一律等用户修订完 note、明确说「发布」才执行。
+生成器只认 `- **标签** ：说明` 条目行，✨ 新增→added、🐛 修复→fixed、⚡ 优化→improved，
+条目数不裁剪——用户拍板的定稿。
+
 七个资产，缺一不可：
 
 | 资产 | 从哪来 |

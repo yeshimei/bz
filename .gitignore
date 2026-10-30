@@ -21,3 +21,9 @@ viz/
 
 # bz-face vendor 运行日志（logger.py 以 __file__ 锚定，落在 vendor 内，不入 git）
 tools/obsidian-face/python/vendor/WeChatMsg_Lite/logs/
+
+# GitHub Release 打包产物（本地临时，随 Release 上传，不入库）
+bz-*.zip
+bz-offline-*.zip
+SHA256SUMS.txt
+release-note-*.md

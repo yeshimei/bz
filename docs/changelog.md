@@ -23,6 +23,11 @@ pnpm changelog          # = node scripts/_gen-changelog.mjs，仓库根执行
 | `src/settings-panel/changelog-data.ts` | 生成物，文件头标「勿手改」 |
 | `manifest.json` | 最新版本号回写（版本号单一事实源在生成器，勿手改） |
 
+发版时另有一个口子：`--note=<release-note.md>`——Release note 的「更新日志」节经用户
+修订后，以 note 口径**覆盖最新版本块**再重出 html（在线资源的更新日志与 Release 页同稿）。
+解析只认 `- **标签** ：说明` 条目行，✨ 新增→added、🐛 修复→fixed、⚡ 优化→improved，
+标签原样作域标签（DOMAIN_NAMES 没有的键直出原文），条目数不受 CAPS 裁剪。
+
 生成器只写这两个文件，其余不动。
 
 ## 提交信息怎么写
