@@ -715,6 +715,17 @@
   min-width: 0;
 }
 .bz-sp-group-body .bz-sp-set-row:first-child { border-top: 0; }
+/* 深链锚点（域空态「打开设置」→ 落到该填的那一行）：进场亮两秒就退，别留成常驻高亮 */
+.bz-sp-set-row.is-anchor {
+  background: var(--sp-accent-soft);
+  box-shadow: inset 3px 0 0 var(--sp-accent);
+  animation: bzSpAnchor 2.2s var(--bz-ease-out) 1;
+}
+@keyframes bzSpAnchor {
+  0% { background: var(--sp-accent-soft); }
+  70% { background: var(--sp-accent-soft); }
+  100% { background: transparent; }
+}
 /* 首位门控行被藏起来时，看不见的 :first-child 不再是首行——下面那行就会把上边线画到组标题底下，
    凭空多出一条线（「在线资源」组的「检查更新」行恒在首位且按需隐藏，就是这个情形，ADR-0205/0207）。
    线要归第一个**可见**行走：只在「首位被隐藏」这一种情形补一条抑制，中间行被搜索过滤藏起来时

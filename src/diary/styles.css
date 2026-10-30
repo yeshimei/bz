@@ -1130,6 +1130,20 @@
 .bz-diary-fallback { position: fixed; inset: 0; z-index: 600; display: flex; align-items: center; justify-content: center; }
 .bz-diary-fallback[hidden] { display: none; }
 .bz-diary-fb-paper { background: #fff8d6; padding: 30px 36px; font-size: 17px; line-height: 32px; text-align: center; transform: rotate(-1.5deg); box-shadow: 0 20px 50px rgba(0,0,0,.5); }
+/* 未配置日记文件夹的引导纸（2026-10-30）：还是那张黄便签，多了标题/说明/一个去设置的钮。
+   纸面是浅黄底，字色一律写死深棕——不能吃主题变量，深色主题下会变成一片看不见的字。 */
+.bz-diary-fb-paper.bz-diary-fb-lead { max-width: 420px; line-height: 26px; }
+.bz-diary-fb-lead-title { font-size: 17px; font-weight: 600; color: #3d2f0c; margin-bottom: 8px; }
+.bz-diary-fb-lead-desc { font-size: 13px; color: #6b5720; margin-bottom: 16px; }
+.bz-diary-fb-lead-act { display: flex; justify-content: center; }
+/* 空册：写在左侧书页上的那一段（形制照真日记——标题 + 正文 + 一句引导，
+   不是浮在书上的卡片；落点是当时生效的日记文件夹） */
+.bz-diary-void-entry { padding: 2px 0 8px; }
+.bz-diary-void-entry p { margin: 0 0 10px; font-size: 15px; line-height: 2; color: var(--bz-diary-ink); }
+.bz-diary-void-entry p.bz-diary-void-title { font-size: 16px; font-weight: 600; }
+.bz-diary-void-link { border: 0; background: none; padding: 0; font: inherit; font-size: 13px; cursor: pointer;
+  color: #b3564d; text-decoration: underline; text-underline-offset: 4px; }
+.bz-diary-void-link:hover { color: #8d3b33; }
 
 /* 撕页碎片 */
 .bz-diary-scrap {

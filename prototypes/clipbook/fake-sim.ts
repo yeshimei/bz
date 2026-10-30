@@ -25,6 +25,8 @@ import { setSettingsProvider, setSettingsSaver } from '../../src/core/settings-p
 import { attachObsidianAdapter } from '../../src/core/obsidian-adapter';
 import { openClipbook, unloadClipbook } from '../../src/clipbook/index';
 import { closePanel as closePanelReal } from '../../src/clipbook/ui';
+import { pvBlankDirs } from '../preview-mode';
+import { pvEmptyData, pvWipeVault } from '../preview-mode';
 
 /** 剪藏目录（与插件默认值同值；种子与扫描共用） */
 const CLIP_DIR = '归档/网页剪藏';
@@ -127,6 +129,8 @@ const settingsStore: Record<string, unknown> = {
 
 /** 设置注入（settings-provider 真实现可用） */
 function injectSettings(): void {
+  // 壳的「文件夹」开关：未配置 → 剪藏目录留空，看引导态
+  pvBlankDirs(settingsStore, ['articleDirectory', 'clipbookImageFolder']);
   setSettingsProvider(() => settingsStore as never);
   setSettingsSaver(async () => {
     localStorage.setItem(SETTINGS_KEY, JSON.stringify(settingsStore));
@@ -141,6 +145,14 @@ export function bootClipbookSim(): void {
   if (g.__bzClipSimBooted) return;
   g.__bzClipSimBooted = true;
   seedDatabase();
+  // 壳的「空册」档：种完再收口（反过来会被种子补回来），并撤标记让切回「有内容」能重种
+  if (pvEmptyData()) {
+    const src = window.CLIP_DATA || (window.parent && (window.parent as Window).CLIP_DATA) || null;
+    if (src) pvWipeVault(src.NOTES.map((n) => n.path));
+    // 资讯待剪池与阅读态 sidecar 一并清：只清笔记的话，切到「资讯」源还是满屏待剪文章
+    pvWipeVault([NEWS_PATH, SIDECAR_PATH]);
+    localStorage.removeItem(SEED_MARK);
+  }
   // core/app 的 setApp 形参是 obsidian App 类型；评审壳 FakeApp 只实现依赖链消费面，
   // 运行期以 (app.vault as any) 等访问——类型断言收敛此处差异。
   const app = new FakeApp();

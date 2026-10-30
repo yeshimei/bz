@@ -144,7 +144,7 @@ function fmValue(raw: string, key: string): string {
 
 /** 日记本：写日记（文件名即时刻）+ 写信（frontmatter date） */
 async function collectDiary(ctx: Ctx): Promise<void> {
-  const diaryDir = settingDir(['diaryDirectory'], '我的/日记');
+  const diaryDir = settingDir(['diaryDirectory'], '');
   const prefix = diaryDir + '/';
   for (const f of ctx.mdFiles) {
     if (!f.path.startsWith(prefix) || f.path.slice(prefix.length).includes('/')) continue;
@@ -166,7 +166,7 @@ async function collectDiary(ctx: Ctx): Promise<void> {
     push(ctx, { domain: 'diary', ts, text: COPY.diary(kind, chars), kind: 'produce' });
   }
 
-  const letterDir = settingDir(['letterDirectory'], '我的/信');
+  const letterDir = settingDir(['letterDirectory'], '');
   const letterPrefix = letterDir + '/';
   for (const f of ctx.mdFiles) {
     if (!f.path.startsWith(letterPrefix)) continue;
@@ -234,7 +234,7 @@ async function collectBelongings(ctx: Ctx): Promise<void> {
 
 /** 影院：想看 / 在看 / 已看 / 影评 / 重温（五项都从同一篇笔记的 frontmatter 拆） */
 async function collectCinema(ctx: Ctx): Promise<void> {
-  const folder = settingDir(['cinemaFolderPath'], '我的/影视');
+  const folder = settingDir(['cinemaFolderPath'], '');
   const prefix = folder + '/';
   for (const f of ctx.mdFiles) {
     if (!f.path.startsWith(prefix)) continue;

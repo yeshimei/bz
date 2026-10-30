@@ -16,6 +16,7 @@ import { notice, notify } from '../core/notice';
 import { readNewsData, writeNewsDataMerged, normalizeFetchIntervalMin, FETCH_INTERVAL_STEPS, DEFAULT_FETCH_INTERVAL_MIN, type NewsSources, type NewsWriteIntent, type RssFeed } from './news-data';
 import { articleKeyOf, localDatetime } from './constants';
 import { enqueueNewsWrite } from './write-queue';
+import { needsFolderSetup } from '../core/folder-setup';
 
 // ---------- 常量（对齐守护） ----------
 
@@ -752,6 +753,8 @@ async function executeFetchRound(deps?: Partial<RunFetchDeps>, opts?: { silent?:
  *  CB12 配套：自动轮全程静默——间隔判定的读盘抛错与轮内意外都只 console.warn 计数，
  *  不弹错误通知（onload 后台周期不刷屏）。 */
 export async function maybeFetchNews(deps?: Partial<RunFetchDeps>): Promise<NewsFetchResult | null> {
+  // 未配置剪藏文件夹：面板打开是引导态，抓回来也没人看，白耗流量
+  if (needsFolderSetup('clipbook')) return null;
   if (fetching) return null;
   const store = deps?.store || defaultFetchStore();
   let disk: FetchDiskState | null;

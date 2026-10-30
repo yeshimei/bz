@@ -42,25 +42,24 @@ export function classifyFilePath(path: string | null | undefined): FileDomainKin
   const p = String(path).replace(/\\/g, '/');
   if (!p.endsWith('.md')) return null;
   const s = tryGetSettings();
-  // 日记：settings.diaryDirectory（「📂 日记目录」）；缺键回退 '我的/日记'
-  // （出处：src/settings.ts DEFAULT_SETTINGS，同 src/diary/config.ts DIARY_DIRECTORY 初值）
-  if (matchSettingDir(s.diaryDirectory, p, '我的/日记')) return 'diary';
+  // 日记：settings.diaryDirectory（「📂 日记目录」）。**未配置就是未配置**（2026-10-30）：
+  // 目录缺省已改为空，这里不再回退字面量——否则设置里空着，点开一个「我的/日记」里的
+  // 旧笔记仍会被认成日记域，导航到一本没配置过的册子。
+  if (matchSettingDir(s.diaryDirectory, p, '')) return 'diary';
   // 闪念（卡片盒）：settings 无对应键，沿用 src/smartcat/context-source.ts FLASH_DIR 硬编码 '卡片盒'
   if (isUnderDir('卡片盒', p)) return 'flash';
-  // 剪藏：settings.articleDirectory（「📂 剪藏目录」）；缺键回退 '归档/网页剪藏'（出处：DEFAULT_SETTINGS）
-  if (matchSettingDir(s.articleDirectory, p, '归档/网页剪藏')) return 'clipping';
-  // 影院（cinema 域，ADR-0087 起接管影视目录）：显式配置 cinemaFolderPath 命中即归类
-  // （缺省回落 '我的/影视'——旧 movieFolderPath 键已退役；与 cinema/state DEFAULT_FOLDER 同源副本）
-  if (matchSettingDir(s.cinemaFolderPath, p, '我的/影视')) return 'cinema';
+  // 剪藏：settings.articleDirectory（「📂 剪藏目录」）；未配置不归类（同上，不回退字面量）
+  if (matchSettingDir(s.articleDirectory, p, '')) return 'clipping';
+  // 影院（cinema 域，ADR-0087 起接管影视目录）：只看显式配置，未配置不归类
+  if (matchSettingDir(s.cinemaFolderPath, p, '')) return 'cinema';
   // 旧 'movie' 分类随 diary 旧域退役（ADR-0115）：其目录唯一真理已并入 cinemaFolderPath（上一分支），
   // movie:file-* 语义事件无消费者，不再派发
   // 现代诗：settings 无对应键，沿用 src/smartcat/context-source.ts 硬编码 '我的/现代诗'
   if (isUnderDir('我的/现代诗', p)) return 'poem';
-  // 信：settings.letterDirectory（「✉️ 信目录」）；缺键回退 '我的/信'
-  // （出处：src/settings.ts DEFAULT_SETTINGS，同 src/diary/config.ts LETTER_DIRECTORY 初值）
-  if (matchSettingDir(s.letterDirectory, p, '我的/信')) return 'letter';
-  // 文献盒：settings.knowledgeDirectory（「文献目录」）；缺键回退 '文献盒'（ADR-0072 迁出为新域）
-  if (matchSettingDir(s.knowledgeDirectory, p, '文献盒')) return 'knowledge';
+  // 信：settings.letterDirectory（「✉️ 信目录」）；可选项目，未配置不归类
+  if (matchSettingDir(s.letterDirectory, p, '')) return 'letter';
+  // 文献盒：settings.knowledgeDirectory（「文献目录」）；未配置不归类（ADR-0072 迁出为新域）
+  if (matchSettingDir(s.knowledgeDirectory, p, '')) return 'knowledge';
   return null;
 }
 

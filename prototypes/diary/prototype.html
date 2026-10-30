@@ -20,6 +20,8 @@
   │ 壳内只允许：外景容器样式、评审徽牌、演示钩子与自检。                      │
   └────────────────────────────────────────────────────────────────────────┘
 -->
+<link rel="stylesheet" href="../host-theme.css">
+<link rel="stylesheet" href="../preview-settings.css">
 <link rel="stylesheet" href="../mob-1to1.css">
 <script src="../mob-1to1.js"></script>
 <style>
@@ -36,30 +38,12 @@
     border: 1px solid var(--background-modifier-border); box-shadow: var(--shadow-l); background: var(--background-primary); }
   .demo-frame { width: 100%; height: 100%; border: 0; display: block; }
 
-  /* 评审徽牌（演示壳自用） */
-  .vbadge { position: fixed; right: 16px; bottom: 12px; font-size: var(--font-ui-smaller); color: var(--text-muted); display: flex; gap: 10px; align-items: center;
-    background: var(--background-primary); border: 1px solid var(--background-modifier-border); padding: 4px 9px; border-radius: var(--radius-m); z-index: 900; }
-  .vbadge button { border: none; background: none; color: var(--text-accent); font: inherit; cursor: pointer; }
-  .vbadge .ok { color: var(--color-green); }
-  .vbadge .bad { color: var(--text-error); }
-  /* 明暗切换：分段控件（壳自用，非组件样式） */
-  .themegrp { display: flex; border: 1px solid var(--background-modifier-border); border-radius: var(--radius-s); overflow: hidden; }
-  .themegrp button { padding: 2px 7px; color: var(--text-muted); }
-  .themegrp button.on { background: var(--interactive-accent); color: var(--text-on-accent); }
 </style>
 </head>
 <body class="theme-light"> <!-- 宿主类由 host-theme.css 定义（theme-light / theme-dark），下方脚本按切换钮改写 -->
   <div id="dtHost" class="demo-dt"><iframe class="demo-frame" src="./prototype-view.html" title="日记本·桌面"></iframe></div>
   <div id="mobHost" class="demo-mob-wrap"><div class="demo-mob"><iframe class="demo-frame" src="./prototype-view.html?mob=1" title="日记本·移动"></iframe></div></div>
 
-  <div class="vbadge">日记本 · 真行为单源预览（桌面=真 ui.ts 跑在 980px，移动=412×915 真全屏）· 真实 vault 快照
-    <span class="themegrp" id="themeGrp">
-      <button data-mode="light">明</button><button data-mode="dark">暗</button><button data-mode="auto">跟随系统</button>
-    </span>
-    <button id="mobToggle">隐藏移动端</button>
-    <button id="reset">重置演示数据</button>
-    <span id="stResult"></span>
-  </div>
 
 <script src="./prototype-icons.js"></script>
 <script src="./prototype-data.js"></script>
@@ -98,22 +82,6 @@
     tries();
   });
 
-  document.querySelector('#mobToggle').addEventListener('click', () => {
-    const m = document.querySelector('#mobHost');
-    const hidden = m.style.display === 'none';
-    m.style.display = hidden ? '' : 'none';
-    document.querySelector('#mobToggle').textContent = hidden ? '隐藏移动端' : '显示移动端';
-  });
-
-  document.querySelector('#reset').addEventListener('click', () => {
-    const kill = [];
-    for (let i = 0; i < localStorage.length; i++) {
-      const k = localStorage.key(i);
-      if (k && k.startsWith(LS) && k !== LS + '__theme') kill.push(k); // 主题偏好不属于演示数据，保留
-    }
-    kill.forEach((k) => localStorage.removeItem(k));
-    location.reload();
-  });
 
   /* ==================== 自检（?selftest=1）：真行为 DOM 断言（经 iframe） ====================
    * 必含 CSS 生效断言（view 页 CSS 路径 404 前科）：.bz-diary 作用域自定义属性 --dw-bg
@@ -244,5 +212,6 @@
   }
 })();
 </script>
+<script src="../preview-settings.js"></script>
 </body>
 </html>

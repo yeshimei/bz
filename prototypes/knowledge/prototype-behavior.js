@@ -1,5 +1,5 @@
-/* 源指纹 db13f9ac706fb555 · 仓内输入 59 个（校验见 tests/preview-freshness.test.ts） */
-/*#preview-inputs=["prototypes/knowledge/fake-sim.ts","prototypes/knowledge/fake/ai-index.ts","prototypes/knowledge/fake/fake-obsidian.ts","src/core/ai.ts","src/core/app.ts","src/core/asr-proofread.ts","src/core/crypto.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/knowledge-boxes.ts","src/core/link-now.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/net-progress.ts","src/core/node-runtime-install.ts","src/core/note-trash.ts","src/core/notice.ts","src/core/offline-source.ts","src/core/plugin-path.ts","src/core/remote-asset.ts","src/core/remote-base.ts","src/core/settings-provider.ts","src/core/sha256.ts","src/core/storage-path.ts","src/core/storage.ts","src/core/tar.ts","src/core/tool-hint.ts","src/core/tool-runtime.ts","src/core/ui/focus-trap.ts","src/core/ui/icons.ts","src/core/ui/resize.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/utils.ts","src/core/z-order.ts","src/core/zip.ts","src/knowledge/data.ts","src/knowledge/motion.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-edit.ts","src/knowledge/note-gen.ts","src/knowledge/partial-json.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/relink.ts","src/knowledge/source.ts","src/knowledge/tack.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/secondbrain/readonly.ts"]*/
+/* 源指纹 e5fc807498484afc · 仓内输入 65 个（校验见 tests/preview-freshness.test.ts） */
+/*#preview-inputs=["prototypes/knowledge/fake-sim.ts","prototypes/knowledge/fake/ai-index.ts","prototypes/knowledge/fake/fake-obsidian.ts","prototypes/preview-mode.ts","src/core/ai.ts","src/core/app.ts","src/core/asr-proofread.ts","src/core/attachment-dir.ts","src/core/crypto.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/folder-setup.ts","src/core/http.ts","src/core/item-actions.ts","src/core/knowledge-boxes.ts","src/core/link-now.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/net-progress.ts","src/core/node-runtime-install.ts","src/core/note-trash.ts","src/core/notice.ts","src/core/offline-source.ts","src/core/plugin-path.ts","src/core/remote-asset.ts","src/core/remote-base.ts","src/core/settings-provider.ts","src/core/sha256.ts","src/core/storage-path.ts","src/core/storage.ts","src/core/tar.ts","src/core/tool-hint.ts","src/core/tool-runtime.ts","src/core/ui/button.ts","src/core/ui/empty.ts","src/core/ui/focus-trap.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/resize.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/utils.ts","src/core/z-order.ts","src/core/zip.ts","src/knowledge/data.ts","src/knowledge/motion.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-edit.ts","src/knowledge/note-gen.ts","src/knowledge/partial-json.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/relink.ts","src/knowledge/source.ts","src/knowledge/tack.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/secondbrain/readonly.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/knowledge/fake-sim.ts → window.BZW_knowledge（行为单源预览包，issue 245/ADR-0106） */
 var BZW_knowledge = (() => {
   var __create = Object.create;
@@ -39,9 +39,9 @@ var BZW_knowledge = (() => {
   ));
   var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
 
-  // ../bz/node_modules/.pnpm/moment@2.30.1/node_modules/moment/moment.js
+  // node_modules/.pnpm/moment@2.30.1/node_modules/moment/moment.js
   var require_moment = __commonJS({
-    "../bz/node_modules/.pnpm/moment@2.30.1/node_modules/moment/moment.js"(exports, module) {
+    "node_modules/.pnpm/moment@2.30.1/node_modules/moment/moment.js"(exports, module) {
       (function(global, factory) {
         typeof exports === "object" && typeof module !== "undefined" ? module.exports = factory() : typeof define === "function" && define.amd ? define(factory) : global.moment = factory();
       })(exports, function() {
@@ -8173,6 +8173,33 @@ ${lines}`;
     return { texts: out, failed: false };
   }
 
+  // src/core/attachment-dir.ts
+  function cleanDir(v) {
+    return String(v != null ? v : "").trim().replace(/\\/g, "/").replace(/^\/+|\/+$/g, "");
+  }
+  function obsidianAttachmentDir() {
+    var _a, _b;
+    let raw = "";
+    try {
+      const vault = getApp().vault;
+      raw = String((_b = (_a = vault == null ? void 0 : vault.getConfig) == null ? void 0 : _a.call(vault, "attachmentFolderPath")) != null ? _b : "");
+    } catch (e) {
+      return null;
+    }
+    const v = raw.trim().replace(/\\/g, "/");
+    if (!v || v === "/") return null;
+    if (v.startsWith("./")) return null;
+    const dir = cleanDir(v);
+    return dir || null;
+  }
+  function resolveAssetDir(configured, fallback) {
+    const c = cleanDir(configured);
+    if (c) return { dir: c, source: "setting" };
+    const o = obsidianAttachmentDir();
+    if (o) return { dir: o, source: "obsidian" };
+    return { dir: cleanDir(fallback), source: "fallback" };
+  }
+
   // src/knowledge/partial-json.ts
   var ESCAPE_CHARS = {
     n: "\n",
@@ -8545,10 +8572,8 @@ ${notes.map((x) => `第 ${x.n} 张：${x.d}`).join("\n")}`;
     };
   }
   function resolveImageDir(settings) {
-    const configured = String((settings == null ? void 0 : settings.knowledgeImageFolder) || "").trim().replace(/\\/g, "/").replace(/^\/+|\/+$/g, "");
-    if (configured) return configured;
     const dir = String((settings == null ? void 0 : settings.knowledgeDirectory) || "文献盒").replace(/\\/g, "/").replace(/^\/+|\/+$/g, "") || "文献盒";
-    return `${dir}/${IMAGE_ASSETS_DIR}`;
+    return resolveAssetDir(settings == null ? void 0 : settings.knowledgeImageFolder, `${dir}/${IMAGE_ASSETS_DIR}`).dir;
   }
   async function generateImageNote(opts) {
     var _a, _b;
@@ -13764,6 +13789,118 @@ ${String(blockText != null ? blockText : "").trim()}`);
     }
   };
 
+  // src/core/folder-setup.ts
+  var FOLDER_PLANS = {
+    diary: {
+      name: "日记本",
+      icon: "notebook-pen",
+      settingsId: "diary",
+      title: "日记本还没定文件夹",
+      desc: "写下的每一篇都会存进日记文件夹。定了之后才有地方落笔。",
+      fields: [{ key: "diaryDirectory", label: "日记文件夹", reco: "我的/日记", note: "信件文件夹可选，用到时才问" }]
+    },
+    clipbook: {
+      name: "剪藏本",
+      icon: "scissors",
+      settingsId: "clipping",
+      title: "剪藏本还没定文件夹",
+      desc: "抓到的网页要存成笔记，正文得有个固定的落脚处。",
+      fields: [
+        { key: "articleDirectory", label: "剪藏文件夹", reco: "归档/网页剪藏" },
+        { key: "clipbookImageFolder", label: "图片文件夹", reco: "", image: true, imageFallback: (main) => `${main}/assets` }
+      ]
+    },
+    cinema: {
+      name: "影院",
+      icon: "clapperboard",
+      settingsId: "cinema",
+      title: "影院还没定文件夹",
+      desc: "影视条目一部一条，存在影视目录里。",
+      fields: [
+        { key: "cinemaFolderPath", label: "影视目录", reco: "我的/影视" },
+        { key: "cinemaPosterFolder", label: "海报文件夹", reco: "", image: true, imageFallback: (main) => `${main}/封面` }
+      ]
+    },
+    bookshelf: {
+      name: "书库",
+      icon: "library",
+      settingsId: "bookshelf",
+      title: "书库还没定文件夹",
+      desc: "书库读的是这个文件夹里带书标签的笔记；已有书的笔记放进去就能认出来。",
+      fields: [
+        { key: "bookshelfFolderPath", label: "书库目录", reco: "书库" },
+        { key: "bookshelfPosterFolder", label: "封面文件夹", reco: "", image: true, imageFallback: (main) => `${main}/封面` }
+      ]
+    },
+    gameshelf: {
+      name: "游戏库",
+      icon: "gamepad-2",
+      settingsId: "gameshelf",
+      title: "游戏库还没定文件夹",
+      desc: "一款一条，存在游戏目录里。",
+      // 定完文件夹还不会自己长数据：同步要 Steam 凭据（用户点名要在空态里说清）
+      hint: "同步还要在设置里填好 SteamID64 与 Web API 密钥。",
+      fields: [
+        { key: "gameshelfFolderPath", label: "游戏目录", reco: "我的/游戏" },
+        { key: "gameshelfPosterFolder", label: "海报文件夹", reco: "", image: true, imageFallback: (main) => `${main}/封面` }
+      ]
+    },
+    knowledge: {
+      name: "知识盒",
+      icon: "boxes",
+      settingsId: "knowledge",
+      title: "知识盒还没定文件夹",
+      desc: "四类各放一处：长文献、卡片、主题，外加配图。",
+      fields: [
+        { key: "knowledgeDirectory", label: "文献文件夹", reco: "文献盒" },
+        { key: "knowledgeCardboxDirectory", label: "卡片文件夹", reco: "卡片盒" },
+        { key: "knowledgeTopicDirectory", label: "主题文件夹", reco: "主题盒" },
+        { key: "knowledgeImageFolder", label: "图片文件夹", reco: "", image: true, imageFallback: (main) => `${main}/assets` }
+      ]
+    }
+  };
+  function settingValue(key2) {
+    const s = tryGetSettings();
+    return cleanDir(s ? s[key2] : "");
+  }
+  function folderState(domain) {
+    const plan = FOLDER_PLANS[domain];
+    const mainDir = (() => {
+      const first = plan.fields.find((f) => !f.image);
+      return first ? settingValue(first.key) : "";
+    })();
+    const fields = plan.fields.map((field) => {
+      if (field.image) {
+        const fallback = field.imageFallback ? field.imageFallback(mainDir || field.reco) : mainDir;
+        const r = resolveAssetDir(settingValue(field.key), fallback);
+        return { field, dir: r.dir, source: r.source, missing: !r.dir };
+      }
+      const v = settingValue(field.key);
+      return { field, dir: v, source: v ? "setting" : "fallback", missing: !v };
+    });
+    const missing = fields.filter((f) => f.missing);
+    return { plan, fields, missing, ok: missing.length === 0 };
+  }
+  function needsFolderSetup(domain) {
+    return !folderState(domain).ok;
+  }
+  function openFolderSettings(domain, anchorKey, closeBefore) {
+    var _a;
+    const plan = FOLDER_PLANS[domain];
+    const key2 = anchorKey || ((_a = folderState(domain).missing[0]) == null ? void 0 : _a.field.key);
+    try {
+      closeBefore == null ? void 0 : closeBefore();
+    } catch (e) {
+    }
+    const spec = ["..", "settings-panel"].join("/");
+    void import(
+      /* webpackIgnore: true */
+      spec
+    ).then((m) => m.openSettingsPanel(getApp(), plan.settingsId, key2)).catch(() => {
+      notice("设置面板没能打开，可以从「设置 → 包仔」进入", "warning");
+    });
+  }
+
   // src/knowledge/ui.ts
   function litKindPlain(type) {
     if (type === "video") return "影像";
@@ -13920,6 +14057,27 @@ ${String(blockText != null ? blockText : "").trim()}`);
   function stripFrontmatter4(text) {
     const m = text.match(/^---\r?\n[\s\S]*?\r?\n---\r?\n?/);
     return text.slice(m ? m[0].length : 0).replace(/^\r?\n+/, "");
+  }
+  function mountKnowledgeFolderGate(el) {
+    if (!needsFolderSetup("knowledge")) return false;
+    const plan = folderState("knowledge").plan;
+    el.textContent = "";
+    const wrap = document.createElement("div");
+    wrap.className = "bz-kb-gate";
+    const title = document.createElement("div");
+    title.className = "bz-kb-gate-title";
+    title.textContent = plan.title;
+    const note = document.createElement("div");
+    note.className = "bz-kb-empty";
+    note.textContent = plan.desc;
+    const act = document.createElement("button");
+    act.type = "button";
+    act.className = "bz-kb-mt-btn bz-kb-gate-act";
+    act.textContent = "打开设置";
+    act.addEventListener("click", () => openFolderSettings("knowledge"));
+    wrap.append(title, note, act);
+    el.appendChild(wrap);
+    return true;
   }
   var UIManager = class {
     constructor(app) {
@@ -14983,6 +15141,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
     /** 当前部数据 + 渲染（目录变更检测 → 清缓存重扫） */
     async refreshCurrent() {
       if (!this.contentEl) return;
+      if (mountKnowledgeFolderGate(this.contentEl)) return;
       const s = tryGetSettings();
       if (this.part === "z1") {
         const dir = litDirOf(s);
@@ -17957,6 +18116,52 @@ ${String(blockText != null ? blockText : "").trim()}`);
     }
   };
 
+  // prototypes/preview-mode.ts
+  function pvDirsMode() {
+    try {
+      const v = new URLSearchParams(location.search).get("dirs");
+      return v === "0" ? "0" : v === "1" ? "1" : "";
+    } catch (e) {
+      return "";
+    }
+  }
+  function pvUnset() {
+    return pvDirsMode() === "0";
+  }
+  function pvBlankDirs(store, keys) {
+    if (!pvUnset()) return;
+    for (const k of keys) store[k] = "";
+  }
+  function pvEmptyData() {
+    try {
+      return new URLSearchParams(location.search).get("state") === "empty";
+    } catch (e) {
+      return false;
+    }
+  }
+  function pvWipeVault(paths) {
+    const LS = "bz-sim:";
+    const STAT = "bz-sim:__stat__";
+    const hit = (p) => paths.some((raw) => {
+      const pre = raw.replace(/\/+$/, "");
+      return p === pre || p.startsWith(`${pre}/`);
+    });
+    const doomed = [];
+    for (let i = 0; i < localStorage.length; i += 1) {
+      const k = localStorage.key(i);
+      if (!k || k === STAT || !k.startsWith(LS)) continue;
+      if (hit(k.slice(LS.length))) doomed.push(k);
+    }
+    for (const k of doomed) localStorage.removeItem(k);
+    try {
+      const stats = JSON.parse(localStorage.getItem(STAT) || "{}");
+      for (const k of Object.keys(stats)) if (hit(k)) delete stats[k];
+      localStorage.setItem(STAT, JSON.stringify(stats));
+    } catch (e) {
+      localStorage.setItem(STAT, "{}");
+    }
+  }
+
   // prototypes/knowledge/fake-sim.ts
   var SEED_MARKER = "bz-sim:__kb_seed_v3";
   var key = (path) => `bz-sim:${path}`;
@@ -18481,6 +18686,7 @@ date: 2026-09-13 09:10:00
       knowledgeCacheDir: "",
       knowledgeCacheRetentionDays: 7
     };
+    pvBlankDirs(settings, ["knowledgeDirectory", "knowledgeCardboxDirectory", "knowledgeTopicDirectory", "knowledgeImageFolder"]);
     setSettingsProvider(() => settings);
     setAISettingsProvider(() => settings);
   }
@@ -18636,6 +18842,10 @@ ${text}`;
     if (g.__bzKbSimBooted) return;
     g.__bzKbSimBooted = true;
     seedVault();
+    if (pvEmptyData()) {
+      pvWipeVault([...SEED_NOTES, ...SEED_MOUNT_NOTES, ...SEED_MOUNT_LITERATURE, ...SEED_MEDIA].map((n) => n.path));
+      localStorage.removeItem(SEED_MARKER);
+    }
     const app = new FakeApp();
     setApp(app);
     injectSettings();

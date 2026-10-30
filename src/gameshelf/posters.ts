@@ -26,6 +26,7 @@ import type { App, TFile } from 'obsidian';
 import { requestUrl } from 'obsidian';
 import { withTimeout } from '../core/http';
 import { tryGetSettings } from '../core/settings-provider';
+import { resolveAssetDir } from '../core/attachment-dir';
 import { upsertDetail } from './notes';
 import { M, type GameItem } from './state';
 import { steamCoverUrl } from './steam';
@@ -40,13 +41,11 @@ export const DEFAULT_POSTER_FOLDER = 'CONFIG/游戏海报';
  */
 const MEDIA_DOWNLOAD_TIMEOUT_MS = 20_000;
 
-/** 海报文件夹解析（显式配置优先，缺省回落） */
+/** 海报文件夹解析：显式配置优先 → Obsidian 附件位置 → 缺省（core/attachment-dir 单源） */
 export function resolvePosterFolder(): string {
   try {
     const s = tryGetSettings() as Record<string, unknown>;
-    return typeof s.gameshelfPosterFolder === 'string' && s.gameshelfPosterFolder.trim()
-      ? s.gameshelfPosterFolder
-      : DEFAULT_POSTER_FOLDER;
+    return resolveAssetDir(s.gameshelfPosterFolder, DEFAULT_POSTER_FOLDER).dir;
   } catch {
     return DEFAULT_POSTER_FOLDER;
   }

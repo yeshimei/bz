@@ -26,6 +26,7 @@ import { setAISettingsProvider } from '../../src/core/ai';
 import { attachObsidianAdapter } from '../../src/core/obsidian-adapter';
 import { ensureCinema, openCinema as openCinemaDomain } from '../../src/cinema/index';
 import { closeOverlay, openAddModalDirect } from '../../src/cinema/ui';
+import { pvBlankDirs, pvEmptyData } from '../preview-mode';
 
 /** 影视目录（插件 DEFAULT_FOLDER 同值；种子与自动刷新前缀共用） */
 const FOLDER = '我的/影视';
@@ -188,6 +189,8 @@ const settingsStore: Record<string, unknown> = {
  *  插件侧这个键走插件设置页，原型没有设置页入口，故由壳的 vbadge 按钮改写 iframe src 传进来。 */
 function injectSettings(): void {
   if (new URLSearchParams(location.search).get('merge') === '0') settingsStore.cinemaMergeSeasons = false;
+  // 壳的「文件夹」开关：未配置 → 影视目录留空，看引导态
+  pvBlankDirs(settingsStore, ['cinemaFolderPath', 'cinemaPosterFolder']);
   setSettingsProvider(() => settingsStore as never);
   setSettingsSaver(async () => {
     localStorage.setItem(SETTINGS_KEY, JSON.stringify(settingsStore));
@@ -203,6 +206,12 @@ export function bootCinemaSim(): void {
   if (g.__bzCinSimBooted) return;
   g.__bzCinSimBooted = true;
   seedDatabase();
+  // 壳的「空册」档：照常种完再收口（顺序不能反——先清后种会被种子原样补回来），
+  // 同时撤掉种子标记，切回「有内容」时才会重新种
+  if (pvEmptyData()) {
+    clearSeedFolder();
+    localStorage.removeItem(SEED_MARK);
+  }
   // core/app 的 setApp 形参是 obsidian App 类型；评审壳 FakeApp 只实现依赖链消费面，
   // 运行期以 (app.vault as any) 等访问——类型断言收敛此处差异。
   const app = new FakeApp();

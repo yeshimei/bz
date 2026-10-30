@@ -349,6 +349,15 @@ textarea.bz-input { height: auto; min-height: 80px; padding: 8px 10px; line-heig
 .bz-empty-title { font-size: var(--bz-font-body); font-weight: 600; color: var(--bz-text-2); }
 .bz-empty-desc { font-size: var(--bz-font-meta); color: var(--bz-text-3); max-width: 280px; }
 .bz-empty .bz-btn-row { margin-top: 12px; }
+/* 空态的补充提示（比 .bz-empty-desc 弱一档：说完「缺什么」再补一句「还要做什么」） */
+.bz-empty-note {
+  max-width: 300px;
+  margin: 2px 0 -4px;
+  font-size: var(--bz-font-meta);
+  line-height: 1.8;
+  color: var(--bz-text-3);
+  opacity: 0.9;
+}
 
 /* ═══════════ 分段 .bz-segmented ═══════════ */
 .bz-segmented {

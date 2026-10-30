@@ -13,6 +13,7 @@ import { ensurePosters, mediaItemsOf, unloadPosters } from './posters';
 import { ensureBackfill, unloadBackfill } from './backfill';
 import { ensureZhNames, unloadZhNames } from './names';
 import { closePanel, openPanel, renderAll, resetScrollMemo } from './ui';
+import { needsFolderSetup } from '../core/folder-setup';
 
 let initialized = false;
 
@@ -26,6 +27,9 @@ export function ensureGameshelf(app: App): void {
 
 /** 打开面板后的后台收尾（自动同步 → 重渲 → 补媒体与中文名）；两条打开类命令共用 */
 function afterOpen(app: App): void {
+  // 未配置游戏目录 → 不同步、不落海报、不补成就：这些全是写盘动作，
+  // 落到老的「我的/游戏」里比什么都不做更糟
+  if (needsFolderSetup('gameshelf')) return;
   void import('./sync').then(async (m) => {
     await m.autoSyncOnOpen(app);
     renderAll(app);

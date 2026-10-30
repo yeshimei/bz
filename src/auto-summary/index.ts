@@ -25,6 +25,7 @@ import type { NoticeHandle } from '../core/notice';
 import { clipDir } from '../clipbook/save';
 import { AUTO_SUMMARY_KEYS } from './keys';
 import { processFile, type ProcessOutcome } from './processor';
+import { needsFolderSetup } from '../core/folder-setup';
 
 /** 监听目录与剪藏本设置一致（articleDirectory）：直引 clipDir 单源（N1/一致#3） */
 function getWatchDir(): string {
@@ -35,6 +36,8 @@ function getWatchDir(): string {
  *  clipbook scanClipDirectory 只扫顶层，两域共用同一设置键必须同半径，
  *  否则子目录里的非剪藏笔记会被 AI 补全甚至改名，而剪藏本列表永不显示它们 */
 function isWatchedTopLevel(path: string): boolean {
+  // 剪藏目录未配置 → 一个文件都不认（否则老默认目录里的笔记会被 AI 摘要动一遍）
+  if (needsFolderSetup('clipbook')) return false;
   const dir = getWatchDir();
   const prefix = dir + '/';
   return path.startsWith(prefix) && !path.slice(prefix.length).includes('/');

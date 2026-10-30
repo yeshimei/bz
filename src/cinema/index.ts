@@ -10,6 +10,7 @@ import { M, resetCinemaState, resolveCinemaFolderPath, DEFAULT_FOLDER, isRecentS
 import { rebuildItems, findPosterRenameTargets } from './data';
 import { createOverlay, closeOverlay, registerEscapeHandler, renderAll, renderSoft, openAddModalDirect, openRandomMovie, openYearbookOverlay } from './ui';
 import { shutdownDoubanQueue, sweepDoubanFetch } from './douban-queue';
+import { needsFolderSetup, openFolderSettings } from '../core/folder-setup';
 
 let initialized = false;
 let autoRefreshRegistered = false;
@@ -136,7 +137,8 @@ export function openCinema(app: App): void {
   applyDefaultView();
   createOverlay(app);
   // 豆瓣抓取队列（ADR-0113）：打开即扫未齐条目，入队串行补抓
-  sweepDoubanFetch(app);
+  // 未配置影视目录就不入队（补抓会写海报与笔记，落点还不知道在哪儿）
+  if (!needsFolderSetup('cinema')) sweepDoubanFetch(app);
 }
 
 /**
@@ -155,6 +157,11 @@ export function openCinemaAnalysis(app: App): void {
 /** 添加影视（命令 bz-cinema-add） */
 export function addCinemaItem(app: App): void {
   ensureCinema(app);
+  // 未配置影视目录：先定文件夹，别让人填完一整张表单才发现没地方存
+  if (needsFolderSetup('cinema')) {
+    openFolderSettings('cinema');
+    return;
+  }
   openAddModalDirect(app);
 }
 

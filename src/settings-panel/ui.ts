@@ -355,6 +355,11 @@ export class SettingsPanelUI {
    *  桌面滚动元素 = .bz-sp-desk-main（pane 父级）、移动 = .bz-sp-mob-page-body（pane 自身），
    *  key 以端前缀区分；cleanup 随面板销毁清空（会话内有效）。 */
   private scrollMem = new Map<string, number>();
+  /**
+   * 深链锚点（2026-10-30）：某域空态点「打开设置」时带过来的设置键——
+   * 域渲染完成后滚到那一行并高亮两秒（不给锚点就只是打开该域，行为不变）。
+   */
+  private pendingAnchor: string | null = null;
   /** 列表重绘回调（桌面导航/移动列表各自注册；preload 解析出零项域后剔除重绘） */
   private rerenderList: (() => void) | null = null;
   /** 移动端推入状态：home = 首页列表；domain = 已推入域设置页 */
@@ -391,8 +396,10 @@ export class SettingsPanelUI {
   /**
    * 打开面板；domainId 可选（增强包：备忘录场景菜单「在设置中编辑」直达）——
    * 桌面定位左栏选中域；移动端打开后直接进域设置弹窗。未知 id 忽略（回退通用）。
+   * anchorKey 可选（2026-10-30：域空态「打开设置」带过来）——渲染完滚到该行并高亮。
    */
-  open(domainId?: string): void {
+  open(domainId?: string, anchorKey?: string): void {
+    this.pendingAnchor = anchorKey ? String(anchorKey) : null;
     const deep = domainId ? DOMAINS.find((x) => x.id === domainId) : undefined;
     if (deep) this.activeDomainId = deep.id;
     if (this.mask && this.popup) {
@@ -841,6 +848,7 @@ export class SettingsPanelUI {
       // SP5：记账本域 + 回填记忆滚位——重进域回到离开时的位置（过滤后行高已定，钳制自然兜底）
       pane.dataset.spActive = domain.id;
       scroller.scrollTop = this.scrollMem.get(`${side}:${domain.id}`) ?? 0;
+      this.applyAnchor(pane);
       // 动效挂点：翻层揭帘（DOM 已全部就位后纯表现编排，绝不推迟重写——契约见 motion.ts）
       spm.motionRendered(pane);
       return;
@@ -862,6 +870,24 @@ export class SettingsPanelUI {
       body.appendChild(empty);
       notifyActionError(e, `加载「${domain.name}」设置`, { onRetry: retry });
     }
+  }
+
+  /**
+   * 深链锚点落地：滚到 `[data-key="<键>"]` 那一行并高亮两秒（空态「打开设置」的唯一目的
+   * 就是把用户送到该填的那个框前面；只到域不到行，等于把他丢进一张长表里自己找）。
+   * 无待处理锚点 → 零开销返回（常规打开的路径不受影响）。
+   */
+  private applyAnchor(pane: HTMLElement): void {
+    const key = this.pendingAnchor;
+    if (!key) return;
+    this.pendingAnchor = null;
+    const el = pane.querySelector<HTMLElement>(`[data-key="${key.replace(/"/g, '\\"')}"]`);
+    if (!el) return;
+    el.scrollIntoView({ block: 'center' });
+    el.classList.remove('is-anchor');
+    void el.offsetWidth; // 强制回流，连点两次同一行也能重放动画
+    el.classList.add('is-anchor');
+    setTimeout(() => el.classList.remove('is-anchor'), 2200);
   }
 
   /**

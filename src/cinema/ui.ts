@@ -52,6 +52,7 @@ import {
 } from './render';
 import { mergeSeasonCards, isSeriesKey, cardFace, type SeriesCard } from './seasons';
 import { MOTION, EASE, STAGGER } from './motion';
+import { folderState, needsFolderSetup, openFolderSettings } from '../core/folder-setup';
 
 // ---------- 海报 ----------
 
@@ -3102,6 +3103,59 @@ function playGridMotion(root: HTMLElement, before: Map<string, GridCardSnap>): v
 
 /** 渲染总入口：按面板根的风格/端分发（vault 自动刷新与 M.renderFn 都走这里） */
 export function renderAll(app: App): void {
+  renderAllInner(app);
+  // 影视目录没配 → 内容区给引导态。放在渲染之后定位内容容器：
+  // 根容器带着整条头行（标题/筛选/搜索），整块换掉会让面板失去骨架
+  mountFolderGateCinema();
+}
+
+/**
+ * 未配置引导页（本域形制版）：core 的通用空态卡是宿主浅色卡片语言，跟午夜场的
+ * 墨色衬线大字、无底墨线钮不是一套皮肤——这里照 `emptyPageHtml` 的形制自己拼一份，
+ * 直接复用 `.cn-empty-page` / `.dm-btn`，不加新样式类别。
+ *
+ * 挂载点两种：库里有片子时内容在 `.d-scroll/.m-scroll` 里（清空它）；库里一部都没有时
+ * 根本没有滚动容器，只有「影片空空如也」那张空态页——就地把它换掉（否则引导页永远不出现）。
+ */
+function mountFolderGateCinema(): boolean {
+  const root = cinemaRoot();
+  if (!root || !needsFolderSetup('cinema')) return false;
+  const plan = folderState('cinema').plan;
+  const page = document.createElement('div');
+  page.className = 'cn-empty-page';
+  const big = document.createElement('div');
+  big.className = 'big';
+  big.textContent = plan.title;
+  const note = document.createElement('span');
+  note.className = 'cn-empty-note';
+  note.textContent = plan.desc;
+  const btn = document.createElement('button');
+  btn.type = 'button';
+  btn.className = 'dm-btn gold';
+  btn.textContent = '打开设置';
+  btn.addEventListener('click', () => openFolderSettings('cinema', undefined, closeOverlay));
+  page.append(big, note, btn);
+  const bare = root.querySelector<HTMLElement>('.cn-empty-page');
+  if (bare) {
+    bare.replaceWith(page);
+    return true;
+  }
+  const shell = root.querySelector<HTMLElement>('.d-scroll, .m-scroll');
+  if (!shell) return false;
+  if (shell.classList.contains('m-scroll')) {
+    // mob：滚动容器本身就是 j-mview，转 flex 列后空态页 flex:1 才撑满居中（与原生空态同法）
+    shell.textContent = '';
+    shell.classList.add('cn-mempty');
+    shell.appendChild(page);
+    return true;
+  }
+  // desk：原生空态页是 .j-view（.d-main，flex 列）的直接子元素；塞进 .d-scroll 里会因为没有
+  // flex 父级而只 flex:1 失效、贴在顶部——所以整块换掉滚动容器，位置与原生空态完全一致
+  shell.replaceWith(page);
+  return true;
+}
+
+function renderAllInner(app: App): void {
   const root = cinemaRoot();
   if (!root) return;
   clearSoftRender(); // 已排期的顺延渲染作废，本次渲染已覆盖

@@ -45,3 +45,9 @@ export function toDatetime(dateStr: string): string {
   }
 }
 
+
+/**
+ * 剪藏本视频教程（作者本人的操作演示，B 站）。
+ * 三处共用：未配置引导 / 空册空态 / 设置面板「目录」组——改地址只改这里。
+ */
+export const CLIP_TUTORIAL_URL = 'https://www.bilibili.com/video/BV1pvxe6qEkf/';

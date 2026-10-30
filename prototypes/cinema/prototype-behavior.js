@@ -1,5 +1,5 @@
-/* 源指纹 19d22782c5670d50 · 仓内输入 82 个（校验见 tests/preview-freshness.test.ts） */
-/*#preview-inputs=["prototypes/cinema/fake-sim.ts","prototypes/cinema/fake/fake-obsidian.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/douban-fetcher.ts","src/cinema/douban-queue.ts","src/cinema/index.ts","src/cinema/layouts/midnight/render.ts","src/cinema/motion.ts","src/cinema/recommend.ts","src/cinema/render.ts","src/cinema/seasons.ts","src/cinema/shared.ts","src/cinema/state.ts","src/cinema/type-decide.ts","src/cinema/ui.ts","src/cinema/yearbook/data.ts","src/cinema/yearbook/engine.ts","src/cinema/yearbook/index.ts","src/cinema/yearbook/kits.ts","src/cinema/yearbook/motions.ts","src/cinema/yearbook/scenes.ts","src/core/ai.ts","src/core/app.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/douban-name-index.ts","src/core/download-manifest.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/gesture.ts","src/core/http.ts","src/core/item-actions.ts","src/core/jev-fallback.ts","src/core/jev.ts","src/core/landscape.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/note-trash.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/offline-source.ts","src/core/path-classify.ts","src/core/plugin-path.ts","src/core/remote-asset.ts","src/core/remote-base.ts","src/core/settings-provider.ts","src/core/sha256.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/help-tip.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slide-pill.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts"]*/
+/* 源指纹 52ba90693a6b096c · 仓内输入 85 个（校验见 tests/preview-freshness.test.ts） */
+/*#preview-inputs=["prototypes/cinema/fake-sim.ts","prototypes/cinema/fake/fake-obsidian.ts","prototypes/preview-mode.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/douban-fetcher.ts","src/cinema/douban-queue.ts","src/cinema/index.ts","src/cinema/layouts/midnight/render.ts","src/cinema/motion.ts","src/cinema/recommend.ts","src/cinema/render.ts","src/cinema/seasons.ts","src/cinema/shared.ts","src/cinema/state.ts","src/cinema/type-decide.ts","src/cinema/ui.ts","src/cinema/yearbook/data.ts","src/cinema/yearbook/engine.ts","src/cinema/yearbook/index.ts","src/cinema/yearbook/kits.ts","src/cinema/yearbook/motions.ts","src/cinema/yearbook/scenes.ts","src/core/ai.ts","src/core/app.ts","src/core/attachment-dir.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/douban-name-index.ts","src/core/download-manifest.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/folder-setup.ts","src/core/gesture.ts","src/core/http.ts","src/core/item-actions.ts","src/core/jev-fallback.ts","src/core/jev.ts","src/core/landscape.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/note-trash.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/offline-source.ts","src/core/path-classify.ts","src/core/plugin-path.ts","src/core/remote-asset.ts","src/core/remote-base.ts","src/core/settings-provider.ts","src/core/sha256.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/help-tip.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slide-pill.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/cinema/fake-sim.ts → window.BZW_cinema（行为单源预览包，issue 245/ADR-0106） */
 var BZW_cinema = (() => {
   var __create = Object.create;
@@ -39,9 +39,9 @@ var BZW_cinema = (() => {
   ));
   var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
 
-  // ../bz/node_modules/.pnpm/moment@2.30.1/node_modules/moment/moment.js
+  // node_modules/.pnpm/moment@2.30.1/node_modules/moment/moment.js
   var require_moment = __commonJS({
-    "../bz/node_modules/.pnpm/moment@2.30.1/node_modules/moment/moment.js"(exports, module) {
+    "node_modules/.pnpm/moment@2.30.1/node_modules/moment/moment.js"(exports, module) {
       (function(global, factory) {
         typeof exports === "object" && typeof module !== "undefined" ? module.exports = factory() : typeof define === "function" && define.amd ? define(factory) : global.moment = factory();
       })(exports, function() {
@@ -5151,13 +5151,13 @@ var BZW_cinema = (() => {
     const p = String(path).replace(/\\/g, "/");
     if (!p.endsWith(".md")) return null;
     const s = tryGetSettings();
-    if (matchSettingDir(s.diaryDirectory, p, "我的/日记")) return "diary";
+    if (matchSettingDir(s.diaryDirectory, p, "")) return "diary";
     if (isUnderDir("卡片盒", p)) return "flash";
-    if (matchSettingDir(s.articleDirectory, p, "归档/网页剪藏")) return "clipping";
-    if (matchSettingDir(s.cinemaFolderPath, p, "我的/影视")) return "cinema";
+    if (matchSettingDir(s.articleDirectory, p, "")) return "clipping";
+    if (matchSettingDir(s.cinemaFolderPath, p, "")) return "cinema";
     if (isUnderDir("我的/现代诗", p)) return "poem";
-    if (matchSettingDir(s.letterDirectory, p, "我的/信")) return "letter";
-    if (matchSettingDir(s.knowledgeDirectory, p, "文献盒")) return "knowledge";
+    if (matchSettingDir(s.letterDirectory, p, "")) return "letter";
+    if (matchSettingDir(s.knowledgeDirectory, p, "")) return "knowledge";
     return null;
   }
   function diaryDateFromPath(path) {
@@ -8419,6 +8419,33 @@ var BZW_cinema = (() => {
     return [...prefix, ...contains].slice(0, limit);
   }
 
+  // src/core/attachment-dir.ts
+  function cleanDir(v) {
+    return String(v != null ? v : "").trim().replace(/\\/g, "/").replace(/^\/+|\/+$/g, "");
+  }
+  function obsidianAttachmentDir() {
+    var _a, _b;
+    let raw = "";
+    try {
+      const vault = getApp().vault;
+      raw = String((_b = (_a = vault == null ? void 0 : vault.getConfig) == null ? void 0 : _a.call(vault, "attachmentFolderPath")) != null ? _b : "");
+    } catch (e) {
+      return null;
+    }
+    const v = raw.trim().replace(/\\/g, "/");
+    if (!v || v === "/") return null;
+    if (v.startsWith("./")) return null;
+    const dir = cleanDir(v);
+    return dir || null;
+  }
+  function resolveAssetDir(configured, fallback) {
+    const c = cleanDir(configured);
+    if (c) return { dir: c, source: "setting" };
+    const o = obsidianAttachmentDir();
+    if (o) return { dir: o, source: "obsidian" };
+    return { dir: cleanDir(fallback), source: "fallback" };
+  }
+
   // src/cinema/douban-queue.ts
   var FETCH_GAP_MS = 15e3;
   var FETCH_TIMEOUT_MS = 3 * 60 * 1e3;
@@ -8472,7 +8499,7 @@ var BZW_cinema = (() => {
       },
       apizeroKey: typeof s.cinemaApizeroKey === "string" ? s.cinemaApizeroKey.trim() : "",
       doubanCookie: typeof s.cinemaDoubanCookie === "string" ? s.cinemaDoubanCookie.trim() : "",
-      posterFolder: typeof s.cinemaPosterFolder === "string" ? s.cinemaPosterFolder.trim() : ""
+      posterFolder: resolveAssetDir(s.cinemaPosterFolder, POSTER_FOLDER).dir
     };
   }
   var previewFn = null;
@@ -12230,6 +12257,118 @@ tags:
     if (chips) chips.innerHTML = chipsHtml(v, inp.lists);
   }
 
+  // src/core/folder-setup.ts
+  var FOLDER_PLANS = {
+    diary: {
+      name: "日记本",
+      icon: "notebook-pen",
+      settingsId: "diary",
+      title: "日记本还没定文件夹",
+      desc: "写下的每一篇都会存进日记文件夹。定了之后才有地方落笔。",
+      fields: [{ key: "diaryDirectory", label: "日记文件夹", reco: "我的/日记", note: "信件文件夹可选，用到时才问" }]
+    },
+    clipbook: {
+      name: "剪藏本",
+      icon: "scissors",
+      settingsId: "clipping",
+      title: "剪藏本还没定文件夹",
+      desc: "抓到的网页要存成笔记，正文得有个固定的落脚处。",
+      fields: [
+        { key: "articleDirectory", label: "剪藏文件夹", reco: "归档/网页剪藏" },
+        { key: "clipbookImageFolder", label: "图片文件夹", reco: "", image: true, imageFallback: (main) => `${main}/assets` }
+      ]
+    },
+    cinema: {
+      name: "影院",
+      icon: "clapperboard",
+      settingsId: "cinema",
+      title: "影院还没定文件夹",
+      desc: "影视条目一部一条，存在影视目录里。",
+      fields: [
+        { key: "cinemaFolderPath", label: "影视目录", reco: "我的/影视" },
+        { key: "cinemaPosterFolder", label: "海报文件夹", reco: "", image: true, imageFallback: (main) => `${main}/封面` }
+      ]
+    },
+    bookshelf: {
+      name: "书库",
+      icon: "library",
+      settingsId: "bookshelf",
+      title: "书库还没定文件夹",
+      desc: "书库读的是这个文件夹里带书标签的笔记；已有书的笔记放进去就能认出来。",
+      fields: [
+        { key: "bookshelfFolderPath", label: "书库目录", reco: "书库" },
+        { key: "bookshelfPosterFolder", label: "封面文件夹", reco: "", image: true, imageFallback: (main) => `${main}/封面` }
+      ]
+    },
+    gameshelf: {
+      name: "游戏库",
+      icon: "gamepad-2",
+      settingsId: "gameshelf",
+      title: "游戏库还没定文件夹",
+      desc: "一款一条，存在游戏目录里。",
+      // 定完文件夹还不会自己长数据：同步要 Steam 凭据（用户点名要在空态里说清）
+      hint: "同步还要在设置里填好 SteamID64 与 Web API 密钥。",
+      fields: [
+        { key: "gameshelfFolderPath", label: "游戏目录", reco: "我的/游戏" },
+        { key: "gameshelfPosterFolder", label: "海报文件夹", reco: "", image: true, imageFallback: (main) => `${main}/封面` }
+      ]
+    },
+    knowledge: {
+      name: "知识盒",
+      icon: "boxes",
+      settingsId: "knowledge",
+      title: "知识盒还没定文件夹",
+      desc: "四类各放一处：长文献、卡片、主题，外加配图。",
+      fields: [
+        { key: "knowledgeDirectory", label: "文献文件夹", reco: "文献盒" },
+        { key: "knowledgeCardboxDirectory", label: "卡片文件夹", reco: "卡片盒" },
+        { key: "knowledgeTopicDirectory", label: "主题文件夹", reco: "主题盒" },
+        { key: "knowledgeImageFolder", label: "图片文件夹", reco: "", image: true, imageFallback: (main) => `${main}/assets` }
+      ]
+    }
+  };
+  function settingValue(key) {
+    const s = tryGetSettings();
+    return cleanDir(s ? s[key] : "");
+  }
+  function folderState(domain) {
+    const plan = FOLDER_PLANS[domain];
+    const mainDir = (() => {
+      const first = plan.fields.find((f) => !f.image);
+      return first ? settingValue(first.key) : "";
+    })();
+    const fields = plan.fields.map((field) => {
+      if (field.image) {
+        const fallback = field.imageFallback ? field.imageFallback(mainDir || field.reco) : mainDir;
+        const r = resolveAssetDir(settingValue(field.key), fallback);
+        return { field, dir: r.dir, source: r.source, missing: !r.dir };
+      }
+      const v = settingValue(field.key);
+      return { field, dir: v, source: v ? "setting" : "fallback", missing: !v };
+    });
+    const missing = fields.filter((f) => f.missing);
+    return { plan, fields, missing, ok: missing.length === 0 };
+  }
+  function needsFolderSetup(domain) {
+    return !folderState(domain).ok;
+  }
+  function openFolderSettings(domain, anchorKey, closeBefore) {
+    var _a;
+    const plan = FOLDER_PLANS[domain];
+    const key = anchorKey || ((_a = folderState(domain).missing[0]) == null ? void 0 : _a.field.key);
+    try {
+      closeBefore == null ? void 0 : closeBefore();
+    } catch (e) {
+    }
+    const spec = ["..", "settings-panel"].join("/");
+    void import(
+      /* webpackIgnore: true */
+      spec
+    ).then((m) => m.openSettingsPanel(getApp(), plan.settingsId, key)).catch(() => {
+      notice("设置面板没能打开，可以从「设置 → 包仔」进入", "warning");
+    });
+  }
+
   // src/cinema/ui.ts
   function posterUrl(item, app) {
     if (!item.poster) return null;
@@ -14686,6 +14825,44 @@ tags:
     }
   }
   function renderAll(app) {
+    renderAllInner(app);
+    mountFolderGateCinema();
+  }
+  function mountFolderGateCinema() {
+    const root = cinemaRoot();
+    if (!root || !needsFolderSetup("cinema")) return false;
+    const plan = folderState("cinema").plan;
+    const page = document.createElement("div");
+    page.className = "cn-empty-page";
+    const big = document.createElement("div");
+    big.className = "big";
+    big.textContent = plan.title;
+    const note = document.createElement("span");
+    note.className = "cn-empty-note";
+    note.textContent = plan.desc;
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "dm-btn gold";
+    btn.textContent = "打开设置";
+    btn.addEventListener("click", () => openFolderSettings("cinema", void 0, closeOverlay));
+    page.append(big, note, btn);
+    const bare = root.querySelector(".cn-empty-page");
+    if (bare) {
+      bare.replaceWith(page);
+      return true;
+    }
+    const shell = root.querySelector(".d-scroll, .m-scroll");
+    if (!shell) return false;
+    if (shell.classList.contains("m-scroll")) {
+      shell.textContent = "";
+      shell.classList.add("cn-mempty");
+      shell.appendChild(page);
+      return true;
+    }
+    shell.replaceWith(page);
+    return true;
+  }
+  function renderAllInner(app) {
     const root = cinemaRoot();
     if (!root) return;
     clearSoftRender();
@@ -14815,7 +14992,31 @@ tags:
     }
     applyDefaultView();
     createOverlay(app);
-    sweepDoubanFetch(app);
+    if (!needsFolderSetup("cinema")) sweepDoubanFetch(app);
+  }
+
+  // prototypes/preview-mode.ts
+  function pvDirsMode() {
+    try {
+      const v = new URLSearchParams(location.search).get("dirs");
+      return v === "0" ? "0" : v === "1" ? "1" : "";
+    } catch (e) {
+      return "";
+    }
+  }
+  function pvUnset() {
+    return pvDirsMode() === "0";
+  }
+  function pvBlankDirs(store, keys) {
+    if (!pvUnset()) return;
+    for (const k of keys) store[k] = "";
+  }
+  function pvEmptyData() {
+    try {
+      return new URLSearchParams(location.search).get("state") === "empty";
+    } catch (e) {
+      return false;
+    }
   }
 
   // prototypes/cinema/fake-sim.ts
@@ -14908,6 +15109,7 @@ tags:
   };
   function injectSettings() {
     if (new URLSearchParams(location.search).get("merge") === "0") settingsStore.cinemaMergeSeasons = false;
+    pvBlankDirs(settingsStore, ["cinemaFolderPath", "cinemaPosterFolder"]);
     setSettingsProvider(() => settingsStore);
     setSettingsSaver(async () => {
       localStorage.setItem(SETTINGS_KEY, JSON.stringify(settingsStore));
@@ -14920,6 +15122,10 @@ tags:
     if (g.__bzCinSimBooted) return;
     g.__bzCinSimBooted = true;
     seedDatabase();
+    if (pvEmptyData()) {
+      clearSeedFolder();
+      localStorage.removeItem(SEED_MARK);
+    }
     const app = new FakeApp();
     simApp = app;
     setApp(app);

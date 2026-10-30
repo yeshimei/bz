@@ -52,6 +52,7 @@ import { tackMediaToNote, mediaEmbedsOf } from './tack';
 import { relinkNoteByPath } from './relink';
 import { fetchCheckedQualities, fetchVideoMeta, needsBvidRepair, parseBvid, resolveVideo, type ResolvedVideo, type VideoMeta } from './video-meta';
 import { RangeBar } from './range-bar';
+import { folderState, needsFolderSetup, openFolderSettings } from '../core/folder-setup';
 import {
   motionAddIn, motionAddOut, motionAddReveal, motionCardsAppended, motionContentArrive, motionDupHint,
   motionEntryIn, motionEntryOut, motionEntryPenOn, motionEntryPreviewIn, motionLitReveal, motionMainIn,
@@ -465,6 +466,33 @@ export function knowledgeSettingsSchema(opts?: { onClearHistory?: () => void | P
       },
     ],
   };
+}
+
+/**
+ * 未配置引导态（本域形制版）：知识盒的界面是纸面 + 墨字（--ink/--ink3 + 字距），
+ * core 的通用空态卡带的是宿主配色与实心主钮，贴在这儿像另一种软件。这里改用本域
+ * 现成的墨字空态行（.bz-kb-empty）＋墨线小钮（.bz-kb-mt-btn）。
+ */
+function mountKnowledgeFolderGate(el: HTMLElement): boolean {
+  if (!needsFolderSetup('knowledge')) return false;
+  const plan = folderState('knowledge').plan;
+  el.textContent = '';
+  const wrap = document.createElement('div');
+  wrap.className = 'bz-kb-gate';
+  const title = document.createElement('div');
+  title.className = 'bz-kb-gate-title';
+  title.textContent = plan.title;
+  const note = document.createElement('div');
+  note.className = 'bz-kb-empty';
+  note.textContent = plan.desc;
+  const act = document.createElement('button');
+  act.type = 'button';
+  act.className = 'bz-kb-mt-btn bz-kb-gate-act';
+  act.textContent = '打开设置';
+  act.addEventListener('click', () => openFolderSettings('knowledge'));
+  wrap.append(title, note, act);
+  el.appendChild(wrap);
+  return true;
 }
 
 export class UIManager {
@@ -1520,6 +1548,8 @@ export class UIManager {
   /** 当前部数据 + 渲染（目录变更检测 → 清缓存重扫） */
   private async refreshCurrent(): Promise<void> {
     if (!this.contentEl) return;
+    // 三个盒目录没配齐 → 内容区给引导态，别拿空列表冒充「还没有文献/卡片」
+    if (mountKnowledgeFolderGate(this.contentEl)) return;
     const s = tryGetSettings() as Partial<BzSettings> | undefined;
     if (this.part === 'z1') {
       const dir = litDirOf(s);

@@ -1,5 +1,5 @@
-/* 源指纹 633832b94083a3e8 · 仓内输入 81 个（校验见 tests/preview-freshness.test.ts） */
-/*#preview-inputs=["prototypes/diary/fake-sim.ts","prototypes/diary/fake/fake-obsidian.ts","src/bookshelf/data.ts","src/bookshelf/state.ts","src/cinema/state.ts","src/core/app.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/note-trash.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/plugin-path.ts","src/core/settings-btn-state.ts","src/core/settings-common.ts","src/core/settings-modal.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage-path.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/help-tip.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/data.ts","src/diary/encrypt.ts","src/diary/flip-idle-guard.ts","src/diary/index.ts","src/diary/media-import.ts","src/diary/parser.ts","src/diary/render.ts","src/diary/repair.ts","src/diary/store.ts","src/diary/ui.ts","src/diary/ui/entry-actions.ts","src/diary/ui/locator.ts","src/diary/vendor/page-flip.browser.js","src/diary/volume.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/motion.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/password-vault/data.ts"]*/
+/* 源指纹 c04686d271f2d819 · 仓内输入 83 个（校验见 tests/preview-freshness.test.ts） */
+/*#preview-inputs=["prototypes/diary/fake-sim.ts","prototypes/diary/fake/fake-obsidian.ts","src/bookshelf/data.ts","src/bookshelf/state.ts","src/cinema/state.ts","src/core/app.ts","src/core/attachment-dir.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/folder-setup.ts","src/core/http.ts","src/core/item-actions.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/note-trash.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/plugin-path.ts","src/core/settings-btn-state.ts","src/core/settings-common.ts","src/core/settings-modal.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage-path.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/help-tip.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/data.ts","src/diary/encrypt.ts","src/diary/flip-idle-guard.ts","src/diary/index.ts","src/diary/media-import.ts","src/diary/parser.ts","src/diary/render.ts","src/diary/repair.ts","src/diary/store.ts","src/diary/ui.ts","src/diary/ui/entry-actions.ts","src/diary/ui/locator.ts","src/diary/vendor/page-flip.browser.js","src/diary/volume.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/motion.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/password-vault/data.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/diary/fake-sim.ts → window.BZW_diary（行为单源预览包，issue 245/ADR-0106） */
 var BZW_diary = (() => {
   var __create = Object.create;
@@ -42,9 +42,9 @@ var BZW_diary = (() => {
   ));
   var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
 
-  // ../bz/node_modules/.pnpm/moment@2.30.1/node_modules/moment/moment.js
+  // node_modules/.pnpm/moment@2.30.1/node_modules/moment/moment.js
   var require_moment = __commonJS({
-    "../bz/node_modules/.pnpm/moment@2.30.1/node_modules/moment/moment.js"(exports, module) {
+    "node_modules/.pnpm/moment@2.30.1/node_modules/moment/moment.js"(exports, module) {
       (function(global, factory) {
         typeof exports === "object" && typeof module !== "undefined" ? module.exports = factory() : typeof define === "function" && define.amd ? define(factory) : global.moment = factory();
       })(exports, function() {
@@ -5199,8 +5199,15 @@ var BZW_diary = (() => {
   // src/bookshelf/data.ts
   function resolveFolderPath() {
     const s = tryGetSettings();
-    const v = typeof s.bookshelfFolderPath === "string" && s.bookshelfFolderPath.trim() ? s.bookshelfFolderPath : typeof s.libraryFolderPath === "string" && s.libraryFolderPath.trim() ? s.libraryFolderPath : "书库";
-    return v.replace(/^\/+|\/+$/g, "");
+    const cur = typeof s.bookshelfFolderPath === "string" ? s.bookshelfFolderPath.trim() : "";
+    if (cur) return cur.replace(/^\/+|\/+$/g, "");
+    const legacy = typeof s.libraryFolderPath === "string" ? s.libraryFolderPath.trim() : "";
+    if (legacy) {
+      s.bookshelfFolderPath = legacy;
+      void saveSettings();
+      return legacy.replace(/^\/+|\/+$/g, "");
+    }
+    return "";
   }
   var init_data = __esm({
     "src/bookshelf/data.ts"() {
@@ -7607,6 +7614,36 @@ var BZW_diary = (() => {
   });
 
   // src/core/ui/button.ts
+  function uiBtn(opts) {
+    const b = document.createElement("button");
+    b.type = "button";
+    const cls = ["bz-btn"];
+    if (opts.tone && opts.tone !== "default") cls.push(`bz-btn--${opts.tone}`);
+    if (opts.size && opts.size !== "md") cls.push(`bz-btn--${opts.size}`);
+    if (opts.chip) cls.push("bz-btn--chip");
+    if (opts.on) cls.push("is-on");
+    if (opts.className) cls.push(opts.className);
+    b.className = cls.join(" ");
+    if (opts.title) b.title = opts.title;
+    if (opts.disabled) b.disabled = true;
+    if (opts.icon) {
+      if (opts.chip) {
+        const chip = document.createElement("span");
+        chip.className = "bz-btn-chip";
+        chip.appendChild(uiIcon(opts.icon));
+        b.appendChild(chip);
+      } else {
+        b.appendChild(uiIcon(opts.icon));
+      }
+    }
+    if (opts.label) {
+      const span = document.createElement("span");
+      span.textContent = opts.label;
+      b.appendChild(span);
+    }
+    if (opts.onClick) b.addEventListener("click", opts.onClick);
+    return b;
+  }
   var init_button = __esm({
     "src/core/ui/button.ts"() {
       init_icon();
@@ -16412,12 +16449,31 @@ ${String(review).trim()}`;
   async function withEntryFile(filePath, task) {
     return enqueueFileTask(filePath, async () => task(await readEntryCtxInQueue(filePath)));
   }
+  async function ensureFolderFor(dir) {
+    if (!dir) return;
+    const v = getApp().vault;
+    const missing = [];
+    let probe = dir;
+    while (probe && !v.getAbstractFileByPath(probe)) {
+      missing.unshift(probe);
+      const s = probe.lastIndexOf("/");
+      if (s <= 0) break;
+      probe = probe.slice(0, s);
+    }
+    for (const p of missing) {
+      try {
+        await v.createFolder(p);
+      } catch (e) {
+      }
+    }
+  }
   async function addEntry(dateStr, timeStr, tagsArray, content, opts) {
     const [hours = 0, minutes = 0] = timeStr.split(":").map(Number);
     const timeValue = hours * 100 + minutes;
     const dir = (opts == null ? void 0 : opts.filePath) ? opts.filePath.split("/").slice(0, -1).join("/") : DIARY_DIRECTORY;
     const addKey = `${dir}/${dateStr}`;
     const created = await enqueueFileTask(addKey, async () => {
+      await ensureFolderFor(dir);
       let seq = 1;
       let filePath = diaryEntryPath(dir, dateStr, timeStr, seq);
       while (getApp().vault.getAbstractFileByPath(filePath)) {
@@ -16809,6 +16865,155 @@ ${entry.content.trim()}`;
 
   // src/diary/ui.ts
   init_ui();
+
+  // src/core/folder-setup.ts
+  init_app();
+  init_notice();
+  init_settings_provider();
+
+  // src/core/attachment-dir.ts
+  init_app();
+  function cleanDir(v) {
+    return String(v != null ? v : "").trim().replace(/\\/g, "/").replace(/^\/+|\/+$/g, "");
+  }
+  function obsidianAttachmentDir() {
+    var _a, _b;
+    let raw = "";
+    try {
+      const vault = getApp().vault;
+      raw = String((_b = (_a = vault == null ? void 0 : vault.getConfig) == null ? void 0 : _a.call(vault, "attachmentFolderPath")) != null ? _b : "");
+    } catch (e) {
+      return null;
+    }
+    const v = raw.trim().replace(/\\/g, "/");
+    if (!v || v === "/") return null;
+    if (v.startsWith("./")) return null;
+    const dir = cleanDir(v);
+    return dir || null;
+  }
+  function resolveAssetDir(configured, fallback) {
+    const c = cleanDir(configured);
+    if (c) return { dir: c, source: "setting" };
+    const o = obsidianAttachmentDir();
+    if (o) return { dir: o, source: "obsidian" };
+    return { dir: cleanDir(fallback), source: "fallback" };
+  }
+
+  // src/core/folder-setup.ts
+  init_empty();
+  init_button();
+  var FOLDER_PLANS = {
+    diary: {
+      name: "日记本",
+      icon: "notebook-pen",
+      settingsId: "diary",
+      title: "日记本还没定文件夹",
+      desc: "写下的每一篇都会存进日记文件夹。定了之后才有地方落笔。",
+      fields: [{ key: "diaryDirectory", label: "日记文件夹", reco: "我的/日记", note: "信件文件夹可选，用到时才问" }]
+    },
+    clipbook: {
+      name: "剪藏本",
+      icon: "scissors",
+      settingsId: "clipping",
+      title: "剪藏本还没定文件夹",
+      desc: "抓到的网页要存成笔记，正文得有个固定的落脚处。",
+      fields: [
+        { key: "articleDirectory", label: "剪藏文件夹", reco: "归档/网页剪藏" },
+        { key: "clipbookImageFolder", label: "图片文件夹", reco: "", image: true, imageFallback: (main) => `${main}/assets` }
+      ]
+    },
+    cinema: {
+      name: "影院",
+      icon: "clapperboard",
+      settingsId: "cinema",
+      title: "影院还没定文件夹",
+      desc: "影视条目一部一条，存在影视目录里。",
+      fields: [
+        { key: "cinemaFolderPath", label: "影视目录", reco: "我的/影视" },
+        { key: "cinemaPosterFolder", label: "海报文件夹", reco: "", image: true, imageFallback: (main) => `${main}/封面` }
+      ]
+    },
+    bookshelf: {
+      name: "书库",
+      icon: "library",
+      settingsId: "bookshelf",
+      title: "书库还没定文件夹",
+      desc: "书库读的是这个文件夹里带书标签的笔记；已有书的笔记放进去就能认出来。",
+      fields: [
+        { key: "bookshelfFolderPath", label: "书库目录", reco: "书库" },
+        { key: "bookshelfPosterFolder", label: "封面文件夹", reco: "", image: true, imageFallback: (main) => `${main}/封面` }
+      ]
+    },
+    gameshelf: {
+      name: "游戏库",
+      icon: "gamepad-2",
+      settingsId: "gameshelf",
+      title: "游戏库还没定文件夹",
+      desc: "一款一条，存在游戏目录里。",
+      // 定完文件夹还不会自己长数据：同步要 Steam 凭据（用户点名要在空态里说清）
+      hint: "同步还要在设置里填好 SteamID64 与 Web API 密钥。",
+      fields: [
+        { key: "gameshelfFolderPath", label: "游戏目录", reco: "我的/游戏" },
+        { key: "gameshelfPosterFolder", label: "海报文件夹", reco: "", image: true, imageFallback: (main) => `${main}/封面` }
+      ]
+    },
+    knowledge: {
+      name: "知识盒",
+      icon: "boxes",
+      settingsId: "knowledge",
+      title: "知识盒还没定文件夹",
+      desc: "四类各放一处：长文献、卡片、主题，外加配图。",
+      fields: [
+        { key: "knowledgeDirectory", label: "文献文件夹", reco: "文献盒" },
+        { key: "knowledgeCardboxDirectory", label: "卡片文件夹", reco: "卡片盒" },
+        { key: "knowledgeTopicDirectory", label: "主题文件夹", reco: "主题盒" },
+        { key: "knowledgeImageFolder", label: "图片文件夹", reco: "", image: true, imageFallback: (main) => `${main}/assets` }
+      ]
+    }
+  };
+  function settingValue(key) {
+    const s = tryGetSettings();
+    return cleanDir(s ? s[key] : "");
+  }
+  function folderState(domain) {
+    const plan = FOLDER_PLANS[domain];
+    const mainDir = (() => {
+      const first = plan.fields.find((f) => !f.image);
+      return first ? settingValue(first.key) : "";
+    })();
+    const fields = plan.fields.map((field) => {
+      if (field.image) {
+        const fallback = field.imageFallback ? field.imageFallback(mainDir || field.reco) : mainDir;
+        const r = resolveAssetDir(settingValue(field.key), fallback);
+        return { field, dir: r.dir, source: r.source, missing: !r.dir };
+      }
+      const v = settingValue(field.key);
+      return { field, dir: v, source: v ? "setting" : "fallback", missing: !v };
+    });
+    const missing = fields.filter((f) => f.missing);
+    return { plan, fields, missing, ok: missing.length === 0 };
+  }
+  function needsFolderSetup(domain) {
+    return !folderState(domain).ok;
+  }
+  function openFolderSettings(domain, anchorKey, closeBefore) {
+    var _a;
+    const plan = FOLDER_PLANS[domain];
+    const key = anchorKey || ((_a = folderState(domain).missing[0]) == null ? void 0 : _a.field.key);
+    try {
+      closeBefore == null ? void 0 : closeBefore();
+    } catch (e) {
+    }
+    const spec = ["..", "settings-panel"].join("/");
+    void import(
+      /* webpackIgnore: true */
+      spec
+    ).then((m) => m.openSettingsPanel(getApp(), plan.settingsId, key)).catch(() => {
+      notice("设置面板没能打开，可以从「设置 → 包仔」进入", "warning");
+    });
+  }
+
+  // src/diary/ui.ts
   var SINGLE_MAX_W = 720;
   var FLIP_TIME_MS = 240;
   var PAGE_CUT_MIN_PX = 84;
@@ -17324,6 +17529,9 @@ ${x.review || ""}`;
           flow.push({ el: elOf(daystampHTML(e.date, dayCount.get(e.date) || 1)), h: 0, keep: true });
         }
         this.pushEntryBlocks(flow, e, ctx);
+      }
+      if (!this.entries.length && !this._loadError) {
+        flow.push({ el: this.emptyEntryBlock(), h: 0, keep: true });
       }
       if (single) {
         this.pages = this.groupByDay(flow);
@@ -19757,6 +19965,67 @@ ${x.review || ""}`;
      *   但开册只需要读到第一册收卷为止（通常一两窗），不必等全册读完；这段时间书还是空的，
      *   桌上摆一张报进度的纸条（`showLoading`），读完换「正在装订」，成册即收。
      */
+    /**
+     * 未配置日记文件夹时的引导纸（复用兜底纸那张黄便签的容器，不另造浮层）：
+     * 说清缺哪个文件夹 + 「设置日记文件夹」。与「配好了但册子是空的」区分开——
+     * 那种情况照常开册，由册子自己的空态说话，不挂设置按钮。
+     */
+    showFolderGate() {
+      var _a;
+      const paper = (_a = this.fallbackEl) == null ? void 0 : _a.querySelector(".bz-diary-fb-paper");
+      if (!paper) return;
+      const st = folderState("diary");
+      const missing = st.missing.map((f) => f.field.label).join("、") || "日记文件夹";
+      paper.textContent = "";
+      paper.classList.add("bz-diary-fb-lead");
+      const title = document.createElement("div");
+      title.className = "bz-diary-fb-lead-title";
+      title.textContent = "这本册子还没定文件夹";
+      const desc = document.createElement("div");
+      desc.className = "bz-diary-fb-lead-desc";
+      desc.textContent = `写下的每一篇都要落进${missing}，先把位置定一下。`;
+      const act = document.createElement("div");
+      act.className = "bz-diary-fb-lead-act";
+      act.appendChild(
+        uiBtn({
+          label: "设置日记文件夹",
+          icon: "settings",
+          tone: "primary",
+          // 配完再回来时本册还停在引导纸上（日记没有「设置变更后重渲」的入口），先合上
+          onClick: () => openFolderSettings("diary", void 0, () => this.hide())
+        })
+      );
+      paper.append(title, desc, act);
+      this.fallbackEl.hidden = false;
+      this.hideLoading();
+    }
+    /** 从引导纸切回正常册子（设好文件夹后再打开时清掉它，恢复兜底纸文案） */
+    clearFolderGate() {
+      var _a;
+      const paper = (_a = this.fallbackEl) == null ? void 0 : _a.querySelector(".bz-diary-fb-paper");
+      if (!paper || !paper.classList.contains("bz-diary-fb-lead")) return;
+      paper.classList.remove("bz-diary-fb-lead");
+      paper.textContent = "册子的数据没读出来。\n可以把日记本关掉再开一次试试。";
+      this.fallbackEl.hidden = true;
+    }
+    /**
+     * 空册时写在书页上的那一段（不是浮层）：形制照着真日记来——标题一句、正文一句、
+     * 末尾一个「写第一篇」的行内链接。落点路径现算，用户改过文件夹就显示他自己的。
+     */
+    emptyEntryBlock() {
+      const wrap = document.createElement("div");
+      wrap.className = "bz-diary-void-entry";
+      const title = document.createElement("p");
+      title.className = "bz-diary-void-title";
+      title.textContent = "这本册子还是空的。";
+      const act = document.createElement("button");
+      act.type = "button";
+      act.className = "bz-diary-void-link";
+      act.textContent = "写第一篇 →";
+      act.addEventListener("click", () => this.openWrite());
+      wrap.append(title, act);
+      return wrap;
+    }
     show() {
       if (!this._initialized) this.ensureElements();
       const reopen = this._shownOnce;
@@ -19765,6 +20034,11 @@ ${x.review || ""}`;
       this.root.style.display = "flex";
       topifyZ(this.root);
       this._allowCacheNext = true;
+      if (needsFolderSetup("diary")) {
+        this.showFolderGate();
+        return;
+      }
+      this.clearFolderGate();
       this.subscribeEvents();
       this.subscribeVault();
       if (this.bookFresh && this.entries.length && !this._loadError && this.bookStillValid()) {
@@ -20049,6 +20323,10 @@ ${x.review || ""}`;
     void ensureDiary(app).then(() => getController2().show());
   }
   function openDiaryWrite(app) {
+    if (needsFolderSetup("diary")) {
+      openDiary(app);
+      return;
+    }
     void ensureDiary(app).then(() => {
       getController2().openWrite();
     });
@@ -20074,8 +20352,35 @@ ${x.review || ""}`;
       }
     }
   }
+  var LS_SEED = "bz-sim:";
+  function applyDataMode() {
+    let st = "";
+    try {
+      st = new URLSearchParams(location.search).get("state") || "";
+    } catch (e) {
+      return;
+    }
+    const files = window.DIARY && window.DIARY.FILES || [];
+    if (!files.length) return;
+    if (st === "empty") {
+      for (const f of files) localStorage.removeItem(LS_SEED + f.path);
+      return;
+    }
+    for (const f of files) {
+      if (!localStorage.getItem(LS_SEED + f.path)) {
+        localStorage.setItem(LS_SEED + f.path, JSON.stringify({ c: f.content, ct: f.ctime, mt: f.ctime }));
+      }
+    }
+  }
+  function simDirs() {
+    try {
+      return new URLSearchParams(location.search).get("dirs") === "1" ? { diaryDirectory: "我的/日记", letterDirectory: "我的/信" } : {};
+    } catch (e) {
+      return {};
+    }
+  }
   function injectSettings() {
-    setSettingsProvider(() => ({}));
+    setSettingsProvider(() => simDirs());
   }
   var _app2 = null;
   function bootDiarySim() {
@@ -20083,6 +20388,7 @@ ${x.review || ""}`;
     if (g.__bzDiarySimBooted) return;
     g.__bzDiarySimBooted = true;
     seedVault();
+    applyDataMode();
     injectSettings();
     const app = new FakeApp();
     setApp(app);

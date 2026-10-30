@@ -9,7 +9,7 @@
  */
 import { TFile } from 'obsidian';
 import type { App } from 'obsidian';
-import { tryGetSettings } from '../core/settings-provider';
+import { saveSettings, tryGetSettings } from '../core/settings-provider';
 import { localDayKey } from '../core/utils';
 import { notice } from '../core/notice';
 import type { BookshelfItem } from './state';
@@ -19,16 +19,23 @@ const WEAVE_PLUGIN_ID = 'weave-epub-reader';
 export const WEAVE_DATA_FILE = 'weave-data.json';
 const COVER_EXTENSIONS = ['jpg', 'jpeg', 'png', 'webp', 'gif'];
 
-/** 书库文件夹：新设置键优先；旧键 libraryFolderPath 已随 library 域退役从接口删除，
- *  此处运行时读存量值（用户 data.json 可能仍存有该键），零感知迁移；最终回落「书库」 */
+/** 书库文件夹：新设置键优先。
+ *  - 旧键 libraryFolderPath 已随 library 域退役，但老库 data.json 里可能只剩它：
+ *    这里**一次性把它写进新键**（2026-10-30）——只读不回写的话新键恒空，老用户会被
+ *    当成「还没配置书库」挨一次引导，而他明明早就有个书架。
+ *  - 两键都没有 = 未配置，返回空串（目录缺省不再回落字面量「书库」）。 */
 export function resolveFolderPath(): string {
+  // tryGetSettings：未注入提供者（测试/早期调用）时返回空对象，不抛
   const s = tryGetSettings() as Record<string, unknown>;
-  const v = typeof s.bookshelfFolderPath === 'string' && s.bookshelfFolderPath.trim()
-    ? s.bookshelfFolderPath
-    : typeof s.libraryFolderPath === 'string' && s.libraryFolderPath.trim()
-      ? s.libraryFolderPath
-      : '书库';
-  return v.replace(/^\/+|\/+$/g, '');
+  const cur = typeof s.bookshelfFolderPath === 'string' ? s.bookshelfFolderPath.trim() : '';
+  if (cur) return cur.replace(/^\/+|\/+$/g, '');
+  const legacy = typeof s.libraryFolderPath === 'string' ? s.libraryFolderPath.trim() : '';
+  if (legacy) {
+    s.bookshelfFolderPath = legacy;
+    void saveSettings(); // 迁移落盘；未注入提供者时静默（下次进来再迁一次，幂等）
+    return legacy.replace(/^\/+|\/+$/g, '');
+  }
+  return '';
 }
 
 /** 书标签：bookTag 键已随 library 域退役从接口删除——运行时读存量值（零感知迁移），缺省 'book' */

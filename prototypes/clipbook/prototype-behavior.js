@@ -1,5 +1,5 @@
-/* 源指纹 a63f1d9facc9a44a · 仓内输入 136 个（校验见 tests/preview-freshness.test.ts） */
-/*#preview-inputs=["prototypes/clipbook/fake-sim.ts","prototypes/clipbook/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/keys.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/clipbook/anchor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/file-sync.ts","src/clipbook/flow.ts","src/clipbook/image-save.ts","src/clipbook/index.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/motion.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/press/data.ts","src/clipbook/press/engine.ts","src/clipbook/press/index.ts","src/clipbook/press/motions.ts","src/clipbook/press/view.ts","src/clipbook/render.ts","src/clipbook/report-stats.ts","src/clipbook/report-ui.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai.ts","src/core/app.ts","src/core/asr-proofread.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/download-manifest.ts","src/core/esc-manager.ts","src/core/file-sync.ts","src/core/flow-dialog.ts","src/core/gesture.ts","src/core/http.ts","src/core/item-actions.ts","src/core/knowledge-boxes.ts","src/core/landscape.ts","src/core/link-now.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/net-progress.ts","src/core/node-runtime-install.ts","src/core/note-trash.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/offline-source.ts","src/core/path-classify.ts","src/core/path-picker.ts","src/core/plugin-path.ts","src/core/remote-asset.ts","src/core/remote-base.ts","src/core/rss-catalog.ts","src/core/settings-btn-state.ts","src/core/settings-common.ts","src/core/settings-modal.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/sha256.ts","src/core/storage-path.ts","src/core/storage.ts","src/core/tar.ts","src/core/tool-hint.ts","src/core/tool-runtime.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/help-tip.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/core/zip.ts","src/knowledge/data.ts","src/knowledge/file-sync.ts","src/knowledge/index.ts","src/knowledge/motion.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-edit.ts","src/knowledge/note-gen.ts","src/knowledge/partial-json.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/relink.ts","src/knowledge/source-retire.ts","src/knowledge/source.ts","src/knowledge/tack.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/secondbrain/readonly.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/motion.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/shared.ts"]*/
+/* 源指纹 08f9f306222660d5 · 仓内输入 139 个（校验见 tests/preview-freshness.test.ts） */
+/*#preview-inputs=["prototypes/clipbook/fake-sim.ts","prototypes/clipbook/fake/fake-obsidian.ts","prototypes/preview-mode.ts","src/auto-summary/index.ts","src/auto-summary/keys.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/clipbook/anchor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/file-sync.ts","src/clipbook/flow.ts","src/clipbook/image-save.ts","src/clipbook/index.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/motion.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/press/data.ts","src/clipbook/press/engine.ts","src/clipbook/press/index.ts","src/clipbook/press/motions.ts","src/clipbook/press/view.ts","src/clipbook/render.ts","src/clipbook/report-stats.ts","src/clipbook/report-ui.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai.ts","src/core/app.ts","src/core/asr-proofread.ts","src/core/attachment-dir.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/download-manifest.ts","src/core/esc-manager.ts","src/core/file-sync.ts","src/core/flow-dialog.ts","src/core/folder-setup.ts","src/core/gesture.ts","src/core/http.ts","src/core/item-actions.ts","src/core/knowledge-boxes.ts","src/core/landscape.ts","src/core/link-now.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/net-progress.ts","src/core/node-runtime-install.ts","src/core/note-trash.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/offline-source.ts","src/core/path-classify.ts","src/core/path-picker.ts","src/core/plugin-path.ts","src/core/remote-asset.ts","src/core/remote-base.ts","src/core/rss-catalog.ts","src/core/settings-btn-state.ts","src/core/settings-common.ts","src/core/settings-modal.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/sha256.ts","src/core/storage-path.ts","src/core/storage.ts","src/core/tar.ts","src/core/tool-hint.ts","src/core/tool-runtime.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/help-tip.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/core/zip.ts","src/knowledge/data.ts","src/knowledge/file-sync.ts","src/knowledge/index.ts","src/knowledge/motion.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-edit.ts","src/knowledge/note-gen.ts","src/knowledge/partial-json.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/relink.ts","src/knowledge/source-retire.ts","src/knowledge/source.ts","src/knowledge/tack.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/secondbrain/readonly.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/motion.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/shared.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/clipbook/fake-sim.ts → window.BZW_clipbook（行为单源预览包，issue 245/ADR-0106） */
 var BZW_clipbook = (() => {
   var __create = Object.create;
@@ -290,8 +290,14 @@ var BZW_clipbook = (() => {
             }
           };
         }
-        /** 外链（openExternal 消费面）：原型中不弹浏览器，no-op */
-        openUrl() {
+        /** 外链（openExternal 消费面）：真插件里交给系统浏览器，壳里必须真开新标签——
+         *  否则 core 的 openExternalUrl 拿到一个静默成功就 return，用户点了没反应
+         *  （2026-10-30 实际踩过：视频教程链接点了不出声）。 */
+        openUrl(url) {
+          try {
+            window.open(url, "_blank");
+          } catch (e) {
+          }
         }
       };
     }
@@ -840,9 +846,9 @@ var BZW_clipbook = (() => {
     }
   });
 
-  // ../bz/node_modules/.pnpm/moment@2.30.1/node_modules/moment/moment.js
+  // node_modules/.pnpm/moment@2.30.1/node_modules/moment/moment.js
   var require_moment = __commonJS({
-    "../bz/node_modules/.pnpm/moment@2.30.1/node_modules/moment/moment.js"(exports, module) {
+    "node_modules/.pnpm/moment@2.30.1/node_modules/moment/moment.js"(exports, module) {
       (function(global, factory) {
         typeof exports === "object" && typeof module !== "undefined" ? module.exports = factory() : typeof define === "function" && define.amd ? define(factory) : global.moment = factory();
       })(exports, function() {
@@ -5551,10 +5557,12 @@ var BZW_clipbook = (() => {
       return (/* @__PURE__ */ new Date()).toISOString().replace("T", " ").substring(0, 19);
     }
   }
+  var CLIP_TUTORIAL_URL;
   var init_constants = __esm({
     "src/clipbook/constants.ts"() {
       init_str();
       init_utils();
+      CLIP_TUTORIAL_URL = "https://www.bilibili.com/video/BV1pvxe6qEkf/";
     }
   });
 
@@ -6606,6 +6614,248 @@ var BZW_clipbook = (() => {
     }
   });
 
+  // src/core/attachment-dir.ts
+  function cleanDir(v) {
+    return String(v != null ? v : "").trim().replace(/\\/g, "/").replace(/^\/+|\/+$/g, "");
+  }
+  function obsidianAttachmentDir() {
+    var _a, _b;
+    let raw = "";
+    try {
+      const vault = getApp().vault;
+      raw = String((_b = (_a = vault == null ? void 0 : vault.getConfig) == null ? void 0 : _a.call(vault, "attachmentFolderPath")) != null ? _b : "");
+    } catch (e) {
+      return null;
+    }
+    const v = raw.trim().replace(/\\/g, "/");
+    if (!v || v === "/") return null;
+    if (v.startsWith("./")) return null;
+    const dir = cleanDir(v);
+    return dir || null;
+  }
+  function resolveAssetDir(configured, fallback) {
+    const c = cleanDir(configured);
+    if (c) return { dir: c, source: "setting" };
+    const o = obsidianAttachmentDir();
+    if (o) return { dir: o, source: "obsidian" };
+    return { dir: cleanDir(fallback), source: "fallback" };
+  }
+  var init_attachment_dir = __esm({
+    "src/core/attachment-dir.ts"() {
+      init_app();
+    }
+  });
+
+  // src/core/ui/icon.ts
+  function uiIcon(name, extraClass = "") {
+    const i = document.createElement("span");
+    i.className = "bz-ic" + (extraClass ? " " + extraClass : "");
+    setIcon(i, name);
+    return i;
+  }
+  var init_icon = __esm({
+    "src/core/ui/icon.ts"() {
+      init_fake_obsidian();
+    }
+  });
+
+  // src/core/ui/empty.ts
+  function uiEmpty(opts) {
+    const el = document.createElement("div");
+    el.className = "bz-empty";
+    if (opts.icon) {
+      const ic = uiIcon(opts.icon);
+      ic.classList.add("bz-empty-ic");
+      el.appendChild(ic);
+    }
+    const t = document.createElement("div");
+    t.className = "bz-empty-title";
+    t.textContent = opts.title;
+    el.appendChild(t);
+    if (opts.desc) {
+      const d = document.createElement("div");
+      d.className = "bz-empty-desc";
+      d.textContent = opts.desc;
+      el.appendChild(d);
+    }
+    if (opts.actions) el.appendChild(opts.actions);
+    return el;
+  }
+  var init_empty = __esm({
+    "src/core/ui/empty.ts"() {
+      init_icon();
+    }
+  });
+
+  // src/core/ui/button.ts
+  function uiBtn(opts) {
+    const b = document.createElement("button");
+    b.type = "button";
+    const cls = ["bz-btn"];
+    if (opts.tone && opts.tone !== "default") cls.push(`bz-btn--${opts.tone}`);
+    if (opts.size && opts.size !== "md") cls.push(`bz-btn--${opts.size}`);
+    if (opts.chip) cls.push("bz-btn--chip");
+    if (opts.on) cls.push("is-on");
+    if (opts.className) cls.push(opts.className);
+    b.className = cls.join(" ");
+    if (opts.title) b.title = opts.title;
+    if (opts.disabled) b.disabled = true;
+    if (opts.icon) {
+      if (opts.chip) {
+        const chip2 = document.createElement("span");
+        chip2.className = "bz-btn-chip";
+        chip2.appendChild(uiIcon(opts.icon));
+        b.appendChild(chip2);
+      } else {
+        b.appendChild(uiIcon(opts.icon));
+      }
+    }
+    if (opts.label) {
+      const span = document.createElement("span");
+      span.textContent = opts.label;
+      b.appendChild(span);
+    }
+    if (opts.onClick) b.addEventListener("click", opts.onClick);
+    return b;
+  }
+  function uiBtnRow(buttons, opts) {
+    const row = document.createElement("div");
+    const cls = ["bz-btn-row"];
+    if (opts == null ? void 0 : opts.center) cls.push("bz-btn-row--center");
+    if (opts == null ? void 0 : opts.grow) cls.push("bz-btn-row--grow");
+    row.className = cls.join(" ");
+    buttons.forEach((x) => row.appendChild(x));
+    return row;
+  }
+  var init_button = __esm({
+    "src/core/ui/button.ts"() {
+      init_icon();
+    }
+  });
+
+  // src/core/folder-setup.ts
+  function settingValue(key) {
+    const s = tryGetSettings();
+    return cleanDir(s ? s[key] : "");
+  }
+  function folderState(domain) {
+    const plan = FOLDER_PLANS[domain];
+    const mainDir = (() => {
+      const first = plan.fields.find((f) => !f.image);
+      return first ? settingValue(first.key) : "";
+    })();
+    const fields = plan.fields.map((field) => {
+      if (field.image) {
+        const fallback = field.imageFallback ? field.imageFallback(mainDir || field.reco) : mainDir;
+        const r = resolveAssetDir(settingValue(field.key), fallback);
+        return { field, dir: r.dir, source: r.source, missing: !r.dir };
+      }
+      const v = settingValue(field.key);
+      return { field, dir: v, source: v ? "setting" : "fallback", missing: !v };
+    });
+    const missing = fields.filter((f) => f.missing);
+    return { plan, fields, missing, ok: missing.length === 0 };
+  }
+  function needsFolderSetup(domain) {
+    return !folderState(domain).ok;
+  }
+  function openFolderSettings(domain, anchorKey, closeBefore) {
+    var _a;
+    const plan = FOLDER_PLANS[domain];
+    const key = anchorKey || ((_a = folderState(domain).missing[0]) == null ? void 0 : _a.field.key);
+    try {
+      closeBefore == null ? void 0 : closeBefore();
+    } catch (e) {
+    }
+    const spec = ["..", "settings-panel"].join("/");
+    void import(
+      /* webpackIgnore: true */
+      spec
+    ).then((m) => m.openSettingsPanel(getApp(), plan.settingsId, key)).catch(() => {
+      notice("设置面板没能打开，可以从「设置 → 包仔」进入", "warning");
+    });
+  }
+  var FOLDER_PLANS;
+  var init_folder_setup = __esm({
+    "src/core/folder-setup.ts"() {
+      init_app();
+      init_notice();
+      init_settings_provider();
+      init_attachment_dir();
+      init_empty();
+      init_button();
+      FOLDER_PLANS = {
+        diary: {
+          name: "日记本",
+          icon: "notebook-pen",
+          settingsId: "diary",
+          title: "日记本还没定文件夹",
+          desc: "写下的每一篇都会存进日记文件夹。定了之后才有地方落笔。",
+          fields: [{ key: "diaryDirectory", label: "日记文件夹", reco: "我的/日记", note: "信件文件夹可选，用到时才问" }]
+        },
+        clipbook: {
+          name: "剪藏本",
+          icon: "scissors",
+          settingsId: "clipping",
+          title: "剪藏本还没定文件夹",
+          desc: "抓到的网页要存成笔记，正文得有个固定的落脚处。",
+          fields: [
+            { key: "articleDirectory", label: "剪藏文件夹", reco: "归档/网页剪藏" },
+            { key: "clipbookImageFolder", label: "图片文件夹", reco: "", image: true, imageFallback: (main) => `${main}/assets` }
+          ]
+        },
+        cinema: {
+          name: "影院",
+          icon: "clapperboard",
+          settingsId: "cinema",
+          title: "影院还没定文件夹",
+          desc: "影视条目一部一条，存在影视目录里。",
+          fields: [
+            { key: "cinemaFolderPath", label: "影视目录", reco: "我的/影视" },
+            { key: "cinemaPosterFolder", label: "海报文件夹", reco: "", image: true, imageFallback: (main) => `${main}/封面` }
+          ]
+        },
+        bookshelf: {
+          name: "书库",
+          icon: "library",
+          settingsId: "bookshelf",
+          title: "书库还没定文件夹",
+          desc: "书库读的是这个文件夹里带书标签的笔记；已有书的笔记放进去就能认出来。",
+          fields: [
+            { key: "bookshelfFolderPath", label: "书库目录", reco: "书库" },
+            { key: "bookshelfPosterFolder", label: "封面文件夹", reco: "", image: true, imageFallback: (main) => `${main}/封面` }
+          ]
+        },
+        gameshelf: {
+          name: "游戏库",
+          icon: "gamepad-2",
+          settingsId: "gameshelf",
+          title: "游戏库还没定文件夹",
+          desc: "一款一条，存在游戏目录里。",
+          // 定完文件夹还不会自己长数据：同步要 Steam 凭据（用户点名要在空态里说清）
+          hint: "同步还要在设置里填好 SteamID64 与 Web API 密钥。",
+          fields: [
+            { key: "gameshelfFolderPath", label: "游戏目录", reco: "我的/游戏" },
+            { key: "gameshelfPosterFolder", label: "海报文件夹", reco: "", image: true, imageFallback: (main) => `${main}/封面` }
+          ]
+        },
+        knowledge: {
+          name: "知识盒",
+          icon: "boxes",
+          settingsId: "knowledge",
+          title: "知识盒还没定文件夹",
+          desc: "四类各放一处：长文献、卡片、主题，外加配图。",
+          fields: [
+            { key: "knowledgeDirectory", label: "文献文件夹", reco: "文献盒" },
+            { key: "knowledgeCardboxDirectory", label: "卡片文件夹", reco: "卡片盒" },
+            { key: "knowledgeTopicDirectory", label: "主题文件夹", reco: "主题盒" },
+            { key: "knowledgeImageFolder", label: "图片文件夹", reco: "", image: true, imageFallback: (main) => `${main}/assets` }
+          ]
+        }
+      };
+    }
+  });
+
   // src/clipbook/news-fetcher.ts
   function requestUrlHttpGet() {
     const impl = requestUrlAsFetch();
@@ -7150,6 +7400,7 @@ ${c.trim()}
     }
   }
   async function maybeFetchNews(deps) {
+    if (needsFolderSetup("clipbook")) return null;
     if (fetching) return null;
     const store = (deps == null ? void 0 : deps.store) || defaultFetchStore();
     let disk;
@@ -7194,6 +7445,7 @@ ${c.trim()}
       init_news_data();
       init_constants();
       init_write_queue();
+      init_folder_setup();
       WINDOW_MS = 24 * 60 * 60 * 1e3;
       RSS_MAX_PER_FEED = 30;
       FETCH_TIMEOUT_MS = 15e3;
@@ -7394,9 +7646,7 @@ ${c.trim()}
   });
   function clipbookImageDir() {
     const s = tryGetSettings();
-    const configured = String(s && s.clipbookImageFolder || "").trim().replace(/\\/g, "/").replace(/^\/+|\/+$/g, "");
-    if (configured) return configured;
-    return `${clipDir()}/assets`;
+    return resolveAssetDir(s && s.clipbookImageFolder, `${clipDir()}/assets`).dir;
   }
   function normalizeImageSrc(src) {
     const s = String(src || "").trim();
@@ -7566,6 +7816,7 @@ ${c.trim()}
       init_utils();
       init_fake_obsidian();
       init_app();
+      init_attachment_dir();
       init_settings_provider();
       init_notice();
       init_save();
@@ -10628,10 +10879,8 @@ ${notes.map((x) => `第 ${x.n} 张：${x.d}`).join("\n")}`;
     };
   }
   function resolveImageDir(settings) {
-    const configured = String((settings == null ? void 0 : settings.knowledgeImageFolder) || "").trim().replace(/\\/g, "/").replace(/^\/+|\/+$/g, "");
-    if (configured) return configured;
     const dir = String((settings == null ? void 0 : settings.knowledgeDirectory) || "文献盒").replace(/\\/g, "/").replace(/^\/+|\/+$/g, "") || "文献盒";
-    return `${dir}/${IMAGE_ASSETS_DIR}`;
+    return resolveAssetDir(settings == null ? void 0 : settings.knowledgeImageFolder, `${dir}/${IMAGE_ASSETS_DIR}`).dir;
   }
   async function generateImageNote(opts) {
     var _a, _b;
@@ -10856,6 +11105,7 @@ ${sample}`
       init_str();
       init_http();
       init_app();
+      init_attachment_dir();
       init_settings_provider();
       init_partial_json();
       init_source();
@@ -16122,6 +16372,27 @@ ${String(blockText != null ? blockText : "").trim()}`);
     const m = text.match(/^---\r?\n[\s\S]*?\r?\n---\r?\n?/);
     return text.slice(m ? m[0].length : 0).replace(/^\r?\n+/, "");
   }
+  function mountKnowledgeFolderGate(el) {
+    if (!needsFolderSetup("knowledge")) return false;
+    const plan = folderState("knowledge").plan;
+    el.textContent = "";
+    const wrap = document.createElement("div");
+    wrap.className = "bz-kb-gate";
+    const title = document.createElement("div");
+    title.className = "bz-kb-gate-title";
+    title.textContent = plan.title;
+    const note = document.createElement("div");
+    note.className = "bz-kb-empty";
+    note.textContent = plan.desc;
+    const act = document.createElement("button");
+    act.type = "button";
+    act.className = "bz-kb-mt-btn bz-kb-gate-act";
+    act.textContent = "打开设置";
+    act.addEventListener("click", () => openFolderSettings("knowledge"));
+    wrap.append(title, note, act);
+    el.appendChild(wrap);
+    return true;
+  }
   var IMAGE_ENTRY_MAX, TACK_LIST_MAX, PANEL, ROW_MENU_CLASS, REL_BG_NOTICE_KEY, STATUS_META, STEP_DONE_MAP, fmtElapsed, UIManager;
   var init_ui = __esm({
     "src/knowledge/ui.ts"() {
@@ -16156,6 +16427,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
       init_relink();
       init_video_meta();
       init_range_bar();
+      init_folder_setup();
       init_motion();
       IMAGE_ENTRY_MAX = 9;
       TACK_LIST_MAX = 200;
@@ -17240,6 +17512,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
         /** 当前部数据 + 渲染（目录变更检测 → 清缓存重扫） */
         async refreshCurrent() {
           if (!this.contentEl) return;
+          if (mountKnowledgeFolderGate(this.contentEl)) return;
           const s = tryGetSettings();
           if (this.part === "z1") {
             const dir = litDirOf(s);
@@ -20672,6 +20945,11 @@ ${String(blockText != null ? blockText : "").trim()}`);
     return `${clipDir()}/${cleanClipTitleOf(title)}.md`;
   }
   async function writeClipNote(raw) {
+    if (needsFolderSetup("clipbook")) {
+      notice("先定一下剪藏文件夹，剪下来的笔记才有地方放", "warning");
+      openFolderSettings("clipbook");
+      return false;
+    }
     const app = getApp();
     const cleanTitle = cleanClipTitleOf(raw && raw.title);
     if (!cleanTitle) {
@@ -20820,6 +21098,7 @@ ${body}`;
       init_constants();
       init_anchor();
       init_utils();
+      init_folder_setup();
     }
   });
 
@@ -21117,65 +21396,6 @@ ${body}`;
     }
   });
 
-  // src/core/ui/icon.ts
-  function uiIcon(name, extraClass = "") {
-    const i = document.createElement("span");
-    i.className = "bz-ic" + (extraClass ? " " + extraClass : "");
-    setIcon(i, name);
-    return i;
-  }
-  var init_icon = __esm({
-    "src/core/ui/icon.ts"() {
-      init_fake_obsidian();
-    }
-  });
-
-  // src/core/ui/button.ts
-  function uiBtn(opts) {
-    const b = document.createElement("button");
-    b.type = "button";
-    const cls = ["bz-btn"];
-    if (opts.tone && opts.tone !== "default") cls.push(`bz-btn--${opts.tone}`);
-    if (opts.size && opts.size !== "md") cls.push(`bz-btn--${opts.size}`);
-    if (opts.chip) cls.push("bz-btn--chip");
-    if (opts.on) cls.push("is-on");
-    if (opts.className) cls.push(opts.className);
-    b.className = cls.join(" ");
-    if (opts.title) b.title = opts.title;
-    if (opts.disabled) b.disabled = true;
-    if (opts.icon) {
-      if (opts.chip) {
-        const chip2 = document.createElement("span");
-        chip2.className = "bz-btn-chip";
-        chip2.appendChild(uiIcon(opts.icon));
-        b.appendChild(chip2);
-      } else {
-        b.appendChild(uiIcon(opts.icon));
-      }
-    }
-    if (opts.label) {
-      const span = document.createElement("span");
-      span.textContent = opts.label;
-      b.appendChild(span);
-    }
-    if (opts.onClick) b.addEventListener("click", opts.onClick);
-    return b;
-  }
-  function uiBtnRow(buttons, opts) {
-    const row = document.createElement("div");
-    const cls = ["bz-btn-row"];
-    if (opts == null ? void 0 : opts.center) cls.push("bz-btn-row--center");
-    if (opts == null ? void 0 : opts.grow) cls.push("bz-btn-row--grow");
-    row.className = cls.join(" ");
-    buttons.forEach((x) => row.appendChild(x));
-    return row;
-  }
-  var init_button = __esm({
-    "src/core/ui/button.ts"() {
-      init_icon();
-    }
-  });
-
   // src/core/ui/chip.ts
   function uiChip(opts) {
     const c = document.createElement("button");
@@ -21305,34 +21525,6 @@ ${body}`;
   // src/core/ui/slider.ts
   var init_slider = __esm({
     "src/core/ui/slider.ts"() {
-    }
-  });
-
-  // src/core/ui/empty.ts
-  function uiEmpty(opts) {
-    const el = document.createElement("div");
-    el.className = "bz-empty";
-    if (opts.icon) {
-      const ic = uiIcon(opts.icon);
-      ic.classList.add("bz-empty-ic");
-      el.appendChild(ic);
-    }
-    const t = document.createElement("div");
-    t.className = "bz-empty-title";
-    t.textContent = opts.title;
-    el.appendChild(t);
-    if (opts.desc) {
-      const d = document.createElement("div");
-      d.className = "bz-empty-desc";
-      d.textContent = opts.desc;
-      el.appendChild(d);
-    }
-    if (opts.actions) el.appendChild(opts.actions);
-    return el;
-  }
-  var init_empty = __esm({
-    "src/core/ui/empty.ts"() {
-      init_icon();
     }
   });
 
@@ -23402,6 +23594,7 @@ ${bodyText.substring(0, 6e3)}`;
     return clipDir();
   }
   function isWatchedTopLevel(path) {
+    if (needsFolderSetup("clipbook")) return false;
     const dir = getWatchDir();
     const prefix = dir + "/";
     return path.startsWith(prefix) && !path.slice(prefix.length).includes("/");
@@ -23634,6 +23827,7 @@ ${bodyText.substring(0, 6e3)}`;
       init_save();
       init_keys();
       init_processor2();
+      init_folder_setup();
       initialized2 = false;
       vaultRef = null;
       workspaceRef = null;
@@ -30522,8 +30716,9 @@ ${bodyText.substring(0, 6e3)}`;
   }
   function renderHeadIssue() {
     if (!overlayEl2) return;
+    const label = needsFolderSetup("clipbook") ? "未配置" : `第 ${M3.articles.length} 期`;
     overlayEl2.querySelectorAll("[data-clip-issue]").forEach((el) => {
-      el.textContent = `第 ${M3.articles.length} 期`;
+      el.textContent = label;
     });
   }
   function currentSrc() {
@@ -30724,8 +30919,47 @@ ${bodyText.substring(0, 6e3)}`;
     lastListCurId = curId;
     motionListRendered(listEl, renderMood, foldKind, pressed);
   }
+  function setVoidLayout(on) {
+    const body = overlayEl2 == null ? void 0 : overlayEl2.querySelector(".bz-clip-desk-body");
+    if (body) body.classList.toggle("is-void", on);
+  }
+  function tutorialLink(extraClass = "") {
+    const b = document.createElement("button");
+    b.type = "button";
+    b.className = "bz-clip-tut" + (extraClass ? " " + extraClass : "");
+    b.textContent = "看视频教程 →";
+    b.addEventListener("click", () => openExternalUrl(getApp(), CLIP_TUTORIAL_URL));
+    return b;
+  }
+  function mountClipFolderGate() {
+    if (!listEl || !needsFolderSetup("clipbook")) return false;
+    const plan = folderState("clipbook").plan;
+    const wrap = document.createElement("div");
+    wrap.className = "bz-clip-nodir";
+    const title = document.createElement("div");
+    title.className = "bz-clip-nodir-title";
+    title.textContent = plan.title;
+    const desc = document.createElement("div");
+    desc.className = "bz-clip-nodir-desc";
+    desc.textContent = plan.desc;
+    const act = document.createElement("div");
+    act.className = "bz-clip-nodir-act";
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "bz-clip-nodir-btn";
+    btn.textContent = "打开设置";
+    btn.addEventListener("click", () => openFolderSettings("clipbook", void 0, closePanel));
+    act.append(btn, tutorialLink());
+    wrap.append(title, desc, act);
+    listEl.innerHTML = "";
+    listEl.appendChild(wrap);
+    setVoidLayout(true);
+    return true;
+  }
   function renderListNow() {
     if (!listEl) return;
+    if (mountClipFolderGate()) return;
+    setVoidLayout(false);
     if (loadError) {
       listEl.innerHTML = "";
       listEl.appendChild(uiEmpty({
@@ -30742,7 +30976,13 @@ ${bodyText.substring(0, 6e3)}`;
       const list = queryBySource(M3.articles, M3.sidecar, M3.clipUrls, M3.clipNotes || [], src, M3.upInfo).filter((a) => !searchKw || matchesSearch(a));
       if (!list.length) {
         listEl.innerHTML = "";
-        listEl.appendChild(uiEmpty({ icon: "scissors", title: searchKw ? "查无此条" : "剪藏本为空" }));
+        setVoidLayout(!searchKw);
+        listEl.appendChild(uiEmpty({
+          icon: "scissors",
+          title: searchKw ? "查无此条" : "剪藏本为空",
+          // 空册不是错，是还没上手：给一条看完就会的教程（搜索无命中时不给，那是另一回事）
+          actions: searchKw ? void 0 : tutorialLink("bz-clip-tut--block")
+        }));
         M3.cur = null;
         if (readerEl) renderReader();
         return;
@@ -30759,7 +30999,13 @@ ${bodyText.substring(0, 6e3)}`;
     const flat = deskFlat();
     if (!flat.length) {
       listEl.innerHTML = "";
-      listEl.appendChild(uiEmpty({ icon: "inbox", title: "这个源暂无内容" }));
+      setVoidLayout(true);
+      listEl.appendChild(uiEmpty({
+        icon: "inbox",
+        title: "这个源暂无内容",
+        // 空源同样给教程入口：空册切到哪个源都得能问到「怎么用」
+        actions: searchKw ? void 0 : tutorialLink("bz-clip-tut--block")
+      }));
       M3.cur = null;
       if (readerEl) renderReader();
       return;
@@ -30922,14 +31168,25 @@ ${bodyText.substring(0, 6e3)}`;
     if (!readerEl || !curId || prevId === curId) return;
     motionReaderRendered(readerEl, prevId === "" ? "first" : readerDir, renderMood);
   }
+  function renderReaderEmpty() {
+    if (!readerEl) return;
+    readerEl.innerHTML = "";
+    const wrap = document.createElement("div");
+    wrap.className = "bz-clip-read-empty";
+    const t = document.createElement("div");
+    t.className = "bz-clip-read-empty-t";
+    t.textContent = "从列表挑一篇，在这里读";
+    wrap.append(t);
+    if (!searchKw) wrap.append(tutorialLink("bz-clip-tut--block"));
+    readerEl.appendChild(wrap);
+  }
   function renderReaderNow() {
     if (!readerEl) return;
     const a = M3.cur;
     hideSelBar();
     applyReaderFontSize();
     if (!a) {
-      readerEl.innerHTML = "";
-      readerEl.appendChild(uiEmpty({ icon: "book-open", title: "从列表选择一篇文章开始阅读" }));
+      renderReaderEmpty();
       return;
     }
     setReadingSession(a.id, { title: a.title, src: a.srcName });
@@ -31240,12 +31497,34 @@ ${bodyText.substring(0, 6e3)}`;
     s.clipbookMidWidth = w;
     void saveSettings();
   }
+  function mountMobFolderGate() {
+    if (!mobListEl || !needsFolderSetup("clipbook")) return false;
+    const plan = folderState("clipbook").plan;
+    const wrap = document.createElement("div");
+    wrap.className = "bz-clip-mob-nodir";
+    const title = document.createElement("div");
+    title.className = "bz-clip-mob-nodir-title";
+    title.textContent = plan.title;
+    const desc = document.createElement("div");
+    desc.className = "bz-clip-mob-nodir-desc";
+    desc.textContent = plan.desc;
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "bz-clip-mob-nodir-btn";
+    btn.textContent = "打开设置";
+    btn.addEventListener("click", () => openFolderSettings("clipbook", void 0, closePanel));
+    wrap.append(title, desc, btn, tutorialLink("bz-clip-tut--mob"));
+    mobListEl.innerHTML = "";
+    mobListEl.appendChild(wrap);
+    return true;
+  }
   function renderMobToc() {
     renderMobTocNow();
     if (mobListEl) motionMobTocRendered(mobListEl, renderMood);
   }
   function renderMobTocNow() {
     if (!mobListEl) return;
+    if (mountMobFolderGate()) return;
     const arts = M3.articles;
     const clipNotes = M3.clipNotes || [];
     const savedUrls = new Set((M3.sidecar.savedArchive || []).map((x) => x.url));
@@ -31295,6 +31574,7 @@ ${bodyText.substring(0, 6e3)}`;
     mobItemOrder = order;
     if (!chapters.length) {
       mobListEl.innerHTML = mobNoHitHtml(searching ? "查无此条" : "暂无剪藏内容");
+      if (!searching) mobListEl.appendChild(tutorialLink("bz-clip-tut--mob"));
       return;
     }
     mobListEl.innerHTML = mobTocHtml(chapters, searching, expandedMobArch);
@@ -31854,6 +32134,22 @@ ${bodyText.substring(0, 6e3)}`;
     return {
       groups: [
         {
+          // 关于组放最前（2026-10-30 用户拍板）：进设置第一眼就是「怎么用」，
+          // 而不是先看到一堆外观开关——新用户卡住的是用法，不是皮肤
+          icon: "info",
+          name: "关于",
+          rows: [
+            {
+              // 描述用一句大白话收尾（2026-10-30 用户给定文案）：不解释功能，只顺带求个三连
+              type: "button",
+              name: "视频教程",
+              desc: "若有帮助，记得一键三连",
+              buttonText: "看视频",
+              onClick: () => openExternalUrl(getApp(), CLIP_TUTORIAL_URL)
+            }
+          ]
+        },
+        {
           // 外观组（issue 246 占位单卡）：布局/主题各一档，域 UI 消费待皮肤设计时接入
           icon: "palette",
           name: "外观",
@@ -31981,6 +32277,7 @@ ${bodyText.substring(0, 6e3)}`;
       init_image_save();
       init_flow();
       init_press();
+      init_folder_setup();
       overlayEl2 = null;
       railListEl = null;
       railFootEl = null;
@@ -32322,13 +32619,13 @@ ${bodyText.substring(0, 6e3)}`;
     const p = String(path).replace(/\\/g, "/");
     if (!p.endsWith(".md")) return null;
     const s = tryGetSettings();
-    if (matchSettingDir(s.diaryDirectory, p, "我的/日记")) return "diary";
+    if (matchSettingDir(s.diaryDirectory, p, "")) return "diary";
     if (isUnderDir("卡片盒", p)) return "flash";
-    if (matchSettingDir(s.articleDirectory, p, "归档/网页剪藏")) return "clipping";
-    if (matchSettingDir(s.cinemaFolderPath, p, "我的/影视")) return "cinema";
+    if (matchSettingDir(s.articleDirectory, p, "")) return "clipping";
+    if (matchSettingDir(s.cinemaFolderPath, p, "")) return "cinema";
     if (isUnderDir("我的/现代诗", p)) return "poem";
-    if (matchSettingDir(s.letterDirectory, p, "我的/信")) return "letter";
-    if (matchSettingDir(s.knowledgeDirectory, p, "文献盒")) return "knowledge";
+    if (matchSettingDir(s.letterDirectory, p, "")) return "letter";
+    if (matchSettingDir(s.knowledgeDirectory, p, "")) return "knowledge";
     return null;
   }
   function diaryDateFromPath(path) {
@@ -32407,6 +32704,54 @@ ${bodyText.substring(0, 6e3)}`;
   // prototypes/clipbook/fake-sim.ts
   init_clipbook();
   init_ui3();
+
+  // prototypes/preview-mode.ts
+  function pvDirsMode() {
+    try {
+      const v = new URLSearchParams(location.search).get("dirs");
+      return v === "0" ? "0" : v === "1" ? "1" : "";
+    } catch (e) {
+      return "";
+    }
+  }
+  function pvUnset() {
+    return pvDirsMode() === "0";
+  }
+  function pvBlankDirs(store, keys) {
+    if (!pvUnset()) return;
+    for (const k of keys) store[k] = "";
+  }
+  function pvEmptyData() {
+    try {
+      return new URLSearchParams(location.search).get("state") === "empty";
+    } catch (e) {
+      return false;
+    }
+  }
+  function pvWipeVault(paths) {
+    const LS = "bz-sim:";
+    const STAT = "bz-sim:__stat__";
+    const hit = (p) => paths.some((raw) => {
+      const pre = raw.replace(/\/+$/, "");
+      return p === pre || p.startsWith(`${pre}/`);
+    });
+    const doomed = [];
+    for (let i = 0; i < localStorage.length; i += 1) {
+      const k = localStorage.key(i);
+      if (!k || k === STAT || !k.startsWith(LS)) continue;
+      if (hit(k.slice(LS.length))) doomed.push(k);
+    }
+    for (const k of doomed) localStorage.removeItem(k);
+    try {
+      const stats = JSON.parse(localStorage.getItem(STAT) || "{}");
+      for (const k of Object.keys(stats)) if (hit(k)) delete stats[k];
+      localStorage.setItem(STAT, JSON.stringify(stats));
+    } catch (e) {
+      localStorage.setItem(STAT, "{}");
+    }
+  }
+
+  // prototypes/clipbook/fake-sim.ts
   var CLIP_DIR = "归档/网页剪藏";
   var SEED_MARK = "bz-sim:__clipbook-seed-v4";
   var SETTINGS_KEY = "bz-sim:__settings";
@@ -32456,6 +32801,7 @@ ${bodyText.substring(0, 6e3)}`;
     clipbookMidWidth: 0
   };
   function injectSettings() {
+    pvBlankDirs(settingsStore, ["articleDirectory", "clipbookImageFolder"]);
     setSettingsProvider(() => settingsStore);
     setSettingsSaver(async () => {
       localStorage.setItem(SETTINGS_KEY, JSON.stringify(settingsStore));
@@ -32467,6 +32813,12 @@ ${bodyText.substring(0, 6e3)}`;
     if (g.__bzClipSimBooted) return;
     g.__bzClipSimBooted = true;
     seedDatabase();
+    if (pvEmptyData()) {
+      const src = window.CLIP_DATA || window.parent && window.parent.CLIP_DATA || null;
+      if (src) pvWipeVault(src.NOTES.map((n) => n.path));
+      pvWipeVault([NEWS_PATH, SIDECAR_PATH]);
+      localStorage.removeItem(SEED_MARK);
+    }
     const app = new FakeApp();
     simApp = app;
     setApp(app);

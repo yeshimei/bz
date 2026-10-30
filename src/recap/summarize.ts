@@ -186,7 +186,7 @@ export type RecapWriteOutcome = 'written' | 'replaced';
  */
 export async function findRecapEntryPath(app: App, now: number = Date.now()): Promise<string | null> {
   try {
-    const dir = settingDir(['diaryDirectory'], '我的/日记');
+    const dir = settingDir(['diaryDirectory'], '');
     const dateStr = localDayStr(now);
     const files = ((app.vault as any).getMarkdownFiles?.() || []) as { path: string }[];
     const candidates = files

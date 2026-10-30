@@ -16,6 +16,7 @@
 import type { App } from 'obsidian';
 import { DiaryAppController } from './ui';
 import { loadWallEntries, invalidateWallCache } from './data';
+import { needsFolderSetup } from '../core/folder-setup';
 
 let initialized = false;
 let prewarmed = false;
@@ -42,6 +43,11 @@ export function openDiary(app: App): void {
 
 /** 写日记命令回调（bz-diary-write）：ensure 后摊开册子，排好了就在书上摆出写作内页 */
 export function openDiaryWrite(app: App): void {
+  // 未配置日记文件夹 → 摊开册子（那时书上是引导纸），别让人对着一张写不成字的空纸
+  if (needsFolderSetup('diary')) {
+    openDiary(app);
+    return;
+  }
   void ensureDiary(app).then(() => {
     getController().openWrite();
   });
@@ -53,6 +59,9 @@ export function openDiaryWrite(app: App): void {
  *  失败静默：预热只是加速，真正打开时 loadAndRender 会自行重读并呈现错误态。 */
 export function prewarmDiary(app: App, isUnloaded: () => boolean = () => false): void {
   if (prewarmed) return;
+  // 未配置日记文件夹：没有可扫的目录，预热只会去扫老路径（返回空）——直接跳过，
+  // 且不置 prewarmed，用户配好之后下一次调用仍能预热
+  if (needsFolderSetup('diary')) return;
   prewarmed = true;
   const run = (): void => {
     if (isUnloaded()) return;

@@ -991,13 +991,13 @@ export const DEFAULT_SETTINGS: BzSettings = {
   memoLayout: 'default',
 
   // 日记本（ADR-0115：3 键；影视/书库目录跨域读，退役键见接口注释）
-  diaryDirectory: '我的/日记',
-  letterDirectory: '我的/信',
+  diaryDirectory: '',
+  letterDirectory: '',
   useFileDateTime: false,
   diaryPageSize: 50,
 
-  // 剪藏本
-  articleDirectory: '归档/网页剪藏',
+  // 目录缺省留空（2026-10-30）：新库不替用户猜位置，剪藏本主界面走「未配置」空态引导他设一次
+  articleDirectory: '',
   // 自动摘要五键改引 keys.ts 单源（A6 跨域字面收口，呈报批 A6）：键名唯一定义处
   // src/auto-summary/keys.ts，改名只动一处（字面量散布时漏改一处即静默回退默认值）
   [AUTO_SUMMARY_KEYS.enabled]: true,
@@ -1038,7 +1038,7 @@ export const DEFAULT_SETTINGS: BzSettings = {
   bookshelfLayout: 'default',
 
   // 影院（cinema；ADR-0087 起接管影视；缺省回落默认目录，旧 movieFolderPath 键已退役）
-  cinemaFolderPath: '我的/影视',
+  cinemaFolderPath: '',
   cinemaSortMode: 'date',
   cinemaStatusFilter: '',
   // 剧集按季合并（issue 376 / ADR-0168）：2026-09-20 用户改默认**开**（合并已是常态视图）
@@ -1050,7 +1050,7 @@ export const DEFAULT_SETTINGS: BzSettings = {
   bilibiliCookie: '',
 
   // 游戏架（gameshelf，issue 368：Steam 直连自动拉库；目录缺省回落「我的/游戏」）
-  gameshelfFolderPath: '我的/游戏',
+  gameshelfFolderPath: '',
   gameshelfPosterFolder: '',
   gameshelfSteamId: '',
   gameshelfSteamApiKey: '',
@@ -1182,9 +1182,10 @@ export const DEFAULT_SETTINGS: BzSettings = {
   knowledgeOutputDir: '',
   knowledgeCompress: true,
   knowledgeCrf: 23,
-  knowledgeCardboxDirectory: '卡片盒',
-  knowledgeTopicDirectory: '主题盒',
-  knowledgeDirectory: '文献盒',
+  // 三盒目录缺省留空（2026-10-30）：知识盒空态一次问齐，不替用户占三个目录
+  knowledgeCardboxDirectory: '',
+  knowledgeTopicDirectory: '',
+  knowledgeDirectory: '',
   knowledgeImageFolder: '',
   knowledgeDomainList: '',
   // knowledgeFfmpegPath / knowledgeFfprobePath / knowledgePythonPath 已退役（issue 462 迁移为

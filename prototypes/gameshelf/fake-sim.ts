@@ -24,19 +24,21 @@ import { ensureGameshelf, openGameshelf as openGameshelfDomain, unloadGameshelf 
 import { closePanel } from '../../src/gameshelf/ui';
 import { setMediaInterval } from '../../src/gameshelf/posters';
 import { achRowText, parseAchievementRows, parseStoreMeta } from '../../src/gameshelf/steam';
+import { pvBlankDirs } from '../preview-mode';
+import { pvEmptyData, pvWipeVault } from '../preview-mode';
 
 /** 游戏目录（插件 DEFAULT_FOLDER 同值；种子与自动刷新前缀共用） */
 const FOLDER = '我的/游戏';
 /**
- * 评审种子条数上限：0 = 整库（147 款快照，评审默认口径）。交互调试期曾限 3 款
- * （媒体回填「落图 → 重渲」会让评审壳躁动），收尾已复原。若再要小种子评审，
- * 改这里 + 同一次把 SEED_MARK 版本 +1（sync 罐头回放同读此数据源，砍种子即一起砍）。
+ * 评审种子条数上限：0 = 整库（147 款快照）。
+ * 2026-10-30 定为 8：147 款连海报/成就回填一起跑，评审壳卡到没法点（用户点名「放几块就够」）。
+ * 改这个数要同一次把 SEED_MARK 版本 +1（sync 罐头回放同读此数据源，砍种子即一起砍）。
  */
-const SEED_LIMIT = 0;
+const SEED_LIMIT = 8;
 /** 种子标记：存在 = 已种子过（用户在壳里的改动保留，不被覆盖）。
  *  ⚠️ 改种子内容（含条数上限）必须同一次把版本号 +1——否则浏览器老 localStorage 里的
  *  旧种子不会重播。 */
-const SEED_MARK = 'bz-sim:__gameshelf-seed-v10';
+const SEED_MARK = 'bz-sim:__gameshelf-seed-v11';
 /** 设置持久键 */
 const SETTINGS_KEY = 'bz-sim:__settings';
 
@@ -155,6 +157,8 @@ const settingsStore: Record<string, unknown> = {
 };
 
 function injectSettings(): void {
+  // 壳的「文件夹」开关：未配置 → 游戏目录留空，看引导态
+  pvBlankDirs(settingsStore, ['gameshelfFolderPath', 'gameshelfPosterFolder']);
   setSettingsProvider(() => settingsStore as never);
   setSettingsSaver(async () => {
     localStorage.setItem(SETTINGS_KEY, JSON.stringify(settingsStore));
@@ -181,6 +185,15 @@ export function bootGameshelfSim(): void {
     } catch { /* 跨域隔离时放弃（本地壳恒同源） */ }
   }
   seedDatabase();
+  // 壳的「空册」档：种完再清，标记一并撤掉（切回「有内容」时重新种）
+  if (pvEmptyData()) {
+    pvWipeVault([FOLDER]);
+    localStorage.removeItem(SEED_MARK);
+    // 打开面板会跑自动同步，GetOwnedGames 罐头按 GAMESHELF_DATA 现拼一整库——
+    // 光清盘不够，库源也换成空数组顶住回放。只压本 iframe 的 window，
+    // 父页数据不动（切回「有内容」时重载 iframe 就照常取回全量）
+    window.GAMESHELF_DATA = [];
+  }
   // 媒体队列的任务间隔归零：生产那 120ms 是给 Steam CDN 留的礼貌间隔，壳里没有真网络，
   // 留着只会让评审时「图一张张才出来」（截图一款就有 8 张）
   setMediaInterval(0);

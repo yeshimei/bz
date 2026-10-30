@@ -25,6 +25,7 @@ import type { ClipSavedImage } from './data';
 // 一致#1 收编：转义实现单源 core/utils（escapeYamlText 裸转义核心——引号由下方
 // md 模板内嵌，yamlEscapeQuoted 是恒包裹出口，此处用裸核心保持原语义逐值等价）
 import { escapeYamlText as yamlEscape } from '../core/utils';
+import { needsFolderSetup, openFolderSettings } from '../core/folder-setup';
 
 /**
  * 剪藏目录单源（CB4/A3）：读设置 articleDirectory，尾斜杠归一（去尾 `/{1,}`）——
@@ -66,6 +67,12 @@ export function clipFilePathOf(title: unknown): string {
  *  同名覆盖三出口（效率#3）：覆盖更新=现语义；另存为新剪藏=文件名追加 ` · N` 序号去重
  *  循环后走正常写盘；取消/ESC/遮罩=false（不写盘）。 */
 export async function writeClipNote(raw: any): Promise<boolean> {
+  // 未配置剪藏文件夹 → 不落盘，直接把人送去设置（否则会静默写进老的「归档/网页剪藏」）
+  if (needsFolderSetup('clipbook')) {
+    notice('先定一下剪藏文件夹，剪下来的笔记才有地方放', 'warning');
+    openFolderSettings('clipbook');
+    return false;
+  }
   const app = getApp();
   const cleanTitle = cleanClipTitleOf(raw && raw.title);
   if (!cleanTitle) {

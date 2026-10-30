@@ -40,6 +40,7 @@ import { ensureZhNames, unloadZhNames } from './names';
 import { unloadBackfill } from './backfill';
 import { unloadPosters } from './posters';
 import { coverDisplayUrl, iconDisplayUrl, resolveShotUrls } from './posters';
+import { mountFolderGate } from '../core/folder-setup';
 
 /** ESC 层 id 沿域内约定 'bz-<域>'（cons C4：全仓面板级层 id 唯一不带前缀的破例，对齐） */
 const ESC_ID = 'bz-gameshelf';
@@ -1152,6 +1153,8 @@ export function renderAll(app: App): void {
   if (!body) return;
   gsInRenderAll = false; // 早退也复位：别让链内标记卡死后续的 user 波浪
   body.innerHTML = '';
+  // 游戏目录没配 → 主体区给引导态（别把"未配置"画成"没有游戏"）
+  if (mountFolderGate(body, 'gameshelf', closePanel)) return;
   // 视图标记（只有游戏墙打）：移动端「滚动权交给网格本身」那套布局按它切，统计页/引导态不受影响
   body.removeAttribute('data-view');
   disposeSelects(); // 工具行重建前先摘掉上一轮下拉的 document 监听

@@ -446,6 +446,16 @@
 .bz-clip-mob-arch .bz-clip-mob-item { padding-left: 3px; }
 /* 目录空态（搜索无命中 / 暂无内容） */
 .bz-clip-mob-no-hit { padding: 40px 0; text-align: center; font-family: var(--clip-serif); font-size: 18.75px; letter-spacing: 2px; color: var(--clip-muted); }
+/* 未配置剪藏文件夹（移动端引导）：与 .bz-clip-mob-no-hit 同族——纸面、衬线、字距；
+   钮是墨线方角，跟本域期刊式排版一致，不用宿主的实心圆角主钮 */
+.bz-clip-mob-nodir { padding: 64px 8px 0; text-align: center; }
+.bz-clip-mob-nodir-title { font-family: var(--clip-serif); font-size: 19.5px; letter-spacing: 2px; color: var(--clip-ink); }
+.bz-clip-mob-nodir-desc { margin-top: 14px; font-family: var(--clip-serif); font-size: 15px; line-height: 2; letter-spacing: 1px; color: var(--clip-muted); }
+.bz-clip-mob-nodir-btn { margin-top: 26px; border: 1px solid var(--clip-ink); background: none; color: var(--clip-ink);
+  font-family: var(--clip-serif); font-size: 15px; letter-spacing: 2px; padding: 7px 22px; border-radius: 2px; cursor: pointer; }@media (hover: hover) {
+
+.bz-clip-mob-nodir-btn:hover { background: var(--clip-ink); color: var(--clip-paper); }
+}
 
 /* ---- 移动详情（屏2 overlay，原型 .detail-screen） ---- */
 .bz-clip-mob-detail { position: absolute; inset: 0; background: var(--clip-paper); display: none; flex-direction: column; z-index: 2; }
@@ -1448,3 +1458,39 @@
 
 .bz-rss-cat-empty { padding: 28px 12px; text-align: center; }
 .bz-rss-cat-empty-text { font-size: var(--font-ui-small); color: var(--text-muted); margin: 0 0 14px; }
+
+/* ══════════════════════════════════════════════════════════════════
+   未配置引导（桌面）与教程入口
+   本域是纸面 + 衬线 + 字距的期刊语言；core 通用空态卡是宿主配色 + 实心主钮，
+   贴在这儿像另一个软件，故引导自己拼（移动端 .bz-clip-mob-nodir 同族）。
+   ══════════════════════════════════════════════════════════════════ */
+.bz-clip-nodir { padding: 64px 20px; text-align: center; }
+.bz-clip-nodir-title { font-family: var(--clip-serif); font-size: 19.5px; letter-spacing: 2px; color: var(--clip-ink); }
+.bz-clip-nodir-desc { margin-top: 12px; font-family: var(--clip-serif); font-size: 14.5px; line-height: 2; letter-spacing: 1px; color: var(--clip-muted); }
+.bz-clip-nodir-act { margin-top: 24px; display: flex; align-items: center; justify-content: center; gap: 18px; flex-wrap: wrap; }
+.bz-clip-nodir-btn { border: 1px solid var(--clip-ink); background: none; color: var(--clip-ink); font-family: var(--clip-serif);
+  font-size: 14.5px; letter-spacing: 2px; padding: 7px 22px; border-radius: 2px; cursor: pointer; }
+/* 教程入口：行内衬线链接（未配置 / 空册 / 移动端三处共用） */
+.bz-clip-tut { border: 0; background: none; padding: 0; cursor: pointer; font-family: var(--clip-serif);
+  font-size: 14px; letter-spacing: 1.5px; color: var(--clip-accent); border-bottom: 1px solid currentColor; }
+.bz-clip-tut--block { margin-top: 14px; align-self: center; }
+.bz-clip-tut--mob { display: block; margin: 22px auto 0; font-size: 14px; }@media (hover: hover) {
+
+.bz-clip-nodir-btn:hover { background: var(--clip-ink); color: var(--clip-paper); }
+.bz-clip-tut:hover { opacity: .72; }
+}
+
+/* 右侧阅读区空态（未配置 / 空册 / 未选中同屏）：纸面一行小字 + 教程，不用通用空态卡 */
+.bz-clip-read-empty { height: 100%; min-height: 240px; box-sizing: border-box;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 12px; padding: 40px 20px; text-align: center; }
+.bz-clip-read-empty-t { font-family: var(--clip-serif); font-size: 16px; letter-spacing: 2px; color: var(--clip-muted); }
+
+/* 未配置 / 空册：左右并成一栏——站点 rail、目录头、右侧阅读窗格一起收起，
+   中间那块撑满面板并居中（否则左边一句引导、右边一句「从列表选择一篇文章」，像两块坏区域） */
+.bz-clip-desk-body.is-void .bz-clip-rail,
+.bz-clip-desk-body.is-void .bz-clip-toc-head,
+.bz-clip-desk-body.is-void .bz-clip-read { display: none; }
+.bz-clip-desk-body.is-void .bz-clip-mid { flex: 1; width: auto; border-right: 0; }
+.bz-clip-desk-body.is-void .bz-clip-list { display: flex; align-items: center; justify-content: center; }
+.bz-clip-desk-body.is-void .bz-clip-list > * { width: 100%; }

@@ -26,6 +26,8 @@ import { setAISettingsProvider } from '../../src/core/ai';
 import { KnowledgeData } from '../../src/knowledge/data';
 import { UIManager } from '../../src/knowledge/ui';
 import * as mountCanvas from '../../src/knowledge/mount-canvas';
+import { pvBlankDirs } from '../preview-mode';
+import { pvEmptyData, pvWipeVault } from '../preview-mode';
 
 const SEED_MARKER = 'bz-sim:__kb_seed_v3';
 const key = (path: string): string => `bz-sim:${path}`;
@@ -531,6 +533,8 @@ function injectSettings(): void {
     knowledgeCacheDir: '',
     knowledgeCacheRetentionDays: 7,
   } as never;
+  // 壳的「文件夹」开关：未配置 → 三个盒目录留空，看引导态
+  pvBlankDirs(settings, ['knowledgeDirectory', 'knowledgeCardboxDirectory', 'knowledgeTopicDirectory', 'knowledgeImageFolder']);
   setSettingsProvider(() => settings);
   // AI 模块有独立注入口（cinema/secondbrain 同款）：不注入则生成报「未配置 AI」
   setAISettingsProvider(() => settings as never);
@@ -719,6 +723,11 @@ export function bootKnowledgeSim(): void {
   if (g.__bzKbSimBooted) return;
   g.__bzKbSimBooted = true;
   seedVault();
+  // 壳的「空册」档：种完再清（反过来会被种子补回来），撤标记让切回「有内容」能重种
+  if (pvEmptyData()) {
+    pvWipeVault([...SEED_NOTES, ...SEED_MOUNT_NOTES, ...SEED_MOUNT_LITERATURE, ...SEED_MEDIA].map((n) => n.path));
+    localStorage.removeItem(SEED_MARKER);
+  }
   const app = new FakeApp();
   setApp(app as never);
   injectSettings();

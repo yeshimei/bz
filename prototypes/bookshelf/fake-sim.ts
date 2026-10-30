@@ -24,6 +24,8 @@ import { esc } from '../../src/core/ui/str';
 import { ensureBookshelf, openBookshelf as openBookshelfDomain } from '../../src/bookshelf/index';
 import { catColor } from '../../src/bookshelf/render';
 import { openReportView } from '../../src/bookshelf/ui';
+import { pvUnset } from '../preview-mode';
+import { pvEmptyData, pvWipeVault } from '../preview-mode';
 
 /** 种子条目（prototype-data.js 的 BookshelfItem 同构快照 + 生成器补的 ctime） */
 interface BsSeedItem {
@@ -138,6 +140,12 @@ function epubAggregate(it: BsSeedItem): Record<string, unknown> {
  *  面板只读（issue 223），无「用户改过数据」态——每次启动无条件重灌，评审壳重复自检天然干净。 */
 function seedDatabase(app: FakeApp): void {
   const vault = app.vault;
+  // 壳的「空册」档：不种，并抹掉上次种下的（书库每次启动无条件下种，只跳过不够）
+  if (pvEmptyData()) {
+    for (const it of seedItems()) pvWipeVault([it.id, it.cover].filter(Boolean) as string[]);
+    pvWipeVault(['CONFIG/STORAGE/weave-data.json']);
+    return;
+  }
   const books: Record<string, unknown> = {};
   for (const it of seedItems()) {
     if (it.isEpub) {
@@ -160,7 +168,8 @@ function injectSettings(): void {
   setSettingsProvider(
     () =>
       ({
-        bookshelfFolderPath: '书库',
+        // 壳的「文件夹」开关：未配置 → 目录留空，看引导态
+        bookshelfFolderPath: pvUnset() ? '' : '书库',
         bookTag: 'book',
         bookshelfSkin: skin,
         bookshelfDefaultSide: 'all',

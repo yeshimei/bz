@@ -541,6 +541,10 @@
 /* 空态（面板 toast 已收编 core notice 单源，一致审查#2：自绘通道与样式段退役） */
 .bz-cinema--midnight .cn-empty-page{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:var(--bz-space-sm);color:var(--ink-3)}
 .bz-cinema--midnight .cn-empty-page .big{font-family:"Noto Serif SC",SimSun,serif;font-size:var(--bz-font-emphasis);letter-spacing:.3em;color:var(--ink-2)}
+/* 未配置引导页（影视目录空着）：与「影片空空如也」同一套形制——衬线大字 + 墨字说明 + 金钮，
+   不用 core 通用空态卡（那是宿主浅色皮肤，跟午夜场不是一套语言） */
+.bz-cinema--midnight .cn-empty-page .cn-empty-note{max-width:32em;font-size:var(--bz-font-meta);line-height:1.9;text-align:center;color:var(--ink-3)}
+.bz-cinema--midnight .cn-empty-page .dm-btn{margin-top:var(--bz-space-xs)}
 
 /* ====================================================================
    落域适配段（issue 236 / ADR-0103；插件专用，原型不出）

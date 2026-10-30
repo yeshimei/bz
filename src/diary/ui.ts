@@ -102,7 +102,8 @@ import { parseFlexibleDateTime } from './parser';
 import { MEDIA_PICK_MAX_MB, PICK_MEDIA_ACCEPT, writePickedMedia } from './media-import';
 /* 纯层只吐 data-lucide 占位（iconSpan），兑现统一在这里做一次：
    插件端走 setIcon（全 lucide 名），评审壳走 prototype-icons.js 的手写白名单。 */
-import { mountIcons, uiProgress } from '../core/ui';
+import { mountIcons, uiProgress, uiBtn } from '../core/ui';
+import { needsFolderSetup, openFolderSettings, folderState } from '../core/folder-setup';
 
 // ===== 常量 =====
 
@@ -794,6 +795,13 @@ export class DiaryAppController {
         flow.push({ el: elOf(daystampHTML(e.date, dayCount.get(e.date) || 1)), h: 0, keep: true });
       }
       this.pushEntryBlocks(flow, e, ctx);
+    }
+
+    /* 空册（已配置文件夹、一篇都没有）：往块流里塞一篇「默认日记」——它会排在第 0 页，
+       也就是摊开书时左边那页。文字的形制跟真日记一致（日戳 + 正文 + 一句引导），
+       不像浮在书上的卡片那样打断"这是本书"的感觉。 */
+    if (!this.entries.length && !this._loadError) {
+      flow.push({ el: this.emptyEntryBlock(), h: 0, keep: true });
     }
 
     if (single) {
@@ -3608,6 +3616,68 @@ export class DiaryAppController {
    *   但开册只需要读到第一册收卷为止（通常一两窗），不必等全册读完；这段时间书还是空的，
    *   桌上摆一张报进度的纸条（`showLoading`），读完换「正在装订」，成册即收。
    */
+  /**
+   * 未配置日记文件夹时的引导纸（复用兜底纸那张黄便签的容器，不另造浮层）：
+   * 说清缺哪个文件夹 + 「设置日记文件夹」。与「配好了但册子是空的」区分开——
+   * 那种情况照常开册，由册子自己的空态说话，不挂设置按钮。
+   */
+  private showFolderGate(): void {
+    const paper = this.fallbackEl?.querySelector<HTMLElement>('.bz-diary-fb-paper');
+    if (!paper) return;
+    const st = folderState('diary');
+    const missing = st.missing.map((f) => f.field.label).join('、') || '日记文件夹';
+    paper.textContent = '';
+    paper.classList.add('bz-diary-fb-lead');
+    const title = document.createElement('div');
+    title.className = 'bz-diary-fb-lead-title';
+    title.textContent = '这本册子还没定文件夹';
+    const desc = document.createElement('div');
+    desc.className = 'bz-diary-fb-lead-desc';
+    desc.textContent = `写下的每一篇都要落进${missing}，先把位置定一下。`;
+    const act = document.createElement('div');
+    act.className = 'bz-diary-fb-lead-act';
+    act.appendChild(
+      uiBtn({
+        label: '设置日记文件夹',
+        icon: 'settings',
+        tone: 'primary',
+        // 配完再回来时本册还停在引导纸上（日记没有「设置变更后重渲」的入口），先合上
+        onClick: () => openFolderSettings('diary', undefined, () => this.hide()),
+      })
+    );
+    paper.append(title, desc, act);
+    this.fallbackEl.hidden = false;
+    this.hideLoading();
+  }
+
+  /** 从引导纸切回正常册子（设好文件夹后再打开时清掉它，恢复兜底纸文案） */
+  private clearFolderGate(): void {
+    const paper = this.fallbackEl?.querySelector<HTMLElement>('.bz-diary-fb-paper');
+    if (!paper || !paper.classList.contains('bz-diary-fb-lead')) return;
+    paper.classList.remove('bz-diary-fb-lead');
+    paper.textContent = '册子的数据没读出来。\n可以把日记本关掉再开一次试试。';
+    this.fallbackEl.hidden = true;
+  }
+
+  /**
+   * 空册时写在书页上的那一段（不是浮层）：形制照着真日记来——标题一句、正文一句、
+   * 末尾一个「写第一篇」的行内链接。落点路径现算，用户改过文件夹就显示他自己的。
+   */
+  private emptyEntryBlock(): HTMLElement {
+    const wrap = document.createElement('div');
+    wrap.className = 'bz-diary-void-entry';
+    const title = document.createElement('p');
+    title.className = 'bz-diary-void-title';
+    title.textContent = '这本册子还是空的。';
+    const act = document.createElement('button');
+    act.type = 'button';
+    act.className = 'bz-diary-void-link';
+    act.textContent = '写第一篇 →';
+    act.addEventListener('click', () => this.openWrite());
+    wrap.append(title, act);
+    return wrap;
+  }
+
   show(): void {
     if (!this._initialized) this.ensureElements();
     const reopen = this._shownOnce;
@@ -3616,6 +3686,16 @@ export class DiaryAppController {
     this.root!.style.display = 'flex';
     topifyZ(this.root!); // ADR-0067：域根层级动态发号
     this._allowCacheNext = true;
+
+    /* 未配置日记文件夹（2026-10-30）：不读盘、不排册，桌上贴一张引导纸——
+       说明缺什么 + 「设置日记文件夹」。与「已配置但没内容」的空册严格分开：
+       后者照常开册、由册子自己的空态说话，不带设置按钮。 */
+    if (needsFolderSetup('diary')) {
+      this.showFolderGate();
+      return;
+    }
+    this.clearFolderGate();
+
     this.subscribeEvents();
     this.subscribeVault();
 

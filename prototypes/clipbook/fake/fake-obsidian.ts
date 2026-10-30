@@ -339,9 +339,15 @@ export class FakeApp {
       /* 原型 no-op：不跳出笔记 */
     },
   };
-  /** 外链（openExternal 消费面）：原型中不弹浏览器，no-op */
-  openUrl(): void {
-    /* 原型 no-op */
+  /** 外链（openExternal 消费面）：真插件里交给系统浏览器，壳里必须真开新标签——
+   *  否则 core 的 openExternalUrl 拿到一个静默成功就 return，用户点了没反应
+   *  （2026-10-30 实际踩过：视频教程链接点了不出声）。 */
+  openUrl(url: string): void {
+    try {
+      window.open(url, '_blank');
+    } catch (e) {
+      /* 弹窗被拦：core 那边不会再有兜底，留给点击处自行提示 */
+    }
   }
   metadataCache = {
     /** scan.ts defaultCache 唯一消费面：现场解析 frontmatter（文件缺失/无 frontmatter → null） */

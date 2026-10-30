@@ -195,6 +195,30 @@ export async function listDateEntries(dateStr: string, opts?: DateWriteOptions):
   return out;
 }
 
+/**
+ * 逐级建目录（vault 路径，非点前缀）：已存在的层级跳过；建失败只吞掉——
+ * 真正的失败交给随后的 vault.create 报（那里有准确的落点与原因）。
+ */
+async function ensureFolderFor(dir: string): Promise<void> {
+  if (!dir) return;
+  const v = getApp().vault;
+  const missing: string[] = [];
+  let probe = dir;
+  while (probe && !v.getAbstractFileByPath(probe)) {
+    missing.unshift(probe);
+    const s = probe.lastIndexOf('/');
+    if (s <= 0) break;
+    probe = probe.slice(0, s);
+  }
+  for (const p of missing) {
+    try {
+      await v.createFolder(p);
+    } catch (e) {
+      /* 并发建目录竞态无害 */
+    }
+  }
+}
+
 /** 添加新日记条目：按日期串行取空闲文件名（同刻第二篇落 `-2` 后缀）后建文件。
  *  opts.filePath 只取其目录作为落点（条目文件一篇一条，不向已有文件追加）。 */
 export async function addEntry(
@@ -211,6 +235,10 @@ export async function addEntry(
   const addKey = `${dir}/${dateStr}`;
 
   const created = await enqueueFileTask(addKey, async () => {
+    // 落笔前先把目录建出来：vault.create 不会替你建父目录，全新库里第一篇必然
+    // `ENOENT: no such file or directory, open '…/我的/日记/2610301942.md'`
+    //（2026-10-30 实测报障；用户自选的目录同样可能是空的，所以这里按落点建、不按设置建）
+    await ensureFolderFor(dir);
     let seq = 1;
     let filePath = diaryEntryPath(dir, dateStr, timeStr, seq);
     while (getApp().vault.getAbstractFileByPath(filePath)) {

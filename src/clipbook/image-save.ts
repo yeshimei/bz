@@ -17,6 +17,7 @@ import { pad2 } from '../core/utils';
  */
 import { requestUrl, TFile } from 'obsidian';
 import { getApp } from '../core/app';
+import { resolveAssetDir } from '../core/attachment-dir';
 import { tryGetSettings } from '../core/settings-provider';
 import { notice } from '../core/notice';
 import { clipDir } from './save';
@@ -32,14 +33,13 @@ const UA_HEADERS = { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) Ap
 const EXT_WHITELIST = new Set(['png', 'jpg', 'jpeg', 'gif', 'webp', 'svg', 'bmp', 'avif', 'ico']);
 
 /**
- * 剪藏图片目录：设置键 clipbookImageFolder（留空回落 <articleDirectory>/assets）。
+ * 剪藏图片目录：设置键 clipbookImageFolder 优先，留空**跟随 Obsidian 的「默认新附件位置」**
+ * （用户在宿主里早设过一次，不必在插件里再填一遍），两者都没有才回落 <articleDirectory>/assets。
  * 回落口径走 save.clipDir 单源（CB4/A3 收编；articleDirectory 缺省与尾斜杠归一同一处）。
  */
 export function clipbookImageDir(): string {
   const s = tryGetSettings() as any;
-  const configured = String((s && s.clipbookImageFolder) || '').trim().replace(/\\/g, '/').replace(/^\/+|\/+$/g, '');
-  if (configured) return configured;
-  return `${clipDir()}/assets`;
+  return resolveAssetDir(s && s.clipbookImageFolder, `${clipDir()}/assets`).dir;
 }
 
 /** 协议相对地址补全（//host/a.png → https://host/a.png）；data:/blob: 原样返回 */

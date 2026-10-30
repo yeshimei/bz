@@ -1,5 +1,5 @@
-/* 源指纹 9384fdd5a2bc25e7 · 仓内输入 67 个（校验见 tests/preview-freshness.test.ts） */
-/*#preview-inputs=["prototypes/bookshelf/fake-sim.ts","prototypes/bookshelf/fake/fake-obsidian.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/epub-notes.ts","src/bookshelf/index.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/motion.ts","src/bookshelf/notes-ui.ts","src/bookshelf/notes.ts","src/bookshelf/render.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/bookshelf/ui.ts","src/core/app.ts","src/core/chart-palette.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/download-manifest.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/mobile.ts","src/core/notice.ts","src/core/offline-source.ts","src/core/plugin-path.ts","src/core/remote-asset.ts","src/core/remote-base.ts","src/core/settings-provider.ts","src/core/sha256.ts","src/core/skin-pack.ts","src/core/storage-path.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/help-tip.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/reading-report/index.ts","src/reading-report/report.ts","src/reading-report/stats.ts"]*/
+/* 源指纹 1789cca5f25d3a37 · 仓内输入 70 个（校验见 tests/preview-freshness.test.ts） */
+/*#preview-inputs=["prototypes/bookshelf/fake-sim.ts","prototypes/bookshelf/fake/fake-obsidian.ts","prototypes/preview-mode.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/epub-notes.ts","src/bookshelf/index.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/motion.ts","src/bookshelf/notes-ui.ts","src/bookshelf/notes.ts","src/bookshelf/render.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/bookshelf/ui.ts","src/core/app.ts","src/core/attachment-dir.ts","src/core/chart-palette.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/download-manifest.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/folder-setup.ts","src/core/http.ts","src/core/mobile.ts","src/core/notice.ts","src/core/offline-source.ts","src/core/plugin-path.ts","src/core/remote-asset.ts","src/core/remote-base.ts","src/core/settings-provider.ts","src/core/sha256.ts","src/core/skin-pack.ts","src/core/storage-path.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/help-tip.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/reading-report/index.ts","src/reading-report/report.ts","src/reading-report/stats.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/bookshelf/fake-sim.ts → window.BZW_bookshelf（行为单源预览包，issue 245/ADR-0106） */
 var BZW_bookshelf = (() => {
   var __create = Object.create;
@@ -39,9 +39,9 @@ var BZW_bookshelf = (() => {
   ));
   var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
 
-  // ../bz/node_modules/.pnpm/moment@2.30.1/node_modules/moment/moment.js
+  // node_modules/.pnpm/moment@2.30.1/node_modules/moment/moment.js
   var require_moment = __commonJS({
-    "../bz/node_modules/.pnpm/moment@2.30.1/node_modules/moment/moment.js"(exports, module) {
+    "node_modules/.pnpm/moment@2.30.1/node_modules/moment/moment.js"(exports, module) {
       (function(global, factory) {
         typeof exports === "object" && typeof module !== "undefined" ? module.exports = factory() : typeof define === "function" && define.amd ? define(factory) : global.moment = factory();
       })(exports, function() {
@@ -4812,8 +4812,15 @@ var BZW_bookshelf = (() => {
   var COVER_EXTENSIONS = ["jpg", "jpeg", "png", "webp", "gif"];
   function resolveFolderPath() {
     const s = tryGetSettings();
-    const v = typeof s.bookshelfFolderPath === "string" && s.bookshelfFolderPath.trim() ? s.bookshelfFolderPath : typeof s.libraryFolderPath === "string" && s.libraryFolderPath.trim() ? s.libraryFolderPath : "书库";
-    return v.replace(/^\/+|\/+$/g, "");
+    const cur = typeof s.bookshelfFolderPath === "string" ? s.bookshelfFolderPath.trim() : "";
+    if (cur) return cur.replace(/^\/+|\/+$/g, "");
+    const legacy = typeof s.libraryFolderPath === "string" ? s.libraryFolderPath.trim() : "";
+    if (legacy) {
+      s.bookshelfFolderPath = legacy;
+      void saveSettings();
+      return legacy.replace(/^\/+|\/+$/g, "");
+    }
+    return "";
   }
   function resolveBookTag() {
     const s = tryGetSettings();
@@ -8168,6 +8175,177 @@ var BZW_bookshelf = (() => {
     bookNotesLoadSeq = 0;
   }
 
+  // src/core/attachment-dir.ts
+  function cleanDir(v) {
+    return String(v != null ? v : "").trim().replace(/\\/g, "/").replace(/^\/+|\/+$/g, "");
+  }
+  function obsidianAttachmentDir() {
+    var _a, _b;
+    let raw = "";
+    try {
+      const vault = getApp().vault;
+      raw = String((_b = (_a = vault == null ? void 0 : vault.getConfig) == null ? void 0 : _a.call(vault, "attachmentFolderPath")) != null ? _b : "");
+    } catch (e) {
+      return null;
+    }
+    const v = raw.trim().replace(/\\/g, "/");
+    if (!v || v === "/") return null;
+    if (v.startsWith("./")) return null;
+    const dir = cleanDir(v);
+    return dir || null;
+  }
+  function resolveAssetDir(configured, fallback) {
+    const c = cleanDir(configured);
+    if (c) return { dir: c, source: "setting" };
+    const o = obsidianAttachmentDir();
+    if (o) return { dir: o, source: "obsidian" };
+    return { dir: cleanDir(fallback), source: "fallback" };
+  }
+
+  // src/core/folder-setup.ts
+  var FOLDER_PLANS = {
+    diary: {
+      name: "日记本",
+      icon: "notebook-pen",
+      settingsId: "diary",
+      title: "日记本还没定文件夹",
+      desc: "写下的每一篇都会存进日记文件夹。定了之后才有地方落笔。",
+      fields: [{ key: "diaryDirectory", label: "日记文件夹", reco: "我的/日记", note: "信件文件夹可选，用到时才问" }]
+    },
+    clipbook: {
+      name: "剪藏本",
+      icon: "scissors",
+      settingsId: "clipping",
+      title: "剪藏本还没定文件夹",
+      desc: "抓到的网页要存成笔记，正文得有个固定的落脚处。",
+      fields: [
+        { key: "articleDirectory", label: "剪藏文件夹", reco: "归档/网页剪藏" },
+        { key: "clipbookImageFolder", label: "图片文件夹", reco: "", image: true, imageFallback: (main) => `${main}/assets` }
+      ]
+    },
+    cinema: {
+      name: "影院",
+      icon: "clapperboard",
+      settingsId: "cinema",
+      title: "影院还没定文件夹",
+      desc: "影视条目一部一条，存在影视目录里。",
+      fields: [
+        { key: "cinemaFolderPath", label: "影视目录", reco: "我的/影视" },
+        { key: "cinemaPosterFolder", label: "海报文件夹", reco: "", image: true, imageFallback: (main) => `${main}/封面` }
+      ]
+    },
+    bookshelf: {
+      name: "书库",
+      icon: "library",
+      settingsId: "bookshelf",
+      title: "书库还没定文件夹",
+      desc: "书库读的是这个文件夹里带书标签的笔记；已有书的笔记放进去就能认出来。",
+      fields: [
+        { key: "bookshelfFolderPath", label: "书库目录", reco: "书库" },
+        { key: "bookshelfPosterFolder", label: "封面文件夹", reco: "", image: true, imageFallback: (main) => `${main}/封面` }
+      ]
+    },
+    gameshelf: {
+      name: "游戏库",
+      icon: "gamepad-2",
+      settingsId: "gameshelf",
+      title: "游戏库还没定文件夹",
+      desc: "一款一条，存在游戏目录里。",
+      // 定完文件夹还不会自己长数据：同步要 Steam 凭据（用户点名要在空态里说清）
+      hint: "同步还要在设置里填好 SteamID64 与 Web API 密钥。",
+      fields: [
+        { key: "gameshelfFolderPath", label: "游戏目录", reco: "我的/游戏" },
+        { key: "gameshelfPosterFolder", label: "海报文件夹", reco: "", image: true, imageFallback: (main) => `${main}/封面` }
+      ]
+    },
+    knowledge: {
+      name: "知识盒",
+      icon: "boxes",
+      settingsId: "knowledge",
+      title: "知识盒还没定文件夹",
+      desc: "四类各放一处：长文献、卡片、主题，外加配图。",
+      fields: [
+        { key: "knowledgeDirectory", label: "文献文件夹", reco: "文献盒" },
+        { key: "knowledgeCardboxDirectory", label: "卡片文件夹", reco: "卡片盒" },
+        { key: "knowledgeTopicDirectory", label: "主题文件夹", reco: "主题盒" },
+        { key: "knowledgeImageFolder", label: "图片文件夹", reco: "", image: true, imageFallback: (main) => `${main}/assets` }
+      ]
+    }
+  };
+  function settingValue(key) {
+    const s = tryGetSettings();
+    return cleanDir(s ? s[key] : "");
+  }
+  function folderState(domain) {
+    const plan = FOLDER_PLANS[domain];
+    const mainDir = (() => {
+      const first = plan.fields.find((f) => !f.image);
+      return first ? settingValue(first.key) : "";
+    })();
+    const fields = plan.fields.map((field) => {
+      if (field.image) {
+        const fallback = field.imageFallback ? field.imageFallback(mainDir || field.reco) : mainDir;
+        const r = resolveAssetDir(settingValue(field.key), fallback);
+        return { field, dir: r.dir, source: r.source, missing: !r.dir };
+      }
+      const v = settingValue(field.key);
+      return { field, dir: v, source: v ? "setting" : "fallback", missing: !v };
+    });
+    const missing = fields.filter((f) => f.missing);
+    return { plan, fields, missing, ok: missing.length === 0 };
+  }
+  function needsFolderSetup(domain) {
+    return !folderState(domain).ok;
+  }
+  function openFolderSettings(domain, anchorKey, closeBefore) {
+    var _a;
+    const plan = FOLDER_PLANS[domain];
+    const key = anchorKey || ((_a = folderState(domain).missing[0]) == null ? void 0 : _a.field.key);
+    try {
+      closeBefore == null ? void 0 : closeBefore();
+    } catch (e) {
+    }
+    const spec = ["..", "settings-panel"].join("/");
+    void import(
+      /* webpackIgnore: true */
+      spec
+    ).then((m) => m.openSettingsPanel(getApp(), plan.settingsId, key)).catch(() => {
+      notice("设置面板没能打开，可以从「设置 → 包仔」进入", "warning");
+    });
+  }
+  function folderSetupEmpty(domain, closeBefore) {
+    const st = folderState(domain);
+    const { plan } = st;
+    const desc = plan.desc;
+    const acts = uiBtnRow(
+      [
+        uiBtn({
+          label: "打开设置",
+          icon: "settings",
+          tone: "primary",
+          onClick: () => openFolderSettings(domain, void 0, closeBefore)
+        })
+      ],
+      { center: true }
+    );
+    const el = uiEmpty({ icon: plan.icon, title: plan.title, desc, actions: acts });
+    if (plan.hint) {
+      const n = document.createElement("div");
+      n.className = "bz-empty-note";
+      n.textContent = plan.hint;
+      el.insertBefore(n, acts);
+    }
+    el.classList.add("bz-folder-setup-empty");
+    return el;
+  }
+  function mountFolderGate(container, domain, closeBefore) {
+    if (!container) return false;
+    if (!needsFolderSetup(domain)) return false;
+    container.textContent = "";
+    container.appendChild(folderSetupEmpty(domain, closeBefore));
+    return true;
+  }
+
   // src/bookshelf/ui.ts
   var HOOKS = { mountIcons };
   var wallAction = "refresh";
@@ -8207,6 +8385,7 @@ var BZW_bookshelf = (() => {
     if (!overlay) return;
     const shelf = overlay.querySelector("#bz-bs-shelf");
     if (!shelf) return;
+    if (mountFolderGate(shelf, "bookshelf", closeOverlay)) return;
     const sig = displaySignature();
     const room = shelf.closest(".bz-bs-room");
     const hint = overlay.querySelector("#bz-bs-hint");
@@ -8593,6 +8772,48 @@ var BZW_bookshelf = (() => {
     createOverlay(app);
   }
 
+  // prototypes/preview-mode.ts
+  function pvDirsMode() {
+    try {
+      const v = new URLSearchParams(location.search).get("dirs");
+      return v === "0" ? "0" : v === "1" ? "1" : "";
+    } catch (e) {
+      return "";
+    }
+  }
+  function pvUnset() {
+    return pvDirsMode() === "0";
+  }
+  function pvEmptyData() {
+    try {
+      return new URLSearchParams(location.search).get("state") === "empty";
+    } catch (e) {
+      return false;
+    }
+  }
+  function pvWipeVault(paths) {
+    const LS = "bz-sim:";
+    const STAT = "bz-sim:__stat__";
+    const hit = (p) => paths.some((raw) => {
+      const pre = raw.replace(/\/+$/, "");
+      return p === pre || p.startsWith(`${pre}/`);
+    });
+    const doomed = [];
+    for (let i = 0; i < localStorage.length; i += 1) {
+      const k = localStorage.key(i);
+      if (!k || k === STAT || !k.startsWith(LS)) continue;
+      if (hit(k.slice(LS.length))) doomed.push(k);
+    }
+    for (const k of doomed) localStorage.removeItem(k);
+    try {
+      const stats = JSON.parse(localStorage.getItem(STAT) || "{}");
+      for (const k of Object.keys(stats)) if (hit(k)) delete stats[k];
+      localStorage.setItem(STAT, JSON.stringify(stats));
+    } catch (e) {
+      localStorage.setItem(STAT, "{}");
+    }
+  }
+
   // prototypes/bookshelf/fake-sim.ts
   function seedItems() {
     const src = window.BS || window.parent && window.parent.BS || null;
@@ -8664,6 +8885,11 @@ var BZW_bookshelf = (() => {
   }
   function seedDatabase(app) {
     const vault = app.vault;
+    if (pvEmptyData()) {
+      for (const it of seedItems()) pvWipeVault([it.id, it.cover].filter(Boolean));
+      pvWipeVault(["CONFIG/STORAGE/weave-data.json"]);
+      return;
+    }
     const books = {};
     for (const it of seedItems()) {
       if (it.isEpub) {
@@ -8681,7 +8907,8 @@ var BZW_bookshelf = (() => {
     const skin = new URLSearchParams(location.search).get("skin") || "nordic";
     setSettingsProvider(
       () => ({
-        bookshelfFolderPath: "书库",
+        // 壳的「文件夹」开关：未配置 → 目录留空，看引导态
+        bookshelfFolderPath: pvUnset() ? "" : "书库",
         bookTag: "book",
         bookshelfSkin: skin,
         bookshelfDefaultSide: "all",

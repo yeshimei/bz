@@ -43,7 +43,7 @@ import { saveSettings, tryGetSettings, panelSizePersist } from '../core/settings
 import { ensureAutoSummary, stopAutoSummary, regenerateSummary } from '../auto-summary';
 import { AUTO_SUMMARY_KEYS } from '../auto-summary/keys';
 import { dataSourceGroupRows } from './news-sources-group';
-import { articleKeyOf } from './constants';
+import { articleKeyOf, CLIP_TUTORIAL_URL } from './constants';
 import { readDataSourceState, type DataSourceState } from './news-source-settings';
 import type { ClipArticle } from './types';
 import { stripClipChrome } from './md';
@@ -72,6 +72,7 @@ import {
 } from './flow';
 import { openReadingPress } from './press';
 import type { ClipNote } from './scan';
+import { folderState, needsFolderSetup, openFolderSettings } from '../core/folder-setup';
 
 // ================= 模块级 UI 引用 =================
 let overlayEl: HTMLElement | null = null;
@@ -702,8 +703,10 @@ function closeMobDetail(): void {
  *  「第 N 期」，N = news 总条数（含已处理），随刷新更新 */
 function renderHeadIssue(): void {
   if (!overlayEl) return;
+  // 未配置文件夹时不该报期号：那会显示成「第 0 期」，像个坏掉的计数器
+  const label = needsFolderSetup('clipbook') ? '未配置' : `第 ${M.articles.length} 期`;
   overlayEl.querySelectorAll<HTMLElement>('[data-clip-issue]').forEach((el) => {
-    el.textContent = `第 ${M.articles.length} 期`;
+    el.textContent = label;
   });
 }
 
@@ -1007,8 +1010,64 @@ function renderList(): void {
   motionListRendered(listEl, renderMood, foldKind, pressed);
 }
 
+/**
+ * 未配置 / 空册时把三栏并成一栏：站点 rail、目录头、右侧阅读窗格全收起来，
+ * 中间那块撑满面板并居中——否则左边一句引导、右边一句「从列表选择一篇文章」，
+ * 像是两块坏掉的区域并排放着。
+ */
+function setVoidLayout(on: boolean): void {
+  const body = overlayEl?.querySelector<HTMLElement>('.bz-clip-desk-body');
+  if (body) body.classList.toggle('is-void', on);
+}
+
+/**
+ * 教程入口（纸面衬线的行内链接，不是宿主按钮）：空态与未配置引导共用。
+ * 用 button 不用 a——Obsidian 里裸链会被阅读视图接管，这里统一走 openExternalUrl。
+ */
+function tutorialLink(extraClass = ''): HTMLButtonElement {
+  const b = document.createElement('button');
+  b.type = 'button';
+  b.className = 'bz-clip-tut' + (extraClass ? ' ' + extraClass : '');
+  b.textContent = '看视频教程 →';
+  b.addEventListener('click', () => openExternalUrl(getApp(), CLIP_TUTORIAL_URL));
+  return b;
+}
+
+/**
+ * 桌面未配置引导：剪藏本是纸面衬线语言，core 的通用空态卡（宿主配色 + 实心橙钮）
+ * 贴进来像另一个软件——这里照本域排版自己拼一份，钮用墨线方角，另给一条教程入口。
+ */
+function mountClipFolderGate(): boolean {
+  if (!listEl || !needsFolderSetup('clipbook')) return false;
+  const plan = folderState('clipbook').plan;
+  const wrap = document.createElement('div');
+  wrap.className = 'bz-clip-nodir';
+  const title = document.createElement('div');
+  title.className = 'bz-clip-nodir-title';
+  title.textContent = plan.title;
+  const desc = document.createElement('div');
+  desc.className = 'bz-clip-nodir-desc';
+  desc.textContent = plan.desc;
+  const act = document.createElement('div');
+  act.className = 'bz-clip-nodir-act';
+  const btn = document.createElement('button');
+  btn.type = 'button';
+  btn.className = 'bz-clip-nodir-btn';
+  btn.textContent = '打开设置';
+  btn.addEventListener('click', () => openFolderSettings('clipbook', undefined, closePanel));
+  act.append(btn, tutorialLink());
+  wrap.append(title, desc, act);
+  listEl.innerHTML = '';
+  listEl.appendChild(wrap);
+  setVoidLayout(true);
+  return true;
+}
+
 function renderListNow(): void {
   if (!listEl) return;
+  // 剪藏文件夹没配 → 列表区直接给引导态（别让空列表冒充「还没有剪藏」）
+  if (mountClipFolderGate()) return;
+  setVoidLayout(false);
   // 效率#16：装载错误态分流——错误空态（图标 + 原因 + 重试钮）替代引导空态，
   // 防 corrupt/读盘异常呈现「暂无内容」假空态误导用户以为数据全丢
   if (loadError) {
@@ -1029,7 +1088,13 @@ function renderListNow(): void {
     if (!list.length) {
       listEl.innerHTML = '';
       // C15：搜索零命中走「查无此条」（news 源同态文案），不误报「剪藏本为空」
-      listEl.appendChild(uiEmpty({ icon: 'scissors', title: searchKw ? '查无此条' : '剪藏本为空' }));
+      setVoidLayout(!searchKw); // 搜索无命中不并栏：那是「筛掉了」，不是「还没内容」
+      listEl.appendChild(uiEmpty({
+        icon: 'scissors',
+        title: searchKw ? '查无此条' : '剪藏本为空',
+        // 空册不是错，是还没上手：给一条看完就会的教程（搜索无命中时不给，那是另一回事）
+        actions: searchKw ? undefined : tutorialLink('bz-clip-tut--block'),
+      }));
       M.cur = null;
       if (readerEl) renderReader();
       return;
@@ -1048,7 +1113,13 @@ function renderListNow(): void {
   const flat = deskFlat();
   if (!flat.length) {
     listEl.innerHTML = '';
-    listEl.appendChild(uiEmpty({ icon: 'inbox', title: '这个源暂无内容' }));
+    setVoidLayout(true);
+    listEl.appendChild(uiEmpty({
+      icon: 'inbox',
+      title: '这个源暂无内容',
+      // 空源同样给教程入口：空册切到哪个源都得能问到「怎么用」
+      actions: searchKw ? undefined : tutorialLink('bz-clip-tut--block'),
+    }));
     // G：切到空源清当前阅读——M.cur 残留上一源文章会被 renderReader/mob 详情再渲染
     M.cur = null;
     if (readerEl) renderReader();
@@ -1261,14 +1332,31 @@ function renderReader(): void {
   motionReaderRendered(readerEl, prevId === '' ? 'first' : readerDir, renderMood);
 }
 
+/**
+ * 右侧阅读区空态：剪藏本的阅读面是纸面衬线，core 通用空态（图标 + 系统字体粗标题）
+ * 摆在这张纸上很跳。这里只留一行纸面小字，并在非搜索态给教程入口——
+ * 未配置与空册两种情形下，用户看到的都是这一屏。
+ */
+function renderReaderEmpty(): void {
+  if (!readerEl) return;
+  readerEl.innerHTML = '';
+  const wrap = document.createElement('div');
+  wrap.className = 'bz-clip-read-empty';
+  const t = document.createElement('div');
+  t.className = 'bz-clip-read-empty-t';
+  t.textContent = '从列表挑一篇，在这里读';
+  wrap.append(t);
+  if (!searchKw) wrap.append(tutorialLink('bz-clip-tut--block'));
+  readerEl.appendChild(wrap);
+}
+
 function renderReaderNow(): void {
   if (!readerEl) return;
   const a = M.cur;
   hideSelBar(); // 切篇/重渲收工具框（旧选区 rect 已失效）
   applyReaderFontSize();
   if (!a) {
-    readerEl.innerHTML = '';
-    readerEl.appendChild(uiEmpty({ icon: 'book-open', title: '从列表选择一篇文章开始阅读' }));
+    renderReaderEmpty();
     return;
   }
   // issue 358：会话计时携带条目元信息（title/srcName）——封存入账 readLog 时「哪篇、哪里来」
@@ -1674,6 +1762,33 @@ function rememberSplitWidth(w: number): void {
 
 // ================= 渲染：移动（m3 目录索引：site 章 + 已读/已收双折叠，ADR-0108） =================
 /** 动效挂点：boot = 章块接力浮出（见 motionMobTocRendered）；search/mute 静默。 */
+/**
+ * 移动端未配置引导：剪藏本移动壳只有「资讯摘要」一栏，没有桌面那套文件夹列表，
+ * 所以引导要单独接一次；形制照本域的纸面衬线（.bz-clip-mob-no-hit 同族），
+ * 不用 core 的通用空态卡——那套是宿主配色，贴在纸面上不是一本书。
+ */
+function mountMobFolderGate(): boolean {
+  if (!mobListEl || !needsFolderSetup('clipbook')) return false;
+  const plan = folderState('clipbook').plan;
+  const wrap = document.createElement('div');
+  wrap.className = 'bz-clip-mob-nodir';
+  const title = document.createElement('div');
+  title.className = 'bz-clip-mob-nodir-title';
+  title.textContent = plan.title;
+  const desc = document.createElement('div');
+  desc.className = 'bz-clip-mob-nodir-desc';
+  desc.textContent = plan.desc;
+  const btn = document.createElement('button');
+  btn.type = 'button';
+  btn.className = 'bz-clip-mob-nodir-btn';
+  btn.textContent = '打开设置';
+  btn.addEventListener('click', () => openFolderSettings('clipbook', undefined, closePanel));
+  wrap.append(title, desc, btn, tutorialLink('bz-clip-tut--mob'));
+  mobListEl.innerHTML = '';
+  mobListEl.appendChild(wrap);
+  return true;
+}
+
 function renderMobToc(): void {
   renderMobTocNow();
   if (mobListEl) motionMobTocRendered(mobListEl, renderMood);
@@ -1681,6 +1796,8 @@ function renderMobToc(): void {
 
 function renderMobTocNow(): void {
   if (!mobListEl) return;
+  // 未配置剪藏文件夹 → 移动端列表换引导（照本域纸面衬线语言，不用 core 通用卡）
+  if (mountMobFolderGate()) return;
   const arts = M.articles;
   const clipNotes = M.clipNotes || [];
   const savedUrls = new Set((M.sidecar.savedArchive || []).map((x) => x.url));
@@ -1733,6 +1850,8 @@ function renderMobTocNow(): void {
   mobItemOrder = order;
   if (!chapters.length) {
     mobListEl.innerHTML = mobNoHitHtml(searching ? '查无此条' : '暂无剪藏内容');
+    // 空册（不是搜索无命中）：给教程入口，别让人对着一行字猜怎么用
+    if (!searching) mobListEl.appendChild(tutorialLink('bz-clip-tut--mob'));
     return;
   }
   mobListEl.innerHTML = mobTocHtml(chapters, searching, expandedMobArch);
@@ -2399,6 +2518,19 @@ async function openKnowledgePreviewSafe(path: string): Promise<void> {
 export function clipbookSettingsSchema(dataSource: DataSourceState): SettingsSchema {
   return {
     groups: [
+      {
+        // 关于组放最前（2026-10-30 用户拍板）：进设置第一眼就是「怎么用」，
+        // 而不是先看到一堆外观开关——新用户卡住的是用法，不是皮肤
+        icon: 'info',
+        name: '关于',
+        rows: [
+          {
+            // 描述用一句大白话收尾（2026-10-30 用户给定文案）：不解释功能，只顺带求个三连
+            type: 'button', name: '视频教程', desc: '若有帮助，记得一键三连',
+            buttonText: '看视频', onClick: () => openExternalUrl(getApp(), CLIP_TUTORIAL_URL),
+          },
+        ],
+      },
       {
         // 外观组（issue 246 占位单卡）：布局/主题各一档，域 UI 消费待皮肤设计时接入
         icon: 'palette',

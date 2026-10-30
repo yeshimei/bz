@@ -30,6 +30,7 @@ import {
   getDisplayItems as pipeDisplay,
 } from './render';
 import { closeBookNoteModals } from './notes-ui';
+import { mountFolderGate } from '../core/folder-setup';
 import {
   motionPanelIn, motionPanelOut, motionWallRendered, motionDetailOpen, motionReportEnter,
   motionReportWatch, motionReportStop, motionHeatmapNav, motionYearToggle, motionTeardown,
@@ -97,6 +98,8 @@ function renderWall(): void {
   if (!overlay) return;
   const shelf = overlay.querySelector('#bz-bs-shelf') as HTMLElement | null;
   if (!shelf) return;
+  // 书库目录没配 → 墙区给引导态（空墙不等于"一本都没收"）
+  if (mountFolderGate(shelf, 'bookshelf', closeOverlay)) return;
   const sig = displaySignature();
   const room = shelf.closest('.bz-bs-room') as HTMLElement | null;
   const hint = overlay.querySelector('#bz-bs-hint') as HTMLElement | null;

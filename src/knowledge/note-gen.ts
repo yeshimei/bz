@@ -18,6 +18,7 @@ import { notice } from '../core/notice';
 import { localNow } from '../core/ui/str';
 import { withTimeout } from '../core/http';
 import { getApp } from '../core/app';
+import { resolveAssetDir } from '../core/attachment-dir';
 import { tryGetSettings } from '../core/settings-provider';
 import type { App } from 'obsidian';
 import { partialStringField } from './partial-json';
@@ -482,12 +483,13 @@ export async function generateImageDraft(imageUrls: string[], descs?: string[], 
   };
 }
 
-/** 图版图片落地目录：设置优先，留空回落到文献目录下的 assets/（issue 313） */
+/**
+ * 图版图片落地目录：设置优先 → **跟随 Obsidian「默认新附件位置」**（core/attachment-dir 单源）
+ * → 回落文献目录下的 assets/（issue 313）。
+ */
 export function resolveImageDir(settings: { knowledgeImageFolder?: string; knowledgeDirectory?: string }): string {
-  const configured = String(settings?.knowledgeImageFolder || '').trim().replace(/\\/g, '/').replace(/^\/+|\/+$/g, '');
-  if (configured) return configured;
   const dir = String(settings?.knowledgeDirectory || '文献盒').replace(/\\/g, '/').replace(/^\/+|\/+$/g, '') || '文献盒';
-  return `${dir}/${IMAGE_ASSETS_DIR}`;
+  return resolveAssetDir(settings?.knowledgeImageFolder, `${dir}/${IMAGE_ASSETS_DIR}`).dir;
 }
 
 /**

@@ -11,9 +11,10 @@ import { requestUrl } from 'obsidian';
 import { notice, notify } from '../core/notice';
 import { sleep } from '../core/utils';
 import { tryGetSettings } from '../core/settings-provider';
+import { resolveAssetDir } from '../core/attachment-dir';
 import { M } from './state';
 import { rebuildItems } from './data';
-import { fetchNoteDouban, queryDoubanByName, queryDoubanBySid, downloadPosterToVault, fetchDoubanList, type DoubanListEntry, type DoubanListPageCb, type DoubanFetchDeps, type DoubanFetchOutcome, type DoubanQueryOutcome } from './douban-fetcher';
+import { fetchNoteDouban, queryDoubanByName, queryDoubanBySid, downloadPosterToVault, fetchDoubanList, POSTER_FOLDER, type DoubanListEntry, type DoubanListPageCb, type DoubanFetchDeps, type DoubanFetchOutcome, type DoubanQueryOutcome } from './douban-fetcher';
 
 /** 查询结果类型再导出：测试注入 `configureFetchQueue({ preview })` 时要用 */
 export type { DoubanQueryOutcome };
@@ -99,7 +100,7 @@ function fetchDepsFromSettings(app: App): DoubanFetchDeps {
     },
     apizeroKey: typeof s.cinemaApizeroKey === 'string' ? s.cinemaApizeroKey.trim() : '',
     doubanCookie: typeof s.cinemaDoubanCookie === 'string' ? s.cinemaDoubanCookie.trim() : '',
-    posterFolder: typeof s.cinemaPosterFolder === 'string' ? s.cinemaPosterFolder.trim() : '',
+    posterFolder: resolveAssetDir(s.cinemaPosterFolder, POSTER_FOLDER).dir,
   };
 }
 

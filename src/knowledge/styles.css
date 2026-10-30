@@ -163,6 +163,27 @@
   line-height: 2;
 }
 
+/* 未配置引导态（三个盒目录空着）：纸面墨字 + 墨线钮，与知识盒整体语言一致；
+   不用 core 通用空态卡（宿主配色 + 实心主钮） */
+.bz-kb-gate {
+  height: 100%;
+  min-height: 220px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--bz-space-md);
+  padding: 26px 16px;
+  box-sizing: border-box;
+}
+.bz-kb-gate-title {
+  font-size: var(--bz-font-body);
+  color: var(--ink);
+  letter-spacing: 0.12em;
+}
+.bz-kb-gate .bz-kb-empty { padding: 0; }
+.bz-kb-gate-act { padding: 6px 16px; font-size: var(--bz-font-body); letter-spacing: 0.1em; }
+
 /* ===== 词条行 ===== */
 .bz-kb-lexrow {
   padding: var(--bz-space-md) 2px var(--bz-space-md);
