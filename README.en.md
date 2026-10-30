@@ -15,7 +15,7 @@
 </p>
 
 <p align="center">
-  <a href="README.md">中文</a> · <b>English</b>
+  <a href="README.md">中文</a> · <b>English</b> · <a href="#support">Support</a>
 </p>
 
 <p align="center">
@@ -63,7 +63,7 @@
     </td>
     <td align="center" valign="top" width="50%">
       <img src="docs/images/06-clips.png" height="230" alt="Clippings"><br>
-      <b>Clippings</b><br>
+      <b>Clippings</b> · <a href="https://www.bilibili.com/video/BV1pvxe6qEkf/?vd_source=15205b8944be621a94fb0bf0efdb81f3#reply117529380915552">▶ Video tutorial</a><br>
       <sub>Web clips plus an unread feed from your subscriptions</sub>
     </td>
   </tr>
@@ -163,6 +163,18 @@ Then hit download again — a local copy that passes the sha256 check is used as
 pnpm: `pnpm install` / `pnpm run dev` / `pnpm run build` / `pnpm test`. Read [CONTRIBUTING.md](CONTRIBUTING.md) before sending a patch; architecture notes are in [AGENTS.md](AGENTS.md), glossary in [CONTEXT.md](CONTEXT.md).
 
 Both of those are in Chinese — open an issue if you need them translated.
+
+<a name="support" id="support"></a>
+
+## Support the author
+
+<p align="center">
+  <img src="src/core/assets/reward-code.png" width="230" alt="WeChat reward code">
+</p>
+
+<p align="center"><sub>Scan with WeChat to buy the author a coffee</sub></p>
+
+Development, maintenance, and the tutorial videos are all done by one person — completely free, ad-free, with no revenue from any other channel. You can find the donor list in the plugin's Settings → General → About → Support the author.
 
 ## License
 

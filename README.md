@@ -15,7 +15,7 @@
 </p>
 
 <p align="center">
-  <b>中文</b> · <a href="README.en.md">English</a>
+  <b>中文</b> · <a href="README.en.md">English</a> · <a href="#support">支持作者</a>
 </p>
 
 <p align="center">
@@ -63,7 +63,7 @@
     </td>
     <td align="center" valign="top" width="50%">
       <img src="docs/images/06-clips.png" height="230" alt="剪藏本"><br>
-      <b>剪藏本</b><br>
+      <b>剪藏本</b> · <a href="https://www.bilibili.com/video/BV1pvxe6qEkf/?vd_source=15205b8944be621a94fb0bf0efdb81f3#reply117529380915552">▶ 视频教程</a><br>
       <sub>网页剪藏 + 订阅源未读流</sub>
     </td>
   </tr>
@@ -155,6 +155,18 @@
 包管理用 pnpm：`pnpm install` / `pnpm run dev` / `pnpm run build` / `pnpm test`。想提交代码先看 [CONTRIBUTING.md](CONTRIBUTING.md)；架构约定见 [AGENTS.md](AGENTS.md)，术语表见 [CONTEXT.md](CONTEXT.md)。
 
 `issues/` 是作者内部的问题与设计记录，不是反馈入口。
+
+<a name="support" id="support"></a>
+
+## 支持作者
+
+<p align="center">
+  <img src="src/core/assets/reward-code.png" width="230" alt="微信赞赏码">
+</p>
+
+<p align="center"><sub>微信扫一扫，请作者喝杯咖啡</sub></p>
+
+插件的开发维护和教程视频制作都是作者一个人，完全免费、无广告，也没有任何其他渠道的收益。可以在插件的 设置 → 通用 → 关于 → 支持作者 里看到打赏名单。
 
 ## License
 
