@@ -94,18 +94,23 @@ describe('PasswordVaultUIManager', () => {
     expect(locks[0].querySelector('[data-ls="title"]')!.textContent).toBe('密码本已上锁');
   });
 
-  it('首设：无清单 → 锁屏标题「设置主密码」', async () => {
+  it('首设：无清单 → 锁层挂三域共用的首设面板', async () => {
     ui.show();
     await new Promise((r) => setTimeout(r, 20));
     const locks = document.querySelectorAll('.bz-password-vault-lock.open');
-    expect(locks.length).toBe(2);
-    expect(locks[0].querySelector('[data-ls="title"]')!.textContent).toBe('设置主密码');
+    expect(locks.length).toBe(2); // desk/mob 双实例
+    expect(locks[0].querySelector('.bz-setup')).toBeTruthy();
+    expect(locks[0].querySelector('[data-su="title"]')!.textContent).toBe('设置主密码');
+    expect(locks[1].querySelector('[data-su="title"]')!.textContent).toBe('设置主密码');
   });
 
-  it('冷启动锁屏统计回落 lock-stats.json 快照（ADR-0124 决策 4 修订，issue 299）', async () => {
+  it('冷启动解锁屏统计回落 lock-stats.json 快照（ADR-0124 决策 4 修订，issue 299）', async () => {
     await vault.create('CONFIG/STORAGE/lock-stats.json', JSON.stringify({
       'password-vault': [{ num: '3', label: '平台' }, { num: '5', label: '口令条目' }, { num: '1', label: '收藏' }],
     }));
+    // 先建清单才走解锁屏——没清单时挂的是首设面板，本就不显示统计卡
+    await sm.unlock('pw');
+    sm.lock();
     ui.show();
     // hydrate 是 fire-and-forget 链：轮询等首个实例渲染出回落数字，不定长 sleep
     await waitForAsync(async () => {
@@ -342,27 +347,21 @@ describe('PasswordVaultUIManager', () => {
 
   // issue 291：首设风险确认走 core/flow-dialog（真实实现，本文件未 mock），
   // 弹窗挂 body —— 必须自带 bz-pwv-flow-dialog 域类，否则金色/材质掉回 core 裸皮。
-  it('首设风险确认框挂 bz-pwv-flow-dialog（域皮随行，与统一壳类共存）', async () => {
-    ui.show(); // 无清单 → 首设态锁屏（双输入）
+  it('首设不再叠第二道确认框：风险告知与勾选在面板内一次说完', async () => {
+    ui.show(); // 无清单 → 首设态
     await new Promise((r) => setTimeout(r, 20));
     const lock = document.querySelector('.bz-password-vault-lock.open') as HTMLElement;
     expect(lock).toBeTruthy();
-    (lock.querySelector('[data-ls="p1"]') as HTMLInputElement).value = 'abcd';
-    (lock.querySelector('[data-ls="p2"]') as HTMLInputElement).value = 'abcd';
-    (lock.querySelector('[data-ls="go"]') as HTMLButtonElement).click();
-    await vi.waitFor(() => expect(document.getElementById('__shared_confirm_popup__')).toBeTruthy());
-    const popup = document.getElementById('__shared_confirm_popup__') as HTMLElement;
-    expect(popup.querySelector('h4')!.textContent).toBe('设置主密码');
-    expect(popup.classList.contains('bz-overlay-popup')).toBe(true); // 统一壳（issue 291 核心）
-    expect(popup.classList.contains('bz-flow-dialog')).toBe(true);
-    expect(popup.classList.contains('bz-pwv-flow-dialog')).toBe(true); // 域皮
-    // 刻意不挂危险修饰（issue 291 评审）：本框是「风险告知门」，主动作是把主密码设下去的
-    // 正向路径、动作本身不破坏数据，故保留金色主钮；域 CSS 的
-    // :not(.bz-flow-dialog--danger) 守卫就是给它的通路（对照下方「仍要重设」用例）。
-    expect(popup.classList.contains('bz-flow-dialog--danger')).toBe(false);
-    // 收尾：取消（按取消语义结算并移除 DOM，防污染后续用例）
-    (document.getElementById('__shared_confirm_cancel__') as HTMLButtonElement).click();
-    expect(document.getElementById('__shared_confirm_mask__')).toBeNull();
+    expect(lock.querySelector('.bz-setup')).toBeTruthy();
+    (lock.querySelector('[data-su="p1"]') as HTMLInputElement).value = 'abcd';
+    (lock.querySelector('[data-su="p2"]') as HTMLInputElement).value = 'abcd';
+    const ack = lock.querySelector('[data-su="ack"] input') as HTMLInputElement;
+    ack.checked = true;
+    ack.dispatchEvent(new Event('change'));
+    (lock.querySelector('[data-su="go"]') as HTMLButtonElement).click();
+    await vi.waitFor(() => expect(sm.unlocked).toBe(true));
+    // 旧实现先弹 openFlowDialog 再 unlock（同一件事问两遍）；现在风险告知就在面板上
+    expect(document.getElementById('__shared_confirm_popup__')).toBeNull();
   });
 
   // issue 291 评审补：「仍要重设」会生成全新空清单、旧加密数据永久无法恢复 —— 破坏性主动作，

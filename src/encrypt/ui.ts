@@ -40,6 +40,7 @@ import { compressImage, videoFrame } from './preview';
 import { PasswordVaultDataManager } from '../password-vault/data';
 import { overviewHTML, noteRowHTML, noteDetailHTML, statusbarHtml, type VaultAsset, type OverviewStats, vIc } from './vault-assets-view';
 import { uiLockScreen } from '../core/ui/lock-screen';
+import { uiSetupScreen } from '../core/ui/setup-screen';
 import type { LockScreenKind, LockScreenStat } from '../core/ui/lock-screen';
 import { readLockStats, writeLockStats } from '../core/lock-stats';
 import {
@@ -1354,6 +1355,45 @@ export class UIManager {
     }
   }
 
+  /**
+   * 首设屏：三域共用的一块面板（core/ui/setup-screen）。
+   * 保险库、加密日记、密码本第一次设密码都落到这里——同一把主密码，同一个样子；
+   * 解锁屏仍各穿各的皮，故两者不共用骨架。收场出口唯一：done()。
+   */
+  private async openFirstSetupScreen(
+    promise: Promise<boolean>,
+    resolveFn: (ok: boolean) => void
+  ): Promise<boolean> {
+    let done: (ok: boolean) => void = () => {};
+    const su = uiSetupScreen({
+      title: '设置主密码',
+      action: '设置并解锁',
+      onSubmit: async (pw) => {
+        const ok = await this.dataManager.unlock(pw);
+        // 首设场景清单原本不存在，unlock 返回 false 只可能是写盘失败——抛给面板亮错误行，
+        // 让人清完磁盘原地重试（而不是关屏 + 一条通知，逼他重新走一遍）
+        if (!ok) throw new Error('设置失败：无法写入清单，请检查磁盘空间后重试');
+        done(true);
+        notice('密码已设置，数据已加密', 'success');
+      },
+      onCancel: () => done(false),
+    });
+    topifyZ(su.el); // ADR-0067：一次性弹窗，创建即显示即发号
+    document.body.appendChild(su.el);
+    // 唯一出口：清单例句柄（防悬挂）→ 摘 DOM → 放行等待方（ESC / 点遮罩由组件自己接）
+    done = (ok: boolean) => {
+      if (activeUnlock && activeUnlock.promise === promise) activeUnlock = null;
+      su.close();
+      resolveFn(ok);
+    };
+    // 焦点：元素挂载后再聚焦才生效；移动端 WebView 需二次聚焦才弹键盘
+    su.focus();
+    setTimeout(() => su.focus(), 150);
+    // 单例登记（N11）：进行中复用同一 Promise；cancel 供 closeAllDialogs 收场走正规取消链
+    activeUnlock = { el: su.el, promise, cancel: () => done(false) };
+    return promise;
+  }
+
   /** 实际构建解锁屏（单例登记在 showPasswordDialog，唯一收场出口为 done()） */
   private async openUnlockScreen(
     kind: LockScreenKind,
@@ -1363,25 +1403,23 @@ export class UIManager {
   ): Promise<boolean> {
     const exists = await this.dataManager.exists();
     const meta = LOCK_KIND_META[kind];
+    // 占位期已被收场（closeAllDialogs 等）：不再开屏，等待方已按取消放行
+    if (isCancelled()) return promise;
+    // 首设：三域共用同一块面板（core/ui/setup-screen）。锁屏那套统计卡 / 分段输两次 /
+    // 风险块在「还没有任何数据」时全是噪音，故整条换掉，不进下面的解锁屏。
+    if (!exists) return this.openFirstSetupScreen(promise, resolveFn);
     // 统计项：会话快照优先，冷启动回落 lock-stats.json 上次快照（ADR-0124 决策 4 修订），都没有才「—」
     const stats =
       this.lockStatsCache[kind] || (await readLockStats(kind)) || meta.stats.map((s) => ({ ...s, num: '—' }));
-    // 占位期已被收场（closeAllDialogs 等）：不再开屏，等待方已按取消放行
-    if (isCancelled()) return promise;
     const ls = uiLockScreen({
       kind,
       icon: meta.icon,
-      title: exists ? meta.title : '设置主密码',
-      sub: exists ? meta.sub : '请设置一个主密码（用于加密所有数据）',
+      title: meta.title,
+      sub: meta.sub,
       stats,
-      action: exists ? meta.action : '设置并解锁',
-      firstSetup: !exists,
-      warningHtml:
-        `${vIc('triangle-alert', 14)} <strong>重要提醒</strong><br>• 主密码 <b>不会存储</b>，也无法找回，请务必牢记！<br>• 若遗忘密码，库内笔记及其附件将永久丢失。<br>• 建议使用密码本（如 Bitwarden）保存此密码。`,
-      ackText: '我已了解：主密码无法找回，遗忘将导致密文永久无法恢复',
-      secText: exists ? '主密码不会存储 · 遗忘将无法恢复密文' : '',
+      action: meta.action,
+      secText: '主密码不会存储 · 遗忘将无法恢复密文',
       secTone: 'warn',
-      hint: exists ? '' : '建议使用密码本保存此密码',
       // 脸谱封面给一颗看得见的退出口（issue 506）：取消 = 不开面板 / 不展示任何数据（ADR-0194 决策 3）
       cancel: kind === 'people' ? '取消' : undefined,
     });
@@ -1416,39 +1454,6 @@ export class UIManager {
     ls.actionBtn.onclick = async () => {
       const pw = ls.input.value;
       if (!pw) { this.rejectInput('请输入密码', setErr); return; }
-      if (!exists) {
-        // 首设：第二遍确认（功能性显隐）+ 风险勾选
-        if (ls.input2.style.display === 'none') {
-          ls.showSecondInput(true);
-          ls.input2.value = '';
-          ls.setMessage('请再次输入主密码确认');
-          ls.focus();
-          return;
-        }
-        if (pw !== ls.input2.value) { this.rejectInput('两次密码不一致', setErr); return; }
-        // E18（自 master 锁家族修复批并入）：与密码本锁屏同规则——首设至少 4 位
-        if (pw.length < 4) { this.rejectInput('主密码至少 4 位', setErr); return; }
-        if (!ls.ackBox || !ls.ackBox.checked) { this.rejectInput('请先勾选风险确认', setErr); return; }
-        // T7 busy 防重（对齐销毁确认先例）：PBKDF2/写盘窗口内 Enter/连点不再并发提交
-        ls.setBusy(true);
-        try {
-          const ok = await this.dataManager.unlock(pw);
-          if (ok) {
-            motionUnlockBurst(ls.el.querySelector<HTMLElement>('[data-ls="seal"]')); // 动效层：验讫余韵
-            done(true);
-            notice('密码已设置，数据已加密', 'success');
-          } else {
-            // 数据层已回滚解锁态；写盘失败必须明示并收场（不再假装成功、也不把用户困在弹窗里）
-            notice('设置失败：无法写入清单，请检查磁盘空间后重试', 'error');
-            done(false);
-          }
-        } catch (e: any) {
-          ls.setBusy(false);
-          notifyActionError(e, '设置主密码');
-          done(false);
-        }
-        return;
-      }
       // 冷却期内（P2 节流）：拒绝本次尝试并提示剩余等待
       const remainMs = this.unlockCooldownUntil - Date.now();
       if (remainMs > 0) { this.rejectInput(`尝试过于频繁，请再等 ${Math.ceil(remainMs / 1000)} 秒`, setErr, 'warning'); return; }
@@ -1632,7 +1637,7 @@ export class UIManager {
       const pw = ls.input.value;
       if (!pw) { this.rejectInput('请输入新主密码', setErr); return; }
       if (pw !== ls.input2.value) { this.rejectInput('两次密码不一致', setErr); return; }
-      if (pw.length < 4) { this.rejectInput('主密码至少 4 位', setErr); return; }
+      // 不设长度下限（与首设同规则）：密码强度由用户自己把握，插件只校验非空与两遍一致
       if (pw === currentPw) { this.rejectInput('新密码不能与当前密码相同', setErr); return; }
       if (!ls.ackBox?.checked) { this.rejectInput('请先勾选确认', setErr); return; }
       ls.setBusy(true);

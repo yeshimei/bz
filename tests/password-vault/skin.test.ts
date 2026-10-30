@@ -33,9 +33,11 @@ function block(sel: string): string | null {
 }
 
 describe('issue 291：password-vault 确认框随金色印章皮', () => {
-  it('全部确认框都传域皮（className 或 confirmDiscard 透传）：首设风险 / 清单损坏重设 / 删除类 askConfirm / 弹窗关闭守卫', () => {
+  it('全部确认框都传域皮（className 或 confirmDiscard 透传）：清单损坏重设 / 删除类 askConfirm / 弹窗关闭守卫', () => {
+    // 首设风险确认框已收归三域共用面板（core/ui/setup-screen）——风险告知与勾选在面板内
+    // 一次说完，域内不再弹第二道流程框；剩下的是「清单损坏重设」与 askConfirm 收编单源两处
     const hits = ui().match(/className: 'bz-pwv-flow-dialog'/g) || [];
-    expect(hits.length, '锁屏两处各一 + askConfirm 收编单源一处（issue 365）').toBe(3);
+    expect(hits.length, '清单损坏重设一处 + askConfirm 收编单源一处（issue 365）').toBe(2);
     // 弹窗关闭守卫走 core confirmDiscard 草稿拦截单源（ticket 141，2026-09-24 review 收编）：
     // 域皮经第三参透传（非 className: 字面量），单独断言调用点存在
     expect(ui()).toContain("confirmDiscard(() => this.closeEntryDialog(true), undefined, 'bz-pwv-flow-dialog')");

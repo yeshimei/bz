@@ -1,7 +1,7 @@
 /**
  * 锁家族修复批回归（review-all-bugs.md 三节 encrypt UI 侧）：
  * E3 日记详情异步解密回填补验当前资产、E9 渲染超时后迟到 promise 不再向同容器追加、
- * E11 安全模式空闲自动上锁通知收敛为一条、E18 首设主密码至少 4 位（与密码本同规则）。
+ * E11 安全模式空闲自动上锁通知收敛为一条。
  */
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { setApp } from '../../src/core/app';
@@ -21,6 +21,11 @@ const CONFIG = { root: 'CONFIG/.ENCRYPT', previewEnabled: false, previewSize: 38
 function findDialog(): HTMLElement | null {
   // 解锁屏（ADR-0124 共享骨架）挂 body 全屏遮罩；随面板收敛迁移选择器
   return [...document.querySelectorAll('div')].find((d) => d.classList.contains('bz-lockscreen--mask')) as HTMLElement | null;
+}
+
+/** 首设面板（三域共用 setup-screen，挂 body 的全屏遮罩） */
+function findSetup(): HTMLElement | null {
+  return [...document.querySelectorAll('div')].find((d) => d.classList.contains('bz-setup--mask')) as HTMLElement | null;
 }
 
 describe('锁家族修复批（encrypt UI）', () => {
@@ -50,25 +55,20 @@ describe('锁家族修复批（encrypt UI）', () => {
     document.body.innerHTML = '';
   });
 
-  it('E18：首设主密码短于 4 位拒绝（与密码本锁屏同规则）；≥4 位可正常设置', async () => {
+  it('首设不设密码长度下限：3 位也能直接设下去（规则由人自己把握）', async () => {
     const p = ui.showPasswordDialog();
-    await waitFor(() => !!findDialog());
-    const dialog = findDialog()!;
-    const inputs = dialog.querySelectorAll('.bz-lockscreen-input');
-    const confirmBtn = dialog.querySelector('.bz-lockscreen-action') as HTMLElement;
-    // 两遍一致但只有 3 位 → 拒绝
+    await waitFor(() => !!findSetup());
+    const dialog = findSetup()!;
+    const inputs = dialog.querySelectorAll('.bz-setup-input');
+    const confirmBtn = dialog.querySelector('[data-su="go"]') as HTMLElement;
     (inputs[0] as HTMLInputElement).value = 'abc';
-    confirmBtn.click(); // 第一步：转入再次输入
     (inputs[1] as HTMLInputElement).value = 'abc';
-    confirmBtn.click();
-    expect(hasNotice('主密码至少 4 位')).toBe(true);
-    expect(dm.unlocked).toBe(false);
-    // ≥4 位 → 走风险确认后设置成功
-    (inputs[0] as HTMLInputElement).value = 'abcd';
-    (inputs[1] as HTMLInputElement).value = 'abcd';
-    (dialog.querySelector('[data-ls="ack"] input') as HTMLInputElement).checked = true;
+    const ack = dialog.querySelector('[data-su="ack"] input') as HTMLInputElement;
+    ack.checked = true;
+    ack.dispatchEvent(new Event('change'));
     confirmBtn.click();
     await waitFor(() => dm.unlocked);
+    expect(hasNotice('主密码至少 4 位')).toBe(false);
     void p;
   });
 
@@ -76,6 +76,9 @@ describe('锁家族修复批（encrypt UI）', () => {
     await vault.create('CONFIG/STORAGE/lock-stats.json', JSON.stringify({
       vault: [{ num: '7', label: '笔记条目' }, { num: '2', label: '随库附件' }, { num: '1.5 KB', label: '附件密文' }],
     }));
+    // 先有清单才走解锁屏——没清单时弹的是首设面板，本就不显示统计卡
+    await dm.unlock('long-enough-pw');
+    dm.lock();
     const p = ui.showPasswordDialog();
     await waitFor(() => !!findDialog());
     const nums = [...findDialog()!.querySelectorAll('.bz-lockscreen-num')].map((n) => n.textContent);

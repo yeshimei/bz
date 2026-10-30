@@ -77,6 +77,13 @@ function findDialog(): HTMLElement | null {
   ) as HTMLElement | null;
 }
 
+/** 首设面板（三域共用 setup-screen） */
+function findSetup(): HTMLElement | null {
+  return [...document.querySelectorAll('div')].find(
+    (d) => d.classList.contains('bz-setup--mask')
+  ) as HTMLElement | null;
+}
+
 function cleanupDom() {
   [
     'bz-encrypt-mask', 'bz-encrypt-popup', 'bz-encrypt-preview-mask', 'bz-encrypt-preview-popup',
@@ -407,7 +414,7 @@ describe('解锁弹窗覆盖补测', () => {
     await expect(p).resolves.toBe(false);
   });
 
-  it('首设流程：unlock 写盘抛错 → 「设置失败」，Promise 以 false 结束；Enter 键等效点确认', async () => {
+  it('首设流程：unlock 抛错 → 错误行如实报错；Enter 键也能触发提交', async () => {
     const dm = fakeDM({
       unlocked: false,
       password: null,
@@ -415,16 +422,20 @@ describe('解锁弹窗覆盖补测', () => {
     });
     const ui = makePwUi(dm);
     const p = ui.showPasswordDialog();
-    await waitFor(() => !!findDialog());
-    const dialog = findDialog()!;
-    const inputs = dialog.querySelectorAll('.bz-lockscreen-input');
+    await waitFor(() => !!findSetup());
+    const dialog = findSetup()!;
+    const inputs = dialog.querySelectorAll('.bz-setup-input');
     (inputs[0] as HTMLInputElement).value = 'master';
     (inputs[1] as HTMLInputElement).value = 'master';
-    const ack = dialog.querySelector('[data-ls="ack"] input') as HTMLInputElement;
+    const ack = dialog.querySelector('[data-su="ack"] input') as HTMLInputElement;
     ack.checked = true;
-    // 用 Enter 键触发确认（键盘路径）
+    ack.dispatchEvent(new Event('change'));
+    // 用 Enter 键触发提交（键盘路径）
     inputs[0].dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
-    await waitFor(() => hasNotice('设置主密码失败：磁盘满，请重试'));
+    await waitFor(() => (dialog.textContent || '').includes('磁盘满'));
+    expect(dm.unlocked).toBe(false);
+    // 失败不甩手关屏：人还能改了再试，取消才放行
+    (dialog.querySelector('[data-su="cancel"]') as HTMLElement).click();
     await expect(p).resolves.toBe(false);
   });
 

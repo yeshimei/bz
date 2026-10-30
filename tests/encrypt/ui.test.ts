@@ -31,6 +31,11 @@ function findDialog(): HTMLElement | null {
   return [...document.querySelectorAll('div')].find((d) => d.classList.contains('bz-lockscreen--mask') && d.style.display === 'flex') as HTMLElement | null;
 }
 
+/** 首设面板（三域共用 setup-screen，挂 body 的全屏遮罩） */
+function findSetup(): HTMLElement | null {
+  return [...document.querySelectorAll('div')].find((d) => d.classList.contains('bz-setup--mask')) as HTMLElement | null;
+}
+
 describe('UIManager 解锁弹窗', () => {
   let vault: MockVault;
   let dm: SafeManager;
@@ -52,33 +57,37 @@ describe('UIManager 解锁弹窗', () => {
     document.body.innerHTML = '';
   });
 
-  it('首次无清单：标题「设置主密码」+ 再次确认 + 硬警告；未勾选风险确认拒绝设置，勾选后成功', async () => {
+  it('首次无清单：三域共用的首设面板；不一致 / 未勾选拒绝，勾选后设置成功', async () => {
     const p = ui.showPasswordDialog();
-    await waitFor(() => !!findDialog());
-    const dialog = findDialog()!;
+    await waitFor(() => !!findSetup());
+    const dialog = findSetup()!;
     expect(dialog.textContent).toContain('设置主密码');
-    expect(dialog.textContent).toContain('重要提醒');
-    const inputs = dialog.querySelectorAll('.bz-lockscreen-input');
+    // 同一块面板要讲清「一把密码管三处」——从日记/密码本进来的用户才知道自己在设全局主密码
+    expect(dialog.textContent).toContain('保险库');
+    expect(dialog.textContent).toContain('密码本');
+    const inputs = dialog.querySelectorAll('.bz-setup-input');
     expect(inputs.length).toBe(2);
     expect((inputs[0] as HTMLInputElement).type).toBe('text'); // 首设明文：掩码下输错只能等提交才知道
     expect((inputs[1] as HTMLInputElement).type).toBe('text');
-    expect(dialog.querySelector('[data-ls="ack"]')).toBeTruthy(); // 硬警告确认勾选（仅首设显示）
-    const confirmBtn = dialog.querySelector('.bz-lockscreen-action') as HTMLElement;
+    // 两框各占一个 field：上下排列，不并排
+    expect(dialog.querySelectorAll('.bz-setup-field').length).toBe(2);
+    const confirmBtn = dialog.querySelector('[data-su="go"]') as HTMLElement;
     // 两次不一致
     (inputs[0] as HTMLInputElement).value = 'pw123';
     (inputs[1] as HTMLInputElement).value = 'pw456';
     confirmBtn.click();
-    expect(hasNotice('两次密码不一致')).toBe(true);
-    // 一致但未勾选风险确认 → 拒绝设置（pw123 满足 E18 最短 4 位，短路在勾选检查）
+    await Promise.resolve();
+    expect(dialog.textContent).toContain('两次输入不一致');
+    // 一致但未勾选 → 拒绝设置
     (inputs[1] as HTMLInputElement).value = 'pw123';
     confirmBtn.click();
-    expect(hasNotice('请先勾选风险确认')).toBe(true);
-    expect(dm.unlocked).toBe(false);
-    await new Promise((r) => setTimeout(r, 50));
+    await Promise.resolve();
+    expect(dialog.textContent).toContain('请先勾选确认');
     expect(dm.unlocked).toBe(false);
     // 勾选后再确认 → 设置成功
-    const ackBox = dialog.querySelector('[data-ls="ack"] input') as HTMLInputElement;
-    ackBox.click();
+    const ackBox = dialog.querySelector('[data-su="ack"] input') as HTMLInputElement;
+    ackBox.checked = true;
+    ackBox.dispatchEvent(new Event('change'));
     confirmBtn.click();
     await p;
     expect(dm.unlocked).toBe(true);
@@ -469,15 +478,16 @@ describe('EncryptAppController', () => {
     const c = EncryptAppController.getInstance(CONFIG);
     await c.init();
     const p = c.openManager();
-    await waitFor(() => !!findDialog());
-    // 首设两次一致 + 勾选风险确认
-    const dialog = findDialog()!;
-    const inputs = dialog.querySelectorAll('.bz-lockscreen-input');
-    const confirmBtn = dialog.querySelector('.bz-lockscreen-action') as HTMLElement;
+    await waitFor(() => !!findSetup());
+    // 首设：三域共用面板，两遍明文 + 勾选
+    const dialog = findSetup()!;
+    const inputs = dialog.querySelectorAll('.bz-setup-input');
+    const confirmBtn = dialog.querySelector('[data-su="go"]') as HTMLElement;
     (inputs[0] as HTMLInputElement).value = 'pw12';
-    confirmBtn.click();
     (inputs[1] as HTMLInputElement).value = 'pw12';
-    (dialog.querySelector('[data-ls="ack"] input') as HTMLInputElement).click();
+    const ack = dialog.querySelector('[data-su="ack"] input') as HTMLInputElement;
+    ack.checked = true;
+    ack.dispatchEvent(new Event('change'));
     confirmBtn.click();
     await p;
     expect(c.dataManager.unlocked).toBe(true);
@@ -1199,6 +1209,9 @@ describe('解锁弹窗：清单损坏重设确认 + 首设写失败（雷 1/4 UI
   });
 
   it('解锁弹窗：打开即自动聚焦密码输入框（移动端直接弹键盘）', async () => {
+    // 先建好清单再上锁——否则这里弹的是首设面板，测不到解锁屏的焦点行为
+    await dm.unlock('pw12');
+    dm.lock();
     const p = ui.showPasswordDialog();
     await waitFor(() => !!findDialog());
     const dialog = findDialog()!;
@@ -1211,6 +1224,8 @@ describe('解锁弹窗：清单损坏重设确认 + 首设写失败（雷 1/4 UI
   });
 
   it('解锁弹窗：点击遮罩（内容区外）关闭面板 = 取消；点内容区不关闭', async () => {
+    await dm.unlock('pw12');
+    dm.lock();
     const p = ui.showPasswordDialog();
     await waitFor(() => !!findDialog());
     const mask = findDialog()!;
@@ -1225,21 +1240,26 @@ describe('解锁弹窗：清单损坏重设确认 + 首设写失败（雷 1/4 UI
     expect(findDialog()).toBeFalsy();
   });
 
-  it('首设写清单失败：提示设置失败并关闭弹窗（不再假装成功）', async () => {
+  it('首设写清单失败：错误行如实报错、弹窗留着可重试（不假装成功）', async () => {
     const spy = vi.spyOn(vault.adapter, 'write').mockRejectedValue(new Error('disk full'));
     try {
       const p = ui.showPasswordDialog();
-      await waitFor(() => !!findDialog());
-      const dialog = findDialog()!;
-      const inputs = dialog.querySelectorAll('.bz-lockscreen-input');
-      const confirmBtn = dialog.querySelector('.bz-lockscreen-action') as HTMLElement;
+      await waitFor(() => !!findSetup());
+      const dialog = findSetup()!;
+      const inputs = dialog.querySelectorAll('.bz-setup-input');
+      const confirmBtn = dialog.querySelector('[data-su="go"]') as HTMLElement;
       (inputs[0] as HTMLInputElement).value = 'pw12';
-      confirmBtn.click();
       (inputs[1] as HTMLInputElement).value = 'pw12';
-      (dialog.querySelector('[data-ls="ack"] input') as HTMLInputElement).click();
+      const ack = dialog.querySelector('[data-su="ack"] input') as HTMLInputElement;
+      ack.checked = true;
+      ack.dispatchEvent(new Event('change'));
       confirmBtn.click();
+      await waitFor(() => (dialog.textContent || '').includes('设置失败'));
+      expect(dm.unlocked).toBe(false);
+      // 不甩手关屏：错误留在行内，人清完磁盘能原地重试
+      expect(findSetup()).toBeTruthy();
+      (dialog.querySelector('[data-su="cancel"]') as HTMLElement).click();
       expect(await p).toBe(false);
-      expect(hasNotice('设置失败：无法写入清单，请检查磁盘空间后重试')).toBe(true);
     } finally {
       spy.mockRestore();
     }

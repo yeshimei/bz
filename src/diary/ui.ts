@@ -32,6 +32,7 @@ import { PageFlip } from './vendor/page-flip.browser.js';
 import { guardIdleWrites } from './flip-idle-guard';
 import { registerPanelEsc, unregisterPanelEsc } from '../core/esc-manager';
 import { topifyZ } from '../core/dom';
+import { uiSetupScreen } from '../core/ui/setup-screen';
 import { notice } from '../core/notice';
 import { getApp } from '../core/app';
 import { onDomainEvent } from '../core/domain-bus';
@@ -3236,12 +3237,50 @@ export class DiaryAppController {
     }
     if (safe.unlocked) return true;
     if (this.passSettle) return false; // 已在等输入
+    // 保险库还没有主密码：日记不能自己造一把。三域共用同一块首设面板——
+    // 本域的火漆框只认 unlock()，清单不存在时输什么都解不开，不能当首设入口。
+    let exists = true;
+    try {
+      exists = await safe.exists();
+    } catch {
+      exists = true; // 判断不了就照常走验证路径，别把已有密码的人挡在首设屏前
+    }
+    if (!exists) return this.ensureFirstSetup(safe);
     return new Promise<boolean>((resolve) => {
       this.passSettle = resolve;
       this.passErrEl.textContent = '';
       this.passInputEl.value = '';
       this.passEl.hidden = false;
       this.passInputEl.focus();
+    });
+  }
+
+  /**
+   * 首设：弹三域共用的那块面板（core/ui/setup-screen），与保险库、密码本一字不差。
+   * 成功后清单已经建好且处于解锁态，调用方接着做它原本要做的事即可。
+   */
+  private ensureFirstSetup(
+    safe: Awaited<ReturnType<typeof import('../encrypt')['getSafeManager']>>
+  ): Promise<boolean> {
+    return new Promise<boolean>((resolve) => {
+      let su: ReturnType<typeof uiSetupScreen>;
+      su = uiSetupScreen({
+        title: '设置主密码',
+        action: '设置并解锁',
+        onSubmit: async (pw) => {
+          const ok = await safe.unlock(pw);
+          if (!ok) throw new Error('设置失败：无法写入清单，请检查磁盘空间后重试');
+          su.close();
+          notice('密码已设置，数据已加密', 'success');
+          resolve(true);
+        },
+        onCancel: () => resolve(false),
+      });
+      topifyZ(su.el); // ADR-0067：一次性弹窗，创建即显示即发号
+      document.body.appendChild(su.el);
+      // 焦点：元素挂载后再聚焦才生效；移动端 WebView 需二次聚焦才弹键盘
+      su.focus();
+      setTimeout(() => su.focus(), 150);
     });
   }
 

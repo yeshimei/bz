@@ -22,7 +22,9 @@ import { tryGetSettings, panelSizePersist } from '../core/settings-provider';
 import { uiResizable } from '../core/ui';
 import { isMobileEnv } from '../core/mobile';
 import { uiLockScreen } from '../core/ui/lock-screen';
+import { uiSetupScreen } from '../core/ui/setup-screen';
 import type { LockScreenHandle, LockScreenStat } from '../core/ui/lock-screen';
+import type { SetupScreenHandle } from '../core/ui/setup-screen';
 import { bindFormSubmit } from '../core/ui/modal';
 import { readLockStats, writeLockStats } from '../core/lock-stats';
 import { notice, notifyUndo, notifyActionError } from '../core/notice';
@@ -105,6 +107,11 @@ function hydrateAvatars(scope: HTMLElement): void {
 
 /** 桌面工作台缩放边界（ADR-0084）：拖拽下限 / 硬上限，视口 92% 由 uiResizable 逐帧钳 */
 const PANEL = { MIN_W: 760, MIN_H: 520, MAX_W: 1440, MAX_H: 960 };
+
+/** 锁层里挂的是哪块面板：解锁（本域金印皮）还是首设（三域共用） */
+type LockEntry =
+  | { type: 'lock'; ls: LockScreenHandle }
+  | { type: 'setup'; su: SetupScreenHandle };
 
 export interface PasswordVaultUIConfig {
   charset: string;
@@ -1514,8 +1521,12 @@ export class PasswordVaultUIManager {
     this.maybeOpenPendingAdd();
   }
 
-  /** 锁屏句柄（desk/mob 双实例各一份；结构由 core/ui/lock-screen 提供，三域同源） */
-  private lockHandles = new WeakMap<HTMLElement, LockScreenHandle>();
+  /**
+   * 锁屏/首设句柄（desk/mob 双实例各一份）。
+   * 两块面板不同源：解锁穿本域金印皮（core/ui/lock-screen），首设走三域共用的
+   * setup-screen——同一把密码的第一次设定，不该按域长得不一样。
+   */
+  private lockHandles = new WeakMap<HTMLElement, LockEntry>();
   /** 统计快照：清单是密文，锁定态读不到 —— 用解锁期间的快照，冷启动回落 lock-stats.json 上次快照 */
   private pwLockStatsCache: LockScreenStat[] = [
     { num: '—', label: '平台' },
@@ -1604,14 +1615,33 @@ export class PasswordVaultUIManager {
   }
 
   /** 显示锁屏（未解锁态）：core 共享骨架 + 本域口径（平台/口令条目/收藏）与金色风格；
-   *  幂等可重入——已建 handle 只刷 title/message/action/stats 并清空输入（N16/新-2） */
+   *  首设则换三域共用的那块面板（同一把密码的第一次设定，不分域）。幂等可重入 */
   private showLock() {
     void this.hydrateLockStats().then(() => this.isFirstTime()).then((firstTime) => {
       if (!this.root) return; // arch 新-2：卸载竞态守卫（cleanup 置空 root 后异步链不得解引用）
       this.root.querySelectorAll<HTMLElement>('.bz-password-vault-lock').forEach((lockEl) => {
         lockEl.classList.add('open');
-        let ls = this.lockHandles.get(lockEl);
-        const fresh = !ls;
+        let entry = this.lockHandles.get(lockEl);
+        // 首设 ↔ 上锁会翻转：句柄与当前该显示的面板不符就拆掉重建。
+        // 不复用是因为两块面板结构不同——设完密码再上锁还挂着首设那块，反之亦然。
+        if (entry && (entry.type === 'setup') !== firstTime) {
+          if (entry.type === 'setup') entry.su.close();
+          else entry.ls.close();
+          this.lockHandles.delete(lockEl);
+          entry = undefined;
+        }
+        const fresh = !entry;
+        if (firstTime) {
+          let su = entry && entry.type === 'setup' ? entry.su : null;
+          if (!su) {
+            su = this.mountSetup(lockEl);
+            this.lockHandles.set(lockEl, { type: 'setup', su });
+          }
+          motionLockIn(lockEl, fresh); // 动效层：金印压落（首装）或正冠（重入）+ 候场辉光
+          requestAnimationFrame(() => su.focus());
+          return;
+        }
+        let ls = entry && entry.type === 'lock' ? entry.ls : null;
         if (!ls) {
           ls = uiLockScreen({
             kind: 'password-vault',
@@ -1623,21 +1653,56 @@ export class PasswordVaultUIManager {
             inline: true,
           });
           lockEl.appendChild(ls.el);
-          this.lockHandles.set(lockEl, ls);
+          this.lockHandles.set(lockEl, { type: 'lock', ls });
           this.bindLock(ls);
         }
-        ls.setTitle(firstTime ? '设置主密码' : '密码本已上锁');
-        ls.setMessage(firstTime ? '请设置一个主密码（用于加密密码本数据）' : '解锁后可查看平台与口令');
-        ls.actionBtn.textContent = firstTime ? '设置并解锁' : '解锁';
-        ls.showSecondInput(firstTime);
+        ls.setTitle('密码本已上锁');
+        ls.setMessage('解锁后可查看平台与口令');
+        ls.actionBtn.textContent = '解锁';
         ls.setError('');
         ls.input.value = '';
-        ls.input2.value = '';
         ls.setStats(this.pwLockStatsCache);
-        motionLockIn(lockEl, fresh); // 动效层：金印压落（首装）或正冠（重入）+ 候场辉光
+        motionLockIn(lockEl, fresh); // 动效层：正冠（重入）+ 候场辉光
         requestAnimationFrame(() => ls.focus());
       });
     });
+  }
+  /**
+   * 首设面板（三域共用 setup-screen）：还没有任何密码本数据，金印锁屏那套统计与仪式
+   * 在这里全是空的，直接挂同一块「设置主密码」。设成功后与常规解锁走同一条收场。
+   */
+  private mountSetup(lockEl: HTMLElement): SetupScreenHandle {
+    const safe = this.dataManager.safeManager;
+    let su: SetupScreenHandle;
+    const dispose = () => {
+      su.close();
+      this.lockHandles.delete(lockEl);
+    };
+    su = uiSetupScreen({
+      inline: true,
+      title: '设置主密码',
+      action: '设置并解锁',
+      onSubmit: async (pw) => {
+        const ok = await safe.unlock(pw);
+        // 数据层已回滚解锁态：抛出去让面板亮错误行，别静静关掉装作成功
+        if (!ok) throw new Error('设置失败：无法写入清单，请检查磁盘空间后重试');
+        dispose();
+        motionArmBoot(); // 动效层：开锁后的首渲染播 boot 全编排
+        this.closeLock();
+        notice('密码本已解锁', 'success');
+        await this.reloadAfterUnlock();
+        this.renderAll();
+        this.maybeOpenPendingAdd(); // 快速生成密码的待存状态在此消费（首设分支）
+      },
+      onCancel: () => {
+        dispose();
+        this.closeLock();
+        // 没有主密码就没有密码本：收起面板，别把「暂不设置」留成一块空壳
+        this.hide(true);
+      },
+    });
+    lockEl.appendChild(su.el);
+    return su;
   }
   private async isFirstTime(): Promise<boolean> {
     const safe = this.dataManager.safeManager;
@@ -1708,87 +1773,13 @@ export class PasswordVaultUIManager {
       cooldownTimer = setInterval(tick, 1000);
     };
     const resetBtn = () => {
-      void this.isFirstTime().then((f) => {
-        ls.actionBtn.textContent = f ? '设置并解锁' : '解锁';
-      });
+      ls.actionBtn.textContent = '解锁';
     };
     ls.actionBtn.addEventListener('click', async () => {
       if (busy) return;
-      const first = await this.isFirstTime();
       const pw = ls.input.value;
       if (!pw) {
         showErr('请输入主密码');
-        return;
-      }
-      if (first) {
-        if (ls.input2.style.display === 'none') {
-          ls.showSecondInput(true);
-          ls.input2.value = '';
-          ls.setMessage('请再次输入主密码确认');
-          ls.focus();
-          return;
-        }
-        if (pw !== ls.input2.value) {
-          showErr('两次密码不一致');
-          return;
-        }
-        if (pw.length < 4) {
-          showErr('主密码至少 4 位');
-          return;
-        }
-        // 首设风险确认（Q13 保留）：勾选流程确认后才能继续
-        // func 新-4 防重入：确认框打开期间动作钮置 busy——流程框可被反复点开叠加，
-        // 逐个确认后连环 unlock/reload、通知翻倍
-        ls.setBusy(true);
-        void openFlowDialog({
-          title: '设置主密码',
-          message:
-            '主密码不会存储，也无法找回。若遗忘密码，保险库及加密数据将永久丢失。确定继续吗？',
-          // issue 291：流程框挂 document.body，脱离 .bz-password-vault 根后 --pwv-* token
-          // 全部失效（金色主钮会掉回 core 默认品牌色）。本类既在域 CSS 里复制一份 token，
-          // 又供 id 选择器把共享壳映射成本域材质 —— 缺它确认框与面板不同皮（同 issue 257 事故）。
-          className: 'bz-pwv-flow-dialog',
-          actions: [
-            { label: '取消', value: 'cancel' },
-            // 刻意不标 danger（issue 291 评审）：本框是「风险告知门」，主动作是把主密码设下去
-            // 的正向路径，动作本身不破坏任何数据（与下方「仍要重设」的破坏性重设不同），
-            // 故保留金色主钮——域 CSS 的 :not(.bz-flow-dialog--danger) 就是为它保留的通路。
-            { label: '我已了解并继续', value: 'ok', cta: true },
-          ],
-        }).then(async (v) => {
-          if (v !== 'ok') {
-            ls.input.value = '';
-            ls.input2.value = '';
-            ls.setBusy(false);
-            showErr('已取消设置');
-            return;
-          }
-          busy = true;
-          try {
-            const ok = await safe.unlock(pw);
-            if (ok) {
-              cancelLockTimers();
-              ls.input.value = '';
-              ls.input2.value = ''; // arch 新-1 纵深防御：口令不残留在已关闭的锁屏 DOM 里
-              motionUnlockBurst(ls.el.querySelector<HTMLElement>('[data-ls="seal"]')); // 动效层：金印拧开余韵
-              motionArmBoot(); // 动效层：开锁后的首渲染播 boot 全编排
-              this.closeLock();
-              notice('密码本已解锁', 'success'); // 深审口径批：自称「密码本」；大节点走 success 档
-              await this.reloadAfterUnlock();
-              this.renderAll();
-              this.maybeOpenPendingAdd(); // 快速生成密码的待存状态在此消费（首设分支）
-            } else {
-              showErr('设置失败：无法写入清单，请检查磁盘空间后重试');
-            }
-          } catch (e: any) {
-            showErr('设置失败：' + (e?.message || ''));
-          } finally {
-            busy = false;
-            ls.setBusy(false);
-            if (btnHeldByCooldown) ls.actionBtn.disabled = true; // setBusy(false) 会重开按钮，冷却期按住
-            resetBtn();
-          }
-        });
         return;
       }
       // 非首设：冷却节流（P2）
@@ -1829,8 +1820,7 @@ export class PasswordVaultUIManager {
                 { label: '暂不重设', value: 'cancel' },
                 // danger（issue 291 评审补）：重设会生成全新空清单、旧加密数据永久无法恢复 ——
                 // 破坏性主动作，主按钮降中性底 + 红字（手册 §9/§10）。
-                // 对照上方「设置主密码」：那句是风险告知门、动作本身是首设正向路径，
-                // 故刻意不标 danger，域 CSS 的 :not(.bz-flow-dialog--danger) 金色主钮正是给它用。
+                // 首设已改走三域共用面板、不再弹流程框，本条是域内唯一的非危险候选反例。
                 { label: '仍要重设', value: 'ok', cta: true, danger: true },
               ],
             }).then((v) => {

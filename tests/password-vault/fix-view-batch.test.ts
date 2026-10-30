@@ -389,14 +389,15 @@ describe('深审修复批 C（password-vault 渲染/列表/弹窗面）', () => 
     expect(success, '解锁成功为大节点：success 档 + 密码本自称').toBeTruthy();
   });
 
-  it('口径：UI 文案层不再自称「保险库/保险箱」（源文本断言；首设风险确认真指全局共锁豁免）', () => {
+  it('口径：UI 文案层不再自称「保险库/保险箱」（源文本断言）', () => {
     const src = repo('src/password-vault/ui.ts');
     expect(src).not.toContain('保险库已解锁');
     expect(src).not.toContain('保险箱清单文件为空');
     expect(src).not.toContain("'保险库还是空的'");
     expect(src).not.toContain('请先解锁保险库');
-    // 首设风险确认「若遗忘密码，保险库及加密数据将永久丢失」真指共锁全局概念，豁免保留
-    expect(src).toContain('保险库及加密数据将永久丢失');
+    // 首设的风险告知已收归三域共用面板（core/ui/setup-screen），域内不再自带一份——
+    // 那句话原本只存在于首设流程框里，随流程框一并移除
+    expect(src).not.toContain('保险库及加密数据将永久丢失');
     // 单源收敛：域内 DEFAULT_CHARSET 副本已删，消费 data.ts DEFAULT_PW_CHARSET
     expect(src).not.toMatch(/const DEFAULT_CHARSET/);
     expect(src).toContain('DEFAULT_PW_CHARSET');

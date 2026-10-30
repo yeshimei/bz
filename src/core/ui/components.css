@@ -2807,6 +2807,306 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 }
 
 
+/* ═══════════ 首次设置主密码（三域共用：保险库 / 加密日记 / 密码本） ═══════════
+ * 与解锁屏分开：解锁各域各穿各的皮，首设是同一件事，故一套中性皮、不按域分。
+ * 结构（对齐 setup-screen.ts）：徽 + 标题 + 覆盖范围 → 两遍明文 → 风险条 → 勾选 → 整行主按钮。
+ * 组件变量：--su-accent（缺省跟随宿主 accent）
+ */
+.bz-setup {
+  --su-accent: var(--interactive-accent, var(--bz-brand));
+  /* 弹层挂 body，够不着域作用域 token —— 一律引宿主主题变量并写兜底链（同 .bz-lockscreen） */
+  --su-bg: var(--background-secondary, var(--background-primary, #242424));
+  --su-surface: var(--background-primary, var(--background-secondary, #1b1b1b));
+  --su-line: var(--background-modifier-border, rgba(255, 255, 255, 0.12));
+  --su-ink: var(--text-normal, #dadada);
+  --su-muted: var(--text-muted, #a1a1a1);
+  --su-faint: var(--text-faint, #6d6d6d);
+  --su-bad: var(--text-error, #e06464);
+  --su-ok: var(--color-green, #5db97a);
+  --su-warn: var(--color-orange, #d59035);
+}
+/* 全屏遮罩实例（挂 body；层级由显示路径 topifyZ 一次性发号，样式源不留静态 z 规则） */
+.bz-setup--mask {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: var(--bz-overlay, rgba(0, 0, 0, 0.45));
+  backdrop-filter: blur(var(--bz-overlay-blur));
+}
+/* 内联实例（密码本锁层：面板内覆盖，不另起遮罩） */
+.bz-setup--inline {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.bz-setup-box {
+  width: 424px;
+  max-width: 100%;
+  max-height: 100%;
+  overflow: auto;
+  box-sizing: border-box;
+  padding: 24px;
+  border-radius: var(--bz-radius-md);
+  background: var(--su-bg);
+  border: 1px solid var(--su-line);
+  box-shadow: var(--shadow-s, 0 10px 40px rgba(0, 0, 0, 0.45));
+  text-align: left;
+  animation: bz-setup-in 0.16s ease both;
+}
+@keyframes bz-setup-in {
+  from { opacity: 0; transform: translateY(4px); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .bz-setup-box { animation: none; }
+}
+.bz-setup--inline .bz-setup-box {
+  background: transparent;
+  border: none;
+  box-shadow: none;
+}
+/* 头部：小徽 + 标题 + 覆盖范围（左对齐——这是表单，不是仪式） */
+.bz-setup-head {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+}
+.bz-setup-badge {
+  flex: none;
+  width: 38px;
+  height: 38px;
+  margin-top: 1px;
+  border-radius: 11px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: color-mix(in srgb, var(--su-accent) 13%, transparent);
+  color: var(--su-accent);
+}
+.bz-setup-badge-ic {
+  width: 19px;
+  height: 19px;
+  display: flex;
+}
+.bz-setup-badge-ic svg {
+  width: 19px;
+  height: 19px;
+}
+.bz-setup-title {
+  margin: 0;
+  font-size: var(--bz-font-title);
+  font-weight: 650;
+  line-height: 1.35;
+  color: var(--su-ink);
+}
+.bz-setup-sub {
+  margin: 5px 0 0;
+  font-size: var(--bz-font-label);
+  line-height: 1.6;
+  color: var(--su-muted);
+}
+.bz-setup-sub b {
+  color: var(--su-ink);
+  font-weight: 600;
+}
+/* 字段 */
+.bz-setup-field {
+  margin-top: 18px;
+}
+.bz-setup-label {
+  display: block;
+  margin-bottom: 6px;
+  font-size: var(--bz-font-meta);
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  color: var(--su-muted);
+}
+.bz-setup-control {
+  position: relative;
+}
+.bz-setup-input {
+  width: 100%;
+  box-sizing: border-box;
+  height: 40px;
+  padding: 0 12px;
+  font-size: var(--bz-font-label);
+  color: var(--su-ink);
+  background: var(--su-surface);
+  border: 1px solid var(--su-line);
+  border-radius: var(--bz-radius-sm);
+  outline: none;
+  transition: border-color 0.14s ease, box-shadow 0.14s ease;
+}
+.bz-setup-input::placeholder {
+  color: var(--su-faint);
+}
+.bz-setup-input:focus {
+  border-color: var(--su-accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--su-accent) 13%, transparent);
+}
+/* 第二框右侧留出状态位 */
+.bz-setup-control .bz-setup-input {
+  padding-right: 62px;
+}
+.bz-setup-control.is-bad .bz-setup-input {
+  border-color: var(--su-bad);
+}
+.bz-setup-control.is-bad .bz-setup-input:focus {
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--su-bad) 13%, transparent);
+}
+.bz-setup-mark {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: var(--bz-font-caption);
+  font-weight: 500;
+  opacity: 0;
+  transition: opacity 0.14s ease;
+  pointer-events: none;
+}
+.bz-setup-mark.is-shown {
+  opacity: 1;
+}
+.bz-setup-mark--ok {
+  color: var(--su-ok);
+}
+.bz-setup-mark--bad {
+  color: var(--su-bad);
+}
+.bz-setup-mark-ic {
+  width: 12px;
+  height: 12px;
+  display: flex;
+}
+.bz-setup-mark-ic svg {
+  width: 12px;
+  height: 12px;
+}
+/* 风险告知：一条够用的话，不与勾选重复念叨 */
+.bz-setup-warn {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  margin-top: 18px;
+  padding: 11px 12px;
+  border-radius: var(--bz-radius-sm);
+  border-left: 2px solid var(--su-warn);
+  background: color-mix(in srgb, var(--su-warn) 9%, transparent);
+}
+.bz-setup-warn-ic {
+  flex: none;
+  width: 14px;
+  height: 14px;
+  margin-top: 2px;
+  color: var(--su-warn);
+  display: flex;
+}
+.bz-setup-warn-ic svg {
+  width: 14px;
+  height: 14px;
+}
+.bz-setup-warn p {
+  margin: 0;
+  font-size: var(--bz-font-meta);
+  line-height: 1.7;
+  color: var(--su-muted);
+}
+.bz-setup-warn p b {
+  color: var(--su-ink);
+  font-weight: 600;
+}
+/* 勾选 */
+.bz-setup-ack {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin-top: 12px;
+  font-size: var(--bz-font-label);
+  line-height: 1.5;
+  color: var(--su-muted);
+  cursor: pointer;
+  user-select: none;
+}
+.bz-setup-ack input {
+  flex: none;
+  width: 15px;
+  height: 15px;
+  margin: 1px 0 0;
+  accent-color: var(--su-accent);
+  cursor: pointer;
+}
+.bz-setup-ack.is-on {
+  color: var(--su-ink);
+}
+.bz-setup-err {
+  min-height: 17px;
+  margin-top: 10px;
+  font-size: var(--bz-font-meta);
+  line-height: 1.4;
+  color: var(--su-bad);
+  opacity: 0;
+  transition: opacity 0.12s ease;
+}
+.bz-setup-err.is-shown {
+  opacity: 1;
+}
+/* 主按钮整行——首设是这块面板唯一要人下决心的地方 */
+.bz-setup-go {
+  width: 100%;
+  height: 40px;
+  margin-top: 2px;
+  font-family: inherit;
+  font-size: var(--bz-font-label);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: #fff;
+  background: var(--su-accent);
+  border: 0;
+  border-radius: var(--bz-radius-sm);
+  cursor: pointer;
+  transition: filter 0.14s ease, opacity 0.14s ease;
+}
+@media (hover: hover) {
+  .bz-setup-go:hover {
+    filter: brightness(1.08);
+  }
+}
+.bz-setup-go:disabled {
+  opacity: 0.6;
+  cursor: default;
+  filter: none;
+}
+.bz-setup-later {
+  width: 100%;
+  margin-top: 10px;
+  padding: 4px;
+  font-family: inherit;
+  font-size: var(--bz-font-meta);
+  color: var(--su-faint);
+  background: none;
+  border: 0;
+  cursor: pointer;
+  transition: color 0.14s ease;
+}
+@media (hover: hover) {
+  .bz-setup-later:hover {
+    color: var(--su-muted);
+  }
+}
+.bz-setup-later:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+
 /* ═══════════ N. 行级说明浮窗 .bz-help ═══════════
    说明入口 = 标题自己（core/ui/help-tip.ts 的 attachHelpTip；schema 侧 = 行字段 help）：
    桌面停在标题上出浮窗、触屏点标题开合。静态不挂任何图标——标题旁常驻图元是噪点

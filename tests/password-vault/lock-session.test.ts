@@ -368,18 +368,22 @@ describe('批 B · ui 会话锁屏回归（password-vault）', () => {
     expect(dm.pwData.length).toBe(1);
   });
 
-  it('S10b：首设确认框打开期间动作钮 busy，取消后复位（防叠框连环 unlock）', async () => {
+  it('S10b：首设提交期间动作钮 busy，连点不会叠出第二次 unlock', async () => {
     ui.show(); // 无清单 → 首设态
-    await vi.waitFor(() => expect(document.querySelector('.bz-password-vault-lock.open [data-ls="p1"]')).toBeTruthy());
+    await vi.waitFor(() => expect(document.querySelector('.bz-password-vault-lock.open [data-su="p1"]')).toBeTruthy());
     const lock = document.querySelector('.bz-password-vault-lock.open') as HTMLElement;
-    (lock.querySelector('[data-ls="p1"]') as HTMLInputElement).value = 'abcd';
-    (lock.querySelector('[data-ls="p2"]') as HTMLInputElement).value = 'abcd';
-    (lock.querySelector('[data-ls="go"]') as HTMLButtonElement).click();
-    await vi.waitFor(() => expect(document.getElementById('__shared_confirm_popup__')).toBeTruthy());
-    const go = lock.querySelector('[data-ls="go"]') as HTMLButtonElement;
-    expect(go.disabled).toBe(true); // 确认框开着时动作钮 busy：修复前可反复点开叠加确认框
-    (document.getElementById('__shared_confirm_cancel__') as HTMLButtonElement).click();
-    await vi.waitFor(() => expect(go.disabled).toBe(false)); // 取消后复位
-    expect((lock.querySelector('[data-ls="err"]') as HTMLElement).textContent).toBe('已取消设置');
+    (lock.querySelector('[data-su="p1"]') as HTMLInputElement).value = 'abcd';
+    (lock.querySelector('[data-su="p2"]') as HTMLInputElement).value = 'abcd';
+    const ack = lock.querySelector('[data-su="ack"] input') as HTMLInputElement;
+    ack.checked = true;
+    ack.dispatchEvent(new Event('change'));
+    const go = lock.querySelector('[data-su="go"]') as HTMLButtonElement;
+    const spy = vi.spyOn(sm, 'unlock');
+    go.click();
+    expect(go.disabled).toBe(true); // 提交窗口内按钮按住：修复前可反复点开、连环 unlock
+    go.click(); // 连点
+    await vi.waitFor(() => expect(sm.unlocked).toBe(true));
+    expect(spy).toHaveBeenCalledTimes(1);
+    spy.mockRestore();
   });
 });

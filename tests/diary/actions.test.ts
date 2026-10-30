@@ -332,6 +332,74 @@ describe('收进信封（加密）的守卫与失败分支', () => {
     expect(mocks.encryptEntry).toHaveBeenCalled();
   });
 
+  it('保险库还没设过主密码：弹三域共用的首设面板（火漆框只认 unlock，清单不存在时会卡死）', async () => {
+    const c = await openBook();
+    mocks.getSafeManager.mockReturnValue({
+      unlocked: false,
+      manifest: null,
+      exists: async () => false,
+      unlock: mocks.safeUnlock,
+    });
+    const p = (c as unknown as { encryptEntryAction: (e: WallEntry) => Promise<void> }).encryptEntryAction({
+      date: '2026-08-19',
+      time: '23:02',
+      tags: ['日记'],
+      emoji: '📖',
+      content: 'x',
+      filename: DIARY_PATH,
+      filePath: DIARY_PATH,
+      lineNumber: 0,
+      kind: 'diary',
+      media: [],
+      text: 'x',
+      segments: [],
+    });
+    await vi.waitFor(() => expect(document.querySelector('.bz-setup--mask')).toBeTruthy());
+    // 本域火漆框不出现：它只有 unlock()，没有清单时输什么都解不开
+    expect(q('.bz-diary-pass').hidden).toBe(true);
+    const su = document.querySelector('.bz-setup--mask') as HTMLElement;
+    (su.querySelector('[data-su="p1"]') as HTMLInputElement).value = '主密码-123';
+    (su.querySelector('[data-su="p2"]') as HTMLInputElement).value = '主密码-123';
+    const ack = su.querySelector('[data-su="ack"] input') as HTMLInputElement;
+    ack.checked = true;
+    ack.dispatchEvent(new Event('change'));
+    (su.querySelector('[data-su="go"]') as HTMLButtonElement).click();
+    await p;
+    // 设密码这一步也交给真保险箱（本域不碰密码学）
+    expect(mocks.safeUnlock).toHaveBeenCalledWith('主密码-123');
+    expect(mocks.encryptEntry).toHaveBeenCalled();
+  });
+
+  it('首设面板点「暂不设置」→ 整个动作原地退出，不动文件', async () => {
+    const c = await openBook();
+    mocks.getSafeManager.mockReturnValue({
+      unlocked: false,
+      manifest: null,
+      exists: async () => false,
+      unlock: mocks.safeUnlock,
+    });
+    const p = (c as unknown as { encryptEntryAction: (e: WallEntry) => Promise<void> }).encryptEntryAction({
+      date: '2026-08-19',
+      time: '23:02',
+      tags: ['日记'],
+      emoji: '📖',
+      content: 'x',
+      filename: DIARY_PATH,
+      filePath: DIARY_PATH,
+      lineNumber: 0,
+      kind: 'diary',
+      media: [],
+      text: 'x',
+      segments: [],
+    });
+    await vi.waitFor(() => expect(document.querySelector('.bz-setup--mask')).toBeTruthy());
+    (document.querySelector('[data-su="cancel"]') as HTMLButtonElement).click();
+    await p;
+    expect(mocks.safeUnlock).not.toHaveBeenCalled();
+    expect(mocks.encryptEntry).not.toHaveBeenCalled();
+    expect(vault.files.has(DIARY_PATH)).toBe(true);
+  });
+
   it('磁盘上找不到原文条目 → 提示并不入库', async () => {
     const c = await openBook();
     await (c as unknown as { encryptEntryAction: (e: WallEntry) => Promise<void> }).encryptEntryAction({
