@@ -24,7 +24,7 @@ function app(vault: MockVault): any {
 }
 
 /** 存储根固定成老库口径：storageFile() 读的是设置里的 storagePath，不设就会指向 <插件>/storage；
- *  影视目录同理——ADR-0273 后域目录缺省留空，不显式配置就采集不到夹具里写的笔记 */
+ *  影视目录同理——ADR-0274 后域目录缺省留空，不显式配置就采集不到夹具里写的笔记 */
 beforeEach(() => {
   setApp(mockAppWithVault(new MockVault()) as any);
   setSettingsProvider(() => ({

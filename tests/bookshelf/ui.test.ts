@@ -93,7 +93,7 @@ describe('bookshelf 书脊墙（issue 218）', () => {
   beforeEach(() => {
     resetObsidianMocks();
     resetBookshelfState();
-    // 未配置目录时走引导卡（ADR-0273）；本文件验的是「已配好书库」的墙体行为
+    // 未配置目录时走引导卡（ADR-0274）；本文件验的是「已配好书库」的墙体行为
     setSettingsProvider(() => ({ bookshelfFolderPath: '书库' }) as never);
     clearNotices();
     document.body.innerHTML = '';
@@ -503,7 +503,7 @@ describe('bookshelf 面板皮肤（issue 216）', () => {
   beforeEach(() => {
     resetObsidianMocks();
     resetBookshelfState();
-    // 未配置目录时走引导卡（ADR-0273）；本文件验的是「已配好书库」的墙体行为
+    // 未配置目录时走引导卡（ADR-0274）；本文件验的是「已配好书库」的墙体行为
     setSettingsProvider(() => ({ bookshelfFolderPath: '书库' }) as never);
     clearNotices();
     document.body.innerHTML = '';
@@ -657,7 +657,7 @@ describe('面板拖拽缩放 + 尺寸记忆（ADR-0084/0094）', () => {
   beforeEach(() => {
     resetObsidianMocks();
     resetBookshelfState();
-    // 未配置目录时走引导卡（ADR-0273）；本文件验的是「已配好书库」的墙体行为
+    // 未配置目录时走引导卡（ADR-0274）；本文件验的是「已配好书库」的墙体行为
     setSettingsProvider(() => ({ bookshelfFolderPath: '书库' }) as never);
     clearNotices();
     document.body.innerHTML = '';

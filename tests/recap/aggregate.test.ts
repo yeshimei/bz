@@ -190,7 +190,7 @@ describe('collectRecap（只读采集集成）', () => {
   beforeEach(() => {
     vault = new StatVault();
     setApp(mockAppWithVault(vault) as any);
-    // 域目录缺省留空（ADR-0273）：采集侧直接拿配置值当路径前缀，空串会命中 0 条。
+    // 域目录缺省留空（ADR-0274）：采集侧直接拿配置值当路径前缀，空串会命中 0 条。
     // 这里按夹具实际写入的目录显式配置，断言仍走「已配置库」口径。
     setSettingsProvider(() => ({
       ...DEFAULT_SETTINGS,

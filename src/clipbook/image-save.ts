@@ -17,10 +17,9 @@ import { pad2 } from '../core/utils';
  */
 import { requestUrl, TFile } from 'obsidian';
 import { getApp } from '../core/app';
-import { resolveAssetDir } from '../core/attachment-dir';
+import { resolveAssetDir, domainAssetsDir } from '../core/attachment-dir';
 import { tryGetSettings } from '../core/settings-provider';
 import { notice } from '../core/notice';
-import { clipDir } from './save';
 import type { ClipbookData, ClipSavedImage } from './data';
 import { addArticleImageSwap, applyClipContentTransforms } from './anchor';
 
@@ -34,12 +33,14 @@ const EXT_WHITELIST = new Set(['png', 'jpg', 'jpeg', 'gif', 'webp', 'svg', 'bmp'
 
 /**
  * 剪藏图片目录：设置键 clipbookImageFolder 优先，留空**跟随 Obsidian 的「默认新附件位置」**
- * （用户在宿主里早设过一次，不必在插件里再填一遍），两者都没有才回落 <articleDirectory>/assets。
- * 回落口径走 save.clipDir 单源（CB4/A3 收编；articleDirectory 缺省与尾斜杠归一同一处）。
+ * （用户在宿主里早设过一次，不必在插件里再填一遍），两者都没有才回落 **<剪藏文件夹>/assets**
+ * （2026-10-31 起不再有任何写死的图片目录；剪藏文件夹没配时返回空串，
+ *  调用方不写盘——那时域本身还被空态闸门挡着）。
+ * 直接读 articleDirectory（不借 save.clipDir：那个函数自带 `归档/网页剪藏` 字面量兜底）。
  */
 export function clipbookImageDir(): string {
-  const s = tryGetSettings() as any;
-  return resolveAssetDir(s && s.clipbookImageFolder, `${clipDir()}/assets`).dir;
+  const s = (tryGetSettings() as any) || {};
+  return resolveAssetDir(s.clipbookImageFolder, domainAssetsDir(s.articleDirectory)).dir;
 }
 
 /** 协议相对地址补全（//host/a.png → https://host/a.png）；data:/blob: 原样返回 */
@@ -154,6 +155,8 @@ export async function fetchImageDataUrl(src: string): Promise<string> {
 async function writeUniqueImage(dir: string, baseName: string, ext: string, bytes: ArrayBuffer): Promise<string> {
   const app = getApp();
   const folder = String(dir || '').replace(/\\/g, '/').replace(/^\/+|\/+$/g, '');
+  // 三跳全空（没设图片文件夹、Obsidian 也没给固定附件目录、剪藏文件夹还没配）：绝不落库根
+  if (!folder) throw new Error('还没定图片存哪：先在设置里配好剪藏文件夹');
   let path = `${folder}/${baseName}.${ext}`;
   for (let i = 2; app.vault.getAbstractFileByPath(path); i++) path = `${folder}/${baseName}_${i}.${ext}`;
   try {

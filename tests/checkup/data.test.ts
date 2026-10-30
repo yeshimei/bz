@@ -377,7 +377,7 @@ describe('检查三：孤儿条目', () => {
         [`${DIR}/weave-data.json`]: weave,
       },
       { '书库/B.md': { tags: ['book'], cover: 'CONFIG/BOOK/B/c.png' } },
-      // 书库目录缺省留空（ADR-0273）：不显式配置，scanMarkdownBooks 扫不到夹具里的书
+      // 书库目录缺省留空（ADR-0274）：不显式配置，scanMarkdownBooks 扫不到夹具里的书
       { storagePath: DIR, bookshelfFolderPath: '书库' }
     );
     const sec = await checkOrphans(app);

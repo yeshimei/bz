@@ -839,7 +839,7 @@ describe('generateImageNote（图版文献：图片本体 + 四键 frontmatter +
     vi.clearAllMocks();
     vault = new MockVault();
     setApp({ vault } as any);
-    setSettingsProvider(() => ({ knowledgeDirectory: '文献盒', knowledgeDomainList: '' }) as any);
+    setSettingsProvider(() => ({ knowledgeDirectory: '文献盒', knowledgeCardboxDirectory: '卡片盒', knowledgeDomainList: '' }) as any);
   });
 
   afterEach(() => {
@@ -858,8 +858,8 @@ describe('generateImageNote（图版文献：图片本体 + 四键 frontmatter +
     });
 
     expect(path).toBe('文献盒/窗外的树.md');
-    expect(vault.binaryFiles.has('文献盒/assets/窗外的树.png')).toBe(true);
-    expect(Array.from(vault.binaryFiles.get('文献盒/assets/窗外的树.png')!)).toEqual([1, 2, 3, 4]);
+    expect(vault.binaryFiles.has('卡片盒/assets/窗外的树.png')).toBe(true);
+    expect(Array.from(vault.binaryFiles.get('卡片盒/assets/窗外的树.png')!)).toEqual([1, 2, 3, 4]);
     const content = vault.files.get(path)!;
     const fm = vaultParseFrontmatter(content)!;
     expect(fm.title).toBe('窗外的树');
@@ -871,9 +871,9 @@ describe('generateImageNote（图版文献：图片本体 + 四键 frontmatter +
     expect(fm.author).toBeUndefined();
     expect(fm.tags).toBeUndefined();
     // 正文 = 全路径嵌入（裸名会指错同名图）+ 读图解读，解读在前、嵌入在后（issue 313）
-    expect(content).toContain('![[文献盒/assets/窗外的树.png]]');
+    expect(content).toContain('![[卡片盒/assets/窗外的树.png]]');
     expect(content).toContain('一张树的照片');
-    expect(content.indexOf('一张树的照片')).toBeLessThan(content.indexOf('![[文献盒/assets/窗外的树.png]]'));
+    expect(content.indexOf('一张树的照片')).toBeLessThan(content.indexOf('![[卡片盒/assets/窗外的树.png]]'));
   });
 
   it('描述含 ]] 不破嵌入语法（评审修复：]] 插空格降级）', async () => {
@@ -883,7 +883,7 @@ describe('generateImageNote（图版文献：图片本体 + 四键 frontmatter +
       images: [{ bytes: bytesOf(4), ext: 'png', desc: '见图]]否则截断' }],
     });
     const content = vault.files.get(path)!;
-    expect(content).toContain('![[文献盒/assets/描述带双括号.png|见图] ]否则截断]]');
+    expect(content).toContain('![[卡片盒/assets/描述带双括号.png|见图] ]否则截断]]');
     // 全文恰好一对嵌入闭合（描述内的 ]] 已降级，无残文落正文）
     expect(content.match(/\]\]/g)!.length).toBe(1);
   });
@@ -895,30 +895,32 @@ describe('generateImageNote（图版文献：图片本体 + 四键 frontmatter +
       images: imgs([2, 'png'], [3, 'jpg'], [4, 'webp']),
     });
 
-    expect(vault.binaryFiles.has('文献盒/assets/三张写生.png')).toBe(true);
-    expect(vault.binaryFiles.has('文献盒/assets/三张写生.jpg')).toBe(true);
-    expect(vault.binaryFiles.has('文献盒/assets/三张写生.webp')).toBe(true);
+    expect(vault.binaryFiles.has('卡片盒/assets/三张写生.png')).toBe(true);
+    expect(vault.binaryFiles.has('卡片盒/assets/三张写生.jpg')).toBe(true);
+    expect(vault.binaryFiles.has('卡片盒/assets/三张写生.webp')).toBe(true);
     const content = vault.files.get(path)!;
-    const i1 = content.indexOf('![[文献盒/assets/三张写生.png]]');
-    const i2 = content.indexOf('![[文献盒/assets/三张写生.jpg]]');
-    const i3 = content.indexOf('![[文献盒/assets/三张写生.webp]]');
+    const i1 = content.indexOf('![[卡片盒/assets/三张写生.png]]');
+    const i2 = content.indexOf('![[卡片盒/assets/三张写生.jpg]]');
+    const i3 = content.indexOf('![[卡片盒/assets/三张写生.webp]]');
     expect(i1).toBeGreaterThan(-1);
     expect(i1).toBeLessThan(i2);
     expect(i2).toBeLessThan(i3);
     expect(content.indexOf('一组三张的写生记录')).toBeLessThan(i1); // 文字仍在上
   });
 
-  it('图片目录可由设置指定（issue 313）；留空回落到 <文献目录>/assets', async () => {
-    expect(resolveImageDir({ knowledgeDirectory: '文献盒' })).toBe('文献盒/assets');
-    expect(resolveImageDir({ knowledgeDirectory: '文献盒', knowledgeImageFolder: '  ' })).toBe('文献盒/assets');
-    expect(resolveImageDir({ knowledgeDirectory: '文献盒', knowledgeImageFolder: '/附图/' })).toBe('附图'); // 两侧斜杠归一
+  it('图片目录可由设置指定（issue 313）；留空回落到 <卡片文件夹>/assets（2026-10-31 口径）', async () => {
+    expect(resolveImageDir({ knowledgeCardboxDirectory: '卡片盒' })).toBe('卡片盒/assets');
+    expect(resolveImageDir({ knowledgeCardboxDirectory: '卡片盒', knowledgeImageFolder: '  ' })).toBe('卡片盒/assets');
+    expect(resolveImageDir({ knowledgeCardboxDirectory: '卡片盒', knowledgeImageFolder: '/附图/' })).toBe('附图'); // 两侧斜杠归一
     expect(resolveImageDir({ knowledgeImageFolder: '我的/图片' })).toBe('我的/图片'); // 指定即完全以它为准
+    // 三跳全空（卡片文件夹也没配）= 空串：写盘侧拒绝，绝不落库根
+    expect(resolveImageDir({})).toBe('');
 
     setSettingsProvider(() => ({ knowledgeDirectory: '文献盒', knowledgeImageFolder: '附图' }) as any);
     const path = await generateImageNote({ title: '手稿', summary: '解读', images: imgs([1, 'png']) });
 
     expect(vault.binaryFiles.has('附图/手稿.png')).toBe(true);
-    expect(vault.binaryFiles.has('文献盒/assets/手稿.png')).toBe(false);
+    expect(vault.binaryFiles.has('卡片盒/assets/手稿.png')).toBe(false);
     expect(vault.files.get(path)).toContain('![[附图/手稿.png]]'); // 嵌入随目录一起变
   });
 
@@ -929,10 +931,10 @@ describe('generateImageNote（图版文献：图片本体 + 四键 frontmatter +
 
     expect(p1).toBe('文献盒/窗外的树.md');
     expect(p2).toBe('文献盒/窗外的树_2.md');
-    expect(vault.binaryFiles.has('文献盒/assets/窗外的树.png')).toBe(true);
-    expect(vault.binaryFiles.has('文献盒/assets/窗外的树_2.png')).toBe(true);
+    expect(vault.binaryFiles.has('卡片盒/assets/窗外的树.png')).toBe(true);
+    expect(vault.binaryFiles.has('卡片盒/assets/窗外的树_2.png')).toBe(true);
     // 换扩展名 = 另一个文件，不占用序号（同名 png 已存在也不影响 jpg）；图与笔记各自独立判重
-    expect(vault.binaryFiles.has('文献盒/assets/窗外的树.jpg')).toBe(true);
+    expect(vault.binaryFiles.has('卡片盒/assets/窗外的树.jpg')).toBe(true);
     expect(p3).toBe('文献盒/窗外的树_3.md');
     expect(vault.files.get(p1)).toContain('A');
     expect(vault.files.get(p2)).toContain('B');
@@ -948,7 +950,7 @@ describe('generateImageNote（图版文献：图片本体 + 四键 frontmatter +
 
     const content = vault.files.get(path)!;
     expect(content).toContain('source: "[[我的/日记/2026-09-14.md|2026-09-14]]"');
-    expect(vault.binaryFiles.has('文献盒/assets/手稿页.webp')).toBe(true);
+    expect(vault.binaryFiles.has('卡片盒/assets/手稿页.webp')).toBe(true);
   });
 
   it('标题与解读全空 → 抛错不落盘（既不写图也不写笔记）', async () => {
@@ -967,7 +969,7 @@ describe('generateImageNote（图版文献：图片本体 + 四键 frontmatter +
   it('标题缺失但解读有内容 → 用解读首句兜底命名（不阻断落盘）', async () => {
     const path = await generateImageNote({ title: '', summary: '某张旧照片的内容说明', images: imgs([1, 'png']) });
     expect(path).toBe('文献盒/某张旧照片的内容说明.md');
-    expect(vault.binaryFiles.has('文献盒/assets/某张旧照片的内容说明.png')).toBe(true);
+    expect(vault.binaryFiles.has('卡片盒/assets/某张旧照片的内容说明.png')).toBe(true);
   });
 
   it('图片行语法分叉（ADR-0145，issue 329）：有描述 ![[路径|描述]]、无描述 ![[路径]]，多图逐张对应', async () => {
@@ -980,11 +982,11 @@ describe('generateImageNote（图版文献：图片本体 + 四键 frontmatter +
       ],
     });
     const content = vault.files.get(path)!;
-    expect(content).toContain('![[文献盒/assets/写生两帧.png|窗外的树]]');
-    expect(content).toContain('![[文献盒/assets/写生两帧.jpg]]');
-    expect(content).not.toContain('![[文献盒/assets/写生两帧.jpg|'); // 无描述不得带空管道
+    expect(content).toContain('![[卡片盒/assets/写生两帧.png|窗外的树]]');
+    expect(content).toContain('![[卡片盒/assets/写生两帧.jpg]]');
+    expect(content).not.toContain('![[卡片盒/assets/写生两帧.jpg|'); // 无描述不得带空管道
     // 正文结构不变：解读在上、图片在下（与既有断言同口径）
-    expect(content.indexOf('两张写生')).toBeLessThan(content.indexOf('![[文献盒/assets/写生两帧.png'));
+    expect(content.indexOf('两张写生')).toBeLessThan(content.indexOf('![[卡片盒/assets/写生两帧.png'));
     // 描述唯一载体是正文图片语法，不设 frontmatter 键（ADR-0145 §3）
     const fm = vaultParseFrontmatter(content)!;
     expect(fm.desc).toBeUndefined();
@@ -993,6 +995,6 @@ describe('generateImageNote（图版文献：图片本体 + 四键 frontmatter +
 
   it('描述中的引号/反斜杠在嵌入语法里原样保留（不经 YAML 引号，正文直拼）', async () => {
     const path = await generateImageNote({ title: '手稿', summary: '解读', images: [{ bytes: bytesOf(1), ext: 'png', desc: '带"引号"的图注' }] });
-    expect(vault.files.get(path)).toContain('![[文献盒/assets/手稿.png|带"引号"的图注]]');
+    expect(vault.files.get(path)).toContain('![[卡片盒/assets/手稿.png|带"引号"的图注]]');
   });
 });

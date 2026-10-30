@@ -75,7 +75,7 @@ describe('auto-summary 入口', () => {
     vi.useFakeTimers();
     resetObsidianMocks();
     document.body.innerHTML = '';
-    // 目录缺省留空（ADR-0273）：本块验「已配好剪藏目录」的自动摘要，须显式补上 articleDirectory
+    // 目录缺省留空（ADR-0274）：本块验「已配好剪藏目录」的自动摘要，须显式补上 articleDirectory
     setSettingsProvider(() => ({ articleDirectory: '归档/网页剪藏' }) as any);
     vault = new MockVault();
     workspace = makeWorkspace();

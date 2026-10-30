@@ -44,7 +44,7 @@ const okHttpGet = async () => '{}';
 beforeEach(() => {
   resetObsidianMocks();
   setNewsFetchDoneListener(() => {});
-  // 剪藏目录缺省留空（ADR-0273）：未配置时 maybeFetchNews 直接返回 null（引导态不耗流量），
+  // 剪藏目录缺省留空（ADR-0274）：未配置时 maybeFetchNews 直接返回 null（引导态不耗流量），
   // 本文件测的是触发链语义，按「已配置库」口径给一个目录
   setSettingsProvider(() => ({ articleDirectory: '归档/网页剪藏' }) as never);
 });

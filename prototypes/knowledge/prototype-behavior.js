@@ -1,4 +1,4 @@
-/* 源指纹 357afaca25db35c6 · 仓内输入 66 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 d725b7205d8c5856 · 仓内输入 66 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/knowledge/fake-sim.ts","prototypes/knowledge/fake/ai-index.ts","prototypes/knowledge/fake/fake-obsidian.ts","prototypes/preview-mode.ts","src/core/ai.ts","src/core/app.ts","src/core/asr-proofread.ts","src/core/attachment-dir.ts","src/core/crypto.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/folder-setup.ts","src/core/http.ts","src/core/item-actions.ts","src/core/knowledge-boxes.ts","src/core/link-now.ts","src/core/mask-dismiss.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/net-progress.ts","src/core/node-runtime-install.ts","src/core/note-trash.ts","src/core/notice.ts","src/core/offline-source.ts","src/core/plugin-path.ts","src/core/remote-asset.ts","src/core/remote-base.ts","src/core/settings-provider.ts","src/core/sha256.ts","src/core/storage-path.ts","src/core/storage.ts","src/core/tar.ts","src/core/tool-hint.ts","src/core/tool-runtime.ts","src/core/ui/button.ts","src/core/ui/empty.ts","src/core/ui/focus-trap.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/resize.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/utils.ts","src/core/z-order.ts","src/core/zip.ts","src/knowledge/data.ts","src/knowledge/motion.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-edit.ts","src/knowledge/note-gen.ts","src/knowledge/partial-json.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/relink.ts","src/knowledge/source.ts","src/knowledge/tack.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/secondbrain/readonly.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/knowledge/fake-sim.ts → window.BZW_knowledge（行为单源预览包，issue 245/ADR-0106） */
 var BZW_knowledge = (() => {
@@ -39,9 +39,9 @@ var BZW_knowledge = (() => {
   ));
   var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
 
-  // node_modules/.pnpm/moment@2.30.1/node_modules/moment/moment.js
+  // ../bz/node_modules/.pnpm/moment@2.30.1/node_modules/moment/moment.js
   var require_moment = __commonJS({
-    "node_modules/.pnpm/moment@2.30.1/node_modules/moment/moment.js"(exports, module) {
+    "../bz/node_modules/.pnpm/moment@2.30.1/node_modules/moment/moment.js"(exports, module) {
       (function(global, factory) {
         typeof exports === "object" && typeof module !== "undefined" ? module.exports = factory() : typeof define === "function" && define.amd ? define(factory) : global.moment = factory();
       })(exports, function() {
@@ -8279,6 +8279,10 @@ ${lines}`;
     const dir = cleanDir(v);
     return dir || null;
   }
+  function domainAssetsDir(mainDir) {
+    const m = cleanDir(mainDir);
+    return m ? `${m}/assets` : "";
+  }
   function resolveAssetDir(configured, fallback) {
     const c = cleanDir(configured);
     if (c) return { dir: c, source: "setting" };
@@ -8604,10 +8608,10 @@ ${text}`;
     const body = [fm.join("\n"), summary].filter(Boolean).join("\n\n");
     return writeUniqueNote(String(s.knowledgeDirectory || "文献盒"), sanitizeMdTitle(title || summary), body);
   }
-  var IMAGE_ASSETS_DIR = "assets";
   async function writeUniqueBinary(dir, baseName2, ext, bytes) {
     const app = getApp();
-    const folder = String(dir || "文献盒").replace(/\\/g, "/").replace(/^\/+|\/+$/g, "");
+    const folder = String(dir || "").replace(/\\/g, "/").replace(/^\/+|\/+$/g, "");
+    if (!folder) throw new Error("还没定图片存哪：先在设置里配好卡片文件夹");
     let path = `${folder}/${baseName2}.${ext}`;
     for (let i = 2; app.vault.getAbstractFileByPath(path); i++) path = `${folder}/${baseName2}_${i}.${ext}`;
     try {
@@ -8659,8 +8663,7 @@ ${notes.map((x) => `第 ${x.n} 张：${x.d}`).join("\n")}`;
     };
   }
   function resolveImageDir(settings) {
-    const dir = String((settings == null ? void 0 : settings.knowledgeDirectory) || "文献盒").replace(/\\/g, "/").replace(/^\/+|\/+$/g, "") || "文献盒";
-    return resolveAssetDir(settings == null ? void 0 : settings.knowledgeImageFolder, `${dir}/${IMAGE_ASSETS_DIR}`).dir;
+    return resolveAssetDir(settings == null ? void 0 : settings.knowledgeImageFolder, domainAssetsDir(settings == null ? void 0 : settings.knowledgeCardboxDirectory)).dir;
   }
   async function generateImageNote(opts) {
     var _a, _b;
@@ -13894,7 +13897,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
       desc: "抓到的网页要存成笔记，正文得有个固定的落脚处。",
       fields: [
         { key: "articleDirectory", label: "剪藏文件夹", reco: "归档/网页剪藏" },
-        { key: "clipbookImageFolder", label: "图片文件夹", reco: "", image: true, imageFallback: (main) => `${main}/assets` }
+        { key: "clipbookImageFolder", label: "图片文件夹", reco: "", image: true, imageBaseKey: "articleDirectory" }
       ]
     },
     cinema: {
@@ -13905,7 +13908,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
       desc: "影视条目一部一条，存在影视目录里。",
       fields: [
         { key: "cinemaFolderPath", label: "影视目录", reco: "我的/影视" },
-        { key: "cinemaPosterFolder", label: "海报文件夹", reco: "", image: true, imageFallback: (main) => `${main}/封面` }
+        { key: "cinemaPosterFolder", label: "海报文件夹", reco: "", image: true, imageBaseKey: "cinemaFolderPath" }
       ]
     },
     bookshelf: {
@@ -13929,7 +13932,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
       hint: "同步还要在设置里填好 SteamID64 与 Web API 密钥。",
       fields: [
         { key: "gameshelfFolderPath", label: "游戏目录", reco: "我的/游戏" },
-        { key: "gameshelfPosterFolder", label: "海报文件夹", reco: "", image: true, imageFallback: (main) => `${main}/封面` }
+        { key: "gameshelfPosterFolder", label: "海报文件夹", reco: "", image: true, imageBaseKey: "gameshelfFolderPath" }
       ]
     },
     knowledge: {
@@ -13942,7 +13945,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
         { key: "knowledgeDirectory", label: "文献文件夹", reco: "文献盒" },
         { key: "knowledgeCardboxDirectory", label: "卡片文件夹", reco: "卡片盒" },
         { key: "knowledgeTopicDirectory", label: "主题文件夹", reco: "主题盒" },
-        { key: "knowledgeImageFolder", label: "图片文件夹", reco: "", image: true, imageFallback: (main) => `${main}/assets` }
+        { key: "knowledgeImageFolder", label: "图片文件夹", reco: "", image: true, imageBaseKey: "knowledgeCardboxDirectory" }
       ]
     }
   };
@@ -13952,15 +13955,11 @@ ${String(blockText != null ? blockText : "").trim()}`);
   }
   function folderState(domain) {
     const plan = FOLDER_PLANS[domain];
-    const mainDir = (() => {
-      const first = plan.fields.find((f) => !f.image);
-      return first ? settingValue(first.key) : "";
-    })();
     const fields = plan.fields.map((field) => {
       if (field.image) {
-        const fallback = field.imageFallback ? field.imageFallback(mainDir || field.reco) : mainDir;
-        const r = resolveAssetDir(settingValue(field.key), fallback);
-        return { field, dir: r.dir, source: r.source, missing: !r.dir };
+        const base = field.imageBaseKey ? settingValue(field.imageBaseKey) : "";
+        const r = resolveAssetDir(settingValue(field.key), domainAssetsDir(base));
+        return { field, dir: r.dir, source: r.source, missing: false };
       }
       const v = settingValue(field.key);
       return { field, dir: v, source: v ? "setting" : "fallback", missing: !v };

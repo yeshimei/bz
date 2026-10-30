@@ -13,7 +13,7 @@ describe('cinema 设置 schema', () => {
     const rows = schema.groups.flatMap((g) => g.rows);
     expect(rows.some((r: any) => (r.binding as any)?.key === 'cinemaPageSize')).toBe(false);
     expect(rows.some((r: any) => r.name === '每批加载数量')).toBe(false);
-    // 目录组两行：影视文件夹 + 海报文件夹（cinemaPosterFolder，空回落 CONFIG/MOVIE POSTER）
+    // 目录组两行：影视文件夹 + 海报文件夹（cinemaPosterFolder，空回落 <影视文件夹>/assets）
     const folderGroup = schema.groups.find((g) => g.name === '目录')!;
     expect(folderGroup.rows).toHaveLength(2);
     expect((folderGroup.rows[0] as any).binding.key).toBe('cinemaFolderPath');
@@ -21,13 +21,14 @@ describe('cinema 设置 schema', () => {
     expect(posterRow.type).toBe('path');
     expect(posterRow.mode).toBe('single');
     expect(posterRow.binding.key).toBe('cinemaPosterFolder');
-    expect(posterRow.fallbackValue()).toBe('CONFIG/MOVIE POSTER');
+    // 什么都没配（影视文件夹也空）→ 生效目录为空串，不发明位置
+    expect(posterRow.fallbackValue()).toBe('');
     expect(DEFAULT_SETTINGS.cinemaPosterFolder).toBe('');
   });
 
   it('DEFAULT_SETTINGS 不再声明 cinemaPageSize 默认值', () => {
     expect('cinemaPageSize' in DEFAULT_SETTINGS).toBe(false);
-    // 目录缺省留空（2026-10-30 ADR-0273）：新库不替用户猜位置，未配置走引导态
+    // 目录缺省留空（2026-10-30 ADR-0274）：新库不替用户猜位置，未配置走引导态
     expect(DEFAULT_SETTINGS.cinemaFolderPath).toBe('');
   });
 

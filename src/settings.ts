@@ -245,7 +245,7 @@ export default interface BzSettings {
   cinemaApizeroKey: string;
   /** 影院抓取：豆瓣 Cookie（搜索页风控时提高成功率，可选） */
   cinemaDoubanCookie: string;
-  /** 影院抓取：海报保存文件夹（空 = 回落默认 CONFIG/MOVIE POSTER；写入 frontmatter 海报键与正文 embed） */
+  /** 影院抓取：海报保存文件夹（空 = 跟随 Obsidian 附件位置 → <影视文件夹>/assets；写进 frontmatter 海报键与正文 embed） */
   cinemaPosterFolder: string;
   /** B站 Cookie（ADR-0133 知识盒视频档位查询；「数据源凭据」组设置项，桌面端可从 CLI 导入） */
   bilibiliCookie: string;
@@ -253,7 +253,7 @@ export default interface BzSettings {
   // ===== 🎮 游戏架（gameshelf 域，issue 368：Steam 直连自动拉库，一作一笔记）=====
   /** 📁 游戏文件夹（游戏架域数据源；缺省回落「我的/游戏」） */
   gameshelfFolderPath: string;
-  /** 📁 游戏海报文件夹（封面 header.jpg 本地缓存目录；缺省回落「CONFIG/游戏海报」） */
+  /** 📁 游戏海报文件夹（封面/图标/截图本地缓存目录；空 = 跟随 Obsidian 附件位置 → <游戏文件夹>/assets） */
   gameshelfPosterFolder: string;
   /** 🎮 SteamID64（17 位数字；GetOwnedGames/GetRecentlyPlayedGames 查询主体） */
   gameshelfSteamId: string;

@@ -673,7 +673,7 @@ describe('设置面板（settings-panel）', () => {
     // 场景 1 读过一次路径行，旧键迁移已把值写回 bookshelfFolderPath —— 场景 2 要的是「都没设」，先清干净
     delete (panelState as any).bookshelfFolderPath;
 
-    // 场景 2：新旧键都未设 → 未配置态（ADR-0273：域目录缺省留空，不再回落「书库」；
+    // 场景 2：新旧键都未设 → 未配置态（ADR-0274：域目录缺省留空，不再回落「书库」；
     // 空态 = 选择按钮，不出回落锁定 chip）
     const ui2 = new SettingsPanelUI();
     ui2.open();

@@ -26,8 +26,11 @@ import {
   extractMovieName, normalizeListValue, updateFrontmatterFields, insertPosterEmbed,
   fetchApizeroInfo, fetchNoteDouban, queryDoubanByName, queryDoubanBySid,
   parseRexxarSubjectPic, fetchSubjectPoster,
-  POSTER_FOLDER, type HttpGet, type DoubanFetchDeps,
+  type HttpGet, type DoubanFetchDeps,
 } from '../../src/cinema/douban-fetcher';
+
+/** 海报目录夹具：影院海报落 `<影视目录>/assets`（2026-10-31 起不再有 CONFIG/MOVIE POSTER 缺省） */
+const POSTER_DIR = '我的/影视/assets';
 
 beforeEach(() => {
   resetObsidianMocks();
@@ -292,7 +295,7 @@ function makeDeps(over: {
     writeBinary: async (p, d) => { vault.binaryFiles.set(p, new Uint8Array(d)); },
     mkdir: async (p) => { vault.dirs.add(p); },
     apizeroKey: over.apizeroKey,
-    posterFolder: over.posterFolder,
+    posterFolder: over.posterFolder ?? POSTER_DIR,
     now: () => 1700000000000,
   };
   return { deps, vault };
@@ -316,7 +319,7 @@ describe('fetchNoteDouban 端到端（fake 注入）', () => {
     expect(r).toEqual({ ok: true });
 
     const content = vault.files.get(FILE_PATH)!;
-    expect(content).toContain('海报: "CONFIG/MOVIE POSTER/流浪地球2_1700000000000.jpg"');
+    expect(content).toContain(`海报: ${POSTER_DIR}/流浪地球2_1700000000000.jpg`);
     expect(content).toContain('豆瓣链接: "https://movie.douban.com/subject/35267208/"');
     expect(content).toContain('豆瓣评分: 8.3');
     expect(content).toContain('导演: 郭帆');
@@ -329,13 +332,13 @@ describe('fetchNoteDouban 端到端（fake 注入）', () => {
     expect(content).toContain('上映日期: 2023');
     expect(content).toContain('热门短评: 好看');
     expect(content).not.toMatch(/^季集:/m);
-    expect(content).toContain('![[CONFIG/MOVIE POSTER/流浪地球2_1700000000000.jpg]]');
+    expect(content).toContain(`![[${POSTER_DIR}/流浪地球2_1700000000000.jpg]]`);
     // C4：夹具即 FM 无尾换行形态——frontmatter 仍居首，embed 位于 FM 闭合之后
     expect(content.startsWith('---')).toBe(true);
     expect(content.indexOf('![[')).toBeGreaterThan(content.indexOf('\n---'));
     // ApiZero 有导演/主演 → 不调 rexxar，无编剧字段
     expect(content).not.toContain('编剧');
-    expect(vault.binaryFiles.get(`${POSTER_FOLDER}/流浪地球2_1700000000000.jpg`)?.length).toBe(1024);
+    expect(vault.binaryFiles.get(`${POSTER_DIR}/流浪地球2_1700000000000.jpg`)?.length).toBe(1024);
   });
 
   it('自定义海报文件夹（cinemaPosterFolder）：mkdir/写盘/海报键/embed 全走该目录；空白回落默认', async () => {
@@ -349,14 +352,16 @@ describe('fetchNoteDouban 端到端（fake 注入）', () => {
     expect(content).toContain('![[我的/海报墙/流浪地球2_1700000000000.jpg]]');
     expect(vault.dirs.has('我的/海报墙')).toBe(true);
     expect(vault.binaryFiles.has('我的/海报墙/流浪地球2_1700000000000.jpg')).toBe(true);
-    expect(vault.binaryFiles.has(`${POSTER_FOLDER}/流浪地球2_1700000000000.jpg`)).toBe(false);
+    expect(vault.binaryFiles.has(`${POSTER_DIR}/流浪地球2_1700000000000.jpg`)).toBe(false);
 
-    // 空白串 → 回落默认目录
+    // 空白串 → 没有可写目录：不下载、不写盘（2026-10-31 起不再回落任何写死目录，更不落库根）
     const vault2 = new MockVault();
     vault2.files.set(FILE_PATH, '---\ntags: [电影]\n状态: 想看\n---');
     const { deps: deps2 } = makeDeps({ vault: vault2, posterBytes: new ArrayBuffer(8), posterFolder: '   ' });
-    await runOn(vault2, deps2);
-    expect(vault2.files.get(FILE_PATH)).toContain(`海报: "${POSTER_FOLDER}/流浪地球2_1700000000000.jpg"`);
+    const r2 = await runOn(vault2, deps2);
+    expect(r2).toEqual({ ok: false, reason: 'write' });
+    expect(vault2.binaryFiles.size).toBe(0);
+    expect(vault2.files.get(FILE_PATH)).not.toContain('海报:');
   });
 
   it('无 key：字段落 rexxar 兜底（导演/编剧/主演），无评分', async () => {

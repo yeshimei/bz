@@ -126,7 +126,7 @@ describe('processor 深审修复（A2/N-UI5/N-UI2/N3/N4/N5/A5/T6）', () => {
     resetObsidianMocks();
     resetAIProviderCache();
     setAISettingsProvider(() => ({})); // 默认未配 AI：失败原因走「未配置」文案
-    // 目录缺省留空（ADR-0273）：本块验「已配好剪藏目录」的写盘/处理，须显式补上 articleDirectory
+    // 目录缺省留空（ADR-0274）：本块验「已配好剪藏目录」的写盘/处理，须显式补上 articleDirectory
     setSettingsProvider(() => ({ articleDirectory: '归档/网页剪藏' }) as any);
     document.body.innerHTML = '';
     vault = new MockVault();
@@ -266,7 +266,7 @@ describe('index 深审修复（N1/A3/N-UI1/EFF-1/EFF-2/EFF-3/N6/A4/AS3/T4/T5）'
     vi.useFakeTimers();
     resetObsidianMocks();
     document.body.innerHTML = '';
-    // 目录缺省留空（ADR-0273）：本块验「已配好剪藏目录」的自动摘要，须显式补上 articleDirectory
+    // 目录缺省留空（ADR-0274）：本块验「已配好剪藏目录」的自动摘要，须显式补上 articleDirectory
     setSettingsProvider(() => ({ articleDirectory: '归档/网页剪藏' }) as any);
     vault = new MockVault();
     workspace = makeWorkspace();

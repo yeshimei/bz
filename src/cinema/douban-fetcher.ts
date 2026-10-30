@@ -21,9 +21,6 @@ import { stripMdExt } from '../core/ui/str';
 import { yamlScalarOf } from '../core/utils';
 import { ILLEGAL_NAME_RE_GLOBAL } from './constants';
 
-/** 海报目录（对齐 CLI config 默认值） */
-export const POSTER_FOLDER = 'CONFIG/MOVIE POSTER';
-
 // ---------- 依赖注入 ----------
 
 export type HttpGet = (url: string, headers?: Record<string, string>) => Promise<string | null>;
@@ -40,7 +37,7 @@ export interface DoubanFetchDeps {
   apizeroKey?: string;
   /** 豆瓣 Cookie（设置项，可选；注入搜索/rexxar 请求头） */
   doubanCookie?: string;
-  /** 海报保存文件夹（设置项，可选；空/缺省回落 POSTER_FOLDER） */
+  /** 海报保存文件夹（调用方用 resolveAssetDir 解析好再传；空 = 没地方可写，不落库根） */
   posterFolder?: string;
   now?: () => number;
 }
@@ -568,7 +565,9 @@ export async function downloadPosterToVault(
   }
   if (!buf) return { ok: false, reason: 'network' };
   try {
-    const posterFolder = deps.posterFolder?.trim() || POSTER_FOLDER;
+    const posterFolder = String(deps.posterFolder || '').trim().replace(/\\/g, '/').replace(/^\/+|\/+$/g, '');
+    // 三跳全空（没设海报文件夹、Obsidian 没固定附件目录、影视目录也没配）：不写盘，绝不落库根
+    if (!posterFolder) return { ok: false, reason: 'write' };
     await deps.mkdir(posterFolder);
     const ext = posterUrl.match(/\.(jpg|jpeg|png|webp|gif)(\?.*)?$/i)?.[1] || 'jpg';
     const safeName = name.replace(ILLEGAL_NAME_RE_GLOBAL, '_');

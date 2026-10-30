@@ -55,7 +55,7 @@ beforeEach(() => {
   resetCinemaState();
   M.folderPath = '我的/影视';
   document.body.innerHTML = '';
-  // 目录缺省留空（ADR-0273）：本文件验「已配好影视目录」的悬浮/右键分流，须显式补上目录
+  // 目录缺省留空（ADR-0274）：本文件验「已配好影视目录」的悬浮/右键分流，须显式补上目录
   setSettingsProvider(() => ({ cinemaFolderPath: '我的/影视', cinemaMergeSeasons: true } as any));
 });
 

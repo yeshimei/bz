@@ -205,9 +205,10 @@ describe('侧写 marks / savedImages / pendingSource 读写（updateClipbookData
   });
 });
 
-describe('clipbookImageFolder 回落解析（issue 329）', () => {
+describe('clipbookImageFolder 回落解析（issue 329；2026-10-31 改口径）', () => {
   it('设置留空 → 回落 <articleDirectory>/assets', () => {
-    expect(clipbookImageDir()).toBe('归档/网页剪藏/assets');
+    setSettingsProvider(() => ({ articleDirectory: '归档/剪藏' } as any));
+    expect(clipbookImageDir()).toBe('归档/剪藏/assets');
   });
 
   it('设置非空 → 原样使用（归一反斜杠与首尾斜杠）', () => {
@@ -215,8 +216,8 @@ describe('clipbookImageFolder 回落解析（issue 329）', () => {
     expect(clipbookImageDir()).toBe('附件/网页图');
   });
 
-  it('articleDirectory 缺省 → 兜底默认剪藏目录', () => {
+  it('articleDirectory 也没配 → 空串（不再兜底字面量目录，更不落库根）', () => {
     setSettingsProvider(() => ({ storagePath: 'CONFIG/STORAGE' } as any));
-    expect(clipbookImageDir()).toBe('归档/网页剪藏/assets');
+    expect(clipbookImageDir()).toBe('');
   });
 });

@@ -8,7 +8,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { MockVault } from '../mock-vault';
 import {
-  DEFAULT_POSTER_FOLDER, coverDisplayUrl, ensurePosters, ensureShots, iconDisplayUrl, localCoverPath,
+  coverDisplayUrl, ensurePosters, ensureShots, iconDisplayUrl, localCoverPath,
   localIconPath, localShotPath, resolvePosterFolder, resolveShotUrls, setMediaInterval, unloadPosters,
 } from '../../src/gameshelf/posters';
 import { setApp } from '../../src/core/app';
@@ -17,6 +17,11 @@ import { requestUrl } from 'obsidian';
 
 const vault = new MockVault();
 const app = { vault } as any;
+/** 本域主目录：海报落 `<游戏目录>/assets`（2026-10-31 起不再有 CONFIG/游戏海报 缺省） */
+const MAIN_DIR = '我的/游戏';
+const POSTER_DIR = `${MAIN_DIR}/assets`;
+// COVER/ICON 在模块加载期就解析，夹具必须在它们之前就位
+setSettingsProvider(() => ({ gameshelfFolderPath: MAIN_DIR }) as any);
 const COVER = localCoverPath(1);
 const ICON = localIconPath(1);
 
@@ -25,7 +30,7 @@ const writes: Record<string, unknown>[] = [];
 
 function setup() {
   setApp(app);
-  setSettingsProvider(() => ({}) as any);
+  setSettingsProvider(() => ({ gameshelfFolderPath: MAIN_DIR }) as any);
 }
 
 function media(over: Partial<Parameters<typeof ensurePosters>[1][number]> = {}) {
@@ -125,7 +130,7 @@ describe('显示 URL 四级兜底', () => {
 
   it('本地文件不在 → 属性远端值 → 源键 → CDN 直拼', () => {
     setup();
-    expect(resolvePosterFolder()).toBe(DEFAULT_POSTER_FOLDER);
+    expect(resolvePosterFolder()).toBe(POSTER_DIR);
     expect(coverDisplayUrl(app, 9, 'https://cdn/9.jpg', 'https://src/9.jpg')).toBe('https://cdn/9.jpg');
     // 属性是本地路径但文件没了 → 落到源键
     expect(coverDisplayUrl(app, 9, localCoverPath(9), 'https://src/9.jpg')).toBe('https://src/9.jpg');

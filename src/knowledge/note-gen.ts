@@ -18,7 +18,7 @@ import { notice } from '../core/notice';
 import { localNow } from '../core/ui/str';
 import { withTimeout } from '../core/http';
 import { getApp } from '../core/app';
-import { resolveAssetDir } from '../core/attachment-dir';
+import { resolveAssetDir, domainAssetsDir } from '../core/attachment-dir';
 import { tryGetSettings } from '../core/settings-provider';
 import type { App } from 'obsidian';
 import { partialStringField } from './partial-json';
@@ -413,13 +413,12 @@ export async function generatePassageNote(opts: {
 
 // ---------- 图版（issue 312：图片 → 读图成文；图片本体与笔记同域落盘） ----------
 
-/** 图片本体落盘目录名（文献笔记旁的 assets/：与笔记同域，删笔记不留下跨域悬挂引用） */
-export const IMAGE_ASSETS_DIR = 'assets';
-
 /** 写唯一路径二进制（永不覆盖；目录不存在自动建）——writeUniqueNote 的二进制版（issue 312） */
 export async function writeUniqueBinary(dir: string, baseName: string, ext: string, bytes: ArrayBuffer): Promise<string> {
   const app = getApp();
-  const folder = String(dir || '文献盒').replace(/\\/g, '/').replace(/^\/+|\/+$/g, '');
+  const folder = String(dir || '').replace(/\\/g, '/').replace(/^\/+|\/+$/g, '');
+  // 三跳全空（图片文件夹没设、Obsidian 没固定附件目录、卡片文件夹没配）：不写盘，绝不落库根
+  if (!folder) throw new Error('还没定图片存哪：先在设置里配好卡片文件夹');
   let path = `${folder}/${baseName}.${ext}`;
   for (let i = 2; app.vault.getAbstractFileByPath(path); i++) path = `${folder}/${baseName}_${i}.${ext}`;
   try {
@@ -485,16 +484,16 @@ export async function generateImageDraft(imageUrls: string[], descs?: string[], 
 
 /**
  * 图版图片落地目录：设置优先 → **跟随 Obsidian「默认新附件位置」**（core/attachment-dir 单源）
- * → 回落文献目录下的 assets/（issue 313）。
+ * → 回落 **卡片文件夹下的 assets/**（2026-10-31 用户拍板：图版配图跟卡片盒走，不再落文献盒，
+ * 也不再自带 `文献盒` 字面量缺省）。三跳全空 = 空串，写盘侧据此拒绝，绝不落库根。
  */
-export function resolveImageDir(settings: { knowledgeImageFolder?: string; knowledgeDirectory?: string }): string {
-  const dir = String(settings?.knowledgeDirectory || '文献盒').replace(/\\/g, '/').replace(/^\/+|\/+$/g, '') || '文献盒';
-  return resolveAssetDir(settings?.knowledgeImageFolder, `${dir}/${IMAGE_ASSETS_DIR}`).dir;
+export function resolveImageDir(settings: { knowledgeImageFolder?: string; knowledgeCardboxDirectory?: string }): string {
+  return resolveAssetDir(settings?.knowledgeImageFolder, domainAssetsDir(settings?.knowledgeCardboxDirectory)).dir;
 }
 
 /**
  * 生成图版文献笔记（issue 312；多图与目录可配见 issue 313）：**先把图片本体逐张写进
- * 图片目录**（默认 `<文献目录>/assets/`，可用设置 `knowledgeImageFolder` 改；文件名取最终标题、
+ * 图片目录**（默认 `<卡片文件夹>/assets/`，可用设置 `knowledgeImageFolder` 改；文件名取最终标题、
  * 永不覆盖），再写笔记（frontmatter title/type: image/domain/date + 可选 source/sourceTitle；
  * 正文 = **先文字后图片**——读图解读在上、图片嵌入在下）。
  * 图片行语法分叉（ADR-0145）：该张有描述 → `![[路径|描述]]`，无描述 → `![[路径]]`，多图逐张

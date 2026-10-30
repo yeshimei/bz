@@ -53,7 +53,7 @@ describe('bookshelf 数据层', () => {
   beforeEach(() => {
     resetObsidianMocks();
     resetBookshelfState();
-    // 目录缺省已留空（ADR-0273）：未配置就不扫任何东西，本文件验的是「已配好书库」的解析行为
+    // 目录缺省已留空（ADR-0274）：未配置就不扫任何东西，本文件验的是「已配好书库」的解析行为
     setSettingsProvider(() => ({ bookshelfFolderPath: '书库' }) as any);
   });
   afterEach(() => {
@@ -106,7 +106,7 @@ describe('bookshelf 数据层', () => {
   });
 
   it('目录解析：两口都空 = 未配置；旧键一次性迁进新键；新键优先', () => {
-    // 未配置 = 空串（不再回落字面量「书库」，ADR-0273）
+    // 未配置 = 空串（不再回落字面量「书库」，ADR-0274）
     setSettingsProvider(() => ({}) as any);
     expect(resolveFolderPath()).toBe('');
 
@@ -133,7 +133,7 @@ describe('bookshelf 数据层', () => {
     const vault = new MockVault();
     vault.files.set('书库/三体.md', '---\ntags: [读书]\nauthor: 刘慈欣\n---');
     vault.files.set('书库/不匹配.md', '---\ntags: [novel]\n---');
-    // 目录缺省已留空（ADR-0273）：覆盖 provider 时把书库目录一起带上，否则一条都扫不到
+    // 目录缺省已留空（ADR-0274）：覆盖 provider 时把书库目录一起带上，否则一条都扫不到
     setSettingsProvider(() => ({ bookshelfFolderPath: '书库', bookTag: '读书' }) as any);
     const items = scanMarkdownBooks(makeApp(vault));
     expect(items.length).toBe(1);
