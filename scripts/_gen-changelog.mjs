@@ -311,8 +311,8 @@ if (targetVersion && manifest.version !== targetVersion) {
  * Release note 的「更新日志」节经用户改定后，才是给用户看的最终口径——发版前把它
  * 喂回生成器，覆盖对应版本块、重出 bz-changelog.html（在线资源的更新日志与 Release
  * 页同源同稿）。默认覆盖最新版本块；`--note-version=x.y.z` 指定要覆盖的历史版本，
- * 多份定稿逗号分隔一并回灌（定稿文件留在 docs/，重跑日志时全部带上）。解析只认 `- **标签** ：说明` 条目行；`## ✨ 新增`→added、
- * `## 🐛 修复`→fixed、`## ⚡ 优化`→improved；标签原样作 domain（DOMAIN_NAMES 没有
+ * 多份定稿逗号分隔一并回灌（定稿文件留在 docs/，重跑日志时全部带上）。解析只认 `- **标签** ：说明` 条目行；
+ * `## 新功能`（或 ✨ 新增）→added、`## 问题修复`（或 🐛 修复）→fixed、`## 体验优化`（或 ⚡ 优化）→improved；标签原样作 domain（DOMAIN_NAMES 没有
  * 的键渲染端直出原文）。条目数不受 CAPS 裁剪——这是用户拍板的定稿。 */
 /* 支持逗号分隔多份 note（--note=a.md,b.md --note-version=1.36.0,1.35.0，一一对应；
  * --note-version 少给时缺省逐个落到最新块）。生成器每次从 git 全量重建，历史版本的
@@ -322,7 +322,11 @@ const noteVersionArg = (process.argv.find((a) => a.startsWith('--note-version=')
 const noteFiles = noteArg ? noteArg.split(',').map((s) => s.trim()).filter(Boolean) : [];
 const noteVersions = noteVersionArg ? noteVersionArg.split(',').map((s) => s.trim()).filter(Boolean) : [];
 if (noteFiles.length) {
-  const secMap = { '✨ 新增': 'added', '🐛 修复': 'fixed', '⚡ 优化': 'improved' };
+  const secMap = {
+    '✨ 新增': 'added', '新功能': 'added',
+    '🐛 修复': 'fixed', '问题修复': 'fixed',
+    '⚡ 优化': 'improved', '体验优化': 'improved',
+  };
   noteFiles.forEach((noteFile, i) => {
   const notePath = join(ROOT, noteFile);
   const md = readFileSync(notePath, 'utf8');
@@ -498,8 +502,8 @@ const DATA = ${payload};
 const DOMAIN_NAMES = DATA.domainNames;
 const SECTIONS = [
   { key: 'added', label: '新功能', tier: 'pri' },
-  { key: 'fixed', label: '问题修复', tier: 'sec' },
-  { key: 'improved', label: '体验优化', tier: 'sec' }
+  { key: 'improved', label: '体验优化', tier: 'sec' },
+  { key: 'fixed', label: '问题修复', tier: 'sec' }
 ];
 const RAIL = DATA.releases.slice().reverse();
 const BY_VER = {};
