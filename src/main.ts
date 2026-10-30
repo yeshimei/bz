@@ -22,7 +22,7 @@ import { applySkinManifest, loadLocalSkinPack } from './core/skin-pack';
 import { refreshManifest } from './core/download-manifest';
 import { autoUpdateAssets } from './core/auto-assets';
 import { setAISettingsProvider, resetAIProviderCache } from './core/ai';
-import { setSettingsProvider, setSettingsSaver } from './core/settings-provider';
+import { setSettingsProvider, setSettingsSaver, setSettingsPanelOpener } from './core/settings-provider';
 import { bindMobileViewport, unbindMobileViewport } from './core/viewport';
 import { DOMAIN_ICONS } from './core/domain-icons';
 import { clearDomainEvents } from './core/domain-bus';
@@ -355,6 +355,9 @@ export default class BzPlugin extends Plugin {
     resetAIProviderCache();
     // 通用设置访问器（各域经 getSettings 读取）
     setSettingsProvider(() => this.settings);
+    // 设置面板打开通道：各域「打开设置」按钮（core/folder-setup 等）经此进来，
+    // core 不必 import 面板本体——那样会把整块面板拖进各域行为包（评审壳构建失败）。
+    setSettingsPanelOpener((domainId, anchorKey) => openSettingsPanel(this.app, domainId, anchorKey));
     // 数据目录初值（2026-10-29：缺省从 vault 根的 CONFIG/STORAGE 搬到 <插件目录>/storage）：
     // 只在 data.json 里还没有 storagePath 时写一次（新库）；已有值的库一律不动，不复制不搬运。
     // 必须排在 initDock 之前 —— 登记表路径就是从数据目录推出来的。

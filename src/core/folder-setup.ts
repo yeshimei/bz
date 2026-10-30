@@ -15,9 +15,8 @@
  *
  * 决策与代价见 docs/adr/adr-0273-folder-defaults-and-guides.md。
  */
-import { getApp } from './app';
 import { notice } from './notice';
-import { tryGetSettings } from './settings-provider';
+import { requestSettingsPanel, tryGetSettings } from './settings-provider';
 import { cleanDir, resolveAssetDir, type AssetDir } from './attachment-dir';
 // 从组件文件的深路径取，别走 './ui' 的桶文件：桶会把 settings-schema / path-picker 一并
 // 拖进来，而那些壳的假 obsidian 层没有 Setting / MarkdownRenderer，行为包直接构建失败。
@@ -178,10 +177,9 @@ export function needsFolderSetup(domain: FolderDomainId): boolean {
 }
 
 /** 打开设置面板并定位到该域第一个未配置的行。
- *  说明：用**变量拼出的**动态 import——写成字面量 `import('../settings-panel')` 时 esbuild
- *  会把整个设置面板打进每个域的行为包，而评审壳的假 obsidian 层没有 Setting/Component，
- *  影院/书库/知识盒的行为包会当场构建失败（2026-10-30 实际踩过）。运行时才解析，
- *  真插件里照常加载；壳里没人点这个按钮，点也只是这条路由失败，不影响别处。 */
+ *  面板由 main.ts 经 settings-provider 注入（`setSettingsPanelOpener`）：core 里既不能
+ *  字面量 import（会把整块面板打进各域行为包，评审壳的假 obsidian 缺 Setting/Component）、
+ *  也不能用变量拼 import()（CJS 产物里退化成原生 import()，运行时解析不到 → 按钮点了只弹提示）。 */
 export function openFolderSettings(domain: FolderDomainId, anchorKey?: string, closeBefore?: () => void): void {
   const plan = FOLDER_PLANS[domain];
   const key = anchorKey || folderState(domain).missing[0]?.field.key;
@@ -192,13 +190,10 @@ export function openFolderSettings(domain: FolderDomainId, anchorKey?: string, c
   } catch (e) {
     /* 关不掉就留着，不影响打开设置 */
   }
-  const spec = ['..', 'settings-panel'].join('/');
-  void (import(/* webpackIgnore: true */ spec) as Promise<{ openSettingsPanel: (a: unknown, d?: string, k?: string) => void }>)
-    .then((m) => m.openSettingsPanel(getApp(), plan.settingsId, key))
-    .catch(() => {
-      // 面板拿不到（评审壳里没有设置面板）：至少说一句，别让按钮点了像坏掉
-      notice('设置面板没能打开，可以从「设置 → 包仔」进入', 'warning');
-    });
+  if (!requestSettingsPanel(plan.settingsId, key)) {
+    // 没人接管（评审壳里没有设置面板）：至少说一句，别让按钮点了像坏掉
+    notice('设置面板没能打开，可以从「设置 → 包仔」进入', 'warning');
+  }
 }
 
 /**
