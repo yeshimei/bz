@@ -5046,23 +5046,8 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   border-radius: 9px;
 }
 
-.bz-rw-note {
-  margin-top: 23px;
-  font-size: 13.5px;
-  font-weight: 500;
-  line-height: 1.85;
-  color: var(--rw-ink);
-  letter-spacing: .07em;
-  text-align: center;
-}
-
-.bz-rw-note em {
-  font-style: normal;
-  color: var(--rw-gold-deep);
-}
-
 .bz-rw-ways {
-  margin-top: 11px;
+  margin-top: 20px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -5228,7 +5213,7 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   color: #b6ab97;
 }
 
-/* ---------- 落款 ---------- */
+/* ---------- 落款（只剩那道金弧，字已删） ---------- */
 .bz-rw-foot {
   flex: none;
   position: relative;
@@ -5243,26 +5228,6 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   inset: 0;
   width: 100%;
   height: 100%;
-}
-
-.bz-rw-foot p {
-  position: relative;
-  font-family: var(--rw-serif);
-  font-size: 10.5px;
-  letter-spacing: .18em;
-  text-indent: .18em;
-  color: #a89a76;
-  margin-top: -12px;
-}
-
-.bz-rw-seal {
-  position: absolute;
-  right: 24px;
-  bottom: 8px;
-  font-family: var(--rw-serif);
-  font-size: 9px;
-  letter-spacing: .26em;
-  color: rgba(156, 122, 48, .5);
 }
 
 /* ---------- 关闭钮（桌面右上角；移动端见窄屏段，距顶 44px） ---------- */
@@ -16117,7 +16082,7 @@ canvas { display: block; }
 .bz-sp-set-row[data-key="反馈"] .bz-sp-set-name::before,
 .bz-sp-set-row[data-key="GitHub 主页"] .bz-sp-set-name::before,
 .bz-sp-set-row[data-key="使用教程"] .bz-sp-set-name::before,
-.bz-sp-set-row[data-key="赞赏"] .bz-sp-set-name::before {
+.bz-sp-set-row[data-key="打赏"] .bz-sp-set-name::before {
   content: "";
   display: inline-block;
   width: 20px;
@@ -16154,8 +16119,8 @@ canvas { display: block; }
   --bz-row-ic: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23e0555a' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='9'/%3E%3Cpath d='M10 8.5l6 3.5-6 3.5z'/%3E%3C/svg%3E");
 }
 
-/* 赞赏 · 金 · 同心（与弹窗同一套纸色金） */
-.bz-sp-set-row[data-key="赞赏"] .bz-sp-set-name::before {
+/* 打赏 · 金 · 同心（与弹窗同一套纸色金；2026-10-30 行名「赞赏」改「打赏」，data-key 跟着改） */
+.bz-sp-set-row[data-key="打赏"] .bz-sp-set-name::before {
   --bz-row-ic-bg: #fdf3dd;
   --bz-row-ic-bd: #f0e0bc;
   --bz-row-ic: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%239c7a30' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20.8 4.6a5.5 5.5 0 00-7.8 0L12 5.7l-1.1-1.1a5.5 5.5 0 00-7.8 7.8l1.1 1.1L12 21.2l7.7-7.7 1.1-1.1a5.5 5.5 0 000-7.8z'/%3E%3C/svg%3E");
