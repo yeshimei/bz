@@ -257,6 +257,9 @@ describe('writeRecapEntry（diary 写入 API 集成，条目文件粒度）', ()
   beforeEach(() => {
     vault = new MockVault();
     setDiaryApp({ vault } as never);
+    // 日记目录缺省留空（ADR-0273）：本组断言落在「已配置日记本」口径，显式指到夹具目录，
+    // 否则写链路拿到空串、hasRecapEntry 找不到刚写下的条目
+    setSettingsProvider(() => ({ ...DEFAULT_SETTINGS, diaryDirectory: '我的/日记' }));
   });
 
   it('当天无日记文件：新写入一条回顾条目文件（frontmatter + 标记 + 正文 + 关键数字行），返回 written', async () => {

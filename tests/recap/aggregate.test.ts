@@ -190,7 +190,15 @@ describe('collectRecap（只读采集集成）', () => {
   beforeEach(() => {
     vault = new StatVault();
     setApp(mockAppWithVault(vault) as any);
-    setSettingsProvider(() => ({ ...DEFAULT_SETTINGS, storagePath: 'CONFIG/STORAGE' }));
+    // 域目录缺省留空（ADR-0273）：采集侧直接拿配置值当路径前缀，空串会命中 0 条。
+    // 这里按夹具实际写入的目录显式配置，断言仍走「已配置库」口径。
+    setSettingsProvider(() => ({
+      ...DEFAULT_SETTINGS,
+      storagePath: 'CONFIG/STORAGE',
+      diaryDirectory: '我的/日记',
+      cinemaFolderPath: '我的/影视',
+      bookshelfFolderPath: '书库',
+    }));
   });
 
   it('空库：摘要全 0、无痕迹、无失败域，且不创建任何文件（只读契约）', async () => {

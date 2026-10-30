@@ -376,7 +376,9 @@ describe('检查三：孤儿条目', () => {
         '书库/B.md': '# B',
         [`${DIR}/weave-data.json`]: weave,
       },
-      { '书库/B.md': { tags: ['book'], cover: 'CONFIG/BOOK/B/c.png' } }
+      { '书库/B.md': { tags: ['book'], cover: 'CONFIG/BOOK/B/c.png' } },
+      // 书库目录缺省留空（ADR-0273）：不显式配置，scanMarkdownBooks 扫不到夹具里的书
+      { storagePath: DIR, bookshelfFolderPath: '书库' }
     );
     const sec = await checkOrphans(app);
     expect(sec!.issues.some((i) => i.title.includes('书目《B》') && i.detail!.includes('CONFIG/BOOK/B/c.png'))).toBe(true);

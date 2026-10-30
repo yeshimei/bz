@@ -235,7 +235,7 @@ describe('clipbook UI 桌面三栏', () => {
     input.dispatchEvent(new Event('input'));
     await vi.waitFor(() => expect(M.cur).toBeNull());
     const reader = document.querySelector('[data-clip-reader]') as HTMLElement;
-    expect(reader.textContent).toContain('从列表选择一篇文章开始阅读');
+    expect(reader.textContent).toContain('从列表挑一篇，在这里读');
     closePanel();
   });
 

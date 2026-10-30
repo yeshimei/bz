@@ -13,6 +13,7 @@ import { makeApp } from '../helpers/app';
 import { MockVault, mockAppWithVault } from '../mock-vault';
 import { resetObsidianMocks } from '../mock-obsidian-entry';
 import { M, resetBookshelfState } from '../../src/bookshelf/state';
+import { setSettingsProvider } from '../../src/core/settings-provider';
 import { ensureBookshelf, unloadBookshelf } from '../../src/bookshelf';
 import { createOverlay, closeOverlay } from '../../src/bookshelf/ui';
 
@@ -56,6 +57,8 @@ describe('RR-U13：报告视图宿主搜索行为收窄', () => {
     resetObsidianMocks();
     document.body.innerHTML = '';
     resetBookshelfState();
+    // 书库目录缺省留空（ADR-0273）：resolveFolderPath 已不再回落「书库」，夹具要显式配置
+    setSettingsProvider(() => ({ bookTag: 'book', bookshelfFolderPath: '书库' }) as never);
   });
 
   afterEach(() => {
