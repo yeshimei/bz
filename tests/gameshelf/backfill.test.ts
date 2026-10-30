@@ -14,7 +14,13 @@ import { clearDetailCache } from '../../src/gameshelf/detail';
 import { localShotPath, setMediaInterval, unloadPosters } from '../../src/gameshelf/posters';
 import { M, resetGameshelfState, type GameItem } from '../../src/gameshelf/state';
 
-const CONFIG = { gameshelfSteamId: '76561198000000000', gameshelfSteamApiKey: 'KEY' };
+// 游戏目录要给：图片路径由「设置 → Obsidian 附件位置 → <游戏目录>/assets」三跳解析，
+// 目录全空时 localShotPath 明确返回空串（不拼 `/123.jpg` 那种库根路径），这里补上主目录。
+const CONFIG = {
+  gameshelfSteamId: '76561198000000000',
+  gameshelfSteamApiKey: 'KEY',
+  gameshelfFolderPath: '我的/游戏',
+};
 
 function item(appid: number, name: string, hasAch = false, fm?: Record<string, unknown>): GameItem {
   return {

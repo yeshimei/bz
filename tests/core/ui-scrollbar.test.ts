@@ -14,13 +14,18 @@ import { join } from 'node:path';
 const repo = (p: string) => readFileSync(join(process.cwd(), p), 'utf8');
 const componentsCss = () => repo('src/core/ui/components.css');
 
-/** 递归收集 src 下全部 styles.css（根 styles.css 是构建产物，不在 src，天然排除） */
+/** 递归收集 src 下全部 css（根 styles.css 是构建产物，不在 src，天然排除）。
+ *  2026-10-31：原来只认 `styles.css`，于是 `core/reward-dialog.css` 的 thin + 自绘 thumb
+ *  一直逃过检查——可见条禁令是「整仓样式源」的，不是「叫 styles.css 的文件」的。
+ *  排除 vendor（第三方库自带样式，不属本仓笔迹）。 */
 function listDomainStyles(dir: string): string[] {
   const out: string[] = [];
   for (const name of readdirSync(dir).sort()) {
     const p = join(dir, name);
-    if (statSync(p).isDirectory()) out.push(...listDomainStyles(p));
-    else if (name === 'styles.css') out.push(p);
+    if (statSync(p).isDirectory()) {
+      if (name === 'vendor') continue;
+      out.push(...listDomainStyles(p));
+    } else if (name.endsWith('.css')) out.push(p);
   }
   return out;
 }
@@ -69,7 +74,7 @@ describe('issue 277：滚动条隐藏收敛界面级单源（ADR-0122）', () =>
     expect(repo('src/encrypt/styles.css')).not.toContain('::-webkit-scrollbar-thumb');
   });
 
-  it('全仓 src/**/styles.css：thin/auto 与 ::-webkit-scrollbar-thumb 零回潮（杜绝可见条）', () => {
+  it('全仓 src 下全部 css：thin/auto 与 ::-webkit-scrollbar-thumb 零回潮（杜绝可见条）', () => {
     const hits: string[] = [];
     for (const file of listDomainStyles('src')) {
       const css = repo(file);

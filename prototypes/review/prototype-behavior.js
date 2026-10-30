@@ -1,5 +1,5 @@
-/* 源指纹 5526fc1bc63874fc · 仓内输入 312 个（校验见 tests/preview-freshness.test.ts） */
-/*#preview-inputs=["prototypes/review/fake-sim.ts","prototypes/review/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/keys.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/belongings/ai.ts","src/belongings/catalog-suggest.ts","src/belongings/category.ts","src/belongings/data.ts","src/belongings/layouts/poster/render.ts","src/belongings/motion.ts","src/belongings/render.ts","src/belongings/report-stats.ts","src/belongings/report.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/epub-notes.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/motion.ts","src/bookshelf/notes-ui.ts","src/bookshelf/notes.ts","src/bookshelf/render.ts","src/bookshelf/settings.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/bookshelf/ui.ts","src/checkup/checks-consistency.ts","src/checkup/checks-drift.ts","src/checkup/checks-json.ts","src/checkup/checks-orphans.ts","src/checkup/files.ts","src/checkup/index.ts","src/checkup/run.ts","src/checkup/ui.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/douban-fetcher.ts","src/cinema/seasons.ts","src/cinema/settings.ts","src/cinema/shared.ts","src/cinema/state.ts","src/clipbook/anchor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/file-sync.ts","src/clipbook/flow.ts","src/clipbook/image-save.ts","src/clipbook/index.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/motion.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/press/data.ts","src/clipbook/press/engine.ts","src/clipbook/press/index.ts","src/clipbook/press/motions.ts","src/clipbook/press/view.ts","src/clipbook/render.ts","src/clipbook/report-stats.ts","src/clipbook/report-ui.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/about-group.ts","src/core/ai-models.ts","src/core/ai.ts","src/core/app.ts","src/core/asr-proofread.ts","src/core/assets/reward-code.png","src/core/attachment-dir.ts","src/core/bundle-asset.ts","src/core/category-table.ts","src/core/changelog.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/domain-icons.ts","src/core/douban-name-index.ts","src/core/download-manifest.ts","src/core/env-check.ts","src/core/esc-manager.ts","src/core/file-sync.ts","src/core/flow-dialog.ts","src/core/folder-setup.ts","src/core/gesture.ts","src/core/http.ts","src/core/item-actions.ts","src/core/jev-fallback.ts","src/core/jev.ts","src/core/json-store.ts","src/core/knowledge-boxes.ts","src/core/landscape.ts","src/core/link-now.ts","src/core/lock-stats.ts","src/core/manual.ts","src/core/mask-dismiss.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/net-progress.ts","src/core/node-runtime-install.ts","src/core/note-trash.ts","src/core/notice.ts","src/core/offline-source.ts","src/core/path-picker.ts","src/core/plugin-path.ts","src/core/pomodoro-phase.ts","src/core/remote-asset.ts","src/core/remote-base.ts","src/core/reward-dialog.ts","src/core/rss-catalog.ts","src/core/self-update.ts","src/core/settings-btn-state.ts","src/core/settings-common.ts","src/core/settings-main-schema.ts","src/core/settings-modal.ts","src/core/settings-model-picker.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/setup-state.ts","src/core/setup-wizard.ts","src/core/sha256.ts","src/core/skin-pack.ts","src/core/storage-path.ts","src/core/storage.ts","src/core/tar.ts","src/core/tool-hint.ts","src/core/tool-runtime.ts","src/core/tool-setup.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/flip.ts","src/core/ui/focus-trap.ts","src/core/ui/help-tip.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slide-pill.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/vault-key.ts","src/core/z-order.ts","src/core/zip.ts","src/diary/config.ts","src/diary/settings.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/motion.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/favorites/ai.ts","src/favorites/app.ts","src/favorites/config.ts","src/favorites/data.ts","src/favorites/layouts/board/render.ts","src/favorites/motion.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/gameshelf/constants.ts","src/gameshelf/settings.ts","src/gameshelf/state.ts","src/home/entry-editor.ts","src/home/order.ts","src/home/settings.ts","src/home/shared.ts","src/knowledge/data.ts","src/knowledge/file-sync.ts","src/knowledge/index.ts","src/knowledge/motion.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-edit.ts","src/knowledge/note-gen.ts","src/knowledge/partial-json.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/relink.ts","src/knowledge/source-retire.ts","src/knowledge/source.ts","src/knowledge/tack.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/memo/data.ts","src/memo/due.ts","src/memo/render.ts","src/memo/settings.ts","src/memo/state.ts","src/memo/ui.ts","src/password-vault/data.ts","src/password-vault/settings.ts","src/people/chat.ts","src/people/datasource.ts","src/people/insights.ts","src/people/me-avatar.ts","src/people/media.ts","src/people/parse.ts","src/people/render.ts","src/people/safe-store.ts","src/people/settings.ts","src/people/stats.ts","src/people/types.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/index.ts","src/pomodoro/motion.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts","src/reading-report/index.ts","src/reading-report/report.ts","src/reading-report/stats.ts","src/review/analysis/data.ts","src/review/analysis/engine.ts","src/review/analysis/index.ts","src/review/analysis/kits.ts","src/review/analysis/motions.ts","src/review/analysis/view.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/motion.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/quiz-panel-data.ts","src/review/quiz-panel.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts","src/secondbrain/ai.ts","src/secondbrain/chunk.ts","src/secondbrain/config.ts","src/secondbrain/link-agent/data.ts","src/secondbrain/link-agent/pipeline.ts","src/secondbrain/motion.ts","src/secondbrain/panel.ts","src/secondbrain/readonly.ts","src/secondbrain/render.ts","src/secondbrain/store-file.ts","src/secondbrain/tfidf.ts","src/secondbrain/vector-math.ts","src/secondbrain/weekly-ui.ts","src/secondbrain/weekly.ts","src/secondbrain/whitelist.ts","src/settings-panel/changelog.ts","src/settings-panel/index.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/manual-viewer.ts","src/settings-panel/motion.ts","src/settings-panel/online-resources.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/shared.ts","src/settings-panel/ui.ts","src/settings.ts","src/smartcat/belongings-source.ts","src/smartcat/character.ts","src/smartcat/config.ts","src/smartcat/data.ts","src/smartcat/favorites-source.ts","src/smartcat/motion.ts","src/smartcat/types.ts","src/smartcat/ui.ts"]*/
+/* 源指纹 8f9abed33346bd90 · 仓内输入 313 个（校验见 tests/preview-freshness.test.ts） */
+/*#preview-inputs=["prototypes/review/fake-sim.ts","prototypes/review/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/keys.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/belongings/ai.ts","src/belongings/catalog-suggest.ts","src/belongings/category.ts","src/belongings/data.ts","src/belongings/layouts/poster/render.ts","src/belongings/motion.ts","src/belongings/render.ts","src/belongings/report-stats.ts","src/belongings/report.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/epub-notes.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/motion.ts","src/bookshelf/notes-ui.ts","src/bookshelf/notes.ts","src/bookshelf/render.ts","src/bookshelf/settings.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/bookshelf/ui.ts","src/checkup/checks-consistency.ts","src/checkup/checks-drift.ts","src/checkup/checks-json.ts","src/checkup/checks-orphans.ts","src/checkup/files.ts","src/checkup/index.ts","src/checkup/run.ts","src/checkup/ui.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/douban-fetcher.ts","src/cinema/seasons.ts","src/cinema/settings.ts","src/cinema/shared.ts","src/cinema/state.ts","src/clipbook/anchor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/file-sync.ts","src/clipbook/flow.ts","src/clipbook/image-save.ts","src/clipbook/index.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/motion.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/press/data.ts","src/clipbook/press/engine.ts","src/clipbook/press/index.ts","src/clipbook/press/motions.ts","src/clipbook/press/view.ts","src/clipbook/render.ts","src/clipbook/report-stats.ts","src/clipbook/report-ui.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/about-group.ts","src/core/ai-models.ts","src/core/ai.ts","src/core/app.ts","src/core/asr-proofread.ts","src/core/assets/reward-code.png","src/core/attachment-dir.ts","src/core/bundle-asset.ts","src/core/category-table.ts","src/core/changelog.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/domain-icons.ts","src/core/douban-name-index.ts","src/core/download-manifest.ts","src/core/env-check.ts","src/core/esc-manager.ts","src/core/file-sync.ts","src/core/flow-dialog.ts","src/core/folder-setup.ts","src/core/gesture.ts","src/core/http.ts","src/core/item-actions.ts","src/core/jev-fallback.ts","src/core/jev.ts","src/core/json-store.ts","src/core/knowledge-boxes.ts","src/core/landscape.ts","src/core/link-now.ts","src/core/lock-stats.ts","src/core/manual.ts","src/core/mask-dismiss.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/net-progress.ts","src/core/node-runtime-install.ts","src/core/note-trash.ts","src/core/notice.ts","src/core/offline-source.ts","src/core/path-picker.ts","src/core/plugin-path.ts","src/core/pomodoro-phase.ts","src/core/remote-asset.ts","src/core/remote-base.ts","src/core/reward-dialog.ts","src/core/rss-catalog.ts","src/core/self-update.ts","src/core/settings-btn-state.ts","src/core/settings-common.ts","src/core/settings-main-schema.ts","src/core/settings-modal.ts","src/core/settings-model-picker.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/setup-state.ts","src/core/setup-wizard.ts","src/core/sha256.ts","src/core/skin-pack.ts","src/core/storage-path.ts","src/core/storage.ts","src/core/tar.ts","src/core/tool-hint.ts","src/core/tool-runtime.ts","src/core/tool-setup.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/flip.ts","src/core/ui/focus-trap.ts","src/core/ui/help-tip.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/setup-screen.ts","src/core/ui/slide-pill.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/vault-key.ts","src/core/z-order.ts","src/core/zip.ts","src/diary/config.ts","src/diary/settings.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/motion.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/favorites/ai.ts","src/favorites/app.ts","src/favorites/config.ts","src/favorites/data.ts","src/favorites/layouts/board/render.ts","src/favorites/motion.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/gameshelf/constants.ts","src/gameshelf/settings.ts","src/gameshelf/state.ts","src/home/entry-editor.ts","src/home/order.ts","src/home/settings.ts","src/home/shared.ts","src/knowledge/data.ts","src/knowledge/file-sync.ts","src/knowledge/index.ts","src/knowledge/motion.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-edit.ts","src/knowledge/note-gen.ts","src/knowledge/partial-json.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/relink.ts","src/knowledge/source-retire.ts","src/knowledge/source.ts","src/knowledge/tack.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/memo/data.ts","src/memo/due.ts","src/memo/render.ts","src/memo/settings.ts","src/memo/state.ts","src/memo/ui.ts","src/password-vault/data.ts","src/password-vault/settings.ts","src/people/chat.ts","src/people/datasource.ts","src/people/insights.ts","src/people/me-avatar.ts","src/people/media.ts","src/people/parse.ts","src/people/render.ts","src/people/safe-store.ts","src/people/settings.ts","src/people/stats.ts","src/people/types.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/index.ts","src/pomodoro/motion.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts","src/reading-report/index.ts","src/reading-report/report.ts","src/reading-report/stats.ts","src/review/analysis/data.ts","src/review/analysis/engine.ts","src/review/analysis/index.ts","src/review/analysis/kits.ts","src/review/analysis/motions.ts","src/review/analysis/view.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/motion.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/quiz-panel-data.ts","src/review/quiz-panel.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts","src/secondbrain/ai.ts","src/secondbrain/chunk.ts","src/secondbrain/config.ts","src/secondbrain/link-agent/data.ts","src/secondbrain/link-agent/pipeline.ts","src/secondbrain/motion.ts","src/secondbrain/panel.ts","src/secondbrain/readonly.ts","src/secondbrain/render.ts","src/secondbrain/store-file.ts","src/secondbrain/tfidf.ts","src/secondbrain/vector-math.ts","src/secondbrain/weekly-ui.ts","src/secondbrain/weekly.ts","src/secondbrain/whitelist.ts","src/settings-panel/changelog.ts","src/settings-panel/index.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/manual-viewer.ts","src/settings-panel/motion.ts","src/settings-panel/online-resources.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/shared.ts","src/settings-panel/ui.ts","src/settings.ts","src/smartcat/belongings-source.ts","src/smartcat/character.ts","src/smartcat/config.ts","src/smartcat/data.ts","src/smartcat/favorites-source.ts","src/smartcat/motion.ts","src/smartcat/types.ts","src/smartcat/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/review/fake-sim.ts → window.BZW_review（行为单源预览包，issue 245/ADR-0106） */
 var BZW_review = (() => {
   var __create = Object.create;
@@ -5213,6 +5213,7 @@ var BZW_review = (() => {
     return Math.min(base + extra, 15e3);
   }
   function ensureContainer() {
+    if (typeof document === "undefined" || !(document == null ? void 0 : document.body)) return null;
     let container = document.getElementById("bz-notice-container");
     if (!container) {
       container = document.createElement("div");
@@ -5395,6 +5396,7 @@ var BZW_review = (() => {
     const type = isProgress ? "info" : kind;
     const variant = opts && opts.variant || defaultVariant();
     const container = ensureContainer();
+    if (!container) return noopHandle();
     applyPositionClass(container);
     if (opts && opts.dedupeKey) {
       const key = opts.dedupeKey;
@@ -6680,6 +6682,8 @@ var BZW_review = (() => {
 
   // src/core/mask-dismiss.ts
   function bindMaskDismiss(mask, onDismiss) {
+    const existing = unbinders.get(mask);
+    if (existing) return existing;
     let armed = null;
     let dragged = false;
     let upOnMask = false;
@@ -6742,7 +6746,7 @@ var BZW_review = (() => {
     mask.addEventListener("touchmove", onMove, { capture: true, passive: true });
     mask.addEventListener("touchcancel", onCancel, true);
     mask.addEventListener("click", onClick);
-    return () => {
+    const unbind = () => {
       mask.removeEventListener("mousedown", onDown, true);
       mask.removeEventListener("mouseup", onUp, true);
       mask.removeEventListener("mousemove", onMove, true);
@@ -6751,12 +6755,16 @@ var BZW_review = (() => {
       mask.removeEventListener("touchmove", onMove, true);
       mask.removeEventListener("touchcancel", onCancel, true);
       mask.removeEventListener("click", onClick);
+      unbinders.delete(mask);
     };
+    unbinders.set(mask, unbind);
+    return unbind;
   }
-  var MASK_DISMISS_SLOP;
+  var MASK_DISMISS_SLOP, unbinders;
   var init_mask_dismiss = __esm({
     "src/core/mask-dismiss.ts"() {
       MASK_DISMISS_SLOP = 8;
+      unbinders = /* @__PURE__ */ new WeakMap();
     }
   });
 
@@ -21079,6 +21087,10 @@ ${countsToText(s.missing)}
   function needsFolderSetup(domain) {
     return !folderState(domain).ok;
   }
+  function needsFolderKey(domain, key) {
+    var _a2;
+    return !!((_a2 = folderState(domain).fields.find((f) => f.field.key === key)) == null ? void 0 : _a2.missing);
+  }
   function openFolderSettings(domain, anchorKey, closeBefore) {
     var _a2;
     const plan = FOLDER_PLANS[domain];
@@ -21106,7 +21118,8 @@ ${countsToText(s.missing)}
           settingsId: "diary",
           title: "日记本还没定文件夹",
           desc: "写下的每一篇都会存进日记文件夹。定了之后才有地方落笔。",
-          fields: [{ key: "diaryDirectory", label: "日记文件夹", reco: "我的/日记", note: "信件文件夹可选，用到时才问" }]
+          hint: "信件文件夹可选，用到时才问。",
+          fields: [{ key: "diaryDirectory", label: "日记文件夹", reco: "我的/日记" }]
         },
         clipbook: {
           name: "剪藏本",
@@ -21267,7 +21280,7 @@ ${countsToText(s.missing)}
   }
   async function writeUniqueImage(dir, baseName2, ext, bytes) {
     const app = getApp();
-    const folder = String(dir || "").replace(/\\/g, "/").replace(/^\/+|\/+$/g, "");
+    const folder = cleanDir(dir);
     if (!folder) throw new Error("还没定图片存哪：先在设置里配好剪藏文件夹");
     let path = `${folder}/${baseName2}.${ext}`;
     for (let i = 2; app.vault.getAbstractFileByPath(path); i++) path = `${folder}/${baseName2}_${i}.${ext}`;
@@ -23727,6 +23740,10 @@ ${lines}`;
   });
 
   // src/knowledge/note-gen.ts
+  function litDir() {
+    var _a2;
+    return cleanDir((_a2 = tryGetSettings()) == null ? void 0 : _a2.knowledgeDirectory);
+  }
   function parseDomainList(raw) {
     return [...new Set(String(raw != null ? raw : "").split(/[,，、]/).map((s) => s.trim()).filter(Boolean))];
   }
@@ -23808,7 +23825,8 @@ ${lines}`;
   }
   async function writeUniqueNote(dir, baseName2, content) {
     const app = getApp();
-    const folder = String(dir || "文献盒").replace(/\\/g, "/").replace(/^\/+|\/+$/g, "");
+    const folder = String(dir || "").replace(/\\/g, "/").replace(/^\/+|\/+$/g, "");
+    if (!folder) throw new Error("知识盒还没定文献文件夹：先在设置里选一个");
     let path = `${folder}/${baseName2}.md`;
     for (let i = 2; app.vault.getAbstractFileByPath(path); i++) path = `${folder}/${baseName2}_${i}.md`;
     try {
@@ -23821,8 +23839,8 @@ ${lines}`;
   }
   function findDuplicateTermNote(term) {
     const app = getApp();
-    const s = tryGetSettings();
-    const dir = String(s.knowledgeDirectory || "文献盒").replace(/\\/g, "/").replace(/^\/+|\/+$/g, "");
+    const dir = litDir();
+    if (!dir) return null;
     const path = `${dir}/${sanitizeMdTitle(term)}.md`;
     return app.vault.getAbstractFileByPath(path) ? path : null;
   }
@@ -23884,7 +23902,7 @@ ${metaExcerpt(chunks)}`,
       "---"
     ].join("\n");
     const body = [fm, whole, videoSection].filter(Boolean).join("\n\n");
-    return writeUniqueNote(String(s.knowledgeDirectory || "文献盒"), sanitizeMdTitle(title), body);
+    return writeUniqueNote(litDir(), sanitizeMdTitle(title), body);
   }
   function termPrompt(term, list) {
     return `你是百科知识整理助手。为术语「${term}」生成一篇文献笔记。只输出 JSON，不要任何解释：
@@ -23932,7 +23950,7 @@ ${metaExcerpt(chunks)}`,
     }
     fm.push("---");
     const body = [fm.join("\n"), summary].filter(Boolean).join("\n\n");
-    return writeUniqueNote(String(s.knowledgeDirectory || "文献盒"), sanitizeMdTitle(term), body);
+    return writeUniqueNote(litDir(), sanitizeMdTitle(term), body);
   }
   function passagePrompt(text2, list) {
     return `你是文献整理助手。把下方这段文字整理成一篇文献笔记。只输出 JSON，不要任何解释：
@@ -23977,7 +23995,7 @@ ${text2}`;
     }
     fm.push("---");
     const body = [fm.join("\n"), summary].filter(Boolean).join("\n\n");
-    return writeUniqueNote(String(s.knowledgeDirectory || "文献盒"), sanitizeMdTitle(title || summary), body);
+    return writeUniqueNote(litDir(), sanitizeMdTitle(title || summary), body);
   }
   async function writeUniqueBinary(dir, baseName2, ext, bytes) {
     const app = getApp();
@@ -24044,7 +24062,7 @@ ${notes.map((x) => `第 ${x.n} 张：${x.d}`).join("\n")}`;
     if (!title && !summary) throw new Error("图版为空");
     const images = (Array.isArray(opts.images) ? opts.images : []).filter((im) => im && im.bytes);
     if (!images.length) throw new Error("图版没有图片");
-    const dir = String(s.knowledgeDirectory || "文献盒");
+    const dir = litDir();
     const name = sanitizeMdTitle(title || summary.slice(0, 30));
     const imageRoot = resolveImageDir(s);
     const imagePaths = [];
@@ -24180,11 +24198,11 @@ ${content || ""}`;
     return lines.join(src.includes("\r\n") ? "\r\n" : "\n");
   }
   async function backfillNotes(opts = {}) {
-    var _a2, _b2;
+    var _a2, _b2, _c;
     const app = getApp();
-    const s = tryGetSettings();
     const aiTimeoutMs = (_a2 = opts.aiTimeoutMs) != null ? _a2 : BACKFILL_AI_TIMEOUT_MS;
-    const dir = String(s.knowledgeDirectory || "文献盒").replace(/\\/g, "/").replace(/^\/+|\/+$/g, "");
+    const dir = litDir();
+    if (!dir) return { scanned: 0, filled: 0, aiSkipped: false };
     const files = (app.vault.getFiles() || []).filter((f) => f.path.startsWith(dir + "/") && f.path.endsWith(".md"));
     const needDomain = [];
     let filled = 0;
@@ -24223,7 +24241,7 @@ ${content || ""}`;
     let aiSkipped = false;
     if (needDomain.length) {
       const ai = createAI();
-      const list = parseDomainList(s.knowledgeDomainList);
+      const list = parseDomainList((_b2 = tryGetSettings()) == null ? void 0 : _b2.knowledgeDomainList);
       for (const { file } of needDomain) {
         try {
           const latest = await app.vault.read(file);
@@ -24238,7 +24256,7 @@ ${sample}`
             aiTimeoutMs,
             "领域判定"
           );
-          const domain = String(((_b2 = parseAiJson(raw)) == null ? void 0 : _b2.domain) || "").trim();
+          const domain = String(((_c = parseAiJson(raw)) == null ? void 0 : _c.domain) || "").trim();
           if (domain) {
             await app.vault.modify(file, injectFrontmatter(latest, [`domain:${domain}`]));
             filled++;
@@ -29731,7 +29749,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
       ]
     };
   }
-  function mountKnowledgeFolderGate(el2) {
+  function mountKnowledgeFolderGate(el2, closeBefore) {
     if (!needsFolderSetup("knowledge")) return false;
     const plan = folderState("knowledge").plan;
     el2.textContent = "";
@@ -29747,7 +29765,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
     act.type = "button";
     act.className = "bz-kb-mt-btn bz-kb-gate-act";
     act.textContent = "打开设置";
-    act.addEventListener("click", () => openFolderSettings("knowledge"));
+    act.addEventListener("click", () => openFolderSettings("knowledge", void 0, closeBefore));
     wrap.append(title, note, act);
     el2.appendChild(wrap);
     return true;
@@ -30871,7 +30889,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
         /** 当前部数据 + 渲染（目录变更检测 → 清缓存重扫） */
         async refreshCurrent() {
           if (!this.contentEl) return;
-          if (mountKnowledgeFolderGate(this.contentEl)) return;
+          if (mountKnowledgeFolderGate(this.contentEl, () => this.hideMain())) return;
           const s = tryGetSettings();
           if (this.part === "z1") {
             const dir = litDirOf(s);
@@ -34154,17 +34172,24 @@ ${String(blockText != null ? blockText : "").trim()}`);
       uiManager = null;
     }
   }
+  function blockedByFolderSetup() {
+    if (!needsFolderKey("knowledge", "knowledgeDirectory")) return false;
+    openFolderSettings("knowledge", "knowledgeDirectory");
+    return true;
+  }
   function openKnowledgePanel(app) {
     ensureKnowledge(app);
     uiManager == null ? void 0 : uiManager.showMain();
   }
   function openKnowledgeAddTask(app, prefill) {
     ensureKnowledge(app);
+    if (blockedByFolderSetup()) return;
     uiManager == null ? void 0 : uiManager.showVideoEntry(prefill);
   }
   function openTermNote(app, term, opts) {
     var _a2, _b2;
     ensureKnowledge(app);
+    if (blockedByFolderSetup()) return;
     let t = term == null ? void 0 : term.trim();
     let src;
     if (opts == null ? void 0 : opts.source) src = prefillSource(opts.source);
@@ -34181,6 +34206,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
   function openPassageNote(app, opts) {
     var _a2, _b2, _c;
     ensureKnowledge(app);
+    if (blockedByFolderSetup()) return;
     let text2;
     let src;
     const explicit = String((_a2 = opts == null ? void 0 : opts.text) != null ? _a2 : "").trim();
@@ -34196,6 +34222,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
   }
   function openImageNote(app, opts) {
     ensureKnowledge(app);
+    if (blockedByFolderSetup()) return;
     let src;
     if (opts == null ? void 0 : opts.source) src = prefillSource(opts.source);
     if (!src) {
@@ -34282,6 +34309,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
       init_data5();
       init_ui3();
       init_note_gen();
+      init_folder_setup();
       init_relink();
       init_source_retire();
       init_file_sync2();
@@ -35093,7 +35121,8 @@ ${missing.map((m) => `- ${m}`).join("\n")}
       if (data) {
         const savedArchive = data.savedArchive;
         if (Array.isArray(savedArchive)) {
-          const scannedNotes = await scanClipDirectory(clipDir(), { vault: app.vault }) || [];
+          const clipFolder = clipDir();
+          const scannedNotes = (clipFolder ? await scanClipDirectory(clipFolder, { vault: app.vault }) : []) || [];
           const urls = clipUrlSet(scannedNotes);
           for (let i = 0; i < savedArchive.length; i++) {
             if ((_k = opts.isCancelled) == null ? void 0 : _k.call(opts)) return null;
@@ -53051,8 +53080,8 @@ ${bodyText.substring(0, 6e3)}`;
   }
   function getWatchedFolders2() {
     const s = tryGetSettings();
-    const kb = String(s && s.knowledgeDirectory || "文献盒").trim().replace(/\\/g, "/").replace(/^\/+|\/+$/g, "") || "文献盒";
-    return [kb, clipDir()];
+    const kb = cleanDir(s && s.knowledgeDirectory);
+    return [kb, clipDir()].filter((d) => !!d);
   }
   async function referencedByClipbook(path) {
     if (!path) return false;
@@ -53077,6 +53106,7 @@ ${bodyText.substring(0, 6e3)}`;
       init_settings_provider();
       init_file_sync();
       init_save();
+      init_attachment_dir();
       init_data4();
       agent2 = createFileSync({
         logTag: "[clipbook-file-sync]",
@@ -53175,6 +53205,7 @@ ${bodyText.substring(0, 6e3)}`;
       if (path) invalidateClipBodyCache(path);
       if (stalePath) invalidateClipBodyCache(stalePath);
       const d = clipDir();
+      if (!d) return;
       const inDir2 = (p) => !!p && p.startsWith(d + "/");
       if (!inDir2(path) && !inDir2(stalePath)) return;
       if (timer) clearTimeout(timer);
@@ -54831,9 +54862,8 @@ ${c.trim()}
       await enqueueNewsWrite(() => writeNewsDataMerged({ set, removeArticleKeys: removedKeys }));
     }
     const sidecar = await readClipbookData();
-    const clipNotes = await scanClipDirectory(clipDir(), {
-      vault: getApp().vault
-    });
+    const clipFolder = clipDir();
+    const clipNotes = clipFolder ? await scanClipDirectory(clipFolder, { vault: getApp().vault }) : null;
     if (clipNotes && clipNotes.rejected > 0) {
       console.warn(`[剪藏本] 剪藏目录有 ${clipNotes.rejected} 篇无法识别（缺 url/created frontmatter）`, clipNotes.rejectedPaths);
     }
@@ -64105,6 +64135,246 @@ GitHub 仓库：${ghInfo.title}
     }
   });
 
+  // src/core/ui/setup-screen.ts
+  function uiSetupScreen(opts) {
+    const el2 = document.createElement("div");
+    el2.className = "bz-setup" + (opts.inline ? " bz-setup--inline" : " bz-setup--mask");
+    el2.dataset.su = opts.inline ? "box" : "mask";
+    const box = document.createElement("div");
+    box.className = "bz-setup-box";
+    box.dataset.su = "box";
+    const head = document.createElement("div");
+    head.className = "bz-setup-head";
+    const badge = document.createElement("div");
+    badge.className = "bz-setup-badge";
+    badge.dataset.su = "badge";
+    badge.appendChild(uiIcon(opts.icon || "key-round", "bz-setup-badge-ic"));
+    head.appendChild(badge);
+    const headText = document.createElement("div");
+    const title = document.createElement("h4");
+    title.className = "bz-setup-title";
+    title.dataset.su = "title";
+    title.textContent = opts.title || "设置主密码";
+    const sub = document.createElement("p");
+    sub.className = "bz-setup-sub";
+    sub.dataset.su = "sub";
+    if (opts.sub) sub.textContent = opts.sub;
+    else sub.innerHTML = DEFAULT_SUB;
+    headText.appendChild(title);
+    headText.appendChild(sub);
+    head.appendChild(headText);
+    box.appendChild(head);
+    const makeInput2 = (id, placeholder) => {
+      const inp = document.createElement("input");
+      inp.type = "text";
+      inp.className = "bz-setup-input";
+      inp.dataset.su = id;
+      inp.placeholder = placeholder;
+      inp.spellcheck = false;
+      inp.setAttribute("autocapitalize", "off");
+      inp.setAttribute("autocorrect", "off");
+      inp.autocomplete = "new-password";
+      return inp;
+    };
+    const field1 = document.createElement("div");
+    field1.className = "bz-setup-field";
+    const label1 = document.createElement("label");
+    label1.className = "bz-setup-label";
+    label1.textContent = "主密码";
+    const uid = "bz-setup-" + ++SEQ + "-";
+    const input = makeInput2("p1", "输入要设置的主密码");
+    label1.htmlFor = input.id = uid + "p1";
+    field1.appendChild(label1);
+    field1.appendChild(input);
+    box.appendChild(field1);
+    const field2 = document.createElement("div");
+    field2.className = "bz-setup-field";
+    const label2 = document.createElement("label");
+    label2.className = "bz-setup-label";
+    label2.textContent = "再输一遍";
+    const wrap2 = document.createElement("div");
+    wrap2.className = "bz-setup-control";
+    const input2 = makeInput2("p2", "重复输入，确认没有打错");
+    label2.htmlFor = input2.id = uid + "p2";
+    const mark = document.createElement("span");
+    mark.className = "bz-setup-mark";
+    mark.dataset.su = "mark";
+    wrap2.appendChild(input2);
+    wrap2.appendChild(mark);
+    field2.appendChild(label2);
+    field2.appendChild(wrap2);
+    box.appendChild(field2);
+    const warn = document.createElement("div");
+    warn.className = "bz-setup-warn";
+    warn.dataset.su = "warn";
+    warn.appendChild(uiIcon("triangle-alert", "bz-setup-warn-ic"));
+    const warnText = document.createElement("p");
+    warnText.innerHTML = WARN_TEXT;
+    warn.appendChild(warnText);
+    box.appendChild(warn);
+    const ack = document.createElement("label");
+    ack.className = "bz-setup-ack";
+    ack.dataset.su = "ack";
+    const ackBox = document.createElement("input");
+    ackBox.type = "checkbox";
+    const ackText = document.createElement("span");
+    ackText.textContent = "我已牢记这个密码";
+    ack.appendChild(ackBox);
+    ack.appendChild(ackText);
+    box.appendChild(ack);
+    const err = document.createElement("div");
+    err.className = "bz-setup-err";
+    err.dataset.su = "err";
+    box.appendChild(err);
+    const actionBtn = document.createElement("button");
+    actionBtn.className = "bz-setup-go";
+    actionBtn.dataset.su = "go";
+    actionBtn.type = "button";
+    actionBtn.textContent = opts.action || "设置并解锁";
+    box.appendChild(actionBtn);
+    const cancelBtn = document.createElement("button");
+    cancelBtn.className = "bz-setup-later";
+    cancelBtn.dataset.su = "cancel";
+    cancelBtn.type = "button";
+    cancelBtn.textContent = opts.cancel || "暂不设置";
+    box.appendChild(cancelBtn);
+    el2.appendChild(box);
+    let busy = false;
+    let closed = false;
+    const setErr = (m) => {
+      err.textContent = m;
+      err.classList.toggle("is-shown", !!m);
+    };
+    const setMark = (state3) => {
+      mark.textContent = "";
+      mark.classList.remove("is-shown", "bz-setup-mark--ok", "bz-setup-mark--bad");
+      wrap2.classList.remove("is-bad");
+      if (state3 === "none") return;
+      mark.appendChild(uiIcon(state3 === "ok" ? "check" : "x", "bz-setup-mark-ic"));
+      const t = document.createElement("span");
+      t.textContent = state3 === "ok" ? "一致" : "不一致";
+      mark.appendChild(t);
+      mark.classList.add("is-shown", state3 === "ok" ? "bz-setup-mark--ok" : "bz-setup-mark--bad");
+      if (state3 === "bad") wrap2.classList.add("is-bad");
+    };
+    const sync = () => {
+      const v1 = input.value;
+      const v2 = input2.value;
+      if (!v2) setMark("none");
+      else setMark(v2 === v1 ? "ok" : "bad");
+      if (err.classList.contains("is-shown")) setErr("");
+    };
+    const setBusy = (b) => {
+      busy = !!b;
+      actionBtn.disabled = !!b;
+      input.disabled = !!b;
+      input2.disabled = !!b;
+      ackBox.disabled = !!b;
+      cancelBtn.disabled = !!b;
+      actionBtn.textContent = b ? "处理中…" : opts.action || "设置并解锁";
+    };
+    const focus = () => {
+      try {
+        input.focus({ preventScroll: true });
+      } catch (e) {
+        input.focus();
+      }
+    };
+    const close = () => {
+      if (closed) return;
+      closed = true;
+      if (!opts.inline) {
+        unDismiss();
+        esc4 == null ? void 0 : esc4.unregister();
+      }
+      el2.remove();
+    };
+    const cancel = () => {
+      var _a2;
+      if (busy || closed) return;
+      close();
+      (_a2 = opts.onCancel) == null ? void 0 : _a2.call(opts);
+    };
+    const submit = async () => {
+      if (busy) return;
+      const v1 = input.value;
+      const v2 = input2.value;
+      if (!v1) {
+        setErr("请输入主密码");
+        focus();
+        return;
+      }
+      if (v1 !== v2) {
+        setErr("两次输入不一致");
+        input2.focus();
+        return;
+      }
+      if (!ackBox.checked) {
+        setErr("请先勾选确认");
+        return;
+      }
+      setErr("");
+      setBusy(true);
+      try {
+        await opts.onSubmit(v1);
+      } catch (e) {
+        setBusy(false);
+        setErr((e == null ? void 0 : e.message) || "设置失败");
+      }
+    };
+    input.addEventListener("input", sync);
+    input2.addEventListener("input", sync);
+    ackBox.addEventListener("change", () => {
+      ack.classList.toggle("is-on", ackBox.checked);
+      if (err.classList.contains("is-shown")) setErr("");
+    });
+    for (const inp of [input, input2]) {
+      inp.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") {
+          e.preventDefault();
+          void submit();
+        }
+      });
+    }
+    actionBtn.addEventListener("click", () => {
+      void submit();
+    });
+    cancelBtn.addEventListener("click", cancel);
+    let esc4 = null;
+    let unDismiss = () => {
+    };
+    if (!opts.inline) {
+      unDismiss = bindMaskDismiss(el2, cancel);
+      esc4 = escManager.register("bz-setup-screen", {
+        isVisible: () => el2.isConnected,
+        close: cancel
+      });
+    }
+    return {
+      el: el2,
+      input,
+      input2,
+      ackBox,
+      actionBtn,
+      cancelBtn,
+      setError: setErr,
+      setBusy,
+      focus,
+      close
+    };
+  }
+  var DEFAULT_SUB, WARN_TEXT, SEQ;
+  var init_setup_screen = __esm({
+    "src/core/ui/setup-screen.ts"() {
+      init_mask_dismiss();
+      init_esc_manager();
+      init_icon();
+      DEFAULT_SUB = "只设这一次。<b>保险库</b>、<b>加密日记</b>、<b>密码本</b>共用这一把密码。";
+      WARN_TEXT = "密码<b>不会保存</b>，也无法找回。忘记它，加密的笔记、日记与口令将永久打不开。";
+      SEQ = 0;
+    }
+  });
+
   // src/core/lock-stats.ts
   async function readLockStats(kind) {
     try {
@@ -64985,6 +65255,7 @@ GitHub 仓库：${ghInfo.title}
       init_data14();
       init_vault_assets_view();
       init_lock_screen();
+      init_setup_screen();
       init_lock_stats();
       init_motion10();
       PREVIEW_RENDER_TIMEOUT_MS = 3e3;
@@ -65769,25 +66040,53 @@ GitHub 仓库：${ghInfo.title}
             throw e;
           }
         }
+        /**
+         * 首设屏：三域共用的一块面板（core/ui/setup-screen）。
+         * 保险库、加密日记、密码本第一次设密码都落到这里——同一把主密码，同一个样子；
+         * 解锁屏仍各穿各的皮，故两者不共用骨架。收场出口唯一：done()。
+         */
+        async openFirstSetupScreen(promise, resolveFn) {
+          let done = () => {
+          };
+          const su = uiSetupScreen({
+            title: "设置主密码",
+            action: "设置并解锁",
+            onSubmit: async (pw) => {
+              const ok = await this.dataManager.unlock(pw);
+              if (!ok) throw new Error("设置失败：无法写入清单，请检查磁盘空间后重试");
+              done(true);
+              notice("密码已设置，数据已加密", "success");
+            },
+            onCancel: () => done(false)
+          });
+          topifyZ(su.el);
+          document.body.appendChild(su.el);
+          done = (ok) => {
+            if (activeUnlock && activeUnlock.promise === promise) activeUnlock = null;
+            su.close();
+            resolveFn(ok);
+          };
+          su.focus();
+          setTimeout(() => su.focus(), 150);
+          activeUnlock = { el: su.el, promise, cancel: () => done(false) };
+          return promise;
+        }
         /** 实际构建解锁屏（单例登记在 showPasswordDialog，唯一收场出口为 done()） */
         async openUnlockScreen(kind, promise, resolveFn, isCancelled) {
           const exists = await this.dataManager.exists();
           const meta = LOCK_KIND_META[kind];
-          const stats = this.lockStatsCache[kind] || await readLockStats(kind) || meta.stats.map((s) => ({ ...s, num: "—" }));
           if (isCancelled()) return promise;
+          if (!exists) return this.openFirstSetupScreen(promise, resolveFn);
+          const stats = this.lockStatsCache[kind] || await readLockStats(kind) || meta.stats.map((s) => ({ ...s, num: "—" }));
           const ls = uiLockScreen({
             kind,
             icon: meta.icon,
-            title: exists ? meta.title : "设置主密码",
-            sub: exists ? meta.sub : "请设置一个主密码（用于加密所有数据）",
+            title: meta.title,
+            sub: meta.sub,
             stats,
-            action: exists ? meta.action : "设置并解锁",
-            firstSetup: !exists,
-            warningHtml: `${vIc("triangle-alert", 14)} <strong>重要提醒</strong><br>• 主密码 <b>不会存储</b>，也无法找回，请务必牢记！<br>• 若遗忘密码，库内笔记及其附件将永久丢失。<br>• 建议使用密码本（如 Bitwarden）保存此密码。`,
-            ackText: "我已了解：主密码无法找回，遗忘将导致密文永久无法恢复",
-            secText: exists ? "主密码不会存储 · 遗忘将无法恢复密文" : "",
+            action: meta.action,
+            secText: "主密码不会存储 · 遗忘将无法恢复密文",
             secTone: "warn",
-            hint: exists ? "" : "建议使用密码本保存此密码",
             // 脸谱封面给一颗看得见的退出口（issue 506）：取消 = 不开面板 / 不展示任何数据（ADR-0194 决策 3）
             cancel: kind === "people" ? "取消" : void 0
           });
@@ -65816,44 +66115,6 @@ GitHub 仓库：${ghInfo.title}
             const pw = ls.input.value;
             if (!pw) {
               this.rejectInput("请输入密码", setErr);
-              return;
-            }
-            if (!exists) {
-              if (ls.input2.style.display === "none") {
-                ls.showSecondInput(true);
-                ls.input2.value = "";
-                ls.setMessage("请再次输入主密码确认");
-                ls.focus();
-                return;
-              }
-              if (pw !== ls.input2.value) {
-                this.rejectInput("两次密码不一致", setErr);
-                return;
-              }
-              if (pw.length < 4) {
-                this.rejectInput("主密码至少 4 位", setErr);
-                return;
-              }
-              if (!ls.ackBox || !ls.ackBox.checked) {
-                this.rejectInput("请先勾选风险确认", setErr);
-                return;
-              }
-              ls.setBusy(true);
-              try {
-                const ok = await this.dataManager.unlock(pw);
-                if (ok) {
-                  motionUnlockBurst(ls.el.querySelector('[data-ls="seal"]'));
-                  done(true);
-                  notice("密码已设置，数据已加密", "success");
-                } else {
-                  notice("设置失败：无法写入清单，请检查磁盘空间后重试", "error");
-                  done(false);
-                }
-              } catch (e) {
-                ls.setBusy(false);
-                notifyActionError(e, "设置主密码");
-                done(false);
-              }
               return;
             }
             const remainMs = this.unlockCooldownUntil - Date.now();
@@ -66032,10 +66293,6 @@ GitHub 仓库：${ghInfo.title}
             }
             if (pw !== ls.input2.value) {
               this.rejectInput("两次密码不一致", setErr);
-              return;
-            }
-            if (pw.length < 4) {
-              this.rejectInput("主密码至少 4 位", setErr);
               return;
             }
             if (pw === currentPw) {
@@ -69707,7 +69964,7 @@ GitHub 仓库：${ghInfo.title}
         // 共享数据路径（ADR-0009）：空 = 还没定过，首次启动时由 core/storage.bootstrapStorageDir 写成
         // `<插件目录>/storage`（2026-10-29，小写；老库则认领原 CONFIG/STORAGE）。
         storagePath: "",
-        // 自动更新：缺省开（2026-10-30 用户拍板；含插件本体 + 在线资源 + 外部工具包）——见 interface 说明
+        // 自动更新：缺省开（2026-10-30 用户拍板；含插件本体 + 三个外部工具包，在线资源不自动下）——见 interface 说明
         autoUpdate: true,
         // 首次引导没走过（首次启动会弹；走完或被跳过后置 true）
         setupDone: false,

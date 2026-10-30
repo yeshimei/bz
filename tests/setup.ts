@@ -55,7 +55,7 @@ if (typeof (globalThis as Record<string, unknown>).CryptoKey === 'undefined') {
 __setPbkdf2IterationsForTests(1000);
 
 /**
- * waitFor 默认超时加宽（1000ms → 5000ms）。
+ * waitFor 默认超时加宽（1000ms → 2500ms 独占 / 5000ms 并发）。
  *
  * vitest 4 的 `vi.waitFor` 默认 `timeout: 1e3` 是**硬编码**的，没有全局配置键
  * （testTimeout 只管用例整体上限，管不到它），全仓 1568 处调用也都没传 timeout。
@@ -64,11 +64,15 @@ __setPbkdf2IterationsForTests(1000);
  * （实测：同一分支单跑 114s/10 红，双会话并发 443s/15 红，且**失败集合不一致**——
  * 只有抖动才会这样，真 bug 的失败集合是稳定的）。
  *
- * 抬到 5s 与 testTimeout 放宽到 20s 同源：只影响上限，正常用例仍是毫秒级返回；
- * 真死循环 / 真没渲染出来照样在 5s 后超时暴露，不会把 bug 藏成绿灯。
+ * 抬预算与 testTimeout 放宽到 20s 同源：只影响上限，正常用例仍是毫秒级返回；
+ * 真死循环 / 真没渲染出来照样在预算耗尽后超时暴露，不会把 bug 藏成绿灯。
  * 显式传了 timeout 的调用（含数字简写）原样透传。
+ *
+ * 2026-10-31：不再恒 5s——这个数只在「等不到」时才是成本，失败用例每条白等一整个预算。
+ * 现在由 vitest.config.ts 按并发会话数写进 `BZ_TEST_WAIT_FOR_MS`：独占 2500、并发 5000。
+ * 2500 仍高于 tests/core/waitfor-default-timeout.test.ts 那条「1.4s 慢响应必须等到」的守卫。
  */
-const WAIT_FOR_TIMEOUT_MS = 5000;
+const WAIT_FOR_TIMEOUT_MS = Number(process.env.BZ_TEST_WAIT_FOR_MS) || 5000;
 /**
  * waitFor 轮询间隔（默认 50ms → 2ms，2026-10-01 实测定稿）。
  *

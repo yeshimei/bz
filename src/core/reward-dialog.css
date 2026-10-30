@@ -201,13 +201,9 @@
   height: 100%;
   overflow-y: auto;
   padding: 14px 0 16px;
-  scrollbar-width: thin;
-  scrollbar-color: #ddd0b4 transparent;
+  /* 滚动条交给 core/ui/components.css 的界面级单源（ADR-0122）：这里不写 thin、不自绘 thumb。
+     此前留了 thin + 5px 自绘拇指，因为滚动条守卫只扫 styles.css，这个文件一直没被扫到。 */
 }
-
-.bz-rw-names::-webkit-scrollbar { width: 5px; }
-.bz-rw-names::-webkit-scrollbar-thumb { background: #ddd0b4; border-radius: 3px; }
-.bz-rw-names::-webkit-scrollbar-track { background: transparent; }
 
 .bz-rw-names li {
   display: grid;

@@ -474,7 +474,7 @@ export function knowledgeSettingsSchema(opts?: { onClearHistory?: () => void | P
  * core 的通用空态卡带的是宿主配色与实心主钮，贴在这儿像另一种软件。这里改用本域
  * 现成的墨字空态行（.bz-kb-empty）＋墨线小钮（.bz-kb-mt-btn）。
  */
-function mountKnowledgeFolderGate(el: HTMLElement): boolean {
+function mountKnowledgeFolderGate(el: HTMLElement, closeBefore?: () => void): boolean {
   if (!needsFolderSetup('knowledge')) return false;
   const plan = folderState('knowledge').plan;
   el.textContent = '';
@@ -490,7 +490,7 @@ function mountKnowledgeFolderGate(el: HTMLElement): boolean {
   act.type = 'button';
   act.className = 'bz-kb-mt-btn bz-kb-gate-act';
   act.textContent = '打开设置';
-  act.addEventListener('click', () => openFolderSettings('knowledge'));
+  act.addEventListener('click', () => openFolderSettings('knowledge', undefined, closeBefore));
   wrap.append(title, note, act);
   el.appendChild(wrap);
   return true;
@@ -1555,7 +1555,7 @@ export class UIManager {
   private async refreshCurrent(): Promise<void> {
     if (!this.contentEl) return;
     // 三个盒目录没配齐 → 内容区给引导态，别拿空列表冒充「还没有文献/卡片」
-    if (mountKnowledgeFolderGate(this.contentEl)) return;
+    if (mountKnowledgeFolderGate(this.contentEl, () => this.hideMain())) return;
     const s = tryGetSettings() as Partial<BzSettings> | undefined;
     if (this.part === 'z1') {
       const dir = litDirOf(s);

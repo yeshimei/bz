@@ -99,7 +99,11 @@ describe('更新日志弹窗（issue 472 立，issue 474 改在线下载）', ()
     btn.click(); // 途中的第二次点击应被吞掉
     await tick(50);
     // 本地已有 → 内容来自本地；这一次请求 = 后台新鲜度核对（issue 476）
-    expect(requestUrl).toHaveBeenCalledTimes(1);
+    // 只数更新日志本身：清单镜像（manifest.json × 5 条通道，并发试通道）与在线资源预载
+    // 同在这条 mock 上，按总次数断言会在机器有负载时假红。
+    const chgCalls = vi.mocked(requestUrl).mock.calls
+      .filter((c: any[]) => String((c[0] as { url?: string })?.url || '').includes(CHANGELOG_FILENAME));
+    expect(chgCalls.length).toBe(1);
     expect(document.getElementById('bz-changelog-popup')).toBeTruthy();
     expect(btn.classList.contains('is-loading')).toBe(false);
   });
@@ -107,7 +111,11 @@ describe('更新日志弹窗（issue 472 立，issue 474 改在线下载）', ()
   it('后台核对发现新版（issue 476）→ 先秒开本地版，拿到新内容后热替换并落盘', async () => {
     vault.files.set(STORED, CHG_HTML);
     let release!: (v: unknown) => void;
-    vi.mocked(requestUrl).mockImplementation(() => new Promise((r) => { release = r; }) as any);
+    // 只接管更新日志那条请求：设置面板同时会拉清单镜像（manifest.json × 5 通道），
+    // 单一 release 会被它们覆盖掉，进而「放行」错的那条 → 更新日志永远等不到响应（并发假红）
+    vi.mocked(requestUrl).mockImplementation(((req: { url?: string }) => new Promise((r) => {
+      if (String(req?.url || '').includes(CHANGELOG_FILENAME)) release = r;
+    })) as any);
     const ui = new SettingsPanelUI();
     ui.open();
     await tick();
@@ -125,7 +133,11 @@ describe('更新日志弹窗（issue 472 立，issue 474 改在线下载）', ()
   it('后台核对回来时弹窗已关闭 → 只落盘不重开', async () => {
     vault.files.set(STORED, CHG_HTML);
     let release!: (v: unknown) => void;
-    vi.mocked(requestUrl).mockImplementation(() => new Promise((r) => { release = r; }) as any);
+    // 只接管更新日志那条请求：设置面板同时会拉清单镜像（manifest.json × 5 通道），
+    // 单一 release 会被它们覆盖掉，进而「放行」错的那条 → 更新日志永远等不到响应（并发假红）
+    vi.mocked(requestUrl).mockImplementation(((req: { url?: string }) => new Promise((r) => {
+      if (String(req?.url || '').includes(CHANGELOG_FILENAME)) release = r;
+    })) as any);
     const ui = new SettingsPanelUI();
     ui.open();
     await tick();
@@ -135,9 +147,9 @@ describe('更新日志弹窗（issue 472 立，issue 474 改在线下载）', ()
     const overlay = document.getElementById('bz-changelog-overlay')!;
     expect(overlay.style.display).toBe('none');
     release({ status: 200, text: CHG_HTML_V2 });
-    await tick(30);
+    // 落盘是异步尾链：并发跑时 30ms 可能还没写完，用轮询等（语义不变：等它写完）
+    await vi.waitFor(() => expect(vault.files.get(STORED)).toBe(CHG_HTML_V2));
     expect(overlay.style.display).toBe('none');
-    expect(vault.files.get(STORED)).toBe(CHG_HTML_V2);
   });
 
   it('下载失败 → notice 出人话原因，loading 复原，不弹窗（不兜底内置快照）', async () => {

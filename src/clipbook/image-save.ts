@@ -17,7 +17,7 @@ import { pad2 } from '../core/utils';
  */
 import { requestUrl, TFile } from 'obsidian';
 import { getApp } from '../core/app';
-import { resolveAssetDir, domainAssetsDir } from '../core/attachment-dir';
+import { resolveAssetDir, domainAssetsDir, cleanDir } from '../core/attachment-dir';
 import { tryGetSettings } from '../core/settings-provider';
 import { notice } from '../core/notice';
 import type { ClipbookData, ClipSavedImage } from './data';
@@ -154,7 +154,7 @@ export async function fetchImageDataUrl(src: string): Promise<string> {
 /** 写唯一路径二进制（永不覆盖；目录不存在自动建——knowledge writeUniqueBinary 同款范式，本域自含） */
 async function writeUniqueImage(dir: string, baseName: string, ext: string, bytes: ArrayBuffer): Promise<string> {
   const app = getApp();
-  const folder = String(dir || '').replace(/\\/g, '/').replace(/^\/+|\/+$/g, '');
+  const folder = cleanDir(dir);
   // 三跳全空（没设图片文件夹、Obsidian 也没给固定附件目录、剪藏文件夹还没配）：绝不落库根
   if (!folder) throw new Error('还没定图片存哪：先在设置里配好剪藏文件夹');
   let path = `${folder}/${baseName}.${ext}`;

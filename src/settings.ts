@@ -86,7 +86,8 @@ export default interface BzSettings {
 
   // ===== ℹ️ 关于（通用页首组，2026-10-28 对外分发）=====
   /** 自动更新：开（缺省）= 启动 15 秒后静默检查并安装新版本（24h 节流），
-   *  并**一并更新插件依赖的下载物**（皮肤、索引/数据表、三个外部工具包，见 core/auto-assets.ts）；
+   *  并**顺手装好三个外部工具包**（缺了就补，见 core/auto-assets.ts）；
+   *  在线资源（手册 / 更新日志 / 索引 / 皮肤）**不自动下**，留在设置 → 通用 → 在线资源按需下载；
    *  关 = 只手动检查，发现新版也**不自动覆盖**。
    *  2026-10-30 用户拍板缺省改为开：分发给别人之后，「更新了但还是不好用」多半是资源停在旧版，
    *  比「不更新」更难查。装之前照旧备份旧三件套，坏包可回滚。
@@ -632,24 +633,36 @@ const MEMO_KEY_MIGRATIONS: Array<[string, string]> = [
   ['todoLayout', 'memoLayout'],
 ];
 
-/** onload 对 loadData 原始对象就地迁移，随后才与 DEFAULT_SETTINGS 合并。
- *  返回是否发生了迁移（旧键存在即算，含新键已在的场景）——C16：调用方据此调度落盘，
- *  否则 data.json 旧键长期残留、每次启动重复迁移 */
 /**
  * 自动更新缺省翻牌（2026-10-30 用户拍板：缺省从关改开）。
- * 只改 DEFAULT_SETTINGS 不够——已装用户的 data.json 里存着显式的 `false`，
- * 合并默认值时永远被覆盖，他们一辈子走不到新缺省。这里做**一次性**迁移：
- * 迁过打标记，此后用户自己关掉的保持关掉，不会被下次启动又打开。
+ *
+ * 只改 DEFAULT_SETTINGS 不够吗？够——缺键时合并默认值就会拿到 `true`。真正要处理的是
+ * **老库 data.json 里存着的那份 `false`**：那是旧缺省写进去的，用户没选过，不翻就永远
+ * 走不到新缺省。但同一串 `false` 也可能是用户**主动关掉**留下的，两者在盘上长得一模一样，
+ * 分不出来。
+ *
+ * 取舍（2026-10-31 发版前 review #3，用户拍板「自动更新缺省开」）：**一律翻成开**。
+ *  - 键不存在 → 置 `true`（新缺省）；
+ *  - 键存在且为 `false` → 同样置 `true`。旧构建的缺省就是 `false`，凡在设置面板点过保存
+ *    的老库，data.json 里都躺着显式 `false`；「尊重显式 false」等于一个人都升不上来。
+ *  - 代价：上一版里**主动关掉**过的人会被静默打开一次（两者在盘上分不出来）。之后用户再关，
+ *    有 `autoUpdateDefaultedOn` 挡着，不会再被翻开。
  */
 export function migrateAutoUpdateDefault(raw: unknown): boolean {
   if (!raw || typeof raw !== 'object') return false;
   const rec = raw as Record<string, unknown>;
   if (rec.autoUpdateDefaultedOn === true) return false;
   rec.autoUpdateDefaultedOn = true;
+  // 一律翻成开，不看原来的值：上一版的缺省就是 false，凡是在设置面板里点过保存的老库，
+  // data.json 里都躺着显式 `false`——「尊重显式 false」等于一个人都升不上来。
+  // 真正的选择留在这之后：用户此刻关掉的，有 autoUpdateDefaultedOn 挡着，不会再被翻开。
   rec.autoUpdate = true;
   return true;
 }
 
+/** onload 对 loadData 原始对象就地迁移，随后才与 DEFAULT_SETTINGS 合并。
+ *  返回是否发生了迁移（旧键存在即算，含新键已在的场景）——C16：调用方据此调度落盘，
+ *  否则 data.json 旧键长期残留、每次启动重复迁移 */
 export function migrateMemoSettingKeys(raw: unknown): boolean {
   if (!raw || typeof raw !== 'object') return false;
   const rec = raw as Record<string, unknown>;
@@ -973,7 +986,7 @@ export const DEFAULT_SETTINGS: BzSettings = {
   // `<插件目录>/storage`（2026-10-29，小写；老库则认领原 CONFIG/STORAGE）。
   storagePath: '',
 
-  // 自动更新：缺省开（2026-10-30 用户拍板；含插件本体 + 在线资源 + 外部工具包）——见 interface 说明
+  // 自动更新：缺省开（2026-10-30 用户拍板；含插件本体 + 三个外部工具包，在线资源不自动下）——见 interface 说明
   autoUpdate: true,
   // 首次引导没走过（首次启动会弹；走完或被跳过后置 true）
   setupDone: false,

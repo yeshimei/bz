@@ -37,8 +37,16 @@
 /** 手势位移容差（px）：超过即判为拖拽，本次 click 不作关闭依据 */
 export const MASK_DISMISS_SLOP = 8;
 
-/** 绑定「点遮罩关闭」。返回解绑函数（同一元素反复挂载时才需要；一次性 DOM 可不管） */
+/** 已挂过的遮罩 → 它的解绑函数。同一元素重复调用直接复用，不再叠一套监听
+ *  （一次点击关两层浮层的老事故）。WeakMap 不持有元素，遮罩被移除后自然释放。 */
+const unbinders = new WeakMap<HTMLElement, () => void>();
+
+/** 绑定「点遮罩关闭」。返回解绑函数（同一元素反复挂载时才需要；一次性 DOM 可不管）。
+ *  **幂等**：同一个遮罩元素重复调用不会重复绑定，第二次返回的是同一个解绑函数。
+ *  （调用方约 50 处，绝大多数新建遮罩用完即弃、随手丢弃返回值——靠「只绑一次」的约定不安全。） */
 export function bindMaskDismiss(mask: HTMLElement, onDismiss: () => void): () => void {
+  const existing = unbinders.get(mask);
+  if (existing) return existing;
   let armed: boolean | null = null;
   let dragged = false;
   /** 抬起落点是否也在遮罩本体：按下在遮罩空白、松手滑进弹窗本体的边界情况靠它拦 */
@@ -113,7 +121,8 @@ export function bindMaskDismiss(mask: HTMLElement, onDismiss: () => void): () =>
   mask.addEventListener('touchcancel', onCancel, true);
   mask.addEventListener('click', onClick);
 
-  return () => {
+  // 先登记再挂监听：登记表里没有它，重复调用就会再挂一套
+  const unbind = (): void => {
     mask.removeEventListener('mousedown', onDown, true);
     mask.removeEventListener('mouseup', onUp, true);
     mask.removeEventListener('mousemove', onMove, true);
@@ -122,5 +131,8 @@ export function bindMaskDismiss(mask: HTMLElement, onDismiss: () => void): () =>
     mask.removeEventListener('touchmove', onMove, true);
     mask.removeEventListener('touchcancel', onCancel, true);
     mask.removeEventListener('click', onClick);
+    unbinders.delete(mask);
   };
+  unbinders.set(mask, unbind);
+  return unbind;
 }

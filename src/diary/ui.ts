@@ -3669,15 +3669,18 @@ export class DiaryAppController {
     const paper = this.fallbackEl?.querySelector<HTMLElement>('.bz-diary-fb-paper');
     if (!paper) return;
     const st = folderState('diary');
+    const plan = st.plan;
+    // 文案只有一处真理（FOLDER_PLANS）：这里再另写一句「这本册子还没定文件夹」，改文案必漏一边
     const missing = st.missing.map((f) => f.field.label).join('、') || '日记文件夹';
+    const reco = st.missing.map((f) => f.field.reco).find((r) => !!r);
     paper.textContent = '';
     paper.classList.add('bz-diary-fb-lead');
     const title = document.createElement('div');
     title.className = 'bz-diary-fb-lead-title';
-    title.textContent = '这本册子还没定文件夹';
+    title.textContent = plan.title;
     const desc = document.createElement('div');
     desc.className = 'bz-diary-fb-lead-desc';
-    desc.textContent = `写下的每一篇都要落进${missing}，先把位置定一下。`;
+    desc.textContent = `${plan.desc}要填${missing}${reco ? `（推荐 ${reco}）` : ''}。`;
     const act = document.createElement('div');
     act.className = 'bz-diary-fb-lead-act';
     act.appendChild(

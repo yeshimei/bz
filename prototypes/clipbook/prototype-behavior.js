@@ -1,4 +1,4 @@
-/* 源指纹 02b60800eebd36a6 · 仓内输入 140 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 1f8e89ee32a27ce5 · 仓内输入 140 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/clipbook/fake-sim.ts","prototypes/clipbook/fake/fake-obsidian.ts","prototypes/preview-mode.ts","src/auto-summary/index.ts","src/auto-summary/keys.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/clipbook/anchor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/file-sync.ts","src/clipbook/flow.ts","src/clipbook/image-save.ts","src/clipbook/index.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/motion.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/press/data.ts","src/clipbook/press/engine.ts","src/clipbook/press/index.ts","src/clipbook/press/motions.ts","src/clipbook/press/view.ts","src/clipbook/render.ts","src/clipbook/report-stats.ts","src/clipbook/report-ui.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai.ts","src/core/app.ts","src/core/asr-proofread.ts","src/core/attachment-dir.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/download-manifest.ts","src/core/esc-manager.ts","src/core/file-sync.ts","src/core/flow-dialog.ts","src/core/folder-setup.ts","src/core/gesture.ts","src/core/http.ts","src/core/item-actions.ts","src/core/knowledge-boxes.ts","src/core/landscape.ts","src/core/link-now.ts","src/core/mask-dismiss.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/net-progress.ts","src/core/node-runtime-install.ts","src/core/note-trash.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/offline-source.ts","src/core/path-classify.ts","src/core/path-picker.ts","src/core/plugin-path.ts","src/core/remote-asset.ts","src/core/remote-base.ts","src/core/rss-catalog.ts","src/core/settings-btn-state.ts","src/core/settings-common.ts","src/core/settings-modal.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/sha256.ts","src/core/storage-path.ts","src/core/storage.ts","src/core/tar.ts","src/core/tool-hint.ts","src/core/tool-runtime.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/help-tip.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/core/zip.ts","src/knowledge/data.ts","src/knowledge/file-sync.ts","src/knowledge/index.ts","src/knowledge/motion.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-edit.ts","src/knowledge/note-gen.ts","src/knowledge/partial-json.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/relink.ts","src/knowledge/source-retire.ts","src/knowledge/source.ts","src/knowledge/tack.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/secondbrain/readonly.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/motion.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/shared.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/clipbook/fake-sim.ts → window.BZW_clipbook（行为单源预览包，issue 245/ADR-0106） */
 var BZW_clipbook = (() => {
@@ -411,6 +411,42 @@ var BZW_clipbook = (() => {
     }
   });
 
+  // src/core/attachment-dir.ts
+  function cleanDir(v) {
+    return String(v != null ? v : "").trim().replace(/\\/g, "/").replace(/^\/+|\/+$/g, "");
+  }
+  function obsidianAttachmentDir() {
+    var _a, _b;
+    let raw = "";
+    try {
+      const vault = getApp().vault;
+      raw = String((_b = (_a = vault == null ? void 0 : vault.getConfig) == null ? void 0 : _a.call(vault, "attachmentFolderPath")) != null ? _b : "");
+    } catch (e) {
+      return null;
+    }
+    const v = raw.trim().replace(/\\/g, "/");
+    if (!v || v === "/") return null;
+    if (v.startsWith("./")) return null;
+    const dir = cleanDir(v);
+    return dir || null;
+  }
+  function domainAssetsDir(mainDir) {
+    const m = cleanDir(mainDir);
+    return m ? `${m}/assets` : "";
+  }
+  function resolveAssetDir(configured, fallback) {
+    const c = cleanDir(configured);
+    if (c) return { dir: c, source: "setting" };
+    const o = obsidianAttachmentDir();
+    if (o) return { dir: o, source: "obsidian" };
+    return { dir: cleanDir(fallback), source: "fallback" };
+  }
+  var init_attachment_dir = __esm({
+    "src/core/attachment-dir.ts"() {
+      init_app();
+    }
+  });
+
   // src/core/z-order.ts
   function syncAlwaysOnTop() {
     for (const el of alwaysOnTop) {
@@ -522,6 +558,7 @@ var BZW_clipbook = (() => {
     return Math.min(base + extra, 15e3);
   }
   function ensureContainer() {
+    if (typeof document === "undefined" || !(document == null ? void 0 : document.body)) return null;
     let container = document.getElementById("bz-notice-container");
     if (!container) {
       container = document.createElement("div");
@@ -688,6 +725,7 @@ var BZW_clipbook = (() => {
     const type = isProgress ? "info" : kind;
     const variant = opts && opts.variant || defaultVariant();
     const container = ensureContainer();
+    if (!container) return noopHandle();
     applyPositionClass(container);
     if (opts && opts.dedupeKey) {
       const key = opts.dedupeKey;
@@ -859,6 +897,8 @@ var BZW_clipbook = (() => {
 
   // src/core/mask-dismiss.ts
   function bindMaskDismiss(mask, onDismiss) {
+    const existing = unbinders.get(mask);
+    if (existing) return existing;
     let armed = null;
     let dragged = false;
     let upOnMask = false;
@@ -921,7 +961,7 @@ var BZW_clipbook = (() => {
     mask.addEventListener("touchmove", onMove, { capture: true, passive: true });
     mask.addEventListener("touchcancel", onCancel, true);
     mask.addEventListener("click", onClick);
-    return () => {
+    const unbind = () => {
       mask.removeEventListener("mousedown", onDown, true);
       mask.removeEventListener("mouseup", onUp, true);
       mask.removeEventListener("mousemove", onMove, true);
@@ -930,12 +970,16 @@ var BZW_clipbook = (() => {
       mask.removeEventListener("touchmove", onMove, true);
       mask.removeEventListener("touchcancel", onCancel, true);
       mask.removeEventListener("click", onClick);
+      unbinders.delete(mask);
     };
+    unbinders.set(mask, unbind);
+    return unbind;
   }
-  var MASK_DISMISS_SLOP;
+  var MASK_DISMISS_SLOP, unbinders;
   var init_mask_dismiss = __esm({
     "src/core/mask-dismiss.ts"() {
       MASK_DISMISS_SLOP = 8;
+      unbinders = /* @__PURE__ */ new WeakMap();
     }
   });
 
@@ -6720,42 +6764,6 @@ var BZW_clipbook = (() => {
     }
   });
 
-  // src/core/attachment-dir.ts
-  function cleanDir(v) {
-    return String(v != null ? v : "").trim().replace(/\\/g, "/").replace(/^\/+|\/+$/g, "");
-  }
-  function obsidianAttachmentDir() {
-    var _a, _b;
-    let raw = "";
-    try {
-      const vault = getApp().vault;
-      raw = String((_b = (_a = vault == null ? void 0 : vault.getConfig) == null ? void 0 : _a.call(vault, "attachmentFolderPath")) != null ? _b : "");
-    } catch (e) {
-      return null;
-    }
-    const v = raw.trim().replace(/\\/g, "/");
-    if (!v || v === "/") return null;
-    if (v.startsWith("./")) return null;
-    const dir = cleanDir(v);
-    return dir || null;
-  }
-  function domainAssetsDir(mainDir) {
-    const m = cleanDir(mainDir);
-    return m ? `${m}/assets` : "";
-  }
-  function resolveAssetDir(configured, fallback) {
-    const c = cleanDir(configured);
-    if (c) return { dir: c, source: "setting" };
-    const o = obsidianAttachmentDir();
-    if (o) return { dir: o, source: "obsidian" };
-    return { dir: cleanDir(fallback), source: "fallback" };
-  }
-  var init_attachment_dir = __esm({
-    "src/core/attachment-dir.ts"() {
-      init_app();
-    }
-  });
-
   // src/core/ui/icon.ts
   function uiIcon(name, extraClass = "") {
     const i = document.createElement("span");
@@ -6865,6 +6873,10 @@ var BZW_clipbook = (() => {
   function needsFolderSetup(domain) {
     return !folderState(domain).ok;
   }
+  function needsFolderKey(domain, key) {
+    var _a;
+    return !!((_a = folderState(domain).fields.find((f) => f.field.key === key)) == null ? void 0 : _a.missing);
+  }
   function openFolderSettings(domain, anchorKey, closeBefore) {
     var _a;
     const plan = FOLDER_PLANS[domain];
@@ -6892,7 +6904,8 @@ var BZW_clipbook = (() => {
           settingsId: "diary",
           title: "日记本还没定文件夹",
           desc: "写下的每一篇都会存进日记文件夹。定了之后才有地方落笔。",
-          fields: [{ key: "diaryDirectory", label: "日记文件夹", reco: "我的/日记", note: "信件文件夹可选，用到时才问" }]
+          hint: "信件文件夹可选，用到时才问。",
+          fields: [{ key: "diaryDirectory", label: "日记文件夹", reco: "我的/日记" }]
         },
         clipbook: {
           name: "剪藏本",
@@ -7828,7 +7841,7 @@ ${c.trim()}
   }
   async function writeUniqueImage(dir, baseName2, ext, bytes) {
     const app = getApp();
-    const folder = String(dir || "").replace(/\\/g, "/").replace(/^\/+|\/+$/g, "");
+    const folder = cleanDir(dir);
     if (!folder) throw new Error("还没定图片存哪：先在设置里配好剪藏文件夹");
     let path = `${folder}/${baseName2}.${ext}`;
     for (let i = 2; app.vault.getAbstractFileByPath(path); i++) path = `${folder}/${baseName2}_${i}.${ext}`;
@@ -10673,6 +10686,10 @@ ${lines}`;
   });
 
   // src/knowledge/note-gen.ts
+  function litDir() {
+    var _a;
+    return cleanDir((_a = tryGetSettings()) == null ? void 0 : _a.knowledgeDirectory);
+  }
   function parseDomainList(raw) {
     return [...new Set(String(raw != null ? raw : "").split(/[,，、]/).map((s) => s.trim()).filter(Boolean))];
   }
@@ -10754,7 +10771,8 @@ ${lines}`;
   }
   async function writeUniqueNote(dir, baseName2, content) {
     const app = getApp();
-    const folder = String(dir || "文献盒").replace(/\\/g, "/").replace(/^\/+|\/+$/g, "");
+    const folder = String(dir || "").replace(/\\/g, "/").replace(/^\/+|\/+$/g, "");
+    if (!folder) throw new Error("知识盒还没定文献文件夹：先在设置里选一个");
     let path = `${folder}/${baseName2}.md`;
     for (let i = 2; app.vault.getAbstractFileByPath(path); i++) path = `${folder}/${baseName2}_${i}.md`;
     try {
@@ -10767,8 +10785,8 @@ ${lines}`;
   }
   function findDuplicateTermNote(term) {
     const app = getApp();
-    const s = tryGetSettings();
-    const dir = String(s.knowledgeDirectory || "文献盒").replace(/\\/g, "/").replace(/^\/+|\/+$/g, "");
+    const dir = litDir();
+    if (!dir) return null;
     const path = `${dir}/${sanitizeMdTitle(term)}.md`;
     return app.vault.getAbstractFileByPath(path) ? path : null;
   }
@@ -10830,7 +10848,7 @@ ${metaExcerpt(chunks)}`,
       "---"
     ].join("\n");
     const body = [fm, whole, videoSection].filter(Boolean).join("\n\n");
-    return writeUniqueNote(String(s.knowledgeDirectory || "文献盒"), sanitizeMdTitle(title), body);
+    return writeUniqueNote(litDir(), sanitizeMdTitle(title), body);
   }
   function termPrompt(term, list) {
     return `你是百科知识整理助手。为术语「${term}」生成一篇文献笔记。只输出 JSON，不要任何解释：
@@ -10878,7 +10896,7 @@ ${metaExcerpt(chunks)}`,
     }
     fm.push("---");
     const body = [fm.join("\n"), summary].filter(Boolean).join("\n\n");
-    return writeUniqueNote(String(s.knowledgeDirectory || "文献盒"), sanitizeMdTitle(term), body);
+    return writeUniqueNote(litDir(), sanitizeMdTitle(term), body);
   }
   function passagePrompt(text, list) {
     return `你是文献整理助手。把下方这段文字整理成一篇文献笔记。只输出 JSON，不要任何解释：
@@ -10923,7 +10941,7 @@ ${text}`;
     }
     fm.push("---");
     const body = [fm.join("\n"), summary].filter(Boolean).join("\n\n");
-    return writeUniqueNote(String(s.knowledgeDirectory || "文献盒"), sanitizeMdTitle(title || summary), body);
+    return writeUniqueNote(litDir(), sanitizeMdTitle(title || summary), body);
   }
   async function writeUniqueBinary(dir, baseName2, ext, bytes) {
     const app = getApp();
@@ -10990,7 +11008,7 @@ ${notes.map((x) => `第 ${x.n} 张：${x.d}`).join("\n")}`;
     if (!title && !summary) throw new Error("图版为空");
     const images = (Array.isArray(opts.images) ? opts.images : []).filter((im) => im && im.bytes);
     if (!images.length) throw new Error("图版没有图片");
-    const dir = String(s.knowledgeDirectory || "文献盒");
+    const dir = litDir();
     const name = sanitizeMdTitle(title || summary.slice(0, 30));
     const imageRoot = resolveImageDir(s);
     const imagePaths = [];
@@ -11126,11 +11144,11 @@ ${content || ""}`;
     return lines.join(src.includes("\r\n") ? "\r\n" : "\n");
   }
   async function backfillNotes(opts = {}) {
-    var _a, _b;
+    var _a, _b, _c;
     const app = getApp();
-    const s = tryGetSettings();
     const aiTimeoutMs = (_a = opts.aiTimeoutMs) != null ? _a : BACKFILL_AI_TIMEOUT_MS;
-    const dir = String(s.knowledgeDirectory || "文献盒").replace(/\\/g, "/").replace(/^\/+|\/+$/g, "");
+    const dir = litDir();
+    if (!dir) return { scanned: 0, filled: 0, aiSkipped: false };
     const files = (app.vault.getFiles() || []).filter((f) => f.path.startsWith(dir + "/") && f.path.endsWith(".md"));
     const needDomain = [];
     let filled = 0;
@@ -11169,7 +11187,7 @@ ${content || ""}`;
     let aiSkipped = false;
     if (needDomain.length) {
       const ai = createAI();
-      const list = parseDomainList(s.knowledgeDomainList);
+      const list = parseDomainList((_b = tryGetSettings()) == null ? void 0 : _b.knowledgeDomainList);
       for (const { file } of needDomain) {
         try {
           const latest = await app.vault.read(file);
@@ -11184,7 +11202,7 @@ ${sample}`
             aiTimeoutMs,
             "领域判定"
           );
-          const domain = String(((_b = parseAiJson(raw)) == null ? void 0 : _b.domain) || "").trim();
+          const domain = String(((_c = parseAiJson(raw)) == null ? void 0 : _c.domain) || "").trim();
           if (domain) {
             await app.vault.modify(file, injectFrontmatter(latest, [`domain:${domain}`]));
             filled++;
@@ -16472,7 +16490,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
     const m = text.match(/^---\r?\n[\s\S]*?\r?\n---\r?\n?/);
     return text.slice(m ? m[0].length : 0).replace(/^\r?\n+/, "");
   }
-  function mountKnowledgeFolderGate(el) {
+  function mountKnowledgeFolderGate(el, closeBefore) {
     if (!needsFolderSetup("knowledge")) return false;
     const plan = folderState("knowledge").plan;
     el.textContent = "";
@@ -16488,7 +16506,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
     act.type = "button";
     act.className = "bz-kb-mt-btn bz-kb-gate-act";
     act.textContent = "打开设置";
-    act.addEventListener("click", () => openFolderSettings("knowledge"));
+    act.addEventListener("click", () => openFolderSettings("knowledge", void 0, closeBefore));
     wrap.append(title, note, act);
     el.appendChild(wrap);
     return true;
@@ -17612,7 +17630,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
         /** 当前部数据 + 渲染（目录变更检测 → 清缓存重扫） */
         async refreshCurrent() {
           if (!this.contentEl) return;
-          if (mountKnowledgeFolderGate(this.contentEl)) return;
+          if (mountKnowledgeFolderGate(this.contentEl, () => this.hideMain())) return;
           const s = tryGetSettings();
           if (this.part === "z1") {
             const dir = litDirOf(s);
@@ -20895,17 +20913,24 @@ ${String(blockText != null ? blockText : "").trim()}`);
       uiManager = null;
     }
   }
+  function blockedByFolderSetup() {
+    if (!needsFolderKey("knowledge", "knowledgeDirectory")) return false;
+    openFolderSettings("knowledge", "knowledgeDirectory");
+    return true;
+  }
   function openKnowledgePanel(app) {
     ensureKnowledge(app);
     uiManager == null ? void 0 : uiManager.showMain();
   }
   function openKnowledgeAddTask(app, prefill) {
     ensureKnowledge(app);
+    if (blockedByFolderSetup()) return;
     uiManager == null ? void 0 : uiManager.showVideoEntry(prefill);
   }
   function openTermNote(app, term, opts) {
     var _a, _b;
     ensureKnowledge(app);
+    if (blockedByFolderSetup()) return;
     let t = term == null ? void 0 : term.trim();
     let src;
     if (opts == null ? void 0 : opts.source) src = prefillSource(opts.source);
@@ -20922,6 +20947,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
   function openPassageNote(app, opts) {
     var _a, _b, _c;
     ensureKnowledge(app);
+    if (blockedByFolderSetup()) return;
     let text;
     let src;
     const explicit = String((_a = opts == null ? void 0 : opts.text) != null ? _a : "").trim();
@@ -20937,6 +20963,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
   }
   function openImageNote(app, opts) {
     ensureKnowledge(app);
+    if (blockedByFolderSetup()) return;
     let src;
     if (opts == null ? void 0 : opts.source) src = prefillSource(opts.source);
     if (!src) {
@@ -21023,6 +21050,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
       init_data2();
       init_ui();
       init_note_gen();
+      init_folder_setup();
       init_relink();
       init_source_retire();
       init_file_sync2();
@@ -27779,9 +27807,8 @@ ${bodyText.substring(0, 6e3)}`;
       await enqueueNewsWrite(() => writeNewsDataMerged({ set, removeArticleKeys: removedKeys }));
     }
     const sidecar = await readClipbookData();
-    const clipNotes = await scanClipDirectory(clipDir(), {
-      vault: getApp().vault
-    });
+    const clipFolder = clipDir();
+    const clipNotes = clipFolder ? await scanClipDirectory(clipFolder, { vault: getApp().vault }) : null;
     if (clipNotes && clipNotes.rejected > 0) {
       console.warn(`[剪藏本] 剪藏目录有 ${clipNotes.rejected} 篇无法识别（缺 url/created frontmatter）`, clipNotes.rejectedPaths);
     }
@@ -32516,8 +32543,8 @@ ${bodyText.substring(0, 6e3)}`;
   }
   function getWatchedFolders2() {
     const s = tryGetSettings();
-    const kb = String(s && s.knowledgeDirectory || "文献盒").trim().replace(/\\/g, "/").replace(/^\/+|\/+$/g, "") || "文献盒";
-    return [kb, clipDir()];
+    const kb = cleanDir(s && s.knowledgeDirectory);
+    return [kb, clipDir()].filter((d) => !!d);
   }
   async function referencedByClipbook(path) {
     if (!path) return false;
@@ -32542,6 +32569,7 @@ ${bodyText.substring(0, 6e3)}`;
       init_settings_provider();
       init_file_sync();
       init_save();
+      init_attachment_dir();
       init_data();
       agent2 = createFileSync({
         logTag: "[clipbook-file-sync]",
@@ -32640,6 +32668,7 @@ ${bodyText.substring(0, 6e3)}`;
       if (path) invalidateClipBodyCache(path);
       if (stalePath) invalidateClipBodyCache(stalePath);
       const d = clipDir();
+      if (!d) return;
       const inDir2 = (p) => !!p && p.startsWith(d + "/");
       if (!inDir2(path) && !inDir2(stalePath)) return;
       if (timer) clearTimeout(timer);
@@ -32725,8 +32754,9 @@ ${bodyText.substring(0, 6e3)}`;
   }
 
   // src/core/path-classify.ts
+  init_attachment_dir();
   function normalizeDir(dir) {
-    return (dir || "").trim().replace(/\\/g, "/").replace(/\/+$/, "");
+    return cleanDir(dir);
   }
   function isUnderDir(dir, p) {
     const d = normalizeDir(dir);

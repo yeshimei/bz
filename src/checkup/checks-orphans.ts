@@ -138,7 +138,9 @@ export async function checkOrphans(app: App, opts: CheckOpts = {}): Promise<Chec
       if (Array.isArray(savedArchive)) {
         // 剪藏目录扫描与 url 命中收编 clipbook 单源（cons P3-1）：scanClipDirectory +
         // clipUrlSet 与域读取链同扫描面、同 url 语义（非字符串 url String 化收编）
-        const scannedNotes = (await scanClipDirectory(clipDir(), { vault: app.vault })) || [];
+        // 未配置（空串）→ 不扫：否则「剪藏本还没定文件夹」会被报成一堆「笔记不存在」
+        const clipFolder = clipDir();
+        const scannedNotes = (clipFolder ? (await scanClipDirectory(clipFolder, { vault: app.vault })) : []) || [];
         const urls = clipUrlSet(scannedNotes);
         for (let i = 0; i < savedArchive.length; i++) {
           if (opts.isCancelled?.()) return null;

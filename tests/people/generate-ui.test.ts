@@ -36,6 +36,16 @@ import { SafeManager } from '../../src/encrypt/data';
 import type { PersonEntry, UnifiedMessage } from '../../src/people/types';
 import type { StoreContact } from '../../src/people/datasource';
 
+/**
+ * 设置注入必须早于「种数据」。
+ *
+ * 这些用例在模块顶层/`before*` 里先 `vault.files.set(getXxxFilePath(), ...)` 再注入设置，
+ * 而路径由 `storagePath` 决定：注入前算出来的是缺省 `<插件>/storage`，跟下面注入的
+ * `CONFIG/STORAGE` 不是同一个文件——表现为**整个文件的第一条用例读到 0 条**，
+ * 靠 `retry` 重跑（此时上一轮的注入还留着）才绿。这里先注入一次，把顺序钉正。
+ */
+setSettingsProvider(() => ({ storagePath: 'CONFIG/STORAGE' }) as never);
+
 const T0 = new Date('2026-09-25T08:00:00').getTime();
 const PW = 'gen-test-pw';
 const tick = (ms = 0) => new Promise((r) => setTimeout(r, ms));
@@ -446,7 +456,10 @@ describe('关面板转后台（450）', () => {
     engine.push([fakeJob({ status: 'done', stage: 'done', message: '', batchesDone: 1, person: '后台画完', events: [] })]);
     await vi.waitFor(async () => expect((await disk()).people[0]?.lastProcessedTs).toBe(T0 + 120_000)); // 等落盘链走完
     expect((await disk()).people[0]?.digest?.person).toBe('后台画完');
-    expect(getNoticeMessages().some((m) => m.includes('陈默」的脸谱已生成'))).toBe(true);
+    // 通知与落盘不在同一步：落盘链走完时提示可能还没推出来（并发跑假红），用轮询等
+    await vi.waitFor(() =>
+      expect(getNoticeMessages().some((m) => m.includes('陈默」的脸谱已生成'))).toBe(true)
+    );
   });
 });
 

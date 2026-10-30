@@ -47,6 +47,16 @@ async function clickDomain(popup: HTMLElement, id: string, name: string): Promis
   await waitPageHead(popup, name);
 }
 
+/** 等后台读盘落地：连续 150ms 没有新调用才算静默（preload 之后仍有异步 loader 在飞） */
+async function settleReads(spy: { mock: { calls: unknown[] } }): Promise<void> {
+  let last = spy.mock.calls.length;
+  for (let i = 0; i < 50; i++) {
+    await new Promise((r) => setTimeout(r, 30));
+    if (spy.mock.calls.length === last) return;
+    last = spy.mock.calls.length;
+  }
+}
+
 describe('设置面板搜索闭环与滚位回归（SP2/SP3/SP4/SP5）', () => {
   let state: Record<string, unknown>;
   let vault: MockVault;
@@ -164,6 +174,9 @@ describe('设置面板搜索闭环与滚位回归（SP2/SP3/SP4/SP5）', () => {
     const popup = document.getElementById('bz-settings-panel-popup')!;
     // preload 全量跑一轮 loader（含剪藏本 readDataSourceState 读盘）并落 schemaCache
     await waitPreload(popup);
+    // preload 的行缓存就位≠读盘全落地：数据源状态那两条是异步读的，会在下面清零之后才回来，
+    // 被算到「进域」的账上（原来靠 retry 掩盖）。先等它们静默，再清零。
+    await settleReads(readSpy);
     readSpy.mockClear();
 
     // 修复前必红：进域 renderDomain 每次 await schemaLoader() 重跑读盘；修复后 preload 已

@@ -1,4 +1,4 @@
-/* 源指纹 d725b7205d8c5856 · 仓内输入 66 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 6389ac7838e9171c · 仓内输入 66 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/knowledge/fake-sim.ts","prototypes/knowledge/fake/ai-index.ts","prototypes/knowledge/fake/fake-obsidian.ts","prototypes/preview-mode.ts","src/core/ai.ts","src/core/app.ts","src/core/asr-proofread.ts","src/core/attachment-dir.ts","src/core/crypto.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/folder-setup.ts","src/core/http.ts","src/core/item-actions.ts","src/core/knowledge-boxes.ts","src/core/link-now.ts","src/core/mask-dismiss.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/net-progress.ts","src/core/node-runtime-install.ts","src/core/note-trash.ts","src/core/notice.ts","src/core/offline-source.ts","src/core/plugin-path.ts","src/core/remote-asset.ts","src/core/remote-base.ts","src/core/settings-provider.ts","src/core/sha256.ts","src/core/storage-path.ts","src/core/storage.ts","src/core/tar.ts","src/core/tool-hint.ts","src/core/tool-runtime.ts","src/core/ui/button.ts","src/core/ui/empty.ts","src/core/ui/focus-trap.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/resize.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/utils.ts","src/core/z-order.ts","src/core/zip.ts","src/knowledge/data.ts","src/knowledge/motion.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-edit.ts","src/knowledge/note-gen.ts","src/knowledge/partial-json.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/relink.ts","src/knowledge/source.ts","src/knowledge/tack.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/secondbrain/readonly.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/knowledge/fake-sim.ts → window.BZW_knowledge（行为单源预览包，issue 245/ADR-0106） */
 var BZW_knowledge = (() => {
@@ -5274,6 +5274,7 @@ var BZW_knowledge = (() => {
     return Math.min(base + extra, 15e3);
   }
   function ensureContainer() {
+    if (typeof document === "undefined" || !(document == null ? void 0 : document.body)) return null;
     let container = document.getElementById("bz-notice-container");
     if (!container) {
       container = document.createElement("div");
@@ -5442,6 +5443,7 @@ var BZW_knowledge = (() => {
     const type = isProgress ? "info" : kind;
     const variant = opts && opts.variant || defaultVariant();
     const container = ensureContainer();
+    if (!container) return noopHandle();
     applyPositionClass(container);
     if (opts && opts.dedupeKey) {
       const key2 = opts.dedupeKey;
@@ -6216,7 +6218,10 @@ var BZW_knowledge = (() => {
 
   // src/core/mask-dismiss.ts
   var MASK_DISMISS_SLOP = 8;
+  var unbinders = /* @__PURE__ */ new WeakMap();
   function bindMaskDismiss(mask, onDismiss) {
+    const existing = unbinders.get(mask);
+    if (existing) return existing;
     let armed = null;
     let dragged = false;
     let upOnMask = false;
@@ -6279,7 +6284,7 @@ var BZW_knowledge = (() => {
     mask.addEventListener("touchmove", onMove, { capture: true, passive: true });
     mask.addEventListener("touchcancel", onCancel, true);
     mask.addEventListener("click", onClick);
-    return () => {
+    const unbind = () => {
       mask.removeEventListener("mousedown", onDown, true);
       mask.removeEventListener("mouseup", onUp, true);
       mask.removeEventListener("mousemove", onMove, true);
@@ -6288,7 +6293,10 @@ var BZW_knowledge = (() => {
       mask.removeEventListener("touchmove", onMove, true);
       mask.removeEventListener("touchcancel", onCancel, true);
       mask.removeEventListener("click", onClick);
+      unbinders.delete(mask);
     };
+    unbinders.set(mask, unbind);
+    return unbind;
   }
 
   // src/core/mobile.ts
@@ -8354,6 +8362,10 @@ ${lines}`;
   }
 
   // src/knowledge/note-gen.ts
+  function litDir() {
+    var _a;
+    return cleanDir((_a = tryGetSettings()) == null ? void 0 : _a.knowledgeDirectory);
+  }
   function parseDomainList(raw) {
     return [...new Set(String(raw != null ? raw : "").split(/[,，、]/).map((s) => s.trim()).filter(Boolean))];
   }
@@ -8436,7 +8448,8 @@ ${lines}`;
   var BACKFILL_AI_TIMEOUT_MS = 25e3;
   async function writeUniqueNote(dir, baseName2, content) {
     const app = getApp();
-    const folder = String(dir || "文献盒").replace(/\\/g, "/").replace(/^\/+|\/+$/g, "");
+    const folder = String(dir || "").replace(/\\/g, "/").replace(/^\/+|\/+$/g, "");
+    if (!folder) throw new Error("知识盒还没定文献文件夹：先在设置里选一个");
     let path = `${folder}/${baseName2}.md`;
     for (let i = 2; app.vault.getAbstractFileByPath(path); i++) path = `${folder}/${baseName2}_${i}.md`;
     try {
@@ -8449,8 +8462,8 @@ ${lines}`;
   }
   function findDuplicateTermNote(term) {
     const app = getApp();
-    const s = tryGetSettings();
-    const dir = String(s.knowledgeDirectory || "文献盒").replace(/\\/g, "/").replace(/^\/+|\/+$/g, "");
+    const dir = litDir();
+    if (!dir) return null;
     const path = `${dir}/${sanitizeMdTitle(term)}.md`;
     return app.vault.getAbstractFileByPath(path) ? path : null;
   }
@@ -8513,7 +8526,7 @@ ${metaExcerpt(chunks)}`,
       "---"
     ].join("\n");
     const body = [fm, whole, videoSection].filter(Boolean).join("\n\n");
-    return writeUniqueNote(String(s.knowledgeDirectory || "文献盒"), sanitizeMdTitle(title), body);
+    return writeUniqueNote(litDir(), sanitizeMdTitle(title), body);
   }
   function termPrompt(term, list) {
     return `你是百科知识整理助手。为术语「${term}」生成一篇文献笔记。只输出 JSON，不要任何解释：
@@ -8561,7 +8574,7 @@ ${metaExcerpt(chunks)}`,
     }
     fm.push("---");
     const body = [fm.join("\n"), summary].filter(Boolean).join("\n\n");
-    return writeUniqueNote(String(s.knowledgeDirectory || "文献盒"), sanitizeMdTitle(term), body);
+    return writeUniqueNote(litDir(), sanitizeMdTitle(term), body);
   }
   function passagePrompt(text, list) {
     return `你是文献整理助手。把下方这段文字整理成一篇文献笔记。只输出 JSON，不要任何解释：
@@ -8606,7 +8619,7 @@ ${text}`;
     }
     fm.push("---");
     const body = [fm.join("\n"), summary].filter(Boolean).join("\n\n");
-    return writeUniqueNote(String(s.knowledgeDirectory || "文献盒"), sanitizeMdTitle(title || summary), body);
+    return writeUniqueNote(litDir(), sanitizeMdTitle(title || summary), body);
   }
   async function writeUniqueBinary(dir, baseName2, ext, bytes) {
     const app = getApp();
@@ -8673,7 +8686,7 @@ ${notes.map((x) => `第 ${x.n} 张：${x.d}`).join("\n")}`;
     if (!title && !summary) throw new Error("图版为空");
     const images = (Array.isArray(opts.images) ? opts.images : []).filter((im) => im && im.bytes);
     if (!images.length) throw new Error("图版没有图片");
-    const dir = String(s.knowledgeDirectory || "文献盒");
+    const dir = litDir();
     const name = sanitizeMdTitle(title || summary.slice(0, 30));
     const imageRoot = resolveImageDir(s);
     const imagePaths = [];
@@ -8792,11 +8805,11 @@ ${content || ""}`;
     return lines.join(src.includes("\r\n") ? "\r\n" : "\n");
   }
   async function backfillNotes(opts = {}) {
-    var _a, _b;
+    var _a, _b, _c;
     const app = getApp();
-    const s = tryGetSettings();
     const aiTimeoutMs = (_a = opts.aiTimeoutMs) != null ? _a : BACKFILL_AI_TIMEOUT_MS;
-    const dir = String(s.knowledgeDirectory || "文献盒").replace(/\\/g, "/").replace(/^\/+|\/+$/g, "");
+    const dir = litDir();
+    if (!dir) return { scanned: 0, filled: 0, aiSkipped: false };
     const files = (app.vault.getFiles() || []).filter((f) => f.path.startsWith(dir + "/") && f.path.endsWith(".md"));
     const needDomain = [];
     let filled = 0;
@@ -8835,7 +8848,7 @@ ${content || ""}`;
     let aiSkipped = false;
     if (needDomain.length) {
       const ai = createAI();
-      const list = parseDomainList(s.knowledgeDomainList);
+      const list = parseDomainList((_b = tryGetSettings()) == null ? void 0 : _b.knowledgeDomainList);
       for (const { file } of needDomain) {
         try {
           const latest = await app.vault.read(file);
@@ -8850,7 +8863,7 @@ ${sample}`
             aiTimeoutMs,
             "领域判定"
           );
-          const domain = String(((_b = parseAiJson(raw)) == null ? void 0 : _b.domain) || "").trim();
+          const domain = String(((_c = parseAiJson(raw)) == null ? void 0 : _c.domain) || "").trim();
           if (domain) {
             await app.vault.modify(file, injectFrontmatter(latest, [`domain:${domain}`]));
             filled++;
@@ -13887,7 +13900,8 @@ ${String(blockText != null ? blockText : "").trim()}`);
       settingsId: "diary",
       title: "日记本还没定文件夹",
       desc: "写下的每一篇都会存进日记文件夹。定了之后才有地方落笔。",
-      fields: [{ key: "diaryDirectory", label: "日记文件夹", reco: "我的/日记", note: "信件文件夹可选，用到时才问" }]
+      hint: "信件文件夹可选，用到时才问。",
+      fields: [{ key: "diaryDirectory", label: "日记文件夹", reco: "我的/日记" }]
     },
     clipbook: {
       name: "剪藏本",
@@ -14140,7 +14154,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
     const m = text.match(/^---\r?\n[\s\S]*?\r?\n---\r?\n?/);
     return text.slice(m ? m[0].length : 0).replace(/^\r?\n+/, "");
   }
-  function mountKnowledgeFolderGate(el) {
+  function mountKnowledgeFolderGate(el, closeBefore) {
     if (!needsFolderSetup("knowledge")) return false;
     const plan = folderState("knowledge").plan;
     el.textContent = "";
@@ -14156,7 +14170,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
     act.type = "button";
     act.className = "bz-kb-mt-btn bz-kb-gate-act";
     act.textContent = "打开设置";
-    act.addEventListener("click", () => openFolderSettings("knowledge"));
+    act.addEventListener("click", () => openFolderSettings("knowledge", void 0, closeBefore));
     wrap.append(title, note, act);
     el.appendChild(wrap);
     return true;
@@ -15222,7 +15236,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
     /** 当前部数据 + 渲染（目录变更检测 → 清缓存重扫） */
     async refreshCurrent() {
       if (!this.contentEl) return;
-      if (mountKnowledgeFolderGate(this.contentEl)) return;
+      if (mountKnowledgeFolderGate(this.contentEl, () => this.hideMain())) return;
       const s = tryGetSettings();
       if (this.part === "z1") {
         const dir = litDirOf(s);

@@ -169,7 +169,9 @@ function warnFailedBatch(kind: string, failed: string[]): void {
  */
 async function collectMdPaths(app: App, dirPath: string): Promise<string[]> {
   const out: string[] = [];
-  const stack: string[] = [dirPath.replace(/\/+$/, '') || '/'];
+  // 空目录 = 未配置：不扫（否则 `|| '/'` 会把整个库当成日记目录，几千篇全被读一遍）
+  if (!dirPath || !dirPath.trim()) return out;
+  const stack: string[] = [dirPath.replace(/\/+$/, '') || dirPath];
   const seen = new Set<string>();
   while (stack.length) {
     const dir = stack.pop()!;

@@ -11,6 +11,8 @@ Obsidian 插件。域 = `src/<域>/`，`core` 是共享层。中文输出。
 
 测试一律 `node` 直调，别走 `pnpm run`（package.json 同名脚本已同口径）：pnpm 11 跑脚本前的依赖自检默认会自动 `pnpm install`，本仓必判「过期」——主仓里 `tools/*` 子包被算成工作区项目，worktree 里还经 junction 读到主仓的状态文件。
 
+重试与 waitFor 预算都跟并发会话数走（判据在 `scripts/test-workers.mjs`）：独占时 **retry 0**、waitFor 2.5s；有并发会话才 retry 2、waitFor 5s。别在 `vitest.config.ts` 里写死 `retry: 2` —— 那会让每条真失败白等两轮（一轮 = 用例里最深的那个 waitFor 预算），几十条同时红就是十几分钟，而全程 CPU 闲着。要显式复现抖动：`BZ_TEST_RETRY=2`。
+
 ## 硬约束（看见就是错）
 - 样式源只有 `src/<域>/styles.css`（根 `styles.css` 是聚合产物）。域内禁 `scrollbar-width: thin/auto`、禁自绘 thumb、禁运行时注入 `<style>`、禁内联视觉样式。例外只有两处，都要先有 ADR：① 远端皮肤包，只在 `src/core/skin-pack.ts` 单一注入点（ADR-0199）；② 展示板**沙箱框文档内部**的滚动条样式，只在 `src/dock/ui.ts` 的 `FRAME_SCROLLBAR_CSS`（ADR-0243 补记，作用域仅 iframe 文档、守卫掐死范围）。
 - 域 UI 的唯一真理源是与评审壳共用的实现源码；两侧不一致 = 缺陷，改源码，别改壳、别改产物。未定稿的探索稿只写 `.scratch/<名>/`。

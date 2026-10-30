@@ -99,9 +99,9 @@ export async function readNewsAndSidecar(): Promise<PanelData> {
   const sidecar = await readClipbookData();
   // 剪藏目录扫描（C12：每次直读 clipDir() 实时值——原 M.dir 缓存只在 initPanel 与域内设置
   // 弹窗 onClose 赋值，设置面板域改「剪藏文件夹」后扫描仍扫旧目录，读写路径不对称）
-  const clipNotes = await scanClipDirectory(clipDir(), {
-    vault: getApp().vault,
-  });
+  // 未配置（空串）就不扫：不拿空目录去 startsWith('/')，也不让「未配置」在数据层失真
+  const clipFolder = clipDir();
+  const clipNotes = clipFolder ? await scanClipDirectory(clipFolder, { vault: getApp().vault }) : null;
   // 效率#2：被契约拒收的剪藏不再凭空蒸发——每次装载 warn 一次（含路径清单，控制台可定位；
   // 面板内可视化呈现留给 UI 侧接线）
   if (clipNotes && clipNotes.rejected > 0) {

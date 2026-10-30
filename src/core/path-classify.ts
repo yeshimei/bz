@@ -5,18 +5,20 @@
  * - 目录边界语义对齐 src/review/watch.ts 的 isUnderFolder：path === dir || path.startsWith(dir + '/')，
  *   防「我的/日记.md」「我的/日记本/a.md」这类前缀相近路径误判；
  * - 反斜杠统一归一化为正斜杠后再匹配（Windows 手输路径容错）；
- * - settings 缺键（提供者未注入 / 测试注入部分对象）时回退各域现行默认值——默认值从现有代码抄入并逐条注明出处；
+ * - settings 缺键 / 值为空（2026-10-31 起目录缺省留空）= 该域未配置，不归类（不回退任何字面量）；
+ *   只有设置里真配了目录的域才参与匹配——与各域「未配置 → 引导态」同一口径；
  * - 本文件属 core 层：按依赖方向（ADR-0002 core ← 域模块）不得反向 import src/diary、src/smartcat 取常量，
  *   故默认值与硬编码目录均为本地副本 + 出处注释，改动上游时须同步此处。
  */
 import { tryGetSettings } from './settings-provider';
 import { diaryDateFromEntryPath } from './diary-format';
+import { cleanDir } from './attachment-dir';
 
 export type FileDomainKind = 'diary' | 'flash' | 'cinema' | 'clipping' | 'poem' | 'letter' | 'knowledge';
 
-/** 目录归一：trim + 反斜杠转正斜杠 + 去尾斜杠 */
+/** 目录归一：走 core/attachment-dir 的 cleanDir 单源（trim + 反斜杠归一 + 去首尾斜杠） */
 function normalizeDir(dir: string): string {
-  return (dir || '').trim().replace(/\\/g, '/').replace(/\/+$/, '');
+  return cleanDir(dir);
 }
 
 /** 目录边界判定（对齐 src/review/watch.ts isUnderFolder：path 恰为该目录或位于其下）；空目录不匹配 */

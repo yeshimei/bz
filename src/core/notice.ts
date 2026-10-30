@@ -273,7 +273,10 @@ function calcDuration(text: string, base: number): number {
   return Math.min(base + extra, 15000);
 }
 
-function ensureContainer(): HTMLElement {
+function ensureContainer(): HTMLElement | null {
+  // 没有 DOM 的宿主（测试的 node 环境、启动早期 / 卸载后）不该让「说一句话」把调用方炸掉：
+  // 通知是最后兜底的报告通道，兜不住就静默——它自己抛错会把被报的原始错误一起埋掉。
+  if (typeof document === 'undefined' || !document?.body) return null;
   let container = document.getElementById('bz-notice-container');
   if (!container) {
     container = document.createElement('div');
@@ -517,6 +520,7 @@ export function notify(msg: string, opts?: NoticeOptions): NoticeHandle {
   const variant: NoticeVariant =
     (opts && opts.variant) || defaultVariant();
   const container = ensureContainer();
+  if (!container) return noopHandle();
   applyPositionClass(container);
 
   // 去重：同键通知存活 → 原地合并更新消息并重置计时（连续任务单框）；

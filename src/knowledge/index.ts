@@ -17,6 +17,7 @@ import { KnowledgeData } from './data';
 import { UIManager, type EntryPrefill } from './ui';
 import { type TermSource } from './source';
 import { upgradeNoteSourceInFile } from './note-gen';
+import { needsFolderKey, openFolderSettings } from '../core/folder-setup';
 import { relinkNoteByPath } from './relink';
 
 let initialized = false;
@@ -59,6 +60,18 @@ export function ensureKnowledge(app: App): void {
   }
 }
 
+/**
+ * 录入入口的目录闸门（2026-10-31 发版 review #1）：命令面板随时能触发，绕得开主面板的
+ * 引导空态。未配置时直接把人送去设置，而不是让他填完一堆内容最后才卡在写盘上。
+ * 返回 true = 已处理（调用方应当 return）。
+ */
+function blockedByFolderSetup(): boolean {
+  // 只认文献文件夹：这些录入都写进 litDir()，主题盒/卡片盒空着不该拦住存一条名词
+  if (!needsFolderKey('knowledge', 'knowledgeDirectory')) return false;
+  openFolderSettings('knowledge', 'knowledgeDirectory');
+  return true;
+}
+
 /** 打开文献盒主面板（bz-knowledge-open 命令回调） */
 export function openKnowledgePanel(app: App): void {
   ensureKnowledge(app);
@@ -72,6 +85,7 @@ export function openKnowledgePanel(app: App): void {
  */
 export function openKnowledgeAddTask(app: App, prefill?: { url: string; title?: string | null; uploader?: string | null }): void {
   ensureKnowledge(app);
+  if (blockedByFolderSetup()) return;
   uiManager?.showVideoEntry(prefill);
 }
 
@@ -85,6 +99,7 @@ export function openKnowledgeAddTask(app: App, prefill?: { url: string; title?: 
  */
 export function openTermNote(app: App, term?: string, opts?: KnowledgeEntryPrefill): void {
   ensureKnowledge(app);
+  if (blockedByFolderSetup()) return;
   let t = term?.trim();
   let src: TermSource | undefined;
   if (opts?.source) src = prefillSource(opts.source);
@@ -111,6 +126,7 @@ export function openTermNote(app: App, term?: string, opts?: KnowledgeEntryPrefi
  */
 export function openPassageNote(app: App, opts?: KnowledgeEntryPrefill): void {
   ensureKnowledge(app);
+  if (blockedByFolderSetup()) return;
   let text: string | undefined;
   let src: TermSource | undefined;
   const explicit = String(opts?.text ?? '').trim();
@@ -132,6 +148,7 @@ export function openPassageNote(app: App, opts?: KnowledgeEntryPrefill): void {
  */
 export function openImageNote(app: App, opts?: KnowledgeEntryPrefill): void {
   ensureKnowledge(app);
+  if (blockedByFolderSetup()) return;
   let src: TermSource | undefined;
   if (opts?.source) src = prefillSource(opts.source);
   if (!src) {
