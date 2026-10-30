@@ -93,6 +93,12 @@ export default interface BzSettings {
    *  比「不更新」更难查。装之前照旧备份旧三件套，坏包可回滚。
    *  注意它只管「装不装」，不管「查不查」：关着也仍会在面板里看到「有新版」。 */
   autoUpdate: boolean;
+  /** 启动时最后确认过「已是这一版」的插件版本号：onload 拿 manifest.version 与它比对，
+   *  不同 = 升级了 → 自动弹更新日志弹窗（用户拍板 2026-10-31：发版必带日志，新版本启动即弹）。
+   *  空 = 没记录过（新装 / 本功能上线前的老库）：新装被首次引导压住只记录不弹；
+   *  老库升级进来的这轮会弹一次（本次升级正是「新版本」）。打开成功才落盘，
+   *  离线没弹成的下版启动再试。 */
+  changelogSeenVersion: string;
   /** 首次引导是否走完（含「以后再说」）：false = 下次启动还会弹（core/setup-wizard）。
    *  跳过的也算走完——不能每次启动都拿同一张清单拦人。 */
   setupDone: boolean;
@@ -988,6 +994,8 @@ export const DEFAULT_SETTINGS: BzSettings = {
 
   // 自动更新：缺省开（2026-10-30 用户拍板；含插件本体 + 三个外部工具包，在线资源不自动下）——见 interface 说明
   autoUpdate: true,
+  // 启动版本确认记录（空 = 没记录过）：新版本启动即弹更新日志，见 interface 说明
+  changelogSeenVersion: '',
   // 首次引导没走过（首次启动会弹；走完或被跳过后置 true）
   setupDone: false,
   // 自定义镜像源（空 = 只用官方通道）

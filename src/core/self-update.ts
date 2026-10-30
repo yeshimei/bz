@@ -372,6 +372,18 @@ export async function checkSelfUpdate(app: unknown, opts: SelfUpdateOptions = {}
   await adapter.write(pluginFile(app, 'styles.css'), css.text);
   await adapter.write(pluginFile(app, 'manifest.json'), mf.text);
   writeStore(PENDING_KEY, { version: pointer.version });
+  // 用户拍板 2026-10-31：更新插件 = **强制同更更新日志**。新三件套落盘后马上向远端
+  // 拉与新版配套的日志（channel 上的 downloads/bz-changelog.html），落进插件目录——
+  // 重载后的启动检测（fetchChangelogForStartup）才有得秒开。失败静默：不挡更新完成，
+  // 启动检测那条线在重载后还会再强制核对一次，两层兜底。
+  void (async () => {
+    try {
+      const { refreshChangelog } = await import('./changelog');
+      await refreshChangelog(app);
+    } catch {
+      /* 静默：日志没跟上不算更新失败 */
+    }
+  })();
   if (!opts.silent) notice(`bz 已更新到 v${pointer.version}：重载插件（或重启 Obsidian）后生效`, 'success');
   return 'installed';
 }
