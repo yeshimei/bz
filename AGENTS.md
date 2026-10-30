@@ -31,13 +31,15 @@ Obsidian 插件。域 = `src/<域>/`，`core` 是共享层。中文输出。
 
 Conventional Commits。**提交信息即更新日志正文**，只有 `feat` / `fix` / `perf` 进日志；标题主句（`——` 之前那段）至少 4 个字，短了会被 `_gen-changelog.mjs` 的 `rewrite()` 静默丢弃（提交照样成功，日志里没这条）。
 
+同一版里修自己刚加、还没发出去的东西，**并回那条 `feat`**（squash 进主句，主题句写修复后的最终态），别让日志出现「新功能 + 修复它」两条——日志是给用户看的（[docs/changelog.md](docs/changelog.md)）。只有修上一版已发布行为、或升版后引入的回归，才单独留 `fix`。
+
 流程：worktree → `git merge master` → 门禁全绿（`test-affected --since master` + `tsc --noEmit` + 自审 + diff 审查）→ 合回主仓 → 推送。
 
 占 issues / ADR 编号前先查主仓库最新号；拍板结论进 `.scratch/memo-suite-plugin/spec.md`，决策进 `docs/adr/` 并同步 `CONTEXT.md`。
 
 ## 发布
 
-只有在**发版**时才走这四步。跟日常提交推送是两回事。
+只有在**发版**时才走这五步。跟日常提交推送是两回事。
 
 **两道硬闸，缺一不可：**
 
@@ -45,6 +47,13 @@ Conventional Commits。**提交信息即更新日志正文**，只有 `feat` / `
 2. **发布前先把 Release note 正文贴给用户看，等他看完点头。** 在 `gh release create` 之前停住——note 没被看过就发出去，等于替用户对外承诺内容。
 
 提交、推送、打 tag 都是本地/仓库内动作；**对外发布**（Release、分发仓库、市场 PR）必须过这两道闸。
+
+### 0. 发布前置 review（不跳）
+
+从上一个 tag 到 HEAD 整段改动走一遍 review，四个维度：代码 / 样式 UI / 稳定性 / 增强建议。
+出一张**编号清单**（编号给了就不再变），然后停住等用户挑号——他选哪些才修哪些，修完才进第 1 步。
+P0 没修完不发版；清单没给过他，不许跑七步。检查点与清单格式见
+[docs/pre-release-review.md](docs/pre-release-review.md)。
 
 ### 1. 主仓跑七步
 
@@ -122,6 +131,7 @@ gh release create v<版本> -R yeshimei/bz --title "bz v<版本>" --notes-file n
 | 值守跑之前等网络 | `tools/dock-watch/net.js` 文件头 · ADR-0242 补记（等不到不记账，留给下一拍） |
 | 写一个接入工具坞的外部脚本 | `docs/dock-tool-guide.md`（声明文件 / 参数值文件 / 四行协议 / 运行记录 / 展示板 `panel.html`） |
 | 发布页正文怎么写、条目什么格式、离线包什么结构 | `docs/release-note-template.md`（条目格式段：标签说人话 + 全角冒号 + 标题 emoji）· `src/core/offline-source.ts` 文件头的目录图 |
+| 发版前的 review 查什么、清单怎么给 | `docs/pre-release-review.md`（四维度检查点 / 编号规则 / 挑完之后） |
 | 分发仓库怎么重建 | `scripts/push-assets.mjs`（保留份数 / 压平阈值 / slug 读哪里）· ADR-0269 |
 | 资源地址、通道顺序 | `src/core/remote-base.ts`（唯一事实源；别在别处再写一份 slug 或域名）· ADR-0269 |
 
