@@ -19,6 +19,7 @@
  * （合成占位卡纯内存零写盘；占位卡上写档案 / 随手记前先 ensureEntry 落一张空卡）。
  */
 import { notice, notifyActionError } from '../core/notice';
+import { bindMaskDismiss } from '../core/mask-dismiss';
 import { openFlowDialog } from '../core/flow-dialog';
 import { topifyZ } from '../core/z-order';
 import { registerPanelEsc, unregisterPanelEsc } from '../core/esc-manager';
@@ -563,6 +564,8 @@ function buildPanelShell(app?: unknown): void {
   });
   trapPanelFocus(overlay.querySelector<HTMLElement>('.bz-people-panel') ?? overlay);
   overlay.addEventListener('click', onOverlayClick);
+  // 点遮罩关闭：手势配对判据（core/mask-dismiss）——跨元素松手（弹窗内选字划出）不算点击
+  bindMaskDismiss(overlay, closePeoplePanel);
   // 补充素材·图片行的时间改写即落状态（509 评审 P2：落盘才读回会被中途重画打回 mtime）
   // 录音导入行的起点同理（ADR-0217）——落盘前随时可改，不逐键绑状态只在 selected 时落
   overlay.addEventListener('change', (e) => {
@@ -2140,7 +2143,6 @@ async function sealAction(kind: string, id: string): Promise<void> {
 
 function onOverlayClick(e: MouseEvent): void {
   const t = e.target as HTMLElement;
-  if (e.target === overlay) { closePeoplePanel(); return; }
   // 反光：点照片那一下也把反光带到那张
   // —— 册子：抽照片 / 翻摊 / 合上（先于其它分支，照片在整个册面上） ——
   const pocket = t.closest<HTMLElement>('[data-people-pocket]');

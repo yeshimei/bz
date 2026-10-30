@@ -9,6 +9,7 @@
  *   关闭（遮罩/ESC/requestClose 放行后的 close）还原焦点到触发元素。
  * ============================================================ */
 import { escManager } from '../esc-manager';
+import { bindMaskDismiss } from '../mask-dismiss';
 import { allocZ } from '../z-order';
 import { firstFocusable, trapFocus } from './focus-trap';
 
@@ -135,10 +136,9 @@ export function uiModal(opts: BzModalOpts): { mask: HTMLElement; popup: HTMLElem
   };
 
   // 点遮罩关闭（弹窗内元素不触发）；closable: false 时整段不挂——引导类流程只能由按钮结束
+  // 判据走 bindMaskDismiss：跨元素松手（弹窗内选字划到遮罩）不算点击，防误触关闭
   if (opts.closable !== false) {
-    mask.addEventListener('click', (e) => {
-      if (e.target === mask) attemptClose();
-    });
+    bindMaskDismiss(mask, attemptClose);
 
     // ESC：栈顶后开先关（escManager 会做可见性判断）
     escHandle = escManager.register('bz-modal', {

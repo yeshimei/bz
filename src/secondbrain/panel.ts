@@ -17,6 +17,7 @@
  */
 import type { App } from 'obsidian';
 import { notice } from '../core/notice';
+import { bindMaskDismiss } from '../core/mask-dismiss';
 import { topifyZ } from '../core/z-order';
 import { mountIcons, uiResizable } from '../core/ui';
 import { openFlowDialog } from '../core/flow-dialog';
@@ -371,7 +372,8 @@ export class SecondBrainPanel {
 
     const mask = document.createElement('div');
     mask.className = 'bz-sb-panel-mask';
-    mask.onclick = () => this.close();
+    // 点遮罩关闭：手势配对判据（core/mask-dismiss）
+    bindMaskDismiss(mask, () => this.close());
 
     const popup = document.createElement('div');
     popup.className = 'bz-sb-panel bz-panel-mtop'; // 移动端全屏 + 44px 顶部避让（issue 272；桌面不生效）

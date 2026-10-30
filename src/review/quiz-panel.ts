@@ -16,6 +16,7 @@
  */
 import type { App } from 'obsidian';
 import { getApp } from '../core/app';
+import { bindMaskDismiss } from '../core/mask-dismiss';
 import { notice, notify } from '../core/notice';
 import { escManager } from '../core/esc-manager';
 import { trapPanelFocus } from '../core/ui/focus-trap';
@@ -97,7 +98,8 @@ class QuizPracticePanel {
     this.mask.classList.add('bz-panel-overlay');
     this.mask.style.display = 'none';
     // C15（ADR-0067）：不置静态档位——present 时 topifyZ 显示即发号
-    this.mask.onclick = () => this.hide();
+    // 点遮罩关闭：手势配对判据（core/mask-dismiss）
+    bindMaskDismiss(this.mask, () => this.hide());
 
     this.popup = document.createElement('div');
     this.popup.id = POPUP_ID;

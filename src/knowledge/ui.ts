@@ -20,6 +20,7 @@
  */
 import { Component, MarkdownRenderer, setIcon, type App } from 'obsidian';
 import { imageDataUrl, imageExtOfMime, imageMimeOfPath } from '../core/ai';
+import { bindMaskDismiss } from '../core/mask-dismiss';
 import { localNow } from '../core/ui/str';
 import type { SettingsSchema } from '../core/settings-schema';
 import { isMobileEnv } from '../core/mobile';
@@ -690,7 +691,8 @@ export class UIManager {
     mask.id = 'knowledge-mask';
     mask.className = 'bz-overlay-mask bz-kb-mask'; // issue 365 收编单源后此处漏挂 → 遮罩零尺寸不可见、点不着关不掉
     mask.style.display = 'none';
-    mask.onclick = () => this.hideMain();
+    // 点遮罩关闭：手势配对判据（core/mask-dismiss）
+    bindMaskDismiss(mask, () => this.hideMain());
 
     const popup = document.createElement('div');
     popup.id = 'knowledge-popup';
@@ -1293,9 +1295,13 @@ export class UIManager {
       closed = true;
       ovl.remove();
     };
+    // 点遮罩关闭：手势配对判据（core/mask-dismiss）——跨元素松手不算点击
+    bindMaskDismiss(ovl, () => {
+      close();
+      opts.onCancel();
+    });
     ovl.addEventListener('click', (e) => {
       const t = e.target as HTMLElement;
-      if (t === ovl) { close(); opts.onCancel(); return; } // 点遮罩 = 取消
       const btn = t.closest?.('[data-edit]') as HTMLElement | null;
       if (!btn) return;
       if (btn.getAttribute('data-edit') === 'cancel') { close(); opts.onCancel(); return; }
@@ -2055,9 +2061,11 @@ export class UIManager {
     const ovl = document.createElement('div');
     ovl.className = 'bz-kb-ovl';
     ovl.innerHTML = `<div class="bz-kb-sheet">${html}</div>`;
+    // 点遮罩关闭：手势配对判据（core/mask-dismiss）——跨元素松手不算点击
+    bindMaskDismiss(ovl, () => this.closeSheet());
     ovl.addEventListener('click', (e) => {
       const t = (e.target as HTMLElement).closest('[data-kb-act],[data-kb-close]') as HTMLElement | null;
-      if (e.target === ovl || (t && t.hasAttribute('data-kb-close'))) { this.closeSheet(); return; }
+      if (t && t.hasAttribute('data-kb-close')) { this.closeSheet(); return; }
       if (!t) return;
       const act = t.getAttribute('data-kb-act');
       // 独立宿主（预览直达）时主窗 onShellClick 不在场：挂载树入口在此兜住（主窗场景由 onShellClick 独家处理，防双开）
@@ -2179,7 +2187,7 @@ export class UIManager {
     mask.id = 'knowledge-video-mask';
     mask.className = 'bz-overlay-mask bz-kb-mask'; // issue 365 收编单源后此处漏挂 → 遮罩零尺寸不可见、点不着关不掉
     mask.style.display = 'none';
-    mask.onclick = () => this.hideVideo();
+    bindMaskDismiss(mask, () => this.hideVideo());
     const popup = document.createElement('div');
     popup.id = 'knowledge-video-popup';
     popup.className = 'bz-kb-window kb';
@@ -2600,7 +2608,7 @@ export class UIManager {
     addMask.id = 'knowledge-add-mask';
     addMask.className = 'bz-overlay-mask bz-kb-mask'; // issue 365 收编单源后此处漏挂 → 遮罩零尺寸不可见、点不着关不掉
     addMask.style.display = 'none';
-    addMask.onclick = () => this.requestAddClose(); // issue 326：有草稿先确认
+    bindMaskDismiss(addMask, () => this.requestAddClose()); // issue 326：有草稿先确认
     const popup = document.createElement('div');
     popup.id = 'knowledge-add-popup';
     popup.className = 'bz-lit-dialog kb'; // kb：纸墨皮变量作用域（缺此背景 var(--panel) 失效成透明，issue 257）
@@ -3253,7 +3261,7 @@ export class UIManager {
     mask.id = 'knowledge-term-mask';
     mask.className = 'bz-overlay-mask bz-kb-mask'; // issue 365 收编单源后此处漏挂 → 遮罩零尺寸不可见、点不着关不掉
     mask.style.display = 'none';
-    mask.onclick = () => this.requestTermClose(); // issue 326：有草稿先确认
+    bindMaskDismiss(mask, () => this.requestTermClose()); // issue 326：有草稿先确认
     const popup = document.createElement('div');
     popup.id = 'knowledge-term-popup';
     popup.className = 'bz-lit-dialog bz-lit-term-dialog kb'; // kb：纸墨皮变量作用域（缺此背景 var(--panel) 失效成透明，issue 257）

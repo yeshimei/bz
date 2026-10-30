@@ -3,6 +3,7 @@
  * createSiteIcon/createIconBtn/createOverlay——行为与 Q3 逐字一致。
  * injectStyles 已随 ticket 60 样式收敛废弃删除（铁律 9：禁运行时注入）。
  */
+import { bindMaskDismiss } from './mask-dismiss';
 import { notice } from './notice';
 import { allocZ, topifyZ } from './z-order';
 
@@ -219,9 +220,9 @@ export function createOverlay(opts: {
   mask.id = opts.maskId;
   mask.className = 'bz-overlay-mask';
   mask.style.display = 'none';
-  mask.onclick = function (e) {
-    if (e.target === mask && typeof opts.onMaskClick === 'function') opts.onMaskClick();
-  };
+  // 点遮罩关闭：手势配对判据（见 core/mask-dismiss.ts）——跨元素松手（弹窗内选字划到
+  // 遮罩、遮罩上误按滑回弹窗）不算点击，只有明确的按下+抬起都在遮罩本体上才关
+  if (typeof opts.onMaskClick === 'function') bindMaskDismiss(mask, opts.onMaskClick);
   const popup = document.createElement('div');
   popup.id = opts.popupId;
   popup.className = 'bz-overlay-popup';

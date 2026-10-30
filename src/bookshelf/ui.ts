@@ -15,6 +15,7 @@
 import type { App } from 'obsidian';
 import { TFile } from 'obsidian';
 import { escManager, registerPanelEsc, unregisterPanelEsc } from '../core/esc-manager';
+import { bindMaskDismiss } from '../core/mask-dismiss';
 import { trapPanelFocus } from '../core/ui/focus-trap';
 import { allocZ } from '../core/z-order';
 import { isMobileEnv } from '../core/mobile';
@@ -352,9 +353,10 @@ export function createOverlay(app: App): void {
   trapPanelFocus(overlay.querySelector<HTMLElement>('.bz-bs-panel') ?? overlay);
 
   // 单一委托：匾额关闭（移动端）/ 标签筛选 / 排序 / 报告视图交互 / 书脊详情
+  // 点遮罩关闭：手势配对判据（core/mask-dismiss）——跨元素松手（弹窗内选字划出）不算点击
+  bindMaskDismiss(overlay, closeOverlay);
   overlay.addEventListener('click', (e) => {
     const t = e.target as HTMLElement;
-    if (e.target === overlay) { closeOverlay(); return; }
     // 移动端关闭出口 = 点「书库」匾收面板（桌面不响应，点面板外/Esc 关）
     if (t.closest('[data-bs-plaque]')) {
       if (isMobileEnv()) closeOverlay();

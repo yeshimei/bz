@@ -24,6 +24,7 @@
  *   chips/segmented/空态在 render.ts 串里沿用组件库皮（bz-chip/bz-segmented/bz-empty，ADR-0094 视觉）。
  */
 import { notice, notifyUndo, notifySaveError, notifyActionError } from '../core/notice';
+import { bindMaskDismiss } from '../core/mask-dismiss';
 import { topifyZ } from '../core/z-order';
 import { getApp } from '../core/app';
 import { registerPanelEsc } from '../core/esc-manager';
@@ -413,9 +414,10 @@ async function openPanelInner(): Promise<void> {
   dropDocClick = onDocClick;
 
   // ---- 事件委托（chips/排序/KPI 一处接管；桌面与移动横滑条共用 data-bel-st 钩子） ----
+  // 点遮罩关闭：手势配对判据（core/mask-dismiss）——跨元素松手（弹窗内选字划出）不算点击
+  bindMaskDismiss(overlay, closePanel);
   overlay.addEventListener('click', (e) => {
     const t = e.target as HTMLElement;
-    if (e.target === overlay) { closePanel(); return; }
     if (t.closest('[data-bel-add]')) { void openForm(null); return; }
     // 年度报告（issue 356）：以当前库开报告页（命令路径共用同一视图入口）
     if (t.closest('[data-bel-report]')) { void openBelongingsReportView(); return; }

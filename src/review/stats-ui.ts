@@ -17,6 +17,7 @@
 
 import { type App } from 'obsidian';
 import { topifyZ } from '../core/z-order';
+import { bindMaskDismiss } from '../core/mask-dismiss';
 import { escManager } from '../core/esc-manager';
 import { escapeHtml, formatRelativeTime, stripTitleMarks } from '../core/utils';
 import { mountIcons } from '../core/ui';
@@ -120,7 +121,7 @@ function renderStatsModal(app: App, dm: ReviewDataManager, items: ReviewItem[], 
   statsMask.id = 'review-stats-mask';
   statsMask.className = 'bz-overlay-mask'; // issue 365：遮罩底/blur 收编 core 单源（弹窗 fixed 自居中不受 flex/padding 影响）
   statsMask.style.display = 'block';
-  statsMask.onclick = closeStatsModal;
+  bindMaskDismiss(statsMask, closeStatsModal); // 手势配对判据（core/mask-dismiss）
 
   statsPopup = document.createElement('div');
   statsPopup.id = 'review-stats-popup';
@@ -281,7 +282,7 @@ export async function showTimeline(app: App, dm: ReviewDataManager, item: Review
   histMask.id = 'review-history-mask';
   histMask.className = 'bz-overlay-mask'; // issue 365：遮罩底/blur 收编 core 单源
   histMask.style.display = 'block';
-  histMask.onclick = closeTimeline;
+  bindMaskDismiss(histMask, closeTimeline); // 手势配对判据（core/mask-dismiss）
 
   histPopup = document.createElement('div');
   histPopup.id = 'review-history-popup';

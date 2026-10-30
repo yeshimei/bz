@@ -26,6 +26,7 @@
 import type { App } from 'obsidian';
 import { setIcon } from 'obsidian';
 import { escManager } from '../core/esc-manager';
+import { bindMaskDismiss } from '../core/mask-dismiss';
 import { trapPanelFocus } from '../core/ui/focus-trap';
 import { allocZ } from '../core/z-order';
 import { tryGetSettings, getSettings, saveSettings } from '../core/settings-provider';
@@ -930,10 +931,8 @@ function buildDOM(): void {
   mask.style.zIndex = String(allocZ());
   document.body.appendChild(mask);
   maskEl = mask;
-  // 点击遮罩本身关闭（弹窗内部点击不关闭）——计时后台继续
-  mask.addEventListener('click', (e) => {
-    if (e.target === mask) closePomodoro();
-  });
+  // 点击遮罩本身关闭（弹窗内部点击不关闭）——计时后台继续；判据走 bindMaskDismiss 防跨元素松手误关
+  bindMaskDismiss(mask, closePomodoro);
   // 层 id 随 core 样板带域前缀（深审 PC4：'bz-<域>' 约定，仅判重用）
   escHandle = escManager.register('bz-pomodoro', {
     isVisible: () => maskEl !== null,

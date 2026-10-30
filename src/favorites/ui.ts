@@ -22,6 +22,7 @@
  *   命令 ID 不动。
  */
 import { notice, notify, notifyUndo, notifySaveError } from '../core/notice';
+import { bindMaskDismiss } from '../core/mask-dismiss';
 import { topifyZ } from '../core/z-order';
 import { longPress } from '../core/dom';
 import { registerPanelEsc } from '../core/esc-manager';
@@ -270,9 +271,10 @@ export function openPanel(app: any, dm: DataManager, ai: FavoritesAIService): vo
   };
 
   // ---- 事件委托（overlay 顶层） ----
+  // 点遮罩关闭：手势配对判据（core/mask-dismiss）——跨元素松手（弹窗内选字划出）不算点击
+  bindMaskDismiss(overlay, closePanel);
   overlay.addEventListener('click', (e) => {
     const t = e.target as HTMLElement;
-    if (e.target === overlay) { closePanel(); return; }
     if (t.closest('[data-fav-add]')) { openForm(null); return; }
     if (t.closest('[data-fav-close]')) { closePanel(); return; }
   });

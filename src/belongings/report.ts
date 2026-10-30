@@ -18,6 +18,7 @@
  *   （粉彩底不翻主题，继承壳墨色会在暗色下翻成米白 → 看不清）。
  */
 import { yieldToMainThread as yieldToMainThreadCore } from '../core/utils';
+import { bindMaskDismiss } from '../core/mask-dismiss';
 import { notify } from '../core/notice';
 import { mountIcons, uiEmpty, uiBtn, uiBtnRow } from '../core/ui';
 import { emptyHtmlStr } from '../core/ui/str';
@@ -112,10 +113,12 @@ export function openBelReport(items: BelongingsItem[], unit: MoneyUnit, opts: { 
   mountIcons(mask);
   maskEl = mask;
 
-  // 事件委托（头部导航 + 关闭 + 点遮罩关）
+  // 点遮罩关闭：手势配对判据（core/mask-dismiss）——跨元素松手（报告内选字划出）不算点击
+  bindMaskDismiss(mask, closeBelReport);
+
+  // 事件委托（头部导航 + 关闭）
   mask.addEventListener('click', (e) => {
     const t = e.target as HTMLElement;
-    if (e.target === mask) { closeBelReport(); return; }
     if (t.closest('[data-belr-close]')) { closeBelReport(); return; }
     if (t.closest('[data-belr-prev]')) { stepYear(-1); return; }
     if (t.closest('[data-belr-next]')) { stepYear(1); return; }

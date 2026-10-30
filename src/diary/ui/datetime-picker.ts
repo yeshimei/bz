@@ -19,6 +19,7 @@
  */
 import { moment } from 'obsidian';
 import { notice } from '../../core/notice';
+import { bindMaskDismiss } from '../../core/mask-dismiss';
 import { escManager } from '../../core/esc-manager';
 import { allocZ } from '../../core/z-order';
 import { getApp } from '../../core/app';
@@ -567,9 +568,8 @@ export function showDateTimePicker(initialMoment: any, onConfirm: (m: any) => vo
     }
   }
 
-  mask.addEventListener('click', (e) => {
-    if (e.target === mask) mask.remove();
-  });
+  // 点遮罩关闭：手势配对判据（core/mask-dismiss）——跨元素松手不算点击
+  bindMaskDismiss(mask, () => mask.remove());
 
   // 一致#5：esc 层 id 对齐 bz- 前缀口径（esc id 非 DOM 契约，无外部按 id 消费者）
   escManager.register('bz-diary-datetime', { isVisible: () => mask.isConnected, close: () => mask.remove() });

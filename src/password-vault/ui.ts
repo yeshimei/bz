@@ -10,6 +10,7 @@
  * markup 单源（issue 251/ADR-0110）：全部 HTML 出自 ./render.ts（本文件零模板串）。
  */
 import { escManager } from '../core/esc-manager';
+import { bindMaskDismiss } from '../core/mask-dismiss';
 import { secureRandomPassword, copySensitiveWithFallback, cancelClipboardClear, debounce, openExternalUrl } from '../core/utils';
 import { getApp } from '../core/app';
 import { getSafeManager } from '../encrypt';
@@ -271,10 +272,9 @@ export class PasswordVaultUIManager {
       this.desk.search.focus();
     });
     // 点击卡片外遮罩 → 关闭窗口
-    root.addEventListener('click', (e) => {
-      if (e.target === root && this.root!.style.display === 'flex') {
-        this.hide();
-      }
+    // 点遮罩关闭：手势配对判据（core/mask-dismiss）——跨元素松手不算点击
+    bindMaskDismiss(root, () => {
+      if (this.root!.style.display === 'flex') this.hide();
     });
   }
 
@@ -301,9 +301,7 @@ export class PasswordVaultUIManager {
     // 返回
     root.querySelector('.bz-password-vault-back')?.addEventListener('click', () => this.mob.page.classList.remove('open'));
     // 次级面板遮罩点击关闭（点击遮罩本身才关闭，面板内不关）
-    this.mob.page.addEventListener('click', (e) => {
-      if (e.target === this.mob.page) this.mob.page.classList.remove('open');
-    });
+    bindMaskDismiss(this.mob.page, () => this.mob.page.classList.remove('open')); // 手势配对判据
     // 详情页右上菜单
     root.querySelector('.bz-password-vault-mobpage .head [data-act="menu"]')?.addEventListener('click', () => {
       const cur = this.mobPagePlatform;
@@ -336,9 +334,7 @@ export class PasswordVaultUIManager {
       const errEl = dlg.querySelector('[data-f-err]') as HTMLElement;
       const get = (f: string) => (dlg.querySelector(`[data-f="${f}"]`) as HTMLInputElement).value.trim();
       // 点击遮罩（非弹窗本体）关闭
-      modal.addEventListener('click', (e) => {
-        if (e.target === modal) this.closeEntryDialog();
-      });
+      bindMaskDismiss(modal as HTMLElement, () => this.closeEntryDialog()); // 手势配对判据（core/mask-dismiss）
       // 生成（呈报#3/P6）：密码框为空直接生成；已手填非空 → 先经 core 流程框确认一声，
       // 防手滑把手工密码无声顶掉（确认/取消均不动原值，确认后才覆盖）
       dlg.querySelector('[data-act="gen"]')?.addEventListener('click', () => {
@@ -423,9 +419,7 @@ export class PasswordVaultUIManager {
       const errEl = card.querySelector('.err') as HTMLElement;
       let currentPlatform: string | null = null;
       // 点击遮罩（非弹窗本体）关闭
-      card.addEventListener('click', (e) => {
-        if (e.target === card) card.classList.remove('open');
-      });
+      bindMaskDismiss(card, () => card.classList.remove('open')); // 手势配对判据
       card.querySelector('[data-act="cancel"]')?.addEventListener('click', () => {
         card.classList.remove('open');
       });

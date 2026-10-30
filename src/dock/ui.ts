@@ -17,6 +17,7 @@
 
 import { Platform, type App } from 'obsidian';
 import { topifyZ } from '../core/z-order';
+import { bindMaskDismiss } from '../core/mask-dismiss';
 import { fileDiskPath } from '../core/path-picker';
 import { escManager } from '../core/esc-manager';
 import { trapPanelFocus } from '../core/ui/focus-trap';
@@ -380,9 +381,8 @@ function build(app: App): void {
 
   frame.append(head, kpi, runbar, bar, body);
   ov.appendChild(frame);
-  ov.addEventListener('click', (e) => {
-    if (e.target === ov) closeDock();
-  });
+  // 点遮罩关闭：手势配对判据（core/mask-dismiss）——跨元素松手不算点击
+  bindMaskDismiss(ov, closeDock);
   document.body.appendChild(ov);
   overlay = ov;
   liveOff = onLiveChanged(() => {

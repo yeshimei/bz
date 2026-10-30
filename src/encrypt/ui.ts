@@ -11,6 +11,7 @@
  */
 import { MarkdownRenderer, Component } from 'obsidian';
 import { notice, notify, notifyActionError } from '../core/notice';
+import { bindMaskDismiss } from '../core/mask-dismiss';
 import type { NoticeHandle } from '../core/notice';
 import { getApp } from '../core/app';
 import { escManager, registerPanelEsc, unregisterPanelEsc } from '../core/esc-manager';
@@ -773,7 +774,8 @@ export class UIManager {
     // 这里只挂移动端常驻框（两框共用一个绑定方法，语义不裂）。
     this.bindSearchInput(this.mob.search, true);
     // 桌面点遮罩关闭
-    this.mask!.addEventListener('click', () => {
+    // 点遮罩关闭：手势配对判据（core/mask-dismiss）——主壳 mask 与 popup 并列挂 body
+    bindMaskDismiss(this.mask!, () => {
       if (this.mask!.style.display === 'block') this.hide();
     });
     // 安全模式防偷看自动上锁：任何交互重置 15 分钟倒计时（捕获阶段兜底输入框事件）。
@@ -1059,10 +1061,8 @@ export class UIManager {
     // 且本卡片无 fixed 定位 → 沉入文档流被遮罩盖住——曾出现「只有遮罩没有内容」）
     mask.appendChild(popup);
     document.body.appendChild(mask);
-    // 点遮罩（非内容区）关闭 = 取消（同解锁弹窗语义）
-    mask.onclick = (e) => {
-      if (e.target === mask) this.hideHealthDialog();
-    };
+    // 点遮罩（非内容区）关闭 = 取消（同解锁弹窗语义）；手势配对判据防跨元素松手误关
+    bindMaskDismiss(mask, () => this.hideHealthDialog());
     // esc 独立层级（后注册优先）：体检窗开着时 ESC 关体检而不是关主面板
     escManager.register('encrypt-health', {
       isVisible: () => !!(this.healthMask && this.healthMask.style.display === 'flex'),
@@ -1515,7 +1515,7 @@ export class UIManager {
     };
     // （输入框回车提交已由 uiLockScreen 内置：Enter → 主按钮，效率整改 13；busy 期按钮 disabled 天然防重）
     // 点遮罩（非内容区）关闭弹窗 = 取消
-    ls.el.addEventListener('click', (e) => { if (e.target === ls.el) done(false); });
+    bindMaskDismiss(ls.el, () => done(false)); // 手势配对判据（core/mask-dismiss）
     // 焦点：元素挂载后再聚焦才生效；移动端 WebView 需二次聚焦才弹键盘
     ls.focus();
     setTimeout(() => ls.focus(), 150);
@@ -1556,7 +1556,7 @@ export class UIManager {
       close: () => done(),
     });
     if (ls.cancelBtn) ls.cancelBtn.onclick = () => done();
-    ls.el.addEventListener('click', (e) => { if (e.target === ls.el) done(); });
+    bindMaskDismiss(ls.el, () => done()); // 手势配对判据（core/mask-dismiss）
     ls.focus();
     setTimeout(() => ls.focus(), 150);
     this.activeChangePw = { el: ls.el };
@@ -2448,7 +2448,7 @@ export class UIManager {
     ls.actionBtn.addEventListener('click', () => void submit());
     // （输入框回车提交已由 uiLockScreen 内置：Enter → 主按钮 = submit，效率整改 13）
     // 点遮罩（非内容区）关闭 = 取消（同解锁屏语义）
-    ls.el.addEventListener('click', (e) => { if (e.target === ls.el) done(false); });
+    bindMaskDismiss(ls.el, () => done(false)); // 手势配对判据（core/mask-dismiss）
     ls.focus();
     setTimeout(() => ls.focus(), 150);
   }

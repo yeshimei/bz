@@ -28,6 +28,7 @@
  * - danger/cta 标记在标准双动作下只影响焦点（cta），不改动冻结的 DOM 结构。
  */
 import { escManager } from './esc-manager';
+import { bindMaskDismiss } from './mask-dismiss';
 import { escapeHtml } from './utils';
 import { allocZ } from './z-order';
 import { trapFocus } from './ui/focus-trap';
@@ -150,9 +151,8 @@ export function openFlowDialog(opts: FlowDialogOptions): Promise<string | undefi
     mask.id = '__shared_confirm_mask__';
     // 动态发号（ADR-0067）：每次打开新建 DOM，创建即显示，谁后开谁在上
     mask.style.zIndex = String(allocZ());
-    mask.onclick = (e) => {
-      if (e.target === mask) settle(undefined);
-    };
+    // 手势配对判据（见 core/mask-dismiss.ts）：跨元素松手不算点击，防选字/误按误关
+    bindMaskDismiss(mask, () => settle(undefined));
 
     const popup = document.createElement('div');
     popup.id = '__shared_confirm_popup__';

@@ -10,6 +10,7 @@
  */
 import type { App } from 'obsidian';
 import { notify } from '../core/notice';
+import { bindMaskDismiss } from '../core/mask-dismiss';
 import { mountIcons, uiEmpty, uiBtn, uiBtnRow } from '../core/ui';
 import { topifyZ } from '../core/dom';
 import { getApp } from '../core/app';
@@ -145,8 +146,9 @@ function buildDom(): void {
   document.body.appendChild(overlayEl);
   mountIcons(overlayEl);
 
+  // 点遮罩关闭：手势配对判据（core/mask-dismiss）——跨元素松手（弹窗内选字划出）不算点击
+  bindMaskDismiss(overlayEl, closeClipbookReport);
   overlayEl.addEventListener('click', (e) => {
-    if (e.target === overlayEl) { closeClipbookReport(); return; }
     const t = e.target as HTMLElement;
     if (t.closest('[data-clp-rep-close]')) { closeClipbookReport(); return; }
     const segBtn = t.closest('[data-period]') as HTMLElement | null;
