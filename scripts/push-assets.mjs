@@ -379,6 +379,14 @@ function commitAndPush(tag, squashed) {
     log(`提交 ${status.split('\n').length} 处变更`);
     if (!DRY) {
       run('git', ['add', '-A']);
+      // `git status` 按 stat 缓存判断，内容其实一致时也会报「已修改」；add 之后
+      // 再问一次——真没差异就别提交，否则 git commit 以 nothing to commit 失败、
+      // run() 直接 exit(1)，把后面的 CDN 清理与 Release 资产上传整段带走。
+      const staged = run('git', ['diff', '--cached', '--name-only']).trim();
+      if (!staged) {
+        log('内容无实际变化（status 误报），跳过提交');
+        return [];
+      }
       run('git', ['commit', '-m', msg]);
     }
   } else {
