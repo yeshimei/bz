@@ -22,9 +22,14 @@
 ├── styles.css
 └── downloads/
     ├── manifest.json
-    ├── skins.zip
+    ├── skins/            ← 26 套皮肤，逐个 css
     └── tools/
+        ├── bili-downloader/
+        ├── dock-watch/
+        └── obsidian-face/
 ```
+
+`tools/` 里已经是解好的工具目录（不是压缩包），放进去就能用；皮肤也一样，不用再解一次。
 
 # 反馈
 
