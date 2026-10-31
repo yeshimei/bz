@@ -194,6 +194,18 @@ export function currentFetchPath(): string | null {
   return currentPath;
 }
 
+/** 该笔记在队列里的位置（导入弹层的**终态判据**，2026-11-01）：
+ *  `current` 正在抓 / `queued` 还排着 / `done` 已处理完（成功、无海报、失败、被删都算）。
+ *
+ *  为什么不让界面拿「frontmatter 有没有海报」当完成判据：豆瓣本身没图的条目、被拦两次
+ *  仍失败、条目在豆瓣被删——这三类抓完也没有海报，界面就会永远停在「等待/补全中」，
+ *  进度条不收尾、轮询定时器也不停。pending 在每条出队完成时 delete，正好是「处理过」的
+ *  事实来源；有没有海报只是**结果好坏**，由界面另标一档。 */
+export function queueStateOf(path: string): 'current' | 'queued' | 'done' {
+  if (currentPath === path) return 'current';
+  return pending.has(path) ? 'queued' : 'done';
+}
+
 /** 暂停 / 继续队列（暂停只影响「下一条开抓」，在抓的那条会跑完） */
 export function pauseDoubanQueue(): void {
   paused = true;
@@ -414,8 +426,13 @@ let listFetchFn: ((app: App, base: string, onPage?: DoubanListPageCb) => Promise
 /** 测试注入：片单抓取（默认走真 fetchDoubanList + 队列 HTTP 通道，同 previewFn 模式） */
 export function configureDoubanListFetch(fn: NonNullable<typeof listFetchFn> | null): void { listFetchFn = fn; }
 
-export async function fetchDoubanListForImport(app: App, base: string, onPage?: DoubanListPageCb): Promise<{ entries: DoubanListEntry[]; firstPageEmpty: boolean; listTitle: string }> {
+export async function fetchDoubanListForImport(
+  app: App,
+  base: string,
+  onPage?: DoubanListPageCb,
+  shouldStop?: () => boolean,
+): Promise<{ entries: DoubanListEntry[]; firstPageEmpty: boolean; listTitle: string }> {
   if (listFetchFn) return listFetchFn(app, base);
   const deps = fetchDepsFromSettings(app);
-  return fetchDoubanList(base, deps.httpGet, deps.doubanCookie || undefined, onPage, LIST_GAP_MS);
+  return fetchDoubanList(base, deps.httpGet, deps.doubanCookie || undefined, onPage, LIST_GAP_MS, shouldStop);
 }

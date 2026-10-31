@@ -18,6 +18,8 @@ export interface DoubanMineCacheRow {
   stars: number | null;
   at: string | null;
   group: 'want' | 'doing' | 'watched';
+  /** 我在豆瓣写的那句短评（收藏页「备注」），导入时落成笔记的「影评」 */
+  review?: string | null;
 }
 
 export interface DoubanMineCache {
@@ -46,7 +48,9 @@ export async function readDoubanMineCache(app: App): Promise<DoubanMineCache | n
     const data = await store(app).read();
     if (!data || !Array.isArray(data.rows) || !data.rows.length) return null;
     const rows = data.rows.filter((r) => r && typeof r.sid === 'string' && typeof r.name === 'string'
-      && (r.group === 'want' || r.group === 'doing' || r.group === 'watched'));
+      && (r.group === 'want' || r.group === 'doing' || r.group === 'watched'))
+      // 短评是后加的字段：老缓存没有它，缺就按空串（不因一个可选字段把整份缓存判废）
+      .map((r) => ({ ...r, review: typeof r.review === 'string' ? r.review : '' }));
     if (!rows.length) return null;
     return { at: typeof data.at === 'string' ? data.at : '', rows };
   } catch {

@@ -14,6 +14,7 @@ import {
   dequeueDoubanFetch,
   sweepDoubanFetch,
   isFetching,
+  queueStateOf,
   shutdownDoubanQueue,
   configureFetchQueue,
   FETCH_TIMEOUT_MS,
@@ -465,5 +466,38 @@ describe('G8：删除影片出队豆瓣抓取队列', () => {
     expect(fetched).toEqual([a.file!.path]);
     expect(vault.files.get(a.file!.path)).toContain('豆瓣链接');
     expect(getNoticeMessages()).toEqual([]);
+  });
+});
+
+describe('队列位置查询 queueStateOf（导入弹层的进度终态判据）', () => {
+  /** 两条基线：都缺海报；队列串行，第一条在抓时第二条停在排队 */
+  function seedTwo(vault: MockVault): [CinemaItem, CinemaItem] {
+    vault.files.set('我的/影视/《甲》.md', '---\ntags: [电影]\n状态: 想看\n---');
+    vault.files.set('我的/影视/《乙》.md', '---\ntags: [电影]\n状态: 想看\n---');
+    M.appRef = mockAppWithVault(vault);
+    rebuildItems(M.appRef as any);
+    return [M.items[0], M.items[1]];
+  }
+
+  it('没入队 = done（界面按已处理收尾，不会永远「等待」）；排队/在抓/抓完各有其态', async () => {
+    const vault = new MockVault();
+    const [a, b] = seedTwo(vault);
+    const pathA = a.file!.path;
+    const pathB = b.file!.path;
+    // 从未入队：done——豆瓣没图 / 条目被删的条目永远等不到「海报」，按海报判会卡死进度
+    expect(queueStateOf(pathA)).toBe('done');
+
+    let unblock!: () => void;
+    configureFetchQueue({
+      ...TEST_HOOKS,
+      fetch: async () => { await new Promise<void>((r) => { unblock = r; }); return okOutcome(); },
+    });
+    expect(enqueueDoubanFetch(a.file!, '甲')).toBe(true);
+    expect(enqueueDoubanFetch(b.file!, '乙')).toBe(true);
+    await settle(); // 甲已开抓、执行器挂着；乙还在队里
+    expect(queueStateOf(pathA)).toBe('current');
+    expect(queueStateOf(pathB)).toBe('queued');
+    unblock();
+    await vi.waitFor(() => { expect(queueStateOf(pathA)).toBe('done'); });
   });
 });

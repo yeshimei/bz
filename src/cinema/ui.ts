@@ -41,7 +41,7 @@ import { runAIRecommend, runSimilarRecommend, buildTasteProfile, quickAddWant, q
 import { bindYearbook, deriveYb, yearbookHtml, yearbookFixedHtml, yearbookOpenHtml, type YbHandle } from './yearbook';
 import {
   enqueueDoubanFetch, dequeueDoubanFetch, isFetching, queryDoubanForPreview, downloadPreviewPoster,
-  fetchDoubanListForImport, currentFetchPath, pauseDoubanQueue, resumeDoubanQueue, IMPORT_GAP_MS,
+  fetchDoubanListForImport, queueStateOf, pauseDoubanQueue, resumeDoubanQueue, IMPORT_GAP_MS,
 } from './douban-queue';
 import {
   normalizeListValue, insertPosterEmbed, doubanUidFromCookie, doubanMineCollectUrl,
@@ -352,7 +352,7 @@ function shelfMembers(name: string): CinemaItem[] {
  * 正常影视视图里——**片单本身保留**（它仍是这层归属，侧栏还能筛）。
  * 语义对偶的是片单导入：贴链接导入的新片带这个标志，只在片单里显示（2026-09-30 拍板）；
  * 「我的影片」（豆瓣看过导入）从一开始就不打它，故对它这条动作自然无成员可动。
- * 确认框与「移除片单」「删除影视」同一张皮（cn-skin + bz-cinema-flow-dialog，2026-11-01 拍板：
+ * 确认框与「移除片单」「删除影视」同一张皮（本域 confirmCinema，2026-11-01 拍板：
  * 整单动作一律两步，别让一次误点就把整单摊进影视视图）；它不删东西，故主钮不挂 danger。
  */
 async function admitShelfToCinema(name: string, app: App): Promise<void> {
@@ -370,19 +370,25 @@ async function admitShelfToCinema(name: string, app: App): Promise<void> {
     okLabel: '收录',
   });
   if (!ok) return;
-  try {
-    for (const x of targets) {
+  // 逐部容错（与「移除片单」同口径）：整单包一层 try 会让第 5 部失败后其余全不处理，
+  // 而内存里它们的 shelvedOnly 已经置 false——界面看着成功、重开又回去
+  let done = 0;
+  for (const x of targets) {
+    try {
       await writeFm(app, x.file!, (fm: Record<string, unknown>) => {
         delete fm['片单收纳'];
       });
       x.shelvedOnly = false;
+      done++;
+    } catch (e) {
+      console.error('[cinema] 收录进影院写盘失败:', x.file?.path, e);
     }
-    notice(`片单「${name}」的 ${targets.length} 部已收录进影院（照常出现在影视视图里，片单保留）`, 'success');
-    renderAll(app);
-  } catch (e) {
-    notifySaveError(e, '收录进影院');
-    console.error(e);
-    renderAll(app);
+  }
+  renderAll(app);
+  if (done === targets.length) {
+    notice(`片单「${name}」的 ${done} 部已收录进影院（照常出现在影视视图里，片单保留）`, 'success');
+  } else {
+    notice(`片单「${name}」收录了 ${done}/${targets.length} 部，其余写盘失败`, 'error');
   }
 }
 
@@ -404,6 +410,18 @@ const shelfBusy = new Set<string>();
  */
 async function removeShelf(name: string, app: App): Promise<void> {
   if (shelfBusy.has(name)) return; // 同一片单已有一次在执行：忽略这次触发
+  // 占位必须在确认框之前：确认是异步的（等人点），放在后面时连点两次会开出两个确认框，
+  // 都点「移除」就整单跑两遍（第二遍的 trashNote 会对已删文件抛错，被逐部容错吞掉）
+  shelfBusy.add(name);
+  try {
+    await removeShelfRun(name, app);
+  } finally {
+    shelfBusy.delete(name);
+  }
+}
+
+/** 移除片单的实际执行（占位与释放由 removeShelf 负责，确认框的 await 落在占位之内） */
+async function removeShelfRun(name: string, app: App): Promise<void> {
   const members = shelfMembers(name);
   if (!members.length) {
     notice(`片单「${name}」里没有影片`, 'warning');
@@ -434,46 +452,41 @@ async function removeShelf(name: string, app: App): Promise<void> {
     danger: true,
   });
   if (!ok) return;
-  shelfBusy.add(name);
   // 大单先报一声：整单是逐部串行落盘（写 frontmatter / 移回收站），129 部要好几秒，
   // 没有这一句用户会以为点了没反应
   if (n > 10) notice(`正在移除「${name}」，共 ${n} 部…`, 'info', 4000);
-  try {
-    let removed = 0;
-    for (const x of trash) {
-      try {
-        await trashNote(app, x.file!);
-        removed++;
-      } catch (e) {
-        console.error('[cinema] 删除片单成员失败:', x.file?.path, e);
-      }
+  let removed = 0;
+  for (const x of trash) {
+    try {
+      await trashNote(app, x.file!);
+      removed++;
+    } catch (e) {
+      console.error('[cinema] 删除片单成员失败:', x.file?.path, e);
     }
-    let detached = 0;
-    for (const x of detach) {
-      try {
-        await writeFm(app, x.file!, (fm: Record<string, unknown>) => {
-          const next = normalizeLists(fm['片单']).filter((l) => l !== name);
-          if (next.length) fm['片单'] = next;
-          else delete fm['片单'];
-        });
-        detached++;
-      } catch (e) {
-        console.error('[cinema] 摘出片单归属失败:', x.file?.path, e);
-      }
-    }
-    refreshDataAndView(app);
-    renderAll(app);
-    const parts: string[] = [];
-    if (detached) parts.push(`${detached} 部留在影院`);
-    if (removed) parts.push(`${removed} 部移入回收站`);
-    const done = removed + detached;
-    notice(
-      done === n ? `片单「${name}」已移除：${parts.join('，')}` : `片单「${name}」处理了 ${done}/${n} 部，其余未能完成`,
-      done === n ? 'success' : 'error'
-    );
-  } finally {
-    shelfBusy.delete(name);
   }
+  let detached = 0;
+  for (const x of detach) {
+    try {
+      await writeFm(app, x.file!, (fm: Record<string, unknown>) => {
+        const next = normalizeLists(fm['片单']).filter((l) => l !== name);
+        if (next.length) fm['片单'] = next;
+        else delete fm['片单'];
+      });
+      detached++;
+    } catch (e) {
+      console.error('[cinema] 摘出片单归属失败:', x.file?.path, e);
+    }
+  }
+  refreshDataAndView(app);
+  renderAll(app);
+  const parts: string[] = [];
+  if (detached) parts.push(`${detached} 部留在影院`);
+  if (removed) parts.push(`${removed} 部移入回收站`);
+  const done = removed + detached;
+  notice(
+    done === n ? `片单「${name}」已移除：${parts.join('，')}` : `片单「${name}」处理了 ${done}/${n} 部，其余未能完成`,
+    done === n ? 'success' : 'error'
+  );
 }
 
 /** 片单改名弹层（右键/抽屉「改名」；复用归入弹层的 .lp-* 形态，零新样式） */
@@ -603,7 +616,8 @@ function openListPick(sec: HTMLElement, targets: CinemaItem[], app: App, head: {
 
 /**
  * 导入我豆瓣账号看过的（桌面列表头第二个导入图标钮；移动端头行同款）：**不收链接**，
- * 用设置里的豆瓣 Cookie 定位账号（dbcl2 → uid → people/<uid>/...），开层即抓三份名单。
+ * 用设置里的豆瓣 Cookie 定位账号（dbcl2 → uid → people/<uid>/...），开层即抓三份名单
+ * （想看 / 在看 / 看过——入口标题写「从豆瓣导入我的标记」，别只说「看过的」）。
  * 前置守卫：没填 Cookie / Cookie 里没有登录信息（无 dbcl2）→ 提示并给「去设置」动作，
  * 直达设置面板影院页的豆瓣 Cookie 那一行（domainId + anchorKey 定位），不去猜用户会自己找。
  */
@@ -620,7 +634,7 @@ function openDoubanMineImport(sec: HTMLElement, app: App): void {
     };
     notify(cookie
       ? '这份豆瓣 Cookie 里没有登录信息（缺 dbcl2），重新从浏览器复制一份完整的再来'
-      : '先填豆瓣 Cookie 才能抓你账号看过的影视（浏览器登录后从 devtools 复制）', {
+      : '先填豆瓣 Cookie 才能从豆瓣导入你的想看 / 在看 / 看过（浏览器登录后从 devtools 复制）', {
       type: 'warning',
       duration: 12000,
       action: { label: '去设置', onClick: goSettings },
@@ -640,6 +654,8 @@ interface MineRow {
   stars: number | null;
   /** 标记日期 YYYY-MM-DD */
   at: string | null;
+  /** 我在豆瓣写的那句短评（收藏页「备注」；没有 ''）→ 导入时落成「影评」 */
+  review: string;
   group: MineGroup;
   sel: boolean;
   /** 影院里已有同名卡（同步时跳过，勾选框禁用） */
@@ -731,8 +747,13 @@ function openDoubanMineSync(sec: HTMLElement, app: App, uid: string): void {
   const rows: MineRow[] = [];
   let fetching = true;
   let pollTimer = 0;
+  /** 弹层已关：逐页抓取据此叫停（见 fetchAll），抓回来的名单也不再写缓存 */
+  let closed = false;
+  /** 这份名单的抓取时刻（缓存态才有值；界面要告诉用户「这是哪天的数据」） */
+  let cachedAt = '';
 
   const cleanup = (): void => {
+    closed = true;
     if (pollTimer) { window.clearInterval(pollTimer); pollTimer = 0; }
     resumeDoubanQueue();
   };
@@ -850,12 +871,13 @@ function openDoubanMineSync(sec: HTMLElement, app: App, uid: string): void {
   const fetchAll = async (): Promise<void> => {
     /** 追加一批（onPage 流式 + 返回值兜底共用）；同 sid 去重，行随到随插 */
     const addBatch = (g: (typeof MINE_GROUPS)[number], batch: DoubanListEntry[]): void => {
+      if (closed) return; // 层已关：别往拆掉的节点里写行
       const box = el.querySelector<HTMLElement>(`[data-rows="${g.k}"]`);
       for (const e of batch) {
         if (!e.name || rows.some((r) => r.sid === e.sid)) continue;
         const r: MineRow = {
           sid: e.sid, name: e.name, stars: e.stars ?? null, at: e.at ?? null,
-          group: g.k, sel: false, inLib: false,
+          review: (e.comment ?? '').trim(), group: g.k, sel: false, inLib: false,
         };
         rows.push(r);
         box?.insertAdjacentHTML('beforeend', rowHtml(r, rows.length - 1));
@@ -866,15 +888,17 @@ function openDoubanMineSync(sec: HTMLElement, app: App, uid: string): void {
       if (sub) sub.innerHTML = `正在读取你的豆瓣标记… 已 <b>${rows.length}</b> 部`;
     };
     for (const g of MINE_GROUPS) {
+      if (closed) return; // 关层：这份名单不要了，也不再写缓存（半截名单不许当底稿）
       const base = `https://movie.douban.com/people/${encodeURIComponent(uid)}/${g.page}`;
       try {
-        const { entries } = await fetchDoubanListForImport(app, base, (batch) => addBatch(g, batch));
+        const { entries } = await fetchDoubanListForImport(app, base, (batch) => addBatch(g, batch), () => closed);
         // 完成态以返回值为准补一遍：onPage 只是过程增量，注入/异常路径都可能缺页
         addBatch(g, entries ?? []);
       } catch {
         /* 单页失败/被拦：这组按已抓到的算，整体空由下面的兜底提示收 */
       }
     }
+    if (closed) return;
     finishLoad(false);
   };
 
@@ -888,26 +912,42 @@ function openDoubanMineSync(sec: HTMLElement, app: App, uid: string): void {
     renderList();
     syncSel();
     q<HTMLElement>('.j-mine-scan')?.classList.add('done');
+    // 「重新导入」抓完也留着（2026-11-01）：原来只在缓存态出现，点过一次刷新就消失，
+    // 想再刷一遍只能关层重开——它本来就是「重新抓一次」的入口，不该有状态门槛
     const reimport = q<HTMLButtonElement>('.j-mine-reimport');
-    if (reimport) reimport.hidden = !fromCache;
+    if (reimport) reimport.hidden = false;
     const sub = q<HTMLElement>('.j-mine-sub');
     if (sub) {
+      const when = fromCache ? fmtCacheAt(cachedAt) : '';
       sub.innerHTML = rows.length
-        ? `已读取你的豆瓣标记 · 共 <b>${rows.length}</b> 部，其中 <b>${libCount()}</b> 部已在影院，不会重复导入`
+        ? `${when ? `缓存自 ${when} · ` : ''}共 <b>${rows.length}</b> 部，其中 <b>${libCount()}</b> 部已在影院，不会重复导入`
         : '一条都没抓到：Cookie 可能过期或被豆瓣风控拦截，去设置里换一份再试';
     }
     if (!rows.length) {
       notice('豆瓣一条都没抓到：Cookie 可能过期或被风控拦截', 'warning');
       return;
     }
-    if (!fromCache) void writeDoubanMineCache(app, rows.map((r) => ({ sid: r.sid, name: r.name, stars: r.stars, at: r.at, group: r.group })));
+    if (!fromCache && !closed) {
+      void writeDoubanMineCache(app, rows.map((r) => ({
+        sid: r.sid, name: r.name, stars: r.stars, at: r.at, group: r.group, review: r.review,
+      })));
+    }
+  };
+
+  /** 缓存时刻 → 「10-31 22:14」（坏值给空串，界面当没这句） */
+  const fmtCacheAt = (iso: string): string => {
+    const d = new Date(iso);
+    if (Number.isNaN(d.getTime())) return '';
+    const p = (n: number): string => String(n).padStart(2, '0');
+    return `${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`;
   };
 
   /** 开层：有缓存先吃缓存（秒开 + 显示「重新导入」），没有再抓 */
   const load = async (): Promise<void> => {
     const cached = await readDoubanMineCache(app);
     if (cached) {
-      for (const r of cached.rows) rows.push({ ...r, sel: false, inLib: false });
+      cachedAt = cached.at; // 界面要报「这份名单是什么时候抓的」，别让用户对着一份旧清单猜
+      for (const r of cached.rows) rows.push({ ...r, review: r.review ?? '', sel: false, inLib: false });
       finishLoad(true);
       return;
     }
@@ -971,7 +1011,9 @@ function openDoubanMineSync(sec: HTMLElement, app: App, uid: string): void {
   q('.j-mine-back')!.addEventListener('click', () => setStage('list'));
 
   // ---------- 同步：建档 → 入队补全 → 轮询进度 ----------
-  interface RunItem { name: string; path: string; group: MineGroup; st: 'wait' | 'run' | 'ok' }
+  /** st=miss：队列处理完了，但笔记没拿到海报（豆瓣没图 / 被拦 / 条目被删）——
+   *  与 ok 一样算收尾，只是不该报成「完成」 */
+  interface RunItem { name: string; path: string; group: MineGroup; st: 'wait' | 'run' | 'ok' | 'miss' }
   let runItems: RunItem[] = [];
   let streamKey = -1;
 
@@ -983,17 +1025,18 @@ function openDoubanMineSync(sec: HTMLElement, app: App, uid: string): void {
     return min < 60 ? `${min} 分钟` : `${Math.floor(min / 60)} 小时 ${min % 60} 分`;
   };
 
-  const renderStream = (done: number, total: number): void => {
+  const renderStream = (done: number, total: number, miss = 0): void => {
     const box = q<HTMLElement>('.j-mine-stream')!;
-    let start = runItems.findIndex((it) => it.st !== 'ok');
+    let start = runItems.findIndex((it) => it.st !== 'ok' && it.st !== 'miss');
     if (start < 0) start = Math.max(0, runItems.length - 5);
     const win = runItems.slice(start, start + 5);
     box.innerHTML = win.map((it) => {
-      const ic = it.st === 'ok' ? `<span class="mine-ck on" style="width:15px;height:15px">${iconSpan('check')}</span>`
+      const ended = it.st === 'ok' || it.st === 'miss';
+      const ic = it.st === 'ok' ? `<span class="mine-ck on">${iconSpan('check')}</span>`
         : it.st === 'run' ? '<span class="mine-spin"></span>' : '<span class="mine-hollow"></span>';
-      const label = it.st === 'ok' ? '完成' : it.st === 'run' ? '补全中' : '等待';
-      const cls = it.st === 'ok' ? ' ok' : it.st === 'run' ? ' run' : '';
-      return `<div class="mine-row${it.st === 'ok' ? ' lib' : ''}">
+      const label = it.st === 'ok' ? '完成' : it.st === 'miss' ? '未取到详情' : it.st === 'run' ? '补全中' : '等待';
+      const cls = it.st === 'ok' ? ' ok' : it.st === 'miss' ? ' miss' : it.st === 'run' ? ' run' : '';
+      return `<div class="mine-row${ended ? ' lib' : ''}">
         <span class="mine-si">${ic}</span><span class="mine-nm">${esc(it.name)}</span>
         <span class="mine-rt"><span class="mine-grp">${MINE_GROUPS.find((g) => g.k === it.group)?.label ?? ''}</span><span class="mine-pst${cls}">${label}</span></span>
       </div>`;
@@ -1014,7 +1057,9 @@ function openDoubanMineSync(sec: HTMLElement, app: App, uid: string): void {
     const sub = q<HTMLElement>('.j-mine-rsub');
     if (sub) {
       sub.innerHTML = finished
-        ? `已把 <b>${total}</b> 部写进影院，海报与详情全部就位`
+        ? (miss
+          ? `已把 <b>${total}</b> 部写进影院，其中 <b>${miss}</b> 部豆瓣没给到详情`
+          : `已把 <b>${total}</b> 部写进影院，海报与详情全部就位`)
         : `已把 <b>${total}</b> 部写进影院，海报与详情在后台补`;
     }
     const b2 = q<HTMLElement>('.j-mine-b2');
@@ -1049,12 +1094,14 @@ function openDoubanMineSync(sec: HTMLElement, app: App, uid: string): void {
     void (async () => {
       let built = 0;
       for (const r of chosen) {
-        // 已看带评分（5 星 ×2 → 10 分制）与标记日期；想看/在看只落状态与日期
+        // 已看带评分（5 星 ×2 → 10 分制）、标记日期与我自己写的短评（→ 影评）；
+        // 想看/在看只落状态与日期
         const ok = await quickAddFromDouban(app, r.name, '电影', r.group, {
           silent: true,
           sid: r.sid,
           rating: r.group === 'watched' && r.stars ? r.stars * 2 : null,
           date: r.at,
+          review: r.review || null,
         });
         if (ok) {
           runItems.push({ name: r.name, path: `${M.folderPath}/《${r.name}》.md`, group: r.group, st: 'wait' });
@@ -1071,16 +1118,26 @@ function openDoubanMineSync(sec: HTMLElement, app: App, uid: string): void {
       const total = runItems.length;
       if (!total) { renderStream(0, 0); return; }
       const tick = (): void => {
-        const cur = currentFetchPath();
         let done = 0;
+        let miss = 0;
         for (const it of runItems) {
-          if (it.st === 'ok') { done++; continue; }
-          if (it.path === cur) { it.st = 'run'; continue; }
+          if (it.st === 'ok' || it.st === 'miss') {
+            done++;
+            if (it.st === 'miss') miss++;
+            continue;
+          }
+          // 终态问队列，不问「有没有海报」：豆瓣本身没图、被拦两轮仍失败、条目被删，
+          // 这三类抓完也没有海报——按海报判会永远停在「等待」，进度条与轮询都不收尾。
+          const qs = queueStateOf(it.path);
+          if (qs === 'current') { it.st = 'run'; continue; }
+          if (qs === 'queued') { it.st = 'wait'; continue; }
           const f = app.vault.getAbstractFileByPath(it.path);
           const fm = f ? app.metadataCache.getFileCache(f as TFile)?.frontmatter : null;
-          if (fm && fm['海报']) { it.st = 'ok'; done++; } else it.st = 'wait';
+          it.st = fm && fm['海报'] ? 'ok' : 'miss';
+          done++;
+          if (it.st === 'miss') miss++;
         }
-        renderStream(done, total);
+        renderStream(done, total, miss);
         if (done >= total && pollTimer) { window.clearInterval(pollTimer); pollTimer = 0; }
       };
       tick();
@@ -1104,7 +1161,8 @@ function openDoubanMineSync(sec: HTMLElement, app: App, uid: string): void {
   });
   q('.j-mine-bg')!.addEventListener('click', () => {
     const total = runItems.length;
-    const done = runItems.filter((it) => it.st === 'ok').length;
+    // miss 也算办完（队列处理过，只是没拿到海报）：按 ok 计数会让「后台继续」的提示永远说还在补
+    const done = runItems.filter((it) => it.st === 'ok' || it.st === 'miss').length;
     const finished = total > 0 && done >= total;
     cleanup();
     close();

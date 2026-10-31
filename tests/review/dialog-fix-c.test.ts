@@ -195,7 +195,9 @@ describe('批 C：抽屉「移出复习计划」免确认（效率整改 5 口�
     // 数据已移除 + 通知可撤销
     const raw = JSON.parse(vault.files.get(REVIEW_FILE_PATH)!);
     expect(raw.find((i: any) => i.id === 'a')).toBeUndefined();
-    expect(getNoticeMessages().some((m) => m.includes('已移出'))).toBe(true);
+    // 移出链在移除之后还串着 refreshPanel + 动态 import 重染色，落通知要跨好几个宏任务：
+    // 原来两次 flushTick 只够跑完移除，通知还没到（用例自 2026-11 起一直红着，与产品行为无关）
+    await vi.waitFor(() => expect(getNoticeMessages().some((m) => m.includes('已移出'))).toBe(true));
     ui.destroy();
   });
 });

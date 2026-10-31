@@ -158,14 +158,19 @@ describe('批 C-9：分析页排印归档', () => {
     expect(css).toContain('.bz-yb-scn'); // 幕样式在位（26 幕共用一套骨架）
   });
 
-  it('cinema 自绘确认框/面板 toast 收编 core 单源（一致审查#1/#2：cn-confirm/cn-toast 退役）', () => {
+  it('cinema 自绘确认框/面板 toast 收编单源（2026-11-01 确认框回本域 .cn-modal）', () => {
     const shared = repo('src/cinema/shared.ts'); // ADR-0104 markup 单源（确认弹窗已随收编退役）
     const behavior = repo('src/cinema/ui.ts');
     const css = cineCss();
-    expect(shared).not.toContain('cn-confirm'); // confirmModalHtml 退役：确认框走 core openFlowDialog
-    expect(behavior).toContain('openFlowDialog'); // 删除确认收编 core 流程框
+    expect(shared).not.toContain('cn-confirm'); // confirmModalHtml 退役
+    // 确认框口径（2026-11-01 用户拍板）：core 流程框挂 document.body，本域样式全在
+    // `.bz-cinema--midnight` 作用域内套不进去，颜色靠 id 选择器硬映射——改为本域 confirmCinema
+    // 走 ovl + .cn-modal（与片单改名/归入片单同一套骨架），一处实现三处确认共用
+    expect(behavior).toContain('confirmCinema');
+    expect(behavior).not.toMatch(/from '\.\.\/core\/flow-dialog'/); // 不再引 core 流程框（注释里提它不算）
     expect(behavior).not.toContain('panelToast'); // 面板 toast 收编 core notice
-    expect(css).toContain('#__shared_confirm_popup__.bz-cinema-flow-dialog'); // 域皮映射在位（favorites/belongings 同款结构）
+    expect(css).toContain('.cn-modal--confirm'); // 确认框那三行结构（小标+片名 / 正文 / 按钮条）在位
+    expect(css).not.toContain('#__shared_confirm_popup__'); // 旧 id 映射段退役
     expect(css).not.toMatch(/\.cn-toast/); // 域内 toast 样式段退役（通知走 core 单源）
   });
 });

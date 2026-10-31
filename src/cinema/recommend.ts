@@ -13,7 +13,7 @@ import { createAI } from '../core/ai';
 import { emitDomainEvent } from '../core/domain-bus';
 import { STATUS_WATCHED, hasIllegalNameChar, ILLEGAL_NAME_HINT, avgRating } from './constants';
 import type { CinemaItem } from './state';
-import { M } from './state';
+import { M, noteSelfWrite } from './state';
 import { refreshDataAndView } from './data';
 import { enqueueDoubanFetch, IMPORT_GAP_MS } from './douban-queue';
 
@@ -179,6 +179,8 @@ export interface AddMovieOpts {
   rating?: number | null;
   /** 观影日期 YYYY-MM-DD（已看建档；缺省今天） */
   date?: string | null;
+  /** 我在豆瓣写的那句短评（个人收藏页「备注」）→ 直接落成笔记的「影评」 */
+  review?: string | null;
   /** 入队后的补抓间隔（缺省走队列全局 15s；批量导入给 IMPORT_GAP_MS） */
   gapMs?: number;
 }
@@ -204,14 +206,15 @@ export async function quickAddWatched(
 
 /**
  * 豆瓣「想看 / 在看 / 已看」三状态导入共用入口（详见 openDoubanMineSync）：
- * 与 quickAddWant 同一内核，状态由调用方按豆瓣页面给；已看带评分与标记日期。
+ * 与 quickAddWant 同一内核，状态由调用方按豆瓣页面给；已看带评分与标记日期，
+ * review = 我在豆瓣写的那句短评（收藏页「备注」），落成笔记的「影评」。
  */
 export async function quickAddFromDouban(
   app: App,
   name: string,
   type: string,
   status: 'want' | 'doing' | 'watched',
-  opts?: { silent?: boolean; sid?: string; rating?: number | null; date?: string | null },
+  opts?: { silent?: boolean; sid?: string; rating?: number | null; date?: string | null; review?: string | null },
 ): Promise<boolean> {
   return addMovieNote(app, name, type, { ...opts, status, gapMs: IMPORT_GAP_MS });
 }
@@ -250,6 +253,8 @@ async function addMovieNote(app: App, name: string, type: string, opts: AddMovie
   const now = localNow();
   const day = String(opts.date || now).slice(0, 10);
   const rating = typeof opts.rating === 'number' && opts.rating > 0 ? Math.round(opts.rating * 10) / 10 : null;
+  /** 我在豆瓣写的那句短评（可能多行/带「:」「#」）——落成笔记的「影评」 */
+  const review = typeof opts.review === 'string' ? opts.review.trim() : '';
   // 观影日期加双引号（深审批A P3-8）：裸日期被真机 YAML 解析成 timestamp（Moment 对象）→ 英文星期；
   // 状态单源键「状态」（评分编码 -1 已退役）。已看建档的「观影日期」= 豆瓣标记日（排序戳）；
   // 在看同样是「何时标进来看」，观影日期取标记日，另落「在看日期」供状态日期展示。
@@ -265,6 +270,17 @@ async function addMovieNote(app: App, name: string, type: string, opts: AddMovie
   fm.push('海报: ', '---', '');
   try {
     const f = await app.vault.create(filePath, fm.join('\n'));
+    // 影评单独写（深审批A P2-1：影评值可多行/含「:」「#」，建档模板只写最小安全集，
+    // 多行交给 Obsidian 的 YAML 序列化）。写失败不影响建档——影评只是附赠字段。
+    if (review) {
+      try {
+        noteSelfWrite(f.path); // 与面板写盘同一条自写登记，防后台刷新把新值盖回去
+        await app.fileManager.processFrontMatter(f, (d: Record<string, unknown>) => { d['影评'] = review; });
+        noteSelfWrite(f.path);
+      } catch (e) {
+        console.error('bz 影院：豆瓣短评写入影评失败（不影响建档）', e);
+      }
+    }
     if (!quiet) notice(`已加入${statusLabel}：「${trimmedName}」`, 'success'); // 引号形制与全域一致（深审批A P3-16）
     // 事件补发（smartcat 行为流观察；ADR-0087 cinema 接管）
     emitDomainEvent('movie', {
@@ -272,7 +288,7 @@ async function addMovieNote(app: App, name: string, type: string, opts: AddMovie
       name: trimmedName,
       status: statusKey,
       rating,
-      review: null,
+      review: review || null,
     });
     // 入抓取队列（ADR-0113）：卡片 loading 反馈，无通知
     enqueueDoubanFetch(f, trimmedName, opts.sid, opts.gapMs ? { gapMs: opts.gapMs } : undefined);

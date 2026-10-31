@@ -155,3 +155,21 @@ describe('翻页步长跟实际每页条数（collect 15/页，写死 25 会漏�
     expect(entries.length).toBe(15);
   });
 });
+
+describe('外部叫停 shouldStop（关掉弹层就别把剩下的页翻完）', () => {
+  it('第 1 页之后就停：不再发第 2 个请求，已抓到的照常返回', async () => {
+    const urls: string[] = [];
+    const httpGet = async (url: string) => {
+      urls.push(url);
+      const start = Number(/start=(\d+)/.exec(url)?.[1] ?? '0');
+      return fakePage(start >= 15 ? 0 : 15, start + 1); // 15/页，本该翻两页
+    };
+    // 第一页抓完就「关层」：第 2 页开头问一次 shouldStop 就该收手
+    const { entries } = await fetchDoubanList(
+      'https://movie.douban.com/people/1/collect', httpGet, 'ck=1', undefined, 0,
+      () => urls.length >= 1,
+    );
+    expect(urls.length).toBe(1);
+    expect(entries.length).toBe(15);
+  });
+});

@@ -930,6 +930,8 @@ export type DoubanListPageCb = (batch: DoubanListEntry[], totalSoFar: number) =>
  * 停页条件：**本页解析为空即停**（到底/需登录/风控拦截页都表现为空），**本页无新 sid 也停**
  * （翻过界豆瓣回落末页内容，继续翻只会原地打转）。cookie 可选（个人页登录态；公开豆列不填）。
  * gapMs = 页间留白（防风控；默认 0——测试同步执行不拖时间，生产由调用方给）。
+ * shouldStop = 外部叫停（导入弹层关掉时用）：每页开头问一次，返回 true 就地收尾——
+ *   否则关层后 collect 那 40 页照样翻完（约一分钟），抓回来的东西没人要。
  * 返回条目全集、片单名（首页 title 提取）与「是否疑似被拦」。
  */
 export async function fetchDoubanList(
@@ -938,6 +940,7 @@ export async function fetchDoubanList(
   cookie?: string,
   onPage?: DoubanListPageCb,
   gapMs = 0,
+  shouldStop?: () => boolean,
 ): Promise<{ entries: DoubanListEntry[]; firstPageEmpty: boolean; listTitle: string }> {
   const sep = base.includes('?') ? '&' : '?';
   const headers = cookie?.trim() ? { Cookie: cookie.trim() } : undefined;
@@ -947,6 +950,7 @@ export async function fetchDoubanList(
   let listTitle = '';
   let start = 0;
   for (let p = 0; p < DOUBAN_LIST_MAX_PAGES; p++) {
+    if (shouldStop?.()) break; // 调用方已放弃（弹层关掉）：别把剩下的页翻完
     if (p > 0 && gapMs > 0) await sleep(gapMs); // 页间留白（风控；首页不等）
     let html: string | null = null;
     try {

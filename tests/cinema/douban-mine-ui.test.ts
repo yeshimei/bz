@@ -10,7 +10,8 @@ import { rebuildItems } from '../../src/cinema/data';
 import { createOverlay, closeOverlay } from '../../src/cinema/ui';
 import { configureDoubanListFetch, shutdownDoubanQueue } from '../../src/cinema/douban-queue';
 import { setSettingsProvider } from '../../src/core/settings-provider';
-import { quickAddWatched } from '../../src/cinema/recommend';
+import { quickAddWatched, quickAddFromDouban } from '../../src/cinema/recommend';
+import { writeDoubanMineCache } from '../../src/cinema/douban-mine-cache';
 
 const flush = (ms = 10): Promise<void> => new Promise((r) => setTimeout(r, ms));
 
@@ -48,6 +49,16 @@ tags:
 
 function setSettings(extra: Record<string, unknown> = {}): void {
   setSettingsProvider(() => ({ cinemaFolderPath: '我的/影视', ...extra }) as any);
+}
+
+
+/** 缓存测试用：三份名单按路径分发（页面名取最后一段） */
+function stubPagesForCache(pages: Record<string, any[]>): void {
+  configureDoubanListFetch(async (_app: unknown, base: string) => {
+    const key = base.split('/').pop() ?? '';
+    const entries = pages[key] ?? [];
+    return { entries, firstPageEmpty: entries.length === 0, listTitle: '' };
+  });
 }
 
 beforeEach(() => {
@@ -230,6 +241,52 @@ describe('我账号的影片：三状态导入（想看 / 在看 / 已看）', (
     // 同步层：建档计数走满
     expect(document.querySelector('.j-mine-b1')?.textContent).toBe('2 / 2');
     expect(hasNotice(/已同步 2 部/)).toBe(false); // 关窗才报，此时还在层里
+  });
+});
+
+describe('豆瓣短评 → 影评（我在收藏页写的那句话）', () => {
+  it('我的短评落成笔记的影评，多行/带冒号也不写破 frontmatter', async () => {
+    const app = seedVault();
+    await quickAddFromDouban(app, '有评片', '电影', 'watched', {
+      rating: 8, date: '2023-08-05', review: '第一行\n第二行: 带冒号 #井号',
+    });
+    const md = (app.vault as any).files.get('我的/影视/《有评片》.md') as string;
+    expect(md).toContain('影评:');
+    expect(md).toContain('第一行');
+    expect(md).toContain('第二行: 带冒号 #井号'); // YAML 序列化兜住多行与特殊字符
+    expect(md).toContain('状态: 已看');
+  });
+
+  it('没写短评就不留「影评」键（空串 ≠ 有影评）', async () => {
+    const app = seedVault();
+    await quickAddFromDouban(app, '无评片', '电影', 'watched', { rating: null, date: '2024-01-01', review: '' });
+    const md = (app.vault as any).files.get('我的/影视/《无评片》.md') as string;
+    expect(md).not.toContain('影评:');
+  });
+});
+
+describe('缓存态：这份名单是什么时候抓的', () => {
+  it('读到缓存直接出清单，并报出抓取时刻；「重新导入」抓完仍留着', async () => {
+    setSettings({ cinemaDoubanCookie: 'dbcl2=150820610:abc' });
+    const app = seedVault();
+    await writeDoubanMineCache(app, [
+      { sid: 'w1', name: '缓存里的想看片', stars: null, at: '2024-03-15', group: 'want', review: '' },
+    ]);
+    stubPagesForCache({ wish: [{ sid: 'w9', name: '重抓回来的片', stars: null, at: '2024-05-01', comment: '' }] });
+    createOverlay(app);
+    (document.querySelector('.j-import-mine') as HTMLElement).click();
+    await flush(40);
+    // 缓存态：秒出清单，且副标题写明缓存时刻（不然用户不知道多旧）
+    expect(document.querySelector('.j-mine-sub')?.textContent).toMatch(/缓存自 \d{2}-\d{2} \d{2}:\d{2}/);
+    expect(document.querySelector('.j-mine-list')?.textContent).toContain('缓存里的想看片');
+    const reimport = document.querySelector('.j-mine-reimport') as HTMLButtonElement;
+    expect(reimport.hidden).toBe(false);
+    // 重新导入：抓回来之后这个入口不该消失（原来只在缓存态出现，点一次就再也没了）
+    reimport.click();
+    await flush(60);
+    expect(document.querySelector('.j-mine-list')?.textContent).toContain('重抓回来的片');
+    expect(document.querySelector('.j-mine-sub')?.textContent).not.toContain('缓存自'); // 重抓过就不再是缓存态
+    expect((document.querySelector('.j-mine-reimport') as HTMLButtonElement).hidden).toBe(false);
   });
 });
 
