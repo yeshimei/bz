@@ -5222,6 +5222,34 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 }
 .bz-setup-note--bad { color: var(--bz-danger); }
 
+/* ── 依赖总览（完成屏的「还需要装什么」）：名称 + 体积一行，命令整行铺在下面 ── */
+.bz-setup-deps .bz-setup-group { margin-bottom: 12px; }
+.bz-setup-row--guide {
+  /* 体积那一列改成 auto：它是「约 1 GB」这种短词，不该跟名称平分宽度 */
+  grid-template-columns: 14px minmax(0, 1fr) auto;
+  row-gap: 3px;
+}
+.bz-setup-row--guide .bz-setup-val { white-space: nowrap; }
+.bz-setup-how {
+  /* 从名称列铺到右边界（状态点那一列不占） */
+  grid-column: 2 / -1;
+  font-size: var(--bz-font-caption);
+  line-height: 1.6;
+  color: var(--bz-text-2);
+  /* 命令之间用 \n 分隔（数据表里就是多行写的），别压成一行 */
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.bz-setup-how code {
+  font-family: var(--bz-font-mono);
+  font-size: var(--bz-font-caption);
+  background: var(--bz-code-bg);
+  border-radius: 4px;
+  padding: 1px 5px;
+  /* 点一下选中整条命令：用户要的是复制，不是拖选 */
+  user-select: all;
+}
+
 /* ── 总进度条 ── */
 .bz-setup-bar {
   height: 3px;
