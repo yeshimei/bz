@@ -19873,6 +19873,9 @@ canvas { display: block; }
 .bz-cinema--midnight .mine-stream .mine-rows{transition:transform var(--cn-m-move) var(--cn-e-move)}
 .bz-cinema--midnight .mine-stream .mine-row{height:34px;padding:0 9px;cursor:default;animation:none}
 .bz-cinema--midnight .mine-si{flex:none;width:16px;height:16px;display:grid;place-items:center}
+/* 完成态的勾选框比列表里小一号（这里是 16px 槽位，列表是整行 16px 勾选框）：
+   尺寸走样式而不是内联 width/height（AGENTS.md：域内禁内联视觉样式） */
+.bz-cinema--midnight .mine-si .mine-ck{width:15px;height:15px}
 .bz-cinema--midnight .mine-spin{width:12px;height:12px;border-radius:50%;border:1.5px solid var(--line);
   border-top-color:var(--gold);animation:cnMineSpin .8s linear infinite;display:block}
 .bz-cinema--midnight .mine-hollow{width:11px;height:11px;border-radius:50%;border:1px solid var(--line);display:block}
@@ -19880,6 +19883,8 @@ canvas { display: block; }
 .bz-cinema--midnight .mine-pst{flex:none;width:60px;text-align:right;font-size:11.5px;color:var(--ink-3);letter-spacing:.04em}
 .bz-cinema--midnight .mine-pst.run{color:var(--gold)}
 .bz-cinema--midnight .mine-pst.ok{color:var(--ink-2)}
+/* miss = 队列处理完了但没拿到海报（豆瓣没图 / 被拦 / 条目被删）：算收尾，不报「完成」 */
+.bz-cinema--midnight .mine-pst.miss{color:var(--ink-3)}
 
 /* 触屏悬浮隔离（呈报#9 / F4）：:hover 一律包在 (hover: hover) 里，触屏不粘滞 */
 @media (hover: hover) {
