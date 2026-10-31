@@ -43,6 +43,8 @@ export const ICON = {
   shelf: 'bookmark',
   listPlus: 'list-plus',
   import: 'download',
+  /** 我账号的影片（豆瓣个人收藏导入入口；与「导入片单」并排） */
+  mine: 'user-round',
   note: 'file-text',
   merge: 'combine',
 } as const;

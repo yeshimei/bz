@@ -686,21 +686,12 @@ function rerankModelRow(): SettingsRow {
  * 第三方数据源凭据集中一卡——影院 ApiZero Key / 豆瓣 Cookie（原影院「数据抓取」组挪入）+
  * B站 Cookie（知识盒档位查询；桌面端可从 CLI 导入）。
  * 三行一律单行 secret（password 掩码 + 眼睛切明文）——2026-09-23 用户报「加密的做成多行框
- * 看着怪」，Cookie 行的 textarea(masked) 档位退役；行序按用户要求（「第二项放到前面」）：
- * ApiZero Key → B站 Cookie → 豆瓣 Cookie。
+ * 看着怪」，Cookie 行的 textarea(masked) 档位退役。
+ * 行序：B站 Cookie → 豆瓣 Cookie → ApiZero Key（2026-11-01 用户拍板：ApiZero 已降为可选，
+ * 影院字段改由豆瓣自己的详情接口取，它排到最后；凭据类里日常必填的两项在前）。
  */
 function credentialGroupRows(): SettingsRow[] {
   return [
-    {
-      type: 'secret',
-      name: 'ApiZero Key',
-      desc: '豆瓣字段接口的密钥',
-      help:
-        '影院取豆瓣字段的密钥，用来补齐评分、导演、主演、类型、地区、片长这些字段。留空则不走这条通道，改由内置的演职员信息兜底，能取到多少算多少。' +
-        '它只影响影院条目的字段来源，不参与搜索，也不决定抓取本身能不能跑起来。',
-      binding: { key: 'cinemaApizeroKey' },
-      placeholder: '粘贴密钥',
-    },
     {
       type: 'secret',
       name: 'B站 Cookie',
@@ -715,12 +706,22 @@ function credentialGroupRows(): SettingsRow[] {
     {
       type: 'secret',
       name: '豆瓣 Cookie',
-      desc: '豆瓣搜索被风控时用的登录凭据',
+      desc: '抓取豆瓣字段与导入片单的登录凭据',
       help:
-        '豆瓣搜索的风控凭据：被风控后抓取失败，填上登录 Cookie 可缓解（三条检索链路都会带上）。' +
-        '拦截会由队列聚合通知与表单提示报出来，不会静默失败。',
+        '影院抓取的主要凭据：搜索、条目详情、演职员、导入「我豆瓣账号的片单」都会带上它。带上登录态后过风控的成功率明显更高，批量导入几百部时差别尤其大。' +
+        '从浏览器登录豆瓣后复制请求头里的 Cookie 粘进来即可；不填也能跑，只是被拦的概率更高。拦截会由队列聚合通知与表单提示报出来，不会静默失败。',
       binding: { key: 'cinemaDoubanCookie' },
       placeholder: '粘贴从浏览器复制的 Cookie',
+    },
+    {
+      type: 'secret',
+      name: 'ApiZero Key',
+      desc: '可选，补热门短评的第三方密钥',
+      help:
+        '影院条目的评分、导演、主演、类型、地区、片长、上映年份、海报，默认全部从豆瓣自己的移动端详情接口取，不需要这个密钥；这里留空完全不影响抓取与导入。' +
+        '只有想额外拿「热门短评」这一项时才需要填（它是 ApiZero 独有的字段）。该服务免费额度按天算，配了也只在这一项上受益，不会拿它当主通道。',
+      binding: { key: 'cinemaApizeroKey' },
+      placeholder: '粘贴密钥',
     },
   ];
 }

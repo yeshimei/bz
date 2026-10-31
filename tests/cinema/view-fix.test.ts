@@ -239,8 +239,8 @@ describe('cinema 深审批 B #1/#2/#3/#4/#6/#7/#8：视图层', () => {
     const { app } = seedVault();
     createOverlay(app);
     const root = mobRoot();
-    // 移动头行五钮（.add + .m-tool×4：导入/AI/分析/关闭）全挂 core 修饰类（触屏 ::after 外扩，视觉零改动）
-    expect(root.querySelectorAll('.m-acts .bz-touch-target.bz-touch-target--lg').length).toBe(5);
+    // 移动头行六钮（.add + .m-tool×5：导入/我账号的/AI/分析/关闭）全挂 core 修饰类（触屏 ::after 外扩，视觉零改动）
+    expect(root.querySelectorAll('.m-acts .bz-touch-target.bz-touch-target--lg').length).toBe(6);
     // chips 横条全挂修饰类（全部 + 6 组 + 3 状态）
     expect(root.querySelectorAll('.chip.bz-touch-target--lg').length).toBe(10);
     expect((root.querySelector('.j-mq') as HTMLInputElement).placeholder).toBe(SEARCH_PH);

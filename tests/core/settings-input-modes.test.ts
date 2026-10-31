@@ -177,7 +177,7 @@ describe('schema 盘点：凭据一律掩码、数值一律数字档位', () => 
 
     // 数据源凭据组三行一律单行掩码（2026-09-23 用户拍板：加密的一律单行框）
     const credRows = rowsOf(ai, '数据源凭据');
-    expect(credRows.map((r) => r.name)).toEqual(['ApiZero Key', 'B站 Cookie', '豆瓣 Cookie']);
+    expect(credRows.map((r) => r.name)).toEqual(['B站 Cookie', '豆瓣 Cookie', 'ApiZero Key']);
     expect(credRows.every((r) => r.type === 'secret')).toBe(true);
   });
 

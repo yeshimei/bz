@@ -39,11 +39,11 @@ function cannedPreview(_app: unknown, name: string): Promise<DoubanQueryOutcome>
       detailUrl: 'https://movie.douban.com/subject/1291561/',
       sid: '1291561',
       posterUrl: '',
-      apizero: {
+      subject: {
         name, year: '2001', score: '9.4', director: '宫崎骏', actor: '柊瑠美',
         genre: '剧情, 动画, 奇幻', area: '日本', duration: '125分钟', episodes: '',
         isTv: false, doubanUrl: 'https://movie.douban.com/subject/1291561/',
-        shortComment: '', commentAuthor: '',
+        posterUrl: '', shortComment: '', commentAuthor: '',
       },
       celebrities: null,
     },
@@ -1055,7 +1055,7 @@ tags: [电影]
     createOverlay(app);
     const root = document.querySelector('section.mob.bz-cinema--midnight') as HTMLElement;
     expect(root).toBeTruthy();
-    expect(root.querySelectorAll('.m-acts .m-tool').length).toBe(4); // 导入/AI/分析/关闭（设置钮退役，添加钮为 .add）
+    expect(root.querySelectorAll('.m-acts .m-tool').length).toBe(5); // 导入/我账号的/AI/分析/关闭（设置钮退役，添加钮为 .add）
     expect(root.querySelector('.j-mclose')).toBeTruthy(); // 落域适配：移动关闭钮
     expect(root.querySelectorAll('.m-chips .chip').length).toBe(10);
     expect(root.querySelectorAll('.m-grid .pcard').length).toBe(4);
@@ -1257,6 +1257,7 @@ tags: [电影]
     expect(acts.map((b) => b.className)).toEqual([
       'add j-madd bz-touch-target bz-touch-target--lg',
       'm-tool j-import bz-touch-target bz-touch-target--lg',
+      'm-tool j-import-mine bz-touch-target bz-touch-target--lg',
       'm-tool j-mai bz-touch-target bz-touch-target--lg',
       'm-tool j-mstat bz-touch-target bz-touch-target--lg',
       'm-tool j-mclose bz-touch-target bz-touch-target--lg',
@@ -2514,11 +2515,11 @@ describe('cinema 添加影视：解析即落盘，不再后台抓取（issue 397
       detailUrl: 'https://movie.douban.com/subject/1291561/',
       sid: '1291561',
       posterUrl: 'https://img9.doubanio.com/view/photo/s_ratio_poster/public/p1.jpg',
-      apizero: {
+      subject: {
         name: '海报片', year: '2001', score: '9.4', director: '宫崎骏', actor: '柊瑠美',
         genre: '剧情, 动画, 奇幻', area: '日本', duration: '125分钟', episodes: '',
         isTv: false, doubanUrl: 'https://movie.douban.com/subject/1291561/',
-        shortComment: '', commentAuthor: '',
+        posterUrl: '', shortComment: '', commentAuthor: '',
       },
       celebrities: null,
     },

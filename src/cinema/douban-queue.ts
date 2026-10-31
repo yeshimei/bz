@@ -21,6 +21,15 @@ export type { DoubanQueryOutcome };
 
 /** 条目间隔 ms（防豆瓣限流，对齐原守护 FETCH_INTERVAL） */
 const FETCH_GAP_MS = 15000;
+/** 批量导入批次的条目间隔 ms：15s 是为零星补抓留的余量，几百条一口气导要跑上百分钟。
+ *  实测（2026-10-31，带登录 cookie + Chrome UA）2~4 秒随机间隔连续几十次不触发风控，
+ *  5 req/s 以上才 403——取安全区上沿 4s，105 部约 7 分钟。 */
+export const IMPORT_GAP_MS = 4000;
+/** 被风控拦截后的退避时长：豆瓣的软拒绝窗口实测「以分钟计」（ADR-0178），
+ *  立刻重试只会继续撞墙；停一拍再试，批量导入时能救回大半 — 仍失败才算真没抓到。 */
+export const BLOCK_BACKOFF_MS = 45000;
+/** 运行时退避值（configureFetchQueue 可覆盖；测试置 0） */
+let blockBackoffMs = BLOCK_BACKOFF_MS;
 /** 单条硬超时 ms（Promise.race 兜底，防单条网络悬挂拖死队列） */
 export const FETCH_TIMEOUT_MS = 3 * 60 * 1000;
 /** 单请求超时 ms（requestUrl 不支持中止 → Promise.race） */
@@ -29,6 +38,12 @@ const HTTP_TIMEOUT_MS = 15000;
 interface QueueEntry {
   file: TFile;
   name: string;
+  /** 已为「风控拦截」退避重试过一次（只退一次，避免被拦时无限重试把账号拖进黑名单） */
+  retried?: boolean;
+  /** 本条与上一条之间的间隔（缺省 = 全局 gapMs）。导入批次自带更短的 4s 档：
+   *  15s 是为「一条一条零星补抓」留的余量，一口气几百条的批量导入用 15s 要跑上百分钟
+   *  （实测豆瓣 2~4 秒间隔不触发风控，见 ADR-0113 补记与 2026-10-31 实测） */
+  gapMs?: number;
   /** 豆瓣片单导入携带的条目 sid：执行时直取 queryDoubanBySid（与表单解析 sid 直取同口径，
    *  省一次名称三路检索）。sweep/重试等路径没有 sid，留空走按名检索 */
   sid?: string;
@@ -55,6 +70,11 @@ let failedEntries: QueueEntry[] = [];
 let blockedNames: string[] = [];
 let blockedEntries: QueueEntry[] = [];
 let pumping = false;
+/** 当前正在抓的那条（导入弹层的「补全中」行要认人；队列串行，恒最多一条） */
+let currentPath: string | null = null;
+/** 暂停闸：暂停题只在导入弹层里出现，关层即恢复（见 ui.ts openDoubanMineSync） */
+let paused = false;
+let resumeWaiters: (() => void)[] = [];
 /** 测试注入 */
 let fetchFn: FetchNote | null = null;
 let gapMs = FETCH_GAP_MS;
@@ -146,12 +166,15 @@ export function configureFetchQueue(hooks: {
   preview?: PreviewQuery | null;
   /** 保存海报落库；传 null 复位（测试 afterEach 用） */
   poster?: PreviewPosterSave | null;
+  /** 风控退避时长（测试置 0；不传用 BLOCK_BACKOFF_MS） */
+  backoffMs?: number;
 }): void {
   if (hooks.fetch) fetchFn = hooks.fetch;
   if (hooks.preview !== undefined) previewFn = hooks.preview;
   if (hooks.poster !== undefined) posterFn = hooks.poster;
   if (hooks.gapMs !== undefined) gapMs = hooks.gapMs;
   if (hooks.refreshDelayMs !== undefined) refreshDelayMs = hooks.refreshDelayMs;
+  if (hooks.backoffMs !== undefined) blockBackoffMs = hooks.backoffMs;
 }
 
 /** 卡片 loading 查询：该笔记是否在抓取中。
@@ -166,8 +189,26 @@ export function isFetching(path: string | null | undefined): boolean {
   return Date.now() - at < ahead * gapMs + FETCH_TIMEOUT_MS + 30_000;
 }
 
+/** 正在抓的笔记路径（没有则 null）。导入弹层据此区分「补全中」与「等待」 */
+export function currentFetchPath(): string | null {
+  return currentPath;
+}
+
+/** 暂停 / 继续队列（暂停只影响「下一条开抓」，在抓的那条会跑完） */
+export function pauseDoubanQueue(): void {
+  paused = true;
+}
+
+export function resumeDoubanQueue(): void {
+  if (!paused) return;
+  paused = false;
+  const waiters = resumeWaiters;
+  resumeWaiters = [];
+  waiters.forEach((fn) => fn());
+}
+
 /** 入队（会话内去重）；全平台启用（ADR-0129：requestUrl 移动端可用）。返回是否真入队 */
-export function enqueueDoubanFetch(file: TFile | null, name: string, sid?: string): boolean {
+export function enqueueDoubanFetch(file: TFile | null, name: string, sid?: string, opts?: { gapMs?: number }): boolean {
   if (!file) return false;
   const key = file.path;
   // G8 豁免只在「在抓被删」那一次：dequeue（删除）会无条件记 cancelled，删过**未入队**的
@@ -178,7 +219,7 @@ export function enqueueDoubanFetch(file: TFile | null, name: string, sid?: strin
   attempted.add(key);
   pending.set(key, Date.now());
   waitAhead.set(key, queue.length); // push 前长度 = 前方条目数（快照，见 isFetching C7）
-  queue.push({ file, name, sid });
+  queue.push({ file, name, sid, gapMs: opts?.gapMs });
   void pump();
   return true;
 }
@@ -234,14 +275,17 @@ async function pump(): Promise<void> {
   try {
     let first = true;
     while (queue.length > 0) {
+      while (paused) await new Promise<void>((resolve) => resumeWaiters.push(resolve));
       const entry = queue.shift()!;
       // C7：出队即刷新打点并清除队列等待预算——loading 时限从「真正开抓」起算，
       // 长队尾条目不再按入队时刻提前过期
       pending.set(entry.file.path, Date.now());
       waitAhead.delete(entry.file.path);
-      if (!first) await sleep(gapMs);
+      if (!first) await sleep(entry.gapMs ?? gapMs);
       first = false;
+      currentPath = entry.file.path;
       const r = await runOne(entry);
+      currentPath = null;
       pending.delete(entry.file.path);
       waitAhead.delete(entry.file.path);
       // G8：已删除影片的条目完成后不记失败（取消集合消费后即清，防集合增长）
@@ -259,6 +303,16 @@ async function pump(): Promise<void> {
         continue;
       }
       if (!r.ok) {
+        if (r.reason === 'blocked' && !entry.retried) {
+          // 拦一次不等于拦一天：退避一拍插回队首重试（顺序不变），还失败才计入本轮失败
+          entry.retried = true;
+          queue.unshift(entry);
+          pending.set(entry.file.path, Date.now());
+          waitAhead.set(entry.file.path, 0);
+          await sleep(blockBackoffMs);
+          first = true; // 退避后不再叠条目间隔
+          continue;
+        }
         if (r.reason === 'blocked') {
           blockedNames.push(entry.name);
           blockedEntries.push(entry);
@@ -348,6 +402,10 @@ export function shutdownDoubanQueue(): void {
   pumping = false;
 }
 
+/** 片单/收藏页翻页间隔 ms（防风控：个人收藏页动辄几十页，零间隔连发会被豆瓣拦——
+ *  实测 5 req/s 以上几十个请求就出 403/验证码）。首页不等，故 400 部约 30 页 ≈ 35 秒。 */
+const LIST_GAP_MS = 1200;
+
 /** 豆瓣片单导入（一键批量建档的抓取端）：复用队列 HTTP 通道与设置里的豆瓣 Cookie
  *  （fetchDepsFromSettings 单源——导入不自己拼第二份 HTTP 层，同 queryDoubanForPreview 口径）。
  *  firstPageEmpty = 首页就没解析出条目（个人收藏页缺登录态 / 风控拦截 / 链接不对），
@@ -359,5 +417,5 @@ export function configureDoubanListFetch(fn: NonNullable<typeof listFetchFn> | n
 export async function fetchDoubanListForImport(app: App, base: string, onPage?: DoubanListPageCb): Promise<{ entries: DoubanListEntry[]; firstPageEmpty: boolean; listTitle: string }> {
   if (listFetchFn) return listFetchFn(app, base);
   const deps = fetchDepsFromSettings(app);
-  return fetchDoubanList(base, deps.httpGet, deps.doubanCookie || undefined, onPage);
+  return fetchDoubanList(base, deps.httpGet, deps.doubanCookie || undefined, onPage, LIST_GAP_MS);
 }

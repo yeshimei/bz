@@ -39,7 +39,7 @@ function makeSuccessFetch(vault: MockVault) {
 }
 
 /** 测试注入基线：刷新延迟归零供 settle 消化 */
-const TEST_HOOKS = { gapMs: 0, refreshDelayMs: 0 };
+const TEST_HOOKS = { gapMs: 0, refreshDelayMs: 0, backoffMs: 0 };
 
 const okOutcome = (): DoubanFetchOutcome => ({ ok: true });
 
@@ -194,6 +194,27 @@ describe('豆瓣抓取队列（douban-queue，ADR-0129 执行器=插件内 fetch
     expect(getNoticeMessages().some((m) => m.includes('普通失败片') && m.includes('豆瓣风控'))).toBe(false);
     // C5：风控文案同步更正（重开面板不会重试，重启重载才会）
     expect(getNoticeMessages().some((m) => m.includes('豆瓣风控') && m.includes('重启 Obsidian（重载插件）后会自动重试'))).toBe(true);
+  });
+
+  it('风控拦截：退避一拍后重试一次，第二次成功就不报失败', async () => {
+    const vault = new MockVault();
+    vault.files.set('我的/影视/《先拦后放》.md', '---\ntags: [电影]\n评分: 8\n海报: CONFIG/MOVIE POSTER/a.jpg\n---');
+    const app = mockAppWithVault(vault);
+    rebuildItems(app);
+    let calls = 0;
+    configureFetchQueue({
+      ...TEST_HOOKS,
+      fetch: async () => {
+        calls++;
+        return calls === 1 ? { ok: false, reason: 'blocked' } : { ok: true };
+      },
+    });
+
+    sweepDoubanFetch(app);
+    await settle();
+
+    expect(calls).toBe(2); // 拦一次 → 退避 → 再试一次
+    expect(hasNotice(/豆瓣风控拦截/)).toBe(false); // 第二次成了，不进失败聚合
   });
 
   it('移动端启用（ADR-0129）：无 child_process 环境照常入队执行', async () => {

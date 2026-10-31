@@ -83,17 +83,18 @@ describe('豆瓣片单翻页抓取（fetchDoubanList）', () => {
     const base = 'https://www.douban.com/doulist/164548718';
     const pages: Record<string, string> = {
       [`${base}?start=0`]: page(Array.from({ length: 20 }, (_, i) => `片${i}`)),
-      [`${base}?start=25`]: page(['尾片A', '尾片B'], 25),
+      [`${base}?start=20`]: page(['尾片A', '尾片B'], 25),
     };
     const { entries, firstPageEmpty } = await fetchDoubanList(base, async (url) => {
       calls.push(url);
       return pages[url] ?? '';
     });
-    // 不假设每页条数（wish 25 / doulist 20）：末页之后还要探一页空页才停
+    // 步长 = 本页实际条数（doulist 20/页、wish 25/页、collect 15/页各不相同）：
+    // 20 条的第一页之后从 start=20 继续，末页之后还要探一页空页才停
     expect(calls).toEqual([
       'https://www.douban.com/doulist/164548718?start=0',
-      'https://www.douban.com/doulist/164548718?start=25',
-      'https://www.douban.com/doulist/164548718?start=50',
+      'https://www.douban.com/doulist/164548718?start=20',
+      'https://www.douban.com/doulist/164548718?start=22',
     ]);
     expect(firstPageEmpty).toBe(false);
     expect(entries).toHaveLength(22);
