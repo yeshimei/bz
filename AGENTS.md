@@ -20,12 +20,17 @@ Obsidian 插件。域 = `src/<域>/`，`core` 是共享层。中文输出。
 - 命令 ID `bz-<域>-<动作>`；通知正文不带 emoji（新语义查 `src/core/notice.ts` 的 ICONS）。
 - **新增弹窗必须穿本域的皮。** `uiModal` / `openFlowDialog` 只给中性壳（400px 窄卡、居中正文、灰底胶囊按钮），直接裸用就是「另一个插件弹出来的框」——2026-10-31 引导页的关闭确认就这么翻车过。做法：`uiModal` 传 `className`、`openFlowDialog` 传 `className`，皮肤规则写进该域的 `styles.css`（`#__shared_confirm_popup__.<皮肤类> …` 起手，因为壳的居中/宽度挂在 id 上，两个类压不住）；本域已有弹窗体就复用，不要另起一套。
 - **遮罩之上不许再压一层可点的铺满层。** 点遮罩关闭的判据是「click 的 target 是遮罩本体」，再叠一层 `position: fixed; inset: 0` 的可点容器，target 就永远落在那层上，遮罩点了没反应（2026-10-31 日记兜底纸：没设文件夹时整张桌被 `.bz-diary-fallback` 盖住，只剩右上角 X 能关）。两种正确做法：那层 `pointer-events: none`，或把它的节点一起写进遮罩的命中判据（日记取的是后者，见 ADR-0230 补记）。全屏面板（本身就铺满、没有遮罩空白）不受这条约束。
-- 改动走 worktree（仓库外，从最新 master 分叉）；**worktree 内不构建**——产物直出本机 vault（`esbuild.config.mjs` 硬编码）与仓库根。
+- 改动走 worktree（仓库外，从最新 master 分叉）；**worktree 内不构建**——产物直出本机 vault（`esbuild.config.mjs` 硬编码，`BZ_VAULT_DIR` 可覆盖落点）与仓库根。
 
-## 「走快速原型」= 不许验证
-不测试、不截图、不比对：禁 vitest 任何跑法（含「只跑当前域」）、禁 CDP / 无头探针、禁壳 `?selftest=1`、禁读计算样式自证。
+## 开发工作流（测试库直出，ADR-0276）
 
-改完源码 → 起或复用预览服务 → 把网址交给他，让他判。门禁等他喊「同步」一次补齐（改到类型边界可顺手 `tsc --noEmit`，但那不算验证、不许拿它拖交付）。
+改 UI 的快速循环，走**测试库**（`E:\Obsidian\测试`，数据笔记可随便造）：
+
+- `BZ_VAULT_DIR="E:/Obsidian/测试/.obsidian/plugins/bz" node esbuild.config.mjs` —— watch 常驻，改动自动重出 main.js/styles.css 到测试库。
+- `node scripts/dev-restart.mjs` —— 一次性构建 + 把 styles.css 同步成测试库 snippet（`bz-dev.css`，CSS 改动免重启）+ 重启 Obsidian 直开测试库。`--no-build` 跳过构建；`--vault <名>` 换目标库。
+- `node scripts/dev-vault.mjs snapshot|reset|wipe|seed` —— 测试库快照 / 回滚 / 清空（测首次引导）/ 从主库播种数据与日记笔记。
+- **开机直达弹窗**：往测试库 `<插件目录>/storage/debug-open.json` 写 `{"command":"bz-<域>-open"}`，插件启动 layout-ready 后自动执行该命令——改某个弹窗时重启即见，不用翻菜单。删掉文件即恢复常规启动。
+- 门禁口径不变：改完在 worktree 跑 `node scripts/test-affected.mjs --since master`；测试库只管「人眼看效果」，不算验证。
 
 ## 提交
 
@@ -42,7 +47,7 @@ Conventional Commits。**提交信息即更新日志正文**，只有 `feat` / `
 |---|---|
 | 某域数据落在哪 | 该域 `data.ts` 的路径 / 键常量（缺省数据根 `<插件目录>/storage/`，ADR-0270；`CONFIG/STORAGE/` 是老库的落位，不是缺省） |
 | 域职责、术语、口径 | `CONTEXT.md` |
-| 单源域名单 | `build-preview.mjs` 的 `PREVIEW_DOMAINS` / `BEHAVIOR_DOMAINS` |
+| 开发工作流（测试库） | ADR-0276 + `scripts/dev-restart.mjs` / `scripts/dev-vault.mjs` 文件头 |
 | 皮肤清单 | `scripts/skins.catalog.json` |
 | 离线值守（Obsidian 关着也跑） | `tools/dock-watch/README.md`（装法/排障）· 租约与状态接口 `src/dock/watchdog.ts` · ADR-0242 |
 | 值守跑之前等网络 | `tools/dock-watch/net.js` 文件头 · ADR-0242 补记（等不到不记账，留给下一拍） |

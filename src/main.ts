@@ -28,7 +28,8 @@ import { DOMAIN_ICONS } from './core/domain-icons';
 import { clearDomainEvents } from './core/domain-bus';
 import { attachObsidianAdapter, detachObsidianAdapter } from './core/obsidian-adapter';
 
-import { bootstrapStorageDir } from './core/storage';
+import { bootstrapStorageDir, storageDir } from './core/storage';
+import { devAutoOpen } from './core/dev-auto-open';
 import { setupAlreadyDone } from './core/setup-state';
 import { isMobileEnv } from './core/mobile';
 import BzSettings, { DEFAULT_SETTINGS, migrateAutoUpdateDefault, migrateMemoSettingKeys, migrateAutoLinkSettings, migrateRetiredAIKeys, migrateRetiredFavoritesSortKey, migrateLinkMinScoreScale, migrateRetiredSecondBrainKeys, migrateRetiredJevKeys, migrateAsrKeys, migrateExternalToolKeys } from './settings';
@@ -359,7 +360,7 @@ export default class BzPlugin extends Plugin {
     // 通用设置访问器（各域经 getSettings 读取）
     setSettingsProvider(() => this.settings);
     // 设置面板打开通道：各域「打开设置」按钮（core/folder-setup 等）经此进来，
-    // core 不必 import 面板本体——那样会把整块面板拖进各域行为包（评审壳构建失败）。
+    // core 不必 import 面板本体——保持 onload 轻量。
     setSettingsPanelOpener((domainId, anchorKey) => openSettingsPanel(this.app, domainId, anchorKey));
     // 数据目录初值（2026-10-29：缺省从 vault 根的 CONFIG/STORAGE 搬到 <插件目录>/storage）：
     // 只在 data.json 里还没有 storagePath 时写一次（新库）；已有值的库一律不动，不复制不搬运。
@@ -477,6 +478,9 @@ export default class BzPlugin extends Plugin {
       // 备忘录提醒后台：启动自动弹出 + 打开笔记提醒（落点=备忘录面板；设置键 autoPopupOnStart/openNoteReminder）。
       // 要弹引导时只跳过「启动自动弹出」——事件监听照挂，引导背后不该先蹦出一个备忘录面板。
       ensureMemoReminders(this.app, { skipStartPopup: needSetup });
+      // 开发辅助（ADR-0276）：测试库数据目录放了 debug-open.json 就开机直达该命令；
+      // 首次引导在场时先让它说话，不抢（正常库没有这个文件，零行为差）。
+      if (!needSetup) devAutoOpen(getApp(), storageDir());
       if (this.settings.autoSummaryEnabled) ensureAutoSummary(this.app);
       // 引用同步无条件常驻（issue 187：原 aiAgentEnabled 开关随旧 AIAgent 退役——
       // 备忘录/收藏本笔记 rename/delete 引用同步是数据完整性功能，不设开关）

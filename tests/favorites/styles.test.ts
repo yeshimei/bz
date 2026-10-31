@@ -14,9 +14,8 @@ const favCss = () => repo('src/favorites/styles.css');
 const favUi = () => repo('src/favorites/ui.ts');
 const favShared = () => repo('src/favorites/shared.ts');
 const favRender = () => repo('src/favorites/layouts/board/render.ts');
-const favProto = () => repo('prototypes/favorites/prototype.html');
 
-describe('C1：域选择器脱离 core reset 同分顺序对抗 + 原型 core 链', () => {
+describe('C1：域选择器脱离 core reset 同分顺序对抗', () => {
   it('styles.css 磁贴 button 基础规则挂 .bz-fav-scope 前缀（(0,2,1)）；右键菜单/抽屉已收编 core（2026-09-11）', () => {
     const css = favCss();
     expect(css).toContain('.bz-fav-scope .bz-fav-tags button {');
@@ -27,24 +26,10 @@ describe('C1：域选择器脱离 core reset 同分顺序对抗 + 原型 core �
     expect(css).not.toMatch(/^\.bz-fav-tags button \{/m);
   });
 
-  it('prototype.html link 链与 build-css SOURCES 同序（core 三份 → 域样式）', () => {
-    const proto = favProto();
-    const stylesIdx = proto.indexOf('../../src/core/styles.css');
-    const tokensIdx = proto.indexOf('../../src/core/ui/tokens.css');
-    const componentsIdx = proto.indexOf('../../src/core/ui/components.css');
-    const domainIdx = proto.indexOf('../../src/favorites/styles.css');
-    for (const idx of [stylesIdx, tokensIdx, componentsIdx, domainIdx]) {
-      expect(idx, '原型缺 link 链一环').toBeGreaterThan(-1);
-    }
-    expect(stylesIdx).toBeLessThan(tokensIdx);
-    expect(tokensIdx).toBeLessThan(componentsIdx);
-    expect(componentsIdx).toBeLessThan(domainIdx);
-  });
 });
 
-describe('C2：弹窗壳收编 core uiModal（issue 365 第 5 项）后 scope 挂 popup（壳不自绘）', () => {
+describe('C2：弹窗壳收编 core uiModal（issue 365 第 5 项）后 scope 挂 popup（不自绘）', () => {
   it('openForm 的 uiModal popup className 只挂 scope；bz-fav-form 由单源内容根携带（F15 单例守卫口径）', () => {
-    const proto = favProto();
     // 行为单源（issue 245/ADR-0106）：弹窗 className 赋值唯一落点 = 真行为 ui.ts；旧自绘 mask 类退役。
     // 壳与内容不重类：popup 只挂 bz-fav-scope（token 域 + 卡皮锚），bz-fav-form 只在内容根
     // （querySelector('.bz-fav-form') 单例守卫恰好命中一层，回归见 tests/review-fix-clip-ui F15）；
@@ -55,19 +40,16 @@ describe('C2：弹窗壳收编 core uiModal（issue 365 第 5 项）后 scope �
     expect(favUi()).not.toContain('bz-fav-form-mask');
     expect(favCss()).toContain('.bz-overlay-popup.bz-fav-scope');
     expect(favCss()).not.toContain('.bz-overlay-popup.bz-fav-form');
-    expect(proto).not.toContain("= 'bz-fav-form-mask';");
-    expect(proto).toContain('prototype-behavior.js');
   });
 });
 
 describe('C7/C8：表单按钮类名合规', () => {
-  it('C7：bz-fav-pick-btn 死类已删（两端 CSS/原型均无此选择器）', () => {
+  it('C7：bz-fav-pick-btn 死类已删（CSS 无此选择器）', () => {
     expect(favUi()).not.toContain('bz-fav-pick-btn');
     expect(favCss()).not.toContain('bz-fav-pick-btn');
-    expect(favProto()).not.toContain('bz-fav-pick-btn');
   });
 
-  it('C8：#fz-ai ID 选择器退役 → .bz-fav-ai-btn 类（ui.ts 模板与原型同步，#fz-ai 锚点保留供 JS/测试）', () => {
+  it('C8：#fz-ai ID 选择器退役 → .bz-fav-ai-btn 类（#fz-ai 锚点保留供 JS/测试）', () => {
     expect(favCss()).not.toContain('#fz-ai');
     expect(favCss()).toContain(':is(.bz-fav-form, .bz-fav-tageditor) .bz-fav-btns .bz-fav-ai-btn {');
     expect(favShared()).toContain('<button type="button" id="fz-ai" class="bz-fav-ai-btn">'); // issue 242：表单 markup 单源 shared.ts，壳经 BZR_favorites 消费
@@ -106,17 +88,12 @@ describe('C11：静态 z-index 退役（壳收编 core uiModal 后 z 发号归 a
   });
 });
 
-describe('C12：表单演示钩子对齐插件契约（行为单源后断言指向真行为 ui.ts）', () => {
-  it('取消= data-fz-cancel / 保存= id="fz-save"（模板与真行为委托同源；壳无自绘演示 JS）', () => {
-    const proto = favProto();
+describe('C12：表单钩子对齐插件契约', () => {
+  it('取消= data-fz-cancel / 保存= id="fz-save"（模板与行为委托同源）', () => {
     expect(favShared()).toContain('<button type="button" data-fz-cancel>取消</button>'); // issue 242：markup 单源 shared.ts
     expect(favShared()).toContain('id="fz-save" class="bz-fav-pri"');
-    // 行为单源（issue 245/ADR-0106）：演示 JS 已随旧壳退役，钩子委托在真行为 ui.ts
     expect(favUi()).toContain("querySelector('[data-fz-cancel]')");
     expect(favUi()).toContain("querySelector('#fz-save')");
-    expect(proto).not.toContain("e.target.dataset.a !== 'ok'");
-    expect(proto).not.toContain("e.target.closest('[data-fz-cancel]')"); // 壳不再自绘委托
-    expect(proto).toContain('prototype-behavior.js');
   });
 });
 

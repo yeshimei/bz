@@ -5,10 +5,10 @@
  * 稳定键、海报内芯、片卡、共享弹窗（详情/表单/设置——ADR-0103 §3 三风格共用；删除确认
  * 已收编 core/flow-dialog）、AI 荐片页与菜单/抽屉行等跨布局件全部出自这里——
  *   - 插件侧：ui.ts 直接 import（事件绑定/core 服务/数据读写留 ui.ts）；
- *   - 原型侧：dev 打成 prototype-render.js（IIFE，挂 window.BZR_cinema），壳消费同一份。
+ *   - （旧评审壳曾打成 prototype-render.js 消费同一份，已退役 ADR-0276。）
  * 布局差异层（午夜场 desk/mob 壳、侧栏、chips、视图装配）在 layouts/midnight/，
  * 域入口 render.ts 聚合两者。
- * 纯层契约（import 白名单由 tests/core/render-purity.test.ts 守卫承担，其余为层约定）：
+ * 纯层契约（import 白名单现为约定）：
  * 白名单仅 `../core/ui/str` 与域内 constants/types（state 仅 type-only，编译期擦除）；
  * 禁模块级可变状态（条目与视图状态显式入参）；图标一律 `<i data-lucide>` 占位，由各端 mountIcons 物化。
  * 演示数据字段与插件形状不同处取兼容回退（AI 推荐 name/meta、itemKey 回退 new:name、
@@ -56,7 +56,7 @@ export function typeColor(group: string): string {
 
 /** 状态色（原型 ST_C 口径） */
 export const ST_COLOR: Record<string, string> = { 想看: '#98917f', 在看: '#d97c1d', 已看: '#4a9a5c' };
-/** 演示数据兼容：status 可能是中文串（评审壳 localStorage 旧档/演示字段直读），归一为数值口径 */
+/** 演示数据兼容：status 可能是中文串（旧评审壳（已退役） localStorage 旧档/演示字段直读），归一为数值口径 */
 export function statusNum(status: number | string): number {
   if (typeof status === 'number') return status;
   return status === '想看' ? STATUS_WANT : status === '在看' ? STATUS_WATCHING : STATUS_WATCHED;

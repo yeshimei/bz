@@ -13,7 +13,7 @@
  *  · import 边   —— `from '...'` / `import('...')` / `require('...')` 的相对路径
  *  · 文本边      —— 测试里以字符串字面量**直接读**的仓库路径（`repo('src/x.css')` 形态）；
  *                   判定依据是**路径真实存在**，不设「根目录白名单」：`downloads/`、`tools/`、
- *                   `prototypes/`、`manual/` 一样有守卫读，白名单会把它们全推给「一律全量」
+ *                   `manual/` 一样有守卫读，白名单会把它们全推给「一律全量」
  *  · 目录/整树边 —— 扫树守卫（`readdirSync('src')`、`listDomainStyles('src')`）→ 该目录下任何文件变更都命中
  * 前两类决定「改什么跑谁」，第三类保证扫树守卫不会被漏掉。
  *
@@ -59,7 +59,7 @@ const slash = (p) => p.split(path.sep).join('/');
  * 文件内容缓存：一次运行内每个文件只读一遍，**读字节**（不是解码后的文本）。
  * 必要性：算结果指纹时要对「自身 ∪ 依赖闭包」逐个哈希，而扫树守卫的闭包≈整棵 src
  * （491 个文件 × 43 个守卫），不缓存就是几十万次重复读盘。
- * 为什么要字节：目录边会盖住 `downloads/`、`prototypes/` 里的 .css/.html/图片，
+ * 为什么要字节：目录边会盖住 `downloads/`、`manual/` 里的 .css/.html/图片，
  * `readFileSync(p,'utf8')` 会把所有非法字节统一成 U+FFFD —— 两个不同的二进制文件可能
  * 解出同一个字符串，指纹就撞了。哈希一律走 Buffer。
  */
@@ -212,9 +212,9 @@ const IMPORT_RE = /(?:from|import|require)\s*\(?\s*['"]([^'"]+)['"]/g;
  * 不是紧贴引号开头，也不都在 src/tests/scripts 下——
  *   `const repo = (p) => readFileSync(join(process.cwd(), p)); repo('src/core/ui/components.css')`
  *   `const D = join(process.cwd(), 'src'); readdirSync(D)`
- *   `readFileSync(path.join(ROOT, 'downloads/manifest.json'))`   ← tools / downloads / prototypes
+ *   `readFileSync(path.join(ROOT, 'downloads/manifest.json'))`   ← tools / downloads
  * 曾用「根目录必须 ∈ {src,tests,scripts}」的白名单来筛，结果把 `downloads/manifest.json`、
- * `tools/obsidian-face/lib/*.js`、`prototypes/**` 这些**真有守卫在读**的路径全挡在门外
+ * `tools/obsidian-face/lib/*.js`、`tests/**` 这些**真有守卫在读**的路径全挡在门外
  * （它们只能靠升格兜底）。改成按**路径是否在仓库里真实存在**判定：不做根名单假设，
  * 也不放过拼错/不存在的路径（URL、绝对路径、vault 内路径、夹具里的假路径自然落空）。
  *
@@ -370,7 +370,7 @@ function dirMatches(dirTarget, file) {
  * 目录整树边 → 该目录下「可能被报成变更」的全部文件（升序，供指纹用）。
  *
  * **这是自审抓到的 P0**：初版把目录边写成 `for (const f of srcFiles) if (dirMatches(target, f))`，
- * 也就是只拿 `src/` 下的文件去展开。于是 `downloads/`、`manual/`、`prototypes/`、
+ * 也就是只拿 `src/` 下的文件去展开。于是 `downloads/`、`manual/`、
  * `tools/` 这些**索引根之外**的目录边：`pickTests` 会靠它选中守卫，但 `fileKey` 里一个文件都
  * 没有 → `applyCache` 拿旧 pass 把守卫复用掉 ——「选中了」和「会跑」成了两回事，确定性漏测。
  * 现在分母取 git 可见全集（与 collectChanged 同口径）；非 git 目录（夹具）退回磁盘扫描。
@@ -407,7 +407,7 @@ const FULL_RULES = [
   [(f) => f.startsWith('src/core/') && !f.endsWith('.css'), 'core 共享层'],
   // 索引只覆盖 src/tests/scripts（INDEX_ROOTS）与「被文本边指到的路径」。除此之外的变更
   // （根 main.js / .gitignore / 新加的顶层目录 …）**没有任何边**，那就不能假装知道谁受影响。
-  // 注意条件里的「无任何文本边」：downloads/manifest.json、tools/… 、prototypes/… 这些虽然
+  // 注意条件里的「无任何文本边」：downloads/manifest.json、tools/… 这些虽然
   // 在索引根之外，但确有守卫用字符串字面量指着它们（文本边/目录边已在索引里），所以走精确选择，
   // 只有真·无主的文件才升格。`.md` 例外：仓库里没有任何测试把文档当输入。
   [
@@ -615,7 +615,7 @@ export function fileKey(root, testFile, index, harness = harnessHash(root)) {
   for (const rel of sorted) {
     h.update(rel);
     h.update('\0');
-    // 按字节哈希：闭包里会有 downloads/*.html、prototypes/*.jpg 这类非文本文件
+    // 按字节哈希：闭包里会有 downloads/*.html 这类非文本文件
     h.update(readBytes(path.join(root, rel)) ?? Buffer.from('missing'));
     h.update('\0');
   }

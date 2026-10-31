@@ -32,7 +32,7 @@
  * 呼吸类长驻循环是氛围指示（同影院「加载循环不入台账」口径），周期自定：专注 4.2s、休息 6.4s。
  *
  * 纪律：
- *  - 零依赖（禁 obsidian / core 服务），纯浏览器 API——插件与评审壳两侧同跑；
+ *  - 零依赖（禁 obsidian / core 服务），纯浏览器 API——插件里照常跑；
  *  - 只动 transform / opacity / filter，不改写几何；render.ts markup 一字不动；
  *  - 注入装饰（vignette / 环头光点 / 迸花涟漪）全部 absolute + pointer-events:none + aria-hidden，
  *    宿主已 position:relative；演出完自移除（环头光点随相位藏显，面板关闭随 DOM 消亡）；

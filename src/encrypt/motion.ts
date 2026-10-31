@@ -26,7 +26,7 @@
  *    「同步收 + body 自毁覆层替身」，绝不在常驻节点上留 fill:forwards 残留
  *    （首页「关→再开」整屏不可见的教训）。
  *  - 与渲染纯层解耦：markup 一字不改；本层只在 ui.ts 生命周期挂点被调用。
- *  - 纯浏览器 API：禁 import obsidian / 任何 core 服务——评审壳与插件两侧都能跑。
+ *  - 纯浏览器 API：禁 import obsidian / 任何 core 服务——插件里照常跑。
  *  - password-vault/motion.ts 复用本文件底层（waapi/after/veil/loop 池），
  *    场景函数各自成文，两域不互相串演出。
  */

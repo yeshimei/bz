@@ -4,8 +4,8 @@
  * 本文件是「原型 × 插件」跨布局共享的唯一事实源：域清单/活动河类型与口径/
  * 规则纯函数（点评/预告/彩点/计数文案）/日期文案全部出自这里——
  *   - 插件侧：ui.ts / river.ts 直接 import（事件绑定/core 服务/数据读写留各自实现）；
- *   - 原型侧：dev watch 打成 prototype-render.js（IIFE，挂 window.BZR_home），壳消费同一份。
- * 纯层契约（tests/core/render-purity.test.ts 守卫）：import 白名单仅 `../core/ui/str`
+ *   - （旧评审壳曾打成 prototype-render.js 消费同一份，已退役 ADR-0276。）
+ * 纯层契约（纯度现为约定）：import 白名单仅 `../core/ui/str`
  * 与 `../core/domain-icons`（零依赖常量表）；recap 类型仅 type-only（编译期擦除）。
  * 禁 obsidian/moment/core 服务/组件库 barrel；禁模块级可变状态（活动河数据与视图状态
  * 显式入参）；图标一律 `<i data-lucide>` 占位，由各端 mountIcons 物化。
@@ -16,7 +16,7 @@ import { DOMAIN_ICONS } from '../core/domain-icons';
 import type { PomodoroPhase } from '../core/pomodoro-phase';
 import type { RecapSummary } from '../recap/aggregate';
 
-// 再出口（壳经 window.BZR_home 取用；插件 ui.ts 亦统一从这里取）
+// 再出口（插件 ui.ts 统一从这里取）
 export { esc, iconSpan };
 export { DOMAIN_ICONS };
 
@@ -252,7 +252,7 @@ export function pomodoroMenuAction(phase: PomodoroPhase): DomainMenuAction {
  * 不放「打开 X」（入口本身就是打开）、不放「整理顺序」（排序改直接拖拽，见 shared.reorderTo）。
  * **本表没有条目的域 = 不挂右键菜单 / 长按抽屉**（空的就别弹），ui.ts 依此判断。
  * 图标一律取「其他域右键菜单已在用」的 lucide 名（原型图标表按名查，
- * 不在表里的名字会静默渲染成空 —— 新增图标记得同时补 prototypes/home/prototype-icons.js）。
+ * 不在表里的名字会静默渲染成空 —— 新增图标用 lucide 名即可）。
  *
  * 2026-09-11 补 9 条（用户点名采纳）：全部是「不开面板、一步完成」的动作，
  * 其中即时类带 `keepHome`（不关首页）；清空类带 `kind: 'danger'`（红字 + 二次确认）。

@@ -1,7 +1,7 @@
 // @vitest-environment node
 /**
  * 第二大脑渲染纯层（issue 251 / ADR-0104）：markup 构建器 + 统计纯函数收编后的锚点断言。
- * 零依赖（node 环境直跑）；行为链与评审壳消费同一份 render.ts（prototype-render.js）。
+ * 零依赖（node 环境直跑）；行为链消费同一份 render.ts（旧评审壳已退役，ADR-0276）。
  */
 import { describe, it, expect } from 'vitest';
 import {

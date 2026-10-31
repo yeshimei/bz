@@ -7,8 +7,7 @@
  *
  * 分层（ADR-0106 / ADR-0230 决策 2）：
  * - **markup 纯层在 `./render`**（书桌 DOM 骨架 + seal/ticket/exlibris/para/entryBlocks/daystamp/photo），
- *   受 render-purity 守卫约束；两处消费同一份——插件这里，以及评审壳
- *   （`prototypes/diary/fake-sim.ts` 跑的是真 `openDiary` → 真 `show()`，不是复刻件）。
+ *   纯度现为约定；插件 ui.ts 消费同一份。
  * - **本文件只放行为**：分页测量与切页、StPageFlip 建书与翻页、文具五项动作、台历/贴纸册/检索/
  *   信封/撕页/灯箱/便签菜单、域事件回刷、加密媒体按需解密。
  * - **数据层不动**（`data.ts`/`store.ts`/`encrypt.ts`/`config.ts`）：本域 content 只读聚合，
@@ -102,7 +101,7 @@ import { buildLocatorPredicateFor } from './ui/locator';
 import { parseFlexibleDateTime } from './parser';
 import { MEDIA_PICK_MAX_MB, PICK_MEDIA_ACCEPT, writePickedMedia } from './media-import';
 /* 纯层只吐 data-lucide 占位（iconSpan），兑现统一在这里做一次：
-   插件端走 setIcon（全 lucide 名），评审壳走 prototype-icons.js 的手写白名单。 */
+   插件端走 setIcon（全 lucide 名）。 */
 import { mountIcons, uiProgress, uiBtn } from '../core/ui';
 import { needsFolderSetup, openFolderSettings, folderState } from '../core/folder-setup';
 
@@ -3231,7 +3230,7 @@ export class DiaryAppController {
       const mod = (await import('../encrypt')) as typeof import('../encrypt');
       safe = mod.getSafeManager();
     } catch (err) {
-      // 保险箱没起来（评审壳里常见）：说清原因，别静默吞掉动作
+      // 保险箱没起来（旧评审壳（已退役）里常见）：说清原因，别静默吞掉动作
       notice(`保险箱暂不可用：${err instanceof Error ? err.message : String(err)}`, 'error');
       return false;
     }

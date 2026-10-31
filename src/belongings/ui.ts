@@ -1,6 +1,6 @@
 /**
  * 归物本 UI（issue 237/ADR-0104 起 markup 单源：面板/网格/详情/表单的 HTML 全部出自
- * ./render.ts（渲染纯层，评审壳 prototype.html 经 prototype-render.js 消费同一份）——
+ * ./render.ts（渲染纯层，ui.ts 消费同一份）——
  * 本文件只保留行为层：生命周期、事件绑定、core 服务接线、数据读写。
  *
  * 桌面：无壳头行（issue 219b/c 收藏本完全原型化范式）：海报 hero 即头，点遮罩/Esc 关闭 →

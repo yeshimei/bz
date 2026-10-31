@@ -1,11 +1,11 @@
 /**
  * 番茄钟渲染纯层（ADR-0104 markup 单源）：弹窗结构 + 面板主题清单。
  *
- * 与插件侧 ui.ts、评审壳（prototypes/pomodoro/skins.html 经 prototype-render.js）共用同一份：
+ * 与插件侧 ui.ts 共用同一份（旧评审壳已退役，ADR-0276）：
  *   - `panelShellHtml()` / `popupShellHtml()` = 弹窗骨架（含控件 id，行为接线仍在 ui.ts）；
  *   - `POMODORO_SKIN_THEMES` = 面板主题清单（设置面板「外观 → 面板主题」选项、皮肤类名、
  *     skins.html 的皮肤列表三处同表）；色值本身在 styles.css 的 :root 变量表（见文件内注释）。
- * 纯度（tests/core/render-purity 守卫）：禁 obsidian/moment/core 服务，本文件零依赖。
+ * 纯度（纯度现为约定）：禁 obsidian/moment/core 服务，本文件零依赖。
  */
 
 /** 面板主题（皮肤）取值——与 CSS 的 `pomodoro-skin-<value>` 一一对应，改名须留兼容 */
@@ -22,13 +22,13 @@ export type PomodoroSkinTheme =
   | 'night';
 
 /**
- * 面板主题清单（**皮肤清单单源**）：设置面板选项、弹窗皮肤类、评审壳皮肤页同表。
+ * 面板主题清单（**皮肤清单单源**）：设置面板选项与弹窗皮肤类同表。
  * 顺序 = 默认项（番茄）在前；value 改动牵动 CSS 类名与旧设置值。
  *
  * ⚠️ 本清单是「**已知取值全集**」而非「可用集合」——ADR-0199 起除首套「番茄」外的九套
  * 都是**远端皮肤**（源在 `src/pomodoro/skins/<id>.css`，不进构建聚合）：能不能挂类看
  * `core/skin-pack` 的就绪表（本地有文件 + sha256 + 版本区间）。本文件是**零依赖纯层**
- * （render-purity 守卫禁 obsidian/core 依赖），故就绪判定落在 `ui.ts::applySkinClass`。
+ * （纯度约定禁 obsidian/core 依赖），故就绪判定落在 `ui.ts::applySkinClass`。
  * 色值不在公共 CSS 里：各皮自带的 `:root` 变量表随皮肤包下发（`--pz-<id>-*`）。
  */
 export const POMODORO_SKIN_THEMES: ReadonlyArray<{ value: PomodoroSkinTheme; label: string }> = [
@@ -97,7 +97,7 @@ export function panelShellHtml(): string {
       </div>`;
 }
 
-/** 弹窗根（tabindex 承载 Space 焦点）+ 骨架（评审壳皮肤页用，与插件同 markup） */
+/** 弹窗根（tabindex 承载 Space 焦点）+ 骨架（与插件同 markup） */
 export function popupShellHtml(): string {
   return `<div id="pomodoro-popup" tabindex="-1">${panelShellHtml()}</div>`;
 }

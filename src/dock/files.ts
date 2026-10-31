@@ -34,7 +34,7 @@ import type { DockIntent, DockRuntime } from './types';
 
 /**
  * 本域需要的最小 fs 面。插件侧走 `window.require('fs')`；移动端为 null（只读面板靠预取）；
- * 测试与评审壳注入假件。
+ * 测试注入假件。
  */
 export interface DockFs {
   readText(path: string): string | null;

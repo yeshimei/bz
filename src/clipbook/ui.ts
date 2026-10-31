@@ -23,7 +23,7 @@
  *
  * issue 247：markup 单源化（ADR-0104）——面板骨架/rail 行/目录条目/阅读面/移动端
  * markup 全部出自 render.ts（纯层，原型 × 插件一份），本文件只管生命周期/事件委托/
- * 数据流；行为单源（ADR-0106）经 fake-sim.ts 打进评审壳 prototype.html（alias obsidian→fake）。
+ * 数据流（旧评审壳已退役，ADR-0276）。
  */
 import { Component, MarkdownRenderer, TFile } from 'obsidian';
 import { getApp } from '../core/app';

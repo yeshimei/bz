@@ -315,7 +315,7 @@
 
 /* ---- 桌面右键菜单皮肤（.bz-item-menu.bz-home-menu，2026-09-11）----
    用户：「首页的右键菜单没有背景色，整体风格和首页的风格一致」。两个原因叠在一起：
-   ① core 基线取主题 `--background-secondary`，而评审壳只 mock 了 `--background-primary`
+   ① core 基线取主题 `--background-secondary`，而旧评审壳（已退役）只 mock 了 `--background-primary`
       → 解析失败 = 菜单透明（core 侧已加兜底链）；
    ② 首页的 `--h-*` 定义在 **`.bz-home-panel` 作用域**内，而菜单挂在 `body` 上**够不着** ——
       所以这里按首页口径**重新声明一份**，再被下面的规则消费。

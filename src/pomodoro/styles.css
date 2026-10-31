@@ -80,7 +80,7 @@
     .pomodoro-btn-armed:hover:not(:disabled),
     .pomodoro-btn-armed:active:not(:disabled) { background: var(--pz-hot, var(--text-error, var(--interactive-accent))); color: var(--pz-on-accent, var(--text-on-accent)); }
 
-    /* 主按钮同样不换底色：--interactive-accent-hover 是 Obsidian 主题变量，评审壳（以及部分主题）
+    /* 主按钮同样不换底色：--interactive-accent-hover 是 Obsidian 主题变量，旧评审壳（已退役）（以及部分主题）
        拿不到 → 背景声明整条失效变透明，而字色是 --pz-on-accent 白字 → 白字糊在弹窗底色上「发白」
        （用户 2026-09-24 报）。统一走本色轻微提亮，与次按钮同口径。 */
     .pomodoro-btn-primary:hover:not(:disabled):not(.pomodoro-btn-armed) { background: var(--pz-accent, var(--interactive-accent)); filter: brightness(1.07); }

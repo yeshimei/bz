@@ -183,7 +183,7 @@ export function needsFolderKey(domain: FolderDomainId, key: string): boolean {
 
 /** 打开设置面板并定位到该域第一个未配置的行。
  *  面板由 main.ts 经 settings-provider 注入（`setSettingsPanelOpener`）：core 里既不能
- *  字面量 import（会把整块面板打进各域行为包，评审壳的假 obsidian 缺 Setting/Component）、
+ *  字面量 import（会把整块面板打进各域行为包，旧评审壳（已退役）的假 obsidian 缺 Setting/Component）、
  *  也不能用变量拼 import()（CJS 产物里退化成原生 import()，运行时解析不到 → 按钮点了只弹提示）。 */
 export function openFolderSettings(domain: FolderDomainId, anchorKey?: string, closeBefore?: () => void): void {
   const plan = FOLDER_PLANS[domain];
@@ -196,7 +196,7 @@ export function openFolderSettings(domain: FolderDomainId, anchorKey?: string, c
     /* 关不掉就留着，不影响打开设置 */
   }
   if (!requestSettingsPanel(plan.settingsId, key)) {
-    // 没人接管（评审壳里没有设置面板）：至少说一句，别让按钮点了像坏掉
+    // 没人接管（旧评审壳（已退役）里没有设置面板）：至少说一句，别让按钮点了像坏掉
     notice('设置面板没能打开，可以从「设置 → 包仔」进入', 'warning');
   }
 }

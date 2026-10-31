@@ -18,7 +18,7 @@ export { runToolDirect, dockToolLabel, judgeRunGate } from './command';
 export { startDockScheduler, stopDockScheduler, kickDockScheduler, notifyDockEvent } from './host';
 export { mountDockStatusBar, unmountDockStatusBar } from './statusbar';
 
-/** 执行依赖注入缝（测试 / 评审壳塞假 child_process） */
+/** 执行依赖注入缝（测试塞假 child_process） */
 export { setExecDeps as setDockRuntimeDeps } from './exec';
 /** fs 注入缝（测试塞假 fs；移动端指向内存读桥） */
 export { setDockFs } from './files';

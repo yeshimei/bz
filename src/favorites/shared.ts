@@ -5,11 +5,9 @@
  * 任何布局不得私有一份口径。布局差异层见 layouts/board/；域入口仍是 render.ts。
  * 原型 × 插件 markup 单源：
  *   - 插件侧：ui.ts 直接 import（事件绑定/core 服务/数据读写留 ui.ts）；
- *   - 评审壳侧：经 fake-sim 启动器（ADR-0106）把真 ui.ts 依赖链打进
- *     prototype-behavior.js（window.BZW_favorites），iframe 壳跑真行为消费同一批函数；
- *     prototype-render.js 渲染产物已于 2026-09-09 退役（壳不再自绘）。
+ *   - （旧评审壳已退役，ADR-0276。）
  *
- * 纯度契约（tests/core/render-purity.test.ts 守卫，违者门禁红）：
+ * 纯度契约（纯度现为约定，守卫已随旧评审壳（已退役）退役）：
  *   - import 白名单：`../core/ui/str`（零依赖字符串工具）、`./config`、`./types`（type-only）；
  *   - 禁 obsidian / moment / core 服务 / 组件库 barrel；
  *   - 禁模块级可变状态：条目与视图状态一律显式入参（items + FavView）；
@@ -23,7 +21,7 @@ import { esc, emptyHtmlStr, iconSpan, relTime } from '../core/ui/str';
 import { getTags } from './config';
 import type { FavoritesItem } from './types';
 
-/** esc/iconSpan 再导出：评审壳演示层 markup（toast/确认框）与插件同源 */
+/** esc/iconSpan 再导出：旧评审壳（已退役）演示层 markup（toast/确认框）与插件同源 */
 export { esc, iconSpan };
 /** 条目类型再导出（行为层统一从 render.ts 取用） */
 export type { FavoritesItem } from './types';
@@ -77,7 +75,7 @@ export function normalizeFavSort(v: unknown): FavSort {
   return v === 'old' || v === 'title' ? v : 'new';
 }
 
-/** 视图状态切片（面板内会话态；ui.ts 的 FavState 与评审壳的 M 均结构兼容于此） */
+/** 视图状态切片（面板内会话态；ui.ts 的 FavState 与旧评审壳（已退役）的 M 均结构兼容于此） */
 export interface FavView {
   /** 当前标签筛选（null = 全部；存标签 label） */
   tag: string | null;
@@ -199,7 +197,7 @@ export function emptyHtml(view?: FavView, items?: FavoritesItem[]): string {
 
 // ==================== 行操作集 ====================
 
-/** 行操作元语（act 为稳定语义键：插件映射 core 服务调用，评审壳映射演示行为） */
+/** 行操作元语（act 为稳定语义键：插件映射 core 服务调用，旧评审壳（已退役）映射演示行为） */
 export interface FavActionSpec {
   icon: string;
   label: string;
@@ -229,7 +227,7 @@ export function actionSpecs(it: FavoritesItem): FavActionSpec[] {
 
 // 2026-09-11 收编 core/item-actions：自绘菜单/抽屉模板（ctxMenuHtml/sheetHtml）退役——
 // 行动浮层壳/动作行/防 Obsidian button 压盖全归共享层，域内只留磁点头皮肤（ui.ts favSheetHead）。
-// actionSpecs（动作序/语义键契约）保留：core ItemAction 映射与评审壳演示层共用。
+// actionSpecs（动作序/语义键契约）保留：core ItemAction 映射共用。
 
 // ==================== 表单（添加 / 编辑共用骨架） ====================
 

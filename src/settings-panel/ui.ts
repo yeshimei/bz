@@ -27,7 +27,7 @@ import { uiIconBtn, uiBtn, uiEmpty, mountIcons, uiResizable } from '../core/ui';
 import { firstFocusable, trapFocus } from '../core/ui/focus-trap';
 import { debounce } from '../core/utils';
 // markup 单源（ADR-0104/0105）：面板壳/导航/页头结构串全出自渲染纯层；
-// 行为单源（ADR-0106，issue 245 范式）：本文件即唯一真理，原型壳为双 iframe 评审壳
+// 行为单源（ADR-0106，issue 245 范式）：本文件即唯一真理，原型壳为双 iframe 旧评审壳（已退役）
 import * as R from './render';
 // 动效层（校准台语义世界，见 motion.ts 文件头）：只在生命周期挂点被调用，markup 契约不变
 import * as spm from './motion';

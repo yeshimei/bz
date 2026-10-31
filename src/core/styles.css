@@ -702,7 +702,7 @@ button.bz-flow-dialog-action.bz-flow-dialog-danger:not(.bz-flow-dialog-cta) {
   position: fixed;
   min-width: 180px; max-width: 320px;
   padding: var(--bz-space-xs);
-  /* 变量兜底链不是洁癖：评审壳只 mock 了 --background-primary，**没有 --background-secondary**
+  /* 变量兜底链不是洁癖：测试环境只 mock 了 --background-primary，**没有 --background-secondary**
      → 直接 var(--background-secondary) 解析失败 = 菜单透明（2026-09-11 用户实测报的 bug）。
      真机走主题值，壳回落主背景，再兜底纯白。 */
   background: var(--background-secondary, var(--background-primary, #fff));

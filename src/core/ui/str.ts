@@ -1,11 +1,10 @@
 /* ============================================================
  * bz 组件库 · 字符串小工具（src/core/ui/str.ts）
  *
- * 域渲染纯层（render.ts 范式，ADR-0104）共用的零依赖字符串工具。
+ * 域渲染纯层（render.ts 范式）共用的零依赖字符串工具。
  * 刻意不 import 任何模块（含 moment/obsidian/组件库 barrel）：
- * 本文件会被 esbuild 打进各域 prototype-render.js（评审壳预览包，
- * 双击原型即加载），import 图必须绝对干净——纯度由
- * tests/core/render-purity.test.ts 守卫。域 render.ts 引用本文件
+ * import 图必须绝对干净——纯度现为约定（守卫已随评审壳退役，ADR-0276）。
+ * 域 render.ts 引用本文件
  * 必须走直连路径（../core/ui/str），禁止经 barrel（会拖入 obsidian）。
  * ============================================================ */
 
@@ -35,7 +34,7 @@ export function localNow(): string {
 
 /** 相对时间跨域单源（2026-09 收编拍板，favorites relTime 为蓝本）：刚刚 / N 分钟前 /
  *  N 小时前 / N 天前（带空格），超 7 天回落 M-D 短日期；空串返回 ''，解析失败原串返回。
- *  s 为 localNow 写入格式（' ' 换 'T' 兼容 ISO）；now 可注入（测试/评审壳重放）。
+ *  s 为 localNow 写入格式（' ' 换 'T' 兼容 ISO）；now 可注入（测试重放）。
  *  消费：favorites/shared、password-vault/render 直转（render 纯层白名单内），
  *  core/utils formatRelativeTime 转基础档（昨天/前天/周几等 moment 增强档留 utils）。
  *  smartcat（absence.ts 自持档位）待后续收编；review/render「N 分钟后」未来向语义不同不收。 */
@@ -62,7 +61,7 @@ export function emptyHtmlStr(icon: string, title: string, desc?: string): string
 }
 
 /** lucide 图标占位串（`<i data-lucide>`）：渲染入 DOM 后由 mountIcons 兑现成 SVG——
- *  插件 = core/ui icons.ts mountIcons（setIcon），评审壳 = prototype-icons.js 内联 SVG（壳层差异表） */
+ *  插件 = core/ui icons.ts mountIcons（setIcon） */
 export function iconSpan(name: string, extra = ''): string {
   return `<i data-lucide="${name}" class="bz-ic${extra ? ' ' + extra : ''}"></i>`;
 }

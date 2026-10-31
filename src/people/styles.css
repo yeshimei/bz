@@ -1095,7 +1095,7 @@ input.bz-people-input.bz-people-input::-webkit-calendar-picker-indicator {
 
 /* 系统里关了动效就都别动（该在的位置还在）：飞过去的照片、视差、显影全部停手；
    掀纸这种大位移不做 —— 但换页总得看得出来，就改成整册闪一下 */
-/* html 上挂 .force-motion 就不认这条偏好（评审壳会替两边挂上：这册子的用处就是看动效，
+/* html 上挂 .force-motion 就不认这条偏好（旧评审壳（已退役）会替两边挂上：这册子的用处就是看动效，
    系统关了动画的话，光看静态截图是评不出手感的） */
 @media (prefers-reduced-motion: reduce) {
   .bz-people-scope:not(.force-motion) *, .bz-people-scope:not(.force-motion) *::before, .bz-people-scope:not(.force-motion) *::after {

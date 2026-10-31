@@ -3,11 +3,10 @@
  *
  * markup 唯一出处：三区队列（头行/工具行/开始本轮条/三区列/底部信息行/空态宿主）、
  * 整窗冲刺（头行/加载/题卡/本轮队列/结果卡/结算屏）、难度弹窗、悬浮迷你评级条。
- * 插件 ui.ts / sprint.ts 与评审壳 prototype.html 消费同一份（壳经 esbuild →
- * prototype-render.js 挂 window.BZR_review）。
+ * 插件 ui.ts / sprint.ts 消费同一份（旧评审壳已退役，ADR-0276）。
  *
- * 纯度契约（tests/core/render-purity.test.ts）：import 图仅限本域 + 零模块级可变状态；
- * 禁 obsidian/moment/core 服务。日期一律「now 参数注入」——可测、可评审壳重放。
+ * 纯度契约（纯度现为约定）：import 图仅限本域 + 零模块级可变状态；
+ * 禁 obsidian/moment/core 服务。日期一律「now 参数注入」——可测、可重放。
  */
 import { emptyHtmlStr, esc, iconSpan, stripTitleMarks } from '../core/ui/str';
 import type { ReviewItem } from './data';
@@ -456,7 +455,7 @@ export function quizPracticeSetupHtml(ctx: QuizPracticeSetupCtx): string {
     detail = `<div class="bz-qp-detail">整库笔记都纳入出题范围，系统目录自动跳过</div>`;
   } else if (ctx.scope === 'folder') {
     // 监听文件夹名单（review-deep 一致#12）：正典应走 uiSetlist({variant:'chips', removeLabel, onRemove})，
-    // 但本文件是 render 纯层——组件库 barrel 会拖入 obsidian（render-purity 白名单外），
+    // 但本文件是 render 纯层——组件库 barrel 会拖入 obsidian（纯度约定白名单外），
     // 故保留手搓胶囊 markup 仅把移除钮文本 ✕ 收编 lucide 占位（同文件 iconSpan() 先例 +
     // 渲染后 mountIcons 兑现）；data-rm-folder 即 onRemove 的 key 通道，行为层接线不变。
     const chips = ctx.folders.length

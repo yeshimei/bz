@@ -10,7 +10,7 @@
  * - C20：详情开着且当前条目被删（M.cur=null）时 renderAll 收起详情 overlay；
  * - C21：死代码清理——dotHtml/M.isMobile 删除；.bz-clip-favchip/.bz-clip-art-flag/stateFlag
  *   因既有测试引用面保留；
- * - C22：src/clipbook/prototype-render.js 陈旧孤本删除（评审壳消费 prototypes/ 那份）；
+ * - C22：src/clipbook/prototype-render.js 陈旧孤本删除（旧评审壳消费（已退役，ADR-0276））；
  * - C29：flowToggleReading 删除（articleOverrides 无生产写入方）；
  * - C32：flowMarkRead 仅 changed 时发 news:read；doMarkRead 撤销快照按磁盘现态重取
  *   （不被「打开即已读」的同步内存位污染）。
@@ -364,7 +364,7 @@ describe('C21/C22/C29：死代码/孤本清理落地', () => {
   const repo = (p: string) => readFileSync(resolve(process.cwd(), p), 'utf8');
 
   it('孤本 src/clipbook/prototype-render.js 已删；dotHtml/isMobile/flowToggleReading 不再出现', () => {
-    // C22：陈旧孤本（评审壳消费 prototypes/clipbook/ 那份，由 build-preview 重出）
+    // C22：陈旧孤本（旧评审壳消费，已退役 ADR-0276）
     expect(existsSync(resolve(process.cwd(), 'src/clipbook/prototype-render.js'))).toBe(false);
     // C21：零调用方死代码
     expect(repo('src/clipbook/render.ts')).not.toContain('dotHtml');

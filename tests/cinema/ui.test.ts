@@ -1,7 +1,7 @@
 import { makeApp } from '../helpers/app';
 /**
  * 影院（cinema）UI 层测试：风格化面板（issue 236 / ADR-0103）
- * DOM 与 src/cinema/prototype.html 同构：午夜场 desk（d-rail/d-head/d-tools/grid）
+ * DOM 同构（旧评审壳已退役，ADR-0276）：午夜场 desk（d-rail/d-head/d-tools/grid）
  * / mob（m-head/chips/m-grid）、共享弹窗（cn-modal 详情/表单/确认/设置、cn-menu、cn-sheet）、
  * AI 页（ai-guide/rec-list）、分析页（stat-cards/sec）、gazette/booth 风格分支。
  * 业务回归保留：落盘/改名/tags 落盘/回收站删除/域事件/CM2 重名拦截/CM3 稳定键。
