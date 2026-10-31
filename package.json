@@ -34,7 +34,8 @@
     "assets": "node scripts/push-assets.mjs",
     "release-steps": "node scripts/release-steps.mjs",
     "pack-release": "node scripts/pack-release.mjs",
-    "pre-review": "node scripts/pre-release-review.mjs"
+    "pre-review": "node scripts/pre-release-review.mjs",
+    "gitee": "node scripts/push-gitee.mjs"
   },
   "keywords": [
     "obsidian",

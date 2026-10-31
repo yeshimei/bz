@@ -1,0 +1,183 @@
+#!/usr/bin/env node
+// scripts/push-gitee.mjs — 码云（Gitee）镜像：Release 页 + 资产 + 仓库描述
+//
+// 为什么有这一步：GitHub 在国内裸网时常连不上（Release 直下、API 一起挂），码云是同一份
+// 内容的第二个出口。代码与 tag 由 git 双推负责（origin 挂了第二条 pushurl，`git push origin`
+// 会同时推两处，见 AGENTS.md「提交」节）；git 管不到的三件由本脚本做：
+//   1. Release 页（标题 / 正文 = docs/note-<tag>.md）
+//   2. Release 资产（与 GitHub 同一批 17 个，命名同样扁平化）
+//   3. 仓库描述（可选，--desc）
+//
+// 用法：
+//   node scripts/push-gitee.mjs                 # 当前版本 Release + 资产（默认）
+//   node scripts/push-gitee.mjs --code          # 只补推代码与当前 tag（双推失败时用）
+//   node scripts/push-gitee.mjs --force         # 已存在的同名附件也重传（否则跳过）
+//   node scripts/push-gitee.mjs --desc="…"      # 顺手同步仓库描述
+//   node scripts/push-gitee.mjs --dry-run       # 只打印将要做的事
+//
+// token：~/.gitee-token（一行纯令牌）或环境变量 GITEE_TOKEN，权限只需要 projects。
+// **绝不写进仓库**——主仓是公开的，写进去等于把账号交出去。
+//
+// 已知差异（不是 bug，别硬改）：
+//   - 码云没有 GitHub 的 topics 字段（v5 只有 tags_url），仓库标签只能网页加；
+//   - 码云附件不能同名覆盖，重传要先 DELETE 旧附件（--force 走这条）；
+//   - Release 的 assets 里永远带两个源码包（tag 的 zip/tar.gz），那不是我们的资产，
+//     清单里按 browser_download_url 是否含 /releases/download/ 区分。
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { execFileSync } from 'node:child_process';
+
+const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+const OWNER = 'ntbl';
+const REPO = 'bz';
+const API = 'https://gitee.com/api/v5';
+
+const DRY = process.argv.includes('--dry-run');
+const CODE_ONLY = process.argv.includes('--code');
+const FORCE = process.argv.includes('--force');
+/** 删掉 Release 上不在清单里的附件（早先逐个传过 downloads/** 的，用这个收掉） */
+const PRUNE = process.argv.includes('--prune');
+const DESC = (process.argv.find((a) => a.startsWith('--desc=')) || '').slice('--desc='.length);
+
+const log = (m) => console.log(`[gitee] ${m}`);
+
+function readToken() {
+  if (process.env.GITEE_TOKEN) return process.env.GITEE_TOKEN.trim();
+  const p = path.join(process.env.HOME || process.env.USERPROFILE || '', '.gitee-token');
+  if (fs.existsSync(p)) return fs.readFileSync(p, 'utf8').trim();
+  console.error('[gitee] 缺令牌：把码云私人令牌写进 ~/.gitee-token（一行），或设 GITEE_TOKEN');
+  process.exit(1);
+}
+
+const TOKEN = readToken();
+
+async function api(method, p, body) {
+  const url = `${API}${p}${p.includes('?') ? '&' : '?'}access_token=${encodeURIComponent(TOKEN)}`;
+  const res = await fetch(url, {
+    method,
+    ...(body ? { headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) } : {}),
+  });
+  const text = await res.text();
+  if (!res.ok) throw new Error(`${method} ${p} → ${res.status} ${text.slice(0, 300)}`);
+  return text ? JSON.parse(text) : null;
+}
+
+/** 待传资产：只发「装了就能用」的那几件
+ *
+ *  **不发 downloads/****（在线资源：皮肤包、工具包、手册、影视索引、更新日志页）——2026-11-01
+ *  用户拍板。理由：客户端取在线资源只走 releaseDownloadUrl 与 jsDelivr 两条道（见
+ *  src/core/remote-base.ts），码云从来不在通道链里；把它镜像过去只是多 11 个没人校验的
+ *  副本，而且每次发版都要多传十几 MB。码云的定位是「国内能手动下到插件本体」。
+ *
+ *  命名与 GitHub Release 同一套（本来就无斜杠，不需要扁平化）。 */
+function assetFiles(version) {
+  const out = [];
+  for (const f of [`bz-${version}.zip`, `bz-offline-${version}.zip`, 'SHA256SUMS.txt', 'main.js', 'manifest.json', 'styles.css']) {
+    const abs = path.join(ROOT, f);
+    if (!fs.existsSync(abs)) throw new Error(`缺 ${f}：先跑 node scripts/pack-release.mjs ${version}`);
+    out.push({ name: f, abs });
+  }
+  return out;
+}
+
+/** 我们自己传的附件。
+ *
+ *  **必须走 attach_files 接口**：release 详情里的 assets 是个混合列表（含码云自动挂的
+ *  源码 zip/tar.gz），且那些条目**没有 id**——拿 assets 去 DELETE 会落到
+ *  `attach_files/undefined` 上，返回一张 HTML 404 页。attach_files 才是"人传上去的附件"，
+ *  带 id、带 size、带 uploader。 */
+async function ownAssets(rel) {
+  const list = await api('GET', `/repos/${OWNER}/${REPO}/releases/${rel.id}/attach_files`);
+  return list || [];
+}
+
+async function ensureRelease(version, bodyFor) {
+  const tag = `v${version}`;
+  const list = await api('GET', `/repos/${OWNER}/${REPO}/releases?per_page=100`);
+  let rel = (list || []).find((r) => r.tag_name === tag);
+  const body = bodyFor();
+  if (!rel) {
+    log(`创建 Release ${tag}`);
+    if (DRY) return null;
+    rel = await api('POST', `/repos/${OWNER}/${REPO}/releases`, {
+      tag_name: tag, name: `bz ${tag}`, body, target_commitish: 'master', prerelease: false,
+    });
+  } else if (rel.name !== `bz ${tag}` || (body && rel.body !== body)) {
+    log(`更新 Release ${tag} 的标题与正文`);
+    if (!DRY) rel = await api('PATCH', `/repos/${OWNER}/${REPO}/releases/${rel.id}`, { name: `bz ${tag}`, body });
+  } else {
+    log(`Release ${tag} 已在位（正文一致）`);
+  }
+  return rel;
+}
+
+async function uploadAssets(rel, version) {
+  const want = assetFiles(version);
+  const have = await ownAssets(rel);
+  const byName = new Map(have.map((a) => [a.name, a]));
+  let sent = 0;
+  for (const f of want) {
+    const old = byName.get(f.name);
+    if (old && !FORCE) { log(`跳过已有资产 ${f.name}`); continue; }
+    if (old && FORCE) {
+      log(`删除旧附件 ${f.name}（#${old.id}）`);
+      if (!DRY) await api('DELETE', `/repos/${OWNER}/${REPO}/releases/${rel.id}/attach_files/${old.id}`);
+    }
+    const bytes = fs.statSync(f.abs).size;
+    log(`上传 ${f.name}（${(bytes / 1048576).toFixed(1)} MB）`);
+    if (DRY) continue;
+    const fd = new FormData();
+    fd.append('file', new Blob([fs.readFileSync(f.abs)]), f.name);
+    const res = await fetch(
+      `${API}/repos/${OWNER}/${REPO}/releases/${rel.id}/attach_files?access_token=${encodeURIComponent(TOKEN)}`,
+      { method: 'POST', body: fd },
+    );
+    if (!res.ok) throw new Error(`上传 ${f.name} 失败：${res.status} ${(await res.text()).slice(0, 200)}`);
+    sent++;
+  }
+  // 收尾：把不在清单里的旧附件删掉（码云不能同名覆盖，留着就是两份互相矛盾的副本）
+  if (PRUNE) {
+    const wantNames = new Set(want.map((f) => f.name));
+    for (const a of have) {
+      if (wantNames.has(a.name)) continue;
+      log(`删除清单外附件 ${a.name}（#${a.id}）`);
+      if (!DRY) await api('DELETE', `/repos/${OWNER}/${REPO}/releases/${rel.id}/attach_files/${a.id}`);
+    }
+  }
+  return { want: want.length, have: have.length, sent };
+}
+
+async function pushCode(version) {
+  const tag = `v${version}`;
+  log(`补推代码与 ${tag} 到 gitee 远端`);
+  if (DRY) return;
+  execFileSync('git', ['push', 'gitee', 'master'], { cwd: ROOT, stdio: 'inherit' });
+  execFileSync('git', ['push', 'gitee', `refs/tags/${tag}`], { cwd: ROOT, stdio: 'inherit' });
+}
+
+async function syncDesc() {
+  if (!DESC) return;
+  log(`同步仓库描述：${DESC}`);
+  if (DRY) return;
+  // 码云更新接口把 name 列为必填，漏了就 400「name is missing」
+  await api('PATCH', `/repos/${OWNER}/${REPO}`, { name: REPO, description: DESC });
+}
+
+const version = JSON.parse(fs.readFileSync(path.join(ROOT, 'manifest.json'), 'utf8')).version;
+const noteFile = path.join(ROOT, 'docs', `note-v${version}.md`);
+const bodyFor = () => (fs.existsSync(noteFile) ? fs.readFileSync(noteFile, 'utf8') : null);
+
+if (CODE_ONLY) {
+  await pushCode(version);
+  log('完成（只推代码）');
+} else {
+  await pushCode(version);
+  await syncDesc();
+  const rel = await ensureRelease(version, bodyFor);
+  if (rel) {
+    const r = await uploadAssets(rel, version);
+    log(`Release v${version}：应有 ${r.want} 个资产，原本 ${r.have} 个，本次上传 ${r.sent} 个`);
+    log(`https://gitee.com/${OWNER}/${REPO}/releases/tag/v${version}`);
+  }
+}
