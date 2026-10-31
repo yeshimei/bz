@@ -22,7 +22,7 @@ const RELEASE_MAIN = path.join(process.cwd(), "main.js");
 const context = await esbuild.context({
   entryPoints: ["src/main.ts"],
   bundle: true,
-  external: ["obsidian", "electron", "@codemirror/*", "os"],
+  external: ["obsidian", "electron", "@codemirror/*", "os", "node:fs", "node:path"],
   format: "cjs",
   target: "es2018",
   logLevel: "info",
@@ -30,6 +30,9 @@ const context = await esbuild.context({
   treeShaking: true,
   minify: prod,
   charset: "utf8",
+  // 开发旗标（ADR-0276）：仅 BZ_VAULT_DIR 指向测试库时注入 true——core/dev-flows 测试合集
+  // 只在测试库构建里存在；false 时 if (__BZ_DEV__) 分支被摇树，发布版零残留。
+  define: { __BZ_DEV__: prod ? "false" : process.env.BZ_VAULT_DIR ? "true" : "false" },
   // 赞赏码内置（src/core/assets/reward-code.png）：png import 直接变 data URI 字符串，
   // 不进 downloads/ 远端资产通道（图固定不变，68KB 换一次网络往返不值）。
   loader: { ".png": "dataurl" },

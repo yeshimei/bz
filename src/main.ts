@@ -461,6 +461,12 @@ export default class BzPlugin extends Plugin {
     // 设置页
     this.addSettingTab(new BzSettingTab(this.app, this));
 
+    // 测试合集（开发工作流，ADR-0276）：仅测试库构建（__BZ_DEV__ define）注册；
+    // false 时动态 import 分支被摇树，发布版零残留。typeof 守卫兼容无 define 的测试环境。
+    if (typeof __BZ_DEV__ !== 'undefined' && __BZ_DEV__) {
+      void import('./core/dev-flows').then((m) => m.registerDevFlows(this));
+    }
+
     // 事件常驻域按设置开关注册（懒加载架构）
     this.app.workspace.onLayoutReady(() => {
       // C13：布局就绪回调不随插件卸载摘除——启动窗口期内禁用插件时此处必须短路，

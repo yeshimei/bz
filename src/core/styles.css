@@ -1201,3 +1201,139 @@ button.bz-rowbtn--fail {
     transform: rotate(360deg);
   }
 }
+
+/* ═══════════ 开发回放器（core/dev-flows.ts，仅测试库构建存在；正式用户不可达，样式随包无害）
+   原型稿 v2：磁带计数器底部条 + 命令面板式合集面板。全 token 语系，深浅主题自适应。 ═══════════ */
+.bz-dev-replay {
+  position: fixed;
+  inset-inline: 0;
+  bottom: 0;
+  /* 静态档只是兜底；真保顶靠 z-order 恒顶注册（registerAlwaysOnTop，随发号器自动抬顶） */
+  z-index: 99999;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 10px 20px;
+  background: color-mix(in srgb, var(--bz-surface-1) 88%, transparent);
+  backdrop-filter: blur(var(--bz-overlay-blur));
+  border-top: 1px solid var(--bz-border);
+  box-shadow: 0 -6px 24px rgba(0, 0, 0, 0.14);
+  font-family: var(--bz-font-ui);
+  font-size: var(--bz-font-meta);
+  color: var(--bz-text-1);
+  user-select: none;
+}
+/* LCD 计数器：mono 内凹底；hover 浮出完整步骤清单（毛玻璃卡，脱离文档流） */
+.bz-dev-replay .counter { position: relative; font-family: Consolas, 'Cascadia Code', monospace; flex-shrink: 0; }
+.bz-dev-replay .lcd {
+  font-size: 15px; font-weight: 700; letter-spacing: 2px;
+  color: var(--interactive-accent);
+  background: color-mix(in srgb, var(--bz-surface-1) 72%, black);
+  border: 1px solid var(--bz-border); border-radius: 8px; padding: 5px 12px;
+  box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.25), 0 0 0 1px color-mix(in srgb, var(--interactive-accent) 14%, transparent);
+}
+.bz-dev-replay .lcd small { color: var(--bz-text-3); font-size: 10px; letter-spacing: 1px; margin-right: 8px; }
+.bz-dev-replay .floater {
+  position: absolute; bottom: calc(100% + 10px); left: 0; display: none;
+  width: 340px; max-height: 280px; overflow: auto;
+  background: var(--bz-surface-2);
+  backdrop-filter: blur(var(--bz-overlay-blur));
+  border: 1px solid var(--bz-border-strong); border-radius: 12px;
+  box-shadow: var(--bz-shadow-lg, 0 16px 48px rgba(0, 0, 0, 0.3));
+  padding: 6px;
+}
+.bz-dev-replay .floater .fi {
+  display: flex; align-items: center; gap: 8px; padding: 6px 9px;
+  border-radius: 7px; font-size: 11.5px; font-family: var(--bz-font-ui); color: var(--bz-text-2);
+}
+.bz-dev-replay .floater .fi .n {
+  font-family: Consolas, monospace; font-size: 10px; width: 20px; text-align: center;
+  color: var(--bz-text-3); flex-shrink: 0;
+}
+.bz-dev-replay .floater .fi.on {
+  background: color-mix(in srgb, var(--interactive-accent) 14%, transparent);
+  color: var(--bz-text-1);
+}
+.bz-dev-replay .floater .fi.on .n { color: var(--interactive-accent); font-weight: 700; }
+.bz-dev-replay .floater .fi.done { color: var(--bz-text-3); }
+.bz-dev-replay .floater .fi.done .n { color: var(--color-green); }
+/* 分段胶带：每段弹性能缩（min 4px），步数再多只往横向挤、始终一条 4px 线 */
+.bz-dev-replay .tape { flex: 1; display: flex; gap: 5px; min-width: 0; align-items: center; padding: 4px 0; }
+.bz-dev-replay .seg {
+  flex: 1 1 0; min-width: 5px; height: 6px; border-radius: 3px;
+  background: var(--bz-border-strong); position: relative; overflow: hidden;
+}
+.bz-dev-replay .seg.done { background: color-mix(in srgb, var(--interactive-accent) 82%, transparent); }
+.bz-dev-replay .seg.cur { background: var(--bz-surface-3); box-shadow: 0 0 0 1px color-mix(in srgb, var(--interactive-accent) 45%, transparent); }
+.bz-dev-replay .seg.cur::after {
+  content: ''; position: absolute; inset: 0; transform-origin: left;
+  background: linear-gradient(90deg, var(--interactive-accent), color-mix(in srgb, var(--interactive-accent) 60%, white));
+  animation: bz-dev-seg-fill 1.5s linear infinite;
+}
+@keyframes bz-dev-seg-fill { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+/* 当前步名单行省略 + 播放状态小字 */
+.bz-dev-replay .lbl {
+  flex: 0 1 auto; min-width: 180px; max-width: 40vw;
+  font-size: var(--bz-font-meta); color: var(--bz-text-1);
+  line-height: 1.45;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+  overflow: hidden; word-break: break-all;
+}
+.bz-dev-replay .lbl small { display: block; font-size: 10px; color: var(--bz-text-3); font-weight: 400; }
+.bz-dev-replay .transport { display: flex; gap: 6px; flex-shrink: 0; margin-left: auto; }
+.bz-dev-replay .transport .bz-btn { width: 32px; height: 32px; padding: 0; justify-content: center; display: inline-flex; align-items: center; }
+.bz-dev-replay .transport .bz-btn--primary { box-shadow: 0 2px 10px color-mix(in srgb, var(--interactive-accent) 45%, transparent); }
+.bz-dev-replay .transport .bz-btn .svg-icon { --icon-size: 15px; }
+
+/* 合集面板（uiModal 皮）：命令面板式，按域折叠收纳 */
+.bz-dev-panel .search {
+  margin: 4px 0 10px; padding: 7px 12px;
+  background: var(--bz-surface-1); border: 1px solid var(--bz-border); border-radius: 10px;
+  display: flex; justify-content: space-between; align-items: center; gap: 8px;
+  font-size: var(--bz-font-meta); color: var(--bz-text-3);
+}
+.bz-dev-panel .bz-dev-panel-input {
+  flex: 1; background: transparent; border: none; outline: none;
+  color: var(--bz-text-1); font: inherit;
+}
+.bz-dev-panel .kbd {
+  font-family: Consolas, monospace; font-size: 10px; color: var(--bz-text-2);
+  border: 1px solid var(--bz-border); border-bottom-width: 2px; border-radius: 5px;
+  padding: 1px 6px; background: var(--bz-surface-3); margin-left: 4px;
+}
+.bz-dev-panel .grp-head {
+  display: flex; align-items: center; gap: 8px;
+  padding: 10px 4px 6px; cursor: pointer; user-select: none;
+  font-size: 11px; font-weight: 700; letter-spacing: 1.5px; color: var(--bz-text-3);
+}
+.bz-dev-panel .grp-head .cnt {
+  font-family: Consolas, monospace; font-size: 10px; font-weight: 400; letter-spacing: 0;
+  background: var(--bz-surface-3); border-radius: 999px; padding: 1px 8px; color: var(--bz-text-2);
+}
+.bz-dev-panel .grp-head .chev { margin-left: auto; display: inline-flex; transition: transform 0.18s; }
+.bz-dev-panel .grp.closed .grp-head .chev { transform: rotate(-90deg); }
+.bz-dev-panel .grp.closed .grp-items { display: none; }
+.bz-dev-panel .pitem {
+  display: flex; align-items: center; gap: 12px; padding: 11px 6px;
+  cursor: pointer; transition: background 0.12s; border-radius: 8px;
+}
+.bz-dev-panel .pitem .num {
+  width: 26px; height: 26px; border-radius: 7px; flex-shrink: 0;
+  background: var(--bz-surface-3); color: var(--bz-text-2);
+  display: flex; align-items: center; justify-content: center;
+  font-family: Consolas, monospace; font-size: 11px;
+}
+.bz-dev-panel .pitem .t { font-weight: 600; }
+.bz-dev-panel .pitem .d { font-size: 11.5px; color: var(--bz-text-2); margin-top: 2px; }
+.bz-dev-panel .pitem .go { margin-left: auto; color: var(--bz-text-3); display: inline-flex; transition: transform 0.15s, color 0.15s; }
+.bz-dev-panel .pitem .go .svg-icon { --icon-size: 14px; }
+
+@media (hover: hover) {
+  .bz-dev-panel .grp-head:hover { color: var(--bz-text-2); }
+  .bz-dev-panel .pitem:hover { background: color-mix(in srgb, var(--interactive-accent) 8%, transparent); }
+  .bz-dev-panel .pitem:hover .num {
+    background: linear-gradient(135deg, var(--interactive-accent), color-mix(in srgb, var(--interactive-accent) 60%, white));
+    color: #fff;
+  }
+  .bz-dev-panel .pitem:hover .go { color: var(--interactive-accent); transform: translateX(3px); }
+}

@@ -19,6 +19,9 @@ const liveRuns = resolveLiveRuns();
 process.env.BZ_TEST_WAIT_FOR_MS ||= String(liveRuns > 1 ? 5000 : 2500);
 
 export default defineConfig({
+  // 编译期开发旗标（ADR-0276）：测试环境恒 false——main.ts 的测试合集分支不可达，
+  // 与发布构建（esbuild define false → 摇树）同口径。
+  define: { __BZ_DEV__: 'false' },
   resolve: {
     alias: {
       // 测试环境将 obsidian 模块替换为 mock（vi.mock 在 setupFiles 中不可靠）
