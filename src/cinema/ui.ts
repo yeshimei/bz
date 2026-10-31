@@ -13,7 +13,7 @@
  */
 import type { App, IconName } from 'obsidian';
 import { TFile } from 'obsidian';
-import { notice, notifySaveError } from '../core/notice';
+import { notice, notify, notifySaveError } from '../core/notice';
 import { bindMaskDismiss } from '../core/mask-dismiss';
 import { trashNote } from '../core/note-trash';
 import { openFlowDialog } from '../core/flow-dialog';
@@ -38,11 +38,18 @@ import {
 import { M, noteSelfWrite, type CinemaItem, type CinemaSortMode } from './state';
 import { loadDoubanNameIndex, searchDoubanNameIndex, normName, type DoubanIndexRow } from '../core/douban-name-index';
 import { rebuildItems, getDisplayItems, normalizeTags, normalizeRewatches, normalizeLists, allLists, refreshDataAndView } from './data';
-import { runAIRecommend, runSimilarRecommend, buildTasteProfile, quickAddWant } from './recommend';
+import { runAIRecommend, runSimilarRecommend, buildTasteProfile, quickAddWant, quickAddFromDouban } from './recommend';
 import { bindYearbook, deriveYb, yearbookHtml, yearbookFixedHtml, yearbookOpenHtml, type YbHandle } from './yearbook';
-import { enqueueDoubanFetch, dequeueDoubanFetch, isFetching, queryDoubanForPreview, downloadPreviewPoster, fetchDoubanListForImport } from './douban-queue';
-import { normalizeListValue, insertPosterEmbed, type DoubanQuery } from './douban-fetcher';
+import {
+  enqueueDoubanFetch, dequeueDoubanFetch, isFetching, queryDoubanForPreview, downloadPreviewPoster,
+  fetchDoubanListForImport, currentFetchPath, pauseDoubanQueue, resumeDoubanQueue, IMPORT_GAP_MS,
+} from './douban-queue';
+import {
+  normalizeListValue, insertPosterEmbed, doubanUidFromCookie, doubanMineCollectUrl,
+  type DoubanListEntry, type DoubanQuery,
+} from './douban-fetcher';
 import { decideCinemaType } from './type-decide';
+import { readDoubanMineCache, writeDoubanMineCache } from './douban-mine-cache';
 import {
   ICON, statusText, statusNum, itemByKey, doubanSearchUrl, itemKey,
   detailModalHtml, seriesDetailModalHtml, formModalHtml, formBackHtml, rewatchRatingHtml,
@@ -336,6 +343,126 @@ async function renameList(oldName: string, newName: string, app: App): Promise<v
   }
 }
 
+/** 片单成员（笔记粒度，与侧栏「卡片数」口径不同——整单操作按笔记走，删的是笔记） */
+function shelfMembers(name: string): CinemaItem[] {
+  return M.items.filter((x) => x.lists.includes(name) && x.file);
+}
+
+/**
+ * 收录进影院（片单整单动作）：二次确认后摘掉成员笔记的「片单收纳」标志，让它们照常出现在
+ * 正常影视视图里——**片单本身保留**（它仍是这层归属，侧栏还能筛）。
+ * 语义对偶的是片单导入：贴链接导入的新片带这个标志，只在片单里显示（2026-09-30 拍板）；
+ * 「我的影片」（豆瓣看过导入）从一开始就不打它，故对它这条动作自然无成员可动。
+ * 确认框与「移除片单」「删除影视」同一张皮（cn-skin + bz-cinema-flow-dialog，2026-11-01 拍板：
+ * 整单动作一律两步，别让一次误点就把整单摊进影视视图）；它不删东西，故主钮不挂 danger。
+ */
+async function admitShelfToCinema(name: string, app: App): Promise<void> {
+  const targets = shelfMembers(name).filter((x) => x.shelvedOnly);
+  if (!targets.length) {
+    notice(`片单「${name}」里的影片都已在影院中`, 'warning');
+    return;
+  }
+  const v = await openFlowDialog({
+    title: '收录进影院',
+    message: `确定收录片单「${name}」里的 ${targets.length} 部吗？\n收录后它们照常出现在影视视图里，片单保留`,
+    className: 'cn-skin bz-cinema-flow-dialog',
+    actions: [
+      { label: '取消', value: 'cancel' },
+      { label: '收录', value: 'ok', cta: true },
+    ],
+  });
+  if (v !== 'ok') return;
+  try {
+    for (const x of targets) {
+      await writeFm(app, x.file!, (fm: Record<string, unknown>) => {
+        delete fm['片单收纳'];
+      });
+      x.shelvedOnly = false;
+    }
+    notice(`片单「${name}」的 ${targets.length} 部已收录进影院（照常出现在影视视图里，片单保留）`, 'success');
+    renderAll(app);
+  } catch (e) {
+    notifySaveError(e, '收录进影院');
+    console.error(e);
+    renderAll(app);
+  }
+}
+
+/**
+ * 移除片单（片单整单动作）：二次确认后**连同片单内所有影片笔记**一起移入 Obsidian 回收站。
+ * 删除走 core trashNote（与单条目删除同一出口，可在回收站恢复）；片单没有自己的存储，
+ * 成员清空即消失——不额外维护一份「片单表」。
+ */
+async function removeShelf(name: string, app: App): Promise<void> {
+  const members = shelfMembers(name);
+  if (!members.length) {
+    notice(`片单「${name}」里没有影片`, 'warning');
+    return;
+  }
+  const v = await openFlowDialog({
+    title: '移除片单',
+    message: `确定移除片单「${name}」吗？\n连同片单内 ${members.length} 部影片一起移入 Obsidian 回收站（.trash），可在回收站恢复`,
+    // 本域确认框专属皮（与「删除影视」同一个：cn-skin + bz-cinema-flow-dialog）
+    className: 'cn-skin bz-cinema-flow-dialog',
+    actions: [
+      { label: '取消', value: 'cancel' },
+      { label: '移除', value: 'ok', cta: true, danger: true },
+    ],
+  });
+  if (v !== 'ok') return;
+  let n = 0;
+  for (const x of members) {
+    try {
+      await trashNote(app, x.file!);
+      n++;
+    } catch (e) {
+      console.error(e);
+    }
+  }
+  refreshDataAndView(app);
+  renderAll(app);
+  notice(n ? `片单「${name}」已移除，${n} 部影片移入回收站` : `片单「${name}」移除未完成，请重试`, n ? 'success' : 'error');
+}
+
+/** 片单改名弹层（右键/抽屉「改名」；复用归入弹层的 .lp-* 形态，零新样式） */
+function openShelfRename(sec: HTMLElement, name: string, app: App): void {
+  const { el, close } = ovl(sec, `<div class="cn-modal cn-modal--listpick">
+    <div class="lp-head"><div class="lp-head-txt"><span class="lp-kicker">片单改名</span><span class="lp-name">${esc(name)}</span></div></div>
+    <div class="lp-new"><input class="j-lp-new" value="${esc(name)}" placeholder="新片单名，回车保存"><button type="button" class="lp-add j-lp-save">保存</button></div>
+  </div>`);
+  mountIcons(el);
+  const input = el.querySelector<HTMLInputElement>('.j-lp-new');
+  input?.focus();
+  input?.select();
+  const submit = (): void => {
+    const v = (input?.value ?? '').trim();
+    if (!v) { notice('片单名不能为空', 'warning'); return; }
+    if (hasIllegalNameChar(v)) { notice(`${ILLEGAL_NAME_HINT}，请修改`, 'error'); return; }
+    if (v !== name && allLists(M.items).includes(v)) { notice(`片单「${v}」已存在`, 'warning'); return; }
+    close();
+    if (v !== name) void renameList(name, v, app);
+  };
+  el.querySelector('.j-lp-save')?.addEventListener('click', submit);
+  input?.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') { e.preventDefault(); submit(); }
+  });
+}
+
+/** 片单整单动作（侧栏片单行右键 / 移动端片单 chip 长按）：收录进影院 · 改名 · 移除 */
+function shelfActs(name: string, sec: HTMLElement, app: App): MenuAct[] {
+  return [
+    { icon: ICON.grid, label: '收录进影院', run: () => void admitShelfToCinema(name, app) },
+    { icon: ICON.edit, label: '改名', run: () => openShelfRename(sec, name, app) },
+    { icon: ICON.del, label: '移除', danger: true, run: () => void removeShelf(name, app) },
+  ];
+}
+
+/** 片单抽屉头（移动端长按）：片单名 + 成员数（与条目抽屉头同款 .cn-sheet-* 形态） */
+function shelfSheetHead(name: string): HTMLElement {
+  const n = shelfMembers(name).length;
+  return headElOf(`<div class="cn-sheet-head"><div><div class="cn-sheet-name">${esc(name)}</div><div class="cn-sheet-sub">片单 · ${n} 部</div></div></div>`);
+}
+
 /** 归入片单弹层（cn-modal--listpick）：现有片单逐行点选（就地切换勾选不关层）+ 底部新建行
  *  + 行尾铅笔改名（行内编辑态：label 换输入框，Enter 提交 / Esc 还原；编辑中行点击不触发勾选）。
  *  落盘走 setListMembership / renameList；勾选态刷新走 ovl 局部 class 翻转，不整刷。
@@ -422,15 +549,531 @@ function openListPick(sec: HTMLElement, targets: CinemaItem[], app: App, head: {
   });
 }
 
-/** 一键导入豆瓣片单（桌面列表头「添加影片」后的图标钮；移动端在头行 ＋ 后同款图标钮）：贴 wish 收藏页 / 豆列链接 → **流式**抓取
- *  （结果区随页增量出现，不等全部抓完——豆列几十部要翻好几页，过程肉眼可见）→
- *  清单由用户二次确认 → 确认后按「想看」静默批量建档（quickAddWant silent 携带
- *  sid，补抓队列直取 queryDoubanBySid——与表单解析 sid 直取同口径），并可归入
- *  同名自建片单（片单名默认取抓取到的片单标题——豆列名 / 「XXX 的想看」，可改，留空不归入）。
- *  **弹层轻装**（2026-10-01 拍板）：无标题块、无「返回重填」钮——重来一次 = 关掉重开。
- *  **在库条目不过滤**（2026-09-30 拍板）：照常进清单参与导入，建档层的重名保护
- *  自然让它们保持现状，toast 汇总区分「新导入 / 已在库未动」。Cookie 走设置键
- *  cinemaDoubanCookie（queue 单源装配），弹层不收敏感值。 */
+/**
+ * 导入我豆瓣账号看过的（桌面列表头第二个导入图标钮；移动端头行同款）：**不收链接**，
+ * 用设置里的豆瓣 Cookie 定位账号（dbcl2 → uid → people/<uid>/...），开层即抓三份名单。
+ * 前置守卫：没填 Cookie / Cookie 里没有登录信息（无 dbcl2）→ 提示并给「去设置」动作，
+ * 直达设置面板影院页的豆瓣 Cookie 那一行（domainId + anchorKey 定位），不去猜用户会自己找。
+ */
+function openDoubanMineImport(sec: HTMLElement, app: App): void {
+  const s = (tryGetSettings() ?? {}) as Record<string, unknown>;
+  const cookie = typeof s.cinemaDoubanCookie === 'string' ? s.cinemaDoubanCookie.trim() : '';
+  const uid = cookie ? doubanUidFromCookie(cookie) : null;
+  if (!uid) {
+    // 凭据组（ADR-0133 收编 / issue 331）挂在**设置面板的 AI 页**「数据源凭据」组，不在影院页：
+    // 原先传 'cinema' 落到影院设置，锚点行根本不存在，applyAnchor 直接 return —— 用户被丢进
+    // 一张没有目标框的表里。这里改指 AI 页，渲染完滚到豆瓣 Cookie 行并高亮两秒。
+    const goSettings = (): void => {
+      void import('../settings-panel').then((m) => m.openSettingsPanel(app, 'ai', 'cinemaDoubanCookie'));
+    };
+    notify(cookie
+      ? '这份豆瓣 Cookie 里没有登录信息（缺 dbcl2），重新从浏览器复制一份完整的再来'
+      : '先填豆瓣 Cookie 才能抓你账号看过的影视（浏览器登录后从 devtools 复制）', {
+      type: 'warning',
+      duration: 12000,
+      action: { label: '去设置', onClick: goSettings },
+    });
+    return;
+  }
+  openDoubanMineSync(sec, app, uid);
+}
+
+/** 豆瓣三份名单 → 影院状态（1:1：豆瓣想看/在看/看过 = 影院想看/在看/已看） */
+type MineGroup = 'want' | 'doing' | 'watched';
+
+interface MineRow {
+  sid: string;
+  name: string;
+  /** 豆瓣 1~5 星（只有「看过」页有） */
+  stars: number | null;
+  /** 标记日期 YYYY-MM-DD */
+  at: string | null;
+  group: MineGroup;
+  sel: boolean;
+  /** 影院里已有同名卡（同步时跳过，勾选框禁用） */
+  inLib: boolean;
+}
+
+/** 分组顺序 = 面板顺序：想看 → 在看 → 已看（豆瓣 personal 页路径 wish / do / collect） */
+const MINE_GROUPS: { k: MineGroup; label: string; page: string }[] = [
+  { k: 'want', label: '想看', page: 'wish' },
+  { k: 'doing', label: '在看', page: 'do' },
+  { k: 'watched', label: '已看', page: 'collect' },
+];
+
+/** 弹层骨架（1:1 复刻 2026-10-31 定稿原型；样式见 styles.css 的 cn-modal--mine 段） */
+const MINE_HTML = `<div class="cn-modal cn-modal--mine">
+  <div class="mine-stage" data-stage="list">
+    <div class="mine-h">
+      <div class="mine-ht">
+        <div class="mine-tt">从豆瓣导入</div>
+        <div class="mine-sub j-mine-sub">正在读取你的豆瓣标记…</div>
+      </div>
+      <button type="button" class="mine-x j-mine-x" title="关闭">${iconSpan('x')}</button>
+    </div>
+    <div class="mine-scan j-mine-scan"></div>
+    <div class="mine-bar j-mine-bar"></div>
+    <div class="mine-b j-mine-list"></div>
+    <div class="mine-f">
+      <div class="mine-sum j-mine-sum">读取中…</div>
+      <div class="mine-acts">
+        <button type="button" class="mine-btn ghost j-mine-none">全不选</button>
+        <button type="button" class="mine-btn ghost j-mine-reimport" hidden>重新导入</button>
+        <button type="button" class="mine-btn gold j-mine-next" disabled>开始同步</button>
+      </div>
+    </div>
+  </div>
+  <div class="mine-stage" data-stage="confirm" hidden>
+    <div class="mine-h">
+      <div class="mine-ht"><div class="mine-tt">确认同步 <span class="j-mine-n">0</span> 部</div></div>
+    </div>
+    <div class="mine-cf">
+      <div class="mine-warn">${iconSpan('shield-alert', ' mine-wic')}<div class="mine-wtx"><b>豆瓣会限流。</b>海报和详情按 <span class="mine-hl">每 ${IMPORT_GAP_MS / 1000} 秒 1 部</span> 补抓，避免被判定成爬虫。中途被拦会自动退避再试，条目不会丢。</div></div>
+    </div>
+    <div class="mine-f">
+      <div class="mine-acts">
+        <button type="button" class="mine-btn ghost j-mine-back">返回</button>
+        <button type="button" class="mine-btn gold j-mine-go">确认同步 0 部</button>
+      </div>
+    </div>
+  </div>
+  <div class="mine-stage" data-stage="run" hidden>
+    <div class="mine-h">
+      <div class="mine-ht">
+        <div class="mine-tt j-mine-rtt">正在同步</div>
+        <div class="mine-sub j-mine-rsub">—</div>
+      </div>
+    </div>
+    <div class="mine-pg">
+      <div class="mine-step"><i class="mine-dot j-mine-d1"></i><span>建档</span><span class="mine-v j-mine-b1">0 / 0</span></div>
+      <div class="mine-step"><i class="mine-dot j-mine-d2"></i><span>海报与详情</span><span class="mine-v j-mine-b2">0 / 0</span></div>
+      <div class="mine-track j-mine-track"><span class="j-mine-prog"></span></div>
+      <div class="mine-eta j-mine-eta">—</div>
+    </div>
+    <div class="mine-stream"><div class="mine-rows j-mine-stream"></div></div>
+    <div class="mine-f">
+      <div class="mine-sum mute j-mine-note"></div>
+      <div class="mine-acts">
+        <button type="button" class="mine-btn link j-mine-pause">暂停补抓</button>
+        <button type="button" class="mine-btn gold j-mine-bg">后台继续</button>
+      </div>
+    </div>
+  </div>
+</div>`;
+
+/**
+ * 豆瓣三状态导入（想看 / 在看 / 已看）——定稿原型的落地（`.scratch/douban-mine-sync/prototype.html`）。
+ *
+ * 口径：
+ *  - **三份名单一起抓**（wish / do / collect，各翻页到空为止），先拿全名单再让用户勾——
+ *    「本地已有多少」必须建立在完整名单上，只抓一份算不出这个数。
+ *  - **默认全选**；本地已有同名卡的条目置灰、不参与勾选、不进同步数（建档层重名保护同口径）。
+ *  - **同步 = 立即建档 + 后台按节奏补全**：点确认后先落笔记（片名 / 状态 / 评分 / 标记日期），
+ *    海报与详情交给 douban-queue（导入批次 IMPORT_GAP_MS = 4 秒/条，风控限制），弹层用「建档」「海报与详情」两行进度 +
+ *    五条流动窗口把这件事演出来。
+ *  - **不归入任何片单、不打「片单收纳」**：直接进影院列表（2026-10-31 拍板，取代上一版
+ *    「归入片单『我的影片』」的做法）。
+ *  - 评分：豆瓣 1~5 星 ×2 → 影院 10 分制，只在建档时写（缺失才填，已有分不覆盖）。
+ */
+function openDoubanMineSync(sec: HTMLElement, app: App, uid: string): void {
+  const rows: MineRow[] = [];
+  let fetching = true;
+  let pollTimer = 0;
+
+  const cleanup = (): void => {
+    if (pollTimer) { window.clearInterval(pollTimer); pollTimer = 0; }
+    resumeDoubanQueue();
+  };
+  const { el, close } = ovl(sec, MINE_HTML, {
+    onWillClose: (finish) => { cleanup(); finish(); return false; },
+  });
+  mountIcons(el);
+  // 弹层挂在 sec 内部，而主面板的点击委托挂在 sec 上：不拦截，弹层里的每次点击都会被
+  // 当成主面板操作（切视图 / 改类型筛选 / 整页重渲染把弹层冲掉）。2026-11-01 真机：
+  // 点列表任意一行 → 落到 `watched · 0 部`，就是这条漏的。
+  el.addEventListener('click', (e) => e.stopPropagation());
+  const q = <T extends HTMLElement>(sel: string): T | null => el.querySelector<T>(sel);
+  const sumEl = q<HTMLElement>('.j-mine-sum')!;
+  const nextBtn = q<HTMLButtonElement>('.j-mine-next')!;
+
+  const libCount = (): number => rows.filter((r) => r.inLib).length;
+  const selCount = (): number => rows.filter((r) => r.sel && !r.inLib).length;
+
+  /** 顶部三格（想看 / 在看 / 已看）：整组勾选 + 已选数 + 本地已有数 */
+  const renderBar = (): void => {
+    const bar = q<HTMLElement>('.j-mine-bar')!;
+    bar.innerHTML = MINE_GROUPS.map((g) => {
+      const items = rows.filter((r) => r.group === g.k);
+      const pool = items.filter((r) => !r.inLib).length;
+      const sel = items.filter((r) => r.sel).length;
+      const lib = items.filter((r) => r.inLib).length;
+      const on = sel > 0 && sel === pool;
+      const cls = on ? 'on' : sel > 0 ? 'indet' : '';
+      const meta = fetching
+        ? '<i class="mine-ring"></i>读取中'
+        : `已选 <b>${sel}</b>${lib ? ` · 本地已有 ${lib} 部` : ''}`;
+      return `<div class="mine-bar-c${on ? ' on' : ''}" data-mg="${g.k}">
+        <span class="mine-ck ${cls}">${iconSpan('check')}</span>
+        <div class="mine-bar-b">
+          <div class="mine-bar-t"><span class="mine-bar-nm">${g.label}</span><span class="mine-bar-n">${items.length} 部</span></div>
+          <div class="mine-bar-m">${meta}</div>
+        </div>
+      </div>`;
+    }).join('');
+    mountIcons(bar);
+  };
+
+  const rowHtml = (r: MineRow, idx: number): string => {
+    const score = r.stars
+      ? `<span class="mine-st">${starsHtml(r.stars * 2)}</span><span class="mine-sc">${r.stars * 2}.0</span>`
+      : '<span class="mine-st"></span><span class="mine-sc"></span>';
+    const ck = r.inLib ? '<span class="mine-ck dis"></span>'
+      : `<span class="mine-ck${r.sel ? ' on' : ''}">${iconSpan('check')}</span>`;
+    return `<div class="mine-row${r.inLib ? ' lib' : ''}${r.sel && !r.inLib ? ' sel' : ''}" data-i="${idx}">
+      ${ck}<span class="mine-nm">${esc(r.name)}</span>
+      <span class="mine-rt">${score}<span class="mine-dt">${esc(r.at ?? '')}</span></span>
+    </div>`;
+  };
+
+  const renderList = (): void => {
+    q<HTMLElement>('.j-mine-list')!.innerHTML = MINE_GROUPS.map((g) => {
+      const items = rows.filter((r) => r.group === g.k);
+      const body = items.map((r) => rowHtml(r, rows.indexOf(r))).join('');
+      return `<div class="mine-g" data-mine-g="${g.k}">
+        <div class="mine-glab">${g.label}<span class="mine-gn" data-gn="${g.k}">${items.length} 部</span><span class="mine-gs" data-gs="${g.k}">已选 ${items.filter((r) => r.sel).length}</span></div>
+        <div class="mine-rows" data-rows="${g.k}">${body}</div>
+      </div>`;
+    }).join('');
+    mountIcons(el);
+  };
+
+  /** 抓取中的骨架：三组标题先立起来（不然流进来的行没有容器，界面一片空白） */
+  const renderSkeleton = (): void => {
+    q<HTMLElement>('.j-mine-list')!.innerHTML = MINE_GROUPS.map((g) => `<div class="mine-g" data-mine-g="${g.k}">
+        <div class="mine-glab">${g.label}<span class="mine-gn" data-gn="${g.k}">0 部</span><span class="mine-gs" data-gs="${g.k}"></span></div>
+        <div class="mine-rows" data-rows="${g.k}"></div>
+      </div>`).join('');
+  };
+
+  /** 单组标题计数（流式插入时跟着走） */
+  const bumpGroup = (k: MineGroup): void => {
+    const n = rows.filter((r) => r.group === k).length;
+    const gn = el.querySelector<HTMLElement>(`[data-gn="${k}"]`);
+    if (gn) gn.textContent = `${n} 部`;
+  };
+
+  const updateSum = (): void => {
+    const n = selCount();
+    const lib = libCount();
+    sumEl.innerHTML = fetching
+      ? '读取中…'
+      : n
+        ? `已选 <b>${n}</b> 部 · 新建 ${n} 张卡${lib ? ` <span class="mine-mu">· ${lib} 部已在影院</span>` : ''}`
+        : '还没有选片';
+    nextBtn.disabled = fetching || !n;
+  };
+
+  /** 只改变更的行（保住滚动位置） */
+  const syncSel = (): void => {
+    MINE_GROUPS.forEach((g) => {
+      const items = rows.filter((r) => r.group === g.k);
+      const box = el.querySelector<HTMLElement>(`[data-rows="${g.k}"]`);
+      if (box) {
+        items.forEach((r) => {
+          const node = box.querySelector<HTMLElement>(`.mine-row[data-i="${rows.indexOf(r)}"]`);
+          if (!node) return;
+          node.classList.toggle('sel', r.sel && !r.inLib);
+          const ck = node.querySelector<HTMLElement>('.mine-ck');
+          if (ck && !r.inLib) ck.classList.toggle('on', r.sel);
+        });
+      }
+      const lab = el.querySelector<HTMLElement>(`[data-gs="${g.k}"]`);
+      if (lab) lab.textContent = `已选 ${items.filter((r) => r.sel).length}`;
+    });
+    renderBar();
+    updateSum();
+  };
+
+  // ---------- 抓三份名单（流式：每页插一批行） ----------
+  const fetchAll = async (): Promise<void> => {
+    /** 追加一批（onPage 流式 + 返回值兜底共用）；同 sid 去重，行随到随插 */
+    const addBatch = (g: (typeof MINE_GROUPS)[number], batch: DoubanListEntry[]): void => {
+      const box = el.querySelector<HTMLElement>(`[data-rows="${g.k}"]`);
+      for (const e of batch) {
+        if (!e.name || rows.some((r) => r.sid === e.sid)) continue;
+        const r: MineRow = {
+          sid: e.sid, name: e.name, stars: e.stars ?? null, at: e.at ?? null,
+          group: g.k, sel: false, inLib: false,
+        };
+        rows.push(r);
+        box?.insertAdjacentHTML('beforeend', rowHtml(r, rows.length - 1));
+      }
+      if (box) mountIcons(box);
+      bumpGroup(g.k);
+      const sub = q<HTMLElement>('.j-mine-sub');
+      if (sub) sub.innerHTML = `正在读取你的豆瓣标记… 已 <b>${rows.length}</b> 部`;
+    };
+    for (const g of MINE_GROUPS) {
+      const base = `https://movie.douban.com/people/${encodeURIComponent(uid)}/${g.page}`;
+      try {
+        const { entries } = await fetchDoubanListForImport(app, base, (batch) => addBatch(g, batch));
+        // 完成态以返回值为准补一遍：onPage 只是过程增量，注入/异常路径都可能缺页
+        addBatch(g, entries ?? []);
+      } catch {
+        /* 单页失败/被拦：这组按已抓到的算，整体空由下面的兜底提示收 */
+      }
+    }
+    finishLoad(false);
+  };
+
+  /** 名单就位（抓完 / 读到缓存）：算在库、默认全选、收扫描带、显示「重新导入」入口 */
+  const finishLoad = (fromCache: boolean): void => {
+    fetching = false;
+    for (const r of rows) {
+      r.inLib = M.items.some((it) => it.name === r.name);
+      r.sel = !r.inLib;
+    }
+    renderList();
+    syncSel();
+    q<HTMLElement>('.j-mine-scan')?.classList.add('done');
+    const reimport = q<HTMLButtonElement>('.j-mine-reimport');
+    if (reimport) reimport.hidden = !fromCache;
+    const sub = q<HTMLElement>('.j-mine-sub');
+    if (sub) {
+      sub.innerHTML = rows.length
+        ? `已读取你的豆瓣标记 · 共 <b>${rows.length}</b> 部，其中 <b>${libCount()}</b> 部已在影院，不会重复导入`
+        : '一条都没抓到：Cookie 可能过期或被豆瓣风控拦截，去设置里换一份再试';
+    }
+    if (!rows.length) {
+      notice('豆瓣一条都没抓到：Cookie 可能过期或被风控拦截', 'warning');
+      return;
+    }
+    if (!fromCache) void writeDoubanMineCache(app, rows.map((r) => ({ sid: r.sid, name: r.name, stars: r.stars, at: r.at, group: r.group })));
+  };
+
+  /** 开层：有缓存先吃缓存（秒开 + 显示「重新导入」），没有再抓 */
+  const load = async (): Promise<void> => {
+    const cached = await readDoubanMineCache(app);
+    if (cached) {
+      for (const r of cached.rows) rows.push({ ...r, sel: false, inLib: false });
+      finishLoad(true);
+      return;
+    }
+    await fetchAll();
+  };
+
+  /** 重新导入：清空重抓（缓存态才看得到这个入口） */
+  const refetchList = (): void => {
+    rows.length = 0;
+    fetching = true;
+    const reimportBtn = q<HTMLButtonElement>('.j-mine-reimport');
+    if (reimportBtn) reimportBtn.hidden = true;
+    q<HTMLElement>('.j-mine-scan')?.classList.remove('done');
+    const sub = q<HTMLElement>('.j-mine-sub');
+    if (sub) sub.innerHTML = '正在读取你的豆瓣标记…';
+    renderSkeleton();
+    renderBar();
+    updateSum();
+    void fetchAll();
+  };
+
+  // ---------- 交互 ----------
+  q('.j-mine-bar')!.addEventListener('click', (e) => {
+    if (fetching) return;
+    const cell = (e.target as HTMLElement).closest<HTMLElement>('.mine-bar-c');
+    if (!cell?.dataset.mg) return;
+    const items = rows.filter((r) => r.group === cell.dataset.mg && !r.inLib);
+    const target = !items.every((r) => r.sel);
+    items.forEach((r) => { r.sel = target; });
+    syncSel();
+  });
+  q('.j-mine-list')!.addEventListener('click', (e) => {
+    if (fetching) return;
+    const node = (e.target as HTMLElement).closest<HTMLElement>('.mine-row');
+    if (!node || node.classList.contains('lib')) return;
+    const r = rows[Number(node.dataset.i)];
+    if (!r || r.inLib) return;
+    r.sel = !r.sel;
+    syncSel();
+  });
+  q('.j-mine-reimport')!.addEventListener('click', () => refetchList());
+  q('.j-mine-none')!.addEventListener('click', () => {
+    if (fetching) return;
+    rows.forEach((r) => { r.sel = false; });
+    syncSel();
+  });
+  q('.j-mine-x')!.addEventListener('click', () => close());
+
+  const setStage = (name: 'list' | 'confirm' | 'run'): void => {
+    el.querySelectorAll<HTMLElement>('.mine-stage').forEach((s) => { s.hidden = s.dataset.stage !== name; });
+    el.querySelector<HTMLElement>('.cn-modal--mine')?.classList.toggle('is-confirm', name === 'confirm');
+  };
+
+  nextBtn.addEventListener('click', () => {
+    if (fetching || !selCount()) return;
+    const n = selCount();
+    q<HTMLElement>('.j-mine-n')!.textContent = String(n);
+    q<HTMLButtonElement>('.j-mine-go')!.textContent = `确认同步 ${n} 部`;
+    setStage('confirm');
+  });
+  q('.j-mine-back')!.addEventListener('click', () => setStage('list'));
+
+  // ---------- 同步：建档 → 入队补全 → 轮询进度 ----------
+  interface RunItem { name: string; path: string; group: MineGroup; st: 'wait' | 'run' | 'ok' }
+  let runItems: RunItem[] = [];
+  let streamKey = -1;
+
+  const etaText = (n: number): string => {
+    const min = Math.ceil((n * 15000) / 60000);
+    return min < 60 ? `${min} 分钟` : `${Math.floor(min / 60)} 小时 ${min % 60} 分`;
+  };
+
+  const renderStream = (done: number, total: number): void => {
+    const box = q<HTMLElement>('.j-mine-stream')!;
+    let start = runItems.findIndex((it) => it.st !== 'ok');
+    if (start < 0) start = Math.max(0, runItems.length - 5);
+    const win = runItems.slice(start, start + 5);
+    box.innerHTML = win.map((it) => {
+      const ic = it.st === 'ok' ? `<span class="mine-ck on" style="width:15px;height:15px">${iconSpan('check')}</span>`
+        : it.st === 'run' ? '<span class="mine-spin"></span>' : '<span class="mine-hollow"></span>';
+      const label = it.st === 'ok' ? '完成' : it.st === 'run' ? '补全中' : '等待';
+      const cls = it.st === 'ok' ? ' ok' : it.st === 'run' ? ' run' : '';
+      return `<div class="mine-row${it.st === 'ok' ? ' lib' : ''}">
+        <span class="mine-si">${ic}</span><span class="mine-nm">${esc(it.name)}</span>
+        <span class="mine-rt"><span class="mine-grp">${MINE_GROUPS.find((g) => g.k === it.group)?.label ?? ''}</span><span class="mine-pst${cls}">${label}</span></span>
+      </div>`;
+    }).join('');
+    mountIcons(box);
+    if (streamKey >= 0 && start > streamKey) {
+      box.style.transition = 'none';
+      box.style.transform = 'translateY(36px)';
+      requestAnimationFrame(() => {
+        box.style.transition = 'transform .3s cubic-bezier(.22,.61,.36,1)';
+        box.style.transform = 'translateY(0)';
+      });
+    }
+    streamKey = start;
+    const finished = done >= total;
+    const ttl = q<HTMLElement>('.j-mine-rtt');
+    if (ttl) ttl.textContent = finished ? '同步完成' : '正在同步';
+    const sub = q<HTMLElement>('.j-mine-rsub');
+    if (sub) {
+      sub.innerHTML = finished
+        ? `已把 <b>${total}</b> 部写进影院，海报与详情全部就位`
+        : `已把 <b>${total}</b> 部写进影院，海报与详情在后台补`;
+    }
+    const b2 = q<HTMLElement>('.j-mine-b2');
+    if (b2) b2.textContent = `${done} / ${total}`;
+    const d2 = q<HTMLElement>('.j-mine-d2');
+    if (d2) { d2.className = `mine-dot${finished ? ' ok' : ''}`; d2.textContent = finished ? '✓' : ''; }
+    const prog = q<HTMLElement>('.j-mine-prog');
+    if (prog) prog.style.width = `${total ? (done / total) * 100 : 0}%`;
+    q<HTMLElement>('.j-mine-track')?.classList.toggle('idle', finished);
+    const eta = q<HTMLElement>('.j-mine-eta');
+    if (eta) {
+      eta.textContent = finished ? '全部完成'
+        : done === 0 ? `约 ${etaText(total)} 补完`
+          : `剩 ${total - done} 部 · 约 ${etaText(total - done)}`;
+    }
+    const bg = q<HTMLButtonElement>('.j-mine-bg');
+    if (bg) bg.textContent = finished ? '完成' : '后台继续';
+  };
+
+  const startRun = (): void => {
+    const chosen = rows.filter((r) => r.sel && !r.inLib);
+    if (!chosen.length) return;
+    setStage('run');
+    runItems = [];
+    streamKey = -1;
+    const d1 = q<HTMLElement>('.j-mine-d1');
+    if (d1) { d1.className = 'mine-dot live'; d1.textContent = ''; }
+    const b1 = q<HTMLElement>('.j-mine-b1');
+    if (b1) b1.textContent = `0 / ${chosen.length}`;
+    renderStream(0, chosen.length);
+
+    void (async () => {
+      let built = 0;
+      for (const r of chosen) {
+        // 已看带评分（5 星 ×2 → 10 分制）与标记日期；想看/在看只落状态与日期
+        const ok = await quickAddFromDouban(app, r.name, '电影', r.group, {
+          silent: true,
+          sid: r.sid,
+          rating: r.group === 'watched' && r.stars ? r.stars * 2 : null,
+          date: r.at,
+        });
+        if (ok) {
+          runItems.push({ name: r.name, path: `${M.folderPath}/《${r.name}》.md`, group: r.group, st: 'wait' });
+        }
+        built++;
+        const b = q<HTMLElement>('.j-mine-b1');
+        if (b) b.textContent = `${built} / ${chosen.length}`;
+      }
+      const d = q<HTMLElement>('.j-mine-d1');
+      if (d) { d.className = 'mine-dot ok'; d.textContent = '✓'; }
+      refreshDataAndView(app);
+      setTimeout(() => { renderAll(app); }, 600);
+
+      const total = runItems.length;
+      if (!total) { renderStream(0, 0); return; }
+      const tick = (): void => {
+        const cur = currentFetchPath();
+        let done = 0;
+        for (const it of runItems) {
+          if (it.st === 'ok') { done++; continue; }
+          if (it.path === cur) { it.st = 'run'; continue; }
+          const f = app.vault.getAbstractFileByPath(it.path);
+          const fm = f ? app.metadataCache.getFileCache(f as TFile)?.frontmatter : null;
+          if (fm && fm['海报']) { it.st = 'ok'; done++; } else it.st = 'wait';
+        }
+        renderStream(done, total);
+        if (done >= total && pollTimer) { window.clearInterval(pollTimer); pollTimer = 0; }
+      };
+      tick();
+      pollTimer = window.setInterval(tick, 700);
+    })();
+  };
+
+  q('.j-mine-go')!.addEventListener('click', startRun);
+  q('.j-mine-pause')!.addEventListener('click', () => {
+    const btn = q<HTMLButtonElement>('.j-mine-pause')!;
+    const note = q<HTMLElement>('.j-mine-note')!;
+    if (btn.textContent === '暂停补抓') {
+      pauseDoubanQueue();
+      btn.textContent = '继续补抓';
+      note.textContent = '已暂停，队列还留着';
+    } else {
+      resumeDoubanQueue();
+      btn.textContent = '暂停补抓';
+      note.textContent = '';
+    }
+  });
+  q('.j-mine-bg')!.addEventListener('click', () => {
+    const total = runItems.length;
+    const done = runItems.filter((it) => it.st === 'ok').length;
+    const finished = total > 0 && done >= total;
+    cleanup();
+    close();
+    notice(finished
+      ? `已同步 ${total} 部到影院，海报与详情已补齐`
+      : `已同步 ${total} 部到影院，海报与详情在后台补抓（约 ${etaText(total - done)}）`, 'success');
+  });
+
+  renderSkeleton();
+  renderBar();
+  void load();
+}
+
+/**
+ * 一键导入豆瓣片单（桌面列表头「添加影片」后的导入图标钮；移动端在头行 ＋ 后同款）：
+ * 贴 wish 收藏页 / 豆列链接 → **流式**抓取（结果区随页增量出现，不等全部抓完——豆列几十部
+ * 要翻好几页，过程肉眼可见）→ 清单由用户二次确认 → 按「想看」静默批量建档（quickAddWant
+ * silent 携带 sid，补抓队列直取 queryDoubanBySid），并可归入同名自建片单（片单名默认取抓取到的
+ * 片单标题——豆列名 / 「XXX 的想看」，可改，留空不归入）。
+ * **弹层轻装**（2026-10-01 拍板）：无标题块、无「返回重填」钮——重来一次 = 关掉重开。
+ * **在库条目不过滤**（2026-09-30 拍板）：照常进清单参与导入，建档层的重名保护
+ * 自然让它们保持现状，toast 汇总区分「新导入 / 已在库未动」。Cookie 走设置键
+ * cinemaDoubanCookie（queue 单源装配），弹层不收敏感值。
+ */
 function openDoubanImport(sec: HTMLElement, app: App): void {
   const { el, close } = ovl(sec, `<div class="cn-modal cn-modal--dimp">
     <div class="dimp-stage" data-dimp-input>
@@ -450,27 +1093,21 @@ function openDoubanImport(sec: HTMLElement, app: App): void {
   const listEl = resultStage?.querySelector<HTMLElement>('.j-dimp-list');
   const statEl = resultStage?.querySelector<HTMLElement>('.j-dimp-stat');
   const runBtn = resultStage?.querySelector<HTMLButtonElement>('.j-dimp-run');
-  let pending: { sid: string; name: string }[] = [];
+  let pending: DoubanListEntry[] = [];
   let inLibCount = 0;
   let fetching = false;
   const inLibrary = (name: string): boolean => M.items.some((it) => it.name === name);
-  const rowHtml = (e: { name: string }): string =>
+  /** 清单行 */
+  const rowHtml = (e: DoubanListEntry): string =>
     `<div class="dimp-row${inLibrary(e.name) ? ' is-inlib' : ''}"><span class="lp-label">${esc(e.name)}</span><span class="dimp-tag">${inLibrary(e.name) ? '已在库' : '新片'}</span></div>`;
   const refreshStat = (done: boolean): void => {
     if (!statEl) return;
-    statEl.textContent = done
-      ? `抓到 ${pending.length} 部${inLibCount ? `（其中 ${inLibCount} 部已在库）` : ''}`
-      : `抓取中… 已 ${pending.length} 部`;
+    const tail = inLibCount ? `（其中 ${inLibCount} 部已在库）` : '';
+    statEl.textContent = done ? `抓到 ${pending.length} 部${tail}` : `抓取中… 已 ${pending.length} 部`;
   };
-  const fetchBtn = el.querySelector<HTMLButtonElement>('.j-dimp-fetch');
-  fetchBtn?.addEventListener('click', () => {
-    const url = (el.querySelector<HTMLInputElement>('.j-dimp-url')?.value ?? '').trim();
-    if (!/^https?:\/\/(www\.)?(movie\.)?douban\.com\//.test(url)) {
-      notice('先贴一个豆瓣片单链接（movie.douban.com 下）', 'warning');
-      return;
-    }
+  /** 抓取（流式渲染 + 完成态全量兜底） */
+  const runFetch = (url: string): void => {
     if (!inputStage || !resultStage || !listEl || !statEl || !runBtn) return;
-    // 流式：立即切结果区，逐页增量出现（fetchDoubanList 的 onPage 回调驱动）
     pending = [];
     inLibCount = 0;
     fetching = true;
@@ -482,12 +1119,11 @@ function openDoubanImport(sec: HTMLElement, app: App): void {
     resultStage.hidden = false;
     runBtn.disabled = true;
     runBtn.textContent = '抓取中…';
-    void fetchDoubanListForImport(app, url, (batch, total) => {
+    void fetchDoubanListForImport(app, url, (batch) => {
       pending = pending.concat(batch);
       inLibCount = pending.filter((e) => inLibrary(e.name)).length;
       if (listEl) listEl.insertAdjacentHTML('beforeend', batch.map(rowHtml).join(''));
       refreshStat(false);
-      void total;
     }).then(({ entries, firstPageEmpty, listTitle }) => {
       fetching = false;
       if (listNameInput && listTitle) listNameInput.value = listTitle;
@@ -509,6 +1145,15 @@ function openDoubanImport(sec: HTMLElement, app: App): void {
       runBtn.textContent = `导入 ${pending.length} 部`;
       runBtn.disabled = false;
     });
+  };
+  const fetchBtn = el.querySelector<HTMLButtonElement>('.j-dimp-fetch');
+  fetchBtn?.addEventListener('click', () => {
+    const url = (el.querySelector<HTMLInputElement>('.j-dimp-url')?.value ?? '').trim();
+    if (!/^https?:\/\/(www\.)?(movie\.)?douban\.com\//.test(url)) {
+      notice('先贴一个豆瓣片单链接（movie.douban.com 下）', 'warning');
+      return;
+    }
+    runFetch(url);
   });
   el.querySelector('.j-dimp-run')?.addEventListener('click', () => {
     if (fetching || !runBtn) return;
@@ -518,12 +1163,12 @@ function openDoubanImport(sec: HTMLElement, app: App): void {
     void (async () => {
       const createdNames: string[] = [];
       for (const e of pending) {
-        // 在库条目照常尝试加入（不跳过）：建档层重名保护让它们保持现状（false）
-        if (await quickAddWant(app, e.name, '电影', { silent: true, sid: e.sid })) createdNames.push(e.name);
+        // 在库条目照常尝试加入（不跳过）：建档层重名保护让它们保持现状（false）。
+        const ok = await quickAddWant(app, e.name, '电影', { silent: true, sid: e.sid });
+        if (ok) createdNames.push(e.name);
       }
       // 归入片单（拍板：导入的片单要在侧栏可见）+ 打「片单收纳」标志（拍板：一键导入
-      // 的新片只在片单里显示，不混入正常影视视图）——都只作用于新建档条目；
-      // 已在库保持不动的条目两者都不做（按「在库的按照在库的」口径不动它）
+      // 的新片只在片单里显示，不混入正常影视视图）——都只作用于新建档条目
       const validList = listName && !hasIllegalNameChar(listName) ? listName : '';
       if (createdNames.length) {
         refreshDataAndView(app);
@@ -547,9 +1192,12 @@ function openDoubanImport(sec: HTMLElement, app: App): void {
       refreshDataAndView(app);
       renderAll(app);
       close();
-      const listTail = validList && createdNames.length ? `，归入片单「${validList}」（仅在片单中显示）` : createdNames.length ? '（仅在片单中显示，可右键「归入片单…」补归）' : '';
+      const listTail = validList && createdNames.length
+        ? `，归入片单「${validList}」（仅在片单中显示）`
+        : createdNames.length ? '（仅在片单中显示，可右键「归入片单…」补归）' : '';
+      const skipped = pending.length > createdNames.length ? `（${pending.length - createdNames.length} 部已在库保持不动）` : '';
       notice(createdNames.length
-        ? `已从豆瓣片单导入 ${createdNames.length} 部到想看${pending.length > createdNames.length ? `（${pending.length - createdNames.length} 部已在库保持不动）` : ''}${listTail}，海报与信息后台补齐`
+        ? `已从豆瓣片单导入 ${createdNames.length} 部到想看${skipped}${listTail}，海报与信息后台补齐`
         : '片单里的片都已在库，没有新增', createdNames.length ? 'success' : 'warning');
     })();
   });
@@ -696,7 +1344,7 @@ async function persistItem(item: CinemaItem, app: App, edit?: { prevName: string
         // 解析阶段已拿到豆瓣字段 → 建档时直接写入（issue 395）：省掉落盘后再抓一次的往返。
         // 口径与 fetchNoteDouban 一致（ApiZero 优先、rexxar 兜底、缺失才填由本处新檔天然满足）。
         if (douban) {
-          const az = douban.apizero;
+          const az = douban.subject;
           if (douban.detailUrl) fm['豆瓣链接'] = douban.detailUrl;
           if (az) {
             if (az.score) fm['豆瓣评分'] = az.score;
@@ -1183,6 +1831,14 @@ function attachLongPress(sec: HTMLElement, app: App): void {
       const it = itemByKeyInState(key);
       if (!it) return;
       openSheet(sec, itemSheetTarget(it, sec, app));
+    });
+  });
+  // 片单长按（移动端 chip / 侧栏行）→ 整单动作抽屉（与桌面右键同款动作集）
+  sec.querySelectorAll<HTMLElement>('.chip[data-l], .rail-item[data-l]').forEach((el) => {
+    el.addEventListener('contextmenu', (ev) => ev.preventDefault()); // 原生长按菜单让位给抽屉
+    longPress(el, () => {
+      const name = el.dataset.l;
+      if (name) openSheet(sec, { acts: shelfActs(name, sec, app), head: shelfSheetHead(name) });
     });
   });
 }
@@ -1939,7 +2595,7 @@ function openForm(sec: HTMLElement, item: CinemaItem | null, app: App, presetSt?
    *  本地下载落库后换图；下载前维持骨架。 */
   const previewDataOf = (q: DoubanQuery | null): FormPreviewData | null => {
     if (!q) return null;
-    const az = q.apizero;
+    const az = q.subject;
     return {
       posterUrl: '',
       title: q.title || nameInput?.value.trim() || '',
@@ -2049,7 +2705,7 @@ function openForm(sec: HTMLElement, item: CinemaItem | null, app: App, presetSt?
     void ensurePreviewPoster(q.data.posterUrl); // 海报本地落库后换图（防 418 热链拒绝）
     // ② 分类随后补：就地换徽标，不重渲染整卡（重渲染会让海报 img 重新发起请求、白闪一下）
     try {
-      const az = q.data.apizero;
+      const az = q.data.subject;
       const mediaType = q.data.celebrities?.mediaType ?? null;
       const decided = await decideCinemaType({
         title: q.data.title,
@@ -2670,6 +3326,7 @@ function bindMidnight(sec: HTMLElement, app: App): void {
     }
     // 一键导入豆瓣片单：动作不是视图，不走 j-tool 的视图切换分流
     if (t.closest('.j-import')) { openDoubanImport(sec, app); return; }
+    if (t.closest('.j-import-mine')) { openDoubanMineImport(sec, app); return; }
     const tool = t.closest('.j-tool') as HTMLElement | null;
     if (tool && tool.dataset.tool) {
       // 进 ai 不动筛选状态：rail 高亮由渲染层按视图熄灭（render.ts listOn 门控），
@@ -2750,6 +3407,15 @@ function bindMidnight(sec: HTMLElement, app: App): void {
     // 「桌面=有鼠标」——桌面宽度的触屏长按会同时发 pointerdown 与 contextmenu，不分流就会
     // 多弹一个鼠标菜单盖在抽屉上）；移动端长按手势走 core/dom.longPress。
     if (!hoverCapable()) return;
+    // 侧栏片单行（data-l）右键 → 整单动作（收录进影院 / 改名 / 移除）；先于卡片判定，
+    // rail 与网格不重叠但同一套委托，顺序即优先级
+    const railList = (e.target as HTMLElement).closest('.rail-item[data-l]') as HTMLElement | null;
+    if (railList?.dataset.l) {
+      e.preventDefault();
+      openItemMenu(e.clientX, e.clientY, toItemActions(shelfActs(railList.dataset.l, sec, app)), true, MENU_SKIN);
+      resetItemMenuClickGuard();
+      return;
+    }
     const cardEl = (e.target as HTMLElement).closest('.pcard') as HTMLElement | null;
     if (!cardEl) return;
     e.preventDefault();

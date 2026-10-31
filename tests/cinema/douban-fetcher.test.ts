@@ -25,7 +25,7 @@ import {
   upgradePosterUrl, extractSid, parseCelebrities,
   extractMovieName, normalizeListValue, updateFrontmatterFields, insertPosterEmbed,
   fetchApizeroInfo, fetchNoteDouban, queryDoubanByName, queryDoubanBySid,
-  parseRexxarSubjectPic, fetchSubjectPoster,
+  parseRexxarSubject, parseRexxarSubjectPic, fetchSubjectPoster,
   type HttpGet, type DoubanFetchDeps,
 } from '../../src/cinema/douban-fetcher';
 
@@ -311,6 +311,44 @@ async function runOn(vault: MockVault, deps: DoubanFetchDeps) {
 }
 
 describe('fetchNoteDouban 端到端（fake 注入）', () => {
+  // 没配 ApiZero（默认形态）：字段全部来自豆瓣移动端详情，一次请求拿齐
+  const REX_DETAIL_DL2 = JSON.stringify({
+    id: '35267208', title: '流浪地球2', year: '2023', type: 'movie', is_tv: false,
+    rating: { value: 8.3, count: 1200000 },
+    directors: [{ name: '郭帆' }],
+    actors: [{ name: '吴京' }, { name: '刘德华' }],
+    genres: ['科幻', '冒险', '灾难'], countries: ['中国大陆'], durations: ['173分钟'],
+    pic: { large: 'https://img2.doubanio.com/view/photo/l_ratio_poster/public/p2916835424.jpg' },
+  });
+
+  it('没配 ApiZero：豆瓣详情一条腿拿全字段，且全程不触达 ApiZero', async () => {
+    const vault = new MockVault();
+    vault.files.set(FILE_PATH, '---\ntags:\n  - 电影\n状态: 想看\n---');
+    const calls: string[] = [];
+    const { deps } = makeDeps({ vault, posterBytes: new ArrayBuffer(64) });
+    deps.httpGet = async (url) => {
+      calls.push(url);
+      if (url.includes('subject_suggest')) return SUGGEST_JSON;
+      if (url.includes('/rexxar/api/v2/movie/35267208')) return REX_DETAIL_DL2;
+      return null;
+    };
+    const r = await runOn(vault, deps);
+    expect(r).toEqual({ ok: true });
+    const c = vault.files.get(FILE_PATH)!;
+    expect(c).toContain('豆瓣评分: 8.3');
+    expect(c).toContain('导演: 郭帆');
+    expect(c).toContain('主演: "吴京 / 刘德华"'); // 含空格走 YAML 引号形制
+    expect(c).toContain('类型: "科幻 / 冒险 / 灾难"');
+    expect(c).toContain('制片国家/地区: 中国大陆');
+    expect(c).toContain('片长: 173分钟');
+    expect(c).toContain('上映日期: 2023');
+    expect(c).toContain('豆瓣链接: "https://movie.douban.com/subject/35267208/"');
+    expect(c).toContain('海报:'); // 详情自带 pic.large，海报照落
+    expect(calls.some((u) => u.includes('apizero.cn'))).toBe(false);
+    // 条内请求数：suggest 1 + 详情 1（海报地址由详情给出，不再另打一条补图腿）
+    expect(calls.filter((u) => u.includes('rexxar/api/v2/movie/')).length).toBe(1);
+  });
+
   it('主链：suggest 检索 + ApiZero 字段 + 海报写盘 + embed + frontmatter 落盘', async () => {
     const vault = new MockVault();
     vault.files.set(FILE_PATH, '---\ntags:\n  - 电影\n状态: 想看\n---');
@@ -650,6 +688,59 @@ const REXXAR_SUBJECT_JSON = JSON.stringify({
   cover_url: 'https://img2.doubanio.com/view/photo/m_ratio_poster/public/p2510495981.jpg',
 });
 const REXXAR_MISS_JSON = JSON.stringify({ request: 'GET /v2/tv/3022655', msg: 'traversal_error', code: 404 });
+
+// rexxar subject 详情夹具（2026-11-01 真机形态：122 键，这里只留用得上的）
+const REX_SUBJECT_JSON = JSON.stringify({
+  id: '1292052', title: '肖申克的救赎', year: '1994', type: 'movie', is_tv: false,
+  rating: { value: 9.7, count: 3361116, max: 10 },
+  directors: [{ name: '弗兰克·德拉邦特' }],
+  actors: [{ name: '蒂姆·罗宾斯' }, { name: '摩根·弗里曼' }, { name: '鲍勃·冈顿' }],
+  genres: ['剧情', '犯罪'], countries: ['美国'], durations: ['142分钟', '155分钟(美国剧场版)'],
+  pubdate: ['2026-08-28(中国大陆)'],
+  episodes_count: 0,
+  pic: { large: 'https://img2.doubanio.com/view/photo/l_ratio_poster/public/p480747492.jpg' },
+});
+
+describe('parseRexxarSubject（豆瓣移动端详情 → 条目字段面）', () => {
+  it('全字段：评分/导演/主演/类型/地区/片长/年份/海报', () => {
+    const info = parseRexxarSubject(REX_SUBJECT_JSON)!;
+    expect(info).not.toBeNull();
+    expect(info.name).toBe('肖申克的救赎');
+    expect(info.score).toBe('9.7');
+    expect(info.director).toBe('弗兰克·德拉邦特');
+    expect(info.actor).toBe('蒂姆·罗宾斯 / 摩根·弗里曼 / 鲍勃·冈顿');
+    expect(info.genre).toBe('剧情 / 犯罪');
+    expect(info.area).toBe('美国');
+    expect(info.duration).toBe('142分钟'); // 多版本只取第一个
+    expect(info.isTv).toBe(false);
+    expect(info.posterUrl).toContain('l_ratio_poster');
+    // 上映年份取 year 不取 pubdate：豆瓣首项常是重映（肖申克是 2026 重映），写进去会把 1994 标成 2026
+    expect(info.year).toBe('1994');
+  });
+
+  it('未上映（rating.value = 0）→ 评分为空，不写 0', () => {
+    const j = JSON.parse(REX_SUBJECT_JSON);
+    j.rating = { value: 0, count: 0 };
+    expect(parseRexxarSubject(JSON.stringify(j))!.score).toBe('');
+  });
+
+  it('非详情体（celebrities / search / 错误体）→ null，交上层兜底', () => {
+    expect(parseRexxarSubject(JSON.stringify({ total: 40, directors: [{ name: 'x' }], actors: [] }))).toBeNull();
+    expect(parseRexxarSubject(JSON.stringify({ subjects: { items: [] } }))).toBeNull();
+    expect(parseRexxarSubject(JSON.stringify({ msg: 'traversal_error', code: 404 }))).toBeNull();
+    expect(parseRexxarSubject('null')).toBeNull();
+    expect(parseRexxarSubject('<html>')).toBeNull();
+    expect(parseRexxarSubject(null)).toBeNull();
+  });
+
+  it('剧集：type=tv 判 isTv，集数进 episodes', () => {
+    const j = JSON.parse(REX_SUBJECT_JSON);
+    Object.assign(j, { type: 'tv', is_tv: true, episodes_count: 30 });
+    const info = parseRexxarSubject(JSON.stringify(j))!;
+    expect(info.isTv).toBe(true);
+    expect(info.episodes).toBe('30');
+  });
+});
 
 describe('parseRexxarSubjectPic（rexxar subject JSON → 海报 URL）', () => {
   it('pic.large 优先；normal 兜底；cover_url 再兜底', () => {

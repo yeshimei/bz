@@ -344,10 +344,10 @@ describe('设置面板（settings-panel）', () => {
           (r) => r.querySelector('.bz-sp-set-name')?.textContent === name
         );
       // 三行凭据一律单行掩码输入（2026-09-23 用户报「加密的做成多行框看着怪」：textarea 档位退役），
-      // 组序 ApiZero Key → B站 Cookie → 豆瓣 Cookie
+      // 组序 B站 Cookie → 豆瓣 Cookie → ApiZero Key（2026-11-01：ApiZero 降为可选排最后）
       const rowNames = [...popup.querySelectorAll('.bz-sp-set-row .bz-sp-set-name')].map((n) => n.textContent);
-      const credStart = rowNames.indexOf('ApiZero Key');
-      expect(rowNames.slice(credStart, credStart + 3)).toEqual(['ApiZero Key', 'B站 Cookie', '豆瓣 Cookie']);
+      const credStart = rowNames.indexOf('B站 Cookie');
+      expect(rowNames.slice(credStart, credStart + 3)).toEqual(['B站 Cookie', '豆瓣 Cookie', 'ApiZero Key']);
       const bili = rowOf('B站 Cookie');
       const douban = rowOf('豆瓣 Cookie');
       const apizero = rowOf('ApiZero Key');

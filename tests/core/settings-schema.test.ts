@@ -221,22 +221,23 @@ describe('mainSettingsSchema：主设置页区块（issue 422 起 AI 页按模�
     expect(String(rows[3].desc)).toContain('只修错');
   });
 
-  it('数据源凭据组（issue 331 拆组）：三行统一单行 secret（ApiZero Key → B站 Cookie → 豆瓣 Cookie）；桌面端 B站行带「从 CLI 导入」', () => {
+  it('数据源凭据组（issue 331 拆组）：三行统一单行 secret（B站 Cookie → 豆瓣 Cookie → ApiZero Key）；桌面端 B站行带「从 CLI 导入」', () => {
     // 2026-10-26：「外部工具」组插到语音转写之后 → 凭据组不再固定是第 5 个，按名取
     const rows = schema.groups.find((g) => g.name === '数据源凭据')!.rows;
     // 2026-09-23 用户报「加密的做成多行框看着怪」：textarea 的多行掩码档位退役，
     // 三行凭据一律单行 secret（password 掩码 + 眼睛切明文）
     expect(rows.map((r) => r.type)).toEqual(['secret', 'secret', 'secret']);
-    const [apizero, bili, douban] = rows as Array<{
+    // 2026-11-01 用户拍板：ApiZero 降为可选（影院字段改由豆瓣详情接口取），排到最后
+    const [bili, douban, apizero] = rows as Array<{
       name: string;
       binding?: { key: string };
       actions?: Array<{ text: string }>;
       placeholder?: string;
     }>;
-    expect([apizero.name, bili.name, douban.name]).toEqual(['ApiZero Key', 'B站 Cookie', '豆瓣 Cookie']);
-    expect(apizero.binding).toEqual({ key: 'cinemaApizeroKey' });
+    expect([bili.name, douban.name, apizero.name]).toEqual(['B站 Cookie', '豆瓣 Cookie', 'ApiZero Key']);
     expect(bili.binding).toEqual({ key: 'bilibiliCookie' });
     expect(douban.binding).toEqual({ key: 'cinemaDoubanCookie' });
+    expect(apizero.binding).toEqual({ key: 'cinemaApizeroKey' });
     // 非桌面（node 环境无 window.require）：CLI 导入按钮不渲染（ADR-0133 零依赖判定口径）
     expect(bili.actions).toEqual([]);
     // 桌面端：按钮在场（secret 行 actions 与 text 行同口径）

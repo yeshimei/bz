@@ -18,7 +18,7 @@ import {
 import type { DoubanFetchOutcome } from '../../src/cinema/douban-fetcher';
 
 const settle = () => new Promise((r) => setTimeout(r, 25));
-const TEST_HOOKS = { gapMs: 0, refreshDelayMs: 0 };
+const TEST_HOOKS = { gapMs: 0, refreshDelayMs: 0, backoffMs: 0 };
 const okOutcome = (): DoubanFetchOutcome => ({ ok: true });
 
 /** 通知上的动作按钮（core notice action：span.bz-notice-action） */

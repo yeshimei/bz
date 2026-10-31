@@ -1415,8 +1415,164 @@
 .bz-cinema--midnight .dimp-row .lp-label{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .bz-cinema--midnight .dimp-tag{font-size:10.5px;letter-spacing:.06em;flex:none;padding:1px 8px;border-radius:99px;border:1px solid var(--line);color:var(--ink-3)}
 .bz-cinema--midnight .dimp-row:not(.is-inlib) .dimp-tag{border-color:var(--gold);color:var(--gold)}
+/* 导入清单行右挂的豆瓣评分（星）与标记日期（只看过清单有；片单页没有这两项）——
+   星级走卡片同一份 starsHtml，此处只管排版：日期灰、评分金，都不抢片名 */
+.bz-cinema--midnight .dimp-score{flex:none;font-size:11px;letter-spacing:.04em;color:var(--gold)}
+.bz-cinema--midnight .dimp-at{flex:none;font-size:10.5px;color:var(--ink-3);font-variant-numeric:tabular-nums}
 .bz-cinema--midnight .dimp-newlist{display:flex;align-items:center;gap:10px}
 .bz-cinema--midnight .dimp-newlist label{flex:none;font-size:12.5px;color:var(--ink-2)}
 .bz-cinema--midnight .dimp-newlist input{flex:1;min-width:0;background:var(--chip);border:1px solid var(--line);border-radius:10px;padding:8px 12px;color:var(--ink);font-size:12.5px;font-family:inherit;outline:none;transition:border-color var(--cn-m-fast) ease}
 .bz-cinema--midnight .dimp-newlist input::placeholder{color:var(--ink-3)}
 .bz-cinema--midnight .dimp-newlist input:focus{border-color:var(--gold)}
+
+/* ==================== 豆瓣三状态导入（cn-modal--mine） ====================
+   1:1 复刻 2026-10-31 定稿原型 `.scratch/douban-mine-sync/prototype.html`：
+   540 宽（影院面板 900 的 60%）、三状态固定在顶部、片单汇总成一个自由滚动列表、
+   确认层收窄到 440 且只留风控警告、同步层用五条流动窗口。
+   改视觉先改原型再回灌这里，别就地调参（弹窗穿衣规矩见 AGENTS.md）。
+   ==================== */
+
+.bz-cinema--midnight .cn-modal--mine{width:540px;max-width:calc(100% - 16px);max-height:calc(100% - 12px);
+  padding:0;overflow:hidden;display:flex;flex-direction:column;gap:0}
+.bz-cinema--midnight .cn-modal--mine.is-confirm{width:440px}
+.bz-cinema--midnight .mine-stage{display:flex;flex-direction:column;min-height:0;flex:1}
+.bz-cinema--midnight .mine-stage[hidden]{display:none}
+
+/* 头 */
+.bz-cinema--midnight .mine-h{flex:none;display:flex;align-items:flex-start;gap:12px;padding:22px 22px 15px}
+.bz-cinema--midnight .mine-ht{min-width:0}
+.bz-cinema--midnight .mine-tt{font-family:"Noto Serif SC",SimSun,serif;font-size:20px;font-weight:700;letter-spacing:.1em;line-height:1.3;color:var(--ink)}
+.bz-cinema--midnight .mine-sub{margin-top:7px;font-size:12.5px;color:var(--ink-2);line-height:1.7}
+.bz-cinema--midnight .mine-sub b{color:var(--gold);font-weight:600;font-variant-numeric:tabular-nums;font-size:13px}
+.bz-cinema--midnight .mine-x{margin-left:auto;flex:none;width:28px;height:28px;border:1px solid transparent;background:none;
+  border-radius:7px;color:var(--ink-3);line-height:1;cursor:pointer;display:grid;place-items:center;padding:0}
+.bz-cinema--midnight .mine-x svg{width:15px;height:15px}
+
+/* 抓取扫描带 */
+.bz-cinema--midnight .mine-scan{flex:none;height:2px;margin:0 22px;background:var(--line);overflow:hidden;
+  position:relative;border-radius:2px;transition:opacity var(--cn-m-base) ease}
+.bz-cinema--midnight .mine-scan::after{content:"";position:absolute;top:0;bottom:0;left:0;width:26%;
+  background:linear-gradient(90deg,transparent,var(--gold),transparent);animation:cnMineScan 1.1s linear infinite}
+.bz-cinema--midnight .mine-scan.done{opacity:0}
+.bz-cinema--midnight .mine-scan.done::after{animation:none}
+@keyframes cnMineScan{from{transform:translateX(-110%)}to{transform:translateX(420%)}}
+
+/* 顶部三状态（固定在列表之上） */
+.bz-cinema--midnight .mine-bar{flex:none;display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--line);
+  border-top:1px solid var(--line);border-bottom:1px solid var(--line);margin-top:12px}
+.bz-cinema--midnight .mine-bar-c{background:var(--panel);padding:10px 11px;cursor:pointer;user-select:none;display:flex;
+  gap:9px;align-items:flex-start;transition:background var(--cn-m-fast) ease}
+.bz-cinema--midnight .mine-bar-c.on{background:var(--chip)}
+.bz-cinema--midnight .mine-bar-b{min-width:0;flex:1}
+.bz-cinema--midnight .mine-bar-t{display:flex;align-items:baseline;gap:6px}
+.bz-cinema--midnight .mine-bar-nm{font-family:"Noto Serif SC",SimSun,serif;font-size:13.5px;font-weight:700;letter-spacing:.1em;color:var(--ink)}
+.bz-cinema--midnight .mine-bar-n{margin-left:auto;font-size:11px;color:var(--ink-3);font-variant-numeric:tabular-nums}
+.bz-cinema--midnight .mine-bar-m{margin-top:4px;font-size:10.5px;color:var(--ink-3);letter-spacing:.01em;
+  font-variant-numeric:tabular-nums;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  display:flex;align-items:center;gap:4px}
+.bz-cinema--midnight .mine-bar-m b{color:var(--gold);font-weight:600}
+.bz-cinema--midnight .mine-ring{flex:none;width:11px;height:11px;border-radius:50%;border:1.5px solid var(--line);
+  border-top-color:var(--gold);animation:cnMineSpin .8s linear infinite;display:inline-block}
+@keyframes cnMineSpin{to{transform:rotate(360deg)}}
+
+/* 勾选框 */
+.bz-cinema--midnight .mine-ck{flex:none;width:16px;height:16px;border-radius:4px;border:1px solid var(--line);
+  background:var(--panel);display:grid;place-items:center;position:relative;
+  transition:background var(--cn-m-fast) ease,border-color var(--cn-m-fast) ease}
+.bz-cinema--midnight .mine-ck svg{width:11px;height:11px;opacity:0;color:#161410}
+.bz-cinema--midnight .mine-ck.on,
+.bz-cinema--midnight .mine-ck.indet{background:var(--gold);border-color:var(--gold)}
+.bz-cinema--midnight .mine-ck.on svg{opacity:1}
+.bz-cinema--midnight .mine-ck.indet::after{content:"";width:8px;height:1.5px;background:#161410;border-radius:2px;position:absolute}
+.bz-cinema--midnight .mine-ck.indet svg{opacity:0}
+.bz-cinema--midnight .mine-ck.dis{background:var(--chip);border-color:var(--line);opacity:.4}
+
+/* 汇总列表（整块自由滚动，条不画） */
+.bz-cinema--midnight .mine-b{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;padding:16px 22px 20px;
+  scrollbar-width:none}
+.bz-cinema--midnight .mine-g + .mine-g{margin-top:18px}
+.bz-cinema--midnight .mine-glab{display:flex;align-items:baseline;gap:8px;font-size:10.5px;letter-spacing:.26em;
+  color:var(--ink-3);padding:0 2px 7px}
+.bz-cinema--midnight .mine-glab .mine-gn{letter-spacing:.02em;font-variant-numeric:tabular-nums}
+.bz-cinema--midnight .mine-glab .mine-gs{margin-left:auto;letter-spacing:.02em;color:var(--gold);font-variant-numeric:tabular-nums}
+.bz-cinema--midnight .mine-rows{display:grid;grid-template-columns:minmax(0,1fr);gap:2px}
+
+/* 行：片名左，其余右 */
+.bz-cinema--midnight .mine-row{display:flex;align-items:center;gap:12px;padding:8px 9px;border-radius:8px;min-width:0;
+  border:1px solid transparent;cursor:pointer;font-size:13px;color:var(--ink);animation:cnMineRow var(--cn-m-move) ease both}
+@keyframes cnMineRow{from{opacity:0;transform:translateY(-3px)}to{opacity:1;transform:none}}
+.bz-cinema--midnight .mine-row.sel{background:var(--chip);border-color:var(--line)}
+.bz-cinema--midnight .mine-nm{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:left}
+.bz-cinema--midnight .mine-rt{flex:none;display:flex;align-items:center;gap:12px;justify-content:flex-end}
+.bz-cinema--midnight .mine-st{font-size:12px;letter-spacing:.05em;font-variant-numeric:tabular-nums;white-space:nowrap;
+  min-width:62px;text-align:right}
+.bz-cinema--midnight .mine-st i{font-style:normal;color:var(--ink-3)}
+.bz-cinema--midnight .mine-st i.is-on{color:var(--star)}
+.bz-cinema--midnight .mine-sc{width:30px;text-align:right;font-size:12px;color:var(--ink-3);font-variant-numeric:tabular-nums}
+.bz-cinema--midnight .mine-dt{width:70px;text-align:right;font-size:11.5px;color:var(--ink-3);font-variant-numeric:tabular-nums}
+.bz-cinema--midnight .mine-row.lib{color:var(--ink-3);cursor:default}
+
+/* 底栏 */
+.bz-cinema--midnight .mine-f{flex:none;display:flex;align-items:center;gap:10px;row-gap:8px;flex-wrap:wrap;padding:15px 22px;
+  border-top:1px solid var(--line);background:var(--panel)}
+.bz-cinema--midnight .mine-sum{flex:1 1 auto;min-width:0;font-size:12.5px;color:var(--ink-2);font-variant-numeric:tabular-nums}
+.bz-cinema--midnight .mine-sum b{color:var(--ink);font-weight:600}
+.bz-cinema--midnight .mine-sum .mine-mu{color:var(--ink-3)}
+.bz-cinema--midnight .mine-sum.mute{color:var(--ink-3)}
+.bz-cinema--midnight .mine-acts{margin-left:auto;display:flex;gap:9px}
+.bz-cinema--midnight .mine-btn{border-radius:9px;padding:9px 14px;font-size:12.5px;font-family:inherit;cursor:pointer;
+  letter-spacing:.04em;border:1px solid transparent}
+.bz-cinema--midnight .mine-btn.gold{background:var(--gold);color:#161410;border-color:var(--gold)}
+.bz-cinema--midnight .mine-btn.gold:disabled{opacity:.45;cursor:default;filter:none}
+.bz-cinema--midnight .mine-btn.ghost{background:none;border-color:var(--line);color:var(--ink-2)}
+.bz-cinema--midnight .mine-btn.link{background:none;border:0;color:var(--ink-3);padding:9px 4px}
+
+/* 确认层：只剩警告 */
+.bz-cinema--midnight .mine-cf{padding:4px 22px 22px}
+.bz-cinema--midnight .mine-warn{display:flex;gap:12px;padding:16px 18px;border:1px solid var(--line);
+  border-radius:11px;background:var(--chip)}
+.bz-cinema--midnight .mine-warn .mine-wic{flex:none;width:17px;height:17px;color:var(--gold);margin-top:2px}
+.bz-cinema--midnight .mine-warn .mine-wtx{font-size:13px;line-height:1.9;color:var(--ink-2)}
+.bz-cinema--midnight .mine-warn .mine-wtx b{color:var(--ink);font-weight:600}
+.bz-cinema--midnight .mine-warn .mine-hl{color:var(--gold);font-variant-numeric:tabular-nums;font-weight:600}
+
+/* 进度层 */
+.bz-cinema--midnight .mine-pg{padding:0 22px 12px;display:flex;flex-direction:column;gap:14px}
+.bz-cinema--midnight .mine-step{display:flex;align-items:center;gap:9px;font-size:13px;color:var(--ink-2);margin-bottom:10px}
+.bz-cinema--midnight .mine-step:last-of-type{margin-bottom:0}
+.bz-cinema--midnight .mine-dot{flex:none;width:15px;height:15px;border-radius:50%;display:grid;place-items:center;
+  font-size:9.5px;border:1px solid var(--line);position:relative}
+.bz-cinema--midnight .mine-dot.ok{background:var(--gold);border-color:var(--gold);color:#161410}
+.bz-cinema--midnight .mine-dot.live{border-color:var(--gold);border-top-color:transparent;animation:cnMineSpin .8s linear infinite}
+.bz-cinema--midnight .mine-v{margin-left:auto;font-variant-numeric:tabular-nums;color:var(--ink)}
+.bz-cinema--midnight .mine-track{height:3px;border-radius:2px;background:var(--line);overflow:hidden;position:relative}
+.bz-cinema--midnight .mine-track span{display:block;height:100%;width:0;border-radius:2px;transition:width var(--cn-m-base) ease;
+  background:linear-gradient(90deg,var(--gold),#f3cf87,var(--gold));background-size:220% 100%;
+  animation:cnMineSheen 1.8s linear infinite}
+.bz-cinema--midnight .mine-track.idle span{animation:none}
+@keyframes cnMineSheen{from{background-position:0 0}to{background-position:-220% 0}}
+.bz-cinema--midnight .mine-eta{margin-top:12px;font-size:11.5px;color:var(--ink-3);font-variant-numeric:tabular-nums}
+
+/* 五条流动窗口 */
+.bz-cinema--midnight .mine-stream{flex:none;margin:0 22px 18px;overflow:hidden}
+.bz-cinema--midnight .mine-stream .mine-rows{transition:transform var(--cn-m-move) var(--cn-e-move)}
+.bz-cinema--midnight .mine-stream .mine-row{height:34px;padding:0 9px;cursor:default;animation:none}
+.bz-cinema--midnight .mine-si{flex:none;width:16px;height:16px;display:grid;place-items:center}
+.bz-cinema--midnight .mine-spin{width:12px;height:12px;border-radius:50%;border:1.5px solid var(--line);
+  border-top-color:var(--gold);animation:cnMineSpin .8s linear infinite;display:block}
+.bz-cinema--midnight .mine-hollow{width:11px;height:11px;border-radius:50%;border:1px solid var(--line);display:block}
+.bz-cinema--midnight .mine-grp{width:48px;text-align:right;font-size:11.5px;color:var(--ink-3)}
+.bz-cinema--midnight .mine-pst{flex:none;width:60px;text-align:right;font-size:11.5px;color:var(--ink-3);letter-spacing:.04em}
+.bz-cinema--midnight .mine-pst.run{color:var(--gold)}
+.bz-cinema--midnight .mine-pst.ok{color:var(--ink-2)}
+
+/* 触屏悬浮隔离（呈报#9 / F4）：:hover 一律包在 (hover: hover) 里，触屏不粘滞 */
+@media (hover: hover) {
+.bz-cinema--midnight .mine-x:hover{border-color:var(--line);color:var(--ink)}
+.bz-cinema--midnight .mine-bar-c:hover,
+.bz-cinema--midnight .mine-row:hover{background:var(--chip)}
+.bz-cinema--midnight .mine-row.lib:hover{background:none}
+.bz-cinema--midnight .mine-btn.gold:hover{filter:brightness(1.08)}
+.bz-cinema--midnight .mine-btn.ghost:hover{color:var(--ink);border-color:var(--ink-3)}
+.bz-cinema--midnight .mine-btn.link:hover{color:var(--ink-2)}
+}

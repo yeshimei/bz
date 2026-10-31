@@ -36,7 +36,8 @@ describe('queryDoubanForPreview 生产通道（previewFn 未注入）', () => {
       calls.push(req.url);
       if (req.url.includes('apizero.cn')) return { status: 200, text: AZ_OK } as any;
       if (req.url.includes('/api/v2/movie/26647087')) {
-        return { status: 200, text: JSON.stringify({ pic: { large: 'https://img2.doubanio.com/view/photo/m_ratio_poster/public/p1.jpg' } }) } as any;
+        // 详情体带 title（真实的 subject 详情必有；解析判据认它区分「详情」与「别的 JSON」）
+        return { status: 200, text: JSON.stringify({ id: '26647087', title: '三体', pic: { large: 'https://img2.doubanio.com/view/photo/m_ratio_poster/public/p1.jpg' } }) } as any;
       }
       throw new Error('不应触达: ' + req.url);
     }) as any);

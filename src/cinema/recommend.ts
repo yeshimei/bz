@@ -15,7 +15,7 @@ import { STATUS_WATCHED, hasIllegalNameChar, ILLEGAL_NAME_HINT, avgRating } from
 import type { CinemaItem } from './state';
 import { M } from './state';
 import { refreshDataAndView } from './data';
-import { enqueueDoubanFetch } from './douban-queue';
+import { enqueueDoubanFetch, IMPORT_GAP_MS } from './douban-queue';
 
 /** 类型 → 默认 tag（加入想看用） */
 const GROUP_DEFAULT_TAG: Record<string, string> = {
@@ -167,19 +167,73 @@ export function parseRecommendJson(raw: string): any[] | null {
   }
 }
 
+/** 建档选项（quickAddWant / quickAddWatched 共用内核 addMovieNote） */
+export interface AddMovieOpts {
+  /** 批量导入用：不出逐条 toast、不逐条刷新——调用方统一统计 + 最后一次刷 */
+  silent?: boolean;
+  /** 豆瓣片单/收藏导入携带的 sid：队列直取 queryDoubanBySid（省一次名称检索） */
+  sid?: string;
+  /** 状态（缺省想看）；doing = 豆瓣「在看」导入 */
+  status?: 'want' | 'doing' | 'watched';
+  /** 我的评分 1~10（已看建档；豆瓣 5 星由调用方 ×2 映射过来） */
+  rating?: number | null;
+  /** 观影日期 YYYY-MM-DD（已看建档；缺省今天） */
+  date?: string | null;
+  /** 入队后的补抓间隔（缺省走队列全局 15s；批量导入给 IMPORT_GAP_MS） */
+  gapMs?: number;
+}
+
 /** 加入想看（AI 推荐条目 → 建笔记，状态键想看） */
 export async function quickAddWant(app: App, name: string, type: string, opts?: { silent?: boolean; sid?: string }): Promise<boolean> {
-  // 返回「是否实际建档」——批量导入按它汇总（跳过/失败为 false，调用方区分口径）
-  // silent（豆瓣片单批量导入用）：不出逐条 toast、不逐条刷新——调用方统一统计 + 最后一次刷
-  const quiet = !!opts?.silent;
+  return addMovieNote(app, name, type, { ...opts, status: 'want' });
+}
+
+/**
+ * 加入已看（**豆瓣收藏导入专用**）：状态键已看 + 评分 + 观影日期/已看日期。
+ * 与 quickAddWant 同一内核（建档 / 队列 / 域事件单源，不各写一份）。
+ * 返回「是否实际建档」——批量导入按它汇总（跳过/失败为 false，调用方区分口径）
+ */
+export async function quickAddWatched(
+  app: App,
+  name: string,
+  type: string,
+  opts?: { silent?: boolean; sid?: string; rating?: number | null; date?: string | null },
+): Promise<boolean> {
+  return addMovieNote(app, name, type, { ...opts, status: 'watched' });
+}
+
+/**
+ * 豆瓣「想看 / 在看 / 已看」三状态导入共用入口（详见 openDoubanMineSync）：
+ * 与 quickAddWant 同一内核，状态由调用方按豆瓣页面给；已看带评分与标记日期。
+ */
+export async function quickAddFromDouban(
+  app: App,
+  name: string,
+  type: string,
+  status: 'want' | 'doing' | 'watched',
+  opts?: { silent?: boolean; sid?: string; rating?: number | null; date?: string | null },
+): Promise<boolean> {
+  return addMovieNote(app, name, type, { ...opts, status, gapMs: IMPORT_GAP_MS });
+}
+
+/**
+ * 建档内核（**单源**）：建《X》.md → 入抓取队列 → 补发 movie 域事件。
+ * 已看建档多写「评分 / 已看日期」，观影日期取传入的标记日（没有就用今天）。
+ */
+async function addMovieNote(app: App, name: string, type: string, opts: AddMovieOpts = {}): Promise<boolean> {
+  const quiet = !!opts.silent;
+  const statusKey = opts.status ?? 'want';
+  const watched = statusKey === 'watched';
+  const doing = statusKey === 'doing';
+  const statusLabel = watched ? '已看' : doing ? '在看' : '想看';
   const trimmedName = typeof name === 'string' ? name.trim() : '';
   if (!trimmedName) {
-    if (!quiet) notice('推荐条目缺少片名，已跳过加入想看');
+    if (!quiet) notice(watched ? '条目缺少片名，已跳过' : '推荐条目缺少片名，已跳过加入想看');
     return false;
   }
   // 非法字符校验（深审批A P3-7）：名称进文件名《X》.md，AI 返回的 title 不受控
   if (hasIllegalNameChar(trimmedName)) {
-    if (!quiet) notice(`${ILLEGAL_NAME_HINT}，已跳过加入想看`, 'error');
+    if (!quiet) notice(`${ILLEGAL_NAME_HINT}，已跳过${watched ? '' : '加入想看'}`, 'error');
     return false;
   }
   const tag = GROUP_DEFAULT_TAG[type] || '电影';
@@ -194,28 +248,38 @@ export async function quickAddWant(app: App, name: string, type: string, opts?: 
     return false;
   }
   const now = localNow();
+  const day = String(opts.date || now).slice(0, 10);
+  const rating = typeof opts.rating === 'number' && opts.rating > 0 ? Math.round(opts.rating * 10) / 10 : null;
   // 观影日期加双引号（深审批A P3-8）：裸日期被真机 YAML 解析成 timestamp（Moment 对象）→ 英文星期；
-  // 状态单源键「状态」（评分编码 -1 已退役）
-  const content = `---
-tags:
-- ${tag}
-状态: 想看
-观影日期: "${now}"
-想看日期: "${now.slice(0, 10)}"
-海报: 
----
-`;
+  // 状态单源键「状态」（评分编码 -1 已退役）。已看建档的「观影日期」= 豆瓣标记日（排序戳）；
+  // 在看同样是「何时标进来看」，观影日期取标记日，另落「在看日期」供状态日期展示。
+  const fm = ['---', 'tags:', `- ${tag}`, `状态: ${statusLabel}`, `观影日期: "${watched || doing ? day : now}"`];
+  if (watched) {
+    fm.push(`已看日期: "${day}"`);
+    if (rating !== null) fm.push(`评分: ${rating}`);
+  } else if (doing) {
+    fm.push(`在看日期: "${day}"`);
+  } else {
+    fm.push(`想看日期: "${now.slice(0, 10)}"`);
+  }
+  fm.push('海报: ', '---', '');
   try {
-    const f = await app.vault.create(filePath, content);
-    if (!quiet) notice(`已加入想看：「${trimmedName}」`, 'success'); // 引号形制与全域一致（深审批A P3-16）
-    // 事件补发（smartcat 行为流观察；ADR-0087 cinema 接管）：created want
-    emitDomainEvent('movie', { kind: 'created', name: trimmedName, status: 'want', rating: null, review: null });
+    const f = await app.vault.create(filePath, fm.join('\n'));
+    if (!quiet) notice(`已加入${statusLabel}：「${trimmedName}」`, 'success'); // 引号形制与全域一致（深审批A P3-16）
+    // 事件补发（smartcat 行为流观察；ADR-0087 cinema 接管）
+    emitDomainEvent('movie', {
+      kind: 'created',
+      name: trimmedName,
+      status: statusKey,
+      rating,
+      review: null,
+    });
     // 入抓取队列（ADR-0113）：卡片 loading 反馈，无通知
-    enqueueDoubanFetch(f, trimmedName, opts?.sid); // 片单导入携带 sid：队列直取 queryDoubanBySid（省一次名称检索）
+    enqueueDoubanFetch(f, trimmedName, opts.sid, opts.gapMs ? { gapMs: opts.gapMs } : undefined);
     if (!quiet) refreshDataAndView(app); // silent：调用方批量收尾统一刷
     return true;
   } catch (e) {
-    notifySaveError(e, '加入想看');
+    notifySaveError(e, `加入${statusLabel}`);
     console.error(e);
     return false;
   }
