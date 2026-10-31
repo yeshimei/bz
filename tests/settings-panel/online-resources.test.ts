@@ -554,8 +554,14 @@ describe('无清单时外部工具不消失（2026-10-28 断网报障）', () =>
     const vault = newVault();
     // MockVault 没有绝对路径：补一个 adapter.getBasePath，让插件目录能被拼出来
     setApp({ vault: Object.assign(vault, { adapter: { getBasePath: () => '/vault' } }), workspace: {} } as any);
-    // 入口脚本与 system node 都「存在」：运行时解析判成就绪 → 行态 ready
-    setFsProbe((p) => p.endsWith('/downloads/tools/bili-downloader/cli.js') || p === 'C:/nodejs/node.exe');
+    // 入口脚本、就绪标记与 system node 都「存在」：运行时解析判成就绪 → 行态 ready
+    // （标记那一条是 2026-11-01 补的：只看入口脚本会把「解包解到一半」也算成已下载）
+    setFsProbe(
+      (p) =>
+        p.endsWith('/downloads/tools/bili-downloader/cli.js') ||
+        p.endsWith('/downloads/tools/bili-downloader/.bz-bundle.json') ||
+        p === 'C:/nodejs/node.exe',
+    );
     stubNodeOnPath('C:/nodejs/node.exe');
     routeFetch({ [REMOTE_MANIFEST]: new Error('ENOTFOUND'), [BACKUP_MANIFEST]: new Error('ETIMEDOUT') });
     try {

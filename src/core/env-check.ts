@@ -22,6 +22,7 @@ import { tryGetSettings } from './settings-provider';
 import { pluginRelDirOf } from './plugin-path';
 import { isMobileEnv } from './mobile';
 import { probeNodeRuntime, runtimeDiagnostics, vaultBasePathOf } from './tool-runtime';
+import { probeDep, PYTHON_VERSION_RE, type DepId } from './dep-runtime';
 import { getApp } from './app';
 import { DEFAULT_STORAGE_DIR, normalizeStorageDir } from './storage-path';
 
@@ -212,59 +213,38 @@ async function storageDirOf(): Promise<string> {
 }
 
 /**
- * 找 Python（脸谱导入微信记录要用）。
+ * 找 Python（脸谱导入微信记录、知识盒语音转写要用）。
  *
- * **只探测、不安装**：脸谱的依赖是 funasr/torch 这一档（pip 装下来 GB 级，还要 ffmpeg 与
- * 模型文件），自动装等于替用户下一个几 GB 的包再赌网络——这种事不能藏在「一键」后面。
- * 所以这一行永远不判红，只如实说「有没有」。
+ * **只探测、不安装**：装的动作在引导页 / 自检的补齐队列里（core/dep-runtime 的
+ * installDep），这里只回答「现在有没有、在哪、哪个版本」。
  *
  * 一个必须避开的坑：Windows 10/11 的 `%LOCALAPPDATA%\Microsoft\WindowsApps\python.exe`
  * 是**应用商店别名占位符**，每台机器都有、跑起来什么都不做（要么弹商店，要么直接退出）。
  * 只看 `where python` 会把它当成「已装 Python」，等脸谱真跑起来才报一个看不懂的错。
- * 所以拿到路径后必须真跑一次 `-V`，认输出里的版本号。
+ * 所以拿到路径后必须真跑一次 `-V`，认输出里的版本号——判据在 core/dep-runtime 的
+ * PYTHON_VERSION_RE（本函数只是它的薄封装，两边共用一条正则，免得漂）。
  */
 export function isRealPythonOutput(out: string): boolean {
-  return /Python\s+3\.\d+/i.test(String(out || ''));
+  return PYTHON_VERSION_RE.test(String(out || ''));
 }
 
-function pythonProbe(): { found: boolean; value: string } {
-  const configured = String(tryGetSettings()?.pythonPath || '').trim();
-  if (configured) return { found: true, value: `已配置：${configured}` };
-  if (typeof window === 'undefined') return { found: false, value: '未知（非桌面端）' };
-  let cp: any = null;
-  try {
-    cp = (window as any).require?.('child_process');
-  } catch {
-    cp = null;
+/** 一行探测结果的文案（包含来源——「插件内便携」和「系统里那份」对排查是两件事） */
+function depRow(app: unknown, id: DepId): { value: string; ok: boolean | null } {
+  const st = probeDep(app, id);
+  if (st.ok) {
+    const v = st.version ? ` ${st.version}` : '';
+    const where = st.via === 'bundled' ? '插件内便携' : st.via === 'settings' ? '设置里填的' : '系统 PATH';
+    // ffmpeg 这一项是两个入口（ffmpeg + ffprobe），第一入口的路径足够定位
+    const path = st.entries[0]?.path || '';
+    return { value: `${where}${v}${path ? `（${path}）` : ''}`, ok: true };
   }
-  if (!cp?.spawnSync) return { found: false, value: '未知' };
-
-  const win = typeof process !== 'undefined' && process.platform === 'win32';
-  const finder = win ? 'where' : 'which';
-  for (const name of ['python', 'python3']) {
-    let path = '';
-    try {
-      const r = cp.spawnSync(finder, [name], { encoding: 'utf8', windowsHide: true, timeout: 4000 });
-      path = String(r?.stdout || '')
-        .split(String.fromCharCode(10))
-        .map((x: string) => x.trim())
-        .filter(Boolean)[0] || '';
-    } catch {
-      path = '';
-    }
-    if (!path) continue;
-    // 真跑一次：占位符/坏装在 `where` 里也有，只有 `-V` 会说话
-    try {
-      const v = cp.spawnSync(path, ['-V'], { encoding: 'utf8', windowsHide: true, timeout: 8000 });
-      const out = `${v?.stdout || ''}${v?.stderr || ''}`;
-      if (isRealPythonOutput(out)) {
-        return { found: true, value: `${out.trim().split(String.fromCharCode(10))[0]}（${path}）` };
-      }
-    } catch {
-      /* 跑不起来 = 不是真 Python，继续找下一个 */
-    }
-  }
-  return { found: false, value: '未找到可用的 Python 3（脸谱导入微信记录时需要，其余功能不受影响）' };
+  const why = st.stale
+    ? `${st.stale}，需要重新指定或让 bz 装一份`
+    : id === 'python'
+      ? '未找到（语音转写与脸谱导入需要，引导页可一键装）'
+      : '未找到（视频压缩与录音转 wav 需要，引导页可一键装）';
+  // 不判红：缺了是「某些功能用不了」，不是「插件坏了」——但必须让人看见
+  return { value: why, ok: null };
 }
 
 /** 读 AI 是否已配（按当前服务商判；ollama 本地无鉴权视为已配） */
@@ -363,13 +343,17 @@ export async function environmentCheck(app: unknown): Promise<EnvCheckRow[]> {
     }
   }
 
-  const python = pythonProbe();
-  rows.push({
-    id: 'python',
-    key: 'Python 环境',
-    value: python.value,
-    ok: null, // 可选项：没装不判红，但要让人看见（脸谱导入需要）
-  });
+  // 两个本地运行时（Python / ffmpeg+ffprobe）：装法在 core/dep-runtime，这里只报状态。
+  // 2026-11-01 起它们能自动装了，所以文案里给出路（引导页 / 环境自检的补齐队列）。
+  for (const id of ['python', 'ffmpeg'] as DepId[]) {
+    const r = depRow(app, id);
+    rows.push({
+      id,
+      key: id === 'python' ? 'Python 环境' : '音视频工具',
+      value: r.value,
+      ok: r.ok,
+    });
+  }
 
   const ai = await aiConfigured();
   rows.push({

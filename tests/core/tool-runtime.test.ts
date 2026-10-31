@@ -124,13 +124,26 @@ describe('probeNodeRuntime / toolReadyState', () => {
     expect(rt).toMatchObject({ kind: 'none', path: '' });
   });
 
-  it('toolReadyState：已下载 → via=bundle；都没有 → via=none', () => {
+  it('toolReadyState：整包解完 → via=bundle；半截解包 / 都没有 → via=none', () => {
     stubNodeOnPath('C:/nodejs/node.exe');
-    setFsProbe(fsWith([`${PLUGIN}/downloads/tools/dock-watch/cli.js`, 'C:/nodejs/node.exe']));
+    const script = `${PLUGIN}/downloads/tools/dock-watch/cli.js`;
+    const marker = `${PLUGIN}/downloads/tools/dock-watch/.bz-bundle.json`;
+    // 整包解完 = 入口脚本 + 就绪标记都在
+    setFsProbe(fsWith([script, marker, 'C:/nodejs/node.exe']));
     expect(toolReadyState(appOf(), 'dock-watch')).toEqual({ ready: true, via: 'bundle' });
 
+    // 2026-11-01 补的判据：入口脚本落盘了但解包没解完（断网 / 磁盘满 / 路径超 260）——
+    // 脚本在、标记不在 → 不算就绪。这是用户报的「检测屏说已下载、内容屏又让下载」
+    // 和「下载失败了完成屏还说已下载」的同一个根因。
+    setFsProbe(fsWith([script, 'C:/nodejs/node.exe']));
+    expect(toolReadyState(appOf(), 'dock-watch')).toEqual({ ready: false, via: 'none' });
+
+    // 有标记但没 node：工具跑不起来，同样不算就绪
     resetNodeRuntimeCache();
     stubNodeOnPath(null);
+    setFsProbe(fsWith([script, marker]));
+    expect(toolReadyState(appOf(), 'dock-watch')).toEqual({ ready: false, via: 'none' });
+
     setFsProbe(() => false);
     expect(toolReadyState(appOf(), 'dock-watch')).toEqual({ ready: false, via: 'none' });
   });

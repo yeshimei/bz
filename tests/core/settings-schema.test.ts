@@ -97,12 +97,14 @@ describe('mainSettingsSchema：主设置页区块（issue 422 起 AI 页按模�
     expect(valuesOf('ollama')).toEqual(['auto', 'off', 'low', 'medium', 'high']); // 走 reasoning_effort
   });
 
-  it('Embedding 组（issue 422/ADR-0182 + 424/ADR-0184 + 427/ADR-0186 + 429 + 431/ADR-0189）：地址 / 模型 / 重排总闸 / 重排走 Jev / 重排模型五行', () => {
+  it('Embedding 组（issue 422/ADR-0182 + 424/ADR-0184 + 427/ADR-0186 + 429 + 431/ADR-0189）：地址 / 模型 / 装 Ollama / 重排总闸 / 重排走 Jev / 重排模型六行', () => {
     const rows = schema.groups[1].rows as Array<{
       name: string;
       type: string;
       desc?: string;
+      help?: string;
       placeholder?: string;
+      buttonText?: string;
       binding?: { key: string };
       actions?: Array<{ text: string }>;
       visibleWhen?: (s: SettingsSnapshot) => boolean;
@@ -110,39 +112,48 @@ describe('mainSettingsSchema：主设置页区块（issue 422 起 AI 页按模�
     // issue 424：第二行「移动端远程地址」删除（桌面端启动自动跟随本机 IP，无人看/改）
     // issue 427/429：第三行「启用重排」+ 第四行「重排模型」
     // issue 431/ADR-0189：第四行改「重排走 Jev」（通道二选一），「重排模型」退居第五行（本地通道专属）
+    // 2026-11-01：「装 Ollama 与向量模型」插在模型行之后（缺 Ollama/模型时的怎么装）
     expect(rows.map((r) => r.name)).toEqual([
       'Ollama 本地 URL',
       'Embedding 模型',
+      '装 Ollama 与向量模型',
       '启用重排',
       '重排走 Jev',
       '重排模型',
     ]);
-    expect(rows.map((r) => r.type)).toEqual(['text', 'text', 'toggle', 'toggle', 'text']);
-    expect(rows.map((r) => r.binding)).toEqual([
+    expect(rows.map((r) => r.type)).toEqual(['text', 'text', 'button', 'toggle', 'toggle', 'text']);
+    // 按钮行纯动作、不带键绑定（它不存任何设置，只开一张「怎么装」的说明卡）
+    expect(rows[2].binding).toBeUndefined();
+    expect(rows[2].buttonText).toBe('看怎么装');
+    expect(rows[2].help).toContain('Ollama');
+    expect(rows.filter((r) => r.binding).map((r) => r.binding)).toEqual([
       { key: 'secondBrainOllamaUrl' },
       { key: 'secondBrainEmbeddingModel' },
       { key: 'secondBrainRerank' },
       { key: 'secondBrainRerankJev' },
       { key: 'secondBrainRerankModel' },
     ]);
+    // 下列各行断言按角色取行，不再写死下标——组里以后再插引导行不会全体错位
+    const [urlRow, embedRow, , rerankRow, jevRow, modelRow] = rows;
     // 各键的消费口径零改动（secondbrain/config.ts / vector-store / ai-models 读取路径不变）
-    expect(rows[1].actions?.map((a) => a.text)).toEqual(['获取模型']);
-    expect(rows[1].desc).toBe('向量化使用的嵌入模型');
+    expect(urlRow.name).toBe('Ollama 本地 URL');
+    expect(embedRow.actions?.map((a) => a.text)).toEqual(['获取模型']);
+    expect(embedRow.desc).toBe('向量化使用的嵌入模型');
     // 重排模型行：同款「获取模型」弹窗（issue 429）；留空 = 回落到内置默认
-    expect(rows[4].actions?.map((a) => a.text)).toEqual(['获取模型']);
-    expect(rows[4].placeholder).toBe('dengcao/Qwen3-Reranker-4B:Q4_K_M');
-    expect(rows[4].desc).toBe('重排通道使用的模型');
+    expect(modelRow.actions?.map((a) => a.text)).toEqual(['获取模型']);
+    expect(modelRow.placeholder).toBe('dengcao/Qwen3-Reranker-4B:Q4_K_M');
+    expect(modelRow.desc).toBe('重排通道使用的模型');
     // 重排总闸常显（issue 431/ADR-0189）：8B 门收窄给本地通道，总闸不再绑嵌入模型；
     // 「总闸开着但无通道生效」的空转状态靠 desc 静态交代（Q7：本地需 8B / Jev 需 JEV 组密钥）
-    expect(rows[2].visibleWhen).toBeUndefined();
-    expect(rows[2].desc).toBe('召回结果再精排，相关笔记排序更准');
+    expect(rerankRow.visibleWhen).toBeUndefined();
+    expect(rerankRow.desc).toBe('召回结果再精排，相关笔记排序更准');
     // 「重排走 Jev」行：总闸开才显示（通道选择只在重排开启时有意义）
-    const jevRowVisible = (s: Record<string, unknown>) => rows[3].visibleWhen?.(snapOf(s)) === true;
+    const jevRowVisible = (s: Record<string, unknown>) => jevRow.visibleWhen?.(snapOf(s)) === true;
     expect(jevRowVisible({ secondBrainRerank: true })).toBe(true);
     expect(jevRowVisible({ secondBrainRerank: false })).toBe(false);
     expect(jevRowVisible({})).toBe(true); // 键缺省 = 总闸默认开
     // 重排模型行（本地通道专属）：8B 嵌入 ∧ 总闸非关 ∧ Jev 关——Jev 开时隐藏（二选一，无暗态）
-    const modelRowVisible = (s: Record<string, unknown>) => rows[4].visibleWhen?.(snapOf(s)) === true;
+    const modelRowVisible = (s: Record<string, unknown>) => modelRow.visibleWhen?.(snapOf(s)) === true;
     expect(modelRowVisible({ secondBrainEmbeddingModel: 'qwen3-embedding:8b', secondBrainRerank: true })).toBe(true);
     expect(modelRowVisible({ secondBrainEmbeddingModel: 'qwen3-embedding:8b', secondBrainRerank: true, secondBrainRerankJev: false })).toBe(true);
     expect(modelRowVisible({ secondBrainEmbeddingModel: 'qwen3-embedding:8b', secondBrainRerank: true, secondBrainRerankJev: true })).toBe(false);
