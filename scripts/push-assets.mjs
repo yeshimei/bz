@@ -173,6 +173,52 @@ function syncFiles(tag) {
       fs.cpSync(from, path.join(dstRel, f));
     }
   }
+  checkReleaseMatchesTag(tag);
+}
+
+/**
+ * 发布三件套必须与 tag 一致（2026-10-31 加）。
+ *
+ * 为什么：三件套是从**主仓工作区**拷的，而工作区可能带着没提交的改动——2026-10-31 推送时
+ * 主仓 styles.css 是另一条流程的半成品（dev-flows 回放器样式），跟着进了 releases/v1.36.0/，
+ * 用户从 CDN 装到的是「v1.36.0 的 main.js + 非 v1.36.0 的 styles.css」——混版三件套。
+ *
+ * 判据：tag 存在时，逐件比对「工作区文件」与「tag 里的同名文件」，不一致就报错停下。
+ * 差异有两种合法成因，都要人确认：
+ *  - tag 之后又修了 bug（要重新发版 → 打新 tag）；
+ *  - tag 后重出过产物但内容等价（极少）。
+ * 拿不准就 `git checkout v<版本> -- <文件>` 把工作区恢复成 tag 版再推。
+ */
+function checkReleaseMatchesTag(tag) {
+  try {
+    execFileSync('git', ['rev-parse', '--verify', `${tag}^{commit}`], { cwd: ROOT, stdio: 'ignore' });
+  } catch {
+    log(`仓库里没有 ${tag}（新版本还没打 tag）——跳过三件套与 tag 的一致性核对`);
+    return;
+  }
+  const mismatched = [];
+  for (const f of BUNDLE_FILES) {
+    const abs = path.join(ROOT, f);
+    if (!fs.existsSync(abs)) continue;
+    let tagged;
+    try {
+      tagged = execFileSync('git', ['show', `${tag}:${f}`], { cwd: ROOT, maxBuffer: 64 * 1024 * 1024 });
+    } catch {
+      continue; // tag 里没有这个文件（如新加的三件套成员）→ 不比
+    }
+    const cur = fs.readFileSync(abs);
+    if (!cur.equals(tagged)) mismatched.push(f);
+  }
+  if (!mismatched.length) {
+    log(`三件套与 ${tag} 一致 ✓`);
+    return;
+  }
+  console.error(`\n发布三件套与 ${tag} 不一致：${mismatched.join('、')}`);
+  console.error('工作区里的这些文件带着未提交的改动（或 tag 后重出过），跟 tag 版本不是同一份。');
+  console.error('要么打新 tag（改的是要发的内容），要么恢复成 tag 版：');
+  console.error(`  git checkout ${tag} -- ${mismatched.join(' ')}`);
+  console.error('确认无误后再跑本脚本。');
+  process.exit(1);
 }
 
 /** 只留最近 N 份发布 */
