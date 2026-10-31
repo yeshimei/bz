@@ -44,6 +44,10 @@ const FORCE_SQUASH = process.argv.includes('--force-squash');
 /** 强制重清 CDN 全量缓存（不管本次有没有变更）——jsDelivr 缓存逐 POP 各自为政，
  *  「没有变更就跳过清缓存」会让「再跑一次」这句提示自相矛盾（重跑时无变更，照样不清）。 */
 const RE_PURGE = process.argv.includes('--re-purge');
+/** 只做「上传 GitHub Release 资产」一步（tag 打完之后补跑用；幂等，--clobber 覆盖） */
+const UPLOAD_ONLY = process.argv.includes('--upload-only');
+/** 跳过 Release 上传（排查分发仓问题时用；默认会尝试传） */
+const NO_UPLOAD = process.argv.includes('--no-upload');
 
 /** 一个分发仓库最多留几份发布（客户端只会指向最新那份，旧的是给「指针还没更新就断网」的人兜底） */
 const RELEASES_KEEP = 3;
@@ -65,6 +69,17 @@ function assetsSlug() {
 }
 
 const SLUG = assetsSlug();
+/** 源码主仓 slug（Release 开在这里——下载计数、tag 冻结都归它，见 uploadReleaseAssets） */
+function sourceSlug() {
+  const src = fs.readFileSync(path.join(ROOT, 'src/core/remote-base.ts'), 'utf8');
+  const m = /export const REPO_SLUG = '([^']+)'/.exec(src);
+  if (!m) {
+    console.error('src/core/remote-base.ts 里找不到 REPO_SLUG —— 先修好它再发布');
+    process.exit(1);
+  }
+  return m[1];
+}
+const SOURCE_SLUG = sourceSlug();
 const TARGET = path.resolve(process.env.BZ_ASSETS_DIR || path.join(ROOT, '..', 'bz-assets'));
 const REMOTE = `https://github.com/${SLUG}.git`;
 
@@ -117,6 +132,114 @@ function readVersion() {
     process.exit(1);
   }
   return { version, tag: `v${version}` };
+}
+
+/**
+ * 上传 GitHub Release 资产（2026-10-31 新增：Release 是客户端的**主下载通道**，
+ * 见 src/core/remote-base.ts 的 releaseDownloadUrl——按 tag 冻结 + 自带下载计数）。
+ *
+ * 上传清单：
+ *   downloads/** 逐字平铺（资产名保留相对路径，GitHub 支持带斜杠的资产名）
+ *   三件套（main.js / manifest.json / styles.css，平铺在 Release 根）
+ *
+ * 时序：发布流程里本脚本跑在**打 tag 之前**，那时 Release 还不存在——正常跳过并提示，
+ * 打完 tag 后 `node scripts/push-assets.mjs --upload-only` 补跑。Release 已存在时
+ * --clobber 覆盖（同名资产更新为同内容，幂等）。
+ *
+ * 上传失败**不算发布失败**（raw/jsDelivr 兜底通道照常工作），但要大声说出来——
+ * 那是「这版发布拿不到计数」的唯一线索。
+ */
+async function uploadReleaseAssets(tag, { fromTag }) {
+  if (NO_UPLOAD || DRY) {
+    log('跳过 Release 资产上传（--no-upload / --dry-run）');
+    return;
+  }
+  // Release 存在于**源码主仓**（REPO_SLUG），不是分发镜像仓
+  let exists = true;
+  try {
+    execFileSync('gh', ['release', 'view', tag, '-R', `https://github.com/${SOURCE_SLUG}`], { stdio: 'ignore' });
+  } catch {
+    exists = false;
+  }
+  if (!exists) {
+    if (UPLOAD_ONLY) {
+      console.error(`Release ${tag} 不存在（tag 还没打？）——先走完发布流程，再补跑本命令`);
+      process.exit(1);
+    }
+    log(`Release ${tag} 还不存在（发布顺序：本脚本 → 打 tag）——打完 tag 后补跑 node scripts/push-assets.mjs --upload-only`);
+    return;
+  }
+
+  // 收集待传文件：downloads/** 全部 + 三件套（三件套来源与 syncFiles 同口径：tag 里那份优先）
+  let files = [];
+  const walk = (dir, prefix) => {
+    for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
+      const abs = path.join(dir, e.name);
+      const rel = `${prefix}${e.name}`;
+      if (e.isDirectory()) walk(abs, `${rel}/`);
+      else files.push({ rel, abs });
+    }
+  };
+  const downloadsMirror = path.join(TARGET, 'downloads');
+  if (fs.existsSync(downloadsMirror)) {
+    walk(downloadsMirror, 'downloads/');
+    // 皮肤只发整包（skins.zip），单个 css 不上 Release：旧客户端不知道 Release 通道
+    // （走 raw/jsDelivr，镜像照旧）；新客户端走 skinsPack；回落逐文件时 Release 404
+    // 只是跳过、接着试 raw/jsDelivr。省 26 个资产，列表干净一截。
+    files = files.filter((f) => !f.rel.startsWith('downloads/skins/'));
+  }
+  else if (UPLOAD_ONLY) {
+    console.error('分发仓没有 downloads/——先跑一次完整 push-assets 同步');
+    process.exit(1);
+  }
+  for (const f of BUNDLE_FILES) {
+    const tmp = path.join(TARGET, '.release-upload', f);
+    if (fromTag?.[f]) {
+      fs.mkdirSync(path.dirname(tmp), { recursive: true });
+      fs.writeFileSync(tmp, fromTag[f]);
+      files.push({ rel: f, abs: tmp });
+    } else {
+      const abs = path.join(ROOT, f);
+      if (!fs.existsSync(abs)) {
+        console.error(`缺 ${f}：Release 资产传不全——先跑构建`);
+        process.exit(1);
+      }
+      files.push({ rel: f, abs });
+    }
+  }
+
+  // 资产名扁平化（2026-10-31 立，review #1）：`gh release upload` **只取文件 basename**，
+  // 造不出带斜杠的资产名（GitHub 网页/API 支持，gh 不支持）。照仓库路径传上去，
+  // `downloads/manifest.json` 会落成 `manifest.json`，与三件套那份撞名（422——v1.37.0 首发
+  // 就是这么翻的车）；而客户端 Release 通道请求的偏偏是带 `downloads/` 前缀的地址。
+  // 两端统一扁平名才对得上：本侧按同一规则暂存后再传，客户端侧见
+  // remote-base.releaseDownloadUrl 的 `/` → `-` 映射。
+  const flatAssetName = (rel) => String(rel).replace(/^\/+/, '').replace(/\//g, '-');
+  const stageDir = path.join(TARGET, '.release-upload');
+  const toUpload = files.map((f) => {
+    const asset = flatAssetName(f.rel);
+    if (path.basename(f.abs) === asset) return String(f.abs);
+    const tmp = path.join(stageDir, asset);
+    fs.mkdirSync(path.dirname(tmp), { recursive: true });
+    fs.copyFileSync(f.abs, tmp);
+    return tmp;
+  });
+
+  log(`上传 Release 资产 ${toUpload.length} 个（--clobber）`);
+  if (NO_PUSH) {
+    log('跳过（--no-push）');
+    return;
+  }
+  const args = ['release', 'upload', tag, '-R', `https://github.com/${SOURCE_SLUG}`, '--clobber', ...toUpload];
+  try {
+    execFileSync('gh', args, { stdio: ['ignore', 'pipe', 'pipe'] });
+    log(`Release 资产已上传：https://github.com/${SOURCE_SLUG}/releases/tag/${tag}`);
+  } catch (e) {
+    console.error(`\n⚠ Release 资产上传失败（不影响 raw/jsDelivr 通道，但这版拿不到下载计数）：`);
+    console.error(String(e.stderr || e.stdout || e.message).trim().split('\n').slice(-8).join('\n'));
+  } finally {
+    fs.rmSync(path.join(TARGET, '.release-upload'), { recursive: true, force: true });
+  }
 }
 
 /** 版本号比较（只用于给 releases/ 排序，够用就行） */
@@ -191,6 +314,7 @@ function syncFiles(tag) {
       fs.cpSync(from, path.join(dstRel, f));
     }
   }
+  return fromTag;
 }
 
 /**
@@ -374,3 +498,7 @@ console.log(`  清单 ${base}/downloads/manifest.json`);
 console.log(`  指针 ${base}/downloads/version.json`);
 console.log(`  本体 ${base}/releases/${tag}/main.js`);
 if (DRY) console.log('\n（dry-run：以上都没真的写盘、没推送）');
+
+// Release 资产上传（源码主仓）——2026-10-31 发现这步定义了却没接进主流程，v1.37.0 首发资产因此漏传。
+// 必须在 syncFiles 之后：三件套取分发仓 releases/<tag>/ 里 tag 冻结的那份。
+await uploadReleaseAssets(tag, { fromTag: readBundleFromTag(tag) });

@@ -17,6 +17,7 @@
 //   node scripts/build-manifest.mjs --check  # 只校验清单与产物同步（守卫测试复用）
 import fs from 'node:fs';
 import path from 'node:path';
+import zlib from 'node:zlib';
 import { createHash } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 
@@ -112,7 +113,7 @@ const ROW_ORDER = [
 // ── 反向守卫（issue 490）：downloads/ 顶层不允许存在清单外的文件 ──
 // 新产物进目录但忘了登记 DOCS → 构建期就炸，而不是发布后插件端校验才失败
 // （那些失败发生在用户机器上，构建期不查就没人查）。清单文件自身、发布指针与皮肤子目录豁免。
-const MANIFEST_GUARD_IGNORE = new Set(['manifest.json', 'version.json', ...DOCS.map((d) => d.file)]);
+const MANIFEST_GUARD_IGNORE = new Set(['manifest.json', 'version.json', 'skins.zip', ...DOCS.map((d) => d.file)]);
 for (const name of fs.readdirSync(path.join(ROOT, 'downloads'), { withFileTypes: true })) {
   if (!name.isFile() || MANIFEST_GUARD_IGNORE.has(name.name)) continue;
   problems.push(
@@ -172,15 +173,135 @@ if (problems.length) {
   process.exit(1);
 }
 
-const manifestText = JSON.stringify({ version: CATALOG.version ?? 1, docs, skins, rowOrder: ROW_ORDER }, null, 2) + '\n';
+// ── 皮肤整包 skins.zip（2026-10-31）：全部 skins 的 css 打成一个归档 ──
+// 客户端下载一次替代最多 26 次逐文件请求（core/skin-pack.ts 的整包快路）。
+// 归档格式：deflate-raw（zlib.deflateRawSync ↔ 插件端 DecompressionStream/zlib.inflateRawSync
+// 同一算法），crc32 写进目录供解包校验；时间字段固定为 0——同内容出同字节，
+// 重复跑发布流程不会让 sha256 无意义地变化。
+// 逐文件 css 照旧保留在 downloads/skins/：旧客户端（不认识 skinsPack 字段）走它，
+// 离线包镜像也是逐字结构，互为兜底——schema 只增不改。
+const SKINS_ZIP_REL = 'skins.zip';
+const crcTable = (() => {
+  const t = new Uint32Array(256);
+  for (let i = 0; i < 256; i++) {
+    let c = i;
+    for (let k = 0; k < 8; k++) c = c & 1 ? 0xedb88320 ^ (c >>> 1) : c >>> 1;
+    t[i] = c >>> 0;
+  }
+  return t;
+})();
+function crc32(buf) {
+  let c = 0xffffffff;
+  for (let i = 0; i < buf.length; i++) c = crcTable[(c ^ buf[i]) & 0xff] ^ (c >>> 8);
+  return (c ^ 0xffffffff) >>> 0;
+}
+function dosDateTime(ms) {
+  // 固定 2000-01-01 00:00:00（DOS 时间），与内容无关 → 字节确定
+  const d = ms === undefined ? new Date(2000, 0, 1) : new Date(ms);
+  const time = ((d.getHours() || 0) << 11) | ((d.getMinutes() || 0) << 5) | ((d.getSeconds() || 0) >> 1);
+  const date = (((d.getFullYear() || 2000) - 1980) << 9) | (((d.getMonth() || 0) + 1) << 5) | (d.getDate() || 1);
+  return { time, date };
+}
+function buildSkinsZip() {
+  const files = [];
+  const walk = (dir, prefix) => {
+    for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
+      const abs = path.join(dir, e.name);
+      const rel = `${prefix}${e.name}`;
+      if (e.isDirectory()) walk(abs, `${rel}/`);
+      else files.push({ rel, buf: fs.readFileSync(abs) });
+    }
+  };
+  walk(path.join(ROOT, 'downloads/skins'), 'skins/');
+  files.sort((a, b) => (a.rel < b.rel ? -1 : 1));
+  if (!files.length) {
+    console.error('downloads/skins/ 是空的——先跑 pnpm skin-pack');
+    process.exit(1);
+  }
 
-// ── 发布指针 downloads/version.json（2026-10-28 对外分发） ──
-// 自更新分两段：先读这个小文件拿到「最新发布是哪个 tag」，再去那个 tag 下拉三件套。
-// 为什么不能只靠 API：GitHub API 限流（按 IP，同一出口整个局域网共用）且国内常在超时名单里；
-// 本指针走的是与在线资源同一套双源，失败口径/被墙兜底全部复用。
+  const chunks = [];
+  const central = [];
+  let offset = 0;
+  const u16 = (v) => { const b = Buffer.alloc(2); b.writeUInt16LE(v); return b; };
+  const u32 = (v) => { const b = Buffer.alloc(4); b.writeUInt32LE(v >>> 0); return b; };
+  for (const { rel, buf } of files) {
+    const comp = zlib.deflateRawSync(buf, { level: 9 });
+    const useComp = comp.length < buf.length; // 压不动的小文件就地 store（method 0）
+    const data = useComp ? comp : buf;
+    const method = useComp ? 8 : 0;
+    const { time, date } = dosDateTime();
+    const name = Buffer.from(rel, 'utf8');
+    const crc = crc32(buf);
+
+    const local = Buffer.concat([
+      u32(0x04034b50), u16(20), u16(0), u16(method), u16(time), u16(date),
+      u32(crc), u32(data.length), u32(buf.length), u16(name.length), u16(0), name,
+    ]);
+    chunks.push(local, data);
+    central.push(
+      Buffer.concat([
+        u32(0x02014b50), u16(20), u16(20), u16(0), u16(method), u16(time), u16(date),
+        u32(crc), u32(data.length), u32(buf.length), u16(name.length),
+        u16(0), u16(0), u16(0), u16(0), u32(0), u32(offset), name,
+      ]),
+    );
+    offset += local.length + data.length;
+  }
+  const cdStart = offset;
+  const cd = Buffer.concat(central);
+  const eocd = Buffer.concat([
+    u32(0x06054b50), u16(0), u16(0), u16(files.length), u16(files.length),
+    u32(cd.length), u32(cdStart), u16(0),
+  ]);
+  return Buffer.concat([...chunks, cd, eocd]);
+}
+
+let skinsPack;
+if (!CHECK_ONLY) {
+  const zip = buildSkinsZip();
+  fs.writeFileSync(path.join(ROOT, 'downloads', SKINS_ZIP_REL), zip);
+  console.log(`产出 downloads/${SKINS_ZIP_REL}（${skins.length} 套皮肤，${(zip.length / 1024).toFixed(0)} KB）`);
+  skinsPack = {
+    file: SKINS_ZIP_REL,
+    sha256: createHash('sha256').update(zip).digest('hex'),
+    size: zip.length,
+  };
+} else if (fs.existsSync(path.join(ROOT, 'downloads', SKINS_ZIP_REL))) {
+  // --check 模式：zip 已在就顺带核一次（不是本脚本产出的场景不硬卡）
+  const zip = fs.readFileSync(path.join(ROOT, 'downloads', SKINS_ZIP_REL));
+  skinsPack = {
+    file: SKINS_ZIP_REL,
+    sha256: createHash('sha256').update(zip).digest('hex'),
+    size: zip.length,
+  };
+}
+
+// ── 插件版本（发布指针的两处产出共用）──
 // 指针里的 tag 按 `<repo 版本号>` 推：tag 名就是 `v<manifest.json 的 version>`，
 // 发布流程必须（1）先 bump manifest.json（2）构建（3）打同名 tag（4）push。
 const PLUGIN_VERSION = JSON.parse(fs.readFileSync(path.join(ROOT, 'manifest.json'), 'utf8')).version;
+
+const manifestText =
+  JSON.stringify(
+    {
+      version: CATALOG.version ?? 1,
+      docs,
+      skins,
+      ...(skinsPack ? { skinsPack } : {}),
+      rowOrder: ROW_ORDER,
+      // 发布指针（2026-10-31 合并进清单）：新客户端检查更新直接读清单顶层 `release`，
+      // 一次请求同时拿到「有没有新版」和「在线资源清单」。字段名不能叫 version——
+      // 那个名字已被清单 schema 版本占用（只增不改）。version.json 照常产出：
+      // v1.36 及更早的客户端只认它（代码里硬编码 raw 地址，与 Release 通道无关），
+      // 停产等于把老用户焊死在旧版；等老客户端沉淀完再退役。
+      release: { version: PLUGIN_VERSION, tag: `v${PLUGIN_VERSION}` },
+    },
+    null,
+    2,
+  ) + '\n';
+
+// ── 发布指针 downloads/version.json（2026-10-28 对外分发；2026-10-31 起新客户端改读清单
+//    顶层 `release`，此文件仅为 v1.36 及更早客户端保留——它们硬编码 raw 地址，不碰 Release）──
 const POINTER_OUT = path.join(ROOT, 'downloads/version.json');
 const pointerText = JSON.stringify({ version: PLUGIN_VERSION, tag: `v${PLUGIN_VERSION}` }, null, 2) + '\n';
 const prevPointer = fs.existsSync(POINTER_OUT) ? fs.readFileSync(POINTER_OUT, 'utf8') : null;
@@ -201,6 +322,10 @@ if (prev === manifestText) {
     for (const p of problems) console.error('  - ' + p);
     process.exit(1);
   }
+  // 内容没变就不必重写（省一次磁盘、git 也不会脏），但**必须动一下 mtime**：
+  // release-steps 用「产物比起点新」判定这一步是否真跑过，不 touch 会被误判成
+  // 「manifest 步漏跑」——那正是它要拦的静默事故，只是这次是它自己误报。
+  fs.utimesSync(OUT, new Date(), new Date());
   console.log(`清单与产物同步 ✓（docs ${docs.length} + skins ${skins.length} 条）`);
   process.exit(0);
 }

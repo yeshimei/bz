@@ -98,8 +98,9 @@ describe('probeNetwork：通道可达性', () => {
     vi.mocked(requestUrl).mockReset();
   });
 
-  const RAW = REPO_BASES[0];
-  const CDN = REPO_BASES[1];
+  // 2026-10-31 起 raw 退场：主通道探 GitHub 仓库页（Release 下载同域），备用探 jsDelivr
+  const GH = 'https://github.com/yeshimei/bz';
+  const CDN = REPO_BASES[0];
 
   /** 按域名分派：命中的 resolve，其余按给的错误 reject */
   function route(ok: (url: string) => boolean, err = 'net::ERR_CONNECTION_RESET'): void {
@@ -119,7 +120,7 @@ describe('probeNetwork：通道可达性', () => {
   });
 
   it('主通道被墙、备用通 → 各说各的（国内最常见的那一种）', async () => {
-    route((u) => !u.startsWith(RAW), 'net::ERR_CONNECTION_RESET');
+    route((u) => u.startsWith(CDN), 'net::ERR_CONNECTION_RESET');
     const net = await probeNetwork();
     expect(net.github).toBe(false);
     expect(net.githubError).toBe('连接被重置（常见于被墙）');
@@ -128,7 +129,7 @@ describe('probeNetwork：通道可达性', () => {
   });
 
   it('只有慢的那个入口通 → 备用通道取最快的那条', async () => {
-    route((u) => !u.startsWith(RAW));
+    route((u) => u.startsWith(CDN));
     const net = await probeNetwork();
     expect(net.jsdelivr).toBe(true);
     expect(net.jsdelivrMs).toBeGreaterThanOrEqual(0);
@@ -145,7 +146,7 @@ describe('probeNetwork：通道可达性', () => {
 
   it('404 也算通：探的是「网络通不通」，不是「这个文件在不在」', async () => {
     vi.mocked(requestUrl).mockImplementation((async (opts: { url: string }) => ({
-      status: opts.url === RAW ? 404 : 200,
+      status: opts.url === GH ? 404 : 200,
       text: '',
     })) as never);
     const net = await probeNetwork();

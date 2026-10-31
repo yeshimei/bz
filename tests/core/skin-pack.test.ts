@@ -36,7 +36,7 @@ import type { DownloadManifest } from '../../src/core/download-manifest';
 
 const MANIFEST_CACHE_PATH = '.obsidian/plugins/bz/downloads/manifest.json';
 const MANIFEST_PATH = '.obsidian/plugins/bz/manifest.json';
-const REMOTE_MANIFEST = 'https://raw.githubusercontent.com/yeshimei/bz-assets/master/downloads/manifest.json';
+const REMOTE_MANIFEST = 'https://fastly.jsdelivr.net/gh/yeshimei/bz-assets@master/downloads/manifest.json';
 const OLD_INDEX_PATH = '.obsidian/plugins/bz/skins/index.json'; // 旧落位（插件目录根），applySkinManifest 的幂等清扫目标
 
 const appOf = (vault: MockVault) => ({ vault, workspace: {} }) as any;
@@ -229,7 +229,7 @@ describe('downloadSkinUpdates（用户显式下载：只拉非就绪）', () => 
     vault.files.set('.obsidian/plugins/bz/downloads/skins/bookshelf/noir.css', CSS_NOIR); // 已就绪 → 不拉
     routeFetch({
       [REMOTE_MANIFEST]: manifestText([noir, kraft]), // 混在请求里也无妨（真实流程先 refreshManifest）
-      'https://raw.githubusercontent.com/yeshimei/bz-assets/master/downloads/skins/bookshelf/kraft.css': CSS_KRAFT,
+      'https://fastly.jsdelivr.net/gh/yeshimei/bz-assets@master/downloads/skins/bookshelf/kraft.css': CSS_KRAFT,
     });
 
     const res = await downloadSkinUpdates(appOf(vault), { version: 1, docs: [], skins: [noir, kraft] });
@@ -243,7 +243,7 @@ describe('downloadSkinUpdates（用户显式下载：只拉非就绪）', () => 
   it('sha256 不匹配（被篡改/CDN 错版）→ 拒收计 failed，不注入', async () => {
     const vault = newVault();
     const noir = entryOf('noir', CSS_NOIR);
-    const bad = 'https://raw.githubusercontent.com/yeshimei/bz-assets/master/downloads/skins/bookshelf/noir.css';
+    const bad = 'https://fastly.jsdelivr.net/gh/yeshimei/bz-assets@master/downloads/skins/bookshelf/noir.css';
     routeFetch({
       [bad]: '.bz-bs-skin-noir{color:red}', // 内容变了但 hash 是旧的
       'https://cdn.jsdelivr.net/gh/yeshimei/bz-assets@master/downloads/skins/bookshelf/noir.css': '.bz-bs-skin-noir{color:red}',
@@ -263,7 +263,7 @@ describe('downloadSkinUpdates（用户显式下载：只拉非就绪）', () => 
     vault.files.set('.obsidian/plugins/bz/downloads/skins/bookshelf/noir.css', CSS_NOIR);
     const fresh = entryOf('noir', '/* noir v2 全新内容 */');
     routeFetch({
-      'https://raw.githubusercontent.com/yeshimei/bz-assets/master/downloads/skins/bookshelf/noir.css': new Error('ENOTFOUND'),
+      'https://fastly.jsdelivr.net/gh/yeshimei/bz-assets@master/downloads/skins/bookshelf/noir.css': new Error('ENOTFOUND'),
       'https://cdn.jsdelivr.net/gh/yeshimei/bz-assets@master/downloads/skins/bookshelf/noir.css': new Error('ETIMEDOUT'),
     });
 
@@ -281,9 +281,9 @@ describe('downloadSkinUpdates（用户显式下载：只拉非就绪）', () => 
     const fresh = entryOf('noir', '/* noir v2 全新内容 */');
     const kraft = entryOf('kraft', CSS_KRAFT);
     routeFetch({
-      'https://raw.githubusercontent.com/yeshimei/bz-assets/master/downloads/skins/bookshelf/noir.css': '/* noir v2 全新内容 */',
+      'https://fastly.jsdelivr.net/gh/yeshimei/bz-assets@master/downloads/skins/bookshelf/noir.css': '/* noir v2 全新内容 */',
       'https://cdn.jsdelivr.net/gh/yeshimei/bz-assets@master/downloads/skins/bookshelf/noir.css': '/* noir v2 全新内容 */',
-      'https://raw.githubusercontent.com/yeshimei/bz-assets/master/downloads/skins/bookshelf/kraft.css': CSS_KRAFT,
+      'https://fastly.jsdelivr.net/gh/yeshimei/bz-assets@master/downloads/skins/bookshelf/kraft.css': CSS_KRAFT,
       'https://cdn.jsdelivr.net/gh/yeshimei/bz-assets@master/downloads/skins/bookshelf/kraft.css': CSS_KRAFT,
     });
 

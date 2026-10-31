@@ -1,9 +1,10 @@
 /* ============================================================
  * bz · 新版本自更新（core/self-update.ts，单源）
  *
- * 通道（2026-10-28 对外分发重做）：**发布指针 + tag**
- *  1. 指针：master 上的 `downloads/version.json` = `{ version, tag }`（几百字节，双源拉取）；
- *  2. 产物：该 tag 下的三件套 manifest.json / main.js / styles.css。
+ * 通道（2026-10-28 对外分发重做；2026-10-31 起 raw 退场、Release 主 / jsDelivr 备）：
+ *  1. 指针：Release latest 的 `downloads/manifest.json` 顶层 `release`（合并形态），
+ *     老指针 `downloads/version.json` 兜底（v1.36 及更早客户端只认它）；
+ *  2. 产物：该 tag 下的三件套 manifest.json / main.js / styles.css（Release 资产优先）。
  * 两段分开的理由见 core/remote-base.ts 文件头——指针必须恒可达，产物必须是冻结的提交。
  *
  * 行为分两档（设置键 `autoUpdate`，缺省**开**；2026-10-30 用户拍板）：
@@ -24,7 +25,9 @@
 import { requestUrl } from 'obsidian';
 import { notice } from './notice';
 import { pluginVaultPath } from './plugin-path';
-import { downloadRemotesFor, isValidTag, RELEASE_POINTER, repoRemotesForTag } from './remote-base';
+import { downloadRemotesFor, isValidTag, releaseDownloadUrl, RELEASE_POINTER, REPO_SLUG, repoRemotesForTag } from './remote-base';
+import { MANIFEST_FILE as DOWNLOAD_MANIFEST_FILE } from './download-manifest';
+import { noteReleaseTag } from './remote-asset';
 
 /** 巡检节流：24 小时 */
 const CHECK_INTERVAL_MS = 24 * 3600 * 1000;
@@ -52,6 +55,11 @@ const LAST_CHECK_KEY = 'bz-selfupdate:last-check';
 const PENDING_KEY = 'bz-selfupdate:pending';
 /** 发现但未安装的新版（`{"version":"1.34.0","tag":"v1.34.0","at":123}`） */
 const AVAILABLE_KEY = 'bz-selfupdate:available';
+/** 发布指针的免 tag 地址：`releases/latest/download/<资产名>`，GitHub 302 到最新发布的同名资产
+ *  （latest 语义 = 非 draft 非 prerelease，与「note/资产齐了才转正」的发布口径一致）。
+ *  2026-10-31 起指针合并进在线资源清单（顶层 `release` 字段），清单优先——一次请求同时
+ *  拿到「有没有新版」和「在线资源清单」。资产名扁平化见 remote-base.releaseDownloadUrl。 */
+const LATEST_MANIFEST_URL = `https://github.com/${REPO_SLUG}/releases/latest/download/downloads-manifest.json`;
 
 /** 备份目录（相对插件安装目录；点前缀是「不是下载产物」的视觉声明，也避开 downloads/ 的清单守卫） */
 const BACKUP_DIR = 'downloads/.backup';
@@ -123,9 +131,9 @@ async function fetchText(url: string, timeoutMs: number = FETCH_TIMEOUT_MS): Pro
 }
 
 /**
- * 依序试一组 URL（raw 主通道 → jsDelivr 各边缘入口）。
+ * 依序试一组 URL（Release 资产在前 → jsDelivr 各边缘入口）。
  *
- * 第一个单独试（raw 最新鲜），失败了把**其余通道并发**打出去：串行试五条时，
+ * 第一个单独试（Release 主通道），失败了把**其余通道并发**打出去：串行试五条时，
  * 国内半通网络下用户要盯着转圈半分钟才看到「网络不通」。
  */
 async function fetchFirst(
@@ -235,21 +243,92 @@ export async function selfUpdateState(app: unknown): Promise<SelfUpdateState> {
   };
 }
 
-/** 读发布指针 → `{ version, tag }`；指针坏/字段缺 → 抛人话错误 */
-async function fetchPointer(): Promise<{ version: string; tag: string }> {
-  const { text, url } = await fetchFirst(downloadRemotesFor(RELEASE_POINTER));
+/** 解析一份「可能是发布指针」的内容：**解析不出就返回 null，不抛错**。
+ *
+ *  为什么不抛错：通道链上会拿到「HTTP 200 但不是指针」的内容——分发仓镜像上的
+ *  `downloads/manifest.json` 可能还是**没有 `release` 字段的旧清单**（v1.36 及更早的产物），
+ *  它顶层 `version` 是清单 schema 版本（数字 1）、没有 tag。2026-10-31 v1.37.0 首发翻车就是
+ *  这里抛了「发布指针的 tag 不可用」，明明后面的 `version.json` 是对的却不再试——
+ *  客户端于是把「已是最新」显示成「服务异常」。语义上「这内容不是指针」只是**这条通道无效**，
+ *  该换通道，不是检查失败。 */
+function tryParsePointer(text: string): { version: string; tag: string } | null {
   let raw: unknown;
   try {
     raw = JSON.parse(text);
   } catch {
-    throw new Error(`发布指针不是 JSON：${url}`);
+    return null;
   }
-  const o = raw as { version?: unknown; tag?: unknown };
-  const version = String(o?.version || '').trim();
-  const tag = String(o?.tag || '').trim();
-  if (!version) throw new Error(`发布指针缺 version：${url}`);
-  if (!isValidTag(tag)) throw new Error(`发布指针的 tag 不可用：${url}`);
-  return { version, tag };
+  const o = raw as { version?: unknown; tag?: unknown; release?: unknown };
+  // 清单形态：顶层 `release: { version, tag }`（字段名不能叫 version——那被清单 schema 版本占用）
+  const rel = o?.release as { version?: unknown; tag?: unknown } | undefined;
+  if (rel && typeof rel === 'object') {
+    const version = String(rel.version || '').trim();
+    const tag = String(rel.tag || '').trim();
+    return version && isValidTag(tag) ? { version, tag } : null;
+  }
+  // 老指针形态：`{ version, tag }`（v1.36 及更早客户端唯一认的文件；这里读它是兜底）
+  const version = String(o?.version ?? '').trim();
+  const tag = String(o?.tag ?? '').trim();
+  return version && isValidTag(tag) ? { version, tag } : null;
+}
+
+/** 第一个成功的（按 resolve 顺序，失败的忽略）；全部失败才 reject */
+function firstOk<T>(tasks: Array<() => Promise<T>>): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    let pending = tasks.length;
+    if (!pending) {
+      reject(new Error('没有可用的下载源'));
+      return;
+    }
+    for (const run of tasks) {
+      run().then(resolve, (e) => {
+        pending -= 1;
+        if (pending === 0) reject(e);
+      });
+    }
+  });
+}
+
+async function fetchPointer(): Promise<{ version: string; tag: string }> {
+  // 通道链（2026-10-31 起指针合并进清单；raw 退场、Release 主 / jsDelivr 备）：
+  //  1. Release 免 tag 形态 `releases/latest/download/<资产名>`——GitHub 302 到**当前最新
+  //     发布**的同名资产。它把「指针放哪」与「latest 是哪个 tag」的死结解开了：读指针
+  //     不需要事先知道 tag，而 GitHub 的 latest 语义（非 draft、非 prerelease）与
+  //     「note/资产齐了才转正」的发布流程天然一致——转正那一刻才对外可见。
+  //     清单在前（新客户端主路，一次请求指针+清单），镜像上的老指针 version.json 跟着兜。
+  //  2. jsDelivr 边缘 + `?t=` 破缓存兜底：GitHub 直连不通时走它。jsDelivr 对 `@master`
+  //     有分钟到小时级缓存，换个缓存键强制回源（remote-asset.FetchAssetOpts.bust 同口径）。
+  //
+  // **每条通道都要校验内容**：镜像清单可能还是旧版（无 release 字段），那是「这条无效」
+  // 不是「检查失败」，必须继续试下一条（v1.37.0 首发翻车的根因）。
+  const stamp = Date.now();
+  const urls = [
+    LATEST_MANIFEST_URL,
+    ...downloadRemotesFor(DOWNLOAD_MANIFEST_FILE).map((u) => `${u}?t=${stamp}`),
+    ...downloadRemotesFor(RELEASE_POINTER).map((u) => `${u}?t=${stamp}`),
+  ];
+  const attempt = async (url: string) => {
+    const text = await fetchText(url, FETCH_TIMEOUT_MS);
+    const p = tryParsePointer(text);
+    if (!p) throw new Error(`${url}：内容不是发布指针`);
+    return p;
+  };
+  let pointer: { version: string; tag: string };
+  const [head, ...rest] = urls;
+  try {
+    // 第一条单独试（latest 最新鲜），失败了把其余通道并发打出去——串行试五条时，
+    // 国内半通网络下用户要盯着转圈半分钟才看到结果。
+    pointer = await attempt(head);
+  } catch (headErr) {
+    try {
+      pointer = await firstOk(rest.map((u) => () => attempt(u)));
+    } catch (e) {
+      throw new Error(`拿不到发布指针：${(headErr as Error)?.message || headErr}；${(e as Error)?.message || e}`);
+    }
+  }
+  // 回填 Release 通道的 tag 记忆（remote-asset 的下载链据此把 Release 资产排到最前）
+  noteReleaseTag(pointer.tag);
+  return pointer;
 }
 
 /** 备份旧三件套（覆盖前唯一的安全网）；失败只记录不阻断——备份不该成为装不上的理由 */
@@ -350,11 +429,17 @@ export async function checkSelfUpdate(app: unknown, opts: SelfUpdateOptions = {}
   writeStore(AVAILABLE_KEY, lastAvailable);
   if (!apply) return 'available';
 
-  // 有新版本才拉大文件（省流量）：三件套全部来自**该 tag**，不是 master
+  // 有新版本才拉大文件（省流量）：三件套全部来自**该 tag**，不是 master。
+  // 通道：Release 资产（github.com/<主仓>/releases/download/<tag>/<name>）在前——
+  // 按计数、按冻结性都优于分发仓镜像；镜像（jsDelivr）整条链跟在后面兜底。
   // 三件套按「大文件」时限拉：2.8 MB 的 main.js 在慢速边缘上要几十秒（见 FETCH_ASSET_TIMEOUT_MS）
-  const js = await fetchFirst(repoRemotesForTag(pointer.tag, 'main.js'), FETCH_ASSET_TIMEOUT_MS);
-  const css = await fetchFirst(repoRemotesForTag(pointer.tag, 'styles.css'), FETCH_ASSET_TIMEOUT_MS);
-  const mf = await fetchFirst(repoRemotesForTag(pointer.tag, 'manifest.json'), FETCH_ASSET_TIMEOUT_MS);
+  const bundleUrl = (name: string): string[] => {
+    const rel = releaseDownloadUrl(pointer.tag, name);
+    return [...(rel ? [rel] : []), ...repoRemotesForTag(pointer.tag, name)];
+  };
+  const js = await fetchFirst(bundleUrl('main.js'), FETCH_ASSET_TIMEOUT_MS);
+  const css = await fetchFirst(bundleUrl('styles.css'), FETCH_ASSET_TIMEOUT_MS);
+  const mf = await fetchFirst(bundleUrl('manifest.json'), FETCH_ASSET_TIMEOUT_MS);
   if (!looksLikeBundle(js.text)) throw new Error('远端 main.js 内容异常，放弃覆盖');
   // manifest.json 只有几百字节，不能拿 looksLikeBundle 的「>1000 字节」去卡它——
   // 那份校验是为 main.js 设的（防 CDN 回 HTML 错误页）。清单的可信判据是「能解析且 id 对得上」。

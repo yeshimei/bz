@@ -25,7 +25,15 @@
  * - **启动期失败一律静默**（照 self-update 范式）；「在线资源」组里的失败态由
  *   UI 自己呈现（检查更新失败 + 重试），本层不发通知。
  * ============================================================ */
-import { assetVaultPath, downloadsVaultPath, ensureAssetWithHash, readAsset } from './remote-asset';
+import {
+  assetVaultPath,
+  downloadsVaultPath,
+  ensureAssetWithHash,
+  readAsset,
+  writeAssetText,
+} from './remote-asset';
+import { fetchArchiveBytes } from './bundle-asset';
+import { extractZipEntry, readZipEntries } from './zip';
 import { textSha256 } from './sha256';
 import { cachedManifest, type DownloadManifest, type SkinPackEntry } from './download-manifest';
 
@@ -324,6 +332,78 @@ export interface SkinDownloadResult {
 }
 
 /**
+ * 皮肤整包快路（2026-10-31）：清单带 `skinsPack` 时，把 wanted 全部皮肤从**一个
+ * `downloads/skins.zip`** 里解出来，替代最多 26 次逐文件请求。
+ *
+ * 安全口径与逐文件完全一致，一层都不省：
+ *  - 归档字节先过 `skinsPack.sha256`（fetchAssetBytes 内做，防通道被劫持喂假包）；
+ *  - 解出的每个 css 再过**清单逐条目的 sha256**（文本归一口径）——包与清单不同版
+ *    （jsDelivr 边缘新旧掺发、离线包过期）在这里整体暴露；
+ *  - **全部条目解出且校验通过才开始落盘**：半套成功半套失败的状态不存在，任何一步
+ *    失败整体返回 false，调用方回落逐文件下载（那个口径天然逐条独立）。
+ *
+ * @returns true = wanted 全部就绪（byFile 已写入）；false = 回落逐文件
+ */
+async function installSkinsViaPack(
+  app: unknown,
+  manifest: DownloadManifest,
+  wanted: SkinPackEntry[],
+  byFile: Map<string, ReadySkin>,
+): Promise<boolean> {
+  const pack = manifest.skinsPack;
+  if (!pack || !wanted.length) return false;
+
+  let bytes: Uint8Array;
+  try {
+    bytes = await fetchArchiveBytes(app, { file: pack.file, sha256: pack.sha256, name: '皮肤整包' });
+  } catch (e) {
+    console.warn('[bz] 皮肤整包下载失败（回落逐文件）:', (e as Error)?.message || e);
+    return false;
+  }
+
+  let entries: ReturnType<typeof readZipEntries>;
+  try {
+    entries = readZipEntries(bytes);
+  } catch (e) {
+    console.warn('[bz] 皮肤整包不是有效 zip（回落逐文件）:', (e as Error)?.message || e);
+    return false;
+  }
+  const byName = new Map(entries.map((z) => [z.name, z]));
+
+  // 先全部解出 + 校验，再落盘（见上：半套状态不存在）
+  const extracted: Array<{ entry: SkinPackEntry; text: string }> = [];
+  for (const e of wanted) {
+    const z = byName.get(e.file);
+    if (!z) {
+      console.warn(`[bz] 皮肤整包缺 ${e.file}（回落逐文件）`);
+      return false;
+    }
+    // 路径安全：包是我们自己打的，但仍按不可信输入对待——路径逃逸的条目直接拒收
+    if (z.name.includes('..') || z.name.startsWith('/')) return false;
+    let data: Uint8Array;
+    try {
+      data = extractZipEntry(bytes, z);
+    } catch (err) {
+      console.warn(`[bz] 皮肤整包解 ${e.file} 失败（回落逐文件）:`, (err as Error)?.message || err);
+      return false;
+    }
+    const text = new TextDecoder().decode(data);
+    if (textSha256(text) !== e.sha256) {
+      console.warn(`[bz] 皮肤整包与清单不同版（${e.file} sha256 不符，回落逐文件）`);
+      return false;
+    }
+    extracted.push({ entry: e, text });
+  }
+
+  for (const { entry, text } of extracted) {
+    await writeAssetText(app, entry.file, text);
+    await removeLegacyFile(app, entry.file); // 旧落位副本（plugins/bz/skins/ 时代）顺手清掉
+    byFile.set(entry.file, { entry, text });
+  }
+  return true;
+}
+
+/**
  * 用户显式下载/更新（ADR-0203：皮肤分发的唯一下载入口）——
  * 把「区间内且非就绪」（未下载 + 可更新）的全部套数拉一遍，限并发 4；
  * 已就绪的绝不动（用户已可用的皮肤不因一次点击承担被换内容的风险）。
@@ -349,7 +429,11 @@ export async function downloadSkinUpdates(app: unknown, manifest: DownloadManife
   for (const r of verified) byFile.set(r.entry.file, r);
   for (const arr of ready.values()) for (const r of arr) byFile.set(r.entry.file, r);
 
-  await mapLimit(todo, 4, async (e) => {
+  // 整包快路（清单带 skinsPack 时）：一次下载覆盖全部待办；任何失败整体回落逐文件
+  if (todo.length && (await installSkinsViaPack(app, manifest, todo, byFile))) {
+    result.downloaded = todo.length;
+  } else {
+    await mapLimit(todo, 4, async (e) => {
     try {
       const text = await ensureAssetWithHash(app, e.file, e.sha256, `皮肤「${e.name}」`, e.size);
       if (text !== null) {
@@ -361,7 +445,8 @@ export async function downloadSkinUpdates(app: unknown, manifest: DownloadManife
       console.warn(`[bz] 皮肤「${e.domain}/${e.id}」下载失败:`, (err as Error)?.message || err);
       result.failed++;
     }
-  });
+    });
+  }
 
   // 按清单顺序重灌：旧口径的保留、新下载成功的覆盖（能选 = 能生效）
   applyReady(wanted.map((e) => byFile.get(e.file)).filter((r): r is ReadySkin => r !== undefined));

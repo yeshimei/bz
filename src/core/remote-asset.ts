@@ -10,9 +10,7 @@
  * 为什么放插件目录而不是数据目录：这些是程序资产、跟版本走，
  * 放数据目录会跟「数据存储路径」这个用户键纠缠。
  *
- * 下载链路：raw.githubusercontent 主 → cdn.jsdelivr 备（国内被墙时
- * 的第二通道）；两路都 404/失败才报错。内容校验由调用方给的
- * validate 判定（防把 CDN 的错误页写进文件）。
+ * 下载链路：GitHub Release 主（tag 已知时）→ jsDelivr 备；全链失败才报错。
  *
  * 双源基址的唯一事实源见 core/remote-base.ts（REPO_BASES / downloadRemotesFor）——
  * 本层 `remotesFor` 仅作转发，不在此重述域名。
@@ -31,7 +29,7 @@
 import { requestUrl } from 'obsidian';
 import { textSha256 } from './sha256';
 import { emitDomainEvent } from './domain-bus';
-import { downloadRemotesFor } from './remote-base';
+import { downloadRemotesFor, isValidTag, releaseDownloadUrl } from './remote-base';
 import { pluginVaultPath } from './plugin-path';
 import { readOfflineText } from './offline-source';
 
@@ -39,7 +37,7 @@ import { readOfflineText } from './offline-source';
  *  消费 = 设置面板在线资源组把已渲染行态同步成磁盘事实（导航入口更新文档后组内按钮翻「已下载」）。 */
 export const DOWNLOADS_CHANGED_EVENT = 'downloads:asset-changed';
 
-/** 远端 URL：主 GitHub raw → 备 jsDelivr（双源基址唯一事实源见 core/remote-base.ts）。
+/** 远端 URL：master 快照的通道链（jsDelivr 各边缘；唯一事实源见 core/remote-base.ts）。
  *  导出与签名不变（测试在用）；函数体直接转发 downloadRemotesFor。
  *
  *  顺序按「上次谁成功过」动态排（`rankRemotes`）：一条卡死的通道不该永远占着队首。 */
@@ -101,6 +99,83 @@ function rankRemotes(urls: string[]): string[] {
 /** 测试用：清掉通道记忆（跨用例不该互相影响） */
 export function resetChannelPreferenceForTests(): void {
   preferredBase = '';
+}
+
+/* ---------- GitHub Release 通道（2026-10-31 新增，见 remote-base.releaseDownloadUrl） ----------
+ *
+ * 通道链 = Release 资产（tag 已知时）在前，jsDelivr 在后兜底（raw 已退场）。tag 从
+ * 发布指针解析（self-update 拉指针后回填；这里只读缓存不发网络），localStorage 缓存
+ * 24h——指针只有 46 字节，但每次下载都先拉一遍指针没必要，tag 在两次发布之间不会变。
+ *
+ * 失败语义：tag 拿不到 → 通道链退化为纯 jsDelivr，**不会**让任何原本能成功的下载
+ * 变成失败。
+ */
+
+/** release tag 缓存键与 TTL（与自更新巡检同期） */
+const RELEASE_TAG_KEY = 'bz-remote:release-tag';
+const RELEASE_TAG_TTL_MS = 24 * 3600 * 1000;
+
+/** 会话内记忆（省 localStorage 解析；模块级，测试可重置） */
+let releaseTagMemo = '';
+
+function readCachedReleaseTag(): string {
+  if (releaseTagMemo) return releaseTagMemo;
+  try {
+    const raw = localStorage.getItem(RELEASE_TAG_KEY);
+    if (!raw) return '';
+    const o = JSON.parse(raw) as { tag?: unknown; at?: unknown };
+    const tag = String(o?.tag || '');
+    const at = Number(o?.at || 0);
+    if (!isValidTag(tag) || !at || Date.now() - at > RELEASE_TAG_TTL_MS) return '';
+    releaseTagMemo = tag;
+    return tag;
+  } catch {
+    return '';
+  }
+}
+
+/** 回填 release tag（self-update 拉到指针后调用；tag 不合法则忽略） */
+export function noteReleaseTag(tag: string): void {
+  const t = String(tag || '');
+  if (!isValidTag(t)) return;
+  releaseTagMemo = t;
+  try {
+    localStorage.setItem(RELEASE_TAG_KEY, JSON.stringify({ tag: t, at: Date.now() }));
+  } catch {
+    /* 隐私模式/配额满：会话内记忆仍有效 */
+  }
+}
+
+/** 测试用：清掉 release tag 记忆 */
+export function resetReleaseTagForTests(): void {
+  releaseTagMemo = '';
+  try {
+    localStorage.removeItem(RELEASE_TAG_KEY);
+  } catch {
+    /* 同上 */
+  }
+}
+
+/**
+ * 惰性解析当前发布 tag：**只读缓存，不发网络**（self-update 每次拉到发布指针后经
+ * noteReleaseTag 回填，TTL 24h）。这里刻意不做「拉不到指针就自己拉一遍」——
+ * 那会让每次资源下载多出一跳网络、失败语义膨胀，且单测环境会打真网。
+ * 缓存没有/过期 → 返回空串，通道链退化为纯 jsDelivr，行为可预期。
+ */
+export async function ensureReleaseTag(): Promise<string> {
+  return readCachedReleaseTag();
+}
+
+/** 完整通道链：Release 资产（tag 已知时）在前 + jsDelivr（含镜像）在后 */
+export async function remotesForWithRelease(fileName: string): Promise<string[]> {
+  return channelUrls(fileName);
+}
+
+async function channelUrls(fileName: string, opts: { releasePath?: string } = {}): Promise<string[]> {
+  const tag = await ensureReleaseTag();
+  const rel = opts.releasePath ?? `downloads/${fileName}`;
+  const release = releaseDownloadUrl(tag, rel);
+  return [...(release ? [release] : []), ...remotesFor(fileName)];
 }
 
 /**
@@ -265,7 +340,7 @@ export async function fetchAssetText(
       /* 走网络 */
     }
   }
-  const raw = remotesFor(fileName);
+  const raw = await channelUrls(fileName);
   // 破缓存参数（见 FetchAssetOpts.bust）：每个通道各加一个同一时刻的时间戳——
   // 同一轮请求用同一个值，既是新的缓存键，也不至于让同一份清单的几条通道各算一次代价。
   const stamp = opts?.bust ? Date.now() : 0;
@@ -332,7 +407,7 @@ export async function ensureAssetWithHash(
   }
 
   const timeoutMs = contentTimeoutFor(sizeBytes);
-  for (const url of remotesFor(fileName)) {
+  for (const url of await channelUrls(fileName)) {
     try {
       const text = await requestText(url, timeoutMs);
       if (want && textSha256(text) !== want) {

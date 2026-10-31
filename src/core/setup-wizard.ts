@@ -3,7 +3,7 @@
  *
  * 一次把「新机器缺什么、缺的怎么补」走完。六屏：
  *
- *   ① 检测   先探网络（raw + jsDelivr 四个边缘），再探本机八项
+ *   ① 检测   先探网络（GitHub 主通道 + jsDelivr 备用），再探本机八项
  *   ② 存放   数据存哪（默认 <插件目录>/storage，可改；点「下一步」写探针验证时才建目录）
  *   ③ 内容   下什么（运行时 / 工具 / 文档索引 / 皮肤，逐项可勾；**已就绪的自动跳过**）
  *   ④ AI     可选：服务商 + 密钥 + 当场测通（跳过不影响其他功能）
@@ -430,12 +430,12 @@ async function stageProbe(ctx: WizardCtx, st: WizardState, ui: Ui): Promise<void
 
   const net = setupGroup('网络');
   ui.body.appendChild(net.group);
-  const netRow = addRow('资源站', net.card);
-  const cdnRow = addRow('备用通道', net.card);
+  const netRow = addRow('GitHub 主通道', net.card);
+  const cdnRow = addRow('备用通道 · jsDelivr', net.card);
   const probe = st.net ?? (await probeNetwork().catch(() => null));
   st.net = probe;
   // 不可达时把**原因**带上（2026-10-28：只说「不可达」时，网页能开 GitHub 的人根本无从判断
-  // 是墙、是代理还是 DNS——raw.githubusercontent.com 与 github.com 是两回事）
+  // 是墙、是代理还是 DNS——github.com 与 jsDelivr 是两回事）
   paint(netRow, probe?.github === true, probe?.github ? `可达 · ${probe.githubMs} ms` : `不可达 · ${probe?.githubError || '未知原因'}`);
   paint(cdnRow, probe?.jsdelivr ? true : null, probe?.jsdelivr ? `可达 · ${probe.jsdelivrMs} ms` : `不可达 · ${probe?.jsdelivrError || '未知原因'}`);
 

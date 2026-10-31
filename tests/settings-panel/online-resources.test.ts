@@ -33,11 +33,11 @@ import { textSha256 } from '../../src/core/sha256';
 
 const MANIFEST_CACHE_PATH = '.obsidian/plugins/bz/downloads/manifest.json';
 const PLUGIN_MANIFEST_PATH = '.obsidian/plugins/bz/manifest.json';
-const REMOTE_MANIFEST = 'https://raw.githubusercontent.com/yeshimei/bz-assets/master/downloads/manifest.json';
+const REMOTE_MANIFEST = 'https://fastly.jsdelivr.net/gh/yeshimei/bz-assets@master/downloads/manifest.json';
 const BACKUP_MANIFEST = 'https://cdn.jsdelivr.net/gh/yeshimei/bz-assets@master/downloads/manifest.json';
-const REMOTE_CSS = 'https://raw.githubusercontent.com/yeshimei/bz-assets/master/downloads/skins/bookshelf/noir.css';
+const REMOTE_CSS = 'https://fastly.jsdelivr.net/gh/yeshimei/bz-assets@master/downloads/skins/bookshelf/noir.css';
 const BACKUP_CSS = 'https://cdn.jsdelivr.net/gh/yeshimei/bz-assets@master/downloads/skins/bookshelf/noir.css';
-const remoteDoc = (file: string) => `https://raw.githubusercontent.com/yeshimei/bz-assets/master/downloads/${file}`;
+const remoteDoc = (file: string) => `https://fastly.jsdelivr.net/gh/yeshimei/bz-assets@master/downloads/${file}`;
 
 const HTML_V1 = '<!DOCTYPE html><html><body>日志 v1</body></html>';
 const HTML_V2 = '<!DOCTYPE html><html><body>日志 v2</body></html>';

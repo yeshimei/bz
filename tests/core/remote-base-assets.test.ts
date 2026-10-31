@@ -48,19 +48,20 @@ describe('分发仓库与源码仓库是两回事', () => {
     }
   });
 
-  it('通道形状：raw 一条 + jsDelivr 多条（国内只有后者能通）', () => {
-    expect(REPO_BASES[0]).toBe(`https://raw.githubusercontent.com/${ASSETS_SLUG}/master`);
-    const cdn = REPO_BASES.slice(1);
-    expect(cdn.length).toBeGreaterThanOrEqual(3);
-    for (const b of cdn) expect(b).toMatch(new RegExp(`^https://[a-z]+\\.jsdelivr\\.net/gh/${ASSETS_SLUG}@master$`));
+  it('通道形状：全部 jsDelivr 边缘（raw 已退场，主通道是 Release 资产）', () => {
+    expect(REPO_BASES.length).toBeGreaterThanOrEqual(3);
+    for (const b of REPO_BASES) expect(b).toMatch(new RegExp(`^https://[a-z]+\\.jsdelivr\\.net/gh/${ASSETS_SLUG}@master$`));
+    // raw 不许回来（2026-10-31 拍板：国内裸网恒死，每个用户白等一次超时）
+    for (const b of REPO_BASES) expect(b).not.toContain('raw.githubusercontent.com');
   });
 });
 
 describe('资源 URL', () => {
   it('downloads/ 资产：分发仓库 master 下的 downloads/<file>', () => {
     const urls = downloadRemotesFor('skins/bookshelf/noir.css');
-    expect(urls[0]).toBe(`https://raw.githubusercontent.com/${ASSETS_SLUG}/master/downloads/skins/bookshelf/noir.css`);
+    expect(urls[0]).toBe(`https://fastly.jsdelivr.net/gh/${ASSETS_SLUG}@master/downloads/skins/bookshelf/noir.css`);
     expect(urls.some((u) => u.includes('/downloads/skins/bookshelf/noir.css'))).toBe(true);
+    for (const u of urls) expect(u).not.toContain('raw.githubusercontent.com');
     for (const u of urls) expect(u).toContain('/downloads/');
   });
 
@@ -80,7 +81,7 @@ describe('资源 URL', () => {
 describe('插件本体三件套：releases/<tag>/', () => {
   it('路径形状固定为 releases/<tag>/<file>', () => {
     const urls = repoRemotesForTag('v1.34.0', BUNDLE.js);
-    expect(urls[0]).toBe(`https://raw.githubusercontent.com/${ASSETS_SLUG}/master/releases/v1.34.0/${BUNDLE.js}`);
+    expect(urls[0]).toBe(`https://fastly.jsdelivr.net/gh/${ASSETS_SLUG}@master/releases/v1.34.0/${BUNDLE.js}`);
     for (const u of urls) expect(u.endsWith(`/releases/v1.34.0/${BUNDLE.js}`)).toBe(true);
   });
 

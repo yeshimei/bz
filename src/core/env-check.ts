@@ -17,7 +17,7 @@
  *  - **不把「没配」当「坏了」**：AI 密钥是可选项，只提示，不计红。
  * ============================================================ */
 import { requestUrl } from 'obsidian';
-import { REPO_BASES } from './remote-base';
+import { REPO_BASES, REPO_SLUG } from './remote-base';
 import { tryGetSettings } from './settings-provider';
 import { pluginRelDirOf } from './plugin-path';
 import { isMobileEnv } from './mobile';
@@ -42,7 +42,7 @@ export interface EnvCheckRow {
 
 /** 网络探测结果（第一屏第一件事就是它：不通的话后面全是白忙） */
 export interface NetworkProbe {
-  /** GitHub raw 是否可达（主通道） */
+  /** GitHub 是否可达（主通道——Release 资产与其页面同域，文案只说 GitHub） */
   github: boolean;
   /** jsDelivr 是否可达（备用通道） */
   jsdelivr: boolean;
@@ -58,6 +58,9 @@ export interface NetworkProbe {
 
 /** 单次探测的超时（requestUrl 没有 abort，用 race 兜住；超时按不可达算） */
 const PROBE_TIMEOUT_MS = 6000;
+
+/** GitHub 主通道的探测 URL：仓库页恒定存在，且与 Release 下载同域（见 probeNetwork 注释） */
+const GITHUB_PROBE_URL = `https://github.com/${REPO_SLUG}`;
 
 /** 一次探测的原始结果 */
 interface NetAttempt {
@@ -139,22 +142,24 @@ export function explainNetError(raw: string): string {
  * 界面据此给出「检查代理/VPN」的说明而不是一个异常。
  */
 export async function probeNetwork(): Promise<NetworkProbe> {
-  // 全通道并发探（raw + jsDelivr 的四个边缘域名）。逐个串行探会让「两条都不通」的结论
-  // 慢三倍，而这一步是首次引导的第一屏——等不起。
-  const urls = REPO_BASES.map((b) => `${b}/downloads/version.json`);
+  // 全通道并发探。逐个串行探会让「两条都不通」的结论慢三倍，而这一步是首次引导的第一屏——等不起。
+  //  - GitHub 主通道：探仓库页 `github.com/<REPO_SLUG>`——Release 资产下载就在这个域
+  //    （302 到 objects.githubusercontent.com）。tag 未知时探真资产只能是 404，404 是
+  //    「文件不在」不是「通道不通」，所以探恒定存在的仓库页。
+  //  - jsDelivr：探 version.json，取**最快**的那个边缘（国内实测 cdn 不通、fastly/gcore/testingcf 通）
+  const urls = [GITHUB_PROBE_URL, ...REPO_BASES.map((b) => `${b}/downloads/version.json`)];
   const results = await Promise.all(urls.map((u) => timedFetch(u)));
-  const raw = results[0] ?? { ms: -1, status: 0, error: '未探测' };
-  // jsDelivr 一侧取**最快**的那个入口（国内实测 cdn 不通、fastly/gcore/testingcf 通）
-  // 判据是 ms >= 0（只有真拿到 2xx/3xx 才算），不是 status > 0 —— 403 也有状态码
+  const gh = results[0] ?? { ms: -1, status: 0, error: '未探测' };
   const cdn = results.slice(1).filter((r) => r.ms >= 0);
+  // 判据是 ms >= 0（只有真拿到 2xx/3xx 才算），不是 status > 0 —— 403 也有状态码
   const fastest = cdn.length ? cdn.reduce((a, b) => (b.ms < a.ms ? b : a)) : null;
   return {
-    github: raw.ms >= 0,
+    github: gh.ms >= 0,
     jsdelivr: !!fastest,
-    githubMs: raw.ms >= 0 ? raw.ms : -1,
+    githubMs: gh.ms >= 0 ? gh.ms : -1,
     jsdelivrMs: fastest ? fastest.ms : -1,
-    githubError: raw.ms >= 0 ? '' : explainNetError(raw.error),
-    jsdelivrError: fastest ? '' : explainNetError((results.slice(1).find((r) => r.error) ?? raw).error),
+    githubError: gh.ms >= 0 ? '' : explainNetError(gh.error),
+    jsdelivrError: fastest ? '' : explainNetError((results.slice(1).find((r) => r.error) ?? gh).error),
   };
 }
 

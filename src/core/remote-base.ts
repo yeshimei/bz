@@ -5,8 +5,12 @@
  * 自更新（self-update 的仓库根三件套）都从这里取双源地址，杜绝两处各写一份
  * 字面量导致漂移。
  *
- * 通道口径：GitHub raw **主** → jsDelivr **备**（国内被墙时的第二通道）；
- * 两路都 404/失败才报错，且第一个成功的就用——见两消费方各自的行为语义。
+ * 通道口径（2026-10-31 用户拍板）：**GitHub Release 主 → jsDelivr 备**。
+ *  - 主：Release 资产（`releaseDownloadUrl`，tag 已知时；tag 冻结、自带下载计数）；
+ *  - 备：jsDelivr 边缘（本文件 REPO_BASES）——发布指针、在线资源、
+ *    `releases/<tag>/` 镜像目录这些 master/tag 快照上的东西都走它；
+ *  - raw.githubusercontent **不再作为通道**（国内裸网恒死，每个用户白等一次超时）。
+ * 首个成功的就用，且成功通道会被记到队首——见两消费方各自的行为语义。
  *
  * ---------- 两条分支：master 与 releases/<tag>（2026-10-28 对外分发） ----------
  *
@@ -52,24 +56,25 @@ import { tryGetSettings } from './settings-provider';
 
 /** jsDelivr 的四个入口（同一个 CDN 的不同边缘域名）。
  *
- *  为什么不是只有 cdn.jsdelivr.net：国内实测 2026-10-28 **cdn 与 raw 同时不通**
- *  （`code=000`，1.2s / 0.5s 两个都连不上），而 fastly / gcore / testingcf 三个入口
- *  全通（200）。它们指向同一份内容，只是边缘域名不同——这是零成本的冗余。
- *  排序按实测可用性：能通的在前，`cdn` 那个已知在国内不通，放最后当长尾。 */
+ *  为什么是四个而不是一个：国内实测 2026-10-28 **cdn 与 raw 同时不通**（`code=000`），
+ *  而 fastly / gcore / testingcf 三个入口全通（200）。它们指向同一份内容，只是边缘
+ *  域名不同——这是零成本的冗余。排序按实测可用性：能通的在前，`cdn` 已知在国内
+ *  不通，放最后当长尾。 */
 const JSDELIVR_HOSTS = ['fastly.jsdelivr.net', 'gcore.jsdelivr.net', 'testingcf.jsdelivr.net', 'cdn.jsdelivr.net'];
 
-/** 分发仓库的多通道基址（master 分支），按「新鲜度优先」排：
- *  raw（无缓存，最真实）→ 三个能通的 jsDelivr 边缘 → cdn（长尾）。
- *  唯一事实源——资源通道（remote-asset）、发布指针、插件自更新共用。
+/**
+ * master 快照的通道基址（2026-10-31 用户拍板：**raw 整个退出通道链**）。
  *
- *  代价说明：国内无代理时先撞 raw 会白等一次超时（8 s 封顶），之后
- *  `remote-asset` 会把成功过的通道记到队首（`preferredBase`），后续请求直接命中。
- *  顺序不换成 jsDelivr 优先的理由：jsDelivr 对 `@master` 有分钟到小时级缓存，
- *  把指针文件放前面会让「检查更新」读到旧版本号。 */
-export const REPO_BASES = [
-  `https://raw.githubusercontent.com/${ASSETS_SLUG}/master`,
-  ...JSDELIVR_HOSTS.map((h) => `https://${h}/gh/${ASSETS_SLUG}@master`),
-];
+ * 通道口径 = **GitHub Release 主 → jsDelivr 备**：Release 资产（`releaseDownloadUrl`，
+ * tag 已知时）是下载链的最前；本数组只服务 master 快照上的东西——发布指针
+ * `version.json`、在线资源、`releases/<tag>/` 镜像目录——全部走 jsDelivr 边缘。
+ *
+ * raw 为什么删：它在国内裸网基本恒死（每个用户先白等一次 8s 超时才开始真正下载），
+ * 而它的唯一优势「无缓存、最真实」已经被 Release 通道的 tag 冻结覆盖——指针的新鲜度
+ * 由 self-update 拉指针时的破缓存参数保证（见 self-update.fetchPointer）。
+ * 唯一事实源——资源通道（remote-asset）、发布指针、插件自更新共用。
+ */
+export const REPO_BASES = JSDELIVR_HOSTS.map((h) => `https://${h}/gh/${ASSETS_SLUG}@master`);
 
 /**
  * 发布指针（master 上的小文件）：`{ "version": "1.34.0", "tag": "v1.34.0" }`。
@@ -79,6 +84,33 @@ export const REPO_BASES = [
  * 失败口径、缓存口径、被墙兜底全部复用，不引入第二条网络栈。
  */
 export const RELEASE_POINTER = 'version.json';
+
+/**
+ * GitHub Release 资产 URL（**第三条通道**，2026-10-31 新增，放通道链最前）。
+ *
+ * 形状 `https://github.com/<REPO_SLUG>/releases/download/<tag>/<path>`，落到 S3
+ * （objects.githubusercontent.com）。选它当主通道的理由：
+ *  - **自带精确下载计数**（download_count）——raw 与 jsDelivr 都不提供，这是唯一
+ *    能回答「多少人装了」的通道；
+ *  - **按 tag 冻结**：资产是打 tag 那一刻的字节，清单与产物永远同版，天然消灭
+ *    `@master` 快照「清单新、正文旧」那一类事故（2026-10-31 翻过的车）。
+ *
+ * **资产名一律扁平化**（2026-10-31 立，review #1）：`downloads/manifest.json` 的
+ * 资产名是 `downloads-manifest.json`（`/` → `-`）。虽然 GitHub 网页/API 允许带斜杠的
+ * 资产名，但 `gh release upload` **只取文件 basename**，造不出带斜杠的名字——照仓库路径
+ * 传上去，`downloads/manifest.json` 会变成 `manifest.json`，与三件套那份撞名（422，
+ * v1.37.0 首发就是这么翻的车），而客户端请求的又偏偏是带 `downloads/` 前缀的地址。
+ * 两端都用扁平名才对得上：上传侧 `push-assets` 按同一规则暂存，客户端侧本函数做映射。
+ * 仓库路径 → 资产名仍是逐字同构（只是分隔符换了个字符），排错时不用心算。
+ *
+ * tag 未知（指针还没拉到）→ 返回空串，调用方跳过这条通道，回落 jsDelivr——
+ * 行为与旧版完全一致，不会因为这条新通道引入新的失败面。
+ */
+export function releaseDownloadUrl(tag: string, path: string): string {
+  if (!isValidTag(tag) || !String(path || '').trim()) return '';
+  const asset = String(path).replace(/^\/+/, '').replace(/\//g, '-');
+  return `https://github.com/${REPO_SLUG}/releases/download/${tag}/${asset}`;
+}
 
 /** tag 名的合法形状（防把远端返回的脏串拼进 URL 造出别的地址） */
 const TAG_RE = /^[A-Za-z0-9][A-Za-z0-9._-]*$/;

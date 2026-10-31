@@ -82,6 +82,13 @@ export interface DownloadManifest {
   version: number;
   docs: ManifestDocEntry[];
   skins: SkinPackEntry[];
+  /**
+   * 皮肤整包（2026-10-31 新增，可选）：全部 skins[] 的 css 打成一个 `skins.zip` 放
+   * `downloads/`，下载一次替代最多 26 次逐文件请求。字段缺席（旧清单）→ 皮肤走
+   * 原逐文件下载，行为不变——**schema 只增不改**，旧客户端读新清单不受影响。
+   * sha256 是**归档字节**的（与 bundle 同口径，不是文本归一 hash）。
+   */
+  skinsPack?: { file: string; sha256: string; size: number };
   /** 行序（在线资源组内的行顺序）：docs id + 保留 id 'skins' 的排列；
    *  缺席（旧清单）则回落「docs 顺序 + skins 末位」。 */
   rowOrder?: string[];
@@ -121,7 +128,13 @@ export function parseDownloadManifest(text: string | null): DownloadManifest | n
   } catch (e) {
     return null;
   }
-  const obj = raw as { version?: unknown; docs?: unknown; skins?: unknown; rowOrder?: unknown };
+  const obj = raw as {
+    version?: unknown;
+    docs?: unknown;
+    skins?: unknown;
+    skinsPack?: Partial<NonNullable<DownloadManifest['skinsPack']>>;
+    rowOrder?: unknown;
+  };
   if (!obj || !Array.isArray(obj.docs) || !Array.isArray(obj.skins)) return null;
   const docs: ManifestDocEntry[] = [];
   for (const item of obj.docs as unknown[]) {
@@ -150,6 +163,13 @@ export function parseDownloadManifest(text: string | null): DownloadManifest | n
   }
   const version = typeof obj.version === 'number' ? obj.version : 1;
 
+  // 皮肤整包（可选）：形状不全 → 视为缺席（undefined），不影响整份清单与其他条目
+  let skinsPack: DownloadManifest['skinsPack'];
+  const pack = obj.skinsPack;
+  if (pack && typeof pack.file === 'string' && pack.file && typeof pack.sha256 === 'string' && SHA_RE.test(pack.sha256.toLowerCase()) && typeof pack.size === 'number' && pack.size > 0) {
+    skinsPack = { file: pack.file, sha256: pack.sha256.toLowerCase(), size: pack.size };
+  }
+
   // 行序（在线资源组别内行顺序）：可选字段，旧清单没有它必须照常可用。
   // 必须是数组、逐项非空字符串，任一不合格 → 整字段丢弃（rowOrder 变 undefined，
   // 回落「docs 顺序 + skins 末位」），**不要让整份清单失效**。数组里允许出现清单
@@ -162,7 +182,7 @@ export function parseDownloadManifest(text: string | null): DownloadManifest | n
     // 不合格（不是数组 / 含空串 / 含非字符串）→ 保持 undefined，不报错、不失效
   }
 
-  return { version, docs, skins, rowOrder };
+  return { version, docs, skins, skinsPack, rowOrder };
 }
 
 /** 读本地缓存的清单（上次成功拉取的镜像）；无缓存/坏形 → null */

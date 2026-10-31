@@ -5,8 +5,8 @@
       "id": "changelog",
       "name": "更新日志",
       "file": "bz-changelog.html",
-      "sha256": "eade9a8c1f88a53f415f4dbef349766a074f5066f644577b40d54092a9fb61a6",
-      "size": 11874
+      "sha256": "aea9c15ab075d5bcf81e056b95b67618a7b0fb334934839482c3e05fa48f49ce",
+      "size": 12220
     },
     {
       "id": "manual",
@@ -49,7 +49,7 @@
       "name": "工具坞工具包",
       "file": "tools/dock-watch.tar.gz",
       "kind": "bundle",
-      "sha256": "30fb003b30c3f01420f94bf7274c6dc77c783f4ec62bb012a6dfab2eeff646f7",
+      "sha256": "dbdc468cde37f2edf71ffe5383a2e7a20797d18d7b174be7711527128ed2bc68",
       "size": 49646
     },
     {
@@ -297,6 +297,11 @@
       "sha256": "5569615a75e0f7006963ba468335a8186feb47750f765bc963cddd687a0d242e"
     }
   ],
+  "skinsPack": {
+    "file": "skins.zip",
+    "sha256": "bacc16d37810628b8afff003752946cd231ce3f25c6f69bac9b80a206eaa122b",
+    "size": 32357
+  },
   "rowOrder": [
     "changelog",
     "manual",
@@ -307,5 +312,9 @@
     "tool-bili-downloader",
     "tool-dock-watch",
     "tool-obsidian-face"
-  ]
+  ],
+  "release": {
+    "version": "1.37.0",
+    "tag": "v1.37.0"
+  }
 }

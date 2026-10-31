@@ -34,6 +34,10 @@ export default defineConfig({
     // 纯数据层测试用首行 `// @vitest-environment node` 标注跳过 DOM 环境（已有 300+ 文件）。
     environment: 'jsdom',
     include: ['tests/**/*.test.ts', 'tests/**/*.test.mjs'],
+    // tests/e2e/ 是**真实网络**端到端（打临时仓库 yeshimei/bz-e2e），按需手动跑：
+    //   BZ_E2E_LOCAL=1.36.0 BZ_E2E_EXPECT=installed:1.37.0 npx vitest run --config vitest.e2e.config.ts
+    // 不进默认门禁：依赖外网与临时仓的状态，跑门禁时会被当成「随机失败」。
+    exclude: ['tests/e2e/**', 'node_modules/**'],
     setupFiles: ['tests/setup.ts'],
     // vmThreads 池：**环境按 worker 建一次**，每个文件只发一份全新的 VM 上下文 + window。
     //

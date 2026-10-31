@@ -15,7 +15,6 @@
  * 会留下半份目录 + 没有标记，下次照样判「未装」并重解，这一层是自愈的。
  * ============================================================ */
 import { requestUrl } from 'obsidian';
-import { downloadRemotesFor } from './remote-base';
 import { sha256Bytes } from './sha256';
 import { untar, type TarFile } from './tar';
 import {
@@ -23,6 +22,7 @@ import {
   downloadsVaultPath,
   ensureDir,
   readAsset,
+  remotesForWithRelease,
 } from './remote-asset';
 import { emitDomainEvent } from './domain-bus';
 import { readOfflineBytes } from './offline-source';
@@ -187,8 +187,12 @@ export async function readBundleMarker(app: unknown, entry: ManifestDocEntry): P
   }
 }
 
-/** 取归档字节：先看本地缓存（hash 对得上就复用，省一次流量），否则双源下载 */
-async function fetchArchive(app: unknown, entry: ManifestDocEntry, deps: BundleDeps): Promise<Uint8Array> {
+/** 取归档字节：先看本地缓存（hash 对得上就复用，省一次流量），否则通道链下载 */
+async function fetchArchive(
+  app: unknown,
+  entry: Pick<ManifestDocEntry, 'file' | 'sha256' | 'name'>,
+  deps: BundleDeps,
+): Promise<Uint8Array> {
   const want = String(entry.sha256 || '').toLowerCase();
   const fetchBytes = deps.fetchBytes ?? defaultFetchBytes;
 
@@ -218,7 +222,7 @@ async function fetchArchive(app: unknown, entry: ManifestDocEntry, deps: BundleD
     /* 没有离线包：走网络 */
   }
 
-  for (const url of downloadRemotesFor(entry.file)) {
+  for (const url of await remotesForWithRelease(entry.file)) {
     try {
       const bytes = await fetchBytes(url);
       if (bytes.byteLength === 0) {
@@ -246,6 +250,18 @@ async function fetchArchive(app: unknown, entry: ManifestDocEntry, deps: BundleD
     }
   }
   throw new Error(`${entry.name}下载失败：${lastErr}`);
+}
+
+/**
+ * 通用归档字节出口（2026-10-31）：**皮肤整包 skins.zip**（core/skin-pack.ts 的整包快路）
+ * 借这条通道下载——本地归档缓存 → 离线包 → Release/raw/jsDelivr，sha256 全程把关，
+ * 与工具包完全同一套口径。zip 的解包在调用方（core/zip.ts），这里只管把可信字节拿到手。
+ */
+export async function fetchArchiveBytes(
+  app: unknown,
+  ref: Pick<ManifestDocEntry, 'file' | 'sha256' | 'name'>,
+): Promise<Uint8Array> {
+  return fetchArchive(app, ref, {});
 }
 
 /** 清空旧解包目录（更新时防「上版删掉的文件」残留）；不支持 rmdir 的环境静默跳过 */

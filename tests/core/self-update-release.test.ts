@@ -34,6 +34,10 @@ function stubRemote(opts: { pointerVersion?: string; badBundle?: boolean } = {})
   const manifest = JSON.stringify({ id: 'bz', version: opts.pointerVersion ?? NEW });
   vi.mocked(requestUrl).mockImplementation((async ({ url }: { url: string }) => {
     seen.push(url);
+    // 指针三形态里的清单形态（2026-10-31 合并）：Release latest 的清单顶层带 `release`
+    if (url.includes('/releases/latest/download/downloads/manifest.json')) {
+      return { status: 200, text: JSON.stringify({ version: 1, release: { version: NEW, tag: TAG } }) };
+    }
     if (url.includes('/downloads/version.json')) {
       return { status: 200, text: JSON.stringify({ version: NEW, tag: TAG }) };
     }
@@ -161,7 +165,8 @@ describe('checkSelfUpdate：失败面', () => {
     const { vault } = app;
     vi.mocked(requestUrl).mockImplementation((async () => ({ status: 200, text: 'not json' })) as never);
 
-    await expect(checkSelfUpdate(app, { apply: false, throttle: false })).rejects.toThrow(/发布指针不是 JSON/);
+    // 全是非指针内容 → 逐条通道校验后仍拿不到指针，才算失败（且失败信息里带上「内容不是发布指针」）
+    await expect(checkSelfUpdate(app, { apply: false, throttle: false })).rejects.toThrow(/拿不到发布指针/);
     const st = await selfUpdateState(app);
     expect(st.error).toContain('发布指针');
   });
@@ -174,6 +179,75 @@ describe('checkSelfUpdate：失败面', () => {
       text: JSON.stringify({ version: NEW, tag: '../refs/heads/master' }),
     })) as never);
 
-    await expect(checkSelfUpdate(app, { apply: true, throttle: false })).rejects.toThrow(/tag 不可用/);
+    // 非法 tag 视作「这条通道不是有效指针」，全部通道都无效才失败——绝不把坏 tag 拼进 URL
+    await expect(checkSelfUpdate(app, { apply: true, throttle: false })).rejects.toThrow(/拿不到发布指针/);
+    expect(vault.files.get('.obsidian/plugins/bz/manifest.json')).toContain(LOCAL);
+  });
+});
+
+/**
+ * 2026-10-31 v1.37.0 首发翻车回归：装完 1.37 再点检查更新，弹出「检查更新失败：发布指针的 tag
+ * 不可用：…@master/downloads/manifest.json」。
+ *
+ * 根因：`fetchPointer` 拿到 HTTP 200 就把内容当指针解析，而分发仓镜像上的清单可能还是
+ * **没有 release 字段的旧清单**（顶层 version 是 schema 版本 1、没有 tag）→ 解析抛错 →
+ * 后面的 version.json 根本不再试 → 面板把「已是最新」显示成「服务异常」。
+ */
+describe('回归：通道内容不是指针 → 换通道，而不是报错', () => {
+  const OLD_MANIFEST = JSON.stringify({ version: 1, docs: [], skins: [], rowOrder: [] });
+
+  it('latest 404 + 镜像清单还是旧版（无 release）+ version.json 同版本 → current，不报错', async () => {
+    const app = appWithPlugin(); // 本地 1.33.0
+    const { vault } = app;
+    vi.mocked(requestUrl).mockImplementation((async ({ url }: { url: string }) => {
+      if (url.includes('/releases/latest/download/')) throw new Error('404 Not Found');
+      if (url.includes('/downloads/manifest.json')) return { status: 200, text: OLD_MANIFEST };
+      if (url.includes('/downloads/version.json'))
+        return { status: 200, text: JSON.stringify({ version: LOCAL, tag: `v${LOCAL}` }) };
+      throw new Error('unexpected ' + url);
+    }) as never);
+
+    const r = await checkSelfUpdate(app, { apply: true, throttle: false });
+
+    expect(r).toBe('current');
+    const st = await selfUpdateState(app);
+    expect(st.error).toBeNull();
+    expect(vault.files.has('.obsidian/plugins/bz/main.js')).toBe(false);
+  });
+
+  it('本地已是 1.37.0，发布页也还是 1.37.0 → current（首发事故的那一步）', async () => {
+    const vault = new MockVault();
+    vault.files.set('.obsidian/plugins/bz/manifest.json', JSON.stringify({ id: 'bz', version: '1.37.0' }));
+    const app = { vault, plugins: { manifests: { bz: { version: '1.37.0' } } } };
+    vi.mocked(requestUrl).mockImplementation((async ({ url }: { url: string }) => {
+      if (url.includes('/releases/latest/download/')) throw new Error('404 Not Found');
+      if (url.includes('/downloads/manifest.json')) return { status: 200, text: OLD_MANIFEST };
+      if (url.includes('/downloads/version.json'))
+        return { status: 200, text: JSON.stringify({ version: '1.37.0', tag: 'v1.37.0' }) };
+      throw new Error('unexpected ' + url);
+    }) as never);
+
+    expect(await checkSelfUpdate(app, { apply: true, throttle: false })).toBe('current');
+    expect((await selfUpdateState(app)).error).toBeNull();
+  });
+
+  it('1.38.0 发布后：新指针 → 正常装到 1.38.0', async () => {
+    const vault = new MockVault();
+    vault.files.set('.obsidian/plugins/bz/manifest.json', JSON.stringify({ id: 'bz', version: '1.37.0' }));
+    const app = { vault, plugins: { manifests: { bz: { version: '1.37.0' } } } };
+    const js = '/*' + 'x'.repeat(3000) + '*/';
+    vi.mocked(requestUrl).mockImplementation((async ({ url }: { url: string }) => {
+      if (url.includes('/releases/latest/download/downloads-manifest.json')) {
+        return { status: 200, text: JSON.stringify({ version: 1, release: { version: '1.38.0', tag: 'v1.38.0' } }) };
+      }
+      if (url.endsWith('/v1.38.0/main.js')) return { status: 200, text: js };
+      if (url.endsWith('/v1.38.0/styles.css')) return { status: 200, text: '/*css*/' };
+      if (url.endsWith('/v1.38.0/manifest.json'))
+        return { status: 200, text: JSON.stringify({ id: 'bz', version: '1.38.0' }) };
+      throw new Error('unexpected ' + url);
+    }) as never);
+
+    expect(await checkSelfUpdate(app, { apply: true, throttle: false })).toBe('installed');
+    expect(vault.files.get('.obsidian/plugins/bz/manifest.json')).toContain('1.38.0');
   });
 });
