@@ -5,7 +5,7 @@
  * 这个脚本把本域那五个零依赖纯模块打成一个单文件 CJS，让它 `require` 过去 ——
  * **`ruleDue` 因此只有一份实现**（改判据只改 `src/dock/rules.ts`，值守件重打即可）。
  *
- * 为什么产物入 git：`tools/` 下的子包是要能单独拿出去用的（同 news-watcher / obsidian-face），
+ * 为什么产物入 git：`tools/` 下的子包是要能单独拿出去用的（同 obsidian-face），
  * 拿不到仓库源码的人也得跑得起来。所以它是**生成物但跟踪**，与根 `main.js` / `changelog-data.ts`
  * 同性质 —— 一律别手改，改源码后重跑本脚本。
  *

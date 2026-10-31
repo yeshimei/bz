@@ -1,5 +1,6 @@
 /**
  * 聚合讯插件内抓取核心（issue 302 / ADR-0128）：自 tools/news-watcher/watcher.js 移植。
+ * 源目录 2026-11-01 已从仓库删除（此处即唯一实现），历史见 git。
  * 抓取 = 纯逻辑 + 依赖注入（httpGet / 存储），生产环境由 requestUrl 适配与
  * news-data 合并写承接；桌面/移动同源（ADR-0008 守护退役，插件全责）。
  * 纯数据层（无 DOM），node 环境可测。

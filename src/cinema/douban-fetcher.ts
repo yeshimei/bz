@@ -1,6 +1,7 @@
 /**
  * 影院豆瓣抓取核心（issue 303 / ADR-0129；ADR-0177 搜索页退役、ADR-0178 三路检索链）：
  * 自 tools/obsidian-douban-poster 移植入插件。
+ * 源目录 2026-11-01 已从仓库删除（此处即唯一实现），历史见 git。
  * 字段链：**三路检索链**（ADR-0178）——①subject_suggest 补全接口（JSON 一步拿 sid + 规范名 +
  * 海报 URL，最快最全）→ ②rexxar 移动搜索（与①频控池独立；①有「200+空数组」软拒绝形态，
  * 实测窗口以分钟计）→ ③www.douban.com/search 搜索页 HTML（末路兜底复活）——命中即用，

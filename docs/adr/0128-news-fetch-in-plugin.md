@@ -14,6 +14,7 @@ grill-with-docs 三轮拍板（2026-09-13）：
 - 通知静默，仅失败时通知（B站 cookie 失效/风控须明确报）
 - 知乎/果壳逐篇正文抓取照搬（入库即全文，离线可读；移动端后台串行请求不阻塞 UI）
 - PM2 退役程度：只停进程，npm 包与 `tools/news-watcher/` 源码保留不删（回滚成本最低）
+  - 2026-11-01 变更：`tools/news-watcher/` 源码已从仓库删除（逻辑全量落在 `src/clipbook/news-fetcher.ts`，不再需要回滚源）；npm 包不动
 
 ## 决策
 
