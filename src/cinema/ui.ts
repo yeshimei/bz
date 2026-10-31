@@ -390,17 +390,17 @@ async function admitShelfToCinema(name: string, app: App): Promise<void> {
 const shelfBusy = new Set<string>();
 
 /**
- * 移除片单（片单整单动作）：一次确认选口径，整单一次办完（2026-11-01 用户验收：
- * 「要一次性删掉，或摘出来」——此前只做「导入条目删、主列表摘出」这一种混合口径，
- * 想删主列表里的影片只能一部一部去点，129 部的片单要点 129 次）。
+ * 移除片单（片单整单动作）：一次确认，整单自动分流办完（2026-11-01 用户拍板的口径）。
  *
- * 两条路，都在同一个确认框里，点一次就把整单跑完：
- * · **只摘出**：一部不删，全部去掉这个片单的归属；带「片单收纳」的导入条目顺带摘掉标志
- *   （否则摘完片单它们就成了不在任何视图里的孤儿，等于变相丢失）。
- * · **删影片**：整单成员不论来路，全部移入 Obsidian 回收站（.trash），可在回收站恢复。
+ * **不看按钮、只看影片位置**，每部各走各的：
+ * · 影院主列表里也有（无「片单收纳」）→ 只摘掉这个片单的归属，影片留在主列表；
+ * · 只在片单里（带「片单收纳」，主列表看不见它）→ 移入 Obsidian 回收站（.trash），可恢复。
+ *
+ * 多片单的导入条目是例外（2026-11-01 用户采纳）：它还挂在别的片单上时**只摘归属、不删**——
+ * 它在别的片单里仍可见，删了整个条目就没了；等它从最后一个片单退出时才轮得到删除。
  *
  * 片单没有自己的存储，成员归属清空即消失——不额外维护一份「片单表」。
- * 逐部容错：某部写盘/删除失败只记一条，不中断整单（129 部里挂一部就前功尽弃更糟）。
+ * 整单逐部容错：某部写盘/删除失败只记一条，不中断整单（129 部里挂一部就前功尽弃更糟）。
  */
 async function removeShelf(name: string, app: App): Promise<void> {
   if (shelfBusy.has(name)) return; // 同一片单已有一次在执行：忽略这次触发
@@ -411,71 +411,64 @@ async function removeShelf(name: string, app: App): Promise<void> {
   }
   const sec = cinemaRoot();
   if (!sec) return;
-  const imports = members.filter((x) => x.shelvedOnly);
   const n = members.length;
-  const stat = imports.length
-    ? `片单里共 ${n} 部：影院主列表 ${n - imports.length} 部 · 只在片单里 ${imports.length} 部`
-    : `片单里共 ${n} 部`;
-  const choice = await chooseCinema(sec, {
+  // 分流：只在片单里（且没有别的片单可去）的删，其余只摘归属
+  const trash: CinemaItem[] = [];
+  const detach: CinemaItem[] = [];
+  for (const x of members) {
+    const others = x.lists.filter((l) => l !== name);
+    if (x.shelvedOnly && others.length === 0) trash.push(x);
+    else detach.push(x);
+  }
+  const ok = await confirmCinema(sec, {
     kicker: '移除片单',
     subject: `「${name}」`,
-    lines: [
-      stat,
-      '只摘出：影片全部留下，只去掉这层片单归属（只在片单里的转进影院主列表）',
-      '删影片：整单移入 Obsidian 回收站（.trash），可在回收站恢复',
-    ],
-    actions: [
-      { label: '只摘出', value: 'pick' },
-      { label: '删影片', value: 'del', danger: true },
-    ],
+    // 文案不写术语（不提「片单收纳」/路径），只报「删几部、留几部」；
+    // 第二行用「其余」而不是「影院主列表里的」——多片单的导入条目也归这一侧保留
+    lines: trash.length && detach.length
+      ? [`只在片单里的 ${trash.length} 部移入回收站，可在回收站恢复`, `其余 ${detach.length} 部保留，只退出这个片单`]
+      : trash.length
+        ? [`这 ${trash.length} 部都只在片单里，移除后移入回收站，可在回收站恢复`]
+        : [`这 ${detach.length} 部都保留，移除后只退出这个片单`],
+    okLabel: '移除',
+    danger: true,
   });
-  if (!choice) return;
+  if (!ok) return;
   shelfBusy.add(name);
   // 大单先报一声：整单是逐部串行落盘（写 frontmatter / 移回收站），129 部要好几秒，
   // 没有这一句用户会以为点了没反应
   if (n > 10) notice(`正在移除「${name}」，共 ${n} 部…`, 'info', 4000);
   try {
-    if (choice === 'del') {
-      let done = 0;
-      for (const x of members) {
-        try {
-          await trashNote(app, x.file!);
-          done++;
-        } catch (e) {
-          console.error('[cinema] 删除片单成员失败:', x.file?.path, e);
-        }
-      }
-      refreshDataAndView(app);
-      renderAll(app);
-      notice(
-        done === n ? `片单「${name}」已移除，${done} 部影片移入回收站` : `片单「${name}」移除了 ${done}/${n} 部，其余未能删除`,
-        done === n ? 'success' : 'error'
-      );
-      return;
-    }
-    // 只摘出：片单归属 + 「片单收纳」标志一起摘（一次写盘搞定，别写两遍）
-    const pending = members.slice();
-    for (const x of pending) x.lists = x.lists.filter((l) => l !== name);
-    let done = 0;
-    for (const x of pending) {
+    let removed = 0;
+    for (const x of trash) {
       try {
-        const hadShelved = x.shelvedOnly;
+        await trashNote(app, x.file!);
+        removed++;
+      } catch (e) {
+        console.error('[cinema] 删除片单成员失败:', x.file?.path, e);
+      }
+    }
+    let detached = 0;
+    for (const x of detach) {
+      try {
         await writeFm(app, x.file!, (fm: Record<string, unknown>) => {
-          const cur = normalizeLists(fm['片单']);
-          const next = cur.filter((l) => l !== name);
+          const next = normalizeLists(fm['片单']).filter((l) => l !== name);
           if (next.length) fm['片单'] = next;
           else delete fm['片单'];
-          if (hadShelved) delete fm['片单收纳'];
         });
-        done++;
+        detached++;
       } catch (e) {
         console.error('[cinema] 摘出片单归属失败:', x.file?.path, e);
       }
     }
     refreshDataAndView(app);
     renderAll(app);
+    const parts: string[] = [];
+    if (detached) parts.push(`${detached} 部留在影院`);
+    if (removed) parts.push(`${removed} 部移入回收站`);
+    const done = removed + detached;
     notice(
-      done === n ? `片单「${name}」已移除，${done} 部影片留在影院` : `片单「${name}」摘出了 ${done}/${n} 部，其余未能写入`,
+      done === n ? `片单「${name}」已移除：${parts.join('，')}` : `片单「${name}」处理了 ${done}/${n} 部，其余未能完成`,
       done === n ? 'success' : 'error'
     );
   } finally {

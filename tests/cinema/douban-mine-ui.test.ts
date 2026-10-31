@@ -276,7 +276,7 @@ describe('片单整单动作（侧栏片单行右键）', () => {
     expect(md).toContain('片单A'); // 片单保留
   });
 
-  it('移除：一个确认框给两条路（只摘出 / 删影片），各一次办完整单', async () => {
+  it('移除：按影片位置自动分流，一次确认整单办完', async () => {
     const app = seedVault();
     createOverlay(app);
     const rail = document.querySelector('.rail-item[data-l="片单A"]') as HTMLElement;
@@ -289,49 +289,60 @@ describe('片单整单动作（侧栏片单行右键）', () => {
     };
     openRemove();
     await flush();
-    // 确认框：本域 .cn-modal 那张纸，两条口径一次给出
+    // 确认框：不给选项，按位置分两类报数（文案 A 版）
     const popup = document.querySelector('.cn-modal--confirm') as HTMLElement;
     expect(popup).toBeTruthy();
     expect(popup.querySelector('.cf-kicker')?.textContent).toBe('移除片单');
-    expect(popup.textContent).toContain('片单里共 2 部');
-    expect(popup.textContent).toContain('只摘出');
-    expect(popup.textContent).toContain('删影片');
-    expect(popup.querySelector('.cf-btn--danger')?.textContent).toBe('删影片');
+    expect(popup.textContent).toContain('只在片单里的 1 部移入回收站，可在回收站恢复');
+    expect(popup.textContent).toContain('其余 1 部保留，只退出这个片单');
+    expect(popup.querySelectorAll('.j-cf-act').length).toBe(1); // 只有一个动作钮，不再让用户选口径
+    expect(popup.querySelector('.cf-btn--danger')?.textContent).toBe('移除');
     // 取消：一部不动、片单归属也不动
     (popup.querySelector('.j-cf-cancel') as HTMLElement).click();
     await flush(20);
     expect((app.vault as any).files.has('我的/影视/《收纳片》.md')).toBe(true);
     expect((app.vault as any).files.get('我的/影视/《已在影院》.md') as string).toContain('片单A');
-    // 只摘出：两部都留，片单归属清空；导入条目顺带摘掉「片单收纳」（否则成孤儿）
+    // 确认：只在片单里的删掉；影院里也有的只摘归属、笔记保留
     openRemove();
     await flush();
-    (document.querySelector('.cn-modal--confirm [data-cf-act="pick"]') as HTMLElement).click();
-    // 整单逐部写盘：断言放进 waitFor（单跑 40ms 够，整套目录并发跑时偶发不够）
+    (document.querySelector('.cn-modal--confirm .j-cf-ok') as HTMLElement).click();
     await vi.waitFor(() => {
-      const picked = (app.vault as any).files.get('我的/影视/《收纳片》.md') as string;
-      expect(picked).not.toContain('片单A');
-      expect(picked).not.toContain('片单收纳');
+      expect((app.vault as any).files.has('我的/影视/《收纳片》.md')).toBe(false);
       const kept = (app.vault as any).files.get('我的/影视/《已在影院》.md') as string;
       expect(kept).not.toContain('片单A');
       expect(kept).toContain('已看');
     });
-    expect(hasNotice(/片单「片单A」已移除，2 部影片留在影院/)).toBe(true);
+    expect(hasNotice(/片单「片单A」已移除：1 部留在影院，1 部移入回收站/)).toBe(true);
   });
 
-  it('移除片单·删影片：整单一次进回收站（不分来路）', async () => {
+  it('移除：导入条目还挂在别的片单时只摘归属，不删（多片单边界）', async () => {
     const app = seedVault();
+    // 《收纳片》同时在片单A、片单B
+    (app.vault as any).files.set('我的/影视/《收纳片》.md', `---
+tags:
+- 电影
+状态: 想看
+片单收纳: true
+片单: [片单A, 片单B]
+---
+`);
+    rebuildItems(app as any);
     createOverlay(app);
     const rail = document.querySelector('.rail-item[data-l="片单A"]') as HTMLElement;
     rail.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true, clientX: 20, clientY: 20 }));
     const menu = document.querySelector('.bz-item-menu') as HTMLElement;
     ([...menu.querySelectorAll('button, .bz-item-menu-item')].find((b) => (b.textContent ?? '').includes('移除')) as HTMLElement).click();
     await flush();
-    (document.querySelector('.cn-modal--confirm [data-cf-act="del"]') as HTMLElement).click();
+    // 它不「只在这个片单里」→ 归到保留那类
+    const popup = document.querySelector('.cn-modal--confirm') as HTMLElement;
+    expect(popup.textContent).toContain('这 2 部都保留，移除后只退出这个片单');
+    (popup.querySelector('.j-cf-ok') as HTMLElement).click();
     await vi.waitFor(() => {
-      expect((app.vault as any).files.has('我的/影视/《收纳片》.md')).toBe(false);
-      expect((app.vault as any).files.has('我的/影视/《已在影院》.md')).toBe(false);
+      const md = (app.vault as any).files.get('我的/影视/《收纳片》.md') as string;
+      expect(md).not.toContain('片单A');
+      expect(md).toContain('片单B'); // 另一个片单归属保留
+      expect(md).toContain('片单收纳'); // 仍是导入条目，没被"转正"进主列表
     });
-    expect(hasNotice(/片单「片单A」已移除，2 部影片移入回收站/)).toBe(true);
   });
 
   it('移除片单·连点两次只跑一次（防重入）', async () => {
@@ -346,10 +357,11 @@ describe('片单整单动作（侧栏片单行右键）', () => {
     openRemove();
     await flush();
     const trashSpy = vi.spyOn(app.vault, 'trash').mockResolvedValue(undefined);
-    const ok = document.querySelector('.cn-modal--confirm [data-cf-act="del"]') as HTMLElement;
+    const ok = document.querySelector('.cn-modal--confirm .j-cf-ok') as HTMLElement;
     ok.click();
     ok.click(); // 双击/抖动：第二次点击落在已摘掉的节点上，不得再跑一遍
-    await vi.waitFor(() => expect(trashSpy).toHaveBeenCalledTimes(2));
+    // 自动分流下只有《收纳片》该删（另一部只摘归属）：连点两次也只删 1 次
+    await vi.waitFor(() => expect(trashSpy).toHaveBeenCalledTimes(1));
     expect(document.querySelectorAll('.cn-modal--confirm').length).toBe(0);
   });
 });
