@@ -449,7 +449,8 @@ export function knowledgeSettingsSchema(opts?: { onClearHistory?: () => void | P
         ],
       },
       // 外部工具组（Python / ffmpeg / ffprobe / 模型目录）2026-10-26 迁出：三个路径键是全域共用
-      // 前提，已收进「设置 → 通用 → 外部工具」；模型目录跟转写引擎一起住在「AI → 语音转写」。
+      // 前提，现住在「设置 → AI → 外部工具」（2026-10-26 收进 AI 页，紧跟「语音转写」组——
+      // 转写缺的就是这三样里的 Python，同页看得到）；模型目录跟转写引擎一起住在「AI → 语音转写」。
       {
         icon: 'wrench', name: '维护',
         rows: [

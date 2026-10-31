@@ -21,6 +21,7 @@
  * 空格或中文是常态）。数组参数没有这一层，路径原样到达进程。
  * ============================================================ */
 import { DOWNLOADS_DIR, downloadsVaultPath } from './remote-asset';
+import { BUNDLE_MARKER } from './bundle-asset';
 import { bundledNodeFile, NODE_RUNTIME_DIR } from './node-runtime-install';
 import { pluginDirOf, vaultBasePathOf } from './plugin-path';
 import { getApp } from './app';
@@ -274,8 +275,29 @@ export function resolveToolCommand(app: unknown, id: ToolId, args: string[] = []
 export function toolReadyState(app: unknown, id: ToolId): { ready: boolean; via: 'bundle' | 'none' } {
   const entry = TOOL_ENTRIES[id];
   const script = fsPath(app, `${toolBundleDir(id)}/${entry.script}`);
-  if (script && existsOnDisk(script) && probeNodeRuntime(app).kind !== 'none') return { ready: true, via: 'bundle' };
+  // 三件事都要：入口脚本在、**整包解完了**（就绪标记在）、有 node。
+  //
+  // 标记文件这一条是 2026-11-01 补的，补的是「半截解包」：此前只看入口脚本，
+  // 而解包是逐文件顺序写的——cli.js 排在前面，解到一半断掉（断网、磁盘满、路径超 260）
+  // 时脚本已经躺在盘上了，于是判「已下载」，可一跑就缺模块。用户看到的是
+  // 「检测页说已下载，内容页又让我下」和「下载失败了还显示已下载」，同一个根因。
+  // 判据与内容页的 bundleStatus 对齐：标记在 = 这份目录是完整解出来的。
+  if (script && existsOnDisk(script) && bundleMarkerOnDisk(app, id) && probeNodeRuntime(app).kind !== 'none') {
+    return { ready: true, via: 'bundle' };
+  }
   return { ready: false, via: 'none' };
+}
+
+/**
+ * 解包就绪标记在不在（同步）。
+ *
+ * 为什么不去调 `bundleStatus`：那个是异步的（要读标记 + 比 sha256），而这几个探测函数
+ * 是同步的、被面板与自检在渲染路径上直接调用。这里只要回答「整包解完了没有」，
+ * 不回答「是不是最新」——有新版但旧版完整，仍然算可用，那是内容页该提示的事。
+ * 标记名与 `core/bundle-asset` 的 `BUNDLE_MARKER` 同源（那边是产出方，这边是消费方）。
+ */
+function bundleMarkerOnDisk(app: unknown, id: ToolId): boolean {
+  return existsOnDisk(fsPath(app, `${toolBundleDir(id)}/${BUNDLE_MARKER}`));
 }
 
 /**

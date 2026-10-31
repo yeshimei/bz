@@ -3,9 +3,9 @@
  *
  * 一次把「新机器缺什么、缺的怎么补」走完。六屏：
  *
- *   ① 检测   先探网络（GitHub 主通道 + jsDelivr 备用），再探本机八项
+ *   ① 检测   先探网络（GitHub 主通道 + jsDelivr 备用），再探本机九项
  *   ② 存放   数据存哪（默认 <插件目录>/storage，可改；点「下一步」写探针验证时才建目录）
- *   ③ 内容   下什么（运行时 / 工具 / 文档索引 / 皮肤，逐项可勾；**已就绪的自动跳过**）
+ *   ③ 内容   下什么（运行时 / 本地运行时 / 工具 / 文档索引 / 皮肤，逐项可勾；**已就绪的自动跳过**）
  *   ④ AI     可选：服务商 + 密钥 + 当场测通（跳过不影响其他功能）
  *   ⑤ 安装   勾了就全自动，不再逐项确认；单项失败不牵连
  *   ⑥ 完成   就绪清单 + 值守启用询问（唯一改系统状态的一步）+ 仍需手工的项
@@ -29,6 +29,8 @@ import { ensureAssetWithHash } from './remote-asset';
 import { downloadSkinUpdates, skinStatus } from './skin-pack';
 import { installPortableNode, PORTABLE_NODE_VERSION } from './node-runtime-install';
 import { probeNodeRuntime, resetNodeRuntimeCache } from './tool-runtime';
+import { depArchives, depSpec, installDep, probeDep, type DepId, type DepState } from './dep-runtime';
+import { openDepsGuide } from './deps-guide';
 import { setupAfterInstall } from './tool-setup';
 import { pluginDirOf, pluginRelDirOf, vaultBasePathOf } from './plugin-path';
 import { initialStorageDir } from './storage-path';
@@ -48,7 +50,7 @@ const NODE_SIZE_HINT = 36.4 * 1024 * 1024;
 const MANIFEST_TIMEOUT_MS = 12000;
 
 /** 下载项的种类（决定 ③ 屏怎么分组、缺省勾不勾） */
-export type SetupKind = 'node' | 'bundle' | 'doc' | 'skins';
+export type SetupKind = 'node' | 'dep' | 'bundle' | 'doc' | 'skins';
 
 /** 一个可下载项 */
 export interface SetupItem {
@@ -78,8 +80,16 @@ export function sizeText(bytes: number | null): string {
  * 「要下什么」的**纯**队列（不看磁盘状态）。
  * 顺序刻意如此：Node 最久，放第一个——先让它跑起来，后面小包在它之后秒完，
  * 用户看到的进度是连续的，而不是「卡在 87% 一动不动」。
+ *
+ * @param opts.depStates 两个本地运行时（Python / ffmpeg）的探测结果。由调用方
+ *   `probeDep` 一次拿到后传进来——放这里现探会让同一件事在 `isReady` 里再做一遍，
+ *   而它们每次都要 spawn 一个子进程。
  */
-export function buildSetupTasks(app: unknown, manifest: DownloadManifest | null, opts: { nodeMissing: boolean }): SetupItem[] {
+export function buildSetupTasks(
+  app: unknown,
+  manifest: DownloadManifest | null,
+  opts: { nodeMissing: boolean; depStates?: Record<DepId, DepState> },
+): SetupItem[] {
   const mk = (i: Omit<SetupItem, 'ready'>): SetupItem => ({ ...i, ready: false });
   const items: SetupItem[] = [];
   if (opts.nodeMissing) {
@@ -105,6 +115,37 @@ export function buildSetupTasks(app: unknown, manifest: DownloadManifest | null,
       }),
     );
   }
+
+  // 两个本地运行时：Python 45MB（转写与脸谱的执行环境，缺了转写整条链断）、
+  // ffmpeg 109MB（只服务视频压缩与录音转 wav，缺了会降级但功能还在）。
+  // 两个都进队列，但 ffmpeg 标 optional —— 它贵，且不是「装了才有东西用」那一类。
+  for (const id of ['python', 'ffmpeg'] as DepId[]) {
+    const state = opts.depStates?.[id];
+    if (!state || state.ok) continue;
+    const spec = depSpec(id);
+    const plan = depArchives(id)[0];
+    items.push(
+      mk({
+        id: `dep-${id}`,
+        kind: 'dep',
+        label: spec.label,
+        desc: plan ? `${spec.desc} · 约 ${Math.round(plan.size / 1024 / 1024)} MB` : spec.desc,
+        size: plan?.size ?? null,
+        ...(id === 'ffmpeg' ? { optional: true } : {}),
+        run: async (report) => {
+          await installDep(app, id, {
+            onStage: (stage) => report?.(stage),
+            onProgress: (got, total) => {
+              if (total > 0) report?.(`${Math.min(99, Math.round((got / total) * 100))}% · ${sizeText(got)} / ${sizeText(total)}`);
+              else report?.(sizeText(got));
+            },
+          });
+          // 装完 installDep 已经把绝对路径写进设置；这里只需让引导页的值立刻反映出来
+        },
+      }),
+    );
+  }
+
   if (!manifest) return items;
 
   // 目录包（工具）先于文档：工具决定「能不能用」，文档决定「查不查得到」
@@ -164,8 +205,17 @@ function docItem(app: unknown, e: ManifestDocEntry): Omit<SetupItem, 'ready'> {
 export const LAZY_DOC_IDS = new Set(['cinema-douban-index']);
 
 /** 磁盘上这一项是不是已经就绪（重跑引导时用来跳过，避免白拉几十 MB） */
-async function isReady(app: unknown, manifest: DownloadManifest | null, id: string, kind: SetupKind): Promise<boolean> {
+async function isReady(
+  app: unknown,
+  manifest: DownloadManifest | null,
+  id: string,
+  kind: SetupKind,
+  depStates?: Record<DepId, DepState>,
+): Promise<boolean> {
   if (kind === 'node') return probeNodeRuntime(app, { fresh: true }).kind !== 'none';
+  // 本地运行时的判据是「两个入口都真跑得起来」，不是「目录里有没有文件」——
+  // 探测（probeDep）已经做了那件事，这里只取结论，不再 spawn 一遍
+  if (kind === 'dep') return depStates?.[id.replace(/^dep-/, '') as DepId]?.ok ?? false;
   if (!manifest) return false;
   if (kind === 'skins') {
     const st = await skinStatus(app, manifest);
@@ -181,11 +231,11 @@ async function isReady(app: unknown, manifest: DownloadManifest | null, id: stri
 export async function planSetupItems(
   app: unknown,
   manifest: DownloadManifest | null,
-  opts: { nodeMissing: boolean },
+  opts: { nodeMissing: boolean; depStates?: Record<DepId, DepState> },
 ): Promise<SetupItem[]> {
   const items = buildSetupTasks(app, manifest, opts);
   const out: SetupItem[] = [];
-  for (const it of items) out.push({ ...it, ready: await isReady(app, manifest, it.id, it.kind) });
+  for (const it of items) out.push({ ...it, ready: await isReady(app, manifest, it.id, it.kind, opts.depStates) });
   return out;
 }
 
@@ -468,8 +518,11 @@ async function stageProbe(ctx: WizardCtx, st: WizardState, ui: Ui): Promise<void
     const onlineRes = setupGroup('在线资源');
     ui.body.appendChild(onlineRes.group);
     for (const e of resourceDocsOf(manifest)) {
-      // 深校验只对目录包有意义（逐文件 stat）；文档是单文件 sha256，docStatus 立刻能判
-      const state = await docStatus(ctx.app, e);
+      // 判据必须与 ③ 屏的 isReady 完全一致——按 kind 分派。
+      // 这里此前一律用 docStatus，而它判的是**归档文件的 sha256**：对目录包来说那是
+      // 下载前的 .tar.gz，跟解包后的目录是两回事。结果就是同一项在 ① 说「已下载」、
+      // 在 ③ 又说要下（2026-11-01 用户报障）。目录包该问 bundleStatus（看解包标记）。
+      const state = e.kind === 'bundle' ? await bundleStatus(ctx.app, e) : await docStatus(ctx.app, e);
       const text = state === 'ready' ? '已下载' : state === 'updated' ? '有更新' : '未下载';
       paint(addRow(e.name, onlineRes.card), state === 'ready' ? true : state === 'updated' ? null : false, text);
     }
@@ -605,7 +658,12 @@ async function stageResources(ctx: WizardCtx, st: WizardState, ui: Ui): Promise<
   }
   const manifest = st.manifest ?? null;
   const nodeMissing = probeNodeRuntime(ctx.app, { fresh: true }).kind === 'none';
-  st.items = await planSetupItems(ctx.app, manifest, { nodeMissing });
+  // 两个本地运行时只探这一次：清单屏要按它决定列不列、就绪屏要按它决定显不显示「已就绪」
+  const depStates: Record<DepId, DepState> = {
+    python: probeDep(ctx.app, 'python'),
+    ffmpeg: probeDep(ctx.app, 'ffmpeg'),
+  };
+  st.items = await planSetupItems(ctx.app, manifest, { nodeMissing, depStates });
   st.selected = defaultSelection(st.items);
 
   const pending = (): SetupItem[] => selectedTasks(st.items, st.selected);
@@ -640,6 +698,9 @@ async function stageResources(ctx: WizardCtx, st: WizardState, ui: Ui): Promise<
 
   const GROUPS: Array<{ kind: SetupKind; title: string }> = [
     { kind: 'node', title: '运行环境' },
+    // 本地运行时单开一组：它们和 Node 一样是「机器上的东西」，但装法不同——
+    // Node 是 bz 自己 spawn 的，这两个的路径要下发给外部工具包（见 core/dep-runtime）
+    { kind: 'dep', title: '本地运行时' },
     { kind: 'bundle', title: '外部工具' },
     { kind: 'doc', title: '文档' },
     { kind: 'skins', title: '皮肤' },
@@ -927,6 +988,7 @@ async function stageInstall(ctx: WizardCtx, st: WizardState, ui: Ui, tasks: Setu
 }
 
 /* ---------- ⑥ 完成 ---------- */
+
 async function stageDone(ctx: WizardCtx, st: WizardState, ui: Ui): Promise<void> {
   const rows = await environmentCheck(ctx.app);
   st.rows = rows;
@@ -941,10 +1003,14 @@ async function stageDone(ctx: WizardCtx, st: WizardState, ui: Ui): Promise<void>
     if (r.ok === false) row.classList.add('is-bad');
     box.card.appendChild(row);
   }
-  if (rows.some((r) => r.id === 'python' && r.value.includes('未找到'))) {
+  // 两个本地运行时没装上时的收尾交代。2026-11-01 起它们能自动装了，所以这句话不说
+  // 「你得自己去装 Python」——说清「哪些功能会用不了」和「去哪补」，剩下的是用户的选择。
+  const missingDeps = (['python', 'ffmpeg'] as const).filter((id) => rows.find((r) => r.id === id)?.ok !== true);
+  if (missingDeps.length) {
+    const names = missingDeps.map((id) => (id === 'python' ? 'Python' : 'ffmpeg')).join(' 与 ');
     const hint = document.createElement('div');
     hint.className = 'bz-setup-note';
-    hint.textContent = '脸谱导入微信记录要先装 Python 3，不影响其他功能。';
+    hint.textContent = `${names} 还没装上：语音转写、视频压缩、脸谱录音会受影响，其余功能正常。可回上一屏重试，或在「设置 → AI → 外部工具」里填一个已装好的路径。`;
     ui.body.appendChild(hint);
   }
   const enter = button('bz-setup-btn bz-setup-btn--cta', '开始使用');
@@ -952,6 +1018,10 @@ async function stageDone(ctx: WizardCtx, st: WizardState, ui: Ui): Promise<void>
     closeModal(ui);
     ctx.onFinish?.();
   };
+  // 「还需要装什么」：下载队列覆盖不到的那几层（云端密钥 / Ollama / 模型 / pip 依赖）。
+  // 放在主行动左边、教程右边——它是「配置还差什么」，比看教程更贴近下一步。
+  const depsGuide = button('bz-setup-link bz-setup-link--foot', '还需要装什么？');
+  depsGuide.onclick = () => openDepsGuide(ctx.app);
   // 东西齐了，下一步是「怎么用」：把教程摆在这一屏，用户不必先摸到设置面板再找回来。
   // 左边贴一条文字链（与「开始使用」同一行，不抢主行动），点了开浏览器、引导不关。
   const tutorial = button('bz-setup-link bz-setup-link--foot', '看使用教程 →');
@@ -974,7 +1044,7 @@ async function stageDone(ctx: WizardCtx, st: WizardState, ui: Ui): Promise<void>
       if (v === 'go') openExternalUrl(ctx.app, VIDEO_URL);
     });
   };
-  ui.foot.append(tutorial, enter);
+  ui.foot.append(tutorial, depsGuide, enter);
 }
 
 /* ---------- 杂项 ---------- */

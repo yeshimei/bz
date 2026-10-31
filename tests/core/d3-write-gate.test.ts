@@ -51,6 +51,13 @@ const WHITELIST: Array<{ file: RegExp; reason: string; /** 防回归哨兵：预
       '不进 json 段写原语；顺序性由「整包解完才写就绪标记」保证（半截目录无标记 = 下次重解）',
   },
   {
+    file: /^src\/core\/dep-runtime\.ts$/,
+    reason:
+      '本地运行时依赖（2026-11-01）：Python / ffmpeg 的归档解包结果逐个 writeBinary 落 downloads/tools/，' +
+      '与 node-runtime-install / bundle-asset 同类——是插件资产而非域数据文件，不进 json 段写原语；' +
+      '顺序性由「整目录解完再跑探针验证，验不过整目录删掉」保证（无标记文件，判据就是能不能跑）',
+  },
+  {
     file: /^src\/core\/env-check\.ts$/,
     reason:
       '环境自检（2026-10-28）：写一个 .bz-write-probe 立刻删掉，只为判「这个目录能不能写」——' +

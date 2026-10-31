@@ -13,7 +13,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
-import { describe, expect, it } from 'vitest';
+import { afterAll, beforeEach, describe, expect, it } from 'vitest';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 /** 唯一被允许注入的模块（ADR-0199 决策 4） */
@@ -149,8 +149,30 @@ describe('唯一注入点守卫（铁律 4 / ADR-0199）', () => {
 });
 
 describe('迁移/出版脚本自检', () => {
-  const run = (script: string) =>
-    execFileSync(process.execPath, [path.join(ROOT, script), '--check'], { cwd: ROOT, encoding: 'utf8' });
+  /**
+   * 反向守卫要在 `downloads/` 顶层放一个探测文件，正常路径在 `finally` 里删掉；但一轮跑被
+   * 打断（Ctrl+C、超时、管道截断）就删不掉，下一轮「清单与产物同步」会被这个残留判成
+   * 「未登记文件」而红——症状是同一份代码第一次跑红、后面几次全绿，最难查的那种。
+   * 所以：文件名带 pid（并发跑不互撞），每组测试前先扫掉残留。
+   */
+  const ROGUE_PREFIX = 'guard-probe-';
+  const sweepStaleProbes = () => {
+    const dir = path.join(ROOT, 'downloads');
+    for (const name of fs.readdirSync(dir)) {
+      if (name.startsWith(ROGUE_PREFIX) && name.endsWith('.tmp')) fs.rmSync(path.join(dir, name), { force: true });
+    }
+  };
+  beforeEach(sweepStaleProbes);
+  afterAll(sweepStaleProbes);
+
+  const run = (script: string) => {
+    try {
+      return execFileSync(process.execPath, [path.join(ROOT, script), '--check'], { cwd: ROOT, encoding: 'utf8' });
+    } catch (e: any) {
+      // 脚本的报错都在 stderr，直接抛「Error」看不出是哪里不同步——带上原文
+      throw new Error(`${script} --check 失败：\n${e.stderr || ''}${e.stdout || ''}`);
+    }
+  };
 
   it('皮肤源里没有残留「该搬走的」远端皮肤规则（split-domain-skins --check）', () => {
     expect(() => run('scripts/split-domain-skins.mjs')).not.toThrow();
@@ -165,7 +187,8 @@ describe('迁移/出版脚本自检', () => {
   });
 
   it('downloads/ 顶层不允许清单外文件——未登记文件让 build-manifest 报错（issue 490 反向守卫）', () => {
-    const rogue = path.join(ROOT, 'downloads', 'guard-probe-unregistered.tmp');
+    const name = `${ROGUE_PREFIX}${process.pid}.tmp`;
+    const rogue = path.join(ROOT, 'downloads', name);
     fs.writeFileSync(rogue, 'probe', 'utf8');
     try {
       let err = '';
@@ -175,7 +198,7 @@ describe('迁移/出版脚本自检', () => {
         err = String(e.stderr || e.message || e);
       }
       expect(err).toContain('未登记进清单');
-      expect(err).toContain('guard-probe-unregistered.tmp');
+      expect(err).toContain(name);
     } finally {
       fs.rmSync(rogue, { force: true });
     }

@@ -21,6 +21,7 @@ import { bindMaskDismiss } from '../core/mask-dismiss';
 import { topifyZ } from '../core/z-order';
 import { mountIcons, uiResizable } from '../core/ui';
 import { openFlowDialog } from '../core/flow-dialog';
+import { openDepsGuide, probeOllamaService } from '../core/deps-guide';
 import { escManager } from '../core/esc-manager';
 import { formatRelativeTime } from '../core/utils';
 import { isMobileEnv } from '../core/mobile';
@@ -63,6 +64,9 @@ export type { SecondBrainStats, SourceDistItem, RecentNote, SourceTreeNode } fro
 
 /** 主面板桌面缩放边界（ADR-0084）：拖拽下限 / 硬上限，视口 92% 由 uiResizable 逐帧钳 */
 const PANEL = { MIN_W: 640, MIN_H: 440, MAX_W: 1280, MAX_H: 880 };
+
+/** 「Ollama/模型不可用」时自动弹一次依赖引导的会话级标记（每次启动只打扰一次） */
+let depsGuideOffered = false;
 
 // ==================== 主面板弹窗 ====================
 
@@ -345,7 +349,12 @@ export class SecondBrainPanel {
       } else {
         const box = document.getElementById('bz-sb-init-progress');
         if (box) box.style.display = 'flex';
-        if (status) status.textContent = '重建未完成：请确认 Ollama 服务与 Embedding 模型可用后重试';
+        if (status) {
+          status.textContent = '重建未完成：正在检测本机 Ollama…';
+          // 与初始化失败同一套诊断（服务没起 / 没模型 / 都在却跑不通）——重建失败的根因
+          // 九成也是这两样，给一样的出路口径，别让两处文案各说一套。
+          void this.diagnoseIndexFailure(status, '重建');
+        }
         this.revealInitBtn('重试重建');
       }
     } catch (e: any) {
@@ -482,11 +491,12 @@ export class SecondBrainPanel {
         await this.renderStats(); // 但统计必须立即渲染（skipRefresh 不带渲染）
       } else if (sawFail || sawCountedDone) {
         // [3]：失败段提示（缺 ✅ 完整完成）或全跑完仍未登记 → 判为 Ollama/数据不可用，先于「范围为空」提示
-        status.textContent =
-          '没有成功向量化任何内容：请确认 Ollama 服务与 Embedding 模型可用' +
-          (IS_MOBILE ? '（移动端需在 AI 面板配置「移动端远程地址」）' : '') +
-          '后重试';
+        status.textContent = '没有成功向量化任何内容：正在检测本机 Ollama…';
         this.revealInitBtn('重试初始化');
+        // 一句话「请确认 Ollama 可用」等于没说：它没告诉用户是**服务没起**、**模型没拉**，
+        // 还是**两者都在但这一段没跑通**——三种情况下一步完全不同。这里探一次服务，
+        // 把结论写成能照做的动作；详细清单跟着「怎么装」弹窗一起给（每次会话一次）。
+        void this.diagnoseIndexFailure(status, '初始化');
       } else if (sawWarning) {
         status.textContent = '三个盒子与额外检索目录内都没有可索引的笔记：请检查 ⚙️ 设置中的「目录与分类」';
         this.revealInitBtn('重试初始化');
@@ -517,6 +527,54 @@ export class SecondBrainPanel {
       return;
     }
     void this.runInitialIndexView();
+  }
+
+  /**
+   * 把「没有成功向量化任何内容」拆成三种能照做的结论（探测是异步的，文案随后补上）。
+   *
+   * 三种情况的下一步完全不同：
+   *   - 服务没起 → 去把 Ollama 打开（这是唯一「重启一下就好」的情况，值得单独说）
+   *   - 服务在、没模型 → 跑 `ollama pull bge-m3`
+   *   - 都在还失败 → 换更准的模型，或去环境自检看详细
+   *
+   * 前两种再自动弹一次「怎么装」：这两种靠点重试永远解决不了，重试是空转。
+   */
+  private async diagnoseIndexFailure(status: HTMLElement, what: '初始化' | '重建'): Promise<void> {
+    const svc = await probeOllamaService();
+    if (!status.isConnected) return;
+    const tail = IS_MOBILE ? '（移动端需在 AI 面板配置「移动端远程地址」）' : '';
+    const head = what === '初始化' ? '没有成功向量化任何内容' : '重建未完成';
+    if (!svc.up) {
+      status.textContent =
+        `${head}：Ollama 没在运行。` +
+        'Windows 从开始菜单打开它（或命令行跑 ollama serve），macOS 打开 Ollama.app，任务栏出现羊驼图标后重试' +
+        tail;
+      this.offerDepsGuide(); // 服务都没起，重试多少次都一样——直接给「怎么装、怎么拉起来」
+    } else if (!svc.models.length) {
+      status.textContent =
+        `${head}：Ollama 在跑，但本机一个模型都还没拉。跑 ollama pull bge-m3（约 1.2 GB）后重试` + tail;
+      this.offerDepsGuide(); // 同上：缺的是模型，不是重试能补的
+    } else {
+      // 两样都在还失败 = 这一段自己的问题（模型不兼容 / 文本太长 / 服务异常），
+      // 不弹「怎么装」——那张表在这里帮不上忙，弹了只是打扰。
+      status.textContent =
+        `${head}：Ollama 与模型都在，这一段却没跑通。可换 qwen3-embedding:8b 试试，` +
+        '或到「设置 → 关于 → 环境自检」看详细' + tail;
+    }
+  }
+
+  /**
+   * 依赖没装好时，把「怎么装」直接摆出来（每次会话一次）。
+   *
+   * 为什么不是只加一个按钮：这一屏上的「重试初始化」在 Ollama 没装 / 没启动 / 模型没拉时
+   * 是纯空转——点几次都一样。用户真正需要的是「装什么、多大、怎么把 Ollama 拉起来」，
+   * 那正是 core/deps-guide 那张表。自动弹只做一次，之后的入口在
+   * 「设置 → AI → Embedding → 装 Ollama 与向量模型」。
+   */
+  private offerDepsGuide(): void {
+    if (depsGuideOffered) return;
+    depsGuideOffered = true;
+    openDepsGuide(this.app);
   }
 
   /** 失败路径恢复「开始按钮」可见并复位文案（进度形态时按钮被隐藏） */
