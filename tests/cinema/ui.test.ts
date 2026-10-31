@@ -217,26 +217,25 @@ describe('cinema 风格化面板（issue 236）', () => {
     expect(root.querySelector('.cn-ovl')).toBeNull();
   });
 
-  // 确认框收编 core/flow-dialog（一致审查#1）：自绘 .cn-confirm 三段式退役
-  it('详情删除 → core 流程框确认（域皮 bz-cinema-flow-dialog + 危险中性）→ 移入回收站（列表减少）', async () => {
+  // 确认框改本域皮（2026-11-01）：.cn-modal 那张纸，不再走挂 body 的 core 流程框
+  it('详情删除 → 本域确认框（.cn-modal--confirm，危险主钮只有文字色）→ 移入回收站（列表减少）', async () => {
     const { app } = seedVault();
     createOverlay(app);
     const root = document.querySelector('[data-cinema-root]') as HTMLElement;
     clickEl(pcardByName(root, '想看片'));
     clickEl((root.querySelector('.cn-modal') as HTMLElement).querySelector('.j-del'));
-    const popup = document.getElementById('__shared_confirm_popup__') as HTMLElement;
+    // 确认框挂面板树内（ovl → .cn-ovl），不在 document.body 的 core 流程框里
+    expect(document.getElementById('__shared_confirm_popup__')).toBeNull();
+    const popup = root.querySelector('.cn-modal--confirm') as HTMLElement;
     expect(popup).toBeTruthy();
-    expect(popup.querySelector('h4')?.textContent).toBe('删除影视');
-    expect(popup.textContent).toContain('确定删除「想看片」吗？');
+    expect(popup.querySelector('.cf-kicker')?.textContent).toBe('删除影视');
+    expect(popup.querySelector('.cf-name')?.textContent).toBe('「想看片」');
     expect(popup.textContent).toContain('回收站');
-    // 域皮类在位（cn-skin 取午夜场调色板）+ 危险主动作中性修饰
-    expect(popup.classList.contains('cn-skin')).toBe(true);
-    expect(popup.classList.contains('bz-cinema-flow-dialog')).toBe(true);
-    expect(popup.classList.contains('bz-flow-dialog--danger')).toBe(true);
+    expect(popup.querySelector('.cf-btn--danger')).toBeTruthy();
     // 效率审查#1：危险主动作不落焦点（焦点反落取消钮，回车不再直通删除）
-    expect(document.activeElement).toBe(popup.querySelector('#__shared_confirm_cancel__'));
+    expect(document.activeElement).toBe(popup.querySelector('.j-cf-cancel'));
     const trashSpy = vi.spyOn(app.vault, 'trash').mockResolvedValue(undefined);
-    clickEl(popup.querySelector('#__shared_confirm_ok__'));
+    clickEl(popup.querySelector('.j-cf-ok'));
     await vi.waitFor(() => expect(trashSpy).toHaveBeenCalled());
     await vi.waitFor(() => expect(hasNotice(/已删除「想看片」/)).toBe(true));
     expect(root.querySelectorAll('.d-scroll .pcard').length).toBe(3);
@@ -250,9 +249,9 @@ describe('cinema 风格化面板（issue 236）', () => {
     const root = document.querySelector('[data-cinema-root]') as HTMLElement;
     clickEl(pcardByName(root, '想看片'));
     clickEl((root.querySelector('.cn-modal') as HTMLElement).querySelector('.j-del'));
-    const popup = document.getElementById('__shared_confirm_popup__') as HTMLElement;
-    clickEl(popup.querySelector('#__shared_confirm_cancel__'));
-    await vi.waitFor(() => expect(document.getElementById('__shared_confirm_popup__')).toBeNull());
+    const popup = root.querySelector('.cn-modal--confirm') as HTMLElement;
+    clickEl(popup.querySelector('.j-cf-cancel'));
+    await vi.waitFor(() => expect(root.querySelector('.cn-modal--confirm')).toBeNull());
     expect(trashSpy).not.toHaveBeenCalled();
     expect(root.querySelectorAll('.d-scroll .pcard').length).toBe(4);
     expect(M.items.some((i) => i.name === '想看片')).toBe(true);
@@ -2060,6 +2059,29 @@ describe('深审批A：写路径与 ui 行为回归', () => {
     expect(document.activeElement, '空态整刷后焦点应回到搜索框').toBe(q);
     expect(q.selectionStart).toBe(q.value.length);
     expect(q.selectionEnd).toBe(q.value.length);
+  });
+
+  // 输入法组字（2026-11-01 用户报）：拼音阶段不搜、整刷不换掉搜索框节点，定字后才按汉字搜
+  it('中文输入法组字期间不搜也不整刷：定字后才拿汉字搜，输入框节点不被换掉', async () => {
+    const { app } = seedVault();
+    createOverlay(app);
+    const root = document.querySelector('[data-cinema-root]') as HTMLElement;
+    const input = root.querySelector('.j-q') as HTMLInputElement;
+    input.focus();
+    input.dispatchEvent(new CompositionEvent('compositionstart', { bubbles: true }));
+    input.value = 'chenxiang';
+    input.dispatchEvent(new InputEvent('input', { bubbles: true, isComposing: true, data: 'chenxiang' }));
+    await new Promise((r) => setTimeout(r, 380)); // 越过 300ms 搜索防抖 + 400ms 打字静默期
+    expect(M.searchKeyword, '组字中的拼音不许进搜索词').toBe('');
+    // 后台刷新（补抓完成那种）在组字期必须押住：节点还是同一个，组字会话才不被掐断
+    renderSoft(app);
+    renderAll(app);
+    await new Promise((r) => setTimeout(r, 20));
+    expect(root.querySelector('.j-q'), '组字期间整刷不许换掉输入框').toBe(input);
+    // 定字：compositionend 带汉字 → 按汉字搜
+    input.value = '陈翔';
+    input.dispatchEvent(new CompositionEvent('compositionend', { bubbles: true, data: '陈翔' }));
+    await vi.waitFor(() => expect(M.searchKeyword).toBe('陈翔'), { timeout: 2000 });
   });
 
   // P2-5：搜索框 ESC 二段清词——有词先清词（回焦不断打字），无词放行关面板语义不变

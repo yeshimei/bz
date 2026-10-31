@@ -254,41 +254,63 @@ describe('片单整单动作（侧栏片单行右键）', () => {
         .find((b) => (b.textContent ?? '').includes('收录进影院')) as HTMLElement;
       admit.click();
     };
-    // 第一次：先出确认框（本域皮），取消 → 一部不动
+    // 第一次：先出确认框（本域 .cn-modal 那张纸），取消 → 一部不动
     clickAdmit(openMenu());
     await flush();
-    const popup = document.getElementById('__shared_confirm_popup__');
-    expect(popup?.className).toContain('bz-cinema-flow-dialog');
-    expect(popup?.textContent).toContain('片单「片单A」里的 1 部');
-    (document.getElementById('__shared_confirm_cancel__') as HTMLElement).click();
+    const popup = document.querySelector('.cn-modal--confirm') as HTMLElement;
+    expect(popup).toBeTruthy();
+    expect(popup.querySelector('.cf-kicker')?.textContent).toBe('收录进影院');
+    expect(popup.querySelector('.cf-name')?.textContent).toBe('「片单A」');
+    expect(popup.textContent).toContain('这 1 部收录后照常出现在影视视图里');
+    (popup.querySelector('.j-cf-cancel') as HTMLElement).click();
     await flush(20);
     const before = (app.vault as any).files.get('我的/影视/《收纳片》.md') as string;
     expect(before).toContain('片单收纳'); // 取消：标志还在
     // 第二次：确认 → 摘标志，片单保留
     clickAdmit(openMenu());
     await flush();
-    (document.getElementById('__shared_confirm_ok__') as HTMLElement).click();
+    (document.querySelector('.cn-modal--confirm .j-cf-ok') as HTMLElement).click();
     await flush(30);
     const md = (app.vault as any).files.get('我的/影视/《收纳片》.md') as string;
     expect(md).not.toContain('片单收纳');
     expect(md).toContain('片单A'); // 片单保留
   });
 
-  it('移除：二次确认后才删（取消则一部不动）', async () => {
+  it('移除：只删只在片单里的导入条目，在主列表里的保留（取消则一部不动）', async () => {
     const app = seedVault();
     createOverlay(app);
     const rail = document.querySelector('.rail-item[data-l="片单A"]') as HTMLElement;
-    rail.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true, clientX: 20, clientY: 20 }));
-    const menu = document.querySelector('.bz-item-menu') as HTMLElement;
-    const remove = [...menu.querySelectorAll('button, .bz-item-menu-item')].find((b) => (b.textContent ?? '').includes('移除')) as HTMLElement;
-    remove.click();
+    const openRemove = (): HTMLElement => {
+      rail.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true, clientX: 20, clientY: 20 }));
+      const menu = document.querySelector('.bz-item-menu') as HTMLElement;
+      const remove = [...menu.querySelectorAll('button, .bz-item-menu-item')]
+        .find((b) => (b.textContent ?? '').includes('移除')) as HTMLElement;
+      remove.click();
+      return menu;
+    };
+    openRemove();
     await flush();
-    // 确认框（本域皮：bz-cinema-flow-dialog）
-    const popup = document.getElementById('__shared_confirm_popup__');
-    expect(popup?.className).toContain('bz-cinema-flow-dialog');
-    expect(popup?.textContent).toContain('连同片单内 2 部影片');
-    (document.getElementById('__shared_confirm_cancel__') as HTMLElement).click();
+    // 确认框：本域 .cn-modal 那张纸，危险主钮只有文字色
+    const popup = document.querySelector('.cn-modal--confirm') as HTMLElement;
+    expect(popup).toBeTruthy();
+    expect(popup.querySelector('.cf-kicker')?.textContent).toBe('移除片单');
+    expect(popup.textContent).toContain('只在片单里的 1 部导入条目移入 Obsidian 回收站');
+    expect(popup.textContent).toContain('影院主体里的 1 部保留');
+    expect(popup.querySelector('.cf-btn--danger')).toBeTruthy();
+    // 取消：一部不动、片单归属也不动
+    (popup.querySelector('.j-cf-cancel') as HTMLElement).click();
     await flush(20);
-    expect((app.vault as any).files.has('我的/影视/《收纳片》.md')).toBe(true); // 取消：一部不动
+    expect((app.vault as any).files.has('我的/影视/《收纳片》.md')).toBe(true);
+    expect((app.vault as any).files.get('我的/影视/《已在影院》.md') as string).toContain('片单A');
+    // 确认：导入条目进回收站；主列表里的保留，只从这个片单摘出来
+    openRemove();
+    await flush();
+    (document.querySelector('.cn-modal--confirm .j-cf-ok') as HTMLElement).click();
+    await flush(40);
+    expect((app.vault as any).files.has('我的/影视/《收纳片》.md')).toBe(false);
+    const kept = (app.vault as any).files.get('我的/影视/《已在影院》.md') as string;
+    expect(kept).not.toContain('片单A');
+    expect(kept).toContain('已看');
+    expect(hasNotice(/片单「片单A」已移除/)).toBe(true);
   });
 });

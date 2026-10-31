@@ -551,8 +551,8 @@ export function formBackHtml(d: FormPreviewData | null, o: FormBackOpts): string
   `;
 }
 
-// 删除确认弹窗已收编 core/flow-dialog（一致审查#1）：行为层 openConfirm 走 openFlowDialog +
-// 域皮 `cn-skin bz-cinema-flow-dialog`（styles.css 映射段），confirmModalHtml 退役。
+// 删除确认弹窗：行为层 openConfirm 走本域 confirmCinema（.cn-modal 那张纸，2026-11-01 换下
+// core/flow-dialog——流程框挂 body，域皮套不进去）；confirmModalHtml 早已退役。
 
 // ---------- AI 荐片页（共享页；画像/结果状态显式入参） ----------
 

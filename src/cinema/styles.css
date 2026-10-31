@@ -430,41 +430,26 @@
 .bz-cinema--midnight .f-range{flex:1;-webkit-appearance:none;appearance:none;height:4px;border-radius:99px;background:var(--chip);outline:none}
 .bz-cinema--midnight .f-range::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:16px;height:16px;border-radius:50%;background:var(--gold);cursor:pointer;border:2px solid var(--panel);box-shadow:0 1px 4px #0003}
 .bz-cinema--midnight .f-range-val{min-width:36px;text-align:center;font-size:var(--bz-font-label);font-weight:600;color:var(--ink);font-variant-numeric:tabular-nums}
-/* 删除确认流程框（core/flow-dialog 收编，一致审查#1：全域最后一个自绘确认框退役）。
-   行为层 openConfirm 传 className: 'cn-skin bz-cinema-flow-dialog'。为什么必须是这两个类：
-     · `cn-skin` = 午夜场调色板（本文件开头）：core 流程框挂 document.body、不在面板树内，
-       缺它下面所有变量解析失败（跟手菜单/底部抽屉皮肤同一通道）；
-     · `bz-cinema-flow-dialog` = 本域确认框专属类，承载下面这套取值。
-   取值照抄同域弹窗 .cn-modal（纸白底/墨线描边/大阴影），让「删除影视」确认框读起来就是
-   午夜场弹窗那张纸。结构与几何仍由 core 壳承担（.bz-overlay-popup 消费的 --bz-* token 起底），
-   这里只覆写颜色观感，故选择器结构与 favorites/belongings 域皮同款（id 契约映射）。 */
-#__shared_confirm_popup__.bz-cinema-flow-dialog {
-  background: var(--panel);
-  border: 1px solid var(--line);
-  box-shadow: 0 18px 48px #0005, 0 2px 10px #0003;
+/* ---------- 危险确认框（.cn-modal--confirm，2026-11-01 用户拍板换掉 core 流程框） ----------
+   前身是 core/flow-dialog + 一段 id 选择器手映射纸色：流程框挂 document.body，本域样式全在
+   `.bz-cinema--midnight` 作用域内套不进去，颜色像了形制仍不是影院的。现在确认框走本域 ovl
+   （挂面板树内的 bz-cinema--midnight 宿主），与「片单改名」「归入片单」共用 .cn-modal 骨架，
+   这里只补确认框自己的三行结构：小标 + 片名 / 正文 / 按钮条。 */
+.bz-cinema--midnight .cn-modal--confirm{max-width:min(390px,100%);padding:20px 22px 16px}
+.bz-cinema--midnight .cf-head{display:flex;flex-direction:column;gap:5px;margin-bottom:13px;min-width:0}
+.bz-cinema--midnight .cf-kicker{font-size:10.5px;color:var(--gold);letter-spacing:.22em}
+.bz-cinema--midnight .cf-name{font-family:"Noto Serif SC",SimSun,serif;font-size:16px;line-height:1.45;letter-spacing:.04em;color:var(--ink);word-break:break-word}
+.bz-cinema--midnight .cf-body p{margin:0 0 7px;font-size:12.5px;line-height:1.75;color:var(--ink-2)}
+.bz-cinema--midnight .cf-body p:last-child{margin-bottom:0}
+.bz-cinema--midnight .cf-foot{display:flex;justify-content:flex-end;gap:8px;margin-top:17px;padding-top:14px;border-top:1px solid var(--line)}
+.bz-cinema--midnight .cf-btn{border:1px solid var(--line);background:none;color:var(--ink-2);border-radius:10px;padding:7px 17px;font-size:12.5px;font-family:inherit;cursor:pointer;transition:border-color var(--cn-m-fast) ease,color var(--cn-m-fast) ease}
+@media (hover: hover) {
+.bz-cinema--midnight .cf-btn:hover{border-color:var(--gold);color:var(--ink)}
 }
-#__shared_confirm_popup__.bz-cinema-flow-dialog h4 {
-  font-family: "Noto Serif SC", SimSun, serif;
-  letter-spacing: .08em;
-  color: var(--ink);
-}
-#__shared_confirm_popup__.bz-cinema-flow-dialog p {
-  color: var(--ink);
-}
-/* 按钮：对齐同域弹窗 .dm-btn（墨线描边/无底/次级墨字）。删除主钮在危险态由 core 的
-   .bz-flow-dialog--danger 降为中性次级形制，本域按 .dm-btn.danger 口径把文字色交给域内
-   危险色惯例 #b3402a（午夜场调色板无 --danger token）；常态 (2,1,0) 规则天然被
-   core 危险规则 (2,2,0) 压住，危险覆写状态限定 .bz-flow-dialog--danger。 */
-#__shared_confirm_popup__.bz-cinema-flow-dialog #__shared_confirm_cancel__,
-#__shared_confirm_popup__.bz-cinema-flow-dialog #__shared_confirm_ok__ {
-  border-color: var(--line);
-  background: none;
-  color: var(--ink-2);
-}
-#__shared_confirm_popup__.bz-cinema-flow-dialog.bz-flow-dialog--danger #__shared_confirm_ok__ {
-  border-color: var(--line);
-  background: none;
-  color: #b3402a;
+/* 危险动作只换文字色（午夜场调色板无 --danger token，沿用域内惯例 #b3402a），不铺红底 */
+.bz-cinema--midnight .cf-btn--danger{border-color:#b3402a4d;color:#b3402a}
+@media (hover: hover) {
+.bz-cinema--midnight .cf-btn--danger:hover{border-color:#b3402a;color:#b3402a}
 }
 /* ---------- 统一浮层皮肤（core/item-actions：跟手菜单 .bz-item-menu / 底部抽屉 .bz-item-sheet） ----------
    移动端抽屉与跟手菜单的**手势与实现**统一走共享层（core/dom.longPress + core/item-actions：

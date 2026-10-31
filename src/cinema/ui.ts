@@ -16,7 +16,6 @@ import { TFile } from 'obsidian';
 import { notice, notify, notifySaveError } from '../core/notice';
 import { bindMaskDismiss } from '../core/mask-dismiss';
 import { trashNote } from '../core/note-trash';
-import { openFlowDialog } from '../core/flow-dialog';
 import { emitDomainEvent } from '../core/domain-bus';
 import { escManager, registerPanelEsc, unregisterPanelEsc } from '../core/esc-manager';
 import { firstFocusable, trapPanelFocus } from '../core/ui/focus-trap';
@@ -362,16 +361,15 @@ async function admitShelfToCinema(name: string, app: App): Promise<void> {
     notice(`片单「${name}」里的影片都已在影院中`, 'warning');
     return;
   }
-  const v = await openFlowDialog({
-    title: '收录进影院',
-    message: `确定收录片单「${name}」里的 ${targets.length} 部吗？\n收录后它们照常出现在影视视图里，片单保留`,
-    className: 'cn-skin bz-cinema-flow-dialog',
-    actions: [
-      { label: '取消', value: 'cancel' },
-      { label: '收录', value: 'ok', cta: true },
-    ],
+  const sec = cinemaRoot();
+  if (!sec) return;
+  const ok = await confirmCinema(sec, {
+    kicker: '收录进影院',
+    subject: `「${name}」`,
+    lines: [`这 ${targets.length} 部收录后照常出现在影视视图里，片单保留`],
+    okLabel: '收录',
   });
-  if (v !== 'ok') return;
+  if (!ok) return;
   try {
     for (const x of targets) {
       await writeFm(app, x.file!, (fm: Record<string, unknown>) => {
@@ -389,9 +387,11 @@ async function admitShelfToCinema(name: string, app: App): Promise<void> {
 }
 
 /**
- * 移除片单（片单整单动作）：二次确认后**连同片单内所有影片笔记**一起移入 Obsidian 回收站。
- * 删除走 core trashNote（与单条目删除同一出口，可在回收站恢复）；片单没有自己的存储，
- * 成员清空即消失——不额外维护一份「片单表」。
+ * 移除片单（片单整单动作）：二次确认后按**条目来路**分流（2026-11-01 用户口径：
+ * 「只删只在导入条目、不在主列表中的；在主列表里的保留」）：
+ * · 带「片单收纳」的导入条目——它们只因为这个片单才存在，随片单一起移入 Obsidian 回收站；
+ * · 也在影院主体里的影片——**不删**，只把它从这个片单摘出来（片单字段去掉，影片照常在主列表）。
+ * 片单没有自己的存储，成员全部摘完之后片单自然消失——不额外维护一份「片单表」。
  */
 async function removeShelf(name: string, app: App): Promise<void> {
   const members = shelfMembers(name);
@@ -399,19 +399,23 @@ async function removeShelf(name: string, app: App): Promise<void> {
     notice(`片单「${name}」里没有影片`, 'warning');
     return;
   }
-  const v = await openFlowDialog({
-    title: '移除片单',
-    message: `确定移除片单「${name}」吗？\n连同片单内 ${members.length} 部影片一起移入 Obsidian 回收站（.trash），可在回收站恢复`,
-    // 本域确认框专属皮（与「删除影视」同一个：cn-skin + bz-cinema-flow-dialog）
-    className: 'cn-skin bz-cinema-flow-dialog',
-    actions: [
-      { label: '取消', value: 'cancel' },
-      { label: '移除', value: 'ok', cta: true, danger: true },
+  const sec = cinemaRoot();
+  if (!sec) return;
+  const imports = members.filter((x) => x.shelvedOnly);
+  const kept = members.filter((x) => !x.shelvedOnly);
+  const ok = await confirmCinema(sec, {
+    kicker: '移除片单',
+    subject: `「${name}」`,
+    lines: [
+      imports.length ? `只在片单里的 ${imports.length} 部导入条目移入 Obsidian 回收站（.trash），可在回收站恢复` : '',
+      kept.length ? `影院主体里的 ${kept.length} 部保留，只从这个片单摘出来` : '',
     ],
+    okLabel: '移除',
+    danger: true,
   });
-  if (v !== 'ok') return;
+  if (!ok) return;
   let n = 0;
-  for (const x of members) {
+  for (const x of imports) {
     try {
       await trashNote(app, x.file!);
       n++;
@@ -419,9 +423,13 @@ async function removeShelf(name: string, app: App): Promise<void> {
       console.error(e);
     }
   }
+  if (kept.length) await setListMembership(kept, name, false, app, `片单「${name}」的 ${kept.length} 部`);
   refreshDataAndView(app);
   renderAll(app);
-  notice(n ? `片单「${name}」已移除，${n} 部影片移入回收站` : `片单「${name}」移除未完成，请重试`, n ? 'success' : 'error');
+  const parts: string[] = [];
+  if (n) parts.push(`${n} 部导入条目移入回收站`);
+  if (kept.length) parts.push(`${kept.length} 部保留在影院`);
+  notice(parts.length ? `片单「${name}」已移除：${parts.join('，')}` : `片单「${name}」移除未完成，请重试`, parts.length ? 'success' : 'error');
 }
 
 /** 片单改名弹层（右键/抽屉「改名」；复用归入弹层的 .lp-* 形态，零新样式） */
@@ -3004,27 +3012,70 @@ async function saveEdit(item: CinemaItem, p: FormPayload, app: App, form: FormHa
   }
 }
 
-// ---------- 弹窗：删除确认（一致审查#1 收编 core/flow-dialog：全域最后一个自绘确认框退役） ----------
+// ---------- 弹窗：危险确认（本域皮，2026-11-01 用户拍板） ----------
+//
+// 三处确认（删除影视 / 移除片单 / 收录进影院）原来都走 core 的 openFlowDialog：它挂在
+// document.body 上，而影院样式全写在 `.bz-cinema--midnight` 作用域内，套不进 body 节点，
+// 只能靠 `#__shared_confirm_popup__.bz-cinema-flow-dialog` 一段 id 选择器手映射纸色与字色
+// ——颜色像了，几何、排版、按钮仍是宿主通用形制，用户一眼就看出「这不是影院的弹窗」。
+// 改走本域 ovl（挂面板树内的 bz-cinema--midnight 宿主）→ `.cn-modal` 那张纸，与「片单改名」
+// 「归入片单」同一套骨架；ESC / 点遮罩取消由 ovl 自带的 escManager + mask-dismiss 承担。
 
 /**
- * 删除确认：走 core openFlowDialog（role=dialog/aria-modal、ESC/遮罩取消、焦点管理、
- * danger 中性形制——焦点反落取消钮，回车不再直通删除）。皮肤类见 styles.css 的
- * `#__shared_confirm_popup__.bz-cinema-flow-dialog` 映射段。
+ * 影院确认框：resolve true = 点了主动作；取消 / ESC / 点遮罩 / 被新层顶替 = false。
+ * 焦点默认落取消钮（危险动作靠 Tab 或鼠标才够得着，回车不直通删除——与 core 流程框
+ * 同一条防误触哲学）；非危险动作（收录进影院）焦点落主动作。
+ */
+function confirmCinema(sec: HTMLElement, o: {
+  kicker: string;
+  subject?: string;
+  lines: string[];
+  okLabel: string;
+  danger?: boolean;
+}): Promise<boolean> {
+  let settled = false;
+  let resolveFn: (v: boolean) => void = () => {};
+  const answer = new Promise<boolean>((r) => { resolveFn = r; });
+  const { el, close } = ovl(sec, `<div class="cn-modal cn-modal--confirm" role="dialog" aria-modal="true">
+    <div class="cf-head"><span class="cf-kicker">${esc(o.kicker)}</span>${o.subject ? `<span class="cf-name">${esc(o.subject)}</span>` : ''}</div>
+    <div class="cf-body">${o.lines.filter(Boolean).map((l) => `<p>${esc(l)}</p>`).join('')}</div>
+    <div class="cf-foot"><button type="button" class="cf-btn j-cf-cancel">取消</button><button type="button" class="cf-btn j-cf-ok${o.danger ? ' cf-btn--danger' : ''}">${esc(o.okLabel)}</button></div>
+  </div>`, {
+    // 取消语义收口：ESC 与点遮罩都从这里走；返回 false 放行 ovl 自己的收尾（摘层/注销 ESC）
+    onWillClose: () => {
+      if (!settled) { settled = true; resolveFn(false); }
+      return false;
+    },
+  });
+  const settle = (v: boolean): void => {
+    if (settled) return;
+    settled = true;
+    resolveFn(v);
+    close({ skipReturn: true });
+  };
+  el.querySelector('.j-cf-cancel')?.addEventListener('click', () => settle(false));
+  el.querySelector('.j-cf-ok')?.addEventListener('click', () => settle(true));
+  const focusTarget = (o.danger ? el.querySelector('.j-cf-cancel') : el.querySelector('.j-cf-ok')) as HTMLElement | null;
+  focusTarget?.focus();
+  return answer;
+}
+
+// ---------- 弹窗：删除确认 ----------
+
+/**
+ * 删除确认：本域确认框（`confirmCinema`）——.cn-modal 那张纸，危险动作走文字色不铺底。
  */
 function openConfirm(item: CinemaItem, app: App): void {
-  void openFlowDialog({
-    title: '删除影视',
-    // message 经 core escapeHtml（片名注入防护），\n 渲染为 <br> 分行
-    message: `确定删除「${item.name}」吗？\n将移入 Obsidian 回收站（.trash），可在回收站恢复`,
-    // 流程框挂 document.body、不在面板树内：cn-skin 取午夜场调色板（菜单/抽屉皮肤同一通道），
-    // bz-cinema-flow-dialog = 本域确认框专属类；删除是危险主动作 → core 另挂 bz-flow-dialog--danger
-    className: 'cn-skin bz-cinema-flow-dialog',
-    actions: [
-      { label: '取消', value: 'cancel' },
-      { label: '删除', value: 'ok', cta: true, danger: true },
-    ],
-  }).then(async (v) => {
-    if (v !== 'ok') return;
+  const sec = cinemaRoot();
+  if (!sec) return;
+  void confirmCinema(sec, {
+    kicker: '删除影视',
+    subject: `「${item.name}」`,
+    lines: ['将移入 Obsidian 回收站（.trash），可在回收站恢复'],
+    okLabel: '删除',
+    danger: true,
+  }).then(async (ok) => {
+    if (!ok) return;
     if (item.file) {
       try {
         await trashNote(app, item.file);
@@ -3446,6 +3497,7 @@ const PANEL = { MIN_W: 640, MIN_H: 440, MAX_W: 1280, MAX_H: 880 };
 let panelResizeDetach: { flush: () => void; detach: () => void } | null = null;
 
 export function createOverlay(app: App): void {
+  resetImeState(); // 上一轮组字没收尾的残留不许带进新面板（否则一开就押着渲染）
   const overlay = document.createElement('div');
   overlay.className = 'bz-panel-overlay';
   const mobile = isMobileEnv();
@@ -3474,11 +3526,42 @@ export function createOverlay(app: App): void {
   bindMaskDismiss(overlay, closeOverlay);
 
   bindMidnight(root, app);
+  // 中文输入法组字（2026-11-01 用户报：「开中文输入法打，等着下面刷新，输入框被强制关掉，
+  // 只搜到几个字母」）。组字期两件事都不能做：① 不能按 input 搜——那时 value 还是拼音字母
+  // （chen / cx），搜出来自然只剩几个字母；② 不能整刷——renderAll 整写 innerHTML 会把
+  // 搜索框这个节点换掉，浏览器随之结束组字会话，候选窗消失、拼音留在框里。
+  // 所以组字期间只把打字心跳续上（让 renderSoft 继续顺延），搜与刷都押到 compositionend。
+  root.addEventListener('compositionstart', (e) => {
+    if (!isTextField(e.target as Element)) return;
+    imeComposing = true;
+    M.lastInputAt = Date.now();
+    armImeSafety(app);
+  });
+  root.addEventListener('compositionupdate', () => {
+    if (!imeComposing) return;
+    M.lastInputAt = Date.now();
+    armImeSafety(app);
+  });
+  root.addEventListener('compositionend', (e) => {
+    const t = e.target as HTMLElement;
+    if (!isTextField(t)) return;
+    imeComposing = false;
+    if (imeSafetyTimer) { clearTimeout(imeSafetyTimer); imeSafetyTimer = null; }
+    M.lastInputAt = Date.now();
+    // 定字后才搜（此时 value 是汉字）；Chrome 之后还会补一个 isComposing=false 的 input，
+    // onSearchInput 只是重置防抖计时，重复调用无副作用
+    if (t.classList.contains('j-q') || t.classList.contains('j-mq')) {
+      onSearchInput(app, root, t.classList.contains('j-mq'), (t as HTMLInputElement).value);
+    }
+    flushImeDeferredRender(app);
+  });
   // 搜索/滑杆输入（委托；input 冒泡）
   root.addEventListener('input', (e) => {
     M.lastInputAt = Date.now(); // 打字心跳：renderSoft 据此让路（含中文输入法组合期）
     const t = e.target as HTMLElement;
     if (t.classList.contains('j-q') || t.classList.contains('j-mq')) {
+      // 组字中的 input 只带拼音，搜它等于把用户的汉字拆成字母（同一个 bug 的另一半）
+      if ((e as InputEvent).isComposing) return;
       onSearchInput(app, root, t.classList.contains('j-mq'), (t as HTMLInputElement).value);
     } else if (t.classList.contains('j-range')) {
       const out = root.querySelector('.j-rval');
@@ -3520,6 +3603,42 @@ const SOFT_RENDER_DELAY_MS = 400;
 
 let softRenderTimer: ReturnType<typeof setTimeout> | null = null;
 
+// ---------- 输入法组字态（2026-11-01 用户报的搜索框被强制关闭） ----------
+//
+// 组字期间既要押住整刷（innerHTML 换掉输入框 = 结束组字会话、候选窗消失），
+// 也不能拿 input 里的拼音去搜。两处都由下面这个开关统一判定，凑齐三件：
+// 监听（在 createOverlay 里挂 root）、押刷（renderAllInner 开头）、押搜（input 分支）。
+
+let imeComposing = false;
+/** 安全阀：compositionend 一直不来（输入法崩了 / 面板在组字中被关）也要能自愈，
+ *  否则「渲染永久押着」——比原来的 bug 更难查。 */
+let imeSafetyTimer: ReturnType<typeof setTimeout> | null = null;
+const IME_SAFETY_MS = 15000;
+
+function armImeSafety(app: App): void {
+  if (imeSafetyTimer) clearTimeout(imeSafetyTimer);
+  imeSafetyTimer = setTimeout(() => {
+    imeSafetyTimer = null;
+    if (!imeComposing) return;
+    imeComposing = false;
+    flushImeDeferredRender(app);
+  }, IME_SAFETY_MS);
+}
+
+/** 组字结束后把押住的渲染补上（没押过就不动，免得白刷一次） */
+function flushImeDeferredRender(app: App): void {
+  if (!softRenderTimer) return;
+  clearTimeout(softRenderTimer);
+  softRenderTimer = null;
+  renderAll(app);
+}
+
+/** 开/关面板时清干净：上一个面板组字没收尾，不能让新面板一开就押着渲染 */
+function resetImeState(): void {
+  imeComposing = false;
+  if (imeSafetyTimer) { clearTimeout(imeSafetyTimer); imeSafetyTimer = null; }
+}
+
 /** 文本输入判定（排除滑杆/勾选等不支持选区的输入类型） */
 function isTextField(el: Element | null): el is HTMLInputElement | HTMLTextAreaElement {
   if (!(el instanceof HTMLInputElement) && !(el instanceof HTMLTextAreaElement)) return false;
@@ -3560,8 +3679,12 @@ function restoreFocus(root: HTMLElement, snap: FocusSnap | null): void {
 
 /** 面板内是否还在打字（焦点在文本输入 + 距上次键入未过静默期） */
 function isTyping(root: HTMLElement): boolean {
+  const focused = isTextField(document.activeElement) && root.contains(document.activeElement);
+  // 组字期一律算「还在打字」：与 400ms 心跳无关——选字时人是静默的，光看心跳会把组字
+  // 押的渲染放过去，正是「等着下面刷新、输入框就被关掉」的那一拍
+  if (imeComposing) return focused;
   if (!M.lastInputAt || Date.now() - M.lastInputAt >= TYPING_GUARD_MS) return false;
-  return isTextField(document.activeElement) && root.contains(document.activeElement);
+  return focused;
 }
 
 function clearSoftRender(): void {
@@ -3828,6 +3951,14 @@ function mountFolderGateCinema(): boolean {
 function renderAllInner(app: App): void {
   const root = cinemaRoot();
   if (!root) return;
+  // 组字期间不整刷：整写 innerHTML 会把输入框节点换掉，浏览器随之结束组字会话
+  //（候选窗消失、拼音残在框里＝用户说的「输入框被强制关闭」）。押到 compositionend 补刷。
+  if (imeComposing) {
+    if (!softRenderTimer) {
+      softRenderTimer = setTimeout(() => { softRenderTimer = null; renderAll(app); }, SOFT_RENDER_DELAY_MS);
+    }
+    return;
+  }
   clearSoftRender(); // 已排期的顺延渲染作废，本次渲染已覆盖
   const snap = snapshotFocus(root);
   const beforeCards = measureGridCards(root); // 网格动效（issue 402）：渲染前量，渲染后就没机会了
@@ -3858,6 +3989,7 @@ function renderAllInner(app: App): void {
 
 export function closeOverlay(): void {
   clearSoftRender(); // 面板已关：顺延渲染不再补，免留下野定时器
+  resetImeState();   // 组字态跟着面板走（组字中关面板则安全阀也不必再等）
   pendingFlash = null;      // 本次落位闪作废（面板都关了，没有卡可闪）
   lastViewIdentity = null;  // 下次开面板按「内容身份变了」处理 → 首屏排进场接力
   if (M.searchDebounceTimer) clearTimeout(M.searchDebounceTimer);
