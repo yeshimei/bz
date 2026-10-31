@@ -386,14 +386,24 @@ async function admitShelfToCinema(name: string, app: App): Promise<void> {
   }
 }
 
+/** 正在执行整单动作的片单名（防重入：连点「移除」/ 长按抖动 / 菜单残余 click 只算一次） */
+const shelfBusy = new Set<string>();
+
 /**
- * 移除片单（片单整单动作）：二次确认后按**条目来路**分流（2026-11-01 用户口径：
- * 「只删只在导入条目、不在主列表中的；在主列表里的保留」）：
- * · 带「片单收纳」的导入条目——它们只因为这个片单才存在，随片单一起移入 Obsidian 回收站；
- * · 也在影院主体里的影片——**不删**，只把它从这个片单摘出来（片单字段去掉，影片照常在主列表）。
- * 片单没有自己的存储，成员全部摘完之后片单自然消失——不额外维护一份「片单表」。
+ * 移除片单（片单整单动作）：一次确认选口径，整单一次办完（2026-11-01 用户验收：
+ * 「要一次性删掉，或摘出来」——此前只做「导入条目删、主列表摘出」这一种混合口径，
+ * 想删主列表里的影片只能一部一部去点，129 部的片单要点 129 次）。
+ *
+ * 两条路，都在同一个确认框里，点一次就把整单跑完：
+ * · **只摘出**：一部不删，全部去掉这个片单的归属；带「片单收纳」的导入条目顺带摘掉标志
+ *   （否则摘完片单它们就成了不在任何视图里的孤儿，等于变相丢失）。
+ * · **删影片**：整单成员不论来路，全部移入 Obsidian 回收站（.trash），可在回收站恢复。
+ *
+ * 片单没有自己的存储，成员归属清空即消失——不额外维护一份「片单表」。
+ * 逐部容错：某部写盘/删除失败只记一条，不中断整单（129 部里挂一部就前功尽弃更糟）。
  */
 async function removeShelf(name: string, app: App): Promise<void> {
+  if (shelfBusy.has(name)) return; // 同一片单已有一次在执行：忽略这次触发
   const members = shelfMembers(name);
   if (!members.length) {
     notice(`片单「${name}」里没有影片`, 'warning');
@@ -402,34 +412,75 @@ async function removeShelf(name: string, app: App): Promise<void> {
   const sec = cinemaRoot();
   if (!sec) return;
   const imports = members.filter((x) => x.shelvedOnly);
-  const kept = members.filter((x) => !x.shelvedOnly);
-  const ok = await confirmCinema(sec, {
+  const n = members.length;
+  const stat = imports.length
+    ? `片单里共 ${n} 部：影院主列表 ${n - imports.length} 部 · 只在片单里 ${imports.length} 部`
+    : `片单里共 ${n} 部`;
+  const choice = await chooseCinema(sec, {
     kicker: '移除片单',
     subject: `「${name}」`,
     lines: [
-      imports.length ? `只在片单里的 ${imports.length} 部导入条目移入 Obsidian 回收站（.trash），可在回收站恢复` : '',
-      kept.length ? `影院主体里的 ${kept.length} 部保留，只从这个片单摘出来` : '',
+      stat,
+      '只摘出：影片全部留下，只去掉这层片单归属（只在片单里的转进影院主列表）',
+      '删影片：整单移入 Obsidian 回收站（.trash），可在回收站恢复',
     ],
-    okLabel: '移除',
-    danger: true,
+    actions: [
+      { label: '只摘出', value: 'pick' },
+      { label: '删影片', value: 'del', danger: true },
+    ],
   });
-  if (!ok) return;
-  let n = 0;
-  for (const x of imports) {
-    try {
-      await trashNote(app, x.file!);
-      n++;
-    } catch (e) {
-      console.error(e);
+  if (!choice) return;
+  shelfBusy.add(name);
+  // 大单先报一声：整单是逐部串行落盘（写 frontmatter / 移回收站），129 部要好几秒，
+  // 没有这一句用户会以为点了没反应
+  if (n > 10) notice(`正在移除「${name}」，共 ${n} 部…`, 'info', 4000);
+  try {
+    if (choice === 'del') {
+      let done = 0;
+      for (const x of members) {
+        try {
+          await trashNote(app, x.file!);
+          done++;
+        } catch (e) {
+          console.error('[cinema] 删除片单成员失败:', x.file?.path, e);
+        }
+      }
+      refreshDataAndView(app);
+      renderAll(app);
+      notice(
+        done === n ? `片单「${name}」已移除，${done} 部影片移入回收站` : `片单「${name}」移除了 ${done}/${n} 部，其余未能删除`,
+        done === n ? 'success' : 'error'
+      );
+      return;
     }
+    // 只摘出：片单归属 + 「片单收纳」标志一起摘（一次写盘搞定，别写两遍）
+    const pending = members.slice();
+    for (const x of pending) x.lists = x.lists.filter((l) => l !== name);
+    let done = 0;
+    for (const x of pending) {
+      try {
+        const hadShelved = x.shelvedOnly;
+        await writeFm(app, x.file!, (fm: Record<string, unknown>) => {
+          const cur = normalizeLists(fm['片单']);
+          const next = cur.filter((l) => l !== name);
+          if (next.length) fm['片单'] = next;
+          else delete fm['片单'];
+          if (hadShelved) delete fm['片单收纳'];
+        });
+        done++;
+      } catch (e) {
+        console.error('[cinema] 摘出片单归属失败:', x.file?.path, e);
+      }
+    }
+    refreshDataAndView(app);
+    renderAll(app);
+    notice(
+      done === n ? `片单「${name}」已移除，${done} 部影片留在影院` : `片单「${name}」摘出了 ${done}/${n} 部，其余未能写入`,
+      done === n ? 'success' : 'error'
+    );
+  } finally {
+    shelfBusy.delete(name);
   }
-  if (kept.length) await setListMembership(kept, name, false, app, `片单「${name}」的 ${kept.length} 部`);
-  refreshDataAndView(app);
-  renderAll(app);
-  const parts: string[] = [];
-  if (n) parts.push(`${n} 部导入条目移入回收站`);
-  if (kept.length) parts.push(`${kept.length} 部保留在影院`);
-  notice(parts.length ? `片单「${name}」已移除：${parts.join('，')}` : `片单「${name}」移除未完成，请重试`, parts.length ? 'success' : 'error');
 }
 
 /** 片单改名弹层（右键/抽屉「改名」；复用归入弹层的 .lp-* 形态，零新样式） */
@@ -932,7 +983,10 @@ function openDoubanMineSync(sec: HTMLElement, app: App, uid: string): void {
   let streamKey = -1;
 
   const etaText = (n: number): string => {
-    const min = Math.ceil((n * 15000) / 60000);
+    // 按导入批次的真实节奏算（IMPORT_GAP_MS = 4s/部）：这里曾硬编码 15000，
+    // 界面照着「零星补抓」的 15 秒口径报时，105 部显示「约 27 分钟」，
+    // 实际 7 分钟就跑完了——用户会以为还挂在旧节奏上
+    const min = Math.ceil((n * IMPORT_GAP_MS) / 60000);
     return min < 60 ? `${min} 分钟` : `${Math.floor(min / 60)} 小时 ${min % 60} 分`;
   };
 
@@ -3022,9 +3076,55 @@ async function saveEdit(item: CinemaItem, p: FormPayload, app: App, form: FormHa
 // 「归入片单」同一套骨架；ESC / 点遮罩取消由 ovl 自带的 escManager + mask-dismiss 承担。
 
 /**
- * 影院确认框：resolve true = 点了主动作；取消 / ESC / 点遮罩 / 被新层顶替 = false。
- * 焦点默认落取消钮（危险动作靠 Tab 或鼠标才够得着，回车不直通删除——与 core 流程框
- * 同一条防误触哲学）；非危险动作（收录进影院）焦点落主动作。
+ * 影院多选确认框：resolve 选中的动作 value；取消 / ESC / 点遮罩 / 被新层顶替 = null。
+ * 动作按钮可给多枚（移除片单要「只摘出 / 删影片」两条路，2026-11-01 用户口径：
+ * 一次确认就把整单办完，别让人一部一部删）。焦点默认落取消钮（危险动作靠 Tab 或鼠标才够得着，
+ * 回车不直通删除——与 core 流程框同一条防误触哲学）。
+ */
+function chooseCinema(sec: HTMLElement, o: {
+  kicker: string;
+  subject?: string;
+  lines: string[];
+  actions: { label: string; value: string; danger?: boolean }[];
+  /** 焦点归属：cancel（默认，有危险动作时用）/ primary（全是安全动作时落第一枚动作钮） */
+  focus?: 'cancel' | 'primary';
+}): Promise<string | null> {
+  let settled = false;
+  let resolveFn: (v: string | null) => void = () => {};
+  const answer = new Promise<string | null>((r) => { resolveFn = r; });
+  const btns = o.actions
+    // value='ok' 的钮额外挂 j-cf-ok（单动作确认框的稳定钩子，调用方/测试按它点主动作）
+    .map((a, i) => `<button type="button" class="cf-btn j-cf-act${a.value === 'ok' ? ' j-cf-ok' : ''}${a.danger ? ' cf-btn--danger' : ''}" data-cf-act="${esc(a.value)}" data-cf-i="${i}">${esc(a.label)}</button>`)
+    .join('');
+  const { el, close } = ovl(sec, `<div class="cn-modal cn-modal--confirm" role="dialog" aria-modal="true">
+    <div class="cf-head"><span class="cf-kicker">${esc(o.kicker)}</span>${o.subject ? `<span class="cf-name">${esc(o.subject)}</span>` : ''}</div>
+    <div class="cf-body">${o.lines.filter(Boolean).map((l) => `<p>${esc(l)}</p>`).join('')}</div>
+    <div class="cf-foot"><button type="button" class="cf-btn j-cf-cancel">取消</button>${btns}</div>
+  </div>`, {
+    // 取消语义收口：ESC 与点遮罩都从这里走；返回 false 放行 ovl 自己的收尾（摘层/注销 ESC）
+    onWillClose: () => {
+      if (!settled) { settled = true; resolveFn(null); }
+      return false;
+    },
+  });
+  const settle = (v: string | null): void => {
+    if (settled) return;
+    settled = true;
+    resolveFn(v);
+    close({ skipReturn: true });
+  };
+  el.querySelector('.j-cf-cancel')?.addEventListener('click', () => settle(null));
+  el.querySelectorAll<HTMLElement>('.j-cf-act').forEach((b) => {
+    b.addEventListener('click', () => settle(b.dataset.cfAct ?? null));
+  });
+  // 焦点落取消钮：危险动作永不因回车误触；全安全动作的框落第一枚动作钮（原来的语义不变）
+  const focusSel = o.focus === 'primary' ? '.j-cf-act' : '.j-cf-cancel';
+  (el.querySelector(focusSel) as HTMLElement | null)?.focus();
+  return answer;
+}
+
+/**
+ * 影院单选确认框：resolve true = 点了主动作；取消 / ESC / 点遮罩 / 被新层顶替 = false。
  */
 function confirmCinema(sec: HTMLElement, o: {
   kicker: string;
@@ -3033,31 +3133,13 @@ function confirmCinema(sec: HTMLElement, o: {
   okLabel: string;
   danger?: boolean;
 }): Promise<boolean> {
-  let settled = false;
-  let resolveFn: (v: boolean) => void = () => {};
-  const answer = new Promise<boolean>((r) => { resolveFn = r; });
-  const { el, close } = ovl(sec, `<div class="cn-modal cn-modal--confirm" role="dialog" aria-modal="true">
-    <div class="cf-head"><span class="cf-kicker">${esc(o.kicker)}</span>${o.subject ? `<span class="cf-name">${esc(o.subject)}</span>` : ''}</div>
-    <div class="cf-body">${o.lines.filter(Boolean).map((l) => `<p>${esc(l)}</p>`).join('')}</div>
-    <div class="cf-foot"><button type="button" class="cf-btn j-cf-cancel">取消</button><button type="button" class="cf-btn j-cf-ok${o.danger ? ' cf-btn--danger' : ''}">${esc(o.okLabel)}</button></div>
-  </div>`, {
-    // 取消语义收口：ESC 与点遮罩都从这里走；返回 false 放行 ovl 自己的收尾（摘层/注销 ESC）
-    onWillClose: () => {
-      if (!settled) { settled = true; resolveFn(false); }
-      return false;
-    },
-  });
-  const settle = (v: boolean): void => {
-    if (settled) return;
-    settled = true;
-    resolveFn(v);
-    close({ skipReturn: true });
-  };
-  el.querySelector('.j-cf-cancel')?.addEventListener('click', () => settle(false));
-  el.querySelector('.j-cf-ok')?.addEventListener('click', () => settle(true));
-  const focusTarget = (o.danger ? el.querySelector('.j-cf-cancel') : el.querySelector('.j-cf-ok')) as HTMLElement | null;
-  focusTarget?.focus();
-  return answer;
+  return chooseCinema(sec, {
+    kicker: o.kicker,
+    subject: o.subject,
+    lines: o.lines,
+    actions: [{ label: o.okLabel, value: 'ok', danger: o.danger }],
+    focus: o.danger ? 'cancel' : 'primary',
+  }).then((v) => v === 'ok');
 }
 
 // ---------- 弹窗：删除确认 ----------
