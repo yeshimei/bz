@@ -28,6 +28,7 @@
 //   node scripts/push-assets.mjs --dry-run     # 只算差异，不动仓库、不推送
 //   node scripts/push-assets.mjs --no-push     # 本地提交，不推送（排查用）
 //   node scripts/push-assets.mjs --force-squash# 无条件压平历史
+//   node scripts/push-assets.mjs --re-purge    # 强制重清 CDN 全量缓存（无变更也清）
 //
 // 目标目录：`<主仓同级>/bz-assets`，可用环境变量 BZ_ASSETS_DIR 覆盖。
 import fs from 'node:fs';
@@ -40,6 +41,9 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const DRY = process.argv.includes('--dry-run');
 const NO_PUSH = process.argv.includes('--no-push');
 const FORCE_SQUASH = process.argv.includes('--force-squash');
+/** 强制重清 CDN 全量缓存（不管本次有没有变更）——jsDelivr 缓存逐 POP 各自为政，
+ *  「没有变更就跳过清缓存」会让「再跑一次」这句提示自相矛盾（重跑时无变更，照样不清）。 */
+const RE_PURGE = process.argv.includes('--re-purge');
 
 /** 一个分发仓库最多留几份发布（客户端只会指向最新那份，旧的是给「指针还没更新就断网」的人兜底） */
 const RELEASES_KEEP = 3;
@@ -239,11 +243,33 @@ function commitAndPush(tag, squashed) {
  *
  * 清缓存失败不算发布失败（内容已经推上去了，边缘自己也会过期），但要说出来——
  * 那是「用户今天可能还看不到新版」的唯一线索。
+ *
+ * `--re-purge`：不管本次有没有变更，把 downloads/ 全量清一遍。原因：jsDelivr 的缓存
+ * **逐 POP 各自为政**——清掉的只是回源时打到的那台边缘，用户机器可能落在另一台还拿着
+ * 旧副本的边缘上（2026-10-31 实测：gcore 边缘发新版清单 + 旧版正文，fastly 整套旧）。
+ * 而「没有变更就跳过清缓存」会让「过几分钟重跑本脚本再清一次」这句提示自相矛盾——
+ * 重跑时没有变更，照样什么都不清。
  */
 async function purgeCdn(changed) {
-  const files = changed.filter((p) => p.startsWith('downloads/') && fs.existsSync(path.join(TARGET, p)));
+  const changedFiles = changed.filter((p) => p.startsWith('downloads/') && fs.existsSync(path.join(TARGET, p)));
+  let files = changedFiles;
+  if (RE_PURGE) {
+    // 全量：downloads/ 下所有文件（逐个清，别漏子目录里的皮肤与工具包）
+    const walk = (dir, prefix) => {
+      const out = [];
+      for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
+        const rel = `${prefix}${e.name}`;
+        if (e.isDirectory()) out.push(...walk(path.join(dir, e.name), `${rel}/`));
+        else out.push(rel);
+      }
+      return out;
+    };
+    const dl = path.join(TARGET, 'downloads');
+    if (fs.existsSync(dl)) files = walk(dl, 'downloads/');
+    log(`--re-purge：全量清 ${files.length} 个文件（本次变更 ${changedFiles.length} 个）`);
+  }
   if (!files.length) {
-    log('没有 downloads/ 变更，跳过清缓存');
+    log('没有 downloads/ 变更，跳过清缓存（要强制重清用 --re-purge）');
     return;
   }
   if (DRY || NO_PUSH) {
@@ -267,15 +293,27 @@ async function purgeCdn(changed) {
 /** 清完缓存核对一次：边缘拿到的清单必须与本地逐字一致，否则客户端会拿到旧 hash */
 async function verifyManifest() {
   const want = createHash('sha256').update(fs.readFileSync(path.join(ROOT, 'downloads/manifest.json'), 'utf8')).digest('hex');
-  try {
-    const res = await fetch(`https://fastly.jsdelivr.net/gh/${SLUG}@master/downloads/manifest.json`, {
-      signal: AbortSignal.timeout(20000),
-    });
-    const got = createHash('sha256').update(await res.text()).digest('hex');
-    log(got === want ? '边缘清单已刷新 ✓' : '⚠ 边缘清单还是旧的：过几分钟重跑本脚本再清一次，再发版');
-  } catch (e) {
-    log(`⚠ 清单核对没成功（${(e && e.message) || e}）；已推送的内容不受影响`);
+  /* 逐边缘核对：jsDelivr 的缓存逐 POP 各自为政，只验一个边缘等于没验
+   * （2026-10-31 实测：fastly 整套旧、gcore 清单新正文旧，两个边缘状态完全不同）。 */
+  const edges = ['fastly.jsdelivr.net', 'gcore.jsdelivr.net', 'testingcf.jsdelivr.net', 'cdn.jsdelivr.net'];
+  let stale = 0;
+  for (const host of edges) {
+    try {
+      const res = await fetch(`https://${host}/gh/${SLUG}@master/downloads/manifest.json`, {
+        signal: AbortSignal.timeout(20000),
+      });
+      const got = createHash('sha256').update(await res.text()).digest('hex');
+      if (got === want) {
+        log(`${host} 清单已刷新 ✓`);
+      } else {
+        stale++;
+        log(`⚠ ${host} 的清单还是旧的（边缘缓存未清干净）——过几分钟再跑一次 --re-purge`);
+      }
+    } catch (e) {
+      log(`⚠ ${host} 核对没成功（${(e && e.message) || e}）——连不上这条边缘，不影响已推送的内容`);
+    }
   }
+  if (stale) log(`⚠ ${stale} 个边缘还在发旧清单——用户端可能报「sha256 不匹配」，过几分钟再跑一次 --re-purge`);
 }
 
 const { version, tag } = readVersion();

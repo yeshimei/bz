@@ -7,7 +7,7 @@
  * 全部步跑完后再跑一次 _gen-changelog --check（tag/manifest/日志版本 + docs sha256 对账）
  * ——这步只对账不重出产物，打 tag 之后跑同样有效。 */
 import { spawnSync } from 'node:child_process';
-import { existsSync, readdirSync, statSync } from 'node:fs';
+import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 
@@ -58,7 +58,30 @@ const steps = [
     check: () => {
       const html = join(ROOT, 'downloads/bz-changelog.html');
       if (!existsSync(html) || statSync(html).mtimeMs <= startedAt) throw new Error('bz-changelog.html 没有重出');
-      return '日志页已重出';
+      /* 定稿自检：docs/note-v*.md 里的定稿必须落进产物。生成器已自动应用定稿
+       * （2026-10-31 起，不再靠人记得传 --note），这里再验一次产物与定稿一致——
+       * 「Release 页与线上日志同源同稿」是发版的硬口径，不能只看文件重出了。 */
+      const noteDir = join(ROOT, 'docs');
+      if (existsSync(noteDir)) {
+        const notes = readdirSync(noteDir).filter((n) => /^note-v\d+\.\d+\.\d+\.md$/.test(n));
+        for (const name of notes) {
+          const version = name.match(/^note-v(\d+\.\d+\.\d+)\.md$/)[1];
+          const md = readFileSync(join(noteDir, name), 'utf8');
+          const s = md.indexOf('# 更新日志');
+          const e = md.indexOf('\n# ', s + 1);
+          if (s < 0 || e < 0) continue;
+          const want = md.slice(s, e).split('\n').filter((l) => l.trim().startsWith('- ')).length;
+          const data = readFileSync(html, 'utf8').match(/const DATA = (\{.*?\});/s);
+          if (!data) throw new Error('bz-changelog.html 里的 DATA 读不出来');
+          const rel = JSON.parse(data[1]).releases.find((r) => r.version === version);
+          if (!rel) throw new Error(`定稿 ${name} 对应的 v${version} 不在日志里`);
+          const got = rel.added.length + rel.fixed.length + rel.improved.length;
+          if (got !== want) {
+            throw new Error(`日志 v${version} 有 ${got} 条，定稿 ${name} 是 ${want} 条——定稿没落进产物`);
+          }
+        }
+      }
+      return '日志页已重出（定稿已应用）';
     },
   },
   {

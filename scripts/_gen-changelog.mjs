@@ -21,7 +21,7 @@
  */
 import { execSync, spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
-import { existsSync, readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 
@@ -276,9 +276,85 @@ const latestTag = allTags.length ? allTags[allTags.length - 1] : '';
 const current = releases.length ? releases[releases.length - 1].version : manifest.version;
 const targetVersion = nextArg || current;
 
-/* --check：发布前的四项对账。版本号的事实源是 tag，manifest 与日志都必须跟它一致；
+/* ==================== note 定稿：发现 + 解析（--check 也要用，先于它定义） ====================
+ * 「用户改完的 note 就是在线日志的真理源」这条口径的实现：
+ *  - 定稿留档在 docs/note-v<版本>.md，**自动按版本号扫描**（不靠人记得传 --note；
+ *    2026-10-31 翻车就是这么来的：七步流程的 changelog 步不传 --note，重跑把定稿冲掉）；
+ *  - --check 额外对账「已产出的 bz-changelog.html 各版本块 == 定稿」，冲掉当场报红。
+ * 显式 --note 仍可用（临时改稿不入 docs/ 时），同版本以显式为准。 */
+const NOTE_DIR = join(ROOT, 'docs');
+
+/** 扫 docs/note-v<版本>.md → [{ version, file }]（版本号取自文件名，按版本升序） */
+function discoverNoteFiles() {
+  if (!existsSync(NOTE_DIR)) return [];
+  const out = [];
+  for (const name of readdirSync(NOTE_DIR)) {
+    const m = /^note-v(\d+\.\d+\.\d+)\.md$/.exec(name);
+    if (m) out.push({ version: m[1], file: `docs/${name}` });
+  }
+  return out.sort((a, b) => (a.version < b.version ? -1 : a.version > b.version ? 1 : 0));
+}
+
+/** note 里的小节名 → 日志分区 */
+const NOTE_SEC_MAP = {
+  '✨ 新增': 'added', '新功能': 'added',
+  '🐛 修复': 'fixed', '问题修复': 'fixed',
+  '⚡ 优化': 'improved', '体验优化': 'improved',
+};
+
+/**
+ * 解析一份 note 的「更新日志」节 → { added, fixed, improved }。
+ * 解析不了就抛（带行内容），绝不静默丢条目——定稿丢一条 = 用户端少一条。
+ */
+function parseNoteItems(noteFile) {
+  const notePath = join(ROOT, noteFile);
+  const md = readFileSync(notePath, 'utf8');
+  const logStart = md.indexOf('# 更新日志');
+  const logEnd = md.indexOf('\n# ', logStart + 1);
+  if (logStart < 0 || logEnd < 0) {
+    throw new Error(`note ${noteFile} 里找不到「# 更新日志」一级标题节（到下一个一级标题之前）`);
+  }
+  const items = { added: [], fixed: [], improved: [] };
+  let cur = null;
+  for (const lineRaw of md.slice(logStart, logEnd).split('\n')) {
+    const line = lineRaw.trim();
+    if (line.startsWith('## ')) {
+      cur = NOTE_SEC_MAP[line.slice(3).trim()] || null;
+      continue;
+    }
+    if (!cur || !line.startsWith('- ')) continue;
+    const m = line.slice(2).match(/^\*\*(.+?)\*\*\s*：\s*(.+)$/);
+    if (!m) {
+      throw new Error(`note ${noteFile} 里有一条解析不了的条目（格式必须是 \`- **标签** ：说明\`）：\n  ${line}`);
+    }
+    items[cur].push({ domain: m[1].trim(), text: m[2].trim(), sub: '' });
+  }
+  if (!items.added.length && !items.fixed.length && !items.improved.length) {
+    throw new Error(`note ${noteFile} 更新日志节里没解析出条目（格式：\`- **标签** ：说明\`）`);
+  }
+  return items;
+}
+
+/** 定稿来源 = 自动发现的留档 + 显式传入的；同版本显式覆盖留档 */
+function resolveNoteSources() {
+  const map = new Map();
+  for (const d of discoverNoteFiles()) map.set(d.version, d.file);
+  const noteArg = (process.argv.find((a) => a.startsWith('--note=')) || '').slice('--note='.length);
+  const noteVersionArg = (process.argv.find((a) => a.startsWith('--note-version=')) || '').slice('--note-version='.length);
+  const files = noteArg ? noteArg.split(',').map((s) => s.trim()).filter(Boolean) : [];
+  const versions = noteVersionArg ? noteVersionArg.split(',').map((s) => s.trim()).filter(Boolean) : [];
+  files.forEach((f, i) => {
+    const v = versions[i];
+    if (v) map.set(v, f); // 显式定稿覆盖同版本的留档
+  });
+  return [...map.entries()].map(([version, file]) => ({ version, file }));
+}
+
+/* --check：发布前的五项对账。版本号的事实源是 tag，manifest 与日志都必须跟它一致；
  * 第四项守「清单与文件同一版」：清单 docs 条目的 sha256 必须与 downloads/ 现产文件一致
- * ——漏跑 manifest 步的翻车（2026-10-31）就是这一项没对账，--check 却报绿。 */
+ * ——漏跑 manifest 步的翻车（2026-10-31）就是这一项没对账，--check 却报绿。
+ * 第五项守「定稿即真理源」：已产出的日志文件里，各版本块的条目必须与 note 定稿逐条一致
+ * ——七步流程重跑冲掉定稿的那次翻车（Release 页 2+8+2、线上日志 5+0+11）就靠它拦。 */
 if (process.argv.includes('--check')) {
   const problems = [];
   if (!latestTag) {
@@ -315,12 +391,61 @@ if (process.argv.includes('--check')) {
       }
     }
   }
+  /* 第五项：定稿即真理源——已产出的日志文件里，各版本块必须与 note 定稿逐条一致。
+   * 读的是**文件**（不是内存里的 releases）：内存块在生成阶段还没应用定稿，
+   * 这里要验的是「用户真正下载到的那份」有没有被重跑冲掉。 */
+  const noteSources = resolveNoteSources();
+  if (noteSources.length) {
+    const logHtmlPath = join(ROOT, 'downloads', 'bz-changelog.html');
+    if (!existsSync(logHtmlPath)) {
+      problems.push('downloads/bz-changelog.html 不存在（先跑 changelog 步出产物）');
+    } else {
+      const html = readFileSync(logHtmlPath, 'utf8');
+      const m = html.match(/const DATA = (\{.*?\});/s);
+      let data = null;
+      try {
+        data = m ? JSON.parse(m[1]) : null;
+      } catch (e) {
+        problems.push('downloads/bz-changelog.html 里的 DATA 解析失败（产物坏了，重出）');
+      }
+      if (!data && m) problems.push('downloads/bz-changelog.html 里的 DATA 解析失败（产物坏了，重出）');
+      if (data) {
+        const byVer = new Map((data.releases || []).map((r) => [r.version, r]));
+        const secLabel = { added: '新功能', fixed: '问题修复', improved: '体验优化' };
+        for (const { version, file } of noteSources) {
+          const got = byVer.get(version);
+          if (!got) {
+            problems.push(`定稿 v${version} 在已产出的日志里没有对应版本块（重跑 changelog 步）`);
+            continue;
+          }
+          let want;
+          try {
+            want = parseNoteItems(file);
+          } catch (e) {
+            problems.push(String(e.message || e));
+            continue;
+          }
+          for (const sec of ['added', 'fixed', 'improved']) {
+            const wantTexts = want[sec].map((i) => `${i.domain}|${i.text}`);
+            const gotTexts = (got[sec] || []).map((i) => `${i.domain}|${i.text}`);
+            if (wantTexts.join('\n') !== gotTexts.join('\n')) {
+              problems.push(
+                `日志 v${version} 的「${secLabel[sec]}」与定稿 ${file} 不一致` +
+                `（定稿 ${wantTexts.length} 条，日志 ${gotTexts.length} 条）——` +
+                `重跑日志时没带定稿，跑 node scripts/_gen-changelog.mjs（会自动应用 docs/note-v*.md）`,
+              );
+            }
+          }
+        }
+      }
+    }
+  }
   if (problems.length) {
     console.error('更新日志与版本不一致：');
     for (const p of problems) console.error('  - ' + p);
     process.exit(1);
   }
-  console.log(`更新日志与 tag 一致 ✓（最新 ${latestTag}，共 ${releases.length} 个版本块；docs sha256 对账 ${JSON.parse(readFileSync(distManifestPath, 'utf8')).docs.length} 条）`);
+  console.log(`更新日志与 tag 一致 ✓（最新 ${latestTag}，共 ${releases.length} 个版本块；docs sha256 对账 ${JSON.parse(readFileSync(distManifestPath, 'utf8')).docs.length} 条${noteSources.length ? `；定稿对账 ${noteSources.length} 版` : ''}）`);
   process.exit(0);
 }
 
@@ -342,79 +467,37 @@ if (targetVersion && manifest.version !== targetVersion) {
   manifestSynced = true;
 }
 
-/* ==================== note 覆盖（`--note=<release-note.md>`） ====================
+/* ==================== note 覆盖（定稿即真理源） ====================
  * Release note 的「更新日志」节经用户改定后，才是给用户看的最终口径——发版前把它
  * 喂回生成器，覆盖对应版本块、重出 bz-changelog.html（在线资源的更新日志与 Release
- * 页同源同稿）。默认覆盖最新版本块；`--note-version=x.y.z` 指定要覆盖的历史版本，
- * 多份定稿逗号分隔一并回灌（定稿文件留在 docs/，重跑日志时全部带上）。解析只认 `- **标签** ：说明` 条目行；
- * `## 新功能`（或 ✨ 新增）→added、`## 问题修复`（或 🐛 修复）→fixed、`## 体验优化`（或 ⚡ 优化）→improved；标签原样作 domain（DOMAIN_NAMES 没有
- * 的键渲染端直出原文）。条目数不受 CAPS 裁剪——这是用户拍板的定稿。 */
-/* 支持逗号分隔多份 note（--note=a.md,b.md --note-version=1.36.0,1.35.0，一一对应；
- * --note-version 少给时缺省逐个落到最新块）。生成器每次从 git 全量重建，历史版本的
- * 用户定稿不会被「记住」，所以重跑日志时要把所有定稿一并带上。 */
-const noteArg = (process.argv.find((a) => a.startsWith('--note=')) || '').slice('--note='.length);
-const noteVersionArg = (process.argv.find((a) => a.startsWith('--note-version=')) || '').slice('--note-version='.length);
-const noteFiles = noteArg ? noteArg.split(',').map((s) => s.trim()).filter(Boolean) : [];
-const noteVersions = noteVersionArg ? noteVersionArg.split(',').map((s) => s.trim()).filter(Boolean) : [];
-if (noteFiles.length) {
-  const secMap = {
-    '✨ 新增': 'added', '新功能': 'added',
-    '🐛 修复': 'fixed', '问题修复': 'fixed',
-    '⚡ 优化': 'improved', '体验优化': 'improved',
-  };
-  noteFiles.forEach((noteFile, i) => {
-  const notePath = join(ROOT, noteFile);
-  const md = readFileSync(notePath, 'utf8');
-  const logStart = md.indexOf('# 更新日志');
-  const logEnd = md.indexOf('\n# ', logStart + 1);
-  if (logStart < 0 || logEnd < 0) {
-    console.error(`note ${noteFile} 里找不到「# 更新日志」一级标题节（到 # 安装 之前）`);
+ * 页同源同稿）。解析只认 `- **标签** ：说明` 条目行；`## 新功能`（或 ✨ 新增）→added、
+ * `## 问题修复`（或 🐛 修复）→fixed、`## 体验优化`（或 ⚡ 优化）→improved；标签原样作 domain
+ * （DOMAIN_NAMES 没有的键渲染端直出原文）。条目数不受 CAPS 裁剪——这是用户拍板的定稿。
+ *
+ * 定稿来源 = docs/note-v<版本>.md 留档（**自动扫描**）+ 显式 --note（同版本以显式为准）。
+ * 自动扫描是必须的：原来靠人记得传 --note，七步流程的 changelog 步不传 → 重跑就把定稿
+ * 冲成提交历史口径（2026-10-31 翻车：Release 页 2+8+2、线上日志 5+0+11）。 */
+const noteSources = resolveNoteSources();
+if (noteSources.length) {
+  console.log(`定稿来源：${noteSources.map((s) => `v${s.version}=${s.file}`).join('  ')}`);
+}
+for (const { version: wantVersion, file: noteFile } of noteSources) {
+  let items;
+  try {
+    items = parseNoteItems(noteFile);
+  } catch (e) {
+    console.error(String(e.message || e));
     process.exit(1);
   }
-  const items = { added: [], fixed: [], improved: [] };
-  let cur = null;
-  for (const lineRaw of md.slice(logStart, logEnd).split('\n')) {
-    const line = lineRaw.trim();
-    if (line.startsWith('## ')) {
-      cur = secMap[line.slice(3).trim()] || null;
-      continue;
-    }
-    if (!cur || !line.startsWith('- ')) continue;
-    const m = line.slice(2).match(/^\*\*(.+?)\*\*\s*：\s*(.+)$/);
-    if (!m) {
-      console.error(`note ${noteFile} 里有一条解析不了的条目（格式必须是 \`- **标签** ：说明\`）：\n  ${line}`);
-      process.exit(1);
-    }
-    items[cur].push({ domain: m[1].trim(), text: m[2].trim(), sub: '' });
-  }
-  const total = items.added.length + items.fixed.length + items.improved.length;
-  if (!total) {
-    console.error(`note ${noteFile} 更新日志节里没解析出条目（格式：\`- **标签** ：说明\`）`);
-    process.exit(1);
-  }
-  const wantVersion = noteVersions[i];
-  const rel = wantVersion
-    ? releases.find((r) => r.version === wantVersion)
-    : releases[releases.length - 1];
+  const rel = releases.find((r) => r.version === wantVersion);
   if (!rel) {
-    console.error(wantVersion
-      ? `note 要覆盖的版本 v${wantVersion} 不在日志里（检查基线与 tag）`
-      : '没有可覆盖的版本块（先打 tag 生成基线，或带 --next）');
+    console.error(`note 要覆盖的版本 v${wantVersion} 不在日志里（检查基线与 tag）`);
     process.exit(1);
   }
   rel.added = items.added;
   rel.fixed = items.fixed;
   rel.improved = items.improved;
   console.log(`note 覆盖 v${rel.version}：新增 ${items.added.length} / 修复 ${items.fixed.length} / 优化 ${items.improved.length}`);
-  });
-  /* 回灌重出了 bz-changelog.html，清单里 docs 条目的 sha256 必须跟着现算——漏跑
-   * manifest 步的翻车（2026-10-31 用户端 sha256 不匹配）就出在这里，所以自动带上，
-   * 不再靠人记住补跑。build-manifest 对全部 docs/skins 现算，幂等。 */
-  const manifestRun = spawnSync(process.execPath, [join(ROOT, 'scripts', 'build-manifest.mjs')], { stdio: 'inherit' });
-  if (manifestRun.status !== 0) {
-    console.error('回灌后的清单重算（build-manifest）失败，见上方输出');
-    process.exit(1);
-  }
 }
 
 /* ==================== 产出单文件 HTML（issue 474） ====================
@@ -612,3 +695,16 @@ writeFileSync(join(ROOT, 'downloads', 'bz-changelog.html'), html, 'utf8');
 console.log(`版本数=${releases.length} 条目=${shown} 当前=${current}${manifestSynced ? '（manifest 已回写）' : ''}`);
 console.log(`产出 downloads/bz-changelog.html（${(Buffer.byteLength(html) / 1024).toFixed(1)}KB）`);
 console.log(releases.slice(-6).map((r) => `v${r.version}(${r.date}): +${r.added.length} !${r.fixed.length} ^${r.improved.length}`).join('  '));
+
+/* ---- 清单重算（必须在日志写盘之后）----
+ * 清单里 docs 条目的 sha256 是对**已出版产物**现算的（build-manifest 口径），
+ * 所以必须在 bz-changelog.html 落盘之后再跑——跑在前面算的是上一版的 hash，
+ * 客户端拿清单校验新日志必然「sha256 不匹配」（2026-10-31 翻车根因）。
+ * 无条件跑（不只在 --note 时）：任何一次重出日志都会改文件 hash。 */
+{
+  const manifestRun = spawnSync(process.execPath, [join(ROOT, 'scripts', 'build-manifest.mjs')], { stdio: 'inherit' });
+  if (manifestRun.status !== 0) {
+    console.error('清单重算（build-manifest）失败，见上方输出');
+    process.exit(1);
+  }
+}
