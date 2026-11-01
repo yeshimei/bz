@@ -55,6 +55,14 @@ export function releaseEntryCount(release: ChangelogRelease): number {
  */
 export const CHANGELOG_RELEASES: readonly ChangelogRelease[] = [
   {
+    version: '1.40.0',
+    date: '2026-11-02',
+    added: [
+      { domain: '更新提示', text: '升级后第一次打开 bz 界面时弹出，只讲这一版改了什么' },
+      { domain: 'QQ 交流群', text: '关于页和更新提示里都有入口，群号点一下就复制，手机端还能直接唤起加群' },
+    ]
+  },
+  {
     version: '1.39.1',
     date: '2026-11-02',
     improved: [
