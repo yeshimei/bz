@@ -36,6 +36,7 @@ import path from 'node:path';
 import { createHash } from 'node:crypto';
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
+import { enforceGate } from './release-gate.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const DRY = process.argv.includes('--dry-run');
@@ -154,6 +155,10 @@ async function uploadReleaseAssets(tag, { fromTag }) {
     log('跳过 Release 资产上传（--no-upload / --dry-run）');
     return;
   }
+  // 第二道闸（2026-11-02 立）：上传之前必须让用户看过 note 全文与资产清单，并明确说
+  // 「发布」。贴卡这件事原先只写在 skill 里，靠记性维持——v1.40.0 那次一路挂到 draft
+  // 才想起来，所以钉成代码：没放行就不传，一个字节都不上 GitHub。
+  enforceGate('publish', ROOT, tag.replace(/^v/, ''));
   // Release 存在于**源码主仓**（REPO_SLUG），不是分发镜像仓
   let exists = true;
   try {

@@ -13,9 +13,14 @@ import { createHash } from 'node:crypto';
 import { copyFileSync, existsSync, mkdirSync, readdirSync, readFileSync, rmSync, statSync, utimesSync, writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
+import { enforceGate } from './release-gate.mjs';
 
 const ROOT = dirname(dirname(fileURLToPath(import.meta.url)));
 const ver = process.argv[2] || JSON.parse(readFileSync(join(ROOT, 'manifest.json'), 'utf8')).version;
+
+/* 第一道闸（同上）：包是按版本号和 note 文案出去的，没过目就不打 */
+enforceGate('note', ROOT, ver);
+
 const tmp = join(ROOT, '.pack-tmp');
 const zips = [`bz-${ver}.zip`, `bz-offline-${ver}.zip`];
 

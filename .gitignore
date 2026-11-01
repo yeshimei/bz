@@ -27,3 +27,5 @@ bz-*.zip
 bz-offline-*.zip
 SHA256SUMS.txt
 release-note-*.md
+# 发版两道闸的状态（scripts/release-gate.mjs 写；每次发版重新过目，不入库）
+.bz-release-gate.json

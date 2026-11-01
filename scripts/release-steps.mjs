@@ -10,10 +10,16 @@ import { spawnSync } from 'node:child_process';
 import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
+import { manifestVersion, enforceGate } from './release-gate.mjs';
 
 const ROOT = dirname(dirname(fileURLToPath(import.meta.url)));
 const startedAt = Date.now();
 const nextArg = (process.argv.find((a) => a.startsWith('--next=')) || '').slice('--next='.length);
+
+/* 第一道闸（2026-11-02 立）：版本号 + note 全文先给用户过目，他 approve-note 之后才许往下跑。
+ * 放在七步之前，是因为产物一按版本出去就收不回来了——版本号猜错、文案没过目，
+ * 都要等发完才发现（v1.40.0 就是这么翻的：一路跑到挂齐资产才想起来贴卡）。 */
+enforceGate('note', ROOT, nextArg || manifestVersion(ROOT));
 
 /** 比 startedAt 新的文件数（目录递归一层足够，downloads 结构浅） */
 function freshCount(p) {
