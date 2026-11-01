@@ -1,12 +1,15 @@
 /**
- * 下图期间主界面屏闪的回归钉（2026-11-01 用户反馈：游戏库后台下载封面时主界面不断屏闪）。
+ * 后台队列落地时主界面屏闪的回归钉（2026-11-01 用户反馈：游戏库后台下载封面时不断屏闪）。
  *
- * 两处成因，各钉一条：
- * 1) 媒体队列下完一批图就走一遍整面板整刷（renderAll），把工具行、门面、整片网格连同
- *    所有 img 元素一起换掉 →改走 mediaRepaintFn 原地换图，卡片/工具行节点必须原样存活；
+ * 三处成因，各有钉子：
+ * 1) 整面板整刷（renderAll）会把工具行、门面、整片网格连同所有 img 元素一起换掉
+ *    → 三条后台队列（封面/图标、中文名、商店回填）改走 repaintFn 原地重绘，
+ *    卡片 / 工具行 / 门面底图节点必须原样存活；
  * 2) renderAll 链内的网格重填本该静默（gsInRenderAll 的语义），但标记在 body.innerHTML
  *    之前就被复位了——后台队列每次节流重渲都演一遍 user 波浪 → 现在整条链由 finally 罩住。
- *    jsdom 无 WAAPI，动效层落终态内联（opacity:1），所以「演过没有」看内联样式即可。
+ *    jsdom 无 WAAPI，动效层落终态内联（opacity:1），所以「演过没有」看内联样式即可；
+ * 3) 原地重绘做不到的场合（统计页 / 按名称排 / 搜索中）必须交回整刷——否则改名不动位置、
+ *    搜索词命中的卡片消失不了，比闪一下严重得多。
  */
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { setApp } from '../../src/core/app';
@@ -37,14 +40,17 @@ const app: any = {
     getResourcePath: (f: { path: string }) => `app://vault/${f.path}`,
     createFolder: async () => {},
   },
-  metadataCache: { getFileCache: () => null },
+  metadataCache: { getFileCache: () => (fmOf ? { frontmatter: fmOf } : null) },
 };
+/** metadataCache 里那款游戏的属性（回填用例按需换） */
+let fmOf: Record<string, unknown> | null = null;
 
 const cards = (): HTMLElement[] => [...document.querySelectorAll<HTMLElement>('.bz-gs-card')];
 
 beforeEach(() => {
   document.body.innerHTML = '';
   files.clear();
+  fmOf = null;
   resetGameshelfState();
   resetObsidianMocks();
   setApp(app);
@@ -78,7 +84,7 @@ describe('媒体下完图：原地换图，不重建面板', () => {
     // 模拟 posters.runQueue 的收尾：文件落盘 + 内存条目改指本地 → 叫一声重绘钩子
     files.set(local, { path: local });
     M.items[0].cover = local;
-    M.mediaRepaintFn?.();
+    M.repaintFn?.();
 
     expect(document.querySelector('.bz-gs-card[data-appid="1"]')).toBe(card); // 没被重建
     expect(document.querySelector('.bz-gs-tools')).toBe(tools);
@@ -91,7 +97,7 @@ describe('媒体下完图：原地换图，不重建面板', () => {
   it('地址没变 → 原样不动；封面换地址后兜底链重新起算', () => {
     openWithTwo();
     const img = document.querySelector('.bz-gs-card[data-appid="1"] .bz-gs-cover img') as HTMLImageElement;
-    M.mediaRepaintFn?.(); // 无变化
+    M.repaintFn?.(); // 无变化
     expect(img.getAttribute('src')).toBe('https://cdn/1.jpg');
 
     img.dataset.fbDone = '1'; // 上一轮兜底已用掉
@@ -100,18 +106,67 @@ describe('媒体下完图：原地换图，不重建面板', () => {
     const local = localCoverPath(1);
     files.set(local, { path: local });
     M.items[0].cover = local;
-    M.mediaRepaintFn?.();
+    M.repaintFn?.();
     expect(img.dataset.fbDone).toBeUndefined(); // 新图重新给一次兜底机会
     expect(card.querySelector('.bz-gs-cover')!.classList.contains('is-broken')).toBe(false);
   });
 
-  it('媒体钩子与整刷钩子各走各的：面板关了就置空', () => {
+  it('原地钩子与整刷钩子各走各的：面板关了就置空', () => {
     openWithTwo();
-    expect(typeof M.mediaRepaintFn).toBe('function');
+    expect(typeof M.repaintFn).toBe('function');
     expect(typeof M.renderFn).toBe('function');
     closePanel();
-    expect(M.mediaRepaintFn).toBeNull();
+    expect(M.repaintFn).toBeNull();
     expect(() => M.renderFn?.()).not.toThrow();
+  });
+});
+
+describe('中文名 / 成就回填也原地重绘（同样不重建网格）', () => {
+  it('中文名落地：只改卡名与原名副行，卡片节点存活', () => {
+    openWithTwo();
+    const card = document.querySelector('.bz-gs-card[data-appid="1"]') as HTMLElement;
+    M.items[0].zhName = '甲游戏';
+    expect(M.repaintFn?.({ order: true })).toBe(true);
+    expect(document.querySelector('.bz-gs-card[data-appid="1"]')).toBe(card); // 没被重建
+    expect(card.querySelector('.bz-gs-name')!.textContent).toBe('甲游戏');
+    expect(card.querySelector('.bz-gs-orig')!.textContent).toBe('AAA'); // 原名退居副行
+    expect(card.querySelector('.bz-gs-cover')!.getAttribute('data-initial')).toBe('甲');
+  });
+
+  it('成就回填：条是新挂上去的节点，宽度 = 已解/总数', () => {
+    openWithTwo();
+    M.items[0].file = { path: '我的/游戏/《AAA》.md' } as never;
+    const card = document.querySelector('.bz-gs-card[data-appid="1"]') as HTMLElement;
+    expect(card.querySelector('.bz-gs-strip')).toBeNull(); // 回填前：无成就页 → 不画条
+
+    fmOf = { 成就总数: 10, 成就已解: 4 };
+    M.items[0].hasAch = true;
+    expect(M.repaintFn?.({ order: true })).toBe(true);
+    const strip = card.querySelector('.bz-gs-strip') as HTMLElement;
+    expect(strip).not.toBeNull();
+    expect(strip.querySelector('i')!.getAttribute('style')).toContain('40%');
+    expect(card.querySelector('.bz-gs-trophy')).toBeNull(); // 没满就不挂奖杯
+  });
+});
+
+describe('原地重绘做不到的场合，交回整刷', () => {
+  it('按名称排 / 搜索中：改名可能换位或让卡片消失，不能只改字面', () => {
+    openWithTwo();
+    M.sort = 'name';
+    expect(M.repaintFn?.({ order: true })).toBe(false);
+    M.sort = 'last';
+    M.query = '甲';
+    expect(M.repaintFn?.({ order: true })).toBe(false);
+    M.query = '';
+    expect(M.repaintFn?.({ order: true })).toBe(true);
+  });
+
+  it('统计页：数字是整页算的，原地改不出来', () => {
+    openWithTwo();
+    M.view = 'stats';
+    renderAll(app);
+    expect(M.repaintFn?.()).toBe(false);
+    M.view = 'shelf';
   });
 });
 

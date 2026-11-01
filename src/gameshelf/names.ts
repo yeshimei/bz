@@ -126,12 +126,17 @@ function sleep(ms: number): Promise<void> {
   return new Promise((r) => setTimeout(r, ms));
 }
 
-/** 节流重渲（1.2s 尾沿；面板关着 renderFn 空转无害） */
+/**
+ * 节流重渲（1.2s 尾沿；面板关着两个钩子都空，空转无害）。
+ * 改名会影响「按名称排」的顺序与搜索命中，故带 order 标记走原地重绘。
+ */
 function scheduleRerender(): void {
   if (rerenderTimer) return;
   rerenderTimer = setTimeout(() => {
     rerenderTimer = null;
-    M.renderFn?.();
+// 原地重绘优先（只改变化的卡片，不重建面板——逐条落地的过程整刷会「一直闪」）；
+// 做不到的场合（统计页 / 按名称排 / 搜索中）由它返回 false，这里回落整刷。
+    if (!M.repaintFn?.({ order: true })) M.renderFn?.();
   }, 1200);
 }
 

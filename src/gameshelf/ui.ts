@@ -1062,50 +1062,121 @@ function fillHero(app: App, rp: GameshelfReport): void {
   heroEl.innerHTML = heroRestHtml;
 }
 
-/* ==================== 媒体本地化后的原地换图（不整刷面板） ==================== */
+/* ==================== 后台队列落地后的原地重绘（不整刷面板） ==================== */
+//
+// 三条后台队列（封面/图标、中文名、商店回填）都是逐条落地的：一整个库要下一轮。
+// 每落地一批就整刷一次 renderAll，等于每 1.2 秒把工具行、门面、整片网格连同所有 `<img>`
+// 一起换掉——用户看到的就是「主界面一直在闪」（2026-11-01 反馈）。这里按 appid 对上卡片
+// **只改变化的那几处**：封面 src / 卡名 / 成就条 / 奖杯，地址没变就一个 DOM 都不碰。
+//
+// 什么时候不能原地（返回 false，调用方回落整刷）：统计页（数字整页算的）、按名称排序或
+// 搜索中（重命名会让卡片换位或从结果里消失）。这三种都是「改动影响的是列表本身」，不是
+// 卡片上的字。
+
+/** 成就进度（属性优先零网络）：无成就页 / 属性缺 → null（卡上不显示条） */
+function achProgressOf(app: App, it: GameItem): { unlocked: number; total: number } | null {
+  if (!it.hasAch) return null;
+  const s = fmToAchSummary(safeDetailFm(app, it.file));
+  return s && s.total > 0 ? s : null;
+}
+
+/** 卡片封面：换成新地址后兜底链重新起算（新图也可能裂，还得能退回源键、再判死） */
+function repaintCardCover(app: App, it: GameItem, card: HTMLElement): void {
+  const img = card.querySelector<HTMLImageElement>('.bz-gs-cover img');
+  if (!img) return; // 无封面位的卡不该出现在队列里，真出现也不硬塞图
+  const url = coverDisplayUrl(app, it.appid, it.cover, it.coverSrc);
+  if (!url || img.getAttribute('src') === url) return;
+  img.dataset.fallbackSrc = it.coverSrc ?? '';
+  delete img.dataset.fbDone;
+  card.querySelector('.bz-gs-cover')?.classList.remove('is-broken');
+  img.setAttribute('src', url);
+}
+
+/** 卡片名字（中文名回填）：主名 + 原名副行 + 破图占位字一起跟 */
+function repaintCardName(it: GameItem, card: HTMLElement): void {
+  const zh = displayNameOf(it);
+  const nameEl = card.querySelector<HTMLElement>('.bz-gs-name');
+  if (!nameEl || nameEl.textContent === zh) return;
+  nameEl.textContent = zh;
+  card.querySelector('.bz-gs-cover')?.setAttribute('data-initial', firstChar(zh));
+  const box = card.querySelector('.bz-gs-namebox');
+  const orig = it.zhName && it.zhName !== it.name ? it.name : '';
+  const origEl = box?.querySelector<HTMLElement>('.bz-gs-orig') ?? null;
+  if (!orig) origEl?.remove();
+  else if (origEl) origEl.textContent = orig;
+  else box?.insertAdjacentHTML('beforeend', `<span class="bz-gs-orig">${esc(orig)}</span>`);
+}
+
+/** 卡片成就进度条 + 全成就奖杯（回填后才有数据 → 条是新增节点，不是改宽） */
+function repaintCardAch(app: App, it: GameItem, card: HTMLElement): void {
+  const ach = achProgressOf(app, it);
+  const pct = ach && ach.total > 0 ? Math.round((ach.unlocked / ach.total) * 100) : null;
+  const strip = card.querySelector<HTMLElement>('.bz-gs-strip');
+  const trophy = card.querySelector<HTMLElement>('.bz-gs-trophy');
+  if (pct === null) {
+    strip?.remove();
+    trophy?.remove();
+    return;
+  }
+  const full = pct >= 100;
+  if (strip) {
+    strip.classList.toggle('is-full', full);
+    const bar = strip.querySelector<HTMLElement>('i');
+    if (bar) bar.style.width = `${pct}%`;
+  } else {
+    card.insertAdjacentHTML('beforeend', `<span class="bz-gs-strip${full ? ' is-full' : ''}"><i style="width:${pct}%"></i></span>`);
+  }
+  if (full && !trophy) {
+    card.querySelector('.bz-gs-cover')?.insertAdjacentHTML('beforeend', '<span class="bz-gs-trophy" title="全成就达成">🏆</span>');
+  } else if (!full && trophy) {
+    trophy.remove();
+  }
+}
 
 /**
- * 门面底图原地换（静息态才换：换脸态挂的是悬停那款，不归列表首位口径管）。
- * data-cover-url 记当前地址，值没变就连 style 都不碰（重设同一 url 会让浏览器重取一遍图）。
+ * 门面原地跟进（静息态才动：换脸态挂的是悬停那款，不归列表首位口径管）。
+ * 底图与文字块分开换——`hero-art` 元素不动，大图不会重画一遍。
  */
-function repaintHeroCover(app: App): void {
+function repaintHero(app: App, rp: GameshelfReport): void {
   if (!heroEl || peekedHeroAppid !== null) return;
   const top = sortList(filterList(M.items))[0];
   const art = heroEl.querySelector<HTMLElement>('.bz-gs-hero-art');
   if (!top || !art) return;
   const cover = coverDisplayUrl(app, top.appid, top.cover, top.coverSrc);
-  if ((art.dataset.coverUrl ?? '') === cover) return;
-  art.dataset.coverUrl = cover;
-  art.style.backgroundImage = cover ? `url('${cover}')` : '';
-  heroEl.querySelector('.bz-gs-hero')?.classList.toggle('bz-gs-hero--bare', !cover);
+  if ((art.dataset.coverUrl ?? '') !== cover) {
+    art.dataset.coverUrl = cover;
+    art.style.backgroundImage = cover ? `url('${cover}')` : '';
+    heroEl.querySelector('.bz-gs-hero')?.classList.toggle('bz-gs-hero--bare', !cover);
+  }
+  const tpl = document.createElement('div');
+  tpl.innerHTML = heroHtml(top, cover, rp);
+  const fresh = tpl.querySelector('.bz-gs-hero-in');
+  const cur = heroEl.querySelector('.bz-gs-hero-in');
+  if (fresh && cur && cur.innerHTML !== fresh.innerHTML) cur.replaceWith(fresh);
   heroRestHtml = heroEl.innerHTML; // 静息快照跟上：悬浮换脸结束复原时不回旧图
 }
 
 /**
- * 后台媒体队列下完图后的重绘：**只换已变化的那张图**，不重建面板。
- *
- * 为什么不能走 renderSoft（整刷）：封面/图标是逐款下完的，一整个库要下一轮，每次整刷都会
- * 把工具行、门面、整片网格连同全部 img 元素一起换掉——下图期间界面就是「一直在闪」
- * （2026-11-01 用户反馈：下载图片时主界面不断屏闪）。这里按 appid 对上卡片原地改 src，
- * 地址没变就一个 DOM 都不碰；搜索/滚动/悬浮这类会话态也一并保住。
+ * 后台队列落地后的原地重绘。返回 true = 已经处理干净，调用方别再整刷。
+ * @param opts.order 调用方的改动会不会影响列表本身（改名 / 新成就）：是的话，
+ *                   「按名称排」与「搜索中」不能只改字面——卡片可能要换位或消失。
  */
-export function repaintMedia(app: App): void {
+export function repaintCards(app: App, opts: { order?: boolean } = {}): boolean {
   const frame = M.currentOverlay;
-  if (!frame || !document.body.contains(frame)) return;
+  if (!frame || !document.body.contains(frame)) return false;
+  if (M.view !== 'shelf' || !gridEl) return false; // 统计页的数字是整页算的
+  if (opts.order && (M.sort === 'name' || M.query.trim())) return false;
   const byId = new Map(M.items.map((it) => [it.appid, it]));
-  gridEl?.querySelectorAll<HTMLElement>('.bz-gs-card').forEach((card) => {
+  gridEl.querySelectorAll<HTMLElement>('.bz-gs-card').forEach((card) => {
     const it = byId.get(Number(card.dataset.appid));
-    const img = card.querySelector<HTMLImageElement>('.bz-gs-cover img');
-    if (!it || !img) return; // 无封面位的卡不该出现在队列里，真出现也不硬塞图
-    const url = coverDisplayUrl(app, it.appid, it.cover, it.coverSrc);
-    if (!url || img.getAttribute('src') === url) return;
-    // 换成新地址后兜底链重新起算：新图也可能裂，还得能退回源键、再判死
-    img.dataset.fallbackSrc = it.coverSrc ?? '';
-    delete img.dataset.fbDone;
-    img.closest('.bz-gs-cover')?.classList.remove('is-broken');
-    img.setAttribute('src', url);
+    if (!it) return;
+    repaintCardCover(app, it, card);
+    repaintCardName(it, card);
+    repaintCardAch(app, it, card);
   });
-  repaintHeroCover(app);
+  lastReport = buildReport(M.items); // 门面用的就是这份，顺手让后续 renderList 复用
+  repaintHero(app, lastReport);
+  return true;
 }
 
 /* ==================== 输入守护（打字/下拉菜单不被后台整刷打断，影院同款两层） ==================== */
@@ -1439,11 +1510,7 @@ export function renderList(app: App): void {
   const list = sortList(filterList(M.items));
   const showRank = M.bucket === 'all' && !M.query.trim() && M.sort === 'hours';
   // 成就进度（条 + 奖杯）从笔记属性读（属性优先零网络）；无成就页/属性缺 → null，卡上不显示
-  const achOf = (it: GameItem): { unlocked: number; total: number } | null => {
-    if (!it.hasAch) return null;
-    const s = fmToAchSummary(safeDetailFm(app, it.file));
-    return s && s.total > 0 ? { unlocked: s.unlocked, total: s.total } : null;
-  };
+  const achOf = (it: GameItem) => achProgressOf(app, it);
   // 动效层：只演「用户直接触发」的重填（boot 首渲与 renderAll 整刷链内静默——
   // 编排归 renderAll 末尾统一管，后台队列绝不重播）
   const gsAutonomous = !gsBoot && !gsInRenderAll;
@@ -1521,8 +1588,8 @@ export function openPanel(app: App, view: GameshelfViewKind = 'shelf'): void {
   // 三队列 scheduleRerender 与 sync 收尾统一走 renderSoft（G1）：打字/下拉菜单开着时顺延，
   // 不再整刷抢焦点——调用点（names/backfill/posters/sync）零改动即全收
   M.renderFn = () => renderSoft(app);
-  // 媒体队列另走一条更轻的通道（见 repaintMedia 注）：只换封面/图标那张图，不重建面板
-  M.mediaRepaintFn = () => repaintMedia(app);
+  // 三条后台队列另走一条更轻的通道（见 repaintCards 注）：只改变化的那几处，不重建面板
+  M.repaintFn = (o) => repaintCards(app, o);
   renderAll(app);
   void ensurePostersFor(app);
   ensureZhNames(app, M.items);
@@ -1557,7 +1624,7 @@ export function closePanel(): void {
   M.statusMsg = ''; // 状态行不跨开关残留（UX-1）：重开面板不再挂着上次的「同步完成…」
   M.renderFn = null;
   M.modalRepaintFn = null;
-  M.mediaRepaintFn = null;
+  M.repaintFn = null;
   // 卸载拖动缩放（ADR-0084；persist 未落盘的防抖尾值由 detach 立即补存）
   if (panelResizeDetach) {
     panelResizeDetach.detach();

@@ -81,7 +81,9 @@ function scheduleRerender(): void {
   if (rerenderTimer) return;
   rerenderTimer = setTimeout(() => {
     rerenderTimer = null;
-    M.renderFn?.();
+// 原地重绘优先（只改变化的卡片，不重建面板——逐条落地的过程整刷会「一直闪」）；
+// 做不到的场合（统计页 / 按名称排 / 搜索中）由它返回 false，这里回落整刷。
+    if (!M.repaintFn?.({ order: true })) M.renderFn?.();
   }, 1200);
 }
 

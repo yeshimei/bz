@@ -119,18 +119,34 @@ describe('媒体本地化队列', () => {
     expect(vault.binaryFiles.has(COVER)).toBe(false);
   });
 
-  it('下完图走 mediaRepaintFn（原地换图），不走 renderFn（整刷=屏闪）', async () => {
+  it('下完图走 repaintFn（原地重绘），不走 renderFn（整刷=屏闪）', async () => {
     setup();
-    const repaint = vi.fn();
+    const repaint = vi.fn(() => true); // true = 已原地处理干净
     const render = vi.fn();
-    M.mediaRepaintFn = repaint;
+    M.repaintFn = repaint;
     M.renderFn = render;
     try {
       ensurePosters(app, media({ iconSrc: null }));
       await vi.waitFor(() => expect(repaint).toHaveBeenCalled(), { timeout: 4000 });
       expect(render).not.toHaveBeenCalled();
     } finally {
-      M.mediaRepaintFn = null;
+      M.repaintFn = null;
+      M.renderFn = null;
+    }
+  }, 8000);
+
+  it('原地重绘做不到（返回 false）时回落整刷：统计页/按名称排/搜索中就是这条路', async () => {
+    setup();
+    const repaint = vi.fn(() => false);
+    const render = vi.fn();
+    M.repaintFn = repaint;
+    M.renderFn = render;
+    try {
+      ensurePosters(app, media({ iconSrc: null }));
+      await vi.waitFor(() => expect(render).toHaveBeenCalled(), { timeout: 4000 });
+      expect(repaint).toHaveBeenCalled();
+    } finally {
+      M.repaintFn = null;
       M.renderFn = null;
     }
   }, 8000);
@@ -199,9 +215,11 @@ describe('封面兜底链（2026-11-02）：header → 胶囊图 → 第一张�
         : { status: 404, arrayBuffer: new ArrayBuffer(0) }
     ));
     ensurePosters(app, media({ iconSrc: null }));
-    // header + capsule + hero 三次 404 → 记账「等截图」
+    // header + capsule + hero 三次 404 → 记账「等截图」，同时落一条判缺（免得下次开面板重跑整条链）
     await vi.waitFor(() => expect((requestUrl as any).mock.calls.length).toBe(3));
-    expect(writes.length).toBe(0);
+    expect(writes.length).toBe(1);
+    expect(writes[0]).toHaveProperty('封面缺');
+    expect(writes[0]).not.toHaveProperty('封面');
     ensureShots(app, {
       appid: 1,
       file: { path: '我的/游戏/《A》.md' } as never,
@@ -284,4 +302,46 @@ describe('商店截图本地化（2026-09-18）', () => {
     expect(got[1]).toBe('https://s/2.jpg');
     expect(got[2]).toBe('https://s/3.jpg');
   });
+});
+
+describe('封面判缺：四跳全 404 → 落一条带日期的结论，窗口内不再重试', () => {
+  it('四跳全 404 → 写「封面缺」，不写「封面」；请求数 = 3（本地没有截图可拷）', async () => {
+    setup();
+    (requestUrl as any).mockImplementation(async () => ({ status: 404, arrayBuffer: new ArrayBuffer(0) }));
+    ensurePosters(app, media({ iconSrc: null }));
+    await vi.waitFor(() => expect(writes.length).toBeGreaterThan(0), { timeout: 4000 });
+    const last = writes[writes.length - 1];
+    expect(String(last['封面缺'])).toMatch(/^\d{4}-\d{2}-\d{2}T/);
+    expect(last).not.toHaveProperty('封面');
+    expect(vault.binaryFiles.has(COVER)).toBe(false);
+    expect((requestUrl as any).mock.calls.length).toBe(3); // header → capsule → library_hero
+  }, 8000);
+
+  it('网络失败（不是 404）不落判缺结论 —— 断一次网不该把封面封死 30 天', async () => {
+    setup();
+    (requestUrl as any).mockImplementation(async () => {
+      throw new Error('socket hang up');
+    });
+    ensurePosters(app, media({ iconSrc: null }));
+    await new Promise((r) => setTimeout(r, 60));
+    expect(writes.length).toBe(0);
+  });
+
+  it('判缺窗口内的条目不再入队：一个请求都不发', async () => {
+    setup();
+    const before = (requestUrl as any).mock.calls.length;
+    ensurePosters(app, media({ iconSrc: null, coverMissing: new Date().toISOString() }));
+    await new Promise((r) => setTimeout(r, 40));
+    expect((requestUrl as any).mock.calls.length).toBe(before);
+    expect(writes.length).toBe(0);
+  });
+
+  it('结论过期（31 天前）→ 重新走一遍兜底链', async () => {
+    setup();
+    const old = new Date(Date.now() - 31 * 24 * 3600 * 1000).toISOString();
+    (requestUrl as any).mockImplementation(async () => ({ status: 404, arrayBuffer: new ArrayBuffer(0) }));
+    ensurePosters(app, media({ iconSrc: null, coverMissing: old }));
+    await vi.waitFor(() => expect(writes.length).toBeGreaterThan(0), { timeout: 4000 });
+    expect(writes[writes.length - 1]['封面缺']).not.toBe(old); // 重判，日期刷新
+  }, 8000);
 });

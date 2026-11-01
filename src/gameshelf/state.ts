@@ -57,6 +57,8 @@ export interface GameItem {
   cover: string | null;
   /** 封面远端地址（frontmatter `封面源`；同步管辖，本地化后仍在，供删缓存后重下） */
   coverSrc: string | null;
+  /** 封面判缺时刻 ISO（frontmatter `封面缺`；远端三级上都 404 时由媒体队列写，30 天内不再重试） */
+  coverMissing?: string | null;
   /** 图标现值（frontmatter `图标`：本地路径或远端） */
   icon: string | null;
   /** 图标远端地址（frontmatter `图标源`；hash 拼不出来，只有同步能刷新它） */
@@ -118,10 +120,18 @@ export interface GameshelfState {
   /** 详情弹窗的重画钩子（媒体队列下完图后调它，否则弹窗里第一次看到的是占位图，
    *  关掉重开才出真图 —— 真机上首次打开某款的详情就撞这个）。弹窗关了就自清。 */
   modalRepaintFn: (() => void) | null;
-  /** 游戏墙的**原地**换图钩子（媒体队列下完封面/图标后调它）：只改已变化那张 img 的 src，
-   *  不重建面板——整刷会把工具行与整片网格一起换掉，下图期间看起来就是「主界面一直在闪」
-   *  （2026-11-01 用户反馈）。面板关了就置空。 */
-  mediaRepaintFn: (() => void) | null;
+  /**
+   * 游戏墙的**原地**重绘钩子（封面 / 名字 / 成就条三条后台队列收尾时调它）。
+   *
+   * 返回值 = 「这次已经原地处理干净了」：true 时调用方**不要**再调 renderFn 整刷。
+   * 做不到原地（不在游戏墙视图、按名称排序、搜索中——改动可能让卡片换位或从结果里消失）
+   * 返回 false，调用方回落整刷。面板关了就置空（`?.()` 得 undefined，按 false 处理更安全，
+   * 但那时 renderFn 也是空，等于什么都不做）。
+   *
+   * 为什么不让队列直接整刷：整刷会把工具行、门面、整片网格连同所有 `<img>` 一起换掉，
+   * 后台逐条落地的过程中界面就是「一直在闪」（2026-11-01 用户反馈）。
+   */
+  repaintFn: ((opts?: { order?: boolean }) => boolean) | null;
 }
 
 export const M: GameshelfState = {
@@ -137,7 +147,7 @@ export const M: GameshelfState = {
   folderPath: DEFAULT_FOLDER,
   renderFn: null,
   modalRepaintFn: null,
-  mediaRepaintFn: null,
+  repaintFn: null,
 };
 
 /** 测试/卸载用：整体重置模块状态 */
@@ -154,5 +164,5 @@ export function resetGameshelfState(): void {
   M.folderPath = DEFAULT_FOLDER;
   M.renderFn = null;
   M.modalRepaintFn = null;
-  M.mediaRepaintFn = null;
+  M.repaintFn = null;
 }

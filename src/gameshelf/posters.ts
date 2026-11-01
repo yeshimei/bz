@@ -10,10 +10,13 @@
  *
  * **封面兜底链**（2026-11-02 用户点版）：header.jpg 有的 appid 根本没有（新上架 / 下架 / 只发过
  * 截图的小品），卡片就只剩首字占位。落不到 header 时按 `header → capsule_616x353 → 第一张商店
- * 截图` 往下走，落到的那张**存成同一个 `<appid>.jpg`**——下游（notes 的 `封面`、coverDisplayUrl、
- * 原地换图）一条路径不用改，`needsWork` 也自然「有文件 = 齐了」，不会每次开面板回头重试 header。
+ * 截图 → library_hero` **四跳**往下走，落到的那张**存成同一个 `<appid>.jpg`**——下游（notes 的
+ * `封面`、coverDisplayUrl、原地重绘）一条路径不用改，`needsWork` 也自然「有文件 = 齐了」。
  * 只在**确实没有**（HTTP 404）时跳下一跳：超时/重置等网络失败原样留给下次，否则一次断网就把
  * 那款的封面永久钉在胶囊图/截图上。
+ * 四跳**全** 404 = 远端确实一张都没有 → 落 `封面缺`（判缺时刻 ISO），30 天内不再为这款重跑
+ * 整条链。没有这条记录时，这类 appid 每次开面板都要白打三四个 404，而且结论没有去处——
+ * 下次打开还得从头试一遍（本机库里那两款就是）。
  *
  * 为什么成就图标不走这条路（ADR-0176 的判据）：它是**按成就条目逐条生成**的，且每个成就两色
  * （彩色 + 灰图）——实测 147 款库累积出 8,118 个文件，是封面 / 库内图标 / 截图三类合计
@@ -130,6 +133,8 @@ export interface MediaItem {
   icon?: string | null;
   /** frontmatter `图标源`（远端；没有就跳过图标） */
   iconSrc?: string | null;
+  /** frontmatter `封面缺`（判缺时刻 ISO；30 天内不再重跑兜底链） */
+  coverMissing?: string | null;
   file: TFile | null;
 }
 
@@ -141,6 +146,7 @@ export function mediaItemsOf(items: GameItem[]): MediaItem[] {
     coverSrc: it.coverSrc,
     icon: it.icon,
     iconSrc: it.iconSrc,
+    coverMissing: it.coverMissing ?? null,
     file: it.file,
   }));
 }
@@ -161,11 +167,25 @@ const coverFallbackPending = new Set<number>();
 let running = false;
 let rerenderTimer: ReturnType<typeof setTimeout> | null = null;
 
+/** 「判缺」结论的有效期：Steam 偶尔后补素材，过了这段时间再试一次 */
+const COVER_MISSING_TTL_MS = 30 * 24 * 3600 * 1000;
+
+/** 这款是不是刚被判过「远端确实没有封面」（窗口内不再重跑兜底链） */
+function coverGaveUp(it: MediaItem, now = Date.now()): boolean {
+  if (!it.coverMissing) return false;
+  const at = Date.parse(it.coverMissing);
+  return Number.isFinite(at) && now - at < COVER_MISSING_TTL_MS;
+}
+
 /** 该条目还有没有活要干（本地文件齐 + 属性已指本地 → 无事可做，别排队） */
 function needsWork(app: App, it: MediaItem): boolean {
   const cover = localCoverPath(it.appid);
-  if (!hasFile(app, cover)) return true;
-  if (it.cover !== cover) return true;
+  if (hasFile(app, cover)) {
+    if (it.cover !== cover) return true; // 文件在、属性没指过来 → 还差一次回写
+  } else if (!coverGaveUp(it)) {
+    // 没封面文件：刚判过缺（30 天内）就不再试——否则每次开面板都为它白打三四个 404
+    return true;
+  }
   if (isRemote(it.iconSrc)) {
     const icon = localIconPath(it.appid);
     if (!hasFile(app, icon)) return true;
@@ -241,34 +261,51 @@ async function copyAsCover(app: App, from: string, to: string): Promise<boolean>
 }
 
 /**
- * 封面三跳兜底（写进同一个 `<appid>.jpg`）：header → 胶囊图 → 第一张商店截图 → 库内主视觉。
+ * 封面兜底链的结果。
+ * - `ok`   ：落到一张了（写进同一个 `<appid>.jpg`）；
+ * - `absent`：**远端确实一张都没有**（四跳全 404）→ 调用方落「封面缺」，30 天内不再试；
+ * - 其余失败（超时 / 网络错 / 写盘失败）：`ok=false, absent=false`，原样留到下次。
+ */
+interface CoverOutcome {
+  ok: boolean;
+  absent: boolean;
+}
+
+const FELL_BACK: CoverOutcome = { ok: true, absent: false };
+const GAVE_UP: CoverOutcome = { ok: false, absent: true };
+const RETRY_LATER: CoverOutcome = { ok: false, absent: false };
+
+/**
+ * 封面四跳兜底（写进同一个 `<appid>.jpg`）：header → 胶囊图 → 第一张商店截图 → 库内主视觉。
  * 前面几跳远端都没有（404）才继续；网络失败就地收工，等下一次队列。
  */
-async function fetchCover(app: App, item: MediaItem, path: string): Promise<boolean> {
+async function fetchCover(app: App, item: MediaItem, path: string): Promise<CoverOutcome> {
   const first = await download(app, path, item.coverSrc || steamCoverUrl(item.appid));
-  if (first === 'ok') return true;
-  if (first !== 'missing') return false;
+  if (first === 'ok') return FELL_BACK;
+  if (first !== 'missing') return RETRY_LATER;
   // 第二跳：capsule_616x353 是同款封面图，比例（1.75）比 16:9 的截图更贴卡片的 460/215
   const capsule = await download(app, path, steamCapsuleUrl(item.appid));
-  if (capsule === 'ok') return true;
-  if (capsule !== 'missing') return false;
+  if (capsule === 'ok') return FELL_BACK;
+  if (capsule !== 'missing') return RETRY_LATER;
   // 两跳都 404 = 这款的 `steam/apps/<id>/` 常规封面图确实没有。记一笔：截图比它晚到
   //（商店资料在回填队列里、比本队列慢），落地时由 ensureShots 顺手补上，不用再等下一次开面板。
   coverFallbackPending.add(item.appid);
   // 第三跳：第一张商店截图。截图队列通常早把它下好了（`<appid>-shot-1.jpg`），直接拷一份当封面，
   // 零网络；还没下到就先空手回去，等截图落地（见上面的记账）。
   const shot = localShotPath(item.appid, 0);
-  if (hasFile(app, shot) && (await copyAsCover(app, shot, path))) {
+  if (hasFile(app, shot)) {
+    if (!(await copyAsCover(app, shot, path))) return RETRY_LATER; // 复制失败是写盘问题，不是「没有」
     coverFallbackPending.delete(item.appid);
-    return true;
+    return FELL_BACK;
   }
   // 第四跳：库内主视觉（3862670 这类未上架/极少素材的 app 只剩这张，比例 3.1:1，卡片里左右各裁一截）
   const hero = await download(app, path, steamHeroUrl(item.appid));
   if (hero === 'ok') {
     coverFallbackPending.delete(item.appid);
-    return true;
+    return FELL_BACK;
   }
-  return false;
+  // 只有四跳都拿到「远端说没有」才算判缺；网络问题（retry later）不落结论
+  return hero === 'missing' ? GAVE_UP : RETRY_LATER;
 }
 
 async function runQueue(): Promise<void> {
@@ -278,12 +315,23 @@ async function runQueue(): Promise<void> {
     const { app, item } = job;
     try {
       const wrote: Record<string, unknown> = {};
-      // 封面：本地文件优先；没有则走兜底链（header → 胶囊图 → 第一张截图，见 fetchCover）
+      // 封面：本地文件优先；没有则走兜底链（header → 胶囊图 → 截图 → 主视觉，见 fetchCover）
       const coverPath = localCoverPath(item.appid);
       if (hasFile(app, coverPath)) {
         if (item.cover !== coverPath) wrote[GS_FM.cover] = coverPath;
-      } else if (await fetchCover(app, item, coverPath)) {
-        wrote[GS_FM.cover] = coverPath;
+      } else {
+        const res = await fetchCover(app, item, coverPath);
+        if (res.ok) {
+          wrote[GS_FM.cover] = coverPath;
+          // 之前判过缺（后来 Steam 补了素材）：把结论撤掉，别让笔记挂着一条假记录
+          if (item.coverMissing) wrote[GS_FM.coverMissing] = null;
+        } else if (res.absent && item.file) {
+          // 远端确实没有 → 落一条带日期的结论，30 天内不再为它重跑兜底链
+          //（否则每次开面板都白打三四个 404，而结论从来没有去处）
+          const at = new Date().toISOString();
+          item.coverMissing = at;
+          wrote[GS_FM.coverMissing] = at;
+        }
       }
       // 图标：只认「图标源」（hash 拼不出，没源就跳过——下次同步会补上）
       if (isRemote(item.iconSrc)) {
@@ -427,16 +475,17 @@ async function pumpMedia(): Promise<void> {
 /**
  * 逐条完成后节流重绘（1.5s 尾沿；面板关着钩子为空，空转无害）。
  *
- * 走 `mediaRepaintFn`（原地换图）而不是 `renderFn`（整面板整刷）：封面是一整个库逐款下完的，
+ * 走 `repaintFn`（原地重绘）而不是 `renderFn`（整面板整刷）：封面是一整个库逐款下完的，
  * 整刷会把工具行、门面、整片网格连同所有 img 元素一起换掉，下图期间界面看起来就是
- * 「一直在闪」——2026-11-01 用户反馈的主界面屏闪就是这个。
+ * 「一直在闪」——2026-11-01 用户反馈的主界面屏闪就是这个。原地重绘做不到的场合
+ *（统计页 / 按名称排 / 搜索中）它返回 false，这里回落整刷。
  * 截图下载与游戏墙无关（只有详情弹窗里看得见），所以只叫弹窗那一声。
  */
 function scheduleRerender(): void {
   if (rerenderTimer) return;
   rerenderTimer = setTimeout(() => {
     rerenderTimer = null;
-    M.mediaRepaintFn?.();
+    if (!M.repaintFn?.()) M.renderFn?.();
     M.modalRepaintFn?.(); // 详情弹窗不在面板树里，得单独叫一声
   }, 1500);
 }

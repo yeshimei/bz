@@ -108,6 +108,7 @@ export function rebuildItems(app: App): GameItem[] {
           : '',
       // 封面/图标：既可能是本地 vault 路径（媒体队列写过），也可能是远端地址（没本地化过）
       cover: strOf(coverRaw) || steamCoverUrl(appid),
+      coverMissing: typeof fm[GS_FM.coverMissing] === 'string' ? String(fm[GS_FM.coverMissing]) : null,
       coverSrc: strOf(coverSrc) || steamCoverUrl(appid),
       icon: strOf(icon),
       iconSrc: strOf(iconSrc),
