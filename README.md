@@ -51,7 +51,7 @@
     </td>
     <td align="center" valign="top" width="50%">
       <img src="docs/images/16-cinema.jpg" height="230" alt="影院"><br>
-      <b>影院</b><br>
+      <b>影院</b> · <a href="https://www.bilibili.com/video/BV15hxH6QEgM/">▶ 视频教程</a><br>
       <sub>想看 / 在看 / 已看，海报自动补齐</sub>
     </td>
   </tr>
