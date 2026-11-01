@@ -8,6 +8,13 @@
  * - `<appid>-icon.jpg`       库内小图标
  * - `<appid>-shot-<n>.jpg`   商店截图（第 n 张，1 基）
  *
+ * **封面兜底链**（2026-11-02 用户点版）：header.jpg 有的 appid 根本没有（新上架 / 下架 / 只发过
+ * 截图的小品），卡片就只剩首字占位。落不到 header 时按 `header → capsule_616x353 → 第一张商店
+ * 截图` 往下走，落到的那张**存成同一个 `<appid>.jpg`**——下游（notes 的 `封面`、coverDisplayUrl、
+ * 原地换图）一条路径不用改，`needsWork` 也自然「有文件 = 齐了」，不会每次开面板回头重试 header。
+ * 只在**确实没有**（HTTP 404）时跳下一跳：超时/重置等网络失败原样留给下次，否则一次断网就把
+ * 那款的封面永久钉在胶囊图/截图上。
+ *
  * 为什么成就图标不走这条路（ADR-0176 的判据）：它是**按成就条目逐条生成**的，且每个成就两色
  * （彩色 + 灰图）——实测 147 款库累积出 8,118 个文件，是封面 / 库内图标 / 截图三类合计
  * （约 1,400 个）的近六倍。文件数正是 Obsidian 每次启动都要遍历的量，所以它改成界面直取
@@ -29,7 +36,7 @@ import { tryGetSettings } from '../core/settings-provider';
 import { resolveAssetDir, domainAssetsDir } from '../core/attachment-dir';
 import { upsertDetail } from './notes';
 import { M, type GameItem } from './state';
-import { steamCoverUrl } from './steam';
+import { steamCapsuleUrl, steamCoverUrl, steamHeroUrl } from './steam';
 import { GS_FM } from './constants';
 
 /**
@@ -144,6 +151,13 @@ interface QueueJob {
 }
 const queue: QueueJob[] = [];
 const pending = new Set<number>();
+/**
+ * 「封面还在等第一张截图」的 appid（2026-11-02）：header 与胶囊图都 404，剩下的素材只有商店截图，
+ * 而截图比封面慢一拍（商店资料在回填队列里）。记账后由 ensureShots 在截图落地时补拷封面——
+ * 否则这一款要等下次开面板才补得上，用户盯着那两张占位卡看不到任何变化。
+ * 会话级即可：真错过了，下一轮 ensurePosters 还会重算。
+ */
+const coverFallbackPending = new Set<number>();
 let running = false;
 let rerenderTimer: ReturnType<typeof setTimeout> | null = null;
 
@@ -183,8 +197,16 @@ export function ensurePosters(app: App, items: MediaItem[]): void {
   if (added > 0 && !running) void runQueue();
 }
 
-/** 下载到 vault（成功 true；HTTP 非 2xx / 无 arrayBuffer / 超时 / 异常 → false） */
-async function download(app: App, path: string, url: string): Promise<boolean> {
+/**
+ * 下载结果三态（封面兜底链要据此分流，别再退化成 boolean）：
+ * - `ok`      落地了；
+ * - `missing` 远端明确说没有（404）——**只有这种才该试下一跳**；
+ * - `fail`    超时 / 网络错 / 5xx / 403 等：图可能还在，下次再来，不往下兜。
+ */
+type DownloadOutcome = 'ok' | 'missing' | 'fail';
+
+/** 下载到 vault（成功 ok；404 = missing；其余失败 fail） */
+async function download(app: App, path: string, url: string): Promise<DownloadOutcome> {
   try {
     const resp = await withTimeout(
       requestUrl({ url, method: 'GET', throw: false }),
@@ -195,10 +217,56 @@ async function download(app: App, path: string, url: string): Promise<boolean> {
     const buf = (resp as { arrayBuffer?: ArrayBuffer }).arrayBuffer;
     if (resp.status >= 200 && resp.status < 300 && buf) {
       if (!app.vault.getAbstractFileByPath(path)) await app.vault.adapter.writeBinary(path, buf);
-      return true;
+      return 'ok';
     }
+    // 403 不算 missing：CDN / 代理侧拒绝也报这个码，跳过它会把封面误钉在兜底图上
+    if (resp.status === 404) return 'missing';
   } catch (e) {
     console.warn('bz 游戏库：媒体下载失败:', url, e);
+  }
+  return 'fail';
+}
+
+/** 本地已有文件 → 复制一份当封面（第一张截图通常在回填时早下好了，不必再走网络） */
+async function copyAsCover(app: App, from: string, to: string): Promise<boolean> {
+  try {
+    const buf = await app.vault.adapter.readBinary(from);
+    if (!buf || !buf.byteLength) return false;
+    await app.vault.adapter.writeBinary(to, buf);
+    return true;
+  } catch (e) {
+    console.warn('bz 游戏库：封面复制失败:', from, e);
+    return false;
+  }
+}
+
+/**
+ * 封面三跳兜底（写进同一个 `<appid>.jpg`）：header → 胶囊图 → 第一张商店截图 → 库内主视觉。
+ * 前面几跳远端都没有（404）才继续；网络失败就地收工，等下一次队列。
+ */
+async function fetchCover(app: App, item: MediaItem, path: string): Promise<boolean> {
+  const first = await download(app, path, item.coverSrc || steamCoverUrl(item.appid));
+  if (first === 'ok') return true;
+  if (first !== 'missing') return false;
+  // 第二跳：capsule_616x353 是同款封面图，比例（1.75）比 16:9 的截图更贴卡片的 460/215
+  const capsule = await download(app, path, steamCapsuleUrl(item.appid));
+  if (capsule === 'ok') return true;
+  if (capsule !== 'missing') return false;
+  // 两跳都 404 = 这款的 `steam/apps/<id>/` 常规封面图确实没有。记一笔：截图比它晚到
+  //（商店资料在回填队列里、比本队列慢），落地时由 ensureShots 顺手补上，不用再等下一次开面板。
+  coverFallbackPending.add(item.appid);
+  // 第三跳：第一张商店截图。截图队列通常早把它下好了（`<appid>-shot-1.jpg`），直接拷一份当封面，
+  // 零网络；还没下到就先空手回去，等截图落地（见上面的记账）。
+  const shot = localShotPath(item.appid, 0);
+  if (hasFile(app, shot) && (await copyAsCover(app, shot, path))) {
+    coverFallbackPending.delete(item.appid);
+    return true;
+  }
+  // 第四跳：库内主视觉（3862670 这类未上架/极少素材的 app 只剩这张，比例 3.1:1，卡片里左右各裁一截）
+  const hero = await download(app, path, steamHeroUrl(item.appid));
+  if (hero === 'ok') {
+    coverFallbackPending.delete(item.appid);
+    return true;
   }
   return false;
 }
@@ -210,11 +278,11 @@ async function runQueue(): Promise<void> {
     const { app, item } = job;
     try {
       const wrote: Record<string, unknown> = {};
-      // 封面：本地文件优先；没有则按「封面源」（缺省 CDN 直拼）下载
+      // 封面：本地文件优先；没有则走兜底链（header → 胶囊图 → 第一张截图，见 fetchCover）
       const coverPath = localCoverPath(item.appid);
       if (hasFile(app, coverPath)) {
         if (item.cover !== coverPath) wrote[GS_FM.cover] = coverPath;
-      } else if (await download(app, coverPath, item.coverSrc || steamCoverUrl(item.appid))) {
+      } else if (await fetchCover(app, item, coverPath)) {
         wrote[GS_FM.cover] = coverPath;
       }
       // 图标：只认「图标源」（hash 拼不出，没源就跳过——下次同步会补上）
@@ -222,7 +290,7 @@ async function runQueue(): Promise<void> {
         const iconPath = localIconPath(item.appid);
         if (hasFile(app, iconPath)) {
           if (item.icon !== iconPath) wrote[GS_FM.icon] = iconPath;
-        } else if (await download(app, iconPath, item.iconSrc as string)) {
+        } else if ((await download(app, iconPath, item.iconSrc as string)) === 'ok') {
           wrote[GS_FM.icon] = iconPath;
         }
       }
@@ -307,7 +375,7 @@ export function ensureShots(app: App, job: ShotJob): void {
           paths.push(path);
           continue;
         }
-        if (await download(app, path, job.remote[i])) {
+        if ((await download(app, path, job.remote[i])) === 'ok') {
           paths.push(path);
           downloaded += 1;
         } else {
@@ -316,9 +384,19 @@ export function ensureShots(app: App, job: ShotJob): void {
       }
       const wanted = job.prevLocal.concat(Array(Math.max(0, job.remote.length - job.prevLocal.length)).fill(''));
       const same = wanted.length === paths.length && wanted.every((v, i) => v === paths[i]);
-      if (job.file && (downloaded > 0 || !same)) {
+      // 封面还在等截图（见 coverFallbackPending）：第一张一到就顺手拷成封面，同一次写盘写两个键，
+      // 这样「这款没有 header」的那几款，本次开面板内就能看到封面，而不是等下一轮。
+      const coverPath = localCoverPath(job.appid);
+      let coverFixed = false;
+      if (job.file && coverFallbackPending.has(job.appid) && paths[0] && !hasFile(app, coverPath)) {
+        coverFixed = await copyAsCover(app, paths[0], coverPath);
+        if (coverFixed) coverFallbackPending.delete(job.appid);
+      }
+      if (job.file && (downloaded > 0 || !same || coverFixed)) {
         try {
-          await upsertDetail(app, job.file, { [GS_FM.shots]: paths });
+          const fields: Record<string, unknown> = { [GS_FM.shots]: paths };
+          if (coverFixed) fields[GS_FM.cover] = coverPath;
+          await upsertDetail(app, job.file, fields);
           scheduleRerender();
         } catch (e) {
           console.warn('bz 游戏库：截图路径写回失败:', job.appid, e);

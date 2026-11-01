@@ -136,6 +136,83 @@ describe('媒体本地化队列', () => {
   }, 8000);
 });
 
+describe('封面兜底链（2026-11-02）：header → 胶囊图 → 第一张商店截图 → 库内主视觉', () => {
+  it('header 404 → 改下 capsule_616x353，存成同一个 <appid>.jpg；属性指本地', async () => {
+    setup();
+    (requestUrl as any).mockImplementation(async (o: { url: string }) => (
+      o.url.includes('header.jpg') || o.url.includes('cdn/1.jpg')
+        ? { status: 404, arrayBuffer: new ArrayBuffer(0) }
+        : { status: 200, arrayBuffer: new ArrayBuffer(8) }
+    ));
+    ensurePosters(app, media({ iconSrc: null }));
+    await vi.waitFor(() => expect(writes.length).toBeGreaterThan(0));
+    expect(vault.binaryFiles.has(COVER)).toBe(true);
+    expect(writes[writes.length - 1]).toMatchObject({ 封面: COVER });
+    const urls = (requestUrl as any).mock.calls.map((c: any[]) => String(c[0]?.url));
+    expect(urls.some((u: string) => u.includes('capsule_616x353'))).toBe(true);
+  });
+
+  it('header 与胶囊图都没有 → 拿第一张商店截图当封面（本地已有就拷，不再走网络）', async () => {
+    setup();
+    const shot = localShotPath(1, 0);
+    vault.binaryFiles.set(shot, new Uint8Array([7, 7, 7]));
+    (requestUrl as any).mockImplementation(async () => ({ status: 404, arrayBuffer: new ArrayBuffer(0) }));
+    ensurePosters(app, media({ iconSrc: null }));
+    await vi.waitFor(() => expect(writes.length).toBeGreaterThan(0));
+    expect(vault.binaryFiles.get(COVER)).toEqual(new Uint8Array([7, 7, 7]));
+    expect(writes[writes.length - 1]).toMatchObject({ 封面: COVER });
+    // 只试了 header + capsule 两次远端：截图那跳走本地拷贝，不耗网络
+    expect((requestUrl as any).mock.calls.length).toBe(2);
+  });
+
+  it('网络失败（非 404）不往下兜 —— 断一次网不该把封面永久钉在兜底图上', async () => {
+    setup();
+    (requestUrl as any).mockImplementation(async () => {
+      throw new Error('socket hang up');
+    });
+    ensurePosters(app, media({ iconSrc: null }));
+    await new Promise((r) => setTimeout(r, 40));
+    expect((requestUrl as any).mock.calls.length).toBe(1); // 只碰了 header，没试胶囊图
+    expect(writes.length).toBe(0);
+    expect(vault.binaryFiles.has(COVER)).toBe(false);
+  });
+
+  it('常规图全无、只剩 library_hero → 用主视觉兜底（Shelldiver 3862670 的实测形态）', async () => {
+    setup();
+    (requestUrl as any).mockImplementation(async (o: { url: string }) => (
+      o.url.includes('library_hero.jpg')
+        ? { status: 200, arrayBuffer: new ArrayBuffer(8) }
+        : { status: 404, arrayBuffer: new ArrayBuffer(0) }
+    ));
+    ensurePosters(app, media({ iconSrc: null }));
+    await vi.waitFor(() => expect(writes.length).toBeGreaterThan(0));
+    expect(vault.binaryFiles.has(COVER)).toBe(true);
+    expect(writes[writes.length - 1]).toMatchObject({ 封面: COVER });
+  });
+
+  it('封面等第一张截图：截图队列落地时顺手补封面（同一轮就见效，不必等下次开面板）', async () => {
+    setup();
+    // 常规封面图全 404；商店截图的地址（s/）可下
+    (requestUrl as any).mockImplementation(async (o: { url: string }) => (
+      o.url.includes('/s/')
+        ? { status: 200, arrayBuffer: new ArrayBuffer(8) }
+        : { status: 404, arrayBuffer: new ArrayBuffer(0) }
+    ));
+    ensurePosters(app, media({ iconSrc: null }));
+    // header + capsule + hero 三次 404 → 记账「等截图」
+    await vi.waitFor(() => expect((requestUrl as any).mock.calls.length).toBe(3));
+    expect(writes.length).toBe(0);
+    ensureShots(app, {
+      appid: 1,
+      file: { path: '我的/游戏/《A》.md' } as never,
+      remote: ['https://s/1.jpg'],
+      prevLocal: [],
+    });
+    await vi.waitFor(() => expect(vault.binaryFiles.has(COVER)).toBe(true));
+    expect(writes[writes.length - 1]).toMatchObject({ 封面: COVER, 截图: [localShotPath(1, 0)] });
+  });
+});
+
 describe('显示 URL 四级兜底', () => {
   it('本地文件在 → 用 vault resource URL（最高优先）', () => {
     setup();

@@ -62,6 +62,23 @@ export function steamCoverUrl(appid: number): string {
   return `https://cdn.cloudflare.steamstatic.com/steam/apps/${appid}/header.jpg`;
 }
 
+/**
+ * 胶囊图直拼（封面兜底链第二跳，2026-11-02）：一部分 appid 没有 header.jpg（新上架 / 下架 /
+ * 只发过截图的小品），但同目录的 capsule_616x353.jpg 往往还在，且它就是同款封面图
+ * （1.75 的比例也比 16:9 的商店截图更贴卡片的 460/215）。
+ */
+export function steamCapsuleUrl(appid: number): string {
+  return `https://cdn.cloudflare.steamstatic.com/steam/apps/${appid}/capsule_616x353.jpg`;
+}
+
+/**
+ * 库内主视觉直拼（封面兜底链最后一跳，2026-11-02）：极少素材的 app（未上架 / 只挂过商店页）
+ * 连 capsule 都没有，只剩这张 3840×1240 的主视觉。比例 3.1:1，卡片里左右各裁一截，仅作最后兜底。
+ */
+export function steamHeroUrl(appid: number): string {
+  return `https://cdn.cloudflare.steamstatic.com/steam/apps/${appid}/library_hero.jpg`;
+}
+
 /** 商店页地址（详情弹窗「在商店打开」用） */
 export function steamStoreUrl(appid: number): string {
   return `${STORE_BASE}/app/${appid}/`;
