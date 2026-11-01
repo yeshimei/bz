@@ -5,8 +5,8 @@
       "id": "changelog",
       "name": "更新日志",
       "file": "bz-changelog.html",
-      "sha256": "8d85e1ea7e4e35763680a9e8b8e3a33c33301cd88dce8f241d2b47446d07ab50",
-      "size": 14379
+      "sha256": "66ea4b793b0ce7fdc0a9902c8db4ae6be22cc3095d206a68b285be20aa843a0a",
+      "size": 14235
     },
     {
       "id": "manual",
@@ -314,7 +314,7 @@
     "tool-obsidian-face"
   ],
   "release": {
-    "version": "1.40.0",
-    "tag": "v1.40.0"
+    "version": "1.39.1",
+    "tag": "v1.39.1"
   }
 }
