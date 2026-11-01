@@ -141,8 +141,7 @@ export const PLAN_ITEMS: readonly PlanItem[] = [
   { id: 'pycryptodome', group: '脸谱', name: 'pycryptodome', mb: 3, size: '约 3 MB', required: true },
 ];
 
-/** 教程视频地址（用户后续提供；空 = 按钮禁用并提示） */
-export const PLAN_TUTORIAL_URL = '';
+/* 教程视频地址不在这里：它是三处共用的一条常量，沉在 core/tutorial-video（纯模块，谁都能引）。 */
 
 /* ---------- 选中态 ---------- */
 

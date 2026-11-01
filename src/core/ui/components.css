@@ -3665,7 +3665,7 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 /* 输入框隐藏时（Ollama 不需要密钥）它不再是 grid item，行内按钮会落进 1fr 那格被
    拉满整行——让它始终贴右。 */
 .bz-setup-row .bz-setup-link { justify-self: end; }
-/* 底栏里的文字链（⑥ 完成屏「看使用教程」）：贴左、与按钮同高同一档字号——
+/* 底栏里的文字链（⑥ 完成屏「看视频教程」）：贴左、与按钮同高同一档字号——
    它是行内按钮的尺寸，直接放进底栏会矮一头，看起来像漏了个控件。 */
 .bz-setup-link--foot {
   height: var(--bz-control-h);

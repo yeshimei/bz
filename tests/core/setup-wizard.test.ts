@@ -4,6 +4,7 @@
  * 但「下哪些、按什么顺序下、体积怎么算」是这里的责任，也最容易写错。
  */
 import { describe, it, expect, beforeEach } from 'vitest';
+import { readFileSync } from 'node:fs';
 import {
   buildSetupTasks,
   defaultSelection,
@@ -254,5 +255,48 @@ describe('引导已走过：设置优先，兜底只兜「设置写不进去」'
   it('data.json 根本不存在（只读库/首次）→ 才吃兜底键', () => {
     localStorage.setItem(setupDoneStorageKey('E:/vault-a'), STAMP);
     expect(setupAlreadyDone({ setupDone: false }, 'E:/vault-a', false)).toBe(true);
+  });
+});
+
+/**
+ * 三处教程入口各指一集（2026-11-01 用户拍板）：
+ *   关于组＝第 1P（裸链接）／引导完成屏＝第 4P／依赖清单弹窗＝第 3P；
+ * 界面上不写分P（不出现「4P」「共几集」），完成屏也不再弹「去 B 站看？」确认。
+ *
+ * 为什么用源码断言而不是起 DOM：链接与确认弹窗都长在渲染函数深处，拉一整套 app/state
+ * 只为了看一个 href 不划算；这里真正要防的是「哪天被人顺手改回去」。
+ */
+describe('视频教程三处入口：各指一集，界面上不写分P', () => {
+  const src = (rel: string) => readFileSync(new URL(rel, import.meta.url), 'utf8');
+  const ABOUT = src('../../src/core/about-group.ts');
+  const SETUP = src('../../src/core/setup-wizard.ts');
+  const DEPS = src('../../src/core/deps-guide.ts');
+
+  it('关于组：第 1P，裸链接（不带 ?p=）', () => {
+    expect(ABOUT).toContain("const VIDEO_URL = 'https://www.bilibili.com/video/BV1vNsZ6pE7i/';");
+    expect(ABOUT).toContain("name: '视频教程'");
+  });
+
+  it('完成屏：文案仍是「看使用教程 →」，直连第 4P，不再二次确认', () => {
+    expect(SETUP).toContain("'看使用教程 →'");
+    expect(SETUP).toContain("const TUTORIAL_URL = 'https://www.bilibili.com/video/BV1vNsZ6pE7i/?p=4';");
+    // 注释里会提到「不再问去 B 站看」，所以这里只看代码：确认弹窗的标题字面量必须消失
+    expect(SETUP, '跳外链前的「去 B 站看？」确认已撤').not.toContain("title: '去 B 站");
+  });
+
+  it('依赖清单弹窗：第 3P，且不再把集数写进 tooltip', () => {
+    expect(DEPS).toContain("const TUTORIAL_URL = 'https://www.bilibili.com/video/BV1vNsZ6pE7i/?p=3';");
+    expect(DEPS).not.toContain('共 ${');
+  });
+
+  it('三处的链接行都不带分享追踪参数（换个人分享就变）', () => {
+    const urlLineOf = (s: string) =>
+      s.split('\n').find((l) => l.includes("'https://www.bilibili.com/video/BV1vNsZ6pE7i/")) as string;
+    for (const [file, s] of [['about-group', ABOUT], ['setup-wizard', SETUP], ['deps-guide', DEPS]] as const) {
+      const line = urlLineOf(s);
+      expect(line, file).toBeTruthy();
+      expect(line, file).not.toContain('vd_source');
+      expect(line, file).not.toContain('spm_id_from');
+    }
   });
 });

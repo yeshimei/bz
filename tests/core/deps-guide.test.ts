@@ -124,6 +124,23 @@ describe('deps-guide 弹窗结构（照原型）', () => {
     expect(popup().querySelectorAll('.bz-deps-bar .bz-deps-acts .bz-btn').length).toBe(2);
   });
 
+  it('教程按钮：文案「看视频教程」，不写分P，点开就是第 3P 那一集', () => {
+    openDepsGuide(APP);
+    const [video] = popup().querySelectorAll<HTMLButtonElement>('.bz-deps-acts .bz-btn');
+    expect(video.textContent).toBe('看视频教程');
+    expect(video.disabled).toBe(false);
+    // 2026-11-01 用户口径：界面上不出现「共几集 / 4P」这类字样
+    expect(video.title).toBe('在浏览器里打开（B 站）');
+    const open = vi.spyOn(window, 'open').mockImplementation(() => null);
+    video.click();
+    expect(open).toHaveBeenCalledWith(
+      'https://www.bilibili.com/video/BV1vNsZ6pE7i/?p=3',
+      '_blank',
+      'noopener',
+    );
+    open.mockRestore();
+  });
+
   it('换嵌入模型：单选互斥，汇总与提示词当场跟着变', () => {
     openDepsGuide(APP);
     const embed = groupOf('向量检索').querySelector('table.bz-deps-tb') as HTMLTableElement;

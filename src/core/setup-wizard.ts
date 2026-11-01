@@ -40,8 +40,11 @@ import { isMobileEnv } from './mobile';
 import { getApp } from './app';
 import { getSettings, saveSettings, tryGetSettings } from './settings-provider';
 import { AI_PROVIDER_REGISTRY, DEFAULT_AI_PROVIDER, getProviderDescriptor, testAIConnectivity } from './ai';
-// 使用教程的地址只有一处事实源（设置 → 关于 → 使用教程 用的也是它），别在这里再写一遍字面量
-import { VIDEO_URL } from './about-group';
+
+/** 视频教程 · **第 4P（最新一集）**。三处教程入口各指一集（关于＝第 1P／本屏＝第 4P／
+ *  依赖清单＝第 3P），用户明确不要共享常量：指向不同的集，共享反而多一层解释。
+ *  分享参数 `vd_source` / `spm_id_from` 是追踪用的，别带。 */
+const TUTORIAL_URL = 'https://www.bilibili.com/video/BV1vNsZ6pE7i/?p=4';
 
 /** Node 归档的估算体积（只在清单里显示，真实体积看服务端） */
 const NODE_SIZE_HINT = 36.4 * 1024 * 1024;
@@ -981,26 +984,11 @@ async function stageDone(ctx: WizardCtx, st: WizardState, ui: Ui): Promise<void>
   depsGuide.onclick = () => openDepsGuide(ctx.app);
   // 东西齐了，下一步是「怎么用」：把教程摆在这一屏，用户不必先摸到设置面板再找回来。
   // 左边贴一条文字链（与「开始使用」同一行，不抢主行动），点了开浏览器、引导不关。
+  // 文案保留「看使用教程 →」（2026-11-01 用户拍板：这一处不改叫「看视频教程」）。
+  // 也不再问「去 B 站看？」那一道（同日用户要求）：点教程链接的意图已经明确，
+  // 再弹一层确认纯属多一步；引导页本身不会关，用户随时能回来。
   const tutorial = button('bz-setup-link bz-setup-link--foot', '看使用教程 →');
-  tutorial.onclick = () => {
-    if (!VIDEO_URL) {
-      notice('使用教程还没发布，发布后这里会直连');
-      return;
-    }
-    // 跳外链前先问一句（2026-10-31 用户要求）：这一步会离开插件去浏览器，
-    // 不是点了才发现跳走。同一套 bz-setup-flow 皮，和关闭确认一个样子。
-    void openFlowDialog({
-      className: 'bz-setup-flow',
-      title: '去 B 站看使用教程？',
-      message: '会在浏览器里打开视频。看的时候可以随时回来，引导不会关。',
-      actions: [
-        { label: '取消', value: 'cancel' },
-        { label: '继续', value: 'go' },
-      ],
-    }).then((v) => {
-      if (v === 'go') openExternalUrl(ctx.app, VIDEO_URL);
-    });
-  };
+  tutorial.onclick = () => openExternalUrl(ctx.app, TUTORIAL_URL);
   ui.foot.append(tutorial, depsGuide, enter);
 }
 

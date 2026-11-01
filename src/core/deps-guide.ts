@@ -9,10 +9,10 @@
  *   2. 按勾选实时生成一段**自足的提示词**——粘给 AI 或自己照着敲都能走完；
  *   3. 复制走。
  *
- * 为什么单独成模块而不是留在 setup-wizard 里：**三个地方都要它**——
- * 引导完成屏的「安装外部工具」、设置 → AI → Embedding 的「怎么装」、
- * 第二大脑失败态的「Ollama 没装或没启动？」。同一份清单、同一套文案，
- * 分头写三遍必然漂。
+ * 为什么单独成模块而不是留在 setup-wizard 里：**两个地方都要它**——
+ * 引导完成屏的「安装外部工具」、第二大脑失败态的「Ollama 没装或没启动？」。
+ * 同一份清单、同一套文案，分头写两遍必然漂。
+ * （设置 → AI → Embedding 的那一行 2026-11-01 已撤，入口只留这两处。）
  *
  * 形制（2026-11-01 用户拍板「1:1 复刻原型」）：照 .scratch/deps-guide-proto 定稿稿，
  * 逐段——头行 / 正文（分组卡：普通项走行，模型项走表）/ 提示词 / 底栏。
@@ -29,7 +29,6 @@ import { pluginDirOf, vaultBasePathOf } from './plugin-path';
 import {
   PLAN_GROUPS,
   PLAN_ITEMS,
-  PLAN_TUTORIAL_URL,
   buildPlanPrompt,
   defaultPicked,
   formatSize,
@@ -39,6 +38,11 @@ import {
   type PlanItem,
   type PlanItemId,
 } from './deps-plan';
+
+/** 视频教程 · **第 3P（讲装外部工具的那一集）**。三处教程入口各指一集（关于＝第 1P／
+ *  完成屏＝第 4P／本弹窗＝第 3P），用户明确不要共享常量：三处指向不同的集，
+ *  共享反倒要多加一层「这是给自己那集的」解释。 */
+const TUTORIAL_URL = 'https://www.bilibili.com/video/BV1vNsZ6pE7i/?p=3';
 
 /* ---------- 最小 DOM 工具 ---------- */
 
@@ -286,11 +290,9 @@ export function openDepsGuide(app: unknown = getApp()): void {
   const videoBtn = document.createElement('button');
   videoBtn.type = 'button';
   videoBtn.className = 'bz-btn';
-  videoBtn.textContent = '看教程视频';
-  if (!PLAN_TUTORIAL_URL) {
-    videoBtn.disabled = true;
-    videoBtn.title = '教程视频地址待定';
-  }
+  videoBtn.textContent = '看视频教程';
+  // 界面上不堆分P（2026-11-01 用户口径：按钮、行名一律「视频教程」，不写「共几集」）
+  videoBtn.title = '在浏览器里打开（B 站）';
   const copyBtn = document.createElement('button');
   copyBtn.type = 'button';
   copyBtn.className = 'bz-btn bz-btn--primary';
@@ -329,11 +331,9 @@ export function openDepsGuide(app: unknown = getApp()): void {
     });
   }
 
-  if (PLAN_TUTORIAL_URL) {
-    videoBtn.addEventListener('click', () => {
-      window.open(PLAN_TUTORIAL_URL, '_blank', 'noopener');
-    });
-  }
+  videoBtn.addEventListener('click', () => {
+    window.open(TUTORIAL_URL, '_blank', 'noopener');
+  });
 
   copyBtn.addEventListener('click', () => {
     const text = buildPlanPrompt(picked, ctx);

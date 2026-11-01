@@ -568,8 +568,8 @@ export class SecondBrainPanel {
    *
    * 为什么不是只加一个按钮：这一屏上的「重试初始化」在 Ollama 没装 / 没启动 / 模型没拉时
    * 是纯空转——点几次都一样。用户真正需要的是「装什么、多大、怎么把 Ollama 拉起来」，
-   * 那正是 core/deps-guide 那张表。自动弹只做一次，之后的入口在
-   * 「设置 → AI → Embedding → 装 Ollama 与向量模型」。
+   * 那正是 core/deps-guide 那张表。自动弹只做一次；另一个入口是首次引导完成屏的
+   * 「安装外部工具」（设置页里那一行 2026-11-01 已撤掉，这一屏的自动弹就是设置侧的唯一入口）。
    */
   private offerDepsGuide(): void {
     if (depsGuideOffered) return;

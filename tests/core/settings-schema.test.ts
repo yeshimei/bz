@@ -112,20 +112,16 @@ describe('mainSettingsSchema：主设置页区块（issue 422 起 AI 页按模�
     // issue 424：第二行「移动端远程地址」删除（桌面端启动自动跟随本机 IP，无人看/改）
     // issue 427/429：第三行「启用重排」+ 第四行「重排模型」
     // issue 431/ADR-0189：第四行改「重排走 Jev」（通道二选一），「重排模型」退居第五行（本地通道专属）
-    // 2026-11-01：「装 Ollama 与向量模型」插在模型行之后（缺 Ollama/模型时的怎么装）
+    // 2026-11-01：「装 Ollama 与向量模型」那行撤掉（入口收回到引导完成屏的「安装外部工具」
+    // 与第二大脑失败态的自动弹；设置页里不再单开一行按钮）
     expect(rows.map((r) => r.name)).toEqual([
       'Ollama 本地 URL',
       'Embedding 模型',
-      '装 Ollama 与向量模型',
       '启用重排',
       '重排走 Jev',
       '重排模型',
     ]);
-    expect(rows.map((r) => r.type)).toEqual(['text', 'text', 'button', 'toggle', 'toggle', 'text']);
-    // 按钮行纯动作、不带键绑定（它不存任何设置，只开一张「怎么装」的说明卡）
-    expect(rows[2].binding).toBeUndefined();
-    expect(rows[2].buttonText).toBe('看怎么装');
-    expect(rows[2].help).toContain('Ollama');
+    expect(rows.map((r) => r.type)).toEqual(['text', 'text', 'toggle', 'toggle', 'text']);
     expect(rows.filter((r) => r.binding).map((r) => r.binding)).toEqual([
       { key: 'secondBrainOllamaUrl' },
       { key: 'secondBrainEmbeddingModel' },
@@ -134,7 +130,7 @@ describe('mainSettingsSchema：主设置页区块（issue 422 起 AI 页按模�
       { key: 'secondBrainRerankModel' },
     ]);
     // 下列各行断言按角色取行，不再写死下标——组里以后再插引导行不会全体错位
-    const [urlRow, embedRow, , rerankRow, jevRow, modelRow] = rows;
+    const [urlRow, embedRow, rerankRow, jevRow, modelRow] = rows;
     // 各键的消费口径零改动（secondbrain/config.ts / vector-store / ai-models 读取路径不变）
     expect(urlRow.name).toBe('Ollama 本地 URL');
     expect(embedRow.actions?.map((a) => a.text)).toEqual(['获取模型']);

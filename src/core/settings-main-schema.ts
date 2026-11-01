@@ -65,7 +65,6 @@ import { tryGetSettings, saveSettings, getSettings } from './settings-provider';
 import { fetchEmbeddingModels, fetchProviderModels, fetchRerankModels, hasRerankNamed, isQwen3Embedding8b, providerDescriptorOf } from './ai-models';
 import { openModelPicker } from './settings-model-picker';
 import { getApp } from './app';
-import { isMobileEnv } from './mobile';
 
 import type { NumberRow, RowAction, SettingsSchema, SettingsRow, SettingsRowContext } from './settings-schema';
 
@@ -585,38 +584,7 @@ function jevModelRow(): SettingsRow {
  * → 「重排模型」（本地通道专属，Jev 开时隐藏）。
  */
 function embeddingGroupRows(): SettingsRow[] {
-  return [ollamaLocalUrlRow(), embeddingModelRow(), ollamaSetupRow(), rerankToggleRow(), jevRerankToggleRow(), rerankModelRow()];
-}
-
-/**
- * 「装 Ollama 与向量模型」（2026-11-01）：第二大脑 / 小橘在这两样缺了的时候只会说
- * 「请确认 Ollama 服务与 Embedding 模型可用」，用户下一步该干什么没人告诉他。
- *
- * 为什么是个引导而不是下载按钮：Ollama 是通用服务（机器上可能已有一份在给别的东西用），
- * 向量模型几个 GB 且要落在 Ollama 自己的模型目录里——bz 不该自带也不该代管。
- * 所以这里只负责把「缺什么、多大、怎么装、装完怎么验」讲清楚（清单在 core/deps-guide）。
- *
- * 动态 import 是必须的：本模块要保持 node 环境可安全加载（文案 lint 直接 import 它），
- * 而 deps-guide 会顺着 uiModal 拖进 obsidian。
- */
-function ollamaSetupRow(): SettingsRow {
-  return {
-    type: 'button',
-    name: '装 Ollama 与向量模型',
-    desc: '本机还没装 Ollama 或模型时看这里',
-    help:
-      '第二大脑的语义检索、小橘的记忆库都靠这两样：一个本地推理服务（Ollama），和至少一个向量模型（缺省 bge-m3，约 1.2 GB）。' +
-      '这里不是下载按钮——Ollama 是通用服务，机器上可能已经有一份在给别的工具用，bz 再装一份会变成两个端口、两套模型缓存；' +
-      '模型也要落在 Ollama 自己的目录里。所以这里只讲「怎么装、装完怎么验」，包括 Ollama 装了但没启动时怎么拉起来。',
-    buttonText: '看怎么装',
-    // 手机上不显示（2026-11-01）：清单里全是「装到 Program Files / PATH / Ollama 模型目录」，
-    // 而手机既没有这些位置、`vault.adapter.getBasePath()` 也给不出绝对路径——点开只会看到
-    // 一份路径为空的 Windows 安装说明，比不给入口更糟。
-    visibleWhen: () => !isMobileEnv(),
-    onClick: () => {
-      void import('./deps-guide').then((m) => m.openDepsGuide());
-    },
-  };
+  return [ollamaLocalUrlRow(), embeddingModelRow(), rerankToggleRow(), jevRerankToggleRow(), rerankModelRow()];
 }
 
 /**

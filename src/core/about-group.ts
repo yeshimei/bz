@@ -2,7 +2,7 @@
  * bz · 设置面板「关于」组（core/about-group.ts）
  *
  * 通用页**最上面**那一组（2026-10-28 对外分发）：版本 / 自动更新 / 环境自检 / 反馈 /
- * GitHub 主页 / 使用教程 / 赞赏。分工与边界：
+ * GitHub 主页 / 视频教程 / 赞赏。分工与边界：
  *
  *  - **版本**（info 行 + 动作钮）：运行中版本为真值；磁盘比运行中新时补一句
  *    「已下载 vX，重载后生效」——不补的话用户会看到「更新完了但版本号没变」。
@@ -33,12 +33,12 @@ export const FEEDBACK_URL = `https://github.com/${REPO_SLUG}/issues`;
 /** 项目主页（GitHub 仓库首页；与反馈、下载通道同一 slug，不另立字面量） */
 export const REPO_URL = `https://github.com/${REPO_SLUG}`;
 
-/** 视频版使用教程（B 站，2026-10-29 用户给定）。改地址只改这一处，文案与测试都从这里取。
+/** 视频版使用教程：**第 1P**，裸链接不带 `?p=`（2026-11-01 用户拍板「就是不带 p 的链接」）。
  *
- *  2026-10-31：这是**多 P 视频**，要落到的不是第 1 P，而是 `?p=3` 那一集 ——
- *  少了这个参数，点进去停在目录页第 1 集，用户还得自己找。分享链接里的
- *  `vd_source` / `spm_id_from` 是追踪参数，不进常量（换个环境分享就变）。 */
-export const VIDEO_URL = 'https://www.bilibili.com/video/BV1vNsZ6pE7i/?p=3';
+ *  三处教程入口各指一集（关于＝第 1P／完成屏＝第 4P／依赖清单＝第 3P），用户明确不要
+ *  再抽一个共享常量文件——三处指向不同的集，共享反倒要加一层「这是给自己那集的」注释。
+ *  分享链接里的 `vd_source` / `spm_id_from` 是追踪参数（换个人分享就变），不要带。 */
+const VIDEO_URL = 'https://www.bilibili.com/video/BV1vNsZ6pE7i/';
 
 /** 版本行的描述文案（一句自然句，无符号花样——设置项文案规范） */
 export function versionDesc(st: SelfUpdateState): string {
@@ -108,19 +108,14 @@ export async function aboutGroup(): Promise<GroupDecl> {
     onClick: () => openExternalUrl(getApp(), REPO_URL),
   };
 
+  // 2026-11-01 用户拍板：行名「使用教程」→「视频教程」（原名与下面的说明重复），
+  // 且**不写分P**（视频当时已到 4P，写「4P/共 4 集」只是噪音，用户点进去自然看见）。
   const videoRow: SettingsRow = {
     type: 'button',
-    name: '使用教程',
-    desc: '视频版教程，边看边用',
+    name: '视频教程',
+    desc: '边看边用，卡住了先看这里',
     buttonText: '观看',
-    // 地址是常量（VIDEO_URL）；哪天视频下架把常量清空，这里降级成一句提示，别开一张空页
-    onClick: () => {
-      if (!VIDEO_URL) {
-        notify('使用教程还没发布，发布后这里会直连');
-        return;
-      }
-      openExternalUrl(getApp(), VIDEO_URL);
-    },
+    onClick: () => openExternalUrl(getApp(), VIDEO_URL),
   };
 
   // 环境自检（2026-10-28 对外分发）：把「这台机器上缺什么」一次说清。
