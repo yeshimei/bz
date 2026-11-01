@@ -5222,14 +5222,264 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 }
 .bz-setup-note--bad { color: var(--bz-danger); }
 
-/* ── 依赖总览（完成屏的「还需要装什么」）：名称 + 体积一行，命令整行铺在下面 ── */
-.bz-setup-deps .bz-setup-group { margin-bottom: 12px; }
-.bz-setup-row--guide {
-  /* 体积那一列改成 auto：它是「约 1 GB」这种短词，不该跟名称平分宽度 */
-  grid-template-columns: 14px minmax(0, 1fr) auto;
-  row-gap: 3px;
+/* ═══════════ 依赖清单弹窗 .bz-deps（core/deps-guide.ts） ═══════════
+   形制按定稿原型（.scratch/deps-guide-proto）一比一：头行 / 正文（分组卡：普通项走行、
+   模型项走表）/ 提示词 / 底栏。**不套引导页那套 .bz-setup-* 皮**——这一屏是横着比模型
+   （分数、体积、显存），逐行清单比不出来；两套形状各服务各的读法。
+   下面所有度量（20px 内边距、11.5px 表头、14px 勾选框、18px 组间距…）都是原型上的实数，
+   要改先回原型改，别只改这一处。 */
+.bz-overlay-popup.bz-deps-modal {
+  width: min(760px, calc(100vw - 40px));
+  max-height: calc(100vh - 40px);
+  padding: 0; /* 头行/底栏各自带内边距，壳不再叠一层 */
+  border-radius: 10px; /* 原型 .modal 的 10px，弹窗里别的壳是 12px——这一屏照原型 */
+  overflow: hidden; /* 滚动只发生在 .bz-deps-b，底栏常驻 */
 }
-.bz-setup-row--guide .bz-setup-val { white-space: nowrap; }
+.bz-deps-modal .bz-dialog-body { flex: 1 1 auto; min-height: 0; overflow: hidden; }
+.bz-deps { display: flex; flex-direction: column; min-height: 0; flex: 1 1 auto; }
+
+/* ── 头行 ── */
+.bz-deps-h {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--bz-border);
+}
+.bz-deps-t { font-size: var(--bz-font-emphasis); font-weight: var(--bz-weight-semibold); color: var(--bz-text-1); }
+.bz-deps-x {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  padding: 0 2px;
+  font-size: 16px;
+  line-height: 1;
+  color: var(--bz-text-3);
+  cursor: pointer;
+  font-family: inherit;
+}
+@media (hover: hover) {
+  /* 触屏破口：:hover 在触屏上会粘住 */
+  .bz-deps-x:hover { color: var(--bz-text-1); }
+}
+.bz-deps-x:focus-visible { outline: var(--bz-focus-ring); outline-offset: 2px; }
+
+/* ── 正文（唯一滚动区） ── */
+.bz-deps-b { flex: 1 1 auto; min-height: 0; overflow-y: auto; padding: 18px 20px 20px; }
+.bz-deps-grp { margin-bottom: 18px; }
+.bz-deps-grp-h {
+  font-size: 11.5px;
+  color: var(--bz-text-3);
+  letter-spacing: 0.6px;
+  margin: 0 0 8px 2px;
+}
+.bz-deps-card {
+  border: 1px solid var(--bz-border);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+/* ── 普通项一行：勾选框 / 名称（可带徽章）/ 体积 ── */
+.bz-deps-row {
+  display: grid;
+  grid-template-columns: 14px minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: baseline;
+  padding: 11px 14px;
+  border-bottom: 1px solid var(--bz-border);
+}
+.bz-deps-row:last-child { border-bottom: 0; }
+/* 表在行后面时，行自己的下边框会被表的表头贴住，补一条分隔（原型 .card > .mt-wrap + .g-row 同款） */
+.bz-deps-card > .bz-deps-tw + .bz-deps-row { border-top: 1px solid var(--bz-border); }
+.bz-deps-key { font-size: 13.5px; color: var(--bz-text-1); min-width: 0; }
+.bz-deps-val {
+  font-size: var(--bz-font-meta);
+  color: var(--bz-text-2);
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+.bz-deps-val--ok { color: var(--bz-success); }
+.bz-deps-val--bad { color: var(--bz-danger); }
+
+/* 必装徽章：不抢眼，只说明「这一项没得选」 */
+.bz-deps-req {
+  font-style: normal;
+  font-size: 10.5px;
+  color: var(--bz-text-3);
+  border: 1px solid var(--bz-border);
+  border-radius: 20px;
+  padding: 0 6px;
+  margin-left: 7px;
+  vertical-align: 1px;
+  white-space: nowrap;
+}
+
+/* ── 勾选框（自绘：原生 checkbox 会被主题改成各家样子，同一个弹窗换个主题就变样） ── */
+.bz-deps-ck {
+  appearance: none;
+  -webkit-appearance: none;
+  margin: 0;
+  width: 14px;
+  height: 14px;
+  flex: none;
+  border: 1.5px solid var(--bz-border-strong);
+  border-radius: 4px;
+  background: var(--bz-surface-2);
+  cursor: pointer;
+  position: relative;
+  transform: translateY(2px); /* 与 13.5px 名称的视觉基线对齐 */
+}
+@media (hover: hover) {
+  .bz-deps-ck:hover { border-color: var(--bz-text-3); }
+}
+.bz-deps-ck:checked { background: var(--bz-brand); border-color: var(--bz-brand); }
+.bz-deps-ck:checked::after {
+  content: "";
+  position: absolute;
+  left: 4px;
+  top: 1px;
+  width: 4px;
+  height: 7px;
+  border: 1.6px solid var(--bz-on-brand);
+  border-top: 0;
+  border-left: 0;
+  transform: rotate(42deg);
+}
+.bz-deps-ck:focus-visible { outline: var(--bz-focus-ring); outline-offset: 2px; }
+/* disabled 的勾选框不触发 change、也不进 Tab 序列：必装项靠它表达「改不了」。
+   压到 .45 而不是 .3——太淡会被读成「不可用」，这里要的是「已锁定」。 */
+.bz-deps-ck:disabled { cursor: default; }
+.bz-deps-ck:disabled:checked { opacity: 0.45; }
+/* 单选：外圈变圆 + 内点 */
+.bz-deps-ck--r { border-radius: 50%; }
+.bz-deps-ck--r:checked::after {
+  content: "";
+  left: 3.5px;
+  top: 3.5px;
+  width: 5px;
+  height: 5px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--bz-on-brand);
+  transform: none;
+}
+
+/* ── 模型表（嵌入 / 重排 / 转写）：缩进 36px 挂在 Ollama 那一行下面 ── */
+.bz-deps-tw { padding: 12px 14px 14px 36px; }
+.bz-deps-tb { width: 100%; border-collapse: collapse; font-size: 11.5px; }
+.bz-deps-tb th,
+.bz-deps-tb td {
+  text-align: left;
+  padding: 5px 8px;
+  border-bottom: 1px solid var(--bz-border);
+}
+.bz-deps-tb th {
+  font-size: 10.5px;
+  font-weight: var(--bz-weight-medium);
+  color: var(--bz-text-3);
+  letter-spacing: 0.4px;
+}
+.bz-deps-tb th:first-child,
+.bz-deps-tb td:first-child { padding-left: 0; }
+.bz-deps-tb tbody tr:last-child td { border-bottom: 0; }
+/* 名称列走 mono：模型名是要被抄进命令行的，字形对齐比好看重要 */
+.bz-deps-tb .bz-deps-name {
+  font-family: var(--bz-font-mono);
+  font-size: 11.5px;
+  color: var(--bz-text-1);
+  white-space: nowrap;
+}
+.bz-deps-tb .bz-deps-name .bz-deps-ck { margin-right: 7px; transform: translateY(1px); }
+.bz-deps-tb .bz-deps-num {
+  font-size: 11px;
+  color: var(--bz-text-2);
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+/* 口径说明比数字长（「多模式，无单一分数」），这一列允许换行，别把表挤歪 */
+.bz-deps-tb .bz-deps-num--wrap { white-space: normal; color: var(--bz-text-3); }
+/* 推荐行的极淡品牌底：比 --bz-brand-soft 再淡一档，只做「扫一眼能落在推荐项上」 */
+.bz-deps-tb tr.is-hl td { background: color-mix(in srgb, var(--bz-brand) 6%, transparent); }
+/* 第二张表（重排）与第一张（嵌入）之间：一条分隔 + 拉开一档 */
+.bz-deps-sub { margin-top: 16px; padding-top: 12px; border-top: 1px solid var(--bz-border); }
+
+/* ── 徽章 / 链接（表内与行内共用） ── */
+.bz-deps-pill {
+  display: inline-block;
+  font-style: normal;
+  font-size: 10.5px;
+  border-radius: 20px;
+  padding: 0 7px;
+  margin-left: 7px;
+  border: 1px solid color-mix(in srgb, var(--bz-brand) 40%, transparent);
+  color: var(--bz-brand);
+  vertical-align: 1px;
+  white-space: nowrap;
+}
+.bz-deps-pill--dim { border-color: var(--bz-border); color: var(--bz-text-3); }
+.bz-deps-a {
+  color: inherit;
+  text-decoration: underline;
+  text-decoration-color: var(--bz-border-strong);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 2px;
+}
+@media (hover: hover) {
+  .bz-deps-a:hover { color: var(--bz-brand); text-decoration-color: var(--bz-brand); }
+}
+
+/* ── 提示词预览 ── */
+.bz-deps-pbox {
+  margin: 14px 0 0;
+  border: 1px solid var(--bz-border);
+  border-radius: 8px;
+  background: var(--bz-code-bg);
+  overflow: hidden;
+}
+.bz-deps-pbox-h {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 7px 12px;
+  font-size: var(--bz-font-caption);
+  color: var(--bz-text-3);
+  border-bottom: 1px solid var(--bz-border);
+}
+.bz-deps-pbox pre {
+  margin: 0;
+  padding: 10px 12px;
+  max-height: 180px;
+  overflow-y: auto;
+  font-family: var(--bz-font-mono);
+  font-size: var(--bz-font-caption);
+  line-height: 1.75;
+  color: var(--bz-text-2);
+  /* 提示词本身就是多行文本：保留换行，长路径按字符断 */
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+}
+
+/* ── 底栏：汇总 + 看教程 / 复制提示词 ── */
+.bz-deps-bar {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 12px 20px 14px;
+  border-top: 1px solid var(--bz-border);
+  background: var(--bz-surface-1);
+}
+.bz-deps-sum { font-size: var(--bz-font-meta); color: var(--bz-text-2); }
+.bz-deps-sum b { color: var(--bz-text-1); font-weight: var(--bz-weight-semibold); font-variant-numeric: tabular-nums; }
+.bz-deps-acts { display: flex; align-items: center; gap: 8px; flex: none; }
+/* 底栏按钮按原型收一档圆角（6px）：它坐在一条 14px 高的窄栏里，8px 会显肿 */
+.bz-deps-acts .bz-btn { border-radius: 6px; }
+.bz-deps-acts .bz-btn:not(.bz-btn--primary) { border-color: var(--bz-border); }
+
 .bz-setup-how {
   /* 从名称列铺到右边界（状态点那一列不占） */
   grid-column: 2 / -1;

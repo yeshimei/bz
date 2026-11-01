@@ -15,7 +15,8 @@
  *    自己的目录写文件。唯一会改系统状态的是「值守注册登录自启」，那一步单独确认
  *    （⑤ 末尾调 core/tool-setup.ts 的 setupAfterInstall，它自己带确认框）。
  *  - **已就绪的不重下**。③ 的列表按磁盘事实打勾：老用户重跑一遍不必再拉几十 MB。
- *  - 与「设置 → 关于 → 环境自检」共用同一套行渲染与补齐队列；自检模式跳过 ②④ 两屏。
+ *  - 与「设置 → 关于 → 环境自检」共用同一套行渲染与补齐队列；自检模式跳过 ②③④ 三屏，
+ *    检测完直接到 ⑥（2026-11-01：自检不需要清单屏，「缺什么」在完成屏一眼看完）。
  * ============================================================ */
 import { notice } from './notice';
 import { openExternalUrl } from './utils';
@@ -261,7 +262,7 @@ export function selectedTasks(items: SetupItem[], selected: Set<string>): SetupI
 interface WizardCtx {
   app: unknown;
   firstRun: boolean;
-  /** 自检模式：跳过「存放 / AI」两屏，直奔清单 */
+  /** 自检模式：跳过「存放 / 清单 / AI」三屏，检测完直奔完成屏 */
   checkOnly: boolean;
   /** 首次引导**结束**后的回调：main.ts 用它打开首页。结束路径都触发——
    *  「开始使用」「以后再说」「稍后再说」，以及下载屏点遮罩确认关掉那条。 */
@@ -563,7 +564,10 @@ async function stageProbe(ctx: WizardCtx, st: WizardState, ui: Ui): Promise<void
   const again = button('bz-setup-btn bz-setup-btn--back', '重新检测');
   again.onclick = rescan;
   const next = button('bz-setup-btn bz-setup-btn--cta', '下一步');
-  next.onclick = () => (ctx.checkOnly ? void stageResources(ctx, st, ui) : void stageStorage(ctx, st, ui));
+  // 自检模式不再进「在线资源清单」那一屏（2026-11-01 用户拍板）：自检的结论只有一句话——
+  // 「能用了没」。清单屏在那儿既不装东西、也没法改什么，只是把同一批状态再列一遍，
+  // 反倒让「下一步」看起来还有活要干。缺的东西一律交给完成屏的「安装外部工具」。
+  next.onclick = () => (ctx.checkOnly ? void stageDone(ctx, st, ui) : void stageStorage(ctx, st, ui));
   ui.foot.append(again, next);
 }
 
@@ -750,13 +754,6 @@ async function stageResources(ctx: WizardCtx, st: WizardState, ui: Ui): Promise<
     }
     void stageInstall(ctx, st, ui, tasks);
   };
-
-  if (ctx.checkOnly && !st.items.some((i) => !i.ready)) {
-    const ok = button('bz-setup-btn bz-setup-btn--cta', '知道了');
-    ok.onclick = () => closeModal(ui);
-    ui.foot.append(ok);
-    return;
-  }
   ui.foot.append(skip, next);
   refreshFoot();
 }
@@ -992,7 +989,10 @@ async function stageInstall(ctx: WizardCtx, st: WizardState, ui: Ui, tasks: Setu
 async function stageDone(ctx: WizardCtx, st: WizardState, ui: Ui): Promise<void> {
   const rows = await environmentCheck(ctx.app);
   st.rows = rows;
-  setSub(ui, '都就位了。');
+  // 这一屏既是「装完了」也是「自检完了」的落点，所以别说一口「都就位了」：
+  // 红着的那几行摆在下头，标题却报平安，只会让用户怀疑整张表。
+  const bad = rows.filter((r) => r.ok === false);
+  setSub(ui, bad.length ? `还有 ${bad.length} 项没就位，其余已经能用。` : '都就位了。');
   ui.body.innerHTML = '';
   ui.foot.innerHTML = '';
 
@@ -1003,24 +1003,18 @@ async function stageDone(ctx: WizardCtx, st: WizardState, ui: Ui): Promise<void>
     if (r.ok === false) row.classList.add('is-bad');
     box.card.appendChild(row);
   }
-  // 两个本地运行时没装上时的收尾交代。2026-11-01 起它们能自动装了，所以这句话不说
-  // 「你得自己去装 Python」——说清「哪些功能会用不了」和「去哪补」，剩下的是用户的选择。
-  const missingDeps = (['python', 'ffmpeg'] as const).filter((id) => rows.find((r) => r.id === id)?.ok !== true);
-  if (missingDeps.length) {
-    const names = missingDeps.map((id) => (id === 'python' ? 'Python' : 'ffmpeg')).join(' 与 ');
-    const hint = document.createElement('div');
-    hint.className = 'bz-setup-note';
-    hint.textContent = `${names} 还没装上：语音转写、视频压缩、脸谱录音会受影响，其余功能正常。可回上一屏重试，或在「设置 → AI → 外部工具」里填一个已装好的路径。`;
-    ui.body.appendChild(hint);
-  }
+  // Python / ffmpeg 的收尾交代随那两行一起撤了（2026-11-01）：它们不在检查表里了，
+  // 还留一句「还没装上」只会指向一个这一屏已经不负责的东西。要装就是下面那颗按钮。
   const enter = button('bz-setup-btn bz-setup-btn--cta', '开始使用');
   enter.onclick = () => {
     closeModal(ui);
     ctx.onFinish?.();
   };
-  // 「还需要装什么」：下载队列覆盖不到的那几层（云端密钥 / Ollama / 模型 / pip 依赖）。
-  // 放在主行动左边、教程右边——它是「配置还差什么」，比看教程更贴近下一步。
-  const depsGuide = button('bz-setup-link bz-setup-link--foot', '还需要装什么？');
+  // 「安装外部工具」：下载队列覆盖不到的那几层（Node / Python / Ollama / 模型 / ffmpeg / pip 依赖）
+  // ——队列只搬得进插件目录的东西，这些全是系统级运行时。
+  // 形制是**次级按钮**，紧贴「开始使用」左边（2026-11-01 用户拍板）：两者是并列的两条下一步，
+  // 它不该缩成一条备注式的文字链贴在角落。
+  const depsGuide = button('bz-setup-btn', '安装外部工具');
   depsGuide.onclick = () => openDepsGuide(ctx.app);
   // 东西齐了，下一步是「怎么用」：把教程摆在这一屏，用户不必先摸到设置面板再找回来。
   // 左边贴一条文字链（与「开始使用」同一行，不抢主行动），点了开浏览器、引导不关。
@@ -1135,7 +1129,7 @@ export function openSetupWizard(
   return true;
 }
 
-/** 设置面板「环境自检」按钮的入口（同一视图；自检模式跳过存放与 AI 两屏） */
+/** 设置面板「环境自检」按钮的入口（同一视图；自检模式跳过存放 / 清单 / AI 三屏） */
 export function openEnvironmentCheck(app: unknown = getApp()): void {
   openSetupWizard(app, { firstRun: false });
 }

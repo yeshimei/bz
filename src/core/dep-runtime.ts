@@ -769,131 +769,13 @@ export async function installDep(
   throw new Error(`${label}安装失败：${lastErr}`);
 }
 
-/* ==================== 完整依赖清单（不在下载队列里的那些） ==================== */
-
-/**
- * 引导页的下载队列只管「bz 自己能搬进插件目录」的东西（Node / 工具包 / Python / ffmpeg）。
- * 剩下这些搬不动、也不该搬——但**它们是功能的前提**，用户必须知道存在：
- *
- * | 这一类 | 为什么不能进队列 |
- * |---|---|
- * | 云端 AI 密钥 | 不是安装，是「去申请一个」 |
- * | Ollama | 通用服务，机器上可能已有一份在给别的东西用；自带一份会变成两个端口、两套模型缓存 |
- * | 向量模型 | 几个 GB，且要落在 Ollama 自己的模型目录里（不归 bz 管） |
- * | Python 包 | pip 装 2GB 级依赖，必须用户点头；bz 只能代跑命令，不能静默做 |
- * | 转写模型 | 首次转写时由 modelscope 自动下，提前下纯占地方 |
- *
- * 这张表就是完成屏「还需要装什么」的全部内容。**加新依赖请加在这里**，
- * 别在弹窗里现写一段文案——那是下一个人找不到的第二个事实源。
- */
-export interface DepGuideRow {
-  /** 分组（渲染时按它聚合，顺序 = 首次出现顺序） */
-  group: string;
-  /** 要装的东西 */
-  name: string;
-  /** 服务于什么——写功能名，不写模块名 */
-  serves: string;
-  /** 怎么装；`{python}` 会替换成本机探测到的 Python 绝对路径 */
-  how: string;
-  /** 体积（人话；未知/不需要 = 空） */
-  size?: string;
-  /** 有探测判据的那几项填这个（渲染时按实际情况打勾/标缺） */
-  probe?: 'ai' | 'ollama' | 'embedding' | 'asr-model';
-}
-
-export const EXTRA_DEP_GUIDE: DepGuideRow[] = [
-  /* ---- 云端 AI ---- */
-  {
-    group: '云端 AI（可选，但一半功能靠它）',
-    name: '一个 AI 服务商的密钥',
-    serves: '文档摘要、小橘对话、转写后的错别字校对',
-    how: '设置 → AI → LLM 里选服务商填密钥。DeepSeek 有免费额度；不填也能用，只是这些功能关着。',
-    probe: 'ai',
-  },
-
-  /* ---- 本地向量检索 ---- */
-  {
-    group: '本地向量检索（第二大脑 / 小橘记忆）',
-    name: 'Ollama',
-    serves: '第二大脑的语义检索、小橘的记忆库——负责把笔记变成向量',
-    how:
-      '到 ollama.com/download 下安装包，双击装完它自己常驻 11434 端口。装完回「设置 → 关于 → 环境自检」会看到它。\n' +
-      '已经装了但用不了，多半是它没在跑：Windows 从开始菜单打开 Ollama（或在命令行跑 `ollama serve`），' +
-      'macOS 打开 Ollama.app——托盘出现羊驼图标才算起来了。',
-    size: '约 1 GB',
-    probe: 'ollama',
-  },
-  {
-    group: '本地向量检索（第二大脑 / 小橘记忆）',
-    name: '向量模型 bge-m3',
-    serves: '同上：真正干「把文字变成一串数字」这活的东西',
-    how: '装完 Ollama 后跑 `ollama pull bge-m3`；或在「设置 → AI → Embedding」点「获取模型」选它。',
-    size: '约 1.2 GB',
-    probe: 'embedding',
-  },
-  {
-    group: '本地向量检索（第二大脑 / 小橘记忆）',
-    name: '（可选）换成 qwen3-embedding:8b',
-    serves: '检索更准，代价是体积和显存',
-    how: '`ollama pull qwen3-embedding:8b`，再在「设置 → AI → Embedding」里选它。本地重排也认这个模型，换过去才会启用。',
-    size: '约 4.7 GB',
-  },
-
-  /* ---- 语音转写 ---- */
-  {
-    group: '语音转写（知识盒视频转文字 / 脸谱语音条）',
-    name: 'funasr + torch',
-    serves: '缺省引擎 SenseVoice-Small 的 Python 依赖',
-    how:
-      '这两句要分开跑（torch 的 CPU 轮子在自己的源上，funasr 在 PyPI）：\n' +
-      '`{python} -m pip install torch --index-url https://download.pytorch.org/whl/cpu`\n' +
-      '`{python} -m pip install funasr`',
-    size: '约 2 GB',
-  },
-  {
-    group: '语音转写（知识盒视频转文字 / 脸谱语音条）',
-    name: '（备选引擎）faster-whisper',
-    serves: '「设置 → AI → 语音转写」里换引擎时才需要',
-    how: '`{python} -m pip install faster-whisper`',
-    size: '约 300 MB + 模型',
-  },
-  {
-    group: '语音转写（知识盒视频转文字 / 脸谱语音条）',
-    name: '（脸谱）pycryptodome',
-    serves: '脸谱导入微信聊天记录时需要',
-    how: '`{python} -m pip install pycryptodome`',
-    size: '约 3 MB',
-  },
-  {
-    group: '语音转写（知识盒视频转文字 / 脸谱语音条）',
-    name: '转写模型 SenseVoice-Small',
-    serves: '识别中文语音的模型本体',
-    how: '不用管：第一次转写时自动从 modelscope 下到 Python 的缓存目录。想换位置就在「设置 → AI → 语音转写 → 模型目录」里指定。',
-    size: '约 1 GB',
-    probe: 'asr-model',
-  },
-
-  /* ---- 可选凭据 ---- */
-  {
-    group: '可选凭据（不填也能跑，只是成功率低一些）',
-    name: '豆瓣 Cookie',
-    serves: '影院的条目抓取与片单导入',
-    how: '浏览器登录豆瓣后复制请求头里的 Cookie，粘进「设置 → AI → 数据源凭据」。',
-  },
-  {
-    group: '可选凭据（不填也能跑，只是成功率低一些）',
-    name: 'B 站 Cookie',
-    serves: '知识盒下载视频时能选到更高清晰度',
-    how: '同上，在「设置 → AI → 数据源凭据 → B 站 Cookie」。桌面端还有「从 CLI 导入」读本机 ~/.bilibili-cookies.json。',
-  },
-];
-
 /** 依赖未就绪时指向的设置位置（唯一出处；别在别处再拼一遍这句话） */
 export const DEP_SETTINGS_HINT = '「设置 → AI → 外部工具」';
 
-/** 「未找到 X：到 … 里填路径，或让引导页帮你装一份」 */
+/** 「未找到 X：到 … 里填路径，或照「安装外部工具」里的提示词装一份」
+ *  bz 自己不装这些了（见 core/deps-plan.ts 的立场），所以这句不能再说「让 bz 装」。 */
 export function depMissingHint(label = '本地运行时'): string {
-  return `未找到${label}：到${DEP_SETTINGS_HINT}里填路径，或在首次引导 / 环境自检里让 bz 装一份`;
+  return `未找到${label}：到${DEP_SETTINGS_HINT}里填路径；还没装的话，在「安装外部工具」里复制提示词装一份`;
 }
 
 /** 依赖装完后的占用概览（设置面板与清理入口用） */

@@ -19,7 +19,7 @@ function appOf(vault: MockVault): unknown {
 }
 
 describe('environmentCheck', () => {
-  it('一次给出运行环境 / vault / 插件目录 / 数据目录 / Node / 三个工具', async () => {
+  it('一次给出运行环境 / vault / 插件目录 / 数据目录 / 三个工具', async () => {
     resetNodeRuntimeCache();
     setFsProbe(() => false);
     const vault = new MockVault();
@@ -31,7 +31,6 @@ describe('environmentCheck', () => {
     expect(keys).toContain('运行环境');
     expect(keys).toContain('vault 路径');
     expect(keys).toContain('数据目录可写');
-    expect(keys).toContain('Node 运行时');
     expect(keys).toContain('知识盒工具包');
     setFsProbe(null);
   });
@@ -61,15 +60,17 @@ describe('environmentCheck', () => {
     setFsProbe(null);
   });
 
-  it('Node 缺失 → 那一行判红（这是「工具下好了也跑不起来」的根因）', async () => {
+  it('系统级运行时不再占这一屏的三行（它们归「安装外部工具」那张清单）', async () => {
     resetNodeRuntimeCache();
     setFsProbe(() => false);
-    // jsdom 没有 window.require → 探测不到 node
     delete (window as unknown as { require?: unknown }).require;
     const rows = await environmentCheck(appOf(new MockVault()));
-    const row = rows.find((r) => r.key === 'Node 运行时')!;
-    expect(row.ok).toBe(false);
-    expect(row.value).toContain('未找到');
+    const keys = rows.map((r) => r.key);
+    // 2026-11-01 用户拍板：Node / Python / ffmpeg 的装法在依赖清单弹窗里，
+    // 检查页留着一个「未找到」的红点却点不动任何东西，只会让人去翻设置。
+    expect(keys).not.toContain('Node 运行时');
+    expect(keys).not.toContain('Python 环境');
+    expect(keys).not.toContain('音视频工具');
     setFsProbe(null);
   });
 });

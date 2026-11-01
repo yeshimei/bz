@@ -5,11 +5,14 @@
  * 视图在 core/setup-wizard.ts（首次引导与「环境自检」共用同一套行渲染）。
  *
  * 每条结果带一个 `fix`：告诉界面「这一项缺了该拿什么补」——
- *   node   → 下便携 Node 运行时
  *   tools  → 下外部工具目录包（知识盒工具包 / 工具坞工具包 / 脸谱工具包）
  *   docs   → 下文档与大索引（手册/更新日志/分类表/RSS/豆瓣索引）
  *   ai     → 去设置里填密钥（不是下载）
  * 界面按 fix 决定按钮，不靠关键词猜。
+ *
+ * 不在这张表里的：Node / Python / ffmpeg（2026-11-01 用户拍板）。它们是**系统级运行时**，
+ * 装法统一在「安装外部工具」那张依赖清单（core/deps-guide）里，检查页不再重复报一遍——
+ * 那一屏要说的是「装完才发现没用」的东西，不是「还得去装一遍」的东西。
  *
  * 三条口径（沿用前版）：
  *  - **可写**要真写一次再删掉：`exists()` 通过不代表能写（只读盘、iCloud 占位、权限位）。
@@ -21,13 +24,13 @@ import { REPO_BASES, REPO_SLUG } from './remote-base';
 import { tryGetSettings } from './settings-provider';
 import { pluginRelDirOf } from './plugin-path';
 import { isMobileEnv } from './mobile';
-import { probeNodeRuntime, runtimeDiagnostics, vaultBasePathOf } from './tool-runtime';
-import { probeDep, PYTHON_VERSION_RE, type DepId } from './dep-runtime';
+import { runtimeDiagnostics, vaultBasePathOf } from './tool-runtime';
+import { PYTHON_VERSION_RE } from './dep-runtime';
 import { getApp } from './app';
 import { DEFAULT_STORAGE_DIR, normalizeStorageDir } from './storage-path';
 
 /** 缺项的可补方式（见文件头） */
-export type EnvFix = 'node' | 'tools' | 'docs' | 'ai';
+export type EnvFix = 'tools' | 'docs' | 'ai';
 
 /** 一行检查结果 */
 export interface EnvCheckRow {
@@ -228,25 +231,6 @@ export function isRealPythonOutput(out: string): boolean {
   return PYTHON_VERSION_RE.test(String(out || ''));
 }
 
-/** 一行探测结果的文案（包含来源——「插件内便携」和「系统里那份」对排查是两件事） */
-function depRow(app: unknown, id: DepId): { value: string; ok: boolean | null } {
-  const st = probeDep(app, id);
-  if (st.ok) {
-    const v = st.version ? ` ${st.version}` : '';
-    const where = st.via === 'bundled' ? '插件内便携' : st.via === 'settings' ? '设置里填的' : '系统 PATH';
-    // ffmpeg 这一项是两个入口（ffmpeg + ffprobe），第一入口的路径足够定位
-    const path = st.entries[0]?.path || '';
-    return { value: `${where}${v}${path ? `（${path}）` : ''}`, ok: true };
-  }
-  const why = st.stale
-    ? `${st.stale}，需要重新指定或让 bz 装一份`
-    : id === 'python'
-      ? '未找到（语音转写与脸谱导入需要，引导页可一键装）'
-      : '未找到（视频压缩与录音转 wav 需要，引导页可一键装）';
-  // 不判红：缺了是「某些功能用不了」，不是「插件坏了」——但必须让人看见
-  return { value: why, ok: null };
-}
-
 /** 读 AI 是否已配（按当前服务商判；ollama 本地无鉴权视为已配） */
 async function aiConfigured(): Promise<{ ok: boolean; value: string }> {
   try {
@@ -304,18 +288,9 @@ export async function environmentCheck(app: unknown): Promise<EnvCheckRow[]> {
   });
 
   if (!mobile) {
-    const node = probeNodeRuntime(app, { fresh: true });
-    rows.push({
-      id: 'node',
-      key: 'Node 运行时',
-      value:
-        node.kind === 'none'
-          ? '未找到（知识盒工具包、工具坞工具包、脸谱工具包都靠它跑）'
-          : `${node.kind === 'bundled' ? '插件内' : '系统'}${node.version ? ` ${node.version}` : ''}`,
-      ok: node.kind === 'none' ? false : true,
-      fix: node.kind === 'none' ? 'node' : null,
-    });
-    // 三个工具的状态由 runtimeDiagnostics 统一给（与面板同一口径）；前两行不是工具，跳过
+    // 三个工具的状态由 runtimeDiagnostics 统一给（与面板同一口径）；前两行不是工具，跳过。
+    // Node / Python / ffmpeg 不在这张表里了（2026-11-01 用户拍板）：它们是**系统级运行时**，
+    // 装法在「安装外部工具」那张依赖清单里，检查页只保留「装完才发现没用」的那些项。
     for (const r of runtimeDiagnostics(app).slice(2)) {
       const notInstalled = r.value === '未安装';
       rows.push({
@@ -341,18 +316,6 @@ export async function environmentCheck(app: unknown): Promise<EnvCheckRow[]> {
         ok: deep < 240 ? null : false,
       });
     }
-  }
-
-  // 两个本地运行时（Python / ffmpeg+ffprobe）：装法在 core/dep-runtime，这里只报状态。
-  // 2026-11-01 起它们能自动装了，所以文案里给出路（引导页 / 环境自检的补齐队列）。
-  for (const id of ['python', 'ffmpeg'] as DepId[]) {
-    const r = depRow(app, id);
-    rows.push({
-      id,
-      key: id === 'python' ? 'Python 环境' : '音视频工具',
-      value: r.value,
-      ok: r.ok,
-    });
   }
 
   const ai = await aiConfigured();
