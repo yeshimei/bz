@@ -100,7 +100,7 @@ describe(`端到端：本地 ${LOCAL} → 期望 ${EXPECT}`, () => {
     vault.files.set('.obsidian/plugins/bz/manifest.json', JSON.stringify({ id: 'bz', version: LOCAL }));
     const app = { vault, plugins: { manifests: { bz: { version: LOCAL } } } };
 
-    const result = await checkSelfUpdate(app, { apply: true, throttle: false });
+    const result = await checkSelfUpdate(app, { apply: true });
 
     expect(result).toBe(EXPECT as 'installed' | 'current' | 'available');
     const st = await selfUpdateState(app);

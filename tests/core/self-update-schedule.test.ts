@@ -28,7 +28,7 @@ beforeEach(() => {
   vi.mocked(requestUrl).mockReset();
   vi.useFakeTimers();
   try {
-    localStorage.clear(); // 24h 节流时间戳别跨用例残留
+    localStorage.clear(); // available/pending 别跨用例残留
   } catch {
     /* 无 localStorage 也不太可能——jsdom 里有 */
   }

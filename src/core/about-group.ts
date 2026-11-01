@@ -85,7 +85,7 @@ export async function aboutGroup(): Promise<GroupDecl> {
     desc: '启动时自动更新插件、外部工具与在线资源',
     help:
       '关闭时只在打开这个面板时提示有没有新版本，不会动插件文件。' +
-      '开启后每次启动会在后台静默检查一次（24 小时内不重复）：插件本体有新版本直接安装；' +
+      '开启后每次启动都会在后台静默检查一次：插件本体有新版本直接安装；' +
       '皮肤、索引数据表与三个外部工具包（知识盒 / 工具坞 / 脸谱）缺的或过期的也会一并下好。',
     binding: { key: 'autoUpdate' },
   };
@@ -160,7 +160,7 @@ export async function runCheckAndUpdate(ctx?: SettingsRowContext): Promise<void>
   // 常驻 + 不确定态进度：至少让人看见「在跑」，而不是一个不动的按钮
   const h = notify('正在检查更新…', { type: 'progress', duration: 0, dedupeKey: 'bz-selfupdate-check' });
   try {
-    const result = await checkSelfUpdate(app, { throttle: false, apply: true, silent: true });
+    const result = await checkSelfUpdate(app, { apply: true, silent: true });
     const st = await selfUpdateState(app);
     paintVersionDesc(ctx, st);
     if (result === 'installed') {

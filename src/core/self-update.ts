@@ -13,6 +13,10 @@
  *        「有新版 vX」；**不下载、不覆盖**。要不要装由人点「更新」。
  *  - 开：检查到新版直接装（备份旧版 → 覆盖三件套 → 通知重载）。
  *
+ * **巡检不节流**（2026-11-01 用户拍板）：每次启动都去查一次。此前是 24 小时内只查一次，
+ * 代价是「发了新版，当天重启几次的用户还是看不见」。指针只有几百字节，多查这点流量
+ * 远比信息滞后划算。
+ *
  * 三条安全线：
  *  - **覆盖前备份**：旧三件套存 `<插件目录>/downloads/.backup/<旧版本>/`。此前没有回滚，
  *    推一次坏包等于把所有用户焊死在坏包上（自更新代码本身就在坏包里，没人能自救）。
@@ -29,9 +33,10 @@ import { downloadRemotesFor, isValidTag, releaseDownloadUrl, RELEASE_POINTER, RE
 import { MANIFEST_FILE as DOWNLOAD_MANIFEST_FILE } from './download-manifest';
 import { noteReleaseTag } from './remote-asset';
 
-/** 巡检节流：24 小时 */
-const CHECK_INTERVAL_MS = 24 * 3600 * 1000;
-/** 启动后延迟巡检（躲开 Obsidian 启动高峰） */
+/**
+ * 启动后延迟巡检（躲开 Obsidian 启动高峰）。
+ * 不节流（2026-11-01 用户拍板）：每次启动都查，理由见文件头。
+ */
 const CHECK_DELAY_MS = 15 * 1000;
 /**
  * 单通道超时（毫秒）。
@@ -50,7 +55,6 @@ const FETCH_TIMEOUT_MS = 6000;
  * 用户看到的是「自动更新开着，但从来没更新过」。慢就慢，让它下完。
  */
 export const FETCH_ASSET_TIMEOUT_MS = 90 * 1000;
-const LAST_CHECK_KEY = 'bz-selfupdate:last-check';
 /** 已下载待重载的版本（`{"version":"1.34.0"}`）：磁盘已是新版、运行中还是旧的 */
 const PENDING_KEY = 'bz-selfupdate:pending';
 /** 发现但未安装的新版（`{"version":"1.34.0","tag":"v1.34.0","at":123}`） */
@@ -366,8 +370,6 @@ export interface SelfUpdateOptions {
    * 面板「更新」按钮显式传 true：人点了才装，与开关无关。
    */
   apply?: boolean;
-  /** 跳过 24h 节流（面板手动「检查更新」/ 显式动作）。缺省 true 之外的调用方须显式传 */
-  throttle?: boolean;
   /** 装完后不自己弹通知（面板已用一条常驻 toast 全程接管：正在检查 → 结果） */
   silent?: boolean;
 }
@@ -378,15 +380,6 @@ export interface SelfUpdateOptions {
  */
 export async function checkSelfUpdate(app: unknown, opts: SelfUpdateOptions = {}): Promise<SelfUpdateResult> {
   const now = Date.now();
-  const throttle = opts.throttle !== false;
-  if (throttle) {
-    const last = Number(readStore<number>(LAST_CHECK_KEY) || 0);
-    if (last && now - last < CHECK_INTERVAL_MS) {
-      // 节流窗内不复检，但把上次的结论原样交回去（面板靠它决定按钮文案）
-      return lastAvailable ? 'available' : 'current';
-    }
-  }
-  writeStore(LAST_CHECK_KEY, now);
   lastCheckedAt = now;
   lastError = null;
 
@@ -483,6 +476,9 @@ export async function checkSelfUpdate(app: unknown, opts: SelfUpdateOptions = {}
  *
  * 注意：**开关关着也照跑巡检**（那是「查」，不是「装」）。区别只在 apply——关着时
  * 巡检只把「有新版」记进面板，不动磁盘任何文件。
+ *
+ * **每次启动都查**（2026-11-01 起不节流）：没有跨会话时间戳，重启一次就是一次真实请求。
+ * 同一次会话内重复调用（面板手动「检查并更新」）本来也不该被挡。
  */
 export function scheduleSelfUpdateCheck(
   getAppFn: () => unknown,

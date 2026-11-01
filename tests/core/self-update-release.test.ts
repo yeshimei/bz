@@ -73,7 +73,7 @@ describe('checkSelfUpdate：只查不装', () => {
     stubRemote();
     const before = vault.files.get('.obsidian/plugins/bz/manifest.json');
 
-    const r = await checkSelfUpdate(app, { apply: false, throttle: false });
+    const r = await checkSelfUpdate(app, { apply: false });
 
     expect(r).toBe('available');
     expect(vault.files.get('.obsidian/plugins/bz/manifest.json')).toBe(before);
@@ -94,9 +94,24 @@ describe('checkSelfUpdate：只查不装', () => {
       throw new Error('不该再请求：' + url);
     }) as never);
 
-    const r = await checkSelfUpdate(app, { apply: true, throttle: false });
+    const r = await checkSelfUpdate(app, { apply: true });
     expect(r).toBe('current');
     expect(vault.files.has('.obsidian/plugins/bz/main.js')).toBe(false);
+  });
+});
+
+describe('巡检不节流：每次启动都查（2026-11-01 用户拍板）', () => {
+  it('同一会话连续两次检查都真的打网络，不走 24h 窗口', async () => {
+    const app = appWithPlugin();
+    const seen = stubRemote();
+
+    expect(await checkSelfUpdate(app, { apply: false })).toBe('available');
+    const first = seen.length;
+    expect(first).toBeGreaterThan(0);
+
+    // 没有节流：第二次照样去拉指针（此前窗口内会直接交回上次结论，一个字节都不发）
+    expect(await checkSelfUpdate(app, { apply: false })).toBe('available');
+    expect(seen.length).toBeGreaterThan(first);
   });
 });
 
@@ -106,7 +121,7 @@ describe('checkSelfUpdate：安装', () => {
     const { vault } = app;
     const seen = stubRemote();
 
-    const r = await checkSelfUpdate(app, { apply: true, throttle: false });
+    const r = await checkSelfUpdate(app, { apply: true });
 
     expect(r).toBe('installed');
     // 三件套都覆盖了
@@ -130,7 +145,7 @@ describe('checkSelfUpdate：安装', () => {
     setSettingsProvider(() => ({ autoUpdate: true }) as never);
     stubRemote();
 
-    const r = await checkSelfUpdate(app, { throttle: false });
+    const r = await checkSelfUpdate(app, {});
 
     expect(r).toBe('installed');
     expect(vault.files.get('.obsidian/plugins/bz/manifest.json')).toContain(NEW);
@@ -143,7 +158,7 @@ describe('checkSelfUpdate：安装', () => {
     stubRemote();
     const before = vault.files.get('.obsidian/plugins/bz/manifest.json');
 
-    const r = await checkSelfUpdate(app, { throttle: false });
+    const r = await checkSelfUpdate(app, {});
 
     expect(r).toBe('available');
     expect(vault.files.get('.obsidian/plugins/bz/manifest.json')).toBe(before);
@@ -154,7 +169,7 @@ describe('checkSelfUpdate：安装', () => {
     const { vault } = app;
     stubRemote({ badBundle: true });
 
-    await expect(checkSelfUpdate(app, { apply: true, throttle: false })).rejects.toThrow(/内容异常/);
+    await expect(checkSelfUpdate(app, { apply: true })).rejects.toThrow(/内容异常/);
     expect(vault.files.get('.obsidian/plugins/bz/manifest.json')).toContain(LOCAL);
   });
 });
@@ -166,7 +181,7 @@ describe('checkSelfUpdate：失败面', () => {
     vi.mocked(requestUrl).mockImplementation((async () => ({ status: 200, text: 'not json' })) as never);
 
     // 全是非指针内容 → 逐条通道校验后仍拿不到指针，才算失败（且失败信息里带上「内容不是发布指针」）
-    await expect(checkSelfUpdate(app, { apply: false, throttle: false })).rejects.toThrow(/拿不到发布指针/);
+    await expect(checkSelfUpdate(app, { apply: false })).rejects.toThrow(/拿不到发布指针/);
     const st = await selfUpdateState(app);
     expect(st.error).toContain('发布指针');
   });
@@ -180,7 +195,7 @@ describe('checkSelfUpdate：失败面', () => {
     })) as never);
 
     // 非法 tag 视作「这条通道不是有效指针」，全部通道都无效才失败——绝不把坏 tag 拼进 URL
-    await expect(checkSelfUpdate(app, { apply: true, throttle: false })).rejects.toThrow(/拿不到发布指针/);
+    await expect(checkSelfUpdate(app, { apply: true })).rejects.toThrow(/拿不到发布指针/);
     expect(vault.files.get('.obsidian/plugins/bz/manifest.json')).toContain(LOCAL);
   });
 });
@@ -207,7 +222,7 @@ describe('回归：通道内容不是指针 → 换通道，而不是报错', ()
       throw new Error('unexpected ' + url);
     }) as never);
 
-    const r = await checkSelfUpdate(app, { apply: true, throttle: false });
+    const r = await checkSelfUpdate(app, { apply: true });
 
     expect(r).toBe('current');
     const st = await selfUpdateState(app);
@@ -227,7 +242,7 @@ describe('回归：通道内容不是指针 → 换通道，而不是报错', ()
       throw new Error('unexpected ' + url);
     }) as never);
 
-    expect(await checkSelfUpdate(app, { apply: true, throttle: false })).toBe('current');
+    expect(await checkSelfUpdate(app, { apply: true })).toBe('current');
     expect((await selfUpdateState(app)).error).toBeNull();
   });
 
@@ -247,7 +262,7 @@ describe('回归：通道内容不是指针 → 换通道，而不是报错', ()
       throw new Error('unexpected ' + url);
     }) as never);
 
-    expect(await checkSelfUpdate(app, { apply: true, throttle: false })).toBe('installed');
+    expect(await checkSelfUpdate(app, { apply: true })).toBe('installed');
     expect(vault.files.get('.obsidian/plugins/bz/manifest.json')).toContain('1.38.0');
   });
 });
