@@ -8,10 +8,10 @@
  * ADR-0205：整组为**通用声明行**（button 行 + visibleWhen 门控 + 行按钮三态助手）。
  *
  * 状态永远从**磁盘单源**现算（缓存清单 + 本地文件 sha256），组内不持久状态；
- * 构建期本地现算一次，打开面板顺手后台核对一次清单（60s 节流）；
+ * 构建期本地现算一次，打开面板顺手后台核对一次清单（不节流，ADR-0281）；
  * 核对失败有缓存沿用缓存渲染 + 检查更新行留档；无缓存则只留操作行并禁用。
  * **跨入口同步**：导航入口更新文档 / 分类表拉取落盘后，本组订阅下载事件把行态同步成磁盘事实。
- * **半自动铁则的 UI 面**：本组按钮与手册/日志导航入口是仅有的两个下载触发点。
+ * **下载触发点有三个**：本组按钮、手册/日志导航入口、启动链的自动更新（core/auto-assets）。
  *
  * 新增一条在线资源 = 出版产物 + `pnpm manifest` 登记 docs 条目与 rowOrder，本文件零改动
  * （只用通用状态机的资源不必碰代码；要专属描述补规模才加一条 DESC_EXTRAS）。
@@ -111,9 +111,6 @@ async function readyExtra(app: unknown, id: string, entry: ManifestDocEntry): Pr
   return DESC_EXTRAS[id] ? DESC_EXTRAS[id](app, entry) : null;
 }
 
-/** 打开面板时后台核对的节流窗（快速开关面板不狂拉；启动链每次启动独立跑不受此限） */
-const CHECK_THROTTLE_MS = 60_000;
-let lastCheckAt = 0;
 /** 本次会话最近一次核对是否失败（检查更新行据此呈失败文案与「重试」） */
 let checkFailed = false;
 /** 组内行按钮（button 行窄档；行对象可变——syncGroupRows 就地改写，下次重渲即新值） */
@@ -158,7 +155,6 @@ const busyIds = new Set<string>();
 
 /** 重置会话状态（测试用；生产进程内随会话存续无需重置） */
 export function resetOnlineResourcesState(): void {
-  lastCheckAt = 0;
   checkFailed = false;
   currentGroups = [];
   currentEntries = [];
@@ -442,8 +438,9 @@ export async function onlineResourcesGroups(): Promise<[GroupDecl, GroupDecl]> {
   ];
   subscribeOnce();
 
-  // 打开面板顺手核对一次（60s 节流；无论成败都记窗——失败也补丁呈现，不记窗补丁链会雪球式重核）
-  if (Date.now() - lastCheckAt > CHECK_THROTTLE_MS) void checkInBackground();
+  // 打开面板顺手核对一次（不节流：2026-11-01 用户拍板，清单只有几 KB，
+  // 快速开关面板多拉几次的代价远小于「面板上的状态是旧的」）
+  void checkInBackground();
 
   return [tools, resources];
 }
@@ -471,9 +468,8 @@ function syncLogged(): Promise<void> {
 }
 
 /** 后台核对清单；成败都 syncGroupRows——失败态就在补丁里呈现。
- *  「重试」按钮直调本函数（不经尾部节流判断），失败后立即可重试。 */
+ *  「重试」按钮直调本函数。 */
 async function checkInBackground(): Promise<void> {
-  lastCheckAt = Date.now();
   try {
     await refreshManifest(getApp());
     checkFailed = false;

@@ -91,11 +91,11 @@ describe('体积文案', () => {
   });
 });
 
-describe('按需下载：大索引不占首装', () => {
-  it('豆瓣索引标成按需项（照样列出来、照样默认勾，只是文案说明「用到时会自己拉」）', () => {
+describe('首装大件：豆瓣索引不在这一屏下（交给启动链的自动更新后台补）', () => {
+  it('豆瓣索引标成可选（照样列出来、照样默认勾），文案说明体积大', () => {
     const item = buildSetupTasks({}, manifest, { nodeMissing: false }).find((t) => t.id === 'cinema-douban-index')!;
     expect(item.optional).toBe(true);
-    expect(item.desc).toContain('按需');
+    expect(item.desc).toContain('体积较大');
     // 其它文档不是按需项：该下的还是要下
     expect(buildSetupTasks({}, manifest, { nodeMissing: false }).find((t) => t.id === 'changelog')!.optional).toBeUndefined();
   });

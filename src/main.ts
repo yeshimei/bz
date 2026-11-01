@@ -495,10 +495,9 @@ export default class BzPlugin extends Plugin {
       // 否则用户上次选的远端皮肤会在每次重启的头十几秒里回落首套（像「皮肤被重置」）
       void loadLocalSkinPack(getApp());
       // 新版本自更新巡检（每次启动都查、启动 15s 后静默跑；有新版才弹通知，失败不吵）。
-      // after = 在线资源清单对比（ADR-0203）：必须**串在自更新之后**——皮肤版本区间校验
-      // 吃 manifest 版本号。只对比 + 下架清理 + 就绪注入，**绝不下载**（半自动铁则：
-      // 下载只听用户的，在设置面板「在线资源」组或手册/日志入口触发）；失败静默等下次启动，
-      // 组内失败态由 UI 自行呈现。
+      // after = 插件本体之后的在线资源链（ADR-0203）：必须**串在自更新之后**——皮肤版本区间
+      // 校验吃 manifest 版本号。顺序：拉清单 → 皮肤下架清理与就绪注入 → 自动更新
+      //（日志 → 工具包 → 手册与索引 → 皮肤，见 core/auto-assets）；失败静默等下次启动。
       scheduleSelfUpdateCheck(getApp, () => this.unloaded, async () => {
         let manifest: Parameters<typeof applySkinManifest>[1] | null = null;
         try {
@@ -508,8 +507,8 @@ export default class BzPlugin extends Plugin {
         } catch (e) {
           console.warn('[bz] 下载清单拉取失败（已静默，等下次启动/手动重试）:', (e as Error)?.message || e);
         }
-        // 自动更新开着时，插件本体之外的东西也一起跟上：皮肤、索引、数据表、三个外部工具包
-        //（2026-10-30 用户拍板：开了自动更新就不该只换插件本体）。清单复用上一段已拉的那份——
+        // 自动更新开着时，插件本体之外的东西也一起跟上（2026-11-01 用户拍板：全部在线资源都要，
+        // 顺序为 更新日志 → 工具包 → 手册与索引 → 皮肤）。清单复用上一段已拉的那份——
         // 上一段没拉到时（离线）本轮就不做：同一趟启动再撞一次同样的墙只是白等。
         if (manifest) {
           try {

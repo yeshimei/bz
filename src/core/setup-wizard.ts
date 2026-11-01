@@ -166,7 +166,7 @@ function docItem(app: unknown, e: ManifestDocEntry): Omit<SetupItem, 'ready'> {
     id: e.id,
     kind: 'doc',
     label: e.name,
-    desc: lazy ? '按需下载' : '',
+    desc: lazy ? '体积较大，可先跳过' : '',
     size: e.size ?? null,
     ...(lazy ? { optional: true } : {}),
     run: async () => {
@@ -175,7 +175,7 @@ function docItem(app: unknown, e: ManifestDocEntry): Omit<SetupItem, 'ready'> {
   };
 }
 
-/** 按需下载的资源 id（首装默认不勾；对应功能首次用到时自己拉） */
+/** 首装不勾的大件资源 id：这一屏不下，交给启动链的自动更新后台补（ADR-0281） */
 export const LAZY_DOC_IDS = new Set(['cinema-douban-index']);
 
 /** 磁盘上这一项是不是已经就绪（重跑引导时用来跳过，避免白拉几十 MB） */
