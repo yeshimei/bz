@@ -39,6 +39,9 @@ describe('海报墙 markup', () => {
   it('门面：排口标签 + 名字 + 时长副行 + 三个总览数字', () => {
     const list = [item(548430, 'Deep Rock Galactic', 65214, '2026-07-20'), item(1, 'B', 60)];
     const rp = buildReport(list);
+    // 缺省档 = 最近玩（2026-11-01 用户点版）；排序标签跟着当前档位走
+    expect(heroHtml(list[0], 'https://cdn/548430.jpg', rp)).toContain('最近在玩');
+    M.sort = 'hours';
     const html = heroHtml(list[0], 'https://cdn/548430.jpg', rp);
     expect(html).toContain('时长第一');
     expect(html).toContain('Deep Rock Galactic');
@@ -454,7 +457,7 @@ describe('海报头与悬浮预览（issue 378：头行退役 / 截图快轮播 
       bindShotReel(app, body, true); // jsdom 无真 hover 能力，显式开
 
       const hero = () => document.querySelector('#bz-gs-hero')!.innerHTML;
-      expect(hero()).toContain('AAA'); // 静息态门面 = 列表首位（按时长）
+      expect(hero()).toContain('AAA'); // 静息态门面 = 列表首位（缺省按最近玩，两款都没日期 → 时长决胜）
 
       const cardB = document.querySelector('.bz-gs-card[data-appid="2"]') as HTMLElement;
       cardB.dispatchEvent(new MouseEvent('mouseover', { bubbles: true }));
@@ -495,7 +498,7 @@ describe('海报头与悬浮预览（issue 378：头行退役 / 截图快轮播 
       cardA.dispatchEvent(new MouseEvent('mouseout', { bubbles: true, relatedTarget: document.body }));
       expect(cardA.querySelector('.bz-gs-reel')).toBeNull();
       expect(hero()).toContain('AAA');
-      expect(hero()).toContain('时长第一');
+      expect(hero()).toContain('最近在玩'); // 缺省档的口径标签
       const after = hero();
       vi.advanceTimersByTime(2100);
       expect(hero()).toBe(after);

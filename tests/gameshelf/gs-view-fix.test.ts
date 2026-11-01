@@ -279,7 +279,7 @@ describe('G6 openDetail 收悬浮预览', () => {
     expect(document.querySelector('#bz-gs-hero')!.innerHTML).toContain('BBB'); // 门面换脸态
     cardB.click(); // 进详情弹窗
     expect(cardB.querySelector('.bz-gs-reel')).toBeNull(); // 定时器不再空转
-    expect(document.querySelector('#bz-gs-hero')!.innerHTML).toContain('时长第一'); // 回静息（非换脸）
+    expect(document.querySelector('#bz-gs-hero')!.innerHTML).toContain('最近在玩'); // 回静息（非换脸，缺省档=最近玩）
   });
 });
 

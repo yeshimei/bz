@@ -95,6 +95,9 @@ export type GameshelfBucket = 'all' | 'b200' | 'b50' | 'b10' | 'b1' | 'idle';
 /** 排序键 */
 export type GameshelfSort = 'hours' | 'last' | 'name';
 
+/** 排序缺省值（2026-11-01 用户点版：默认按「最近玩」——打开库先看最近动了哪几款） */
+export const DEFAULT_SORT: GameshelfSort = 'last';
+
 export interface GameshelfState {
   currentOverlay: HTMLElement | null;
   items: GameItem[];
@@ -127,7 +130,7 @@ export const M: GameshelfState = {
   view: 'shelf',
   query: '',
   bucket: 'all',
-  sort: 'hours',
+  sort: DEFAULT_SORT,
   syncing: false,
   statusMsg: '',
   appRef: null,
@@ -144,7 +147,7 @@ export function resetGameshelfState(): void {
   M.view = 'shelf';
   M.query = '';
   M.bucket = 'all';
-  M.sort = 'hours';
+  M.sort = DEFAULT_SORT;
   M.syncing = false;
   M.statusMsg = '';
   M.appRef = null;

@@ -46,6 +46,17 @@ import { mountFolderGate } from '../core/folder-setup';
 /** ESC 层 id 沿域内约定 'bz-<域>'（cons C4：全仓面板级层 id 唯一不带前缀的破例，对齐） */
 const ESC_ID = 'bz-gameshelf';
 
+/**
+ * 排序三档（桌面分段与移动端下拉共这一份，顺序即展示顺序）。
+ * 2026-11-01 用户点版：最近玩排头、且是缺省档（`DEFAULT_SORT`）——
+ * 打开游戏库先看最近动了哪几款，时长排到第二位。
+ */
+const SORT_OPTIONS: Array<{ value: GameshelfSort; label: string }> = [
+  { value: 'last', label: '最近玩' },
+  { value: 'hours', label: '时长' },
+  { value: 'name', label: '名称' },
+];
+
 /** 主面板拖拽缩放口径（ADR-0084）：下限挡住游戏墙网格塌缩，上限留视口余量；
  *  视口 92% 逐帧钳制在 core uiResizable 内，此处只给硬边界 */
 const PANEL = { MIN_W: 820, MIN_H: 540, MAX_W: 1440, MAX_H: 960 };
@@ -1300,15 +1311,11 @@ function shelfBody(app: App, rp: GameshelfReport): HTMLElement {
     chips.appendChild(chip);
   }
 
-  // 排序（桌面：三档分段；口径标签与 heroTag 一致）
+  // 排序（桌面：三档分段；口径标签与 heroTag 一致；顺序与缺省值同源——最近玩排头且默认选中）
   const sortSeg = uiSegmented<GameshelfSort>({
     value: M.sort,
     label: '排序',
-    options: [
-      { value: 'hours', label: '时长' },
-      { value: 'last', label: '最近玩' },
-      { value: 'name', label: '名称' },
-    ],
+    options: SORT_OPTIONS,
     onChange: (v) => {
       M.sort = v;
       sortSelRef?.setValue(v); // 回写移动端下拉（G5，同上）
@@ -1338,11 +1345,7 @@ function shelfBody(app: App, rp: GameshelfReport): HTMLElement {
   const sortSel = uiSelect<GameshelfSort>({
     value: M.sort,
     className: 'bz-gs-select',
-    options: [
-      { value: 'hours', label: '按时长' },
-      { value: 'last', label: '按最近玩' },
-      { value: 'name', label: '按名称' },
-    ],
+    options: SORT_OPTIONS.map((o) => ({ value: o.value, label: `按${o.label}` })),
     onChange: (v) => {
       M.sort = v;
       sortSegRef?.setValue(v);
