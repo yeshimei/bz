@@ -97,7 +97,7 @@ describe('mainSettingsSchema：主设置页区块（issue 422 起 AI 页按模�
     expect(valuesOf('ollama')).toEqual(['auto', 'off', 'low', 'medium', 'high']); // 走 reasoning_effort
   });
 
-  it('Embedding 组（issue 422/ADR-0182 + 424/ADR-0184 + 427/ADR-0186 + 429 + 431/ADR-0189）：地址 / 模型 / 装 Ollama / 重排总闸 / 重排走 Jev / 重排模型六行', () => {
+  it('Embedding 组（issue 422/ADR-0182 + 424/ADR-0184 + 427/ADR-0186 + 429 + 431/ADR-0189）：地址 / 模型 / 重排总闸 / 重排走 Jev / 重排模型五行', () => {
     const rows = schema.groups[1].rows as Array<{
       name: string;
       type: string;

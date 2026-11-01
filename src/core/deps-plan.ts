@@ -141,7 +141,8 @@ export const PLAN_ITEMS: readonly PlanItem[] = [
   { id: 'pycryptodome', group: '脸谱', name: 'pycryptodome', mb: 3, size: '约 3 MB', required: true },
 ];
 
-/* 教程视频地址不在这里：它是三处共用的一条常量，沉在 core/tutorial-video（纯模块，谁都能引）。 */
+/* 教程视频地址不在这里，也不在共享常量里：三处入口各指同一个视频的不同分P（关于＝第 1P／
+ * 完成屏＝第 4P／依赖清单＝第 3P），各自写在自己的模块里——见 ADR-0268 补记十。 */
 
 /* ---------- 选中态 ---------- */
 
