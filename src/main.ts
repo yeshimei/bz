@@ -55,7 +55,7 @@ import { unloadReadingReport } from './reading-report';
 // 直达影院面板分析页，独立报告窗退役）
 import { openCinema, addCinemaItem, openCinemaAnalysis, pickRandomCinema, unloadCinema } from './cinema';
 // 游戏库（gameshelf 域，issue 368：Steam 直连自动拉库，我的/游戏/*.md 一作一笔记）
-import { openGameshelf, openGameshelfStats, syncGameshelf, unloadGameshelf } from './gameshelf';
+import { openGameshelf, openGameshelfStats, syncGameshelf, startupSyncGameshelf, unloadGameshelf } from './gameshelf';
 // 书架墙（bookshelf 域，新域与书库并存；不修改旧书库代码；读书报告内嵌为面板内视图）
 import { openBookshelf, openBookshelfReport, continueReading, unloadBookshelf } from './bookshelf';
 // 影视分析报告独立域已退役（ADR-0090：报告窗并入影院内嵌分析页，命令直达 bz-cinema-analysis）
@@ -530,6 +530,12 @@ export default class BzPlugin extends Plugin {
       void ensurePomodoro(this.app);
       // 聚合讯自动抓取（issue 302 / ADR-0128）：启动延迟一拍后台抓一轮（间隔判定在 fetcher 内）
       setTimeout(() => { if (!this.unloaded) void maybeFetchNews(); }, 0);
+      // 游戏库启动静默同步（2026-11-02 用户点版）：首页时间线里那条「玩了 X」读的是游戏笔记的
+      // `最后游玩`，不开游戏库就永远是旧的。延迟 5 秒再拉，别跟皮肤包 / 自更新 / 新闻抢启动那口气
+      // （api.steampowered.com 国内要过系统代理，启动瞬间并发越少越稳）。
+      // 全套闸门在 startupSyncGameshelf 内（目录未配 / 自动同步关 / 未填密钥一律不动），
+      // 30 分钟间隔门照旧；卸载旗标照传（C13），启动窗口内被禁用就不再发请求。
+      setTimeout(() => { if (!this.unloaded) startupSyncGameshelf(getApp()); }, 5000);
       // 小橘：启动即挂载（ADR-0254 域总闸；桌面宠物常驻）
       if (this.smartcatDomainOn) void ensureSmartCat(this.app);
       // 日记本后台预热（②）：延迟一拍到空闲只读数据填缓存、不建 DOM（ADR-0003 兼容），

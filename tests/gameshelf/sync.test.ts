@@ -13,7 +13,7 @@ import { parseFm, serializeFm } from '../helpers/frontmatter';
 import { runSync, isSyncDue } from '../../src/gameshelf/sync';
 import { rebuildItems } from '../../src/gameshelf/notes';
 import { M, resetGameshelfState, DEFAULT_FOLDER } from '../../src/gameshelf/state';
-import { openGameshelf, openGameshelfStats, syncGameshelf, unloadGameshelf } from '../../src/gameshelf';
+import { openGameshelf, openGameshelfStats, syncGameshelf, startupSyncGameshelf, unloadGameshelf } from '../../src/gameshelf';
 import { closePanel, renderAll } from '../../src/gameshelf/ui';
 
 /* ---------- 测试专用 mock 组装 ---------- */
@@ -168,6 +168,45 @@ describe('runSync 同步链路（issue 368）', () => {
     const again = await runSync(app, { force: true }); // 数值一致 → 无变化
     expect(again.ok).toBe(true);
     expect(M.statusMsg).toBe('');
+  });
+
+  it('silent：只落数据——不弹通知、不动状态行（状态行留给面板自己说）', async () => {
+    setup(CONFIG);
+    M.statusMsg = '面板上原来的状态';
+    mockSteam([{ appid: 1, name: 'A', playtime_forever: 60 }]);
+    const r = await runSync(makeApp(), { silent: true });
+    expect(r.ok).toBe(true);
+    expect(r.added).toBe(1);
+    expect(vault.files.has(`${DEFAULT_FOLDER}/《A》.md`)).toBe(true);
+    expect(M.statusMsg).toBe('面板上原来的状态');
+    expect(document.querySelectorAll('.bz-notice').length).toBe(0);
+  });
+
+  it('silent 失败也不弹（除控制台外零痕迹）', async () => {
+    setup(CONFIG);
+    (requestUrl as any).mockImplementation(async () => {
+      throw new Error('socket hang up');
+    });
+    const r = await runSync(makeApp(), { silent: true });
+    expect(r.reason).toBe('network');
+    expect(document.querySelectorAll('.bz-notice').length).toBe(0);
+  });
+
+  it('启动静默同步：没填密钥 → 零请求零落盘（启动期不该有任何动静）', async () => {
+    setup({ gameshelfFolderPath: DEFAULT_FOLDER });
+    mockSteam([{ appid: 1, name: 'A', playtime_forever: 60 }]);
+    startupSyncGameshelf(makeApp());
+    await new Promise((r) => setTimeout(r, 30));
+    expect((requestUrl as any).mock.calls.length).toBe(0);
+    expect(vault.files.size).toBe(0);
+  });
+
+  it('启动静默同步：配好就拉（不等开面板），笔记落盘且不弹通知', async () => {
+    setup(CONFIG);
+    mockSteam([{ appid: 1, name: 'A', playtime_forever: 60 }]);
+    startupSyncGameshelf(makeApp());
+    await vi.waitFor(() => expect(vault.files.has(`${DEFAULT_FOLDER}/《A》.md`)).toBe(true));
+    expect(document.querySelectorAll('.bz-notice').length).toBe(0);
   });
 });
 

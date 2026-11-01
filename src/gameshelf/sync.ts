@@ -41,16 +41,20 @@ export function isSyncDue(syncedAts: string[], now = Date.now()): boolean {
 
 /**
  * 同步主入口。force=true 忽略间隔（手动「立即同步」）。
+ * silent=true 只落数据、不出声（启动静默同步走这条，见 index.ts::startupSyncGameshelf）：
+ * 不弹通知、不写状态行——失败也只进 console，用户没主动点任何东西，不该被弹窗打扰。
+ * 重绘不在此列：钩子只在面板开着时非空，落库后补一下能让误开的面板跟上数据。
  * 进行中重入返回 busy（面板按钮态在 ui 层已防，命令/自动路径兜底）。
  */
-export async function runSync(app: App, opts?: { force?: boolean }): Promise<SyncSummary> {
+export async function runSync(app: App, opts?: { force?: boolean; silent?: boolean }): Promise<SyncSummary> {
+  const quiet = opts?.silent === true;
   if (M.syncing) return { ok: false, added: 0, updated: 0, offShelf: 0, reason: 'busy' };
   const folder = resolveGameshelfFolderPath();
   const syncedAts = rebuildItems(app)
     .map((it) => it.syncedAt || '')
     .filter(Boolean);
   if (!opts?.force && !isSyncDue(syncedAts)) {
-    M.statusMsg = `游戏库已是最新（${fmtTime(new Date(lastSyncedAt(syncedAts)))}同步）`;
+    if (!quiet) M.statusMsg = `游戏库已是最新（${fmtTime(new Date(lastSyncedAt(syncedAts)))}同步）`;
     return { ok: true, added: 0, updated: 0, offShelf: 0 };
   }
   const { steamId, apiKey } = readSteamConfig();
@@ -58,13 +62,19 @@ export async function runSync(app: App, opts?: { force?: boolean }): Promise<Syn
     return { ok: false, added: 0, updated: 0, offShelf: 0, reason: 'config', message: '尚未配置 SteamID64 与 Web API 密钥' };
   }
   M.syncing = true;
-  M.statusMsg = '正在从 Steam 拉取游戏库…';
-  M.renderFn?.();
+  if (!quiet) {
+    M.statusMsg = '正在从 Steam 拉取游戏库…';
+    M.renderFn?.();
+  }
   try {
     const result = await fetchSteamLibrary(steamId, apiKey);
     if (!result.ok) {
-      M.statusMsg = result.message;
-      notice(`游戏库同步失败：${result.message}`, 'error');
+      if (!quiet) {
+        M.statusMsg = result.message;
+        notice(`游戏库同步失败：${result.message}`, 'error');
+      } else {
+        console.warn('bz 游戏库：启动静默同步失败:', result.reason, result.message);
+      }
       return { ok: false, added: 0, updated: 0, offShelf: 0, reason: result.reason, message: result.message };
     }
     const r = await applySyncPlan(app, folder, result.owned, new Date().toISOString());
@@ -75,9 +85,11 @@ export async function runSync(app: App, opts?: { force?: boolean }): Promise<Syn
     if (r.offShelf > 0) parts.push(`下架标记 ${r.offShelf}`);
     // 库内无变化 → 状态行留空（用户 2026-09-17：「同步完成：库内无变化」是噪音，
     // 每次点立即同步都挂一行「什么都没发生」；真有事才说话）
-    M.statusMsg = parts.length > 0 ? `同步完成：${parts.join('，')}` : '';
-    if (parts.length > 0) {
-      notice(`游戏库已同步：${parts.join('，')}`, 'success');
+    if (!quiet) {
+      M.statusMsg = parts.length > 0 ? `同步完成：${parts.join('，')}` : '';
+      if (parts.length > 0) {
+        notice(`游戏库已同步：${parts.join('，')}`, 'success');
+      }
     }
     // 行为流观察事件（emit-and-forget，零成本）：当前全仓无订阅方——原注释「smartcat 消费」
     // 系虚指已修正（深审 C6）；真接行为流时再按总线 `<域名>:<事件>` 约定定形制
@@ -85,11 +97,18 @@ export async function runSync(app: App, opts?: { force?: boolean }): Promise<Syn
     return { ok: true, ...r };
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e);
-    M.statusMsg = `同步失败：${msg}`;
-    notice(`游戏库同步失败：${msg}`, 'error');
+    if (!quiet) {
+      M.statusMsg = `同步失败：${msg}`;
+      notice(`游戏库同步失败：${msg}`, 'error');
+    } else {
+      console.warn('bz 游戏库：启动静默同步异常:', msg);
+    }
     return { ok: false, added: 0, updated: 0, offShelf: 0, reason: 'http', message: msg };
   } finally {
     M.syncing = false;
+    // 静默也重绘：钩子只在面板开着时才非空（关着就是空转）——「启动 5 秒里正好点开游戏库」
+    // 这一拍，面板会先按同步前的数据画一遍（autoSyncOnOpen 撞上 busy 直接返回），落库后
+    // 不补这一下，界面就停在旧数字上直到用户再点一次同步。
     M.renderFn?.();
   }
 }

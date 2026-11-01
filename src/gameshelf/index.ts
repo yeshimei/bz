@@ -7,7 +7,8 @@
  */
 import type { App } from 'obsidian';
 import { notice } from '../core/notice';
-import { M, resetGameshelfState, resolveGameshelfFolderPath } from './state';
+import { tryGetSettings } from '../core/settings-provider';
+import { M, resetGameshelfState, resolveGameshelfFolderPath, readSteamConfig } from './state';
 import { rebuildItems } from './notes';
 import { ensurePosters, mediaItemsOf, unloadPosters } from './posters';
 import { ensureBackfill, unloadBackfill } from './backfill';
@@ -88,6 +89,27 @@ export async function syncGameshelf(app: App): Promise<void> {
   }
   if (r.reason === 'config') notice('游戏库尚未配置：先在设置面板填写 SteamID64 与 Web API 密钥', 'warning');
   else if (r.reason === 'busy') notice('同步已在进行中', 'info');
+}
+
+/**
+ * 启动静默同步（2026-11-02 用户点版）：插件加载就拉一次，**不等打开游戏库面板**。
+ * 目的单一——首页时间线里那条「玩了 X」读的是游戏笔记的 `最后游玩`，不开游戏库就永远是旧的。
+ *
+ * 静默：不弹通知、不写状态行、不叫重绘（面板本来没开），失败也只进 console——
+ * 用户没主动点任何东西，启动期不该有弹窗。
+ * **只跑同步**：封面 / 中文名 / 回填三条队列仍留在开面板时做（那是几百个文件的写盘活）。
+ * 30 分钟间隔门照旧（重启再频繁也不会连拉）；用户明确不要定时轮询（同日点版）。
+ */
+export function startupSyncGameshelf(app: App): void {
+  ensureGameshelf(app);
+  if (needsFolderSetup('gameshelf')) return; // 目录没定 → 不拉：落盘动作没有去处
+  const s = tryGetSettings() as Record<string, unknown>;
+  if (s.gameshelfAutoSync === false) return; // 关了自动同步 = 纯手动，启动也不动
+  const { steamId, apiKey } = readSteamConfig();
+  if (!steamId.trim() || !apiKey.trim()) return;
+  void import('./sync')
+    .then((m) => m.runSync(app, { silent: true }))
+    .catch((e) => console.warn('bz 游戏库：启动静默同步失败:', e));
 }
 
 /** 卸载清理（main.ts onunload 调用） */
