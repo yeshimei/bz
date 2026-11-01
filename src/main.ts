@@ -531,11 +531,21 @@ export default class BzPlugin extends Plugin {
       // 聚合讯自动抓取（issue 302 / ADR-0128）：启动延迟一拍后台抓一轮（间隔判定在 fetcher 内）
       setTimeout(() => { if (!this.unloaded) void maybeFetchNews(); }, 0);
       // 游戏库启动静默同步（2026-11-02 用户点版）：首页时间线里那条「玩了 X」读的是游戏笔记的
-      // `最后游玩`，不开游戏库就永远是旧的。延迟 5 秒再拉，别跟皮肤包 / 自更新 / 新闻抢启动那口气
-      // （api.steampowered.com 国内要过系统代理，启动瞬间并发越少越稳）。
+      // `最后游玩`，不开游戏库就永远是旧的。
+      // 时机 = 首屏空闲（`requestIdleCallback`，拿不到就 8 秒兜底）：这趟要先读一遍全库笔记的
+      // 属性（走 metadataCache，不读盘，成本不高），但启动头几秒正是 Obsidian 自己建索引的时候，
+      // 没必要插队；也顺便避开皮肤包 / 自更新 / 新闻那口气。
       // 全套闸门在 startupSyncGameshelf 内（目录未配 / 自动同步关 / 未填密钥一律不动），
       // 30 分钟间隔门照旧；卸载旗标照传（C13），启动窗口内被禁用就不再发请求。
-      setTimeout(() => { if (!this.unloaded) startupSyncGameshelf(getApp()); }, 5000);
+      const kickGameshelfSync = (): void => { if (!this.unloaded) startupSyncGameshelf(getApp()); };
+      const idleHost = window as unknown as {
+        requestIdleCallback?: (cb: () => void, opts?: { timeout?: number }) => number;
+      };
+      if (typeof idleHost.requestIdleCallback === 'function') {
+        idleHost.requestIdleCallback(kickGameshelfSync, { timeout: 8000 });
+      } else {
+        setTimeout(kickGameshelfSync, 8000);
+      }
       // 小橘：启动即挂载（ADR-0254 域总闸；桌面宠物常驻）
       if (this.smartcatDomainOn) void ensureSmartCat(this.app);
       // 日记本后台预热（②）：延迟一拍到空闲只读数据填缓存、不建 DOM（ADR-0003 兼容），
