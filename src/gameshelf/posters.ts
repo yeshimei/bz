@@ -346,12 +346,19 @@ async function pumpMedia(): Promise<void> {
   mediaRunning = false;
 }
 
-/** 逐条完成后节流重渲（1.5s 尾沿；面板关着 renderFn 空转无害） */
+/**
+ * 逐条完成后节流重绘（1.5s 尾沿；面板关着钩子为空，空转无害）。
+ *
+ * 走 `mediaRepaintFn`（原地换图）而不是 `renderFn`（整面板整刷）：封面是一整个库逐款下完的，
+ * 整刷会把工具行、门面、整片网格连同所有 img 元素一起换掉，下图期间界面看起来就是
+ * 「一直在闪」——2026-11-01 用户反馈的主界面屏闪就是这个。
+ * 截图下载与游戏墙无关（只有详情弹窗里看得见），所以只叫弹窗那一声。
+ */
 function scheduleRerender(): void {
   if (rerenderTimer) return;
   rerenderTimer = setTimeout(() => {
     rerenderTimer = null;
-    M.renderFn?.();
+    M.mediaRepaintFn?.();
     M.modalRepaintFn?.(); // 详情弹窗不在面板树里，得单独叫一声
   }, 1500);
 }

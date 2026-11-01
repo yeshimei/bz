@@ -115,6 +115,10 @@ export interface GameshelfState {
   /** 详情弹窗的重画钩子（媒体队列下完图后调它，否则弹窗里第一次看到的是占位图，
    *  关掉重开才出真图 —— 真机上首次打开某款的详情就撞这个）。弹窗关了就自清。 */
   modalRepaintFn: (() => void) | null;
+  /** 游戏墙的**原地**换图钩子（媒体队列下完封面/图标后调它）：只改已变化那张 img 的 src，
+   *  不重建面板——整刷会把工具行与整片网格一起换掉，下图期间看起来就是「主界面一直在闪」
+   *  （2026-11-01 用户反馈）。面板关了就置空。 */
+  mediaRepaintFn: (() => void) | null;
 }
 
 export const M: GameshelfState = {
@@ -130,6 +134,7 @@ export const M: GameshelfState = {
   folderPath: DEFAULT_FOLDER,
   renderFn: null,
   modalRepaintFn: null,
+  mediaRepaintFn: null,
 };
 
 /** 测试/卸载用：整体重置模块状态 */
@@ -146,4 +151,5 @@ export function resetGameshelfState(): void {
   M.folderPath = DEFAULT_FOLDER;
   M.renderFn = null;
   M.modalRepaintFn = null;
+  M.mediaRepaintFn = null;
 }

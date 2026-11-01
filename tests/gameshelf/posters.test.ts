@@ -13,6 +13,7 @@ import {
 } from '../../src/gameshelf/posters';
 import { setApp } from '../../src/core/app';
 import { setSettingsProvider } from '../../src/core/settings-provider';
+import { M } from '../../src/gameshelf/state';
 import { requestUrl } from 'obsidian';
 
 const vault = new MockVault();
@@ -117,6 +118,22 @@ describe('媒体本地化队列', () => {
     expect(writes.length).toBe(0);
     expect(vault.binaryFiles.has(COVER)).toBe(false);
   });
+
+  it('下完图走 mediaRepaintFn（原地换图），不走 renderFn（整刷=屏闪）', async () => {
+    setup();
+    const repaint = vi.fn();
+    const render = vi.fn();
+    M.mediaRepaintFn = repaint;
+    M.renderFn = render;
+    try {
+      ensurePosters(app, media({ iconSrc: null }));
+      await vi.waitFor(() => expect(repaint).toHaveBeenCalled(), { timeout: 4000 });
+      expect(render).not.toHaveBeenCalled();
+    } finally {
+      M.mediaRepaintFn = null;
+      M.renderFn = null;
+    }
+  }, 8000);
 });
 
 describe('显示 URL 四级兜底', () => {

@@ -245,7 +245,7 @@ export function heroHtml(item: GameItem, cover: string, rp: GameshelfReport, tag
   const bg = cover ? ` style="background-image:url('${escCssUrl(cover)}')"` : '';
   return `
   <div class="bz-gs-hero${cover ? '' : ' bz-gs-hero--bare'}">
-    <div class="bz-gs-hero-art"${bg}></div>
+    <div class="bz-gs-hero-art"${bg} data-cover-url="${escAttr(cover)}"></div>
     <div class="bz-gs-hero-veil"></div>
     <div class="bz-gs-hero-in">
       <div class="bz-gs-hero-left">
@@ -1051,6 +1051,52 @@ function fillHero(app: App, rp: GameshelfReport): void {
   heroEl.innerHTML = heroRestHtml;
 }
 
+/* ==================== 媒体本地化后的原地换图（不整刷面板） ==================== */
+
+/**
+ * 门面底图原地换（静息态才换：换脸态挂的是悬停那款，不归列表首位口径管）。
+ * data-cover-url 记当前地址，值没变就连 style 都不碰（重设同一 url 会让浏览器重取一遍图）。
+ */
+function repaintHeroCover(app: App): void {
+  if (!heroEl || peekedHeroAppid !== null) return;
+  const top = sortList(filterList(M.items))[0];
+  const art = heroEl.querySelector<HTMLElement>('.bz-gs-hero-art');
+  if (!top || !art) return;
+  const cover = coverDisplayUrl(app, top.appid, top.cover, top.coverSrc);
+  if ((art.dataset.coverUrl ?? '') === cover) return;
+  art.dataset.coverUrl = cover;
+  art.style.backgroundImage = cover ? `url('${cover}')` : '';
+  heroEl.querySelector('.bz-gs-hero')?.classList.toggle('bz-gs-hero--bare', !cover);
+  heroRestHtml = heroEl.innerHTML; // 静息快照跟上：悬浮换脸结束复原时不回旧图
+}
+
+/**
+ * 后台媒体队列下完图后的重绘：**只换已变化的那张图**，不重建面板。
+ *
+ * 为什么不能走 renderSoft（整刷）：封面/图标是逐款下完的，一整个库要下一轮，每次整刷都会
+ * 把工具行、门面、整片网格连同全部 img 元素一起换掉——下图期间界面就是「一直在闪」
+ * （2026-11-01 用户反馈：下载图片时主界面不断屏闪）。这里按 appid 对上卡片原地改 src，
+ * 地址没变就一个 DOM 都不碰；搜索/滚动/悬浮这类会话态也一并保住。
+ */
+export function repaintMedia(app: App): void {
+  const frame = M.currentOverlay;
+  if (!frame || !document.body.contains(frame)) return;
+  const byId = new Map(M.items.map((it) => [it.appid, it]));
+  gridEl?.querySelectorAll<HTMLElement>('.bz-gs-card').forEach((card) => {
+    const it = byId.get(Number(card.dataset.appid));
+    const img = card.querySelector<HTMLImageElement>('.bz-gs-cover img');
+    if (!it || !img) return; // 无封面位的卡不该出现在队列里，真出现也不硬塞图
+    const url = coverDisplayUrl(app, it.appid, it.cover, it.coverSrc);
+    if (!url || img.getAttribute('src') === url) return;
+    // 换成新地址后兜底链重新起算：新图也可能裂，还得能退回源键、再判死
+    img.dataset.fallbackSrc = it.coverSrc ?? '';
+    delete img.dataset.fbDone;
+    img.closest('.bz-gs-cover')?.classList.remove('is-broken');
+    img.setAttribute('src', url);
+  });
+  repaintHeroCover(app);
+}
+
 /* ==================== 输入守护（打字/下拉菜单不被后台整刷打断，影院同款两层） ==================== */
 //
 // 起因（G1/eff E1）：names/backfill/posters 三队列逐条干活各自节流调 M.renderFn，
@@ -1137,66 +1183,71 @@ function restoreFocus(snap: { value: string; start: number | null; end: number |
 export function renderAll(app: App): void {
   const frame = M.currentOverlay;
   if (!frame || !document.body.contains(frame)) return;
-  gsInRenderAll = true; // 动效层：整刷链内的 renderList 一律静默（见 gsInRenderAll 注）
-  clearSoftRender(); // 已排期的顺延渲染作废，本次渲染已覆盖
-  const snap = snapshotFocus();
-  saveScrollMemo(); // GS4：旧 DOM 的滚位按 renderedView 归账（须在 body 清空前）
-  const configured = isConfigured();
-  mountOps(app);
-  restReel();
-  const status = frame.querySelector<HTMLElement>('#bz-gs-status');
-  if (status) {
-    status.textContent = M.statusMsg;
-    motionStatusLine(status, M.statusMsg); // 动效层：状态行文案变化时轻滑入（同文案不重播）
-  }
-  const body = frame.querySelector<HTMLElement>('#bz-gs-body');
-  if (!body) return;
-  gsInRenderAll = false; // 早退也复位：别让链内标记卡死后续的 user 波浪
-  body.innerHTML = '';
-  // 游戏目录没配 → 主体区给引导态（别把"未配置"画成"没有游戏"）
-  if (mountFolderGate(body, 'gameshelf', closePanel)) return;
-  // 视图标记（只有游戏墙打）：移动端「滚动权交给网格本身」那套布局按它切，统计页/引导态不受影响
-  body.removeAttribute('data-view');
-  disposeSelects(); // 工具行重建前先摘掉上一轮下拉的 document 监听
-  gridEl = null;
-  lastReport = null;
-
-  if (!configured) {
-    if (heroEl) {
-      heroEl.innerHTML = '';
-      heroRestHtml = '';
+  // 动效层：整刷链内的 renderList 一律静默（见 gsInRenderAll 注）。
+  // ⚠️ 曾把复位写在 body.innerHTML 之前，等于整刷链里的重填根本没带上标记——
+  // 后台队列（封面/中文名/回填）每次节流重渲都演一遍 user 波浪，界面上就是「不停屏闪」
+  // （2026-11-01 用户反馈）。标记必须罩住整个函数，任何出口都由 finally 收口。
+  gsInRenderAll = true;
+  try {
+    clearSoftRender(); // 已排期的顺延渲染作废，本次渲染已覆盖
+    const snap = snapshotFocus();
+    saveScrollMemo(); // GS4：旧 DOM 的滚位按 renderedView 归账（须在 body 清空前）
+    const configured = isConfigured();
+    mountOps(app);
+    restReel();
+    const status = frame.querySelector<HTMLElement>('#bz-gs-status');
+    if (status) {
+      status.textContent = M.statusMsg;
+      motionStatusLine(status, M.statusMsg); // 动效层：状态行文案变化时轻滑入（同文案不重播）
     }
-    body.appendChild(guidanceEl(app));
+    const body = frame.querySelector<HTMLElement>('#bz-gs-body');
+    if (!body) return;
+    body.innerHTML = '';
+    // 游戏目录没配 → 主体区给引导态（别把"未配置"画成"没有游戏"）
+    if (mountFolderGate(body, 'gameshelf', closePanel)) return;
+    // 视图标记（只有游戏墙打）：移动端「滚动权交给网格本身」那套布局按它切，统计页/引导态不受影响
+    body.removeAttribute('data-view');
+    disposeSelects(); // 工具行重建前先摘掉上一轮下拉的 document 监听
+    gridEl = null;
+    lastReport = null;
+
+    if (!configured) {
+      if (heroEl) {
+        heroEl.innerHTML = '';
+        heroRestHtml = '';
+      }
+      body.appendChild(guidanceEl(app));
+      mountIcons(frame);
+      renderedView = null; // 引导态无滚位可言：不把它的 scrollTop=0 记到任何视图名下
+      // 动效层：引导态 = 上电 + 「开始键」空态（boot 消费即熄，后台刷新静默）
+      const guideBoot = gsBoot;
+      gsBoot = false;
+      motionRendered(frame, body, guideBoot, false, null);
+      return;
+    }
+    const rp = buildReport(M.items);
+    lastReport = rp;
+    fillHero(app, rp);
+    if (M.view === 'stats') {
+      body.insertAdjacentHTML('beforeend', statsHtml(rp));
+      fillStatsRow(app, rp);
+    } else {
+      body.appendChild(shelfBody(app, rp));
+      body.dataset.view = 'shelf';
+    }
     mountIcons(frame);
-    renderedView = null; // 引导态无滚位可言：不把它的 scrollTop=0 记到任何视图名下
-    // 动效层：引导态 = 上电 + 「开始键」空态（boot 消费即熄，后台刷新静默）
-    const guideBoot = gsBoot;
+    restoreFocus(snap);
+    // 动效层：boot 消费即熄；视图切换（含后台队列把库从无到有补出来的那刷）演视图编排，
+    // 其余后台整刷一律静默。须在 renderedView 归账前判定。
+    const viewChanged = renderedView !== null && renderedView !== M.view;
+    const boot = gsBoot;
     gsBoot = false;
-    motionRendered(frame, body, guideBoot, false, null);
-    gsInRenderAll = false; // 早退复位（同上）
-    return;
+    motionRendered(frame, body, boot, viewChanged, M.view);
+    renderedView = M.view;
+    restoreScrollMemo(); // GS4：落位后还滚位（焦点快照回写可能引发滚动，故放在它之后盖过）
+  } finally {
+    gsInRenderAll = false;
   }
-  const rp = buildReport(M.items);
-  lastReport = rp;
-  fillHero(app, rp);
-  if (M.view === 'stats') {
-    body.insertAdjacentHTML('beforeend', statsHtml(rp));
-    fillStatsRow(app, rp);
-  } else {
-    body.appendChild(shelfBody(app, rp));
-    body.dataset.view = 'shelf';
-  }
-  mountIcons(frame);
-  restoreFocus(snap);
-  // 动效层：boot 消费即熄；视图切换（含后台队列把库从无到有补出来的那刷）演视图编排，
-  // 其余后台整刷一律静默。须在 renderedView 归账前判定。
-  const viewChanged = renderedView !== null && renderedView !== M.view;
-  const boot = gsBoot;
-  gsBoot = false;
-  motionRendered(frame, body, boot, viewChanged, M.view);
-  renderedView = M.view;
-  restoreScrollMemo(); // GS4：落位后还滚位（焦点快照回写可能引发滚动，故放在它之后盖过）
-  gsInRenderAll = false;
 }
 
 /**
@@ -1467,6 +1518,8 @@ export function openPanel(app: App, view: GameshelfViewKind = 'shelf'): void {
   // 三队列 scheduleRerender 与 sync 收尾统一走 renderSoft（G1）：打字/下拉菜单开着时顺延，
   // 不再整刷抢焦点——调用点（names/backfill/posters/sync）零改动即全收
   M.renderFn = () => renderSoft(app);
+  // 媒体队列另走一条更轻的通道（见 repaintMedia 注）：只换封面/图标那张图，不重建面板
+  M.mediaRepaintFn = () => repaintMedia(app);
   renderAll(app);
   void ensurePostersFor(app);
   ensureZhNames(app, M.items);
@@ -1501,6 +1554,7 @@ export function closePanel(): void {
   M.statusMsg = ''; // 状态行不跨开关残留（UX-1）：重开面板不再挂着上次的「同步完成…」
   M.renderFn = null;
   M.modalRepaintFn = null;
+  M.mediaRepaintFn = null;
   // 卸载拖动缩放（ADR-0084；persist 未落盘的防抖尾值由 detach 立即补存）
   if (panelResizeDetach) {
     panelResizeDetach.detach();
