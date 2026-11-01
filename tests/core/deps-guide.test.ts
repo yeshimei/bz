@@ -117,10 +117,10 @@ describe('deps-guide 弹窗结构（照原型）', () => {
     expect(groupOf('脸谱').querySelectorAll('.bz-deps-row').length).toBe(1);
   });
 
-  it('底栏汇总按默认勾选算：8 项 · 约 3.2 GB', () => {
+  it('底栏汇总按默认勾选算：8 项 · 约 3.1 GB', () => {
     openDepsGuide(APP);
     const sum = popup().querySelector('.bz-deps-sum') as HTMLElement;
-    expect(sum.textContent).toBe('已选 8 项 · 约 3.2 GB');
+    expect(sum.textContent).toBe('已选 8 项 · 约 3.1 GB');
     expect(popup().querySelectorAll('.bz-deps-bar .bz-deps-acts .bz-btn').length).toBe(2);
   });
 
@@ -135,8 +135,36 @@ describe('deps-guide 弹窗结构（照原型）', () => {
     const bge = embed.querySelector<HTMLInputElement>('input[value="embed:bge-m3"]')!;
     expect(bge.checked).toBe(false);
     // 8b 比 bge-m3 贵 3.5 GB 左右，汇总要变
-    expect((popup().querySelector('.bz-deps-sum') as HTMLElement).textContent).not.toBe('已选 8 项 · 约 3.2 GB');
+    expect((popup().querySelector('.bz-deps-sum') as HTMLElement).textContent).not.toBe('已选 8 项 · 约 3.1 GB');
     expect(popup().querySelector('.bz-deps-pbox pre')?.textContent).toContain('qwen3-embedding:8b');
+  });
+
+  it('勾了重排但嵌入选的是 bge-m3 → 卡片下面给出「装了不会跑」的说明', () => {
+    openDepsGuide(APP);
+    const warn = groupOf('向量检索').querySelector('.bz-deps-warn') as HTMLElement;
+    expect(warn).toBeTruthy();
+    // 默认就是 bge-m3 + 不装重排：这时候还没到该劝的时候
+    expect(warn.hidden).toBe(true);
+
+    const rb = groupOf('向量检索').querySelector<HTMLInputElement>('input[value="rerank:dengcao/Qwen3-Reranker-4B:Q4_K_M"]')!;
+    rb.checked = true;
+    rb.dispatchEvent(new Event('change', { bubbles: true }));
+    expect(warn.hidden).toBe(false);
+    expect(warn.textContent).toContain('qwen3-embedding:8b');
+
+    // 换成 8b：门过了，警示收回
+    const hi = groupOf('向量检索').querySelector<HTMLInputElement>('input[value="embed:qwen3-embedding:8b"]')!;
+    hi.checked = true;
+    hi.dispatchEvent(new Event('change', { bubbles: true }));
+    expect(warn.hidden).toBe(true);
+  });
+
+  it('拿不到绝对路径（移动端）→ 不弹窗，只给一句为什么', () => {
+    // 手机上 vault.adapter.getBasePath() 给不出路径：清单里的安装位置一个都不存在，
+    // 提示词还会写成「不要装进 Obsidian 仓库 」——宁可不给这个入口
+    openDepsGuide({ vault: { configDir: '.obsidian', adapter: {} } });
+    expect(popup()).toBeNull();
+    expect(document.body.textContent).toContain('只能在电脑上装');
   });
 
   it('Ollama 那行右格是探活结果，不是体积', async () => {

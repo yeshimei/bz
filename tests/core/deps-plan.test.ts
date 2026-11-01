@@ -14,6 +14,7 @@ import {
   dataFilePath,
   defaultPicked,
   formatSize,
+  localRerankBlocked,
   summarize,
   toggleRadio,
 } from '../../src/core/deps-plan';
@@ -86,10 +87,15 @@ describe('默认勾选', () => {
     }
   });
 
-  it('默认值就是原型里那句「8 项 · 3.2 GB」', () => {
+  it('默认值是 8 项 · 约 3.1 GB（ffprobe 的体积并进 ffmpeg 那行，不重复计）', () => {
     const { count, mb } = summarize(defaultPicked());
+    // 项数仍按 8 算：ffprobe 是要装的东西，只是体积不单列
     expect(count).toBe(8);
-    expect(formatSize(mb)).toBe('3.2 GB');
+    expect(formatSize(mb)).toBe('3.1 GB');
+    // 反过来钉住「不重复计」：把 ffprobe 拿掉，总量一分不减
+    const withoutProbe = new Set([...defaultPicked()].filter((id) => id !== 'ffprobe'));
+    expect(summarize(withoutProbe).mb).toBe(mb);
+    expect(summarize(withoutProbe).count).toBe(7);
   });
 });
 
@@ -228,7 +234,9 @@ describe('提示词', () => {
     expect(text).toMatch(/别把这件事交回给我/);
     // 改文件的三条前提（备份 / 合法 JSON / 自己重启）一个都不能少
     expect(text).toContain('data.json.bak');
-    expect(text).toMatch(/由你重启 Obsidian/);
+    // 改之前必须先退进程：Obsidian 端存设置是整份覆盖写，开着改会被下次保存盖掉
+    expect(text).toMatch(/先让 Obsidian 完全退出/);
+    expect(text).toMatch(/重新打开/);
     expect(text).toMatch(/合法 JSON/);
     // 结尾不把活推回用户
     expect(text).not.toMatch(/请你自己去设置里填/);
@@ -285,11 +293,28 @@ describe('回填字段', () => {
     expect(f.value).toContain('"qwen3-embedding:8b"');
   });
 
-  it('重排是「总闸 + 模型名」两个键：只写模型名而总闸 false，装了也不生效', () => {
+  it('重排是「总闸 + 模型名」两个键，且总闸只在嵌入是 8B 时才开', () => {
+    // 8B 嵌入 + 重排：本地通道的两个门都过了，总闸写 true
+    const ok = toggleRadio(
+      toggleRadio(defaultPicked(), 'embed:qwen3-embedding:8b'),
+      'rerank:dengcao/Qwen3-Reranker-4B:Q4_K_M',
+    );
+    const okMap = new Map(backfillFields(ok).map((f) => [f.key, f.value]));
+    expect(okMap.get('secondBrainRerank')).toBe('true');
+    expect(okMap.get('secondBrainRerankModel')).toContain('Qwen3-Reranker-4B');
+  });
+
+  it('嵌入不是 8B 却勾了重排：总闸写 false（否则设置页显示已开、实际不跑）', () => {
+    // 判据与 secondbrain/config 的 rerankChannel 同源：bge-m3 + 重排 → 本地通道 off
     const picked = toggleRadio(defaultPicked(), 'rerank:dengcao/Qwen3-Reranker-4B:Q4_K_M');
+    expect(localRerankBlocked(picked)).toBe(true);
     const map = new Map(backfillFields(picked).map((f) => [f.key, f.value]));
-    expect(map.get('secondBrainRerank')).toBe('true');
+    expect(map.get('secondBrainRerank')).toContain('false');
+    expect(map.get('secondBrainRerank')).toContain('qwen3-embedding:8b');
+    // 模型名照留：先装好，换嵌入后不用重新下载
     expect(map.get('secondBrainRerankModel')).toContain('Qwen3-Reranker-4B');
+    // 提示词里也要说清楚，别只在界面上警示
+    expect(buildPlanPrompt(picked, CTX)).toMatch(/装了也不会生效/);
   });
 
   it('选「不安装重排」只关总闸，不留一个模型名在文件里', () => {

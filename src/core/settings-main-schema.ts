@@ -65,6 +65,7 @@ import { tryGetSettings, saveSettings, getSettings } from './settings-provider';
 import { fetchEmbeddingModels, fetchProviderModels, fetchRerankModels, hasRerankNamed, isQwen3Embedding8b, providerDescriptorOf } from './ai-models';
 import { openModelPicker } from './settings-model-picker';
 import { getApp } from './app';
+import { isMobileEnv } from './mobile';
 
 import type { NumberRow, RowAction, SettingsSchema, SettingsRow, SettingsRowContext } from './settings-schema';
 
@@ -608,6 +609,10 @@ function ollamaSetupRow(): SettingsRow {
       '这里不是下载按钮——Ollama 是通用服务，机器上可能已经有一份在给别的工具用，bz 再装一份会变成两个端口、两套模型缓存；' +
       '模型也要落在 Ollama 自己的目录里。所以这里只讲「怎么装、装完怎么验」，包括 Ollama 装了但没启动时怎么拉起来。',
     buttonText: '看怎么装',
+    // 手机上不显示（2026-11-01）：清单里全是「装到 Program Files / PATH / Ollama 模型目录」，
+    // 而手机既没有这些位置、`vault.adapter.getBasePath()` 也给不出绝对路径——点开只会看到
+    // 一份路径为空的 Windows 安装说明，比不给入口更糟。
+    visibleWhen: () => !isMobileEnv(),
     onClick: () => {
       void import('./deps-guide').then((m) => m.openDepsGuide());
     },

@@ -30,7 +30,6 @@ import { ensureAssetWithHash } from './remote-asset';
 import { downloadSkinUpdates, skinStatus } from './skin-pack';
 import { installPortableNode, PORTABLE_NODE_VERSION } from './node-runtime-install';
 import { probeNodeRuntime, resetNodeRuntimeCache } from './tool-runtime';
-import { depArchives, depSpec, installDep, probeDep, type DepId, type DepState } from './dep-runtime';
 import { openDepsGuide } from './deps-guide';
 import { setupAfterInstall } from './tool-setup';
 import { pluginDirOf, pluginRelDirOf, vaultBasePathOf } from './plugin-path';
@@ -51,7 +50,7 @@ const NODE_SIZE_HINT = 36.4 * 1024 * 1024;
 const MANIFEST_TIMEOUT_MS = 12000;
 
 /** 下载项的种类（决定 ③ 屏怎么分组、缺省勾不勾） */
-export type SetupKind = 'node' | 'dep' | 'bundle' | 'doc' | 'skins';
+export type SetupKind = 'node' | 'bundle' | 'doc' | 'skins';
 
 /** 一个可下载项 */
 export interface SetupItem {
@@ -81,15 +80,11 @@ export function sizeText(bytes: number | null): string {
  * 「要下什么」的**纯**队列（不看磁盘状态）。
  * 顺序刻意如此：Node 最久，放第一个——先让它跑起来，后面小包在它之后秒完，
  * 用户看到的进度是连续的，而不是「卡在 87% 一动不动」。
- *
- * @param opts.depStates 两个本地运行时（Python / ffmpeg）的探测结果。由调用方
- *   `probeDep` 一次拿到后传进来——放这里现探会让同一件事在 `isReady` 里再做一遍，
- *   而它们每次都要 spawn 一个子进程。
  */
 export function buildSetupTasks(
   app: unknown,
   manifest: DownloadManifest | null,
-  opts: { nodeMissing: boolean; depStates?: Record<DepId, DepState> },
+  opts: { nodeMissing: boolean },
 ): SetupItem[] {
   const mk = (i: Omit<SetupItem, 'ready'>): SetupItem => ({ ...i, ready: false });
   const items: SetupItem[] = [];
@@ -117,35 +112,10 @@ export function buildSetupTasks(
     );
   }
 
-  // 两个本地运行时：Python 45MB（转写与脸谱的执行环境，缺了转写整条链断）、
-  // ffmpeg 109MB（只服务视频压缩与录音转 wav，缺了会降级但功能还在）。
-  // 两个都进队列，但 ffmpeg 标 optional —— 它贵，且不是「装了才有东西用」那一类。
-  for (const id of ['python', 'ffmpeg'] as DepId[]) {
-    const state = opts.depStates?.[id];
-    if (!state || state.ok) continue;
-    const spec = depSpec(id);
-    const plan = depArchives(id)[0];
-    items.push(
-      mk({
-        id: `dep-${id}`,
-        kind: 'dep',
-        label: spec.label,
-        desc: plan ? `${spec.desc} · 约 ${Math.round(plan.size / 1024 / 1024)} MB` : spec.desc,
-        size: plan?.size ?? null,
-        ...(id === 'ffmpeg' ? { optional: true } : {}),
-        run: async (report) => {
-          await installDep(app, id, {
-            onStage: (stage) => report?.(stage),
-            onProgress: (got, total) => {
-              if (total > 0) report?.(`${Math.min(99, Math.round((got / total) * 100))}% · ${sizeText(got)} / ${sizeText(total)}`);
-              else report?.(sizeText(got));
-            },
-          });
-          // 装完 installDep 已经把绝对路径写进设置；这里只需让引导页的值立刻反映出来
-        },
-      }),
-    );
-  }
+  // Python / ffmpeg 不在这里装（2026-11-01 改）：它们是**系统级运行时**，而这条队列只会
+  // 往插件目录搬东西——装出来的便携副本换个仓库、重装插件就没了，还会把那个会消失的路径
+  // 写进设置。装法统一交给完成屏的「安装外部工具」（core/deps-guide 出清单与提示词）。
+  // 这里留一行位置说明，免得以后有人看着「本地运行时」这四个字又塞回来。
 
   if (!manifest) return items;
 
@@ -211,12 +181,8 @@ async function isReady(
   manifest: DownloadManifest | null,
   id: string,
   kind: SetupKind,
-  depStates?: Record<DepId, DepState>,
 ): Promise<boolean> {
   if (kind === 'node') return probeNodeRuntime(app, { fresh: true }).kind !== 'none';
-  // 本地运行时的判据是「两个入口都真跑得起来」，不是「目录里有没有文件」——
-  // 探测（probeDep）已经做了那件事，这里只取结论，不再 spawn 一遍
-  if (kind === 'dep') return depStates?.[id.replace(/^dep-/, '') as DepId]?.ok ?? false;
   if (!manifest) return false;
   if (kind === 'skins') {
     const st = await skinStatus(app, manifest);
@@ -232,11 +198,11 @@ async function isReady(
 export async function planSetupItems(
   app: unknown,
   manifest: DownloadManifest | null,
-  opts: { nodeMissing: boolean; depStates?: Record<DepId, DepState> },
+  opts: { nodeMissing: boolean },
 ): Promise<SetupItem[]> {
   const items = buildSetupTasks(app, manifest, opts);
   const out: SetupItem[] = [];
-  for (const it of items) out.push({ ...it, ready: await isReady(app, manifest, it.id, it.kind, opts.depStates) });
+  for (const it of items) out.push({ ...it, ready: await isReady(app, manifest, it.id, it.kind) });
   return out;
 }
 
@@ -662,12 +628,7 @@ async function stageResources(ctx: WizardCtx, st: WizardState, ui: Ui): Promise<
   }
   const manifest = st.manifest ?? null;
   const nodeMissing = probeNodeRuntime(ctx.app, { fresh: true }).kind === 'none';
-  // 两个本地运行时只探这一次：清单屏要按它决定列不列、就绪屏要按它决定显不显示「已就绪」
-  const depStates: Record<DepId, DepState> = {
-    python: probeDep(ctx.app, 'python'),
-    ffmpeg: probeDep(ctx.app, 'ffmpeg'),
-  };
-  st.items = await planSetupItems(ctx.app, manifest, { nodeMissing, depStates });
+  st.items = await planSetupItems(ctx.app, manifest, { nodeMissing });
   st.selected = defaultSelection(st.items);
 
   const pending = (): SetupItem[] => selectedTasks(st.items, st.selected);
@@ -702,9 +663,6 @@ async function stageResources(ctx: WizardCtx, st: WizardState, ui: Ui): Promise<
 
   const GROUPS: Array<{ kind: SetupKind; title: string }> = [
     { kind: 'node', title: '运行环境' },
-    // 本地运行时单开一组：它们和 Node 一样是「机器上的东西」，但装法不同——
-    // Node 是 bz 自己 spawn 的，这两个的路径要下发给外部工具包（见 core/dep-runtime）
-    { kind: 'dep', title: '本地运行时' },
     { kind: 'bundle', title: '外部工具' },
     { kind: 'doc', title: '文档' },
     { kind: 'skins', title: '皮肤' },
@@ -1005,10 +963,15 @@ async function stageDone(ctx: WizardCtx, st: WizardState, ui: Ui): Promise<void>
   }
   // Python / ffmpeg 的收尾交代随那两行一起撤了（2026-11-01）：它们不在检查表里了，
   // 还留一句「还没装上」只会指向一个这一屏已经不负责的东西。要装就是下面那颗按钮。
-  const enter = button('bz-setup-btn bz-setup-btn--cta', '开始使用');
+  // 自检模式（设置 → 关于 → 环境自检）没有「开始使用」这回事：用户是来看一眼的，
+  // 不是来开始用的。上一版这里是「知道了」，随「在线资源清单」那一屏一起被删掉了；
+  // 少了这个分支，自检到最后会拿到一颗「开始使用」，点下去还会走 onFinish 打开首页。
+  const enter = ctx.checkOnly
+    ? button('bz-setup-btn bz-setup-btn--cta', '知道了')
+    : button('bz-setup-btn bz-setup-btn--cta', '开始使用');
   enter.onclick = () => {
     closeModal(ui);
-    ctx.onFinish?.();
+    if (!ctx.checkOnly) ctx.onFinish?.();
   };
   // 「安装外部工具」：下载队列覆盖不到的那几层（Node / Python / Ollama / 模型 / ffmpeg / pip 依赖）
   // ——队列只搬得进插件目录的东西，这些全是系统级运行时。

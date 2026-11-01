@@ -20,6 +20,8 @@
  *     不写插件目录下的任何相对位置。
  * ============================================================ */
 
+import { isQwen3Embedding8b } from './ai-models';
+
 /** 一个可勾选的条目标识；`embed:` / `rerank:` / `asr:` 前缀用来表达「组内单选」 */
 export type PlanItemId = string;
 
@@ -123,8 +125,10 @@ export const PLAN_ITEMS: readonly PlanItem[] = [
     id: 'ffprobe',
     group: '音视频处理',
     name: 'ffprobe',
-    mb: 88,
-    size: '约 88 MB',
+    // 与 ffmpeg 同一个压缩包（一个包解出两个 exe），体积只在 ffmpeg 那行计一次：
+    // 两行各记一遍会让底栏的「约 X GB」凭空多出一份 88 MB。
+    mb: 0,
+    size: '随 ffmpeg',
     required: true,
     url: 'https://github.com/BtbN/FFmpeg-Builds/releases/latest',
   },
@@ -166,12 +170,19 @@ export function toggleRadio(picked: ReadonlySet<PlanItemId>, id: PlanItemId): Se
   return next;
 }
 
-/** 汇总：项数与总体积（MB）。`mb === 0` 的条目不计入项数——它不下载任何东西 */
+/**
+ * 汇总：项数与总体积（MB）。
+ *
+ * `mb === 0` 的两类意思要分开：一类是「压根不下载任何东西」（不安装重排），连**项数**都不该占；
+ * 另一类是「体积并进了同组的另一行」（ffprobe 跟着 ffmpeg 一起来），项数照算、体积记 0。
+ * 用 `required` 区分它们——必装项一定是要装的东西，只是体积不在这行计。
+ */
 export function summarize(picked: ReadonlySet<PlanItemId>): { count: number; mb: number } {
   let count = 0;
   let mb = 0;
   for (const item of PLAN_ITEMS) {
-    if (!picked.has(item.id) || item.mb <= 0) continue;
+    if (!picked.has(item.id)) continue;
+    if (item.mb <= 0 && !item.required) continue;
     count += 1;
     mb += item.mb;
   }
@@ -204,6 +215,22 @@ function pickPrefix(picked: ReadonlySet<PlanItemId>, prefix: string): string {
 /** Windows 路径在提示词里统一用反斜杠（用户看着顺眼，复制到 cmd 也能直接用） */
 function winPath(p: string): string {
   return String(p || '').replace(/\//g, '\\');
+}
+
+/**
+ * 「勾了重排、但本地通道不会生效」——嵌入模型不是 qwen3-embedding:8b 时就是这个状态。
+ *
+ * 判据不能自己写一条正则：本地重排的门在 `secondbrain/config.ts` 的 `rerankChannel()`
+ * （`isQwen3Embedding8b`），设置页「重排模型」行的可见性也吃同一条判定。这里再抄一份，
+ * 将来门一改，弹窗就会给出与插件行为相反的结论——所以直接调同一个函数。
+ *
+ * 为什么值得单独成一个函数：界面要在勾选时就地提示，提示词要按它把总闸写成 false，
+ * 两处必须同一个答案。
+ */
+export function localRerankBlocked(picked: ReadonlySet<PlanItemId>): boolean {
+  const rerank = pickPrefix(picked, 'rerank:');
+  if (!rerank) return false;
+  return !isQwen3Embedding8b(pickPrefix(picked, 'embed:'));
 }
 
 /* ---------- 回填：data.json 里要改哪些键 ---------- */
@@ -262,10 +289,20 @@ export function backfillFields(picked: ReadonlySet<PlanItemId>): BackfillField[]
       value: `"${embed}"（与 ollama list 里的名字一字不差；换模型会让旧向量索引失效，bz 下次打开第二大脑自动重建，第一次检索会慢）`,
     });
   }
-  // 重排是「总闸 + 模型名」两个键：只写模型名而总闸是 false，装了也不会生效
+  // 重排是「总闸 + 模型名」两个键：只写模型名而总闸是 false，装了也不会生效。
+  // 反过来——嵌入不是 8B 时本地通道本来就不启用（localRerankBlocked），这时把总闸写 true
+  // 会让设置页显示「已开启」而实际不生效：宁可写 false，让界面与行为说同一句话。
   if (rerank) {
-    out.push({ key: 'secondBrainRerank', value: 'true' });
-    out.push({ key: 'secondBrainRerankModel', value: `"${rerank}"` });
+    if (localRerankBlocked(picked)) {
+      out.push({
+        key: 'secondBrainRerank',
+        value: `false（本地重排只在嵌入模型是 qwen3-embedding:8b 时生效，你选的是 ${embed || '其他嵌入模型'}，开了也不会跑；模型可以先装着，换嵌入后才用得上）`,
+      });
+      out.push({ key: 'secondBrainRerankModel', value: `"${rerank}"` });
+    } else {
+      out.push({ key: 'secondBrainRerank', value: 'true' });
+      out.push({ key: 'secondBrainRerankModel', value: `"${rerank}"` });
+    }
   } else if (picked.has('rerank:')) {
     out.push({ key: 'secondBrainRerank', value: 'false（这次不装重排模型，总闸关掉）' });
   }
@@ -333,8 +370,8 @@ export function buildPlanPrompt(picked: ReadonlySet<PlanItemId>, ctx: PlanContex
 
   if (rerank) {
     const lines = [`ollama pull ${rerank}`, '拉完 ollama list 里能看到它。'];
-    if (embed !== 'qwen3-embedding:8b') {
-      lines.unshift(`注意：bz 的重排只在嵌入模型是 qwen3-embedding:8b 时启用，现在的选择是 ${embed || '没选嵌入模型'}——装了也不会生效。`);
+    if (localRerankBlocked(picked)) {
+      lines.unshift(`注意：bz 的重排只在嵌入模型是 qwen3-embedding:8b 时启用，现在的选择是 ${embed || '没选嵌入模型'}——装了也不会生效，最后一步的总闸我会写成 false。`);
     }
     steps.push([`重排模型 ${rerank}`, lines]);
   }
@@ -415,10 +452,14 @@ export function buildPlanPrompt(picked: ReadonlySet<PlanItemId>, ctx: PlanContex
       '最后一步：由你自己改 bz 的插件设置文件，别把这件事交回给我。',
       '',
       `文件：${dataFilePath(ctx)}（Obsidian 的插件设置，一个 JSON 对象）`,
+      // 这一条必须是第一句。Obsidian 端存设置是**整份覆盖写**（saveData 把内存里那份全写回），
+      // 插件开着时用户拖一下面板尺寸、改一个开关，就会把这里刚写进去的键整份盖回旧值——
+      // 症状是「装完了、设置没进去」，没有任何报错。所以改文件的前提是先让进程退干净。
+      '  · 先让 Obsidian 完全退出（退进程，不是关窗口；任务栏/托盘里也不能还留着）。它开着时，插件下一次保存会把这份文件整份覆盖掉，这里改的就白改了。',
       '  · 动手前把原文件复制一份成 data.json.bak。',
       '  · 只改下面这些键：其余键原样保留，不增、不删、不重排；写回后必须是合法 JSON（不能有尾逗号、不能带注释）。',
       '  · 值是路径时，反斜杠写成两个（"C:\\\\Program Files\\\\nodejs\\\\node.exe"），或者整条路径改用正斜杠。',
-      '  · 这个文件只在 Obsidian 启动时读一次：改完由你重启 Obsidian（别让我去动文件），再读回文件确认键值确实写进去了。',
+      '  · 这个文件只在 Obsidian 启动时读一次：写完后立刻把它重新打开（别让我去动文件），再读回文件确认键值确实写进去了。',
       '',
       '要改的键（等号后面就是该写成的值）：',
       ...(fields.length

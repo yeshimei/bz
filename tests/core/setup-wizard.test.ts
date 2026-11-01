@@ -64,6 +64,13 @@ describe('首次准备：补齐队列', () => {
     expect(skin.desc).toContain('2 套');
   });
 
+  it('Python / ffmpeg 不再进队列（系统级运行时归「安装外部工具」）', () => {
+    // 这条队列只会往插件目录搬东西：装出来的便携副本换仓库就没了，
+    // 还会把那个会消失的路径写进设置。2026-11-01 起它们不再由这里装。
+    const ids = buildSetupTasks({}, manifest, { nodeMissing: true }).map((t) => t.id);
+    expect(ids.some((id) => id.startsWith('dep-'))).toBe(false);
+  });
+
   it('清单拉不到 → 只剩 Node 任务（不静默当成「没有要下的」）', () => {
     const tasks = buildSetupTasks({}, null, { nodeMissing: true });
     expect(tasks.map((t) => t.id)).toEqual(['node']);

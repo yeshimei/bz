@@ -23,7 +23,6 @@
  * ============================================================ */
 import { uiModal } from './ui/modal';
 import { embeddingServiceUrl } from './ai-models';
-import { tryGetSettings } from './settings-provider';
 import { getApp } from './app';
 import { notice } from './notice';
 import { pluginDirOf, vaultBasePathOf } from './plugin-path';
@@ -34,6 +33,7 @@ import {
   buildPlanPrompt,
   defaultPicked,
   formatSize,
+  localRerankBlocked,
   summarize,
   toggleRadio,
   type PlanItem,
@@ -50,19 +50,6 @@ function el(tag: string, cls: string, text?: string): HTMLElement {
 }
 
 /* ---------- 本机探测（外部消费方在用，不是本弹窗的渲染依赖） ---------- */
-
-/** 云端 AI 配没配（与 env-check 的 aiConfigured 同口径：本地 Ollama 无需密钥即视为已配） */
-export function cloudAiConfigured(): boolean {
-  try {
-    const s = tryGetSettings() as Record<string, unknown>;
-    const provider = String(s?.aiProvider || 'deepseek');
-    if (provider === 'ollama') return true;
-    const key = provider === 'zhipu-plan' ? s?.zhipuPlanApiKey : s?.deepseekApiKey;
-    return !!String(key ?? '').trim();
-  } catch {
-    return false;
-  }
-}
 
 /** Ollama 服务探活（超时 → 当没起；服务没起不是错误，只是这一项还没配） */
 export async function probeOllamaService(timeoutMs = 3000): Promise<{ up: boolean; models: string[] }> {
@@ -197,6 +184,14 @@ function tableOf(
  */
 export function openDepsGuide(app: unknown = getApp()): void {
   const ctx = { pluginDir: pluginDirOf(app), vaultDir: vaultBasePathOf(app) };
+  // 拿不到绝对路径 = 手机上（或者 adapter 给不出 base path）。清单里全是「装进 Program Files /
+  // PATH / Ollama 模型目录」这种事，手机上一个位置都没有，提示词还会写成
+  // 「不要装进 Obsidian 仓库 」「/.obsidian/plugins/bz/data.json」——给不出一份能用的东西，
+  // 就别弹窗。设置页那行在移动端已经隐藏，这里兜住另外两个入口（引导完成屏、第二大脑面板）。
+  if (!ctx.pluginDir || !ctx.vaultDir) {
+    notice('外部工具只能在电脑上装：手机没有能放这些运行时和模型的位置', 'info');
+    return;
+  }
   let picked = defaultPicked();
 
   const root = el('div', 'bz-deps');
@@ -216,6 +211,8 @@ export function openDepsGuide(app: unknown = getApp()): void {
   const handles: Array<{ item: PlanItem; input: HTMLInputElement }> = [];
   /** 普通项右格（Ollama 那一行要换成探活结果，得留个引用） */
   const valNodes = new Map<PlanItemId, HTMLElement>();
+  /** 重排的生效门槛提示（只在「勾了重排 + 嵌入不是 8B」时出现，见 refresh） */
+  let rerankWarn: HTMLElement | null = null;
 
   for (const groupName of PLAN_GROUPS) {
     const items = PLAN_ITEMS.filter((i) => i.group === groupName);
@@ -257,6 +254,13 @@ export function openDepsGuide(app: unknown = getApp()): void {
     }
 
     group.appendChild(card);
+    // 重排的门槛就地摆在表格下面：勾了重排却不是 8B 嵌入时，这 2.5 GB 装了不跑，
+    // 用户没有别的机会知道（设置页那行在同样条件下是隐藏的，等于什么都不说）。
+    if (items.some((i) => i.radio === 'rerank')) {
+      rerankWarn = el('div', 'bz-deps-warn');
+      rerankWarn.hidden = true;
+      group.appendChild(rerankWarn);
+    }
     body.appendChild(group);
   }
 
@@ -301,6 +305,13 @@ export function openDepsGuide(app: unknown = getApp()): void {
     cntNode.textContent = String(count);
     sizeNode.textContent = formatSize(mb);
     pre.textContent = buildPlanPrompt(picked, ctx);
+    if (rerankWarn) {
+      const blocked = localRerankBlocked(picked);
+      rerankWarn.hidden = !blocked;
+      rerankWarn.textContent = blocked
+        ? '本地重排只在向量模型选 qwen3-embedding:8b 时启用。现在这套组合装了也不会跑，最后一步会把重排总闸写成关闭。'
+        : '';
+    }
   }
 
   for (const h of handles) {

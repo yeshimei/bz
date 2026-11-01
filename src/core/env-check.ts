@@ -218,8 +218,8 @@ async function storageDirOf(): Promise<string> {
 /**
  * 找 Python（脸谱导入微信记录、知识盒语音转写要用）。
  *
- * **只探测、不安装**：装的动作在引导页 / 自检的补齐队列里（core/dep-runtime 的
- * installDep），这里只回答「现在有没有、在哪、哪个版本」。
+ * **只探测、不安装**：装的动作在「安装外部工具」那张清单里（core/deps-plan 出提示词，
+ * 由用户或 AI 装到系统位置），这里只回答「现在有没有、在哪、哪个版本」。
  *
  * 一个必须避开的坑：Windows 10/11 的 `%LOCALAPPDATA%\Microsoft\WindowsApps\python.exe`
  * 是**应用商店别名占位符**，每台机器都有、跑起来什么都不做（要么弹商店，要么直接退出）。

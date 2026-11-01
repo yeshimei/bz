@@ -5405,6 +5405,17 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 /* 第二张表（重排）与第一张（嵌入）之间：一条分隔 + 拉开一档 */
 .bz-deps-sub { margin-top: 16px; padding-top: 12px; border-top: 1px solid var(--bz-border); }
 
+/* 门槛提示（重排只在 8B 嵌入时生效）：挂在卡片下面的说明行，不抢勾选区的视线——
+   用警示色但只做左边一条细线，别做成红底横幅（那不是错误，是条件没满足）。 */
+.bz-deps-warn {
+  margin: 8px 0 0 2px;
+  padding-left: 8px;
+  border-left: 2px solid var(--bz-warning);
+  font-size: var(--bz-font-caption);
+  line-height: 1.6;
+  color: var(--bz-text-2);
+}
+
 /* ── 徽章 / 链接（表内与行内共用） ── */
 .bz-deps-pill {
   display: inline-block;
