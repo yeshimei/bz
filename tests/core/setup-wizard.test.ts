@@ -91,16 +91,17 @@ describe('体积文案', () => {
   });
 });
 
-describe('首装大件：豆瓣索引不在这一屏下（交给启动链的自动更新后台补）', () => {
-  it('豆瓣索引标成可选（照样列出来、照样默认勾），文案说明体积大', () => {
-    const item = buildSetupTasks({}, manifest, { nodeMissing: false }).find((t) => t.id === 'cinema-douban-index')!;
-    expect(item.optional).toBe(true);
-    expect(item.desc).toContain('体积较大');
-    // 其它文档不是按需项：该下的还是要下
-    expect(buildSetupTasks({}, manifest, { nodeMissing: false }).find((t) => t.id === 'changelog')!.optional).toBeUndefined();
+describe('首装与启动链同口径：在线资源一次全下（2026-11-02 用户拍板）', () => {
+  it('大件索引没有「可先跳过」的例外：与其它文档同形（只给名称与体积）', () => {
+    const items = buildSetupTasks({}, manifest, { nodeMissing: false });
+    const big = items.find((t) => t.id === 'cinema-douban-index')!;
+    const normal = items.find((t) => t.id === 'changelog')!;
+    expect(big.desc).toBe(normal.desc);
+    expect(big.desc).toBe('');
+    expect(big.size).toBeGreaterThan(0); // 体积照实给，用户看得见这一项大
   });
 
-  it('defaultSelection 全部勾上（含按需项与皮肤：装了不等于能用，用户 2026-10-28 拍板）', () => {
+  it('defaultSelection 全部勾上（含大件索引与皮肤：装了不等于能用，用户 2026-10-28 拍板）', () => {
     const items = buildSetupTasks({}, manifest, { nodeMissing: true }).map((t) => ({ ...t, ready: false }));
     const selected = defaultSelection(items);
     expect(selected.has('cinema-douban-index')).toBe(true);

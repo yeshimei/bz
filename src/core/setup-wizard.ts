@@ -65,8 +65,6 @@ export interface SetupItem {
   size: number | null;
   /** 磁盘上已经就绪（已下载 / 已有可用运行时）——重跑时不重下 */
   ready: boolean;
-  /** 按需项：只影响「装完再补」的提示，勾选口径与其他项一致（默认全勾） */
-  optional?: boolean;
   /** 干活；`report` 用于中途改这一行的状态文字（进度、阶段） */
   run: (report?: (text: string) => void) => Promise<void>;
 }
@@ -159,24 +157,19 @@ function bundleItem(app: unknown, e: ManifestDocEntry): Omit<SetupItem, 'ready'>
 }
 
 function docItem(app: unknown, e: ManifestDocEntry): Omit<SetupItem, 'ready'> {
-  // 大索引（豆瓣影视索引 7.2MB）不占首装：它只服务影院域的输入联想，用到的域进页面时自己拉。
-  // 首装跟着下一遍，是纯占地方——而且走镜像要 30 秒，正好卡在「最后一项」让人以为卡死。
-  const lazy = LAZY_DOC_IDS.has(e.id);
   return {
     id: e.id,
     kind: 'doc',
     label: e.name,
-    desc: lazy ? '体积较大，可先跳过' : '',
+    // 名称 + 体积就是全部信息：这一屏与启动链的自动更新（ADR-0281）口径一致，
+    // 全都是「列出来、勾上、这一次就下完」，没有「可先跳过 / 用到再拉」这种例外
+    desc: '',
     size: e.size ?? null,
-    ...(lazy ? { optional: true } : {}),
     run: async () => {
       await ensureAssetWithHash(app, e.file, e.sha256, e.name, e.size);
     },
   };
 }
-
-/** 首装不勾的大件资源 id：这一屏不下，交给启动链的自动更新后台补（ADR-0281） */
-export const LAZY_DOC_IDS = new Set(['cinema-douban-index']);
 
 /** 磁盘上这一项是不是已经就绪（重跑引导时用来跳过，避免白拉几十 MB） */
 async function isReady(
@@ -211,9 +204,10 @@ export async function planSetupItems(
 
 /**
  * 缺省勾选：**全部勾上**（2026-10-28 用户拍板「默认全部都下载」）。
- * 早前把皮肤和按需项留空，理由是「提前下纯占地方」——实际用起来是「装了不等于能用」：
- * 皮肤要单点、索引要等首次进影院才拉，用户以为坏了。已经就绪的项照旧不列进勾选
- * （selectedTasks 会再滤一遍，勾中也只补真缺的）。
+ * 早前把皮肤和大件索引留空，理由是「提前下纯占地方」——实际用起来是「装了不等于能用」：
+ * 皮肤要单点、索引要等首次进影院才拉，用户以为坏了。2026-11-02 用户再确认一次口径：
+ * 引导页全下、启动链的自动更新也全补（ADR-0281），两边**不留任何按需例外**。
+ * 已经就绪的项照旧不列进勾选（selectedTasks 会再滤一遍，勾中也只补真缺的）。
  */
 export function defaultSelection(items: SetupItem[]): Set<string> {
   const sel = new Set<string>();
@@ -688,7 +682,6 @@ async function stageResources(ctx: WizardCtx, st: WizardState, ui: Ui): Promise<
       };
       row.append(box, keyEl(it.label, it.desc), valEl(it.ready ? '已就绪' : sizeText(it.size) || '待下载'));
       if (it.ready) row.classList.add('is-ok');
-      if (it.optional && !it.ready) row.dataset.optional = '1';
       wrap.card.appendChild(row);
     }
     ui.body.appendChild(wrap.group);
