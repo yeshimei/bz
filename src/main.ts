@@ -17,6 +17,8 @@ import { closeAllModals } from './core/ui/modal';
 import { closeAllOverlays } from './core/dom';
 import { setApp, getApp } from './core/app';
 import { setPluginRelDir, vaultBasePathOf } from './core/plugin-path';
+import { compareVersions } from './core/version';
+import { CHANGELOG_RELEASES, pickReleaseFor, releaseEntryCount } from './core/changelog-data';
 import { scheduleSelfUpdateCheck } from './core/self-update';
 import { applySkinManifest, loadLocalSkinPack } from './core/skin-pack';
 import { refreshManifest } from './core/download-manifest';
@@ -303,6 +305,21 @@ export default class BzPlugin extends Plugin {
   /** 设置落盘串行队列（C15）：并发 saveSettings 排队写入 */
   private saveQueue: Promise<void> = Promise.resolve();
 
+  /** 「本次更新」小窗还等着第一次打开 bz 界面才弹（2026-11-02 用户拍板）。
+   *  null = 没有待弹的（未升级 / 已弹过 / 已经记过账）。存版本号而不是布尔：
+   *  弹之前还要拿它去日志里严格对版本，对不上就既不弹也不记账。 */
+  private pendingNoteVersion: string | null = null;
+
+  /** 「本次更新」弹窗正在处理中（单飞闸）：同一 tick 多个入口各调一次时，
+   *  它们都会在 `await loadData()` 处读到同一个旧 seen，于是各弹一个窗。
+   *  真环境探针实测会叠出两层遮罩，这里只放一个进去。 */
+  private changelogNoteBusy = false;
+  /** onload 时 data.json 是否已存在（`loadData()` 返回非 null）。
+   *  真新装 = 没有 data.json → 更新提示只记账不弹；老库 = 有 → 有更新就弹。
+   *  用它而不是「首次引导要不要弹」：手机端不弹引导，那个判据在手机上恒为假，
+   *  会把新装的手机用户当成老用户。 */
+  private settingsFileExisted = false;
+
   /** 卸载旗标（C13）：onLayoutReady 回调 / 延迟初始化定时器不随插件卸载摘除，
    *  启动窗口期内禁用插件后布局就绪（或 setTimeout 到点）须短路，防幽灵初始化且无卸载路径 */
   private unloaded = false;
@@ -321,6 +338,8 @@ export default class BzPlugin extends Plugin {
     // data.json 是否存在：存在 = 设置写得进去，引导判据只信设置（里面写没写 setupDone 都一样）；
     // 不存在 = 只读库/从未写过设置，才轮到 localStorage 兜底（判据细节见 core/setup-wizard）
     const setupDoneSaved = !!loaded && typeof loaded === 'object';
+    // 同一事实的第二用途：更新提示靠它区分「真新装」与「老库升级」（见 armChangelogNote）
+    this.settingsFileExisted = setupDoneSaved;
     // issue 260 正名迁移：旧 todo* 面板设置键就地改名（读旧写新删旧）；
     // C16：发生迁移即调度落盘——原先只改内存，data.json 旧键长期残留、每次启动重复迁移
     const memoKeysMigrated = migrateMemoSettingKeys(loaded);
@@ -418,10 +437,17 @@ export default class BzPlugin extends Plugin {
     if (Platform.isMobile) await primeVaultFs(this.app);
 
     // 命令裸注册（ADR-0004：app.commands.addCommand 原样 id 注册——plugin.addCommand 会被 Obsidian 自动加插件前缀，主页.js 等外部裸 id 调用会失效）
+    // 「用过 bz」的信号就在这里打（2026-11-02）：升级提示只等第一次打开任意 bz 界面，
+    // 命令是绝大多数入口，ribbon 另行包装。
     for (const c of COMMANDS) {
       // 域开关（ADR-0254）：小橘关着时整组不注册——命令面板里连名字都不出现
       if (!this.smartcatDomainOn && isSmartcatCommand(c.id)) continue;
-      (this.app as any).commands.addCommand({ id: c.id, name: c.name, icon: c.icon, callback: c.callback });
+      (this.app as any).commands.addCommand({
+        id: c.id,
+        name: c.name,
+        icon: c.icon,
+        callback: this.withNoteHook(c.callback),
+      });
       this.registeredCommandIds.push(c.id);
     }
 
@@ -437,7 +463,7 @@ export default class BzPlugin extends Plugin {
         id: cmdId,
         name: `运行工具：${dockToolLabel(entry)}`,
         icon: DOMAIN_ICONS.dock,
-        callback: () => void runToolDirect(getApp(), entry.id),
+        callback: this.withNoteHook(() => void runToolDirect(getApp(), entry.id)),
       });
       this.registeredCommandIds.push(cmdId); // 卸载随 registeredCommandIds 一并摘除
     }
@@ -446,8 +472,9 @@ export default class BzPlugin extends Plugin {
     ensureAttachFileMenu(this);
 
     // ribbon 主入口：备忘录 + 日记本（diary = ADR-0115 回忆墙升格，命令直挂不启动即 init）
-    this.addRibbonIcon('check-square', '备忘录', () => openMemoPanel(this.app));
-    this.addRibbonIcon('notebook-pen', '日记本', () => openDiary(getApp()));
+    // 不走命令表，所以「用过 bz」的信号在这两处单独打（工具坞那颗在下面的状态栏回调里）
+    this.addRibbonIcon('check-square', '备忘录', this.withNoteHook(() => openMemoPanel(this.app)));
+    this.addRibbonIcon('notebook-pen', '日记本', this.withNoteHook(() => openDiary(getApp())));
 
     // 番茄钟状态栏（ticket 29：常驻倒计时，点击打开弹窗）
     mountPomodoroStatusBar(this.addStatusBarItem(), this.app);
@@ -456,7 +483,7 @@ export default class BzPlugin extends Plugin {
     mountEncryptStatusBar(this.addStatusBarItem());
 
     // 工具坞状态栏：面板没开也看得见「有工具在跑」，点击打开面板
-    mountDockStatusBar(this.addStatusBarItem(), () => openDock(getApp()));
+    mountDockStatusBar(this.addStatusBarItem(), this.withNoteHook(() => openDock(getApp())));
 
     // 设置页
     this.addSettingTab(new BzSettingTab(this.app, this));
@@ -464,7 +491,11 @@ export default class BzPlugin extends Plugin {
     // 测试合集（开发工作流，ADR-0276）：仅测试库构建（__BZ_DEV__ define）注册；
     // false 时动态 import 分支被摇树，发布版零残留。typeof 守卫兼容无 define 的测试环境。
     if (typeof __BZ_DEV__ !== 'undefined' && __BZ_DEV__) {
-      void import('./core/dev-flows').then((m) => m.registerDevFlows(this));
+      void import('./core/dev-flows').then((m) => {
+        m.registerDevFlows(this);
+        // 数据目录放了 debug-flow.json 就开机自动把那条流程跑一遍（演示用，不用点）
+        this.app.workspace.onLayoutReady(() => m.autoStartDevFlow(this, storageDir()));
+      });
     }
 
     // 事件常驻域按设置开关注册（懒加载架构）
@@ -478,9 +509,9 @@ export default class BzPlugin extends Plugin {
       // 移动端不弹引导（openSetupWizard 直接劝退）→ 也就不存在「先弹它」这回事，别误压备忘录。
       const needSetup =
         !isMobileEnv() && !setupAlreadyDone(this.settings, vaultBasePathOf(this.app), setupDoneSaved);
-      // 新版本启动即弹更新日志（用户拍板 2026-10-31）：manifest 版本 ≠ 上次记录 = 升级了。
-      // 新装（这轮要弹引导）只记录不弹；移动端无引导概念，照常走弹窗检测。
-      this.checkChangelogOnStart(needSetup);
+      // 升级提示只「上膛」不弹（2026-11-02 用户拍板：第一次打开 bz 任意界面才弹）。
+      // 真正的判定与记录在 armChangelogNote / noteBzUsed / showChangelogNote 里。
+      this.armChangelogNote();
       // 备忘录提醒后台：启动自动弹出 + 打开笔记提醒（落点=备忘录面板；设置键 autoPopupOnStart/openNoteReminder）。
       // 要弹引导时只跳过「启动自动弹出」——事件监听照挂，引导背后不该先蹦出一个备忘录面板。
       ensureMemoReminders(this.app, { skipStartPopup: needSetup });
@@ -704,7 +735,12 @@ export default class BzPlugin extends Plugin {
     for (const c of COMMANDS) {
       if (!isSmartcatCommand(c.id)) continue;
       if (on) {
-        commands.addCommand({ id: c.id, name: c.name, icon: c.icon, callback: c.callback });
+        commands.addCommand({
+          id: c.id,
+          name: c.name,
+          icon: c.icon,
+          callback: this.withNoteHook(c.callback),
+        });
         if (!this.registeredCommandIds.includes(c.id)) this.registeredCommandIds.push(c.id);
       } else {
         try {
@@ -719,42 +755,96 @@ export default class BzPlugin extends Plugin {
     else unloadSmartCat();
   }
 
-  /** 新版本启动自动弹更新日志（用户拍板 2026-10-31）：onLayoutReady 调用。
-   *  口径：settings.changelogSeenVersion ≠ manifest.version = 升级了 → 弹。
-   *  - 新装（needSetup）：首次引导是这轮启动的第一个界面，只记录当前版不弹——
-   *    新装用户还没用过插件，没有「更新了什么」可看。
-   *  - seen 为空且不需要引导 = 本功能上线前老库的升级 → 也弹（这次升级就是新版本）。
-   *  - 弹窗内容走 core/changelog 的强制口径：先向远端拿与新版配套的日志（自更新装新版时
-   *    已同步拉过一次，这里再核对兜底），离线回落本地已存版；打开成功才落盘 seen，
-   *    失败（离线且本地从没下载过）不记录、下次启动再试。自动弹失败**不出通知**——
-   *    没人主动要求看日志，弹个错误脸比不弹更吵。 */
-  private checkChangelogOnStart(needSetup: boolean): void {
+  /** 升级提示「上膛」（2026-11-02，精简版）。
+   *
+   *  判据只有一条：`settings.changelogSeenVersion` 比 `manifest.version` 旧 = 升级过 → 上膛，
+   *  等用户**第一次打开 bz 任意界面**（noteBzUsed）时才弹一次小窗。启动本身不弹任何东西。
+   *  - data.json 本来就不存在（`settingsFileExisted` 为假）= 真新装：只记账不弹；
+   *  - data.json 存在、seen 为空 = 本功能上线前的老库：当作升级，上膛一次——
+   *    这一版正好是「老用户该看到的那次更新」；
+   *  - 降级 / 回滚（current < seen）：只记账不弹。
+   *  上膛只是内存标记，不落盘：没弹成就下次启动再来，落盘由 showChangelogNote 负责。 */
+  private armChangelogNote(): void {
     const current = String(this.manifest?.version || '');
-    const seen = this.settings.changelogSeenVersion;
-    if (!current || seen === current) return;
-    if (needSetup) {
-      this.settings.changelogSeenVersion = current;
-      void this.saveSettings().catch((e) => console.error('[bz] 更新日志版本记录落盘失败:', e));
+    if (!current) return;
+    if (!this.settingsFileExisted) {
+      void this.markChangelogSeen(current);
       return;
     }
-    // 延到事件循环：onLayoutReady 回调里不抢引导/备忘录那批同步动作的时序
-    setTimeout(() => {
-      if (this.unloaded) return;
-      void (async () => {
-        try {
-          const [core, modal] = await Promise.all([
-            import('./core/changelog'),
-            import('./settings-panel/changelog'),
-          ]);
-          const html = await core.fetchChangelogForStartup(getApp());
-          modal.openChangelogModal(html, current);
-          this.settings.changelogSeenVersion = current;
-          await this.saveSettings();
-        } catch {
-          /* 静默：离线且无本地日志 → 不落记录，下次启动再试 */
+    const seen = String(this.settings.changelogSeenVersion || '');
+    const cmp = seen ? compareVersions(current, seen) : 1; // seen 为空 = 老库，算升级
+    if (cmp > 0) this.pendingNoteVersion = current;
+    else if (cmp < 0) void this.markChangelogSeen(current); // 降级：记账，不打扰
+  }
+
+  /** 「用过 bz」的信号：命令 / ribbon / 状态栏入口都先打这个点再干活。
+   *  只在有待弹版本时生效，且取走即清空（同一次会话内绝不弹第二次）。 */
+  private noteBzUsed(): void {
+    const version = this.pendingNoteVersion;
+    if (!version) return;
+    this.pendingNoteVersion = null;
+    void this.showChangelogNote(version);
+  }
+
+  /** 命令回调的包装（含小橘域重注册那条路径，三处用法一致） */
+  private withNoteHook(fn: () => void): () => void {
+    return () => {
+      this.noteBzUsed();
+      fn();
+    };
+  }
+
+  /**
+   * 弹「本次更新」小窗。数据是**内置**的（core/changelog-data）：不下载远端日志，
+   * 也就不存在「远端没跟上、弹了上一版内容」这回事。
+   *  - 小窗里列**内置的全部版本**（最新展开、更早的折叠，用户自己点开）——
+   *    跨版本更新的用户不会被吞掉中间几版，也不必去猜他跨了几版；
+   *  - 内置数据里没有当前这一版（发版漏加）/ 三段全空 → 记账，不弹空窗；
+   *  - **先记账、写成功才弹**：写不进去就这次不弹、下次启动再试——绝不出现
+   *    「弹了但没记住 → 每次启动都弹」的死循环。
+   */
+  private async showChangelogNote(version: string): Promise<void> {
+    // 单飞闸：同一 tick 里多个入口各调一次（连点/多窗口入口），都会在 await loadData 处
+    // 读到同一个旧 seen，于是各弹一个窗——真环境实测会叠出两层遮罩。这里只放一个进去。
+    if (this.changelogNoteBusy) return;
+    this.changelogNoteBusy = true;
+    try {
+      // 两个 Obsidian 窗口各持一份启动时读的旧 seen，都会上膛。弹之前重新读一次盘：
+      // 另一个窗口已经写过 = 它已经弹过，这边就安静退出。只多一次 loadData，不引入任何新文件。
+      try {
+        const disk = (await this.loadData()) as { changelogSeenVersion?: string } | null;
+        const diskSeen = String(disk?.changelogSeenVersion || '');
+        if (diskSeen && compareVersions(diskSeen, version) >= 0) return;
+      } catch {
+        /* 读不到就按内存里的判断走 */
+      }
+
+      const release = pickReleaseFor(CHANGELOG_RELEASES, version);
+      if (!release || releaseEntryCount(release) === 0) {
+        if (!release) {
+          console.warn(`[bz] 更新提示：内置日志里没有 v${version} 这一版（发版时漏加了？），本次不弹`);
         }
-      })();
-    }, 0);
+        await this.markChangelogSeen(version);
+        return;
+      }
+      if (!(await this.markChangelogSeen(version))) return;
+      const note = await import('./settings-panel/changelog-note');
+      note.openChangelogNote(CHANGELOG_RELEASES, version);
+    } finally {
+      this.changelogNoteBusy = false;
+    }
+  }
+
+  /** 记下「这一版的提示已经给过了」并落盘；返回是否写成功 */
+  private async markChangelogSeen(version: string): Promise<boolean> {
+    this.settings.changelogSeenVersion = version;
+    try {
+      await this.saveSettings();
+      return true;
+    } catch (e) {
+      console.error('[bz] 更新日志版本记录落盘失败:', e);
+      return false;
+    }
   }
 }
 

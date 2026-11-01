@@ -189,6 +189,9 @@ export interface SpRowVm {
   cls?: string;
   /** info 区：名称/描述/备注（↳ 前缀 note）；custom 行 = info + 自定义内容 */
   name?: string;
+  /** 行名尾部的可点小字（来自 RowBase.nameAddon；如 QQ 交流群后的群号） */
+  addonText?: string;
+  addonTitle?: string;
   desc?: string;
   note?: string;
   /** 控件区 HTML（isCards 时容器用 .bz-sp-set-cards；isCustom 时为整行自定义内容） */
@@ -205,7 +208,14 @@ export function rowHtml(vm: SpRowVm): string {
   if (vm.isCards) cls.push('bz-sp-set-row--cards');
   if (vm.isCustom) cls.push('bz-sp-set-row--custom');
   const open = `<div class="${cls.join(' ')}"${vm.key ? ` data-key="${esc(vm.key)}"` : ''}>`;
-  const name = vm.name ? `<div class="bz-sp-set-name">${esc(vm.name)}</div>` : '';
+  const nameEl = vm.name ? `<div class="bz-sp-set-name">${esc(vm.name)}</div>` : '';
+  // 可点小字放**行名之外**（同一行的 flex 容器里）：搜索命中高亮会重建
+  // .bz-sp-set-name 的 textContent，挂里面会被整块清掉；放外面顺带让行名
+  // 的 textContent 仍等于行名本身（滚动定位按全等匹配）。
+  const name = vm.addonText
+    ? `<div class="bz-sp-set-namewrap">${nameEl}` +
+      `<button type="button" class="bz-sp-set-addon" title="${esc(vm.addonTitle || '点击复制')}">${esc(vm.addonText)}</button></div>`
+    : nameEl;
   const desc = vm.desc ? `<div class="bz-sp-set-desc">${esc(vm.desc)}</div>` : '';
   if (vm.isCustom) {
     return `${open}<div class="bz-sp-set-info">${name}${desc}</div>${vm.ctrlHtml ?? ''}</div>`;

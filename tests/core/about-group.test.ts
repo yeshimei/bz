@@ -5,10 +5,10 @@
  * 测的是**文案口径**（版本行最容易骗人的地方）与组形状：
  *  - 待重载要写清「已下载 vX，重载后生效」——否则用户看到「更新了但版本没变」；
  *  - 发现新版、检查失败各有一句；
- *  - 组里必须有版本 / 自动更新 / 反馈 / 打赏四行，且**自动更新默认关**（对外分发的缺省）。
+ *  - 组里必须有版本 / 自动更新 / 打赏三行，且**自动更新默认关**（对外分发的缺省）。
  */
 import { describe, it, expect } from 'vitest';
-import { versionDesc, FEEDBACK_URL } from '../../src/core/about-group';
+import { versionDesc, REPO_URL } from '../../src/core/about-group';
 import type { SelfUpdateState } from '../../src/core/self-update';
 
 function stateOf(over: Partial<SelfUpdateState> = {}): SelfUpdateState {
@@ -51,8 +51,8 @@ describe('versionDesc：版本行说人话', () => {
 });
 
 describe('反馈渠道', () => {
-  it('直接指向仓库的 issues（与下载通道同一个 slug，不另立一处字面量）', () => {
-    expect(FEEDBACK_URL).toBe('https://github.com/yeshimei/bz/issues');
+  it('GitHub 行直接指向仓库首页（反馈已并入这一行，2026-11-02 撤掉独立「反馈」行）', () => {
+    expect(REPO_URL).toBe('https://github.com/yeshimei/bz');
   });
 });
 
@@ -64,7 +64,7 @@ describe('反馈渠道', () => {
  *  ③ 点到之后没有任何即时可感知的东西。
  * ------------------------------------------------------------------ */
 import { beforeEach, vi } from 'vitest';
-import { requestUrl } from 'obsidian';
+import { requestUrl, Platform } from 'obsidian';
 import { resetObsidianMocks, clearNotices } from '../mock-obsidian-entry';
 import { MockVault } from '../mock-vault';
 import { setApp } from '../../src/core/app';
@@ -90,6 +90,8 @@ beforeEach(() => {
   resetSelfUpdateState();
   clearNotices();
   document.body.innerHTML = '';
+  // 平台判定默认回桌面端：移动端用例自己打开，别把状态漏给下一个用例
+  (Platform as { isMobile: boolean }).isMobile = false;
   setPluginRelDir(null); // 别的用例注入过目录时别串味
   setSettingsProvider(() => ({}) as never);
   vi.mocked(requestUrl).mockReset();
@@ -109,6 +111,32 @@ describe('版本行的动作声明', () => {
     expect(a.text).toBe('检查并更新');
     expect(a.stateful).toBe(true);
     expect(a.okText).toBe('已是最新');
+  });
+});
+
+describe('QQ 交流群行（2026-11-02）', () => {
+  it('群号直接挂在行名后面、可点复制（mqqapi 唤起会静默失败，号得能自己拿到）', async () => {
+    appWith();
+    const g = await aboutGroup();
+    const row = g.rows.find((r) => r.name === 'QQ 交流群') as { nameAddon?: { text: string; title?: string } };
+    expect(row).toBeTruthy();
+    expect(row.nameAddon?.text).toBe('1130883117');
+    expect(row.nameAddon?.title).toBe('点击复制群号');
+  });
+
+  it('桌面端按钮写「复制群号」：NT QQ 当面弹「版本不支持本功能」，不能承诺一键加群', async () => {
+    appWith();
+    const g = await aboutGroup();
+    const row = g.rows.find((r) => r.name === 'QQ 交流群') as { buttonText: string };
+    expect(row.buttonText).toBe('复制群号');
+  });
+
+  it('手机端仍是「加入」：那条 mqqapi 在手机 QQ 上是通的', async () => {
+    (Platform as { isMobile: boolean }).isMobile = true;
+    appWith();
+    const g = await aboutGroup();
+    const row = g.rows.find((r) => r.name === 'QQ 交流群') as { buttonText: string };
+    expect(row.buttonText).toBe('加入');
   });
 });
 

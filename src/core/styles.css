@@ -1264,6 +1264,9 @@ button.bz-rowbtn--fail {
   background: var(--bz-border-strong); position: relative; overflow: hidden;
 }
 .bz-dev-replay .seg.done { background: color-mix(in srgb, var(--interactive-accent) 82%, transparent); }
+/* 没走完的步骤：红一格——「第 N 步卡住了」在条带上就该看得见，不用回去翻日志 */
+.bz-dev-replay .seg.bad { background: var(--color-red); }
+.bz-dev-replay .floater .fi.bad { color: var(--color-red); }
 .bz-dev-replay .seg.cur { background: var(--bz-surface-3); box-shadow: 0 0 0 1px color-mix(in srgb, var(--interactive-accent) 45%, transparent); }
 .bz-dev-replay .seg.cur::after {
   content: ''; position: absolute; inset: 0; transform-origin: left;

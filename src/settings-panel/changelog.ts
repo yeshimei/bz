@@ -22,6 +22,7 @@ import { topifyZ } from '../core/z-order';
 import { bindMaskDismiss } from '../core/mask-dismiss';
 import { escManager } from '../core/esc-manager';
 import { trapPanelFocus } from '../core/ui/focus-trap';
+import { bindChangelogLinks, changelogLinksHtml } from './changelog-links';
 
 const OVERLAY_ID = 'bz-changelog-overlay';
 const FRAME_ID = 'bz-changelog-popup';
@@ -93,6 +94,8 @@ function build(): void {
   frame.className = 'bz-panel-frame bz-sp-skin bz-panel-mtop bz-chg-popup';
   frame.innerHTML = shellHtml();
   frame.querySelector<HTMLElement>('.bz-chg-close')?.addEventListener('click', hide);
+  const tools = frame.querySelector<HTMLElement>('.bz-chg-tools');
+  if (tools) bindChangelogLinks(tools);
   ov.appendChild(frame);
   // 点遮罩关闭：手势配对判据（core/mask-dismiss）——跨元素松手不算点击
   bindMaskDismiss(ov, hide);
@@ -106,7 +109,12 @@ const CLOSE_BTN = `<button class="bz-chg-close" type="button" aria-label="关闭
     stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
 </button>`;
 
-/** 弹窗骨架（无头行——与手册弹窗同形态，用户拍板：外壳不出标题，零留白贴边） */
+/** 弹窗骨架（无头行——与手册弹窗同形态，用户拍板：外壳不出标题，零留白贴边）。
+ *  右下角浮一条外部入口（GitHub / B 站 / QQ 群 / 支持作者，2026-11-02 用户要求）：
+ *  日志正文是 iframe 里的远端文档，改不了它的结构，所以这组按钮挂在外壳上、盖在 iframe 之上。 */
 function shellHtml(): string {
-  return `${CLOSE_BTN}<div class="bz-chg-body"><iframe class="bz-chg-frame" title="更新日志"></iframe></div>`;
+  return (
+    `${CLOSE_BTN}<div class="bz-chg-body"><iframe class="bz-chg-frame" title="更新日志"></iframe></div>` +
+    `<div class="bz-chg-tools">${changelogLinksHtml()}</div>`
+  );
 }

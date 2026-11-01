@@ -355,10 +355,22 @@ function renderRow(
     isCards: isCardsRow,
     isCustom,
     name: rowName,
+    addonText: (row as { nameAddon?: { text: string; title?: string } }).nameAddon?.text,
+    addonTitle: (row as { nameAddon?: { text: string; title?: string } }).nameAddon?.title,
     desc: (row as { desc?: string }).desc,
     note: (row as { note?: string }).note,
   });
   const el = holder.firstElementChild as HTMLElement;
+  // 行名尾部的可点小字（2026-11-02：QQ 交流群的群号）：按钮由 rowHtml 生成，
+  // 行为在这里绑——回调用 schema 里那份，别在样式层猜语义。
+  const addon = (row as { nameAddon?: { onClick: () => void } }).nameAddon;
+  if (addon) {
+    el.querySelector<HTMLElement>('.bz-sp-set-addon')?.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      addon.onClick();
+    });
+  }
   // 用法说明（issue 457 二轮）：入口 = 标题自己（悬停/点击出浮窗），不再往标题旁挂图标。
   // 挂类就地在 .bz-sp-set-name 上——搜索命中高亮只重建该元素的 textContent，监听与类都不丢。
   const helpText = (row as { help?: string }).help;

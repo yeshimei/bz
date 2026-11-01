@@ -624,8 +624,8 @@ export async function checkSelfUpdate(app: unknown, opts: SelfUpdateOptions = {}
   writeStore(PENDING_KEY, { version: pointer.version });
   // 用户拍板 2026-10-31：更新插件 = **强制同更更新日志**。新三件套落盘后马上向远端
   // 拉与新版配套的日志（channel 上的 downloads/bz-changelog.html），落进插件目录——
-  // 重载后的启动检测（fetchChangelogForStartup）才有得秒开。失败静默：不挡更新完成，
-  // 启动检测那条线在重载后还会再强制核对一次，两层兜底。
+  // 设置面板里点「更新日志」看完整历史时才有得秒开。失败静默：不挡更新完成。
+  // （2026-11-02 起升级提示小窗不再吃这份远端日志，改吃内置数据 core/changelog-data。）
   void (async () => {
     try {
       const { refreshChangelog } = await import('./changelog');

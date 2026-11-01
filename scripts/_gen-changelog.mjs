@@ -140,7 +140,13 @@ function rewrite(subject) {
 /** 版本基线：只从这一版起算（更早的 tag 与提交不进日志，历史不重写、不改写） */
 const BASELINE_TAG = 'v1.35.0';
 
-const generatedAt = new Date().toISOString().slice(0, 10);
+/** 今天（本地时区）。别用 toISOString：它是 UTC，东八区凌晨跑出来的日志会写成前一天
+ *  ——2026-11-02 早发 v1.40.0 就撞过：tag 记 11-02、日志块写 11-01。 */
+const generatedAt = (() => {
+  const d = new Date();
+  const p = (n) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
+})();
 
 const git = (args) => execSync(`git ${args}`, {
   cwd: ROOT, maxBuffer: 64 * 1024 * 1024, encoding: 'utf8',

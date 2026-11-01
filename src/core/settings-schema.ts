@@ -76,6 +76,17 @@ interface RowBase {
   isChild?: boolean;
   /** 行底补充提示（拍板原型：『↳』前缀灰字，渲染于描述之下——如存储路径的迁移提示） */
   note?: string;
+  /**
+   * 行名尾部的可点小字（2026-11-02 用户要求：QQ 交流群行名后面挂群号，点一下复制）。
+   * 与 desc/note 的分工：那两者是**说明**，这个是**动作**——所以渲染成可点元素
+   * （带下划线暗示、hover 变色），不是灰字。
+   */
+  nameAddon?: {
+    text: string;
+    /** 悬停提示；缺省「点击复制」 */
+    title?: string;
+    onClick: () => void;
+  };
 }
 
 interface ToggleRow extends RowBase {
@@ -546,6 +557,25 @@ export function renderSettingsInto(container: HTMLElement, schema: SettingsSchem
   /** 行 Setting 统一构建：名称 + 可选描述 + visibleWhen 显隐登记（七类行共用样板收口） */
   const newRowSetting = (body: HTMLElement, row: RowBase & { name: string }): Setting => {
     const setting = new Setting(body).setName(row.name);
+    // 行名尾部的可点小字（原生设置界面这一侧）：append 到 nameEl，用的是 Obsidian
+    // 原生的行排版，只靠 .bz-row-addon 收一下间距与可点观感。
+    if (row.nameAddon) {
+      const addon = row.nameAddon;
+      const nameEl = (setting as unknown as { nameEl?: HTMLElement }).nameEl;
+      if (nameEl) {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'bz-row-addon';
+        btn.textContent = addon.text;
+        btn.title = addon.title || '点击复制';
+        btn.addEventListener('click', (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          addon.onClick();
+        });
+        nameEl.appendChild(btn);
+      }
+    }
     if (row.desc) setting.setDesc(row.desc);
     attachHelp(setting, row.help);
     if (row.visibleWhen) entries.push({ el: setting.settingEl, visibleWhen: row.visibleWhen });

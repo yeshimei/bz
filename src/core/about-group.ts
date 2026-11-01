@@ -24,13 +24,13 @@ import { notify } from './notice';
 import { openExternalUrl } from './utils';
 import { REPO_SLUG } from './remote-base';
 import { checkSelfUpdate, selfUpdateState, type SelfUpdateState } from './self-update';
+import { QQ_GROUP_NUMBER, copyQqNumber, openQqGroup, qqJoinOneClick } from './qq-group';
 import { openRewardDialog } from './reward-dialog';
 import type { GroupDecl, SettingsRow, SettingsRowContext } from './settings-schema';
 
-/** 反馈渠道（GitHub issues；仓库 slug 与下载通道同一事实源） */
-export const FEEDBACK_URL = `https://github.com/${REPO_SLUG}/issues`;
-
-/** 项目主页（GitHub 仓库首页；与反馈、下载通道同一 slug，不另立字面量） */
+/** 项目主页（GitHub 仓库首页；与下载通道同一 slug，不另立字面量）。
+ *  反馈入口 2026-11-02 撤掉独立行（用户拍板：GitHub 那一行本身就是反馈入口，
+ *  仓库首页进去就是 issue），FEEDBACK_URL 常量随之退役。 */
 export const REPO_URL = `https://github.com/${REPO_SLUG}`;
 
 /** 视频版使用教程：**第 1P**，裸链接不带 `?p=`（2026-11-01 用户拍板「就是不带 p 的链接」）。
@@ -92,30 +92,43 @@ export async function aboutGroup(): Promise<GroupDecl> {
     binding: { key: 'autoUpdate' },
   };
 
-  const feedbackRow: SettingsRow = {
-    type: 'button',
-    name: '反馈',
-    desc: '有问题或建议，去 GitHub 提 issue',
-    buttonText: '打开',
-    onClick: () => openExternalUrl(getApp(), FEEDBACK_URL),
-  };
-
   // 项目主页与使用教程（2026-10-29 用户要求）：关于组原本只回答「有问题去哪说」，
-  // 补上「东西在哪、怎么上手」——三行都是外链，读下来是一条链接清单，不比原来绕。
+  // 补上「东西在哪、怎么上手」——读下来是一条链接清单，不比原来绕。
+  // 2026-11-02 用户拍板：① 行名「GitHub 主页」→「GitHub」；② 去掉「反馈」行——
+  // GitHub 那一行本身就是反馈入口（仓库首页进去就是 issue）；③ 渠道行不再写描述，
+  // 行名已经说清是什么，描述只是把同一件事再说一遍。
   const repoRow: SettingsRow = {
     type: 'button',
-    name: 'GitHub 主页',
-    desc: '源码和更新说明都在这里',
+    name: 'GitHub',
     buttonText: '打开',
     onClick: () => openExternalUrl(getApp(), REPO_URL),
   };
 
+  // QQ 交流群（2026-11-02 用户要求，群号见 core/qq-group）：排在 GitHub 之后——
+  // 「想看代码/提 issue 去 GitHub，想问一句去群里」，两个渠道紧挨着读才顺。
+  // 行图标（那只蓝企鹅）走 settings-panel/styles.css 的 data-key 定位，与另外三行同款。
+  // 行名后面直接挂群号且可点复制（2026-11-02）：mqqapi 唤起依赖本机 QQ 客户端，
+  // 没装/版本旧/协议被抢都会静默失败——群号摆在明面上，用户不必先点「加入」才发现不行。
+  // 同日再看：桌面端连静默都算不上，NT QQ 会当面弹「版本不支持本功能」。所以桌面端
+  // 按钮文案改成「复制群号」，点下去只复制 + 说清去哪粘；「加入」只留给手机端。
+  const qqRow: SettingsRow = {
+    type: 'button',
+    name: 'QQ 交流群',
+    nameAddon: {
+      text: QQ_GROUP_NUMBER,
+      title: '点击复制群号',
+      onClick: () => void copyQqNumber(),
+    },
+    buttonText: qqJoinOneClick() ? '加入' : '复制群号',
+    onClick: () => openQqGroup(getApp()),
+  };
+
   // 2026-11-01 用户拍板：行名「使用教程」→「视频教程」（原名与下面的说明重复），
   // 且**不写分P**（视频当时已到 4P，写「4P/共 4 集」只是噪音，用户点进去自然看见）。
+  // 2026-11-02：描述一并去掉（与 GitHub / QQ 交流群同口径）。
   const videoRow: SettingsRow = {
     type: 'button',
     name: '视频教程',
-    desc: '边看边用，卡住了先看这里',
     buttonText: '观看',
     onClick: () => openExternalUrl(getApp(), VIDEO_URL),
   };
@@ -144,7 +157,7 @@ export async function aboutGroup(): Promise<GroupDecl> {
   return {
     name: '关于',
     icon: 'info',
-    rows: [versionRow, autoUpdateRow, envRow, feedbackRow, repoRow, videoRow, rewardRow],
+    rows: [versionRow, autoUpdateRow, envRow, repoRow, qqRow, videoRow, rewardRow],
   };
 }
 

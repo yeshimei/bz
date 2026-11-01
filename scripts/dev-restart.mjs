@@ -12,7 +12,7 @@
  * CSS 免重启原理：styles.css 拷成 <vault>/.obsidian/snippets/bz-dev.css 并在
  * appearance.json 里启用——Obsidian 实时监听 snippets 目录，存盘即生效。
  */
-import { execSync, spawn } from 'node:child_process';
+import { execSync, execFileSync, spawn } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 
@@ -29,14 +29,16 @@ function sh(cmd) {
 }
 
 // 1) 构建（once 模式：不压缩、inline sourcemap、构建完退出）
+//    必须同步等它结束：spawn 是异步的，`r.exitCode` 当场是 null，会被当成失败。
 if (!noBuild) {
-  const r = spawn(process.execPath, ['esbuild.config.mjs', 'once'], {
-    stdio: 'inherit',
-    env: { ...process.env, BZ_VAULT_DIR: PLUGIN_DIR },
-  });
-  if (r.exitCode !== 0) {
+  try {
+    execFileSync(process.execPath, ['esbuild.config.mjs', 'once'], {
+      stdio: 'inherit',
+      env: { ...process.env, BZ_VAULT_DIR: PLUGIN_DIR },
+    });
+  } catch {
     console.error('✗ 构建失败，不重启');
-    process.exit(r.exitCode ?? 1);
+    process.exit(1);
   }
 }
 

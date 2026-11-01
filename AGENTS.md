@@ -30,6 +30,7 @@ Obsidian 插件。域 = `src/<域>/`，`core` 是共享层。中文输出。
 - `node scripts/dev-restart.mjs` —— 一次性构建 + 把 styles.css 同步成测试库 snippet（`bz-dev.css`，CSS 改动免重启）+ 重启 Obsidian 直开测试库。`--no-build` 跳过构建；`--vault <名>` 换目标库。
 - `node scripts/dev-vault.mjs snapshot|reset|wipe|seed` —— 测试库快照 / 回滚 / 清空（测首次引导）/ 从主库播种数据与日记笔记。
 - **开机直达弹窗**：往测试库 `<插件目录>/storage/debug-open.json` 写 `{"command":"bz-<域>-open"}`，插件启动 layout-ready 后自动执行该命令——改某个弹窗时重启即见，不用翻菜单。删掉文件即恢复常规启动。
+- **步骤器（自动播，肉眼看）**：往 `<插件目录>/storage/debug-flow.json` 写 `{"flow":"<流程 id>","auto":true}`，插件启动后自动把 `core/dev-flows` 里那条流程一步步播到底，每步停一会儿——作用是**替人点、替人滚**，人盯着屏幕判断流程对不对（不做自动断言、不写报告）。现成范例 `changelog-note`。跑完删文件，否则每次启动都会重播。
 - 门禁口径不变：改完在 worktree 跑 `node scripts/test-affected.mjs --since master`；测试库只管「人眼看效果」，不算验证。
 
 ## 提交
@@ -39,6 +40,8 @@ Conventional Commits。**提交信息即更新日志正文**，只有 `feat` / `
 同一版里修自己刚加、还没发出去的东西，**并回那条 `feat`**（squash 进主句，主题句写修复后的最终态），别让日志出现「新功能 + 修复它」两条——日志是给用户看的（[docs/changelog.md](docs/changelog.md)）。只有修上一版已发布行为、或升版后引入的回归，才单独留 `fix`。
 
 流程：worktree → `git merge master` → 门禁全绿（`test-affected --since master` + `tsc --noEmit` + 自审 + diff 审查）→ 合回主仓 → 推送。
+
+**升级提示的数据内置在 `src/core/changelog-data.ts`**（2026-11-02）：小窗不下载远端日志，只认这一份。发版前把本版那条插到数组最前面，`version` 必须与 `manifest.json` 完全一致——`tests/core/changelog-data.test.ts` 会拿 manifest 对账，漏加必红（否则这版静默不弹提示）。文案与 `downloads/bz-changelog.html` 保持一致，别在这里另写一版。
 
 **推送即双推**（2026-11-01）：`origin` 挂了第二条 pushurl（`git@gitee.com:ntbl/bz.git`），`git push origin` 会同时推 GitHub 与码云，tag 同理。码云只是国内第二个出口，**不参与任何通道链**——在线资源与更新检查仍只走 GitHub Release 与 jsDelivr（`src/core/remote-base.ts`）。只推单边时用 `git push github …` / `git push gitee …`（两个具名远端都在）。
 

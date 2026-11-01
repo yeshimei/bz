@@ -1648,6 +1648,9 @@ button.bz-rowbtn--fail {
   background: var(--bz-border-strong); position: relative; overflow: hidden;
 }
 .bz-dev-replay .seg.done { background: color-mix(in srgb, var(--interactive-accent) 82%, transparent); }
+/* 没走完的步骤：红一格——「第 N 步卡住了」在条带上就该看得见，不用回去翻日志 */
+.bz-dev-replay .seg.bad { background: var(--color-red); }
+.bz-dev-replay .floater .fi.bad { color: var(--color-red); }
 .bz-dev-replay .seg.cur { background: var(--bz-surface-3); box-shadow: 0 0 0 1px color-mix(in srgb, var(--interactive-accent) 45%, transparent); }
 .bz-dev-replay .seg.cur::after {
   content: ''; position: absolute; inset: 0; transform-origin: left;
@@ -16869,16 +16872,56 @@ canvas { display: block; }
 }
 .bz-sp-set-info { min-width: 0; }
 .bz-sp-set-name { font-size: var(--bz-font-label); color: var(--sp-ink); }
-/* ── 关于组的行图标（2026-10-30）──
- * 只给「反馈 / GitHub 主页 / 视频教程 / 赞赏」四行：前三行（版本、自动更新、环境自检）
- * 是同组的操作/状态行，用户要求去掉图标——它们已经贴着组标题，再挂一枚只会显得吵。
+/* 行名 + 尾部可点小字（2026-11-02：QQ 交流群后的群号）。
+ * 小字是**动作**不是说明，所以不吃正文的颜色与字号：退到第三档灰、等宽数字、
+ * 与行名基线对齐；下划线用虚线且只在悬停时亮——平时像行名的一部分，不抢按钮的位。
+ * 容器只在行有 addon 时才出现，其余行的行名 DOM 不变（搜索高亮重建 textContent 不受影响）。 */
+.bz-sp-set-namewrap { display: flex; align-items: baseline; gap: 8px; }
+.bz-sp-set-addon {
+  padding: 0 0 1px;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-size: 11.5px;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: .02em;
+  color: var(--sp-ink-3);
+  cursor: pointer;
+  border-bottom: 1px dashed transparent;
+  transition: color .14s ease, border-color .14s ease;
+}
+@media (hover: hover) {
+  .bz-sp-set-addon:hover { color: var(--sp-accent); border-bottom-color: currentColor; }
+}
+/* 原生设置界面那侧的同款小字（core/settings-schema 的 newRowSetting）——
+ * 那边没有 --sp-* 令牌，用 Obsidian 自带的语义色，只借这一份排版。 */
+.bz-row-addon {
+  margin-left: 8px;
+  padding: 0 0 1px;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-size: 0.85em;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-faint);
+  cursor: pointer;
+  border-bottom: 1px dashed transparent;
+  transition: color .14s ease, border-color .14s ease;
+}
+@media (hover: hover) {
+  .bz-row-addon:hover { color: var(--text-accent); border-bottom-color: currentColor; }
+}
+/* ── 关于组的行图标（2026-10-30 立，2026-11-02 随行名调整）──
+ * 只给「GitHub / QQ 交流群 / 视频教程 / 打赏」四行：版本、自动更新、环境自检是同组的
+ * 操作/状态行，用户要求去掉图标——它们已经贴着组标题，再挂一枚只会显得吵。
  * 一枚 20px 圆角块 + 内嵌描边图标（feather 口径，stroke 2）。
  * 走 data-key 定位而不是给 schema 加 icon 字段：行键 = 绑定键 || 行名，自绘面板才有
  * .bz-sp-set-name，Obsidian 原生设置界面（.setting-item-name）自动不受影响——
  * 不必为几行图标去动两套渲染器，也就不会出现两边不一致。
+ * **行名就是选择器**：改 schema 里的行名时这里必须同步改，否则图标静默消失。
  * 形状只定义一次，每行覆写三支变量：底色 / 描边 / 图标。 */
-.bz-sp-set-row[data-key="反馈"] .bz-sp-set-name::before,
-.bz-sp-set-row[data-key="GitHub 主页"] .bz-sp-set-name::before,
+.bz-sp-set-row[data-key="GitHub"] .bz-sp-set-name::before,
+.bz-sp-set-row[data-key="QQ 交流群"] .bz-sp-set-name::before,
 .bz-sp-set-row[data-key="视频教程"] .bz-sp-set-name::before,
 .bz-sp-set-row[data-key="打赏"] .bz-sp-set-name::before {
   content: "";
@@ -16896,18 +16939,21 @@ canvas { display: block; }
   background-repeat: no-repeat;
 }
 
-/* 反馈 · 橙（品牌色）· 对话气泡 */
-.bz-sp-set-row[data-key="反馈"] .bz-sp-set-name::before {
-  --bz-row-ic-bg: #fdeee7;
-  --bz-row-ic-bd: #f8d8c7;
-  --bz-row-ic: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23e67341' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z'/%3E%3C/svg%3E");
-}
-
-/* GitHub 主页 · 墨 · 猫 */
-.bz-sp-set-row[data-key="GitHub 主页"] .bz-sp-set-name::before {
+/* GitHub · 墨 · 猫 */
+.bz-sp-set-row[data-key="GitHub"] .bz-sp-set-name::before {
   --bz-row-ic-bg: #eeeef2;
   --bz-row-ic-bd: #dcdce4;
   --bz-row-ic: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2344444c' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M9 19c-5 1.5-5-2.5-7-3m14 6v-3.9a3.4 3.4 0 00-.9-2.6c3.1-.4 6.4-1.5 6.4-7A5.4 5.4 0 0020 4.8 5.1 5.1 0 0019.9 1S18.7.7 16 2.5a13.4 13.4 0 00-7 0C6.3.7 5.1 1 5.1 1A5.1 5.1 0 005 4.8 5.4 5.4 0 003.5 8.5c0 5.4 3.3 6.6 6.4 7a3.4 3.4 0 00-.9 2.6V22'/%3E%3C/svg%3E");
+}
+
+/* QQ 交流群 · 蓝 · 企鹅（官方剪影 path，2026-11-02 换掉自绘的水滴形）。
+ * 这一只比其他三行的图标大 2px：企鹅剪影有头、翅、围巾三段，压到 12px 会糊成
+ * 一坨认不出的形状——它要的是「一眼看出这是 QQ」，不是跟旁边一样大。 */
+.bz-sp-set-row[data-key="QQ 交流群"] .bz-sp-set-name::before {
+  --bz-row-ic-bg: #e8f6fe;
+  --bz-row-ic-bd: #c6e8fb;
+  --bz-row-ic: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%230f9fdc'%3E%3Cpath d='M21.395 15.035a40 40 0 0 0-.803-2.264l-1.079-2.695c.001-.032.014-.562.014-.836C19.526 4.632 17.351 0 12 0S4.474 4.632 4.474 9.241c0 .274.013.804.014.836l-1.08 2.695a39 39 0 0 0-.802 2.264c-1.021 3.283-.69 4.643-.438 4.673.54.065 2.103-2.472 2.103-2.472 0 1.469.756 3.387 2.394 4.771-.612.188-1.363.479-1.845.835-.434.32-.379.646-.301.778.343.578 5.883.369 7.482.189 1.6.18 7.14.389 7.483-.189.078-.132.132-.458-.301-.778-.483-.356-1.233-.646-1.846-.836 1.637-1.384 2.393-3.302 2.393-4.771 0 0 1.563 2.537 2.103 2.472.251-.03.581-1.39-.438-4.673'/%3E%3C/svg%3E");
+  background-size: 14px 14px;
 }
 
 /* 视频教程 · 红 · 播放 */
@@ -17902,6 +17948,369 @@ canvas { display: block; }
     z-index: 3;
     color: var(--sp-ink-2);
   }
+}
+
+
+/* ═══════════ 更新日志的外部入口（changelog-links.ts）：小窗页脚 + 全量弹窗右下角共用 ═══════════
+   四个一组：GitHub / B 站 / QQ 群 / 支持作者。前三个是纯图标（27px 方块，不抢视线），
+   最后一个带文案与淡金底——它要人看见。
+
+   **选择器必须带容器前缀**（.bz-chg-note / .bz-chg-tools）：core/reset.css 的
+   `button:not(.clickable-icon)` 是 (0,1,1)，会把裸单类 (0,1,0) 的 color 与
+   background-color 一起 unset 掉——2026-11-02 真机就是这个症状：图标变黑、
+   按钮底色消失。带上容器就是 (0,2,0)，压得住。 */
+.bz-chg-note .bz-chg-link,
+.bz-chg-tools .bz-chg-link {
+  flex: none;
+  width: 27px;
+  height: 27px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--sp-line);
+  border-radius: 7px;
+  background: none;
+  color: var(--sp-ink-3);
+  font: inherit;
+  cursor: pointer;
+  transition: color .14s ease, background .14s ease, border-color .14s ease;
+}
+@media (hover: hover) {
+  .bz-chg-note .bz-chg-link:hover,
+  .bz-chg-tools .bz-chg-link:hover {
+    color: var(--sp-ink);
+    border-color: var(--sp-ink-3);
+    background: color-mix(in srgb, var(--sp-ink) 6%, transparent);
+  }
+}
+.bz-chg-note .bz-chg-link.donate,
+.bz-chg-tools .bz-chg-link.donate {
+  width: auto;
+  gap: 5px;
+  padding: 0 10px 0 9px;
+  font-size: 11.5px;
+  letter-spacing: .01em;
+  white-space: nowrap;
+  color: var(--sp-accent);
+  border-color: color-mix(in srgb, var(--sp-accent) 34%, transparent);
+  background: var(--sp-accent-soft);
+}
+@media (hover: hover) {
+  .bz-chg-note .bz-chg-link.donate:hover,
+  .bz-chg-tools .bz-chg-link.donate:hover {
+    color: var(--sp-on-accent);
+    background: var(--sp-accent);
+    border-color: transparent;
+  }
+}
+/* 全量日志弹窗：浮在 iframe 之上的右下角条（日志正文是远端文档，改不了它的结构） */
+.bz-chg-tools {
+  position: absolute;
+  right: 13px;
+  bottom: calc(13px + env(safe-area-inset-bottom, 0px));
+  z-index: 3;
+  display: flex;
+  gap: 7px;
+  padding: 6px;
+  border-radius: 12px;
+  border: 1px solid var(--sp-line);
+  background: color-mix(in srgb, var(--sp-panel) 88%, transparent);
+  backdrop-filter: blur(9px);
+  box-shadow: 0 8px 22px -10px rgba(0, 0, 0, .5);
+}
+
+
+/* ═══════════ 更新提示小窗（changelog-note.ts，2026-11-02）═══════════
+   升级后第一次打开 bz 界面弹一次，只放当前这一版。版式定稿于
+   .scratch/changelog-note/note-b.html，1:1 照搬：顶部 accent 细条 → 徽标/日期/改动数 →
+   「本次更新」→ 三段（accent 竖线只给新功能）→ 页脚主动作 + 四个外部入口。
+   颜色全走本域 --sp-* 令牌，与设置面板、全量日志弹窗同一张皮。 ═══════════ */
+.bz-overlay-popup.bz-chg-note {
+  width: 436px;
+  max-width: min(436px, calc(100vw - 32px));
+  max-height: min(82vh, 560px);
+  padding: 0;
+  overflow: hidden;
+  background: var(--sp-panel);
+  border: 1px solid var(--sp-line);
+  border-radius: var(--sp-radius);
+  box-shadow: 0 18px 44px -18px rgba(74, 56, 30, .38), 0 2px 8px rgba(74, 56, 30, .1);
+  animation: bz-chg-note-pop .19s cubic-bezier(.33, 1, .68, 1) both;
+}
+.theme-dark .bz-overlay-popup.bz-chg-note {
+  box-shadow: 0 16px 40px -14px rgba(0, 0, 0, .55), 0 3px 10px rgba(0, 0, 0, .22);
+}
+@keyframes bz-chg-note-pop {
+  from { opacity: 0; transform: translateY(5px) scale(.986); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .bz-overlay-popup.bz-chg-note { animation: none; }
+}
+/* uiModal 的正文层：卡片自己排版，这层不留内边距、不滚 */
+.bz-overlay-popup.bz-chg-note .bz-dialog-body {
+  flex: 1;
+  min-height: 0;
+  padding: 0;
+  overflow: hidden;
+}
+
+.bz-chg-strip {
+  flex: none;
+  height: 2px;
+  background: linear-gradient(90deg, var(--sp-accent), transparent 92%);
+}
+/* 移动端底部升起时的抓手（桌面不渲染） */
+.bz-chg-grab {
+  display: none;
+  flex: none;
+  width: 34px;
+  height: 4px;
+  margin: 6px auto 0;
+  border-radius: 2px;
+  background: var(--sp-line);
+}
+.bz-chg-head {
+  flex: none;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 16px 20px 4px;
+}
+.bz-chg-headmain { flex: 1; min-width: 0; }
+.bz-chg-tags { display: flex; align-items: baseline; gap: 8px; }
+.bz-chg-badge {
+  font-family: var(--bz-font-mono);
+  font-size: 10.5px;
+  letter-spacing: .04em;
+  color: var(--sp-accent);
+  background: var(--sp-accent-soft);
+  padding: 2px 7px;
+  border-radius: 5px;
+}
+.bz-chg-date,
+.bz-chg-count { font-size: 11px; color: var(--sp-ink-3); }
+.bz-chg-title {
+  margin: 7px 0 0;
+  font-size: 17px;
+  font-weight: 600;
+  letter-spacing: -.012em;
+  line-height: 1.3;
+  color: var(--sp-ink);
+}
+/* 关闭钮：桌面走遮罩/ESC，只有移动端升起时才出现（那时遮罩点不到）。
+   前缀同 .bz-chg-link：单类会被 core/reset 的 button:not(.clickable-icon) unset 掉颜色 */
+.bz-chg-note .bz-chg-close {
+  flex: none;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 1px solid var(--sp-line);
+  border-radius: 7px;
+  background: none;
+  color: var(--sp-ink-2);
+  cursor: pointer;
+}
+@media (hover: hover) {
+  .bz-chg-note .bz-chg-close:hover { color: var(--sp-ink); }
+}
+
+/* 正文：能滚但不显示滚动条（本域统一口径），溢出时底部渐隐提示「还有」 */
+.bz-chg-scrollwrap {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+}
+.bz-chg-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 2px 0 8px;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  overscroll-behavior: contain;
+}
+.bz-chg-scroll::-webkit-scrollbar { width: 0; height: 0; display: none; }
+.bz-chg-fade {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 24px;
+  background: linear-gradient(to bottom, transparent 0%, var(--sp-panel) 88%);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity .12s ease;
+}
+.bz-chg-scrollwrap.more .bz-chg-fade { opacity: 1; }
+
+/* 更早的版本：**一整块**折叠（2026-11-02 用户拍板：不要一版一个折叠行）。
+   收起时只占一行，点开是连续的文本流——每版一个小标题，正文直接铺下去让用户滚。
+   开关本身是 button，必须带 .bz-chg-note 前缀——core/reset.css 的
+   button:not(.clickable-icon) 会把颜色 / 底色 / 边框全 unset 掉。 */
+.bz-chg-note .bz-chg-old-h {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  margin: 4px 0 0;
+  padding: 13px 20px 11px;
+  border: 0;
+  border-top: 1px solid var(--sp-line-soft);
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+  font: inherit;
+  text-align: left;
+  color: var(--sp-ink-2);
+  cursor: pointer;
+}
+@media (hover: hover) {
+  .bz-chg-note .bz-chg-old-h:hover { background: var(--sp-line-soft); }
+  .bz-chg-note .bz-chg-old-h:hover .bz-chg-old-t { color: var(--sp-ink); }
+}
+.bz-chg-old-t {
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: .15em;
+  color: var(--sp-ink-3);
+}
+.bz-chg-old.open .bz-chg-old-t { color: var(--sp-accent); }
+.bz-chg-chev {
+  flex: none;
+  margin-left: auto;
+  color: var(--sp-ink-3);
+  transform: rotate(-90deg);
+  transition: transform .14s ease;
+}
+.bz-chg-old.open .bz-chg-chev { transform: rotate(0); }
+.bz-chg-old-body { display: none; }
+.bz-chg-old.open .bz-chg-old-body { display: block; }
+/* 展开后的每一版：一行版本标题 + 三段正文；版本之间只隔一条细线，读起来是一条流 */
+.bz-chg-oldrel { border-top: 1px solid var(--sp-line-soft); padding-top: 2px; }
+.bz-chg-oldrel:first-child { border-top: 0; }
+.bz-chg-oldrel-h {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 14px 20px 6px;
+}
+.bz-chg-oldrel-v {
+  font-family: var(--bz-font-mono);
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: .02em;
+  color: var(--sp-ink-2);
+}
+
+/* 三段：竖线是段落的分区线，accent 只给「新功能」 */
+.bz-chg-sec { padding: 0 20px 10px; }.bz-chg-rail { border-left: 2px solid var(--sp-line); padding-left: 12px; }
+.bz-chg-sec.pri .bz-chg-rail { border-left-color: var(--sp-accent); }
+.bz-chg-sec-h {
+  padding: 10px 0 6px;
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: .15em;
+  color: var(--sp-ink-3);
+}
+.bz-chg-item { display: flex; gap: 11px; padding: 5px 0; }
+.bz-chg-dom {
+  flex: none;
+  width: 54px;
+  padding-top: 1px;
+  font-size: 10.5px;
+  line-height: 1.62;
+  color: var(--sp-ink-3);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.bz-chg-txt { flex: 1; min-width: 0; }
+.bz-chg-txt p {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.62;
+  letter-spacing: .002em;
+  color: var(--sp-ink);
+  text-wrap: pretty;
+}
+.bz-chg-sub {
+  display: block;
+  margin-top: 3px;
+  font-size: 11.5px;
+  line-height: 1.55;
+  color: var(--sp-ink-2);
+  text-wrap: pretty;
+}
+
+/* 页脚：主动作在左，四个入口成组收在右。
+   入口组自己排 7px 间距（对齐全量弹窗的 .bz-chg-tools），不吃页脚的 12px——
+   四颗图标按 12px 摊开时，横向被拉开一大截，跟原型不是一回事。 */
+.bz-chg-foot {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 20px 14px;
+  border-top: 1px solid var(--sp-line-soft);
+}
+.bz-chg-grow { flex: 1; }
+.bz-chg-links { display: flex; align-items: center; gap: 7px; flex: none; }
+/* 前缀同 .bz-chg-link：单类压不过 core/reset 的 button:not(.clickable-icon) */
+.bz-chg-note .bz-chg-ok {
+  flex: none;
+  height: 30px;
+  padding: 0 15px;
+  border: 0;
+  border-radius: 8px;
+  background: var(--sp-accent);
+  color: var(--sp-on-accent);
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 600;
+  line-height: 1;
+  cursor: pointer;
+  transition: filter .15s ease;
+}
+@media (hover: hover) {
+  .bz-chg-note .bz-chg-ok:hover { filter: brightness(1.05); }
+}
+
+@media (max-width: 768px) {
+  /* 底部升起：不改 mask，直接让卡片贴视口底（遮罩此时点不到，关闭靠右上那颗钮） */
+  .bz-overlay-popup.bz-chg-note {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: 100%;
+    max-width: 100%;
+    max-height: 82%;
+    border: 0;
+    border-radius: 18px 18px 0 0;
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    animation: bz-chg-note-rise .22s cubic-bezier(.33, 1, .68, 1) both;
+  }
+  @keyframes bz-chg-note-rise {
+    from { transform: translateY(20px); opacity: .55; }
+  }
+  .bz-chg-grab { display: block; }
+  .bz-chg-head { padding: 8px 20px 8px; }
+  .bz-chg-title { font-size: 16px; margin-top: 5px; }
+  .bz-chg-note .bz-chg-close { display: flex; }
+  /* 页脚折成两行：整宽主按钮在上，四个入口居中在下 */
+  .bz-chg-foot {
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 9px;
+    padding: 10px 20px calc(12px + env(safe-area-inset-bottom, 0px));
+  }
+  .bz-chg-note .bz-chg-ok { flex: 0 0 100%; height: 40px; border-radius: 10px; font-size: 13.5px; }
+  .bz-chg-grow { display: none; }
 }
 
 
