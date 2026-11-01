@@ -66,7 +66,9 @@ export async function aboutGroup(): Promise<GroupDecl> {
     hideBadge: true,
     help:
       '「检查并更新」会立刻去仓库取最新发布：有新版本就装下来，重载插件后生效。' +
-      '装之前会把当前版本备份进插件目录的 downloads/.backup 里。',
+      '装之前会把当前版本备份进插件目录的 downloads/.backup 里，' +
+      '写盘是「先写临时文件、核对无误再整体换上」，中途失败会自动退回旧版；' +
+      '磁盘空间不足会在动手前就拦下。',
     actions: [
       {
         // 人在场点的，一律按「同意装」处理：与 autoUpdate 开关无关

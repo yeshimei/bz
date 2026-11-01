@@ -20,6 +20,10 @@
  * 三条安全线：
  *  - **覆盖前备份**：旧三件套存 `<插件目录>/downloads/.backup/<旧版本>/`。此前没有回滚，
  *    推一次坏包等于把所有用户焊死在坏包上（自更新代码本身就在坏包里，没人能自救）。
+ *  - **原子落盘**：先写 `<文件>.bz-tmp`，读回核对一字不差，再 `fs.renameSync` 覆盖
+ *    （ADR-0282）。此前是直接往正式文件里写 2.8 MB —— 中途断电 / 崩溃 / 盘满就留下
+ *    半截 main.js，而**加载失败的插件没有任何自救能力**（自更新代码就在这个坏文件里）。
+ *    三件套里任何一件写失败，已换上去的按备份全部退回（半装比没装贵得多）。
  *  - **内容宽校验**：main.js 非空且不像 HTML 错误页才写（CDN 被墙时常见）。
  *  - **失败一律静默**：启动期网络失败不该弹脸；只有「真的装了」才发通知。
  *
@@ -28,7 +32,7 @@
  * ============================================================ */
 import { requestUrl } from 'obsidian';
 import { notice } from './notice';
-import { pluginVaultPath } from './plugin-path';
+import { pluginDirOf, pluginVaultPath } from './plugin-path';
 import { downloadRemotesFor, isValidTag, releaseDownloadUrl, RELEASE_POINTER, REPO_SLUG, repoRemotesForTag } from './remote-base';
 import { MANIFEST_FILE as DOWNLOAD_MANIFEST_FILE } from './download-manifest';
 import { noteReleaseTag } from './remote-asset';
@@ -67,6 +71,12 @@ const LATEST_MANIFEST_URL = `https://github.com/${REPO_SLUG}/releases/latest/dow
 
 /** 备份目录（相对插件安装目录；点前缀是「不是下载产物」的视觉声明，也避开 downloads/ 的清单守卫） */
 const BACKUP_DIR = 'downloads/.backup';
+/** 自更新的三件套（顺序即落盘顺序：manifest.json 最后——它决定版本号） */
+const PLUGIN_FILES = ['main.js', 'styles.css', 'manifest.json'] as const;
+/** 原子写的临时后缀（与正本同目录：rename 必须同盘） */
+const TMP_SUFFIX = '.bz-tmp';
+/** 覆盖前要求的最小可用空间（三件套 ≈ 3 MB + 一份备份 ≈ 3 MB，留一倍余量） */
+const MIN_FREE_BYTES = 16 * 1024 * 1024;
 /** 自更新的四种结局（面板据此说人话） */
 export type SelfUpdateResult =
   /** 同版本或更低：无事发生 */
@@ -354,7 +364,7 @@ async function backupCurrent(app: unknown, version: string): Promise<void> {
   } catch {
     /* 已存在 */
   }
-  for (const name of ['main.js', 'styles.css', 'manifest.json']) {
+  for (const name of PLUGIN_FILES) {
     try {
       const text = await adapter.read(pluginFile(app, name));
       if (text) await adapter.write(`${dir}/${name}`, text);
@@ -362,6 +372,147 @@ async function backupCurrent(app: unknown, version: string): Promise<void> {
       console.warn(`[bz] 自更新备份 ${name} 失败（继续）:`, (e as Error)?.message || e);
     }
   }
+}
+
+/* ---------- 落盘：空间预检 + 原子替换（ADR-0282，2026-11-01 用户拍板） ---------- */
+
+/** Node fs 的最小形状（桌面端 `window.require('fs')`；测试打桩也走这个口） */
+interface NodeFsLike {
+  writeFileSync?: (p: string, data: string, enc?: string) => void;
+  readFileSync?: (p: string, enc?: string) => unknown;
+  unlinkSync?: (p: string) => void;
+  renameSync?: (a: string, b: string) => void;
+  statfsSync?: (p: string) => { bavail?: number; bsize?: number };
+}
+
+/** 插件目录 adapter 的最小形状 */
+interface PluginAdapterLike {
+  read?: (p: string) => Promise<string>;
+  write?: (p: string, d: string) => Promise<void>;
+  exists?: (p: string) => Promise<boolean>;
+  remove?: (p: string) => Promise<void>;
+}
+
+function adapterOf(app: unknown): PluginAdapterLike | null {
+  return (app as { vault?: { adapter?: PluginAdapterLike } })?.vault?.adapter ?? null;
+}
+
+/** 取 Node fs（拿不到 → null：非桌面端 / 异常运行时，调用方退回 adapter 直写） */
+function nodeFs(): NodeFsLike | null {
+  if (typeof window === 'undefined') return null;
+  try {
+    const fs = (window as unknown as { require?: (m: string) => unknown }).require?.('fs') as NodeFsLike | undefined;
+    return fs && typeof fs.renameSync === 'function' && typeof fs.writeFileSync === 'function' ? fs : null;
+  } catch {
+    return null;
+  }
+}
+
+/** 临时件删不掉不影响结论：下次写同一路径会覆盖它 */
+function safeUnlink(fs: NodeFsLike, p: string): void {
+  try {
+    fs.unlinkSync?.(p);
+  } catch {
+    /* 幂等 */
+  }
+}
+
+/**
+ * 写前预检：磁盘够不够。
+ *
+ * 目的不是「防崩」，是**别让人等三分钟才失败**——三件套加备份约 6 MB，空间不够时早一点
+ * 给一句人话，比写到一半 ENOSPC 好。`statfsSync` 是 Node 18.15+ 才有的，拿不到就跳过；
+ * 真正的兜底是原子写本身：临时文件写不进去时，正本毫发无伤。
+ */
+function preflightSpace(fs: NodeFsLike | null, dir: string, needBytes: number): void {
+  if (!fs?.statfsSync || !dir) return;
+  try {
+    const st = fs.statfsSync(dir);
+    const free = Number(st?.bavail || 0) * Number(st?.bsize || 0);
+    if (free > 0 && free < needBytes) {
+      throw new Error(
+        `磁盘空间不足（剩 ${Math.round(free / 1048576)} MB，本次更新约需 ${Math.round(needBytes / 1048576)} MB）`,
+      );
+    }
+  } catch (e) {
+    if (e instanceof Error && e.message.startsWith('磁盘空间不足')) throw e;
+    /* statfs 不支持 / 路径异常：跳过，交给实际写入报错 */
+  }
+}
+
+/**
+ * 把一个文件**原子地**换掉：写临时件 → 读回核对 → rename 覆盖。
+ *
+ * 为什么必须 rename：`adapter.write` 是「打开正本、截断、写 2.8 MB」，中间任何一拍出事
+ * （断电 / 崩溃 / 盘满 / 杀软锁文件），磁盘上就留一个**半截 main.js**。而插件加载失败的
+ * 现场是「没有任何代码能跑」——备份明明在，却没东西能把它拷回去。这是自更新唯一一处
+ * 能把用户永久焊死的地方，所以这里不能省。
+ *
+ * rename 覆盖是原子的（Node 在 Windows 走 MoveFileEx REPLACE_EXISTING，POSIX 就是 rename(2)）：
+ * 要么旧内容，要么完整新内容，没有第三种。读回核对挡的是「写进去的和读到的不一样」
+ * （同步盘截断、编码差异），比事后加载失败好查得多。
+ */
+async function writePluginFileAtomic(app: unknown, name: string, text: string): Promise<void> {
+  const fs = nodeFs();
+  const abs = (() => {
+    const dir = pluginDirOf(app);
+    return dir ? `${dir}/${name}` : '';
+  })();
+  if (fs?.writeFileSync && fs.readFileSync && fs.renameSync && fs.unlinkSync && abs) {
+    const tmp = `${abs}${TMP_SUFFIX}`;
+    try {
+      fs.writeFileSync(tmp, text, 'utf8');
+    } catch (e) {
+      throw new Error(`${name} 写入失败（磁盘满 / 只读 / 被安全软件锁住）：${(e as Error)?.message || e}`);
+    }
+    let back = '';
+    try {
+      back = String(fs.readFileSync(tmp, 'utf8') ?? '');
+    } catch (e) {
+      safeUnlink(fs, tmp);
+      throw new Error(`${name} 落盘后读回失败（已放弃覆盖）：${(e as Error)?.message || e}`);
+    }
+    if (back !== text) {
+      safeUnlink(fs, tmp);
+      throw new Error(`${name} 落盘校验不一致（写入的与读回的不同），已放弃覆盖`);
+    }
+    try {
+      fs.renameSync(tmp, abs);
+    } catch (e) {
+      safeUnlink(fs, tmp);
+      throw new Error(`${name} 替换失败（正本未动）：${(e as Error)?.message || e}`);
+    }
+    return;
+  }
+  // 拿不到 Node fs（非桌面端 / 异常运行时）：退回 adapter 直写——没有原子性，但那是改动前的
+  // 既有行为，不是新引入的风险；备份与下面的失败回滚仍然有效。
+  const adapter = adapterOf(app);
+  if (!adapter?.write) throw new Error('当前环境无法写入插件文件（需要在桌面端操作）');
+  await adapter.write(pluginFile(app, name), text);
+}
+
+/**
+ * 用备份把三件套拷回原位（半装回滚；将来面板「恢复上一版」也走它）。
+ * @returns 三件是否都回去了
+ */
+async function restoreFromBackup(app: unknown, version: string): Promise<boolean> {
+  const adapter = adapterOf(app);
+  if (!adapter?.read) return false;
+  const dir = `${pluginVaultPath(app, BACKUP_DIR)}/${version || 'unknown'}`;
+  let ok = true;
+  for (const name of PLUGIN_FILES) {
+    try {
+      const text = await adapter.read(`${dir}/${name}`);
+      if (!text) throw new Error('备份里没有这个文件');
+      await writePluginFileAtomic(app, name, text);
+    } catch (e) {
+      ok = false;
+      console.warn(`[bz] 自更新回滚 ${name} 失败:`, (e as Error)?.message || e);
+    }
+  }
+  // 回滚成功 = 磁盘已回到旧版，那条「待重载」的账就作废
+  if (ok) writeStore(PENDING_KEY, null);
+  return ok;
 }
 
 export interface SelfUpdateOptions {
@@ -445,10 +596,31 @@ export async function checkSelfUpdate(app: unknown, opts: SelfUpdateOptions = {}
   }
   if (!mfOk) throw new Error('远端 manifest.json 内容异常，放弃覆盖');
 
+  // 空间预检 + 备份，然后逐个**原子替换**。manifest.json 放最后：它决定版本号，
+  // 写早了会出现「版本已是新版、代码还是旧的」这种自欺状态（比报错难查）。
+  preflightSpace(nodeFs(), pluginDirOf(app), MIN_FREE_BYTES);
   await backupCurrent(app, localVer);
-  await adapter.write(pluginFile(app, 'main.js'), js.text);
-  await adapter.write(pluginFile(app, 'styles.css'), css.text);
-  await adapter.write(pluginFile(app, 'manifest.json'), mf.text);
+  const bundle: Array<[string, string]> = [
+    ['main.js', js.text],
+    ['styles.css', css.text],
+    ['manifest.json', mf.text],
+  ];
+  let replaced = 0;
+  try {
+    for (const [name, text] of bundle) {
+      await writePluginFileAtomic(app, name, text);
+      replaced += 1;
+    }
+  } catch (e) {
+    // 半装比没装更糟：一件失败就把已经换上去的按备份退回去（回滚本身也走原子写）。
+    // replaced === 0 说明正本一个都没动（临时件写失败就退出了），不必回滚。
+    const msg = (e as Error)?.message || String(e);
+    if (!replaced) throw new Error(`${msg}（没有改动任何文件，插件仍是 v${localVer}）`);
+    const rolled = await restoreFromBackup(app, localVer);
+    throw new Error(
+      `${msg}${rolled ? `（已自动回滚到 v${localVer}）` : `（回滚失败，备份在 ${BACKUP_DIR}/${localVer}）`}`,
+    );
+  }
   writeStore(PENDING_KEY, { version: pointer.version });
   // 用户拍板 2026-10-31：更新插件 = **强制同更更新日志**。新三件套落盘后马上向远端
   // 拉与新版配套的日志（channel 上的 downloads/bz-changelog.html），落进插件目录——
