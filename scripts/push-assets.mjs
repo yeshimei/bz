@@ -554,15 +554,23 @@ if (STAGE_ONLY) {
 
 /* 顺序闸（2026-11-02 立，v1.40.0 事故后钉死）：分发仓是客户端主通道，只许镜像**已转正**的
  * Release。判据只有一条——`gh release view <tag>` 回来不是 draft；不 ok 直接 exit(3)，
- * 一个字节都不推。`--upload-only` 方向相反（往 draft Release 里补传资产），不受这条约束。 */
-if (!UPLOAD_ONLY) {
-  enforceReleaseOrder(tag, SOURCE_SLUG, { what: '分发仓库' });
+ * 一个字节都不推。 */
+
+/* `--upload-only`：只往 draft Release 补传 assets，分发仓一个字节都不动。
+ * 2026-11-02 v1.39.2 踩到：这个开关原先只跳过下面两道闸，syncFiles / commitAndPush / purgeCdn
+ * 照跑——等于 Release 还是 draft 时就把 CDN 指针推到新版，正是顺序闸要防的那件事，
+ * 而且闸被绕过后没人会看见。方向本来就相反，就地返回。 */
+if (UPLOAD_ONLY) {
+  await uploadReleaseAssets(tag, { fromTag: readBundleFromTag(tag) });
+  process.exit(0);
 }
+
+enforceReleaseOrder(tag, SOURCE_SLUG, { what: '分发仓库' });
 
 /* 顺带钉住「三件套只能取自 tag」：Release 已转正却没有本地 tag，说明这台机器没拉 tag——
  * 那就只剩「拿工作区凑」这一条路，装到的就是混版三件套（v1.36.0 翻过一次车）。
  * 宁可停下让人 git fetch --tags，也不许拿工作区产物冒充某个已发布版本。 */
-if (!UPLOAD_ONLY && !readBundleFromTag(tag)) {
+if (!readBundleFromTag(tag)) {
   console.error(`[push-assets] ✗ 本地没有 ${tag} 这个 tag：镜像里的三件套必须取自 tag（已发布版本冻结在 tag）。`);
   console.error(`  git fetch --tags 之后再跑；不许拿工作区产物当已发布版本。`);
   process.exit(1);
