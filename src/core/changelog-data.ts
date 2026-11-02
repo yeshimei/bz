@@ -51,15 +51,18 @@ export function releaseEntryCount(release: ChangelogRelease): number {
 
 /**
  * 内置日志（**最新在前**，最多 50 版）。
- * 文案口径与 downloads/bz-changelog.html 一致——同名同句，不要在这里另写一版。
+ * 文案口径与 docs/note-v<版本>.md（以及由此产出的 docs/changelog.html）一致——
+ * 同名同句，不要在这里另写一版。
  */
 export const CHANGELOG_RELEASES: readonly ChangelogRelease[] = [
   {
-    version: '1.40.0',
+    version: '1.39.2',
     date: '2026-11-02',
-    added: [
-      { domain: '更新提示', text: '升级后第一次打开 bz 界面时弹出，只讲这一版改了什么' },
-      { domain: 'QQ 交流群', text: '关于页和更新提示里都有入口，群号点一下就复制，手机端还能直接唤起加群' },
+    // 条目与 docs/note-v1.39.2.md 逐字同稿（2026-11-02 用户改定为 2 条）。
+    // 小窗与 Release 页读的是同一批句子，别在这里另写一版。
+    improved: [
+      { domain: 'QQ 交流群', text: '在关于页加了入口。' },
+      { domain: '更新日志', text: '内置进插件。' },
     ]
   },
   {

@@ -45,7 +45,7 @@ Conventional Commits。**提交信息即更新日志正文**，只有 `feat` / `
 
 **推送即双推**（2026-11-01）：`origin` 挂了第二条 pushurl（`git@gitee.com:ntbl/bz.git`），`git push origin` 会同时推 GitHub 与码云，tag 同理。码云只是国内第二个出口，**不参与任何通道链**——在线资源与更新检查仍只走 GitHub Release 与 jsDelivr（`src/core/remote-base.ts`）。只推单边时用 `git push github …` / `git push gitee …`（两个具名远端都在）。
 
-**发版时码云另有一条 Release**：GitHub 那边走完七步后跑 `node scripts/push-gitee.mjs`，它建/更新码云的 Release 页（正文取 `docs/note-v<版本>.md`）并挂 **6 个资产**（安装包 / 离线资源包 / SHA256SUMS / 三件套）。**不发 downloads/**** 那批在线资源（皮肤、工具包、手册、目录包）——码云不在通道链里，镜像过去只是没人校验的副本；要整包就给离线资源包。令牌放 `~/.gitee-token`（一行），**绝不进仓库**（主仓公开）。**顺序闸**：它只镜像已转正的 Release（`gh release view` 不是 draft），否则 exit 3。
+**发版时码云另有一条 Release**：GitHub 那边走完七步后跑 `node scripts/push-gitee.mjs`，它建/更新码云的 Release 页（正文取 `docs/note-v<版本>.md`）并挂 **6 个资产**（安装包 / 离线资源包 / SHA256SUMS / 三件套）。**不发 downloads/**** 那批在线资源（皮肤、工具包、目录包）——码云不在通道链里，镜像过去只是没人校验的副本；要整包就给离线资源包。令牌放 `~/.gitee-token`（一行），**绝不进仓库**（主仓公开）。**顺序闸**：它只镜像已转正的 Release（`gh release view` 不是 draft），否则 exit 3。
 
 **分发仓与码云都不许早于 Release 上线**（2026-11-02 v1.40.0 事故后钉进代码）：七步里的 assets 步只做 `push-assets --stage-only` 自检、不推远端；真镜像发生在 `release-gate.mjs finalize`（转正 → `push-assets` → `push-gitee`），两个脚本动手前都过 `enforceReleaseOrder`，Release 没转正就 exit 3。另加一条：本地没有该 tag 时 `push-assets` 拒绝镜像（不许拿工作区产物冒充已发布版本）。
 

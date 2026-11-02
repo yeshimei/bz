@@ -2,7 +2,7 @@
 //
 // 汇总全部在线资源条目，写 `downloads/manifest.json`——插件端启动双源拉取的
 // 唯一事实源（src/core/download-manifest.ts 消费）：
-//   docs[]  —— 单文件资源（bz-manual.html 等），id / name / file / sha256
+//   docs[]  —— 单文件资源（归物分类表、RSS 源库、影视索引、外部工具包），id / name / file / sha256
 //   skins[] —— 皮肤条目，id / domain / name / file / previewClass / 版本区间 / sha256
 //
 // sha256 一律对 **downloads/ 里的已出版产物**算（ skins 对 css、docs 对 html），
@@ -67,9 +67,11 @@ const problems = [];
 
 // docs：单文件资源（新资源在此登记一行，插件端 download-manifest 的默认行表同步认 id）
 const DOCS = [
-  // 2026-11-02：更新日志退出在线资源（日志已全部内置进插件，更新提示与设置页共用那一份）。
-  // 不要再加回来——加回来就等于「内置一份 + 远端再下一份」，两处迟早对不上。
-  { id: 'manual', name: '使用手册', file: 'bz-manual.html' },
+  // 2026-11-02：更新日志与使用手册双双退出在线资源（用户拍板）——
+  // 日志已全部内置进插件（core/changelog-data，更新提示与设置页共用那一份），
+  // 手册由视频教程承接。**不要再加回来**：加回来就等于「内置一份 + 远端再下一份」，
+  // 两处迟早对不上；也不再产出、不再上传 bz-changelog.html / bz-manual.html。
+  // 插件侧的显隐开关在 core/doc-visibility（入口撤了，链路留着）。
   // issue 478：归物本物品分类表（数据表，不是文档；产物由 pnpm catalog 出，故发布顺序里 catalog 在 manifest 之前）
   { id: 'belongings-categories', name: '归物分类表', file: 'belongings-categories.json' },
   // issue 495：RSS 源库（社区源清单出版物，黄页模型见 ADR-0208；产物由 pnpm rss-catalog 出，
@@ -98,7 +100,6 @@ const docs = DOCS.map((d) => ({
 // 行序（在线资源组内的行顺序）：'skins' 是皮肤聚合行的保留 id，不是 doc 条目。
 // 新增资源 = DOCS 加一行 + 本表加一个 id；漏登记由下方守卫拦下。
 const ROW_ORDER = [
-  'manual',
   'skins',
   'belongings-categories',
   'rss-catalog',

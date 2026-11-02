@@ -643,13 +643,26 @@ export class SettingsPanelUI {
 
   /** 更新日志（2026-11-02 拍板「两者就是一个」）：不再下载远端 html、不再 iframe，
    *  直接开升级提示用的那个弹窗（内置数据 + 同一套版式）。列表里的版本自己点，
-   *  设置页这一入口只是把它当「文档」翻。 */
+   *  设置页这一入口只是把它当「文档」翻。
+   *
+   *  防重入：两个动态 import 是异步的，连点两下会在它们返回前各走一遍、各开一个窗
+   *  （uiModal 不去重，两层遮罩要连关两次）。旧实现靠按钮上的 `is-loading` 挡，
+   *  改开内置弹窗后那段随下载逻辑一起删了，闸得自己立——窗口一开就盖住面板，
+   *  所以只要挡住 import 这段窗口期即可。 */
+  private changelogNoteOpening = false;
+
   private async runChangelogOpen(_btn: HTMLElement): Promise<void> {
-    const [data, note] = await Promise.all([
-      import('../core/changelog-data'),
-      import('./changelog-note'),
-    ]);
-    note.openChangelogNote(data.CHANGELOG_RELEASES);
+    if (this.changelogNoteOpening) return;
+    this.changelogNoteOpening = true;
+    try {
+      const [data, note] = await Promise.all([
+        import('../core/changelog-data'),
+        import('./changelog-note'),
+      ]);
+      note.openChangelogNote(data.CHANGELOG_RELEASES);
+    } finally {
+      this.changelogNoteOpening = false;
+    }
   }
 
   /** 文档资产后台核对（issue 476）：`refresh` 返回新文本才调 `swap` 换内容；

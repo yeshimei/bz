@@ -2,13 +2,6 @@
   "version": 1,
   "docs": [
     {
-      "id": "manual",
-      "name": "使用手册",
-      "file": "bz-manual.html",
-      "sha256": "cadef4b1d050194c4ee65a952e1efc0d69e36dba21d41ca8d69379fea4a5843c",
-      "size": 275139
-    },
-    {
       "id": "belongings-categories",
       "name": "归物分类表",
       "file": "belongings-categories.json",
@@ -296,7 +289,6 @@
     "size": 32357
   },
   "rowOrder": [
-    "manual",
     "skins",
     "belongings-categories",
     "rss-catalog",
@@ -306,7 +298,7 @@
     "tool-obsidian-face"
   ],
   "release": {
-    "version": "1.40.0",
-    "tag": "v1.40.0"
+    "version": "1.39.2",
+    "tag": "v1.39.2"
   }
 }

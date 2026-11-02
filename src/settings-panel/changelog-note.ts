@@ -200,7 +200,14 @@ export function openChangelogNote(
     '</div>';
 
   // bz-sp-skin 不能省：本窗配色全吃 --sp-* 令牌，而令牌只定义在 .bz-sp-skin 作用域里。
-  const modal = uiModal({ content, className: 'bz-chg-note bz-sp-skin', title: '更新日志' });
+  // onClose 摘 resize 监听：遮罩 / ESC / × 关窗都不经过下面返回的句柄，只挂在句柄上
+  // 得等下一次窗口 resize 才自清。（syncFade 是函数声明，此处引用已在提升范围内。）
+  const modal = uiModal({
+    content,
+    className: 'bz-chg-note bz-sp-skin',
+    title: '更新日志',
+    onClose: () => window.removeEventListener('resize', syncFade),
+  });
   const popup = modal.popup;
 
   const rail = popup.querySelector<HTMLElement>('.bz-chgn-rail');
@@ -210,7 +217,7 @@ export function openChangelogNote(
   const fadeBot = popup.querySelector<HTMLElement>('.bz-chgn-fade-bot');
 
   // 上下渐隐：有溢出才提示，已经到头/到底就撤——别拿假的「还有内容」骗人
-  const syncFade = (): void => {
+  function syncFade(): void {
     if (!body || !body.isConnected) {
       window.removeEventListener('resize', syncFade);
       return;
@@ -218,7 +225,7 @@ export function openChangelogNote(
     const more = body.scrollHeight - body.clientHeight > 2;
     fadeTop?.classList.toggle('show', more && body.scrollTop > 4);
     fadeBot?.classList.toggle('show', more && body.scrollTop + body.clientHeight < body.scrollHeight - 4);
-  };
+  }
 
   let cur = start;
   const select = (i: number): void => {

@@ -66,8 +66,8 @@ const steps = [
     name: 'changelog',
     cmd: ['scripts/_gen-changelog.mjs', ...(nextArg ? [`--next=${nextArg}`] : [])],
     check: () => {
-      const html = join(ROOT, 'downloads/bz-changelog.html');
-      if (!existsSync(html) || statSync(html).mtimeMs <= startedAt) throw new Error('bz-changelog.html 没有重出');
+      const html = join(ROOT, 'docs/changelog.html');
+      if (!existsSync(html) || statSync(html).mtimeMs <= startedAt) throw new Error('docs/changelog.html 没有重出');
       /* 定稿自检：docs/note-v*.md 里的定稿必须落进产物。生成器已自动应用定稿
        * （2026-10-31 起，不再靠人记得传 --note），这里再验一次产物与定稿一致——
        * 「Release 页与线上日志同源同稿」是发版的硬口径，不能只看文件重出了。 */
@@ -82,7 +82,7 @@ const steps = [
           if (s < 0 || e < 0) continue;
           const want = md.slice(s, e).split('\n').filter((l) => l.trim().startsWith('- ')).length;
           const data = readFileSync(html, 'utf8').match(/const DATA = (\{.*?\});/s);
-          if (!data) throw new Error('bz-changelog.html 里的 DATA 读不出来');
+          if (!data) throw new Error('docs/changelog.html 里的 DATA 读不出来');
           const rel = JSON.parse(data[1]).releases.find((r) => r.version === version);
           if (!rel) throw new Error(`定稿 ${name} 对应的 v${version} 不在日志里`);
           const got = rel.added.length + rel.fixed.length + rel.improved.length;
