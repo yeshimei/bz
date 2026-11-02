@@ -15,6 +15,7 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { requestUrl } from 'obsidian';
 import { resetObsidianMocks } from './../mock-obsidian-entry';
+import { setSettingsProvider } from '../../src/core/settings-provider';
 import { MockVault } from '../mock-vault';
 import { crc32, extractZipEntry, readZipEntries, type ZipEntry } from '../../src/core/zip';
 import { textSha256 } from '../../src/core/sha256';
@@ -111,6 +112,11 @@ function routeFetch(map: Record<string, string | Uint8Array | Error>): void {
 
 /* ---------- 夹具 ---------- */
 
+/* 2026-11-02 起官方静态快照层（jsDelivr）退场：静态通道是「用户镜像 → 码云 raw」。
+ * 这里用两条镜像基址验多通道（换备源、hash 不符换下一条），与内网部署时走的路一致。 */
+const M1 = 'https://m1.example.com';
+const M2 = 'https://m2.example.com';
+
 const CSS_A = '/* noir */\n.bz-bs-skin-noir { --bz-brand: #d9b45f; }\n';
 const CSS_B = '/* kraft */\n.bz-bs-skin-kraft { --bz-brand: #8a6a3e; }\n';
 
@@ -146,6 +152,7 @@ function newVault(): MockVault {
 
 beforeEach(() => {
   resetObsidianMocks();
+  setSettingsProvider(() => ({ resourceMirror: `${M1}, ${M2}` }) as never);
   resetSkinPackState();
   resetChannelPreferenceForTests();
   resetReleaseTagForTests();
@@ -180,8 +187,8 @@ describe('皮肤整包快路', () => {
     routeFetch({
       [releaseZipUrl('v1.0.0')]: zip,
       // 逐文件回落的两个 raw 地址
-      'https://fastly.jsdelivr.net/gh/yeshimei/bz-assets@master/downloads/skins/bookshelf/noir.css': CSS_A,
-      'https://fastly.jsdelivr.net/gh/yeshimei/bz-assets@master/downloads/skins/bookshelf/kraft.css': CSS_B,
+      [`${M1}/downloads/skins/bookshelf/noir.css`]: CSS_A,
+      [`${M1}/downloads/skins/bookshelf/kraft.css`]: CSS_B,
     });
     const vault = newVault();
 
@@ -197,8 +204,8 @@ describe('皮肤整包快路', () => {
     const manifest = manifestWithPack([skinOf('noir', CSS_A), skinOf('kraft', CSS_B)], zip);
     routeFetch({
       [releaseZipUrl('v1.0.0')]: zip,
-      'https://fastly.jsdelivr.net/gh/yeshimei/bz-assets@master/downloads/skins/bookshelf/noir.css': CSS_A,
-      'https://fastly.jsdelivr.net/gh/yeshimei/bz-assets@master/downloads/skins/bookshelf/kraft.css': CSS_B,
+      [`${M1}/downloads/skins/bookshelf/noir.css`]: CSS_A,
+      [`${M1}/downloads/skins/bookshelf/kraft.css`]: CSS_B,
     });
     const vault = newVault();
 
@@ -213,7 +220,7 @@ describe('皮肤整包快路', () => {
     const a = skinOf('noir', CSS_A);
     const manifest: DownloadManifest = { version: 1, docs: [], skins: [a] };
     routeFetch({
-      'https://fastly.jsdelivr.net/gh/yeshimei/bz-assets@master/downloads/skins/bookshelf/noir.css': CSS_A,
+      [`${M1}/downloads/skins/bookshelf/noir.css`]: CSS_A,
     });
     const vault = newVault();
 

@@ -1,24 +1,26 @@
 // scripts/push-assets.mjs — 分发仓库镜像推送（2026-10-28 拆分 downloads/，ADR-0269）
 //
-// 主仓 `yeshimei/bz` 的 `.git` 已 284 MB，**超过 jsDelivr 的 50 MB 包上限**——它对
-// 主仓里任何没被缓存过的文件一律回 `HTTP 403 · Package size exceeded`；而国内无代理时
-// `raw.githubusercontent.com` 又不通。两条通道同时死掉，插件端下载功能等于没有。
+// 主仓 `yeshimei/bz` 的 `.git` 已 284 MB，客户端要下载的那点东西（`downloads/` 与每版三件套）
+// 搬进独立小仓库 `yeshimei/bz-assets`（约 14 MB）。主仓仍是**产物唯一的产出地**，
+// 这个仓库只是逐字镜像。
 //
-// 解法：把「客户端要下载的那点东西」搬进独立小仓库 `yeshimei/bz-assets`（约 14 MB），
-// jsDelivr 立刻恢复服务（裸网实测 200，约 0.9 s）。主仓仍是**产物唯一的产出地**，
-// 这个仓库只是逐字镜像，删掉重建没有任何副作用。
+// 2026-11-02 起它不再服务 jsDelivr（那条通道缓存不可控，整条退场，见 core/remote-base 文件头），
+// 但**仍然要推、也仍然不能下线**：
+//  - `gh-proxy.com` 那条 HTML 兜底还指着它的 `master/downloads/`；
+//  - 离线资源包（`bz-offline-<版本>.zip`）的内容就是这份 `downloads/`；
+//  - ≤1.39.x 老客户端的通道链里还有它。
 //
 // 推送内容：
-//   downloads/**             ← 主仓 downloads/ 逐字镜像（手册/更新日志/皮肤/目录包/清单/指针）
+//   downloads/**             ← 主仓 downloads/ 逐字镜像（皮肤/目录包/清单/指针）
 //   releases/<tag>/          ← 插件本体三件套（manifest.json / main.js / styles.css）
-//                              只留最近 RELEASES_KEEP 份：jsDelivr 看的是**当前快照**体积，
-//                              历史版本对客户端没有价值（指针只会指向最新那份）。
+//                              只留最近 RELEASES_KEEP 份：指针只会指向最新那份，
+//                              历史版本对客户端没有价值。
 //
 // 体积守卫：`.git` 超过 SQUASH_AT_BYTES 就压成单提交历史再强推。否则每次发布多几十 MB
 // 历史，早晚重新撞上 50 MB 上限——而那个失败是「下载全挂」，不是慢慢变差。
 //
-// CDN 刷新：推送后按本次变更逐个清 jsDelivr 的 `@master` 缓存，再核对一次边缘清单。
-// 不清的症状不是 404，而是清单里的 sha256 还是上一版 —— 客户端每一项下载都校验失败。
+// （2026-11-02 起不再清 CDN：jsDelivr 整条退场，`--re-purge` 连同那段一起删了。历史上它
+//  清不干净的症状不是 404，而是清单里的 sha256 还是上一版——客户端每一项下载都校验失败。）
 //
 // 发布顺序：manifest → **build** → push-assets（--stage-only，只本地暂存）→ 打 tag →
 //   create-draft → 用户确认 → finalize（转正）→ **push-assets（真推）**
@@ -35,11 +37,10 @@
 //
 // 用法：
 //   node scripts/push-assets.mjs                 # 镜像 + 推送（要求 Release 已转正）
-//   node scripts/push-assets.mjs --stage-only    # 只本地暂存，不推、不清缓存、不传资产
+//   node scripts/push-assets.mjs --stage-only    # 只本地暂存，不推、不传资产
 //   node scripts/push-assets.mjs --dry-run       # 只算差异，不动仓库、不推送
 //   node scripts/push-assets.mjs --no-push       # 本地提交，不推送（排查用）
 //   node scripts/push-assets.mjs --force-squash  # 无条件压平历史
-//   node scripts/push-assets.mjs --re-purge      # 强制重清 CDN 全量缓存（无变更也清）
 //
 // 目标目录：`<主仓同级>/bz-assets`，可用环境变量 BZ_ASSETS_DIR 覆盖。
 import fs from 'node:fs';
@@ -53,9 +54,6 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const DRY = process.argv.includes('--dry-run');
 const NO_PUSH = process.argv.includes('--no-push');
 const FORCE_SQUASH = process.argv.includes('--force-squash');
-/** 强制重清 CDN 全量缓存（不管本次有没有变更）——jsDelivr 缓存逐 POP 各自为政，
- *  「没有变更就跳过清缓存」会让「再跑一次」这句提示自相矛盾（重跑时无变更，照样不清）。 */
-const RE_PURGE = process.argv.includes('--re-purge');
 /** 只做「上传 GitHub Release 资产」一步（tag 打完之后补跑用；幂等，--clobber 覆盖） */
 const UPLOAD_ONLY = process.argv.includes('--upload-only');
 /** 只跳过 Release 上传（排查分发仓问题时用；默认会尝试传） */
@@ -66,7 +64,7 @@ const STAGE_ONLY = process.argv.includes('--stage-only');
 
 /** 一个分发仓库最多留几份发布（客户端只会指向最新那份，旧的是给「指针还没更新就断网」的人兜底） */
 const RELEASES_KEEP = 3;
-/** `.git` 超过这个体积就压平历史（jsDelivr 上限 50 MB，留一半余量给文件本身） */
+/** `.git` 超过这个体积就压平历史（这个仓库只有快照与最近三份，历史没有留存价值） */
 const SQUASH_AT_BYTES = 25 * 1024 * 1024;
 
 const BUNDLE_FILES = ['manifest.json', 'main.js', 'styles.css'];
@@ -166,7 +164,7 @@ function readVersion() {
  * 打完 tag 后 `node scripts/push-assets.mjs --upload-only` 补跑。Release 已存在时
  * --clobber 覆盖（同名资产更新为同内容，幂等）。
  *
- * 上传失败**不算发布失败**（raw/jsDelivr 兜底通道照常工作），但要大声说出来——
+ * 上传失败**不算发布失败**（raw / 分发镜像 兜底通道照常工作），但要大声说出来——
  * 那是「这版发布拿不到计数」的唯一线索。
  */
 async function uploadReleaseAssets(tag, { fromTag }) {
@@ -213,8 +211,8 @@ async function uploadReleaseAssets(tag, { fromTag }) {
   if (fs.existsSync(downloadsSrc)) {
     walk(downloadsSrc, 'downloads/');
     // 皮肤只发整包（skins.zip），单个 css 不上 Release：旧客户端不知道 Release 通道
-    // （走 raw/jsDelivr，镜像照旧）；新客户端走 skinsPack；回落逐文件时 Release 404
-    // 只是跳过、接着试 raw/jsDelivr。省 26 个资产，列表干净一截。
+    // （走 raw / 分发镜像）；新客户端走 skinsPack；回落逐文件时 Release 404
+    // 只是跳过、接着试 raw / 分发镜像。省 26 个资产，列表干净一截。
     files = files.filter((f) => !f.rel.startsWith('downloads/skins/'));
   } else if (UPLOAD_ONLY) {
     console.error('主仓没有 downloads/——先跑 release-steps 把在线资源出齐');
@@ -263,7 +261,7 @@ async function uploadReleaseAssets(tag, { fromTag }) {
     execFileSync('gh', args, { stdio: ['ignore', 'pipe', 'pipe'] });
     log(`Release 资产已上传：https://github.com/${SOURCE_SLUG}/releases/tag/${tag}`);
   } catch (e) {
-    console.error(`\n⚠ Release 资产上传失败（不影响 raw/jsDelivr 通道，但这版拿不到下载计数）：`);
+    console.error(`\n⚠ Release 资产上传失败（不影响 raw / 分发镜像 通道，但这版拿不到下载计数）：`);
     console.error(String(e.stderr || e.stdout || e.message).trim().split('\n').slice(-8).join('\n'));
   } finally {
     fs.rmSync(STAGE_DIR, { recursive: true, force: true });
@@ -287,13 +285,13 @@ function ensureRepo() {
     run('git', ['init', '-b', 'master']);
     run('git', ['remote', 'add', 'origin', REMOTE]);
   }
-  // GitHub 侧：仓库不存在就建（public —— jsDelivr 只服务公开仓库）
+  // GitHub 侧：仓库不存在就建（public —— 离线包 / gh-proxy 兜底要匿名可读）
   if (!DRY) {
     try {
       execFileSync('gh', ['repo', 'view', SLUG], { stdio: 'ignore' });
     } catch {
       log(`GitHub 上没有 ${SLUG}，创建空仓库`);
-      execFileSync('gh', ['repo', 'create', SLUG, '--public', '--description', 'bz 分发镜像：downloads/ 与 releases/<tag>（jsDelivr 取用）'], {
+      execFileSync('gh', ['repo', 'create', SLUG, '--public', '--description', 'bz 分发镜像：downloads/ 与 releases/<tag>（gh-proxy 兜底 / 离线包内容源）'], {
         stdio: 'inherit',
       });
     }
@@ -383,7 +381,7 @@ function pruneReleases() {
   }
 }
 
-/** 历史压平（`.git` 太大就做；jsDelivr 只看当前快照，历史对这个仓库没有价值） */
+/** 历史压平（`.git` 太大就做；这个仓库只有快照与最近三份，历史没有留存价值） */
 function compactIfNeeded() {
   const gitSize = sizeOf(path.join(TARGET, '.git'));
   const snapshot = sizeOf(TARGET, { skipGit: true });
@@ -434,89 +432,6 @@ function commitAndPush(tag, squashed) {
     : [];
 }
 
-/**
- * 主动清 jsDelivr 的 `@master` 缓存（按本次真正变了的文件逐个清）。
- *
- * 不清会怎样：jsDelivr 对 `@master` 的缓存按小时到天算，推完它可能还在发**上一版**的
- * `downloads/manifest.json`。用户端看到的不是「404」，而是清单里的 sha256 与产物不是同一版——
- * 每一项下载都以校验失败收场（2026-10-31 报障：工具改名后引导页仍显示旧名字，下载行全红）。
- * 清单和它指向的产物必须一起换，所以按变更清单清，而不是只清清单一个。
- *
- * 清缓存失败不算发布失败（内容已经推上去了，边缘自己也会过期），但要说出来——
- * 那是「用户今天可能还看不到新版」的唯一线索。
- *
- * `--re-purge`：不管本次有没有变更，把 downloads/ 全量清一遍。原因：jsDelivr 的缓存
- * **逐 POP 各自为政**——清掉的只是回源时打到的那台边缘，用户机器可能落在另一台还拿着
- * 旧副本的边缘上（2026-10-31 实测：gcore 边缘发新版清单 + 旧版正文，fastly 整套旧）。
- * 而「没有变更就跳过清缓存」会让「过几分钟重跑本脚本再清一次」这句提示自相矛盾——
- * 重跑时没有变更，照样什么都不清。
- */
-async function purgeCdn(changed) {
-  const changedFiles = changed.filter((p) => p.startsWith('downloads/') && fs.existsSync(path.join(TARGET, p)));
-  let files = changedFiles;
-  if (RE_PURGE) {
-    // 全量：downloads/ 下所有文件（逐个清，别漏子目录里的皮肤与工具包）
-    const walk = (dir, prefix) => {
-      const out = [];
-      for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
-        const rel = `${prefix}${e.name}`;
-        if (e.isDirectory()) out.push(...walk(path.join(dir, e.name), `${rel}/`));
-        else out.push(rel);
-      }
-      return out;
-    };
-    const dl = path.join(TARGET, 'downloads');
-    if (fs.existsSync(dl)) files = walk(dl, 'downloads/');
-    log(`--re-purge：全量清 ${files.length} 个文件（本次变更 ${changedFiles.length} 个）`);
-  }
-  if (!files.length) {
-    log('没有 downloads/ 变更，跳过清缓存（要强制重清用 --re-purge）');
-    return;
-  }
-  if (DRY || NO_PUSH) {
-    log(`跳过清缓存（${files.length} 个文件）`);
-    return;
-  }
-  let ok = 0;
-  for (const rel of files) {
-    try {
-      const res = await fetch(`https://purge.jsdelivr.net/gh/${SLUG}@master/${rel}`, { signal: AbortSignal.timeout(15000) });
-      if (res.ok) ok++;
-      else log(`清缓存失败 ${rel}（HTTP ${res.status}）——边缘可能还在发旧内容`);
-    } catch (e) {
-      log(`清缓存失败 ${rel}（${(e && e.message) || e}）——边缘可能还在发旧内容`);
-    }
-  }
-  log(`已清 jsDelivr 缓存：${ok}/${files.length} 个文件`);
-  await verifyManifest();
-}
-
-/** 清完缓存核对一次：边缘拿到的清单必须与本地逐字一致，否则客户端会拿到旧 hash */
-async function verifyManifest() {
-  const want = createHash('sha256').update(fs.readFileSync(path.join(ROOT, 'downloads/manifest.json'), 'utf8')).digest('hex');
-  /* 逐边缘核对：jsDelivr 的缓存逐 POP 各自为政，只验一个边缘等于没验
-   * （2026-10-31 实测：fastly 整套旧、gcore 清单新正文旧，两个边缘状态完全不同）。 */
-  const edges = ['fastly.jsdelivr.net', 'gcore.jsdelivr.net', 'testingcf.jsdelivr.net', 'cdn.jsdelivr.net'];
-  let stale = 0;
-  for (const host of edges) {
-    try {
-      const res = await fetch(`https://${host}/gh/${SLUG}@master/downloads/manifest.json`, {
-        signal: AbortSignal.timeout(20000),
-      });
-      const got = createHash('sha256').update(await res.text()).digest('hex');
-      if (got === want) {
-        log(`${host} 清单已刷新 ✓`);
-      } else {
-        stale++;
-        log(`⚠ ${host} 的清单还是旧的（边缘缓存未清干净）——过几分钟再跑一次 --re-purge`);
-      }
-    } catch (e) {
-      log(`⚠ ${host} 核对没成功（${(e && e.message) || e}）——连不上这条边缘，不影响已推送的内容`);
-    }
-  }
-  if (stale) log(`⚠ ${stale} 个边缘还在发旧清单——用户端可能报「sha256 不匹配」，过几分钟再跑一次 --re-purge`);
-}
-
 const { version, tag } = readVersion();
 console.log(`分发仓库 ${SLUG} → ${TARGET}`);
 console.log(`发布 ${tag}（保留最近 ${RELEASES_KEEP} 份）`);
@@ -557,8 +472,8 @@ if (STAGE_ONLY) {
  * 一个字节都不推。 */
 
 /* `--upload-only`：只往 draft Release 补传 assets，分发仓一个字节都不动。
- * 2026-11-02 v1.39.2 踩到：这个开关原先只跳过下面两道闸，syncFiles / commitAndPush / purgeCdn
- * 照跑——等于 Release 还是 draft 时就把 CDN 指针推到新版，正是顺序闸要防的那件事，
+ * 2026-11-02 v1.39.2 踩到：这个开关原先只跳过下面两道闸，syncFiles / commitAndPush 照跑
+ * ——等于 Release 还是 draft 时就把镜像指针推到新版，正是顺序闸要防的那件事，
  * 而且闸被绕过后没人会看见。方向本来就相反，就地返回。 */
 if (UPLOAD_ONLY) {
   await uploadReleaseAssets(tag, { fromTag: readBundleFromTag(tag) });
@@ -580,14 +495,11 @@ ensureRepo();
 syncFiles(tag);
 pruneReleases();
 const squashed = compactIfNeeded();
-const changed = commitAndPush(tag, squashed);
-await purgeCdn(changed);
+commitAndPush(tag, squashed);
 
-const base = `https://fastly.jsdelivr.net/gh/${SLUG}@master`;
-console.log(`\n完成。客户端取用地址：`);
-console.log(`  清单 ${base}/downloads/manifest.json`);
-console.log(`  指针 ${base}/downloads/version.json`);
-console.log(`  本体 ${base}/releases/${tag}/main.js`);
+/* 镜像只是「老版本客户端与 gh-proxy 的兜底」——2026-11-02 起客户端主备两通道都取
+ * GitHub / 码云 的 Release 资产，这里不再打印「客户端取用地址」，免得下次发布照着它排错。 */
+console.log(`\n分发仓已镜像（${SLUG}@master）：给老客户端与 gh-proxy 兜底用，不是当前客户端的下载通道。`);
 if (DRY) console.log('\n（dry-run：以上都没真的写盘、没推送）');
 
 // Release 资产上传（源码主仓）——2026-10-31 发现这步定义了却没接进主流程，v1.37.0 首发资产因此漏传。

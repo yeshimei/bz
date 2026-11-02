@@ -27,7 +27,7 @@ import { MockVault } from '../mock-vault';
 
 const CHG_HTML = '<!DOCTYPE html><html><head><title>包仔更新日志</title></head><body><script>\nconst DATA = {"current":"1.24.0","releases":[]};\n</script></body></html>';
 const STORED = `.obsidian/plugins/bz/downloads/${CHANGELOG_FILENAME}`; // issue 480b：落 downloads 单独目录
-const REMOTE_CDN = 'https://cdn.jsdelivr.net/gh/yeshimei/bz-assets@master/downloads/bz-changelog.html';
+const REMOTE_RAW = 'https://gitee.com/ntbl/bz/raw/master/downloads/bz-changelog.html';
 
 const newVault = () => new MockVault();
 const appOf = (vault: MockVault, extra: Record<string, unknown> = {}) =>
@@ -41,20 +41,14 @@ beforeEach(() => {
 });
 
 describe('remotesFor / assetVaultPath（issue 474 共用内核）', () => {
-  it('多通道顺序：jsDelivr 边缘（能通的在先）→ cdn 长尾 →（HTML 才有）反代兜底；raw 已退场', () => {
+  it('多通道：码云 raw 静态兜底 →（HTML 才有）反代兜底；jsDelivr 已整条退场', () => {
     const urls = remotesFor(CHANGELOG_FILENAME);
-    // 分发仓库小到 jsDelivr 肯发，「能通的那三个」排前面，cdn 那个已知不可用当长尾
-    expect(urls.slice(0, 4)).toEqual([
-      REMOTE_CDN.replace('cdn.jsdelivr.net', 'fastly.jsdelivr.net'),
-      REMOTE_CDN.replace('cdn.jsdelivr.net', 'gcore.jsdelivr.net'),
-      REMOTE_CDN.replace('cdn.jsdelivr.net', 'testingcf.jsdelivr.net'),
-      REMOTE_CDN,
-    ]);
-    // jsDelivr 对 .html 一律 301 到 raw（反钓鱼），裸网下这条链是死循环 → 最后一跳走反代
-    expect(urls).toHaveLength(5);
-    expect(urls[4]).toBe(
+    expect(urls[0]).toBe(REMOTE_RAW);
+    expect(urls).toHaveLength(2);
+    expect(urls[1]).toBe(
       `https://gh-proxy.com/https://raw.githubusercontent.com/yeshimei/bz-assets/master/downloads/${CHANGELOG_FILENAME}`,
     );
+    for (const u of urls) expect(u).not.toContain('jsdelivr');
   });
 
   it('落盘路径 = 插件安装目录（跟随 configDir），非数据目录', () => {
@@ -97,7 +91,7 @@ describe('ensureChangelogReady（issue 474 一键口径）', () => {
     vi.mocked(requestUrl).mockResolvedValue({ status: 200, text: '{"error":"Not Found"}' } as any);
     await expect(ensureChangelogReady(appOf(vault))).rejects.toThrow(/更新日志下载失败/);
     // 两路都试过（信息含最后失败的那条），且报错内容指明「返回内容不是更新日志页」
-    await expect(ensureChangelogReady(appOf(vault))).rejects.toThrow(/jsdelivr\.net.*不是更新日志页/s);
+    await expect(ensureChangelogReady(appOf(vault))).rejects.toThrow(/gh-proxy\.com.*不是更新日志页/s);
     expect(vault.files.has(STORED)).toBe(false);
   });
 

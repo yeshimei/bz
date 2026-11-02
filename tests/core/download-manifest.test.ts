@@ -25,12 +25,18 @@ import {
   type DownloadManifest,
 } from '../../src/core/download-manifest';
 import { refreshAsset } from '../../src/core/remote-asset';
+import { setSettingsProvider } from '../../src/core/settings-provider';
 
 const MANIFEST_CACHE_PATH = '.obsidian/plugins/bz/downloads/manifest.json';
-const REMOTE_MANIFEST = 'https://fastly.jsdelivr.net/gh/yeshimei/bz-assets@master/downloads/manifest.json';
-const BACKUP_MANIFEST = 'https://cdn.jsdelivr.net/gh/yeshimei/bz-assets@master/downloads/manifest.json';
-const REMOTE_HTML = (f: string) => `https://fastly.jsdelivr.net/gh/yeshimei/bz-assets@master/downloads/${f}`;
-const BACKUP_HTML = (f: string) => `https://cdn.jsdelivr.net/gh/yeshimei/bz-assets@master/downloads/${f}`;
+/* 2026-11-02 起官方静态快照层（jsDelivr）整条退场，客户端的静态通道只剩「用户镜像 →
+ * 码云 raw」。这里用两条镜像基址验多通道行为（换备源、并发抢答），这也是内网/离线
+ * 部署时真实会走的那条路。 */
+const M1 = 'https://m1.example.com';
+const M2 = 'https://m2.example.com';
+const REMOTE_MANIFEST = `${M1}/downloads/manifest.json`;
+const BACKUP_MANIFEST = `${M2}/downloads/manifest.json`;
+const REMOTE_HTML = (f: string) => `${M1}/downloads/${f}`;
+const BACKUP_HTML = (f: string) => `${M2}/downloads/${f}`;
 
 const appOf = (vault: MockVault) => ({ vault, workspace: {} }) as any;
 
@@ -69,6 +75,7 @@ function routeFetch(map: Record<string, string | Error>): void {
 beforeEach(() => {
   resetObsidianMocks();
   vi.mocked(requestUrl).mockReset();
+  setSettingsProvider(() => ({ resourceMirror: `${M1}, ${M2}` }) as never);
 });
 
 describe('parseDownloadManifest（清单解析够严）', () => {

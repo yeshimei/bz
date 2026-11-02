@@ -10,7 +10,8 @@
  * 为什么放插件目录而不是数据目录：这些是程序资产、跟版本走，
  * 放数据目录会跟「数据存储路径」这个用户键纠缠。
  *
- * 下载链路：GitHub Release 主（tag 已知时）→ jsDelivr 备；全链失败才报错。
+ * 下载链路：GitHub Release 主 → 码云 Release 备（tag 已知时）→ 用户镜像 / 码云 raw 兜底；
+ * 全链失败才报错。
  *
  * 双源基址的唯一事实源见 core/remote-base.ts（REPO_BASES / downloadRemotesFor）——
  * 本层 `remotesFor` 仅作转发，不在此重述域名。
@@ -29,7 +30,7 @@
 import { requestUrl } from 'obsidian';
 import { textSha256 } from './sha256';
 import { emitDomainEvent } from './domain-bus';
-import { downloadRemotesFor, isValidTag, releaseDownloadUrl } from './remote-base';
+import { downloadRemotesFor, giteeReleaseUrl, isValidTag, releaseDownloadUrl } from './remote-base';
 import { pluginVaultPath } from './plugin-path';
 import { readOfflineText } from './offline-source';
 
@@ -37,7 +38,8 @@ import { readOfflineText } from './offline-source';
  *  消费 = 设置面板在线资源组把已渲染行态同步成磁盘事实（导航入口更新文档后组内按钮翻「已下载」）。 */
 export const DOWNLOADS_CHANGED_EVENT = 'downloads:asset-changed';
 
-/** 远端 URL：master 快照的通道链（jsDelivr 各边缘；唯一事实源见 core/remote-base.ts）。
+/** 远端 URL：静态通道链（用户镜像 → 码云 raw；唯一事实源见 core/remote-base.ts）。
+ *  Release 那两条要 tag，由 channelUrls 拼在最前。
  *  导出与签名不变（测试在用）；函数体直接转发 downloadRemotesFor。
  *
  *  顺序按「上次谁成功过」动态排（`rankRemotes`）：一条卡死的通道不该永远占着队首。 */
@@ -58,7 +60,7 @@ export function remotesFor(fileName: string): string[] {
 const CHANNEL_TIMEOUT_MS = 8000;
 
 /* 正文下载时限（2026-10-30 实测补）：8 s 那条是给**清单**这种几 KB 的小文件定的。
- * 正文完全不是一回事——国内直连 jsDelivr 边缘实测约 40~110 KB/s：
+ * 正文完全不是一回事——国内直连码云实测约 1 MB/s，GitHub 时通时不通：
  * 手册 154 KB / 2.6 s 没问题，但「豆瓣影视索引」5.5 MB 要 **51 s**、main.js 2.8 MB 要 18~48 s。
  * 用 8 s 给正文封顶，结果是「自动更新开了也永远下不完」，面板却说有新版。
  * 所以正文按体积估时限（40 KB/s 下限，封顶 3 分钟）：知道体积就按体积算，
@@ -103,12 +105,12 @@ export function resetChannelPreferenceForTests(): void {
 
 /* ---------- GitHub Release 通道（2026-10-31 新增，见 remote-base.releaseDownloadUrl） ----------
  *
- * 通道链 = Release 资产（tag 已知时）在前，jsDelivr 在后兜底（raw 已退场）。tag 从
+ * 通道链 = GitHub Release → 码云 Release（tag 已知时）在前，用户镜像 / raw 兜底在后。tag 从
  * 发布指针解析（self-update 拉指针后回填；这里只读缓存不发网络），localStorage 缓存
  * 24h——指针只有 46 字节，但每次下载都先拉一遍指针没必要，tag 在两次发布之间不会变。
  *
- * 失败语义：tag 拿不到 → 通道链退化为纯 jsDelivr，**不会**让任何原本能成功的下载
- * 变成失败。
+ * 失败语义：tag 拿不到 → 通道链退化为静态兜底（码云 raw + 镜像），**不会**让任何
+ * 原本能成功的下载变成失败。
  */
 
 /** release tag 缓存键与 TTL（与自更新巡检同期） */
@@ -160,13 +162,13 @@ export function resetReleaseTagForTests(): void {
  * 惰性解析当前发布 tag：**只读缓存，不发网络**（self-update 每次拉到发布指针后经
  * noteReleaseTag 回填，TTL 24h）。这里刻意不做「拉不到指针就自己拉一遍」——
  * 那会让每次资源下载多出一跳网络、失败语义膨胀，且单测环境会打真网。
- * 缓存没有/过期 → 返回空串，通道链退化为纯 jsDelivr，行为可预期。
+ * 缓存没有/过期 → 返回空串，通道链退化为静态兜底（码云 raw + 镜像），行为可预期。
  */
 export async function ensureReleaseTag(): Promise<string> {
   return readCachedReleaseTag();
 }
 
-/** 完整通道链：Release 资产（tag 已知时）在前 + jsDelivr（含镜像）在后 */
+/** 完整通道链：GitHub Release → 码云 Release（tag 已知时）+ 用户镜像 / html 反代在后 */
 export async function remotesForWithRelease(fileName: string): Promise<string[]> {
   return channelUrls(fileName);
 }
@@ -174,8 +176,12 @@ export async function remotesForWithRelease(fileName: string): Promise<string[]>
 async function channelUrls(fileName: string, opts: { releasePath?: string } = {}): Promise<string[]> {
   const tag = await ensureReleaseTag();
   const rel = opts.releasePath ?? `downloads/${fileName}`;
-  const release = releaseDownloadUrl(tag, rel);
-  return [...(release ? [release] : []), ...remotesFor(fileName)];
+  // 两条 Release 通道都按 tag 冻结，谁先谁后都安全；GitHub 在前是因为它带下载计数。
+  // 码云那条是 2026-11-02 接进来的国内主备——jsDelivr 的 `@master` 快照缓存不可控
+  //（清不掉、边缘各发一版），整条退场。
+  const gh = releaseDownloadUrl(tag, rel);
+  const gt = giteeReleaseUrl(tag, rel);
+  return [...(gh ? [gh] : []), ...(gt ? [gt] : []), ...remotesFor(fileName)];
 }
 
 /**
@@ -197,11 +203,10 @@ async function requestText(url: string, timeoutMs: number = CHANNEL_TIMEOUT_MS):
     const text = String(res?.text || '');
     const status = Number(res?.status) || 0;
     if (status && (status < 200 || status >= 300)) {
-      throw new Error(
-        /Package size exceeded/i.test(text)
-          ? 'HTTP 403 · 通道拒绝分发（仓库超过 50 MB，jsDelivr 已停发未缓存的文件）'
-          : `HTTP ${status}`,
-      );
+      // 正文一起带出来：Release/CDN 的 4xx 常常只有响应体里才有真原因（签名过期、限流、
+      // 被墙时返回的拦截页），只报状态码会把人引向「网络不通」这个错方向。
+      const hint = text && text.length < 200 ? ` · ${text.replace(/\s+/g, ' ').trim()}` : '';
+      throw new Error(`HTTP ${status}${hint}`);
     }
     preferredBase = baseOfUrl(url);
     return text;

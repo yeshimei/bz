@@ -34,11 +34,15 @@ import { DOC_VISIBILITY } from '../../src/core/doc-visibility';
 
 const MANIFEST_CACHE_PATH = '.obsidian/plugins/bz/downloads/manifest.json';
 const PLUGIN_MANIFEST_PATH = '.obsidian/plugins/bz/manifest.json';
-const REMOTE_MANIFEST = 'https://fastly.jsdelivr.net/gh/yeshimei/bz-assets@master/downloads/manifest.json';
-const BACKUP_MANIFEST = 'https://cdn.jsdelivr.net/gh/yeshimei/bz-assets@master/downloads/manifest.json';
-const REMOTE_CSS = 'https://fastly.jsdelivr.net/gh/yeshimei/bz-assets@master/downloads/skins/bookshelf/noir.css';
-const BACKUP_CSS = 'https://cdn.jsdelivr.net/gh/yeshimei/bz-assets@master/downloads/skins/bookshelf/noir.css';
-const remoteDoc = (file: string) => `https://fastly.jsdelivr.net/gh/yeshimei/bz-assets@master/downloads/${file}`;
+/* 2026-11-02 起官方静态快照层（jsDelivr）退场：静态通道是「用户镜像 → 码云 raw」。
+ * 这里用两条镜像基址验多通道，与内网/离线部署时真实走的那条路一致。 */
+const M1 = 'https://m1.example.com';
+const M2 = 'https://m2.example.com';
+const REMOTE_MANIFEST = `${M1}/downloads/manifest.json`;
+const BACKUP_MANIFEST = `${M2}/downloads/manifest.json`;
+const REMOTE_CSS = `${M1}/downloads/skins/bookshelf/noir.css`;
+const BACKUP_CSS = `${M2}/downloads/skins/bookshelf/noir.css`;
+const remoteDoc = (file: string) => `${M1}/downloads/${file}`;
 
 const HTML_V1 = '<!DOCTYPE html><html><body>日志 v1</body></html>';
 const HTML_V2 = '<!DOCTYPE html><html><body>日志 v2</body></html>';
@@ -138,7 +142,7 @@ beforeEach(() => {
   clearNotices();
   document.body.innerHTML = '';
   resetOnlineResourcesState();
-  setSettingsProvider(() => ({}) as any);
+  setSettingsProvider(() => ({ resourceMirror: `${M1}, ${M2}` }) as any);
   vi.mocked(requestUrl).mockReset();
   // 本文件钉的是「在线资源组」这条链路本身，与文档显隐开关正交：清单里有 changelog /
   // manual 就要出行、要走同一状态机——那是功能还在的凭据。默认（关）的行为由文件末尾

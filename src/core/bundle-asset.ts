@@ -88,7 +88,7 @@ function defaultGunzip(bytes: Uint8Array): Uint8Array {
 /**
  * 缺省下载：requestUrl 的 arrayBuffer（别用 text——二进制过一遍 UTF-8 会当场坏掉）。
  *
- * 带 3 分钟硬时限：目录包是 MB 级（国内 jsDelivr 边缘实测约 40~110 KB/s），
+ * 带 3 分钟硬时限：目录包是 MB 级（国内慢通道实测约 40~110 KB/s），
  * 全程不给时限的话，一条卡死的通道会把整趟自动更新挂在那儿——用户看到的是
  * 「自动更新开着，但它一直没动静」（2026-10-30 与 self-update 的大文件时限同批补）。
  */
@@ -254,7 +254,7 @@ async function fetchArchive(
 
 /**
  * 通用归档字节出口（2026-10-31）：**皮肤整包 skins.zip**（core/skin-pack.ts 的整包快路）
- * 借这条通道下载——本地归档缓存 → 离线包 → Release/raw/jsDelivr，sha256 全程把关，
+ * 借这条通道下载——本地归档缓存 → 离线包 → Release（GitHub/码云）→ raw/镜像，sha256 全程把关，
  * 与工具包完全同一套口径。zip 的解包在调用方（core/zip.ts），这里只管把可信字节拿到手。
  */
 export async function fetchArchiveBytes(

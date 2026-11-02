@@ -16,7 +16,7 @@ import {
   readOfflineBytes,
   readOfflineText,
 } from '../../src/core/offline-source';
-import { normalizeMirrorBase, repoBases, downloadRemotesFor, REPO_BASES } from '../../src/core/remote-base';
+import { normalizeMirrorBase, repoBases, downloadRemotesFor } from '../../src/core/remote-base';
 import { ensureAssetWithHash } from '../../src/core/remote-asset';
 import { textSha256 } from '../../src/core/sha256';
 import { MockVault } from '../mock-vault';
@@ -133,12 +133,11 @@ describe('自定义镜像基址', () => {
     expect(normalizeMirrorBase('')).toBe('');
   });
 
-  it('配了镜像 → 镜像排在官方通道之前；没配 → 与官方通道逐字相同', () => {
-    expect(repoBases()).toEqual(REPO_BASES);
+  it('配了镜像 → 静态基址只有镜像；没配 → 空（官方 CDN 快照层 2026-11-02 已整条退场）', () => {
+    expect(repoBases()).toEqual([]);
     setSettingsProvider(() => ({ resourceMirror: 'http://nas.local/bz, https://b.example.com/bz' }) as never);
     const bases = repoBases();
-    expect(bases.slice(0, 2)).toEqual(['http://nas.local/bz', 'https://b.example.com/bz']);
-    expect(bases.slice(2)).toEqual(REPO_BASES);
+    expect(bases).toEqual(['http://nas.local/bz', 'https://b.example.com/bz']);
     expect(downloadRemotesFor('changelog.html')[0]).toBe('http://nas.local/bz/downloads/changelog.html');
   });
 });

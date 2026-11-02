@@ -20,7 +20,7 @@
  *  - **不把「没配」当「坏了」**：AI 密钥是可选项，只提示，不计红。
  * ============================================================ */
 import { requestUrl } from 'obsidian';
-import { REPO_BASES, REPO_SLUG } from './remote-base';
+import { GITEE_SLUG, REPO_SLUG } from './remote-base';
 import { tryGetSettings } from './settings-provider';
 import { pluginRelDirOf } from './plugin-path';
 import { isMobileEnv } from './mobile';
@@ -48,16 +48,16 @@ export interface EnvCheckRow {
 export interface NetworkProbe {
   /** GitHub 是否可达（主通道——Release 资产与其页面同域，文案只说 GitHub） */
   github: boolean;
-  /** jsDelivr 是否可达（备用通道） */
-  jsdelivr: boolean;
+  /** 码云是否可达（备用通道：Release 资产的第二个出口） */
+  gitee: boolean;
   /** 主通道耗时（ms；不可达 = -1） */
   githubMs: number;
   /** 备用通道耗时（ms；不可达 = -1） */
-  jsdelivrMs: number;
+  giteeMs: number;
   /** 不可达时的原因（可达 = 空串）——「不可达」三个字没法排查，原因才有用 */
   githubError: string;
   /** 备用通道不可达的原因（可达 = 空串） */
-  jsdelivrError: string;
+  giteeError: string;
 }
 
 /** 单次探测的超时（requestUrl 没有 abort，用 race 兜住；超时按不可达算） */
@@ -65,6 +65,8 @@ const PROBE_TIMEOUT_MS = 6000;
 
 /** GitHub 主通道的探测 URL：仓库页恒定存在，且与 Release 下载同域（见 probeNetwork 注释） */
 const GITHUB_PROBE_URL = `https://github.com/${REPO_SLUG}`;
+/** 码云探测地址：探仓库页（恒存在）。Release 资产落在 foruda.gitee.com，但入口都在这个域。 */
+const GITEE_PROBE_URL = `https://gitee.com/${GITEE_SLUG}`;
 
 /** 一次探测的原始结果 */
 interface NetAttempt {
@@ -96,15 +98,9 @@ async function timedFetch(url: string): Promise<NetAttempt> {
       const status = Number(r?.status) || 0;
       if (!status) return { ms: -1, status: 0, error: '响应没有状态码' };
       // 403 / 407 / 451 是「通道拒绝服务」，跟断网一样用不了；404 只是「这个文件不在」
-      // （网络通着），不能混为一谈——jsDelivr 对本仓库的 403 正文是「仓库超过 50 MB」。
+      // （网络通着），不能混为一谈。
       if (status === 403 || status === 407 || status === 451) {
-        return {
-          ms: -1,
-          status,
-          error: /Package size exceeded/i.test(String(r?.text || ''))
-            ? '通道拒绝分发（仓库超过 50 MB）'
-            : `HTTP ${status}`,
-        };
+        return { ms: -1, status, error: `HTTP ${status}` };
       }
       return { ms: Date.now() - t0, status, error: '' };
     } catch (e: unknown) {
@@ -131,7 +127,6 @@ export function explainNetError(raw: string): string {
   const s = String(raw || '').trim();
   if (!s) return '未知原因';
   if (/超时|timed? ?out|ETIMEDOUT/i.test(s)) return '超时';
-  if (/仓库超过 50 MB|Package size exceeded/i.test(s)) return '通道拒绝分发（仓库超过 50 MB）';
   if (/ENOTFOUND|EAI_AGAIN|getaddrinfo|ERR_NAME_NOT_RESOLVED|ERR_NAME_RESOLUTION/i.test(s)) return '域名解析失败';
   if (/ECONNREFUSED|ERR_CONNECTION_REFUSED/i.test(s)) return '连接被拒绝（代理没开？）';
   if (/ECONNRESET|ERR_CONNECTION_RESET|ERR_CONNECTION_CLOSED|ERR_CONNECTION_ABORTED/i.test(s)) return '连接被重置（常见于被墙）';
@@ -150,8 +145,8 @@ export async function probeNetwork(): Promise<NetworkProbe> {
   //  - GitHub 主通道：探仓库页 `github.com/<REPO_SLUG>`——Release 资产下载就在这个域
   //    （302 到 objects.githubusercontent.com）。tag 未知时探真资产只能是 404，404 是
   //    「文件不在」不是「通道不通」，所以探恒定存在的仓库页。
-  //  - jsDelivr：探 version.json，取**最快**的那个边缘（国内实测 cdn 不通、fastly/gcore/testingcf 通）
-  const urls = [GITHUB_PROBE_URL, ...REPO_BASES.map((b) => `${b}/downloads/version.json`)];
+  //  - 码云：探仓库页。备用通道（国内直连，2026-11-02 接进通道链，替换不可控的 jsDelivr）
+  const urls = [GITHUB_PROBE_URL, GITEE_PROBE_URL];
   const results = await Promise.all(urls.map((u) => timedFetch(u)));
   const gh = results[0] ?? { ms: -1, status: 0, error: '未探测' };
   const cdn = results.slice(1).filter((r) => r.ms >= 0);
@@ -159,11 +154,11 @@ export async function probeNetwork(): Promise<NetworkProbe> {
   const fastest = cdn.length ? cdn.reduce((a, b) => (b.ms < a.ms ? b : a)) : null;
   return {
     github: gh.ms >= 0,
-    jsdelivr: !!fastest,
+    gitee: !!fastest,
     githubMs: gh.ms >= 0 ? gh.ms : -1,
-    jsdelivrMs: fastest ? fastest.ms : -1,
+    giteeMs: fastest ? fastest.ms : -1,
     githubError: gh.ms >= 0 ? '' : explainNetError(gh.error),
-    jsdelivrError: fastest ? '' : explainNetError((results.slice(1).find((r) => r.error) ?? gh).error),
+    giteeError: fastest ? '' : explainNetError((results.slice(1).find((r) => r.error) ?? gh).error),
   };
 }
 

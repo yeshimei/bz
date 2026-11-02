@@ -101,11 +101,11 @@ function stubRemote(): void {
     if (url.includes('/downloads/version.json')) {
       return { status: 200, text: JSON.stringify({ version: NEW, tag: TAG }) };
     }
-    if (url.includes(`/releases/${TAG}/main.js`)) {
+    if (url.includes(`/releases/download/${TAG}/main.js`)) {
       return { status: 200, text: '/*new-bundle-' + 'n'.repeat(1200) + '*/' };
     }
-    if (url.includes(`/releases/${TAG}/styles.css`)) return { status: 200, text: '/*new-css*/' };
-    if (url.includes(`/releases/${TAG}/manifest.json`)) {
+    if (url.includes(`/releases/download/${TAG}/styles.css`)) return { status: 200, text: '/*new-css*/' };
+    if (url.includes(`/releases/download/${TAG}/manifest.json`)) {
       return { status: 200, text: JSON.stringify({ id: 'bz', version: NEW }) };
     }
     throw new Error('offline');

@@ -1,10 +1,10 @@
 /* ============================================================
  * bz · 新版本自更新（core/self-update.ts，单源）
  *
- * 通道（2026-10-28 对外分发重做；2026-10-31 起 raw 退场、Release 主 / jsDelivr 备）：
- *  1. 指针：Release latest 的 `downloads/manifest.json` 顶层 `release`（合并形态），
- *     老指针 `downloads/version.json` 兜底（v1.36 及更早客户端只认它）；
- *  2. 产物：该 tag 下的三件套 manifest.json / main.js / styles.css（Release 资产优先）。
+ * 通道（2026-11-02 定版：GitHub Release 主 → 码云 Release 备；jsDelivr 整条退场）：
+ *  1. 指针：GitHub `releases/latest/download/downloads-manifest.json` 顶层 `release`（合并形态），
+ *     不通时走码云 API latest + 该 tag 的 manifest.json；再不通才用自定义镜像的旧指针；
+ *  2. 产物：该 tag 下的三件套 manifest.json / main.js / styles.css（先 GitHub 资产，后码云资产）。
  * 两段分开的理由见 core/remote-base.ts 文件头——指针必须恒可达，产物必须是冻结的提交。
  *
  * 行为分两档（设置键 `autoUpdate`，缺省**开**；2026-10-30 用户拍板）：
@@ -33,7 +33,16 @@
 import { requestUrl } from 'obsidian';
 import { notice } from './notice';
 import { pluginDirOf, pluginVaultPath } from './plugin-path';
-import { downloadRemotesFor, isValidTag, releaseDownloadUrl, RELEASE_POINTER, REPO_SLUG, repoRemotesForTag } from './remote-base';
+import {
+  GITEE_LATEST_API,
+  giteeReleaseUrl,
+  isValidTag,
+  RELEASE_POINTER,
+  REPO_SLUG,
+  repoRemotesFor,
+  repoRemotesForTag,
+  releaseDownloadUrl,
+} from './remote-base';
 import { MANIFEST_FILE as DOWNLOAD_MANIFEST_FILE } from './download-manifest';
 import { noteReleaseTag } from './remote-asset';
 
@@ -54,7 +63,7 @@ const FETCH_TIMEOUT_MS = 6000;
  * 大文件（main.js / styles.css）的单通道时限。
  *
  * 与指针的 6 秒分开：指针是几百字节，慢到 6 秒就是网络真有问题；而三件套里 main.js 有
- * **2.8 MB**，2026-10-30 实测国内直连 jsDelivr 边缘 **18～48 秒**（fastly 48s / gcore 18s）。
+ * **2.8 MB**，国内直连（GitHub 时通时不通，码云实测约 1 MB/s）都要几十秒到一两分钟。
  * 用同一个 6 秒等于给本体判死刑：检查能过、下载永远超时，面板还显示「有新版」——
  * 用户看到的是「自动更新开着，但从来没更新过」。慢就慢，让它下完。
  */
@@ -145,7 +154,7 @@ async function fetchText(url: string, timeoutMs: number = FETCH_TIMEOUT_MS): Pro
 }
 
 /**
- * 依序试一组 URL（Release 资产在前 → jsDelivr 各边缘入口）。
+ * 依序试一组 URL（GitHub Release 资产 → 码云 Release 资产 → 自定义镜像）。
  *
  * 第一个单独试（Release 主通道），失败了把**其余通道并发**打出去：串行试五条时，
  * 国内半通网络下用户要盯着转圈半分钟才看到「网络不通」。
@@ -303,39 +312,72 @@ function firstOk<T>(tasks: Array<() => Promise<T>>): Promise<T> {
   });
 }
 
+/**
+ * 码云这条指针（**没有 latest 别名，只能两步**）：
+ *  1. `GET /api/v5/repos/ntbl/bz/releases/latest` → `tag_name`（免登录，0.2 s 量级）；
+ *  2. 取该 tag 下的 `manifest.json` 当指针 —— 它的 `version` 就是版本号。
+ *
+ * 为什么要第二步而不是直接信 API 的 tag：`push-gitee` 是「先建 Release、再传资产」，
+ * 中间那几秒会「查得到 tag、下不到文件」。第二步拿 manifest 等于顺手验了就绪——
+ * 拿不到就当这条通道无效，回落上一条，而不是让用户点「更新」再吃 404。
+ *
+ * 限流 60 次/小时/IP：只在 GitHub 那条失败后才会走到，正常用户一天也就几次。
+ */
+async function fetchGiteePointer(): Promise<{ version: string; tag: string }> {
+  const res = await withTimeout(
+    requestUrl({ url: GITEE_LATEST_API, method: 'GET', throw: true }),
+    FETCH_TIMEOUT_MS,
+    GITEE_LATEST_API,
+  );
+  let tag = '';
+  try {
+    tag = String((JSON.parse(String(res.text || '')) as { tag_name?: unknown })?.tag_name || '').trim();
+  } catch {
+    tag = '';
+  }
+  if (!isValidTag(tag)) throw new Error('码云 latest 里没有可用的 tag');
+  const url = giteeReleaseUrl(tag, 'manifest.json');
+  const text = await fetchText(url, FETCH_TIMEOUT_MS);
+  let mf: { id?: unknown; version?: unknown };
+  try {
+    mf = JSON.parse(text) as { id?: unknown; version?: unknown };
+  } catch {
+    throw new Error(`${url}：不是 JSON`);
+  }
+  const version = String(mf?.version || '').trim();
+  if (mf?.id !== 'bz' || !version) throw new Error(`${url}：不是 bz 的 manifest`);
+  // tag 与 manifest 必须对得上（发布脚本炸了/手工传错时会不一致，那种版本不能装）
+  if (tag.replace(/^v/i, '') !== version) {
+    throw new Error(`码云 ${tag} 的 manifest 写的是 ${version}，对不上`);
+  }
+  return { version, tag };
+}
+
 async function fetchPointer(): Promise<{ version: string; tag: string }> {
-  // 通道链（2026-10-31 起指针合并进清单；raw 退场、Release 主 / jsDelivr 备）：
+  // 通道链（2026-11-02 起：GitHub Release 主 → 码云 Release 备；jsDelivr 整条退场）：
   //  1. Release 免 tag 形态 `releases/latest/download/<资产名>`——GitHub 302 到**当前最新
   //     发布**的同名资产。它把「指针放哪」与「latest 是哪个 tag」的死结解开了：读指针
   //     不需要事先知道 tag，而 GitHub 的 latest 语义（非 draft、非 prerelease）与
   //     「note/资产齐了才转正」的发布流程天然一致——转正那一刻才对外可见。
-  //     清单在前（新客户端主路，一次请求指针+清单），镜像上的老指针 version.json 跟着兜。
-  //  2. jsDelivr 边缘 + `?t=` 破缓存兜底：GitHub 直连不通时走它。jsDelivr 对 `@master`
-  //     有分钟到小时级缓存，换个缓存键强制回源（remote-asset.FetchAssetOpts.bust 同口径）。
+  //  2. 码云（fetchGiteePointer）：GitHub 直连不通时的国内主备。两步走，见该函数注释。
+  //  3. 用户自定义镜像的清单 / version.json（`?t=` 破缓存）：内网环境里的最后一手。
   //
   // **每条通道都要校验内容**：镜像清单可能还是旧版（无 release 字段），那是「这条无效」
   // 不是「检查失败」，必须继续试下一条（v1.37.0 首发翻车的根因）。
   const stamp = Date.now();
-  const urls = [
-    LATEST_MANIFEST_URL,
-    ...downloadRemotesFor(DOWNLOAD_MANIFEST_FILE).map((u) => `${u}?t=${stamp}`),
-    ...downloadRemotesFor(RELEASE_POINTER).map((u) => `${u}?t=${stamp}`),
-  ];
-  const attempt = async (url: string) => {
-    const text = await fetchText(url, FETCH_TIMEOUT_MS);
-    const p = tryParsePointer(text);
-    if (!p) throw new Error(`${url}：内容不是发布指针`);
-    return p;
-  };
+  const rest: Array<() => Promise<{ version: string; tag: string }>> = [fetchGiteePointer];
+  for (const u of repoRemotesFor(`downloads/${DOWNLOAD_MANIFEST_FILE}`)) {
+    rest.push(() => attemptPointer(`${u}?t=${stamp}`));
+  }
+  for (const u of repoRemotesFor(RELEASE_POINTER)) {
+    rest.push(() => attemptPointer(`${u}?t=${stamp}`));
+  }
   let pointer: { version: string; tag: string };
-  const [head, ...rest] = urls;
   try {
-    // 第一条单独试（latest 最新鲜），失败了把其余通道并发打出去——串行试五条时，
-    // 国内半通网络下用户要盯着转圈半分钟才看到结果。
-    pointer = await attempt(head);
+    pointer = await attemptPointer(LATEST_MANIFEST_URL);
   } catch (headErr) {
     try {
-      pointer = await firstOk(rest.map((u) => () => attempt(u)));
+      pointer = await firstOk(rest);
     } catch (e) {
       throw new Error(`拿不到发布指针：${(headErr as Error)?.message || headErr}；${(e as Error)?.message || e}`);
     }
@@ -343,6 +385,14 @@ async function fetchPointer(): Promise<{ version: string; tag: string }> {
   // 回填 Release 通道的 tag 记忆（remote-asset 的下载链据此把 Release 资产排到最前）
   noteReleaseTag(pointer.tag);
   return pointer;
+}
+
+/** 某个 URL 上的内容能否解析成发布指针（不能 → 抛，交给 next 通道） */
+async function attemptPointer(url: string): Promise<{ version: string; tag: string }> {
+  const text = await fetchText(url, FETCH_TIMEOUT_MS);
+  const p = tryParsePointer(text);
+  if (!p) throw new Error(`${url}：内容不是发布指针`);
+  return p;
 }
 
 /** 备份旧三件套（覆盖前唯一的安全网）；失败只记录不阻断——备份不该成为装不上的理由 */
@@ -574,8 +624,8 @@ export async function checkSelfUpdate(app: unknown, opts: SelfUpdateOptions = {}
   if (!apply) return 'available';
 
   // 有新版本才拉大文件（省流量）：三件套全部来自**该 tag**，不是 master。
-  // 通道：Release 资产（github.com/<主仓>/releases/download/<tag>/<name>）在前——
-  // 按计数、按冻结性都优于分发仓镜像；镜像（jsDelivr）整条链跟在后面兜底。
+  // 通道：GitHub Release 资产在前（自带下载计数），码云 Release 资产（repoRemotesForTag）
+  // 在后兜底。两条都按 tag 冻结，不存在「清单新、正文旧」。
   // 三件套按「大文件」时限拉：2.8 MB 的 main.js 在慢速边缘上要几十秒（见 FETCH_ASSET_TIMEOUT_MS）
   const bundleUrl = (name: string): string[] => {
     const rel = releaseDownloadUrl(pointer.tag, name);

@@ -34,20 +34,27 @@ function stubRemote(opts: { pointerVersion?: string; badBundle?: boolean } = {})
   const manifest = JSON.stringify({ id: 'bz', version: opts.pointerVersion ?? NEW });
   vi.mocked(requestUrl).mockImplementation((async ({ url }: { url: string }) => {
     seen.push(url);
-    // 指针三形态里的清单形态（2026-10-31 合并）：Release latest 的清单顶层带 `release`
-    if (url.includes('/releases/latest/download/downloads/manifest.json')) {
+    // 指针形态一：GitHub `releases/latest/download/<扁平资产名>`（顶层带 `release`，2026-10-31 合并）
+    if (url.includes('/releases/latest/download/downloads-manifest.json')) {
       return { status: 200, text: JSON.stringify({ version: 1, release: { version: NEW, tag: TAG } }) };
     }
+    // 指针形态二：码云两步（API latest 拿 tag → 该 tag 的 manifest.json）
+    if (url.includes('gitee.com/api/v5/')) {
+      return { status: 200, text: JSON.stringify({ tag_name: TAG }) };
+    }
+    // 指针形态三：用户镜像上的老指针
     if (url.includes('/downloads/version.json')) {
       return { status: 200, text: JSON.stringify({ version: NEW, tag: TAG }) };
     }
-    if (url.includes(`/releases/${TAG}/main.js`)) {
+    // 三件套：GitHub 与码云同一形状 `…/releases/download/<tag>/<file>`
+    const rel = `/releases/download/${TAG}/`;
+    if (url.includes(`${rel}main.js`)) {
       return { status: 200, text: opts.badBundle ? '<!DOCTYPE html><html>404</html>' : js };
     }
-    if (url.includes(`/releases/${TAG}/styles.css`)) {
+    if (url.includes(`${rel}styles.css`)) {
       return { status: 200, text: css };
     }
-    if (url.includes(`/releases/${TAG}/manifest.json`)) {
+    if (url.includes(`${rel}manifest.json`)) {
       return { status: 200, text: manifest };
     }
     throw new Error('offline');
@@ -90,7 +97,10 @@ describe('checkSelfUpdate：只查不装', () => {
     const seen: string[] = [];
     vi.mocked(requestUrl).mockImplementation((async ({ url }: { url: string }) => {
       seen.push(url);
-      if (url.includes('version.json')) return { status: 200, text: JSON.stringify({ version: LOCAL, tag: 'v1.33.0' }) };
+      // 主通道就是 GitHub latest 清单：这里回「远端也是 1.33.0」= 已是最新
+      if (url.includes('/releases/latest/download/downloads-manifest.json')) {
+        return { status: 200, text: JSON.stringify({ version: 1, release: { version: LOCAL, tag: `v${LOCAL}` } }) };
+      }
       throw new Error('不该再请求：' + url);
     }) as never);
 
@@ -131,7 +141,7 @@ describe('checkSelfUpdate：安装', () => {
     // 旧版备份在 downloads/.backup/<旧版本>/
     expect(vault.files.has(`.obsidian/plugins/bz/downloads/.backup/${LOCAL}/manifest.json`)).toBe(true);
     // 全程走 tag，不碰 master 的三件套
-    expect(seen.some((u) => u.includes(`/releases/${TAG}/main.js`))).toBe(true);
+    expect(seen.some((u) => u.includes(`/releases/download/${TAG}/main.js`))).toBe(true);
     expect(seen.some((u) => /@master\/main\.js|\/master\/main\.js/.test(u))).toBe(false);
     // pending 让面板说「重载后生效」
     const st = await selfUpdateState(app);
@@ -211,14 +221,15 @@ describe('checkSelfUpdate：失败面', () => {
 describe('回归：通道内容不是指针 → 换通道，而不是报错', () => {
   const OLD_MANIFEST = JSON.stringify({ version: 1, docs: [], skins: [], rowOrder: [] });
 
-  it('latest 404 + 镜像清单还是旧版（无 release）+ version.json 同版本 → current，不报错', async () => {
+  it('latest 404 → 码云两步拿到同版本指针 → current，不报错', async () => {
     const app = appWithPlugin(); // 本地 1.33.0
     const { vault } = app;
     vi.mocked(requestUrl).mockImplementation((async ({ url }: { url: string }) => {
+      // GitHub 主通道挂了 → 码云两步：API latest 拿 tag，再取该 tag 的 manifest
       if (url.includes('/releases/latest/download/')) throw new Error('404 Not Found');
-      if (url.includes('/downloads/manifest.json')) return { status: 200, text: OLD_MANIFEST };
-      if (url.includes('/downloads/version.json'))
-        return { status: 200, text: JSON.stringify({ version: LOCAL, tag: `v${LOCAL}` }) };
+      if (url.includes('gitee.com/api/v5/')) return { status: 200, text: JSON.stringify({ tag_name: `v${LOCAL}` }) };
+      if (url.endsWith(`/releases/download/v${LOCAL}/manifest.json`))
+        return { status: 200, text: JSON.stringify({ id: 'bz', version: LOCAL }) };
       throw new Error('unexpected ' + url);
     }) as never);
 
@@ -230,15 +241,15 @@ describe('回归：通道内容不是指针 → 换通道，而不是报错', ()
     expect(vault.files.has('.obsidian/plugins/bz/main.js')).toBe(false);
   });
 
-  it('本地已是 1.37.0，发布页也还是 1.37.0 → current（首发事故的那一步）', async () => {
+  it('本地已是 1.37.0，码云那边也还是 1.37.0 → current（首发事故的那一步）', async () => {
     const vault = new MockVault();
     vault.files.set('.obsidian/plugins/bz/manifest.json', JSON.stringify({ id: 'bz', version: '1.37.0' }));
     const app = { vault, plugins: { manifests: { bz: { version: '1.37.0' } } } };
     vi.mocked(requestUrl).mockImplementation((async ({ url }: { url: string }) => {
       if (url.includes('/releases/latest/download/')) throw new Error('404 Not Found');
-      if (url.includes('/downloads/manifest.json')) return { status: 200, text: OLD_MANIFEST };
-      if (url.includes('/downloads/version.json'))
-        return { status: 200, text: JSON.stringify({ version: '1.37.0', tag: 'v1.37.0' }) };
+      if (url.includes('gitee.com/api/v5/')) return { status: 200, text: JSON.stringify({ tag_name: 'v1.37.0' }) };
+      if (url.endsWith('/releases/download/v1.37.0/manifest.json'))
+        return { status: 200, text: JSON.stringify({ id: 'bz', version: '1.37.0' }) };
       throw new Error('unexpected ' + url);
     }) as never);
 

@@ -6,8 +6,11 @@
  * 调用方（`fetchManifestWithTimeout` 只等 12 s）就把整件事判成「资源清单没拉到」，
  * 后面几条本来能用的通道根本没被试到。所以：
  *  1. 清单这类小文件**并发**试，谁先通过校验用谁；
- *  2. jsDelivr 的 403 正文要带出来（本仓库超 50 MB 被它停发，不是「网络不通」）；
+ *  2. 非 2xx 要把响应体带出来（4xx 的正文常常才是真原因，不是「网络不通」）；
  *  3. 成功过的通道记下来，下次排到队首。
+ *
+ * 注：2026-11-02 起通道链是 GitHub Release → 码云 Release，jsDelivr 已整条退场；
+ * 这里的「多跳」用 html 资产验（它有码云 raw 静态兜底 + gh-proxy 反代两跳）。
  */
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { requestUrl } from 'obsidian';
@@ -31,9 +34,10 @@ describe('fetchAssetText：通道选择', () => {
   });
 
   it('并发模式：队首卡住/慢死，后面通道的内容照样先到位', async () => {
-    route((url) => (url.includes('raw.githubusercontent.com') ? delay(80) : ok('LIST')));
+    // html 资产有两跳（码云 raw 静态兜底 → gh-proxy 反代），拿它验「不等最慢的那条」
+    route((url) => (url.includes('gitee.com') ? delay(80) : ok('LIST')));
     const t0 = Date.now();
-    const text = await fetchAssetText('manifest.json', (t) => t === 'LIST', '下载清单', '', undefined, {
+    const text = await fetchAssetText('manual.html', (t) => t === 'LIST', '使用手册', '页', undefined, {
       concurrent: true,
     });
     expect(text).toBe('LIST');
@@ -42,38 +46,38 @@ describe('fetchAssetText：通道选择', () => {
   });
 
   it('串行模式（下载正文）：某条失败后换下一条，不整份放弃', async () => {
-    route((url) => (url.includes('raw.githubusercontent.com') ? { status: 500, text: '' } : ok('DOC')));
+    route((url) => (url.includes('gitee.com') ? { status: 500, text: '' } : ok('DOC')));
     const text = await fetchAssetText('manual.html', (t) => t === 'DOC', '使用手册', '页');
     expect(text).toBe('DOC');
   });
 
   it('内容校验不过 → 换下一条（不把 CDN 的错误页当正文）', async () => {
-    route((url) => (url.includes('raw.githubusercontent.com') ? ok('<html>404</html>') : ok('DOC')));
+    route((url) => (url.includes('gitee.com') ? ok('<html>404</html>') : ok('DOC')));
     const text = await fetchAssetText('manual.html', (t) => t === 'DOC', '使用手册', '页');
     expect(text).toBe('DOC');
   });
 
-  it('jsDelivr 403 的正文带出来：是「仓库超 50 MB 停发」，不是「网络不通」', async () => {
+  it('4xx 把响应体带出来：是「通道那边说清了原因」，不是一句「网络不通」', async () => {
     route((url) =>
-      url.includes('jsdelivr')
-        ? { status: 403, text: 'Package size exceeded the configured limit of 50 MB. Try https://github.com/...' }
+      url.includes('gitee.com')
+        ? { status: 403, text: 'rate limited: too many requests' }
         : { status: 502, text: '' },
     );
     await expect(
-      fetchAssetText('manifest.json', () => true, '下载清单', '', undefined, { concurrent: true }),
-    ).rejects.toThrow(/超过 50 MB/);
+      fetchAssetText('manual.html', () => true, '使用手册', '页', undefined, { concurrent: true }),
+    ).rejects.toThrow(/HTTP 403 · rate limited/);
   });
 
   it('成功过的通道排到队首（下次不再先撞死的那条）', async () => {
-    route((url) => (url.includes('testingcf.jsdelivr.net') ? ok('LIST') : { status: 500, text: '' }));
-    await fetchAssetText('manifest.json', (t) => t === 'LIST', '下载清单', '', undefined, { concurrent: true });
-    expect(remotesFor('manifest.json')[0]).toContain('testingcf.jsdelivr.net');
+    route((url) => (url.includes('gh-proxy') ? ok('DOC') : { status: 500, text: '' }));
+    await fetchAssetText('manual.html', (t) => t === 'DOC', '使用手册', '页', undefined, { concurrent: true });
+    expect(remotesFor('manual.html')[0]).toContain('gh-proxy');
   });
 
   it('全失败 → 错误里带每一条的原因（主机名 + 原因，不糊整串 URL）', async () => {
-    route(() => ({ status: 403, text: 'Package size exceeded the configured limit of 50 MB.' }));
+    route(() => ({ status: 403, text: 'blocked' }));
     await expect(
       fetchAssetText('manifest.json', () => true, '下载清单', '', undefined, { concurrent: true }),
-    ).rejects.toThrow(/下载清单下载失败：.*jsdelivr\.net/);
+    ).rejects.toThrow(/下载清单下载失败：.*gitee\.com/);
   });
 });

@@ -35,8 +35,20 @@ import { execFileSync } from 'node:child_process';
 import { enforceReleaseOrder, sourceSlug } from './release-gate.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const OWNER = 'ntbl';
-const REPO = 'bz';
+
+/** 码云 slug：从 src/core/remote-base.ts 读，**不在脚本里另写一份**——
+ *  两处各写一份字面量的结果一定是某天只改了一处，客户端去拉一个不存在的仓库。 */
+function giteeSlug() {
+  const src = fs.readFileSync(path.join(ROOT, 'src/core/remote-base.ts'), 'utf8');
+  const m = /export const GITEE_SLUG = '([^']+)'/.exec(src);
+  if (!m) {
+    console.error('src/core/remote-base.ts 里找不到 GITEE_SLUG —— 先修好它再发布');
+    process.exit(1);
+  }
+  return m[1];
+}
+
+const [OWNER, REPO] = giteeSlug().split('/');
 const API = 'https://gitee.com/api/v5';
 
 const DRY = process.argv.includes('--dry-run');
@@ -69,21 +81,42 @@ async function api(method, p, body) {
   return text ? JSON.parse(text) : null;
 }
 
-/** 待传资产：只发「装了就能用」的那几件
+/** 待传资产：与 GitHub Release **同一批**（2026-11-02 起 15 个）
  *
- *  **不发 downloads/****（在线资源：皮肤包、工具包、手册、影视索引、更新日志页）——2026-11-01
- *  用户拍板。理由：客户端取在线资源只走 releaseDownloadUrl 与 jsDelivr 两条道（见
- *  src/core/remote-base.ts），码云从来不在通道链里；把它镜像过去只是多 11 个没人校验的
- *  副本，而且每次发版都要多传十几 MB。码云的定位是「国内能手动下到插件本体」。
+ *  **downloads/ 那批必须发**（2026-11-02 用户拍板，反转 11-01 的「不发」）：那天码云还
+ *  不在通道链里，镜像过去只是没人校验的副本；现在它是客户端的第二通道
+ *  （`src/core/remote-base.ts`：GitHub Release 主 → 码云 Release 备，jsDelivr 整条退场），
+ *  少一个资产就等于备用通道缺一块。
  *
- *  命名与 GitHub Release 同一套（本来就无斜杠，不需要扁平化）。 */
+ *  命名与 GitHub 完全同一套规则：`downloads/manifest.json` → `downloads-manifest.json`
+ *  （见 remote-base.flatAssetName）。两端口径不一致时，客户端拿到的资产名会对不上，
+ *  表现为「备用通道 404」。 */
 function assetFiles(version) {
   const out = [];
+  const seen = new Set();
+  const add = (name, abs) => {
+    if (seen.has(name)) throw new Error(`资产名撞了：${name}`);
+    seen.add(name);
+    out.push({ name, abs });
+  };
   for (const f of [`bz-${version}.zip`, `bz-offline-${version}.zip`, 'SHA256SUMS.txt', 'main.js', 'manifest.json', 'styles.css']) {
     const abs = path.join(ROOT, f);
     if (!fs.existsSync(abs)) throw new Error(`缺 ${f}：先跑 node scripts/pack-release.mjs ${version}`);
-    out.push({ name: f, abs });
+    add(f, abs);
   }
+  // downloads/**（排除单个皮肤 css：客户端只取 skins.zip 整包，与 push-assets 同口径）
+  const flat = (rel) => String(rel).replace(/^\/+/, '').replace(/\//g, '-');
+  const walk = (dir, prefix) => {
+    for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
+      const abs = path.join(dir, e.name);
+      const rel = `${prefix}${e.name}`;
+      if (e.isDirectory()) walk(abs, `${rel}/`);
+      else if (!rel.startsWith('downloads/skins/')) add(flat(rel), abs);
+    }
+  };
+  const dl = path.join(ROOT, 'downloads');
+  if (!fs.existsSync(dl)) throw new Error('主仓没有 downloads/——先跑 release-steps 把在线资源出齐');
+  walk(dl, 'downloads/');
   return out;
 }
 

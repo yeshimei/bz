@@ -5,7 +5,7 @@
 // 清单（含 sha256）不再由本脚本产出——统一收敛到 `downloads/manifest.json`
 //（scripts/build-manifest.mjs，`pnpm manifest`），skins 条目在那里对**已出版的 css**算 hash，
 // 保证清单永与产物一致。发布顺序固定：skin-pack → changelog → manifest。
-// 插件启动时按统一清单从 raw.githubusercontent（备 jsDelivr）逐套拉取，校验 sha256 后注入。
+// 插件启动时按统一清单从 GitHub Release / 码云 Release（兜底 raw）逐套拉取，校验 sha256 后注入。
 //
 // 为什么产物提交入 git：远端读的就是仓库里的 `downloads/`（与 downloads/bz-changelog.html 同一条路）。
 // 为什么 sha256 对「归一换行后的文本」算：插件端 src/core/sha256.ts 同口径，

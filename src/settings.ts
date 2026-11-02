@@ -102,7 +102,7 @@ export default interface BzSettings {
   /** 首次引导是否走完（含「以后再说」）：false = 下次启动还会弹（core/setup-wizard）。
    *  跳过的也算走完——不能每次启动都拿同一张清单拦人。 */
   setupDone: boolean;
-  /** 自定义镜像源（可选；空格/逗号分隔多条）。企业网里 raw 与 jsDelivr 可能全不通，
+  /** 自定义镜像源（可选；空格/逗号分隔多条）。企业网里公网通道可能全不通，
    *  那时把内网静态目录填进来就能下载资源；地址形状与仓库一致（`<基址>/downloads/xxx`）。
    *  只管**资源下载**，插件自更新仍走官方 tag（core/remote-base.ts 的 mirrorBases）。
    *

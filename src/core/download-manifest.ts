@@ -217,7 +217,7 @@ export async function refreshManifest(app: unknown): Promise<ManifestRefresh> {
     '',
     app,
     // 清单 9 KB：并发试通道（串行时只要第一条通道卡住，后面能用的全被外层超时砍掉）；
-    // 再带破缓存参数——jsDelivr 的 `@master` 缓存逐 POP 各自为政，不清掉的话可能长期
+    // 再带破缓存参数——静态通道（码云 raw / 自建镜像）也可能有分钟级缓存，不清掉的话可能长期
     // 拿到改名前的旧清单（见 FetchAssetOpts.bust）。
     { concurrent: true, bust: true },
   );

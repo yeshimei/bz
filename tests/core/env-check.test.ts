@@ -10,7 +10,6 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { requestUrl } from 'obsidian';
 import { MockVault } from '../mock-vault';
 import { environmentCheck, explainNetError, isRealPythonOutput, probeNetwork } from '../../src/core/env-check';
-import { REPO_BASES } from '../../src/core/remote-base';
 import { resetNodeRuntimeCache, setFsProbe } from '../../src/core/tool-runtime';
 import { DEFAULT_STORAGE_DIR } from '../../src/core/storage-path';
 
@@ -99,9 +98,9 @@ describe('probeNetwork：通道可达性', () => {
     vi.mocked(requestUrl).mockReset();
   });
 
-  // 2026-10-31 起 raw 退场：主通道探 GitHub 仓库页（Release 下载同域），备用探 jsDelivr
+  // 2026-11-02 起 jsDelivr 整条退场：主通道探 GitHub 仓库页（Release 下载同域），备用探码云
   const GH = 'https://github.com/yeshimei/bz';
-  const CDN = REPO_BASES[0];
+  const GITEE = 'https://gitee.com/ntbl/bz';
 
   /** 按域名分派：命中的 resolve，其余按给的错误 reject */
   function route(ok: (url: string) => boolean, err = 'net::ERR_CONNECTION_RESET'): void {
@@ -117,32 +116,33 @@ describe('probeNetwork：通道可达性', () => {
     expect(net.github).toBe(true);
     expect(net.githubMs).toBeGreaterThanOrEqual(0);
     expect(net.githubError).toBe('');
-    expect(net.jsdelivr).toBe(true);
+    expect(net.gitee).toBe(true);
   });
 
   it('主通道被墙、备用通 → 各说各的（国内最常见的那一种）', async () => {
-    route((u) => u.startsWith(CDN), 'net::ERR_CONNECTION_RESET');
+    route((u) => u.startsWith(GITEE), 'net::ERR_CONNECTION_RESET');
     const net = await probeNetwork();
     expect(net.github).toBe(false);
     expect(net.githubError).toBe('连接被重置（常见于被墙）');
-    expect(net.jsdelivr).toBe(true);
-    expect(net.jsdelivrError).toBe('');
+    expect(net.gitee).toBe(true);
+    expect(net.giteeError).toBe('');
   });
 
-  it('只有慢的那个入口通 → 备用通道取最快的那条', async () => {
-    route((u) => u.startsWith(CDN));
+  it('只有备用通道通 → 照样给出耗时（引导页据此说「可达 · N ms」）', async () => {
+    route((u) => u.startsWith(GITEE));
     const net = await probeNetwork();
-    expect(net.jsdelivr).toBe(true);
-    expect(net.jsdelivrMs).toBeGreaterThanOrEqual(0);
+    expect(net.gitee).toBe(true);
+    expect(net.giteeMs).toBeGreaterThanOrEqual(0);
+    expect(net.github).toBe(false);
   });
 
   it('全都不通 → 两条都红，原因折成人话（不是一句「不可达」）', async () => {
     route(() => false, 'getaddrinfo ENOTFOUND raw.githubusercontent.com');
     const net = await probeNetwork();
     expect(net.github).toBe(false);
-    expect(net.jsdelivr).toBe(false);
+    expect(net.gitee).toBe(false);
     expect(net.githubError).toBe('域名解析失败');
-    expect(net.jsdelivrError).toBe('域名解析失败');
+    expect(net.giteeError).toBe('域名解析失败');
   });
 
   it('404 也算通：探的是「网络通不通」，不是「这个文件在不在」', async () => {
@@ -154,15 +154,15 @@ describe('probeNetwork：通道可达性', () => {
     expect(net.github).toBe(true); // 有 HTTP 响应 = 网络通（文件缺失是另一件事）
   });
 
-  it('403 拒绝分发 ≠ 可达：jsDelivr 对超 50 MB 的仓库停发，要说清是它拒了', async () => {
+  it('403 / 407 / 451 不算可达：通道拒了你，跟断网一样用不上', async () => {
     vi.mocked(requestUrl).mockImplementation((async () => ({
       status: 403,
       text: 'Package size exceeded the configured limit of 50 MB.',
     })) as never);
     const net = await probeNetwork();
     expect(net.github).toBe(false);
-    expect(net.jsdelivr).toBe(false);
-    expect(net.githubError).toBe('通道拒绝分发（仓库超过 50 MB）');
+    expect(net.gitee).toBe(false);
+    expect(net.githubError).toBe('HTTP 403');
   });
 
   it('用静态 import 拿 requestUrl（动态 import 裸模块在 Obsidian 里永远失败）', async () => {

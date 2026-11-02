@@ -4,8 +4,8 @@
  * 为什么另起一条：`requestUrl` 只给「下载完了」这一个时刻，没有中间态。36MB 的便携 Node
  * 在慢网下要几分钟，界面只能显示一个不动的小圈——用户以为卡死了，去点第二次。
  *
- * 走 `fetch` + `ReadableStream` 就够：GitHub raw 与 jsDelivr 都发 `access-control-allow-origin: *`，
- * 浏览器里能直接读（Electron 渲染进程等于 Chromium）。拿不到流（老环境 / 被拦）就整块读，
+ * 走 `fetch` + `ReadableStream` 就够：GitHub raw 这类源发 `access-control-allow-origin: *`，
+ * 浏览器里能直接读（Electron 渲染进程等于 Chromium）。拿不到流（别的源 / 老环境 / 被拦）就整块读，
  * 至少还能给「开始/结束」两态。
  *
  * **失败一律返回 null，不抛**：调用方回落到 `requestUrl`（它绕 CORS、走 Electron 网络栈，
