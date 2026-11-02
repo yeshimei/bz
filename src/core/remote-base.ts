@@ -31,25 +31,17 @@
  * 会 302 到源码包，不是资产），所以码云那条指针要两步：API `releases/latest` 拿 tag，
  * 再取该 tag 下的 `manifest.json`。细节见 self-update.fetchPointer。
  *
- * 以上资产全部住在**源码仓库** `REPO_SLUG` 的 Release 上（2026-11-02 起；分发仓
- * `ASSETS_SLUG` 的 master 快照不再被下载，只留作手动镜像与旧版离线包的内容源）。
+ * 以上资产全部住在**源码仓库** `REPO_SLUG` 的 Release 上。
+ *
+ * 分发仓 `yeshimei/bz-assets` 已退役（2026-11-02 用户拍板）：它是 10-28 为绕 jsDelivr
+ * 的 50 MB 上限建的，jsDelivr 退场后新客户端对它零依赖（通道链只有 Release 与码云 raw，
+ * 离线包直接打自主仓 `downloads/`，唯一指着它的 HTML 反代分支也没有 html 资产可服务）。
+ * 仓库原地冻结、不再上传；旧版客户端（≤1.39.x）的 jsDelivr 备链里还有它，删了会让那批人
+ * 连滞后的副本都拿不到。手动重建用 `scripts/push-assets.mjs`（已退出发布流程）。
  * ============================================================ */
 
 /** 源码 / 反馈 / issue 的仓库 slug（`<owner>/<repo>`）。Release 资产挂在这里。 */
 export const REPO_SLUG = 'yeshimei/bz';
-
-/**
- * 分发仓库 slug（GitHub）——2026-10-28 为绕开 jsDelivr 的 50 MB 包体积上限而建。
- *
- * jsDelivr 退场后它不再是客户端的下载通道，但**不能删**：
- *  - `gh-proxy.com` 那条 HTML 兜底仍指向它的 `master/downloads/`；
- *  - 离线资源包（`bz-offline-<版本>.zip`）的内容就是这份 `downloads/` 目录；
- *  - 老版本客户端（≤1.39.x）的通道链里还有它，镜像继续在，别让老用户断粮。
- *
- * 2026-11-02 起 `push-assets` 仍会镜像它（保留最近三份），只是发布流程不再依赖它的
- * 缓存新鲜度——顺序闸照样拦「Release 没转正就镜像」。
- */
-export const ASSETS_SLUG = 'yeshimei/bz-assets';
 
 /**
  * 码云镜像 slug（国内第二出口）。
@@ -137,32 +129,23 @@ export function repoRemotesForTag(tag: string, name: string): string[] {
 }
 
 /**
- * HTML 资产的**最后一跳**：公开反代 gh-proxy.com（把 raw 转出来）。
- *
- * 2026-10-28 加它是因为 jsDelivr 对 `.html` 一律 301 到 raw。jsDelivr 已退场，Release
- * 资产能直接吐字节，这条降级成「分发仓 master 的手动镜像兜底」——留着不占通道（只在
- * html 资产上追加一条），内容有 sha256 兜底（清单里每个 doc 都带 hash，对不上就拒收）。
- */
-const HTML_PROXY_BASE = 'https://gh-proxy.com';
-
-/**
  * `downloads/` 资产的静态通道（**不含** GitHub / 码云 Release —— 那两条要 tag，
  * 由 remote-asset.channelUrls 拼在最前）。
  *
- * 顺序：用户自定义镜像 → 码云 raw master（静态兜底）→ html 的 gh-proxy 反代。
+ * 顺序：用户自定义镜像 → 码云 raw master（静态兜底）。
  *
  * 为什么留码云 raw 这条（2026-11-02）：`remotesFor` 在 tag 还没拉到时是**唯一的**通道
  * （首次引导、指针没拿到的场景）。没有它，那种情况下在线资源一个都下不动——而它只是
  * 「国内可达的静态副本」，正文有清单里的 sha256 兜底，对不上就拒收，不会装错内容。
  * 指针**不用**它：raw 的 version.json 在推代码那一刻就是新版号，比 Release 资产早，
  * 顺序是反的（见文件头）。
+ *
+ * 早先对 html 资产还追加过一条 gh-proxy 反代（指向分发仓 master）。分发仓退役后那条
+ * 必然 404，且 `downloads/` 下已无 html 资产（手册与远端日志都已退场），一并删掉。
  */
 export function downloadRemotesFor(fileName: string): string[] {
   const urls = repoBases().map((b) => `${b}/downloads/${fileName}`);
   urls.push(`https://gitee.com/${GITEE_SLUG}/raw/master/downloads/${fileName}`);
-  if (/\.html?$/i.test(fileName)) {
-    urls.push(`${HTML_PROXY_BASE}/https://raw.githubusercontent.com/${ASSETS_SLUG}/master/downloads/${fileName}`);
-  }
   return urls;
 }
 

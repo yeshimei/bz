@@ -41,14 +41,14 @@ beforeEach(() => {
 });
 
 describe('remotesFor / assetVaultPath（issue 474 共用内核）', () => {
-  it('多通道：码云 raw 静态兜底 →（HTML 才有）反代兜底；jsDelivr 已整条退场', () => {
+  it('通道只剩码云 raw 静态兜底；jsDelivr 与 gh-proxy 反代都已退场', () => {
     const urls = remotesFor(CHANGELOG_FILENAME);
     expect(urls[0]).toBe(REMOTE_RAW);
-    expect(urls).toHaveLength(2);
-    expect(urls[1]).toBe(
-      `https://gh-proxy.com/https://raw.githubusercontent.com/yeshimei/bz-assets/master/downloads/${CHANGELOG_FILENAME}`,
-    );
-    for (const u of urls) expect(u).not.toContain('jsdelivr');
+    expect(urls).toHaveLength(1);
+    for (const u of urls) {
+      expect(u).not.toContain('jsdelivr');
+      expect(u).not.toContain('gh-proxy');
+    }
   });
 
   it('落盘路径 = 插件安装目录（跟随 configDir），非数据目录', () => {
@@ -76,22 +76,19 @@ describe('ensureChangelogReady（issue 474 一键口径）', () => {
     expect(requestUrl).not.toHaveBeenCalled();
   });
 
-  it('主远端返回错误页（不像日志）→ 备远端接管', async () => {
+  it('远端返回错误页（不像日志）→ 抛人话错，不落盘（通道只剩码云 raw 一条）', async () => {
     const vault = newVault();
-    vi.mocked(requestUrl)
-      .mockResolvedValueOnce({ status: 200, text: '<html>404 Not Found</html>' } as any)
-      .mockResolvedValueOnce({ status: 200, text: CHG_HTML } as any);
-    await ensureChangelogReady(appOf(vault));
-    expect(vault.files.get(STORED)).toBe(CHG_HTML);
-    expect(requestUrl).toHaveBeenCalledTimes(2);
+    vi.mocked(requestUrl).mockResolvedValue({ status: 200, text: '<html>404 Not Found</html>' } as any);
+    await expect(ensureChangelogReady(appOf(vault))).rejects.toThrow(/不是更新日志页/);
+    expect(vault.files.has(STORED)).toBe(false);
   });
 
   it('两路都不可信 → 抛人话错（含「更新日志下载失败」与最后失败远端），不写文件、不兜底快照', async () => {
     const vault = newVault();
     vi.mocked(requestUrl).mockResolvedValue({ status: 200, text: '{"error":"Not Found"}' } as any);
     await expect(ensureChangelogReady(appOf(vault))).rejects.toThrow(/更新日志下载失败/);
-    // 两路都试过（信息含最后失败的那条），且报错内容指明「返回内容不是更新日志页」
-    await expect(ensureChangelogReady(appOf(vault))).rejects.toThrow(/gh-proxy\.com.*不是更新日志页/s);
+    // 报错里点名最后失败的那条远端，并指明「返回内容不是更新日志页」
+    await expect(ensureChangelogReady(appOf(vault))).rejects.toThrow(/gitee\.com.*不是更新日志页/s);
     expect(vault.files.has(STORED)).toBe(false);
   });
 
@@ -100,13 +97,13 @@ describe('ensureChangelogReady（issue 474 一键口径）', () => {
     await expect(ensureChangelogReady(appOf(newVault()))).rejects.toThrow(/ENOTFOUND/);
   });
 
-  it('内容校验：真实产物形状（<!DOCTYPE + 数据锚点）放行；只有 HTML 头、缺数据锚点 → 视为不可信换远端', async () => {
+  it('内容校验：真实产物形状（<!DOCTYPE + 数据锚点）放行；只有 HTML 头、缺数据锚点 → 视为不可信', async () => {
+    vi.mocked(requestUrl).mockResolvedValue({ status: 200, text: '<html><body>维护中</body></html>' } as any);
+    await expect(ensureChangelogReady(appOf(newVault()))).rejects.toThrow(/不是更新日志页/);
+    // 真产物照常放行
     const vault = newVault();
-    vi.mocked(requestUrl)
-      .mockResolvedValueOnce({ status: 200, text: '<html><body>维护中</body></html>' } as any)
-      .mockResolvedValueOnce({ status: 200, text: CHG_HTML } as any);
+    vi.mocked(requestUrl).mockResolvedValue({ status: 200, text: CHG_HTML } as any);
     await ensureChangelogReady(appOf(vault));
-    expect(requestUrl).toHaveBeenCalledTimes(2);
     expect(vault.files.get(STORED)).toBe(CHG_HTML);
   });
 

@@ -16,7 +16,6 @@ import { describe, it, expect } from 'vitest';
 import fs from 'node:fs';
 import path from 'node:path';
 import {
-  ASSETS_SLUG,
   GITEE_LATEST_API,
   GITEE_SLUG,
   REPO_SLUG,
@@ -42,11 +41,10 @@ const BUNDLE = {
 };
 
 describe('两条通道：GitHub 主 → 码云备', () => {
-  it('slug：源码仓 / 分发仓 / 码云镜像三个互不相同', () => {
+  it('slug：源码仓与码云镜像互不相同（分发仓已退役，不再进通道链）', () => {
     expect(REPO_SLUG).toBe('yeshimei/bz');
-    expect(ASSETS_SLUG).toBe('yeshimei/bz-assets');
     expect(GITEE_SLUG).toBe('ntbl/bz');
-    expect(new Set([REPO_SLUG, ASSETS_SLUG, GITEE_SLUG]).size).toBe(3);
+    expect(REPO_SLUG).not.toBe(GITEE_SLUG);
   });
 
   it('码云指针走 API latest（它没有 releases/latest 别名）', () => {
@@ -96,14 +94,12 @@ describe('资源 URL', () => {
     expect(downloadRemotesFor('manifest.json').some((u) => u.includes('version.json'))).toBe(false);
   });
 
-  it('HTML 资产多一条反代兜底', () => {
-    const html = downloadRemotesFor('bz-manual.html');
-    expect(html).toHaveLength(2);
-    expect(html[html.length - 1]).toBe(
-      `https://gh-proxy.com/https://raw.githubusercontent.com/${ASSETS_SLUG}/master/downloads/bz-manual.html`,
-    );
-    // 非 html 不许挂反代：第三方能少碰就少碰
-    expect(downloadRemotesFor('manifest.json').some((u) => u.includes('gh-proxy'))).toBe(false);
+  it('任何资产都不挂第三方反代（分发仓退役，gh-proxy 那条分支已删）', () => {
+    for (const f of ['bz-manual.html', 'manifest.json', 'skins/bookshelf/noir.css']) {
+      const urls = downloadRemotesFor(f);
+      expect(urls.some((u) => u.includes('gh-proxy'))).toBe(false);
+      expect(urls.some((u) => u.includes('bz-assets'))).toBe(false);
+    }
   });
 });
 
@@ -124,11 +120,16 @@ describe('插件本体三件套：码云 Release 目录', () => {
 describe('发布脚本与插件用同一个 slug', () => {
   const read = (rel: string) => fs.readFileSync(path.join(process.cwd(), rel), 'utf8');
 
-  it('push-assets.mjs 从 remote-base.ts 读 ASSETS_SLUG，不自己再写一份字面量', () => {
-    const script = read('scripts/push-assets.mjs');
-    expect(script).toContain('ASSETS_SLUG');
-    expect(script).toContain('src/core/remote-base.ts');
-    expect(script).not.toContain(`'${ASSETS_SLUG}'`);
+  it('分发仓已退役：finalize 不再镜像它，push-assets 也不在七步里', () => {
+    const gate = read('scripts/release-gate.mjs');
+    // finalize 只剩「转正 → 码云」；出现 push-assets 就是有人把镜像仓又接回流程了
+    expect(gate).not.toContain("['scripts/push-assets.mjs']");
+    expect(gate).toContain('scripts/push-gitee.mjs');
+    const steps = read('scripts/release-steps.mjs');
+    // 注释里可以提它的来历，但不能真把它 spawn 起来
+    expect(steps).not.toContain("'scripts/push-assets.mjs'");
+    // 脚本本身留着（手动重建用），头部要写清已退役
+    expect(read('scripts/push-assets.mjs')).toContain('已退出发布流程');
   });
 
   it('push-gitee.mjs 从 remote-base.ts 读 GITEE_SLUG（码云那条通道的地址只此一处）', () => {

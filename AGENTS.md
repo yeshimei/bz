@@ -47,7 +47,7 @@ Conventional Commits。**提交信息即更新日志正文**，只有 `feat` / `
 
 **发版时码云另有一条 Release**：GitHub 那边走完七步后跑 `node scripts/push-gitee.mjs`，它建/更新码云的 Release 页（正文取 `docs/note-v<版本>.md`）并挂 **15 个资产**（安装包 / 离线资源包 / SHA256SUMS / 三件套 / downloads 扁平化 9 个）。**downloads/ 那批也要发**（2026-11-02 反转：码云现在是备通道，少一个资产就等于备通道缺一块；与 GitHub 同一套扁平化命名，共 15 个）。令牌放 `~/.gitee-token`（一行），**绝不进仓库**（主仓公开）。**顺序闸**：它只镜像已转正的 Release（`gh release view` 不是 draft），否则 exit 3。
 
-**分发仓与码云都不许早于 Release 上线**（2026-11-02 v1.40.0 事故后钉进代码）：七步里的 assets 步只做 `push-assets --stage-only` 自检、不推远端；真镜像发生在 `release-gate.mjs finalize`（转正 → `push-assets` → `push-gitee`），两个脚本动手前都过 `enforceReleaseOrder`，Release 没转正就 exit 3。另加一条：本地没有该 tag 时 `push-assets` 拒绝镜像（不许拿工作区产物冒充已发布版本）。
+**对外镜像只剩码云一条**（2026-11-02）：七步里的 assets 步是**纯本地对账**（清单声明的每个文件在不在），不跑脚本、不碰网络；真正的对外镜像只有 `release-gate.mjs finalize` 里的 `push-gitee`（转正 → 码云），动手前过 `enforceReleaseOrder`，Release 没转正就 exit 3。分发仓 `yeshimei/bz-assets` 同日起**退役**：原地冻结、不再上传（它的存在理由 jsDelivr 已整条退场），`push-assets.mjs` 保留作手动重建工具，不进程；唯一还在用的模式是 `--upload-only`（往源码仓 Release 补传 `downloads/` 那批资产，create-draft 调它），它不碰分发仓。
 
 占 issues / ADR 编号前先查主仓库最新号；拍板结论进 `.scratch/memo-suite-plugin/spec.md`，决策进 `docs/adr/` 并同步 `CONTEXT.md`。
 
@@ -63,7 +63,7 @@ Conventional Commits。**提交信息即更新日志正文**，只有 `feat` / `
 | 写一个接入工具坞的外部脚本 | `docs/dock-tool-guide.md`（声明文件 / 参数值文件 / 四行协议 / 运行记录 / 展示板 `panel.html`） |
 | 发布页正文怎么写、条目什么格式、离线包什么结构 | `docs/release-note-template.md`（条目格式段：标签说人话 + 全角冒号 + 标题 emoji）· `src/core/offline-source.ts` 文件头的目录图 |
 | 发版前的 review 查什么、清单怎么给 | `docs/pre-release-review.md`（四维度检查点 / 编号规则 / 挑完之后） |
-| 分发仓库怎么重建 | `scripts/push-assets.mjs`（保留份数 / 压平阈值 / slug 读哪里）· ADR-0269 |
+| 分发仓库怎么重建（已退役，仅手动） | `scripts/push-assets.mjs`（保留份数 / 压平阈值）· ADR-0269 |
 | 资源地址、通道顺序 | `src/core/remote-base.ts`（唯一事实源；别在别处再写一份 slug 或域名）· ADR-0269 |
 
 本文与代码冲突时以代码为准，并顺手改这里。历史注释里的「铁律 N」是旧编号，按内容找，别按号找。

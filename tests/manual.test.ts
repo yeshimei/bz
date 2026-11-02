@@ -40,17 +40,11 @@ describe('downloadManual（issue 473）', () => {
     expect(await hasManual(appOf(vault))).toBe(true);
   });
 
-  it('主远端返回错误页（不像手册）→ 备远端接管；两路都不像 → 抛错含原因', async () => {
+  it('远端返回错误页（不像手册）→ 抛人话错，不落盘（通道只剩码云 raw 一条）', async () => {
     const vault = newVault();
-    vi.mocked(requestUrl)
-      .mockResolvedValueOnce({ status: 200, text: '{"error":"Not Found"}' } as any)
-      .mockResolvedValueOnce({ status: 200, text: MANUAL_HTML } as any);
-    await downloadManual(appOf(vault));
-    expect(vault.files.get(STORED)).toBe(MANUAL_HTML);
-    expect(requestUrl).toHaveBeenCalledTimes(2);
-
-    vi.mocked(requestUrl).mockResolvedValue({ status: 200, text: 'not a manual' } as any);
-    await expect(downloadManual(appOf(newVault()))).rejects.toThrow(/手册下载失败/);
+    vi.mocked(requestUrl).mockResolvedValue({ status: 200, text: '{"error":"Not Found"}' } as any);
+    await expect(downloadManual(appOf(vault))).rejects.toThrow(/手册下载失败/);
+    expect(vault.files.has(STORED)).toBe(false);
   });
 
   it('网络失败 → 抛错消息带上最后失败原因（人话透传）', async () => {

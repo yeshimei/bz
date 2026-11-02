@@ -11,6 +11,8 @@ viz/
 .scratch/
 # Release 资产的扁平化暂存目录（push-assets 自己建、跑完自己删；万一中断别进库）
 .release-upload/
+# pack-release 的打包暂存目录（同样自己建、跑完自己删；中断时会把整份下载夹留在这里）
+.pack-tmp/
 .dsh-worktrees/
 .zcode/
 # ZCode 自己生成的排除清单（内容随编辑器同步，属于本机配置）

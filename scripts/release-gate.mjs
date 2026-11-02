@@ -13,11 +13,12 @@
  *  2. **publish 闸**（上线之前）：资产挂齐后把「note 全文 + 资产清单与 sha256」再贴一遍，
  *     他 `approve-publish --i-say=发布` 才允许上传与转正。`--i-say` 的值必须是「发布」
  *     两个字——防手滑，也防「帮我准备一下」被当成放行。
- *  3. **顺序闸**（对外镜像之前，2026-11-02 立）：分发仓（gh-proxy 兜底 / 离线包内容源）与码云
- *     （备份通道）只许镜像**已经转正**的 Release。判据就一个：`gh release view <tag>`
- *     回来不是 draft。没有这一道，七步里的 assets 步会赶在 tag 之前把指针与三件套
- *     推上线——v1.40.0 就是这么让半成品走出后门的（Release 页还是 1.39.1，客户端
- *     检查更新已经能看到 1.40.0）。
+ *  3. **顺序闸**（对外镜像之前，2026-11-02 立）：码云（备份通道）只许镜像**已经转正**的
+ *     Release。判据就一个：`gh release view <tag>` 回来不是 draft。没有这一道，七步里的
+ *     assets 步会赶在 tag 之前把指针与三件套推上线——v1.40.0 就是这么让半成品走出后门的
+ *     （Release 页还是 1.39.1，客户端检查更新已经能看到 1.40.0）。
+ *     分发仓 `yeshimei/bz-assets` 已退役（2026-11-02），不再由 finalize 镜像；闸仍保留给
+ *     码云用，也给那个脚本手动重建时用。
  *
  * 闸的状态记在仓库根 `.bz-release-gate.json`（已 gitignore，不进版本库）。
  * **note 改一个字节，两道闸同时作废**：noteSha256 对不上就得重新过目，
@@ -195,9 +196,9 @@ export function evaluatePublish(root, version) {
  * 而那一刻 GitHub 上根本没有 v1.40.0 这个 Release。结果是「Release 页还停在 1.39.1，
  * 客户端检查更新已经能拿到 1.40.0 半成品」，等于从后门把一个没做完的版本放了出去。
  *
- * 顺序铁律：**先 Release 转正，才许对外镜像**。分发仓（gh-proxy 兜底 / 离线包内容源）与码云
- * （备份通道）都要过这一关，判据只有一个——`gh release view <tag>` 回来不是 draft。
- * 纯函数与 gh 调用分开写：判定可单测，另一层只负责取数。
+ * 顺序铁律：**先 Release 转正，才许对外镜像**。码云（备份通道）要过这一关，判据只有一个
+ * ——`gh release view <tag>` 回来不是 draft。分发仓已退役（2026-11-02），闸留着是给码云
+ * 与 `push-assets.mjs` 的手动重建用。纯函数与 gh 调用分开写：判定可单测，另一层只负责取数。
  */
 
 /** 顺序判定（纯函数，单测直调）：exists / isDraft / isPrerelease 由调用方查来 */
@@ -454,15 +455,12 @@ function main() {
       const edit = spawnSync('gh', ['release', 'edit', `v${v}`, '-R', slug, '--draft=false'], { cwd: ROOT, stdio: 'inherit' });
       if (edit.status !== 0) process.exit(edit.status || 1);
       console.log(`[release-gate] ✓ 已转正：https://github.com/${slug}/releases/tag/v${v}`);
-      /* 顺序（2026-11-02 立）：转正之后才镜像分发仓——它才是客户端主通道
-       * （downloads/ 指针 + releases/<tag> 三件套）。放在这里而不是七步里，
-       * 是因为七步跑在打 tag 之前，那时镜像出去的就是「Release 还不存在」的半成品。 */
-      const mirror = spawnSync(process.execPath, ['scripts/push-assets.mjs'], { cwd: ROOT, stdio: 'inherit' });
-      if (mirror.status !== 0) {
-        console.error('[release-gate] 分发仓镜像没跑成（Release 已发布，可稍后补跑 node scripts/push-assets.mjs）');
-      }
+      /* 对外镜像只剩码云一条（2026-11-02 用户拍板）：分发仓 `yeshimei/bz-assets` 退役，
+       * 原地冻结、不再上传——它的存在理由（jsDelivr）已整条退场，新客户端对它零依赖，
+       * 后续版本全部依赖码云 Release。旧版客户端（≤1.39.x）的备链里还有它，所以只冻结、
+       * 不删除；`scripts/push-assets.mjs` 保留作手动重建工具，不再由这里调用。 */
       const gitee = spawnSync(process.execPath, ['scripts/push-gitee.mjs'], { cwd: ROOT, stdio: 'inherit' });
-      if (gitee.status !== 0) console.error('[release-gate] 码云镜像没跑成（GitHub 已发布，可稍后补跑）');
+      if (gitee.status !== 0) console.error('[release-gate] 码云镜像没跑成（GitHub 已发布，可稍后补跑 node scripts/push-gitee.mjs）');
       break;
     }
     case 'reset': {

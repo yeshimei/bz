@@ -7,9 +7,10 @@
  * 全部步跑完后再跑一次 _gen-changelog --check（tag/manifest/日志版本 + docs sha256 对账）
  * ——这步只对账不重出产物，打 tag 之后跑同样有效。
  *
- * **七步不对外发布任何东西**（2026-11-02 立）：assets 步只本地暂存（--stage-only），
- * 分发仓与码云的对外镜像一律在 Release 转正之后由 release-gate 的 finalize 触发。
- * 原因是 v1.40.0 那次 assets 步跑在 tag 之前，把指针与三件套先放上了线。 */
+ * **七步不对外发布任何东西**（2026-11-02 立）：assets 步只做本地对账（清单声明的文件在不在），
+ * 不跑脚本、不碰网络；码云的对外镜像一律在 Release 转正之后由 release-gate 的 finalize 触发。
+ * 原因是 v1.40.0 那次 assets 步跑在 tag 之前，把指针与三件套先放上了线。
+ * 分发仓 `yeshimei/bz-assets` 同日退役（原地冻结、不再上传），这一步没有地方可推了。 */
 import { spawnSync } from 'node:child_process';
 import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
@@ -126,23 +127,42 @@ const steps = [
   },
   {
     name: 'assets',
-    // 只本地暂存（2026-11-02 立）：七步跑在**打 tag 之前**，那时 Release 还不存在。
-    // 原来这步直接推分发仓，等于把 version.json 指针与 releases/<tag> 三件套先于 Release
-    // 放到线上——v1.40.0 的半成品就是这么出去的（Release 页 1.39.1，客户端已能装 1.40.0）。
-    // 真推在 finalize（转正）之后，由 release-gate 的顺序闸放行。
-    cmd: ['scripts/push-assets.mjs', '--stage-only'],
-    check: () => '镜像目录已在本地暂存（对外推送要等 Release 转正后由 finalize 触发）',
+    /* 纯自检，不跑任何脚本、不碰网络、不写分发仓（2026-11-02 二阶改）：
+     * 这一步原先跑 `push-assets --stage-only`，作用只是「把要发的东西摆出来看一眼」。
+     * 分发仓退役后没有地方可摆了——资产全在源码仓 Release 上，由 create-draft 一次挂齐。
+     * 于是这一步改成直接对账：清单里声明的每个文件都得在 downloads/ 下，三件套也得到位。
+     * 它挡的是历史上的静默故障（清单 sha256 指向一个没产出的文件 → 用户端每项下载都失败）。 */
+    checkOnly: true,
+    check: () => {
+      const dl = join(ROOT, 'downloads');
+      const mfPath = join(dl, 'manifest.json');
+      if (!existsSync(mfPath)) throw new Error('downloads/manifest.json 不存在——前几步没出清单');
+      const mf = JSON.parse(readFileSync(mfPath, 'utf8'));
+      const missing = [];
+      for (const d of mf.docs ?? []) if (!existsSync(join(dl, d.file))) missing.push(d.file);
+      for (const s of mf.skins ?? []) if (!existsSync(join(dl, s.file))) missing.push(s.file);
+      if (mf.skinsPack?.file && !existsSync(join(dl, mf.skinsPack.file))) missing.push(mf.skinsPack.file);
+      if (!existsSync(join(dl, 'version.json'))) missing.push('version.json');
+      for (const f of ['main.js', 'styles.css', 'manifest.json']) {
+        if (!existsSync(join(ROOT, f))) missing.push(f);
+      }
+      if (missing.length) throw new Error(`缺件 ${missing.length} 个：${missing.slice(0, 5).join('、')}${missing.length > 5 ? ' …' : ''}`);
+      const n = (mf.docs?.length ?? 0) + (mf.skins?.length ?? 0) + 1;
+      return `清单声明的 ${n} 个资产齐备，三件套就位`;
+    },
   },
 ];
 
 for (const step of steps) {
   const t0 = Date.now();
-  const run = step.npm
-    ? spawnSync('node', step.cmd, { cwd: ROOT, stdio: 'inherit', shell: false })
-    : spawnSync(process.execPath, step.cmd, { cwd: ROOT, stdio: 'inherit' });
-  if (run.status !== 0) {
-    console.error(`\n[release-steps] 第「${step.name}」步失败（exit ${run.status}），后续步骤全部停掉。`);
-    process.exit(run.status || 1);
+  if (!step.checkOnly) {
+    const run = step.npm
+      ? spawnSync('node', step.cmd, { cwd: ROOT, stdio: 'inherit', shell: false })
+      : spawnSync(process.execPath, step.cmd, { cwd: ROOT, stdio: 'inherit' });
+    if (run.status !== 0) {
+      console.error(`\n[release-steps] 第「${step.name}」步失败（exit ${run.status}），后续步骤全部停掉。`);
+      process.exit(run.status || 1);
+    }
   }
   try {
     const fact = step.check();
@@ -158,4 +178,4 @@ if (check.status !== 0) {
   console.error('[release-steps] 终检（--check）没过，见上方输出');
   process.exit(1);
 }
-console.log(`[release-steps] 七步全部完成，总耗时 ${((Date.now() - startedAt) / 1000).toFixed(1)}s。接下来：打 tag → note 定稿回灌 → pack-release → gate create-draft → 确认卡 → gate finalize（转正后才镜像分发仓与码云）。`);
+console.log(`[release-steps] 七步全部完成，总耗时 ${((Date.now() - startedAt) / 1000).toFixed(1)}s。接下来：打 tag → pack-release → gate create-draft → 确认卡 → gate finalize（转正后镜像码云；分发仓已退役，不再镜像）。`);

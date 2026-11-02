@@ -1,16 +1,24 @@
-// scripts/push-assets.mjs — 分发仓库镜像推送（2026-10-28 拆分 downloads/，ADR-0269）
+// scripts/push-assets.mjs — 分发仓库镜像推送（2026-10-28 建，ADR-0269；**2026-11-02 退役**）
 //
-// 主仓 `yeshimei/bz` 的 `.git` 已 284 MB，客户端要下载的那点东西（`downloads/` 与每版三件套）
-// 搬进独立小仓库 `yeshimei/bz-assets`（约 14 MB）。主仓仍是**产物唯一的产出地**，
-// 这个仓库只是逐字镜像。
+// ⚠ **本脚本已退出发布流程，平时不要跑。** 保留它只为「需要手工重建那个仓库」这一种场景。
+//   唯一还在流程里的用法是 `--upload-only`：它不碰分发仓，只往**源码仓 Release** 补传
+//   `downloads/` 那批资产（create-draft 建完草稿后调它）。这条与分发仓无关，别一起删。
 //
-// 2026-11-02 起它不再服务 jsDelivr（那条通道缓存不可控，整条退场，见 core/remote-base 文件头），
-// 但**仍然要推、也仍然不能下线**：
-//  - `gh-proxy.com` 那条 HTML 兜底还指着它的 `master/downloads/`；
-//  - 离线资源包（`bz-offline-<版本>.zip`）的内容就是这份 `downloads/`；
-//  - ≤1.39.x 老客户端的通道链里还有它。
+// 它的来历：主仓 `yeshimei/bz` 的 `.git` 已 284 MB，超过 jsDelivr 的 50 MB 包上限，于是把
+// 客户端要下载的那点东西（`downloads/` 与每版三件套）搬到独立小仓库
+// `yeshimei/bz-assets`（约 14 MB），交给 jsDelivr 分发。
 //
-// 推送内容：
+// 为什么退役（2026-11-02 用户拍板）：
+//  - jsDelivr 已经整条退场（缓存清不掉、四条边缘各发一版，见 core/remote-base 文件头），
+//    而它是这个仓库唯一存在过的理由；
+//  - 新客户端的通道链只有 Release 与码云 raw，离线包直接打自主仓 `downloads/`，
+//    唯一还指着它的 HTML 反代分支随 `downloads/` 里的 html 资产一起没了；
+//  - 后续版本全部依赖码云 Release，这里再镜像一遍只是白占带宽与维护面。
+//
+// 仓库本体**不删也不动**：≤1.39.x 老客户端的 jsDelivr 备链里还有它，冻结在原地，让那批人
+// 至少还能拿到滞后的副本。所以 `finalize` 不再调用本脚本，七步里的 assets 步也改成纯自检。
+//
+// 推送内容（仅在手工重建时）：
 //   downloads/**             ← 主仓 downloads/ 逐字镜像（皮肤/目录包/清单/指针）
 //   releases/<tag>/          ← 插件本体三件套（manifest.json / main.js / styles.css）
 //                              只留最近 RELEASES_KEEP 份：指针只会指向最新那份，
@@ -19,21 +27,10 @@
 // 体积守卫：`.git` 超过 SQUASH_AT_BYTES 就压成单提交历史再强推。否则每次发布多几十 MB
 // 历史，早晚重新撞上 50 MB 上限——而那个失败是「下载全挂」，不是慢慢变差。
 //
-// （2026-11-02 起不再清 CDN：jsDelivr 整条退场，`--re-purge` 连同那段一起删了。历史上它
-//  清不干净的症状不是 404，而是清单里的 sha256 还是上一版——客户端每一项下载都校验失败。）
-//
-// 发布顺序：manifest → **build** → push-assets（--stage-only，只本地暂存）→ 打 tag →
-//   create-draft → 用户确认 → finalize（转正）→ **push-assets（真推）**
-//   （清单由 manifest 出、main.js 由 build 出，两者都要在推送前就位）
-//
-// ⚠ 分发仓库**只镜像已转正的 Release**（2026-11-02 v1.40.0 事故后钉死）：
-//   本脚本默认模式在动手之前先过顺序闸（`release-gate.mjs` 的 enforceReleaseOrder）——
-//   `gh release view <tag>` 回来不是 draft 才许推。v1.40.0 那次七步里的 assets 步跑在
-//   tag 之前，把 version.json 指针与 releases/v1.40.0 三件套直接推上了分发仓，而 GitHub
-//   上根本没有这个 Release：Release 页停在 1.39.1，客户端检查更新却已经能拿到半成品。
-//   `--stage-only` 是唯一不过这道闸的模式，且它**什么都不推、也不写分发仓**，只做备料自检
-//   （downloads/ 齐不齐、三件套在不在、Release 转正没有）——七步用它，就是让「跑完七步」
-//   再也不可能等于「已经对外发布」。
+// ⚠ 唯一硬约束还在：**只镜像已转正的 Release**（2026-11-02 v1.40.0 事故后钉死）。
+//   本脚本动手之前先过顺序闸（`release-gate.mjs` 的 enforceReleaseOrder）——`gh release view
+//   <tag>` 回来不是 draft 才许推。`--stage-only` 是唯一不过这道闸的模式，且它什么都不推、
+//   也不写分发仓，只做备料自检。
 //
 // 用法：
 //   node scripts/push-assets.mjs                 # 镜像 + 推送（要求 Release 已转正）
@@ -74,19 +71,12 @@ const BUNDLE_FILES = ['manifest.json', 'main.js', 'styles.css'];
  *  成品，临时件混进去就会被提交（v1.40.0 那次 `.release-upload/*` 十几个文件就是这么进库的）。 */
 const STAGE_DIR = path.join(ROOT, '.release-upload');
 
-/** 分发仓库 slug：从 src/core/remote-base.ts 读，**不在脚本里另写一份**——
- *  两处各写一份字面量的结果一定是某天只改了一处，客户端去拉一个不存在的仓库。 */
-function assetsSlug() {
-  const src = fs.readFileSync(path.join(ROOT, 'src/core/remote-base.ts'), 'utf8');
-  const m = /export const ASSETS_SLUG = '([^']+)'/.exec(src);
-  if (!m) {
-    console.error('src/core/remote-base.ts 里找不到 ASSETS_SLUG —— 先修好它再发布');
-    process.exit(1);
-  }
-  return m[1];
-}
-
-const SLUG = assetsSlug();
+/** 分发仓库 slug：**写死在这里**（2026-11-02 退役之后）。
+ *
+ *  它曾经从 `src/core/remote-base.ts` 的 `ASSETS_SLUG` 读，理由是「两处各写一份，某天
+ *  只会改一处」。现在客户端代码里已经没有任何地方引用这个仓库（那个常量随 HTML 反代分支
+ *  一起删了），这个脚本是唯一还知道它的人——事实源只剩一份，就在下面。 */
+const SLUG = 'yeshimei/bz-assets';
 /** 源码主仓 slug（Release 开在这里——下载计数、tag 冻结都归它，见 uploadReleaseAssets） */
 function sourceSlug() {
   const src = fs.readFileSync(path.join(ROOT, 'src/core/remote-base.ts'), 'utf8');
