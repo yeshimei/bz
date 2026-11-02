@@ -18,6 +18,11 @@
 // token：~/.gitee-token（一行纯令牌）或环境变量 GITEE_TOKEN，权限只需要 projects。
 // **绝不写进仓库**——主仓是公开的，写进去等于把账号交出去。
 //
+// 顺序闸（2026-11-02 立）：本脚本只镜像**GitHub 上已经转正**的 Release（`gh release view`
+// 回来不是 draft）。备份通道同样是「对外可见」，先于正本上线等于给用户一条拿到半成品的路；
+// 闸在 release-gate.mjs 的 enforceReleaseOrder，不 ok 直接 exit(3)。`--code` 不受此限
+// （推代码/tag 不是发布）。
+//
 // 已知差异（不是 bug，别硬改）：
 //   - 码云没有 GitHub 的 topics 字段（v5 只有 tags_url），仓库标签只能网页加；
 //   - 码云附件不能同名覆盖，重传要先 DELETE 旧附件（--force 走这条）；
@@ -27,6 +32,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { execFileSync } from 'node:child_process';
+import { enforceReleaseOrder, sourceSlug } from './release-gate.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const OWNER = 'ntbl';
@@ -172,6 +178,10 @@ if (CODE_ONLY) {
   await pushCode(version);
   log('完成（只推代码）');
 } else {
+  /* 顺序闸（2026-11-02 立）：码云是**备份通道**，但备份也不能先于正本对外可见。
+   * 判据与分发仓同一条——GitHub 上 v<版本> 的 Release 已经转正（非 draft）。
+   * 没有这道闸，手跑一次本脚本就能在 GitHub 还没发布时先把包挂到码云上。 */
+  enforceReleaseOrder(`v${version}`, sourceSlug(ROOT), { what: '码云备份通道' });
   await pushCode(version);
   await syncDesc();
   const rel = await ensureRelease(version, bodyFor);

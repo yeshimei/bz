@@ -9,6 +9,8 @@ _tmp_*
 coverage/
 viz/
 .scratch/
+# Release 资产的扁平化暂存目录（push-assets 自己建、跑完自己删；万一中断别进库）
+.release-upload/
 .dsh-worktrees/
 .zcode/
 # ZCode 自己生成的排除清单（内容随编辑器同步，属于本机配置）

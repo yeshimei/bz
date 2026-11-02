@@ -20,15 +20,26 @@
 // CDN 刷新：推送后按本次变更逐个清 jsDelivr 的 `@master` 缓存，再核对一次边缘清单。
 // 不清的症状不是 404，而是清单里的 sha256 还是上一版 —— 客户端每一项下载都校验失败。
 //
-// 发布顺序：manifest → **build** → push-assets → 打 tag。
+// 发布顺序：manifest → **build** → push-assets（--stage-only，只本地暂存）→ 打 tag →
+//   create-draft → 用户确认 → finalize（转正）→ **push-assets（真推）**
 //   （清单由 manifest 出、main.js 由 build 出，两者都要在推送前就位）
 //
+// ⚠ 分发仓库**只镜像已转正的 Release**（2026-11-02 v1.40.0 事故后钉死）：
+//   本脚本默认模式在动手之前先过顺序闸（`release-gate.mjs` 的 enforceReleaseOrder）——
+//   `gh release view <tag>` 回来不是 draft 才许推。v1.40.0 那次七步里的 assets 步跑在
+//   tag 之前，把 version.json 指针与 releases/v1.40.0 三件套直接推上了分发仓，而 GitHub
+//   上根本没有这个 Release：Release 页停在 1.39.1，客户端检查更新却已经能拿到半成品。
+//   `--stage-only` 是唯一不过这道闸的模式，且它**什么都不推、也不写分发仓**，只做备料自检
+//   （downloads/ 齐不齐、三件套在不在、Release 转正没有）——七步用它，就是让「跑完七步」
+//   再也不可能等于「已经对外发布」。
+//
 // 用法：
-//   node scripts/push-assets.mjs               # 同步 + 提交 + 推送
-//   node scripts/push-assets.mjs --dry-run     # 只算差异，不动仓库、不推送
-//   node scripts/push-assets.mjs --no-push     # 本地提交，不推送（排查用）
-//   node scripts/push-assets.mjs --force-squash# 无条件压平历史
-//   node scripts/push-assets.mjs --re-purge    # 强制重清 CDN 全量缓存（无变更也清）
+//   node scripts/push-assets.mjs                 # 镜像 + 推送（要求 Release 已转正）
+//   node scripts/push-assets.mjs --stage-only    # 只本地暂存，不推、不清缓存、不传资产
+//   node scripts/push-assets.mjs --dry-run       # 只算差异，不动仓库、不推送
+//   node scripts/push-assets.mjs --no-push       # 本地提交，不推送（排查用）
+//   node scripts/push-assets.mjs --force-squash  # 无条件压平历史
+//   node scripts/push-assets.mjs --re-purge      # 强制重清 CDN 全量缓存（无变更也清）
 //
 // 目标目录：`<主仓同级>/bz-assets`，可用环境变量 BZ_ASSETS_DIR 覆盖。
 import fs from 'node:fs';
@@ -36,7 +47,7 @@ import path from 'node:path';
 import { createHash } from 'node:crypto';
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
-import { enforceGate } from './release-gate.mjs';
+import { enforceGate, enforceReleaseOrder } from './release-gate.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const DRY = process.argv.includes('--dry-run');
@@ -47,8 +58,11 @@ const FORCE_SQUASH = process.argv.includes('--force-squash');
 const RE_PURGE = process.argv.includes('--re-purge');
 /** 只做「上传 GitHub Release 资产」一步（tag 打完之后补跑用；幂等，--clobber 覆盖） */
 const UPLOAD_ONLY = process.argv.includes('--upload-only');
-/** 跳过 Release 上传（排查分发仓问题时用；默认会尝试传） */
+/** 只跳过 Release 上传（排查分发仓问题时用；默认会尝试传） */
 const NO_UPLOAD = process.argv.includes('--no-upload');
+/** 只做备料自检：**不写分发仓、不推远端、不清缓存、不传资产**，只回答「这版要镜像的东西齐不齐」。
+ *  给七步用——七步跑在打 tag 之前，那时候对外推就是「Release 还不存在的半成品」。 */
+const STAGE_ONLY = process.argv.includes('--stage-only');
 
 /** 一个分发仓库最多留几份发布（客户端只会指向最新那份，旧的是给「指针还没更新就断网」的人兜底） */
 const RELEASES_KEEP = 3;
@@ -56,6 +70,11 @@ const RELEASES_KEEP = 3;
 const SQUASH_AT_BYTES = 25 * 1024 * 1024;
 
 const BUNDLE_FILES = ['manifest.json', 'main.js', 'styles.css'];
+
+/** 扁平化暂存目录（Release 资产名要 `downloads-manifest.json` 这种形状，`gh release upload`
+ *  只认 basename，所以先在这里摆一份）。放**主仓根**而不是分发仓：分发仓只放要对外镜像的
+ *  成品，临时件混进去就会被提交（v1.40.0 那次 `.release-upload/*` 十几个文件就是这么进库的）。 */
+const STAGE_DIR = path.join(ROOT, '.release-upload');
 
 /** 分发仓库 slug：从 src/core/remote-base.ts 读，**不在脚本里另写一份**——
  *  两处各写一份字面量的结果一定是某天只改了一处，客户端去拉一个不存在的仓库。 */
@@ -176,6 +195,11 @@ async function uploadReleaseAssets(tag, { fromTag }) {
   }
 
   // 收集待传文件：downloads/** 全部 + 三件套（三件套来源与 syncFiles 同口径：tag 里那份优先）
+  //
+  // 源目录是**主仓 downloads/**，不是分发仓的镜像（2026-11-02 改）。原来读镜像，等于
+  // create-draft 依赖「镜像已经先推上去」——而镜像现在被顺序闸拦在 Release 之后，
+  // 两者互为前置就成了死结（v1.40.0 那次顺序错乱正源于此）。主仓 downloads/ 才是唯一
+  // 产出地，镜像只是它的副本。
   let files = [];
   const walk = (dir, prefix) => {
     for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
@@ -185,20 +209,19 @@ async function uploadReleaseAssets(tag, { fromTag }) {
       else files.push({ rel, abs });
     }
   };
-  const downloadsMirror = path.join(TARGET, 'downloads');
-  if (fs.existsSync(downloadsMirror)) {
-    walk(downloadsMirror, 'downloads/');
+  const downloadsSrc = path.join(ROOT, 'downloads');
+  if (fs.existsSync(downloadsSrc)) {
+    walk(downloadsSrc, 'downloads/');
     // 皮肤只发整包（skins.zip），单个 css 不上 Release：旧客户端不知道 Release 通道
     // （走 raw/jsDelivr，镜像照旧）；新客户端走 skinsPack；回落逐文件时 Release 404
     // 只是跳过、接着试 raw/jsDelivr。省 26 个资产，列表干净一截。
     files = files.filter((f) => !f.rel.startsWith('downloads/skins/'));
-  }
-  else if (UPLOAD_ONLY) {
-    console.error('分发仓没有 downloads/——先跑一次完整 push-assets 同步');
+  } else if (UPLOAD_ONLY) {
+    console.error('主仓没有 downloads/——先跑 release-steps 把在线资源出齐');
     process.exit(1);
   }
   for (const f of BUNDLE_FILES) {
-    const tmp = path.join(TARGET, '.release-upload', f);
+    const tmp = path.join(STAGE_DIR, f);
     if (fromTag?.[f]) {
       fs.mkdirSync(path.dirname(tmp), { recursive: true });
       fs.writeFileSync(tmp, fromTag[f]);
@@ -220,7 +243,7 @@ async function uploadReleaseAssets(tag, { fromTag }) {
   // 两端统一扁平名才对得上：本侧按同一规则暂存后再传，客户端侧见
   // remote-base.releaseDownloadUrl 的 `/` → `-` 映射。
   const flatAssetName = (rel) => String(rel).replace(/^\/+/, '').replace(/\//g, '-');
-  const stageDir = path.join(TARGET, '.release-upload');
+  const stageDir = STAGE_DIR;
   const toUpload = files.map((f) => {
     const asset = flatAssetName(f.rel);
     if (path.basename(f.abs) === asset) return String(f.abs);
@@ -243,7 +266,7 @@ async function uploadReleaseAssets(tag, { fromTag }) {
     console.error(`\n⚠ Release 资产上传失败（不影响 raw/jsDelivr 通道，但这版拿不到下载计数）：`);
     console.error(String(e.stderr || e.stdout || e.message).trim().split('\n').slice(-8).join('\n'));
   } finally {
-    fs.rmSync(path.join(TARGET, '.release-upload'), { recursive: true, force: true });
+    fs.rmSync(STAGE_DIR, { recursive: true, force: true });
   }
 }
 
@@ -498,6 +521,53 @@ const { version, tag } = readVersion();
 console.log(`分发仓库 ${SLUG} → ${TARGET}`);
 console.log(`发布 ${tag}（保留最近 ${RELEASES_KEEP} 份）`);
 
+/* --stage-only：备料自检（2026-11-02 改）。
+ *
+ * 原本它还会把镜像目录摆好；现在**不碰分发仓一个字**——七步跑在打 tag 之前，本地镜像
+ * 一旦先进了半成品，就等着谁手一抖 `git push`（v1.40.0 的镜像工作区里就是这么躺着
+ * 一整套 1.40.0 的）。这里只回答两个问题：这版要镜像的东西齐不齐、Release 转正了没有。 */
+if (STAGE_ONLY) {
+  const order = enforceReleaseOrder(tag, SOURCE_SLUG, { what: '分发仓库', allowUnpublished: true });
+  const dl = path.join(ROOT, 'downloads');
+  if (!fs.existsSync(dl)) {
+    console.error('[push-assets] ✗ 主仓没有 downloads/——先跑 release-steps 把在线资源出齐');
+    process.exit(1);
+  }
+  let n = 0;
+  const count = (dir) => {
+    for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
+      if (e.isDirectory()) count(path.join(dir, e.name));
+      else n++;
+    }
+  };
+  count(dl);
+  const bundle = BUNDLE_FILES.map((f) => {
+    const abs = path.join(ROOT, f);
+    return fs.existsSync(abs) ? `${f} ${mb(fs.statSync(abs).size)}` : `${f} 缺件`;
+  });
+  console.log(`\n[push-assets] 暂存自检：downloads/ ${n} 个文件 ${mb(sizeOf(dl))}`);
+  console.log(`  三件套：${bundle.join(' · ')}`);
+  console.log(`  Release ${tag}：${order.ok ? '已转正' : `未发布（${order.reason}）`}`);
+  console.log('  七步到此为止，不推任何东西。镜像与码云都等 finalize 转正之后由 release-gate 触发。');
+  process.exit(0);
+}
+
+/* 顺序闸（2026-11-02 立，v1.40.0 事故后钉死）：分发仓是客户端主通道，只许镜像**已转正**的
+ * Release。判据只有一条——`gh release view <tag>` 回来不是 draft；不 ok 直接 exit(3)，
+ * 一个字节都不推。`--upload-only` 方向相反（往 draft Release 里补传资产），不受这条约束。 */
+if (!UPLOAD_ONLY) {
+  enforceReleaseOrder(tag, SOURCE_SLUG, { what: '分发仓库' });
+}
+
+/* 顺带钉住「三件套只能取自 tag」：Release 已转正却没有本地 tag，说明这台机器没拉 tag——
+ * 那就只剩「拿工作区凑」这一条路，装到的就是混版三件套（v1.36.0 翻过一次车）。
+ * 宁可停下让人 git fetch --tags，也不许拿工作区产物冒充某个已发布版本。 */
+if (!UPLOAD_ONLY && !readBundleFromTag(tag)) {
+  console.error(`[push-assets] ✗ 本地没有 ${tag} 这个 tag：镜像里的三件套必须取自 tag（已发布版本冻结在 tag）。`);
+  console.error(`  git fetch --tags 之后再跑；不许拿工作区产物当已发布版本。`);
+  process.exit(1);
+}
+
 ensureRepo();
 syncFiles(tag);
 pruneReleases();
@@ -513,5 +583,5 @@ console.log(`  本体 ${base}/releases/${tag}/main.js`);
 if (DRY) console.log('\n（dry-run：以上都没真的写盘、没推送）');
 
 // Release 资产上传（源码主仓）——2026-10-31 发现这步定义了却没接进主流程，v1.37.0 首发资产因此漏传。
-// 必须在 syncFiles 之后：三件套取分发仓 releases/<tag>/ 里 tag 冻结的那份。
+// 三件套优先取 tag 冻结的那份（与 syncFiles 同口径）。
 await uploadReleaseAssets(tag, { fromTag: readBundleFromTag(tag) });

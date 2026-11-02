@@ -13,6 +13,11 @@
  *  2. **publish 闸**（上线之前）：资产挂齐后把「note 全文 + 资产清单与 sha256」再贴一遍，
  *     他 `approve-publish --i-say=发布` 才允许上传与转正。`--i-say` 的值必须是「发布」
  *     两个字——防手滑，也防「帮我准备一下」被当成放行。
+ *  3. **顺序闸**（对外镜像之前，2026-11-02 立）：分发仓（jsDelivr 主通道）与码云
+ *     （备份通道）只许镜像**已经转正**的 Release。判据就一个：`gh release view <tag>`
+ *     回来不是 draft。没有这一道，七步里的 assets 步会赶在 tag 之前把指针与三件套
+ *     推上线——v1.40.0 就是这么让半成品走出后门的（Release 页还是 1.39.1，客户端
+ *     检查更新已经能看到 1.40.0）。
  *
  * 闸的状态记在仓库根 `.bz-release-gate.json`（已 gitignore，不进版本库）。
  * **note 改一个字节，两道闸同时作废**：noteSha256 对不上就得重新过目，
@@ -24,11 +29,12 @@
  *   node scripts/release-gate.mjs approve-publish --version=X --i-say=发布   # 第二道闸放行
  *   node scripts/release-gate.mjs check-note [--version=X]           # 给脚本内部调用，未放行 exit 2
  *   node scripts/release-gate.mjs check-publish [--version=X]        # 同上
+ *   node scripts/release-gate.mjs check-release [--version=X]        # 顺序闸：Release 转正了吗（未放行 exit 3）
  *   node scripts/release-gate.mjs reset                              # 作废，重新走一遍
  *
  * 版本号缺省读 manifest.json（`_gen-changelog` 回写的那个，唯一事实源）。
  */
-import { spawnSync } from 'node:child_process';
+import { execFileSync, spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { existsSync, readFileSync, writeFileSync, rmSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
@@ -182,6 +188,74 @@ export function evaluatePublish(root, version) {
   return { ok: true, version, fingerprint, approvedAt: gate.publishApprovedAt };
 }
 
+/* ============ 第三道闸：发布顺序（Release 转正之后才许对外镜像） ============
+ *
+ * 为什么非要这一段（2026-11-02 v1.40.0 事故）：七步里的 assets 步跑在**打 tag 之前**，
+ * 它把 `downloads/version.json` 指针和 `releases/<tag>/` 三件套直接推上了分发仓库——
+ * 而那一刻 GitHub 上根本没有 v1.40.0 这个 Release。结果是「Release 页还停在 1.39.1，
+ * 客户端检查更新已经能拿到 1.40.0 半成品」，等于从后门把一个没做完的版本放了出去。
+ *
+ * 顺序铁律：**先 Release 转正，才许对外镜像**。分发仓（jsDelivr 主通道）与码云
+ * （备份通道）都要过这一关，判据只有一个——`gh release view <tag>` 回来不是 draft。
+ * 纯函数与 gh 调用分开写：判定可单测，另一层只负责取数。
+ */
+
+/** 顺序判定（纯函数，单测直调）：exists / isDraft / isPrerelease 由调用方查来 */
+export function evaluateReleaseOrder({ tag, exists, isDraft, isPrerelease } = {}) {
+  if (!tag || !/^v\d+\.\d+\.\d+$/.test(tag)) {
+    return { ok: false, tag, reason: `tag 不合法：${JSON.stringify(tag)}——镜像仓的目录名必须是 vX.Y.Z` };
+  }
+  if (!exists) {
+    return { ok: false, tag, reason: `GitHub Release ${tag} 还不存在——对外通道没有资格先于 Release 可见` };
+  }
+  if (isDraft) {
+    return { ok: false, tag, reason: `GitHub Release ${tag} 还是草稿（draft），用户根本看不到——转正之后才许镜像` };
+  }
+  return { ok: true, tag, prerelease: !!isPrerelease };
+}
+
+/** 查某个 tag 在源码主仓的 Release 状态（gh CLI）。
+ *  查不到（没网 / 没 gh / tag 没打）一律按「不存在」处理——顺序闸宁可拦住，不许猜。 */
+export function queryReleaseOrder(tag, slug) {
+  try {
+    const out = execFileSync(
+      'gh',
+      ['release', 'view', tag, '-R', `https://github.com/${slug}`, '--json', 'isDraft,isPrerelease'],
+      { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] },
+    );
+    const j = JSON.parse(out || '{}');
+    return evaluateReleaseOrder({ tag, exists: true, isDraft: !!j.isDraft, isPrerelease: !!j.isPrerelease });
+  } catch {
+    return evaluateReleaseOrder({ tag, exists: false });
+  }
+}
+
+/**
+ * 对外镜像之前调它：不 ok 就非零退出。
+ * `allowUnpublished` 只给「本地暂存」这一种模式用（push-assets --stage-only）：
+ * 它不推远端，只把镜像目录在本地摆好，后续 create-draft 要靠它取 downloads/ 那批文件。
+ */
+export function enforceReleaseOrder(tag, slug, { what = '分发仓库', allowUnpublished = false } = {}) {
+  const r = queryReleaseOrder(tag, slug);
+  const who = `${what} ${tag}`;
+  if (r.ok) {
+    console.log(`[release-gate] ✓ 顺序闸已过：${who}（Release 已转正）`);
+    return r;
+  }
+  const lines = [
+    `[release-gate] ✗ 顺序闸没过：${who}`,
+    `  ${r.reason}`,
+    '  顺序：create-draft → 用户看过确认卡 → finalize 转正 → 最后才镜像分发仓 / 码云。',
+  ];
+  if (allowUnpublished) {
+    console.log(lines.join('\n'));
+    console.log('[release-gate] （只做本地暂存，不往远端推）');
+    return r;
+  }
+  console.error(`\n${lines.join('\n')}`);
+  process.exit(3);
+}
+
 /* ==================== 打印件 ==================== */
 
 function fmtBytes(n) {
@@ -333,6 +407,17 @@ function main() {
       console.log(`[release-gate] ✓ publish 闸已过：v${v}`);
       break;
     }
+    case 'check-release': {
+      const v = needVersion();
+      const r = queryReleaseOrder(`v${v}`, sourceSlug(ROOT));
+      if (!r.ok) {
+        console.error(`\n[release-gate] ✗ 顺序闸没过：v${v} —— ${r.reason}`);
+        console.error('—— 分发仓与码云都只镜像已转正的 Release：先 create-draft → 确认卡 → finalize。');
+        process.exit(3);
+      }
+      console.log(`[release-gate] ✓ 顺序闸已过：v${v}（Release 已转正）`);
+      break;
+    }
     case 'create-draft': {
       const v = needVersion();
       enforceGate('publish', ROOT, v);
@@ -369,6 +454,13 @@ function main() {
       const edit = spawnSync('gh', ['release', 'edit', `v${v}`, '-R', slug, '--draft=false'], { cwd: ROOT, stdio: 'inherit' });
       if (edit.status !== 0) process.exit(edit.status || 1);
       console.log(`[release-gate] ✓ 已转正：https://github.com/${slug}/releases/tag/v${v}`);
+      /* 顺序（2026-11-02 立）：转正之后才镜像分发仓——它才是客户端主通道
+       * （downloads/ 指针 + releases/<tag> 三件套）。放在这里而不是七步里，
+       * 是因为七步跑在打 tag 之前，那时镜像出去的就是「Release 还不存在」的半成品。 */
+      const mirror = spawnSync(process.execPath, ['scripts/push-assets.mjs'], { cwd: ROOT, stdio: 'inherit' });
+      if (mirror.status !== 0) {
+        console.error('[release-gate] 分发仓镜像没跑成（Release 已发布，可稍后补跑 node scripts/push-assets.mjs）');
+      }
       const gitee = spawnSync(process.execPath, ['scripts/push-gitee.mjs'], { cwd: ROOT, stdio: 'inherit' });
       if (gitee.status !== 0) console.error('[release-gate] 码云镜像没跑成（GitHub 已发布，可稍后补跑）');
       break;

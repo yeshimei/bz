@@ -5,7 +5,11 @@
  * 上一版、tools-pack 漏 = 用户端显示最新但内容旧、assets 漏 = 客户端拿上一版）。
  * 用法：node scripts/release-steps.mjs [--next=<版本>]   （--next 只透传给 changelog 步）
  * 全部步跑完后再跑一次 _gen-changelog --check（tag/manifest/日志版本 + docs sha256 对账）
- * ——这步只对账不重出产物，打 tag 之后跑同样有效。 */
+ * ——这步只对账不重出产物，打 tag 之后跑同样有效。
+ *
+ * **七步不对外发布任何东西**（2026-11-02 立）：assets 步只本地暂存（--stage-only），
+ * 分发仓与码云的对外镜像一律在 Release 转正之后由 release-gate 的 finalize 触发。
+ * 原因是 v1.40.0 那次 assets 步跑在 tag 之前，把指针与三件套先放上了线。 */
 import { spawnSync } from 'node:child_process';
 import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
@@ -122,8 +126,12 @@ const steps = [
   },
   {
     name: 'assets',
-    cmd: ['scripts/push-assets.mjs'],
-    check: () => '分发仓库已镜像（推送失败时去 bz-assets 手动 SSH 补推）',
+    // 只本地暂存（2026-11-02 立）：七步跑在**打 tag 之前**，那时 Release 还不存在。
+    // 原来这步直接推分发仓，等于把 version.json 指针与 releases/<tag> 三件套先于 Release
+    // 放到线上——v1.40.0 的半成品就是这么出去的（Release 页 1.39.1，客户端已能装 1.40.0）。
+    // 真推在 finalize（转正）之后，由 release-gate 的顺序闸放行。
+    cmd: ['scripts/push-assets.mjs', '--stage-only'],
+    check: () => '镜像目录已在本地暂存（对外推送要等 Release 转正后由 finalize 触发）',
   },
 ];
 
@@ -150,4 +158,4 @@ if (check.status !== 0) {
   console.error('[release-steps] 终检（--check）没过，见上方输出');
   process.exit(1);
 }
-console.log(`[release-steps] 七步全部完成，总耗时 ${((Date.now() - startedAt) / 1000).toFixed(1)}s。接下来：打 tag → note 定稿回灌 → pack-release。`);
+console.log(`[release-steps] 七步全部完成，总耗时 ${((Date.now() - startedAt) / 1000).toFixed(1)}s。接下来：打 tag → note 定稿回灌 → pack-release → gate create-draft → 确认卡 → gate finalize（转正后才镜像分发仓与码云）。`);

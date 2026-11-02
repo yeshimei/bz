@@ -21,6 +21,7 @@ import {
   clearGate,
   evaluateNote,
   evaluatePublish,
+  evaluateReleaseOrder,
   gatePath,
   manifestVersion,
   noteBody,
@@ -147,6 +148,38 @@ describe('第二道闸：资产清单过目 + 明确说「发布」', () => {
       expect(card).toContain(sha256File(join(root, f)));
     }
     expect(card).toContain(`--i-say=${PUBLISH_WORD}`);
+  });
+});
+
+describe('第三道闸：发布顺序（对外镜像必须晚于 Release 转正）', () => {
+  const TAG = `v${VER}`;
+
+  it('Release 还不存在 → 拦住（半成品不许先上线，v1.40.0 就是这么翻的）', () => {
+    const r = evaluateReleaseOrder({ tag: TAG, exists: false });
+    expect(r.ok).toBe(false);
+    expect(r.reason).toContain('还不存在');
+  });
+
+  it('还是 draft → 拦住（用户看不到草稿，镜像出去等于绕过发布）', () => {
+    const r = evaluateReleaseOrder({ tag: TAG, exists: true, isDraft: true });
+    expect(r.ok).toBe(false);
+    expect(r.reason).toContain('草稿');
+  });
+
+  it('已转正 → 放行', () => {
+    expect(evaluateReleaseOrder({ tag: TAG, exists: true, isDraft: false }).ok).toBe(true);
+  });
+
+  it('预发布（prerelease）算已发布，放行但要把事实带出来', () => {
+    const r = evaluateReleaseOrder({ tag: TAG, exists: true, isDraft: false, isPrerelease: true });
+    expect(r.ok).toBe(true);
+    expect(r.prerelease).toBe(true);
+  });
+
+  it('tag 形状不合法 → 拦住（目录名只能是 vX.Y.Z）', () => {
+    expect(evaluateReleaseOrder({ tag: 'v1.4', exists: true }).ok).toBe(false);
+    expect(evaluateReleaseOrder({ tag: '', exists: true }).ok).toBe(false);
+    expect(evaluateReleaseOrder({}).ok).toBe(false);
   });
 });
 
