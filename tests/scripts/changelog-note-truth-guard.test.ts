@@ -36,7 +36,9 @@ describe('更新日志定稿即真理源（2026-10-31 事故守卫）', () => {
   });
 
   it('清单重算跑在日志写盘之后（否则清单 hash 停在上一版）', () => {
-    const writeIdx = gen.indexOf("writeFileSync(join(ROOT, 'downloads', 'bz-changelog.html'), html, 'utf8')");
+    // 2026-11-02：日志产物从 downloads/bz-changelog.html 挪到 docs/changelog.html（退出在线资源，
+    // 只留浏览器可读存档）——「写盘之后才重算清单」这条口径不变，路径跟着产物走。
+    const writeIdx = gen.indexOf("writeFileSync(join(ROOT, 'docs', 'changelog.html'), html, 'utf8')");
     const manifestIdx = gen.indexOf("join(ROOT, 'scripts', 'build-manifest.mjs')");
     expect(writeIdx).toBeGreaterThan(-1);
     expect(manifestIdx).toBeGreaterThan(-1);

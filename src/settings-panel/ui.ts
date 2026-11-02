@@ -26,13 +26,12 @@ import { getApp } from '../core/app';
 import { uiIconBtn, uiBtn, uiEmpty, mountIcons, uiResizable } from '../core/ui';
 import { firstFocusable, trapFocus } from '../core/ui/focus-trap';
 import { debounce } from '../core/utils';
+import { DOC_VISIBILITY } from '../core/doc-visibility';
 // markup 单源（ADR-0104/0105）：面板壳/导航/页头结构串全出自渲染纯层；
 // 行为单源（ADR-0106，issue 245 范式）：本文件即唯一真理，原型壳为双 iframe 旧评审壳（已退役）
 import * as R from './render';
 // 动效层（校准台语义世界，见 motion.ts 文件头）：只在生命周期挂点被调用，markup 契约不变
 import * as spm from './motion';
-// 更新日志弹窗（issue 472）：侧栏底部入口的独立子弹窗，同皮 .bz-sp-skin
-import { openChangelogModal } from './changelog';
 
 /** 搜索输入防抖窗口（E-5）：纯 UI 重绘无数据丢失面，每键全量重建导航/列表 + 图标物化 + 全行
  *  重扫收敛为一停顿一次（core debounce 先例口径 180ms）。 */
@@ -47,9 +46,12 @@ const PANEL = { MIN_W: 760, MIN_H: 520, MAX_W: 1280, MAX_H: 900 };
 const spMatch = (hay: string, needle: string): boolean =>
   !needle || hay.toLowerCase().includes(needle.toLowerCase());
 
-/** 文档入口（使用手册 / 更新日志）参与搜索匹配的名目：搜「文档」「手册」「日志」都能命中。
- *  它们不是域（无 data-sp-domain），不进 groupDomains，只在导航/列表末尾成组。 */
-const DOC_ENTRY_NAMES = ['文档', '使用手册', '更新日志', '手册', '日志', 'changelog'];
+/** 文档入口参与搜索匹配的名目：搜「文档」「手册」「日志」都能命中。
+ *  它们不是域（无 data-sp-domain），不进 groupDomains，只在导航/列表末尾成组。
+ *  手册那两个名目跟着显隐开关走（core/doc-visibility）：入口都没了，搜「手册」还把整组
+ *  捞出来，剩下一条更新日志挂在底下是误导。 */
+const docEntryNames = (): string[] =>
+  ['文档', '更新日志', '日志', 'changelog', ...(DOC_VISIBILITY.manualInDocNav ? ['使用手册', '手册'] : [])];
 
 /* ==================== 域清单（全局 + 19 域；图标 = lucide 名） ==================== */
 
@@ -533,7 +535,7 @@ export class SettingsPanelUI {
       }
       // 文档组挂导航末尾（2026-09-26 用户拍板：手册/日志不再常驻底缘）——
       // 搜索时同样按词过滤，命中「手册/日志/文档」才出，否则搜「番茄」也挂着两条是噪音
-      if (!query || DOC_ENTRY_NAMES.some((n) => spMatch(n, query))) {
+      if (!query || docEntryNames().some((n) => spMatch(n, query))) {
         nav.insertAdjacentHTML('beforeend', R.navDocSecHtml());
       }
       mountIcons(nav); // 导航图标占位物化（mock setIcon 记 data-icon）
@@ -639,35 +641,15 @@ export class SettingsPanelUI {
     }
   }
 
-  /* 更新日志一键（issue 474）：与手册同口径——日志不随构建分发，现场从 GitHub 下载
-   * manual/bz-changelog.html 再在 OB 内独立弹窗内嵌渲染（iframe srcdoc，与手册同范式）。
-   * 下载期间按钮图标换 loader + .is-loading 转圈防重入；失败不兜底（用户拍板：
-   * 不退回内置快照），core/changelog 的人话原因出 notice，弹窗不开。
-   * issue 476 与手册同刀：本地版秒开后后台核对一次，有新重出的日志就热替换。 */
-  private async runChangelogOpen(btn: HTMLElement): Promise<void> {
-    if (btn.classList.contains('is-loading')) return; // 下载中防重入
-    const ic = btn.querySelector<HTMLElement>('.bz-ic');
-    btn.classList.add('is-loading');
-    try {
-      const [core, modal] = await Promise.all([
-        import('../core/changelog'),
-        import('./changelog'),
-      ]);
-      if (ic) setIcon(ic, 'loader');
-      const html = await core.ensureChangelogReady(getApp());
-      modal.openChangelogModal(html);
-      void this.refreshDocInBackground(
-        () => core.refreshChangelog(getApp()),
-        (fresh) => {
-          if (modal.isChangelogOpen()) modal.openChangelogModal(fresh);
-        },
-      );
-    } catch (e) {
-      notice((e as Error)?.message || '更新日志下载失败', 'error');
-    } finally {
-      btn.classList.remove('is-loading');
-      if (ic) setIcon(ic, 'history');
-    }
+  /** 更新日志（2026-11-02 拍板「两者就是一个」）：不再下载远端 html、不再 iframe，
+   *  直接开升级提示用的那个弹窗（内置数据 + 同一套版式）。列表里的版本自己点，
+   *  设置页这一入口只是把它当「文档」翻。 */
+  private async runChangelogOpen(_btn: HTMLElement): Promise<void> {
+    const [data, note] = await Promise.all([
+      import('../core/changelog-data'),
+      import('./changelog-note'),
+    ]);
+    note.openChangelogNote(data.CHANGELOG_RELEASES);
   }
 
   /** 文档资产后台核对（issue 476）：`refresh` 返回新文本才调 `swap` 换内容；
@@ -1116,7 +1098,7 @@ export class SettingsPanelUI {
           html += `<div class="bz-sp-mob-sec">域（${doms.length}）</div>`;
           doms.forEach((d) => { html += R.mobItemHtml({ id: d.id, icon: d.icon, name: d.name, desc: d.desc }); });
         }
-        if (DOC_ENTRY_NAMES.some((n) => spMatch(n, query))) html += R.mobDocSecHtml();
+        if (docEntryNames().some((n) => spMatch(n, query))) html += R.mobDocSecHtml();
         if (rows.length) {
           html += `<div class="bz-sp-mob-sec">设置项（${rows.length}）</div>`;
           // row = 行名（data-sp-row）：推入该域后据此滚动定位并高亮（2026-09-12 补）

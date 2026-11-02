@@ -626,8 +626,12 @@ export async function checkSelfUpdate(app: unknown, opts: SelfUpdateOptions = {}
   // 拉与新版配套的日志（channel 上的 downloads/bz-changelog.html），落进插件目录——
   // 设置面板里点「更新日志」看完整历史时才有得秒开。失败静默：不挡更新完成。
   // （2026-11-02 起升级提示小窗不再吃这份远端日志，改吃内置数据 core/changelog-data。）
+  // 2026-11-02 再改：日志已从在线资源里隐藏（core/doc-visibility），这里跟着停手——
+  // 没有入口读它，再拉一份远端 html 落盘就是纯浪费一趟网络。开关翻回 true 即恢复原行为。
   void (async () => {
     try {
+      const { docListedInResources } = await import('./doc-visibility');
+      if (!docListedInResources('changelog')) return;
       const { refreshChangelog } = await import('./changelog');
       await refreshChangelog(app);
     } catch {

@@ -2,13 +2,6 @@
   "version": 1,
   "docs": [
     {
-      "id": "changelog",
-      "name": "更新日志",
-      "file": "bz-changelog.html",
-      "sha256": "6fba9f62321dd4220b1097d7bd028e095411793753f5e33e889b75e332e9e365",
-      "size": 14211
-    },
-    {
       "id": "manual",
       "name": "使用手册",
       "file": "bz-manual.html",
@@ -303,7 +296,6 @@
     "size": 32357
   },
   "rowOrder": [
-    "changelog",
     "manual",
     "skins",
     "belongings-categories",

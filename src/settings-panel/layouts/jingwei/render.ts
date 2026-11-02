@@ -10,6 +10,7 @@
  * （navDocSecHtml / mobDocSecHtml）：跟其他组一样随列表滚动、能被搜索命中。
  */
 import { esc, iconSpan } from '../../../core/ui/str';
+import { DOC_VISIBILITY } from '../../../core/doc-visibility';
 
 /* ==================== 桌面：B 侧栏工作台 ==================== */
 
@@ -39,14 +40,19 @@ export function navItemHtml(opts: { id: string; icon: string; name: string; coun
 
 /** 导航末尾「文档」组（桌面）：手册在上、日志在下。
  *  用 .bz-sp-nav-doc 而非 .bz-sp-nav-item —— 后者是域契约类（ui 层按 data-sp-domain 切域、
- *  测试按它数域项），手册/日志不是域，不得入列。data-sp-manual / data-sp-changelog 沿用原契约。 */
+ *  测试按它数域项），手册/日志不是域，不得入列。data-sp-manual / data-sp-changelog 沿用原契约。
+ *
+ *  2026-11-02：使用手册从这里撤掉（视频教程取代，见 core/doc-visibility）；更新日志留着
+ *  ——它打开的是内置数据的弹窗，不下载任何东西。整组空了就不出「文档」这个小标题。 */
 export function navDocSecHtml(): string {
-  return `<div class="bz-sp-nav-sec"><div class="bz-sp-nav-sec-t">文档</div>` +
-    `<button type="button" class="bz-sp-nav-doc" data-sp-manual>` +
-    `${iconSpan('book-open', 'bz-ic bz-sp-nav-ic')}<span class="bz-sp-nav-name">使用手册</span></button>` +
+  const items =
+    (DOC_VISIBILITY.manualInDocNav
+      ? `<button type="button" class="bz-sp-nav-doc" data-sp-manual>` +
+        `${iconSpan('book-open', 'bz-ic bz-sp-nav-ic')}<span class="bz-sp-nav-name">使用手册</span></button>`
+      : '') +
     `<button type="button" class="bz-sp-nav-doc" data-sp-changelog>` +
-    `${iconSpan('history', 'bz-ic bz-sp-nav-ic')}<span class="bz-sp-nav-name">更新日志</span></button>` +
-    `</div>`;
+    `${iconSpan('history', 'bz-ic bz-sp-nav-ic')}<span class="bz-sp-nav-name">更新日志</span></button>`;
+  return `<div class="bz-sp-nav-sec"><div class="bz-sp-nav-sec-t">文档</div>${items}</div>`;
 }
 
 /* ==================== 移动端：全屏推入式两页（首页列表 ⇆ 域设置页） ==================== */
@@ -80,13 +86,16 @@ export function mobItemHtml(opts: { id: string; icon: string; name: string; desc
 }
 
 /** 移动端列表末尾「文档」组：与桌面同口径（手册 / 日志不是域，用 .bz-sp-mob-doc
- *  而非 .bz-sp-mob-item —— 后者带 data-sp-domain，会被列表点击回查成域而推空页）。 */
+ *  而非 .bz-sp-mob-item —— 后者带 data-sp-domain，会被列表点击回查成域而推空页）。
+ *  2026-11-02：使用手册同样撤掉，只留更新日志（见 core/doc-visibility）。 */
 export function mobDocSecHtml(): string {
-  return `<div class="bz-sp-mob-sec">文档</div>` +
-    `<button type="button" class="bz-sp-mob-doc" data-sp-manual>` +
-    `<span class="bz-sp-mob-ic">${iconSpan('book-open')}</span>` +
-    `<span class="bz-sp-mob-t"><span class="bz-sp-mob-name">使用手册</span>` +
-    `<span class="bz-sp-mob-desc">完整功能说明，随时可查</span></span></button>` +
+  const manual = DOC_VISIBILITY.manualInDocNav
+    ? `<button type="button" class="bz-sp-mob-doc" data-sp-manual>` +
+      `<span class="bz-sp-mob-ic">${iconSpan('book-open')}</span>` +
+      `<span class="bz-sp-mob-t"><span class="bz-sp-mob-name">使用手册</span>` +
+      `<span class="bz-sp-mob-desc">完整功能说明，随时可查</span></span></button>`
+    : '';
+  return `<div class="bz-sp-mob-sec">文档</div>` + manual +
     `<button type="button" class="bz-sp-mob-doc" data-sp-changelog>` +
     `<span class="bz-sp-mob-ic">${iconSpan('history')}</span>` +
     `<span class="bz-sp-mob-t"><span class="bz-sp-mob-name">更新日志</span>` +

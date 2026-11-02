@@ -1,10 +1,10 @@
 /**
- * 更新日志生成器（issue 472 立、issue 474 改为产出自包含 HTML）：从 git 提交历史生成
- * downloads/bz-changelog.html，并把最新版本号回写 manifest.json（版本事实源 = 提交历史 + 本文件合成规则）。
+ * 更新日志生成器（issue 472 立；2026-11-02 退出发版分发链）：从 git 提交历史生成
+ * docs/changelog.html，并把最新版本号回写 manifest.json（版本事实源 = 提交历史 + 本文件合成规则）。
  *
- * 产物去向：更新日志不随插件构建打包（旧产物 src/settings-panel/changelog-data.ts 已退役），
- * 由插件在用户点「更新日志」时从 GitHub 现场下载（core/changelog.ts + settings-panel/changelog.ts
- * 的 iframe srcdoc 弹窗）——与使用手册（downloads/bz-manual.html）同一套口径。
+ * 产物去向（2026-11-02 用户拍板）：日志**全部内置在插件里**（core/changelog-data，更新提示
+ * 与设置页「更新日志」共用那一份），不再下载、不再进在线资源清单。本文件产出的 html 只留在
+ * 仓库 docs/ 里当浏览器可读的存档，**不进 downloads/、不进 manifest、不上分发仓库**。
  *
  * 版本合成规则：
  *   - 版本切点 = 「主构建部署产物」提交日（部署即发版）；该约定（2026-09-08）之前按自然周归并；
@@ -17,7 +17,7 @@
  *   - 主题句 = 「——」前的部分，其后的细节作弱化副行（过长截断）；剥 issue/ticket/ADR/呈报 尾注与 emoji；
  *   - 内部工程条目过滤（评审/走查/收口/测试/守卫/契约/基准/单源/重构…）；块内按主题句去重。
  * 重跑：`pnpm changelog`（仓库根执行，**只在主仓库跑**——worktree 里跑会生成残缺版本）。
- * 只写 downloads/bz-changelog.html 与 manifest.json。
+ * 只写 docs/changelog.html 与 manifest.json（downloads/ 一律不碰）。
  */
 import { execSync, spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
@@ -286,7 +286,7 @@ const targetVersion = nextArg || current;
  * 「用户改完的 note 就是在线日志的真理源」这条口径的实现：
  *  - 定稿留档在 docs/note-v<版本>.md，**自动按版本号扫描**（不靠人记得传 --note；
  *    2026-10-31 翻车就是这么来的：七步流程的 changelog 步不传 --note，重跑把定稿冲掉）；
- *  - --check 额外对账「已产出的 bz-changelog.html 各版本块 == 定稿」，冲掉当场报红。
+ *  - --check 额外对账「已产出的 docs/changelog.html 各版本块 == 定稿」，冲掉当场报红。
  * 显式 --note 仍可用（临时改稿不入 docs/ 时），同版本以显式为准。 */
 const NOTE_DIR = join(ROOT, 'docs');
 
@@ -402,9 +402,9 @@ if (process.argv.includes('--check')) {
    * 这里要验的是「用户真正下载到的那份」有没有被重跑冲掉。 */
   const noteSources = resolveNoteSources();
   if (noteSources.length) {
-    const logHtmlPath = join(ROOT, 'downloads', 'bz-changelog.html');
+    const logHtmlPath = join(ROOT, 'docs', 'changelog.html');
     if (!existsSync(logHtmlPath)) {
-      problems.push('downloads/bz-changelog.html 不存在（先跑 changelog 步出产物）');
+      problems.push('docs/changelog.html 不存在（先跑 changelog 步出产物）');
     } else {
       const html = readFileSync(logHtmlPath, 'utf8');
       const m = html.match(/const DATA = (\{.*?\});/s);
@@ -412,9 +412,9 @@ if (process.argv.includes('--check')) {
       try {
         data = m ? JSON.parse(m[1]) : null;
       } catch (e) {
-        problems.push('downloads/bz-changelog.html 里的 DATA 解析失败（产物坏了，重出）');
+        problems.push('docs/changelog.html 里的 DATA 解析失败（产物坏了，重出）');
       }
-      if (!data && m) problems.push('downloads/bz-changelog.html 里的 DATA 解析失败（产物坏了，重出）');
+      if (!data && m) problems.push('docs/changelog.html 里的 DATA 解析失败（产物坏了，重出）');
       if (data) {
         const byVer = new Map((data.releases || []).map((r) => [r.version, r]));
         const secLabel = { added: '新功能', fixed: '问题修复', improved: '体验优化' };
@@ -475,7 +475,7 @@ if (targetVersion && manifest.version !== targetVersion) {
 
 /* ==================== note 覆盖（定稿即真理源） ====================
  * Release note 的「更新日志」节经用户改定后，才是给用户看的最终口径——发版前把它
- * 喂回生成器，覆盖对应版本块、重出 bz-changelog.html（在线资源的更新日志与 Release
+ * 喂回生成器，覆盖对应版本块、重出 docs/changelog.html（更新提示内置数据与 Release
  * 页同源同稿）。解析只认 `- **标签** ：说明` 条目行；`## 新功能`（或 ✨ 新增）→added、
  * `## 问题修复`（或 🐛 修复）→fixed、`## 体验优化`（或 ⚡ 优化）→improved；标签原样作 domain
  * （DOMAIN_NAMES 没有的键渲染端直出原文）。条目数不受 CAPS 裁剪——这是用户拍板的定稿。
@@ -506,11 +506,10 @@ for (const { version: wantVersion, file: noteFile } of noteSources) {
   console.log(`note 覆盖 v${rel.version}：新增 ${items.added.length} / 修复 ${items.fixed.length} / 优化 ${items.improved.length}`);
 }
 
-/* ==================== 产出单文件 HTML（issue 474） ====================
- * 更新日志不再随构建打进 main.js（旧产物 changelog-data.ts 已退役）：改为发布
- * downloads/bz-changelog.html——单文件自包含（样式 + 数据 + 脚本全内联），由插件在
- * 用户点「更新日志」时从 GitHub 现场下载，弹窗用 iframe srcdoc 内嵌渲染。
- * 与使用手册（downloads/bz-manual.html）同一套口径与同一套 token。
+/* ==================== 产出单文件 HTML（2026-11-02 起只作存档） ====================
+ * 日志的**唯一消费者**是插件内置数据（core/changelog-data）：更新提示小窗与设置页
+ * 「更新日志」读同一份，不联网、不下载。这里产出的 single-file html 只留在仓库
+ * docs/ 里，给「在浏览器里翻历史」用——不进 downloads/、不进 manifest、不上分发仓库。
  * ==================================================================== */
 
 /** HTML 文本转义（title/属性位；正文数据走 JSON.stringify 无需转义） */
@@ -697,16 +696,15 @@ document.addEventListener('DOMContentLoaded', () => {
 </html>
 `;
 
-writeFileSync(join(ROOT, 'downloads', 'bz-changelog.html'), html, 'utf8');
+writeFileSync(join(ROOT, 'docs', 'changelog.html'), html, 'utf8');
 console.log(`版本数=${releases.length} 条目=${shown} 当前=${current}${manifestSynced ? '（manifest 已回写）' : ''}`);
-console.log(`产出 downloads/bz-changelog.html（${(Buffer.byteLength(html) / 1024).toFixed(1)}KB）`);
+console.log(`产出 docs/changelog.html（${(Buffer.byteLength(html) / 1024).toFixed(1)}KB）`);
 console.log(releases.slice(-6).map((r) => `v${r.version}(${r.date}): +${r.added.length} !${r.fixed.length} ^${r.improved.length}`).join('  '));
 
-/* ---- 清单重算（必须在日志写盘之后）----
- * 清单里 docs 条目的 sha256 是对**已出版产物**现算的（build-manifest 口径），
- * 所以必须在 bz-changelog.html 落盘之后再跑——跑在前面算的是上一版的 hash，
- * 客户端拿清单校验新日志必然「sha256 不匹配」（2026-10-31 翻车根因）。
- * 无条件跑（不只在 --note 时）：任何一次重出日志都会改文件 hash。 */
+/* ---- 清单重算 ----
+ * 本生成器改的是 docs/changelog.html 与 manifest.json 的 version；downloads/ 已不再
+ * 产出日志，清单里也没有它这一条。仍然无条件重跑一次 build-manifest：版本号变更会
+ * 影响清单里的 since/until 区间判定，把清单留在上一版同样会翻车。 */
 {
   const manifestRun = spawnSync(process.execPath, [join(ROOT, 'scripts', 'build-manifest.mjs')], { stdio: 'inherit' });
   if (manifestRun.status !== 0) {

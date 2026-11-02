@@ -30,6 +30,7 @@ import { resetNodeRuntimeCache, setFsProbe } from '../../src/core/tool-runtime';
 import { setApp } from '../../src/core/app';
 import { MockVault } from '../mock-vault';
 import { textSha256 } from '../../src/core/sha256';
+import { DOC_VISIBILITY } from '../../src/core/doc-visibility';
 
 const MANIFEST_CACHE_PATH = '.obsidian/plugins/bz/downloads/manifest.json';
 const PLUGIN_MANIFEST_PATH = '.obsidian/plugins/bz/manifest.json';
@@ -139,9 +140,16 @@ beforeEach(() => {
   resetOnlineResourcesState();
   setSettingsProvider(() => ({}) as any);
   vi.mocked(requestUrl).mockReset();
+  // 本文件钉的是「在线资源组」这条链路本身，与文档显隐开关正交：清单里有 changelog /
+  // manual 就要出行、要走同一状态机——那是功能还在的凭据。默认（关）的行为由文件末尾
+  // 「已隐藏的文档不出行」那一组单独钉，两边都留着，开关翻回去不用重写测试。
+  DOC_VISIBILITY.changelogInResources = true;
+  DOC_VISIBILITY.manualInResources = true;
 });
 afterEach(() => {
   vi.useRealTimers();
+  DOC_VISIBILITY.changelogInResources = false;
+  DOC_VISIBILITY.manualInResources = false;
 });
 
 /** 建一个挂好 app 的 vault（每用例自配版本与缓存清单） */
@@ -885,5 +893,40 @@ describe('两组分家：外部工具在前，在线资源在后', () => {
       '更新日志',
       '主题',
     ]);
+  });
+});
+
+describe('已隐藏的文档不出行（core/doc-visibility，2026-11-02 用户拍板：只隐藏不删）', () => {
+  const entries = () => [
+    docEntry('changelog', HTML_V1),
+    docEntry('manual', HTML_V1),
+    docEntry('belongings-categories', '{"version":"0.1.0","groups":[]}', { name: '归物分类表' }),
+  ];
+
+  it('开关关（默认）：清单里仍挂着 changelog / manual，组里也不给它们出行', async () => {
+    DOC_VISIBILITY.changelogInResources = false;
+    DOC_VISIBILITY.manualInResources = false;
+    const vault = newVault();
+    vault.files.set(MANIFEST_CACHE_PATH, manifestJson(entries(), []));
+    routeFetch({ [REMOTE_MANIFEST]: manifestJson(entries(), []) });
+
+    const el = await renderGroup();
+    const names = Array.from({ length: resCount(el) }, (_, i) => resName(el, i));
+    expect(names).not.toContain('更新日志');
+    expect(names).not.toContain('使用手册');
+    // 其余条目一个不少：皮肤聚合行 + 没被隐藏的数据表
+    expect(names).toEqual(['主题', '归物分类表']);
+  });
+
+  it('开关翻回 true：两条照常出行（隐藏不是删除，链路原样在）', async () => {
+    DOC_VISIBILITY.changelogInResources = true;
+    DOC_VISIBILITY.manualInResources = true;
+    const vault = newVault();
+    vault.files.set(MANIFEST_CACHE_PATH, manifestJson(entries(), []));
+    routeFetch({ [REMOTE_MANIFEST]: manifestJson(entries(), []) });
+
+    const el = await renderGroup();
+    const names = Array.from({ length: resCount(el) }, (_, i) => resName(el, i));
+    expect(names).toEqual(['更新日志', '使用手册', '主题', '归物分类表']);
   });
 });

@@ -9,6 +9,9 @@
  *   ③ 其余在线资源（使用手册、归物分类表、RSS 源库、豆瓣影视索引）—— 用到才翻
  *   ④ 皮肤（逐文件或整包）
  *
+ * 2026-11-02：更新日志与使用手册已从界面上撤掉（日志改为全内置、手册由视频教程取代），
+ * ①③ 里它们不再下载——判断在 core/doc-visibility，代码留着，翻回开关即恢复。
+ *
  * 插件本体不在这里：它由 core/self-update.ts 在同一趟启动链里更早跑完
  * （皮肤版本区间校验吃 manifest 版本号，所以本体必须在前，见 main.ts 的 after）。
  *
@@ -25,6 +28,7 @@ import { bundleStatus, installBundle } from './bundle-asset';
 import { isMobileEnv } from './mobile';
 import { ensureAssetWithHash } from './remote-asset';
 import { CHANGELOG_FILENAME } from './changelog';
+import { docListedInResources } from './doc-visibility';
 import { downloadSkinUpdates, isInVersionRange, readPluginVersion, skinStatus } from './skin-pack';
 
 /** 自动更新结果（面板/测试读它；生产只用来决定要不要发通知） */
@@ -109,7 +113,9 @@ async function runAutoUpdateAssets(
     }
   };
 
-  // 版本区间外（旧版插件看到「需要更新版插件」的资源）不下载、不计数
+  // 版本区间外（旧版插件看到「需要更新版插件」的资源）不下载、不计数；
+  // 已隐藏的条目（更新日志 / 使用手册，见 core/doc-visibility）同理——清单里就算还挂着，
+  // 也不该在后台占一趟网络：它们的入口都不在界面上，下下来用户也看不到。
   const version = await readPluginVersion(app);
   const docs = mf.docs.filter((d) => !version || isInVersionRange(d, version));
 
@@ -117,9 +123,9 @@ async function runAutoUpdateAssets(
   const bundles = docs.filter((d) => d.kind === 'bundle');
   const others = docs.filter((d) => d.kind !== 'bundle' && d !== changelog);
 
-  if (changelog) await syncDoc(changelog);
+  if (changelog && docListedInResources(changelog.id)) await syncDoc(changelog);
   for (const entry of bundles) await syncBundle(entry);
-  for (const entry of others) await syncDoc(entry);
+  for (const entry of others) if (docListedInResources(entry.id)) await syncDoc(entry);
 
   // 皮肤：缺的 / 过期的套数由清单实测决定；下载完 `downloadSkinUpdates` 自己注入
   if (mf.skins.length) {

@@ -534,9 +534,12 @@ describe('真实仓库：不许回到「命中 0 个」的假绿', () => {
   });
 
   it('改文档 → 不全量、也不硬凑（没有测试受影响就是 0 个，交给调用方 --full）', () => {
+    // docs/ 不再是「无主」：2026-11-02 起日志产物落 docs/changelog.html，定稿守卫用字面量
+    // 指着那个目录 → docs 下的改动带上它一条。这是字面量边的既有口径（不是硬凑），
+    // 其余文档改动仍是 0 个——由下面 issues/ 那一半钉住。
     const plan = realPick(REPO.docChangelog);
     expect(plan.mode).toBe('affected');
-    expect(plan.files).toHaveLength(0);
+    expect(plan.files).toEqual([GUARD.changelogTruthGuard]);
 
     const issue = realPick(REPO.issueFile);
     expect(issue.mode).toBe('affected');

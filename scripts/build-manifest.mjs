@@ -2,12 +2,12 @@
 //
 // 汇总全部在线资源条目，写 `downloads/manifest.json`——插件端启动双源拉取的
 // 唯一事实源（src/core/download-manifest.ts 消费）：
-//   docs[]  —— 单文件资源（bz-changelog.html / bz-manual.html），id / name / file / sha256
+//   docs[]  —— 单文件资源（bz-manual.html 等），id / name / file / sha256
 //   skins[] —— 皮肤条目，id / domain / name / file / previewClass / 版本区间 / sha256
 //
 // sha256 一律对 **downloads/ 里的已出版产物**算（ skins 对 css、docs 对 html），
 // 不从 src 源重算——清单永与产物一致，不会出现「清单说 A、产物是 B」。
-// 因此发布顺序固定：pnpm skin-pack → pnpm changelog → pnpm catalog → pnpm manifest。
+// 因此发布顺序固定：pnpm skin-pack → pnpm catalog → pnpm manifest。
 //
 // 换行口径与插件端一致（src/core/sha256.ts：normalizeEol 后取 SHA-256），
 // Windows CRLF 与仓库 LF 不会算出两个值。
@@ -35,7 +35,7 @@ const textSha256 = (s) => createHash('sha256').update(Buffer.from(normalizeEol(s
 function fileSha256(rel) {
   const abs = path.join(ROOT, 'downloads', rel);
   if (!fs.existsSync(abs)) {
-    console.error(`downloads/${rel} 不存在——先跑 pnpm skin-pack / pnpm changelog / pnpm catalog 出产物，再跑 pnpm manifest`);
+    console.error(`downloads/${rel} 不存在——先跑 pnpm skin-pack / pnpm catalog 出产物，再跑 pnpm manifest`);
     process.exit(1);
   }
   return textSha256(fs.readFileSync(abs, 'utf8'));
@@ -57,7 +57,7 @@ function fileSha256Bytes(rel) {
 function fileSize(rel) {
   const abs = path.join(ROOT, 'downloads', rel);
   if (!fs.existsSync(abs)) {
-    console.error(`downloads/${rel} 不存在——先跑 pnpm skin-pack / pnpm changelog / pnpm catalog 出产物，再跑 pnpm manifest`);
+    console.error(`downloads/${rel} 不存在——先跑 pnpm skin-pack / pnpm catalog 出产物，再跑 pnpm manifest`);
     process.exit(1);
   }
   return fs.statSync(abs).size;
@@ -67,7 +67,8 @@ const problems = [];
 
 // docs：单文件资源（新资源在此登记一行，插件端 download-manifest 的默认行表同步认 id）
 const DOCS = [
-  { id: 'changelog', name: '更新日志', file: 'bz-changelog.html' },
+  // 2026-11-02：更新日志退出在线资源（日志已全部内置进插件，更新提示与设置页共用那一份）。
+  // 不要再加回来——加回来就等于「内置一份 + 远端再下一份」，两处迟早对不上。
   { id: 'manual', name: '使用手册', file: 'bz-manual.html' },
   // issue 478：归物本物品分类表（数据表，不是文档；产物由 pnpm catalog 出，故发布顺序里 catalog 在 manifest 之前）
   { id: 'belongings-categories', name: '归物分类表', file: 'belongings-categories.json' },
@@ -97,7 +98,6 @@ const docs = DOCS.map((d) => ({
 // 行序（在线资源组内的行顺序）：'skins' 是皮肤聚合行的保留 id，不是 doc 条目。
 // 新增资源 = DOCS 加一行 + 本表加一个 id；漏登记由下方守卫拦下。
 const ROW_ORDER = [
-  'changelog',
   'manual',
   'skins',
   'belongings-categories',

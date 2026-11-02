@@ -1,24 +1,19 @@
 /* ============================================================
- * bz · 更新提示小窗（settings-panel/changelog-note.ts）
+ * bz · 更新日志弹窗（settings-panel/changelog-note.ts）
  *
- * 2026-11-02 用户拍板：升级后的提示不再弹「整页更新日志」，只弹这一张小窗，
- * 且**只在第一次打开 bz 任意界面时**弹一次。
+ * 一个弹窗，两个门面（2026-11-02 用户拍板「两者就是一个」）：
+ *  - 升级后第一次打开 bz 任何界面时自动弹（main.ts showChangelogNote）；
+ *  - 设置页左侧「文档 → 更新日志」打开它。
+ * 内容全部吃内置数据（core/changelog-data），不下载、不联网、不读远端 html。
  *
- * 同日二次拍板（替代「按 seen 掐区间」的写法）：日志既然已经内置，就别猜用户跨了几版——
- * **把内置的版本全列出来**，最新那版直接展开；更早的收在**一整块**折叠里，
- * 点开是连续的文本流（每版一个小标题），用户自己滚着往下看（2026-11-02 三次拍板：
- * 不要一版一个折叠行）。数据量（当前 32 版）对包体没压力。
+ * 版式 1:1 复刻原型 .scratch/proto-changelog/unified-log.html：
+ *  桌面（>768px） 214px 版本时间轴（细线串点，当前版实心点）+ 右侧单版正文
+ *                （眉标 / 大号等宽版本号 / 改动统计 → 三段 → 右下入口图标）；
+ *  移动（≤768px） 不设版本栏：顶栏（标题 + 关闭）+ 全部版本按新→旧铺成一篇文档流
+ *                + 右下浮动入口条（手机上一滚页脚就没了，浮条才是长文档的归属）。
  *
- * 与 settings-panel/changelog.ts（设置面板里的全量日志弹窗）是两件事：
- * 那个走 iframe srcdoc 内嵌远端整页；这个吃内置的 CHANGELOG_RELEASES，自己排版。
- *
- * 版式（2026-11-02 定稿，1:1 复刻 .scratch/changelog-note/note-b.html）：
- * 顶部 2px accent 渐变细条 → v 徽标 / 日期 / 改动数 → 「本次更新」→
- * 三段（accent 竖线只给「新功能」，其余普通线）→ 更早版本整块折叠 → 页脚主动作 + 四个外部入口。
- * 正文能滚但不显示滚动条（本域统一口径），底部 24px 渐隐只在「还有且没到底」时亮。
- *
- * 移动端（≤768px）改为底部升起：不改 mask，靠 popup 自身
- * `position: fixed; bottom: 0` 贴底——遮罩此时点不到，所以右上必须有实体关闭钮。
+ * 两端共用一份 DOM，靠 CSS 媒体查询切换——不在 JS 里判断宽度，改窗口大小也不会错位。
+ * 正文滚动条两端都藏掉，靠上下渐隐提示「还有内容」。
  * ============================================================ */
 import { uiModal } from '../core/ui/modal';
 import { escapeHtml } from '../core/utils';
@@ -26,87 +21,147 @@ import { normalizeVersion } from '../core/version';
 import { releaseEntryCount, type ChangelogEntry, type ChangelogRelease } from '../core/changelog-data';
 import { bindChangelogLinks, changelogLinksHtml } from './changelog-links';
 
-/** 三段定义：新功能用 accent 竖线，体验优化与问题修复用普通线 */
-const SECTIONS: { key: 'added' | 'improved' | 'fixed'; label: string; primary: boolean }[] = [
-  { key: 'added', label: '新功能', primary: true },
-  { key: 'improved', label: '体验优化', primary: false },
-  { key: 'fixed', label: '问题修复', primary: false },
+/** 三段定义（顺序即渲染顺序；标签与线上日志文档同一套措辞） */
+const SECTIONS: { key: 'added' | 'improved' | 'fixed'; label: string; cls: string }[] = [
+  { key: 'added', label: '新功能', cls: 'bz-chgn-g-add' },
+  { key: 'improved', label: '体验优化', cls: 'bz-chgn-g-imp' },
+  { key: 'fixed', label: '修复', cls: 'bz-chgn-g-fix' },
 ];
 
-/** 一条条目：域名固定 54px 左列 + 正文（可带一行更淡的副行） */
-function itemHtml(entry: ChangelogEntry): string {
-  const sub = entry.sub ? `<span class="bz-chg-sub">${escapeHtml(entry.sub)}</span>` : '';
+/** 2026-11-02 → 2026.11.02（等宽数字里点比短横线安静） */
+function fmtDate(date?: string): string {
+  return escapeHtml((date || '').replace(/-/g, '.'));
+}
+
+function countText(n: number): string {
+  return `${n} 处改动`;
+}
+
+/* ── 右栏正文（桌面） ─────────────────────────────── */
+
+function rowsHtml(list: readonly ChangelogEntry[]): string {
+  return list
+    .map(
+      (e) =>
+        '<div class="bz-chgn-row">' +
+        `<span class="bz-chgn-k">${escapeHtml(e.domain || '')}</span>` +
+        `<span class="bz-chgn-t">${escapeHtml(e.text || '')}</span>` +
+        '</div>',
+    )
+    .join('');
+}
+
+function groupsHtml(release: ChangelogRelease): string {
+  const out = SECTIONS.map((sec) => {
+    const list = release[sec.key] || [];
+    if (!list.length) return '';
+    return (
+      '<section class="bz-chgn-grp">' +
+      `<div class="bz-chgn-grp-hd"><i class="${sec.cls}"></i>${sec.label}` +
+      `<span class="bz-chgn-grp-cnt">${list.length}</span></div>` +
+      rowsHtml(list) +
+      '</section>'
+    );
+  }).join('');
+  return out || '<div class="bz-chgn-empty">这一版没有记录。</div>';
+}
+
+/** 右栏头部：眉标 + 版本号 + 统计（选中项变了只换这一块和正文） */
+function headHtml(release: ChangelogRelease, isNewest: boolean): string {
+  const total = releaseEntryCount(release);
+  const parts = SECTIONS.filter((s) => (release[s.key] || []).length).map(
+    (s) => `${s.label} ${(release[s.key] || []).length}`,
+  );
+  const meta = [`共 ${total} 处改动`, ...parts].join('<span class="bz-chgn-sep"></span>');
   return (
-    '<div class="bz-chg-item">' +
-    `<span class="bz-chg-dom">${escapeHtml(entry.domain || '')}</span>` +
-    `<div class="bz-chg-txt"><p>${escapeHtml(entry.text || '')}</p>${sub}</div>` +
-    '</div>'
+    `<div class="bz-chgn-eyebrow">${isNewest ? '本次更新' : '历史版本'}</div>` +
+    `<h1 class="bz-chgn-ver">v${escapeHtml(release.version)}` +
+    `<small>${fmtDate(release.date)}</small></h1>` +
+    `<div class="bz-chgn-meta">${meta}</div>`
   );
 }
 
-/** 三段正文（空段不渲染） */
-function sectionsHtml(release: ChangelogRelease): string {
+/* ── 移动端正文（整篇文档流） ─────────────────────── */
+
+function mobBlocksHtml(release: ChangelogRelease): string {
   return SECTIONS.map((sec) => {
     const list = release[sec.key] || [];
     if (!list.length) return '';
     return (
-      `<section class="bz-chg-sec${sec.primary ? ' pri' : ''}"><div class="bz-chg-rail">` +
-      `<div class="bz-chg-sec-h">${sec.label}</div>` +
-      list.map(itemHtml).join('') +
-      '</div></section>'
+      '<div class="bz-chgn-mblk">' +
+      `<div class="bz-chgn-mblk-t"><i class="${sec.cls}"></i>${sec.label}` +
+      `<span class="bz-chgn-mcnt">${list.length}</span></div>` +
+      list
+        .map(
+          (e) =>
+            '<div class="bz-chgn-mit">' +
+            `<span class="bz-chgn-mdom">${escapeHtml(e.domain || '')}</span>` +
+            `<span class="bz-chgn-mtxt">${escapeHtml(e.text || '')}</span>` +
+            '</div>',
+        )
+        .join('') +
+      '</div>'
     );
   }).join('');
 }
 
-/**
- * 更早的版本：**一整块**折叠（2026-11-02 用户拍板：不要一版一个折叠行）。
- * 收起时只有一行「更早的版本 · N 版」，点开以后所有旧版本按新→旧连续铺下来，
- * 每版一个小标题 + 正文，用户直接往下滚着看——像读一条长日志，而不是逐行点 31 次。
- */
-function oldVersionsHtml(older: readonly ChangelogRelease[]): string {
-  if (!older.length) return '';
-  const body = older
-    .map((release) => {
-      const count = releaseEntryCount(release);
-      const date = release.date ? `<span class="bz-chg-date">${escapeHtml(release.date)}</span>` : '';
-      const countHtml = count ? `<span class="bz-chg-count">${count} 处改动</span>` : '';
-      return (
-        '<section class="bz-chg-oldrel">' +
-        '<div class="bz-chg-oldrel-h">' +
-        `<span class="bz-chg-oldrel-v">v${escapeHtml(release.version)}</span>${date}${countHtml}` +
+function mobPageHtml(list: readonly ChangelogRelease[]): string {
+  return list
+    .map(
+      (r, i) =>
+        '<section class="bz-chgn-mrel">' +
+        '<div class="bz-chgn-mrel-hd">' +
+        `<span class="bz-chgn-mver">v${escapeHtml(r.version)}</span>` +
+        (i === 0 ? '<span class="bz-chgn-mcur">当前</span>' : '') +
+        `<span class="bz-chgn-mdate">${fmtDate(r.date)}</span>` +
         '</div>' +
-        sectionsHtml(release) +
-        '</section>'
-      );
-    })
+        mobBlocksHtml(r) +
+        '</section>',
+    )
+    .join('');
+}
+
+/* ── 左栏版本时间轴（桌面） ───────────────────────── */
+
+function railHtml(list: readonly ChangelogRelease[], active: number): string {
+  const items = list
+    .map(
+      (r, i) =>
+        `<button class="bz-chgn-v${i === active ? ' on' : ''}" type="button" data-i="${i}"` +
+        `${i === active ? ' aria-current="true"' : ''}>` +
+        `<span class="v">v${escapeHtml(r.version)}</span>` +
+        `<span class="d">${fmtDate(r.date)}</span>` +
+        `<span class="n">${countText(releaseEntryCount(r))}</span>` +
+        '</button>',
+    )
     .join('');
   return (
-    '<div class="bz-chg-old">' +
-    '<button class="bz-chg-old-h" type="button" aria-expanded="false">' +
-    `<span class="bz-chg-old-t">更早的版本 · ${older.length} 版</span>` +
-    '<svg class="bz-chg-chev" viewBox="0 0 24 24" width="13" height="13" fill="none" ' +
-    'stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
-    '<path d="m6 9 6 6 6-6"/></svg>' +
-    '</button>' +
-    `<div class="bz-chg-old-body">${body}</div>` +
-    '</div>'
+    '<div class="bz-chgn-rail-hd"><b>版本历史</b>' +
+    `<span>${list.length} 版</span></div>` +
+    `<div class="bz-chgn-rail-list">${items}</div>`
   );
 }
+
+const CLOSE_SVG =
+  '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" ' +
+  'stroke-linecap="round" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>';
+
+const CLOCK_SVG =
+  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" ' +
+  'stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/>' +
+  '<path d="M12 7v5l3 2"/></svg>';
 
 export interface ChangelogNoteHandle {
   close: () => void;
 }
 
 /**
- * 弹出「本次更新」小窗：`releases` 按**新→旧**给（内置数据本就是这个顺序）。
- * 最新那版直接展开，更早的版本收在**一整块**折叠里，点开是连续文本流。
+ * 打开更新日志弹窗。`releases` 按**新→旧**给（内置数据本就是）。
  *
- * `expectVersion`：本次要提示的版本。给了就按它定位「最新一版」——调用方
- * （main.ts）已经用 `pickReleaseFor` 验过它在数据里，这里再按它取一次，
- * 是为了让「验的版本」和「渲染的版本」是同一个值；不给则默认数组第一条。
+ * `expectVersion`：本次要提示的版本（main.ts 已用 `pickReleaseFor` 验过它在数据里）。
+ * 桌面端据此把时间轴停在那一版；不给则停在最新一版。移动端是整篇文档流，用不到它。
  *
- * 返回关闭句柄（插件卸载 / 测试收口用；正常交互走按钮、遮罩、ESC）。
- * 空数组 = 没有可展示的内容，调用方本就不该调到这里，此时直接不弹。
+ * 返回关闭句柄（插件卸载 / 测试收口用）；正常交互走右上 × 、点遮罩、ESC。
  */
 export function openChangelogNote(
   releases: readonly ChangelogRelease[],
@@ -118,75 +173,88 @@ export function openChangelogNote(
   const target = expectVersion ? normalizeVersion(expectVersion) : '';
   const at = target ? list.findIndex((r) => normalizeVersion(r.version) === target) : 0;
   const start = at >= 0 ? at : 0;
-  const newest = list[start];
-  const older = list.slice(start + 1);
-  const count = releaseEntryCount(newest);
-  const date = newest.date ? `<span class="bz-chg-date">${escapeHtml(newest.date)}</span>` : '';
-  const countHtml = count ? `<span class="bz-chg-count">${count} 处改动</span>` : '';
-  const olderHtml = oldVersionsHtml(older);
 
+  const links = changelogLinksHtml();
   const content =
-    '<div class="bz-chg-strip"></div>' +
-    '<div class="bz-chg-grab"></div>' +
-    '<div class="bz-chg-head">' +
-    '<div class="bz-chg-headmain">' +
-    `<div class="bz-chg-tags"><span class="bz-chg-badge">v${escapeHtml(newest.version)}</span>${date}${countHtml}</div>` +
-    '<h2 class="bz-chg-title">本次更新</h2>' +
+    // 桌面：时间轴 + 单版正文 + 页脚（关闭钮与页脚留在固定层，切版本不重建，省得反复绑事件）
+    '<div class="bz-chgn">' +
+    '<aside class="bz-chgn-rail"></aside>' +
+    '<main class="bz-chgn-pane">' +
+    '<div class="bz-chgn-hd"></div>' +
+    '<div class="bz-chgn-wrap">' +
+    '<div class="bz-chgn-fade-top"></div>' +
+    '<div class="bz-chgn-body"></div>' +
+    '<div class="bz-chgn-fade-bot"></div>' +
     '</div>' +
-    '<button class="bz-chg-close" type="button" aria-label="关闭更新提示" title="关闭">' +
-    '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" ' +
-    'stroke-linecap="round" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>' +
-    '</button>' +
+    '</main>' +
+    `<footer class="bz-chgn-ft"><span class="bz-chgn-grow"></span>${links}</footer>` +
+    `<button class="bz-chgn-close" type="button" aria-label="关闭更新日志" title="关闭">${CLOSE_SVG}</button>` +
     '</div>' +
-    '<div class="bz-chg-scrollwrap">' +
-    `<div class="bz-chg-scroll">${sectionsHtml(newest)}${olderHtml}</div>` +
-    '<div class="bz-chg-fade"></div>' +
+    // 移动端：整篇文档流（同一份数据再排一遍，≤768px 由 CSS 切过来）
+    '<div class="bz-chgn-m">' +
+    `<div class="bz-chgn-mbar"><div class="bz-chgn-mtitle">${CLOCK_SVG}更新日志</div>` +
+    `<button class="bz-chgn-close" type="button" aria-label="关闭更新日志" title="关闭">${CLOSE_SVG}</button>` +
     '</div>' +
-    '<div class="bz-chg-foot">' +
-    '<button class="bz-chg-ok" type="button">知道了</button>' +
-    '<span class="bz-chg-grow"></span>' +
-    `<span class="bz-chg-links">${changelogLinksHtml()}</span>` +
+    `<div class="bz-chgn-mpage">${mobPageHtml(list)}</div>` +
+    `<div class="bz-chgn-mtools">${links}</div>` +
     '</div>';
 
-  // bz-sp-skin 不能省：本窗的配色全部吃 --sp-* 令牌，而令牌只定义在 .bz-sp-skin 作用域里。
-  // 少了它，--sp-* 全部取不到值 → padding/圆角还在、底色与文字色全空，看着就是「没样式」。
-  const modal = uiModal({ content, className: 'bz-chg-note bz-sp-skin', title: '本次更新' });
+  // bz-sp-skin 不能省：本窗配色全吃 --sp-* 令牌，而令牌只定义在 .bz-sp-skin 作用域里。
+  const modal = uiModal({ content, className: 'bz-chg-note bz-sp-skin', title: '更新日志' });
   const popup = modal.popup;
-  popup.querySelector('.bz-chg-ok')?.addEventListener('click', () => modal.close());
-  popup.querySelector('.bz-chg-close')?.addEventListener('click', () => modal.close());
-  bindChangelogLinks(popup);
 
-  // 溢出且还没到底才亮底部渐隐：没超时不该出现（像「下面还有」的假提示），
-  // 已经滚到底也别亮——渐隐会一直压住最后一行的下半截。
-  const scroll = popup.querySelector<HTMLElement>('.bz-chg-scroll');
-  const wrap = popup.querySelector<HTMLElement>('.bz-chg-scrollwrap');
+  const rail = popup.querySelector<HTMLElement>('.bz-chgn-rail');
+  const hd = popup.querySelector<HTMLElement>('.bz-chgn-hd');
+  const body = popup.querySelector<HTMLElement>('.bz-chgn-body');
+  const fadeTop = popup.querySelector<HTMLElement>('.bz-chgn-fade-top');
+  const fadeBot = popup.querySelector<HTMLElement>('.bz-chgn-fade-bot');
+
+  // 上下渐隐：有溢出才提示，已经到头/到底就撤——别拿假的「还有内容」骗人
   const syncFade = (): void => {
-    // 窗已经关了（点了「知道了」/×/遮罩/ESC 都会绕过 handle.close）就顺手把监听摘掉——
-    // 否则每关一次留一个 resize 监听，之后每次改窗口大小都对摘掉的节点跑一遍。
-    if (!scroll || !wrap || !scroll.isConnected) {
+    if (!body || !body.isConnected) {
       window.removeEventListener('resize', syncFade);
       return;
     }
-    const overflow = scroll.scrollHeight - scroll.clientHeight > 2;
-    const atBottom = scroll.scrollTop + scroll.clientHeight >= scroll.scrollHeight - 2;
-    wrap.classList.toggle('more', overflow && !atBottom);
+    const more = body.scrollHeight - body.clientHeight > 2;
+    fadeTop?.classList.toggle('show', more && body.scrollTop > 4);
+    fadeBot?.classList.toggle('show', more && body.scrollTop + body.clientHeight < body.scrollHeight - 4);
   };
 
-  // 更早的版本：一整块折叠开关。内容已经在 DOM 里（收起时 display:none 不参与排版），
-  // 点开就是一条连续的文本流，往下滚就行——不用一版一点。
-  const oldBlock = popup.querySelector<HTMLElement>('.bz-chg-old');
-  const oldHead = oldBlock?.querySelector<HTMLElement>('.bz-chg-old-h');
-  oldHead?.addEventListener('click', () => {
-    const open = !oldBlock!.classList.contains('open');
-    oldBlock!.classList.toggle('open', open);
-    oldHead.setAttribute('aria-expanded', open ? 'true' : 'false');
-    syncFade();
-  });
+  let cur = start;
+  const select = (i: number): void => {
+    cur = i;
+    const r = list[i];
+    if (hd) hd.innerHTML = headHtml(r, i === 0);
+    if (body) {
+      body.innerHTML = groupsHtml(r);
+      body.scrollTop = 0;
+    }
+    rail?.querySelectorAll<HTMLElement>('.bz-chgn-v').forEach((el) => {
+      const on = Number(el.dataset.i) === i;
+      el.classList.toggle('on', on);
+      if (on) el.setAttribute('aria-current', 'true');
+      else el.removeAttribute('aria-current');
+    });
+    requestAnimationFrame(syncFade);
+  };
 
-  scroll?.addEventListener('scroll', syncFade, { passive: true });
+  if (rail) rail.innerHTML = railHtml(list, start);
+  rail?.addEventListener('click', (e) => {
+    const btn = (e.target as HTMLElement).closest<HTMLElement>('.bz-chgn-v');
+    if (!btn) return;
+    select(Number(btn.dataset.i) || 0);
+  });
+  select(start);
+
+  body?.addEventListener('scroll', syncFade, { passive: true });
   window.addEventListener('resize', syncFade);
-  // 首帧：等排版落定再量（同一帧内量会拿到 0）
+  // wrap 高度随排版落定才准，首帧量一次会拿到 0
   requestAnimationFrame(syncFade);
+
+  popup.querySelectorAll<HTMLElement>('.bz-chgn-close').forEach((btn) => {
+    btn.addEventListener('click', () => modal.close());
+  });
+  bindChangelogLinks(popup);
 
   return {
     close: () => {

@@ -17,6 +17,7 @@
  * （只用通用状态机的资源不必碰代码；要专属描述补规模才加一条 DESC_EXTRAS）。
  * ============================================================ */
 import { getApp } from '../core/app';
+import { docListedInResources } from '../core/doc-visibility';
 import { notice } from '../core/notice';
 import { onDomainEvent } from '../core/domain-bus';
 import { DOWNLOADS_CHANGED_EVENT } from '../core/remote-asset';
@@ -199,7 +200,9 @@ const LOCAL_TOOL_ROWS: Array<{ id: string; name: string; toolId: ToolId }> = TOO
  * rowOrder 漏提的 doc 追加在末尾（清单是事实源，漏登记不该让条目凭空消失），漏提皮肤也补在末尾。
  */
 function rowIdsOf(manifest: DownloadManifest): string[] {
-  const docIds = manifest.docs.map((d) => d.id);
+  // 已隐藏的条目连行序都不参与（更新日志/使用手册，见 core/doc-visibility）：
+  // 留着槽位会让 rowOrder 里那些 id 变成「永远等不到行的占位」
+  const docIds = manifest.docs.filter((d) => docListedInResources(d.id)).map((d) => d.id);
   const order = manifest.rowOrder;
   if (!order || order.length === 0) return [...docIds, SKINS_ROW_ID];
   const ids = order.filter((id) => id === SKINS_ROW_ID || docIds.includes(id));
@@ -269,6 +272,8 @@ async function computeRowStates(app: unknown): Promise<{ rows: RowState[]; manif
     }
     const entry = manifest.docs.find((d) => d.id === id);
     if (!entry) continue;
+    // 已隐藏的条目不出行（2026-11-02：更新日志内置进插件、使用手册改由视频教程承接）
+    if (!docListedInResources(entry.id)) continue;
     // 版本区间外 → 该行不呈现（旧版插件看到「需新版」的资源不误报可下载）
     if (pluginVersion && !isInVersionRange(entry, pluginVersion)) continue;
     // 两种形态共用三态（missing / updated / ready），只有「怎么判就绪」不同：

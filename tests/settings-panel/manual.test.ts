@@ -16,6 +16,7 @@ import { openManualViewer, unloadManualViewer } from '../../src/settings-panel/m
 import { setSettingsProvider } from '../../src/core/settings-provider';
 import { setApp } from '../../src/core/app';
 import { MockVault } from '../mock-vault';
+import { DOC_VISIBILITY } from '../../src/core/doc-visibility';
 
 // mock Platform.isMobile 切换（与 changelog.test.ts 同口径；本入口仅桌面 footer）
 let mobileFlag = false;
@@ -52,6 +53,11 @@ describe('使用手册 footer 入口 + OB 内弹窗（issue 473）', () => {
     setApp({ vault, workspace: {} } as any);
     vi.mocked(requestUrl).mockReset();
     vi.mocked(requestUrl).mockResolvedValue({ status: 200, text: MANUAL_HTML } as any);
+    // 本文件钉的是「手册入口 + 弹窗」这条链路本身（下载 / srcdoc / 后台核对 / 卸载）。
+    // 2026-11-02 起这条入口在界面上被藏了（视频教程取代手册，见 core/doc-visibility），
+    // 但功能没删——所以这里翻回 true 让入口出现，链路照旧逐条验；默认关着的行为在
+    // 文件末尾那一组单独钉。
+    DOC_VISIBILITY.manualInDocNav = true;
   });
 
   it('入口在 footer：位于「更新日志」上方，不入导航契约类', async () => {
@@ -218,5 +224,55 @@ describe('使用手册 footer 入口 + OB 内弹窗（issue 473）', () => {
     openManualViewer(MANUAL_HTML);
     expect(document.getElementById('bz-manual-overlay')).toBeTruthy();
     unloadManualViewer();
+  });
+});
+
+describe('使用手册入口的显隐（core/doc-visibility，2026-11-02：视频教程取代手册）', () => {
+  beforeEach(() => {
+    resetObsidianMocks();
+    clearNotices();
+    mobileFlag = false;
+    document.body.innerHTML = '';
+    unloadSettingsPanel();
+    unloadManualViewer();
+    setSettingsProvider(() => ({}) as any);
+    setApp({ vault: new MockVault(), workspace: {} } as any);
+    vi.mocked(requestUrl).mockReset();
+  });
+
+  it('开关关（默认）：侧栏文档组里不再有「使用手册」，更新日志照旧在', async () => {
+    DOC_VISIBILITY.manualInDocNav = false;
+    const ui = new SettingsPanelUI();
+    ui.open();
+    await tick();
+    const panel = document.getElementById('bz-settings-panel-popup')!;
+    expect(panel.querySelector('[data-sp-manual]')).toBeNull();
+    expect(panel.querySelector('[data-sp-changelog]')).toBeTruthy();
+  });
+
+  it('搜「手册」不再把文档组捞出来（入口都没了，只挂一条更新日志是误导）', async () => {
+    DOC_VISIBILITY.manualInDocNav = false;
+    const ui = new SettingsPanelUI();
+    ui.open();
+    await tick();
+    const popup = document.getElementById('bz-settings-panel-popup')!;
+    const search = popup.querySelector('.bz-sp-search .bz-input') as HTMLInputElement;
+    search.value = '手册';
+    search.dispatchEvent(new Event('input', { bubbles: true }));
+    await new Promise((r) => setTimeout(r, 260)); // E-5：180ms 防抖 + 余量
+    expect(popup.querySelector('[data-sp-manual]')).toBeNull();
+    expect(popup.querySelector('[data-sp-changelog]')).toBeNull();
+  });
+
+  it('开关翻回 true：手册入口回到更新日志上方（功能没删）', async () => {
+    DOC_VISIBILITY.manualInDocNav = true;
+    const ui = new SettingsPanelUI();
+    ui.open();
+    await tick();
+    const panel = document.getElementById('bz-settings-panel-popup')!;
+    const man = panel.querySelector('[data-sp-manual]') as HTMLElement;
+    const chg = panel.querySelector('[data-sp-changelog]') as HTMLElement;
+    expect(man).toBeTruthy();
+    expect(man.compareDocumentPosition(chg) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   });
 });

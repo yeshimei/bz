@@ -38,6 +38,7 @@ import { setupDoneStorageKey } from './setup-state';
 import { openPathPicker } from './path-picker';
 import { isMobileEnv } from './mobile';
 import { getApp } from './app';
+import { docListedInResources } from './doc-visibility';
 import { getSettings, saveSettings, tryGetSettings } from './settings-provider';
 import { AI_PROVIDER_REGISTRY, DEFAULT_AI_PROVIDER, getProviderDescriptor, testAIConnectivity } from './ai';
 
@@ -122,7 +123,10 @@ export function buildSetupTasks(
 
   // 目录包（工具）先于文档：工具决定「能不能用」，文档决定「查不查得到」
   for (const e of manifest.docs.filter((d) => d.kind === 'bundle')) items.push(mk(bundleItem(app, e)));
-  for (const e of manifest.docs.filter((d) => d.kind !== 'bundle')) items.push(mk(docItem(app, e)));
+  // 文档段与「在线资源」组同口径：已隐藏的条目（更新日志 / 使用手册，见 core/doc-visibility）
+  // 不进这一屏的勾选队列——下下来也没有入口能打开它。
+  for (const e of manifest.docs.filter((d) => d.kind !== 'bundle' && docListedInResources(String(d.id || ''))))
+    items.push(mk(docItem(app, e)));
   const skinBytes = manifest.skins.reduce((n, s) => n + (s.size || 0), 0);
   if (manifest.skins.length) {
     items.push(
@@ -367,9 +371,11 @@ export function splitProbeRows<T extends { id?: string }>(rows: T[]): { env: T[]
   return { env: rows.filter((r) => !isTool(r.id)), tools: rows.filter((r) => isTool(r.id)) };
 }
 
-/** 「在线资源」段只列文档与皮肤（目录包已经归「外部工具」，不在这里重复） */
-export function resourceDocsOf<T extends { kind?: string }>(manifest: { docs: T[] }): T[] {
-  return manifest.docs.filter((d) => d.kind !== 'bundle');
+/** 「在线资源」段只列文档与皮肤（目录包已经归「外部工具」，不在这里重复）。
+ *  已隐藏的条目（更新日志 / 使用手册，见 core/doc-visibility）也不列：引导页是
+ *  一次性的「要下什么」清单，留一行下完没法用的东西只会让人多勾一次。 */
+export function resourceDocsOf<T extends { kind?: string; id?: string }>(manifest: { docs: T[] }): T[] {
+  return manifest.docs.filter((d) => d.kind !== 'bundle' && docListedInResources(String(d.id || '')));
 }
 
 /** 当前引导实例的关闭句柄（uiModal.close 幂等）：走它而不是直接 remove 遮罩，

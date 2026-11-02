@@ -15,7 +15,16 @@ import {
   sizeText,
   splitProbeRows,
 } from '../../src/core/setup-wizard';
+import { DOC_VISIBILITY } from '../../src/core/doc-visibility';
 import type { DownloadManifest } from '../../src/core/download-manifest';
+
+// 与「在线资源」组 / 启动链同口径：本文件钉的是编排本身（顺序、体积、勾选），文档显隐开关
+// 默认关（core/doc-visibility）——这里翻回 true，日志/手册照旧进队列，「功能还在」有凭据；
+// 关着的行为由文件末尾那一组单独钉。
+beforeEach(() => {
+  DOC_VISIBILITY.changelogInResources = true;
+  DOC_VISIBILITY.manualInResources = true;
+});
 
 /** 兜底标记的新格式：旧版的裸 `'1'` 已不再认（见 setupAlreadyDone 的说明） */
 const STAMP = JSON.stringify({ at: 1700000000000 });
@@ -299,5 +308,35 @@ describe('视频教程三处入口：各指一集，界面上不写分P', () => 
       expect(line, file).not.toContain('vd_source');
       expect(line, file).not.toContain('spm_id_from');
     }
+  });
+});
+
+describe('已隐藏的文档不进首装队列（core/doc-visibility，2026-11-02：只隐藏不删）', () => {
+  it('开关关（默认）：更新日志不进队列，其余文档与皮肤照进', () => {
+    DOC_VISIBILITY.changelogInResources = false;
+    DOC_VISIBILITY.manualInResources = false;
+    const ids = buildSetupTasks({}, manifest, { nodeMissing: false }).map((t) => t.id);
+    expect(ids).not.toContain('changelog');
+    expect(ids).toContain('cinema-douban-index');
+    expect(ids).toContain('skins');
+  });
+
+  it('开关翻回 true：更新日志回到队列（功能没删）', () => {
+    DOC_VISIBILITY.changelogInResources = true;
+    expect(buildSetupTasks({}, manifest, { nodeMissing: false }).map((t) => t.id)).toContain('changelog');
+  });
+
+  it('resourceDocsOf 随开关走：关 → 空；开 → 日志与手册都在', () => {
+    const docs = [
+      { id: 'changelog', name: '更新日志' },
+      { id: 'tool-dock-watch', name: '工具坞值守', kind: 'bundle' },
+      { id: 'manual', name: '使用手册' },
+    ];
+    DOC_VISIBILITY.changelogInResources = false;
+    DOC_VISIBILITY.manualInResources = false;
+    expect(resourceDocsOf({ docs }).map((d) => d.id)).toEqual([]);
+    DOC_VISIBILITY.changelogInResources = true;
+    DOC_VISIBILITY.manualInResources = true;
+    expect(resourceDocsOf({ docs }).map((d) => d.id)).toEqual(['changelog', 'manual']);
   });
 });

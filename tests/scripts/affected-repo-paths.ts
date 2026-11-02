@@ -55,4 +55,6 @@ export const GUARD = {
   cssAggregationManifest: 'tests/core/css-aggregation-manifest.test.ts',
   skinPackCatalog: 'tests/core/skin-pack-catalog.test.ts',
   skinPackSplitGuard: 'tests/core/skin-pack-split-guard.test.ts',
+  /** 更新日志定稿守卫：2026-11-02 起日志产物落 docs/changelog.html，它用字面量指着那个目录 */
+  changelogTruthGuard: 'tests/scripts/changelog-note-truth-guard.test.ts',
 } as const;

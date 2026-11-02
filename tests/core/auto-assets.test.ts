@@ -21,6 +21,7 @@ import { MockVault } from '../mock-vault';
 import { setSettingsProvider } from '../../src/core/settings-provider';
 import { textSha256 } from '../../src/core/sha256';
 import { autoUpdateAssets } from '../../src/core/auto-assets';
+import { DOC_VISIBILITY } from '../../src/core/doc-visibility';
 import type { DownloadManifest, ManifestDocEntry } from '../../src/core/download-manifest';
 
 const PLUGIN = '.obsidian/plugins/bz';
@@ -117,10 +118,17 @@ beforeEach(() => {
   // 目录包解压走桌面端的 window.require('zlib')；jsdom 里没有，补一个
   (window as unknown as { require: (m: string) => unknown }).require = (m: string) =>
     m === 'zlib' ? zlib : m === 'buffer' ? { Buffer } : undefined;
+  // 与「在线资源」组的测试同口径：本文件钉的是启动链的编排与状态机，文档显隐开关默认关
+  // （core/doc-visibility）——这里翻回 true，日志/手册照旧进链，「功能还在」有凭据；
+  // 关着的行为由文件末尾那一组单独钉。
+  DOC_VISIBILITY.changelogInResources = true;
+  DOC_VISIBILITY.manualInResources = true;
 });
 
 afterEach(() => {
   delete (window as unknown as { require?: unknown }).require;
+  DOC_VISIBILITY.changelogInResources = false;
+  DOC_VISIBILITY.manualInResources = false;
 });
 
 describe('autoUpdateAssets：开关与范围', () => {
@@ -231,5 +239,53 @@ describe('autoUpdateAssets：开关与范围', () => {
     expect(r.failed).toBe(1);
     expect(vault.binaryFiles.has(`${PLUGIN}/downloads/tools/good/ok.js`)).toBe(true);
     expect(vault.binaryFiles.has(`${PLUGIN}/downloads/tools/bad/bad.js`)).toBe(false);
+  });
+});
+
+describe('已隐藏的文档不进启动链（core/doc-visibility，2026-11-02：只隐藏不删）', () => {
+  it('开关关（默认）：日志 / 手册一个请求都不发，工具包照下', async () => {
+    DOC_VISIBILITY.changelogInResources = false;
+    DOC_VISIBILITY.manualInResources = false;
+    const vault = new MockVault();
+    setSettingsProvider(() => ({ autoUpdate: true }) as never);
+    const tgz = makeTgz([{ name: 'cli.js', body: 'console.log(1)' }]);
+    const seen = stubRemote(tgz, { 'bz-changelog.html': LOG, 'bz-manual.html': MANUAL });
+
+    const r = await autoUpdateAssets(
+      appOf(vault),
+      manifestWith([
+        docEntry('changelog', '更新日志', 'bz-changelog.html', LOG),
+        docEntry('manual', '使用手册', 'bz-manual.html', MANUAL),
+        bundleEntry(tgz),
+      ]),
+    );
+
+    expect(seen.some((u) => u.includes('bz-changelog.html'))).toBe(false);
+    expect(seen.some((u) => u.includes('bz-manual.html'))).toBe(false);
+    expect(r.done).toBe(1); // 只有工具包
+    expect(vault.binaryFiles.has(`${PLUGIN}/downloads/tools/demo/cli.js`)).toBe(true);
+  });
+
+  it('开关翻回 true：顺序照旧 更新日志 → 工具包 → 其余（功能没删）', async () => {
+    DOC_VISIBILITY.changelogInResources = true;
+    DOC_VISIBILITY.manualInResources = true;
+    const vault = new MockVault();
+    setSettingsProvider(() => ({ autoUpdate: true }) as never);
+    const tgz = makeTgz([{ name: 'cli.js', body: 'console.log(1)' }]);
+    const seen = stubRemote(tgz, { 'bz-changelog.html': LOG, 'bz-manual.html': MANUAL });
+
+    await autoUpdateAssets(
+      appOf(vault),
+      manifestWith([
+        docEntry('manual', '使用手册', 'bz-manual.html', MANUAL),
+        bundleEntry(tgz),
+        docEntry('changelog', '更新日志', 'bz-changelog.html', LOG),
+      ]),
+    );
+
+    const at = (needle: string) => seen.findIndex((u) => u.includes(needle));
+    expect(at('bz-changelog.html'), '日志要最先').toBeGreaterThanOrEqual(0);
+    expect(at('.tar.gz'), '工具包排在日志之后').toBeGreaterThan(at('bz-changelog.html'));
+    expect(at('bz-manual.html'), '手册排在工具包之后').toBeGreaterThan(at('.tar.gz'));
   });
 });
