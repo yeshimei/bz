@@ -62,3 +62,35 @@ describe('更新日志定稿即真理源（2026-10-31 事故守卫）', () => {
     expect(gen).toMatch(/process\.exit\(1\)/);
   });
 });
+
+/**
+ * 内置更新日志必须含本版（2026-11-03 立，v1.39.3 事故）
+ *
+ * 升级提示小窗不再下载远端日志，只读 src/core/changelog-data.ts 里内置的数据，而且是
+ * **全等匹配**——数组里没有本版就返回 null，什么都不弹。v1.39.3 发出去时 manifest 已是
+ * 1.39.3、内置数据停在 1.39.2：日志页正常、构建正常、七步全绿，唯独用户升级后看不到提示。
+ * 唯一的守卫（tests/core/changelog-data.test.ts）当时没被执行——七步流程不跑 vitest。
+ * 于把这条并进 `_gen-changelog.mjs --check`（发版最后一步必跑），这里钉住它没被删掉。
+ */
+describe('内置更新日志含本版（--check 第六项）', () => {
+  const dataSrc = readFileSync(join(ROOT, 'src/core/changelog-data.ts'), 'utf8');
+  const builtinVersions = [...dataSrc.matchAll(/^ {4}version: '([^']+)'/gm)].map((m) => m[1]);
+
+  it('--check 会读内置数据并报「没有本版」', () => {
+    expect(gen).toMatch(/src\/core\/changelog-data\.ts/);
+    expect(gen).toMatch(/内置更新日志里没有本版/);
+    expect(gen).toMatch(/升级提示会静默不弹/);
+  });
+
+  it('同时守「新在前」与「版本不重复」', () => {
+    expect(gen).toMatch(/内置更新日志第一条是/);
+    expect(gen).toMatch(/内置更新日志版本重复/);
+  });
+
+  it('现状自检：内置数据第一条就是 manifest.json 的版本', () => {
+    const manifest = JSON.parse(readFileSync(join(ROOT, 'manifest.json'), 'utf8'));
+    expect(builtinVersions.length).toBeGreaterThan(0);
+    expect(builtinVersions[0]).toBe(manifest.version);
+    expect(builtinVersions).toContain(manifest.version);
+  });
+});

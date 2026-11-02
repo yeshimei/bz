@@ -356,11 +356,13 @@ function resolveNoteSources() {
   return [...map.entries()].map(([version, file]) => ({ version, file }));
 }
 
-/* --check：发布前的五项对账。版本号的事实源是 tag，manifest 与日志都必须跟它一致；
+/* --check：发布前的六项对账。版本号的事实源是 tag，manifest 与日志都必须跟它一致；
  * 第四项守「清单与文件同一版」：清单 docs 条目的 sha256 必须与 downloads/ 现产文件一致
  * ——漏跑 manifest 步的翻车（2026-10-31）就是这一项没对账，--check 却报绿。
  * 第五项守「定稿即真理源」：已产出的日志文件里，各版本块的条目必须与 note 定稿逐条一致
- * ——七步流程重跑冲掉定稿的那次翻车（Release 页 2+8+2、线上日志 5+0+11）就靠它拦。 */
+ * ——七步流程重跑冲掉定稿的那次翻车（Release 页 2+8+2、线上日志 5+0+11）就靠它拦。
+ * 第六项守「内置数据含本版」：升级提示小窗只读内置的 changelog-data.ts 且全等匹配，
+ * 缺了本版就静默不弹——v1.39.3 就是这么出去的（七步不跑 vitest，那条守卫没人执行）。 */
 if (process.argv.includes('--check')) {
   const problems = [];
   if (!latestTag) {
@@ -446,12 +448,38 @@ if (process.argv.includes('--check')) {
       }
     }
   }
+  /* 第六项：内置更新日志必须有本版那一条，且排在最前（2026-11-03 加，v1.39.3 的教训）。
+   * 升级提示小窗**不再下载远端日志**，只认 src/core/changelog-data.ts 里内置的数据，
+   * 而且是全等匹配——数组里没有本版就返回 null，什么都不弹，日志页、构建、七步流程
+   * 全都照样绿。v1.39.3 就是这么发出去的：manifest 升到 1.39.3、内置数据停在 1.39.2，
+   * 唯一的守卫 tests/core/changelog-data.test.ts 没被执行（七步不跑 vitest）。
+   * 这里只读源码文本，不引 TS、不跑测试，几毫秒的事，但能把这个静默故障卡在发版前。 */
+  const cdPath = join(ROOT, 'src/core/changelog-data.ts');
+  if (!existsSync(cdPath)) {
+    problems.push('src/core/changelog-data.ts 不存在（内置更新日志是升级提示的数据源，不能丢）');
+  } else {
+    const builtinVersions = [...readFileSync(cdPath, 'utf8').matchAll(/^ {4}version: '([^']+)'/gm)].map((m) => m[1]);
+    if (!builtinVersions.length) {
+      problems.push('src/core/changelog-data.ts 里读不到任何版本条目（格式变了？按 `    version: \'x.y.z\',` 逐行读）');
+    } else {
+      if (!builtinVersions.includes(manifest.version)) {
+        problems.push(
+          `内置更新日志里没有本版 ${manifest.version} 这一条——升级提示会静默不弹` +
+          `（往 CHANGELOG_RELEASES 数组最前面补一条，条目抄 docs/note-v${manifest.version}.md）`,
+        );
+      } else if (builtinVersions[0] !== manifest.version) {
+        problems.push(`内置更新日志第一条是 ${builtinVersions[0]}，本版是 ${manifest.version}（约定新在前）`);
+      }
+      const dup = [...new Set(builtinVersions.filter((v, i) => builtinVersions.indexOf(v) !== i))];
+      if (dup.length) problems.push(`内置更新日志版本重复：${dup.join('、')}（全等匹配会取到哪一条不确定）`);
+    }
+  }
   if (problems.length) {
     console.error('更新日志与版本不一致：');
     for (const p of problems) console.error('  - ' + p);
     process.exit(1);
   }
-  console.log(`更新日志与 tag 一致 ✓（最新 ${latestTag}，共 ${releases.length} 个版本块；docs sha256 对账 ${JSON.parse(readFileSync(distManifestPath, 'utf8')).docs.length} 条${noteSources.length ? `；定稿对账 ${noteSources.length} 版` : ''}）`);
+  console.log(`更新日志与 tag 一致 ✓（最新 ${latestTag}，共 ${releases.length} 个版本块；内置数据含本版 ${manifest.version}；docs sha256 对账 ${JSON.parse(readFileSync(distManifestPath, 'utf8')).docs.length} 条${noteSources.length ? `；定稿对账 ${noteSources.length} 版` : ''}）`);
   process.exit(0);
 }
 
