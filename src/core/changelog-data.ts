@@ -56,6 +56,17 @@ export function releaseEntryCount(release: ChangelogRelease): number {
  */
 export const CHANGELOG_RELEASES: readonly ChangelogRelease[] = [
   {
+    version: '1.39.3',
+    date: '2026-11-02',
+    // 条目与 docs/note-v1.39.3.md 逐字同稿（2026-11-02 用户改定为 1 优化 + 1 修复）。
+    improved: [
+      { domain: '下载通道', text: '备用线路换成码云。' },
+    ],
+    fixed: [
+      { domain: '更新提示', text: '手机上顶栏和关闭钮不再被状态栏压住。' },
+    ],
+  },
+  {
     version: '1.39.2',
     date: '2026-11-02',
     // 条目与 docs/note-v1.39.2.md 逐字同稿（2026-11-02 用户改定为 2 条）。
