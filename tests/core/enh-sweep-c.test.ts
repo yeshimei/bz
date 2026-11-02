@@ -60,6 +60,19 @@ describe('enh-sweep-c：.bz-panel-mtop 移动全屏顶距', () => {
     expect(css('diary')).not.toMatch(/bz-diary-mob \.bz-diary-head \{[^}]*padding-top/);
     expect(css('home')).not.toMatch(/bz-home-hero \{[^}]*env\(safe-area-inset-top/);
   });
+
+  it('打赏弹窗全屏后让出状态栏（裸 env() 在 webview 恒为 0，必须 max(44px, …) 兜底）', () => {
+    const s = src('src/core/reward-dialog.css');
+    const at = s.indexOf('@media (max-width: 768px)');
+    expect(at).toBeGreaterThan(-1);
+    const block = s.slice(at, s.indexOf('@media (max-width: 560px)'));
+    // 全屏壳自己垫顶（内容从 44px 起，纸色仍到边）
+    expect(block).toContain('padding-top: max(44px, env(safe-area-inset-top, 0px))');
+    expect(block).toContain('box-sizing: border-box');
+    // 关闭钮同口径；全文件不许留裸 env()（那条等于没写）
+    expect(block).toMatch(/\.bz-rw-close \{[^}]*top: max\(44px/);
+    expect(s).not.toMatch(/top:\s*env\(safe-area-inset-top/);
+  });
 });
 
 describe('enh-sweep-c：触控热区扫尾', () => {

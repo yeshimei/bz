@@ -41,6 +41,12 @@ const ICON_HEART =
   'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
   '<path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg>';
 
+/** 按钮的行为键。绑定时按 `data-bz-act` 查，**不按 DOM 顺序**——
+ *  同一份标记会同时插进桌面页脚和手机浮动条两处（≤768px 由 CSS 切），
+ *  全局索引查表时第二组拿到的是 actions[4..7]，全是 undefined，
+ *  点了静默无事（2026-11-02 真机反馈「移动端四个图标全哑」就是这么来的）。 */
+export type ChangelogLinkAction = 'repo' | 'qq' | 'video' | 'donate';
+
 /** 四个入口的按钮 HTML（类名 bz-chg-link；容器负责摆放，样式在 settings-panel/styles.css）。
  *  顺序（2026-11-02 用户拍板）：GitHub → QQ 群 → B 站 → 支持作者。 */
 export function changelogLinksHtml(): string {
@@ -49,27 +55,31 @@ export function changelogLinksHtml(): string {
   const qqHint =
     `QQ 交流群 ${QQ_GROUP_NUMBER}` + (qqJoinOneClick() ? '' : ' · 点击复制群号');
   return (
-    '<button class="bz-chg-link" type="button" title="GitHub 仓库" aria-label="GitHub 仓库">' +
-    `${ICON_GITHUB}</button>` +
-    `<button class="bz-chg-link" type="button" title="${qqHint}" aria-label="${qqHint}">` +
+    '<button class="bz-chg-link" type="button" data-bz-act="repo" ' +
+    `title="GitHub 仓库" aria-label="GitHub 仓库">${ICON_GITHUB}</button>` +
+    `<button class="bz-chg-link" type="button" data-bz-act="qq" title="${qqHint}" aria-label="${qqHint}">` +
     `${ICON_QQ}</button>` +
-    '<button class="bz-chg-link" type="button" title="B 站视频教程" aria-label="B 站视频教程">' +
-    `${ICON_BILI}</button>` +
-    '<button class="bz-chg-link donate" type="button" title="支持作者" aria-label="支持作者">' +
-    `${ICON_HEART}<span>支持作者</span></button>`
+    '<button class="bz-chg-link" type="button" data-bz-act="video" ' +
+    `title="B 站视频教程" aria-label="B 站视频教程">${ICON_BILI}</button>` +
+    '<button class="bz-chg-link donate" type="button" data-bz-act="donate" ' +
+    `title="支持作者" aria-label="支持作者">${ICON_HEART}<span>支持作者</span></button>`
   );
 }
 
-/** 给 root 里的四个按钮按 DOM 顺序绑行为 */
+/** 行为表：键与标记里的 data-bz-act 一一对应 */
+const ACTIONS: Record<ChangelogLinkAction, () => void> = {
+  repo: () => openExternalUrl(getApp(), REPO_URL),
+  qq: () => openQqGroup(getApp()),
+  video: () => openExternalUrl(getApp(), VIDEO_URL),
+  // 打赏弹窗带 68KB 赞赏码图，动态引入——只为点它的人付这份体积
+  donate: () => void import('../core/reward-dialog').then((m) => m.openRewardDialog()),
+};
+
+/** 给 root 里所有 `.bz-chg-link` 绑行为（桌面页脚、手机浮动条各一套，各自都绑） */
 export function bindChangelogLinks(root: HTMLElement): void {
-  const actions: (() => void)[] = [
-    () => openExternalUrl(getApp(), REPO_URL),
-    () => openQqGroup(getApp()),
-    () => openExternalUrl(getApp(), VIDEO_URL),
-    // 打赏弹窗带 68KB 赞赏码图，动态引入——只为点它的人付这份体积
-    () => void import('../core/reward-dialog').then((m) => m.openRewardDialog()),
-  ];
-  root.querySelectorAll<HTMLButtonElement>('.bz-chg-link').forEach((btn, i) => {
-    btn.addEventListener('click', () => actions[i]?.());
+  root.querySelectorAll<HTMLButtonElement>('.bz-chg-link').forEach((btn) => {
+    const act = btn.getAttribute('data-bz-act') as ChangelogLinkAction | null;
+    const fn = act ? ACTIONS[act] : undefined;
+    if (fn) btn.addEventListener('click', fn);
   });
 }

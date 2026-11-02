@@ -133,6 +133,28 @@ describe('更新日志弹窗 · 桌面', () => {
     expect(firstFour[3].textContent).toContain('支持作者');
   });
 
+  it('两套入口各自都绑上了行为（别按全局索引查表）', async () => {
+    const reward = await import('../../src/core/reward-dialog');
+    vi.mocked(reward.openRewardDialog).mockClear();
+    openChangelogNote([release()]);
+    const root = lastNote()!;
+    // 桌面页脚在前、手机浮动条在后，同一份标记两份 DOM
+    for (const box of [
+      root.querySelector<HTMLElement>('.bz-chgn-ft')!,
+      root.querySelector<HTMLElement>('.bz-chgn-mtools')!,
+    ]) {
+      expect([...box.querySelectorAll('.bz-chg-link')].map((b) => b.getAttribute('data-bz-act'))).toEqual([
+        'repo',
+        'qq',
+        'video',
+        'donate',
+      ]);
+    }
+    // 浮动条那组在 DOM 里排在页脚之后：按索引查表的话这一下会静默无事
+    root.querySelector<HTMLElement>('.bz-chgn-mtools .bz-chg-link.donate')!.click();
+    await vi.waitFor(() => expect(reward.openRewardDialog).toHaveBeenCalled());
+  });
+
   it('右上 × 关闭窗口', () => {
     openChangelogNote([release()]);
     note()!.querySelector<HTMLElement>('.bz-chgn-pane ~ .bz-chgn-close, .bz-chgn-close')!.click();

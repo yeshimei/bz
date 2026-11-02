@@ -2173,13 +2173,21 @@
     top: 0;
     left: 0;
     transform: none;
+    /* 壳没走全局 border-box：不加这句，下面的 padding-top 会把总高顶出 44px，
+       浮动条被推出屏幕底边。 */
+    box-sizing: border-box;
     width: 100vw;
     max-width: 100vw;
     height: var(--bz-vvh, 100dvh);
     max-height: var(--bz-vvh, 100dvh);
     border: 0;
     border-radius: 0;
-    padding-top: env(safe-area-inset-top, 0px);
+    /* 顶部避让取 max(44px, 安全区)——与 core 的 .bz-panel-mtop、手册弹窗同口径。
+       只写 env() 等于没写：移动端 webview 里 safe-area-inset-top 恒为 0，
+       顶栏会贴到物理屏顶，关闭钮落进系统状态栏，手机上根本点不到（2026-11-02 真机）。
+       这里不挂 .bz-panel-mtop：那个类会把首个子元素的 padding-top 归零，
+       而首个子元素正是顶栏 mbar。 */
+    padding-top: max(44px, env(safe-area-inset-top, 0px));
     animation: none;
   }
   .bz-chgn { display: none; }
@@ -2205,21 +2213,21 @@
     display: flex;
     align-items: center;
     gap: 7px;
-    font-size: 13.5px;
+    font-size: 14px;
     font-weight: 600;
     color: var(--sp-ink);
   }
-  .bz-chgn-mtitle svg { width: 16px; height: 16px; color: var(--sp-accent); }
+  .bz-chgn-mtitle svg { width: 17px; height: 17px; color: var(--sp-accent); }
   .bz-chgn-m .bz-chgn-close {
     position: static;
     margin-left: auto;
     display: grid;
     place-items: center;
-    width: 34px;
-    height: 34px;
+    width: 40px;
+    height: 40px;
     padding: 0;
     border: 0;
-    border-radius: 8px;
+    border-radius: 10px;
     background: none;
     color: var(--sp-ink-3);
     cursor: pointer;
@@ -2228,7 +2236,8 @@
     flex: 1;
     min-height: 0;
     overflow-y: auto;
-    padding: 18px 22px 48px;
+    /* 底距让给右下浮动条：条高 52 + 离地 36 = 88，再留一口气（原先 48 是按旧的小尺寸算的） */
+    padding: 18px 22px 96px;
     scrollbar-width: none;
   }
   .bz-chgn-mpage::-webkit-scrollbar { display: none; }
@@ -2248,9 +2257,9 @@
     color: var(--sp-ink);
   }
   .bz-chgn-mcur {
-    padding: 3px 7px;
+    padding: 3px 8px;
     border-radius: 999px;
-    font-size: 10px;
+    font-size: 11px;
     line-height: 1;
     color: var(--sp-accent);
     background: var(--sp-accent-soft);
@@ -2258,7 +2267,7 @@
   .bz-chgn-mdate {
     margin-left: auto;
     font-family: var(--bz-font-mono);
-    font-size: 11.5px;
+    font-size: 12px;
     color: var(--sp-ink-3);
   }
   .bz-chgn-mblk { margin-top: 16px; }
@@ -2268,7 +2277,7 @@
     gap: 7px;
     padding-bottom: 6px;
     border-bottom: 1px solid var(--sp-line);
-    font-size: 11.5px;
+    font-size: 13px;
     font-weight: 600;
     letter-spacing: .04em;
     color: var(--sp-ink-2);
@@ -2277,47 +2286,57 @@
   .bz-chgn-mcnt {
     margin-left: auto;
     font-family: var(--bz-font-mono);
-    font-size: 10px;
+    font-size: 11px;
     letter-spacing: .04em;
     color: var(--sp-ink-3);
   }
   .bz-chgn-mit {
     display: flex;
-    gap: 10px;
-    padding: 9px 0;
+    gap: 12px;
+    padding: 11px 0;
     border-bottom: 1px solid var(--sp-line-soft);
   }
   .bz-chgn-mit:last-child { border-bottom: 0; }
+  /* 62px 是 11px 字号下「QQ 交流群」五个字刚好装下的宽度；字号提到 13px 后要跟着放宽，
+     否则被 nowrap + ellipsis 截成「QQ 交流…」 */
   .bz-chgn-mdom {
     flex: none;
-    width: 62px;
+    width: 70px;
     padding-top: 1px;
-    font-size: 11px;
-    line-height: 1.55;
+    font-size: 13px;
+    line-height: 1.5;
     color: var(--sp-ink-2);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
   }
-  .bz-chgn-mtxt { flex: 1; min-width: 0; font-size: 12.5px; line-height: 1.6; color: var(--sp-ink); }
-  /* 入口图标：手机上一滚页脚就没了，沿用老日志页的右下浮动条 */
+  .bz-chgn-mtxt { flex: 1; min-width: 0; font-size: 14px; line-height: 1.65; color: var(--sp-ink); }
+  /* 入口图标：手机上一滚页脚就没了，沿用老日志页的右下浮动条。
+     底距必须抬出系统手势区——只算 14px 时整条压在 Android 手势导航 / iOS home indicator
+     上，触摸被系统先吃掉：四个按钮全哑，连本地打赏弹窗都不响应（2026-11-02 真机）。
+     max(16px, 安全区) 兼顾无安全区机型与刘海机。 */
   .bz-chgn-mtools {
     position: absolute;
-    right: 14px;
-    bottom: calc(14px + env(safe-area-inset-bottom, 0px));
-    z-index: 3;
+    right: 16px;
+    bottom: calc(20px + max(16px, env(safe-area-inset-bottom, 0px)));
+    z-index: 5;
     display: flex;
-    gap: 6px;
-    padding: 5px;
+    gap: 8px;
+    padding: 6px;
     border: 1px solid var(--sp-line);
-    border-radius: 11px;
+    border-radius: 13px;
     background: color-mix(in srgb, var(--sp-panel) 90%, transparent);
     backdrop-filter: blur(9px);
     box-shadow: 0 8px 22px -10px rgba(0, 0, 0, .5);
+    pointer-events: auto;
   }
-  .bz-chgn-mtools .bz-chg-link { width: 28px; height: 28px; }
-  /* 带文字的「支持作者」必须 width:auto —— 上面那条同为 (0,2,0)，会把它按 28px 卡死成竖排 */
-  .bz-chgn-mtools .bz-chg-link.donate { width: auto; padding: 0 9px; font-size: 11px; }
+  /* 40px 视觉 + ::after 外扩 2px 补到 44px 触控档（与 .bz-touch-target 同口径）。
+     桌面页脚那版是 30px —— 手机端反过来更小，正是「按不准」的一半原因。 */
+  .bz-chgn-mtools .bz-chg-link { position: relative; width: 40px; height: 40px; border-radius: 10px; }
+  .bz-chgn-mtools .bz-chg-link::after { content: ''; position: absolute; inset: -2px; }
+  .bz-chgn-mtools .bz-chg-link svg { width: 19px; height: 19px; }
+  /* 带文字的「支持作者」必须 width:auto —— 上面那条同为 (0,2,0)，会把它按 40px 卡死成竖排 */
+  .bz-chgn-mtools .bz-chg-link.donate { width: auto; height: 40px; gap: 7px; padding: 0 14px; font-size: 12.5px; }
 }
 
 

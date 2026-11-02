@@ -368,22 +368,35 @@
     height: var(--bz-vvh, 100vh);
     max-height: var(--bz-vvh, 100vh);
     border-radius: 0;
+    /* 全屏后纸从 y=0 起，抬头那几行会被状态栏压住。顶部让出安全距——
+       移动端 webview 里 env(safe-area-inset-top) 恒为 0，只写 env() 等于没写，
+       必须 max(44px, …) 兜底（与 .bz-panel-mtop、更新日志弹窗同口径）。 */
+    box-sizing: border-box;
+    padding-top: max(44px, env(safe-area-inset-top, 0px));
+  }
+
+  /* 关闭钮跟着安全距走；本体 40px，命中区补到 44px（触屏） */
+  .bz-rw-close {
+    top: max(44px, env(safe-area-inset-top, 0px));
+    right: 18px;
+    width: 40px;
+    height: 40px;
+  }
+
+  .bz-rw-close::after {
+    content: "";
+    position: absolute;
+    inset: -2px;
   }
 }
 
 /* ---------- 窄屏内容缩距（全屏壳之上，只管字号与留白） ---------- */
 @media (max-width: 560px) {
 
-  .bz-rw-head { padding: 26px 24px 0; }
+  /* 顶部留白已由壳的 44px 安全距承担，这里不再叠 26px */
+  .bz-rw-head { padding: 12px 24px 0; }
   .bz-rw-code { padding: 20px 24px 18px; }
   .bz-rw-code-box { width: 134px; height: 134px; }
   .bz-rw-list { margin: 0 24px; }
   .bz-rw-lead { font-size: 13.5px; }
-
-  .bz-rw-close {
-    top: max(44px, env(safe-area-inset-top));
-    right: 18px;
-    width: 34px;
-    height: 34px;
-  }
 }
