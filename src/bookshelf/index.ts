@@ -68,6 +68,14 @@ function registerAutoRefresh(app: App): void {
     weaveFile.on('modify', (file) => schedule({ path: (file as { path?: string })?.path })),
     weaveFile.on('create', (file) => schedule({ path: (file as { path?: string })?.path })),
     weaveFile.on('delete', (file) => schedule({ path: (file as { path?: string })?.path })),
+    // 原子写兜底（2026-11-05）：bz-reader 落盘是 `.tmp` → `rename` 覆盖正本（store.ts
+    // 的原子写契约），部分平台还走「正本 → .bak，再改名 tmp」——目标文件是**被 rename
+    // 替换**的，不保证发 modify。新旧路径都交给 schedule（防抖合并，零额外成本），
+    // 否则面板开着时改书名/划线/进度不刷新，用户以为数据没保存。
+    weaveFile.on('rename', (file, oldPath) => {
+      schedule({ path: (file as { path?: string })?.path });
+      if (oldPath) schedule({ path: oldPath });
+    }),
   ];
 }
 

@@ -17,6 +17,7 @@ import {
   readReaderData,
   normalizeReaderAggregates,
   readReaderAggregates,
+  mergeLegacyReaderTitles,
   resetReaderCorruptWarned,
 } from '../../src/bookshelf/reader-source';
 
@@ -181,5 +182,82 @@ describe('bz 阅读数据源：归一为 weave 聚合形状', () => {
     const books = await readReaderAggregates(appOf(vault));
     expect(books.length).toBe(1);
     expect(books[0].file.vaultPath).toBe('书库/悉达多.epub');
+  });
+});
+
+/** 旧目录（0.1.2 之前的 bz 阅读/）兜底：用户来回切数据目录后，改名可能留在旧目录 */
+describe('bz 阅读数据源：旧数据目录兜底', () => {
+  beforeEach(() => {
+    resetObsidianMocks();
+    resetReaderCorruptWarned();
+    setSettingsProvider(() => ({}) as any);
+  });
+  afterEach(() => setSettingsProvider(null as any));
+
+  const LEGACY = `bz 阅读/${READER_DATA_FILE}`;
+  const bookOf = (title: string, extra: Record<string, any> = {}) => ({
+    id: 'b1',
+    meta: { title, ...extra },
+    fileRef: { vaultPath: '书库/红楼梦.epub' },
+    reading: { position: { percent: 0.5 }, stats: { totalReadTime: 2, lastReadTime: 2 } },
+    notes: { highlights: [], excerpts: [], bookmarks: [] },
+    addedAt: 1,
+    updatedAt: 2,
+  });
+
+  it('当前目录未改名（无 titleEdited）→ 旧目录的改名补进书库，其余字段仍用当前目录', async () => {
+    const vault = new MockVault();
+    vault.files.set(`${PLUGIN_DIR}/data.json`, JSON.stringify({ dataDir: '读书' }));
+    vault.files.set(`读书/${READER_DATA_FILE}`, JSON.stringify({ books: [bookOf('红楼梦（全本）')] }));
+    vault.files.set(LEGACY, JSON.stringify({ books: [bookOf('红楼梦', { titleEdited: true })] }));
+    const books = await readReaderAggregates(appOf(vault));
+    expect(books[0].meta.title).toBe('红楼梦');
+    expect(books[0].meta.titleEdited).toBe(true);
+    expect(books[0].reading.position.percent).toBe(0.5); // 进度以当前目录为准
+  });
+
+  it('当前目录自己 titleEdited=true → 不回退旧目录', async () => {
+    const vault = new MockVault();
+    vault.files.set(`${PLUGIN_DIR}/data.json`, JSON.stringify({ dataDir: '读书' }));
+    vault.files.set(`读书/${READER_DATA_FILE}`, JSON.stringify({ books: [bookOf('石头记', { titleEdited: true })] }));
+    vault.files.set(LEGACY, JSON.stringify({ books: [bookOf('红楼梦', { titleEdited: true })] }));
+    const books = await readReaderAggregates(appOf(vault));
+    expect(books[0].meta.title).toBe('石头记');
+  });
+
+  it('当前目录整份缺失 → 旧目录顶上（书不从书库消失）', async () => {
+    const vault = new MockVault();
+    vault.files.set(`${PLUGIN_DIR}/data.json`, JSON.stringify({ dataDir: '读书' }));
+    vault.files.set(LEGACY, JSON.stringify({ books: [bookOf('红楼梦', { titleEdited: true })] }));
+    const books = await readReaderAggregates(appOf(vault));
+    expect(books).toHaveLength(1);
+    expect(books[0].meta.title).toBe('红楼梦');
+  });
+
+  it('旧目录损坏 → 当前目录照常读', async () => {
+    const vault = new MockVault();
+    vault.files.set(`${PLUGIN_DIR}/data.json`, JSON.stringify({ dataDir: '读书' }));
+    vault.files.set(`读书/${READER_DATA_FILE}`, JSON.stringify({ books: [bookOf('红楼梦（全本）')] }));
+    vault.files.set(LEGACY, '{ 半截');
+    const books = await readReaderAggregates(appOf(vault));
+    expect(books[0].meta.title).toBe('红楼梦（全本）');
+  });
+
+  it('dataDir 本身就是 bz 阅读 → 只读这一份，不重复合并', async () => {
+    const vault = new MockVault();
+    vault.files.set(`${PLUGIN_DIR}/data.json`, JSON.stringify({ dataDir: 'bz 阅读' }));
+    vault.files.set(LEGACY, JSON.stringify({ books: [bookOf('红楼梦', { titleEdited: true })] }));
+    const books = await readReaderAggregates(appOf(vault));
+    expect(books).toHaveLength(1);
+    expect(books[0].meta.title).toBe('红楼梦');
+  });
+
+  it('mergeLegacyReaderTitles：id 缺失时按 vaultPath 匹配', () => {
+    const primary = { books: [{ meta: { title: '旧长名' }, fileRef: { vaultPath: '书库/红楼梦.epub' } }] };
+    const legacy = {
+      books: [{ meta: { title: '红楼梦', titleEdited: true }, fileRef: { vaultPath: '书库/红楼梦.epub' } }],
+    };
+    mergeLegacyReaderTitles(primary, legacy);
+    expect(primary.books[0].meta.title).toBe('红楼梦');
   });
 });

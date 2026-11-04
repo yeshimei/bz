@@ -11,6 +11,9 @@
  *   - 库根容器 `bz-reader/` 下另有 `books/`（用户导入的书）与 `notes/`（导出的书摘），
  *     只有 `storage/` 是业务数据——老用户可能仍把 dataDir 显式指在旧的「bz 阅读」，
  *     所以这里以插件 data.json 的记录为准，缺省值只在它为空/不可读时兜底。
+ *     旧 `bz 阅读/` 另做一层**只读兜底**（2026-11-05）：用户来回切数据目录后，
+ *     改名可能留在旧目录（bz-reader 的 titleEdited 只写当时那份），读侧补书名；
+ *     当前目录整份缺失时用旧目录顶上。见 readReaderData。
  *
  * 为什么不直接读 bz-reader 插件实例（`app.plugins.plugins['bz-reader'].repo`）：
  *   1. 插件被禁用/未加载时书库仍应能显示书——数据是文件，不是内存；
@@ -36,6 +39,10 @@ export const READER_DATA_FILE = 'bz-reader.json';
 /** 数据目录缺省值（bz-reader core/plugin-path.ts 的 DEFAULT_DATA_DIR，2026-11-04 起为
  *  `bz-reader/storage`；旧默认「bz 阅读」只作为用户 data.json 里的显式存量值存在） */
 export const READER_DEFAULT_DATA_DIR = 'bz-reader/storage';
+/** bz-reader 0.1.2 之前的数据目录（库根 `bz 阅读/`）。2026-11-04 起默认值收进
+ *  `bz-reader/storage`，但老库升级/用户来回切目录后，旧目录里可能留着**更新的改名**
+ *  （bz-reader 的 titleEdited 只写在当时那个目录）。读侧把它当兜底候选，见 readReaderData。 */
+export const LEGACY_READER_DATA_DIR = 'bz 阅读';
 
 function isObj(v: unknown): v is Record<string, any> {
   return !!v && typeof v === 'object' && !Array.isArray(v);
@@ -118,9 +125,13 @@ export interface ReaderDataRead {
   data?: any;
 }
 
-/** 只读直读业务 JSON（不写、不建目录）。路径每回现算：用户在 bz 阅读设置里迁目录后下一次就读新的。 */
-export async function readReaderData(app: App): Promise<ReaderDataRead> {
-  const filePath = await resolveReaderDataFilePath(app);
+/** 旧数据目录（0.1.2 之前的 `bz 阅读/`）的数据文件路径 */
+export function legacyReaderDataFilePath(): string {
+  return readerDataFilePathOf(LEGACY_READER_DATA_DIR);
+}
+
+/** 读单个数据文件（不写、不建目录） */
+async function readReaderFile(app: App, filePath: string): Promise<ReaderDataRead> {
   let raw: string | null = null;
   try {
     raw = await (app as any)?.vault?.adapter?.read?.(filePath);
@@ -133,6 +144,68 @@ export async function readReaderData(app: App): Promise<ReaderDataRead> {
   } catch {
     return { filePath, state: 'corrupt' };
   }
+}
+
+/**
+ * 旧目录里「用户显式改过名」的书名补进当前数据（只改内存，不写盘）。
+ *
+ * 为什么只补书名：bz-reader 的改名是 `meta.titleEdited = true`，其余字段（进度、
+ * 划线）以当前目录那份为准——写回路径（mutateReaderBook）读的是当前目录，读侧如果
+ * 合并出当前文件里不存在的划线，书库编辑/删除会落空。书名只是展示，补进来不会与
+ * 写回冲突。
+ */
+export function mergeLegacyReaderTitles(primary: any, legacy: any): any {
+  const books = isObj(primary) && Array.isArray((primary as any).books) ? (primary as any).books : null;
+  const oldBooks = isObj(legacy) && Array.isArray((legacy as any).books) ? (legacy as any).books : [];
+  if (!books || !oldBooks.length) return primary;
+  const byId = new Map<string, any>();
+  const byPath = new Map<string, any>();
+  for (const old of oldBooks) {
+    if (!isObj(old)) continue;
+    const id = typeof old.id === 'string' ? old.id.trim() : '';
+    if (id) byId.set(id, old);
+    const path = typeof old.fileRef?.vaultPath === 'string' ? old.fileRef.vaultPath.trim() : '';
+    if (path) byPath.set(path, old);
+  }
+  for (const book of books) {
+    if (!isObj(book) || !isObj(book.meta)) continue;
+    if (book.meta.titleEdited === true) continue; // 当前目录自己就是改名后的数据，别回头盖
+    const id = typeof book.id === 'string' ? book.id.trim() : '';
+    const path = typeof book.fileRef?.vaultPath === 'string' ? book.fileRef.vaultPath.trim() : '';
+    const old = (id && byId.get(id)) || (path && byPath.get(path)) || null;
+    if (!old || old.meta?.titleEdited !== true) continue;
+    const title = typeof old.meta?.title === 'string' ? old.meta.title.trim() : '';
+    if (!title) continue;
+    book.meta.title = title;
+    book.meta.titleEdited = true;
+  }
+  return primary;
+}
+
+/** 只读直读业务 JSON（不写、不建目录）。路径每回现算：用户在 bz 阅读设置里迁目录后下一次就读新的。
+ *
+ *  旧目录兜底（2026-11-05，书库显示原书名的修复）：
+ *    - 当前目录存在时，旧 `bz 阅读/` 里 `titleEdited` 的书名补进来（只补书名，见上）；
+ *    - 当前目录整个缺失时，旧目录有一份就整份用——目录迁移失败/被清指针后，书不该从
+ *      书库凭空消失（写回仍定位当前目录，可能失败，但读展示优先）。
+ *    - 两份路径相同（用户就把数据放在 `bz 阅读`）时只读一次。 */
+export async function readReaderData(app: App): Promise<ReaderDataRead> {
+  const filePath = await resolveReaderDataFilePath(app);
+  const primary = await readReaderFile(app, filePath);
+  const legacyPath = legacyReaderDataFilePath();
+  if (filePath === legacyPath) return primary;
+  if (primary.state === 'ok') {
+    const legacy = await readReaderFile(app, legacyPath);
+    if (legacy.state === 'ok') {
+      return { ...primary, data: mergeLegacyReaderTitles(primary.data, legacy.data) };
+    }
+    return primary;
+  }
+  if (primary.state === 'missing') {
+    const legacy = await readReaderFile(app, legacyPath);
+    if (legacy.state === 'ok') return { filePath, state: 'ok', data: legacy.data };
+  }
+  return primary;
 }
 
 /** 划线归一：comment → commentText，createdAt → createdTime（bz 读书笔记读 weave 口径字段） */

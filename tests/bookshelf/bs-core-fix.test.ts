@@ -261,6 +261,30 @@ describe('书库深审修复批：weave-data 通道与读侧降级（func F4 / a
     expect(spines(overlayEl()).some((s) => s.title?.includes('百年孤独'))).toBe(true);
   });
 
+  it('rename 通道：bz-reader 原子写（tmp → rename 覆盖正本）→ 防抖后 EPUB 上墙', async () => {
+    // bz-reader 落盘 = 写 .tmp → adapter.rename(tmp, 正本)（store.ts 原子写）：目标文件
+    // 是被 rename 替换的，不保证发 modify。旧实现只挂 create/modify/delete，面板开着时
+    // 改书名/划线不刷新；index.ts 补 rename 通道后这条链路要能走通。
+    const { vault, app } = seedVault();
+    await openPanel(app);
+    expect(spines(overlayEl()).length).toBe(2);
+    const readerJson = 'bz-reader/storage/bz-reader.json';
+    vault.files.set(readerJson, JSON.stringify({
+      books: [{
+        id: 'b1',
+        meta: { title: '红楼梦' },
+        fileRef: { vaultPath: '书库/红楼梦.epub' },
+        reading: { position: { percent: 0.2 }, stats: { totalReadTime: 1, lastReadTime: 1 } },
+        notes: { highlights: [], excerpts: [], bookmarks: [] },
+        addedAt: 1,
+        updatedAt: 1,
+      }],
+    }));
+    vault.emit('rename', vault.file(readerJson), `${readerJson}.tmp`);
+    await waitFor(() => spines(overlayEl()).length === 3);
+    expect(spines(overlayEl()).some((s) => s.title?.includes('红楼梦'))).toBe(true);
+  });
+
   it('TG1 集成：md 写盘（vault.process 落盘进度）→ vault modify → 300ms 防抖自动刷新墙', async () => {
     const { vault, app } = seedVault();
     await openPanel(app);
