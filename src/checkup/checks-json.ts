@@ -9,6 +9,7 @@
 import type { App } from 'obsidian';
 import type { CheckIssue, CheckOpts, CheckResult, CheckSection } from './types';
 import { corruptBackupsFor, fileExists, jsonScanTargets, readRawJson, CORRUPT_DIR } from './files';
+import { resolveReaderDataFilePath } from '../bookshelf/reader-source';
 
 /** 单个数据文件的解析体检结果（纯数据，node 可测） */
 export interface JsonFileVerdict {
@@ -79,6 +80,8 @@ export function jsonIssuesOf(verdicts: JsonFileVerdict[]): { summary: string; is
 
 /** 检查一：全部域数据 json 逐个解析（只读，逐文件让出主线程） */
 export async function checkJsonFiles(app: App, opts: CheckOpts = {}): Promise<CheckResult> {
+  // 先刷新 bz 阅读的数据文件路径快照（清单是同步函数；用户在阅读器里迁过目录才不会漏检）
+  await resolveReaderDataFilePath(app).catch(() => undefined);
   const targets = jsonScanTargets(app);
   const verdicts: JsonFileVerdict[] = [];
   for (let i = 0; i < targets.length; i++) {

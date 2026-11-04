@@ -14,6 +14,7 @@
  *     源按与读取相同的规则定位（findEpubBookByPath → epubSourceOf），不另立一套判据。
  */
 import { enqueueFileTask } from '../core/storage';
+import { openExternalUrl } from '../core/utils';
 import {
   WEAVE_DATA_FILE, epubSourceOf, readEpubAggregates, resolveWeaveDataPath,
 } from './data';
@@ -59,9 +60,6 @@ export async function findEpubBookByPath(
   const normalized = String(vaultPath || '').trim();
   return aggregates.find((aggregate) => String(aggregate?.file?.vaultPath || '').trim() === normalized) || null;
 }
-
-/** @deprecated 旧名（weave 独占时代）：读取已并入 bz 阅读，用 findEpubBookByPath。 */
-export const findWeaveBookByPath = findEpubBookByPath;
 
 /** 读某书的划线列表（notes.highlights），映射为读书笔记条目。
  *  调用方可传入已 findEpubBookByPath 得到的 book，避免重复读取数据文件。 */
@@ -130,24 +128,24 @@ export function epubJumpTargetOf(book: any, note: EpubBookNote): EpubJumpTarget 
   return link ? { kind: 'wikilink', value: link } : null;
 }
 
-/** 打开 obsidian:// 协议链接（交给 Obsidian 自己的协议处理器；Linux 无桌面集成时会静默失败） */
-export function openProtocolUrl(url: string): void {
-  try {
-    window.open(url);
-  } catch {
-    /* 打不开不影响列表：调用方已关闭弹窗，用户可以手动去阅读器里找 */
-  }
+/** 打开 `obsidian://` 协议链接：走 core `openExternalUrl` 单源（app.openUrl → electron →
+ *  window.open 的兜底链，全链失败有人话提示）。裸 window.open 在移动端对自定义协议不可靠，
+ *  失败了也静默——用户只看到弹窗关了、原文没打开。 */
+export function openProtocolUrl(app: any, url: string): void {
+  openExternalUrl(app, url);
 }
 
-/** 打开跳转目标（双击划线 → 落回原文那一句） */
-export function openEpubJump(app: any, book: any, note: EpubBookNote): void {
+/** 打开跳转目标（双击划线 → 落回原文那一句）。返回是否真的打开——调用方据此决定要不要
+ *  关掉弹窗：目标为空（bz 书缺 bookId / weave 划线脏数据缺 cfiRange）时关窗就是「对着桌面」。 */
+export function openEpubJump(app: any, book: any, note: EpubBookNote): boolean {
   const target = epubJumpTargetOf(book, note);
-  if (!target) return;
+  if (!target) return false;
   if (target.kind === 'wikilink') {
     app?.workspace?.openLinkText?.(target.value, '', false);
-    return;
+    return true;
   }
-  openProtocolUrl(target.value);
+  openProtocolUrl(app, target.value);
+  return true;
 }
 
 /**
@@ -162,7 +160,7 @@ export function openEpubBook(
   if (item?.epubSource === 'reader' && item.epubBookId) {
     const q = [`book=${encodeURIComponent(item.epubBookId)}`];
     if (item.epubCfi) q.push(`cfi=${encodeURIComponent(item.epubCfi)}`);
-    openProtocolUrl(`obsidian://bz-reader?${q.join('&')}`);
+    openProtocolUrl(app, `obsidian://bz-reader?${q.join('&')}`);
     return true;
   }
   const target = String(item?.epubVaultPath || '').trim();
@@ -222,9 +220,13 @@ async function mutateWeaveBook(
 /**
  * 队列内事务（bz 阅读）：`books` 是数组，字段名是 `comment` / `createdAt`。
  *
- * 写盘前把 `book.updatedAt` 推进到当前时刻——bz 阅读的 ReaderStore 写盘前会比对
- * 磁盘签名并**按 updatedAt 合并**外部修改（store.ts 第 4 条）。不推进的话，它内存里
- * 的旧快照会以「同 updatedAt 取本地」赢回这份刚写进去的想法，用户看到的是「改了又弹回去」。
+ * 写盘前把 `book.updatedAt` 与 `book.notesUpdatedAt` 一起推进到当前时刻——bz 阅读的
+ * ReaderStore 写盘前会比对磁盘签名并**按时间戳合并**外部修改（store.ts 第 4 条 + A-15）：
+ *   - `updatedAt` 决定 progress / meta / 收藏 谁赢（同值取本地）；
+ *   - `notes` 单独比 `notesUpdatedAt`（同值取磁盘那份）。
+ * 只推 updatedAt 不推 notesUpdatedAt 会留一个丢想法的窗口：bz 阅读刚划了一条线、还没
+ * flush（2 秒节流）时到这里改想法，它内存里的 notes 更新（notesUpdatedAt 更大），flush
+ * 时「本地 notes 赢」，把这份刚写进去的想法整份顶掉。
  */
 async function mutateReaderBook(
   app: any,
@@ -247,6 +249,9 @@ async function mutateReaderBook(
     if (!book) return false;
     if (!mutate(book)) return false;
     book.updatedAt = Date.now();
+    // 标注单独一条时间线（bz-reader store.ts 的 A-15）：写的是 notes，就得推进它，
+    // 否则「bz 阅读刚划线未 flush」时它会以本地 notes 赢回、盖掉刚写进去的想法
+    book.notesUpdatedAt = book.updatedAt;
     // bz 阅读写的是单行紧凑 JSON（store.ts JSON.stringify 无缩进）；沿用它的格式，diff 才不会整份翻红
     const content = JSON.stringify(document);
     const f = app?.vault?.getAbstractFileByPath?.(filePath);

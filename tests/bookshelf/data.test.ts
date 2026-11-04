@@ -400,7 +400,7 @@ describe('bookshelf 数据层：bz 阅读数据源', () => {
     updatedAt: 1700000000000,
   };
 
-  it('bz-reader.json 的书进入书库墙：进度/状态/时长秒转毫秒/来源标记/CFI', async () => {
+  it('bz-reader.json 的书进入书库墙：进度/状态/时长秒转毫秒/字数页数/来源标记/CFI', async () => {
     const vault = new MockVault();
     seedReader(vault, [READER_BOOK]);
     const app = makeApp(vault);
@@ -417,6 +417,9 @@ describe('bookshelf 数据层：bz 阅读数据源', () => {
     expect(it.epubBookId).toBe('rb1');
     expect(it.epubCfi).toBe('epubcfi(/6/2!/4/2)');
     expect(it.category).toBe('小说');
+    // 字数/页数与阅读报告同源（meta.wordCount，500 字/页）
+    expect(it.wordCount).toBe(80000);
+    expect(it.pages).toBe(160);
   });
 
   it('想法计数：bz 阅读的 excerpts 是划线镜像——thinks 等于「有想法」的条数，不是划线总数', async () => {
@@ -462,6 +465,32 @@ describe('bookshelf 数据层：bz 阅读数据源', () => {
     seedReader(vaultTie, [{ ...READER_BOOK, reading: { ...READER_BOOK.reading, stats: { ...READER_BOOK.reading.stats, lastReadTime: 0 } }, updatedAt: 0, addedAt: 0 }]);
     const [tie] = await loadEpubItems(makeApp(vaultTie));
     expect(tie.epubSource).toBe('reader');
+  });
+
+  it('同一本：weave 读过、bz 阅读只是导入过（无进度/无划线）→ 取 weave 那份，进度不被清零', async () => {
+    const vaultJustImported = new MockVault();
+    vaultJustImported.files.set('CONFIG/STORAGE/weave-data.json', JSON.stringify({
+      books: {
+        w1: {
+          id: 'w1',
+          meta: { title: '悉达多（weave）' },
+          file: { vaultPath: '书库/悉达多.epub' },
+          reading: { position: { percent: 0.5 }, stats: { lastReadTime: 1600000000000 } },
+        },
+      },
+    }));
+    // bz 阅读刚导入：addedAt/updatedAt 都是「现在」，但一页没读、一条线没划
+    seedReader(vaultJustImported, [{
+      ...READER_BOOK,
+      reading: { position: { percent: 0 }, stats: { totalReadTime: 0, lastReadTime: 0 }, sessions: [] },
+      notes: { highlights: [], excerpts: [], bookmarks: [] },
+      addedAt: 1800000000000,
+      updatedAt: 1800000000000,
+    }]);
+    const [item] = await loadEpubItems(makeApp(vaultJustImported));
+    // 只按 addedAt 比时间会选到 reader（书架显示 0%、划线清零），迁移期批量导入必然撞上
+    expect(item.epubSource).toBe('weave');
+    expect(item.progress).toBe(50);
   });
 
   it('bz 阅读数据目录跟插件 data.json 的 dataDir 走（不是写死缺省值）', async () => {

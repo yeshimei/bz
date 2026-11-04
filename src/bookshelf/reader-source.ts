@@ -94,9 +94,21 @@ export async function resolveReaderDataDir(app: App): Promise<string> {
   return normalizeReaderDataDir(cfg?.dataDir);
 }
 
+/** 最近一次解析成功的数据文件路径。
+ *  体检（checkup）的扫描清单是同步函数，又必须与这里走同一条解析链（用户可在 bz 阅读里
+ *  迁数据目录），所以把解析结果留一份快照给它；体检开跑时会先调一次 resolve 刷新。 */
+let knownDataFilePath: string | null = null;
+
+/** 同步取「已知的数据文件路径」：尚未解析过时回落缺省目录（与 bz 阅读的默认值一致） */
+export function knownReaderDataFilePath(): string {
+  return knownDataFilePath || readerDataFilePathOf(READER_DEFAULT_DATA_DIR);
+}
+
 /** 当前业务数据文件路径（vault 相对） */
 export async function resolveReaderDataFilePath(app: App): Promise<string> {
-  return readerDataFilePathOf(await resolveReaderDataDir(app));
+  const filePath = readerDataFilePathOf(await resolveReaderDataDir(app));
+  knownDataFilePath = filePath;
+  return filePath;
 }
 
 /** 读结果三态：missing = 文件不存在（首次/没用过 bz 阅读）；corrupt = 存在但读/解析失败 */

@@ -123,6 +123,14 @@ describe('扫描清单契约：jsonScanTargets', () => {
     expect(names).toContain('smartcat-behavior.json');
   });
 
+  it('书库两个数据源都在清单里：weave-data.json + bz-reader.json（ADR-0283）', () => {
+    const targets = jsonScanTargets({ vault: { getAbstractFileByPath: () => null } } as never);
+    const names = targets.map((t) => t.file.split('/').pop() || t.file);
+    // 只查 weave 会让 bz 阅读的数据坏了之后体检照绿（书库那边会弹提示，用户不知道该信谁）
+    expect(names).toContain('weave-data.json');
+    expect(names).toContain('bz-reader.json');
+  });
+
   it('豁免边界在案：encrypt 密文 manifest 与 secondbrain.vec 不入清单（头注释登记）', () => {
     const targets = jsonScanTargets({ vault: { getAbstractFileByPath: () => null } } as never);
     const names = targets.map((t) => t.file.split('/').pop() || t.file);

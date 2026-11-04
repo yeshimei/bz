@@ -14,7 +14,6 @@ import {
   updateEpubNoteComment,
   deleteEpubNote,
   findEpubBookByPath,
-  findWeaveBookByPath,
   encodeCfiForWikilink,
 } from '../../src/bookshelf/epub-notes';
 import { READER_DEFAULT_DATA_DIR } from '../../src/bookshelf/reader-source';
@@ -115,11 +114,11 @@ describe('epub-notes（bookshelf）', () => {
     expect(await deleteEpubNote(app, '书库/悉达多.epub', 'missing')).toBe(false);
   });
 
-  it('findWeaveBookByPath：按 vaultPath 定位', async () => {
+  it('findEpubBookByPath：按 vaultPath 定位', async () => {
     seedWeaveData(vault, { bk_001: HIGH_BOOK, bk_other: { ...HIGH_BOOK, id: 'bk_other', file: { vaultPath: 'X/其他.epub' } } });
-    const book = await findWeaveBookByPath(makeApp(vault), 'X/其他.epub');
+    const book = await findEpubBookByPath(makeApp(vault), 'X/其他.epub');
     expect(book?.id).toBe('bk_other');
-    expect(await findWeaveBookByPath(makeApp(vault), 'NOPE.epub')).toBeNull();
+    expect(await findEpubBookByPath(makeApp(vault), 'NOPE.epub')).toBeNull();
   });
 
   it('weave-data.json 缺失 → load 空数组 / 编辑 false（不抛错）', async () => {
@@ -193,6 +192,7 @@ describe('epub-notes：bz 阅读数据源', () => {
     },
     addedAt: 1699000000000,
     updatedAt: 1700000000000,
+    notesUpdatedAt: 1700000000000,
   };
 
   const READER_PATH = `${READER_DEFAULT_DATA_DIR}/bz-reader.json`;
@@ -239,16 +239,21 @@ describe('epub-notes：bz 阅读数据源', () => {
     expect(buildEpubJumpLink(weaveBook, weaveNotes[0])).toContain('#weave-cfi=');
   });
 
-  it('编辑想法：写 bz-reader.json 的 comment 字段，镜像 excerpt 同步，updatedAt 推进（不被旧快照覆盖）', async () => {
+  it('编辑想法：写 bz-reader.json 的 comment 字段，镜像 excerpt 同步，updatedAt / notesUpdatedAt 一起推进', async () => {
     seedReader(vault);
     const app = makeApp(vault);
     const before = readerFile(vault).books[0].updatedAt;
+    const beforeNotes = readerFile(vault).books[0].notesUpdatedAt;
     expect(await updateEpubNoteComment(app, '书库/悉达多.epub', 'h1', '新想法')).toBe(true);
 
     const book = readerFile(vault).books[0];
     expect(book.notes.highlights[0].comment).toBe('新想法');
     expect(book.notes.excerpts[0].comment).toBe('新想法');
     expect(book.updatedAt).toBeGreaterThan(before);
+    // 标注是单独一条时间线（bz-reader store.ts 的 A-15）：不推进 notesUpdatedAt，
+    // 阅读器 flush 时会以本地 notes 赢回、把刚写进去的想法盖掉
+    expect(book.notesUpdatedAt).toBe(book.updatedAt);
+    expect(book.notesUpdatedAt).toBeGreaterThan(beforeNotes);
     // 只动了 bz-reader.json，没有写 weave
     expect(vault.modifiedPaths).toEqual([READER_PATH]);
 
@@ -282,25 +287,20 @@ describe('epub-notes：bz 阅读数据源', () => {
     expect(vault.modifiedPaths).toContain('CONFIG/STORAGE/weave-data.json');
   });
 
-  it('openEpubBook：bz 阅读走协议链接（带当前位置 CFI），weave 走 openLinkText', () => {
+  it('openEpubBook：bz 阅读走协议链接（带当前位置 CFI，经 core openExternalUrl 单源），weave 走 openLinkText', () => {
     const opened: string[] = [];
-    const originalOpen = window.open;
-    (window as any).open = (url: string) => { opened.push(url); return null; };
-    try {
-      const app = makeApp(vault) as any;
-      const links: string[] = [];
-      app.workspace.openLinkText = (t: string) => { links.push(t); };
+    const app = makeApp(vault) as any;
+    app.openUrl = (url: string) => { opened.push(url); return Promise.resolve(); };
+    const links: string[] = [];
+    app.workspace.openLinkText = (t: string) => { links.push(t); };
 
-      expect(openEpubBook(app, {
-        epubSource: 'reader', epubBookId: 'rb1', epubCfi: 'epubcfi(/6/2!/4/2)', epubVaultPath: '书库/悉达多.epub',
-      })).toBe(true);
-      expect(opened).toEqual([`obsidian://bz-reader?book=rb1&cfi=${encodeURIComponent('epubcfi(/6/2!/4/2)')}`]);
-      expect(links).toEqual([]);
+    expect(openEpubBook(app, {
+      epubSource: 'reader', epubBookId: 'rb1', epubCfi: 'epubcfi(/6/2!/4/2)', epubVaultPath: '书库/悉达多.epub',
+    })).toBe(true);
+    expect(opened).toEqual([`obsidian://bz-reader?book=rb1&cfi=${encodeURIComponent('epubcfi(/6/2!/4/2)')}`]);
+    expect(links).toEqual([]);
 
-      expect(openEpubBook(app, { epubSource: 'weave', epubVaultPath: '书库/悉达多.epub' })).toBe(true);
-      expect(links).toEqual(['书库/悉达多.epub']);
-    } finally {
-      (window as any).open = originalOpen;
-    }
+    expect(openEpubBook(app, { epubSource: 'weave', epubVaultPath: '书库/悉达多.epub' })).toBe(true);
+    expect(links).toEqual(['书库/悉达多.epub']);
   });
 });
