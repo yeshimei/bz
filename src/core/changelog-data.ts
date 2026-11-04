@@ -56,6 +56,20 @@ export function releaseEntryCount(release: ChangelogRelease): number {
  */
 export const CHANGELOG_RELEASES: readonly ChangelogRelease[] = [
   {
+    version: '1.39.4',
+    date: '2026-11-05',
+    // 条目与 docs/note-v1.39.4.md 逐字同稿（2026-11-05 定稿，3 新增 + 2 优化）。
+    added: [
+      { domain: '书库', text: '接上 bz 阅读，书、进度、划线和阅读时长都跟着显示。' },
+      { domain: '书库', text: '读书笔记里能改想法、删划线，双击划线跳回原文。' },
+      { domain: '影视', text: '没配目录或一部片都没有时，空态给一个视频教程入口。' },
+    ],
+    improved: [
+      { domain: '阅读报告', text: 'bz 阅读的书也一并算进统计。' },
+      { domain: '书库', text: '阅读数据只认 bz 阅读，不再读 Weave。' },
+    ],
+  },
+  {
     version: '1.39.3',
     date: '2026-11-02',
     // 条目与 docs/note-v1.39.3.md 逐字同稿（2026-11-02 用户改定为 1 优化 + 1 修复）。
