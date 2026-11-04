@@ -119,6 +119,10 @@ export function getStarString(rating: number): string {
 // 当前仅午夜场上岸（gazette/booth 为 styles.css 预留段，设置项见 settings.ts）；
 // 未来多风格时在此定义风格 id 联合类型（读设置取值属行为层，ADR-0104 纯度守卫）。
 
+/** 影院视频教程（作者本人的操作演示，B 站）：未配置引导页与空库空态共用，
+ *  点击走 core `openExternalUrl` 单源（剪藏本 CLIP_TUTORIAL_URL 同范式）。 */
+export const CINEMA_TUTORIAL_URL = 'https://www.bilibili.com/video/BV15hxH6QEgM';
+
 // ======================= 名称合法性（深审批A P3-7：三入口统一校验） =======================
 
 /** 人话提示主干（编辑改名/新增建档/AI 加想看同源，尾巴按入口补动作指引） */

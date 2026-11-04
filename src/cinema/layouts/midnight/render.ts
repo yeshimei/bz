@@ -122,10 +122,14 @@ export function chipsHtml(view: CinemaView, lists: string[] = []): string {
 
 // ---------- 视图装配 ----------
 
-/** 空态页（筛选无命中 / 库空两态） */
+/** 空态页（筛选无命中 / 库空两态）。
+ *  库空态附一条视频教程（剪藏本空册同语义）：没片子时最需要「这东西怎么用」，
+ *  点击由 ui.ts 的 sec 级委托（data-cinema-tut）接住，URL 不落纯层。 */
 export function emptyPageHtml(filtered: boolean): string {
   return `<div class="cn-empty-page"><div class="big">${filtered ? '无匹配影片' : '影片空空如也'}</div>
-    ${filtered ? '<button class="dm-btn j-clear" data-cinema-clear style="margin-top:6px">清空筛选</button>' : '<span style="font-size:11.5px">点右上「添加影片」开始记录</span>'}</div>`;
+    ${filtered
+      ? '<button class="dm-btn j-clear" data-cinema-clear style="margin-top:6px">清空筛选</button>'
+      : '<span style="font-size:11.5px">点右上「添加影片」开始记录</span><button class="cn-tut" type="button" data-cinema-tut>看视频教程 →</button>'}</div>`;
 }
 
 /** ai/stat 页头（返回钮 + 标题 + 计数） */

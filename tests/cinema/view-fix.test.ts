@@ -9,7 +9,7 @@ import { makeApp } from '../helpers/app';
  * #6 合并卡季行单位原文（seasonText 自带单位不再拼「 集」）
  * #7/#8 触控热区修饰类 + 搜索占位文案统一（markup 断言）
  */
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { MockVault, mockAppWithVault } from '../mock-vault';
 import { resetObsidianMocks, Platform } from '../mock-obsidian-entry';
 import { M, resetCinemaState } from '../../src/cinema/state';
@@ -21,6 +21,7 @@ import { deriveYb } from '../../src/cinema/yearbook';
 import { mergeSeasonCards } from '../../src/cinema/seasons';
 import { seriesDetailModalHtml } from '../../src/cinema/shared';
 import { clearDomainEvents } from '../../src/core/domain-bus';
+import { CINEMA_TUTORIAL_URL } from '../../src/cinema/constants';
 
 const SEARCH_PH = '搜索片名、类型、导演、主演、影评…';
 
@@ -145,6 +146,13 @@ describe('cinema 深审批 B #1/#2/#3/#4/#6/#7/#8：视图层', () => {
     const empty = mobRoot().querySelector('.j-mview .cn-empty-page');
     expect(empty?.querySelector('.big')?.textContent).toContain('影片空空如也');
     expect(empty?.querySelector('[data-cinema-clear]')).toBeNull(); // 空库态没有筛选可清
+    // 空库态带视频教程入口（剪藏本空册同款）：点击走 core openExternalUrl → app.openUrl
+    const tut = empty?.querySelector('[data-cinema-tut]') as HTMLElement | null;
+    expect(tut?.textContent).toContain('看视频教程');
+    const openUrl = vi.fn();
+    (app as any).openUrl = openUrl;
+    tut?.click();
+    expect(openUrl).toHaveBeenCalledWith(CINEMA_TUTORIAL_URL);
     // desk 同构回归（desk 分支既有，守此不退化）
     closeOverlay();
     Platform.isMobile = false;
@@ -152,6 +160,24 @@ describe('cinema 深审批 B #1/#2/#3/#4/#6/#7/#8：视图层', () => {
     createOverlay(app);
     const deskEmpty = document.querySelector('section.bz-cinema--midnight:not(.mob) .cn-empty-page');
     expect(deskEmpty?.querySelector('.big')?.textContent).toContain('无匹配影片');
+    expect(deskEmpty?.querySelector('[data-cinema-tut]')).toBeNull(); // 筛选无命中不是「没上手」，不给教程
+  });
+
+  it('未配置影视目录 → 引导页给「打开设置」+ 视频教程入口（剪藏本未配置引导同款）', () => {
+    setSettingsProvider(() => ({}) as any); // 目录未配置 → 本域引导页
+    const app = makeApp(new MockVault());
+    ensureCinema(app);
+    rebuildItems(app);
+    createOverlay(app);
+    const page = document.querySelector('section.bz-cinema--midnight:not(.mob) .cn-empty-page') as HTMLElement;
+    expect(page).toBeTruthy();
+    expect([...page.querySelectorAll('button')].some((b) => b.textContent === '打开设置')).toBe(true);
+    const tut = page.querySelector('[data-cinema-tut]') as HTMLElement;
+    expect(tut?.textContent).toContain('看视频教程');
+    const openUrl = vi.fn();
+    (app as any).openUrl = openUrl;
+    tut.click();
+    expect(openUrl).toHaveBeenCalledWith(CINEMA_TUTORIAL_URL);
   });
 
   it('#2 mob 搜索框回显：重开面板框内可见旧词（desk 输入 → 关面板 → mob 重开），✕ 同步显示', () => {

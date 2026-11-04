@@ -33,6 +33,7 @@ import { stripMdExt } from '../core/ui/str';
 import {
   STATUS_WANT, STATUS_WATCHING, STATUS_WATCHED, DEFAULT_RATING,
   getGroupForTag, hasIllegalNameChar, ILLEGAL_NAME_HINT, rewatchCount, avgRating, REWATCH_SHELF,
+  CINEMA_TUTORIAL_URL,
 } from './constants';
 import { M, noteSelfWrite, type CinemaItem, type CinemaSortMode } from './state';
 import { loadDoubanNameIndex, searchDoubanNameIndex, normName, type DoubanIndexRow } from '../core/douban-name-index';
@@ -3481,6 +3482,8 @@ function bindMidnight(sec: HTMLElement, app: App): void {
   });
   sec.addEventListener('click', (e) => {
     const t = e.target as HTMLElement;
+    // 空态教程入口（未配置引导页 / 空库空态共用）：外链走 core openExternalUrl 单源
+    if (t.closest('[data-cinema-tut]')) { openExternalUrl(app, CINEMA_TUTORIAL_URL); return; }
     // AI 页按钮（开始/重试/换一批/加入想看）先行分流（页内与共享弹窗内同享）
     const aiBtn = t.closest('[data-cinema-ai-start],[data-rec-add]') as HTMLElement | null;
     if (aiBtn) {
@@ -4060,7 +4063,14 @@ function mountFolderGateCinema(): boolean {
   btn.className = 'dm-btn gold';
   btn.textContent = '打开设置';
   btn.addEventListener('click', () => openFolderSettings('cinema', undefined, closeOverlay));
-  page.append(big, note, btn);
+  // 教程入口（剪藏本未配置引导同款）：还没上手的人先看一遍演示，再回来配目录。
+  // 点击走 sec 级委托（data-cinema-tut）——与空库空态那枚共用同一出口。
+  const tut = document.createElement('button');
+  tut.type = 'button';
+  tut.className = 'cn-tut';
+  tut.textContent = '看视频教程 →';
+  tut.setAttribute('data-cinema-tut', '');
+  page.append(big, note, btn, tut);
   const bare = root.querySelector<HTMLElement>('.cn-empty-page');
   if (bare) {
     bare.replaceWith(page);

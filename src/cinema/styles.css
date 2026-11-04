@@ -530,6 +530,14 @@
    不用 core 通用空态卡（那是宿主浅色皮肤，跟午夜场不是一套语言） */
 .bz-cinema--midnight .cn-empty-page .cn-empty-note{max-width:32em;font-size:var(--bz-font-meta);line-height:1.9;text-align:center;color:var(--ink-3)}
 .bz-cinema--midnight .cn-empty-page .dm-btn{margin-top:var(--bz-space-xs)}
+/* 空态教程入口（未配置引导 / 空库共用；剪藏本 bz-clip-tut 同语义）：行内衬线链接，
+   不再加一枚按钮——空态只有一件事要做，教程是「想先看看」的第二选项 */
+.bz-cinema--midnight .cn-tut{border:0;background:none;padding:0;margin-top:var(--bz-space-xs);cursor:pointer;
+  font-family:"Noto Serif SC",SimSun,serif;font-size:var(--bz-font-meta);letter-spacing:.12em;
+  color:var(--gold);border-bottom:1px solid currentColor}@media (hover: hover) {
+
+.bz-cinema--midnight .cn-tut:hover{opacity:.72}
+}
 
 /* ====================================================================
    落域适配段（issue 236 / ADR-0103；插件专用，原型不出）
