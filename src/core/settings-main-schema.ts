@@ -930,7 +930,7 @@ export function generalSettingsSchema(): SettingsSchema {
               '\n- knowledge.json 知识盒\n- mount-suggest.json 挂载建议缓存\n- secondbrain.json 第二大脑\n- secondbrain.vec 第二大脑向量' +
               '\n- home.json 内容首页\n- smartcat.json 小橘\n- smartcat-memory.json 小橘记忆流\n- smartcat-memory-vectors.vec 小橘记忆向量' +
               '\n- smartcat-behavior.json 小橘行为流\n- people.json 脸谱\n- people-preview.json 脸谱预览缓存\n- people-jobs.json 脸谱导入任务' +
-              '\n- lock-stats.json 锁屏统计\n- weave-data.json 书库阅读数据',
+              '\n- lock-stats.json 锁屏统计\n- weave-data.json 书库阅读数据（Weave）\n- bz-reader.json 书库阅读数据（bz 阅读，默认 bz-reader/storage 目录）',
             note: '改动仅改路径不迁移旧数据；重载插件后生效',
             binding: { key: 'storagePath' },
             onCommit: () => {

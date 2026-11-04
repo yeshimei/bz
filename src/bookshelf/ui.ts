@@ -31,6 +31,7 @@ import {
   getDisplayItems as pipeDisplay,
 } from './render';
 import { closeBookNoteModals } from './notes-ui';
+import { openEpubBook } from './epub-notes';
 import { mountFolderGate } from '../core/folder-setup';
 import {
   motionPanelIn, motionPanelOut, motionWallRendered, motionDetailOpen, motionReportEnter,
@@ -248,10 +249,23 @@ function closeDomainModals(): void {
   if (detailModalClose) { detailModalClose(); detailModalClose = null; }
 }
 
-/** 跳回原文继续读：md 书 / EPUB 都走 openLinkText（Weave 注册了 epub 处理器，落回上次阅读位置）；
+/** 跳回原文继续读：md 书走 openLinkText；EPUB 按数据来源分派——weave 的书 openLinkText
+ *  （Weave 注册了 epub 处理器，落回上次阅读位置），bz 阅读的书走 obsidian://bz-reader 协议
+ *  （它没注册 epub 扩展名，裸 openLinkText 会落到 Weave 或打不开）。
  *  原型壳的 workspace.openLinkText 是 no-op 桩，两侧同语义 */
 function continueBook(app: App, it: BookshelfItem): void {
-  const target = it.isEpub ? it.epubVaultPath : it.file?.path;
+  if (it.isEpub) {
+    // 先验目标再关面板：没有可打开的东西时，用户应该还留在借书卡上（而不是对着空白桌面看提示）
+    if (!it.epubVaultPath && !(it.epubSource === 'reader' && it.epubBookId)) {
+      notice('找不到这本书的文件', 'warning');
+      return;
+    }
+    closeDomainModals();
+    closeOverlay();
+    openEpubBook(app, it);
+    return;
+  }
+  const target = it.file?.path;
   if (!target) { notice('找不到这本书的文件', 'warning'); return; }
   closeDomainModals();
   closeOverlay();

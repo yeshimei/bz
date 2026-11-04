@@ -16,7 +16,7 @@
 import { pad2 } from '../core/utils';
 import { CHART_HEATMAP_SERIES } from '../core/chart-palette';
 import {
-  readWeaveAggregates,
+  readEpubAggregates,
   resolveBookTag,
   resolveFolderPath,
   epubProgress,
@@ -112,9 +112,11 @@ function buildEpubBookNoteEntry(aggregate: any): BookNoteEntry | null {
   };
 }
 
-/** 阅读报告的 EPUB 书条目（全库 weave 书，不筛目录；ADR-0013 扩展）。 */
+/** 阅读报告的 EPUB 书条目（全库 EPUB 书，不筛目录；ADR-0013 扩展）。
+ *  数据源与书架墙同源（readEpubAggregates：weave-data.json + bz-reader.json 合并去重），
+ *  报告与墙对同一本书的进度/时长/划线计数恒等。 */
 export async function getEpubBookNotes(app: any): Promise<BookNoteEntry[]> {
-  const aggregates = await readWeaveAggregates(app);
+  const aggregates = await readEpubAggregates(app);
   const entries: BookNoteEntry[] = [];
   for (const aggregate of aggregates) {
     const entry = buildEpubBookNoteEntry(aggregate);

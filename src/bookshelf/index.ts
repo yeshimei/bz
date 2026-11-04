@@ -10,7 +10,7 @@ import { onDomainEvent } from '../core/domain-bus';
 import { notice } from '../core/notice';
 import { M, resetBookshelfState, applyDefaultView } from './state';
 import { currentSideItems } from './shared';
-import { isBookshelfPath, resolveFolderPath, rebuildItems, WEAVE_DATA_FILE } from './data';
+import { isBookshelfPath, resolveFolderPath, rebuildItems, WEAVE_DATA_FILE, READER_DATA_FILE } from './data';
 import {
   createOverlay, closeOverlay, registerEscapeHandler, unregisterEscapeHandler,
   renderAll, refreshReportView, openReportView, showView,
@@ -43,8 +43,9 @@ function registerAutoRefresh(app: App): void {
   let timer: ReturnType<typeof setTimeout> | null = null;
   const schedule = (file: { path?: string }) => {
     // 收录谓词单源（深审 RR-A1/RR-F7）：isBookshelfPath 含「目录本身是单个 md 笔记」形态——
-    // 旧过滤只认目录前缀，单文件书库（书库.md）写盘面板不刷新（收录两侧认、刷新通道不认）
-    if (file && file.path && !file.path.endsWith(WEAVE_DATA_FILE)
+    // 旧过滤只认目录前缀，单文件书库（书库.md）写盘面板不刷新（收录两侧认、刷新通道不认）。
+    // 两份 EPUB 阅读数据（weave / bz 阅读）都是外部插件直写，同样要在墙存续期间跟着刷新
+    if (file && file.path && !file.path.endsWith(WEAVE_DATA_FILE) && !file.path.endsWith(READER_DATA_FILE)
       && !isBookshelfPath(file.path, resolveFolderPath())) return;
     if (timer) clearTimeout(timer);
     timer = setTimeout(() => {
@@ -58,7 +59,7 @@ function registerAutoRefresh(app: App): void {
   for (const ch of ['vault:md-created', 'vault:md-deleted', 'vault:md-modified']) {
     autoRefreshOffs.push(onDomainEvent<{ path: string }>(ch, (evt) => schedule({ path: evt.path })));
   }
-  // B4：EPUB 数据来自 weave-data.json（外部 Weave 阅读器直写，core vault 适配器只转发 .md），
+  // B4：EPUB 数据来自 weave-data.json / bz-reader.json（外部阅读器直写，core vault 适配器只转发 .md），
   // 域内自挂 vault modify 补 json 通道；B5：EventRef 一并登记，卸载 offref。
   // 深审 func F4：补 create/delete——json 尚不存在时 Weave 首次落盘走 create（面板开着不刷新），
   // json 被外部删除走 delete（EPUB 区残留旧数据），与 modify 复用同一 schedule，零额外成本

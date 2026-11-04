@@ -10,8 +10,9 @@ import { setSettingsProvider } from '../../src/core/settings-provider';
 import { M, resetBookshelfState } from '../../src/bookshelf/state';
 import {
   scanMarkdownBooks, loadEpubItems, resolveFolderPath, resolveBookTag, formatReadingTime,
-  rebuildItems, isBookshelfPath,
+  rebuildItems, isBookshelfPath, readEpubAggregates,
 } from '../../src/bookshelf/data';
+import { READER_DEFAULT_DATA_DIR } from '../../src/bookshelf/reader-source';
 // 深审 arch A1：data.ts 不再依赖渲染纯层（读 M 的状态包装迁 ui.ts）——
 // 数据层测试改断言纯管道形态（显式入参，语义等价）
 import {
@@ -352,5 +353,146 @@ describe('bookshelf 数据层', () => {
     // 库外（含同名前缀目录陷阱）
     expect(isBookshelfPath('Inbox/笔记.md', folder)).toBe(false);
     expect(isBookshelfPath('书库别馆/A.md', folder)).toBe(false);
+  });
+});
+
+/**
+ * bz 阅读（bz-reader.json）兼容：缺省数据目录 `bz-reader/storage`（2026-11-04 起；旧默认
+ * 「bz 阅读」只剩存量用户显式指着的形态）；读入后与 weave 合并成同一批条目。
+ * 字段差异（fileRef / comment / createdAt / 秒单位）的归一细节在 reader-source.test.ts，
+ * 这里只验书库墙看到的结果（标题/进度/状态/时长/来源/想法计数）。
+ */
+describe('bookshelf 数据层：bz 阅读数据源', () => {
+  beforeEach(() => {
+    resetObsidianMocks();
+    resetBookshelfState();
+    setSettingsProvider(() => ({ bookshelfFolderPath: '书库' }) as any);
+  });
+  afterEach(() => {
+    setSettingsProvider(null as any);
+  });
+
+  function seedReader(vault: MockVault, books: any[], dataDir = READER_DEFAULT_DATA_DIR) {
+    vault.files.set(`${dataDir}/bz-reader.json`, JSON.stringify({ version: 1, schemaVersion: 2, books }));
+  }
+
+  const READER_BOOK = {
+    id: 'rb1',
+    meta: { title: '悉达多', author: '黑塞', wordCount: 80000, subjects: ['小说'], coverPath: 'bz-reader/storage/covers/rb1.jpg' },
+    fileRef: { vaultPath: '书库/悉达多.epub', format: 'epub' },
+    reading: {
+      position: { percent: 0.42, cfi: 'epubcfi(/6/2!/4/2)' },
+      stats: { totalReadTime: 90, lastReadTime: 1700000000000, completedTime: 0 },
+      sessions: [],
+    },
+    notes: {
+      highlights: [
+        { id: 'h1', text: '原文一', comment: '想法一', createdAt: 1699990000000, cfiRange: 'epubcfi(/6/2!/4/2)', chapterTitle: '第一章' },
+        { id: 'h2', text: '原文二', createdAt: 1699990100000, cfiRange: 'epubcfi(/6/4!/4/2)' },
+      ],
+      excerpts: [
+        { id: 'h1', text: '原文一', comment: '想法一', createdAt: 1699990000000 },
+        { id: 'h2', text: '原文二', createdAt: 1699990100000 },
+      ],
+      bookmarks: [],
+    },
+    addedAt: 1699900000000,
+    updatedAt: 1700000000000,
+  };
+
+  it('bz-reader.json 的书进入书库墙：进度/状态/时长秒转毫秒/来源标记/CFI', async () => {
+    const vault = new MockVault();
+    seedReader(vault, [READER_BOOK]);
+    const app = makeApp(vault);
+    const items = await loadEpubItems(app);
+    expect(items.length).toBe(1);
+    const it = items[0];
+    expect(it.title).toBe('悉达多');
+    expect(it.isEpub).toBe(true);
+    expect(it.progress).toBe(42);
+    expect(it.status).toBe('在读');
+    expect(it.readingTimeFormat).toBe('2分'); // 90 秒 = 1.5 分 → 四舍五入 2 分
+    expect(it.epubVaultPath).toBe('书库/悉达多.epub');
+    expect(it.epubSource).toBe('reader');
+    expect(it.epubBookId).toBe('rb1');
+    expect(it.epubCfi).toBe('epubcfi(/6/2!/4/2)');
+    expect(it.category).toBe('小说');
+  });
+
+  it('想法计数：bz 阅读的 excerpts 是划线镜像——thinks 等于「有想法」的条数，不是划线总数', async () => {
+    const vault = new MockVault();
+    seedReader(vault, [READER_BOOK]);
+    const [it] = await loadEpubItems(makeApp(vault));
+    expect(it.highlights).toBe(2);
+    expect(it.thinks).toBe(1);
+  });
+
+  it('同一条 vaultPath 双源并存：取最近活动的一份；并列/更新时 bz 阅读优先', async () => {
+    const mkWeave = (lastReadTime: number) => JSON.stringify({
+      books: {
+        w1: {
+          id: 'w1',
+          meta: { title: '悉达多（weave）' },
+          file: { vaultPath: '书库/悉达多.epub' },
+          reading: { position: { percent: 0.1 }, stats: { lastReadTime } },
+        },
+      },
+    });
+
+    // weave 更晚 → 用 weave
+    const vaultOldReader = new MockVault();
+    vaultOldReader.files.set('CONFIG/STORAGE/weave-data.json', mkWeave(1800000000000));
+    seedReader(vaultOldReader, [READER_BOOK]);
+    const [byWeave] = await loadEpubItems(makeApp(vaultOldReader));
+    expect(byWeave.title).toBe('悉达多（weave）');
+    expect(byWeave.epubSource).toBe('weave');
+
+    // bz 阅读更晚 → 用 bz 阅读
+    const vaultNewReader = new MockVault();
+    vaultNewReader.files.set('CONFIG/STORAGE/weave-data.json', mkWeave(1600000000000));
+    seedReader(vaultNewReader, [READER_BOOK]);
+    const [byReader] = await loadEpubItems(makeApp(vaultNewReader));
+    expect(byReader.title).toBe('悉达多');
+    expect(byReader.epubSource).toBe('reader');
+    expect(byReader.epubBookId).toBe('rb1');
+
+    // 并列（同样活动时刻）→ bz 阅读优先
+    const vaultTie = new MockVault();
+    vaultTie.files.set('CONFIG/STORAGE/weave-data.json', mkWeave(0));
+    seedReader(vaultTie, [{ ...READER_BOOK, reading: { ...READER_BOOK.reading, stats: { ...READER_BOOK.reading.stats, lastReadTime: 0 } }, updatedAt: 0, addedAt: 0 }]);
+    const [tie] = await loadEpubItems(makeApp(vaultTie));
+    expect(tie.epubSource).toBe('reader');
+  });
+
+  it('bz 阅读数据目录跟插件 data.json 的 dataDir 走（不是写死缺省值）', async () => {
+    const vault = new MockVault();
+    vault.files.set('.obsidian/plugins/bz-reader/data.json', JSON.stringify({ dataDir: '读书/阅读数据' }));
+    vault.files.set('读书/阅读数据/bz-reader.json', JSON.stringify({ books: [READER_BOOK] }));
+    const app = makeApp(vault) as any;
+    app.plugins = { manifests: { 'bz-reader': { dir: '.obsidian/plugins/bz-reader' } } };
+    const [it] = await loadEpubItems(app);
+    expect(it.title).toBe('悉达多');
+  });
+
+  it('存量用户：data.json 显式指着旧默认「bz 阅读」→ 仍读旧目录（默认值改动不动老数据）', async () => {
+    const vault = new MockVault();
+    vault.files.set('.obsidian/plugins/bz-reader/data.json', JSON.stringify({ dataDir: 'bz 阅读' }));
+    vault.files.set('bz 阅读/bz-reader.json', JSON.stringify({ books: [READER_BOOK] }));
+    const app = makeApp(vault) as any;
+    app.plugins = { manifests: { 'bz-reader': { dir: '.obsidian/plugins/bz-reader' } } };
+    const [it] = await loadEpubItems(app);
+    expect(it.title).toBe('悉达多');
+    expect(it.epubSource).toBe('reader');
+  });
+
+  it('bz-reader.json 损坏 → 降级为空（不炸）；同库 weave 条目照常显示', async () => {
+    const vault = new MockVault();
+    vault.files.set(`${READER_DEFAULT_DATA_DIR}/bz-reader.json`, '{ 半截');
+    vault.files.set('CONFIG/STORAGE/weave-data.json', JSON.stringify({
+      books: { w1: { meta: { title: 'weave 书' }, file: { vaultPath: 'books/w.epub' } } },
+    }));
+    // silent：本用例在 node 环境跑（无 DOM），读侧损坏告警由 UI 层场景覆盖
+    const aggregates = await readEpubAggregates(makeApp(vault), { silent: true });
+    expect(aggregates.map((a) => a.meta.title)).toEqual(['weave 书']);
   });
 });

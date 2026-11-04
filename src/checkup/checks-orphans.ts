@@ -87,10 +87,14 @@ export async function checkOrphans(app: App, opts: CheckOpts = {}): Promise<Chec
       scanned += 1;
       const p = (b.epubVaultPath || '').trim();
       if (p && !fileExists(app, p)) {
+        // 数据源可能是 weave（旧通道）也可能是 bz 阅读（bz-reader.json）——文案要说清该去哪找
+        const origin = b.epubSource === 'reader'
+          ? 'bz 阅读数据（bz-reader.json，外部插件数据，体检不改动）；请重新导入或清理 bz 阅读插件数据。'
+          : 'weave 阅读数据（weave-data.json，外部插件数据，体检不改动）；请重新导入或清理 Weave 插件数据。';
         issues.push({
           severity: 'warn',
           title: `EPUB 书目《${b.title}》指向的文件不存在`,
-          detail: `EPUB 路径：${p}\n该条目来自 weave 阅读数据（weave-data.json，外部插件数据，体检不改动）；请重新导入或清理 Weave 插件数据。`,
+          detail: `EPUB 路径：${p}\n该条目来自 ${origin}`,
         });
       }
       await opts.tick?.(`书库 · ${b.title}`, { done: mdBooks.length + i + 1, total: mdBooks.length + epubs.length });
