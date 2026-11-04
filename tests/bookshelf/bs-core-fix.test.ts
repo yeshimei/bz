@@ -22,7 +22,8 @@ import { catColor } from '../../src/bookshelf/render';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 
-const WEAVE = 'CONFIG/STORAGE/weave-data.json';
+/** 书库唯一的 EPUB 数据源（bz 阅读；ADR-0283） */
+const READER = 'bz-reader/storage/bz-reader.json';
 
 function seedVault(): { vault: MockVault; app: ReturnType<typeof mockAppWithVault> } {
   const vault = new MockVault();
@@ -234,7 +235,7 @@ describe('书库深审修复批：检索 ESC 二段清词 + 尾 ✕（eff E2 定
   });
 });
 
-describe('书库深审修复批：weave-data 通道与读侧降级（func F4 / arch A3 / TG1）', () => {
+describe('书库深审修复批：阅读数据通道与读侧降级（func F4 / arch A3 / TG1）', () => {
   beforeEach(() => {
     resetObsidianMocks();
     resetBookshelfState();
@@ -248,15 +249,15 @@ describe('书库深审修复批：weave-data 通道与读侧降级（func F4 / a
     document.body.innerHTML = '';
   });
 
-  it('F4：面板开着时 weave-data.json 首次落盘（create 事件）→ 防抖后 EPUB 上墙', async () => {
+  it('F4：面板开着时 bz-reader.json 首次落盘（create 事件）→ 防抖后 EPUB 上墙', async () => {
     const { vault, app } = seedVault();
     await openPanel(app);
     expect(spines(overlayEl()).length).toBe(2);
-    // Weave 首次落盘：json 此前不存在 → create（旧实现只挂 modify，面板不刷新）
-    vault.files.set(WEAVE, JSON.stringify({
-      books: { a: { meta: { title: '百年孤独' }, file: { vaultPath: 'books/x.epub' }, reading: { position: { percent: 0.5 } } } },
+    // bz 阅读首次落盘：json 此前不存在 → create（旧实现只挂 modify，面板不刷新）
+    vault.files.set(READER, JSON.stringify({
+      books: [{ id: 'a', meta: { title: '百年孤独' }, fileRef: { vaultPath: 'books/x.epub' }, reading: { position: { percent: 0.5 } } }],
     }));
-    vault.emit('create', vault.file(WEAVE));
+    vault.emit('create', vault.file(READER));
     await waitFor(() => spines(overlayEl()).length === 3);
     expect(spines(overlayEl()).some((s) => s.title?.includes('百年孤独'))).toBe(true);
   });
@@ -323,26 +324,26 @@ readingProgress: 30
     await waitFor(() => spines(overlayEl()).find((s2) => s2.title?.includes('我的书'))?.title.includes('90%') === true);
   });
 
-  it('A3：weave-data.json 损坏 → EPUB 区降级空 + 一次性 warning 告警（恢复正常后复位）', async () => {
+  it('A3：bz-reader.json 损坏 → EPUB 区降级空 + 一次性 warning 告警（恢复正常后复位）', async () => {
     const { vault, app } = seedVault();
-    vault.files.set(WEAVE, '{ 这不是合法 JSON');
+    vault.files.set(READER, '{ 这不是合法 JSON');
     await openPanel(app);
     // md 书照常、EPUB 静默降级为空；读侧损坏有一次性告警（写侧零侵入契约不变）
     expect(spines(overlayEl()).length).toBe(2);
-    expect(getNoticeMessages().some((m) => m.includes('weave 阅读数据文件损坏'))).toBe(true);
+    expect(getNoticeMessages().some((m) => m.includes('bz 阅读数据文件损坏'))).toBe(true);
     expect(document.querySelector('.bz-notice--warning')).toBeTruthy();
     clearNotices();
     // 同一次损坏存续期内 rebuild 不重复弹（一次性）
     await (await import('../../src/bookshelf/data')).rebuildItems(app);
     renderAll();
-    expect(getNoticeMessages().some((m) => m.includes('weave 阅读数据文件损坏'))).toBe(false);
+    expect(getNoticeMessages().some((m) => m.includes('bz 阅读数据文件损坏'))).toBe(false);
     // 恢复正常后再损坏可再次告警
-    vault.files.set(WEAVE, JSON.stringify({ books: { a: { meta: { title: '百年孤独' }, file: { vaultPath: 'books/x.epub' } } } }));
+    vault.files.set(READER, JSON.stringify({ books: [{ id: 'a', meta: { title: '百年孤独' }, fileRef: { vaultPath: 'books/x.epub' } }] }));
     await (await import('../../src/bookshelf/data')).rebuildItems(app);
-    vault.files.set(WEAVE, 'again broken');
+    vault.files.set(READER, 'again broken');
     await (await import('../../src/bookshelf/data')).rebuildItems(app);
     renderAll();
-    expect(getNoticeMessages().some((m) => m.includes('weave 阅读数据文件损坏'))).toBe(true);
+    expect(getNoticeMessages().some((m) => m.includes('bz 阅读数据文件损坏'))).toBe(true);
   });
 });
 
@@ -421,7 +422,7 @@ describe('书库深审修复批：借书卡与编辑弹窗（ui F5/F8 / eff E3�
     expect(document.querySelector('.bz-bs-d-popup')).toBeNull();
   });
 
-  it('F5：EPUB 编辑想法保存失败（书已不在 weave 数据）→ 明确 error toast、弹窗保留', async () => {
+  it('F5：EPUB 编辑想法保存失败（书已不在 bz 阅读数据）→ 明确 error toast、弹窗保留', async () => {
     const { app } = seedVault();
     const note = {
       highlight: { id: 'h1' }, text: '原文', comment: '', chapterIndex: 0,

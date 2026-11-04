@@ -123,12 +123,13 @@ describe('扫描清单契约：jsonScanTargets', () => {
     expect(names).toContain('smartcat-behavior.json');
   });
 
-  it('书库两个数据源都在清单里：weave-data.json + bz-reader.json（ADR-0283）', () => {
+  it('书库唯一 EPUB 数据源在清单里：bz-reader.json（ADR-0283；v1.39.4 起 weave-data.json 通道已删）', () => {
     const targets = jsonScanTargets({ vault: { getAbstractFileByPath: () => null } } as never);
     const names = targets.map((t) => t.file.split('/').pop() || t.file);
-    // 只查 weave 会让 bz 阅读的数据坏了之后体检照绿（书库那边会弹提示，用户不知道该信谁）
-    expect(names).toContain('weave-data.json');
+    // 漏了它 bz 阅读的数据坏了之后体检照绿（书库那边会弹提示，用户不知道该信谁）
     expect(names).toContain('bz-reader.json');
+    // Weave 通道整条删除后不得再回到清单里：清单里挂着它等于给「已不存在的数据源」背书
+    expect(names).not.toContain('weave-data.json');
   });
 
   it('豁免边界在案：encrypt 密文 manifest 与 secondbrain.vec 不入清单（头注释登记）', () => {

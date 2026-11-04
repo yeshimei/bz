@@ -249,14 +249,13 @@ function closeDomainModals(): void {
   if (detailModalClose) { detailModalClose(); detailModalClose = null; }
 }
 
-/** 跳回原文继续读：md 书走 openLinkText；EPUB 按数据来源分派——weave 的书 openLinkText
- *  （Weave 注册了 epub 处理器，落回上次阅读位置），bz 阅读的书走 obsidian://bz-reader 协议
- *  （它没注册 epub 扩展名，裸 openLinkText 会落到 Weave 或打不开）。
+/** 跳回原文继续读：md 书走 openLinkText；EPUB 走 `obsidian://bz-reader` 协议
+ *  （bz 阅读没注册 .epub 扩展名，裸 openLinkText 会落到别处或打不开）。
  *  原型壳的 workspace.openLinkText 是 no-op 桩，两侧同语义 */
 function continueBook(app: App, it: BookshelfItem): void {
   if (it.isEpub) {
     // 先验目标再关面板：没有可打开的东西时，用户应该还留在借书卡上（而不是对着空白桌面看提示）
-    if (!it.epubVaultPath && !(it.epubSource === 'reader' && it.epubBookId)) {
+    if (!it.epubBookId) {
       notice('找不到这本书的文件', 'warning');
       return;
     }
@@ -513,7 +512,7 @@ export function createOverlay(app: App): void {
   mountIcons(overlay);
   paintViewContainers();
   motionPanelIn(overlay); // 动效层：书房灯亮（置位 boot；首屏编排由 rebuild 后的 renderWall 消费）
-  // B8：首扫加载态——rebuild 完成前墙位显示占位，防异步读 weave-data 空白闪烁
+  // B8：首扫加载态——rebuild 完成前墙位显示占位，防异步读阅读数据空白闪烁
   const shelf0 = overlay.querySelector('#bz-bs-shelf') as HTMLElement | null;
   if (shelf0) shelf0.innerHTML = wallLoadingHTML();
   // 冷开报告并行先行（深审 RR-F6 + eff 补证）：报告管线自扫全库、不消费 rebuild 产物——

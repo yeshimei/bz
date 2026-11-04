@@ -3,7 +3,7 @@
  *
  * 各域数据文件路径在此收敛（读各域 data 层同款解析逻辑的常量/函数，不改域代码）：
  * 全部经 core/storage 的 storageDir()/storageFile() 解析（跟随 storagePath 设置），
- * weave-data.json 走书架墙的 Weave 插件 dataPath 解析。
+ * bz-reader.json 走书架墙的 bz 阅读数据目录解析（其插件 data.json 的 dataDir）。
  * 深审 ARCH-2 storagePath 双轨已收敛（bz-fix-core-pledges）：.json 尾段剥除上沉
  * core/storage normalizeStorageDir 单源，favorites/config getStoragePath 降级为
  * @deprecated 兼容转发——收藏本与其余各域同一解析口径，行为恒等（契约见
@@ -16,8 +16,7 @@ import type { App } from 'obsidian';
 import { storageDir, storageFile } from '../core/storage';
 import { tryGetSettings } from '../core/settings-provider';
 import { getStoragePath } from '../favorites/config';
-import { resolveWeaveDataPath, WEAVE_DATA_FILE } from '../bookshelf/data';
-import { knownReaderDataFilePath } from '../bookshelf/reader-source';
+import { knownReaderDataFilePath } from '../bookshelf/data';
 
 /** 冲突留档目录（与 core/storage D1 原语 3 的 CORRUPT_BACKUP_DIR 同名；勿改，合并时对齐） */
 export const CORRUPT_DIR = 'CONFIG/.CORRUPT';
@@ -58,9 +57,8 @@ export function jsonScanTargets(app: App): JsonScanTarget[] {
     { file: storageFile('knowledge.json'), label: '知识盒' },
     { file: storageFile('secondbrain.json'), label: '第二大脑' },
     { file: storageFile('quiz.json'), label: '复习做题' },
-    { file: `${resolveWeaveDataPath(app)}/${WEAVE_DATA_FILE}`, label: 'EPUB 阅读数据（Weave）' },
-    // 书库的第二个数据源（ADR-0283）：路径由 bz 阅读插件配置决定，靠 reader-source 的
-    // 同步快照取（checkJsonFiles 开跑前会先刷新一次，保证与真实位置一致）
+    // 书库的 EPUB 数据源（ADR-0283）：路径由 bz 阅读插件配置决定，靠书架墙的同步快照取
+    // （checkJsonFiles 开跑前会先刷新一次，保证与真实位置一致）
     { file: knownReaderDataFilePath(), label: 'EPUB 阅读数据（bz 阅读）' },
   ];
 }

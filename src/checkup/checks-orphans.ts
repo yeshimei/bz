@@ -3,7 +3,7 @@
  *
  * 域条目里指向库内文件的引用，指向的文件已不存在 = 孤儿：
  * - 影院：影视条目的「海报」附件缺失（frontmatter 海报路径指向的文件不存在）；
- * - 书架墙：md 书目封面缺失 / EPUB 条目指向的 EPUB 文件缺失（weave 阅读数据残留）；
+ * - 书架墙：md 书目封面缺失 / EPUB 条目指向的 EPUB 文件缺失（bz 阅读数据残留）；
  * - 游戏库：游戏条目「封面」/「截图」本地路径指向的文件缺失（只报告，同影院海报口径）；
  * - 剪藏本：clipbook.json 侧写 savedArchive 残留指向的剪藏笔记已不存在（可修复）；
  *   划词标注 marks / 待回写来源 pendingSource 指向的笔记已不存在（issue 339 扩展，可修复）；
@@ -12,7 +12,7 @@
  *   （issue 339 扩展，可修复 = 清字段，任务本体保留）。
  *
  * 修复边界（只读纪律）：影院海报/书架封面/游戏封面截图在用户笔记 frontmatter 里、
- * EPUB 清单是 weave 插件的数据文件——一律只报告不动；可修复的只有插件自有 json
+ * EPUB 清单是 bz 阅读的数据文件——一律只报告不动；可修复的只有插件自有 json
  * （favorites/clipbook/knowledge）。修复口径跟随 run.ts 的 fixOrphanIssues 现有模式。
  *
  * 单源收编（深审 cons P3-1/P3-2 + func P3-7）：剪藏目录走 clipbook/save clipDir、
@@ -87,14 +87,10 @@ export async function checkOrphans(app: App, opts: CheckOpts = {}): Promise<Chec
       scanned += 1;
       const p = (b.epubVaultPath || '').trim();
       if (p && !fileExists(app, p)) {
-        // 数据源可能是 weave（旧通道）也可能是 bz 阅读（bz-reader.json）——文案要说清该去哪找
-        const origin = b.epubSource === 'reader'
-          ? 'bz 阅读数据（bz-reader.json，外部插件数据，体检不改动）；请重新导入或清理 bz 阅读插件数据。'
-          : 'weave 阅读数据（weave-data.json，外部插件数据，体检不改动）；请重新导入或清理 Weave 插件数据。';
         issues.push({
           severity: 'warn',
           title: `EPUB 书目《${b.title}》指向的文件不存在`,
-          detail: `EPUB 路径：${p}\n该条目来自 ${origin}`,
+          detail: `EPUB 路径：${p}\n该条目来自 bz 阅读数据（bz-reader.json，外部插件数据，体检不改动）；请重新导入或清理 bz 阅读插件数据。`,
         });
       }
       await opts.tick?.(`书库 · ${b.title}`, { done: mdBooks.length + i + 1, total: mdBooks.length + epubs.length });

@@ -1,13 +1,16 @@
 /**
- * 阅读报告 EPUB 条目测试（ADR-0013 扩展）：getEpubBookNotes 从 weave-data.json 映射为报告 book-note 口径。
+ * 阅读报告 EPUB 条目测试（ADR-0283）：getEpubBookNotes 从 bz-reader.json 映射为报告 book-note 口径。
  * 深审修复批（bz-fix-rr-core）：RR-F1 subjects 分类通道 / RR-F4 readingDate progress 前置 /
- * RR-F9 会话 type 派生 / RR-F10 非法 start 丢弃；fixture 键清理（weaveDataPath 非 bz 设置键，
- * 路径走 Weave 插件 settings.dataPath，缺省回落 CONFIG/STORAGE 恰好一致——无效注入误导后人）。
+ * RR-F9 会话 type 派生 / RR-F10 非法 start 丢弃；fixture 直接写 bz 阅读的数据文件
+ * （缺省数据目录 `bz-reader/storage`，不注入其插件 data.json 的 dataDir），字段按它的 schema
+ * （fileRef / comment+createdAt / 秒记账，见 bookshelf/reader-source.ts）——不再经旧数据通道，
+ * 也不再往设置里塞路径注入键（数据目录由 bz 阅读自己的 data.json 决定，写在这里只会误导后人）。
  */
 import { describe, it, expect, beforeEach } from 'vitest';
 import { setApp } from '../../src/core/app';
 import { setSettingsProvider } from '../../src/core/settings-provider';
 import { getEpubBookNotes, calculateReadingStats, analyzeReadingFocus } from '../../src/reading-report/stats';
+import { READER_DEFAULT_DATA_DIR } from '../../src/bookshelf/reader-source';
 import { MockVault, parseFrontmatter } from '../mock-vault';
 import { resetObsidianMocks } from '../mock-obsidian-entry';
 
@@ -32,7 +35,20 @@ function localIsoDate(ts: number): string {
   return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
 }
 
-describe('getEpubBookNotes（ADR-0013 扩展）', () => {
+/** 缺省数据目录（bz 阅读插件的 data.json 未注入 → 回落 `bz-reader/storage`） */
+const READER_PATH = `${READER_DEFAULT_DATA_DIR}/bz-reader.json`;
+
+/** bz 阅读落盘形状：顶层 books 是**数组**，书用 fileRef，时长按**秒**记账 */
+function readerFile(books: any[]) {
+  return JSON.stringify({ version: 1, schemaVersion: 2, books });
+}
+
+/** 有想法的划线（thinks 读的是归一后「带 comment 的 highlights」条数） */
+function highlightWithComment(ts: number) {
+  return { id: 'h1', text: '原文一', comment: '想法一', createdAt: ts };
+}
+
+describe('getEpubBookNotes（ADR-0283）', () => {
   let vault: MockVault;
 
   beforeEach(() => {
@@ -40,30 +56,38 @@ describe('getEpubBookNotes（ADR-0013 扩展）', () => {
     document.body.innerHTML = '';
     vault = new MockVault();
     setApp(makeApp(vault));
-    // 路径解析读 Weave 插件 settings（resolveWeaveDataPath）；bz 侧无 weaveDataPath 设置键
+    // 数据目录解析只认 bz 阅读插件自己的 data.json（未注入 = 缺省 bz-reader/storage）
     setSettingsProvider(() => ({}) as any);
   });
 
-  function seedWeaveData(books: any) {
-    vault.files.set('CONFIG/STORAGE/weave-data.json', JSON.stringify({ schemaVersion: 2, books }));
+  function seedReaderData(books: any[]) {
+    vault.files.set(READER_PATH, readerFile(books));
   }
 
   it('映射 frontmatter 口径（进度/时长/划线/想法/日期/页码估算）', async () => {
-    seedWeaveData({
-      bk_001: {
+    seedReaderData([
+      {
         id: 'bk_001',
-        file: { vaultPath: '书库/悉达多.epub' },
+        fileRef: { vaultPath: '书库/悉达多.epub' },
         meta: { title: '悉达多', author: '赫尔曼·黑塞', wordCount: 60000, chapterCount: 12 },
         reading: {
           position: { chapterIndex: 2, cfi: '', percent: 50 },
-          stats: { totalReadTime: 3600000, lastReadTime: 1735000000000, completedTime: 1735600000000 },
+          // bz 阅读按秒记账：3600 秒 → 归一后 3600000 毫秒
+          stats: { totalReadTime: 3600, lastReadTime: 1735000000000, completedTime: 1735600000000 },
           sessions: [
             { start: 1734900000000, end: 1734900700000, durationSeconds: 700 },
           ],
         },
-        notes: { bookmarks: [], highlights: [{ id: 'h1' }], excerpts: [{ id: 'e1' }] },
+        notes: {
+          bookmarks: [],
+          highlights: [highlightWithComment(1734900000000)],
+          // excerpts 是 highlights 的同 id 镜像（bz 阅读的真实落盘形态）
+          excerpts: [highlightWithComment(1734900000000)],
+        },
+        addedAt: 1734800000000,
+        updatedAt: 1735000000000,
       },
-    });
+    ]);
 
     const entries = await getEpubBookNotes(makeApp(vault));
     expect(entries.length).toBe(1);
@@ -83,52 +107,58 @@ describe('getEpubBookNotes（ADR-0013 扩展）', () => {
   });
 
   it('RR-F1：meta.subjects 分类接 ADR-0099 通道——与书架墙 buildEpubItem 同源不再整体「未分类」', async () => {
-    seedWeaveData({
-      bk_001: {
+    seedReaderData([
+      {
         id: 'bk_001',
-        file: { vaultPath: '书库/悉达多.epub' },
+        fileRef: { vaultPath: '书库/悉达多.epub' },
         meta: { title: '悉达多', author: '黑塞', subjects: ['中国古典文学', '哲学'] },
         reading: {
           position: { percent: 0.5 },
-          stats: { totalReadTime: 60000, lastReadTime: 1735000000000 },
+          stats: { totalReadTime: 60, lastReadTime: 1735000000000 },
           sessions: [],
         },
-        notes: { bookmarks: [], highlights: [], excerpts: [] },
+        notes: { bookmarks: [], highlights: [] },
+        addedAt: 1734800000000,
+        updatedAt: 1735000000000,
       },
-    });
+    ]);
     const entries = await getEpubBookNotes(makeApp(vault));
     expect(entries[0].frontmatter.category).toBe('中国古典文学'); // subjects[0]（ADR-0099 决策 4）
     // subjects 空/非串 → 回落「未分类」
-    seedWeaveData({
-      bk_002: {
+    seedReaderData([
+      {
         id: 'bk_002',
-        file: { vaultPath: '书库/宇宙.epub' },
+        fileRef: { vaultPath: '书库/宇宙.epub' },
         meta: { title: '宇宙', subjects: ['', 42] },
         reading: { position: { percent: 0.5 }, stats: { totalReadTime: 0, lastReadTime: 0 }, sessions: [] },
         notes: {},
+        addedAt: 1734800000000,
+        updatedAt: 1734800000000,
       },
-    });
+    ]);
     const entries2 = await getEpubBookNotes(makeApp(vault));
     expect(entries2[0].frontmatter.category).toBe('未分类'); // subjects 空/非串回落
   });
 
   it('readingSessions 转换：duration 单位秒、type 派生（RR-F9）', async () => {
-    seedWeaveData({
-      bk_001: {
+    seedReaderData([
+      {
         id: 'bk_001',
-        file: { vaultPath: '书库/宇宙.epub' },
+        fileRef: { vaultPath: '书库/宇宙.epub' },
         meta: { title: '宇宙', author: '卡尔·萨根', wordCount: 30000, chapterCount: 8 },
         reading: {
           position: { chapterIndex: 0, cfi: '', percent: 10 },
-          stats: { totalReadTime: 3600000, lastReadTime: 1735000000000 },
+          stats: { totalReadTime: 3600, lastReadTime: 1735000000000 },
           sessions: [
             { start: 1734900000000, end: 1734901200000, durationSeconds: 1200 },
             { start: 1734901300000, end: 1734901650000, durationSeconds: 350 },
           ],
         },
-        notes: { bookmarks: [], highlights: [], excerpts: [] },
+        notes: { bookmarks: [], highlights: [] },
+        addedAt: 1734800000000,
+        updatedAt: 1735000000000,
       },
-    });
+    ]);
 
     const entries = await getEpubBookNotes(makeApp(vault));
     expect(entries[0].frontmatter.readingSessions).toEqual([
@@ -138,22 +168,24 @@ describe('getEpubBookNotes（ADR-0013 扩展）', () => {
   });
 
   it('RR-F9：EPUB 会话并入专注度——完成率不再恒 0（type 派生口径）', async () => {
-    seedWeaveData({
-      bk_001: {
+    seedReaderData([
+      {
         id: 'bk_001',
-        file: { vaultPath: '书库/宇宙.epub' },
+        fileRef: { vaultPath: '书库/宇宙.epub' },
         meta: { title: '宇宙', author: '卡尔·萨根' },
         reading: {
           position: { percent: 0.5 },
-          stats: { totalReadTime: 7200000, lastReadTime: 1735000000000 },
+          stats: { totalReadTime: 7200, lastReadTime: 1735000000000 },
           sessions: [
             { start: 1734900000000, end: 1734901200000, durationSeconds: 1200 },
             { start: 1734902000000, end: 1734903800000, durationSeconds: 1800 },
           ],
         },
-        notes: { bookmarks: [], highlights: [], excerpts: [] },
+        notes: { bookmarks: [], highlights: [] },
+        addedAt: 1734800000000,
+        updatedAt: 1735000000000,
       },
-    });
+    ]);
     const entries = await getEpubBookNotes(makeApp(vault));
     const focus = analyzeReadingFocus(entries[0].frontmatter.readingSessions, entries);
     // type 派生前完成率恒 0 → 完成度 30 分权重拿不到（总分 ≈48）；派生后 ≥60
@@ -161,23 +193,25 @@ describe('getEpubBookNotes（ADR-0013 扩展）', () => {
   });
 
   it('RR-F10：start 缺失/非法（0）的会话直接丢弃——不落 1970 幽灵月', async () => {
-    seedWeaveData({
-      bk_001: {
+    seedReaderData([
+      {
         id: 'bk_001',
-        file: { vaultPath: '书库/宇宙.epub' },
+        fileRef: { vaultPath: '书库/宇宙.epub' },
         meta: { title: '宇宙', author: '卡尔·萨根' },
         reading: {
           position: { percent: 0.5 },
-          stats: { totalReadTime: 7200000, lastReadTime: 1735000000000 },
+          stats: { totalReadTime: 7200, lastReadTime: 1735000000000 },
           sessions: [
             { start: 0, end: 600000, durationSeconds: 600 },
             { durationSeconds: 300 },
             { start: 1734900000000, end: 1734900700000, durationSeconds: 700 },
           ],
         },
-        notes: { bookmarks: [], highlights: [], excerpts: [] },
+        notes: { bookmarks: [], highlights: [] },
+        addedAt: 1734800000000,
+        updatedAt: 1735000000000,
       },
-    });
+    ]);
     const entries = await getEpubBookNotes(makeApp(vault));
     expect(entries[0].frontmatter.readingSessions).toEqual([
       { start: 1734900000000, end: 1734900700000, duration: 700, type: 'completed' },
@@ -189,45 +223,54 @@ describe('getEpubBookNotes（ADR-0013 扩展）', () => {
   });
 
   it('RR-F4：进度重置 0（重读）→ readingDate 为 null——与书架墙「未读」口径一致', async () => {
-    seedWeaveData({
-      bk_001: {
+    seedReaderData([
+      {
         id: 'bk_001',
-        file: { vaultPath: '书库/悉达多.epub' },
+        fileRef: { vaultPath: '书库/悉达多.epub' },
         meta: { title: '悉达多', author: '黑塞' },
         reading: {
           position: { percent: 0 },
-          stats: { totalReadTime: 60000, lastReadTime: 1735000000000 }, // lastReadTime 在但 progress=0
+          stats: { totalReadTime: 60, lastReadTime: 1735000000000 }, // lastReadTime 在但 progress=0
           sessions: [],
         },
-        notes: { bookmarks: [], highlights: [], excerpts: [] },
+        notes: { bookmarks: [], highlights: [] },
+        addedAt: 1734800000000,
+        updatedAt: 1735000000000,
       },
-    });
+    ]);
     const entries = await getEpubBookNotes(makeApp(vault));
     expect(entries[0].frontmatter.readingDate).toBeNull();
     const stats = calculateReadingStats(entries);
     expect(stats.readingBooks).toBe(0); // 不再「报告在读、书架未读」两侧分叉
   });
 
-  it('缺 title/vaultPath 的书跳过；weave-data 缺失 → 空数组', async () => {
+  it('缺 title/vaultPath 的书跳过；bz-reader 数据缺失 → 空数组', async () => {
     expect(await getEpubBookNotes(makeApp(vault))).toEqual([]);
-    seedWeaveData({ bad: { id: 'bad', file: { vaultPath: '' }, meta: {} } });
+    seedReaderData([{ id: 'bad', fileRef: { vaultPath: '' }, meta: {}, addedAt: 1, updatedAt: 1 }]);
     expect(await getEpubBookNotes(makeApp(vault))).toEqual([]);
   });
 
   it('并入 calculateReadingStats：会话/时长/划线都计入统计', async () => {
-    seedWeaveData({
-      bk_001: {
+    seedReaderData([
+      {
         id: 'bk_001',
-        file: { vaultPath: '书库/悉达多.epub' },
+        fileRef: { vaultPath: '书库/悉达多.epub' },
         meta: { title: '悉达多', author: '赫尔曼·黑塞', wordCount: 60000 },
         reading: {
           position: { chapterIndex: 2, cfi: '', percent: 100 },
-          stats: { totalReadTime: 3600000, lastReadTime: 1735000000000, completedTime: 1735600000000 },
+          stats: { totalReadTime: 3600, lastReadTime: 1735000000000, completedTime: 1735600000000 },
           sessions: [{ start: 1734900000000, end: 1734900700000, durationSeconds: 700 }],
         },
-        notes: { bookmarks: [], highlights: [{ id: 'h1' }], excerpts: [{ id: 'e1' }] },
+        notes: {
+          bookmarks: [],
+          highlights: [highlightWithComment(1734900000000)],
+          // 同 id 镜像（见首个用例说明）
+          excerpts: [highlightWithComment(1734900000000)],
+        },
+        addedAt: 1734800000000,
+        updatedAt: 1735000000000,
       },
-    });
+    ]);
 
     const entries = await getEpubBookNotes(makeApp(vault));
     const stats = calculateReadingStats(entries);

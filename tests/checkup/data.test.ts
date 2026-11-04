@@ -361,20 +361,27 @@ describe('检查三：孤儿条目', () => {
   });
 
   it('书架墙：md 封面缺失与 EPUB 文件缺失分别报告', async () => {
-    const weave = JSON.stringify({
-      books: {
-        a: {
-          meta: { title: 'E书' },
-          file: { vaultPath: 'Books/e.epub' },
-          reading: { position: { percent: 0.5 }, stats: {} },
-          notes: {},
+    // 书库的 EPUB 数据源只剩 bz 阅读（ADR-0283；v1.39.4 起 weave-data.json 通道已删）：
+    // fileRef 而非 file、stats.totalReadTime 按**秒**记账（读侧归一 ×1000 成毫秒）
+    const reader = JSON.stringify({
+      version: 1,
+      schemaVersion: 2,
+      books: [
+        {
+          id: 'a',
+          meta: { title: 'E书', author: '某作者' },
+          fileRef: { vaultPath: 'Books/e.epub' },
+          reading: { position: { percent: 0.5 }, stats: { totalReadTime: 60, lastReadTime: 1700000000000 } },
+          notes: { highlights: [], excerpts: [], bookmarks: [] },
+          addedAt: 1699000000000,
+          updatedAt: 1700000000000,
         },
-      },
+      ],
     });
     const { app } = makeApp(
       {
         '书库/B.md': '# B',
-        [`${DIR}/weave-data.json`]: weave,
+        'bz-reader/storage/bz-reader.json': reader,
       },
       { '书库/B.md': { tags: ['book'], cover: 'CONFIG/BOOK/B/c.png' } },
       // 书库目录缺省留空（ADR-0274）：不显式配置，scanMarkdownBooks 扫不到夹具里的书

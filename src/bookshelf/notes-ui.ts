@@ -2,9 +2,9 @@
  * 书架墙读书笔记窗口（迁移自旧 src/library/ui.ts 的读书笔记/EPUB 读书笔记弹窗，旧域退役）：
  *  - md 书：浏览划线/批注树（按笔记标题层级分组），双击跳原文（path#^id + 聚焦），
  *    长按内容编辑批注、长按日期删除划线（core/flow-dialog 确认，先关壳再确认、终态重开壳）；
- *  - EPUB 书：从 weave-data.json / bz-reader.json 渲染 划线+想法（按章节分组），双击跳原文
- *    （weave 深链 / bz 阅读协议按来源分派），长按编辑想法/删除划线（直改对应数据文件，
- *    ADR-0013 扩展记录竞态例外）。
+ *  - EPUB 书：从 bz-reader.json 渲染 划线+想法（按章节分组），双击跳原文
+ *    （`obsidian://bz-reader` 协议），长按编辑想法/删除划线（直改该数据文件，
+ *    ADR-0283 记录竞态例外）。
  * 基线（铁律 6）：弹窗壳走组件库 uiModal，按钮/输入走 bz-btn/bz-input，空态走 uiEmpty；
  * 域内只留笔记列表排版（bz-bs-notes-*）。
  * 写盘保持旧域收口语义：md 走 vault.process 原子读改写（src/bookshelf/notes.ts）。
@@ -211,7 +211,7 @@ export function showEpubBookNotes(app: App, vaultPath: string, title: string) {
     const book = await findEpubBookByPath(app, path);
     if (!book) {
       contentContainer.innerHTML = '';
-      contentContainer.appendChild(uiEmpty({ icon: 'book', title: '未找到该书阅读数据', desc: '用 Weave 或 bz 阅读打开这本书后这里会显示' }));
+      contentContainer.appendChild(uiEmpty({ icon: 'book', title: '未找到该书阅读数据', desc: '用 bz 阅读打开这本书后这里会显示' }));
       return;
     }
     // 传入已取到的 book，避免二次读取阅读数据文件
@@ -343,7 +343,7 @@ function renderEpubHighlightBlock(
 
   const highlightId = String(note.highlight?.id || '');
 
-  // 双击整个块 → 跳原文（weave 深链 / bz 阅读协议，按来源分派）。
+  // 双击整个块 → 跳原文（`obsidian://bz-reader` 协议）。
   // 只有真打开了才关窗：跳转目标为空（脏数据缺 cfi/bookId）时关掉弹窗＝用户对着桌面。
   block.addEventListener('dblclick', () => {
     if (openEpubJump(app, book, note)) closeEpubNotesModal();
@@ -476,7 +476,7 @@ export function openEditCommentModal(
   });
 }
 
-/** 编辑想法弹窗（EPUB：直改这本书所在的阅读数据文件——weave-data.json / bz-reader.json）。
+/** 编辑想法弹窗（EPUB：直改 bz-reader.json）。
  *  深审 ui F5：保存失败（书被移除/文件缺失/json 损坏 → false）补明确 toast——
  *  同文件删除路径已有失败 notice（B2），编辑路径此前零反馈像没点一样。 */
 export function openEpubEditCommentModal(

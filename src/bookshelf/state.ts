@@ -1,6 +1,6 @@
 /**
  * 书架墙（bookshelf）域状态：模块级可变对象 M（与 cinema 域同构但独立）。
- * 并存式新域：数据同源（书库目录 md + weave-data.json / bz-reader.json EPUB 条目），
+ * 并存式新域：数据同源（书库目录 md + bz-reader.json 的 EPUB 条目），
  * 不改数据格式；日后旧 library 域删除后本域独立承担书库 UI。
  */
 import type { App, TFile } from 'obsidian';
@@ -37,14 +37,11 @@ export interface BookshelfItem {
   pages: number;
   /** 派生展示态：未读 / 在读 / 已读 */
   status: string;
-  /** true = Weave / bz 阅读数据驱动的 EPUB 条目（ADR-0013 口径） */
+  /** true = bz 阅读数据驱动的 EPUB 条目（ADR-0283） */
   isEpub: boolean;
   /** EPUB 深链源标识（跳转读书笔记/原文用；md 书 null） */
   epubVaultPath: string | null;
-  /** EPUB 数据来源：weave = weave-data.json（旧通道）；reader = bz-reader.json（bz 阅读）。
-   *  只有 EPUB 条目有值（md 书 undefined）。 */
-  epubSource?: 'weave' | 'reader';
-  /** bz 阅读的稳定书目 id（`obsidian://bz-reader?book=` 深链用；weave 源 null） */
+  /** bz 阅读的稳定书目 id（`obsidian://bz-reader?book=` 深链用；md 书 undefined/null） */
   epubBookId?: string | null;
   /** 当前位置 CFI（「继续读」定位用；无位置 null） */
   epubCfi?: string | null;

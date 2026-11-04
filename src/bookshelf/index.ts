@@ -10,7 +10,7 @@ import { onDomainEvent } from '../core/domain-bus';
 import { notice } from '../core/notice';
 import { M, resetBookshelfState, applyDefaultView } from './state';
 import { currentSideItems } from './shared';
-import { isBookshelfPath, resolveFolderPath, rebuildItems, WEAVE_DATA_FILE, READER_DATA_FILE } from './data';
+import { isBookshelfPath, resolveFolderPath, rebuildItems, READER_DATA_FILE } from './data';
 import {
   createOverlay, closeOverlay, registerEscapeHandler, unregisterEscapeHandler,
   renderAll, refreshReportView, openReportView, showView,
@@ -22,7 +22,7 @@ let initialized = false;
 let autoRefreshRegistered = false;
 // B5：订阅句柄统一收集（域事件退订函数 + vault EventRef），卸载时全部释放
 let autoRefreshOffs: (() => void)[] = [];
-let weaveVaultRefs: EventRef[] = [];
+let epubVaultRefs: EventRef[] = [];
 
 /** 幂等初始化（懒加载）：目录设置注入 + ESC + 自动刷新 */
 export function ensureBookshelf(app: App): void {
@@ -44,8 +44,8 @@ function registerAutoRefresh(app: App): void {
   const schedule = (file: { path?: string }) => {
     // 收录谓词单源（深审 RR-A1/RR-F7）：isBookshelfPath 含「目录本身是单个 md 笔记」形态——
     // 旧过滤只认目录前缀，单文件书库（书库.md）写盘面板不刷新（收录两侧认、刷新通道不认）。
-    // 两份 EPUB 阅读数据（weave / bz 阅读）都是外部插件直写，同样要在墙存续期间跟着刷新
-    if (file && file.path && !file.path.endsWith(WEAVE_DATA_FILE) && !file.path.endsWith(READER_DATA_FILE)
+    // EPUB 阅读数据（bz-reader.json）由外部插件直写，同样要在墙存续期间跟着刷新
+    if (file && file.path && !file.path.endsWith(READER_DATA_FILE)
       && !isBookshelfPath(file.path, resolveFolderPath())) return;
     if (timer) clearTimeout(timer);
     timer = setTimeout(() => {
@@ -59,20 +59,20 @@ function registerAutoRefresh(app: App): void {
   for (const ch of ['vault:md-created', 'vault:md-deleted', 'vault:md-modified']) {
     autoRefreshOffs.push(onDomainEvent<{ path: string }>(ch, (evt) => schedule({ path: evt.path })));
   }
-  // B4：EPUB 数据来自 weave-data.json / bz-reader.json（外部阅读器直写，core vault 适配器只转发 .md），
+  // B4：EPUB 数据来自 bz-reader.json（外部阅读器直写，core vault 适配器只转发 .md），
   // 域内自挂 vault modify 补 json 通道；B5：EventRef 一并登记，卸载 offref。
-  // 深审 func F4：补 create/delete——json 尚不存在时 Weave 首次落盘走 create（面板开着不刷新），
+  // 深审 func F4：补 create/delete——json 尚不存在时 bz 阅读首次落盘走 create（面板开着不刷新），
   // json 被外部删除走 delete（EPUB 区残留旧数据），与 modify 复用同一 schedule，零额外成本
-  const weaveFile = app.vault;
-  weaveVaultRefs = [
-    weaveFile.on('modify', (file) => schedule({ path: (file as { path?: string })?.path })),
-    weaveFile.on('create', (file) => schedule({ path: (file as { path?: string })?.path })),
-    weaveFile.on('delete', (file) => schedule({ path: (file as { path?: string })?.path })),
+  const vaultEvents = app.vault;
+  epubVaultRefs = [
+    vaultEvents.on('modify', (file) => schedule({ path: (file as { path?: string })?.path })),
+    vaultEvents.on('create', (file) => schedule({ path: (file as { path?: string })?.path })),
+    vaultEvents.on('delete', (file) => schedule({ path: (file as { path?: string })?.path })),
     // 原子写兜底（2026-11-05）：bz-reader 落盘是 `.tmp` → `rename` 覆盖正本（store.ts
     // 的原子写契约），部分平台还走「正本 → .bak，再改名 tmp」——目标文件是**被 rename
     // 替换**的，不保证发 modify。新旧路径都交给 schedule（防抖合并，零额外成本），
     // 否则面板开着时改书名/划线/进度不刷新，用户以为数据没保存。
-    weaveFile.on('rename', (file, oldPath) => {
+    vaultEvents.on('rename', (file, oldPath) => {
       schedule({ path: (file as { path?: string })?.path });
       if (oldPath) schedule({ path: oldPath });
     }),
@@ -135,8 +135,8 @@ export function unloadBookshelf(): void {
   // B5：退订全部域事件 + vault EventRef
   autoRefreshOffs.forEach((off) => off());
   autoRefreshOffs = [];
-  for (const ref of weaveVaultRefs) M.appRef?.vault.offref(ref);
-  weaveVaultRefs = [];
+  for (const ref of epubVaultRefs) M.appRef?.vault.offref(ref);
+  epubVaultRefs = [];
   unregisterEscapeHandler(); // B1：注销 ESC 层
   closeBookNoteModals(); // 读书笔记弹窗（uiModal 壳挂 body，面板未开也可能存活）：卸载不留孤儿浮层
   // 深审 func F2/ui F7：卸载也走 closeOverlay 单口——window resize 监听、搜索/resize

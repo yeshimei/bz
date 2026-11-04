@@ -1,15 +1,18 @@
 // @vitest-environment node
 /**
  * EPUB 供数面契约对照锁（深审 RR-A1 路线 A）：
- * 同一份 weave-data fixture 同时喂书架墙（bookshelf/data loadEpubItems → buildEpubItem）
+ * 同一份 bz-reader.json fixture 同时喂书架墙（bookshelf/data loadEpubItems → buildEpubItem）
  * 与阅读报告（reading-report/stats getEpubBookNotes → buildEpubBookNoteEntry），
  * 断言共享字段逐项等值——宿主改字段映射时此测试红给报告侧提词，镜像漂移在 CI 拦截。
  * （RR-F1 subjects / RR-F4 readingDate progress 前置 / progress 归一口径随锁固化。）
+ * fixture 直写 bz 阅读的缺省数据文件（`bz-reader/storage/bz-reader.json`），字段按其 schema
+ * （fileRef / 秒记账 / comment+createdAt）；不再往设置里注入外来数据目录。
  */
 import { describe, it, expect, beforeEach } from 'vitest';
 import { setApp } from '../../src/core/app';
 import { setSettingsProvider } from '../../src/core/settings-provider';
 import { loadEpubItems } from '../../src/bookshelf/data';
+import { READER_DEFAULT_DATA_DIR } from '../../src/bookshelf/reader-source';
 import { getEpubBookNotes } from '../../src/reading-report/stats';
 import { MockVault } from '../mock-vault';
 import { resetObsidianMocks } from '../mock-obsidian-entry';
@@ -19,11 +22,13 @@ function makeApp(vault: MockVault) {
     vault,
     metadataCache: { getFileCache: () => null },
     workspace: {},
-    plugins: { plugins: { 'weave-epub-reader': { settings: { dataPath: 'CONFIG/STORAGE' } } } },
   } as any;
 }
 
-/** 覆盖 subjects 有/无、percent 0/0.5/150、lastReadTime 有无 的聚合 fixture */
+/** 缺省数据目录（bz 阅读插件的 data.json 未注入 → 回落 `bz-reader/storage`） */
+const READER_PATH = `${READER_DEFAULT_DATA_DIR}/bz-reader.json`;
+
+/** 覆盖 subjects 有/无、percent 0/0.5/150、lastReadTime 有无 的聚合 fixture（bz 阅读落盘形状） */
 function aggregate(overrides: {
   id: string;
   percent: number;
@@ -31,9 +36,13 @@ function aggregate(overrides: {
   lastReadTime?: number;
   completedTime?: number;
 }) {
+  // bz 阅读按秒记账（60 秒 → 归一后 60000 毫秒，与书架墙 readingTimeMs 同口径）
+  const stats: Record<string, any> = { totalReadTime: 60 };
+  if (overrides.lastReadTime !== undefined) stats.lastReadTime = overrides.lastReadTime;
+  if (overrides.completedTime !== undefined) stats.completedTime = overrides.completedTime;
   return {
     id: overrides.id,
-    file: { vaultPath: `书库/${overrides.id}.epub` },
+    fileRef: { vaultPath: `书库/${overrides.id}.epub` },
     meta: {
       title: `书-${overrides.id}`,
       author: '测试作者',
@@ -41,14 +50,18 @@ function aggregate(overrides: {
     },
     reading: {
       position: { chapterIndex: 0, cfi: '', percent: overrides.percent },
-      stats: {
-        totalReadTime: 60000,
-        ...(overrides.lastReadTime !== undefined ? { lastReadTime: overrides.lastReadTime } : {}),
-        ...(overrides.completedTime !== undefined ? { completedTime: overrides.completedTime } : {}),
-      },
+      stats,
       sessions: [{ start: 1734900000000, end: 1734901200000, durationSeconds: 1200 }],
     },
-    notes: { bookmarks: [], highlights: [{ id: 'h1' }], excerpts: [{ id: 'e1' }, { id: 'e2' }] },
+    notes: {
+      bookmarks: [],
+      // 带 comment 的划线：归一后的 excerpts 由它重建，thinks 两侧都读这一条
+      highlights: [{ id: 'h1', text: '原文一', comment: '想法一', createdAt: 1734900000000 }],
+      // excerpts 是 highlights 的同 id 镜像（bz 阅读真实落盘形态）；归一不读它，从 highlights 重建
+      excerpts: [{ id: 'h1', text: '原文一', comment: '想法一', createdAt: 1734900000000 }],
+    },
+    addedAt: 1734800000000,
+    updatedAt: 1735000000000,
   };
 }
 
@@ -62,9 +75,9 @@ describe('EPUB 供数面契约对照（buildEpubItem × buildEpubBookNoteEntry �
     setSettingsProvider(() => ({}) as any);
   });
 
-  /** 种 weave-data → 两侧装载（供数面单源消费下的等值锁） */
-  async function contract(books: Record<string, any>) {
-    vault.files.set('CONFIG/STORAGE/weave-data.json', JSON.stringify({ schemaVersion: 2, books }));
+  /** 种 bz-reader.json → 两侧装载（供数面单源消费下的等值锁） */
+  async function contract(books: any[]) {
+    vault.files.set(READER_PATH, JSON.stringify({ version: 1, schemaVersion: 2, books }));
     const app = makeApp(vault);
     const wallItems = await loadEpubItems(app);
     const reportEntries = await getEpubBookNotes(app);
@@ -72,17 +85,17 @@ describe('EPUB 供数面契约对照（buildEpubItem × buildEpubBookNoteEntry �
   }
 
   it('subjects 有值：category 两侧等值（ADR-0099 通道）', async () => {
-    const { wallItems, reportEntries } = await contract({
-      a: aggregate({ id: 'a', percent: 0.5, subjects: ['中国古典文学', '哲学'], lastReadTime: 1735000000000 }),
-    });
+    const { wallItems, reportEntries } = await contract([
+      aggregate({ id: 'a', percent: 0.5, subjects: ['中国古典文学', '哲学'], lastReadTime: 1735000000000 }),
+    ]);
     expect(wallItems[0].category).toBe('中国古典文学');
     expect(reportEntries[0].frontmatter.category).toBe(wallItems[0].category);
   });
 
   it('subjects 缺失：墙侧 null（kwFilter 不误命中）/ 报告侧「未分类」串——归桶等值', async () => {
-    const { wallItems, reportEntries } = await contract({
-      a: aggregate({ id: 'a', percent: 0.5, lastReadTime: 1735000000000 }),
-    });
+    const { wallItems, reportEntries } = await contract([
+      aggregate({ id: 'a', percent: 0.5, lastReadTime: 1735000000000 }),
+    ]);
     expect(wallItems[0].category).toBeNull();
     // 报告 frontmatter 需要字符串做分布；墙侧 categoryLabel(it) || '未分类' 同桶
     expect(reportEntries[0].frontmatter.category).toBe('未分类');
@@ -95,9 +108,9 @@ describe('EPUB 供数面契约对照（buildEpubItem × buildEpubBookNoteEntry �
     ['超 100 钳 100（150）', 150],
     ['0（重读重置）', 0],
   ])('progress 归一与 readingDate 生成两侧恒等（%s）', async (_name, percent) => {
-    const { wallItems, reportEntries } = await contract({
-      a: aggregate({ id: 'a', percent, lastReadTime: 1735000000000 }),
-    });
+    const { wallItems, reportEntries } = await contract([
+      aggregate({ id: 'a', percent, lastReadTime: 1735000000000 }),
+    ]);
     const wall = wallItems[0];
     const report = reportEntries[0].frontmatter;
     expect(report.readingProgress).toBe(wall.progress);
@@ -111,9 +124,9 @@ describe('EPUB 供数面契约对照（buildEpubItem × buildEpubBookNoteEntry �
   });
 
   it('其余共享字段：作者/划线/想法/时长毫秒/完成日期 逐项等值', async () => {
-    const { wallItems, reportEntries } = await contract({
-      a: aggregate({ id: 'a', percent: 0.8, subjects: ['文学'], lastReadTime: 1735000000000, completedTime: 1735600000000 }),
-    });
+    const { wallItems, reportEntries } = await contract([
+      aggregate({ id: 'a', percent: 0.8, subjects: ['文学'], lastReadTime: 1735000000000, completedTime: 1735600000000 }),
+    ]);
     const wall = wallItems[0];
     const report = reportEntries[0].frontmatter;
     expect(report.author).toBe(wall.author);
@@ -125,9 +138,9 @@ describe('EPUB 供数面契约对照（buildEpubItem × buildEpubBookNoteEntry �
   });
 
   it('缺 lastReadTime：进度 > 0 时两侧 readingDate 同为 null（不互相臆造日期）', async () => {
-    const { wallItems, reportEntries } = await contract({
-      a: aggregate({ id: 'a', percent: 0.5 }),
-    });
+    const { wallItems, reportEntries } = await contract([
+      aggregate({ id: 'a', percent: 0.5 }),
+    ]);
     expect(wallItems[0].readingDate).toBeNull();
     expect(reportEntries[0].frontmatter.readingDate).toBeNull();
   });

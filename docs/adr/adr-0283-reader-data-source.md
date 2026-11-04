@@ -1,6 +1,6 @@
 # ADR-0283：书库接入 bz 阅读数据源（bz-reader.json）
 
-日期：2026-11-04 · 状态：已采纳
+日期：2026-11-04 · 状态：已采纳（2026-11-05 修订：Weave 通道摘除，见文末）
 
 ## 背景
 
@@ -66,8 +66,36 @@ bz 阅读的存储约定（其 `src/core/plugin-path.ts` / `src/data/store.ts`�
 - **边界（有意不做）**：
   - 小橘的「书库观察」（ADR-0034）仍只监听 `weave-data.json`——那是行为流的
     结构化 diff 源，接入 bz 阅读需要另建一份 diff 记账，超出本次范围；
-  - 体检的 JSON 解析巡检清单（`checkup/files.ts` 的 `jsonScanTargets`）是同步签名，
-    而 bz 阅读的数据目录要异步读插件配置才能确定，暂不加入（EPUB 路径缺失仍会报）；
+  - 体检的 JSON 解析巡检清单（`checkup/files.ts` 的 `jsonScanTargets`）由同步快照接入
+    （2026-11-04 当天补上）：`reader-source.ts` 的 `knownReaderDataFilePath()` 记住最近一次
+    解析结果，`checkJsonFiles` 开跑前先 `await resolveReaderDataFilePath(app)` 刷新一次，
+    清单里于是能带上真实路径；副作用是「从没打开过书库、直接跑体检」的那一档拿默认目录，
+    体检报告会标该文件不存在，不影响其它检查。
   - bz 阅读导出的 Markdown（`tags: [书摘]`、`progress`/`exported` 键）不当作 bz 书库
     md 书——它是「某本书的划线笔记」，与书库 md 书的目录/tags 契约不同（ADR-0274 的
     目录闸门也不覆盖「书摘」目录）。
+
+## 修订（2026-11-05）：Weave 通道摘除
+
+**决策变更**：书库不再读 `weave-data.json`，EPUB 书目只有 bz 阅读一个数据源
+（用户拍板：「书库去掉 weave 相关的逻辑代码」）。上文的「两个数据源」「合并去重」
+「按来源分派」全部作废，落地改动：
+
+- `bookshelf/data.ts`：删 `resolveWeaveDataPath` / `readWeaveAggregates` /
+  `WEAVE_PLUGIN_ID` / `WEAVE_DATA_FILE` / `pickAggregate` / `hasReadingTrace`；
+  `readEpubAggregates` 只剩读 bz-reader.json、按 `vaultPath` 去重（同一本书重复出现时
+  取最近活动的一条）。聚合只登记 bz 阅读书目 id（`epubBookIdOf`），不再有 source 概念。
+- 封面不再按书名去 `CONFIG/BOOK/EPUB COVER/` 猜（那是 Weave 时代的约定，猜中同名书
+  就是串封面），只认 `meta.coverPath`。
+- `bookshelf/epub-notes.ts`：删 `buildEpubJumpLink` / `encodeCfiForWikilink` /
+  `mutateWeaveBook` / `epubSourceForWrite`；跳转与写回只有协议链接与 bz-reader.json 一条路。
+- `state.ts` 的 `BookshelfItem` 去掉 `epubSource` 字段。
+- `bookshelf/index.ts` 自动刷新只跟 `bz-reader.json`。
+- `checkup`：清单删掉 weave-data.json 一条；孤儿条目文案只剩 bz 阅读的清理指引。
+- 设置页数据路径说明删掉 weave-data.json 一行。
+- **数据不迁移**：旧 `weave-data.json` 原样留在盘上，不读、不改、不删；装过 Weave 的
+  用户升级后那批书会从书库消失，读数需改用 bz 阅读重新导入。
+- **边界不变**：小橘的「书库观察」（ADR-0034，`src/smartcat/library-source.ts`）仍只监听
+  `weave-data.json`，与书库数据源脱钩——它读的是另一份文件，本次不动（用户 2026-11-05
+  确认「原样留着」）；它现在没有数据源，等于空跑。
+

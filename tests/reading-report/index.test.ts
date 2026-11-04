@@ -251,16 +251,21 @@ describe('报告视图渲染（面板内容区）', () => {
 
   it('RR-F2/RR-UX1：silent 重算（自动刷新档）——无 toast、翻月游标/年卡展开/滚位保留', async () => {
     const vault = seedVault();
-    // 会话覆盖 2025-05 / 2025-06 两月，供翻月
+    // 会话覆盖 2025-05 / 2025-06 两月，供翻月——数据源是 bz 阅读的 bz-reader.json
+    // （books 数组 / fileRef / stats.totalReadTime 按秒；会话挂在 reading.sessions 上）
     const ms = (y: number, m: number, d: number, h: number) => new Date(y, m - 1, d, h).getTime();
-    vault.files.set('CONFIG/STORAGE/weave-data.json', JSON.stringify({
-      books: {
-        a: {
+    vault.files.set('bz-reader/storage/bz-reader.json', JSON.stringify({
+      version: 1,
+      schemaVersion: 2,
+      books: [
+        {
+          id: 'a',
           meta: { title: '会话之书', author: '村上春树' },
-          file: { vaultPath: 'books/s.epub' },
+          fileRef: { vaultPath: 'books/s.epub' },
           reading: {
             position: { percent: 0.5 },
-            stats: { totalReadTime: 7200000, lastReadTime: ms(2025, 6, 2, 14) },
+            // 7200 秒 = weave 时代的 7200000 毫秒（读侧归一 ×1000，报告口径不变）
+            stats: { totalReadTime: 7200, lastReadTime: ms(2025, 6, 2, 14) },
             sessions: [
               { start: ms(2025, 5, 10, 8), end: ms(2025, 5, 10, 9), durationSeconds: 1200 },
               { start: ms(2025, 5, 11, 9), end: ms(2025, 5, 11, 10), durationSeconds: 2400 },
@@ -270,8 +275,11 @@ describe('报告视图渲染（面板内容区）', () => {
               { start: ms(2025, 6, 2, 14), end: ms(2025, 6, 2, 15), durationSeconds: 1500 },
             ],
           },
+          notes: { highlights: [], excerpts: [], bookmarks: [] },
+          addedAt: 1699000000000,
+          updatedAt: 1700000000000,
         },
-      },
+      ],
     }));
     const app = makeApp(vault);
     const container = newContainer();
@@ -302,16 +310,20 @@ describe('报告视图渲染（面板内容区）', () => {
 
   it('热力图翻月：段头 ‹ › 与月份标题在场；点击 ‹ 切上一月（标题/网格联动，域内交互）', async () => {
     const vault = seedVault();
-    // 会话经 weave-data.json（EPUB 聚合 reading.sessions）注入，覆盖 2025-05 / 2025-06 两个月
+    // 会话经 bz 阅读数据（bz-reader.json 的 reading.sessions）注入，覆盖 2025-05 / 2025-06 两个月
     const ms = (y: number, m: number, d: number, h: number) => new Date(y, m - 1, d, h).getTime();
-    vault.files.set('CONFIG/STORAGE/weave-data.json', JSON.stringify({
-      books: {
-        a: {
+    vault.files.set('bz-reader/storage/bz-reader.json', JSON.stringify({
+      version: 1,
+      schemaVersion: 2,
+      books: [
+        {
+          id: 'a',
           meta: { title: '会话之书', author: '村上春树' },
-          file: { vaultPath: 'books/s.epub' },
+          fileRef: { vaultPath: 'books/s.epub' },
           reading: {
             position: { percent: 0.5 },
-            stats: { totalReadTime: 7200000, lastReadTime: ms(2025, 6, 2, 14) },
+            // 7200 秒 = weave 时代的 7200000 毫秒（读侧归一 ×1000，报告口径不变）
+            stats: { totalReadTime: 7200, lastReadTime: ms(2025, 6, 2, 14) },
             sessions: [
               { start: ms(2025, 5, 10, 8), end: ms(2025, 5, 10, 9), durationSeconds: 1200 },
               { start: ms(2025, 5, 11, 9), end: ms(2025, 5, 11, 10), durationSeconds: 2400 },
@@ -321,8 +333,11 @@ describe('报告视图渲染（面板内容区）', () => {
               { start: ms(2025, 6, 2, 14), end: ms(2025, 6, 2, 15), durationSeconds: 1500 },
             ],
           },
+          notes: { highlights: [], excerpts: [], bookmarks: [] },
+          addedAt: 1699000000000,
+          updatedAt: 1700000000000,
         },
-      },
+      ],
     }));
     const container = newContainer();
     renderReadingReport(container, makeApp(vault));

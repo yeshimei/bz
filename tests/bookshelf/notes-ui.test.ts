@@ -30,7 +30,6 @@ function makeApp(vault: MockVault, extra: any = {}) {
       getActiveFile: vi.fn(() => null),
     },
     commands: { executeCommandById: vi.fn() },
-    plugins: { plugins: { 'weave-epub-reader': { settings: { dataPath: 'CONFIG/STORAGE' } } } },
     ...extra,
   } as any;
 }
@@ -51,23 +50,29 @@ const NOTE_MD = `# 第一章
 <span data-id="h1" data-comment="批注一" data-date="2025-06-01" class="__comment cm-highlight">原文一</span>
 `;
 
-const EPUB_WEAVE = (vaultPath = '书库/悉达多.epub') => JSON.stringify({
+/** 书库唯一的 EPUB 数据源：bz 阅读缺省数据目录（ADR-0283） */
+const READER_PATH = 'bz-reader/storage/bz-reader.json';
+
+const EPUB_READER = (vaultPath = '书库/悉达多.epub') => JSON.stringify({
+  version: 1,
   schemaVersion: 2,
-  books: {
-    bk_001: {
+  books: [
+    {
       id: 'bk_001',
-      file: { vaultPath, sourceId: 'epubsrc-demo' },
+      fileRef: { vaultPath, sourceId: 'epubsrc-demo' },
       meta: { title: '悉达多', author: '赫尔曼·黑塞' },
-      reading: { position: { chapterIndex: 0, cfi: '', percent: 0.6 }, stats: { totalReadTime: 0, lastReadTime: 0, createdTime: 0 } },
+      reading: { position: { chapterIndex: 0, cfi: '', percent: 0.6 }, stats: { totalReadTime: 0, lastReadTime: 0 } },
       notes: {
         bookmarks: [],
         highlights: [
-          { id: 'h1', text: '原文一', commentText: '想法一', chapterIndex: 0, chapterTitle: '第一章', cfiRange: 'epubcfi(/6/2)!/4/4', createdTime: 1700000000000 },
+          { id: 'h1', text: '原文一', comment: '想法一', chapterIndex: 0, chapterTitle: '第一章', cfiRange: 'epubcfi(/6/2)!/4/4', createdAt: 1700000000000 },
         ],
         excerpts: [],
       },
+      addedAt: 1700000000000,
+      updatedAt: 1700000000000,
     },
-  },
+  ],
 });
 
 /** 打开主面板并等待首次异步重建完成 */
@@ -319,23 +324,26 @@ describe('读书笔记弹窗（EPUB）', () => {
     expect(notesPopup()!.textContent).toContain('未找到该书阅读数据');
   });
 
-  it('双击划线块 → weave-cfi 深链跳原文', async () => {
-    vault.files.set('CONFIG/STORAGE/weave-data.json', EPUB_WEAVE());
+  it('双击划线块 → obsidian://bz-reader 协议跳原文（带 book/cfi）', async () => {
+    vault.files.set(READER_PATH, EPUB_READER());
     const app = makeApp(vault);
+    app.openUrl = vi.fn(() => Promise.resolve());
     showEpubBookNotes(app, '书库/悉达多.epub', '悉达多');
     await new Promise((r) => setTimeout(r, 30));
     const quote = [...document.querySelectorAll<HTMLElement>('.bz-bs-hl-quote')].find((d) => d.textContent === '❝ 原文一')!;
     const block = quote.parentElement!.parentElement!;
     block.dispatchEvent(new MouseEvent('dblclick', { bubbles: true }));
-    expect(app.workspace.openLinkText).toHaveBeenCalledWith(
-      '书库/悉达多.epub#weave-cfi=epubcfi(/6/2)!/4/4&chapter=0&sid=epubsrc-demo',
-      '',
-      false
-    );
+    expect(app.openUrl).toHaveBeenCalledTimes(1);
+    const url = (app.openUrl as any).mock.calls[0][0] as string;
+    expect(url.startsWith('obsidian://bz-reader?')).toBe(true);
+    expect(url).toContain('book=bk_001');
+    expect(url).toContain(`cfi=${encodeURIComponent('epubcfi(/6/2)!/4/4')}`);
+    // bz 阅读不再走 vault 深链（它没注册 .epub 扩展名）
+    expect(app.workspace.openLinkText).not.toHaveBeenCalled();
   });
 
-  it('长按内容 → 编辑想法；写回 weave-data.json 并重开刷新', async () => {
-    vault.files.set('CONFIG/STORAGE/weave-data.json', EPUB_WEAVE());
+  it('长按内容 → 编辑想法；写回 bz-reader.json 并重开刷新', async () => {
+    vault.files.set(READER_PATH, EPUB_READER());
     const app = makeApp(vault);
     showEpubBookNotes(app, '书库/悉达多.epub', '悉达多');
     await new Promise((r) => setTimeout(r, 30));
@@ -348,14 +356,14 @@ describe('读书笔记弹窗（EPUB）', () => {
     textarea.value = '新想法';
     (editPopup.querySelector('.bz-btn--primary') as HTMLElement).click();
     await new Promise((r) => setTimeout(r, 40));
-    const data = JSON.parse(vault.files.get('CONFIG/STORAGE/weave-data.json')!);
-    expect(data.books.bk_001.notes.highlights[0].commentText).toBe('新想法');
+    const data = JSON.parse(vault.files.get(READER_PATH)!);
+    expect(data.books[0].notes.highlights[0].comment).toBe('新想法');
     // 重开壳显示新想法
     expect(notesPopup()!.textContent).toContain('新想法');
   });
 
-  it('长按日期 → 确认删除整条划线（weave-data.json 移除）+ 失败重开壳（B2）', async () => {
-    vault.files.set('CONFIG/STORAGE/weave-data.json', EPUB_WEAVE());
+  it('长按日期 → 确认删除整条划线（bz-reader.json 移除）+ 失败重开壳（B2）', async () => {
+    vault.files.set(READER_PATH, EPUB_READER());
     seedRemoteSkins('bookshelf', ['kraft']); // kraft 远端化：就绪后才挂得上
     setSettingsProvider(() => ({ bookTag: 'book', bookshelfFolderPath: '书库', bookshelfSkin: 'kraft' }) as any); // issue 291：EPUB 路径同样验皮肤类
     const app = makeApp(vault);
@@ -372,47 +380,52 @@ describe('读书笔记弹窗（EPUB）', () => {
     expect(confirmPopup.classList.contains('bz-flow-dialog--danger')).toBe(true);
     (document.querySelector('#__shared_confirm_ok__') as HTMLElement).click();
     await new Promise((r) => setTimeout(r, 40));
-    const data = JSON.parse(vault.files.get('CONFIG/STORAGE/weave-data.json')!);
-    expect(data.books.bk_001.notes.highlights).toHaveLength(0);
+    const data = JSON.parse(vault.files.get(READER_PATH)!);
+    expect(data.books[0].notes.highlights).toHaveLength(0);
     // onChanged → 重开壳（此时已无划线 → 空态）
     expect(notesPopup()!.textContent).toContain('没有找到高亮或想法');
   });
 
   it('G11 验证：连开两本 EPUB，旧书在途 async 后到 → 旧壳已移除不覆盖新书壳（无残留可交互块）', async () => {
-    // 两本书：A/B 各一条划线；A 的首次 weave-data 读取挂起（在途窗口）
+    // 两本书：A/B 各一条划线；A 的首次阅读数据读取挂起（在途窗口）
     const twoBooks = {
+      version: 1,
       schemaVersion: 2,
-      books: {
-        bk_a: {
+      books: [
+        {
           id: 'bk_a',
-          file: { vaultPath: '书库/A.epub', sourceId: 'sid-a' },
+          fileRef: { vaultPath: '书库/A.epub', sourceId: 'sid-a' },
           meta: { title: 'A 书', author: '甲' },
-          reading: { position: { chapterIndex: 0, cfi: '', percent: 0.5 }, stats: { totalReadTime: 0, lastReadTime: 0, createdTime: 0 } },
+          reading: { position: { percent: 0.5 }, stats: {} },
           notes: { bookmarks: [], excerpts: [], highlights: [
-            { id: 'ha', text: 'A 的划线', commentText: '', chapterIndex: 0, chapterTitle: '章 A', cfiRange: 'epubcfi(/6/2)!/4/2', createdTime: 1700000000000 },
+            { id: 'ha', text: 'A 的划线', comment: '', chapterIndex: 0, chapterTitle: '章 A', cfiRange: 'epubcfi(/6/2)!/4/2', createdAt: 1700000000000 },
           ] },
+          addedAt: 1700000000000,
+          updatedAt: 1700000000000,
         },
-        bk_b: {
+        {
           id: 'bk_b',
-          file: { vaultPath: '书库/B.epub', sourceId: 'sid-b' },
+          fileRef: { vaultPath: '书库/B.epub', sourceId: 'sid-b' },
           meta: { title: 'B 书', author: '乙' },
-          reading: { position: { chapterIndex: 0, cfi: '', percent: 0.5 }, stats: { totalReadTime: 0, lastReadTime: 0, createdTime: 0 } },
+          reading: { position: { percent: 0.5 }, stats: {} },
           notes: { bookmarks: [], excerpts: [], highlights: [
-            { id: 'hb', text: 'B 的划线', commentText: '', chapterIndex: 0, chapterTitle: '章 B', cfiRange: 'epubcfi(/6/2)!/4/3', createdTime: 1700000000000 },
+            { id: 'hb', text: 'B 的划线', comment: '', chapterIndex: 0, chapterTitle: '章 B', cfiRange: 'epubcfi(/6/2)!/4/3', createdAt: 1700000000000 },
           ] },
+          addedAt: 1700000000000,
+          updatedAt: 1700000000000,
         },
-      },
+      ],
     };
-    vault.files.set('CONFIG/STORAGE/weave-data.json', JSON.stringify(twoBooks));
+    vault.files.set(READER_PATH, JSON.stringify(twoBooks));
     const app = makeApp(vault);
-    // A 的首次 weave-data 读取挂起：showEpubBookNotes(A) 的 async 停在在途
+    // A 的首次阅读数据读取挂起：showEpubBookNotes(A) 的 async 停在在途
     let releaseA!: (v: string) => void;
     const gate = new Promise<string>((r) => { releaseA = r; });
-    let firstWeaveRead = true;
+    let firstRead = true;
     const realRead = vault.adapter.read.bind(vault.adapter);
     (vault.adapter as any).read = async (path: string) => {
-      if (firstWeaveRead && path === 'CONFIG/STORAGE/weave-data.json') {
-        firstWeaveRead = false;
+      if (firstRead && path === READER_PATH) {
+        firstRead = false;
         return gate;
       }
       return realRead(path);
@@ -434,15 +447,15 @@ describe('读书笔记弹窗（EPUB）', () => {
     expect(notesPopup()!.textContent).not.toContain('A 的划线');
   });
 
-  it('删除失败（weave-data 被并发移除）→ error toast + 重开壳（B2 不留死局）', async () => {
-    vault.files.set('CONFIG/STORAGE/weave-data.json', EPUB_WEAVE());
+  it('删除失败（bz-reader.json 被并发移除）→ error toast + 重开壳（B2 不留死局）', async () => {
+    vault.files.set(READER_PATH, EPUB_READER());
     const app = makeApp(vault);
     showEpubBookNotes(app, '书库/悉达多.epub', '悉达多');
     await new Promise((r) => setTimeout(r, 30));
     const dateEl = document.querySelector('.bz-bs-hl-date--pointer') as HTMLElement;
     await longPress(dateEl);
-    // 确认前外部把书从 weave-data.json 移除 → deleteEpubNote false
-    vault.files.set('CONFIG/STORAGE/weave-data.json', JSON.stringify({ schemaVersion: 2, books: {} }));
+    // 确认前外部把书从 bz-reader.json 移除 → deleteEpubNote false
+    vault.files.set(READER_PATH, JSON.stringify({ version: 1, schemaVersion: 2, books: [] }));
     (document.querySelector('#__shared_confirm_ok__') as HTMLElement).click();
     await new Promise((r) => setTimeout(r, 40));
     expect(hasNotice('删除划线和想法失败，请重试')).toBe(true);

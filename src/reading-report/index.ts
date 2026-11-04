@@ -194,7 +194,7 @@ export function renderReadingReport(container: HTMLElement, app: App, opts: Repo
     // finishAbort/finishDone 以 let 绑定闭合，提前返回路径读到的是 null/false
     let quiet = false;
 
-    // 采集阶段（书库扫描 + weave 读取均为毫秒级快速步骤；计数前不弹 toast——
+    // 采集阶段（书库扫描 + 阅读数据读取均为毫秒级快速步骤；计数前不弹 toast——
     // EFF-7 与 clipbook 同序：骨架已给反馈，小库全程静默）
     await yieldToMainThread();
     if (!alive()) return finishAbort();

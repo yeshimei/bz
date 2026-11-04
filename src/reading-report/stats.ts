@@ -9,7 +9,7 @@
  * - C-4/EFF-8 一刀清：建议生成器（practical/focus/interaction/category/speed）与衍生死字段
  *   （trends 7 字段/habits 3 字段/focus 3 字段/categories 8 字段）及 generateMonthlySpeedTrend
  *   HTML 死模板（含内联 hex 与模拟数据）已删——上屏消费面 = report.ts 各段模板，未列字段即无产出。
- * - RR-F9 语义拍板：EPUB 会话无 type 字段，mapWeaveSessionToReport 按有效起止派生
+ * - RR-F9 语义拍板：EPUB 会话无 type 字段，mapEpubSessionToReport 按有效起止派生
  *   type:'completed'（有起止且时长 > 0 即完成会话）——会话完成率不再恒 0 压低专注分。
  * - RR-F10：start 缺失/非法的会话直接丢弃（不再补 0 落 1970 幽灵月）。
  */
@@ -43,7 +43,7 @@ export interface BookNoteEntry {
  * RR-F9：EPUB 会话无 type 字段，按有效起止派生 type:'completed'（有起止且时长 > 0
  * 即完成会话）——analyzeReadingSessions/analyzeSessionFocus 的完成率口径不再恒 0。
  */
-function mapWeaveSessionToReport(session: any): any | null {
+function mapEpubSessionToReport(session: any): any | null {
   const rawStart = session?.start;
   const start = typeof rawStart === 'number' && Number.isFinite(rawStart) && rawStart > 0 ? rawStart : null;
   if (start === null) return null;
@@ -65,7 +65,7 @@ function toIsoDate(timestamp: number | undefined): string | null {
 }
 
 /**
- * 把 Weave 书籍聚合映射为报告书条目（frontmatter 口径与 md 书一致，缺 field 补缺省）。
+ * 把 bz 阅读的书籍聚合映射为报告书条目（frontmatter 口径与 md 书一致，缺 field 补缺省）。
  * RR-A1：progress 归一 / subjects 分类 / readingDate 生成经 bookshelf/data 共享纯函数，
  * 与书架墙 buildEpubItem 同源（RR-F1 subjects 通道 / RR-F4 progress 前置随刀收敛）。
  */
@@ -100,7 +100,7 @@ function buildEpubBookNoteEntry(aggregate: any): BookNoteEntry | null {
       readingProgress: progress,
       readingTime: typeof stats?.totalReadTime === 'number' ? stats.totalReadTime : 0,
       readingSessions: sessions
-        .map(mapWeaveSessionToReport)
+        .map(mapEpubSessionToReport)
         .filter((s: any): s is NonNullable<typeof s> => s !== null),
       readingDate,
       completionDate: toIsoDate(stats?.completedTime),
@@ -115,8 +115,8 @@ function buildEpubBookNoteEntry(aggregate: any): BookNoteEntry | null {
   };
 }
 
-/** 阅读报告的 EPUB 书条目（全库 EPUB 书，不筛目录；ADR-0013 扩展）。
- *  数据源与书架墙同源（readEpubAggregates：weave-data.json + bz-reader.json 合并去重），
+/** 阅读报告的 EPUB 书条目（全库 EPUB 书，不筛目录；ADR-0283）。
+ *  数据源与书架墙同源（readEpubAggregates：只读 bz-reader.json），
  *  报告与墙对同一本书的进度/时长/划线计数恒等。 */
 export async function getEpubBookNotes(app: any): Promise<BookNoteEntry[]> {
   const aggregates = await readEpubAggregates(app);
@@ -252,7 +252,7 @@ export function calculateReadingStats(books: BookNoteEntry[]): ReadingStats {
       const fm = book.frontmatter;
       // RR-F4：钳 [0,100]——负数手滑不再落「刚开始」桶、超 100 进「已完成」桶（与宿主 data.ts 同款钳制）
       const readingProgress = Math.max(0, Math.min(100, parseFloat(fm.readingProgress) || 0));
-      // RR-F5/A1 供数面：parseReadingTimeMs 单源（readingTime 毫秒直读 → readingTimeFormat 中文/weave 双格式兜底）
+      // RR-F5/A1 供数面：parseReadingTimeMs 单源（readingTime 毫秒直读 → readingTimeFormat 中文/英文双格式兜底）
       const readingTime = parseReadingTimeMs(fm);
       // EFF-3：单趟归并——旧写法逐书 concat + 全量重 filter（O(n²·m) 大库热点），
       // 前缀全为重复劳动；push 直写语义逐字等价（顺序、>60s 阈值不变）

@@ -20,12 +20,12 @@
  *   2. 实例字段是插件的内部实现（private），跨插件耦合比读一份对外契约 JSON 更脆。
  *   配置走 adapter 直读：`.obsidian` 在 vault 文件树里不可见，getAbstractFileByPath 取不到。
  *
- * 归一目标：weave-data.json 的聚合形状（ADR-0013），上层 bookshelf / reading-report /
- * home / recap 只认这一种。差异全部收敛在 normalizeReaderAggregates：
- *   - `books` 是数组（weave 是 id → aggregate 的字典）
- *   - `fileRef.vaultPath`（weave 是 `file.vaultPath`）
- *   - 划线想法在 `comment` / `createdAt`（weave 是 `commentText` / `createdTime`）
- *   - `stats.totalReadTime` 是**秒**（weave 是毫秒）→ 归一乘 1000
+ * 归一目标：书库的 EPUB 聚合形状——上层 bookshelf / reading-report / home / recap 只认这一种。
+ * 差异全部收敛在 normalizeReaderAggregates：
+ *   - `books` 是数组 → 聚合列表
+ *   - `fileRef.vaultPath` → `file.vaultPath`
+ *   - 划线想法在 `comment` / `createdAt` → `commentText` / `createdTime`
+ *   - `stats.totalReadTime` 是**秒** → 归一乘 1000（上层按毫秒展示）
  *   - `notes.excerpts` 是 highlights 的**全量镜像**（bz-reader data/notes.ts 的 mirrorExcerpt）
  *     → 只保留「有想法」的，否则 bz 的 thinks（读 excerpts.length）会等于划线总数
  */
@@ -208,7 +208,7 @@ export async function readReaderData(app: App): Promise<ReaderDataRead> {
   return primary;
 }
 
-/** 划线归一：comment → commentText，createdAt → createdTime（bz 读书笔记读 weave 口径字段） */
+/** 划线归一：comment → commentText，createdAt → createdTime（读书笔记层读归一后的字段） */
 function normalizeHighlights(list: unknown): any[] {
   if (!Array.isArray(list)) return [];
   const out: any[] = [];
@@ -223,7 +223,7 @@ function normalizeHighlights(list: unknown): any[] {
 }
 
 /**
- * bz-reader 业务 JSON → weave 形状聚合数组（纯函数；坏条目直接丢，不猜）。
+ * bz-reader 业务 JSON → 书库聚合数组（纯函数；坏条目直接丢，不猜）。
  *
  * 想法数口径：bz-reader 的 excerpts 是 highlights 的镜像，无论有没有 comment 都会写；
  * bz 的 thinks 读 excerpts.length，直接透传会把「划线数」当「想法数」（虚高）。
@@ -262,7 +262,7 @@ export function normalizeReaderAggregates(raw: unknown): any[] {
         position: isObj(reading.position) ? reading.position : { percent: 0 },
         stats: {
           ...stats,
-          // bz-reader 按秒记账，weave 按毫秒——上层（书架/报告）统一按毫秒展示
+          // bz-reader 按秒记账，上层（书架/报告）统一按毫秒展示
           totalReadTime: num(stats.totalReadTime) * 1000,
           lastReadTime: num(stats.lastReadTime),
           completedTime: num(stats.completedTime),
@@ -284,7 +284,7 @@ export function normalizeReaderAggregates(raw: unknown): any[] {
   return out;
 }
 
-/** 读侧损坏已告警旗标（与 weave 同口径：损坏降级一次性告警，恢复正常后复位） */
+/** 读侧损坏已告警旗标：损坏降级一次性告警，恢复正常后复位 */
 let readerCorruptWarned = false;
 
 /** 读 bz-reader.json 聚合（缺失返回 []；损坏降级空 + 一次性告警）。

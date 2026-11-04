@@ -15,6 +15,10 @@ import { createOverlay, closeOverlay, applyBookshelfSkin, bsSkinClass } from '..
 import { setSettingsProvider } from '../../src/core/settings-provider';
 import { resetSkinPackState } from '../../src/core/skin-pack';
 import { seedRemoteSkins } from '../skin-pack-helpers';
+import { READER_DEFAULT_DATA_DIR } from '../../src/bookshelf/reader-source';
+
+/** bz 阅读的业务数据文件（书库唯一的 EPUB 数据源，ADR-0283） */
+const READER_PATH = `${READER_DEFAULT_DATA_DIR}/bz-reader.json`;
 
 
 /** 轮询等待报告分片渲染完成（EFF-7 后小库静默：以内容区段数 ≥9 为完成标记，与 toast 档位解耦） */
@@ -277,17 +281,18 @@ describe('bookshelf 书脊墙（issue 218）', () => {
     closeOverlay();
   });
 
-  it('借书卡：EPUB 与 md 同一只读形态（无编辑控件；展示 Weave 数据）', async () => {
+  it('借书卡：EPUB 与 md 同一只读形态（无编辑控件；展示 bz 阅读数据）', async () => {
     const vault = new MockVault();
     vault.files.set('书库/认知觉醒.md', '---\ntags: [book]\n---');
-    vault.files.set('CONFIG/STORAGE/weave-data.json', JSON.stringify({
-      books: {
-        a: {
+    vault.files.set(READER_PATH, JSON.stringify({
+      books: [
+        {
+          id: 'a',
           meta: { title: '百年孤独', author: '马尔克斯' },
-          file: { vaultPath: 'books/x.epub' },
-          reading: { position: { percent: 0.5 }, stats: { totalReadTime: 3600000 } },
+          fileRef: { vaultPath: 'books/x.epub' },
+          reading: { position: { percent: 0.5 }, stats: { totalReadTime: 3600 } },
         },
-      },
+      ],
     }));
     const app = makeApp(vault);
     await openPanel(vault, app);
@@ -334,21 +339,21 @@ describe('bookshelf 书脊墙（issue 218）', () => {
     closeOverlay();
   });
 
-  it('B4：weave-data.json vault modify → 防抖后自动刷新（EPUB 上墙）', async () => {
+  it('B4：bz-reader.json vault modify → 防抖后自动刷新（EPUB 上墙）', async () => {
     const { vault, app } = seedVault();
-    vault.files.set('CONFIG/STORAGE/weave-data.json', JSON.stringify({
-      books: { a: { meta: { title: '百年孤独' }, file: { vaultPath: 'books/x.epub' }, reading: { position: { percent: 0.9 } } } },
+    vault.files.set(READER_PATH, JSON.stringify({
+      books: [{ id: 'a', meta: { title: '百年孤独' }, fileRef: { vaultPath: 'books/x.epub' }, reading: { position: { percent: 0.9 } } }],
     }));
     await openPanel(vault, app);
     let overlay = document.querySelector('.bz-panel-overlay') as HTMLElement;
     expect(spines(overlay).some((s) => s.title?.includes('百年孤独'))).toBe(true);
-    vault.files.set('CONFIG/STORAGE/weave-data.json', JSON.stringify({
-      books: {
-        a: { meta: { title: '百年孤独' }, file: { vaultPath: 'books/x.epub' }, reading: { position: { percent: 0.9 } } },
-        b: { meta: { title: '新加的书' }, file: { vaultPath: 'books/y.epub' } },
-      },
+    vault.files.set(READER_PATH, JSON.stringify({
+      books: [
+        { id: 'a', meta: { title: '百年孤独' }, fileRef: { vaultPath: 'books/x.epub' }, reading: { position: { percent: 0.9 } } },
+        { id: 'b', meta: { title: '新加的书' }, fileRef: { vaultPath: 'books/y.epub' } },
+      ],
     }));
-    vault.emit('modify', vault.file('CONFIG/STORAGE/weave-data.json'));
+    vault.emit('modify', vault.file(READER_PATH));
     await waitFor(() => spines(document.querySelector('.bz-panel-overlay') as HTMLElement).length === 5, 5000); // 300ms 防抖 + rebuild
     overlay = document.querySelector('.bz-panel-overlay') as HTMLElement;
     expect(spines(overlay).length).toBe(5); // 3 md + 2 epub
