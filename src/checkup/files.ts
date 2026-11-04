@@ -17,6 +17,7 @@ import { storageDir, storageFile } from '../core/storage';
 import { tryGetSettings } from '../core/settings-provider';
 import { getStoragePath } from '../favorites/config';
 import { resolveWeaveDataPath, WEAVE_DATA_FILE } from '../bookshelf/data';
+import { knownReaderDataFilePath } from '../bookshelf/reader-source';
 
 /** 冲突留档目录（与 core/storage D1 原语 3 的 CORRUPT_BACKUP_DIR 同名；勿改，合并时对齐） */
 export const CORRUPT_DIR = 'CONFIG/.CORRUPT';
@@ -57,7 +58,10 @@ export function jsonScanTargets(app: App): JsonScanTarget[] {
     { file: storageFile('knowledge.json'), label: '知识盒' },
     { file: storageFile('secondbrain.json'), label: '第二大脑' },
     { file: storageFile('quiz.json'), label: '复习做题' },
-    { file: `${resolveWeaveDataPath(app)}/${WEAVE_DATA_FILE}`, label: 'EPUB 阅读数据（书库）' },
+    { file: `${resolveWeaveDataPath(app)}/${WEAVE_DATA_FILE}`, label: 'EPUB 阅读数据（Weave）' },
+    // 书库的第二个数据源（ADR-0283）：路径由 bz 阅读插件配置决定，靠 reader-source 的
+    // 同步快照取（checkJsonFiles 开跑前会先刷新一次，保证与真实位置一致）
+    { file: knownReaderDataFilePath(), label: 'EPUB 阅读数据（bz 阅读）' },
   ];
 }
 
