@@ -270,6 +270,17 @@ export function epubCategory(meta: any): string | null {
   return typeof subjects[0] === 'string' && subjects[0].trim() ? subjects[0].trim() : null;
 }
 
+/** 字数与页数口径单源（书架借书卡与阅读报告同用）：只有正的 meta.wordCount 才算，
+ *  页数按 500 字/页。bz 阅读与 weave 的聚合都带这个字段，别再各写一份。 */
+export function epubWordCount(meta: any): number {
+  return typeof meta?.wordCount === 'number' && meta.wordCount > 0 ? meta.wordCount : 0;
+}
+
+export function epubPageCount(wordCount: number): number {
+  const raw = Number.isFinite(wordCount) ? wordCount : 0;
+  return Math.floor(raw / 500);
+}
+
 /** readingDate 生成（深审 RR-F4 单源）：progress > 0 才带阅读日期——进度重置为 0 的重读书
  *  两侧一致判「未读」，不再「报告按 readingDate 计在读、书架墙按 progress 判未读」分叉 */
 export function epubReadingDate(progress: number, lastReadTime: number | undefined): string | null {
@@ -297,6 +308,7 @@ function buildEpubItem(app: App, aggregate: any): BookshelfItem | null {
 
   const vaultFile = app?.vault?.getAbstractFileByPath?.(vaultPath);
   const epubCategoryValue = epubCategory(meta);
+  const wordCount = epubWordCount(meta);
   const source = epubSourceOf(aggregate);
   const cfi = typeof reading?.position?.cfi === 'string' ? reading.position.cfi.trim() : '';
   return {
@@ -315,8 +327,8 @@ function buildEpubItem(app: App, aggregate: any): BookshelfItem | null {
     readingTimeMs: totalReadTimeMs,
     highlights: Array.isArray(notes?.highlights) ? notes.highlights.length : 0,
     thinks: Array.isArray(notes?.excerpts) ? notes.excerpts.length : 0,
-    wordCount: 0,
-    pages: 0,
+    wordCount,
+    pages: epubPageCount(wordCount),
     status: completionDate ? '已读' : progress > 0 ? '在读' : '未读',
     isEpub: true,
     epubVaultPath: vaultPath,
@@ -361,12 +373,46 @@ export async function readWeaveAggregates(app: App, opts?: ReadAggregatesOptions
   return Object.values(books);
 }
 
+/** 阅读痕迹：读过或划过线才算（进度 0、无划线、无读完时间 = 只是导入过） */
+function hasReadingTrace(aggregate: any): boolean {
+  const reading = aggregate?.reading;
+  const stats = reading?.stats;
+  const percent = Number(reading?.position?.percent);
+  if (Number.isFinite(percent) && percent > 0) return true;
+  if (Number.isFinite(stats?.lastReadTime) && Number(stats.lastReadTime) > 0) return true;
+  if (Number.isFinite(stats?.completedTime) && Number(stats.completedTime) > 0) return true;
+  const highlights = aggregate?.notes?.highlights;
+  return Array.isArray(highlights) && highlights.length > 0;
+}
+
+/** 同一本书两份数据各有一份时选哪份（ADR-0283 选源规则单源；readEpubAggregates 与写路径共用） */
+function pickAggregate(
+  weave: any | undefined,
+  reader: any | undefined,
+): { aggregate: any; source: EpubAggregateSource } {
+  if (!weave) return { aggregate: reader, source: 'reader' };
+  if (!reader) return { aggregate: weave, source: 'weave' };
+  const weaveTrace = hasReadingTrace(weave);
+  const readerTrace = hasReadingTrace(reader);
+  if (weaveTrace !== readerTrace) {
+    return weaveTrace ? { aggregate: weave, source: 'weave' } : { aggregate: reader, source: 'reader' };
+  }
+  return aggregateActivity(reader) >= aggregateActivity(weave)
+    ? { aggregate: reader, source: 'reader' }
+    : { aggregate: weave, source: 'weave' };
+}
+
 /**
  * 全库 EPUB 聚合（异步）：weave-data.json + bz-reader.json 合并。
  *
  * 同一 vaultPath 只留一条——两个插件读同一本 epub 时，书架上出现两本同名书
- * （还有两份进度/划线）比任何取舍都糟。取「最近活动」的一份（lastReadTime /
- * updatedAt），并列时 bz 阅读优先（新通道，旧通道多半是迁移前的残留）。
+ * （还有两份进度/划线）比任何取舍都糟。选源顺序见 pickAggregate：
+ *   1. 只有一份 → 用它；
+ *   2. 一方有阅读痕迹、一方没有 → 取有痕迹的。bz 阅读刚导入同一批书时 addedAt 必然是
+ *      「现在」，只按时间比会让「从未打开过」盖掉 Weave 里读了半本的那份（书架显示未读、
+ *      划线清零，数据其实都在）——迁移期批量导入必然撞上；
+ *   3. 两份都有痕迹（或都没有）→ 比最近活动（lastReadTime 为主，updatedAt/addedAt 兜底），
+ *      并列时 bz 阅读优先（新通道，旧通道多半是迁移前的残留）。
  * 每份聚合登记来源（WeakMap），供条目携带深链素材、写回时按源分派文件。
  */
 export async function readEpubAggregates(app: App, opts?: ReadAggregatesOptions): Promise<any[]> {
@@ -374,24 +420,25 @@ export async function readEpubAggregates(app: App, opts?: ReadAggregatesOptions)
     readWeaveAggregates(app, opts),
     readReaderAggregates(app, opts),
   ]);
-  const picked = new Map<string, { aggregate: any; activity: number }>();
+  const byPath = new Map<string, { weave?: any; reader?: any }>();
   for (const aggregate of weave) {
     const path = String(aggregate?.file?.vaultPath || '').trim();
     if (!path) continue; // 无路径的聚合 buildEpubItem 也会丢，这里提前收敛
-    picked.set(path, {
-      aggregate: tagAggregate(aggregate, 'weave', String(aggregate?.id || '')),
-      activity: aggregateActivity(aggregate),
-    });
+    const entry = byPath.get(path) || {};
+    entry.weave = aggregate;
+    byPath.set(path, entry);
   }
   for (const aggregate of reader) {
     const path = String(aggregate?.file?.vaultPath || '').trim();
     if (!path) continue;
-    const prev = picked.get(path);
-    const activity = aggregateActivity(aggregate);
-    if (prev && activity < prev.activity) continue;
-    picked.set(path, { aggregate: tagAggregate(aggregate, 'reader', String(aggregate?.id || '')), activity });
+    const entry = byPath.get(path) || {};
+    entry.reader = aggregate;
+    byPath.set(path, entry);
   }
-  return [...picked.values()].map((v) => v.aggregate);
+  return [...byPath.values()].map(({ weave: weaveOne, reader: readerOne }) => {
+    const { aggregate, source } = pickAggregate(weaveOne, readerOne);
+    return tagAggregate(aggregate, source, String(aggregate?.id || ''));
+  });
 }
 
 /** EPUB 条目（异步；缺文件返回 []） */

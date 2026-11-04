@@ -343,10 +343,10 @@ function renderEpubHighlightBlock(
 
   const highlightId = String(note.highlight?.id || '');
 
-  // 双击整个块 → 跳原文（weave 深链 / bz 阅读协议，按来源分派）
+  // 双击整个块 → 跳原文（weave 深链 / bz 阅读协议，按来源分派）。
+  // 只有真打开了才关窗：跳转目标为空（脏数据缺 cfi/bookId）时关掉弹窗＝用户对着桌面。
   block.addEventListener('dblclick', () => {
-    openEpubJump(app, book, note);
-    closeEpubNotesModal();
+    if (openEpubJump(app, book, note)) closeEpubNotesModal();
   });
 
   // 长按内容 → 编辑想法

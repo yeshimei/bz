@@ -22,6 +22,8 @@ import {
   epubProgress,
   epubCategory,
   epubReadingDate,
+  epubWordCount,
+  epubPageCount,
   parseReadingTimeMs,
   isBookshelfPath,
 } from '../bookshelf/data';
@@ -78,8 +80,9 @@ function buildEpubBookNoteEntry(aggregate: any): BookNoteEntry | null {
   if (!vaultPath || !title) return null;
 
   const progress = epubProgress(reading?.position?.percent);
-  const wordCount = typeof meta?.wordCount === 'number' && meta.wordCount > 0 ? meta.wordCount : 0;
-  const pages = Math.floor(wordCount / 500);
+  // 字数/页数口径与书架借书卡同源（bookshelf/data 的 epubWordCount / epubPageCount）
+  const wordCount = epubWordCount(meta);
+  const pages = epubPageCount(wordCount);
   const sessions = Array.isArray(reading?.sessions) ? reading.sessions : [];
   const readingDate = epubReadingDate(progress, stats?.lastReadTime);
 
