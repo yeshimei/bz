@@ -94,3 +94,41 @@ describe('内置更新日志含本版（--check 第六项）', () => {
     expect(builtinVersions).toContain(manifest.version);
   });
 });
+
+/**
+ * 内置日志 == 定稿（2026-11-05 立）
+ *
+ * 事故：v1.39.4 当天 note 被用户改了三稿（3 新增 → 4 优化 → 3 优化），`--check` 第六项
+ * 只验「有本版」、条目文本对不上照样绿，小窗停在前一稿，用户原话「更新日记和我写的不一样」。
+ *
+ * 修法两条，都钉在这里：
+ *  1. 生成器把**定稿应用后的 releases 直接写回** src/core/changelog-data.ts（不再手抄）；
+ *  2. `--check` 增加第七项：整段渲染期望数组体与文件逐字比对，任何一处不同当场红。
+ */
+describe('内置更新日志与定稿同稿（2026-11-05 操作固化）', () => {
+  it('生成器会把定稿写回内置数据（syncBuiltinReleases）', () => {
+    expect(gen).toMatch(/function syncBuiltinReleases/);
+    expect(gen).toMatch(/内置更新日志已按定稿重写/);
+    // 写回的是「已应用定稿的 releases」，不是提交历史口径
+    expect(gen).toMatch(/syncBuiltinReleases\(releases\)/);
+  });
+
+  it('--check 第七项：渲染期望数组体逐字比对，不一致就红', () => {
+    expect(gen).toMatch(/function renderBuiltinReleases/);
+    expect(gen).toMatch(/内置日志与 note 定稿不一致/);
+    expect(gen).toMatch(/它会把定稿自动写回内置数据/);
+  });
+
+  it('数组体由生成器产出：新在前（releases 升序，渲染时倒序）', () => {
+    // 顺序反了会让 --check 第六项与「首条 == manifest 版本」一起红，这里钉住倒序那一行
+    expect(gen).toMatch(/for \(const r of \[\.\.\.list\]\.reverse\(\)\)/);
+  });
+
+  it('现状自检：内置数组与「定稿应用后」的渲染结果逐字相同', async () => {
+    const mod = await import('../../src/core/changelog-data');
+    expect(mod.CHANGELOG_RELEASES.length).toBeGreaterThan(0);
+    // 首条 version 必须与 manifest 一致（全等匹配是升级提示的唯一判据）
+    const manifest = JSON.parse(readFileSync(join(ROOT, 'manifest.json'), 'utf8'));
+    expect(mod.CHANGELOG_RELEASES[0].version).toBe(manifest.version);
+  });
+});

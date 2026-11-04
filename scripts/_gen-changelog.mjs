@@ -356,13 +356,91 @@ function resolveNoteSources() {
   return [...map.entries()].map(([version, file]) => ({ version, file }));
 }
 
-/* --check：发布前的六项对账。版本号的事实源是 tag，manifest 与日志都必须跟它一致；
+/* ==================== 内置更新日志：从定稿自动生成（2026-11-05 固化） ====================
+ * 升级提示小窗读的是 src/core/changelog-data.ts 里的 CHANGELOG_RELEASES，不是 note 文件。
+ * 原来这份数据靠人手抄 note——抄漏、抄成上一稿都是静默的：`--check` 第六项只验「有本版」，
+ * 条目文本对不上照样绿。2026-11-05 v1.39.4 当场撞了两次（note 从 3 新增改成 4 优化、
+ * 又改成 3 优化，小窗还停在前一稿，用户看到的原话是「更新日记和我写的不一样」）。
+ *
+ * 现在：**这一整段数组由本脚本从 releases 生成并写盘**，note 定稿是唯一事实源；
+ * 手改 changelog-data.ts 的数组体没有意义（下次跑就被覆盖），`--check` 也会报红。
+ * 数组以外的部分（文件头注释、releaseEntryCount、pickReleaseFor）原样保留。
+ * ==================================================================== */
+const BUILTIN_PATH = join(ROOT, 'src/core/changelog-data.ts');
+const BUILTIN_HEAD = 'export const CHANGELOG_RELEASES: readonly ChangelogRelease[] = [';
+
+/** TS 单引号字符串字面量（转义反斜杠与单引号；与文件里现有风格一致） */
+function q(s) {
+  return `'${String(s == null ? '' : s).replace(/\\/g, '\\\\').replace(/'/g, "\\'")}'`;
+}
+
+/** releases → CHANGELOG_RELEASES 数组体（含首尾行，不含文件其余部分）。
+ *  releases 按版本升序收集，内置数组的约定是**新在前**（小窗从头往下读、`--check`
+ *  第六项与测试都按「首条 == manifest 版本」验），这里倒序输出。 */
+function renderBuiltinReleases(list) {
+  const lines = [BUILTIN_HEAD];
+  for (const r of [...list].reverse()) {
+    lines.push('  {');
+    lines.push(`    version: ${q(r.version)},`);
+    if (r.date) lines.push(`    date: ${q(r.date)},`);
+    lines.push(`    // 条目与 docs/note-v${r.version}.md 同稿（scripts/_gen-changelog.mjs 自动生成，勿手改）`);
+    for (const sec of ['added', 'fixed', 'improved']) {
+      const rows = r[sec] || [];
+      if (!rows.length) continue;
+      lines.push(`    ${sec}: [`);
+      for (const it of rows) {
+        const parts = [`domain: ${q(it.domain)}`, `text: ${q(it.text)}`];
+        if (it.sub) parts.push(`sub: ${q(it.sub)}`);
+        lines.push(`      { ${parts.join(', ')} },`);
+      }
+      lines.push('    ],');
+    }
+    lines.push('  },');
+  }
+  lines.push('];');
+  return lines.join('\n');
+}
+
+/** 数组体在文件里的 [start, end) 区间（end 含 `\n];`），找不到返回 null */
+function builtinRange(src) {
+  const start = src.indexOf(BUILTIN_HEAD);
+  if (start < 0) return null;
+  const end = src.indexOf('\n];', start);
+  if (end < 0) return null;
+  return { start, end: end + 3 };
+}
+
+/** 把 releases 写回 changelog-data.ts；返回是否真的改动了文件 */
+function syncBuiltinReleases(list) {
+  if (!existsSync(BUILTIN_PATH)) return false;
+  const src = readFileSync(BUILTIN_PATH, 'utf8');
+  const range = builtinRange(src);
+  if (!range) return false;
+  const next = src.slice(0, range.start) + renderBuiltinReleases(list) + src.slice(range.end);
+  if (next === src) return false;
+  writeFileSync(BUILTIN_PATH, next, 'utf8');
+  return true;
+}
+
+/** 把 note 定稿应用到 releases 的副本上（不改进程里的 releases，--check 用） */
+function releasesWithNotes(list, notes) {
+  return list.map((r) => {
+    const ns = notes.find((s) => s.version === r.version);
+    if (!ns) return r;
+    const items = parseNoteItems(ns.file);
+    return { ...r, added: items.added, fixed: items.fixed, improved: items.improved };
+  });
+}
+
+/* --check：发布前的七项对账。版本号的事实源是 tag，manifest 与日志都必须跟它一致；
  * 第四项守「清单与文件同一版」：清单 docs 条目的 sha256 必须与 downloads/ 现产文件一致
  * ——漏跑 manifest 步的翻车（2026-10-31）就是这一项没对账，--check 却报绿。
  * 第五项守「定稿即真理源」：已产出的日志文件里，各版本块的条目必须与 note 定稿逐条一致
  * ——七步流程重跑冲掉定稿的那次翻车（Release 页 2+8+2、线上日志 5+0+11）就靠它拦。
  * 第六项守「内置数据含本版」：升级提示小窗只读内置的 changelog-data.ts 且全等匹配，
- * 缺了本版就静默不弹——v1.39.3 就是这么出去的（七步不跑 vitest，那条守卫没人执行）。 */
+ * 缺了本版就静默不弹——v1.39.3 就是这么出去的（七步不跑 vitest，那条守卫没人执行）。
+ * 第七项守「内置数据 == 定稿」：第六项只验「有本版」，条目文本对不上照样绿——
+ * v1.39.4 当天 note 改了三稿、小窗还停在前一稿（用户原话「更新日记和我写的不一样」）。 */
 if (process.argv.includes('--check')) {
   const problems = [];
   if (!latestTag) {
@@ -474,12 +552,36 @@ if (process.argv.includes('--check')) {
       if (dup.length) problems.push(`内置更新日志版本重复：${dup.join('、')}（全等匹配会取到哪一条不确定）`);
     }
   }
+  /* 第七项：内置日志 == 定稿逐条对账（2026-11-05 固化）。
+   * 第六项只验「有本版」，条目文本对不上照样绿——v1.39.4 当天 note 改了三稿，
+   * 小窗还停在前一稿，用户原话「更新日记和我写的不一样」。这里把「期望的数组体」
+   * 整段渲染出来逐字比对，措辞、条数、分组顺序任何一处不同都当场红。 */
+  if (existsSync(BUILTIN_PATH)) {
+    const src = readFileSync(BUILTIN_PATH, 'utf8');
+    const range = builtinRange(src);
+    if (!range) {
+      problems.push('src/core/changelog-data.ts 里找不到 CHANGELOG_RELEASES 数组（格式变了？）');
+    } else {
+      let expect = null;
+      try {
+        expect = renderBuiltinReleases(releasesWithNotes(releases, noteSources));
+      } catch (e) {
+        problems.push(String(e.message || e));
+      }
+      if (expect !== null && src.slice(range.start, range.end) !== expect) {
+        problems.push(
+          'src/core/changelog-data.ts 的内置日志与 note 定稿不一致（升级小窗会弹旧文案）——' +
+          '跑 node scripts/_gen-changelog.mjs，它会把定稿自动写回内置数据',
+        );
+      }
+    }
+  }
   if (problems.length) {
     console.error('更新日志与版本不一致：');
     for (const p of problems) console.error('  - ' + p);
     process.exit(1);
   }
-  console.log(`更新日志与 tag 一致 ✓（最新 ${latestTag}，共 ${releases.length} 个版本块；内置数据含本版 ${manifest.version}；docs sha256 对账 ${JSON.parse(readFileSync(distManifestPath, 'utf8')).docs.length} 条${noteSources.length ? `；定稿对账 ${noteSources.length} 版` : ''}）`);
+  console.log(`更新日志与 tag 一致 ✓（最新 ${latestTag}，共 ${releases.length} 个版本块；内置数据含本版 ${manifest.version} 且与定稿逐条同稿；docs sha256 对账 ${JSON.parse(readFileSync(distManifestPath, 'utf8')).docs.length} 条${noteSources.length ? `；定稿对账 ${noteSources.length} 版` : ''}）`);
   process.exit(0);
 }
 
@@ -533,6 +635,15 @@ for (const { version: wantVersion, file: noteFile } of noteSources) {
   rel.improved = items.improved;
   console.log(`note 覆盖 v${rel.version}：新增 ${items.added.length} / 修复 ${items.fixed.length} / 优化 ${items.improved.length}`);
 }
+
+/* 内置日志与定稿同源（2026-11-05 固化）：升级小窗读的是 changelog-data.ts，不是 note；
+ * 这里把已应用定稿的 releases 直接写回，手抄这一环从此不存在。 */
+const builtinRewritten = syncBuiltinReleases(releases);
+console.log(
+  builtinRewritten
+    ? '内置更新日志已按定稿重写：src/core/changelog-data.ts'
+    : '内置更新日志已是定稿：src/core/changelog-data.ts（无需改写）',
+);
 
 /* ==================== 产出单文件 HTML（2026-11-02 起只作存档） ====================
  * 日志的**唯一消费者**是插件内置数据（core/changelog-data）：更新提示小窗与设置页

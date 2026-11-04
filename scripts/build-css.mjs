@@ -79,7 +79,7 @@ const HEADER = [
   " * 重新生成：npm run dev / npm run build（scripts/build-css.mjs）",
   " * ============================================================ */",
   "",
-].join("\r\n");
+].join("\n");
 
 export function buildStyles() {
   const parts = [HEADER];
@@ -88,9 +88,12 @@ export function buildStyles() {
     if (!fs.existsSync(file)) {
       throw new Error(`样式源缺失：${rel}（聚合清单见 scripts/build-css.mjs SOURCES）`);
     }
-// 行尾统一 CRLF：与仓库工作区惯例一致，避免混合行尾造成 git 状态假差异
-    let text = fs.readFileSync(file, "utf8").replace(/\r?\n/g, "\r\n");
-    if (!text.endsWith("\n")) text += "\r\n";
+// 行尾统一 LF（2026-11-05 修）：这里原先把行尾强制成 CRLF，与 .gitattributes 的
+    // `*.css text eol=lf` 打架——git 存 LF、工作区写 CRLF，git status 看不见（被规范化），
+    // 但发布时 zip 打的是工作区 CRLF、Release 单挂的三件套取自 tag（LF），两条路的
+    // styles.css 字节不同、sha256 对不上。以 .gitattributes 为准，统一 LF。
+    let text = fs.readFileSync(file, "utf8").replace(/\r\n/g, "\n");
+    if (!text.endsWith("\n")) text += "\n";
     parts.push(text);
   }
   const css = parts.join("");

@@ -58,38 +58,40 @@ export const CHANGELOG_RELEASES: readonly ChangelogRelease[] = [
   {
     version: '1.39.4',
     date: '2026-11-05',
-    // 条目与 docs/note-v1.39.4.md 逐字同稿（2026-11-05 用户改定为 4 条优化，无新增）。
+    // 条目与 docs/note-v1.39.4.md 同稿（scripts/_gen-changelog.mjs 自动生成，勿手改）
     improved: [
-      { domain: '书库', text: '阅读数据只认 bz 阅读，不再读 Weave。' },
       { domain: '书库', text: '接上 bz reader，书、进度、划线和阅读时长都跟着显示。' },
-      { domain: '阅读报告', text: 'bz 阅读的书也一并算进统计。' },
+      { domain: '阅读报告', text: 'bz reader 的书也一并算进统计。' },
       { domain: '影视', text: '没配目录或一部片都没有时，空态给一个视频教程入口。' },
     ],
   },
   {
     version: '1.39.3',
     date: '2026-11-02',
-    // 条目与 docs/note-v1.39.3.md 逐字同稿（2026-11-02 用户改定为 1 优化 + 1 修复）。
-    improved: [
-      { domain: '下载通道', text: '备用线路换成码云。' },
-    ],
+    // 条目与 docs/note-v1.39.3.md 同稿（scripts/_gen-changelog.mjs 自动生成，勿手改）
     fixed: [
       { domain: '更新提示', text: '手机上顶栏和关闭钮不再被状态栏压住。' },
+    ],
+    improved: [
+      { domain: '下载通道', text: '备用线路换成码云。' },
     ],
   },
   {
     version: '1.39.2',
     date: '2026-11-02',
-    // 条目与 docs/note-v1.39.2.md 逐字同稿（2026-11-02 用户改定为 2 条）。
-    // 小窗与 Release 页读的是同一批句子，别在这里另写一版。
+    // 条目与 docs/note-v1.39.2.md 同稿（scripts/_gen-changelog.mjs 自动生成，勿手改）
     improved: [
       { domain: 'QQ 交流群', text: '在关于页加了入口。' },
       { domain: '更新日志', text: '内置进插件。' },
-    ]
+    ],
   },
   {
     version: '1.39.1',
     date: '2026-11-02',
+    // 条目与 docs/note-v1.39.1.md 同稿（scripts/_gen-changelog.mjs 自动生成，勿手改）
+    fixed: [
+      { domain: '游戏库', text: '后台拉封面、中文名、成就时主界面不再一遍遍闪，只改变化的那几处' },
+    ],
     improved: [
       { domain: '游戏库', text: '打开 Obsidian 就静默同步一次，首页时间线的「玩了 X」不必先开游戏库' },
       { domain: '游戏库', text: 'Steam 上没封面的游戏，改用同款封面图、商店截图或库内主视觉补上' },
@@ -97,45 +99,50 @@ export const CHANGELOG_RELEASES: readonly ChangelogRelease[] = [
       { domain: '插件更新', text: '每次启动都查一遍新版本，不再被节流跳过' },
       { domain: '在线资源', text: '手册、更新日志、皮肤、工具包跟着版本一起自动补齐' },
     ],
-    fixed: [
-      { domain: '游戏库', text: '后台拉封面、中文名、成就时主界面不再一遍遍闪，只改变化的那几处' },
-    ]
   },
   {
     version: '1.39.0',
     date: '2026-11-01',
+    // 条目与 docs/note-v1.39.0.md 同稿（scripts/_gen-changelog.mjs 自动生成，勿手改）
     added: [
       { domain: '外部工具', text: '新增「bz 依赖什么」清单——勾选要装的东西（Node、Python、Ollama、向量模型、ffmpeg、转写引擎、脸谱的 Python 包），当场生成一段安装提示词，复制给任意 AI 就能从头装到尾，连 bz 里的设置一起回填' },
-    ]
+    ],
   },
   {
     version: '1.38.0',
     date: '2026-11-01',
+    // 条目与 docs/note-v1.38.0.md 同稿（scripts/_gen-changelog.mjs 自动生成，勿手改）
     added: [
       { domain: '影院', text: '可以从豆瓣导入影片至影院中' },
       { domain: '影院', text: '片单可以整单收录进影院' },
     ],
+    fixed: [
+      { domain: '影院', text: '中文输入法在搜索框打字不再被打断' },
+    ],
     improved: [
       { domain: '影院', text: '评分、导演、主演、海报都改从豆瓣详情接口取' },
     ],
-    fixed: [
-      { domain: '影院', text: '中文输入法在搜索框打字不再被打断' },
-    ]
   },
   {
     version: '1.37.0',
     date: '2026-10-31',
+    // 条目与 docs/note-v1.37.0.md 同稿（scripts/_gen-changelog.mjs 自动生成，勿手改）
     improved: [
       { domain: '下载通道', text: '插件更新与在线资源全面改走 GitHub 主通道、jsDelivr 备用，国内直连下载更快更稳' },
       { domain: '更新日志', text: '插件更新重启后会自动弹出本次的更新说明' },
-    ]
+    ],
   },
   {
     version: '1.36.0',
     date: '2026-10-31',
+    // 条目与 docs/note-v1.36.0.md 同稿（scripts/_gen-changelog.mjs 自动生成，勿手改）
     added: [
       { domain: '域目录', text: '日记、剪藏、影视等六个板块的存放位置默认不再替您猜，第一次用时会有引导卡带您指一次就好' },
       { domain: '保险库', text: '四个板块第一次设置主密码时，共用同一块设置面板' },
+    ],
+    fixed: [
+      { domain: '保险库', text: '全新的库第一次设置主密码不再失败' },
+      { domain: '番茄钟', text: '重新打开番茄钟不再丢失正在进行的倒计时' },
     ],
     improved: [
       { domain: '界面', text: '在弹窗里选字、滑动时不会再误点外面把弹窗关掉' },
@@ -147,14 +154,11 @@ export const CHANGELOG_RELEASES: readonly ChangelogRelease[] = [
       { domain: '自检', text: '手机上断网页面的三个按钮放不下会自动换行，并加了「连不上？看视频」教程入口' },
       { domain: '其他', text: '断网时打开插件不再重复请求更新，启动更快' },
     ],
-    fixed: [
-      { domain: '保险库', text: '全新的库第一次设置主密码不再失败' },
-      { domain: '番茄钟', text: '重新打开番茄钟不再丢失正在进行的倒计时' },
-    ]
   },
   {
     version: '1.35.0',
     date: '2026-10-30',
+    // 条目与 docs/note-v1.35.0.md 同稿（scripts/_gen-changelog.mjs 自动生成，勿手改）
     added: [
       { domain: '首页', text: '时间线改为直接汇总各板块的数据来展示，内容筛选也整个重做，更快更准' },
       { domain: '剪藏本', text: '知乎日报与果壳科学人两个订阅源默认关闭，想看再打开' },
@@ -165,6 +169,6 @@ export const CHANGELOG_RELEASES: readonly ChangelogRelease[] = [
     ],
     fixed: [
       { domain: '其他', text: '修复两处只在自动化测试环境出现的误报，不影响日常使用' },
-    ]
+    ],
   },
 ];
