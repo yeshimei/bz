@@ -530,6 +530,10 @@
    不用 core 通用空态卡（那是宿主浅色皮肤，跟午夜场不是一套语言） */
 .bz-cinema--midnight .cn-empty-page .cn-empty-note{max-width:32em;font-size:var(--bz-font-meta);line-height:1.9;text-align:center;color:var(--ink-3)}
 .bz-cinema--midnight .cn-empty-page .dm-btn{margin-top:var(--bz-space-xs)}
+/* 空态两态的视觉全部落这里（纯层 render.ts 不带内联样式）：清空筛选钮 6px 间距、
+   空库提示句 11.5px 字号——原先是 emptyPageHtml 上的 style 属性 */
+.bz-cinema--midnight .cn-empty-page .cn-empty-clear{margin-top:6px}
+.bz-cinema--midnight .cn-empty-page .cn-empty-hint{font-size:11.5px}
 /* 空态教程入口（未配置引导 / 空库共用；剪藏本 bz-clip-tut 同语义）：行内衬线链接，
    不再加一枚按钮——空态只有一件事要做，教程是「想先看看」的第二选项 */
 .bz-cinema--midnight .cn-tut{border:0;background:none;padding:0;margin-top:var(--bz-space-xs);cursor:pointer;
