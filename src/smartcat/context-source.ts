@@ -31,8 +31,10 @@ export function classifyPath(path: string | null | undefined): ActivityKind {
   // P2 硬编码路径修复：经 smartcatStorageDir() 动态拼装，跟随 storagePath 设置（默认仍 CONFIG/STORAGE）
   if (p === `${smartcatStorageDir()}/pomodoro.json`) return 'pomodoro';
   if (!p.endsWith('.md')) return null;
-  const diaryDir = (DIARY_DIRECTORY || '我的/日记').replace(/\/+$/, '');
-  if (p.startsWith(diaryDir + '/') || p.startsWith('我的/日记/')) return 'diary';
+  // 2026-11-05：目录已由 diary 域按「设置 → Obsidian 日记新笔记存放位置」解析；两边都空 = 未配置，
+  // 不再回落写死的「我的/日记」（否则设置里空着，旧目录里的笔记仍被当成日记）
+  const diaryDir = DIARY_DIRECTORY.replace(/\/+$/, '');
+  if (diaryDir && p.startsWith(diaryDir + '/')) return 'diary';
   if (p.startsWith(FLASH_DIR + '/')) return 'flash';
   if (p.startsWith('归档/网页剪藏')) return 'clipping';
   if (p.startsWith('我的/影视')) return 'movie';

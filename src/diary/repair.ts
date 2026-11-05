@@ -19,6 +19,7 @@ import {
   parseDiaryStamp,
   readDiaryFrontmatterFieldRaw,
 } from '../core/diary-format';
+import { diaryDayDateOf } from './config';
 
 export type DiaryLintReason = 'unparsable' | 'legacy' | 'name-mismatch';
 
@@ -44,7 +45,8 @@ export const LINT_REASON_TEXT: Record<DiaryLintReason, string> = {
  */
 export function lintEntryFile(path: string, content: string): DiaryLintReason | null {
   const base = (path || '').replace(/\\/g, '/').split('/').pop() || '';
-  if (DIARY_LEGACY_FILE_RE.test(base)) return 'legacy';
+  // day 格式：按 Obsidian 日记日期格式解析（含内置四种与旧 YYYY-MM-DD），命中的是「日期文件」不是坏条目
+  if (diaryDayDateOf(path) || DIARY_LEGACY_FILE_RE.test(base)) return 'legacy';
 
   const raw = readDiaryFrontmatterFieldRaw(content, DIARY_DATE_KEY);
   const rawLegacyKey = readDiaryFrontmatterFieldRaw(content, '日期'); // ADR-0131 前的中文键（已不认）

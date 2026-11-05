@@ -11,6 +11,7 @@
  */
 import type { SettingsSchema } from '../core/settings-schema';
 import { getSettings } from '../core/settings-provider';
+import { obsidianDailyNotesFolder } from '../core/daily-notes';
 import { applyDirectories } from './config';
 import { mountDiaryFormatEditor } from './settings-format';
 import { mountDiaryTypeEditor } from './settings-types';
@@ -36,8 +37,11 @@ export function diarySettingsSchema(): SettingsSchema {
             type: 'path',
             mode: 'single',
             name: '日记文件夹',
-            desc: '留空则跟随 Obsidian 日记本的目录',
+            desc: '留空则跟随 Obsidian 日记的新笔记存放位置',
             binding: { key: 'diaryDirectory' },
+            // 留空时把「实际跟随到哪」显式挂成锁定 chip（只展示不落盘；点击可改为显式目录）。
+            // 2026-11-05 用户重装后报「设置里空着，看不出到底跟到了哪个文件夹」。
+            fallbackValue: () => obsidianDailyNotesFolder(),
             onChange: () => applyDirectories(getSettings()),
           },
         ],

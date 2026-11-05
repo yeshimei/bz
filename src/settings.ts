@@ -165,7 +165,7 @@ export default interface BzSettings {
   diaryDirectory: string;
   /** ✉️ 信目录 */
   letterDirectory: string;
-  /** 日记存储格式：entry = 一篇一个文件（YYMMDDHHmm.md）；day = 一天一个文件（YYYY-MM-DD.md，Obsidian 日记原生） */
+  /** 日记存储格式：entry = 一篇一个文件（YYMMDDHHmm.md）；day = 一天一个文件（文件名按 Obsidian 日记的日期格式，如 2026-06-13.md） */
   diaryEntryFormat: 'entry' | 'day';
   /** 日记类型清单（JSON 字符串，DiaryTypeConfig[]）。空 = 用 diary/config 的 3 个示例默认；
    *  老库升级由 migrateDiaryTypes 一次性写入旧版 28 类，之后完全归用户编辑 */
@@ -671,6 +671,34 @@ export function migrateAutoUpdateDefault(raw: unknown): boolean {
   return true;
 }
 
+/**
+ * 日记存储格式缺省翻牌（2026-11-05 用户拍板：缺省从「一篇一个文件」改为「一天一个文件」）。
+ *
+ * 只改 DEFAULT_SETTINGS 会连带改变**老库**：data.json 里没这个键的库（装过插件、写过日记，
+ * 但没在设置面板点过保存）合并默认值后会突然从 entry 切到 day，而盘上已经全是
+ * `YYMMDDHHmm.md` 条目文件——同一个日记目录里两种格式混着写，用户看到的是「日记散成两堆」。
+ * 所以在老库上补写显式 `'entry'`，保住它原来的写法；真新装（loadData 为空）不写，走新缺省。
+ *
+ * 判据与 diary/config 的 migrateDiaryTypes 同款：只认确实用过日记的老库（data.json 里带
+ * 日记键），避免给无关的 data.json 凭空写一个日记键。返回 true = 发生了迁移（调用方调度落盘）。
+ */
+export function migrateDiaryEntryFormatDefault(raw: unknown): boolean {
+  if (!raw || typeof raw !== 'object') return false;
+  const rec = raw as Record<string, unknown>;
+  if ('diaryEntryFormat' in rec) return false;
+  const hasDiaryTrace =
+    'diaryDirectory' in rec ||
+    'letterDirectory' in rec ||
+    'diaryPageSize' in rec ||
+    'diarySkin' in rec ||
+    'diarySkinTheme' in rec ||
+    'diaryTypes' in rec ||
+    'useFileDateTime' in rec;
+  if (!hasDiaryTrace) return false;
+  rec.diaryEntryFormat = 'entry';
+  return true;
+}
+
 /** onload 对 loadData 原始对象就地迁移，随后才与 DEFAULT_SETTINGS 合并。
  *  返回是否发生了迁移（旧键存在即算，含新键已在的场景）——C16：调用方据此调度落盘，
  *  否则 data.json 旧键长期残留、每次启动重复迁移 */
@@ -1036,8 +1064,10 @@ export const DEFAULT_SETTINGS: BzSettings = {
   // 日记本（ADR-0115：3 键；影视/书库目录跨域读，退役键见接口注释）
   diaryDirectory: '',
   letterDirectory: '',
+  // 2026-11-05 用户拍板：缺省「一天一个文件」（文件名跟随 Obsidian 日记的日期格式）；
+  // 老库没有这个键时由 migrateDiaryEntryFormatDefault 补写 'entry'，保住原写法
+  diaryEntryFormat: 'day',
   // 空串 = 用 diary/config 的默认 3 个示例（唯一源在那边，避免两份默认值漂移）
-  diaryEntryFormat: 'entry',
   diaryTypes: '',
   useFileDateTime: false,
   diaryPageSize: 50,

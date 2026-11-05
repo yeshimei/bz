@@ -29,7 +29,7 @@ beforeEach(async () => {
   document.body.innerHTML = '';
   clearNotices();
   resetObsidianMocks();
-  applyDirectories({});
+  applyDirectories({ diaryEntryFormat: 'entry' });
   // applyDirectories 会把类型重置为默认 3 个；本文件用旧分类表夹具，必须在它之后注入
   applyDiaryTypes(LEGACY_DIARY_TYPES);
   unloadEncrypt();
@@ -281,12 +281,12 @@ describe('reclassifyEntry 分支（还原 = merge 成条目文件，ADR-0130）'
     const note = sm.manifest.notes.find((n: any) => n.id === res!.noteId)!;
     // 模拟用户改日记目录：note.path 还指着旧目录（basename 为条目文件形状 → realign 换目录段）
     note.path = '我的/日记/2401012100.md';
-    await applyDirectories({ diaryDirectory: '日记本' });
+    await applyDirectories({ diaryDirectory: '日记本', diaryEntryFormat: 'entry' });
     const ok = await reclassifyEntry(res!.noteId!, ['日记']);
     expect(ok).toBe(true);
     await waitFor(() => sm.manifest.notes.length === 0);
     expect(vault.files.get('日记本/2401012100.md')).toContain('要还原的日记');
-    applyDirectories({});
+    applyDirectories({ diaryEntryFormat: 'entry' });
   });
 
   it('旧格式日期文件形状的历史 note.path：merge 兜底换算为条目文件路径落盘', async () => {

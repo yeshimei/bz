@@ -419,6 +419,15 @@ function buildResolvedLinks(vault: MockVault): Record<string, Record<string, num
 export function mockAppWithVault(vault: MockVault) {
   return {
     vault,
+    // Obsidian 核心「日记」插件的假层（2026-11-05）：bz 的日记目录留空时跟随它的
+    // `options.folder`、day 文件名跟随 `options.format`。测试库的日记一直就在 `我的/日记`，
+    // 这里给同值，等价于旧行为；要测「跟随全局新笔记位置」的用例可自行覆盖 getPluginById。
+    internalPlugins: {
+      getPluginById: (id: string): any =>
+        id === 'daily-notes'
+          ? { instance: { options: { folder: '我的/日记', format: 'YYYY-MM-DD' } } }
+          : null,
+    },
     metadataCache: (() => {
       const listeners: Record<string, Function[]> = {};
       return {

@@ -15,13 +15,14 @@
 import { getApp } from '../core/app';
 import { trashNote } from '../core/note-trash';
 import {
-  diaryDateFromLegacyPath,
+  diaryDayDateFromPath,
+  diaryDayFormats,
   diaryEntryPath,
   diaryMetaFromEntryPath,
   parseDiaryEntryFile,
   serializeDiaryEntryFile,
 } from '../core/diary-format';
-import { DIARY_DIRECTORY, type DiaryEntryFormat } from './config';
+import { DIARY_DIRECTORY, diaryDayPath, type DiaryEntryFormat } from './config';
 import { parseLegacyDayFile, serializeLegacyBlock } from './legacy';
 import { parseEntryFile } from './parser';
 
@@ -66,7 +67,9 @@ function yieldToUi(): Promise<void> {
 export async function convertLegacyToEntries(onProgress?: ProgressFn): Promise<ConvertReport> {
   const app = getApp();
   const report: ConvertReport = { target: 'entry', converted: 0, skipped: [], errors: [] };
-  const legacyPaths = diaryMdPaths().filter((p) => !!diaryDateFromLegacyPath(p));
+  const legacyPaths = diaryMdPaths().filter(
+    (p) => !!diaryDayDateFromPath(p, DIARY_DIRECTORY, diaryDayFormats())
+  );
   const total = legacyPaths.length;
   let done = 0;
 
@@ -80,11 +83,12 @@ export async function convertLegacyToEntries(onProgress?: ProgressFn): Promise<C
     }
     const dir = path.split('/').slice(0, -1).join('/');
     const created: string[] = [];
+    const dayDate = diaryDayDateFromPath(path, DIARY_DIRECTORY, diaryDayFormats());
     try {
       const content = await app.vault.read(file);
-      const day = parseLegacyDayFile(content, path);
+      const day = parseLegacyDayFile(content, path, dayDate ?? undefined);
       if (!day) {
-        report.skipped.push({ path, reason: '不是 YYYY-MM-DD.md 日期文件' });
+        report.skipped.push({ path, reason: '不是日记日期文件' });
         done++;
         continue;
       }
@@ -168,11 +172,11 @@ export async function convertEntriesToLegacy(onProgress?: ProgressFn): Promise<C
   for (const date of dates) {
     onProgress?.({ done, total, current: date });
     const dir = (byDate.get(date)?.[0] ?? '').split('/').slice(0, -1).join('/') || DIARY_DIRECTORY;
-    const target = `${dir}/${date}.md`;
+    const target = diaryDayPath(dir, date);
     const paths = (byDate.get(date) ?? []).slice().sort();
 
     if (app.vault.getAbstractFileByPath(target)) {
-      report.skipped.push({ path: target, reason: `当天已存在 ${date}.md，整日跳过（避免合并冲突）` });
+      report.skipped.push({ path: target, reason: `当天已存在 ${target.split('/').pop()}，整日跳过（避免合并冲突）` });
       done++;
       continue;
     }

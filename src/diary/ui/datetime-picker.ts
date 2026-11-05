@@ -334,10 +334,11 @@ function probeEarliestYear(): number | null {
   try {
     const files = getApp().vault.getMarkdownFiles?.() ?? [];
     const dir = DIARY_DIRECTORY.replace(/\/+$/, '');
+    if (!dir) return null; // 未配置日记目录：不扫全库
     let earliest: number | null = null;
     for (const f of files) {
       const p = String((f as any)?.path ?? '');
-      if (dir && !p.startsWith(dir + '/')) continue;
+      if (!p.startsWith(dir + '/')) continue;
       const date = diaryDateFromEntryPath(p);
       if (!date) continue;
       const y = parseInt(date.slice(0, 4), 10);

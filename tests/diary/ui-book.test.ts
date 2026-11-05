@@ -166,7 +166,7 @@ beforeEach(() => {
   clearNotices();
   resetObsidianMocks();
   resetFlips();
-  applyDirectories({});
+  applyDirectories({ diaryEntryFormat: 'entry' });
   // 本文件的贴纸册/写作内页断言按旧 28 类夹具（>5 张贴纸）；默认 3 个示例另测
   applyDiaryTypes(LEGACY_DIARY_TYPES);
   // 未配置目录时走引导卡（ADR-0274）；本文件验的是「已配好四目录」的册子行为
@@ -1585,6 +1585,10 @@ describe('DiaryAppController · 写作内页（ADR-0233）', () => {
      判据把 fallbackEl 也算命中后，点纸外空白就该收起。 */
   it('未设日记文件夹：引导纸铺满整屏，点纸外空白也能收起', () => {
     setSettingsProvider(() => ({}) as never); // 目录空着 → needsFolderSetup 真
+    // 2026-11-05：bz 留空时跟随 Obsidian 日记的新日记存放位置——连它也没有才算未配置
+    const app = mockAppWithVault(vault);
+    (app as any).internalPlugins.getPluginById = () => null;
+    setApp(app as never);
     const c = DiaryAppController.getInstance();
     c.show();
     const fb = q('.bz-diary-fallback');

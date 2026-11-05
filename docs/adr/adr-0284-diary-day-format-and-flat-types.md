@@ -54,3 +54,46 @@ ADR-0130 把日记从「一天一文件多条目」迁到「一篇一文件」�
 - 「分类」取代「主标签/二级标签」：写日记弹窗按配置顺序平铺全部分类（「加密」不进新建弹窗）。
 - 小橘记忆/观察仍只认条目文件（day 格式下不产记忆），属已知派生缺口，另票处理。
 - 设置项数 6 → 7（sp-contract-lock 基准同步）；旧测试夹具改为显式注入 `LEGACY_DIARY_TYPES`。
+
+## 补记（2026-11-05）：day 文件名跟随 Obsidian 日期格式、缺省改 day、目录跟随扩到全局设置
+
+用户看设置页截图后提了三条：
+
+1. 图一「日记文件夹」：默认跟随 Obsidian 日记里**新笔记的存放位置**，没有就留空；
+2. 图二：存储卡片默认选中「一天一个文件」；
+3. 图三：day 卡片的示例文件名，要按 Obsidian 日记的**日期格式**显示。
+
+### 决策
+
+1. **目录跟随补全**（`core/daily-notes.ts`）
+   - 仍先读日记插件自己的 `options.folder`；
+   - 它为空时再读 Obsidian 全局「新笔记的存放位置」（`vault.getConfig('newFileLocation')`）：
+     选「指定文件夹」→ `newFileFolderPath`；根目录/当前文件夹 → 空串（库根）。
+   - 两边都没有：设置面板里保持留空（不自动填值），域主界面走「未配置」引导；
+     运行时 `DIARY_DIRECTORY` 仍保留 `我的/日记` 作内部兜底（写入口已被引导挡住，用户看不到）。
+2. **缺省格式改 `day`**
+   - `DEFAULT_SETTINGS.diaryEntryFormat = 'day'`，`applyDirectories` 只认显式 `'entry'`。
+   - 老库迁移 `migrateDiaryEntryFormatDefault`：`data.json` 没有该键且有日记痕迹 → 补写 `'entry'`，
+     保住「盘上全是 YYMMDDHHmm.md」的库；真新装不写，走新缺省。
+3. **day 文件名按 Obsidian 日期格式**（`core/diary-format.ts`）
+   - 生成：`diaryDayStamp(date, format)` / `diaryDayFilePath(dir, date)`，`format` 取
+     `obsidianDailyNotesFormat()`（缺省 `YYYY-MM-DD`）。格式含 `/` 时落子目录（如 `2026/06/13.md`）。
+   - 反解：`diaryDayDateFromPath(path, dir, formats)` 按**当前格式 + 内置四种**逐个
+     `moment(stamp, format, true)` 严格解析并做往返校验（宽松写法 `2026-6-3` 不认）。
+     内置四种 = Obsidian 下拉里的 `YYYY-MM-DD` / `YYYY.MM.DD` / `YYYY/MM/DD` / `YYYY/MM/YYYY-MM-DD`，
+     保证换格式后旧文件仍读得出来。
+   - 消费面全换：`diary/{store,data,convert,legacy,settings-format,settings-types,repair,encrypt}`、
+     `encrypt/data`、`home/timeline-collect`、`recap/aggregate`、`core/path-classify`。
+     `parseLegacyDayFile` 增加可选 `date` 参数（路径不再只靠 basename 判日期）。
+   - 设置卡片与切换确认框的样例文件名都走同一个 `formatSample()`（`2026-06-13` 按当前格式格式化）。
+4. **加密还原随当前目录 + 当前格式**：历史清单里的 day 路径用「路径自己的父目录」反解日期
+   （`diaryDayDateFromOwnPath`），落点再按当前目录/格式重算。
+
+### 代价与边界
+
+- day 格式的「一天」现在可能是多级目录（`YYYY/MM/DD`）；`collectMdPaths`/`ensureFolderFor` 已递归/逐级建目录。
+- 换 Obsidian 日期格式后，**旧格式文件仍按内置四种读**；不在四种里的自定义旧格式读不到（用户可在
+  Obsidian 里改回或手动改名）——不做自动迁移，避免动用户的文件名。
+- `YYYY/MM/YYYY-MM-DD` 这类格式的文件名跨目录，`parseLegacyDayFile` 必须由调用方传 `date`；
+  只给 basename 的旧入口仍按 `YYYY-MM-DD` 兜底。
+

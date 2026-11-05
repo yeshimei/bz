@@ -32,7 +32,7 @@ import {
   serializeDiaryEntryFile,
 } from '../core/diary-format';
 import { lintEntryFile } from './repair';
-import { DIARY_DIRECTORY, getTagEmoji, isDayFormat } from './config';
+import { DIARY_DIRECTORY, diaryDayDateOf, diaryDayPath, getTagEmoji, isDayFormat } from './config';
 import { parseEntryFile } from './parser';
 import {
   emojiSeqOfTags,
@@ -151,10 +151,11 @@ interface LegacyFileCtx {
   day: LegacyDayFile | null;
 }
 
-/** 枚举某日期全部条目引用：新格式按文件名，旧日期文件读一次拆块 */
+/** 枚举某日期全部条目引用：新格式按文件名，day 日期文件读一次拆块 */
 async function listDateEntryRefs(dateStr: string): Promise<DateEntryRef[]> {
   const dirPrefix = `${DIARY_DIRECTORY}/`;
   const out: DateEntryRef[] = [];
+  if (!DIARY_DIRECTORY) return out; // 未配置日记目录：不枚举（防 startsWith('/') 扫空）
   const vault = getApp().vault;
   for (const f of vault.getMarkdownFiles?.() || []) {
     const p = String((f as { path?: string }).path ?? '');
@@ -164,13 +165,13 @@ async function listDateEntryRefs(dateStr: string): Promise<DateEntryRef[]> {
       if (meta.date === dateStr) out.push({ path: p, time: meta.time, legacy: false });
       continue;
     }
-    const legacyDate = diaryDateFromLegacyPath(p);
+    const legacyDate = diaryDayDateOf(p) ?? diaryDateFromLegacyPath(p);
     if (legacyDate !== dateStr) continue;
     try {
       const file = vault.getAbstractFileByPath(p);
       if (!file || 'children' in file) continue;
       const content = await vault.read(file as any);
-      const day = parseLegacyDayFile(content, p);
+      const day = parseLegacyDayFile(content, p, legacyDate);
       if (!day) continue;
       for (const b of day.blocks) out.push({ path: p, time: b.time, line: b.line, legacy: true });
     } catch (e) {
@@ -181,11 +182,11 @@ async function listDateEntryRefs(dateStr: string): Promise<DateEntryRef[]> {
   return out;
 }
 
-/** 指定文件的条目引用（新格式一条 / 旧文件全部块） */
+/** 指定文件的条目引用（新格式一条 / day 文件全部块） */
 async function listEntryRefsForFile(filePath: string): Promise<DateEntryRef[]> {
   const meta = diaryMetaFromEntryPath(filePath);
   if (meta) return [{ path: filePath, time: meta.time, legacy: false }];
-  const date = diaryDateFromLegacyPath(filePath);
+  const date = diaryDayDateOf(filePath) ?? diaryDateFromLegacyPath(filePath);
   if (!date) {
     // 显式指定的未知形状文件：仍交给 entry 守卫读（readEntryCtxInQueue →
     // UnparsedLineError），否则「filePath 指向随手记」会静默变成 0 条，守卫语义丢失
@@ -195,7 +196,7 @@ async function listEntryRefsForFile(filePath: string): Promise<DateEntryRef[]> {
     const file = getApp().vault.getAbstractFileByPath(filePath);
     if (!file || 'children' in file) return [];
     const content = await getApp().vault.read(file as any);
-    const day = parseLegacyDayFile(content, filePath);
+    const day = parseLegacyDayFile(content, filePath, date);
     return (day?.blocks ?? []).map((b) => ({ path: filePath, time: b.time, line: b.line, legacy: true }));
   } catch (e) {
     return [];
@@ -216,10 +217,11 @@ async function readLegacyCtxInQueue(filePath: string): Promise<LegacyFileCtx> {
     );
     throw new DiaryFileReadError(filePath, e);
   }
-  const day = parseLegacyDayFile(content, filePath);
+  const date = diaryDayDateOf(filePath) ?? diaryDateFromLegacyPath(filePath);
+  const day = parseLegacyDayFile(content, filePath, date ?? undefined);
   if (!day) {
     warnUnparsed(
-      `「${filePath.split('/').pop()}」不是日期文件（YYYY-MM-DD.md），本次修改没有执行。`,
+      `「${filePath.split('/').pop()}」不是日记日期文件，本次修改没有执行。`,
       `diary-write-refused-${filePath}`
     );
     throw new UnparsedLineError(filePath.split('/').pop() || filePath, 1);
@@ -414,7 +416,8 @@ async function addLegacyEntry(
 ): Promise<DiaryEntry> {
   const [hours = 0, minutes = 0] = timeStr.split(':').map(Number);
   const timeValue = hours * 100 + minutes;
-  const filePath = `${dir}/${dateStr}.md`;
+  // 文件名按 Obsidian 日记的日期格式（`YYYY/MM/DD` 会落子目录，ensureFolderFor 逐级建）
+  const filePath = diaryDayPath(dir, dateStr);
   const addKey = `${dir}/${dateStr}`;
 
   const created = await enqueueFileTask(addKey, async () => {
@@ -439,7 +442,7 @@ async function addLegacyEntry(
     if (file) await getApp().vault.modify(file, next);
     else await getApp().vault.create(filePath, next);
 
-    const day = parseLegacyDayFile(next, filePath);
+    const day = parseLegacyDayFile(next, filePath, dateStr);
     const blocks = day?.blocks ?? [];
     const line = blocks.length > 0 ? blocks[blocks.length - 1].line : 0;
     const entry: DiaryEntry = {
@@ -528,7 +531,7 @@ async function removeLegacyBlockInQueue(
     return true;
   }
   await getApp().vault.modify(file, text);
-  const rest = parseLegacyDayFile(text, filePath);
+  const rest = parseLegacyDayFile(text, filePath, day.date);
   if (diaryDataMap) {
     diaryDataMap.set(
       filePath,
@@ -635,7 +638,7 @@ async function updateLegacyBlockTagsInQueue(
   const lines = content.replace(/\r\n/g, '\n').split('\n');
   lines[block.line] = `# ${emojiSeqOfTags(newTags)} ${block.time}`;
   await getApp().vault.modify(file, lines.join('\n'));
-  const rest = parseLegacyDayFile(lines.join('\n'), filePath);
+  const rest = parseLegacyDayFile(lines.join('\n'), filePath, day.date);
   if (diaryDataMap) {
     diaryDataMap.set(
       filePath,

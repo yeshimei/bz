@@ -471,6 +471,36 @@ describe('path 行接入统一路径选择器（ADR-0061）', () => {
     expect(saver).toHaveBeenCalledTimes(1);
   });
 
+  /* 2026-11-05 日记本「日记文件夹」行：留空跟随 Obsidian 日记时，行内要显示实际生效目录 */
+  it('空值 + fallbackValue：显示实际生效目录的锁定 chip（只展示不落盘、无 ✕）', () => {
+    seedVault();
+    state.storagePath = '';
+    const container = document.createElement('div');
+    renderSettingsInto(container, {
+      groups: [
+        {
+          name: '路径组',
+          rows: [
+            {
+              type: 'path',
+              mode: 'single',
+              name: '存储路径',
+              binding: { key: 'storagePath' },
+              fallbackValue: () => 'CONFIG/STORAGE',
+            },
+          ],
+        },
+      ],
+    });
+    const row = findRow(container, '存储路径');
+    const chip = row.querySelector('.bz-chip--locked');
+    expect(chip?.textContent).toBe('CONFIG/STORAGE');
+    expect(row.querySelector('.bz-chip-x')).toBeNull(); // 锁定态不可移除
+    expect(state.storagePath).toBe(''); // 只展示、不落盘
+    (chip as HTMLElement).click(); // 点击 → 打开选择器改显式值
+    expect(document.getElementById('bz-path-picker-popup')).toBeTruthy();
+  });
+
   it('N6：域行 onChange 同步抛错 → 绑定值回滚 + chips 回滚 + 保存失败通知（不再 unhandled rejection）', async () => {
     const vault = new MockVault();
     vault.create('旧目录/a.md', 'x');

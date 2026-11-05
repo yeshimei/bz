@@ -19,31 +19,37 @@ import { getApp } from '../core/app';
 import { getSettings, saveSettings } from '../core/settings-provider';
 import { notify, notifySaveError } from '../core/notice';
 import { openFlowDialog } from '../core/flow-dialog';
-import { diaryDateFromLegacyPath, diaryMetaFromEntryPath } from '../core/diary-format';
-import { applyDirectories, DIARY_DIRECTORY, type DiaryEntryFormat } from './config';
+import { diaryMetaFromEntryPath } from '../core/diary-format';
+import { applyDirectories, DIARY_DIRECTORY, diaryDayDateOf, diaryDayStampOf, type DiaryEntryFormat } from './config';
 import { convertDiaryFormat, type ConvertProgress } from './convert';
 
-/** 格式名与样例文件名：卡片、确认框标题、样例块共用一套，避免三处叫法漂移 */
+/** 格式名：卡片、确认框标题共用一套，避免叫法漂移 */
 const FORMAT_LABEL: Record<DiaryEntryFormat, string> = {
   entry: '一篇一个文件',
   day: '一天一个文件',
 };
-const FORMAT_SAMPLE: Record<DiaryEntryFormat, string> = {
-  entry: '2606131223.md',
-  day: '2026-06-13.md',
-};
+
+/**
+ * 示例文件名：day 格式按 **Obsidian 日记的日期格式** 生成（2026-11-05 用户要求），
+ * 固定用 2026-06-13 作示例日期——用户一眼能看出自己库里将来的文件长什么样。
+ * 例：`YYYY/MM/DD` → `2026/06/13.md`；`YYYY.MM.DD` → `2026.06.13.md`。
+ */
+function formatSample(format: DiaryEntryFormat): string {
+  return format === 'day' ? `${diaryDayStampOf('2026-06-13')}.md` : '2606131223.md';
+}
+
 /** 样例块的引导语（只说「之后新写的会怎样」，不复述当前格式） */
 const FORMAT_CAP: Record<DiaryEntryFormat, string> = {
   entry: '之后新写的，每条一个文件',
   day: '之后新写的，当天都收进这一份',
 };
 
-/** 当前设置里的格式（设置提供者未注入的测试环境回落 entry） */
+/** 当前设置里的格式（设置提供者未注入的测试环境回落 day——2026-11-05 新缺省） */
 function currentFormat(): DiaryEntryFormat {
   try {
-    return getSettings().diaryEntryFormat === 'day' ? 'day' : 'entry';
+    return getSettings().diaryEntryFormat === 'entry' ? 'entry' : 'day';
   } catch (e) {
-    return 'entry';
+    return 'day';
   }
 }
 
@@ -55,7 +61,7 @@ function countDiaryFiles(): number {
     for (const f of getApp().vault.getMarkdownFiles?.() || []) {
       const p = String((f as { path?: string }).path || '');
       if (!p.startsWith(prefix)) continue;
-      if (diaryMetaFromEntryPath(p) || diaryDateFromLegacyPath(p)) n += 1;
+      if (diaryMetaFromEntryPath(p) || diaryDayDateOf(p)) n += 1;
     }
   } catch (e) {
     return 0;
@@ -92,7 +98,7 @@ function buildSwitchBody(next: DiaryEntryFormat, count: number): HTMLElement {
   cap.textContent = FORMAT_CAP[next];
   const file = document.createElement('span');
   file.className = 'bz-diary-fmt-dialog-file';
-  file.textContent = FORMAT_SAMPLE[next];
+  file.textContent = formatSample(next);
   sample.append(cap, file);
 
   const facts = document.createElement('div');
@@ -133,7 +139,7 @@ export function mountDiaryFormatEditor(body: HTMLElement): void {
         'day',
         format === 'day',
         busy,
-        ['2026-06-13.md', '<span class="seg"># 📖 12:23</span>', '<span class="seg"># ✍️ 22:10</span>'],
+        [formatSample('day'), '<span class="seg"># 📖 12:23</span>', '<span class="seg"># ✍️ 22:10</span>'],
         '一天一个文件',
         'Obsidian 日记原生格式，当天的日记分段'
       ) +
@@ -223,7 +229,7 @@ export function mountDiaryFormatEditor(body: HTMLElement): void {
   /** 切换确认框：取消 / 只切换 / 切换并转换 */
   async function askSwitch(next: DiaryEntryFormat): Promise<void> {
     const count = countDiaryFiles();
-    const sample = FORMAT_SAMPLE[next];
+    const sample = formatSample(next);
     const existing = count > 0 ? `已有 ${count} 个文件保持原样` : '还没有已存的日记文件';
     const note = '转换的话，原文件进回收站，可恢复';
     // 纯文本兜底（读屏 / 弹窗没建成时仍可读）：与富正文同三句，不重复当前格式与分段规则

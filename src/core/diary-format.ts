@@ -11,13 +11,126 @@
  *
  * 消费方：diary（parser/store/encrypt/repair/data）、smartcat、recap、home、encrypt、core/path-classify。
  * 本文件属 core 层（ADR-0002）：只依赖与 obsidian 无关的纯函数，禁反向 import 任何域。
+ * 例外（2026-11-05）：day 格式的文件名要按 Obsidian 日记的日期格式生成/反解，需 moment——
+ * 走 obsidian 模块取宿主 moment（测试 alias 已替换），不 import 任何域；其余仍是纯函数。
  */
+import { moment } from 'obsidian';
+import { OBSIDIAN_DAILY_NOTES_DEFAULT_FORMAT, obsidianDailyNotesFormat } from './daily-notes';
 
 /** 条目文件名（题目）：`YYMMDDHHmm` 或同刻第 N 篇 `YYMMDDHHmm-N` */
 export const DIARY_ENTRY_FILE_RE = /^(\d{2})(\d{2})(\d{2})(\d{2})(\d{2})(?:-(\d+))?\.md$/;
 
 /** 旧「一天一文件」日期文件名（迁移后本域不再产出；体检按 legacy 报出、加密还原按它换算条目路径） */
 export const DIARY_LEGACY_FILE_RE = /^(\d{4})-(\d{2})-(\d{2})\.md$/;
+
+/**
+ * Obsidian 日记设置页下拉里的四种日期格式（2026-11-05）：当前格式之外的这几种也要认得出来，
+ * 否则用户从内置格式换到自定义格式后，旧日记文件会从册子里整批消失。
+ */
+export const DIARY_DAY_BUILTIN_FORMATS = [
+  'YYYY-MM-DD',
+  'YYYY.MM.DD',
+  'YYYY/MM/DD',
+  'YYYY/MM/YYYY-MM-DD',
+] as const;
+
+/** 当前生效的 day 日期格式：读 Obsidian 日记设置；测试/无 app 回落 Obsidian 缺省 */
+export function diaryDayFormat(): string {
+  try {
+    return obsidianDailyNotesFormat();
+  } catch (e) {
+    return OBSIDIAN_DAILY_NOTES_DEFAULT_FORMAT;
+  }
+}
+
+/** 解析 day 文件时依次尝试的格式：当前格式在前，再补内置四种（去重、去空） */
+export function diaryDayFormats(): string[] {
+  const out: string[] = [];
+  const push = (f: string): void => {
+    const t = String(f || '').trim();
+    if (t && !out.includes(t)) out.push(t);
+  };
+  push(diaryDayFormat());
+  for (const f of DIARY_DAY_BUILTIN_FORMATS) push(f);
+  return out;
+}
+
+/**
+ * 日期 → day 文件相对路径（不含 `.md`）：按 Obsidian 日记的日期格式格式化。
+ * 例：`2026-06-13` + `YYYY/MM/DD` → `2026/06/13`（含 `/` 即落在子目录）。
+ * 日期非法 / 格式为空 → null（调用方回落 `YYYY-MM-DD`）。
+ */
+export function diaryDayStamp(dateStr: string, format?: string): string | null {
+  const fmt = String(format ?? diaryDayFormat()).trim();
+  if (!fmt) return null;
+  const d = moment(dateStr, 'YYYY-MM-DD', true);
+  if (!d.isValid()) return null;
+  try {
+    const stamp = d.format(fmt).trim();
+    return stamp || null;
+  } catch (e) {
+    return null;
+  }
+}
+
+/**
+ * day 文件相对路径（不含 `.md`）→ 日期 `YYYY-MM-DD`；逐格式严格解析。
+ * 严格 = moment 严格模式 + 往返校验（同一格式再格式化必须与原文逐字相同）——
+ * 宽松解析会把 `2026-6-3` 也认成 6 月 3 日，与 Obsidian 自己的命名对不上。
+ */
+export function diaryDayDateFromStamp(stamp: string, formats: string[]): string | null {
+  const raw = String(stamp || '').replace(/\\/g, '/').trim();
+  if (!raw) return null;
+  for (const fmt of formats) {
+    const f = String(fmt || '').trim();
+    if (!f) continue;
+    let m: ReturnType<typeof moment>;
+    try {
+      m = moment(raw, f, true);
+    } catch (e) {
+      continue;
+    }
+    if (!m.isValid()) continue;
+    if (m.format(f).trim() !== raw) continue;
+    return m.format('YYYY-MM-DD');
+  }
+  return null;
+}
+
+/**
+ * 完整 vault 路径 → day 日期；相对日记目录取路径再按格式解析。
+ * `dir` 为空 = 库根，相对路径即完整路径（不取 basename：`YYYY/MM/DD` 的日期跨三级目录）。
+ */
+export function diaryDayDateFromPath(path: string, dir: string, formats?: string[]): string | null {
+  const p = String(path || '').replace(/\\/g, '/').replace(/^\/+/, '');
+  if (!p.toLowerCase().endsWith('.md')) return null;
+  const d = String(dir || '')
+    .replace(/\\/g, '/')
+    .replace(/^\/+|\/+$/g, '');
+  let rel = p.slice(0, -3);
+  if (d) {
+    if (!rel.startsWith(d + '/')) return null;
+    rel = rel.slice(d.length + 1);
+  }
+  return diaryDayDateFromStamp(rel, formats ?? diaryDayFormats());
+}
+
+/** day 文件完整路径：目录 + 按当前 Obsidian 日期格式的日期相对路径 + `.md`（格式含 `/` 即子目录） */
+export function diaryDayFilePath(dir: string, dateStr: string): string {
+  const stamp = diaryDayStamp(dateStr) ?? dateStr;
+  const base = String(dir || '').replace(/\/+$/, '');
+  return base ? `${base}/${stamp}.md` : `${stamp}.md`;
+}
+
+/**
+ * 从**任意路径**反解 day 日期（不要求它还在当前日记目录下）：用路径自己的父目录作相对基准。
+ * 加密还原 / 目录改过之后的历史清单要用它——按当前目录解析会因为前缀对不上而丢日期。
+ */
+export function diaryDayDateFromOwnPath(path: string, formats?: string[]): string | null {
+  const p = String(path || '').replace(/\\/g, '/');
+  const dir = p.split('/').slice(0, -1).join('/');
+  return diaryDayDateFromPath(p, dir, formats ?? diaryDayFormats());
+}
 
 /** frontmatter 属性名（英文字面量单源：序列化与解析共用，防两侧漂移） */
 export const DIARY_DATE_KEY = 'date';

@@ -114,3 +114,52 @@ describe('removeDiaryEntries（day 格式：只摘块）', () => {
     expect(vault.files.has('.trash/2026-06-13.md')).toBe(false);
   });
 });
+
+/**
+ * 2026-11-05 用户要求：day 格式的文件名日期格式跟随 Obsidian 日记设置（增强兼容性）。
+ * 写入、读取、改块、删块都得认同一个格式——含 `/` 时文件落在子目录里。
+ */
+describe('day 文件名跟随 Obsidian 日记的日期格式', () => {
+  /** 把 mock app 的日记插件日期格式换成 fmt（写层实时读，不需要重新 applyDirectories） */
+  function withFormat(fmt: string): void {
+    const app = mockAppWithVault(vault);
+    (app as any).internalPlugins.getPluginById = (id: string) =>
+      id === 'daily-notes' ? { instance: { options: { folder: '我的/日记', format: fmt } } } : null;
+    setApp(app as never);
+  }
+
+  it('YYYY/MM/DD：写进子目录，读路径按相对路径认出同一天', async () => {
+    withFormat('YYYY/MM/DD');
+    const e = await addEntry(DATE, '12:23', ['日记'], '子目录里的第一篇');
+    expect(e.filePath).toBe('我的/日记/2026/06/13.md');
+    expect(vault.files.get('我的/日记/2026/06/13.md')).toContain('子目录里的第一篇');
+
+    const es = await listDateEntries(DATE);
+    expect(es.map((x) => x.content)).toEqual(['子目录里的第一篇']);
+
+    const updated = await updateDiaryTags(DATE, (x) => x.content === '子目录里的第一篇', ['随笔']);
+    expect(updated?.tags).toEqual(['随笔']);
+    expect(vault.files.get('我的/日记/2026/06/13.md')).toContain('# ✍️ 12:23');
+  });
+
+  it('YYYY.MM.DD：文件名带点，块读写照常', async () => {
+    withFormat('YYYY.MM.DD');
+    const e = await addEntry(DATE, '08:00', ['日记'], '点号格式');
+    expect(e.filePath).toBe('我的/日记/2026.06.13.md');
+    expect((await listDateEntries(DATE)).map((x) => x.content)).toEqual(['点号格式']);
+  });
+
+  it('自定义带星期：YYYY-MM-DD-dddd 也能写能读（往返严格，不宽松吞别的文件）', async () => {
+    withFormat('YYYY-MM-DD-dddd');
+    const e = await addEntry(DATE, '09:00', ['日记'], '带星期');
+    expect(e.filePath).toMatch(/^我的\/日记\/2026-06-13-.+\.md$/);
+    expect((await listDateEntries(DATE)).map((x) => x.content)).toEqual(['带星期']);
+  });
+
+  it('旧 YYYY-MM-DD 文件在自定义格式下仍认（内置四种兜底，不整批消失）', async () => {
+    withFormat('YYYY/MM/DD');
+    vault.files.set(PATH, '# 📖 12:23\n\n旧文件名\n');
+    const es = await listDateEntries(DATE);
+    expect(es.map((x) => x.content)).toEqual(['旧文件名']);
+  });
+});

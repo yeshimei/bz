@@ -17,12 +17,13 @@ import { openFlowDialog } from '../core/flow-dialog';
 import { topifyZ } from '../core/z-order';
 import { iconSpan } from '../core/ui/str';
 import { mountIcons } from '../core/ui';
-import { diaryDateFromLegacyPath, diaryMetaFromEntryPath, parseDiaryEntryFile } from '../core/diary-format';
+import { diaryMetaFromEntryPath, parseDiaryEntryFile } from '../core/diary-format';
 import {
   applyDiaryTypes,
   currentDiaryTypes,
   serializedDiaryTypes,
   DIARY_DIRECTORY,
+  diaryDayDateOf,
   type DiaryTypeConfig,
 } from './config';
 import { parseLegacyDayFile } from './legacy';
@@ -372,9 +373,11 @@ export function mountDiaryTypeEditor(body: HTMLElement): void {
             const content = await app.vault.cachedRead(file);
             parseDiaryEntryFile(content).tags.forEach(inc);
           }
-        } else if (diaryDateFromLegacyPath(path)) {
+        } else {
+          const dayDate = diaryDayDateOf(path);
+          if (!dayDate) continue;
           const content = await app.vault.cachedRead(file);
-          const day = parseLegacyDayFile(content, path);
+          const day = parseLegacyDayFile(content, path, dayDate);
           for (const b of day?.blocks ?? []) b.tags.forEach(inc);
         }
       } catch (e) {

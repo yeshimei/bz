@@ -21,7 +21,8 @@ import { storageFile } from '../core/storage';
 import { localDayKey } from '../core/utils';
 import { pad2 } from '../core/ui/str';
 import { settingDir, fileIfExists, readJsonIfExists } from '../recap/aggregate';
-import { diaryDateFromLegacyPath, diaryMetaFromEntryPath } from '../core/diary-format';
+import { diaryDayDateFromPath, diaryDayFormats, diaryMetaFromEntryPath } from '../core/diary-format';
+import { DIARY_DIRECTORY } from '../diary/config';
 import { parseLegacyDayFile } from '../diary/legacy';
 import { achRowFromText } from '../gameshelf/steam';
 import { COPY, clip } from './timeline-copy';
@@ -145,13 +146,14 @@ function fmValue(raw: string, key: string): string {
 
 /** 日记本：写日记（entry 文件名即时刻 / day 文件按块拆）+ 写信（frontmatter date） */
 async function collectDiary(ctx: Ctx): Promise<void> {
-  const diaryDir = settingDir(['diaryDirectory'], '');
-  const prefix = diaryDir + '/';
+  // 目录用 diary 域应用后的快照：设置留空时它已跟随 Obsidian 日记的新日记存放位置
+  const diaryDir = DIARY_DIRECTORY;
+  const prefix = diaryDir ? `${diaryDir}/` : '';
   for (const f of ctx.mdFiles) {
-    if (!f.path.startsWith(prefix) || f.path.slice(prefix.length).includes('/')) continue;
+    if (!prefix || !f.path.startsWith(prefix)) continue;
 
-    // 旧格式（YYYY-MM-DD.md）：一天多块，每块一条痕迹
-    const legacyDate = diaryDateFromLegacyPath(f.path);
+    // day 格式（按 Obsidian 日记日期格式，`YYYY/MM/DD` 会在子目录里）：一天多块，每块一条痕迹
+    const legacyDate = diaryDayDateFromPath(f.path, diaryDir, diaryDayFormats());
     if (legacyDate) {
       let raw = '';
       try {
@@ -159,7 +161,7 @@ async function collectDiary(ctx: Ctx): Promise<void> {
       } catch {
         continue;
       }
-      const day = parseLegacyDayFile(raw, f.path);
+      const day = parseLegacyDayFile(raw, f.path, legacyDate);
       const [y, m, d] = legacyDate.split('-').map(Number);
       for (const b of day?.blocks ?? []) {
         const [hh, mm] = b.time.split(':').map(Number);
@@ -171,6 +173,8 @@ async function collectDiary(ctx: Ctx): Promise<void> {
       continue;
     }
 
+    // entry 格式：只认日记目录下直接放的条目文件（子目录留给 day 格式的日期层级）
+    if (f.path.slice(prefix.length).includes('/')) continue;
     const meta = diaryMetaFromEntryPath(f.path);
     if (!meta) continue;
     const [y, m, d] = meta.date.split('-').map(Number);

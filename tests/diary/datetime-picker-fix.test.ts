@@ -24,7 +24,7 @@ import { MockVault, mockAppWithVault } from '../mock-vault';
 beforeEach(() => {
   document.body.innerHTML = '';
   resetTagsConfig();
-  applyDirectories({});
+  applyDirectories({ diaryEntryFormat: 'entry' });
   setApp({ workspace: {} } as any); // 默认无 vault：探测静默回落 1900 默认范围
   resetDateTimeYearProbe();
 });

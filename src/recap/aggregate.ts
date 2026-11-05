@@ -24,7 +24,8 @@ import { storageFile } from '../core/storage';
 import { localDayKey, parseLocalDay } from '../core/utils';
 import { parseEntryFile } from '../diary/parser';
 import { parseLegacyDayFile } from '../diary/legacy';
-import { diaryDateFromEntryPath, diaryDateFromLegacyPath } from '../core/diary-format';
+import { diaryDayDateFromPath, diaryDayFormats, diaryDateFromEntryPath } from '../core/diary-format';
+import { DIARY_DIRECTORY } from '../diary/config';
 import { parseMovieFile } from '../cinema/data';
 import { STATUS_WATCHED, getStarString } from '../cinema/constants';
 import { scanMarkdownBooks, loadEpubItems } from '../bookshelf/data';
@@ -296,17 +297,19 @@ export async function collectRecap(app: App, now: number = Date.now()): Promise<
   // 日记：当天两种格式都认——entry 逐篇解析；day 文件按块拆（日期取文件名）。
   // R1/N2：过滤口径对齐墙（ui.ts「加密」chip 只认标签）——只滤「加密」标签。
   try {
-    const dir = settingDir(['diaryDirectory'], '');
+    // 目录用 diary 域应用后的快照（设置留空时已跟随 Obsidian 日记的新日记存放位置）
+    const dir = DIARY_DIRECTORY;
+    const prefix = dir ? `${dir}/` : '';
     const dateStr = localDayStr(now);
     const times: string[] = [];
     for (const f of app.vault.getMarkdownFiles?.() || []) {
-      if (!f.path.startsWith(`${dir}/`)) continue;
-      const legacyDate = diaryDateFromLegacyPath(f.path);
+      if (!prefix || !f.path.startsWith(prefix)) continue;
+      const legacyDate = diaryDayDateFromPath(f.path, dir, diaryDayFormats());
       const entryDate = diaryDateFromEntryPath(f.path) || legacyDate;
       if (entryDate !== dateStr) continue;
       const content = await app.vault.read(f as TFile);
       if (legacyDate) {
-        const day = parseLegacyDayFile(content, f.path);
+        const day = parseLegacyDayFile(content, f.path, legacyDate);
         for (const b of day?.blocks ?? []) {
           if (!b.tags.includes('加密')) times.push(b.time);
         }

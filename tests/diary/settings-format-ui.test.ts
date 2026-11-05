@@ -142,3 +142,55 @@ describe('转换进度条的生命周期', () => {
     await vi.waitFor(() => expect(body.querySelector('.bz-diary-fmt-progress')).toBeNull());
   });
 });
+
+/**
+ * 2026-11-05 用户要求：默认选中「一天一个文件」；图三那张卡里的示例文件名
+ * 跟随 Obsidian 日记的日期格式显示。
+ */
+describe('默认选中与示例跟随 Obsidian 日期格式', () => {
+  /** 换一个带指定日记日期格式的 app */
+  function withDailyFormat(fmt: string): void {
+    const app = mockAppWithVault(vault);
+    (app as any).internalPlugins.getPluginById = (id: string) =>
+      id === 'daily-notes' ? { instance: { options: { folder: '我的/日记', format: fmt } } } : null;
+    setApp(app as never);
+  }
+
+  /** 重新挂一个干净的编辑器（beforeEach 已经挂过一个） */
+  function remount(format: 'entry' | 'day' | undefined): HTMLElement {
+    document.body.innerHTML = '';
+    setSettingsProvider(
+      () => ({ ...DEFAULT_SETTINGS, ...(format ? { diaryEntryFormat: format } : {}) }) as never
+    );
+    const host = document.createElement('div');
+    document.body.appendChild(host);
+    mountDiaryFormatEditor(host);
+    return host;
+  }
+
+  it('设置缺省（DEFAULT_SETTINGS.diaryEntryFormat = day）→ 一天一个文件卡选中', () => {
+    const host = remount(undefined);
+    const day = host.querySelector('[data-fmt="day"]') as HTMLElement;
+    const entry = host.querySelector('[data-fmt="entry"]') as HTMLElement;
+    expect(day.getAttribute('aria-checked')).toBe('true');
+    expect(day.classList.contains('is-on')).toBe(true);
+    expect(entry.getAttribute('aria-checked')).toBe('false');
+  });
+
+  it('示例文件名按 Obsidian 日期格式显示：YYYY/MM/DD → 2026/06/13.md', () => {
+    withDailyFormat('YYYY/MM/DD');
+    const host = remount('entry');
+    expect(host.querySelector('[data-fmt="day"] .bz-diary-fmt-line')?.textContent).toBe('2026/06/13.md');
+
+    // 确认框里的样例同样跟随（两处同一个 formatSample 出口）
+    (host.querySelector('[data-fmt="day"]') as HTMLElement).click();
+    const popup = document.getElementById('__shared_confirm_popup__');
+    expect(popup?.querySelector('.bz-diary-fmt-dialog-file')?.textContent).toBe('2026/06/13.md');
+  });
+
+  it('YYYY.MM.DD → 2026.06.13.md（不是写死的 2026-06-13.md）', () => {
+    withDailyFormat('YYYY.MM.DD');
+    const host = remount('entry');
+    expect(host.querySelector('[data-fmt="day"] .bz-diary-fmt-line')?.textContent).toBe('2026.06.13.md');
+  });
+});

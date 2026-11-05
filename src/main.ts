@@ -35,7 +35,7 @@ import { bootstrapStorageDir, storageDir } from './core/storage';
 import { devAutoOpen } from './core/dev-auto-open';
 import { setupAlreadyDone } from './core/setup-state';
 import { isMobileEnv } from './core/mobile';
-import BzSettings, { DEFAULT_SETTINGS, migrateAutoUpdateDefault, migrateMemoSettingKeys, migrateAutoLinkSettings, migrateRetiredAIKeys, migrateRetiredFavoritesSortKey, migrateLinkMinScoreScale, migrateRetiredSecondBrainKeys, migrateRetiredJevKeys, migrateAsrKeys, migrateExternalToolKeys } from './settings';
+import BzSettings, { DEFAULT_SETTINGS, migrateAutoUpdateDefault, migrateMemoSettingKeys, migrateAutoLinkSettings, migrateRetiredAIKeys, migrateRetiredFavoritesSortKey, migrateLinkMinScoreScale, migrateRetiredSecondBrainKeys, migrateRetiredJevKeys, migrateAsrKeys, migrateExternalToolKeys, migrateDiaryEntryFormatDefault } from './settings';
 
 // 备忘录（memo 域，ADR-0092 旧备忘录域退役后 memo.json 唯一属主，ADR-0117 正名：UI/交互/写盘/引用同步归本域；
 // 被动捕获入口——启动自动弹出/file-open 提醒/侧栏图标——落点=备忘录面板）
@@ -364,6 +364,9 @@ export default class BzPlugin extends Plugin {
     // 日记类型从「代码默认 28 类」搬到用户设置：老库（有 data.json）一次性写入旧表，
     // 新装保持空串 → diary/config 的 3 个示例。之后类型完全归用户编辑。
     const diaryTypesMigrated = migrateDiaryTypes(loaded);
+    // 日记存储格式缺省翻牌（2026-11-05：缺省 day）：老库没显式选过就补写 'entry'，保住原写法；
+    // 真新装不写，走新缺省。必须排在 Object.assign 之前（就地改 loadData 原始对象）。
+    const diaryFormatMigrated = migrateDiaryEntryFormatDefault(loaded);
     this.settings = Object.assign({}, DEFAULT_SETTINGS, loaded);
     // 插件安装目录的唯一来源（core/plugin-path）：目录名由用户决定（`bz` / `包仔` / `bz-test`
     // 都可能），写死 `plugins/bz` 会让下载落位与读取位置双双错到不存在的目录。
@@ -407,6 +410,7 @@ export default class BzPlugin extends Plugin {
       asrKeysMigrated ||
       externalToolKeysMigrated ||
       diaryTypesMigrated ||
+      diaryFormatMigrated ||
       autoUpdateMigrated ||
       storageDirBootstrapped
     ) {

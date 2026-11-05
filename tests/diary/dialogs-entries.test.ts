@@ -26,7 +26,7 @@ beforeEach(() => {
   document.body.innerHTML = '';
   clearNotices();
   resetTagsConfig();
-  applyDirectories({});
+  applyDirectories({ diaryEntryFormat: 'entry' });
   vi.restoreAllMocks();
   vault = new MockVault();
   setApp(mockAppWithVault(vault));

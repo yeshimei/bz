@@ -11,7 +11,8 @@
  *   故默认值与硬编码目录均为本地副本 + 出处注释，改动上游时须同步此处。
  */
 import { tryGetSettings } from './settings-provider';
-import { diaryDateFromEntryPath, diaryDateFromLegacyPath } from './diary-format';
+import { obsidianDailyNotesFolder } from './daily-notes';
+import { diaryDayDateFromOwnPath, diaryDayDateFromPath, diaryDayFormats, diaryDateFromEntryPath } from './diary-format';
 import { cleanDir } from './attachment-dir';
 
 export type FileDomainKind = 'diary' | 'flash' | 'cinema' | 'clipping' | 'poem' | 'letter' | 'knowledge';
@@ -34,6 +35,13 @@ function matchSettingDir(value: unknown, p: string, fallback: string): boolean {
   return isUnderDir(raw, p);
 }
 
+/** 日记实际生效目录：设置值 → Obsidian 日记的新日记存放位置 → 空（未配置） */
+function diaryDirectory(): string {
+  const raw = tryGetSettings().diaryDirectory;
+  const v = typeof raw === 'string' ? normalizeDir(raw) : '';
+  return v || obsidianDailyNotesFolder();
+}
+
 /**
  * 按 settings 目录配置识别 md 文件所属域；未命中返回 null（兜底通道用）。
  * 只认 .md（对齐 src/smartcat/context-source.ts classifyPath）；
@@ -44,10 +52,9 @@ export function classifyFilePath(path: string | null | undefined): FileDomainKin
   const p = String(path).replace(/\\/g, '/');
   if (!p.endsWith('.md')) return null;
   const s = tryGetSettings();
-  // 日记：settings.diaryDirectory（「📂 日记目录」）。**未配置就是未配置**（2026-10-30）：
-  // 目录缺省已改为空，这里不再回退字面量——否则设置里空着，点开一个「我的/日记」里的
-  // 旧笔记仍会被认成日记域，导航到一本没配置过的册子。
-  if (matchSettingDir(s.diaryDirectory, p, '')) return 'diary';
+  // 日记：settings.diaryDirectory（「📂 日记目录」）；留空时跟随 Obsidian 日记的新日记存放位置。
+  // 两边都没有 = 未配置，不归类（不回退字面量——否则设置里空着，旧目录里的笔记仍被认成日记）。
+  if (isUnderDir(diaryDirectory(), p)) return 'diary';
   // 闪念（卡片盒）：settings 无对应键，沿用 src/smartcat/context-source.ts FLASH_DIR 硬编码 '卡片盒'
   if (isUnderDir('卡片盒', p)) return 'flash';
   // 剪藏：settings.articleDirectory（「📂 剪藏目录」）；未配置不归类（同上，不回退字面量）
@@ -65,7 +72,14 @@ export function classifyFilePath(path: string | null | undefined): FileDomainKin
   return null;
 }
 
-/** 从日记路径取日期：条目文件 basename（ADR-0130）或旧日期文件（YYYY-MM-DD.md）；否则 null */
+/** 从日记路径取日期：条目文件 basename（ADR-0130）或 day 日期文件（按 Obsidian 日期格式）；否则 null */
 export function diaryDateFromPath(path: string): string | null {
-  return diaryDateFromEntryPath(path) ?? diaryDateFromLegacyPath(path);
+  const p = String(path ?? '').replace(/\\/g, '/');
+  const entry = diaryDateFromEntryPath(p);
+  if (entry) return entry;
+  const byDir = diaryDayDateFromPath(p, diaryDirectory(), diaryDayFormats());
+  if (byDir) return byDir;
+  // 目录未知/未配置（或路径不在当前日记目录下）：按路径自身目录解析——与旧 basename 口径一致，
+  // 不依赖设置也能认出 `2026-08-23.md` 这类日期文件
+  return diaryDayDateFromOwnPath(p, diaryDayFormats());
 }

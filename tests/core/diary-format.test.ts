@@ -12,6 +12,11 @@ import {
   DIARY_LEGACY_FILE_RE,
   diaryDateFromEntryPath,
   diaryDateFromLegacyPath,
+  diaryDayDateFromOwnPath,
+  diaryDayDateFromPath,
+  diaryDayDateFromStamp,
+  diaryDayFilePath,
+  diaryDayStamp,
   diaryEntryBaseName,
   diaryEntryPath,
   diaryMetaFromEntryPath,
@@ -183,5 +188,58 @@ describe('diary-format 序列化 ↔ 解析', () => {
     const parsed = parseDiaryEntryFile('---\n来源: 快捷输入\ndate: 2026-03-23 12:32\ntype:\n  - 日记\n  -\n---\n\n正文');
     expect(parsed.meta).toEqual({ date: '2026-03-23', time: '12:32' });
     expect(parsed.tags).toEqual(['日记']);
+  });
+});
+
+/**
+ * day 文件名按 Obsidian 日记的日期格式（2026-11-05）：生成与反解必须是一对，
+ * 且反解要严格（往返逐字一致），否则 `2026-6-3.md` 这种手写名也会被认成日记。
+ */
+describe('day 文件名：按日期格式生成 / 反解', () => {
+  it('diaryDayStamp：常见格式各自成形', () => {
+    expect(diaryDayStamp('2026-06-13', 'YYYY-MM-DD')).toBe('2026-06-13');
+    expect(diaryDayStamp('2026-06-13', 'YYYY.MM.DD')).toBe('2026.06.13');
+    expect(diaryDayStamp('2026-06-13', 'YYYY/MM/DD')).toBe('2026/06/13');
+    expect(diaryDayStamp('2026-06-13', 'YYYY/MM/YYYY-MM-DD')).toBe('2026/06/2026-06-13');
+  });
+
+  it('diaryDayStamp：非法日期 / 空格式 → null（调用方回落 YYYY-MM-DD）', () => {
+    expect(diaryDayStamp('2026-02-30', 'YYYY-MM-DD')).toBe(null);
+    expect(diaryDayStamp('2026-06-13', '   ')).toBe(null);
+  });
+
+  it('diaryDayDateFromStamp：各格式反解回同一个 YYYY-MM-DD', () => {
+    expect(diaryDayDateFromStamp('2026-06-13', ['YYYY-MM-DD'])).toBe('2026-06-13');
+    expect(diaryDayDateFromStamp('2026.06.13', ['YYYY.MM.DD'])).toBe('2026-06-13');
+    expect(diaryDayDateFromStamp('2026/06/13', ['YYYY/MM/DD'])).toBe('2026-06-13');
+    expect(diaryDayDateFromStamp('2026/06/2026-06-13', ['YYYY/MM/YYYY-MM-DD'])).toBe('2026-06-13');
+  });
+
+  it('严格反解：宽松写法不被认（2026-6-3 / 多空格 / 多余后缀）', () => {
+    expect(diaryDayDateFromStamp('2026-6-3', ['YYYY-MM-DD'])).toBe(null);
+    expect(diaryDayDateFromStamp('2026-06-13 ', ['YYYY-MM-DD'])).toBe('2026-06-13'); // trim 后仍合法
+    expect(diaryDayDateFromStamp('2026-06-13-x', ['YYYY-MM-DD'])).toBe(null);
+    expect(diaryDayDateFromStamp('随手记', ['YYYY-MM-DD'])).toBe(null);
+  });
+
+  it('diaryDayDateFromPath：相对日记目录取路径（含 / 的多级子目录）', () => {
+    expect(diaryDayDateFromPath('我的/日记/2026/06/13.md', '我的/日记', ['YYYY/MM/DD'])).toBe('2026-06-13');
+    expect(diaryDayDateFromPath('我的/日记/2026.06.13.md', '我的/日记', ['YYYY.MM.DD'])).toBe('2026-06-13');
+    // 不在该目录下 / 非 .md → null（不猜）
+    expect(diaryDayDateFromPath('别处/2026-06-13.md', '我的/日记', ['YYYY-MM-DD'])).toBe(null);
+    expect(diaryDayDateFromPath('我的/日记/2026-06-13.txt', '我的/日记', ['YYYY-MM-DD'])).toBe(null);
+  });
+
+  it('diaryDayDateFromOwnPath：不要求还在当前目录（目录改过/历史清单兜底）', () => {
+    expect(diaryDayDateFromOwnPath('旧日记本/2026.06.13.md', ['YYYY.MM.DD'])).toBe('2026-06-13');
+    expect(diaryDayDateFromOwnPath('2026-06-13.md', ['YYYY-MM-DD'])).toBe('2026-06-13');
+    expect(diaryDayDateFromOwnPath('随手记.md', ['YYYY-MM-DD'])).toBe(null);
+  });
+
+  it('diaryDayFilePath：目录 + 当前格式 + .md；库根则不带前缀', () => {
+    // 测试环境未注入 Obsidian app → 当前格式回落缺省 YYYY-MM-DD
+    expect(diaryDayFilePath('我的/日记', '2026-06-13')).toBe('我的/日记/2026-06-13.md');
+    expect(diaryDayFilePath('', '2026-06-13')).toBe('2026-06-13.md');
+    expect(diaryDayFilePath('我的/日记/', '2026-06-13')).toBe('我的/日记/2026-06-13.md');
   });
 });

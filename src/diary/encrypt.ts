@@ -14,12 +14,13 @@ import { collectNoteAttachmentPaths, kindOf } from '../encrypt/ui';
 import { bytesToBase64, type LockAttachmentInput } from '../encrypt/data';
 import {
   diaryDateFromLegacyPath,
+  diaryDayDateFromOwnPath,
   diaryEntryPath,
   diaryMetaFromEntryPath,
   parseDiaryBlockHeader,
   serializeDiaryBlockHeader,
 } from '../core/diary-format';
-import { DIARY_DIRECTORY, ENCRYPT_TAG, getTagEmoji, isDayFormat } from './config';
+import { DIARY_DIRECTORY, ENCRYPT_TAG, diaryDayPath, getTagEmoji, isDayFormat } from './config';
 import { serializeLegacyBlock } from './legacy';
 import type { DiaryEntry } from './types';
 
@@ -149,7 +150,8 @@ export async function loadEncryptedEntries(): Promise<DiaryEntry[]> {
       // 补 diaryDateFromLegacyPath 兜底换算（与 encrypt/data.ts mergeDiaryBlock 同套兜底），
       // 否则解锁后这些条目不上墙、无解密入口（还原路径有兜底而加载路径没有，口径不一致）。
       const meta = diaryMetaFromEntryPath(note.path);
-      const date = meta?.date ?? diaryDateFromLegacyPath(note.path);
+      const date =
+        meta?.date ?? diaryDayDateFromOwnPath(note.path) ?? diaryDateFromLegacyPath(note.path);
       if (!date) continue;
       const entry = parseDiaryBlock(plain, date, note.id, note.path);
       if (entry) out.push(entry);
@@ -198,18 +200,26 @@ export async function deleteEncryptedEntry(noteId: string): Promise<void> {
 // ===== 降级/改分类（恢复 merge 回原 md，取出即删） =====
 
 /**
- * 还原落点按当前日记目录重算（D9 后半）：加密时固化的是「当时」的条目文件路径，
+ * 还原落点按当前日记目录重算（D9 后半）：加密时固化的是「当时」的文件路径，
  * 用户改过日记目录后直接还原会 merge 进旧目录（墙读新目录 → 条目凭空消失）。
- * 规则（ADR-0130）：basename 为条目文件形状的 diary-entry，只换目录段指向当前日记目录
- * （同刻冲突由 mergeDiaryBlock 的后缀让位处理）；basename 非条目形状保持原路径不动。
+ * 规则（ADR-0130 / 2026-11-05 补 day 格式）：
+ * - 条目文件形状 → 只换目录段指向当前日记目录（同刻冲突由 mergeDiaryBlock 的后缀让位处理）；
+ * - day 日期文件形状（当前格式 / 内置四种）→ 按**当前日期格式**重算当天文件路径；
+ * - 其余形状保持原路径不动。
  */
 async function realignRestorePath(noteId: string): Promise<void> {
   const safe = getSafeManager();
   const note = safe.manifest?.notes?.find((n) => n.id === noteId);
   if (!note || note.kind !== 'diary-entry') return;
   const base = note.path.split('/').pop() || '';
-  if (!diaryMetaFromEntryPath(base)) return;
-  const target = `${DIARY_DIRECTORY}/${base}`;
+  const dayDate = diaryMetaFromEntryPath(base) ? null : diaryDayDateFromOwnPath(note.path);
+  const target = diaryMetaFromEntryPath(base)
+    ? DIARY_DIRECTORY
+      ? `${DIARY_DIRECTORY}/${base}`
+      : base
+    : dayDate
+      ? diaryDayPath(DIARY_DIRECTORY, dayDate)
+      : note.path;
   if (target === note.path) return;
   note.path = target;
   try {

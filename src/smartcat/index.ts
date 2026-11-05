@@ -530,7 +530,7 @@ function ensureNoteMemorySync(): void {
         } catch { return null; }
       },
       now: () => Date.now(),
-      diaryDirectory: () => DIARY_DIRECTORY || '我的/日记',
+      diaryDirectory: () => DIARY_DIRECTORY,
     },
     backend: memorySystem as unknown as NoteMemoryBackend,
     getDirectories: () => normalizeMemoryDirectories(getSettings().memoryDirectories),

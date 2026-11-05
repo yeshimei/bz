@@ -28,7 +28,7 @@ function makeVault(files: Record<string, string>) {
 }
 
 beforeEach(() => {
-  applyDirectories({});
+  applyDirectories({ diaryEntryFormat: 'entry' });
   // applyDirectories 会把类型重置为默认 3 个；本文件用旧分类表夹具，必须在它之后注入
   applyDiaryTypes(LEGACY_DIARY_TYPES);
   setDiaryDataMap(null);

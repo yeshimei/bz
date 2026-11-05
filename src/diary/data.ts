@@ -18,7 +18,7 @@
  */
 import type { App, TFile } from 'obsidian';
 import { parseEntryFile, parseMovieFile, parseLetterFile, parseBookFile } from './parser';
-import { diaryDateFromLegacyPath, diaryMetaFromEntryPath } from '../core/diary-format';
+import { diaryDayDateFromPath, diaryDayFormats, diaryMetaFromEntryPath } from '../core/diary-format';
 import { DIARY_DIRECTORY, LETTER_DIRECTORY, movieDirectory, bookDirectory, inWallDirs } from './config';
 import { parseLegacyDayFile, legacyBlockToEntry } from './legacy';
 import { onDomainEvent } from '../core/domain-bus';
@@ -305,11 +305,11 @@ async function diarySlots(app: App, diaryDir: string): Promise<DiarySlot[]> {
       slots.push({ path: f.path, date: meta.date, time: meta.time });
       continue;
     }
-    const legacyDate = diaryDateFromLegacyPath(f.name);
+    const legacyDate = diaryDayDateFromPath(f.path, diaryDir, diaryDayFormats());
     if (!legacyDate) continue;
     try {
       const content = await app.vault.cachedRead(f);
-      const day = parseLegacyDayFile(content, f.path);
+      const day = parseLegacyDayFile(content, f.path, legacyDate);
       if (!day) continue;
       for (const b of day.blocks) {
         slots.push({ path: f.path, date: legacyDate, time: b.time, line: b.line, legacy: true });
@@ -335,7 +335,7 @@ async function readDiarySlot(app: App, slot: DiarySlot, diaryDir: string, failed
   try {
     const content = await app.vault.read(file as TFile);
     if (slot.legacy) {
-      const day = parseLegacyDayFile(content, slot.path);
+      const day = parseLegacyDayFile(content, slot.path, slot.date);
       if (!day) return null;
       // 优先按块头行号定位（同刻多条也不会串），行号失效时退回同刻第一个块
       const block = day.blocks.find((b) => b.line === slot.line) ?? day.blocks.find((b) => b.time === slot.time);

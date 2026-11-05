@@ -15,13 +15,19 @@
 import { describe, expect, it, beforeEach } from 'vitest';
 import { diarySettingsSchema } from '../../src/diary/settings';
 import { applyDirectories, DIARY_DIRECTORY, LETTER_DIRECTORY } from '../../src/diary/config';
+import { setApp } from '../../src/core/app';
 import { setSettingsProvider } from '../../src/core/settings-provider';
 import type { SettingsSchema, SettingsRowContext } from '../../src/core/settings-schema';
+import { MockVault, mockAppWithVault } from '../mock-vault';
 
 const NO_CTX = {} as SettingsRowContext;
 
 /** 取「目录」组下指定绑定键的 path 行（找不到直接 fail，不静默跳过） */
-function directoryRow(bindingKey: string): { type: 'path'; onChange: (value: string, ctx: SettingsRowContext) => void } {
+function directoryRow(bindingKey: string): {
+  type: 'path';
+  onChange: (value: string, ctx: SettingsRowContext) => void;
+  fallbackValue?: () => string;
+} {
   const schema: SettingsSchema = diarySettingsSchema();
   const group = schema.groups.find((g) => g.name === '目录');
   if (!group) throw new Error('diarySettingsSchema 缺少「目录」组——设置结构漂移');
@@ -35,7 +41,7 @@ function directoryRow(bindingKey: string): { type: 'path'; onChange: (value: str
 
 beforeEach(() => {
   // 运行时常量复位（跨用例隔离；config.ts 默认值 = 我的/日记 | 我的/信）
-  applyDirectories({});
+  applyDirectories({ diaryEntryFormat: 'entry' });
 });
 
 describe('目录设置行 → applyDirectories → 运行时常量（端到端接线）', () => {
@@ -69,5 +75,17 @@ describe('目录设置行 → applyDirectories → 运行时常量（端到端�
     directoryRow('diaryDirectory').onChange('', NO_CTX);
     expect(DIARY_DIRECTORY).toBe('我的/日记');
     expect(LETTER_DIRECTORY).toBe('我的/信');
+  });
+
+  /* 2026-11-05 用户重装后报「设置里空着，看不出到底跟到了哪个文件夹」：
+     空值时行内要挂一枚锁定 chip，显示 Obsidian 日记的实际目录（只展示、不落盘）。 */
+  it('留空时 fallbackValue 指向 Obsidian 日记目录（设置行显示「跟随到哪」）', () => {
+    const app = mockAppWithVault(new MockVault());
+    (app as any).internalPlugins.getPluginById = (id: string) =>
+      id === 'daily-notes' ? { instance: { options: { folder: '日记' } } } : null;
+    setApp(app as never);
+    const row = directoryRow('diaryDirectory');
+    expect(typeof row.fallbackValue).toBe('function');
+    expect(row.fallbackValue?.()).toBe('日记');
   });
 });

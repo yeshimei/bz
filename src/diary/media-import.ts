@@ -20,8 +20,11 @@ export const PICK_MEDIA_ACCEPT = 'image/*,video/*,audio/*';
  *  （与 encrypt.ts 的 64MB 附件上限同源） */
 export const MEDIA_PICK_MAX_MB = 64;
 
-/** 退回的附件目录（宿主没有 getAvailablePathForAttachment 时用） */
-const FALLBACK_MEDIA_DIR = `${DIARY_DIRECTORY}/附件`;
+/** 退回的附件目录（宿主没有 getAvailablePathForAttachment 时用）；目录未配置 → 库根 `附件` */
+function fallbackMediaDir(): string {
+  const base = DIARY_DIRECTORY.replace(/\/+$/, '');
+  return base ? `${base}/附件` : '附件';
+}
 
 /** 宿主侧「附件默认位置」的窄接口（旧宿主 / 旧评审壳（已退役）可能没有，故按可选能力探测） */
 type AttachmentPathHost = {
@@ -40,21 +43,22 @@ export async function mediaPathFor(app: App, name: string): Promise<string> {
   const host = app as unknown as AttachmentPathHost;
   const getPath = host.fileManager?.getAvailablePathForAttachment;
   if (typeof getPath === 'function') {
-    return await getPath.call(host.fileManager, name, `${DIARY_DIRECTORY}/`);
+    return await getPath.call(host.fileManager, name, DIARY_DIRECTORY ? `${DIARY_DIRECTORY}/` : '');
   }
   const dot = name.lastIndexOf('.');
   const base = dot > 0 ? name.slice(0, dot) : name;
   const ext = dot > 0 ? name.slice(dot) : '';
+  const fallbackDir = fallbackMediaDir();
   try {
-    if (!(await app.vault.adapter.exists(FALLBACK_MEDIA_DIR))) {
-      await app.vault.createFolder(FALLBACK_MEDIA_DIR);
+    if (!(await app.vault.adapter.exists(fallbackDir))) {
+      await app.vault.createFolder(fallbackDir);
     }
   } catch {
     /* 目录已存在 / 无权限：交给 createBinary 自己报错 */
   }
-  let path = `${FALLBACK_MEDIA_DIR}/${name}`;
+  let path = `${fallbackDir}/${name}`;
   for (let i = 2; app.vault.getAbstractFileByPath(path); i++) {
-    path = `${FALLBACK_MEDIA_DIR}/${base}_${i}${ext}`;
+    path = `${fallbackDir}/${base}_${i}${ext}`;
   }
   return path;
 }

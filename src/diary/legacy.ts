@@ -14,7 +14,7 @@
  * 旧表只服务「读懂历史文件」，不参与 UI 默认值；用户删掉某个类型后，旧日记仍能还原标签。
  */
 import { diaryDateFromLegacyPath, isValidDiaryTime } from '../core/diary-format';
-import { emojiToTagMap, tagToEmojiMap, getTagEmoji, LEGACY_DIARY_TYPES } from './config';
+import { diaryDayDateOf, emojiToTagMap, tagToEmojiMap, getTagEmoji, LEGACY_DIARY_TYPES } from './config';
 import type { DiaryEntry } from './types';
 
 /** 旧文件里的一个条目块 */
@@ -101,12 +101,13 @@ export function serializeLegacyBlock(tags: string[], time: string, body: string)
 }
 
 /**
- * 解析旧日期文件。path 只取 basename 判日期；非 `YYYY-MM-DD.md` 返回 null。
+ * 解析旧日期文件（day 格式）。日期优先用调用方算好的 `date`（按 Obsidian 日记日期格式解析），
+ * 没传才退回 basename 的 `YYYY-MM-DD` 形状；两者都拿不到 → null。
  * 行号以 `\n` 切分（CRLF 先归一），供写层按块替换/删除与 UI 跳转。
  */
-export function parseLegacyDayFile(content: string, path: string): LegacyDayFile | null {
-  const date = diaryDateFromLegacyPath(path);
-  if (!date) return null;
+export function parseLegacyDayFile(content: string, path: string, date?: string): LegacyDayFile | null {
+  const resolved = date ?? diaryDateFromLegacyPath(path);
+  if (!resolved) return null;
 
   const lines = String(content ?? '').replace(/\r\n/g, '\n').split('\n');
   const blocks: LegacyBlock[] = [];
@@ -139,12 +140,13 @@ export function parseLegacyDayFile(content: string, path: string): LegacyDayFile
   }
   flush(lines.length - 1);
 
-  return { date, blocks, unparsed, empty: blocks.length === 0 && unparsed === 0 };
+  return { date: resolved, blocks, unparsed, empty: blocks.length === 0 && unparsed === 0 };
 }
 
-/** 路径是否旧日期文件（`YYYY-MM-DD.md`） */
+/** 路径是否 day 格式文件（按当前日记目录 + Obsidian 日期格式解析，兼容内置四种与旧 `YYYY-MM-DD`） */
 export function isLegacyDiaryPath(path: string | null | undefined): boolean {
-  return !!diaryDateFromLegacyPath(String(path ?? ''));
+  const p = String(path ?? '');
+  return !!diaryDayDateOf(p) || !!diaryDateFromLegacyPath(p);
 }
 
 /**

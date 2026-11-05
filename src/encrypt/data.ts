@@ -25,8 +25,11 @@ import { emitDomainEvent } from '../core/domain-bus';
 import { CryptoService, clearCryptoKeyCache } from '../core/crypto';
 import { enqueueFileTask } from '../core/storage';
 import { tryGetSettings } from '../core/settings-provider';
+import { obsidianDailyNotesFolder } from '../core/daily-notes';
 import {
   diaryDateFromLegacyPath,
+  diaryDayDateFromOwnPath,
+  diaryDayFilePath,
   diaryEntryPath,
   diaryMetaFromEntryPath,
   parseDiaryBlockHeader,
@@ -226,7 +229,8 @@ function isOrphanEncName(name: string): boolean {
 function currentDiaryDirectory(): string {
   const raw = tryGetSettings().diaryDirectory;
   const t = (raw || '').trim().replace(/\/+$/, '');
-  return t || '我的/日记';
+  // 2026-11-05：设置留空时跟随 Obsidian 日记的新日记存放位置；两边都没有 → 内部兜底旧默认
+  return t || obsidianDailyNotesFolder() || '我的/日记';
 }
 
 /** 暂存目录名（encryptRoot 下，点前缀隐藏、与最终镜像同盘；ADR-0018 提交式加密） */
@@ -1607,7 +1611,7 @@ export class SafeManager {
     if (meta) {
       date = meta.date;
     } else {
-      const legacyDate = diaryDateFromLegacyPath(datePath);
+      const legacyDate = diaryDayDateFromOwnPath(datePath) ?? diaryDateFromLegacyPath(datePath);
       if (legacyDate) {
         date = legacyDate;
         targetPath = diaryEntryPath(dir, date, time);
@@ -1655,10 +1659,13 @@ export class SafeManager {
     const md = block.replace(/\r\n/g, '\n').trimEnd();
     const first = md.split('\n')[0] ?? '';
     if (!/^#\s*.+?\s+\d{2}:\d{2}\s*$/.test(first)) return false;
-    const date = diaryMetaFromEntryPath(datePath)?.date ?? diaryDateFromLegacyPath(datePath);
+    const date =
+      diaryMetaFromEntryPath(datePath)?.date ??
+      diaryDayDateFromOwnPath(datePath) ??
+      diaryDateFromLegacyPath(datePath);
     if (!date) return false;
-    const dir = datePath.split('/').slice(0, -1).join('/') || currentDiaryDirectory();
-    const targetPath = `${dir}/${date}.md`;
+    // 落点按当前日记目录 + 当前 Obsidian 日期格式重算（目录/格式改过也能落回正确文件）
+    const targetPath = diaryDayFilePath(currentDiaryDirectory(), date);
     await this.ensureVaultParentFolder(targetPath);
     await enqueueFileTask(targetPath, async () => {
       const existing = app.vault.getAbstractFileByPath(targetPath) as any;

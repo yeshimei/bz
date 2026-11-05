@@ -127,7 +127,7 @@ beforeEach(() => {
   clearNotices();
   resetObsidianMocks();
   resetFlips();
-  applyDirectories({});
+  applyDirectories({ diaryEntryFormat: 'entry' });
   // 未配置目录时走引导卡（ADR-0274）；本文件验的是「已配好四目录」的册子行为
   setSettingsProvider(() => ({ diaryDirectory: '我的/日记', letterDirectory: '我的/信', cinemaFolderPath: '我的/影视', bookshelfFolderPath: '书库' }) as never);
   for (const fn of Object.values(mocks)) fn.mockClear();

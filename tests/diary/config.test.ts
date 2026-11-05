@@ -119,16 +119,18 @@ describe('applyDirectories 设置应用', () => {
     expect(LETTER_DIRECTORY).toBe('信件2');
   });
 
-  it('缺省回退默认目录（我的/日记、我的/信）', () => {
+  it('缺省回退默认目录（设置空 + 无 Obsidian 日记设置 → 内部兜底「我的/日记」）', () => {
     applyDirectories({});
     expect(DIARY_DIRECTORY).toBe('我的/日记');
     expect(LETTER_DIRECTORY).toBe('我的/信');
   });
 
-  it('diaryEntryFormat 只认 day，其余回落 entry', () => {
+  it('diaryEntryFormat 只认 entry，其余回落 day（2026-11-05 新缺省）', () => {
     applyDirectories({ diaryEntryFormat: 'day' });
     expect(DIARY_ENTRY_FORMAT).toBe('day');
     applyDirectories({ diaryEntryFormat: 'xxx' });
+    expect(DIARY_ENTRY_FORMAT).toBe('day');
+    applyDirectories({ diaryEntryFormat: 'entry' });
     expect(DIARY_ENTRY_FORMAT).toBe('entry');
   });
 
@@ -166,7 +168,7 @@ describe('applyDirectories 设置应用', () => {
     applyDirectories({ diaryDirectory: '我的/日记/', letterDirectory: '我的/信//' });
     expect(DIARY_DIRECTORY).toBe('我的/日记'); // 双斜杠尾随一并清掉：监听侧 startsWith(dir+'/') 不再恒不命中
     expect(LETTER_DIRECTORY).toBe('我的/信');
-    applyDirectories({ diaryDirectory: '  ' }); // 空白回落默认
+    applyDirectories({ diaryDirectory: '  ' }); // 空白 = 没填 → 跟随 Obsidian；测试无 app → 兜底默认
     expect(DIARY_DIRECTORY).toBe('我的/日记');
     applyDirectories({});
   });

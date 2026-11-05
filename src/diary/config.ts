@@ -17,14 +17,25 @@
 import type { SubTagConfig, TagConfig } from './types';
 import { tryGetSettings } from '../core/settings-provider';
 import { obsidianDailyNotesFolder } from '../core/daily-notes';
+import {
+  diaryDayDateFromPath,
+  diaryDayFilePath,
+  diaryDayFormats as coreDiaryDayFormats,
+  diaryDayStamp,
+} from '../core/diary-format';
 import { resolveCinemaFolderPath } from '../cinema/state';
 import { resolveFolderPath as resolveBookshelfFolderPath } from '../bookshelf/data';
 
 // ===== 可变常量（设置应用时更新） =====
+/**
+ * 日记目录。模块初值只是「applyDirectories 之前」的安全兜底；真正生效值由 applyDirectories
+ * 按「设置 → Obsidian 日记新日记存放位置 → 我的/日记」解析（2026-11-05 起跟随 Obsidian）。
+ * 「设置留空且 Obsidian 也没设」时由 folderState 判未配置、域主界面给引导，写入口不会落笔。
+ */
 export let DIARY_DIRECTORY = '我的/日记';
 export let LETTER_DIRECTORY = '我的/信';
 
-/** 日记存储格式：entry = 一篇一个文件；day = 一天一个文件（YYYY-MM-DD.md） */
+/** 日记存储格式：entry = 一篇一个文件；day = 一天一个文件（文件名按 Obsidian 日记日期格式） */
 export type DiaryEntryFormat = 'entry' | 'day';
 
 /** 日记分类（用户可编辑）：一个名字 + 一个 emoji，全部平级 */
@@ -94,8 +105,31 @@ export const LEGACY_DIARY_TYPES: DiaryTypeConfig[] = [
   { tag: '创意', emoji: '🧩' },
 ];
 
-/** 当前生效的存储格式（applyDirectories 更新） */
+/** 当前生效的存储格式（applyDirectories 更新；缺省一天一个文件，2026-11-05 用户拍板）。
+ *  模块初值同样是 apply 之前的安全兜底（旧口径 entry），生产 onload 必定先 apply。 */
 export let DIARY_ENTRY_FORMAT: DiaryEntryFormat = 'entry';
+
+/** day 格式的文件名日期串（按 Obsidian 日记的日期格式；非法日期/格式回落 `YYYY-MM-DD`） */
+export function diaryDayStampOf(dateStr: string): string {
+  return diaryDayStamp(dateStr) ?? dateStr;
+}
+
+/**
+ * day 文件完整路径：目录 + 按 Obsidian 日记日期格式的日期相对路径 + `.md`。
+ * 格式含 `/` 时（如 `YYYY/MM/DD`）落进子目录，建目录由写层 ensureFolderFor 负责。
+ * 目录空（未配置/库根）→ 相对库根的路径。
+ */
+export function diaryDayPath(dir: string, dateStr: string): string {
+  return diaryDayFilePath(dir, dateStr);
+}
+
+/**
+ * 完整路径 → day 日期 `YYYY-MM-DD`：按当前日记目录取相对路径，再按当前格式 + 内置四种严格解析。
+ * 不是 day 文件（含条目文件、随手记）→ null。目录未配置时只认库根相对路径（不认旧目录）。
+ */
+export function diaryDayDateOf(path: string): string | null {
+  return diaryDayDateFromPath(path, DIARY_DIRECTORY, coreDiaryDayFormats());
+}
 
 /** 当前生效的日记分类（applyDirectories 更新；外部只读时用 currentDiaryTypes() 拿副本） */
 let DIARY_TYPES: DiaryTypeConfig[] = clone(DEFAULT_DIARY_TYPES);
@@ -259,9 +293,12 @@ export function applyDirectories(settings: {
     const t = (v || '').trim().replace(/\/+$/, '');
     return t || fallback;
   };
+  // 2026-11-05：设置留空 → 跟随 Obsidian 日记的新日记存放位置；两边都没有时，内部仍保留
+  // 「我的/日记」作最后兜底（写入口由 folderState 的未配置引导挡住，用户看不到这层兜底）。
   DIARY_DIRECTORY = clean(settings.diaryDirectory, '') || obsidianDailyNotesFolder() || '我的/日记';
   LETTER_DIRECTORY = clean(settings.letterDirectory, '我的/信');
-  DIARY_ENTRY_FORMAT = settings.diaryEntryFormat === 'day' ? 'day' : 'entry';
+  // 2026-11-05 用户拍板：缺省「一天一个文件」；显式 'entry' 才走一篇一文件
+  DIARY_ENTRY_FORMAT = settings.diaryEntryFormat === 'entry' ? 'entry' : 'day';
   applyDiaryTypes(settings.diaryTypes);
 }
 
