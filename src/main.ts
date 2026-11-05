@@ -361,8 +361,7 @@ export default class BzPlugin extends Plugin {
     const asrKeysMigrated = migrateAsrKeys(loaded);
     // issue 462/ADR-0195：knowledge 三路径键 → 外部工具组（pythonPath/ffmpegPath/ffprobePath）
     const externalToolKeysMigrated = migrateExternalToolKeys(loaded);
-    // 日记分类从「代码默认」搬到用户设置：老库（有 data.json 但没 diaryTypes）一次性写入
-    // **默认 3 个示例**（不再灌旧版 28 类——升级观感见 config.migrateDiaryTypes 注释）。
+    // 日记类型从「代码默认 28 类」搬到用户设置：老库（有 data.json）一次性写入旧表，
     // 新装保持空串 → diary/config 的 3 个示例。之后类型完全归用户编辑。
     const diaryTypesMigrated = migrateDiaryTypes(loaded);
     this.settings = Object.assign({}, DEFAULT_SETTINGS, loaded);

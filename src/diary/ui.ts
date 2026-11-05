@@ -2410,8 +2410,7 @@ export class DiaryAppController {
     const ok = this.albumEl.querySelector<HTMLElement>('.bz-diary-ap-confirm');
     if (target) {
       this.albumSubEl.textContent = `点几张，盖到 ${target.date} 这一页上`;
-      // 旧 type 可能已不在分类表：把它一并列进来（已选态），否则用户改一次贴纸就会把它静默丢掉
-      for (const t of getSortedTagsForAddDialog(target.tags)) {
+      for (const t of getSortedTagsForAddDialog()) {
         const b = document.createElement('span');
         b.className = 'bz-diary-ap-sticker';
         b.dataset.tag = t;
@@ -2954,8 +2953,7 @@ export class DiaryAppController {
    */
   private renderWspTools(): void {
     const picked = new Set(this.draft?.tags || []);
-    // 正在改的这条如果带着旧 type（已不在分类表），也要出现在 chips 里，显示兜底 emoji 并可取消
-    const chips = getSortedTagsForAddDialog(this.draft?.tags)
+    const chips = getSortedTagsForAddDialog()
       .map(
         (t) =>
           `<span class="bz-diary-wsp-chip${picked.has(t) ? ' bz-diary-on' : ''}" data-tag="${escapeHtml(
