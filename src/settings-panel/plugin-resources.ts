@@ -67,16 +67,13 @@ export function pluginDescOf(state: ReaderInstallState, latest: string | null): 
   return head;
 }
 
-/** 已是最新（本机版本 ≥ 最新版，且这次核对成功过；没查到 ≠ 已最新） */
+/**
+ * 已装且**没有确认的新版** → 按钮写「已安装」并灰掉。
+ * 2026-11-05 用户要求：「已安装」就该是灰的、不加粗、点不动——不纠结这次有没有查到最新版；
+ * 真想知道有没有新版，点组首「全部更新」（它会在未知时现查）。
+ */
 function isUpToDate(state: ReaderInstallState): boolean {
-  return (
-    state.installed &&
-    !state.broken &&
-    latestChecked &&
-    !latestFailed &&
-    !!latestVersion &&
-    compareVersions(latestVersion, state.version) <= 0
-  );
+  return state.installed && !state.broken && !hasKnownUpdate(state);
 }
 
 /** 已知有新版（查询成功、且最新版比本机新） */

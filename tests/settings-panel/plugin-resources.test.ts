@@ -126,14 +126,14 @@ describe('版本号与按钮文字', () => {
     expect(rowDesc(el, 1)).toBe('已安装 0.2.0');
   });
 
-  it('最新版查不到 → 「已安装」可点（点它时现查），不冒充「更新」', async () => {
+  it('最新版查不到 → 「已安装」也是灰的（要查新版点「全部更新」）', async () => {
     const vault = newVault();
     vault.files.set(`${PLUGIN_DIR}/manifest.json`, JSON.stringify({ id: 'bz-reader', version: '0.2.0' }));
     route([['github.com', new Error('ENOTFOUND')], ['gitee.com', new Error('ENOTFOUND')]]);
     const { el } = await renderGroup();
     await vi.waitFor(() => expect(rowDesc(el, 1)).toBe('已安装 0.2.0'));
     expect(rowBtns(el, 1)[1].textContent).toBe('已安装');
-    expect(rowBtns(el, 1)[1].disabled).toBe(false);
+    expect(rowBtns(el, 1)[1].disabled).toBe(true);
   });
 
   it('已装 + 有新版 → 「更新」（可点）', async () => {
