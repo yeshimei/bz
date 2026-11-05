@@ -367,7 +367,14 @@ export function ticketHTML(e: WallEntry, ctx: RenderCtx): string {
   );
 }
 
-/** 藏书票（书） */
+/**
+ * 藏书票（书）——「读毕」的那张纸（用户 2026-11-05 采纳的方案 C）。
+ *
+ * 纸面语言：双线框 + 顶部 EX LIBRIS + 引文竖线 + 右下角压一枚读毕印章。
+ * 字段全部来自 `extra`（`parseBookFile` 补的加性可选字段）：
+ * `title` / `author` / `publisher` / `pages` / `review` / `cover`；日期用条目自身的 `date`。
+ * 署名行只拼非空项，缺一个就少一段，不会留下 `· ·`。
+ */
 export function exlibrisHTML(e: WallEntry, ctx: RenderCtx): string {
   const x = e.extra || {};
   const cover = x.cover
@@ -375,28 +382,37 @@ export function exlibrisHTML(e: WallEntry, ctx: RenderCtx): string {
       esc(ctx.mediaSrc(x.cover)) +
       '" loading="lazy" alt="">'
     : '<i class="bz-diary-ex-nothing"></i>';
-  const byline = x.author
-    ? esc(x.author) + (x.category ? ' · ' + esc(x.category) : '')
-    : esc(x.category || '');
+  const byline = [x.author, x.publisher, x.pages ? x.pages + ' 页' : '']
+    .filter((s): s is string => !!s && s.trim() !== '')
+    .map((s) => esc(s))
+    .join(' · ');
+  /* 印章圆内窄（58px），日期拆两行才不越出圆周 */
+  const dateParts = e.date.split('-');
+  const stampYear = dateParts[0] || '';
+  const stampDate = dateParts.slice(1).join('.');
   return (
     '<div class="bz-diary-exlibris" data-eid="' +
     esc(e.id || '') +
     '">' +
+    '<div class="bz-diary-ex-frame">' +
+    '<div class="bz-diary-ex-top"><i class="bz-diary-ex-rule"></i>' +
+    '<b class="bz-diary-ex-mark">EX LIBRIS</b>' +
+    '<i class="bz-diary-ex-rule"></i></div>' +
+    '<div class="bz-diary-ex-body">' +
     cover +
-    '<div class="bz-diary-ex-main"><div class="bz-diary-ex-title">《' +
+    '<div class="bz-diary-ex-text">' +
+    '<div class="bz-diary-ex-title">《' +
     esc(x.title || '') +
     '》</div>' +
-    '<div class="bz-diary-ex-author">' +
-    byline +
-    '</div>' +
+    (byline ? '<div class="bz-diary-ex-byline">' + byline + '</div>' : '') +
     '<div class="bz-diary-ex-review">' +
     inlineMd(x.review || '') +
-    '</div>' +
-    '<div class="bz-diary-ex-date">读毕 ' +
-    esc(e.date) +
-    ' · ' +
-    esc(e.emoji) +
-    '</div></div></div>'
+    '</div></div></div></div>' +
+    '<div class="bz-diary-ex-seal"><b>读毕</b><i>' +
+    esc(stampYear) +
+    '</i><i>' +
+    esc(stampDate) +
+    '</i></div></div>'
   );
 }
 

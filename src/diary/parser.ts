@@ -256,7 +256,8 @@ export async function parseLetterFile(file: any, app: any): Promise<DiaryEntry |
 
 /**
  * 解析书文件（书库/*.md），生成一个日记条目（每个文件对应一个条目）
- * - 日期：completionDate 优先，无则 readingDate，都无（或非法）返回 null（跳过）；
+ * - 日期：**只认 `completionDate`（读完）**，缺失或非法返回 null（跳过）；`readingDate` 不再兜底
+ *   ——用户 2026-11-05：「当书库中有读完并且有书评的书时，也会放到日记本当中」；
  * - 必须有书评且非空（bookReview），否则返回 null 跳过（用户要求「书只获取有书评的」，与影视影评同语义）；
  * - title：frontmatter title，缺省回退文件名（不含扩展名）；
  * - content = `**《title》**` + 空行 + bookReview；
@@ -273,10 +274,11 @@ export async function parseBookFile(file: any, app: any): Promise<DiaryEntry | n
     const review = fm.bookReview;
     if (!review || String(review).trim() === '') return null;
 
-    // 日期：completionDate 优先，无则 readingDate；都无跳过
-    let dateStr = fm.completionDate ?? fm.readingDate;
-    if (!dateStr || !moment(dateStr, 'YYYY-MM-DD', true).isValid()) return null;
-    dateStr = moment(dateStr).format('YYYY-MM-DD');
+    // 必须读完：只认 completionDate（与书库 `status === '已读'` 同判据）；
+    // 只有 readingDate 的在读/弃读不进册——用户 2026-11-05：「读完并且有书评」
+    const completed = fm.completionDate;
+    if (!completed || !moment(completed, 'YYYY-MM-DD', true).isValid()) return null;
+    const dateStr = moment(completed).format('YYYY-MM-DD');
 
     // 标题：frontmatter title 优先，缺省回退文件名
     const title = (fm.title && String(fm.title).trim() !== '' ? String(fm.title).trim() : null) || file.basename;
@@ -314,6 +316,15 @@ export async function parseBookFile(file: any, app: any): Promise<DiaryEntry | n
         cover: cover && String(cover).trim() !== '' ? String(cover).trim() : undefined,
         author: fm.author && String(fm.author).trim() ? String(fm.author).trim() : undefined,
         category: fm.category && String(fm.category).trim() ? String(fm.category).trim() : undefined,
+        publisher: fm.publisher && String(fm.publisher).trim() ? String(fm.publisher).trim() : undefined,
+        pages:
+          fm.pages !== undefined && fm.pages !== null && String(fm.pages).trim()
+            ? String(fm.pages).trim()
+            : undefined,
+        readingTime:
+          fm.readingTimeFormat && String(fm.readingTimeFormat).trim()
+            ? String(fm.readingTimeFormat).trim()
+            : undefined,
       },
     };
   } catch (err) {
