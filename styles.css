@@ -7324,17 +7324,27 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 .bz-diary-fb-paper.bz-diary-fb-lead { max-width: 420px; line-height: 26px; }
 .bz-diary-fb-lead-title { font-size: 17px; font-weight: 600; color: #3d2f0c; margin-bottom: 8px; }
 .bz-diary-fb-lead-desc { font-size: 13px; color: #6b5720; margin-bottom: 16px; }
-.bz-diary-fb-lead-act { display: flex; justify-content: center; }
-/* 空册：写在左侧书页上的那一段（形制照真日记——标题 + 正文 + 一句引导，
+.bz-diary-fb-lead-act { display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 6px 16px; }
+/* 未配置时的教程入口：和空册那枚同一句话，纸面文字链接（不抢「设置日记文件夹」的主按钮） */
+.bz-diary-fb-lead-tut { border: 0; background: none; padding: 0; font: inherit; font-size: 13px; cursor: pointer;
+  color: #8a6a2a; text-decoration: underline; text-underline-offset: 4px; }
+@media (hover: hover) {
+  .bz-diary-fb-lead-tut:hover { color: #6b4f1a; }
+}
+/* 空册：写在左侧书页上的那一段（形制照真日记——标题 + 正文 + 一行入口，
    不是浮在书上的卡片；落点是当时生效的日记文件夹） */
 .bz-diary-void-entry { padding: 2px 0 8px; }
 .bz-diary-void-entry p { margin: 0 0 10px; font-size: 15px; line-height: 2; color: var(--bz-diary-ink); }
 .bz-diary-void-entry p.bz-diary-void-title { font-size: 16px; font-weight: 600; }
+.bz-diary-void-acts { display: flex; align-items: center; flex-wrap: wrap; gap: 6px 18px; }
 .bz-diary-void-link { border: 0; background: none; padding: 0; font: inherit; font-size: 13px; cursor: pointer;
   color: #b3564d; text-decoration: underline; text-underline-offset: 4px; }
+/* 空册的教程入口：常驻（空态不弹窗），颜色比「写第一篇」退一档 */
+.bz-diary-void-link.bz-diary-void-tut { color: #8d6b3f; }
 /* 触屏悬浮隔离范式（呈报#9 / F4）：:hover 一律包进 @media (hover: hover)，防触屏粘滞 */
 @media (hover: hover) {
   .bz-diary-void-link:hover { color: #8d3b33; }
+  .bz-diary-void-link.bz-diary-void-tut:hover { color: #6b4f2a; }
 }
 
 /* 撕页碎片 */
@@ -7532,6 +7542,109 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   .bz-diary-add-popup .bz-btn--primary:hover { background: linear-gradient(180deg, #c04433, #9c3122); }
 }
 
+/* ---- 视频教程弹窗（首次打开日记本、册子非空时盖上来的一张票根） ----
+   与写日记弹窗同一份纸/墨/铜材料（同样挂 body，取不到 .bz-diary-scene 上的变量）。
+   字少：没有标题头、没有说明段——一张播放票根 + 两枚按钮就说完。
+   未发视频时（DIARY_TUTORIAL_URL 为空）只换角标文案，形的部分一版共用。 */
+.bz-overlay-popup.bz-diary-tutorial-popup {
+  background: linear-gradient(178deg, #f6efdd, #ece2c8);
+  color: #43392b;
+  border: 1px solid rgba(120, 92, 56, .42);
+  border-radius: 3px;
+  box-shadow: 0 18px 44px rgba(20, 12, 5, .55), inset 0 1px 0 rgba(255, 252, 240, .55);
+}
+.bz-diary-tutorial-popup .bz-dialog-body { color: #43392b; }
+
+/* 票根：一张压在纸上的浅色票根；hover 抬半格，说明它可点 */
+.bz-diary-tut-cover {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  box-sizing: border-box;
+  margin: 0;
+  padding: 15px 16px;
+  border: 1px solid rgba(120, 92, 56, .34);
+  border-radius: 3px;
+  background:
+    radial-gradient(130% 100% at 10% 0%, rgba(255, 252, 240, .75), rgba(255, 252, 240, 0) 62%),
+    linear-gradient(168deg, #efe6cf, #e2d4b2);
+  box-shadow: inset 0 1px 0 rgba(255, 252, 240, .6);
+  color: #43392b;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  appearance: none;
+  transition: transform .18s ease, box-shadow .18s ease;
+}
+@media (hover: hover) {
+  .bz-diary-tut-cover:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 16px rgba(90, 60, 25, .18), inset 0 1px 0 rgba(255, 252, 240, .6);
+  }
+}
+.bz-diary-tut-cover:active { transform: translateY(0); }
+/* 键盘焦点：不在整张卡上再套一圈框（会像「选中态」），让火漆播放钮亮一圈 */
+.bz-diary-tut-cover:focus-visible { outline: none; }
+.bz-diary-tut-cover:focus-visible .bz-diary-tut-play {
+  box-shadow:
+    0 0 0 3px rgba(178, 58, 42, .28),
+    0 3px 8px rgba(90, 25, 15, .32),
+    inset 0 1px 0 rgba(255, 220, 200, .3);
+}
+
+/* 火漆圆钮 + 米色播放三角（纯 CSS，不引图标字体） */
+.bz-diary-tut-play {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: linear-gradient(180deg, #b23a2a, #8d2b1d);
+  box-shadow: 0 3px 8px rgba(90, 25, 15, .32), inset 0 1px 0 rgba(255, 220, 200, .3);
+}
+.bz-diary-tut-play::before {
+  content: '';
+  width: 0;
+  height: 0;
+  margin-left: 4px;
+  border-style: solid;
+  border-width: 8px 0 8px 13px;
+  border-color: transparent transparent transparent #fdf3e2;
+}
+
+.bz-diary-tut-cover-text { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.bz-diary-tut-kicker { font-size: 10.5px; letter-spacing: .14em; color: #8d6b3f; }
+.bz-diary-tut-name { font-size: 15.5px; font-weight: 600; letter-spacing: .02em; color: #43392b; }
+
+/* 底栏：纸签（次）与火漆（主）两档按钮，与写日记弹窗同皮 */
+.bz-diary-tut-foot {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 14px;
+}
+.bz-diary-tutorial-popup .bz-btn:not(.bz-btn--primary):not(.bz-btn--danger) {
+  background: linear-gradient(180deg, #fbf6e8, #efe6cf);
+  border: 1px solid rgba(120, 92, 56, .4);
+  color: #43392b;
+}
+.bz-diary-tutorial-popup .bz-btn--primary {
+  background: linear-gradient(180deg, #b23a2a, #8d2b1d);
+  border: 1px solid rgba(90, 25, 15, .55);
+  color: #fdf3e2;
+}
+@media (hover: hover) {
+  .bz-diary-tutorial-popup .bz-btn--primary:hover { background: linear-gradient(180deg, #c04433, #9c3122); }
+}
+@media (max-width: 420px) {
+  .bz-diary-tut-cover { gap: 11px; padding: 12px 13px; }
+  .bz-diary-tut-play { width: 38px; height: 38px; }
+  .bz-diary-tut-name { font-size: 14.5px; }
+}
+
 /* ---- 撕页确认：桌角撕下来的一角纸 ----
    注意：删除是慎重决策（设计手册 §9/§10），主按钮**不得高亮**——
    core 用 `#__shared_confirm_popup__.bz-flow-dialog.bz-flow-dialog--danger #__shared_confirm_ok__`
@@ -7561,6 +7674,53 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   background: linear-gradient(180deg, #fbf6e8, #efe6cf);
   border: 1px solid rgba(120, 92, 56, .4);
   color: #b23a2a;
+}
+
+/* ---- 切换存储格式确认：样例文件名当视觉中心（设置面板「存储」组） ----
+   壳的宽度/居中挂在 #__shared_confirm_popup__ 上（core 版式段），这里只补本框的排版。
+   皮走设置面板 .bz-sp-skin（--sp-* 由 popup 自身持有一份，子节点继承），不换纸面材质。 */
+#__shared_confirm_popup__.bz-diary-fmt-dialog {
+  width: min(420px, calc(100vw - 32px));
+}
+#__shared_confirm_popup__.bz-diary-fmt-dialog .bz-diary-fmt-dialog-body {
+  width: 100%;
+  margin: 0 0 var(--bz-space-lg);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  text-align: left;
+}
+/* 视觉中心：目标格式的样例块——比弹窗底暗一档，像嵌进去的一张标签 */
+#__shared_confirm_popup__.bz-diary-fmt-dialog .bz-diary-fmt-dialog-sample {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 11px 14px;
+  border: 1px solid var(--sp-line-soft, var(--bz-border));
+  border-radius: 10px;
+  background: var(--sp-bg, var(--bz-surface-1));
+}
+#__shared_confirm_popup__.bz-diary-fmt-dialog .bz-diary-fmt-dialog-cap {
+  font-size: 11px;
+  color: var(--sp-ink-3, var(--bz-text-3));
+}
+#__shared_confirm_popup__.bz-diary-fmt-dialog .bz-diary-fmt-dialog-file {
+  font-family: var(--bz-font-mono, ui-monospace, Consolas, monospace);
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: .02em;
+  color: var(--sp-ink, var(--bz-text-1));
+}
+#__shared_confirm_popup__.bz-diary-fmt-dialog .bz-diary-fmt-dialog-facts {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 12.5px;
+  color: var(--sp-ink-2, var(--bz-text-2));
+}
+#__shared_confirm_popup__.bz-diary-fmt-dialog .bz-diary-fmt-dialog-note {
+  font-size: 11.5px;
+  color: var(--sp-ink-3, var(--bz-text-3));
 }
 
 /* 表单纵向骨架：日期行 + 类型标签 + chip 滚动区 + 底栏；
@@ -7780,7 +7940,9 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 
 /* ---------- emoji 选择浮层（挂 body，走全局组件库 token） ---------- */
 .bz-diary-type-emoji-pop {
-  position: fixed; z-index: 10050; width: 262px; padding: 8px;
+  /* z-index 由 openEmojiPicker 经 topifyZ 动态分配（ADR-0067）——静态档 10050 会被
+     设置面板（100000+）压住（2026-11-05 用户报障）。 */
+  position: fixed; width: 262px; padding: 8px;
   border: 1px solid var(--bz-border); border-radius: 10px;
   background: var(--bz-surface-3);
   box-shadow: var(--bz-pop-shadow, 0 12px 34px rgba(0, 0, 0, 0.24));
