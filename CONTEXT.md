@@ -12,7 +12,7 @@
 内存对象由文件派生（date/time/tags/emoji/content/filename=filePath）。
 _Avoid_: 日记、记录、post
 
-**条目文件 (Entry File)**: 两种形态（ADR-030 / ADR-0284）——
+**条目文件 (Entry File)**: 两种形态（ADR-0130 / ADR-0284）——
 - entry：`我的/日记/YYMMDDHHmm(-N)?.md`，同刻冲突加 `-2/-3` 后缀；题目是时间戳的数字简写（`2026-06-13 12:23` → `2606131223`），Windows 禁英文 `:`、简写全平台合法且**字典序即时间序**；frontmatter 恰两属性 `date: YYYY-MM-DD HH:mm` + `type:`（多值分类名列表）。
 - day：`我的/日记/YYYY-MM-DD.md`（Obsidian 日记原生文件名），同一天多篇以 `# 📖 12:23` 分块，标签只写 emoji。
 格式契约单源 `src/core/diary-format.ts`（新格式）+ `src/diary/legacy.ts`（旧格式解析/序列化）。
