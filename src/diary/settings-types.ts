@@ -14,6 +14,7 @@ import { getApp } from '../core/app';
 import { getSettings, saveSettings } from '../core/settings-provider';
 import { notify, notifySaveError } from '../core/notice';
 import { openFlowDialog } from '../core/flow-dialog';
+import { topifyZ } from '../core/z-order';
 import { iconSpan } from '../core/ui/str';
 import { mountIcons } from '../core/ui';
 import { diaryDateFromLegacyPath, diaryMetaFromEntryPath, parseDiaryEntryFile } from '../core/diary-format';
@@ -76,7 +77,11 @@ function attachDrag(root: HTMLElement, onReorder: (from: number, to: number) => 
   });
 }
 
-/** 挂在 body 上的 emoji 选择浮层（不穿设置面板皮，走组件库 --bz-* token） */
+/** 挂在 body 上的 emoji 选择浮层（不穿设置面板皮，走组件库 --bz-* token）。
+ *
+ * 2026-11-05 用户报「点击图标打开的窗口被设置面遮挡」：浮层此前只有 CSS 里一档静态
+ * `z-index: 10050`，而设置面板走动态发号（ADR-0067，100000+），一进面板就永远压在下面。
+ * 现在与全站 overlay 同口径：append 后 `topifyZ`，谁后显示谁在上。 */
 function openEmojiPicker(anchor: HTMLElement, onPick: (emoji: string) => void): void {
   document.querySelector('.bz-diary-type-emoji-pop')?.remove();
   const pop = document.createElement('div');
@@ -87,6 +92,7 @@ function openEmojiPicker(anchor: HTMLElement, onPick: (emoji: string) => void): 
     `</div>` +
     `<div class="bz-diary-type-emoji-custom"><input type="text" maxlength="8" placeholder="或粘贴一个 emoji" aria-label="自定义 emoji"><button type="button" class="bz-btn bz-btn--sm" data-ok>用这个</button></div>`;
   document.body.appendChild(pop);
+  topifyZ(pop);
 
   const rect = anchor.getBoundingClientRect();
   const width = 262;

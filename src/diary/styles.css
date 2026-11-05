@@ -1396,6 +1396,53 @@
   color: #b23a2a;
 }
 
+/* ---- 切换存储格式确认：样例文件名当视觉中心（设置面板「存储」组） ----
+   壳的宽度/居中挂在 #__shared_confirm_popup__ 上（core 版式段），这里只补本框的排版。
+   皮走设置面板 .bz-sp-skin（--sp-* 由 popup 自身持有一份，子节点继承），不换纸面材质。 */
+#__shared_confirm_popup__.bz-diary-fmt-dialog {
+  width: min(420px, calc(100vw - 32px));
+}
+#__shared_confirm_popup__.bz-diary-fmt-dialog .bz-diary-fmt-dialog-body {
+  width: 100%;
+  margin: 0 0 var(--bz-space-lg);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  text-align: left;
+}
+/* 视觉中心：目标格式的样例块——比弹窗底暗一档，像嵌进去的一张标签 */
+#__shared_confirm_popup__.bz-diary-fmt-dialog .bz-diary-fmt-dialog-sample {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 11px 14px;
+  border: 1px solid var(--sp-line-soft, var(--bz-border));
+  border-radius: 10px;
+  background: var(--sp-bg, var(--bz-surface-1));
+}
+#__shared_confirm_popup__.bz-diary-fmt-dialog .bz-diary-fmt-dialog-cap {
+  font-size: 11px;
+  color: var(--sp-ink-3, var(--bz-text-3));
+}
+#__shared_confirm_popup__.bz-diary-fmt-dialog .bz-diary-fmt-dialog-file {
+  font-family: var(--bz-font-mono, ui-monospace, Consolas, monospace);
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: .02em;
+  color: var(--sp-ink, var(--bz-text-1));
+}
+#__shared_confirm_popup__.bz-diary-fmt-dialog .bz-diary-fmt-dialog-facts {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 12.5px;
+  color: var(--sp-ink-2, var(--bz-text-2));
+}
+#__shared_confirm_popup__.bz-diary-fmt-dialog .bz-diary-fmt-dialog-note {
+  font-size: 11.5px;
+  color: var(--sp-ink-3, var(--bz-text-3));
+}
+
 /* 表单纵向骨架：日期行 + 类型标签 + chip 滚动区 + 底栏；
    壳限高 82vh 内 chip 区自滚、底栏常驻，保存钮不再随 chips 滚走 */
 .bz-diary-form {
@@ -1613,7 +1660,9 @@
 
 /* ---------- emoji 选择浮层（挂 body，走全局组件库 token） ---------- */
 .bz-diary-type-emoji-pop {
-  position: fixed; z-index: 10050; width: 262px; padding: 8px;
+  /* z-index 由 openEmojiPicker 经 topifyZ 动态分配（ADR-0067）——静态档 10050 会被
+     设置面板（100000+）压住（2026-11-05 用户报障）。 */
+  position: fixed; width: 262px; padding: 8px;
   border: 1px solid var(--bz-border); border-radius: 10px;
   background: var(--bz-surface-3);
   box-shadow: var(--bz-pop-shadow, 0 12px 34px rgba(0, 0, 0, 0.24));

@@ -50,6 +50,13 @@ export interface FlowDialogOptions {
   actions: FlowDialogAction[];
   /** 追加到弹窗根的皮肤类（挂 body，供域自绘皮：如剪藏本编辑部对话框） */
   className?: string;
+  /**
+   * 富正文（可选）：给了就替换默认的 `<p>`，用于需要分块排版 / 样例块的确认框。
+   * 调用方负责建 DOM（textContent 赋值，不拼 HTML）；`message` 仍是纯文本兜底，
+   * 读屏与「弹窗没建成」的降级路径都靠它。DOM 契约不变：标题仍在 h4、按钮容器仍是
+   * `.confirm-actions`，只是正文节点由调用方提供。
+   */
+  body?: HTMLElement;
 }
 
 /** 按钮规格（数据层产物；label 为原文，DOM 层拼 HTML 时统一 escapeHtml） */
@@ -169,6 +176,11 @@ export function openFlowDialog(opts: FlowDialogOptions): Promise<string | undefi
     // P0-8：文案全部经 escapeHtml 再拼 HTML（title/message/label 均为纯文本语义），
     // DOM 结构/id/类名不变
     popup.innerHTML = parts.html;
+    // 富正文：只在调用方显式给出时替换默认 <p>；没给就保持逐字节同构的旧结构
+    if (opts.body) {
+      const p = popup.querySelector('p');
+      if (p) p.replaceWith(opts.body);
+    }
 
     mask.appendChild(popup);
     document.body.appendChild(mask);

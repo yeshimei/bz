@@ -6,6 +6,14 @@
  * 所以走 custom 行自绘（设置面板插槽），交互与原型一一对应。
  *
  * 卡片只用文字 mini 预览，图标仍走 lucide（本文件不出现 emoji 图标）。
+ *
+ * 切换确认框（2026-11-05 用户重做）：正文走 openFlowDialog 的 `body` 富内容——
+ * 目标格式的样例文件名单独成块当视觉中心，下面只留「已有 N 个文件保持原样」与
+ * 「转换进回收站」两句小字；不再把当前格式、分段规则、转换后果凑成四段等重长文。
+ *
+ * 进度条只在转换期间存在于 DOM（开始时插入、结束即移除）：旧实现渲染时先放一个
+ * `hidden` 的条，但 `.bz-diary-fmt-progress{display:flex}` 会压过 `[hidden]` 的 UA 规则，
+ * 转换完「正在转换… 0%」就永久留在页面上（用户 2026-11-05 报障）。
  */
 import { getApp } from '../core/app';
 import { getSettings, saveSettings } from '../core/settings-provider';
@@ -14,6 +22,21 @@ import { openFlowDialog } from '../core/flow-dialog';
 import { diaryDateFromLegacyPath, diaryMetaFromEntryPath } from '../core/diary-format';
 import { applyDirectories, DIARY_DIRECTORY, type DiaryEntryFormat } from './config';
 import { convertDiaryFormat, type ConvertProgress } from './convert';
+
+/** 格式名与样例文件名：卡片、确认框标题、样例块共用一套，避免三处叫法漂移 */
+const FORMAT_LABEL: Record<DiaryEntryFormat, string> = {
+  entry: '一篇一个文件',
+  day: '一天一个文件',
+};
+const FORMAT_SAMPLE: Record<DiaryEntryFormat, string> = {
+  entry: '2606131223.md',
+  day: '2026-06-13.md',
+};
+/** 样例块的引导语（只说「之后新写的会怎样」，不复述当前格式） */
+const FORMAT_CAP: Record<DiaryEntryFormat, string> = {
+  entry: '之后新写的，每条一个文件',
+  day: '之后新写的，当天都收进这一份',
+};
 
 /** 当前设置里的格式（设置提供者未注入的测试环境回落 entry） */
 function currentFormat(): DiaryEntryFormat {
@@ -51,6 +74,40 @@ function cardHtml(format: DiaryEntryFormat, active: boolean, busy: boolean, line
   );
 }
 
+/**
+ * 切换确认框的富正文：
+ * - 上半 = 样例块（视觉中心）：引导语 + 目标文件名等宽大字；
+ * - 下半 = 两句事实：已有文件保持原样 / 转换进回收站。
+ * 只描述「之后会怎样」与「已有会怎样」，不复述当前格式与分段规则——那两件事
+ * 两张格式卡片的 mini 预览已经说完了，确认框再抄一遍就是噪音。
+ */
+function buildSwitchBody(next: DiaryEntryFormat, count: number): HTMLElement {
+  const wrap = document.createElement('div');
+  wrap.className = 'bz-diary-fmt-dialog-body';
+
+  const sample = document.createElement('div');
+  sample.className = 'bz-diary-fmt-dialog-sample';
+  const cap = document.createElement('span');
+  cap.className = 'bz-diary-fmt-dialog-cap';
+  cap.textContent = FORMAT_CAP[next];
+  const file = document.createElement('span');
+  file.className = 'bz-diary-fmt-dialog-file';
+  file.textContent = FORMAT_SAMPLE[next];
+  sample.append(cap, file);
+
+  const facts = document.createElement('div');
+  facts.className = 'bz-diary-fmt-dialog-facts';
+  const existing = document.createElement('span');
+  existing.textContent = count > 0 ? `已有 ${count} 个文件保持原样` : '还没有已存的日记文件';
+  const note = document.createElement('span');
+  note.className = 'bz-diary-fmt-dialog-note';
+  note.textContent = '转换的话，原文件进回收站，可恢复';
+  facts.append(existing, note);
+
+  wrap.append(sample, facts);
+  return wrap;
+}
+
 /** 挂进设置面板「存储」组的 custom 行插槽 */
 export function mountDiaryFormatEditor(body: HTMLElement): void {
   let format = currentFormat();
@@ -80,10 +137,6 @@ export function mountDiaryFormatEditor(body: HTMLElement): void {
         '一天一个文件',
         'Obsidian 日记原生格式，当天的日记分段'
       ) +
-      `</div>` +
-      `<div class="bz-diary-fmt-progress" hidden>` +
-      `<div class="bz-diary-fmt-progress-meta"><span data-role="label">正在转换…</span><span data-role="pct">0%</span></div>` +
-      `<div class="bz-diary-fmt-track"><div class="bz-diary-fmt-fill" data-role="fill"></div></div>` +
       `</div>`;
   }
 
@@ -91,28 +144,34 @@ export function mountDiaryFormatEditor(body: HTMLElement): void {
     return root.querySelector<HTMLElement>('.bz-diary-fmt-progress');
   }
 
+  /** 进度条只在转换期间存在：第一次上报时建，之后原地更新 */
+  function ensureProgress(): HTMLElement {
+    const existing = progressEl();
+    if (existing) return existing;
+    const box = document.createElement('div');
+    box.className = 'bz-diary-fmt-progress';
+    box.setAttribute('role', 'status');
+    box.innerHTML =
+      `<div class="bz-diary-fmt-progress-meta"><span data-role="label">正在转换…</span><span data-role="pct">0%</span></div>` +
+      `<div class="bz-diary-fmt-track"><div class="bz-diary-fmt-fill" data-role="fill"></div></div>`;
+    root.appendChild(box);
+    return box;
+  }
+
   function showProgress(p?: ConvertProgress): void {
-    const box = progressEl();
-    if (!box) return;
-    box.hidden = false;
+    const box = ensureProgress();
     const label = box.querySelector<HTMLElement>('[data-role="label"]');
     const pct = box.querySelector<HTMLElement>('[data-role="pct"]');
     const fill = box.querySelector<HTMLElement>('[data-role="fill"]');
-    if (!p) {
-      if (label) label.textContent = '正在转换…';
-      if (pct) pct.textContent = '0%';
-      if (fill) fill.style.width = '0%';
-      return;
-    }
-    const percent = p.total > 0 ? Math.min(100, Math.round((p.done / p.total) * 100)) : 0;
-    if (label) label.textContent = p.current ? `正在转换：${p.current.split('/').pop()}` : '正在转换…';
+    const percent = p && p.total > 0 ? Math.min(100, Math.round((p.done / p.total) * 100)) : 0;
+    if (label) label.textContent = p?.current ? `正在转换：${p.current.split('/').pop()}` : '正在转换…';
     if (pct) pct.textContent = `${percent}%`;
     if (fill) fill.style.width = `${percent}%`;
   }
 
+  /** 结束即从 DOM 摘掉——不留「正在转换…」的残影（见文件头 2026-11-05 报障） */
   function hideProgress(): void {
-    const box = progressEl();
-    if (box) box.hidden = true;
+    progressEl()?.remove();
   }
 
   /** 只切换格式：写设置，不动文件 */
@@ -163,24 +222,17 @@ export function mountDiaryFormatEditor(body: HTMLElement): void {
 
   /** 切换确认框：取消 / 只切换 / 切换并转换 */
   async function askSwitch(next: DiaryEntryFormat): Promise<void> {
-    const toDay = next === 'day';
     const count = countDiaryFiles();
-    const nowName = toDay ? '一篇一个文件' : '一天一个文件';
-    const nextName = toDay ? '一天一个文件' : '一篇一个文件';
-    const example = toDay ? '2026-06-13.md' : '2606131223.md';
-    const detail = toDay
-      ? '当天写的几篇会收进同一个文件，每篇用 # 📖 12:23 这样的标题分开。'
-      : '每篇日记独立成一个文件，日期时间写在文件名和属性里。';
-    const message = [
-      `现在按「${nowName}」存；之后新写的按 ${example} 这样存。`,
-      detail,
-      `只切换的话，已有的 ${count} 个文件保持原样，只有以后新写的用新格式。`,
-      `也可以顺手把已有的 ${count} 个文件一起转换。转换会改写文件形态，原文件移入 Obsidian 回收站，可恢复。`,
-    ].join('\n');
+    const sample = FORMAT_SAMPLE[next];
+    const existing = count > 0 ? `已有 ${count} 个文件保持原样` : '还没有已存的日记文件';
+    const note = '转换的话，原文件进回收站，可恢复';
+    // 纯文本兜底（读屏 / 弹窗没建成时仍可读）：与富正文同三句，不重复当前格式与分段规则
+    const message = [`${FORMAT_CAP[next]}：${sample}`, existing, note].join('\n');
 
     const value = await openFlowDialog({
-      title: `切换到「${nextName}」？`,
+      title: `切换到「${FORMAT_LABEL[next]}」？`,
       message,
+      body: buildSwitchBody(next, count),
       className: 'bz-sp-skin bz-diary-fmt-dialog',
       actions: [
         { label: '取消', value: 'cancel' },
