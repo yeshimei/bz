@@ -79,10 +79,29 @@ function isUpToDate(state: ReaderInstallState): boolean {
   );
 }
 
-/** 行内动作钮文字：没装 → 安装；已最新 → 已安装（灰）；有新版 / 未知 → 更新 */
+/** 已知有新版（查询成功、且最新版比本机新） */
+function hasKnownUpdate(state: ReaderInstallState): boolean {
+  return (
+    state.installed &&
+    !state.broken &&
+    latestChecked &&
+    !latestFailed &&
+    !!latestVersion &&
+    compareVersions(latestVersion, state.version) > 0
+  );
+}
+
+/**
+ * 行内动作钮文字。
+ *
+ * 2026-11-05 用户报障：打开面板先看到「更新」，点一下才变「已安装」灰——因为旧逻辑在
+ * 「最新版还没查到」时写「更新」，等于替用户猜「有新版」。现在反过来：本地**已装**就
+ * 默认「已安装」，只有**确认**有新版才写「更新」；查询中/查失败都保持「已安装」，
+ * 点它时现查（查不到会给人话）。
+ */
 function actionTextOf(state: ReaderInstallState): string {
   if (!state.installed || state.broken) return '安装';
-  return isUpToDate(state) ? '已安装' : '更新';
+  return hasKnownUpdate(state) ? '更新' : '已安装';
 }
 
 /** 有没有待办：未装 / 半装 / 有新版。最新版未知时按「可点」处理（点下去现查） */
@@ -123,8 +142,11 @@ export async function pluginResourcesGroup(): Promise<GroupDecl> {
 
   currentRows = [info];
   currentAllRow = allRow;
-  // 后台核对最新版（不阻塞面板）；失败静默，行里继续显示本机版本
-  void refreshLatest();
+  // 后台核对最新版（不阻塞面板）；失败静默，行里继续显示本机版本。
+  // catch 兜住尾部的 syncRows：面板关掉/测试环境拆除后 getApp() 会抛，不能变成 unhandled rejection。
+  void refreshLatest().catch((e) => {
+    console.warn('[bz] 插件组刷新失败（已静默）:', (e as Error)?.message || e);
+  });
   // 缓存命中（刚刚查过）时把「已安装」的灰态同步到已渲染按钮上——
   // info 行的 actions 没有 disabled 字段，只能渲染后补
   setTimeout(() => patchRenderedGroup(), 0);
@@ -146,8 +168,13 @@ async function refreshLatest(): Promise<void> {
     latestFailed = true;
     console.warn('[bz] 插件最新版核对失败（已静默）:', (e as Error)?.message || e);
   }
-  await syncRows();
-  patchRenderedGroup();
+  try {
+    await syncRows();
+    patchRenderedGroup();
+  } catch (e) {
+    // 跑完时面板可能已经关了（测试里 app 也可能已被清理）：这一轮结果作废即可
+    console.warn('[bz] 插件行状态刷新失败（已静默）:', (e as Error)?.message || e);
+  }
 }
 
 /** 按磁盘事实改写行对象（下次重渲即新值） */

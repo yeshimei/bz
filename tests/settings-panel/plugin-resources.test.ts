@@ -115,14 +115,25 @@ describe('版本号与按钮文字', () => {
     expect(rowBtns(el, 1)[1].textContent).toBe('安装');
   });
 
-  it('已装且已是最新 → 「已安装 0.2.0」/「已安装」（灰）', async () => {
+  it('已装且已是最新 → 「已安装 0.2.0」/「已安装」（查到后变灰）', async () => {
     const vault = newVault();
     vault.files.set(`${PLUGIN_DIR}/manifest.json`, JSON.stringify({ id: 'bz-reader', version: '0.2.0' }));
     route([['/releases/latest/download/manifest.json', MANIFEST]]);
     const { el } = await renderGroup();
-    await vi.waitFor(() => expect(rowBtns(el, 1)[1].textContent).toBe('已安装'));
+    // 查到「已是最新」之前也不写「更新」：本地已装就默认「已安装」（2026-11-05 用户报障）
+    expect(rowBtns(el, 1)[1].textContent).toBe('已安装');
+    await vi.waitFor(() => expect(rowBtns(el, 1)[1].disabled).toBe(true));
     expect(rowDesc(el, 1)).toBe('已安装 0.2.0');
-    expect(rowBtns(el, 1)[1].disabled).toBe(true);
+  });
+
+  it('最新版查不到 → 「已安装」可点（点它时现查），不冒充「更新」', async () => {
+    const vault = newVault();
+    vault.files.set(`${PLUGIN_DIR}/manifest.json`, JSON.stringify({ id: 'bz-reader', version: '0.2.0' }));
+    route([['github.com', new Error('ENOTFOUND')], ['gitee.com', new Error('ENOTFOUND')]]);
+    const { el } = await renderGroup();
+    await vi.waitFor(() => expect(rowDesc(el, 1)).toBe('已安装 0.2.0'));
+    expect(rowBtns(el, 1)[1].textContent).toBe('已安装');
+    expect(rowBtns(el, 1)[1].disabled).toBe(false);
   });
 
   it('已装 + 有新版 → 「更新」（可点）', async () => {
