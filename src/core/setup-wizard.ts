@@ -1,23 +1,23 @@
 /* ============================================================
  * bz · 首次引导 / 环境自检（core/setup-wizard.ts）
  *
- * 一次把「新机器缺什么、缺的怎么补」走完。六屏：
+ * 一次把「新机器缺什么、缺的怎么补」走完。五屏：
  *
- *   ① 检测   先探网络（GitHub 主通道 + 码云备用），再探本机九项
+ *   ① 检测   先探网络（GitHub 主通道 + 码云备用），再探本机九项；**缺什么在这一屏全列出来**
  *   ② 存放   数据存哪（默认 <插件目录>/storage，可改；点「下一步」写探针验证时才建目录）
- *   ③ 内容   列出来、全部下载（运行时 / 工具 / 文档索引 / 皮肤 / bz reader；已就绪的自动跳过，
- *             2026-11-05 用户拍板：不再逐项勾选，进来了就都是要下的）
- *   ④ AI     可选：服务商 + 密钥 + 当场测通（跳过不影响其他功能）
- *   ⑤ 安装   勾了就全自动，不再逐项确认；单项失败不牵连
- *   ⑥ 完成   就绪清单 + 值守启用询问（唯一改系统状态的一步）+ 仍需手工的项
+ *   ③ AI     可选：服务商 + 密钥 + 当场测通（跳过不影响其他功能）
+ *   ④ 安装   检测屏列出的缺口一次补齐（**不列清单、不给勾选**；单项失败不牵连）
+ *   ⑤ 完成   就绪清单 + 值守启用询问（唯一改系统状态的一步）+ 仍需手工的项
  *
- * 三条设计约束：
- *  - **同意只有一次**（③ 底部的「开始下载」）。之后的下载不再问第二遍——它们只是往插件
- *    自己的目录写文件。唯一会改系统状态的是「值守注册登录自启」，那一步单独确认
- *    （⑤ 末尾调 core/tool-setup.ts 的 setupAfterInstall，它自己带确认框）。
- *  - **已就绪的不重下**。③ 的列表按磁盘事实打勾：老用户重跑一遍不必再拉几十 MB。
- *  - 与「设置 → 关于 → 环境自检」共用同一套行渲染与补齐队列；自检模式跳过 ②③④ 三屏，
- *    检测完直接到 ⑥（2026-11-01：自检不需要清单屏，「缺什么」在完成屏一眼看完）。
+ * 设计约束：
+ *  - **同意只有一次**（② 的「下一步」/③ 的「保存并继续」之后就全自动）。之后的下载不再问
+ *    第二遍——它们只是往插件自己的目录写文件。唯一会改系统状态的是「值守注册登录自启」，
+ *    那一步单独确认（④ 末尾调 core/tool-setup.ts 的 setupAfterInstall，它自己带确认框）。
+ *  - **不重复展示清单**（2026-11-05 用户拍板）：① 已经把「缺什么」摊开，③ 之后直接下，
+ *    中间不再摆一屏「要下载什么」让用户看第二遍、勾一遍。
+ *  - **已就绪的不重下**：安装屏按磁盘事实跳过，老用户重跑一遍不必再拉几十 MB。
+ *  - 与「设置 → 关于 → 环境自检」共用同一套行渲染与补齐队列；自检模式跳过 ②③ 两屏，
+ *    检测完直接到 ⑤（2026-11-01：自检不需要清单屏，「缺什么」在完成屏一眼看完）。
  * ============================================================ */
 import { notice } from './notice';
 import { openExternalUrl } from './utils';
@@ -268,14 +268,10 @@ interface WizardCtx {
 
 interface WizardState {
   net: NetworkProbe | null;
-  /** 清单（检测屏拉一次，下载屏复用——不让用户在两屏之间等两次网络） */
+  /** 清单（检测屏拉一次，安装屏复用——不让用户在两屏之间等两次网络） */
   manifest?: DownloadManifest | null;
-  /** 清单没拉到时的**具体原因**（引导页原样给人看；空 = 拉到了或还没拉） */
-  manifestError?: string;
   rows: EnvCheckRow[];
   storagePath: string;
-  items: SetupItem[];
-  selected: Set<string>;
   provider: string;
   apiKey: string;
   aiTest: { state: 'idle' | 'busy' | 'ok' | 'fail'; text: string };
@@ -426,7 +422,7 @@ function mountReaderRow(ctx: WizardCtx, card: HTMLElement, initialLatest: string
   const val = valEl('检查中…');
   const btn = button('bz-setup-link', '安装');
   btn.classList.add('is-hidden');
-  row.append(mark, keyEl('bz reader', '把 Obsidian 变成一个能读书的地方：多格式、AI 问答、双向链接，数据全部本地'), val, btn);
+  row.append(mark, keyEl('bz reader'), val, btn);
   card.appendChild(row);
 
   let latest = initialLatest;
@@ -606,11 +602,10 @@ async function stageProbe(ctx: WizardCtx, st: WizardState, ui: Ui): Promise<void
   }
 
   // 在线资源的下载状态：自检不能只说「这台机器缺什么」，还要说「哪些已经下好了」。
-  // 清单只拉一次，③ 屏直接复用（st.manifest）。
+  // 清单只拉一次，安装屏直接复用（st.manifest）。
   if (st.manifest === undefined) {
     const fetched = await fetchManifestWithTimeout(ctx.app);
     st.manifest = fetched.manifest;
-    st.manifestError = fetched.error;
   }
   const manifest = st.manifest;
   if (manifest) {
@@ -746,104 +741,33 @@ async function stageStorage(ctx: WizardCtx, st: WizardState, ui: Ui): Promise<vo
   ui.foot.append(back, next);
 }
 
-/* ---------- ③ 下载内容 ---------- */
-async function stageResources(ctx: WizardCtx, st: WizardState, ui: Ui): Promise<void> {
+/* ---------- 进安装（不列清单） ---------- */
+/**
+ * 「下一步」之后直接下。
+ *
+ * 2026-11-05 用户拍板：检测屏已经把「缺什么」列全了，中间再摆一屏下载清单等于让用户
+ * 重复看一遍、再勾一遍——引导页不该有选择题。这里按检测结果直接算队列，全下。
+ */
+async function beginInstall(ctx: WizardCtx, st: WizardState, ui: Ui): Promise<void> {
   setSub(ui, '正在核对磁盘…');
-  ui.body.innerHTML = '';
   ui.foot.innerHTML = '';
-
   if (st.manifest === undefined) {
-    // 检测屏已经拉过就直接复用；直接进到这一屏（重跑引导）才现拉
+    // 直接重跑引导（没经过检测屏）时才现拉；正常路径在检测屏已经拉过
     const fetched = await fetchManifestWithTimeout(ctx.app);
     st.manifest = fetched.manifest;
-    st.manifestError = fetched.error;
   }
-  const manifest = st.manifest ?? null;
   const nodeMissing = probeNodeRuntime(ctx.app, { fresh: true }).kind === 'none';
   // bz reader 不进在线资源清单（它是另一个插件），单独问一次磁盘
   const readerState = await readReaderInstall(ctx.app);
   const readerMissing = !readerState.installed || readerState.broken;
-  st.items = await planSetupItems(ctx.app, manifest, { nodeMissing, readerMissing });
-  st.selected = defaultSelection(st.items);
-
-  const pending = (): SetupItem[] => selectedTasks(st.items, st.selected);
-  const total = pending().reduce((n, t) => n + (t.size || 0), 0);
-  // 一句话说清「下多少」；「点开始后自动完成，中途不用再确认」那种交代属于多余说明
-  setSub(
-    ui,
-    pending().length
-      ? `${pending().length} 项 · ${sizeText(total) || '体积未知'}`
-      : // 清单没拉到时**不能**说「什么都不缺」：那是「不知道缺什么」，两件事
-        manifest
-        ? '都齐了。'
-        : '清单没拉到。',
-  );
-  ui.body.innerHTML = '';
-  ui.foot.innerHTML = '';
-
-  // 只在真需要交代的时候给一行注释（清单缺 / 走备用通道）
-  const hintText = !manifest
-    ? `这次只能补 Node 运行时与 bz reader，其余资源等清单能拉到再说${reasonSuffix(st.manifestError)}`
-    : st.net && !st.net.github
-      ? 'GitHub 不通，自动走备用通道。'
-      : '';
-  if (hintText) {
-    const hint = document.createElement('div');
-    hint.className = 'bz-setup-note';
-    hint.textContent = hintText;
-    ui.body.appendChild(hint);
+  const items = await planSetupItems(ctx.app, st.manifest ?? null, { nodeMissing, readerMissing });
+  const tasks = selectedTasks(items, defaultSelection(items));
+  if (!tasks.length) {
+    await markDone(ctx.app);
+    void stageDone(ctx, st, ui);
+    return;
   }
-
-  const next = button('bz-setup-btn bz-setup-btn--cta', '');
-
-  const GROUPS: Array<{ kind: SetupKind; title: string }> = [
-    { kind: 'node', title: '运行环境' },
-    { kind: 'reader', title: '同作者插件' },
-    { kind: 'bundle', title: '外部工具' },
-    { kind: 'doc', title: '文档' },
-    { kind: 'skins', title: '皮肤' },
-  ];
-  for (const g of GROUPS) {
-    const group = st.items.filter((i) => i.kind === g.kind);
-    if (!group.length) continue;
-    const wrap = setupGroup(g.title);
-    for (const it of group) {
-      // 2026-11-05 用户拍板：进来了就都是要下的，不再给勾选框（已就绪的标绿、自动跳过）
-      const row = rowEl('bz-setup-row');
-      row.append(
-        markEl(it.ready ? 'ok' : 'idle'),
-        keyEl(it.label, it.desc),
-        valEl(it.ready ? '已就绪' : sizeText(it.size) || '待下载'),
-      );
-      if (it.ready) row.classList.add('is-ok');
-      wrap.card.appendChild(row);
-    }
-    ui.body.appendChild(wrap.group);
-  }
-
-  const refreshFoot = (): void => {
-    const t = pending();
-    const bytes = t.reduce((s, x) => s + (x.size || 0), 0);
-    next.textContent = t.length ? `开始下载（${sizeText(bytes) || `${t.length} 项`}）` : '完成';
-  };
-
-  const skip = button('bz-setup-btn bz-setup-btn--back', ctx.firstRun ? '以后再说' : '关闭');
-  skip.onclick = () => {
-    void markDone(ctx.app);
-    closeModal(ui);
-    ctx.onFinish?.();
-  };
-  next.onclick = () => {
-    const tasks = pending();
-    if (!tasks.length) {
-      void markDone(ctx.app);
-      void stageDone(ctx, st, ui);
-      return;
-    }
-    void stageInstall(ctx, st, ui, tasks);
-  };
-  ui.foot.append(skip, next);
-  refreshFoot();
+  void stageInstall(ctx, st, ui, tasks);
 }
 
 /**
@@ -869,26 +793,13 @@ export function freeSpaceBytes(app: unknown = getApp()): number | null {
   }
 }
 
-/** 拉清单带超时（失败 → null，不阻断流程） */
-/**
- * 清单拉不到时的原因后缀（空 → 空串）。
- *
- * 以前这条链上每个 catch 都 `() => null`，用户只能看到「清单没拉到」六个字，我们隔着一块屏幕
- * 猜了两轮（先怀疑网络、再怀疑 jsDelivr）。原文摆出来：哪条通道、什么错，一眼能分清是墙、
- * 是代理、还是本地磁盘写不进去。
- */
-function reasonSuffix(error?: string): string {
-  const s = String(error || '').trim();
-  if (!s) return '';
-  return `（原因：${s.length > 160 ? `${s.slice(0, 160)}…` : s}）`;
-}
-
 /** 清单拉取结果：`error` 是给人看的原因（引导页原样显示——无声吞掉过一次，排查盲了两轮） */
 interface ManifestFetch {
   manifest: DownloadManifest | null;
   error: string;
 }
 
+/** 拉清单带超时（失败 → null，不阻断流程） */
 async function fetchManifestWithTimeout(app: unknown): Promise<ManifestFetch> {
   const work = refreshManifest(app)
     .then((r) => ({ manifest: r?.manifest ?? null, error: '' }))
@@ -904,7 +815,7 @@ async function fetchManifestWithTimeout(app: unknown): Promise<ManifestFetch> {
   ]);
 }
 
-/* ---------- ④ AI 密钥（可选） ---------- */
+/* ---------- ③ AI 密钥（可选） ---------- */
 async function stageAi(ctx: WizardCtx, st: WizardState, ui: Ui): Promise<void> {
   st.provider = String(tryGetSettings()?.aiProvider || DEFAULT_AI_PROVIDER);
   st.apiKey = '';
@@ -964,9 +875,9 @@ async function stageAi(ctx: WizardCtx, st: WizardState, ui: Ui): Promise<void> {
   paint();
 
   const back = button('bz-setup-btn bz-setup-btn--back', '上一步');
-  back.onclick = () => void stageResources(ctx, st, ui);
+  back.onclick = () => void stageStorage(ctx, st, ui);
   const skip = button('bz-setup-btn', '跳过');
-  skip.onclick = () => void stageResources(ctx, st, ui);
+  skip.onclick = () => void beginInstall(ctx, st, ui);
   test.onclick = async () => {
     await saveAi(st);
     st.aiTest = { state: 'busy', text: '' };
@@ -982,7 +893,7 @@ async function stageAi(ctx: WizardCtx, st: WizardState, ui: Ui): Promise<void> {
   const save = button('bz-setup-btn bz-setup-btn--cta', '保存并继续');
   save.onclick = async () => {
     await saveAi(st);
-    void stageResources(ctx, st, ui);
+    void beginInstall(ctx, st, ui);
   };
   ui.foot.append(back, skip, save);
 }
@@ -1001,11 +912,11 @@ async function saveAi(st: WizardState): Promise<void> {
   }
 }
 
-/* ---------- ⑤ 安装 ---------- */
+/* ---------- ④ 安装 ---------- */
 async function stageInstall(ctx: WizardCtx, st: WizardState, ui: Ui, tasks: SetupItem[]): Promise<void> {
   // 下载屏不给「收起来，后台继续」（2026-10-31 用户拍板）：点了之后弹窗消失、下载在后台跑，
   // 用户看不到进度也等不到「完成」那一屏，回来只发现东西装上了 —— 首次引导等于半途而废。
-  // 这里就是让它跑完：跑完自动进 ⑥，还没装齐的会在完成屏列出来，去「在线资源」重试。
+  // 这里就是让它跑完：跑完自动进 ⑤，还没装齐的会在完成屏列出来，去「在线资源」重试。
   setSub(ui, '正在下载，跑完自动进入下一步。');
   ui.body.innerHTML = '';
   ui.foot.innerHTML = '';
@@ -1021,8 +932,9 @@ async function stageInstall(ctx: WizardCtx, st: WizardState, ui: Ui, tasks: Setu
   const free = freeSpaceBytes(ctx.app);
   if (free !== null && free < total * 1.5 + 64 * 1024 * 1024) {
     setSub(ui, `磁盘余量不足：需要约 ${sizeText(total * 1.5 + 64 * 1024 * 1024)}，当前只剩 ${sizeText(free)}。`);
-    const again = button('bz-setup-btn bz-setup-btn--cta', '返回清单');
-    again.onclick = () => void stageResources(ctx, st, ui);
+    // 余量不足：回去改数据目录（换到别的盘），不是回「清单」——清单屏已经没有了
+    const again = button('bz-setup-btn bz-setup-btn--cta', '返回修改位置');
+    again.onclick = () => void stageStorage(ctx, st, ui);
     ui.foot.appendChild(again);
     return;
   }
@@ -1072,7 +984,7 @@ async function stageInstall(ctx: WizardCtx, st: WizardState, ui: Ui, tasks: Setu
   }
 }
 
-/* ---------- ⑥ 完成 ---------- */
+/* ---------- ⑤ 完成 ---------- */
 
 async function stageDone(ctx: WizardCtx, st: WizardState, ui: Ui): Promise<void> {
   const rows = await environmentCheck(ctx.app);
@@ -1222,8 +1134,6 @@ export function openSetupWizard(
     net: null,
     rows: [],
     storagePath: '',
-    items: [],
-    selected: new Set(),
     provider: DEFAULT_AI_PROVIDER,
     apiKey: '',
     aiTest: { state: 'idle', text: '' },
@@ -1233,7 +1143,7 @@ export function openSetupWizard(
   return true;
 }
 
-/** 设置面板「环境自检」按钮的入口（同一视图；自检模式跳过存放 / 清单 / AI 三屏） */
+/** 设置面板「环境自检」按钮的入口（同一视图；自检模式跳过存放 / AI 两屏） */
 export function openEnvironmentCheck(app: unknown = getApp()): void {
   openSetupWizard(app, { firstRun: false });
 }
