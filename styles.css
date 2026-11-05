@@ -5664,6 +5664,8 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 .bz-setup-row--path { grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; }
 /* 输入行（AI 密钥）：名称 / 输入框 / 行内按钮 */
 .bz-setup-row--input { grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; }
+/* bz reader 行：状态点 / 名称 / 值 / 行内安装按钮，四段贴一行 */
+.bz-setup-row--reader { grid-template-columns: 14px minmax(0, 1fr) minmax(0, 1.05fr) auto; align-items: center; }
 .bz-setup-input {
   height: var(--bz-control-h-sm);
   min-width: 0;
