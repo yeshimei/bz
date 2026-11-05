@@ -1,10 +1,10 @@
 /**
  * 日记本设置 schema。
- * 组序：外观 / 目录 / 存储 / 分类 / 显示。
+ * 组序：外观 / 目录 / 显示 / 存储 / 分类。
  * - 目录：只保留日记文件夹（信件文件夹按用户要求从设置页隐藏，键与读写逻辑保留）；
+ * - 显示：写日记时间口径、每卷则数（紧跟目录：先放哪儿，再怎么看，2026-11-05 用户要求）；
  * - 存储：custom 行（两种格式卡片 + 切换确认 + 转换进度，见 ./settings-format）；
- * - 分类：custom 行（清单式，全部平级，见 ./settings-types）；
- * - 显示：写日记时间口径、每卷则数。
+ * - 分类：custom 行（清单式，全部平级，见 ./settings-types）。
  * 「维护」组与「日记格式体检」弹窗按用户拍板退役（2026-09-25）——格式 lint 仍留在
  * src/diary/repair.ts（store 写入路径消费），只是不再有手动体检入口。
  * ⚙️ 弹窗 / 设置面板「日记本」页共用本 schema。
@@ -43,16 +43,6 @@ export function diarySettingsSchema(): SettingsSchema {
         ],
       },
       {
-        icon: 'hard-drive',
-        name: '存储',
-        rows: [{ type: 'custom', render: (body) => mountDiaryFormatEditor(body) }],
-      },
-      {
-        icon: 'tags',
-        name: '分类',
-        rows: [{ type: 'custom', render: (body) => mountDiaryTypeEditor(body) }],
-      },
-      {
         icon: 'eye',
         name: '显示',
         rows: [
@@ -67,6 +57,16 @@ export function diarySettingsSchema(): SettingsSchema {
             step: 10,
           },
         ],
+      },
+      {
+        icon: 'hard-drive',
+        name: '存储',
+        rows: [{ type: 'custom', render: (body) => mountDiaryFormatEditor(body) }],
+      },
+      {
+        icon: 'tags',
+        name: '分类',
+        rows: [{ type: 'custom', render: (body) => mountDiaryTypeEditor(body) }],
       },
     ],
   };
