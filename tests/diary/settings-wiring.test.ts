@@ -39,9 +39,13 @@ beforeEach(() => {
 });
 
 describe('目录设置行 → applyDirectories → 运行时常量（端到端接线）', () => {
-  it('目录组含日记/信两行且 onChange 均已接线', () => {
+  it('目录组只有日记文件夹一行，信件文件夹行已隐藏', () => {
     expect(() => directoryRow('diaryDirectory')).not.toThrow();
-    expect(() => directoryRow('letterDirectory')).not.toThrow();
+    const group = diarySettingsSchema().groups.find((g) => g.name === '目录')!;
+    const keys = group.rows
+      .filter((r) => (r as { type?: string }).type === 'path')
+      .map((r) => (r as { binding?: { key?: string } }).binding?.key);
+    expect(keys).toEqual(['diaryDirectory']);
   });
 
   it('日记目录行 onChange 触发后 DIARY_DIRECTORY 更新为设置值', () => {
@@ -53,16 +57,10 @@ describe('目录设置行 → applyDirectories → 运行时常量（端到端�
     expect(DIARY_DIRECTORY).toBe('备份/日记本');
   });
 
-  it('同一回调把信件目录一并应用（applyDirectories 双键契约）', () => {
+  it('信件行隐藏但键仍生效：日记行回调把 letterDirectory 一并应用（applyDirectories 双键契约）', () => {
     setSettingsProvider(() => ({ diaryDirectory: '备份/日记本', letterDirectory: '存信/信箱' }) as never);
     directoryRow('diaryDirectory').onChange('备份/日记本', NO_CTX);
     expect(DIARY_DIRECTORY).toBe('备份/日记本');
-    expect(LETTER_DIRECTORY).toBe('存信/信箱');
-  });
-
-  it('信件目录行 onChange 走同一链路', () => {
-    setSettingsProvider(() => ({ diaryDirectory: '我的/日记', letterDirectory: '存信/信箱' }) as never);
-    directoryRow('letterDirectory').onChange('存信/信箱', NO_CTX);
     expect(LETTER_DIRECTORY).toBe('存信/信箱');
   });
 

@@ -11,7 +11,7 @@
  *   故默认值与硬编码目录均为本地副本 + 出处注释，改动上游时须同步此处。
  */
 import { tryGetSettings } from './settings-provider';
-import { diaryDateFromEntryPath } from './diary-format';
+import { diaryDateFromEntryPath, diaryDateFromLegacyPath } from './diary-format';
 import { cleanDir } from './attachment-dir';
 
 export type FileDomainKind = 'diary' | 'flash' | 'cinema' | 'clipping' | 'poem' | 'letter' | 'knowledge';
@@ -65,7 +65,7 @@ export function classifyFilePath(path: string | null | undefined): FileDomainKin
   return null;
 }
 
-/** 从日记路径取日期：条目文件 basename（ADR-0130 契约，core/diary-format.ts 单源）；否则 null */
+/** 从日记路径取日期：条目文件 basename（ADR-0130）或旧日期文件（YYYY-MM-DD.md）；否则 null */
 export function diaryDateFromPath(path: string): string | null {
-  return diaryDateFromEntryPath(path);
+  return diaryDateFromEntryPath(path) ?? diaryDateFromLegacyPath(path);
 }

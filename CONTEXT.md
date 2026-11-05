@@ -6,25 +6,27 @@
 
 ### 已迁移域
 
-**日记条目 (DiaryEntry)**: 日记本中展示的最小单位，ADR-0130 起即**一篇独立笔记**：题目 `YYMMDDHHmm(-N)?`（ADR-0131，如 `2606131223`）、frontmatter `date`+`type`、正文无一级标题；内存对象由文件派生（date/time/tags/emoji/content/filename=filePath，lineNumber 恒 0）。
+**日记条目 (DiaryEntry)**: 日记本中展示的最小单位。ADR-0284 起支持两种存储格式：
+- **entry**（缺省）：一篇独立笔记，题目 `YYMMDDHHmm(-N)?`（ADR-0131，如 `2606131223`）、frontmatter `date`+`type`、正文无一级标题；lineNumber 恒 0。
+- **day**：一天一个 `YYYY-MM-DD.md`，一条 = 文件里的一个 `# emoji序列 HH:mm` 块；lineNumber = 块头行号（同天同刻靠它区分）。
+内存对象由文件派生（date/time/tags/emoji/content/filename=filePath）。
 _Avoid_: 日记、记录、post
 
-**条目文件 (Entry File)**: `我的/日记/YYMMDDHHmm(-N)?.md`，一条日记一个文件（ADR-0130；题目形态 ADR-0131）；同刻冲突加 `-2/-3` 后缀。题目是时间戳的数字简写（`2026-06-13 12:23` → `2606131223`）：Windows 禁英文 `:`（实测 ENOENT）、全角冒号不合初衷，简写全平台合法且**字典序即时间序**。frontmatter 恰两属性——`date: YYYY-MM-DD HH:mm`（英文冒号）+ `type:`（多值标签名列表）。格式契约单源 `src/core/diary-format.ts`（含降级 `resolveDiaryEntryMeta`）。
+**条目文件 (Entry File)**: 两种形态（ADR-030 / ADR-0284）——
+- entry：`我的/日记/YYMMDDHHmm(-N)?.md`，同刻冲突加 `-2/-3` 后缀；题目是时间戳的数字简写（`2026-06-13 12:23` → `2606131223`），Windows 禁英文 `:`、简写全平台合法且**字典序即时间序**；frontmatter 恰两属性 `date: YYYY-MM-DD HH:mm` + `type:`（多值分类名列表）。
+- day：`我的/日记/YYYY-MM-DD.md`（Obsidian 日记原生文件名），同一天多篇以 `# 📖 12:23` 分块，标签只写 emoji。
+格式契约单源 `src/core/diary-format.ts`（新格式）+ `src/diary/legacy.ts`（旧格式解析/序列化）。
 
 **题目简写 (Stamp Name)**: 条目文件名里的 `YYMMDDHHmm` 形态（ADR-0131）——题目本身即完整时间戳的编码，故「属性损坏按题目降级」零信息损失；与可读形式 `YYYY-MM-DD HH:mm` 的互译只发生在 `core/diary-format.ts`。_Avoid_: 题目里用 `-` 分隔时分、用全角 `：` 顶替
-_Avoid_: 日期文件（旧「一天一文件多条目」格式，已归档 `归档/日记/`）、头行锚点
+_Avoid_: 把 day 格式的 `YYYY-MM-DD.md` 当成「待迁移的旧残留」——ADR-0284 起它是受支持的一等格式
 
 **未解析行 (Unparsed Line)**: ~~解析日期文件时无法归属任何条目的行~~ **ADR-0130 起废弃**——条目文件化后无头行边界问题；旧格式残留文件在体检（lint）中报 `legacy`，frontmatter `date` 缺失/非法的条目文件报 `unparsable`（运行时按题目降级，体检口径从严）。
 _Avoid_: 解析失败条目。旧修复边界见 ADR-0054（历史，已随 ADR-0130 重新定义）。
 
-**主标签 (Primary Tag)**: 标签配置中的一级标签（如 日记 📖、旅游 ✈️），可带二级标签。
-_Avoid_: 类型、分类
+**分类 (Diary Type)**: 日记的**平级**分类（如 日记 📖、随笔 ✍️、生活 🏠），一个名字 + 一个 emoji，**没有主/子层级**（ADR-0284 取代旧「主标签/二级标签」）。用户配置存 `settings.diaryTypes`（JSON），默认只有 3 个示例；旧版 28 类只用于老库一次性迁移（原二级标签拍平成独立分类）。写日记时按配置顺序平铺选择（「加密」不进新建弹窗）。
+_Avoid_: 主标签、二级标签、标签配置（层级与旧文本格式配置均已退役）、类型
 
-**二级标签 (Sub Tag)**: 挂在主标签下的细分标签（如 旅游 → 四川 🀄、大理 🛶），配置中经 `>` 声明。
-
-**标签配置 (Tags Config)**: 设置中的文本格式 `标签名 emoji` 或 `主标签 emoji > 子标签 emoji, ...`，可解析为标签↔emoji 双向映射。
-
-**摘抄 (Quote)**: 从其他笔记选中文本生成的块引用双链（`[[文件#^blockid|文本]]`），以「摘抄」标签写入日记。
+**摘抄 (Quote)**: 从其他笔记选中文本生成的块引用双链（`[[文件#^blockid|文本]]`），以「摘抄」分类写入日记。
 
 **影视条目 / 信条目**: 从 `我的/影视`、`我的/信` 目录的 frontmatter 解析出的条目，聚合显示在日记流中。
 

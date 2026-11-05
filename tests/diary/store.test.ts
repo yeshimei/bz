@@ -1,7 +1,7 @@
 // @vitest-environment node
 import { describe, expect, it, beforeEach, vi } from 'vitest';
 import { setApp } from '../../src/core/app';
-import { applyDirectories, resetTagsConfig } from '../../src/diary/config';
+import { applyDiaryTypes, applyDirectories, LEGACY_DIARY_TYPES } from '../../src/diary/config';
 import {
   addEntry,
   removeDiaryEntries,
@@ -28,8 +28,9 @@ function makeVault(files: Record<string, string>) {
 }
 
 beforeEach(() => {
-  resetTagsConfig();
   applyDirectories({});
+  // applyDirectories 会把类型重置为默认 3 个；本文件用旧分类表夹具，必须在它之后注入
+  applyDiaryTypes(LEGACY_DIARY_TYPES);
   setDiaryDataMap(null);
   vi.restoreAllMocks();
 });
@@ -272,14 +273,15 @@ describe('守卫语义（ADR-0130：宽运行时降级 / 异常文件跳过不�
     expect(vault.files.has(E1)).toBe(false);
   });
 
-  it('非条目文件名（含旧格式日期文件）不进日期枚举：删/读都跳过不误伤', async () => {
+  it('旧格式日期文件与新格式条目同一天共存：两种都读，删只删匹配的', async () => {
     const legacy = `我的/日记/${DATE}.md`;
     makeVault({ [legacy]: '# 📖 08:00\n旧格式正文\n', [E1]: fm('08:00', ['日记'], 'A') });
     const entries = await listDateEntries(DATE);
-    expect(entries.map((e) => e.content)).toEqual(['A']); // 旧格式文件不解析不出
-    const n = await removeDiaryEntries(DATE, () => true);
+    expect(entries.map((e) => e.content).sort()).toEqual(['A', '旧格式正文'].sort());
+    const n = await removeDiaryEntries(DATE, (e) => e.content === 'A');
     expect(n).toBe(1);
-    expect(vault.files.has(legacy)).toBe(true); // 旧文件原样保留（迁移归档由脚本负责）
+    expect(vault.files.has(legacy)).toBe(true); // 旧文件里另一条不动
+    expect(vault.files.has(E1)).toBe(false);
   });
 
   it('显式 filePath 指向非条目文件：listDateEntries 拒读抛 UnparsedLineError', async () => {

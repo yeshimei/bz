@@ -2153,6 +2153,7 @@ export class DiaryAppController {
           filePath: e.filePath,
           emoji: e.emoji,
           time: e.time,
+          lineNumber: e.lineNumber,
         });
         return;
       }
@@ -2196,7 +2197,7 @@ export class DiaryAppController {
         ],
       });
       if (ok !== 'ok') return;
-      const entry = await findDiaryEntry(e.filePath || e.filename || e.date);
+      const entry = await findDiaryEntry(e.filePath || e.filename || e.date, e.time, e.lineNumber);
       if (!entry) {
         notice('找不到原文条目，无法加密', 'error');
         return;

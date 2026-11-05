@@ -1,7 +1,7 @@
 // @vitest-environment node
 import { describe, expect, it, beforeEach, vi } from 'vitest';
 import { setApp } from '../../src/core/app';
-import { buildTagMaps } from '../../src/diary/config';
+import { applyDiaryTypes, LEGACY_DIARY_TYPES } from '../../src/diary/config';
 import { parseEntryFile, parseMovieFile, parseLetterFile, parseBookFile, parseNaturalTime, isEncryptedEntry } from '../../src/diary/parser';
 import { serializeDiaryEntryFile } from '../../src/core/diary-format';
 
@@ -34,7 +34,7 @@ function entryFile(date: string, time: string, tags: string[], body: string): st
 }
 
 beforeEach(() => {
-  buildTagMaps();
+  applyDiaryTypes(LEGACY_DIARY_TYPES);
 });
 
 describe('parseEntryFile（ADR-0131 一目一文件）', () => {

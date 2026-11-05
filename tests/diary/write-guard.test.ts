@@ -7,7 +7,7 @@
  */
 import { describe, expect, it, beforeEach, vi } from 'vitest';
 import { setApp } from '../../src/core/app';
-import { applyDirectories, resetTagsConfig } from '../../src/diary/config';
+import { applyDiaryTypes, applyDirectories, LEGACY_DIARY_TYPES } from '../../src/diary/config';
 import { addEntry, removeDiaryEntries, updateDiaryTags, setDiaryDataMap } from '../../src/diary/store';
 import { serializeDiaryEntryFile } from '../../src/core/diary-format';
 import { clearNotices, getNoticeMessages } from '../mock-obsidian-entry';
@@ -18,8 +18,9 @@ let vault: MockVault;
 beforeEach(() => {
   document.body.innerHTML = '';
   clearNotices();
-  resetTagsConfig();
   applyDirectories({});
+  // applyDirectories 会把类型重置为默认 3 个；本文件用旧分类表夹具，必须在它之后注入
+  applyDiaryTypes(LEGACY_DIARY_TYPES);
   setDiaryDataMap(null);
   vi.restoreAllMocks();
   vault = new MockVault();

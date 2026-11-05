@@ -15,13 +15,15 @@ import type { DiaryEntryLocator } from './dialogs';
 import { buildLocatorPredicateFor } from './locator';
 
 /** 条目锚点面：filename（日期串或完整路径）或 filePath（完整路径）二选一；
- *  ADR-0130 起条目即文件，emoji/time 不再参与锚点构造（字段保留兼容旧调用面） */
+ *  day 格式一天多块共用 filePath，lineNumber 是块头行号（跳转滚行依据） */
 export interface DiaryAnchorRef {
   filename: string;
   /** 完整 vault 路径（条目文件定位依据） */
   filePath?: string;
   emoji: string;
   time: string;
+  /** 旧日期文件里的块头行号（0-based）；entry 格式恒 0/缺省 */
+  lineNumber?: number;
 }
 
 /** 条目所在 md 文件路径（条目文件化后 filePath 恒为完整 vault 路径，filename 兼容兜底；
@@ -31,7 +33,7 @@ function diaryEntryFilePath(entry: DiaryAnchorRef): string | null {
   return entry.filePath || entry.filename || null;
 }
 
-/** 跳转日记条目原文（ADR-0130 一目一文件）：直接打开条目文件 */
+/** 跳转日记条目原文：entry 格式直接打开文件；day 格式打开日期文件后滚到该块头 */
 export async function jumpToDiaryEntry(entry: DiaryAnchorRef): Promise<void> {
   const filePath = diaryEntryFilePath(entry);
   if (!filePath) {
@@ -47,6 +49,21 @@ export async function jumpToDiaryEntry(entry: DiaryAnchorRef): Promise<void> {
   }
 
   await getApp().workspace.openLinkText(stripMdExt(filePath), '', false, { active: true });
+
+  // 旧日期文件一天多块：视图就绪后把光标/视口落到该块头（新格式 line 恒 0，不进这里）
+  const line = Number(entry.lineNumber ?? 0);
+  if (line > 0) {
+    setTimeout(() => {
+      try {
+        const editor = (getApp().workspace as any).activeEditor?.editor;
+        if (!editor) return;
+        editor.setCursor({ line, ch: 0 });
+        editor.scrollIntoView({ from: { line, ch: 0 }, to: { line, ch: 0 } }, true);
+      } catch (e) {
+        /* 视图未就绪/宿主能力缺失：只开文件，不滚行 */
+      }
+    }, 30);
+  }
 }
 
 /** 复制日记条目的双链引用（`[[条目文件路径不带扩展名]]`） */

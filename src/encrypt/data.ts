@@ -1582,6 +1582,10 @@ export class SafeManager {
   private async mergeDiaryBlock(datePath: string, block: string): Promise<boolean> {
     const app = getApp();
     if (!datePath || !block) return false;
+    // day 格式：还原进当天的 `YYYY-MM-DD.md`，块头是 emoji（不是 v2 标签名）
+    if (tryGetSettings().diaryEntryFormat === 'day') {
+      return this.mergeLegacyDiaryBlock(datePath, block);
+    }
     // 解析块头 `# 标签名/标签名 HH:mm`（v2 标签名制）
     const md = block.replace(/\r\n/g, '\n');
     const lines = md.split('\n');
@@ -1636,6 +1640,38 @@ export class SafeManager {
       }
       const file = await app.vault.create(targetPath, serialized);
       (app.metadataCache as any)?.trigger?.('changed', file);
+    });
+    return true;
+  }
+
+  /**
+   * day 格式还原：把旧格式块追加到当天 `YYYY-MM-DD.md`。
+   * - 日期从 note.path（条目文件或旧日期文件）换算；
+   * - 幂等：同一块已在文件里则跳过；
+   * - 只追加，不覆盖已有内容。
+   */
+  private async mergeLegacyDiaryBlock(datePath: string, block: string): Promise<boolean> {
+    const app = getApp();
+    const md = block.replace(/\r\n/g, '\n').trimEnd();
+    const first = md.split('\n')[0] ?? '';
+    if (!/^#\s*.+?\s+\d{2}:\d{2}\s*$/.test(first)) return false;
+    const date = diaryMetaFromEntryPath(datePath)?.date ?? diaryDateFromLegacyPath(datePath);
+    if (!date) return false;
+    const dir = datePath.split('/').slice(0, -1).join('/') || currentDiaryDirectory();
+    const targetPath = `${dir}/${date}.md`;
+    await this.ensureVaultParentFolder(targetPath);
+    await enqueueFileTask(targetPath, async () => {
+      const existing = app.vault.getAbstractFileByPath(targetPath) as any;
+      let content = '';
+      if (existing && existing.isFolder !== true) content = await app.vault.read(existing);
+      const base = content.replace(/\r\n/g, '\n').trimEnd();
+      if (base.includes(md)) return; // 幂等：同一块已在文件里
+      const next = base ? `${base}\n\n${md}\n` : `${md}\n`;
+      if (existing && existing.isFolder !== true) await app.vault.modify(existing, next);
+      else {
+        const file = await app.vault.create(targetPath, next);
+        (app.metadataCache as any)?.trigger?.('changed', file);
+      }
     });
     return true;
   }

@@ -165,6 +165,11 @@ export default interface BzSettings {
   diaryDirectory: string;
   /** ✉️ 信目录 */
   letterDirectory: string;
+  /** 日记存储格式：entry = 一篇一个文件（YYMMDDHHmm.md）；day = 一天一个文件（YYYY-MM-DD.md，Obsidian 日记原生） */
+  diaryEntryFormat: 'entry' | 'day';
+  /** 日记类型清单（JSON 字符串，DiaryTypeConfig[]）。空 = 用 diary/config 的 3 个示例默认；
+   *  老库升级由 migrateDiaryTypes 一次性写入旧版 28 类，之后完全归用户编辑 */
+  diaryTypes: string;
   /** 🕒 写日记默认日期取自文件（否则当前时间） */
   useFileDateTime: boolean;
   /** 📄 每卷装多少则（历史键名仍叫 pageSize）：一册只摊开一卷，凑够就另装一卷（缺省 50；0/缺失按缺省） */
@@ -1031,6 +1036,9 @@ export const DEFAULT_SETTINGS: BzSettings = {
   // 日记本（ADR-0115：3 键；影视/书库目录跨域读，退役键见接口注释）
   diaryDirectory: '',
   letterDirectory: '',
+  // 空串 = 用 diary/config 的默认 3 个示例（唯一源在那边，避免两份默认值漂移）
+  diaryEntryFormat: 'entry',
+  diaryTypes: '',
   useFileDateTime: false,
   diaryPageSize: 50,
 

@@ -19,7 +19,8 @@ import {
   parseDiaryBlockHeader,
   serializeDiaryBlockHeader,
 } from '../core/diary-format';
-import { DIARY_DIRECTORY, ENCRYPT_TAG, getTagEmoji } from './config';
+import { DIARY_DIRECTORY, ENCRYPT_TAG, getTagEmoji, isDayFormat } from './config';
+import { serializeLegacyBlock } from './legacy';
 import type { DiaryEntry } from './types';
 
 // 加密分类标签名（ADR-0017；写入块标题、参与筛选/计数）——单一来源在 config，此处转出给 UI 层
@@ -218,7 +219,9 @@ async function realignRestorePath(noteId: string): Promise<void> {
   }
 }
 
-/** 构造还原块：以 newTags 重建头行（v2 标签名制，丢弃加密，保留 HH:mm 与正文）。
+/** 构造还原块：以 newTags 重建头行（丢弃加密，保留 HH:mm 与正文）。
+ *  - entry 格式：v2 标签名制 `# 标签/标签 HH:mm`；
+ *  - day 格式：旧格式 `# emoji HH:mm`（写回当天日期文件，由 encrypt 域 merge 落位）。
  *  D10：newTags 滤掉「加密」后为空时兜底「日记」——原样保留会把「加密」写回头行。 */
 async function buildRestoreBlock(noteId: string, newTags?: string[]): Promise<string | null> {
   const plain = await getSafeManager().getDiaryEntryPlain(noteId);
@@ -228,6 +231,9 @@ async function buildRestoreBlock(noteId: string, newTags?: string[]): Promise<st
   if (!head) return null;
   const kept = (newTags ?? []).filter((t) => t !== ENCRYPT_TAG);
   const seqTags = kept.length > 0 ? kept : ['日记'];
+  if (isDayFormat()) {
+    return serializeLegacyBlock(seqTags, head.time, lines.slice(1).join('\n'));
+  }
   return `${serializeDiaryBlockHeader(seqTags, head.time)}${lines.length > 1 ? '\n' + lines.slice(1).join('\n') : ''}`;
 }
 
