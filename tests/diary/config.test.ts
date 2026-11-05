@@ -4,6 +4,8 @@ import {
   applyDiaryTypes,
   applyDirectories,
   bookDirectory,
+  DEFAULT_DIARY_EMOJI,
+  DEFAULT_DIARY_TYPES,
   DIARY_ENTRY_FORMAT,
   DIARY_DIRECTORY,
   emojiToTagMap,
@@ -101,14 +103,32 @@ describe('分类表解析 / 迁移', () => {
     expect(JSON.parse(raw)).toEqual([{ tag: '日记', emoji: '📖' }]);
   });
 
-  it('migrateDiaryTypes：老库（带日记键）写旧表；空对象/无日记键/已有新键不写', () => {
+  it('migrateDiaryTypes：老库（带日记键）只写默认 3 个示例，不再灌旧版 28 类；空对象/无日记键/已有新键不写', () => {
     const oldVault: Record<string, unknown> = { diaryDirectory: '' };
     expect(migrateDiaryTypes(oldVault)).toBe(true);
-    expect(String(oldVault.diaryTypes)).toContain('四川');
+    expect(JSON.parse(String(oldVault.diaryTypes))).toEqual(DEFAULT_DIARY_TYPES);
+    expect(String(oldVault.diaryTypes)).not.toContain('四川');
+    expect(String(oldVault.diaryTypes)).not.toContain('咪咪');
     expect(migrateDiaryTypes({})).toBe(false);
     expect(migrateDiaryTypes({ storagePath: 'DATA/STORAGE' })).toBe(false);
     expect(migrateDiaryTypes({ diaryDirectory: '', diaryTypes: '[]' })).toBe(false);
     expect(migrateDiaryTypes(null)).toBe(false);
+  });
+
+  it('旧日记的 type 不在分类表：emoji 回退默认，但 type 原文仍能进换贴纸清单（不会静默丢）', () => {
+    resetTagsConfig();
+    expect(getTagEmoji('四川')).toBe(DEFAULT_DIARY_EMOJI);
+    expect(getTagEmoji('咪咪')).toBe(DEFAULT_DIARY_EMOJI);
+    // 当前条目的旧 type 追加在配置项之后；重名不重复，「加密」仍不进新建/换贴纸清单
+    expect(getSortedTagsForAddDialog(['四川', '日记', '咪咪', '加密'])).toEqual([
+      '日记',
+      '随笔',
+      '生活',
+      '四川',
+      '咪咪',
+    ]);
+    // 新建日记不传 extraTags 时行为不变
+    expect(getSortedTagsForAddDialog()).toEqual(['日记', '随笔', '生活']);
   });
 });
 
