@@ -174,6 +174,10 @@ export default interface BzSettings {
   useFileDateTime: boolean;
   /** 📄 每卷装多少则（历史键名仍叫 pageSize）：一册只摊开一卷，凑够就另装一卷（缺省 50；0/缺失按缺省） */
   diaryPageSize: number;
+  /** 🎬 已经打开过日记本（**首次打开严格只判一次**：首次且册子非空才弹教程；空态走册子上的入口） */
+  diaryFirstOpened: boolean;
+  /** 🎬 视频教程弹窗已弹过（打开即记账，防同一首次流程弹第二次；老库缺键 = 没弹过） */
+  diaryTutorialSeen: boolean;
   // 跨域读：影视目录走影院域 cinemaFolderPath、书库目录走书架墙域 resolveFolderPath（ADR-0115，
   // 用户拍板「影视部分走影院的」）；退役：movieDirectory/showTagCount/diaryBatchSize/diaryTagShowEmoji/
   // diaryContentRenderMode/diaryTagSortMode/diaryDefaultDateFilter/diaryDefaultSelectedTag/diaryJumpToEditAfterSave
@@ -1071,6 +1075,10 @@ export const DEFAULT_SETTINGS: BzSettings = {
   diaryTypes: '',
   useFileDateTime: false,
   diaryPageSize: 50,
+  // 首次打开日记本才判一次教程（2026-11-05 用户拍板）：判过即记账，之后永不重弹；
+  // 空册不弹（教程入口常驻在空册页上），弹窗真的出现过才写 diaryTutorialSeen
+  diaryFirstOpened: false,
+  diaryTutorialSeen: false,
 
   // 目录缺省留空（2026-10-30）：新库不替用户猜位置，剪藏本主界面走「未配置」空态引导他设一次
   articleDirectory: '',

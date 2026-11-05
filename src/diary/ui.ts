@@ -38,6 +38,7 @@ import { onDomainEvent } from '../core/domain-bus';
 import { escapeHtml, stripMdExt } from '../core/utils';
 import { openFlowDialog } from '../core/flow-dialog';
 import { DIARY_DIRECTORY, inWallDirs, getTagEmoji, getSortedTagsForAddDialog } from './config';
+import { maybeShowDiaryTutorial, openTutorialVideo, shouldShowFirstOpenTutorial } from './tutorial';
 import {
   loadWallEntries,
   loadMoreWallEntries,
@@ -541,6 +542,9 @@ export class DiaryAppController {
   private _hideMotion = false;
   private _allowCacheNext = false;
   private _loadError: string | null = null;
+  /** 本次 show 是「第一次打开日记本」——读盘完、确认册子非空才弹教程；show 开头即取走，
+   *  本次没弹成（空册/读坏/中途被关）就作废，绝不跨次补弹 */
+  private firstOpenTutorial = false;
   private _subs: (() => void)[] = [];
   private _vaultRefs: EventRef[] = [];
 
@@ -3692,6 +3696,13 @@ export class DiaryAppController {
         onClick: () => openFolderSettings('diary', undefined, () => this.hide()),
       })
     );
+    // 还没上手的人先看一遍演示，再回来配目录（影院/剪藏本未配置引导同款出口）
+    const tut = document.createElement('button');
+    tut.type = 'button';
+    tut.className = 'bz-diary-fb-lead-tut';
+    tut.textContent = '看视频教程 →';
+    tut.addEventListener('click', () => openTutorialVideo());
+    act.appendChild(tut);
     paper.append(title, desc, act);
     this.fallbackEl.hidden = false;
     this.hideLoading();
@@ -3708,7 +3719,7 @@ export class DiaryAppController {
 
   /**
    * 空册时写在书页上的那一段（不是浮层）：形制照着真日记来——标题一句、正文一句、
-   * 末尾一个「写第一篇」的行内链接。落点路径现算，用户改过文件夹就显示他自己的。
+   * 末尾两枚行内入口：「写第一篇」与「看视频教程」（空态不弹窗，教程入口常驻在这里）。
    */
   private emptyEntryBlock(): HTMLElement {
     const wrap = document.createElement('div');
@@ -3716,27 +3727,47 @@ export class DiaryAppController {
     const title = document.createElement('p');
     title.className = 'bz-diary-void-title';
     title.textContent = '这本册子还是空的。';
+
+    const acts = document.createElement('div');
+    acts.className = 'bz-diary-void-acts';
+
     const act = document.createElement('button');
     act.type = 'button';
     act.className = 'bz-diary-void-link';
     act.textContent = '写第一篇 →';
     act.addEventListener('click', () => this.openWrite());
-    wrap.append(title, act);
+
+    const tut = document.createElement('button');
+    tut.type = 'button';
+    tut.className = 'bz-diary-void-link bz-diary-void-tut';
+    tut.textContent = '看视频教程 →';
+    tut.addEventListener('click', () => openTutorialVideo());
+
+    acts.append(act, tut);
+    wrap.append(title, acts);
     return wrap;
+  }
+
+  /** index.openDiary 判完「第一次打开」后调用；show 开头取走，本次 show 用完即作废 */
+  markFirstOpenTutorial(): void {
+    this.firstOpenTutorial = true;
   }
 
   show(): void {
     if (!this._initialized) this.ensureElements();
     const reopen = this._shownOnce;
     this._shownOnce = true;
+    /* 首次教程只跟这一次 show 走：空册/读坏/中途被关都算判过，下一次打开不再补弹 */
+    const firstOpen = this.firstOpenTutorial;
+    this.firstOpenTutorial = false;
     this._hideMotion = false;
     this.root!.style.display = 'flex';
     topifyZ(this.root!); // ADR-0067：域根层级动态发号
     this._allowCacheNext = true;
 
     /* 未配置日记文件夹（2026-10-30）：不读盘、不排册，桌上贴一张引导纸——
-       说明缺什么 + 「设置日记文件夹」。与「已配置但没内容」的空册严格分开：
-       后者照常开册、由册子自己的空态说话，不带设置按钮。 */
+       说明缺什么 + 「设置日记文件夹」+「看视频教程」（空态，不弹窗）。
+       与「已配置但没内容」的空册严格分开：后者照常开册、由册子自己的空态说话。 */
     if (needsFolderSetup('diary')) {
       this.showFolderGate();
       return;
@@ -3748,6 +3779,7 @@ export class DiaryAppController {
 
     /* 快路：上次排好的这一册还能用（数据没被外部改动、锁态没变） */
     if (this.bookFresh && this.entries.length && !this._loadError && this.bookStillValid()) {
+      this.promptFirstOpenTutorial(firstOpen);
       this.toast(reopen ? '又翻开了' : '翻开的是最新那篇');
       return;
     }
@@ -3786,9 +3818,16 @@ export class DiaryAppController {
         this.hideLoading();
       }
       this.startBackgroundFill();
+      this.promptFirstOpenTutorial(firstOpen);
       this.toast(reopen ? '又翻开了' : '翻开的是最新那篇');
     })();
     this.loadTask = task;
+  }
+
+  /** 第一次打开且这一册不是空的才弹教程；空册不弹——入口常驻在册子空态页上，不挡着人写第一篇 */
+  private promptFirstOpenTutorial(firstOpen: boolean): void {
+    if (!shouldShowFirstOpenTutorial({ firstOpen, loadError: this._loadError, entries: this.entries.length })) return;
+    maybeShowDiaryTutorial();
   }
 
   /**

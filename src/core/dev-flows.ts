@@ -18,6 +18,7 @@
  * 两者都是开发工具不进发布版，样式类 .bz-dev-* 见 core/styles.css 开发工具段。
  */
 import { setIcon } from 'obsidian';
+import type { App } from 'obsidian';
 import { notice } from './notice';
 import { openSetupWizard } from './setup-wizard';
 import { setupDoneStorageKey, SETUP_DONE_FALLBACK_KEY } from './setup-state';
@@ -25,6 +26,8 @@ import { vaultBasePathOf } from './plugin-path';
 import { registerAlwaysOnTop, unregisterAlwaysOnTop } from './z-order';
 import { uiModal, closeAllModals } from './ui/modal';
 import { CHANGELOG_RELEASES } from './changelog-data';
+import { openDiary } from '../diary';
+import { resetDiaryTutorialState } from '../diary/tutorial';
 
 /** 一条可演步骤：name 写准（报修引用点）；hold = 自动播放时这一步做完停多久给人看；
  *  undo 缺省 = 该步不可回退 */
@@ -305,6 +308,70 @@ export function devFlows(): DevFlow[] {
             console.log('[bz] 更新提示演示跑完，当前版本', curVersion(ctx), '· 内置日志', CHANGELOG_RELEASES.length, '版');
           },
           hold: 1500,
+        },
+      ],
+    },
+    /**
+     * 日记本首次教程弹窗 · 流程演示
+     *
+     * 只演四屏：清两个标记 → 真命令打开日记本（册子非空时教程应盖在摊开的书上）
+     * → 点「先翻翻」收壳 → 再打开一次（不该重弹）。
+     *
+     * 前提：测试库里得有日记。空册时按设计**不弹**（入口常驻在空册那页上），
+     * 这时第二步会等不到弹窗——不是 bug；想看弹窗先在测试库写一篇或 seed 一批。
+     */
+    {
+      id: 'diary-tutorial',
+      name: '日记本首次教程弹窗',
+      domain: '日记本',
+      steps: [
+        {
+          name: '初始化：清「首次打开」与「教程已弹」两个标记，收起可能开着的弹窗',
+          run: async (ctx) => {
+            closeAllModals();
+            resetDiaryTutorialState();
+            ctx.saved.diaryFirstOpened = ctx.plugin.settings.diaryFirstOpened;
+            ctx.saved.diaryTutorialSeen = ctx.plugin.settings.diaryTutorialSeen;
+            ctx.plugin.settings.diaryFirstOpened = false;
+            ctx.plugin.settings.diaryTutorialSeen = false;
+            await ctx.plugin.saveSettings();
+          },
+          undo: async (ctx) => {
+            closeAllModals();
+            ctx.plugin.settings.diaryFirstOpened = ctx.saved.diaryFirstOpened;
+            ctx.plugin.settings.diaryTutorialSeen = ctx.saved.diaryTutorialSeen;
+            await ctx.plugin.saveSettings();
+          },
+          hold: 1500,
+        },
+        {
+          name: '命令打开日记本：书先摊开，册子非空时教程票根随后盖上来',
+          run: async (ctx) => {
+            openDiary(ctx.app as App);
+            await waitUntil(
+              () => !!document.querySelector('.bz-diary-tutorial-popup'),
+              15000,
+              '教程弹窗出现（空册不会弹，属设计）'
+            );
+            await sleep(500);
+          },
+          hold: 5000,
+        },
+        {
+          name: '点「先翻翻」收起教程：下面应是摊开的册子，不是白屏',
+          run: async () => {
+            document.querySelector<HTMLButtonElement>('.bz-diary-tut-dismiss')?.click();
+            await sleep(500);
+          },
+          hold: 4000,
+        },
+        {
+          name: '再执行一次打开命令：首次已判过、也弹过，教程不该再弹',
+          run: async (ctx) => {
+            openDiary(ctx.app as App);
+            await sleep(1500);
+          },
+          hold: 2500,
         },
       ],
     },

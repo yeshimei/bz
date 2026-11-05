@@ -16,6 +16,7 @@
 import type { App } from 'obsidian';
 import { DiaryAppController } from './ui';
 import { loadWallEntries, invalidateWallCache } from './data';
+import { consumeFirstDiaryOpen } from './tutorial';
 import { needsFolderSetup } from '../core/folder-setup';
 
 let initialized = false;
@@ -36,9 +37,15 @@ export async function ensureDiary(_app: App): Promise<void> {
   getController();
 }
 
-/** 打开日记本主窗口（命令回调；ensure 后 show——controller.show 内部惰性创建 DOM） */
+/** 打开日记本主窗口（命令回调；ensure 后 show——controller.show 内部惰性创建 DOM）。
+ *  **首次打开判定只在这里发生一次**（consumeFirstDiaryOpen 就地记账）：本次是第一次
+ *  才把「待判教程」交给控制器，等这一册读出来、确认非空才弹；空册/未配置不弹（入口在册子上）。 */
 export function openDiary(app: App): void {
-  void ensureDiary(app).then(() => getController().show());
+  void ensureDiary(app).then(() => {
+    const c = getController();
+    if (consumeFirstDiaryOpen()) c.markFirstOpenTutorial();
+    c.show();
+  });
 }
 
 /** 写日记命令回调（bz-diary-write）：ensure 后摊开册子，排好了就在书上摆出写作内页 */
