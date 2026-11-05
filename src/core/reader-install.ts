@@ -201,13 +201,16 @@ export async function readReaderInstall(app: unknown): Promise<ReaderInstallStat
   }
 
   let dirExists = false;
-  if (!fileOk && !installed && adapter?.exists) {
+  if (!fileOk && adapter?.exists) {
     try {
       dirExists = await adapter.exists(dir);
     } catch {
       dirExists = false;
     }
   }
+  // **磁盘是唯一真值**：Obsidian 的内存清单可能还留着「目录已经被删掉」的旧记录
+  // （2026-11-05 测试库实测），不查目录就会把「没装」报成「安装不完整」。
+  if (adapter?.exists) installed = fileOk || dirExists;
 
   return {
     id: READER_PLUGIN_ID,
@@ -215,8 +218,8 @@ export async function readReaderInstall(app: unknown): Promise<ReaderInstallStat
     installed,
     version,
     enabled: isReaderEnabled(app),
-    // 目录在却读不出 manifest：半装、写坏、或目录里躺着别人。
-    broken: !fileOk && (installed || dirExists),
+    // 目录在却读不出 manifest：半装、写坏、或目录里躺着别人（展示上仍按「未安装」算）
+    broken: !fileOk && installed,
   };
 }
 
@@ -225,8 +228,9 @@ export async function readReaderInstall(app: unknown): Promise<ReaderInstallStat
  * `latest` 传 null/undefined 就只报本机状态（完成屏不联网）。
  */
 export function readerStateText(state: ReaderInstallState, latest?: string | null): string {
-  if (state.broken) return '安装不完整（需重装）';
-  if (!state.installed) return '未安装';
+  // 半装与没装在界面上是同一句话（2026-11-05 用户拍板）：用户只需知道「没装好、点安装」，
+  // 「安装不完整（需重装）」这种词只会让人犹豫要不要先卸载。
+  if (!state.installed || state.broken) return '未安装';
   const head = `已安装 ${state.version || '版本未知'}`;
   const v = normalizeVersion(String(latest || ''));
   if (v && compareVersions(v, state.version) > 0) return `${head} · 新版 ${v}`;

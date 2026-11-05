@@ -87,7 +87,7 @@ describe('environmentCheck', () => {
     setFsProbe(null);
   });
 
-  it('bz reader 已装 → 绿行；目录在但 manifest 读不出 → 红行要重装', async () => {
+  it('bz reader 已装 → 绿行；目录在但 manifest 读不出 → 红行（文案仍是「未安装」）', async () => {
     resetNodeRuntimeCache();
     setFsProbe(() => false);
     const installed = new MockVault();
@@ -103,7 +103,7 @@ describe('environmentCheck', () => {
     broken.dirs.add('.obsidian/plugins/bz-reader');
     const badRow = (await environmentCheck(appOf(broken))).find((r) => r.id === 'bz-reader')!;
     expect(badRow.ok).toBe(false);
-    expect(badRow.value).toBe('安装不完整（需重装）');
+    expect(badRow.value).toBe('未安装');
     setFsProbe(null);
   });
 });

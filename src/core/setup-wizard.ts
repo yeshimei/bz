@@ -438,7 +438,7 @@ function mountReaderRow(ctx: WizardCtx, card: HTMLElement, initialLatest: string
     const needUpdate = healthy && !!latest && compareVersions(latest, state.version) > 0;
     btn.classList.toggle('is-hidden', busy || (!needInstall && !needUpdate));
     btn.disabled = busy;
-    btn.textContent = needInstall ? (state.broken ? '重装' : '安装') : '更新';
+    btn.textContent = needInstall ? '安装' : '更新';
   };
 
   const refresh = async (): Promise<void> => {
@@ -656,11 +656,10 @@ async function stageProbe(ctx: WizardCtx, st: WizardState, ui: Ui): Promise<void
 
   const again = button('bz-setup-btn bz-setup-btn--back', '重新检测');
   again.onclick = rescan;
-  const next = button('bz-setup-btn bz-setup-btn--cta', '下一步');
-  // 自检模式不再进「在线资源清单」那一屏（2026-11-01 用户拍板）：自检的结论只有一句话——
-  // 「能用了没」。清单屏在那儿既不装东西、也没法改什么，只是把同一批状态再列一遍，
-  // 反倒让「下一步」看起来还有活要干。缺的东西一律交给完成屏的「安装外部工具」。
-  next.onclick = () => (ctx.checkOnly ? void stageDone(ctx, st, ui) : void stageStorage(ctx, st, ui));
+  // 自检模式也走安装（2026-11-05 用户拍板）：检测屏已经把「缺什么」列全了，
+  // 点「安装缺失项」直接补齐，装完再看结果——不再点下一步就退到完成屏。
+  const next = button('bz-setup-btn bz-setup-btn--cta', ctx.checkOnly ? '安装缺失项' : '下一步');
+  next.onclick = () => (ctx.checkOnly ? void beginInstall(ctx, st, ui) : void stageStorage(ctx, st, ui));
   ui.foot.append(again, next);
 }
 
@@ -763,7 +762,7 @@ async function beginInstall(ctx: WizardCtx, st: WizardState, ui: Ui): Promise<vo
   const items = await planSetupItems(ctx.app, st.manifest ?? null, { nodeMissing, readerMissing });
   const tasks = selectedTasks(items, defaultSelection(items));
   if (!tasks.length) {
-    await markDone(ctx.app);
+    if (!ctx.checkOnly) await markDone(ctx.app);
     void stageDone(ctx, st, ui);
     return;
   }
@@ -965,7 +964,8 @@ async function stageInstall(ctx: WizardCtx, st: WizardState, ui: Ui, tasks: Setu
     (bar.querySelector('i') as HTMLElement).style.width = `${pct}%`;
   }
   (bar.querySelector('i') as HTMLElement).style.width = '100%';
-  await markDone(ctx.app);
+  // 自检模式不是「首次准备」：不该把 setupDone 置 true（那笔账只属于首次引导）
+  if (!ctx.checkOnly) await markDone(ctx.app);
 
   // 值守是唯一「改系统状态」的一步：bundle 装完就在这里问一次（setupAfterInstall 自带确认框）
   if (tasks.some((t) => t.id === 'tool-dock-watch')) {
@@ -1028,32 +1028,6 @@ async function stageDone(ctx: WizardCtx, st: WizardState, ui: Ui): Promise<void>
   // 再弹一层确认纯属多一步；引导页本身不会关，用户随时能回来。
   const tutorial = button('bz-setup-link bz-setup-link--foot', '看使用教程 →');
   tutorial.onclick = () => openExternalUrl(ctx.app, TUTORIAL_URL);
-
-  // bz reader 还没装好（引导里跳过了队列 / 自检刚发现半装）：就地补一颗次级按钮。
-  // 这里不联网查「有没有新版」——那一步在检测屏做过，完成屏只补真正的缺口。
-  const reader = await readReaderInstall(ctx.app);
-  if (!reader.installed || reader.broken) {
-    const installReader = button('bz-setup-btn', reader.broken ? '重装 bz reader' : '安装 bz reader');
-    installReader.onclick = async () => {
-      installReader.disabled = true;
-      installReader.textContent = '安装中…';
-      try {
-        const r = await installReaderPlugin(ctx.app);
-        notice(
-          r.enabled
-            ? `bz reader 已安装并启用（${r.version}）`
-            : `bz reader 已安装（${r.version}），到「设置 → 第三方插件」里启用`,
-          r.enabled ? 'success' : 'warning',
-        );
-        void stageDone(ctx, st, ui); // 重绘：这一屏的状态行跟着更新
-      } catch (e) {
-        notice(`bz reader 安装失败：${String((e as Error)?.message || e)}`, 'error');
-        installReader.disabled = false;
-        installReader.textContent = '重试';
-      }
-    };
-    ui.foot.append(installReader);
-  }
   ui.foot.append(tutorial, depsGuide, enter);
 }
 

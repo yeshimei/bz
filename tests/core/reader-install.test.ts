@@ -106,13 +106,26 @@ describe('本机状态：读磁盘与 Obsidian 清单', () => {
     expect(state.version).toBe('0.1.2');
   });
 
-  it('目录在、manifest 读不出来 → broken（半装要修，不再是「未安装」）', async () => {
+  it('内存清单还留着旧记录、但目录已被删 → 未安装（不报「安装不完整」）', async () => {
+    // 2026-11-05 测试库实测：Obsidian 内存里 manifests['bz-reader'] 还在，
+    // 磁盘目录已经没了——以磁盘为准，否则界面会把「没装」说成「装坏了」。
+    const { app } = appOf(new MockVault(), {
+      manifests: { 'bz-reader': { dir: PLUGIN_DIR, version: '0.2.0' } },
+    });
+    const state = await readReaderInstall(app);
+    expect(state.installed).toBe(false);
+    expect(state.broken).toBe(false);
+    expect(readerStateText(state)).toBe('未安装');
+  });
+
+  it('目录在、manifest 读不出 → broken（磁盘有东西，但展示仍按「未安装」）', async () => {
     const vault = new MockVault();
     vault.dirs.add(PLUGIN_DIR);
     const { app } = appOf(vault);
     const state = await readReaderInstall(app);
-    expect(state.installed).toBe(false);
+    expect(state.installed).toBe(true); // 目录在
     expect(state.broken).toBe(true);
+    expect(readerStateText(state)).toBe('未安装');
   });
 });
 
@@ -132,7 +145,7 @@ describe('状态文案', () => {
     expect(readerStateText({ ...base, enabled: false })).toBe('已安装 0.2.0 · 未启用');
     expect(readerStateText(base, '0.2.1')).toBe('已安装 0.2.0 · 新版 0.2.1');
     expect(readerStateText(base, '0.2.0')).toBe('已安装 0.2.0 · 已启用');
-    expect(readerStateText({ ...base, broken: true })).toBe('安装不完整（需重装）');
+    expect(readerStateText({ ...base, broken: true })).toBe('未安装');
   });
 });
 
