@@ -17,7 +17,7 @@ import { emitDomainEvent } from '../../src/core/domain-bus';
 import { localDayKey } from '../../src/core/utils';
 import { setSettingsProvider } from '../../src/core/settings-provider';
 import { DEFAULT_SETTINGS } from '../../src/settings';
-import { applyDirectories, resetTagsConfig, getTagEmoji, getParentPrimaryTag, isSubTag } from '../../src/diary/config';
+import { applyDiaryTypes, applyDirectories, LEGACY_DIARY_TYPES } from '../../src/diary/config';
 import { openAddDialog, saveNewEntry, createAddDialog, resetTagUsageStats } from '../../src/diary/ui/dialogs';
 import { clearNotices, getNoticeMessages } from '../mock-obsidian-entry';
 import { MockVault, mockAppWithVault } from '../mock-vault';
@@ -27,8 +27,9 @@ let vault: MockVault;
 beforeEach(() => {
   document.body.innerHTML = '';
   clearNotices();
-  resetTagsConfig();
   applyDirectories({});
+  // applyDirectories 会把类型重置为默认 3 个；本文件用旧分类表夹具，必须在它之后注入
+  applyDiaryTypes(LEGACY_DIARY_TYPES);
   resetTagUsageStats();
   vi.restoreAllMocks();
   vault = new MockVault();
@@ -197,17 +198,13 @@ describe('一致#1/#2/#7 + D-UI15：口径与域皮', () => {
     expect(value.startsWith(`${localDayKey()} `)).toBe(true);
   });
 
-  it('D-UI11/D-UI15：chip 文本走 textContent + 角标 createElement 拼装；挂 bz-touch-target--xl', () => {
+  it('D-UI11/D-UI15：chip 文本走 textContent、无主标签角标；挂 bz-touch-target--xl', () => {
     openWriteDialog();
     const chips = [...document.querySelectorAll<HTMLButtonElement>('#add-diary-type-container .diary-tag-selector-btn')];
     expect(chips.length).toBeGreaterThan(0);
-    const sub = chips.find((b) => isSubTag(b.dataset.tag!));
-    if (sub) {
-      const badge = sub.querySelector('.bz-diary-tag-badge')!;
-      expect(badge).not.toBeNull();
-      expect(badge.textContent).toBe(getTagEmoji(getParentPrimaryTag(sub.dataset.tag!)!));
-      expect(badge.hasAttribute('style')).toBe(false); // 不再内联样式
-    }
+    // 2026-11 起全部平级：不再有「二级标签 + 主标签 emoji 角标」这层
+    expect(chips.every((b) => !b.querySelector('.bz-diary-tag-badge'))).toBe(true);
+    expect(chips.every((b) => b.textContent && b.textContent.trim().length > 0)).toBe(true);
     expect(chips.every((b) => b.classList.contains('bz-touch-target--xl'))).toBe(true);
   });
 });

@@ -1,11 +1,13 @@
 // @vitest-environment node
 import { describe, expect, it, beforeEach } from 'vitest';
 import {
+  applyDiaryTypes,
   applyDirectories,
-  buildTagMaps,
   bookDirectory,
+  DIARY_ENTRY_FORMAT,
   DIARY_DIRECTORY,
   emojiToTagMap,
+  LEGACY_DIARY_TYPES,
   LETTER_DIRECTORY,
   movieDirectory,
   getParentPrimaryTag,
@@ -13,11 +15,14 @@ import {
   getSubTagsOfPrimary,
   getTagEmoji,
   isSubTag,
+  migrateDiaryTypes,
+  parseDiaryTypes,
   resetTagsConfig,
+  serializedDiaryTypes,
   tagToEmojiMap,
 } from '../../src/diary/config';
 
-// 回归：模块加载时即构建 emoji 映射（设置项「标签配置」移除后不依赖设置应用流程）
+// 回归：模块加载时即构建 emoji 映射（不依赖设置应用流程）
 // 此断言位于 beforeEach 之前，真实反映模块顶层状态
 if (emojiToTagMap['📖'] !== '日记' || tagToEmojiMap['日记'] !== '📖') {
   throw new Error('config 模块加载后 emoji 映射未构建——缺少模块顶层 buildTagMaps() 调用');
@@ -27,50 +32,83 @@ beforeEach(() => {
   resetTagsConfig();
 });
 
-describe('emoji 映射', () => {
-  beforeEach(() => {
-    buildTagMaps();
+describe('默认分类（全部平级，只有 3 个示例）', () => {
+  it('默认只有日记/随笔/生活三个', () => {
+    expect(Object.keys(tagToEmojiMap).sort()).toEqual(['生活', '日记', '随笔'].sort());
+    expect(getTagEmoji('日记')).toBe('📖');
+    expect(getTagEmoji('随笔')).toBe('✍️');
+    expect(getTagEmoji('生活')).toBe('🏠');
   });
 
-  it('默认映射：主标签与二级标签', () => {
-    expect(tagToEmojiMap['日记']).toBe('📖');
-    expect(tagToEmojiMap['四川']).toBe('🀄');
-    expect(emojiToTagMap['📖']).toBe('日记');
-    expect(emojiToTagMap['🀄']).toBe('四川');
+  it('旧版 28 类不再进默认值', () => {
+    expect(getTagEmoji('四川')).toBe('📖'); // 未知回退
+    expect(getTagEmoji('艺术')).toBe('📖');
+    expect(tagToEmojiMap['骑行']).toBeUndefined();
   });
 
-  it('组合 emoji 作为键（🧑‍🎨 艺术）', () => {
+  it('层级已退役：子标签辅助函数恒空/恒否', () => {
+    expect(isSubTag('旅行')).toBe(false);
+    expect(getParentPrimaryTag('旅行')).toBeNull();
+    expect(getSubTagsOfPrimary('生活')).toBeNull();
+  });
+
+  it('写日记弹窗的分类顺序 = 配置顺序，全部平级', () => {
+    expect(getSortedTagsForAddDialog()).toEqual(['日记', '随笔', '生活']);
+  });
+
+  it('组合 emoji 可作为键（🧑‍🎨 艺术）', () => {
+    applyDiaryTypes([{ tag: '艺术', emoji: '🧑‍🎨' }]);
     expect(tagToEmojiMap['艺术']).toBe('🧑‍🎨');
     expect(emojiToTagMap['🧑‍🎨']).toBe('艺术');
   });
-
-  it('未知标签回退 📖', () => {
-    expect(getTagEmoji('不存在的标签')).toBe('📖');
-  });
 });
 
-describe('标签辅助函数', () => {
-  it('isSubTag / getParentPrimaryTag', () => {
-    expect(isSubTag('四川')).toBe(true);
-    expect(isSubTag('日记')).toBe(false);
-    expect(getParentPrimaryTag('四川')).toBe('旅游');
-    expect(getParentPrimaryTag('日记')).toBeNull();
+describe('分类表解析 / 迁移', () => {
+  it('parseDiaryTypes：去重保序、空名跳过、emoji 缺失回退', () => {
+    const out = parseDiaryTypes([
+      { tag: '日记', emoji: '📖' },
+      { tag: '日记', emoji: '📕' },
+      { tag: '  ', emoji: '📝' },
+      { tag: '随笔' },
+    ]);
+    expect(out.map((t) => t.tag)).toEqual(['日记', '随笔']);
+    expect(out[1].emoji).toBe('📖');
   });
 
-  it('getSubTagsOfPrimary', () => {
-    const subs = getSubTagsOfPrimary('旅游')!;
-    expect(subs.map((s) => s.tag)).toEqual(['四川', '大理']);
-    expect(getSubTagsOfPrimary('日记')).toBeNull();
+  it('旧层级配置自动拍平：子标签变成独立分类（升级不丢名字）', () => {
+    const raw = JSON.stringify([
+      { tag: '生活', emoji: '🏠', subTags: [{ tag: '旅行', emoji: '✈️' }, { tag: '美食', emoji: '🍜' }] },
+    ]);
+    expect(parseDiaryTypes(raw).map((t) => t.tag)).toEqual(['生活', '旅行', '美食']);
   });
 
-  it('getSortedTagsForAddDialog 隐藏有二级标签的主标签', () => {
-    const sorted = getSortedTagsForAddDialog();
-    expect(sorted).not.toContain('旅游');
-    expect(sorted).not.toContain('收藏');
-    expect(sorted).toContain('四川');
-    expect(sorted).toContain('日记');
-    // 二级标签按配置顺序
-    expect(sorted.indexOf('四川')).toBeLessThan(sorted.indexOf('大理'));
+  it('空/损坏的 JSON 回退 3 个示例', () => {
+    expect(parseDiaryTypes('').map((t) => t.tag)).toEqual(['日记', '随笔', '生活']);
+    expect(parseDiaryTypes('{坏').map((t) => t.tag)).toEqual(['日记', '随笔', '生活']);
+    expect(parseDiaryTypes('[]').map((t) => t.tag)).toEqual(['日记', '随笔', '生活']);
+  });
+
+  it('旧版 28 类已拍平（四川/大理/咪咪 都成为平级分类）', () => {
+    const tags = LEGACY_DIARY_TYPES.map((t) => t.tag);
+    expect(tags).toContain('四川');
+    expect(tags).toContain('大理');
+    expect(tags).toContain('咪咪');
+    expect(new Set(tags).size).toBe(tags.length); // 无重名
+  });
+
+  it('serializedDiaryTypes 只写 tag/emoji，不带层级', () => {
+    const raw = serializedDiaryTypes([{ tag: '日记', emoji: '📖' }]);
+    expect(JSON.parse(raw)).toEqual([{ tag: '日记', emoji: '📖' }]);
+  });
+
+  it('migrateDiaryTypes：老库（带日记键）写旧表；空对象/无日记键/已有新键不写', () => {
+    const oldVault: Record<string, unknown> = { diaryDirectory: '' };
+    expect(migrateDiaryTypes(oldVault)).toBe(true);
+    expect(String(oldVault.diaryTypes)).toContain('四川');
+    expect(migrateDiaryTypes({})).toBe(false);
+    expect(migrateDiaryTypes({ storagePath: 'DATA/STORAGE' })).toBe(false);
+    expect(migrateDiaryTypes({ diaryDirectory: '', diaryTypes: '[]' })).toBe(false);
+    expect(migrateDiaryTypes(null)).toBe(false);
   });
 });
 
@@ -85,6 +123,19 @@ describe('applyDirectories 设置应用', () => {
     applyDirectories({});
     expect(DIARY_DIRECTORY).toBe('我的/日记');
     expect(LETTER_DIRECTORY).toBe('我的/信');
+  });
+
+  it('diaryEntryFormat 只认 day，其余回落 entry', () => {
+    applyDirectories({ diaryEntryFormat: 'day' });
+    expect(DIARY_ENTRY_FORMAT).toBe('day');
+    applyDirectories({ diaryEntryFormat: 'xxx' });
+    expect(DIARY_ENTRY_FORMAT).toBe('entry');
+  });
+
+  it('设置里的 diaryTypes 随 applyDirectories 生效', () => {
+    applyDirectories({ diaryTypes: JSON.stringify([{ tag: '读书', emoji: '📚' }]) });
+    expect(getTagEmoji('读书')).toBe('📚');
+    expect(getSortedTagsForAddDialog()).toEqual(['读书']);
   });
 
   it('影视/书库目录跨域实时解析并回退默认（本域无独立设置键；D6：函数实时 resolve 非启动快照）', () => {

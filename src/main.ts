@@ -47,7 +47,7 @@ import { maybeFetchNews, fetchNowNews, notifyManualFetchResult } from './clipboo
 // 统一保险库（encrypt 域，ADR-0085）：密码管理已并入 encrypt，旧 password-vault 域已删除
 // 日记本（diary 域，ADR-0115：原回忆墙升格正名，旧编辑域退役；媒体墙 + 写链路单一 UI）
 import { openDiary, openDiaryWrite, prewarmDiary, unloadDiary } from './diary';
-import { applyDirectories } from './diary/config';
+import { applyDirectories, migrateDiaryTypes } from './diary/config';
 import { openFavoritesPanel, addFavoriteItem, unloadFavorites } from './favorites';
 // 脸谱（people 域，issue 435/ADR-0191：留痕导出的微信聊天 → AI 提炼脸谱；原文不落盘）
 import { openPeople, importWechat, unloadPeople } from './people';
@@ -360,6 +360,9 @@ export default class BzPlugin extends Plugin {
     const asrKeysMigrated = migrateAsrKeys(loaded);
     // issue 462/ADR-0195：knowledge 三路径键 → 外部工具组（pythonPath/ffmpegPath/ffprobePath）
     const externalToolKeysMigrated = migrateExternalToolKeys(loaded);
+    // 日记类型从「代码默认 28 类」搬到用户设置：老库（有 data.json）一次性写入旧表，
+    // 新装保持空串 → diary/config 的 3 个示例。之后类型完全归用户编辑。
+    const diaryTypesMigrated = migrateDiaryTypes(loaded);
     this.settings = Object.assign({}, DEFAULT_SETTINGS, loaded);
     // 插件安装目录的唯一来源（core/plugin-path）：目录名由用户决定（`bz` / `包仔` / `bz-test`
     // 都可能），写死 `plugins/bz` 会让下载落位与读取位置双双错到不存在的目录。
@@ -402,6 +405,7 @@ export default class BzPlugin extends Plugin {
       retiredJevKeysMigrated ||
       asrKeysMigrated ||
       externalToolKeysMigrated ||
+      diaryTypesMigrated ||
       autoUpdateMigrated ||
       storageDirBootstrapped
     ) {

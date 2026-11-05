@@ -18,8 +18,9 @@
  */
 import type { App, TFile } from 'obsidian';
 import { parseEntryFile, parseMovieFile, parseLetterFile, parseBookFile } from './parser';
-import { diaryMetaFromEntryPath } from '../core/diary-format';
+import { diaryDateFromLegacyPath, diaryMetaFromEntryPath } from '../core/diary-format';
 import { DIARY_DIRECTORY, LETTER_DIRECTORY, movieDirectory, bookDirectory, inWallDirs } from './config';
+import { parseLegacyDayFile, legacyBlockToEntry } from './legacy';
 import { onDomainEvent } from '../core/domain-bus';
 import { tryGetSettings } from '../core/settings-provider';
 import type { DiaryEntry } from './types';
@@ -270,12 +271,18 @@ export function wallEntryOfDiary(e: DiaryEntry): WallEntry {
 
 /**
  * 日记候补：只按**文件名**排出日/时（题目 `YYMMDDHHmm`），正文一个字都不读。
+ * 旧日期文件（`YYYY-MM-DD.md`，一天多篇）是例外：必须读一次正文才能按 `# emoji HH:mm` 拆块，
+ * 拆出来的每个块各占一个候补（带 `line` 供跳转/写层定位）。
  * 「先有全序、再按窗读正文」就是开册只读一窗的全部秘密（见 `pickWindow`）。
  */
 interface DiarySlot {
   path: string;
   date: string;
   time: string;
+  /** 旧日期文件里的块头行号（0-based）；新格式条目恒 undefined */
+  line?: number;
+  /** 该候补来自旧日期文件 */
+  legacy?: boolean;
 }
 
 /** 降序比较器（日期降序、同日时降序）：`<0` 表示 a 更新、排在前面（`HH:mm` 字典序与数值序一致） */
@@ -284,16 +291,40 @@ function cmpDesc(aDate: string, aTime: string, bDate: string, bTime: string): nu
   return byDate !== 0 ? byDate : bTime.localeCompare(aTime);
 }
 
-/** 枚举目录下全体日记条目文件，按题目日期时间降序（含子目录递归；非条目命名的一律不进候补） */
+/**
+ * 枚举目录下全体日记条目文件，按题目日期时间降序（含子目录递归）。
+ * 新格式（`YYMMDDHHmm.md`）零读盘；旧格式（`YYYY-MM-DD.md`）读一次正文拆块，
+ * 每个块一个候补——两种格式可以在同一目录共存（转换中途/用户手放）。
+ */
 async function diarySlots(app: App, diaryDir: string): Promise<DiarySlot[]> {
   const mdFiles = await mdFilesUnder(app, diaryDir);
   const slots: DiarySlot[] = [];
   for (const f of mdFiles) {
     const meta = diaryMetaFromEntryPath(f.name);
-    if (meta) slots.push({ path: f.path, date: meta.date, time: meta.time });
+    if (meta) {
+      slots.push({ path: f.path, date: meta.date, time: meta.time });
+      continue;
+    }
+    const legacyDate = diaryDateFromLegacyPath(f.name);
+    if (!legacyDate) continue;
+    try {
+      const content = await app.vault.cachedRead(f);
+      const day = parseLegacyDayFile(content, f.path);
+      if (!day) continue;
+      for (const b of day.blocks) {
+        slots.push({ path: f.path, date: legacyDate, time: b.time, line: b.line, legacy: true });
+      }
+    } catch (e) {
+      /* 单个旧文件读失败：跳过，不影响整册（转换/修复另有入口） */
+    }
   }
-  /* 同日同刻落了两篇时按文件名字典序定序（`-2` 后缀即题目的次序），保证全序稳定 */
-  slots.sort((a, b) => cmpDesc(a.date, a.time, b.date, b.time) || b.path.localeCompare(a.path));
+  /* 同日同刻落了两篇时按文件名字典序定序（`-2` 后缀即题目的次序），旧文件同日同刻再按块行号 */
+  slots.sort(
+    (a, b) =>
+      cmpDesc(a.date, a.time, b.date, b.time) ||
+      b.path.localeCompare(a.path) ||
+      (b.line ?? 0) - (a.line ?? 0)
+  );
   return slots;
 }
 
@@ -303,6 +334,14 @@ async function readDiarySlot(app: App, slot: DiarySlot, diaryDir: string, failed
   if (!file || 'children' in file) return null;
   try {
     const content = await app.vault.read(file as TFile);
+    if (slot.legacy) {
+      const day = parseLegacyDayFile(content, slot.path);
+      if (!day) return null;
+      // 优先按块头行号定位（同刻多条也不会串），行号失效时退回同刻第一个块
+      const block = day.blocks.find((b) => b.line === slot.line) ?? day.blocks.find((b) => b.time === slot.time);
+      if (!block) return null;
+      return toWallEntry(legacyBlockToEntry(day, block, slot.path), 'diary', diaryDir);
+    }
     const e = parseEntryFile(content, slot.path);
     return e ? toWallEntry(e, 'diary', diaryDir) : null;
   } catch {

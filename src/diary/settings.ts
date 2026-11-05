@@ -1,8 +1,10 @@
 /**
- * 日记本设置 schema（ADR-0115：旧 diary 12 键按消费面收编为 3 键 + 2 跨域读）。
- * 「外观」沿用 issue 246 范式（diarySkin 布局行「媒体墙」+ diarySkinTheme 主题行「画廊白」layoutKey 联动）；
- * 「目录」仅日记/信两键（影视走影院域 cinemaFolderPath、书库走书架墙域 resolveFolderPath，跨域读）；
- * 「显示」useFileDateTime（写日记弹窗时间口径）。
+ * 日记本设置 schema。
+ * 组序：外观 / 目录 / 存储 / 分类 / 显示。
+ * - 目录：只保留日记文件夹（信件文件夹按用户要求从设置页隐藏，键与读写逻辑保留）；
+ * - 存储：custom 行（两种格式卡片 + 切换确认 + 转换进度，见 ./settings-format）；
+ * - 分类：custom 行（清单式，全部平级，见 ./settings-types）；
+ * - 显示：写日记时间口径、每卷则数。
  * 「维护」组与「日记格式体检」弹窗按用户拍板退役（2026-09-25）——格式 lint 仍留在
  * src/diary/repair.ts（store 写入路径消费），只是不再有手动体检入口。
  * ⚙️ 弹窗 / 设置面板「日记本」页共用本 schema。
@@ -10,6 +12,8 @@
 import type { SettingsSchema } from '../core/settings-schema';
 import { getSettings } from '../core/settings-provider';
 import { applyDirectories } from './config';
+import { mountDiaryFormatEditor } from './settings-format';
+import { mountDiaryTypeEditor } from './settings-types';
 
 /** 日记本设置 schema */
 export function diarySettingsSchema(): SettingsSchema {
@@ -28,9 +32,25 @@ export function diarySettingsSchema(): SettingsSchema {
         icon: 'folder-open',
         name: '目录',
         rows: [
-          { type: 'path', mode: 'single', name: '日记文件夹', desc: '存放日记文件的文件夹', binding: { key: 'diaryDirectory' }, onChange: () => applyDirectories(getSettings()) },
-          { type: 'path', mode: 'single', name: '信件文件夹', desc: '存放信件的文件夹', binding: { key: 'letterDirectory' }, onChange: () => applyDirectories(getSettings()) },
+          {
+            type: 'path',
+            mode: 'single',
+            name: '日记文件夹',
+            desc: '留空则跟随 Obsidian 日记本的目录',
+            binding: { key: 'diaryDirectory' },
+            onChange: () => applyDirectories(getSettings()),
+          },
         ],
+      },
+      {
+        icon: 'hard-drive',
+        name: '存储',
+        rows: [{ type: 'custom', render: (body) => mountDiaryFormatEditor(body) }],
+      },
+      {
+        icon: 'tags',
+        name: '分类',
+        rows: [{ type: 'custom', render: (body) => mountDiaryTypeEditor(body) }],
       },
       {
         icon: 'eye',

@@ -17,7 +17,7 @@ import { describe, expect, it, beforeEach, afterEach, vi, beforeAll } from 'vite
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { setApp, getApp } from '../../src/core/app';
-import { applyDirectories } from '../../src/diary/config';
+import { applyDiaryTypes, applyDirectories, LEGACY_DIARY_TYPES } from '../../src/diary/config';
 import { serializeDiaryEntryFile } from '../../src/core/diary-format';
 import { MockVault, mockAppWithVault } from '../mock-vault';
 import { resetObsidianMocks, clearNotices, getNoticeMessages, Platform } from '../mock-obsidian-entry';
@@ -167,6 +167,8 @@ beforeEach(() => {
   resetObsidianMocks();
   resetFlips();
   applyDirectories({});
+  // 本文件的贴纸册/写作内页断言按旧 28 类夹具（>5 张贴纸）；默认 3 个示例另测
+  applyDiaryTypes(LEGACY_DIARY_TYPES);
   // 未配置目录时走引导卡（ADR-0274）；本文件验的是「已配好四目录」的册子行为
   setSettingsProvider(() => ({ diaryDirectory: '我的/日记', letterDirectory: '我的/信', cinemaFolderPath: '我的/影视', bookshelfFolderPath: '书库' }) as never);
   for (const fn of Object.values(mocks)) fn.mockClear();

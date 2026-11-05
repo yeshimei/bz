@@ -17,6 +17,7 @@
  */
 import { notice } from './notice';
 import { requestSettingsPanel, tryGetSettings } from './settings-provider';
+import { obsidianDailyNotesFolder } from './daily-notes';
 import { cleanDir, resolveAssetDir, domainAssetsDir, type AssetDir } from './attachment-dir';
 // 从组件文件的深路径取，别走 './ui' 的桶文件：桶会把 settings-schema / path-picker 一并
 // 拖进来，而那些壳的假 obsidian 层没有 Setting / MarkdownRenderer，行为包直接构建失败。
@@ -160,6 +161,12 @@ export function folderState(domain: FolderDomainId): FolderState {
       return { field, dir: r.dir, source: r.source, missing: false };
     }
     const v = settingValue(field.key);
+    if (v) return { field, dir: v, source: 'setting', missing: false };
+    // 日记：bz 没填时跟随 Obsidian 核心插件「日记」的文件夹（两处都空才走引导）
+    if (domain === 'diary' && field.key === 'diaryDirectory') {
+      const hostDir = obsidianDailyNotesFolder();
+      if (hostDir) return { field, dir: hostDir, source: 'obsidian', missing: false };
+    }
     return { field, dir: v, source: v ? 'setting' : 'fallback', missing: !v };
   });
   const missing = fields.filter((f) => f.missing);

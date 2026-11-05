@@ -7,7 +7,7 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { setApp as setCoreApp } from '../../src/core/app';
 import { setSettingsProvider } from '../../src/core/settings-provider';
-import { applyDirectories, resetTagsConfig } from '../../src/diary/config';
+import { applyDiaryTypes, applyDirectories, LEGACY_DIARY_TYPES } from '../../src/diary/config';
 import { setDiaryDataMap } from '../../src/diary/store';
 import {
   ENCRYPT_TAG,
@@ -29,8 +29,9 @@ beforeEach(async () => {
   document.body.innerHTML = '';
   clearNotices();
   resetObsidianMocks();
-  resetTagsConfig();
   applyDirectories({});
+  // applyDirectories 会把类型重置为默认 3 个；本文件用旧分类表夹具，必须在它之后注入
+  applyDiaryTypes(LEGACY_DIARY_TYPES);
   unloadEncrypt();
   EncryptAppController.instance = null;
   setSettingsProvider(() => ({

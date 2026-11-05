@@ -133,9 +133,9 @@ describe('diaryDateFromPath', () => {
     expect(diaryDateFromPath('我的\\日记\\2412312359.md')).toBe('2024-12-31'); // 反斜杠
   });
 
-  it('反例：非条目命名/旧日期文件/错误格式/日历非法/非 md 返回 null', () => {
+  it('反例：非条目命名/错误格式/日历非法/非 md 返回 null；旧日期文件现在按 day 格式认日期', () => {
     expect(diaryDateFromPath('我的/日记/随笔.md')).toBeNull();
-    expect(diaryDateFromPath('我的/日记/2026-08-23.md')).toBeNull(); // 旧格式日期文件（ADR-0131 起不再识别）
+    expect(diaryDateFromPath('我的/日记/2026-08-23.md')).toBe('2026-08-23'); // 一天一文件格式（2026-11 起支持）
     expect(diaryDateFromPath('我的/日记/2608230930.txt')).toBeNull(); // 非 md 后缀
     expect(diaryDateFromPath('我的/日记/2608230930-2-3.md')).toBeNull(); // 序号形状非法
     expect(diaryDateFromPath('我的/日记/2602311200.md')).toBeNull(); // 2 月 31 日：日历非法

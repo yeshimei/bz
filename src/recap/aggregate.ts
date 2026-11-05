@@ -23,7 +23,8 @@ import { tryGetSettings } from '../core/settings-provider';
 import { storageFile } from '../core/storage';
 import { localDayKey, parseLocalDay } from '../core/utils';
 import { parseEntryFile } from '../diary/parser';
-import { diaryDateFromEntryPath } from '../core/diary-format';
+import { parseLegacyDayFile } from '../diary/legacy';
+import { diaryDateFromEntryPath, diaryDateFromLegacyPath } from '../core/diary-format';
 import { parseMovieFile } from '../cinema/data';
 import { STATUS_WATCHED, getStarString } from '../cinema/constants';
 import { scanMarkdownBooks, loadEpubItems } from '../bookshelf/data';
@@ -292,7 +293,7 @@ export async function collectRecap(app: App, now: number = Date.now()): Promise<
     pomodoros: [],
   };
 
-  // 日记：当天条目文件逐篇解析（ADR-0130 一目一文件；加密条目同日记本口径不可见）。
+  // 日记：当天两种格式都认——entry 逐篇解析；day 文件按块拆（日期取文件名）。
   // R1/N2：过滤口径对齐墙（ui.ts「加密」chip 只认标签）——只滤「加密」标签。
   try {
     const dir = settingDir(['diaryDirectory'], '');
@@ -300,8 +301,18 @@ export async function collectRecap(app: App, now: number = Date.now()): Promise<
     const times: string[] = [];
     for (const f of app.vault.getMarkdownFiles?.() || []) {
       if (!f.path.startsWith(`${dir}/`)) continue;
-      if (diaryDateFromEntryPath(f.path) !== dateStr) continue;
-      const e = parseEntryFile(await app.vault.read(f as TFile), f.path);
+      const legacyDate = diaryDateFromLegacyPath(f.path);
+      const entryDate = diaryDateFromEntryPath(f.path) || legacyDate;
+      if (entryDate !== dateStr) continue;
+      const content = await app.vault.read(f as TFile);
+      if (legacyDate) {
+        const day = parseLegacyDayFile(content, f.path);
+        for (const b of day?.blocks ?? []) {
+          if (!b.tags.includes('加密')) times.push(b.time);
+        }
+        continue;
+      }
+      const e = parseEntryFile(content, f.path);
       if (!e) continue;
       // N2：只滤「加密」标签（对齐墙 ui.ts 加密 chip 口径）——条目文件化后正文 🔐 只是普通字符
       //（保险箱加密条目本就不在 getMarkdownFiles 里），连查正文会把手打 🔐 的普通条目从回顾滤掉、

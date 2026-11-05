@@ -1,7 +1,7 @@
 // @vitest-environment node
 import { describe, expect, it, beforeEach, afterEach, vi } from 'vitest';
 import { MockVault, mockAppWithVault } from '../mock-vault';
-import { buildTagMaps, resetTagsConfig } from '../../src/diary/config';
+import { applyDiaryTypes, buildTagMaps, LEGACY_DIARY_TYPES } from '../../src/diary/config';
 import {
   extractMedia,
   extractSegments,
@@ -52,7 +52,9 @@ function makeApp(files: Record<string, string>) {
 }
 
 beforeEach(() => {
-  resetTagsConfig();
+  // 本文件大量断言用旧分类表里的标签（书/诗/骑行…），夹具显式注入完整表；
+  // 「默认只有 3 个示例」的语义由 config.test.ts 单独验
+  applyDiaryTypes(LEGACY_DIARY_TYPES);
   buildTagMaps();
   invalidateWallCache(); // ②：每例清缓存与域事件订阅，防跨例泄漏（模块级单例缓存）
 });

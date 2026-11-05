@@ -1486,3 +1486,134 @@
   --ls-muted: var(--dw-muted);
   --ls-faint: var(--dw-faint);
 }
+
+/* ============ 设置面板 · 日记本（存储 / 分类） ============
+ * 2026-11 用户定稿：设置页「存储」两张卡 + 「分类」平级清单。
+ * 全部走组件库 --bz-* token（设置面板作用域内已被重定向到 --sp-*，自动同皮）；
+ * 操作图标一律 lucide（.bz-ic），分类自己的图标仍是用户选的 emoji。
+ */
+
+/* ---------- 存储：格式卡片 ---------- */
+.bz-diary-fmt { display: flex; flex-direction: column; gap: 9px; padding: 2px 0 4px; }
+.bz-diary-fmt-title { font-size: 12.5px; color: var(--bz-text-1); }
+.bz-diary-fmt-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.bz-diary-fmt-card {
+  display: flex; flex-direction: column; gap: 7px; padding: 9px; text-align: left;
+  border: 1px solid var(--bz-border); border-radius: 10px;
+  background: var(--bz-surface-2); color: var(--bz-text-1); font: inherit; cursor: pointer;
+}
+@media (hover: hover) {
+  .bz-diary-fmt-card:hover { border-color: var(--bz-border-hover); }
+}
+.bz-diary-fmt-card.is-on {
+  border-color: var(--bz-brand);
+  background: var(--bz-brand-soft);
+  box-shadow: inset 0 0 0 1px var(--bz-brand);
+}
+.bz-diary-fmt-card:disabled { cursor: not-allowed; opacity: 0.6; }
+.bz-diary-fmt-mini {
+  display: flex; flex-direction: column; justify-content: center; gap: 2px;
+  min-height: 58px; padding: 8px 9px; overflow: hidden;
+  border: 1px solid var(--bz-border); border-radius: 7px; background: var(--bz-surface-1);
+  font-family: var(--bz-font-mono, ui-monospace, Consolas, monospace); font-size: 10.5px; line-height: 1.7;
+  color: var(--bz-text-1);
+}
+.bz-diary-fmt-line { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.bz-diary-fmt-line .seg { color: var(--bz-text-3); }
+.bz-diary-fmt-name { font-size: 12.5px; font-weight: 600; }
+.bz-diary-fmt-sub { margin-top: -3px; font-size: 11px; color: var(--bz-text-2); }
+.bz-diary-fmt-progress { display: flex; flex-direction: column; gap: 6px; padding: 2px 0; }
+.bz-diary-fmt-progress-meta { display: flex; justify-content: space-between; font-size: 11px; color: var(--bz-text-2); }
+.bz-diary-fmt-track { height: 5px; overflow: hidden; border-radius: 99px; background: var(--bz-surface-1); }
+.bz-diary-fmt-fill { height: 100%; width: 0; border-radius: 99px; background: var(--bz-brand); transition: width 0.12s linear; }
+
+/* ---------- 分类：平级清单 ---------- */
+.bz-diary-type { padding: 0 0 2px; }
+.bz-diary-type-list { display: flex; flex-direction: column; border-top: 1px solid var(--bz-border); }
+.bz-diary-type-row {
+  display: flex; align-items: center; gap: 9px; padding: 8px 0;
+  border-bottom: 1px solid var(--bz-border); background: transparent;
+}
+.bz-diary-type-row.is-dragging { opacity: 0.45; }
+.bz-diary-type-row.is-drop { box-shadow: inset 0 2px 0 var(--bz-brand); }
+.bz-diary-type-grip {
+  flex: none; display: flex; width: 12px; color: var(--bz-text-3);
+  cursor: grab; user-select: none;
+}
+.bz-diary-type-grip .bz-ic { width: 14px; height: 14px; }
+.bz-diary-type-emoji {
+  flex: none; width: 32px; height: 32px; display: grid; place-items: center;
+  border: 1px solid var(--bz-border); border-radius: 8px; background: var(--bz-surface-1);
+  font-size: 18px; line-height: 1; cursor: pointer;
+}
+@media (hover: hover) {
+  .bz-diary-type-emoji:hover { border-color: var(--bz-border-hover); }
+}
+.bz-diary-type-main { flex: 1; min-width: 0; }
+.bz-diary-type-name {
+  width: 100%; padding: 0 0 1px; border: 0; border-bottom: 1px dashed transparent;
+  background: transparent; color: var(--bz-text-1); font: inherit; font-size: 13px; font-weight: 600; outline: none;
+}
+.bz-diary-type-name:focus { border-bottom-color: var(--bz-brand); }
+.bz-diary-type-meta { margin-top: 1px; font-size: 10.5px; color: var(--bz-text-3); }
+.bz-diary-type-actions { flex: none; display: flex; align-items: center; gap: 2px; }
+.bz-diary-type-ibtn {
+  width: 24px; height: 24px; display: grid; place-items: center;
+  border: 1px solid transparent; border-radius: 6px; background: transparent;
+  color: var(--bz-text-3); cursor: pointer;
+}
+.bz-diary-type-ibtn .bz-ic { width: 14px; height: 14px; }
+@media (hover: hover) {
+  .bz-diary-type-ibtn:hover { background: var(--bz-surface-1); border-color: var(--bz-border); color: var(--bz-text-1); }
+  .bz-diary-type-ibtn.is-danger:hover { background: var(--bz-danger-soft, rgba(180, 69, 63, 0.12)); border-color: transparent; color: var(--bz-danger, #b4453f); }
+}
+.bz-diary-type-ibtn:disabled { opacity: 0.3; cursor: default; }
+.bz-diary-type-add {
+  display: flex; align-items: center; gap: 6px; width: 100%; margin-top: 9px; padding: 7px 9px;
+  border: 1px dashed var(--bz-border); border-radius: 8px; background: transparent;
+  color: var(--bz-text-2); font: inherit; font-size: 12px; text-align: left; cursor: pointer;
+}
+.bz-diary-type-add .bz-ic { width: 14px; height: 14px; }
+@media (hover: hover) {
+  .bz-diary-type-add:hover { border-color: var(--bz-border-hover); color: var(--bz-text-1); background: var(--bz-surface-1); }
+}
+.bz-diary-type-preview {
+  display: flex; align-items: center; flex-wrap: wrap; gap: 6px;
+  margin-top: 10px; padding: 8px 10px; border-radius: 8px; background: var(--bz-surface-1);
+}
+.bz-diary-type-preview-label { margin-right: 2px; font-size: 10.5px; letter-spacing: 0.1em; color: var(--bz-text-3); }
+.bz-diary-type-pchip {
+  display: inline-flex; align-items: center; gap: 4px; padding: 2px 9px;
+  border: 1px solid var(--bz-border); border-radius: 99px; background: var(--bz-surface-2);
+  font-size: 11.5px; color: var(--bz-text-2); white-space: nowrap;
+}
+.bz-diary-type-empty { font-size: 11.5px; color: var(--bz-text-3); }
+
+/* ---------- emoji 选择浮层（挂 body，走全局组件库 token） ---------- */
+.bz-diary-type-emoji-pop {
+  position: fixed; z-index: 10050; width: 262px; padding: 8px;
+  border: 1px solid var(--bz-border); border-radius: 10px;
+  background: var(--bz-surface-3);
+  box-shadow: var(--bz-pop-shadow, 0 12px 34px rgba(0, 0, 0, 0.24));
+}
+.bz-diary-type-emoji-grid { display: grid; grid-template-columns: repeat(8, 1fr); gap: 2px; }
+.bz-diary-type-emoji-cell {
+  width: 28px; height: 28px; display: grid; place-items: center;
+  border: 0; border-radius: 6px; background: transparent; font-size: 17px; line-height: 1; cursor: pointer;
+}
+@media (hover: hover) {
+  .bz-diary-type-emoji-cell:hover { background: var(--bz-surface-hover); }
+}
+.bz-diary-type-emoji-custom { display: flex; gap: 6px; margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--bz-border); }
+.bz-diary-type-emoji-custom input {
+  flex: 1; min-width: 0; padding: 4px 7px;
+  border: 1px solid var(--bz-border); border-radius: 6px;
+  background: var(--bz-surface-1); color: var(--bz-text-1); font: inherit; font-size: 12px; outline: none;
+}
+.bz-diary-type-emoji-custom input:focus { border-color: var(--bz-brand); }
+
+@media (max-width: 560px) {
+  .bz-diary-fmt-cards { grid-template-columns: 1fr; }
+  .bz-diary-type-row { gap: 7px; }
+  .bz-diary-type-meta { font-size: 10.5px; }
+}
