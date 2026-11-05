@@ -81,6 +81,20 @@ describe('首次准备：补齐队列', () => {
     expect(ids.some((id) => id.startsWith('dep-'))).toBe(false);
   });
 
+  it('bz reader 进队列（清单拉不到也能装），排在 Node 之后', () => {
+    const tasks = buildSetupTasks({}, null, { nodeMissing: true, readerMissing: true });
+    expect(tasks.map((t) => t.id)).toEqual(['node', 'reader']);
+    const reader = tasks.find((t) => t.id === 'reader')!;
+    expect(reader.kind).toBe('reader');
+    expect(reader.label).toBe('bz reader');
+    expect(reader.size).toBeGreaterThan(0);
+  });
+
+  it('已装 bz reader → 不进队列（重跑引导不重下）', () => {
+    const ids = buildSetupTasks({}, manifest, { nodeMissing: false, readerMissing: false }).map((t) => t.id);
+    expect(ids).not.toContain('reader');
+  });
+
   it('清单拉不到 → 只剩 Node 任务（不静默当成「没有要下的」）', () => {
     const tasks = buildSetupTasks({}, null, { nodeMissing: true });
     expect(tasks.map((t) => t.id)).toEqual(['node']);

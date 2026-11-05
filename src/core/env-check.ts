@@ -28,9 +28,10 @@ import { runtimeDiagnostics, vaultBasePathOf } from './tool-runtime';
 import { PYTHON_VERSION_RE } from './dep-runtime';
 import { getApp } from './app';
 import { DEFAULT_STORAGE_DIR, normalizeStorageDir } from './storage-path';
+import { readReaderInstall, readerStateText } from './reader-install';
 
 /** 缺项的可补方式（见文件头） */
-export type EnvFix = 'tools' | 'docs' | 'ai';
+export type EnvFix = 'tools' | 'docs' | 'ai' | 'reader';
 
 /** 一行检查结果 */
 export interface EnvCheckRow {
@@ -280,6 +281,18 @@ export async function environmentCheck(app: unknown): Promise<EnvCheckRow[]> {
     key: '数据目录可写',
     value: storeOk ? storeDir : `${storeDir}（写不进去：检查是否只读 / 被同步盘占用）`,
     ok: storeOk,
+  });
+
+  // bz reader（同作者阅读器）：书库的 EPUB 书靠它的数据，但没装不影响 markdown 书。
+  // 所以「未安装」是灰行（可选增强），只有「目录在却读不出 manifest」才算红（半装要修）。
+  // 这里只读本机、不联网：有没有新版由引导页检测屏单独问一次（reader-install）。
+  const reader = await readReaderInstall(app);
+  rows.push({
+    id: 'bz-reader',
+    key: 'bz reader',
+    value: readerStateText(reader),
+    ok: reader.broken ? false : reader.installed ? true : null,
+    fix: reader.installed && !reader.broken ? null : 'reader',
   });
 
   if (!mobile) {

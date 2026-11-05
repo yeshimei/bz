@@ -39,6 +39,12 @@ const WHITELIST: Array<{ file: RegExp; reason: string; /** 防回归哨兵：预
     reason: '自更新（2026-09-26）：覆盖插件目录 main.js/styles.css/manifest.json 三件套，升级协议自有顺序，非域数据文件',
   },
   {
+    file: /^src\/core\/reader-install\.ts$/,
+    reason:
+      'bz reader 安装器（ADR-0284）：把**另一个** Obsidian 插件的三件套写进 <configDir>/plugins/bz-reader/，' +
+      '落盘顺序（manifest 最后）是升级协议的一部分，非域数据文件；同 self-update 先例',
+  },
+  {
     file: /^src\/core\/node-runtime-install\.ts$/,
     reason:
       '便携 Node 运行时（2026-10-28 对外分发）：把官方 node 二进制写进 downloads/tools/node-runtime/，' +

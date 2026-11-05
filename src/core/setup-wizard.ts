@@ -41,6 +41,14 @@ import { getApp } from './app';
 import { docListedInResources } from './doc-visibility';
 import { getSettings, saveSettings, tryGetSettings } from './settings-provider';
 import { AI_PROVIDER_REGISTRY, DEFAULT_AI_PROVIDER, getProviderDescriptor, testAIConnectivity } from './ai';
+import {
+  fetchLatestReaderRelease,
+  installReaderPlugin,
+  readReaderInstall,
+  readerStateText,
+  type ReaderInstallState,
+} from './reader-install';
+import { compareVersions } from './version';
 
 /** 视频教程 · **第 4P（最新一集）**。三处教程入口各指一集（关于＝第 1P／本屏＝第 4P／
  *  依赖清单＝第 3P），用户明确不要共享常量：指向不同的集，共享反而多一层解释。
@@ -54,7 +62,7 @@ const NODE_SIZE_HINT = 36.4 * 1024 * 1024;
 const MANIFEST_TIMEOUT_MS = 12000;
 
 /** 下载项的种类（决定 ③ 屏怎么分组、缺省勾不勾） */
-export type SetupKind = 'node' | 'bundle' | 'doc' | 'skins';
+export type SetupKind = 'node' | 'reader' | 'bundle' | 'doc' | 'skins';
 
 /** 一个可下载项 */
 export interface SetupItem {
@@ -86,7 +94,7 @@ export function sizeText(bytes: number | null): string {
 export function buildSetupTasks(
   app: unknown,
   manifest: DownloadManifest | null,
-  opts: { nodeMissing: boolean },
+  opts: { nodeMissing: boolean; readerMissing?: boolean },
 ): SetupItem[] {
   const mk = (i: Omit<SetupItem, 'ready'>): SetupItem => ({ ...i, ready: false });
   const items: SetupItem[] = [];
@@ -109,6 +117,25 @@ export function buildSetupTasks(
           });
           // 刚装好的运行时必须让探测缓存失效：否则同一会话里 toolReadyState 还是旧结论
           resetNodeRuntimeCache();
+        },
+      }),
+    );
+  }
+
+  // bz reader（同作者阅读器）：不在在线资源清单里，装法也不同于目录包——它是一整个
+  // Obsidian 插件（三件套 + 启用），由 core/reader-install 从 Release 拉。
+  // 已装就当就绪（「有没有新版」交给检测屏那一行，不在下载队列里重复问）。
+  if (opts.readerMissing) {
+    items.push(
+      mk({
+        id: 'reader',
+        kind: 'reader',
+        label: 'bz reader',
+        desc: '书库 · EPUB',
+        size: 820 * 1024,
+        run: async (report) => {
+          const r = await installReaderPlugin(app, { onStage: (stage) => report?.(stage) });
+          if (!r.enabled) throw new Error('已装好，但没能自动启用：到「设置 → 第三方插件」里启用');
         },
       }),
     );
@@ -183,6 +210,10 @@ async function isReady(
   kind: SetupKind,
 ): Promise<boolean> {
   if (kind === 'node') return probeNodeRuntime(app, { fresh: true }).kind !== 'none';
+  if (kind === 'reader') {
+    const state = await readReaderInstall(app);
+    return state.installed && !state.broken;
+  }
   if (!manifest) return false;
   if (kind === 'skins') {
     const st = await skinStatus(app, manifest);
@@ -198,7 +229,7 @@ async function isReady(
 export async function planSetupItems(
   app: unknown,
   manifest: DownloadManifest | null,
-  opts: { nodeMissing: boolean },
+  opts: { nodeMissing: boolean; readerMissing?: boolean },
 ): Promise<SetupItem[]> {
   const items = buildSetupTasks(app, manifest, opts);
   const out: SetupItem[] = [];
@@ -378,6 +409,90 @@ export function resourceDocsOf<T extends { kind?: string; id?: string }>(manifes
   return manifest.docs.filter((d) => d.kind !== 'bundle' && docListedInResources(String(d.id || '')));
 }
 
+/** bz reader 行的句柄：外部查到最新版后 setLatest 重算按钮，装完后 refresh 重读磁盘 */
+interface ReaderRowHandle {
+  refresh: () => Promise<void>;
+  setLatest: (version: string | null) => void;
+}
+
+/**
+ * bz reader 一行：状态 + 安装/更新按钮（引导检测屏与自检完成屏共用）。
+ *
+ * 状态来自磁盘（core/reader-install.readReaderInstall），最新版由调用方异步查——
+ * 不在这里发请求，检测屏可以让它跟清单拉取并发，完成屏则干脆不查（只补缺口）。
+ */
+function mountReaderRow(ctx: WizardCtx, card: HTMLElement, initialLatest: string | null = null): ReaderRowHandle {
+  const row = rowEl('bz-setup-row bz-setup-row--reader');
+  const mark = markEl('idle');
+  const val = valEl('检查中…');
+  const btn = button('bz-setup-link', '安装');
+  btn.classList.add('is-hidden');
+  row.append(mark, keyEl('bz reader', '书库 · EPUB'), val, btn);
+  card.appendChild(row);
+
+  let latest = initialLatest;
+  let busy = false;
+
+  const render = (state: ReaderInstallState): void => {
+    val.textContent = readerStateText(state, latest);
+    const healthy = state.installed && !state.broken;
+    mark.className =
+      'bz-setup-mark ' + (state.broken ? 'bz-setup-mark--bad' : healthy ? 'bz-setup-mark--ok' : 'bz-setup-mark--idle');
+    row.classList.toggle('is-bad', state.broken);
+    const needInstall = !healthy;
+    const needUpdate = healthy && !!latest && compareVersions(latest, state.version) > 0;
+    btn.classList.toggle('is-hidden', busy || (!needInstall && !needUpdate));
+    btn.disabled = busy;
+    btn.textContent = needInstall ? (state.broken ? '重装' : '安装') : '更新';
+  };
+
+  const refresh = async (): Promise<void> => {
+    render(await readReaderInstall(ctx.app));
+  };
+
+  btn.onclick = async () => {
+    if (busy) return;
+    busy = true;
+    btn.disabled = true;
+    btn.textContent = '安装中…';
+    try {
+      const r = await installReaderPlugin(ctx.app, {
+        onStage: (text) => {
+          val.textContent = text;
+        },
+      });
+      latest = r.version;
+      busy = false;
+      await refresh();
+      notice(
+        r.enabled
+          ? `bz reader 已安装并启用（${r.version}）`
+          : `bz reader 已安装（${r.version}），到「设置 → 第三方插件」里启用`,
+        r.enabled ? 'success' : 'warning',
+      );
+    } catch (e) {
+      busy = false;
+      const msg = String((e as Error)?.message || e);
+      val.textContent = `安装失败：${msg}`;
+      mark.className = 'bz-setup-mark bz-setup-mark--bad';
+      row.classList.add('is-bad');
+      btn.classList.remove('is-hidden');
+      btn.disabled = false;
+      btn.textContent = '重试';
+      notice(`bz reader 安装失败：${msg}`, 'error');
+    }
+  };
+
+  void refresh();
+  return {
+    refresh,
+    setLatest: (version) => {
+      latest = version;
+      void refresh();
+    },
+  };
+}
+
 /** 当前引导实例的关闭句柄（uiModal.close 幂等）：走它而不是直接 remove 遮罩，
  *  存活登记表与 ESC 注册才跟着注销。 */
 let activeClose: (() => void) | null = null;
@@ -464,11 +579,26 @@ async function stageProbe(ctx: WizardCtx, st: WizardState, ui: Ui): Promise<void
   //  ③ **在线资源**（只列文档与皮肤）
   const rows = st.rows.length ? st.rows : await environmentCheck(ctx.app);
   st.rows = rows;
-  const { env: envRows, tools: toolRows } = splitProbeRows(rows);
+  // bz reader 那一行要带「安装」按钮，单独一组渲染（environmentCheck 给的是纯文本行，
+  // 留给完成屏；这里按 id 摘掉，免得同一件事在一屏里出现两次）。
+  const { env: envRows, tools: toolRows } = splitProbeRows(rows.filter((r) => r.id !== 'bz-reader'));
 
   const env = setupGroup('本机');
   ui.body.appendChild(env.group);
   for (const r of envRows) paint(addRow(r.key, env.card), r.ok, r.value);
+
+  // bz reader：本机状态立刻显示，最新版异步查（GitHub 主 → 码云备），不阻塞这一屏。
+  // 两条通道都不通时静默——按钮照常可点，点安装时再把具体原因给人看。
+  const readerGroup = setupGroup('bz reader');
+  ui.body.appendChild(readerGroup.group);
+  const readerHandle = mountReaderRow(ctx, readerGroup.card);
+  if (probe?.github || probe?.gitee) {
+    void fetchLatestReaderRelease()
+      .then((r) => readerHandle.setLatest(r.version))
+      .catch(() => {
+        /* 静默：安装按钮仍可用 */
+      });
+  }
 
   if (toolRows.length) {
     const tools = setupGroup('外部工具');
@@ -631,7 +761,10 @@ async function stageResources(ctx: WizardCtx, st: WizardState, ui: Ui): Promise<
   }
   const manifest = st.manifest ?? null;
   const nodeMissing = probeNodeRuntime(ctx.app, { fresh: true }).kind === 'none';
-  st.items = await planSetupItems(ctx.app, manifest, { nodeMissing });
+  // bz reader 不进在线资源清单（它是另一个插件），单独问一次磁盘
+  const readerState = await readReaderInstall(ctx.app);
+  const readerMissing = !readerState.installed || readerState.broken;
+  st.items = await planSetupItems(ctx.app, manifest, { nodeMissing, readerMissing });
   st.selected = defaultSelection(st.items);
 
   const pending = (): SetupItem[] => selectedTasks(st.items, st.selected);
@@ -651,7 +784,7 @@ async function stageResources(ctx: WizardCtx, st: WizardState, ui: Ui): Promise<
 
   // 只在真需要交代的时候给一行注释（清单缺 / 走备用通道）
   const hintText = !manifest
-    ? `这次只能补 Node 运行时，其余资源等清单能拉到再说${reasonSuffix(st.manifestError)}`
+    ? `这次只能补 Node 运行时与 bz reader，其余资源等清单能拉到再说${reasonSuffix(st.manifestError)}`
     : st.net && !st.net.github
       ? 'GitHub 不通，自动走备用通道。'
       : '';
@@ -666,6 +799,7 @@ async function stageResources(ctx: WizardCtx, st: WizardState, ui: Ui): Promise<
 
   const GROUPS: Array<{ kind: SetupKind; title: string }> = [
     { kind: 'node', title: '运行环境' },
+    { kind: 'reader', title: '同作者插件' },
     { kind: 'bundle', title: '外部工具' },
     { kind: 'doc', title: '文档' },
     { kind: 'skins', title: '皮肤' },
@@ -988,6 +1122,32 @@ async function stageDone(ctx: WizardCtx, st: WizardState, ui: Ui): Promise<void>
   // 再弹一层确认纯属多一步；引导页本身不会关，用户随时能回来。
   const tutorial = button('bz-setup-link bz-setup-link--foot', '看使用教程 →');
   tutorial.onclick = () => openExternalUrl(ctx.app, TUTORIAL_URL);
+
+  // bz reader 还没装好（引导里跳过了队列 / 自检刚发现半装）：就地补一颗次级按钮。
+  // 这里不联网查「有没有新版」——那一步在检测屏做过，完成屏只补真正的缺口。
+  const reader = await readReaderInstall(ctx.app);
+  if (!reader.installed || reader.broken) {
+    const installReader = button('bz-setup-btn', reader.broken ? '重装 bz reader' : '安装 bz reader');
+    installReader.onclick = async () => {
+      installReader.disabled = true;
+      installReader.textContent = '安装中…';
+      try {
+        const r = await installReaderPlugin(ctx.app);
+        notice(
+          r.enabled
+            ? `bz reader 已安装并启用（${r.version}）`
+            : `bz reader 已安装（${r.version}），到「设置 → 第三方插件」里启用`,
+          r.enabled ? 'success' : 'warning',
+        );
+        void stageDone(ctx, st, ui); // 重绘：这一屏的状态行跟着更新
+      } catch (e) {
+        notice(`bz reader 安装失败：${String((e as Error)?.message || e)}`, 'error');
+        installReader.disabled = false;
+        installReader.textContent = '重试';
+      }
+    };
+    ui.foot.append(installReader);
+  }
   ui.foot.append(tutorial, depsGuide, enter);
 }
 

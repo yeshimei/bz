@@ -31,6 +31,7 @@ describe('environmentCheck', () => {
     expect(keys).toContain('vault 路径');
     expect(keys).toContain('数据目录可写');
     expect(keys).toContain('知识盒工具包');
+    expect(keys).toContain('bz reader');
     setFsProbe(null);
   });
 
@@ -70,6 +71,39 @@ describe('environmentCheck', () => {
     expect(keys).not.toContain('Node 运行时');
     expect(keys).not.toContain('Python 环境');
     expect(keys).not.toContain('音视频工具');
+    setFsProbe(null);
+  });
+
+  // bz reader 是可选增强（书库的 EPUB 书靠它），「没装」不该跟「坏了」一样红。
+  it('bz reader 未安装 → 灰行（可选增强，不计红）', async () => {
+    resetNodeRuntimeCache();
+    setFsProbe(() => false);
+    const rows = await environmentCheck(appOf(new MockVault()));
+    const row = rows.find((r) => r.id === 'bz-reader')!;
+    expect(row.key).toBe('bz reader');
+    expect(row.value).toBe('未安装');
+    expect(row.ok).toBeNull();
+    expect(row.fix).toBe('reader');
+    setFsProbe(null);
+  });
+
+  it('bz reader 已装 → 绿行；目录在但 manifest 读不出 → 红行要重装', async () => {
+    resetNodeRuntimeCache();
+    setFsProbe(() => false);
+    const installed = new MockVault();
+    installed.files.set(
+      '.obsidian/plugins/bz-reader/manifest.json',
+      JSON.stringify({ id: 'bz-reader', version: '0.2.0' }),
+    );
+    const okRow = (await environmentCheck(appOf(installed))).find((r) => r.id === 'bz-reader')!;
+    expect(okRow.ok).toBe(true);
+    expect(okRow.value).toBe('已安装 0.2.0 · 未启用');
+
+    const broken = new MockVault();
+    broken.dirs.add('.obsidian/plugins/bz-reader');
+    const badRow = (await environmentCheck(appOf(broken))).find((r) => r.id === 'bz-reader')!;
+    expect(badRow.ok).toBe(false);
+    expect(badRow.value).toBe('安装不完整（需重装）');
     setFsProbe(null);
   });
 });
