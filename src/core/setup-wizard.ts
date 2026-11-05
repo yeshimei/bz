@@ -5,7 +5,8 @@
  *
  *   ① 检测   先探网络（GitHub 主通道 + 码云备用），再探本机九项
  *   ② 存放   数据存哪（默认 <插件目录>/storage，可改；点「下一步」写探针验证时才建目录）
- *   ③ 内容   下什么（运行时 / 本地运行时 / 工具 / 文档索引 / 皮肤，逐项可勾；**已就绪的自动跳过**）
+ *   ③ 内容   列出来、全部下载（运行时 / 工具 / 文档索引 / 皮肤 / bz reader；已就绪的自动跳过，
+ *             2026-11-05 用户拍板：不再逐项勾选，进来了就都是要下的）
  *   ④ AI     可选：服务商 + 密钥 + 当场测通（跳过不影响其他功能）
  *   ⑤ 安装   勾了就全自动，不再逐项确认；单项失败不牵连
  *   ⑥ 完成   就绪清单 + 值守启用询问（唯一改系统状态的一步）+ 仍需手工的项
@@ -61,7 +62,7 @@ const NODE_SIZE_HINT = 36.4 * 1024 * 1024;
 /** 拉清单的超时（requestUrl 没有 abort，用 race 兜住——不让第一屏挂在网络上） */
 const MANIFEST_TIMEOUT_MS = 12000;
 
-/** 下载项的种类（决定 ③ 屏怎么分组、缺省勾不勾） */
+/** 下载项的种类（决定 ③ 屏怎么分组、排序） */
 export type SetupKind = 'node' | 'reader' | 'bundle' | 'doc' | 'skins';
 
 /** 一个可下载项 */
@@ -238,11 +239,9 @@ export async function planSetupItems(
 }
 
 /**
- * 缺省勾选：**全部勾上**（2026-10-28 用户拍板「默认全部都下载」）。
- * 早前把皮肤和大件索引留空，理由是「提前下纯占地方」——实际用起来是「装了不等于能用」：
- * 皮肤要单点、索引要等首次进影院才拉，用户以为坏了。2026-11-02 用户再确认一次口径：
- * 引导页全下、启动链的自动更新也全补（ADR-0281），两边**不留任何按需例外**。
- * 已经就绪的项照旧不列进勾选（selectedTasks 会再滤一遍，勾中也只补真缺的）。
+ * 缺省选择：**全部未就绪项**（2026-10-28 用户拍板「默认全部都下载」；2026-11-05 起
+ * ③ 屏连勾选框都不再显示，这里保留函数只服务队列筛选与测试）。
+ * 已经就绪的项照旧不列进选择（selectedTasks 会再滤一遍）。
  */
 export function defaultSelection(items: SetupItem[]): Set<string> {
   const sel = new Set<string>();
@@ -427,7 +426,7 @@ function mountReaderRow(ctx: WizardCtx, card: HTMLElement, initialLatest: string
   const val = valEl('检查中…');
   const btn = button('bz-setup-link', '安装');
   btn.classList.add('is-hidden');
-  row.append(mark, keyEl('bz reader', '书库 · EPUB'), val, btn);
+  row.append(mark, keyEl('bz reader', '把 Obsidian 变成一个能读书的地方：多格式、AI 问答、双向链接，数据全部本地'), val, btn);
   card.appendChild(row);
 
   let latest = initialLatest;
@@ -589,7 +588,7 @@ async function stageProbe(ctx: WizardCtx, st: WizardState, ui: Ui): Promise<void
 
   // bz reader：本机状态立刻显示，最新版异步查（GitHub 主 → 码云备），不阻塞这一屏。
   // 两条通道都不通时静默——按钮照常可点，点安装时再把具体原因给人看。
-  const readerGroup = setupGroup('bz reader');
+  const readerGroup = setupGroup('Obsidian 插件');
   ui.body.appendChild(readerGroup.group);
   const readerHandle = mountReaderRow(ctx, readerGroup.card);
   if (probe?.github || probe?.gitee) {
@@ -809,18 +808,13 @@ async function stageResources(ctx: WizardCtx, st: WizardState, ui: Ui): Promise<
     if (!group.length) continue;
     const wrap = setupGroup(g.title);
     for (const it of group) {
-      const row = rowEl('bz-setup-row bz-setup-row--pick');
-      const box = document.createElement('input');
-      box.type = 'checkbox';
-      box.className = 'bz-setup-check';
-      box.checked = st.selected.has(it.id);
-      box.disabled = it.ready;
-      box.onchange = () => {
-        if (box.checked) st.selected.add(it.id);
-        else st.selected.delete(it.id);
-        refreshFoot();
-      };
-      row.append(box, keyEl(it.label, it.desc), valEl(it.ready ? '已就绪' : sizeText(it.size) || '待下载'));
+      // 2026-11-05 用户拍板：进来了就都是要下的，不再给勾选框（已就绪的标绿、自动跳过）
+      const row = rowEl('bz-setup-row');
+      row.append(
+        markEl(it.ready ? 'ok' : 'idle'),
+        keyEl(it.label, it.desc),
+        valEl(it.ready ? '已就绪' : sizeText(it.size) || '待下载'),
+      );
       if (it.ready) row.classList.add('is-ok');
       wrap.card.appendChild(row);
     }
