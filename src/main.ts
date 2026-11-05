@@ -23,6 +23,7 @@ import { scheduleSelfUpdateCheck } from './core/self-update';
 import { applySkinManifest, loadLocalSkinPack } from './core/skin-pack';
 import { refreshManifest } from './core/download-manifest';
 import { autoUpdateAssets } from './core/auto-assets';
+import { autoUpdateReaderPlugin } from './core/reader-install';
 import { setAISettingsProvider, resetAIProviderCache } from './core/ai';
 import { setSettingsProvider, setSettingsSaver, setSettingsPanelOpener } from './core/settings-provider';
 import { bindMobileViewport, unbindMobileViewport } from './core/viewport';
@@ -551,6 +552,13 @@ export default class BzPlugin extends Plugin {
           } catch (e) {
             console.warn('[bz] 自动更新在线资源失败（已静默）:', (e as Error)?.message || e);
           }
+        }
+        // bz reader 跟着同一趟自动更新走（2026-11-05 用户要求）：开关关着时内部直接返回。
+        // 它走自己的 GitHub Release 链，不依赖上面那份在线资源清单是否拉到。
+        try {
+          await autoUpdateReaderPlugin(getApp());
+        } catch (e) {
+          console.warn('[bz] 自动更新 bz reader 失败（已静默）:', (e as Error)?.message || e);
         }
       });
       // 知识盒/剪藏本引用同步无条件常驻（issue 336 / ADR-0149：knowledge.json、clipbook.json

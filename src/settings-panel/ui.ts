@@ -88,6 +88,10 @@ const schemaLoaders: Record<string, () => Promise<SettingsSchema>> = {
       desc: '各域数据文件的只读体检',
       onClick: () => void openDataCheckup(getApp()),
     });
+    // 「插件」组在「外部工具」之上（2026-11-05 用户要求）：bz reader 是另一个独立插件，
+    // 版本跟着自动更新一起走；放工具组上面，因为它决定「书库能不能看到 EPUB 书」。
+    const { pluginResourcesGroup } = await import('./plugin-resources');
+    schema.groups.push(await pluginResourcesGroup());
     // 「在线资源」组排最后（2026-09-27 用户拍板，ADR-0203；ADR-0205 回归通用声明行）：
     // 更新日志/手册/主题/分类表四行下载状态机；下载动作收口在这里与文档导航入口两处
     const { onlineResourcesGroups } = await import('./online-resources');

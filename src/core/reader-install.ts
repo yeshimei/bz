@@ -36,6 +36,8 @@
 import { requestUrl } from 'obsidian';
 import { withTimeout } from './http';
 import { compareVersions, normalizeVersion } from './version';
+import { tryGetSettings } from './settings-provider';
+import { isMobileEnv } from './mobile';
 
 /** bz-reader 的 Obsidian 插件 id（= 社区目录键 = 其 manifest.id） */
 export const READER_PLUGIN_ID = 'bz-reader';
@@ -474,4 +476,22 @@ export async function installReaderPlugin(
   stage('启用插件…');
   const enabled = await enableReaderPlugin(app);
   return { version: release.version, dir, enabled, via: assets.via };
+}
+
+/**
+ * 启动链的自动更新（2026-11-05 用户要求：「也随着自动更新和插件更新一起更新」）。
+ *
+ * 只有 `autoUpdate` 打开 + 桌面端才动手（与 core/auto-assets 同一口径：关着时一个字节都不下）。
+ * 已是最新 → 返回 false，不白下一次 0.8 MB。调用方（main.ts）负责静默失败。
+ */
+export async function autoUpdateReaderPlugin(app: unknown): Promise<boolean> {
+  if (tryGetSettings()?.autoUpdate !== true) return false;
+  if (isMobileEnv()) return false;
+  const state = await readReaderInstall(app);
+  const release = await fetchLatestReaderRelease();
+  if (state.installed && !state.broken && compareVersions(release.version, state.version) <= 0) {
+    return false;
+  }
+  await installReaderPlugin(app);
+  return true;
 }

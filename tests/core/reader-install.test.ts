@@ -10,6 +10,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { requestUrl } from 'obsidian';
 import { MockVault } from '../mock-vault';
 import {
+  autoUpdateReaderPlugin,
   fetchLatestReaderRelease,
   installReaderPlugin,
   isReaderEnabled,
@@ -20,6 +21,7 @@ import {
   READER_PLUGIN_ID,
   READER_REPO_SLUG,
 } from '../../src/core/reader-install';
+import { setSettingsProvider } from '../../src/core/settings-provider';
 
 const PLUGIN_DIR = '.obsidian/plugins/bz-reader';
 const MANIFEST = JSON.stringify({
@@ -275,5 +277,42 @@ describe('常量：两条通道的 slug 与 bz reader 自己的仓库对得上',
     expect(isReaderEnabled({ plugins: { plugins: { 'bz-reader': {} } } })).toBe(true);
     expect(isReaderEnabled({ plugins: { enabledPlugins: new Set(['other']) } })).toBe(false);
     expect(isReaderEnabled({})).toBe(false);
+  });
+});
+
+/**
+ * 启动链自动更新（2026-11-05 用户要求：「也随着自动更新一起更新」）。
+ * 开关关着时一个请求都不该发；已是最新时不该重复下载 0.8 MB。
+ */
+describe('autoUpdateReaderPlugin：跟 bz 的自动更新开关走', () => {
+  it('开关关着 → false，且一个请求都不发', async () => {
+    setSettingsProvider(() => ({ autoUpdate: false }) as any);
+    const { app } = appOf(new MockVault());
+    await expect(autoUpdateReaderPlugin(app)).resolves.toBe(false);
+    expect(requestUrl).not.toHaveBeenCalled();
+  });
+
+  it('开关开着 + 已是最新 → false，不重复下载', async () => {
+    setSettingsProvider(() => ({ autoUpdate: true }) as any);
+    const vault = new MockVault();
+    vault.files.set(`${PLUGIN_DIR}/manifest.json`, JSON.stringify({ id: 'bz-reader', version: '0.2.0' }));
+    const { app } = appOf(vault);
+    route([['/releases/latest/download/manifest.json', MANIFEST]]);
+    await expect(autoUpdateReaderPlugin(app)).resolves.toBe(false);
+    expect(vault.files.has(`${PLUGIN_DIR}/main.js`)).toBe(false);
+  });
+
+  it('开关开着 + 有新版 → 装上并返回 true', async () => {
+    setSettingsProvider(() => ({ autoUpdate: true }) as any);
+    const vault = new MockVault();
+    vault.files.set(`${PLUGIN_DIR}/manifest.json`, JSON.stringify({ id: 'bz-reader', version: '0.1.2' }));
+    const { app } = appOf(vault);
+    route([
+      ['/releases/latest/download/manifest.json', MANIFEST],
+      ['/releases/download/0.2.0/main.js', MAIN_JS],
+      ['/releases/download/0.2.0/styles.css', STYLES],
+    ]);
+    await expect(autoUpdateReaderPlugin(app)).resolves.toBe(true);
+    expect(vault.files.get(`${PLUGIN_DIR}/main.js`)).toBe(MAIN_JS);
   });
 });

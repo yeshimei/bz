@@ -185,10 +185,10 @@ describe('设置面板（settings-panel）', () => {
     // doc 条目并入「在线资源」组（不再单开「数据资产」组，见 ADR-0204）；ADR-0254：新增「功能域」组（域级开关）
     // 2026-10-28：最前追加「关于」组（版本 / 自动更新 / 反馈 / 打赏）
     // 2026-10-28：撤「外观」组（-1）；「外部工具」从「在线资源」里拆出来单列（+1）
-    // 2026-10-29：撤「功能域」组（-1，小橘默认关）
-    expect(groups.length).toBe(5);
+    // 2026-10-29：撤「功能域」组（-1，小橘默认关）；2026-11-05：「插件」组加在外部工具之上（+1）
+    expect(groups.length).toBe(6);
     expect([...groups].map((g) => g.querySelector('.bz-sp-group-name')!.textContent)).toEqual([
-      '关于', '通知', '数据存储路径', '外部工具', '在线资源',
+      '关于', '通知', '数据存储路径', '插件', '外部工具', '在线资源',
     ]);
     // 点 AI 域 → 内嵌渲染 AI 组（服务商 select 等）
     const aiItem = Array.from(popup.querySelectorAll('.bz-sp-nav-item')).find(
@@ -381,8 +381,8 @@ describe('设置面板（settings-panel）', () => {
     // （issue 473：「使用手册」组撤出 → 入口搬侧栏 footer，不再占分组卡）
     // （2026-10-26：「外部工具」组收进 AI 页 → 通用页不再有 terminal 卡）
     let icons = [...popup.querySelectorAll('.bz-sp-group-icon')].map((i) => i.getAttribute('data-icon'));
-    // 2026-10-28：最前新增「关于」组（info）
-    expect(icons).toEqual(['info', 'bell', 'folder-open', 'wrench', 'cloud-download']); // issue 480：+ 在线资源组（2026-10-29 撤功能域）
+    // 2026-10-28：最前新增「关于」组（info）；2026-11-05：「插件」组（puzzle）在外部工具之上
+    expect(icons).toEqual(['info', 'bell', 'folder-open', 'puzzle', 'wrench', 'cloud-download']); // issue 480：+ 在线资源组（2026-10-29 撤功能域）
     // AI 域分组：LLM/Embedding/JEV/语音转写/外部工具/数据源凭据
     // （issue 422 四组重排；issue 444 增语音转写；2026-10-26 外部工具组迁入，排语音转写之后）
     const aiItem = Array.from(popup.querySelectorAll('.bz-sp-nav-item')).find(

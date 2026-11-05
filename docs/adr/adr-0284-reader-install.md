@@ -57,3 +57,20 @@ bz 阅读（plugin id `bz-reader`，独立仓库 `yeshimei/bz-reader`）已是�
   有没有新版」。
 - 已知边界：码云 Release 的 tag 必须与 GitHub 一致（0.2.0，不带 `v`）；bz-reader 发版时
   必须先转正 GitHub Release，再跑 `push-gitee.mjs`，否则备份通道会先于正本对外可见。
+
+## 补记（2026-11-05）：设置面板「插件」组 + 启动自动更新
+
+用户追加要求：设置面板「通用 → 外部工具」**上面**加一组「插件」，组首「全部更新」，
+bz reader 一行显示版本号 + 两个按钮（GitHub / 安装更新）；它的更新要跟着「自动更新」
+开关走——开着时启动链顺带更新，关着时只显示「新版 x.y.z」、由用户自己点。
+
+- `src/settings-panel/plugin-resources.ts`：组 = 「全部更新」button 行 + bz reader info 行
+  （GitHub + 安装/更新两个 actions）。打开面板先按本机状态渲染，最新版在后台查
+  （`fetchLatestReaderRelease`），查到后改写行对象并补丁已渲染 DOM（同 online-resources）；
+  关着自动更新也能看到新版号。
+- `src/settings-panel/ui.ts`：插件组插在「外部工具」之前（`groups.push(插件组, 外部工具, 在线资源)`）。
+- `core/reader-install.autoUpdateReaderPlugin`：`autoUpdate` 开 + 桌面端时，启动链在
+  `auto-assets` 之后顺带检查并更新 bz reader（main.ts 调用，失败静默）；关着时一个字节都不下。
+  已是最新时不重复下载，更新后提示「重启 Obsidian 后生效」，不自动重启。
+- 手动「全部更新」/ 行内「更新」= 用户显式同意，不受 `autoUpdate` 开关限制；先现查最新版，
+  已是最新就只给一句提示，不白下一次 0.8 MB。
