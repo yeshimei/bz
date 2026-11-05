@@ -16,6 +16,7 @@ import { notify, notifySaveError } from '../core/notice';
 import { openFlowDialog } from '../core/flow-dialog';
 import { iconSpan } from '../core/ui/str';
 import { mountIcons } from '../core/ui';
+import { topifyZ } from '../core/z-order';
 import { diaryDateFromLegacyPath, diaryMetaFromEntryPath, parseDiaryEntryFile } from '../core/diary-format';
 import {
   applyDiaryTypes,
@@ -76,17 +77,26 @@ function attachDrag(root: HTMLElement, onReorder: (from: number, to: number) => 
   });
 }
 
-/** 挂在 body 上的 emoji 选择浮层（不穿设置面板皮，走组件库 --bz-* token） */
+/**
+ * 挂在 body 上的 emoji 选择浮层（不穿设置面板皮，走组件库 --bz-* token）。
+ *
+ * 层级必须走 core 的 `topifyZ` 动态发号（ADR-0067）：设置面板的遮罩/本体是 100000 起的
+ * 动态档，浮层原先写死 `z-index: 10050` 会被整块面板压住——点 emoji「看起来没反应」，
+ * 实际浮层开在面板背后。浮层创建即显示，所以这里发一次号即可。
+ */
 function openEmojiPicker(anchor: HTMLElement, onPick: (emoji: string) => void): void {
   document.querySelector('.bz-diary-type-emoji-pop')?.remove();
   const pop = document.createElement('div');
   pop.className = 'bz-diary-type-emoji-pop';
+  pop.setAttribute('role', 'dialog');
+  pop.setAttribute('aria-label', '选择分类图标');
   pop.innerHTML =
     `<div class="bz-diary-type-emoji-grid">` +
     EMOJI_CHOICES.map((e) => `<button type="button" class="bz-diary-type-emoji-cell" data-e="${e}">${e}</button>`).join('') +
     `</div>` +
     `<div class="bz-diary-type-emoji-custom"><input type="text" maxlength="8" placeholder="或粘贴一个 emoji" aria-label="自定义 emoji"><button type="button" class="bz-btn bz-btn--sm" data-ok>用这个</button></div>`;
   document.body.appendChild(pop);
+  topifyZ(pop);
 
   const rect = anchor.getBoundingClientRect();
   const width = 262;
@@ -245,7 +255,7 @@ export function mountDiaryTypeEditor(body: HTMLElement): void {
     void openFlowDialog({
       title: `删除「${t.tag}」？`,
       message,
-      className: 'bz-sp-skin bz-diary-type-dialog',
+      className: 'bz-sp-skin bz-diary-flow-dialog bz-diary-type-dialog',
       actions: [
         { label: '取消', value: 'cancel' },
         { label: '删除分类', value: 'ok', danger: true },

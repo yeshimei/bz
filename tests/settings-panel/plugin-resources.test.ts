@@ -92,7 +92,7 @@ describe('组形状', () => {
     expect(group.rows[0].type).toBe('button');
     expect((group.rows[0] as { name: string }).name).toBe('全部更新');
     expect(group.rows[1].type).toBe('info');
-    expect(rowName(el, 1)).toBe('bz Reader');
+    expect(rowName(el, 1)).toBe('bz reader');
   });
 
   it('行右侧两个按钮：GitHub + 安装', async () => {
@@ -115,13 +115,24 @@ describe('版本号与按钮文字', () => {
     expect(rowBtns(el, 1)[1].textContent).toBe('安装');
   });
 
-  it('已装 → 「已安装 0.2.0」/「更新」', async () => {
+  it('已装且已是最新 → 「已安装 0.2.0」/「已安装」（灰）', async () => {
     const vault = newVault();
     vault.files.set(`${PLUGIN_DIR}/manifest.json`, JSON.stringify({ id: 'bz-reader', version: '0.2.0' }));
     route([['/releases/latest/download/manifest.json', MANIFEST]]);
     const { el } = await renderGroup();
+    await vi.waitFor(() => expect(rowBtns(el, 1)[1].textContent).toBe('已安装'));
     expect(rowDesc(el, 1)).toBe('已安装 0.2.0');
-    expect(rowBtns(el, 1)[1].textContent).toBe('更新');
+    expect(rowBtns(el, 1)[1].disabled).toBe(true);
+  });
+
+  it('已装 + 有新版 → 「更新」（可点）', async () => {
+    const vault = newVault();
+    vault.files.set(`${PLUGIN_DIR}/manifest.json`, JSON.stringify({ id: 'bz-reader', version: '0.2.0' }));
+    const newer = JSON.stringify({ id: 'bz-reader', name: 'bz reader', version: '0.2.1' });
+    route([['/releases/latest/download/manifest.json', newer]]);
+    const { el } = await renderGroup();
+    await vi.waitFor(() => expect(rowBtns(el, 1)[1].textContent).toBe('更新'));
+    expect(rowBtns(el, 1)[1].disabled).toBe(false);
   });
 
   it('后台查到新版 → 补成「已安装 0.2.0 · 新版 0.2.1」', async () => {

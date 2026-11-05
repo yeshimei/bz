@@ -56,6 +56,8 @@ let currentRows: InfoRow[] = [];
 let currentAllRow: BtnRow | null = null;
 /** 组级 / 单行动作的忙位（只有一个插件，共用一个即可） */
 let busy = false;
+/** 当前插件是否已是最新（渲染器不认 actions 的禁用态，补丁按它设按钮灰） */
+let currentUpToDate = false;
 
 /** 版本文案（用户要的版本号就长在这句里） */
 export function pluginDescOf(state: ReaderInstallState, latest: string | null): string {
@@ -65,9 +67,22 @@ export function pluginDescOf(state: ReaderInstallState, latest: string | null): 
   return head;
 }
 
-/** 行内动作钮文字：没装 → 安装；装了 → 更新（已是最新时点它会给一句「已是最新」） */
+/** 已是最新（本机版本 ≥ 最新版，且这次核对成功过；没查到 ≠ 已最新） */
+function isUpToDate(state: ReaderInstallState): boolean {
+  return (
+    state.installed &&
+    !state.broken &&
+    latestChecked &&
+    !latestFailed &&
+    !!latestVersion &&
+    compareVersions(latestVersion, state.version) <= 0
+  );
+}
+
+/** 行内动作钮文字：没装 → 安装；已最新 → 已安装（灰）；有新版 / 未知 → 更新 */
 function actionTextOf(state: ReaderInstallState): string {
-  return state.installed && !state.broken ? '更新' : '安装';
+  if (!state.installed || state.broken) return '安装';
+  return isUpToDate(state) ? '已安装' : '更新';
 }
 
 /** 有没有待办：未装 / 半装 / 有新版。最新版未知时按「可点」处理（点下去现查） */
@@ -110,6 +125,9 @@ export async function pluginResourcesGroup(): Promise<GroupDecl> {
   currentAllRow = allRow;
   // 后台核对最新版（不阻塞面板）；失败静默，行里继续显示本机版本
   void refreshLatest();
+  // 缓存命中（刚刚查过）时把「已安装」的灰态同步到已渲染按钮上——
+  // info 行的 actions 没有 disabled 字段，只能渲染后补
+  setTimeout(() => patchRenderedGroup(), 0);
   return { name: PLUGIN_GROUP_NAME, icon: GROUP_ICON, rows: [allRow, info] };
 }
 
@@ -140,6 +158,7 @@ async function syncRows(): Promise<void> {
   info.desc = pluginDescOf(state, latestFailed ? null : latestVersion);
   const act = info.actions?.[1];
   if (act) act.text = actionTextOf(state);
+  currentUpToDate = isUpToDate(state);
   if (currentAllRow) currentAllRow.disabled = !hasWork(state);
 }
 
@@ -173,6 +192,8 @@ function patchRenderedGroup(): void {
     const updateBtn = btns[1];
     if (updateBtn && !updateBtn.classList.contains('bz-rowbtn--busy')) {
       updateBtn.textContent = info.actions?.[1]?.text || '更新';
+      // 已是最新 → 灰掉（用户 2026-11-05 要求：按钮变灰、写「已安装」）
+      updateBtn.disabled = currentUpToDate;
     }
   });
 }
@@ -222,6 +243,8 @@ async function runUpdateRow(ctx: SettingsRowContext): Promise<void> {
   patchRenderedGroup();
   const state = await readReaderInstall(getApp());
   setRowBtnState(updateBtn, 'idle', actionTextOf(state));
+  // idle 会把 disabled 复位成 false，这里按「已是最新」重新灰掉
+  if (updateBtn) updateBtn.disabled = isUpToDate(state);
 }
 
 /** 组级「全部更新」：逐个插件跑一遍（现在只有一个） */
@@ -238,8 +261,9 @@ async function runUpdateAll(ctx: SettingsRowContext): Promise<void> {
     busy = false;
   }
   await syncRows();
-  patchRenderedGroup();
   setRowBtnState(btn, 'idle', '全部更新');
+  if (btn && currentAllRow) btn.disabled = currentAllRow.disabled === true;
+  patchRenderedGroup();
 }
 
 /** 测试用：清掉模块级状态（最新版缓存 / 行引用 / 忙位） */
@@ -250,5 +274,6 @@ export function resetPluginResourcesState(): void {
   latestToken++;
   currentRows = [];
   currentAllRow = null;
+  currentUpToDate = false;
   busy = false;
 }

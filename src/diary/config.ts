@@ -7,8 +7,9 @@
  *   （movieDirectory()/bookDirectory() 实时解析，D6 修复——改影院/书架目录无需重启）。
  * - 存储格式 DIARY_ENTRY_FORMAT：entry = 一篇一个文件；day = 一天一个文件（Obsidian 日记原生）。
  * - 日记分类（2026-11 起）：**全部平级**（不再有主标签/二级标签），用户配置落 settings.diaryTypes。
- *   代码只留两份常量：`DEFAULT_DIARY_TYPES`（新装 3 个示例）与 `LEGACY_DIARY_TYPES`
- *   （**只**给老库一次性迁移用，已是拍平后的旧主/子标签，不再是任何默认值）。
+ *   代码只留两份常量：`DEFAULT_DIARY_TYPES`（唯一默认值：新装与老库升级都只写这 3 个示例）与
+ *   `LEGACY_DIARY_TYPES`（旧版 28 类拍平表，**只**用于读旧日记：旧「一天一文件」的 emoji 头行
+ *   靠它反查标签；不再是任何默认值，也不参与迁移落盘）。
  * - emoji ↔ 分类名双向映射、写弹窗分类序 getSortedTagsForAddDialog 都从当前分类表派生。
  *
  * 兼容说明：`getSubTagsOfPrimary`/`isSubTag`/`getParentPrimaryTag` 保留导出但恒空/恒否——
@@ -33,9 +34,12 @@ export interface DiaryTypeConfig {
   emoji: string;
 }
 
+/** 分类没配 emoji / 旧 type 不在当前分类表时的兜底图标（读旧日记不能出现空白签） */
+export const DEFAULT_DIARY_EMOJI = '📖';
+
 /** 默认只给 3 个示例（一个新装用户需要的全部；其余由用户自己加） */
 export const DEFAULT_DIARY_TYPES: DiaryTypeConfig[] = [
-  { tag: '日记', emoji: '📖' },
+  { tag: '日记', emoji: DEFAULT_DIARY_EMOJI },
   { tag: '随笔', emoji: '✍️' },
   { tag: '生活', emoji: '🏠' },
 ];
@@ -43,8 +47,10 @@ export const DEFAULT_DIARY_TYPES: DiaryTypeConfig[] = [
 /**
  * 旧版内置 28 类（ADR-0115 时代写死在代码里的那份）——**已拍平**：
  * 旧「旅游」下的四川/大理、旧「收藏」下的 13 个子标签都成为独立分类。
- * **只用于老库一次性迁移**：main.ts onload 发现 data.json 里没有 diaryTypes 时写进去，
- * 让升级用户不丢现有日记的分类；新装用户永远只看到 DEFAULT_DIARY_TYPES 的 3 个。
+ * **只服务读旧日记**：旧「一天一文件」的 `# emoji HH:mm` 头行没有标签名，只能靠这张表反查
+ * （见 `./legacy` 的 LEGACY_EMOJI_TO_TAG）。2026-11 收尾起老库升级**不再**把它写进设置——
+ * 默认分类只有 `DEFAULT_DIARY_TYPES` 的 3 个；旧日记里的 type 由 `getTagEmoji` 的兜底
+ * 显示，不依赖它仍在分类表里。
  */
 export const LEGACY_DIARY_TYPES: DiaryTypeConfig[] = [
   { tag: '日记', emoji: '📖' },
@@ -141,7 +147,7 @@ export function parseDiaryTypes(raw: unknown): DiaryTypeConfig[] {
     seen.add(tag);
     out.push({
       tag,
-      emoji: typeof emojiRaw === 'string' && emojiRaw.trim() ? emojiRaw.trim() : '📖',
+      emoji: typeof emojiRaw === 'string' && emojiRaw.trim() ? emojiRaw.trim() : DEFAULT_DIARY_EMOJI,
     });
   };
 
@@ -184,9 +190,13 @@ export function serializedDiaryTypes(types?: DiaryTypeConfig[]): string {
 }
 
 /**
- * 老库一次性迁移（main.ts onload 调用）：data.json 里没有 diaryTypes 时写入旧版（已拍平）分类。
- * 返回 true = 发生了迁移（调用方调度落盘）。`loaded` 为 null（真新装）不动——
- * 新库走 DEFAULT_SETTINGS.diaryTypes 的空串，即 3 个示例。
+ * 老库一次性迁移（main.ts onload 调用）：data.json 里没有 diaryTypes 时写入**默认 3 个示例**。
+ * 返回 true = 发生了迁移（调用方调度落盘）。`loaded` 为 null（真新装）不动。
+ *
+ * 2026-11 收尾（接 b8fbb1f1）用户实测反馈「一升级就冒出二十多个分类」：迁移原先写的是
+ * `LEGACY_DIARY_TYPES`（旧版 28 类拍平），老库没有 diaryTypes 键就整串灌进设置页。现在改回
+ * 3 个示例——旧日记里仍留着的 type（四川/咪咪…）由 `getTagEmoji` 兜底显示、列表编辑器不会
+ * 凭空多出条目；`LEGACY_DIARY_TYPES` 只留在读旧「一天一文件」的 emoji 反查路径上。
  */
 export function migrateDiaryTypes(loaded: unknown): boolean {
   if (!loaded || typeof loaded !== 'object') return false;
@@ -202,7 +212,7 @@ export function migrateDiaryTypes(loaded: unknown): boolean {
     'diarySkin' in rec ||
     'useFileDateTime' in rec;
   if (!hasDiaryTrace) return false;
-  rec.diaryTypes = serializedDiaryTypes(LEGACY_DIARY_TYPES);
+  rec.diaryTypes = serializedDiaryTypes(DEFAULT_DIARY_TYPES);
   return true;
 }
 
@@ -305,9 +315,14 @@ export function buildTagMaps() {
   }
 }
 
-/** 获取分类对应的 emoji；未知回退 📖 */
+/**
+ * 获取分类对应的 emoji；未知 type 回退 `DEFAULT_DIARY_EMOJI`（📖）。
+ * 旧日记的 frontmatter type / 旧块头 emoji 可能不在当前分类表（用户升级后只保留 3 个示例、
+ * 手动删过分类）——这里必须给默认图标，渲染层才能在类型签/票根/藏书票上照常显示 type 原文，
+ * 不出现空签、也不抛错。
+ */
 export function getTagEmoji(tag: string): string {
-  return tagToEmojiMap[tag] || '📖';
+  return tagToEmojiMap[tag] || DEFAULT_DIARY_EMOJI;
 }
 
 /** 层级已退役：恒返回 null（保留导出，旧调用方不会炸） */
@@ -327,7 +342,19 @@ export function getParentPrimaryTag(_subTag: string): string | null {
 
 /**
  * 写日记弹窗里的分类顺序：全部平级，按配置顺序（「加密」不进新建弹窗，ADR-0017）。
+ *
+ * `extraTags`：把「当前条目已有的 type」并进来（去重、排在配置项之后）。读旧日记/换贴纸时
+ * 旧 type（如「四川」）可能已不在分类表——不并进来就会在贴纸册里隐身，用户盖一次贴纸
+ * 保存后旧标签被静默丢掉。新建日记不传，行为与原来完全一致。
  */
-export function getSortedTagsForAddDialog(): string[] {
-  return Object.keys(PRIMARY_TAGS_CONFIG).filter((t) => t !== ENCRYPT_TAG);
+export function getSortedTagsForAddDialog(extraTags?: Iterable<string>): string[] {
+  const tags = Object.keys(PRIMARY_TAGS_CONFIG).filter((t) => t !== ENCRYPT_TAG);
+  const seen = new Set(tags);
+  for (const raw of extraTags ?? []) {
+    const tag = String(raw ?? '').trim();
+    if (!tag || tag === ENCRYPT_TAG || seen.has(tag)) continue;
+    seen.add(tag);
+    tags.push(tag);
+  }
+  return tags;
 }

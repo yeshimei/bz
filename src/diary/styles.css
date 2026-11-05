@@ -1396,6 +1396,55 @@
   color: #b23a2a;
 }
 
+/* ---- 切换存储格式确认：纸面 + 等宽样例文件名（设置页「存储」组） ----
+   壳的居中/宽度挂在 #__shared_confirm_popup__ 上，所以沿用 id + 域皮肤类起手；
+   纸面材料复用上方 .bz-diary-flow-dialog，这里只补本框的三段排版与三颗按钮。 */
+#__shared_confirm_popup__.bz-diary-fmt-dialog {
+  width: min(440px, calc(100vw - 32px));
+}
+#__shared_confirm_popup__.bz-diary-fmt-dialog h4 {
+  font-size: 17px;
+  letter-spacing: .04em;
+}
+#__shared_confirm_popup__.bz-diary-fmt-dialog .bz-diary-fmt-dialog-body {
+  width: 100%; margin: 0 0 18px; text-align: left;
+  display: flex; flex-direction: column; gap: 7px;
+  font-size: 13px; line-height: 1.7; color: #6b5f4c;
+}
+#__shared_confirm_popup__.bz-diary-fmt-dialog .bz-diary-fmt-dialog-line { display: block; }
+#__shared_confirm_popup__.bz-diary-fmt-dialog .bz-diary-fmt-dialog-file {
+  display: inline-block; margin: 0 2px; padding: 1px 7px;
+  border: 1px solid rgba(120, 92, 56, .38); border-radius: 3px;
+  background: rgba(255, 253, 245, .78); color: #43392b;
+  font-family: var(--bz-font-mono, ui-monospace, Consolas, monospace);
+  font-size: 11.5px; letter-spacing: .02em; white-space: nowrap;
+}
+#__shared_confirm_popup__.bz-diary-fmt-dialog .bz-diary-fmt-dialog-note {
+  font-size: 10.5px; color: #9a8d74;
+}
+#__shared_confirm_popup__.bz-diary-fmt-dialog .confirm-actions { gap: 8px; }
+#__shared_confirm_popup__.bz-diary-fmt-dialog #__shared_confirm_cancel__,
+#__shared_confirm_popup__.bz-diary-fmt-dialog #__shared_confirm_ok__,
+#__shared_confirm_popup__.bz-diary-fmt-dialog button.bz-flow-dialog-action {
+  flex: 1 1 auto; padding: 0 10px; font-size: 12.5px;
+  background: linear-gradient(180deg, #fbf6e8, #efe6cf);
+  border: 1px solid rgba(120, 92, 56, .4); color: #43392b;
+}
+#__shared_confirm_popup__.bz-diary-fmt-dialog button.bz-flow-dialog-action.bz-flow-dialog-cta {
+  background: linear-gradient(180deg, #b23a2a, #8d2b1d);
+  border-color: rgba(90, 25, 15, .55); color: #fdf3e2;
+}
+@media (hover: hover) {
+  #__shared_confirm_popup__.bz-diary-fmt-dialog:not(.bz-flow-dialog--danger) #__shared_confirm_cancel__:hover,
+  #__shared_confirm_popup__.bz-diary-fmt-dialog:not(.bz-flow-dialog--danger) #__shared_confirm_ok__:hover,
+  #__shared_confirm_popup__.bz-diary-fmt-dialog:not(.bz-flow-dialog--danger) button.bz-flow-dialog-action:hover {
+    background: linear-gradient(180deg, #fffaf0, #f3ead5);
+  }
+  #__shared_confirm_popup__.bz-diary-fmt-dialog button.bz-flow-dialog-action.bz-flow-dialog-cta:hover {
+    background: linear-gradient(180deg, #c04433, #9c3122);
+  }
+}
+
 /* 表单纵向骨架：日期行 + 类型标签 + chip 滚动区 + 底栏；
    壳限高 82vh 内 chip 区自滚、底栏常驻，保存钮不再随 chips 滚走 */
 .bz-diary-form {
@@ -1546,8 +1595,15 @@
 .bz-diary-fmt-sub { margin-top: -3px; font-size: 11px; color: var(--bz-text-2); }
 .bz-diary-fmt-progress { display: flex; flex-direction: column; gap: 6px; padding: 2px 0; }
 .bz-diary-fmt-progress-meta { display: flex; justify-content: space-between; font-size: 11px; color: var(--bz-text-2); }
-.bz-diary-fmt-track { height: 5px; overflow: hidden; border-radius: 99px; background: var(--bz-surface-1); }
-.bz-diary-fmt-fill { height: 100%; width: 0; border-radius: 99px; background: var(--bz-brand); transition: width 0.12s linear; }
+/* 原生 <progress>：进度值走元素 value（语义属性），不再写内联 width */
+.bz-diary-fmt-track {
+  appearance: none; -webkit-appearance: none;
+  display: block; width: 100%; height: 5px; overflow: hidden;
+  border: 0; border-radius: 99px; background: var(--bz-surface-1);
+}
+.bz-diary-fmt-track::-webkit-progress-bar { border-radius: 99px; background: var(--bz-surface-1); }
+.bz-diary-fmt-track::-webkit-progress-value { border-radius: 99px; background: var(--bz-brand); transition: width 0.12s linear; }
+.bz-diary-fmt-track::-moz-progress-bar { border-radius: 99px; background: var(--bz-brand); }
 
 /* ---------- 分类：平级清单 ---------- */
 .bz-diary-type { padding: 0 0 2px; }
@@ -1611,9 +1667,11 @@
 }
 .bz-diary-type-empty { font-size: 11.5px; color: var(--bz-text-3); }
 
-/* ---------- emoji 选择浮层（挂 body，走全局组件库 token） ---------- */
+/* ---------- emoji 选择浮层（挂 body，走全局组件库 token） ----------
+   层级不写静态档：设置面板遮罩/本体是 core topifyZ 发的 100000+ 动态档，
+   静态 10050 会整块压在面板背后（点了像没反应）。浮层创建后由 settings-types 调 topifyZ。 */
 .bz-diary-type-emoji-pop {
-  position: fixed; z-index: 10050; width: 262px; padding: 8px;
+  position: fixed; width: 262px; padding: 8px;
   border: 1px solid var(--bz-border); border-radius: 10px;
   background: var(--bz-surface-3);
   box-shadow: var(--bz-pop-shadow, 0 12px 34px rgba(0, 0, 0, 0.24));
