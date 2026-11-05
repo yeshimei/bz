@@ -17764,6 +17764,10 @@ canvas { display: block; }
   opacity: 0.55;
   cursor: default;
   background: var(--sp-panel);
+  /* 强调色按钮的 on-color 是白字：禁用后背景压成面板浅色，白字会直接消失
+   *（2026-11-05 插件组「已安装」几乎看不见）。禁用态统一用弱墨色，保证读得出来。 */
+  color: var(--sp-ink-3);
+  border-color: var(--sp-line);
 }
 
 /* custom 插槽内原生 Setting 的按钮（AI「获取模型名」等）并入同一观感 */
