@@ -462,10 +462,10 @@ describe('parseBookFile（书库 frontmatter 解析）', () => {
     return { ...app0.vault.file(path), basename: basename ?? path.split('/').pop()!.replace(/\.md$/, '') };
   }
 
-  it('completionDate 优先于 readingDate', async () => {
+  it('completionDate 定日期，并把署名/页数/时长收进 extra', async () => {
     const app = makeApp({
       '书库/来自新世界.md':
-        '---\ntitle: 来自新世界\ncompletionDate: 2024-06-10\nreadingDate: 2024-05-01\nbookReview: 神作\ncover: CONFIG/BOOK/来自新世界/cover.jpeg\n---\n',
+        '---\ntitle: 来自新世界\ncompletionDate: 2024-06-10\nreadingDate: 2024-05-01\nbookReview: 神作\ncover: CONFIG/BOOK/来自新世界/cover.jpeg\nauthor: 贵志祐介\npublisher: 上海译文出版社\npages: 352\nreadingTimeFormat: 9h13m\n---\n',
     });
     const file = bookFile('书库/来自新世界.md');
     const entry = await parseBookFile(file, app);
@@ -477,17 +477,31 @@ describe('parseBookFile（书库 frontmatter 解析）', () => {
     expect(entry!.id).toContain('book-');
     // 时间（A1）：不再取文件创建时间，回落固定 00:00（对端书库域补结构化时间前的过渡口径）
     expect(entry!.time).toBe('00:00');
+    // 藏书票署名行要的余项（ADR-0230 加性可选；缺项直接不写）
+    expect(entry!.extra).toMatchObject({
+      title: '来自新世界',
+      author: '贵志祐介',
+      publisher: '上海译文出版社',
+      pages: '352',
+      readingTime: '9h13m',
+      cover: 'CONFIG/BOOK/来自新世界/cover.jpeg',
+    });
   });
 
-  it('无 completionDate 时用 readingDate', async () => {
+  it('只有 readingDate（在读/弃读）→ 返回 null 跳过（用户 2026-11-05：「读完并且有书评」）', async () => {
     const app = makeApp({
       '书库/人类简史.md': '---\ntitle: 人类简史\nreadingDate: 2024-03-15\nbookReview: 好看\n---\n',
     });
+    expect(await parseBookFile(bookFile('书库/人类简史.md'), app)).toBeNull();
+  });
+
+  it('无 cover 时 content 只有书名与书评', async () => {
+    const app = makeApp({
+      '书库/人类简史.md': '---\ntitle: 人类简史\ncompletionDate: 2024-03-15\nbookReview: 好看\n---\n',
+    });
     const entry = await parseBookFile(bookFile('书库/人类简史.md'), app);
-    expect(entry).not.toBeNull();
-    expect(entry!.date).toBe('2024-03-15');
-    // 无 cover：content 不含 ![[
     expect(entry!.content).toBe('**《人类简史》**\n\n好看');
+    expect(entry!.extra).toMatchObject({ title: '人类简史', review: '好看' });
   });
 
   it('bookReview 缺失或空白 → 返回 null 跳过（用户要求：书只获取有书评的）', async () => {

@@ -57,10 +57,16 @@ export interface DiaryEntryExtra {
   meta?: Record<string, string>;
   /** 书：封面内链引用名——同上，纸面渲染跳过该媒体段，改贴藏书票封面 */
   cover?: string;
-  /** 书：作者（藏书票 `ex-author` 前段） */
+  /** 书：作者（藏书票署名行首段） */
   author?: string;
-  /** 书：分类（藏书票 `ex-author` 后段，与作者以 ` · ` 相接） */
+  /** 书：分类（书库 frontmatter 原值；藏书票不直接上纸，留给类型签与检索） */
   category?: string;
+  /** 书：出版社（藏书票署名行中段） */
+  publisher?: string;
+  /** 书：页数（frontmatter 原值是数字，这里统一存字符串） */
+  pages?: string;
+  /** 书：阅读时长原文（如 `9h13m31s`；当前不上纸面，留作后续） */
+  readingTime?: string;
 }
 
 /**
