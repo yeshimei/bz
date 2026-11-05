@@ -35,6 +35,16 @@ const GROUP_ICON = 'puzzle';
 
 type BtnRow = Extract<SettingsRow, { type: 'button' }>;
 
+/**
+ * GitHub 标记（feather 那只描边猫，与「关于」组 GitHub 行的行图标同一支形状——
+ * 那边 12px 画在淡色方块里，这里 13px 直接摆在字前面，看着才是同一个入口）。
+ * 吃 currentColor：钮的悬停/禁用/明暗主题由 button 自己管，图标不另立颜色。
+ */
+const GITHUB_ICON =
+  '<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" ' +
+  'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+  '<path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.9a3.4 3.4 0 00-.9-2.6c3.1-.4 6.4-1.5 6.4-7A5.4 5.4 0 0020 4.8 5.1 5.1 0 0019.9 1S18.7.7 16 2.5a13.4 13.4 0 00-7 0C6.3.7 5.1 1 5.1 1A5.1 5.1 0 005 4.8 5.4 5.4 0 003.5 8.5c0 5.4 3.3 6.6 6.4 7a3.4 3.4 0 00-.9 2.6V22"/></svg>';
+
 /** 插件目录：现在只有 bz reader；以后加插件在这里加一行（读状态/安装按 id 分派） */
 export interface PluginEntry {
   id: string;
@@ -56,8 +66,6 @@ let currentRows: InfoRow[] = [];
 let currentAllRow: BtnRow | null = null;
 /** 组级 / 单行动作的忙位（只有一个插件，共用一个即可） */
 let busy = false;
-/** 当前插件是否已是最新（渲染器不认 actions 的禁用态，补丁按它设按钮灰） */
-let currentUpToDate = false;
 
 /** 版本文案（用户要的版本号就长在这句里） */
 export function pluginDescOf(state: ReaderInstallState, latest: string | null): string {
@@ -68,12 +76,13 @@ export function pluginDescOf(state: ReaderInstallState, latest: string | null): 
 }
 
 /**
- * 已装且**没有确认的新版** → 按钮写「已安装」并灰掉。
- * 2026-11-05 用户要求：「已安装」就该是灰的、不加粗、点不动——不纠结这次有没有查到最新版；
- * 真想知道有没有新版，点组首「全部更新」（它会在未知时现查）。
+ * 已装且**没有确认的新版** → 行里连「安装」钮都不留。
+ * 2026-11-05 用户要求（原话）：已安装就隐藏安装按钮、只显示 GitHub，有更新才显示更新按钮。
+ * 此前那枚灰的「已安装」钮既点不动、又占着位置，等于把「没有动作」画成一个动作。
  */
-function isUpToDate(state: ReaderInstallState): boolean {
-  return state.installed && !state.broken && !hasKnownUpdate(state);
+function actionVisible(state: ReaderInstallState): boolean {
+  if (!state.installed || state.broken) return true;
+  return hasKnownUpdate(state);
 }
 
 /** 已知有新版（查询成功、且最新版比本机新） */
@@ -89,16 +98,16 @@ function hasKnownUpdate(state: ReaderInstallState): boolean {
 }
 
 /**
- * 行内动作钮文字。
+ * 行内动作钮文字（只在钮露出来时有意义）。
  *
  * 2026-11-05 用户报障：打开面板先看到「更新」，点一下才变「已安装」灰——因为旧逻辑在
- * 「最新版还没查到」时写「更新」，等于替用户猜「有新版」。现在反过来：本地**已装**就
- * 默认「已安装」，只有**确认**有新版才写「更新」；查询中/查失败都保持「已安装」，
- * 点它时现查（查不到会给人话）。
+ * 「最新版还没查到」时写「更新」，等于替用户猜「有新版」。现在的口径更硬：**只有确认**
+ * 有新版，这枚钮才露出来写「更新」；最新版未知/查询失败/已是最新，钮根本不在
+ * （见 actionVisible）——不拿文案去表达「什么都不用做」。
  */
 function actionTextOf(state: ReaderInstallState): string {
   if (!state.installed || state.broken) return '安装';
-  return hasKnownUpdate(state) ? '更新' : '已安装';
+  return '更新';
 }
 
 /** 有没有待办：未装 / 半装 / 有新版。最新版未知时按「可点」处理（点下去现查） */
@@ -123,9 +132,15 @@ export async function pluginResourcesGroup(): Promise<GroupDecl> {
     // 右列已有两个按钮，再挂一枚同名徽标只会把按钮挤窄（与关于组「版本」行同口径）
     hideBadge: true,
     desc: pluginDescOf(state, latestFailed ? null : latestVersion),
+    // 动作恒占两个位（补丁按位置对位），第二个按状态显隐：已装且没有新版 → 收起
     actions: [
-      { text: 'GitHub', onClick: () => openExternalUrl(app, entry.repoUrl) },
-      { text: actionTextOf(state), cta: true, onClick: (_value, ctx) => void runUpdateRow(ctx) },
+      { text: 'GitHub', iconHtml: GITHUB_ICON, onClick: () => openExternalUrl(app, entry.repoUrl) },
+      {
+        text: actionTextOf(state),
+        cta: true,
+        hidden: !actionVisible(state),
+        onClick: (_value, ctx) => void runUpdateRow(ctx),
+      },
     ],
   };
   const allRow: BtnRow = {
@@ -144,8 +159,8 @@ export async function pluginResourcesGroup(): Promise<GroupDecl> {
   void refreshLatest().catch((e) => {
     console.warn('[bz] 插件组刷新失败（已静默）:', (e as Error)?.message || e);
   });
-  // 缓存命中（刚刚查过）时把「已安装」的灰态同步到已渲染按钮上——
-  // info 行的 actions 没有 disabled 字段，只能渲染后补
+  // 缓存命中（刚刚查过）时把「收起 / 露出」同步到已渲染按钮上——
+  // info 行的 actions 没有 disabled 字段，显隐也只能渲染后补
   setTimeout(() => patchRenderedGroup(), 0);
   return { name: PLUGIN_GROUP_NAME, icon: GROUP_ICON, rows: [allRow, info] };
 }
@@ -181,8 +196,10 @@ async function syncRows(): Promise<void> {
   const info = currentRows[0];
   info.desc = pluginDescOf(state, latestFailed ? null : latestVersion);
   const act = info.actions?.[1];
-  if (act) act.text = actionTextOf(state);
-  currentUpToDate = isUpToDate(state);
+  if (act) {
+    act.text = actionTextOf(state);
+    act.hidden = !actionVisible(state);
+  }
   if (currentAllRow) currentAllRow.disabled = !hasWork(state);
 }
 
@@ -216,8 +233,8 @@ function patchRenderedGroup(): void {
     const updateBtn = btns[1];
     if (updateBtn && !updateBtn.classList.contains('bz-rowbtn--busy')) {
       updateBtn.textContent = info.actions?.[1]?.text || '更新';
-      // 已是最新 → 灰掉（用户 2026-11-05 要求：按钮变灰、写「已安装」）
-      updateBtn.disabled = currentUpToDate;
+      // 已装且无新版（或最新版没查到）→ 连钮都不留，行里只剩 GitHub；有新版才露出来
+      updateBtn.style.display = info.actions?.[1]?.hidden ? 'none' : '';
     }
   });
 }
@@ -267,8 +284,8 @@ async function runUpdateRow(ctx: SettingsRowContext): Promise<void> {
   patchRenderedGroup();
   const state = await readReaderInstall(getApp());
   setRowBtnState(updateBtn, 'idle', actionTextOf(state));
-  // idle 会把 disabled 复位成 false，这里按「已是最新」重新灰掉
-  if (updateBtn) updateBtn.disabled = isUpToDate(state);
+  // idle 会把 disabled 复位成 false，这里按状态定显隐：装完就该收起（不再留一枚灰钮）
+  if (updateBtn) updateBtn.style.display = actionVisible(state) ? '' : 'none';
 }
 
 /** 组级「全部更新」：逐个插件跑一遍（现在只有一个） */
@@ -298,6 +315,5 @@ export function resetPluginResourcesState(): void {
   latestToken++;
   currentRows = [];
   currentAllRow = null;
-  currentUpToDate = false;
   busy = false;
 }

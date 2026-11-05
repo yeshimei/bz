@@ -303,14 +303,15 @@ function mountTextActions(
   ctrlEl: HTMLElement,
   input: HTMLInputElement | HTMLTextAreaElement,
   acc: { read: () => unknown },
-  actions: Array<{ text: string; cta?: boolean; stateful?: boolean; onClick: (value: string | undefined, ctx: SettingsRowContext) => void | Promise<void> }> | undefined,
+  actions: Array<{ text: string; cta?: boolean; stateful?: boolean; iconHtml?: string; hidden?: boolean; onClick: (value: string | undefined, ctx: SettingsRowContext) => void | Promise<void> }> | undefined,
   ctx: SettingsRowContext,
   refresh: () => void
 ): void {
   for (const a of actions ?? []) {
     const holder = document.createElement('div');
-    holder.innerHTML = R.rowBtnHtml(a.text, a.cta);
+    holder.innerHTML = R.rowBtnHtml(a.text, a.cta, a.iconHtml);
     const btn = holder.firstElementChild as HTMLElement;
+    if (a.hidden) btn.style.display = 'none';
     btn.addEventListener('click', () => {
       void (async () => {
         try {
@@ -749,8 +750,9 @@ function renderRow(
       // 行内附加按钮（滑条右侧，如「试听」）
       for (const a of row.actions ?? []) {
         const holder = document.createElement('div');
-        holder.innerHTML = R.rowBtnHtml(a.text, a.cta);
+        holder.innerHTML = R.rowBtnHtml(a.text, a.cta, a.iconHtml);
         const btn = holder.firstElementChild as HTMLElement;
+        if (a.hidden) btn.style.display = 'none';
         btn.addEventListener('click', () => void a.onClick(undefined, ctx));
         ctrlEl.appendChild(btn);
       }
@@ -814,8 +816,11 @@ function renderRow(
       if (!row.hideBadge) ctrlEl.innerHTML = R.badgeHtml(row.name);
       for (const a of row.actions ?? []) {
         const holder = document.createElement('div');
-        holder.innerHTML = R.rowBtnHtml(a.text, a.cta);
+        holder.innerHTML = R.rowBtnHtml(a.text, a.cta, a.iconHtml);
         const btn = holder.firstElementChild as HTMLElement;
+        // hidden = 状态驱动的显隐（如「插件」组的安装钮：已装就收起）。留在 DOM 里而非不渲染，
+        // 是为了让 DOM 补丁在有新版时还能把同一枚钮露出来（补丁按位置对位）。
+        if (a.hidden) btn.style.display = 'none';
         // stateful 钮（与 text 行同口径）：点击即转圈、resolve 绿✓、reject 红✕。
         // 早前 info 行**没有**这段——「检查并更新」点下去毫无反应（2026-10-28 用户实测报障）：
         // 网络慢时几十秒里既无转圈也无提示，用户只能以为按钮坏了。

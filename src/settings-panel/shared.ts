@@ -90,9 +90,11 @@ export function sliderHtml(min: number | undefined, max: number | undefined, ste
 
 
 /** 行操作按钮（cta → accent 实底）——原型 button 分支。
- *  UI-4：~27px 行内钮挂触控热区修饰（--lg -8px 外扩，触屏档生效，桌面零影响）。 */
-export function rowBtnHtml(label: string, cta?: boolean): string {
-  return `<button type="button" class="bz-sp-btn${cta ? ' bz-sp-btn--primary' : ''} bz-touch-target--lg">${esc(label)}</button>`;
+ *  UI-4：~27px 行内钮挂触控热区修饰（--lg -8px 外扩，触屏档生效，桌面零影响）。
+ *  iconHtml = 钮前缀图标（**调用方给的可信纯串**，如品牌 SVG；本层不转义，只负责把它摆在
+ *  文案前面——.bz-sp-btn 是 inline-flex + gap，图标与字自己排好）。 */
+export function rowBtnHtml(label: string, cta?: boolean, iconHtml?: string): string {
+  return `<button type="button" class="bz-sp-btn${cta ? ' bz-sp-btn--primary' : ''} bz-touch-target--lg">${iconHtml ?? ''}${esc(label)}</button>`;
 }
 
 /** 通用列表行 markup/行为已收归组件库（core/ui setlist.ts，uiSetlist）——本文件不再持有实现，

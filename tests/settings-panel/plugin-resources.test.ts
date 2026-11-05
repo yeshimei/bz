@@ -2,7 +2,8 @@
 /**
  * 「插件」组（settings-panel/plugin-resources.ts）——2026-11-05 用户要求：
  * - 组在「外部工具」上面：组首「全部更新」+ bz reader 一行；
- * - 行右侧两个按钮：GitHub（跳仓库）+ 安装/更新；
+ * - 行右侧 GitHub（带图标，跳仓库）+ 安装/更新；
+ * - **已装就只剩 GitHub，不摆一枚灰的「已安装」**；只有确认有新版才露「更新」；
  * - 行里显示版本号，后台查到最新版后补成「已安装 x · 新版 y」；
  * - 关掉自动更新只是不自动装，版本号照旧显示（点「更新」才装）。
  */
@@ -80,6 +81,9 @@ const rowDesc = (el: HTMLElement, i: number) =>
   rows(el)[i]?.querySelector('.bz-sp-set-desc')?.textContent ?? '';
 const rowBtns = (el: HTMLElement, i: number): HTMLButtonElement[] =>
   Array.from(rows(el)[i]?.querySelectorAll<HTMLButtonElement>('.bz-sp-btn') ?? []);
+/** 露在行里的按钮（被状态收起的按钮仍在 DOM 里，只是 display:none） */
+const shownBtns = (el: HTMLElement, i: number): HTMLButtonElement[] =>
+  rowBtns(el, i).filter((b) => b.style.display !== 'none');
 
 describe('组形状', () => {
   it('组名「插件」、图标 puzzle；组首「全部更新」，下面 bz reader 一行', async () => {
@@ -95,14 +99,20 @@ describe('组形状', () => {
     expect(rowName(el, 1)).toBe('bz reader');
   });
 
-  it('行右侧两个按钮：GitHub + 安装', async () => {
+  it('未安装 → 行右侧两个按钮：GitHub（带图标）+ 安装', async () => {
     newVault();
     route([['/releases/latest/download/manifest.json', MANIFEST]]);
     const { el } = await renderGroup();
     const btns = rowBtns(el, 1);
     expect(btns).toHaveLength(2);
     expect(btns[0].textContent).toBe('GitHub');
+    // 图标取「关于」组那只 GitHub（feather 描边标记）：字前面立一枚，认得出来是仓库入口
+    const svg = btns[0].querySelector('svg');
+    expect(svg).toBeTruthy();
+    expect(svg?.getAttribute('aria-hidden')).toBe('true');
+    expect(svg?.querySelector('path')?.getAttribute('d')).toMatch(/^M9 19c-5 1\.5/);
     expect(btns[1].textContent).toBe('安装');
+    expect(shownBtns(el, 1).map((b) => b.textContent)).toEqual(['GitHub', '安装']);
   });
 });
 
@@ -112,38 +122,39 @@ describe('版本号与按钮文字', () => {
     route([['/releases/latest/download/manifest.json', MANIFEST]]);
     const { el } = await renderGroup();
     expect(rowDesc(el, 1)).toBe('未安装');
-    expect(rowBtns(el, 1)[1].textContent).toBe('安装');
+    expect(shownBtns(el, 1).map((b) => b.textContent)).toEqual(['GitHub', '安装']);
   });
 
-  it('已装且已是最新 → 「已安装 0.2.0」/「已安装」（查到后变灰）', async () => {
+  it('已装且已是最新 → 只留 GitHub，安装钮不露（不摆灰钮）', async () => {
     const vault = newVault();
     vault.files.set(`${PLUGIN_DIR}/manifest.json`, JSON.stringify({ id: 'bz-reader', version: '0.2.0' }));
     route([['/releases/latest/download/manifest.json', MANIFEST]]);
     const { el } = await renderGroup();
-    // 查到「已是最新」之前也不写「更新」：本地已装就默认「已安装」（2026-11-05 用户报障）
-    expect(rowBtns(el, 1)[1].textContent).toBe('已安装');
-    await vi.waitFor(() => expect(rowBtns(el, 1)[1].disabled).toBe(true));
-    expect(rowDesc(el, 1)).toBe('已安装 0.2.0');
+    // 打开面板那一刻就已经是「已装」——不等联网核对，安装钮就不该出现（否则先闪一下再收起）
+    expect(shownBtns(el, 1).map((b) => b.textContent)).toEqual(['GitHub']);
+    await vi.waitFor(() => expect(rowDesc(el, 1)).toBe('已安装 0.2.0'));
+    expect(shownBtns(el, 1).map((b) => b.textContent)).toEqual(['GitHub']);
   });
 
-  it('最新版查不到 → 「已安装」也是灰的（要查新版点「全部更新」）', async () => {
+  it('最新版查不到（网络坏）→ 同样只留 GitHub，不摆灰钮', async () => {
     const vault = newVault();
     vault.files.set(`${PLUGIN_DIR}/manifest.json`, JSON.stringify({ id: 'bz-reader', version: '0.2.0' }));
     route([['github.com', new Error('ENOTFOUND')], ['gitee.com', new Error('ENOTFOUND')]]);
     const { el } = await renderGroup();
     await vi.waitFor(() => expect(rowDesc(el, 1)).toBe('已安装 0.2.0'));
-    expect(rowBtns(el, 1)[1].textContent).toBe('已安装');
-    expect(rowBtns(el, 1)[1].disabled).toBe(true);
+    expect(shownBtns(el, 1).map((b) => b.textContent)).toEqual(['GitHub']);
   });
 
-  it('已装 + 有新版 → 「更新」（可点）', async () => {
+  it('已装 + 有新版 → 「更新」露出来（可点）', async () => {
     const vault = newVault();
     vault.files.set(`${PLUGIN_DIR}/manifest.json`, JSON.stringify({ id: 'bz-reader', version: '0.2.0' }));
     const newer = JSON.stringify({ id: 'bz-reader', name: 'bz reader', version: '0.2.1' });
     route([['/releases/latest/download/manifest.json', newer]]);
     const { el } = await renderGroup();
     await vi.waitFor(() => expect(rowBtns(el, 1)[1].textContent).toBe('更新'));
-    expect(rowBtns(el, 1)[1].disabled).toBe(false);
+    const shown = shownBtns(el, 1);
+    expect(shown.map((b) => b.textContent)).toEqual(['GitHub', '更新']);
+    expect(shown[1].disabled).toBe(false);
   });
 
   it('后台查到新版 → 补成「已安装 0.2.0 · 新版 0.2.1」', async () => {
@@ -175,7 +186,7 @@ describe('版本号与按钮文字', () => {
 });
 
 describe('点「安装」真的装', () => {
-  it('未安装 → 点安装：下载三件套、写盘、刷新成已安装', async () => {
+  it('未安装 → 点安装：下载三件套、写盘、装完收起安装钮', async () => {
     const vault = newVault();
     route([
       ['/releases/latest/download/manifest.json', MANIFEST],
@@ -186,6 +197,8 @@ describe('点「安装」真的装', () => {
     rowBtns(el, 1)[1].click();
     await vi.waitFor(() => expect(vault.files.get(`${PLUGIN_DIR}/main.js`)).toBe(MAIN_JS));
     await vi.waitFor(() => expect(rowDesc(el, 1)).toBe('已安装 0.2.0'));
+    // 装完就没什么可点的了：行里只剩 GitHub
+    await vi.waitFor(() => expect(shownBtns(el, 1).map((b) => b.textContent)).toEqual(['GitHub']));
     // 装完有一条通知（文案随是否首次安装/能否自动启用而不同，这里只钉「有反馈」）
     expect(getNoticeMessages().length).toBeGreaterThan(0);
   });

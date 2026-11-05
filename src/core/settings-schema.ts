@@ -118,6 +118,13 @@ export interface RowAction {
   text: string;
   /** 强调色按钮 */
   cta?: boolean;
+  /** 钮前缀图标（**可信的纯 SVG 串**，如品牌标记；与文案同排、吃 currentColor）。
+   *  只有自绘面板消费它——Obsidian 原生 Setting 钮不吃 HTML，那边忽略本字段。 */
+  iconHtml?: string;
+  /** 本次渲染不显示（状态驱动的显隐：装完就收起「安装」钮，不留一枚灰的占位）。
+   *  自绘面板渲染成 display:none（仍留在 DOM 里，DOM 补丁可按状态再露出来）；
+   *  原生渲染器直接跳过。 */
+  hidden?: boolean;
   /** 状态反馈钮（issue 434，测试类按钮专用）：点击即转圈，resolve→绿✓、reject→红✕，
    *  短暂停留后复原；约定不弹通知——结果长在按钮上（core/settings-btn-state 单源）。 */
   stateful?: boolean;
@@ -767,6 +774,7 @@ export function renderSettingsInto(container: HTMLElement, schema: SettingsSchem
     const actions = (row as TextRow | TextAreaRow | NumberRow | SecretRow).actions;
     if (actions) {
       for (const a of actions) {
+        if (a.hidden) continue;
         setting.addButton((b) => {
           if (a.cta) b.setCta();
           b.setButtonText(a.text).onClick(() => {
@@ -1000,6 +1008,7 @@ export function renderSettingsInto(container: HTMLElement, schema: SettingsSchem
         });
         // 行内附加按钮（滑条右侧，如「试听」）
         for (const a of row.actions ?? []) {
+          if (a.hidden) continue;
           setting.addButton((b) => {
             if (a.cta) b.setCta();
             b.setButtonText(a.text).onClick(() => void a.onClick(undefined, ctx));
@@ -1021,6 +1030,7 @@ export function renderSettingsInto(container: HTMLElement, schema: SettingsSchem
         // 纯展示：名称 + 描述（actions 在场时附操作按钮）
         const setting = newRowSetting(body, row);
         for (const a of row.actions ?? []) {
+          if (a.hidden) continue; // 状态驱动的显隐在原生面板里同样是「不渲染」
           setting.addButton((b) => {
             if (a.cta) b.setCta();
             // stateful 钮（与 text 行同口径）：点击转圈、resolve 绿✓、reject 红✕。
