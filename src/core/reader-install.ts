@@ -41,8 +41,8 @@ import { isMobileEnv } from './mobile';
 
 /** bz-reader 的 Obsidian 插件 id（= 社区目录键 = 其 manifest.id） */
 export const READER_PLUGIN_ID = 'bz-reader';
-/** 展示名（社区目录里显示的名字，与 id 不同） */
-export const READER_PLUGIN_NAME = 'bz Reader';
+/** 展示名（引导页 / 设置面板统一小写，与命令和插件目录同名） */
+export const READER_PLUGIN_NAME = 'bz reader';
 /** 源码仓库（同作者另一个仓库；与 bz 的 REPO_SLUG 不是同一个） */
 export const READER_REPO_SLUG = 'yeshimei/bz-reader';
 /** 码云镜像（备用通道；scripts/push-gitee.mjs 往这里发同 tag 的 Release） */

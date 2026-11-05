@@ -579,9 +579,10 @@ describe('无清单时外部工具不消失（2026-10-28 断网报障）', () =>
     try {
       const el = await toolGroup();
       // 第 0 行是「全部更新」（无清单 → 等待检查更新，禁用），工具行自第 1 行起
-      expect(rowBtn(el, 1).textContent).toBe('已下载');
+      // 2026-11-05 用户要求：工具包的就绪文案是「已安装」，文档/皮肤才说「已下载」
+      expect(rowBtn(el, 1).textContent).toBe('已安装');
       expect(rowBtn(el, 1).disabled).toBe(true);
-      expect(rowDesc(el, 1)).toContain('已下载');
+      expect(rowDesc(el, 1)).toContain('已安装');
       // 另外两个没下载 → 仍是「下载」禁用
       expect(rowBtn(el, 2).textContent).toBe('下载');
     } finally {

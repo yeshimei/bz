@@ -286,11 +286,16 @@ async function computeRowStates(app: unknown): Promise<{ rows: RowState[]; manif
   return { rows, manifest };
 }
 
+/** 工具包说「已安装」，文档 / 皮肤说「已下载」（2026-11-05 用户要求：工具是装进插件目录的程序） */
+function readyWord(id: string): string {
+  return toolIds.has(id) ? '已安装' : '已下载';
+}
+
 /** 行状态 → 描述文案（设置项文案规范：一句自然句，无符号花样；就绪态捎带规模与体积） */
 function rowDesc(st: RowState): string {
   const size = st.size !== null ? sizeText(st.size) : '';
   // 本地兜底行：没有清单就没有下载地址，能说的只有「装没装」与「为什么现在下不了」
-  if (st.local === 'ready') return '已下载，可以正常使用（清单没拉到，暂时无法检查更新）';
+  if (st.local === 'ready') return `${readyWord(st.id)}，可以正常使用（清单没拉到，暂时无法检查更新）`;
   if (st.local === 'missing') return '尚未下载。资源清单没拉到（网络不可用），联网后可下载';
   if (st.skin) {
     const { ready, missing, updated } = st.skin;
@@ -310,7 +315,7 @@ function rowDesc(st: RowState): string {
 /** 行状态 → 按钮文案与禁用态（更新优先于下载；两者并存的差额在描述里说清） */
 function rowButton(st: RowState): { text: string; disabled: boolean } {
   // 本地兜底行恒禁用：没有清单就没有下载地址与 sha256，点下去只能转到 timeout
-  if (st.local) return { text: st.local === 'ready' ? '已下载' : '下载', disabled: true };
+  if (st.local) return { text: st.local === 'ready' ? readyWord(st.id) : '下载', disabled: true };
   if (st.skin) {
     const { missing, updated } = st.skin;
     if (updated > 0) return { text: `更新 ${updated}`, disabled: false };
@@ -319,7 +324,7 @@ function rowButton(st: RowState): { text: string; disabled: boolean } {
   }
   if (st.doc === 'missing') return { text: '下载', disabled: false };
   if (st.doc === 'updated') return { text: '更新', disabled: false };
-  if (st.doc === 'ready') return { text: '已下载', disabled: true };
+  if (st.doc === 'ready') return { text: readyWord(st.id), disabled: true };
   return { text: '下载', disabled: true };
 }
 
