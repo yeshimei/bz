@@ -12,6 +12,8 @@ import { notify } from '../core/notice';
 import type { NoticeHandle } from '../core/notice';
 import { getAIProvider, type AIService } from '../core/ai';
 import { tryGetSettings } from '../core/settings-provider';
+import { clipDir } from '../clipbook/save';
+import { SUMMARY_CARD_KEY, summaryCardText, upsertSummaryCard } from '../clipbook/summary-card';
 
 /** 通知去重键自增序号：同一次尝试内 progress→结果 原地合并；不同文件/重试 各弹各（ticket 1） */
 let attemptSeq = 0;
@@ -192,6 +194,23 @@ function retryViaQueue(app: any, ai: AIService, file: any, force: boolean): void
     .catch(() => { /* 队列入口不可用（卸载中）时放弃重试 */ });
 }
 
+/**
+ * 摘要卡落点（ADR-0290）：摘要是真生成出来的，才往剪藏笔记正文顶部放一张原生 callout。
+ * 三个前置条件缺一不写——开关关掉（设置 · 剪藏本 · 自动摘要组）、笔记不在剪藏目录内、
+ * 摘要为空（AI 未配置或失败的分支在 processFile 更前面已 return，走到这里的空摘要只能是
+ * 模型没给内容）。upsert 顺带清掉旧版写进正文的 dataviewjs 块：存量笔记重新生成一次摘要
+ * 即原地升级成原生卡，不必单独迁移。
+ */
+function bodyWithSummaryCard(file: any, settings: any, fm: Record<string, any>, body: string): string {
+  if (settings?.[SUMMARY_CARD_KEY] === false) return body;
+  const dir = clipDir();
+  const path = String(file?.path || '');
+  if (!dir || !path.startsWith(dir + '/')) return body;
+  const card = summaryCardText({ title: file?.basename, summary: fm.summary, tags: fm.tags });
+  if (!card) return body;
+  return upsertSummaryCard(body, card);
+}
+
 /** 处理单个文件：缺什么补什么（title/summary/tags），字段齐全跳过；返回结构化结果（A5）。
  *  ticket 124（Q8 详设）：摘要长度/标签开关数量/时机由设置驱动。
  *  enh 包 1：force 档跳过缺失检测直接重建，且只重建 summary/tags——title 不进目标
@@ -277,7 +296,8 @@ export async function processFile(app: any, ai: AIService, file: any, opts: Proc
     }
 
     // 重建时原样拼回未识别原文行 + 非管辖键原文行（审计修复 + A1），防外来剪藏 frontmatter 重建丢行/类型漂移
-    const newContent = buildFrontmatter(mergedFm, latestParsed.extraLines) + '\n\n' + latestParsed.body;
+    const newContent = buildFrontmatter(mergedFm, latestParsed.extraLines) + '\n\n'
+      + bodyWithSummaryCard(targetFile, s, mergedFm, latestParsed.body);
     await app.vault.modify(targetFile, newContent);
     if (renameFailed) {
       // B5：标题已在上面真实写入 frontmatter，此刻的「已写入」文案才站得住

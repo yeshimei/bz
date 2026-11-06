@@ -132,3 +132,35 @@ describe('T2 frontmatter 三面往返（writeClipNote → parseClipFile → auto
     expect(fm.tags).toEqual(['剪藏', '探针']);
   });
 });
+
+/**
+ * ADR-0290：剪藏笔记只写 Obsidian 原生结构（frontmatter + 正文），不写任何渲染指令。
+ * 旧行为往正文塞 ```dataviewjs await dv.view(`CONFIG/SCRIPTS/DataView/摘要`) ```——那是作者
+ * 私人库里的脚本路径，别的用户打开笔记只会看到报错块。摘要卡改由 auto-summary 写回时生成。
+ */
+describe('ADR-0290 剪藏笔记不写渲染指令', () => {
+  it('writeClipNote 产出：frontmatter + 纯正文，无 dataviewjs、无摘要卡', async () => {
+    const vault = boot();
+    await writeClipNote(RAW());
+    const out = vault.files.get(CLIP_PATH)!;
+    expect(out).not.toContain('dataviewjs');
+    expect(out).not.toContain('dv.view');
+    expect(out).not.toContain('CONFIG/SCRIPTS');
+    expect(out).not.toContain('> [!summary]');
+    expect(out).toContain('往返正文一段。');
+  });
+
+  it('旧 body 自带 dataviewjs 块 → 落盘前清掉，正文其余原样', async () => {
+    const vault = boot();
+    await writeClipNote(
+      RAW({
+        title: '旧块探针文',
+        url: 'https://gk.com/fm-legacy',
+        body: '```dataviewjs\nawait dv.view(`CONFIG/SCRIPTS/DataView/摘要`)\n```\n\n旧块之后的正文。',
+      }),
+    );
+    const out = vault.files.get('归档/网页剪藏/旧块探针文.md')!;
+    expect(out).not.toContain('dataviewjs');
+    expect(out).toContain('旧块之后的正文。');
+  });
+});
