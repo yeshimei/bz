@@ -82,6 +82,8 @@ export async function dataFileExists(app: App, path: string): Promise<boolean> {
 /**
  * 只读直读文件原文；不存在返回 null（区别于读到的空串）。
  * 走 adapter.read——不经 jsonFileStore，无任何写副作用。
+ * 读不动（文件在、IO/权限失败）也返回 null：体检用 dataFileExists 复核成 unreadable，
+ * 不让一个瞬时故障把整个扫描掀翻。
  */
 export async function readRawFile(app: App, path: string): Promise<string | null> {
   return diskReadText(app, path);

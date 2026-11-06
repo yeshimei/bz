@@ -482,13 +482,13 @@ export async function migrateLegacyStats(data: NewsData): Promise<NewsData> {
   const app = getApp();
   // 老库的 CONFIG/STORAGE 可索引，但存储目录可能被设到点前缀路径——迁移同样只问盘
   const raw = await diskReadText(app, STATS_JSON_PATH);
-  if (raw === null) return data;
+  if (raw === null) return data; // 没有旧文件（或读不动）：本次不迁移，下次载入再试
   try {
     const old = JSON.parse(raw);
     const merged = mergeStatsInto(data, old);
     return merged === data ? data : merged;
   } catch {
-    return data;
+    return data; // 旧文件是坏 JSON：不阻塞载入
   }
 }
 

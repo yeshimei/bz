@@ -205,7 +205,9 @@ export async function diskPathExists(app: any, p: string): Promise<boolean> {
  * 盘上只读直读（绕过索引）。点前缀目录（缺省数据目录 `.obsidian/plugins/<插件>/storage`、
  * `CONFIG/.CORRUPT`、`.ENCRYPT`）**不在 vault 索引里**，`getAbstractFileByPath` 恒 null；
  * 判断数据文件「在不在、是什么」一律问 adapter，不要问索引。
- * 缺失/读失败 → null（调用方按「没有」走原路）。
+ * 缺失与读不动（被占用/权限/瞬时 IO）都返回 `null`——本函数只回答「拿到没有」，
+ * 不为诊断多花一次 IO。要区分两者的调用方自己用 `diskPathExists` 复探
+ * （体检 json 扫描的 unreadable、小橘备忘到期扫描的失败计数都这么做）。
  */
 export async function diskReadText(app: any, p: string): Promise<string | null> {
   try {

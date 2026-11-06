@@ -1558,7 +1558,14 @@ export async function maybeMemoDueScan(now: Date = new Date()): Promise<void> {
   try {
     // 读盘走 adapter：memo.json 在缺省数据目录（点前缀）里，vault 索引取不到文件对象
     const rawText = await diskReadText(appRef, getMemoDataPath());
-    if (rawText === null) return; // memo 域未启用（无 memo.json）：静默，不推进扫描日期（等 memo 数据出现再扫）
+    if (rawText === null) {
+      // 区分「memo 域未启用（无 memo.json）」与「文件在但读不动」：后者是故障，
+      // 走下面的失败计数（达到上限当日放弃），别当成「没有数据」无限静默。
+      if (await diskPathExists(appRef, getMemoDataPath())) {
+        throw new Error('memo.json 读取失败（文件存在）');
+      }
+      return; // memo 域未启用：静默，不推进扫描日期（等 memo 数据出现再扫）
+    }
     const raw = JSON.parse(rawText);
     const items: MemoDueLike[] = Array.isArray(raw) ? (raw as any[]) : [];
     // B8 防重复：先推进扫描日期（落盘）再观察——如上注释，任何后续失败也跳过当天重扫
@@ -2381,9 +2388,12 @@ export async function pollDomainActivity(): Promise<void> {
     const st = await diskPathStat(app, p);
     const mtime = st && typeof st.mtime === 'number' ? st.mtime : null;
     if (mtime === null || domainMtime.get(key) === mtime) continue;
-    domainMtime.set(key, mtime);
     const hit = await readDomainFile(p);
-    if (!hit || domainLastRaw.get(key) === hit.text) continue;
+    // 读成功才推进 mtime 基线：先推进再读的话，这一拍读失败（文件被占用/瞬时 IO）
+    // 就永久丢掉这次变更——要等下一次写盘 mtime 变化才重审。
+    if (!hit) continue;
+    domainMtime.set(key, mtime);
+    if (domainLastRaw.get(key) === hit.text) continue;
     domainLastRaw.set(key, hit.text);
     if (!domainObserved.has(key)) {
       // 首次发现：只记录基线，不产出观察（同 snapshotDomains 口径）
