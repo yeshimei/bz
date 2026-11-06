@@ -339,3 +339,20 @@ export function aggregateSites(
   return [...rows.values()].sort((x, y) =>
     y.total - x.total || y.unread - x.unread || cmpZh(x.site, y.site));
 }
+
+/**
+ * 站点名下**全部** news 条数（含已读、已收），按 `siteName` 归一分桶。
+ *
+ * 左栏订阅行与空源文案靠它区分「一条都没抓回来」和「抓到了但都处理过了」：
+ * `aggregateSites` 跳过已读、`queryBySource` 也跳过已读，单看这两个列表长度，
+ * 一个抓回来 10 篇全读完的源和一个从没抓到的源长得一模一样。
+ */
+export function countNewsBySite(articles: any[]): Map<string, number> {
+  const out = new Map<string, number>();
+  for (const a of articles || []) {
+    if (!a) continue;
+    const site = normSite(siteName(a));
+    out.set(site, (out.get(site) || 0) + 1);
+  }
+  return out;
+}

@@ -48,7 +48,7 @@ import { articleKeyOf, CLIP_TUTORIAL_URL } from './constants';
 import { readDataSourceState, type DataSourceState } from './news-source-settings';
 import type { ClipArticle } from './types';
 import { stripClipChrome } from './md';
-import { queryBySource, queryBySourceFull, aggregateSites, clipArticle, bucketByState, normSite, feedSiteName } from './store';
+import { queryBySource, queryBySourceFull, aggregateSites, clipArticle, bucketByState, normSite, feedSiteName, countNewsBySite } from './store';
 import {
   panelHtml, railItemHtml, railFootHtml, tocListHtml,
   readerHtml, mobListHtml, mobDetailHtml, mobTocHtml, mobNoHitHtml, type MobChapter, siteTint,
@@ -898,10 +898,13 @@ function renderRailNow(): void {
     const active = M.sel.kind === 'site' && M.sel.site === row.site;
     html += railItemHtml({ kind: 'site', site: row.site }, row.site, searchKw ? hit : unreadN, full.length, 'feed', siteTint(row.site), active, '');
   }
-  // 已订阅、但一篇都没抓回来的源补 0/0 行：站点行是从文章倒推的，源不可达（公共 RSSHub 实例
-  // 限流/挂掉最常见）时左栏根本没有这个源——订阅列表里有、界面上却没有，看着就是「订阅没成功」。
-  // 抓到文章后按同名的站点行并掉（covered 去重），不会出现两行。
+  // 站点行覆盖不到的订阅补一行：站点行是从文章倒推的，源不可达（公共 RSSHub 实例限流/挂掉
+  // 最常见）时左栏根本没有这个源——订阅列表里有、界面上却没有，看着就是「订阅没成功」。
+  // 抓到文章后按同名并掉（covered 去重），不会出现两行。
+  // 总数取**全量**条数（含已读/已收）：全读完的源也会落到这里，显 0/0 会伪装成「从没抓到」，
+  // 而 0/0 正是用户拿来判断「到底抓没抓到」的那一眼。
   const covered = new Set(siteRows.map((r) => r.site));
+  const newsCount = countNewsBySite(arts);
   const pendingFeeds = [...(M.rssFeeds || [])]
     .map((f) => feedSiteName(f))
     .filter((name) => { if (covered.has(name)) return false; covered.add(name); return true; })
@@ -909,7 +912,7 @@ function renderRailNow(): void {
   for (const name of pendingFeeds) {
     const hit = countOf({ kind: 'site', site: name });
     const active = M.sel.kind === 'site' && M.sel.site === name;
-    html += railItemHtml({ kind: 'site', site: name }, name, hit, 0, 'feed', siteTint(name), active, '');
+    html += railItemHtml({ kind: 'site', site: name }, name, hit, newsCount.get(normSite(name)) || 0, 'feed', siteTint(name), active, '');
   }
 
   // B站 UP 展开（C2：Map 按 author/uid 去重；C6：upInfo 回填名字显示）。
@@ -1119,13 +1122,27 @@ function mountClipFolderGate(): boolean {
 
 /**
  * 空源空态：搜索零命中只说一句；「已订阅但一篇没抓到」要给出地址与排查路径
- *（否则用户只知道订阅成功了，界面上却什么都没有）；其余维持一句「这个源暂无内容」。
+ *（否则用户只知道订阅成功了，界面上却什么都没有）；「抓到了但都处理过」不能说成没抓到
+ *（那会把人引去换 RSSHub 实例，而条目其实在剪藏本里）；其余维持一句「这个源暂无内容」。
  * 空源同样留教程入口——空册切到哪个源都得能问到「怎么用」。
  */
 function emptySourceView(src: SrcFilter): HTMLElement {
   if (searchKw) return uiEmpty({ icon: 'inbox', title: '这个源暂无内容' });
   const feed = src.kind === 'site' ? feedOfSite(src.site) : null;
   const feedRows = (M.rssFeeds || []).length;
+  // 这个站名下抓回来过几篇（含已读/已收）：>0 说明源是通的，空是因为都处理完了
+  const fetched = src.kind === 'site' ? (countNewsBySite(M.articles).get(normSite(src.site)) || 0) : 0;
+  if (feed && fetched > 0) {
+    return uiEmpty({
+      icon: 'check-check',
+      title: `已抓到 ${fetched} 篇，都处理过了`,
+      desc: '读完的和收进剪藏本的条目不会留在未读里。',
+      actions: uiBtnRow([
+        uiBtn({ label: '去剪藏本', icon: 'scissors', onClick: () => selectSource({ kind: 'clip' }) }),
+        tutorialLink(),
+      ], { center: true }),
+    });
+  }
   if (feed || (src.kind === 'all' && !M.articles.length && feedRows > 0)) {
     const desc = feed
       ? `订阅地址：${feed.url}。拉不到多是 RSSHub 实例限流或不可达，可在 设置 · 剪藏本 · 数据源 换自建实例。`

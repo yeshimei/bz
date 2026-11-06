@@ -30,7 +30,7 @@ const GUOKR = {
   body: '正文一',
 };
 
-function seed(feeds: RssFeed[] = [], articles: any[] = []): MockVault {
+function seed(feeds: RssFeed[] = [], articles: any[] = [], sidecar: any = null): MockVault {
   const vault = new MockVault();
   vault.files.set('CONFIG/STORAGE/news.json', JSON.stringify({
     articles,
@@ -42,14 +42,15 @@ function seed(feeds: RssFeed[] = [], articles: any[] = []): MockVault {
     lastFetchAt: Date.now() + 24 * 60 * 60 * 1000,
     fetchIntervalMin: 360,
   }));
+  if (sidecar) vault.files.set('CONFIG/STORAGE/clipbook.json', JSON.stringify(sidecar));
   return vault;
 }
 
-async function openPanel(feeds: RssFeed[] = [], articles: any[] = []): Promise<void> {
+async function openPanel(feeds: RssFeed[] = [], articles: any[] = [], sidecar: any = null): Promise<void> {
   try { unloadClipbook(); } catch (e) { /* 幂等 */ }
   resetObsidianMocks();
   setSettingsProvider(() => ({ storagePath: 'CONFIG/STORAGE', articleDirectory: '归档/网页剪藏', newsRetentionUnsavedDays: '30' } as any));
-  const vault = seed(feeds, articles);
+  const vault = seed(feeds, articles, sidecar);
   setApp(mockAppWithVault(vault));
   openClipbook(getApp());
   await vi.waitFor(() => expect(M.open).toBe(true));
@@ -83,6 +84,38 @@ describe('左栏订阅补行', () => {
     const rows = railRows().filter((r) => r.textContent!.includes('少数派'));
     expect(rows).toHaveLength(1);
     expect(rows[0].textContent).toContain('1/1');
+  });
+
+  it('抓到了但全读完：行总数是 0/N 而不是 0/0（0/0 只表示没抓到）', async () => {
+    const readArticle = {
+      platform: '少数派', title: '少数派读过的文章', url: 'https://sspai.com/post/2', read: true,
+      author: '少数派', date: ago(1, '09:00:00'), fetchedAt: ago(1, '09:00:00'), body: '正文',
+    };
+    await openPanel([FEED], [GUOKR, readArticle]);
+    expect(railRow('少数派').textContent).toContain('0/1');
+  });
+});
+
+describe('空源文案说实话', () => {
+  it('抓到了但全收进剪藏本：说「都处理过了」并给去剪藏本，不说「还没抓到」', async () => {
+    const savedArticle = {
+      platform: '少数派', title: '少数派已收文章', url: 'https://sspai.com/post/3',
+      author: '少数派', date: ago(2, '09:00:00'), fetchedAt: ago(2, '09:00:00'), body: '正文',
+    };
+    await openPanel([FEED], [GUOKR, savedArticle], {
+      savedArchive: [{ url: savedArticle.url, title: savedArticle.title, savedAt: ago(1, '10:00:00') }],
+    });
+    expect(railRow('少数派').textContent).toContain('0/1');
+    railRow('少数派').click();
+    expect(listText()).toContain('已抓到 1 篇，都处理过了');
+    expect(listText()).not.toContain('还没抓到');
+    expect(listText()).not.toContain(FEED.url); // 别再把人引去换实例
+  });
+
+  it('真的没抓到：仍然说「已订阅，还没抓到文章」并给出订阅地址', async () => {
+    await openPanel([FEED], [GUOKR]);
+    railRow('少数派').click();
+    expect(listText()).toContain('已订阅，还没抓到文章');
   });
 });
 
