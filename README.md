@@ -34,7 +34,7 @@
   <tr>
     <td align="center" valign="top" width="50%">
       <img src="docs/images/02-diary.jpg" height="230" alt="日记本"><br>
-      <b>日记本</b><br>
+      <b>日记本</b> · <a href="https://www.bilibili.com/video/BV1W44i6yETx">▶ 视频教程</a><br>
       <sub>一天能写多条，按月份装订成册</sub>
     </td>
     <td align="center" valign="top" width="50%">
