@@ -45,11 +45,12 @@ import { AI_PROVIDER_REGISTRY, DEFAULT_AI_PROVIDER, getProviderDescriptor, testA
 import {
   fetchLatestReaderRelease,
   installReaderPlugin,
+  isReaderHealthy,
   readReaderInstall,
+  readerActionOf,
   readerStateText,
   type ReaderInstallState,
 } from './reader-install';
-import { compareVersions } from './version';
 
 /** 视频教程 · **第 4P（最新一集）**。三处教程入口各指一集（关于＝第 1P／本屏＝第 4P／
  *  依赖清单＝第 3P），用户明确不要共享常量：指向不同的集，共享反而多一层解释。
@@ -213,7 +214,7 @@ async function isReady(
   if (kind === 'node') return probeNodeRuntime(app, { fresh: true }).kind !== 'none';
   if (kind === 'reader') {
     const state = await readReaderInstall(app);
-    return state.installed && !state.broken;
+    return isReaderHealthy(state);
   }
   if (!manifest) return false;
   if (kind === 'skins') {
@@ -430,15 +431,15 @@ function mountReaderRow(ctx: WizardCtx, card: HTMLElement, initialLatest: string
 
   const render = (state: ReaderInstallState): void => {
     val.textContent = readerStateText(state, latest);
-    const healthy = state.installed && !state.broken;
+    const healthy = isReaderHealthy(state);
     mark.className =
       'bz-setup-mark ' + (state.broken ? 'bz-setup-mark--bad' : healthy ? 'bz-setup-mark--ok' : 'bz-setup-mark--idle');
     row.classList.toggle('is-bad', state.broken);
-    const needInstall = !healthy;
-    const needUpdate = healthy && !!latest && compareVersions(latest, state.version) > 0;
-    btn.classList.toggle('is-hidden', busy || (!needInstall && !needUpdate));
+    // 动作与设置面板、向导完成屏同一处判定（readerActionOf）：三处不再各写一套
+    const action = readerActionOf(state, latest);
+    btn.classList.toggle('is-hidden', busy || action === 'none');
     btn.disabled = busy;
-    btn.textContent = needInstall ? '安装' : '更新';
+    btn.textContent = action === 'install' ? '安装' : '更新';
   };
 
   const refresh = async (): Promise<void> => {
@@ -758,7 +759,7 @@ async function beginInstall(ctx: WizardCtx, st: WizardState, ui: Ui): Promise<vo
   const nodeMissing = probeNodeRuntime(ctx.app, { fresh: true }).kind === 'none';
   // bz reader 不进在线资源清单（它是另一个插件），单独问一次磁盘
   const readerState = await readReaderInstall(ctx.app);
-  const readerMissing = !readerState.installed || readerState.broken;
+  const readerMissing = !isReaderHealthy(readerState);
   const items = await planSetupItems(ctx.app, st.manifest ?? null, { nodeMissing, readerMissing });
   const tasks = selectedTasks(items, defaultSelection(items));
   if (!tasks.length) {

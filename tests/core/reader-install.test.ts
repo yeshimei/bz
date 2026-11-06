@@ -14,7 +14,9 @@ import {
   fetchLatestReaderRelease,
   installReaderPlugin,
   isReaderEnabled,
+  isReaderHealthy,
   readReaderInstall,
+  readerActionOf,
   readerPluginDirOf,
   readerStateText,
   READER_GITEE_SLUG,
@@ -149,6 +151,19 @@ describe('状态文案', () => {
     expect(readerStateText(base, '0.2.0')).toBe('已安装 0.2.0 · 已启用');
     expect(readerStateText({ ...base, broken: true })).toBe('未安装');
   });
+
+  // 三处界面（引导检测屏 / 设置面板 / 向导完成屏）共用这一处动作判定：
+  // 未装或半装 → 安装；确认有新版 → 更新；其余（含「最新版未知」）→ 什么都不做
+  it('动作判定单源：未装/半装=安装，确认有新版=更新，其余=无', () => {
+    expect(readerActionOf({ ...base, installed: false })).toBe('install');
+    expect(readerActionOf({ ...base, broken: true })).toBe('install');
+    expect(readerActionOf(base)).toBe('none');
+    expect(readerActionOf(base, '0.2.0')).toBe('none');
+    expect(readerActionOf(base, '0.2.1')).toBe('update');
+    expect(readerActionOf(base, null)).toBe('none'); // 不替用户猜有新版
+    expect(isReaderHealthy(base)).toBe(true);
+    expect(isReaderHealthy({ ...base, broken: true })).toBe(false);
+  });
 });
 
 describe('最新版：GitHub 主 → 码云备', () => {
@@ -200,8 +215,8 @@ describe('安装：下载 → 写盘 → 启用', () => {
     const { app, enabled } = appOf(vault);
     route([
       ['/releases/latest/download/manifest.json', MANIFEST],
-      ['/releases/download/0.2.0/main.js', MAIN_JS],
-      ['/releases/download/0.2.0/styles.css', STYLES],
+      ['github.com/yeshimei/bz-reader/releases/latest/download/main.js', MAIN_JS],
+      ['github.com/yeshimei/bz-reader/releases/latest/download/styles.css', STYLES],
     ]);
 
     const r = await installReaderPlugin(app);
@@ -225,8 +240,8 @@ describe('安装：下载 → 写盘 → 启用', () => {
     const { app } = appOf(vault);
     route([
       ['/releases/latest/download/manifest.json', MANIFEST],
-      ['github.com/yeshimei/bz-reader/releases/download/0.2.0/main.js', new Error('HTTP 404')],
-      ['github.com/yeshimei/bz-reader/releases/download/0.2.0/styles.css', new Error('HTTP 404')],
+      ['github.com/yeshimei/bz-reader/releases/latest/download/main.js', new Error('HTTP 404')],
+      ['github.com/yeshimei/bz-reader/releases/latest/download/styles.css', new Error('HTTP 404')],
       ['gitee.com/ntbl/bz-reader/releases/download/0.2.0/main.js', MAIN_JS],
       ['gitee.com/ntbl/bz-reader/releases/download/0.2.0/styles.css', STYLES],
     ]);
@@ -240,8 +255,8 @@ describe('安装：下载 → 写盘 → 启用', () => {
     const { app } = appOf(vault);
     route([
       ['/releases/latest/download/manifest.json', MANIFEST],
-      ['/releases/download/0.2.0/main.js', `<!DOCTYPE html><html>${'x'.repeat(2000)}</html>`],
-      ['/releases/download/0.2.0/styles.css', STYLES],
+      ['github.com/yeshimei/bz-reader/releases/latest/download/main.js', `<!DOCTYPE html><html>${'x'.repeat(2000)}</html>`],
+      ['github.com/yeshimei/bz-reader/releases/latest/download/styles.css', STYLES],
     ]);
     await expect(installReaderPlugin(app)).rejects.toThrow(/网页而不是文件/);
     expect(vault.files.has(`${PLUGIN_DIR}/main.js`)).toBe(false);
@@ -255,12 +270,32 @@ describe('安装：下载 → 写盘 → 启用', () => {
     });
     route([
       ['/releases/latest/download/manifest.json', MANIFEST],
-      ['/releases/download/0.2.0/main.js', MAIN_JS],
-      ['/releases/download/0.2.0/styles.css', STYLES],
+      ['github.com/yeshimei/bz-reader/releases/latest/download/main.js', MAIN_JS],
+      ['github.com/yeshimei/bz-reader/releases/latest/download/styles.css', STYLES],
     ]);
     const r = await installReaderPlugin(app);
     expect(r.enabled).toBe(false);
     expect(vault.files.has(`${PLUGIN_DIR}/manifest.json`)).toBe(true);
+  });
+
+  it('并发两次安装：复用同一趟（只下载一次、不交错写盘）', async () => {
+    const vault = new MockVault();
+    const { app } = appOf(vault);
+    let mainJsHits = 0;
+    vi.mocked(requestUrl).mockImplementation((async (opts: { url: string }) => {
+      if (opts.url.includes('/releases/latest/download/manifest.json')) return ok(MANIFEST);
+      if (opts.url.includes('/releases/latest/download/main.js')) {
+        mainJsHits += 1;
+        return ok(MAIN_JS);
+      }
+      if (opts.url.includes('/releases/latest/download/styles.css')) return ok(STYLES);
+      throw new Error(`unmocked url: ${opts.url}`);
+    }) as never);
+
+    // 向导与设置面板各自 busy、彼此不知道：同时点会在同一批三件套上写两遍
+    const [a, b] = await Promise.all([installReaderPlugin(app), installReaderPlugin(app)]);
+    expect(a).toEqual(b);
+    expect(mainJsHits).toBe(1);
   });
 });
 
@@ -309,8 +344,8 @@ describe('autoUpdateReaderPlugin：跟 bz 的自动更新开关走', () => {
     const { app } = appOf(vault);
     route([
       ['/releases/latest/download/manifest.json', MANIFEST],
-      ['/releases/download/0.2.0/main.js', MAIN_JS],
-      ['/releases/download/0.2.0/styles.css', STYLES],
+      ['github.com/yeshimei/bz-reader/releases/latest/download/main.js', MAIN_JS],
+      ['github.com/yeshimei/bz-reader/releases/latest/download/styles.css', STYLES],
     ]);
     await expect(autoUpdateReaderPlugin(app)).resolves.toBe(true);
     expect(vault.files.get(`${PLUGIN_DIR}/main.js`)).toBe(MAIN_JS);

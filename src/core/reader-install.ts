@@ -21,8 +21,9 @@
  * （60 次/小时/IP）时退到 raw master 的 manifest（推代码即变，可能比 Release 新，
  * 只作为最后兜底）。
  *
- * 资产下载两条通道都按**同一个 tag** 拼：GitHub 失败（网络/404）才走码云。
- * 两端资产由 scripts/push-gitee.mjs 保证字节一致（码云那份从 GitHub Release 原样搬）。
+ * 资产下载：GitHub 走同一个免 tag 别名（清单与两件套同源）；GitHub 失败（网络/404）才走码云，
+ * 码云没有 latest 别名，按 Release 的 tag 拼。两端资产由 scripts/push-gitee.mjs 保证字节一致
+ * （码云那份从 GitHub Release 原样搬）。
  *
  * ---------- 落盘顺序 ----------
  *   main.js → styles.css → manifest.json
@@ -226,16 +227,43 @@ export async function readReaderInstall(app: unknown): Promise<ReaderInstallStat
 }
 
 /**
+ * 装好且可用（未装 / 半装都不算）。
+ * 「装没装好」只有这一个判据：引导页的标记、设置面板的按钮显隐、向导的完成判定都从这里取。
+ */
+export function isReaderHealthy(state: ReaderInstallState): boolean {
+  return state.installed && !state.broken;
+}
+
+/** 现在该干什么：安装（未装/半装）、更新（确认有新版）、什么都不做 */
+export type ReaderAction = 'install' | 'update' | 'none';
+
+/**
+ * 状态 + 最新版 → 动作（单源）。
+ *
+ * 三个入口此前各写一套（引导检测屏的 needInstall/needUpdate、设置面板的
+ * actionVisible/hasKnownUpdate、向导完成屏的 missing 判定）：结论一致时看不出问题，
+ * 改一处忘另两处就会出现「已装却提示更新」「半装被当成已装」这类互相矛盾的界面。
+ * 最新版未知（null / 查询失败）按「不更新」算——不替用户猜有新版。
+ */
+export function readerActionOf(state: ReaderInstallState, latest?: string | null): ReaderAction {
+  if (!isReaderHealthy(state)) return 'install';
+  const v = normalizeVersion(String(latest || ''));
+  if (v && compareVersions(v, state.version) > 0) return 'update';
+  return 'none';
+}
+
+/**
  * 状态 → 人话（检测屏 / 完成屏共用）。
  * `latest` 传 null/undefined 就只报本机状态（完成屏不联网）。
  */
 export function readerStateText(state: ReaderInstallState, latest?: string | null): string {
   // 半装与没装在界面上是同一句话（2026-11-05 用户拍板）：用户只需知道「没装好、点安装」，
   // 「安装不完整（需重装）」这种词只会让人犹豫要不要先卸载。
-  if (!state.installed || state.broken) return '未安装';
+  if (!isReaderHealthy(state)) return '未安装';
   const head = `已安装 ${state.version || '版本未知'}`;
-  const v = normalizeVersion(String(latest || ''));
-  if (v && compareVersions(v, state.version) > 0) return `${head} · 新版 ${v}`;
+  if (readerActionOf(state, latest) === 'update') {
+    return `${head} · 新版 ${normalizeVersion(String(latest))}`;
+  }
   return `${head} · ${state.enabled ? '已启用' : '未启用'}`;
 }
 
@@ -333,12 +361,15 @@ async function fetchAssetsFrom(base: string): Promise<{ mainJs: string; styles: 
   return { mainJs, styles };
 }
 
-/** 资产：GitHub 主 → 码云备（两端口径一致：同 tag、同文件名） */
+/** 资产：GitHub 主 → 码云备。
+ *  GitHub 走**免 tag 别名**（releases/latest/download）：清单也是从那里拿的，两件套跟它同源；
+ *  即便以后 tag 改成 `v0.2.0` 这类带前缀的写法，资产地址也不会 404。
+ *  码云没有 latest 别名，仍按 release tag 拼（tag 由 API/Release 页提供，与 manifest 同批发布）。 */
 async function downloadAssets(tag: string): Promise<ReaderAssets> {
   const safeTag = encodeURIComponent(tag);
   let ghErr: unknown = null;
   try {
-    const a = await fetchAssetsFrom(`${GITHUB_BASE}/releases/download/${safeTag}`);
+    const a = await fetchAssetsFrom(GITHUB_LATEST);
     return { ...a, via: 'github' };
   } catch (e) {
     ghErr = e;
@@ -442,11 +473,27 @@ async function enableReaderPlugin(app: unknown): Promise<boolean> {
  *
  * 顺序：拿最新版 → 下载两件套 → 校验内容 → 写 main.js / styles.css / manifest.json
  * → 回读核对 → 启用。任何一步抛错，调用方把 message 原样给人看。
+ *
+ * 单飞（2026-11-06）：向导、设置面板、启动自动更新三处入口各有各的 busy，彼此不知道；
+ * 两路同时写同一批 `.bz-tmp` / 三件套会互相覆盖，最后核对报「安装后版本对不上」。
+ * 后到的调用复用同一趟（拿同一个结果），不重复下载、不交错写盘。
+ * 代价：复用者自己的 `onStage` 收不到进度（它的界面停在「安装中…」直到完成）——比写坏好。
  */
-export async function installReaderPlugin(
+let installInFlight: Promise<ReaderInstallResult> | null = null;
+
+export function installReaderPlugin(
   app: unknown,
   hooks: ReaderInstallHooks = {},
 ): Promise<ReaderInstallResult> {
+  if (installInFlight) return installInFlight;
+  const run: Promise<ReaderInstallResult> = installReader(app, hooks).finally(() => {
+    if (installInFlight === run) installInFlight = null;
+  });
+  installInFlight = run;
+  return run;
+}
+
+async function installReader(app: unknown, hooks: ReaderInstallHooks): Promise<ReaderInstallResult> {
   const stage = (text: string): void => hooks.onStage?.(text);
 
   stage('获取最新版…');

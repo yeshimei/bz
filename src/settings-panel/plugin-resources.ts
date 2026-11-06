@@ -17,14 +17,15 @@ import { notice } from '../core/notice';
 import { openExternalUrl } from '../core/utils';
 import type { GroupDecl, InfoRow, SettingsRow, SettingsRowContext } from '../core/settings-schema';
 import { setRowBtnState } from '../core/settings-btn-state';
-import { compareVersions } from '../core/version';
 import {
   READER_PLUGIN_ID,
   READER_PLUGIN_NAME,
   READER_REPO_SLUG,
   fetchLatestReaderRelease,
   installReaderPlugin,
+  isReaderHealthy,
   readReaderInstall,
+  readerActionOf,
   type ReaderInstallState,
 } from '../core/reader-install';
 
@@ -67,11 +68,19 @@ let currentAllRow: BtnRow | null = null;
 /** 组级 / 单行动作的忙位（只有一个插件，共用一个即可） */
 let busy = false;
 
+/**
+ * 当前可用的最新版：只有**查询成功**才认缓存值。
+ * 未查完 / 查询失败 → null（不替用户猜有新版，也不拿上一次的旧值冒充本次结果）。
+ */
+function confirmedLatest(): string | null {
+  return latestChecked && !latestFailed ? latestVersion : null;
+}
+
 /** 版本文案（用户要的版本号就长在这句里） */
 export function pluginDescOf(state: ReaderInstallState, latest: string | null): string {
-  if (!state.installed || state.broken) return '未安装';
+  if (!isReaderHealthy(state)) return '未安装';
   const head = `已安装 ${state.version || '版本未知'}`;
-  if (latest && compareVersions(latest, state.version) > 0) return `${head} · 新版 ${latest}`;
+  if (readerActionOf(state, latest) === 'update') return `${head} · 新版 ${latest}`;
   return head;
 }
 
@@ -81,20 +90,7 @@ export function pluginDescOf(state: ReaderInstallState, latest: string | null): 
  * 此前那枚灰的「已安装」钮既点不动、又占着位置，等于把「没有动作」画成一个动作。
  */
 function actionVisible(state: ReaderInstallState): boolean {
-  if (!state.installed || state.broken) return true;
-  return hasKnownUpdate(state);
-}
-
-/** 已知有新版（查询成功、且最新版比本机新） */
-function hasKnownUpdate(state: ReaderInstallState): boolean {
-  return (
-    state.installed &&
-    !state.broken &&
-    latestChecked &&
-    !latestFailed &&
-    !!latestVersion &&
-    compareVersions(latestVersion, state.version) > 0
-  );
+  return readerActionOf(state, confirmedLatest()) !== 'none';
 }
 
 /**
@@ -106,15 +102,13 @@ function hasKnownUpdate(state: ReaderInstallState): boolean {
  * （见 actionVisible）——不拿文案去表达「什么都不用做」。
  */
 function actionTextOf(state: ReaderInstallState): string {
-  if (!state.installed || state.broken) return '安装';
-  return '更新';
+  return readerActionOf(state, confirmedLatest()) === 'install' ? '安装' : '更新';
 }
 
 /** 有没有待办：未装 / 半装 / 有新版。最新版未知时按「可点」处理（点下去现查） */
 function hasWork(state: ReaderInstallState): boolean {
-  if (!state.installed || state.broken) return true;
-  if (!latestChecked || latestFailed || !latestVersion) return true;
-  return compareVersions(latestVersion, state.version) > 0;
+  if (readerActionOf(state, confirmedLatest()) !== 'none') return true;
+  return !latestChecked || latestFailed;
 }
 
 /**
@@ -250,11 +244,11 @@ async function updateOnce(): Promise<void> {
   latestVersion = rel.version;
   latestChecked = true;
   latestFailed = false;
-  if (before.installed && !before.broken && compareVersions(rel.version, before.version) <= 0) {
+  if (readerActionOf(before, rel.version) === 'none') {
     notice(`bz reader 已是最新版本（${before.version}）`);
     return;
   }
-  const wasInstalled = before.installed && !before.broken;
+  const wasInstalled = isReaderHealthy(before);
   const r = await installReaderPlugin(app);
   notice(
     wasInstalled
