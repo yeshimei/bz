@@ -3,10 +3,11 @@
  * 加密保险箱数据层测试：SafeManager 加锁/还原（取出即删）状态机、
  * 清单加密存储、平铺点前缀密文镜像、指纹冲突安全、崩溃幂等。
  */
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { SafeManager, fingerprintOf, flatName, mapLimit, type HealthProgress, type SafeNote } from '../../src/encrypt/data';
 import { CryptoService, clearCryptoKeyCache } from '../../src/core/crypto';
 import { setApp } from '../../src/core/app';
+import { setSettingsProvider } from '../../src/core/settings-provider';
 import { MockVault } from '../mock-vault';
 
 /** 构造带 metadataCache.trigger 探针的 app（数据层改文件后触发刷新，还原测试断言） */
@@ -1514,5 +1515,41 @@ describe('SafeManager 操作级互斥与挂起标记读改写（P1-6）', () => 
     const report = await sm2.scanHealth();
     expect(report.items.length).toBe(0);
     expect([...vault.files.keys()].some((p) => p.startsWith('CONFIG/.ENCRYPT/.staging/'))).toBe(false);
+  });
+});
+
+describe('加密日记还原：day 格式落点跟随注入的 diaryDir', () => {
+  let vault: MockVault;
+
+  beforeEach(() => {
+    vault = new MockVault();
+    makeApp(vault);
+    // settings 的日记目录与调用方注入值故意不同：落点只认注入值（两分支同源）
+    setSettingsProvider(
+      () => ({ diaryDirectory: '我的/日记', diaryEntryFormat: 'day' }) as any
+    );
+  });
+
+  afterEach(() => {
+    setSettingsProvider(() => ({} as any));
+  });
+
+  it('传入不同 diaryDir：还原写进注入目录的当天文件，不落 settings 目录', async () => {
+    vault.create('新日记本/2026-08-20.md', '# 📖 09:00\n\n早上\n');
+    const sm = new SafeManager('CONFIG/.ENCRYPT');
+    await sm.unlock('pw');
+    const note = await sm.lockNote({
+      path: '我的/日记/2026-08-20.md',
+      title: '2026-08-20 · 12:00 日记',
+      kind: 'diary-entry',
+      content: '# 日记/加密 12:00\n午后',
+      attachments: [],
+    });
+    expect(await sm.restoreDiaryEntry(note.id, '# 📖 12:00\n\n午后', '新日记本')).toBe(true);
+    const moved = vault.files.get('新日记本/2026-08-20.md')!;
+    expect(moved).toContain('午后');
+    expect(moved.indexOf('09:00')).toBeLessThan(moved.indexOf('12:00'));
+    expect(vault.files.has('我的/日记/2026-08-20.md')).toBe(false);
+    expect(sm.manifest.notes.some((n) => n.id === note.id)).toBe(false);
   });
 });

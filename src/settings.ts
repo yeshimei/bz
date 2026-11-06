@@ -174,6 +174,10 @@ export default interface BzSettings {
   useFileDateTime: boolean;
   /** 📄 每卷装多少则（历史键名仍叫 pageSize）：一册只摊开一卷，凑够就另装一卷（缺省 50；0/缺失按缺省） */
   diaryPageSize: number;
+  /** 🎬 日记本是否收录影院条目（默认开：观影票根混排在册子里；关掉只影响日记本显示） */
+  diaryShowCinema: boolean;
+  /** 📚 日记本是否收录书库条目（默认开：藏书票混排在册子里；关掉只影响日记本显示） */
+  diaryShowBookshelf: boolean;
   /** 🎬 已经打开过日记本（**首次打开严格只判一次**：首次且册子非空才弹教程；空态走册子上的入口） */
   diaryFirstOpened: boolean;
   /** 🎬 视频教程弹窗已弹过（打开即记账，防同一首次流程弹第二次；老库缺键 = 没弹过） */
@@ -1075,6 +1079,9 @@ export const DEFAULT_SETTINGS: BzSettings = {
   diaryTypes: '',
   useFileDateTime: false,
   diaryPageSize: 50,
+  // 2026-11-06 用户拍板：两个联动开关默认开（现状即「日记本混排影院/书库」）
+  diaryShowCinema: true,
+  diaryShowBookshelf: true,
   // 首次打开日记本才判一次教程（2026-11-05 用户拍板）：判过即记账，之后永不重弹；
   // 空册不弹（教程入口常驻在空册页上），弹窗真的出现过才写 diaryTutorialSeen
   diaryFirstOpened: false,

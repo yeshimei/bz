@@ -476,9 +476,17 @@
 }
 .bz-diary-filter-tab.bz-diary-on { display: block; }
 .bz-diary-filter-tab .bz-diary-ft-x { font-size: 11px; letter-spacing: 2px; opacity: .75; margin-top: 8px; }
+/* 加密册上的「全部解密」：与「取下」同一条纸签上的第二枚小字，不加底色 */
+.bz-diary-filter-tab .bz-diary-ft-all {
+  font-size: 11px; letter-spacing: 2px; opacity: .85; margin-top: 8px;
+  border-bottom: 1px dashed rgba(255, 233, 216, .55); padding-bottom: 1px;
+}
+/* [hidden] 不该依赖 UA 默认样式：将来作者给这张纸签写了 display，这一条仍能把它收起来 */
+.bz-diary-filter-tab .bz-diary-ft-all[hidden] { display: none; }
 @media (hover: hover) {
 
 .bz-diary-filter-tab:hover .bz-diary-ft-x { opacity: 1; text-decoration: underline; }
+.bz-diary-filter-tab .bz-diary-ft-all:hover { opacity: 1; text-decoration: underline; }
 }
 
 /* ============================================================
@@ -772,69 +780,7 @@
 .bz-diary-ex-seal b { font-size: 12px; letter-spacing: 3px; font-weight: 600; }
 .bz-diary-ex-seal i { font-style: normal; font-size: 10.5px; letter-spacing: .2px; line-height: 1.35; }
 
-/* ---------- 火漆信封(加密) ---------- */
-.bz-diary-b-envelope { margin: 14px auto 18px; width: 78%; }
-.bz-diary-envelope { position: relative; cursor: pointer; }
-.bz-diary-env-body {
-  height: 150px; border-radius: 5px;
-  background: linear-gradient(160deg, #5c4a38, #4a3a2a 60%, #3d2f22);
-  box-shadow: 0 10px 20px rgba(30, 18, 8, .45), inset 0 1px 0 rgba(255,255,255,.1);
-  position: relative; overflow: hidden;
-}
-.bz-diary-env-body::before {
-  content: ""; position: absolute; inset: 0;
-  background:
-    linear-gradient(45deg, transparent 46%, rgba(255,255,255,.06) 46% 54%, transparent 54%),
-    linear-gradient(-45deg, transparent 46%, rgba(0,0,0,.12) 46% 54%, transparent 54%);
-}
-.bz-diary-env-flap {
-  position: absolute; left: 0; right: 0; top: 0; height: 76px;
-  background: linear-gradient(180deg, #6a563f, #55432f);
-  clip-path: polygon(0 0, 100% 0, 50% 100%);
-  transition: transform .5s ease; transform-origin: top center;
-  box-shadow: 0 3px 6px rgba(0,0,0,.3);
-  z-index: 2;
-}
-.bz-diary-env-wax {
-  position: absolute; left: 50%; top: 58px; transform: translateX(-50%);
-  width: 44px; height: 44px; border-radius: 50%;
-  background: radial-gradient(circle at 35% 30%, #a03325, #6e1d13 70%, #571409);
-  box-shadow: 0 3px 8px rgba(0,0,0,.5), inset 0 -3px 6px rgba(0,0,0,.35);
-  display: flex; align-items: center; justify-content: center;
-  font-size: 19px; z-index: 3;
-  transition: transform .3s;
-}
-@media (hover: hover) {
-
-.bz-diary-envelope:hover .bz-diary-env-wax { transform: translateX(-50%) scale(1.07); }
-}
-.bz-diary-env-label {
-  position: absolute; left: 0; right: 0; bottom: 14px; text-align: center;
-  color: #cbb896;  font-size: 14px; letter-spacing: 4px;
-}
-.bz-diary-env-split { position: absolute; left: 0; right: 0; top: 58px; height: 44px; pointer-events: none; z-index: 4; display: none; }
-.bz-diary-env-split i { position: absolute; top: 0; width: 50%; height: 100%; }
-.bz-diary-env-split .bz-diary-es-l { left: 0; transform-origin: right bottom; }
-.bz-diary-env-split .bz-diary-es-r { right: 0; transform-origin: left bottom; }
-.bz-diary-envelope.bz-diary-opening .bz-diary-env-split { display: block; }
-.bz-diary-envelope.bz-diary-opening .bz-diary-env-split .bz-diary-es-l { animation: bz-diary-waxL .6s ease both; }
-.bz-diary-envelope.bz-diary-opening .bz-diary-env-split .bz-diary-es-r { animation: bz-diary-waxR .6s ease both; }
-@keyframes bz-diary-waxL { to { transform: rotate(-38deg) translate(-12px, 10px); opacity: 0; } }
-@keyframes bz-diary-waxR { to { transform: rotate(30deg) translate(10px, 14px); opacity: 0; } }
-.bz-diary-envelope.bz-diary-opening .bz-diary-env-wax { animation: bz-diary-waxBreak .6s ease both; }
-@keyframes bz-diary-waxBreak {
-  0% { transform: translateX(-50%) scale(1); }
-  45% { transform: translateX(-50%) scale(1.25); }
-  100% { transform: translateX(-50%) scale(0); opacity: 0; }
-}
-.bz-diary-envelope.bz-diary-opening .bz-diary-env-flap { transform: rotateX(150deg); }
-/* 拆开的信不在纸上原地撑高(会把纸面顶破),全文在「抽出的一张纸」里读 */
-.bz-diary-env-reseal {
-  display: none; margin: 4px auto 12px; width: max-content;
-   font-size: 14px; color: #8a6a33; cursor: pointer;
-  border-bottom: 1px dashed rgba(138, 106, 51, .6); padding-bottom: 1px;
-}
-.bz-diary-envelope.bz-diary-unsealed .bz-diary-env-reseal { display: block; }
+/* 火漆信封整段退役（2026-11-06 用户拍板）：加密分类册里直接摊明文，不再有信封这一块。 */
 
 /* ============================================================
    浮层:便签菜单 / 纸条 / 贴纸册 / 台历 / 抽出的一张纸 / 灯箱
@@ -1106,6 +1052,11 @@
 .bz-diary-lb-photo.bz-diary-tilt-5 { transform: rotate(1.7deg); }
 @keyframes bz-diary-lbPick { from { transform: scale(.4) rotate(6deg); opacity: 0; } }
 .bz-diary-lb-media { position: relative; background: #111; }
+/* 加密媒体解密失败：给一句人话占位，不写空 src（空 src 会被浏览器当成当前页再请求一次） */
+.bz-diary-lb-fail {
+  padding: 40px 48px; font-size: 14px; letter-spacing: .06em;
+  color: #efe4cc; background: #241a10;
+}
 /* 照片按**容器**收边,不按视口 —— 外层 .lb-photo 是 min(86vw,1000px) 再减 32px 内边距,
    图若按 86vw 取宽,会比它宽 32px 顶出白卡(卡纸两侧被切)。
    max-height 仍是视口比例:竖图靠它收高。 */
@@ -1169,6 +1120,8 @@
 .bz-diary-void-entry { padding: 2px 0 8px; }
 .bz-diary-void-entry p { margin: 0 0 10px; font-size: 15px; line-height: 2; color: var(--bz-diary-ink); }
 .bz-diary-void-entry p.bz-diary-void-title { font-size: 16px; font-weight: 600; }
+/* 分类册/加密册空态那句说明：比标题轻一档，别和正文抢眼睛 */
+.bz-diary-void-entry p.bz-diary-void-desc { font-size: 13px; color: var(--bz-diary-ink-soft); line-height: 1.8; }
 .bz-diary-void-acts { display: flex; align-items: center; flex-wrap: wrap; gap: 6px 18px; }
 .bz-diary-void-link { border: 0; background: none; padding: 0; font: inherit; font-size: 13px; cursor: pointer;
   color: #b3564d; text-decoration: underline; text-underline-offset: 4px; }

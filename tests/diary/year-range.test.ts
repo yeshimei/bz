@@ -70,4 +70,13 @@ describe('getYearRange（写日记滚轮年份动态范围，UX-34）', () => {
     // 混有有效 → 只按有效项计算
     expect(yearRangeOf(['abc', '2020-03-04', '日记-2026'])).toEqual({ min: 2020, max: expectedMax() });
   });
+
+  it('解锁后 entries 里的加密条目不算：全本年份范围只按可见条目（更早的加密条目不把下限拖老）', () => {
+    const c = new DiaryAppController();
+    c.entries = [
+      mkEntry('2020-03-04'),
+      { ...mkEntry('1999-12-31'), encrypted: true, tags: ['日记', '加密'], noteId: 'note-1' },
+    ];
+    expect(c.getYearRange()).toEqual({ min: 2020, max: expectedMax() });
+  });
 });

@@ -108,7 +108,11 @@ function buildSwitchBody(next: DiaryEntryFormat, count: number): HTMLElement {
   const note = document.createElement('span');
   note.className = 'bz-diary-fmt-dialog-note';
   note.textContent = '转换的话，原文件进回收站，可恢复';
-  facts.append(existing, note);
+  // 加密日记不在 md 里（在保险库），切换格式不会碰它们——用户容易以为「整本一起转」
+  const enc = document.createElement('span');
+  enc.className = 'bz-diary-fmt-dialog-note';
+  enc.textContent = '保险库里的加密日记不受影响';
+  facts.append(existing, note, enc);
 
   wrap.append(sample, facts);
   return wrap;

@@ -17,7 +17,7 @@
  *    图片失败态一律走类切换，不写行内样式。
  */
 import { esc, iconSpan } from '../core/ui/str';
-import type { WallEntry, WallMedia } from './types';
+import { SYSTEM_ENCRYPT_TAG, type WallEntry, type WallMedia } from './types';
 
 // ===== 媒体地址解析（纯层不碰 vault：回调由 ui 侧给） =====
 
@@ -244,7 +244,11 @@ export function stripHashInto(t: string, out: string[]): string {
  * 原样渲染会在每一则影评/书评条头印出「00:00 · 电影」，把内部占位当成了内容。
  */
 export function sealHTML(e: WallEntry, hashes: string[]): string {
-  const tags = e.tags.map((t) => '<span class="bz-diary-seal-tag">' + esc(t) + '</span>').join('');
+  /* 系统分类「加密」不印在条目头（它只是分类册的入口记号，UI 合并时已滤掉，这里再兜一层） */
+  const tags = e.tags
+    .filter((t) => t !== SYSTEM_ENCRYPT_TAG)
+    .map((t) => '<span class="bz-diary-seal-tag">' + esc(t) + '</span>')
+    .join('');
   const hs = hashes.length
     ? '<span class="bz-diary-seal-hashes">' +
       hashes.map((t) => '<span class="bz-diary-seal-hash">#' + esc(t) + '</span>').join('') +
@@ -264,8 +268,8 @@ export function photoHTML(m: WallMedia, e: WallEntry, lbIndex: number, ctx: Rend
   const name = m.name;
   /*
    * 加密条目的媒体在保险箱里，vault 里没有可解析的文件——纸面**先只留挂载点**
-   * （`data-enc-name` / `data-enc-kind`），拆信后由 `ui.ts::mountEncryptedMedia` 按需解密再补 src。
-   * 这类媒体也不入灯箱（`collectPhotoRefs` 只收明文条目），故不发 `data-lb`。
+   * （`data-enc-name` / `data-enc-kind`），摊明文后由 `ui.ts::mountEncryptedMediaVisible` 按需解密再补 src。
+   * 灯箱号照发：点开时同样按需解密那一条（2026-11-06 起加密条目也进灯箱）。
    */
   const lazy = !!e.encrypted;
   const hook = lazy ? ' data-enc-name="' + esc(name) + '" data-enc-kind="' + m.kind + '"' : '';
@@ -296,13 +300,15 @@ export function photoHTML(m: WallMedia, e: WallEntry, lbIndex: number, ctx: Rend
     m.kind === 'video'
       ? '<video' + src + ' preload="metadata" muted playsinline' + hook + '></video>'
       : '<img' + src + ' loading="lazy" alt="' + alt + '"' + hook + '>';
+  /* 灯箱号缺失（-1，媒体不在当前册的索引里）时不发 data-lb：点了也不会开出一张空灯箱 */
+  const lbAttr = lbIndex >= 0 ? ' data-lb="' + lbIndex + '"' : '';
   return (
     '<div class="bz-diary-b-photo" data-eid="' +
     esc(e.id || '') +
     '"><figure class="bz-diary-photo ' +
     tiltClassOf(lbIndex) +
     '"' +
-    (lazy ? '' : ' data-lb="' + lbIndex + '"') +
+    lbAttr +
     '><div class="bz-diary-ph-media">' +
     inner +
     '</div></figure></div>'
@@ -424,41 +430,21 @@ function paraHTML(b: { text: string }, e: WallEntry): string {
   );
 }
 
-/** 火漆信封（加密条目：全文不装在纸面上，拆开后在「抽出的一张纸」里读） */
-function envelopeHTML(e: WallEntry): string {
-  return (
-    '<div class="bz-diary-b-envelope"><div class="bz-diary-envelope" data-eid="' +
-    esc(e.id || '') +
-    '"><div class="bz-diary-env-body"><div class="bz-diary-env-flap"></div>' +
-    '<div class="bz-diary-env-split"><i class="bz-diary-es-l"></i><i class="bz-diary-es-r"></i></div>' +
-    '<div class="bz-diary-env-wax">🔐</div><div class="bz-diary-env-label">火漆封缄 · 拆信需主密码</div></div>' +
-    '<span class="bz-diary-env-reseal">重新封缄</span></div></div>'
-  );
-}
-
 /**
  * 条目 → 块 HTML 串（按纸面顺序）。日戳不在此列——由分页器在日界处插 `daystampHTML`。
  *
  * 派生规则（与原型一致）：
- * - 加密条目 → 只有信封一块（`opts.unwrap` 时例外，见下）；
+ * - 加密条目 → 解锁后**直接摊明文**（2026-11-06 用户拍板，火漆信封退役）：正文照常排，
+ *   只把媒体段换成 `data-enc-name` 挂载点（原文件不在 vault，由 ui 按需解密后补 src）；
  * - 影视/书 → 类型签 + 票根/藏书票（**正文段整体跳过**：那两类的 content 是解析期压平的
  *   `影评 + ![[海报]]` / `书名 + 书评 + ![[封面]]`，正文已由票根/藏书票承载，再渲一遍就是重复）；
  * - 信 → 类型签 + 标题行 + 正文段流（与日记同构，不截断）；
  * - 日记 → 类型签 + 正文段流。
- *
- * `opts.unwrap`：拆信后那张纸要的是**加密条目的全文**——跳过信封分支，但仍以「加密」身份渲染，
- * 这样媒体段会发出 `data-enc-name` 挂载点（`photoHTML`）供按需解密。
  */
-export function entryBlockHTMLs(
-  e: WallEntry,
-  ctx: RenderCtx,
-  opts: { unwrap?: boolean } = {},
-): string[] {
+export function entryBlockHTMLs(e: WallEntry, ctx: RenderCtx): string[] {
   const eid = esc(e.id || '');
   const wrap = (cls: string, inner: string) =>
     '<div class="' + cls + '" data-eid="' + eid + '">' + inner + '</div>';
-
-  if (e.encrypted && !opts.unwrap) return [envelopeHTML(e)];
 
   /* `#标签` 先收集（供类型签展示），正文里不要再出现 */
   const hashes: string[] = [];
@@ -629,8 +615,8 @@ export function bookPanelHTML(): string {
         <div class="bz-diary-flipbook"></div>
       </div>
 
-      <!-- 分类书签条（筛选态） -->
-      <div class="bz-diary-filter-tab"><span class="bz-diary-ft-name"></span><span class="bz-diary-ft-x">取下</span></div>
+      <!-- 分类书签条（筛选态）；加密册上多一枚「全部解密」 -->
+      <div class="bz-diary-filter-tab"><span class="bz-diary-ft-name"></span><span class="bz-diary-ft-all" hidden>全部解密</span><span class="bz-diary-ft-x">取下</span></div>
 
       <!-- 写作内页（ADR-0233）：点「写」就在书上摊开一张素纸，正文写在这一页上。
            摆这一层（书页之上、书壳之内）而不是进 StPageFlip 的书页流：草稿不该被分页，
@@ -680,9 +666,8 @@ export function bookPanelHTML(): string {
   <div class="bz-diary-menu" hidden>
     <div class="bz-diary-mn-item" data-act="open">打开笔记</div>
     <div class="bz-diary-mn-item" data-act="retype">换张贴纸</div>
-    <div class="bz-diary-mn-item" data-act="envelope">收进信封</div>
-    <div class="bz-diary-mn-item" data-act="unseal">拆信看</div>
-    <div class="bz-diary-mn-item" data-act="takeout">从信封取出</div>
+    <div class="bz-diary-mn-item" data-act="envelope">加密</div>
+    <div class="bz-diary-mn-item" data-act="takeout">解密</div>
     <div class="bz-diary-mn-item" data-act="copytext">誊录正文</div>
     <div class="bz-diary-mn-item" data-act="copylink">誊录位置</div>
     <div class="bz-diary-mn-item bz-diary-danger" data-act="tear">撕掉</div>
@@ -705,12 +690,12 @@ export function bookPanelHTML(): string {
     </div>
   </div>
 
-  <!-- 火漆密码框：拆信/收进信封/看加密照片都要过这道（主密码交给真保险箱校验，
+  <!-- 火漆密码框：加密/解密/看加密照片都要过这道（主密码交给真保险箱校验，
        本域只负责收，绝不碰密码学——原型那个演示用假密码框不搬，见 ui.ts 头部注记） -->
   <div class="bz-diary-pass" hidden>
     <div class="bz-diary-pass-paper">
       <div class="bz-diary-pass-wax">${iconSpan('lock')}</div>
-      <div class="bz-diary-pass-title">火漆封缄</div>
+      <div class="bz-diary-pass-title">解锁保险库</div>
       <div class="bz-diary-pass-desc">这一下要动保险箱，先报主密码</div>
       <input class="bz-diary-pass-input" type="password" spellcheck="false"
              autocomplete="off" placeholder="主密码">

@@ -148,6 +148,11 @@ export function noteRowHTML(note: SafeNote, kind: 'note' | 'diary', active: bool
     </div>`;
 }
 
+/** 日记块头 `# 标签/标签 HH:mm`：详情里只摊正文，时间/分类已经在标题与副行里 */
+function stripDiaryBlockHead(text: string): string {
+  return String(text || '').replace(/^#\s+.+\s+\d{2}:\d{2}\s*\r?\n?/, '');
+}
+
 /** 笔记/日记详情卡 HTML（含各资产动作按钮，绑定由 UIManager 完成） */
 export function noteDetailHTML(note: SafeNote, kind: 'note' | 'diary', plainPreview?: string): string {
   const color = ASSET_COLOR[kind];
@@ -163,7 +168,8 @@ export function noteDetailHTML(note: SafeNote, kind: 'note' | 'diary', plainPrev
       ? `<button class="bbtn teal" data-detail="preview">${vIc('eye', 14)} 解密预览</button>
          <button class="bbtn" data-detail="restore">${vIc('download', 14)} 取出还原</button>
          <button class="bbtn danger" data-detail="delete">${vIc('trash-2', 14)} 销毁</button>`
-      : `<button class="bbtn indigo" data-detail="restore-diary">${vIc('download', 14)} 还原回日记</button>
+      : `<button class="bbtn indigo" data-detail="preview">${vIc('eye', 14)} 图文预览</button>
+         <button class="bbtn" data-detail="restore-diary">${vIc('download', 14)} 还原回日记</button>
          <button class="bbtn" data-detail="copy-diary">${vIc('copy', 14)} 复制正文</button>
          <button class="bbtn danger" data-detail="destroy-diary">${vIc('trash-2', 14)} 彻底销毁</button>`;
   return `
@@ -176,7 +182,9 @@ export function noteDetailHTML(note: SafeNote, kind: 'note' | 'diary', plainPrev
         ? `<div class="field"><div class="lab">附件镜像</div><div class="valrow">${attLine}</div></div>
            <div class="field"><div class="lab">加密时间</div><div class="valrow"><span class="val">${escapeHtml(created)}</span></div></div>
            <div class="note hint">原笔记正文已 100% 密文化；双击列表行可压缩预览（原图按需加载原层）。</div>`
-        : `<div class="field"><div class="lab">正文预览</div><div class="note pre">${plainPreview ? escapeHtml(plainPreview).replace(/\n/g, '<br>') : '（未解密预览）'}</div></div>
+        : `<div class="field"><div class="lab">正文</div><div class="note pre">${plainPreview ? escapeHtml(stripDiaryBlockHead(plainPreview)).replace(/\n/g, '<br>') : '（未解密预览）'}</div></div>
+           ${note.attachments.length ? '<div class="field"><div class="lab">图片与视频</div><div class="bz-vault-dmedia" data-diary-media></div></div>' : ''}
+           <div class="field"><div class="lab">附件</div><div class="valrow">${attLine}</div></div>
            <div class="field"><div class="lab">加密于</div><div class="valrow"><span class="val">${escapeHtml(created)}</span></div></div>`}
       <div class="bigbtns">${actionBtns}</div>
     </div>`;

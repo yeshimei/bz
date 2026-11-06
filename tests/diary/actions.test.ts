@@ -2,7 +2,7 @@
  * 日记本书页界面（ADR-0230）· 条目动作与媒体回归。
  *
  * 与 `ui-book.test.ts` 的分工：那边管**结构**（分页/建书/文具/菜单分流），这边管**动作的细枝末节**——
- * 复制双链的三种分流、加密/取出的守卫与失败分支、撕掉的确认对象、媒体失败态与显影、
+ * 复制双链的三种分流、加密/解密的守卫与失败分支、撕掉的确认对象、媒体失败态与显影、
  * 录音卡「一次只放一段」、`[[双链]]` 跳转、那年今天的明信片、浮层 Esc 栈的顺序。
  *
  * 淘汰自回忆墙版的同名文件（ADR-0230 决策 7）：旧版整套断言挂在 `.bz-diary-desk` /
@@ -253,7 +253,7 @@ describe('誊录位置（复制双链）', () => {
 });
 
 // ============================================================
-//  收进信封 / 从信封取出：守卫与失败分支
+//  加密 / 解密：守卫与失败分支
 // ============================================================
 
 describe('收进信封（加密）的守卫与失败分支', () => {
@@ -442,7 +442,7 @@ describe('收进信封（加密）的守卫与失败分支', () => {
   });
 });
 
-describe('从信封取出（解密）的守卫', () => {
+describe('解密（还原）的守卫', () => {
   it('reclassifyEntry 抛错 → 提示主密码有问题且密文未受影响（不广播解密事件）', async () => {
     const c = await openBook();
     mocks.reclassifyEntry.mockRejectedValue(new Error('wrong password'));
@@ -461,29 +461,34 @@ describe('从信封取出（解密）的守卫', () => {
       encrypted: true,
       noteId: 'note-9',
     });
-    expect(getNoticeMessages().join('\n')).toContain('取出失败：主密码可能不正确');
+    expect(getNoticeMessages().join('\n')).toContain('解密失败：主密码可能不正确');
   });
 
-  it('「拆信看」在册面上找不到信封（纸已被重排掉）→ 直接把全文摊在抽出的纸上', async () => {
+  it('解密前先二次确认：选取消就一个字都不动', async () => {
     const c = await openBook();
-    (c as unknown as { unsealEntry: (e: WallEntry) => void }).unsealEntry({
+    mocks.openFlowDialog.mockResolvedValue('cancel');
+    await (c as unknown as { decryptEntryAction: (e: WallEntry) => Promise<void> }).decryptEntryAction({
       date: '2026-08-10',
       time: '21:00',
-      tags: ['日记', '加密'],
-      emoji: '🔐',
-      content: '藏在信封里的话',
+      tags: ['日记'],
+      emoji: '',
+      content: 'x',
       filename: 'vault/x',
       lineNumber: 0,
       kind: 'diary',
       media: [],
-      text: '藏在信封里的话',
-      segments: [{ kind: 'text', text: '藏在信封里的话' }],
+      text: 'x',
+      segments: [],
       encrypted: true,
       noteId: 'note-9',
-      id: 'enc-not-on-page',
     });
-    expect(q('.bz-diary-sheet').hidden).toBe(false);
-    expect(q('.bz-diary-sheet-body').textContent).toContain('藏在信封里的话');
+    expect(mocks.openFlowDialog).toHaveBeenCalledWith(
+      expect.objectContaining({ className: 'bz-diary-flow-dialog', title: '解密这篇日记' })
+    );
+    const ref = (mocks.openFlowDialog.mock.calls[0] as unknown as [{ message?: string }])[0];
+    expect(ref.message).toContain('解密');
+    expect(ref.message).not.toContain('取出'); // 用户可见文案统一成「解密/解锁」
+    expect(mocks.reclassifyEntry).not.toHaveBeenCalled();
   });
 });
 

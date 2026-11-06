@@ -15,6 +15,8 @@
 import { describe, expect, it, beforeEach } from 'vitest';
 import { diarySettingsSchema } from '../../src/diary/settings';
 import { applyDirectories, DIARY_DIRECTORY, LETTER_DIRECTORY } from '../../src/diary/config';
+import { invalidateWallCache, loadWallEntries, wallCacheFresh } from '../../src/diary/data';
+import { serializeDiaryEntryFile } from '../../src/core/diary-format';
 import { setApp } from '../../src/core/app';
 import { setSettingsProvider } from '../../src/core/settings-provider';
 import type { SettingsSchema, SettingsRowContext } from '../../src/core/settings-schema';
@@ -37,6 +39,21 @@ function directoryRow(bindingKey: string): {
   if (!row) throw new Error(`diarySettingsSchema「目录」组缺少绑定键 ${bindingKey} 的 path 行`);
   if (typeof row.onChange !== 'function') throw new Error(`目录行 ${bindingKey} 的 onChange 未接线`);
   return row as { type: 'path'; onChange: (value: string, ctx: SettingsRowContext) => void };
+}
+
+/** 取「显示」组下指定绑定键的 toggle 行（找不到 / 没接 onChange 直接 fail） */
+function displayToggleRow(bindingKey: string): {
+  type: 'toggle';
+  onChange: (value: boolean, ctx: SettingsRowContext) => void;
+} {
+  const group = diarySettingsSchema().groups.find((g) => g.name === '显示');
+  if (!group) throw new Error('diarySettingsSchema 缺少「显示」组——设置结构漂移');
+  const row = group.rows.find(
+    (r) => (r as { type?: string }).type === 'toggle' && (r as { binding?: { key?: string } }).binding?.key === bindingKey
+  ) as { type: 'toggle'; onChange?: (value: boolean, ctx: SettingsRowContext) => void } | undefined;
+  if (!row) throw new Error(`diarySettingsSchema「显示」组缺少绑定键 ${bindingKey} 的 toggle 行`);
+  if (typeof row.onChange !== 'function') throw new Error(`toggle 行 ${bindingKey} 的 onChange 未接线`);
+  return row as { type: 'toggle'; onChange: (value: boolean, ctx: SettingsRowContext) => void };
 }
 
 beforeEach(() => {
@@ -87,5 +104,36 @@ describe('目录设置行 → applyDirectories → 运行时常量（端到端�
     const row = directoryRow('diaryDirectory');
     expect(typeof row.fallbackValue).toBe('function');
     expect(row.fallbackValue?.()).toBe('日记');
+  });
+});
+
+describe('「收录影院/收录书库」开关 → 墙缓存失效（不依赖日记本 UI 订阅）', () => {
+  it('两个 toggle 的 onChange 都立即作废 wallCache：日记本关着改设置，下次开册也不会命中旧聚合', async () => {
+    const vault = new MockVault();
+    vault.files.set(
+      '我的/日记/2401010800.md',
+      serializeDiaryEntryFile({ date: '2024-01-01', time: '08:00' }, ['日记'], '一条日记')
+    );
+    const app = mockAppWithVault(vault);
+    setApp(app as never);
+    applyDirectories({ diaryDirectory: '我的/日记', diaryEntryFormat: 'entry' });
+    setSettingsProvider(() => ({ diaryPageSize: 20 }) as never);
+    try {
+      await loadWallEntries(app as never);
+      expect(wallCacheFresh(app as never)).toBe(true);
+
+      // 影院开关：onChange 同步作废（不等 150ms 的合并广播）
+      displayToggleRow('diaryShowCinema').onChange(false, NO_CTX);
+      expect(wallCacheFresh(app as never)).toBe(false);
+
+      // 书库开关同样：重新读盘建立缓存后再切，仍立即失效
+      await loadWallEntries(app as never);
+      expect(wallCacheFresh(app as never)).toBe(true);
+      displayToggleRow('diaryShowBookshelf').onChange(false, NO_CTX);
+      expect(wallCacheFresh(app as never)).toBe(false);
+    } finally {
+      invalidateWallCache();
+      setSettingsProvider(() => ({}) as never);
+    }
   });
 });

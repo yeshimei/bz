@@ -632,6 +632,44 @@ describe('loadWallEntries 聚合四类（日记+影视+信+书）', () => {
     });
   });
 
+  it('设置里关掉影院/书库 → 聚合不再含这两类，信与日记照旧（2026-11-06 联动开关）', async () => {
+    setSettingsProvider(
+      () =>
+        ({
+          diaryShowCinema: false,
+          diaryShowBookshelf: false,
+        }) as never
+    );
+    try {
+      const app = makeApp({
+        '我的/日记/2403100800.md': entry('2024-03-10', '08:00', ['日记'], '春游'),
+        '我的/影视/海边的曼彻斯特.md': '---\n影评: 很压抑\n观影日期: 2024-03-11\n---\n',
+        '我的/信/给未来.md': '---\ndate: 2024-03-09 20:00\n---\n你好\n',
+        '书库/来自新世界.md': '---\ntitle: 来自新世界\ncompletionDate: 2024-03-12\nbookReview: 神作\n---\n',
+      });
+      const entries = await loadWallEntries(app);
+      expect(entries.map((e) => e.kind).sort()).toEqual(['diary', 'letter']);
+    } finally {
+      setSettingsProvider(() => ({}) as never);
+    }
+  });
+
+  it('老库缺 diaryShowCinema / diaryShowBookshelf 键 → 两个开关都按默认「开」收录', async () => {
+    // 2026-11-06 新增的加性开关：老库设置里没有这两个键，不能当成 false 把影院/书库吞掉
+    setSettingsProvider(() => ({ diaryPageSize: 20 }) as never);
+    try {
+      const app = makeApp({
+        '我的/日记/2403100800.md': entry('2024-03-10', '08:00', ['日记'], '春游'),
+        '我的/影视/海边的曼彻斯特.md': '---\n影评: 很压抑\n观影日期: 2024-03-11\n---\n',
+        '书库/来自新世界.md': '---\ntitle: 来自新世界\ncompletionDate: 2024-03-12\nbookReview: 神作\n---\n',
+      });
+      const entries = await loadWallEntries(app);
+      expect(entries.map((e) => e.kind).sort()).toEqual(['book', 'diary', 'movie']);
+    } finally {
+      setSettingsProvider(() => ({}) as never);
+    }
+  });
+
   it('四类目录同时为空（或不存在）安全返回空数组', async () => {
     const app = makeApp({});
     expect(await loadWallEntries(app)).toEqual([]);

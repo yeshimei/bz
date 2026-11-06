@@ -777,12 +777,15 @@ describe('设置面板（settings-panel）', () => {
     // 模拟某域在当前端零可见项（如设置全为移动端组时处于桌面端）→ 列表剔除
     (mod.loadedCounts as Map<string, number>).set('cinema', 0);
     expect(mod.listableDomains().some((d) => d.id === 'cinema')).toBe(false);
-    // 触发导航重绘（搜索输入即重绘）→ 影院从导航消失
+    // 触发导航重绘（搜索输入即重绘）→ 影院从导航消失；日记本的「收录影院」开关可能命中，故按域名钉
     const search = popup.querySelector('.bz-sp-search .bz-input') as HTMLInputElement;
     search.value = '影院';
     search.dispatchEvent(new Event('input', { bubbles: true }));
     await flushSearch();
-    expect(popup.querySelectorAll('.bz-sp-nav-item').length).toBe(0);
+    const navNames = [...popup.querySelectorAll('.bz-sp-nav-item .bz-sp-nav-name')].map((b) => b.textContent);
+    expect(navNames).not.toContain('影院');
+    // 「影院」命中日记本的「收录影院」开关文案：日记本设置项仍在列（不是整列表被清空）
+    expect(navNames).toContain('日记本');
     // 未加载（无计数）的域保守显示；cleanup 清空计数
     (mod.loadedCounts as Map<string, number>).delete('cinema');
     expect(mod.listableDomains().some((d) => d.id === 'cinema')).toBe(true);
@@ -837,11 +840,15 @@ describe('设置面板（settings-panel）', () => {
     await flushSearch();
     const hitNames = [...popup.querySelectorAll('.bz-sp-nav-item .bz-sp-nav-name')].map((b) => b.textContent);
     expect(hitNames).not.toContain('聚合讯');
-    // 但可见域搜索正常
+    // 但可见域搜索正常（2026-11-06：「影院」还会命中日记本的「收录影院」开关——
+    // 搜索本来就搜设置项文案，故这里只钉「影院域在列」，不再按命中数死数）
     search.value = '影院';
     search.dispatchEvent(new Event('input', { bubbles: true }));
     await flushSearch();
-    expect(popup.querySelectorAll('.bz-sp-nav-item').length).toBe(1);
+    const hitNames2 = [...popup.querySelectorAll('.bz-sp-nav-item .bz-sp-nav-name')].map((b) => b.textContent);
+    expect(hitNames2).toContain('影院');
+    // 同一个词也命中日记本设置项（收录影院）——两个域都该在列
+    expect(hitNames2).toContain('日记本');
     ui.cleanup();
   });
 

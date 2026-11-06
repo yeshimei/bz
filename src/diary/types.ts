@@ -91,6 +91,14 @@ export interface DateFilter {
 // ===== 媒体墙条目类型（issue 255 起 WallEntry 家族自 data.ts 上移；render 纯层经此引用，
 // 不触 data.ts 的 obsidian 依赖，纯度约定要求） =====
 
+/**
+ * 系统分类「加密」的标签名——**纯层可用的单一来源**。
+ * `render.ts` 的条目头要滤掉它（加密签只是分类册入口，不当内容展示），而纯层不能 import
+ * `config.ts`（那里连着 settings-provider / cinema / bookshelf 等服务）。config.ts 的
+ * `ENCRYPT_TAG` 从这里转出，两侧永远同一个字面量。
+ */
+export const SYSTEM_ENCRYPT_TAG = '加密';
+
 /** 媒体文件（从正文 `![[...]]` 内链提取） */
 export interface WallMedia {
   /** 引用名：纯文件名或完整引用路径（不含 `|参数` 后缀） */

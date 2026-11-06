@@ -4,14 +4,16 @@
  * - 加密：构建 `# emoji HH:mm\n正文` 块 + 收集正文引用的图片/视频附件 → lockNote 入库 →
  *         原块由 diary 域写层（store.removeDiaryEntries）摘除（lockNote 不删整 md）。
  * - 加载：从解锁的 SafeManager 读全部 diary-entry → 解密 → 解析成 DiaryEntry（带 encrypted/noteId 标记）。
- * - 降级/改分类：restoreDiaryEntry 还原附件 + 块 merge 回原 md + 取出即删。
+ * - 解密/改分类：restoreDiaryEntry 还原附件 + 块 merge 回原 md + 解密即删（旧称「取出即删」）。
  * 依赖方向（ADR-0002）：store(数据层) ← 本层 ← ui；不挂 window；import 保险箱域（显式跨域 import）。
  */
 import { getApp } from '../core/app';
 import { notify } from '../core/notice';
 import { getSafeManager } from '../encrypt';
-import { collectNoteAttachmentPaths, kindOf } from '../encrypt/ui';
+import { collectNoteAttachmentPaths, collectSharedAttachmentPaths, kindOf, mimeOf } from '../encrypt/ui';
+import { compressImage, videoFrame } from '../encrypt/preview';
 import { bytesToBase64, type LockAttachmentInput } from '../encrypt/data';
+import { tryGetSettings } from '../core/settings-provider';
 import {
   diaryDateFromLegacyPath,
   diaryDayDateFromOwnPath,
@@ -52,10 +54,40 @@ interface CollectedAttachments {
   oversized: string[];
 }
 
+/**
+ * 压缩预览层（与保险库「生成压缩预览」设置同源，2026-11-06）：
+ * 保险库设置里 `encryptPreviewEnabled` 开（默认开）才生成；图片 canvas 缩放、视频抽首帧。
+ * 这是可选增强，任何失败都返回 undefined，绝不阻塞加密主流程。
+ */
+async function buildPreviewData(path: string, b64: string): Promise<string | undefined> {
+  try {
+    const s = tryGetSettings() as
+      | { encryptPreviewEnabled?: boolean; encryptPreviewSize?: string; encryptPreviewQuality?: string }
+      | undefined;
+    if (s?.encryptPreviewEnabled === false) return undefined;
+    const size = parseInt(String(s?.encryptPreviewSize ?? ''), 10) || 384;
+    const quality = parseFloat(String(s?.encryptPreviewQuality ?? '')) || 0.5;
+    const src = `data:${mimeOf(path)};base64,${b64}`;
+    const kind = kindOf(path);
+    const res = kind === 'video' ? await videoFrame(src, size, quality) : await compressImage(src, size, quality);
+    return res?.dataUrl;
+  } catch {
+    return undefined;
+  }
+}
+
 async function collectAttachmentsForContent(content: string, datePath: string): Promise<CollectedAttachments> {
   const app = getApp();
   // 附件引用：metadataCache.embeds（Obsidian 自带链接信息）为主 + 正则兜底（collectNoteAttachmentPaths）
   const paths = collectNoteAttachmentPaths(app, datePath, content);
+  /* 他引保护（issue 338）：被其他笔记同时引用的附件，原件保留在原路径、只加密一份镜像；
+     还原时跳过写回。日记加密此前漏了这层检查，加密一篇会把别处还在用的图连带删掉。 */
+  const shared = new Set<string>();
+  try {
+    for (const p of collectSharedAttachmentPaths(app, datePath, paths)) shared.add(p);
+  } catch {
+    /* 他引检查失败按「无他引」处理（与保险库同口径：功能不阻断） */
+  }
   const list: AttachmentInput[] = [];
   const oversized: string[] = [];
   for (const p of paths) {
@@ -69,8 +101,16 @@ async function collectAttachmentsForContent(content: string, datePath: string): 
         continue;
       }
       const buf = await app.vault.readBinary(f as any);
-      // 原始 base64（无预览层精简；还原以原质量为准）——统一分块 util
-      list.push({ path: p, kind: kindOf(p), data: bytesToBase64(new Uint8Array(buf)) });
+      // 原始 base64（还原以原质量为准）+ 可选压缩预览层（保险库图文预览用）
+      const data = bytesToBase64(new Uint8Array(buf));
+      const previewData = await buildPreviewData(p, data);
+      list.push({
+        path: p,
+        kind: kindOf(p),
+        data,
+        previewData,
+        keptShared: shared.has(p) || undefined,
+      });
     } catch (e) {
       /* 附件读取失败跳过该附件 */
     }
@@ -197,7 +237,7 @@ export async function deleteEncryptedEntry(noteId: string): Promise<void> {
   await safe.removeNote(noteId);
 }
 
-// ===== 降级/改分类（恢复 merge 回原 md，取出即删） =====
+// ===== 降级/改分类（恢复 merge 回原 md，解密即删；旧称「取出即删」） =====
 
 /**
  * 还原落点按当前日记目录重算（D9 后半）：加密时固化的是「当时」的文件路径，

@@ -14,7 +14,7 @@
  * 兼容说明：`getSubTagsOfPrimary`/`isSubTag`/`getParentPrimaryTag` 保留导出但恒空/恒否——
  * 层级概念已退役，调用方若还引用不会炸，只是永远拿不到子项。
  */
-import type { SubTagConfig, TagConfig } from './types';
+import { SYSTEM_ENCRYPT_TAG, type SubTagConfig, type TagConfig } from './types';
 import { tryGetSettings } from '../core/settings-provider';
 import { obsidianDailyNotesFolder } from '../core/daily-notes';
 import {
@@ -302,8 +302,8 @@ export function applyDirectories(settings: {
   applyDiaryTypes(settings.diaryTypes);
 }
 
-/** 加密分类名（ADR-0017；写块标题、筛选/计数、排序用） */
-export const ENCRYPT_TAG = '加密';
+/** 加密分类名（ADR-0017；写块标题、筛选/计数、排序用）。字面量单源在 types.ts 的纯层常量 */
+export const ENCRYPT_TAG = SYSTEM_ENCRYPT_TAG;
 
 /**
  * 分类展示顺序（筛选栏）：配置顺序，但「加密」固定排在最后（用户决策）。
@@ -342,8 +342,10 @@ export function buildTagMaps() {
   }
 }
 
-/** 获取分类对应的 emoji；未知回退 📖 */
+/** 获取分类对应的 emoji；未知回退 📖。「加密」是系统分类，固定用 🔐（用户 2026-11-06：
+ *  分类册里不能显示成一本普通日记的 📖）。 */
 export function getTagEmoji(tag: string): string {
+  if (tag === ENCRYPT_TAG) return '🔐';
   return tagToEmojiMap[tag] || '📖';
 }
 

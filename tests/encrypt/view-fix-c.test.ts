@@ -111,6 +111,19 @@ describe('批 C 修复回归：日记入口/概览绑定/滚位/搜索/流水口
     expect(ui.asset).toBe('diary');
   });
 
+  it('加密日记详情：有附件时图与视频铺在正文下（媒体槽 + 图文预览入口）', async () => {
+    const note = fakeNote(9, 'diary-entry');
+    note.attachments = [
+      { path: '我的/日记/附件/a.png', kind: 'image', blobRef: '.a.enc', blobSize: 3, fingerprint: 'f', hasPreview: false, previewRef: '' },
+    ];
+    sm.manifest.notes.push(note);
+    ui.show();
+    await waitFor(() => !!document.querySelector('.bz-vault-detail > .bz-vault-area'));
+    (ui as any).setAssetFromNav('diary');
+    await waitFor(() => !!document.querySelector('[data-diary-media] .bz-encrypt-preview-slot'));
+    expect(document.querySelector('[data-detail="preview"]')).toBeTruthy();
+  });
+
   it('T1(P1) setAsset/setAssetFromNav 不再把 diary 折为 note（pw 仍兜底）', () => {
     (ui as any).setAssetFromNav('diary');
     expect(ui.asset).toBe('diary');

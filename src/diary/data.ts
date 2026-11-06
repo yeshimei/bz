@@ -379,14 +379,20 @@ async function loadSpecialEntries(
 
 /**
  * 影视/信/书三类（① 三目录并行）：一个文件一条，量小且日期取自 frontmatter
- * （影视/书连正文都不用读，只走 metadataCache），故**一次解析齐**，作为窗口流里那一侧的游标源。
+ * （影视/书连正文都不用读，只走 metadataCache），故**一次解析齐**，作为窗口流里那一侧游标源。
  * 排序与全墙同口径：date 降序、time 降序。
+ *
+ * 影院/书库可被日记本设置关掉（2026-11-06 用户拍板，默认开）：关掉只影响本册子的收录，
+ * 两个域自己的数据与面板不动；信没有开关（它是日记本自己的第二目录）。
  */
 async function loadOtherEntries(app: App): Promise<WallEntry[]> {
+  const s = tryGetSettings() as { diaryShowCinema?: boolean; diaryShowBookshelf?: boolean } | undefined;
+  const showMovie = s?.diaryShowCinema !== false;
+  const showBook = s?.diaryShowBookshelf !== false;
   const [movieE, letterE, bookE] = await Promise.all([
-    loadSpecialEntries(app, movieDirectory(), 'movie', parseMovieFile),
+    showMovie ? loadSpecialEntries(app, movieDirectory(), 'movie', parseMovieFile) : Promise.resolve([]),
     loadSpecialEntries(app, LETTER_DIRECTORY, 'letter', parseLetterFile),
-    loadSpecialEntries(app, bookDirectory(), 'book', parseBookFile),
+    showBook ? loadSpecialEntries(app, bookDirectory(), 'book', parseBookFile) : Promise.resolve([]),
   ]);
   const entries = [...movieE, ...letterE, ...bookE];
   entries.sort((a, b) => cmpDesc(a.date, a.time, b.date, b.time));

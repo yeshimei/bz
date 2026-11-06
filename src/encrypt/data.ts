@@ -1501,6 +1501,7 @@ export class SafeManager {
    * 原子语义同 restoreNote：全部附件解密/校验成功且块就绪才写回；任一失败零落盘。
    * `diaryDir`：当前日记目录（D9 同源真值=diary 域 applyDirectories 维护的 DIARY_DIRECTORY 快照，
    * 由调用方注入——diary 侧直传、encrypt 面板侧动态 import；未注入时回落 settings 读取兜底）。
+   * entry / day 两个还原分支的落点都优先用它（同一来源，避免与 settings 读取有时序差）。
    */
   restoreDiaryEntry(noteId: string, finalBlock: string, diaryDir?: string): Promise<boolean> {
     return this.enqueueOp(() => this.restoreDiaryEntrySerial(noteId, finalBlock, diaryDir));
@@ -1540,7 +1541,7 @@ export class SafeManager {
         const wasCreated = await this.commitRestoreAttachment(a, plainAttachments[i]!);
         if (wasCreated) created.push(a.path);
       }
-      const ok = await this.mergeDiaryBlock(note.path, finalBlock);
+      const ok = await this.mergeDiaryBlock(note.path, finalBlock, diaryDir);
       if (!ok) throw new Error('日记块 merge 失败');
     } catch (e) {
       for (const p of created) {
@@ -1581,14 +1582,16 @@ export class SafeManager {
    * - 同内容幂等跳过（「块已 merge 但清单没保存」的中断残留/重试）；
    * - 目标被占且内容不同（外来内容）绝不覆盖——后缀让位 `-2/-3…` 新建；
    * - note.path 为旧格式日期文件路径时兜底换算为条目文件路径（历史清单兼容）。
+   * `diaryDir`：调用方注入的当前日记目录（与 entry 分支的落点同源）；day 分支优先用它，
+   * 未注入才回落 settings 读取。
    * @returns 成功写入（或幂等跳过）返回 true；路径无法换算日期返回 false。
    */
-  private async mergeDiaryBlock(datePath: string, block: string): Promise<boolean> {
+  private async mergeDiaryBlock(datePath: string, block: string, diaryDir?: string): Promise<boolean> {
     const app = getApp();
     if (!datePath || !block) return false;
     // day 格式：还原进当天的 `YYYY-MM-DD.md`，块头是 emoji（不是 v2 标签名）
     if (tryGetSettings().diaryEntryFormat === 'day') {
-      return this.mergeLegacyDiaryBlock(datePath, block);
+      return this.mergeLegacyDiaryBlock(datePath, block, diaryDir);
     }
     // 解析块头 `# 标签名/标签名 HH:mm`（v2 标签名制）
     const md = block.replace(/\r\n/g, '\n');
@@ -1649,23 +1652,28 @@ export class SafeManager {
   }
 
   /**
-   * day 格式还原：把旧格式块追加到当天 `YYYY-MM-DD.md`。
+   * day 格式还原：把旧格式块按 **HH:mm 插回当天文件的时间序位置**（2026-11-06 用户拍板；
+   * 此前只追加到末尾，同一天还原多篇顺序会乱）。
    * - 日期从 note.path（条目文件或旧日期文件）换算；
-   * - 幂等：同一块已在文件里则跳过；
-   * - 只追加，不覆盖已有内容。
+   * - 幂等：同一块已在文件里则跳过（旧版只追加、不压缩，历史残留的未压缩同块同样命中）；
+   * - 只插入，不覆盖已有内容；同一时刻的多块插在已有同刻块之后；
+   * - 块内容逐字还原（正文里 3+ 连续空行不压），只规范化块与前后文的交界；
+   * - 落点目录优先用调用方注入的 `diaryDir`（与 entry 分支同源），未注入才回落 settings。
    */
-  private async mergeLegacyDiaryBlock(datePath: string, block: string): Promise<boolean> {
+  private async mergeLegacyDiaryBlock(datePath: string, block: string, diaryDir?: string): Promise<boolean> {
     const app = getApp();
     const md = block.replace(/\r\n/g, '\n').trimEnd();
     const first = md.split('\n')[0] ?? '';
-    if (!/^#\s*.+?\s+\d{2}:\d{2}\s*$/.test(first)) return false;
+    const head = /^#\s*.+?\s+(\d{2}:\d{2})\s*$/.exec(first);
+    if (!head) return false;
+    const time = head[1];
     const date =
       diaryMetaFromEntryPath(datePath)?.date ??
       diaryDayDateFromOwnPath(datePath) ??
       diaryDateFromLegacyPath(datePath);
     if (!date) return false;
-    // 落点按当前日记目录 + 当前 Obsidian 日期格式重算（目录/格式改过也能落回正确文件）
-    const targetPath = diaryDayFilePath(currentDiaryDirectory(), date);
+    // 落点按调用方注入的日记目录 + 当前 Obsidian 日期格式重算（目录/格式改过也能落回正确文件）
+    const targetPath = diaryDayFilePath(diaryDir || currentDiaryDirectory(), date);
     await this.ensureVaultParentFolder(targetPath);
     await enqueueFileTask(targetPath, async () => {
       const existing = app.vault.getAbstractFileByPath(targetPath) as any;
@@ -1673,7 +1681,29 @@ export class SafeManager {
       if (existing && existing.isFolder !== true) content = await app.vault.read(existing);
       const base = content.replace(/\r\n/g, '\n').trimEnd();
       if (base.includes(md)) return; // 幂等：同一块已在文件里
-      const next = base ? `${base}\n\n${md}\n` : `${md}\n`;
+      /* 按块头时间找插入点：第一块比它晚的就插在那一块前面；都不晚就接在末尾 */
+      const lines = base ? base.split('\n') : [];
+      let at = lines.length;
+      for (let i = 0; i < lines.length; i++) {
+        const m = /^#\s*(?:\S+)\s+(\d{2}:\d{2})/u.exec(lines[i]);
+        if (!m) continue;
+        if (m[1] > time) {
+          at = i;
+          break;
+        }
+      }
+      const before = lines.slice(0, at);
+      const after = lines.slice(at);
+      // 只规范化插入点两侧：吃掉紧邻边界的空行，块与前后文之间恒留一个空行。
+      // `md` 自身逐字保留（解密即原文：正文里的 3+ 连续空行不能压）；
+      // before/after 内部同理不碰——其他条目有意保留的空行原样留在文件里。
+      while (before.length && before[before.length - 1].trim() === '') before.pop();
+      while (after.length && after[0].trim() === '') after.shift();
+      const chunks: string[] = [];
+      if (before.length) chunks.push(before.join('\n'));
+      chunks.push(md);
+      if (after.length) chunks.push(after.join('\n'));
+      const next = chunks.join('\n\n').trimEnd() + '\n';
       if (existing && existing.isFolder !== true) await app.vault.modify(existing, next);
       else {
         const file = await app.vault.create(targetPath, next);

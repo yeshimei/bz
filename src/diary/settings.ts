@@ -15,6 +15,30 @@ import { obsidianDailyNotesFolder } from '../core/daily-notes';
 import { applyDirectories } from './config';
 import { mountDiaryFormatEditor } from './settings-format';
 import { mountDiaryTypeEditor } from './settings-types';
+import { emitDomainEvent } from '../core/domain-bus';
+import { invalidateWallCache } from './data';
+
+/**
+ * 「收录影院 / 收录书库」两次连切的合并广播间隔：两个开关各自 emit 会让整册重读重排两次。
+ * 缓存失效是**同步**做的（见 `notifyDiaryDisplayChanged`），被合并的只有重排信号。
+ */
+const DISPLAY_CHANGE_DEBOUNCE_MS = 150;
+let displayChangeTimer: ReturnType<typeof setTimeout> | null = null;
+
+/**
+ * 显示开关变了。两步分工：
+ * 1. **立刻作废墙缓存**——日记本关着时 `diary:display-changed` 没有订阅者（订阅在 show/hide 之间），
+ *    不在这里作废，下次 show() 会走 `_allowCacheNext` 快路命中旧聚合，影院/书库仍被收录；
+ * 2. 广播做一次短防抖：连切两个开关只触发一轮整读重排。
+ */
+function notifyDiaryDisplayChanged(): void {
+  invalidateWallCache();
+  if (displayChangeTimer !== null) clearTimeout(displayChangeTimer);
+  displayChangeTimer = setTimeout(() => {
+    displayChangeTimer = null;
+    emitDomainEvent('diary:display-changed', {});
+  }, DISPLAY_CHANGE_DEBOUNCE_MS);
+}
 
 /** 日记本设置 schema */
 export function diarySettingsSchema(): SettingsSchema {
@@ -51,6 +75,21 @@ export function diarySettingsSchema(): SettingsSchema {
         name: '显示',
         rows: [
           { type: 'toggle', name: '默认日期取自文件', desc: '默认日期取自当前打开的日记文件', binding: { key: 'useFileDateTime' } },
+          {
+            type: 'toggle',
+            name: '收录影院',
+            desc: '把影院的观影票根排进这本册子',
+            binding: { key: 'diaryShowCinema' },
+            // 保存后作废缓存 + 合并广播：日记本关着时缓存也要失效，开着时按新开关重读重排（聚合在 data.ts）
+            onChange: () => notifyDiaryDisplayChanged(),
+          },
+          {
+            type: 'toggle',
+            name: '收录书库',
+            desc: '把书库的藏书票排进这本册子',
+            binding: { key: 'diaryShowBookshelf' },
+            onChange: () => notifyDiaryDisplayChanged(),
+          },
           {
             type: 'number',
             name: '每卷装多少则',

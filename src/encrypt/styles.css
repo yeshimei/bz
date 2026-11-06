@@ -82,6 +82,20 @@
   max-width: 100%; max-height: 70vh; border-radius: var(--bz-radius-sm); display: block; margin: var(--bz-space-sm) 0;
 }
 @keyframes bz-encrypt-spin { to { transform: rotate(360deg); } }
+
+/* 加密日记详情：正文下面的图与视频（2026-11-06 用户要求「文字和图片视频一起看」）。
+   复用预览窗的 slot/media 类，只给容器排成网格；视频点开才解密原层并变成可播放的 <video>。 */
+.bz-vault-dmedia {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(118px, 1fr));
+  gap: var(--bz-space-sm); margin-top: var(--bz-space-sm);
+}
+.bz-vault-dmedia .bz-encrypt-preview-slot { margin: 0; min-height: 86px; }
+.bz-vault-dmedia .bz-encrypt-preview-slot .bz-encrypt-preview-media {
+  width: 100%; height: 100%; max-height: 180px; object-fit: cover;
+  border-radius: var(--bz-radius-sm); display: block;
+}
+.bz-vault-dmedia .bz-encrypt-preview-missing { min-height: 86px; }
+.bz-vault-dmedia .bz-encrypt-preview-video { width: 100%; max-height: 220px; }
 @media (max-width: 768px) {
   #bz-encrypt-popup { width: 95%; max-height: 90vh; }
 }

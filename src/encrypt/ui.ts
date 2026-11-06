@@ -405,7 +405,7 @@ function mediaHtml(a: SafeAttachment | null | undefined, dataUrl: string | null 
       <span>${a.kind === 'video' ? '视频抽帧预览不可用' : '无压缩预览'}，点击加载原${kindLabel}</span>
     </div>`;
   }
-  return `<span class="bz-encrypt-preview-slot" data-attach="${key}">${inner}<span class="bz-encrypt-preview-spinner"></span></span>`;
+  return `<span class="bz-encrypt-preview-slot" data-attach="${key}" data-kind="${a.kind}">${inner}<span class="bz-encrypt-preview-spinner"></span></span>`;
 }
 
 /** 进度通知按次独立：每次加密/还原用唯一键，避免相邻操作被去重抑制 */
@@ -551,6 +551,12 @@ export class UIManager {
   asset: VaultAsset = 'overview';
   /** 加密日记详情临时明文缓存（渲染详情时惰性解密） */
   private _diaryPlain: Record<string, string> = {};
+  /**
+   * 加密日记详情缩略图缓存：key = `noteId|附件 path`，值为预览层 dataUrl（无预览层记 null）。
+   * 详情首帧（正文未就绪）与正文落定后的重绘会各调一次 fillDiaryMedia，按正文顺序重排时
+   * 不应把同一批缩略图再解一遍（decryptPreview 本身无缓存）；随上锁与 `_diaryPlain` 一并清空。
+   */
+  private _diaryPreviewCache = new Map<string, string | null>();
   /** 最近一次体检结果缓存（E5：概览健康卡随 scanHealth 更新，未体检为 null；上锁清空） */
   lastHealth: { issues: number; lastChecked: string } | null = null;
   /** 本次解锁会话起点（ms；notifyUnlockUi 同步，上锁清空）——左栏「已解锁时长」计时用 */
@@ -929,7 +935,7 @@ export class UIManager {
       this.dataManager.lock();
       this.pwDataManager.lock(); // 共享锁：本侧密码明文缓存一并清出
       this._selNoteId = null;
-      this._diaryPlain = {}; // G：明文缓存随上锁一并清出内存（与 lockNow 同口径）
+      this.clearDiaryCaches(); // G：明文缓存（正文 + 详情缩略图）随上锁一并清出内存（与 lockNow 同口径）
       // E11：lockNow 路径传 suppress——一次上锁只由触发方发一条通知，不再 lockNow/hide 各弹一条
       if (!suppressAutoLockNotice) this.noticeAutoLock();
     }
@@ -1983,7 +1989,7 @@ export class UIManager {
         uiEmpty(
           kind === 'note'
             ? { title: '还没有笔记', desc: '用「加密当前笔记」把整篇笔记移入保险库' }
-            : { title: '还没有加密日记', desc: '日记面板把条目改分类为「加密」后移入这里' }
+            : { title: '还没有加密日记', desc: '在日记本里右键点「加密」，这条日记就会收进这里' }
         )
       );
       return;
@@ -2012,12 +2018,41 @@ export class UIManager {
 
   private _selNoteId: string | null = null;
 
-  /** 加密笔记/日记详情（异步解密日记正文预览） */
+  /** 加密笔记/日记详情（异步解密日记正文 + 图片视频） */
   private renderNoteDetail(detail: HTMLElement, note: SafeNote, kind: 'note' | 'diary') {
     const plain = kind === 'diary' ? this._diaryPlain[note.id] : undefined;
     detail.innerHTML = noteDetailHTML(note, kind, plain);
     // 呈报#59/E5：详情卡大图标 + 动作按钮图标占位兑现
     mountIcons(detail);
+    this.bindNoteDetail(detail, note, kind);
+    // 详情的 ⋮ 菜单按评审去掉（桌面端右上角三点）：行级操作改从**行右键菜单**进入
+    // （attachNoteDrawer 同一套 attachItemActions，功能不丢，只是不再有第二个入口）
+    // 无 kind 过滤（正文预览异步）
+    if (kind === 'diary') {
+      /* 「点开加密日记只显示文字」改掉（2026-11-06 用户要求）：图与视频铺在正文下面，
+         按保险库的预览设置走（有压缩预览先显缩略图，点开才解密原层）。 */
+      void this.fillDiaryMedia(detail, note, plain);
+      if (!this._diaryPlain[note.id]) {
+        void this.dataManager
+          .decryptNoteBody(note)
+          .then((t) => {
+            // E3：解密耗时窗口内用户可能已切走资产——除条目 id 外还须验当前资产，
+            // 否则切到「密码」后半秒详情区被日记卡盖掉（导航高亮停在密码）
+            if (t !== null && this.asset === 'diary' && this._selNoteId === note.id) {
+              this._diaryPlain[note.id] = t;
+              this.renderNoteDetail(detail, note, kind);
+              // 动效层：日记正文解密落定——正文预览块显影（异步解密窗口的收束一拍）
+              const pre = detail.querySelector<HTMLElement>('.note.pre');
+              if (pre) motionRevealBody(pre);
+            }
+          })
+          .catch(() => {});
+      }
+    }
+  }
+
+  /** 详情卡动作绑定（桌面右栏与移动二级页共用一份） */
+  private bindNoteDetail(detail: HTMLElement, note: SafeNote, kind: 'note' | 'diary'): void {
     const bind = (a: string, fn: () => void) => {
       detail.querySelector(`[data-detail="${a}"]`)?.addEventListener('click', (e) => {
         e.stopPropagation();
@@ -2033,24 +2068,84 @@ export class UIManager {
     bind('restore-diary', () => this.confirmRestoreDiary(note));
     bind('copy-diary', () => this.copyDiaryText(note));
     bind('destroy-diary', () => this.confirmDestroyDiary(note));
-    // 详情的 ⋮ 菜单按评审去掉（桌面端右上角三点）：行级操作改从**行右键菜单**进入
-    // （attachNoteDrawer 同一套 attachItemActions，功能不丢，只是不再有第二个入口）
-    // 无 kind 过滤（正文预览异步）
-    if (kind === 'diary' && !this._diaryPlain[note.id]) {
-      void this.dataManager
-        .decryptNoteBody(note)
-        .then((t) => {
-          // E3：解密耗时窗口内用户可能已切走资产——除条目 id 外还须验当前资产，
-          // 否则切到「密码」后半秒详情区被日记卡盖掉（导航高亮停在密码）
-          if (t !== null && this.asset === 'diary' && this._selNoteId === note.id) {
-            this._diaryPlain[note.id] = t;
-            this.renderNoteDetail(detail, note, kind);
-            // 动效层：日记正文解密落定——正文预览块显影（异步解密窗口的收束一拍）
-            const pre = detail.querySelector<HTMLElement>('.note.pre');
-            if (pre) motionRevealBody(pre);
-          }
-        })
-        .catch(() => {});
+    void kind; // 动作集已按 data-detail 分流，kind 保留给后续差异化
+  }
+
+  /**
+   * 加密日记详情里的图与视频（2026-11-06 用户要求：文字旁边也要看得到图）：
+   * - 顺序：正文里出现的先后，没被引用的接在后面；
+   * - 有压缩预览层先显缩略图/视频封面，点它才解密原始层（大视频不直接进内存）；
+   * - `encryptAutoLoadOriginal` 开着时自动解密全部**原图**——与预览窗同一套保险库设置；
+   *   视频保持点击按需加载（几十 MB 视频的原始 base64 → Blob 会整段驻留内存，且设置文案就是「原图」）。
+   */
+  private async fillDiaryMedia(root: HTMLElement, note: SafeNote, plain?: string): Promise<void> {
+    const box = root.querySelector<HTMLElement>('[data-diary-media]');
+    if (!box) return;
+    const media = note.attachments.filter((a) => a.kind === 'image' || a.kind === 'video');
+    if (!media.length) return;
+    const ordered: SafeAttachment[] = [];
+    if (plain) {
+      const { slots, inlined } = collectMediaSlots(plain, note.attachments);
+      for (const s of slots) {
+        if (s.attachment && media.includes(s.attachment) && !ordered.includes(s.attachment)) {
+          ordered.push(s.attachment);
+        }
+      }
+      for (const a of media) if (!inlined.has(a.path) && !ordered.includes(a)) ordered.push(a);
+    } else {
+      ordered.push(...media);
+    }
+    let previews: (string | null)[];
+    try {
+      previews = await Promise.all(ordered.map((a) => this.diaryPreviewOf(note.id, a)));
+    } catch {
+      previews = ordered.map(() => null);
+    }
+    if (!box.isConnected) return; // 解密窗口内详情被重建/切走：这批结果作废（旧容器已离树）
+    box.innerHTML = '';
+    ordered.forEach((a, i) => {
+      const wrap = document.createElement('div');
+      wrap.innerHTML = mediaHtml(a, previews[i]);
+      if (wrap.firstElementChild) box.appendChild(wrap.firstElementChild);
+    });
+    if (!box.childElementCount) return;
+    this.bindMediaClicks(box, ordered);
+    if (this.config.autoLoadOriginal) {
+      // 只自动加载图片：视频原始层体积大（几十 MB 的解密结果会以 Blob 形式驻留内存）
+      box
+        .querySelectorAll<HTMLElement>('.bz-encrypt-preview-slot[data-kind="image"]')
+        .forEach((slot) => slot.click());
+    }
+  }
+
+  /**
+   * 解密一张附件的预览层（详情内缓存）：同一 `noteId|path` 只解一次——
+   * 首帧与正文落定后的重绘共用；上锁清空（迟到的解密结果不回填，防明文跨锁驻留）。
+   */
+  private async diaryPreviewOf(noteId: string, a: SafeAttachment): Promise<string | null> {
+    const key = noteId + '|' + a.path;
+    if (this._diaryPreviewCache.has(key)) return this._diaryPreviewCache.get(key)!;
+    if (!a.hasPreview) {
+      this._diaryPreviewCache.set(key, null);
+      return null;
+    }
+    const du = await this.dataManager.decryptPreview(a).catch(() => null);
+    if (this.dataManager.unlocked) this._diaryPreviewCache.set(key, du);
+    return du;
+  }
+
+  /** 整体清空日记详情明文缓存（上锁/外部上锁/安全模式隐藏共用） */
+  private clearDiaryCaches(): void {
+    this._diaryPlain = {};
+    this._diaryPreviewCache.clear();
+  }
+
+  /** 丢掉某条日记的详情明文缓存（还原回日记 / 彻底销毁后条目已出库） */
+  private dropDiaryCaches(noteId: string): void {
+    delete this._diaryPlain[noteId];
+    const prefix = noteId + '|';
+    for (const k of [...this._diaryPreviewCache.keys()]) {
+      if (k.startsWith(prefix)) this._diaryPreviewCache.delete(k);
     }
   }
 
@@ -2231,7 +2326,7 @@ export class UIManager {
     this.dataManager.lock();
     this.pwDataManager.lock(); // 共享锁：本侧密码明文缓存一并清出
     this._selNoteId = null;
-    this._diaryPlain = {};
+    this.clearDiaryCaches();
     // E3：收敛回概览 + 锁态文案——避免停在「笔记」视图显示空态，
     // 视觉像"清空"而非"上锁"
     this.asset = 'overview';
@@ -2263,7 +2358,7 @@ export class UIManager {
     this.closePreview();
     this.hideHealthDialog();
     this._selNoteId = null;
-    this._diaryPlain = {};
+    this.clearDiaryCaches();
     this.lastHealth = null;
     this.unlockedAt = null;
     this.stopSessionTimers();
@@ -2316,7 +2411,7 @@ export class UIManager {
       body.replaceChildren(
         uiEmpty(
           kind === 'diary'
-            ? { title: '还没有加密日记', desc: '日记面板把条目改分类为「加密」后移入这里' }
+            ? { title: '还没有加密日记', desc: '在日记本里右键点「加密」，这条日记就会收进这里' }
             : { title: '还没有笔记', desc: '用「加密当前笔记」把整篇笔记移入保险库' }
         )
       );
@@ -2351,19 +2446,7 @@ export class UIManager {
     body.innerHTML = noteDetailHTML(note, kind);
     // 呈报#59/E5：详情卡图标占位兑现（createMobPage 只兑现了页头，正文体此处另挂）
     mountIcons(body);
-    // 详情动作（复用 bind 逻辑）
-    const bind = (a: string, fn: () => void) => {
-      body.querySelector(`[data-detail="${a}"]`)?.addEventListener('click', (e) => {
-        e.stopPropagation();
-        fn();
-      });
-    };
-    bind('preview', () => void this.openPreview(note));
-    bind('restore', () => this.confirmRestore(note));
-    bind('delete', () => this.confirmDeleteNote(note));
-    bind('restore-diary', () => this.confirmRestoreDiary(note));
-    bind('copy-diary', () => this.copyDiaryText(note));
-    bind('destroy-diary', () => this.confirmDestroyDiary(note));
+    this.bindNoteDetail(body, note, kind);
     page.querySelector('[data-mob-back]')?.addEventListener('click', () => page.remove());
     page.querySelector('[data-mob-menu]')?.addEventListener('click', () => {
       // 移动端详情 ⋮：直接开底部抽屉（E6：旧实现 tmp.click() 触发不了 contextmenu/长按手势，
@@ -2373,15 +2456,21 @@ export class UIManager {
     });
     this.mob.body.appendChild(page);
     motionRevealBody(page); // 动效层：二级页显影揭出
-    // 渲染日记正文预览
+    // 日记：正文解密后重建详情（文字 + 图片视频），不只是往正文格里塞字
     if (kind === 'diary') {
-      void this.dataManager.decryptNoteBody(note).then((t) => {
-        const pre = body.querySelector('.note.pre');
-        if (pre && t !== null) {
-          pre.innerHTML = escapeHtml(t).replace(/\n/g, '<br>');
-          motionRevealBody(pre as HTMLElement); // 动效层：正文解密落定显影
-        }
-      }).catch(() => {});
+      void this.fillDiaryMedia(body, note);
+      void this.dataManager
+        .decryptNoteBody(note)
+        .then((t) => {
+          if (t === null || !body.isConnected) return;
+          body.innerHTML = noteDetailHTML(note, kind, t);
+          mountIcons(body);
+          this.bindNoteDetail(body, note, kind);
+          const pre = body.querySelector<HTMLElement>('.note.pre');
+          if (pre) motionRevealBody(pre); // 动效层：正文解密落定显影
+          void this.fillDiaryMedia(body, note, t);
+        })
+        .catch(() => {});
     }
   }
 
@@ -2481,7 +2570,7 @@ export class UIManager {
   confirmRestoreDiary(note: SafeNote) {
     this.askConfirm(
       '还原回日记',
-      `将「${note.title}」的正文与附件还原到 ${note.path} 的时间序位置？`,
+      `将「${note.title}」的正文与附件还原到日记本（按当前的日记格式与目录落位）？`,
       '还原',
       false, // 还原是取出动作，非破坏 → 保持普通高亮主动作
       () => {
@@ -2511,6 +2600,7 @@ export class UIManager {
       const ok = await this.dataManager.restoreDiaryEntry(note.id, plain, diaryDir);
       if (h) h.hide();
       if (ok) {
+        this.dropDiaryCaches(note.id);
         if (this._selNoteId === note.id) this._selNoteId = null;
         this.renderList();
         this.toast('已还原回日记');
@@ -2531,7 +2621,9 @@ export class UIManager {
           this.toast('正文解密失败', true);
           return;
         }
-        void copySensitiveWithFallback(t).then((ok) => this.toast(ok ? '正文已复制（60 秒后自动清空）' : '复制失败', !ok));
+        /* 块头 `# 标签/标签 HH:mm` 是存储用的，复制给人读的正文时剥掉 */
+        const bodyText = t.replace(/^#\s+.+\s+\d{2}:\d{2}\s*\r?\n?/, '');
+        void copySensitiveWithFallback(bodyText).then((ok) => this.toast(ok ? '正文已复制（60 秒后自动清空）' : '复制失败', !ok));
       })
       .catch(() => this.toast('正文解密失败', true));
   }
@@ -2546,7 +2638,7 @@ export class UIManager {
         void this.dataManager
           .removeNote(note.id)
           .then(() => {
-            delete this._diaryPlain[note.id];
+            this.dropDiaryCaches(note.id);
             if (this._selNoteId === note.id) this._selNoteId = null;
             this.renderList();
             this.toast(`已销毁「${note.title}」`);
@@ -2684,8 +2776,10 @@ export class UIManager {
         err.textContent = '正文解密失败';
         bodyEl = err;
       } else {
+        /* 加密日记的块头 `# 标签/标签 HH:mm` 是存储用的，预览里剥掉，别渲染成一级标题 */
+        const bodyPlain = note.kind === 'diary-entry' ? plain.replace(/^#\s+.+\s+\d{2}:\d{2}\s*\r?\n?/, '') : plain;
         // 先把嵌入改写占位 token（按文档顺序混排），渲染后再原位替换为预览图
-        const { text, slots, inlined: inl } = collectMediaSlots(plain, note.attachments);
+        const { text, slots, inlined: inl } = collectMediaSlots(bodyPlain, note.attachments);
         inlined = inl;
         // Markdown 渲染（占位 token 原样保留）——带超时：render 挂起时降级纯文本而不是让弹窗空白
         const { ok: rendered, el: mdEl } = await this.renderWithTimeout(getApp(), text, note.path);
@@ -2701,7 +2795,7 @@ export class UIManager {
           mdEl.innerHTML = html;
         } else {
           // 渲染失败/超时 → 纯文本兜底（至少能看正文）
-          mdEl.textContent = plain;
+          mdEl.textContent = bodyPlain;
         }
         bodyEl = mdEl;
       }

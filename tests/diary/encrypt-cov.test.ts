@@ -5,7 +5,7 @@
  * 块头标签名解析与兜底去重、deleteEncryptedEntry 守卫、reclassifyEntry 分支（还原落条目文件）。
  */
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { setApp as setCoreApp } from '../../src/core/app';
+import { setApp as setCoreApp, getApp } from '../../src/core/app';
 import { setSettingsProvider } from '../../src/core/settings-provider';
 import { applyDiaryTypes, applyDirectories, LEGACY_DIARY_TYPES } from '../../src/diary/config';
 import { setDiaryDataMap } from '../../src/diary/store';
@@ -146,6 +146,22 @@ describe('encryptEntry 附件收集', () => {
     expect(note.attachments).toHaveLength(1);
     expect(note.attachments[0].kind).toBe('video');
     expect((note.attachments[0] as any).blobSize).toBeGreaterThan(0); // 密文已入库
+  });
+
+  it('他引保护：别的笔记也在用的附件标记 keptShared，原件保留不删（2026-11-06）', async () => {
+    const sm = await unlockSafe();
+    const app = getApp() as any;
+    vault.binaryFiles.set('shared.png', new Uint8Array([1, 2, 3]));
+    vault.files.set('笔记/他引.md', '也引用 ![[shared.png]]');
+    // metadataCache：他引笔记的 embeds 指向 shared.png（collectSharedAttachmentPaths 的唯一输入）
+    (app.metadataCache as any).getFileCache = (f: any) =>
+      f?.path === '笔记/他引.md' ? { embeds: [{ link: 'shared.png' }] } : { embeds: [] };
+    const res = await encryptEntry(plainEntry({ content: '图 ![[shared.png]]' }));
+    expect(res).not.toBeNull();
+    const note = sm.manifest.notes[sm.manifest.notes.length - 1];
+    expect(note.attachments[0]).toMatchObject({ path: 'shared.png', keptShared: true });
+    // 原件保留：他篇的 ![[shared.png]] 不断链
+    expect(vault.binaryFiles.has('shared.png')).toBe(true);
   });
 
   /** 造一个 stat.size 超限的附件（内容仍是 1 字节——守卫在读取前按 stat 拦截，不真读大 buffer） */

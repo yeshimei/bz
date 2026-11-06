@@ -2,14 +2,14 @@
  * 日记本（diary）域 UI · 「桌上那本」书页界面（ADR-0230）
  *
  * 一本书落在台灯下的桌面上：翻开就是最新那篇，往后翻是更旧的日子；功能全是桌上实物——
- * 书口抽册页索引 / 台历跳日 / 放大镜检索 / 铅笔写 / 贴纸册分类 / 火漆信封加密 / 撕页删除 /
- * 相纸显影灯箱 / 那年今天明信片 / 票根·信笺·藏书票。
+ * 书口抽册页索引 / 台历跳日 / 放大镜检索 / 铅笔写 / 贴纸册分类 / 保险库加密（加密分类册） /
+ * 撕页删除 / 相纸显影灯箱 / 那年今天明信片 / 票根·信笺·藏书票。
  *
  * 分层（ADR-0106 / ADR-0230 决策 2）：
  * - **markup 纯层在 `./render`**（书桌 DOM 骨架 + seal/ticket/exlibris/para/entryBlocks/daystamp/photo），
  *   纯度现为约定；插件 ui.ts 消费同一份。
  * - **本文件只放行为**：分页测量与切页、StPageFlip 建书与翻页、文具五项动作、台历/贴纸册/检索/
- *   信封/撕页/灯箱/便签菜单、域事件回刷、加密媒体按需解密。
+ *   加密分类册/撕页/灯箱/便签菜单、域事件回刷、加密媒体按需解密。
  * - **数据层不动**（`data.ts`/`store.ts`/`encrypt.ts`/`config.ts`）：本域 content 只读聚合，
  *   写盘全走 `./store` 的守卫 + 串行队列。
  *
@@ -17,7 +17,8 @@
  * 1. **不带外链字体**（决策 3）：`font-family` 一律回归宿主，观感由「手写」转「印刷」。
  * 2. **没有「抹（抹掉全部本地涂改）」这件文具**（决策 9）：那是探索稿 localStorage 覆盖层专有的
  *    概念（added/deleted/tags/encrypted 四本账），单源里对应的是真文件，没有可抹的对象。
- *    同为原型的「拆信/取出」在单源里走真保险箱，也不再需要那个演示用假密码框。
+ *    同为原型的「拆信/取出」（旧称）在单源里走真保险箱；2026-11-06 起加密分类册直接摊明文，
+ *    解锁仍走本域火漆密码框（主密码交给真保险箱校验）。
  *
  * **写日记走书内写作页**（ADR-0233，推翻 ADR-0230 决策 8）：点「写」在这本书上摊开一张素纸
  * （`.bz-diary-wsp`，见 `startWrite` 一族），落笔即进写层。旧写日记弹窗（`./ui/dialogs` 的
@@ -34,6 +35,7 @@ import { topifyZ } from '../core/dom';
 import { uiSetupScreen } from '../core/ui/setup-screen';
 import { notice } from '../core/notice';
 import { getApp } from '../core/app';
+import { getSafeManager } from '../encrypt';
 import { onDomainEvent } from '../core/domain-bus';
 import { escapeHtml, stripMdExt } from '../core/utils';
 import { openFlowDialog } from '../core/flow-dialog';
@@ -96,6 +98,7 @@ import {
   encryptEntry,
   reclassifyEntry,
   deleteEncryptedEntry,
+  ENCRYPT_TAG,
 } from './encrypt';
 import { copyDiaryLink, showConfirm, jumpToDiaryEntry } from './ui/entry-actions';
 import { buildLocatorPredicateFor } from './ui/locator';
@@ -141,14 +144,12 @@ export interface PhotoRef {
 /**
  * 灯箱序列（纯函数，可单测）：按**条目顺序 × 段序**收集图片/视频，**同名媒体只登记一次**
  * （正文里同一张图引用两次不该在灯箱里数成两张）。
- * 录音卡不进灯箱；加密条目的媒体不在其中——`loadWallEntries` 本就不含未解锁的加密条目，
- * 解锁后在册的加密条目其媒体走 `encryptedMediaUrl()` 单独解密。
+ * 加密条目的媒体也在其中（2026-11-06）：解锁后点开灯箱再按需解密那一条（不预先全解）。
  */
 export function collectPhotoRefs(entries: WallEntry[]): PhotoRef[] {
   const out: PhotoRef[] = [];
   const seen = new Set<string>();
   for (const e of entries) {
-    if (e.encrypted) continue;
     for (const seg of e.segments) {
       if (seg.kind !== 'media') continue;
       if (seg.media.kind === 'audio') continue;
@@ -412,6 +413,12 @@ export class DiaryAppController {
   private albumTarget: WallEntry | null = null;
   /** 「盖上去」在写盘（防连点；写层队列幂等，这里只是别让人以为没反应） */
   private albumBusy = false;
+  /** 「全部解密」在批处理（防连点：已还原的 noteId 再还原会抛错，重复点会报「N 篇没解开」） */
+  private decryptAllBusy = false;
+  /** 批量解密进行中：`diary:entry-decrypted` 由本函数末尾统一整读重排，别再各发一次防抖回刷 */
+  private batchDecrypting = false;
+  /** 正在进加密册：解锁事件那一轮让位给 `enterEncryptedAlbum`，避免按旧 filterTag 先排一遍 */
+  private enteringEncryptAlbum = false;
   private calEl!: HTMLElement;
   private calYmEl!: HTMLElement;
   private calGridEl!: HTMLElement;
@@ -632,7 +639,7 @@ export class DiaryAppController {
     const app = this.app();
     return {
       mediaSrc: (name: string) => this.mediaUrlOf(app, name),
-      lbIndexOf: (name: string) => this.photoIndex.get(name) ?? 0,
+      lbIndexOf: (name: string) => this.photoIndex.get(name) ?? -1,
     };
   }
 
@@ -707,10 +714,17 @@ export class DiaryAppController {
   //  排版：块流 → 测量 → 切页 → 建书
   // ============================================================
 
+  /**
+   * 这一册里能看到的条目。
+   * - 全本 / 普通分类：加密条目一律不出现（解锁也不出现，2026-11-06 用户拍板「加密后从正文消失」）；
+   * - 加密分类：只出现加密条目（「加密书签」= 这一本加密册）。
+   */
   private visibleEntries(): WallEntry[] {
-    if (!this.filterTag) return this.entries;
+    if (this.filterTag === ENCRYPT_TAG) return this.entries.filter((e) => !!e.encrypted);
+    const list = this.entries.filter((e) => !e.encrypted);
+    if (!this.filterTag) return list;
     const tag = this.filterTag;
-    return this.entries.filter((e) => e.tags.includes(tag));
+    return list.filter((e) => e.tags.includes(tag));
   }
 
   /**
@@ -720,7 +734,8 @@ export class DiaryAppController {
    */
   private planVolumes(): Volume[] {
     const list = this.visibleEntries();
-    const key = `${list.length}|${list[0]?.date || ''}|${list[list.length - 1]?.date || ''}|${wallWindowSize()}`;
+    /* 指纹要带筛选态：全本与加密册可能条数/首末日期相同，卷界却不能混用 */
+    const key = `${this.filterTag || ''}|${list.length}|${list[0]?.date || ''}|${list[list.length - 1]?.date || ''}|${wallWindowSize()}`;
     if (key !== this._volKey) {
       this.volumes = splitVolumes(
         list.map((e) => e.date),
@@ -787,7 +802,7 @@ export class DiaryAppController {
     const bookH = this.bookEl.clientHeight || parseFloat(this.cssVar('--bz-diary-pg-h')) || 700;
     const availH = bookH - padT - padB;
 
-    // 1) 块流：日戳 + 条目块（票根/藏书票/信封的归位由 render 层决定）
+    // 1) 块流：日戳 + 条目块（票根/藏书票的归位由 render 层决定）
     const ctx = this.ctx();
     const flow: FlowItem[] = [];
     let lastDate: string | null = null;
@@ -804,7 +819,7 @@ export class DiaryAppController {
     /* 空册（已配置文件夹、一篇都没有）：往块流里塞一篇「默认日记」——它会排在第 0 页，
        也就是摊开书时左边那页。文字的形制跟真日记一致（日戳 + 正文 + 一句引导），
        不像浮在书上的卡片那样打断"这是本书"的感觉。 */
-    if (!this.entries.length && !this._loadError) {
+    if (!list.length && !this._loadError) {
       flow.push({ el: this.emptyEntryBlock(), h: 0, keep: true });
     }
 
@@ -1059,6 +1074,8 @@ export class DiaryAppController {
     this.flip.turnToPage(Math.max(0, targetPage));
     this.flip.on('flip', (e) => {
       this.cursor = e.data;
+      /* 翻到新的一页：加密条目的图片/视频此刻才解密（只解可见页，见 mountEncryptedMediaVisible） */
+      void this.mountEncryptedMediaVisible(this.flipHost);
     });
     this.cursor = Math.max(0, targetPage);
     this.afterPagesBuilt(host);
@@ -1138,17 +1155,20 @@ export class DiaryAppController {
       for (let k = 0; k < this.daySections.length; k++) {
         this.daySections[k].classList.toggle('bz-diary-day-on', k === next);
       }
+      /* 换到新的一天：加密条目的图片/视频此刻才解密（与翻页档的 flip 事件同一语义） */
+      void this.mountEncryptedMediaVisible(this.daySections[next]);
     }
     if (place === 'keep') return;
     const sc = this.daySections[next].firstElementChild as HTMLElement | null;
     if (sc) sc.scrollTop = place === 'bottom' ? sc.scrollHeight : 0;
   }
 
-  /** 每次建书后要重挂的东西：显影 / 媒体失败态 / 录音卡 */
+  /** 每次建书后要重挂的东西：显影 / 媒体失败态 / 录音卡 / 加密条目的媒体解密 */
   private afterPagesBuilt(scope: HTMLElement): void {
     this.developPhotos(scope);
     this.bindMediaErrors(scope);
     this.bindAudios(scope);
+    void this.mountEncryptedMediaVisible(scope);
   }
 
   /** 往后 / 往前一条：跨页档翻一张纸（StPageFlip），窄屏档换一天（日卷，无过渡） */
@@ -1491,13 +1511,28 @@ export class DiaryAppController {
     }
   }
 
-  /** 拆信后的那张纸上若带照片：加密媒体解出后挂 src（并走显影） */
-  private async mountEncryptedMedia(scope: HTMLElement, noteId: string): Promise<void> {
-    const els = scope.querySelectorAll<HTMLElement>('[data-enc-name]');
-    for (const el of Array.from(els)) {
+  /**
+   * 加密条目摊明文的媒体：图片/视频的 `src` 还是空的（render 只发 `data-enc-name` 挂载点），
+   * 按**当前可见页**解密补上。只解可见元素（翻页/切天再解下一批），结果带缓存（含失败）。
+   * 未解锁/无附件/解密失败保持空占位，不阻断整册。
+   */
+  private async mountEncryptedMediaVisible(scope: HTMLElement): Promise<void> {
+    const els = Array.from(scope.querySelectorAll<HTMLElement>('[data-enc-name]'));
+    for (const el of els) {
+      /* 只解「当前摊开的那一页/那一天」。判据不用 `page.style.display`：
+         库的 `display:none` 是 rAF 里写的 inline（首屏同步建书时还没写），库 CSS 的
+         `.stf__item{display:none}` 也不算 inline；窄屏一天的显隐是 `.bz-diary-day-on` 类。
+         所以跨页档按 `cursor`/`cursor+1` 限定，窄屏看 `bz-diary-day-on`——都只看显式状态。 */
+      const page = el.closest<HTMLElement>('.bz-diary-page-item, .bz-diary-day');
+      if (page && !this.isEncMediaPageVisible(page)) continue;
+      if (el.dataset.encLoaded === '1') continue;
+      const host = el.closest<HTMLElement>('[data-eid]');
+      const entry = this.byEid.get(host?.dataset.eid || '');
+      if (!entry?.noteId) continue;
+      el.dataset.encLoaded = '1';
       const name = el.dataset.encName || '';
       const kind = (el.dataset.encKind || 'img') as WallMedia['kind'];
-      const url = await this.encryptedMediaUrl(noteId, { name, kind });
+      const url = await this.encryptedMediaUrl(entry.noteId, { name, kind });
       if (!url || !el.isConnected) continue;
       if (el instanceof HTMLImageElement) {
         el.addEventListener('load', () => el.classList.add('bz-diary-develop'), { once: true });
@@ -1510,6 +1545,23 @@ export class DiaryAppController {
         el.preload = 'metadata';
       }
     }
+  }
+
+  /**
+   * 这个页容器此刻是不是摊在眼前（`mountEncryptedMediaVisible` 的唯一判据）。
+   * - 跨页档：StPageFlip 的 `cursor` 是当前跨页的**左页号**，可见页 = cursor / cursor+1；
+   * - 窄屏档：一天一卷，只有 `.bz-diary-day-on` 那一卷是显出来的；
+   * - 不在书页容器里（灯箱、抽出的纸）：照常挂载，那里本来就是单独打开的。
+   */
+  private isEncMediaPageVisible(page: HTMLElement): boolean {
+    if (page.classList.contains('bz-diary-day')) return page.classList.contains('bz-diary-day-on');
+    if (!page.classList.contains('bz-diary-page-item')) return true;
+    const items = this.flipHost
+      ? Array.from(this.flipHost.querySelectorAll<HTMLElement>('.bz-diary-page-item'))
+      : [];
+    const idx = items.indexOf(page);
+    if (idx < 0) return true; // 页不在当前书里（旧实例/临时副本）：不阻碍解密
+    return idx === this.cursor || idx === this.cursor + 1;
   }
 
   // ============================================================
@@ -1755,7 +1807,7 @@ export class DiaryAppController {
   }
 
   // ============================================================
-  //  块级事件（一次委托）：录音 / wiki / 重封 / 照片 / 票根·藏书票 / 信封
+  //  块级事件（一次委托）：录音 / wiki / 照片 / 票根·藏书票
   // ============================================================
 
   private bindBlockEvents(): void {
@@ -1781,27 +1833,14 @@ export class DiaryAppController {
         if (/^https?:\/\//i.test(href)) window.open(href, '_blank', 'noopener,noreferrer');
         return;
       }
-      const reseal = t.closest<HTMLElement>('.bz-diary-env-reseal');
-      if (reseal) {
-        reseal.closest('.bz-diary-envelope')?.classList.remove('bz-diary-unsealed', 'bz-diary-opening');
-        this.closeSheet();
-        this.toast('重新封缄了');
-        return;
-      }
       const ph = t.closest<HTMLElement>('.bz-diary-photo');
       if (ph && ph.dataset.lb != null) {
-        /* 加密条目的媒体不入灯箱（无 data-lb），别把 0 当页号 */
         this.openLightbox(Number(ph.dataset.lb));
         return;
       }
       const more = t.closest<HTMLElement>('.bz-diary-tk-more');
       if (more) {
         this.openReviewSheet(this.byEid.get(more.closest<HTMLElement>('.bz-diary-ticket')?.dataset.eid || ''));
-        return;
-      }
-      const env = t.closest<HTMLElement>('.bz-diary-envelope');
-      if (env) {
-        this.onEnvelope(env);
         return;
       }
       const ex = t.closest<HTMLElement>('.bz-diary-exlibris');
@@ -1903,29 +1942,17 @@ export class DiaryAppController {
     }
   }
 
-  /**
-   * 拆开的信 / 解封的加密条目：全文（含照片）按需装进一张纸。
-   * render 层对 `encrypted` 条目只出信封，故走 `unwrap`（跳过信封分支）——
-   * **条目仍带着 `encrypted` 身份**，媒体段才会发出 `data-enc-name` 挂载点，
-   * 由 `mountEncryptedMedia` 解密后补 src（内容一字不差，只是不走信封那条分支）。
-   */
-  private buildUnsealed(e: WallEntry): HTMLElement {
-    const box = document.createElement('div');
-    for (const html of entryBlockHTMLs(e, this.ctx(), { unwrap: true })) {
-      box.appendChild(elOf(html));
-    }
-    return box;
-  }
-
   // ============================================================
   //  灯箱（相纸显影）
   // ============================================================
 
   private openLightbox(i: number): void {
-    if (!this.photoRefs[i]) return;
+    if (i < 0 || !this.photoRefs[i]) return;
     this.lbIdx = i;
-    this.renderLightbox();
+    /* 先揭开再画：加密条目的媒体是异步解密（paint 里会挡「已关窗」的迟到结果），
+       顺序反过来第一帧永远是空卡 */
     this.lightboxEl.hidden = false;
+    this.renderLightbox();
   }
 
   private lbStep(d: 1 | -1): void {
@@ -1935,27 +1962,49 @@ export class DiaryAppController {
   }
 
   private renderLightbox(): void {
-    const p = this.photoRefs[this.lbIdx];
+    const idx = this.lbIdx;
+    const p = this.photoRefs[idx];
     if (!p) return;
     const app = this.app();
-    const src = this.mediaUrlOf(app, p.media.name);
-    this.lbMediaEl.innerHTML = '';
-    if (p.media.kind === 'video') {
-      const v = document.createElement('video');
-      v.src = src;
-      v.controls = true;
-      v.autoplay = true;
-      v.loop = true;
-      v.playsInline = true;
-      this.lbMediaEl.appendChild(v);
-    } else {
-      const img = document.createElement('img');
-      img.src = src;
-      img.alt = '';
-      this.lbMediaEl.appendChild(img);
+    const paint = (src: string): void => {
+      if (this.lightboxEl.hidden || this.lbIdx !== idx) return;
+      this.lbMediaEl.innerHTML = '';
+      if (p.media.kind === 'video') {
+        const v = document.createElement('video');
+        v.src = src;
+        v.controls = true;
+        v.autoplay = true;
+        v.loop = true;
+        v.playsInline = true;
+        this.lbMediaEl.appendChild(v);
+      } else {
+        const img = document.createElement('img');
+        img.src = src;
+        img.alt = '';
+        this.lbMediaEl.appendChild(img);
+      }
+      /* 确定性微旋角（类，非内联）：原型是 `style.setProperty('--lb-tilt', …)` */
+      this.lbPhotoEl.className = `bz-diary-lb-photo ${tiltClassOf(idx + 3)}`;
+    };
+    /* 解密失败不写空 src（空 src 会被浏览器当成当前页再请求一次，且显出一个破图标）：
+       给一句人话占位，照片卡照旧摆着。 */
+    const paintFail = (): void => {
+      if (this.lightboxEl.hidden || this.lbIdx !== idx) return;
+      this.lbMediaEl.innerHTML = '';
+      const fail = document.createElement('div');
+      fail.className = 'bz-diary-lb-fail';
+      fail.textContent = '这张没能解密';
+      this.lbMediaEl.appendChild(fail);
+      this.lbPhotoEl.className = `bz-diary-lb-photo ${tiltClassOf(idx + 3)}`;
+    };
+    /* 加密条目：vault 里没有原文件，先留白再按需解密（同一份缓存与纸面共用） */
+    if (p.entry.encrypted && p.entry.noteId) {
+      this.lbMediaEl.innerHTML = '';
+      this.lbPhotoEl.className = `bz-diary-lb-photo ${tiltClassOf(idx + 3)}`;
+      void this.encryptedMediaUrl(p.entry.noteId, p.media).then((url) => (url ? paint(url) : paintFail()));
+      return;
     }
-    /* 确定性微旋角（类，非内联）：原型是 `style.setProperty('--lb-tilt', …)` */
-    this.lbPhotoEl.className = `bz-diary-lb-photo ${tiltClassOf(this.lbIdx + 3)}`;
+    paint(this.mediaUrlOf(app, p.media.name));
     /* 大屏里**一个字都不出**（用户拍板 2026-10-16）：底部原来的「日期 时间 · 文件名」题注
        与「第 n / N 张」计数一并退役 —— 看照片时就只看照片。 */
   }
@@ -2000,7 +2049,6 @@ export class DiaryAppController {
     show('open', !enc && !!(e.filePath || e.filename));
     show('retype', isDiary && !enc);
     show('envelope', isDiary && !enc);
-    show('unseal', enc);
     show('takeout', enc);
     show('copytext', true);
     /* 影视/信/书没有 filePath（只有完整 vault 路径的 filename），但 copyLink 正是按 filename 拼的
@@ -2040,9 +2088,6 @@ export class DiaryAppController {
           break;
         case 'envelope':
           void this.encryptEntryAction(e);
-          break;
-        case 'unseal':
-          this.unsealEntry(e);
           break;
         case 'takeout':
           void this.decryptEntryAction(e);
@@ -2181,9 +2226,9 @@ export class DiaryAppController {
   }
 
   /**
-   * 收进信封（加密）：本域 `encryptEntry`（需保险箱解锁）+ 写层摘除原块；
+   * 加密：本域 `encryptEntry`（需保险库解锁）+ 写层摘除原块；
    * 摘除失败必须回滚密文——密文已入库而原文未删时，解锁后同条出现两次且重试越积越多。
-   * 与「撕掉」同为「条目当场从册上消失」，同样补二次确认。
+   * 与「撕掉」同为「条目当场从册上消失」，同样补二次确认；确认框穿日记本的纸面皮肤。
    */
   private async encryptEntryAction(e: WallEntry): Promise<void> {
     if (e.kind !== 'diary') return; // 影视/信/书无加密入口（入库语义错位）
@@ -2193,11 +2238,13 @@ export class DiaryAppController {
       const unlocked = await this.ensureUnlocked();
       if (!unlocked) return;
       const ok = await openFlowDialog({
-        title: '收进信封',
-        message: `将把「${e.date} ${e.time}」这条日记移入保险库加密保存，原位置不再保留明文。`,
+        title: '加密这篇日记',
+        // 与「撕掉」同一张纸：core 只给中性壳，日记本的皮在 styles.css 的 .bz-diary-flow-dialog
+        className: 'bz-diary-flow-dialog',
+        message: `将把「${e.date} ${e.time}」这条日记锁进保险库，原位置不再保留明文。想拿回来时，到「加密」分类里解密。`,
         actions: [
           { label: '取消', value: 'cancel' },
-          { label: '收进信封', value: 'ok', cta: true, danger: true },
+          { label: '加密', value: 'ok', cta: true, danger: true },
         ],
       });
       if (ok !== 'ok') return;
@@ -2244,56 +2291,110 @@ export class DiaryAppController {
     }
   }
 
-  /** 从信封取出（解密）：本域 `reclassifyEntry` 降级（还原块 merge 回 md，取出即删） */
+  /**
+   * 解密（还原）：确认后 `reclassifyEntry` 把密文解密、按**当前**日记格式与目录重建块写回 md。
+   * 还原是恢复性操作，但它会把明文重新落到磁盘、并从保险库删掉密文，所以补一次确认；
+   * 成功后它不再是加密条目——在加密册里当场消失（取下书签回全本就能看到）。
+   */
   private async decryptEntryAction(e: WallEntry): Promise<void> {
     try {
       const noteId = e.noteId;
       if (!noteId) {
-        notice('无法取出（缺少保险箱记录）', 'error');
+        notice('无法解密（缺少保险箱记录）', 'error');
         return;
       }
       // 此前不问解锁直接取，锁着时只会报一句「主密码可能不正确」（其实是压根没问过密码）
       if (!(await this.ensureUnlocked())) return;
-      const newTags = e.tags.filter((t) => t !== '加密');
-      const ok = await reclassifyEntry(noteId, newTags);
-      if (!ok) {
-        notice('取出失败：主密码可能不正确，密文未受影响', 'error');
+      const ok = await openFlowDialog({
+        title: '解密这篇日记',
+        className: 'bz-diary-flow-dialog',
+        message:
+          `将把「${e.date} ${e.time}」从保险库解密，按当前的日记格式与目录写回日记本；` +
+          '保险库里不再保留这份密文。',
+        actions: [
+          { label: '取消', value: 'cancel' },
+          { label: '解密', value: 'ok', cta: true },
+        ],
+      });
+      if (ok !== 'ok') return;
+      const newTags = e.tags.filter((t) => t !== ENCRYPT_TAG);
+      const done = await reclassifyEntry(noteId, newTags);
+      if (!done) {
+        notice('解密失败：主密码可能不正确，密文未受影响', 'error');
         return;
       }
       const { emitDomainEvent } = await import('../core/domain-bus');
       emitDomainEvent('diary:entry-decrypted', { noteId, date: e.date, newTags });
       await this.loadAndRelayout();
+      /* 它已不是加密条目：加密册里会当场消失，告诉人它回到哪一天 */
+      this.toast(
+        this.filterTag === ENCRYPT_TAG
+          ? `已解密，回到 ${e.date} ${e.time}——取下书签就能看到`
+          : `已解密，写在 ${e.date} ${e.time}`
+      );
     } catch {
-      notice('取出失败：主密码可能不正确，密文未受影响', 'error');
+      notice('解密失败：主密码可能不正确，密文未受影响', 'error');
     }
   }
 
-  /** 拆信看：加密条目在册时（保险箱已解锁）直接摊开全文；内容随密文一起存在内存里 */
-  private unsealEntry(e: WallEntry): void {
-    const env = this.blockEl.querySelector<HTMLElement>(
-      `.bz-diary-envelope[data-eid="${cssEscape(e.id || '')}"]`
-    );
-    if (env) this.onEnvelope(env);
-    else this.openSheet(e.kind === 'letter' ? '火漆封缄 · 全文' : '火漆封缄 · 全文', this.buildUnsealed(e));
-  }
-
-  /** 信封被点：演示拆封动效，然后把全文放到抽出来的那张纸上 */
-  private onEnvelope(env: HTMLElement): void {
-    if (env.classList.contains('bz-diary-unsealed') || env.classList.contains('bz-diary-opening')) return;
-    const eid = env.dataset.eid || '';
-    const e = this.byEid.get(eid);
-    if (!e) return;
-    env.classList.add('bz-diary-opening');
-    const epoch = this.epoch;
-    setTimeout(() => {
-      if (epoch !== this.epoch || !env.isConnected) return;
-      env.classList.remove('bz-diary-opening');
-      env.classList.add('bz-diary-unsealed');
-      /* 拆开：火漆碎开，全文在抽出来的那张纸上读（信封本身高度不变，纸面不会被顶破） */
-      const box = this.buildUnsealed(e);
-      this.openSheet('火漆封缄 · 全文', box);
-      if (e.noteId) void this.mountEncryptedMedia(box, e.noteId);
-    }, 620);
+  /** 加密册的书签条上「全部解密」：确认后逐篇解密还原（串行，失败计数如实报告；防连点） */
+  private async decryptAll(): Promise<void> {
+    if (this.decryptAllBusy) return;
+    const list = this.visibleEntries().filter((x) => !!x.noteId);
+    if (!list.length) {
+      this.toast('加密册里还没有日记');
+      return;
+    }
+    this.decryptAllBusy = true;
+    try {
+      if (!(await this.ensureUnlocked())) return;
+      const ok = await openFlowDialog({
+        title: '全部解密',
+        className: 'bz-diary-flow-dialog',
+        message:
+          `将把这一册的 ${list.length} 篇加密日记全部解密，按当前的日记格式与目录写回日记本；` +
+          '保险库里不再保留这些密文。',
+        actions: [
+          { label: '取消', value: 'cancel' },
+          { label: `全部解密（${list.length} 篇）`, value: 'ok', cta: true, danger: true },
+        ],
+      });
+      if (ok !== 'ok') return;
+      let done = 0;
+      let failed = 0;
+      /** 成功的那些：循环里不逐篇发事件，末尾只发一次聚合事件 */
+      const decrypted: { noteId: string; date: string; newTags: string[] }[] = [];
+      /* 待办表逐篇变短：重复点进不来（busy），中途失败也不会把已还原的再算一遍 */
+      const pending = list.slice();
+      while (pending.length) {
+        const x = pending.shift()!;
+        if (!x.noteId) continue;
+        try {
+          const newTags = x.tags.filter((t) => t !== ENCRYPT_TAG);
+          const r = await reclassifyEntry(x.noteId, newTags);
+          if (r) {
+            done += 1;
+            decrypted.push({ noteId: x.noteId, date: x.date, newTags });
+          } else failed += 1;
+        } catch {
+          failed += 1;
+        }
+      }
+      if (decrypted.length) {
+        const { emitDomainEvent } = await import('../core/domain-bus');
+        /* 一次聚合事件，且这批解密自己会在末尾整读重排——别让本域订阅再排一次 */
+        this.batchDecrypting = true;
+        try {
+          emitDomainEvent('diary:entry-decrypted', { decrypted, count: decrypted.length });
+        } finally {
+          this.batchDecrypting = false;
+        }
+      }
+      await this.loadAndRelayout();
+      this.toast(failed ? `解密了 ${done} 篇，${failed} 篇没解开` : `全部解密完成：${done} 篇`);
+    } finally {
+      this.decryptAllBusy = false;
+    }
   }
 
   /** 撕掉：接本域 `showConfirm`（加密条目走保险箱销毁分支）+ 碎纸动效 */
@@ -2430,19 +2531,32 @@ export class DiaryAppController {
 
     const counts = this.tagCounts();
     this.albumSubEl.textContent = '点一张，就按它重装订一本分类册';
-    const tags = Array.from(counts.keys()).filter((t) => t !== '加密').sort((a, b) => (counts.get(b) || 0) - (counts.get(a) || 0));
-    if (counts.has('加密')) tags.push('加密');
+    const tags = Array.from(counts.keys())
+      .filter((t) => t !== ENCRYPT_TAG)
+      .sort((a, b) => (counts.get(b) || 0) - (counts.get(a) || 0));
+    /* 「加密」是一本常驻的分类册（用户决策：固定排最后），不是按用量统计出来的贴纸：
+       它不参与普通计数，锁着时也不泄露条数；点它先解锁，再把加密日记摊进册子。 */
+    tags.push(ENCRYPT_TAG);
+    const encCount = this.entries.filter((e) => !!e.encrypted).length;
     for (const t of tags) {
-      const isEncrypt = t === '加密';
+      const isEncrypt = t === ENCRYPT_TAG;
       const b = document.createElement('span');
       b.className = `bz-diary-ap-sticker${isEncrypt ? ' bz-diary-as-encrypt' : ''}`;
       b.dataset.tag = t;
       if (this.filterTag === t) b.classList.add('bz-diary-on');
       b.innerHTML =
         `<span class="bz-diary-as-emoji">${getTagEmoji(t)}</span>${escapeHtml(t)}` +
-        (isEncrypt ? '' : `<i class="bz-diary-as-count"> ${counts.get(t) || 0}</i>`);
+        (isEncrypt
+          ? isUnlocked()
+            ? `<i class="bz-diary-as-count"> ${encCount}</i>`
+            : `<i class="bz-diary-as-count"> 🔒</i>`
+          : `<i class="bz-diary-as-count"> ${counts.get(t) || 0}</i>`);
       b.addEventListener('click', () => {
         this.closeAlbum();
+        if (isEncrypt) {
+          void this.enterEncryptedAlbum();
+          return;
+        }
         this.filterTag = this.filterTag === t ? null : t;
         this.applyFilter();
       });
@@ -2500,18 +2614,64 @@ export class DiaryAppController {
     this.albumTarget = null;
   }
 
+  /** 分类书签条复位（收起/上锁、以及「取下书签」）：三条显示状态一起清，别留着上一册的名字 */
+  private resetFilterTab(): void {
+    this.filterTabEl?.classList.remove('bz-diary-on');
+    const allBtn = this.filterTabEl?.querySelector<HTMLElement>('.bz-diary-ft-all');
+    if (allBtn) allBtn.hidden = true;
+    const name = this.filterTabEl?.querySelector<HTMLElement>('.bz-diary-ft-name');
+    if (name) name.textContent = '';
+  }
+
   private applyFilter(): void {
+    /* 落点已经在 relayout 里给了（volume 1 / page 0）；再 jumpToPage(0) 只会多一次翻页，
+       纸上有草稿时还会被 writeGuard 多弹一句「先落笔」。 */
     this.relayout({ volume: 1, page: 0 });
-    if (this.filterTag) {
+    const allBtn = this.filterTabEl.querySelector<HTMLElement>('.bz-diary-ft-all');
+    if (allBtn) allBtn.hidden = this.filterTag !== ENCRYPT_TAG;
+    if (this.filterTag === ENCRYPT_TAG) {
+      this.filterTabEl.classList.add('bz-diary-on');
+      const name = this.filterTabEl.querySelector<HTMLElement>('.bz-diary-ft-name');
+      if (name) name.textContent = `🔐 ${ENCRYPT_TAG}`;
+      const n = this.visibleEntries().length;
+      this.toast(n ? `加密册打开了：${n} 篇` : '加密册里还没有日记：先右键「加密」一篇');
+    } else if (this.filterTag) {
       this.filterTabEl.classList.add('bz-diary-on');
       const name = this.filterTabEl.querySelector<HTMLElement>('.bz-diary-ft-name');
       if (name) name.textContent = `${getTagEmoji(this.filterTag)} ${this.filterTag}`;
-      this.jumpToPage(0);
       this.toast(`分类册装订好了：${this.filterTag}`);
     } else {
-      this.filterTabEl.classList.remove('bz-diary-on');
+      this.resetFilterTab();
       this.toast('整本册子回来了');
     }
+  }
+
+  /**
+   * 进入加密分类册（2026-11-06 用户拍板流程）：
+   * 锁着先开本域火漆框 → 解锁后把保险库里的加密日记并进册子（只解密到内存，不写盘）→
+   * 挂上「加密书签」，这一册只摊加密日记。已经是加密册时再点一次 = 取下书签回全本。
+   */
+  private async enterEncryptedAlbum(): Promise<void> {
+    if (this.filterTag === ENCRYPT_TAG) {
+      this.filterTag = null;
+      this.applyFilter();
+      return;
+    }
+    if (!isUnlocked()) {
+      /* 解锁事件会先触发本域订阅的整读重排；那一刻 `filterTag` 还是旧值，
+         照跑一轮会看到书先闪回全本/分类、再由本函数重排进加密册。置旗让位给本函数。 */
+      this.enteringEncryptAlbum = true;
+      let ok = false;
+      try {
+        ok = await this.ensureUnlocked();
+      } finally {
+        this.enteringEncryptAlbum = false;
+      }
+      if (!ok) return;
+    }
+    this.filterTag = ENCRYPT_TAG;
+    await this.mergeEncryptedEntries();
+    this.applyFilter();
   }
 
   private bindAlbum(): void {
@@ -2522,7 +2682,12 @@ export class DiaryAppController {
     this.albumEl.querySelector<HTMLElement>('.bz-diary-ap-confirm')?.addEventListener('click', () => {
       void this.commitAlbumTags();
     });
-    this.filterTabEl.addEventListener('click', () => {
+    this.filterTabEl.addEventListener('click', (ev) => {
+      // 书签上的「全部解密」是动作，不是「取下」：先拦它，别把书签一起摘了
+      if ((ev.target as HTMLElement).closest('.bz-diary-ft-all')) {
+        void this.decryptAll();
+        return;
+      }
       this.filterTag = null;
       this.applyFilter();
     });
@@ -3410,14 +3575,19 @@ export class DiaryAppController {
       // 取副本：数据层那个数组是「这一轮已读的墙」，UI 会往里并加密条目/过滤，别写回缓存
       this.entries = [...(await loadWallEntries(this.app()))];
       this.hasMore = wallHasMore(this.app());
-      /* 读到第 1 卷收卷（看到第 2 卷为止）：页面上这一卷必须是完整的一卷 */
+      /* 读到第 1 卷收卷（看到第 2 卷为止）：页面上这一卷必须是完整的一卷。
+         加密册例外：那一刻加密条目还没 `mergeEncryptedEntries()`，`visibleEntries()` 是空集，
+         `firstVolumeClosedAt` 恒 -1——照旧读下去会把整个日记库读完（大库进加密册直接卡住）。
+         加密册的条目本来就由 `loadEncryptedEntries()` 全量并入内存，不需要这段有界续读。 */
       const cap = wallWindowSize();
-      for (let guard = 0; this.hasMore && guard < 64; guard++) {
-        if (firstVolumeClosedAt(this.visibleEntries().map((e) => e.date), cap) >= 0) break;
-        const added = await loadMoreWallEntries(this.app());
-        if (!added.length) break;
-        this.entries.push(...added);
-        this.hasMore = wallHasMore(this.app());
+      if (this.filterTag !== ENCRYPT_TAG) {
+        for (let guard = 0; this.hasMore && guard < 64; guard++) {
+          if (firstVolumeClosedAt(this.visibleEntries().map((e) => e.date), cap) >= 0) break;
+          const added = await loadMoreWallEntries(this.app());
+          if (!added.length) break;
+          this.entries.push(...added);
+          this.hasMore = wallHasMore(this.app());
+        }
       }
       if (this.entries.length) this.entries.sort((a, b) => cmpEntryDesc(a, b));
       this._loadError = null;
@@ -3491,7 +3661,7 @@ export class DiaryAppController {
 
   /**
    * 并入加密日记（保险箱已解锁时）。内容随密文一起在内存里，媒体段照常切出来——
-   * 纸面只出火漆信封（render 层按 `encrypted` 分流），拆信时再把全文放到抽出的纸上。
+   * 纸面直接摊明文（render 层不再分红信封），媒体由 `mountEncryptedMediaVisible` 按需解密。
    */
   private async mergeEncryptedEntries(): Promise<void> {
     try {
@@ -3503,11 +3673,15 @@ export class DiaryAppController {
       for (const e of encrypted) {
         if (!e.noteId || existingIds.has(e.noteId)) continue;
         existingIds.add(e.noteId);
+        /* 系统标签「加密」不进食标签：它是分类册的入口记号，不是用户贴的分类；
+           带进纸面就会在条目头上印一枚「加密」签（2026-11-06 用户拍板不当内容展示）。 */
+        const shownTags = e.tags.filter((t) => t !== ENCRYPT_TAG);
+        if (!shownTags.length) shownTags.push('日记');
         added.push({
           date: e.date,
           time: e.time,
-          tags: e.tags,
-          emoji: e.emoji,
+          tags: shownTags,
+          emoji: shownTags.map((t) => getTagEmoji(t)).join(''),
           content: e.content,
           text: stripMediaLinks(e.content),
           media: extractMedia(e.content, DIARY_DIRECTORY),
@@ -3547,19 +3721,32 @@ export class DiaryAppController {
       this._subs.push(
         onDomainEvent(ch, () => {
           if (this.root?.style.display !== 'flex') return;
+          /* 批量解密自己会在循环末尾整读重排：这批聚合事件不再触发一轮防抖重读 */
+          if (ch === 'diary:entry-decrypted' && this.batchDecrypting) return;
           /* 新落一篇 → 这一轮回刷落册首（最新那篇就在第 0 页）；其余四通道保阅读位置 */
           this.scheduleRelayout(ch === 'diary:entry-added');
         })
       );
     }
     this._subs.push(
+      // 设置面板改了「收录影院/收录书库」：数据聚合变了，必须重读重排（不只是重排）
+      onDomainEvent('diary:display-changed', () => {
+        if (this.root?.style.display !== 'flex') return;
+        void this.loadAndRelayout();
+      })
+    );
+    this._subs.push(
       onDomainEvent<{ unlocked: boolean }>('encrypt:unlock-changed', (evt) => {
         if (this.root?.style.display !== 'flex') return;
         this.encMediaCache.clear();
         if (!evt || !evt.unlocked) {
-          // 上锁：加密条目实时不可见
-          if (this.filterTag === '加密') this.filterTag = null;
+          // 上锁：加密条目实时不可见，加密书签与明文一起收走
+          if (this.filterTag === ENCRYPT_TAG) this.filterTag = null;
+          this.resetFilterTab();
+          this.entries = this.entries.filter((e) => !e.encrypted);
           void this.loadAndRelayout();
+        } else if (this.enteringEncryptAlbum) {
+          /* 正在进加密册：本函数解锁后会自己合并 + 重排，这一轮让位（否则先按旧 filterTag 排一遍） */
         } else {
           void this.loadAndRelayout();
         }
@@ -3720,16 +3907,42 @@ export class DiaryAppController {
   /**
    * 空册时写在书页上的那一段（不是浮层）：形制照着真日记来——标题一句、正文一句、
    * 末尾两枚行内入口：「写第一篇」与「看视频教程」（空态不弹窗，教程入口常驻在这里）。
+   * 分类册/加密册的空态另说：那两本里没有「写第一篇」的道理，给的是回全本的出口。
    */
   private emptyEntryBlock(): HTMLElement {
     const wrap = document.createElement('div');
     wrap.className = 'bz-diary-void-entry';
     const title = document.createElement('p');
     title.className = 'bz-diary-void-title';
-    title.textContent = '这本册子还是空的。';
+    title.textContent = this.filterTag
+      ? this.filterTag === ENCRYPT_TAG
+        ? '加密册还是空的。'
+        : `「${this.filterTag}」这一册还是空的。`
+      : '这本册子还是空的。';
 
     const acts = document.createElement('div');
     acts.className = 'bz-diary-void-acts';
+
+    if (this.filterTag) {
+      const desc = document.createElement('p');
+      desc.className = 'bz-diary-void-desc';
+      desc.textContent =
+        this.filterTag === ENCRYPT_TAG
+          ? '在日记上右键点「加密」，它就会锁进这里；这里看到的已经是解开的样子。'
+          : '取下书签就回整本了，或者换一张分类贴纸。';
+      const back = document.createElement('button');
+      back.type = 'button';
+      back.className = 'bz-diary-void-link';
+      back.textContent = '取下书签，回整本 →';
+      back.addEventListener('click', () => {
+        this.filterTag = null;
+        this.applyFilter();
+      });
+      acts.appendChild(back);
+      /* 顺序必须是标题 → 描述 → 入口（先 append 描述会把它压在标题上面） */
+      wrap.append(title, desc, acts);
+      return wrap;
+    }
 
     const act = document.createElement('button');
     act.type = 'button';
@@ -3826,7 +4039,7 @@ export class DiaryAppController {
 
   /** 第一次打开且这一册不是空的才弹教程；空册不弹——入口常驻在册子空态页上，不挡着人写第一篇 */
   private promptFirstOpenTutorial(firstOpen: boolean): void {
-    if (!shouldShowFirstOpenTutorial({ firstOpen, loadError: this._loadError, entries: this.entries.length })) return;
+    if (!shouldShowFirstOpenTutorial({ firstOpen, loadError: this._loadError, entries: this.visibleEntries().length })) return;
     maybeShowDiaryTutorial();
   }
 
@@ -3994,12 +4207,67 @@ export class DiaryAppController {
     this.setToolsShown(false);
     this._hideMotion = false;
     this.root.style.display = 'none';
+    this.lockOnHide();
+  }
+
+  /**
+   * 收起整本就上锁（2026-11-06 用户拍板，ADR-0017 的「关闭面板即上锁」补上日记这一侧）：
+   * 加密册摊的是明文，书合上就不该在共享的保险库解锁态里留着。共享 SafeManager，
+   * 保险库/密码本会一起上锁——这是共锁同库的既定语义。
+   *
+   * 光清内存不够：`.bz-diary-b-*` 里的加密正文与 `img[data-enc-name]` 上已写好的 `data:`
+   * 明文 URL 仍在文档里（`display:none` 只是看不见）。这里把书芯 DOM 一并拆掉。
+   * **写作内页 `.bz-diary-wsp` 在 `.bz-diary-bk-block` 之外**（书壳内、书芯旁），
+   * 草稿不在这棵子树里，不会跟着被清。
+   */
+  private lockOnHide(): void {
+    this.encMediaCache.clear();
+    this.layoutUnlocked = false;
+    this.bookFresh = false;
+    this.entries = this.entries.filter((e) => !e.encrypted);
+    /* 加密书签随手收起：下次翻开是整本，不该停在「锁着的加密册」 */
+    if (this.filterTag === ENCRYPT_TAG) this.filterTag = null;
+    this.resetFilterTab();
+    this.clearBookPagesDom();
+    try {
+      const safe = getSafeManager();
+      if (safe.unlocked) safe.lock();
+    } catch {
+      /* 保险库未初始化：本来就没解锁态可清 */
+    }
+  }
+
+  /** 拆书芯 DOM（含页元素、已解出的明文媒体），保住库容器与书壳；内存里的页/索引一并放掉 */
+  private clearBookPagesDom(): void {
+    if (!this.blockEl) return;
+    if (this.flip) {
+      try {
+        this.flip.destroy();
+      } catch {
+        /* 重复销毁无害 */
+      }
+      this.flip = null;
+    }
+    /* 只清 blockEl 不够：库容器（flipHost）自己的子树还挂着页元素，重新 append 就又带回来了 */
+    this.blockEl.innerHTML = '';
+    if (this.flipHost) {
+      this.flipHost.innerHTML = '';
+      this.blockEl.appendChild(this.flipHost);
+    }
+    this.pages = [];
+    this.daySections = [];
+    this.dayIdx = 0;
+    this.cursor = 0;
+    this.photoRefs = [];
+    this.photoIndex.clear();
+    this.byEid.clear();
   }
 
   /** 当前数据的滚轮年份动态范围（无数据返回 null → 控件回落 1900～当前年+1） */
   getYearRange(): { min: number; max: number } | null {
     let earliest: number | null = null;
-    for (const entry of this.entries) {
+    /* 只按**当前这本册子**算：解锁后 `entries` 里有加密条目，但全本/普通分类看不到它们 */
+    for (const entry of this.visibleEntries()) {
       const y = parseInt(String(entry.date).split('-')[0], 10);
       if (!Number.isNaN(y) && (earliest === null || y < earliest)) earliest = y;
     }

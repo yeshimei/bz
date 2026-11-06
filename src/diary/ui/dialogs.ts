@@ -3,7 +3,7 @@
  * 只剩「写日记弹窗」一个（openAddDialog / saveNewEntry + 滚轮日期时间控件）。
  * **标签选择器（showTagPicker）已退役**（用户 2026-10-25：它是旧墙时代的宿主弹窗，
  * 盖在书上面又是一层）：换贴纸改在书里的贴纸册盖（ui.ts 的 openAlbum / commitAlbumTags），
- * 删除走便签菜单「撕掉」，加密条目改分类走「拆信看 → 从信封取出」——本模块不再往
+ * 删除走便签菜单「撕掉」，加密/解密走便签菜单「加密」「解密」——本模块不再往
  * document.body 上挂任何浮层。
  * 弹窗走 core uiModal 壳（ADR-0125 浮层唯一壳）：遮罩/圆角/阴影 token、ESC 层（壳自带
  * 'bz-modal'）、焦点圈闭与还原、requestClose 关闭意图钩子均由壳承载。D-UI2 三件套：
