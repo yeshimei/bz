@@ -331,6 +331,8 @@ describe('C26 按条补丁写（writeNewsDataMerged / runNewsFetchRound）', () 
     };
     const r = await runNewsFetchRound({ httpGet, store, now: () => NOW });
     expect(r.failedSources).toEqual([]); // f2 单 feed 失败不升级为源级失败
+    // 但要点名到具体订阅：否则用户只看到「新增 N 条」（N 来自别的源），以为 RSS 也抓到了
+    expect(r.failedFeeds).toEqual(['https://f2.example/rss.xml']);
     expect(r.added).toBe(2); // B站 1 + RSS 1
 
     const d = disk(vault);

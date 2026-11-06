@@ -551,19 +551,23 @@ export async function fetchGuokr(httpGet: HttpGet, now: number = Date.now()): Pr
 
 /** RSS 源：逐 feed 拉取解析；单 feed 失败只跳过不中断。
  *  C3：requestFailed = 全部已尝试 feed 的列表请求都失败（httpGet null）——传导 failedSources；
- *  部分失败仍算源可用（单 feed 订阅时等同源级失败） */
-export async function fetchRss(feeds: RssFeed[], httpGet: HttpGet): Promise<{ articles: any[]; perFeed: Record<string, any[]>; titleUpdates: Record<string, string>; requestFailed: boolean }> {
+ *  部分失败仍算源可用（单 feed 订阅时等同源级失败）。
+ *  failedFeeds：失败 feed 的展示名（标题优先，回退地址）——原来单 feed 失败完全静默：
+ *  公共实例限流时用户只看到「本次抓取新增 N 条」（N 来自别的源），以为 RSS 也抓到了。 */
+export async function fetchRss(feeds: RssFeed[], httpGet: HttpGet): Promise<{ articles: any[]; perFeed: Record<string, any[]>; titleUpdates: Record<string, string>; requestFailed: boolean; failedFeeds: string[] }> {
   const articles: any[] = [];
   const perFeed: Record<string, any[]> = {};
   const titleUpdates: Record<string, string> = {};
+  const failedFeeds: string[] = [];
   let attempted = 0;
   let failedRequests = 0;
   for (const feed of feeds || []) {
     const url = String((feed && feed.url) || '').trim();
     if (!url) continue;
     attempted++;
+    const label = String((feed && feed.title) || '').trim() || url;
     const xml = await httpGet(url);
-    if (!xml) { failedRequests++; continue; } // C3：列表请求失败计数（请求失败 ≠ 解析失败）
+    if (!xml) { failedRequests++; failedFeeds.push(label); continue; } // C3：列表请求失败计数（请求失败 ≠ 解析失败）
     try {
       const feedTitle = String(xml.match(/<title[^>]*>([\s\S]*?)<\/title>/i)?.[1] || '')
         .replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, '$1').replace(/<[^>]+>/g, '').trim();
@@ -574,9 +578,9 @@ export async function fetchRss(feeds: RssFeed[], httpGet: HttpGet): Promise<{ ar
         .filter(Boolean);
       perFeed[name] = items;
       articles.push(...items);
-    } catch { /* 单 feed 解析失败跳过（服务端可达，不计请求失败） */ }
+    } catch { failedFeeds.push(label); /* 单 feed 解析失败跳过（服务端可达，不计请求失败） */ }
   }
-  return { articles, perFeed, titleUpdates, requestFailed: attempted > 0 && failedRequests === attempted };
+  return { articles, perFeed, titleUpdates, failedFeeds, requestFailed: attempted > 0 && failedRequests === attempted };
 }
 
 // ---------- 抓取与入库（照搬守护 checkAndFetch，存储换插件合并写） ----------
@@ -586,6 +590,8 @@ export interface NewsFetchResult {
   prunedBilibili: number;
   prunedRss: number;
   failedSources: string[];
+  /** 单条 RSS 订阅失败（标题优先，回退地址）；可选——老调用方构造结果时不带 */
+  failedFeeds?: string[];
   needsCookieNotice: boolean;
 }
 
@@ -629,7 +635,7 @@ export async function runNewsFetchRound(deps: RunFetchDeps): Promise<NewsFetchRe
     }
   };
   const emptyBili: BilibiliFetchResult = { articles: [], upInfo: {}, perUpArticles: {}, perUpRejected: {}, needsCookieNotice: false, requestFailed: false };
-  const emptyRss = { articles: [] as any[], perFeed: {} as Record<string, any[]>, titleUpdates: {} as Record<string, string>, requestFailed: false };
+  const emptyRss = { articles: [] as any[], perFeed: {} as Record<string, any[]>, titleUpdates: {} as Record<string, string>, requestFailed: false, failedFeeds: [] as string[] };
   const guokrList = (await guarded(guokrP, '果壳科学人', [] as any[])) || [];
   const zhihuList = (await guarded(zhihuP, '知乎日报', [] as any[])) || [];
   const biliRes = await guarded(biliP, 'B站', emptyBili);
@@ -701,6 +707,9 @@ export async function runNewsFetchRound(deps: RunFetchDeps): Promise<NewsFetchRe
     prunedBilibili: prunedUrls.length,
     prunedRss: rssPrunedUrls.length,
     failedSources,
+    // 单 feed 失败不并进 failedSources：那一列参与 allFailed 判据（长度 ≥ 已尝试源数），
+    // 一条订阅的两三个 feed 就会把「别的源明明成功」的轮次误判成全失败，lastFetchAt 不推进
+    failedFeeds: rssRes ? rssRes.failedFeeds : [],
     needsCookieNotice: biliRes ? biliRes.needsCookieNotice : false,
   };
 }
@@ -728,8 +737,17 @@ async function executeFetchRound(deps?: Partial<RunFetchDeps>, opts?: { silent?:
       store: deps?.store || defaultFetchStore(),
       now: deps?.now,
     });
-    if (r.failedSources.length > 0) {
-      notice(`聚合讯抓取部分失败：${r.failedSources.join('、')}`, 'warning');
+    const failedFeedNames = r.failedFeeds || [];
+    if (r.failedSources.length > 0 || failedFeedNames.length > 0) {
+      const parts = [...r.failedSources];
+      // 点名到订阅：只说「RSS 失败」时用户无从判断是哪个源、该换实例还是该删订阅。
+      // 整条 RSS 源级失败（全部 feed 都失败）时 failedSources 已含 RSS，不再逐条重复
+      if (failedFeedNames.length > 0 && !parts.includes('RSS')) {
+        // 通知里最多点三条名（十来个订阅同时挂掉时，一条通知塞不下，也会盖住真正原因）
+        const head = failedFeedNames.slice(0, 3).map((n) => `「${n}」`).join('');
+        parts.push(`RSS 订阅${head}${failedFeedNames.length > 3 ? ` 等 ${failedFeedNames.length} 条` : ''}`);
+      }
+      notice(`聚合讯抓取部分失败：${parts.join('、')}`, 'warning');
     }
     if (r.needsCookieNotice) {
       // 新-1（拍板 2026-09-12：数据源组 Cookie 设置行已移除，不恢复入口）：
@@ -781,7 +799,8 @@ export function notifyManualFetchResult(r: NewsFetchResult | null): void {
     notice('抓取已在进行中，请稍候', 'info');
     return;
   }
-  if (r.failedSources.length > 0) return;
+  // failedFeeds 同属部分失败：executeFetchRound 已发 warning，这里不能再报「暂无新文章」成功
+  if (r.failedSources.length > 0 || (r.failedFeeds && r.failedFeeds.length > 0)) return;
   notify(r.added > 0 ? `已抓取，新增 ${r.added} 篇文章` : '已抓取，暂无新文章', {
     type: 'success',
     action: {

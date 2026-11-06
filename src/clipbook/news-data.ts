@@ -119,6 +119,36 @@ export function normalizeRssFeedUrl(text: string): string | null {
   return /^https?:\/\/\S+$/i.test(t) ? t : null;
 }
 
+/**
+ * 纯函数：RSSHub 路由型订阅换实例（ADR-0209 补记）。
+ * 源库路由条目订阅时按当时的实例地址拼成完整 URL 落盘，事后改「RSSHub 实例」不会回头修
+ * 已订阅的条目——用户换到自建实例仍拉不到，只会以为「换了没用」。这里把 origin（协议+主机+端口）
+ * 指向旧实例的订阅重拼到新实例，路由路径与查询串原样保留；其余订阅（自备完整地址）一条不动。
+ */
+export function remapRssFeedInstance(
+  feeds: RssFeed[],
+  from: string,
+  to: string
+): { feeds: RssFeed[]; changed: number } {
+  const list = Array.isArray(feeds) ? feeds : [];
+  const originOf = (v: string): string => {
+    try { return new URL(String(v || '')).origin; } catch (e) { return ''; }
+  };
+  const fromOrigin = originOf(from);
+  const toOrigin = originOf(to);
+  if (!fromOrigin || !toOrigin || fromOrigin === toOrigin) return { feeds: list, changed: 0 };
+  let changed = 0;
+  const next = list.map((f) => {
+    const url = String((f && f.url) || '');
+    let parsed: URL;
+    try { parsed = new URL(url); } catch (e) { return f; }
+    if (parsed.origin !== fromOrigin) return f;
+    changed++;
+    return { ...f, url: toOrigin + parsed.pathname + parsed.search };
+  });
+  return { feeds: changed > 0 ? next : list, changed };
+}
+
 /** 纯函数：bilibiliUpInfo 段容错解析（uid → {name?, avatar?}；非对象/数组/空 → {}；头像统一转 https） */
 export function parseBilibiliUpInfo(raw: unknown): Record<string, BilibiliUpInfo> {
   if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return {};
@@ -296,12 +326,14 @@ export interface NewsWriteIntent {
  *   removeArticleKeys 从两侧剔除）；
  * - 其余段：声明改动（intent.set 含该段）→ 用声明值；未声明 → 取磁盘现值。
  * 须在 write-queue 串行队列内调用（见 write-queue.ts）。
+ * 返回是否真的落盘：F8 放弃写时返回 false，调用方（设置项保存）据此提示失败——
+ * 旧实现返回 void，读盘失败被静默吞掉，界面照样弹「已订阅/已保存」（假成功）。
  */
-export async function writeNewsDataMerged(intent: NewsWriteIntent): Promise<void> {
+export async function writeNewsDataMerged(intent: NewsWriteIntent): Promise<boolean> {
   const res = await readNewsData();
   // F8：损坏（ok=false）直接放弃本次写——以空库为基底落盘会把「不清盘保原文件」的
   // 恢复现场销毁（原文件坏 JSON 被静默替换成近乎空库）
-  if (!res.ok) return;
+  if (!res.ok) return false;
   const base = res.data;
   const next: NewsData = { ...base };
   if (intent.set.articles || intent.removeArticleKeys?.length) {
@@ -343,6 +375,7 @@ export async function writeNewsDataMerged(intent: NewsWriteIntent): Promise<void
     );
   }
   await writeNewsData(next);
+  return true;
 }
 
 /**

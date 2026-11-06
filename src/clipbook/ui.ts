@@ -30,7 +30,7 @@ import { getApp } from '../core/app';
 import { bindMaskDismiss } from '../core/mask-dismiss';
 import { trashNote } from '../core/note-trash';
 import { notice, notifyActionError, notifySaveError, notifyUndo } from '../core/notice';
-import { uiBtn, uiEmpty, uiResizable, uiVSplitter, mountIcons } from '../core/ui';
+import { uiBtn, uiBtnRow, uiEmpty, uiResizable, uiVSplitter, mountIcons } from '../core/ui';
 import { cmpZh, debounce, formatRelativeTime, localDayKey, openExternalUrl } from '../core/utils';
 import { isMobileEnv } from '../core/mobile';
 import { topifyZ } from '../core/dom';
@@ -48,13 +48,13 @@ import { articleKeyOf, CLIP_TUTORIAL_URL } from './constants';
 import { readDataSourceState, type DataSourceState } from './news-source-settings';
 import type { ClipArticle } from './types';
 import { stripClipChrome } from './md';
-import { queryBySource, queryBySourceFull, aggregateSites, clipArticle, bucketByState } from './store';
+import { queryBySource, queryBySourceFull, aggregateSites, clipArticle, bucketByState, normSite, feedSiteName } from './store';
 import {
   panelHtml, railItemHtml, railFootHtml, tocListHtml,
   readerHtml, mobListHtml, mobDetailHtml, mobTocHtml, mobNoHitHtml, type MobChapter, siteTint,
   deskFoldRowHtml, foldBodyHtml, ICO, clipReportEntryHtml,
 } from './render';
-import { M, resetClipbookState, bumpLoadGeneration, currentLoadGeneration } from './state';
+import { M, resetClipbookState, bumpLoadGeneration, currentLoadGeneration, setPanelDirtyListener, defaultSel } from './state';
 import {
   motionPanelIn, motionPanelOut, motionHeadRevealed, motionRailRendered, motionListRendered,
   motionReaderRendered, motionMobTocRendered, motionMobFoldOpen, motionMobDetailIn,
@@ -62,6 +62,7 @@ import {
   motionLoadingPulse, motionTeardown, type MotionMood,
 } from './motion';
 import { readNewsAndSidecar } from './loader';
+import { fetchNowNews, notifyManualFetchResult } from './news-fetcher';
 import { readNewsData } from './news-data';
 import { writeClipNote } from './save';
 import { getKnowledgeBoxes } from '../core/knowledge-boxes';
@@ -102,6 +103,9 @@ let loaded = false; // C5：本次会话是否已成功装载过（false = 首�
  *  两态 + 原因。错误时中栏出「读取失败」错误空态（带重试钮）替代引导空态——
  *  防「暂无内容」假空态误导用户以为数据全丢（数据明明在盘上） */
 let loadError: { kind: 'corrupt' | 'exception'; reason: string } | null = null;
+/** 会话首次渲染前校验选中源（showPanel 置位，renderAllNow 消费一次）：上次停的源可能
+ *  已删/已读空/上次的订阅没了，继承下来只剩一个没有出口的空壳 */
+let sessionSelCheck = false;
 /** 会话内滚位记忆（效率#17）：id → scrollTop，切走存、切回恢复；beginSession 清空（跨会话不背） */
 const readScrollMemo = new Map<string, number>();
 const READ_SCROLL_MEMO_MAX = 200; // 上限防涨（FIFO 淘汰最旧即可，不必 LRU）
@@ -142,6 +146,9 @@ const SPLIT_MIN_READ = 320;
 export function initPanel(app: any, showNow = false): void {
   M.appRef = app;
   if (!overlayEl) buildDom(app);
+  // 数据源设置在设置面板里改（订阅增删 / 实例地址）：那边不经过本域 onClose 钩子。
+  // 面板开着 → 立刻重读（左栏 0/0 行当场出现）；关着 → reloadIfOpen 顺手标脏，下次打开重读
+  setPanelDirtyListener(reloadIfOpen);
   if (showNow) showPanel();
   else void loadIfNeeded();
 }
@@ -160,6 +167,9 @@ export function showPanel(): void {
   panelSplit?.restore(); // 分割线尺寸记忆（容器可见后 restore 才能按实际宽度钳制）
   M.open = true;
   beginSession();
+  // 本会话首次渲染前校验一次选中源（renderAllNow 消费）：上次停的源可能已经空了或
+  // 不存在了，继承下来就是一个没有任何出口的空壳
+  sessionSelCheck = true;
   // 动效层：新会话开印——本次 renderAll 播完整入场编排；换篇/换选判定基线复位
   pendingBoot = true;
   lastReaderId = '';
@@ -339,6 +349,7 @@ export function unloadPanel(): void {
   expandedMobArch.clear(); // 面板重开折叠态复位（会话内详情往返不丢）
   mobItemById = new Map();
   mobItemOrder = [];
+  setPanelDirtyListener(null); // 卸载后退订：数据层写入不再回调已卸载的 UI
   resetClipbookState();
 }
 
@@ -672,6 +683,12 @@ function renderAll(): void {
 
 function renderAllNow(): void {
   if (!M.open) return;
+  if (sessionSelCheck) {
+    sessionSelCheck = false;
+    // 停在的源已经空了/不存在了（订阅删了、旧站点读完）→ 回「全部未读」，不继承空壳。
+    // 只在本会话首次渲染校验：会话内点进空源要能看到空态说明，不能被弹回去
+    if (!selectionAlive()) M.sel = defaultSel();
+  }
   renderHeadIssue();
   renderRail();
   renderList();
@@ -724,6 +741,30 @@ function currentSrc(): SrcFilter {
 
 function currentList(): ClipArticle[] {
   return queryBySource(M.articles, M.sidecar, M.clipUrls, M.clipNotes || [], currentSrc(), M.upInfo);
+}
+
+/** 站点名 → 对应的 RSS 订阅（title 优先、缺省回退地址，与 rail 站点行同口径）；没有则 null */
+function feedOfSite(site: string): (typeof M.rssFeeds)[number] | null {
+  const key = normSite(site);
+  return (M.rssFeeds || []).find((f) => feedSiteName(f) === key) || null;
+}
+
+/** 整本真的一无所有（没抓到过文章、没有剪藏、也没订阅）——只有这种空才把三栏并成一栏 */
+function bookIsEmpty(): boolean {
+  return !M.articles.length && !(M.clipNotes || []).length && !(M.rssFeeds || []).length;
+}
+
+/** 选中源还在不在（站点行存在 / 还有剪藏 / 还是某条订阅）——用于会话开头复位空壳选择 */
+function selectionAlive(): boolean {
+  const s = M.sel;
+  if (s.kind === 'all' || s.kind === 'clip') return true;
+  if (s.kind === 'site') {
+    if (feedOfSite(s.site)) return true;
+    const site = normSite(s.site);
+    return aggregateSites(M.articles, M.clipNotes || [], new Set((M.sidecar.savedArchive || []).map((x) => x.url)), M.clipUrls)
+      .some((r) => r.site === site);
+  }
+  return M.articles.some((a) => String(a.platform || '') === s.platform && (!s.up || String(a.author || '') === s.up));
 }
 
 // ================= 会话目录快照（ADR-0108 冻结序） =================
@@ -849,12 +890,26 @@ function renderRailNow(): void {
   // 站点行动态聚合（issue 222：rail 按 site 属性分类，issue 206 平台聚合行退役）——
   // 全库站点 = 剪藏全量 + 未读 news 面（行总数 = 该源列表长度，口径同 queryBySource site 源）；
   // 排序总数降序 → 未读降序 → 名 zh 序；徽标色按站名哈希（编辑部皮肤本就隐藏徽标）
-  for (const row of aggregateSites(arts, clipNotes, new Set((M.sidecar.savedArchive || []).map((x) => x.url)), M.clipUrls)) {
+  const siteRows = aggregateSites(arts, clipNotes, new Set((M.sidecar.savedArchive || []).map((x) => x.url)), M.clipUrls);
+  for (const row of siteRows) {
     const full = queryBySource(arts, M.sidecar, M.clipUrls, clipNotes, { kind: 'site', site: row.site }, M.upInfo);
     const unreadN = full.filter((a) => a.st !== 'saved').length;
     const hit = countOf({ kind: 'site', site: row.site });
     const active = M.sel.kind === 'site' && M.sel.site === row.site;
     html += railItemHtml({ kind: 'site', site: row.site }, row.site, searchKw ? hit : unreadN, full.length, 'feed', siteTint(row.site), active, '');
+  }
+  // 已订阅、但一篇都没抓回来的源补 0/0 行：站点行是从文章倒推的，源不可达（公共 RSSHub 实例
+  // 限流/挂掉最常见）时左栏根本没有这个源——订阅列表里有、界面上却没有，看着就是「订阅没成功」。
+  // 抓到文章后按同名的站点行并掉（covered 去重），不会出现两行。
+  const covered = new Set(siteRows.map((r) => r.site));
+  const pendingFeeds = [...(M.rssFeeds || [])]
+    .map((f) => feedSiteName(f))
+    .filter((name) => { if (covered.has(name)) return false; covered.add(name); return true; })
+    .sort(cmpZh);
+  for (const name of pendingFeeds) {
+    const hit = countOf({ kind: 'site', site: name });
+    const active = M.sel.kind === 'site' && M.sel.site === name;
+    html += railItemHtml({ kind: 'site', site: name }, name, hit, 0, 'feed', siteTint(name), active, '');
   }
 
   // B站 UP 展开（C2：Map 按 author/uid 去重；C6：upInfo 回填名字显示）。
@@ -1062,6 +1117,36 @@ function mountClipFolderGate(): boolean {
   return true;
 }
 
+/**
+ * 空源空态：搜索零命中只说一句；「已订阅但一篇没抓到」要给出地址与排查路径
+ *（否则用户只知道订阅成功了，界面上却什么都没有）；其余维持一句「这个源暂无内容」。
+ * 空源同样留教程入口——空册切到哪个源都得能问到「怎么用」。
+ */
+function emptySourceView(src: SrcFilter): HTMLElement {
+  if (searchKw) return uiEmpty({ icon: 'inbox', title: '这个源暂无内容' });
+  const feed = src.kind === 'site' ? feedOfSite(src.site) : null;
+  const feedRows = (M.rssFeeds || []).length;
+  if (feed || (src.kind === 'all' && !M.articles.length && feedRows > 0)) {
+    const desc = feed
+      ? `订阅地址：${feed.url}。拉不到多是 RSSHub 实例限流或不可达，可在 设置 · 剪藏本 · 数据源 换自建实例。`
+      : `已订阅 ${feedRows} 个 RSS 源，但一篇都没抓到。公共 RSSHub 实例限流或不可达时就是这样，可在 设置 · 剪藏本 · 数据源 换自建实例。`;
+    return uiEmpty({
+      icon: 'rss',
+      title: '已订阅，还没抓到文章',
+      desc,
+      actions: uiBtnRow([
+        uiBtn({ label: '立即抓取', icon: 'refresh-cw', onClick: () => { void fetchNowNews().then(notifyManualFetchResult); } }),
+        tutorialLink(),
+      ], { center: true }),
+    });
+  }
+  return uiEmpty({
+    icon: 'inbox',
+    title: '这个源暂无内容',
+    actions: tutorialLink('bz-clip-tut--block'),
+  });
+}
+
 function renderListNow(): void {
   if (!listEl) return;
   // 剪藏文件夹没配 → 列表区直接给引导态（别让空列表冒充「还没有剪藏」）
@@ -1087,7 +1172,8 @@ function renderListNow(): void {
     if (!list.length) {
       listEl.innerHTML = '';
       // C15：搜索零命中走「查无此条」（news 源同态文案），不误报「剪藏本为空」
-      setVoidLayout(!searchKw); // 搜索无命中不并栏：那是「筛掉了」，不是「还没内容」
+      // 并栏只留「整本真的一无所有」：书里有 news 时把三栏收掉，用户连切回别的源的地方都没有
+      setVoidLayout(!searchKw && bookIsEmpty()); // 搜索无命中不并栏：那是「筛掉了」，不是「还没内容」
       listEl.appendChild(uiEmpty({
         icon: 'scissors',
         title: searchKw ? '查无此条' : '剪藏本为空',
@@ -1112,13 +1198,10 @@ function renderListNow(): void {
   const flat = deskFlat();
   if (!flat.length) {
     listEl.innerHTML = '';
-    setVoidLayout(true);
-    listEl.appendChild(uiEmpty({
-      icon: 'inbox',
-      title: '这个源暂无内容',
-      // 空源同样给教程入口：空册切到哪个源都得能问到「怎么用」
-      actions: searchKw ? undefined : tutorialLink('bz-clip-tut--block'),
-    }));
+    // 源里没内容是常态（还没抓到 / 都读完了）：只让中栏说清楚，三栏留着——
+    // 旧实现一并栏，左栏整块消失，用户连切回别的源的地方都没有，看着像整本被清空
+    setVoidLayout(bookIsEmpty());
+    listEl.appendChild(emptySourceView(src));
     // G：切到空源清当前阅读——M.cur 残留上一源文章会被 renderReader/mob 详情再渲染
     M.cur = null;
     if (readerEl) renderReader();

@@ -282,10 +282,17 @@ export function bucketByState(list: ClipArticle[]): { unread: ClipArticle[]; rea
 
 // ===== 站点聚合（issue 222：rail 按 site 属性分类，平台聚合行退役）=====
 
-/** site 归一：去首尾空白，空值归「未知」桶 */
-function normSite(s: string): string {
+/** site 归一：去首尾空白，空值归「未知」桶（导出：rail 订阅补行要与站点行同口径匹配） */
+export function normSite(s: string): string {
   const t = String(s || '').trim();
   return t || '未知';
+}
+
+/** 订阅源在 rail/站点口径里的名字：title 优先，缺省回退 url——
+ *  与 buildRssArticle 的 platform（feed.title || feed 自带标题 || url）同口径，抓到文章后能并成一行 */
+export function feedSiteName(feed: { url?: string; title?: string } | null | undefined): string {
+  const f = feed || {};
+  return normSite(String(f.title || '').trim() || String(f.url || ''));
 }
 
 /** 站点聚合行（rail 与移动源胶囊共用） */
