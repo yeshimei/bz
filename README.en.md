@@ -34,7 +34,7 @@
   <tr>
     <td align="center" valign="top" width="50%">
       <img src="docs/images/02-diary.jpg" height="230" alt="Diary"><br>
-      <b>Diary</b><br>
+      <b>Diary</b> · <a href="https://www.bilibili.com/video/BV1W44i6yETx">▶ Video tutorial</a><br>
       <sub>Multiple entries a day, bound into monthly spreads</sub>
     </td>
     <td align="center" valign="top" width="50%">
@@ -51,7 +51,7 @@
     </td>
     <td align="center" valign="top" width="50%">
       <img src="docs/images/16-cinema.jpg" height="230" alt="Cinema"><br>
-      <b>Cinema</b><br>
+      <b>Cinema</b> · <a href="https://www.bilibili.com/video/BV15hxH6QEgM">▶ Video tutorial</a><br>
       <sub>Want / watching / watched, posters filled in</sub>
     </td>
   </tr>
@@ -63,7 +63,7 @@
     </td>
     <td align="center" valign="top" width="50%">
       <img src="docs/images/06-clips.png" height="230" alt="Clippings"><br>
-      <b>Clippings</b> · <a href="https://www.bilibili.com/video/BV1pvxe6qEkf/?vd_source=15205b8944be621a94fb0bf0efdb81f3#reply117529380915552">▶ Video tutorial</a><br>
+      <b>Clippings</b> · <a href="https://www.bilibili.com/video/BV1pvxe6qEkf/">▶ Video tutorial</a><br>
       <sub>Web clips plus an unread feed from your subscriptions</sub>
     </td>
   </tr>

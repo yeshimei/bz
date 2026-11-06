@@ -63,7 +63,7 @@
     </td>
     <td align="center" valign="top" width="50%">
       <img src="docs/images/06-clips.png" height="230" alt="剪藏本"><br>
-      <b>剪藏本</b> · <a href="https://www.bilibili.com/video/BV1pvxe6qEkf/?vd_source=15205b8944be621a94fb0bf0efdb81f3#reply117529380915552">▶ 视频教程</a><br>
+      <b>剪藏本</b> · <a href="https://www.bilibili.com/video/BV1pvxe6qEkf/">▶ 视频教程</a><br>
       <sub>网页剪藏 + 订阅源未读流</sub>
     </td>
   </tr>
