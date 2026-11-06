@@ -5,6 +5,7 @@ import type { App } from 'obsidian';
 import type { ClipArticle } from './types';
 import type { ClipNote } from './scan';
 import type { ClipbookData } from './data';
+import type { RssFeed } from './news-data';
 
 export interface ClipSourceSel {
   /** null = 全部未读；'clip' = 剪藏本；'site' = 站点（site 必填，issue 222）；否则 inbox（platform 必填） */
@@ -37,6 +38,8 @@ export interface ClipbookState {
   list: ClipArticle[];
   /** UP 头像资料（news.json bilibiliUpInfo） */
   upInfo: Record<string, { name?: string; avatar?: string }>;
+  /** RSS 订阅列表（news.json rssFeeds；左栏给「订阅了但还没抓到」的源留 0/0 行） */
+  rssFeeds: RssFeed[];
   /** 移动详情打开态 */
   mobDetailOpen: boolean;
 }
@@ -57,6 +60,7 @@ export const M: ClipbookState = {
   cur: null,
   list: [],
   upInfo: {},
+  rssFeeds: [],
   mobDetailOpen: false,
 };
 
@@ -73,7 +77,23 @@ export function resetClipbookState(): void {
   M.cur = null;
   M.list = [];
   M.upInfo = {};
+  M.rssFeeds = [];
   M.mobDetailOpen = false;
+}
+
+/**
+ * 面板脏通知（跨模块单向：数据写入方通知，UI 自己决定要不要重读）。
+ * 起因：数据源设置在设置面板里改（订阅增删、实例地址），剪藏本面板不经过域内
+ * onClose 钩子——M 是常驻内存面，不重读就会停留在「订阅前」的旧样子。
+ * 放 state.ts 而非 ui.ts：news-source-settings 是数据层，反向 import ui 会成环；
+ * ui 在 initPanel 注册回调（面板开着立刻刷、关着标脏等下次打开）。
+ */
+let panelDirtyListener: (() => void) | null = null;
+export function markPanelDirty(): void {
+  if (panelDirtyListener) panelDirtyListener();
+}
+export function setPanelDirtyListener(fn: (() => void) | null): void {
+  panelDirtyListener = fn;
 }
 
 /** 装载代际（state 层单源：ui 装载/卸载递增，loader 写 M 前校验）。

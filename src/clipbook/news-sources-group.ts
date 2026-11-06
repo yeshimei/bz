@@ -138,8 +138,12 @@ export function dataSourceGroupRows(init: DataSourceState): SettingsRow[] {
         save: async () => {
           // 保存成功后字盒回填归一值（trim/补协议/去尾斜杠；非法回退默认），下次打开显示的就是真值
           const normalized = normalizeRsshubInstance(box.rsshubInstance) ?? RSS_HUB_DEFAULT_INSTANCE;
-          if (await writeRsshubInstance(box.rsshubInstance)) box.rsshubInstance = normalized;
-          else notifyWriteFailed('RSSHub 实例');
+          const r = await writeRsshubInstance(box.rsshubInstance);
+          if (!r.ok) { notifyWriteFailed('RSSHub 实例'); return; }
+          box.rsshubInstance = normalized;
+          // 路由型订阅的地址是按旧实例拼死落盘的：本次已顺带重拼的条数如实报出来，
+          // 否则用户换完实例看不到任何反馈，也分不清「没生效」还是「本来就该重新订阅」
+          if (r.remapped > 0) notice(`已更新 ${r.remapped} 条 RSSHub 路由订阅的实例地址`, 'success');
         },
       } },
     { type: 'number', name: 'B站抓取条数', desc: '每位 UP 主抓取的动态条数上限', min: 1, max: 50, step: 1,
