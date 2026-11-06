@@ -53,6 +53,34 @@ describe('旧 → 新（日期文件拆条目文件）', () => {
     expect(vault.files.has(E1)).toBe(false);
   });
 
+  it('整篇无头行（Obsidian 原生日记）：整篇转一条，兜底 00:00，记进 inferred', async () => {
+    vault.files.set(DAY_PATH, '今天下雨了。\n\n在家写了一下午代码。\n');
+    const r = await convertLegacyToEntries();
+    expect(r.errors).toEqual([]);
+    expect(r.skipped).toEqual([]);
+    expect(r.converted).toBe(1);
+    // MockVault 的 ctime 是 2024-01-01，不在文件名那天 → 兜底 00:00
+    expect(r.inferred).toHaveLength(1);
+    expect(r.inferred[0].path).toBe(DAY_PATH);
+    expect(r.inferred[0].reason).toContain('00:00');
+    expect(vault.files.get(`${DIR}/2606130000.md`)).toBe(
+      serializeDiaryEntryFile(
+        { date: '2026-06-13', time: '00:00' },
+        ['日记'],
+        '今天下雨了。\n\n在家写了一下午代码。'
+      )
+    );
+    expect(vault.files.has(DAY_PATH)).toBe(false);
+    expect(vault.files.has('.trash/2026-06-13.md')).toBe(true);
+  });
+
+  it('正常有头行的文件不进 inferred（只有靠兜底时间的才记）', async () => {
+    vault.files.set(DAY_PATH, '# 📖 12:23\n\nA\n');
+    const r = await convertLegacyToEntries();
+    expect(r.converted).toBe(1);
+    expect(r.inferred).toEqual([]);
+  });
+
   it('空日期文件：跳过（不建空条目）', async () => {
     vault.files.set(DAY_PATH, '\n\n');
     const r = await convertLegacyToEntries();

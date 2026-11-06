@@ -13,7 +13,7 @@
  * emoji 反查：先查**用户当前类型表**（config 的 emojiToTagMap），查不到再查 LEGACY 旧表——
  * 旧表只服务「读懂历史文件」，不参与 UI 默认值；用户删掉某个类型后，旧日记仍能还原标签。
  */
-import { diaryDateFromLegacyPath, isValidDiaryTime } from '../core/diary-format';
+import { diaryDateFromLegacyPath, isValidDiaryTime, parseDiaryEntryFile } from '../core/diary-format';
 import { diaryDayDateOf, emojiToTagMap, tagToEmojiMap, getTagEmoji, LEGACY_DIARY_TYPES } from './config';
 import type { DiaryEntry } from './types';
 
@@ -39,6 +39,12 @@ export interface LegacyDayFile {
   unparsed: number;
   /** 无可解析块且无游离行（空文件） */
   empty: boolean;
+  /**
+   * 整篇降级来的（一个头行都没有、整篇正文算一条）。
+   * 只有 `parseDayFileForRead` 会置 true；`parseLegacyDayFile` 永远不出这个形态——
+   * 写层拿到的永远是「真按头行切开的文件」，见本文件末尾的口径说明。
+   */
+  whole?: boolean;
 }
 
 /** 头行：`# <emoji序列> HH:mm`（与 scripts/diary-split.mjs 同口径） */
@@ -143,6 +149,81 @@ export function parseLegacyDayFile(content: string, path: string, date?: string)
   return { date: resolved, blocks, unparsed, empty: blocks.length === 0 && unparsed === 0 };
 }
 
+/**
+ * 无头行文件的兜底时分：ctime 落在**文件名那一天** → 取它的 HH:mm；否则 00:00。
+ *
+ * 两条口径（2026-11-06）：
+ * - 用 ctime 不用 mtime：日记当天写下、之后常被反复编辑，mtime 会漂到深夜；创建时间更贴「那天写的」。
+ * - **必须校验日期**：跨盘拷入 / 同步拉下来的 ctime 是拷贝时间。ADR-0157 补记正是因此把
+ *   无条件的 ctime 推导从日记侧清掉了；这里请回来的是「带日期校验的兜底」，两条不是一回事。
+ *   校验不过就记 00:00——展示 00:00 比编一个假时分诚实。
+ */
+export function diaryFallbackTime(ctimeMs: number | null | undefined, date: string): string {
+  const ms = Number(ctimeMs);
+  if (!Number.isFinite(ms) || ms <= 0) return '00:00';
+  const d = new Date(ms);
+  if (!Number.isFinite(d.valueOf())) return '00:00';
+  const pad = (n: number): string => String(n).padStart(2, '0');
+  const day = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+  if (day !== String(date || '')) return '00:00';
+  return `${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
+/**
+ * **读路径专用**的 day 文件解析：在 `parseLegacyDayFile` 之上加一层「整篇降级」。
+ *
+ * Obsidian 原生日记常常就是一篇纯正文，没有 `# emoji HH:mm` 分段时间头。严格解析会
+ * 把它算成「N 行游离正文」→ 册子里一条都不显示、转换整份跳过（用户 2026-11-06 点名要能看见）。
+ *
+ * 降级判据（宁可少降，不乱降）：
+ * - 一个头行都没有（连写坏的 `# 📖 25:00` 也没有）—— 有头行说明用户想分段，写坏了就该
+ *   照旧进「跳过报告」让人自己修，不能把坏头行当正文吞掉；
+ * - 没有 bz 条目属性（`date`）—— 有条目属性却用日期命名的，是被改了名的分片文件，
+ *   不是 Obsidian 原生日记；降级会把 frontmatter 当正文摊到墙上；
+ * - 整篇有正文（全空白仍算空文件）。
+ *
+ * 合成块的 line/endLine 覆盖首个到最后一个非空行：`jumpToDiaryEntry` 靠它定位，
+ * 写层不认这个形态（见文件末口径）。
+ */
+export function parseDayFileForRead(
+  content: string,
+  path: string,
+  date?: string,
+  ctimeMs?: number | null
+): LegacyDayFile | null {
+  const day = parseLegacyDayFile(content, path, date);
+  if (!day || day.blocks.length > 0 || day.unparsed === 0) return day;
+
+  const lines = String(content ?? '').replace(/\r\n/g, '\n').split('\n');
+  const hasHeading = lines.some((l) => HEADING_RE.test(l));
+  if (hasHeading) return day; // 想分段但头行写坏：不降级，留给跳过报告
+  // 带 bz 条目属性（date）却用日期命名：被改名的分片文件，降级会把 frontmatter 当正文
+  if (parseDiaryEntryFile(content).meta) return day;
+
+  let first = -1;
+  let last = -1;
+  for (let i = 0; i < lines.length; i++) {
+    if (lines[i].trim() === '') continue;
+    if (first < 0) first = i;
+    last = i;
+  }
+  if (first < 0) return day; // 全空白：维持空文件
+
+  day.blocks = [
+    {
+      time: diaryFallbackTime(ctimeMs, day.date),
+      tags: ['日记'],
+      body: lines.slice(first, last + 1).join('\n').trim(),
+      line: first,
+      endLine: last,
+    },
+  ];
+  day.unparsed = 0;
+  day.empty = false;
+  day.whole = true;
+  return day;
+}
+
 /** 路径是否 day 格式文件（按当前日记目录 + Obsidian 日期格式解析，兼容内置四种与旧 `YYYY-MM-DD`） */
 export function isLegacyDiaryPath(path: string | null | undefined): boolean {
   const p = String(path ?? '');
@@ -168,3 +249,14 @@ export function legacyBlockToEntry(day: LegacyDayFile, block: LegacyBlock, path:
     id: `diary-${path.replace(/\//g, '-')}-${day.date}-${block.time}-${block.line}`,
   };
 }
+
+/*
+ * 口径（ADR-0286）：**读降级，写严格**。
+ *
+ * - 读：`parseDayFileForRead` 允许「整篇无头行」的文件降级成一条（Obsidian 原生日记开箱可见）；
+ * - 写：`store.ts` 的所有写口仍走 `parseLegacyDayFile`，并对「blocks 空 + unparsed > 0」
+ *   抛 `UnparsedLineError`——bz 不改写原生文件的格式。
+ *
+ * 两条共用 `LegacyDayFile` 形状，边界只在调用方选哪个函数。**不要给 `parseLegacyDayFile`
+ * 加降级参数**：那会让写层默认放过原生文件，静默改格式的口子就又开了。
+ */

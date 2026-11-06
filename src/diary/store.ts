@@ -38,6 +38,7 @@ import {
   emojiSeqOfTags,
   isLegacyDiaryPath,
   legacyBlockToEntry,
+  parseDayFileForRead,
   parseLegacyDayFile,
   serializeLegacyBlock,
   type LegacyBlock,
@@ -63,6 +64,23 @@ function warnUnparsed(msg: string, dedupeKey?: string) {
   } catch (e) {
     /* 无 DOM 环境（node 测试）降级为静默 */
   }
+}
+
+/**
+ * 整篇无头行的 Obsidian 原生日记：**写路径统一拒绝**（追加 / 改标签 / 删除都不许）。
+ *
+ * 读路径会把它降级成一条显示（`parseDayFileForRead`），但写路径一旦放过它，
+ * 追加一个 `# 📖 HH:mm` 块就把纯正文变成「游离正文 + 头行块」——静默改写用户的原生文件。
+ * 要在这里写，先走设置页的「切换并转换」。
+ */
+function refuseHeadlessDay(day: LegacyDayFile | null, filePath: string): void {
+  if (!day || day.blocks.length > 0 || day.unparsed === 0) return;
+  const name = filePath.split('/').pop() || filePath;
+  warnUnparsed(
+    `「${name}」是 Obsidian 原生日记（一整篇，没有分段时间），bz 不会改写它。要在这里写，先把日记格式切成「一篇一个文件」。`,
+    `diary-write-refused-headless-${filePath}`
+  );
+  throw new UnparsedLineError(name, day.unparsed);
 }
 
 /** 「读盘失败」错误 toast（同 warnUnparsed 的静默降级口径；dedupeKey 防反复触发刷屏） */
@@ -171,7 +189,8 @@ async function listDateEntryRefs(dateStr: string): Promise<DateEntryRef[]> {
       const file = vault.getAbstractFileByPath(p);
       if (!file || 'children' in file) continue;
       const content = await vault.read(file as any);
-      const day = parseLegacyDayFile(content, p, legacyDate);
+      // 读路径允许「整篇无头行」降级成一条（Obsidian 原生日记）；写路径仍走严格解析
+      const day = parseDayFileForRead(content, p, legacyDate, (file as { stat?: { ctime?: number } }).stat?.ctime);
       if (!day) continue;
       for (const b of day.blocks) out.push({ path: p, time: b.time, line: b.line, legacy: true });
     } catch (e) {
@@ -196,15 +215,19 @@ async function listEntryRefsForFile(filePath: string): Promise<DateEntryRef[]> {
     const file = getApp().vault.getAbstractFileByPath(filePath);
     if (!file || 'children' in file) return [];
     const content = await getApp().vault.read(file as any);
-    const day = parseLegacyDayFile(content, filePath, date);
+    const day = parseDayFileForRead(content, filePath, date, (file as { stat?: { ctime?: number } }).stat?.ctime);
     return (day?.blocks ?? []).map((b) => ({ path: filePath, time: b.time, line: b.line, legacy: true }));
   } catch (e) {
     return [];
   }
 }
 
-/** 旧日期文件的队列内守卫读（读失败/非旧文件形状抛错，与 entry 守卫同待遇） */
-async function readLegacyCtxInQueue(filePath: string): Promise<LegacyFileCtx> {
+/**
+ * 旧日期文件的队列内守卫读（读失败/非旧文件形状抛错，与 entry 守卫同待遇）。
+ * `readOnly` = 纯读场景（`listDateEntries`）：允许整篇无头行的原生日记降级成一条；
+ * 默认（写场景）走严格解析，`refuseHeadlessDay` 拦下改写。
+ */
+async function readLegacyCtxInQueue(filePath: string, opts?: { readOnly?: boolean }): Promise<LegacyFileCtx> {
   const file = getApp().vault.getAbstractFileByPath(filePath) as any;
   if (!file) return { file: null, content: '', day: null };
   let content = '';
@@ -218,7 +241,9 @@ async function readLegacyCtxInQueue(filePath: string): Promise<LegacyFileCtx> {
     throw new DiaryFileReadError(filePath, e);
   }
   const date = diaryDayDateOf(filePath) ?? diaryDateFromLegacyPath(filePath);
-  const day = parseLegacyDayFile(content, filePath, date ?? undefined);
+  const day = opts?.readOnly
+    ? parseDayFileForRead(content, filePath, date ?? undefined, file?.stat?.ctime)
+    : parseLegacyDayFile(content, filePath, date ?? undefined);
   if (!day) {
     warnUnparsed(
       `「${filePath.split('/').pop()}」不是日记日期文件，本次修改没有执行。`,
@@ -226,6 +251,7 @@ async function readLegacyCtxInQueue(filePath: string): Promise<LegacyFileCtx> {
     );
     throw new UnparsedLineError(filePath.split('/').pop() || filePath, 1);
   }
+  if (!opts?.readOnly) refuseHeadlessDay(day, filePath);
   if (!diaryDataMap) setDiaryDataMap(new Map());
   diaryDataMap!.set(
     filePath,
@@ -234,9 +260,13 @@ async function readLegacyCtxInQueue(filePath: string): Promise<LegacyFileCtx> {
   return { file, content, day };
 }
 
-/** 旧日期文件的队列壳（读在队列内，与写路径 FIFO 互斥） */
-async function withLegacyFile<T>(filePath: string, task: (ctx: LegacyFileCtx) => T | Promise<T>): Promise<T> {
-  return enqueueFileTask(filePath, async () => task(await readLegacyCtxInQueue(filePath)));
+/** 旧日期文件的队列壳（读在队列内，与写路径 FIFO 互斥）；`readOnly` 见 readLegacyCtxInQueue */
+async function withLegacyFile<T>(
+  filePath: string,
+  task: (ctx: LegacyFileCtx) => T | Promise<T>,
+  opts?: { readOnly?: boolean }
+): Promise<T> {
+  return enqueueFileTask(filePath, async () => task(await readLegacyCtxInQueue(filePath, opts)));
 }
 
 /** 在旧文件里按块头行号（优先）或时刻找块 */
@@ -299,7 +329,7 @@ export async function listDateEntries(dateStr: string, opts?: DateWriteOptions):
   for (const ref of refs) {
     try {
       if (ref.legacy) {
-        const ctx = await withLegacyFile(ref.path, (c) => c);
+        const ctx = await withLegacyFile(ref.path, (c) => c, { readOnly: true });
         const block = ctx.day ? findLegacyBlock(ctx.day, ref) : null;
         if (ctx.day && block) out.push({ ...legacyBlockToEntry(ctx.day, block, ref.path) });
         continue;
@@ -435,6 +465,11 @@ async function addLegacyEntry(
         throw new DiaryFileReadError(filePath, e);
       }
     }
+    /*
+     * 文件已存在且是「整篇无头行」的原生日记：拒绝追加。
+     * 追加一个 `# emoji HH:mm` 块会把纯正文变成「游离正文 + 头行块」，等于静默改写用户的原生文件。
+     */
+    refuseHeadlessDay(parseLegacyDayFile(before, filePath, dateStr), filePath);
     const base = before.replace(/\s+$/, '');
     const prefix = base ? `${base}\n\n` : '';
     const block = serializeLegacyBlock(tagsArray, timeStr, content.trim());

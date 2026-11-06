@@ -114,6 +114,40 @@ describe('切换格式确认框：样例外置成视觉中心 + 文案收敛', (
   });
 });
 
+describe('转换说明：Obsidian 原生日记的时间怎么来', () => {
+  /** 当前格式是 day，点「一篇一个文件」才会弹（点已选中的卡片直接 return） */
+  function remountAsDay(): void {
+    setSettingsProvider(() => ({ ...DEFAULT_SETTINGS, diaryEntryFormat: 'day' }) as never);
+    body.innerHTML = '';
+    mountDiaryFormatEditor(body);
+  }
+
+  /** 点「一篇一个文件」卡片：这一侧要 await 扫库计数，弹窗不是同步出来的 */
+  async function openToEntry(): Promise<HTMLElement> {
+    remountAsDay();
+    (body.querySelector('[data-fmt="entry"]') as HTMLElement).click();
+    await vi.waitFor(() => {
+      expect(document.getElementById('__shared_confirm_popup__')).toBeTruthy();
+    });
+    return document.getElementById('__shared_confirm_popup__')!;
+  }
+
+  it('有整篇无头行的原生日记：说明按文件创建时间补、对不上记 00:00', async () => {
+    vault.files.set('我的/日记/2026-06-13.md', '今天下雨了。\n\n在家写了一下午代码。\n');
+    const popup = await openToEntry();
+    const text = popup.querySelector('.bz-diary-fmt-dialog-body')?.textContent || '';
+    expect(text).toContain('其中 1 篇是 Obsidian 原生日记');
+    expect(text).toContain('文件创建时间');
+    expect(text).toContain('00:00');
+  });
+
+  it('没有原生日记：不出现这段说明（不制造无关噪音）', async () => {
+    const popup = await openToEntry();
+    const text = popup.querySelector('.bz-diary-fmt-dialog-body')?.textContent || '';
+    expect(text).not.toContain('Obsidian 原生日记');
+  });
+});
+
 describe('转换进度条的生命周期', () => {
   it('未开始转换时 DOM 里没有进度条（不是 hidden）', () => {
     expect(body.querySelector('.bz-diary-fmt-progress')).toBeNull();
@@ -127,7 +161,7 @@ describe('转换进度条的生命周期', () => {
     conv.state.calls[0]?.onProgress?.({ done: 1, total: 2, current: '我的/日记/2606131223.md' });
     expect(body.querySelector('[data-role="pct"]')?.textContent).toBe('50%');
 
-    conv.state.settle?.({ target: 'day', converted: 1, skipped: [], errors: [] });
+    conv.state.settle?.({ target: 'day', converted: 1, skipped: [], errors: [], inferred: [] });
     await vi.waitFor(() => expect(body.querySelector('.bz-diary-fmt-progress')).toBeNull());
     // 转换完两张卡恢复可点（busy 解除），别再卡在禁用态
     expect((body.querySelector('[data-fmt="day"]') as HTMLButtonElement).disabled).toBe(false);

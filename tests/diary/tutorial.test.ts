@@ -5,7 +5,7 @@
  * - **严格只弹一次**：openDiary 判一次「首次打开」并记账（diaryFirstOpened），之后永不重弹；
  *   弹窗真出现过再写 diaryTutorialSeen，双保险；
  * - **只在非空态弹**：空册/未配置不弹，教程入口常驻在册子空态页与引导纸上；
- * - 占位期（DIARY_TUTORIAL_URL 为空）点入口只给一句人话，不送 404；
+ * - 地址为空时（预留形态）点入口只给一句人话，不送 404；
  * - 弹窗穿日记域皮（.bz-overlay-popup.bz-diary-tutorial-popup），无标题头，字少。
  */
 import { describe, expect, it, beforeEach, vi } from 'vitest';
@@ -86,7 +86,7 @@ describe('教程弹窗（A · 票根）', () => {
     expect(el!.getAttribute('aria-label')).toBe('视频教程');
     expect(el!.querySelector('.bz-dialog-head')).toBeNull(); // 字少：不出标题头
     expect(el!.querySelector('.bz-diary-tut-cover')).toBeTruthy();
-    expect(el!.querySelector('.bz-diary-tut-kicker')!.textContent).toContain('即将上线');
+    expect(el!.querySelector('.bz-diary-tut-kicker')!.textContent).toContain('视频教程');
     expect(el!.querySelector('.bz-diary-tut-name')!.textContent).toBe('三分钟上手');
     expect(byClass('bz-diary-tut-dismiss').textContent).toContain('先翻翻');
     expect(byClass('bz-diary-tut-go').textContent).toContain('看视频教程');
@@ -120,9 +120,17 @@ describe('教程弹窗（A · 票根）', () => {
 });
 
 describe('B 站链接', () => {
-  it('占位期（空串）：票根写即将上线，点「看视频教程」只给一句人话', () => {
-    expect(DIARY_TUTORIAL_URL).toBe('');
+  it('地址已填（2026-11-06 发布）：票根写「视频教程」，不写「即将上线」', () => {
+    expect(DIARY_TUTORIAL_URL).toBe('https://www.bilibili.com/video/BV1W44i6yETx');
     showDiaryTutorial();
+
+    expect(popup()!.querySelector('.bz-diary-tut-kicker')!.textContent).toContain('视频教程');
+    expect(popup()!.querySelector('.bz-diary-tut-kicker')!.textContent).not.toContain('即将上线');
+  });
+
+  it('地址为空（预留的未发布形态）：点「看视频教程」只给一句人话', () => {
+    showDiaryTutorial({ url: '' });
+    expect(popup()!.querySelector('.bz-diary-tut-kicker')!.textContent).toContain('即将上线');
 
     byClass('bz-diary-tut-go').click();
     expect(mocks.openExternalUrl).not.toHaveBeenCalled();
@@ -151,9 +159,10 @@ describe('B 站链接', () => {
 });
 
 describe('空态入口', () => {
-  it('空册上的「看视频教程」占位期开不了外链，只给一句人话', () => {
+  it('空册上的「看视频教程」直接开 B 站（不再走占位提示）', () => {
     openTutorialVideo();
-    expect(mocks.openExternalUrl).not.toHaveBeenCalled();
-    expect(getNoticeMessages().join('\n')).toContain('教程视频还没发');
+    expect(mocks.openExternalUrl).toHaveBeenCalledTimes(1);
+    expect(mocks.openExternalUrl.mock.calls[0][1]).toBe(DIARY_TUTORIAL_URL);
+    expect(getNoticeMessages().join('\n')).not.toContain('还没发');
   });
 });
