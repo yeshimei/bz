@@ -48,6 +48,7 @@ import { articleKeyOf, CLIP_TUTORIAL_URL } from './constants';
 import { readDataSourceState, type DataSourceState } from './news-source-settings';
 import type { ClipArticle } from './types';
 import { stripClipChrome } from './md';
+import { SUMMARY_CARD_KEY } from './summary-card';
 import { queryBySource, queryBySourceFull, aggregateSites, clipArticle, bucketByState, normSite, feedSiteName, countNewsBySite } from './store';
 import {
   panelHtml, railItemHtml, railFootHtml, tocListHtml,
@@ -2697,6 +2698,16 @@ export function clipbookSettingsSchema(dataSource: DataSourceState): SettingsSch
             stopAutoSummary();
             ensureAutoSummary(getApp());
           } },
+          {
+            // ADR-0290：摘要卡的落点开关。独立于「自动摘要」总开关常显——手动重跑摘要
+            // 也会写卡，总开关关掉时这一项仍要能改
+            type: 'toggle', name: '笔记内摘要卡', desc: 'AI 摘要写回后在笔记正文顶部生成摘要卡',
+            help:
+              '摘要卡是 Obsidian 原生的提示块（不是插件渲染），打开笔记一眼能看到摘要和标签，不依赖任何插件。' +
+              '关掉之后摘要只留在笔记属性里，正文保持纯正文。' +
+              '只有 AI 摘要真正生成出来才写——AI 没配好或生成失败，正文不会留一张空卡。',
+            binding: { key: SUMMARY_CARD_KEY },
+          },
         ],
       },
       {

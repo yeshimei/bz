@@ -8,6 +8,9 @@ QuickAdd 时代 key 存在 Q3 宏设置（`aiProvider`、`opencodeGoApiKey`）�
 
 ## 2. Dataview 依赖（聚合讯）
 
+> **已被 ADR-0290 推翻（2026-11-06）**：剪藏笔记不再写 dataviewjs 指令，摘要卡改由
+> auto-summary 写回时生成 Obsidian 原生 callout。下方为历史决策原文，仅存档。
+
 聚合讯把 ` ```dataviewjs await dv.view('CONFIG/SCRIPTS/DataView/摘要') ``` ` 代码块写进笔记，由 **Dataview 插件**渲染。用户决策「按源码的方式写」——**保留此方案**：插件继续生成 dataviewjs 代码块，不自行渲染。
 
 ## 3. Ollama / 本地服务（闪念）

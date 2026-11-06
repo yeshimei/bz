@@ -1,11 +1,12 @@
 /**
  * clipbook（剪藏本融合域，ADR-0082 / issue 177）：保存到剪藏本（写剪藏笔记）。
  *
- * 语义迁移自 src/news/reader.ts saveToClip（逐字保留 frontmatter 契约 P1-24 +
- * dataviewjs 摘要块）：news 条目标记已保存 → 写 `剪藏目录/<cleanTitle>.md`。
+ * 语义迁移自 src/news/reader.ts saveToClip（逐字保留 frontmatter 契约 P1-24）：
+ * news 条目标记已保存 → 写 `剪藏目录/<cleanTitle>.md`。
  * - frontmatter：url/author/site/summary/tags/date/created（created 本地时间戳
  *   ——UTC+8 凌晨不落昨日；date 转 UTC 本地串）
- * - 正文剥离 frontmatter/dataviewjs 块后写入，尾部嵌 dataviewjs 摘要 view
+ * - 正文剥离 frontmatter / 旧 dataviewjs 块后原样写入；**不写摘要卡**——摘要卡由
+ *   auto-summary 写回成功时生成（ADR-0290：AI 未配置或摘要失败时不落卡）
  * - 同名文件已存在 → 覆盖确认（flow-dialog 三出口：覆盖/另存为新剪藏/取消，效率#3）
  * - B站视频条目保存分流文献盒（ADR-0068：openLiteratureAddTask），不写剪藏
  *
@@ -18,6 +19,7 @@ import { notice, notify, notifySaveError, type NoticeHandle } from '../core/noti
 import { openFlowDialog } from '../core/flow-dialog';
 import { localDatetime, toDatetime, articleKeyOf } from './constants';
 import { readArticleTracking, applyBodyTransforms, clearArticleTracking, linkAliasText } from './anchor';
+import { stripLegacyDataviewBlock } from './summary-card';
 import type { ClipSavedImage } from './data';
 
 // C27：先转义反斜杠（\ → \\）再转义引号/换行——否则 url/author/summary 含 `\` 时
@@ -99,15 +101,16 @@ export async function writeClipNote(raw: any): Promise<boolean> {
   // C10：剥离外壳必须锚定串首（去 m 标志）——带 m 时 `^` 匹配任意行首，正文中两条
   // `---` 分隔线之间的整段会被当 frontmatter 静默删掉（已复现：intro/中段/outro 丢中段）
   const rawBody = String(raw.body || '')
-    .replace(/^\s*---[\s\S]*?---\s*/, '')
-    .replace(/^\s*```dataviewjs[\s\S]*?```\s*/, '')
-    .trim();
+    .replace(/^\s*---[\s\S]*?---\s*/, '');
+  // 存量笔记/旧 news.json 的 body 可能带着前几版写进去的 dataviewjs 摘要块 → 落盘前清掉
+  // （剥离实现与读侧单源，ADR-0290）
+  const strippedBody = stripLegacyDataviewBlock(rawBody).trim();
   // issue 329：保存物化——落盘前按侧写追踪（划词 marks + 已存图片映射）变换正文
   const key = articleKeyOf(raw);
   const tracking = await readArticleTracking(key);
   // 全量图片本地化：所有外链图下载落盘后组 src→local 全量映射，与划词同一 imageSwaps 管线换链
-  const imageSwaps = await localizeImagesForSave(rawBody, tracking.images);
-  const transformed = applyBodyTransforms(rawBody, tracking.marks, imageSwaps);
+  const imageSwaps = await localizeImagesForSave(strippedBody, tracking.images);
+  const transformed = applyBodyTransforms(strippedBody, tracking.marks, imageSwaps);
   const body = transformed.body;
 
   const md = `---
@@ -120,9 +123,6 @@ ${tagsYaml}
 date: "${yamlEscape(pubDate)}"
 created: ${now}
 ---
-\`\`\`dataviewjs
-await dv.view(\`CONFIG/SCRIPTS/DataView/摘要\`)
-\`\`\`
 
 ${body}`;
 
