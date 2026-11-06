@@ -33,7 +33,7 @@ interface ClipbookData {
 ### 3. 状态与保存闭环（旧 news 行为保留，迁入 clipbook）
 
 - reading/saved 落侧写 articleOverrides/archive；read 只落 news.json read=true+state 骨架 + stats（删 body，保留策略沿用）。
-- 「保存到剪藏本」：写 `归档/网页剪藏/<cleanTitle>.md`（frontmatter url/author/site/summary/tags/date/created + dataviewjs 摘要块，迁自 news/reader.ts saveToClip），并发 `news:read/saved` 域事件（smartcat 行为流三跳依赖）+ 目录文件事件增量刷左栏剪藏计数。B站视频条目保存分流文献盒（ADR-0068）。
+- 「保存到剪藏本」：写 `归档/网页剪藏/<cleanTitle>.md`（frontmatter url/author/site/summary/tags/date/created + dataviewjs 摘要块，迁自 news/reader.ts saveToClip；**dataviewjs 块已由 ADR-0290 废除**——正文只留纯正文，摘要卡改由 auto-summary 写回成功时生成原生 callout），并发 `news:read/saved` 域事件（smartcat 行为流三跳依赖）+ 目录文件事件增量刷左栏剪藏计数。B站视频条目保存分流文献盒（ADR-0068）。
 - news.json 状态写回走串行队列 + mergeWithDisk 双写者合并 + 迁移旧 news-stats.json（函数迁入/复用 news/data.ts）。
 - 右栏阅读器沿用聚合讯逐篇正文（body 未删才可读；已删条目不进流），累计阅读时长统计（对齐 ticket 076 openedAt/accumMs 语义）由行为流事件承载。
 

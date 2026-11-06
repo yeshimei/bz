@@ -17,6 +17,11 @@ describe('clipbook/md stripClipChrome（enh 包 3：右栏读剪藏正文）', (
     expect(out).toContain('> 引用');
   });
 
+  it('剥原生摘要卡（ADR-0290）：右栏自渲染摘要，正文不重复显示', () => {
+    const withCard = '---\nurl: "https://a.b/2"\n---\n> [!summary] 标题\n> 一段摘要\n>\n> #标签\n\n第一段。\n';
+    expect(stripClipChrome(withCard)).toBe('第一段。');
+  });
+
   it('无 frontmatter/空串安全', () => {
     expect(stripClipChrome('正文')).toBe('正文');
     expect(stripClipChrome('')).toBe('');

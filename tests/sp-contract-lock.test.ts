@@ -28,7 +28,7 @@ const COUNT_BASELINE: Record<string, number> = {
   memo: 11,
   belongings: 6,
   people: 11, // 2026-09-29 复评：聊天仓组新增「我的头像」text 行（+1，逐轮时间轴「我」那一侧的头像路径）。基线 10 的沿革：2026-09-27 回退 496 重复行（转写引擎统一在 AI 设置面板，issue 444）；2026-09-26 issue 470 聊天仓组「每批图片数」+1；issue 467+462 媒体组两行随 peopleMediaDir 退役（头像改走保库记录附件）。现口径：数据源 3 + 聊天仓 6 + 隐私 2（清空按钮不计）
-  clipping: 12, // 2026-09-27 issue 497 / ADR-0209：数据源组新增「RSSHub 实例」text 行（+1）；issue 495 基线 11
+  clipping: 13, // 2026-11-06 ADR-0290：自动摘要组「笔记内摘要卡」toggle（+1，常显不随总开关收起）；2026-09-27 issue 497 / ADR-0209：数据源组新增「RSSHub 实例」text 行（+1）；issue 495 基线 11
   favorites: 5,
   cinema: 7, // 2026-09-26：网格每行列数退役（列数固定 5）
   bookshelf: 5,

@@ -7,6 +7,7 @@
 import { getKnowledgeBoxes, isBoxDir, parseDirList } from './core/knowledge-boxes';
 import { DEFAULT_PW_CHARSET } from './password-vault/data';
 import { AUTO_SUMMARY_KEYS } from './auto-summary/keys';
+import { SUMMARY_CARD_KEY } from './clipbook/summary-card';
 import { unsharpenScore } from './secondbrain/vector-math';
 // 工具坞（dock 域）登记条目类型 —— **type-only**：类型层引用，运行时零依赖（不拖 dock 侧的 core/storage）
 import type { DockTrustRecord } from './dock/registry';
@@ -214,6 +215,8 @@ export default interface BzSettings {
   clipbookMidWidth: number;
   /** 剪藏本图片文件夹（issue 329：保存正文图片落地目录；留空回落 <剪藏目录>/assets） */
   clipbookImageFolder: string;
+  /** 摘要卡（ADR-0290）：AI 摘要写回成功后把摘要卡写进剪藏笔记正文顶部；关 = 只写 frontmatter */
+  clipbookSummaryCard: boolean;
 
   // ===== 🔐 密码本（6 项）=====
   /** 🔤 密码生成字符集 */
@@ -1107,6 +1110,9 @@ export const DEFAULT_SETTINGS: BzSettings = {
   clipbookMidWidth: 0,
   // clipbook：图片文件夹（issue 329；留空回落剪藏目录 assets）
   clipbookImageFolder: '',
+  // clipbook：摘要卡落正文（ADR-0290；默认开——摘要写回成功后正文顶部生成原生 callout，
+  // 关掉只写 frontmatter。旧行为是每篇都写 dataviewjs 指令，那条路已废）
+  [SUMMARY_CARD_KEY]: true,
 
 
   // 字符集默认值收编 password-vault/data 单源（原字面量第三份拷贝，深审批 C 口径漂移清单）
