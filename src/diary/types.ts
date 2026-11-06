@@ -29,6 +29,9 @@ export interface DiaryEntry {
   id?: string;
   /** 是否为加密日记条目（ADR-0017）：解锁后解密进列表、卡片🔐角标、点击只读预览不跳 md */
   encrypted?: boolean;
+  /** 整篇无头行的 Obsidian 原生日记（ADR-0286 读降级合成的一条）：
+   *  正文可改写（写回保持无头行），贴纸仍不可改（追加/改标签一律拒写） */
+  whole?: boolean;
   /** 对应的保险箱 SafeNote id（encrypted=true 时存在） */
   noteId?: string;
   /** 附加元信息（ADR-0230 加性字段）：影视/书库的展示余项，见 DiaryEntryExtra */
@@ -117,7 +120,7 @@ export type WallSegment = { kind: 'text'; text: string } | { kind: 'media'; medi
 export interface WallEntry
   extends Pick<
     DiaryEntry,
-    'date' | 'time' | 'tags' | 'emoji' | 'content' | 'filename' | 'filePath' | 'lineNumber' | 'id' | 'noteId' | 'encrypted' | 'extra'
+    'date' | 'time' | 'tags' | 'emoji' | 'content' | 'filename' | 'filePath' | 'lineNumber' | 'id' | 'noteId' | 'encrypted' | 'whole' | 'extra'
   > {
   kind: WallEntryKind;
   media: WallMedia[];

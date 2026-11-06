@@ -6,6 +6,8 @@ import {
   addEntry,
   removeDiaryEntries,
   updateDiaryTags,
+  updateDiaryContent,
+  DiaryContentConflictError,
   listDateEntries,
   findDiaryEntry,
   diaryDataMap,
@@ -234,6 +236,82 @@ describe('updateDiaryTags（只重写 frontmatter，正文一字不动）', () =
     const updated = await updateDiaryTags(DATE, (e) => e.time === '09:30', ['骑行']);
     expect(updated).toBeNull(); // 拒写
     expect(vault.files.get(E1)).toBe(before); // 磁盘一字不动（date 未被单方面改成 08:00）
+  });
+});
+
+describe('updateDiaryContent（改正文：原地替换，日期时辰不动）', () => {
+  const withExtra = [
+    '---',
+    'date: 2024-01-01 08:00',
+    'cssclass: wide',
+    'type:',
+    '  - 日记',
+    'tags: [a, b]',
+    '---',
+    '',
+    'A',
+    '',
+  ].join('\n');
+
+  it('entry 格式：重写正文，frontmatter 契约两键与契约外键原样保留；发 diary:content-changed', async () => {
+    makeVault({ [E1]: withExtra });
+    const { onDomainEvent } = await import('../../src/core/domain-bus');
+    const seen: any[] = [];
+    const off = onDomainEvent('diary:content-changed', (e) => seen.push(e));
+    const updated = await updateDiaryContent(DATE, (e) => e.time === '08:00', '改过的字');
+    off();
+
+    expect(updated?.content).toBe('改过的字');
+    expect(updated?.time).toBe('08:00'); // 时辰锁死
+    const disk = vault.files.get(E1)!;
+    expect(disk).toContain('date: 2024-01-01 08:00');
+    expect(disk).toContain('cssclass: wide'); // N4 同口径：契约外键不静默丢
+    expect(disk).toContain('tags: [a, b]');
+    expect(disk).toContain('改过的字');
+    expect(disk).not.toMatch(/\nA\n/);
+    expect(seen[0]).toMatchObject({ date: DATE, time: '08:00', filePath: E1 });
+    expect(diaryDataMap!.get(E1)![0].content).toBe('改过的字');
+  });
+
+  it('正文没变（只差首尾空白）：等价成功，不写盘（逐字节一致）', async () => {
+    makeVault({ [E1]: fm('08:00', ['日记'], 'A') });
+    const before = vault.files.get(E1);
+    const updated = await updateDiaryContent(DATE, (e) => e.time === '08:00', '  A\n\n');
+    expect(updated?.content).toBe('A');
+    expect(vault.files.get(E1)).toBe(before);
+  });
+
+  it('冲突：expectContent 与磁盘现文不一致 → 抛 DiaryContentConflictError，盘上一字不动', async () => {
+    makeVault({ [E1]: fm('08:00', ['日记'], '磁盘上的新字') });
+    const before = vault.files.get(E1);
+    await expect(
+      updateDiaryContent(DATE, (e) => e.time === '08:00', '我写的字', { expectContent: '册子里的旧字' })
+    ).rejects.toBeInstanceOf(DiaryContentConflictError);
+    expect(vault.files.get(E1)).toBe(before);
+  });
+
+  it('force：人已确认「以册子为准」→ 跳过比对写盘', async () => {
+    makeVault({ [E1]: fm('08:00', ['日记'], '磁盘上的新字') });
+    const updated = await updateDiaryContent(DATE, (e) => e.time === '08:00', '我写的字', {
+      expectContent: '册子里的旧字',
+      force: true,
+    });
+    expect(updated?.content).toBe('我写的字');
+    expect(vault.files.get(E1)).toContain('我写的字');
+  });
+
+  it('空正文不落盘（返回 null）', async () => {
+    makeVault({ [E1]: fm('08:00', ['日记'], 'A') });
+    const before = vault.files.get(E1);
+    expect(await updateDiaryContent(DATE, (e) => e.time === '08:00', '   ')).toBeNull();
+    expect(vault.files.get(E1)).toBe(before);
+  });
+
+  it('定位失败（谓词不命中）：返回 null、不改盘', async () => {
+    makeVault({ [E1]: fm('08:00', ['日记'], 'A') });
+    const before = vault.files.get(E1);
+    expect(await updateDiaryContent(DATE, (e) => e.time === '23:59', '改')).toBeNull();
+    expect(vault.files.get(E1)).toBe(before);
   });
 });
 

@@ -249,6 +249,8 @@ function toWallEntry(e: DiaryEntry, kind: WallEntry['kind'], dir: string): WallE
     id: e.id,
     // 加密日记条目的保险箱 SafeNote id（encrypted=true 时存在；UI 解密时用，非加密条目为 undefined）
     noteId: e.noteId,
+    // 整篇无头行的原生日记（ADR-0286）：改字只放开正文，贴纸不可改
+    whole: e.whole,
     kind,
     media: extractMedia(e.content, dir),
     // 渲染用正文：去媒体嵌入，保留 markdown 语法（content 保留原文供复制/跳转）
