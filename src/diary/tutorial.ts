@@ -8,8 +8,8 @@
  *    直接写在册子的空态页/引导纸上（和影院同款：常驻、随时能点）。
  * 3. 弹窗打开即写 `settings.diaryTutorialSeen`，与第 1 条双保险，防任何路径重复弹。
  *
- * 链接暂时占位：视频还没发。发布后只改 `DIARY_TUTORIAL_URL` 一处——
- * 空串 = 未发布：票根写「即将上线」，点击只给一句人话，不把人送去 404。
+ * 链接单源在 `DIARY_TUTORIAL_URL`（2026-11-06 已发布）——空串仍按「未发布」处理：
+ * 票根写「即将上线」，点击只给一句人话，不把人送去 404。
  *
  * 皮：uiModal 壳 + `.bz-diary-tutorial-popup`（纸 / 墨 / 铜材料与写日记弹窗同款，见 styles.css）。
  * 弹窗挂 document.body，取不到场景根上的 --bz-diary-* 变量，故域样式里自带一份材料色。
@@ -23,9 +23,9 @@ import { openExternalUrl } from '../core/utils';
 
 /**
  * 日记本视频教程地址（作者本人的操作演示，B 站）。
- * TODO（2026-11-05）：视频发布后把地址填进来。空串 = 还没发，入口走「即将上线」形态。
+ * 2026-11-06 发布。空串 = 未发布，入口走「即将上线」形态（保留这条兜底，防将来换片期）。
  */
-export const DIARY_TUTORIAL_URL = '';
+export const DIARY_TUTORIAL_URL = 'https://www.bilibili.com/video/BV1W44i6yETx';
 
 /** 弹窗的域皮类（styles.css 里 `.bz-overlay-popup.bz-diary-tutorial-popup` 起手） */
 const TUTORIAL_CLASS = 'bz-diary-tutorial-popup';
