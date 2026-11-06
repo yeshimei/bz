@@ -56,6 +56,29 @@ export function releaseEntryCount(release: ChangelogRelease): number {
  */
 export const CHANGELOG_RELEASES: readonly ChangelogRelease[] = [
   {
+    version: '1.40.0',
+    date: '2026-11-06',
+    // 条目与 docs/note-v1.40.0.md 同稿（scripts/_gen-changelog.mjs 自动生成，勿手改）
+    added: [
+      { domain: '日记本', text: '首次打开会弹视频教程，空册页常驻入口。' },
+      { domain: '日记本', text: '一天一个文件成为默认，文件名跟随 Obsidian 日记的日期格式。' },
+      { domain: '设置面板', text: '新增「插件」组，能看 bz reader 版本并就地更新。' },
+    ],
+    fixed: [
+      { domain: '存储', text: '数据目录在插件里时也能正常读，剪藏本、首页计数、小橘、体检一并恢复。' },
+      { domain: '剪藏本', text: '订阅了却没抓到的源在左栏可见，空源提示分清「没抓到」和「都处理过了」。' },
+      { domain: '剪藏本', text: '剪藏笔记不再写私人脚本，摘要卡改用 Obsidian 原生提示块。' },
+      { domain: '日记本', text: '切换格式不再出现半批，整批能转才动手。' },
+    ],
+    improved: [
+      { domain: '日记本', text: '册子上能改正文。' },
+      { domain: '日记本', text: '分类全部改平级，老库的二级分类升级时一并拍平。' },
+      { domain: '日记本', text: '加密分类册接管加密解密。' },
+      { domain: '日记本', text: '藏书票改版，读完的书盖上读毕印章。' },
+      { domain: '日记本', text: '日记目录留空时跟随 Obsidian 日记本的位置。' },
+    ],
+  },
+  {
     version: '1.39.4',
     date: '2026-11-05',
     // 条目与 docs/note-v1.39.4.md 同稿（scripts/_gen-changelog.mjs 自动生成，勿手改）
