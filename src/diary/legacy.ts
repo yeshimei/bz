@@ -247,6 +247,8 @@ export function legacyBlockToEntry(day: LegacyDayFile, block: LegacyBlock, path:
     filePath: path,
     lineNumber: block.line,
     id: `diary-${path.replace(/\//g, '-')}-${day.date}-${block.time}-${block.line}`,
+    // 整篇无头行的原生日记（ADR-0286）：UI 据此只放开「改正文」，贴纸仍不可改
+    ...(day.whole ? { whole: true as const } : {}),
   };
 }
 

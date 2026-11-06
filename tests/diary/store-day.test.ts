@@ -11,6 +11,7 @@ import {
   listDateEntries,
   removeDiaryEntries,
   updateDiaryTags,
+  updateDiaryContent,
   setDiaryDataMap,
 } from '../../src/diary/store';
 import { MockVault, mockAppWithVault } from '../mock-vault';
@@ -109,6 +110,46 @@ describe('updateDiaryTags（day 格式：只换块头）', () => {
     const before = vault.files.get(PATH);
     const updated = await updateDiaryTags(DATE, (e) => e.content === '第一篇', ['日记']);
     expect(updated?.tags).toEqual(['日记']);
+    expect(vault.files.get(PATH)).toBe(before);
+  });
+});
+
+describe('updateDiaryContent（day 格式：只换块内正文）', () => {
+  it('命中块只改正文，块头时辰/emoji 与其他块一字不动', async () => {
+    vault.files.set(PATH, '# 📖 12:23\n\n第一篇\n\n# ✍️ 22:10\n\n第二篇\n');
+    const updated = await updateDiaryContent(DATE, (e) => e.time === '12:23', '第一篇改过');
+    expect(updated?.content).toBe('第一篇改过');
+    expect(updated?.time).toBe('12:23'); // 时辰锁死
+    expect(vault.files.get(PATH)).toBe('# 📖 12:23\n\n第一篇改过\n\n# ✍️ 22:10\n\n第二篇\n');
+  });
+
+  it('正文行数变化：后面的块行号重新算对（回刷后按新行号定位）', async () => {
+    vault.files.set(PATH, '# 📖 12:23\n\n第一篇\n\n# ✍️ 22:10\n\n第二篇\n');
+    await updateDiaryContent(DATE, (e) => e.time === '12:23', '一\n\n二');
+    expect(vault.files.get(PATH)).toBe('# 📖 12:23\n\n一\n\n二\n\n# ✍️ 22:10\n\n第二篇\n');
+    const es = await listDateEntries(DATE);
+    expect(es.map((x) => [x.time, x.lineNumber, x.content])).toEqual([
+      ['12:23', 0, '一\n\n二'],
+      ['22:10', 6, '第二篇'],
+    ]);
+  });
+
+  it('整篇无头行的原生日记：改字保持无头行（不塞时间头）', async () => {
+    vault.files.set(PATH, '今天下雨了。\n\n在家写了一下午代码。\n');
+    const updated = await updateDiaryContent(DATE, (e) => e.content.includes('下雨'), '今天放晴了。\n\n出门走了一圈。');
+    expect(updated?.content).toBe('今天放晴了。\n\n出门走了一圈。');
+    const disk = vault.files.get(PATH)!;
+    expect(disk).toBe('今天放晴了。\n\n出门走了一圈。\n');
+    expect(disk).not.toContain('# ');
+  });
+
+  it('整篇无头行的原生日记：冲突同样拦下来（expectContent 与磁盘不一致）', async () => {
+    vault.files.set(PATH, '今天下雨了。\n');
+    const before = vault.files.get(PATH);
+    const { DiaryContentConflictError } = await import('../../src/diary/store');
+    await expect(
+      updateDiaryContent(DATE, (e) => e.content.includes('下雨'), '改', { expectContent: '册子里的旧字' })
+    ).rejects.toBeInstanceOf(DiaryContentConflictError);
     expect(vault.files.get(PATH)).toBe(before);
   });
 });

@@ -372,6 +372,8 @@
 .bz-diary-wsp-act:hover { opacity: .75; }
 }
 .bz-diary-wsp-datebtn { cursor: pointer; border-bottom: 1px dashed rgba(178, 58, 42, .5); }
+/* 改字态：日子时辰锁死（改时辰等于给这篇搬家），日戳上那枚「改日子 · 时辰」小签收起 */
+.bz-diary-wsp-editing .bz-diary-wsp-datebtn { display: none; }
 .bz-diary-wsp-pageno {
   position: absolute; bottom: 18px; right: 40px;
   font-size: 14px; color: var(--bz-diary-ink-faint); letter-spacing: 2px; user-select: none;

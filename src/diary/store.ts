@@ -12,11 +12,13 @@
  * - 新建 entry：按日期串行取空闲文件名（同刻第二篇落 `-2` 后缀）后 vault.create；
  * - 新建 day：读当天日期文件，末尾追加块（文件不存在则建）；
  * - 改标签 entry：只重写 frontmatter；改标签 day：只替换块头行；
+ * - 改正文 entry：重写正文（frontmatter 原样）；改正文 day：只换块内正文
+ *   （整篇无头行的原生日记也走这条，写回保持无头行——ADR-0286 的写回分支）；
  * - 删除 entry：整文件进回收站；删除 day：只摘掉那个块（文件空了才整文件进回收站）。
  *
  * 磁盘同步即守卫：读盘失败抛 DiaryFileReadError 中止任务（D1：视为空文件会删掉整篇日记）；
  * 条目文件存在但解析不出条目抛 UnparsedLineError 拒处理——直接写会永久抹掉原文。
- * 动作完成后发域事件（diary:entry-added / tags-changed），墙与其他消费者自行刷新。
+ * 动作完成后发域事件（diary:entry-added / tags-changed / content-changed），墙与其他消费者自行刷新。
  * 本模块不碰 DOM、不挂监听。
  */
 import { getApp } from '../core/app';
@@ -115,6 +117,28 @@ export class DiaryFileReadError extends Error {
 /** 判断是否写层读盘失败（UI 层 catch 后静默：人话通知已由写层发出） */
 export function isDiaryReadFailure(e: unknown): boolean {
   return e instanceof DiaryFileReadError;
+}
+
+/**
+ * 正文冲突（改字落盘前重读比对不上）：磁盘上的这一篇在册子读到之后被别处改过。
+ * 不静默覆盖——日记是手写的字，别处的改动同样值钱；由 UI 弹一张纸让人决定。
+ */
+export class DiaryContentConflictError extends Error {
+  constructor(public filePath: string, public currentContent: string) {
+    super(`日记正文已在别处更新：${filePath}`);
+    this.name = 'DiaryContentConflictError';
+  }
+}
+
+/** 判断是否正文冲突（UI 捕获后弹确认，而不是当「没找到原文」） */
+export function isDiaryContentConflict(e: unknown): e is DiaryContentConflictError {
+  return e instanceof DiaryContentConflictError;
+}
+
+/** 正文比较归一（换行统一 + 首尾空白）：只判「字有没有变」，不跟空白较劲 */
+function sameDiaryBody(a: string, b: string): boolean {
+  const norm = (s: string): string => String(s ?? '').replace(/\r\n/g, '\n').trim();
+  return norm(a) === norm(b);
 }
 
 /**
@@ -683,6 +707,129 @@ async function updateLegacyBlockTagsInQueue(
   const updated = { ...legacyBlockToEntry(day, block, filePath), tags: [...newTags] };
   updated.emoji = newTags.map((tag) => getTagEmoji(tag)).join('');
   return { entry: updated, from, changed: true };
+}
+
+/** 正文改写的选项（DateWriteOptions + 冲突判定） */
+export interface DiaryContentWriteOptions extends DateWriteOptions {
+  /** 进入编辑时册子上那份正文：落盘前在同一个队列任务里重读比对，不一致抛冲突 */
+  expectContent?: string;
+  /** 人已确认「以册子为准覆盖」：跳过冲突比对 */
+  force?: boolean;
+}
+
+/**
+ * 改写条目正文（日期与时辰锁死：本条只换字，不搬家）。
+ * - entry 格式：重写该文件正文；frontmatter 契约两键 + 契约外键原样保留；
+ * - day 格式：只替换该块的正文行（块头、块间空行、其他块不动）；
+ * - 整篇无头行的原生日记（ADR-0286）：整篇替换这一段字，**不写时间头**——写回保持无头行；
+ * - 冲突：`expectContent` 与磁盘现文不一致且未 `force` → 抛 `DiaryContentConflictError`。
+ *
+ * 空正文不落盘（返回 null；UI 已先拦）。正文真被改过才发 `diary:content-changed`，
+ * 墙按常态刷新保阅读位置。
+ */
+export async function updateDiaryContent(
+  dateStr: string,
+  match: (e: DiaryEntry) => boolean,
+  newContent: string,
+  opts?: DiaryContentWriteOptions
+): Promise<DiaryEntry | null> {
+  const body = String(newContent ?? '').replace(/\r\n/g, '\n').trim();
+  if (!body) return null;
+  const refs = opts?.filePath ? await listEntryRefsForFile(opts.filePath) : await listDateEntryRefs(dateStr);
+  for (const ref of refs) {
+    const p = ref.path;
+    let hit: { entry: DiaryEntry; changed: boolean } | null = null;
+    try {
+      hit = ref.legacy
+        ? await enqueueFileTask(p, async () => updateLegacyBlockBodyInQueue(p, ref, match, body, opts))
+        : await enqueueFileTask(p, async () => {
+            // 写在队列回调词法区域内（D3 直写守门契约内实现）：守卫读 + 冲突比对 + 重写一气呵成
+            const { file, content, entry } = await readEntryCtxInQueue(p);
+            if (!file || !entry || !match(entry)) return null;
+            // N4：属性与题目双轨不一致（体检 name-mismatch）拒写，人工裁决后再改
+            if (lintEntryFile(p, content) === 'name-mismatch') {
+              warnUnparsed(
+                `「${p.split('/').pop()}」属性时间与文件名不一致（需人工裁决），本次改字没有执行。` +
+                  `请先修正该文件的文件名或属性时间后再试。`,
+                `diary-name-mismatch-${p}`
+              );
+              return null;
+            }
+            if (!opts?.force && opts?.expectContent != null && !sameDiaryBody(entry.content, opts.expectContent)) {
+              throw new DiaryContentConflictError(p, entry.content);
+            }
+            if (sameDiaryBody(entry.content, body)) return { entry, changed: false }; // 一个字没变：不写盘
+            let disk = serializeDiaryEntryFile({ date: entry.date, time: entry.time }, entry.tags, body);
+            // N4：契约外键原样插回重写后的 frontmatter（位于关闭行之前）
+            const extra = extraFrontmatterLines(content);
+            if (extra.length > 0) {
+              const closeIdx = disk.indexOf('\n---\n', 4);
+              disk = disk.slice(0, closeIdx + 1) + extra.join('\n') + '\n' + disk.slice(closeIdx + 1);
+            }
+            await getApp().vault.modify(file, disk);
+            entry.content = body;
+            if (diaryDataMap) diaryDataMap.set(p, [entry]);
+            return { entry, changed: true };
+          });
+    } catch (e) {
+      if (e instanceof DiaryContentConflictError) throw e; // 冲突交给人裁决，不当「没命中」吞掉
+      if (isDiaryReadFailure(e) || e instanceof UnparsedLineError) continue;
+      throw e;
+    }
+    if (hit) {
+      /* 只在这条真被改过时才发：原样返回（只差首尾空白）不该触发一轮整册回刷 */
+      if (hit.changed) emitDomainEvent('diary:content-changed', { date: hit.entry.date, time: hit.entry.time, filePath: p });
+      return hit.entry;
+    }
+  }
+  return null;
+}
+
+/**
+ * day 格式改一个块的正文（含整篇无头行）。
+ * 走 `readOnly` 守卫读：整篇无头行的原生日记也允许「改字」（写回保持无头行），
+ * 而追加 / 改标签 / 删除仍走严格解析（`refuseHeadlessDay`）——两条口径不互相松动。
+ */
+async function updateLegacyBlockBodyInQueue(
+  filePath: string,
+  ref: DateEntryRef,
+  match: (e: DiaryEntry) => boolean,
+  body: string,
+  opts?: DiaryContentWriteOptions
+): Promise<{ entry: DiaryEntry; changed: boolean } | null> {
+  const { file, content, day } = await readLegacyCtxInQueue(filePath, { readOnly: true });
+  if (!file || !day) return null;
+  const block = findLegacyBlock(day, ref);
+  if (!block) return null;
+  const entry = legacyBlockToEntry(day, block, filePath);
+  if (!match(entry)) return null;
+  if (!opts?.force && opts?.expectContent != null && !sameDiaryBody(block.body, opts.expectContent)) {
+    throw new DiaryContentConflictError(filePath, block.body);
+  }
+  if (sameDiaryBody(block.body, body)) return { entry, changed: false };
+
+  const lines = content.replace(/\r\n/g, '\n').split('\n');
+  const next = day.whole
+    ? [...lines.slice(0, block.line), ...body.split('\n'), ...lines.slice(block.endLine + 1)].join('\n')
+    : replaceLegacyBlockBody(lines, block, body);
+  await getApp().vault.modify(file, next);
+  const rest = parseDayFileForRead(next, filePath, day.date, file?.stat?.ctime);
+  if (diaryDataMap) {
+    diaryDataMap.set(
+      filePath,
+      (rest?.blocks ?? []).map((b) => legacyBlockToEntry(rest!, b, filePath))
+    );
+  }
+  /* 头行行号不变（替换区间从块头起）——本条仍用原 lineNumber，换的是正文与后续块的位置 */
+  return { entry: { ...entry, content: body }, changed: true };
+}
+
+/** 块正文替换：保留头行与块后空行，只换「头行之后到最后一个非空行」这一段 */
+function replaceLegacyBlockBody(lines: string[], block: LegacyBlock, body: string): string {
+  let end = block.endLine;
+  while (end > block.line && lines[end].trim() === '') end--;
+  const head = `# ${emojiSeqOfTags(block.tags)} ${block.time}`;
+  return [...lines.slice(0, block.line), head, '', ...body.split('\n'), ...lines.slice(end + 1)].join('\n');
 }
 
 /**

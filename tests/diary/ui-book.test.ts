@@ -1004,10 +1004,10 @@ describe('DiaryAppController · 便签菜单（右键 / 长按）', () => {
     return qa('.bz-diary-menu .bz-diary-mn-item').filter((i) => !i.hidden);
   }
 
-  it('普通日记条目：换贴纸 / 收进信封 / 誊录正文 / 誊录位置 / 撕掉；无「拆信/取出」', async () => {
+  it('普通日记条目：改字 / 换贴纸 / 收进信封 / 誊录正文 / 誊录位置 / 撕掉；无「拆信/取出」', async () => {
     await openBook();
     const acts = openMenuOn(blockOf('diary')).map((i) => i.dataset.act);
-    expect(acts).toEqual(['open', 'retype', 'envelope', 'copytext', 'copylink', 'tear']);
+    expect(acts).toEqual(['open', 'edit', 'retype', 'envelope', 'copytext', 'copylink', 'tear']);
   });
 
   it('影视/书条目：只能誊录（无加密/删除入口，写层语义错位）', async () => {
@@ -2497,3 +2497,121 @@ describe('DiaryAppController · 开册进度（读盘 → 成册）', () => {
   });
 });
 
+
+// ============================================================
+//  八、改字（用户 2026-11-06：日记正文在册子上原地改）
+// ============================================================
+
+describe('DiaryAppController · 改字', () => {
+  function blockByText(text: string): HTMLElement {
+    const para = qa('.bz-diary-b-para').find((p) => (p.textContent || '').includes(text))!;
+    return para.closest<HTMLElement>('[data-eid]')!;
+  }
+
+  function openMenuOn(el: HTMLElement): HTMLElement[] {
+    el.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, clientX: 40, clientY: 50 }));
+    return qa('.bz-diary-menu .bz-diary-mn-item').filter((i) => !i.hidden);
+  }
+
+  function clickEdit(text = '被猫盯着'): void {
+    openMenuOn(blockByText(text));
+    q('.bz-diary-menu .bz-diary-mn-item[data-act="edit"]').click();
+  }
+
+  it('右键「改字」：旧字摊回写作纸，按钮换「改好 / 作罢」，纸脚标「旧字重写」', async () => {
+    await openBook();
+    clickEdit();
+    const area = q<HTMLTextAreaElement>('.bz-diary-wsp-area');
+    expect(q('.bz-diary-wsp').hidden).toBe(false);
+    expect(area.value).toBe('被猫盯着\n\n![[photo.jpg]]\n\n今天 #随手记');
+    expect(q('.bz-diary-wsp').classList.contains('bz-diary-wsp-editing')).toBe(true);
+    expect(q('.bz-diary-wsp-day .bz-diary-ds-day').textContent).toBe('19'); // 那一天的日戳
+    expect(q('.bz-diary-wsp-pageno').textContent).toContain('旧字重写');
+    expect(q('[data-wact="save"]').textContent).toBe('改好');
+    expect(q('[data-wact="discard"]').textContent).toBe('作罢');
+  });
+
+  it('改好：原地替换那一条（不新增文件），贴纸一并写回', async () => {
+    await openBook();
+    const before = new Set(vault.files.keys());
+    clickEdit();
+    q<HTMLTextAreaElement>('.bz-diary-wsp-area').value = '改好的字';
+    const ride = qa('.bz-diary-wsp-chip').find((el) => el.dataset.tag === '骑行')!;
+    ride.click();
+
+    q('[data-wact="save"]').click();
+    await vi.waitFor(() => expect(q('.bz-diary-wsp').hidden).toBe(true));
+
+    expect([...vault.files.keys()].filter((p) => !before.has(p))).toEqual([]); // 没有多出一篇
+    const disk = vault.files.get(DIARY_PATH)!;
+    expect(disk).toContain('改好的字');
+    expect(disk).not.toContain('被猫盯着');
+    expect(disk).toContain('  - 骑行'); // 贴纸写回
+    expect(disk).toContain('date: 2026-08-19 23:02'); // 日子时辰不动
+  });
+
+  it('改字那一轮回刷保阅读位置（不当成「新落一篇」甩回册首）', async () => {
+    const c = await openBook();
+    const spy = vi.spyOn(c as unknown as { scheduleRelayout: (home?: boolean) => void }, 'scheduleRelayout');
+    clickEdit();
+    q<HTMLTextAreaElement>('.bz-diary-wsp-area').value = '改好的字';
+    q('[data-wact="save"]').click();
+    await vi.waitFor(() => expect(spy).toHaveBeenCalled());
+    expect(spy.mock.calls.every((call) => call[0] !== true)).toBe(true);
+  });
+
+  it('改字态日子时辰锁死：点日戳不弹台历（改时辰＝搬家，不在这一条里）', async () => {
+    await openBook();
+    clickEdit();
+    q('.bz-diary-wsp-datebtn').click();
+    expect(q('.bz-diary-cal-pop').hidden).toBe(true);
+  });
+
+  it('别处刚改过 → 先拦下来问；选「先不改」留在纸上，盘上不被盖', async () => {
+    await openBook();
+    clickEdit();
+    q<HTMLTextAreaElement>('.bz-diary-wsp-area').value = '我改的';
+    const externally = serializeDiaryEntryFile({ date: '2026-08-19', time: '23:02' }, ['日记'], '别处改的新字');
+    vault.files.set(DIARY_PATH, externally); // 模拟 Obsidian 编辑器那边的改动
+
+    q('[data-wact="save"]').click();
+    await vi.waitFor(() => expect(mocks.openFlowDialog).toHaveBeenCalled());
+    const asked = (mocks.openFlowDialog.mock.calls.at(-1) as unknown as [{ title: string }])[0];
+    expect(asked.title).toContain('别处刚改过');
+    await Promise.resolve();
+    expect(q('.bz-diary-wsp').hidden).toBe(false); // 留在纸上，字还在
+    expect(q<HTMLTextAreaElement>('.bz-diary-wsp-area').value).toBe('我改的');
+    expect(vault.files.get(DIARY_PATH)).toBe(externally);
+  });
+
+  it('别处刚改过 → 选「以册子为准」才覆盖写盘', async () => {
+    await openBook();
+    clickEdit();
+    q<HTMLTextAreaElement>('.bz-diary-wsp-area').value = '我改的';
+    vault.files.set(DIARY_PATH, serializeDiaryEntryFile({ date: '2026-08-19', time: '23:02' }, ['日记'], '别处改的新字'));
+
+    mocks.openFlowDialog.mockResolvedValueOnce('overwrite');
+    q('[data-wact="save"]').click();
+    await vi.waitFor(() => expect(q('.bz-diary-wsp').hidden).toBe(true));
+    expect(vault.files.get(DIARY_PATH)).toContain('我改的');
+    expect(vault.files.get(DIARY_PATH)).not.toContain('别处改的新字');
+  });
+
+  it('整篇无头行的原生日记：有「改字」，没有「换张贴纸」（写层拒改它的标签）', async () => {
+    applyDirectories({ diaryEntryFormat: 'day' });
+    try {
+      vault.files.set('我的/日记/2026-08-18.md', '一整篇原生日记。\n\n没有时间头。\n');
+      invalidateWallCache();
+      const c = DiaryAppController.getInstance();
+      c.show();
+      await vi.waitFor(() => expect(qa('.bz-diary-page-item').length).toBeGreaterThan(0));
+
+      const acts = openMenuOn(blockByText('一整篇原生日记'));
+      const names = acts.map((i) => i.dataset.act);
+      expect(names).toContain('edit');
+      expect(names).not.toContain('retype');
+    } finally {
+      applyDirectories({ diaryEntryFormat: 'entry' });
+    }
+  });
+});

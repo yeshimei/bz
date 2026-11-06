@@ -87,6 +87,8 @@ import {
   findDiaryEntry,
   removeDiaryEntries,
   updateDiaryTags,
+  updateDiaryContent,
+  isDiaryContentConflict,
   isUnparsedRefusal,
   isDiaryReadFailure,
   rekeyDiaryMapPath,
@@ -522,8 +524,24 @@ export class DiaryAppController {
   /**
    * 写作内页的草稿（ADR-0233）：点「写」时立，落笔/揉掉即销。
    * 只存日子、时辰与已选贴纸——正文以 textarea 的 value 为准（不进状态，免得两份真相）。
+   * `edit` 有值 = 「改字」态（用户 2026-11-06）：这一页摊的是旧字，落盘原地替换那一条；
+   * 日子与时辰锁死（改时辰等于搬家：entry 换文件名 / day 换块头甚至换文件，不在本条范围）。
    */
-  private draft: { date: string; time: string; tags: string[] } | null = null;
+  private draft: {
+    date: string;
+    time: string;
+    tags: string[];
+    edit?: {
+      filePath: string;
+      lineNumber: number;
+      /** 进编辑时册子上那份正文：落盘前重读比对，别处改过就拦下来问 */
+      expectContent: string;
+      /** 进编辑时的贴纸：落盘时据此判要不要先写标签 */
+      originalTags: string[];
+      /** 整篇无头行的原生日记：贴纸不可改（写层拒改它），只换正文 */
+      whole: boolean;
+    };
+  } | null = null;
   /** 落笔进行中（防连点：写盘慢时双击「落笔」会在同刻落两篇） */
   private saving = false;
   /** 开册进度条的 `uiProgress` 句柄（首次开册建一次就复用，不随层出入栈——基元没有状态） */
@@ -2047,7 +2065,10 @@ export class DiaryAppController {
     const enc = !!e.encrypted;
     /* 打开笔记：日记有条目 md、影视/信/书有自己那份 md；加密条目没有明文文件，不给 */
     show('open', !enc && !!(e.filePath || e.filename));
-    show('retype', isDiary && !enc);
+    /* 改字：只有日记正文能在册子上改；加密条目（密文在保险库）、影视/信/书（各有自己的地方）不给 */
+    show('edit', isDiary && !enc && !!(e.filePath || e.filename));
+    /* 整篇无头行的原生日记：写层拒改标签（ADR-0286），别让人盖完贴纸才被拒 */
+    show('retype', isDiary && !enc && !e.whole);
     show('envelope', isDiary && !enc);
     show('takeout', enc);
     show('copytext', true);
@@ -2082,6 +2103,9 @@ export class DiaryAppController {
       switch (it.dataset.act) {
         case 'open':
           void this.openEntryNote(e);
+          break;
+        case 'edit':
+          this.startEdit(e);
           break;
         case 'retype':
           this.editTags(e);
@@ -2705,6 +2729,9 @@ export class DiaryAppController {
    *   「就这天」一次性回写草稿的日子与时辰。
    */
   private openCal(mode: 'jump' | 'write' = 'jump'): void {
+    /* 改字态日子时辰锁死（用户 2026-11-06）：改时辰等于搬家，纸上的日戳也不给入口；
+       这里再拦一道，任何别的调用路径都改不动它 */
+    if (mode === 'write' && this.draft?.edit) return;
     this.calMode = mode;
     const d = this.draft;
     /* 基准月取**当前这本册子**最新一篇所在的月（`visibleEntries()`：筛选态下不是全量最新那篇）——
@@ -3103,6 +3130,59 @@ export class DiaryAppController {
     setTimeout(() => this.focusWrite(), 60);
   }
 
+  /**
+   * 改字（用户 2026-11-06）：把这一篇的旧字摊回写作内页，改完原地替换，不新增一条。
+   * 日子与时辰锁死——改时辰等于给这篇搬家（entry 换文件名 / day 换块头甚至换文件），
+   * 撞名与顺序重排不在这一条里；纸上的日戳因此不给「改日子 · 时辰」那枚小签。
+   * 加密条目（密文在保险库）与影视/信/书（各有各的地方）不进这里。
+   */
+  private startEdit(e: WallEntry): void {
+    if (e.kind !== 'diary' || e.encrypted) return;
+    const filePath = e.filePath || e.filename;
+    if (!filePath) {
+      notice('找不到原文，改不了', 'error');
+      return;
+    }
+    if (this.draft) {
+      this.toast(this.draft.edit ? '先把这篇改完，或作罢' : '先把这张纸写完，或揉掉');
+      this.focusWrite();
+      return;
+    }
+    this.draft = {
+      date: e.date,
+      time: e.time,
+      tags: [...e.tags],
+      edit: {
+        filePath,
+        lineNumber: Number(e.lineNumber ?? 0),
+        expectContent: e.content,
+        originalTags: [...e.tags],
+        whole: !!e.whole,
+      },
+    };
+    this.wspAreaEl.value = e.content;
+    this.renderWspDay();
+    this.renderWspTools();
+    this.setWriteMode(true);
+    this.wspEl.hidden = false;
+    setTimeout(() => this.focusWrite(), 60);
+  }
+
+  /**
+   * 写作内页的两种态：新写（落笔 / 揉掉）与改字（改好 / 作罢）。
+   * 改字态纸脚与按钮换词、日戳上的「改日子 · 时辰」收起（CSS 按 `.bz-diary-wsp-editing` 藏）。
+   */
+  private setWriteMode(editing: boolean): void {
+    this.wspEl.classList.toggle('bz-diary-wsp-editing', editing);
+    const discard = this.wspEl.querySelector<HTMLElement>('[data-wact="discard"]');
+    const save = this.wspEl.querySelector<HTMLElement>('[data-wact="save"]');
+    const pageno = this.wspEl.querySelector<HTMLElement>('.bz-diary-wsp-pageno');
+    if (discard) discard.textContent = editing ? '作罢' : '揉掉';
+    if (save) save.textContent = editing ? '改好' : '落笔';
+    if (pageno) pageno.textContent = editing ? '— 旧字重写 —' : '— 新的一页 —';
+    this.wspAreaEl.placeholder = editing ? '' : '笔递给你了，写吧……';
+  }
+
   private focusWrite(): void {
     const ta = this.wspAreaEl;
     ta.focus();
@@ -3162,25 +3242,32 @@ export class DiaryAppController {
     const d = this.draft;
     const tag = chip.dataset.tag || '';
     if (!d || !tag) return;
+    /* 整篇无头行的原生日记：写层拒改它的标签（ADR-0286），纸上也不让点 */
+    if (d.edit?.whole) {
+      this.toast('原生日记只改字，不换贴纸');
+      return;
+    }
     const i = d.tags.indexOf(tag);
     if (i >= 0) d.tags.splice(i, 1);
     else d.tags.push(tag);
     chip.classList.toggle('bz-diary-on', i < 0);
   }
 
-  /** 揉掉这张纸。写过的字不静默丢：有正文先问一句（纸条层，本域自己的确认件）。 */
+  /** 揉掉这张纸。写过的字不静默丢：有正文先问一句（纸条层，本域自己的确认件）。
+   *  改字态是「作罢」：原文还在册上，作罢只是这次改动白费。 */
   private discardWrite(): void {
     if (!this.draft) return;
+    const editing = !!this.draft.edit;
     if (this.saving) {
-      this.toast('正在落笔，等一下'); // 落笔在途时揉掉＝条目照样写进去，语义被否
+      this.toast(editing ? '正在改，等一下' : '正在落笔，等一下'); // 落笔在途时揉掉＝条目照样写进去，语义被否
       return;
     }
     if (this.wspAreaEl.value.trim()) {
       this.openSlip({
-        title: '这张纸还没落笔',
-        body: '揉掉就没了。',
-        ok: '揉掉',
-        cancelText: '接着写',
+        title: editing ? '这篇还没改好' : '这张纸还没落笔',
+        body: editing ? '作罢就白改了，原文还在册上。' : '揉掉就没了。',
+        ok: editing ? '作罢' : '揉掉',
+        cancelText: editing ? '接着改' : '接着写',
         danger: true,
         onSubmit: () => {
           this.closeSlip();
@@ -3197,6 +3284,7 @@ export class DiaryAppController {
     this.draft = null;
     this.wspAreaEl.value = '';
     this.wspEl.hidden = true;
+    this.setWriteMode(false); // 纸收走即回「新写」措辞：下一张纸不该带着上一张的「改好」
     /* 写作期间被让路的视口变化（软键盘）在这里补一次排：走同一条防抖回刷，
        与「落笔」那次 `diary:entry-added` 的刷新合并成一次，不各排一遍整册 */
     if (this.resizePending) {
@@ -3219,13 +3307,21 @@ export class DiaryAppController {
     if (!d || this.saving) return false;
     const text = this.wspAreaEl.value.trim();
     if (!text) {
-      this.toast('一个字都没写呢');
+      this.toast(d.edit ? '改成一个字都不剩，就先作罢吧' : '一个字都没写呢');
       this.focusWrite();
       return false;
     }
     this.saving = true;
     this.wspAreaEl.readOnly = true;
     try {
+      /* 改字：原地替换那一条，不新增；日子时辰不动 */
+      if (d.edit) {
+        const saved = await this.saveEdit(text);
+        if (!saved) return false;
+        this.dropWrite();
+        this.toast('改好了');
+        return true;
+      }
       const created = await addEntry(d.date, d.time, d.tags.length ? d.tags : ['日记'], text);
       this.dropWrite();
       /* 立刻回册首、且新内容就在眼前（ADR-0259 决策 8）：这一篇已经落盘，
@@ -3254,13 +3350,72 @@ export class DiaryAppController {
       // 守卫拒写 / 读盘失败的人话通知已由写层发出，这里只兜底其余异常
       if (!isUnparsedRefusal(e) && !isDiaryReadFailure(e)) {
         console.error('落笔失败:', e);
-        notice(`落笔没成：${e instanceof Error ? e.message : String(e)}`, 'error');
+        notice(`${this.draft?.edit ? '没改成' : '落笔没成'}：${e instanceof Error ? e.message : String(e)}`, 'error');
       }
       return false;
     } finally {
       this.saving = false;
       this.wspAreaEl.readOnly = false;
     }
+  }
+
+  /**
+   * 落「改好」：贴纸有变先写标签（它只换头行，不动正文与行号），再写正文。
+   * 正文冲突（这篇在别处刚被改过、册子还没刷新）→ 弹一张纸问：
+   * 「先不改」留在纸上，还是「以册子为准」盖掉那边。返回是否真的改成了。
+   */
+  private async saveEdit(text: string): Promise<boolean> {
+    const d = this.draft;
+    const ed = d?.edit;
+    if (!d || !ed) return false;
+    const loc = {
+      filename: ed.filePath,
+      filePath: ed.filePath,
+      date: d.date,
+      time: d.time,
+      lineNumber: ed.lineNumber,
+      tags: d.tags,
+    };
+    const match = buildLocatorPredicateFor(d.date, loc);
+    /* 整篇无头行的原生日记：写层拒改标签（ADR-0286），纸上也不许点——这里再兜一道 */
+    const tagsChanged = !ed.whole && d.tags.join('\u0000') !== ed.originalTags.join('\u0000');
+    const write = (force: boolean) =>
+      updateDiaryContent(d.date, match, text, {
+        filePath: ed.filePath,
+        expectContent: ed.expectContent,
+        force,
+      });
+    let hit: Awaited<ReturnType<typeof updateDiaryContent>> = null;
+    try {
+      hit = await write(false);
+    } catch (err) {
+      if (!isDiaryContentConflict(err)) throw err;
+      const choice = await openFlowDialog({
+        title: '这篇在别处刚改过',
+        className: 'bz-diary-flow-dialog',
+        message: '磁盘上的字和册子里看到的不一样了。要以册子里的这份为准，盖掉那边的改动吗？',
+        actions: [
+          { label: '先不改', value: 'cancel' },
+          { label: '以册子为准', value: 'overwrite', cta: true, danger: true },
+        ],
+      });
+      if (choice !== 'overwrite') return false;
+      hit = await write(true);
+    }
+    if (!hit) {
+      notice('未能在日记数据中定位该条目，这次没改', 'error');
+      return false;
+    }
+    /* 贴纸放在正文之后：正文冲突时若先写贴纸，会出现「说了先不改、贴纸却换了」的假同步。
+       正文行数变了块行号会重算，用返回条目的新行号定位（entry 恒 0）。 */
+    if (tagsChanged) {
+      const after = { ...loc, lineNumber: hit.lineNumber };
+      const updated = await updateDiaryTags(d.date, buildLocatorPredicateFor(d.date, after), d.tags, {
+        filePath: ed.filePath,
+      });
+      if (!updated) notice('字改好了，贴纸没换成', 'error');
+    }
+    return true;
   }
 
   // ============================================================
@@ -3713,6 +3868,7 @@ export class DiaryAppController {
     const chs = [
       'diary:entry-added',
       'diary:tags-changed',
+      'diary:content-changed',
       'diary:entry-deleted',
       'diary:entry-decrypted',
       'diary:encrypted-purged',
@@ -3723,7 +3879,7 @@ export class DiaryAppController {
           if (this.root?.style.display !== 'flex') return;
           /* 批量解密自己会在循环末尾整读重排：这批聚合事件不再触发一轮防抖重读 */
           if (ch === 'diary:entry-decrypted' && this.batchDecrypting) return;
-          /* 新落一篇 → 这一轮回刷落册首（最新那篇就在第 0 页）；其余四通道保阅读位置 */
+          /* 新落一篇 → 这一轮回刷落册首（最新那篇就在第 0 页）；其余通道（含改字）保阅读位置 */
           this.scheduleRelayout(ch === 'diary:entry-added');
         })
       );
@@ -4140,7 +4296,7 @@ export class DiaryAppController {
    */
   private writeGuard(): boolean {
     if (!this.hasDraft()) return false;
-    this.toast('先落笔，或把这张纸揉掉');
+    this.toast(this.draft?.edit ? '先改好，或把这张纸作罢' : '先落笔，或把这张纸揉掉');
     return true;
   }
 
@@ -4159,14 +4315,15 @@ export class DiaryAppController {
       return;
     }
     let choice: string | undefined;
+    const editing = !!this.draft?.edit;
     try {
       choice = await openFlowDialog({
-        title: '这张纸还没落笔',
+        title: editing ? '这篇还没改好' : '这张纸还没落笔',
         message: '先收着的话，下次翻开日记本还在这张纸上。',
         actions: [
-          { label: '接着写', value: 'stay' },
+          { label: editing ? '接着改' : '接着写', value: 'stay' },
           { label: '先收着', value: 'hold' },
-          { label: '落笔', value: 'save', cta: true },
+          { label: editing ? '改好' : '落笔', value: 'save', cta: true },
         ],
       });
     } catch {
