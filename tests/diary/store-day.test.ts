@@ -64,6 +64,28 @@ describe('addEntry（day 格式：追加到当天日期文件）', () => {
 });
 
 describe('读路径（旧文件拆块）', () => {
+  it('整篇无头行的 Obsidian 原生日记：读得出来（一条，标签「日记」）', async () => {
+    vault.files.set(PATH, '今天下雨了。\n\n在家写了一下午代码。\n');
+    const es = await listDateEntries(DATE);
+    expect(es).toHaveLength(1);
+    expect(es[0]).toMatchObject({ tags: ['日记'], content: '今天下雨了。\n\n在家写了一下午代码。' });
+  });
+
+  it('整篇无头行的原生日记：拒写（不把纯正文改写成 # 头行格式）', async () => {
+    const raw = '今天下雨了。\n\n在家写了一下午代码。\n';
+    vault.files.set(PATH, raw);
+    const { UnparsedLineError } = await import('../../src/diary/store');
+    await expect(addEntry(DATE, '12:23', ['日记'], '新的一条')).rejects.toBeInstanceOf(UnparsedLineError);
+    expect(vault.files.get(PATH)).toBe(raw); // 原文件一字未动
+  });
+
+  it('空日期文件仍可追加（新的一天第一次写不受守卫影响）', async () => {
+    vault.files.set(PATH, '\n\n');
+    const e = await addEntry(DATE, '12:23', ['日记'], '第一篇');
+    expect(e.time).toBe('12:23');
+    expect(vault.files.get(PATH)).toContain('第一篇');
+  });
+
   it('listDateEntries 拆块并按时间升序；filePath 限定旧文件返回全部块', async () => {
     vault.files.set(PATH, '# 📖 22:10\n\n晚\n\n# 📖 08:00\n\n早\n');
     const es = await listDateEntries(DATE);

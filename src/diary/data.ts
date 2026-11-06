@@ -20,7 +20,7 @@ import type { App, TFile } from 'obsidian';
 import { parseEntryFile, parseMovieFile, parseLetterFile, parseBookFile } from './parser';
 import { diaryDayDateFromPath, diaryDayFormats, diaryMetaFromEntryPath } from '../core/diary-format';
 import { DIARY_DIRECTORY, LETTER_DIRECTORY, movieDirectory, bookDirectory, inWallDirs } from './config';
-import { parseLegacyDayFile, legacyBlockToEntry } from './legacy';
+import { parseDayFileForRead, legacyBlockToEntry } from './legacy';
 import { onDomainEvent } from '../core/domain-bus';
 import { tryGetSettings } from '../core/settings-provider';
 import type { DiaryEntry } from './types';
@@ -309,7 +309,8 @@ async function diarySlots(app: App, diaryDir: string): Promise<DiarySlot[]> {
     if (!legacyDate) continue;
     try {
       const content = await app.vault.cachedRead(f);
-      const day = parseLegacyDayFile(content, f.path, legacyDate);
+      // 读路径允许「整篇无头行」降级成一条（Obsidian 原生日记），写路径不认这个形态
+      const day = parseDayFileForRead(content, f.path, legacyDate, f.stat?.ctime);
       if (!day) continue;
       for (const b of day.blocks) {
         slots.push({ path: f.path, date: legacyDate, time: b.time, line: b.line, legacy: true });
@@ -335,7 +336,7 @@ async function readDiarySlot(app: App, slot: DiarySlot, diaryDir: string, failed
   try {
     const content = await app.vault.read(file as TFile);
     if (slot.legacy) {
-      const day = parseLegacyDayFile(content, slot.path, slot.date);
+      const day = parseDayFileForRead(content, slot.path, slot.date, (file as TFile).stat?.ctime);
       if (!day) return null;
       // 优先按块头行号定位（同刻多条也不会串），行号失效时退回同刻第一个块
       const block = day.blocks.find((b) => b.line === slot.line) ?? day.blocks.find((b) => b.time === slot.time);

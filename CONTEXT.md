@@ -8,7 +8,7 @@
 
 **日记条目 (DiaryEntry)**: 日记本中展示的最小单位。ADR-0284 起支持两种存储格式：
 - **entry**：一篇独立笔记，题目 `YYMMDDHHmm(-N)?`（ADR-0131，如 `2606131223`）、frontmatter `date`+`type`、正文无一级标题；lineNumber 恒 0。
-- **day**（缺省，2026-11-05 起）：一天一个文件，文件名日期格式**跟随 Obsidian 日记设置**（缺省 `YYYY-MM-DD`，可 `YYYY/MM/DD` 落子目录等），一条 = 文件里的一个 `# emoji序列 HH:mm` 块；lineNumber = 块头行号（同天同刻靠它区分）。
+- **day**（缺省，2026-11-05 起）：一天一个文件，文件名日期格式**跟随 Obsidian 日记设置**（缺省 `YYYY-MM-DD`，可 `YYYY/MM/DD` 落子目录等），一条 = 文件里的一个 `# emoji序列 HH:mm` 块；lineNumber = 块头行号（同天同刻靠它区分）。**整篇无头行的原生日记**（ADR-0286）：读路径降级成一条（分类「日记」，时分取 ctime 且必须落在文件名那天，否则 `00:00`），写路径拒绝改写原文，转换时整篇转一条并单独记账。
 内存对象由文件派生（date/time/tags/emoji/content/filename=filePath）。
 _Avoid_: 日记、记录、post
 

@@ -191,6 +191,22 @@ describe('loadWallEntries', () => {
     expect(entries[0].date).toBe('2024-01-01');
   });
 
+  it('整篇无头行的 Obsidian 原生日记：降级成一条显示（不再整个文件消失）', async () => {
+    const app = makeApp({
+      // 文件名日期与 mock ctime（2024-01-01）不同 → 时间走 00:00 兜底，断言不依赖测试机时区
+      '我的/日记/2024-01-02.md': '今天下雨了。\n\n在家写了一下午代码。\n',
+    });
+    const entries = await loadWallEntries(app);
+    expect(entries).toHaveLength(1);
+    expect(entries[0]).toMatchObject({
+      date: '2024-01-02',
+      time: '00:00',
+      tags: ['日记'],
+      emoji: '📖',
+      content: '今天下雨了。\n\n在家写了一下午代码。',
+    });
+  });
+
   it('空目录安全返回空数组', async () => {
     const app = makeApp({});
     expect(await loadWallEntries(app)).toEqual([]);

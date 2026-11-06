@@ -22,6 +22,7 @@ import { openFlowDialog } from '../core/flow-dialog';
 import { diaryMetaFromEntryPath } from '../core/diary-format';
 import { applyDirectories, DIARY_DIRECTORY, diaryDayDateOf, diaryDayStampOf, type DiaryEntryFormat } from './config';
 import { convertDiaryFormat, type ConvertProgress } from './convert';
+import { parseDayFileForRead } from './legacy';
 
 /** 格式名：卡片、确认框标题共用一套，避免叫法漂移 */
 const FORMAT_LABEL: Record<DiaryEntryFormat, string> = {
@@ -69,6 +70,37 @@ function countDiaryFiles(): number {
   return n;
 }
 
+/**
+ * 日记目录下有多少「整篇无头行」的 day 文件（Obsidian 原生日记，没有 `# emoji HH:mm` 分段时间）。
+ * 只有转成「一篇一个文件」时才要问——切回「一天一个文件」不涉及补时间。
+ * 用 cachedRead：确认框要秒开，不为一个计数把整库正文重读一遍；读不出的不计入，
+ * 转换时会照旧进跳过报告。
+ */
+async function countNativeDayFiles(): Promise<number> {
+  const prefix = `${DIARY_DIRECTORY}/`;
+  let n = 0;
+  try {
+    const app = getApp();
+    for (const f of app.vault.getMarkdownFiles?.() || []) {
+      const p = String((f as { path?: string }).path || '');
+      if (!p.startsWith(prefix)) continue;
+      if (diaryMetaFromEntryPath(p)) continue;
+      const date = diaryDayDateOf(p);
+      if (!date) continue;
+      try {
+        const content = await app.vault.cachedRead(f as never);
+        const day = parseDayFileForRead(content, p, date, (f as { stat?: { ctime?: number } }).stat?.ctime);
+        if (day?.whole) n += 1;
+      } catch (e) {
+        /* 单篇读失败：不计入 */
+      }
+    }
+  } catch (e) {
+    return 0;
+  }
+  return n;
+}
+
 function cardHtml(format: DiaryEntryFormat, active: boolean, busy: boolean, lines: string[], name: string, sub: string): string {
   return (
     `<button type="button" class="bz-diary-fmt-card${active ? ' is-on' : ''}" data-fmt="${format}"` +
@@ -83,11 +115,12 @@ function cardHtml(format: DiaryEntryFormat, active: boolean, busy: boolean, line
 /**
  * 切换确认框的富正文：
  * - 上半 = 样例块（视觉中心）：引导语 + 目标文件名等宽大字；
- * - 下半 = 两句事实：已有文件保持原样 / 转换进回收站。
+ * - 下半 = 两句事实：已有文件保持原样 / 转换进回收站；
+ * - 原生日记（整篇无头行）存在时，再补一句它们会怎么转。
  * 只描述「之后会怎样」与「已有会怎样」，不复述当前格式与分段规则——那两件事
  * 两张格式卡片的 mini 预览已经说完了，确认框再抄一遍就是噪音。
  */
-function buildSwitchBody(next: DiaryEntryFormat, count: number): HTMLElement {
+function buildSwitchBody(next: DiaryEntryFormat, count: number, native = 0): HTMLElement {
   const wrap = document.createElement('div');
   wrap.className = 'bz-diary-fmt-dialog-body';
 
@@ -113,6 +146,19 @@ function buildSwitchBody(next: DiaryEntryFormat, count: number): HTMLElement {
   enc.className = 'bz-diary-fmt-dialog-note';
   enc.textContent = '保险库里的加密日记不受影响';
   facts.append(existing, note, enc);
+
+  /*
+   * 整篇无头行的原生日记：转换会把整篇算一条、时间靠文件创建时间补。
+   * 这是「用户看不见的推断」，必须在点转换之前说清楚——转完再解释就晚了。
+   */
+  if (next === 'entry' && native > 0) {
+    const nativeNote = document.createElement('span');
+    nativeNote.className = 'bz-diary-fmt-dialog-note bz-diary-fmt-dialog-native';
+    nativeNote.textContent =
+      `其中 ${native} 篇是 Obsidian 原生日记（一整篇，没有分段时间）：转换后每篇算一条，` +
+      '时间按文件创建时间补；文件创建时间不在这天的，记 00:00';
+    facts.append(nativeNote);
+  }
 
   wrap.append(sample, facts);
   return wrap;
@@ -218,6 +264,7 @@ export function mountDiaryFormatEditor(body: HTMLElement): void {
       applyDirectories(s);
       format = next;
       const parts = [`已转换 ${report.converted} 个文件`];
+      if (report.inferred.length > 0) parts.push(`其中 ${report.inferred.length} 篇按文件创建时间补了时分`);
       if (report.skipped.length > 0) parts.push(`跳过 ${report.skipped.length} 个`);
       if (report.errors.length > 0) parts.push(`失败 ${report.errors.length} 个`);
       notify(parts.join('，'), { type: report.errors.length > 0 ? 'warning' : 'success' });
@@ -233,16 +280,25 @@ export function mountDiaryFormatEditor(body: HTMLElement): void {
   /** 切换确认框：取消 / 只切换 / 切换并转换 */
   async function askSwitch(next: DiaryEntryFormat): Promise<void> {
     const count = countDiaryFiles();
+    // 只有转成「一篇一个文件」才要补时间；切回一天一个文件不涉及
+    const native = next === 'entry' ? await countNativeDayFiles() : 0;
     const sample = formatSample(next);
     const existing = count > 0 ? `已有 ${count} 个文件保持原样` : '还没有已存的日记文件';
     const note = '转换的话，原文件进回收站，可恢复';
-    // 纯文本兜底（读屏 / 弹窗没建成时仍可读）：与富正文同三句，不重复当前格式与分段规则
-    const message = [`${FORMAT_CAP[next]}：${sample}`, existing, note].join('\n');
+    // 纯文本兜底（读屏 / 弹窗没建成时仍可读）：与富正文同句，不重复当前格式与分段规则
+    const message = [
+      `${FORMAT_CAP[next]}：${sample}`,
+      existing,
+      note,
+      ...(native > 0
+        ? [`其中 ${native} 篇是 Obsidian 原生日记，转换后每篇算一条，时间按文件创建时间补`]
+        : []),
+    ].join('\n');
 
     const value = await openFlowDialog({
       title: `切换到「${FORMAT_LABEL[next]}」？`,
       message,
-      body: buildSwitchBody(next, count),
+      body: buildSwitchBody(next, count, native),
       className: 'bz-sp-skin bz-diary-fmt-dialog',
       actions: [
         { label: '取消', value: 'cancel' },

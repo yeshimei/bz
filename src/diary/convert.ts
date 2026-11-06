@@ -4,6 +4,8 @@
  * 入口：设置面板「存储 → 切换并转换」；也可以在命令/测试里直接调。
  * 口径（与 scripts/diary-split.mjs 同语义，但这里是运行中的真实写盘）：
  * - 旧 → 新：每个 `YYYY-MM-DD.md` 按 `# emoji HH:mm` 拆块，每块写成一个条目文件；
+ *   一个头行都没有的（Obsidian 原生日记）整篇算一条，时间取文件创建时间（不在当天记 00:00），
+ *   这类文件单独记进 `inferred`，设置页会说明；
  *   有游离正文/坏时间头行的文件**整份跳过**（绝不静默丢行），原文件不动；
  * - 新 → 旧：同一天的条目文件按时间拼成一个 `YYYY-MM-DD.md`；目标已存在则整日跳过；
  * - 转换成功的原文件进 Obsidian 回收站（`trashNote`，可恢复），不做硬删；
@@ -23,7 +25,7 @@ import {
   serializeDiaryEntryFile,
 } from '../core/diary-format';
 import { DIARY_DIRECTORY, diaryDayPath, type DiaryEntryFormat } from './config';
-import { parseLegacyDayFile, serializeLegacyBlock } from './legacy';
+import { parseDayFileForRead, serializeLegacyBlock } from './legacy';
 import { parseEntryFile } from './parser';
 
 export interface ConvertProgress {
@@ -46,6 +48,11 @@ export interface ConvertReport {
   skipped: ConvertIssue[];
   /** 失败（已回滚本次目标写入） */
   errors: ConvertIssue[];
+  /**
+   * 靠兜底时间转出来的（Obsidian 原生日记：整篇无分段时间头，时间取自文件创建时间，
+   * 创建时间不在当天则记 00:00）。设置页的确认框与结果提示要用它说清「有几篇时间不是原文写的」。
+   */
+  inferred: ConvertIssue[];
 }
 
 type ProgressFn = (p: ConvertProgress) => void;
@@ -66,7 +73,7 @@ function yieldToUi(): Promise<void> {
 /** 旧 → 新：日期文件拆条目文件 */
 export async function convertLegacyToEntries(onProgress?: ProgressFn): Promise<ConvertReport> {
   const app = getApp();
-  const report: ConvertReport = { target: 'entry', converted: 0, skipped: [], errors: [] };
+  const report: ConvertReport = { target: 'entry', converted: 0, skipped: [], errors: [], inferred: [] };
   const legacyPaths = diaryMdPaths().filter(
     (p) => !!diaryDayDateFromPath(p, DIARY_DIRECTORY, diaryDayFormats())
   );
@@ -86,7 +93,11 @@ export async function convertLegacyToEntries(onProgress?: ProgressFn): Promise<C
     const dayDate = diaryDayDateFromPath(path, DIARY_DIRECTORY, diaryDayFormats());
     try {
       const content = await app.vault.read(file);
-      const day = parseLegacyDayFile(content, path, dayDate ?? undefined);
+      /*
+       * 读路径与转换共用降级解析：整篇无分段时间头的 Obsidian 原生日记算一条，
+       * 时间取文件创建时间（不在当天则 00:00）。有坏头行的仍按 unparsed 整份跳过，不吞正文。
+       */
+      const day = parseDayFileForRead(content, path, dayDate ?? undefined, file.stat?.ctime);
       if (!day) {
         report.skipped.push({ path, reason: '不是日记日期文件' });
         done++;
@@ -101,6 +112,12 @@ export async function convertLegacyToEntries(onProgress?: ProgressFn): Promise<C
         report.skipped.push({ path, reason: '空文件，没有可拆的条目' });
         done++;
         continue;
+      }
+      if (day.whole) {
+        report.inferred.push({
+          path,
+          reason: `原文件没有分段时间头，整篇转一条，时间 ${day.blocks[0]?.time ?? '00:00'}`,
+        });
       }
 
       const used = new Map<string, number>();
@@ -154,7 +171,7 @@ export async function convertLegacyToEntries(onProgress?: ProgressFn): Promise<C
 /** 新 → 旧：同一天的条目文件合并成日期文件 */
 export async function convertEntriesToLegacy(onProgress?: ProgressFn): Promise<ConvertReport> {
   const app = getApp();
-  const report: ConvertReport = { target: 'day', converted: 0, skipped: [], errors: [] };
+  const report: ConvertReport = { target: 'day', converted: 0, skipped: [], errors: [], inferred: [] };
 
   // 按日期分组（只认条目文件；旧日期文件留着的话目标会撞上，整日跳过）
   const byDate = new Map<string, string[]>();
