@@ -23,7 +23,7 @@
  */
 import type { App } from 'obsidian';
 import { yieldToMainThread } from '../core/utils';
-import { enqueueFileTask, jsonFileStore, storageFile } from '../core/storage';
+import { enqueueFileTask, jsonFileStore, storageFile, diskPathExists, diskPathStat } from '../core/storage';
 import type { CheckIssue, CheckOpts, CheckResult, CheckSection, CheckupReport } from './types';
 import { jsonScanTargets } from './files';
 import { checkJsonFiles } from './checks-json';
@@ -91,7 +91,7 @@ export async function runCheckup(app: App, opts: RunCheckupOpts = {}): Promise<C
   }
   const report: CheckupReport = { sections, finishedAt: new Date().toLocaleString() };
   lastReport = report; // 结果缓存（内存级，重开面板展示）
-  lastFingerprints = collectFingerprints(app); // 数据指纹（eff P3-6：重开时区分缓存是否仍然可信）
+  lastFingerprints = await collectFingerprints(app); // 数据指纹（eff P3-6：重开时区分缓存是否仍然可信）
   return report;
 }
 
@@ -101,15 +101,18 @@ let lastReport: CheckupReport | null = null;
 /** 体检完成时刻各扫描文件的 mtime 指纹（eff P3-6：重开面板时对比，判定缓存是否仍然可信） */
 let lastFingerprints: Record<string, number> | null = null;
 
-/** 采集各扫描数据文件的 mtime 指纹（O(N) 次内存查询零 IO；取不到 mtime 的文件不记） */
-export function collectFingerprints(app: App): Record<string, number> {
+/** 采集各扫描数据文件的 mtime 指纹（O(N) 次 adapter stat；取不到 mtime 的文件不记）。
+ *  走 adapter：数据目录缺省是点前缀路径，索引口径 stat 恒取不到 → 指纹永远空 →
+ *  缓存新鲜度永远判「可能已变化」。 */
+export async function collectFingerprints(app: App): Promise<Record<string, number>> {
   const fp: Record<string, number> = {};
-  // 防御：指纹是缓存可信度的辅助口径，采集不到（vault 异常/测试桩）不作为失败点
-  const get = (app.vault as any)?.getAbstractFileByPath;
-  if (typeof get !== 'function') return fp;
   for (const t of jsonScanTargets(app)) {
-    const f = get.call(app.vault, t.file) as { stat?: { mtime?: number } } | null;
-    if (f && f.stat && typeof f.stat.mtime === 'number') fp[t.file] = f.stat.mtime;
+    try {
+      const st = await diskPathStat(app, t.file);
+      if (st && typeof st.mtime === 'number') fp[t.file] = st.mtime;
+    } catch {
+      /* 指纹是缓存可信度的辅助口径，采集不到不作为失败点 */
+    }
   }
   return fp;
 }
@@ -120,13 +123,15 @@ export function collectFingerprints(app: App): Record<string, number> {
  * 或 'changed'（有文件变化/无法判定，维持「数据可能已变化」口径）。
  * 无指纹基准（从未采到）保守按 changed，不无据宣称「未变化」。
  */
-export function cacheFreshness(app: App): 'clean' | 'changed' {
-  if (!lastFingerprints || Object.keys(lastFingerprints).length === 0) return 'changed';
-  const now = collectFingerprints(app);
-  const oldKeys = Object.keys(lastFingerprints);
+export async function cacheFreshness(app: App): Promise<'clean' | 'changed'> {
+  // 局部快照：await 期间可能被 __resetCheckupCacheForTests / 新一轮体检置空（面板关闭竞态）
+  const base = lastFingerprints;
+  if (!base || Object.keys(base).length === 0) return 'changed';
+  const now = await collectFingerprints(app);
+  const oldKeys = Object.keys(base);
   if (oldKeys.length !== Object.keys(now).length) return 'changed';
   for (const k of oldKeys) {
-    if (now[k] !== lastFingerprints[k]) return 'changed';
+    if (now[k] !== base[k]) return 'changed';
   }
   return 'clean';
 }
@@ -160,9 +165,10 @@ export function fixKeysOf(issues: CheckIssue[], group: string): string[] {
   return issues.filter((i) => i.fixGroup === group && i.fixKey).map((i) => i.fixKey!);
 }
 
-/** 文件存在才读（修复链专用，ARCH-1 加固）：不存在返回 null，绝不触发「缺失即落盘 stub」 */
+/** 文件存在才读（修复链专用，ARCH-1 加固）：不存在返回 null，绝不触发「缺失即落盘 stub」。
+ *  存在性问盘：数据目录缺省是点前缀路径，vault 索引看不见（否则修复链对每个文件都静默跳过）。 */
 async function readJsonIfPresent<T>(app: App, file: string, make: () => { read(): Promise<T> }): Promise<T | null> {
-  if (!app.vault.getAbstractFileByPath(file)) return null;
+  if (!(await diskPathExists(app, file))) return null;
   return make().read();
 }
 

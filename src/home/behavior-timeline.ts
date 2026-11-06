@@ -8,8 +8,8 @@
  * 不进时间线；事件直带 kind（produce/progress/note/skipped），过滤不再走文案前缀判类。
  * 纯数据层（无 DOM），node 环境可测。
  */
-import type { App, TFile } from 'obsidian';
-import { storageFile } from '../core/storage';
+import type { App } from 'obsidian';
+import { storageFile, diskReadText } from '../core/storage';
 import { localDayKey } from '../core/utils';
 import { pad2 } from '../core/ui/str';
 import { SMARTCAT_BEHAVIOR_SIDECAR_FILE } from '../smartcat/memory';
@@ -130,15 +130,15 @@ export function mapBehaviorEvent(item: BehaviorItemLite): TimelineEvent | null {
   }
 }
 
-/** 读行为流侧车（只读契约：探测存在再读，缺失/损坏回落空数组）。
+/** 读行为流侧车（只读契约：缺失/损坏回落空数组）。读盘走 adapter——数据目录缺省是
+ *  点前缀路径，vault 索引看不见，探测存在会把「文件在」误判成「缺失」（时间线恒空）。
  *  文件名单源 = smartcat/memory.ts 的 SMARTCAT_BEHAVIOR_SIDECAR_FILE（home 深审 A2：
  *  原 home 本地字面量双源，发射侧改名会静默读空） */
 export async function readBehaviorItems(app: App): Promise<BehaviorItemLite[]> {
   try {
-    const filePath = storageFile(SMARTCAT_BEHAVIOR_SIDECAR_FILE);
-    if (!app.vault.getAbstractFileByPath(filePath)) return [];
-    const f = app.vault.getAbstractFileByPath(filePath) as TFile;
-    const parsed: unknown = JSON.parse(await app.vault.read(f));
+    const raw = await diskReadText(app, storageFile(SMARTCAT_BEHAVIOR_SIDECAR_FILE));
+    if (raw === null) return [];
+    const parsed: unknown = JSON.parse(raw);
     const items = (parsed as Record<string, unknown>)?.items;
     if (!Array.isArray(items)) return [];
     return items.map(normalizeBehaviorItem).filter((x): x is BehaviorItemLite => x !== null);

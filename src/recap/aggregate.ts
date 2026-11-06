@@ -20,7 +20,7 @@
  */
 import type { App, TFile } from 'obsidian';
 import { tryGetSettings } from '../core/settings-provider';
-import { storageFile } from '../core/storage';
+import { storageFile, diskPathExists } from '../core/storage';
 import { localDayKey, parseLocalDay } from '../core/utils';
 import { parseEntryFile } from '../diary/parser';
 import { parseLegacyDayFile } from '../diary/legacy';
@@ -259,22 +259,18 @@ function numOr0(v: unknown): number {
   return typeof v === 'number' && Number.isFinite(v) ? v : 0;
 }
 
-/** 文件存在才返回文件对象（不触发建文件） */
-export function fileIfExists(app: App, filePath: string): TFile | null {
-  try {
-    const f = app.vault.getAbstractFileByPath(filePath);
-    return f && 'basename' in (f as object) ? (f as TFile) : null;
-  } catch {
-    return null;
-  }
-}
-
-/** 读 json 文件：缺失返回 undefined（合法空，不算失败）；存在但读取/解析失败抛错，
- *  由调用方 per-source 容错记入 failed（摘要 N/A，同「某域读取失败不炸面板」契约） */
+/**
+ * 读 json 文件：缺失返回 undefined（合法空，不算失败）；存在但读取/解析失败抛错，
+ * 由调用方 per-source 容错记入 failed（摘要 N/A，同「某域读取失败不炸面板」契约）。
+ *
+ * 一律 adapter 直读：数据目录缺省是 `<插件目录>/storage`（点前缀），vault 索引看不见，
+ * 先 `getAbstractFileByPath` 探测会把「文件在」误判成「缺失」→ 首页各域计数静默归零。
+ */
 export async function readJsonIfExists(app: App, filePath: string): Promise<unknown | undefined> {
-  const f = fileIfExists(app, filePath);
-  if (!f) return undefined;
-  return JSON.parse(await app.vault.read(f));
+  // 先问存在再读：缺失的文件不产生一次注定失败的 read（采集链会摸十几个域文件，
+  // 多数是没启用的域）。存在性走 adapter——点前缀数据目录不在 vault 索引里。
+  if (!(await diskPathExists(app, filePath))) return undefined;
+  return JSON.parse(await app.vault.adapter.read(filePath));
 }
 
 /** 本地时区日期串 'YYYY-MM-DD'（日记文件名口径；core localDayKey 转发壳） */

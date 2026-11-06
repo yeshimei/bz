@@ -29,6 +29,7 @@ import { classifyPath } from './context-source';
 import { NoteMemorySync, type NoteMemoryBackend } from './note-memory';
 import { normalizeMemoryDirectories } from './config';
 import { onDomainEvent } from '../core/domain-bus';
+import { diskPathExists, diskReadText, diskPathStat } from '../core/storage';
 import type { MovieActionEvent } from './movie-source';
 import { buildMemoStructured, buildMemoDueScanStructured, type MemoActionEvent, type MemoDueLike } from './memo-source';
 import { generateDescription } from './description-generators';
@@ -230,8 +231,9 @@ export async function ensureSmartCat(app: App): Promise<void> {
   if (typeof data.editingData?.lastPresenceAt !== 'number') {
     touchPresence(data);
   }
-  // 用户拍板：所有数据单 json——首次无文件时也落盘一次（迁移或在空账本上建文件）
-  if (!app.vault.getAbstractFileByPath(getSmartcatFilePath())) {
+  // 用户拍板：所有数据单 json——首次无文件时也落盘一次（迁移或在空账本上建文件）。
+  // 存在性问盘：数据目录缺省是点前缀路径，vault 索引看不见 → 每次启动空转一次写。
+  if (!(await diskPathExists(app, getSmartcatFilePath()))) {
     await saveSmartCatData(app, data);
   }
   // 竞态守卫 1.5：首次落盘等待期间被 unload 则停止装配
@@ -561,6 +563,8 @@ function startResidentHeartbeat(): void {
 function dispatchResidentTick(): void {
   residentTickCount++;
   const n = residentTickCount;
+  // 1 分钟（2 节拍）→ 域数据变更轮询（点前缀数据目录收不到 vault modify 事件，见 pollDomainActivity）
+  if (n % 2 === 0) void pollDomainActivity();
   // 10 分钟（20 节拍）→ 主动关心（温和问候豁免/作息闸门等在 maybeProactiveCare 内部，语义不动）
   if (n % 20 === 0) void maybeProactiveCare();
   // 30 分钟（60 节拍）→ 情绪趋势回写 + 心情门控心跳（maybeTrendDrift 内部喂 onHeartbeat）
@@ -1287,6 +1291,8 @@ export function unloadSmartCat(): void {
   domainReader = null;
   domainPrev.clear();
   domainObserved.clear();
+  domainMtime.clear();
+  domainLastRaw.clear();
   mobileAdapter?.destroy();
   // 记忆目录增量同步器（ADR-0069）：内存表清空（无定时器）
   noteMemorySync?.dispose();
@@ -1550,9 +1556,10 @@ export async function maybeMemoDueScan(now: Date = new Date()): Promise<void> {
   if (memoDueScanFail.date !== today) memoDueScanFail = { date: today, count: 0 };
   if (memoDueScanFail.count >= memoDueScanMaxFails) return;
   try {
-    const file = appRef.vault.getAbstractFileByPath(getMemoDataPath());
-    if (!file) return; // memo 域未启用（无 memo.json）：静默，不推进扫描日期（等 memo 数据出现再扫）
-    const raw = JSON.parse(await appRef.vault.read(file as any));
+    // 读盘走 adapter：memo.json 在缺省数据目录（点前缀）里，vault 索引取不到文件对象
+    const rawText = await diskReadText(appRef, getMemoDataPath());
+    if (rawText === null) return; // memo 域未启用（无 memo.json）：静默，不推进扫描日期（等 memo 数据出现再扫）
+    const raw = JSON.parse(rawText);
     const items: MemoDueLike[] = Array.isArray(raw) ? (raw as any[]) : [];
     // B8 防重复：先推进扫描日期（落盘）再观察——如上注释，任何后续失败也跳过当天重扫
     const d = dataProvider();
@@ -2328,14 +2335,82 @@ async function consumeLibraryDiff(diff: LibraryWeaveDiff, mem: MemorySystem): Pr
   for (const e of diff.excerptEvents) pushLibraryPending(e.id, e.title, { excerpts: e.texts });
 }
 
+/** 读域数据文件（adapter 直读；缺失/读失败 → null）。点前缀数据目录在 vault 索引里不可见，
+ *  不能先 getAbstractFileByPath 再 vault.read。原文一并返回供内容级去重。 */
+async function readDomainFile(path: string): Promise<{ text: string; json: any } | null> {
+  if (!appRef) return null;
+  const text = await diskReadText(appRef, path);
+  if (text === null) return null;
+  try { return { text, json: JSON.parse(text) }; } catch { return null; }
+}
+
+/** 一条域数据变化 → 观察（modify 事件与 mtime 轮询共用这一条路径） */
+async function consumeDomainRaw(key: string, raw: any, mem: MemorySystem): Promise<void> {
+  // ticket 081：library 走结构化 diff（书架/时长即时，划线/想法防抖）；其余域 string/数组逐条入流
+  if (key === 'library') {
+    const diff = DOMAIN_FILES.library.extract(raw, domainPrev) as LibraryWeaveDiff | null;
+    if (diff) await consumeLibraryDiff(diff, mem);
+    return;
+  }
+  const texts = DOMAIN_FILES[key].extract(raw, domainPrev);
+  // type guard：library 的 LibraryWeaveDiff 已在上面分支处理；此处仅 string/数组
+  if (texts && (typeof texts === 'string' || Array.isArray(texts))) {
+    for (const t of (Array.isArray(texts) ? texts : [texts])) {
+      if (t) await mem.addObservation(t, { source: 'domain:' + key });
+    }
+  }
+}
+
+/** 域数据 observe 用的 mtime 快照（key → mtime）：轮询侧预筛，mtime 没动就不读内容 */
+const domainMtime = new Map<string, number>();
+/** 每个域上次处理过的原文（内容级去重）：modify 事件与轮询可能同时看到同一次变更，
+ *  同一份内容只处理一次。不用 mtime 做唯一判据——同一秒内连续两次写可能落同一个 mtime。 */
+const domainLastRaw = new Map<string, string>();
+
+/**
+ * 域数据变更轮询（30s 心跳每 2 拍调一次）：点前缀目录（缺省数据目录）不在 vault 索引里，
+ * `vault.on('modify')` 对这类文件**不触发**——只挂事件等于观察链整条失效。
+ * 轮询只比 mtime（adapter.stat），变了才读内容走同一条 diff 路径。
+ */
+export async function pollDomainActivity(): Promise<void> {
+  if (!appRef || !memorySystem) return;
+  const app = appRef;
+  const mem = memorySystem;
+  for (const key of Object.keys(DOMAIN_FILES)) {
+    const p = DOMAIN_FILES[key].file;
+    const st = await diskPathStat(app, p);
+    const mtime = st && typeof st.mtime === 'number' ? st.mtime : null;
+    if (mtime === null || domainMtime.get(key) === mtime) continue;
+    domainMtime.set(key, mtime);
+    const hit = await readDomainFile(p);
+    if (!hit || domainLastRaw.get(key) === hit.text) continue;
+    domainLastRaw.set(key, hit.text);
+    if (!domainObserved.has(key)) {
+      // 首次发现：只记录基线，不产出观察（同 snapshotDomains 口径）
+      domainObserved.add(key);
+      DOMAIN_FILES[key].extract(hit.json, domainPrev);
+      continue;
+    }
+    if (!watchEnabled()) continue;
+    await consumeDomainRaw(key, hit.json, mem);
+  }
+}
+
 /** 域 JSON 观察接入（2026-08-23 用户拍板：CONFIG/STORAGE 域数据 modify → 观察；懒启动探测已有数据文件）。
- *  noteSource 关（A3）→ modify 监听照挂、事件逐个短接静默（对齐 vault md 事件订阅：开关可随时切换）。 */
+ *  noteSource 关（A3）→ modify 监听照挂、事件逐个短接静默（对齐 vault md 事件订阅：开关可随时切换）。
+ *  点前缀数据目录收不到 modify 事件，变更感知由 pollDomainActivity 兜底（见上）。 */
 async function onDomainActivity(): Promise<void> {
   if (!appRef || !memorySystem) return;
   const app = appRef;
   const mem = memorySystem;
-  // 首次快照：记录各域当前状态（不产出观察）
-  const found = await snapshotDomains(async (path) => JSON.parse(await app.vault.read(app.vault.getAbstractFileByPath(path) as any)), domainPrev);
+  // 首次快照：记录各域当前状态（不产出观察）。读盘同样走 adapter（readDomainFile）。
+  const found = await snapshotDomains(async (path) => {
+    const hit = await readDomainFile(path);
+    if (!hit) return null;
+    const key = Object.keys(DOMAIN_FILES).find((k) => DOMAIN_FILES[k].file === path);
+    if (key) domainLastRaw.set(key, hit.text);
+    return hit.json;
+  }, domainPrev);
   found.forEach((k) => domainObserved.add(k));
   if (!domainReader) {
     const ref = (app.vault as any).on?.('modify', async (file: any) => {
@@ -2343,21 +2418,13 @@ async function onDomainActivity(): Promise<void> {
       if (!watchEnabled()) return; // noteSource 关（ticket 084c A3）→ 域数据 modify 不产（对齐 vault md 事件订阅短接）
       const key = Object.keys(DOMAIN_FILES).find((k) => DOMAIN_FILES[k].file === file.path);
       if (!key || !domainObserved.has(key)) return;
-      let raw: any = null;
-      try { raw = JSON.parse(await app.vault.read(file)); } catch { return; }
-      // ticket 081：library 走结构化 diff（书架/时长即时，划线/想法防抖）；其余域 string/数组逐条入流
-      if (key === 'library') {
-        const diff = DOMAIN_FILES.library.extract(raw, domainPrev) as LibraryWeaveDiff | null;
-        if (diff) await consumeLibraryDiff(diff, mem);
-        return;
-      }
-      const texts = DOMAIN_FILES[key].extract(raw, domainPrev);
-      // type guard：library 的 LibraryWeaveDiff 已在上面分支处理；此处仅 string/数组
-      if (texts && (typeof texts === 'string' || Array.isArray(texts))) {
-        for (const t of (Array.isArray(texts) ? texts : [texts])) {
-          if (t) await mem.addObservation(t, { source: 'domain:' + key });
-        }
-      }
+      // 与轮询去重：同一份内容只处理一次（不用 mtime——同秒两次写会撞同一 mtime）
+      const mtime = typeof file.stat?.mtime === 'number' ? file.stat.mtime : null;
+      if (mtime !== null) domainMtime.set(key, mtime);
+      const hit = await readDomainFile(file.path);
+      if (!hit || domainLastRaw.get(key) === hit.text) return;
+      domainLastRaw.set(key, hit.text);
+      await consumeDomainRaw(key, hit.json, mem);
     });
     if (ref) domainReader = () => (app as any)?.vault?.offref?.(ref as any);
   }

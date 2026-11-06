@@ -4,9 +4,8 @@
  * 保留策略清理（未读不处理 / 已保存 N 天 / 已跳过 M 天）。
  * 纯数据层（无 DOM、无事件），node 环境可测。
  */
-import { TFile } from 'obsidian';
 import { getApp } from '../core/app';
-import { jsonFileStore, storageFile } from '../core/storage';
+import { jsonFileStore, storageFile, diskPathExists, diskReadText } from '../core/storage';
 import { httpGetText, requestUrlAsFetch } from '../core/http';
 import { articleKeyOf } from './constants';
 import { RSS_HUB_DEFAULT_INSTANCE } from '../core/rss-catalog';
@@ -269,7 +268,10 @@ export function parseNewsFileContent(raw: string): NewsData | null {
  *  损坏 → 不清盘（保持原文件原样——崩溃半截 JSON 保护既有设计），返回错误态（corrupt:true）；
  *  读抛错（瞬时 IO，可重试）同样返回错误态但 corrupt:false（C24：不再与损坏态混归） */
 export async function readNewsData(): Promise<ReadNewsResult> {
-  const missing = !getApp().vault.getAbstractFileByPath(getNewsFilePath());
+  // 存在性问盘，不问 vault 索引：缺省数据目录是 <插件目录>/storage（点前缀），
+  // Obsidian 的索引不含点前缀目录，getAbstractFileByPath 对它恒 null →
+  // 明明读到了数据也被判「首用」，设置页 UP 主/RSS 列表全空（2026-11-06 用户报障）。
+  const missing = !(await diskPathExists(getApp(), getNewsFilePath()));
   let corrupt = false;
   let readThrew = false; // C24：read 抛错 = 瞬时 IO（可重试），区别于 onCorrupt 的 JSON 损坏态
   const parsed = await jsonFileStore<any>(getNewsFilePath(), {
@@ -478,10 +480,10 @@ export async function migrateLegacyStats(data: NewsData): Promise<NewsData> {
   // stats 段已有真实数据则不动（避免反复覆盖）
   if (statsHasData(data.stats)) return data;
   const app = getApp();
-  const af = app.vault.getAbstractFileByPath(STATS_JSON_PATH);
-  if (!af) return data;
+  // 老库的 CONFIG/STORAGE 可索引，但存储目录可能被设到点前缀路径——迁移同样只问盘
+  const raw = await diskReadText(app, STATS_JSON_PATH);
+  if (raw === null) return data;
   try {
-    const raw = await app.vault.read(af as TFile);
     const old = JSON.parse(raw);
     const merged = mergeStatsInto(data, old);
     return merged === data ? data : merged;

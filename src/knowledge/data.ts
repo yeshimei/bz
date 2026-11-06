@@ -7,7 +7,7 @@
  * read/write 保持无锁原语（仅限队列内调用，勿再入队——队列不可重入）。
  */
 import moment from 'moment';
-import { enqueueFileTask, jsonFileStore, storageFile, type JsonFileStore } from '../core/storage';
+import { enqueueFileTask, jsonFileStore, storageFile, diskPathExists, diskReadText, type JsonFileStore } from '../core/storage';
 import { tryGetSettings } from '../core/settings-provider';
 import { generateId } from '../core/utils';
 import { pad2 } from '../core/ui/str';
@@ -117,10 +117,11 @@ export const KnowledgeData = {
     this._legacyMigrated = true;
     try {
       const app = getApp();
-      if (app.vault.getAbstractFileByPath(this.filePath)) return;
+      // 存在性/读取都问盘：数据目录缺省是点前缀路径，vault 索引看不见（迁移永远跳过）
+      if (await diskPathExists(app, this.filePath)) return;
       const legacyPath = this.filePath.replace(/knowledge\.json$/, 'literature.json');
-      const legacy = app.vault.getAbstractFileByPath(legacyPath);
-      if (legacy) await app.vault.create(this.filePath, await app.vault.read(legacy as any));
+      const legacyRaw = await diskReadText(app, legacyPath);
+      if (legacyRaw !== null) await this._ensureStore().write(JSON.parse(legacyRaw));
     } catch { /* 迁移失败不阻塞读取（store 按空数组起盘，下次打开再试） */ }
   },
 

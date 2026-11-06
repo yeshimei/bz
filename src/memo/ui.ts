@@ -47,6 +47,7 @@ import { measureFlip, playFlip, safeAnimate } from '../core/ui/flip';
 import { bindFormSubmit } from '../core/ui/modal';
 import { openFlowDialog, confirmDiscard } from '../core/flow-dialog';
 import { emitDomainEvent } from '../core/domain-bus';
+import { diskPathStat } from '../core/storage';
 import { attachItemActions, closeItemMenu, openItemMenu, resetItemMenuClickGuard, type ItemAction } from '../core/item-actions';
 import {
   debounce, formatRelativeTime, getCurrentNoteInfo, getCurrentCursorPosition, localDayKey, stripMdExt,
@@ -204,6 +205,10 @@ async function refresh(): Promise<void> {
 // ---------- T1：同源 memo.json 跨域同步（旧 memo 面板/后台任务改动 → 已开 memo 面板重读） ----------
 let vaultSyncRef: EventRef | null = null;
 let vaultSyncTimer: ReturnType<typeof setTimeout> | null = null;
+/** 点前缀数据目录收不到 vault modify 事件 → mtime 轮询兜底（面板开着时才跑） */
+let vaultSyncPoll: ReturnType<typeof setInterval> | null = null;
+let vaultSyncMtime: number | null = null;
+let vaultSyncPolling = false;
 let syncing = false; // 自己写盘引发的 modify 不重复刷新（写路径已自 refresh）
 let origMemoWrite: ((data: any) => Promise<unknown>) | null = null; // 包装前原始 write（卸载还原）
 
@@ -222,16 +227,58 @@ function subscribeMemoSync(app: App): void {
       }
     };
   }
-  vaultSyncRef = app.vault.on('modify', (file) => {
-    if (syncing) return; // 自己写盘
-    if (!M.overlay) return; // 面板没开不刷
-    if (file && file.path !== MemoData.memoFilePath) return; // 只关心 memo.json
+  const scheduleRefresh = (): void => {
     if (vaultSyncTimer !== null) clearTimeout(vaultSyncTimer);
     vaultSyncTimer = setTimeout(() => {
       vaultSyncTimer = null;
       void refresh();
     }, 150);
+  };
+  vaultSyncRef = app.vault.on('modify', (file) => {
+    if (syncing) return; // 自己写盘
+    if (!M.overlay) return; // 面板没开不刷
+    if (file && file.path !== MemoData.memoFilePath) return; // 只关心 memo.json
+    if (file && typeof (file as any).stat?.mtime === 'number') vaultSyncMtime = (file as any).stat.mtime;
+    scheduleRefresh();
   });
+}
+
+/** 面板打开期间启动 mtime 轮询：memo.json 在点前缀数据目录（缺省 <插件目录>/storage）时
+ *  vault 不派 modify 事件，跨域同步会静默失效。只在面板开着时跑（关面板即停，不常驻）。 */
+function startMemoSyncPoll(app: App): void {
+  if (vaultSyncPoll !== null) return;
+  vaultSyncMtime = null; // 每轮打开重记基线（打开时已 refresh 过）
+  vaultSyncPoll = setInterval(() => {
+    void (async () => {
+      if (syncing || !M.overlay || vaultSyncPolling) return;
+      vaultSyncPolling = true;
+      try {
+        const st = await diskPathStat(app, MemoData.memoFilePath);
+        const m = st && typeof st.mtime === 'number' ? st.mtime : null;
+        if (m === null) return;
+        if (vaultSyncMtime === null) { vaultSyncMtime = m; return; } // 首轮只记基线
+        if (m === vaultSyncMtime) return;
+        vaultSyncMtime = m;
+        if (vaultSyncTimer !== null) clearTimeout(vaultSyncTimer);
+        vaultSyncTimer = setTimeout(() => {
+          vaultSyncTimer = null;
+          void refresh();
+        }, 150);
+      } finally {
+        vaultSyncPolling = false;
+      }
+    })();
+  }, 2000);
+}
+
+/** 停掉面板期的 mtime 轮询（关面板 / 插件卸载） */
+function stopMemoSyncPoll(): void {
+  if (vaultSyncPoll !== null) {
+    clearInterval(vaultSyncPoll);
+    vaultSyncPoll = null;
+  }
+  vaultSyncMtime = null;
+  vaultSyncPolling = false;
 }
 function unsubscribeMemoSync(): void {
   if (vaultSyncRef) {
@@ -243,6 +290,12 @@ function unsubscribeMemoSync(): void {
     clearTimeout(vaultSyncTimer);
     vaultSyncTimer = null;
   }
+  if (vaultSyncPoll !== null) {
+    clearInterval(vaultSyncPoll);
+    vaultSyncPoll = null;
+  }
+  vaultSyncMtime = null;
+  vaultSyncPolling = false;
   syncing = false;
   // 还原 write 包装（卸载后不再拦截，避免引用的 UI 闭包残留）
   if (origMemoWrite) {
@@ -409,6 +462,7 @@ export function openMemoPanel(app: App, opts?: { notePath?: string }): void {
   M.overlay = overlay;
   M.appRef = app;
   M.renderFn = () => renderAll();
+  startMemoSyncPoll(app); // T1 兜底：点前缀数据目录收不到 vault modify，面板期靠 mtime 轮询
 
   playPanelEnter(overlay); // 入场：侧栏 / 工具行错峰（卡片层等首次渲染）
   panelEnterPending = true;
@@ -695,6 +749,7 @@ function playPanelExit(overlay: HTMLElement): void {
 }
 
 export function closeMemoPanel(): void {
+  stopMemoSyncPoll(); // 面板关即停 mtime 轮询（不常驻）
   if (M.overlay) {
     // 上次停留（memoOpenScene='@last' 的取数源）：关面板记住当下场景，下次打开取回
     const s = tryGetSettings();

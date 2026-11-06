@@ -13,7 +13,7 @@
  * 把待报告的坏文件原地重建、毁掉现场。这里一律 adapter 直读原文。
  */
 import type { App } from 'obsidian';
-import { storageDir, storageFile } from '../core/storage';
+import { storageDir, storageFile, diskPathExists, diskReadText } from '../core/storage';
 import { tryGetSettings } from '../core/settings-provider';
 import { getStoragePath } from '../favorites/config';
 import { knownReaderDataFilePath } from '../bookshelf/data';
@@ -63,9 +63,20 @@ export function jsonScanTargets(app: App): JsonScanTarget[] {
   ];
 }
 
-/** 文件是否存在（不读内容） */
+/** 文件是否存在（索引口径）。**只用于用户可见路径**（笔记/封面/附件）——
+ *  这些路径都在 vault 索引里。数据文件别用这个，用下面的 dataFileExists。 */
 export function fileExists(app: App, path: string): boolean {
   return !!app.vault.getAbstractFileByPath(path);
+}
+
+/**
+ * 数据文件是否存在（索引 + 磁盘双口径）。缺省数据目录是 `<插件目录>/storage`（点前缀），
+ * `CONFIG/.CORRUPT` 也含点段——这些路径不在 vault 索引里，`getAbstractFileByPath` 恒 null。
+ * 只问索引 = 把「文件在」误判成「不在」（体检修复链全部静默跳过、坏文件留档永远列不出）。
+ */
+export async function dataFileExists(app: App, path: string): Promise<boolean> {
+  if (fileExists(app, path)) return true;
+  return diskPathExists(app, path);
 }
 
 /**
@@ -73,11 +84,7 @@ export function fileExists(app: App, path: string): boolean {
  * 走 adapter.read——不经 jsonFileStore，无任何写副作用。
  */
 export async function readRawFile(app: App, path: string): Promise<string | null> {
-  try {
-    return await app.vault.adapter.read(path);
-  } catch {
-    return null;
-  }
+  return diskReadText(app, path);
 }
 
 /** 解析后的 json 读结果：ok=解析成功 / corrupt=解析失败（raw 保留现场） */
@@ -96,17 +103,22 @@ export async function readRawJson(app: App, path: string): Promise<RawJson | nul
   }
 }
 
-/** 目录下直接子文件名（目录不存在返回空数组） */
-export function listDirNames(app: App, dir: string): string[] {
-  const f = app.vault.getAbstractFileByPath(dir) as { children?: Array<{ name?: string }> } | null;
-  if (!f || !Array.isArray(f.children)) return [];
-  return f.children.map((c) => (c && c.name) || '').filter(Boolean);
+/** 目录下直接子文件名（目录不存在返回空数组）。
+ *  走 adapter.list——留档目录 `CONFIG/.CORRUPT` 含点段，vault 索引看不见（children 恒空）。 */
+export async function listDirNames(app: App, dir: string): Promise<string[]> {
+  try {
+    const listed = await app.vault.adapter.list(dir);
+    const files = Array.isArray(listed?.files) ? listed.files : [];
+    return files.map((p) => String(p).slice(String(p).lastIndexOf('/') + 1)).filter(Boolean);
+  } catch {
+    return [];
+  }
 }
 
 /** 某数据文件在留档目录里的全部备份文件名（无则空数组） */
-export function corruptBackupsFor(app: App, filePath: string): string[] {
+export async function corruptBackupsFor(app: App, filePath: string): Promise<string[]> {
   const base = filePath.includes('/') ? filePath.slice(filePath.lastIndexOf('/') + 1) : filePath;
-  return listDirNames(app, CORRUPT_DIR)
+  return (await listDirNames(app, CORRUPT_DIR))
     .filter((n) => n.startsWith(base + '.') && n.endsWith('.bak'))
     .sort();
 }
