@@ -20,7 +20,7 @@ import type { App, TFile } from 'obsidian';
 import { storageFile } from '../core/storage';
 import { localDayKey } from '../core/utils';
 import { pad2 } from '../core/ui/str';
-import { settingDir, fileIfExists, readJsonIfExists } from '../recap/aggregate';
+import { settingDir, readJsonIfExists } from '../recap/aggregate';
 import { diaryDayDateFromPath, diaryDayFormats, diaryMetaFromEntryPath } from '../core/diary-format';
 import { DIARY_DIRECTORY } from '../diary/config';
 import { parseLegacyDayFile } from '../diary/legacy';
@@ -120,11 +120,11 @@ function pickArray(json: unknown, keys: string[]): Record<string, unknown>[] {
 
 async function readStorageJson(app: App, fileName: string): Promise<unknown> {
   const path = storageFile(fileName);
-  if (!fileIfExists(app, path)) return undefined;
   try {
+    // 缺失 → undefined（合法空）；坏 JSON → 当没有，不制造半条时间线
     return await readJsonIfExists(app, path);
   } catch {
-    return undefined; // 坏 JSON：当没有，不制造半条时间线
+    return undefined;
   }
 }
 

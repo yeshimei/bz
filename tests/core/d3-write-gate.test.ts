@@ -106,10 +106,6 @@ const WHITELIST: Array<{ file: RegExp; reason: string; /** 防回归哨兵：预
       '——只动文件末尾的一次性读改写，无插件私有数据竞态面；口径同 note-edit 与 note-gen 的 upgradeNoteSourceInFile',
   },
   {
-    file: /^src\/knowledge\/data\.ts$/,
-    reason: 'ADR-0112 数据文件更名一次性迁移：literature.json 原样复制为 knowledge.json（只复制不改写，旧文件保留）',
-  },
-  {
     file: /^src\/clipbook\/save\.ts$/,
     reason: '剪藏 md 用户文档写（归档/网页剪藏/*.md）；news.json/clipbook.json 数据写已 D2 收编',
   },

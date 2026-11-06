@@ -776,10 +776,10 @@ describe('编排器与结果缓存', () => {
     const { cacheFreshness } = await import('../../src/checkup/run');
     const { app, vault } = makeApp({ [`${DIR}/memo.json`]: '[]' });
     await runCheckup(app);
-    expect(cacheFreshness(app)).toBe('clean'); // mtime 未变（MockVault 恒定 stat）
+    expect(await cacheFreshness(app)).toBe('clean'); // mtime 未变（MockVault 恒定 stat）
     // 任一扫描文件消失 → 指纹键数变化 → changed
     vault.files.delete(`${DIR}/memo.json`);
-    expect(cacheFreshness(app)).toBe('changed');
+    expect(await cacheFreshness(app)).toBe('changed');
   });
 });
 

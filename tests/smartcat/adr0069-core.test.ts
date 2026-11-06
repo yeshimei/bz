@@ -48,6 +48,16 @@ function makeFakeApp() {
     create: async (p: string, c: string) => { files.set(p, c); return { path: p }; },
     createFolder: async () => {},
     adapter: {
+      // 2026-11-06：sidecar 读写改走 adapter（点前缀数据目录不在 vault 索引里）；
+      // 真机 adapter 这四件套齐全，桩层补齐，否则 readJsonSidecar 会把「文件在」误判成「不存在」。
+      read: async (p: string) => {
+        const v = files.get(p);
+        if (v === undefined) throw new Error('file not found: ' + p);
+        return v;
+      },
+      write: async (p: string, c: string) => { files.set(p, c); },
+      exists: async (p: string) => files.has(p) || binaries.has(p),
+      stat: async (p: string) => (files.has(p) ? { type: 'file', mtime: 0, size: files.get(p)!.length } : null),
       readBinary: async (p: string) => {
         const b = binaries.get(p);
         if (!b) throw new Error('no binary: ' + p);

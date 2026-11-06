@@ -8,7 +8,7 @@
  */
 import type { App } from 'obsidian';
 import type { CheckIssue, CheckOpts, CheckResult, CheckSection } from './types';
-import { corruptBackupsFor, fileExists, jsonScanTargets, readRawJson, CORRUPT_DIR } from './files';
+import { corruptBackupsFor, dataFileExists, jsonScanTargets, readRawJson, CORRUPT_DIR } from './files';
 import { resolveReaderDataFilePath } from '../bookshelf/reader-source';
 
 /** 单个数据文件的解析体检结果（纯数据，node 可测） */
@@ -90,8 +90,9 @@ export async function checkJsonFiles(app: App, opts: CheckOpts = {}): Promise<Ch
     const parsed = await readRawJson(app, t.file);
     // 读失败复核（func P3-1）：raw 读不到时区分「文件不在」（missing，懒创建常态）
     // 与「文件在但读不动」（unreadable，瞬时可重试）
-    const unreadable = parsed === null && fileExists(app, t.file);
-    verdicts.push(verdictOfJsonTarget(t.file, t.label, parsed, parsed && !parsed.ok ? corruptBackupsFor(app, t.file) : [], unreadable));
+    const unreadable = parsed === null && (await dataFileExists(app, t.file));
+    const backups = parsed && !parsed.ok ? await corruptBackupsFor(app, t.file) : [];
+    verdicts.push(verdictOfJsonTarget(t.file, t.label, parsed, backups, unreadable));
     await opts.tick?.(`${t.label}（${t.file}）`, { done: i + 1, total: targets.length });
   }
   const { summary, issues } = jsonIssuesOf(verdicts);

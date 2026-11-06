@@ -282,15 +282,25 @@ function renderReport(report: CheckupReport, stale: boolean): void {
     // 缓存失效动态口径（eff P3-6）：数据指纹（mtime）全未变 → 「此后数据未变化」；
     // 有变化/无法判定 → 维持「数据可能已变化」促重跑口径，并就地挂「重新体检」行动钮
     //（呈报#30/CK8：提示即可行动，不必再到 foot 找入口）
-    if (hostApp && cacheFreshness(hostApp) === 'clean') {
-      hint.textContent = `上次体检：${report.finishedAt} · 此后数据未变化`;
-    } else {
-      hint.classList.add('bz-checkup-stale--actionable');
-      const txt = document.createElement('span');
-      txt.textContent = `上次体检：${report.finishedAt} · 数据可能已变化，`;
-      hint.append(txt, uiBtn({ label: '重新体检', size: 'sm', onClick: () => void startRun() }));
-    }
+    // 先按保守口径同步渲染（数据可能已变化 + 行动钮），指纹判定是异步的（要点盘取 mtime，
+    // 点前缀数据目录不在索引里）——判定回来若是 clean 就原地降级文案、摘掉行动钮。
+    hint.classList.add('bz-checkup-stale--actionable');
+    const txt = document.createElement('span');
+    txt.textContent = `上次体检：${report.finishedAt} · 数据可能已变化，`;
+    hint.append(txt, uiBtn({ label: '重新体检', size: 'sm', onClick: () => void startRun() }));
     body.appendChild(hint);
+    if (hostApp) {
+      const app = hostApp;
+      void (async () => {
+        let fresh = false;
+        try {
+          fresh = (await cacheFreshness(app)) === 'clean';
+        } catch { /* 指纹采集失败按「可能已变化」保守口径 */ }
+        if (!fresh || !hint.isConnected) return;
+        hint.classList.remove('bz-checkup-stale--actionable');
+        hint.textContent = `上次体检：${report.finishedAt} · 此后数据未变化`;
+      })();
+    }
   }
 
   const counts = severityCounts(report);

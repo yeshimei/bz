@@ -66,10 +66,11 @@ describe('jsonStore', () => {
 
   it('P1-32 留档失败 → 容错原地重建空库（不抛错）', async () => {
     vault.files.set('CONFIG/STORAGE/memo.json', '{broken');
-    const rawCreate = vault.create.bind(vault);
-    vault.create = async (path: string, content: string) => {
+    // 留档写入走 adapter（点前缀目录 CONFIG/.CORRUPT 不在 vault 索引里，vault.create 不可靠）
+    const rawWrite = vault.adapter.write.bind(vault.adapter);
+    vault.adapter.write = async (path: string, content: string) => {
       if (path.startsWith('CONFIG/.CORRUPT/')) throw new Error('create failed');
-      return rawCreate(path, content);
+      return rawWrite(path, content);
     };
     const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
     try {

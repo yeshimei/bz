@@ -12,6 +12,12 @@ export class MockVault {
   /** 显式注册的空目录（区分"空目录"与"目录不存在"） */
   dirs = new Set<string>();
   modifiedPaths: string[] = [];
+  /** 每路径 mtime 覆盖（缺省 = 固定 2024-01-01T12:00Z）：adapter.stat 与 file().stat 同源，
+   *  测试改这个 Map 即可模拟「文件被外部改写」（mtime 轮询/缓存指纹类用例） */
+  mtimes = new Map<string, number>();
+  private mtimeOf(path: string): number {
+    return this.mtimes.get(path) ?? Date.UTC(2024, 0, 1, 12, 0);
+  }
 
   /** 内存文件系统 adapter（Obsidian 式 read/write，数据层日志/配置读写用） */
   adapter = {
@@ -24,7 +30,26 @@ export class MockVault {
       this.files.set(path, content);
       this.modifiedPaths.push(path);
     },
-    exists: async (path: string): Promise<boolean> => this.files.has(path) || this.binaryFiles.has(path) || this.dirs.has(path),
+    /** 磁盘存在性（真机 fs.stat 口径）：文件、登记过的目录、**以及有子文件的隐含目录**都算存在。
+     *  最后一条是 2026-11-06 补的：只查 dirs 会让「目录里已有文件但没登记目录」判不存在，
+     *  与真机不符（jsonFileStore 的首建判重正是靠这条避开 already exists）。 */
+    exists: async (path: string): Promise<boolean> => {
+      if (this.files.has(path) || this.binaryFiles.has(path) || this.dirs.has(path)) return true;
+      const prefix = path.endsWith('/') ? path : path + '/';
+      return [...this.files.keys(), ...this.binaryFiles.keys()].some((p) => p.startsWith(prefix));
+    },
+    /** Obsidian DataAdapter.stat：不存在返回 null；mtime/size 会被缓存指纹与变更轮询消费 */
+    stat: async (path: string) => {
+      const isFile = this.files.has(path) || this.binaryFiles.has(path);
+      if (!isFile && !this.dirs.has(path)) return null;
+      const content = this.files.get(path);
+      return {
+        type: isFile ? 'file' : 'folder',
+        ctime: this.mtimeOf(path),
+        mtime: this.mtimeOf(path),
+        size: content ? new TextEncoder().encode(content).length : 0,
+      };
+    },
     /** 绝对路径解析（douban-queue spawn 用）；固定前缀便于测试映射回 vault 相对路径 */
     getFullPath: (path: string): string => '/mock-vault-root/' + path,
     remove: async (path: string): Promise<void> => {
@@ -128,7 +153,7 @@ export class MockVault {
       stat: {
         ctime: Date.UTC(2024, 0, 1, 12, 0),
         birthtime: Date.UTC(2024, 0, 1, 12, 0),
-        mtime: Date.UTC(2024, 0, 1, 12, 0),
+        mtime: this.mtimeOf(path),
         // 字节数（Obsidian FileStats 契约；home 活动河「第二大脑存储占用」消费）
         size: new TextEncoder().encode(content ?? '').length,
       },
@@ -274,6 +299,38 @@ export class IndexLagVault extends MockVault {
   }
   override async create(path: string, content: string): Promise<any> {
     if (await this.adapter.exists(path)) throw new Error('File already exists.');
+    return super.create(path, content);
+  }
+}
+
+/**
+ * 点前缀不索引假层：真机 Obsidian 的 vault 索引**不含**含点前缀段的路径
+ * （`.obsidian/plugins/<插件>/storage`、`CONFIG/.CORRUPT`、`.ENCRYPT`），
+ * `getAbstractFileByPath` 对它们恒 null，但 adapter（磁盘）照常读写。
+ *
+ * 与 IndexLagVault 的区别：IndexLag 是**全瞎**（只发生在启动扫描窗口），
+ * 这里是**只对点前缀路径失效**、其余路径正常——这正是缺省数据目录
+ * （ADR-0270：`<插件目录>/storage`）的长期状态。
+ */
+export class DotHiddenVault extends MockVault {
+  /** 路径里任一段以 `.` 开头即视为点前缀（与真机索引口径一致） */
+  static isDotPath(p: string): boolean {
+    return String(p || '').split('/').some((seg) => seg.startsWith('.') && seg !== '.' && seg !== '..');
+  }
+  override getAbstractFileByPath(path: string): any {
+    if (DotHiddenVault.isDotPath(path)) return null;
+    return super.getAbstractFileByPath(path);
+  }
+  /** 真机 createFolder/create 按**磁盘**判重（已存在即抛）——点前缀路径上这条尤其致命：
+   *  「索引查不到 = 不存在」的写法会在这里撞 already exists。 */
+  override async createFolder(path: string): Promise<void> {
+    const prefix = path + '/';
+    const hasChild = [...this.files.keys(), ...this.binaryFiles.keys()].some((p) => p.startsWith(prefix));
+    if (hasChild || (await this.adapter.exists(path))) throw new Error('Folder already exists.');
+    this.dirs.add(path);
+  }
+  override async create(path: string, content: string): Promise<any> {
+    if (this.files.has(path) || (await this.adapter.exists(path))) throw new Error('File already exists.');
     return super.create(path, content);
   }
 }

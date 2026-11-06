@@ -438,20 +438,28 @@ describe('collectRiver（只读采集集成）', () => {
     vault.files.set('CONFIG/STORAGE/memo.json', JSON.stringify([{ title: 'a', created: '2026-09-01 09:00:00', completed: null }]));
     vault.files.set('CONFIG/STORAGE/pomodoro.json', JSON.stringify({ version: 1, state: {}, history: [], archived: [] }));
     const app = mockAppWithVault(vault) as any;
-    const spy = vi.spyOn(vault, 'read');
+    // 2026-11-06：数据 json 改走 adapter 直读（点前缀数据目录不在 vault 索引里），
+    // 计数要覆盖两条通道——只看 vault.read 会恒为 0，守卫形同虚设。
+    const spyVault = vi.spyOn(vault, 'read');
+    const spyAdapter = vi.spyOn(vault.adapter, 'read');
+    const reads = () => spyVault.mock.calls.length + spyAdapter.mock.calls.length;
     setSettingsProvider(() => ({ ...DEFAULT_SETTINGS, ...DIRS, storagePath: 'CONFIG/STORAGE', homeTimelineRange: 'week' }));
     await collectRiver(app, NOW);
-    const weekReads = spy.mock.calls.length;
-    spy.mockClear();
+    const weekReads = reads();
+    spyVault.mockClear();
+    spyAdapter.mockClear();
     setSettingsProvider(() => ({ ...DEFAULT_SETTINGS, ...DIRS, storagePath: 'CONFIG/STORAGE', homeTimelineRange: 'today' }));
     await collectRiver(app, NOW);
-    const todayReads = spy.mock.calls.length;
-    spy.mockRestore();
+    const todayReads = reads();
+    spyVault.mockRestore();
+    spyAdapter.mockRestore();
     expect(weekReads).toBeGreaterThan(0);
     // 换源后 read 面不再主要由 recap 的「按天读」决定：时间线要读影视笔记的 frontmatter 才能判断
     // 日期落不落在窗口里，这部分与窗口档无关。真正要钉住的是**不随窗口变多**，且总量有界
     // （4 篇影视 + 2 个 JSON + 少量余量），否则「打开首页扫全库」会悄悄回来。
     expect(todayReads).toBeLessThanOrEqual(weekReads);
-    expect(weekReads).toBeLessThanOrEqual(30);
+    // 上限含 EPUB 阅读数据路径探测（reader-source 每次要在多个候选目录间探一遍，
+    // 约 40 次 adapter 读，与窗口档无关）——这是固定开销，不是「按天扫」回退。
+    expect(weekReads).toBeLessThanOrEqual(60);
   });
 });

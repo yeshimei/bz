@@ -16,6 +16,7 @@ import { DEFAULT_W } from './fsrs';
 import { DEFAULT_R_THRESHOLD, isDueToday, isEarlyDue, roundQueue } from './queue';
 import { computeStats } from './stats';
 import { emitDomainEvent } from '../core/domain-bus';
+import { diskPathStat } from '../core/storage';
 
 /** item 5：普通复习离篇宽限期（ms）——持续离篇超过此时长才算中断；测试可注入 */
 export let REVIEW_AWAY_GRACE_MS = 120000;
@@ -654,10 +655,14 @@ export const reviewApp = {
     // 「每 tick 一次全量 JSON 解析」降为「每 2.5s 一次内存 stat 对比」。
     // 基线 null（首轮/探测不可用）→ 保守回退全量读，翻篇检测不劣化。
     let lastMtime: number | null = null;
-    const storageMtime = (): number | null => {
+    // 索引优先（内存零 IO）；点前缀数据目录索引恒空 → 落 adapter.stat 兜底，
+    // 否则 mtime 永远是 null，轮询退化成每 2.5s 全量读盘。
+    const storageMtime = async (): Promise<number | null> => {
       try {
         const f = app.vault.getAbstractFileByPath(getReviewFilePath()) as { stat?: { mtime?: number } } | null;
-        return f?.stat?.mtime ?? null;
+        if (f && typeof f.stat?.mtime === 'number') return f.stat.mtime;
+        const st = await diskPathStat(app, getReviewFilePath());
+        return st && typeof st.mtime === 'number' ? st.mtime : null;
       } catch {
         return null;
       }
@@ -713,10 +718,10 @@ export const reviewApp = {
         });
         return;
       }
-      const mtime = storageMtime();
+      const mtime = await storageMtime();
       if (lastMtime !== null && mtime !== null && mtime === lastMtime) return; // 未变：本 tick 不读盘
       const updatedItems = await dm.loadItems();
-      lastMtime = storageMtime();
+      lastMtime = await storageMtime();
       const updated = updatedItems.find((i) => i.filePath === item.filePath);
       if (updated && updated.lastReviewed) {
         const last = new Date(updated.lastReviewed);

@@ -23,11 +23,11 @@
  *    （今天未写不断签；ADR-0130 一目一文件口径）。
  */
 import type { App, TFile } from 'obsidian';
-import { collectRecap, settingDir, fileIfExists, readJsonIfExists } from '../recap/aggregate';
+import { collectRecap, settingDir, readJsonIfExists } from '../recap/aggregate';
 import { collectTimelineEvents, type TimelineEvent } from './timeline-collect';
 import type { RecapSummary } from '../recap/aggregate';
 import { tryGetSettings } from '../core/settings-provider';
-import { storageFile } from '../core/storage';
+import { storageFile, diskPathExists, diskPathStat } from '../core/storage';
 import { diaryDateFromEntryPath } from '../core/diary-format';
 import { reviewApp } from '../review/app';
 import type { ReviewItem } from '../review/data';
@@ -71,7 +71,7 @@ function toRiverDay(dateStr: string, summary: RecapSummary, events: TimelineEven
 }
 
 /* ---------- 计数采集（各源独立容错） ----------
-   只读小工具收编 recap 正典（cons P3-4）：settingDir/fileIfExists/readJsonIfExists，
+   只读小工具收编 recap 正典（cons P3-4）：settingDir/readJsonIfExists，
    本文件已静态依赖 recap（collectRecap），收编零新增依赖边、不引环。 */
 
 /* ---------- 计数采集（各源独立容错） ---------- */
@@ -79,7 +79,7 @@ function toRiverDay(dateStr: string, summary: RecapSummary, events: TimelineEven
 /** 复习：总数 / 逾期 / 明天到期（口径同 snapshot reviewApp.loadItems） */
 async function collectReviewCounts(app: App, now: number, c: RiverCounts): Promise<void> {
   const filePath = storageFile('review.json');
-  if (!fileIfExists(app, filePath)) return;
+  if (!(await diskPathExists(app, filePath))) return;
   reviewApp.ensure(app);
   const items = (await reviewApp.dataManager!.loadItems()) as ReviewItem[];
   c.reviewTotal = items.filter((i) => !i.isMissing).length;
@@ -130,7 +130,7 @@ async function collectClippingCounts(app: App, c: RiverCounts): Promise<void> {
 async function collectFavoritesCounts(app: App, c: RiverCounts): Promise<void> {
   const dir = settingDir(['storagePath'], 'CONFIG/STORAGE');
   const filePath = getFavoritesPath(dir);
-  if (!fileIfExists(app, filePath)) return;
+  if (!(await diskPathExists(app, filePath))) return;
   const dm = new FavoritesDataManager(filePath);
   const all = await dm.getAll();
   c.favoritesTotal = (Array.isArray(all) ? all : []).filter((i) => !(i as { archived?: boolean }).archived).length;
@@ -139,7 +139,7 @@ async function collectFavoritesCounts(app: App, c: RiverCounts): Promise<void> {
 /** 归物：登记件数（口径同 snapshot） */
 async function collectBelongingsCounts(app: App, c: RiverCounts): Promise<void> {
   const filePath = storageFile('belongings.json');
-  if (!fileIfExists(app, filePath)) return;
+  if (!(await diskPathExists(app, filePath))) return;
   const db = await loadBelongings();
   c.belongingsTotal = Object.keys((db as { items?: Record<string, unknown> }).items ?? {}).length;
 }
@@ -181,15 +181,12 @@ function collectKnowledgeCounts(mdFiles: TFile[], c: RiverCounts): void {
 }
 
 /** 第二大脑：存储占用（2026-09-18 用户点名）= secondbrain.json + secondbrain.vec 字节数；
- *  只 stat 不读内容，文件缺失跳过（json+vec 可能只存在其一）。 */
-function collectSecondbrainBytes(app: App, c: RiverCounts): void {
+ *  只 stat 不读内容，文件缺失跳过（json+vec 可能只存在其一）。stat 走 adapter——
+ *  点前缀数据目录不在 vault 索引里，索引 stat 恒取不到（占用恒 0）。 */
+async function collectSecondbrainBytes(app: App, c: RiverCounts): Promise<void> {
   for (const p of [storageFile('secondbrain.json'), storageFile('secondbrain.vec')]) {
-    try {
-      const f = app.vault.getAbstractFileByPath(p) as TFile | null;
-      if (f && f.stat && typeof f.stat.size === 'number') c.secondbrainBytes += f.stat.size;
-    } catch {
-      /* 单文件失败不拖垮 */
-    }
+    const st = await diskPathStat(app, p);
+    if (st && typeof st.size === 'number') c.secondbrainBytes += st.size;
   }
 }
 

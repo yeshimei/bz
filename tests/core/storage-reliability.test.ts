@@ -201,10 +201,11 @@ describe('冲突留档：解析失败（D1 原语 3）', () => {
 
   it('留档失败（create 抛错）→ 原流程继续：降级重建照常、read 不抛', async () => {
     const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
-    const origCreate = vault.create.bind(vault);
-    vault.create = async (path: string, content: string) => {
+    // 留档写入走 adapter（点前缀目录 CONFIG/.CORRUPT 不在 vault 索引里，vault.create 不可靠）
+    const origWrite = vault.adapter.write.bind(vault.adapter);
+    vault.adapter.write = async (path: string, content: string) => {
       if (path.startsWith('CONFIG/.CORRUPT/')) throw new Error('disk full');
-      return origCreate(path, content);
+      return origWrite(path, content);
     };
     try {
       vault.files.set('CONFIG/STORAGE/bad.json', '{broken');
@@ -212,7 +213,7 @@ describe('冲突留档：解析失败（D1 原语 3）', () => {
       expect([...vault.files.keys()].filter((p) => p.startsWith('CONFIG/.CORRUPT/'))).toHaveLength(0);
       expect(JSON.parse(vault.files.get('CONFIG/STORAGE/bad.json')!)).toEqual([]);
     } finally {
-      vault.create = origCreate;
+      vault.adapter.write = origWrite;
       warnSpy.mockRestore();
     }
   });

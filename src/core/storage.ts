@@ -201,6 +201,32 @@ export async function diskPathExists(app: any, p: string): Promise<boolean> {
   }
 }
 
+/**
+ * 盘上只读直读（绕过索引）。点前缀目录（缺省数据目录 `.obsidian/plugins/<插件>/storage`、
+ * `CONFIG/.CORRUPT`、`.ENCRYPT`）**不在 vault 索引里**，`getAbstractFileByPath` 恒 null；
+ * 判断数据文件「在不在、是什么」一律问 adapter，不要问索引。
+ * 缺失/读失败 → null（调用方按「没有」走原路）。
+ */
+export async function diskReadText(app: any, p: string): Promise<string | null> {
+  try {
+    return await app.vault.adapter.read(p);
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * 盘上 stat（绕过索引）。mtime/size 取不到（文件不存在/适配器不支持）→ null。
+ * 用途：缓存指纹、轮询变更探测、体积统计——这些数据文件同样落在点前缀目录里。
+ */
+export async function diskPathStat(app: any, p: string): Promise<{ mtime?: number; size?: number } | null> {
+  try {
+    return (await app.vault?.adapter?.stat?.(p)) ?? null;
+  } catch {
+    return null;
+  }
+}
+
 // ---------- 冲突留档（D1 可靠写契约原语 3） ----------
 
 /** 留档目录（与 CONFIG/.ENCRYPT 同级的插件保留目录）：坏文件/写失败前内容原样留档，永不静默丢数据 */
@@ -234,22 +260,23 @@ function baseNameOf(p: string): string {
  */
 export async function backupOriginal(app: any, filePath: string, raw?: string): Promise<string | null> {
   try {
-    const f = app.vault.getAbstractFileByPath(filePath);
-    // 索引滞后（启动扫描未完成）时 f 查不到，但 raw（读侧当场取到的原文）照样能留档 —— 留档以内容为准，不以索引为准
-    const content = raw !== undefined ? raw : f ? await app.vault.read(f) : undefined;
-    if (content === undefined) return null;
-    if (!app.vault.getAbstractFileByPath(CORRUPT_BACKUP_DIR)) {
+    // 原文一律问盘：点前缀数据目录（缺省 `<插件目录>/storage`）不在 vault 索引里，
+    // getAbstractFileByPath 取不到文件对象 → 留档会被静默跳过（坏文件现场就丢了）
+    const content = raw !== undefined ? raw : await diskReadText(app, filePath);
+    if (content === undefined || content === null) return null;
+    // 留档目录 CONFIG/.CORRUPT 含点段，同样不在索引里 —— 判存在只能问盘
+    if (!(await diskPathExists(app, CORRUPT_BACKUP_DIR))) {
       try {
         await app.vault.createFolder(CORRUPT_BACKUP_DIR);
-      } catch { /* 并发建目录竞态：已建则继续；真建不了由下方 create 报错走 null */ }
+      } catch { /* 并发建目录竞态：已建则继续；真建不了由下方写盘报错走 null */ }
     }
     const base = baseNameOf(filePath);
     const stamp = corruptStamp();
     let backupPath = `${CORRUPT_BACKUP_DIR}/${base}.${stamp}.bak`;
-    for (let i = 2; app.vault.getAbstractFileByPath(backupPath); i++) {
+    for (let i = 2; await diskPathExists(app, backupPath); i++) {
       backupPath = `${CORRUPT_BACKUP_DIR}/${base}.${stamp}-${i}.bak`;
     }
-    await app.vault.create(backupPath, content);
+    await app.vault.adapter.write(backupPath, content);
     return backupPath;
   } catch (e) {
     console.warn('[storage] ' + filePath + ' 留档失败（' + CORRUPT_BACKUP_DIR + '），继续原流程', e);
@@ -396,6 +423,24 @@ export function jsonFileStore<T>(filePath: string, opts: JsonFileStoreOptions<T>
       const app = resolveApp();
       const c = serialize(data);
       let f = app.vault.getAbstractFileByPath(filePath);
+      if (!f && (await diskPathExists(app, filePath))) {
+        // 索引看不见但盘上有（点前缀数据目录 / 启动扫描窗口）→ 直接按 modify 语义 adapter 直写。
+        // 不能交给 createIfMissing：vault.create 对已存在路径抛 already exists，白跑一次失败调用
+        // （索引永远看不见点前缀路径，每次写都撞）。
+        if (opts.writeIfChanged) {
+          try {
+            if ((await readFromDisk(app, filePath)) === c) return;
+          } catch { /* 读盘失败照常写 */ }
+        }
+        try {
+          await app.vault.adapter.write(filePath, c);
+          return;
+        } catch (e) {
+          const backupPath = await backupOriginal(app, filePath);
+          if (backupPath) notifyBackup(filePath, backupPath, '写入失败');
+          throw e;
+        }
+      }
       if (f) {
         // 写前比对（Syncthing 止血）：读盘内容与将写内容一致 → 跳过写，避免无谓的 mtime 刷新
         if (opts.writeIfChanged) {

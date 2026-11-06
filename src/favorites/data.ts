@@ -28,7 +28,7 @@
  *   写链由 per-path 串行队列保证安全（d2-reliability 回归在案）。
  */
 import { jsonStore } from '../core/json-store';
-import { enqueueFileTask } from '../core/storage';
+import { enqueueFileTask, diskPathExists } from '../core/storage';
 import { getApp } from '../core/app';
 import { saveSettings, tryGetSettings } from '../core/settings-provider';
 import { CONFIG, getTags, normalizeTags, normalizeUrl, setTags } from './config';
@@ -260,13 +260,14 @@ export class DataManager {
    */
   private async migrateLegacyTagsFile(): Promise<void> {
     const path = legacyTagsPath(this.filePath);
-    let file: any = null;
+    let exists = false;
     try {
-      file = getApp().vault.getAbstractFileByPath(path);
+      // 存在性问盘：数据目录缺省是点前缀路径，vault 索引看不见 → 旧文件迁移永远静默跳过
+      exists = await diskPathExists(getApp(), path);
     } catch {
       return; // app 未就绪：跳过（下次载入重试）
     }
-    if (!file) return; // 幂等：旧文件不存在直接跳过
+    if (!exists) return; // 幂等：旧文件不存在直接跳过
     let raw: unknown = null;
     try {
       raw = await jsonStore(path).read();
@@ -285,7 +286,14 @@ export class DataManager {
       }
     }
     try {
-      await getApp().vault.trash(file, true); // 系统回收站，可反悔
+      const app = getApp();
+      const f = app.vault.getAbstractFileByPath(path);
+      if (f) {
+        await app.vault.trash(f, true); // 系统回收站，可反悔
+      } else {
+        // 点前缀数据目录取不到 TFile：原地改名留档（不硬删用户数据）
+        await app.vault.adapter.rename(path, `${path}.bak`);
+      }
     } catch (e) {
       console.error('[favorites-tags-migrate] 旧伴生文件退役失败（下次载入重试）:', e);
     }

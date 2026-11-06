@@ -25,6 +25,7 @@ import { createOverlay } from '../core/dom';
 import { escManager } from '../core/esc-manager';
 import { tryGetSettings } from '../core/settings-provider';
 import { loadSmartCatData, getSmartcatFilePath } from './data';
+import { storageFile, diskReadText, diskPathStat } from '../core/storage';
 import { readMemorySidecarFile, readBehaviorSidecarFile } from './memory';
 
 /** 面板现读（ADR-0069）：smartcat.json 已不含双流——合并 memory/behavior sidecar 后再渲染，
@@ -417,18 +418,17 @@ function getVisiblePaneKeys(): PaneKey[] {
 
 /** memo.json 路径（跟随共享 storagePath；loadMemoTitlesByDay 与 C1 自动刷新监听共用） */
 function memoDataPath(): string {
-  const s = tryGetSettings();
-  const dir = (s?.storagePath || 'CONFIG/STORAGE').trim().replace(/\/+$/, '');
-  return `${dir}/memo.json`;
+  return storageFile('memo.json');
 }
 
 /** memo.json 当日备忘标题表（「一起的日子」关键时刻用；dayKey → titles；读失败静默空表——零新增持久化） */
 async function loadMemoTitlesByDay(app: App): Promise<Map<string, string[]>> {
   const map = new Map<string, string[]>();
   try {
-    const f = app.vault.getAbstractFileByPath(memoDataPath());
-    if (!f) return map;
-    const raw = JSON.parse(await app.vault.read(f as any));
+    // 读盘走 adapter：memo.json 在数据目录（缺省点前缀路径）里，vault 索引取不到文件对象
+    const rawText = await diskReadText(app, memoDataPath());
+    if (rawText === null) return map;
+    const raw = JSON.parse(rawText);
     for (const it of Array.isArray(raw) ? raw : []) {
       if (!it || typeof it.title !== 'string' || !it.title) continue;
       const created = typeof it.created === 'string' ? it.created : '';
@@ -1127,6 +1127,8 @@ interface DashboardState {
   eventRefs: unknown[];
   /** C1 自动刷新：防抖计时器句柄（close clearTimeout 清理） */
   debounceTimer: number | null;
+  /** C1 自动刷新：mtime 轮询句柄（点前缀数据目录收不到 vault modify 事件，close clearInterval） */
+  pollTimer: number | null;
   /** 最近一次渲染的数据引用（行为筛选/加载更多重渲染用；renderPanes 更新） */
   lastData: SmartCatData | null;
   /** 行为页签：当前来源筛选（null=全部） */
@@ -1172,6 +1174,10 @@ function teardownAutoRefresh(): void {
   if (dashState.debounceTimer !== null) {
     window.clearTimeout(dashState.debounceTimer);
     dashState.debounceTimer = null;
+  }
+  if (dashState.pollTimer !== null) {
+    window.clearInterval(dashState.pollTimer);
+    dashState.pollTimer = null;
   }
   for (const ref of dashState.eventRefs) {
     try {
@@ -1261,7 +1267,7 @@ export async function openSmartcatDashboard(app: App): Promise<void> {
   const memoTitles = await loadMemoTitlesByDay(app);
   dashState = {
     app, mask, popup, body, panes, tabs, activeTab: 'overview', visibleKeys, escHandle: null,
-    memoTitles, eventRefs: [], debounceTimer: null, lastData: null,
+    memoTitles, eventRefs: [], debounceTimer: null, pollTimer: null, lastData: null,
     behaviorFilter: null, behaviorShown: BEHAVIOR_BATCH_SIZE, behaviorListEl: null, behaviorLoadMoreBtn: null,
   };
   renderPanes(data);
@@ -1283,6 +1289,7 @@ export async function openSmartcatDashboard(app: App): Promise<void> {
   // closeSmartcatDashboard 统一 offref 清理——与 registerEvent(app.vault,'modify') 清理语义等价；
   // 注册失败仅失去自动刷新，面板功能不受影响）
   const watchPaths = [getSmartcatFilePath(), memoDataPath()];
+  const watchMtime = new Map<string, number>();
   const onVaultModify = (file: unknown): void => {
     const p = typeof file === 'string' ? file : (file as any)?.path;
     if (!p || !watchPaths.includes(p)) return; // 非目标路径不触发
@@ -1291,6 +1298,28 @@ export async function openSmartcatDashboard(app: App): Promise<void> {
   try {
     dashState.eventRefs.push((app.vault as any).on('modify', onVaultModify));
   } catch (e) { /* 老环境兜底：仅失去自动刷新 */ }
+  // 点前缀数据目录（缺省 storage）不在 vault 索引里，modify 事件不触发——用 mtime 轮询兜底：
+  // 面板打开期间每 3s 比一次 stat，变了走同一个防抖刷新（关闭时 clearInterval，不常驻）
+  void (async () => {
+    for (const p of watchPaths) {
+      const st = await diskPathStat(app, p);
+      if (st && typeof st.mtime === 'number') watchMtime.set(p, st.mtime);
+    }
+  })();
+  dashState.pollTimer = window.setInterval(() => {
+    void (async () => {
+      if (!dashState) return;
+      let changed = false;
+      for (const p of watchPaths) {
+        const st = await diskPathStat(app, p);
+        const m = st && typeof st.mtime === 'number' ? st.mtime : null;
+        if (m === null || watchMtime.get(p) === m) continue;
+        watchMtime.set(p, m);
+        changed = true;
+      }
+      if (changed) scheduleSilentRefresh();
+    })();
+  }, DASH_REFRESH_DEBOUNCE_MS);
 
   const escHandle = escManager.register('smartcat-dashboard', {
     isVisible: () => !!dashState && dashState.popup.isConnected,

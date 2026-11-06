@@ -25,6 +25,7 @@ import { buildBehaviorWording } from './behavior-wording';
 import type BzSettings from '../settings';
 import { tryGetSettings } from '../core/settings-provider';
 import { bytesEqual } from '../core/utils';
+import { jsonFileStore, diskPathExists } from '../core/storage';
 
 export const MEMORY_CONFIG = {
   /** 检索返回条数 */
@@ -2054,32 +2055,23 @@ export interface BehaviorSidecarFile {
   items: BehaviorItem[];
 }
 
-/** 读 sidecar json；区分「不存在」（null）与「存在但坏 JSON」（corrupt 标记，调用方备份中止防二次清库） */
+/** 读 sidecar json；区分「不存在」（null）与「存在但坏 JSON」（corrupt 标记，调用方备份中止防二次清库）。
+ *  一律 adapter 直读：sidecar 与数据目录同处（缺省点前缀路径），vault 索引看不见。 */
 async function readJsonSidecar(app: App, path: string): Promise<{ value: any | null; corrupt: boolean }> {
   try {
-    const f = app.vault.getAbstractFileByPath(path);
-    if (!f) return { value: null, corrupt: false };
-    return { value: JSON.parse(await app.vault.read(f as any)), corrupt: false };
+    const raw = await app.vault.adapter.read(path);
+    return { value: JSON.parse(raw), corrupt: false };
   } catch {
+    // 不在盘上 → 不存在；在盘上却读不动/解析失败 → corrupt（照旧中止迁移，防以空流覆盖）
+    if (!(await diskPathExists(app, path))) return { value: null, corrupt: false };
     return { value: null, corrupt: true };
   }
 }
 
-/** 写 sidecar json（存在 modify / 不存在 create + 建目录兜底，与 data.ts saveSmartCatData 同款）。
- *  Syncthing 冲突止血（用户拍板 2026-08-29）：写前比对盘上现读内容，没变就跳过写。 */
+/** 写 sidecar json（走统一读写层：存在 modify / 不存在 create + 建目录，索引滞后自动降级 adapter）。
+ *  Syncthing 冲突止血（用户拍板 2026-08-29）：writeIfChanged 字节级比对，没变就跳过写。 */
 async function writeJsonSidecar(app: App, path: string, content: unknown): Promise<void> {
-  const c = JSON.stringify(content, null, 2);
-  const f = app.vault.getAbstractFileByPath(path);
-  if (f) {
-    try {
-      if ((await app.vault.read(f as any)) === c) return;
-    } catch { /* 读失败照写 */ }
-    await app.vault.modify(f as any, c);
-  } else {
-    const d = path.substring(0, path.lastIndexOf('/'));
-    if (d && !app.vault.getAbstractFileByPath(d)) await app.vault.createFolder(d);
-    await app.vault.create(path, c);
-  }
+  await jsonFileStore<any>(path, { app, writeIfChanged: true }).write(content);
 }
 
 /** 读记忆流 sidecar（无文件/失败 → null） */
@@ -2140,11 +2132,9 @@ export async function migrateSmartcatSidecars(app: App, data: SmartCatData): Pro
   for (const [read, path] of [[memRead, getSmartcatMemorySidecarPath()], [behRead, getSmartcatBehaviorSidecarPath()]] as const) {
     if (!read.corrupt) continue;
     try {
-      const f = app.vault.getAbstractFileByPath(path);
-      const raw = f ? await app.vault.read(f as any) : '';
-      const bak = app.vault.getAbstractFileByPath(path + '.bak');
-      if (bak) await app.vault.delete(bak as any); // 旧 .bak 先清（create 对已存在路径抛错，备份会静默失效）
-      await app.vault.create((path + '.bak') as any, raw);
+      // 现场备份走 adapter：sidecar 在点前缀目录里，vault 索引取不到文件对象
+      const raw = await app.vault.adapter.read(path);
+      await app.vault.adapter.write(path + '.bak', raw);
     } catch { /* 备份失败仍中止——宁可不迁，不可覆盖 */ }
     throw new Error(`smartcat sidecar 损坏，已备份 .bak 并中止迁移：${path}`);
   }

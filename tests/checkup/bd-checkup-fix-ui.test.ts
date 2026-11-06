@@ -178,12 +178,8 @@ describe('数据体检拍板修复批（bd-checkup-fix-ui）', () => {
     // 关面板 → 模拟体检后数据文件 mtime 变化 → 重开
     const mask = document.getElementById('bz-checkup-mask')!;
     mask.dispatchEvent(new Event('click'));
-    const origFile = vault.file.bind(vault);
-    (vault as any).file = (p: string) => {
-      const f = origFile(p);
-      if (p === `${DIR}/memo.json`) f.stat.mtime += 60000;
-      return f;
-    };
+    // 数据被外部改写：指纹走 adapter.stat（真机 mtime 来源），MockVault 用 mtimes 覆盖表模拟
+    vault.mtimes.set(`${DIR}/memo.json`, Date.UTC(2024, 0, 1, 12, 0) + 60000);
     openDataCheckup(app);
     const stale = popup.querySelector('.bz-checkup-stale') as HTMLElement;
     expect(stale).toBeTruthy();
@@ -200,7 +196,9 @@ describe('数据体检拍板修复批（bd-checkup-fix-ui）', () => {
     mask.dispatchEvent(new Event('click'));
     openDataCheckup(app);
     const stale2 = popup.querySelector('.bz-checkup-stale') as HTMLElement;
-    expect(stale2.textContent).toContain('此后数据未变化');
+    // 指纹判定是异步的（mtime 走 adapter，点前缀数据目录不在索引里）：先渲染保守态，
+    // 判定回来 clean 再原地降级文案并摘掉行动钮
+    await waitFor(() => !!stale2.textContent && stale2.textContent.includes('此后数据未变化'));
     expect(stale2.querySelector('button')).toBeNull();
   });
 
