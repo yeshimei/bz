@@ -145,6 +145,10 @@ export function walkTests(root = ROOT) {
   return walk(path.join(root, 'tests'))
     .filter((p) => /\.test\.(ts|mjs)$/.test(p))
     .map((p) => slash(path.relative(root, p)))
+    /* tests/e2e/ 是真实网络端到端，vitest.config.ts 的 exclude 排除了它（手动用
+       vitest.e2e.config.ts 跑）。选择器不认这份配置就会把它塞给默认 vitest，
+       默认 vitest 报「No test files found」让门禁假红——这里按同一口径剔除。 */
+    .filter((p) => !p.startsWith('tests/e2e/'))
     .sort();
 }
 
@@ -538,7 +542,9 @@ export function pickTests({ root = ROOT, since = 'HEAD', cache = null, files: ov
     }
   }
 
-  const files = [...picked].sort();
+  /* 依赖索引按整棵 tests/ 建（e2e 也在里面），但 e2e 不进默认 vitest 的 include 口径：
+     这里再兜一层，避免反向闭包/文本边把 tests/e2e/** 重新捡回来（见 walkTests 注）。 */
+  const files = [...picked].filter((f) => !f.startsWith('tests/e2e/')).sort();
   const filtered = cache ? applyCache({ root, files, index, cache }) : { files, reused: [] };
   return {
     mode: 'affected',
