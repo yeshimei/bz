@@ -246,7 +246,7 @@ export function mountDiaryFormatEditor(body: HTMLElement): void {
     notify('已切换；之后的日记按新格式写，已有日记没动', { type: 'info' });
   }
 
-  /** 切换并转换：先转换，成功后写设置 */
+  /** 切换并转换：先转换，整批都转成了才写设置 */
   async function convertAndSwitch(next: DiaryEntryFormat): Promise<void> {
     if (busy) return;
     busy = true;
@@ -254,8 +254,21 @@ export function mountDiaryFormatEditor(body: HTMLElement): void {
     showProgress();
     try {
       const report = await convertDiaryFormat(next, (p) => showProgress(p));
-      if (report.converted === 0 && report.errors.length > 0) {
-        notify(`没有文件转换成功，格式没有切换：${report.errors[0]?.reason || '未知错误'}`, { type: 'error' });
+      /*
+       * 只要还有文件没转成（skipped / errors 非空）就不切格式。
+       * 格式切换是「切了就按新格式读」——半批转成功、半批没转时，切与不切都会让一部分
+       * 日记在日记本里看不见。convertDiaryFormat 的试运行已经保证这种半批通常一个文件
+       * 都不会动；这里兜的是执行期才失败的残余（磁盘满/权限），如实说清已转了多少。
+       */
+      const blocked = [...report.errors, ...report.skipped];
+      if (blocked.length > 0) {
+        const reason = blocked[0]?.reason || '未知错误';
+        notify(
+          report.converted === 0
+            ? `有 ${blocked.length} 个文件没法转换，格式没有切换：${reason}`
+            : `转换中断：已转 ${report.converted} 个，还有 ${blocked.length} 个没转，格式没有切换：${reason}`,
+          { type: 'error', dedupeKey: 'diary-format-convert-blocked' },
+        );
         return;
       }
       const s = getSettings();
@@ -263,11 +276,13 @@ export function mountDiaryFormatEditor(body: HTMLElement): void {
       await saveSettings();
       applyDirectories(s);
       format = next;
-      const parts = [`已转换 ${report.converted} 个文件`];
+      const parts = [
+        report.converted > 0 ? `已转换 ${report.converted} 个文件` : '已有日记都已是目标格式',
+      ];
       if (report.inferred.length > 0) parts.push(`其中 ${report.inferred.length} 篇按文件创建时间补了时分`);
-      if (report.skipped.length > 0) parts.push(`跳过 ${report.skipped.length} 个`);
-      if (report.errors.length > 0) parts.push(`失败 ${report.errors.length} 个`);
-      notify(parts.join('，'), { type: report.errors.length > 0 ? 'warning' : 'success' });
+      const leftovers = report.leftovers ?? [];
+      if (leftovers.length > 0) parts.push(`${leftovers.length} 天的原文件没进回收站，可手动清理`);
+      notify(parts.join('，'), { type: leftovers.length > 0 ? 'warning' : 'success' });
     } catch (e) {
       notify(`转换失败：${e instanceof Error ? e.message : String(e)}`, { type: 'error' });
     } finally {

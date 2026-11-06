@@ -32,9 +32,31 @@ import {
   diaryDayFilePath,
   diaryEntryPath,
   diaryMetaFromEntryPath,
+  isValidDiaryTime,
   parseDiaryBlockHeader,
   serializeDiaryEntryFile,
 } from '../core/diary-format';
+
+/** day 文件块头：`# <emoji> HH:mm`（与 diary/legacy 的 HEADING_RE 同口径；只用于判「整篇无头行」） */
+const LEGACY_DAY_HEAD_RE = /^#\s*(\S+)\s+(\d{2}:\d{2})/u;
+
+/**
+ * 整篇没有合法分段时间头、但有正文 —— Obsidian 原生日记。
+ *
+ * 日记写路径对这类文件明确拒写（`diary/store.refuseHeadlessDay`）：往里追加一个
+ * `# emoji HH:mm` 块，纯正文就变成「游离正文 + 头行块」，等于静默改写用户的原生文件，
+ * 之后体检报游离行、格式转换整份跳过。还原路径（解密写回）必须用同一判据——
+ * 它走的是 vault 直写，不经过 diary 写层的守卫。
+ */
+function isHeadlessDayText(content: string): boolean {
+  let hasBody = false;
+  for (const line of String(content ?? '').replace(/\r\n/g, '\n').split('\n')) {
+    const m = LEGACY_DAY_HEAD_RE.exec(line);
+    if (m && isValidDiaryTime(m[2])) return false;
+    if (line.trim()) hasBody = true;
+  }
+  return hasBody;
+}
 
 /** 保险库数据变更通道（ADR-0078：密码本/保险库等外部消费者订阅；写操作后广播） */
 export const ENCRYPT_CHANGED_CHANNEL = 'encrypt:changed' as const;
@@ -1675,10 +1697,21 @@ export class SafeManager {
     // 落点按调用方注入的日记目录 + 当前 Obsidian 日期格式重算（目录/格式改过也能落回正确文件）
     const targetPath = diaryDayFilePath(diaryDir || currentDiaryDirectory(), date);
     await this.ensureVaultParentFolder(targetPath);
+    let refusedHeadless = false;
     await enqueueFileTask(targetPath, async () => {
       const existing = app.vault.getAbstractFileByPath(targetPath) as any;
       let content = '';
       if (existing && existing.isFolder !== true) content = await app.vault.read(existing);
+      /*
+       * 目标是 Obsidian 原生日记（整篇无分段时间头）：与 diary 写路径同口径拒写。
+       * 还原走的是 vault 直写，绕过了 store.refuseHeadlessDay——不在这里拦，追加一个块
+       * 就会把用户的原生文件改成「游离正文 + 头行块」，之后体检报游离行、格式转换整份跳过。
+       */
+      if (isHeadlessDayText(content)) {
+        refusedHeadless = true;
+        console.warn('[encrypt] 目标日是 Obsidian 原生日记（整篇无分段时间头），拒绝写回：' + targetPath);
+        return;
+      }
       const base = content.replace(/\r\n/g, '\n').trimEnd();
       if (base.includes(md)) return; // 幂等：同一块已在文件里
       /* 按块头时间找插入点：第一块比它晚的就插在那一块前面；都不晚就接在末尾 */
@@ -1710,7 +1743,7 @@ export class SafeManager {
         (app.metadataCache as any)?.trigger?.('changed', file);
       }
     });
-    return true;
+    return !refusedHeadless;
   }
 
   /**

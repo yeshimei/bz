@@ -81,10 +81,13 @@ describe('旧 → 新（日期文件拆条目文件）', () => {
     expect(r.inferred).toEqual([]);
   });
 
-  it('空日期文件：跳过（不建空条目）', async () => {
+  it('空日期文件：不建空条目，也不算问题（不挡整批切换）', async () => {
     vault.files.set(DAY_PATH, '\n\n');
     const r = await convertLegacyToEntries();
-    expect(r.skipped[0]?.reason).toContain('空文件');
+    expect(r.converted).toBe(0);
+    expect(r.skipped).toEqual([]);
+    expect(r.errors).toEqual([]);
+    expect(vault.files.has(DAY_PATH)).toBe(true); // 原文件留着（没有可丢的内容）
   });
 
   it('幂等：目标已存在且内容一致，不重复写、不列入回滚', async () => {
@@ -153,5 +156,36 @@ describe('convertDiaryFormat 分派', () => {
     setApp(mockAppWithVault(v2));
     expect((await convertDiaryFormat('day')).converted).toBe(1);
     expect(v2.files.has(DAY_PATH)).toBe(true);
+  });
+
+  it('试运行：有文件不能转时整批一个都不动，不会出现「半批已转」', async () => {
+    // 6-13 能转；6-14 有游离正文（整份跳过）
+    vault.files.set(`${DIR}/2026-06-13.md`, '# 📖 12:23\n\nA\n');
+    vault.files.set(`${DIR}/2026-06-14.md`, '前言\n# 📖 12:23\n\nB\n');
+    const r = await convertDiaryFormat('entry');
+    expect(r.converted).toBe(0);
+    expect(r.errors).toEqual([]);
+    expect(r.skipped).toHaveLength(1);
+    // 能转的那天也没动：原文件还在，条目文件一个没建
+    expect(vault.files.has(`${DIR}/2026-06-13.md`)).toBe(true);
+    expect(vault.files.has(`${DIR}/2606131223.md`)).toBe(false);
+  });
+
+  it('目标写好但原文件没进回收站：记 leftovers，重跑只补移原文件、不重复写', async () => {
+    vault.files.set(E1, serializeDiaryEntryFile({ date: '2026-06-13', time: '12:23' }, ['日记'], 'A'));
+    const trashSpy = vi.spyOn(vault, 'trash').mockRejectedValueOnce(new Error('回收站不可写'));
+    const r1 = await convertDiaryFormat('day');
+    expect(r1.converted).toBe(1);
+    expect(r1.leftovers).toHaveLength(1);
+    expect(vault.files.has(DAY_PATH)).toBe(true);
+    expect(vault.files.has(E1)).toBe(true); // 原文件还在（目标不能跟着回滚）
+    trashSpy.mockRestore();
+
+    // 重跑：目标内容一致 = 上次已转换 → 不重新写、只把残留原文件挪走
+    const r2 = await convertDiaryFormat('day');
+    expect(r2.converted).toBe(0);
+    expect(r2.skipped).toEqual([]);
+    expect(r2.leftovers).toEqual([]);
+    expect(vault.files.has(E1)).toBe(false);
   });
 });

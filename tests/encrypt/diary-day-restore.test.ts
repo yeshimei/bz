@@ -131,6 +131,22 @@ describe('加密日记还原：day 格式按 HH:mm 插回', () => {
     expect(sm.manifest.notes.some((n) => n.id === noteId)).toBe(false);
   });
 
+  it('目标是 Obsidian 原生日记（整篇无头行）→ 拒绝写回，文件一个字不动', async () => {
+    const native = '今天下雨了。\n\n在家写了一下午代码。\n';
+    vault.create('我的/日记/2026-08-12.md', native);
+    const sm = new SafeManager('CONFIG/.ENCRYPT');
+    await sm.unlock('pw');
+    const noteId = await lockDiary(sm, {
+      path: '我的/日记/2026-08-12.md',
+      time: '12:00',
+      content: '午后',
+    });
+    // 与日记写路径 refuseHeadlessDay 同口径：追加会把纯正文变成「游离正文 + 头行块」
+    expect(await sm.restoreDiaryEntry(noteId, '# 📖 12:00\n\n午后')).toBe(false);
+    expect(vault.files.get('我的/日记/2026-08-12.md')).toBe(native);
+    expect(sm.manifest.notes.some((n) => n.id === noteId)).toBe(true); // 密文仍在，可重试
+  });
+
   it('插入只规范插入点：不压缩其他条目正文里有意保留的连续空行', async () => {
     const original = '# 📖 09:00\n\n第一段\n\n\n\n第二段（保留 3 个空行）\n\n# 📖 21:00\n\n睡前\n';
     vault.create('我的/日记/2026-08-13.md', original);

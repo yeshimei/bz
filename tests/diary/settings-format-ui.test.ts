@@ -161,7 +161,7 @@ describe('转换进度条的生命周期', () => {
     conv.state.calls[0]?.onProgress?.({ done: 1, total: 2, current: '我的/日记/2606131223.md' });
     expect(body.querySelector('[data-role="pct"]')?.textContent).toBe('50%');
 
-    conv.state.settle?.({ target: 'day', converted: 1, skipped: [], errors: [], inferred: [] });
+    conv.state.settle?.({ target: 'day', converted: 1, skipped: [], errors: [], leftovers: [], inferred: [] });
     await vi.waitFor(() => expect(body.querySelector('.bz-diary-fmt-progress')).toBeNull());
     // 转换完两张卡恢复可点（busy 解除），别再卡在禁用态
     expect((body.querySelector('[data-fmt="day"]') as HTMLButtonElement).disabled).toBe(false);

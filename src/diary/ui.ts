@@ -2344,7 +2344,10 @@ export class DiaryAppController {
       const newTags = e.tags.filter((t) => t !== ENCRYPT_TAG);
       const done = await reclassifyEntry(noteId, newTags);
       if (!done) {
-        notice('解密失败：主密码可能不正确，密文未受影响', 'error');
+        notice(
+          '解密失败：主密码可能不正确，或目标那天是 Obsidian 原生日记（需先把日记格式切成「一篇一个文件」）；密文未受影响',
+          'error',
+        );
         return;
       }
       const { emitDomainEvent } = await import('../core/domain-bus');

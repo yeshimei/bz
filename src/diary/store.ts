@@ -472,7 +472,10 @@ async function addLegacyEntry(
   const timeValue = hours * 100 + minutes;
   // 文件名按 Obsidian 日记的日期格式（`YYYY/MM/DD` 会落子目录，ensureFolderFor 逐级建）
   const filePath = diaryDayPath(dir, dateStr);
-  const addKey = `${dir}/${dateStr}`;
+  // 串行键必须与改字/撕页/换贴纸同键（那边都按真实文件路径入队，见 removeDiaryEntries /
+  // updateDiaryTags / updateDiaryContent）：此前用「目录/日期」伪路径，同一份日文件两套键
+  // 互不排斥——一边在追块、一边在改块，后写者会覆盖前者的读-改-写结果。
+  const addKey = filePath;
 
   const created = await enqueueFileTask(addKey, async () => {
     await ensureFolderFor(dir);

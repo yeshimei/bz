@@ -2605,7 +2605,7 @@ export class UIManager {
         this.renderList();
         this.toast('已还原回日记');
       } else {
-        this.toast('还原失败：附件冲突或写回失败', true);
+        this.toast('还原失败：附件冲突、目标那天是 Obsidian 原生日记（需先切换日记格式）或写回失败', true);
       }
     } catch (e: any) {
       if (h) h.hide();
