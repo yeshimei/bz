@@ -908,13 +908,13 @@ describe('generateImageNote（图版文献：图片本体 + 四键 frontmatter +
     expect(content.indexOf('一组三张的写生记录')).toBeLessThan(i1); // 文字仍在上
   });
 
-  it('图片目录可由设置指定（issue 313）；留空回落到 <卡片文件夹>/assets（2026-10-31 口径）', async () => {
+  it('图片目录可由设置指定（issue 313）；卡片目录不配也按缺省「卡片盒」归一（2026-11-07）', async () => {
     expect(resolveImageDir({ knowledgeCardboxDirectory: '卡片盒' })).toBe('卡片盒/assets');
     expect(resolveImageDir({ knowledgeCardboxDirectory: '卡片盒', knowledgeImageFolder: '  ' })).toBe('卡片盒/assets');
     expect(resolveImageDir({ knowledgeCardboxDirectory: '卡片盒', knowledgeImageFolder: '/附图/' })).toBe('附图'); // 两侧斜杠归一
     expect(resolveImageDir({ knowledgeImageFolder: '我的/图片' })).toBe('我的/图片'); // 指定即完全以它为准
-    // 三跳全空（卡片文件夹也没配）= 空串：写盘侧拒绝，绝不落库根
-    expect(resolveImageDir({})).toBe('');
+    // 卡片目录已不在设置面板上（ADR-0293）：空值回落到缺省盒名，而不是一路退到附件目录
+    expect(resolveImageDir({})).toBe('卡片盒/assets');
 
     setSettingsProvider(() => ({ knowledgeDirectory: '文献盒', knowledgeImageFolder: '附图' }) as any);
     const path = await generateImageNote({ title: '手稿', summary: '解读', images: imgs([1, 'png']) });

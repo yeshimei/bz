@@ -446,24 +446,42 @@ export function chatThinkingHtml(topK: number): string {
   return `<div class="bz-sb-chat-thinking"><span class="bz-sb-chat-thinking-dots"><i></i><i></i><i></i></span>正在检索 ${topK} 条相关段落…</div>`;
 }
 
+/**
+ * 书命中的来源色：按书号稳定取色。
+ *
+ * 笔记来源色走 bySource 位次（有统计表可查），书不在那张表里——拿 path 查会永远落到兜底色，
+ * 而且书的 path 里带章节名，同一本书的每一章都会各算一次。按 bookId 哈希，一本书一个色。
+ */
+export function sbBookColor(seed: string): string {
+  const s = String(seed ?? '');
+  if (!s) return SB_FALLBACK;
+  let h = 0;
+  for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) | 0;
+  return SB_PALETTE[Math.abs(h) % SB_PALETTE.length];
+}
+
 /** 引用卡列表（会话内展示，不落盘） */
 export function chatCitesHtml(
-  hits: Array<{ path: string; pct: number; color: string; bookId?: string }>,
+  hits: Array<{ path: string; pct: number; color: string; bookId?: string; label?: string }>,
 ): string {
   if (!hits.length) return '';
   return (
     `<div class="bz-sb-chat-cites">` +
     hits
-      .map(
-        (h) =>
+      .map((h) => {
+        /* 展示名：书命中带 label（书名里可能有斜杠，按路径取 basename 会截成半截），
+           笔记命中仍按路径取文件名 */
+        const name = h.label || stripMdExt(h.path.replace(/^.*[\\/]/, ''));
+        return (
           `<button class="bz-sb-chat-cite" data-path="${escapeHtml(h.path)}"${
             h.bookId ? ` data-book="${escapeHtml(h.bookId)}"` : ''
           }>` +
           `<span class="bz-sb-chat-cite-score">${h.pct}%</span>` +
           `<span class="bz-sb-dot" style="background:${h.color}"></span>` +
-          `<span class="bz-sb-chat-cite-name">${escapeHtml(stripMdExt(h.path.replace(/^.*[\\/]/, '')))}</span>` +
+          `<span class="bz-sb-chat-cite-name">${escapeHtml(name)}</span>` +
           `</button>`
-      )
+        );
+      })
       .join('') +
     `</div>`
   );

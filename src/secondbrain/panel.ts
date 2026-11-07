@@ -615,11 +615,14 @@ export class SecondBrainPanel {
     // 头行：计数 + 健康 pill
     const cnt = popup.querySelector('#bz-sb-cnt');
     if (cnt) cnt.textContent = `${fmtCompact(stats.noteCount)} 篇 · ${fmtCompact(stats.chunkCount)} 段已入脑`;
+    /* 书籍统计：一次取数，头行与状态行共用——那是读阅读器索引文件的异步 IO，
+       同一轮渲染里问两遍没有意义。共享关着时返回 null，两处都不提。 */
+    const booksStat = sharedBookStats(this.app);
     /* 共享打开时才补书籍这一段：开关关着就完全不提，像没有这本书一样。
        异步补写而不是等它——书的画像可能几十份，不该拖住笔记那边的秒开。 */
     if (cnt) {
       const base = cnt.textContent ?? '';
-      void sharedBookStats(this.app).then((bs) => {
+      void booksStat.then((bs) => {
         if (!bs || !cnt.isConnected) return;
         cnt.textContent = `${base} · ${fmtCompact(bs.books)} 本书`;
       });
@@ -676,8 +679,8 @@ export class SecondBrainPanel {
         { text: healthy ? '索引一致' : `向量 ${Math.round(vecRows)} 行 / 块 ${stats.chunkCount} 个`, warn: !healthy },
         { text: vecBytes ? `占用 ${fmtBytes(metaBytes + vecBytes)}` : '暂无向量文件' },
       ]);
-      /* 书籍统计单独一行，只挂在共享打开时（与头行同一个口径） */
-      void sharedBookStats(this.app).then((bs) => {
+      /* 书籍统计单独一行，只挂在共享打开时（与头行同一个口径、同一份取数） */
+      void booksStat.then((bs) => {
         if (!bs || !log.isConnected) return;
         log.insertAdjacentHTML(
           'beforeend',

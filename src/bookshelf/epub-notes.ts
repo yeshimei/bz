@@ -14,6 +14,7 @@
  */
 import { enqueueFileTask } from '../core/storage';
 import { openExternalUrl } from '../core/utils';
+import { openReaderJump, readerJumpUrl } from '../core/reader-link';
 import { epubBookIdOf, readEpubAggregates } from './data';
 import { resolveReaderDataFilePath } from './reader-source';
 
@@ -71,24 +72,18 @@ export async function loadEpubBookNotes(app: any, vaultPath: string, book?: any)
     }));
 }
 
-/** bz 阅读的协议参数上限（与 bz-reader data/deeplink.ts 的 SNIPPET 一致：20 字足够唯一定位一次） */
-const READER_TEXT_SNIPPET = 20;
-
 /**
  * bz 阅读的位置链接：`obsidian://bz-reader?book=<id>&cfi=…&t=…&c=…`。
- * 与 bz-reader 自己的 deeplink.ts 同格式；`t` 是 CFI 失效时它用来在章节里搜的原文片段。
- * 章节名是 bz 侧兜底（「第 N 章」）时不传——那不是真章节，传过去只会让降级搜索更窄。
+ * 拼装与编码走 core `reader-link` 单源（同一串在第二大脑引用卡、知识盒来源也用）；
+ * 本函数只决定**哪些参数该传**——章节名是 bz 侧兜底（「第 N 章」）时不传，那不是真章节，
+ * 传过去只会让降级搜索更窄。
  */
 export function buildReaderJumpUrl(book: any, note: EpubBookNote): string {
   const bookId = String(epubBookIdOf(book) || book?.id || '').trim();
   if (!bookId) return '';
-  const q: string[] = [`book=${encodeURIComponent(bookId)}`];
-  if (note.cfiRange) q.push(`cfi=${encodeURIComponent(note.cfiRange)}`);
-  const text = String(note.text || '').replace(/\s+/g, ' ').trim().slice(0, READER_TEXT_SNIPPET);
-  if (text) q.push(`t=${encodeURIComponent(text)}`);
   const chapter = String(note.chapterTitle || '').trim();
-  if (chapter && !/^第 \d+ 章$/.test(chapter) && chapter !== '未命名章节') q.push(`c=${encodeURIComponent(chapter)}`);
-  return `obsidian://bz-reader?${q.join('&')}`;
+  const realChapter = chapter && !/^第 \d+ 章$/.test(chapter) && chapter !== '未命名章节' ? chapter : '';
+  return readerJumpUrl(bookId, { cfi: note.cfiRange, text: note.text, chapter: realChapter });
 }
 
 /** 打开 `obsidian://` 协议链接：走 core `openExternalUrl` 单源（app.openUrl → electron →
@@ -118,9 +113,7 @@ export function openEpubBook(
 ): boolean {
   const bookId = String(item?.epubBookId || '').trim();
   if (!bookId) return false;
-  const q = [`book=${encodeURIComponent(bookId)}`];
-  if (item.epubCfi) q.push(`cfi=${encodeURIComponent(item.epubCfi)}`);
-  openProtocolUrl(app, `obsidian://bz-reader?${q.join('&')}`);
+  openReaderJump(app, bookId, { cfi: item.epubCfi });
   return true;
 }
 

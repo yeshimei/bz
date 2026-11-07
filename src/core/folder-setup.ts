@@ -18,6 +18,7 @@
 import { notice } from './notice';
 import { requestSettingsPanel, tryGetSettings } from './settings-provider';
 import { obsidianDailyNotesFolder } from './daily-notes';
+import { DEFAULT_CARDBOX_DIR } from './knowledge-boxes';
 import { cleanDir, resolveAssetDir, domainAssetsDir, type AssetDir } from './attachment-dir';
 // 从组件文件的深路径取，别走 './ui' 的桶文件：桶会把 settings-schema / path-picker 一并
 // 拖进来，而那些壳的假 obsidian 层没有 Setting / MarkdownRenderer，行为包直接构建失败。
@@ -37,6 +38,9 @@ interface FolderField {
   image?: boolean;
   /** 图片类的主目录键（缺省落 `<该键当前值>/assets`；剪藏=剪藏文件夹、知识盒=卡片文件夹、影院/游戏库=本域目录） */
   imageBaseKey?: string;
+  /** 主目录键空着时的缺省名（知识盒的卡片目录 2026-11-07 起不在设置面板上，空值必须回落到
+   *  「卡片盒」，否则图版的默认落点会退到 Obsidian 附件目录 —— 与 ADR-0293 的描述不符） */
+  imageBaseDefault?: string;
 }
 
 interface FolderPlan {
@@ -120,7 +124,7 @@ export const FOLDER_PLANS: Record<FolderDomainId, FolderPlan> = {
     // 目录本身照旧按缺省名（卡片盒 / 主题盒）工作，老库里已填的值继续生效。
     fields: [
       { key: 'knowledgeDirectory', label: '文献文件夹', reco: '文献盒' },
-      { key: 'knowledgeImageFolder', label: '图片文件夹', reco: '', image: true, imageBaseKey: 'knowledgeCardboxDirectory' },
+      { key: 'knowledgeImageFolder', label: '图片文件夹', reco: '', image: true, imageBaseKey: 'knowledgeCardboxDirectory', imageBaseDefault: DEFAULT_CARDBOX_DIR },
     ],
   },
 };
@@ -157,7 +161,7 @@ export function folderState(domain: FolderDomainId): FolderState {
   const fields: FolderFieldState[] = plan.fields.map((field) => {
     if (field.image) {
       // 图片类**永不 gate**：主目录没配时它只能是空（不落库根），但挡人进域的是主目录，不是它
-      const base = field.imageBaseKey ? settingValue(field.imageBaseKey) : '';
+      const base = field.imageBaseKey ? settingValue(field.imageBaseKey) || field.imageBaseDefault || '' : '';
       const r = resolveAssetDir(settingValue(field.key), domainAssetsDir(base));
       return { field, dir: r.dir, source: r.source, missing: false };
     }

@@ -19,6 +19,7 @@ import { localNow } from '../core/ui/str';
 import { withTimeout } from '../core/http';
 import { getApp } from '../core/app';
 import { resolveAssetDir, domainAssetsDir, cleanDir } from '../core/attachment-dir';
+import { DEFAULT_CARDBOX_DIR, normalizeBoxDir } from '../core/knowledge-boxes';
 import { tryGetSettings } from '../core/settings-provider';
 
 /**
@@ -499,10 +500,15 @@ export async function generateImageDraft(imageUrls: string[], descs?: string[], 
 /**
  * 图版图片落地目录：设置优先 → **跟随 Obsidian「默认新附件位置」**（core/attachment-dir 单源）
  * → 回落 **卡片文件夹下的 assets/**（2026-10-31 用户拍板：图版配图跟卡片盒走，不再落文献盒，
- * 也不再自带 `文献盒` 字面量缺省）。三跳全空 = 空串，写盘侧据此拒绝，绝不落库根。
+ * 也不再自带 `文献盒` 字面量缺省）。
+ *
+ * 卡片目录缺省按三盒口径归一（2026-11-07，ADR-0293 补）：那一行已从设置面板收起，
+ * 空值必须回落到「卡片盒」，否则默认落点会退成 Obsidian 附件目录。归一之后本函数不会再
+ * 产出空串（「三跳全空就拒写、绝不落库根」那条安全口径仍适用于别的域）。
  */
 export function resolveImageDir(settings: { knowledgeImageFolder?: string; knowledgeCardboxDirectory?: string }): string {
-  return resolveAssetDir(settings?.knowledgeImageFolder, domainAssetsDir(settings?.knowledgeCardboxDirectory)).dir;
+  const cardbox = normalizeBoxDir(settings?.knowledgeCardboxDirectory, DEFAULT_CARDBOX_DIR);
+  return resolveAssetDir(settings?.knowledgeImageFolder, domainAssetsDir(cardbox)).dir;
 }
 
 /**

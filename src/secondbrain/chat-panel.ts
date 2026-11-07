@@ -20,12 +20,13 @@ import type { App, TFile } from 'obsidian';
 import { createOverlay } from '../core/dom';
 import { escManager } from '../core/esc-manager';
 import { openFlowDialog } from '../core/flow-dialog';
+import { openReaderJump } from '../core/reader-link';
 import { mountIcons } from '../core/ui';
 import { buildConfig } from './config';
 import { renderMarkdown } from './ui-tools';
 import { AI } from './ai';
 import { appendChatHistory, clearChatHistory, loadChatHistory, type ChatHistoryEntry } from './store-file';
-import { chatShellHtml, chatUserMsgHtml, chatAiMsgHtml, chatThinkingHtml, chatCitesHtml, sbSourceColor, computeStats } from './render';
+import { chatShellHtml, chatUserMsgHtml, chatAiMsgHtml, chatThinkingHtml, chatCitesHtml, sbSourceColor, sbBookColor, computeStats } from './render';
 import {
   motionChatIn,
   motionChatOut,
@@ -116,14 +117,12 @@ export class ChatPanel {
       const cite = (e.target as HTMLElement).closest('.bz-sb-chat-cite') as HTMLElement | null;
       if (!cite) return;
       const path = cite.dataset.path;
-      /* 书籍命中没有库内路径：走阅读器自己的协议回到那本书 */
+      /* 书籍命中没有库内路径：走阅读器自己的协议回到那本书。
+         打开走 core 单源（含移动端兜底与失败提示）——裸 window.open 对自定义协议
+         在移动端不可靠且失败静默，用户只会觉得「点了没反应」。 */
       const bookId = cite.dataset.book;
       if (bookId) {
-        try {
-          window.open(`obsidian://bz-reader?book=${encodeURIComponent(bookId)}`);
-        } catch {
-          this.appendAiNote('没能打开这本书');
-        }
+        openReaderJump(this.app, bookId);
         return;
       }
       const f = path ? this.app.vault.getAbstractFileByPath(path) : null;
@@ -203,14 +202,23 @@ export class ChatPanel {
     return div;
   }
 
-  /** 引用卡行（来源色点按来源分布序取色板） */
-  private citeRows(hits: SearchHit[]): Array<{ path: string; pct: number; color: string }> {
+  /**
+   * 引用卡行（来源色点按来源分布序取色板）。
+   *
+   * 笔记与书分席：笔记取前 5 条、书取前 3 条。合并后直接 slice 会让书的命中永远被笔记挤掉
+   * （检索结果里笔记排前面，前 5 席全是笔记）——书是「补充依据」，该有自己的位置。
+   */
+  private citeRows(hits: SearchHit[]): Array<{ path: string; pct: number; color: string; bookId?: string; label?: string }> {
     const order = new Map(computeStats(this.store.meta).bySource.map((s, i) => [s.name, i]));
-    return hits.slice(0, 5).map((h) => ({
+    const notes = hits.filter((h) => !h.bookId).slice(0, 5);
+    const books = hits.filter((h) => !!h.bookId).slice(0, 3);
+    return [...notes, ...books].map((h) => ({
       path: h.path,
       pct: Math.round(h.score * 100),
-      color: sbSourceColor(h.path.split('/')[0] || '（根目录）', order),
+      // 书按书号稳定取色（一本书一个色）；笔记按一级目录查来源位次
+      color: h.bookId ? sbBookColor(h.bookId) : sbSourceColor(h.path.split('/')[0] || '（根目录）', order),
       bookId: h.bookId,
+      label: h.label,
     }));
   }
 
@@ -281,9 +289,10 @@ export class ChatPanel {
     try {
       const noteHits: SearchHit[] = await this.store.search(userMsg, CONFIG.CHAT_TOP_K);
       /* 共享打开时，书里检索到的块作为补充依据并进同一份上下文；
-         关着、没装阅读器、书那边出错，都只是少这一层（笔记照常回答）。 */
+         关着、没装阅读器、书那边出错或超时，都只是少这一层（笔记照常回答）。
+         signal 与超时都传下去：那是外部插件的实现，卡住不能把整轮回答一起挂死。 */
       const bookHits: SearchHit[] = (
-        await searchSharedBooks(this.app, userMsg, 3)
+        await searchSharedBooks(this.app, userMsg, 3, { signal: controller.signal })
       ).map(bookHitToSearchHit);
       const results: SearchHit[] = [...noteHits, ...bookHits];
       if (seq !== this.seq) return; // 已清空/销毁

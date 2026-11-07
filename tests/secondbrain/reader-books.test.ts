@@ -100,6 +100,36 @@ describe('检索只在共享打开时给', () => {
     });
     expect(await searchSharedBooks(appWith(boom), '注意力')).toEqual([]);
   });
+
+  /* 外部插件的实现不可控：卡住的检索不能把整轮问答一起挂死（2026-11-07 发版 review #2） */
+  it('门面永不返回 → 到点收敛成空数组', async () => {
+    const stuck = api({ search: () => new Promise(() => {}) });
+    const t0 = Date.now();
+    expect(await searchSharedBooks(appWith(stuck), '注意力', 3, { timeoutMs: 30 })).toEqual([]);
+    expect(Date.now() - t0).toBeLessThan(1000);
+  });
+
+  it('调用方取消 → 立刻收敛成空数组', async () => {
+    const stuck = api({ search: () => new Promise(() => {}) });
+    const ac = new AbortController();
+    const p = searchSharedBooks(appWith(stuck), '注意力', 3, { signal: ac.signal });
+    ac.abort();
+    expect(await p).toEqual([]);
+  });
+
+  it('已取消的调用方 → 一个请求都不发', async () => {
+    let called = 0;
+    const spy = api({
+      search: async () => {
+        called += 1;
+        return [];
+      },
+    });
+    const ac = new AbortController();
+    ac.abort();
+    expect(await searchSharedBooks(appWith(spy), '注意力', 3, { signal: ac.signal })).toEqual([]);
+    expect(called).toBe(0);
+  });
 });
 
 describe('书的结果 → 检索结果', () => {
@@ -119,5 +149,12 @@ describe('书的结果 → 检索结果', () => {
     const hit = bookHitToSearchHit({ bookId: 'b1', title: '心流', chapter: '', chunk: 'x', score: Number.NaN });
     expect(hit.path).toBe('《心流》');
     expect(hit.score).toBe(0);
+  });
+
+  /* 书名里可以有斜杠：展示名走 label，别让下游按路径取 basename 截成半截（2026-11-07 review #4） */
+  it('书名带斜杠时展示名不被路径处理截断', () => {
+    const hit = bookHitToSearchHit({ bookId: 'b1', title: '人类简史/漫画版', chapter: '第一章', chunk: 'x', score: 0.5 });
+    expect(hit.label).toBe('《人类简史/漫画版》 · 第一章');
+    expect(hit.path).toBe(hit.label);
   });
 });

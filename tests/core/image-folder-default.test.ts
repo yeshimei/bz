@@ -10,6 +10,9 @@
  *
  * 三跳全空（没设图片文件夹、Obsidian 也没固定附件目录、主目录还没配）= 空串：写盘侧拒绝，
  * 绝不落库根。图片字段也**永不参与空态闸门**，挡人进域的是主目录。
+ * 例外是知识盒（2026-11-07，ADR-0293）：卡片目录已从设置面板收起，空值按缺省盒名
+ * 「卡片盒」归一，所以它的第三跳是 `卡片盒/assets` 而不是空串——否则图版默认落点会退到
+ * Obsidian 的附件目录，与 ADR 描述不符。
  */
 import { beforeEach, describe, expect, it } from 'vitest';
 import { readFileSync, readdirSync, statSync } from 'node:fs';
@@ -129,11 +132,12 @@ describe('图片类目录的生效值 = 显式 → Obsidian → <主目录>/asse
     }
   });
 
-  it('三跳全空 → 空串（不发明目录，也不落库根）', () => {
+  it('三跳全空 → 空串（知识盒例外：卡片盒缺省）；都不落库根', () => {
     setSettingsProvider(() => ({}) as never);
     mockVaultConfig(null);
     for (const c of IMAGE_ROWS) {
-      expect(rowOf(c.schema(), c.key).fallbackValue!(), c.key).toBe('');
+      const expected = c.key === 'knowledgeImageFolder' ? '卡片盒/assets' : '';
+      expect(rowOf(c.schema(), c.key).fallbackValue!(), c.key).toBe(expected);
     }
   });
 
