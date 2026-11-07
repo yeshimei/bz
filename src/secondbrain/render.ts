@@ -447,14 +447,18 @@ export function chatThinkingHtml(topK: number): string {
 }
 
 /** 引用卡列表（会话内展示，不落盘） */
-export function chatCitesHtml(hits: Array<{ path: string; pct: number; color: string }>): string {
+export function chatCitesHtml(
+  hits: Array<{ path: string; pct: number; color: string; bookId?: string }>,
+): string {
   if (!hits.length) return '';
   return (
     `<div class="bz-sb-chat-cites">` +
     hits
       .map(
         (h) =>
-          `<button class="bz-sb-chat-cite" data-path="${escapeHtml(h.path)}">` +
+          `<button class="bz-sb-chat-cite" data-path="${escapeHtml(h.path)}"${
+            h.bookId ? ` data-book="${escapeHtml(h.bookId)}"` : ''
+          }>` +
           `<span class="bz-sb-chat-cite-score">${h.pct}%</span>` +
           `<span class="bz-sb-dot" style="background:${h.color}"></span>` +
           `<span class="bz-sb-chat-cite-name">${escapeHtml(stripMdExt(h.path.replace(/^.*[\\/]/, '')))}</span>` +

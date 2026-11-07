@@ -32,6 +32,7 @@ import type { SettingsSchema } from '../core/settings-schema';
 import { buildConfig, IS_MOBILE } from './config';
 import type { VectorStore } from './vector-store';
 import { parsePathList, formatPathList } from './whitelist';
+import { sharedBookStats } from './reader-books';
 import { loadStore } from './store-file';
 import { openWeeklyDigest, renderPanelWeeklyCard } from './weekly-ui';
 import {
@@ -614,6 +615,15 @@ export class SecondBrainPanel {
     // 头行：计数 + 健康 pill
     const cnt = popup.querySelector('#bz-sb-cnt');
     if (cnt) cnt.textContent = `${fmtCompact(stats.noteCount)} 篇 · ${fmtCompact(stats.chunkCount)} 段已入脑`;
+    /* 共享打开时才补书籍这一段：开关关着就完全不提，像没有这本书一样。
+       异步补写而不是等它——书的画像可能几十份，不该拖住笔记那边的秒开。 */
+    if (cnt) {
+      const base = cnt.textContent ?? '';
+      void sharedBookStats(this.app).then((bs) => {
+        if (!bs || !cnt.isConnected) return;
+        cnt.textContent = `${base} · ${fmtCompact(bs.books)} 本书`;
+      });
+    }
     const pill = popup.querySelector('#bz-sb-pill-txt');
     if (pill) pill.textContent = healthy ? '索引健康' : `索引偏差 ${Math.abs(vecRows - stats.chunkCount)} 行`;
     popup.querySelector('.bz-sb-pill-dot')?.classList.toggle('bz-sb-pill-dot--warn', !healthy);
@@ -666,6 +676,16 @@ export class SecondBrainPanel {
         { text: healthy ? '索引一致' : `向量 ${Math.round(vecRows)} 行 / 块 ${stats.chunkCount} 个`, warn: !healthy },
         { text: vecBytes ? `占用 ${fmtBytes(metaBytes + vecBytes)}` : '暂无向量文件' },
       ]);
+      /* 书籍统计单独一行，只挂在共享打开时（与头行同一个口径） */
+      void sharedBookStats(this.app).then((bs) => {
+        if (!bs || !log.isConnected) return;
+        log.insertAdjacentHTML(
+          'beforeend',
+          panelLogHtml([
+            { text: `书籍 ${bs.books} 本 / ${fmtCompact(bs.blocks)} 块${bs.lastAt ? ` · 最近 ${formatRelativeTime(bs.lastAt)}` : ''}` },
+          ]),
+        );
+      });
     }
 
     mountIcons(popup);

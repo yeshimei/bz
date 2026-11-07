@@ -73,6 +73,13 @@ export interface SecondBrainMeta {
 export interface SearchHit {
   path: string;
   chunk: string;
+  /**
+   * 书号（仅共享检索里的书籍命中携带）。
+   *
+   * 书没有库内路径，`path` 只是给人看的「《书名》· 章」；点开要用这个
+   * 走 `obsidian://bz-reader?book=…` 协议，否则会被告知「文件不存在」。
+   */
+  bookId?: string;
   /** 相关度分（余弦 [0,1]）——**阈值判定的唯一尺**（ADR-0185），显示亦默认用它 */
   score: number;
   /** 重排分 P(yes)（issue 429）：仅头部经重排的条目携带，用于显示与名次同尺的百分比。

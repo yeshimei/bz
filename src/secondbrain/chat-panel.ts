@@ -36,6 +36,7 @@ import {
   motionTeardown,
 } from './motion';
 import type { SearchHit, VectorStore } from './vector-store';
+import { bookHitToSearchHit, searchSharedBooks } from './reader-books';
 
 /** 欢迎语（首次进入 / 清空后共用一份文案） */
 function welcomeText(topK: number): string {
@@ -115,6 +116,16 @@ export class ChatPanel {
       const cite = (e.target as HTMLElement).closest('.bz-sb-chat-cite') as HTMLElement | null;
       if (!cite) return;
       const path = cite.dataset.path;
+      /* 书籍命中没有库内路径：走阅读器自己的协议回到那本书 */
+      const bookId = cite.dataset.book;
+      if (bookId) {
+        try {
+          window.open(`obsidian://bz-reader?book=${encodeURIComponent(bookId)}`);
+        } catch {
+          this.appendAiNote('没能打开这本书');
+        }
+        return;
+      }
       const f = path ? this.app.vault.getAbstractFileByPath(path) : null;
       if (f) void this.app.workspace.getLeaf(false).openFile(f as TFile);
       else if (path) this.appendAiNote('文件不存在或已被移动');
@@ -199,6 +210,7 @@ export class ChatPanel {
       path: h.path,
       pct: Math.round(h.score * 100),
       color: sbSourceColor(h.path.split('/')[0] || '（根目录）', order),
+      bookId: h.bookId,
     }));
   }
 
@@ -267,7 +279,13 @@ export class ChatPanel {
     this.messagesDiv.scrollTop = this.messagesDiv.scrollHeight;
     let acc = '';
     try {
-      const results: SearchHit[] = await this.store.search(userMsg, CONFIG.CHAT_TOP_K);
+      const noteHits: SearchHit[] = await this.store.search(userMsg, CONFIG.CHAT_TOP_K);
+      /* 共享打开时，书里检索到的块作为补充依据并进同一份上下文；
+         关着、没装阅读器、书那边出错，都只是少这一层（笔记照常回答）。 */
+      const bookHits: SearchHit[] = (
+        await searchSharedBooks(this.app, userMsg, 3)
+      ).map(bookHitToSearchHit);
+      const results: SearchHit[] = [...noteHits, ...bookHits];
       if (seq !== this.seq) return; // 已清空/销毁
       const context =
         results.length > 0
