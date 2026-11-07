@@ -16,6 +16,7 @@ bz-reader（原 fork-weave）要做三件事：把划词存进知识盒、在侧
 4. 实现走 `src/core/reader-ai.ts`（叶子：只 `import type`，运行时零依赖，范式同 `secondbrain/readonly.ts`）+ `src/secondbrain/reader-ai-bridge.ts`（接线）：`ensureSecondBrain` 注册、`unloadSecondBrain` 置 null。`main.ts` 挂的是**常驻转发对象**——onload 时域还没初始化，转发让调用方永远拿到稳定的面：探测能力看函数在不在，探测就绪看 `isIndexReady()`。
 5. 批量嵌入按 `EMBED_BATCH_SIZE` 切段，批失败逐条回退（同 vector-store 口径）：一条畸形不该让整批白跑，也不能把几百块一次塞给本地 Ollama。
 6. **来源链接的协议兼容**：`TermSource` 的 note 态 `path` 允许是协议串（阅读器传 `obsidian://bz-reader?book=…&cfi=…`）。三处口径跟着改：点开走 `openExternalUrl` 而不是查 `TFile`；徽标显示「原 文」而不是「内 部」；落盘写成纯值 + `sourceTitle`，不写成 `[[obsidian://…|书名]]`（那是一枚永远点不开的坏链接）。
+7. **知识盒门面加一个只读探针 `isFolderReady()`**（ADR-0215 的既有对象上追加，纯增量）：调用方在**调用前**就知道「文献文件夹还没配」，能提前说清差哪一步——否则 bz 会把人送到设置页，阅读器那边只能看着一个跳走的界面猜。
 
 ## 后果
 

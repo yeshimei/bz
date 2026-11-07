@@ -16,6 +16,7 @@ import { closeLightbox } from './core/ui/lightbox';
 import { closeAllModals } from './core/ui/modal';
 import { closeAllOverlays } from './core/dom';
 import { setApp, getApp } from './core/app';
+import { needsFolderKey } from './core/folder-setup';
 import { getReaderAi, type ReaderAiApi } from './core/reader-ai';
 import { setPluginRelDir, vaultBasePathOf } from './core/plugin-path';
 import { compareVersions } from './core/version';
@@ -330,7 +331,13 @@ export default class BzPlugin extends Plugin {
    *  不发明新入口。同步函数引用（非 getter / 非 Promise，外部 typeof 探测
    *  `plugin.knowledge?.openTermNote === 'function'` 语义成立）；懒初始化仍在函数内部
    *  ensureKnowledge（与命令入口同款），挂载本身零初始化成本。 */
-  knowledge: { openTermNote: typeof openTermNote; openPassageNote: typeof openPassageNote } | null = null;
+  knowledge: {
+    openTermNote: typeof openTermNote;
+    openPassageNote: typeof openPassageNote;
+    /** 文献文件夹配好了没（ADR-0294）：门面调用方据此在**调用前**说清「还差一步」，
+     *  而不是等 bz 自己把设置页弹出来、用户对着跳走的界面猜发生了什么 */
+    isFolderReady: () => boolean;
+  } | null = null;
   /** 阅读器 AI 门面（ADR-0294，bz-reader 同样经 app.plugins.getPlugin('bz') 调用）：
    *  笔记库检索 + 嵌入。**常驻转发对象**而不是一次性引用——第二大脑是布局就绪后懒初始化，
    *  onload 那一刻还没有实现可挂；写成转发后调用方永远拿到一个稳定的面：
@@ -446,7 +453,11 @@ export default class BzPlugin extends Plugin {
     // 知识盒对外最小门面（ADR-0215）：外部插件（fork-weave 阅读器）经 getPlugin('bz') 取实例后
     // 调名词/段落录入；不挂 window 全局、不新增命令与设置。同步赋值既有导出的函数引用即可
     // （knowledge 域懒初始化在两函数内部 ensureKnowledge，与命令入口完全同款）。
-    this.knowledge = { openTermNote, openPassageNote };
+    this.knowledge = {
+      openTermNote,
+      openPassageNote,
+      isFolderReady: () => !needsFolderKey('knowledge', 'knowledgeDirectory'),
+    };
 
     // ESC 全局管理器重挂入口（N1）：escManager 是模块 IIFE 单例，禁用→再启用不重新求值，
     // destroy 只软关不清层——onload 每次恢复 ESC 处理（首次调用复位缺省旗标，幂等）
