@@ -502,7 +502,9 @@ export class SecondBrainPanel {
         status.textContent = '三个盒子与额外检索目录内都没有可索引的笔记：请检查 ⚙️ 设置中的「目录与分类」';
         this.revealInitBtn('重试初始化');
       } else {
-        status.textContent = '未发现可索引的笔记内容';
+        // 有点文件、却没有一段可嵌文字（空文件 / 只有 frontmatter / 没有文字的空白板）：
+        // 不是服务或配置问题，按用户口径停在引导态，文案说准是「没有正文」而非「未发现内容」
+        status.textContent = '没有可索引的正文：索引范围内的笔记都是空文件、只有 frontmatter，或是没有文字的空白板';
         this.revealInitBtn('重试初始化');
       }
     } catch (e: any) {

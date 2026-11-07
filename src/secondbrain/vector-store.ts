@@ -447,8 +447,11 @@ export class VectorStore {
     }
 
     // ticket 107 自愈：meta 有条目但向量缺失/为空（.vec 丢失或写入中断）→ 视为全量重建，
-    // 否则 mtime 全匹配会永远「已最新」，损坏态无法自愈、主面板引导也无法修复
-    const indexIncomplete = Object.keys(this.meta.notes).length > 0 && (this.vectors.length === 0 || !this.dim);
+    // 否则 mtime 全匹配会永远「已最新」，损坏态无法自愈、主面板引导也无法修复。
+    // 2026-11-08：判据换成「有需要向量化的段落」——0 段条目（空文件 / 纯 frontmatter / 空白板）
+    // 是合法结果、天然占 0 行，若仍按「meta 非空」判损坏，全空库会每轮反复整库重跑。
+    const expectedRows = Object.values(this.meta.notes).reduce((n, note) => n + note.chunks.length, 0);
+    const indexIncomplete = expectedRows > 0 && (this.vectors.length === 0 || !this.dim);
 
     let vectors = this.vectors;
     let dim = this.meta._dim || this.dim || 0;
@@ -478,6 +481,11 @@ export class VectorStore {
     // 读取 + 分块（issue 424/ADR-0184：不按段落长度过滤——「段落最小长度」设置项已删）
     const fileChunksMap = new Map<string, (ChunkTask | null)[]>();
     const globalTasks: ChunkTask[] = [];
+    // 读到但切不出块的笔记（空文件 / 只有 frontmatter / 没有文字的空白板）：不算读取失败，
+    // 按「0 段」登记 mtime——① 不登记则每轮 refresh 都重读（hasPendingChanges 恒真、面板每次
+    // 打开都闪进度条）；② 放进下面的登记循环时 vecs 会是空数组，取维度读 vecs[0].length 直接
+    // 抛 TypeError 打断整轮初始化（2026-11-08 真机：Cannot read properties of undefined）。
+    const emptyNotes = new Map<string, number>();
     let readFailed = 0;
     for (const file of toProcess) {
       try {
@@ -486,6 +494,10 @@ export class VectorStore {
         const content = file.extension === 'canvas' ? canvasToText(raw) : raw;
         // ticket 110：frontmatter 剥离后切块、标题并入首块（空正文兜底截断收口在 embedChunks 内）
         const chunks = embedChunks(content, noteTitleFromPath(file.path));
+        if (chunks.length === 0) {
+          emptyNotes.set(file.path, (file.stat as any).mtime);
+          continue;
+        }
         fileChunksMap.set(file.path, chunks.map(() => null));
         chunks.forEach((text, idx) => globalTasks.push({ filePath: file.path, chunkIdx: idx, text }));
       } catch (err) {
@@ -495,10 +507,12 @@ export class VectorStore {
       }
     }
     if (globalTasks.length === 0) {
-      // 本轮摘掉了 meta 条目（文件消失 deleted / 读取失败 readFailed）却没走到 mergeWrite：
-      // 行数已短于 .vec，必须同步落盘，否则本会话后续检索按 meta 键序漫游会把被摘条目之后的
-      // 整段行认到别的笔记上（与上方「无变更但有删除」分支同口径）
-      if (deleted + readFailed > 0) await this.compactAndSave(srcOffsets);
+      // 0 段笔记先登记（全库都没正文时也要记 mtime，下次不再重读）
+      for (const [path, mtime] of emptyNotes) this.meta.notes[path] = { mtime, chunks: [] };
+      // 本轮摘掉了 meta 条目（文件消失 deleted / 读取失败 readFailed）或把笔记清空了（emptyNotes），
+      // 却没走到 mergeWrite：行数已与磁盘 .vec 不一致，必须同步重排落盘，否则本会话后续检索按
+      // meta 键序漫游会把被摘条目之后的整段行认到别的笔记上（与上方「无变更但有删除」分支同口径）
+      if (deleted + readFailed > 0 || emptyNotes.size > 0) await this.compactAndSave(srcOffsets);
       this.updateProgress('✅ 向量化完成（无新内容）');
       return;
     }
@@ -540,7 +554,8 @@ export class VectorStore {
           let newly = 0;
           for (const file of toProcess) {
             const slots = fileChunksMap.get(file.path);
-            if (!slots || slots.some((s) => !s || !s.embedding)) continue; // 槽位有任务且 embedding 已赋值
+            // 空槽位 = 读取失败 / 0 段笔记：不在这里登记（0 段统一在最终登记前处理）
+            if (!slots || slots.length === 0 || slots.some((s) => !s || !s.embedding)) continue; // 槽位有任务且 embedding 已赋值
             if (ckptDoneFiles.has(file.path)) continue;
             ckptDoneFiles.add(file.path);
             newly++;
@@ -599,8 +614,18 @@ export class VectorStore {
     // → 下轮按 mtime 差异整篇重试；仅整篇全失败才删除旧条目（QA 同语义）。
     const newChunksPerFile = new Map<string, Float32Array[]>();
     for (const file of toProcess) {
+      // 0 段笔记（空文件 / 纯 frontmatter / 没有文字的空白板）：只记 mtime 与空 chunks，
+      // 不占任何向量行——行序不变式（键序 × 各篇 chunks 数）天然成立。在这里按 toProcess
+      // 顺序登记，与有内容笔记的入 meta 顺序保持一致（键序＝行序的旧口径不变）
+      const emptyMtime = emptyNotes.get(file.path);
+      if (emptyMtime !== undefined) {
+        this.meta.notes[file.path] = { mtime: emptyMtime, chunks: [] };
+        continue;
+      }
       const slots = fileChunksMap.get(file.path);
-      if (!slots) continue; // 读取失败的文件：读取循环已删条目，无槽位（与 maybeCheckpoint 同守卫）
+      // 读取失败的文件（读取循环已删条目）没有槽位。slots.length 判空是双保险：
+      // 万一将来有路径把空数组塞进 map，vecs[0] 也不会再炸
+      if (!slots || slots.length === 0) continue;
       if (slots.some((s) => !s || !s.embedding)) {
         if (!slots.some((s) => s?.embedding)) delete this.meta.notes[file.path]; // 整篇全失败
         continue; // 部分失败：保持旧条目/无条目 → 下轮自动整篇重试

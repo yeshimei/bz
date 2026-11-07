@@ -193,7 +193,7 @@ describe('VectorStore 补测（refresh 边界）', () => {
     expect(binary.size).toBe(1); // 正常文件已落盘
   });
 
-  it('全部待处理文件正文为空 → 提示「无新内容」，不登记条目', async () => {
+  it('全部待处理文件正文为空 → 登记 0 段条目、不写 .vec，且不再判待处理', async () => {
     const vault = new MockVault();
     vault.files.set('我的/E.md', '');
     vault.files.set('我的/F.md', '  \n\n  ');
@@ -207,8 +207,70 @@ describe('VectorStore 补测（refresh 边界）', () => {
     await vs.refresh(progress);
 
     expect(progress).toHaveBeenCalledWith('✅ 向量化完成（无新内容）');
-    expect(vs.meta.notes).toEqual({});
-    expect(binary.size).toBe(0); // 提前返回不写盘
+    // 2026-11-08：0 段笔记按「读到了但没有可嵌正文」登记 mtime（此前完全不登记，
+    // 导致每轮刷新都重读它们、面板每次打开都判有增量）
+    const meta = readMeta(vault);
+    expect(meta.notes['我的/E.md']).toEqual({ mtime: 1, chunks: [] });
+    expect(meta.notes['我的/F.md']).toEqual({ mtime: 1, chunks: [] });
+    expect(binary.size).toBe(0); // 没有需要向量的段落，不写 .vec
+    expect(vs.isIndexReady()).toBe(false); // 全 0 段库仍算未就绪（面板停在引导态）
+    expect(vs.hasPendingChanges()).toBe(false); // 记过 mtime，下一轮不再判待处理
+  });
+
+  it('正常笔记 + 空文件 + 纯 frontmatter + 空白板混合：初始化不抛错，0 段按 0 行登记（2026-11-08 回归）', async () => {
+    const vault = new MockVault();
+    vault.files.set('我的/正常.md', '正常段落一。\n\n正常段落二。');
+    vault.files.set('我的/空.md', '');
+    vault.files.set('我的/只有头.md', '---\ntitle: 模板\n---\n');
+    vault.files.set('我的/空白板.canvas', JSON.stringify({ nodes: [], edges: [] }));
+    const { adapter, binary } = makeAdapter(vault);
+    const app: any = makeApp(vault, adapter);
+    // makeApp 只造了 md 枚举口；canvas 经 getFiles 进场（ADR-0141 §5）
+    app.vault.getFiles = () =>
+      [...vault.files.keys()]
+        .filter((p) => p.endsWith('.canvas'))
+        .map((p) => ({ path: p, extension: 'canvas', stat: { mtime: 1 } }));
+    setApp(app);
+    const vs = new VectorStore(app);
+    await vs.load();
+
+    vi.mocked(getEmbeddingsBatch).mockImplementation(async (texts) => texts.map(() => [0.5, 0.5]));
+    // 修复前：空笔记在登记循环里 vecs 为空 → vecs[0].length 抛 TypeError，整轮初始化中断
+    await expect(vs.refresh()).resolves.toBeUndefined();
+
+    const meta = readMeta(vault);
+    expect(meta.notes['我的/正常.md'].chunks.length).toBeGreaterThan(0);
+    expect(meta.notes['我的/空.md'].chunks).toEqual([]);
+    expect(meta.notes['我的/只有头.md'].chunks).toEqual([]);
+    expect(meta.notes['我的/空白板.canvas'].chunks).toEqual([]);
+    expect(vs.dim).toBe(2);
+    // 0 段笔记不占向量行：行数只由正常笔记贡献
+    expect(parseRows(binary).length).toBe(meta.notes['我的/正常.md'].chunks.length * 2);
+    expect(vs.hasPendingChanges()).toBe(false); // 空笔记已记 mtime，下一轮不再判待处理
+    expect(vs.isIndexReady()).toBe(true); // 有正常笔记 + 向量 → 就绪
+  });
+
+  it('笔记清空后增量刷新：0 段登记、旧向量行让位，不抛错（2026-11-08 回归）', async () => {
+    const vault = new MockVault();
+    vault.files.set('我的/A.md', '第一段内容。\n\n第二段内容。');
+    const mtimes: Record<string, number> = { '我的/A.md': 1 };
+    const { adapter, binary } = makeAdapter(vault);
+    const app = makeApp(vault, adapter, mtimes);
+    setApp(app as any);
+    const vs = new VectorStore(app as any);
+    await vs.load();
+
+    vi.mocked(getEmbeddingsBatch).mockImplementation(async (texts) => texts.map(() => [0.5, 0.5]));
+    await vs.refresh();
+    expect(parseRows(binary).length).toBeGreaterThan(0);
+
+    // 清空正文并推进 mtime（模拟用户把笔记删空）
+    vault.files.set('我的/A.md', '');
+    mtimes['我的/A.md'] = 2;
+    await expect(vs.refresh()).resolves.toBeUndefined();
+
+    expect(readMeta(vault).notes['我的/A.md']).toEqual({ mtime: 2, chunks: [] });
+    expect(vs.vectors.length).toBe(0); // 唯一一篇变空 → 旧向量行必须让位，不能残留造成行序错位
   });
 
   it('正文短于 minChunk → 调用方兜底取整段为单块；不传 updateProgress 用默认 noop', async () => {
