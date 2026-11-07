@@ -56,6 +56,18 @@ export function releaseEntryCount(release: ChangelogRelease): number {
  */
 export const CHANGELOG_RELEASES: readonly ChangelogRelease[] = [
   {
+    version: '1.41.0',
+    date: '2026-11-07',
+    // 条目与 docs/note-v1.41.0.md 同稿（scripts/_gen-changelog.mjs 自动生成，勿手改）
+    added: [
+      { domain: 'bz reader', text: '阅读器可接上第二大脑的检索与嵌入与知识盒的存为名词和存为段落文献笔记。' },
+    ],
+    improved: [
+      { domain: '知识盒', text: '设置里只需配文献目录，卡片与主题目录按缺省盒名继续工作。' },
+      { domain: '知识盒', text: '图版图片固定跟卡片盒走，不再依赖那两个目录设置。' },
+    ],
+  },
+  {
     version: '1.40.0',
     date: '2026-11-06',
     // 条目与 docs/note-v1.40.0.md 同稿（scripts/_gen-changelog.mjs 自动生成，勿手改）

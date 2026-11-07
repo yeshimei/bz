@@ -35,7 +35,7 @@
       "name": "工具坞工具包",
       "file": "tools/dock-watch.tar.gz",
       "kind": "bundle",
-      "sha256": "959da7ac1acaec2837bf5e4204f4de5af0ca4baa2d035ead656455cc3743df27",
+      "sha256": "2d0c96fce5f360c764d874636c4cd13746e907fde739d988f7016459a54ffc19",
       "size": 49646
     },
     {
@@ -298,7 +298,7 @@
     "tool-obsidian-face"
   ],
   "release": {
-    "version": "1.40.0",
-    "tag": "v1.40.0"
+    "version": "1.41.0",
+    "tag": "v1.41.0"
   }
 }
