@@ -26,6 +26,7 @@ import { tryGetSettings } from '../core/settings-provider';
 import { IS_MOBILE } from './config';
 import { VectorStore } from './vector-store';
 import { setVectorSearchSource } from './readonly';
+import { registerReaderAi, unregisterReaderAi } from './reader-ai-bridge';
 import { SecondBrainPanel, confirmFullRebuild } from './panel';
 import { ReferencePanel } from './reference-panel';
 import { ChatPanel } from './chat-panel';
@@ -63,6 +64,10 @@ export function ensureSecondBrain(app: App): void {
     isIndexReady: () => !!store?.isIndexReady(),
     search: (query: string, topK?: number) => (store ? store.search(query, topK) : Promise.resolve([])),
   });
+  // ADR-0294：阅读器门面（笔记库检索 + 嵌入）随域初始化注册；unload 置 null。
+  // 与只读检索桥分开：嵌入不依赖索引就绪（用户没建第二大脑索引也能给整本书算向量），
+  // 检索才要索引——两条能力必须能分别探测。
+  registerReaderAi(s);
   // ticket 107：load 完成信号挂到 store 上，主面板打开时等待它——避免启动竞态下
   // 读到尚未装载的空库而误入引导态
   s.initialLoad = (async () => {
@@ -146,6 +151,7 @@ export function unloadSecondBrain(): void {
   unloadWeeklyDigest(); // issue 360：每周动态调度定时器 + 详情弹层 DOM/ESC 句柄一并清理
   store = null;
   setVectorSearchSource(null); // issue 318：卸载即撤销只读检索桥（未初始化/已卸载取到 null）
+  unregisterReaderAi(); // ADR-0294：阅读器门面同时撤销，禁用插件后外部探测立刻拿不到能力
   appRef = null;
   initialized = false;
 }

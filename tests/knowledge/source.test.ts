@@ -12,6 +12,8 @@ import {
   cleanSourceTitle,
   noteSourceName,
   serializeTermSource,
+  isProtocolSourcePath,
+  sourceBadge,
   isInternalSourceValue,
   upgradeSourceLine,
 } from '../../src/knowledge/source';
@@ -197,5 +199,45 @@ describe('upgradeSourceLine（外链 source → 内部双链；只动 source 一
     const out = upgradeSourceLine(crlf, '[[a.md|a]]')!;
     expect(out).toContain('\r\n');
     expect(out).toContain('source: "[[a.md|a]]"');
+  });
+});
+
+/**
+ * ADR-0294：书内定位来源（`obsidian://bz-reader?…`）的落盘与展示口径。
+ *
+ * 以前 note 态 path 一律写成 `[[path|name]]`——协议串写成双链在 Obsidian 里是
+ * 一枚永远点不开的坏链接，回读时还会被当成库内笔记去查 TFile。
+ */
+describe('协议链接来源（ADR-0294：bz-reader 的原文定位）', () => {
+  it('识别协议前缀；普通库内路径与相对路径不算', () => {
+    expect(isProtocolSourcePath('obsidian://bz-reader?book=b1&cfi=epubcfi(/6/4)')).toBe(true);
+    expect(isProtocolSourcePath('HTTPS://example.com/a')).toBe(true);
+    expect(isProtocolSourcePath('  笔记/心流.md  ')).toBe(false);
+    expect(isProtocolSourcePath('bz-reader/books/书.epub#weave-cfi=1')).toBe(false);
+    expect(isProtocolSourcePath('')).toBe(false);
+  });
+
+  it('徽标：外部 / 原文 / 内部 三种来源各有各的说法', () => {
+    expect(sourceBadge({ kind: 'external', url: 'https://x.com/a' })).toBe('外 部');
+    expect(sourceBadge({ kind: 'note', path: 'obsidian://bz-reader?book=b1' })).toBe('原 文');
+    expect(sourceBadge({ kind: 'note', path: '文献/某名词.md' })).toBe('内 部');
+  });
+
+  it('落盘不写双链：source 存整串协议、sourceTitle 存书名（空 title 时不写）', () => {
+    const url = 'obsidian://bz-reader?book=b1&cfi=epubcfi(/6/4!4/2/1:0)';
+    expect(serializeTermSource({ kind: 'note', path: url, name: '心流' })).toEqual({
+      source: url,
+      sourceTitle: '心流',
+    });
+    expect(serializeTermSource({ kind: 'note', path: url })).toEqual({
+      source: url,
+      sourceTitle: 'bz-reader',
+    });
+  });
+
+  it('库内笔记仍走双链（协议分支不许把老口径带偏）', () => {
+    expect(serializeTermSource({ kind: 'note', path: '文献/心流.md', name: '心流' })).toEqual({
+      source: '[[文献/心流.md|心流]]',
+    });
   });
 });

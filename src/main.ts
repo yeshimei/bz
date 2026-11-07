@@ -16,6 +16,7 @@ import { closeLightbox } from './core/ui/lightbox';
 import { closeAllModals } from './core/ui/modal';
 import { closeAllOverlays } from './core/dom';
 import { setApp, getApp } from './core/app';
+import { getReaderAi, type ReaderAiApi } from './core/reader-ai';
 import { setPluginRelDir, vaultBasePathOf } from './core/plugin-path';
 import { compareVersions } from './core/version';
 import { CHANGELOG_RELEASES, pickReleaseFor, releaseEntryCount } from './core/changelog-data';
@@ -330,6 +331,23 @@ export default class BzPlugin extends Plugin {
    *  `plugin.knowledge?.openTermNote === 'function'` 语义成立）；懒初始化仍在函数内部
    *  ensureKnowledge（与命令入口同款），挂载本身零初始化成本。 */
   knowledge: { openTermNote: typeof openTermNote; openPassageNote: typeof openPassageNote } | null = null;
+  /** 阅读器 AI 门面（ADR-0294，bz-reader 同样经 app.plugins.getPlugin('bz') 调用）：
+   *  笔记库检索 + 嵌入。**常驻转发对象**而不是一次性引用——第二大脑是布局就绪后懒初始化，
+   *  onload 那一刻还没有实现可挂；写成转发后调用方永远拿到一个稳定的面：
+   *  探测「这台 bz 有没有这个能力」看函数在不在，探测「现在能不能用」看 isIndexReady()。 */
+  readerAi: ReaderAiApi = {
+    isIndexReady: () => getReaderAi()?.isIndexReady() ?? false,
+    embeddingModel: () => getReaderAi()?.embeddingModel() ?? '',
+    searchNotes: (query: string, topK?: number) => getReaderAi()?.searchNotes(query, topK) ?? Promise.resolve([]),
+    embedDocuments: (texts: string[], signal?: AbortSignal) => {
+      const api = getReaderAi();
+      return api ? api.embedDocuments(texts, signal) : Promise.reject(new Error('第二大脑还没就绪，稍后再试'));
+    },
+    embedQuery: (text: string, signal?: AbortSignal) => {
+      const api = getReaderAi();
+      return api ? api.embedQuery(text, signal) : Promise.reject(new Error('第二大脑还没就绪，稍后再试'));
+    },
+  };
   /** 小橘域开关上次落到运行时的值（ADR-0254）：saveSettings 里比对，拨动即挂/卸，
    *  不靠面板 onChange 钩子——命令面板外部调用 saveSettings 的路径也一样生效 */
   private smartcatDomainOn = true;

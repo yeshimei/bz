@@ -47,7 +47,7 @@ import type { KnowledgeTask } from './types';
 import { BatchRunner, type BatchEvents } from './processor';
 import { openMountTree } from './mount-canvas';
 import { backfillNotes, findDuplicateTermNote, generateImageDraft, generateImageNote, generatePassageDraft, generatePassageNote, generateTermDraft, generateTermNote, parseDomainList, resolveImageDir, type DraftFields, type DraftHooks } from './note-gen';
-import { canonicalVideoUrl, cleanSourceTitle, isUrlLikeSourceText, normalizeSourceUrl, noteSourceName, serializeTermSource, type TermSource } from './source';
+import { canonicalVideoUrl, cleanSourceTitle, isProtocolSourcePath, isUrlLikeSourceText, normalizeSourceUrl, noteSourceName, serializeTermSource, sourceBadge, type TermSource } from './source';
 import { writeNoteFm, type FmEdit } from './note-edit';
 import { tackMediaToNote, mediaEmbedsOf } from './tack';
 import { relinkNoteByPath } from './relink';
@@ -3772,10 +3772,10 @@ export class UIManager {
       return;
     }
     const isNote = src.kind === 'note';
-    const label = isNote ? noteSourceName(src.path) : src.title || shortUrlText(src.url);
+    const label = isNote ? noteSourceName(src.path, src.name) : src.title || shortUrlText(src.url);
     chip.title = isNote ? src.path : src.url;
     chip.style.display = 'inline-flex';
-    chip.innerHTML = `<b>${isNote ? '内 部' : '外 部'}</b><span>${esc(label)}</span><button type="button" data-term-src-clear title="清除来源" aria-label="清除来源">✕</button>`;
+    chip.innerHTML = `<b>${sourceBadge(src)}</b><span>${esc(label)}</span><button type="button" data-term-src-clear title="清除来源" aria-label="清除来源">✕</button>`;
     if (input) input.style.display = 'none';
     motionSrcChipIn(chip); // 动效层：来源签拍进卡槽（标题异步抓回重渲时同款轻弹）
   }
@@ -3791,7 +3791,7 @@ export class UIManager {
     if (!src) { row.style.display = 'none'; val.textContent = ''; return; }
     row.style.display = '';
     val.textContent = src.kind === 'note'
-      ? noteSourceName(src.path)
+      ? noteSourceName(src.path, src.name)
       : src.title || src.url;
     val.title = src.kind === 'note' ? src.path : src.url;
   }
@@ -4566,6 +4566,14 @@ export class UIManager {
 
   private openNote(path: string): void {
     const app = getApp();
+    /* 协议链接（bz-reader 的书内定位等，ADR-0294）：不是库内文件，
+       按路径查 TFile 必然落空，直接交给宿主开协议。 */
+    if (isProtocolSourcePath(path)) {
+      openExternalUrl(app, path.trim());
+      this.hideMain();
+      this.hideVideo();
+      return;
+    }
     const file = app.vault.getAbstractFileByPath(path);
     if (file) {
       void app.workspace.getLeaf(false).openFile(file as any);

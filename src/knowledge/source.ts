@@ -10,12 +10,42 @@ export type TermSource =
   | { kind: 'external'; url: string; title?: string | null }
   | { kind: 'note'; path: string; name?: string };
 
-/** 笔记来源的展示名：显式 name 优先，缺省取去目录去 .md 的文件名 */
+/**
+ * 笔记来源的展示名：显式 name 优先，缺省取去目录去 .md 的文件名
+ */
 export function noteSourceName(path: string, name?: string | null): string {
   const explicit = String(name ?? '').trim();
   if (explicit) return explicit;
-  const base = String(path ?? '').replace(/\\/g, '/').split('/').pop() || '';
-  return stripMdExt(base) || String(path ?? '');
+  const raw = String(path ?? '');
+  /* 协议链接没有「文件名」可言：按 / 切最后一段会切出查询串里的残渣（`1:0)`），
+     取协议后的第一段当名字（`obsidian://bz-reader?…` → `bz-reader`）。 */
+  if (isProtocolSourcePath(raw)) {
+    const after = raw.trim().replace(/^[a-z][a-z0-9+.-]*:\/\//i, '');
+    return after.split(/[/?#]/)[0] || raw.trim();
+  }
+  const base = raw.replace(/\\/g, '/').split('/').pop() || '';
+  return stripMdExt(base) || raw;
+}
+
+/** 协议链接（`obsidian://…`、`http(s)://…`）：**不是**库内笔记，不能按路径查 TFile */
+const PROTOCOL_RE = /^[a-z][a-z0-9+.-]*:\/\//i;
+
+/**
+ * 来源 path 是不是一条协议链接。
+ *
+ * ADR-0215 把 note 态 path 定义为「不透明链接串」，ADR-0294 起 bz-reader 传的是
+ * `obsidian://bz-reader?book=…&cfi=…`——点它要**回到原文那一页**，不是打开一篇笔记。
+ * 以前所有 note 态来源都按库内路径 `getAbstractFileByPath` 找文件，协议串永远找不到，
+ * 用户看到「文献笔记不存在」。判据只看协议前缀，不解释子路径语义。
+ */
+export function isProtocolSourcePath(path: string): boolean {
+  return PROTOCOL_RE.test(String(path ?? '').trim());
+}
+
+/** 来源徽标：外部链接「外 部」/ 协议链接「原 文」/ 库内笔记「内 部」 */
+export function sourceBadge(src: TermSource): string {
+  if (src.kind === 'external') return '外 部';
+  return isProtocolSourcePath(src.path) ? '原 文' : '内 部';
 }
 
 /**
@@ -115,6 +145,12 @@ export function serializeTermSource(src: TermSource | null | undefined): { sourc
   const path = String(src.path ?? '').trim();
   if (!path) return null;
   const name = noteSourceName(path, src.name);
+  /* 协议链接（ADR-0294：bz-reader 的 `obsidian://bz-reader?…` 原文定位）**不写成双链**：
+     `[[obsidian://…|书名]]` 在 Obsidian 里是一枚永远点不开的坏链接，回读时还会被当成内部来源
+     去查 TFile。改落成纯值 + sourceTitle：与外部链接同形，点它走协议打开，回到原文。 */
+  if (isProtocolSourcePath(path)) {
+    return { source: path, sourceTitle: name };
+  }
   return { source: `[[${path}|${name}]]` };
 }
 
