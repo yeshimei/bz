@@ -411,6 +411,10 @@
 }
 .bz-sb-dist-row--dir {
   cursor: pointer;
+}
+/* 书籍行（2026-11-08）：书名比目录名长，名称列放宽；书不参与笔记的来源配色 */
+.bz-sb-dist-row--book {
+  grid-template-columns: 16px 96px minmax(0, 1fr) auto;
 }@media (hover: hover) {
 
 .bz-sb-dist-row--dir:hover {

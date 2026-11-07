@@ -4,6 +4,7 @@ import {
   bookHitToSearchHit,
   readerBooksApi,
   searchSharedBooks,
+  sharedBookList,
   sharedBookStats,
   type ReaderBookAiApi,
 } from '../../src/secondbrain/reader-books';
@@ -66,6 +67,42 @@ describe('统计只在共享打开时给', () => {
       },
     });
     expect(await sharedBookStats(appWith(boom))).toBe(null);
+  });
+});
+
+describe('书籍清单（可选出口，2026-11-08）', () => {
+  it('老版阅读器没有 books() → null（退回汇总行，其它照常）', async () => {
+    expect(await sharedBookList(appWith(api()))).toBe(null);
+  });
+
+  it('共享关着 → null（与统计同一个闸门）', async () => {
+    expect(await sharedBookList(appWith(api({ isShared: () => false })))).toBe(null);
+  });
+
+  it('清单原样给出；空书号 / 零块的坏行剔掉', async () => {
+    const withBooks = api({
+      books: async () => [
+        { bookId: 'b1', title: '心流', blocks: 20, chars: 100, updatedAt: 5, model: 'm', plan: 'vector' },
+        { bookId: '', title: '坏行', blocks: 3, chars: 1, updatedAt: 1, model: '', plan: 'vector' },
+        { bookId: 'b2', title: '零块', blocks: 0, chars: 0, updatedAt: 2, model: '', plan: 'compress' },
+      ],
+    });
+    const list = await sharedBookList(appWith(withBooks));
+    expect(list?.map((b) => b.bookId)).toEqual(['b1']);
+    expect(list?.[0]).toMatchObject({ title: '心流', blocks: 20, plan: 'vector' });
+  });
+
+  it('空清单 → null（没有书，不是「读取失败」）', async () => {
+    expect(await sharedBookList(appWith(api({ books: async () => [] })))).toBe(null);
+  });
+
+  it('抛错 → null，笔记那边照常', async () => {
+    const boom = api({
+      books: async () => {
+        throw new Error('x');
+      },
+    });
+    expect(await sharedBookList(appWith(boom))).toBe(null);
   });
 });
 

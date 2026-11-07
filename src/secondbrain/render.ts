@@ -44,6 +44,16 @@ export interface SourceTreeNode {
   notes: number;
   chunks: number;
   children: SourceTreeNode[];
+  /**
+   * 书籍节点（2026-11-08）：来源分布把阅读器的书并进来。
+   * `group` = 「书籍」汇总行（可展开），`book` = 单本书行（点开跳书）。
+   * 书籍不是目录：它的计数单位是「本 / 块」，不是「篇 / 段」。
+   */
+  book?: 'group' | 'book';
+  /** 单本书的书号（点开走阅读器协议） */
+  bookId?: string;
+  /** 悬停提示（书的向量模型与当前嵌入模型不一致时用） */
+  hint?: string;
 }
 
 // ==================== 统计纯函数（自 panel.ts 收编，口径不变） ====================
@@ -168,6 +178,8 @@ export function buildSourceTree(meta: SecondBrainMeta): SourceTreeNode[] {
 /** 来源四色（定稿原型）：按 bySource 排序位取色，超出调色板循环取中性色 */
 export const SB_PALETTE = ['#0f766e', '#6366f1', '#d97706', '#db2777', '#0e7490', '#7c3aed', '#b45309', '#be185d'];
 const SB_FALLBACK = '#a39b8c';
+/** 书籍固定色（不参与笔记的来源色轮转，避免抢色；书卷暖棕，与八色板都拉得开） */
+export const SB_BOOK_COLOR = '#a16207';
 
 export function sbSourceColor(name: string, order: Map<string, number>): string {
   const i = order.get(name);
@@ -283,35 +295,193 @@ export function panelTrendHtml(trend: number[]): string {
     .join('');
 }
 
-/** 来源分布树（递归；expanded 为会话内记忆的展开目录集） */
+/** 书籍节点输入：与 reader-books 的 ReaderBookItem 解耦，只取构造节点要用的字段 */
+export interface BookDistSource {
+  bookId: string;
+  title: string;
+  blocks: number;
+}
+
+/**
+ * 来源分布的书籍节点（2026-11-08）。
+ *
+ * 三种形态：
+ *   · 有清单 → 可展开的「书籍」+ 每本一行（只列最近更新的 limit 本，其余折成「等 N 本」）；
+ *   · 老版阅读器只有汇总 → 一行不可展开的「书籍」；
+ *   · 都没有 → 空数组（与「共享关着」同口径：面板完全不提书）。
+ *
+ * 计数单位是「本 / 块」，与笔记的「篇 / 段」区分开——书不是目录。
+ */
+export function bookDistNodes(
+  books: readonly BookDistSource[],
+  totals: { books: number; blocks: number } | null,
+  limit: number,
+  hint?: string
+): SourceTreeNode[] {
+  if (books.length) {
+    const shown = books.slice(0, Math.max(1, Math.floor(limit) || 1));
+    const children: SourceTreeNode[] = shown.map((b) => ({
+      name: `《${b.title || '未命名'}》`,
+      path: `__book__:${b.bookId}`,
+      notes: 1,
+      chunks: b.blocks,
+      children: [],
+      book: 'book',
+      bookId: b.bookId,
+    }));
+    if (books.length > shown.length) {
+      children.push({
+        name: `等 ${books.length - shown.length} 本`,
+        path: '__book_more__',
+        notes: 0,
+        chunks: 0,
+        children: [],
+        book: 'book',
+      });
+    }
+    return [
+      {
+        name: '书籍',
+        path: '__books__',
+        notes: books.length,
+        chunks: books.reduce((n, b) => n + b.blocks, 0),
+        children,
+        book: 'group',
+        hint,
+      },
+    ];
+  }
+  if (!totals || totals.books <= 0) return [];
+  return [
+    {
+      name: '书籍',
+      path: '__books__',
+      notes: totals.books,
+      chunks: totals.blocks,
+      children: [],
+      book: 'group',
+      hint,
+    },
+  ];
+}
+
+/** 来源分布树（递归；expanded 为会话内记忆的展开目录集）。
+ *  2026-11-08：书籍节点按「本 / 块」出数、固定书色；单本书行带 data-book（点开走阅读器协议）。 */
 export function panelDistHtml(nodes: SourceTreeNode[], expanded: Set<string>, colorOf: (name: string) => string, maxChunks: number, depth = 0): string {
   return nodes
     .map((node) => {
       const hasChildren = node.children.length > 0;
       const open = expanded.has(node.path);
-      const row = `<div class="bz-sb-dist-row${hasChildren ? ' bz-sb-dist-row--dir' : ''}" data-path="${escapeHtml(node.path)}" style="padding-left:${10 + depth * 16}px">` +
+      const attr = node.bookId ? ` data-book="${escapeHtml(node.bookId)}"` : ` data-path="${escapeHtml(node.path)}"`;
+      const tip = node.hint ? ` title="${escapeHtml(node.hint)}"` : '';
+      const num =
+        node.book === 'group'
+          ? `${node.notes} 本 / ${node.chunks} 块`
+          : node.book === 'book'
+            ? `${node.chunks} 块`
+            : `${node.notes} 篇 / ${node.chunks} 段`;
+      const row = `<div class="bz-sb-dist-row${hasChildren ? ' bz-sb-dist-row--dir' : ''}${
+        node.book ? ' bz-sb-dist-row--book' : ''
+      }"${attr}${tip} style="padding-left:${10 + depth * 16}px">` +
         `<span class="bz-sb-dist-caret${hasChildren ? '' : ' bz-sb-dist-caret--leaf'}">${hasChildren ? ic('chevron-right', 12) : ''}</span>` +
         `<span class="bz-sb-dist-name">${escapeHtml(node.name)}</span>` +
-        `<span class="bz-sb-dist-bar"><span class="bz-sb-dist-fill" style="width:${Math.round((node.chunks / maxChunks) * 100)}%;background:${colorOf(node.name)}"></span></span>` +
-        `<span class="bz-sb-dist-num">${node.notes} 篇 / ${node.chunks} 段</span></div>`;
+        `<span class="bz-sb-dist-bar"><span class="bz-sb-dist-fill" style="width:${Math.round((node.chunks / Math.max(1, maxChunks)) * 100)}%;background:${node.book ? SB_BOOK_COLOR : colorOf(node.name)}"></span></span>` +
+        `<span class="bz-sb-dist-num">${num}</span></div>`;
       const kids = hasChildren && open ? panelDistHtml(node.children, expanded, colorOf, maxChunks, depth + 1) : '';
       return row + kids;
     })
     .join('');
 }
 
+/** 最近列表的一行（笔记与书共用；书带 bookId、单位换成「块」） */
+export interface RecentRowItem {
+  path?: string;
+  bookId?: string;
+  name: string;
+  chunks: number;
+  /** 计数单位：「段」= 笔记块，「块」= 书块 */
+  unit: string;
+  when: string;
+  color: string;
+}
+
 /** 最近向量化列表（相对时间由行为层注入） */
-export function panelRecentHtml(rows: Array<{ path: string; name: string; chunks: number; when: string; color: string }>): string {
+export function panelRecentHtml(rows: RecentRowItem[]): string {
   if (!rows.length) return '<div class="bz-sb-empty">没有符合条件的文件</div>';
   return rows
-    .map(
-      (r) =>
-        `<div class="bz-sb-recent-row" data-path="${escapeHtml(r.path)}">` +
+    .map((r) => {
+      const attr = r.bookId ? ` data-book="${escapeHtml(r.bookId)}"` : ` data-path="${escapeHtml(r.path ?? '')}"`;
+      return (
+        `<div class="bz-sb-recent-row"${attr}>` +
         `<span class="bz-sb-dot" style="background:${r.color}"></span>` +
         `<span class="bz-sb-recent-name">${escapeHtml(r.name)}</span>` +
-        `<span class="bz-sb-recent-time">${r.chunks} 段 · ${escapeHtml(r.when)}</span></div>`
-    )
+        `<span class="bz-sb-recent-time">${r.chunks} ${escapeHtml(r.unit)} · ${escapeHtml(r.when)}</span></div>`
+      );
+    })
     .join('');
+}
+
+/**
+ * 最近向量化混排（2026-11-08）：笔记的修改时间与书的画像更新时间放同一把时间尺上，
+ * 取最近的 N 条。笔记入口只带前 N 条（computeStats 已截），书也只给清单；
+ * 这个函数只负责合并与排序，名字与相对时间由行为层填。
+ */
+export interface RecentBookSource {
+  bookId: string;
+  title: string;
+  blocks: number;
+  updatedAt: number;
+}
+
+export interface MergedRecentRow {
+  path?: string;
+  bookId?: string;
+  name: string;
+  chunks: number;
+  unit: '段' | '块';
+  at: number;
+}
+
+/** 老版阅读器只有汇总时，最近列表用这一行兜底（没有书号 → 点不开，只作告知） */
+export interface RecentBookSummary {
+  books: number;
+  blocks: number;
+  lastAt: number | null;
+}
+
+export function mergeRecent(
+  notes: RecentNote[],
+  books: RecentBookSource[],
+  limit = 10,
+  summary?: RecentBookSummary | null
+): MergedRecentRow[] {
+  const rows: MergedRecentRow[] = [
+    ...notes.map((n) => ({
+      path: n.path,
+      name: n.path.split('/').pop() || n.path,
+      chunks: n.chunks,
+      unit: '段' as const,
+      at: n.mtime,
+    })),
+    ...books.map((b) => ({
+      bookId: b.bookId,
+      name: `《${b.title || '未命名'}》`,
+      chunks: b.blocks,
+      unit: '块' as const,
+      at: b.updatedAt,
+    })),
+  ];
+  /* 老版阅读器没有清单：补一行汇总，别让「最近向量化」里一本书都看不见 */
+  if (!books.length && summary && summary.books > 0) {
+    rows.push({
+      name: `书籍 ${summary.books} 本`,
+      chunks: summary.blocks,
+      unit: '块',
+      at: summary.lastAt ?? 0,
+    });
+  }
+  rows.sort((a, b) => b.at - a.at);
+  return rows.slice(0, limit);
 }
 
 /** AI 库摘要卡（panel.summary 段；无文本返回空串，行为层整卡隐藏） */

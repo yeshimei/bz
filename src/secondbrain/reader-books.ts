@@ -32,9 +32,31 @@ export interface ReaderBookStats {
   models: string[];
 }
 
+/**
+ * 单本书的清单行（2026-11-08）：第二大脑统计面板要把书和笔记摆在一起，
+ * 汇总数字不够用——来源分布每本书一行、最近向量化按时间和笔记混排。
+ */
+export interface ReaderBookItem {
+  bookId: string;
+  /** 书名（缺失是空串，界面兜底成「未命名」） */
+  title: string;
+  /** 可检索块数 */
+  blocks: number;
+  /** 正文总字数（按块计） */
+  chars: number;
+  /** 最近一次建／重建的时间（ms） */
+  updatedAt: number;
+  /** 产出向量的模型名 */
+  model: string;
+  /** 画像方案：vector 可检索；compress 只有要点 */
+  plan: 'vector' | 'compress';
+}
+
 export interface ReaderBookAiApi {
   isShared(): boolean;
   stats(): Promise<ReaderBookStats>;
+  /** 清单（可选：老版阅读器没有这个方法，第二大脑退回汇总行，不影响其它） */
+  books?: () => Promise<ReaderBookItem[]>;
   search(query: string, topK?: number): Promise<ReaderBookHit[]>;
 }
 
@@ -108,6 +130,37 @@ export async function sharedBookStats(app: App | null | undefined): Promise<Read
     if (!api.isShared()) return null;
     const s = await withDeadline(api.stats(), BOOK_STATS_TIMEOUT_MS);
     return s && s.books > 0 ? s : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * 书籍清单（可选出口）：老版阅读器没有 `books()` → 返回 null，调用方退回汇总行。
+ *
+ * 归一化在这里做完（补空串、剔掉没有块/没有书号的行），渲染层不再猜。
+ * 任何失败（关着 / 超时 / 抛错 / 空清单）都收敛成 null——「这次没有清单」，
+ * 不是「没有书」，两种空态在界面上是不同的显示。
+ */
+export async function sharedBookList(app: App | null | undefined): Promise<ReaderBookItem[] | null> {
+  const api = readerBooksApi(app);
+  if (!api || typeof api.books !== 'function') return null;
+  try {
+    if (!api.isShared()) return null;
+    const raw = await withDeadline(api.books(), BOOK_STATS_TIMEOUT_MS);
+    if (!Array.isArray(raw) || !raw.length) return null;
+    const list = raw
+      .map((b) => ({
+        bookId: String(b?.bookId ?? '').trim(),
+        title: String(b?.title ?? '').trim(),
+        blocks: Math.max(0, Number(b?.blocks) || 0),
+        chars: Math.max(0, Number(b?.chars) || 0),
+        updatedAt: Number(b?.updatedAt) || 0,
+        model: String(b?.model ?? ''),
+        plan: b?.plan === 'compress' ? ('compress' as const) : ('vector' as const),
+      }))
+      .filter((b) => b.bookId && b.blocks > 0);
+    return list.length ? list : null;
   } catch {
     return null;
   }

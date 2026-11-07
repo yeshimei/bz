@@ -15,7 +15,7 @@
  * 模块顶层：settings-panel 域动态 import 本路径（tests/settings-panel.test.ts /
  * copy-lint 同锚），文案与键零变化。统计纯函数收编 render.ts，此处 re-export 兼容旧引用。
  */
-import type { App } from 'obsidian';
+import type { App, TFile } from 'obsidian';
 import { notice } from '../core/notice';
 import { bindMaskDismiss } from '../core/mask-dismiss';
 import { topifyZ } from '../core/z-order';
@@ -32,7 +32,7 @@ import type { SettingsSchema } from '../core/settings-schema';
 import { buildConfig, IS_MOBILE } from './config';
 import type { VectorStore } from './vector-store';
 import { parsePathList, formatPathList } from './whitelist';
-import { sharedBookStats } from './reader-books';
+import { sharedBookList, sharedBookStats, type ReaderBookItem, type ReaderBookStats } from './reader-books';
 import { loadStore } from './store-file';
 import { openWeeklyDigest, renderPanelWeeklyCard } from './weekly-ui';
 import {
@@ -46,6 +46,9 @@ import {
   sbSourceColor,
   computeStats,
   buildSourceTree,
+  mergeRecent,
+  sbBookColor,
+  bookDistNodes,
   fmtCompact,
 } from './render';
 import {
@@ -98,6 +101,9 @@ export function confirmFullRebuild(): Promise<boolean> {
   }).then((v) => v === 'ok');
 }
 
+/** 来源分布里书籍子行的上限（书多时只列最近更新的 N 本，其余折成「等 N 本」） */
+const BOOK_DIST_LIMIT = 8;
+
 export class SecondBrainPanel {
   app: App;
   store: VectorStore;
@@ -119,6 +125,12 @@ export class SecondBrainPanel {
   private motionSeq = 0;
   /** 桌面拖动缩放句柄（ADR-0084/0094）：open 挂、close 摘，与面板显隐成对 */
   private panelResizeDetach: { flush: () => void; detach: () => void } | null = null;
+  /**
+   * 阅读器书籍统计（2026-11-08）：异步取，来源分布与最近向量化共用。
+   * null = 还没取到 / 共享没开 / 没装阅读器——三种情况界面都不显示书，
+   * 但保留上一轮的值，重开面板时不会先短一截再跳回来。
+   */
+  private booksInfo: { stats: ReaderBookStats | null; list: ReaderBookItem[] | null } | null = null;
 
   constructor(app: App, store: VectorStore, opts: PanelOptions) {
     this.app = app;
@@ -427,8 +439,14 @@ export class SecondBrainPanel {
     const initBtn = popup.querySelector('#bz-sb-init-btn') as HTMLButtonElement | null;
     if (initBtn) initBtn.onclick = () => void this.startInitialIndex();
 
-    // 来源树展开：父容器一次性委托（重渲 innerHTML 不丢监听）
+    // 来源树：书行点开阅读器；目录行展开/收起（父容器一次性委托，重渲 innerHTML 不丢监听）
     popup.querySelector('#bz-sb-dist')?.addEventListener('click', (e) => {
+      const bookRow = (e.target as HTMLElement).closest('.bz-sb-dist-row[data-book]') as HTMLElement | null;
+      const bookId = bookRow?.dataset.book;
+      if (bookId) {
+        window.open(`obsidian://bz-reader?book=${encodeURIComponent(bookId)}`);
+        return;
+      }
       const row = (e.target as HTMLElement).closest('.bz-sb-dist-row--dir') as HTMLElement | null;
       if (!row) return;
       const path = row.dataset.path;
@@ -437,6 +455,22 @@ export class SecondBrainPanel {
       else this.expandedDirs.add(path);
       this.renderDist();
       motionDistIn(popup.querySelector<HTMLElement>('#bz-sb-dist')); // 动效层：枝突伸展微编排
+    });
+
+    // 最近向量化：笔记点开文件、书点开阅读器（2026-11-08 补上这条委托；原先注释说能点、实际没绑）
+    popup.querySelector('#bz-sb-recent')?.addEventListener('click', (e) => {
+      const row = (e.target as HTMLElement).closest('.bz-sb-recent-row') as HTMLElement | null;
+      if (!row) return;
+      const bookId = row.dataset.book;
+      if (bookId) {
+        window.open(`obsidian://bz-reader?book=${encodeURIComponent(bookId)}`);
+        return;
+      }
+      const path = row.dataset.path;
+      if (!path) return;
+      const f = this.app.vault.getAbstractFileByPath(path);
+      if (f) void this.app.workspace.getLeaf(false).openFile(f as TFile);
+      else notice('文件不存在或已被移动', 'warning');
     });
 
     document.body.appendChild(mask);
@@ -610,21 +644,17 @@ export class SecondBrainPanel {
     const healthy = vecRows === 0 || vecRows === stats.chunkCount;
     const fmtBytes = (n: number) => (n >= 1024 * 1024 ? `${(n / 1024 / 1024).toFixed(1)} MB` : `${Math.round(n / 1024)} KB`);
 
-    // 来源序（色板位次）——树/最近列表共用
-    const order = new Map(stats.bySource.map((s, i) => [s.name, i]));
-    const colorOf = (name: string) => sbSourceColor(name, order);
-
     // 头行：计数 + 健康 pill
     const cnt = popup.querySelector('#bz-sb-cnt');
     if (cnt) cnt.textContent = `${fmtCompact(stats.noteCount)} 篇 · ${fmtCompact(stats.chunkCount)} 段已入脑`;
-    /* 书籍统计：一次取数，头行与状态行共用——那是读阅读器索引文件的异步 IO，
-       同一轮渲染里问两遍没有意义。共享关着时返回 null，两处都不提。 */
-    const booksStat = sharedBookStats(this.app);
-    /* 共享打开时才补书籍这一段：开关关着就完全不提，像没有这本书一样。
-       异步补写而不是等它——书的画像可能几十份，不该拖住笔记那边的秒开。 */
+    /* 书籍统计一次取齐：头行 / 来源分布 / 最近向量化三处共用——那是读阅读器索引的异步 IO，
+       同一轮渲染里问三遍没有意义。共享关着或没装时两个值都是 null，面板完全不提书。 */
+    const booksPromise = Promise.all([sharedBookStats(this.app), sharedBookList(this.app)]).then(
+      ([bookStats, bookList]) => ({ stats: bookStats, list: bookList })
+    );
     if (cnt) {
       const base = cnt.textContent ?? '';
-      void booksStat.then((bs) => {
+      void booksPromise.then(({ stats: bs }) => {
         if (!bs || !cnt.isConnected) return;
         cnt.textContent = `${base} · ${fmtCompact(bs.books)} 本书`;
       });
@@ -654,26 +684,22 @@ export class SecondBrainPanel {
       if (sum) sum.textContent = stats.trend12w.reduce((a, b) => a + b, 0) + ' 篇';
     }
 
-    // 来源分布树（展开集会话内记忆）
+    // 来源分布树（展开集会话内记忆）——书的数据到了会再重渲一次，带上书籍节点
     this.renderDist();
 
-    // 最近向量化（点击打开文件——真身行为保留）
-    const recentEl = popup.querySelector('#bz-sb-recent');
-    if (recentEl) {
-      recentEl.innerHTML = panelRecentHtml(
-        stats.recent.map((r) => ({
-          path: r.path,
-          name: r.path.split('/').pop() || r.path,
-          chunks: r.chunks,
-          when: formatRelativeTime(r.mtime),
-          color: colorOf(topLevelName(r.path)),
-        }))
-      );
-      const recentN = popup.querySelector('#bz-sb-recent-n');
-      if (recentN) recentN.textContent = `最新 ${stats.recent.length} 条`;
-    }
+    // 最近向量化（笔记与书按时间混排；点击打开——真身行为保留）
+    this.renderRecent();
 
-    // 底部状态行：上次索引 · 索引一致性 · 存储明细
+    /* 书的数据是异步的（阅读器读画像文件，最长 3 秒）：先按笔记渲染，到了再补进两块。
+       this.booksInfo 留上一轮的值，重开面板/重渲时不会先短一截再跳回来。 */
+    void booksPromise.then((info) => {
+      if (!popup.isConnected) return;
+      this.booksInfo = info;
+      this.renderDist();
+      this.renderRecent();
+    });
+
+    // 底部状态行：上次索引 · 索引一致性 · 存储明细（书籍另起卡片，这里不再重复）
     const log = popup.querySelector('#bz-sb-log');
     if (log) {
       log.innerHTML = panelLogHtml([
@@ -681,16 +707,6 @@ export class SecondBrainPanel {
         { text: healthy ? '索引一致' : `向量 ${Math.round(vecRows)} 行 / 块 ${stats.chunkCount} 个`, warn: !healthy },
         { text: vecBytes ? `占用 ${fmtBytes(metaBytes + vecBytes)}` : '暂无向量文件' },
       ]);
-      /* 书籍统计单独一行，只挂在共享打开时（与头行同一个口径、同一份取数） */
-      void booksStat.then((bs) => {
-        if (!bs || !log.isConnected) return;
-        log.insertAdjacentHTML(
-          'beforeend',
-          panelLogHtml([
-            { text: `书籍 ${bs.books} 本 / ${fmtCompact(bs.blocks)} 块${bs.lastAt ? ` · 最近 ${formatRelativeTime(bs.lastAt)}` : ''}` },
-          ]),
-        );
-      });
     }
 
     mountIcons(popup);
@@ -698,7 +714,8 @@ export class SecondBrainPanel {
     motionStatsIn(popup); // 动效层：记忆星图编排（boot 首渲才演，刷新静默）
   }
 
-  /** 来源树渲染（renderStats 与展开点击共用；展开集会话内记忆） */
+  /** 来源树渲染（renderStats 与展开点击共用；展开集会话内记忆）。
+   *  2026-11-08：书籍节点挂在树尾（每本书一行 / 老版阅读器只有一行汇总），来源数随之 +1。 */
   private renderDist(): void {
     const popup = this.popup;
     const dist = popup?.querySelector('#bz-sb-dist') as HTMLElement | null;
@@ -706,11 +723,44 @@ export class SecondBrainPanel {
     const tree = buildSourceTree(this.store.meta);
     const order = new Map(computeStats(this.store.meta).bySource.map((s, i) => [s.name, i]));
     const colorOf = (name: string) => sbSourceColor(name, order);
-    const rootMax = Math.max(1, ...tree.map((n) => n.chunks));
-    dist.innerHTML = panelDistHtml(tree, this.expandedDirs, colorOf, rootMax);
+    const info = this.booksInfo;
+    const nodes = [
+      ...tree,
+      ...bookDistNodes(info?.list ?? [], info?.stats ?? null, BOOK_DIST_LIMIT, this.bookModelHint(info?.stats ?? null)),
+    ];
+    const rootMax = Math.max(1, ...nodes.map((n) => n.chunks));
+    dist.innerHTML = panelDistHtml(nodes, this.expandedDirs, colorOf, rootMax);
     const distN = popup.querySelector('#bz-sb-dist-n');
-    if (distN) distN.textContent = `${tree.length} 个来源`;
+    if (distN) distN.textContent = `${nodes.length} 个来源`;
     mountIcons(dist);
+  }
+
+  /** 书的向量模型与当前嵌入模型不一致时，悬停给一句话（否则用户只会觉得书永远搜不到） */
+  private bookModelHint(stats: ReaderBookStats | null): string | undefined {
+    const models = (stats?.models ?? []).filter(Boolean);
+    if (!models.length) return undefined;
+    const current = buildConfig().EMBEDDING_MODEL;
+    if (models.includes(current)) return undefined;
+    return `书的向量模型：${models.join('、')}（当前嵌入模型 ${current}）——不一致时书只能看统计，问答里可能搜不到`;
+  }
+
+  /** 最近向量化：笔记与书按时间混排取最近 10 条（2026-11-08）；
+   *  笔记点开文件、书点开阅读器（原来这条点击委托缺失，本次一并补上）。 */
+  private renderRecent(): void {
+    const popup = this.popup;
+    const recentEl = popup?.querySelector('#bz-sb-recent') as HTMLElement | null;
+    if (!popup || !recentEl) return;
+    const stats = computeStats(this.store.meta);
+    const order = new Map(stats.bySource.map((s, i) => [s.name, i]));
+    const rows = mergeRecent(stats.recent, this.booksInfo?.list ?? [], 10, this.booksInfo?.stats ?? null).map((r) => ({
+      ...r,
+      when: formatRelativeTime(r.at),
+      // 书按书号取色（与问答引用卡同一口径：一本书一个色），笔记按一级目录查来源位次
+      color: r.bookId ? sbBookColor(r.bookId) : sbSourceColor(topLevelName(r.path ?? ''), order),
+    }));
+    recentEl.innerHTML = panelRecentHtml(rows);
+    const recentN = popup.querySelector('#bz-sb-recent-n');
+    if (recentN) recentN.textContent = `最新 ${rows.length} 条`;
   }
 
   /** AI 库摘要 + 自动建链数 + 每周动态入口卡（secondbrain.json panel/link/weekly 段，异步回填；

@@ -13,6 +13,9 @@ import {
   panelTrendHtml,
   panelDistHtml,
   panelRecentHtml,
+  mergeRecent,
+  bookDistNodes,
+  SB_BOOK_COLOR,
   panelSummaryHtml,
   panelLogHtml,
   chatShellHtml,
@@ -97,11 +100,94 @@ describe('主面板 markup', () => {
     const dist = panelDistHtml(tree, expanded, () => '#0f766e', 2);
     expect(dist).toContain('bz-sb-dist-row--dir');
     expect(dist).toContain('网页剪藏'); // 展开态渲染子行
-    const recent = panelRecentHtml([{ path: '卡片盒/A.md', name: 'A', chunks: 3, when: '今天', color: '#0f766e' }]);
+    const recent = panelRecentHtml([{ path: '卡片盒/A.md', name: 'A', chunks: 3, unit: '段', when: '今天', color: '#0f766e' }]);
     expect(recent).toContain('data-path="卡片盒/A.md"');
     expect(panelSummaryHtml('', '')).toBe(''); // 无摘要整卡隐藏
     expect(panelSummaryHtml('摘要', '昨天')).toContain('摘要');
     expect(panelLogHtml([{ text: 'a' }, { text: 'b', warn: true }])).toContain('bz-sb-log-item--warn');
+  });
+});
+
+/**
+ * 书籍并入统计（2026-11-08）：来源分布与最近向量化都要把阅读器的书摆进来。
+ * 书不是目录——计数单位是「本 / 块」，点开走 data-book（阅读器协议），不是库内路径。
+ */
+describe('书籍并入统计（2026-11-08）', () => {
+  const bookNodes: SourceTreeNode[] = [
+    { name: '归档', path: '归档', notes: 2, chunks: 4, children: [] },
+    {
+      name: '书籍',
+      path: '__books__',
+      notes: 2,
+      chunks: 30,
+      book: 'group',
+      children: [
+        { name: '《心流》', path: '__book__:b1', notes: 1, chunks: 20, children: [], book: 'book', bookId: 'b1' },
+        { name: '《存在》', path: '__book__:b2', notes: 1, chunks: 10, children: [], book: 'book', bookId: 'b2' },
+      ],
+    },
+  ];
+
+  it('来源分布：书籍汇总按「本 / 块」出数，单本书行带 data-book，书不参与笔记配色', () => {
+    const html = panelDistHtml(bookNodes, new Set(['__books__']), () => '#0f766e', 20);
+    expect(html).toContain('2 本 / 30 块');
+    expect(html).toContain('data-book="b1"');
+    expect(html).toContain('data-book="b2"');
+    expect(html).toContain('20 块');
+    expect(html).toContain(SB_BOOK_COLOR); // 书籍固定色
+    expect(html).not.toContain('1 篇 / 20 段'); // 书的计数单位不能沿用笔记
+  });
+
+  it('最近向量化：书行没有路径、单位是「块」，点开走 data-book', () => {
+    const html = panelRecentHtml([
+      { bookId: 'b1', name: '《心流》', chunks: 20, unit: '块', when: '昨天', color: SB_BOOK_COLOR },
+      { path: '卡片盒/A.md', name: 'A', chunks: 3, unit: '段', when: '今天', color: '#0f766e' },
+    ]);
+    expect(html).toContain('data-book="b1"');
+    expect(html).toContain('20 块');
+    expect(html).toContain('data-path="卡片盒/A.md"');
+    expect(html).toContain('3 段');
+  });
+
+  it('混排：笔记与书按时间降序共用一把尺，取前 N 条', () => {
+    const rows = mergeRecent(
+      [
+        { path: '卡片盒/旧.md', mtime: 100, chunks: 2 },
+        { path: '卡片盒/新.md', mtime: 300, chunks: 1 },
+      ],
+      [{ bookId: 'b1', title: '心流', blocks: 20, updatedAt: 200 }],
+      3
+    );
+    expect(rows.map((r) => r.name)).toEqual(['新.md', '《心流》', '旧.md']);
+    expect(rows[1]).toMatchObject({ bookId: 'b1', chunks: 20, unit: '块' });
+    expect(mergeRecent([], [{ bookId: 'b1', title: '', blocks: 1, updatedAt: 1 }], 10)[0].name).toBe('《未命名》');
+  });
+
+  it('老版阅读器只有汇总：最近列表补一行书籍汇总（没有书号 → 点不开）', () => {
+    const rows = mergeRecent(
+      [{ path: '卡片盒/A.md', mtime: 500, chunks: 1 }],
+      [],
+      10,
+      { books: 4, blocks: 90, lastAt: 100 }
+    );
+    expect(rows.map((r) => r.name)).toEqual(['A.md', '书籍 4 本']);
+    expect(rows[1]).toMatchObject({ chunks: 90, unit: '块' });
+    expect(rows[1].bookId).toBeUndefined();
+  });
+
+  it('书籍节点：清单只列前 N 本，其余折成「等 N 本」', () => {
+    const books = Array.from({ length: 3 }, (_, i) => ({ bookId: `b${i}`, title: `书${i}`, blocks: 10 }));
+    const nodes = bookDistNodes(books, { books: 3, blocks: 30 }, 2);
+    expect(nodes).toHaveLength(1);
+    expect(nodes[0]).toMatchObject({ name: '书籍', notes: 3, chunks: 30, book: 'group' });
+    expect(nodes[0].children.map((c) => c.name)).toEqual(['《书0》', '《书1》', '等 1 本']);
+  });
+
+  it('书籍节点：老版阅读器只有汇总 → 一行不可展开；都没有 → 不加节点', () => {
+    const [only] = bookDistNodes([], { books: 4, blocks: 90 }, 8);
+    expect(only).toMatchObject({ name: '书籍', notes: 4, chunks: 90, book: 'group' });
+    expect(only.children).toEqual([]);
+    expect(bookDistNodes([], null, 8)).toEqual([]);
   });
 });
 
