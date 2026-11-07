@@ -1802,14 +1802,16 @@ describe('知识盒 UI（ADR-0112 三部）', () => {
 
   // ==================== 设置 schema / ESC ====================
 
-  it('knowledgeSettingsSchema：五组（目录与分类含卡片/主题目录新键、自动关联、视频处理、维护）+ 清空历史回调', async () => {
+  it('knowledgeSettingsSchema：五组（目录与分类只剩文献/图版图片/领域词表、自动关联、视频处理、维护）+ 清空历史回调', async () => {
     const schema = knowledgeSettingsSchema();
     // 「外部工具」组 issue 462 回归（Python/ffmpeg/ffprobe 三行升格域无关键位，脸谱共用）；
     // 原「工具」组 2026-09-16 移除的其余行（Whisper 档位走 AI 面板、缓存两键）仍不暴露
     expect(schema.groups.map((g) => g.name)).toEqual(['外观', '目录与分类', '自动关联', '视频处理', '维护']);
     const dirRows = schema.groups[1].rows.map((r) => (r as any).binding?.key);
-    expect(dirRows).toContain('knowledgeCardboxDirectory');
-    expect(dirRows).toContain('knowledgeTopicDirectory');
+    // 2026-11-07 用户要求：知识盒只配文献即可用，卡片 / 主题目录行暂时隐藏（设置键与消费方照旧）
+    expect(dirRows).toEqual(['knowledgeDirectory', 'knowledgeImageFolder', 'knowledgeDomainList']);
+    expect(dirRows).not.toContain('knowledgeCardboxDirectory');
+    expect(dirRows).not.toContain('knowledgeTopicDirectory');
     expect((schema.groups[1].rows[0] as any).binding.key).toBe('knowledgeDirectory');
     // issue 313：图版图片目录可配，空值时 chips 区显示实际生效目录（同书库 fallbackValue 先例）
     expect(dirRows).toContain('knowledgeImageFolder');

@@ -26,7 +26,7 @@ vi.mock('../../src/core/notice', () => ({
   },
 }));
 
-import { folderSetupEmpty, openFolderSettings } from '../../src/core/folder-setup';
+import { folderSetupEmpty, folderState, needsFolderSetup, openFolderSettings } from '../../src/core/folder-setup';
 import { requestSettingsPanel, setSettingsPanelOpener, setSettingsProvider } from '../../src/core/settings-provider';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
@@ -98,6 +98,19 @@ describe('未配置空态「打开设置」', () => {
     expect(() => openFolderSettings('diary')).not.toThrow();
     expect(notices).toEqual(['设置面板没能打开，可以从「设置 → 包仔」进入']);
     err.mockRestore();
+  });
+});
+
+describe('知识盒闸门：只配文献即可用（2026-11-07）', () => {
+  it('卡片 / 主题目录已退出必填：只配文献就不再是未配置态', () => {
+    setSettingsProvider(() => ({ knowledgeDirectory: '文献盒' }) as never);
+    expect(needsFolderSetup('knowledge')).toBe(false);
+    expect(folderState('knowledge').fields.map((f) => f.field.key)).toEqual(['knowledgeDirectory', 'knowledgeImageFolder']);
+  });
+
+  it('一个都没配：引导仍落在文献文件夹（面板里也只这一处必填）', () => {
+    expect(needsFolderSetup('knowledge')).toBe(true);
+    expect(folderState('knowledge').missing.map((f) => f.field.key)).toEqual(['knowledgeDirectory']);
   });
 });
 

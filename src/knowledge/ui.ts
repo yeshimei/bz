@@ -22,7 +22,7 @@ import { Component, MarkdownRenderer, setIcon, type App } from 'obsidian';
 import { imageDataUrl, imageExtOfMime, imageMimeOfPath } from '../core/ai';
 import { bindMaskDismiss } from '../core/mask-dismiss';
 import { localNow } from '../core/ui/str';
-import type { SettingsSchema } from '../core/settings-schema';
+import type { SettingsRow, SettingsSchema } from '../core/settings-schema';
 import { isMobileEnv } from '../core/mobile';
 import { tryGetSettings, getSettings, saveSettings, panelSizePersist } from '../core/settings-provider';
 import { uiResizable } from '../core/ui/resize';
@@ -368,6 +368,19 @@ interface TackPick {
   created: number;
 }
 
+/**
+ * 2026-11-07 暂时隐藏的两行目录设置（用户要求：知识盒只配文献即可用）。
+ *
+ * 隐藏的只是**面板入口**：`knowledgeCardboxDirectory` / `knowledgeTopicDirectory` 两个键、
+ * 缺省名（卡片盒 / 主题盒，见 core/knowledge-boxes）与全部消费方照旧——部贰/部叁照旧扫描，
+ * 自动关联与第二大脑索引仍以三盒为界，老库里已填的值也继续生效。
+ * 恢复 = 删掉这个 Set 与下面 `目录与分类` 组 rows 末尾那一句 filter。
+ */
+const HIDDEN_DIR_SETTING_KEYS: ReadonlySet<string> = new Set([
+  'knowledgeCardboxDirectory',
+  'knowledgeTopicDirectory',
+]);
+
 /** 知识盒设置 schema（声明式五组；ADR-0112 更名并新增卡片/主题目录，ADR-0141 增「自动关联」组） */
 export function knowledgeSettingsSchema(opts?: { onClearHistory?: () => void | Promise<void>; onClearSuggestCache?: () => void | Promise<void> }): SettingsSchema {
   // 自动关联的总开关是**启动快照**配置（监听注册发生在域初始化），一次弹窗会话只提示一次（文案冻结同第二大脑面板）
@@ -397,7 +410,9 @@ export function knowledgeSettingsSchema(opts?: { onClearHistory?: () => void | P
       },
       {
         icon: 'folder-open', name: '目录与分类',
-        rows: [
+        // 卡片 / 主题两行暂时不暴露（HIDDEN_DIR_SETTING_KEYS）：schema 即真相——组卡项数、
+        // 可见项计数与移动端「设置项」搜索都读这份行表，只留空壳行会让三处各算一遍。
+        rows: ([
           { type: 'path', mode: 'single', name: '文献文件夹', desc: '文献笔记所在文件夹，部壹扫描这里', binding: { key: 'knowledgeDirectory' } },
           { type: 'path', mode: 'single', name: '图版图片文件夹', desc: '图版录入的图片保存位置，留空跟随 Obsidian 的默认附件位置',
             binding: { key: 'knowledgeImageFolder' },
@@ -406,7 +421,9 @@ export function knowledgeSettingsSchema(opts?: { onClearHistory?: () => void | P
           { type: 'path', mode: 'single', name: '卡片文件夹', desc: '自己写的卡片笔记所在文件夹', binding: { key: 'knowledgeCardboxDirectory' } },
           { type: 'path', mode: 'single', name: '主题文件夹', desc: '主题笔记所在文件夹', binding: { key: 'knowledgeTopicDirectory' } },
           { type: 'textarea', name: '领域词表', desc: '逗号分隔的领域词表', binding: { key: 'knowledgeDomainList' }, placeholder: '物理,医学,计算机,经济…' },
-        ],
+        ] as SettingsRow[]).filter(
+          (r) => !HIDDEN_DIR_SETTING_KEYS.has((r as { binding?: { key?: string } }).binding?.key ?? '')
+        ),
       },
       {
         // 自动关联（ADR-0141 §1：原第二大脑「自动双链」组迁入本域，正名「自动关联」）。

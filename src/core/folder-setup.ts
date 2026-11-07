@@ -115,10 +115,11 @@ export const FOLDER_PLANS: Record<FolderDomainId, FolderPlan> = {
     settingsId: 'knowledge',
     title: '知识盒还没定文件夹',
     desc: '四类各放一处：长文献、卡片、主题，外加配图。',
+    // 2026-11-07：卡片 / 主题目录暂不从设置面板暴露（用户要求：只配文献即可用），两项也随之
+    // 退出未配置闸门——否则面板里没有可填的行，知识盒会永远卡在引导空态。
+    // 目录本身照旧按缺省名（卡片盒 / 主题盒）工作，老库里已填的值继续生效。
     fields: [
       { key: 'knowledgeDirectory', label: '文献文件夹', reco: '文献盒' },
-      { key: 'knowledgeCardboxDirectory', label: '卡片文件夹', reco: '卡片盒' },
-      { key: 'knowledgeTopicDirectory', label: '主题文件夹', reco: '主题盒' },
       { key: 'knowledgeImageFolder', label: '图片文件夹', reco: '', image: true, imageBaseKey: 'knowledgeCardboxDirectory' },
     ],
   },
