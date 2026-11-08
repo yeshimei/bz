@@ -18,45 +18,21 @@
  * 走 esbuild 的 dataurl loader（esbuild.config.mjs），源码里就是一行 import。
  *
  * 名单为什么是常量：微信赞赏码没有可查的接口，谁给了、写了什么只有作者看得到，
- * 只能手动维护。`REWARD_NAMES` 按**时间倒序**排（最新的在前），序号由 `names.length`
- * 倒推（最新一位是最大号），与原型一致。将来人多到懒得手改，再搬去
- * downloads/ 的 json（走 core/download-manifest 的 doc 通道），渲染层不用动。
+ * 只能手动维护。名单与日期格式化 2026-11-08 拆去 core/reward-names（更新日志页脚的
+ * 「支持作者」按钮要读人数，不该为这个 length 把 68KB 赞赏码拉进主包）；
+ * 本文件只留渲染，`REWARD_NAMES` 照旧从这里转出，调用方不用改 import。
+ * 顺序仍是**时间倒序**（最新的在前），序号由 `names.length` 倒推（最新一位是最大号）。
+ * 将来人多到懒得手改，再搬去 downloads/ 的 json（走 core/download-manifest 的 doc
+ * 通道），渲染层不用动。
  * ============================================================ */
 import { uiModal } from './ui/modal';
 import { escapeHtml } from './utils';
+import { REWARD_NAMES, formatRewardDate, type RewardName } from './reward-names';
 import rewardCodeUrl from './assets/reward-code.png';
 
-/** 一条留名记录（金额单位：元） */
-export interface RewardName {
-  /** 昵称（赞赏时填的，原样显示） */
-  name: string;
-  /** 金额（元，整数；不显示合计，只挂在单条右侧） */
-  amount: number;
-  /** 日期 `YYYY-MM-DD` */
-  date: string;
-  /** 留言（可空；空的就只显示名字那一行，不留占位文字） */
-  message?: string;
-}
-
-/**
- * 留名名单（**时间倒序，最新在前**）。
- *
- * 维护方式：按日期插到数组头部；没有留言就省略 `message` 字段（别写空串占位）。
- * 空数组时弹窗显示那张空态信笺（`renderRewardEmpty`）。
- *
- * 2026-11-08 开张：微信赞赏码收到第一笔，12 元、留言照登。
- * 金额按接口约定存整数（12 元即 12），纸面上显示 ¥12，不铺两位小数。
- */
-export const REWARD_NAMES: readonly RewardName[] = [
-  { name: '执徐', amount: 12, date: '2026-11-08', message: '伟大无需多言！' },
-];
-
-/** `2026-10-21` → `10 月 21 日`（解析不了就原样返回，不猜） */
-export function formatRewardDate(iso: string): string {
-  const m = /^(\d{4})-(\d{1,2})-(\d{1,2})$/.exec(String(iso || '').trim());
-  if (!m) return iso;
-  return `${Number(m[2])} 月 ${Number(m[3])} 日`;
-}
+// 名单与日期格式化的门面留在原处：外部一直是从 reward-dialog 拿这两样的。
+export { REWARD_NAMES, formatRewardDate };
+export type { RewardName };
 
 /** 名单列表（序号倒排：最新一位是最大号） */
 export function renderRewardList(names: readonly RewardName[]): HTMLOListElement {

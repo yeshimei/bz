@@ -10,11 +10,17 @@
  *
  * 顺序固定：GitHub → QQ 群 → B 站视频 → 支持作者（最后一个带文案，是这组里
  * 唯一有底色的一个——它要人看见，其余三个不抢视线）。
+ *
+ * 「支持作者」右上角那枚角标（2026-11-08 用户拍板：位置选角标，文案写「+人数」）：
+ * 数字取赞赏名单的人数，从 core/reward-names 读（不是 reward-dialog——那边静态挂着
+ * 68KB 赞赏码，读个 length 不值得把图拉进主包）。名单为空时不渲染角标。
+ * 两位数自己撑成小胶囊；三位数会把角标拖成一条贴纸，所以超过 99 封顶成「99+」。
  * ============================================================ */
 import { getApp } from '../core/app';
 import { openExternalUrl } from '../core/utils';
 import { REPO_URL } from '../core/about-group';
 import { QQ_GROUP_ICON, QQ_GROUP_NUMBER, openQqGroup, qqJoinOneClick } from '../core/qq-group';
+import { REWARD_NAMES } from '../core/reward-names';
 
 /** 视频教程第 1P（与「关于」组同一集）。分集链接按 about-group 的口径不共享常量：
  *  三处入口各指一集，抽公共常量反而要再加一层「这是自己那集」的注释。 */
@@ -54,6 +60,13 @@ export function changelogLinksHtml(): string {
   // 悬停提示得跟着说实话——不然用户还以为是「加入」。
   const qqHint =
     `QQ 交流群 ${QQ_GROUP_NUMBER}` + (qqJoinOneClick() ? '' : ' · 点击复制群号');
+  // 支持者角标：+人数。0 位时不画（别留一个孤零零的「+0」）。
+  const count = REWARD_NAMES.length;
+  const badge = count > 0
+    ? `<span class="bz-chg-count" aria-hidden="true">${count > 99 ? '99+' : `+${count}`}</span>`
+    : '';
+  // 读屏与悬停读得懂「+1」是人数，不是未读：连着按钮一起念。
+  const donateLabel = count > 0 ? `支持作者（已有 ${count} 位）` : '支持作者';
   return (
     '<button class="bz-chg-link" type="button" data-bz-act="repo" ' +
     `title="GitHub 仓库" aria-label="GitHub 仓库">${ICON_GITHUB}</button>` +
@@ -62,7 +75,7 @@ export function changelogLinksHtml(): string {
     '<button class="bz-chg-link" type="button" data-bz-act="video" ' +
     `title="B 站视频教程" aria-label="B 站视频教程">${ICON_BILI}</button>` +
     '<button class="bz-chg-link donate" type="button" data-bz-act="donate" ' +
-    `title="支持作者" aria-label="支持作者">${ICON_HEART}<span>支持作者</span></button>`
+    `title="${donateLabel}" aria-label="${donateLabel}">${ICON_HEART}<span>支持作者</span>${badge}</button>`
   );
 }
 
