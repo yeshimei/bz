@@ -98,6 +98,19 @@ test('parseLenStr：MM:SS / HH:MM:SS / 非法', () => {
   assert.equal(core.parseLenStr('abc'), 0)
 })
 
+test('briefDuration：多 P 保留列表总长，单 P / 列表缺时长才用实测', () => {
+  // 单 P：实测覆盖列表（修正 B 站 API 整数秒与码流 <1s 的系统性差值）
+  assert.equal(core.briefDuration(120, 119.4, 1), 119.4)
+  // 多 P：列表是全部 P 的总长，不能拿第 1 P 的实测把它盖掉
+  assert.equal(core.briefDuration(3600, 1200, 30), 3600)
+  // 列表没给时长：只能信实测
+  assert.equal(core.briefDuration(0, 119.4, 30), 119.4)
+  // 实测拿不到：保留列表
+  assert.equal(core.briefDuration(3600, 0, 30), 3600)
+  // pageCount 缺失按单 P 处理（老调用方/老数据）
+  assert.equal(core.briefDuration(120, 119.4, undefined), 119.4)
+})
+
 test('checkSubtitlePlausible：时间轴越界 / 字速不可能 / 正常', () => {
   assert.equal(core.checkSubtitlePlausible({ text: '一二三四五', maxTo: 10, duration: 10 }).ok, true)
   const over = core.checkSubtitlePlausible({ text: '短', maxTo: 756, duration: 39 })

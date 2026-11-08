@@ -336,6 +336,34 @@ test('downloadStream：Content-Length 提供总大小 → 真进度到 100%', as
   assert.equal(last.total, data.length)
 })
 
+test('downloadStream：响应字节数少于声明大小 → 切下一个节点重下整份', async () => {
+  const out = path.join(tmp, 'dl-short.mp4')
+  const diag = []
+  const full = Buffer.from('hello world')
+  const get = mockGet(url => {
+    if (url.includes('cdn1')) {
+      return { status: 200, headers: { 'content-length': String(full.length) }, chunks: [full.subarray(0, 5)] }
+    }
+    return { status: 200, headers: { 'content-length': String(full.length) }, chunks: [full] }
+  })
+  await core.downloadStream({
+    urls: ['https://cdn1/v.m4s', 'https://cdn2/v.m4s'], outPath: out, referer: 'x',
+    onDiag: t => diag.push(t), get,
+  })
+  assert.equal(fs.readFileSync(out, 'utf8'), 'hello world')
+  assert.ok(diag.some(t => t.includes('下载不完整')), JSON.stringify(diag))
+})
+
+test('downloadStream：所有节点都收不全 → 报下载不完整，不交付半截文件', async () => {
+  const out = path.join(tmp, 'dl-short-all.mp4')
+  const full = Buffer.from('hello world')
+  const get = mockGet(() => ({ status: 200, headers: { 'content-length': String(full.length) }, chunks: [full.subarray(0, 5)] }))
+  await assert.rejects(
+    core.downloadStream({ urls: ['https://cdn1/v.m4s', 'https://cdn2/v.m4s'], outPath: out, referer: 'x', get }),
+    /下载不完整/
+  )
+})
+
 test('downloadStream：长时间零字节(stall)才切换节点（慢速不再触发切换）', async () => {
   const out = path.join(tmp, 'dl-stall.mp4')
   const diag = []

@@ -265,14 +265,21 @@ function downloadStream({ urls, outPath, referer, size, stallMs = 12000, onProgr
     let idx = 0
     // 跨节点累计的下载量（进度平滑，换节点不回跳；文件本身每次整下用一个节点）
     let received = 0, speed = 0, lastT = Date.now(), lastB = 0, totalBytes = size > 0 ? size : 0
+    // 最近一次「本节点没收全」的字节数：全部节点都收不全时，用它给出比「网络受限」更准的失败原因
+    let lastShort = null
     const tryNext = () => {
       if (ABORTED) return reject(new Error('已中止'))
-      if (idx >= cands.length) return reject(new Error('所有 CDN 节点均失败（可能网络受限）'))
+      if (idx >= cands.length) {
+        return reject(lastShort
+          ? new Error(`下载不完整（${lastShort.got}/${lastShort.need} 字节，已重试所有节点）`)
+          : new Error('所有 CDN 节点均失败（可能网络受限）'))
+      }
       const url = cands[idx++]
       const host = new URL(url).hostname
       onDiag && onDiag(`节点 ${host}`)
       const t0 = Date.now()
       let lastDataAt = 0, settled = false, lastReportAt = 0, contentLength = 0
+      let nodeReceived = 0   // 本节点已收字节（received 是跨节点累计，判完整性只能用本节点的）
       const ws = fs.createWriteStream(outPath)
       const h = { req: null, ws }
       trackDownload(h)
@@ -312,12 +319,16 @@ function downloadStream({ urls, outPath, referer, size, stallMs = 12000, onProgr
           return tryNext()
         }
         // size 缺失时用 Content-Length 当总大小（真实，不再用 received*4 的 25% 假进度）
-        if (totalBytes <= 0 && res.headers) {
+        if (res.headers) {
           const cl = parseInt(res.headers['content-length'], 10)
-          if (cl > 0) totalBytes = cl
+          if (cl > 0) {
+            contentLength = cl
+            if (totalBytes <= 0) totalBytes = cl
+          }
         }
         res.on('data', c => {
           received += c.length
+          nodeReceived += c.length
           lastDataAt = Date.now()
           ws.write(c)
           const now = Date.now()
@@ -325,6 +336,20 @@ function downloadStream({ urls, outPath, referer, size, stallMs = 12000, onProgr
         })
         res.on('end', () => {
           if (settled) return
+          // 完整性校验（2026-11-08 review）：响应体没收全，别当成品交出去——先换下一个节点整下，
+          // 全部节点都收不全才失败。拿不到声明大小（分块传输）时不校验，保持原行为。
+          const got = nodeReceived
+          const need = contentLength > 0 ? contentLength : (size > 0 ? size : 0)
+          if (need > 0 && got < need) {
+            settled = true
+            clearInterval(stallTimer)
+            DOWNLOADS.delete(h)
+            lastShort = { got, need }
+            onDiag && onDiag(`节点 ${host} 下载不完整（${got}/${need} 字节），切换…`)
+            // 等流关闭再切：同一路径会被下一个节点重新整下，避免两个写入流抢同一个文件
+            ws.end(() => tryNext())
+            return
+          }
           settled = true
           clearInterval(stallTimer)
           DOWNLOADS.delete(h)
@@ -1024,7 +1049,18 @@ async function runBatch(task, deps = {}) {
     transcriptPath: transcriptTemp,
     videoPath: finalPath,
     title: info.title, bvid, duration: mediaDur,
+    // 分 P 数：简报据此判断实测时长能不能覆盖投稿列表口径（多 P 的列表时长是全部 P 的总长）
+    pageCount: (info.pages || []).length || 1,
   }
+}
+
+/* 简报用哪个时长（2026-11-08 review）：多 P 视频的投稿列表时长是全部 P 的总长，而简报只转写
+ * 第 1 P——拿实测时长覆盖会把「3 小时课程」显示成「20 分钟」。单 P 才用实测（修正 API 整数秒
+ * 与码流 <1s 的系统性差值）；列表没给时长时也只能信实测。 */
+function briefDuration(listDur, mediaDur, pageCount) {
+  const list = Number(listDur) || 0
+  if (!mediaDur) return list
+  return (Number(pageCount) || 1) <= 1 || !list ? mediaDur : list
 }
 
 // ---- 每日简报批处理（--brief，issue 263）：runBrief ----
@@ -1110,7 +1146,7 @@ async function runBrief(task, deps = {}) {
         )
         try { text = String(fs.readFileSync(r.transcriptPath, 'utf8') || '').trim() } catch { text = '' }
         try { fs.unlinkSync(r.transcriptPath) } catch {}   // 转录临时件用后即删（内容随即落简报缓存）
-        if (r.duration) info.duration = r.duration   // 转写路径用 runBatch 实测时长覆盖投稿列表口径
+        info.duration = briefDuration(info.duration, r.duration, r.pageCount)   // 多 P 保留列表总长，见 briefDuration
         if (!info.title && r.title) info.title = r.title
       }
       if (!text) throw new Error('未产出转录文本')
@@ -1146,5 +1182,5 @@ module.exports = {
   cacheKey, getCacheDir, cachePath, cleanupCache,
   resumeKey, resumeClipPath, resumeCompressedPath, resumeTranscriptPath,
   vaultRel, decodeBatchArg, runBatch,
-  getUpVideos, parseLenStr, getCid, getSubtitle, checkSubtitlePlausible, runBrief,
+  getUpVideos, parseLenStr, getCid, getSubtitle, checkSubtitlePlausible, runBrief, briefDuration,
 }

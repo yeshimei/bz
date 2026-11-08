@@ -45,7 +45,7 @@ _Avoid_: 配置文件、config.json
 _Avoid_: Cookie、登录态
 
 **CDN 节点切换 (CDN Failover)**:
-下载时按 baseUrl → backupUrl 逐个尝试官方 CDN 节点；连接失败或长时间零字节自动切换（慢速持续有数据不切换）。
+下载时按 baseUrl → backupUrl 逐个尝试官方 CDN 节点；连接失败、长时间零字节、或响应字节数少于声明大小自动切换（慢速持续有数据不切换）。全部节点都收不全时判「下载不完整」，不交付半截文件。
 _Avoid_: 重试、换线路
 
 **视频缓存 (Video Cache)**:
