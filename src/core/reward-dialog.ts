@@ -42,9 +42,14 @@ export interface RewardName {
  * 留名名单（**时间倒序，最新在前**）。
  *
  * 维护方式：按日期插到数组头部；没有留言就省略 `message` 字段（别写空串占位）。
- * 目前为空——第一批赞赏还没发生。
+ * 空数组时弹窗显示那张空态信笺（`renderRewardEmpty`）。
+ *
+ * 2026-11-08 开张：微信赞赏码收到第一笔，12 元、留言照登。
+ * 金额按接口约定存整数（12 元即 12），纸面上显示 ¥12，不铺两位小数。
  */
-export const REWARD_NAMES: readonly RewardName[] = [];
+export const REWARD_NAMES: readonly RewardName[] = [
+  { name: '执徐', amount: 12, date: '2026-11-08', message: '伟大无需多言！' },
+];
 
 /** `2026-10-21` → `10 月 21 日`（解析不了就原样返回，不猜） */
 export function formatRewardDate(iso: string): string {
