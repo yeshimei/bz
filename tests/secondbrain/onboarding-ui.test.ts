@@ -550,7 +550,11 @@ describe('第二大脑对话弹窗（ticket 108 改居中弹窗）', () => {
     expect(popup).not.toBeNull();
     expect(popup!.style.display).toBe('flex');
     expect(document.getElementById('bz-sb-chat-mask')!.style.display).toBe('block');
-    expect(popup!.querySelectorAll('button').length).toBe(8); // 发送 + 清空 + 6 推荐问法 chips（issue 251；仍无关闭钮，靠遮罩+ESC）
+    expect(popup!.querySelectorAll('button').length).toBeGreaterThanOrEqual(4); // 返回 + 灵感参考 + 发送 + 清空
+    expect(popup!.querySelector('#bz-sb-ws-back')).not.toBeNull();
+    expect(popup!.querySelector('#bz-sb-ws-ref')).not.toBeNull();
+    expect(popup!.querySelector('#bz-sb-chat-send')).not.toBeNull();
+    expect(popup!.querySelector('#bz-sb-chat-clear')).not.toBeNull();
 
     chat.close();
     expect(popup!.style.display).toBe('none');

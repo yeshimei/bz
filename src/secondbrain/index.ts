@@ -188,8 +188,10 @@ function openReferenceInternal(): void {
 
 function ensureChat(): void {
   if (!appRef || !store || chat) return;
-  // ChatPanel 为居中弹窗（core createOverlay，ticket 108 改；原右侧窄窗形态废弃）
-  chat = new ChatPanel(store, appRef);
+  // ChatPanel 为与主面板同尺寸的居中弹窗（900×620，2026-11 重写；原全屏工作区方案已按用户拍板改为同尺寸）
+  chat = new ChatPanel(store, appRef, () => {
+    if (appRef) openSecondBrainPanel(appRef);
+  });
 }
 
 /** 对话入口：桌面居中弹窗；移动端统一走底部抽屉 AI tab（ticket 31：与参考入口同一抽屉、两入口行为一致） */

@@ -99,20 +99,13 @@ describe('secondbrain/reference-panel 刷新竞态防护', () => {
     panel.close();
   });
 
-  it('悬停预览：卡片摘除后定时器到点不产生孤儿预览；连接态照常显示', () => {
+  it('单击 220ms 后卡片就地展开（新交互）；双击让路跳转', () => {
     const panel = makePanel();
-    const dead = panel.createResultCard(HIT_A as any);
-    mouse(dead, 'mouseenter');
-    dead.remove(); // 摘除后 mouseleave 不会再来
-    vi.advanceTimersByTime(400);
-    expect(document.querySelectorAll('.bz-sb-ref-preview')).toHaveLength(0);
-
-    const live = panel.createResultCard(HIT_B as any);
-    mouse(live, 'mouseenter');
-    vi.advanceTimersByTime(300);
-    expect(document.querySelectorAll('.bz-sb-ref-preview')).toHaveLength(1);
-    panel.close(); // destroyResources 兜底 hideHoverPreview
-    expect(document.querySelectorAll('.bz-sb-ref-preview')).toHaveLength(0);
+    const card = panel.createResultCard(HIT_A as any);
+    mouse(card, 'click');
+    vi.advanceTimersByTime(230);
+    expect(card.classList.contains('is-open')).toBe(true);
+    panel.close();
   });
 
   it('双击归位保持既有语义；归位后再关窗无残留', () => {

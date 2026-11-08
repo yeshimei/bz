@@ -573,31 +573,40 @@ export function weeklyLoadingHtml(): string {
 
 // ==================== AI 对话 markup ====================
 
-/** 推荐问法（静态引导集，原型常驻 chips） */
+/** 推荐问法（静态引导集） */
 export const CHAT_CHIPS = ['为什么会遗忘', '享乐适应', '怎么高效记笔记', '睡不好怎么补救', '闪电', '王阳明'];
 
-/** 对话弹窗骨架（头行/消息区/输入区；模型徽标已按用户要求摘除——头部只留清空对话） */
+/**
+ * 对话工作区骨架（探针形态）：顶栏 + 左问题栏 + 中对话 + 右依据栏。
+ *
+ * 类名沿用 `bz-sb-chat-*` 行为锚点（输入/发送/清空/消息容器）——测试与行为层按这些锚点找节点；
+ * 外层加 `bz-sb-ws` 表示全屏工作区，样式在 styles.css 里覆盖旧居中弹窗的几何。
+ */
 export function chatShellHtml(topK: number): string {
   return `
-  <div class="bz-sb-chat-head">
-    <div class="bz-sb-glyph bz-sb-chat-glyph">${ic('brain', 17)}</div>
-    <div class="bz-sb-head-title">
-      <h3>AI 对话</h3>
-      <div class="bz-sb-cnt">以库为底作答 · 单次检索 ${topK} 条相关段落</div>
+  <header class="bz-sb-ws-top">
+    <button class="bz-sb-ws-back" id="bz-sb-ws-back" aria-label="返回第二大脑" title="返回第二大脑">${ic('arrow-left', 15)}</button>
+    <div class="bz-sb-ws-title">问答</div>
+    <div class="bz-sb-ws-acts">
+      <span class="bz-sb-ws-model"><i></i>DeepSeek · 就绪</span>
+      <button class="bz-sb-ws-ref" id="bz-sb-ws-ref">${ic('radar', 12)}灵感参考</button>
+      <button class="bz-sb-chat-clear" id="bz-sb-chat-clear" hidden>清空对话</button>
     </div>
-    <div class="bz-sb-head-sp"></div>
-    <button class="bz-sb-chat-clear bz-sb-fbtn" id="bz-sb-chat-clear">${ic('history', 13)}清空对话</button>
-  </div>
-  <div class="bz-sb-chat-messages bz-sb-scroll-y" id="bz-sb-chat-messages"></div>
-  <div class="bz-sb-chat-input-area">
-    <div class="bz-sb-chat-input-row">
-      <span class="bz-sb-chat-lens">${ic('sparkles', 15)}</span>
-      <textarea class="bz-sb-chat-input" id="bz-sb-chat-input" rows="1" placeholder="向第二大脑提问，回车发送…"></textarea>
-      <button class="bz-sb-chat-send" id="bz-sb-chat-send" aria-label="发送">${ic('send', 14)}</button>
-    </div>
-    <div class="bz-sb-chat-chips" id="bz-sb-chat-chips">
-      ${CHAT_CHIPS.map((c) => `<button class="bz-sb-chat-chip" data-q="${escapeHtml(c)}">${escapeHtml(c)}</button>`).join('')}
-    </div>
+  </header>
+  <div class="bz-sb-ws-cols">
+    <aside class="bz-sb-ws-questions" id="bz-sb-ws-questions"></aside>
+    <main class="bz-sb-ws-main">
+      <div class="bz-sb-chat-messages bz-sb-scroll-y" id="bz-sb-chat-messages"></div>
+      <div class="bz-sb-chat-input-area">
+        <div class="bz-sb-chat-input-row">
+          <span class="bz-sb-chat-lens">${ic('sparkles', 15)}</span>
+          <textarea class="bz-sb-chat-input" id="bz-sb-chat-input" rows="1" placeholder="继续追问，或指定只从某个盒子找…"></textarea>
+          <button class="bz-sb-chat-send" id="bz-sb-chat-send" aria-label="发送">${ic('send', 14)}</button>
+        </div>
+        <div class="bz-sb-chat-chips" id="bz-sb-chat-chips" hidden></div>
+      </div>
+    </main>
+    <aside class="bz-sb-ws-cites" id="bz-sb-ws-cites"></aside>
   </div>`;
 }
 
@@ -606,7 +615,7 @@ export function chatUserMsgHtml(): string {
   return `<div class="bz-sb-chat-who">${ic('send', 10)}刚问</div><div class="bz-sb-chat-bubble"></div>`;
 }
 
-/** assistant 气泡壳（正文节点由行为层渲染 markdown；检索中态/引用卡可追加） */
+/** assistant 气泡壳（正文节点由行为层渲染 markdown） */
 export function chatAiMsgHtml(): string {
   return `<div class="bz-sb-chat-who">${ic('brain', 10)}第二大脑</div><div class="bz-sb-chat-bubble"></div>`;
 }
@@ -630,7 +639,7 @@ export function sbBookColor(seed: string): string {
   return SB_PALETTE[Math.abs(h) % SB_PALETTE.length];
 }
 
-/** 引用卡列表（会话内展示，不落盘） */
+/** 引用卡列表（工作区右栏 / 移动端共用；会话内展示，不落盘） */
 export function chatCitesHtml(
   hits: Array<{ path: string; pct: number; color: string; bookId?: string; label?: string }>,
 ): string {
@@ -657,17 +666,177 @@ export function chatCitesHtml(
   );
 }
 
+/** 左问题栏（本次对话的提问索引；点击由行为层滚动到对应消息） */
+export function chatQuestionsHtml(items: Array<{ id: number; text: string; active?: boolean; meta?: string }>): string {
+  if (!items.length) {
+    return `<div class="bz-sb-ws-q-empty">还没有提问。<br>在下面问第一句。</div>`;
+  }
+  return (
+    `<div class="bz-sb-ws-q-head">本次问题<span>${items.length}</span></div>` +
+    items
+      .map(
+        (q, i) =>
+          `<button class="bz-sb-ws-q${q.active ? ' is-on' : ''}" data-msg="${q.id}" title="${escapeHtml(q.text)}">` +
+          `<span class="bz-sb-ws-q-text">${escapeHtml(q.text)}</span>` +
+          (q.meta ? `<small>${escapeHtml(q.meta)}</small>` : '') +
+          `</button>`
+      )
+      .join('') +
+    `<div class="bz-sb-ws-q-head" style="margin-top:14px">下一步</div>` +
+    `<button class="bz-sb-ws-q bz-sb-ws-q--soft" data-follow="再顺着这个思路追问下去">${ic('sparkles', 11)} 顺着追问</button>` +
+    `<button class="bz-sb-ws-q bz-sb-ws-q--soft" data-follow="和「情绪二因素」并排看">和「情绪二因素」并排看</button>`
+  );
+}
+
+/** 右依据栏（最近一轮回答的命中；空态给一句说明） */
+export function chatCitesPanelHtml(
+  rows: Array<{
+    path: string;
+    pct: number;
+    color: string;
+    bookId?: string;
+    label?: string;
+    source?: string;
+    snippet?: string;
+  }>,
+): string {
+  if (!rows.length) {
+    return `<div class="bz-sb-ws-cites-empty">回答后，检索到的笔记会列到这里</div>`;
+  }
+  return (
+    `<div class="bz-sb-ws-cites-head">本次依据<span>${rows.length}</span></div>` +
+    `<div class="bz-sb-chat-cites bz-sb-ws-cites-list">` +
+    rows
+      .map((h, i) => {
+        const name = h.label || stripMdExt(h.path.replace(/^.*[\\/]/, ''));
+        return (
+          `<button class="bz-sb-chat-cite bz-sb-ws-src" data-n="${i + 1}" data-path="${escapeHtml(h.path)}"${
+            h.bookId ? ` data-book="${escapeHtml(h.bookId)}"` : ''
+          }>` +
+          `<div class="bz-sb-ws-src-top"><span class="bz-sb-ws-src-n">${i + 1}</span>` +
+          `<span class="bz-sb-ws-src-tag"><i style="background:${h.color}"></i>${escapeHtml(h.source || '笔记')}</span>` +
+          `<span class="bz-sb-chat-cite-score">${h.pct}%</span></div>` +
+          `<b class="bz-sb-ws-src-title">${escapeHtml(name)}</b>` +
+          `<p class="bz-sb-ws-src-snippet">${escapeHtml(h.snippet || '')}</p>` +
+          `</button>`
+        );
+      })
+      .join('') +
+    `</div>` +
+    `<div class="bz-sb-ws-cites-note">点条目打开原文；依据按最近一轮回答更新。</div>`
+  );
+}
+
 // ==================== 灵感参考 markup ====================
 
-/** 参考卡（正文容器由行为层 renderMarkdown 填充；分数条为定稿原型新元素） */
-export function refCardHtml(name: string, pct: number, color: string): string {
+/** 参考浮窗内部骨架：上下文卡 + 结果列表（共滚动）+ 底部状态（固定） */
+export function refShellHtml(): string {
+  return `
+  <div class="bz-sb-ref-body">
+    <div class="bz-sb-ref-scroll bz-sb-scroll-y">
+      <div id="bz-sb-ref-context"></div>
+      <div class="bz-sb-ref-list" id="bz-sb-ref-list"></div>
+    </div>
+    <div class="bz-sb-ref-foot" id="bz-sb-ref-foot"></div>
+  </div>`;
+}
+
+/** 上下文卡：告诉用户“这次为什么是这些结果”，并提供锁定/换一批 */
+export function refContextHtml(info: {
+  noteName: string;
+  path: string;
+  sentence: string;
+  locked: boolean;
+  updated: string;
+}): string {
+  const has = !!info.sentence;
+  return `<div class="bz-sb-ref-ctx-live"><i class="${info.locked ? 'is-locked' : ''}"></i>${
+    info.locked ? '已锁定当前上下文' : '正在跟随光标'
+  }<span>${escapeHtml(info.updated)}</span></div>
+  <div class="bz-sb-ref-ctx${info.locked ? ' is-locked' : ''}">
+    <div class="bz-sb-ref-ctx-top"><span>当前笔记</span>
+      <button class="bz-sb-ref-ctx-btn" data-ref-act="lock">${ic('pin', 10)}${info.locked ? '已锁定' : '锁定'}</button>
+    </div>
+    <div class="bz-sb-ref-ctx-title">${escapeHtml(info.noteName || '未打开笔记')}</div>
+    <div class="bz-sb-ref-ctx-sentence">${
+      has ? `“${escapeHtml(info.sentence)}”` : '把光标放到正文里，这里会显示正在读的那句话。'
+    }</div>
+    <div class="bz-sb-ref-ctx-foot">
+      <span>${escapeHtml(info.path || '—')}</span>
+      <button class="bz-sb-ref-ctx-btn" data-ref-act="refresh">${ic('refresh', 10)}换一批</button>
+    </div>
+  </div>`;
+}
+
+/** 结果分组标题（强相关 / 擦边线索） */
+export function refGroupHeadHtml(label: string, count: number, hint: string): string {
+  return `<div class="bz-sb-ref-group-head"><b>${escapeHtml(label)}</b><span>${count}</span><em>${escapeHtml(hint)}</em></div>`;
+}
+
+/** 参考卡：来源 + 标题 + 摘要 + 元信息 + 分数条（隐藏，测试锚点）+ 正文容器 + 动作 */
+export function refCardHtml(
+  name: string,
+  pct: number,
+  color: string,
+  opts: {
+    source?: string;
+    meta?: string;
+    snippet?: string;
+    open?: boolean;
+    pinned?: boolean;
+    book?: boolean;
+  } = {},
+): string {
+  const source = opts.source || '笔记';
   return (
     `<div class="bz-sb-ref-card-top">` +
-    `<div class="bz-sb-ref-card-path">${escapeHtml(name)}</div>` +
+    `<span class="bz-sb-ref-source"><i style="background:${color}"></i>${escapeHtml(source)}</span>` +
     `<span class="bz-sb-ref-card-score">${pct}%</span>` +
     `</div>` +
+    `<h4 class="bz-sb-ref-card-path">${escapeHtml(name)}</h4>` +
+    (opts.snippet ? `<div class="bz-sb-ref-card-snippet">${escapeHtml(opts.snippet)}</div>` : '') +
+    (opts.meta ? `<div class="bz-sb-ref-card-meta">${escapeHtml(opts.meta)}</div>` : '') +
     `<div class="bz-sb-ref-card-bar"><span class="bz-sb-ref-card-bar-fill" style="width:${pct}%;background:${color}"></span></div>` +
+    `<div class="bz-sb-ref-card-body"></div>` +
+    `<div class="bz-sb-ref-card-acts">` +
+    `<button class="bz-sb-ref-act" data-ref-act="open">${ic('arrow-up-right', 10)}打开</button>` +
+    (opts.book
+      ? `<button class="bz-sb-ref-act" data-ref-act="open-book">${ic('book-open', 10)}打开书</button>`
+      : `<button class="bz-sb-ref-act" data-ref-act="insert">${ic('quote', 10)}插入引用</button>`) +
+    `<button class="bz-sb-ref-act${opts.pinned ? ' is-on' : ''}" data-ref-act="pin">${ic('pin', 10)}${
+      opts.pinned ? '已钉住' : '钉住'
+    }</button>` +
+    `</div>`
+  );
+}
+
+/** 擦边行：单行标题 + 来源 + 分数；展开后显示摘要与元信息 */
+export function refRowHtml(
+  name: string,
+  pct: number,
+  color: string,
+  opts: { source?: string; meta?: string; snippet?: string } = {},
+): string {
+  return (
+    `<div class="bz-sb-ref-row-head">` +
+    `<span class="bz-sb-ref-row-dot" style="background:${color}"></span>` +
+    `<span class="bz-sb-ref-card-path bz-sb-ref-row-title">${escapeHtml(name)}</span>` +
+    `<span class="bz-sb-ref-row-src">${escapeHtml(opts.source || '')}</span>` +
+    `<span class="bz-sb-ref-card-score">${pct}%</span>` +
+    `</div>` +
+    `<div class="bz-sb-ref-row-body"><p>${escapeHtml(opts.snippet || '')}</p>` +
+    (opts.meta ? `<div class="bz-sb-ref-card-meta">${escapeHtml(opts.meta)}</div>` : '') +
+    `</div>` +
     `<div class="bz-sb-ref-card-body"></div>`
+  );
+}
+
+/** 底部状态（条数 / 来源数 / 降级说明） */
+export function refFootHtml(count: number, sources: number, hint = ''): string {
+  return (
+    `<span class="bz-sb-ref-foot-live"><i></i>跟随光标与文件变更</span>` +
+    `<span>${count} 条 · ${sources} 个来源</span>` +
+    (hint ? `<span class="bz-sb-ref-foot-hint">${escapeHtml(hint)}</span>` : '')
   );
 }
 

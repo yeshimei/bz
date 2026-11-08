@@ -5,7 +5,7 @@
  * - 请求可取消：发送钮原地切「停止」，点击经 AbortController 中止（signal abort → AI.ask 拒绝），
  *   状态恢复为「发送」，气泡提示「已停止生成。」；请求中 Enter 不触发新一轮；
  * - 流式增量渲染：onDelta 增量写入占位气泡，完成后整段 markdown 重渲；
- * - 历史持久化：secondbrain.json chatHistory 段每轮写盘 / 打开读回渲染 /
+ * - 历史持久化：secondbrain.json chatHistory 段每轮写盘 / 打开默认空会话不读回 /
  *   旧数据无段兼容（零迁移）；「清空对话」flow 确认后清空并写盘；
  * - 概括移除：主面板无概括区块、无残留导出；设置 schema 已无「AI 通道」跳转行。
  */
@@ -72,6 +72,19 @@ describe('第二大脑对话：多行输入（ticket 141）', () => {
     chat.input.value = '第一行';
     chat.input.dispatchEvent(new Event('input'));
     expect(chat.input.style.height).toContain('px'); // 自增高设置（jsdom scrollHeight=0，仅验证联动）
+    chat.destroy();
+  });
+
+  it('回答末尾【建议追问】→ 正文去掉标记，建议渲染成可点 chips', async () => {
+    const chat = new ChatPanel(makeStore(), {} as any);
+    vi.spyOn(AI, 'ask').mockResolvedValue('回答正文\n【建议追问】\n继续问一\n继续问二');
+    chat.input.value = '问题';
+    await chat.sendChatMessage();
+    await until(() => chat.messagesDiv.textContent!.includes('回答正文'));
+    expect(chat.messagesDiv.textContent).not.toContain('【建议追问】');
+    const chips = chat.popup.querySelectorAll('.bz-sb-chat-chip');
+    expect(chips.length).toBe(2);
+    expect(chips[0].textContent).toBe('继续问一');
     chat.destroy();
   });
 
@@ -205,7 +218,7 @@ describe('第二大脑对话：历史持久化与清空（ticket 141）', () => 
     makeEnv();
   });
 
-  it('一轮问答写盘（user+assistant），重开面板读回渲染', async () => {
+  it('一轮问答写盘（user+assistant），重开默认空会话不读回', async () => {
     const vault = new MockVault();
     const app = mockAppWithVault(vault);
     setApp(app);
@@ -222,11 +235,12 @@ describe('第二大脑对话：历史持久化与清空（ticket 141）', () => 
       { role: 'assistant', content: '持久化的回答' },
     ]);
 
-    // 重开面板：读回渲染（welcome + 历史 2 条）
+    // 重开面板：默认空会话，只显示欢迎语（历史仍写盘，但不自动读回）
     chat.destroy();
     const chat2 = new ChatPanel(makeStore(), app);
-    await until(() => chat2.messagesDiv.textContent!.includes('持久化的回答'));
-    expect(chat2.messagesDiv.textContent).toContain('持久化问题');
+    expect(chat2.messagesDiv.children.length).toBe(1);
+    expect(chat2.messagesDiv.textContent).toContain('你好！每次提问会独立检索');
+    expect(chat2.messagesDiv.textContent).not.toContain('持久化问题');
     chat2.destroy();
   });
 
@@ -390,9 +404,9 @@ describe('第二大脑对话：引用卡（ADR-0110 §4；issue 359 随 AI 通�
 
     chat.input.value = '引用问题';
     await chat.sendChatMessage();
-    await until(() => chat.messagesDiv.querySelectorAll('.bz-sb-chat-cite').length === 1);
+    await until(() => chat.citesDiv.querySelectorAll('.bz-sb-chat-cite').length === 1);
 
-    const cite = chat.messagesDiv.querySelector('.bz-sb-chat-cite') as HTMLElement;
+    const cite = chat.citesDiv.querySelector('.bz-sb-chat-cite') as HTMLElement;
     expect(cite.dataset.path).toBe('日记/2026-09-16.md');
     expect(cite.textContent).toContain('80%'); // 分数百分比上卡
 
@@ -415,9 +429,9 @@ describe('第二大脑对话：引用卡（ADR-0110 §4；issue 359 随 AI 通�
 
     chat.input.value = '失效引用问题';
     await chat.sendChatMessage();
-    await until(() => chat.messagesDiv.querySelectorAll('.bz-sb-chat-cite').length === 1);
+    await until(() => chat.citesDiv.querySelectorAll('.bz-sb-chat-cite').length === 1);
 
-    (chat.messagesDiv.querySelector('.bz-sb-chat-cite') as HTMLElement).click();
+    (chat.citesDiv.querySelector('.bz-sb-chat-cite') as HTMLElement).click();
     expect(openFile).not.toHaveBeenCalled();
     await until(() => chat.messagesDiv.textContent!.includes('文件不存在或已被移动'));
     chat.destroy();

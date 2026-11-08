@@ -21,7 +21,6 @@ import {
   chatShellHtml,
   chatThinkingHtml,
   chatCitesHtml,
-  CHAT_CHIPS,
   refCardHtml,
   refStateHtml,
   sbSourceColor,
@@ -192,12 +191,13 @@ describe('书籍并入统计（2026-11-08）', () => {
 });
 
 describe('对话 markup', () => {
-  it('骨架含输入/发送/清空锚点与推荐词', () => {
+  it('骨架含输入/发送/清空锚点；推荐词默认空', () => {
     const html = chatShellHtml(20);
     expect(html).toContain('id="bz-sb-chat-input"');
     expect(html).toContain('id="bz-sb-chat-send"');
     expect(html).toContain('id="bz-sb-chat-clear"');
-    expect(html.match(/class="bz-sb-chat-chip"/g)!.length).toBe(CHAT_CHIPS.length);
+    expect(html.match(/class="bz-sb-chat-chip"/g)).toBeNull();
+    expect(html).toContain('id="bz-sb-chat-chips" hidden');
     expect(chatThinkingHtml(20)).toContain('检索 20 条');
     const cites = chatCitesHtml([{ path: '卡片盒/享乐适应.md', pct: 86, color: '#0f766e' }]);
     expect(cites).toContain('data-path');
