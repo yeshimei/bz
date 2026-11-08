@@ -15,8 +15,12 @@
 //   node scripts/push-gitee.mjs --desc="…"      # 顺手同步仓库描述
 //   node scripts/push-gitee.mjs --dry-run       # 只打印将要做的事
 //
-// token：~/.gitee-token（一行纯令牌）或环境变量 GITEE_TOKEN，权限只需要 projects。
+// token：优先环境变量 GITEE_TOKEN，否则读 **bz 专用文件** `~/.gitee-token-bz`（一行纯令牌），
+// 老位置 `~/.gitee-token` 只作兼容后备。权限只需要 projects。
 // **绝不写进仓库**——主仓是公开的，写进去等于把账号交出去。
+// 为什么要有专用文件（2026-11-08 事故）：那台机器上还有别的项目，两边都用 `~/.gitee-token`，
+// 谁后写谁覆盖——令牌被换掉后码云 API 回 404「Not Found Project」（不是 401，容易误判成仓库没了）。
+// bz 只认自己的文件，不去动别人那枚。
 // 鉴权参数保持 `access_token`（2026-11-07 排查：v1.39.4 起镜像失败是本地那枚旧令牌失效，
 // 同一个参数换新令牌后读写都正常；中途试过 `private_token`，GET 能过、POST 必 401，别换）。
 //
@@ -64,9 +68,12 @@ const log = (m) => console.log(`[gitee] ${m}`);
 
 function readToken() {
   if (process.env.GITEE_TOKEN) return process.env.GITEE_TOKEN.trim();
-  const p = path.join(process.env.HOME || process.env.USERPROFILE || '', '.gitee-token');
-  if (fs.existsSync(p)) return fs.readFileSync(p, 'utf8').trim();
-  console.error('[gitee] 缺令牌：把码云私人令牌写进 ~/.gitee-token（一行），或设 GITEE_TOKEN');
+  // 专用文件优先：多项目共用 ~/.gitee-token 会互相覆盖（2026-11-08 撞过，表现是 404）
+  for (const name of ['.gitee-token-bz', '.gitee-token']) {
+    const p = path.join(process.env.HOME || process.env.USERPROFILE || '', name);
+    if (fs.existsSync(p)) return fs.readFileSync(p, 'utf8').trim();
+  }
+  console.error('[gitee] 缺令牌：把码云私人令牌写进 ~/.gitee-token-bz（一行），或设 GITEE_TOKEN');
   process.exit(1);
 }
 
