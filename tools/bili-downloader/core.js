@@ -467,20 +467,37 @@ async function validateClip(file, { expectedSec, toleranceSec = 2, ffprobe = 'ff
 
 // 裁切+压缩：crf 为 null 用流复制（快速无损），否则 libx264 重编码。
 // 可靠性保障（bug #5）：copy 产物 ffprobe 校验，失败/时长不符自动重编码重试，保证可播。
+// 失败文案以**校验原因**为主：runFfmpeg 无论成败都把 stderr 尾行存进 err，ffmpeg 正常收尾时
+// 那行是 aac 的 `Qavg:` 统计——直接拿它当错误原因会把「时长偏差超限」这类真实原因顶掉。
 // 返回 { mode: 'copy'|'reencode', reencoded }；失败抛错。
 async function trimVideo({ inPath, outPath, ffmpeg = 'ffmpeg', ffprobe = 'ffprobe', start, end, crf, totalMs, onProgress, faststartMaxSec = 1800 }) {
   const dur = Math.max(0, end - start)
   if (crf === null || crf === undefined) {
     let r = await runFfmpeg({ args: buildTrimArgs({ mode: 'copy', inPath, outPath, start, end, faststartMaxSec }), ffmpeg, totalMs, onProgress })
-    if (r.ok && (await validateClip(outPath, { expectedSec: dur, toleranceSec: 2, ffprobe })).ok) return { mode: 'copy', reencoded: false }
+    let copyReason = ''
+    if (r.ok) {
+      const v = await validateClip(outPath, { expectedSec: dur, toleranceSec: 2, ffprobe })
+      if (v.ok) return { mode: 'copy', reencoded: false }
+      copyReason = v.reason
+    }
     // copy 产物失效/时长不对 → 自动重编码（帧精确，默认 CRF 23）
     try { fs.unlinkSync(outPath) } catch {}
     const r2 = await runFfmpeg({ args: buildTrimArgs({ mode: 'reencode', inPath, outPath, start, end, crf: 23, faststartMaxSec }), ffmpeg, totalMs, onProgress })
-    if (r2.ok && (await validateClip(outPath, { expectedSec: dur, toleranceSec: 0.5, ffprobe })).ok) return { mode: 'reencode', reencoded: true }
-    throw new Error(`裁切失败:${[r.err, r2.err].filter(Boolean).join('；') || '产物校验未通过'}`)
+    let reReason = ''
+    if (r2.ok) {
+      const v2 = await validateClip(outPath, { expectedSec: dur, toleranceSec: 0.5, ffprobe })
+      if (v2.ok) return { mode: 'reencode', reencoded: true }
+      reReason = v2.reason
+    }
+    const reasons = [copyReason || (r.ok ? '' : r.err), reReason || (r2.ok ? '' : r2.err)].filter(Boolean)
+    throw new Error(`裁切失败:${reasons.join('；') || '产物校验未通过'}`)
   }
   const r3 = await runFfmpeg({ args: buildTrimArgs({ mode: 'reencode', inPath, outPath, start, end, crf, faststartMaxSec }), ffmpeg, totalMs, onProgress })
-  if (r3.ok && (await validateClip(outPath, { expectedSec: dur, toleranceSec: 0.5, ffprobe })).ok) return { mode: 'reencode', reencoded: false }
+  if (r3.ok) {
+    const v3 = await validateClip(outPath, { expectedSec: dur, toleranceSec: 0.5, ffprobe })
+    if (v3.ok) return { mode: 'reencode', reencoded: false }
+    throw new Error(`压缩失败:${v3.reason}`)
+  }
   throw new Error(`压缩失败:${r3.err || '产物校验未通过'}`)
 }
 
@@ -850,15 +867,22 @@ async function runBatch(task, deps = {}) {
     try { fs.mkdirSync(path.dirname(cachedPath), { recursive: true }); fs.copyFileSync(originalPath, cachedPath) } catch {}
   }
 
+  // 时长口径基准：B 站 view API 的 duration 是整数秒（常见向上取整），与码流实际时长有 <1s 的
+  // 系统性差值。整片压缩拿 API 时长做 -to 与校验，会因超出 0.5s 容差被判「压缩失败」
+  // （实测 BV1tK4E6KE1B：API 378s / 码流 377.301769s，差 0.698s）。以下载产物 ffprobe 实测为准，
+  // 读不到才退回选中分 P 的时长，最后用 API 总时长兜底。
+  let mediaDur = await probeDuration(originalPath, ffprobe)
+  if (!mediaDur || !(mediaDur > 0)) mediaDur = (selPage && selPage.duration) || info.duration
+
   // ③ 剪辑（起止都有值才跑；parseTimeInput 转秒；越界/非法区间 clampSeg 同规 → 按整片）
   let seg = null
   let srcForDeliver = originalPath
   let resumeClipUsed = false   // 断点续跑命中剪辑缓存：交付后不得删缓存件
   let resumeCompressUsed = false   // 断点续跑命中压缩缓存：交付后不得删缓存件
-  let srcDur = info.duration   // 压缩/转文字用的源时长（剪辑后为段长，整片为全片）
-  // 断点续跑区间键（ADR-0067）：无剪辑/整片 → [0, duration]；剪辑 → [start, end]
+  let srcDur = mediaDur   // 压缩/转文字用的源时长（剪辑后为段长，整片为全片实测时长）
+  // 断点续跑区间键（ADR-0067）：无剪辑/整片 → [0, mediaDur]；剪辑 → [start, end]
   let rStart = 0
-  let rEnd = info.duration
+  let rEnd = mediaDur
   const hasRange = task.start != null && task.end != null &&
     String(task.start).trim() !== '' && String(task.end).trim() !== ''
   if (hasRange) {
@@ -866,9 +890,9 @@ async function runBatch(task, deps = {}) {
     const end = parseTimeInput(task.end)
     if (start === null || end === null) throw new Error('起止时间格式错误（HH:MM:SS.S / MM:SS / 秒）')
     let s = Math.max(0, start)
-    let e = Math.min(info.duration, end)
-    if (e - s < 0.1) { s = 0; e = info.duration }
-    seg = { start: s, end: e, full: !(s > 0 || e < info.duration) }
+    let e = Math.min(mediaDur, end)
+    if (e - s < 0.1) { s = 0; e = mediaDur }
+    seg = { start: s, end: e, full: !(s > 0 || e < mediaDur) }
     if (!seg.full) {
       rStart = s
       rEnd = e
@@ -986,8 +1010,8 @@ async function runBatch(task, deps = {}) {
       title: info.title, bv: bvid,
       page: selPage && pageNum > 1 ? pageNum : '',   // 第 2 P 起文件名带 _N
       trimmed: seg ? !seg.full : false,
-      start: seg ? seg.start : 0, end: seg ? seg.end : info.duration,
-      duration: info.duration, compressed: compressedAdopted, crf,
+      start: seg ? seg.start : 0, end: seg ? seg.end : mediaDur,
+      duration: mediaDur, compressed: compressedAdopted, crf,
     })
     finalPath = uniquePath(path.join(outDirAbs, name))
     fs.copyFileSync(srcForDeliver, finalPath)
@@ -999,7 +1023,7 @@ async function runBatch(task, deps = {}) {
     video: finalPath ? vaultRel(finalPath, conf.vaultPath) : null,
     transcriptPath: transcriptTemp,
     videoPath: finalPath,
-    title: info.title, bvid, duration: info.duration,
+    title: info.title, bvid, duration: mediaDur,
   }
 }
 
@@ -1086,7 +1110,7 @@ async function runBrief(task, deps = {}) {
         )
         try { text = String(fs.readFileSync(r.transcriptPath, 'utf8') || '').trim() } catch { text = '' }
         try { fs.unlinkSync(r.transcriptPath) } catch {}   // 转录临时件用后即删（内容随即落简报缓存）
-        if (!info.duration && r.duration) info.duration = r.duration
+        if (r.duration) info.duration = r.duration   // 转写路径用 runBatch 实测时长覆盖投稿列表口径
         if (!info.title && r.title) info.title = r.title
       }
       if (!text) throw new Error('未产出转录文本')
