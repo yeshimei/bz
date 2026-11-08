@@ -27,8 +27,8 @@
       "name": "知识盒工具包",
       "file": "tools/bili-downloader.tar.gz",
       "kind": "bundle",
-      "sha256": "b1a9135cea7cd009eb351c7c2d41da95bf042dd4cf43304ff3bc896f85f18f90",
-      "size": 26126
+      "sha256": "a144ab32e9c9bbd5dffd8261067c2fa30849772ee4ac6e191c1f02ca4dc66b7e",
+      "size": 26754
     },
     {
       "id": "tool-dock-watch",
