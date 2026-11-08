@@ -183,6 +183,10 @@ export default interface BzSettings {
   diaryFirstOpened: boolean;
   /** 🎬 视频教程弹窗已弹过（打开即记账，防同一首次流程弹第二次；老库缺键 = 没弹过） */
   diaryTutorialSeen: boolean;
+  /** 🎬 知识盒视频教程弹窗已弹过（2026-11：第一次打开知识盒弹一次；老库缺键 = 没弹过） */
+  knowledgeTutorialSeen: boolean;
+  /** 🎬 第二大脑视频教程弹窗已弹过（2026-11：第一次打开第二大脑弹一次；老库缺键 = 没弹过） */
+  secondbrainTutorialSeen: boolean;
   // 跨域读：影视目录走影院域 cinemaFolderPath、书库目录走书架墙域 resolveFolderPath（ADR-0115，
   // 用户拍板「影视部分走影院的」）；退役：movieDirectory/showTagCount/diaryBatchSize/diaryTagShowEmoji/
   // diaryContentRenderMode/diaryTagSortMode/diaryDefaultDateFilter/diaryDefaultSelectedTag/diaryJumpToEditAfterSave
@@ -1089,6 +1093,9 @@ export const DEFAULT_SETTINGS: BzSettings = {
   // 空册不弹（教程入口常驻在空册页上），弹窗真的出现过才写 diaryTutorialSeen
   diaryFirstOpened: false,
   diaryTutorialSeen: false,
+  // 知识盒 / 第二大脑的教程弹窗各只弹一次（2026-11 用户拍板：空态常驻入口 + 第一次打开弹一次）
+  knowledgeTutorialSeen: false,
+  secondbrainTutorialSeen: false,
 
   // 目录缺省留空（2026-10-30）：新库不替用户猜位置，剪藏本主界面走「未配置」空态引导他设一次
   articleDirectory: '',

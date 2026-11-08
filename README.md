@@ -75,14 +75,14 @@
     </td>
     <td align="center" valign="top" width="50%">
       <img src="docs/images/09-knowledge-box.png" height="230" alt="知识盒"><br>
-      <b>知识盒</b><br>
+      <b>知识盒</b> · <a href="https://www.bilibili.com/video/BV1bR4s6dEjH">▶ 视频教程</a><br>
       <sub>名词、段落、图版、影像四类文献</sub>
     </td>
   </tr>
   <tr>
     <td align="center" valign="top" width="50%">
       <img src="docs/images/10-second-brain.png" height="230" alt="第二大脑"><br>
-      <b>第二大脑</b><br>
+      <b>第二大脑</b> · <a href="https://www.bilibili.com/video/BV1bR4s6dEjH">▶ 视频教程</a><br>
       <sub>向量库规模、来源分布与索引健康</sub>
     </td>
     <td align="center" valign="top" width="50%">

@@ -163,6 +163,55 @@
   line-height: 2;
 }
 
+/* 空态里的视频教程入口：墨线小钮，与 .bz-kb-mt-btn 同族，独占一行 */
+.bz-kb-tut {
+  display: block;
+  margin: 10px auto 0;
+  border: 1px solid var(--line);
+  background: none;
+  color: var(--ink2);
+  font: inherit;
+  font-size: var(--bz-font-meta);
+  padding: 5px 14px;
+  border-radius: var(--bz-radius-sm);
+  cursor: pointer;
+  letter-spacing: 0.06em;
+}@media (hover: hover) {
+
+.bz-kb-tut:hover {
+  border-color: var(--accent);
+  background: var(--chip);
+  color: var(--ink);
+}
+}
+
+/* ===== 视频教程弹窗（core/ui/tutorial-modal；className = 'kb bz-kb-tutorial'）=====
+   共享壳 .bz-overlay-popup 挂 body —— `kb` 类把纸墨变量带在根上（同确认框的做法），
+   这里只把壳改成纸面材质；结构与按钮布局在 core/ui/components.css 的 .bz-tut-*。 */
+.bz-overlay-popup.bz-kb-tutorial {
+  background: var(--panel);
+  color: var(--ink);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.35);
+  font-family: var(--font-interface);
+  --bz-text-1: var(--ink);
+  --bz-text-2: var(--ink2);
+  --bz-text-3: var(--ink3);
+  --bz-surface-2: var(--card);
+  --bz-border: var(--line);
+  --bz-brand: var(--green);
+  --bz-on-brand: #fff;
+}
+.bz-overlay-popup.bz-kb-tutorial .bz-tut-name {
+  font-family: 'Noto Serif SC', SimSun, serif;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+}
+.bz-overlay-popup.bz-kb-tutorial .bz-tut-kicker { color: var(--amber); }
+/* 纸墨皮的播放钮不是圆糖：方一点，配纸面 */
+.bz-overlay-popup.bz-kb-tutorial .bz-tut-play { border-radius: 10px; }
+
 /* 未配置引导态（三个盒目录空着）：纸面墨字 + 墨线钮，与知识盒整体语言一致；
    不用 core 通用空态卡（宿主配色 + 实心主钮） */
 .bz-kb-gate {

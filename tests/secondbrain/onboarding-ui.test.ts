@@ -131,6 +131,8 @@ describe('第二大脑首用引导（ticket 107）', () => {
       expect(b.classList.contains('bz-sb-btn-hidden')).toBe(true);
     }
     expect(document.getElementById('bz-sb-init-btn')?.textContent).toContain('开始向量化');
+    // 空库引导页的视频教程入口（2026-11：常驻）
+    expect(document.getElementById('bz-sb-tut')?.textContent).toContain('看视频教程');
     unloadSecondBrain();
   });
 

@@ -19,6 +19,7 @@ import { type TermSource } from './source';
 import { upgradeNoteSourceInFile } from './note-gen';
 import { needsFolderKey, openFolderSettings } from '../core/folder-setup';
 import { relinkNoteByPath } from './relink';
+import { maybeShowKnowledgeTutorial } from './tutorial';
 
 let initialized = false;
 let uiManager: UIManager | null = null;
@@ -76,6 +77,8 @@ function blockedByFolderSetup(): boolean {
 export function openKnowledgePanel(app: App): void {
   ensureKnowledge(app);
   uiManager?.showMain();
+  // 第一次打开弹一次教程（空态另有常驻入口，见 ui.ts 的 kb-tutorial）
+  maybeShowKnowledgeTutorial();
 }
 
 /**

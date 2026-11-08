@@ -18,8 +18,8 @@ import { resolve } from 'node:path';
 const repo = (p: string) => readFileSync(resolve(process.cwd(), p), 'utf8');
 const cssFlat = () => repo('src/secondbrain/styles.css').replace(/\s+/g, ' ');
 
-/** 七根 + 确认流程框 + 每周动态弹层：三界面 + 移动抽屉/胶囊 + 双逸出点 + flow-dialog + weekly
- *  （顺序须与 styles.css 两个 token 组选择器一致；issue 360 起第九根 .bz-sb-weekly-modal） */
+/** 七根 + 确认流程框 + 教程弹窗 + 每周动态弹层：三界面 + 移动抽屉/胶囊 + 双逸出点 + flow-dialog
+ *  + tutorial + weekly（顺序须与 styles.css 两个 token 组选择器一致；2026-11 起第十根 .bz-sb-tutorial） */
 const ROOTS = [
   '.bz-sb-panel',
   '.bz-sb-chat-modal',
@@ -29,6 +29,7 @@ const ROOTS = [
   '.bz-sb-ref-preview',
   '.bz-sb-ref-card--float',
   '.bz-sb-flow-dialog',
+  '.bz-sb-tutorial',
   '.bz-sb-weekly-modal',
 ];
 

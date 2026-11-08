@@ -208,6 +208,8 @@ describe('知识盒 UI（ADR-0112 三部）', () => {
     const acts = Array.from(popup.querySelectorAll<HTMLElement>('.bz-kb-entrybtn')).map((b) => b.getAttribute('data-kb-act'));
     expect(acts).toEqual(['term-entry', 'passage-entry', 'image-entry', 'video-entry']);
     await vi.waitFor(() => expect(popup.querySelector('.bz-kb-sc')!.textContent).toContain('还没有文献笔记'));
+    // 空态里的视频教程入口（2026-11：常驻，点击走 data-kb-act 委托）
+    expect(popup.querySelector('[data-kb-act="kb-tutorial"]')?.textContent).toContain('看视频教程');
   });
 
   it('主窗尺寸记忆：有记忆值时打开即套用内联宽高，重复 showMain 不叠挂（ADR-0084/0094）', async () => {

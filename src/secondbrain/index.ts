@@ -34,6 +34,7 @@ import { MobilePanel } from './mobile-panel';
 import { LinkAgent } from './link-agent/pipeline';
 import { LinkAgentWatcher, createLinkBridge, startQueueConsumption, startStartupBackfill } from './link-agent/watch';
 import { scheduleWeeklyDigest, unloadWeeklyDigest, runWeeklyManual } from './weekly-ui';
+import { maybeShowSecondBrainTutorial } from './tutorial';
 
 let appRef: App | null = null;
 let store: VectorStore | null = null;
@@ -216,6 +217,8 @@ export function openSecondBrainPanel(app: App): void {
     onOpenChat: () => openChatInternal(),
   });
   void panel.open();
+  // 第一次打开弹一次教程（空库引导页另有常驻入口，见 render.ts 的 bz-sb-tut）
+  maybeShowSecondBrainTutorial();
 }
 
 /**

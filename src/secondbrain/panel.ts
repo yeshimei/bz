@@ -36,6 +36,7 @@ import { parsePathList, formatPathList } from './whitelist';
 import { sharedBookList, sharedBookStats, type ReaderBookItem, type ReaderBookStats } from './reader-books';
 import { loadStore } from './store-file';
 import { openWeeklyDigest, renderPanelWeeklyCard } from './weekly-ui';
+import { openSecondBrainTutorial } from './tutorial';
 import {
   panelShellHtml,
   panelCardsHtml,
@@ -439,6 +440,8 @@ export class SecondBrainPanel {
     // 引导态按钮
     const initBtn = popup.querySelector('#bz-sb-init-btn') as HTMLButtonElement | null;
     if (initBtn) initBtn.onclick = () => void this.startInitialIndex();
+    // 空库引导页的视频教程入口（常驻；与首次打开的教程弹窗同一份弹窗）
+    popup.querySelector('#bz-sb-tut')?.addEventListener('click', () => openSecondBrainTutorial());
 
     // 来源树：书行点开阅读器；目录行展开/收起（父容器一次性委托，重渲 innerHTML 不丢监听）
     popup.querySelector('#bz-sb-dist')?.addEventListener('click', (e) => {

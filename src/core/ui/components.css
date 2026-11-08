@@ -3779,3 +3779,54 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 
 /* 运行时隐藏（不用内联 display，样式单源） */
 .bz-setup .is-hidden { display: none; }
+
+/* ==================== 教程视频弹窗（core/ui/tutorial-modal） ====================
+   结构单源：票根 + 一句说明 + 次/主两个按钮。
+   这里只定版式、颜色一律走中性 token；域皮（`.bz-overlay-popup.<域类>`）负责材质，
+   所以同一个弹窗放进知识盒是纸墨、放进第二大脑是米白红棕。 */
+
+.bz-tut { display: flex; flex-direction: column; gap: var(--bz-space-md); }
+
+.bz-tut-cover {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 12px 14px;
+  border: 1px solid var(--bz-border);
+  border-radius: var(--bz-radius-md);
+  background: var(--bz-surface-2);
+  color: var(--bz-text-2);
+  text-align: left;
+  cursor: pointer;
+}
+
+.bz-tut-play {
+  flex: none;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: var(--bz-brand);
+  color: var(--bz-on-brand);
+}
+
+/* 三角播放符号：纯 CSS，不额外引图标 */
+.bz-tut-play::before {
+  content: '';
+  border-left: 11px solid currentColor;
+  border-top: 7px solid transparent;
+  border-bottom: 7px solid transparent;
+  margin-left: 3px;
+}
+
+.bz-tut-cover-text { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.bz-tut-kicker { font-size: 10.5px; letter-spacing: 0.14em; color: var(--bz-text-3); }
+.bz-tut-name { font-size: 15px; font-weight: 650; letter-spacing: 0.02em; color: var(--bz-text-1); }
+.bz-tut-desc { margin: 0; font-size: var(--bz-font-meta); line-height: 1.65; color: var(--bz-text-2); }
+.bz-tut-foot { display: flex; gap: 8px; justify-content: flex-end; }
+
+@media (hover: hover) {
+  .bz-tut-cover:hover { border-color: var(--bz-brand); }
+}

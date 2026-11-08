@@ -31,6 +31,7 @@
 .bz-sb-ref-preview,
 .bz-sb-ref-card--float,
 .bz-sb-flow-dialog,
+.bz-sb-tutorial,
 .bz-sb-weekly-modal {
   --sb-bg: #fbfaf7;
   --sb-card: #ffffff;
@@ -84,6 +85,7 @@
 .theme-dark .bz-sb-ref-preview,
 .theme-dark .bz-sb-ref-card--float,
 .theme-dark .bz-sb-flow-dialog,
+.theme-dark .bz-sb-tutorial,
 .theme-dark .bz-sb-weekly-modal {
   --sb-bg: #17150f;
   --sb-card: #211d16;
@@ -638,6 +640,25 @@
 .bz-sb-init-btn:disabled {
   opacity: 0.6;
   cursor: default;
+}
+/* 空库引导页的视频教程入口（常驻在「开始向量化」下面） */
+.bz-sb-tut {
+  margin-top: 10px;
+  border: 1px solid var(--sb-line2);
+  background: none;
+  border-radius: 8px;
+  padding: 5px 14px;
+  font: inherit;
+  font-size: var(--bz-font-meta);
+  color: var(--sb-mut);
+  cursor: pointer;
+  letter-spacing: 0.04em;
+}@media (hover: hover) {
+
+.bz-sb-tut:hover {
+  border-color: var(--sb-acc);
+  color: var(--sb-acc);
+}
 }
 .bz-sb-init-progress {
   display: none;
@@ -2587,6 +2608,29 @@
 /* 暗色壳影加深：与 .theme-dark .bz-sb-panel / .bz-sb-chat-modal 同值
    （黑影在深炭棕底不可见，域内该档是写死值、不走 token，故此处必须另写一条） */
 .theme-dark #__shared_confirm_popup__.bz-sb-flow-dialog {
+  box-shadow: 0 24px 60px #00000080;
+}
+
+/* ===== 视频教程弹窗（core/ui/tutorial-modal；className = bz-sb-tutorial）=====
+   共享壳 .bz-overlay-popup 挂 body —— 类名已并入上方 token 组（亮/暗两组），
+   这里只把壳改成米白 × 红棕材质；结构与按钮布局在 core/ui/components.css 的 .bz-tut-*。 */
+.bz-overlay-popup.bz-sb-tutorial {
+  background: var(--sb-bg);
+  color: var(--sb-ink);
+  border: 1px solid var(--sb-line2);
+  border-radius: 14px;
+  box-shadow: 0 24px 60px #00000022;
+  font-family: "Segoe UI Variable Text", "PingFang SC", "Microsoft YaHei", system-ui, -apple-system, sans-serif;
+  --bz-text-1: var(--sb-ink);
+  --bz-text-2: var(--sb-ink2);
+  --bz-text-3: var(--sb-ink3);
+  --bz-surface-2: var(--sb-card);
+  --bz-border: var(--sb-line2);
+  --bz-brand: var(--sb-acc);
+  --bz-on-brand: var(--sb-on-acc);
+}
+.bz-overlay-popup.bz-sb-tutorial .bz-tut-kicker { color: var(--sb-mut); }
+.theme-dark .bz-overlay-popup.bz-sb-tutorial {
   box-shadow: 0 24px 60px #00000080;
 }
 

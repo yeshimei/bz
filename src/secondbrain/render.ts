@@ -261,6 +261,7 @@ export function panelShellHtml(): string {
       <div class="bz-sb-onboard-title" id="bz-sb-progress-title">初始化向量数据库</div>
       <div class="bz-sb-onboard-desc" id="bz-sb-onboard-desc"></div>
       <button class="bz-sb-init-btn" id="bz-sb-init-btn">开始向量化</button>
+      <button class="bz-sb-tut" id="bz-sb-tut" type="button">看视频教程 →</button>
       <div class="bz-sb-init-progress" id="bz-sb-init-progress">
         <div class="bz-sb-init-bar"><span class="bz-sb-init-fill" id="bz-sb-init-fill"></span></div>
         <div class="bz-sb-init-status" id="bz-sb-init-status">准备中…</div>

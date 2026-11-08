@@ -35,6 +35,7 @@ import { confirmDiscard, openFlowDialog } from '../core/flow-dialog';
 import { notice, notify } from '../core/notice';
 import { escapeHtml, fetchPageTitle, formatRelativeTime, stripMdExt, openExternalUrl } from '../core/utils';
 import { iconSpan } from '../core/ui/str';
+import { openKnowledgeTutorial } from './tutorial';
 import { mountIcons } from '../core/ui/icons';
 import { uiSuggest } from '../core/ui/suggest';
 import { topifyZ } from '../core/z-order';
@@ -775,6 +776,7 @@ export class UIManager {
     }
     else if (act === 'topic-open') { const p = t.getAttribute('data-path') || ''; const tp = this.allTopics.find((x) => x.path === p); if (tp) void this.openPreview({ file: tp.file, path: tp.path, title: tp.title, domain: tp.where }, 'topic'); }
     else if (act === 'kb-close') this.hideMain(); // 移动端全屏主窗出口（ADR-0116：手机无 ESC/遮罩边缘）
+    else if (act === 'kb-tutorial') openKnowledgeTutorial(); // 空态里的视频教程入口
     // 「挂到笔记」页（2026-10-26）：整页视图内的四个动作
     else if (act === 'tack-back') this.closeTackPicker();
     else if (act === 'tack-row') {
@@ -1662,7 +1664,8 @@ export class UIManager {
           <button class="bz-kb-entrybtn" data-kb-act="image-entry"><b>图版</b></button>
           <button class="bz-kb-entrybtn" data-kb-act="video-entry"><b>影像</b></button>
         </div>
-        ${rows || '<div class="bz-kb-empty">「文献目录」还没有文献笔记——从上面的四种录入开始。</div>'}
+        ${rows || `<div class="bz-kb-empty">「文献目录」还没有文献笔记——从上面的四种录入开始。
+          <button class="bz-kb-tut" type="button" data-kb-act="kb-tutorial">看视频教程 →</button></div>`}
       </div>`;
     // 动效层：词典行抽卡接力（boot = 首开编排 / part = 翻部编排 / silent = 后台刷新静默）；消费即熄
     motionLitReveal(this.contentEl, this.motionCue);
