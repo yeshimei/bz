@@ -876,6 +876,51 @@
     min-width: 0;
   }
 }
+/* ── 目录行折行（2026-11-08 用户报：设置面板「额外检索目录」选了 8 个目录后，标题与说明被挤成
+      一字一行的竖排、胶囊一路冲出分组卡右缘被裁掉）──
+   .bz-sp-chips 是路径行的胶囊容器（settings-panel/renderer.ts 的 makePathRowCtrl，单值与多值路径
+   行共用）：原样没有布局规则，而 .bz-sp-set-ctrl 按内容宽贴右（flex:none），目录一多就把左侧挤到
+   0 宽、自己溢出被 .bz-sp-group 的 overflow:hidden 裁掉。这里让胶囊按剩余宽度折行，压缩全由右侧
+   承担，标题列保一条最低宽度；只放开「控件区里就是目录胶囊」的行，开关/下拉/输入框等单控件行仍按
+   内容宽贴右，不受影响。 */
+.bz-sp-set-row:has(> .bz-sp-set-ctrl > .bz-sp-chips) { align-items: flex-start; }
+.bz-sp-set-row:has(> .bz-sp-set-ctrl > .bz-sp-chips) > .bz-sp-set-info {
+  flex: 0 1 auto;
+  min-width: 160px; /* ≈ 11 个汉字：标题横着写，长说明在自己列里折行 */
+  padding-right: var(--bz-space-md);
+}
+.bz-sp-set-row:has(> .bz-sp-set-ctrl > .bz-sp-chips) > .bz-sp-set-ctrl {
+  flex: 0 1 auto;
+  min-width: 0;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+.bz-sp-chips {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 6px;
+  min-width: 0;
+  max-width: 100%;
+}
+/* 窄屏（≤768px，与上方复合行两行排版同断点）：名称/说明独占首行，胶囊落到第二行、占满行宽从左侧排 */
+@media (max-width: 768px) {
+  .bz-sp-set-row:has(> .bz-sp-set-ctrl > .bz-sp-chips) {
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--bz-space-sm);
+  }
+  .bz-sp-set-row:has(> .bz-sp-set-ctrl > .bz-sp-chips) > .bz-sp-set-info {
+    min-width: 0;
+    padding-right: 0;
+  }
+  .bz-sp-set-row:has(> .bz-sp-set-ctrl > .bz-sp-chips) > .bz-sp-set-ctrl {
+    margin-left: 0;
+    width: 100%;
+    justify-content: flex-start;
+  }
+  .bz-sp-chips { justify-content: flex-start; }
+}
 /* 设置子项层级降级（enh-sweep-a）：isChild 行弱化、hover 恢复 */
 .bz-sp-desk .bz-sp-set-row.child,
 .bz-sp-mobile .bz-sp-set-row.child,
@@ -1647,7 +1692,9 @@
    padding 抬档并负 margin 视觉对位——横排紧凑行不外扩防互盖）。 */
 .bz-sp-desk .bz-sp-chips .bz-chip,
 .bz-sp-mobile .bz-sp-chips .bz-chip {
-  max-width: 260px;
+  /* 260px 是长路径的截断上限；上限再压一层「不超过胶囊容器宽」——折行后的窄列里
+     单枚胶囊不得比行还宽（否则又溢出分组卡）。 */
+  max-width: min(260px, 100%);
   font-family: ui-monospace, Consolas, monospace;
 }
 .bz-sp-desk .bz-sp-chips .bz-chip > span:first-child,
