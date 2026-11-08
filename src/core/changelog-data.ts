@@ -56,6 +56,26 @@ export function releaseEntryCount(release: ChangelogRelease): number {
  */
 export const CHANGELOG_RELEASES: readonly ChangelogRelease[] = [
   {
+    version: '1.42.0',
+    date: '2026-11-08',
+    // 条目与 docs/note-v1.42.0.md 同稿（scripts/_gen-changelog.mjs 自动生成，勿手改）
+    added: [
+      { domain: '灵感参考', text: '改成右侧浮窗，顶部显示正在读的那句话，结果分强相关与擦边。' },
+      { domain: 'AI 对话', text: '改成三栏弹窗，左边问过什么、右边本次依据，正文引用编号可点。' },
+      { domain: '视频教程', text: '知识盒与第二大脑的教程上线，空态与第一次打开都能看。' },
+    ],
+    fixed: [
+      { domain: '向量库', text: '只有空文件或纯 frontmatter 的库初始化不再报错、不再反复重跑。' },
+      { domain: 'AI 对话', text: '没配 AI 时顶栏照实显示未配置，不再假装就绪。' },
+    ],
+    improved: [
+      { domain: '灵感参考', text: '能锁定当前上下文，锁定后不再跟着光标跑。' },
+      { domain: 'AI 对话', text: '每次回答后给四个可点的追问，顶栏显示当前用的模型。' },
+      { domain: '灵感参考', text: '卡片单击就地展开，能一键打开、插入引用、钉住。' },
+      { domain: '灵感参考', text: '收起后是 18 像素窄条，不再占一条带图标的边。' },
+    ],
+  },
+  {
     version: '1.41.0',
     date: '2026-11-07',
     // 条目与 docs/note-v1.41.0.md 同稿（scripts/_gen-changelog.mjs 自动生成，勿手改）

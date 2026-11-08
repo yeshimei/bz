@@ -5702,6 +5702,57 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 
 /* 运行时隐藏（不用内联 display，样式单源） */
 .bz-setup .is-hidden { display: none; }
+
+/* ==================== 教程视频弹窗（core/ui/tutorial-modal） ====================
+   结构单源：票根 + 一句说明 + 次/主两个按钮。
+   这里只定版式、颜色一律走中性 token；域皮（`.bz-overlay-popup.<域类>`）负责材质，
+   所以同一个弹窗放进知识盒是纸墨、放进第二大脑是米白红棕。 */
+
+.bz-tut { display: flex; flex-direction: column; gap: var(--bz-space-md); }
+
+.bz-tut-cover {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 12px 14px;
+  border: 1px solid var(--bz-border);
+  border-radius: var(--bz-radius-md);
+  background: var(--bz-surface-2);
+  color: var(--bz-text-2);
+  text-align: left;
+  cursor: pointer;
+}
+
+.bz-tut-play {
+  flex: none;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: var(--bz-brand);
+  color: var(--bz-on-brand);
+}
+
+/* 三角播放符号：纯 CSS，不额外引图标 */
+.bz-tut-play::before {
+  content: '';
+  border-left: 11px solid currentColor;
+  border-top: 7px solid transparent;
+  border-bottom: 7px solid transparent;
+  margin-left: 3px;
+}
+
+.bz-tut-cover-text { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.bz-tut-kicker { font-size: 10.5px; letter-spacing: 0.14em; color: var(--bz-text-3); }
+.bz-tut-name { font-size: 15px; font-weight: 650; letter-spacing: 0.02em; color: var(--bz-text-1); }
+.bz-tut-desc { margin: 0; font-size: var(--bz-font-meta); line-height: 1.65; color: var(--bz-text-2); }
+.bz-tut-foot { display: flex; gap: 8px; justify-content: flex-end; }
+
+@media (hover: hover) {
+  .bz-tut-cover:hover { border-color: var(--bz-brand); }
+}
 /* ============================================================
  * bz · 赞赏弹窗样式（core/reward-dialog.css）
  *
@@ -23500,6 +23551,55 @@ canvas { display: block; }
   line-height: 2;
 }
 
+/* 空态里的视频教程入口：墨线小钮，与 .bz-kb-mt-btn 同族，独占一行 */
+.bz-kb-tut {
+  display: block;
+  margin: 10px auto 0;
+  border: 1px solid var(--line);
+  background: none;
+  color: var(--ink2);
+  font: inherit;
+  font-size: var(--bz-font-meta);
+  padding: 5px 14px;
+  border-radius: var(--bz-radius-sm);
+  cursor: pointer;
+  letter-spacing: 0.06em;
+}@media (hover: hover) {
+
+.bz-kb-tut:hover {
+  border-color: var(--accent);
+  background: var(--chip);
+  color: var(--ink);
+}
+}
+
+/* ===== 视频教程弹窗（core/ui/tutorial-modal；className = 'kb bz-kb-tutorial'）=====
+   共享壳 .bz-overlay-popup 挂 body —— `kb` 类把纸墨变量带在根上（同确认框的做法），
+   这里只把壳改成纸面材质；结构与按钮布局在 core/ui/components.css 的 .bz-tut-*。 */
+.bz-overlay-popup.bz-kb-tutorial {
+  background: var(--panel);
+  color: var(--ink);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.35);
+  font-family: var(--font-interface);
+  --bz-text-1: var(--ink);
+  --bz-text-2: var(--ink2);
+  --bz-text-3: var(--ink3);
+  --bz-surface-2: var(--card);
+  --bz-border: var(--line);
+  --bz-brand: var(--green);
+  --bz-on-brand: #fff;
+}
+.bz-overlay-popup.bz-kb-tutorial .bz-tut-name {
+  font-family: 'Noto Serif SC', SimSun, serif;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+}
+.bz-overlay-popup.bz-kb-tutorial .bz-tut-kicker { color: var(--amber); }
+/* 纸墨皮的播放钮不是圆糖：方一点，配纸面 */
+.bz-overlay-popup.bz-kb-tutorial .bz-tut-play { border-radius: 10px; }
+
 /* 未配置引导态（三个盒目录空着）：纸面墨字 + 墨线钮，与知识盒整体语言一致；
    不用 core 通用空态卡（宿主配色 + 实心主钮） */
 .bz-kb-gate {
@@ -25540,6 +25640,7 @@ canvas { display: block; }
 .bz-sb-ref-preview,
 .bz-sb-ref-card--float,
 .bz-sb-flow-dialog,
+.bz-sb-tutorial,
 .bz-sb-weekly-modal {
   --sb-bg: #fbfaf7;
   --sb-card: #ffffff;
@@ -25593,6 +25694,7 @@ canvas { display: block; }
 .theme-dark .bz-sb-ref-preview,
 .theme-dark .bz-sb-ref-card--float,
 .theme-dark .bz-sb-flow-dialog,
+.theme-dark .bz-sb-tutorial,
 .theme-dark .bz-sb-weekly-modal {
   --sb-bg: #17150f;
   --sb-card: #211d16;
@@ -26148,6 +26250,25 @@ canvas { display: block; }
   opacity: 0.6;
   cursor: default;
 }
+/* 空库引导页的视频教程入口（常驻在「开始向量化」下面） */
+.bz-sb-tut {
+  margin-top: 10px;
+  border: 1px solid var(--sb-line2);
+  background: none;
+  border-radius: 8px;
+  padding: 5px 14px;
+  font: inherit;
+  font-size: var(--bz-font-meta);
+  color: var(--sb-mut);
+  cursor: pointer;
+  letter-spacing: 0.04em;
+}@media (hover: hover) {
+
+.bz-sb-tut:hover {
+  border-color: var(--sb-acc);
+  color: var(--sb-acc);
+}
+}
 .bz-sb-init-progress {
   display: none;
   flex-direction: column;
@@ -26306,17 +26427,6 @@ canvas { display: block; }
   font-weight: 700;
   letter-spacing: -0.01em;
 }
-.bz-sb-ws-crumb {
-  font-size: 10.5px;
-  color: var(--sb-faint);
-  padding-left: 10px;
-  border-left: 1px solid var(--sb-line2);
-  margin-left: 1px;
-  min-width: 0;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
 .bz-sb-ws-acts {
   margin-left: auto;
   display: flex;
@@ -26343,6 +26453,14 @@ canvas { display: block; }
   background: var(--ok);
   display: block;
 }
+/* 未配置 AI：圆点转暖色警示，别再给「就绪」的假绿 */
+.bz-sb-ws-model.is-off {
+  color: var(--sb-warn);
+  border-color: var(--sb-warn);
+}
+.bz-sb-ws-model.is-off i {
+  background: var(--sb-warn);
+}
 .bz-sb-ws-ref {
   border: 1px solid var(--sb-line2);
   background: var(--sb-card);
@@ -26360,27 +26478,20 @@ canvas { display: block; }
   color: var(--sb-acc);
 }
 }
-.bz-sb-ws-new,
-.bz-sb-ws-close {
-  width: 27px;
-  height: 27px;
-  border: 0;
-  border-radius: 7px;
+/* 清空对话：顶栏次级按钮（历史仍每轮写盘，入口要能点到） */
+.bz-sb-chat-clear {
+  border: 1px solid var(--sb-line2);
   background: none;
+  border-radius: 7px;
+  padding: 4px 8px;
+  font-size: 10.5px;
   color: var(--sb-mut);
-  display: grid;
-  place-items: center;
   cursor: pointer;
-  padding: 0;
 }@media (hover: hover) {
-.bz-sb-ws-new:hover,
-.bz-sb-ws-close:hover{
-  background: var(--sb-acc-soft);
+.bz-sb-chat-clear:hover{
+  border-color: var(--sb-acc);
   color: var(--sb-acc);
 }
-}
-.bz-sb-chat-clear[hidden] {
-  display: none !important;
 }
 
 .bz-sb-ws-cols {
@@ -26413,6 +26524,10 @@ canvas { display: block; }
   margin-left: auto;
   font-family: var(--mono);
   color: var(--sb-faint);
+}
+/* 「下一步」分组与上一组拉开距离（原先靠内联 margin） */
+.bz-sb-ws-q-head--next {
+  margin-top: 14px;
 }
 .bz-sb-ws-q {
   display: block;
@@ -27618,7 +27733,6 @@ canvas { display: block; }
   .bz-sb-chat-input-area {
     padding: 8px 18px 14px;
   }
-  .bz-sb-ws-crumb,
   .bz-sb-ws-model {
     display: none;
   }
@@ -28103,6 +28217,29 @@ canvas { display: block; }
 /* 暗色壳影加深：与 .theme-dark .bz-sb-panel / .bz-sb-chat-modal 同值
    （黑影在深炭棕底不可见，域内该档是写死值、不走 token，故此处必须另写一条） */
 .theme-dark #__shared_confirm_popup__.bz-sb-flow-dialog {
+  box-shadow: 0 24px 60px #00000080;
+}
+
+/* ===== 视频教程弹窗（core/ui/tutorial-modal；className = bz-sb-tutorial）=====
+   共享壳 .bz-overlay-popup 挂 body —— 类名已并入上方 token 组（亮/暗两组），
+   这里只把壳改成米白 × 红棕材质；结构与按钮布局在 core/ui/components.css 的 .bz-tut-*。 */
+.bz-overlay-popup.bz-sb-tutorial {
+  background: var(--sb-bg);
+  color: var(--sb-ink);
+  border: 1px solid var(--sb-line2);
+  border-radius: 14px;
+  box-shadow: 0 24px 60px #00000022;
+  font-family: "Segoe UI Variable Text", "PingFang SC", "Microsoft YaHei", system-ui, -apple-system, sans-serif;
+  --bz-text-1: var(--sb-ink);
+  --bz-text-2: var(--sb-ink2);
+  --bz-text-3: var(--sb-ink3);
+  --bz-surface-2: var(--sb-card);
+  --bz-border: var(--sb-line2);
+  --bz-brand: var(--sb-acc);
+  --bz-on-brand: var(--sb-on-acc);
+}
+.bz-overlay-popup.bz-sb-tutorial .bz-tut-kicker { color: var(--sb-mut); }
+.theme-dark .bz-overlay-popup.bz-sb-tutorial {
   box-shadow: 0 24px 60px #00000080;
 }
 
