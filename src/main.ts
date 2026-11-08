@@ -78,7 +78,7 @@ import {
 import { openPomodoro, unloadPomodoro, ensurePomodoro, toggleFocus, skipBreak, togglePause } from './pomodoro';
 import { mountPomodoroStatusBar, unmountPomodoroStatusBar } from './pomodoro/statusbar';
 // 知识盒（knowledge 域，ADR-0072 自 bili-downloader 迁出、ADR-0112 三部重构；网页版已移除，见 tools/bili-downloader）
-import { openKnowledgePanel, openTermNote, openPassageNote, openImageNote, openKnowledgeAddTask, unloadKnowledge, relinkActiveNote, linkAllInBoxes, ensureKnowledgeFileSync, unloadKnowledgeFileSync } from './knowledge';
+import { openKnowledgePanel, openTermNote, openPassageNote, openImageNote, openKnowledgeAddTask, openKnowledgePreview, unloadKnowledge, relinkActiveNote, linkAllInBoxes, ensureKnowledgeFileSync, unloadKnowledgeFileSync } from './knowledge';
 // 挂载树白板（knowledge 域，issues 317/319）：两个命令直达 + 卸载清理（自绘遮罩挂 body，卸载必须摘）
 import { destroyMountTree, openMountTree, refreshMountTree } from './knowledge/mount-canvas';
 // 附件搬移（ticket 65 新域：移动当前笔记附件，fileManager 自动更新内部链接 + 右键菜单）
@@ -326,17 +326,21 @@ export default class BzPlugin extends Plugin {
   /** 卸载旗标（C13）：onLayoutReady 回调 / 延迟初始化定时器不随插件卸载摘除，
    *  启动窗口期内禁用插件后布局就绪（或 setTimeout 到点）须短路，防幽灵初始化且无卸载路径 */
   private unloaded = false;
-  /** 知识盒对外最小门面（ADR-0215，fork-weave 阅读器经 app.plugins.getPlugin('bz') 跨插件调用）：
-   *  只挂 openTermNote / openPassageNote 两个既有导出——签名与 KnowledgeEntryPrefill 契约不变，
-   *  不发明新入口。同步函数引用（非 getter / 非 Promise，外部 typeof 探测
+  /** 知识盒对外最小门面（ADR-0215，fork-weave / bz-reader 阅读器经 app.plugins.getPlugin('bz') 跨插件调用）：
+   *  只挂既有导出的函数引用——签名与 KnowledgeEntryPrefill 契约不变，不发明新入口。
+   *  同步函数引用（非 getter / 非 Promise，外部 typeof 探测
    *  `plugin.knowledge?.openTermNote === 'function'` 语义成立）；懒初始化仍在函数内部
-   *  ensureKnowledge（与命令入口同款），挂载本身零初始化成本。 */
+   *  ensureKnowledge（与命令入口同款），挂载本身零初始化成本。
+   *  openPreview（2026-11-08）：按路径打开文献预览弹层——阅读器把「存过的名词 / 段落」
+   *  显示成可点链接，点开要的是知识盒那张预览卡，而不是一个原始笔记文件。 */
   knowledge: {
     openTermNote: typeof openTermNote;
     openPassageNote: typeof openPassageNote;
     /** 文献文件夹配好了没（ADR-0294）：门面调用方据此在**调用前**说清「还差一步」，
      *  而不是等 bz 自己把设置页弹出来、用户对着跳走的界面猜发生了什么 */
     isFolderReady: () => boolean;
+    /** 按 vault 路径打开知识盒的文献预览（不在文献目录 / 文件缺失时回退原生打开） */
+    openPreview: (path: string) => Promise<void>;
   } | null = null;
   /** 阅读器 AI 门面（ADR-0294，bz-reader 同样经 app.plugins.getPlugin('bz') 调用）：
    *  笔记库检索 + 嵌入。**常驻转发对象**而不是一次性引用——第二大脑是布局就绪后懒初始化，
@@ -450,13 +454,16 @@ export default class BzPlugin extends Plugin {
     // 域事件总线地基：全插件唯一 vault 订阅点挂载（registerEvent 保证插件卸载时 Obsidian 自动清理引用）
     attachObsidianAdapter(this.app, (ref) => this.registerEvent(ref as any));
 
-    // 知识盒对外最小门面（ADR-0215）：外部插件（fork-weave 阅读器）经 getPlugin('bz') 取实例后
-    // 调名词/段落录入；不挂 window 全局、不新增命令与设置。同步赋值既有导出的函数引用即可
+    // 知识盒对外最小门面（ADR-0215）：外部插件（fork-weave / bz-reader）经 getPlugin('bz') 取实例后
+    // 调名词/段落录入与文献预览；不挂 window 全局、不新增命令与设置。同步赋值既有导出的函数引用即可
     // （knowledge 域懒初始化在两函数内部 ensureKnowledge，与命令入口完全同款）。
     this.knowledge = {
       openTermNote,
       openPassageNote,
       isFolderReady: () => !needsFolderKey('knowledge', 'knowledgeDirectory'),
+      /* 包一层而不是直接挂引用：openKnowledgePreview 的首参是 app（域内签名），
+         门面按外部口径只收 path，别让调用方去猜 bz 的内部形状。 */
+      openPreview: (path: string) => openKnowledgePreview(this.app, path),
     };
 
     // ESC 全局管理器重挂入口（N1）：escManager 是模块 IIFE 单例，禁用→再启用不重新求值，
