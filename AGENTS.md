@@ -4,33 +4,25 @@ Obsidian 插件。域 = `src/<域>/`，`core` 是共享层。中文输出。
 
 ## 动手之前：先读，再说，等回话
 
-改任何代码（含测试、构建脚本、样式）之前，只看不写，然后用**一段通俗的话**把三件事连起来讲清楚：这东西现在哪里不对劲、你打算怎么改、哪一处你还没把握。说给不懂代码的人听——不要贴文件路径、行号、函数名、报错原文这类技术细节；真有必须问的问题，单独编号放在最后。
+在改动代码之前，请先勘察相关代码细节，不要直接修改代码。然后按顺序列出四个清单，每个清单都要有编号，清单内每一项也用序号列出；每项用一句话或一段话，通俗、简洁地说明，不要附任何代码细节或技术细节：
 
-那段话后面再单独列一份**「你可能没想到的」清单**：会顺带影响哪些地方、哪些老行为会变、哪些这次不碰、有什么风险或代价。一条一句大白话，别写成技术报告。
+1. 针对我提出的问题/需求，说明你是如何理解的、准备怎么做。
+2. 指出我可能疏忽、会导致问题的地方，并附上你的建议。
+3. 就以上问题，列出可以优化、增强的方向。
+4. 列出你不确认、需要我回答的问题。
 
-讲完就停。**只有用户明确说「可以改」才算放行**；回答部分问题、补充信息、没回复都不算。方案变了重新讲一遍。
-
-- 讲清楚之前不写文件、不建 worktree；自己发现的（测试红了、tsc 报错）同样先讲再动。
-- 纯 `.md`、用户当轮明说「直接改」的，不进流程。
-
-改一个域：`node scripts/test-domain.mjs <域>`（~10s）。跨域、说不清、或要下「通过」结论：`node scripts/test-affected.mjs`（~12s）——只跑受影响的测试 + 扫树守卫，**它的结论就是结论**；没变过的文件复用上次成功结果，通常几秒。
-
-改到 core、依赖清单、测试配置、全局夹具时，选择器自己升格为全量，不用你判断。合回主干前跑 `node scripts/test-affected.mjs --since master`（覆盖整条分支）。手动强制全量才用 `--full`。
-
-别用 `vitest --changed` / `related`：一批守卫靠读源码文本断言，模块图里没有这条边，改样式会「命中 0 个、退出码 0」——假绿，不是慢。
-
-测试一律 `node` 直调，别走 `pnpm run`（package.json 同名脚本已同口径）：pnpm 11 跑脚本前的依赖自检默认会自动 `pnpm install`，本仓必判「过期」——主仓里 `tools/*` 子包被算成工作区项目，worktree 里还经 junction 读到主仓的状态文件。
-
-重试与 waitFor 预算都跟并发会话数走（判据在 `scripts/test-workers.mjs`）：独占时 **retry 0**、waitFor 2.5s；有并发会话才 retry 2、waitFor 5s。别在 `vitest.config.ts` 里写死 `retry: 2` —— 那会让每条真失败白等两轮（一轮 = 用例里最深的那个 waitFor 预算），几十条同时红就是十几分钟，而全程 CPU 闲着。要显式复现抖动：`BZ_TEST_RETRY=2`。
+等我确认后再改动代码。
 
 ## 硬约束（看见就是错）
-- 样式源只有 `src/<域>/styles.css`（根 `styles.css` 是聚合产物）。域内禁 `scrollbar-width: thin/auto`、禁自绘 thumb、禁运行时注入 `<style>`、禁内联视觉样式。例外只有两处，都要先有 ADR：① 远端皮肤包，只在 `src/core/skin-pack.ts` 单一注入点（ADR-0199）；② 展示板**沙箱框文档内部**的滚动条样式，只在 `src/dock/ui.ts` 的 `FRAME_SCROLLBAR_CSS`（ADR-0243 补记，作用域仅 iframe 文档、守卫掐死范围）。
-- 未定稿的探索稿只写 `.scratch/<名>/`，别混进 `src/` 或 `docs/`。
-- 不手改生成物：根 `main.js` / `styles.css`、`changelog-data.ts`、`downloads/manifest.json`、`downloads/skins/`、`tools/dock-watch/dock-core.cjs`（+ 同目录 `core-version.json`）。
-- 命令 ID `bz-<域>-<动作>`；通知正文不带 emoji（新语义查 `src/core/notice.ts` 的 ICONS）。
-- **新增弹窗必须穿本域的皮。** `uiModal` / `openFlowDialog` 只给中性壳（400px 窄卡、居中正文、灰底胶囊按钮），直接裸用就是「另一个插件弹出来的框」——2026-10-31 引导页的关闭确认就这么翻车过。做法：`uiModal` 传 `className`、`openFlowDialog` 传 `className`，皮肤规则写进该域的 `styles.css`（`#__shared_confirm_popup__.<皮肤类> …` 起手，因为壳的居中/宽度挂在 id 上，两个类压不住）；本域已有弹窗体就复用，不要另起一套。
-- **遮罩之上不许再压一层可点的铺满层。** 点遮罩关闭的判据是「click 的 target 是遮罩本体」，再叠一层 `position: fixed; inset: 0` 的可点容器，target 就永远落在那层上，遮罩点了没反应（2026-10-31 日记兜底纸：没设文件夹时整张桌被 `.bz-diary-fallback` 盖住，只剩右上角 X 能关）。两种正确做法：那层 `pointer-events: none`，或把它的节点一起写进遮罩的命中判据（日记取的是后者，见 ADR-0230 补记）。全屏面板（本身就铺满、没有遮罩空白）不受这条约束。
-- 改动走 worktree（仓库外，从最新 master 分叉）；**worktree 内不构建**——产物直出本机 vault（`esbuild.config.mjs` 硬编码，`BZ_VAULT_DIR` 可覆盖落点）与仓库根。
+
+1. 样式只认 `src/<域>/styles.css`，域内禁滚动条自绘/注入/内联视觉，例外仅 ADR 授权的皮肤包与展示板 iframe 滚动条。
+2. 未定稿探索稿只放 `.scratch/<名>/`，不得混入 `src/` 或 `docs/`。
+3. 生成物一律不手改，包括根 `main.js`、`styles.css`、`changelog-data.ts`、`downloads/manifest.json`、`downloads/skins/` 及 dock-watch 生成文件。
+4. 命令 ID 用 `bz-<域>-<动作>`，通知正文不带 emoji，新语义查 `src/core/notice.ts` 的 ICONS。
+5. 新增弹窗必须用本域 `styles.css` 给 `uiModal`/`openFlowDialog` 传皮肤类穿皮，并复用本域已有弹窗体。
+6. 遮罩之上不得再压可点铺满层，否则点遮罩关闭失效；应设 `pointer-events: none` 或把该层纳入命中判据。
+7. 改动走仓库外 worktree 并从最新 master 分叉，worktree 内不构建，产物直出本机 vault 与仓库根。
+8. 存储路径的存在性/读取/mtime 一律走 `core/storage` 的问盘助手（`diskPathExists` / `diskReadText` / `diskPathStat`），不得用 `vault.getAbstractFileByPath` 探测——缺省数据目录是点前缀路径，vault 索引恒空（ADR-0289）。
 
 ## 开发工作流（测试库直出，ADR-0276）
 
@@ -45,21 +37,16 @@ Obsidian 插件。域 = `src/<域>/`，`core` 是共享层。中文输出。
 
 ## 提交
 
-Conventional Commits。**提交信息即更新日志正文**，只有 `feat` / `fix` / `perf` 进日志；标题主句（`——` 之前那段）至少 4 个字，短了会被 `_gen-changelog.mjs` 的 `rewrite()` 静默丢弃（提交照样成功，日志里没这条）。
+收到，这些规则我记下了，关键约束复述确认：
 
-同一版里修自己刚加、还没发出去的东西，**并回那条 `feat`**（squash 进主句，主题句写修复后的最终态），别让日志出现「新功能 + 修复它」两条——日志是给用户看的（[docs/changelog.md](docs/changelog.md)）。只有修上一版已发布行为、或升版后引入的回归，才单独留 `fix`。
+- **提交信息即日志正文**：Conventional Commits，仅 `feat`/`fix`/`perf` 进日志；标题主句（`——` 前）≥4 字，否则被 `_gen-changelog.mjs` 的 `rewrite()` 静默丢弃。同版内修自己未发布的改动 squash 回原 `feat`，只有修已发布行为或升版后回归才单留 `fix`。
+- **合入流程**：worktree → `git merge master` → 门禁（`test-affected --since master` + `tsc --noEmit` + 自审 + diff 审查）→ 合回主仓 → 推送。
+- **升级提示内置**：文案在 `src/core/changelog-data.ts`，发版前把本版插数组最前，`version` 与 `manifest.json` 完全一致（`tests/core/changelog-data.test.ts` 对账，漏加必红），文案与 `downloads/bz-changelog.html` 一致。
+- **推送即双推**：`git push origin` 同时推 GitHub 与码云（pushurl），单边用 `git push github/gitee`。码云是第二下载通道（GitHub Release 主 → 码云 Release 备，jsDelivr 已退场）。
+- **码云 Release**：GitHub 七步后跑 `node scripts/push-gitee.mjs`，正文取 `docs/note-v<版本>.md`，挂 **15 个资产**（安装包/离线资源包/SHA256SUMS/三件套/downloads 扁平化 9 个）；令牌在 `~/.gitee-token`，绝不进仓库；只镜像已转正 Release（`gh release view` 非 draft），否则 exit 3。
+- **对外镜像只剩码云**：assets 步为纯本地对账（不跑脚本不联网）；真正镜像只有 `release-gate.mjs finalize` 里的 `push-gitee`，动手前过 `enforceReleaseOrder`。`yeshimei/bz-assets` 已退役冻结，`push-assets.mjs` 仅留作手动重建，唯一在用的是 `--upload-only`（补传 `downloads/`，不碰分发仓）。
+- **编号与沉淀**：占 issues/ADR 号先查主仓最新号；拍板结论进 `.scratch/memo-suite-plugin/spec.md`，决策进 `docs/adr/` 并同步 `CONTEXT.md`。
 
-流程：worktree → `git merge master` → 门禁全绿（`test-affected --since master` + `tsc --noEmit` + 自审 + diff 审查）→ 合回主仓 → 推送。
-
-**升级提示的数据内置在 `src/core/changelog-data.ts`**（2026-11-02）：小窗不下载远端日志，只认这一份。发版前把本版那条插到数组最前面，`version` 必须与 `manifest.json` 完全一致——`tests/core/changelog-data.test.ts` 会拿 manifest 对账，漏加必红（否则这版静默不弹提示）。文案与 `downloads/bz-changelog.html` 保持一致，别在这里另写一版。
-
-**推送即双推**（2026-11-01）：`origin` 挂了第二条 pushurl（`git@gitee.com:ntbl/bz.git`），`git push origin` 会同时推 GitHub 与码云，tag 同理。码云是**第二下载通道**（2026-11-02 起：GitHub Release 主 → 码云 Release 备，jsDelivr 整条退场，见 `src/core/remote-base.ts`）。只推单边时用 `git push github …` / `git push gitee …`（两个具名远端都在）。
-
-**发版时码云另有一条 Release**：GitHub 那边走完七步后跑 `node scripts/push-gitee.mjs`，它建/更新码云的 Release 页（正文取 `docs/note-v<版本>.md`）并挂 **15 个资产**（安装包 / 离线资源包 / SHA256SUMS / 三件套 / downloads 扁平化 9 个）。**downloads/ 那批也要发**（2026-11-02 反转：码云现在是备通道，少一个资产就等于备通道缺一块；与 GitHub 同一套扁平化命名，共 15 个）。令牌放 `~/.gitee-token`（一行），**绝不进仓库**（主仓公开）。**顺序闸**：它只镜像已转正的 Release（`gh release view` 不是 draft），否则 exit 3。
-
-**对外镜像只剩码云一条**（2026-11-02）：七步里的 assets 步是**纯本地对账**（清单声明的每个文件在不在），不跑脚本、不碰网络；真正的对外镜像只有 `release-gate.mjs finalize` 里的 `push-gitee`（转正 → 码云），动手前过 `enforceReleaseOrder`，Release 没转正就 exit 3。分发仓 `yeshimei/bz-assets` 同日起**退役**：原地冻结、不再上传（它的存在理由 jsDelivr 已整条退场），`push-assets.mjs` 保留作手动重建工具，不进程；唯一还在用的模式是 `--upload-only`（往源码仓 Release 补传 `downloads/` 那批资产，create-draft 调它），它不碰分发仓。
-
-占 issues / ADR 编号前先查主仓库最新号；拍板结论进 `.scratch/memo-suite-plugin/spec.md`，决策进 `docs/adr/` 并同步 `CONTEXT.md`。
 
 ## 去哪儿查
 | 要什么 | 去哪 |
