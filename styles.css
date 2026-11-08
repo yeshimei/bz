@@ -18289,6 +18289,34 @@ canvas { display: block; }
   }
 }
 
+/* 支持者角标（2026-11-08）：+人数，钉在「支持作者」右上角。
+   15px 圆点里 9px 字——它是这排按钮上唯一的彩色实心块，再大就抢戏了。
+   两位数自己撑成小胶囊（min-width + padding 一起长），99 位以上文案封顶成 99+
+   （见 changelog-links.ts）。边框取面板底色，做出「从按钮上挖掉一角」的观感。
+   pointer-events: none —— 角标是按钮的装饰，点击永远落在按钮本体上。 */
+.bz-chg-note .bz-chg-link.donate { position: relative; }
+.bz-chg-note .bz-chg-count {
+  position: absolute;
+  top: -5px;
+  right: -6px;
+  min-width: 15px;
+  height: 15px;
+  padding: 0 4px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  background: var(--sp-accent);
+  color: var(--sp-on-accent);
+  font-size: 9px;
+  font-weight: 600;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  border: 2px solid var(--sp-panel);
+  box-sizing: content-box;
+  pointer-events: none;
+}
+
 
 /* ═══════════ 更新日志弹窗（changelog-note.ts，2026-11-02）═══════════
    一个弹窗两个门面：升级后第一次打开界面自动弹一次；设置页「文档 → 更新日志」开的
@@ -18826,6 +18854,14 @@ canvas { display: block; }
   .bz-chgn-mtools .bz-chg-link svg { width: 19px; height: 19px; }
   /* 带文字的「支持作者」必须 width:auto —— 上面那条同为 (0,2,0)，会把它按 40px 卡死成竖排 */
   .bz-chgn-mtools .bz-chg-link.donate { width: auto; height: 40px; gap: 7px; padding: 0 14px; font-size: 12.5px; }
+  /* 角标跟按钮一起放大一档：40px 按钮上挂 15px 的角标会显得缩水 */
+  .bz-chgn-mtools .bz-chg-link.donate .bz-chg-count {
+    top: -6px;
+    right: -7px;
+    min-width: 16px;
+    height: 16px;
+    font-size: 10px;
+  }
 }
 
 
