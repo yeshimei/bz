@@ -27,15 +27,15 @@
       "name": "知识盒工具包",
       "file": "tools/bili-downloader.tar.gz",
       "kind": "bundle",
-      "sha256": "a144ab32e9c9bbd5dffd8261067c2fa30849772ee4ac6e191c1f02ca4dc66b7e",
-      "size": 26754
+      "sha256": "29ebef8895e1150d3a458f7791e68d547eeed200e4b03f9edcec6284cd29789a",
+      "size": 27607
     },
     {
       "id": "tool-dock-watch",
       "name": "工具坞工具包",
       "file": "tools/dock-watch.tar.gz",
       "kind": "bundle",
-      "sha256": "2d0c96fce5f360c764d874636c4cd13746e907fde739d988f7016459a54ffc19",
+      "sha256": "eef641b43b43634d86021d1e57cf5b2ac80a63a3b342846c7e83979a81a8b5ac",
       "size": 49646
     },
     {
@@ -298,7 +298,7 @@
     "tool-obsidian-face"
   ],
   "release": {
-    "version": "1.42.0",
-    "tag": "v1.42.0"
+    "version": "1.42.1",
+    "tag": "v1.42.1"
   }
 }

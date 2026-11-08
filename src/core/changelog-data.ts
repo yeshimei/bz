@@ -56,6 +56,18 @@ export function releaseEntryCount(release: ChangelogRelease): number {
  */
 export const CHANGELOG_RELEASES: readonly ChangelogRelease[] = [
   {
+    version: '1.42.1',
+    date: '2026-11-08',
+    // 条目与 docs/note-v1.42.1.md 同稿（scripts/_gen-changelog.mjs 自动生成，勿手改）
+    added: [
+      { domain: '更新日志', text: '「支持作者」右上角多了一枚支持者人数角标。' },
+    ],
+    fixed: [
+      { domain: 'B 站视频', text: '整片压缩不再因为时长差半秒被判失败。' },
+      { domain: 'B 站视频', text: '下载没下全时会直接提示，不再拿半截视频继续处理。' },
+    ],
+  },
+  {
     version: '1.42.0',
     date: '2026-11-08',
     // 条目与 docs/note-v1.42.0.md 同稿（scripts/_gen-changelog.mjs 自动生成，勿手改）
