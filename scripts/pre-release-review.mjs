@@ -60,12 +60,12 @@ for (const [g, files] of sorted) {
 }
 out.push('## 四维度检查（检查点见 docs/pre-release-review.md）');
 out.push('');
+out.push('（每条一句话、不写位置；编号跨维度连续排，按 P0 > P1 > P2 排序）');
+out.push('');
 for (const dim of ['代码', '样式 UI', '稳定性', '增强建议']) {
   out.push(`### ${dim}`);
   out.push('');
-  out.push('| # | 位置 | 问题 | 建议 | 档 |');
-  out.push('|---|---|---|---|---|');
-  out.push('|  |  |  |  |  |');
+  out.push('- （一句话，不写位置、不写代码细节）');
   out.push('');
 }
 out.push('清单给用户挑号后：选哪些修哪些，修完才进七步；P0 没修完不发版。');
