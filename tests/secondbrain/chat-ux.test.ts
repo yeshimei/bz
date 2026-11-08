@@ -436,4 +436,41 @@ describe('第二大脑对话：引用卡（ADR-0110 §4；issue 359 随 AI 通�
     await until(() => chat.messagesDiv.textContent!.includes('文件不存在或已被移动'));
     chat.destroy();
   });
+
+  it('正文 [n] 标号物化成角标；点击与右栏依据联动高亮', async () => {
+    const vault = new MockVault();
+    const app = mockAppWithVault(vault);
+    setApp(app);
+    vault.files.set('日记/2026-09-16.md', '命中内容');
+    const { chat } = await makeChatWithHits(
+      [{ path: '日记/2026-09-16.md', score: 0.8, chunk: '相关片段' }],
+      vault,
+      app
+    );
+    vi.spyOn(AI, 'ask').mockResolvedValue('引用回答 [1]');
+
+    chat.input.value = '角标问题';
+    await chat.sendChatMessage();
+    await until(() => chat.messagesDiv.querySelectorAll('.bz-sb-cite').length === 1);
+
+    const badge = chat.messagesDiv.querySelector('.bz-sb-cite') as HTMLElement;
+    expect(badge.dataset.n).toBe('1');
+    badge.click();
+    expect(chat.citesDiv.querySelector('.bz-sb-chat-cite')!.classList.contains('is-on')).toBe(true);
+    chat.destroy();
+  });
+
+  it('左栏提问索引：点击条目滚到对应消息并高亮', () => {
+    const chat = new ChatPanel(makeStore(), {} as any);
+    const msg = chat.addChatMessage('user', '问题一');
+    const btn = chat.questionsDiv.querySelector('.bz-sb-ws-q[data-msg]') as HTMLElement;
+    expect(btn).toBeTruthy();
+    const scroll = vi.fn();
+    (msg as any).scrollIntoView = scroll;
+
+    btn.click();
+    expect(scroll).toHaveBeenCalledTimes(1);
+    expect(msg.classList.contains('bz-sb-chat-msg--hit')).toBe(true);
+    chat.destroy();
+  });
 });

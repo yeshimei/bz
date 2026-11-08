@@ -24,6 +24,7 @@ import { openFlowDialog } from '../core/flow-dialog';
 import { openDepsGuide, probeOllamaService } from '../core/deps-guide';
 import { escManager } from '../core/esc-manager';
 import { formatRelativeTime } from '../core/utils';
+import { openReaderJump } from '../core/reader-link';
 import { isMobileEnv } from '../core/mobile';
 import { tryGetSettings, getSettings, saveSettings, panelSizePersist } from '../core/settings-provider';
 import { openSettingsModal } from '../core/settings-modal';
@@ -444,7 +445,8 @@ export class SecondBrainPanel {
       const bookRow = (e.target as HTMLElement).closest('.bz-sb-dist-row[data-book]') as HTMLElement | null;
       const bookId = bookRow?.dataset.book;
       if (bookId) {
-        window.open(`obsidian://bz-reader?book=${encodeURIComponent(bookId)}`);
+        // 协议单源（core/reader-link）：移动端兜底与失败提示都在那一层，别在这里裸 window.open
+        openReaderJump(this.app, bookId);
         return;
       }
       const row = (e.target as HTMLElement).closest('.bz-sb-dist-row--dir') as HTMLElement | null;
@@ -463,7 +465,7 @@ export class SecondBrainPanel {
       if (!row) return;
       const bookId = row.dataset.book;
       if (bookId) {
-        window.open(`obsidian://bz-reader?book=${encodeURIComponent(bookId)}`);
+        openReaderJump(this.app, bookId);
         return;
       }
       const path = row.dataset.path;

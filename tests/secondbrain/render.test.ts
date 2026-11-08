@@ -20,7 +20,7 @@ import {
   panelLogHtml,
   chatShellHtml,
   chatThinkingHtml,
-  chatCitesHtml,
+  chatQuestionsHtml,
   refCardHtml,
   refStateHtml,
   sbSourceColor,
@@ -191,17 +191,21 @@ describe('书籍并入统计（2026-11-08）', () => {
 });
 
 describe('对话 markup', () => {
-  it('骨架含输入/发送/清空锚点；推荐词默认空', () => {
-    const html = chatShellHtml(20);
+  it('骨架含输入/发送/清空锚点；推荐词默认空；清空钮不再隐藏', () => {
+    const html = chatShellHtml();
     expect(html).toContain('id="bz-sb-chat-input"');
     expect(html).toContain('id="bz-sb-chat-send"');
     expect(html).toContain('id="bz-sb-chat-clear"');
+    expect(html).not.toContain('id="bz-sb-chat-clear" hidden');
     expect(html.match(/class="bz-sb-chat-chip"/g)).toBeNull();
     expect(html).toContain('id="bz-sb-chat-chips" hidden');
     expect(chatThinkingHtml(20)).toContain('检索 20 条');
-    const cites = chatCitesHtml([{ path: '卡片盒/享乐适应.md', pct: 86, color: '#0f766e' }]);
-    expect(cites).toContain('data-path');
-    expect(chatCitesHtml([])).toBe('');
+  });
+
+  it('左栏「下一步」只有通用追问，不写死示例问题', () => {
+    const html = chatQuestionsHtml([{ id: 1, text: '为什么会遗忘', active: true }]);
+    expect(html).toContain('data-follow="再顺着这个思路追问下去"');
+    expect(html).not.toContain('情绪二因素');
   });
 });
 

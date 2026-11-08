@@ -797,17 +797,6 @@
   font-weight: 700;
   letter-spacing: -0.01em;
 }
-.bz-sb-ws-crumb {
-  font-size: 10.5px;
-  color: var(--sb-faint);
-  padding-left: 10px;
-  border-left: 1px solid var(--sb-line2);
-  margin-left: 1px;
-  min-width: 0;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
 .bz-sb-ws-acts {
   margin-left: auto;
   display: flex;
@@ -834,6 +823,14 @@
   background: var(--ok);
   display: block;
 }
+/* 未配置 AI：圆点转暖色警示，别再给「就绪」的假绿 */
+.bz-sb-ws-model.is-off {
+  color: var(--sb-warn);
+  border-color: var(--sb-warn);
+}
+.bz-sb-ws-model.is-off i {
+  background: var(--sb-warn);
+}
 .bz-sb-ws-ref {
   border: 1px solid var(--sb-line2);
   background: var(--sb-card);
@@ -851,27 +848,20 @@
   color: var(--sb-acc);
 }
 }
-.bz-sb-ws-new,
-.bz-sb-ws-close {
-  width: 27px;
-  height: 27px;
-  border: 0;
-  border-radius: 7px;
+/* 清空对话：顶栏次级按钮（历史仍每轮写盘，入口要能点到） */
+.bz-sb-chat-clear {
+  border: 1px solid var(--sb-line2);
   background: none;
+  border-radius: 7px;
+  padding: 4px 8px;
+  font-size: 10.5px;
   color: var(--sb-mut);
-  display: grid;
-  place-items: center;
   cursor: pointer;
-  padding: 0;
 }@media (hover: hover) {
-.bz-sb-ws-new:hover,
-.bz-sb-ws-close:hover{
-  background: var(--sb-acc-soft);
+.bz-sb-chat-clear:hover{
+  border-color: var(--sb-acc);
   color: var(--sb-acc);
 }
-}
-.bz-sb-chat-clear[hidden] {
-  display: none !important;
 }
 
 .bz-sb-ws-cols {
@@ -904,6 +894,10 @@
   margin-left: auto;
   font-family: var(--mono);
   color: var(--sb-faint);
+}
+/* 「下一步」分组与上一组拉开距离（原先靠内联 margin） */
+.bz-sb-ws-q-head--next {
+  margin-top: 14px;
 }
 .bz-sb-ws-q {
   display: block;
@@ -2109,7 +2103,6 @@
   .bz-sb-chat-input-area {
     padding: 8px 18px 14px;
   }
-  .bz-sb-ws-crumb,
   .bz-sb-ws-model {
     display: none;
   }

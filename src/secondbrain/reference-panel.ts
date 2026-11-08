@@ -13,7 +13,7 @@
  * 悬停预览方法保留（旧测试/未来可选），但新交互不再绑定 mouseenter——卡片改为就地展开，
  * 避免浮层遮住正文。
  */
-import { stripMdExt } from '../core/utils';
+import { stripMdExt, formatRelativeTime } from '../core/utils';
 import type { App, TFile } from 'obsidian';
 import { notice } from '../core/notice';
 import { allocZ } from '../core/z-order';
@@ -61,6 +61,8 @@ export class ReferencePanel {
   private lastNoteName = '';
   private lastNotePath = '';
   private lastSentence = '';
+  /** 最近一次检索完成的时间（上下文卡「N 分钟前」用它，不再写死「刚刚更新」） */
+  private lastUpdatedAt = 0;
   private sourceOrder = new Map<string, number>();
 
   private isClosed = false;
@@ -80,7 +82,7 @@ export class ReferencePanel {
   /** 在途检索（issue 428「只查最新」） */
   private inflight: AbortController | null = null;
 
-  constructor(app: App, store: VectorStore, existingWin?: FloatWindow) {
+  constructor(app: App, store: VectorStore) {
     this.app = app;
     this.store = store;
 
@@ -98,18 +100,14 @@ export class ReferencePanel {
       (this.app as any).commands?.executeCommandById?.('bz-secondbrain-chat');
     });
 
-    if (existingWin) {
-      this.fw = existingWin;
-    } else {
-      this.fw = new FloatWindow('灵感参考', {
-        width: 400,
-        headerRight: this.denseBtn,
-        subtitle: '从当前笔记联想',
-        glyph: 'radar',
-        minimal: true,
-        onClose: () => this.destroyResources(),
-      });
-    }
+    this.fw = new FloatWindow('灵感参考', {
+      width: 400,
+      headerRight: this.denseBtn,
+      subtitle: '从当前笔记联想',
+      glyph: 'radar',
+      minimal: true,
+      onClose: () => this.destroyResources(),
+    });
     this.fw.headerRight.insertBefore(this.chatBtn, this.denseBtn.nextSibling);
     this.denseBtn.addEventListener('click', () => this.toggleDensity());
     mountIcons(this.denseBtn);
@@ -187,6 +185,20 @@ export class ReferencePanel {
     this.debounceTimer = setTimeout(() => void this.refreshContent(), CONFIG.DEBOUNCE_DELAY);
   }
 
+  /**
+   * 清掉「上一份结果仍有效」的记忆。
+   *
+   * 占位态（无编辑器 / 光标句不足 2 字）只换文案不够：早退条件看的是 lastQuery 与
+   * lastResults——不清的话光标回到原句时会命中早退，列表永远停在「打开一篇笔记…」；
+   * 在途检索也要一并中止，否则它回来会把占位盖成结果。
+   */
+  private resetListState(): void {
+    this.lastQuery = '';
+    this.lastResults = [];
+    this.inflight?.abort();
+    this.inflight = null;
+  }
+
   async refreshContent(force = false): Promise<void> {
     if (this.isClosed) return;
     const ed = this.app.workspace.activeEditor?.editor;
@@ -194,8 +206,9 @@ export class ReferencePanel {
     this.lastNoteName = note?.basename || '';
     this.lastNotePath = note?.path || '';
     if (!ed) {
+      this.resetListState();
       this.lastSentence = '';
-      this.renderContext('未打开编辑器');
+      this.renderContext();
       this.showListState('打开一篇笔记，参考会跟着光标走');
       return;
     }
@@ -203,10 +216,10 @@ export class ReferencePanel {
     this.lastSentence = query;
     this.renderContext();
     if (query.length < 2) {
+      this.resetListState();
       this.showListState('把光标放到正文里，这里会跟着联想');
       return;
     }
-    if (!force && this.locked && query === this.lastQuery) return;
     if (!force && query === this.lastQuery && this.lastResults.length) return;
 
     this.lastQuery = query;
@@ -228,11 +241,13 @@ export class ReferencePanel {
       if (this.inflight !== ac) return;
       this.inflight = null;
       if (this.isClosed) return;
+      this.lastUpdatedAt = Date.now();
       this.renderResults(results);
+      this.renderContext();
       if (degraded) this.appendListHint('⚠ 向量检索暂不可用，已降级为文本匹配');
     } catch (err) {
       if (ac.signal.aborted) return;
-      if (this.inflight === ac) this.inflight = null;
+      this.resetListState();
       console.warn('[secondbrain] 参考面板检索失败', err);
       if (this.isClosed) return;
       this.showListState('检索失败：请检查 Ollama 服务后重试');
@@ -240,18 +255,17 @@ export class ReferencePanel {
   }
 
   /** 上下文卡（当前笔记 + 光标句 + 锁定/换一批） */
-  private renderContext(emptyText = ''): void {
+  private renderContext(): void {
     const noteName = this.lastNoteName || '未打开笔记';
     const parent = this.lastNotePath.includes('/')
       ? this.lastNotePath.slice(0, this.lastNotePath.lastIndexOf('/'))
       : '';
-    const sentence = emptyText || this.lastSentence;
     this.contextDiv.innerHTML = refContextHtml({
       noteName,
       path: parent,
-      sentence,
+      sentence: this.lastSentence,
       locked: this.locked,
-      updated: '刚刚更新',
+      updated: this.lastUpdatedAt ? formatRelativeTime(this.lastUpdatedAt) : '',
     });
     mountIcons(this.contextDiv);
     const sub = this.fw.header.querySelector('.bz-sb-float-sub');
@@ -305,20 +319,14 @@ export class ReferencePanel {
     }
   }
 
-  /** 命中笔记的段落数与修改时间（原型卡片底部“2 段命中 · 今天 08:14”） */
+  /** 命中笔记的段数与修改时间（原型卡片底部「2 段 · 今天 08:14」） */
   private hitMeta(item: SearchHit, pct: number): string {
     if (item.bookId) return `书籍命中 · 匹配度 ${pct}%`;
-    let chunks = 0;
-    let when = '';
-    try {
-      const entry = (this.store.meta as any)?.notes?.[item.path];
-      chunks = entry?.chunks?.length || 0;
-      when = this.formatWhen(entry?.mtime);
-    } catch {
-      /* 元数据缺失就只显示质量档 */
-    }
+    const entry = this.store.meta?.notes?.[item.path];
+    const chunks = entry?.chunks?.length || 0;
+    const when = this.formatWhen(entry?.mtime);
     const quality = pct >= 90 ? '高度重合' : '可作旁证';
-    return [chunks ? `${chunks} 段命中` : '', when, quality].filter(Boolean).join(' · ');
+    return [chunks ? `${chunks} 段` : '', when, quality].filter(Boolean).join(' · ');
   }
 
   private formatWhen(mtime?: number): string {
@@ -331,6 +339,8 @@ export class ReferencePanel {
     const mm = String(d.getMinutes()).padStart(2, '0');
     if (d.toDateString() === now.toDateString()) return `今天 ${hh}:${mm}`;
     if (d.toDateString() === yest.toDateString()) return `昨天 ${hh}:${mm}`;
+    // 跨年补年份：否则去年 12 月与今年 12 月在卡上看起来是同一天
+    if (d.getFullYear() !== now.getFullYear()) return `${d.getFullYear()} 年 ${d.getMonth() + 1} 月 ${d.getDate()} 日`;
     return `${d.getMonth() + 1} 月 ${d.getDate()} 日`;
   }
 
@@ -583,8 +593,9 @@ export class ReferencePanel {
       notice('没有打开的编辑器');
       return;
     }
-    const name = stripMdExt(item.path.replace(/^.*[\\/]/, ''));
-    ed.replaceSelection(`[[${name}]]`);
+    // 链接用库内路径（不带 .md）：只看 basename 会在同名笔记间指到错的那篇
+    const link = stripMdExt(item.path.replace(/\.md$/i, ''));
+    ed.replaceSelection(`[[${link}]]`);
     notice('已插入引用', 'success');
   }
 
@@ -593,9 +604,7 @@ export class ReferencePanel {
     if (this.pinned.has(item.path)) this.pinned.delete(item.path);
     else this.pinned.add(item.path);
     btn.classList.toggle('is-on', this.pinned.has(item.path));
-    btn.innerHTML = `<i data-lucide="pin" style="width:10px;height:10px"></i>${
-      this.pinned.has(item.path) ? '已钉住' : '钉住'
-    }`;
+    btn.innerHTML = `<i data-lucide="pin"></i>${this.pinned.has(item.path) ? '已钉住' : '钉住'}`;
     mountIcons(btn);
   }
 

@@ -577,20 +577,20 @@ export function weeklyLoadingHtml(): string {
 export const CHAT_CHIPS = ['为什么会遗忘', '享乐适应', '怎么高效记笔记', '睡不好怎么补救', '闪电', '王阳明'];
 
 /**
- * 对话工作区骨架（探针形态）：顶栏 + 左问题栏 + 中对话 + 右依据栏。
+ * 对话弹窗骨架：顶栏 + 左问题栏 + 中对话 + 右依据栏，900×620 居中弹窗（不是全屏工作区）。
  *
  * 类名沿用 `bz-sb-chat-*` 行为锚点（输入/发送/清空/消息容器）——测试与行为层按这些锚点找节点；
- * 外层加 `bz-sb-ws` 表示全屏工作区，样式在 styles.css 里覆盖旧居中弹窗的几何。
+ * 外层加 `bz-sb-ws` 表示三栏工作区形态，几何在 styles.css 里定义。
  */
-export function chatShellHtml(topK: number): string {
+export function chatShellHtml(): string {
   return `
   <header class="bz-sb-ws-top">
     <button class="bz-sb-ws-back" id="bz-sb-ws-back" aria-label="返回第二大脑" title="返回第二大脑">${ic('arrow-left', 15)}</button>
     <div class="bz-sb-ws-title">问答</div>
     <div class="bz-sb-ws-acts">
-      <span class="bz-sb-ws-model"><i></i>DeepSeek · 就绪</span>
+      <span class="bz-sb-ws-model" id="bz-sb-ws-model"><i></i>AI 设置</span>
       <button class="bz-sb-ws-ref" id="bz-sb-ws-ref">${ic('radar', 12)}灵感参考</button>
-      <button class="bz-sb-chat-clear" id="bz-sb-chat-clear" hidden>清空对话</button>
+      <button class="bz-sb-chat-clear" id="bz-sb-chat-clear">清空对话</button>
     </div>
   </header>
   <div class="bz-sb-ws-cols">
@@ -639,34 +639,9 @@ export function sbBookColor(seed: string): string {
   return SB_PALETTE[Math.abs(h) % SB_PALETTE.length];
 }
 
-/** 引用卡列表（工作区右栏 / 移动端共用；会话内展示，不落盘） */
-export function chatCitesHtml(
-  hits: Array<{ path: string; pct: number; color: string; bookId?: string; label?: string }>,
-): string {
-  if (!hits.length) return '';
-  return (
-    `<div class="bz-sb-chat-cites">` +
-    hits
-      .map((h) => {
-        /* 展示名：书命中带 label（书名里可能有斜杠，按路径取 basename 会截成半截），
-           笔记命中仍按路径取文件名 */
-        const name = h.label || stripMdExt(h.path.replace(/^.*[\\/]/, ''));
-        return (
-          `<button class="bz-sb-chat-cite" data-path="${escapeHtml(h.path)}"${
-            h.bookId ? ` data-book="${escapeHtml(h.bookId)}"` : ''
-          }>` +
-          `<span class="bz-sb-chat-cite-score">${h.pct}%</span>` +
-          `<span class="bz-sb-dot" style="background:${h.color}"></span>` +
-          `<span class="bz-sb-chat-cite-name">${escapeHtml(name)}</span>` +
-          `</button>`
-        );
-      })
-      .join('') +
-    `</div>`
-  );
-}
-
-/** 左问题栏（本次对话的提问索引；点击由行为层滚动到对应消息） */
+/** 左问题栏（本次对话的提问索引；点击由行为层滚动到对应消息）。
+ *  「下一步」只留一条与库内容无关的通用追问——具体追问由每轮回答的 chips 生成，
+ *  不在这里写死任何示例问题（写死等于替用户问一句他库里没有的话）。 */
 export function chatQuestionsHtml(items: Array<{ id: number; text: string; active?: boolean; meta?: string }>): string {
   if (!items.length) {
     return `<div class="bz-sb-ws-q-empty">还没有提问。<br>在下面问第一句。</div>`;
@@ -682,9 +657,8 @@ export function chatQuestionsHtml(items: Array<{ id: number; text: string; activ
           `</button>`
       )
       .join('') +
-    `<div class="bz-sb-ws-q-head" style="margin-top:14px">下一步</div>` +
-    `<button class="bz-sb-ws-q bz-sb-ws-q--soft" data-follow="再顺着这个思路追问下去">${ic('sparkles', 11)} 顺着追问</button>` +
-    `<button class="bz-sb-ws-q bz-sb-ws-q--soft" data-follow="和「情绪二因素」并排看">和「情绪二因素」并排看</button>`
+    `<div class="bz-sb-ws-q-head bz-sb-ws-q-head--next">下一步</div>` +
+    `<button class="bz-sb-ws-q bz-sb-ws-q--soft" data-follow="再顺着这个思路追问下去">${ic('sparkles', 11)} 顺着追问</button>`
   );
 }
 
@@ -752,7 +726,7 @@ export function refContextHtml(info: {
   const has = !!info.sentence;
   return `<div class="bz-sb-ref-ctx-live"><i class="${info.locked ? 'is-locked' : ''}"></i>${
     info.locked ? '已锁定当前上下文' : '正在跟随光标'
-  }<span>${escapeHtml(info.updated)}</span></div>
+  }${info.updated ? `<span>${escapeHtml(info.updated)}</span>` : ''}</div>
   <div class="bz-sb-ref-ctx${info.locked ? ' is-locked' : ''}">
     <div class="bz-sb-ref-ctx-top"><span>当前笔记</span>
       <button class="bz-sb-ref-ctx-btn" data-ref-act="lock">${ic('pin', 10)}${info.locked ? '已锁定' : '锁定'}</button>
@@ -782,7 +756,6 @@ export function refCardHtml(
     source?: string;
     meta?: string;
     snippet?: string;
-    open?: boolean;
     pinned?: boolean;
     book?: boolean;
   } = {},

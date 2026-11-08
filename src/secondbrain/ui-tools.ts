@@ -38,15 +38,21 @@ export function jumpToChunk(file: any, chunkText: string, highlight = false): vo
   }
 }
 
-/** 渲染 markdown（异步失败也回退 textContent——QA L815-822 同语义；ticket 107 修移植回归） */
-export function renderMarkdown(el: HTMLElement, md: string, app: App): void {
+/** 渲染 markdown（异步失败也回退 textContent——QA L815-822 同语义；ticket 107 修移植回归）。
+ *  返回 Promise：调用方要等正文落定再做后处理（如对话正文的 [n] 角标）时 await 它，
+ *  不再用定时器赌渲染时机。 */
+export function renderMarkdown(el: HTMLElement, md: string, app: App): Promise<void> {
   try {
     const ctx = new Component();
-    Promise.resolve(MarkdownRenderer.render(app, md, el, '', ctx)).catch(() => {
-      el.textContent = md;
-    });
+    return Promise.resolve(MarkdownRenderer.render(app, md, el, '', ctx)).then(
+      () => undefined,
+      () => {
+        el.textContent = md;
+      }
+    );
   } catch {
     el.textContent = md;
+    return Promise.resolve();
   }
 }
 

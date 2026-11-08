@@ -11,7 +11,7 @@
  * secondbrain.json chatHistory 段（上限 100 条），但打开默认空会话、不自动读回旧历史。
  *
  * 落域适配（ADR-0110 §4）：检索命中（path+score）以右栏引用卡渲染——仅会话内展示不落盘，
- * chatHistory 段 {role, content} 结构零改动（历史读回无引用卡）；引用卡点击 = 打开对应笔记。
+ * chatHistory 段 {role, content} 结构零改动（历史只写盘、打开不读回）；引用卡点击 = 打开对应笔记。
  */
 import type { App, TFile } from 'obsidian';
 import { escManager } from '../core/esc-manager';
@@ -23,6 +23,7 @@ import { mountIcons } from '../core/ui';
 import { buildConfig } from './config';
 import { renderMarkdown } from './ui-tools';
 import { AI } from './ai';
+import { getAIProvider, getProviderDescriptor } from '../core/ai';
 import { appendChatHistory, clearChatHistory, type ChatHistoryEntry } from './store-file';
 import {
   chatShellHtml,
@@ -41,7 +42,6 @@ import {
   motionChatOut,
   motionMsgIn,
   motionSearchWave,
-  motionCitesIn,
   motionChatClear,
   motionTeardown,
 } from './motion';
@@ -97,8 +97,6 @@ export class ChatPanel {
   private msgSeq = 0;
   /** 每个问题对应的依据条数（左栏小字） */
   private questionCites = new Map<number, number>();
-  /** 最近一轮依据（右栏当前内容） */
-  private lastCites: CiteRow[] = [];
   /** 每轮回答结束后由 AI 生成的一组建议追问（默认空） */
   private suggestions: string[] = [];
 
@@ -116,7 +114,7 @@ export class ChatPanel {
     this.popup.className = 'bz-sb-chat-modal bz-sb-ws';
     this.popup.id = 'bz-sb-chat-panel';
     this.popup.style.display = 'none';
-    this.popup.innerHTML = chatShellHtml(CONFIG.CHAT_TOP_K);
+    this.popup.innerHTML = chatShellHtml();
     mountIcons(this.popup);
 
     this.messagesDiv = this.popup.querySelector('#bz-sb-chat-messages') as HTMLElement;
@@ -215,7 +213,26 @@ export class ChatPanel {
     this.addChatMessage('assistant', welcomeText(CONFIG.CHAT_TOP_K));
     this.renderQuestions();
     this.renderCites([]);
+    void this.loadModelBadge();
     // 默认空会话：打开只显示欢迎语；历史仍写盘（chatHistory 段），不自动读回
+  }
+
+  /** 顶栏模型徽标：按当前 AI 设置解析真实 provider/模型，未配置就照实说未配置 */
+  private async loadModelBadge(): Promise<void> {
+    const el = this.popup.querySelector('#bz-sb-ws-model') as HTMLElement | null;
+    if (!el) return;
+    try {
+      const provider = await getAIProvider();
+      if (!this.alive) return;
+      const label = getProviderDescriptor(provider.id).label;
+      el.classList.remove('is-off');
+      el.innerHTML = `<i></i>${escapeHtml(label)}${provider.model ? ` · ${escapeHtml(provider.model)}` : ''}`;
+    } catch {
+      if (!this.alive) return;
+      el.classList.add('is-off');
+      el.innerHTML = `<i></i>未配置 AI`;
+      el.title = '主设置 → AI 配置：填好密钥与模型后，问答才能用';
+    }
   }
 
   get alive(): boolean {
@@ -262,10 +279,11 @@ export class ChatPanel {
     div.className = `bz-sb-chat-msg ${role}`;
     div.dataset.msg = String(++this.msgSeq);
     let bubble: HTMLElement | null = null;
+    let rendered: Promise<void> | null = null;
     if (role === 'assistant') {
       div.innerHTML = chatAiMsgHtml();
       bubble = div.querySelector('.bz-sb-chat-bubble') as HTMLElement;
-      renderMarkdown(bubble, content, this.app); // 失败时内部回退 textContent
+      rendered = renderMarkdown(bubble, content, this.app); // 失败时内部回退 textContent
     } else {
       div.innerHTML = chatUserMsgHtml();
       (div.querySelector('.bz-sb-chat-bubble') as HTMLElement).textContent = content;
@@ -284,10 +302,13 @@ export class ChatPanel {
       const uid = this.lastUserId();
       if (uid != null) this.questionCites.set(uid, rows.length);
       this.renderQuestions();
-      // markdown 渲染是异步的：渲染完再把 [1] 这样的标号物化成可点的角标
+      // markdown 渲染是异步的：等这一段落定后再把 [1] 这样的标号物化成可点角标
+      // （固定延时赌时机在长回答/慢机器上会漏——角标不出现、点不动）
       if (bubble) {
         const root = bubble;
-        setTimeout(() => this.decorateCites(root, rows.length), 80);
+        void (rendered ?? Promise.resolve()).then(() => {
+          if (root.isConnected) this.decorateCites(root, rows.length);
+        });
       }
     }
     this.renderChips();
@@ -357,9 +378,8 @@ export class ChatPanel {
     mountIcons(this.questionsDiv);
   }
 
-  /** 右栏本次依据 */
+  /** 右栏本次依据（只渲染，不另存一份——重渲染后以 DOM 为准） */
   private renderCites(rows: CiteRow[]): void {
-    this.lastCites = rows;
     this.citesDiv.innerHTML = chatCitesPanelHtml(rows);
     this.citesDiv.scrollTop = 0;
   }
@@ -485,7 +505,6 @@ export class ChatPanel {
         const { body, suggestions } = splitChatAnswer(answer);
         const finalMsg = this.addChatMessage('assistant', body || answer, results);
         motionMsgIn(finalMsg);
-        motionCitesIn(finalMsg.querySelector<HTMLElement>('.bz-sb-chat-cites'));
         this.persistHistory([{ role: 'assistant', content: body || answer }]);
         this.suggestions = parseSuggestions(suggestions);
         this.renderChips();
@@ -528,7 +547,6 @@ export class ChatPanel {
     this.sendBtn.removeAttribute('data-state');
     this.sendBtn.title = '发送';
     this.history = [];
-    this.lastCites = [];
     this.questionCites.clear();
     this.suggestions = [];
     this.renderChips();
