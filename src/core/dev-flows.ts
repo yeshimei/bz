@@ -246,18 +246,52 @@ export function devFlows(): DevFlow[] {
           hold: 2500,
         },
         {
-          name: '八 · 点遮罩关闭：小窗和遮罩要一起消失，别留下透明挡板',
+          name: '八 · 点遮罩：先弹「支持作者」提醒，日志窗停在下面不动',
           run: async () => {
             const maskEl = notePopup()?.parentElement;
             maskEl?.click();
-            await waitUntil(() => !notePopup(), 3000, '小窗消失');
+            await waitUntil(() => !!document.querySelector('.bz-sup'), 3000, '提醒窗出现');
+            await sleep(900);
+          },
+          hold: 4000,
+        },
+        {
+          name: '九 · 点「以后再说」：提醒窗与日志窗一起收掉，别留下透明挡板',
+          run: async () => {
+            document.querySelector<HTMLElement>('.bz-sup-later')?.click();
+            await waitUntil(
+              () => !notePopup() && !document.querySelector('.bz-sup'),
+              3000,
+              '两个窗都消失',
+            );
             await sleep(400);
           },
           hold: 2500,
         },
         {
-          name: '九 · 同一会话里再触发 5 次：本次已经看过，不该再弹',
+          name: '十 · 再关一次，这回点「支持作者」：日志窗收掉，落进赞赏扫码窗',
+          run: async () => {
+            closeAllModals();
+            const { openChangelogNote } = await import('../settings-panel/changelog-note');
+            openChangelogNote(CHANGELOG_RELEASES);
+            await sleep(600);
+            document.querySelector<HTMLElement>('.bz-chgn-close')?.click();
+            await waitUntil(() => !!document.querySelector('.bz-sup'), 3000, '提醒窗出现');
+            await sleep(700);
+            document.querySelector<HTMLElement>('.bz-sup-go')?.click();
+            await waitUntil(
+              () => !notePopup() && !!document.querySelector('.bz-rw'),
+              5000,
+              '赞赏扫码窗出现',
+            );
+            await sleep(900);
+          },
+          hold: 5000,
+        },
+        {
+          name: '十一 · 同一会话里再触发 5 次：本次已经看过，不该再弹',
           run: async (ctx) => {
+            closeAllModals();
             for (let i = 0; i < 5; i++) {
               ctx.plugin.noteBzUsed();
               await sleep(250);
@@ -267,7 +301,7 @@ export function devFlows(): DevFlow[] {
           hold: 2500,
         },
         {
-          name: '十 · 跨版本更新（上次看的是几个月前的老版本）：再弹一次，中间版本的日志一起列出来',
+          name: '十二 · 跨版本更新（上次看的是几个月前的老版本）：再弹一次，中间版本的日志一起列出来',
           run: async (ctx) => {
             closeAllModals();
             // 拿一个确实早于当前的版本，模拟「用户几个月没更新，这次一口气跨好几个版本」
@@ -284,7 +318,7 @@ export function devFlows(): DevFlow[] {
           hold: 5000,
         },
         {
-          name: '十一 · 降级回旧版（当前版本比「已看过」还旧）：不弹，安静记账',
+          name: '十三 · 降级回旧版（当前版本比「已看过」还旧）：不弹，安静记账',
           run: async (ctx) => {
             closeAllModals();
             await ctx.plugin.markChangelogSeen('99.0.0');

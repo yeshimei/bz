@@ -39,6 +39,9 @@ const SOURCES = [
   // 赞赏弹窗（core/reward-dialog.ts 的配套样式）：纸色/金色全部写死在本文件作用域，
   // 刻意不消费设计 token（一张纸，不跟主题变色）
   "src/core/reward-dialog.css",
+  // 支持作者提醒（core/support-prompt.ts 的配套样式）：关更新日志时叠在最上面那张纸，
+  // 与赞赏窗同族；同样写死作用域、刻意不消费设计 token
+  "src/core/support-prompt.css",
   // 日记本内嵌 StPageFlip v2.0.7（MIT，见 src/diary/vendor/page-flip.LICENSE）——库自带样式，
   // 必须排在本域 styles.css 之前，域样式才能覆盖它（ADR-0230）
   "src/diary/vendor/stPageFlip.css",

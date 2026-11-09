@@ -12,6 +12,8 @@
  * （「谁来过，我记得」+ `bz`）也删只留弧、空态改「还没有人打赏」、关于组行名「赞赏」改「打赏」。
  * 引言句换稿：原客套话（先说声谢谢）删掉，换成作者处境的实话说白——开发维护与教程视频
  * 都是作者一个人、完全免费、无广告、无其他渠道收益（2026-10-30 用户定稿）。
+ * 2026-11-09 起这句话从 `core/support-prompt` 取（关日志时的提醒窗说的是同一句），
+ * 改文案只改那一处；README 是文档、不进构建，那边仍需手动同步。
  *
  * 赞赏码为什么内置：图固定不变、68KB，走 downloads/ 远端要等一次网络往返，
  * 且清单层只支持单文件文本与 tar.gz 目录包，为此单开一条二进制通道不划算。
@@ -28,6 +30,7 @@
 import { uiModal } from './ui/modal';
 import { escapeHtml } from './utils';
 import { REWARD_NAMES, formatRewardDate, type RewardName } from './reward-names';
+import { SUPPORT_PITCH, SUPPORT_PITCH_REST } from './support-prompt';
 import rewardCodeUrl from './assets/reward-code.png';
 
 // 名单与日期格式化的门面留在原处：外部一直是从 reward-dialog 拿这两样的。
@@ -97,7 +100,7 @@ export function buildRewardBody(names: readonly RewardName[], onClose: () => voi
   head.className = 'bz-rw-head';
   head.innerHTML =
     '<div class="bz-rw-kicker">题赠</div>' +
-    '<p class="bz-rw-lead">插件的开发维护和教程视频制作都是作者一个人，<br>完全免费、无广告，也没有任何其他渠道的收益。</p>';
+    `<p class="bz-rw-lead">${SUPPORT_PITCH}<br>${SUPPORT_PITCH_REST}</p>`;
   root.appendChild(head);
 
   const code = document.createElement('div');

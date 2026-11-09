@@ -14,11 +14,16 @@
  *
  * 两端共用一份 DOM，靠 CSS 媒体查询切换——不在 JS 里判断宽度，改窗口大小也不会错位。
  * 正文滚动条两端都藏掉，靠上下渐隐提示「还有内容」。
+ *
+ * 关窗先问一句（2026-11-09 用户拍板）：点 × / 点遮罩 / ESC 都不直接关，先叠一张
+ * 「支持作者」提醒（core/support-prompt）——选「支持作者」进赞赏扫码窗，选「以后再说」
+ * 两个窗一起收。三条关闭路径共用一个出口，不存在「点遮罩能偷偷关掉」这种事。
  * ============================================================ */
 import { uiModal } from '../core/ui/modal';
 import { escapeHtml } from '../core/utils';
 import { normalizeVersion } from '../core/version';
 import { releaseEntryCount, type ChangelogEntry, type ChangelogRelease } from '../core/changelog-data';
+import { openSupportPrompt } from '../core/support-prompt';
 import { bindChangelogLinks, changelogLinksHtml } from './changelog-links';
 
 /** 三段定义（顺序即渲染顺序；标签与线上日志文档同一套措辞） */
@@ -202,13 +207,35 @@ export function openChangelogNote(
   // bz-sp-skin 不能省：本窗配色全吃 --sp-* 令牌，而令牌只定义在 .bz-sp-skin 作用域里。
   // onClose 摘 resize 监听：遮罩 / ESC / × 关窗都不经过下面返回的句柄，只挂在句柄上
   // 得等下一次窗口 resize 才自清。（syncFade 是函数声明，此处引用已在提升范围内。）
+  //
+  // requestClose（2026-11-09）：关窗先问一句要不要支持作者。×、点遮罩、ESC 三条路
+  // 都交给它，日志窗停在提醒窗之下不动——选「以后再说」才一起收。
   const modal = uiModal({
     content,
     className: 'bz-chg-note bz-sp-skin',
     title: '更新日志',
     onClose: () => window.removeEventListener('resize', syncFade),
+    requestClose: () => closeWithPrompt(),
   });
   const popup = modal.popup;
+
+  /** 关窗前的最后一问（2026-11-09 用户拍板）。
+   *  - 「支持作者」→ 两窗收掉，打开赞赏扫码窗（core/reward-dialog）；
+   *  - 「以后再说」/ 遮罩 / ESC → 提醒窗与日志窗一起收掉。
+   *  `asking` 是单飞闸：提醒窗已经开着时再点遮罩/ESC，不叠第二个提醒窗。 */
+  let asking = false;
+  function closeWithPrompt(): void {
+    if (asking) return;
+    asking = true;
+    void openSupportPrompt().then((choice) => {
+      asking = false;
+      modal.close();
+      if (choice === 'support') {
+        // 赞赏码 68KB，动态引入——只为真的点下去的人付这份体积
+        void import('../core/reward-dialog').then((m) => m.openRewardDialog());
+      }
+    });
+  }
 
   const rail = popup.querySelector<HTMLElement>('.bz-chgn-rail');
   const hd = popup.querySelector<HTMLElement>('.bz-chgn-hd');
@@ -259,12 +286,13 @@ export function openChangelogNote(
   requestAnimationFrame(syncFade);
 
   popup.querySelectorAll<HTMLElement>('.bz-chgn-close').forEach((btn) => {
-    btn.addEventListener('click', () => modal.close());
+    btn.addEventListener('click', () => closeWithPrompt());
   });
   bindChangelogLinks(popup);
 
   return {
     close: () => {
+      // 卸载 / 测试收口走这条路：**不弹**提醒（插件正在消失，问一句没有意义）
       window.removeEventListener('resize', syncFade);
       modal.close();
     },

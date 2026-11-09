@@ -155,10 +155,39 @@ describe('更新日志弹窗 · 桌面', () => {
     await vi.waitFor(() => expect(reward.openRewardDialog).toHaveBeenCalled());
   });
 
-  it('右上 × 关闭窗口', () => {
+  // 2026-11-09：× 不再直接关窗，先弹「支持作者」提醒（core/support-prompt）
+  it('右上 × 先弹「支持作者」提醒，日志窗留在下面', async () => {
     openChangelogNote([release()]);
     note()!.querySelector<HTMLElement>('.bz-chgn-pane ~ .bz-chgn-close, .bz-chgn-close')!.click();
+    await vi.waitFor(() => expect(document.querySelector('.bz-sup')).toBeTruthy());
+    expect(note()).not.toBeNull();
+  });
+
+  it('提醒窗选「以后再说」：两个窗一起收掉', async () => {
+    openChangelogNote([release()]);
+    note()!.querySelector<HTMLElement>('.bz-chgn-close')!.click();
+    await vi.waitFor(() => expect(document.querySelector('.bz-sup')).toBeTruthy());
+    document.querySelector<HTMLElement>('.bz-sup-later')!.click();
+    await vi.waitFor(() => expect(note()).toBeNull());
+    expect(document.querySelector('.bz-sup')).toBeNull();
+  });
+
+  it('提醒窗选「支持作者」：日志窗收掉，打开赞赏扫码窗', async () => {
+    const reward = await import('../../src/core/reward-dialog');
+    vi.mocked(reward.openRewardDialog).mockClear();
+    openChangelogNote([release()]);
+    note()!.querySelector<HTMLElement>('.bz-chgn-close')!.click();
+    await vi.waitFor(() => expect(document.querySelector('.bz-sup')).toBeTruthy());
+    document.querySelector<HTMLElement>('.bz-sup-go')!.click();
+    await vi.waitFor(() => expect(reward.openRewardDialog).toHaveBeenCalled());
     expect(note()).toBeNull();
+  });
+
+  it('句柄 close() 不弹提醒（插件卸载收口不该问一句）', () => {
+    const handle = openChangelogNote([release()]);
+    handle.close();
+    expect(note()).toBeNull();
+    expect(document.querySelector('.bz-sup')).toBeNull();
   });
 
   it('一条改动都没有的内容不弹空窗', () => {
