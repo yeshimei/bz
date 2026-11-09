@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * 测试库数据管理（ADR-0276）。目标 = 测试库（E:/Obsidian/测试，可用 BZ_TEST_VAULT / --vault 覆盖）。
+ * 测试库数据管理（ADR-0276）。目标 = 测试库（E:/Obsidian/bz，可用 BZ_TEST_VAULT / --vault 覆盖）。
  *
  * 用法：
  *   node scripts/dev-vault.mjs snapshot            # 快照测试库 bz 数据（data.json + storage/），留最近 5 份
@@ -16,7 +16,7 @@ import path from 'node:path';
 const args = process.argv.slice(2);
 const cmd = args[0];
 const vIdx = args.indexOf('--vault');
-const vaultName = vIdx >= 0 ? args[vIdx + 1] : path.basename(process.env.BZ_TEST_VAULT || '测试');
+const vaultName = vIdx >= 0 ? args[vIdx + 1] : path.basename(process.env.BZ_TEST_VAULT || 'bz');
 const VAULT = `E:/Obsidian/${vaultName}`;
 const PLUGIN = `${VAULT}/.obsidian/plugins/bz`;
 const SNAP_ROOT = `${VAULT}/.obsidian/bz-snapshots`;

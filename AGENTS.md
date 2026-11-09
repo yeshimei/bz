@@ -26,10 +26,10 @@ Obsidian 插件。域 = `src/<域>/`，`core` 是共享层。中文输出。
 
 ## 开发工作流（测试库直出，ADR-0276）
 
-改 UI 的快速循环，走**测试库**（`E:\Obsidian\测试`，数据笔记可随便造）：
+改 UI 的快速循环，走**测试库**（`E:\Obsidian\bz`，数据笔记可随便造）：
 
-- `BZ_VAULT_DIR="E:/Obsidian/测试/.obsidian/plugins/bz" node esbuild.config.mjs` —— watch 常驻，改动自动重出 main.js/styles.css 到测试库。
-- `node scripts/dev-restart.mjs` —— 一次性构建 + 把 styles.css 同步成测试库 snippet（`bz-dev.css`，CSS 改动免重启）+ 重启 Obsidian 直开测试库。`--no-build` 跳过构建；`--vault <名>` 换目标库。
+- `BZ_VAULT_DIR="E:/Obsidian/bz/.obsidian/plugins/bz" node esbuild.config.mjs` —— watch 常驻，改动自动重出 main.js/styles.css 到测试库。
+- `node scripts/dev-restart.mjs --vault bz` —— 一次性构建 + 把 styles.css 同步成测试库 snippet（`bz-dev.css`，CSS 改动免重启）+ 重启 Obsidian 直开测试库。`--no-build` 跳过构建；`--vault <名>` 换目标库。
 - `node scripts/dev-vault.mjs snapshot|reset|wipe|seed` —— 测试库快照 / 回滚 / 清空（测首次引导）/ 从主库播种数据与日记笔记。
 - **开机直达弹窗**：往测试库 `<插件目录>/storage/debug-open.json` 写 `{"command":"bz-<域>-open"}`，插件启动 layout-ready 后自动执行该命令——改某个弹窗时重启即见，不用翻菜单。删掉文件即恢复常规启动。
 - **步骤器（自动播，肉眼看）**：往 `<插件目录>/storage/debug-flow.json` 写 `{"flow":"<流程 id>","auto":true}`，插件启动后自动把 `core/dev-flows` 里那条流程一步步播到底，每步停一会儿——作用是**替人点、替人滚**，人盯着屏幕判断流程对不对（不做自动断言、不写报告）。现成范例 `changelog-note`。跑完删文件，否则每次启动都会重播。

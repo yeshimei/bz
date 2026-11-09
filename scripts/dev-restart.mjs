@@ -7,7 +7,7 @@
  *   node scripts/dev-restart.mjs --no-build      # 跳过构建（只同步 + 重启）
  *   node scripts/dev-restart.mjs --vault <名>    # 换目标库（E:/Obsidian/<名>）
  *
- * 环境变量：BZ_TEST_VAULT（缺省 E:/Obsidian/测试）
+ * 环境变量：BZ_TEST_VAULT（缺省 E:/Obsidian/bz）
  *
  * CSS 免重启原理：styles.css 拷成 <vault>/.obsidian/snippets/bz-dev.css 并在
  * appearance.json 里启用——Obsidian 实时监听 snippets 目录，存盘即生效。
@@ -19,7 +19,7 @@ import path from 'node:path';
 const args = process.argv.slice(2);
 const noBuild = args.includes('--no-build');
 const vIdx = args.indexOf('--vault');
-const vaultName = vIdx >= 0 ? args[vIdx + 1] : path.basename(process.env.BZ_TEST_VAULT || '测试');
+const vaultName = vIdx >= 0 ? args[vIdx + 1] : path.basename(process.env.BZ_TEST_VAULT || 'bz');
 const VAULT = `E:/Obsidian/${vaultName}`;
 const PLUGIN_DIR = `${VAULT}/.obsidian/plugins/bz`;
 const SNIPPETS = `${VAULT}/.obsidian/snippets`;
