@@ -6,7 +6,8 @@
  * 依赖：只用 Node 内置能力（fetch + crypto），不装任何 npm 包。
  * 凭据：本机扫码一次得到的 cookie 文件（缺省 ~/.bz-quark-cookie），不进仓库；
  *       失效时跑 `python scripts/quark-auth.py` 重新授权。
- * 落点（2026-11-09 实测）：网盘根 / bz / bz 与 网盘根 / bz / bz reader。
+ * 落点：网盘根目录（2026-11-09 用户改口——一个产品只有一个包，不再套文件夹）。
+ *       根目录里别人的文件一律不碰，「只留最新版」只认本产品自己的包名。
  *
  * 用法：
  *   node scripts/push-quark.mjs --product=bz          # 传仓库根 bz-<版本>.zip
@@ -37,10 +38,24 @@ const UA =
   'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) quark-cloud-drive/2.5.20 Chrome/100.0.4896.160 Electron/18.3.5.4-b478491100 Safari/537.36 Channel/pckk_other_ch';
 const OSS_UA = 'aliyun-sdk-js/6.6.1 Chrome 98.0.4758.80 on Windows 10 64-bit';
 
-/** 两个产品在网盘里的落点 */
+/**
+ * 两个产品在网盘里的落点：都放根目录（2026-11-09 用户改口——一个产品只有一个包，
+ * 不值得再套一层文件夹）。`pattern` 是「只留最新版」的判据：只删本产品自己的旧包，
+ * 根目录里用户的影视、备份等文件一律不碰。
+ */
 const PRODUCTS = {
-  bz: { label: 'bz', pdir: '2da1697d0d044dacbc319220cd1a4357', zip: (v) => `bz-${v}.zip` },
-  reader: { label: 'bz reader', pdir: 'c3792e6f412549479a3d0cb909a9ee37', zip: (v) => `bz-reader-${v}.zip` },
+  bz: {
+    label: 'bz',
+    pdir: '0',
+    zip: (v) => `bz-${v}.zip`,
+    pattern: /^bz-\d+\.\d+\.\d+\.zip$/,
+  },
+  reader: {
+    label: 'bz reader',
+    pdir: '0',
+    zip: (v) => `bz-reader-${v}.zip`,
+    pattern: /^bz-reader-\d+\.\d+\.\d+\.zip$/,
+  },
 };
 
 function arg(name, fallback = undefined) {
@@ -230,19 +245,19 @@ function resolveVersion(repo) {
   }
 }
 
-/** 把 bz reader 的三件套打成 bz-reader-<版本>.zip（包内一层 bz-reader/，与 bz 的包同构） */
-function packReader(repo, version) {
-  const tmp = mkdtempSync(join(tmpdir(), 'bz-reader-pack-'));
-  const stage = join(tmp, 'bz-reader');
+/** 把三件套打成 `<dirName>/main.js` 开头的 zip（与 pack-release 的包同构），返回临时文件 */
+function packPlugin(repo, version, dirName) {
+  const tmp = mkdtempSync(join(tmpdir(), 'bz-pack-'));
+  const stage = join(tmp, dirName);
   mkdirSync(stage, { recursive: true });
   for (const f of ['main.js', 'manifest.json', 'styles.css']) {
     copyFileSync(join(repo, f), join(stage, f));
   }
-  const out = join(tmp, `bz-reader-${version}.zip`);
+  const out = join(tmp, `${dirName}-${version}.zip`);
   const run = spawnSync('powershell', ['-NoProfile', '-Command', `Compress-Archive -Path '${stage}' -DestinationPath '${out}'`], {
     stdio: 'inherit',
   });
-  if (run.status !== 0) throw new Error('打包 bz-reader 失败');
+  if (run.status !== 0) throw new Error(`打包 ${dirName} 失败`);
   return { zip: out, cleanup: () => rmSync(tmp, { recursive: true, force: true }) };
 }
 
@@ -264,12 +279,14 @@ async function main() {
   let zip = String(arg('file', ''));
   let cleanup = null;
   if (!zip) {
-    if (product === 'reader') {
-      const packed = packReader(repo, version);
+    const candidate = join(repo, conf.zip(version));
+    if (existsSync(candidate)) {
+      zip = candidate;
+    } else {
+      // 没有现成的包就现场打三件套（bz 正常走 pack-release；reader 一直现场打）
+      const packed = packPlugin(repo, version, product === 'reader' ? 'bz-reader' : 'bz');
       zip = packed.zip;
       cleanup = packed.cleanup;
-    } else {
-      zip = join(repo, conf.zip(version));
     }
   }
   if (!existsSync(zip)) throw new Error(`找不到要上传的文件：${zip}`);
@@ -297,8 +314,8 @@ async function main() {
   const hit = after.find((f) => f.file_name === name && f.size === size);
   if (!hit) throw new Error(`上传后对不上账：目录里没找到 ${name}（${size} 字节）`);
 
-  // 只留最新版：删掉除本次之外的所有文件
-  const stale = after.filter((f) => f.fid !== hit.fid);
+  // 只留最新版：只删本产品自己的旧包，根目录里别人的文件一律不碰
+  const stale = after.filter((f) => f.fid !== hit.fid && conf.pattern.test(f.file_name));
   if (stale.length) {
     await quark.remove(stale.map((f) => f.fid));
     console.log(`[push-quark] 清理旧版：${stale.map((f) => f.file_name).join('、')}`);
