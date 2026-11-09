@@ -31,6 +31,7 @@ import { topifyZ } from '../core/dom';
 import { attachItemActions, type ItemAction } from '../core/item-actions';
 import { isMobileEnv } from '../core/mobile';
 import { tryGetSettings, panelSizePersist } from '../core/settings-provider';
+import type { BzResizablePersist } from '../core/ui/resize';
 import { H } from './state';
 import { DOMAIN_MAP } from './domains';
 import {
@@ -125,6 +126,34 @@ function restoreScroll(overlay: HTMLElement): void {
  *  视口 92% 逐帧钳制在 core uiResizable 内，此处只给硬边界 */
 const PANEL = { MIN_W: 640, MIN_H: 420, MAX_W: 1200, MAX_H: 820 };
 
+/**
+ * 默认高度，与 styles.css 里 `.bz-home-panel` 的 `height` 是**同一个数**（改一处必须同步另一处）。
+ * 来由（2026-11-09 用户报「默认高度把『设置』挡住了」）：默认 580 装不下左栏全部入口——
+ * 17 行约 665px，最后一行就是「设置」，被面板底边裁掉；全站滚动条隐藏（ADR-0122），
+ * 用户看不出还能往下滚，只觉得那一行被遮了。680 留出余量。
+ */
+const PANEL_DEFAULT_H = 680;
+
+/**
+ * 首页专用尺寸记忆：在通用 panelSizePersist 之上加一条高度下限。
+ * **只抬高度、不抬宽度**：宽度记忆（882 之类）本来就够用，抬宽会让面板莫名其妙变宽；
+ * 高度则是旧版本（默认 580 时代）拖出来的 635 之类仍装不下全部入口，升级后照样被裁——
+ * 低于默认就按默认算，用户不必为了看见「设置」再拖一次鼠标。
+ * 代价（有意取舍）：手动把面板拖到 680 以下，下次打开会被抬回 680——680 以下本就装不下
+ * 全部入口，允许它保持等于默认值「每次都要再滚」。
+ */
+function homePanelPersist(): BzResizablePersist {
+  const base = panelSizePersist('homePanelWidth', 'homePanelHeight', PANEL.MIN_W, PANEL.MIN_H);
+  return {
+    load: () => {
+      const saved = base.load?.();
+      if (!saved) return null;
+      return { w: saved.w, h: Math.max(saved.h, PANEL_DEFAULT_H) };
+    },
+    save: base.save,
+  };
+}
+
 /** 面板当前 resize 句柄（显示期间非空，隐藏/卸载摘除清空） */
 let panelResizeDetach: { flush: () => void; detach: () => void } | null = null;
 
@@ -141,7 +170,7 @@ function mountPanelResize(overlay: HTMLElement): void {
   panelResizeDetach = uiResizable(panel, {
     minW: PANEL.MIN_W, minH: PANEL.MIN_H,
     maxW: PANEL.MAX_W, maxH: PANEL.MAX_H,
-    persist: panelSizePersist('homePanelWidth', 'homePanelHeight', PANEL.MIN_W, PANEL.MIN_H),
+    persist: homePanelPersist(),
   });
 }
 

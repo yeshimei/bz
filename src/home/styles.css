@@ -21,7 +21,10 @@
   background: var(--h-bg);
   color: var(--h-ink);
   width: min(880px, 94vw);
-  height: min(580px, 92vh);
+  /* 2026-11-09 用户报「默认高度把『设置』挡住了」：580 装不下左栏全部入口（17 行约 665px），
+     最后一行「设置」被面板底边裁掉，而全站隐藏滚动条、看不出还能往下滚 → 抬到 680 留余量。
+     与 ui.ts 的 PANEL_DEFAULT_H 是同一个数（旧尺寸记忆按它抬升），改一处必须同步另一处。 */
+  height: min(680px, 92vh);
   display: flex;
   flex-direction: column;
   overflow: hidden;

@@ -117,21 +117,42 @@ describe('home 活动河 UI（issue 232）', () => {
   });
 
   it('面板拖拽缩放 + 尺寸记忆（ADR-0084/0094）：有记忆值时打开即套用内联宽高，隐藏重开（复用显）重挂套新值', () => {
-    // 可变单例 state：provider 每次读同一对象，隐藏期间改记忆值即可验证重开套新值
-    const state = { ...DEFAULT_SETTINGS, storagePath: 'CONFIG/STORAGE', homePanelWidth: 760, homePanelHeight: 500 };
-    setSettingsProvider(() => state);
-    const app = recApp(vault);
-    openHome(app);
-    const panel = document.querySelector('.bz-home-panel') as HTMLElement;
-    expect(panel.style.width).toBe('760px');
-    expect(panel.style.height).toBe('500px');
-    // 隐藏（closeOverlay 摘句柄）→ 重开走 showOverlay 复用显：必须重挂，否则复用 DOM 永远吃不到缩放
-    closeOverlay();
-    state.homePanelWidth = 800;
-    state.homePanelHeight = 520;
-    openHome(app);
-    expect(panel.style.width).toBe('800px');
-    expect(panel.style.height).toBe('520px');
+    // 视口高度显式钉住：内联尺寸经「视口 92%」钳制，断言值不该随跑测试的窗口尺寸漂移
+    const ih = vi.spyOn(window, 'innerHeight', 'get').mockReturnValue(1200);
+    try {
+      // 可变单例 state：provider 每次读同一对象，隐藏期间改记忆值即可验证重开套新值
+      const state = { ...DEFAULT_SETTINGS, storagePath: 'CONFIG/STORAGE', homePanelWidth: 760, homePanelHeight: 700 };
+      setSettingsProvider(() => state);
+      const app = recApp(vault);
+      openHome(app);
+      const panel = document.querySelector('.bz-home-panel') as HTMLElement;
+      expect(panel.style.width).toBe('760px');
+      expect(panel.style.height).toBe('700px');
+      // 隐藏（closeOverlay 摘句柄）→ 重开走 showOverlay 复用显：必须重挂，否则复用 DOM 永远吃不到缩放
+      closeOverlay();
+      state.homePanelWidth = 800;
+      state.homePanelHeight = 720;
+      openHome(app);
+      expect(panel.style.width).toBe('800px');
+      expect(panel.style.height).toBe('720px');
+    } finally {
+      ih.mockRestore();
+    }
+  });
+
+  it('尺寸记忆高度下限：旧版（默认 580 时代）拖出的 635 装不下全部入口 → 按新默认 680 抬升；宽度不动', () => {
+    const ih = vi.spyOn(window, 'innerHeight', 'get').mockReturnValue(1200);
+    try {
+      setSettingsProvider(() => ({
+        ...DEFAULT_SETTINGS, storagePath: 'CONFIG/STORAGE', homePanelWidth: 760, homePanelHeight: 635,
+      }));
+      openHome(recApp(vault));
+      const panel = document.querySelector('.bz-home-panel') as HTMLElement;
+      expect(panel.style.height).toBe('680px'); // 680 = ui.ts PANEL_DEFAULT_H（与 styles.css 默认高同源）
+      expect(panel.style.width).toBe('760px'); // 只抬高度：宽度记忆照旧
+    } finally {
+      ih.mockRestore();
+    }
   });
 
   it('面板拖拽缩放：0 = 未拖过 → 不写内联尺寸（走 CSS 默认，persist 语义）', () => {
