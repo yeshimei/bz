@@ -6155,6 +6155,238 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   .bz-rw-list { margin: 0 24px; }
   .bz-rw-lead { font-size: 13.5px; }
 }
+/* ============================================================
+ * bz · 支持作者提醒样式（core/support-prompt.css）
+ *
+ * 关更新日志时叠在上面的那张小纸（core/support-prompt.ts）。
+ * 米白纸、金色、衬线题赠，与赞赏窗（core/reward-dialog.css）同一族——
+ * 用户点「支持作者」之后落到的就是那张纸，中途不换材质。
+ *
+ * **刻意不消费 --bz-* 设计 token**：它不是通用组件，是一张「纸」，
+ * 明暗主题下都保持纸的样子（与 reward-dialog 同口径）。变量挂在本类作用域内不外泄。
+ *
+ * 位置写死 `.bz-overlay-popup.bz-sup-modal`：core/styles.css 与 ui/components.css
+ * 各有一版 .bz-overlay-popup（一版 fixed+translate、一版 flex item），谁后置生效随
+ * 聚合顺序变；reward-dialog 2026-10-30 就被这条漂到过右下角，这里同样钉死。
+ * ============================================================ */
+
+.bz-overlay-popup.bz-sup-modal {
+  --sup-paper: #fcf9f3;
+  --sup-ink: #26221d;
+  --sup-ink-soft: #453f36;
+  --sup-faint: #a89e8b;
+  --sup-gold: #bd9440;
+  --sup-gold-deep: #9c7a30;
+  --sup-serif: "Source Han Serif SC", "Noto Serif SC", "Songti SC", "STSong", SimSun, serif;
+  --sup-sans: "PingFang SC", "Microsoft YaHei", system-ui, -apple-system, sans-serif;
+
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  margin: 0;
+  /* uiModal 的壳默认带 padding（components.css）；纸卡自己管留白，壳这里清零 */
+  padding: 0;
+  width: 430px;
+  max-width: calc(100vw - 32px);
+  overflow: hidden;
+  background: var(--sup-paper);
+  border: 0;
+  border-radius: 12px;
+  font-family: var(--sup-sans);
+  color: var(--sup-ink);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, .6) inset,
+    0 30px 64px -18px rgba(0, 0, 0, .72),
+    0 0 0 1px rgba(0, 0, 0, .28);
+}
+
+/* 纸的上沿那道极淡的金线（与赞赏窗同一笔） */
+.bz-overlay-popup.bz-sup-modal::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(189, 148, 64, .5), transparent);
+  z-index: 3;
+}
+
+.bz-sup {
+  padding: 32px 32px 24px;
+}
+
+/* 眉标：两侧短金线夹一个宽字距的词 */
+.bz-sup-kicker {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 11px;
+  margin-bottom: 20px;
+  font-size: 10px;
+  letter-spacing: .44em;
+  text-indent: .44em;
+  color: var(--sup-gold-deep);
+}
+
+.bz-sup-kicker::before,
+.bz-sup-kicker::after {
+  content: "";
+  width: 20px;
+  height: 1px;
+  flex: none;
+  background: rgba(189, 148, 64, .38);
+}
+
+/* 正文：衬线、两行、行高放到 2.05——纸上的一句话，读慢一点 */
+.bz-sup-lead {
+  margin: 0;
+  font-family: var(--sup-serif);
+  font-size: 14.5px;
+  line-height: 2.05;
+  letter-spacing: .05em;
+  text-align: center;
+  color: var(--sup-ink-soft);
+}
+
+/* 后缀：一个实心金点引出的短句，比正文低一级 */
+.bz-sup-note {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin: 14px 0 0;
+  font-size: 11.5px;
+  letter-spacing: .1em;
+  color: var(--sup-faint);
+}
+
+.bz-sup-note::before {
+  content: "";
+  width: 4px;
+  height: 4px;
+  flex: none;
+  border-radius: 50%;
+  background: rgba(189, 148, 64, .65);
+}
+
+.bz-sup-acts {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 26px;
+}
+
+.bz-sup-btn {
+  height: 40px;
+  padding: 0 20px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  font-family: var(--sup-sans);
+  font-size: 13px;
+  letter-spacing: .1em;
+  cursor: pointer;
+  transition: background .16s ease, color .16s ease, transform .16s ease;
+}
+
+/* 次按钮：纯文字，hover 才给一点底 */
+.bz-sup-later {
+  color: #736b5e;
+}
+
+/* 主按钮：金底纸字。hover 只在有鼠标的地方抬一点（触屏没有 hover，别留假状态） */
+.bz-sup-go {
+  color: #fffdf6;
+  background: linear-gradient(180deg, #c9a34e, #b98f3c);
+  box-shadow:
+    0 8px 18px -10px rgba(120, 90, 20, .8),
+    0 1px 0 rgba(255, 255, 255, .28) inset;
+}
+
+@media (hover: hover) {
+  .bz-sup-later:hover {
+    color: var(--sup-ink);
+    background: rgba(38, 34, 29, .045);
+  }
+
+  .bz-sup-go:hover {
+    background: linear-gradient(180deg, #d2ac57, #c1983f);
+    transform: translateY(-1px);
+  }
+}
+
+.bz-sup-go:active {
+  transform: translateY(0);
+}
+
+/* 焦点环：纸面上用金色，别用默认蓝（主题里那一圈会跳出来） */
+.bz-sup-btn:focus-visible {
+  outline: 2px solid rgba(189, 148, 64, .55);
+  outline-offset: 2px;
+}
+
+/* ---------- 移动端：底部卡片（不是全屏） ----------
+   内容只有四行，铺满整屏会把「问一句」放大成「一页交代」。
+   两端留 12px、底边留 12px，它自己就是一张从底部升起的纸。
+   uiModal 会内联 maxWidth=min(430px, 100vw-32px)，不覆盖它右侧会缺一条纸。 */
+@media (max-width: 768px) {
+  .bz-overlay-popup.bz-sup-modal {
+    top: auto;
+    bottom: 12px;
+    left: 12px;
+    right: 12px;
+    transform: none;
+    width: auto;
+    max-width: none !important;
+    border-radius: 14px;
+  }
+
+  .bz-sup {
+    padding: 24px 20px max(18px, env(safe-area-inset-bottom));
+  }
+
+  /* 13px 是量出来的：第二句 24 字 × 13 = 312，卡内可用 326，两行正好收住。
+     再大一点就会把「收益。」挤成孤行——手机上这种孤字最扎眼。 */
+  .bz-sup-lead {
+    font-size: 13px;
+    line-height: 1.95;
+    letter-spacing: .02em;
+  }
+
+  /* 按钮按内容宽度居中，不铺满整行：主次靠底色与留白区分，不靠占满 */
+  .bz-sup-acts {
+    gap: 12px;
+    margin-top: 24px;
+  }
+
+  .bz-sup-btn {
+    flex: none;
+    height: 44px;
+    padding: 0 22px;
+    font-size: 13.5px;
+  }
+
+  .bz-sup-go {
+    padding: 0 26px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bz-sup-btn {
+    transition: none;
+  }
+}
+
+/* 减少动态偏好下撤掉主按钮那 1px 抬升。必须与 hover 媒体**同时**成立——
+   单独写在 reduced-motion 里的 :hover 会被 hover-isolation 守卫判成触屏粘滞破口。 */
+@media (hover: hover) and (prefers-reduced-motion: reduce) {
+  .bz-sup-go:hover {
+    transform: none;
+  }
+}
 .stf__parent {
   position: relative;
   display: block;
