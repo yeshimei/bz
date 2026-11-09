@@ -397,6 +397,10 @@ export default class BzPlugin extends Plugin {
     // 真新装不写，走新缺省。必须排在 Object.assign 之前（就地改 loadData 原始对象）。
     const diaryFormatMigrated = migrateDiaryEntryFormatDefault(loaded);
     this.settings = Object.assign({}, DEFAULT_SETTINGS, loaded);
+    // 自动更新固定为开（2026-11-09 用户拍板）：设置面板已整行隐藏这个开关（core/about-group），
+    // 这里兜住老库 data.json 里残留的显式 false 与手改的 false —— 启动链默认读到的永远是开。
+    // 上面的 migrateAutoUpdateDefault 照旧保留（一次性翻牌 + 哨兵），本行只是最后一道强制。
+    this.settings.autoUpdate = true;
     // 插件安装目录的唯一来源（core/plugin-path）：目录名由用户决定（`bz` / `包仔` / `bz-test`
     // 都可能），写死 `plugins/bz` 会让下载落位与读取位置双双错到不存在的目录。
     // manifest.dir 是 Obsidian 记录的、当前真正加载的那份插件的相对路径。
