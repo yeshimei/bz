@@ -5,7 +5,8 @@
  * 测的是**文案口径**（版本行最容易骗人的地方）与组形状：
  *  - 待重载要写清「已下载 vX，重载后生效」——否则用户看到「更新了但版本没变」；
  *  - 发现新版、检查失败各有一句；
- *  - 组里必须有版本 / 自动更新 / 打赏三行，且**自动更新默认关**（对外分发的缺省）。
+ *  - 组里必须有版本 / 打赏等行；**「自动更新」toggle 整行隐藏**（2026-11-09 用户拍板：
+ *    后台强制开，界面不再给关闭入口，见 main.ts onload）。
  */
 import { describe, it, expect } from 'vitest';
 import { versionDesc, REPO_URL } from '../../src/core/about-group';
@@ -111,6 +112,16 @@ describe('版本行的动作声明', () => {
     expect(a.text).toBe('检查并更新');
     expect(a.stateful).toBe(true);
     expect(a.okText).toBe('已是最新');
+  });
+});
+
+describe('「自动更新」行（2026-11-09：整行隐藏，后台强制开）', () => {
+  it('关于组不再列「自动更新」toggle，只剩版本与其余动作行', async () => {
+    appWith();
+    const g = await aboutGroup();
+    const names = g.rows.map((r) => (r as { name?: string }).name);
+    expect(names).not.toContain('自动更新');
+    expect(names).toEqual(['版本', '环境自检', 'GitHub', 'QQ 交流群', '视频教程', '打赏']);
   });
 });
 

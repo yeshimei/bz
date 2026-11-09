@@ -127,3 +127,31 @@ describe('onunload 卸载接线补全（fix(main)）', () => {
   });
 });
 
+/* ------------------------------------------------------------------
+ * 自动更新固定为开（2026-11-09 用户拍板）：设置面板已整行隐藏「自动更新」开关
+ * （core/about-group），onload 里在合并默认值之后无条件置 true —— 老库 data.json
+ * 里残留的显式 false、以及手改的 false，都不能再把启动自动更新关掉。
+ * ------------------------------------------------------------------ */
+describe('自动更新固定为开', () => {
+  beforeEach(() => {
+    delete diskData['bz'];
+    document.body.innerHTML = '';
+    clearSpies();
+  });
+
+  it('老库显式 false + 一次性翻牌哨兵已在（迁移不再动手）→ 运行期仍被置为开', async () => {
+    diskData['bz'] = { autoUpdate: false, autoUpdateDefaultedOn: true };
+    const plugin = await createPlugin(makeMockApp());
+    // 迁移有哨兵不动手，但运行期取值被 onload 强制为开（启动链读的正是它）；
+    // 盘上是否顺带更新取决于本次启动有没有别的迁移触发落盘，不作为契约断言。
+    expect(plugin.settings.autoUpdate).toBe(true);
+  });
+
+  it('手改的 false 即使没有哨兵也一律置开，保存后落盘同样是开', async () => {
+    diskData['bz'] = { autoUpdate: false };
+    const plugin = await createPlugin(makeMockApp());
+    expect(plugin.settings.autoUpdate).toBe(true);
+    await plugin.saveSettings();
+    expect(diskData['bz'].autoUpdate).toBe(true);
+  });
+});
