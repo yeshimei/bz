@@ -135,6 +135,10 @@
 2. 解压到 `<你的 vault>/.obsidian/plugins/` 下，得到一个 `bz/` 文件夹
 3. 重启 Obsidian → 设置 → 第三方插件 → 找到「bz」→ 启用
 
+## 插件推荐
+
+- [bz Reader](https://github.com/yeshimei/bz-reader) —— 把 Obsidian 变成一个能读书的地方。桌面端 + 移动端、多格式支持、八种界面语言、AI 问答、双向链接，数据全部本地。
+
 ## 离线资源包
 
 在线资源（皮肤、工具包、手册、影视索引）下不动时，用 `bz-offline-<版本>.zip`。解压出的 `downloads/` 整个放进插件目录，再回插件点一次下载——本地校验通过就直接用，不联网。

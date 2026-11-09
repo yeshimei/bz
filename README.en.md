@@ -139,6 +139,10 @@ The video uses a one-click script; manual works too.
 
 To upgrade, overwrite the extracted files and restart. You can also use BRAT: install BRAT, then *Add Beta Plugin* with this repository.
 
+## Recommended plugins
+
+- [bz Reader](https://github.com/yeshimei/bz-reader) — Turn Obsidian into a place to read. Desktop and mobile, multiple formats, eight interface languages, AI Q&A, wikilinks, and all data stored locally.
+
 ## Offline assets
 
 Skins, tool packs, the manual and the cinema index are normally fetched from GitHub / jsDelivr. Behind a corporate proxy, with no route to the CDN, the download button in the plugin just spins — use `bz-offline-<version>.zip` from the same release page.
