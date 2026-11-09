@@ -461,6 +461,10 @@ function main() {
        * 不删除；`scripts/push-assets.mjs` 保留作手动重建工具，不再由这里调用。 */
       const gitee = spawnSync(process.execPath, ['scripts/push-gitee.mjs'], { cwd: ROOT, stdio: 'inherit' });
       if (gitee.status !== 0) console.error('[release-gate] 码云镜像没跑成（GitHub 已发布，可稍后补跑 node scripts/push-gitee.mjs）');
+      /* 网盘镜像（2026-11-09 立）：推广渠道只要最新安装包，所以放在转正之后传；
+       * 传不上去不影响发版——GitHub / 码云才是用户拿到更新的主通道。 */
+      const quark = spawnSync(process.execPath, ['scripts/push-quark.mjs', '--product=bz', `--version=${v}`], { cwd: ROOT, stdio: 'inherit' });
+      if (quark.status !== 0) console.error('[release-gate] 夸克网盘没传成（发版不受影响，可稍后补跑 node scripts/push-quark.mjs --product=bz）');
       break;
     }
     case 'reset': {
