@@ -73,6 +73,8 @@ const EXPECTED_COMMAND_IDS = [
   'bz-clipbook-fetch-now',
   // 剪藏阅读报告（issue 358「我读了什么」：剪藏本自有阅读流水报告弹层）
   'bz-clipbook-report',
+  // 剪藏本全屏（2026-11-09：铺满窗口 / 再执行还原；面板没开时只开窗）
+  'bz-clipbook-fullscreen',
   // 自动摘要（enh-autosum 包 1）：当前剪藏笔记手动重跑 AI 摘要
   'bz-auto-summary-redo',
   // 统一保险库（encrypt 域，ADR-0085）：密码/笔记/日记合一

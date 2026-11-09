@@ -43,6 +43,10 @@ const noteGen = vi.hoisted(() => ({
 }));
 vi.mock('../../src/knowledge/note-gen', () => noteGen);
 
+// ADR-0296：本机导入的选文件走 core/path-picker（Electron 原生链）；测试替换成一个可编排的桩
+const picker = vi.hoisted(() => ({ pickSystemFiles: vi.fn(async (): Promise<string[]> => []) }));
+vi.mock('../../src/core/path-picker', () => ({ pickSystemFiles: picker.pickSystemFiles }));
+
 // issue 326：ui.ts 新 import confirmDiscard（关闭二次确认）。openFlowDialog 换成 spy（issue 291 断言用），
 // confirmDiscard 打**行为等价桩**——真实实现内部引用的是模块原 openFlowDialog，替换导出够不着它；
 // 桩记录 message/className（断言用）并经 spy 的 'ok' 解析走 proceed（与真实「确认放弃」同路径）。
@@ -502,6 +506,66 @@ describe('知识盒 UI（ADR-0112 三部）', () => {
     expect(tasks[0].duration).toBe(120);
     expect(tasks[0].page).toBeNull();
     expect(document.querySelector('#knowledge-video-list .bz-kb-taskcard')!.textContent).toContain('整片');
+  });
+
+  it('本机导入（ADR-0296）：选文件 → 链接行让位 / UP主与分P隐藏 → 保存落本地任务（url 空、音声按扩展名）', async () => {
+    picker.pickSystemFiles.mockResolvedValueOnce(['D:/音频/播客 第 3 期.m4a']);
+    ui.showVideoEntry();
+    await vi.waitFor(() => expect(document.getElementById('knowledge-add-popup')!.style.display).toBe('flex'));
+    // 未导入前：链接行在、本机行不在
+    expect((document.getElementById('lit-add-localrow') as HTMLElement).style.display).toBe('none');
+    (document.getElementById('lit-add-local') as HTMLElement).click();
+    await vi.waitFor(() => expect(document.getElementById('lit-add-localrow')!.style.display).not.toBe('none'));
+    // 链接行整行让位，文件名 + 类型章 + 标题取文件名
+    expect((document.getElementById('lit-add-urlrow') as HTMLElement).style.display).toBe('none');
+    expect(document.getElementById('lit-add-localname')!.textContent).toBe('播客 第 3 期.m4a');
+    expect(document.getElementById('lit-add-localkind')!.textContent).toBe('音声');
+    expect(document.getElementById('lit-add-ititle')!.textContent).toBe('播客 第 3 期');
+    // 本机没有的项藏起来：UP 主 / 分P / 清晰度
+    expect((document.getElementById('lit-add-uploader-row') as HTMLElement).style.display).toBe('none');
+    expect((document.getElementById('lit-add-page-row') as HTMLElement).style.display).toBe('none');
+    expect((document.getElementById('lit-add-pagenum-row') as HTMLElement).style.display).toBe('none');
+    expect((document.getElementById('lit-add-quality-row') as HTMLElement).style.display).toBe('none');
+    expect(document.getElementById('lit-add-more')!.style.display).not.toBe('none'); // 选中即展开
+    // 剪辑手填（时长未知：两端都填才算切片）
+    const sEl = document.getElementById('lit-add-start') as HTMLInputElement;
+    const eEl = document.getElementById('lit-add-end') as HTMLInputElement;
+    sEl.value = '1:00';
+    eEl.value = '2:00';
+    sEl.dispatchEvent(new Event('change'));
+    eEl.dispatchEvent(new Event('change'));
+    (document.getElementById('lit-add-save') as HTMLElement).click();
+    await vi.waitFor(async () => {
+      expect(await KnowledgeData.loadTasks()).toHaveLength(1);
+    });
+    const t = (await KnowledgeData.loadTasks())[0];
+    expect(t.sourceKind).toBe('local');
+    expect(t.url).toBe('');
+    expect(t.localPath).toBe('D:/音频/播客 第 3 期.m4a');
+    expect(t.mediaKind).toBe('audio');
+    expect(t.title).toBe('播客 第 3 期');
+    expect(t.uploader).toBeNull();
+    expect(t.start).toBe('1:00');
+    expect(t.end).toBe('2:00');
+    expect(t.page).toBeNull();
+    expect(t.quality).toBeNull();
+    // 任务卡：文件名 + 「本机 · 音声」，不是可点链接
+    const card = document.querySelector('#knowledge-video-list .bz-kb-taskcard')!;
+    expect(card.textContent).toContain('播客 第 3 期');
+    expect(card.textContent).toContain('本机 · 音声');
+    expect(card.querySelector('.bz-kb-tlink')).toBeNull();
+  });
+
+  it('本机导入：不认识的文件类型 → 拒绝并提示，不进入本机态', async () => {
+    picker.pickSystemFiles.mockResolvedValueOnce(['D:/文档/笔记.md']);
+    ui.showVideoEntry();
+    await vi.waitFor(() => expect(document.getElementById('knowledge-add-popup')!.style.display).toBe('flex'));
+    clearNotices();
+    (document.getElementById('lit-add-local') as HTMLElement).click();
+    await vi.waitFor(() => expect(getNoticeMessages().join('\n')).toContain('不认识的文件类型'));
+    expect((document.getElementById('lit-add-localrow') as HTMLElement).style.display).toBe('none');
+    expect((document.getElementById('lit-add-urlrow') as HTMLElement).style.display).not.toBe('none');
+    (document.getElementById('knowledge-add-mask') as HTMLElement).click(); // 收窗，避免脏态流到后续用例
   });
 
   it('录入打开时影像处理面板垫底（2026-09-24 拍板）：不出口图标、不触发自动重抓，保存进队列路径不变', async () => {

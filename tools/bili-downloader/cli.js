@@ -4,6 +4,9 @@
 // 用法:
 //   bili-dl --batch '<json>'   无头批处理（Obsidian 插件「文献盒」面板后台引擎）
 //       json = {"url":"…","start":"mm:ss|hh:mm:ss(.S)|null","end":"…","options":{...}}；start/end 都 null = 整片不剪辑
+//       或本机音视频（ADR-0296）：{"local":{"path":"D:/音频/a.m4a","kind":"audio"},"start":null,"end":null,"options":{...}}
+//           local.path 为绝对路径（插件已归一正斜杠）、kind = 'video'|'audio'；本机任务不下载、不分P、不压缩视频本体，
+//           流程 = 读取中 → 提取音轨中（ffmpeg 抽 16k wav，有起止按段切）→ 转文字中 → 交付中（复制原件进交付目录）
 //       或 --batch 'b64:<base64>'（插件经 shell 启动时用——JSON 引号/空格会被 shell 对消，base64 安全，P2-5）
 //       options（bz「文献盒」设置全量下发，全部可选）：quality、keepVideo、outputDir、compress（缺省开）、
 //       crf（缺省 23，范围 18-28）、vaultPath、ffmpegPath、ffprobePath、pythonPath、
@@ -11,12 +14,12 @@
 //       cacheDir、cacheRetentionDays
 //       stdout 逐步打 [bz-step] 行（解析中 → 下载中 → 剪辑中(有起止才跑) → 压缩中(缺省开) → 转文字中
 //       → 交付中(keepVideo=false 时跳过)）；压缩中若压缩件比原文件还大自动回退用原文件（ticket 145）；
-//       进度打 [bz-p] 行（{"phase":"download|trim|compress|transcribe","pct":0-100|null}，300ms 节流，pct=null 为不确定）；
+//       进度打 [bz-p] 行（{"phase":"download|trim|compress|transcribe|extract","pct":0-100|null}，300ms 节流，pct=null 为不确定）；
 //       成功末尾一行 [bz-result] {"transcript":"<转录临时文件绝对路径>","video":"CONFIG/APPENDIX/xxx.mp4"|null}
 //       （transcript = UTF-8 转录全文临时文件，插件读取后自删；video 为 vault 相对/绝对路径，null = 未交付）并 exit 0；
 //       任一步失败 stderr 给中文原因（含缺失前置引导，如转写环境 funasr / faster-whisper）并 exit 1，不写 [bz-result]。
 //       断点续跑（ADR-0067，ticket 136 机械产物）：成功步骤产物（剪辑件/压缩件/转写稿）留存缓存目录，
-//       同一任务重跑自动从出错步骤继续，不重跑已成功步骤。
+//       同一任务重跑自动从出错步骤继续，不重跑已成功步骤（本机任务不做断点续跑，见 core.runLocal 注释）。
 //       --batch 模式不打印横幅、不起服务，避免污染协议。
 //   bili-dl --brief '<json>'  每日简报批处理（issue 263，ADR-0119；守护进程 spawn，插件读转录后产要点）
 //       json = {"ups":["3706929260006322"],"known":["BV..."],"backfill":10,"limit":3,"options":{...}}
@@ -51,11 +54,12 @@ function runBatchMode(rawJson) {
     process.exit(1)
   }
   if (!task || typeof task !== 'object' || Array.isArray(task)) {
-    console.error('--batch 参数必须是 JSON 对象（{"url":"…","start":"…|null","end":"…|null"}）')
+    console.error('--batch 参数必须是 JSON 对象（{"url":"…","start":"…|null","end":"…|null"} 或 {"local":{"path":"…"}}）')
     process.exit(1)
   }
-  if (!task.url || typeof task.url !== 'string' || !String(task.url).trim()) {
-    console.error('缺少 url（B站视频链接或 BV 号）')
+  const isLocal = task.local && typeof task.local === 'object' && typeof task.local.path === 'string' && task.local.path.trim()
+  if (!isLocal && (!task.url || typeof task.url !== 'string' || !String(task.url).trim())) {
+    console.error('缺少 url（B站视频链接或 BV 号）或 local（本机音视频文件路径）')
     process.exit(1)
   }
   const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'bili-dl-batch-'))

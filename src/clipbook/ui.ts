@@ -138,11 +138,67 @@ const searchDebounced = debounce(() => {
 }, SEARCH_DEBOUNCE_MS);
 let panelResizeDetach: { detach: () => void; flush: () => void } | null = null;
 let panelSplit: { el: HTMLElement; restore: () => void; flush: () => void; detach: () => void } | null = null;
+/** 全屏态（命令 bz-clipbook-fullscreen 切换；面板关闭 / 卸载即复位，全屏值从不写尺寸记忆） */
+let fullscreenOn = false;
+let fullscreenFrame: HTMLElement | null = null;
 /** 分割线钳制：中栏（目录）最小宽 / 右栏（阅读）最小宽（对齐 PANEL_MIN_W 下整体不溢出） */
 const SPLIT_MIN_MID = 220;
 const SPLIT_MIN_READ = 320;
 
 // ================= 生命周期 =================
+
+/** 挂桌面拖拽缩放（buildDom 首次挂载 + 退出全屏重挂，两处同源）。
+ *  persist 是尺寸记忆：重挂即按记忆恢复，所以全屏值从不落盘——退出后回到用户原来的窗口大小。 */
+function mountFrameResize(frameEl: HTMLElement): void {
+  panelResizeDetach?.detach();
+  panelResizeDetach = uiResizable(frameEl, {
+    minW: PANEL_MIN_W, minH: PANEL_MIN_H, maxW: PANEL_MAX_W, maxH: PANEL_MAX_H,
+    persist: panelSizePersist('clipbookPanelWidth', 'clipbookPanelHeight', PANEL_MIN_W, PANEL_MIN_H),
+  });
+}
+
+/** 面板当前是否可见（命令 toggle 用来判「未打开 → 只开窗」） */
+export function isPanelOpen(): boolean {
+  return !!overlayEl && overlayEl.style.display !== 'none' && M.open;
+}
+
+/** 进入全屏：清掉尺寸记忆写下的内联宽高、脱开拖拽缩放，交给域内 .bz-clip-full 铺满窗口 */
+function enterFullscreen(frame: HTMLElement): void {
+  fullscreenFrame = frame;
+  // 拖拽缩放按「意图尺寸 × 视口 92%」写内联宽高，全屏期间必须脱开（detach 会先落盘待存尾值）
+  panelResizeDetach?.detach();
+  panelResizeDetach = null;
+  frame.style.width = '';
+  frame.style.height = '';
+  frame.classList.add('bz-clip-full');
+  fullscreenOn = true;
+}
+
+/** 退出全屏：清类与内联，再把拖拽缩放挂回去（挂载即按尺寸记忆恢复；面板已卸载则只清状态） */
+function exitFullscreen(): void {
+  const frame = fullscreenFrame ?? (overlayEl?.querySelector('.bz-clip-frame') as HTMLElement | null);
+  fullscreenOn = false;
+  fullscreenFrame = null;
+  if (!frame) return;
+  frame.classList.remove('bz-clip-full');
+  frame.style.width = '';
+  frame.style.height = '';
+  if (!isMobileEnv() && !panelResizeDetach) mountFrameResize(frame);
+}
+
+/**
+ * 全屏切换（命令 bz-clipbook-fullscreen 的唯一落点）：铺满窗口 ⇄ 还原。
+ * 移动端本来就是满屏，不做动作只提示；面板未打开时由调用方（index.ts）先开窗，不进全屏
+ * ——「普通打开保持原窗口大小，只有手动执行全屏命令才铺满」，且全屏态不跨面板开关保留。
+ */
+export function togglePanelFullscreen(): void {
+  const frame = overlayEl?.querySelector('.bz-clip-frame') as HTMLElement | null;
+  if (!frame) return;
+  if (isMobileEnv()) { notice('手机端本来就是满屏', 'info'); return; }
+  if (fullscreenOn) exitFullscreen();
+  else enterFullscreen(frame);
+}
+
 /** 幂等初始化面板 DOM（首开建结构 + 装载 + 订阅；重复调用只切可见性） */
 export function initPanel(app: any, showNow = false): void {
   M.appRef = app;
@@ -271,6 +327,9 @@ export function closePanel(): void {
   pauseReadingSession();
   // issue 358：关面板前把本段阅读会话封存入账侧写 readLog（时长不因关面板丢失）
   void flushReadingSession();
+  // 全屏态不跨面板开关：先退出全屏（重挂拖拽缩放，尺寸记忆回原窗口），再落盘/收起，
+  // 否则重开面板还停在上次的满屏尺寸上（用户拍板：普通打开保持原窗口大小）
+  if (fullscreenOn) exitFullscreen();
   panelResizeDetach?.flush(); // 关面板即落盘面板尺寸（review P2：恢复旧 flushPendingSize 语义）
   panelSplit?.flush(); // 关面板即落盘分割线宽度（同上语义）
   hideSelBar(); // CB7：划选工具框挂 body，面板藏了框还悬着（要等下一次 mousedown 才被兜底收走）
@@ -312,6 +371,9 @@ export function unloadPanel(): void {
     panelResizeDetach.detach(); // detach 内补落未存的防抖尾值（persist 收尾）
     panelResizeDetach = null;
   }
+  // 全屏态只属于面板生命周期：DOM 即将移除，状态一并复位（下次打开必是普通窗口）
+  fullscreenOn = false;
+  fullscreenFrame = null;
   if (panelSplit) {
     panelSplit.detach(); // detach 内补落未存的防抖尾值（persist 收尾）
     panelSplit = null;
@@ -359,6 +421,9 @@ function buildDom(app: any): void {
   overlayEl = document.createElement('div');
   overlayEl.className = 'bz-panel-overlay';
   overlayEl.style.display = 'none';
+  // 全屏态只属于上一次的 DOM：重建即复位（否则新 frame 不带类、布尔还挂着，下一次命令走反）
+  fullscreenOn = false;
+  fullscreenFrame = null;
   // 面板骨架 markup 单源 render.ts（issue 247）：桌面三栏 + 移动双屏 + 移动详情 overlay
   // （isMobileEnv 决定显示哪套，CSS 媒体查询兜底隐藏）
   overlayEl.innerHTML = panelHtml();
@@ -558,11 +623,12 @@ function buildDom(app: any): void {
   // （[data-clip-md]/[data-clip-mob-md]）——列表卡片右键菜单、桌面右键均不受影响。
   overlayEl.addEventListener('contextmenu', onReaderContextMenu, true);
 
-  // ESC（C19：详情屏开着时第一层收详情返回列表，再按一次才关面板）
+  // ESC（C19：详情屏开着时第一层收详情返回列表；全屏时第一层退全屏；都没有才关面板）
   escKey = 'bz-clipbook';
   escHandle = escManager.register(escKey, {
     isVisible: () => !!overlayEl && overlayEl.style.display !== 'none',
     close: () => {
+      if (fullscreenOn) { exitFullscreen(); return; }
       if (M.mobDetailOpen) { closeMobDetail(); return; }
       closePanel();
     },
@@ -571,12 +637,9 @@ function buildDom(app: any): void {
   // 桌面面板拖拽缩放 + 尺寸记忆（enh 包 8 → ADR-0094 persist 选项）：仅桌面写内联宽高——
   // 内联样式优先级高于移动端媒体查询的满屏规则；恢复/防抖落盘/收尾补存全由 uiResizable 承担，
   // persist 收敛 core panelSizePersist 工厂（键 clipbookPanelWidth/Height 语义不变）；
-  // uiResizable 自身对触屏也空操作兜底
+  // uiResizable 自身对触屏也空操作兜底；退出全屏时由 mountFrameResize 重挂同一套
   if (!isMobileEnv()) {
-    panelResizeDetach = uiResizable(frameEl, {
-      minW: PANEL_MIN_W, minH: PANEL_MIN_H, maxW: PANEL_MAX_W, maxH: PANEL_MAX_H,
-      persist: panelSizePersist('clipbookPanelWidth', 'clipbookPanelHeight', PANEL_MIN_W, PANEL_MIN_H),
-    });
+    mountFrameResize(frameEl);
     // 中栏 ⇄ 右栏分割线（issue 222）：拖动改中栏定宽、右栏弹性吸收；
     // restore 在 showPanel 面板可见后调（display:none 容器宽度为 0 无法钳制）
     const midEl = overlayEl.querySelector('.bz-clip-mid') as HTMLElement;

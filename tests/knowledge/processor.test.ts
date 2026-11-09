@@ -170,6 +170,8 @@ describe('BatchRunner', () => {
         clip: { start: '1:02:03', end: '1:05:00' },
         // ticket 151：CLI [bz-result] 交付的 video 路径随笔记落盘（正文视频双链）
         videoPath: 'CONFIG/APPENDIX/v.mp4',
+        // ADR-0296：媒体类型随任务下发（B 站任务恒 video）
+        mediaKind: 'video',
       });
       // 插件侧 AI 步骤固定文案进时间线（ui.ts STEP_DONE_MAP 完成态按此匹配）
       expect(steps).toContain(`${tasks[0].id}:AI 生成文献笔记中`);

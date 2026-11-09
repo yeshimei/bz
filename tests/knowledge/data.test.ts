@@ -163,6 +163,38 @@ describe('KnowledgeData（knowledge.json）', () => {
     });
   });
 
+  it('本机任务（ADR-0296）：sourceKind/localPath/mediaKind 落库，路径归一正斜杠，url 留空', async () => {
+    const t = await KnowledgeData.addTask({
+      url: '',
+      sourceKind: 'local',
+      localPath: 'D:\\音频\\播客 第 3 期.m4a',
+      mediaKind: 'audio',
+      title: '播客 第 3 期',
+    });
+    expect(t.sourceKind).toBe('local');
+    expect(t.localPath).toBe('D:/音频/播客 第 3 期.m4a');
+    expect(t.mediaKind).toBe('audio');
+    expect(t.url).toBe('');
+    const all = await KnowledgeData.loadTasks();
+    expect(all[0]).toMatchObject({ sourceKind: 'local', mediaKind: 'audio', url: '' });
+  });
+
+  it('只给 localPath 不给 sourceKind → 自动判为本地任务；url 任务恒 mediaKind=video 且无 localPath', async () => {
+    const local = await KnowledgeData.addTask({ url: '', localPath: 'C:/x/录屏.mp4' });
+    expect(local.sourceKind).toBe('local');
+    expect(local.mediaKind).toBe('video');
+    const urlTask = await KnowledgeData.addTask({ url: 'BV1xx411c7mD' });
+    expect(urlTask.sourceKind).toBe('url');
+    expect(urlTask.mediaKind).toBe('video');
+    expect(urlTask.localPath).toBeNull();
+  });
+
+  it('旧数据无 sourceKind/mediaKind → loadTasks 兜底 url / video', async () => {
+    await KnowledgeData.write([{ id: 'legacy-3', url: 'BV1xx411c7mE' }]);
+    const all = await KnowledgeData.loadTasks();
+    expect(all[0]).toMatchObject({ sourceKind: 'url', mediaKind: 'video', localPath: null });
+  });
+
   it('title/uploader 可选字段（ticket 134）：addTask 去空白落库 + 旧数据补 null + updateTask 可改', async () => {
     const t = await KnowledgeData.addTask({ url: 'BV1xx411c7mD', title: '  某视频标题  ', uploader: ' UP主甲 ' });
     expect(t.title).toBe('某视频标题');

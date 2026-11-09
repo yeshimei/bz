@@ -202,13 +202,17 @@ export const BatchRunner = {
         return t ? t : undefined;
       };
       const asrEngine = s && s.asrEngine === 'faster-whisper' ? 'faster-whisper' : 'sensevoice';
+      const isLocal = task.sourceKind === 'local';
       const taskJson = JSON.stringify({
-        url: task.url,
+        // 本地任务（ADR-0296）：url 留空、local 带路径与媒体类型；下载/分P/清晰度这些项对本地无意义，
+        // 一律不下发（CLI 侧按 local 分流，永远走不到下载分支）
+        url: isLocal ? '' : task.url,
+        ...(isLocal ? { local: { path: task.localPath, kind: task.mediaKind } } : {}),
         start: task.start ?? null,
         end: task.end ?? null,
-        page: task.page && task.page > 0 ? task.page : null,
+        page: isLocal ? null : task.page && task.page > 0 ? task.page : null,
         options: {
-          quality: (task.quality || (s && s.knowledgeQuality) || 'highest') as string,
+          ...(isLocal ? {} : { quality: (task.quality || (s && s.knowledgeQuality) || 'highest') as string }),
           keepVideo: !s || s.knowledgeKeepVideo !== false,
           outputDir: nonEmpty(s && s.knowledgeOutputDir),
           compress: !s || s.knowledgeCompress !== false,
@@ -292,17 +296,23 @@ export const BatchRunner = {
               const info = JSON.parse(m[1]);
               const infoTitle = info && typeof info.title === 'string' ? String(info.title).trim() : '';
               const infoUploader = info && typeof info.uploader === 'string' ? String(info.uploader).trim() : '';
-              if (infoTitle || infoUploader) {
-                const prevTitle = task.title || '';
-                const prevUploader = task.uploader || '';
-                task.title = prevTitle || infoTitle;
-                task.uploader = prevUploader || infoUploader;
-                if (task.title !== prevTitle || task.uploader !== prevUploader) {
-                  const patch: Partial<KnowledgeTask> = { title: task.title || null, uploader: task.uploader || null };
-                  void KnowledgeData.updateTask(task.id, patch).then(() => {
-                    events.onTaskInfo({ ...task });
-                  });
-                }
+              // ADR-0296：本地任务的时长在录入时拿不到（不额外起一次 ffprobe），由工具包探测后在此回填；
+              // 同样只在空时回填——B 站任务解析期已有的时长不被处理阶段覆盖
+              const infoDuration = Number(info && info.duration);
+              const prevTitle = task.title || '';
+              const prevUploader = task.uploader || '';
+              const prevDuration = task.duration;
+              task.title = prevTitle || infoTitle;
+              task.uploader = prevUploader || infoUploader;
+              if (Number.isFinite(infoDuration) && infoDuration > 0 && !(prevDuration && prevDuration > 0)) {
+                task.duration = Math.round(infoDuration);
+              }
+              // 标题 / UP 主 / 时长三者任一变化都要落库（issue 278 的「只在空时回填」口径不变）
+              if (task.title !== prevTitle || task.uploader !== prevUploader || task.duration !== prevDuration) {
+                const patch: Partial<KnowledgeTask> = { title: task.title || null, uploader: task.uploader || null, duration: task.duration };
+                void KnowledgeData.updateTask(task.id, patch).then(() => {
+                  events.onTaskInfo({ ...task });
+                });
               }
             } catch { /* 忽略坏信息行 */ }
             continue;
@@ -377,12 +387,15 @@ export const BatchRunner = {
       notePath = await generateVideoNote({
         transcript,
         videoTitle: task.title || '',
+        // 本地任务 url 为空：note-gen 据此不落 source 键（ADR-0296）
         url: task.url,
         uploader: task.uploader || '',
         // ADR-0261：切片范围随笔记落盘（frontmatter clip 键），并让元数据只依据片段文稿
         clip: { start: task.start, end: task.end },
-        // ticket 151：CLI 交付的 mp4 路径随笔记落盘（正文视频双链）；keepVideo=false 时为 null → 无视频段
+        // ticket 151：CLI 交付的媒体路径随笔记落盘（正文媒体双链）；keepVideo=false 时为 null → 无媒体段
         videoPath: videoPath,
+        // ADR-0296：本机音声 → type: audio，元数据提示词与文案换口径
+        mediaKind: task.mediaKind,
       });
     } catch (e: any) {
       tryUnlink(transcriptPath);

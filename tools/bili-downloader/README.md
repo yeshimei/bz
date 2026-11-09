@@ -22,14 +22,17 @@ node cli.js --batch '{"url":"BV1xx411c7mD","start":null,"end":null}'
 # 或安装为全局命令
 npm install -g @jwbz/bili-downloader
 bili-dl --batch '{"url":"https://www.bilibili.com/video/BV…","start":"0:12","end":"1:30"}'
+
+# 本机视频 / 音声（ADR-0296）：不下载、不分P、不压缩视频本体
+bili-dl --batch '{"local":{"path":"D:/音频/播客 第 3 期.m4a","kind":"audio"},"start":null,"end":null}'
 ```
 
-`--batch` JSON：`{url, start?, end?, page?, options?}`——`start/end` 都 null = 整片不剪辑；`options` 由 bz「文献盒」设置全量下发（quality / keepVideo / outputDir / compress(缺省开) / crf(缺省 23) / vaultPath / ffmpegPath / ffprobePath / pythonPath / whisperModel / cacheDir / cacheRetentionDays）。
+`--batch` JSON：`{url, local?, start?, end?, page?, options?}`——`url` 与 `local` 二选一；`local = {path, kind}`（`path` 绝对路径，`kind = 'video'|'audio'`，缺省 video）；`start/end` 都 null = 整片不剪辑；`options` 由 bz「文献盒」设置全量下发（quality / keepVideo / outputDir / compress(缺省开) / crf(缺省 23) / vaultPath / ffmpegPath / ffprobePath / pythonPath / whisperModel / cacheDir / cacheRetentionDays）。本机任务不走下载、分P、压缩，`quality/page` 即使给了也不读。
 
 **协议**（Obsidian 插件「文献盒」面板逐行解析驱动进度）：
-- `[bz-step] 名称`：解析中 / 下载中 / 剪辑中(有起止才跑) / 压缩中(缺省开) / 转文字中 / 交付中(keepVideo=false 时跳过)
-- `[bz-p] {"phase":"download|trim|compress|transcribe","pct":0-100|null}`
-- `[bz-info] {title,uploader,bvid,url,duration}`（解析信息）
+- `[bz-step] 名称`：解析中 / 下载中 / 剪辑中(有起止才跑) / 压缩中(缺省开) / 转文字中 / 交付中(keepVideo=false 时跳过)；本机任务是 读取中 / 提取音轨中 / 转文字中 / 交付中
+- `[bz-p] {"phase":"download|trim|compress|transcribe|extract","pct":0-100|null}`
+- `[bz-info] {title,uploader,bvid,url,duration}`（解析信息；本机任务 `kind` 额外回传 `video|audio`，`bvid/url` 为空）
 - 成功末尾 `[bz-result] {"transcript":"<转录临时文件绝对路径>","video":"<vault相对|绝对|null>"}` 并 exit 0；失败 stderr 给中文原因并 exit 1。
 
 转录临时文件为 UTF-8 全文，**bz 插件读取后自删**；`video=null` = keepVideo=false 未交付。

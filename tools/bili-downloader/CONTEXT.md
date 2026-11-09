@@ -8,6 +8,14 @@
 无头处理一条视频任务的完整流水（解析 → 下载 → 剪辑(有起止才跑) → 压缩(缺省开) → 转文字 → 交付），经 `--batch '<json>'` 由 Obsidian 插件「文献盒」面板驱动；stdout 打协议行（`[bz-step]`/`[bz-p]`/`[bz-info]`/`[bz-result]`），stderr 给失败中文原因。
 _Avoid_: 会话、作业
 
+**本机媒体 (Local Media)**:
+`task.local = {path, kind}` 形态的批处理任务（ADR-0296）——文件在**本机磁盘**上，不是 B 站链接。流水：读取中（ffprobe 拿时长）→ 提取音轨中（ffmpeg 抽 16k 单声道 wav，有起止按段切）→ 转文字中（与 B 站任务同一套 Python 引擎）→ 交付中（复制原件进交付目录）。**不下载、不分P、不压缩视频本体、不做断点续跑缓存**。
+_Avoid_: 本地导入（那是插件侧入口）、上传
+
+**音声 (Audio)**:
+`kind='audio'` 的本机媒体（与 `kind='video'` 相对）。对这个工具只有一处语义差异：`[bz-info]` 回传的 `kind` 会被插件拿去写 `type: audio`；其余流水与视频完全相同（视频也先抽音轨再转写）。
+_Avoid_: 音频（界面叫法是「音声」）
+
 **下载原件 (Original)**:
 任务中下载合并后的原始视频文件，未被剪辑/压缩；跨任务持久缓存（同 BV+cid+清晰度）命中即跳过下载。
 _Avoid_: 原片、原始文件
@@ -62,5 +70,6 @@ _Avoid_: 断点续传、会话恢复
 - **缓存只存下载原件**：剪辑/压缩件不进原件缓存；断点续跑机械产物存 cacheDir，同保留期回收。
 - **缓存命中即跳过下载**：解析照跑（拿标题/BV/清晰度），缓存键（BV+cid+清晰度）全同则跳过下载+合并。
 - **不写文献笔记、不调 AI（ticket 136）**：AI 与笔记落盘由 bz 插件完成（core/ai + 插件写 frontmatter）；本工具只产「转录临时文件 + 交付视频」。
+- **本机媒体不缓存**（ADR-0296）：没有「下载」这一段可省，重跑只重抽一次音轨；文件被移走/删除时当场报「找不到文件」，不静默跳过。
 - **options 全量下发**：bz「文献盒」设置经 task.options 传入（quality/keepVideo/outputDir/compress/crf/vaultPath/ffmpegPath/ffprobePath/pythonPath/whisperModel/cacheDir/cacheRetentionDays），并入 conf 覆盖 rc 兜底。
 - **交付即终局**：交付文件移入交付目录（copy + unlink，exFAT 兼容），重名加序号、永不覆盖。

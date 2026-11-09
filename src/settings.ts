@@ -513,6 +513,8 @@ export default interface BzSettings {
   /** 文献盒：移动端默认全屏（默认关——95% 居中卡，ADR-0065） */
   /** 文献盒：步骤进度详细度（默认开——当前步骤+耗时+百分比+步骤时间线；关=仅步骤徽章，ADR-0066） */
   knowledgeProgressDetail: boolean;
+  /** 文献盒：影像笔记自动分段（默认开——转写稿按句边界切自然段、段间空行，一个字不改；关 = 整段直出，ADR-0295） */
+  knowledgeAutoParagraph: boolean;
   /** 文献盒：处理完是否保留视频原件（默认保留；关=只出文献笔记不落视频，ADR-0066） */
   knowledgeKeepVideo: boolean;
   /** 文献盒：下载清晰度（'highest'/'1080'/'720'，默认最高；透传工具 options.quality，ADR-0066） */
@@ -1283,6 +1285,8 @@ export const DEFAULT_SETTINGS: BzSettings = {
   favoriteTags: [],
   // 文献盒处理设置（键名随域更名 literature*；ticket 136 默认值=既存行为不动，零迁移）
   knowledgeProgressDetail: true,
+  // 影像笔记自动分段（ADR-0295）：默认开——旧笔记不回改，只影响新生成的笔记
+  knowledgeAutoParagraph: true,
   knowledgeKeepVideo: true,
   knowledgeQuality: 'highest',
   knowledgeStopOnFailure: false,

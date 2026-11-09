@@ -808,8 +808,10 @@
 }
 .bz-lit-dialog input:focus, .bz-lit-dialog select:focus { border-color: var(--accent); }
 
-/* 解析按钮（ADR-0133：链接行右侧，描边次级档；整片/剪辑 toggle 样式随 toggle 退役删除） */
-#lit-add-resolve {
+/* 解析按钮（ADR-0133：链接行右侧，描边次级档；整片/剪辑 toggle 样式随 toggle 退役删除）；
+   「导入」（本机文件，ADR-0296）与解析同档并列在链接行右侧 */
+#lit-add-resolve,
+#lit-add-local {
   flex: none;
   border: 1px solid var(--accent);
   background: none;
@@ -823,7 +825,8 @@
   white-space: nowrap;
 }@media (hover: hover) {
 
-#lit-add-resolve:hover { background: var(--chip); }
+#lit-add-resolve:hover,
+#lit-add-local:hover { background: var(--chip); }
 }
 #lit-add-resolve:disabled { opacity: 0.55; cursor: default; }
 
@@ -833,7 +836,8 @@
 
 /* 剪辑范围区（ADR-0133：双把手 + 时间框 + 整片重置）——
    行内标签行（剪辑 | 开始 ~ 结束 | 整片）之后直接跟范围条 */
-#lit-add-whole {
+#lit-add-whole,
+#lit-add-localclear {
   border: 1px solid var(--line);
   background: none;
   color: var(--ink2);
@@ -845,7 +849,8 @@
   flex: none;
 }@media (hover: hover) {
 
-#lit-add-whole:hover { background: var(--chip); color: var(--ink); }
+#lit-add-whole:hover,
+#lit-add-localclear:hover { background: var(--chip); color: var(--ink); }
 }
 .bz-lit-rhint { margin-top: var(--bz-space-sm); font-size: var(--bz-font-meta); color: var(--ink3); line-height: 1.7; }
 /* 保存行与上方「清晰度」行拉开（术语壳里由 .bz-lit-term-body > .bz-lit-term-actions 给，这里同档） */

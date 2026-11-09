@@ -13,7 +13,7 @@ import { generateId } from '../core/utils';
 import { pad2 } from '../core/ui/str';
 import { getApp } from '../core/app';
 import { cleanUrlText, normalizeSourceUrl } from './source';
-import type { KnowledgeTask, KnowledgeTaskStatus } from './types';
+import type { KnowledgeTask, KnowledgeTaskStatus, KnowledgeSourceKind, KnowledgeMediaKind } from './types';
 
 export interface KnowledgeSettingsLike {
   /** ADR-0009 共享数据路径（优先），旧独立路径不涉及 */
@@ -23,6 +23,12 @@ export interface KnowledgeSettingsLike {
 /** 任务 CRUD 时输入的字段（id/status 系由管理器维护） */
 export interface KnowledgeTaskInput {
   url: string;
+  /** 来源形态（ADR-0296；缺省 'url'） */
+  sourceKind?: KnowledgeSourceKind;
+  /** 本机文件绝对路径（sourceKind='local' 必填） */
+  localPath?: string | null;
+  /** 媒体类型（缺省按文件名判定，再缺省 = 'video'） */
+  mediaKind?: KnowledgeMediaKind;
   start?: string | null;
   end?: string | null;
   remark?: string | null;
@@ -35,6 +41,12 @@ export interface KnowledgeTaskInput {
   uploader?: string | null;
   /** 视频时长（秒；ADR-0133 解析落库——多 P 时为所选分 P 时长，与弹窗保存同口径） */
   duration?: number | null;
+}
+
+/** 本机路径归一（正斜杠；去尾斜杠）——落库与比对同一种写法 */
+export function normalizeLocalPath(p: string | null | undefined): string | null {
+  const s = String(p ?? '').trim().replace(/\\/g, '/');
+  return s ? s.replace(/\/+$/, '') : null;
 }
 
 /** 时间格式：mm:ss 或 hh:mm:ss(.S)，与工具 @jwbz/bili-downloader 一致（0.1s 精度） */
@@ -169,6 +181,10 @@ export const KnowledgeData = {
         return {
           id: item.id,
           url: item.url || '',
+          // ADR-0296：存量数据没有这两字段——按 url / video 兜底，零迁移
+          sourceKind: item.sourceKind === 'local' ? 'local' : 'url',
+          localPath: normalizeLocalPath(item.localPath),
+          mediaKind: item.mediaKind === 'audio' ? 'audio' : 'video',
           start: item.start || null,
           end: item.end || null,
           status: (item.status as KnowledgeTaskStatus) || 'pending',
@@ -194,9 +210,15 @@ export const KnowledgeData = {
 
   /** 追加一条待处理任务（队列尾 = 处理顺序尾） */
   addTask(input: KnowledgeTaskInput): Promise<KnowledgeTask> {
+    const localPath = normalizeLocalPath(input.localPath);
+    const sourceKind: KnowledgeSourceKind = input.sourceKind === 'local' || localPath ? 'local' : 'url';
     const task: KnowledgeTask = {
       id: generateId('knowledge-task'),
-      url: normalizeUrl(input.url),
+      // 本地任务不占 URL 语义（url 空串）；展示与处理都按 sourceKind 分流
+      url: sourceKind === 'local' ? '' : normalizeUrl(input.url),
+      sourceKind,
+      localPath: sourceKind === 'local' ? localPath : null,
+      mediaKind: input.mediaKind === 'audio' ? 'audio' : 'video',
       start: input.start?.trim() || null,
       end: input.end?.trim() || null,
       status: 'pending',

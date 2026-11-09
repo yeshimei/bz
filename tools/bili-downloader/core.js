@@ -821,8 +821,164 @@ function vaultRel(absPath, vaultPath) {
   return absPath
 }
 
+// ---- 本地音视频（ADR-0296：--batch 的 task.local 分支）----
+// 本机文件不下载、不动视频本体：先 ffmpeg 抽 16k 单声道 wav（视频取音轨 / 音声转码），
+// 有起止就顺带按段切；再走同一套 Python 转写；最后按 keepVideo 决定是否把原件复制进交付目录。
+// 返回形状与 runBatch 一致（transcript/video/transcriptPath/videoPath/title/duration），插件侧零分叉。
+//
+// 不做断点续跑缓存：本机文件没有「下载」这一大段时间，重跑最多重抽一次音轨；键怎么设计
+// （路径 + mtime + 起止）比省下来的几十秒贵，先不做。文件被移走/删除时每次都会当场报错。
+
+/** 抽 16k 单声道 wav（start/end 有值 = 按段切；音频没有关键帧问题，用输出级精确切） */
+async function extractAudio({ inPath, outPath, ffmpeg = 'ffmpeg', start = 0, end = 0, totalMs = 0, onProgress }) {
+  const args = ['-y', '-i', inPath, '-vn', '-ac', '1', '-ar', '16000']
+  if (start > 0 || end > 0) args.push('-ss', fmtSec(start), '-to', fmtSec(end))
+  args.push('-c:a', 'pcm_s16le', '-f', 'wav', '-stats_period', '0.2', outPath)
+  const r = await runFfmpeg({ args, ffmpeg, totalMs, onProgress })
+  if (!r.ok) throw new Error(r.err)
+}
+
+async function runLocal(task, deps = {}) {
+  resetAbort()
+  const conf = { ...(deps.conf || {}), ...((task && task.options) || {}) }
+  const ffmpeg = deps.ffmpeg || conf.ffmpegPath || 'ffmpeg'
+  const ffprobe = deps.ffprobe || conf.ffprobePath || 'ffprobe'
+  const py = deps.py || conf.pythonPath
+  const engine = resolveEngine(conf.engine)
+  const model = engine === 'faster-whisper' ? (conf.whisperModel || 'small') : ''
+  const runPythonImpl = deps.runPythonImpl || runPython
+  // 探测/抽音轨的注入点（仅测试用：CI 没有 ffmpeg 二进制，单测打桩）
+  const probeImpl = deps.probeDurationImpl || probeDuration
+  const extractImpl = deps.extractAudioImpl || extractAudio
+  const onStep = deps.onStep || (() => {})
+  const onProgress = deps.onProgress || (() => {})
+  const onInfo = deps.onInfo || (() => {})
+  const tmpDir = deps.tmpDir || fs.mkdtempSync(path.join(os.tmpdir(), 'bili-dl-local-'))
+  const opts = (task && task.options) || {}
+  // 进度行节流：与 runBatch 同一口径（每阶段 ≤300ms 一行）
+  const lastPgAt = {}
+  const pg = p => {
+    const now = Date.now()
+    if (now - (lastPgAt[p.phase] || 0) < 300) return
+    lastPgAt[p.phase] = now
+    onProgress(p)
+  }
+
+  const local = (task && task.local) || {}
+  const inPath = String(local.path || '').trim()
+  if (!inPath) throw new Error('缺少本地文件路径')
+  if (!fs.existsSync(inPath)) throw new Error(`找不到文件：${inPath}（可能已被移动或删除）`)
+  const kind = local.kind === 'audio' ? 'audio' : 'video'
+  const name = path.basename(inPath)
+  const title = name.replace(/\.[^.]+$/, '')
+
+  onStep('读取中')
+  const mediaDur = await probeImpl(inPath, ffprobe)
+  if (!mediaDur || !(mediaDur > 0)) {
+    throw new Error('读不出这个文件的时长——可能不是音视频文件，或 ffprobe 不可用（设置面板「外部工具」里可填路径）')
+  }
+  // 起止（与 runBatch 同口径：两端都有值才切；非法/越界按整片或钳制）
+  let s = 0
+  let e = mediaDur
+  const hasRange = task.start != null && task.end != null &&
+    String(task.start).trim() !== '' && String(task.end).trim() !== ''
+  if (hasRange) {
+    const start = parseTimeInput(task.start)
+    const end = parseTimeInput(task.end)
+    if (start === null || end === null) throw new Error('起止时间格式错误（HH:MM:SS.S / MM:SS / 秒）')
+    s = Math.max(0, start)
+    e = Math.min(mediaDur, end)
+    if (e - s < 0.1) { s = 0; e = mediaDur }
+  }
+  const segDur = e - s
+  // 解析信息回传（[bz-info] 行）：标题/时长/类型；本机任务没有 UP 主与 BV 号，url 留空
+  try {
+    onInfo({ title, uploader: '', bvid: '', url: '', duration: mediaDur, kind })
+  } catch { /* 信息回传失败不阻断流程 */ }
+
+  onStep('提取音轨中')
+  const wavPath = path.join(tmpDir, 'local-audio.wav')
+  try {
+    await extractImpl({
+      inPath, outPath: wavPath, ffmpeg, start: s, end: e, totalMs: segDur * 1000,
+      onProgress: p => pg({ phase: 'extract', pct: Number.isFinite(p.percent) ? p.percent : null }),
+    })
+  } catch (err) {
+    const m = String((err && err.message) || err)
+    if (/无法启动 ffmpeg|ENOENT/i.test(m)) {
+      throw new Error(`提取音轨失败：找不到 ffmpeg（${lastLine(m)}）——请到设置面板「外部工具」填 ffmpeg 路径，或把 ffmpeg 放进 PATH`)
+    }
+    throw new Error(`提取音轨失败：${lastLine(m) || m}`)
+  }
+
+  onStep('转文字中')
+  if (!py) throw new Error('转文字失败：未配置 pythonPath——请在设置面板「外部工具」填 python 路径（或直接写 python 走 PATH）')
+  let raw = ''
+  let doneFiles = 0
+  try {
+    await runPythonImpl({
+      py, engine, modelsDir: String(conf.modelsDir || '').trim(), args: [model, wavPath],
+      onChunk: chunk => {
+        raw += chunk
+        doneFiles += (String(chunk).match(/\x1e[^\x1f]*\x1f\x1f/g) || []).length
+        pg({ phase: 'transcribe', pct: doneFiles >= 1 ? 100 : null })
+      },
+    })
+  } catch (err) {
+    const m = (err && err.message) || err
+    if (/无法启动 Python|ENOENT/i.test(String(m))) {
+      throw new Error(`转文字失败：找不到 Python（${lastLine(String(m))}）——设置面板「外部工具」填 python 路径，或把 python 放进 PATH`)
+    }
+    if (engine === 'faster-whisper') {
+      throw new Error(`转文字失败：${m}（请确认 faster-whisper 环境已安装：目标 Python 已 pip install faster-whisper）`)
+    }
+    throw new Error(`转文字失败：${m}（请确认 funasr 环境已安装：目标 Python 已 pip install funasr torch torchaudio）`)
+  }
+  const units = parseTranscriptUnits(raw)
+  const byFile = new Map(units.map(u => [path.resolve(u.file), u.text]))
+  const transcript = (byFile.get(path.resolve(wavPath)) || '').trim()
+  if (!transcript) {
+    throw new Error(engine === 'faster-whisper'
+      ? '转文字未产出文本（文件可能没有语音，或请确认 faster-whisper 环境可用、模型正常加载）'
+      : '转文字未产出文本（文件可能没有语音，或请确认 funasr 环境可用、SenseVoice 模型正常加载）')
+  }
+  // 转录临时文件：写系统临时目录（CLI 退出后插件仍需读取）
+  const transcriptTemp = path.join(
+    os.tmpdir(),
+    `bili-dl-transcript-local-${Date.now()}-${Math.random().toString(36).slice(2)}.txt`,
+  )
+  fs.writeFileSync(transcriptTemp, transcript, 'utf8')
+
+  // 交付：保留原件 = 复制一份进交付目录（重名加序号），base 路径回传 vault 相对；
+  // keepVideo=false 就只转文字、不复制（笔记逐字保留，但没有可点的媒体）
+  const keepVideo = !(opts.keepVideo === false)
+  let finalPath = null
+  if (keepVideo) {
+    onStep('交付中')
+    const outOverride = String(opts.outputDir || '').trim()
+    if (!conf.outputDir && !outOverride) throw new Error('交付目录未配置（rc outputDir 或 options.outputDir），请在插件设置里填写')
+    const outDirAbs = outOverride ? path.resolve(outOverride) : path.resolve(conf.outputDir)
+    fs.mkdirSync(outDirAbs, { recursive: true })
+    finalPath = uniquePath(path.join(outDirAbs, name))
+    fs.copyFileSync(inPath, finalPath)
+  }
+
+  return {
+    transcript: transcriptTemp,
+    video: finalPath ? vaultRel(finalPath, conf.vaultPath) : null,
+    transcriptPath: transcriptTemp,
+    videoPath: finalPath,
+    title,
+    bvid: '',
+    duration: mediaDur,
+    kind,
+  }
+}
+
 async function runBatch(task, deps = {}) {
   resetAbort()   // 全局中止标志复位（server resetTask 同规）
+  // ADR-0296：带 local 的任务走本机文件分支（不下载、不分 P、不压缩视频本体）
+  if (task && task.local && typeof task.local === 'object') return runLocal(task, deps)
   // conf 缺省 = rc（调用方读入），task.options（bz 文献盒设置全量下发）并入 conf——
   // 让 options 里的 vaultPath/ffmpegPath/ffprobePath/pythonPath/engine/whisperModel/cacheDir/cacheRetentionDays/outputDir 覆盖 rc 兜底
   const conf = { ...(deps.conf || {}), ...((task && task.options) || {}) }
@@ -1181,6 +1337,6 @@ module.exports = {
   abortAll, resetAbort, trackProc, runPython, PY_TRANSCRIBE, PY_TRANSCRIBE_SENSEVOICE, resolveEngine, parseTranscriptUnits,
   cacheKey, getCacheDir, cachePath, cleanupCache,
   resumeKey, resumeClipPath, resumeCompressedPath, resumeTranscriptPath,
-  vaultRel, decodeBatchArg, runBatch,
+  vaultRel, decodeBatchArg, runBatch, runLocal, extractAudio,
   getUpVideos, parseLenStr, getCid, getSubtitle, checkSubtitlePlausible, runBrief, briefDuration,
 }

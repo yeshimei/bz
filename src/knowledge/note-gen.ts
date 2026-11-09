@@ -67,6 +67,86 @@ export function chunkTranscript(text: string, maxLen = 4000): string[] {
   return chunks;
 }
 
+/** 自动分段的每段目标长度（字符）。中文阅读舒适区约 3-5 句，150 字上下是转写稿的经验值 */
+const PARAGRAPH_TARGET = 150;
+/** 单句超过「目标段长 × 本倍数」才允许硬切——否则宁可这一段略长，也不把一句话劈成两段 */
+const PARAGRAPH_SENTENCE_MAX = 2;
+/** 句末标点（与 chunkTranscript 同集合：中文全角 + 英文感叹/问号/分号） */
+const SENTENCE_END = '。！？!?；;';
+/** 闭合标点：切句后跟在句号后面的右引号/右括号，要收回上一句，不能落到下一句开头 */
+const CLOSERS = '”’」』】》）)]';
+
+/** 切句：句末标点留句尾，紧跟的闭合标点收回上一句（“走吧。”不能把右引号甩到下一句） */
+function splitSentences(text: string): string[] {
+  const raw: string[] = [];
+  let cur = '';
+  for (const ch of text) {
+    cur += ch;
+    if (SENTENCE_END.includes(ch)) { raw.push(cur); cur = ''; }
+  }
+  if (cur.trim()) raw.push(cur);
+  const out: string[] = [];
+  for (const s of raw) {
+    let head = s;
+    let front = '';
+    while (head && CLOSERS.includes(head[0])) { front += head[0]; head = head.slice(1); }
+    if (front && out.length) out[out.length - 1] += front;
+    else head = front + head;
+    if (head.trim()) out.push(head.trim());
+  }
+  return out;
+}
+
+/** 超长假句硬切：优先在逗号/顿号/冒号后断，断不出来再按长度等分 */
+function hardSplitSentence(text: string, max: number): string[] {
+  const parts = text.split(/(?<=[，、：,;])/).map((p) => p.trim()).filter(Boolean);
+  const out: string[] = [];
+  let cur = '';
+  for (const p of parts) {
+    if (cur && cur.length + p.length > max) { out.push(cur); cur = ''; }
+    if (p.length > max) {
+      if (cur) { out.push(cur); cur = ''; }
+      for (let i = 0; i < p.length; i += max) out.push(p.slice(i, i + max));
+      continue;
+    }
+    cur += p;
+  }
+  if (cur) out.push(cur);
+  return out;
+}
+
+/**
+ * 影像笔记正文自动分段（ADR-0295）：只改排版，一个字不改——
+ * 按句末标点切句，累积到目标段长即断段，段间空行；超长句优先在逗号处断，断不出来按长度等分。
+ * 原文若已有空行分段（转写稿由校对通道分段、或用户手改过），按原有段落逐段重排，不并段。
+ * 空白归一：中文之间换行/空格直接去掉，英文单词间保留一个空格（避免把英文粘连）。
+ */
+export function paragraphizeTranscript(text: string, targetLen = PARAGRAPH_TARGET): string {
+  const target = Number.isFinite(targetLen) && targetLen > 0 ? Math.floor(targetLen) : PARAGRAPH_TARGET;
+  const blocks = String(text ?? '').split(/\n{2,}/).map((b) => b.trim()).filter(Boolean);
+  if (!blocks.length) return '';
+  const one = (block: string): string => {
+    const flat = block
+      .split(/\n+/).map((s) => s.trim()).filter(Boolean).join(' ')
+      // 中文之间不该有空格（转写稿按行折行时会产生），英文单词间保留
+      .replace(/([\u4e00-\u9fa5，。！？；：、（）《》“”‘’])[ \t]+(?=[\u4e00-\u9fa5，。！？；：、（）《》“”‘’])/g, '$1')
+      .replace(/[ \t]{2,}/g, ' ')
+      .trim();
+    if (!flat) return '';
+    const sentences = splitSentences(flat)
+      .flatMap((s) => (s.length <= target * PARAGRAPH_SENTENCE_MAX ? [s] : hardSplitSentence(s, target)));
+    const paras: string[] = [];
+    let cur = '';
+    for (const s of sentences) {
+      if (cur && cur.length + s.length > target) { paras.push(cur); cur = ''; }
+      cur += s;
+    }
+    if (cur) paras.push(cur);
+    return paras.join('\n\n');
+  };
+  return blocks.map(one).filter(Boolean).join('\n\n');
+}
+
 /** AI 返回 JSON 容错解析：剥 markdown 围栏 + 残留文本提取；失败抛错带片段 */
 export function parseAiJson(raw: string): any {
   const cleaned = String(raw || '').replace(/```(?:json)?\s*/gi, '').replace(/```/g, '').trim();
@@ -200,12 +280,14 @@ export function clipRangeLabel(clip?: { start?: string | null; end?: string | nu
 }
 
 /**
- * 生成视频文献笔记：元数据（title/tags/summary/domain，一次 JSON 调用，非文本润色，保留）→
+ * 生成影像文献笔记：元数据（title/tags/summary/domain，一次 JSON 调用，非文本润色，保留）→
  * 正文文本档（ADR-0222 / issue 518）：LLM 校对开 = 分块「只修错不创作」校对后拼接；关 = 转写
  * 原文直出——旧「分块润色」已退役（用户 2026-09-29 拍板），本链路对文本的 LLM 处理只剩校对一档。
- * videoPath 非空时正文尾部附视频双链（ADR-0066/0073，ticket 151 补回）。返回 vault 相对笔记路径。
+ * videoPath 非空时正文尾部附媒体双链（ADR-0066/0073，ticket 151 补回）。返回 vault 相对笔记路径。
  * ADR-0261：标题/简介以文稿为唯一依据——整片任务把视频标题当「仅背景」附上，切片任务**不喂**
  * 整条视频的标题（片段之外的结论会被模型当成片段内容写进标题），并把覆盖范围落成 `clip` 键。
+ * ADR-0296：mediaKind='audio'（本机音声）时 type 写 audio、标签与文案改口径；url 为空
+ * （本机文件没有出处链接）时不落 source 键——sourceTitle 记原文件名，正文尾部嵌库内那份。
  */
 export async function generateVideoNote(opts: {
   transcript: string;
@@ -213,6 +295,8 @@ export async function generateVideoNote(opts: {
   url: string;
   uploader: string;
   videoPath?: string | null;
+  /** 媒体类型（ADR-0296；缺省 video = 旧行为） */
+  mediaKind?: 'video' | 'audio';
   /** 剪辑范围（task.start/end；两端都空 = 整片）：决定元数据依据什么写、笔记落不落 clip 键（ADR-0261） */
   clip?: { start?: string | null; end?: string | null } | null;
 }): Promise<string> {
@@ -221,15 +305,17 @@ export async function generateVideoNote(opts: {
   const list = parseDomainList(s.knowledgeDomainList);
   const chunks = chunkTranscript(opts.transcript);
   const clip = clipRangeLabel(opts.clip);
+  const audio = opts.mediaKind === 'audio';
+  const kindWord = audio ? '音声' : '视频';
   // 元数据（一次 JSON 调用：标题/标签/简介/领域）
   const metaPrompt = [
     '你是文献整理助手。根据下方转写文稿生成文献笔记元数据。只输出 JSON，不要任何解释：',
     `{"title":"15-30字的中文完整陈述句，不得使用疑问句或疑问语气（为何/为什么/怎么/如何/吗/呢），禁止冒号、破折号、句中句号问号，需要连接时用逗号","tags":["3-6个中文标签，每个不超过5个字，涵盖主题领域、关键概念、应用场景"],"summary":"一句话简介，不超过60字",${domainInstruction(list)}}`,
-    '硬约束：标题与简介只能写转写文稿里确实讲到的东西——文稿没有提到的人物、事件、结论、数字，一律不得写进标题或简介；不得拿视频标题里的说法代替文稿内容。所有字段一律使用简体中文。',
+    `硬约束：标题与简介只能写转写文稿里确实讲到的东西——文稿没有提到的人物、事件、结论、数字，一律不得写进标题或简介；不得拿${kindWord}标题里的说法代替文稿内容。所有字段一律使用简体中文。`,
     `【转写文稿】\n${metaExcerpt(chunks)}`,
     clip
-      ? `【本笔记只覆盖视频 ${clip} 这段片段】标题与简介只描述这段片段本身，不要替整条视频下结论。`
-      : `【视频标题·仅背景参考，不是文稿内容】${opts.videoTitle || '未命名'}`,
+      ? `【本笔记只覆盖${kindWord} ${clip} 这段片段】标题与简介只描述这段片段本身，不要替整条${kindWord}下结论。`
+      : `【${kindWord}标题·仅背景参考，不是文稿内容】${opts.videoTitle || '未命名'}`,
   ].join('\n\n');
   const metaRaw = await ai.json(metaPrompt);
   const meta = parseAiJson(metaRaw);
@@ -242,11 +328,13 @@ export async function generateVideoNote(opts: {
   // 正文文本档：LLM 校对开 = 分块只修错（失败原文直出，任务不炸）；关 = 原文直出（ADR-0222）
   let bodies = chunks;
   if (s.asrLlmProofread === true && chunks.length) {
-    const r = await proofreadPieces(chunks, { contextNote: 'B站视频语音转写文稿（讲解/独白，按原顺序切块）' });
+    const r = await proofreadPieces(chunks, { contextNote: `${audio ? '音声' : '视频'}语音转写文稿（讲解/独白，按原顺序切块）` });
     if (r.failed) notice('LLM 校对失败——按转写原文生成文献正文', 'warning');
     else bodies = r.texts;
   }
   const whole = bodies.join('');
+  // 自动分段（ADR-0295）：只改排版、不动一个字；开关关 = 整段直出（旧行为）
+  const bodyText = s.knowledgeAutoParagraph === false ? whole : paragraphizeTranscript(whole);
   // 视频双链（ticket 151 补回，ADR-0066）：CLI 交付的 mp4 vault 相对路径 → 正文尾部嵌 `![[…]]`；
   // keepVideo=false（未交付）时 videoPath 为 null → 无视频段
   const videoSection = opts.videoPath
@@ -258,16 +346,17 @@ export async function generateVideoNote(opts: {
     'tags:',
     tags.map((t) => `  - ${quoteYaml(t)}`).join('\n'),
     `summary: ${quoteYaml(summary)}`,
-    `source: ${quoteYaml(opts.url)}`,
+    // 本机文件没有出处链接（ADR-0296）：不落 source 键，别写成空串让回读方以为「有来源但为空」
+    ...(opts.url ? [`source: ${quoteYaml(opts.url)}`] : []),
     `date: ${quoteYaml(nowStamp())}`,
     `author: ${quoteYaml(opts.uploader)}`,
     `sourceTitle: ${quoteYaml(opts.videoTitle)}`,
     ...(clip ? [`clip: ${quoteYaml(clip)}`] : []),
-    'type: video',
+    `type: ${audio ? 'audio' : 'video'}`,
     `domain: ${quoteYaml(domain)}`,
     '---',
   ].join('\n');
-  const body = [fm, whole, videoSection].filter(Boolean).join('\n\n');
+  const body = [fm, bodyText, videoSection].filter(Boolean).join('\n\n');
   return writeUniqueNote(litDir(), sanitizeMdTitle(title), body);
 }
 

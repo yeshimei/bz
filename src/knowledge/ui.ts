@@ -45,6 +45,8 @@ import type BzSettings from '../settings';
 import { KnowledgeData, normalizeLooseTime, secToTimeText, timeTextToSec } from './data';
 import { mountCtx, orphanCards, refCounts } from './mount-data';
 import type { KnowledgeTask } from './types';
+import { LOCAL_MEDIA_FILTERS, MEDIA_KIND_LABEL, mediaKindOf, mediaTitleOf } from './media-kind';
+import { pickSystemFiles } from '../core/path-picker';
 import { BatchRunner, type BatchEvents } from './processor';
 import { openMountTree } from './mount-canvas';
 import { backfillNotes, findDuplicateTermNote, generateImageDraft, generateImageNote, generatePassageDraft, generatePassageNote, generateTermDraft, generateTermNote, parseDomainList, resolveImageDir, type DraftFields, type DraftHooks } from './note-gen';
@@ -64,10 +66,11 @@ import {
   motionVideoIn, motionVideoOut, motionVideoRows, motionClosing, type MotionCue,
 } from './motion';
 
-/** 文献类型 → 紧凑行名（issue 309/312 四类：名词 / 段落 / 影像 / 图版；未知类型按名词兜底）；
- *  行内标签（字距版）与紧凑写法同源派生，别再各写一份映射（review 2026-09-14） */
+/** 文献类型 → 紧凑行名（issue 309/312 四类 + ADR-0296 音声：名词 / 段落 / 影像 / 音声 / 图版；
+ *  未知类型按名词兜底）；行内标签（字距版）与紧凑写法同源派生，别再各写一份映射（review 2026-09-14） */
 function litKindPlain(type: string): string {
   if (type === 'video') return '影像';
+  if (type === 'audio') return '音声';
   if (type === 'passage') return '段落';
   if (type === 'image') return '图版';
   return '名词';
@@ -75,6 +78,13 @@ function litKindPlain(type: string): string {
 /** 同一映射的行内标签（每字间加空格的「词典字距」排版） */
 function litKindLabel(type: string): string {
   return litKindPlain(type).split('').join(' ');
+}
+
+/** 素材型文献的量词（「挂到笔记」副标用）：视频「个」、音声「段」、图版「张」 */
+function mediaUnitOf(type: string): string {
+  if (type === 'audio') return '段音声';
+  if (type === 'video') return '个视频';
+  return '张图片';
 }
 /** 图版单次录入的图片张数上限（issue 313）：一次 AI 请求的图片数封顶，避免大图组拖垮上行与费用 */
 const IMAGE_ENTRY_MAX = 9;
@@ -451,6 +461,8 @@ export function knowledgeSettingsSchema(opts?: { onClearHistory?: () => void | P
       {
         icon: 'settings-2', name: '视频处理',
         rows: [
+          // 自动分段（ADR-0295）：默认开；只影响新生成的影像笔记，旧笔记不回改
+          { type: 'toggle', name: '笔记自动分段', desc: '转写正文按句子分自然段，不改字，旧笔记不回改', binding: boolDefaultOn('knowledgeAutoParagraph') },
           { type: 'toggle', name: '详细进度提示', desc: '显示当前步骤与耗时', binding: { key: 'knowledgeProgressDetail' } },
           { type: 'toggle', name: '保留视频原件', desc: '转文献后保留视频文件', binding: { key: 'knowledgeKeepVideo' } },
           { type: 'select', name: '下载清晰度', desc: '下载视频的清晰度', binding: { key: 'knowledgeQuality' }, options: [{ value: 'highest', label: '最高' }, { value: '1080', label: '1080P' }, { value: '720', label: '720P' }] },
@@ -575,6 +587,11 @@ export class UIManager {
   private addRevealed = false;
   /** 解析成功的信息（null = 未解析 / 失败态） */
   private addMeta: VideoMeta | null = null;
+  /**
+   * 本地导入态（ADR-0296）：选中的本机媒体文件；null = 链接模式。
+   * 与 addMeta 互斥——本地文件没有 B 站元数据，标题取文件名、剪辑只能手填。
+   */
+  private addLocal: { path: string; name: string; kind: 'video' | 'audio' } | null = null;
   /** 实测清晰度档位（null = 未取到 → 固定列表回落） */
   private addQualities: number[] | null = null;
   /** 当前选中分 P（1 起） */
@@ -852,7 +869,7 @@ export class UIManager {
     const out: ItemAction[] = [
       { icon: 'book-open', label: '打开笔记', onClick: () => this.openNote(r.path) },
     ];
-    if (r.kind === 'lit' && (r.type === 'video' || r.type === 'image')) {
+    if (r.kind === 'lit' && (r.type === 'video' || r.type === 'audio' || r.type === 'image')) {
       out.push({ icon: 'paperclip', label: '挂到笔记…', onClick: () => void this.showTackPicker(r) });
     }
     if (r.source) out.push({ icon: 'unlink', label: '删除来源', onClick: () => void this.removeRowSource(r) });
@@ -880,7 +897,7 @@ export class UIManager {
     this.tackMedia = 0;
     this.tackPicks = this.tackCandidates(r);
     this.renderTackPicker();
-    // 副标里的「N 个视频」：读一次源笔记数嵌入，读不到就不显示（不挡主路径）
+    // 副标里的「N 个视频 / N 段音声」：读一次源笔记数嵌入，读不到就不显示（不挡主路径）
     try {
       const f = this.app.vault.getAbstractFileByPath(r.path);
       if (f) {
@@ -888,7 +905,7 @@ export class UIManager {
         this.tackMedia = n;
         if (this.tackSource === r && n) {
           const el = this.contentEl?.querySelector('.bz-kb-tack-media');
-          if (el) el.textContent = `${n} 个${r.type === 'video' ? '视频' : '图片'}`;
+          if (el) el.textContent = `${n} ${mediaUnitOf(r.type)}`;
         }
       }
     } catch { /* 源笔记读不到：副标留空，挂载动作自己会报 no-media */ }
@@ -899,7 +916,7 @@ export class UIManager {
     const out: TackPick[] = [];
     for (const n of this.allNotes) {
       const t = String(n.type || '');
-      if (t === 'video' || t === 'image' || n.path === r.path) continue;
+      if (t === 'video' || t === 'audio' || t === 'image' || n.path === r.path) continue;
       out.push({ path: n.path, title: n.title, kind: litKindPlain(t), domain: n.domain, summary: n.summary, date: n.date, created: n.created });
     }
     for (const c of this.allCards) {
@@ -988,7 +1005,7 @@ export class UIManager {
         <button class="bz-kb-tack-x" data-kb-act="tack-back" title="关闭" aria-label="关闭">✕</button>
       </div>
       <div class="bz-kb-tack-sub">
-        <span class="bz-kb-pos ${r.type === 'video' ? 'hot' : 'img'}">${r.type === 'video' ? '影 像' : '图 版'}</span>
+        <span class="bz-kb-pos ${r.type === 'image' ? 'img' : 'hot'}">${litKindLabel(r.type)}</span>
         <span class="bz-kb-tack-src">${esc(r.title)}</span>
         <span class="bz-kb-tack-media"></span>
       </div>
@@ -1652,7 +1669,7 @@ export class UIManager {
     const rows = this.allNotes.map((n) => {
       const kind = litKindLabel(n.type);
       return `<div class="bz-kb-lexrow" data-kb-act="lit-peek" data-path="${esc(n.path)}">
-        <div class="bz-kb-hw"><span class="bz-kb-w">${esc(n.title)}</span><span class="bz-kb-pos ${n.type === 'video' ? 'hot' : n.type === 'image' ? 'img' : ''}">${kind}</span><span class="bz-kb-dom">${esc(n.domain || '未分类')}</span></div>
+        <div class="bz-kb-hw"><span class="bz-kb-w">${esc(n.title)}</span><span class="bz-kb-pos ${n.type === 'video' || n.type === 'audio' ? 'hot' : n.type === 'image' ? 'img' : ''}">${kind}</span><span class="bz-kb-dom">${esc(n.domain || '未分类')}</span></div>
         <div class="bz-kb-tail"><span class="bz-kb-meta">${esc(n.date || '')}</span></div>
       </div>`;
     }).join('');
@@ -1698,7 +1715,7 @@ export class UIManager {
       ? { text: '卡 片', cls: '' }
       : kind === 'topic'
         ? { text: '主 题', cls: '' }
-        : { text: litKindLabel(n.type || ''), cls: n.type === 'video' ? 'hot' : n.type === 'image' ? 'img' : '' };
+        : { text: litKindLabel(n.type || ''), cls: n.type === 'video' || n.type === 'audio' ? 'hot' : n.type === 'image' ? 'img' : '' };
     // 挂载树入口只留卡片（2026-09-24 用户拍板：文献/主题笔记没有挂载数的概念）
     const mtBtn = kind === 'card'
       ? `<button class="bz-kb-mt-openbtn" data-kb-act="mount-tree" data-path="${esc(n.path)}" title="以这张卡为主卡打开挂载树">看挂载树</button>`
@@ -2343,7 +2360,8 @@ export class UIManager {
     this.backfillRunning = true;
     try {
       const tasks = await KnowledgeData.loadTasks();
-      const todo = tasks.filter((t) => !t.archived && t.url && !this.backfillTried.has(t.id)
+      // 本机任务（ADR-0296）没有可抓的元数据：url 天然为空，这里再显式排除一次防将来填错
+      const todo = tasks.filter((t) => !t.archived && t.url && t.sourceKind !== 'local' && !this.backfillTried.has(t.id)
         && (!t.title || (t.status !== 'success' && needsBvidRepair(t.url))));
       if (todo.length) {
         const cookie = String(tryGetSettings()?.bilibiliCookie || '');
@@ -2439,19 +2457,26 @@ export class UIManager {
     card.className = 'bz-kb-taskcard';
     card.dataset.id = task.id;
     const meta = STATUS_META[task.status] ?? STATUS_META.pending;
+    // 本机任务（ADR-0296）：标题行显示文件名（不是链接），类型与来源进次要行
+    const isLocal = task.sourceKind === 'local';
+    const localName = task.title
+      || (task.localPath ? task.localPath.slice(task.localPath.lastIndexOf('/') + 1) : '');
+    const localMeta = isLocal ? `本机 · ${task.mediaKind === 'audio' ? '音声' : '视频'} · ` : '';
     const pageTag = task.page && task.page > 1 ? `P${task.page} · ` : '';
     const timeText = task.start && task.end ? `${pageTag}${task.start} ~ ${task.end}` : `${pageTag}整片`;
     const durText = task.duration ? ` · ${secToTimeText(task.duration)}` : '';
-    const linkLine = task.title
-      ? `<a class="bz-kb-tlink" href="${esc(task.url)}" title="${esc(task.url)}">${esc(task.title)}</a>`
-      : `<span class="bz-kb-turl" title="${esc(task.url)}">${esc(shortUrlText(task.url))}</span>`;
+    const linkLine = isLocal
+      ? `<span class="bz-kb-turl" title="${esc(task.localPath || '')}">${esc(localName || '（本机文件）')}</span>`
+      : task.title
+        ? `<a class="bz-kb-tlink" href="${esc(task.url)}" title="${esc(task.url)}">${esc(task.title)}</a>`
+        : `<span class="bz-kb-turl" title="${esc(task.url)}">${esc(shortUrlText(task.url))}</span>`;
     const upText = task.uploader ? ` · UP主 ${esc(task.uploader)}` : '';
     card.innerHTML = `
       <div class="bz-kb-trow">
         <span class="bz-kb-status ${meta.cls}">${meta.label}</span>
         ${linkLine}
       </div>
-      <div class="bz-kb-tmeta">${timeText}${durText}${upText}${task.remark ? ' · ' + esc(task.remark) : ''}</div>
+      <div class="bz-kb-tmeta">${localMeta}${timeText}${durText}${upText}${task.remark ? ' · ' + esc(task.remark) : ''}</div>
       ${task.status === 'processing' ? (this.runState.has(task.id) ? '<div class="bz-kb-progress-box"></div>' : (task.reason ? `<div class="bz-kb-progress">${esc(task.reason)}</div>` : '')) : ''}
       ${task.status === 'failed' && task.reason ? `<div class="bz-kb-progress bz-kb-progress-error" title="${esc(task.reason)}">${esc(humanizeError(task.reason))}</div>` : ''}
       ${task.status === 'success' && task.notePath ? `<div class="bz-kb-notepath">${iconSpan('file-text')} ${esc(task.notePath)}</div>` : ''}`;
@@ -2471,7 +2496,7 @@ export class UIManager {
     const actions: ItemAction[] = [];
     if (task.status === 'success') {
       if (task.notePath) actions.push({ icon: 'book-open', label: '打开文献笔记', onClick: () => this.openNote(task.notePath!) });
-      if (task.videoPath) actions.push({ icon: 'copy', label: '复制视频路径', onClick: () => void this.copyText(task.videoPath!) });
+      if (task.videoPath) actions.push({ icon: 'copy', label: task.mediaKind === 'audio' ? '复制音声路径' : '复制视频路径', onClick: () => void this.copyText(task.videoPath!) });
       actions.push({ icon: 'pencil', label: '编辑', onClick: () => this.showAddDialog(task) });
     } else if (task.status === 'failed' || task.status === 'pending') {
       actions.push({ icon: 'pencil', label: '编辑', onClick: () => this.showAddDialog(task) });
@@ -2637,16 +2662,25 @@ export class UIManager {
     // 词典皮（issue 310：与名词/段落录入同壳）：标题栏 → 链接行 + 解析 →
     // 「解析完成后」才展开的下半个表单（只读信息 / 分P / 剪辑 / 清晰度 / 保存）。
     // ADR-0133 的解析式录入契约不变（单框 + 解析按钮 → 只读信息 → 双把手范围 + 时间框 → 清晰度）。
+    // ADR-0296：链接行右侧多一个「导入」——选本机视频/音声，选中后链接行整行换成「本机」行，
+    // 标题取文件名、剪辑手填（本机文件不额外起一次探测，时长由处理阶段回填）。
     popup.innerHTML = `
       <div class="bz-lit-sheet-head">
         <span class="bz-lit-sheet-title">影 像</span>
         <span id="lit-add-mode" class="bz-lit-mode-tag" style="display:none;">编辑任务</span>
       </div>
       <div id="lit-add-fail" class="bz-lit-form-alert" style="display:none;"></div>
-      <div class="bz-lit-term-row">
+      <div class="bz-lit-term-row" id="lit-add-urlrow">
         <span class="bz-lit-term-meta-k">链接</span>
         <input id="lit-add-url" type="text" autocomplete="off">
         <button id="lit-add-resolve" type="button">解析</button>
+        <button id="lit-add-local" type="button" title="从本机选视频或音声文件（只支持桌面端）">导入</button>
+      </div>
+      <div class="bz-lit-term-row" id="lit-add-localrow" style="display:none;">
+        <span class="bz-lit-term-meta-k">本机</span>
+        <span id="lit-add-localname" class="bz-lit-term-meta-v" title=""></span>
+        <span id="lit-add-localkind" class="bz-lit-mode-tag"></span>
+        <button id="lit-add-localclear" type="button">换文件</button>
       </div>
       <div id="lit-add-rstate" class="bz-lit-rstate" style="display:none;"></div>
       <div id="lit-add-more" style="display:none;">
@@ -2654,7 +2688,7 @@ export class UIManager {
           <span class="bz-lit-term-meta-k">标题</span>
           <span id="lit-add-ititle" class="bz-lit-term-meta-v"></span>
         </div>
-        <div class="bz-lit-term-row">
+        <div class="bz-lit-term-row" id="lit-add-uploader-row">
           <span class="bz-lit-term-meta-k">UP 主</span>
           <span id="lit-add-iuploader" class="bz-lit-term-meta-v"></span>
         </div>
@@ -2674,7 +2708,7 @@ export class UIManager {
           <button id="lit-add-whole" type="button">整片</button>
         </div>
         <div id="lit-add-rb"></div>
-        <div class="bz-lit-term-row">
+        <div class="bz-lit-term-row" id="lit-add-quality-row">
           <span class="bz-lit-term-meta-k">清晰度</span>
           <select id="lit-add-quality"></select>
         </div>
@@ -2689,6 +2723,9 @@ export class UIManager {
     this.addPopup = popup;
     q<HTMLButtonElement>(popup, '#lit-add-save')!.onclick = () => void this._handleAddSave();
     q<HTMLButtonElement>(popup, '#lit-add-resolve')!.onclick = () => void this._handleResolve();
+    // 本机导入（ADR-0296）：选文件即进本地态；「换文件」走同一个选择器
+    q<HTMLButtonElement>(popup, '#lit-add-local')!.onclick = () => void this._pickLocalMedia();
+    q<HTMLButtonElement>(popup, '#lit-add-localclear')!.onclick = () => void this._pickLocalMedia();
     q<HTMLButtonElement>(popup, '#lit-add-whole')!.onclick = () => { this.addDirty = true; this._resetAddRange(); };
     // 档位下拉（issue 326）：选项在 _renderAdd 里重建但元素常驻，change 只由用户切换触发——打脏标
     q<HTMLSelectElement>(popup, '#lit-add-quality')?.addEventListener('change', () => { this.addDirty = true; });
@@ -2700,6 +2737,8 @@ export class UIManager {
         this.addUrlSeq++; // 在途解析过期（回填前序列号校验丢弃）
         this.addResolving = false; // 改输入 = 放弃在途解析：按钮恢复可用
         this._setResolveState(null);
+        // 改链接 = 放弃本地态（ADR-0296：两种来源互斥，链接行重新接管）
+        if (this.addLocal) this.addLocal = null;
         this.addRevealed = false; // 链接变了 → 下半表单收起，须重新解析（issue 310）
         if (this.addMeta || this.addDuration > 0) {
           this.addMeta = null;
@@ -2752,6 +2791,39 @@ export class UIManager {
     this._renderAdd();
   }
 
+  /**
+   * 选本机媒体（ADR-0296，桌面端专属）：原生文件对话框 → 扩展名白名单校验 → 进本地态。
+   * 本地态与链接态互斥：链接行整行让位给「本机」行，标题取文件名、剪辑只能手填
+   * （本机文件不额外起一次 ffprobe，时长由处理阶段经 [bz-info] 回填）。
+   */
+  private async _pickLocalMedia(): Promise<void> {
+    if (isMobileEnv()) { notice('本机导入只支持桌面端', 'info'); return; }
+    const files = await pickSystemFiles('选择视频或音声', LOCAL_MEDIA_FILTERS);
+    const path = String(files[0] ?? '').trim();
+    if (!path) return; // 取消：不动现有状态
+    const kind = mediaKindOf(path);
+    const name = path.slice(path.lastIndexOf('/') + 1) || path;
+    if (!kind) { notice(`不认识的文件类型：${name}`, 'error'); return; }
+    // 存在性用宿主 fs 直查（绝对路径不在 vault 索引里）
+    const fsMod = (window as any).require?.('fs');
+    if (fsMod?.existsSync && !fsMod.existsSync(path)) { notice('找不到这个文件，可能已被移动或删除', 'error'); return; }
+    this.addUrlSeq++; // 在途解析作废（本地态不认链接结果）
+    this.addLocal = { path, name, kind };
+    this.addMeta = null;
+    this.addQualities = null;
+    this.addResolving = false;
+    this.addDuration = 0;
+    this.addStart = 0;
+    this.addEnd = 0;
+    this.addPage = 1;
+    this.addRevealed = true;
+    this.addDirty = true;
+    const urlInput = this.addPopup ? q<HTMLInputElement>(this.addPopup, '#lit-add-url') : null;
+    if (urlInput) urlInput.value = '';
+    this._setResolveState(null);
+    this._renderAdd();
+  }
+
   showAddDialog(editItem?: Partial<KnowledgeTask>): void {
     if (!this.addPopup || !this.addMask) return;
     // 影像处理面板垫底（2026-09-24 用户拍板）：不开出口图标，录入弹窗打开时直接把面板
@@ -2768,8 +2840,16 @@ export class UIManager {
     const modeTag = q<HTMLElement>(this.addPopup, '#lit-add-mode');
     if (modeTag) modeTag.style.display = this.editingId ? 'inline-block' : 'none';
     (q<HTMLInputElement>(this.addPopup, '#lit-add-url')!).value = editItem?.url ?? '';
+    // 编辑既有本地任务（ADR-0296）：路径与类型回填本地态；链接态任务清空本地态（两种来源互斥）
+    this.addLocal = editItem?.sourceKind === 'local' && editItem.localPath
+      ? {
+          path: editItem.localPath,
+          name: editItem.localPath.slice(editItem.localPath.lastIndexOf('/') + 1) || editItem.localPath,
+          kind: editItem.mediaKind === 'audio' ? 'audio' : 'video',
+        }
+      : null;
     // 解析态回显（ADR-0133）：编辑态先铺任务已有信息（解析失败不丢），再自动重抓刷新
-    this.addMeta = editItem && (editItem.title || editItem.uploader)
+    this.addMeta = !this.addLocal && editItem && (editItem.title || editItem.uploader)
       ? { title: editItem.title || undefined, uploader: editItem.uploader || undefined }
       : null;
     this.addQualities = null;
@@ -2822,16 +2902,33 @@ export class UIManager {
       // 动效层：解析跑完 = 词典条目展开释义（只在「从未展开 → 展开」的瞬间播）
       if (wasHidden && this.addRevealed) motionAddReveal(more);
     }
-    // 信息区（标题 / UP 主只读；缺项显示占位）
+    // 信息区（标题 / UP 主只读；缺项显示占位）——本地态（ADR-0296）：链接行整行换「本机」行，
+    // 标题取文件名、隐藏 UP 主 / 分P / 清晰度（本机文件没有这些概念），剪辑保留（手填）
+    const local = this.addLocal;
+    const urlRow = q<HTMLElement>(popup, '#lit-add-urlrow');
+    const localRow = q<HTMLElement>(popup, '#lit-add-localrow');
+    if (urlRow) urlRow.style.display = local ? 'none' : '';
+    if (localRow) localRow.style.display = local ? '' : 'none';
+    if (local) {
+      const nameEl = q<HTMLElement>(popup, '#lit-add-localname');
+      if (nameEl) { nameEl.textContent = local.name; nameEl.title = local.path; }
+      const kindEl = q<HTMLElement>(popup, '#lit-add-localkind');
+      if (kindEl) kindEl.textContent = MEDIA_KIND_LABEL[local.kind];
+    }
     const tEl = q<HTMLElement>(popup, '#lit-add-ititle');
-    if (tEl) { tEl.textContent = meta?.title || '（未取到标题）'; tEl.title = meta?.title || ''; }
+    const titleText = local ? mediaTitleOf(local.name) : (meta?.title || '');
+    if (tEl) { tEl.textContent = titleText || '（未取到标题）'; tEl.title = titleText; }
+    const upRow = q<HTMLElement>(popup, '#lit-add-uploader-row');
+    if (upRow) upRow.style.display = local ? 'none' : '';
     const uEl = q<HTMLElement>(popup, '#lit-add-iuploader');
     if (uEl) { uEl.textContent = meta?.uploader || '（未取到）'; uEl.title = meta?.uploader || ''; }
-    // 分P：多 P 下拉；单 P 隐藏（拍板）；无 pages 信息 → 数字框（失败态口径，可手填）
+    // 分P：多 P 下拉；单 P 隐藏（拍板）；无 pages 信息 → 数字框（失败态口径，可手填）；本地态恒藏
     const pageRow = q<HTMLElement>(popup, '#lit-add-page-row');
     const numRow = q<HTMLElement>(popup, '#lit-add-pagenum-row');
-    if (pageRow) pageRow.style.display = multi ? '' : 'none';
-    if (numRow) numRow.style.display = pages.length ? 'none' : '';
+    if (pageRow) pageRow.style.display = !local && multi ? '' : 'none';
+    if (numRow) numRow.style.display = !local && !pages.length ? '' : 'none';
+    const qRow = q<HTMLElement>(popup, '#lit-add-quality-row');
+    if (qRow) qRow.style.display = local ? 'none' : '';
     const sel = q<HTMLSelectElement>(popup, '#lit-add-page');
     if (multi && sel) {
       sel.innerHTML = pages.map((p) => `<option value="${p.page}">${esc(this._pageLabel(p))}</option>`).join('');
@@ -3122,6 +3219,7 @@ export class UIManager {
     this.editingId = null;
     this.addUrlReset(); // 关弹窗使在途解析过期（杜绝迟到回填到已卸载 DOM）
     this.addMeta = null;
+    this.addLocal = null; // 本地态不跨弹窗（ADR-0296：下次打开是干净链接模式）
     this.addQualities = null;
     this.addResolving = false;
     this.addRevealed = false;
@@ -3143,6 +3241,46 @@ export class UIManager {
   private async _handleAddSave(): Promise<void> {
     if (!this.addPopup) return;
     if (this.addResolving) { notice('解析中，请稍候', 'info'); return; }
+    // 本地导入（ADR-0296）：与链接模式两条链路——没有 url / 分P / 清晰度，标题取文件名，
+    // 剪辑按手填（时长未知：两端框都空 = 不剪辑，与链接模式「无时长」口径一致）
+    if (this.addLocal) {
+      const local = this.addLocal;
+      this._commitTimeInput('start', true);
+      this._commitTimeInput('end', true);
+      const sText = (q<HTMLInputElement>(this.addPopup, '#lit-add-start')?.value ?? '').trim();
+      const eText = (q<HTMLInputElement>(this.addPopup, '#lit-add-end')?.value ?? '').trim();
+      let start: string | null = null;
+      let end: string | null = null;
+      if (sText || eText) {
+        if (!sText || !eText) { notice('开始与结束时间需成对填写', 'error'); return; }
+        if (this.addStart >= this.addEnd) { notice('结束时间需大于开始时间', 'error'); return; }
+        start = secToTimeText(this.addStart);
+        end = secToTimeText(this.addEnd);
+      }
+      const fields = {
+        url: '',
+        sourceKind: 'local' as const,
+        localPath: local.path,
+        mediaKind: local.kind,
+        start,
+        end,
+        quality: null,
+        page: null,
+        title: mediaTitleOf(local.name) || null,
+        uploader: null,
+        duration: null,
+      };
+      try {
+        if (this.editingId) await KnowledgeData.updateTask(this.editingId, fields);
+        else await KnowledgeData.addTask(fields);
+        this.hideAddDialog();
+        notice(this.editingId ? '任务已更新' : '已加入影像处理队列', 'success');
+        this.showVideoTasks();
+      } catch (e: any) {
+        notice('保存失败：' + (e?.message ?? String(e)), 'error');
+      }
+      return;
+    }
     // 保存前净化兜底（ADR-0133）：裸 BV 号/非 http 文本原样
     let url = normalizeSourceUrl((q<HTMLInputElement>(this.addPopup, '#lit-add-url')?.value ?? '').trim());
     if (!url) { notice('请填写视频链接或 BV 号', 'error'); q<HTMLInputElement>(this.addPopup, '#lit-add-url')?.focus(); return; }
@@ -3226,7 +3364,8 @@ export class UIManager {
     }
     const groups = new Map<string, KnowledgeTask[]>();
     for (const t of rows) {
-      const key = t.url || t.id;
+      // 同一来源归一组：B 站按链接、本机按路径（同一文件多次处理也归一处）
+      const key = t.url || t.localPath || t.id;
       const g = groups.get(key);
       if (g) g.push(t);
       else groups.set(key, [t]);
@@ -3249,12 +3388,20 @@ export class UIManager {
     card.className = 'bz-kb-taskcard bz-kb-hgroup';
     card.dataset.url = head.url || '';
     const href = head.url ? `href="${esc(head.url)}"` : '';
-    const upText = head.uploader ? `<span class="bz-kb-hup">${esc(head.uploader)}</span>` : '';
+    // 本机组（ADR-0296）：标题是文件名、没有可点链接；类型与来源写在右边的小字里
+    const isLocal = head.sourceKind === 'local';
+    const localName = head.title
+      || (head.localPath ? head.localPath.slice(head.localPath.lastIndexOf('/') + 1) : '');
+    const upText = isLocal
+      ? `<span class="bz-kb-hup">本机 · ${head.mediaKind === 'audio' ? '音声' : '视频'}</span>`
+      : head.uploader ? `<span class="bz-kb-hup">${esc(head.uploader)}</span>` : '';
     card.innerHTML = `
       <div class="bz-kb-trow">
-        ${head.title
-          ? `<a class="bz-kb-tlink" ${href} title="${esc(head.url || '')}">${esc(head.title)}</a>`
-          : `<span class="bz-kb-turl" title="${esc(head.url || '')}">${esc(shortUrlText(head.url || ''))}</span>`}
+        ${isLocal
+          ? `<span class="bz-kb-turl" title="${esc(head.localPath || '')}">${esc(localName || '（本机文件）')}</span>`
+          : head.title
+            ? `<a class="bz-kb-tlink" ${href} title="${esc(head.url || '')}">${esc(head.title)}</a>`
+            : `<span class="bz-kb-turl" title="${esc(head.url || '')}">${esc(shortUrlText(head.url || ''))}</span>`}
         ${upText}
       </div>`;
     for (const task of group) {
@@ -3265,7 +3412,7 @@ export class UIManager {
       line.addEventListener('click', () => { if (task.notePath) this.openNote(task.notePath); });
       const actions: ItemAction[] = [];
       if (task.notePath) actions.push({ icon: 'book-open', label: '打开文献笔记', onClick: () => this.openNote(task.notePath!) });
-      if (task.videoPath) actions.push({ icon: 'copy', label: '复制视频路径', onClick: () => void this.copyText(task.videoPath!) });
+      if (task.videoPath) actions.push({ icon: 'copy', label: task.mediaKind === 'audio' ? '复制音声路径' : '复制视频路径', onClick: () => void this.copyText(task.videoPath!) });
       actions.push({ icon: 'trash-2', label: '移出历史', kind: 'danger', onClick: () => void this.confirmDelete(task) });
       attachItemActions(line, actions);
       card.appendChild(line);

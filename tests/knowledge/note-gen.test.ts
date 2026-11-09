@@ -17,6 +17,7 @@ import { notice } from '../../src/core/notice';
 import {
   parseDomainList,
   chunkTranscript,
+  paragraphizeTranscript,
   metaExcerpt,
   clipRangeLabel,
   parseAiJson,
@@ -89,6 +90,64 @@ describe('chunkTranscript（转录分块：句边界优先，超长硬切）', (
     expect(chunkTranscript('   ')).toEqual([]);
     expect(chunkTranscript(null as any)).toEqual([]);
     expect(chunkTranscript(undefined as any)).toEqual([]);
+  });
+});
+
+describe('paragraphizeTranscript（影像正文自动分段：只改排版、一个字不改，ADR-0295）', () => {
+  it('整段长文按句边界切段：段间空行，拼回去与原文完全一致', () => {
+    const sentence = '这是一句用来测试自动分段的中文句子。';
+    const text = sentence.repeat(20);
+    const out = paragraphizeTranscript(text);
+    const paras = out.split('\n\n');
+    expect(paras.length).toBeGreaterThan(1);
+    expect(paras.every((p) => p.length <= 150 + sentence.length)).toBe(true);
+    // 除了被插入的空行，一个字都没动
+    expect(out.replace(/\n\n/g, '')).toBe(text);
+    // 每段都以句末标点收尾（只在句边界断）
+    expect(paras.slice(0, -1).every((p) => /[。！？!?；;”’」』】》）)\]]$/.test(p))).toBe(true);
+  });
+
+  it('短文本保持一段（不足目标段长不硬拆）', () => {
+    expect(paragraphizeTranscript('第一段。第二段！')).toBe('第一段。第二段！');
+  });
+
+  it('原文已用空行分段：保留原段落，逐段重排不并段', () => {
+    const out = paragraphizeTranscript('甲句。乙句。\n\n丙句。丁句。');
+    expect(out.split('\n\n')).toEqual(['甲句。乙句。', '丙句。丁句。']);
+  });
+
+  it('无标点的超长假句：先按逗号断，断不出来再按长度等分（内容不丢）', () => {
+    const noComma = '长'.repeat(800);
+    const out = paragraphizeTranscript(noComma);
+    expect(out.replace(/\n\n/g, '')).toBe(noComma);
+    expect(out.split('\n\n').every((p) => p.length <= 150)).toBe(true);
+
+    // 带逗号、总长远超单句上限（>300 字）→ 先按逗号断，再按段长合并
+    const commas = ('甲'.repeat(80) + '，').repeat(5) + '。';
+    const out2 = paragraphizeTranscript(commas);
+    expect(out2.replace(/\n\n/g, '')).toBe(commas);
+    expect(out2.split('\n\n').length).toBeGreaterThan(1);
+
+    // 单句只比段长略长（≤ 单句上限）时不硬切：宁可这一段略长，也不劈一句话
+    const slightlyLong = '甲'.repeat(90) + '，' + '乙'.repeat(90) + '。';
+    expect(paragraphizeTranscript(slightlyLong)).toBe(slightlyLong);
+  });
+
+  it('中文行内换行/空格归一（英文单词间空格保留）', () => {
+    expect(paragraphizeTranscript('第一句\n第二句')).toBe('第一句第二句');
+    expect(paragraphizeTranscript('hello\nworld')).toBe('hello world');
+  });
+
+  it('右引号跟在句号后：收在上一句末尾，不甩到下一句开头', () => {
+    const text = '他说：“走吧。”她说：“好。”';
+    expect(paragraphizeTranscript(text)).toBe(text);
+  });
+
+  it('空输入 → 空串；targetLen 非法回落默认值', () => {
+    expect(paragraphizeTranscript('')).toBe('');
+    expect(paragraphizeTranscript('   ')).toBe('');
+    expect(paragraphizeTranscript(null as any)).toBe('');
+    expect(paragraphizeTranscript('甲句。乙句。', 0)).toBe('甲句。乙句。');
   });
 });
 
@@ -181,7 +240,9 @@ describe('generateVideoNote（视频文献：九键 frontmatter + 校对开关�
     setSettingsProvider(() => ({}) as any);
   });
 
-  it('开关关（缺省）：元数据一次 JSON，正文 = 转写原文直出，正文零 LLM 调用（润色已退役）', async () => {
+  it('校对关 + 自动分段关：元数据一次 JSON，正文 = 转写原文直出，正文零 LLM 调用（润色已退役）', async () => {
+    // 分段关 → 正文逐字原样（ADR-0295 开关关的旧行为口径）
+    setSettingsProvider(() => ({ knowledgeDirectory: '文献盒', knowledgeDomainList: '心理, 计算机', knowledgeAutoParagraph: false }) as any);
     const transcript = '长'.repeat(3000) + '。' + '长'.repeat(3000);
     const path = await generateVideoNote({ transcript, videoTitle: '测试视频', url: 'https://b23.tv/xxx', uploader: '某UP' });
 
@@ -210,6 +271,16 @@ describe('generateVideoNote（视频文献：九键 frontmatter + 校对开关�
     // 正文 = 转写原文直出（两块原样拼接）
     expect(content).toContain('长'.repeat(3000));
     expect(content).not.toContain('![[CONFIG/APPENDIX/');
+  });
+
+  it('自动分段（缺省开）：正文按句切段、段间空行，去掉空行后与转写原文一致', async () => {
+    const transcript = '第一句话用来测试分段。第二句话接着往下说。第三句话还没有完'.repeat(8) + '。';
+    const path = await generateVideoNote({ transcript, videoTitle: '长视频', url: 'u', uploader: 'w' });
+    const content = vault.files.get(path)!;
+    const body = content.replace(/^---\n[\s\S]*?\n---\n/, '').trim();
+    expect(body.split('\n\n').length).toBeGreaterThan(1); // 切成多段
+    expect(body.replace(/\n\n/g, '')).toBe(transcript); // 一个字都没改
+    expect(aiStub.chat).not.toHaveBeenCalled(); // 分段不调 AI
   });
 
   it('开关开：分块送 LLM 校对（只修错），正文 = 校对稿', async () => {
@@ -245,6 +316,35 @@ describe('generateVideoNote（视频文献：九键 frontmatter + 校对开关�
       transcript: 'x', videoTitle: 't2', url: 'u', uploader: 'w', videoPath: 'CONFIG\\APPENDIX\\v2.mp4',
     });
     expect(vault.files.get(p2)!).toContain('![[CONFIG/APPENDIX/v2.mp4]]');
+  });
+
+  it('音声（ADR-0296）：type 写 audio、不落 source 键、sourceTitle 记文件名、正文嵌库内媒体', async () => {
+    const path = await generateVideoNote({
+      transcript: '这是一段播客的转写。第二句继续。',
+      videoTitle: '2026 播客 第 3 期',
+      url: '',
+      uploader: '',
+      videoPath: 'CONFIG/APPENDIX/2026 播客 第 3 期.m4a',
+      mediaKind: 'audio',
+    });
+    const content = vault.files.get(path)!;
+    const fm = vaultParseFrontmatter(content)!;
+    expect(fm.type).toBe('audio');
+    expect(fm.source).toBeUndefined(); // 本机文件没有出处链接，不写空 source
+    expect(fm.sourceTitle).toBe('2026 播客 第 3 期');
+    expect(content).toContain('![[CONFIG/APPENDIX/2026 播客 第 3 期.m4a]]');
+    // 元数据提示词按「音声」口径问（不是「视频」）
+    const metaPrompt = String(aiStub.json.mock.calls[0][0]);
+    expect(metaPrompt).toContain('【音声标题·仅背景参考，不是文稿内容】');
+    expect(metaPrompt).toContain('不得拿音声标题里的说法代替文稿内容');
+  });
+
+  it('不传 mediaKind = 旧行为（video）；传 video 与缺省等价', async () => {
+    const p1 = await generateVideoNote({ transcript: '甲。乙。', videoTitle: 't', url: 'u', uploader: 'w' });
+    expect(vaultParseFrontmatter(vault.files.get(p1)!)!.type).toBe('video');
+    const p2 = await generateVideoNote({ transcript: '甲。乙。', videoTitle: 't', url: 'u', uploader: 'w', mediaKind: 'video' });
+    expect(vaultParseFrontmatter(vault.files.get(p2)!)!.type).toBe('video');
+    expect(vaultParseFrontmatter(vault.files.get(p2)!)!.source).toBe('u'); // 有 url 仍落 source
   });
 
   it('整片任务：视频标题以「仅背景」形态进提示词，不落 clip 键（ADR-0261）', async () => {

@@ -11,7 +11,7 @@ import { MockVault, mockAppWithVault } from '../mock-vault';
 import { setApp, getApp } from '../../src/core/app';
 import { setSettingsProvider, setSettingsSaver } from '../../src/core/settings-provider';
 import { openClipbook, unloadClipbook } from '../../src/clipbook';
-import { reloadIfOpen, invalidateClipBodyCache, revealClipArticle, closePanel } from '../../src/clipbook/ui';
+import { reloadIfOpen, invalidateClipBodyCache, revealClipArticle, closePanel, togglePanelFullscreen, isPanelOpen } from '../../src/clipbook/ui';
 import { M } from '../../src/clipbook/state';
 import { drainNewsWritesForTests } from '../../src/clipbook/write-queue';
 import { ago } from '../helpers/date';
@@ -386,6 +386,37 @@ describe('面板拖拽缩放 + 尺寸记忆（enh 包 8）', () => {
     // 高轴未拖：mousedown 固化当前渲染高为意图基线（760），同样不被视口 92%（706）挤小
     expect(settings.clipbookPanelHeight).toBe(760);
     await vi.waitFor(() => expect(saveSpy).toHaveBeenCalled());
+  });
+});
+
+describe('全屏命令（bz-clipbook-fullscreen，2026-11-09）', () => {
+  it('进入 → 加 bz-clip-full 并清内联宽高；再执行 → 移除类并按尺寸记忆恢复', async () => {
+    await openDesktop({ clipbookPanelWidth: 900, clipbookPanelHeight: 640 });
+    const frame = document.querySelector('.bz-clip-frame') as HTMLElement;
+    expect(frame.style.width).toBe('900px'); // 尺寸记忆已生效
+    togglePanelFullscreen();
+    expect(frame.classList.contains('bz-clip-full')).toBe(true);
+    expect(frame.style.width).toBe(''); // 全屏交给 CSS，不靠内联
+    expect(frame.style.height).toBe('');
+    togglePanelFullscreen();
+    expect(frame.classList.contains('bz-clip-full')).toBe(false);
+    expect(frame.style.width).toBe('900px'); // 记忆恢复
+    expect(frame.style.height).toBe('640px');
+  });
+
+  it('关面板即退出全屏：重开回到原窗口大小（全屏不跨开关保留）', async () => {
+    await openDesktop({ clipbookPanelWidth: 900, clipbookPanelHeight: 640 });
+    const frame = document.querySelector('.bz-clip-frame') as HTMLElement;
+    togglePanelFullscreen();
+    expect(frame.classList.contains('bz-clip-full')).toBe(true);
+    closePanel();
+    expect(frame.classList.contains('bz-clip-full')).toBe(false);
+    expect(frame.style.width).toBe('900px');
+  });
+
+  it('面板没开时 isPanelOpen=false（命令入口据此只开窗、不进全屏）', async () => {
+    boot({});
+    expect(isPanelOpen()).toBe(false);
   });
 });
 

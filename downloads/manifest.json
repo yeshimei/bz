@@ -27,15 +27,15 @@
       "name": "知识盒工具包",
       "file": "tools/bili-downloader.tar.gz",
       "kind": "bundle",
-      "sha256": "29ebef8895e1150d3a458f7791e68d547eeed200e4b03f9edcec6284cd29789a",
-      "size": 27607
+      "sha256": "0a013d47cc5f2c9dfd0b122c87654c5a00bf3b0e7a5cd0966823b086e3bd262f",
+      "size": 29773
     },
     {
       "id": "tool-dock-watch",
       "name": "工具坞工具包",
       "file": "tools/dock-watch.tar.gz",
       "kind": "bundle",
-      "sha256": "eef641b43b43634d86021d1e57cf5b2ac80a63a3b342846c7e83979a81a8b5ac",
+      "sha256": "dbda2fd3abef8d69e3e7a3f2831cd3afe88edab2d2fb997d1c0adddea769336e",
       "size": 49646
     },
     {
