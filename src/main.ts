@@ -66,6 +66,7 @@ import { openGameshelf, openGameshelfStats, syncGameshelf, startupSyncGameshelf,
 import { openBookshelf, openBookshelfReport, continueReading, unloadBookshelf } from './bookshelf';
 // 影视分析报告独立域已退役（ADR-0090：报告窗并入影院内嵌分析页，命令直达 bz-cinema-analysis）
 import { openReviewPanel, openReviewReport, openReviewAnalysis, openQuizPractice, reviewAddCurrent, reviewRemoveCurrent, reviewJumpOverdue, reviewMarkDialog, reviewMarkRating, reviewStart, ensureReview, unloadReview } from './review';
+import { getReviewPlanApi, type ReviewPlanApi } from './review/reader-api';
 import {
   openSecondBrainPanel,
   openSecondBrainReference,
@@ -371,6 +372,36 @@ export default class BzPlugin extends Plugin {
       return api ? api.embedQuery(text, signal) : Promise.reject(new Error('第二大脑还没就绪，稍后再试'));
     },
   };
+  /**
+   * 复习计划对外门面（bz-reader 的「划线 → 复习卡」）：与 readerAi 同款**转发对象**。
+   *
+   * 复习域是懒初始化的（打开面板才 ensureReview），所以每个方法先 ensure 再取，
+   * 而不是在 onload 就建起来——没人用复习时它不该占启动时间。ensureReview 幂等，
+   * 重复调用直接返回。
+   */
+  reviewPlan: ReviewPlanApi = {
+    isReady: () => {
+      ensureReview(this.app);
+      return !!getReviewPlanApi();
+    },
+    hasNote: async (path) => {
+      ensureReview(this.app);
+      return getReviewPlanApi()?.hasNote(path) ?? false;
+    },
+    addNote: async (path) => {
+      ensureReview(this.app);
+      return getReviewPlanApi()?.addNote(path) ?? { added: false, reason: 'notFound' };
+    },
+    addNotes: async (paths) => {
+      ensureReview(this.app);
+      return getReviewPlanApi()?.addNotes(paths) ?? { added: 0, exists: 0, notFound: 0 };
+    },
+    removeNote: async (path) => {
+      ensureReview(this.app);
+      return getReviewPlanApi()?.removeNote(path) ?? false;
+    },
+  };
+
   /** 小橘域开关上次落到运行时的值（ADR-0254）：saveSettings 里比对，拨动即挂/卸，
    *  不靠面板 onChange 钩子——命令面板外部调用 saveSettings 的路径也一样生效 */
   private smartcatDomainOn = true;

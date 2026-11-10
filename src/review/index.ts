@@ -16,6 +16,13 @@ import { closeStatsModal } from './stats-ui';
 import { unloadReviewAnalysis } from './analysis/index';
 import { cancelActiveFlowDialog } from '../core/flow-dialog';
 import type { Rating } from './fsrs';
+import { setReviewPlanApi } from './reader-api';
+import {
+  addNote as planAddNote,
+  addNotes as planAddNotes,
+  hasNote as planHasNote,
+  removeNote as planRemoveNote,
+} from './plan-ops';
 
 let initialized = false;
 export let dataManager: ReviewDataManager | null = null;
@@ -45,6 +52,19 @@ function pseudoMdFile(path: string): any {
   return { path, basename: stripMdExt(base), extension: 'md' };
 }
 
+/**
+ * 外部（bz-reader）把卡片加进计划之后的收尾：行为流记账 + 面板即时补卡。
+ *
+ * 与 reviewRemoveCurrent 的 removed 事件同一套（issue 261 的小橘行为流）。
+ * 面板刷新失败不影响「已经加进去了」这个事实，所以只吞掉、不往回抛——
+ * 阅读器那边拿到异常只会弹一句看不懂的红字。
+ */
+function notePlanAdded(path: string): void {
+  const title = stripMdExt(String(path ?? '').split('/').pop() || '');
+  emitDomainEvent('review', { kind: 'added', title });
+  if (uiManager) void uiManager.refreshPanel().catch(() => undefined);
+}
+
 /** 幂等初始化（对齐源码 entry：UI 构建 + 事件监听 + 2s 后首查 + 60s 周期） */
 export function ensureReview(app: App): void {
   if (initialized) return;
@@ -52,6 +72,26 @@ export function ensureReview(app: App): void {
   dataManager = new ReviewDataManager(app);
   // A11：注入共享单例（消除 reviewApp 自持/入口面板双实例并存；reviewApp.ensure 保留缺省兜底防独立调用时序）
   reviewApp.dataManager = dataManager;
+  /* 对外门面（bz-reader 的「划线 → 复习卡」，ADR-0294 同范式）：注册一次，卸载置空。
+     闭包读模块级 dataManager / uiManager，而不是捕获此刻的实例——unloadReview 会把
+     门面和这两个字段一起清掉，不存在「门面还活着、数据层已经没了」的窗口。 */
+  setReviewPlanApi({
+    isReady: () => !!dataManager,
+    hasNote: async (path) => (dataManager ? planHasNote(dataManager, path) : false),
+    addNote: async (path) => {
+      if (!dataManager) return { added: false, reason: 'notFound' };
+      const res = await planAddNote(dataManager, app, path);
+      if (res.added) notePlanAdded(path);
+      return res;
+    },
+    addNotes: async (paths) => {
+      if (!dataManager) return { added: 0, exists: 0, notFound: 0 };
+      const res = await planAddNotes(dataManager, app, paths);
+      if (res.added) notePlanAdded(paths[0] ?? '');
+      return res;
+    },
+    removeNote: async (path) => (dataManager ? planRemoveNote(dataManager, path) : false),
+  });
   uiManager = new UIManager(app, dataManager);
   // item 12：R 展示与调度排期同口径——UI 层权重源接拟合权重 currentW()（拟合重算后自动生效）
   uiManager.wSource = () => reviewApp.currentW();
@@ -240,6 +280,9 @@ export async function reviewMarkRating(app: App, rating: Rating): Promise<void> 
 /** 卸载清理 */
 export function unloadReview(): void {
   initialized = false;
+  /* 先摘对外门面：外部插件在本域卸载后再调，拿到的必须是 null 而不是
+     一个还攥着旧 app 的闭包 */
+  setReviewPlanApi(null);
   if (firstCheckTimer) {
     clearTimeout(firstCheckTimer);
     firstCheckTimer = null;
