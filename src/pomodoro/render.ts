@@ -97,7 +97,9 @@ export function panelShellHtml(): string {
       </div>`;
 }
 
-/** 弹窗根（tabindex 承载 Space 焦点）+ 骨架（与插件同 markup） */
+/** 弹窗根（tabindex 承载 Space 焦点）+ 骨架（与插件同 markup）。
+ *  bz-main-panel：它是首页磁贴之一，关闭后要能被「关闭后回到首页」识别（2026-11-10）；
+ *  bz-no-fullscreen：番茄钟不参与通用全屏（用户拍板），全屏命令见到直接提示。 */
 export function popupShellHtml(): string {
-  return `<div id="pomodoro-popup" tabindex="-1">${panelShellHtml()}</div>`;
+  return `<div id="pomodoro-popup" class="bz-main-panel bz-no-fullscreen" tabindex="-1">${panelShellHtml()}</div>`;
 }

@@ -109,6 +109,13 @@ describe('通用全屏命令', () => {
     expect(() => toggleGlobalFullscreen()).not.toThrow();
   });
 
+  it('不参与全屏的主面板（番茄钟）只提示、不加类', () => {
+    const p = panel('bz-no-fullscreen');
+    p.style.zIndex = '1001';
+    toggleGlobalFullscreen();
+    expect(p.classList.contains(GLOBAL_FULL_CLASS)).toBe(false);
+  });
+
   it('面板被关掉后全屏态自愈：再执行不会把已离场的旧面板当成目标', () => {
     const p = panel();
     p.style.zIndex = '1001';

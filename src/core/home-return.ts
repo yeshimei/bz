@@ -19,7 +19,6 @@ import { visibleMainPanels } from './ui/main-panel';
 type OpenHome = () => void;
 
 let armed = false;
-let armAt = 0;
 let sawPanel = false;
 let openHome: OpenHome | null = null;
 /** arm 时已在场的主面板（正常为空；有的话也不算「本次新开的」） */
@@ -30,10 +29,11 @@ let checkTimer: ReturnType<typeof setTimeout> | null = null;
 let returnTimer: ReturnType<typeof setTimeout> | null = null;
 let watchdog: ReturnType<typeof setTimeout> | null = null;
 
-/** 等待命令把面板弹出来的宽限：过了这段仍无主面板 = 本次是弹窗类动作 */
-const OPEN_GRACE_MS = 1200;
-/** 关闭后稍等一拍再回首页：给「关一个、马上开下一个」的跳转（影院 → 分析特刊）留窗口 */
-const RETURN_DELAY_MS = 150;
+/** 闭合后的合并等待：同一拍（0ms 宏任务）内让「关一个、马上开下一个」的跳转先落地，
+ *  用户感知为零延迟；不做几帧级等待——实测 150ms 会被肉眼读成「卡一下」 */
+const RETURN_DELAY_MS = 0;
+/** 观察回调的合并延迟（同拍） */
+const CHECK_DELAY_MS = 0;
 /** 会话兜底：这么久还没闭合就放弃，别让观察器长驻 */
 const WATCHDOG_MS = 20000;
 
@@ -76,26 +76,23 @@ function scheduleReturn(): void {
   }, RETURN_DELAY_MS);
 }
 
-/** body 子树变化 → 先立刻记下「本次开过主面板」，再防抖评估是否已经闭合。
- *  「出现」必须即时标记：面板可能开得很短（点开又马上关），只靠防抖后的快照会看漏。 */
+/** body 子树变化 → 先立刻记下「本次开过主面板」，再评估是否已经闭合。
+ *  「出现」必须即时标记：面板可能开得很短（点开又马上关），只靠下一拍快照会看漏。 */
 function onMutation(): void {
   if (!armed) return;
   if (freshPanels().length) sawPanel = true;
   scheduleCheck();
 }
 
-/** 防抖评估（阈值 80ms）：主面板确实都不可见了才进入「回首页」倒计时 */
+/** 评估：主面板确实都不可见了才进入「回首页」合并等待 */
 function evaluate(): void {
   if (!armed) return;
   if (freshPanels().length) {
     sawPanel = true;
     return;
   }
-  if (!sawPanel) {
-    // 还在等命令开面板；过了宽限期说明本次是弹窗动作，交给 notifyFloatClosed
-    if (Date.now() - armAt >= OPEN_GRACE_MS) sawPanel = true;
-    return;
-  }
+  // 没出现过主面板 = 本次可能是弹窗动作：不因 DOM 杂音回首页，等 notifyFloatClosed
+  if (!sawPanel) return;
   scheduleReturn();
 }
 
@@ -104,7 +101,7 @@ function scheduleCheck(): void {
   checkTimer = setTimeout(() => {
     checkTimer = null;
     evaluate();
-  }, 80);
+  }, CHECK_DELAY_MS);
 }
 
 /**
@@ -114,7 +111,6 @@ function scheduleCheck(): void {
 export function armHomeReturn(open: OpenHome): void {
   stop();
   armed = true;
-  armAt = Date.now();
   openHome = open;
   baseline = new Set(visibleMainPanels());
   if (typeof MutationObserver !== 'undefined' && typeof document !== 'undefined') {
