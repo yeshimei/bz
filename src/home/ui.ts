@@ -32,7 +32,7 @@ import { attachItemActions, type ItemAction } from '../core/item-actions';
 import { isMobileEnv } from '../core/mobile';
 import { tryGetSettings, panelSizePersist } from '../core/settings-provider';
 import type { BzResizablePersist } from '../core/ui/resize';
-import { armHomeReturn, disarmHomeReturn } from '../core/home-return';
+import { armHomeReturn, disarmHomeReturn, notifyActionDone } from '../core/home-return';
 import { H } from './state';
 import { DOMAIN_MAP } from './domains';
 import {
@@ -388,15 +388,26 @@ function openDomain(id: string, app: any): void {
 
 /** 直达命令（菜单快捷动作/入口打开共用）：FakeApp 等无 commands 环境降级为通知，不崩。
  *  异步失败不再静默（func P3-2）：命令 Promise reject 时原样 void 丢弃 = 用户面对
- *  「点了没反应」，挂 catch 出人话提示（同步异常走同一文案）。 */
+ *  「点了没反应」，挂 catch 出人话提示（同步异常走同一文案）。
+ *  命令落地后向返回总线报一次「动作完成」（发版 review #2）：只复制文本、发通知的动作
+ *  压根不开窗口，不报这一句就永远等不到「关闭」，首页回不来；真开了窗口的动作由
+ *  notifyActionDone 看一眼 DOM 后自行忽略，不会提前把首页拉回来。 */
 function runCommand(commandId: string, app: any, failText = '该功能暂时不可用'): void {
+  let ret: unknown;
   try {
-    const ret = app.commands.executeCommandById(commandId) as unknown;
-    if (ret && typeof (ret as Promise<unknown>).catch === 'function') {
-      void (ret as Promise<unknown>).catch(() => notice(failText, 'warning'));
-    }
+    ret = app.commands.executeCommandById(commandId) as unknown;
   } catch {
     notice(failText, 'warning');
+    notifyActionDone();
+    return;
+  }
+  if (ret && typeof (ret as Promise<unknown>).then === 'function') {
+    void (ret as Promise<unknown>).then(notifyActionDone, () => {
+      notice(failText, 'warning');
+      notifyActionDone();
+    });
+  } else {
+    notifyActionDone();
   }
 }
 
