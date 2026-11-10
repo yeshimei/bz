@@ -127,6 +127,7 @@ export function buildRewardBody(names: readonly RewardName[], onClose: () => voi
   code.appendChild(ways);
 
   // 赞助入口（2026-11-10）：不想扫码、或想顺带买点东西的走这里。
+  // 文案「或者成为赞助人」——与上一行「微信扫码」连读成一句话，两种支持方式并列。
   // 长得像链接，点起来不走 `<a>` 的默认跳转——Obsidian 里裸链会被阅读视图接管、
   // 移动端常常点了没反应，统一交给 core 的 openExternalUrl 兜底链（失败有人说人话）。
   const sponsor = document.createElement('p');
@@ -135,7 +136,7 @@ export function buildRewardBody(names: readonly RewardName[], onClose: () => voi
   sponsorLink.className = 'bz-rw-sponsor-link';
   sponsorLink.href = SPONSOR_URL;
   sponsorLink.rel = 'noopener noreferrer';
-  sponsorLink.textContent = '成为赞助人';
+  sponsorLink.textContent = '或者成为赞助人';
   sponsorLink.addEventListener('click', (e) => {
     e.preventDefault();
     openExternalUrl(getApp(), SPONSOR_URL);
