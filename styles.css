@@ -5928,6 +5928,12 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   justify-content: center;
 }
 
+/* 收藏入口（2026-11-10）：第三行——「或者给个 Star」，不花钱的另一种支持。
+   与赞助入口同款，只收一点行距：两行是并列的两条路，不分主次。 */
+.bz-rw-star {
+  margin-top: 8px;
+}
+
 .bz-rw-sponsor-link {
   font-family: var(--rw-serif);
   font-size: 11.5px;
