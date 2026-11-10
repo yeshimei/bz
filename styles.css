@@ -5920,6 +5920,35 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   background: rgba(189, 148, 64, .4);
 }
 
+/* 赞助入口（2026-11-10）：码下面第二行——「成为赞助人」，不敢扫码 / 想顺带买点东西的走这里。
+   字比「微信扫码」大一号、颜色站到金色一侧：它是能点的去处，不是标注。 */
+.bz-rw-sponsor {
+  margin: 13px 0 0;
+  display: flex;
+  justify-content: center;
+}
+
+.bz-rw-sponsor-link {
+  font-family: var(--rw-serif);
+  font-size: 11.5px;
+  letter-spacing: .1em;
+  text-indent: .1em;
+  color: var(--rw-gold-deep);
+  text-decoration: none;
+  padding-bottom: 2px;
+  border-bottom: 1px solid rgba(189, 148, 64, .4);
+  cursor: pointer;
+  transition: color .15s, border-color .15s;
+}
+
+/* 触屏无 hover，悬停反馈只给鼠标（bd-paradigm-hover-isolation 守卫要求） */
+@media (hover: hover) {
+  .bz-rw-sponsor-link:hover {
+    color: var(--rw-ink);
+    border-bottom-color: rgba(38, 34, 29, .45);
+  }
+}
+
 /* ---------- 名单 ---------- */
 .bz-rw-list {
   flex: 1;
@@ -6010,6 +6039,12 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   font-size: 9.5px;
   margin-right: 1px;
   opacity: .75;
+}
+
+/* 金额位不是数字时（「赞助人」这类）：字小半号、收一点字距，别压过旁边的日期 */
+.bz-rw-amt-text {
+  font-size: 11px;
+  letter-spacing: .04em;
 }
 
 .bz-rw-when {
@@ -8229,7 +8264,10 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   background: var(--h-bg);
   color: var(--h-ink);
   width: min(880px, 94vw);
-  height: min(580px, 92vh);
+  /* 2026-11-09 用户报「默认高度把『设置』挡住了」：580 装不下左栏全部入口（17 行约 665px），
+     最后一行「设置」被面板底边裁掉，而全站隐藏滚动条、看不出还能往下滚 → 抬到 680 留余量。
+     与 ui.ts 的 PANEL_DEFAULT_H 是同一个数（旧尺寸记忆按它抬升），改一处必须同步另一处。 */
+  height: min(680px, 92vh);
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -9586,6 +9624,16 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   width: 1180px; max-width: calc(100vw - 40px); height: 760px; max-height: 92vh;
   background: var(--clip-paper);
   color: var(--clip-ink);
+}
+
+/* 全屏命令（bz-clipbook-fullscreen）：铺满窗口、去圆角与描边；再执行一次还原。
+   只由命令加/去类，尺寸记忆不记录全屏值（退出后按记忆回到用户原来的窗口大小）。
+   三栏结构不变，点遮罩与 ESC 的语义也不变（ESC 第一层先退全屏）。 */
+.bz-clip-frame.bz-clip-full {
+  /* 高度必须接 --bz-vvh（C-UI6 守卫：剪藏本域内不写裸 100vh；桌面无该变量时回落 100vh） */
+  width: 100vw; height: var(--bz-vvh, 100vh);
+  max-width: none; max-height: none;
+  border: none; border-radius: 0;
 }
 
 /* ==================== 桌面端（编辑部印刷风） ==================== */
@@ -24464,8 +24512,10 @@ canvas { display: block; }
 }
 .bz-lit-dialog input:focus, .bz-lit-dialog select:focus { border-color: var(--accent); }
 
-/* 解析按钮（ADR-0133：链接行右侧，描边次级档；整片/剪辑 toggle 样式随 toggle 退役删除） */
-#lit-add-resolve {
+/* 解析按钮（ADR-0133：链接行右侧，描边次级档；整片/剪辑 toggle 样式随 toggle 退役删除）；
+   「导入」（本机文件，ADR-0296）与解析同档并列在链接行右侧 */
+#lit-add-resolve,
+#lit-add-local {
   flex: none;
   border: 1px solid var(--accent);
   background: none;
@@ -24479,7 +24529,8 @@ canvas { display: block; }
   white-space: nowrap;
 }@media (hover: hover) {
 
-#lit-add-resolve:hover { background: var(--chip); }
+#lit-add-resolve:hover,
+#lit-add-local:hover { background: var(--chip); }
 }
 #lit-add-resolve:disabled { opacity: 0.55; cursor: default; }
 
@@ -24489,7 +24540,8 @@ canvas { display: block; }
 
 /* 剪辑范围区（ADR-0133：双把手 + 时间框 + 整片重置）——
    行内标签行（剪辑 | 开始 ~ 结束 | 整片）之后直接跟范围条 */
-#lit-add-whole {
+#lit-add-whole,
+#lit-add-localclear {
   border: 1px solid var(--line);
   background: none;
   color: var(--ink2);
@@ -24501,7 +24553,8 @@ canvas { display: block; }
   flex: none;
 }@media (hover: hover) {
 
-#lit-add-whole:hover { background: var(--chip); color: var(--ink); }
+#lit-add-whole:hover,
+#lit-add-localclear:hover { background: var(--chip); color: var(--ink); }
 }
 .bz-lit-rhint { margin-top: var(--bz-space-sm); font-size: var(--bz-font-meta); color: var(--ink3); line-height: 1.7; }
 /* 保存行与上方「清晰度」行拉开（术语壳里由 .bz-lit-term-body > .bz-lit-term-actions 给，这里同档） */
