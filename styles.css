@@ -2821,6 +2821,27 @@ textarea.bz-input { height: auto; min-height: 80px; padding: 8px 10px; line-heig
   overflow: hidden;
 }
 
+/* ═══════════ A1. 通用全屏 .bz-global-full（命令 bz-core-fullscreen，2026-11-10）═══════════
+   只改几何：把当前主面板铺满整个 Obsidian 窗口（100vw × --bz-vvh），去圆角与描边。
+   作用对象 = 各域主面板根（.bz-main-panel），不限 .bz-panel-frame 家族——自带根的
+   面板（备忘录/知识盒/剪藏本…）同样吃这套；退出即摘类，内联宽高原样还在，
+   尺寸记忆不被污染（拖拽缩放在全屏期间空转，见 core/ui/resize.ts）。 */
+.bz-main-panel.bz-global-full {
+  /* 定位统一钉到视口四边：遮罩内居中的面板、独立 body 子元素的弹窗式面板都一套口径；
+     高度因此自动等于窗口高（移动端 --bz-vvh 由 core/viewport 写，桌面不动作也不会走到这里） */
+  position: fixed !important;
+  inset: 0 !important;
+  width: auto !important;
+  height: auto !important;
+  max-width: none !important;
+  max-height: none !important;
+  margin: 0 !important;
+  transform: none !important;
+  border: none !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+
 /* 呈报#13（F3+H3）：大面板「打开即入焦 + Tab 圈闭」——焦点壳（trapPanelFocus 落焦的
    面板容器，tabindex=-1）不画焦点圈：圈会框住整个视口级面板，纯视觉噪音；
    面板内部控件（按钮/输入框/role=button 行）的焦点圈照常。 */
@@ -9663,15 +9684,8 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   color: var(--clip-ink);
 }
 
-/* 全屏命令（bz-clipbook-fullscreen）：铺满窗口、去圆角与描边；再执行一次还原。
-   只由命令加/去类，尺寸记忆不记录全屏值（退出后按记忆回到用户原来的窗口大小）。
-   三栏结构不变，点遮罩与 ESC 的语义也不变（ESC 第一层先退全屏）。 */
-.bz-clip-frame.bz-clip-full {
-  /* 高度必须接 --bz-vvh（C-UI6 守卫：剪藏本域内不写裸 100vh；桌面无该变量时回落 100vh） */
-  width: 100vw; height: var(--bz-vvh, 100vh);
-  max-width: none; max-height: none;
-  border: none; border-radius: 0;
-}
+/* 全屏由通用命令 bz-core-fullscreen 接管（2026-11-10）：域内不再自造 .bz-clip-full 尺寸规则，
+   主面板挂 bz-main-panel，全屏类在 core/ui/components.css 统一处理。 */
 
 /* ==================== 桌面端（编辑部印刷风） ==================== */
 .bz-clip-desk { display: flex; flex-direction: column; height: 100%; min-height: 0; }
