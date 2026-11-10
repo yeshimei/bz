@@ -39,8 +39,10 @@ export interface RewardName {
  * 2026-11-10：第二位「面包」不是扫码打赏，是在赞助商店（wzyp.cn）买了东西，
  * 金额位写「赞助人」而不是数字——他知道有这个渠道并选了它，纸上要看得出来。
  * 同日还有一笔扫码 3.14 元（留言照登）——同一天多笔照记多条，不合并。
+ * 2026-11-11：第四位「沁弦」扫码 6.66 元，英文留言照登（感叹号后没空格也不补）。
  */
 export const REWARD_NAMES: readonly RewardName[] = [
+  { name: '沁弦', amount: 6.66, date: '2026-11-11', message: 'KEEP IT UP!Love from Charis523' },
   { name: 'Sailing Fish', amount: 3.14, date: '2026-11-10', message: '不错不错' },
   { name: '面包', amount: '赞助人', date: '2026-11-10' },
   { name: '执徐', amount: 12, date: '2026-11-08', message: '伟大无需多言！' },
