@@ -144,19 +144,15 @@ const SPLIT_MIN_READ = 320;
 
 // ================= 生命周期 =================
 
-/** 挂桌面拖拽缩放（buildDom 首次挂载 + 退出全屏重挂，两处同源）。
- *  persist 是尺寸记忆：重挂即按记忆恢复，所以全屏值从不落盘——退出后回到用户原来的窗口大小。 */
+/** 挂桌面拖拽缩放（buildDom 首次挂载时调一次）。
+ *  persist 是尺寸记忆：按记忆恢复用户上次调好的窗口大小；全屏由通用命令
+ *  bz-core-fullscreen 接管，域内不再重挂句柄，也不记录全屏值。 */
 function mountFrameResize(frameEl: HTMLElement): void {
   panelResizeDetach?.detach();
   panelResizeDetach = uiResizable(frameEl, {
     minW: PANEL_MIN_W, minH: PANEL_MIN_H, maxW: PANEL_MAX_W, maxH: PANEL_MAX_H,
     persist: panelSizePersist('clipbookPanelWidth', 'clipbookPanelHeight', PANEL_MIN_W, PANEL_MIN_H),
   });
-}
-
-/** 面板当前是否可见（命令 toggle 用来判「未打开 → 只开窗」） */
-export function isPanelOpen(): boolean {
-  return !!overlayEl && overlayEl.style.display !== 'none' && M.open;
 }
 
 /** 幂等初始化面板 DOM（首开建结构 + 装载 + 订阅；重复调用只切可见性） */
@@ -328,7 +324,7 @@ export function unloadPanel(): void {
     panelResizeDetach.detach(); // detach 内补落未存的防抖尾值（persist 收尾）
     panelResizeDetach = null;
   }
-  // 全屏态只属于面板生命周期：DOM 即将移除，状态一并复位（下次打开必是普通窗口）
+  // 分割线状态只属于面板生命周期：DOM 即将移除，状态一并复位
   if (panelSplit) {
     panelSplit.detach(); // detach 内补落未存的防抖尾值（persist 收尾）
     panelSplit = null;
@@ -575,7 +571,7 @@ function buildDom(app: any): void {
   // （[data-clip-md]/[data-clip-mob-md]）——列表卡片右键菜单、桌面右键均不受影响。
   overlayEl.addEventListener('contextmenu', onReaderContextMenu, true);
 
-  // ESC（C19：详情屏开着时第一层收详情返回列表；全屏时第一层退全屏；都没有才关面板）
+  // ESC（C19：详情屏开着时第一层收详情返回列表；否则关面板。全屏由通用命令接管，不占 ESC 层）
   escKey = 'bz-clipbook';
   escHandle = escManager.register(escKey, {
     isVisible: () => !!overlayEl && overlayEl.style.display !== 'none',
@@ -588,7 +584,7 @@ function buildDom(app: any): void {
   // 桌面面板拖拽缩放 + 尺寸记忆（enh 包 8 → ADR-0094 persist 选项）：仅桌面写内联宽高——
   // 内联样式优先级高于移动端媒体查询的满屏规则；恢复/防抖落盘/收尾补存全由 uiResizable 承担，
   // persist 收敛 core panelSizePersist 工厂（键 clipbookPanelWidth/Height 语义不变）；
-  // uiResizable 自身对触屏也空操作兜底；退出全屏时由 mountFrameResize 重挂同一套
+  // uiResizable 自身对触屏也空操作兜底
   if (!isMobileEnv()) {
     mountFrameResize(frameEl);
     // 中栏 ⇄ 右栏分割线（issue 222）：拖动改中栏定宽、右栏弹性吸收；
