@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="96" height="96" viewBox="0 0 96 96" role="img" aria-label="bz">
+  <title>bz · 深墨 bz 字标</title>
+  <rect x="1" y="1" width="94" height="94" rx="22" fill="#1F1D1A" stroke="#3A3733" stroke-width="1.5"/>
+  <g transform="translate(-2.4,0)" fill="none" stroke="#E8703F" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M31 30v37" stroke-width="7.2"/>
+    <circle cx="42" cy="55.5" r="11.4" stroke-width="7.2"/>
+    <path d="M58.4 44.2h14.2L58.4 66.8h14.2" stroke-width="7.2"/>
+  </g>
+</svg>
