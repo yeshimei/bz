@@ -27,8 +27,8 @@
       "name": "知识盒工具包",
       "file": "tools/bili-downloader.tar.gz",
       "kind": "bundle",
-      "sha256": "0a013d47cc5f2c9dfd0b122c87654c5a00bf3b0e7a5cd0966823b086e3bd262f",
-      "size": 29773
+      "sha256": "f5c11a0b74297f6c9df388be0d078370693d5b3736e930dc84eec5c3396e7e6d",
+      "size": 30501
     },
     {
       "id": "tool-dock-watch",
@@ -298,7 +298,7 @@
     "tool-obsidian-face"
   ],
   "release": {
-    "version": "1.42.1",
-    "tag": "v1.42.1"
+    "version": "1.43.0",
+    "tag": "v1.43.0"
   }
 }

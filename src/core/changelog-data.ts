@@ -56,6 +56,20 @@ export function releaseEntryCount(release: ChangelogRelease): number {
  */
 export const CHANGELOG_RELEASES: readonly ChangelogRelease[] = [
   {
+    version: '1.43.0',
+    date: '2026-11-10',
+    // 条目与 docs/note-v1.43.0.md 同稿（scripts/_gen-changelog.mjs 自动生成，勿手改）
+    added: [
+      { domain: '全屏', text: '加了一条通用全屏命令，各域主面板都能铺满窗口。' },
+      { domain: '首页', text: '设置里可打开「关闭后回到首页」，功能关掉后首页重新出现。' },
+      { domain: '知识盒', text: '支持导入本机音视频文件，影像笔记自动分段。' },
+    ],
+    improved: [
+      { domain: '命令面板', text: '全部命令统一加上 bz 前缀，查找时不再混进别的插件。' },
+      { domain: '知识盒', text: '阅读器可直接打开知识盒预览。' },
+    ],
+  },
+  {
     version: '1.42.1',
     date: '2026-11-08',
     // 条目与 docs/note-v1.42.1.md 同稿（scripts/_gen-changelog.mjs 自动生成，勿手改）
