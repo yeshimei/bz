@@ -119,12 +119,13 @@ export function openSupportPrompt(): Promise<SupportChoice> {
     star.appendChild(starLink);
     root.appendChild(star);
 
+    // 模态就该接管焦点：不接管时 Tab 会跑到它后面那扇窗（更新日志）里，键盘用户
+    // 等于在两层窗之间乱窜（2026-11-10 发版 review #4）。uiModal 缺省即
+    // autofocus=true = 打开落焦首个按钮 + Tab 圈闭 + 关闭还原焦点到触发元素。
     handle = uiModal({
       content: root,
       maxWidth: 430,
       className: 'bz-sup-modal',
-      // 不抢焦点：这窗是「关日志时顺手问一句」，把焦点从用户正在做的事上抢走很粗暴
-      autofocus: false,
       onClose: () => settle('dismiss'),
     });
   });

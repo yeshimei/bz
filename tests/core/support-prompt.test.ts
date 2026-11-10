@@ -107,3 +107,19 @@ describe('支持作者提醒 · 收藏入口', () => {
     expect(card()).toBeTruthy();
   });
 });
+
+/* 发版 review #4：这是模态窗，Tab 不能跑到它后面那扇更新日志窗里。 */
+describe('支持作者提醒 · 焦点圈闭', () => {
+  it('打开即落焦窗内首个按钮，Tab 从末项绕回首项', () => {
+    void openSupportPrompt();
+    const popup = document.querySelector<HTMLElement>('.bz-overlay-popup.bz-sup-modal')!;
+    const first = popup.querySelector<HTMLElement>('.bz-sup-later')!;
+    expect(popup.contains(document.activeElement)).toBe(true);
+    expect(document.activeElement).toBe(first);
+
+    const last = popup.querySelector<HTMLElement>('.bz-sup-star-link')!;
+    last.focus();
+    popup.dispatchEvent(new window.KeyboardEvent('keydown', { key: 'Tab', bubbles: true, cancelable: true }));
+    expect(document.activeElement).toBe(first);
+  });
+});
