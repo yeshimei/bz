@@ -1,8 +1,6 @@
 <p align="center">
-  <img src="docs/images/mark.svg" width="76" height="76" alt="">
+  <img src="docs/images/mark.svg" width="76" height="76" alt="bz">
 </p>
-
-<h1 align="center">bz</h1>
 
 <p align="center">
   <a href="https://www.bilibili.com/video/BV1vNsZ6pE7i/">
