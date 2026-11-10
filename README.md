@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="docs/images/mark.svg" width="76" height="76" alt="">
+</p>
+
 <h1 align="center">bz</h1>
 
 <p align="center">
