@@ -6320,6 +6320,36 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   margin-top: 26px;
 }
 
+/* 收藏入口（2026-11-10）：按钮下面一行弱链接——不花钱的另一种支持。
+   比按钮低一级：它是补充出口，不是第三个答案，不该和「以后再说 / 支持作者」抢位。
+   与赞赏窗那两行出口同一套衬线金色小字（reward-dialog 的 .bz-rw-sponsor-link）。 */
+.bz-sup-star {
+  display: flex;
+  justify-content: center;
+  margin: 16px 0 0;
+}
+
+.bz-sup-star-link {
+  font-family: var(--sup-serif);
+  font-size: 11.5px;
+  letter-spacing: .1em;
+  text-indent: .1em;
+  color: var(--sup-gold-deep);
+  text-decoration: none;
+  padding-bottom: 2px;
+  border-bottom: 1px solid rgba(189, 148, 64, .4);
+  cursor: pointer;
+  transition: color .15s, border-color .15s;
+}
+
+/* 触屏无 hover，悬停反馈只给鼠标（bd-paradigm-hover-isolation 守卫要求） */
+@media (hover: hover) {
+  .bz-sup-star-link:hover {
+    color: var(--sup-ink);
+    border-bottom-color: rgba(38, 34, 29, .45);
+  }
+}
+
 .bz-sup-btn {
   height: 40px;
   padding: 0 20px;
@@ -6364,7 +6394,8 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 }
 
 /* 焦点环：纸面上用金色，别用默认蓝（主题里那一圈会跳出来） */
-.bz-sup-btn:focus-visible {
+.bz-sup-btn:focus-visible,
+.bz-sup-star-link:focus-visible {
   outline: 2px solid rgba(189, 148, 64, .55);
   outline-offset: 2px;
 }
