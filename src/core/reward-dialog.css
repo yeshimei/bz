@@ -165,6 +165,35 @@
   background: rgba(189, 148, 64, .4);
 }
 
+/* 赞助入口（2026-11-10）：码下面第二行——「成为赞助人」，不敢扫码 / 想顺带买点东西的走这里。
+   字比「微信扫码」大一号、颜色站到金色一侧：它是能点的去处，不是标注。 */
+.bz-rw-sponsor {
+  margin: 13px 0 0;
+  display: flex;
+  justify-content: center;
+}
+
+.bz-rw-sponsor-link {
+  font-family: var(--rw-serif);
+  font-size: 11.5px;
+  letter-spacing: .1em;
+  text-indent: .1em;
+  color: var(--rw-gold-deep);
+  text-decoration: none;
+  padding-bottom: 2px;
+  border-bottom: 1px solid rgba(189, 148, 64, .4);
+  cursor: pointer;
+  transition: color .15s, border-color .15s;
+}
+
+/* 触屏无 hover，悬停反馈只给鼠标（bd-paradigm-hover-isolation 守卫要求） */
+@media (hover: hover) {
+  .bz-rw-sponsor-link:hover {
+    color: var(--rw-ink);
+    border-bottom-color: rgba(38, 34, 29, .45);
+  }
+}
+
 /* ---------- 名单 ---------- */
 .bz-rw-list {
   flex: 1;
@@ -255,6 +284,12 @@
   font-size: 9.5px;
   margin-right: 1px;
   opacity: .75;
+}
+
+/* 金额位不是数字时（「赞助人」这类）：字小半号、收一点字距，别压过旁边的日期 */
+.bz-rw-amt-text {
+  font-size: 11px;
+  letter-spacing: .04em;
 }
 
 .bz-rw-when {
