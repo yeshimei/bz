@@ -347,6 +347,9 @@ export default interface BzSettings {
   homeTimelineTime: boolean;
   /** 明天预告卡开关（第三栏整块） */
   homeNextCards: boolean;
+  /** 从首页进入功能、关闭后回到首页（2026-11-10 用户拍板，默认关）——
+   *  只认「从首页点进去」的入口；直接打开功能（命令/快捷键/ribbon）关闭时不回首页 */
+  homeReturnAfterClose: boolean;
   // 旧 cinemaPageSize（每批加载数量）已删除：全仓无消费点（列表一次全量渲染），死配置随审计清理
 
 
@@ -1278,6 +1281,7 @@ export const DEFAULT_SETTINGS: BzSettings = {
   homeDefaultDay: 'today',
   homeTimelineTime: true,
   homeNextCards: true,
+  homeReturnAfterClose: false,
   favoritesOpenFilter: '',
   favoritesLastFilter: '',
   favoritesDefaultSort: 'new',

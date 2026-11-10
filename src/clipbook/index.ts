@@ -13,7 +13,7 @@ import { readNewsData } from './news-data';
 import { maybeFetchNews, setNewsFetchDoneListener } from './news-fetcher';
 import { flowMarkAllRead, flowUndoMarkAllRead } from './flow';
 import { clipDir } from './save';
-import { initPanel, showPanel, unloadPanel, reloadIfOpen, invalidateClipBodyCache, isPanelOpen, togglePanelFullscreen } from './ui';
+import { initPanel, showPanel, unloadPanel, reloadIfOpen, invalidateClipBodyCache } from './ui';
 import { openClipbookReport, unloadClipbookReport } from './report-ui';
 import { openReadingPress, unloadReadingPress } from './press';
 import { unloadManagerModals } from './news-sources-group';
@@ -37,26 +37,6 @@ export function openClipbook(app: App): void {
   }
   // 打开即后台抓一轮（间隔判定在 fetcher 内；启动触发走 main.ts onload）
   void maybeFetchNews();
-}
-
-/**
- * 剪藏本全屏（命令 bz-clipbook-fullscreen，2026-11-09）：面板已打开 → 铺满窗口 / 再执行还原；
- * 没打开 → **只开窗、不进全屏**（用户拍板：普通打开保持原窗口大小，全屏只由这条命令触发）。
- * 全屏态不写尺寸记忆、也不跨面板开关保留——关掉再开还是原来的窗口。
- */
-export function toggleClipbookFullscreen(app: App): void {
-  if (!initialized) {
-    initialized = true;
-    registerAutoRefresh(app);
-    setNewsFetchDoneListener(() => reloadIfOpen());
-    initPanel(app, false);
-  }
-  if (!isPanelOpen()) {
-    showPanel();
-    notice('剪藏本已打开；再执行一次「剪藏本全屏」即可铺满窗口', 'info');
-    return;
-  }
-  togglePanelFullscreen();
 }
 
 /**

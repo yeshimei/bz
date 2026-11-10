@@ -99,7 +99,7 @@ describe('批 C-5：bookshelf 面板 44px 补接 .bz-panel-mtop', () => {
   it('面板根节点挂类；书脊墙体系在位（issue 218 换血：头行退役，墙变量/书脊/借书卡落域样式）', () => {
     const ui = repo('src/bookshelf/layouts/wall/render.ts');
     // ADR-0094：面板壳接入共享 .bz-panel-frame（域内只留宽高）；issue 216 皮肤类尾随插入
-    expect(ui).toMatch(/class="bz-panel-frame bz-bs-panel bz-panel-mtop( \$\{esc\(skinClass\)\}| \$\{bsSkinClass\(\)\})?"/);
+    expect(ui).toMatch(/class="bz-panel-frame bz-bs-panel bz-panel-mtop bz-main-panel( \$\{esc\(skinClass\)\}| \$\{bsSkinClass\(\)\})?"/);
     const css = bsCss();
     // issue 218：旧头行/网格退役（.bz-panel-head 规则不再存在），书脊墙体系落位
     expect(css).not.toMatch(/\.bz-bs-panel \.bz-panel-head\s*\{/);
@@ -122,7 +122,7 @@ describe('批 C-6：memo 头行类名拆雷', () => {
   });
 
   it('面板根节点挂 .bz-panel-mtop；移动头行自垫 safe-area 收拢', () => {
-    expect(repo('src/memo/render.ts')).toMatch(/class="bz-panel-frame bz-memo-panel bz-panel-mtop"/);
+    expect(repo('src/memo/render.ts')).toMatch(/class="bz-panel-frame bz-memo-panel bz-panel-mtop bz-main-panel"/);
     const css = repo('src/memo/styles.css');
     expect(css).not.toMatch(/\.bz-memo-head\s*\{[^}]*safe-area-inset-top/);
     expect(css).not.toMatch(/safe-area-inset-top\)\);?\s*\}/);

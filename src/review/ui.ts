@@ -136,6 +136,7 @@ export class UIManager {
     this.popup = document.createElement('div');
     this.popup.id = 'review-popup';
     this.popup.classList.add('bz-panel-frame');
+    this.popup.classList.add('bz-main-panel');
     // ≤768px 弹窗满宽近全屏：挂顶距工具类（44px 避让 Obsidian 移动端头，components.css 统一档）
     this.popup.classList.add('bz-panel-mtop');
     this.popup.style.display = 'none';

@@ -10,6 +10,9 @@ import { resetObsidianMocks, getNoticeMessages, hasNotice, clearNotices } from '
 import { notify } from '../src/core/notice';
 import { serializeDiaryEntryFile } from '../src/core/diary-format';
 
+/** 命令显示名的统一前缀（2026-11-10 用户拍板，GitHub issue #2）：断言语义名前先剥掉 */
+const plainName = (s: string): string => s.replace(/^bz · /, '');
+
 // ai-agent 域解散后的新注册点隔离：ensureMemoFileSync/ensureFavoritesFileSync 换 spy
 // （vi.mock 局部替换，其余导出保持真实实现，命令回调冒烟等用例不受影响）
 const syncSpies = vi.hoisted(() => ({
@@ -73,8 +76,8 @@ const EXPECTED_COMMAND_IDS = [
   'bz-clipbook-fetch-now',
   // 剪藏阅读报告（issue 358「我读了什么」：剪藏本自有阅读流水报告弹层）
   'bz-clipbook-report',
-  // 剪藏本全屏（2026-11-09：铺满窗口 / 再执行还原；面板没开时只开窗）
-  'bz-clipbook-fullscreen',
+  // 通用全屏（2026-11-10：当前最上层主面板铺满窗口 / 再执行或 ESC 还原）
+  'bz-core-fullscreen',
   // 自动摘要（enh-autosum 包 1）：当前剪藏笔记手动重跑 AI 摘要
   'bz-auto-summary-redo',
   // 统一保险库（encrypt 域，ADR-0085）：密码/笔记/日记合一
@@ -206,41 +209,56 @@ describe('bz 骨架冒烟', () => {
   it('命令名统一（f3/f7/t1/t2，id 不动）与重复图标去重（f7）', async () => {
     await createPlugin(makeMockApp());
     const byId = (id: string) => registeredCommands.find((c: any) => c.id === id)!;
-    expect(byId('bz-cinema-open').name).toBe('影院');
-    expect(byId('bz-cinema-add').name).toBe('加影视');
+    /** 去前缀后的语义名（前缀由「命令名前缀」用例单独守） */
+    const n = (id: string): string => plainName(byId(id).name);
+    expect(n('bz-cinema-open')).toBe('影院');
+    expect(n('bz-cinema-add')).toBe('加影视');
     // 书架墙（bookshelf 新域）
-    expect(byId('bz-bookshelf-open').name).toBe('书库');
+    expect(n('bz-bookshelf-open')).toBe('书库');
     // memo 新域：备忘录 / 加备忘录（enh-sweep-a 去冗余括号后缀）
-    expect(byId('bz-memo-open').name).toBe('备忘录');
+    expect(n('bz-memo-open')).toBe('备忘录');
     // clipbook 融合域（ADR-0082）：剪藏本 = 聚合讯+剪藏本合一入口
-    expect(byId('bz-clipbook-open').name).toBe('剪藏本');
+    expect(n('bz-clipbook-open')).toBe('剪藏本');
     // issue 358：剪藏阅读报告（与 bz-reading-report-open 书库报告并列的自有报告）
-    expect(byId('bz-clipbook-report').name).toBe('剪藏阅读报告');
+    expect(n('bz-clipbook-report')).toBe('剪藏阅读报告');
     expect(byId('bz-clipbook-report').icon).toBe('newspaper');
-    expect(byId('bz-memo-add').name).toBe('加备忘录');
+    expect(n('bz-memo-add')).toBe('加备忘录');
     // t2：四套叫法统一「阅读分析报告」（走查批 D；home 磁贴保留短名「阅读报告」）
-    expect(byId('bz-reading-report-open').name).toBe('阅读分析报告');
+    expect(n('bz-reading-report-open')).toBe('阅读分析报告');
     // f3：评级四命令去英文后缀（issue 362 起做题家面板依赖，保留）；呈报#56/R12 动宾式更名
-    expect(byId('bz-review-again').name).toBe('复习评级：忘了');
-    expect(byId('bz-review-hard').name).toBe('复习评级：困难');
-    expect(byId('bz-review-good').name).toBe('复习评级：一般');
-    expect(byId('bz-review-easy').name).toBe('复习评级：简单');
+    expect(n('bz-review-again')).toBe('复习评级：忘了');
+    expect(n('bz-review-hard')).toBe('复习评级：困难');
+    expect(n('bz-review-good')).toBe('复习评级：一般');
+    expect(n('bz-review-easy')).toBe('复习评级：简单');
     // issue 362：做题家独立面板入口（graduation-cap 与复习域设置分组「做题家」同款）
-    expect(byId('bz-review-quiz-open').name).toBe('做题练习');
+    expect(n('bz-review-quiz-open')).toBe('做题练习');
     expect(byId('bz-review-quiz-open').icon).toBe('graduation-cap');
     // f7：第二大脑面板与第二大脑参考区分（不再与功能名歧义）
-    expect(byId('bz-secondbrain-panel').name).toBe('第二大脑面板');
-    expect(byId('bz-secondbrain-open').name).toBe('第二大脑参考');
+    expect(n('bz-secondbrain-panel')).toBe('第二大脑面板');
+    expect(n('bz-secondbrain-open')).toBe('第二大脑参考');
     // issue 360：本周知识动态（图标 calendar-days，与复习报告 calendar-check 错开）
-    expect(byId('bz-secondbrain-weekly').name).toBe('本周知识动态');
+    expect(n('bz-secondbrain-weekly')).toBe('本周知识动态');
     expect(byId('bz-secondbrain-weekly').icon).toBe('calendar-days');
     expect(byId('bz-secondbrain-weekly').icon).not.toBe(byId('bz-review-report').icon);
     // f7：重复图标去重——message-circle 各只出现一次（clapperboard 随 movie-add 退役已无）
     const icons = registeredCommands.map((c: any) => c.icon);
     expect(icons.filter((i: string) => i === 'message-circle')).toHaveLength(1);
     expect(byId('bz-cinema-analysis').icon).toBe('pie-chart');
-    expect(byId('bz-cinema-analysis').name).toBe('影视分析报告');
+    expect(n('bz-cinema-analysis')).toBe('影视分析报告');
     expect(byId('bz-smartcat-chat').icon).toBe('messages-square');
+  });
+
+  it('命令名前缀（2026-11-10，GitHub issue #2）：所有注册命令显示名以「bz · 」开头', async () => {
+    await createPlugin(makeMockApp());
+    expect(registeredCommands.length).toBeGreaterThan(40);
+    for (const c of registeredCommands as Array<{ id: string; name: string }>) {
+      expect(c.name.startsWith('bz · '), `${c.id} name 缺前缀：${c.name}`).toBe(true);
+    }
+    // 全屏命令（通用）：id 用 core 语义命名，不再绑剪藏本
+    const fs = (registeredCommands as Array<{ id: string; name: string }>).find((c) => c.id === 'bz-core-fullscreen');
+    expect(fs).toBeTruthy();
+    expect(fs!.name).toBe('bz · 全屏');
+    expect((registeredCommands as Array<{ id: string }>).some((c) => c.id === 'bz-clipbook-fullscreen')).toBe(false);
   });
 
   it('域图标单一事实源（enh-sweep-a）：域入口命令 icon = DOMAIN_ICONS，历史重复图标已错开', async () => {
@@ -294,14 +312,14 @@ describe('bz 骨架冒烟', () => {
     // 打开命令：已裸注册且名称/图标正确
     const cmd = registeredCommands.find((c: any) => c.id === 'bz-diary-open');
     expect(cmd).toBeDefined();
-    expect(cmd.name).toBe('日记本');
     expect(cmd.icon).toBe('notebook-pen');
+    expect(plainName(cmd.name)).toBe('日记本');
     // 回调（openDiary 异步 ensure 后 show）同步调用不抛
     expect(() => cmd.callback()).not.toThrow();
     // 写日记命令同表注册（旧域内注册已收编）
     const writeCmd = registeredCommands.find((c: any) => c.id === 'bz-diary-write');
     expect(writeCmd).toBeDefined();
-    expect(writeCmd.name).toBe('写日记');
+    expect(plainName(writeCmd.name)).toBe('写日记');
     // 幂等 ensureDiary：mock app 下可调用且不抛（UI 层数据读取失败安全降级为空）
     const { ensureDiary, unloadDiary } = await import('../src/diary');
     await expect(ensureDiary(app as any)).resolves.toBeUndefined();

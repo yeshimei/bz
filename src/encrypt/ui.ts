@@ -640,6 +640,7 @@ export class UIManager {
     if (this._initialized) return;
     this.mask = this.createMask('bz-encrypt-mask');
     this.popup = this.createPopup('bz-encrypt-popup');
+    this.popup.classList.add('bz-main-panel');
     // ≤768px 恒真全屏：挂顶距工具类（44px 避让 Obsidian 移动端头，components.css 统一档）
     this.popup.classList.add('bz-panel-mtop');
     // 统一骨架：nav（三栏左）+ main（顶栏 + area：中列表 / 右详情）

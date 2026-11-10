@@ -3,6 +3,7 @@
  * ADR-0093：旧入口页 launcher 已退役删除，本域为唯一入口首页。
  */
 import type { App } from 'obsidian';
+import { disarmHomeReturn } from '../core/home-return';
 import { H, resetHomeState } from './state';
 import { createOverlay, showOverlay, closeOverlay, registerEscapeHandler, unregisterEscapeHandler, unmountPanelResize } from './ui';
 
@@ -38,6 +39,8 @@ export function openHome(app: App): void {
 /** 卸载清理（main.ts onunload 调用） */
 export function unloadHome(): void {
   initialized = false;
+  // 卸载 = 本次会话全部作废：摘掉「关闭功能后回首页」的等待，防插件已经卸载还重建首页
+  disarmHomeReturn();
   unregisterEscapeHandler();
   unmountPanelResize(); // 缩放句柄随卸载摘除：模块级句柄不随 DOM 移除自清，漏摘会让重开后的新面板被「已挂」误判跳过
   if (H.currentOverlay) {

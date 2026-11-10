@@ -979,7 +979,8 @@ describe('挂载树白板（317 渲染与交互 / 319 壳与入口）', () => {
       expect(registered.map((c) => c.id)).toContain('bz-knowledge-mount-tree');
       const cmd = registered.find((c) => c.id === 'bz-knowledge-mount-tree');
       const refresh = registered.find((c) => c.id === 'bz-knowledge-mount-refresh');
-      expect(cmd.name).toBe('看挂载树');
+      // 命令显示名带统一前缀「bz · 」（2026-11-10，GitHub issue #2），断言语义名用后缀匹配
+      expect(cmd.name.endsWith('看挂载树')).toBe(true);
       expect(cmd.icon).toBe('network');
       expect(refresh.icon).toBe('refresh-cw');
 

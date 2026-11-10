@@ -20,7 +20,7 @@ import type { BelongingsItem } from '../../types';
 
 /** 面板骨架（hero/KPI/chips/工具行/横滑条/内容区/移动记一笔；data-bel-* 钩子契约根） */
 export function panelHtml(): string {
-  return `<div class="bz-bel-panel bz-panel-frame bz-panel-mtop bz-bel--poster">
+  return `<div class="bz-bel-panel bz-panel-frame bz-panel-mtop bz-main-panel bz-bel--poster">
   <div class="bz-bel-body">
     <div class="bz-bel-hero">
       <div class="bz-bel-hero-text">

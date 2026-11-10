@@ -732,7 +732,7 @@ export class UIManager {
 
     const popup = document.createElement('div');
     popup.id = 'knowledge-popup';
-    popup.className = 'bz-kb-window kb';
+    popup.className = 'bz-kb-window kb bz-main-panel';
     if (isMobileEnv()) popup.classList.add('bz-panel-mtop'); // 移动端主窗真全屏（ADR-0116，样式见 styles.css 尾部）
     popup.style.display = 'none';
     // 移动端头部定稿（章回式）：题字居中一行，部切换通栏三格挪出头部压双细线；桌面维持竖排部签居中题字

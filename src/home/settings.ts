@@ -120,6 +120,20 @@ export function homeSettingsSchema(): SettingsSchema {
         ],
       },
       {
+        // 行为组（2026-11-10 用户拍板，承接 GitHub issue #2 的补充答复）：
+        // 首页作为「母船」的走位开关，默认关——老用户无感，主动打开才生效。
+        icon: 'corner-up-left',
+        name: '行为',
+        rows: [
+          {
+            type: 'toggle',
+            name: '关闭后回到首页',
+            desc: '从首页点进的功能，关掉后回到首页',
+            binding: { key: 'homeReturnAfterClose' },
+          },
+        ],
+      },
+      {
         // 入口组（排最后）：拖动排序 + 移除/加回，内联编辑器
         icon: 'layout-grid',
         name: '入口',

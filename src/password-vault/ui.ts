@@ -196,7 +196,7 @@ export class PasswordVaultUIManager {
 
     // 桌面实例
     const desk = document.createElement('div');
-    desk.className = 'bz-password-vault-desk';
+    desk.className = 'bz-password-vault-desk bz-main-panel';
     desk.innerHTML = deskHTML();
     this.root.appendChild(desk);
     this.deskEl = desk;

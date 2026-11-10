@@ -11,6 +11,7 @@
 import { escManager } from '../esc-manager';
 import { bindMaskDismiss } from '../mask-dismiss';
 import { allocZ } from '../z-order';
+import { notifyFloatClosed } from '../home-return';
 import { firstFocusable, trapFocus } from './focus-trap';
 
 /**
@@ -127,6 +128,8 @@ export function uiModal(opts: BzModalOpts): { mask: HTMLElement; popup: HTMLElem
       prevActive.focus();
     }
     opts.onClose?.();
+    // 首页返回总线（从首页菜单点开的表单弹窗，关掉即「功能闭合」；主面板内的弹窗不受影响）
+    notifyFloatClosed();
   }
 
   // 关闭意图统一走 attemptClose：有 requestClose 时交消费方拦截（脏表单先确认），否则直接关
