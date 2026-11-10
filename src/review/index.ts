@@ -22,6 +22,7 @@ import {
   addNotes as planAddNotes,
   hasNote as planHasNote,
   removeNote as planRemoveNote,
+  statusOf as planStatusOf,
 } from './plan-ops';
 
 let initialized = false;
@@ -91,6 +92,8 @@ export function ensureReview(app: App): void {
       return res;
     },
     removeNote: async (path) => (dataManager ? planRemoveNote(dataManager, path) : false),
+    /* 只读查询：不触发 notePlanAdded（没加东西），也不刷新面板 */
+    statusOf: async (paths) => (dataManager ? planStatusOf(dataManager, paths) : []),
   });
   uiManager = new UIManager(app, dataManager);
   // item 12：R 展示与调度排期同口径——UI 层权重源接拟合权重 currentW()（拟合重算后自动生效）

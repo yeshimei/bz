@@ -400,6 +400,10 @@ export default class BzPlugin extends Plugin {
       ensureReview(this.app);
       return getReviewPlanApi()?.removeNote(path) ?? false;
     },
+    statusOf: async (paths) => {
+      ensureReview(this.app);
+      return getReviewPlanApi()?.statusOf(paths) ?? [];
+    },
   };
 
   /** 小橘域开关上次落到运行时的值（ADR-0254）：saveSettings 里比对，拨动即挂/卸，

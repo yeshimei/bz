@@ -11,7 +11,7 @@ import { makeApp } from '../helpers/app';
 import { resetObsidianMocks } from '../mock-obsidian-entry';
 import { setApp } from '../../src/core/app';
 import { ReviewDataManager, REVIEW_FILE_PATH } from '../../src/review/data';
-import { addNote, addNotes, hasNote, removeNote } from '../../src/review/plan-ops';
+import { addNote, addNotes, hasNote, removeNote, statusOf } from '../../src/review/plan-ops';
 
 describe('复习计划对外操作', () => {
   let vault: MockVault;
@@ -95,5 +95,25 @@ describe('复习计划对外操作', () => {
     expect(await removeNote(dm, 'bz-reader/review/卡片一.md')).toBe(true);
     expect(await hasNote(dm, 'bz-reader/review/卡片一.md')).toBe(false);
     expect(await removeNote(dm, 'bz-reader/review/卡片一.md')).toBe(false);
+  });
+
+  it('statusOf：按输入顺序返回排期，没进计划的给空态', async () => {
+    await addNote(dm, app, 'bz-reader/review/卡片一.md');
+    const raw = JSON.parse(vault.files.get(REVIEW_FILE_PATH)!);
+    raw[0] = { ...raw[0], stage: 4, phase: 'fsrs', totalReviews: 9, nextReviewDate: '2026-12-01T00:00:00.000Z' };
+    vault.files.set(REVIEW_FILE_PATH, JSON.stringify(raw));
+
+    const res = await statusOf(dm, ['bz-reader/review/卡片二.md', 'bz-reader/review/卡片一.md']);
+    expect(res).toEqual([
+      { path: 'bz-reader/review/卡片二.md', planned: false, nextReviewDate: null, stage: 0, phase: 'ladder', totalReviews: 0 },
+      { path: 'bz-reader/review/卡片一.md', planned: true, nextReviewDate: '2026-12-01T00:00:00.000Z', stage: 4, phase: 'fsrs', totalReviews: 9 },
+    ]);
+  });
+
+  it('statusOf：空数组与空白路径都不抛错', async () => {
+    expect(await statusOf(dm, [])).toEqual([]);
+    const res = await statusOf(dm, ['', '   ']);
+    expect(res.map((r) => r.planned)).toEqual([false, false]);
+    expect(res.map((r) => r.path)).toEqual(['', '   ']);
   });
 });

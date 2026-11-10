@@ -15,8 +15,8 @@
  *      全文件读写，慢到用户以为卡死。
  */
 import type { App } from 'obsidian';
-import type { ReviewDataManager } from './data';
-import type { ReviewAddOutcome, ReviewAddSummary } from './reader-api';
+import type { ReviewDataManager, ReviewItem } from './data';
+import type { ReviewAddOutcome, ReviewAddSummary, ReviewNoteStatus } from './reader-api';
 import { stripMdExt } from '../core/utils';
 
 /** 路径规整：只留非空字符串（外部传 null / 数字 / 空白一律当没传） */
@@ -109,4 +109,44 @@ export async function removeNote(dm: ReviewDataManager, path: string): Promise<b
   if (!items.some((i) => i.filePath === p)) return false;
   await dm.removeItem(p);
   return true;
+}
+
+/**
+ * 批量查排期现状。
+ *
+ * 一趟 loadItems 回答整批：阅读器的划线面板一次要问几十条，逐条查就是几十次
+ * 读盘。返回顺序与入参一致，调用方按下标对齐即可；`path` 原样回传（含空串），
+ * 免得调用方还得自己维护「第几条对应哪个路径」。
+ *
+ * 没进计划的条目给空态而不是省略——省略会让调用方拿不到对应关系。
+ */
+export async function statusOf(dm: ReviewDataManager, paths: readonly string[]): Promise<ReviewNoteStatus[]> {
+  const list = Array.isArray(paths) ? paths : [];
+  if (!list.length) return [];
+  const items = await dm.loadItems();
+  const byPath = new Map<string, ReviewItem>();
+  for (const it of items) byPath.set(it.filePath, it);
+
+  return list.map((raw) => {
+    const p = cleanPath(raw);
+    const it = p ? byPath.get(p) : undefined;
+    if (!it) {
+      return {
+        path: typeof raw === 'string' ? raw : '',
+        planned: false,
+        nextReviewDate: null,
+        stage: 0,
+        phase: 'ladder' as const,
+        totalReviews: 0,
+      };
+    }
+    return {
+      path: typeof raw === 'string' ? raw : p,
+      planned: true,
+      nextReviewDate: it.nextReviewDate ?? null,
+      stage: Number.isFinite(it.stage) ? it.stage : 0,
+      phase: it.phase === 'fsrs' ? ('fsrs' as const) : ('ladder' as const),
+      totalReviews: Number.isFinite(it.totalReviews) ? it.totalReviews : 0,
+    };
+  });
 }

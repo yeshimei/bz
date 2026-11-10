@@ -29,6 +29,25 @@ export interface ReviewAddSummary {
   notFound: number;
 }
 
+/**
+ * 一张卡片在复习计划里的现状（只读）。
+ *
+ * 阅读器拿它做两件事：划线上标「复习中」，以及把下次复习日期写在提示里。
+ * `planned: false` 时其余字段全是空态——调用方不必再判空。
+ */
+export interface ReviewNoteStatus {
+  /** 传进来的原路径（原样回传，好让调用方直接按路径对齐） */
+  path: string;
+  planned: boolean;
+  /** 下次复习日期（ISO）；没进计划 / 还没排期时为 null */
+  nextReviewDate: string | null;
+  /** 当前级数（阶梯阶段是 0–9，FSRS 阶段沿用进入时的级数） */
+  stage: number;
+  phase: 'ladder' | 'fsrs';
+  /** 已经复习过几次 */
+  totalReviews: number;
+}
+
 export interface ReviewPlanApi {
   /** 门面本身能不能用（复习域已初始化） */
   isReady(): boolean;
@@ -36,6 +55,8 @@ export interface ReviewPlanApi {
   addNote(path: string): Promise<ReviewAddOutcome>;
   addNotes(paths: string[]): Promise<ReviewAddSummary>;
   removeNote(path: string): Promise<boolean>;
+  /** 批量查现状（一趟读盘）；返回顺序与入参一致 */
+  statusOf(paths: string[]): Promise<ReviewNoteStatus[]>;
 }
 
 let source: ReviewPlanApi | null = null;
