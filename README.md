@@ -9,12 +9,12 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/Obsidian-%E2%89%A5%201.4.0-7c3aed?style=flat-square&logo=obsidian&logoColor=white" alt="Obsidian ≥ 1.4.0">
-  <img src="https://img.shields.io/github/v/release/yeshimei/bz?style=flat-square&label=version&color=7c3aed" alt="版本">
-  <img src="https://img.shields.io/github/downloads/yeshimei/bz/total?style=flat-square&label=downloads&color=7c3aed" alt="下载量">
-  <img src="https://img.shields.io/badge/%E6%A1%8C%E9%9D%A2%20%2B%20%E7%A7%BB%E5%8A%A8%E7%AB%AF-16a34a?style=flat-square" alt="桌面 + 移动端">
-  <img src="https://img.shields.io/github/license/yeshimei/bz?style=flat-square&label=license&color=16a34a" alt="license">
-  <a href="https://github.com/yeshimei/bz-reader"><img src="https://img.shields.io/badge/bz%20reader-%E5%A4%9A%E6%A0%BC%E5%BC%8F%E9%98%85%E8%AF%BB%E5%99%A8-8a6a3a?style=flat-square" alt="bz reader：多格式阅读器"></a>
+  <img src="https://img.shields.io/badge/OBSIDIAN-%E2%89%A5%201.4.0-7c3aed?style=flat-square&logo=obsidian&logoColor=white" alt="Obsidian ≥ 1.4.0">
+  <img src="https://img.shields.io/github/v/release/yeshimei/bz?style=flat-square&label=VERSION&color=7c3aed" alt="版本">
+  <img src="https://img.shields.io/github/downloads/yeshimei/bz/total?style=flat-square&label=DOWNLOADS&color=7c3aed" alt="下载量">
+  <img src="https://img.shields.io/badge/PLATFORM-DESKTOP%20%2B%20MOBILE-16a34a?style=flat-square" alt="桌面 + 移动端">
+  <img src="https://img.shields.io/github/license/yeshimei/bz?style=flat-square&label=LICENSE&color=16a34a" alt="license">
+  <a href="https://github.com/yeshimei/bz-reader"><img src="https://img.shields.io/badge/BZ%20READER-%E5%A4%9A%E6%A0%BC%E5%BC%8F%E9%98%85%E8%AF%BB%E5%99%A8-8a6a3a?style=flat-square" alt="bz reader：多格式阅读器"></a>
 </p>
 
 <p align="center">
