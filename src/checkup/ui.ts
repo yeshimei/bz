@@ -86,7 +86,7 @@ function build(app: App): void {
   ov.className = 'bz-panel-overlay';
   const frame = document.createElement('div');
   frame.id = FRAME_ID;
-  frame.className = 'bz-panel-frame bz-checkup-popup';
+  frame.className = 'bz-panel-frame bz-checkup-popup bz-main-panel';
 
   const head = document.createElement('div');
   head.className = 'bz-panel-head';

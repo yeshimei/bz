@@ -496,7 +496,7 @@ describe('render 纯层：命名空间与零内联视觉样式', () => {
       .filter(Boolean);
     expect(classes.length).toBeGreaterThan(30);
     // core 自有的共享类不算「裸类名」（21 个域共用同一份 core 样式，本来就全局唯一）
-    const CORE_SHARED = new Set(['bz-ic']);
+    const CORE_SHARED = new Set(['bz-ic', 'bz-main-panel']);
     for (const c of classes) {
       expect(c.startsWith('bz-diary-') || CORE_SHARED.has(c), `类名未加域前缀：${c}`).toBe(true);
     }

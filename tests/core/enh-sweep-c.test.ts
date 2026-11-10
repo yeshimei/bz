@@ -34,7 +34,7 @@ describe('enh-sweep-c：.bz-panel-mtop 移动全屏顶距', () => {
 
   it('全屏面板根节点接线：各域挂载点（markup 单源）', () => {
     expect(src('src/home/layouts/river/render.ts')).toContain('bz-home-panel bz-panel-mtop'); // issue 243 markup 单源 render.ts
-    expect(src('src/favorites/layouts/board/render.ts')).toContain('bz-fav-panel bz-fav-scope'); // issue 242 markup 单源 render.ts（bz-panel-mtop 随移动端挂载）
+    expect(src('src/favorites/layouts/board/render.ts')).toContain('bz-fav-panel bz-main-panel bz-fav-scope'); // issue 242 markup 单源 render.ts（bz-panel-mtop 随移动端挂载）
     expect(src('src/belongings/layouts/poster/render.ts')).toContain('bz-bel-panel bz-panel-frame bz-panel-mtop'); // issue 237 markup 单源 render.ts
     const clip = src('src/clipbook/render.ts'); // issue 247 markup 单源 render.ts
     expect(clip).toContain('bz-clip-frame bz-panel-mtop');

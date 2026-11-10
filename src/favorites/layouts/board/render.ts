@@ -30,7 +30,7 @@ export interface FavRenderHooks {
  *  桌面固定 900×620、点遮罩/Esc 关闭；移动全屏 + head 行 ✕ 退出。 */
 export function panelHtml(mobile: boolean): string {
   const mob = mobile ? ' bz-fav-mob bz-panel-mtop' : '';
-  return `<div class="bz-fav-panel bz-fav-scope${mob}">
+  return `<div class="bz-fav-panel bz-main-panel bz-fav-scope${mob}">
   <div class="bz-fav-head"><h1>收藏本</h1><button class="bz-fav-mob-close bz-touch-target bz-touch-target--xl" data-fav-close title="关闭">${iconSpan(ICON.close, 'bz-ic--xs')}</button></div>
   <div class="bz-fav-tags" data-fav-tags></div>
   <div class="bz-fav-board" data-fav-content></div>

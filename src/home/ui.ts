@@ -32,6 +32,7 @@ import { attachItemActions, type ItemAction } from '../core/item-actions';
 import { isMobileEnv } from '../core/mobile';
 import { tryGetSettings, panelSizePersist } from '../core/settings-provider';
 import type { BzResizablePersist } from '../core/ui/resize';
+import { armHomeReturn, disarmHomeReturn } from '../core/home-return';
 import { H } from './state';
 import { DOMAIN_MAP } from './domains';
 import {
@@ -270,6 +271,8 @@ async function refreshRiverAndRender(): Promise<void> {
  */
 export function closeOverlay(): void {
   if (!H.currentOverlay || !H.overlayVisible) return;
+  // 用户自己关首页 = 结束这次「从首页进入」的会话，别再等某个功能关闭后拉回首页
+  disarmHomeReturn();
   const overlay = H.currentOverlay;
   saveScroll(overlay);
   unmountPanelResize(); // 隐藏即摘缩放句柄（常驻 DOM 面板，重开 showOverlay 再挂）
@@ -291,6 +294,22 @@ export function showOverlay(): void {
   motionPanelIn(overlay, true);
   mountPanelResize(overlay); // 复用显重挂（closeOverlay 隐藏时已摘，此处句柄恒空，幂等由 mount 自守）
   void refreshRiverAndRender();
+}
+
+/**
+ * 确保首页可见（不 toggle）：从功能关闭后返回首页专用（core/home-return 回调）。
+ * 与 openHome 的差异只有一处——**已显示时不动**：openHome 是 toggle，回首页若撞上
+ * 用户刚亲手打开的首页，会把首页又关掉。隐藏的恢复显示、从未建的新建。
+ */
+export function ensureHomeVisible(app: any): void {
+  if (H.currentOverlay) {
+    if (!H.overlayVisible) showOverlay();
+    else topifyZ(H.currentOverlay); // 已可见也抬到顶，防被残留浮层压住
+    return;
+  }
+  if (!H.appRef) H.appRef = app;
+  registerEscapeHandler();
+  createOverlay(app);
 }
 
 /* ---------- 事件 ---------- */
@@ -348,10 +367,22 @@ function bindEvents(overlay: HTMLElement, app: any): void {
   });
 }
 
+/** 首页「关闭后回到首页」开关（2026-11-10 用户拍板，设置 → 首页 → 行为）：默认关 */
+function returnToHomeEnabled(): boolean {
+  return (tryGetSettings() as Record<string, unknown>)?.homeReturnAfterClose === true;
+}
+
+/** 进入功能前：开关开着就上膛——功能关闭后由 core/home-return 把首页拉回来。
+ *  只覆盖「从首页进入」的入口，直接开功能不经过这里（也就不会回首页）。 */
+function armReturnIfEnabled(app: any): void {
+  if (returnToHomeEnabled()) armHomeReturn(() => ensureHomeVisible(app));
+}
+
 function openDomain(id: string, app: any): void {
   const d = DOMAIN_MAP.get(id);
   if (!d) return;
-  closeOverlay();
+  closeOverlay(); // 先关（顺带 disarm 上一次会话），再按开关重新上膛
+  armReturnIfEnabled(app);
   runCommand(d.commandId, app, `「${d.name}」暂时不可用`);
 }
 
@@ -445,6 +476,7 @@ function attachRowMenu(el: HTMLElement, app: any, river: RiverData): void {
         if (deep) {
           // 设置直达：关首页再开设置面板（定位该域设置页），避免两层面板叠着
           closeOverlay();
+          armReturnIfEnabled(app);
           void import('../settings-panel').then((m) => m.openSettingsPanel(app, deep));
           return;
         }
@@ -455,6 +487,7 @@ function attachRowMenu(el: HTMLElement, app: any, river: RiverData): void {
           return;
         }
         closeOverlay();
+        armReturnIfEnabled(app);
         runCommand(spec.commandId, app);
       },
     };
@@ -509,6 +542,8 @@ function focusKeyOf(el: Element | null): { attr: string; value: string } | null 
 function renderAll(): void {
   const overlay = H.currentOverlay;
   if (!overlay) return;
+  // 骨架完整性守卫：卸载 / 重建瞬间晚到的异步刷新不再往半截 DOM 上写（数据区没建好就放弃本轮）
+  if (!overlay.querySelector('[data-home-flow]')) return;
   const date = overlay.querySelector('[data-home-date]');
   if (date) date.textContent = headDateText();
 

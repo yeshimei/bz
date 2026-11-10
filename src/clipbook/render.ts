@@ -60,7 +60,7 @@ export const ICO = {
  *  桌面 1180×760、关闭 = 点遮罩/ESC（头行无按钮）；移动全屏态有 ✕。 */
 export function panelHtml(): string {
   return `
-    <div class="bz-panel-frame bz-clip-frame bz-panel-mtop">
+    <div class="bz-panel-frame bz-clip-frame bz-panel-mtop bz-main-panel">
       <!-- 桌面三栏 -->
       <div class="bz-clip-desk">
         <div class="bz-panel-head bz-panel-head--tall">

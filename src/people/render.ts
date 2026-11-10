@@ -201,7 +201,7 @@ export function iconButton(icon: string, cls: string, attrs: Record<string, stri
  * 右下沿两枚小签（找一找 / 数据源）常驻；进度便签与合并横幅各自一个绝对定位槽位。
  */
 export function panelShell(): HTMLElement {
-  return el('div', 'bz-people-panel', [
+  return el('div', 'bz-people-panel bz-main-panel', [
     el('div', 'bz-people-page-wrap', { 'data-people-scroll': 'wrap' }, [
       el('div', 'bz-people-spread', { 'data-people-spread': '' }),
     ]),

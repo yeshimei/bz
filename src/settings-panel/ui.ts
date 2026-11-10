@@ -453,6 +453,7 @@ export class SettingsPanelUI {
     });
     this.mask = mask;
     this.popup = popup;
+    popup.classList.add('bz-main-panel'); // 主面板标记（通用全屏 / 首页返回定位用）
 
     if (isMobileEnv()) {
       this.buildMobile(popup);

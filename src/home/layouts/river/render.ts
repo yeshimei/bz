@@ -17,7 +17,7 @@ import {
  *  （仅 pointer:coarse 生效，桌面零影响） */
 export function panelFrameHtml(): string {
   return `
-    <div class="bz-panel-frame bz-home-panel bz-panel-mtop">
+    <div class="bz-panel-frame bz-home-panel bz-panel-mtop bz-main-panel">
       <div class="bz-home-head">
         <div class="bz-home-week" data-home-week></div>
         <span class="bz-home-date" data-home-date></span>

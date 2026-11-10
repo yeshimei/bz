@@ -69,7 +69,8 @@ describe('呈报#56（R12）：六条复习命令名改动宾式', () => {
     for (const [id, name] of EXPECTED_NAMES) {
       const cmd = registeredCommands.find((c) => c.id === id);
       expect(cmd, `缺命令 ${id}`).toBeTruthy();
-      expect(cmd.name, `${id} name 应为「${name}」`).toBe(name);
+      // 命令显示名统一带「bz · 」前缀（2026-11-10，GitHub issue #2）：断言语义名用后缀匹配
+      expect(cmd.name.endsWith(name), `${id} name 应为「${name}」`).toBe(true);
       expect(cmd.name, `${id} 不应再有括号式命名`).not.toMatch(/）/);
     }
   });

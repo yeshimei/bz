@@ -19,7 +19,7 @@ import type { CinemaItem } from '../../state';
 
 /** desk 壳（900×620：左侧栏 + 主视图；j-groups/j-status/j-view 为渲染挂点） */
 export function midnightDeskHtml(): string {
-  return `<section class="bz-cinema--midnight" data-cinema-root="midnight">
+  return `<section class="bz-cinema--midnight bz-main-panel" data-cinema-root="midnight">
     <div class="d-body">
       <aside class="d-rail">
         <div class="rail-brand"><h1>影院</h1><div class="en">CINEMA CLUB</div></div>
@@ -42,7 +42,7 @@ export function midnightDeskHtml(): string {
 
 /** mob 壳（移动端独立自绘；j-mtitle/j-mcnt/j-chips/j-mq/j-mview 为渲染挂点） */
 export function midnightMobHtml(): string {
-  return `<section class="mob bz-cinema--midnight bz-panel-mtop" data-cinema-root="midnight">
+  return `<section class="mob bz-cinema--midnight bz-panel-mtop bz-main-panel" data-cinema-root="midnight">
     <div class="m-head"><h2 class="j-mtitle">全部</h2><span class="cnt j-mcnt"></span>
       <span class="m-acts">
         <button class="add j-madd bz-touch-target bz-touch-target--lg" data-cinema-add title="添加影片">${iconSpan(ICON.add)}</button>

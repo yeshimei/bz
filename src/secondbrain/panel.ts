@@ -400,7 +400,7 @@ export class SecondBrainPanel {
     bindMaskDismiss(mask, () => this.close());
 
     const popup = document.createElement('div');
-    popup.className = 'bz-sb-panel bz-panel-mtop'; // 移动端全屏 + 44px 顶部避让（issue 272；桌面不生效）
+    popup.className = 'bz-sb-panel bz-panel-mtop bz-main-panel'; // 移动端全屏 + 44px 顶部避让（issue 272；桌面不生效）
     popup.innerHTML = panelShellHtml();
 
     // 头行：AI 对话 / 灵感参考 / 关闭（图标钮；⚙️ 已摘——设置走设置面板；引导期 func 钮整体收起，ticket 107）

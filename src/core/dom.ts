@@ -4,6 +4,7 @@
  * injectStyles 已随 ticket 60 样式收敛废弃删除（铁律 9：禁运行时注入）。
  */
 import { bindMaskDismiss } from './mask-dismiss';
+import { notifyFloatClosed } from './home-return';
 import { notice } from './notice';
 import { allocZ, topifyZ } from './z-order';
 
@@ -237,6 +238,8 @@ export function createOverlay(opts: {
       liveOverlays.delete(entry); // 幂等注销（closeAllOverlays 与调用方 close 双入口都安全）
       if (mask.isConnected) mask.remove();
       if (popup.isConnected) popup.remove();
+      // 首页返回总线：从首页菜单点开的浮层，关掉即「功能闭合」（主面板内的不受影响）
+      notifyFloatClosed();
     },
   };
   liveOverlays.add(entry);
@@ -250,6 +253,7 @@ export function createOverlay(opts: {
       entry.close = () => {
         liveOverlays.delete(entry);
         close();
+        notifyFloatClosed();
       };
     },
   };

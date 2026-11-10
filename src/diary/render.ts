@@ -602,7 +602,7 @@ export function bookPanelHTML(): string {
 
     <div class="bz-diary-desk">
     <!-- 遮罩层（token 底色 + blur）：点空白处收起整本；书：打开就落在最新那篇（第 0 页 = 最近一则） -->
-    <div class="bz-diary-book" tabindex="0">
+    <div class="bz-diary-book bz-main-panel" tabindex="0">
       <!-- 底壳与厚度 -->
       <div class="bz-diary-bk-shell"></div>
       <div class="bz-diary-bk-under"></div>

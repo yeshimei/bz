@@ -117,7 +117,7 @@ export function mobAddSceneChipHtml(): string {
  * issue 266 曾为此在头行补过一枚移动端专属新建钮，issue 268 随本次收敛退役。 */
 export function panelShellHtml(): string {
 	return `
-    <div class="bz-panel-frame bz-memo-panel bz-panel-mtop">
+    <div class="bz-panel-frame bz-memo-panel bz-panel-mtop bz-main-panel">
       <div class="bz-panel-head">
         <div class="bz-panel-brand">${iconSpan(MEMO_ICONS.brand, 'bz-ic--sm')}</div>
         <div class="bz-panel-title">备忘录</div>

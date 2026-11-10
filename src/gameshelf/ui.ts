@@ -967,7 +967,7 @@ function createUI(app: App): void {
   // 点遮罩关闭：手势配对判据（core/mask-dismiss）——跨元素松手不算点击
   bindMaskDismiss(mask, closePanel);
   const frame = document.createElement('div');
-  frame.className = 'bz-panel-frame bz-gs-panel bz-panel-mtop';
+  frame.className = 'bz-panel-frame bz-gs-panel bz-panel-mtop bz-main-panel';
   frame.setAttribute('role', 'dialog');
   frame.setAttribute('aria-label', '游戏库');
 

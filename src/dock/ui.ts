@@ -366,7 +366,7 @@ function isPanelVisible(): boolean {
 function build(app: App): void {
   const ov = el('div', 'bz-panel-overlay bz-dock-mask is-off');
   ov.id = OVERLAY_ID;
-  const frame = el('div', 'bz-panel-frame bz-dock-panel bz-panel-mtop');
+  const frame = el('div', 'bz-panel-frame bz-dock-panel bz-panel-mtop bz-main-panel');
   frame.id = FRAME_ID;
 
   const head = el('div', 'bz-panel-head');

@@ -14,6 +14,7 @@ import { closeModelPicker } from './core/settings-model-picker';
 import { closePathPicker } from './core/path-picker';
 import { closeLightbox } from './core/ui/lightbox';
 import { closeAllModals } from './core/ui/modal';
+import { toggleGlobalFullscreen, unloadGlobalFullscreen } from './core/ui/global-fullscreen';
 import { closeAllOverlays } from './core/dom';
 import { setApp, getApp } from './core/app';
 import { needsFolderKey } from './core/folder-setup';
@@ -45,7 +46,7 @@ import { openMemoPanel, addMemoItem, addMemoForActiveNote, unloadMemo, ensureMem
 // 15 域（懒加载：首次命令/事件触发时 ensureXxx 幂等初始化）
 import { addBelongingsItem, openBelongings, openBelongingsReport, unloadBelongings } from './belongings';
 // 剪藏本融合域（clipbook，ADR-0082/issue 177）：聚合讯+剪藏本合一
-import { openClipbook, markAllUnreadRead, openReadingPress, toggleClipbookFullscreen, unloadClipbook, ensureClipbookFileSync, unloadClipbookFileSync } from './clipbook';
+import { openClipbook, markAllUnreadRead, openReadingPress, unloadClipbook, ensureClipbookFileSync, unloadClipbookFileSync } from './clipbook';
 import { maybeFetchNews, fetchNowNews, notifyManualFetchResult } from './clipbook/news-fetcher';
 // 统一保险库（encrypt 域，ADR-0085）：密码管理已并入 encrypt，旧 password-vault 域已删除
 // 日记本（diary 域，ADR-0115：原回忆墙升格正名，旧编辑域退役；媒体墙 + 写链路单一 UI）
@@ -119,10 +120,21 @@ import {
   markDockExit,
 } from './dock';
 
+/** 命令名统一前缀（2026-11-10 用户拍板，承接 GitHub issue #2）：
+ *  所有 bz 命令的**显示名**以「bz · 」开头——命令面板搜「bz」一次列出全部 bz 命令；
+ *  id 一律不动（ADR-0004：外部裸 id 调用契约），中文关键词照样能子串命中。
+ *  表内 name 保持裸名：它是命令语义的单一事实源，前缀只加在注册出口这一处。 */
+const BZ_CMD_PREFIX = 'bz · ';
+const cmdName = (name: string): string => BZ_CMD_PREFIX + name;
+
 /** 命令表：id/name 统一命名（spec「命令 id 全清单」第 9 轮：bz-<域>-<动作>）。
  *  域入口命令 icon 一律从 core/domain-icons（DOMAIN_ICONS）取——与设置面板导航单一事实源（enh-sweep-a）；
  *  动作类命令（加/评级/补链等）保持字面量图标。 */
 const COMMANDS: { id: string; name: string; icon: string; callback: () => void }[] = [
+  // 通用全屏（2026-11-10 用户拍板，承接 GitHub issue #1）：把当前最上层的主面板铺满整个
+  // Obsidian 窗口；再执行一次或 ESC 还原。快捷键由用户在 Obsidian 里自行绑定。
+  // 取代原「剪藏本全屏」（bz-clipbook-fullscreen）——不再绑死某一个域。
+  { id: 'bz-core-fullscreen', name: '全屏', icon: 'maximize', callback: () => toggleGlobalFullscreen() },
   // 内容首页（home 域，ticket 177）
   { id: 'bz-home-open', name: '内容首页', icon: DOMAIN_ICONS.home, callback: () => openHome(getApp()) },
   // 备忘录（memo 域，ADR-0092 起为 memo.json 唯一属主）
@@ -150,9 +162,6 @@ const COMMANDS: { id: string; name: string; icon: string; callback: () => void }
   // 侧写 readLog），与书库「阅读分析报告」并列；图标弃 bar-chart-3（阅读分析报告独占）改
   // newspaper（剪藏本语义），与 pie-chart/calendar-check 继续错开
   { id: 'bz-clipbook-report', name: '剪藏阅读报告', icon: 'newspaper', callback: () => openReadingPress(getApp()) },
-  // 全屏（2026-11-09 用户点名）：面板已开 → 铺满窗口 / 再执行还原；没开 → 只开窗不进全屏。
-  // 全屏只改面板大小，三栏与所有交互不变；尺寸记忆不记录全屏值（关掉重开还是原窗口）。
-  { id: 'bz-clipbook-fullscreen', name: '剪藏本全屏', icon: 'maximize', callback: () => toggleClipbookFullscreen(getApp()) },
 
   // 日记本（diary 域，ADR-0115：原回忆墙升格正名；媒体墙即日记本唯一 UI）
   { id: 'bz-diary-open', name: '日记本', icon: DOMAIN_ICONS.diary, callback: () => openDiary(getApp()) },
@@ -496,7 +505,7 @@ export default class BzPlugin extends Plugin {
       if (!this.smartcatDomainOn && isSmartcatCommand(c.id)) continue;
       (this.app as any).commands.addCommand({
         id: c.id,
-        name: c.name,
+        name: cmdName(c.name),
         icon: c.icon,
         callback: this.withNoteHook(c.callback),
       });
@@ -513,7 +522,7 @@ export default class BzPlugin extends Plugin {
       const cmdId = `bz-dock-run-${entry.id}`;
       (this.app as any).commands.addCommand({
         id: cmdId,
-        name: `运行工具：${dockToolLabel(entry)}`,
+        name: cmdName(`运行工具：${dockToolLabel(entry)}`),
         icon: DOMAIN_ICONS.dock,
         callback: this.withNoteHook(() => void runToolDirect(getApp(), entry.id)),
       });
@@ -686,6 +695,8 @@ export default class BzPlugin extends Plugin {
     // 自建 overlay 存活收口（CB10/A1）：UP/RSS 管理等 createOverlay 弹窗的登记表统一关——
     // closeAllModals 只管 uiModal 面，自建遮罩在此兜底（未打开时 no-op）
     closeAllOverlays();
+    // 通用全屏（2026-11-10）：摘类 + 清 ESC 层状态，避免卸载后残留全屏几何
+    unloadGlobalFullscreen();
     // toast 卸载清理（UX 整改 l2-toast）：清空通知容器 DOM + 存活/去重状态
     cleanupNotices();
     // 清理裸注册命令（统一 bz- 前缀，必须显式 removeCommand）
@@ -796,7 +807,7 @@ export default class BzPlugin extends Plugin {
       if (on) {
         commands.addCommand({
           id: c.id,
-          name: c.name,
+          name: cmdName(c.name),
           icon: c.icon,
           callback: this.withNoteHook(c.callback),
         });

@@ -32,6 +32,11 @@
  * 注意：移动端（触屏）请勿挂载——本工厂只处理 mouse 指针事件。
  * ============================================================ */
 import { swallowNextClick } from '../dom';
+import { GLOBAL_FULL_CLASS } from './global-fullscreen';
+
+/** 全屏期间拖拽缩放空转（2026-11-10 通用全屏）：几何由 CSS 全屏类接管，
+ *  此时若还写内联宽高会把全屏值当意图值落进尺寸记忆，退出后回不到原窗口 */
+const fullNow = (el: HTMLElement): boolean => el.classList.contains(GLOBAL_FULL_CLASS);
 
 /** 命中热区判定（右缘 / 底缘 / 右下角），单位为 CSS px */
 function hitRegion(rect: { width: number; height: number }, x: number, y: number, edge: number): string | null {
@@ -106,6 +111,7 @@ export function uiResizable(el: HTMLElement, opts: BzResizableOpts = {}): {
   /** 渲染值 = 意图值在当前视口下的投影（clamp(意图, min, 视口 92%)）写内联；
    *  无意图值（未拖过/无记忆）不动，面板走 CSS 默认 + CSS 视口钳制自动跟帧 */
   const renderSize = (): void => {
+    if (fullNow(el)) return; // 全屏类接管几何（退出全屏后不走这里，内联原值仍在）
     if (wantW <= 0 || wantH <= 0) return;
     el.style.width = Math.min(Math.max(wantW, minW), cap(true)) + 'px';
     el.style.height = Math.min(Math.max(wantH, minH), cap(false)) + 'px';
@@ -146,7 +152,7 @@ export function uiResizable(el: HTMLElement, opts: BzResizableOpts = {}): {
 
   /** hover（仅 el 上）：实时 rect 换光标；拖拽中交由 document 移动处理 */
   const onHover = (e: MouseEvent) => {
-    if (dragging) return;
+    if (dragging || fullNow(el)) return;
     setCursor(regionAt(e));
   };
 
@@ -185,6 +191,7 @@ export function uiResizable(el: HTMLElement, opts: BzResizableOpts = {}): {
   };
 
   const onMouseDown = (e: MouseEvent) => {
+    if (fullNow(el)) return; // 全屏期间不进入拖拽（屏幕边缘的命中热区会误伤）
     const d = regionAt(e);
     if (!d) return;
     e.preventDefault();

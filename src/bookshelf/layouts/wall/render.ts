@@ -214,7 +214,7 @@ export function sortSegHtml(sortMode: SortKey): string {
 /** 面板骨架 HTML（书脊墙 1:1；皮肤+亮暗类由调用方传——插件读设置/主题体，壳走 ?skin=/?theme=） */
 export function panelHtml(skinClass: string): string {
   return `
-    <div class="bz-panel-frame bz-bs-panel bz-panel-mtop ${esc(skinClass)}">
+    <div class="bz-panel-frame bz-bs-panel bz-panel-mtop bz-main-panel ${esc(skinClass)}">
       <div class="bz-bs-wallpage">
       <div class="bz-bs-header">
         <div class="bz-bs-plaque" data-bs-plaque><h1>书库</h1><p>LIBRARY</p></div>
