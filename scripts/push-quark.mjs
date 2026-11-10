@@ -49,7 +49,10 @@ const PRODUCTS = {
     label: 'bz',
     pdir: '069d66671a554feab5bb6b13c0bf4f0c',
     zip: (v) => `bz-${v}.zip`,
-    pattern: /^bz-\d+\.\d+\.\d+\.zip$/,
+    /* bz 一次发两个包：正常版和离线包（pack-release 同时产出），网盘要给推广渠道
+       凑齐一对。只传前一个的话，拿到链接的人下不到离线包。 */
+    zips: (v) => [`bz-${v}.zip`, `bz-offline-${v}.zip`],
+    pattern: /^bz-(?:offline-)?\d+\.\d+\.\d+\.zip$/,
   },
   reader: {
     label: 'bz reader',
@@ -262,6 +265,38 @@ function packPlugin(repo, version, dirName) {
   return { zip: out, cleanup: () => rmSync(tmp, { recursive: true, force: true }) };
 }
 
+/**
+ * 传一个包并核对：同名先删，再传，最后按「名字 + 大小」对账。
+ *
+ * 夸克不会覆盖同名文件：直接传会落成 `xxx(1).zip`，之后按名字对账永远对不上，
+ * 目录里还会越堆越多（2026-11-10 就攒了三份 1.0.0）。所以先把同名旧包删掉。
+ */
+async function pushOne(quark, pdir, zip) {
+  const name = basename(zip);
+  const size = statSync(zip).size;
+  console.log(`[push-quark] 目标：${name}（${(size / 1024 / 1024).toFixed(2)} MB）`);
+
+  const same = (await quark.list(pdir)).filter((f) => f.file_name === name);
+  if (same.length) {
+    await quark.remove(same.map((f) => f.fid));
+    console.log(`[push-quark] 同名的旧包先删：${same.map((f) => `${f.file_name}（${f.size}）`).join('、')}`);
+  }
+
+  const uploaded = await quark.upload(zip, pdir, name);
+  console.log(`[push-quark] 上传完成${uploaded.rapid ? '（秒传）' : ''}，fid=${uploaded.fid}`);
+
+  // 对账：目录里必须有这个文件且大小一致（网盘索引有延迟，最多等 10 秒）
+  let after = [];
+  for (let i = 0; i < 10; i++) {
+    after = await quark.list(pdir);
+    if (after.some((f) => f.file_name === name && f.size === size)) break;
+    await new Promise((r) => setTimeout(r, 1000));
+  }
+  const hit = after.find((f) => f.file_name === name && f.size === size);
+  if (!hit) throw new Error(`上传后对不上账：目录里没找到 ${name}（${size} 字节）`);
+  return hit;
+}
+
 async function main() {
   const product = String(arg('product', 'bz'));
   const conf = PRODUCTS[product];
@@ -277,52 +312,57 @@ async function main() {
 
   const repo = String(arg('repo', product === 'reader' ? 'D:/Obsidian/bz-reader' : process.cwd()));
   const version = resolveVersion(repo);
-  let zip = String(arg('file', ''));
+  const given = String(arg('file', ''));
+  const wanted = given ? [given] : (conf.zips ?? ((v) => [conf.zip(v)]))(version);
+
+  const targets = [];
   let cleanup = null;
-  if (!zip) {
-    const candidate = join(repo, conf.zip(version));
-    if (existsSync(candidate)) {
-      zip = candidate;
-    } else {
-      // 没有现成的包就现场打三件套（bz 正常走 pack-release；reader 一直现场打）
-      const packed = packPlugin(repo, version, product === 'reader' ? 'bz-reader' : 'bz');
-      zip = packed.zip;
-      cleanup = packed.cleanup;
+  for (const name of wanted) {
+    const p = given ? name : join(repo, name);
+    if (existsSync(p)) {
+      targets.push(p);
+      continue;
     }
+    /* 只有 reader 是现场打三件套；bz 的两个包由 pack-release 产出，
+       缺了就从 GitHub Release 取回来（网盘镜像的就是那份），别在这里瞎拼。 */
+    if (product === 'reader' && !given && wanted.length === 1) {
+      const packed = packPlugin(repo, version, 'bz-reader');
+      targets.push(packed.zip);
+      cleanup = packed.cleanup;
+      continue;
+    }
+    throw new Error(
+      `缺少 ${name}：先出包，或 gh release download v${version} --pattern ${name} --clobber（在 ${repo} 下）`,
+    );
   }
-  if (!existsSync(zip)) throw new Error(`找不到要上传的文件：${zip}`);
 
   const pdir = String(arg('pdir', conf.pdir));
-  const name = basename(zip);
-  const size = statSync(zip).size;
-  console.log(`[push-quark] 目标：${conf.label} / ${name}（${(size / 1024 / 1024).toFixed(2)} MB）`);
   if (dryRun) {
+    for (const p of targets) {
+      console.log(`[push-quark] 目标：${conf.label} / ${basename(p)}（${(statSync(p).size / 1024 / 1024).toFixed(2)} MB）`);
+    }
     console.log('[push-quark] --dry-run：只演算，不真传');
     cleanup?.();
     return;
   }
 
-  const uploaded = await quark.upload(zip, pdir, name);
-  console.log(`[push-quark] 上传完成${uploaded.rapid ? '（秒传）' : ''}，fid=${uploaded.fid}`);
-
-  // 对账：目录里必须有这个文件且大小一致（网盘索引有延迟，最多等 10 秒）
-  let after = [];
-  for (let i = 0; i < 10; i++) {
-    after = await quark.list(pdir);
-    if (after.some((f) => f.file_name === name && f.size === size)) break;
-    await new Promise((r) => setTimeout(r, 1000));
+  const keep = new Set();
+  for (const p of targets) {
+    const hit = await pushOne(quark, pdir, p);
+    keep.add(hit.fid);
   }
-  const hit = after.find((f) => f.file_name === name && f.size === size);
-  if (!hit) throw new Error(`上传后对不上账：目录里没找到 ${name}（${size} 字节）`);
 
-  // 只留最新版：只删本产品自己的旧包，根目录里别人的文件一律不碰
-  const stale = after.filter((f) => f.fid !== hit.fid && conf.pattern.test(f.file_name));
+  // 只留最新版：只删本产品自己的旧包，目录里别人的文件一律不碰
+  const after = await quark.list(pdir);
+  const stale = after.filter((f) => !keep.has(f.fid) && conf.pattern.test(f.file_name));
   if (stale.length) {
     await quark.remove(stale.map((f) => f.fid));
     console.log(`[push-quark] 清理旧版：${stale.map((f) => f.file_name).join('、')}`);
   }
 
-  console.log(`[push-quark] ✓ ${conf.label} 网盘已是最新版${version ? ` v${version}` : ''}（目录现有 ${after.length - stale.length} 个文件）`);
+  console.log(
+    `[push-quark] ✓ ${conf.label} 网盘已是最新版${version ? ` v${version}` : ''}（${keep.size} 个包，目录现有 ${after.length - stale.length} 个文件）`,
+  );
   cleanup?.();
 }
 
