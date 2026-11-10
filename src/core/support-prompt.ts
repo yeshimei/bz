@@ -6,6 +6,8 @@
  *    所以不存在「点遮罩能偷偷关掉、点 × 才被问」这种三套行为；
  *  - 两个答案两个去处：「支持作者」开赞赏扫码窗（core/reward-dialog），
  *    「以后再说」什么都不开，连同日志窗一起收掉；
+ *  - 按钮下面再挂一行「或者给个 Star」（2026-11-10）：不花钱的另一种支持，
+ *    点开本仓库；点它不关窗，人回来还能接着选；
  *  - 版式与配色见 core/support-prompt.css：纸色 + 金色 + 衬线，跟赞赏窗同一族——
  *    用户点「支持作者」之后落到的就是那张纸，中途不换材质。
  *
@@ -14,6 +16,13 @@
  * README 是文档、不进构建，那边仍需手动同步。
  * ============================================================ */
 import { uiModal } from './ui/modal';
+import { getApp } from './app';
+import { openExternalUrl } from './utils';
+import { REPO_SLUG } from './remote-base';
+
+/** 本仓库（收藏入口用）：slug 单源在 core/remote-base，与「关于」组同一处。
+ *  不从 reward-dialog 转引——那边反过来引了本文件的 SUPPORT_PITCH，会成环。 */
+const REPO_URL = `https://github.com/${REPO_SLUG}`;
 
 /** 正文第一行（「作者一个人」那半句。标记里的断行就落在它后面） */
 export const SUPPORT_PITCH = '插件的开发维护和教程视频制作都是作者一个人，';
@@ -92,6 +101,23 @@ export function openSupportPrompt(): Promise<SupportChoice> {
     acts.appendChild(go);
 
     root.appendChild(acts);
+
+    // 收藏入口（2026-11-10）：不花钱的另一种支持。放在两个按钮下面——
+    // 它是「不想打赏也有别的支持方式」的补充，不该和二选一并列抢注意力。
+    // 点它不关窗：人可能去仓库点完 star 回来接着选「以后再说」。
+    const star = document.createElement('p');
+    star.className = 'bz-sup-star';
+    const starLink = document.createElement('a');
+    starLink.className = 'bz-sup-star-link';
+    starLink.href = REPO_URL;
+    starLink.rel = 'noopener noreferrer';
+    starLink.textContent = '或者给个 Star';
+    starLink.addEventListener('click', (e) => {
+      e.preventDefault();
+      openExternalUrl(getApp(), REPO_URL);
+    });
+    star.appendChild(starLink);
+    root.appendChild(star);
 
     handle = uiModal({
       content: root,

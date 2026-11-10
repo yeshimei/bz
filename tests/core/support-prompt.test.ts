@@ -9,7 +9,7 @@
  *
  * 入口时机（谁在什么时候调它）在 settings-panel/changelog-note 的测试里。
  */
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { resetObsidianMocks } from '../mock-obsidian-entry';
 import {
   openSupportPrompt,
@@ -18,6 +18,8 @@ import {
   SUPPORT_NOTE,
 } from '../../src/core/support-prompt';
 import { setApp } from '../../src/core/app';
+import type { App } from 'obsidian';
+import { REPO_SLUG } from '../../src/core/remote-base';
 
 const card = () => document.querySelector<HTMLElement>('.bz-sup');
 const pick = (sel: string) => document.querySelector<HTMLElement>(sel)!;
@@ -43,6 +45,15 @@ describe('支持作者提醒 · 纸上有什么', () => {
 
     const labels = [...document.querySelectorAll('.bz-sup-btn')].map((b) => b.textContent);
     expect(labels).toEqual(['以后再说', '支持作者']);
+  });
+
+  /* 收藏入口（2026-11-10）：不花钱的另一种支持，放在两个按钮下面——
+     不抢「要不要打赏」那个二选一的注意力，但也不藏。 */
+  it('按钮下面还有一行：或者给个 Star，指向本仓库', () => {
+    void openSupportPrompt();
+    const link = card()?.querySelector<HTMLAnchorElement>('.bz-sup-star-link');
+    expect(link?.textContent).toBe('或者给个 Star');
+    expect(link?.getAttribute('href')).toBe(`https://github.com/${REPO_SLUG}`);
   });
 
   it('弹窗壳走的是 uiModal（遮罩 + 纸卡），带皮肤类', () => {
@@ -80,5 +91,19 @@ describe('支持作者提醒 · 两个答案', () => {
     pick('.bz-sup-go').click();
     // 窗已经没了，这里直接验结论（若 settle 没做幂等，第二次会覆盖成 dismiss）
     await expect(p).resolves.toBe('support');
+  });
+});
+
+describe('支持作者提醒 · 收藏入口', () => {
+  it('点它走系统浏览器，窗不关（人可以回来接着选）', () => {
+    const openUrl = vi.fn((_url: string) => Promise.resolve());
+    setApp({ openUrl } as unknown as App);
+
+    void openSupportPrompt();
+    const link = card()!.querySelector<HTMLAnchorElement>('.bz-sup-star-link')!;
+    link.dispatchEvent(new window.MouseEvent('click', { bubbles: true, cancelable: true }));
+
+    expect(openUrl).toHaveBeenCalledWith(`https://github.com/${REPO_SLUG}`);
+    expect(card()).toBeTruthy();
   });
 });
