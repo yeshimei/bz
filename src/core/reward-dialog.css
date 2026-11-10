@@ -165,18 +165,22 @@
   background: rgba(189, 148, 64, .4);
 }
 
-/* 赞助入口（2026-11-10）：码下面第二行——「成为赞助人」，不敢扫码 / 想顺带买点东西的走这里。
-   字比「微信扫码」大一号、颜色站到金色一侧：它是能点的去处，不是标注。 */
-.bz-rw-sponsor {
+/* 出口（2026-11-11 用户拍板）：码下面一行——「成为赞助人 · 给个 Star」，
+   两条并列的支持路径，各点各的：赞助商店 / GitHub 仓库。
+   字比「微信扫码」大一号、颜色站到金色一侧：它们是能点的去处，不是标注。 */
+.bz-rw-exits {
   margin: 13px 0 0;
   display: flex;
+  align-items: center;
   justify-content: center;
+  gap: 7px;
 }
 
-/* 收藏入口（2026-11-10）：第三行——「或者给个 Star」，不花钱的另一种支持。
-   与赞助入口同款，只收一点行距：两行是并列的两条路，不分主次。 */
-.bz-rw-star {
-  margin-top: 8px;
+/* 分隔点：不可点，只把两条路隔开；比链接淡一档 */
+.bz-rw-exit-sep {
+  font-size: 11.5px;
+  line-height: 1;
+  color: rgba(189, 148, 64, .55);
 }
 
 .bz-rw-sponsor-link {

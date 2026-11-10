@@ -9,7 +9,7 @@
  *
  * 入口时机（谁在什么时候调它）在 settings-panel/changelog-note 的测试里。
  */
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach } from 'vitest';
 import { resetObsidianMocks } from '../mock-obsidian-entry';
 import {
   openSupportPrompt,
@@ -18,8 +18,6 @@ import {
   SUPPORT_NOTE,
 } from '../../src/core/support-prompt';
 import { setApp } from '../../src/core/app';
-import type { App } from 'obsidian';
-import { REPO_SLUG } from '../../src/core/remote-base';
 
 const card = () => document.querySelector<HTMLElement>('.bz-sup');
 const pick = (sel: string) => document.querySelector<HTMLElement>(sel)!;
@@ -47,13 +45,12 @@ describe('支持作者提醒 · 纸上有什么', () => {
     expect(labels).toEqual(['以后再说', '支持作者']);
   });
 
-  /* 收藏入口（2026-11-10）：不花钱的另一种支持，放在两个按钮下面——
-     不抢「要不要打赏」那个二选一的注意力，但也不藏。 */
-  it('按钮下面还有一行：或者给个 Star，指向本仓库', () => {
+  /* 收藏入口（2026-11-10 加、2026-11-11 删）：不花钱的支持只在赞赏窗里给，
+     这张提醒窗只回答「要不要支持作者」这一个问题，按钮下面不再挂任何链接。 */
+  it('按钮下面不再有 Star 出口：这张纸只问一个问题', () => {
     void openSupportPrompt();
-    const link = card()?.querySelector<HTMLAnchorElement>('.bz-sup-star-link');
-    expect(link?.textContent).toBe('或者给个 Star');
-    expect(link?.getAttribute('href')).toBe(`https://github.com/${REPO_SLUG}`);
+    expect(card()?.querySelector('.bz-sup-star, .bz-sup-star-link')).toBeNull();
+    expect(card()?.querySelectorAll('a').length).toBe(0);
   });
 
   it('弹窗壳走的是 uiModal（遮罩 + 纸卡），带皮肤类', () => {
@@ -94,20 +91,6 @@ describe('支持作者提醒 · 两个答案', () => {
   });
 });
 
-describe('支持作者提醒 · 收藏入口', () => {
-  it('点它走系统浏览器，窗不关（人可以回来接着选）', () => {
-    const openUrl = vi.fn((_url: string) => Promise.resolve());
-    setApp({ openUrl } as unknown as App);
-
-    void openSupportPrompt();
-    const link = card()!.querySelector<HTMLAnchorElement>('.bz-sup-star-link')!;
-    link.dispatchEvent(new window.MouseEvent('click', { bubbles: true, cancelable: true }));
-
-    expect(openUrl).toHaveBeenCalledWith(`https://github.com/${REPO_SLUG}`);
-    expect(card()).toBeTruthy();
-  });
-});
-
 /* 发版 review #4：这是模态窗，Tab 不能跑到它后面那扇更新日志窗里。 */
 describe('支持作者提醒 · 焦点圈闭', () => {
   it('打开即落焦窗内首个按钮，Tab 从末项绕回首项', () => {
@@ -117,7 +100,7 @@ describe('支持作者提醒 · 焦点圈闭', () => {
     expect(popup.contains(document.activeElement)).toBe(true);
     expect(document.activeElement).toBe(first);
 
-    const last = popup.querySelector<HTMLElement>('.bz-sup-star-link')!;
+    const last = popup.querySelector<HTMLElement>('.bz-sup-go')!;
     last.focus();
     popup.dispatchEvent(new window.KeyboardEvent('keydown', { key: 'Tab', bubbles: true, cancelable: true }));
     expect(document.activeElement).toBe(first);

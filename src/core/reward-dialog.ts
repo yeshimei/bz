@@ -36,11 +36,11 @@ import { SUPPORT_PITCH, SUPPORT_PITCH_REST } from './support-prompt';
 import rewardCodeUrl from './assets/reward-code.png';
 
 /** 赞助商店（2026-11-10 用户给）：不走赞赏码的那条路——在店里买东西也算支持。
- *  码下面挂一行「成为赞助人」，点开系统浏览器。 */
+ *  码下面那行出口的左半边「成为赞助人」，点开系统浏览器。 */
 export const SPONSOR_URL = 'https://wzyp.cn/shop/IFCEI5I3';
 
-/** 本仓库（2026-11-10 第二行出口）：不花钱的另一种支持——打开仓库页，
- *  Star 在页面右上角。slug 单源在 core/remote-base，与「关于」组同一处。 */
+/** 本仓库（2026-11-10 加、2026-11-11 与赞助并成一行）：不花钱的另一种支持——
+ *  打开仓库页，Star 在页面右上角。slug 单源在 core/remote-base，与「关于」组同一处。 */
 export const REPO_URL = `https://github.com/${REPO_SLUG}`;
 
 // 名单与日期格式化的门面留在原处：外部一直是从 reward-dialog 拿这两样的。
@@ -88,12 +88,9 @@ export function renderRewardEmpty(): HTMLDivElement {
   return el;
 }
 
-/** 一行出口（码下面「或者……」那两行）：长得像链接，点起来走 openExternalUrl——
- *  裸 `<a>` 在 Obsidian 里会被阅读视图接管、移动端常常点了没反应。
- *  `rowClass` 只差行距（第二行贴得紧一点），链接本身同一套样式。 */
-function exitLink(text: string, url: string, rowClass: string): HTMLParagraphElement {
-  const row = document.createElement('p');
-  row.className = rowClass;
+/** 一个出口（码下面那行里的一段）：长得像链接，点起来走 openExternalUrl——
+ *  裸 `<a>` 在 Obsidian 里会被阅读视图接管、移动端常常点了没反应。 */
+function exitLink(text: string, url: string): HTMLAnchorElement {
   const a = document.createElement('a');
   a.className = 'bz-rw-sponsor-link';
   a.href = url;
@@ -103,8 +100,7 @@ function exitLink(text: string, url: string, rowClass: string): HTMLParagraphEle
     e.preventDefault();
     openExternalUrl(getApp(), url);
   });
-  row.appendChild(a);
-  return row;
+  return a;
 }
 
 /** 底部金弧（原型同款：一道上凸的浅金边 + 一条淡金描边） */
@@ -150,14 +146,23 @@ export function buildRewardBody(names: readonly RewardName[], onClose: () => voi
   ways.textContent = '微信扫码';
   code.appendChild(ways);
 
-  // 码下面两行出口（2026-11-10）：
-  //  「或者成为赞助人」——不想扫码、或想顺带买点东西的走这里；
-  //  「或者给个 Star」——不花钱的另一种支持，打开 GitHub 仓库。
-  // 两行连读成一句话（「微信扫码 / 或者成为赞助人 / 或者给个 Star」），三种支持方式并列。
+  // 码下面一行出口（2026-11-11 用户拍板把原来两行并成一行）：
+  //  「成为赞助人」——不想扫码、或想顺带买点东西的走这里；
+  //  「给个 Star」——不花钱的另一种支持，打开 GitHub 仓库。
+  // 连读成一句话（「微信扫码 / 成为赞助人 · 给个 Star」），三种支持方式在同一行里并列；
+  // 中点只是分隔符，不可点——两个入口各自可点、各去各的地址。
   // 长得像链接，点起来不走 `<a>` 的默认跳转——Obsidian 里裸链会被阅读视图接管、
   // 移动端常常点了没反应，统一交给 core 的 openExternalUrl 兜底链（失败有人说人话）。
-  code.appendChild(exitLink('或者成为赞助人', SPONSOR_URL, 'bz-rw-sponsor'));
-  code.appendChild(exitLink('或者给个 Star', REPO_URL, 'bz-rw-sponsor bz-rw-star'));
+  const exits = document.createElement('p');
+  exits.className = 'bz-rw-exits';
+  const sep = document.createElement('span');
+  sep.className = 'bz-rw-exit-sep';
+  sep.setAttribute('aria-hidden', 'true');
+  sep.textContent = '·';
+  exits.appendChild(exitLink('成为赞助人', SPONSOR_URL));
+  exits.appendChild(sep);
+  exits.appendChild(exitLink('给个 Star', REPO_URL));
+  code.appendChild(exits);
 
   root.appendChild(code);
 
