@@ -15,7 +15,7 @@
  *      全文件读写，慢到用户以为卡死。
  */
 import type { App } from 'obsidian';
-import type { ReviewDataManager, ReviewItem } from './data';
+import type { ReviewCard, ReviewDataManager, ReviewItem } from './data';
 import type { ReviewAddOutcome, ReviewAddSummary, ReviewNoteStatus } from './reader-api';
 import { stripMdExt } from '../core/utils';
 
@@ -108,6 +108,34 @@ export async function removeNote(dm: ReviewDataManager, path: string): Promise<b
   const items = await dm.loadItems();
   if (!items.some((i) => i.filePath === p)) return false;
   await dm.removeItem(p);
+  return true;
+}
+
+/**
+ * 批量加划线卡。
+ *
+ * 与加笔记的区别：**不查文件**。卡片的内容就在条目里，没有路径可查——查了
+ * 反而会把每一张都判成「文件不存在」。空钥匙 / 空原文算无效，与「已存在」
+ * 一样计入 skipped，让调用方能说清「加了几张、跳过几张」。
+ */
+export async function addCards(dm: ReviewDataManager, cards: readonly ReviewCard[]): Promise<ReviewAddSummary> {
+  const all = Array.isArray(cards) ? cards : [];
+  const list = all.filter((c) => !!cleanPath(c?.key) && !!String(c?.text ?? '').trim());
+  const out: ReviewAddSummary = { added: 0, exists: 0, notFound: all.length - list.length };
+  if (!list.length) return out;
+  const res = await dm.addCards(list);
+  out.added = res.added;
+  out.exists = res.skipped;
+  return out;
+}
+
+/** 移出一张划线卡（按钥匙）；本来就不在返回 false */
+export async function removeCard(dm: ReviewDataManager, key: string): Promise<boolean> {
+  const k = cleanPath(key);
+  if (!k) return false;
+  const items = await dm.loadItems();
+  if (!items.some((i) => i.filePath === k)) return false;
+  await dm.removeItem(k);
   return true;
 }
 

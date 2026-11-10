@@ -400,6 +400,14 @@ export default class BzPlugin extends Plugin {
       ensureReview(this.app);
       return getReviewPlanApi()?.removeNote(path) ?? false;
     },
+    addCards: async (cards) => {
+      ensureReview(this.app);
+      return getReviewPlanApi()?.addCards(cards) ?? { added: 0, exists: 0, notFound: 0 };
+    },
+    removeCard: async (key) => {
+      ensureReview(this.app);
+      return getReviewPlanApi()?.removeCard(key) ?? false;
+    },
     statusOf: async (paths) => {
       ensureReview(this.app);
       return getReviewPlanApi()?.statusOf(paths) ?? [];

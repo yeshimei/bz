@@ -22,6 +22,8 @@ import {
   addNotes as planAddNotes,
   hasNote as planHasNote,
   removeNote as planRemoveNote,
+  addCards as planAddCards,
+  removeCard as planRemoveCard,
   statusOf as planStatusOf,
 } from './plan-ops';
 
@@ -92,6 +94,14 @@ export function ensureReview(app: App): void {
       return res;
     },
     removeNote: async (path) => (dataManager ? planRemoveNote(dataManager, path) : false),
+    /* 划线卡：内容进排期表，不落文件。加完刷新面板，队列里立刻能看到 */
+    addCards: async (cards) => {
+      if (!dataManager) return { added: 0, exists: 0, notFound: 0 };
+      const res = await planAddCards(dataManager, cards);
+      if (res.added) notePlanAdded(cards[0]?.key ?? '');
+      return res;
+    },
+    removeCard: async (key) => (dataManager ? planRemoveCard(dataManager, key) : false),
     /* 只读查询：不触发 notePlanAdded（没加东西），也不刷新面板 */
     statusOf: async (paths) => (dataManager ? planStatusOf(dataManager, paths) : []),
   });

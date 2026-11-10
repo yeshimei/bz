@@ -50,6 +50,8 @@ import {
 import { DEFAULT_R_THRESHOLD, isDueToday } from './queue';
 import { SprintSession } from './sprint';
 import type { SprintMode } from './sprint';
+import { CardSession } from './card-session';
+import { isCardItem } from './data';
 import type { QuizQuestion } from './quiz-core/manager';
 import type { QuizMasterUI } from './quiz-core/session';
 
@@ -96,6 +98,8 @@ export class UIManager {
   entriesContainer: HTMLElement | null = null;
   /** 当前冲刺会话（内容区被占用时队列交互禁用） */
   private sprint: SprintSession | null = null;
+  /** 划线卡复习会话（与 sprint 互斥：两者都占用内容区） */
+  private cardSession: CardSession | null = null;
   /** 冲刺入口 in-flight 防抖（双击/并发触发只放行一次，防双开会话双倍 AI 调用） */
   private sprintStarting = false;
   showArchived = false;
@@ -276,6 +280,8 @@ export class UIManager {
     const active = this.sprint;
     this.sprint = null;
     active?.destroy();
+    this.cardSession?.destroy();
+    this.cardSession = null;
     await this.refreshPanel();
   }
 
@@ -390,11 +396,52 @@ export class UIManager {
     if (this.sprintStarting) return; // 双击/并发防抖：只放行一次
     this.sprintStarting = true;
     try {
+      /* 划线卡没有文件可开，走自己的会话；别让它掉进做题冲刺（那里一进
+         就去读笔记的题库，卡片会拿到空题、被当成「本篇没题」跳过） */
+      if (isCardItem(item)) {
+        await this.startCardRound([item]);
+        return;
+      }
       const { reviewApp } = await import('./app');
       await reviewApp.startSingleSprint(item);
     } finally {
       this.sprintStarting = false;
     }
+  }
+
+  /**
+   * 划线卡复习：宿主内容区交给卡片会话。
+   *
+   * 与做题冲刺互斥——两者都接管 `#review-entries-container`，旧的不销毁就会
+   * 出现「卡片盖着题面、ESC 关错层」。
+   */
+  async startCardRound(queue: ReviewItem[]): Promise<void> {
+    const container = this.entriesContainer;
+    if (!container || !queue.length) return;
+    const prevSprint = this.sprint;
+    this.sprint = null;
+    prevSprint?.destroy();
+    this.cardSession?.destroy();
+    const { reviewApp } = await import('./app');
+    const session = new CardSession({
+      app: this.app,
+      host: container,
+      queue,
+      onRate: async (item, rating) => {
+        await reviewApp.markReview(item.filePath, rating, { autoPending: true });
+      },
+      onExit: () => {
+        this.cardSession = null;
+        void this.showQueue();
+      },
+    });
+    this.cardSession = session;
+    session.start();
+  }
+
+  /** 队列里所有到期卡片（给「开始本轮」按类型分流用） */
+  cardQueueOf(items: ReviewItem[]): ReviewItem[] {
+    return items.filter((i) => isCardItem(i) && isPlayable(i));
   }
 
   /** 供 app 编排：进入做题冲刺会话（宿主接管内容区）。

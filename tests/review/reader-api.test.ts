@@ -15,6 +15,8 @@ function fakeApi(): ReviewPlanApi {
     addNote: async () => ({ added: true }),
     addNotes: async () => ({ added: 0, exists: 0, notFound: 0 }),
     removeNote: async () => false,
+    addCards: async () => ({ added: 0, exists: 0, notFound: 0 }),
+    removeCard: async () => false,
     statusOf: async () => [],
   };
 }

@@ -48,6 +48,25 @@ export interface ReviewNoteStatus {
   totalReviews: number;
 }
 
+/**
+ * 一张划线卡（阅读器交过来的内容）。
+ *
+ * 阅读器不再生成 Markdown：内容直接进排期表。所以这里要收齐「复习时用户
+ * 需要看见的一切」——原文、想法、出处、回原文的链接。少给一样，复习时那
+ * 一面就是空的。
+ */
+export interface ReviewCardInput {
+  /** 稳定钥匙（阅读器建议 `reader:<bookId>:<highlightId>`） */
+  key: string;
+  bookTitle: string;
+  chapterTitle?: string;
+  /** 划线原文（调用方负责截断超长文本） */
+  text: string;
+  comment?: string;
+  /** 回到原文的链接（obsidian:// 协议串） */
+  backlink?: string;
+}
+
 export interface ReviewPlanApi {
   /** 门面本身能不能用（复习域已初始化） */
   isReady(): boolean;
@@ -55,6 +74,10 @@ export interface ReviewPlanApi {
   addNote(path: string): Promise<ReviewAddOutcome>;
   addNotes(paths: string[]): Promise<ReviewAddSummary>;
   removeNote(path: string): Promise<boolean>;
+  /** 批量加划线卡（内容进条目，不落文件） */
+  addCards(cards: ReviewCardInput[]): Promise<ReviewAddSummary>;
+  /** 移出一张划线卡 */
+  removeCard(key: string): Promise<boolean>;
   /** 批量查现状（一趟读盘）；返回顺序与入参一致 */
   statusOf(paths: string[]): Promise<ReviewNoteStatus[]>;
 }
