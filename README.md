@@ -177,7 +177,7 @@
 
 打赏后会出现在 bz 所有插件的感谢名单里（插件里走 设置 → 通用 → 关于 → 支持作者 就能看到）。
 
-**或者成为赞助人：[点击这里](https://wzyp.cn/shop/IFCEI5I3)**
+**成为赞助人：[点击这里](https://wzyp.cn/shop/IFCEI5I3)**
 
 ## License
 
