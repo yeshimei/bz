@@ -9,15 +9,16 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/github/v/release/yeshimei/bz?style=flat-square&label=release&color=7c3aed" alt="release">
-  <img src="https://img.shields.io/github/downloads/yeshimei/bz/total?style=flat-square&color=7c3aed" alt="downloads">
   <img src="https://img.shields.io/badge/Obsidian-%E2%89%A5%201.4.0-7c3aed?style=flat-square&logo=obsidian&logoColor=white" alt="Obsidian ≥ 1.4.0">
+  <img src="https://img.shields.io/github/v/release/yeshimei/bz?style=flat-square&label=version&color=7c3aed" alt="version">
+  <img src="https://img.shields.io/github/downloads/yeshimei/bz/total?style=flat-square&label=downloads&color=7c3aed" alt="downloads">
   <img src="https://img.shields.io/badge/desktop%20%2B%20mobile-16a34a?style=flat-square" alt="desktop + mobile">
-  <img src="https://img.shields.io/github/license/yeshimei/bz?style=flat-square&color=16a34a" alt="license">
+  <img src="https://img.shields.io/github/license/yeshimei/bz?style=flat-square&label=license&color=16a34a" alt="license">
+  <a href="https://github.com/yeshimei/bz-reader"><img src="https://img.shields.io/badge/bz%20reader-multi%20format%20reader-8a6a3a?style=flat-square" alt="bz reader: multi-format reader"></a>
 </p>
 
 <p align="center">
-  <a href="README.md">中文</a> · <b>English</b> · <a href="#support">Support</a>
+  <a href="README.md">中文</a> · <b>English</b> · QQ group <b>1130883117</b> · <a href="#support">Support</a>
 </p>
 
 <p align="center">
@@ -180,9 +181,11 @@ Both of those are in Chinese — open an issue if you need them translated.
 
 <p align="center"><sub>Scan with WeChat to buy the author a coffee</sub></p>
 
-Development, maintenance, and the tutorial videos are all done by one person — completely free, ad-free, with no revenue from any other channel.
+Development, maintenance, and the tutorial videos are all done by one person — completely free, ad-free.
 
-You can find the donor list in the plugin's Settings → General → About → Support the author.
+Donations appear in the thank-you list across all bz plugins (see Settings → General → About → Support the author in the plugin).
+
+**Or become a sponsor: [click here](https://wzyp.cn/shop/IFCEI5I3)**
 
 ## License
 

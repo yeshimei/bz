@@ -9,17 +9,16 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/github/v/release/yeshimei/bz?style=flat-square&label=release&color=7c3aed" alt="release">
-  <img src="https://img.shields.io/github/downloads/yeshimei/bz/total?style=flat-square&color=7c3aed" alt="downloads">
   <img src="https://img.shields.io/badge/Obsidian-%E2%89%A5%201.4.0-7c3aed?style=flat-square&logo=obsidian&logoColor=white" alt="Obsidian ≥ 1.4.0">
+  <img src="https://img.shields.io/github/v/release/yeshimei/bz?style=flat-square&label=version&color=7c3aed" alt="版本">
+  <img src="https://img.shields.io/github/downloads/yeshimei/bz/total?style=flat-square&label=downloads&color=7c3aed" alt="下载量">
   <img src="https://img.shields.io/badge/%E6%A1%8C%E9%9D%A2%20%2B%20%E7%A7%BB%E5%8A%A8%E7%AB%AF-16a34a?style=flat-square" alt="桌面 + 移动端">
-  <img src="https://img.shields.io/github/license/yeshimei/bz?style=flat-square&color=16a34a" alt="license">
-  <a href="https://github.com/yeshimei/bz-reader"><img src="https://img.shields.io/badge/bz%20Reader-%E5%A4%9A%E6%A0%BC%E5%BC%8F%E9%98%85%E8%AF%BB%E5%99%A8-8a6a3a?style=flat-square" alt="bz Reader：多格式阅读器"></a>
-  <img src="https://img.shields.io/badge/QQ%E7%BE%A4-1130883117-12b7f5?style=flat-square&logo=tencentqq&logoColor=white" alt="QQ 交流群 1130883117">
+  <img src="https://img.shields.io/github/license/yeshimei/bz?style=flat-square&label=license&color=16a34a" alt="license">
+  <a href="https://github.com/yeshimei/bz-reader"><img src="https://img.shields.io/badge/bz%20reader-%E5%A4%9A%E6%A0%BC%E5%BC%8F%E9%98%85%E8%AF%BB%E5%99%A8-8a6a3a?style=flat-square" alt="bz reader：多格式阅读器"></a>
 </p>
 
 <p align="center">
-  <b>中文</b> · <a href="README.en.md">English</a> · <a href="#support">支持作者</a>
+  <b>中文</b> · <a href="README.en.md">English</a> · QQ 交流群 <b>1130883117</b> · <a href="#support">支持作者</a>
 </p>
 
 <p align="center">
@@ -174,9 +173,11 @@
 
 <p align="center"><sub>微信扫一扫，请作者喝杯咖啡</sub></p>
 
-插件的开发维护和教程视频制作都是作者一个人，完全免费、无广告，也没有任何其他渠道的收益。
+插件的开发维护和教程视频制作都是作者一个人，完全免费、无广告。
 
-可以在插件的 设置 → 通用 → 关于 → 支持作者 里看到打赏名单。
+打赏后会出现在 bz 所有插件的感谢名单里（插件里走 设置 → 通用 → 关于 → 支持作者 就能看到）。
+
+**或者成为赞助人：[点击这里](https://wzyp.cn/shop/IFCEI5I3)**
 
 ## License
 
