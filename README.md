@@ -140,7 +140,7 @@
 
 ## 插件推荐
 
-- [bz Reader](https://github.com/yeshimei/bz-reader) —— 把 Obsidian 变成一个能读书的地方。桌面端 + 移动端、多格式支持、八种界面语言、AI 问答、双向链接，数据全部本地。
+- **[bz reader](https://github.com/yeshimei/bz-reader)** —— 把 Obsidian 变成一个能读书的地方。桌面端 + 移动端、多格式（包括 PDF），多语言支持、AI 全书问答、双向链接，数据全部本地。
 
 ## 离线资源包
 
