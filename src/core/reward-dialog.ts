@@ -28,10 +28,15 @@
  * 通道），渲染层不用动。
  * ============================================================ */
 import { uiModal } from './ui/modal';
-import { escapeHtml } from './utils';
+import { escapeHtml, openExternalUrl } from './utils';
+import { getApp } from './app';
 import { REWARD_NAMES, formatRewardDate, type RewardName } from './reward-names';
 import { SUPPORT_PITCH, SUPPORT_PITCH_REST } from './support-prompt';
 import rewardCodeUrl from './assets/reward-code.png';
+
+/** 赞助商店（2026-11-10 用户给）：不走赞赏码的那条路——在店里买东西也算支持。
+ *  码下面挂一行「成为赞助人」，点开系统浏览器。 */
+export const SPONSOR_URL = 'https://wzyp.cn/shop/IFCEI5I3';
 
 // 名单与日期格式化的门面留在原处：外部一直是从 reward-dialog 拿这两样的。
 export { REWARD_NAMES, formatRewardDate };
@@ -48,13 +53,17 @@ export function renderRewardList(names: readonly RewardName[]): HTMLOListElement
       const msg = it.message
         ? `<p class="bz-rw-msg">${escapeHtml(it.message)}</p>`
         : '';
+      // 金额位两种写法：数字补 ¥ 后缀不铺小数；字符串原样（「赞助人」这类不走赞赏码的）
+      const amt = typeof it.amount === 'number'
+        ? `<span class="bz-rw-amt"><i>¥</i>${it.amount}</span>`
+        : `<span class="bz-rw-amt bz-rw-amt-text">${escapeHtml(String(it.amount))}</span>`;
       return `<li>
         <div class="bz-rw-no">${no}</div>
         <div>
           <div class="bz-rw-who-row">
             <div class="bz-rw-who">${escapeHtml(it.name)}</div>
             <div class="bz-rw-meta">
-              <span class="bz-rw-amt"><i>¥</i>${Number(it.amount) || 0}</span>
+              ${amt}
               <span class="bz-rw-when">${escapeHtml(formatRewardDate(it.date))}</span>
             </div>
           </div>
@@ -116,6 +125,24 @@ export function buildRewardBody(names: readonly RewardName[], onClose: () => voi
   ways.className = 'bz-rw-ways';
   ways.textContent = '微信扫码';
   code.appendChild(ways);
+
+  // 赞助入口（2026-11-10）：不想扫码、或想顺带买点东西的走这里。
+  // 长得像链接，点起来不走 `<a>` 的默认跳转——Obsidian 里裸链会被阅读视图接管、
+  // 移动端常常点了没反应，统一交给 core 的 openExternalUrl 兜底链（失败有人说人话）。
+  const sponsor = document.createElement('p');
+  sponsor.className = 'bz-rw-sponsor';
+  const sponsorLink = document.createElement('a');
+  sponsorLink.className = 'bz-rw-sponsor-link';
+  sponsorLink.href = SPONSOR_URL;
+  sponsorLink.rel = 'noopener noreferrer';
+  sponsorLink.textContent = '成为赞助人';
+  sponsorLink.addEventListener('click', (e) => {
+    e.preventDefault();
+    openExternalUrl(getApp(), SPONSOR_URL);
+  });
+  sponsor.appendChild(sponsorLink);
+  code.appendChild(sponsor);
+
   root.appendChild(code);
 
   const list = document.createElement('div');
