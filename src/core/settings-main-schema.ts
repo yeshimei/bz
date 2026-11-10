@@ -178,7 +178,7 @@ function providerModelCustomRow(): SettingsRow {
     name: '模型名称',
     desc: 'AI 生成使用的模型',
     help:
-      '生成通道用哪个模型，按服务商分别存储，切服务商互不覆盖；留空就用该服务商的注册表默认模型。「获取模型名」从当前服务商的模型列表接口拉取（Ollama 读本机 /api/tags，其余走 /models），选中即回填；拉取期间切了服务商，这批结果作废、需要重取。' +
+      '生成通道用哪个模型，按服务商分别存储，切服务商互不覆盖；留空就用该服务商的注册表默认模型（自定义没有默认，必须自己填）。「获取模型名」从当前服务商的模型列表接口拉取（Ollama 读本机 /api/tags，自定义与其他家走 /models），选中即回填；拉取期间切了服务商，这批结果作废、需要重取。' +
       '这一行是自由文本，不校验模型是否存在：名字写错面板不会拦，请求会被服务端直接拒绝。',
     placeholder: '默认模型',
     binding: {
@@ -272,11 +272,12 @@ function providerMaxTokensRow(): NumberRow {
 }
 
 /**
- * 「服务商」组行（issue 331 拆组）：服务商下拉 + 每家注册表提供商一行密钥（visibleWhen 随
- * aiProvider 显隐）。
+ * 「服务商」组行（issue 331 拆组）：服务商下拉 + 自定义地址行 + 每家注册表提供商一行密钥
+ * （visibleWhen 随 aiProvider 显隐）。
  * 密钥行标题/描述取自 descriptor 的 apiKeyLabel / apiKeyDesc（文案 lint 与注册表单一事实源）；
- * issue 411/ADR-0179：只留 deepseek / zhipu-plan / ollama 三条通道，custom 的端点/密钥两行退役
- * （新通道按注册表加一行即可，不再需要「自填端点」这一档）。
+ * 2026-11-11：**加回自定义（OpenAI 兼容）**——下拉多一档，选中后多一行「自定义 API 地址」，
+ * 密钥行走同一张注册表（aiCustomApiKey）；插件没列出的服务商都从这里接，不必为加一家改代码。
+ * 地址行紧跟服务商下拉（先选通道、再填地址，与「先选服务商、再填密钥」同一条链）。
  * 密钥行全走「密钥型」档位（type:'secret' → 密码框 + 眼睛切明文），凭据不裸奔。
  * issue 433：行内「测试」按钮（输入框左侧，RowAction 统一渲染序）——对该行所属服务商发一次
  * 真实极小请求验证连通（testAIConnectivity 按 id 解析该家设置，不受当前下拉选中影响）。
@@ -289,9 +290,20 @@ function providerGroupRows(): SettingsRow[] {
       desc: '当前使用的 AI 服务商',
       help:
         '切换服务商不影响已填内容：密钥、模型名、最大输出 token、思考档位都是按服务商分别存储（per-provider 覆盖），切回哪家就是哪家上次的值。' +
-        '当前只有 deepseek、智谱 Plan、Ollama 三条通道。',
+        '当前四档：DeepSeek、智谱 Plan、Ollama（本地）、自定义（OpenAI 兼容）。前三家填密钥即可用；自定义要自己填接口地址与模型名，其余服务商（OpenAI、OpenRouter、硅基流动、自建网关等）都从这一档接。',
       binding: { key: 'aiProvider' },
       options: AI_PROVIDER_REGISTRY.map((p) => ({ value: p.id, label: p.label })),
+    },
+    {
+      type: 'text',
+      name: '自定义 API 地址',
+      desc: 'OpenAI 兼容服务的完整接口地址',
+      help:
+        '仅「自定义」服务商使用：填到 /v1 这一层为止，例如 https://api.example.com/v1。地址不对时「测试」会红✕，请求也会被服务端拒绝。',
+      binding: { key: 'aiCustomEndpoint' },
+      placeholder: 'https://api.example.com/v1',
+      inputMode: 'url',
+      visibleWhen: (snapshot) => snapshot.aiProvider === 'custom',
     },
   ];
   for (const p of AI_PROVIDER_REGISTRY) {
@@ -328,7 +340,7 @@ function providerThinkingRow(): SettingsRow {
     desc: '思考档位，随服务商不同',
     help:
       '思考档位（reasoning effort），按服务商分别存储，切换服务商时选项表随之更换：DeepSeek 为关、低、高、最高；智谱 Plan 无关闭档（强制思考），只有低、高、最高；Ollama 为关、低、中、高。' +
-      '选「跟随」＝不注入任何思考参数，交由模型默认。',
+      '选「跟随」＝不注入任何思考参数，交由模型默认。自定义服务商没有固定的参数口径，这一行不显示（一律不注入）。',
     binding: {
       get: () => providerThinkingValue(),
       set: (v) => setProviderThinkingValue(v),
@@ -339,6 +351,9 @@ function providerThinkingRow(): SettingsRow {
         value: l.value,
         label: l.label,
       })),
+    /* 自定义没有档位表：摆一个空下拉只会让人以为「这里坏了」，干脆不显示（不注入即默认行为） */
+    visibleWhen: (snap) =>
+      thinkingLevelsOf(String((snap as { aiProvider?: string }).aiProvider || DEFAULT_AI_PROVIDER)).length > 0,
     refreshKey: () => providerThinkingValue(),
   } as SettingsRow;
 }

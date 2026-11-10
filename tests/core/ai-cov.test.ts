@@ -129,16 +129,44 @@ describe('getAIProvider 解析与缓存', () => {
     await expect(getAIProvider()).rejects.toThrow('未配置 智谱 Plan API Key');
   });
 
-  it('注册表（issue 411/ADR-0179）：只在册三条通道，每家字段齐全', () => {
-    expect(AI_PROVIDER_REGISTRY.map((p) => p.id)).toEqual(['deepseek', 'zhipu-plan', 'ollama']);
+  it('注册表：三条在册通道 + 自定义（2026-11-11 加回），字段齐全', () => {
+    expect(AI_PROVIDER_REGISTRY.map((p) => p.id)).toEqual(['deepseek', 'zhipu-plan', 'ollama', 'custom']);
     for (const p of AI_PROVIDER_REGISTRY) {
-      expect(p.endpoint, p.id).toBeTruthy();
       expect(p.apiKeyLabel, p.id).toBeTruthy();
       expect(p.apiKeyDesc, p.id).toBeTruthy();
       expect(p.defaultMaxTokens, p.id).toBeGreaterThan(0);
-      expect(p.thinking?.levels.length, p.id).toBeGreaterThan(1);
       expect((p as { apiKeyKey: string }).apiKeyKey).toBeTruthy();
+      if (p.id === 'custom') {
+        /* 自定义：端点和模型都归用户填，注册表给不出默认；也不注入思考参数 */
+        expect(p.endpoint).toBe('');
+        expect(p.model).toBe('');
+        expect(p.thinking).toBeUndefined();
+      } else {
+        expect(p.endpoint, p.id).toBeTruthy();
+        expect(p.thinking?.levels.length, p.id).toBeGreaterThan(1);
+      }
     }
+  });
+
+  it('custom：用户自填端点/密钥/模型（模型走 aiModelOverrides.custom，尾斜杠清理）', async () => {
+    setupAI({
+      aiProvider: 'custom',
+      aiCustomEndpoint: 'https://gw.example.com/v1///',
+      aiCustomApiKey: 'sk-gw',
+      aiModelOverrides: { custom: 'qwen-max' },
+    });
+    const p = await getAIProvider();
+    expect(p.endpoint).toBe('https://gw.example.com/v1');
+    expect(p.apiKey).toBe('sk-gw');
+    expect(p.model).toBe('qwen-max');
+    expect(p.id).toBe('custom');
+  });
+
+  it('custom 缺地址或缺密钥：明确报「未配置自定义」，不发半截请求', async () => {
+    setupAI({ aiProvider: 'custom', aiCustomEndpoint: '', aiCustomApiKey: 'sk-gw' });
+    await expect(getAIProvider()).rejects.toThrow('未配置自定义');
+    setupAI({ aiProvider: 'custom', aiCustomEndpoint: 'https://gw.example.com/v1', aiCustomApiKey: '' });
+    await expect(getAIProvider()).rejects.toThrow('未配置自定义');
   });
 
   it('provider.model 存在但显式指定模型 → 显式值优先', async () => {

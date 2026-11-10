@@ -40,9 +40,13 @@ export function providerDescriptorOf(id: string): AIProviderDescriptor {
   return getProviderDescriptor(id);
 }
 
-/** 当前服务商的可拉取端点（注册表 endpoint；三条在册通道端点均非空） */
+/** 当前服务商的可拉取端点：自定义读设置里的地址，其余用注册表 endpoint */
 function endpointFor(id: string): string {
-  return providerDescriptorOf(id).endpoint.replace(/\/+$/, '');
+  const desc = providerDescriptorOf(id);
+  if (desc.id === 'custom') {
+    return String((tryGetSettings() as any).aiCustomEndpoint || '').trim().replace(/\/+$/, '');
+  }
+  return desc.endpoint.replace(/\/+$/, '');
 }
 
 /** 当前服务商的 API key（Ollama 本地无鉴权返回空串） */
@@ -152,8 +156,12 @@ export async function fetchProviderModels(
   const id = providerId || String((tryGetSettings() as any).aiProvider || DEFAULT_AI_PROVIDER);
   const desc = providerDescriptorOf(id);
 
-  // 端点来源：Ollama 用本地根地址（注册表 /v1 兼容面去掉后缀），其余用注册表 endpoint
+  // 端点来源：Ollama 用本地根地址（注册表 /v1 兼容面去掉后缀），自定义读设置里的地址，其余用注册表
   const endpoint = desc.id === 'ollama' ? OLLAMA_BASE_URL : endpointFor(id);
+  /* 自定义没填地址：先让人去填，别拿空端点拼出 `/models` 这种相对路径去请求 */
+  if (!endpoint) {
+    throw new Error('未配置 API 地址：插件设置 → AI 配置 → LLM → 自定义 API 地址');
+  }
 
   const key = keyFor(id);
   // 除 Ollama 本地服务外，缺 key 即拦截（对齐 getAIProvider 的拦截文案）

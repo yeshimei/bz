@@ -28,7 +28,7 @@ describe('migrateRetiredAIKeys · issue 342 后续（上下文窗口键退役）
 });
 
 describe('migrateRetiredAIKeys · issue 411/ADR-0179（服务商收敛三条通道）', () => {
-  it('退役服务商密钥键 + custom 三件套一并删除', () => {
+  it('退役服务商密钥键删除；自定义的端点/密钥键保留（2026-11-11 复活），旧 aiCustomModel 搬进覆盖表', () => {
     const raw: Record<string, unknown> = {
       aiProvider: 'deepseek',
       deepseekApiKey: 'keep',
@@ -56,23 +56,27 @@ describe('migrateRetiredAIKeys · issue 411/ADR-0179（服务商收敛三条通�
       'opencodeGoApiKey', 'openaiApiKey', 'anthropicApiKey', 'googleApiKey', 'moonshotApiKey',
       'zhipuApiKey', 'dashscopeApiKey', 'siliconflowApiKey', 'openrouterApiKey', 'xaiApiKey',
       'groqApiKey', 'mistralApiKey', 'togetherApiKey',
-      'aiCustomEndpoint', 'aiCustomModel', 'aiCustomApiKey',
+      'aiCustomModel',
     ]) {
       expect(key in raw, key).toBe(false);
     }
-    // 在册三条通道的键保留
+    /* 自定义复活后：端点与密钥是活键，留着；旧模型名搬进 per-provider 覆盖表 */
+    expect(raw.aiCustomEndpoint).toBe('https://x.example/v1');
+    expect(raw.aiCustomApiKey).toBe('x');
+    expect((raw.aiModelOverrides as Record<string, string>).custom).toBe('taste-1');
+    // 在册通道的键保留
     expect(raw.deepseekApiKey).toBe('keep');
     expect(raw.zhipuPlanApiKey).toBe('keep2');
     expect('ollamaApiKey' in raw).toBe(true);
   });
 
-  it('存量非法 aiProvider → 回落缺省通道（否则解析会落到缺省描述上，密钥键对不上）', () => {
-    for (const stale of ['opencode-go', 'openai', 'custom', '']) {
+  it('存量非法 aiProvider → 回落缺省通道；custom 在册不回落', () => {
+    for (const stale of ['opencode-go', 'openai', '']) {
       const raw: Record<string, unknown> = { aiProvider: stale, deepseekApiKey: 'k' };
       expect(migrateRetiredAIKeys(raw), stale).toBe(true);
       expect(raw.aiProvider).toBe(DEFAULT_AI_PROVIDER);
     }
-    // 在册 id 不动
+    // 在册 id 不动（含 2026-11-11 加回的 custom）
     for (const p of AI_PROVIDER_REGISTRY) {
       const raw: Record<string, unknown> = { aiProvider: p.id };
       expect(migrateRetiredAIKeys(raw), p.id).toBe(false);
@@ -84,16 +88,16 @@ describe('migrateRetiredAIKeys · issue 411/ADR-0179（服务商收敛三条通�
     expect('aiProvider' in empty).toBe(false);
   });
 
-  it('per-provider 覆盖表清掉退役 provider 条目（留着是读不到的死值）', () => {
+  it('per-provider 覆盖表清掉退役 provider 条目，自定义的覆盖保留', () => {
     const raw: Record<string, unknown> = {
       aiProvider: 'deepseek',
       aiModelOverrides: { deepseek: 'deepseek-v4-pro', openai: 'gpt-4o', custom: 'taste-1' },
-      aiMaxTokensOverrides: { ollama: 8192, siliconflow: 4096 },
+      aiMaxTokensOverrides: { ollama: 8192, siliconflow: 4096, custom: 8192 },
       aiThinkingOverrides: { deepseek: 'off', dashscope: 'off' },
     };
     expect(migrateRetiredAIKeys(raw)).toBe(true);
-    expect(raw.aiModelOverrides).toEqual({ deepseek: 'deepseek-v4-pro' });
-    expect(raw.aiMaxTokensOverrides).toEqual({ ollama: 8192 });
+    expect(raw.aiModelOverrides).toEqual({ deepseek: 'deepseek-v4-pro', custom: 'taste-1' });
+    expect(raw.aiMaxTokensOverrides).toEqual({ ollama: 8192, custom: 8192 });
     expect(raw.aiThinkingOverrides).toEqual({ deepseek: 'off' });
   });
 

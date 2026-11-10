@@ -859,7 +859,10 @@ async function stageAi(ctx: WizardCtx, st: WizardState, ui: Ui): Promise<void> {
     }
   }
 
-  for (const p of AI_PROVIDER_REGISTRY) {
+  /* 自定义不出现在欢迎引导里（2026-11-11）：这一页只让用户选一家、粘一个密钥就开跑；
+     自定义还要另填接口地址与模型名，且下面的 saveAi 只按密钥槽保存——摆进来只会让人
+     选完却测不通。要接别的服务商，去正式设置页的 LLM 组。 */
+  for (const p of AI_PROVIDER_REGISTRY.filter((x) => x.id !== 'custom')) {
     const b = button('bz-setup-chip', p.label);
     b.dataset.id = p.id;
     b.onclick = () => {

@@ -1,8 +1,8 @@
 /**
  * AIService / createAI（Q3.js window.__utils 移植，ticket 03）
- * provider：注册表驱动（ticket 170/171 策略模式）——**只留三条在用通道**（issue 411/ADR-0179）：
- * deepseek（官方，缺省）/ zhipu-plan（智谱 Coding 套餐）/ ollama（本地）；其余服务商一律退役，
- * 「用到了再按注册表加一行」——注册表加一行即含设置页密钥行与思考档位，解析零分支改动。
+ * provider：注册表驱动（ticket 170/171 策略模式）——三条常用通道（issue 411/ADR-0179）+ 自定义
+ * （2026-11-11 加回）：deepseek（官方，缺省）/ zhipu-plan（智谱 Coding 套餐）/ ollama（本地）/
+ * custom（用户自填 OpenAI 兼容端点与模型）；插件没列出的服务商都从自定义接，不必为加一家改代码。
  * override 字符串（注册表 id）或对象 {endpoint, apiKey, model, extraHeaders, defaultMaxTokens}
  * （对象形态 = 调用方自带完整配置，不经注册表，脚本内指定第三方端点用）。
  * prompt：fetch 流式（stream:true），失败自动 fallback requestUrl 非流式。
@@ -34,6 +34,10 @@ export interface AISettingsLike {
   zhipuPlanApiKey?: string;
   /** 🔑 Ollama（本地服务通常无需密钥，留空放行） */
   ollamaApiKey?: string;
+  /** 🔑 自定义（OpenAI 兼容）接口地址（2026-11-11 加回；空 = 没配） */
+  aiCustomEndpoint?: string;
+  /** 🔑 自定义（OpenAI 兼容）API Key（空 = 没配） */
+  aiCustomApiKey?: string;
   /** 每提供商模型覆盖（键 = provider id；未填用注册表默认） */
   aiModelOverrides?: Record<string, string>;
   /** 每提供商最大输出 token 覆盖（键 = provider id；未填用注册表 defaultMaxTokens） */
@@ -128,9 +132,11 @@ export interface AIProviderDescriptor {
 export const DEFAULT_AI_PROVIDER = 'deepseek';
 
 /**
- * 在册提供商（issue 411/ADR-0179：只留三条真用通道——deepseek 官方 / 智谱 Coding 套餐 / 本地
- * Ollama；其余服务商随其密钥键、设置行一并退役，用到了再按本表加一行）。
- * 思考档位表见 AIThinkingSpec 注释（逐家参数名与支持档不同）。
+ * 在册提供商（issue 411/ADR-0179 的三条真用通道 + 2026-11-11 加回的 custom）：
+ * deepseek 官方 / 智谱 Coding 套餐 / 本地 Ollama / 自定义（OpenAI 兼容）。
+ * 前三家的端点与默认模型由注册表给；custom 的端点与模型由用户填（注册表给不出默认），
+ * 插件没列出的服务商（OpenAI / OpenRouter / 硅基流动 / 自建网关）都从这里接。
+ * 思考档位表见 AIThinkingSpec 注释（逐家参数名与支持档不同；custom 没有档位表 = 不注入）。
  */
 export const AI_PROVIDER_REGISTRY: AIProviderDescriptor[] = [
   {
@@ -201,6 +207,26 @@ export const AI_PROVIDER_REGISTRY: AIProviderDescriptor[] = [
         { ...THINK_HIGH, body: { reasoning_effort: 'high' } },
       ],
     },
+  },
+  {
+    /**
+     * 自定义（OpenAI 兼容）：端点、密钥、模型全由用户填，注册表只占一个位置。
+     *
+     * 2026-11-11 加回（issue 411 时随「只留三条通道」退役）：插件能替用户保证
+     * 「选完填密钥就能用」的只有前三家；剩下的服务商（OpenAI / OpenRouter /
+     * 硅基流动 / 自建网关）都靠这一档接，不必为了加一家就发一版。
+     * 缺地址或缺密钥在 getAIProvider 里直接拦下，不拿空端点拼 URL。
+     */
+    id: 'custom',
+    label: '自定义（OpenAI 兼容）',
+    endpoint: '',
+    model: '',
+    /* 兜底档：自定义没有官方上限可依（同 Ollama），面板可自由调大 */
+    defaultMaxTokens: 8192,
+    apiKeyKey: 'aiCustomApiKey',
+    apiKeyLabel: '自定义 API 密钥',
+    apiKeyDesc: '在服务官网获取后填入这里',
+    /* 不设 thinking：不认识的服务商冒进发思考参数有 400 风险，一律不注入 */
   },
 ];
 
@@ -307,6 +333,31 @@ export async function getAIProvider(override?: string | AIOverrideObject): Promi
   }
   const name = (typeof override === 'string' && override) || s.aiProvider || DEFAULT_AI_PROVIDER;
   const desc = getProviderDescriptor(name);
+  /* 自定义（OpenAI 兼容）：端点/密钥/模型全来自设置，注册表描述只给密钥键与兜底档。
+     缺一样就拦——空端点拼出来是相对路径，fetch 直接抛 TypeError，报错文案帮不上用户。 */
+  if (name === 'custom') {
+    const endpoint = String(s.aiCustomEndpoint || '').trim().replace(/\/+$/, '');
+    const customKey = String(s.aiCustomApiKey || '').trim();
+    if (!endpoint || !customKey) {
+      throw new Error(
+        '未配置自定义 AI 服务：请在 AI 配置的 LLM 组填写「自定义 API 地址」与「自定义 API 密钥」'
+      );
+    }
+    const overrideModel = s.aiModelOverrides?.['custom'];
+    const effModel = overrideModel || '';
+    // 与在册通道同一套上限解析：模型名命中内置档位表就按它封顶，未收录走兜底档
+    const cap = maxOutputCapOf('custom', effModel);
+    const requested = Number(s.aiMaxTokensOverrides?.['custom']);
+    const defaultMaxTokens =
+      requested > 0 ? (cap === undefined ? requested : Math.min(requested, cap)) : cap ?? desc.defaultMaxTokens;
+    return cachePut({
+      id: 'custom',
+      endpoint,
+      apiKey: customKey,
+      model: effModel || undefined,
+      defaultMaxTokens,
+    });
+  }
   const key = s[desc.apiKeyKey];
   if (!key && name === 'deepseek') {
     // deepseek 兼容兜底：settings 缺 key 时读 QuickAdd data.json（legacy，无 UI）

@@ -84,16 +84,20 @@ describe('全量 schema 文案 lint（注册表：LINT_TARGETS）', () => {
     expect(names).toContain('DeepSeek 密钥');
     expect(names).toContain('智谱 Plan 密钥');
     expect(names).toContain('Ollama 密钥');
-    expect(names).not.toContain('自定义 API 地址');
+    // 2026-11-11：自定义加回——地址行 + 自定义密钥行都在
+    expect(names).toContain('自定义 API 地址');
+    expect(names).toContain('自定义 API 密钥');
     expect(names).not.toContain('OpenCode 密钥');
     expect(names).toContain('模型名称');
     expect(names).toContain('最大输出 token');
     expect(names).not.toContain('上下文窗口');
     const deepseekRow = rows.find((r) => r.name === 'DeepSeek 密钥')!;
     const zhipuRow = rows.find((r) => r.name === '智谱 Plan 密钥')!;
+    const customUrlRow = rows.find((r) => r.name === '自定义 API 地址')!;
     const modelRow = rows.find((r) => r.name === '模型名称')!;
     expect(deepseekRow.desc).toBe('DeepSeek 官方的接口密钥');
     expect(zhipuRow.desc).toBe('智谱 Coding 套餐的接口密钥');
+    expect(customUrlRow.desc).toBe('OpenAI 兼容服务的完整接口地址');
     expect(modelRow.desc).toBe('AI 生成使用的模型');
     // issue 342/ADR-0151：未填覆盖时按当前模型查官方最大档
     const maxTokensRow = rows.find((r) => r.name === '最大输出 token')!;

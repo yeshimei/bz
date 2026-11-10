@@ -16,9 +16,10 @@ import { AI_PROVIDER_REGISTRY, DEFAULT_AI_PROVIDER, thinkingLevelsOf } from './c
 
 export default interface BzSettings {
   // ===== 🤖 AI 全局（Q3 语义，spec「AI 全局」）=====
-  /** AI 服务商：注册表 id（ticket 170/171 策略模式）。**issue 411/ADR-0179 起只留三条在册通道**：
-   *  deepseek（缺省）/ zhipu-plan（智谱 Coding 套餐）/ ollama（本地）——其余服务商与其密钥键一并
-   *  退役（用到了再按 AI_PROVIDER_REGISTRY 加一行）；存量非法 id 由 migrateRetiredAIKeys 回落缺省 */
+  /** AI 服务商：注册表 id（ticket 170/171 策略模式）。**issue 411/ADR-0179 起三条在册通道**：
+   *  deepseek（缺省）/ zhipu-plan（智谱 Coding 套餐）/ ollama（本地）；**2026-11-11 加回 custom**
+   *  （OpenAI 兼容自定义端点，插件没列出的服务商都从这里接）；存量非法 id 由
+   *  migrateRetiredAIKeys 回落缺省 */
   aiProvider: string;
   /** 🔑 DeepSeek API Key（留空则回退读取 QuickAdd data.json） */
   deepseekApiKey: string;
@@ -26,6 +27,10 @@ export default interface BzSettings {
   zhipuPlanApiKey: string;
   /** 🔑 Ollama（本地）API Key（本地服务无鉴权，留空放行） */
   ollamaApiKey: string;
+  /** 🔑 自定义（OpenAI 兼容）接口地址（2026-11-11 加回；空 = 没配） */
+  aiCustomEndpoint: string;
+  /** 🔑 自定义（OpenAI 兼容）API Key（空 = 没配） */
+  aiCustomApiKey: string;
   /** 🧠 每提供商模型覆盖（ticket 172，键 = provider id）：未填用注册表默认模型 */
   aiModelOverrides: Record<string, string>;
   /** 📏 每提供商最大输出 token 覆盖（键 = provider id）：未填按当前模型查官方最大档
@@ -747,8 +752,12 @@ export function migrateMemoSettingKeys(raw: unknown): boolean {
  * 幂等：无旧键 / 无冗余条目即不改动，调用方据此决定要不要落盘（同 migrateMemoSettingKeys 的 C16 口径）。
  * 三盒目录从**同一份原始设置**解析（此时还没合并 DEFAULT_SETTINGS，故显式传入 rec）。
  */
-/** 已退役的 AI 服务商设置键（issue 411/ADR-0179：注册表只留 deepseek / zhipu-plan / ollama）——
- *  14 家服务商的密钥键 + custom 的端点/模型/密钥三键，旧值不迁移直接丢 */
+/** 已退役的 AI 服务商设置键（issue 411/ADR-0179 那批 14 家密钥键）——
+ *  旧值不迁移直接丢。
+ *
+ *  2026-11-11：`aiCustomEndpoint` / `aiCustomApiKey` 已移出本表——「自定义」复活后
+ *  它们是活键，再删就把用户刚填的地址与密钥抹掉了。`aiCustomModel` 仍按旧键处理，
+ *  但值不丢：先搬进 `aiModelOverrides.custom` 再删（见 migrateRetiredAIKeys 第 0 步）。 */
 const RETIRED_AI_KEYS: string[] = [
   'opencodeGoApiKey',
   'openaiApiKey',
@@ -763,9 +772,7 @@ const RETIRED_AI_KEYS: string[] = [
   'groqApiKey',
   'mistralApiKey',
   'togetherApiKey',
-  'aiCustomEndpoint',
   'aiCustomModel',
-  'aiCustomApiKey',
 ];
 
 /** per-provider 覆盖表（迁移时清掉退役 provider 的条目——留着是读不到的死值） */
@@ -773,9 +780,12 @@ const AI_OVERRIDE_MAPS: string[] = ['aiModelOverrides', 'aiMaxTokensOverrides', 
 
 /**
  * AI 设置一次性迁移（issue 411/ADR-0179；并入了原 issue 342 后续的 aiContextOverrides 清理）：
- * 1) **退役服务商密钥键删除**（上表 16 键）；
- * 2) **aiProvider 非在册 id → 回落缺省服务商**：已退役的 id（opencode-go / openai / custom…）
- *    若留在设置里，解析会一路落到缺省描述上（端点、密钥键、档位全对不上），必须显式改掉；
+ * 0) **旧「自定义模型」键 → aiModelOverrides.custom 再删除**（2026-11-11 自定义复活：
+ *    历史用户填过的模型名不该丢，搬进 per-provider 覆盖表）；
+ * 1) **退役服务商密钥键删除**（上表 13 键；自定义的地址/密钥已复活，不再删）；
+ * 2) **aiProvider 非在册 id → 回落缺省服务商**：已退役的 id（opencode-go / openai…）
+ *    若留在设置里，解析会一路落到缺省描述上（端点、密钥键、档位全对不上），必须显式改掉
+ *    （custom 自 2026-11-11 起在册，不再回落）；
  * 3) 三个 per-provider 覆盖表清掉退役 provider 的条目；
  * 4) **全局 aiThinking → aiThinkingOverrides[当前 provider]**（旧键删除）：旧词表的 off/low/high
  *    在三条通道里同名可用；`medium` 按官方映射（medium→high）折成 high；折后不在该 provider
@@ -790,6 +800,19 @@ export function migrateRetiredAIKeys(raw: unknown): boolean {
   // 1) 上下文窗口覆盖（issue 342 后续：模型固有属性、插件零消费点）
   if (rec.aiContextOverrides !== undefined) {
     delete rec.aiContextOverrides;
+    migrated = true;
+  }
+  // 0) 旧「自定义模型」键：值搬进覆盖表再删（2026-11-11；搬在删除循环之前，别先删后搬）
+  if (rec.aiCustomModel !== undefined) {
+    const legacyModel = String(rec.aiCustomModel ?? '').trim();
+    if (legacyModel) {
+      const existing = rec.aiModelOverrides;
+      const map =
+        existing && typeof existing === 'object' && !Array.isArray(existing)
+          ? (existing as Record<string, unknown>)
+          : ((rec.aiModelOverrides = {}) as Record<string, unknown>);
+      if (!map.custom) map.custom = legacyModel;
+    }
     migrated = true;
   }
   // 2) 退役服务商密钥键
@@ -1012,11 +1035,13 @@ export function migrateAutoLinkSettings(raw: unknown): boolean {
 }
 
 export const DEFAULT_SETTINGS: BzSettings = {
-  // AI 全局（issue 411/ADR-0179：注册表只留三条通道，缺省 = DeepSeek 官方）
+  // AI 全局（issue 411/ADR-0179 三条通道 + 2026-11-11 加回自定义，缺省 = DeepSeek 官方）
   aiProvider: DEFAULT_AI_PROVIDER,
   deepseekApiKey: '',
   zhipuPlanApiKey: '',
   ollamaApiKey: '',
+  aiCustomEndpoint: '',
+  aiCustomApiKey: '',
   aiModelOverrides: {},
   aiMaxTokensOverrides: {},
   // 每提供商思考档位（issue 411/ADR-0179）：空 = 各 provider 都跟随模型默认（不注入思考参数）

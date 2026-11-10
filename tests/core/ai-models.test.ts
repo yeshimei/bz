@@ -164,14 +164,30 @@ describe('fetchProviderModels：HTTP 通道与错误', () => {
   });
 });
 
-describe('注册表覆盖面（issue 411/ADR-0179：只留在册三条通道）', () => {
-  it('三条通道注册表齐备（端点/模型/密钥键/标签）', () => {
-    expect(AI_PROVIDER_REGISTRY.map((p) => p.id)).toEqual(['deepseek', 'zhipu-plan', 'ollama']);
+describe('注册表覆盖面（三条在册通道 + 自定义）', () => {
+  it('四条通道注册表齐备（自定义的端点/模型留空由用户填）', () => {
+    expect(AI_PROVIDER_REGISTRY.map((p) => p.id)).toEqual(['deepseek', 'zhipu-plan', 'ollama', 'custom']);
     for (const p of AI_PROVIDER_REGISTRY) {
-      expect(p.endpoint, p.id).toBeTruthy();
       expect(p.label, p.id).toBeTruthy();
       expect((p as { apiKeyKey: string }).apiKeyKey, p.id).toBeTruthy();
+      if (p.id !== 'custom') expect(p.endpoint, p.id).toBeTruthy();
     }
+  });
+
+  it('custom：用设置里的自定义地址拉 /models，缺地址明确拦下', async () => {
+    state.aiProvider = 'custom';
+    state.aiCustomEndpoint = 'https://gw.example.com/v1';
+    state.aiCustomApiKey = 'sk-gw';
+    const fetchFn = vi.fn(async (u: string, init: any) => {
+      expect(u).toBe('https://gw.example.com/v1/models');
+      expect(init.headers['Authorization']).toBe('Bearer sk-gw');
+      return okOpenAI({ data: [{ id: 'qwen-max' }] });
+    });
+    const models = await fetchProviderModels(undefined, { fetchFn });
+    expect(models.map((m) => m.id)).toEqual(['qwen-max']);
+
+    state.aiCustomEndpoint = '';
+    await expect(fetchProviderModels(undefined, { fetchFn: vi.fn() })).rejects.toThrow('未配置 API 地址');
   });
 
   it('未知名 provider 回退缺省通道描述（deepseek 端点 + deepseek 密钥）', async () => {

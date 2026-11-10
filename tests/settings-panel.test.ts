@@ -297,8 +297,8 @@ describe('设置面板（settings-panel）', () => {
       item.dispatchEvent(new MouseEvent('click', { bubbles: true }));
     };
 
-    // 服务商下拉 = 注册表三条通道（custom 已退役）
-    expect(readOptions('AI 服务商')).toEqual(['DeepSeek', '智谱 Plan', 'Ollama（本地）']);
+    // 服务商下拉 = 注册表四条通道（2026-11-11 加回自定义）
+    expect(readOptions('AI 服务商')).toEqual(['DeepSeek', '智谱 Plan', 'Ollama（本地）', '自定义（OpenAI 兼容）']);
     // deepseek：五档（有「关闭」、无「中」）
     expect(valOf('思考 reasoning')).toBe('跟随模型默认');
     expect(readOptions('思考 reasoning')).toEqual(['跟随模型默认', '关闭（省 token）', '低', '高', '最高']);
@@ -317,6 +317,47 @@ describe('设置面板（settings-panel）', () => {
     pick('AI 服务商', 'DeepSeek');
     expect(valOf('思考 reasoning')).toBe('关闭（省 token）');
     expect(readOptions('思考 reasoning')).toEqual(['跟随模型默认', '关闭（省 token）', '低', '高', '最高']);
+    ui.cleanup();
+  });
+
+  it('桌面端：切到自定义 → 地址行出现、密钥行换成自定义的、思考行收起', async () => {
+    const ui = new SettingsPanelUI();
+    ui.open();
+    const popup = document.getElementById('bz-settings-panel-popup')!;
+    await tick();
+    const aiItem = Array.from(popup.querySelectorAll('.bz-sp-nav-item')).find(
+      (el) => el.textContent?.includes('AI')
+    ) as HTMLElement;
+    aiItem.click();
+    await waitGroups(popup, 1);
+
+    const rowOf = (name: string) =>
+      [...popup.querySelectorAll<HTMLElement>('.bz-sp-set-row')].find(
+        (r) => r.querySelector('.bz-sp-set-name')?.textContent === name
+      );
+    /* 行显隐走 display:none（面板渲染器口径，DOM 不删只隐藏）——判「看不看得见」而不是「在不在」 */
+    const hidden = (name: string) => {
+      const el = rowOf(name);
+      if (!el) return true;
+      return el.style.display === 'none' || el.classList.contains('bz-setting-hidden');
+    };
+    const pick = (name: string, label: string) => {
+      rowOf(name)!.querySelector<HTMLElement>('.bz-select')!.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+      const item = [...rowOf(name)!.querySelectorAll<HTMLElement>('.bz-select-item')].find(
+        (i) => i.textContent === label
+      )!;
+      item.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    };
+
+    // 缺省 DeepSeek：不摆自定义地址行（地址由注册表带）
+    expect(hidden('自定义 API 地址')).toBe(true);
+    pick('AI 服务商', '自定义（OpenAI 兼容）');
+    await tick();
+    // 选中自定义：地址行、自定义密钥行都在；别家密钥与思考档位收起
+    expect(hidden('自定义 API 地址')).toBe(false);
+    expect(hidden('自定义 API 密钥')).toBe(false);
+    expect(hidden('DeepSeek 密钥')).toBe(true);
+    expect(hidden('思考 reasoning')).toBe(true);
     ui.cleanup();
   });
 

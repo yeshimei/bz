@@ -144,10 +144,20 @@ describe('isAvailable（issue 334/ADR-0148：判定单源 core getAIProvider）'
     await expect(new FavoritesAIService().isAvailable()).resolves.toBe(false);
   });
 
-  it('已退役的 provider id（custom）回落缺省通道判定：DeepSeek 有 key 即 true', async () => {
-    setAISettingsProvider(() => ({ aiProvider: 'custom', deepseekApiKey: 'sk-d' }) as any);
+  it('未知名 provider id 回落缺省通道判定：DeepSeek 有 key 即 true', async () => {
+    setAISettingsProvider(() => ({ aiProvider: 'openai', deepseekApiKey: 'sk-d' }) as any);
     resetAIProviderCache();
     await expect(new FavoritesAIService().isAvailable()).resolves.toBe(true);
+  });
+
+  it('custom（2026-11-11 在册）：地址与密钥齐备才算可用，缺一样即 false', async () => {
+    setAISettingsProvider(() => ({ aiProvider: 'custom', aiCustomEndpoint: 'https://gw.example/v1', aiCustomApiKey: 'sk-gw' }) as any);
+    resetAIProviderCache();
+    await expect(new FavoritesAIService().isAvailable()).resolves.toBe(true);
+
+    setAISettingsProvider(() => ({ aiProvider: 'custom', aiCustomEndpoint: '', aiCustomApiKey: 'sk-gw' }) as any);
+    resetAIProviderCache();
+    await expect(new FavoritesAIService().isAvailable()).resolves.toBe(false);
   });
 
   it('ollama（本地）无需密钥 → 恒 true', async () => {

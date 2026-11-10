@@ -32,18 +32,17 @@ describe('mainSettingsSchema：主设置页区块（issue 422 起 AI 页按模�
     ]);
   });
 
-  it('LLM 组首部（前「服务商」组，issue 411/ADR-0179 收敛三条通道）：服务商下拉 + 每家一行密钥（visibleWhen 随 aiProvider）', () => {
+  it('LLM 组首部：服务商下拉 + 自定义地址行 + 每家一行密钥（visibleWhen 随 aiProvider）', () => {
     // issue 422/ADR-0182：「服务商」组撤销并入 LLM 组首部——先选通道与密钥，再配该通道的模型参数
-    const rows = schema.groups[0].rows.slice(0, 1 + AI_PROVIDER_REGISTRY.length);
-    // 行序 = 服务商下拉 + 注册表每条通道一行密钥（custom 的端点/密钥两行已随通道退役）。
-    // 凭据行全走「密钥型」档位（type:'secret' → password 掩码 + 眼睛切明文）
-    expect(rows.map((r) => r.type)).toEqual(['select', 'secret', 'secret', 'secret']);
-    // 密钥行标题来自注册表 apiKeyLabel（顺序与注册表一致）
+    // 2026-11-11：加回自定义（地址行紧跟服务商下拉，只有选中自定义时可见）
+    const rows = schema.groups[0].rows.slice(0, 2 + AI_PROVIDER_REGISTRY.length);
+    expect(rows.map((r) => r.type)).toEqual(['select', 'text', 'secret', 'secret', 'secret', 'secret']);
     expect(rows.map((r) => (r as { name: string }).name)).toEqual([
       'AI 服务商',
+      '自定义 API 地址',
       ...AI_PROVIDER_REGISTRY.map((p) => p.apiKeyLabel),
     ]);
-    const [provider, ...keyRows] = rows as Array<{
+    const [provider, urlRow, ...keyRows] = rows as Array<{
       binding?: { key: string };
       visibleWhen?: (s: SettingsSnapshot) => boolean;
       options?: Array<{ value: string; label: string }>;
@@ -51,6 +50,10 @@ describe('mainSettingsSchema：主设置页区块（issue 422 起 AI 页按模�
     expect(provider.binding).toEqual({ key: 'aiProvider' });
     // 下拉选项 = 注册表（新增通道零 schema 改动）
     expect(provider.options).toEqual(AI_PROVIDER_REGISTRY.map((p) => ({ value: p.id, label: p.label })));
+    // 地址行：直绑 aiCustomEndpoint，只在自定义时可见
+    expect(urlRow.binding).toEqual({ key: 'aiCustomEndpoint' });
+    expect(urlRow.visibleWhen!(snapOf({ aiProvider: 'custom' }))).toBe(true);
+    expect(urlRow.visibleWhen!(snapOf({ aiProvider: 'deepseek' }))).toBe(false);
     // 每家的密钥行：键直绑 apiKeyKey + visibleWhen 跟随 aiProvider（互斥显隐）
     AI_PROVIDER_REGISTRY.forEach((p, i) => {
       expect(keyRows[i].binding).toEqual({ key: p.apiKeyKey });
@@ -61,7 +64,7 @@ describe('mainSettingsSchema：主设置页区块（issue 422 起 AI 页按模�
   });
 
   it('LLM 组模型行（原「模型配置」组）：模型名称 + 最大输出 token + 思考档位（issue 411 起选项随服务商换表）', () => {
-    const rows = schema.groups[0].rows.slice(1 + AI_PROVIDER_REGISTRY.length) as Array<{
+    const rows = schema.groups[0].rows.slice(2 + AI_PROVIDER_REGISTRY.length) as Array<{
       name: string;
       type: string;
       binding?: { key: string } | { get: () => unknown; set: (v: unknown) => void; save: () => unknown };
@@ -72,11 +75,15 @@ describe('mainSettingsSchema：主设置页区块（issue 422 起 AI 页按模�
     expect(rows.map((r) => r.type)).toEqual(['text', 'number', 'select']);
     // 三行都是 per-provider 行：三函数绑定（不用 key 直绑）+ refreshKey 随服务商联动
     rows.forEach((r) => {
-      expect(r.visibleWhen).toBeUndefined();
       expect(typeof r.refreshKey).toBe('function');
       expect('key' in r.binding!).toBe(false);
       expect('get' in r.binding!).toBe(true);
     });
+    // 模型与 max token 行常显；思考行在自定义（无档位表）时隐藏
+    expect(rows[0].visibleWhen).toBeUndefined();
+    expect(rows[1].visibleWhen).toBeUndefined();
+    expect(rows[2].visibleWhen!(snapOf({ aiProvider: 'custom' }))).toBe(false);
+    expect(rows[2].visibleWhen!(snapOf({ aiProvider: 'deepseek' }))).toBe(true);
     // 模型行内嵌「获取模型名」按钮
     expect((rows[0] as any).actions?.map((a: { text: string }) => a.text)).toEqual(['获取模型名']);
     // 思考档位（issue 411/ADR-0179）：options 为函数——按当前服务商取其档位表（core/ai 单源），

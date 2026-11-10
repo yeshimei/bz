@@ -546,9 +546,14 @@ describe('AIService', () => {
     expect(thinkingLevelsOf('deepseek').map((l) => l.value)).toEqual(['auto', 'off', 'low', 'high', 'max']);
     expect(thinkingLevelsOf('zhipu-plan').map((l) => l.value)).toEqual(['auto', 'low', 'high', 'max']);
     expect(thinkingLevelsOf('ollama').map((l) => l.value)).toEqual(['auto', 'off', 'low', 'medium', 'high']);
-    // 注册表每家都要有档位表（issue 411：新增 provider 忘补表会被这里拦住）
+    // 注册表每家都要有档位表（issue 411：新增 provider 忘补表会被这里拦住）；
+    // 自定义例外——没有固定参数口径，档位表为空（请求里一律不注入思考参数）
     for (const p of AI_PROVIDER_REGISTRY) {
       const levels = thinkingLevelsOf(p.id);
+      if (p.id === 'custom') {
+        expect(levels, 'custom 没有档位表').toEqual([]);
+        continue;
+      }
       expect(levels.length, p.id).toBeGreaterThan(1);
       expect(levels[0].value, p.id).toBe('auto');
       expect(levels[0].body, p.id).toBeNull();
