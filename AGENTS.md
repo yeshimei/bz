@@ -4,12 +4,13 @@ Obsidian 插件。域 = `src/<域>/`，`core` 是共享层。中文输出。
 
 ## 动手之前：先读，再说，等回话
 
-在改动代码之前，请先勘察相关代码细节，不要直接修改代码。然后按顺序列出四个清单，每个清单都要有编号，清单内每一项也用序号列出；每项用一句话或一段话，通俗、简洁地说明，不要附任何代码细节或技术细节：
+在改动代码之前，请先勘察相关代码细节，不要直接修改代码。然后按顺序列出五个清单，每个清单都要有编号，清单内每一项也用序号列出；每项用一句话或一段话，通俗、简洁地说明，不要附任何代码细节或技术细节：
 
 1. 针对我提出的问题/需求，说明你是如何理解的、准备怎么做。
 2. 指出我可能疏忽、会导致问题的地方，并附上你的建议。
 3. 就以上问题，列出可以优化、增强的方向。
 4. 列出你不确认、需要我回答的问题。
+5. 涉及 UI 的改动，说明做完后要在真机上跑哪些相关功能、交哪些截图（桌面一遍，移动端形态再一遍）。
 
 等我确认后再改动代码。
 
@@ -21,19 +22,28 @@ Obsidian 插件。域 = `src/<域>/`，`core` 是共享层。中文输出。
 4. 命令 ID 用 `bz-<域>-<动作>`，通知正文不带 emoji，新语义查 `src/core/notice.ts` 的 ICONS。
 5. 新增弹窗必须用本域 `styles.css` 给 `uiModal`/`openFlowDialog` 传皮肤类穿皮，并复用本域已有弹窗体。
 6. 遮罩之上不得再压可点铺满层，否则点遮罩关闭失效；应设 `pointer-events: none` 或把该层纳入命中判据。
-7. 改动走仓库外 worktree 并从最新 master 分叉，worktree 内不构建，产物直出本机 vault 与仓库根。
+7. 改动走仓库外 worktree 并从最新 master 分叉，worktree 内不构建；日常 main.js 只直出测试库（`E:/Obsidian/bz`），主库与仓库根的 main.js 只在发版时落。
 8. 存储路径的存在性/读取/mtime 一律走 `core/storage` 的问盘助手（`diskPathExists` / `diskReadText` / `diskPathStat`），不得用 `vault.getAbstractFileByPath` 探测——缺省数据目录是点前缀路径，vault 索引恒空（ADR-0289）。
 
 ## 开发工作流（测试库直出，ADR-0276）
 
-改 UI 的快速循环，走**测试库**（`E:\Obsidian\bz`，数据笔记可随便造）：
+改 UI 的快速循环，走**测试库** `E:/Obsidian/bz`（笔记库名就是 `bz`，数据笔记可随便造）：
 
+- **日常只落测试库**：日常构建必须显式 `BZ_VAULT_DIR="E:/Obsidian/bz/.obsidian/plugins/bz"`；这个变量缺省是主库 `E:/Obsidian/叫我包仔`，漏写就把半成品推进主库了——构建前先确认。
+- **发版才落主库与仓库根**：发版构建不带 `BZ_VAULT_DIR`（落主库），`node esbuild.config.mjs production` 再把 `main.js` 复制到仓库根；日常构建的 main.js 不进主库、也不进仓库根（根 `styles.css` 是聚合产物，构建时总会更新）。
 - `BZ_VAULT_DIR="E:/Obsidian/bz/.obsidian/plugins/bz" node esbuild.config.mjs` —— watch 常驻，改动自动重出 main.js/styles.css 到测试库。
 - `node scripts/dev-restart.mjs --vault bz` —— 一次性构建 + 把 styles.css 同步成测试库 snippet（`bz-dev.css`，CSS 改动免重启）+ 重启 Obsidian 直开测试库。`--no-build` 跳过构建；`--vault <名>` 换目标库。
 - `node scripts/dev-vault.mjs snapshot|reset|wipe|seed` —— 测试库快照 / 回滚 / 清空（测首次引导）/ 从主库播种数据与日记笔记。
 - **开机直达弹窗**：往测试库 `<插件目录>/storage/debug-open.json` 写 `{"command":"bz-<域>-open"}`，插件启动 layout-ready 后自动执行该命令——改某个弹窗时重启即见，不用翻菜单。删掉文件即恢复常规启动。
 - **步骤器（自动播，肉眼看）**：往 `<插件目录>/storage/debug-flow.json` 写 `{"flow":"<流程 id>","auto":true}`，插件启动后自动把 `core/dev-flows` 里那条流程一步步播到底，每步停一会儿——作用是**替人点、替人滚**，人盯着屏幕判断流程对不对（不做自动断言、不写报告）。现成范例 `changelog-note`。跑完删文件，否则每次启动都会重播。
 - 门禁口径不变：改完在 worktree 跑 `node scripts/test-affected.mjs --since master`；测试库只管「人眼看效果」，不算验证。
+
+## 真机验收（UI 改动必做）
+
+- 涉及 UI 的改动（界面、布局、弹窗、样式、手势、交互反馈）做完，必须先在真机上把相关功能跑一遍，再把截图贴给用户；没跑过、没截图不算完成。
+- 真机验证和截图都在**测试库**做（`E:/Obsidian/bz`）；不要新建库，也不要在真实库（`叫我包仔`）里试。
+- 移动端形态：Obsidian 桌面端控制台（`Ctrl+Shift+I`）执行一行 `app.emulateMobile(true)`，整个界面切成移动端视图；验完 `app.emulateMobile(false)` 切回。涉及移动端布局/手势的改动，必须在这个形态下跑过并截图。
+- 截图要能看出改的是哪一块：关键步骤各一张，必要时改前/改后对照，并标出位置。
 
 ## 提交
 
