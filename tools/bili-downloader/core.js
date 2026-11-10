@@ -838,6 +838,17 @@ async function extractAudio({ inPath, outPath, ffmpeg = 'ffmpeg', start = 0, end
   if (!r.ok) throw new Error(r.err)
 }
 
+// ---- 本机媒体类型兜底（ADR-0296，发版 review #5）----
+// 插件侧 src/knowledge/media-kind.ts 的扩展名白名单是唯一事实源；本文件是独立 Node
+// 工具、不能 import TS，这里只留音声后缀一份（改那边记得同步）。认不出按视频，旧行为不变。
+const LOCAL_AUDIO_EXTS = new Set([
+  'mp3', 'm4a', 'aac', 'wav', 'flac', 'ogg', 'oga', 'opus', 'wma', 'ape', 'amr', 'aiff', 'aif', 'wv',
+])
+function guessLocalKind(filePath) {
+  const ext = path.extname(String(filePath || '')).slice(1).toLowerCase()
+  return LOCAL_AUDIO_EXTS.has(ext) ? 'audio' : 'video'
+}
+
 async function runLocal(task, deps = {}) {
   resetAbort()
   const conf = { ...(deps.conf || {}), ...((task && task.options) || {}) }
@@ -850,6 +861,7 @@ async function runLocal(task, deps = {}) {
   // 探测/抽音轨的注入点（仅测试用：CI 没有 ffmpeg 二进制，单测打桩）
   const probeImpl = deps.probeDurationImpl || probeDuration
   const extractImpl = deps.extractAudioImpl || extractAudio
+  const trimImpl = deps.trimImpl || trimVideo
   const onStep = deps.onStep || (() => {})
   const onProgress = deps.onProgress || (() => {})
   const onInfo = deps.onInfo || (() => {})
@@ -868,7 +880,8 @@ async function runLocal(task, deps = {}) {
   const inPath = String(local.path || '').trim()
   if (!inPath) throw new Error('缺少本地文件路径')
   if (!fs.existsSync(inPath)) throw new Error(`找不到文件：${inPath}（可能已被移动或删除）`)
-  const kind = local.kind === 'audio' ? 'audio' : 'video'
+  // 显式 kind 优先；缺省/手改数据按文件名判定，别把播客记成影像（发版 review #5）
+  const kind = local.kind === 'audio' || local.kind === 'video' ? local.kind : guessLocalKind(inPath)
   const name = path.basename(inPath)
   const title = name.replace(/\.[^.]+$/, '')
 
@@ -960,7 +973,25 @@ async function runLocal(task, deps = {}) {
     const outDirAbs = outOverride ? path.resolve(outOverride) : path.resolve(conf.outputDir)
     fs.mkdirSync(outDirAbs, { recursive: true })
     finalPath = uniquePath(path.join(outDirAbs, name))
-    fs.copyFileSync(inPath, finalPath)
+    // 切片任务交付的必须是「那一段」，不是整片：抽音轨已按 s/e 切过、逐字稿只覆盖片段，
+    // 整片复制进库会让笔记里嵌的媒体和正文对不上（发版 review #3）。裁切与校验复用
+    // runBatch 同一套 trimVideo（copy 优先、时长校验不过自动重编码），注入点留给测试。
+    const needTrim = s > 0 || e < mediaDur
+    if (needTrim) {
+      const clipPath = path.join(tmpDir, 'local-clip' + (path.extname(inPath) || '.mp4'))
+      try {
+        await trimImpl({
+          inPath, outPath: clipPath, ffmpeg, ffprobe, start: s, end: e, crf: null,
+          totalMs: (e - s) * 1000,
+          onProgress: p => pg({ phase: 'trim', pct: Number.isFinite(p.percent) ? p.percent : null }),
+        })
+      } catch (err) {
+        throw new Error(`交付片段失败：${lastLine(String((err && err.message) || err))}`)
+      }
+      fs.copyFileSync(clipPath, finalPath)
+    } else {
+      fs.copyFileSync(inPath, finalPath)
+    }
   }
 
   return {

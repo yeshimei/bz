@@ -183,3 +183,62 @@ test('runLocal 直接调用：返回 shape 与 runBatch 一致（transcript/vide
   assert.equal(r.kind, 'audio')
   fs.unlinkSync(r.transcript)
 })
+
+test('带范围 + 保留媒体：交付的是裁切片段，不是整片（发版 review #3）', async () => {
+  const media = makeMedia('讲座-切片.mp4')
+  const { deps } = makeDeps()
+  withTranscript(deps)
+  const trimCalls = []
+  deps.trimImpl = async (cfg) => {
+    trimCalls.push({ start: cfg.start, end: cfg.end, crf: cfg.crf })
+    fs.writeFileSync(cfg.outPath, 'TRIMMED-SEGMENT')
+  }
+  const r = await core.runBatch(
+    { local: { path: media, kind: 'video' }, start: '0:10', end: '0:40', options: { keepVideo: true } },
+    deps,
+  )
+  assert.equal(trimCalls.length, 1)
+  assert.equal(trimCalls[0].start, 10)
+  assert.equal(trimCalls[0].end, 40)
+  assert.equal(trimCalls[0].crf, null)
+  assert.equal(fs.readFileSync(path.join(vault, r.video), 'utf8'), 'TRIMMED-SEGMENT')
+  fs.unlinkSync(r.transcript)
+})
+
+test('整片 + 保留媒体：不调裁切，仍旧复制原件', async () => {
+  const media = makeMedia('整片-原件.mp4')
+  const { deps } = makeDeps()
+  withTranscript(deps)
+  let trimmed = false
+  deps.trimImpl = async () => { trimmed = true }
+  const r = await core.runBatch({ local: { path: media, kind: 'video' }, options: { keepVideo: true } }, deps)
+  assert.equal(trimmed, false)
+  assert.equal(fs.readFileSync(path.join(vault, r.video), 'utf8'), 'fake-media-bytes')
+  fs.unlinkSync(r.transcript)
+})
+
+test('本机音声没传 kind：按扩展名判成音声，不记成影像（发版 review #5）', async () => {
+  const media = makeMedia('播客-无kind.m4a')
+  const { deps, infos } = makeDeps()
+  withTranscript(deps)
+  const r = await core.runBatch({ local: { path: media }, options: { keepVideo: false } }, deps)
+  assert.equal(r.kind, 'audio')
+  assert.equal(infos[0].kind, 'audio')
+  fs.unlinkSync(r.transcript)
+})
+
+test('本机视频没传 kind：仍是影像；显式 kind 优先', async () => {
+  const video = makeMedia('录屏-无kind.mp4')
+  const { deps } = makeDeps()
+  withTranscript(deps)
+  const r1 = await core.runBatch({ local: { path: video }, options: { keepVideo: false } }, deps)
+  assert.equal(r1.kind, 'video')
+
+  const audio = makeMedia('曲子-显式.mp3')
+  const { deps: deps2 } = makeDeps()
+  withTranscript(deps2)
+  const r2 = await core.runBatch({ local: { path: audio, kind: 'video' }, options: { keepVideo: false } }, deps2)
+  assert.equal(r2.kind, 'video')
+  fs.unlinkSync(r1.transcript)
+  fs.unlinkSync(r2.transcript)
+})

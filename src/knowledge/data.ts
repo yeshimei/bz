@@ -14,6 +14,14 @@ import { pad2 } from '../core/ui/str';
 import { getApp } from '../core/app';
 import { cleanUrlText, normalizeSourceUrl } from './source';
 import type { KnowledgeTask, KnowledgeTaskStatus, KnowledgeSourceKind, KnowledgeMediaKind } from './types';
+import { mediaKindOf } from './media-kind';
+
+/** 媒体类型兜底（ADR-0296 的缺省口径）：显式值优先，本机任务按文件名扩展名判定，
+ *  认不出 / B 站链接恒按视频——存量数据零迁移，绕过 UI 的入口也不会把音声记成影像。 */
+function resolveMediaKind(explicit: unknown, localPath: string | null): KnowledgeMediaKind {
+  if (explicit === 'audio' || explicit === 'video') return explicit;
+  return (localPath ? mediaKindOf(localPath) : null) || 'video';
+}
 
 export interface KnowledgeSettingsLike {
   /** ADR-0009 共享数据路径（优先），旧独立路径不涉及 */
@@ -184,7 +192,7 @@ export const KnowledgeData = {
           // ADR-0296：存量数据没有这两字段——按 url / video 兜底，零迁移
           sourceKind: item.sourceKind === 'local' ? 'local' : 'url',
           localPath: normalizeLocalPath(item.localPath),
-          mediaKind: item.mediaKind === 'audio' ? 'audio' : 'video',
+          mediaKind: resolveMediaKind(item.mediaKind, item.localPath ? String(item.localPath) : null),
           start: item.start || null,
           end: item.end || null,
           status: (item.status as KnowledgeTaskStatus) || 'pending',
@@ -218,7 +226,7 @@ export const KnowledgeData = {
       url: sourceKind === 'local' ? '' : normalizeUrl(input.url),
       sourceKind,
       localPath: sourceKind === 'local' ? localPath : null,
-      mediaKind: input.mediaKind === 'audio' ? 'audio' : 'video',
+      mediaKind: resolveMediaKind(input.mediaKind, sourceKind === 'local' ? (localPath || null) : null),
       start: input.start?.trim() || null,
       end: input.end?.trim() || null,
       status: 'pending',

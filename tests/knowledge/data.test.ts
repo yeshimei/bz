@@ -195,6 +195,23 @@ describe('KnowledgeData（knowledge.json）', () => {
     expect(all[0]).toMatchObject({ sourceKind: 'url', mediaKind: 'video', localPath: null });
   });
 
+  it('本机音声没给 mediaKind → 按扩展名判 audio；显式值优先（发版 review #5）', async () => {
+    const audio = await KnowledgeData.addTask({ url: '', sourceKind: 'local', localPath: 'D:/音频/播客.flac' });
+    expect(audio.mediaKind).toBe('audio');
+    const video = await KnowledgeData.addTask({ url: '', sourceKind: 'local', localPath: 'D:/视频/录屏.mkv' });
+    expect(video.mediaKind).toBe('video');
+    const forced = await KnowledgeData.addTask({ url: '', sourceKind: 'local', localPath: 'D:/音频/曲子.mp3', mediaKind: 'video' });
+    expect(forced.mediaKind).toBe('video');
+    const all = await KnowledgeData.loadTasks();
+    expect(all.map((x) => x.mediaKind)).toEqual(['audio', 'video', 'video']);
+  });
+
+  it('存量本地数据缺 mediaKind → loadTasks 按 localPath 兜底，不当成影像', async () => {
+    await KnowledgeData.write([{ id: 'legacy-local', url: '', sourceKind: 'local', localPath: 'D:/音频/旧播客.m4a' }]);
+    const all = await KnowledgeData.loadTasks();
+    expect(all[0].mediaKind).toBe('audio');
+  });
+
   it('title/uploader 可选字段（ticket 134）：addTask 去空白落库 + 旧数据补 null + updateTask 可改', async () => {
     const t = await KnowledgeData.addTask({ url: 'BV1xx411c7mD', title: '  某视频标题  ', uploader: ' UP主甲 ' });
     expect(t.title).toBe('某视频标题');
