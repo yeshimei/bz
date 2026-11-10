@@ -14,6 +14,8 @@
   <img src="https://img.shields.io/badge/Obsidian-%E2%89%A5%201.4.0-7c3aed?style=flat-square&logo=obsidian&logoColor=white" alt="Obsidian ≥ 1.4.0">
   <img src="https://img.shields.io/badge/%E6%A1%8C%E9%9D%A2%20%2B%20%E7%A7%BB%E5%8A%A8%E7%AB%AF-16a34a?style=flat-square" alt="桌面 + 移动端">
   <img src="https://img.shields.io/github/license/yeshimei/bz?style=flat-square&color=16a34a" alt="license">
+  <a href="https://github.com/yeshimei/bz-reader"><img src="https://img.shields.io/badge/bz%20Reader-%E5%A4%9A%E6%A0%BC%E5%BC%8F%E9%98%85%E8%AF%BB%E5%99%A8-8a6a3a?style=flat-square" alt="bz Reader：多格式阅读器"></a>
+  <img src="https://img.shields.io/badge/QQ%E7%BE%A4-1130883117-12b7f5?style=flat-square&logo=tencentqq&logoColor=white" alt="QQ 交流群 1130883117">
 </p>
 
 <p align="center">
@@ -163,10 +165,6 @@
 `issues/` 是作者内部的问题与设计记录，不是反馈入口。
 
 <a name="support" id="support"></a>
-
-## 交流
-
-QQ 群：**1130883117** —— 用着有问题、想要什么功能，都可以在群里说。
 
 ## 支持作者
 
