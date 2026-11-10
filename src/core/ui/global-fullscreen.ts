@@ -14,7 +14,7 @@
 import { notice } from '../notice';
 import { isMobileEnv } from '../mobile';
 import { escManager } from '../esc-manager';
-import { isShown, topMainPanel } from './main-panel';
+import { isShown, NO_FULLSCREEN_CLASS, topMainPanel } from './main-panel';
 
 /** 全屏类（CSS 在 core/ui/components.css：只改几何，不改任何域内版式） */
 export const GLOBAL_FULL_CLASS = 'bz-global-full';
@@ -70,6 +70,11 @@ export function toggleGlobalFullscreen(): void {
   const panel = topMainPanel();
   if (!panel) {
     notice('当前界面没有可放大的窗口', 'info');
+    return;
+  }
+  // 番茄钟等「不参与全屏」的主面板（bz-no-fullscreen）：只提示，不放大
+  if (panel.classList.contains(NO_FULLSCREEN_CLASS)) {
+    notice('这个界面不参与全屏', 'info');
     return;
   }
   enterFullscreen(panel);

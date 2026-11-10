@@ -69,7 +69,7 @@ describe('首页返回总线', () => {
   it('只开弹窗的会话：notifyFloatClosed 时才回首页', async () => {
     const open = vi.fn();
     armHomeReturn(open);
-    await wait(1400); // 过宽限期：本次不是主面板
+    await wait(300); // 只等一拍：不是主面板就不该因 DOM 杂音回首页
     expect(open).not.toHaveBeenCalled();
     notifyFloatClosed();
     await wait(300);
