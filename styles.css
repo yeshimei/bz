@@ -5941,18 +5941,22 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   background: rgba(189, 148, 64, .4);
 }
 
-/* 赞助入口（2026-11-10）：码下面第二行——「成为赞助人」，不敢扫码 / 想顺带买点东西的走这里。
-   字比「微信扫码」大一号、颜色站到金色一侧：它是能点的去处，不是标注。 */
-.bz-rw-sponsor {
+/* 出口（2026-11-11 用户拍板）：码下面一行——「成为赞助人 · 给个 Star」，
+   两条并列的支持路径，各点各的：赞助商店 / GitHub 仓库。
+   字比「微信扫码」大一号、颜色站到金色一侧：它们是能点的去处，不是标注。 */
+.bz-rw-exits {
   margin: 13px 0 0;
   display: flex;
+  align-items: center;
   justify-content: center;
+  gap: 7px;
 }
 
-/* 收藏入口（2026-11-10）：第三行——「或者给个 Star」，不花钱的另一种支持。
-   与赞助入口同款，只收一点行距：两行是并列的两条路，不分主次。 */
-.bz-rw-star {
-  margin-top: 8px;
+/* 分隔点：不可点，只把两条路隔开；比链接淡一档 */
+.bz-rw-exit-sep {
+  font-size: 11.5px;
+  line-height: 1;
+  color: rgba(189, 148, 64, .55);
 }
 
 .bz-rw-sponsor-link {
@@ -6341,36 +6345,6 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   margin-top: 26px;
 }
 
-/* 收藏入口（2026-11-10）：按钮下面一行弱链接——不花钱的另一种支持。
-   比按钮低一级：它是补充出口，不是第三个答案，不该和「以后再说 / 支持作者」抢位。
-   与赞赏窗那两行出口同一套衬线金色小字（reward-dialog 的 .bz-rw-sponsor-link）。 */
-.bz-sup-star {
-  display: flex;
-  justify-content: center;
-  margin: 16px 0 0;
-}
-
-.bz-sup-star-link {
-  font-family: var(--sup-serif);
-  font-size: 11.5px;
-  letter-spacing: .1em;
-  text-indent: .1em;
-  color: var(--sup-gold-deep);
-  text-decoration: none;
-  padding-bottom: 2px;
-  border-bottom: 1px solid rgba(189, 148, 64, .4);
-  cursor: pointer;
-  transition: color .15s, border-color .15s;
-}
-
-/* 触屏无 hover，悬停反馈只给鼠标（bd-paradigm-hover-isolation 守卫要求） */
-@media (hover: hover) {
-  .bz-sup-star-link:hover {
-    color: var(--sup-ink);
-    border-bottom-color: rgba(38, 34, 29, .45);
-  }
-}
-
 .bz-sup-btn {
   height: 40px;
   padding: 0 20px;
@@ -6415,8 +6389,7 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 }
 
 /* 焦点环：纸面上用金色，别用默认蓝（主题里那一圈会跳出来） */
-.bz-sup-btn:focus-visible,
-.bz-sup-star-link:focus-visible {
+.bz-sup-btn:focus-visible {
   outline: 2px solid rgba(189, 148, 64, .55);
   outline-offset: 2px;
 }
