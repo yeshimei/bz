@@ -2,6 +2,7 @@
   "version": 1,
   "updatedAt": "2026-11-11",
   "patrons": [
+    { "name": "黄迅", "amount": "patron", "date": "2026-11-11" },
     { "name": "沁弦", "amount": 6.66, "date": "2026-11-11", "message": "KEEP IT UP!Love from Charis523" },
     { "name": "Sailing Fish", "amount": 3.14, "date": "2026-11-10", "message": "不错不错" },
     { "name": "面包", "amount": "patron", "date": "2026-11-10" },
