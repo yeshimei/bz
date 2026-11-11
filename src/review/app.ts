@@ -9,7 +9,7 @@ import { getSettings } from '../core/settings-provider';
 import { FSRS, FSRS_FIRST_TEXTS, scheduleNext, currentR as fsrsCurrentR } from './fsrs';
 import type { Rating } from './fsrs';
 import type { ReviewItem } from './data';
-import { ReviewDataManager, isCardItem } from './data';
+import { ReviewDataManager } from './data';
 import { loadFittedParams, saveFittedParams, FIT_PARAMS_VERSION, getReviewFilePath, type FittedParams } from './data';
 import { fitFromItems, mergeFittedW } from './fit';
 import { DEFAULT_W } from './fsrs';
@@ -460,26 +460,6 @@ export const reviewApp = {
     const limited = this.sortOverdue(round, dailyLimit);
     if (limited.length < round.length) {
       notice(`本轮复习 ${limited.length} 篇，剩余 ${round.length - limited.length} 篇留到下次`, 'info');
-    }
-
-    /* 划线卡和笔记不是一个界面：卡片在自己的会话里复习，笔记要么跳转要么做题。
-       两类都有时先做卡片，做完自动接上笔记那轮——不用再点一次「开始本轮」。 */
-    const cardItems = limited.filter((i) => isCardItem(i));
-    const noteItems = limited.filter((i) => !isCardItem(i));
-    if (cardItems.length) {
-      if (!uiManager) return;
-      await uiManager.startCardRound(
-        cardItems,
-        noteItems.length
-          ? () => {
-              void (async () => {
-                if (getSettings().forceQuizForReview) await this.runSprintSession(noteItems, 'round');
-                else await this.reviewLoop(noteItems, 0);
-              })();
-            }
-          : undefined,
-      );
-      return;
     }
 
     if (!getSettings().forceQuizForReview) {

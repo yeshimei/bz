@@ -387,10 +387,6 @@ export default interface BzSettings {
   reviewFitEveryN: number;
   /** 🆕 R 目标阈值（ADR-0077：低于该值视为可复习/提前；默认 0.9） */
   reviewRThreshold: number;
-  /** 🃏 划线卡复习方式：flashcard=AI 抽认卡 / quiz=AI 做题 / plain=展开全文不用 AI */
-  reviewCardMode: 'flashcard' | 'quiz' | 'plain';
-  /** 🃏 做题方式每轮抽多少（分母：2=一半、3=三分之一、4=四分之一） */
-  reviewCardQuizRatio: number;
   /** 🗂️ 监听文件夹（多个目录；目录内未加入且未排除的 .md 自动进入复习计划，递归） */
   reviewWatchedFolders: string[];
   /** 🚫 排除名单（不参与监听自动加入的笔记路径数组；手动移除/确认移除/批量取消/不更新落此名单） */
@@ -1215,8 +1211,6 @@ export const DEFAULT_SETTINGS: BzSettings = {
   reviewEnableFit: true,
   reviewFitEveryN: 10,
   reviewRThreshold: 0.9,
-  reviewCardMode: 'flashcard',
-  reviewCardQuizRatio: 3,
   reviewWatchedFolders: [],
   reviewExcludedNotes: [],
 

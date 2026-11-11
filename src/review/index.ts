@@ -6,7 +6,7 @@ import { stripMdExt } from '../core/utils';
 import type { App } from 'obsidian';
 import { notice, notifyUndo, notifySaveError, notifyActionError } from '../core/notice';
 import { onDomainEvent, emitDomainEvent } from '../core/domain-bus';
-import { ReviewDataManager, isCardItem } from './data';
+import { ReviewDataManager } from './data';
 import { ReviewWatcher } from './watch';
 import { UIManager } from './ui';
 import { reviewApp } from './app';
@@ -16,18 +16,6 @@ import { closeStatsModal } from './stats-ui';
 import { unloadReviewAnalysis } from './analysis/index';
 import { cancelActiveFlowDialog } from '../core/flow-dialog';
 import type { Rating } from './fsrs';
-import { setReviewPlanApi } from './reader-api';
-import { cardModeOf, ensureCardContent, queueCardPreparation, safeMakeAI, type CardMode, type CardPrepareContext } from './card-ai';
-import { getCardQuiz, saveCardQuiz } from './card-quiz-store';
-import {
-  addNote as planAddNote,
-  addNotes as planAddNotes,
-  hasNote as planHasNote,
-  removeNote as planRemoveNote,
-  addCards as planAddCards,
-  removeCard as planRemoveCard,
-  statusOf as planStatusOf,
-} from './plan-ops';
 
 let initialized = false;
 export let dataManager: ReviewDataManager | null = null;
@@ -38,48 +26,6 @@ let checkInterval: ReturnType<typeof setInterval> | null = null;
 let firstCheckTimer: ReturnType<typeof setTimeout> | null = null;
 /** P2：ensureReview 注册的全部退订函数（unload 统一调用，防卸载后监听残留双触发） */
 let unsubscribers: (() => void)[] = [];
-
-/**
- * 卡片 AI 内容的生成上下文。
- *
- * 闭包读模块级 dataManager：unloadReview 把它置空后，排队里的任务自然读到
- * null 各自退出，不会拿着已销毁的数据层继续写盘。
- */
-function cardPrepareCtx(mode: CardMode): CardPrepareContext {
-  return {
-    mode,
-    loadCard: async (key) => {
-      if (!dataManager) return null;
-      const items = await dataManager.loadItems();
-      return items.find((i) => i.filePath === key && isCardItem(i))?.card ?? null;
-    },
-    updateCard: (key, patch) => (dataManager ? dataManager.updateCard(key, patch) : Promise.resolve(false)),
-    loadQuiz: (key) => getCardQuiz(key),
-    saveQuiz: (key, questions) => saveCardQuiz(key, questions),
-    makeAI: safeMakeAI,
-  };
-}
-
-/**
- * 重新生成一张卡的 AI 内容（复习面板右键菜单 / 复习会话里的「重新生成」）。
- *
- * 当前方式是「展开全文」时按抽认卡生成——这档本来不用模型，但用户既然点了
- * 「重新生成」，多半是在为以后切回抽认卡做准备。
- *
- * 返回是否真的换了内容；生成失败返回 false（不清旧内容，卡片照常能复习）。
- */
-export async function regenerateCardContent(key: string): Promise<boolean> {
-  if (!dataManager) return false;
-  const items = await dataManager.loadItems();
-  const card = items.find((i) => i.filePath === key && isCardItem(i))?.card;
-  if (!card) return false;
-  const mode = cardModeOf();
-  try {
-    return await ensureCardContent(card, cardPrepareCtx(mode === 'plain' ? 'flashcard' : mode), true);
-  } catch {
-    return false;
-  }
-}
 
 /** 原生事件注册即记账（把 offref 语义包装成退订函数：真实 Obsidian 与测试 mock 均按 ref 注销） */
 function listen(source: any, event: string, cb: (...args: any[]) => void): void {
@@ -99,19 +45,6 @@ function pseudoMdFile(path: string): any {
   return { path, basename: stripMdExt(base), extension: 'md' };
 }
 
-/**
- * 外部（bz-reader）把卡片加进计划之后的收尾：行为流记账 + 面板即时补卡。
- *
- * 与 reviewRemoveCurrent 的 removed 事件同一套（issue 261 的小橘行为流）。
- * 面板刷新失败不影响「已经加进去了」这个事实，所以只吞掉、不往回抛——
- * 阅读器那边拿到异常只会弹一句看不懂的红字。
- */
-function notePlanAdded(path: string): void {
-  const title = stripMdExt(String(path ?? '').split('/').pop() || '');
-  emitDomainEvent('review', { kind: 'added', title });
-  if (uiManager) void uiManager.refreshPanel().catch(() => undefined);
-}
-
 /** 幂等初始化（对齐源码 entry：UI 构建 + 事件监听 + 2s 后首查 + 60s 周期） */
 export function ensureReview(app: App): void {
   if (initialized) return;
@@ -119,41 +52,6 @@ export function ensureReview(app: App): void {
   dataManager = new ReviewDataManager(app);
   // A11：注入共享单例（消除 reviewApp 自持/入口面板双实例并存；reviewApp.ensure 保留缺省兜底防独立调用时序）
   reviewApp.dataManager = dataManager;
-  /* 对外门面（bz-reader 的「划线 → 复习卡」，ADR-0294 同范式）：注册一次，卸载置空。
-     闭包读模块级 dataManager / uiManager，而不是捕获此刻的实例——unloadReview 会把
-     门面和这两个字段一起清掉，不存在「门面还活着、数据层已经没了」的窗口。 */
-  setReviewPlanApi({
-    isReady: () => !!dataManager,
-    hasNote: async (path) => (dataManager ? planHasNote(dataManager, path) : false),
-    addNote: async (path) => {
-      if (!dataManager) return { added: false, reason: 'notFound' };
-      const res = await planAddNote(dataManager, app, path);
-      if (res.added) notePlanAdded(path);
-      return res;
-    },
-    addNotes: async (paths) => {
-      if (!dataManager) return { added: 0, exists: 0, notFound: 0 };
-      const res = await planAddNotes(dataManager, app, paths);
-      if (res.added) notePlanAdded(paths[0] ?? '');
-      return res;
-    },
-    removeNote: async (path) => (dataManager ? planRemoveNote(dataManager, path) : false),
-    /* 划线卡：内容进排期表，不落文件。加完刷新面板，队列里立刻能看到。
-       AI 内容按当前复习方式在后台补（加入那一刻生成一次，之后固定）——
-       不在这里 await，阅读器该立刻拿到「已加入」。 */
-    addCards: async (cards) => {
-      if (!dataManager) return { added: 0, exists: 0, notFound: 0 };
-      const res = await planAddCards(dataManager, cards);
-      if (res.added) {
-        notePlanAdded(cards[0]?.key ?? '');
-        void queueCardPreparation(res.addedKeys ?? [], cardPrepareCtx(cardModeOf()));
-      }
-      return res;
-    },
-    removeCard: async (key) => (dataManager ? planRemoveCard(dataManager, key) : false),
-    /* 只读查询：不触发 notePlanAdded（没加东西），也不刷新面板 */
-    statusOf: async (paths) => (dataManager ? planStatusOf(dataManager, paths) : []),
-  });
   uiManager = new UIManager(app, dataManager);
   // item 12：R 展示与调度排期同口径——UI 层权重源接拟合权重 currentW()（拟合重算后自动生效）
   uiManager.wSource = () => reviewApp.currentW();
@@ -342,9 +240,6 @@ export async function reviewMarkRating(app: App, rating: Rating): Promise<void> 
 /** 卸载清理 */
 export function unloadReview(): void {
   initialized = false;
-  /* 先摘对外门面：外部插件在本域卸载后再调，拿到的必须是 null 而不是
-     一个还攥着旧 app 的闭包 */
-  setReviewPlanApi(null);
   if (firstCheckTimer) {
     clearTimeout(firstCheckTimer);
     firstCheckTimer = null;
