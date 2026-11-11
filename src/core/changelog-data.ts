@@ -56,6 +56,14 @@ export function releaseEntryCount(release: ChangelogRelease): number {
  */
 export const CHANGELOG_RELEASES: readonly ChangelogRelease[] = [
   {
+    version: '1.44.0',
+    date: '2026-11-11',
+    // 条目与 docs/note-v1.44.0.md 同稿（scripts/_gen-changelog.mjs 自动生成，勿手改）
+    added: [
+      { domain: 'AI 配置', text: '服务商下拉新增「自定义（OpenAI 兼容）」，插件没列出的服务填好地址与密钥即可使用。' },
+    ],
+  },
+  {
     version: '1.43.0',
     date: '2026-11-10',
     // 条目与 docs/note-v1.43.0.md 同稿（scripts/_gen-changelog.mjs 自动生成，勿手改）
