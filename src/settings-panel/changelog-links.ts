@@ -20,7 +20,7 @@ import { getApp } from '../core/app';
 import { openExternalUrl } from '../core/utils';
 import { REPO_URL } from '../core/about-group';
 import { QQ_GROUP_ICON, QQ_GROUP_NUMBER, openQqGroup, qqJoinOneClick } from '../core/qq-group';
-import { REWARD_NAMES } from '../core/reward-names';
+import { currentPatrons, onPatronsChange } from '../core/patron-list';
 
 /** 视频教程第 1P（与「关于」组同一集）。分集链接按 about-group 的口径不共享常量：
  *  三处入口各指一集，抽公共常量反而要再加一层「这是自己那集」的注释。 */
@@ -61,7 +61,9 @@ export function changelogLinksHtml(): string {
   const qqHint =
     `QQ 交流群 ${QQ_GROUP_NUMBER}` + (qqJoinOneClick() ? '' : ' · 点击复制群号');
   // 支持者角标：+人数。0 位时不画（别留一个孤零零的「+0」）。
-  const count = REWARD_NAMES.length;
+  // 名单是在线拉的（2026-11-11）：先按缓存画，拉到后 bindChangelogLinks 里的
+  // 订阅会原地补数字，不重开弹窗。
+  const count = currentPatrons().length;
   const badge = count > 0
     ? `<span class="bz-chg-count" aria-hidden="true">${count > 99 ? '99+' : `+${count}`}</span>`
     : '';
@@ -88,11 +90,41 @@ const ACTIONS: Record<ChangelogLinkAction, () => void> = {
   donate: () => void import('../core/reward-dialog').then((m) => m.openRewardDialog()),
 };
 
-/** 给 root 里所有 `.bz-chg-link` 绑行为（桌面页脚、手机浮动条各一套，各自都绑） */
-export function bindChangelogLinks(root: HTMLElement): void {
+/** 给 root 里所有 `.bz-chg-link` 绑行为（桌面页脚、手机浮动条各一套，各自都绑）。
+ *
+ *  返回值是**退订函数**：名单是在线拉的，这里订阅它的变化把「+人数」原地补上；
+ *  弹窗关掉不退订，每开一次就多挂一个订阅者（bz 的更新日志可以反复开关）。
+ */
+export function bindChangelogLinks(root: HTMLElement): () => void {
   root.querySelectorAll<HTMLButtonElement>('.bz-chg-link').forEach((btn) => {
     const act = btn.getAttribute('data-bz-act') as ChangelogLinkAction | null;
     const fn = act ? ACTIONS[act] : undefined;
     if (fn) btn.addEventListener('click', fn);
   });
+
+  const sync = (): void => {
+    const count = currentPatrons().length;
+    const label = count > 0 ? `支持作者（已有 ${count} 位）` : '支持作者';
+    root.querySelectorAll<HTMLElement>('[data-bz-act="donate"]').forEach((btn) => {
+      btn.title = label;
+      btn.setAttribute('aria-label', label);
+      const old = btn.querySelector('.bz-chg-count');
+      if (count > 0) {
+        const text = count > 99 ? '99+' : `+${count}`;
+        if (old) old.textContent = text;
+        else {
+          const span = document.createElement('span');
+          span.className = 'bz-chg-count';
+          span.setAttribute('aria-hidden', 'true');
+          span.textContent = text;
+          btn.appendChild(span);
+        }
+      } else {
+        old?.remove();
+      }
+    });
+  };
+
+  sync();
+  return onPatronsChange(sync);
 }

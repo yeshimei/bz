@@ -353,6 +353,34 @@
   color: #b6ab97;
 }
 
+/* 拉失败时的重试（2026-11-11 名单改在线）：浅金小胶囊，跟纸面同一族，
+   压在信笺横线之上；不抢「还没有人打赏」的位置，但点得到 */
+.bz-rw-retry {
+  position: relative;
+  margin-top: 12px;
+  padding: 3px 14px;
+  border: 1px solid rgba(189, 148, 64, .45);
+  border-radius: 999px;
+  background: var(--rw-paper);
+  font-family: var(--rw-serif);
+  font-size: 11px;
+  letter-spacing: .08em;
+  color: #8a7a5c;
+  cursor: pointer;
+}
+
+@media (hover: hover) {
+  .bz-rw-retry:hover {
+    border-color: rgba(189, 148, 64, .78);
+    color: #6f6248;
+  }
+}
+
+.bz-rw-retry:focus-visible {
+  outline: 2px solid rgba(189, 148, 64, .7);
+  outline-offset: 2px;
+}
+
 /* ---------- 落款（只剩那道金弧，字已删） ---------- */
 .bz-rw-foot {
   flex: none;

@@ -65,5 +65,6 @@ Obsidian 插件。域 = `src/<域>/`，`core` 是共享层。中文输出。
 | 发版前的 review 查什么、清单怎么给 | `docs/pre-release-review.md`（四维度检查点 / 编号规则 / 挑完之后） |
 | 分发仓库怎么重建（已退役，仅手动） | `scripts/push-assets.mjs`（保留份数 / 压平阈值）· ADR-0269 |
 | 资源地址、通道顺序 | `src/core/remote-base.ts`（唯一事实源；别在别处再写一份 slug 或域名）· ADR-0269 |
+| 支持者名单（加人 / 改名 / 删除） | `docs/patrons.json`（唯一源，格式见 `docs/patrons.md`）· `node scripts/patron-add.mjs` · skill `bz-reward`。**不再改代码、不再发版**：两个插件都在运行期读它 |
 
 本文与代码冲突时以代码为准，并顺手改这里。历史注释里的「铁律 N」是旧编号，按内容找，别按号找。
