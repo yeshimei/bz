@@ -25,6 +25,7 @@ import { normalizeVersion } from '../core/version';
 import { releaseEntryCount, type ChangelogEntry, type ChangelogRelease } from '../core/changelog-data';
 import { openSupportPrompt } from '../core/support-prompt';
 import { bindChangelogLinks, changelogLinksHtml } from './changelog-links';
+import { refreshPatrons } from '../core/patron-list';
 
 /** 三段定义（顺序即渲染顺序；标签与线上日志文档同一套措辞） */
 const SECTIONS: { key: 'added' | 'improved' | 'fixed'; label: string; cls: string }[] = [
@@ -288,12 +289,16 @@ export function openChangelogNote(
   popup.querySelectorAll<HTMLElement>('.bz-chgn-close').forEach((btn) => {
     btn.addEventListener('click', () => closeWithPrompt());
   });
-  bindChangelogLinks(popup);
+  /* 名单是在线拉的：先按缓存画出人数，拉到后 bindChangelogLinks 的订阅原地补；
+     打开时顺手拉一次（60 秒节流在 core/patron-list）。 */
+  const offLinks = bindChangelogLinks(popup);
+  void refreshPatrons();
 
   return {
     close: () => {
       // 卸载 / 测试收口走这条路：**不弹**提醒（插件正在消失，问一句没有意义）
       window.removeEventListener('resize', syncFade);
+      offLinks();
       modal.close();
     },
   };
