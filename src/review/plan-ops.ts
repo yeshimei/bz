@@ -18,6 +18,7 @@ import type { App } from 'obsidian';
 import type { ReviewCard, ReviewDataManager, ReviewItem } from './data';
 import type { ReviewAddOutcome, ReviewAddSummary, ReviewNoteStatus } from './reader-api';
 import { stripMdExt } from '../core/utils';
+import { removeCardQuiz } from './card-quiz-store';
 
 /** 路径规整：只留非空字符串（外部传 null / 数字 / 空白一律当没传） */
 function cleanPath(path: unknown): string {
@@ -117,6 +118,9 @@ export async function removeNote(dm: ReviewDataManager, path: string): Promise<b
  * 与加笔记的区别：**不查文件**。卡片的内容就在条目里，没有路径可查——查了
  * 反而会把每一张都判成「文件不存在」。空钥匙 / 空原文算无效，与「已存在」
  * 一样计入 skipped，让调用方能说清「加了几张、跳过几张」。
+ *
+ * 返回里带 `addedKeys`：调用方据此只给**这次新进来的**卡生成 AI 内容，
+ * 已经在计划里的卡不动（用户手点的「重新生成」才覆盖）。
  */
 export async function addCards(dm: ReviewDataManager, cards: readonly ReviewCard[]): Promise<ReviewAddSummary> {
   const all = Array.isArray(cards) ? cards : [];
@@ -126,16 +130,18 @@ export async function addCards(dm: ReviewDataManager, cards: readonly ReviewCard
   const res = await dm.addCards(list);
   out.added = res.added;
   out.exists = res.skipped;
+  if (res.keys.length) out.addedKeys = res.keys;
   return out;
 }
 
-/** 移出一张划线卡（按钥匙）；本来就不在返回 false */
+/** 移出一张划线卡（按钥匙）；本来就不在返回 false。题库跟着一起清 */
 export async function removeCard(dm: ReviewDataManager, key: string): Promise<boolean> {
   const k = cleanPath(key);
   if (!k) return false;
   const items = await dm.loadItems();
   if (!items.some((i) => i.filePath === k)) return false;
   await dm.removeItem(k);
+  await removeCardQuiz(k);
   return true;
 }
 

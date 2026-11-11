@@ -43,7 +43,9 @@ describe('划线卡入库', () => {
 
   it('addCards 写进 review.json，kind 是 card、内容原样带着', async () => {
     const res = await addCards(dm, [card()]);
-    expect(res).toEqual({ added: 1, exists: 0, notFound: 0 });
+    expect(res).toMatchObject({ added: 1, exists: 0, notFound: 0 });
+    /* 新增的钥匙要回传：复习域据此只给这次进来的卡生成 AI 内容 */
+    expect(res.addedKeys).toEqual([KEY]);
     const raw = JSON.parse(vault.files.get(REVIEW_FILE_PATH)!);
     expect(raw).toHaveLength(1);
     expect(raw[0].kind).toBe('card');
@@ -55,13 +57,14 @@ describe('划线卡入库', () => {
   it('钥匙重复跳过，不排第二次', async () => {
     await addCards(dm, [card()]);
     const res = await addCards(dm, [card()]);
-    expect(res).toEqual({ added: 0, exists: 1, notFound: 0 });
+    expect(res).toMatchObject({ added: 0, exists: 1, notFound: 0 });
+    expect(res.addedKeys).toBeUndefined();
     expect(JSON.parse(vault.files.get(REVIEW_FILE_PATH)!)).toHaveLength(1);
   });
 
   it('缺钥匙或缺原文的算无效，不写盘', async () => {
     const res = await addCards(dm, [card({ key: '' }), card({ text: '   ' }), card({ key: 'reader:b1:hl-2' })]);
-    expect(res).toEqual({ added: 1, exists: 0, notFound: 2 });
+    expect(res).toMatchObject({ added: 1, exists: 0, notFound: 2 });
     expect(JSON.parse(vault.files.get(REVIEW_FILE_PATH)!)).toHaveLength(1);
   });
 

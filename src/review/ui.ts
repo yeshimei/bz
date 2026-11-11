@@ -34,6 +34,7 @@ import { notice, notifyUndo, notifySaveError, notifyActionError } from '../core/
 import { openFlowDialog } from '../core/flow-dialog';
 import { escManager } from '../core/esc-manager';
 import { tryGetSettings, panelSizePersist } from '../core/settings-provider';
+import { createAI } from '../core/ai';
 import { isMobileEnv } from '../core/mobile';
 import { uiEmpty, mountIcons, uiResizable } from '../core/ui';
 import { DEFAULT_W } from './fsrs';
@@ -51,6 +52,9 @@ import { DEFAULT_R_THRESHOLD, isDueToday } from './queue';
 import { SprintSession } from './sprint';
 import type { SprintMode } from './sprint';
 import { CardSession } from './card-session';
+import { generateFlashcard } from './flashcard';
+import { cardModeOf, cardQuizRatioOf } from './card-ai';
+import { getCardQuiz } from './card-quiz-store';
 import { isCardItem } from './data';
 import type { QuizQuestion } from './quiz-core/manager';
 import type { QuizMasterUI } from './quiz-core/session';
@@ -414,8 +418,10 @@ export class UIManager {
    *
    * 与做题冲刺互斥——两者都接管 `#review-entries-container`，旧的不销毁就会
    * 出现「卡片盖着题面、ESC 关错层」。
+   *
+   * `onDone`：整轮卡片走完后调用（「开始本轮」据此接上同批的笔记复习）。
    */
-  async startCardRound(queue: ReviewItem[]): Promise<void> {
+  async startCardRound(queue: ReviewItem[], onDone?: () => void): Promise<void> {
     const container = this.entriesContainer;
     if (!container || !queue.length) return;
     const prevSprint = this.sprint;
@@ -423,16 +429,55 @@ export class UIManager {
     prevSprint?.destroy();
     this.cardSession?.destroy();
     const { reviewApp } = await import('./app');
+    const mode = cardModeOf();
     const session = new CardSession({
       app: this.app,
       host: container,
       queue,
+      mode,
+      ratio: cardQuizRatioOf(),
       onRate: async (item, rating) => {
         await reviewApp.markReview(item.filePath, rating, { autoPending: true });
       },
-      onExit: () => {
+      /* 抽认卡：卡上没有问句时（加入时没配 AI / 生成失败）现场补一次。
+         拿到合格问句就存进卡里，下次直接复用；拿不到返回 null，会话退回内置提示。 */
+      ask: async (item) => {
+        if (cardModeOf() !== 'flashcard') return null;
+        const card = item.card;
+        if (!card) return null;
+        const res = await generateFlashcard(card, () => createAI());
+        if (!res) return null;
+        try {
+          await this.dataManager?.updateCard(card.key, { qa: { q: res.q, a: res.a, at: Date.now() } });
+        } catch {
+          /* 存不上也照常显示这一次 */
+        }
+        return res;
+      },
+      /* 做题：题库在加入计划时就生成好了，这里只读 */
+      loadQuiz: async (item) => {
+        try {
+          return await getCardQuiz(item.filePath);
+        } catch {
+          return null;
+        }
+      },
+      /* 重新生成：两个 AI 方式都能点，生成完把卡的最新内容换进队列（否则界面还显示旧的） */
+      regenerate: async (item) => {
+        const { regenerateCardContent } = await import('./index');
+        const ok = await regenerateCardContent(item.filePath);
+        if (ok) {
+          const fresh = await this.dataManager?.loadItems();
+          const latest = fresh?.find((i) => i.filePath === item.filePath);
+          if (latest?.card) item.card = latest.card;
+        }
+        return ok;
+      },
+      onExit: (completed) => {
         this.cardSession = null;
         void this.showQueue();
+        /* 中途 ESC 退出不接下一批——用户明显是想停下 */
+        if (completed) onDone?.();
       },
     });
     this.cardSession = session;
@@ -537,11 +582,34 @@ export class UIManager {
   private async openDrawer(item: ReviewItem, x: number, y: number): Promise<void> {
     const { openItemMenu, resetItemMenuClickGuard } = await import('../core/item-actions');
     const actions: ItemActionLite[] = [
-      {
-        icon: 'file-text',
-        label: '打开原文',
-        onClick: () => void this.openItemFile(item),
-      },
+      /* 划线卡没有文件可开，换成「重新生成」——AI 内容在加入时生成一次，
+         想换只能从这里（或复习会话里）点。 */
+      ...(isCardItem(item)
+        ? [
+            {
+              icon: 'refresh-cw',
+              label: '重新生成 AI 内容',
+              onClick: () => {
+                void (async () => {
+                  const { regenerateCardContent } = await import('./index');
+                  notice('正在重新生成…', 'info');
+                  const ok = await regenerateCardContent(item.filePath);
+                  notice(
+                    ok ? '已重新生成' : '这次没生成出来（看看 AI 配置）',
+                    ok ? 'success' : 'warning'
+                  );
+                  if (ok) await this.refreshPanel();
+                })();
+              },
+            } as ItemActionLite,
+          ]
+        : [
+            {
+              icon: 'file-text',
+              label: '打开原文',
+              onClick: () => void this.openItemFile(item),
+            },
+          ]),
       {
         icon: 'history',
         label: '查看历史',
@@ -561,7 +629,14 @@ export class UIManager {
           // 删除免确认直达——不再弹 openFlowDialog 双保险
           void (async () => {
             try {
-              await this.dataManager.removeItem(item.filePath);
+              /* 卡片走 plan-ops.removeCard：顺手把题库一起清掉，不然反复加/移同一段
+                 划线，旧题会一直堆在 review-quiz.json 里 */
+              if (isCardItem(item)) {
+                const { removeCard } = await import('./plan-ops');
+                await removeCard(this.dataManager, item.filePath);
+              } else {
+                await this.dataManager.removeItem(item.filePath);
+              }
               await this.refreshPanel();
               const { reviewApp } = await import('./app');
               await reviewApp.applyReviewStyles(this.app);

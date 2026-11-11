@@ -6,7 +6,7 @@ import { stripMdExt } from '../core/utils';
 import type { App } from 'obsidian';
 import { notice, notifyUndo, notifySaveError, notifyActionError } from '../core/notice';
 import { onDomainEvent, emitDomainEvent } from '../core/domain-bus';
-import { ReviewDataManager } from './data';
+import { ReviewDataManager, isCardItem } from './data';
 import { ReviewWatcher } from './watch';
 import { UIManager } from './ui';
 import { reviewApp } from './app';
@@ -17,6 +17,8 @@ import { unloadReviewAnalysis } from './analysis/index';
 import { cancelActiveFlowDialog } from '../core/flow-dialog';
 import type { Rating } from './fsrs';
 import { setReviewPlanApi } from './reader-api';
+import { cardModeOf, ensureCardContent, queueCardPreparation, safeMakeAI, type CardMode, type CardPrepareContext } from './card-ai';
+import { getCardQuiz, saveCardQuiz } from './card-quiz-store';
 import {
   addNote as planAddNote,
   addNotes as planAddNotes,
@@ -36,6 +38,48 @@ let checkInterval: ReturnType<typeof setInterval> | null = null;
 let firstCheckTimer: ReturnType<typeof setTimeout> | null = null;
 /** P2：ensureReview 注册的全部退订函数（unload 统一调用，防卸载后监听残留双触发） */
 let unsubscribers: (() => void)[] = [];
+
+/**
+ * 卡片 AI 内容的生成上下文。
+ *
+ * 闭包读模块级 dataManager：unloadReview 把它置空后，排队里的任务自然读到
+ * null 各自退出，不会拿着已销毁的数据层继续写盘。
+ */
+function cardPrepareCtx(mode: CardMode): CardPrepareContext {
+  return {
+    mode,
+    loadCard: async (key) => {
+      if (!dataManager) return null;
+      const items = await dataManager.loadItems();
+      return items.find((i) => i.filePath === key && isCardItem(i))?.card ?? null;
+    },
+    updateCard: (key, patch) => (dataManager ? dataManager.updateCard(key, patch) : Promise.resolve(false)),
+    loadQuiz: (key) => getCardQuiz(key),
+    saveQuiz: (key, questions) => saveCardQuiz(key, questions),
+    makeAI: safeMakeAI,
+  };
+}
+
+/**
+ * 重新生成一张卡的 AI 内容（复习面板右键菜单 / 复习会话里的「重新生成」）。
+ *
+ * 当前方式是「展开全文」时按抽认卡生成——这档本来不用模型，但用户既然点了
+ * 「重新生成」，多半是在为以后切回抽认卡做准备。
+ *
+ * 返回是否真的换了内容；生成失败返回 false（不清旧内容，卡片照常能复习）。
+ */
+export async function regenerateCardContent(key: string): Promise<boolean> {
+  if (!dataManager) return false;
+  const items = await dataManager.loadItems();
+  const card = items.find((i) => i.filePath === key && isCardItem(i))?.card;
+  if (!card) return false;
+  const mode = cardModeOf();
+  try {
+    return await ensureCardContent(card, cardPrepareCtx(mode === 'plain' ? 'flashcard' : mode), true);
+  } catch {
+    return false;
+  }
+}
 
 /** 原生事件注册即记账（把 offref 语义包装成退订函数：真实 Obsidian 与测试 mock 均按 ref 注销） */
 function listen(source: any, event: string, cb: (...args: any[]) => void): void {
@@ -94,11 +138,16 @@ export function ensureReview(app: App): void {
       return res;
     },
     removeNote: async (path) => (dataManager ? planRemoveNote(dataManager, path) : false),
-    /* 划线卡：内容进排期表，不落文件。加完刷新面板，队列里立刻能看到 */
+    /* 划线卡：内容进排期表，不落文件。加完刷新面板，队列里立刻能看到。
+       AI 内容按当前复习方式在后台补（加入那一刻生成一次，之后固定）——
+       不在这里 await，阅读器该立刻拿到「已加入」。 */
     addCards: async (cards) => {
       if (!dataManager) return { added: 0, exists: 0, notFound: 0 };
       const res = await planAddCards(dataManager, cards);
-      if (res.added) notePlanAdded(cards[0]?.key ?? '');
+      if (res.added) {
+        notePlanAdded(cards[0]?.key ?? '');
+        void queueCardPreparation(res.addedKeys ?? [], cardPrepareCtx(cardModeOf()));
+      }
       return res;
     },
     removeCard: async (key) => (dataManager ? planRemoveCard(dataManager, key) : false),

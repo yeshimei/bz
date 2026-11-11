@@ -27,6 +27,13 @@ export interface ReviewAddSummary {
   exists: number;
   /** 文件不存在或路径为空的条数 */
   notFound: number;
+  /**
+   * 本次真正新进来的卡片钥匙（只对 addCards 有意义）。
+   *
+   * 复习域用它决定「给哪几张生成 AI 内容」——已经在计划里的卡不重复生成，
+   * 用户手点的「重新生成」才覆盖。调用方不读这个字段也不影响既有行为。
+   */
+  addedKeys?: string[];
 }
 
 /**

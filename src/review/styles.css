@@ -571,3 +571,38 @@
 .bz-rv-sweep { position: absolute; inset: 0; overflow: hidden; border-radius: inherit; pointer-events: none; z-index: 5; }
 .bz-rv-sweep u { position: absolute; top: 0; bottom: 0; left: 0; width: 30%; background: linear-gradient(90deg, transparent, rgba(255,255,255,.16), transparent); }
 .bz-rv-failflash { position: absolute; inset: 0; pointer-events: none; z-index: 6; background: radial-gradient(ellipse at center, transparent 40%, color-mix(in srgb, var(--bz-danger) 36%, transparent) 100%); }
+
+/* ==================== 划线卡复习会话（2026-11-11，src/review/card-session.ts） ====================
+   卡片内容全在排期表里，复习时不打开任何文件。三种方式（抽认卡 / 做题 / 展开全文）
+   共用这层壳；选项按钮直接复用做题家的 .quiz-option-btn（含 correct/wrong 配色），
+   所以此处只补布局与「问句 / 原文」的排版。 */
+.bz-cs { display: flex; flex-direction: column; height: 100%; min-height: 0; gap: var(--bz-space-md); padding: var(--bz-space-md) 20px var(--bz-space-lg); box-sizing: border-box; }
+.bz-cs-head { display: flex; align-items: center; gap: var(--bz-space-sm); font-size: var(--bz-font-caption); color: var(--bz-text-3); }
+.bz-cs-pos { font-variant-numeric: tabular-nums; flex: none; }
+.bz-cs-src { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.bz-cs-regen { flex: none; height: 26px; padding: 0 10px; font-size: var(--bz-font-caption); }
+.bz-cs-body { flex: 1; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: var(--bz-space-md); }
+.bz-cs-prompt { margin: 0; font-size: var(--bz-font-emphasis); line-height: 1.75; color: var(--bz-text-1); }
+.bz-cs-prompt.is-loading { color: var(--bz-text-3); font-size: var(--bz-font-meta); }
+.bz-cs-text { margin: 0; padding: 10px 14px; border-left: 3px solid var(--bz-brand); background: var(--bz-surface-2); border-radius: 0 var(--bz-radius-sm) var(--bz-radius-sm) 0; font-size: var(--bz-font-label); line-height: 1.85; white-space: pre-wrap; overflow-wrap: anywhere; color: var(--bz-text-1); }
+.bz-cs-idea { margin: 0; font-size: var(--bz-font-meta); color: var(--bz-text-2); line-height: 1.65; }
+.bz-cs-back { align-self: flex-start; font-size: var(--bz-font-caption); color: var(--bz-brand); text-decoration: none; }
+.bz-cs-foot { flex: none; display: flex; flex-direction: column; gap: var(--bz-space-sm); }
+.bz-cs-rate { display: flex; gap: var(--bz-space-sm); flex-wrap: wrap; }
+.bz-cs-rate .bz-btn { flex: 1; min-width: 92px; height: 40px; }
+.bz-cs-hint { font-size: var(--bz-font-caption); color: var(--bz-text-3); }
+.bz-cs-quiz-head { font-size: var(--bz-font-caption); color: var(--bz-text-3); }
+.bz-cs-question { margin: 0; font-size: var(--bz-font-label); font-weight: 500; line-height: 1.7; color: var(--bz-text-1); }
+.bz-cs-options { display: flex; flex-direction: column; gap: 6px; }
+.bz-cs-opt { margin: 0; }
+.bz-cs-opt:disabled { cursor: default; }
+.bz-cs-opt-i { flex: none; width: 20px; height: 20px; border-radius: 50%; background: var(--bz-surface-3); font-size: var(--bz-font-caption); display: inline-flex; align-items: center; justify-content: center; }
+.bz-cs-opt-t { flex: 1; min-width: 0; }
+.bz-cs-explain { margin: 0; padding: 8px 10px; border-radius: var(--bz-radius-sm); background: var(--bz-surface-2); font-size: var(--bz-font-caption); line-height: 1.65; color: var(--bz-text-2); }
+.bz-cs-quiz-done { display: flex; flex-direction: column; gap: 6px; }
+.bz-cs-quiz-acc { margin: 0; font-size: var(--bz-font-emphasis); font-weight: 600; color: var(--bz-text-1); }
+.bz-cs-quiz-rating { margin: 0; font-size: var(--bz-font-meta); color: var(--bz-text-2); }
+@media (max-width: 768px) {
+  .bz-cs { padding: var(--bz-space-md) var(--bz-space-md) var(--bz-space-lg); }
+  .bz-cs-rate .bz-btn { min-width: 0; }
+}

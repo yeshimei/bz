@@ -242,9 +242,10 @@ export class ReviewDataManager {
    * 与 addItems 同一套口径：单趟 RMW、已存在跳过不抛、返回 { added, skipped }。
    * 钥匙重复就跳过——同一段划线点两次不该排两次。
    */
-  addCards(cards: readonly ReviewCard[]): Promise<{ added: number; skipped: number }> {
+  addCards(cards: readonly ReviewCard[]): Promise<{ added: number; skipped: number; keys: string[] }> {
     return this.mutate((items) => {
       const have = new Set(items.map((i) => i.filePath));
+      const keys: string[] = [];
       let added = 0;
       let skipped = 0;
       for (const raw of Array.isArray(cards) ? cards : []) {
@@ -256,9 +257,10 @@ export class ReviewDataManager {
         }
         have.add(key);
         items.push(this.newCardItem({ ...raw, key, text }));
+        keys.push(key);
         added++;
       }
-      return { added, skipped };
+      return { added, skipped, keys };
     });
   }
 

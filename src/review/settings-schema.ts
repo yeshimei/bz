@@ -15,6 +15,7 @@ import { getSettings, saveSettings } from '../core/settings-provider';
 import type { SettingsSchema } from '../core/settings-schema';
 import type { ReviewItem } from './data';
 import type { ReviewDataManager } from './data';
+import { cardModeOf } from './card-ai';
 
 export function reviewSettingsSchema(deps: { app: App; dataManager: ReviewDataManager }): SettingsSchema {
   // enableAutoNotify 常驻轮询在 main.ts onload 注册、运行时按设置实时读值（app.ts checkOverdueAndNotify
@@ -36,6 +37,62 @@ export function reviewSettingsSchema(deps: { app: App; dataManager: ReviewDataMa
         rows: [
           { type: 'toggle', name: '到期提醒', desc: '有笔记到期待复习时自动弹出提醒', binding: { key: 'enableAutoNotify' } },
           { type: 'toggle', name: '新笔记加入提醒', desc: '新笔记被自动加入时弹出提示，多条合并成一条', binding: { key: 'reviewAutoAddNotice' } },
+        ],
+      },
+      {
+        /* 划线卡（2026-11-11）：一条划线就是一张卡，复习时不开任何文件。
+           三档方式由复习计划这边定：AI 抽认卡（问句当提示面）、AI 做题
+           （四选一，每轮抽三分之一）、展开全文（不碰 AI，自己评难度）。 */
+        icon: 'layers',
+        name: '划线卡',
+        rows: [
+          {
+            type: 'select',
+            name: '复习方式',
+            desc: '划线卡按哪种方式复习',
+            help:
+              '三种都只复习这张卡自己的内容，不打开任何笔记。' +
+              '「AI 抽认卡」先给一句不能照抄原文的问句，想不起来再看原文；' +
+              '「AI 做题」按划线长短生成 3~15 道四选一，每轮只抽其中一部分；' +
+              '「展开全文」不调用 AI，直接把整段话摆出来，你自己评难度。' +
+              'AI 内容在加入复习计划时生成一次，之后固定在卡上；想换的话，在复习面板里右键那张卡点「重新生成」。',
+            binding: {
+              // 设置里存的是三个字面量之一，schema 的 key 只接 string 型键，所以自管读写
+              get: () => cardModeOf(),
+              set: (v: string) => {
+                (getSettings() as any).reviewCardMode = v === 'quiz' || v === 'plain' ? v : 'flashcard';
+              },
+              save: () => saveSettings(),
+            },
+            options: [
+              { value: 'flashcard', label: 'AI 抽认卡' },
+              { value: 'quiz', label: 'AI 做题' },
+              { value: 'plain', label: '展开全文（不用 AI）' },
+            ],
+          },
+          {
+            type: 'select',
+            name: '每轮抽题比例',
+            desc: '题库固定，每轮只抽其中一部分',
+            binding: {
+              get: () =>
+                String(Math.min(4, Math.max(2, Math.round(Number((getSettings() as any).reviewCardQuizRatio) || 3)))),
+              set: (v: string) => {
+                (getSettings() as any).reviewCardQuizRatio = Math.min(
+                  4,
+                  Math.max(2, Math.round(Number(v) || 3))
+                );
+              },
+              save: () => saveSettings(),
+            },
+            options: [
+              { value: '2', label: '一半' },
+              { value: '3', label: '三分之一' },
+              { value: '4', label: '四分之一' },
+            ],
+            visibleWhen: (s) => (s as any).reviewCardMode === 'quiz',
+            isChild: true,
+          },
         ],
       },
       {
