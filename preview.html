@@ -1,0 +1,473 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>bz · 包仔 — 把生活收进 Obsidian</title>
+<style>
+  :root{
+    --paper:#F7F3EC;
+    --paper-2:#EFE9DE;
+    --white:#FFFDF9;
+    --ink:#1F1D1A;
+    --ink-2:#57514A;
+    --muted:#8C857B;
+    --line:#DED7CB;
+    --line-soft:#E9E3D8;
+    --accent:#E8703F;
+    --accent-deep:#C9562B;
+    --radius:22px;
+    --serif:"Songti SC","Noto Serif SC","Source Han Serif SC","STSong","SimSun",Georgia,serif;
+    --sans:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{
+    background:var(--paper);color:var(--ink);
+    font-family:var(--sans);font-size:16px;line-height:1.7;
+    -webkit-font-smoothing:antialiased;overflow-x:hidden;
+  }
+  body::before{
+    content:"";position:fixed;inset:0;pointer-events:none;z-index:0;
+    background:
+      radial-gradient(900px 520px at 12% -8%, rgba(232,112,63,.12), transparent 62%),
+      radial-gradient(820px 620px at 88% 2%, rgba(196,166,116,.14), transparent 62%);
+  }
+  a{color:inherit;text-decoration:none}
+  img{display:block;max-width:100%}
+
+  /* ---------- nav ---------- */
+  .nav{
+    position:sticky;top:0;z-index:50;
+    background:rgba(247,243,236,.82);
+    backdrop-filter:blur(16px) saturate(1.4);
+    -webkit-backdrop-filter:blur(16px) saturate(1.4);
+    border-bottom:1px solid var(--line-soft);
+  }
+  .nav-inner{max-width:1200px;margin:0 auto;padding:13px 32px;display:flex;align-items:center;justify-content:space-between;gap:24px}
+  .brand{display:flex;align-items:center;gap:11px;font-weight:600;letter-spacing:.02em;font-size:16px}
+  .brand img{width:30px;height:30px;border-radius:8px}
+  .nav-links{display:flex;gap:30px;font-size:14px;color:var(--ink-2)}
+  .nav-links a{transition:color .25s}
+  .nav-links a:hover{color:var(--accent)}
+  .nav-cta{font-size:13.5px;padding:9px 18px;border-radius:999px;background:var(--ink);color:var(--paper);transition:.3s}
+  .nav-cta:hover{background:var(--accent)}
+
+  /* ---------- hero ---------- */
+  .hero{position:relative;z-index:1;max-width:1200px;margin:0 auto;padding:104px 32px 0;text-align:center}
+  .eyebrow{font-size:11.5px;letter-spacing:.24em;text-transform:uppercase;color:var(--muted);margin-bottom:30px}
+  .eyebrow i{font-style:normal;color:var(--accent);margin:0 10px}
+  h1{font-family:var(--serif);font-weight:600;font-size:clamp(44px,6.6vw,84px);line-height:1.06;letter-spacing:-.02em}
+  h1 em{font-style:normal;color:var(--accent);position:relative}
+  h1 em::after{
+    content:"";position:absolute;left:-2%;right:-2%;bottom:.06em;height:.09em;
+    background:linear-gradient(90deg,rgba(232,112,63,0),rgba(232,112,63,.35),rgba(232,112,63,0));
+    border-radius:99px;
+  }
+  .lede{max-width:640px;margin:30px auto 0;color:var(--ink-2);font-size:17px;line-height:1.85}
+  .actions{display:flex;gap:14px;justify-content:center;margin-top:40px;flex-wrap:wrap}
+  .btn{display:inline-flex;align-items:center;gap:9px;padding:14px 28px;border-radius:999px;font-size:15px;font-weight:500;transition:transform .35s cubic-bezier(.2,.8,.2,1),background .3s,color .3s,border-color .3s}
+  .btn-primary{background:var(--ink);color:var(--paper)}
+  .btn-primary:hover{background:var(--accent);color:#fff;transform:translateY(-2px)}
+  .btn-ghost{border:1px solid var(--line);color:var(--ink);background:rgba(255,253,249,.5)}
+  .btn-ghost:hover{border-color:var(--ink);transform:translateY(-2px)}
+  .hero-shot{max-width:1080px;margin:76px auto 0;position:relative}
+  .hero-shot::after{
+    content:"";position:absolute;inset:8% 6% -4%;z-index:-1;
+    background:radial-gradient(closest-side,rgba(31,29,26,.16),transparent 78%);
+    filter:blur(40px);
+  }
+  .hero-shot img{
+    width:100%;border-radius:18px;border:1px solid var(--line);
+    box-shadow:0 70px 130px -70px rgba(31,29,26,.55),0 24px 50px -34px rgba(31,29,26,.3);
+  }
+  .shot-caption{margin-top:18px;font-size:12.5px;color:var(--muted);letter-spacing:.06em}
+
+  /* ---------- strip ---------- */
+  .strip{
+    position:relative;z-index:1;max-width:1200px;margin:96px auto 0;padding:56px 32px;
+    display:grid;grid-template-columns:repeat(4,1fr);
+    border-top:1px solid var(--line-soft);border-bottom:1px solid var(--line-soft);
+  }
+  .strip > div{text-align:center;padding:0 18px;border-right:1px solid var(--line-soft)}
+  .strip > div:last-child{border-right:none}
+  .strip b{display:block;font-family:var(--serif);font-size:30px;font-weight:600;line-height:1.2;letter-spacing:-.01em}
+  .strip span{display:block;margin-top:8px;font-size:12.5px;color:var(--muted);letter-spacing:.04em}
+
+  /* ---------- sections ---------- */
+  .section{position:relative;z-index:1;max-width:1200px;margin:0 auto;padding:104px 32px}
+  .section-head{display:flex;align-items:flex-end;justify-content:space-between;gap:32px;margin-bottom:48px}
+  .section-head h2{font-family:var(--serif);font-size:clamp(30px,3.6vw,46px);font-weight:600;letter-spacing:-.015em;line-height:1.15}
+  .section-head p{color:var(--muted);font-size:14px;max-width:300px;text-align:right;line-height:1.7}
+  .index{display:block;font-size:11.5px;letter-spacing:.22em;color:var(--accent);margin-bottom:16px;font-weight:500}
+
+  /* ---------- grid ---------- */
+  .grid{display:grid;grid-template-columns:repeat(2,1fr);gap:22px}
+  .card{
+    position:relative;background:var(--white);border:1px solid var(--line-soft);
+    border-radius:var(--radius);padding:12px;overflow:hidden;
+    transition:transform .55s cubic-bezier(.2,.8,.2,1),box-shadow .55s,border-color .3s;
+  }
+  .card:hover{transform:translateY(-6px);box-shadow:0 34px 54px -34px rgba(31,29,26,.42);border-color:var(--line)}
+  .card img{width:100%;aspect-ratio:16/10;object-fit:cover;object-position:center top;border-radius:13px;background:var(--paper-2)}
+  .card-body{padding:19px 10px 14px;display:flex;align-items:baseline;justify-content:space-between;gap:16px}
+  .card-body h3{font-size:16.5px;font-weight:600;letter-spacing:.01em}
+  .card-body p{font-size:13px;color:var(--muted);margin-top:3px;line-height:1.6}
+  .card .tag{
+    position:absolute;top:22px;right:22px;z-index:2;
+    background:rgba(31,29,26,.62);color:#F7F3EC;
+    font-size:10.5px;letter-spacing:.08em;padding:5px 10px;border-radius:999px;
+    backdrop-filter:blur(6px);opacity:0;transform:translateY(-4px);
+    transition:opacity .35s,transform .35s;
+  }
+  .card:hover .tag{opacity:1;transform:none}
+
+  /* ---------- dark ---------- */
+  .dark{position:relative;z-index:1;background:var(--ink);color:#EFE9DE;margin-top:40px}
+  .dark .section{padding:118px 32px}
+  .dark .section-head h2{color:#FAF6EF}
+  .dark .section-head p{color:#8E8578}
+  .dark .index{color:var(--accent)}
+  .values{display:grid;grid-template-columns:repeat(2,1fr);gap:60px 72px}
+  .value .num{font-family:var(--serif);font-size:12.5px;letter-spacing:.2em;color:var(--accent)}
+  .value h3{font-family:var(--serif);font-size:25px;font-weight:600;margin:14px 0 12px;letter-spacing:-.01em}
+  .value p{color:#ADA498;font-size:14.5px;line-height:1.85;max-width:430px}
+
+  /* ---------- steps ---------- */
+  .steps{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;counter-reset:s}
+  .step{background:var(--white);border:1px solid var(--line-soft);border-radius:18px;padding:30px 26px 28px;position:relative;transition:border-color .3s,transform .4s}
+  .step:hover{border-color:var(--line);transform:translateY(-3px)}
+  .step .n{font-family:var(--serif);font-size:12.5px;letter-spacing:.18em;color:var(--accent)}
+  .step h3{font-size:17px;font-weight:600;margin:14px 0 8px}
+  .step p{font-size:13.5px;color:var(--muted);line-height:1.75}
+  code{
+    background:var(--paper-2);padding:2px 7px;border-radius:6px;
+    font-family:"SF Mono",ui-monospace,Consolas,monospace;font-size:.86em;color:var(--accent-deep);
+  }
+  kbd{
+    display:inline-block;padding:2px 7px;border:1px solid var(--line);border-bottom-width:2px;
+    border-radius:6px;background:var(--white);font-size:12px;font-family:var(--sans);color:var(--ink-2);
+  }
+
+  /* ---------- eco ---------- */
+  .eco{
+    display:grid;grid-template-columns:1.15fr .85fr;gap:0;align-items:stretch;
+    background:var(--white);border:1px solid var(--line-soft);border-radius:var(--radius);overflow:hidden;
+  }
+  .eco-copy{padding:46px 48px}
+  .eco-copy .index{margin-bottom:18px}
+  .eco-copy h3{font-family:var(--serif);font-size:32px;font-weight:600;letter-spacing:-.015em}
+  .eco-copy p{color:var(--ink-2);font-size:15px;line-height:1.85;margin-top:16px;max-width:430px}
+  .eco-link{display:inline-flex;align-items:center;gap:8px;margin-top:28px;font-size:14px;color:var(--accent-deep);border-bottom:1px solid rgba(201,86,43,.35);padding-bottom:3px;transition:gap .3s}
+  .eco-link:hover{gap:14px}
+  .eco-art{
+    background:linear-gradient(145deg,#EFE6D6,#E3D5BF);
+    display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;
+  }
+  .eco-art::before{
+    content:"";position:absolute;width:300px;height:300px;border-radius:50%;
+    border:1px solid rgba(31,29,26,.12);
+  }
+  .eco-art::after{
+    content:"";position:absolute;width:190px;height:190px;border-radius:50%;
+    border:1px solid rgba(31,29,26,.16);
+  }
+  .eco-art span{position:relative;z-index:1;font-family:var(--serif);font-size:64px;color:rgba(31,29,26,.7);letter-spacing:-.04em}
+
+  /* ---------- support ---------- */
+  .support{text-align:center}
+  .support .section-head{display:block;margin-bottom:36px}
+  .support .section-head p{text-align:center;margin:14px auto 0;max-width:480px}
+  .qr{
+    display:inline-block;padding:14px;background:var(--white);
+    border:1px solid var(--line-soft);border-radius:20px;
+    box-shadow:0 30px 50px -40px rgba(31,29,26,.5);
+  }
+  .qr img{width:196px;border-radius:8px}
+  .support .fine{margin-top:24px;font-size:13px;color:var(--muted);line-height:1.9}
+  .support .fine a{color:var(--accent-deep);border-bottom:1px solid rgba(201,86,43,.3)}
+
+  /* ---------- footer ---------- */
+  footer{position:relative;z-index:1;background:var(--ink);color:#7E766B;margin-top:40px;overflow:hidden}
+  .foot-inner{max-width:1200px;margin:0 auto;padding:72px 32px 40px}
+  .foot-top{display:flex;justify-content:space-between;align-items:flex-start;gap:40px;flex-wrap:wrap}
+  .foot-brand{display:flex;align-items:center;gap:12px;color:#EFE9DE;font-size:15px}
+  .foot-brand img{width:30px;border-radius:8px}
+  .foot-links{display:flex;gap:34px;font-size:13.5px;flex-wrap:wrap}
+  .foot-links a{transition:color .25s}
+  .foot-links a:hover{color:var(--accent)}
+  .foot-mark{
+    font-family:var(--serif);font-size:clamp(110px,17vw,230px);line-height:.82;
+    letter-spacing:-.05em;color:#26231E;margin-top:56px;user-select:none;
+  }
+  .foot-bottom{
+    margin-top:34px;padding-top:24px;border-top:1px solid #2E2A24;
+    display:flex;justify-content:space-between;gap:20px;font-size:12px;flex-wrap:wrap;
+  }
+
+  /* ---------- reveal ---------- */
+  .reveal{opacity:0;transform:translateY(30px);transition:opacity .9s cubic-bezier(.2,.7,.2,1),transform .9s cubic-bezier(.2,.7,.2,1)}
+  .reveal.in{opacity:1;transform:none}
+  .reveal:nth-child(2){transition-delay:.06s}
+
+  @media (max-width:980px){
+    .grid,.values,.steps{grid-template-columns:1fr}
+    .eco{grid-template-columns:1fr}
+    .eco-art{min-height:220px}
+    .strip{grid-template-columns:repeat(2,1fr);row-gap:34px}
+    .strip > div:nth-child(2){border-right:none}
+    .nav-links{display:none}
+    .section-head{flex-direction:column;align-items:flex-start;gap:14px}
+    .section-head p{text-align:left}
+    .hero{padding-top:72px}
+  }
+</style>
+</head>
+<body>
+
+<header class="nav">
+  <div class="nav-inner">
+    <a class="brand" href="#top">
+      <img src="docs/images/mark.svg" alt="">
+      <span>包仔 bz</span>
+    </a>
+    <nav class="nav-links">
+      <a href="#ui">界面</a>
+      <a href="#why">为什么</a>
+      <a href="#install">安装</a>
+      <a href="#eco">生态</a>
+      <a href="#support">支持作者</a>
+    </nav>
+    <a class="nav-cta" href="https://github.com/yeshimei/bz/releases">下载</a>
+  </div>
+</header>
+
+<main id="top">
+
+  <section class="hero">
+    <p class="eyebrow">Obsidian 插件<i>·</i>本地优先<i>·</i>免费开源</p>
+    <h1>散落的生活，<br>值得被<em>收好</em>。</h1>
+    <p class="lede">日记、书影音、收藏、知识、密码与番茄钟——十几个域共用一套数据，<br>全部躺在你自己的 vault 里，不上传，不注册。</p>
+    <div class="actions">
+      <a class="btn btn-primary" href="https://github.com/yeshimei/bz/releases">下载插件</a>
+      <a class="btn btn-ghost" href="https://www.bilibili.com/video/BV1vNsZ6pE7i/">看视频了解</a>
+    </div>
+    <figure class="hero-shot">
+      <img src="docs/images/01-home.png" alt="内容首页">
+      <figcaption class="shot-caption">内容首页 · 所有入口都在这里</figcaption>
+    </figure>
+  </section>
+
+  <section class="strip">
+    <div><b>1</b><span>个 vault，装下所有数据</span></div>
+    <div><b>0</b><span>账号，不注册不联云</span></div>
+    <div><b>2</b><span>端，桌面与移动</span></div>
+    <div><b>MIT</b><span>许可，开放可改</span></div>
+  </section>
+
+  <section class="section" id="ui">
+    <div class="section-head">
+      <div>
+        <span class="index">01 — INTERFACE</span>
+        <h2>一扇扇窗，<br>同一种呼吸。</h2>
+      </div>
+      <p>每个域都有自己的气质，但排版、留白与手感是同一套。悬停可看视频教程。</p>
+    </div>
+
+    <div class="grid">
+      <article class="card reveal">
+        <span class="tag">▶ 视频</span>
+        <a href="https://www.bilibili.com/video/BV1W44i6yETx"><img src="docs/images/02-diary.jpg" alt="日记本"></a>
+        <div class="card-body"><div><h3>日记本</h3><p>一天能写多条，按月份装订成册</p></div></div>
+      </article>
+      <article class="card reveal">
+        <img src="docs/images/08-belongings.png" alt="归物本">
+        <div class="card-body"><div><h3>归物本</h3><p>在库件数、日均成本与流转状态</p></div></div>
+      </article>
+      <article class="card reveal">
+        <img src="docs/images/03-library.png" alt="书库">
+        <div class="card-body"><div><h3>书库</h3><p>书脊按时长和字数长，按题材装区</p></div></div>
+      </article>
+      <article class="card reveal">
+        <span class="tag">▶ 视频</span>
+        <a href="https://www.bilibili.com/video/BV15hxH6QEgM/"><img src="docs/images/16-cinema.jpg" alt="影院"></a>
+        <div class="card-body"><div><h3>影院</h3><p>想看 / 在看 / 已看，海报自动补齐</p></div></div>
+      </article>
+      <article class="card reveal">
+        <img src="docs/images/04-games.jpg" alt="游戏库">
+        <div class="card-body"><div><h3>游戏库</h3><p>从 Steam 拉时长，按游玩排行</p></div></div>
+      </article>
+      <article class="card reveal">
+        <span class="tag">▶ 视频</span>
+        <a href="https://www.bilibili.com/video/BV1pvxe6qEkf/"><img src="docs/images/06-clips.png" alt="剪藏本"></a>
+        <div class="card-body"><div><h3>剪藏本</h3><p>网页剪藏 + 订阅源未读流</p></div></div>
+      </article>
+      <article class="card reveal">
+        <img src="docs/images/07-collections.png" alt="收藏本">
+        <div class="card-body"><div><h3>收藏本</h3><p>链接按标签贴成便签，可归档可置顶</p></div></div>
+      </article>
+      <article class="card reveal">
+        <span class="tag">▶ 视频</span>
+        <a href="https://www.bilibili.com/video/BV1bR4s6dEjH"><img src="docs/images/09-knowledge-box.png" alt="知识盒"></a>
+        <div class="card-body"><div><h3>知识盒</h3><p>名词、段落、图版、影像四类文献</p></div></div>
+      </article>
+      <article class="card reveal">
+        <img src="docs/images/10-second-brain.png" alt="第二大脑">
+        <div class="card-body"><div><h3>第二大脑</h3><p>向量库规模、来源分布与索引健康</p></div></div>
+      </article>
+      <article class="card reveal">
+        <img src="docs/images/05-review.png" alt="复习计划">
+        <div class="card-body"><div><h3>复习计划</h3><p>逾期 / 今天 / 未来三栏排队</p></div></div>
+      </article>
+      <article class="card reveal">
+        <img src="docs/images/12-vault.png" alt="保险库">
+        <div class="card-body"><div><h3>保险库</h3><p>解密预览、取出还原、销毁</p></div></div>
+      </article>
+      <article class="card reveal">
+        <img src="docs/images/13-passwords.png" alt="密码本">
+        <div class="card-body"><div><h3>密码本</h3><p>平台 / 账号 / 详情三栏</p></div></div>
+      </article>
+      <article class="card reveal">
+        <img src="docs/images/14-tool-dock.png" alt="工具坞">
+        <div class="card-body"><div><h3>工具坞</h3><p>外部工具的运行与观察</p></div></div>
+      </article>
+      <article class="card reveal">
+        <img src="docs/images/15-settings.png" alt="设置">
+        <div class="card-body"><div><h3>设置</h3><p>全域设置聚在一处</p></div></div>
+      </article>
+      <article class="card reveal">
+        <img src="docs/images/11-pomodoro.png" alt="番茄钟">
+        <div class="card-body"><div><h3>番茄钟</h3><p>关掉窗口，计时照走</p></div></div>
+      </article>
+      <article class="card reveal">
+        <img src="docs/images/17-faces.png" alt="脸谱">
+        <div class="card-body"><div><h3>脸谱</h3><p>人物档案与随记附件，同一把主密码</p></div></div>
+      </article>
+    </div>
+  </section>
+
+  <section class="dark" id="why">
+    <div class="section">
+      <div class="section-head">
+        <div>
+          <span class="index">02 — WHY BZ</span>
+          <h2>它不是仪表盘，<br>是一间屋子。</h2>
+        </div>
+        <p>仪表盘让你看数字，屋子让你待着。bz 按后者做。</p>
+      </div>
+      <div class="values">
+        <div class="value reveal">
+          <div class="num">01 / 本地</div>
+          <h3>数据住在你自己的磁盘</h3>
+          <p>Markdown 与附件，就躺在 vault 的文件夹里。没有账号，没有云端，断网照样打开，十年后还能打开。</p>
+        </div>
+        <div class="value reveal">
+          <div class="num">02 / 相连</div>
+          <h3>十几个域，一套数据</h3>
+          <p>日记里提的书会进书库，书里划的句子会进知识盒，知识盒的引用能回到原文。它们互相认得。</p>
+        </div>
+        <div class="value reveal">
+          <div class="num">03 / 纸感</div>
+          <h3>照着纸的质感做</h3>
+          <p>书脊、便签、装订线、翻页的手感。不是圆角卡片的堆砌，是把纸质物件的秩序借进屏幕。</p>
+        </div>
+        <div class="value reveal">
+          <div class="num">04 / 一人</div>
+          <h3>一个人维护的礼物</h3>
+          <p>免费、无广告、MIT。更新与教程视频都由作者自己来，不追热点，只把这间屋子收拾干净。</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="install">
+    <div class="section-head">
+      <div>
+        <span class="index">03 — INSTALL</span>
+        <h2>三分钟，<br>不用装任何工具。</h2>
+      </div>
+      <p>支持 Obsidian 1.4.0 及以上，桌面与移动端同一套代码。</p>
+    </div>
+    <div class="steps">
+      <div class="step reveal">
+        <div class="n">STEP 01</div>
+        <h3>下载</h3>
+        <p>到 Releases 取最新的 <code>bz-&lt;版本&gt;.zip</code>。</p>
+      </div>
+      <div class="step reveal">
+        <div class="n">STEP 02</div>
+        <h3>解压</h3>
+        <p>放进 vault 的 <code>.obsidian/plugins/</code>，得到一个 <code>bz/</code> 文件夹。</p>
+      </div>
+      <div class="step reveal">
+        <div class="n">STEP 03</div>
+        <h3>启用</h3>
+        <p>重启 Obsidian，在 <kbd>设置</kbd> → <kbd>第三方插件</kbd> 里打开它。</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="eco">
+    <div class="section-head">
+      <div>
+        <span class="index">04 — ECOSYSTEM</span>
+        <h2>同一个作者，<br>同一套本地优先。</h2>
+      </div>
+    </div>
+    <div class="eco reveal">
+      <div class="eco-copy">
+        <span class="index">BZ READER</span>
+        <h3>把 Obsidian<br>变成能读书的地方。</h3>
+        <p>桌面端与移动端、多格式（含 PDF）、多语言、AI 全书问答、双向链接。数据同样全部本地。</p>
+        <a class="eco-link" href="https://github.com/yeshimei/bz-reader">去看看 →</a>
+      </div>
+      <div class="eco-art"><span>读</span></div>
+    </div>
+  </section>
+
+  <section class="section support" id="support">
+    <div class="section-head">
+      <div>
+        <span class="index">05 — SUPPORT</span>
+        <h2>请作者喝杯咖啡</h2>
+        <p>插件的开发维护和教程视频都是一个人在做，免费、无广告。打赏会出现在 bz 所有插件的感谢名单里。</p>
+      </div>
+    </div>
+    <div class="qr"><img src="src/core/assets/reward-code.png" alt="微信赞赏码"></div>
+    <p class="fine">微信扫一扫 · 或者 <a href="https://wzyp.cn/shop/IFCEI5I3">成为赞助人</a> · QQ 群 1130883117</p>
+  </section>
+
+</main>
+
+<footer>
+  <div class="foot-inner">
+    <div class="foot-top">
+      <a class="foot-brand" href="#top">
+        <img src="docs/images/mark.svg" alt="">
+        <span>包仔 bz</span>
+      </a>
+      <nav class="foot-links">
+        <a href="https://github.com/yeshimei/bz">GitHub</a>
+        <a href="https://www.bilibili.com/video/BV1vNsZ6pE7i/">B 站</a>
+        <a href="https://github.com/yeshimei/bz-reader">bz reader</a>
+        <a href="README.md">README</a>
+      </nav>
+    </div>
+    <div class="foot-mark">bz</div>
+    <div class="foot-bottom">
+      <span>MIT License · 用 Obsidian 打开你的第二大脑</span>
+      <span>QQ 群 1130883117</span>
+    </div>
+  </div>
+</footer>
+
+<script>
+  const io = new IntersectionObserver((entries) => {
+    for (const e of entries) {
+      if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); }
+    }
+  }, { threshold: .12, rootMargin: '0px 0px -8% 0px' });
+  document.querySelectorAll('.reveal').forEach((el) => io.observe(el));
+</script>
+</body>
+</html>

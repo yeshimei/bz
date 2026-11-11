@@ -345,6 +345,13 @@ export async function getAIProvider(override?: string | AIOverrideObject): Promi
     }
     const overrideModel = s.aiModelOverrides?.['custom'];
     const effModel = overrideModel || '';
+    /* 自定义没有注册表默认模型：空的 model 发出去服务端直接 400，报错落在对面，
+       用户看不懂。跟地址、密钥一样在入口拦下，文案直接说去哪填。 */
+    if (!effModel) {
+      throw new Error(
+        '未填自定义模型：请在 AI 配置的 LLM 组填写「模型名称」（自定义服务商没有默认模型）'
+      );
+    }
     // 与在册通道同一套上限解析：模型名命中内置档位表就按它封顶，未收录走兜底档
     const cap = maxOutputCapOf('custom', effModel);
     const requested = Number(s.aiMaxTokensOverrides?.['custom']);

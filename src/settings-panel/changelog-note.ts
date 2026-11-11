@@ -220,6 +220,11 @@ export function openChangelogNote(
   });
   const popup = modal.popup;
 
+  /* 名单订阅的退订句柄：正常关闭（点 × / 遮罩 / ESC 都会走 closeWithPrompt）
+     与卸载 / 测试收口（返回的 close）都退掉——不然反复开关弹窗会在
+     core/patron-list 的监听集合里留一堆已关闭的弹窗。 */
+  let offLinks: () => void = () => {};
+
   /** 关窗前的最后一问（2026-11-09 用户拍板）。
    *  - 「支持作者」→ 两窗收掉，打开赞赏扫码窗（core/reward-dialog）；
    *  - 「以后再说」/ 遮罩 / ESC → 提醒窗与日志窗一起收掉。
@@ -230,6 +235,7 @@ export function openChangelogNote(
     asking = true;
     void openSupportPrompt().then((choice) => {
       asking = false;
+      offLinks();
       modal.close();
       if (choice === 'support') {
         // 赞赏码 68KB，动态引入——只为真的点下去的人付这份体积
@@ -291,7 +297,7 @@ export function openChangelogNote(
   });
   /* 名单是在线拉的：先按缓存画出人数，拉到后 bindChangelogLinks 的订阅原地补；
      打开时顺手拉一次（60 秒节流在 core/patron-list）。 */
-  const offLinks = bindChangelogLinks(popup);
+  offLinks = bindChangelogLinks(popup);
   void refreshPatrons();
 
   return {

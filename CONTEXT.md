@@ -652,6 +652,9 @@ _Avoid_: 总线层全局去环、在 obsidian-adapter 之外直接 app.vault.on 
 **取消语义 (Abort Semantics)**: 跨域统一的「主动取消」口径（`src/core/abort.ts`，issue 428/ADR-0187）——`abortError()` 造 `name === 'AbortError'` 的错误、`isAbortError()` 判定（禁字符串比较）、`throwIfAborted(signal)` 检查点、`linkAbort(outer, controller)` 把调用方 signal 链到内层超时 controller（**返回解绑函数，必须在 finally 里调**，否则长生命周期 signal 上泄漏监听器）。两条铁律：**取消 ≠ 失败**——被取消的链路一律直抛 AbortError、由发起方静默收口，不走任何既有降级/提示分支（不降级文本检索、不落失败 UI、不回退默认序）；**取消与超时分开报**——内层 controller 被两者共用，实现须以自己的 `timedOut` 标记区分（只看 `controller.signal.aborted` 会把取消误报成「无响应」）。首个消费方 = 第二大脑参考面板/移动面板「只查最新」（新查询发起或面板关闭即真中断上一轮，列表态恒归最新一轮）。
 _Avoid_: 软取消（只丢结果不砍请求）、把取消当失败提示、abort 判定散落各模块各写一份
 
+**在线赞赏名单 (Online Patrons)**: 「支持作者」两处入口（赞赏窗、更新日志页脚角标）共用的支持者名单，2026-11-11 起**不在代码里**——唯一源是主仓 `docs/patrons.json`（bz 与 bz Reader 共用一份，格式见 `docs/patrons.md`），解析在 `core/patron-list.ts`：GitHub raw 主源与码云 raw 备源并发取（单请求 8 秒封顶、URL 带 `?t=` 破 CDN 缓存），单条白名单校验（坏一条丢一条，`patrons` 不是数组才判整份不可用）。三层兜底：内存 → localStorage（键 `bz:patrons:v1`）→ 空态 + 重试；远端失败**不覆盖**已有好数据（一次网络故障不清空名单）。加人只改那份 JSON、推一次，两个插件都在运行期读——不改代码、不发版。条目形状 `RewardName` 与日期格式化留在 `core/reward-names.ts`（渲染不依赖取数）。
+_Avoid_: 赞赏名单常量（旧实现，已退役）、把人数写死在页脚（角标改为拉到后原地补）
+
 ### 设置模型（ADR-0009，2026-09-16 起 ADR-0153 修订入口）
 
 **全局设置页 (Global Settings Page)**: Obsidian 设置中的 bz 设置页——ADR-0153 起退役平铺（ADR-0009 原三区块展示取消），只留一行「打开设置面板」按钮跳转 settings-panel 面板；全域设置的唯一浏览/编辑入口是设置面板。
