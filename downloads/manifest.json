@@ -54,8 +54,8 @@
       "name": "黑金夜曲",
       "file": "skins/bookshelf/noir.css",
       "previewClass": "bz-skinprev-bs-noir",
-      "size": 4427,
-      "sha256": "6d68d616a2a6d1bf7f78ef750c0ae9654f03266d1603390b8830f72a0aa37e3a"
+      "size": 4393,
+      "sha256": "8b1d6e6208dd1733561d0ab0de95527e3384371ce12082a55d9c6c5c362d036d"
     },
     {
       "id": "kraft",
@@ -63,8 +63,8 @@
       "name": "牛皮手帐",
       "file": "skins/bookshelf/kraft.css",
       "previewClass": "bz-skinprev-bs-kraft",
-      "size": 4964,
-      "sha256": "c798b9dd9cb3906a01f7ab9e09a7e2b8748b185005414c436d79aa278c1d36e7"
+      "size": 4929,
+      "sha256": "f69255ded77e6ccfd9033aa13fec458bb4719c4e8313254ae07965a5af2b760a"
     },
     {
       "id": "velvet",
@@ -72,8 +72,8 @@
       "name": "丝绒剧院",
       "file": "skins/bookshelf/velvet.css",
       "previewClass": "bz-skinprev-bs-velvet",
-      "size": 4521,
-      "sha256": "6d9b666aa0f62507268266c19b44032349f1c7ce48f9f2f9d167255d638930f0"
+      "size": 4485,
+      "sha256": "52b373bb614503100357b987e04510491c3fda3be8bf4f18ab3adf2c9fb249af"
     },
     {
       "id": "mono",
@@ -81,8 +81,8 @@
       "name": "极简黑白",
       "file": "skins/bookshelf/mono.css",
       "previewClass": "bz-skinprev-bs-mono",
-      "size": 6557,
-      "sha256": "738df15eaf6374793e5fe106c43d5d1c151e8fb6881162836e6ee75b70cbf251"
+      "size": 6473,
+      "sha256": "76d2994bbc727a3ae177a6e8ea3fff0bf58ad2e8bf493f40138c005d8c3e7a8e"
     },
     {
       "id": "ink",
@@ -285,8 +285,8 @@
   ],
   "skinsPack": {
     "file": "skins.zip",
-    "sha256": "bacc16d37810628b8afff003752946cd231ce3f25c6f69bac9b80a206eaa122b",
-    "size": 32357
+    "sha256": "e1160fc93531c70b61314d406dc72b4f0c70bee39bf640532885b010d77a6fa4",
+    "size": 32323
   },
   "rowOrder": [
     "skins",

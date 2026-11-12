@@ -27,7 +27,7 @@ import { openExternalUrl } from '../core/utils';
 import { installReaderPlugin, isReaderHealthy, readReaderInstall } from '../core/reader-install';
 import { renderReadingReport, cancelReadingReport, handleReportInteraction, type ReportRenderOptions } from '../reading-report';
 import { M, applyDefaultView, type BookshelfItem, type BookshelfView, type SideId, type SortKey } from './state';
-import { rebuildItems, resolveFolderPath, resolveBookTag } from './data';
+import { rebuildItems, resolveFolderPath, resolveBookTag, scanMarkdownBooks } from './data';
 import {
   detailBodyHtml, labelsHtml, panelHtml, readerGuideHtml, readerGuideLoadingHTML,
   renderWallInto, sortSegHtml, wallLoadingHTML,
@@ -83,6 +83,19 @@ async function refreshReaderPill(force = false): Promise<void> {
   paintReaderPill(el, pillCacheOk);
 }
 
+/** 本机旧口径（笔记 + book 标签）书目数：只在 0 本引导页用，带 3 秒缓存
+ *  （引导页随每次重渲染重算，全库扫描不该跟着刷） */
+let legacyBookCountCache = -1;
+let legacyBookCountAt = 0;
+function legacyBookCount(app: App): number {
+  if (legacyBookCountCache >= 0 && Date.now() - legacyBookCountAt < 3000) return legacyBookCountCache;
+  let n = 0;
+  try { n = scanMarkdownBooks(app).length; } catch { n = 0; }
+  legacyBookCountCache = n;
+  legacyBookCountAt = Date.now();
+  return n;
+}
+
 /** 引导页：0 本时占据墙区。已装 → 导入第一本；未装/半装 → 安装卡。 */
 async function renderReaderGuide(app: App): Promise<void> {
   const overlay = M.currentOverlay;
@@ -99,6 +112,7 @@ async function renderReaderGuide(app: App): Promise<void> {
     version: state?.version || '',
     installing: readerInstalling,
     stage: readerInstallStage,
+    legacyCount: legacyBookCount(app),
   });
   mountIcons(shelf);
 }
@@ -130,11 +144,21 @@ async function installReaderNow(app: App): Promise<void> {
   }
 }
 
-/** 打开 bz Reader 的书架界面（它自己的命令；未启用时命令不存在） */
+/** 打开 bz Reader 的书架界面。
+ *  命令 id 不写死（2026-11-12 review P2）：对方插件改命令名时会换 id，
+ *  按「bz-reader: 前缀」现查一遍——优先 open，其次名字里带书架/打开的，最后取第一条。 */
 function openReaderShelf(app: App): void {
   const commands = (app as any)?.commands;
-  const ok = typeof commands?.executeCommandById === 'function'
-    ? commands.executeCommandById('bz-reader:open')
+  const table = commands?.commands;
+  const ids: string[] = table && typeof table === 'object' ? Object.keys(table) : [];
+  const readerIds = ids.filter((id) => id.startsWith('bz-reader:'));
+  const named = (id: string): string => String(table?.[id]?.name || '');
+  const target = readerIds.find((id) => id === 'bz-reader:open')
+    || readerIds.find((id) => /书架|打开|shelf|open/i.test(`${id} ${named(id)}`))
+    || readerIds[0]
+    || '';
+  const ok = target && typeof commands?.executeCommandById === 'function'
+    ? commands.executeCommandById(target)
     : false;
   if (!ok) notice('bz Reader 没有响应，请确认它已启用', 'warning');
 }
@@ -359,11 +383,11 @@ function closeDomainModals(): void {
   if (detailModalClose) { detailModalClose(); detailModalClose = null; }
 }
 
-/** 跳回原文继续读：md 书走 openLinkText；EPUB 走 `obsidian://bz-reader` 协议
- *  （bz 阅读没注册 .epub 扩展名，裸 openLinkText 会落到别处或打不开）。
+/** 跳回原文继续读：bz Reader 的书走 `obsidian://bz-reader` 协议（它没注册 epub/pdf 等
+ *  扩展名，裸 openLinkText 会落到别处或打不开；PDF 同样走这条链），md 书走 openLinkText。
  *  原型壳的 workspace.openLinkText 是 no-op 桩，两侧同语义 */
 function continueBook(app: App, it: BookshelfItem): void {
-  if (it.isEpub) {
+  if (it.fromReader) {
     // 先验目标再关面板：没有可打开的东西时，用户应该还留在借书卡上（而不是对着空白桌面看提示）
     if (!it.epubBookId) {
       notice('找不到这本书的文件', 'warning');
@@ -545,8 +569,8 @@ export function createOverlay(app: App): void {
     // 书脊 → 借书卡
     const spine = t.closest('[data-bs-id]') as HTMLElement | null;
     if (spine && M.view === 'shelf') {
-      const epub = spine.dataset.bsEpub === '1';
-      const it = M.items.find((x) => epub ? x.epubVaultPath === spine.dataset.bsId : x.file?.path === spine.dataset.bsId);
+      const fromReader = spine.dataset.bsReader === '1';
+      const it = M.items.find((x) => fromReader ? x.epubVaultPath === spine.dataset.bsId : x.file?.path === spine.dataset.bsId);
       if (it) openBookDetail(it, app, spine);
       return;
     }

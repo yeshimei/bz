@@ -317,14 +317,11 @@ function choreographBoot(overlay: HTMLElement | null, shelf: HTMLElement): void 
        { opacity: 1, transform: rest.transform, filter: 'none' }],
       { duration: M.base, delay: 90 + Math.min(i, 12) * STAG + 5, easing: E.out, fill: 'backwards' }));
   });
-  /* —— 工具行 / 墙脚注 —— */
+  /* —— 工具行 ——（墙脚注 2026-11-12 撤掉，见 styles.css 说明） */
   const tools = overlay.querySelector<HTMLElement>('.bz-bs-tools');
   if (tools) track(waapi(tools,
     [{ opacity: 0, transform: 'translateY(-5px)' }, { opacity: 1, transform: 'none' }],
     { duration: M.base, delay: 150, easing: E.out, fill: 'backwards' }));
-  const note = overlay.querySelector<HTMLElement>('.bz-bs-wallnote');
-  if (note) track(waapi(note, [{ opacity: 0 }, { opacity: 1 }],
-    { duration: M.base + 140, delay: 460, easing: E.out, fill: 'backwards' }));
   choreographWall(shelf, 'boot');
 }
 
@@ -409,7 +406,7 @@ function shelveIn(
   if (sp.isConnected) {
     if (opts.reading) dropRibbon(sp.querySelector<HTMLElement>('.ribbon'), tail);
     else popStamp(sp.querySelector<HTMLElement>('.stamp'), tail);
-    if (opts.accent || sp.dataset.bsEpub === '1') after(tail + 120, () => { if (sp.isConnected) sheen(sp, true); });
+    if (opts.accent || sp.dataset.bsReader === '1') after(tail + 120, () => { if (sp.isConnected) sheen(sp, true); });
   }
 }
 

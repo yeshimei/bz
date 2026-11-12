@@ -58,13 +58,21 @@ export default defineConfig({
     // 注意这只管用例整体上限——`vi.waitFor` 自己的默认超时是另一路，由 tests/setup.ts
     // 统一抬到 5s（vitest 4 没有全局配置键；假红的大头在那边，见 setup.ts 注释）。
     testTimeout: 20000,
-    // 重试只吸收「多会话抢 CPU」的假红，所以与 worker 数同一个信号：独占 0、并发 2
+    // 重试只吸收「多会话抢 CPU」的假红，所以与 worker 数同一个信号：独占 1（保底）、并发 2
     // （判定在 scripts/test-workers.mjs 的 resolveRetryCount；BZ_TEST_RETRY 可显式覆盖）。
     //
     // 2026-10-31 改：原来恒 2。红的时候它是纯代价——失败用例每条多等两轮，单轮成本 = 用例里
     // 最深的那个 waitFor 超时（默认 5s），一条真失败白等 15s；几十条同时红，整轮从 40s 拖到
     // 十几分钟，而全程 CPU 闲着（用户原话「风扇都不响」）。独占时不会有假红，没必要买这份保险。
-    retry: resolveRetryCount(process.env),
+    //
+    // 2026-11-12 改（v1.45.0 发版 review 第 7 条）：独占也保底 1 次。理由：这批用例里有几条
+    // **本身带随机**（布局随机撒点、主动关心的抽取、撤销/刷新竞态），从头到尾没人改它们也会
+    // 偶尔红一次——发版门禁真跑出 7 条齐红、原样重跑全绿。独占时「CPU 空闲所以不会假红」这个
+    // 前提对随机源不成立；保底 1 次的价格是「真失败多等一轮」，比让门禁误判一次便宜得多。
+    // 显式 `BZ_TEST_RETRY=0` 仍然照办（复现 flaky / 只想看首轮结果时用）。
+    retry: process.env.BZ_TEST_RETRY !== undefined
+      ? resolveRetryCount(process.env)
+      : Math.max(1, resolveRetryCount(process.env)),
   },
   // 转译/模块求值结果落盘复用。**vitest 5 迁移点**：v4 里它挂在 `test.experimental.fsModuleCache`，
   // v5 转正为配置顶层同名项（沿用旧写法会打 DEPRECATED 且不再生效）；默认缓存目录也随之从

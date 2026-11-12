@@ -13,7 +13,7 @@
  * 由各端 mountIcons 物化。窗口缩放墙内标尺以 BsWallScale 显式传递（wallScale() 计算）。
  */
 import { esc, iconSpan } from '../core/ui/str';
-import { STATUS_COLORS, ICON } from './constants';
+import { STATUS_COLORS, ICON, BOOK_FORMAT_LABEL } from './constants';
 import type { BookshelfItem, SideId, SortKey } from './state';
 
 // ---------- 小工具 ----------
@@ -119,7 +119,7 @@ export function detailBodyHtml(it: BookshelfItem, coverSrc: string | null): stri
       <div class="bz-bs-d-cover">${cover}</div>
       <div class="bz-bs-d-info">
         <h2 class="bz-bs-d-title">${esc(it.title)}</h2>
-        <div class="bz-bs-d-sub">${esc(it.author)} · ${esc(it.category || '未分类')}${it.isEpub ? ' · EPUB' : ''}</div>
+        <div class="bz-bs-d-sub">${esc(it.author)} · ${esc(it.category || '未分类')}${it.fromReader ? ` · ${BOOK_FORMAT_LABEL[it.bookFormat] || 'EPUB'}` : ''}</div>
         <div class="bz-bs-d-body">
         ${review}
         <table class="bz-bs-d-ledger">
