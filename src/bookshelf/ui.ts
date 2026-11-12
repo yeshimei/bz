@@ -202,6 +202,7 @@ function renderWall(): void {
   // 「书库文件夹没配」的旧引导随设置项一起退役）
   if (!M.items.length) {
     if (hint) hint.textContent = '0 册在墙';
+    wallAction = 'refresh'; // 空态不播墙编排，复位档位防残留到下一次有书渲染
     const app = M.appRef;
     if (app) void renderReaderGuide(app);
     return;
