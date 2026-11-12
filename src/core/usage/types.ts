@@ -1,6 +1,12 @@
 export const USAGE_SCHEMA = 1;
 
-export const USAGE_FILE = 'usage.json';
+/** 账本文件名：带上设备号前缀。
+ *  账本落在库内存储目录，而用户的同步工具会把整个目录同步到别的设备——
+ *  同名文件互相覆盖过一次（失败计数被同步回旧值，退避反复触发）。 */
+export function usageFileName(installId: string): string {
+  const short = String(installId || '').replace(/[^a-z0-9]/gi, '').slice(0, 8) || 'local';
+  return `usage-${short}.json`;
+}
 
 export const KEEP_DAYS = 14;
 
@@ -8,7 +14,9 @@ export const PENDING_MAX_DAYS = 7;
 
 export const TICK_MS = 60_000;
 
-export const PING_MS = 5 * 60_000;
+// 心跳比「在线」判定窗口（5 分钟）短，留出两拍的余量：心跳与窗口等长时，
+// 只要哪一跳慢十几秒，在线数就会闪成 0，看着像掉线，其实设备一直在。
+export const PING_MS = 2 * 60_000;
 
 export const PING_FIRST_DELAY_MS = 5_000;
 
@@ -41,6 +49,17 @@ export interface Ledger {
   days: Record<string, DayBucket>;
 }
 
+/** bz 阅读的使用快照（只标量；书名/路径/划线内容不发送） */
+export interface ReaderSnapshot {
+  /** none 没装 / broken 装坏了 / disabled 装了没启用 / idle 启用了没读 / active 在读 / unknown 这次没探测到 */
+  state: 'none' | 'broken' | 'disabled' | 'idle' | 'active' | 'unknown';
+  version: string;
+  /** 累计阅读分钟 */
+  minutes: number;
+  /** 距最近一次阅读几天；-1 = 从未读过 */
+  daysSince: number;
+}
+
 export interface UsageMeta {
   installId: string;
   pluginVersion: string;
@@ -49,6 +68,11 @@ export interface UsageMeta {
   isMobile: boolean;
   tz: string;
   locale: string;
+  reader?: ReaderSnapshot;
+  /** 首次引导走完了没 */
+  guideDone?: boolean;
+  /** 自动更新开关（缺省开） */
+  updateAuto?: boolean;
 }
 
 export interface DailyPayload extends UsageMeta {

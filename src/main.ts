@@ -120,6 +120,7 @@ import {
   markDockExit,
 } from './dock';
 import { initUsage, trackCommand, disposeUsage } from './core/usage';
+import { probeReaderUsage } from './bookshelf/reader-usage';
 
 /** 命令名统一前缀（2026-11-10 用户拍板，承接 GitHub issue #2）：
  *  所有 bz 命令的**显示名**以「bz · 」开头——命令面板搜「bz」一次列出全部 bz 命令；
@@ -470,7 +471,13 @@ export default class BzPlugin extends Plugin {
     applyDiarySettingsToRuntime(this.settings);
     // 域事件总线地基：全插件唯一 vault 订阅点挂载（registerEvent 保证插件卸载时 Obsidian 自动清理引用）
     attachObsidianAdapter(this.app, (ref) => this.registerEvent(ref as any));
-    initUsage(String(this.manifest?.version || ''));
+    initUsage(String(this.manifest?.version || ''), {
+      reader: () => probeReaderUsage(this.app),
+      flags: () => ({
+        guideDone: this.settings?.setupDone === true,
+        updateAuto: this.settings?.autoUpdate === true,
+      }),
+    });
 
     // 知识盒对外最小门面（ADR-0215）：外部插件（fork-weave / bz-reader）经 getPlugin('bz') 取实例后
     // 调名词/段落录入与文献预览；不挂 window 全局、不新增命令与设置。同步赋值既有导出的函数引用即可

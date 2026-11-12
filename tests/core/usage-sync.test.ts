@@ -106,11 +106,11 @@ describe('usage · 同步时序', () => {
     expect(h.pings).toHaveLength(1);
   });
 
-  it('窗口不可见时心跳与活跃分钟都不记', async () => {
+  it('窗口不可见时心跳照发，活跃分钟不记', async () => {
     const h = makeHarness({ visible: false });
     const handle = createUsage(h.host);
     await h.advance(70_000);
-    expect(h.pings).toHaveLength(0);
+    expect(h.pings).toHaveLength(1); // 进程还开着就算在线
     const today = localDayKey(BASE + 70_000);
     expect(handle.snapshot().days[today]?.activeMinutes ?? 0).toBe(0);
   });
@@ -121,7 +121,9 @@ describe('usage · 同步时序', () => {
     await h.advance(21_000);
     expect(h.dailies).toHaveLength(1);
     const yesterday = localDayKey(BASE - 86_400_000);
-    expect(h.dailies[0].days.map((d) => d.date)).toEqual([yesterday]);
+    const today = localDayKey(BASE + 21_000);
+    // 今天也带一条：当天就能看到今日活跃；水位只认昨天，今天明天会整份重发
+    expect(h.dailies[0].days.map((d) => d.date)).toEqual([yesterday, today]);
     expect(h.dailies[0].days[0].commands['bz-memo-open']).toBe(3);
     expect(handle.snapshot().lastSentDate).toBe(yesterday);
   });

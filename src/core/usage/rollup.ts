@@ -6,10 +6,12 @@ import { PENDING_MAX_DAYS, USAGE_SCHEMA, type DailyPayload, type DayBucket, type
 export function pendingDates(ledger: Ledger, now: number, max = PENDING_MAX_DAYS): string[] {
   const today = localDayKey(now);
   const floor = ledger.lastSentDate && isDayKey(ledger.lastSentDate) ? ledger.lastSentDate : '';
+  // 今天也发：当天就能看到今日活跃，之后每 6 小时滚一次覆盖同一天。
+  // 今天这条不推进水位（见 markDailySent），明天会作为「昨天」再完整发一遍。
   // 取最早的一批，不是最近的一批：服务端一次最多收 7 天，积压超过 7 天时让老日子先走，
   // 剩下的下一轮接着发。取最近 7 天会让中间的日子永远排不进窗口，最后随保留期一起被清掉。
   return Object.keys(ledger.days)
-    .filter((d) => isDayKey(d) && d < today && (!floor || d > floor))
+    .filter((d) => isDayKey(d) && d <= today && (!floor || d > floor))
     .sort()
     .slice(0, Math.max(1, max));
 }
@@ -62,10 +64,12 @@ export function retryWaitMs(ledger: Ledger, now: number): number {
   return elapsed >= wait ? 0 : wait - elapsed;
 }
 
-export function markDailySent(ledger: Ledger, sentDates: string[]): void {
-  if (!sentDates.length) return;
-  const last = sentDates.slice().sort().slice(-1)[0];
-  if (last && (!ledger.lastSentDate || last > ledger.lastSentDate)) ledger.lastSentDate = last;
+export function markDailySent(ledger: Ledger, sentDates: string[], today: string): void {
   ledger.failures = 0;
   ledger.lastAttemptAt = 0;
+  // 水位只认「已经过完的日子」：今天还在长，明天会整份重发，不能被今天顶掉
+  const done = sentDates.filter((d) => d < today);
+  if (!done.length) return;
+  const last = done.slice().sort().slice(-1)[0];
+  if (last && (!ledger.lastSentDate || last > ledger.lastSentDate)) ledger.lastSentDate = last;
 }

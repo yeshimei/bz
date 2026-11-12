@@ -1,3 +1,4 @@
+import { localDayKey } from '../ui/str';
 import { addActiveMinute, normalizeLedger, pruneDays, recordCommand, startSession } from './ledger';
 import { buildDailyPayload, markDailySent, pendingDates, retryDelay, retryWaitMs } from './rollup';
 import {
@@ -118,7 +119,9 @@ export function createUsage(host: UsageHost): UsageHandle {
   }
 
   async function pingNow(): Promise<void> {
-    if (stopped || !ready || !host.enabled() || !host.visible()) return;
+    // 在线只认「插件还在跑」：窗口最小化、切到别的笔记库，Obsidian 都还开着，
+    // 不该从在线掉下去。活跃分钟另有 visible 门槛（那才是「真的在看」）。
+    if (stopped || !ready || !host.enabled()) return;
     const now = host.now();
     if (now - lastPingAt < PING_MS) return;
     lastPingAt = now;
@@ -153,7 +156,7 @@ export function createUsage(host: UsageHost): UsageHandle {
     try {
       const ok = await host.sendDaily(buildDailyPayload(host.meta(), dates.map((d) => ledger.days[d])));
       if (ok) {
-        markDailySent(ledger, dates);
+        markDailySent(ledger, dates, localDayKey(now));
         markDirty();
         uploadAt = now + UPLOAD_INTERVAL_MS;
         void persist();

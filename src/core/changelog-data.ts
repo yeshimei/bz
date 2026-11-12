@@ -56,6 +56,14 @@ export function releaseEntryCount(release: ChangelogRelease): number {
  */
 export const CHANGELOG_RELEASES: readonly ChangelogRelease[] = [
   {
+    version: '1.44.1',
+    date: '2026-11-12',
+    // 条目与 docs/note-v1.44.1.md 同稿（scripts/_gen-changelog.mjs 自动生成，勿手改）
+    improved: [
+      { domain: '插件介绍', text: '插件列表里的一句话介绍换成完整功能概览，一眼看得出有哪些模块。' },
+    ],
+  },
+  {
     version: '1.44.0',
     date: '2026-11-11',
     // 条目与 docs/note-v1.44.0.md 同稿（scripts/_gen-changelog.mjs 自动生成，勿手改）

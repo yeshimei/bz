@@ -1,6 +1,6 @@
 /** 发送内容的键白名单与脏键清洗。 */
 import { describe, expect, it } from 'vitest';
-import { buildDailyPayload, exportDay, pendingDates, retryDelay } from '../../src/core/usage/rollup';
+import { buildDailyPayload, exportDay, markDailySent, pendingDates, retryDelay } from '../../src/core/usage/rollup';
 import { emptyDay, emptyLedger, type DayBucket, type UsageMeta } from '../../src/core/usage/types';
 
 const META: UsageMeta = {
@@ -58,19 +58,18 @@ describe('usage · 发送内容', () => {
     expect(out.domains).toEqual({ memo: 1 });
   });
 
-  it('只发早于今天的日子，一次最多 7 天，且从最早的补起', () => {
+  it('今天也发（当天就能看 DAU），一次最多 7 天，且从最早的补起', () => {
     const l = emptyLedger(0);
     for (let i = 1; i <= 10; i += 1) {
       const d = `2026-11-${String(i).padStart(2, '0')}`;
       l.days[d] = emptyDay(d);
     }
-    l.days['2026-11-11'] = emptyDay('2026-11-11'); // 今天：不发
+    l.days['2026-11-11'] = emptyDay('2026-11-11'); // 今天：也发
     const now = new Date(2026, 10, 11, 22, 0).getTime();
     expect(pendingDates(l, now)).toHaveLength(7);
-    expect(pendingDates(l, now)).not.toContain('2026-11-11');
-    expect(pendingDates(l, now)[0]).toBe('2026-11-01'); // 10 天里取最早 7 天
+    expect(pendingDates(l, now)[0]).toBe('2026-11-01'); // 11 天取最早 7 天，今天排在后面等下一轮
     l.lastSentDate = '2026-11-07';
-    expect(pendingDates(l, now)).toEqual(['2026-11-08', '2026-11-09', '2026-11-10']);
+    expect(pendingDates(l, now)).toEqual(['2026-11-08', '2026-11-09', '2026-11-10', '2026-11-11']);
   });
 
   it('积压超过一批时分轮发完，中间的日子不会被留在窗口外', () => {
@@ -95,6 +94,22 @@ describe('usage · 发送内容', () => {
       '2026-11-09',
       '2026-11-10',
     ]);
+  });
+
+  it('今天的日子发出去也不推进水位（明天要整份重发）', () => {
+    const l = emptyLedger(0);
+    l.lastSentDate = '2026-11-10';
+    l.days['2026-11-11'] = emptyDay('2026-11-11');
+    const now = new Date(2026, 10, 11, 22, 0).getTime();
+    const sent = pendingDates(l, now);
+    expect(sent).toEqual(['2026-11-11']);
+    markDailySent(l, sent, '2026-11-11');
+    expect(l.lastSentDate).toBe('2026-11-10'); // 只有今天，水位不动
+
+    l.lastSentDate = '';
+    l.days['2026-11-10'] = emptyDay('2026-11-10');
+    markDailySent(l, ['2026-11-10', '2026-11-11'], '2026-11-11');
+    expect(l.lastSentDate).toBe('2026-11-10'); // 只认已过完的昨天
   });
 
   it('退避档位：6h → 12h → 24h 封顶', () => {
