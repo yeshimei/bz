@@ -29,7 +29,7 @@
 .bz-bs-skin-velvet .bz-bs-spine { background: linear-gradient(90deg, #241018, #331722 60%, #241018); color: #e8c987; border-left: 2px solid rgba(217, 180, 95, 0.5); border-right: 2px solid rgba(217, 180, 95, 0.5); }
 .bz-bs-skin-velvet .bz-bs-spine::before, .bz-bs-skin-velvet .bz-bs-spine::after { background: rgba(217, 180, 95, 0.35); }
 .bz-bs-skin-velvet .bz-bs-spine.unread { filter: brightness(0.55); }
-.bz-bs-skin-velvet .bz-bs-wallnote, .bz-bs-skin-velvet .bz-bs-hint { color: #a87e6e; }
+.bz-bs-skin-velvet .bz-bs-hint { color: #a87e6e; }
 .bz-bs-skin-velvet .bz-bs-seg button { color: #d9b45f; }
 .bz-bs-skin-velvet .bz-bs-seg button.on { background: #d9b45f; color: #2c0e18; }
 

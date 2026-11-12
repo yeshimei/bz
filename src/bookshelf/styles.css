@@ -205,10 +205,8 @@
 .bz-bs-spine.unread:hover { filter: grayscale(0.2) brightness(1); }
 }
 
-.bz-bs-wallnote {
-  max-width: 1180px; margin: 18px auto var(--bz-space-sm); text-align: center;
-  color: var(--bsw-muted); font-size: var(--bz-font-label); letter-spacing: 4px; font-family: var(--bsw-sans);
-}
+/* 墙脚注（.bz-bs-wallnote）2026-11-12 撤掉：那行「书脊的高度是时长…」随引导页一起删了，
+   元素不再生成，样式与动效一并清掉，别留等不到元素的选择器。 */
 
 /* ==================== 借书卡详情（纸卡 + 台账 + 印章；编辑控件融卡内） ==================== */
 .bz-bs-d-popup.bz-overlay-popup { max-width: min(660px, calc(100vw - 32px)); height: min(72vh, 600px); background: var(--bsw-paper); border: 1px solid var(--bsw-line); overflow: hidden; }
@@ -406,7 +404,6 @@
 
 .bz-bs-skin-nordic .bz-bs-spine.unread:hover { opacity: 1; }
 }
-.bz-bs-skin-nordic .bz-bs-wallnote { color: #9a8f78; }
 .bz-bs-skin-nordic .bz-bs-hint { color: #7c7360; }
 .bz-bs-skin-nordic .bz-bs-seg button { color: #7c7360; }
 .bz-bs-skin-nordic .bz-bs-seg button.on { background: #8a8371; color: #fff; }
@@ -516,7 +513,6 @@
   .bz-bs-room { padding: 14px 10px 10px; }
   .bz-bs-zone { padding: 0 var(--bz-space-sm); min-height: 240px; }
   .bz-bs-divider { margin: 0 10px var(--bz-space-md); letter-spacing: 5px; font-size: var(--bz-font-label); min-height: 190px; }
-  .bz-bs-wallnote { font-size: var(--bz-font-caption); letter-spacing: 2px; padding: 0 var(--bz-space-md); }
   /* 借书卡：窄屏单列 + 流程要求的弹窗留边（不全屏贴边；点遮罩/Esc 关）；
      限高接 core 可视视口（同面板 --bz-vvh 口径，软键盘不遮借书卡） */
   .bz-bs-d-card { flex-direction: column; }
@@ -567,6 +563,14 @@ button.bz-bs-open-reader {
 
 /* 引导页 */
 .bz-bs-guide {
+  /* 引导页色阶（2026-11-12 review P1）：正文/细线/底纹一律由「墨色按比例混纸色」派生。
+     原先写死深褐（#5d4e3b 一类），深色皮肤的黑纸底上几乎看不见字；
+     跟着 --bsw-ink / --bsw-paper 走，昼夜自动翻转，不再需要按皮肤逐个补规则。 */
+  --bsg-soft: color-mix(in srgb, var(--bsw-ink) 84%, var(--bsw-paper));
+  --bsg-mute: color-mix(in srgb, var(--bsw-ink) 60%, var(--bsw-paper));
+  --bsg-line: color-mix(in srgb, var(--bsw-ink) 22%, transparent);
+  --bsg-fill: color-mix(in srgb, var(--bsw-ink) 7%, transparent);
+  --bsg-ok: #6f9c58;
   display: flex; align-items: center; justify-content: center;
   min-height: 100%; padding: 16px 0 24px;
 }
@@ -588,39 +592,39 @@ button.bz-bs-open-reader {
   font-size: 10px; letter-spacing: 4px; padding: 3px 7px;
   transform: rotate(6deg); opacity: .82;
 }
-.bz-bs-guide-kicker { font-size: 10px; letter-spacing: 3px; color: #9a8a70; margin-bottom: 10px; }
+.bz-bs-guide-kicker { font-size: 10px; letter-spacing: 3px; color: var(--bsg-mute); margin-bottom: 10px; }
 .bz-bs-guide-card h2 {
   margin: 0 0 10px; font-family: var(--bsw-serif);
   font-size: 25px; letter-spacing: 2px; font-weight: 700;
 }
-.bz-bs-guide-lead { margin: 0 0 16px; font-size: 13px; line-height: 1.9; color: #5d4e3b; }
+.bz-bs-guide-lead { margin: 0 0 16px; font-size: 13px; line-height: 1.9; color: var(--bsg-soft); }
 
-/* 插件介绍卡（介绍取 GitHub README；下载量取 Obsidian 社区统计） */
+/* 插件介绍卡（介绍取 GitHub README 首段） */
 .bz-bs-guide-plugin {
   display: flex; gap: 12px; align-items: flex-start;
-  background: rgba(90, 70, 40, .06); border: 1px solid rgba(90, 70, 40, .22);
+  background: var(--bsg-fill); border: 1px solid var(--bsg-line);
   padding: 11px 14px; margin: 0 0 14px;
 }
 .bz-bs-guide-plugin-icon {
   flex: none; width: 44px; height: 44px; border-radius: 6px;
-  background: #2b2018; color: var(--bsw-brass);
+  background: var(--bsw-ink); color: var(--bsw-paper);
   display: flex; align-items: center; justify-content: center;
   font-family: var(--bsw-serif); font-size: 18px; letter-spacing: 1px;
 }
 .bz-bs-guide-plugin-main { flex: 1; min-width: 0; }
 .bz-bs-guide-plugin-name { font-size: 14px; font-weight: 600; display: flex; align-items: baseline; gap: 8px; }
 .bz-bs-guide-plugin-name .ver {
-  font-size: 10px; font-weight: 400; color: #8d7c63;
-  border: 1px solid rgba(90, 70, 40, .25); padding: 0 4px;
+  font-size: 10px; font-weight: 400; color: var(--bsg-mute);
+  border: 1px solid var(--bsg-line); padding: 0 4px;
 }
-.bz-bs-guide-plugin-name .ok { color: #4f7a3f; font-size: 11px; }
-.bz-bs-guide-plugin-desc { font-size: 11px; line-height: 1.65; color: #6b5c45; margin-top: 4px; }
+.bz-bs-guide-plugin-name .ok { color: var(--bsg-ok); font-size: 11px; }
+.bz-bs-guide-plugin-desc { font-size: 11px; line-height: 1.65; color: var(--bsg-soft); margin-top: 4px; }
 .bz-bs-guide-plugin-meta {
-  font-size: 10.5px; color: #8d7c63; margin-top: 7px;
+  font-size: 10.5px; color: var(--bsg-mute); margin-top: 7px;
   display: flex; gap: 8px; flex-wrap: wrap; align-items: center;
 }
 .bz-bs-guide-plugin-meta .badge {
-  background: #e9dfc7; border: 1px solid rgba(90, 70, 40, .2);
+  background: var(--bsg-fill); border: 1px solid var(--bsg-line);
   padding: 1px 6px; font-size: 10px;
 }
 
@@ -628,35 +632,42 @@ button.bz-bs-open-reader {
 .bz-bs-guide-steps { list-style: none; margin: 0 0 18px; padding: 0; }
 .bz-bs-guide-steps li {
   display: flex; gap: 13px; align-items: center;
-  padding: 8px 0; border-top: 1px dashed rgba(90, 70, 40, .22);
+  padding: 8px 0; border-top: 1px dashed var(--bsg-line);
   font-size: 13px; font-weight: 600; letter-spacing: .5px;
 }
-.bz-bs-guide-steps li:last-child { border-bottom: 1px dashed rgba(90, 70, 40, .22); }
+.bz-bs-guide-steps li:last-child { border-bottom: 1px dashed var(--bsg-line); }
 .bz-bs-guide-steps .n {
   flex: none; width: 23px; height: 23px;
-  border: 1px solid rgba(90, 70, 40, .42); border-radius: 50%;
+  border: 1px solid var(--bsg-line); border-radius: 50%;
   display: flex; align-items: center; justify-content: center;
-  font-size: 11px; font-weight: 400; color: #6b5c45;
+  font-size: 11px; font-weight: 400; color: var(--bsg-soft);
 }
-.bz-bs-guide-steps li.done .n { border-color: #7fae6b; color: #4f7a3f; }
+.bz-bs-guide-steps li.done .n { border-color: var(--bsg-ok); color: var(--bsg-ok); }
+
+/* 旧 md 书单去向的说明（本机有按笔记收录的书时才出现） */
+.bz-bs-guide-note {
+  margin: 0 0 14px; padding: 8px 10px;
+  border-left: 2px solid var(--bsg-line);
+  color: var(--bsg-mute); font-size: 11.5px; line-height: 1.7;
+}
 
 .bz-bs-guide-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 16px; }
 button.bz-bs-guide-primary {
-  background: var(--bsw-accent); color: #f8efe0; border: none;
+  background: var(--bsw-accent); color: var(--bsw-paper); border: none;
   padding: 12px 20px; font-family: var(--bsw-sans); font-size: 13px; letter-spacing: 2px;
-  cursor: pointer; box-shadow: 0 3px 0 #792a20;
+  cursor: pointer; box-shadow: 0 3px 0 color-mix(in srgb, var(--bsw-accent) 62%, #000);
 }
-button.bz-bs-guide-primary:active { transform: translateY(1px); box-shadow: 0 2px 0 #792a20; }
-button.bz-bs-guide-primary[disabled] { background: #8a7355; box-shadow: none; cursor: default; }
+button.bz-bs-guide-primary:active { transform: translateY(1px); box-shadow: 0 2px 0 color-mix(in srgb, var(--bsw-accent) 62%, #000); }
+button.bz-bs-guide-primary[disabled] { background: var(--bsw-muted); box-shadow: none; cursor: default; }
 button.bz-bs-guide-link {
   background: none; border: none; padding: 0 0 2px; cursor: pointer;
-  font-family: var(--bsw-sans); font-size: 12px; color: #6b5a42;
-  border-bottom: 1px solid rgba(107, 90, 66, .5);
+  font-family: var(--bsw-sans); font-size: 12px; color: var(--bsg-soft);
+  border-bottom: 1px solid var(--bsg-line);
 }
 /* 触屏粘滞范式：:hover 必须包在 @media (hover: hover)（core 范式守卫测试） */
 @media (hover: hover) {
   button.bz-bs-open-reader:hover { background: var(--bsw-brass); color: #2b2018; }
-  button.bz-bs-guide-primary:hover { background: #8f3226; }
+  button.bz-bs-guide-primary:hover { background: color-mix(in srgb, var(--bsw-accent) 86%, #000); }
   button.bz-bs-guide-link:hover { color: var(--bsw-accent); border-color: var(--bsw-accent); }
 }
 

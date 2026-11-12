@@ -159,6 +159,18 @@ export interface AIProviderDescriptor {
 export const DEFAULT_AI_PROVIDER = 'deepseek';
 
 /**
+ * 默认最大输出的保守档（2026-11-12 发版 review P1）。
+ *
+ * 注册表里有些家的「最大输出」是从聚合数据源照抄的，值可疑（有一家直接等于上下文长度、
+ * 一家人为地给了 50 万）。把它当默认值发出去，服务端认为超限会**整条请求拒掉**——
+ * 用户只看到「AI 请求失败」，想不到去改最大输出。故口径：
+ *   - 官方文档写明的值（DeepSeek 384K / 智谱 131072 / OpenAI·Claude 128K / Gemini 64K）照用；
+ *   - 只有聚合数据、没法核实的家，默认走这一档；
+ *   - `maxOutputCap` 仍保留上游值作面板软上限，用户自己调高是明确动作，不算默认坑人。
+ */
+const SAFE_DEFAULT_MAX_TOKENS = 32768;
+
+/**
  * 在册提供商（2026-11-12/ADR-0297 扩表：老三家常驻 + 国内常用 + 海外常用 + 本地 + 自定义兜底）。
  * 前三家常驻通道由插件长期负责「选完填密钥就能用」；2026-11-12 起把市面上真正常用的十几家也收进来，
  * 端点与默认模型取自 models.dev（MIT，2026-11-12 抓取），不引任何运行时依赖。
@@ -267,9 +279,9 @@ export const AI_PROVIDER_REGISTRY: AIProviderDescriptor[] = [
     label: 'Kimi',
     endpoint: 'https://api.moonshot.cn/v1',
     model: 'kimi-k3',
-    // models.dev 报 k3 输出上限 1048576（与上下文同档，疑为上游数据待核）；此处按其收录值，
-    // 面板「最大输出 token」仍可按模型名逐次调低
-    defaultMaxTokens: 1048576,
+    // models.dev 报 k3 输出上限 1048576（与上下文同档，疑为上游数据待核）：默认不敢照抄，
+    // 走保守档（SAFE_DEFAULT_MAX_TOKENS）；面板「最大输出 token」要调高随时可调
+    defaultMaxTokens: SAFE_DEFAULT_MAX_TOKENS,
     maxOutputCap: 1048576,
     apiKeyLabel: 'Kimi 密钥',
     apiKeyDesc: '月之暗面开放平台的接口密钥',
@@ -291,7 +303,8 @@ export const AI_PROVIDER_REGISTRY: AIProviderDescriptor[] = [
     endpoint: 'https://ark.cn-beijing.volces.com/api/v3',
     model: 'doubao-seed-2-1-pro-260628',
     // 豆包模型名带日期后缀（-260628），换版本时在「模型名称」行改；也可填方舟控制台的接入点 id
-    defaultMaxTokens: 256000,
+    // 上游报的 256000 未在官方文档核实，默认走保守档（面板可调高）
+    defaultMaxTokens: SAFE_DEFAULT_MAX_TOKENS,
     maxOutputCap: 256000,
     apiKeyLabel: '火山方舟密钥',
     apiKeyDesc: '火山引擎方舟的接口密钥',
@@ -301,7 +314,8 @@ export const AI_PROVIDER_REGISTRY: AIProviderDescriptor[] = [
     label: '阶跃星辰',
     endpoint: 'https://api.stepfun.com/v1',
     model: 'step-3.7-flash',
-    defaultMaxTokens: 256000,
+    // 上游报的 256000 未核实，默认走保守档
+    defaultMaxTokens: SAFE_DEFAULT_MAX_TOKENS,
     maxOutputCap: 256000,
     apiKeyLabel: '阶跃星辰密钥',
     apiKeyDesc: '阶跃星辰开放平台的接口密钥',
@@ -351,7 +365,8 @@ export const AI_PROVIDER_REGISTRY: AIProviderDescriptor[] = [
     label: 'xAI Grok',
     endpoint: 'https://api.x.ai/v1',
     model: 'grok-4.7',
-    defaultMaxTokens: 500000,
+    // 500000 这个量级不可能是输出上限（疑为上下文），默认走保守档
+    defaultMaxTokens: SAFE_DEFAULT_MAX_TOKENS,
     maxOutputCap: 500000,
     apiKeyLabel: 'xAI 密钥',
     apiKeyDesc: 'xAI 控制台的接口密钥',
@@ -361,7 +376,8 @@ export const AI_PROVIDER_REGISTRY: AIProviderDescriptor[] = [
     label: 'Mistral',
     endpoint: 'https://api.mistral.ai/v1',
     model: 'mistral-large-4',
-    defaultMaxTokens: 262144,
+    // 上游报的 262144 未核实，默认走保守档
+    defaultMaxTokens: SAFE_DEFAULT_MAX_TOKENS,
     maxOutputCap: 262144,
     apiKeyLabel: 'Mistral 密钥',
     apiKeyDesc: 'Mistral 控制台的接口密钥',

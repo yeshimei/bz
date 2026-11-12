@@ -39,15 +39,39 @@ export const EMPTY_FILTER_ICON = 'funnel';
 /**
  * bz Reader 引导页文案与链接（2026-11-12 用户拍板形态 A「入馆须知」）。
  * - 介绍：取 GitHub 仓库 README 首段
- * - 下载量：Obsidian 社区插件统计 community-plugin-stats.json（2026-11-12 抓取；随版本会变，
- *   这里只作展示文案，不参与任何逻辑）
  * - 教程：bz Reader README 顶部「视频教程」
+ * - 不写下载量等会过期的统计（写死在源码里几周就对不上真实值）
  */
 export const READER_GUIDE = {
   name: 'bz Reader',
   desc: '把 Obsidian 变成一个能读书的地方。桌面端 + 移动端、多格式（包括 PDF），AI 全书问答、双向链接，数据全部本地。',
-  downloads: '1,550',
   repo: 'https://github.com/yeshimei/bz-reader',
   tutorial: 'https://www.bilibili.com/video/BV1tK4E6KE1B',
   marketBadge: '已上架 Obsidian 社区插件市场',
 } as const;
+
+/**
+ * 书的格式（2026-11-12 用户报「PDF 被认出成 EPUB」后立）：
+ * bz Reader 支持 epub / txt / mobi / azw3 / fb2 / cbz / pdf 七种（其 data/schema.ts 的
+ * BookFormat），真值写在书目记录的 `fileRef.format`。bz 侧一律以该字段为准，
+ * 缺失（老数据）才回落后缀名，两者都没有按 epub 兜底——那是历史上唯一在册的格式。
+ *
+ * 只做展示（借书卡副标题/书脊提示），不参与任何分支判断：能不能打开由 bz Reader 决定。
+ */
+export const BOOK_FORMAT_LABEL: Record<string, string> = {
+  epub: 'EPUB',
+  txt: 'TXT',
+  mobi: 'MOBI',
+  azw3: 'AZW3',
+  fb2: 'FB2',
+  cbz: 'CBZ',
+  pdf: 'PDF',
+};
+
+/** 归一书的格式：fileRef.format → 文件后缀 → 'epub'（返回值必在小写键集内） */
+export function bookFormatOf(fileRef: any, vaultPath: string): string {
+  const raw = typeof fileRef?.format === 'string' ? fileRef.format.trim().toLowerCase() : '';
+  if (BOOK_FORMAT_LABEL[raw]) return raw;
+  const ext = String(vaultPath || '').split('.').pop()?.toLowerCase() || '';
+  return BOOK_FORMAT_LABEL[ext] ? ext : 'epub';
+}
