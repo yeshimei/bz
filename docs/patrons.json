@@ -1,7 +1,8 @@
 {
   "version": 1,
-  "updatedAt": "2026-11-11",
+  "updatedAt": "2026-11-12",
   "patrons": [
+    { "name": "Pomodorinettina", "amount": "patron", "date": "2026-11-12", "message": "非常喜欢这个阅读器的UI，希望之后可以出更多项目更多功能～" },
     { "name": "NewTree", "amount": "patron", "date": "2026-11-11" },
     { "name": "沁弦", "amount": 6.66, "date": "2026-11-11", "message": "KEEP IT UP!Love from Charis523" },
     { "name": "Sailing Fish", "amount": 3.14, "date": "2026-11-10", "message": "不错不错" },
