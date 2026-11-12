@@ -56,6 +56,19 @@ export function releaseEntryCount(release: ChangelogRelease): number {
  */
 export const CHANGELOG_RELEASES: readonly ChangelogRelease[] = [
   {
+    version: '1.44.2',
+    date: '2026-11-12',
+    // 条目与 docs/note-v1.44.2.md 同稿（scripts/_gen-changelog.mjs 自动生成，勿手改）
+    fixed: [
+      { domain: '界面', text: '按钮样式只在 bz 自己的面板里生效，不影响其它插件。' },
+    ],
+    improved: [
+      { domain: 'AI 配置', text: '服务商扩到 18 家，国内外常用模型选好填密钥就能用。' },
+      { domain: '书库', text: '改由 bz Reader 供书，没装的话引导页可以一键安装。' },
+      { domain: '书库', text: '借书卡按真实格式显示，PDF、TXT 等不再一律写成 EPUB。' },
+    ],
+  },
+  {
     version: '1.44.1',
     date: '2026-11-12',
     // 条目与 docs/note-v1.44.1.md 同稿（scripts/_gen-changelog.mjs 自动生成，勿手改）
