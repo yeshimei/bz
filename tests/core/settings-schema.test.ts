@@ -32,18 +32,24 @@ describe('mainSettingsSchema：主设置页区块（issue 422 起 AI 页按模�
     ]);
   });
 
-  it('LLM 组首部：服务商下拉 + 自定义地址行 + 每家一行密钥（visibleWhen 随 aiProvider）', () => {
+  it('LLM 组首部：服务商下拉 + 自定义地址/协议行 + 每家一行密钥（visibleWhen 随 aiProvider）', () => {
     // issue 422/ADR-0182：「服务商」组撤销并入 LLM 组首部——先选通道与密钥，再配该通道的模型参数
     // 2026-11-11：加回自定义（地址行紧跟服务商下拉，只有选中自定义时可见）
-    const rows = schema.groups[0].rows.slice(0, 2 + AI_PROVIDER_REGISTRY.length);
-    expect(rows.map((r) => r.type)).toEqual(['select', 'text', 'secret', 'secret', 'secret', 'secret']);
+    // 2026-11-12：自定义再加一行「协议」（OpenAI 兼容 / Anthropic）——首部固定三行 + 每家一行密钥
+    const headLen = 3 + AI_PROVIDER_REGISTRY.length;
+    const rows = schema.groups[0].rows.slice(0, headLen);
+    expect(rows.map((r) => r.type)).toEqual([
+      'select', 'text', 'select',
+      ...AI_PROVIDER_REGISTRY.map(() => 'secret'),
+    ]);
     expect(rows.map((r) => (r as { name: string }).name)).toEqual([
       'AI 服务商',
       '自定义 API 地址',
+      '自定义协议',
       ...AI_PROVIDER_REGISTRY.map((p) => p.apiKeyLabel),
     ]);
-    const [provider, urlRow, ...keyRows] = rows as Array<{
-      binding?: { key: string };
+    const [provider, urlRow, protocolRow, ...keyRows] = rows as Array<{
+      binding?: { key: string } | { get: () => unknown; set: (v: unknown) => void; save: () => unknown };
       visibleWhen?: (s: SettingsSnapshot) => boolean;
       options?: Array<{ value: string; label: string }>;
     }>;
@@ -54,17 +60,26 @@ describe('mainSettingsSchema：主设置页区块（issue 422 起 AI 页按模�
     expect(urlRow.binding).toEqual({ key: 'aiCustomEndpoint' });
     expect(urlRow.visibleWhen!(snapOf({ aiProvider: 'custom' }))).toBe(true);
     expect(urlRow.visibleWhen!(snapOf({ aiProvider: 'deepseek' }))).toBe(false);
-    // 每家的密钥行：键直绑 apiKeyKey + visibleWhen 跟随 aiProvider（互斥显隐）
+    // 协议行：直绑 aiCustomProtocol，两档（OpenAI 兼容 / Anthropic），同样只在自定义时可见
+    expect(protocolRow.binding).toEqual({ key: 'aiCustomProtocol' });
+    expect(protocolRow.options).toEqual([
+      { value: 'openai', label: 'OpenAI 兼容' },
+      { value: 'anthropic', label: 'Anthropic（Claude）' },
+    ]);
+    expect(protocolRow.visibleWhen!(snapOf({ aiProvider: 'custom' }))).toBe(true);
+    expect(protocolRow.visibleWhen!(snapOf({ aiProvider: 'deepseek' }))).toBe(false);
+    // 每家的密钥行：老三家键直绑 apiKeyKey（存量兼容）；新家三函数绑 aiApiKeys 表（2026-11-12）
     AI_PROVIDER_REGISTRY.forEach((p, i) => {
-      expect(keyRows[i].binding).toEqual({ key: p.apiKeyKey });
-      expect(keyRows[i].visibleWhen!(snapOf({ aiProvider: p.id }))).toBe(true);
+      if (p.apiKeyKey) expect(keyRows[i].binding, p.id).toEqual({ key: p.apiKeyKey });
+      else expect(keyRows[i].binding && 'get' in keyRows[i].binding!, p.id).toBe(true);
+      expect(keyRows[i].visibleWhen!(snapOf({ aiProvider: p.id })), p.id).toBe(true);
       const other = AI_PROVIDER_REGISTRY.find((x) => x.id !== p.id)!;
-      expect(keyRows[i].visibleWhen!(snapOf({ aiProvider: other.id }))).toBe(false);
+      expect(keyRows[i].visibleWhen!(snapOf({ aiProvider: other.id })), p.id).toBe(false);
     });
   });
 
   it('LLM 组模型行（原「模型配置」组）：模型名称 + 最大输出 token + 思考档位（issue 411 起选项随服务商换表）', () => {
-    const rows = schema.groups[0].rows.slice(2 + AI_PROVIDER_REGISTRY.length) as Array<{
+    const rows = schema.groups[0].rows.slice(3 + AI_PROVIDER_REGISTRY.length) as Array<{
       name: string;
       type: string;
       binding?: { key: string } | { get: () => unknown; set: (v: unknown) => void; save: () => unknown };

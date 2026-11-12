@@ -1,10 +1,15 @@
 /**
  * AIService / createAI（Q3.js window.__utils 移植，ticket 03）
- * provider：注册表驱动（ticket 170/171 策略模式）——三条常用通道（issue 411/ADR-0179）+ 自定义
- * （2026-11-11 加回）：deepseek（官方，缺省）/ zhipu-plan（智谱 Coding 套餐）/ ollama（本地）/
- * custom（用户自填 OpenAI 兼容端点与模型）；插件没列出的服务商都从自定义接，不必为加一家改代码。
+ * provider：注册表驱动（ticket 170/171 策略模式）——2026-11-12/ADR-0297 扩到常用 18 家：
+ * 老三家常驻 deepseek（官方，缺省）/ zhipu-plan（智谱 Coding 套餐）/ ollama（本地）；
+ * 国内常用 zhipu / qwen / kimi / siliconflow / volcengine / stepfun；海外常用 openai / anthropic /
+ * google / xai / mistral / groq / openrouter；本地 lmstudio；custom 兜底（OpenAI 兼容与 Anthropic
+ * 两套协议由 aiCustomProtocol 选）。插件没列出的服务商都从自定义接，不必为加一家改代码。
+ * 协议（ADR-0297）：`protocol` 是 provider 属性，缺省即 OpenAI 兼容 /chat/completions；目前只有
+ * anthropic 常驻通道走 Messages API（/messages、x-api-key、system 顶层、content_block_delta）。
+ * 两套协议的差异收在 ProtocolAdapter 四个注入点，超时/中止/流式读取/兜底共用一份实现。
  * override 字符串（注册表 id）或对象 {endpoint, apiKey, model, extraHeaders, defaultMaxTokens}
- * （对象形态 = 调用方自带完整配置，不经注册表，脚本内指定第三方端点用）。
+ * （对象形态 = 调用方自带完整配置，不经注册表，脚本内指定第三方端点用；无协议身份，按 openai 走）。
  * prompt：fetch 流式（stream:true），失败自动 fallback requestUrl 非流式。
  * 图像输入（issue 311）：`prompt` 除纯文本外也收 `{text, images}`，带图时 content 走 OpenAI
  * 多模态数组（`image_url`）；本地图用 `imageDataUrl` 转 base64 data URL（DeepSeek V4.1-Flash
@@ -28,6 +33,10 @@ import { toBase64 } from './crypto';
 
 export interface AISettingsLike {
   aiProvider?: string;
+  /** 🔑 各服务商密钥（键 = 注册表 id）。2026-11-12 起新增的服务商统一走这张表，不再为每家加一个
+   *  设置键；老三家（deepseek / zhipu-plan / ollama）仍读各自旧键，读时先查本表再回落旧键
+   *  （见 keyOf），写入端按「有无 apiKeyKey」分流，故存量用户数据零迁移 */
+  aiApiKeys?: Record<string, string>;
   /** 🔑 DeepSeek 密钥（留空则回退读外部配置） */
   deepseekApiKey?: string;
   /** 🔑 智谱 Plan（Coding 套餐）密钥 */
@@ -38,6 +47,10 @@ export interface AISettingsLike {
   aiCustomEndpoint?: string;
   /** 🔑 自定义（OpenAI 兼容）API Key（空 = 没配） */
   aiCustomApiKey?: string;
+  /** 自定义通道的请求协议（2026-11-12）：'openai'（缺省，OpenAI 兼容 /chat/completions）/
+   *  'anthropic'（Claude 官方 Messages API /messages）。同一档自定义既能接 OpenAI 兼容网关，
+   *  也能接 Claude 或各家 Anthropic 兼容端点，不必为换协议再加一档 */
+  aiCustomProtocol?: string;
   /** 每提供商模型覆盖（键 = provider id；未填用注册表默认） */
   aiModelOverrides?: Record<string, string>;
   /** 每提供商最大输出 token 覆盖（键 = provider id；未填用注册表 defaultMaxTokens） */
@@ -95,11 +108,24 @@ const THINK_MEDIUM: AIThinkingLevel = { value: 'medium', label: '中', body: nul
 const THINK_HIGH: AIThinkingLevel = { value: 'high', label: '高', body: null };
 const THINK_MAX: AIThinkingLevel = { value: 'max', label: '最高', body: null };
 
+/**
+ * 请求协议（2026-11-12 用户拍板「自定义也要支持两套」）：市面上主流只有两种报文格式——
+ * - openai：OpenAI 兼容 /chat/completions（Bearer 鉴权，messages 可含 system，SSE 取 delta.content）。
+ *   绝大多数服务商（DeepSeek / 智谱 / 通义 / Kimi / 硅基流动 / 火山 / 阶跃 / Groq / xAI /
+ *   Mistral / OpenRouter / LM Studio / LocalAI…）以及 Google 的 OpenAI 兼容端点都是这一套。
+ * - anthropic：Claude 官方 Messages API /messages（x-api-key + anthropic-version 头，system 走顶层
+ *   字段、SSE 是 content_block_delta 事件）。
+ * 缺省即 openai——新增服务商不写 protocol 就是 OpenAI 兼容，不必重复声明。
+ */
+export type AIProtocol = 'openai' | 'anthropic';
+
 export interface AIProviderDescriptor {
   /** 注册表键（settings.aiProvider 取值） */
   id: string;
   /** 设置页下拉展示名 */
   label: string;
+  /** 请求协议（缺省 = 'openai'，见 AIProtocol） */
+  protocol?: AIProtocol;
   /** 默认 API endpoint */
   endpoint: string;
   /** 默认模型（空 = 沿用调用方默认模型） */
@@ -118,8 +144,9 @@ export interface AIProviderDescriptor {
    * 故 deepseek 这类「默认模型名留空、实际模型由调用方传」的通道也必须显式填上。
    */
   maxOutputCap?: number;
-  /** 密钥在 AISettingsLike 的键名 */
-  apiKeyKey: keyof AISettingsLike;
+  /** 密钥在 AISettingsLike 的键名。**缺省 = 走 aiApiKeys[id] 这张表**（新服务商不必加设置键）；
+   *  只有老三家保留了各自的旧键位（存量数据兼容），新条目一律不填 */
+  apiKeyKey?: keyof AISettingsLike;
   /** 设置页密钥行标题（注册表驱动生成密钥行；ticket 171 策略模式完整化） */
   apiKeyLabel: string;
   /** 密钥行描述（设置页；约 20 字自然句，ticket 100 文案规范） */
@@ -132,11 +159,11 @@ export interface AIProviderDescriptor {
 export const DEFAULT_AI_PROVIDER = 'deepseek';
 
 /**
- * 在册提供商（issue 411/ADR-0179 的三条真用通道 + 2026-11-11 加回的 custom）：
- * deepseek 官方 / 智谱 Coding 套餐 / 本地 Ollama / 自定义（OpenAI 兼容）。
- * 前三家的端点与默认模型由注册表给；custom 的端点与模型由用户填（注册表给不出默认），
- * 插件没列出的服务商（OpenAI / OpenRouter / 硅基流动 / 自建网关）都从这里接。
- * 思考档位表见 AIThinkingSpec 注释（逐家参数名与支持档不同；custom 没有档位表 = 不注入）。
+ * 在册提供商（2026-11-12/ADR-0297 扩表：老三家常驻 + 国内常用 + 海外常用 + 本地 + 自定义兜底）。
+ * 前三家常驻通道由插件长期负责「选完填密钥就能用」；2026-11-12 起把市面上真正常用的十几家也收进来，
+ * 端点与默认模型取自 models.dev（MIT，2026-11-12 抓取），不引任何运行时依赖。
+ * 插件没列出的服务商（新的 / 自建的 / 冷门的）都从 custom 接，不必为加一家发一版。
+ * 思考档位表见 AIThinkingSpec 注释（逐家参数名与支持档不同；没有表的家 = 不注入思考参数）。
  */
 export const AI_PROVIDER_REGISTRY: AIProviderDescriptor[] = [
   {
@@ -208,17 +235,189 @@ export const AI_PROVIDER_REGISTRY: AIProviderDescriptor[] = [
       ],
     },
   },
+
+  // ==================== 国内常用（2026-11-12 批量接入） ====================
+  // 端点与默认模型取自 models.dev（2026-11-12 拉取），调大默认模型前请先核对该家官方文档。
+  // 以下条目都不带 apiKeyKey：密钥统一存 settings.aiApiKeys[id]，不新增设置键。
+
+  {
+    id: 'zhipu',
+    label: '智谱 GLM',
+    endpoint: 'https://open.bigmodel.cn/api/paas/v4',
+    model: 'glm-5.3-flash',
+    // glm-5.3 系官方最大输出 131072（上下文 1M）；与 zhipu-plan 同模型、不同计费端点
+    defaultMaxTokens: 131072,
+    maxOutputCap: 131072,
+    apiKeyLabel: '智谱 GLM 密钥',
+    apiKeyDesc: '智谱开放平台的接口密钥',
+  },
+  {
+    id: 'qwen',
+    label: '通义千问',
+    endpoint: 'https://dashscope.aliyuncs.com/compatible-mode/v1',
+    model: 'qwen3.8-flash',
+    // 阿里云百炼 OpenAI 兼容面（国内站）；上下文 1M / 最大输出 131072
+    defaultMaxTokens: 131072,
+    maxOutputCap: 131072,
+    apiKeyLabel: '通义千问密钥',
+    apiKeyDesc: '阿里云百炼的接口密钥',
+  },
+  {
+    id: 'kimi',
+    label: 'Kimi',
+    endpoint: 'https://api.moonshot.cn/v1',
+    model: 'kimi-k3',
+    // models.dev 报 k3 输出上限 1048576（与上下文同档，疑为上游数据待核）；此处按其收录值，
+    // 面板「最大输出 token」仍可按模型名逐次调低
+    defaultMaxTokens: 1048576,
+    maxOutputCap: 1048576,
+    apiKeyLabel: 'Kimi 密钥',
+    apiKeyDesc: '月之暗面开放平台的接口密钥',
+  },
+  {
+    id: 'siliconflow',
+    label: '硅基流动',
+    endpoint: 'https://api.siliconflow.cn/v1',
+    model: 'zai-org/GLM-5.3-Flash',
+    // 聚合式服务：模型名带厂商前缀（zai-org/… / Qwen/… / deepseek-ai/…），选模型时照抄完整 id
+    defaultMaxTokens: 131072,
+    maxOutputCap: 131072,
+    apiKeyLabel: '硅基流动密钥',
+    apiKeyDesc: '硅基流动的接口密钥',
+  },
+  {
+    id: 'volcengine',
+    label: '火山方舟',
+    endpoint: 'https://ark.cn-beijing.volces.com/api/v3',
+    model: 'doubao-seed-2-1-pro-260628',
+    // 豆包模型名带日期后缀（-260628），换版本时在「模型名称」行改；也可填方舟控制台的接入点 id
+    defaultMaxTokens: 256000,
+    maxOutputCap: 256000,
+    apiKeyLabel: '火山方舟密钥',
+    apiKeyDesc: '火山引擎方舟的接口密钥',
+  },
+  {
+    id: 'stepfun',
+    label: '阶跃星辰',
+    endpoint: 'https://api.stepfun.com/v1',
+    model: 'step-3.7-flash',
+    defaultMaxTokens: 256000,
+    maxOutputCap: 256000,
+    apiKeyLabel: '阶跃星辰密钥',
+    apiKeyDesc: '阶跃星辰开放平台的接口密钥',
+  },
+
+  // ==================== 海外常用（2026-11-12 批量接入） ====================
+
+  {
+    id: 'openai',
+    label: 'OpenAI',
+    endpoint: 'https://api.openai.com/v1',
+    model: 'gpt-6-luna',
+    // gpt-6 系最大输出 128000 / 上下文 1.05M
+    defaultMaxTokens: 128000,
+    maxOutputCap: 128000,
+    apiKeyLabel: 'OpenAI 密钥',
+    apiKeyDesc: 'OpenAI 官方平台的接口密钥',
+    // OpenAI 官方支持 reasoning_effort（low/medium/high），但模型档位因款而异——保守不注入
+  },
+  {
+    // Claude 官方：唯一走 Anthropic Messages 协议的常驻通道（与自定义的 anthropic 协议同一实现）
+    id: 'anthropic',
+    label: 'Claude（Anthropic）',
+    protocol: 'anthropic',
+    endpoint: 'https://api.anthropic.com/v1',
+    model: 'claude-haiku-5-5',
+    // claude-5 系最大输出 128000 / 上下文 1M（haiku 与 sonnet 同档）
+    defaultMaxTokens: 128000,
+    maxOutputCap: 128000,
+    apiKeyLabel: 'Claude 密钥',
+    apiKeyDesc: 'Anthropic 官方平台的接口密钥',
+    // 思考（extended thinking）走 budget_tokens，须与 max_tokens 联动折算，本版暂不注入
+  },
+  {
+    id: 'google',
+    label: 'Google Gemini',
+    endpoint: 'https://generativelanguage.googleapis.com/v1beta/openai',
+    model: 'gemini-3.8-flash',
+    // 走 Google 的 OpenAI 兼容面（/v1beta/openai），故与本家其余通道共用一套请求实现
+    defaultMaxTokens: 65536,
+    maxOutputCap: 65536,
+    apiKeyLabel: 'Gemini 密钥',
+    apiKeyDesc: 'Google AI Studio 的接口密钥',
+  },
+  {
+    id: 'xai',
+    label: 'xAI Grok',
+    endpoint: 'https://api.x.ai/v1',
+    model: 'grok-4.7',
+    defaultMaxTokens: 500000,
+    maxOutputCap: 500000,
+    apiKeyLabel: 'xAI 密钥',
+    apiKeyDesc: 'xAI 控制台的接口密钥',
+  },
+  {
+    id: 'mistral',
+    label: 'Mistral',
+    endpoint: 'https://api.mistral.ai/v1',
+    model: 'mistral-large-4',
+    defaultMaxTokens: 262144,
+    maxOutputCap: 262144,
+    apiKeyLabel: 'Mistral 密钥',
+    apiKeyDesc: 'Mistral 控制台的接口密钥',
+  },
+  {
+    id: 'groq',
+    label: 'Groq',
+    endpoint: 'https://api.groq.com/openai/v1',
+    model: 'qwen/qwen3.8-27b',
+    // Groq 主打推理速度，模型名多带上游前缀（qwen/… / openai/…）
+    defaultMaxTokens: 16384,
+    maxOutputCap: 16384,
+    apiKeyLabel: 'Groq 密钥',
+    apiKeyDesc: 'Groq 控制台的接口密钥',
+  },
+  {
+    id: 'openrouter',
+    label: 'OpenRouter',
+    endpoint: 'https://openrouter.ai/api/v1',
+    // 不设默认模型：这一家是聚合网关，模型名（vendor/model）必须由用户自己选，
+    // 留空即与自定义同理——「获取模型名」拉全量列表后挑一个
+    model: '',
+    defaultMaxTokens: 8192,
+    // 有意不设 maxOutputCap：模型任意（几百个），上限是模型属性，无法用单一常量围栏
+    apiKeyLabel: 'OpenRouter 密钥',
+    apiKeyDesc: 'OpenRouter 开放平台的密钥',
+  },
+
+  // ==================== 本地（2026-11-12） ====================
+
+  {
+    id: 'lmstudio',
+    label: 'LM Studio（本地）',
+    endpoint: 'http://127.0.0.1:1234/v1',
+    // 本地模型由用户自行下载，注册表给不出默认；留空必须手填（同自定义）
+    model: '',
+    defaultMaxTokens: 8192,
+    // 同 Ollama：本地模型上限因所装模型而异，不设围栏
+    apiKeyLabel: 'LM Studio 密钥',
+    apiKeyDesc: '本地服务无需密钥',
+  },
   {
     /**
-     * 自定义（OpenAI 兼容）：端点、密钥、模型全由用户填，注册表只占一个位置。
+     * 自定义（OpenAI 兼容 / Anthropic 两套协议）：端点、密钥、模型全由用户填，注册表只占一个位置。
      *
      * 2026-11-11 加回（issue 411 时随「只留三条通道」退役）：插件能替用户保证
-     * 「选完填密钥就能用」的只有前三家；剩下的服务商（OpenAI / OpenRouter /
-     * 硅基流动 / 自建网关）都靠这一档接，不必为了加一家就发一版。
+     * 「选完填密钥就能用」的只有前几家常驻通道；剩下的服务商（自建网关 /
+     * 未被收录的新家）都靠这一档接，不必为了加一家就发一版。
+     * 2026-11-12：协议可选择（aiCustomProtocol）——OpenAI 兼容与 Anthropic Messages 两种报文，
+     * 故连 Claude 或任意 Anthropic 兼容端点也能从自定义接。
      * 缺地址或缺密钥在 getAIProvider 里直接拦下，不拿空端点拼 URL。
      */
     id: 'custom',
     label: '自定义（OpenAI 兼容）',
+    // protocol 由 getAIProvider 按 settings.aiCustomProtocol 动态解析（注册表里只作缺省）
+    protocol: 'openai',
     endpoint: '',
     model: '',
     /* 兜底档：自定义没有官方上限可依（同 Ollama），面板可自由调大 */
@@ -285,6 +484,8 @@ export function hasExplicitThinkingOption(mo: Record<string, any>): boolean {
 interface AIProvider {
   /** 注册表 id（思考档位表按它查，issue 411/ADR-0179）；对象 override 无 id = 不注入思考参数 */
   id?: string;
+  /** 请求协议（缺省 'openai'；对象 override 无协议身份同样按 openai 走） */
+  protocol?: AIProtocol;
   endpoint: string;
   apiKey: string;
   model?: string;
@@ -292,6 +493,30 @@ interface AIProvider {
   extraHeaders?: Record<string, string>;
   /** 注册表默认 max_tokens（设置 per-provider 覆盖缺省时的兜底档） */
   defaultMaxTokens?: number;
+}
+
+/**
+ * 读某家服务商的密钥：先查 aiApiKeys 表（新家入口），再回落该家的旧键位（存量兼容）。
+ * 2026-11-12 起新增服务商一律走表，故这里看不到 `xxxApiKey` 字段的直接访问。
+ */
+function keyOf(s: AISettingsLike, desc: AIProviderDescriptor): string {
+  const fromTable = String(s.aiApiKeys?.[desc.id] ?? '').trim();
+  if (fromTable) return fromTable;
+  const legacy = desc.apiKeyKey ? s[desc.apiKeyKey] : '';
+  return String(legacy ?? '').trim();
+}
+
+/** 该家是否免鉴权（本地服务：Ollama / LM Studio 的默认端点不校验密钥，空 key 放行） */
+function isNoAuthProvider(desc: AIProviderDescriptor): boolean {
+  return desc.id === 'ollama' || desc.id === 'lmstudio';
+}
+
+/** 解析某家的请求协议：注册表声明优先；自定义按 settings.aiCustomProtocol 动态取（缺省 openai） */
+function protocolOf(desc: AIProviderDescriptor, s: AISettingsLike): AIProtocol {
+  if (desc.id === 'custom') {
+    return String(s.aiCustomProtocol || '').toLowerCase() === 'anthropic' ? 'anthropic' : 'openai';
+  }
+  return desc.protocol === 'anthropic' ? 'anthropic' : 'openai';
 }
 
 let _aiProviderCache: AIProvider | null = null;
@@ -324,6 +549,7 @@ export async function getAIProvider(override?: string | AIOverrideObject): Promi
   // 调用方直接给完整配置（如脚本内指定第三方端点/key）——不经注册表，故无思考档位可查
   if (override && typeof override === 'object' && override.apiKey) {
     return {
+      protocol: 'openai', // 对象形态 = 调用方自带完整配置，无注册表协议身份，一律按 OpenAI 兼容走
       endpoint: String(override.endpoint || 'https://api.deepseek.com').replace(/\/+$/, ''),
       apiKey: override.apiKey,
       model: override.model || undefined,
@@ -359,13 +585,15 @@ export async function getAIProvider(override?: string | AIOverrideObject): Promi
       requested > 0 ? (cap === undefined ? requested : Math.min(requested, cap)) : cap ?? desc.defaultMaxTokens;
     return cachePut({
       id: 'custom',
+      // 协议随设置切换：OpenAI 兼容网关与 Anthropic 兼容端点共用一个「自定义」档
+      protocol: protocolOf(desc, s),
       endpoint,
       apiKey: customKey,
       model: effModel || undefined,
       defaultMaxTokens,
     });
   }
-  const key = s[desc.apiKeyKey];
+  const key = keyOf(s, desc);
   if (!key && name === 'deepseek') {
     // deepseek 兼容兜底：settings 缺 key 时读 QuickAdd data.json（legacy，无 UI）
     try {
@@ -375,6 +603,7 @@ export async function getAIProvider(override?: string | AIOverrideObject): Promi
       if (provider && provider.endpoint && provider.apiKey) {
         return cachePut({
           id: 'deepseek',
+          protocol: 'openai',
           endpoint: String(provider.endpoint).replace(/\/+$/, ''),
           apiKey: provider.apiKey,
           defaultMaxTokens: desc.defaultMaxTokens,
@@ -382,8 +611,8 @@ export async function getAIProvider(override?: string | AIOverrideObject): Promi
       }
     } catch (e) { /* 读取失败由调用方提示 */ }
   }
-  // ollama 本地服务无鉴权：空密钥放行（其余提供商缺 key 即拦截）
-  if (!key && name !== 'ollama') {
+  // 本地服务（Ollama / LM Studio）无需鉴权：空密钥放行（其余提供商缺 key 即拦截）
+  if (!key && !isNoAuthProvider(desc)) {
     throw new Error(`未配置 ${desc.label} API Key：插件设置 → AI 配置 → ${desc.apiKeyLabel}`);
   }
   // ticket 172 per-provider 覆盖：用户设置的模型/上下文/max token 优先于注册表默认；
@@ -409,6 +638,7 @@ export async function getAIProvider(override?: string | AIOverrideObject): Promi
       : cap ?? desc.defaultMaxTokens;
   return cachePut({
     id: name,
+    protocol: protocolOf(desc, s),
     endpoint: desc.endpoint,
     apiKey: (key as string) || '',
     model: effModel || undefined,
@@ -455,16 +685,132 @@ function idleTimeoutOf(body: any): number {
   return hasImage ? AI_IMAGE_IDLE_TIMEOUT_MS : AI_IDLE_TIMEOUT_MS;
 }
 
-/** SSE 流式解析（fetch + ReadableStream）；signal 可中止，onDelta 逐段增量回调（ticket 141）。
- *  内部 AbortController 组合外部 signal 与空闲超时（C1）：建连不回包 / 流中途停发超时即中止
- *  （带图请求阈值放宽，见 idleTimeoutOf） */
-async function streamChatCompletions(provider: AIProvider, body: any, signal?: AbortSignal, onDelta?: (delta: string) => void): Promise<string> {
-  const idleMs = idleTimeoutOf(body);
-  const headers: Record<string, string> = {
+// ---------------- 协议适配（OpenAI 兼容 / Anthropic Messages） ----------------
+
+/**
+ * 一份协议的四点差异：端点、鉴权头、报文转换、增量文本提取。
+ * 超时、中止、流式读取、requestUrl 兜底、坏 chunk 容错全部共用——两套协议只在下面这张表里分叉，
+ * 避免把 60 行的空闲超时/AbortController 逻辑复制两份（复制出来的两份早晚会漂移）。
+ */
+interface ProtocolAdapter {
+  /** 完整对话端点（endpoint 已去尾斜杠） */
+  url(endpoint: string): string;
+  /** 鉴权与内容类型请求头 */
+  headers(provider: AIProvider): Record<string, string>;
+  /** 中立报文（model/messages/max_tokens/stream + modelOptions）→ 该协议请求体 */
+  body(body: any): any;
+  /** SSE 单个 data JSON → 本次增量文本（无增量返回空串） */
+  deltaOf(chunk: any): string;
+  /** 流结束标记（OpenAI 是 [DONE] 哨兵单独判，这里指协议自带的事件） */
+  isDone(chunk: any): boolean;
+  /** SSE 内联错误（Anthropic 把错误当事件发，OpenAI 走 HTTP 状态码） */
+  errorOf(chunk: any): string | null;
+  /** 非流式完整响应 → 文本；缺 content 返回 null（由调用方按「响应缺少 content」报错） */
+  textOf(data: any): string | null;
+}
+
+/** Anthropic 报文只接受这几个可选参数（其余字段服务端会以 400 拒绝，故白名单透传） */
+const ANTHROPIC_PASSTHROUGH = ['temperature', 'top_p', 'top_k', 'metadata'] as const;
+
+/** 中立 content（OpenAI 形态）→ Anthropic content：图片从 image_url 转 image/source */
+function toAnthropicContent(content: any): any {
+  if (typeof content === 'string') return content;
+  if (!Array.isArray(content)) return content;
+  const out: any[] = [];
+  for (const part of content) {
+    if (!part || typeof part !== 'object') continue;
+    if (part.type === 'text') {
+      out.push({ type: 'text', text: String(part.text ?? '') });
+    } else if (part.type === 'image_url') {
+      const url = String(part.image_url?.url ?? '');
+      // data URL（本地图）→ base64 source；公网直链 → url source（Anthropic 两种都收）
+      const m = /^data:([^;,]+);base64,(.*)$/s.exec(url);
+      if (m) out.push({ type: 'image', source: { type: 'base64', media_type: m[1], data: m[2] } });
+      else if (url) out.push({ type: 'image', source: { type: 'url', url } });
+    }
+    // 其余部件（未来若加 file 等）不转发，避免发出 Anthropic 不认识的 type
+  }
+  return out;
+}
+
+/** 中立报文 → Anthropic Messages 报文：system 抽到顶层、图片换写法、参数走白名单 */
+function toAnthropicBody(body: any): any {
+  const out: any = { model: body?.model, stream: !!body?.stream };
+  if (typeof body?.max_tokens === 'number') out.max_tokens = body.max_tokens;
+  const sys: string[] = [];
+  const list: any[] = [];
+  const msgs = Array.isArray(body?.messages) ? body.messages : [];
+  for (const m of msgs) {
+    if (!m || typeof m !== 'object') continue;
+    // Anthropic 的 messages 只认 user/assistant——system 必须抽到顶层字段，塞在数组里会被 400
+    if (m.role === 'system') {
+      const t = typeof m.content === 'string' ? m.content : '';
+      if (t) sys.push(t);
+      continue;
+    }
+    list.push({ role: m.role === 'assistant' ? 'assistant' : 'user', content: toAnthropicContent(m.content) });
+  }
+  // messages 为空数组会被拒（"messages: at least one message is required"），补一条空 user 让报错更可读
+  out.messages = list.length ? list : [{ role: 'user', content: '' }];
+  if (sys.length) out.system = sys.join('\n\n');
+  for (const k of ANTHROPIC_PASSTHROUGH) {
+    if (body?.[k] !== undefined) out[k] = body[k];
+  }
+  // OpenAI 的 stop 在 Anthropic 叫 stop_sequences（名字不同，值同构）
+  if (body?.stop !== undefined) out.stop_sequences = Array.isArray(body.stop) ? body.stop : [body.stop];
+  return out;
+}
+
+const OPENAI_ADAPTER: ProtocolAdapter = {
+  url: (endpoint) => `${endpoint}/chat/completions`,
+  headers: (provider) => ({
     'Content-Type': 'application/json',
     'Authorization': `Bearer ${provider.apiKey}`,
     ...(provider.extraHeaders || {}),
-  };
+  }),
+  body: (body) => body,
+  deltaOf: (chunk) => chunk?.choices?.[0]?.delta?.content || '',
+  isDone: () => false, // OpenAI 以 data: [DONE] 收尾，由流解析单独判
+  errorOf: () => null,
+  textOf: (data) => data?.choices?.[0]?.message?.content ?? null,
+};
+
+const ANTHROPIC_ADAPTER: ProtocolAdapter = {
+  url: (endpoint) => `${endpoint}/messages`,
+  headers: (provider) => ({
+    'Content-Type': 'application/json',
+    // Anthropic 不走 Bearer：密钥在 x-api-key，且必须声明 API 版本
+    'x-api-key': provider.apiKey,
+    'anthropic-version': '2023-06-01',
+    ...(provider.extraHeaders || {}),
+  }),
+  body: toAnthropicBody,
+  deltaOf: (chunk) => (chunk?.type === 'content_block_delta' && chunk?.delta?.type === 'text_delta'
+    ? String(chunk.delta.text ?? '')
+    : ''),
+  isDone: (chunk) => chunk?.type === 'message_stop',
+  errorOf: (chunk) => (chunk?.type === 'error'
+    ? String(chunk?.error?.message || chunk?.error?.type || '未知错误')
+    : null),
+  textOf: (data) => {
+    const arr = Array.isArray(data?.content) ? data.content : [];
+    if (!arr.length) return null;
+    return arr.filter((c: any) => c?.type === 'text').map((c: any) => String(c.text ?? '')).join('');
+  },
+};
+
+/** 按 provider.protocol 取适配器（缺省 openai） */
+function adapterOf(provider: AIProvider): ProtocolAdapter {
+  return provider.protocol === 'anthropic' ? ANTHROPIC_ADAPTER : OPENAI_ADAPTER;
+}
+
+/** SSE 流式解析（fetch + ReadableStream）；signal 可中止，onDelta 逐段增量回调（ticket 141）。
+ *  内部 AbortController 组合外部 signal 与空闲超时（C1）：建连不回包 / 流中途停发超时即中止
+ *  （带图请求阈值放宽，见 idleTimeoutOf）。两套协议共用本函数，差异全在 adapter。 */
+async function streamChat(provider: AIProvider, body: any, signal?: AbortSignal, onDelta?: (delta: string) => void): Promise<string> {
+  const adapter = adapterOf(provider);
+  const idleMs = idleTimeoutOf(body);
+  const headers = adapter.headers(provider);
   // 内部 controller：外部 signal 转发 + 空闲超时；aborted 且外部未取消 ⇒ 超时
   const controller = new AbortController();
   const onOuterAbort = () => controller.abort();
@@ -483,10 +829,10 @@ async function streamChatCompletions(provider: AIProvider, body: any, signal?: A
   };
   try {
     armIdle();
-    const resp = await fetch(`${provider.endpoint}/chat/completions`, {
+    const resp = await fetch(adapter.url(provider.endpoint), {
       method: 'POST',
       headers,
-      body: JSON.stringify(body),
+      body: JSON.stringify(adapter.body(body)),
       signal: controller.signal,
     });
     if (!resp.ok) {
@@ -500,7 +846,7 @@ async function streamChatCompletions(provider: AIProvider, body: any, signal?: A
     // 响应无流（老 WebView / 非 SSE）→ 直接读完整 JSON（json() 期间空闲超时仍生效）
     if (!resp.body || typeof (resp.body as any).getReader !== 'function') {
       const data: any = await resp.json();
-      return (data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content) || '';
+      return adapter.textOf(data) ?? '';
     }
     const reader = (resp.body as any).getReader();
     const decoder = new TextDecoder();
@@ -517,16 +863,18 @@ async function streamChatCompletions(provider: AIProvider, body: any, signal?: A
         if (!line.startsWith('data:')) continue;
         const payload = line.slice(5).trim();
         if (payload === '[DONE]') { try { reader.cancel(); } catch (e) { /* 忽略 */ } return full; }
-        try {
-          const chunk = JSON.parse(payload);
-          const delta = chunk.choices && chunk.choices[0] && chunk.choices[0].delta && chunk.choices[0].delta.content;
-          if (delta) {
-            full += delta;
-            try {
-              onDelta?.(delta); // 增量回调异常不影响流式解析
-            } catch (e) { /* 忽略 */ }
-          }
-        } catch (e) { /* 忽略坏 chunk */ }
+        const chunk = safeJson(payload);
+        if (!chunk) continue; // 坏 chunk 跳过（心跳行 / 空行 / 截断数据）
+        const errMsg = adapter.errorOf(chunk);
+        if (errMsg) throw new Error(errMsg);
+        if (adapter.isDone(chunk)) { try { reader.cancel(); } catch (e) { /* 忽略 */ } return full; }
+        const delta = adapter.deltaOf(chunk);
+        if (delta) {
+          full += delta;
+          try {
+            onDelta?.(delta); // 增量回调异常不影响流式解析
+          } catch (e) { /* 忽略 */ }
+        }
       }
     }
     return full;
@@ -541,17 +889,20 @@ async function streamChatCompletions(provider: AIProvider, body: any, signal?: A
   }
 }
 
+/** 解析 SSE 单行 JSON；失败返回 null（心跳 / 半包都算正常损耗，不该打断整条流） */
+function safeJson(text: string): any {
+  try { return JSON.parse(text); } catch (e) { return null; }
+}
+
 /** 非流式（requestUrl：Obsidian 官方 API，无 CORS 限制）；requestUrl 不支持中止 → 前后查 signal，已取消按丢弃处理。
  *  C1：requestUrl 本身无超时也不可中止，这里以 race 兜底——超 60s 未应答 promise 先行 settle 报超时，
- *  调用方不再永久转圈（底层连接无法显式取消，迟到结果由 race 消费侧丢弃不产生 unhandled rejection） */
-async function chatCompletionsNonStream(provider: AIProvider, body: any, signal?: AbortSignal): Promise<string> {
+ *  调用方不再永久转圈（底层连接无法显式取消，迟到结果由 race 消费侧丢弃不产生 unhandled rejection）。
+ *  2026-11-12：两套协议同样共用本函数，端点/头/报文由 adapter 决定。 */
+async function chatNonStream(provider: AIProvider, body: any, signal?: AbortSignal): Promise<string> {
   if (signal?.aborted) throw abortError();
+  const adapter = adapterOf(provider);
   const idleMs = idleTimeoutOf(body);
-  const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
-    'Authorization': `Bearer ${provider.apiKey}`,
-    ...(provider.extraHeaders || {}),
-  };
+  const headers = adapter.headers(provider);
   const resp: any = await new Promise<any>((resolve, reject) => {
     let timer: ReturnType<typeof setTimeout> | null = null;
     const settle = (fn: () => void) => {
@@ -560,10 +911,10 @@ async function chatCompletionsNonStream(provider: AIProvider, body: any, signal?
     };
     timer = setTimeout(() => settle(() => reject(timeoutError(idleMs))), idleMs);
     requestUrl({
-      url: `${provider.endpoint}/chat/completions`,
+      url: adapter.url(provider.endpoint),
       method: 'POST',
       headers,
-      body: JSON.stringify({ ...body, stream: false }),
+      body: JSON.stringify({ ...adapter.body(body), stream: false }),
     }).then(
       (r) => settle(() => resolve(r)),
       (e) => settle(() => reject(e))
@@ -571,10 +922,10 @@ async function chatCompletionsNonStream(provider: AIProvider, body: any, signal?
   });
   if (signal?.aborted) throw abortError();
   const data = JSON.parse(resp.text);
-  // 兼容 OpenAI 与部分第三方网关的错误格式（如 {type, error:{type,message}}）
+  // 兼容 OpenAI / Anthropic 与部分第三方网关的错误格式（{type, error:{type,message}} 同构）
   const errMsg = (data.error && (data.error.message || data.error.type)) || (data.message && data.message);
   if (errMsg) throw new Error(`API ${resp.status}: ${errMsg}`);
-  const content = data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content;
+  const content = adapter.textOf(data);
   if (content === undefined || content === null) throw new Error(`API ${resp.status}: 响应缺少 content`);
   return content;
 }
@@ -716,21 +1067,23 @@ export class AIService {
     }
     // 思考档位注入（issue 411/ADR-0179）：档位与参数名由 provider 档位表决定（thinkingBodyFor）；
     // 调用方显式思考键优先；auto / 档位不在表内 / 无注册表身份（对象 override）一律不注入。
-    // 字符串 override 指定的 provider 以其自身档位表为准（provider.id 随解析带出）
-    if (!hasExplicitThinkingOption(mo)) {
+    // 字符串 override 指定的 provider 以其自身档位表为准（provider.id 随解析带出）。
+    // Anthropic 协议不注入：本版它没有档位表，且 thinking 在 Messages API 里是 budget_tokens
+    // （须与 max_tokens 联动折算），冒进发 OpenAI 形态的字段会被 400 拒绝
+    if (provider.protocol !== 'anthropic' && !hasExplicitThinkingOption(mo)) {
       const thinking = thinkingBodyFor(provider.id, s.aiThinkingOverrides?.[provider.id || '']);
       if (thinking) Object.assign(body, thinking);
     }
     const signal = mergedOptions.signal instanceof AbortSignal ? (mergedOptions.signal as AbortSignal) : undefined;
     const onDelta = typeof mergedOptions.onDelta === 'function' ? (mergedOptions.onDelta as (delta: string) => void) : undefined;
     try {
-      const content = await streamChatCompletions(provider, body, signal, onDelta);
+      const content = await streamChat(provider, body, signal, onDelta);
       return content;
     } catch (streamError: any) {
       if (signal?.aborted) throw streamError; // 用户取消：不再走 requestUrl 兜底
       // fetch 失败（CORS/网络）→ requestUrl 非流式兜底
       try {
-        const content = await chatCompletionsNonStream(provider, body, signal);
+        const content = await chatNonStream(provider, body, signal);
         return content;
       } catch (e: any) {
         throw new Error(`AI 请求失败: ${streamError.message}（fallback: ${e.message}）`);

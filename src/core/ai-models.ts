@@ -49,12 +49,25 @@ function endpointFor(id: string): string {
   return desc.endpoint.replace(/\/+$/, '');
 }
 
-/** 当前服务商的 API key（Ollama 本地无鉴权返回空串） */
+/** 当前服务商的 API key（本地服务无鉴权返回空串；2026-11-12 起先查 aiApiKeys 表再回落旧键） */
 function keyFor(id: string): string {
   const s = tryGetSettings() as any;
   const desc = providerDescriptorOf(id);
-  if (desc.id === 'ollama') return '';
-  return String(s[desc.apiKeyKey] || '');
+  if (desc.id === 'ollama' || desc.id === 'lmstudio') return '';
+  const fromTable = String(s.aiApiKeys?.[desc.id] ?? '').trim();
+  if (fromTable) return fromTable;
+  const legacy = desc.apiKeyKey ? s[desc.apiKeyKey] : '';
+  return String(legacy ?? '');
+}
+
+/** 该家的请求协议（与 core/ai 的解析同源：注册表声明 + 自定义读 aiCustomProtocol） */
+function protocolFor(id: string): 'openai' | 'anthropic' {
+  const s = tryGetSettings() as any;
+  const desc = providerDescriptorOf(id);
+  if (desc.id === 'custom') {
+    return String(s.aiCustomProtocol || '').toLowerCase() === 'anthropic' ? 'anthropic' : 'openai';
+  }
+  return desc.protocol === 'anthropic' ? 'anthropic' : 'openai';
 }
 
 /** Ollama /api/tags 响应 → 模型 id 列表（Ollama 原生格式，非 OpenAI 兼容面） */
@@ -164,14 +177,20 @@ export async function fetchProviderModels(
   }
 
   const key = keyFor(id);
-  // 除 Ollama 本地服务外，缺 key 即拦截（对齐 getAIProvider 的拦截文案）
-  if (!key && desc.id !== 'ollama') {
+  // 本地服务（Ollama / LM Studio）免鉴权，其余缺 key 即拦截（对齐 getAIProvider 的拦截文案）
+  if (!key && desc.id !== 'ollama' && desc.id !== 'lmstudio') {
     throw new Error(`未配置 ${desc.label} API Key：插件设置 → AI 配置 → ${desc.apiKeyLabel}`);
   }
 
   const url = desc.id === 'ollama' ? `${endpoint}/api/tags` : `${endpoint}/models`;
   const headers: Record<string, string> = {};
-  if (key) headers['Authorization'] = `Bearer ${key}`;
+  // Anthropic 的 /models 同样不走 Bearer（x-api-key + 版本头），与对话端点一套鉴权
+  if (key && protocolFor(id) === 'anthropic') {
+    headers['x-api-key'] = key;
+    headers['anthropic-version'] = '2023-06-01';
+  } else if (key) {
+    headers['Authorization'] = `Bearer ${key}`;
+  }
   const timeoutMs = desc.id === 'ollama' ? OLLAMA_TIMEOUT_MS : MODELS_TIMEOUT_MS;
 
   const data = await fetchModelsJson(url, headers, timeoutMs, desc.label, deps);

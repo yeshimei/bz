@@ -17,6 +17,7 @@ import { openSettingsPanel, unloadSettingsPanel } from '../src/settings-panel';
 import { escManager } from '../src/core/esc-manager';
 import { setSettingsProvider } from '../src/core/settings-provider';
 import { setApp, getApp } from '../src/core/app';
+import { AI_PROVIDER_REGISTRY } from '../src/core/ai';
 import type { SettingsSchema } from '../src/core/settings-schema';
 import { MockVault } from './mock-vault';
 import { resetSkinPackState } from '../src/core/skin-pack';
@@ -297,8 +298,8 @@ describe('设置面板（settings-panel）', () => {
       item.dispatchEvent(new MouseEvent('click', { bubbles: true }));
     };
 
-    // 服务商下拉 = 注册表四条通道（2026-11-11 加回自定义）
-    expect(readOptions('AI 服务商')).toEqual(['DeepSeek', '智谱 Plan', 'Ollama（本地）', '自定义（OpenAI 兼容）']);
+    // 服务商下拉 = 注册表全量（2026-11-12 扩到常用十几家，选项仍从注册表直出，schema 零改动）
+    expect(readOptions('AI 服务商')).toEqual(AI_PROVIDER_REGISTRY.map((p) => p.label));
     // deepseek：五档（有「关闭」、无「中」）
     expect(valOf('思考 reasoning')).toBe('跟随模型默认');
     expect(readOptions('思考 reasoning')).toEqual(['跟随模型默认', '关闭（省 token）', '低', '高', '最高']);

@@ -546,14 +546,15 @@ describe('AIService', () => {
     expect(thinkingLevelsOf('deepseek').map((l) => l.value)).toEqual(['auto', 'off', 'low', 'high', 'max']);
     expect(thinkingLevelsOf('zhipu-plan').map((l) => l.value)).toEqual(['auto', 'low', 'high', 'max']);
     expect(thinkingLevelsOf('ollama').map((l) => l.value)).toEqual(['auto', 'off', 'low', 'medium', 'high']);
-    // 注册表每家都要有档位表（issue 411：新增 provider 忘补表会被这里拦住）；
-    // 自定义例外——没有固定参数口径，档位表为空（请求里一律不注入思考参数）
+    // 注册表每家的档位表逐条自洽；**没有表 = 该家不注入思考参数**（2026-11-12 扩表后
+    // 大多数家属于这一档：OpenAI 兼容面里各家的思考参数名与档位差异太大，冒进发会被 400 拒绝）
     for (const p of AI_PROVIDER_REGISTRY) {
       const levels = thinkingLevelsOf(p.id);
       if (p.id === 'custom') {
         expect(levels, 'custom 没有档位表').toEqual([]);
         continue;
       }
+      if (levels.length === 0) continue; // 不注入即默认行为，不是缺失
       expect(levels.length, p.id).toBeGreaterThan(1);
       expect(levels[0].value, p.id).toBe('auto');
       expect(levels[0].body, p.id).toBeNull();
