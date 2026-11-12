@@ -543,6 +543,11 @@
 .bz-bs-reader-pill.off { color: #9b8a72; border-color: rgba(155, 138, 114, .32); }
 .bz-bs-reader-pill.off i { background: #8a7355; box-shadow: none; }
 .bz-bs-reader-pill[hidden] { display: none; }
+/* 亮色皮肤（雪松白等）：深字浅底，防「已连接」糊在墙纸上 */
+.bz-bs-mode-light .bz-bs-reader-pill {
+  color: #6b5a42; border-color: rgba(90, 70, 40, .32); background: rgba(255, 255, 255, .42);
+}
+.bz-bs-mode-light .bz-bs-reader-pill.off { color: #8d7c63; border-color: rgba(90, 70, 40, .2); }
 
 /* 工具行右侧「打开 bz Reader 书架」 */
 .bz-bs-tools-right { margin-left: auto; display: flex; align-items: center; gap: 12px; }
@@ -553,6 +558,9 @@ button.bz-bs-open-reader {
   padding: 8px 14px; cursor: pointer; white-space: nowrap;
 }
 .bz-bs-open-reader[hidden] { display: none; }
+.bz-bs-mode-light button.bz-bs-open-reader {
+  color: #6b5a42; background: rgba(90, 70, 40, .06); border-color: rgba(90, 70, 40, .35);
+}
 /* 0 本时检索/排序没有对象（引导页自带入口） */
 .bz-bs-tools-empty .bz-bs-searchbox,
 .bz-bs-tools-empty .bz-bs-seg { opacity: .55; pointer-events: none; }
