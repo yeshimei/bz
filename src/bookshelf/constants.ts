@@ -35,3 +35,19 @@ export const EMPTY_BOOKS_ICON = 'library-big';
 export const EMPTY_SEARCH_ICON = 'search-x';
 /** B9：状态筛空态（区别于搜索空态的图标语义） */
 export const EMPTY_FILTER_ICON = 'funnel';
+
+/**
+ * bz Reader 引导页文案与链接（2026-11-12 用户拍板形态 A「入馆须知」）。
+ * - 介绍：取 GitHub 仓库 README 首段
+ * - 下载量：Obsidian 社区插件统计 community-plugin-stats.json（2026-11-12 抓取；随版本会变，
+ *   这里只作展示文案，不参与任何逻辑）
+ * - 教程：bz Reader README 顶部「视频教程」
+ */
+export const READER_GUIDE = {
+  name: 'bz Reader',
+  desc: '把 Obsidian 变成一个能读书的地方。桌面端 + 移动端、多格式（包括 PDF），AI 全书问答、双向链接，数据全部本地。',
+  downloads: '1,550',
+  repo: 'https://github.com/yeshimei/bz-reader',
+  tutorial: 'https://www.bilibili.com/video/BV1tK4E6KE1B',
+  marketBadge: '已上架 Obsidian 社区插件市场',
+} as const;

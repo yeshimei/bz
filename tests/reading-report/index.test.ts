@@ -35,33 +35,42 @@ function makeApp(vault: MockVault) {
   } as any;
 }
 
+/** 报告唯一数据源（2026-11-12 起与书库墙同源：bz Reader 的 EPUB） */
+const READER_PATH = 'bz-reader/storage/bz-reader.json';
+
 /** 带一本已完成书的最小书库（完整链路/占位/卸载共用） */
 function seedVault(): MockVault {
   const vault = new MockVault();
-  vault.files.set('书库/A.md', `---
-tags: ["book"]
-author: "余华"
-category: "小说"
-readingDate: 2025-06-01
-completionDate: 2025-07-01
-readingProgress: 100
-readingTime: 3600000
-highlights: 10
-thinks: 2
-pages: 300
-wordCount: 80000
----
-正文
-`);
+  const completed = Date.UTC(2025, 6, 1);
+  vault.files.set(READER_PATH, JSON.stringify({
+    books: [{
+      id: 'a',
+      meta: { title: 'A', author: '余华', wordCount: 80000 },
+      fileRef: { vaultPath: 'books/A.epub' },
+      reading: { position: { percent: 1 }, stats: { totalReadTime: 3600, lastReadTime: completed, completedTime: completed } },
+      notes: { highlights: [], excerpts: [] },
+      shelf: '小说', addedAt: completed, updatedAt: completed,
+    }],
+  }));
   return vault;
 }
 
-/** 大库 fixture（≥ QUIET_TOAST_MIN_BOOKS 本，触发满配 toast 档；带 pages/wordCount 保证速度段在场） */
+/** 大库 fixture（≥ QUIET_TOAST_MIN_BOOKS 本，触发满配 toast 档；字数保证速度段在场） */
 function seedBigVault(): MockVault {
   const vault = new MockVault();
+  const day = Date.UTC(2025, 5, 1);
+  const books: any[] = [];
   for (let i = 0; i < QUIET_TOAST_MIN_BOOKS + 10; i++) {
-    vault.files.set(`书库/书${i}.md`, '---\ntags: [book]\nauthor: 群Author\ncategory: 小说\nreadingDate: 2025-06-01\nreadingProgress: 50\nreadingTime: 60000\npages: 300\nwordCount: 80000\n---\n正文');
+    books.push({
+      id: `b${i}`,
+      meta: { title: `书${i}`, author: '群Author', wordCount: 80000 },
+      fileRef: { vaultPath: `books/${i}.epub` },
+      reading: { position: { percent: 0.5 }, stats: { totalReadTime: 60, lastReadTime: day } },
+      notes: { highlights: [], excerpts: [] },
+      shelf: '小说', addedAt: day, updatedAt: day,
+    });
   }
+  vault.files.set(READER_PATH, JSON.stringify({ books }));
   return vault;
 }
 
@@ -242,7 +251,17 @@ describe('报告视图渲染（面板内容区）', () => {
     expect(notices().length).toBe(0);
 
     // 签名变化：正常重算——探针随 innerHTML 重建消失，报告内容重新落地
-    vault.files.set('书库/B.md', '---\ntags: [book]\nauthor: 刘慈欣\ncategory: 科幻\nreadingDate: 2025-07-01\n---');
+    // 数据源与墙同源：往 bz-reader.json 追一本刘慈欣（md 书不再进报告）
+    const data = JSON.parse(vault.files.get(READER_PATH) as string);
+    data.books.push({
+      id: 'b',
+      meta: { title: 'B', author: '刘慈欣' },
+      fileRef: { vaultPath: 'books/B.epub' },
+      reading: { position: { percent: 0.3 }, stats: { lastReadTime: Date.UTC(2025, 6, 1) } },
+      notes: { highlights: [], excerpts: [] },
+      shelf: '科幻', addedAt: Date.UTC(2025, 6, 1), updatedAt: Date.UTC(2025, 6, 1),
+    });
+    vault.files.set(READER_PATH, JSON.stringify(data));
     renderReadingReport(container, app, { dataSignature: 'sig-2' });
     await waitReportRendered(container);
     expect(container.querySelector('#sig-probe')).toBeNull();
@@ -253,34 +272,31 @@ describe('报告视图渲染（面板内容区）', () => {
     const vault = seedVault();
     // 会话覆盖 2025-05 / 2025-06 两月，供翻月——数据源是 bz 阅读的 bz-reader.json
     // （books 数组 / fileRef / stats.totalReadTime 按秒；会话挂在 reading.sessions 上）
+    // 在 seedVault 的 A 书基础上追加会话之书（保留两本书，报告作者/分类段与书数口径不变）
     const ms = (y: number, m: number, d: number, h: number) => new Date(y, m - 1, d, h).getTime();
-    vault.files.set('bz-reader/storage/bz-reader.json', JSON.stringify({
-      version: 1,
-      schemaVersion: 2,
-      books: [
-        {
-          id: 'a',
-          meta: { title: '会话之书', author: '村上春树' },
-          fileRef: { vaultPath: 'books/s.epub' },
-          reading: {
-            position: { percent: 0.5 },
-            // 7200 秒 = weave 时代的 7200000 毫秒（读侧归一 ×1000，报告口径不变）
-            stats: { totalReadTime: 7200, lastReadTime: ms(2025, 6, 2, 14) },
-            sessions: [
-              { start: ms(2025, 5, 10, 8), end: ms(2025, 5, 10, 9), durationSeconds: 1200 },
-              { start: ms(2025, 5, 11, 9), end: ms(2025, 5, 11, 10), durationSeconds: 2400 },
-              { start: ms(2025, 5, 12, 21), end: ms(2025, 5, 12, 22), durationSeconds: 1800 },
-              { start: ms(2025, 5, 13, 3), end: ms(2025, 5, 13, 4), durationSeconds: 900 },
-              { start: ms(2025, 6, 1, 8), end: ms(2025, 6, 1, 9), durationSeconds: 3000 },
-              { start: ms(2025, 6, 2, 14), end: ms(2025, 6, 2, 15), durationSeconds: 1500 },
-            ],
-          },
-          notes: { highlights: [], excerpts: [], bookmarks: [] },
-          addedAt: 1699000000000,
-          updatedAt: 1700000000000,
-        },
-      ],
-    }));
+    const base = JSON.parse(vault.files.get(READER_PATH) as string);
+    base.books.push({
+      id: 'session-book',
+      meta: { title: '会话之书', author: '村上春树' },
+      fileRef: { vaultPath: 'books/s.epub' },
+      reading: {
+        position: { percent: 0.5 },
+        // 7200 秒 = weave 时代的 7200000 毫秒（读侧归一 ×1000，报告口径不变）
+        stats: { totalReadTime: 7200, lastReadTime: ms(2025, 6, 2, 14) },
+        sessions: [
+          { start: ms(2025, 5, 10, 8), end: ms(2025, 5, 10, 9), durationSeconds: 1200 },
+          { start: ms(2025, 5, 11, 9), end: ms(2025, 5, 11, 10), durationSeconds: 2400 },
+          { start: ms(2025, 5, 12, 21), end: ms(2025, 5, 12, 22), durationSeconds: 1800 },
+          { start: ms(2025, 5, 13, 3), end: ms(2025, 5, 13, 4), durationSeconds: 900 },
+          { start: ms(2025, 6, 1, 8), end: ms(2025, 6, 1, 9), durationSeconds: 3000 },
+          { start: ms(2025, 6, 2, 14), end: ms(2025, 6, 2, 15), durationSeconds: 1500 },
+        ],
+      },
+      notes: { highlights: [], excerpts: [], bookmarks: [] },
+      addedAt: 1699000000000,
+      updatedAt: 1700000000000,
+    });
+    vault.files.set(READER_PATH, JSON.stringify(base));
     const app = makeApp(vault);
     const container = newContainer();
     renderReadingReport(container, app);

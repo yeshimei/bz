@@ -113,17 +113,18 @@ describe('书架墙详情弹窗只读化（issue 223）', () => {
   });
 
   it('详情卡不再提供读书笔记入口按钮（issue 223 只读化：划线/想法为纯展示文字）', async () => {
-    vault.files.set('书库/活着.md', BOOK_MD + '\n' + NOTE_MD);
+    // 书库墙 2026-11-12 起只读 bz Reader：用 EPUB 条目（悉达多 1 划 1 想）
+    vault.files.set(READER_PATH, EPUB_READER());
     const app = makeApp(vault);
     ensureBookshelf(app);
     await openPanel(app);
     const overlay = document.querySelector('.bz-panel-overlay') as HTMLElement;
-    const card = Array.from(overlay.querySelectorAll('.bz-bs-spine')).find((b) => b.textContent?.includes('活着')) as HTMLElement;
+    const card = Array.from(overlay.querySelectorAll('.bz-bs-spine')).find((b) => b.textContent?.includes('悉达多')) as HTMLElement;
     card.click();
     const popup = detailPopup();
     expect(popup).toBeTruthy();
     expect(popup!.querySelector('[data-bs-notes]')).toBeFalsy();
-    expect(popup!.textContent).toContain('5 条 / 2 条');
+    expect(popup!.textContent).toContain('1 条 / 1 条');
   });
 });
 
@@ -475,10 +476,9 @@ describe('mockAppWithVault 兼容（bookshelf 主面板数据源贯通读书笔�
     document.body.innerHTML = '';
   });
 
-  it('md 笔记行被划线解析消费：M.items → 详情入口 → 弹窗渲染同源数据', async () => {
+  it('EPUB 笔记从 bz-reader.json 贯通：M.items → 弹窗渲染同源数据', async () => {
     const vault = new MockVault();
-    vault.files.set('书库/活着.md', BOOK_MD);
-    vault.files.set('书库/读书笔记.md', NOTE_MD);
+    vault.files.set(READER_PATH, EPUB_READER());
     const app = mockAppWithVault(vault) as any;
     (app as any).workspace = {
       ...(app as any).workspace,
@@ -488,10 +488,10 @@ describe('mockAppWithVault 兼容（bookshelf 主面板数据源贯通读书笔�
     ensureBookshelf(app);
     await openPanel(app);
     expect(M.items.length).toBe(1);
-    expect(M.items[0].highlights).toBe(5);
-    // 直接走 showBookNotes（详情入口内部路径）
-    showBookNotes(app, '书库/活着.md', '活着');
+    expect(M.items[0].highlights).toBe(1);
+    // 详情入口的 EPUB 路径：按书路径 + 书名直接开笔记弹窗
+    showEpubBookNotes(app, '书库/悉达多.epub', '悉达多');
     await new Promise((r) => setTimeout(r, 20));
-    expect(notesPopup()!.textContent).toContain('《活着》的读书笔记');
+    expect(notesPopup()!.textContent).toContain('《悉达多》的读书笔记');
   });
 });

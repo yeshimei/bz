@@ -681,73 +681,25 @@ describe('设置面板（settings-panel）', () => {
     ui.cleanup();
   });
 
-  it('桌面端：路径行回落显示（bookshelfFolderPath 空值时旧 library 键存量值优先；都没设给空态）', async () => {
-    // 场景 1：新键未设 + 旧 libraryFolderPath 存量值 → 回落 chip 显示旧目录
+  it('桌面端：书库设置不再出现「书库文件夹」行（2026-11-12 随目录组退役）', async () => {
+    // 老库两个键都在：设置里也不该再出这一项（键保留在盘上，不读不写不删）
     (panelState as any).libraryFolderPath = '旧书库';
-    const ui1 = new SettingsPanelUI();
-    ui1.open();
-    const popup1 = document.getElementById('bz-settings-panel-popup')!;
-    const shelfItem1 = Array.from(popup1.querySelectorAll('.bz-sp-nav-item')).find(
+    (panelState as any).bookshelfFolderPath = '书库';
+    const ui = new SettingsPanelUI();
+    ui.open();
+    const popup = document.getElementById('bz-settings-panel-popup')!;
+    const shelfItem = Array.from(popup.querySelectorAll('.bz-sp-nav-item')).find(
       (el) => el.textContent?.includes('书库')
     ) as HTMLElement;
-    expect(shelfItem1).toBeTruthy();
-    shelfItem1.click();
-    expect(await waitGroups(popup1, 1)).toBe(true);
-    const row1 = Array.from(popup1.querySelectorAll('.bz-sp-set-row')).find(
+    expect(shelfItem).toBeTruthy();
+    shelfItem.click();
+    expect(await waitGroups(popup, 1)).toBe(true);
+    const row = Array.from(popup.querySelectorAll('.bz-sp-set-row')).find(
       (el) => el.querySelector('.bz-sp-set-name')?.textContent === '书库文件夹'
-    ) as HTMLElement;
-    expect(row1).toBeTruthy();
-    const chip1 = row1.querySelector('.bz-chip--locked') as HTMLElement;
-    expect(chip1, '空值时显示回落目录锁定 chip').toBeTruthy();
-    expect(chip1.textContent).toContain('旧书库');
-    // 有 chip 即无按钮（2026-09-08 拍板：按钮仅空态在场）；chip 点击重开选择器
-    expect(row1.querySelector('.bz-sp-path-btn')).toBeNull();
-    chip1.click();
-    expect(document.querySelector('#bz-path-picker-mask'), '回落 chip 点击打开路径选择器').toBeTruthy();
-    expect(document.querySelector('.bz-path-picker'), '弹窗 = core 统一选择器（ADR-0127）').toBeTruthy();
-    // core 选择器无取消按钮：遮罩点击 / ESC 关闭（主窗口规范）
-    (document.querySelector('#bz-path-picker-mask') as HTMLElement).dispatchEvent(
-      new MouseEvent('click', { bubbles: true })
     );
-    expect(document.querySelector('#bz-path-picker-mask')).toBeNull();
-    ui1.cleanup();
+    expect(row, '书库文件夹设置行已退役').toBeFalsy();
+    ui.cleanup();
     delete (panelState as any).libraryFolderPath;
-    // 场景 1 读过一次路径行，旧键迁移已把值写回 bookshelfFolderPath —— 场景 2 要的是「都没设」，先清干净
-    delete (panelState as any).bookshelfFolderPath;
-
-    // 场景 2：新旧键都未设 → 未配置态（ADR-0274：域目录缺省留空，不再回落「书库」；
-    // 空态 = 选择按钮，不出回落锁定 chip）
-    const ui2 = new SettingsPanelUI();
-    ui2.open();
-    const popup2 = document.getElementById('bz-settings-panel-popup')!;
-    (Array.from(popup2.querySelectorAll('.bz-sp-nav-item')).find(
-      (el) => el.textContent?.includes('书库')
-    ) as HTMLElement).click();
-    expect(await waitGroups(popup2, 1)).toBe(true);
-    const row2 = Array.from(popup2.querySelectorAll('.bz-sp-set-row')).find(
-      (el) => el.querySelector('.bz-sp-set-name')?.textContent === '书库文件夹'
-    ) as HTMLElement;
-    expect(row2.querySelector('.bz-chip--locked'), '未配置不出回落 chip').toBeNull();
-    expect(row2.querySelector('.bz-sp-path-btn'), '未配置 → 空态选择按钮').toBeTruthy();
-    ui2.cleanup();
-
-    // 场景 3：显式设置后回落 chip 消失（值 chip 接管，可移除）
-    (panelState as any).bookshelfFolderPath = '我的书';
-    const ui3 = new SettingsPanelUI();
-    ui3.open();
-    const popup3 = document.getElementById('bz-settings-panel-popup')!;
-    (Array.from(popup3.querySelectorAll('.bz-sp-nav-item')).find(
-      (el) => el.textContent?.includes('书库')
-    ) as HTMLElement).click();
-    expect(await waitGroups(popup3, 1)).toBe(true);
-    const row3 = Array.from(popup3.querySelectorAll('.bz-sp-set-row')).find(
-      (el) => el.querySelector('.bz-sp-set-name')?.textContent === '书库文件夹'
-    ) as HTMLElement;
-    expect(row3.querySelector('.bz-chip--locked')).toBeNull();
-    expect(row3.textContent).toContain('我的书');
-    // 显式值 chip 在场同样隐藏按钮（chip 点击重开选择器）
-    expect(row3.querySelector('.bz-sp-path-btn')).toBeNull();
-    ui3.cleanup();
     delete (panelState as any).bookshelfFolderPath;
   });
 

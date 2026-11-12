@@ -27,22 +27,28 @@ const READER = 'bz-reader/storage/bz-reader.json';
 
 function seedVault(): { vault: MockVault; app: ReturnType<typeof mockAppWithVault> } {
   const vault = new MockVault();
-  vault.files.set('书库/认知觉醒.md', `---
-tags: [book]
-author: 周岭
-category: 成长
-readingDate: 2026-08-01
-readingProgress: 60
-highlights: 12
-thinks: 3
----`);
-  vault.files.set('书库/围城.md', `---
-tags: [book]
-author: 钱钟书
-readingDate: 2026-07-01
-completionDate: 2026-08-15
-readingProgress: 100
----`);
+  // md 书保留（报告/旧口径）；书库墙 2026-11-12 起只读 bz Reader
+  vault.files.set('书库/认知觉醒.md', '---\ntags: [book]\nauthor: 周岭\ncategory: 成长\n---');
+  vault.files.set('书库/围城.md', '---\ntags: [book]\nauthor: 钱钟书\n---');
+  const now = Date.now();
+  vault.files.set(READER, JSON.stringify({
+    books: [
+      {
+        id: 'b-cognition',
+        meta: { title: '认知觉醒', author: '周岭' },
+        fileRef: { vaultPath: 'books/认知觉醒.epub' },
+        reading: { position: { percent: 0.6 }, stats: { lastReadTime: now } },
+        shelf: '成长', addedAt: now, updatedAt: now,
+      },
+      {
+        id: 'b-fortress',
+        meta: { title: '围城', author: '钱钟书' },
+        fileRef: { vaultPath: 'books/围城.epub' },
+        reading: { position: { percent: 1 }, stats: { lastReadTime: now, completedTime: now } },
+        addedAt: now, updatedAt: now,
+      },
+    ],
+  }));
   const app = mockAppWithVault(vault);
   ensureBookshelf(app);
   setApp(app);
@@ -111,7 +117,15 @@ describe('书库深审修复批：continueReading（C1 死锁 / E6 新鲜度）'
     // 模拟会话残留：M.items 被清但盘上有在读（旧实现 M.items.length ? : rebuild 只兜空数组——
     // 这里 M.items 非空但全部非在读，盘上新书是在读）
     M.items.length = 0;
-    vault.files.set('书库/新书.md', '---\ntags: [book]\nreadingDate: 2026-09-01\n---');
+    const data = JSON.parse(vault.files.get(READER) as string);
+    data.books.push({
+      id: 'b-new',
+      meta: { title: '新书' },
+      fileRef: { vaultPath: 'books/新书.epub' },
+      reading: { position: { percent: 0.2 }, stats: { lastReadTime: Date.now() } },
+      addedAt: Date.now(), updatedAt: Date.now(),
+    });
+    vault.files.set(READER, JSON.stringify(data));
     await continueReading(app);
     expect(getNoticeMessages().some((m) => m.includes('还没有在读的书'))).toBe(false);
     expect(document.querySelector('.bz-panel-overlay')).toBeTruthy();
@@ -121,9 +135,11 @@ describe('书库深审修复批：continueReading（C1 死锁 / E6 新鲜度）'
   });
 
   it('在读为空 → 只提示不开面板（不 rebuild 出面板空白分栏）', async () => {
-    const { app } = seedVault();
-    // 围城已读、认知觉醒在读删掉
-    (app.vault as MockVault).files.delete('书库/认知觉醒.md');
+    const { vault, app } = seedVault();
+    // 围城已读、认知觉醒在读：墙数据只认 bz Reader → 重写 json 只留已读的围城
+    const data = JSON.parse(vault.files.get(READER) as string);
+    data.books = data.books.filter((b: { id: string }) => b.id === 'b-fortress');
+    vault.files.set(READER, JSON.stringify(data));
     await continueReading(app);
     expect(getNoticeMessages().some((m) => m.includes('还没有在读的书'))).toBe(true);
     expect(document.querySelector('.bz-panel-overlay')).toBeNull();
@@ -164,10 +180,17 @@ describe('书库深审修复批：报告返回书库兜底重画（ui F1/F2）',
     await openPanel(app);
     openBookshelfReport(app); // 热切报告（墙仍是 v1）
     await waitFor(() => !!overlayEl().querySelector('.bz-rr-content')?.textContent?.length);
-    vault.files.set('书库/新书.md', '---\ntags: [book]\nauthor: 新作者\n---');
-    // 真机链路：md 写盘派发 vault:md-modified 域事件 → schedule → rebuild（报告视图只刷报告区）
-    const { emitDomainEvent } = await import('../../src/core/domain-bus');
-    emitDomainEvent('vault:md-modified', { path: '书库/新书.md' });
+    const readerData = JSON.parse(vault.files.get(READER) as string);
+    readerData.books.push({
+      id: 'b-new',
+      meta: { title: '新书', author: '新作者' },
+      fileRef: { vaultPath: 'books/新书.epub' },
+      reading: { position: { percent: 0 } },
+      addedAt: Date.now(), updatedAt: Date.now(),
+    });
+    vault.files.set(READER, JSON.stringify(readerData));
+    // 真机链路：bz-reader.json 写盘 → vault modify → schedule → rebuild（报告视图只刷报告区）
+    vault.emit('modify', vault.file(READER));
     await waitFor(() => M.items.some((i) => i.title === '新书'));
     (overlayEl().querySelector('[data-rr-goto-shelf]') as HTMLElement).click();
     await waitFor(() => spines(overlayEl()).length === 3);
@@ -258,7 +281,7 @@ describe('书库深审修复批：阅读数据通道与读侧降级（func F4 / 
       books: [{ id: 'a', meta: { title: '百年孤独' }, fileRef: { vaultPath: 'books/x.epub' }, reading: { position: { percent: 0.5 } } }],
     }));
     vault.emit('create', vault.file(READER));
-    await waitFor(() => spines(overlayEl()).length === 3);
+    await waitFor(() => spines(overlayEl()).length === 1);
     expect(spines(overlayEl()).some((s) => s.title?.includes('百年孤独'))).toBe(true);
   });
 
@@ -282,28 +305,26 @@ describe('书库深审修复批：阅读数据通道与读侧降级（func F4 / 
       }],
     }));
     vault.emit('rename', vault.file(readerJson), `${readerJson}.tmp`);
-    await waitFor(() => spines(overlayEl()).length === 3);
+    await waitFor(() => spines(overlayEl()).length === 1);
     expect(spines(overlayEl()).some((s) => s.title?.includes('红楼梦'))).toBe(true);
   });
 
-  it('TG1 集成：md 写盘（vault.process 落盘进度）→ vault modify → 300ms 防抖自动刷新墙', async () => {
+  it('TG1 集成：bz-reader.json 写盘（进度 60→80）→ vault modify → 300ms 防抖自动刷新墙', async () => {
     const { vault, app } = seedVault();
     await openPanel(app);
     expect(spines(overlayEl()).length).toBe(2);
-    // 写链：vault.process 原子读改写改 frontmatter 进度（真机此写必触发 vault modify → 域事件）
-    const file = vault.file('书库/认知觉醒.md');
-    await vault.process(file, (c: string) => c.replace('readingProgress: 60', 'readingProgress: 80'));
-    // 模拟 Obsidian 对落盘派发 modify（MockVault 写方法不自动派发；域事件在 index.ts 订阅）
-    const { emitDomainEvent } = await import('../../src/core/domain-bus');
-    emitDomainEvent('vault:md-modified', { path: '书库/认知觉醒.md' });
-    // 自动刷新链路真通：防抖 300ms → rebuild → renderAll → 书脊 title 进度更新
-    await waitFor(() => spines(overlayEl()).find((s) => s.title?.includes('认知觉醒'))?.title.includes('80%') === true);
+    // 真机链路：bz 阅读写 bz-reader.json（进度 60% → 80%）→ vault modify → schedule → rebuild
+    const data = JSON.parse(vault.files.get(READER) as string);
+    data.books[0].reading.position.percent = 0.8;
+    vault.files.set(READER, JSON.stringify(data));
+    vault.emit('modify', vault.file(READER));
+    await waitFor(() => M.items.find((i) => i.title === '认知觉醒')?.progress === 80);
     expect(spines(overlayEl()).length).toBe(2);
   });
 
-  it('RR-F7：目录本身是单个 md 笔记的书库形态写盘 → schedule 不再漏（收录谓词单源）', async () => {
-    // 单文件书库「书库.md」（isBookshelfPath 第二形态）：旧过滤只认目录前缀，
-    // 面板开着改写该书 → 墙与报告都不刷新（收录两侧认、刷新通道不认）
+  it('RR-F7（2026-11-12 口径）：单文件 md 书库形态写盘不再上墙 → 墙保持 0 本', async () => {
+    // 书库墙只由 bz Reader 供书后，旧「书库.md」单文件形态不再进墙。
+    // 刷新管道仍收 md 事件（isBookshelfPath 未删），但 rebuild 产物里没有 md 书。
     setSettingsProvider(() => ({ bookshelfFolderPath: '我的书' }) as never);
     const vault = new MockVault();
     vault.files.set('我的书.md', `---
@@ -315,21 +336,21 @@ readingProgress: 30
     ensureBookshelf(app);
     setApp(app);
     createOverlay(app);
-    await waitFor(() => spines(overlayEl()).length === 1);
-    // 改写该书（进度 30 → 90）→ md modify 域事件 → 防抖 rebuild → 墙刷新
+    await waitFor(() => (overlayEl().querySelector('#bz-bs-hint')?.textContent || '') === '0 册在墙');
     const file = vault.file('我的书.md');
     await vault.process(file, (c: string) => c.replace('readingProgress: 30', 'readingProgress: 90'));
     const { emitDomainEvent } = await import('../../src/core/domain-bus');
     emitDomainEvent('vault:md-modified', { path: '我的书.md' });
-    await waitFor(() => spines(overlayEl()).find((s2) => s2.title?.includes('我的书'))?.title.includes('90%') === true);
+    await new Promise((r) => setTimeout(r, 400));
+    expect(spines(overlayEl()).length).toBe(0);
   });
 
   it('A3：bz-reader.json 损坏 → EPUB 区降级空 + 一次性 warning 告警（恢复正常后复位）', async () => {
     const { vault, app } = seedVault();
     vault.files.set(READER, '{ 这不是合法 JSON');
     await openPanel(app);
-    // md 书照常、EPUB 静默降级为空；读侧损坏有一次性告警（写侧零侵入契约不变）
-    expect(spines(overlayEl()).length).toBe(2);
+    // 书库墙只读 EPUB：json 损坏 → 墙降级空（md 书不再兜底上墙）；读侧有一次性告警
+    expect(spines(overlayEl()).length).toBe(0);
     expect(getNoticeMessages().some((m) => m.includes('bz 阅读数据文件损坏'))).toBe(true);
     expect(document.querySelector('.bz-notice--warning')).toBeTruthy();
     clearNotices();

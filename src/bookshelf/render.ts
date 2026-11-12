@@ -9,6 +9,7 @@
 export * from './shared';
 export {
   panelHtml, labelsHtml, sortSegHtml, wallEmptyHTML, wallLoadingHTML, renderWallInto,
+  readerGuideHtml, readerGuideLoadingHTML,
   wallScale, spineVars, spineHTML, fitTitle, packZone, catColor,
-  type BsWallScale,
+  type BsWallScale, type ReaderGuideOpts,
 } from './layouts/wall/render';

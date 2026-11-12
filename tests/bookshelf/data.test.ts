@@ -321,13 +321,14 @@ describe('bookshelf 数据层', () => {
 
     it('audit I：rebuildItems 并发交错——旧重建晚到不回写覆盖新数据（序号守卫）', async () => {
     // 场景：重建 1 的 EPUB 读取在途时新增书目并触发重建 2；重建 2 先完成，重建 1 的
-    // 陈旧 md 快照（无 B 书）后到——旧实现会把 B 书从 M.items 挤掉
+    // 陈旧快照（无 B 书）后到——旧实现会把 B 书从 M.items 挤掉。
+    // 2026-11-12 起书库只有 EPUB 数据源，快照差就是 json 的版本差。
     const vault = new MockVault();
-    vault.files.set('书库/A.md', '---\ntags: [book]\n---');
+    const readerPath = `${READER_DEFAULT_DATA_DIR}/bz-reader.json`;
     const readerJson = JSON.stringify({
-      books: [{ id: 'e', meta: { title: 'E书' }, fileRef: { vaultPath: 'books/e.epub' } }],
+      books: [{ id: 'a', meta: { title: 'A书' }, fileRef: { vaultPath: 'books/a.epub' } }],
     });
-    vault.files.set(`${READER_DEFAULT_DATA_DIR}/bz-reader.json`, readerJson);
+    vault.files.set(readerPath, readerJson);
     const app = makeApp(vault);
     let hang = true;
     let release!: (v: string) => void;
@@ -339,13 +340,18 @@ describe('bookshelf 数据层', () => {
       }
       return Promise.resolve(vault.files.get(path) ?? '{}');
     };
-    const p1 = rebuildItems(app); // 旧重建：扫描只有 A，EPUB 读取挂起
-    vault.files.set('书库/B.md', '---\ntags: [book]\n---');
-    const p2 = rebuildItems(app); // 新重建：扫描 A+B，先完成
+    const p1 = rebuildItems(app); // 旧重建：读取挂起
+    vault.files.set(readerPath, JSON.stringify({
+      books: [
+        { id: 'a', meta: { title: 'A书' }, fileRef: { vaultPath: 'books/a.epub' } },
+        { id: 'b', meta: { title: 'B书' }, fileRef: { vaultPath: 'books/b.epub' } },
+      ],
+    }));
+    const p2 = rebuildItems(app); // 新重建：A+B，先完成
     await p2;
     release(readerJson);
     await p1;
-    expect(M.items.map((i) => i.title).sort()).toEqual(['A', 'B', 'E书']);
+    expect(M.items.map((i) => i.title).sort()).toEqual(['A书', 'B书']);
   });
 
   it('深审 RR-A1/RR-F7：收录谓词单源 isBookshelfPath——目录前缀/目录本身单文件/库外三形态', () => {

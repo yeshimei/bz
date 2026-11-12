@@ -95,8 +95,8 @@ function buildEpubBookNoteEntry(aggregate: any): BookNoteEntry | null {
     frontmatter: {
       title,
       author: typeof meta?.author === 'string' && meta.author.trim() ? meta.author.trim() : '未知作者',
-      // ADR-0099 subjects 通道（RR-F1）：与书架墙同源回落，无 subjects 才归「未分类」
-      category: epubCategory(meta) || '未分类',
+      // 与书架墙同源：bz Reader 的 shelf 优先，回退 ADR-0099 subjects 通道
+      category: epubCategory(meta, aggregate?.shelf) || '未分类',
       readingProgress: progress,
       readingTime: typeof stats?.totalReadTime === 'number' ? stats.totalReadTime : 0,
       readingSessions: sessions
