@@ -546,7 +546,8 @@
 
 /* 工具行右侧「打开 bz Reader 书架」 */
 .bz-bs-tools-right { margin-left: auto; display: flex; align-items: center; gap: 12px; }
-.bz-bs-open-reader {
+/* 按钮提权（0,1,1）：core reset 的 button:not(.clickable-icon) 会 unset 裸按钮底色/阴影 */
+button.bz-bs-open-reader {
   border: 1px solid var(--bsw-brass); background: rgba(201, 168, 106, .14); color: #f2e4c8;
   font-family: var(--bsw-sans); font-size: 12px; letter-spacing: 1px;
   padding: 8px 14px; cursor: pointer; white-space: nowrap;
@@ -632,23 +633,23 @@
 .bz-bs-guide-steps li.done .n { border-color: #7fae6b; color: #4f7a3f; }
 
 .bz-bs-guide-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 16px; }
-.bz-bs-guide-primary {
+button.bz-bs-guide-primary {
   background: var(--bsw-accent); color: #f8efe0; border: none;
   padding: 12px 20px; font-family: var(--bsw-sans); font-size: 13px; letter-spacing: 2px;
   cursor: pointer; box-shadow: 0 3px 0 #792a20;
 }
-.bz-bs-guide-primary:active { transform: translateY(1px); box-shadow: 0 2px 0 #792a20; }
-.bz-bs-guide-primary[disabled] { background: #8a7355; box-shadow: none; cursor: default; }
-.bz-bs-guide-link {
+button.bz-bs-guide-primary:active { transform: translateY(1px); box-shadow: 0 2px 0 #792a20; }
+button.bz-bs-guide-primary[disabled] { background: #8a7355; box-shadow: none; cursor: default; }
+button.bz-bs-guide-link {
   background: none; border: none; padding: 0 0 2px; cursor: pointer;
   font-family: var(--bsw-sans); font-size: 12px; color: #6b5a42;
   border-bottom: 1px solid rgba(107, 90, 66, .5);
 }
 /* 触屏粘滞范式：:hover 必须包在 @media (hover: hover)（core 范式守卫测试） */
 @media (hover: hover) {
-  .bz-bs-open-reader:hover { background: var(--bsw-brass); color: #2b2018; }
-  .bz-bs-guide-primary:hover { background: #8f3226; }
-  .bz-bs-guide-link:hover { color: var(--bsw-accent); border-color: var(--bsw-accent); }
+  button.bz-bs-open-reader:hover { background: var(--bsw-brass); color: #2b2018; }
+  button.bz-bs-guide-primary:hover { background: #8f3226; }
+  button.bz-bs-guide-link:hover { color: var(--bsw-accent); border-color: var(--bsw-accent); }
 }
 
 @media (max-width: 720px) {
