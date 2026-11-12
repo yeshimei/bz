@@ -3,6 +3,7 @@ import { getApp } from '../app';
 import { enqueueFileTask, jsonFileStore, storageFile } from '../storage';
 import { createUsage, type UsageHandle } from './collect';
 import { USAGE_BASE_URL, USAGE_DB, USAGE_PROJECT, usageConfigured } from './config';
+import { earlierDay, probeSince, readSinceLocal, writeSinceLocal } from './since';
 import {
   usageFileName,
   emptyLedger,
@@ -231,6 +232,27 @@ async function upsert(
   return patched >= 200 && patched < 300;
 }
 
+/**
+ * 读 installs 里这台设备的现值（只为了 `since` 那个「只往早里走」的比较）。
+ * 把状态码一起带出来：404 表示「还没有这条，可以放心写」，其它非 200 表示读不动。
+ */
+async function readInstall(installId: string): Promise<{ status: number; doc: Record<string, unknown> | null }> {
+  if (!usageConfigured()) return { status: 0, doc: null };
+  try {
+    const base = USAGE_BASE_URL.trim().replace(/\/+$/, '');
+    const resp = await requestUrl({
+      url: `${base}/databases/${USAGE_DB}/collections/installs/documents/${installId}`,
+      method: 'GET',
+      headers: { 'X-Appwrite-Project': USAGE_PROJECT.trim() },
+      throw: false,
+    });
+    if (resp.status !== 200) return { status: resp.status, doc: null };
+    return { status: 200, doc: JSON.parse(String(resp.text || '{}')) as Record<string, unknown> };
+  } catch {
+    return { status: 0, doc: null };
+  }
+}
+
 function readerFields(reader?: ReaderSnapshot): Record<string, unknown> {
   if (!reader) return {};
   return {
@@ -249,7 +271,7 @@ function flagFields(payload: PingPayload | DailyPayload): Record<string, unknown
 }
 
 function installFields(payload: PingPayload | DailyPayload, at: string): Record<string, unknown> {
-  return {
+  const out: Record<string, unknown> = {
     lastSeen: at,
     pluginVersion: payload.pluginVersion,
     obsidianVersion: payload.obsidianVersion,
@@ -260,11 +282,15 @@ function installFields(payload: PingPayload | DailyPayload, at: string): Record<
     ...readerFields(payload.reader),
     ...flagFields(payload),
   };
+  // 「最早使用日」只写不删：考古没查到时整个键不发，服务端的旧值也就不会被空值冲掉
+  if (payload.since) out.since = payload.since;
+  return out;
 }
 
 async function sendPing(payload: PingPayload): Promise<boolean> {
   const at = isoOf(payload.at);
-  const ok = await upsert('installs', payload.installId, installFields(payload, at), {
+  // 心跳不带 since：两分钟一次太频，而 since 只要定下来就不再变，交给六小时一次的日汇总去比
+  const ok = await upsert('installs', payload.installId, installFields({ ...payload, since: '' }, at), {
     installId: payload.installId,
     firstSeen: at,
   });
@@ -282,10 +308,26 @@ async function sendPing(payload: PingPayload): Promise<boolean> {
   return ok;
 }
 
+/** 服务端那条 since 只往早里走：远端已经是更早的日子就不写，免得后启动的库把起点改晚 */
+async function earlierSince(installId: string, since: string): Promise<string> {
+  if (!since) return '';
+  const remote = await readInstall(installId);
+  if (remote.status === 200) {
+    const prev = String(remote.doc?.since || '').trim();
+    // 远端更早（或一样）：这次什么都不写，别把起点顶成更晚的日子
+    if (prev && prev <= since) return '';
+    return since;
+  }
+  // 404 = 这条还没建过，可以写。其它（没权限 / 网络不通 / 401）：宁可不写也别乱覆盖，
+  // 下个六小时再来——历史折算晚一轮不影响正确性，写错方向就永远错了。
+  return remote.status === 404 ? since : '';
+}
+
 async function sendDaily(payload: DailyPayload): Promise<boolean> {
   const at = isoOf(Date.now());
   const vault = vaultIdOf(getApp());
-  let ok = await upsert('installs', payload.installId, installFields(payload, at), {
+  const since = await earlierSince(payload.installId, payload.since || '');
+  let ok = await upsert('installs', payload.installId, installFields({ ...payload, since }, at), {
     installId: payload.installId,
     firstSeen: at,
   });
@@ -368,6 +410,19 @@ export function initUsage(manifestVersion: string, opts?: UsageInitOptions): voi
     sendDaily: (payload: DailyPayload) => sendDaily(payload),
     sendPing: (payload: PingPayload) => sendPing(payload),
     meta: () => metaOf(manifestVersion),
+    // 设备级起点：localStorage 那份跨库共享，扫到的只往早里合并，写完立刻回存
+    probeSince: async () => {
+      const known = readSinceLocal();
+      let found = '';
+      try {
+        found = (await probeSince(getApp())).day;
+      } catch {
+        found = '';
+      }
+      const best = earlierDay(known, found);
+      if (best) writeSinceLocal(best);
+      return best;
+    },
     warn: (msg: string, err?: unknown) => console.warn(`[bz] ${msg}`, err ?? ''),
     setInterval: (fn: () => void, ms: number) => window.setInterval(fn, ms),
     clearInterval: (id: number) => window.clearInterval(id),

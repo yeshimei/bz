@@ -1,6 +1,7 @@
 import { localDayKey } from '../ui/str';
 import { addActiveMinute, normalizeLedger, pruneDays, recordCommand, startSession } from './ledger';
 import { buildDailyPayload, markDailySent, pendingDates, retryDelay, retryWaitMs } from './rollup';
+import { earlierDay } from './since';
 import {
   PING_FIRST_DELAY_MS,
   PING_MS,
@@ -26,6 +27,8 @@ export interface UsageHost {
   sendDaily(payload: DailyPayload): Promise<boolean>;
   sendPing(payload: PingPayload): Promise<boolean>;
   meta(): UsageMeta;
+  /** 本地考古「最早使用日」；查不到返回 ''（新装 / 目录还没建） */
+  probeSince(): Promise<string>;
   warn(msg: string, err?: unknown): void;
   setInterval(fn: () => void, ms: number): number;
   clearInterval(id: number): void;
@@ -83,7 +86,30 @@ export function createUsage(host: UsageHost): UsageHandle {
     markDirty();
     ready = true;
     for (const cmd of earlyCommands.splice(0)) recordCommand(ledger, cmd.id, cmd.at);
+    void backfillSince();
   })();
+
+  /**
+   * 补算「最早使用日」。放在 ready 之后跑：扫目录可能几百毫秒，不能挡住活跃分钟与命令计数。
+   *
+   * 每次启动都扫一遍，取「已有值」与「这次扫到的」里更早的那个——只往早里走，绝不改晚。
+   * 必须每次都扫：同一个设备号开两个库就有两份账本，只在各自第一次算会让后开的那个
+   * 把起点顶成更晚的日子（主库 8-31 与测试库 11-09 之间来回切就会这样）。
+   * 代价只有一次 list + 几十次 stat，扫不到就保持原值。
+   */
+  async function backfillSince(): Promise<void> {
+    if (stopped) return;
+    let day = '';
+    try {
+      day = String((await host.probeSince()) || '');
+    } catch {
+      return; // 考古失败不打扰用户，也不写脏值
+    }
+    const best = earlierDay(ledger.sinceDay, day);
+    if (!best || best === ledger.sinceDay) return;
+    ledger.sinceDay = best;
+    markDirty();
+  }
 
   function runTick(): void {
     if (stopped || !ready || ticking) return;
@@ -129,6 +155,7 @@ export function createUsage(host: UsageHost): UsageHandle {
       await host.sendPing({
         schema: USAGE_SCHEMA,
         ...host.meta(),
+        ...(ledger.sinceDay ? { since: ledger.sinceDay } : {}),
         at: now,
       });
     } catch {
@@ -154,7 +181,9 @@ export function createUsage(host: UsageHost): UsageHandle {
     uploading = true;
     ledger.lastAttemptAt = now;
     try {
-      const ok = await host.sendDaily(buildDailyPayload(host.meta(), dates.map((d) => ledger.days[d])));
+      const ok = await host.sendDaily(
+        buildDailyPayload(host.meta(), dates.map((d) => ledger.days[d]), ledger.sinceDay),
+      );
       if (ok) {
         markDailySent(ledger, dates, localDayKey(now));
         markDirty();

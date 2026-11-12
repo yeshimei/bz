@@ -113,6 +113,8 @@ export function normalizeLedger(raw: unknown, now: number): Ledger {
   const ledger: Ledger = {
     schema: USAGE_SCHEMA,
     createdAt: sanitizeAt(r.createdAt) ?? now,
+    // 考古结果一旦落盘就照用：脏值（含未来日期）退回空，下次启动重算
+    sinceDay: isDayKey(r.sinceDay) && r.sinceDay <= localDayKey(now) ? r.sinceDay : '',
     lastSentDate: isDayKey(r.lastSentDate) ? r.lastSentDate : '',
     failures: Math.max(0, Math.min(99, Math.round(Number(r.failures) || 0))),
     lastAttemptAt: sanitizeAt(r.lastAttemptAt) ?? 0,

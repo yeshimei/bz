@@ -37,8 +37,8 @@ export function exportDay(day: DayBucket): DayBucket {
   };
 }
 
-export function buildDailyPayload(meta: UsageMeta, days: DayBucket[]): DailyPayload {
-  return {
+export function buildDailyPayload(meta: UsageMeta, days: DayBucket[], since = ''): DailyPayload {
+  const payload: DailyPayload = {
     schema: USAGE_SCHEMA,
     installId: meta.installId,
     pluginVersion: meta.pluginVersion,
@@ -49,6 +49,9 @@ export function buildDailyPayload(meta: UsageMeta, days: DayBucket[]): DailyPayl
     locale: meta.locale,
     days: days.map(exportDay),
   };
+  // 只有考古拿到日子才带这个键：查不到就让服务端按 firstSeen 兜底，别发空串占位
+  if (since) payload.since = since;
+  return payload;
 }
 
 export function retryDelay(failures: number): number {

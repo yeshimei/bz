@@ -31,13 +31,25 @@ const DAY: DayBucket = {
 
 describe('usage · 发送内容', () => {
   it('发送内容的键只有白名单里的那些', () => {
-    const payload = buildDailyPayload(META, [DAY]);
+    const payload = buildDailyPayload(META, [DAY], '2026-08-15');
     expect(Object.keys(payload).sort()).toEqual(
-      ['days', 'installId', 'isMobile', 'locale', 'obsidianVersion', 'platform', 'pluginVersion', 'schema', 'tz'].sort(),
+      ['days', 'installId', 'isMobile', 'locale', 'obsidianVersion', 'platform', 'pluginVersion', 'schema', 'since', 'tz'].sort(),
     );
     expect(Object.keys(payload.days[0]).sort()).toEqual(
       ['activeMinutes', 'commands', 'date', 'domains', 'firstAt', 'hourMinutes', 'lastAt', 'sessions'].sort(),
     );
+  });
+
+  it('考古没结果时不发 since 这个键（不是发空串）', () => {
+    const payload = buildDailyPayload(META, [DAY]);
+    expect('since' in payload).toBe(false);
+  });
+
+  it('since 只是一串日期，不是路径也不是文件名', () => {
+    const payload = buildDailyPayload(META, [DAY], '2026-08-15');
+    expect(payload.since).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+    expect(payload.since).not.toContain('/');
+    expect(payload.since!.length).toBeLessThanOrEqual(10);
   });
 
   it('没有任何内容类字段可乘虚而入（标题/路径/正文/搜索词）', () => {

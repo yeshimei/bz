@@ -42,6 +42,13 @@ export interface DayBucket {
 export interface Ledger {
   schema: number;
   createdAt: number;
+  /**
+   * 本机考古得到的「最早使用日」（YYYY-MM-DD），由 `probeSince` 每次启动合并一次，
+   * **只往早里走，绝不改晚**（同一设备开两个库时，两份账本各自只增不减）。
+   * '' = 还没查到（新装 / 数据目录还没建）。设备级那份在 localStorage，跨库共享。
+   * 唯一用途：让作者看板知道「统计上线之前这台设备用了多久」，好折算历史时长。
+   */
+  sinceDay: string;
   lastSentDate: string;
   failures: number;
   lastAttemptAt: number;
@@ -77,11 +84,15 @@ export interface UsageMeta {
 
 export interface DailyPayload extends UsageMeta {
   schema: number;
+  /** 本机最早使用日（YYYY-MM-DD）；考古没查到就不带这个键 */
+  since?: string;
   days: DayBucket[];
 }
 
 export interface PingPayload extends UsageMeta {
   schema: number;
+  /** 同 DailyPayload.since：只发日期，不发任何路径或文件名 */
+  since?: string;
   at: number;
 }
 
@@ -89,6 +100,7 @@ export function emptyLedger(now: number): Ledger {
   return {
     schema: USAGE_SCHEMA,
     createdAt: now,
+    sinceDay: '',
     lastSentDate: '',
     failures: 0,
     lastAttemptAt: 0,

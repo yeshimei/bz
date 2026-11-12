@@ -25,10 +25,11 @@ interface Harness {
   setDailyOk(v: boolean): void;
 }
 
-function makeHarness(init: { ledger?: Ledger | null; visible?: boolean; dailyOk?: boolean; pingOk?: boolean; enabled?: boolean } = {}): Harness {
+function makeHarness(init: { ledger?: Ledger | null; visible?: boolean; dailyOk?: boolean; pingOk?: boolean; enabled?: boolean; since?: string } = {}): Harness {
   let now = BASE;
   let visible = init.visible ?? true;
   let dailyOk = init.dailyOk ?? true;
+  let since = init.since ?? '';
   const pings: PingPayload[] = [];
   const dailies: DailyPayload[] = [];
   const saves: Ledger[] = [];
@@ -49,6 +50,7 @@ function makeHarness(init: { ledger?: Ledger | null; visible?: boolean; dailyOk?
       return init.pingOk ?? true;
     },
     meta: () => META,
+    probeSince: async () => since,
     warn: () => undefined,
     setInterval: (fn, ms) => globalThis.setInterval(fn, ms) as unknown as number,
     clearInterval: (id) => globalThis.clearInterval(id as unknown as Parameters<typeof globalThis.clearInterval>[0]),
@@ -205,5 +207,51 @@ describe('usage · 同步时序', () => {
     release();
     await h.advance(1_000);
     expect(h.dailies).toHaveLength(1);
+  });
+
+  it('考古到的「最早使用日」跟着心跳与日汇总一起发', async () => {
+    const h = makeHarness({ ledger: ledgerWithYesterday(), since: '2026-08-15' });
+    createUsage(h.host);
+    await h.advance(21_000);
+    expect(h.pings[0].since).toBe('2026-08-15');
+    expect(h.dailies[0].since).toBe('2026-08-15');
+  });
+
+  it('考古没查到就不带 since 这个键（服务端按 firstSeen 兜底）', async () => {
+    const h = makeHarness({ ledger: ledgerWithYesterday() });
+    createUsage(h.host);
+    await h.advance(21_000);
+    expect('since' in h.pings[0]).toBe(false);
+    expect('since' in h.dailies[0]).toBe(false);
+  });
+
+  it('每次启动都扫一遍，只往早里走，绝不改晚', async () => {
+    const h = makeHarness({ since: '2026-08-15' });
+    const handle = createUsage(h.host);
+    await h.advance(1_000);
+    expect(handle.snapshot().sinceDay).toBe('2026-08-15');
+    await handle.stop();
+    const saved = h.saves[h.saves.length - 1];
+    expect(saved.sinceDay).toBe('2026-08-15');
+
+    // 同一个设备号换一个库启动：这份账本只记了 8-15，新库扫出更早的 8-02 → 取 8-02
+    const h2 = makeHarness({ ledger: saved, since: '2026-08-02' });
+    const again = createUsage(h2.host);
+    await h2.advance(1_000);
+    expect(again.snapshot().sinceDay).toBe('2026-08-02');
+
+    // 反过来：新库扫到的比账本里晚（8-20），保持 8-15 不动
+    const h3 = makeHarness({ ledger: saved, since: '2026-08-20' });
+    const third = createUsage(h3.host);
+    await h3.advance(1_000);
+    expect(third.snapshot().sinceDay).toBe('2026-08-15');
+  });
+
+  it('这次没扫到（目录还没建）时保留账本里的旧值', async () => {
+    const h = makeHarness({ ledger: ledgerWithYesterday() });
+    h.host.probeSince = async () => '';
+    const handle = createUsage(h.host);
+    await h.advance(1_000);
+    expect(handle.snapshot().sinceDay).toBe('');
   });
 });
