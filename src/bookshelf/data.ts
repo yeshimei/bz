@@ -1,10 +1,15 @@
 /**
- * 书架墙（bookshelf）域数据层：书库 md 书目解析 / EPUB（bz 阅读）条目 / 统计。
+ * 书架墙（bookshelf）域数据层：EPUB（bz 阅读）条目 / md 书目解析（保留给报告与旧数据）。
  * 复刻迁移自旧 src/library/items.ts（同语义、独立实现；新旧域并存互不依赖）。
- * - md 书：书库目录（bookshelfFolderPath 空 = 运行时回落旧 libraryFolderPath 存量值）下 frontmatter tags 含 bookTag（旧键存量值）的笔记
+ * - **书库墙 2026-11-12 起只读 bz Reader**：`rebuildItems` 只并入 EPUB 聚合，
+ *   md 书不再上墙（设置里的「书库文件夹」项同步退役，见 settings.ts）。md 解析函数
+ *   （resolveFolderPath / scanMarkdownBooks / parseBookFile）保留——阅读报告、日记读毕
+ *   书目等跨域仍按老口径读存量 md 书，零迁移。
  * - EPUB 书：只有一个数据源 `bz-reader.json`——bz 阅读插件的数据目录（其 data.json 的
  *   `dataDir`，缺省 `bz-reader/storage`），读入后归一成聚合形状（见 reader-source.ts）。
  *   Weave（weave-data.json）通道已于 v1.39.4 摘除：书库只认 bz 阅读。
+ * - 分类：优先用 bz Reader 每本书的 `shelf`（用户自定义分类），回退 `meta.subjects[0]`
+ *   （EPUB 自带题材），都缺归「未分类」。
  * - status 派生：readingDate && !completionDate → 在读；都有 → 已读；否则未读
  * 筛选/排序管道在渲染纯层 shared.ts（ADR-0104）；本文件不依赖渲染层（深审 arch A1）。
  */
@@ -232,8 +237,12 @@ export function epubProgress(rawPercent: number | undefined): number {
     : Math.round(Math.max(0, Math.min(1, raw)) * 100);
 }
 
-/** B11：分类接 `meta.subjects[0]`（issue 221/ADR-0099）；无则置 null（kwFilter 搜「未分类」不误命中 EPUB） */
-export function epubCategory(meta: any): string | null {
+/** 分类口径：bz Reader 的用户分类 `shelf` 优先（2026-11-12 用户拍板「分类信息也要读」），
+ *  回退 EPUB 自带 `meta.subjects[0]`（issue 221/ADR-0099），都无则 null
+ *  （kwFilter 搜「未分类」不误命中 EPUB）。 */
+export function epubCategory(meta: any, shelf?: unknown): string | null {
+  const shelfName = typeof shelf === 'string' ? shelf.trim() : '';
+  if (shelfName) return shelfName;
   const subjects: unknown[] = Array.isArray(meta?.subjects) ? meta.subjects : [];
   return typeof subjects[0] === 'string' && subjects[0].trim() ? subjects[0].trim() : null;
 }
@@ -275,7 +284,8 @@ function buildEpubItem(app: App, aggregate: any): BookshelfItem | null {
   const completionDate = toDateString(completedTime);
 
   const vaultFile = app?.vault?.getAbstractFileByPath?.(vaultPath);
-  const epubCategoryValue = epubCategory(meta);
+  // 分类：bz Reader 的 shelf 优先，回退 EPUB subjects（aggregate.shelf 由 normalizeReaderAggregates 透传）
+  const epubCategoryValue = epubCategory(meta, aggregate?.shelf);
   const wordCount = epubWordCount(meta);
   const cfi = typeof reading?.position?.cfi === 'string' ? reading.position.cfi.trim() : '';
   return {
@@ -347,14 +357,13 @@ export async function loadEpubItems(app: App): Promise<BookshelfItem[]> {
  *  不得回写覆盖新数据；参照 library ui 的 bookNotesLoadSeq 先例 */
 let rebuildSeq = 0;
 
-/** 重建条目列表（md 同步 + EPUB 异步并入；返回 promise 供 UI 层完成后统一渲染） */
+/** 重建条目列表（只 EPUB；md 书不再上墙——2026-11-12 书库只由 bz Reader 供书）。
+ *  返回 promise 供 UI 层完成后统一渲染。 */
 export async function rebuildItems(app: App): Promise<BookshelfItem[]> {
   const seq = ++rebuildSeq;
-  const mdItems = scanMarkdownBooks(app);
   const epubItems = await loadEpubItems(app);
   if (seq !== rebuildSeq) return M.items; // 过期在途重建：已被更新一次的重建取代
-  const merged = [...mdItems, ...epubItems];
   M.items.length = 0;
-  M.items.push(...merged);
-  return merged;
+  M.items.push(...epubItems);
+  return epubItems;
 }

@@ -3,7 +3,7 @@
  * 共享口径与借书卡见 ../../shared.ts；本文件只写「书脊墙」这一布局的排布差异。
  */
 import { esc, emptyHtmlStr, iconSpan } from '../../../core/ui/str';
-import { EMPTY_BOOKS_ICON, EMPTY_SEARCH_ICON, EMPTY_FILTER_ICON, ICON } from '../../constants';
+import { EMPTY_BOOKS_ICON, EMPTY_SEARCH_ICON, EMPTY_FILTER_ICON, ICON, READER_GUIDE } from '../../constants';
 import { itemId, statusColor, type RenderHooks } from '../../shared';
 import { SORT_LABEL } from '../../constants';
 import type { BookshelfItem, SideId, SortKey } from '../../state';
@@ -162,6 +162,73 @@ export function wallLoadingHTML(): string {
   return `<div class="bz-bs-wall-empty">${emptyHtmlStr('loader', '正在整理书架…', '')}</div>`;
 }
 
+/** bz Reader 引导页参数（2026-11-12 用户拍板形态 A「入馆须知」） */
+export interface ReaderGuideOpts {
+  /** 已安装且可用（readReaderInstall + isReaderHealthy） */
+  installed: boolean;
+  /** 目录在但 manifest 坏（半装，建议重装） */
+  broken: boolean;
+  /** 已装版本（未装/坏装给空串） */
+  version: string;
+  /** 安装进行中（按钮禁用 + 显示阶段文案） */
+  installing: boolean;
+  /** 安装阶段文案（「下载 1.1.1…」之类） */
+  stage: string;
+}
+
+/** bz Reader 引导页：书库 0 本时占据墙区。
+ *  文案口径（口述拍板）：步骤只留标题、不写小字；插件介绍用 GitHub README 首段，
+ *  写下载量与「已上架社区插件市场」；安装按钮走 bz 内置安装器，不引导用户去商店。 */
+export function readerGuideHtml(opts: ReaderGuideOpts): string {
+  const { installed, broken, version, installing, stage } = opts;
+  const steps = installed
+    ? `<li class="done"><span class="n">✓</span><b>bz Reader 已安装</b></li>
+       <li><span class="n">2</span><b>打开书架，导入第一本书</b></li>
+       <li><span class="n">3</span><b>回到书库</b></li>`
+    : `<li><span class="n">1</span><b>点下面的「安装 bz Reader」</b></li>
+       <li><span class="n">2</span><b>打开书架，导入一本书</b></li>
+       <li><span class="n">3</span><b>回到这里</b></li>`;
+  const primary = installed
+    ? '<button type="button" class="bz-bs-guide-primary" data-bs-reader-open>打开 bz Reader 导入第一本书</button>'
+    : `<button type="button" class="bz-bs-guide-primary" data-bs-reader-install${installing ? ' disabled' : ''}>${
+        installing ? esc(stage || '正在安装…') : broken ? '重新安装 bz Reader' : '安装 bz Reader'
+      }</button>`;
+  const ver = version && !broken ? `<span class="ver">${esc(version)}</span>` : '';
+  return `<div class="bz-bs-guide">
+    <div class="bz-bs-guide-card">
+      <div class="bz-bs-guide-stamp">入馆须知</div>
+      <div class="bz-bs-guide-kicker">书库 · LIBRARY</div>
+      <h2>${installed ? '书架还是空的' : '书库还没有开张'}</h2>
+      <p class="bz-bs-guide-lead">${installed
+        ? 'bz Reader 已经装好了，书架里还差一本书。放一本进去，这面墙就会自己长出来。'
+        : '书库由 bz Reader 供书。装上它、把书放进去，这里的书目、进度和分类都会自动出现。'}</p>
+      <div class="bz-bs-guide-plugin">
+        <div class="bz-bs-guide-plugin-icon">bz</div>
+        <div class="bz-bs-guide-plugin-main">
+          <div class="bz-bs-guide-plugin-name">${READER_GUIDE.name}${ver}${installed ? '<span class="ok">已安装</span>' : ''}</div>
+          <div class="bz-bs-guide-plugin-desc">${READER_GUIDE.desc}</div>
+          <div class="bz-bs-guide-plugin-meta">
+            <span class="badge">${READER_GUIDE.marketBadge}</span>
+            <span>${READER_GUIDE.downloads} 次下载</span>
+            <span>· 作者 叫我包仔</span>
+          </div>
+        </div>
+      </div>
+      <ol class="bz-bs-guide-steps">${steps}</ol>
+      <div class="bz-bs-guide-actions">
+        ${primary}
+        <button type="button" class="bz-bs-guide-link" data-bs-reader-tut>看视频教程 ↗</button>
+        <button type="button" class="bz-bs-guide-link" data-bs-reader-gh>GitHub ↗</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+/** 引导页读盘中的占位（安装状态/书籍数异步读，先撑住墙区） */
+export function readerGuideLoadingHTML(): string {
+  return `<div class="bz-bs-guide"><div class="bz-bs-guide-loading">正在连接 bz Reader…</div></div>`;
+}
+
 /** 统计标签行 HTML（纸质标签；状态四张 + 分类册数标签；点选筛选、再点回全馆） */
 export function labelsHtml(items: BookshelfItem[], side: SideId, catFilter: string): string {
   const statusDefs: { f: SideId; n: number; t: string }[] = [
@@ -219,6 +286,7 @@ export function panelHtml(skinClass: string): string {
       <div class="bz-bs-header">
         <div class="bz-bs-plaque" data-bs-plaque><h1>书库</h1><p>LIBRARY</p></div>
         <div class="bz-bs-labels" id="bz-bs-labels"></div>
+        <div class="bz-bs-reader-pill" id="bz-bs-reader-pill" hidden></div>
       </div>
         <div class="bz-bs-tools">
           <div class="bz-bs-searchbox">
@@ -227,11 +295,13 @@ export function panelHtml(skinClass: string): string {
           </div>
           <div class="bz-bs-seg" id="bz-bs-sortseg"></div>
           <div class="bz-bs-hint" id="bz-bs-hint"></div>
+          <div class="bz-bs-tools-right">
+            <button class="bz-bs-open-reader" data-bs-reader-openbar type="button" hidden>打开 bz Reader 书架 ↗</button>
+          </div>
         </div>
         <div class="bz-bs-view bz-bs-view-shelf active">
           <div class="bz-bs-room">
             <div class="bz-bs-shelf" id="bz-bs-shelf"></div>
-            <div class="bz-bs-wallnote">—— 书脊的高度是时长，厚度是批注，抽出的是正在进行 ——</div>
           </div>
         </div>
         <div class="bz-bs-view bz-bs-view-report">

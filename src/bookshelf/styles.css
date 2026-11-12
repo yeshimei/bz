@@ -524,3 +524,138 @@
   .bz-bs-d-popup.bz-overlay-popup { width: min(430px, 100vw - 32px); max-width: none !important; max-height: calc(var(--bz-vvh, 100vh) - 48px); }
   .bz-bs-d-seal { display: none; }
 }
+
+/* ==================== bz Reader 引导页（0 本时；2026-11-12 形态 A「入馆须知」） ====================
+   书库改由 bz Reader 供书：未装/半装 → 插件介绍 + 内置安装按钮；已装 0 本 → 打开书架导入。
+   视觉沿书库纸质底（--bsw-paper / --bsw-accent / --bsw-serif），不新开一套皮肤。 */
+
+/* 头行右侧连接状态（桌面显示；移动端头行太挤，隐藏） */
+.bz-bs-reader-pill {
+  flex: none; display: inline-flex; align-items: center; gap: 7px;
+  font-family: var(--bsw-sans); font-size: 11px; letter-spacing: .5px;
+  color: #d8c9ae; border: 1px solid rgba(201, 168, 106, .4); padding: 6px 10px;
+  background: rgba(0, 0, 0, .22);
+}
+.bz-bs-reader-pill i {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: #7fae6b; box-shadow: 0 0 6px #7fae6b;
+}
+.bz-bs-reader-pill.off { color: #9b8a72; border-color: rgba(155, 138, 114, .32); }
+.bz-bs-reader-pill.off i { background: #8a7355; box-shadow: none; }
+.bz-bs-reader-pill[hidden] { display: none; }
+
+/* 工具行右侧「打开 bz Reader 书架」 */
+.bz-bs-tools-right { margin-left: auto; display: flex; align-items: center; gap: 12px; }
+.bz-bs-open-reader {
+  border: 1px solid var(--bsw-brass); background: rgba(201, 168, 106, .14); color: #f2e4c8;
+  font-family: var(--bsw-sans); font-size: 12px; letter-spacing: 1px;
+  padding: 8px 14px; cursor: pointer; white-space: nowrap;
+}
+.bz-bs-open-reader[hidden] { display: none; }
+/* 0 本时检索/排序没有对象（引导页自带入口） */
+.bz-bs-tools-empty .bz-bs-searchbox,
+.bz-bs-tools-empty .bz-bs-seg { opacity: .55; pointer-events: none; }
+
+/* 引导页 */
+.bz-bs-guide {
+  display: flex; align-items: center; justify-content: center;
+  min-height: 100%; padding: 16px 0 24px;
+}
+.bz-bs-guide-loading {
+  color: var(--bsw-muted); font-family: var(--bsw-sans);
+  font-size: 12px; letter-spacing: 2px;
+}
+.bz-bs-guide-card {
+  position: relative; width: 560px; max-width: 100%;
+  background: var(--bsw-paper); color: var(--bsw-ink);
+  padding: 30px 38px 24px;
+  box-shadow: 0 24px 50px rgba(0, 0, 0, .5), inset 0 1px 0 rgba(255, 255, 255, .55);
+  transform: rotate(-.35deg);
+  font-family: var(--bsw-sans);
+}
+.bz-bs-guide-stamp {
+  position: absolute; top: 18px; right: 20px;
+  border: 2px solid var(--bsw-accent); color: var(--bsw-accent);
+  font-size: 10px; letter-spacing: 4px; padding: 3px 7px;
+  transform: rotate(6deg); opacity: .82;
+}
+.bz-bs-guide-kicker { font-size: 10px; letter-spacing: 3px; color: #9a8a70; margin-bottom: 10px; }
+.bz-bs-guide-card h2 {
+  margin: 0 0 10px; font-family: var(--bsw-serif);
+  font-size: 25px; letter-spacing: 2px; font-weight: 700;
+}
+.bz-bs-guide-lead { margin: 0 0 16px; font-size: 13px; line-height: 1.9; color: #5d4e3b; }
+
+/* 插件介绍卡（介绍取 GitHub README；下载量取 Obsidian 社区统计） */
+.bz-bs-guide-plugin {
+  display: flex; gap: 12px; align-items: flex-start;
+  background: rgba(90, 70, 40, .06); border: 1px solid rgba(90, 70, 40, .22);
+  padding: 11px 14px; margin: 0 0 14px;
+}
+.bz-bs-guide-plugin-icon {
+  flex: none; width: 44px; height: 44px; border-radius: 6px;
+  background: #2b2018; color: var(--bsw-brass);
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--bsw-serif); font-size: 18px; letter-spacing: 1px;
+}
+.bz-bs-guide-plugin-main { flex: 1; min-width: 0; }
+.bz-bs-guide-plugin-name { font-size: 14px; font-weight: 600; display: flex; align-items: baseline; gap: 8px; }
+.bz-bs-guide-plugin-name .ver {
+  font-size: 10px; font-weight: 400; color: #8d7c63;
+  border: 1px solid rgba(90, 70, 40, .25); padding: 0 4px;
+}
+.bz-bs-guide-plugin-name .ok { color: #4f7a3f; font-size: 11px; }
+.bz-bs-guide-plugin-desc { font-size: 11px; line-height: 1.65; color: #6b5c45; margin-top: 4px; }
+.bz-bs-guide-plugin-meta {
+  font-size: 10.5px; color: #8d7c63; margin-top: 7px;
+  display: flex; gap: 8px; flex-wrap: wrap; align-items: center;
+}
+.bz-bs-guide-plugin-meta .badge {
+  background: #e9dfc7; border: 1px solid rgba(90, 70, 40, .2);
+  padding: 1px 6px; font-size: 10px;
+}
+
+/* 三步：只有标题，不写小字（2026-11-12 用户要求） */
+.bz-bs-guide-steps { list-style: none; margin: 0 0 18px; padding: 0; }
+.bz-bs-guide-steps li {
+  display: flex; gap: 13px; align-items: center;
+  padding: 8px 0; border-top: 1px dashed rgba(90, 70, 40, .22);
+  font-size: 13px; font-weight: 600; letter-spacing: .5px;
+}
+.bz-bs-guide-steps li:last-child { border-bottom: 1px dashed rgba(90, 70, 40, .22); }
+.bz-bs-guide-steps .n {
+  flex: none; width: 23px; height: 23px;
+  border: 1px solid rgba(90, 70, 40, .42); border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px; font-weight: 400; color: #6b5c45;
+}
+.bz-bs-guide-steps li.done .n { border-color: #7fae6b; color: #4f7a3f; }
+
+.bz-bs-guide-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 16px; }
+.bz-bs-guide-primary {
+  background: var(--bsw-accent); color: #f8efe0; border: none;
+  padding: 12px 20px; font-family: var(--bsw-sans); font-size: 13px; letter-spacing: 2px;
+  cursor: pointer; box-shadow: 0 3px 0 #792a20;
+}
+.bz-bs-guide-primary:active { transform: translateY(1px); box-shadow: 0 2px 0 #792a20; }
+.bz-bs-guide-primary[disabled] { background: #8a7355; box-shadow: none; cursor: default; }
+.bz-bs-guide-link {
+  background: none; border: none; padding: 0 0 2px; cursor: pointer;
+  font-family: var(--bsw-sans); font-size: 12px; color: #6b5a42;
+  border-bottom: 1px solid rgba(107, 90, 66, .5);
+}
+/* 触屏粘滞范式：:hover 必须包在 @media (hover: hover)（core 范式守卫测试） */
+@media (hover: hover) {
+  .bz-bs-open-reader:hover { background: var(--bsw-brass); color: #2b2018; }
+  .bz-bs-guide-primary:hover { background: #8f3226; }
+  .bz-bs-guide-link:hover { color: var(--bsw-accent); border-color: var(--bsw-accent); }
+}
+
+@media (max-width: 720px) {
+  .bz-bs-reader-pill { display: none; }
+  .bz-bs-tools-right { margin-left: 0; }
+  .bz-bs-guide-card { padding: 24px 20px 20px; transform: none; }
+  .bz-bs-guide-card h2 { font-size: 21px; }
+  .bz-bs-guide-stamp { top: 12px; right: 12px; }
+}
+
