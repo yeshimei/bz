@@ -366,13 +366,94 @@ template {
  * 请勿手改产物。
  * ============================================================ */
 
-button:not(.clickable-icon) {
+/* 按钮基线的作用域（2026-11-12 收窄）。
+ * 动机：原先两条规则是裸 button / button:not(.clickable-icon)，无差别命中
+ * Obsidian 核心与其它插件的按钮——底色/文字色/阴影/边框/圆角/内边距被 unset，
+ * 宿主按钮只剩文字，失去层次感。现把生效范围限定在 bz 自己的界面内。
+ * 为什么用 :where()：它本身不贡献特异性，所以每条规则的特异性与原写法
+ * 逐字一致（按钮几何 (0,0,1)、按钮底色 (0,1,1)），插件内的级联与命中结果
+ * 零变化；变的只是范围——宿主与其它插件的按钮不再被命中。
+ * 维护：新增不带 bz- 前缀的 bz 界面根时，往下面这份界面根清单补一行
+ * （带 bz- 前缀的类/ID 已由通配档兜底，无需逐个登记）。 */
+:where(
+    .bz-panel-overlay,
+    .bz-panel-frame,
+    [class^="bz-"],
+    [class*=" bz-"],
+    [id^="bz-"],
+    [id^="knowledge-"],
+    .kb,
+    .cn-skin,
+    .stf__parent,
+    .yb-sc,
+    .ra-film,
+    .diary-popup-header,
+    .fav-header,
+    .news-close-btn,
+    .pomodoro-statusbar,
+    .diary-datetime-scroll-container,
+    #add-diary-popup,
+    #pomodoro-popup,
+    #pomodoro-mask,
+    #quiz-popup,
+    #quiz-mask,
+    #review-popup,
+    #review-entries-container,
+    #review-stats-popup,
+    #review-stats-body,
+    #review-history-popup,
+    #review-history-body,
+    #__shared_confirm_popup__,
+    #__shared_confirm_mask__,
+    #chat-panel,
+    #smartcat-dashboard-panel,
+    #smart-companion-cat,
+    #knowledge-video-popup,
+    #knowledge-video-mask
+) button:not(.clickable-icon),
+button:not(.clickable-icon):where([class^="bz-"], [class*=" bz-"], [id^="bz-"], [id^="knowledge-"]) {
     color: unset;
     background-color: unset;
     box-shadow: unset;
 }
 
-button {
+:where(
+    .bz-panel-overlay,
+    .bz-panel-frame,
+    [class^="bz-"],
+    [class*=" bz-"],
+    [id^="bz-"],
+    [id^="knowledge-"],
+    .kb,
+    .cn-skin,
+    .stf__parent,
+    .yb-sc,
+    .ra-film,
+    .diary-popup-header,
+    .fav-header,
+    .news-close-btn,
+    .pomodoro-statusbar,
+    .diary-datetime-scroll-container,
+    #add-diary-popup,
+    #pomodoro-popup,
+    #pomodoro-mask,
+    #quiz-popup,
+    #quiz-mask,
+    #review-popup,
+    #review-entries-container,
+    #review-stats-popup,
+    #review-stats-body,
+    #review-history-popup,
+    #review-history-body,
+    #__shared_confirm_popup__,
+    #__shared_confirm_mask__,
+    #chat-panel,
+    #smartcat-dashboard-panel,
+    #smart-companion-cat,
+    #knowledge-video-popup,
+    #knowledge-video-mask
+) button,
+button:where([class^="bz-"], [class*=" bz-"], [id^="bz-"], [id^="knowledge-"]) {
     display: inline-block;
     height: auto;
     padding: 0;
@@ -414,9 +495,12 @@ button {
     display: none !important;
 }
 
-/* 设置行控件统一最小宽度（ticket 170）：number/text 等输入控件对齐到 120px */
-.setting-item .setting-item-control input[type="number"],
-.setting-item .setting-item-control input[type="text"] {
+/* 设置行控件统一最小宽度（ticket 170）：number/text 等输入控件对齐到 120px。
+   2026-11-12 收窄：补 :where([id^="bz-"]) 限定在 bz 自己的设置弹窗内——原写法是裸
+   .setting-item，会给 Obsidian 原生设置页里所有插件的设置行灌最小宽度。:where()
+   不贡献特异性，插件内 (0,3,1) 与原一致。 */
+:where([id^="bz-"]) .setting-item .setting-item-control input[type="number"],
+:where([id^="bz-"]) .setting-item .setting-item-control input[type="text"] {
     min-width: 120px;
 }
 
@@ -4018,9 +4102,12 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 }
 .bz-fab:active { transform: scale(0.96); }
 
-/* ── 工具提示 [data-tip]（纯 CSS hover） ── */
-[data-tip] { position: relative; }
-[data-tip]::after {
+/* ── 工具提示 [data-tip]（纯 CSS hover） ──
+   2026-11-12 收窄：限定在 bz 自己的界面根内——原写法是裸 [data-tip]，任何带该
+   属性的元素（其它插件/主题）都会被强加 position:relative 与伪元素气泡。
+   :where() 不贡献特异性，(0,1,0) 与原一致。 */
+:where(.bz-panel-overlay, .bz-panel-frame, [class^="bz-"], [class*=" bz-"], [id^="bz-"], [id^="knowledge-"]) [data-tip] { position: relative; }
+:where(.bz-panel-overlay, .bz-panel-frame, [class^="bz-"], [class*=" bz-"], [id^="bz-"], [id^="knowledge-"]) [data-tip]::after {
   content: attr(data-tip);
   position: absolute;
   bottom: calc(100% + 6px);
@@ -4040,7 +4127,7 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   z-index: 80;
 }@media (hover: hover) {
 
-[data-tip]:hover::after { opacity: 1; }
+:where(.bz-panel-overlay, .bz-panel-frame, [class^="bz-"], [class*=" bz-"], [id^="bz-"], [id^="knowledge-"]) [data-tip]:hover::after { opacity: 1; }
 }
 
 /* ── 多选下拉 .bz-multiselect ── */

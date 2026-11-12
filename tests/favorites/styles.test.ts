@@ -126,12 +126,17 @@ describe('批 B（bz-fix-fav-view）样式契约：vvh 单源 / 负 token calc /
 });
 
 describe('C16：core reset 注释与实现相符', () => {
-  it('button:not(.clickable-icon) 特异性如实标注 (0,1,1)，不再声称 :where 归零', () => {
+  it('button:not(.clickable-icon) 已限定在 bz 界面根内，特异性仍为 (0,1,1)', () => {
     const reset = repo('src/core/reset.css');
     expect(reset).not.toContain(':where() 归零特异性'); // 原失实句式（实现并未用 :where）
     // 0db692c：注释随规则本体迁至聚合产物 styles.css（reset.css 只留规则），断言指产物
     const product = repo('styles.css');
     expect(product).toContain('(0,1,1)');
-    expect(product).toMatch(/button:not\(\.clickable-icon\) \{\s*color: unset;\s*background-color: unset;\s*box-shadow: unset;/);
+    // 2026-11-12 收窄：规则本体包在 :where() 界面根清单里（宿主按钮不再被扒光底色/阴影）
+    expect(product).toMatch(/button:not\(\.clickable-icon\)[^{]*\{\s*color: unset;\s*background-color: unset;\s*box-shadow: unset;/);
+    expect(product).toContain(') button:not(.clickable-icon)');
+    // 反向守卫：不允许回潮成裸 button / button:not(.clickable-icon) 的全局写法
+    expect(product).not.toMatch(/(^|\n)button:not\(\.clickable-icon\)\s*\{/);
+    expect(product).not.toMatch(/(^|\n)button\s*\{\s*display: inline-block/);
   });
 });
