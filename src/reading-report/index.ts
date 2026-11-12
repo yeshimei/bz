@@ -19,9 +19,7 @@ import { yieldToMainThread as yieldToMainThreadCore } from '../core/utils';
 import type { App } from 'obsidian';
 import { notify } from '../core/notice';
 import { mountIcons, uiEmpty, uiBtn, uiBtnRow } from '../core/ui';
-import { resolveFolderPath } from '../bookshelf/data';
 import {
-  getAllBookNotes,
   calculateReadingStats,
   getEpubBookNotes,
   getHeatmapMonthKeys,
@@ -125,7 +123,7 @@ function bindKeyboardActivation(container: HTMLElement): void {
 }
 
 /** 空库空态（空态带动作拍板）：主按钮引导回书架收录（面板 onBack 切回书架列表） */
-function buildEmptyState(opts: ReportRenderOptions, folderPath: string): HTMLElement {
+function buildEmptyState(opts: ReportRenderOptions): HTMLElement {
   const actions = uiBtnRow(
     [
       uiBtn({
@@ -140,7 +138,7 @@ function buildEmptyState(opts: ReportRenderOptions, folderPath: string): HTMLEle
   const empty = uiEmpty({
     icon: 'library-big',
     title: '书库还没有可统计的书',
-    desc: `把书籍笔记放进「${folderPath}」文件夹并在 frontmatter 加 book 标签，收录后这里自动生成阅读报告`,
+    desc: '书库现在只统计 bz Reader 里的书。装好它并导入第一本，这里会自动生成阅读报告。',
     actions,
   });
   return empty;
@@ -198,18 +196,14 @@ export function renderReadingReport(container: HTMLElement, app: App, opts: Repo
     // EFF-7 与 clipbook 同序：骨架已给反馈，小库全程静默）
     await yieldToMainThread();
     if (!alive()) return finishAbort();
-    const bookNotes = getAllBookNotes(app);
-
-    await yieldToMainThread();
+    // 与书库墙同源（2026-11-12）：只统计 bz Reader 的 EPUB；md 书不再上墙，也不进报告
+    const allNotes = await getEpubBookNotes(app);
     if (!alive()) return finishAbort();
-    const epubEntries = await getEpubBookNotes(app);
-    if (!alive()) return finishAbort();
-    const allNotes = epubEntries.length > 0 ? [...bookNotes, ...epubEntries] : bookNotes;
 
     // 空库空态（空态带动作拍板）：无任何书目 → 引导回书架收录，不渲染空报告
     if (allNotes.length === 0) {
       container.innerHTML = '';
-      container.appendChild(buildEmptyState(opts, resolveFolderPath()));
+      container.appendChild(buildEmptyState(opts));
       mountIcons(container);
       return finishDone(true);
     }
