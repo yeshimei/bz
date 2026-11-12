@@ -48,6 +48,8 @@ import { addBelongingsItem, openBelongings, openBelongingsReport, unloadBelongin
 // 剪藏本融合域（clipbook，ADR-0082/issue 177）：聚合讯+剪藏本合一
 import { openClipbook, markAllUnreadRead, openReadingPress, unloadClipbook, ensureClipbookFileSync, unloadClipbookFileSync } from './clipbook';
 import { maybeFetchNews, fetchNowNews, notifyManualFetchResult } from './clipbook/news-fetcher';
+import { createClipbookFacadeHost } from './clipbook/facade-host';
+import type { ClipbookFacade } from './clipbook/facade';
 // 统一保险库（encrypt 域，ADR-0085）：密码管理已并入 encrypt，旧 password-vault 域已删除
 // 日记本（diary 域，ADR-0115：原回忆墙升格正名，旧编辑域退役；媒体墙 + 写链路单一 UI）
 import { openDiary, openDiaryWrite, prewarmDiary, unloadDiary } from './diary';
@@ -356,6 +358,10 @@ export default class BzPlugin extends Plugin {
     /** 按 vault 路径打开知识盒的文献预览（不在文献目录 / 文件缺失时回退原生打开） */
     openPreview: (path: string) => Promise<void>;
   } | null = null;
+  /** 剪藏本门面（剪藏成书）：bz-reader 经 getPlugin('bz') 取实例后列订阅 / 取正文 /
+   *  标已读 / 存剪藏。挂的是常驻对象，内部每次调用才读盘——阅读器可能在剪藏本面板
+   *  没开的时候调用。卸载时置空，外部 typeof 守卫随即探测失败（老版本 bz 同款）。 */
+  clipbook: ClipbookFacade | null = null;
   /** 阅读器 AI 门面（ADR-0294，bz-reader 同样经 app.plugins.getPlugin('bz') 调用）：
    *  笔记库检索 + 嵌入。**常驻转发对象**而不是一次性引用——第二大脑是布局就绪后懒初始化，
    *  onload 那一刻还没有实现可挂；写成转发后调用方永远拿到一个稳定的面：
@@ -490,6 +496,10 @@ export default class BzPlugin extends Plugin {
          门面按外部口径只收 path，别让调用方去猜 bz 的内部形状。 */
       openPreview: (path: string) => openKnowledgePreview(this.app, path),
     };
+
+    // 剪藏本门面（剪藏成书）：与知识盒/AI 门面同一套跨插件约定。只新增一层窄口，
+    // 剪藏本自己的 UI、写队列、数据结构都不动。
+    this.clipbook = createClipbookFacadeHost();
 
     // ESC 全局管理器重挂入口（N1）：escManager 是模块 IIFE 单例，禁用→再启用不重新求值，
     // destroy 只软关不清层——onload 每次恢复 ESC 处理（首次调用复位缺省旗标，幂等）
@@ -763,6 +773,7 @@ export default class BzPlugin extends Plugin {
     unloadKnowledge();
     // 对外门面摘除（ADR-0215）：实例属性置空，外部 typeof 守卫随即探测失败
     this.knowledge = null;
+    this.clipbook = null;
     // 挂载树白板（issues 317/319）：自绘遮罩/大窗直接挂 body，禁用插件时必须摘干净
     destroyMountTree();
     // 域事件总线收口：摘除 vault 订阅点 + 清空全部域事件订阅（总线为进程内单例，随插件卸载全量清空）
