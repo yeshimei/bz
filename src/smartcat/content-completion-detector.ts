@@ -122,7 +122,7 @@ export class ContentCompletionDetector {
 
   /**
    * 仅检查会话超时（内容不足 minLength 时也走此路径兜底）。
-   * 超时后删除路径状态——下次 refresh 从零开始新会话，避免 timeout 重复上报。
+   * 超时后删除路径状态——下次 refresh 从零开始新会话，避免 timeout 重复触发。
    */
   private trySessionTimeout(path: string, s: PathState): CompletionResult | null {
     const t = this.now();

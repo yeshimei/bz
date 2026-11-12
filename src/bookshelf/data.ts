@@ -231,7 +231,7 @@ function aggregateActivity(aggregate: any): number {
   return Math.max(last, updated, added);
 }
 
-/** B6：progress 归一按 CONTEXT 契约（ticket 081/ADR-0034）：读侧上报 0-1 小数
+/** B6：progress 归一按 CONTEXT 契约（ticket 081/ADR-0034）：读侧给出 0-1 小数
  *  （1.0=读完 → 100）；>1 为旧版 0-100 口径直接取整（钳 100），留作存量数据兼容。 */
 export function epubProgress(rawPercent: number | undefined): number {
   const raw = typeof rawPercent === 'number' ? rawPercent : 0;

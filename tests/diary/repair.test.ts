@@ -30,7 +30,7 @@ describe('lintEntryFile 规则', () => {
     expect(lintEntryFile('我的/日记/2613450800.md', entry('2026-13-45', '08:00', ['日记'], 'x'))).toBe('unparsable');
   });
 
-  it('属性损坏但题目合法 → unparsable（运行时已按题目降级，体检从严上报）', () => {
+  it('属性损坏但题目合法 → unparsable（运行时已按题目降级，体检从严判定）', () => {
     const corrupt = '---\ndate: 2026-13-45 99:99\ntype:\n  - 日记\n---\n\n正文';
     expect(lintEntryFile('我的/日记/2608230800.md', corrupt)).toBe('unparsable');
   });

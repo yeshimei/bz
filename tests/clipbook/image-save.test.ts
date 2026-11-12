@@ -164,7 +164,7 @@ describe('localizeArticleImages（全量本地化管线）', () => {
     expect(r.images).toEqual(res.swaps);
   });
 
-  it('进度回调按张上报（done 从 1 计到 total，复用张也计入）', async () => {
+  it('进度回调按张回报（done 从 1 计到 total，复用张也计入）', async () => {
     mockFetch();
     const progress: Array<[number, number]> = [];
     await localizeArticleImages({

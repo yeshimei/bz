@@ -12,7 +12,7 @@
  *     要么落在功能性循环白名单（转圈 / 骨架 / 脉冲 / 扫描，属加载指示，不入台账）；
  *  3. 曲线同样只许出现在台账定义处（别处再写一条 cubic-bezier 就是新曲线）；
  *  4. 本域不含 `prefers-reduced-motion` 块——「不做分支」是拍板口径，不是疏漏
- *     （用户机器恒报 reduce：Windows 关窗口动画时 Chromium 固定上报，媒体查询表达不了意图）。
+ *     （用户机器恒报 reduce：Windows 关窗口动画时 Chromium 固定回报，媒体查询表达不了意图）。
  */
 import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';

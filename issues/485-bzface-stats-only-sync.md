@@ -15,7 +15,7 @@ chat.json，只需要统计数字**——全量消息在导入/画谱时对选�
    （原子写、字节比对幂等）。**不再产出 chat.json**。
 2. **新增按需导出**：`bz-face export --data-root … --contact <名>`（可多值）——对指定联系人
    走现有 export_flow 全量导出 chat.json + 头像。供插件在「导入所选 / 画脸谱」时调用。
-3. `[bz-result]` 口径适配：stats 轮上报统计数；export 轮沿用 written/unchanged/failed。
+3. `[bz-result]` 口径适配：stats 轮输出统计数；export 轮沿用 written/unchanged/failed。
 
 ### 插件侧（src/people）
 

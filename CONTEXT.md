@@ -646,7 +646,7 @@ _Avoid_: 最新评分（不做「最后一次覆盖前一次」）、加权评�
 **排序戳 / 真看过日 (Watch Date / Watched Date)**: 两个长得很像但语义互斥的日期，混用即为 bug。**观影日期（排序戳）**只回答「最近一次活动是什么时候」——建档、导入、标记在看、标记已看、**重温**都会把它刷成当下时刻；它的唯一职责是排序，不代表任何一次真实的观看。**已看日期（真看过日）**回答「到底哪天看的」——只在首次到达「已看」时盖上，此后**永不因重温而改动**；一切「哪天看的」口径（观影分析的年份归档、月度分布等）一律读它，绝不读排序戳。后果：一部 2017 年首看、2026 年重温的片，排序上出现在 2026，但归档仍算 2017 年的片，不会在两年里重复计数。
 _Avoid_: 把观影日期当观看日期用（会把从没看过的条目算进统计）、用已看日期排序（重温后置不了顶）
 
-**域事件总线 (Domain Event Bus)**: bz 的进程内发布订阅设施（ticket 101，ADR-0047，`src/core/domain-bus.ts`）——通道命名 `<域名>:<事件>`（如 `vault:md-modified`、`diary:file-renamed`），fire-and-forget 同步扇出、单 handler 抛错隔离、总线不做去重/防抖。vault 原生四事件由 `core/obsidian-adapter.ts` 全插件唯一订阅点收编并**双通道派发**：恒发通用兜底 `vault:md-*`（任意文件夹监听需求在此接），命中域目录另发语义 `<域>:file-*`；另有一条**缓存就绪路 `vault:md-indexed`**（同文件订阅 `metadataCache` 的 `changed`，此刻 `getFileCache` 必是文件新内容）——需要「重扫即新值」的消费方（影院自动刷新）只认它，不认 `md-created/modified`（那两条早于解析，重扫读到的是写前那份 frontmatter）；目录归类由 `core/path-classify.ts` 按 settings 实时动态构建（smartcat/context-source 硬编码副本的单源替代）。订阅端两条纪律：回环抑制只能在订阅端做（总线禁全局去环）；同源双订必须自带防双记录。跨域事件类型 type-only 导入，零运行时边。**下载落盘事件 `downloads:asset-changed`（ADR-0205）**：派发收口在 `core/remote-asset.ts` 的 `writeAssetText`（所有下载资产 + 清单缓存的唯一落盘口），消费 = 设置面板在线资源组同步行态；新增下载资产自动带上，不逐个动作埋点。
+**域事件总线 (Domain Event Bus)**: bz 的进程内发布订阅设施（ticket 101，ADR-0047，`src/core/domain-bus.ts`）——通道命名 `<域名>:<事件>`（如 `vault:md-modified`、`diary:file-renamed`），fire-and-forget 同步扇出、单 handler 抛错隔离、总线不做去重/防抖。vault 原生四事件由 `core/obsidian-adapter.ts` 全插件唯一订阅点收编并**双通道派发**：恒发通用兜底 `vault:md-*`（任意文件夹监听需求在此接），命中域目录另发语义 `<域>:file-*`；另有一条**缓存就绪路 `vault:md-indexed`**（同文件订阅 `metadataCache` 的 `changed`，此刻 `getFileCache` 必是文件新内容）——需要「重扫即新值」的消费方（影院自动刷新）只认它，不认 `md-created/modified`（那两条早于解析，重扫读到的是写前那份 frontmatter）；目录归类由 `core/path-classify.ts` 按 settings 实时动态构建（smartcat/context-source 硬编码副本的单源替代）。订阅端两条纪律：回环抑制只能在订阅端做（总线禁全局去环）；同源双订必须自带防双记录。跨域事件类型 type-only 导入，零运行时边。**下载落盘事件 `downloads:asset-changed`（ADR-0205）**：派发收口在 `core/remote-asset.ts` 的 `writeAssetText`（所有下载资产 + 清单缓存的唯一落盘口），消费 = 设置面板在线资源组同步行态；新增下载资产自动带上，不逐个动作单独接线。
 _Avoid_: 总线层全局去环、在 obsidian-adapter 之外直接 app.vault.on 订阅 md 四事件、预铺无消费者的通道
 
 **取消语义 (Abort Semantics)**: 跨域统一的「主动取消」口径（`src/core/abort.ts`，issue 428/ADR-0187）——`abortError()` 造 `name === 'AbortError'` 的错误、`isAbortError()` 判定（禁字符串比较）、`throwIfAborted(signal)` 检查点、`linkAbort(outer, controller)` 把调用方 signal 链到内层超时 controller（**返回解绑函数，必须在 finally 里调**，否则长生命周期 signal 上泄漏监听器）。两条铁律：**取消 ≠ 失败**——被取消的链路一律直抛 AbortError、由发起方静默收口，不走任何既有降级/提示分支（不降级文本检索、不落失败 UI、不回退默认序）；**取消与超时分开报**——内层 controller 被两者共用，实现须以自己的 `timedOut` 标记区分（只看 `controller.signal.aborted` 会把取消误报成「无响应」）。首个消费方 = 第二大脑参考面板/移动面板「只查最新」（新查询发起或面板关闭即真中断上一轮，列表态恒归最新一轮）。
@@ -706,7 +706,7 @@ _Avoid_: 裸写读快照全覆盖、域内自建写队列、直改 .CORRUPT 留�
 _Avoid_: 体检写盘（除一键修复定点清理）、直读域单例内存态（体检以磁盘原文为准）、jsonFileStore 做体检读
 
 **使用记录 (Usage Count)**: 本机的功能使用计数（`src/core/usage/`，`usage.json`）。命令回调包装 `withNoteHook(fn, id)` 记一次，另补 ribbon 两颗与番茄钟/保险库状态栏的直调；每天一桶（会话数、活跃分钟、24 个小时桶、命令计数、域计数），保留 14 天，脏命令 id 与脏域键一律丢。口径：「在线」是设备数不是人数；30 分钟内重载不算新会话。
-_Avoid_: 把设备数说成人数、把命令计数当功能价值、在业务域里另埋事件
+_Avoid_: 把设备数说成人数、把命令计数当功能价值、在业务域里另加事件
 
 **筛选弹窗 (Filter Modal)**: 🔀 图标打开的筛选/排序弹窗（影视「筛选与排序」、书库「视图与筛选」），与 ⚙️ 域设置弹窗严格区分——🔀 只做筛选，⚙️ 只做设置。
 _Avoid_: 设置弹窗（指筛选时）

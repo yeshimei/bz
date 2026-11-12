@@ -17,7 +17,7 @@ vault 文件事件的订阅与「路径 → 域」的归类知识长期分散在
 由此产生两类重复债：
 
 1. **路径分类知识三处副本**——smartcat/context-source 的 classifyPath 目录硬编码、review watch 的 isUnderFolder 边界判定、ai-agent 的监听文件夹匹配，各写一套「目录前缀边界」语义，改一处漏两处；
-2. **方法监听六域样板与文件事件通道并存但无统一设施**——ADR-0027~0033 让 movie/memo/news/diary/favorites/belongings/pomodoro 走「UI 确认回调直呼 notifyXxxAction」的方法监听，跨域动作分发靠六份手写样板；文件类观察（diary/卡片盒/现代诗/信）仍各自挂 vault 监听。新域要感知 vault 变化或向小橘上报动作，都得重新造轮子。
+2. **方法监听六域样板与文件事件通道并存但无统一设施**——ADR-0027~0033 让 movie/memo/news/diary/favorites/belongings/pomodoro 走「UI 确认回调直呼 notifyXxxAction」的方法监听，跨域动作分发靠六份手写样板；文件类观察（diary/卡片盒/现代诗/信）仍各自挂 vault 监听。新域要感知 vault 变化或把动作告诉小橘，都得重新造轮子。
 
 ## Options
 
@@ -41,7 +41,7 @@ vault 文件事件的订阅与「路径 → 域」的归类知识长期分散在
 
 ## Consequences
 
-**依赖方向变化**：六域 UI（movie/memo/news/favorites/belongings/pomodoro）的动作上报改为向总线 emit 通道后 import core/domain-bus（ui → core），不再直接 import src/smartcat 的 notifyXxxAction；smartcat 降级为普通订阅方 onDomainEvent 收事件。方向符合 ADR-0002（core ← 域模块），消灭 ui → smartcat 直连边。文件类消费者（review/ai-agent/diary 面板/belongings/movie/clipping）迁到 `'vault:md-*'` 或 `<域>:file-*` 通道，随各域 ticket 推进。
+**依赖方向变化**：六域 UI（movie/memo/news/favorites/belongings/pomodoro）的动作改走总线 emit 通道后 import core/domain-bus（ui → core），不再直接 import src/smartcat 的 notifyXxxAction；smartcat 降级为普通订阅方 onDomainEvent 收事件。方向符合 ADR-0002（core ← 域模块），消灭 ui → smartcat 直连边。文件类消费者（review/ai-agent/diary 面板/belongings/movie/clipping）迁到 `'vault:md-*'` 或 `<域>:file-*` 通道，随各域 ticket 推进。
 
 **行为冻结声明**：观察文案、防抖窗口、10 分钟结算、守卫条件零变化——本轮只换「事件怎么流动」，不改「事件触发什么」；smartcat 各 source 纯函数与回声重置语义原样保留。
 

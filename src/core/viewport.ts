@@ -27,7 +27,7 @@
 /** --bz-vvh 在 :root 上的变量名（components.css 的 .bz-panel-mtop 消费） */
 export const VVH_VAR = '--bz-vvh';
 
-/** 视口高度夹取下限（px）：低于此值视为内核上报异常，忽略该帧 */
+/** 视口高度夹取下限（px）：低于此值视为内核报出的异常，忽略该帧 */
 const MIN_VVH = 120;
 
 type Cleanup = () => void;

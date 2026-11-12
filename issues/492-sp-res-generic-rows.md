@@ -31,7 +31,7 @@ issue 480 把三项在线下载收进设置面板通用域时，组内用 `type:
   `disabled` 属性——两渲染器同调，禁用是行能力不是单侧补丁。
 - `core/remote-asset.ts`：新增 `DOWNLOADS_CHANGED_EVENT = 'downloads:asset-changed'`，
   **派发收口在 `writeAssetText`**——所有下载资产（文档/皮肤/分类表 + 清单缓存自身）的唯一
-  落盘口；`ensureAssetWithHash` 等上层通道自然带上，无需逐个动作埋点。
+  落盘口；`ensureAssetWithHash` 等上层通道自然带上，无需逐个动作单独接线。
   派发方不感知订阅方（总线 fire-and-forget，ADR-0047 口径）。
 
 ### settings-panel

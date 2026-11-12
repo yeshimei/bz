@@ -117,7 +117,7 @@ describe('锁家族修复批（encrypt 数据层）', () => {
     expect(ids.length).toBe(1);
   });
 
-  it('E14：加密期间原文被编辑（删前重读不一致）→ 保留原文件并经 onSkippedStale 上报', async () => {
+  it('E14：加密期间原文被编辑（删前重读不一致）→ 保留原文件并经 onSkippedStale 回调', async () => {
     makeApp(vault);
     const sm = new SafeManager('CONFIG/.ENCRYPT');
     await sm.unlock('pw');

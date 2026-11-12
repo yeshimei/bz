@@ -190,7 +190,7 @@ describe('usage · 同步时序', () => {
     expect(handle.snapshot().days[today]?.activeMinutes ?? 0).toBeGreaterThan(0);
   });
 
-  it('上一次上报还没回来时，下一拍不会再叠一份', async () => {
+  it('上一次请求还没回来时，下一拍不会再叠一份', async () => {
     let release!: () => void;
     const h = makeHarness({ ledger: ledgerWithYesterday() });
     h.host.sendDaily = (p) => {

@@ -200,7 +200,7 @@ export function mountDiaryFormatEditor(body: HTMLElement): void {
     return root.querySelector<HTMLElement>('.bz-diary-fmt-progress');
   }
 
-  /** 进度条只在转换期间存在：第一次上报时建，之后原地更新 */
+  /** 进度条只在转换期间存在：第一次回调时建，之后原地更新 */
   function ensureProgress(): HTMLElement {
     const existing = progressEl();
     if (existing) return existing;

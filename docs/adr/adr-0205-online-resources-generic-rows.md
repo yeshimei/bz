@@ -68,7 +68,7 @@ core 类型上而非面板单侧补丁——core 原生渲染器（⚙️ 弹窗
 
 派发**收口在 `writeAssetText`**——所有下载资产（文档 / 皮肤 / 分类表 / 清单缓存自身）
 的唯一落盘口，上层通道（`ensureAssetWithHash`、`downloadSkinUpdates`、`refreshAsset`）
-自然带上，不必逐个动作埋点。组订阅一次 → `syncGroupRows()`：
+自然带上，不必逐个动作单独接线。组订阅一次 → `syncGroupRows()`：
 
 - 导航入口更新文档 → 组内按钮翻「已下载」；
 - 分类表自动拉取落盘 → 同上；

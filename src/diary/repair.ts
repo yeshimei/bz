@@ -6,7 +6,7 @@
  * - legacy：旧格式日期文件（`YYYY-MM-DD.md`）仍留在日记目录（未迁移/误归档）；
  * - unparsable：题目非条目形状或日历时刻非法，且 frontmatter `date` 缺失/损坏——运行时该文件
  *   不会出现在墙上（parseEntryFile 返回 null）；若题目合法仅属性损坏，运行时已按题目降级加载，
- *   但属性与题目双轨不一致仍是隐患，体检从严上报；
+ *   但属性与题目双轨不一致仍是隐患，体检从严判定；
  * - name-mismatch：frontmatter `date` 与题目（YYMMDDHHmm）都能解析但日期或时刻不一致
  *   （其一必错，需人工裁决）。
  */
