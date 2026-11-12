@@ -705,6 +705,9 @@ _Avoid_: 裸写读快照全覆盖、域内自建写队列、直改 .CORRUPT 留�
 **数据体检 (Data Checkup)**: 全插件数据可靠层只读巡检（D4，2026-09，`src/checkup/` 域，命令 `bz-data-checkup-open` + 设置面板通用组「数据体检」按钮行；仿保险库体检交互）。四类检查：① json 可解析（坏文件列出与 CONFIG/.CORRUPT 留档路径）；② 字段漂移（条目级 memo/favorites/pomodoro-history + 段级 clipbook/news/home/belongings/quiz 的意外/缺失字段统计，只报告不修）；③ 孤儿条目（影院海报/书架封面/EPUB 指向缺失只报告；clipbook savedArchive 残留与 favorites 失效关联可一键修复）；④ 同源一致性（memo 单例/直读双链计数 + 结构异常）。**只读纪律**：体检不走 jsonFileStore.read()（避免触发损坏留档+重建毁现场），一律 adapter 直读原文；修复只动插件自有 json（enqueueFileTask 串行写 + notifyUndo 撤销链），用户笔记 frontmatter 与外部插件数据不动；结果内存级缓存、重开显示上次结果；体检中可取消（runSeq 作废令牌）。
 _Avoid_: 体检写盘（除一键修复定点清理）、直读域单例内存态（体检以磁盘原文为准）、jsonFileStore 做体检读
 
+**使用记录 (Usage Count)**: 本机的功能使用计数（`src/core/usage/`，`usage.json`）。命令回调包装 `withNoteHook(fn, id)` 记一次，另补 ribbon 两颗与番茄钟/保险库状态栏的直调；每天一桶（会话数、活跃分钟、24 个小时桶、命令计数、域计数），保留 14 天，脏命令 id 与脏域键一律丢。口径：「在线」是设备数不是人数；30 分钟内重载不算新会话。
+_Avoid_: 把设备数说成人数、把命令计数当功能价值、在业务域里另埋事件
+
 **筛选弹窗 (Filter Modal)**: 🔀 图标打开的筛选/排序弹窗（影视「筛选与排序」、书库「视图与筛选」），与 ⚙️ 域设置弹窗严格区分——🔀 只做筛选，⚙️ 只做设置。
 _Avoid_: 设置弹窗（指筛选时）
 

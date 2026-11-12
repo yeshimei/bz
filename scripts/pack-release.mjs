@@ -75,13 +75,16 @@ function buildOfflineDownloads(dest) {
     const dir = join(dest, 'tools', id);
     mkdirSync(dir, { recursive: true });
     // 两个坑：Windows 盘符的冒号会被 GNU tar 当「远程主机:文件」（--force-local），
-    // 反斜杠它又不认（-C 的目标要用正斜杠）
+    // 反斜杠它又不认（-C 的目标要用正斜杠）。但 Windows 10+ 自带的是 bsdtar，
+    // 它**不认** --force-local，会把整个调用当语法错误直接退出（2026-11-11 v1.44.0
+    // 撞到）——所以先问一嘴版本，bsd 分支就别带这个参数。
     const posix = (p) => p.replace(/\\/g, '/');
-    const r = spawnSync(
-      'tar',
-      ['--force-local', '-xzf', posix(join(ROOT, 'downloads', entry.file)), '-C', posix(dir)],
-      { stdio: 'inherit' },
-    );
+    const ver = spawnSync('tar', ['--version'], { encoding: 'utf8' });
+    const bsd = /bsdtar/i.test(String(ver.stdout || '') + String(ver.stderr || ''));
+    const args = bsd
+      ? ['-xzf', posix(join(ROOT, 'downloads', entry.file)), '-C', posix(dir)]
+      : ['--force-local', '-xzf', posix(join(ROOT, 'downloads', entry.file)), '-C', posix(dir)];
+    const r = spawnSync('tar', args, { stdio: 'inherit' });
     if (r.status !== 0) {
       console.error(`[pack-release] 解包失败：${entry.file}`);
       process.exit(r.status || 1);

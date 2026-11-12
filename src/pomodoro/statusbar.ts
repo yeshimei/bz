@@ -8,6 +8,7 @@ import { pad2 } from '../core/utils';
 import type { App } from 'obsidian';
 import type { PomodoroState } from './state';
 import { motionStatusbarPop } from './motion';
+import { trackCommand } from '../core/usage';
 
 let statusEl: HTMLElement | null = null;
 let textSpan: HTMLElement | null = null;
@@ -27,6 +28,7 @@ export function mountPomodoroStatusBar(container: HTMLElement, app: App): void {
   textSpan.className = 'pomodoro-statusbar-text';
   statusEl.appendChild(textSpan);
   statusEl.addEventListener('click', () => {
+    trackCommand('bz-pomodoro-open');
     // 函数体内延迟 import（ui.ts 顶层依赖本模块，避免循环引用环）
     void import('./ui').then((m) => m.openPomodoro(app));
   });

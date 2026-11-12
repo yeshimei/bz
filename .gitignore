@@ -33,3 +33,11 @@ SHA256SUMS.txt
 release-note-*.md
 # 发版两道闸的状态（scripts/release-gate.mjs 写；每次发版重新过目，不入库）
 .bz-release-gate.json
+
+# 功能计数端点（本机私有；仓库源码里只有空值，真实值由构建时读这份文件注入）
+usage.local.json
+# 看板产物（脚本默认落 .scratch，这里兜底）
+usage-report.html
+# 本机凭证（万一被误拷进仓库）
+.bz-usage-key
+.bz-pat

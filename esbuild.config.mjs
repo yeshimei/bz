@@ -19,6 +19,22 @@ const VAULT_PLUGIN_DIR =
 // 发布版 main.js 同步到仓库根目录（git 跟踪，README「手动安装」/ GitHub Release 以此为准）
 const RELEASE_MAIN = path.join(process.cwd(), "main.js");
 
+// 功能计数用的端点与公开密钥：从本机 usage.local.json 读（已进 .gitignore）。
+// 仓库里源码永远是空值，只有构建产物里有真实值；文件不存在就构建成空（只本地记账）。
+let usageEndpoint = { url: "", key: "" };
+try {
+  const local = JSON.parse(
+    fs.readFileSync(path.join(process.cwd(), "usage.local.json"), "utf8")
+  );
+  usageEndpoint = { url: String(local.url || ""), key: String(local.key || "") };
+} catch {
+  /* 没有本机文件：构建成空值。发布构建补一句提醒——否则会静默发出去一个不联网的包，
+   * 事后只能靠看板没数据才发现。运行时一句提示都没有，只在构建日志里。 */
+  if (prod) {
+    console.warn("[build] 未读到 usage.local.json：这个包不会向外发送任何记录（本地照常记账）");
+  }
+}
+
 const context = await esbuild.context({
   entryPoints: ["src/main.ts"],
   bundle: true,
@@ -32,7 +48,11 @@ const context = await esbuild.context({
   charset: "utf8",
   // 开发旗标（ADR-0276）：仅 BZ_VAULT_DIR 指向测试库时注入 true——core/dev-flows 测试合集
   // 只在测试库构建里存在；false 时 if (__BZ_DEV__) 分支被摇树，发布版零残留。
-  define: { __BZ_DEV__: prod ? "false" : process.env.BZ_VAULT_DIR ? "true" : "false" },
+  define: {
+    __BZ_DEV__: prod ? "false" : process.env.BZ_VAULT_DIR ? "true" : "false",
+    __BZ_USAGE_URL__: JSON.stringify(usageEndpoint.url),
+    __BZ_USAGE_KEY__: JSON.stringify(usageEndpoint.key),
+  },
   // 赞赏码内置（src/core/assets/reward-code.png）：png import 直接变 data URI 字符串，
   // 不进 downloads/ 远端资产通道（图固定不变，68KB 换一次网络往返不值）。
   loader: { ".png": "dataurl" },

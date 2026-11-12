@@ -119,6 +119,7 @@ import {
   primeVaultFs,
   markDockExit,
 } from './dock';
+import { initUsage, trackCommand, disposeUsage } from './core/usage';
 
 /** 命令名统一前缀（2026-11-10 用户拍板，承接 GitHub issue #2）：
  *  所有 bz 命令的**显示名**以「bz · 」开头——命令面板搜「bz」一次列出全部 bz 命令；
@@ -469,6 +470,7 @@ export default class BzPlugin extends Plugin {
     applyDiarySettingsToRuntime(this.settings);
     // 域事件总线地基：全插件唯一 vault 订阅点挂载（registerEvent 保证插件卸载时 Obsidian 自动清理引用）
     attachObsidianAdapter(this.app, (ref) => this.registerEvent(ref as any));
+    initUsage(String(this.manifest?.version || ''));
 
     // 知识盒对外最小门面（ADR-0215）：外部插件（fork-weave / bz-reader）经 getPlugin('bz') 取实例后
     // 调名词/段落录入与文献预览；不挂 window 全局、不新增命令与设置。同步赋值既有导出的函数引用即可
@@ -507,7 +509,7 @@ export default class BzPlugin extends Plugin {
         id: c.id,
         name: cmdName(c.name),
         icon: c.icon,
-        callback: this.withNoteHook(c.callback),
+        callback: this.withNoteHook(c.callback, c.id),
       });
       this.registeredCommandIds.push(c.id);
     }
@@ -524,7 +526,7 @@ export default class BzPlugin extends Plugin {
         id: cmdId,
         name: cmdName(`运行工具：${dockToolLabel(entry)}`),
         icon: DOMAIN_ICONS.dock,
-        callback: this.withNoteHook(() => void runToolDirect(getApp(), entry.id)),
+        callback: this.withNoteHook(() => void runToolDirect(getApp(), entry.id), cmdId),
       });
       this.registeredCommandIds.push(cmdId); // 卸载随 registeredCommandIds 一并摘除
     }
@@ -534,8 +536,8 @@ export default class BzPlugin extends Plugin {
 
     // ribbon 主入口：备忘录 + 日记本（diary = ADR-0115 回忆墙升格，命令直挂不启动即 init）
     // 不走命令表，所以「用过 bz」的信号在这两处单独打（工具坞那颗在下面的状态栏回调里）
-    this.addRibbonIcon('check-square', '备忘录', this.withNoteHook(() => openMemoPanel(this.app)));
-    this.addRibbonIcon('notebook-pen', '日记本', this.withNoteHook(() => openDiary(getApp())));
+    this.addRibbonIcon('check-square', '备忘录', this.withNoteHook(() => openMemoPanel(this.app), 'bz-memo-open'));
+    this.addRibbonIcon('notebook-pen', '日记本', this.withNoteHook(() => openDiary(getApp()), 'bz-diary-open'));
 
     // 番茄钟状态栏（ticket 29：常驻倒计时，点击打开弹窗）
     mountPomodoroStatusBar(this.addStatusBarItem(), this.app);
@@ -544,7 +546,7 @@ export default class BzPlugin extends Plugin {
     mountEncryptStatusBar(this.addStatusBarItem());
 
     // 工具坞状态栏：面板没开也看得见「有工具在跑」，点击打开面板
-    mountDockStatusBar(this.addStatusBarItem(), this.withNoteHook(() => openDock(getApp())));
+    mountDockStatusBar(this.addStatusBarItem(), this.withNoteHook(() => openDock(getApp()), 'bz-dock-open'));
 
     // 设置页
     this.addSettingTab(new BzSettingTab(this.app, this));
@@ -775,6 +777,7 @@ export default class BzPlugin extends Plugin {
     }
     // 卸载兜底（UX 整改 l2）：异步尾任务禁用前若 notify 重建过通知容器，此处再次清理
     cleanupNotices();
+    await disposeUsage();
   }
 
   async saveSettings() {
@@ -809,7 +812,7 @@ export default class BzPlugin extends Plugin {
           id: c.id,
           name: cmdName(c.name),
           icon: c.icon,
-          callback: this.withNoteHook(c.callback),
+          callback: this.withNoteHook(c.callback, c.id),
         });
         if (!this.registeredCommandIds.includes(c.id)) this.registeredCommandIds.push(c.id);
       } else {
@@ -857,9 +860,10 @@ export default class BzPlugin extends Plugin {
   }
 
   /** 命令回调的包装（含小橘域重注册那条路径，三处用法一致） */
-  private withNoteHook(fn: () => void): () => void {
+  private withNoteHook(fn: () => void, commandId?: string): () => void {
     return () => {
       this.noteBzUsed();
+      if (commandId) trackCommand(commandId);
       fn();
     };
   }

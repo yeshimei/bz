@@ -12,6 +12,7 @@ import { EncryptAppController } from './ui';
 import { statusbarHtml } from './vault-assets-view';
 import { mountIcons } from '../core/ui';
 import type { LockScreenKind } from '../core/ui/lock-screen';
+import { trackCommand } from '../core/usage';
 
 let initialized = false;
 let controller: EncryptAppController | null = null;
@@ -57,7 +58,10 @@ export function mountEncryptStatusBar(container: HTMLElement): void {
   el.innerHTML = statusbarHtml(false);
   // 呈报#59/E5：状态栏锁图标占位兑现（core mountIcons 单源）
   mountIcons(el);
-  el.addEventListener('click', () => openEncrypt(getApp()));
+  el.addEventListener('click', () => {
+    trackCommand('bz-encrypt-open');
+    openEncrypt(getApp());
+  });
   container.appendChild(el);
   statusBarEl = el;
   void ensureEncrypt(getApp())
