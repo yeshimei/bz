@@ -235,6 +235,7 @@ function readerFields(reader?: ReaderSnapshot): Record<string, unknown> {
   if (!reader) return {};
   return {
     readerState: reader.state,
+    readerTier: reader.tier,
     readerVersion: reader.version,
     readerMinutes: reader.minutes,
     readerDaysSince: reader.daysSince,
@@ -340,7 +341,7 @@ export function initUsage(manifestVersion: string, opts?: UsageInitOptions): voi
         if (snap) readerSnapshot = snap;
       } catch {
         // 探测失败不沿用旧值：宁可这一版显示「未知」，也不拿旧数字冒充当前状态
-        readerSnapshot = { state: 'unknown', version: '', minutes: 0, daysSince: -1 };
+        readerSnapshot = { state: 'unknown', tier: 'unknown', version: '', minutes: 0, daysSince: -1 };
       }
     };
     readerFirstTimer = window.setTimeout(() => idle(() => void refresh()), READER_FIRST_DELAY_MS);
