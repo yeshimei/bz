@@ -19,6 +19,7 @@ import { saveSettings, tryGetSettings } from '../core/settings-provider';
 import { localDayKey } from '../core/utils';
 import type { BookshelfItem } from './state';
 import { M } from './state';
+import { bookFormatOf } from './constants';
 import {
   knownReaderDataFilePath, readReaderAggregates, READER_DATA_FILE, resolveReaderDataDir,
 } from './reader-source';
@@ -130,7 +131,9 @@ export function parseBookFile(file: TFile, app: App, folderPath: string, bookTag
     wordCount: Number(fm.wordCount) || 0,
     pages: Number(fm.pages) || 0,
     status: parseStatus(readingDate, completionDate),
-    isEpub: false,
+    // md 书不再上墙（2026-11-12），格式只对 bz Reader 条目有意义
+    fromReader: false,
+    bookFormat: '',
     epubVaultPath: null,
   };
 }
@@ -307,7 +310,9 @@ function buildEpubItem(app: App, aggregate: any): BookshelfItem | null {
     wordCount,
     pages: epubPageCount(wordCount),
     status: completionDate ? '已读' : progress > 0 ? '在读' : '未读',
-    isEpub: true,
+    fromReader: true,
+    // 格式以 bz Reader 的 fileRef.format 为准（PDF / TXT / MOBI… 不再一律当 EPUB）
+    bookFormat: bookFormatOf(fileRef, vaultPath),
     epubVaultPath: vaultPath,
     // 深链素材：继续读/双击划线走 obsidian://bz-reader 协议（它没注册 .epub 扩展名）
     epubBookId: epubBookIdOf(aggregate) || null,

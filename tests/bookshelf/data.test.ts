@@ -74,7 +74,7 @@ describe('bookshelf 数据层', () => {
     expect(byTitle['围城'].status).toBe('已读');
     expect(byTitle['算法导论'].status).toBe('未读');
     expect(byTitle['围城'].progress).toBe(100);
-    expect(byTitle['认知觉醒'].isEpub).toBe(false);
+    expect(byTitle['认知觉醒'].fromReader).toBe(false);
   });
 
   it('issue 226 书脊起伏：md 书时长——readingTime 毫秒直读；readingTimeFormat 中英双格式兜底', () => {
@@ -163,7 +163,7 @@ describe('bookshelf 数据层', () => {
     expect(items.length).toBe(1);
     const it = items[0];
     expect(it.title).toBe('百年孤独');
-    expect(it.isEpub).toBe(true);
+    expect(it.fromReader).toBe(true);
     expect(it.status).toBe('在读');
     expect(it.progress).toBe(62);
     expect(it.readingTimeFormat).toBe('3小时'); // 10800 秒
@@ -420,7 +420,7 @@ describe('bookshelf 数据层：bz 阅读数据源', () => {
     expect(items.length).toBe(1);
     const it = items[0];
     expect(it.title).toBe('悉达多');
-    expect(it.isEpub).toBe(true);
+    expect(it.fromReader).toBe(true);
     expect(it.progress).toBe(42);
     expect(it.status).toBe('在读');
     expect(it.readingTimeFormat).toBe('2分'); // 90 秒 = 1.5 分 → 四舍五入 2 分
@@ -431,6 +431,26 @@ describe('bookshelf 数据层：bz 阅读数据源', () => {
     // 字数/页数与阅读报告同源（meta.wordCount，500 字/页）
     expect(it.wordCount).toBe(80000);
     expect(it.pages).toBe(160);
+    // 格式取 bz Reader 的 fileRef.format（不是一律当 EPUB）
+    expect(it.bookFormat).toBe('epub');
+  });
+
+  it('格式识别：PDF / TXT 不再被当成 EPUB——以 fileRef.format 为准，缺失回落后缀名', async () => {
+    const vault = new MockVault();
+    seedReader(vault, [
+      { ...READER_BOOK, id: 'p1', meta: { title: '一本 PDF' }, fileRef: { vaultPath: '书库/一本 PDF.pdf', format: 'pdf' } },
+      // 老数据没有 format：按后缀认
+      { ...READER_BOOK, id: 'p2', meta: { title: '老的 txt' }, fileRef: { vaultPath: '书库/老的.txt' } },
+      // 后缀也不认识：回落 epub（历史上唯一在册的格式）
+      { ...READER_BOOK, id: 'p3', meta: { title: '怪后缀' }, fileRef: { vaultPath: '书库/怪后缀.xyz' } },
+    ]);
+    const items = await loadEpubItems(makeApp(vault));
+    const byTitle: Record<string, any> = Object.fromEntries(items.map((x) => [x.title, x]));
+    expect(byTitle['一本 PDF'].bookFormat).toBe('pdf');
+    expect(byTitle['老的 txt'].bookFormat).toBe('txt');
+    expect(byTitle['怪后缀'].bookFormat).toBe('epub');
+    // 三本都是 bz Reader 供的书：打开方式（深链）与 EPUB 同一套
+    for (const t of ['一本 PDF', '老的 txt', '怪后缀']) expect(byTitle[t].fromReader).toBe(true);
   });
 
   it('想法计数：bz 阅读的 excerpts 是划线镜像——thinks 等于「有想法」的条数，不是划线总数', async () => {

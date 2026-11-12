@@ -94,7 +94,7 @@ export function fitTitle(spine: HTMLElement, it: BookshelfItem): void {
  *  桌面该类不生成伪元素，覆盖层本身与书脊同面，行为无差 */
 export function spineHTML(it: BookshelfItem, scale: BsWallScale): string {
   const cls = it.status === '已读' ? 'read' : it.status === '在读' ? 'reading' : 'unread';
-  return `<div class="bz-bs-spine ${cls}" style="${spineVars(it, scale)}" data-bs-id="${esc(itemId(it))}" data-bs-epub="${it.isEpub ? '1' : ''}" title="${esc(it.title)} · ${esc(it.status)}${it.progress > 0 ? ' ' + it.progress + '%' : ''}">
+  return `<div class="bz-bs-spine ${cls}" style="${spineVars(it, scale)}" data-bs-id="${esc(itemId(it))}" data-bs-reader="${it.fromReader ? '1' : ''}" title="${esc(it.title)} · ${esc(it.status)}${it.progress > 0 ? ' ' + it.progress + '%' : ''}">
     <span class="bz-bs-spine-title"></span>
     ${it.status === '已读' ? '<span class="stamp">讫</span>' : ''}
     ${it.status === '在读' ? '<span class="ribbon"></span>' : ''}
@@ -174,13 +174,17 @@ export interface ReaderGuideOpts {
   installing: boolean;
   /** 安装阶段文案（「下载 1.1.1…」之类） */
   stage: string;
+  /** 本机按旧口径（笔记 + book 标签）收录的书数：>0 时补一句说明——
+   *  这版起那些书不再上墙，不解释的话老用户看着 0 册会以为书单丢了（2026-11-12 review P1） */
+  legacyCount?: number;
 }
 
 /** bz Reader 引导页：书库 0 本时占据墙区。
  *  文案口径（口述拍板）：步骤只留标题、不写小字；插件介绍用 GitHub README 首段，
- *  写下载量与「已上架社区插件市场」；安装按钮走 bz 内置安装器，不引导用户去商店。 */
+ *  写「已上架社区插件市场」；安装按钮走 bz 内置安装器，不引导用户去商店。 */
 export function readerGuideHtml(opts: ReaderGuideOpts): string {
   const { installed, broken, version, installing, stage } = opts;
+  const legacy = Math.max(0, Number(opts.legacyCount) || 0);
   const steps = installed
     ? `<li class="done"><span class="n">✓</span><b>bz Reader 已安装</b></li>
        <li><span class="n">2</span><b>打开书架，导入第一本书</b></li>
@@ -209,12 +213,12 @@ export function readerGuideHtml(opts: ReaderGuideOpts): string {
           <div class="bz-bs-guide-plugin-desc">${READER_GUIDE.desc}</div>
           <div class="bz-bs-guide-plugin-meta">
             <span class="badge">${READER_GUIDE.marketBadge}</span>
-            <span>${READER_GUIDE.downloads} 次下载</span>
-            <span>· 作者 叫我包仔</span>
+            <span>作者 叫我包仔</span>
           </div>
         </div>
       </div>
       <ol class="bz-bs-guide-steps">${steps}</ol>
+      ${legacy ? `<p class="bz-bs-guide-note">本机还有 ${legacy} 本按笔记收录的旧书，这一版起不再上墙；用 bz Reader 导入同一批文件后会自动回到这里。</p>` : ''}
       <div class="bz-bs-guide-actions">
         ${primary}
         <button type="button" class="bz-bs-guide-link" data-bs-reader-tut>看视频教程 ↗</button>

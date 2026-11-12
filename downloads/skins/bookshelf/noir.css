@@ -36,7 +36,7 @@
 
 .bz-bs-skin-noir .bz-bs-spine.unread:hover { filter: brightness(0.9); }
 }
-.bz-bs-skin-noir .bz-bs-wallnote, .bz-bs-skin-noir .bz-bs-hint { color: #8a7a55; }
+.bz-bs-skin-noir .bz-bs-hint { color: #8a7a55; }
 .bz-bs-skin-noir .bz-bs-seg button { color: #8a7a55; }
 .bz-bs-skin-noir .bz-bs-seg button.on { background: #d9b45f; color: #0b0b0d; }
 
