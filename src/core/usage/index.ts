@@ -130,7 +130,7 @@ function metaOf(pluginVersion: string): UsageMeta {
   }
   const out: UsageMeta = { ...cachedMeta };
   if (readerSnapshot) out.reader = readerSnapshot;
-  // 每次发送前现读：用户中途改了自动更新开关，不用等下次重启才反映
+  // 每次刷新快照前现读：用户中途改了自动更新开关，不用等下次重启才反映
   if (flagsGetter) {
     try {
       const flags = flagsGetter();
@@ -158,7 +158,7 @@ function dayDocId(installId: string, vaultId: string, date: string): string {
 
 let cachedVaultId = '';
 
-/** 同库稳定、跨库不同、不可逆：库名 + 库路径做个 FNV 哈希，只发送这 8 位 */
+/** 同库稳定、跨库不同、不可逆：库名 + 库路径做个 FNV 哈希，只留这 8 位 */
 function vaultIdOf(app: unknown): string {
   if (cachedVaultId) return cachedVaultId;
   const a = app as {

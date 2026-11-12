@@ -49,10 +49,10 @@ export interface Ledger {
   days: Record<string, DayBucket>;
 }
 
-/** bz 阅读的授权档位（2026-11-12 起随快照上报，只给作者看板分类用） */
+/** bz 阅读的授权档位（2026-11-12 起随快照带上，只给作者看板分类用） */
 export type ReaderTier = 'basic' | 'paid' | 'patron' | 'unknown';
 
-/** bz 阅读的使用快照（只标量；书名/路径/划线内容不发送） */
+/** bz 阅读的使用快照（只标量；书名/路径/划线内容不进这里） */
 export interface ReaderSnapshot {
   /** none 没装 / broken 装坏了 / disabled 装了没启用 / idle 启用了没读 / active 在读 / unknown 这次没探测到 */
   state: 'none' | 'broken' | 'disabled' | 'idle' | 'active' | 'unknown';

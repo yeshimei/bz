@@ -1,7 +1,7 @@
 /** bz 阅读（bz-reader 插件）的使用快照。
  *
  * 只取五个数：状态 / 授权档位 / 版本号 / 累计阅读分钟 / 距今几天没读。
- * 书名、文件路径、划线内容、激活码原文、购买者昵称一律不出这一层——发送只带这几个标量。
+ * 书名、文件路径、划线内容、激活码原文、购买者昵称一律不出这一层——快照里只有这几个标量。
  *
  * 数据来源三处（都只读，不写）：
  *   1. core/reader-install 的 readReaderInstall：装没装、启没启用、版本、是否坏；
@@ -62,7 +62,7 @@ export async function probeReaderUsage(app: App): Promise<ReaderSnapshot> {
       if (last > lastAt) lastAt = last;
     }
   } catch {
-    /* 读不到就按「没读过」算，不阻断发送 */
+    /* 读不到就按「没读过」算，不阻断本轮快照 */
   }
 
   const minutes = Math.min(10_000_000, Math.round(ms / 60_000));
