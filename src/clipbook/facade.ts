@@ -272,6 +272,8 @@ export interface ClipbookFacadeDeps {
    * 任一有变化就要变。阅读器轮询它决定要不要重建目录。
    */
   dataVersion(): Promise<string>;
+  /** 打开剪藏本主界面（与命令 bz-clipbook-open 同一入口） */
+  open(): void;
 }
 
 /** 摘要失败原因码：阅读器自己翻译成当前语言 */
@@ -307,6 +309,14 @@ export interface ClipbookFacade {
   isReady(): { ok: boolean; code?: 'noFolder' };
   /** 数据版本：变了说明剪藏本有新文章 / 状态变化 / 笔记改动 */
   dataVersion(): Promise<string>;
+  /**
+   * 打开剪藏本主界面（2026-11-13）。
+   *
+   * 阅读器的剪藏本开关在「库里还是空的」时会弹一句提醒，那个「去设置」按钮
+   * 走这里——与命令 bz-clipbook-open 同一个入口。放进同一个门面而不是另挂
+   * 一个对象：剪藏本对外只有这一个面，两套会让调用方不知道该信哪个。
+   */
+  open(): void;
 }
 
 /** 门面对象：每次调用都重新读盘，不缓存（用户随时可能在剪藏本里改东西） */
@@ -385,6 +395,10 @@ export function createClipbookFacade(deps: ClipbookFacadeDeps): ClipbookFacade {
 
     async dataVersion() {
       return deps.dataVersion();
+    },
+
+    open() {
+      deps.open();
     },
   };
 }

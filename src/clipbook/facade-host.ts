@@ -18,6 +18,7 @@ import { clipDir, clipFilePathOf } from './save';
 import { flowMarkAllRead, flowSave } from './flow';
 import { summarizeClipBody } from './summarize';
 import { buildExportIndex, createClipbookFacade, fnv, type ClipbookFacade } from './facade';
+import { openClipbook } from './index';
 
 /** 文件指纹：mtime + size；读不到给 0（文件还没建也是变化） */
 async function statSig(path: string): Promise<string> {
@@ -89,6 +90,11 @@ export function createClipbookFacadeHost(): ClipbookFacade {
         `clips:${files.length}:${newest}`,
       ].join('|');
       return fnv(sig);
+    },
+
+    /* 与命令 bz-clipbook-open 同一个入口：首次会顺带装载面板，已装载则直接 show */
+    open() {
+      openClipbook(getApp());
     },
   });
 }

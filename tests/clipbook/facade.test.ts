@@ -192,6 +192,7 @@ describe('createClipbookFacade', () => {
     const markRead = vi.fn(async (raws: any[]) => raws.length);
     const save = vi.fn(async (_raw: any) => ({ ok: true, notePath: '归档/网页剪藏/标题A.md' }));
     const summarize = vi.fn(async (_raw: any): Promise<ClipSummaryResult> => ({ ok: true, summary: 'AI 摘要一段' }));
+    const open = vi.fn();
     const facade = createClipbookFacade({
       readIndex: async () => idx,
       readNote: async () => opts.noteText ?? '---\nurl: x\n---\n> [!summary] 标题\n> 摘要\n\n正文A',
@@ -200,12 +201,18 @@ describe('createClipbookFacade', () => {
       summarize,
       isFolderReady: () => opts.folderOk !== false,
       dataVersion: async () => 'v1',
+      open,
     });
-    return { facade, markRead, save, summarize };
+    return { facade, markRead, save, summarize, open };
   };
 
-  it('articles 过滤：savedOnly 只留剪藏；includeRead=false 去掉已读', async () => {
-    const idx = buildExportIndex(input({
+  it('open 转交给主界面入口（阅读器「去设置」按钮走这里）', () => {
+    const { facade, open } = makeFacade(buildExportIndex(input()));
+    facade.open();
+    expect(open).toHaveBeenCalledTimes(1);
+  });
+
+  it('articles 过滤：savedOnly 只留剪藏；includeRead=false 去掉已读', async () => {    const idx = buildExportIndex(input({
       articles: [newsArticle({ url: 'https://x.com/read', read: true }), newsArticle({ url: 'https://x.com/new' })],
       clips: [clipNote({ url: 'https://x.com/saved', path: '剪藏/s.md' })],
     }));
