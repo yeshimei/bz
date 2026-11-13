@@ -56,6 +56,21 @@ export function releaseEntryCount(release: ChangelogRelease): number {
  */
 export const CHANGELOG_RELEASES: readonly ChangelogRelease[] = [
   {
+    version: '1.44.3',
+    date: '2026-11-13',
+    // 条目与 docs/note-v1.44.3.md 同稿（scripts/_gen-changelog.mjs 自动生成，勿手改）
+    added: [
+      { domain: '剪藏成书', text: '剪藏本里的订阅文章与笔记可以当书读，在阅读器里就能标已读、存剪藏、生成摘要。' },
+    ],
+    fixed: [
+      { domain: '剪藏本', text: 'RSS 里分好几段的长文章，正文不再残留多余标记，内容也不丢。' },
+      { domain: '剪藏本', text: '剪藏后的条目副标题重新显示日期。' },
+    ],
+    improved: [
+      { domain: '阅读时长', text: '在阅读器里读的时间也记进剪藏本，和面板里读的合成一份。' },
+    ],
+  },
+  {
     version: '1.44.2',
     date: '2026-11-12',
     // 条目与 docs/note-v1.44.2.md 同稿（scripts/_gen-changelog.mjs 自动生成，勿手改）
