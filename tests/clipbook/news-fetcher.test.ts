@@ -57,6 +57,35 @@ describe('parseRssXml（轻量 RSS/Atom 解析）', () => {
     expect(items[0].pubDate).toContain('2026-09-13');
   });
 
+  it('多段 CDATA（阮一峰 atom 一篇正文 4 段）：边界标记不残留正文', () => {
+    /* 真实形状：<content> 里每段 HTML 各裹一个 CDATA，中间是换行缩进。
+       以前「整段被一个 CDATA 包满」的判定会被非贪婪回溯到最后一个 ]]>，
+       把中间的 <![CDATA[ / ]]> 全吞进正文，htmlToMarkdown 转完就留下孤立 ]]>。 */
+    const xml = `<feed><entry><title>科技爱好者周刊</title>
+      <link rel="alternate" href="https://a.example/weekly"/>
+      <content type="html">
+        <![CDATA[<p>第一段</p>]]>
+        <![CDATA[<p>第二段</p>]]>
+        <![CDATA[<p>第三段</p>]]>
+      </content></entry></feed>`;
+    const items = parseRssXml(xml);
+    const c = items[0].content;
+    expect(c).toContain('第一段');
+    expect(c).toContain('第二段');
+    expect(c).toContain('第三段');
+    expect(c).not.toContain(']]>');
+    expect(c).not.toContain('<![CDATA[');
+  });
+
+  it('单段 CDATA 与无 CDATA 的裸文本行为不变', () => {
+    const one = parseRssXml('<item><title><![CDATA[只有一段]]></title><content:encoded><![CDATA[<p>正文</p>]]></content:encoded></item>');
+    expect(one[0].title).toBe('只有一段');
+    expect(one[0].content).toBe('<p>正文</p>');
+    const bare = parseRssXml('<item><title>裸标题</title><description>裸摘要</description></item>');
+    expect(bare[0].title).toBe('裸标题');
+    expect(bare[0].summary).toBe('裸摘要');
+  });
+
   it('实体解码与畸形输入容错', () => {
     const items = parseRssXml('<item><title>A &amp; B</title><link>https://a/?x=1&amp;y=2</link></item>');
     expect(items[0].title).toBe('A & B');
