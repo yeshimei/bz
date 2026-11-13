@@ -12,6 +12,7 @@
 import { getApp } from '../core/app';
 import { needsFolderSetup } from '../core/folder-setup';
 import { readNewsData, emptyData, getNewsFilePath, writeNewsDataMerged } from './news-data';
+import { articleKeyOf } from './constants';
 import { readClipbookData, clipbookFilePath, updateClipbookData, type ClipbookData } from './data';
 import { scanClipDirectory } from './scan';
 import { clipDir, clipFilePathOf } from './save';
@@ -57,6 +58,14 @@ export function createClipbookFacadeHost(): ClipbookFacade {
       return String(await getApp().vault.adapter.read(path));
     },
 
+    /* 单篇正文：读一次 news.json 按 key 找，不扫剪藏目录（阅读器按章取正文，扫目录会乘上章数） */
+    async readNewsBody(key) {
+      const res = await readNewsData();
+      if (!res.ok) return '';
+      const hit = (res.data.articles || []).find((a: any) => articleKeyOf(a) === key);
+      return String(hit?.body ?? '');
+    },
+
     async markRead(raws) {
       const out = await flowMarkAllRead(raws);
       return out.bumped;
@@ -69,11 +78,20 @@ export function createClipbookFacadeHost(): ClipbookFacade {
 
     /* 摘要写 news.json 的 `aiSummary`，**不碰 `summary`**：后者是 RSS 抓来的
        description，剪藏本自己的列表在用，混在一起会互相顶掉。
-       写盘走合并写队列（后台抓取是另一个写者，盲覆盖会丢它刚追加的文章）。 */
+
+       写盘用 patchArticleFields（只改这一个字段的磁盘现值），不传整条旧快照：
+       AI 生成要几秒，这期间后台抓取可能正好更新了同一篇——传旧快照会把新正文退回去。
+       先读一次确认这篇还在：文章在生成期间被删/被裁，patch 不会把它复活，得如实报 notFound。 */
     async summarize(raw) {
       const summary = await summarizeClipBody(String(raw?.body || ''));
       if (!summary) return { ok: false, code: 'aiFailed' as const };
-      const written = await writeNewsDataMerged({ set: { articles: [{ ...raw, aiSummary: summary }] } });
+      const key = articleKeyOf(raw);
+      const cur = await readNewsData();
+      if (!cur.ok) return { ok: false, code: 'writeFailed' as const };
+      if (!(cur.data.articles || []).some((a: any) => articleKeyOf(a) === key)) {
+        return { ok: false, code: 'notFound' as const };
+      }
+      const written = await writeNewsDataMerged({ set: {}, patchArticleFields: { [key]: { aiSummary: summary } } });
       return written ? { ok: true, summary } : { ok: false, code: 'writeFailed' as const };
     },
 

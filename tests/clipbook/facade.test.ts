@@ -197,6 +197,8 @@ describe('createClipbookFacade', () => {
     const facade = createClipbookFacade({
       readIndex: async () => idx,
       readNote: async () => opts.noteText ?? '---\nurl: x\n---\n> [!summary] 标题\n> 摘要\n\n正文A',
+      /* 正文直读：真实实现读一次 news.json 按 key 找，测试里等价地从索引取 */
+      readNewsBody: async (key: string) => String(idx.rows.find((r) => r.key === key)?.raw?.body ?? ''),
       markRead,
       save,
       summarize,
@@ -251,6 +253,64 @@ describe('createClipbookFacade', () => {
     expect(n).toBe(1);
     expect(markRead).toHaveBeenCalledTimes(1);
     expect(markRead.mock.calls[0][0].map((r: any) => r.url)).toEqual(['https://x.com/u1']);
+  });
+
+  it('markRead：多篇未读一次交底（只写一遍盘，不逐篇循环）', async () => {
+    const idx = buildExportIndex(input({
+      articles: [
+        newsArticle({ url: 'https://x.com/u1' }),
+        newsArticle({ url: 'https://x.com/u2' }),
+        newsArticle({ url: 'https://x.com/u3' }),
+      ],
+    }));
+    const { facade, markRead } = makeFacade(idx);
+    const n = await facade.markRead(['url:https://x.com/u1', 'url:https://x.com/u2', 'url:https://x.com/u3']);
+    expect(n).toBe(3);
+    expect(markRead).toHaveBeenCalledTimes(1);
+    expect(markRead.mock.calls[0][0].map((r: any) => r.url)).toEqual([
+      'https://x.com/u1', 'https://x.com/u2', 'https://x.com/u3',
+    ]);
+  });
+
+  it('articleBody：直读正文，不重建全索引（阅读器按章取，扫目录会乘上章数）', async () => {
+    const idx = buildExportIndex(input({
+      articles: [newsArticle({ url: 'https://x.com/a' })],
+      clips: [clipNote({ url: 'https://x.com/clip', path: '剪藏/c.md' })],
+    }));
+    let indexed = 0;
+    const facade = createClipbookFacade({
+      readIndex: async () => { indexed++; return idx; },
+      readNote: async () => '正文A',
+      readNewsBody: async (key: string) => (key === 'url:https://x.com/a' ? '新闻正文' : ''),
+      markRead: async () => 0,
+      save: async () => ({ ok: true }),
+      summarize: async () => ({ ok: true }),
+      recordRead: async () => 0,
+      isFolderReady: () => true,
+      dataVersion: async () => 'v1',
+      open: () => {},
+    });
+    expect(await facade.articleBody('clip:剪藏/c.md')).toBe('正文A');
+    expect(await facade.articleBody('url:https://x.com/a')).toBe('新闻正文');
+    expect(await facade.articleBody('url:不存在')).toBe('');
+    expect(indexed).toBe(0);
+  });
+
+  it('saveArticle：写盘失败回 saveFailed，不再谎报「找不到」', async () => {
+    const idx = buildExportIndex(input({ articles: [newsArticle({ url: 'https://x.com/a' })] }));
+    const facade = createClipbookFacade({
+      readIndex: async () => idx,
+      readNote: async () => '',
+      readNewsBody: async () => '',
+      markRead: async () => 0,
+      save: async () => ({ ok: false }),
+      summarize: async () => ({ ok: true }),
+      recordRead: async () => 0,
+      isFolderReady: () => true,
+      dataVersion: async () => 'v1',
+      open: () => {},
+    });
+    expect(await facade.saveArticle('url:https://x.com/a')).toEqual({ ok: false, code: 'saveFailed' });
   });
 
   it('saveArticle：B站不存剪藏、剪藏文件夹没配、找不到条目都给稳定原因码', async () => {

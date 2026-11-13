@@ -36,6 +36,24 @@ export interface ReadBatch {
  */
 export const MAX_READ_BATCH_SECONDS = 4 * 60 * 60;
 
+/**
+ * 秒数账的键数上限（2026-11-13）。
+ *
+ * readLog 有 180 天 + 条数上限兜底，readSeconds 没有时间戳可依——只增不裁就随着
+ * 用户读过又删掉的文章一直攒。这里按插入顺序（JS 对象键序保序）丢最早的：陈年月
+ * 精确秒数丢掉不影响报告（报告只认 readLog），近期的账一定还在。
+ */
+export const MAX_SECONDS_KEYS = 2000;
+
+/** 超上限时丢最早插入的键（返回原对象或新对象） */
+function capKeys(map: Record<string, number>): Record<string, number> {
+  const keys = Object.keys(map);
+  if (keys.length <= MAX_SECONDS_KEYS) return map;
+  const out: Record<string, number> = {};
+  for (const k of keys.slice(keys.length - MAX_SECONDS_KEYS)) out[k] = map[k];
+  return out;
+}
+
 export interface ReadAccrual {
   /** 新的每篇累计秒数 */
   readSeconds: Record<string, number>;
@@ -92,7 +110,7 @@ export function accrueRead(input: {
     });
   }
 
-  return { readSeconds, readLoggedSeconds, log };
+  return { readSeconds: capKeys(readSeconds), readLoggedSeconds: capKeys(readLoggedSeconds), log };
 }
 
 /**
@@ -123,7 +141,8 @@ export function readSecondsView(
   return out;
 }
 
-/** 批量上报的合法性过滤（门面在交给实现方之前先过一遍） */export function sanitizeReadBatch(entries: ReadBatch[] | null | undefined): ReadBatch[] {
+/** 批量上报的合法性过滤（门面在交给实现方之前先过一遍） */
+export function sanitizeReadBatch(entries: ReadBatch[] | null | undefined): ReadBatch[] {
   const out: ReadBatch[] = [];
   for (const item of entries || []) {
     const key = normKey(item?.key);

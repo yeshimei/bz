@@ -279,7 +279,12 @@ export function buildExportIndex(input: ExportBuildInput): ClipExportIndex {
 export interface ClipbookFacadeDeps {
   readIndex(): Promise<ClipExportIndex>;
   readNote(path: string): Promise<string>;
-  /** 把一批 news 原文标已读；返回实际变更数 */
+  /**
+   * 单篇订阅文章正文（key = articleKeyOf）。**不建全索引**——阅读器打开一本书要按章取
+   * 二三十次正文，每次重建索引就得把整个剪藏目录重扫一遍，章越多越慢（2026-11-13 修）。
+   */
+  readNewsBody(key: string): Promise<string>;
+  /** 把一批 news 原文标已读；返回实际变更数（**一次调到底**，不要逐篇循环） */
   markRead(raws: any[]): Promise<number>;
   /** 存进剪藏本；notePath 由实现方按标题算好 */
   save(raw: any): Promise<{ ok: boolean; notePath?: string }>;
@@ -312,8 +317,14 @@ export interface ClipSummaryResult {
 export interface ClipSaveResult {
   ok: boolean;
   notePath?: string;
-  /** 失败原因码：阅读器自己翻译成当前语言 */
-  code?: 'bilibili' | 'alreadySaved' | 'notFound' | 'noFolder';
+  /**
+   * 失败原因码：阅读器自己翻译成当前语言。
+   *
+   * `saveFailed` 与 `notFound` 分开（2026-11-13）：以前写盘失败也回 `notFound`，
+   * 用户看到的是「这篇找不到了」，而去剪藏本里明明还躺着。老阅读器认不出这个新码时
+   * 按未知码走兜底文案（「保存失败」），比误报「找不到」准。
+   */
+  code?: 'bilibili' | 'alreadySaved' | 'notFound' | 'noFolder' | 'saveFailed';
 }
 
 export interface ClipbookFacade {
@@ -350,7 +361,10 @@ export interface ClipbookFacade {
   open(): void;
 }
 
-/** 门面对象：每次调用都重新读盘，不缓存（用户随时可能在剪藏本里改东西） */
+/**
+ * 门面对象：清单类方法每次调用都重新读盘，不缓存（用户随时可能在剪藏本里改东西）；
+ * 单篇正文走直读（`clip:<路径>` 读笔记 / news 读一次文件按 key 找），不建全索引。
+ */
 export function createClipbookFacade(deps: ClipbookFacadeDeps): ClipbookFacade {
   const find = (idx: ClipExportIndex, key: string): ClipExportRow | undefined =>
     idx.rows.find((r) => r.key === key);
@@ -372,31 +386,32 @@ export function createClipbookFacade(deps: ClipbookFacadeDeps): ClipbookFacade {
     },
 
     async articleBody(key) {
-      const idx = await deps.readIndex();
-      const row = find(idx, key);
-      if (!row) return '';
-      if (row.origin === 'clip') {
-        if (!row.notePath) return '';
+      const k = String(key || '');
+      /* 两条都走直读、不建索引：clip 的 key 就是 `clip:<路径>`，直接读那篇笔记；
+         news 的 key 是 articleKeyOf，宿主读一次 news.json 按 key 找。以前每次都
+         重建全索引（含扫全部剪藏笔记 frontmatter），阅读器按章取正文时是 O(章数 × 目录) 开销。 */
+      if (k.startsWith('clip:')) {
+        const path = k.slice('clip:'.length);
+        if (!path) return '';
         try {
-          return stripClipChrome(await deps.readNote(row.notePath));
+          return stripClipChrome(await deps.readNote(path));
         } catch {
           return '';
         }
       }
-      return String(row.raw?.body ?? '');
+      return deps.readNewsBody(k);
     },
 
     async markRead(keys) {
       const wanted = new Set(keys || []);
       if (!wanted.size) return 0;
       const idx = await deps.readIndex();
-      let bumped = 0;
-      for (const row of idx.rows) {
-        if (!wanted.has(row.key)) continue;
-        if (row.origin !== 'news' || row.state !== 'unread' || !row.raw) continue;
-        bumped += await deps.markRead([row.raw]);
-      }
-      return bumped;
+      /* 攒齐一次交底：批量标读本来就是一次读改写，逐篇调等于把 news.json 读写 N 遍 */
+      const raws = idx.rows
+        .filter((r) => wanted.has(r.key) && r.origin === 'news' && r.state === 'unread' && !!r.raw)
+        .map((r) => r.raw);
+      if (!raws.length) return 0;
+      return deps.markRead(raws);
     },
 
     async saveArticle(key) {
@@ -408,7 +423,7 @@ export function createClipbookFacade(deps: ClipbookFacadeDeps): ClipbookFacade {
       if (platformOf(row.raw) === 'B站') return { ok: false, code: 'bilibili' };
       if (!deps.isFolderReady()) return { ok: false, code: 'noFolder' };
       const out = await deps.save(row.raw);
-      return out.ok ? { ok: true, notePath: out.notePath } : { ok: false, code: 'notFound' };
+      return out.ok ? { ok: true, notePath: out.notePath } : { ok: false, code: 'saveFailed' };
     },
 
     async summarizeArticle(key) {

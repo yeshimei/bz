@@ -79,13 +79,13 @@ describe('clipbook render 纯层（issue 247）', () => {
     expect(html).toContain('果壳 · 昨天 14:00');
   });
 
-  it('目录：有阅读时长才在 meta 行补「· N 分钟」，不足 1 分钟不显示', () => {
+  it('目录：有阅读时长才在 meta 行补「· N 分钟」，不足 1 分钟说「不到 1 分钟」', () => {
     const list = [art({ id: 'a', srcName: '少数派' }), art({ id: 'b', srcName: '少数派' })];
     const secs: Record<string, number> = { a: 185, b: 42 };
     const html = tocListHtml(list, null, () => '今天', '', (x) => secs[x.id] || 0);
     expect(html).toContain('少数派 · 今天 · 3 分钟');
-    // b 只有 42 秒：meta 行保持原样，不挂「0 分钟」
-    expect(html).toContain('少数派 · 今天</div>');
+    // b 只有 42 秒：给个短词说明「记到了」，不再是整段消失（读完短文回来以为没记上）
+    expect(html).toContain('少数派 · 今天 · 不到 1 分钟');
     expect(html).not.toContain('0 分钟');
   });
 
@@ -94,9 +94,10 @@ describe('clipbook render 纯层（issue 247）', () => {
     expect(tocListHtml(list, null, () => '今天')).toBe(tocListHtml(list, null, () => '今天', '', () => 0));
   });
 
-  it('readTimeLabel：不足 1 分钟空串，满分钟走 formatMinutes，超 1 小时带小时', () => {
+  it('readTimeLabel：没读过空串，不足 1 分钟说「不到 1 分钟」，满分钟走 formatMinutes', () => {
     expect(readTimeLabel(0)).toBe('');
-    expect(readTimeLabel(59)).toBe('');
+    expect(readTimeLabel(1)).toBe('不到 1 分钟');
+    expect(readTimeLabel(59)).toBe('不到 1 分钟');
     expect(readTimeLabel(60)).toBe('1 分钟');
     expect(readTimeLabel(179)).toBe('2 分钟');
     expect(readTimeLabel(3600)).toBe('1 小时');

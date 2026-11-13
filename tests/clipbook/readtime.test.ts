@@ -15,7 +15,7 @@
  */
 // @vitest-environment node
 import { describe, it, expect, vi } from 'vitest';
-import { accrueRead, MAX_READ_BATCH_SECONDS, readSecondsView, type ReadBatch } from '../../src/clipbook/readtime';
+import { accrueRead, MAX_READ_BATCH_SECONDS, MAX_SECONDS_KEYS, readSecondsView, type ReadBatch } from '../../src/clipbook/readtime';
 import {
   buildExportIndex,
   createClipbookFacade,
@@ -109,6 +109,22 @@ describe('accrueRead · 秒数累计', () => {
     expect(out.readSeconds.k).toBe(12);
     expect(out.log).toEqual([]);
   });
+
+  it('键数超上限时丢最早插入的，最新读的一定留着（账不会无限膨胀）', () => {
+    const readSeconds: Record<string, number> = {};
+    const readLoggedSeconds: Record<string, number> = {};
+    for (let i = 0; i < MAX_SECONDS_KEYS; i++) readSeconds[`old-${i}`] = 60;
+    const out = accrueRead({
+      readSeconds,
+      readLoggedSeconds,
+      batch: [batch({ key: 'newest', seconds: 120 })],
+      ts: 1,
+    });
+    expect(Object.keys(out.readSeconds)).toHaveLength(MAX_SECONDS_KEYS);
+    expect(out.readSeconds.newest).toBe(120);
+    expect(out.readSeconds['old-0']).toBeUndefined();
+    expect(out.readSeconds[`old-${MAX_SECONDS_KEYS - 1}`]).toBe(60);
+  });
 });
 
 describe('readSecondsView · 旧 readLog 折算进展示', () => {
@@ -193,6 +209,7 @@ describe('createClipbookFacade · recordRead', () => {
     const facade = createClipbookFacade({
       readIndex: async () => idx,
       readNote: async () => '',
+      readNewsBody: async () => '',
       markRead: vi.fn(async (raws: any[]) => raws.length),
       save: vi.fn(async () => ({ ok: true })),
       summarize: vi.fn(async (): Promise<ClipSummaryResult> => ({ ok: true, summary: 'x' })),

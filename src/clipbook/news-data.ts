@@ -318,6 +318,17 @@ export interface NewsWriteIntent {
   /** C26：rssFeeds 标题按条补丁（url → title）——只改写入时磁盘现值中对应条目。
    *  抓取窗口期内被移除/新增的订阅源不随旧快照整段声明复活/丢失 */
   patchRssFeedTitles?: Record<string, string>;
+  /**
+   * articles 按**字段**补丁（articleKeyOf → 要改的字段）——只对写入时磁盘现值做浅合并。
+   *
+   * 2026-11-13 剪藏成书门面生成摘要时踩过：旧写法传 `set.articles = [旧快照 + aiSummary]`，
+   * 而 set 的声明条目是**整条胜出**，等于用「打开那一刻的文章」覆盖磁盘现值。用户点摘要的
+   * 同时后台正好抓到这一篇的新内容，新内容就被退回旧版本。
+   *
+   * 与 set.articles 的分工：这个意图**只增改字段、不新增条目**——磁盘上没有的 key 直接跳过
+   * （文章已被删/被裁掉时不借补丁把它复活）。两处同时声明时 set 条目胜出。
+   */
+  patchArticleFields?: Record<string, Record<string, any>>;
 }
 
 /**
@@ -325,7 +336,8 @@ export interface NewsWriteIntent {
  * 守护进程的双写者文件，旧「读快照 → 盲覆盖」会把 daemon 在读-写窗口内追加的文章/
  * 更新的配置段覆盖丢失。规则：
  * - articles：磁盘 ∪ 声明列表按 articleKeyOf 并集（磁盘顺序保留，声明条目同 key 胜出，
- *   removeArticleKeys 从两侧剔除）；
+ *   removeArticleKeys 从两侧剔除）；只改某条的几个字段用 patchArticleFields（浅合并磁盘现值，
+ *   不新增条目、不复活已删条目）；
  * - 其余段：声明改动（intent.set 含该段）→ 用声明值；未声明 → 取磁盘现值。
  * 须在 write-queue 串行队列内调用（见 write-queue.ts）。
  * 返回是否真的落盘：F8 放弃写时返回 false，调用方（设置项保存）据此提示失败——
@@ -338,9 +350,11 @@ export async function writeNewsDataMerged(intent: NewsWriteIntent): Promise<bool
   if (!res.ok) return false;
   const base = res.data;
   const next: NewsData = { ...base };
-  if (intent.set.articles || intent.removeArticleKeys?.length) {
+  if (intent.set.articles || intent.removeArticleKeys?.length || intent.patchArticleFields) {
     const patchList = intent.set.articles || [];
     const removeKeys = new Set(intent.removeArticleKeys || []);
+    /* 字段补丁只作用于磁盘现值（不新增条目）；浅合并，不动其他字段 */
+    const fieldPatch = intent.patchArticleFields || {};
     const patchByKey = new Map<string, any>();
     for (const a of patchList) patchByKey.set(articleKeyOf(a), a);
     const merged: any[] = [];
@@ -349,7 +363,8 @@ export async function writeNewsDataMerged(intent: NewsWriteIntent): Promise<bool
       const k = articleKeyOf(a);
       if (removeKeys.has(k)) continue;
       seen.add(k);
-      merged.push(patchByKey.has(k) ? patchByKey.get(k) : a);
+      const fields = fieldPatch[k];
+      merged.push(patchByKey.has(k) ? patchByKey.get(k) : fields ? { ...a, ...fields } : a);
     }
     for (const a of patchList) {
       const k = articleKeyOf(a);

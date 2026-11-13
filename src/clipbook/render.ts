@@ -229,12 +229,14 @@ function tocTagsHtml(tags: string[]): string {
 /**
  * 每篇累计阅读时长 → 人话（2026-11-13）。
  *
- * 不足 1 分钟不显示：剪藏本列表本来就挤（站点 · 时间 · 标签），刚点开扫一眼
- * 就返回的条目挂个「0 分钟」只是噪音。1 分钟起才进 meta 行。
+ * 0 秒不显示（没读过，meta 行与以前一模一样）。
+ * 1 秒 ~ 59 秒显示「不到 1 分钟」：以前这里也返回空串，读完一篇短文回来界面上没有任何
+ * 变化，容易以为根本没记上；给个短词说明「记到了，只是还不够一分钟」。
  */
 export function readTimeLabel(seconds: number): string {
   const s = Math.floor(Number(seconds) || 0);
-  if (s < 60) return '';
+  if (s <= 0) return '';
+  if (s < 60) return '不到 1 分钟';
   return formatMinutes(Math.floor(s / 60));
 }
 

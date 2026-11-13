@@ -21,7 +21,25 @@ import { readClipbookData, updateClipbookData, type ClipbookData, type ClipMark 
 
 // ---------- 同步纯函数（域内私有） ----------
 
-/** 笔记重命名：marks[].notePath 与 pendingSource[] 原地改指新路径 */
+/**
+ * 剪藏条目的时长键搬家（`clip:<旧路径>` → `clip:<新路径>`）。
+ *
+ * 阅读时长的账键就是条目 key，而剪藏条目的 key 带文件路径——用户把笔记改名 / 挪目录后
+ * 路径变了，这篇之前读的时长就查不到、列表上直接归零（2026-11-13 修）。这里在重命名
+ * 事件里把账搬过去；新旧键都有的（同一条目被拆成两份过）相加，不丢任何一边。
+ *
+ * 返回新对象（不改入参）；没搬动就原样返回，调用方据此判 changed。
+ */
+function moveSecondsKey(map: Record<string, number>, oldKey: string, newKey: string): Record<string, number> {
+  if (!map || !Object.prototype.hasOwnProperty.call(map, oldKey)) return map;
+  const next = { ...map };
+  const moved = Number(next[oldKey]) || 0;
+  delete next[oldKey];
+  if (moved > 0) next[newKey] = (Number(next[newKey]) || 0) + moved;
+  return next;
+}
+
+/** 笔记重命名：marks[].notePath 与 pendingSource[] 原地改指新路径；阅读时长账跟着搬 */
 function syncRename(data: ClipbookData, { oldPath, newPath }: { oldPath: string; newPath: string }): boolean {
   let changed = false;
   for (const key of Object.keys(data.marks)) {
@@ -38,6 +56,16 @@ function syncRename(data: ClipbookData, { oldPath, newPath }: { oldPath: string;
       if (list[i] === oldPath) { list[i] = newPath; changed = true; }
     }
   }
+  const oldKey = 'clip:' + oldPath;
+  const newKey = 'clip:' + newPath;
+  if (data.readSeconds && Object.prototype.hasOwnProperty.call(data.readSeconds, oldKey)) {
+    data.readSeconds = moveSecondsKey(data.readSeconds, oldKey, newKey);
+    changed = true;
+  }
+  if (data.readLoggedSeconds && Object.prototype.hasOwnProperty.call(data.readLoggedSeconds, oldKey)) {
+    data.readLoggedSeconds = moveSecondsKey(data.readLoggedSeconds, oldKey, newKey);
+    changed = true;
+  }
   return changed;
 }
 
@@ -45,6 +73,9 @@ function syncRename(data: ClipbookData, { oldPath, newPath }: { oldPath: string;
  * 笔记删除：剔除指向被删笔记的 marks 条目与 pendingSource 项（空列表键一并删，防残留
  * 空数组堆积）。savedImages（src→local 图片映射）与 articleOverrides/savedArchive 非
  * 文献笔记路径引用，不在同步范围。
+ *
+ * 剪藏条目的时长账（`clip:<路径>`）一并摘掉：账键指向一篇已经不存在的笔记，留着只占体积。
+ * readLog（报告流水）不动——那是历史统计，删笔记不等于那天没读过。
  */
 function syncDelete(data: ClipbookData, path: string): boolean {
   let changed = false;
@@ -63,6 +94,17 @@ function syncDelete(data: ClipbookData, path: string): boolean {
     const kept = (list as string[]).filter((p) => p !== path);
     if (kept.length !== list.length) changed = true;
     if (kept.length) pendingSource[key] = kept;
+  }
+  /* 剪藏条目的时长账：键指向已删笔记，摘掉 */
+  const durKey = 'clip:' + path;
+  for (const seg of ['readSeconds', 'readLoggedSeconds'] as const) {
+    const map = data[seg];
+    if (map && Object.prototype.hasOwnProperty.call(map, durKey)) {
+      const next = { ...map };
+      delete next[durKey];
+      data[seg] = next;
+      changed = true;
+    }
   }
   if (!changed) return false;
   data.marks = marks;
