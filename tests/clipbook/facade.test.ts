@@ -151,6 +151,22 @@ describe('buildExportIndex · 去重与状态', () => {
     expect(idx.rows[0].key).toBe('url:https://x.com/new');
     expect(idx.rows[0].summary.length).toBeGreaterThan(0);
   });
+
+  it('正文长度随清单出门面：阅读器按它估页数（不再一律 1200）', () => {
+    const idx = buildExportIndex(input({
+      articles: [newsArticle({ url: 'https://x.com/a', body: '一二三四五' })],
+      clips: [clipNote({ url: 'https://x.com/b' })],
+    }));
+    const byUrl = new Map(idx.rows.map((r) => [r.url, r]));
+    expect(byUrl.get('https://x.com/a')!.size).toBe(5);
+    /* 剪藏笔记清单阶段不读正文：给 0，阅读器渲染后回填 */
+    expect(byUrl.get('https://x.com/b')!.size).toBe(0);
+  });
+
+  it('剪藏行带日期（剪藏后副标题的日期不再消失）', () => {
+    const idx = buildExportIndex(input({ clips: [clipNote()] }));
+    expect(idx.rows[0].date).toMatch(/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/);
+  });
 });
 
 describe('createClipbookFacade', () => {

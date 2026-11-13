@@ -45,6 +45,12 @@ export interface ClipFacadeArticle {
   date: string;
   ts: number;
   summary: string;
+  /**
+   * 正文长度（字符数）。阅读器拿它估整本书的页数：以前没有这个字段，
+   * 每章一律按 1200 兜底，23 章的剪藏本整本总页数会在 23 / 46 / 1541 之间乱跳。
+   * 剪藏笔记（origin=clip）在清单阶段不读正文，给 0，由阅读器按实际渲染回填。
+   */
+  size: number;
   state: ClipArticleState;
   notePath: string | null;
   tags: string[];
@@ -95,6 +101,16 @@ function tsOf(raw: any, fallback = 0): number {
   if (!Number.isNaN(a)) return a;
   const b = new Date(raw?.date).valueOf();
   return Number.isNaN(b) ? fallback : b;
+}
+
+/** 时间戳 → 「YYYY-MM-DD HH:mm:ss」（与 news 的 date 同一写法；给阅读器副标题用） */
+function fmtTs(ts: number): string {
+  if (!Number.isFinite(ts) || ts <= 0) return '';
+  const d = new Date(ts);
+  const p = (n: number): string => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}:${p(
+    d.getSeconds(),
+  )}`;
 }
 
 /**
@@ -192,9 +208,13 @@ export function buildExportIndex(input: ExportBuildInput): ClipExportIndex {
       author: norm(n.author),
       sourceId: src.id,
       source: src.name,
-      date: '',
+      /* 剪藏行的 date 以前是空串：剪藏之后副标题只剩源名、日期整段消失
+         （真机：剪藏后「… · 2026-11-06」不见了）。用 created 补回来。 */
+      date: fmtTs(Number(n.created) || 0),
       ts: Number(n.created) || 0,
       summary: norm(n.summary) || excerpt('', 110),
+      /* 正文在清单阶段不读盘：给 0，阅读器渲染这一章时会回填真实长度 */
+      size: 0,
       state: 'saved',
       notePath: norm(n.path) || null,
       tags: Array.isArray(n.tags) ? n.tags.map(String) : [],
@@ -221,6 +241,7 @@ export function buildExportIndex(input: ExportBuildInput): ClipExportIndex {
       date: norm(a?.date || a?.fetchedAt),
       ts: tsOf(a),
       summary: excerpt(norm(a?.body), 110),
+      size: norm(a?.body).length,
       state: a?.read === true ? (a?.state === 'saved' ? 'saved' : 'read') : 'unread',
       notePath: null,
       tags: Array.isArray(a?.tags) ? a.tags.map(String) : [],
