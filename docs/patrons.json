@@ -2,6 +2,7 @@
   "version": 1,
   "updatedAt": "2026-11-13",
   "patrons": [
+    { "name": "马飞飞", "amount": 8, "date": "2026-11-13", "message": "支持作者大大" },
     { "name": "疯言与诗", "amount": "patron", "date": "2026-11-13" },
     { "name": "高点点", "amount": "patron", "date": "2026-11-13" },
     { "name": "容舠", "amount": "patron", "date": "2026-11-13" },
