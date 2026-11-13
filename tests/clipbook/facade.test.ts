@@ -11,6 +11,7 @@ import {
   buildExportIndex,
   createClipbookFacade,
   type ClipExportIndex,
+  type ClipSummaryResult,
   type ExportBuildInput,
 } from '../../src/clipbook/facade';
 
@@ -149,7 +150,10 @@ describe('buildExportIndex · 去重与状态', () => {
     }));
     expect(idx.rows.map((r) => r.url)).toEqual(['https://x.com/new', 'https://x.com/old']);
     expect(idx.rows[0].key).toBe('url:https://x.com/new');
-    expect(idx.rows[0].summary.length).toBeGreaterThan(0);
+    /* 2026-11-13：`summary` 的门槛变了 —— 只有「在阅读器里生成过的 AI 摘要」
+       （aiSummary）才出门面；RSS description 和正文摘录都不再顶替它。
+       否则阅读器会把正文第一段原样抄到标题下面。 */
+    expect(idx.rows[0].summary).toBe('');
   });
 
   it('正文长度随清单出门面：阅读器按它估页数（不再一律 1200）', () => {
@@ -167,21 +171,37 @@ describe('buildExportIndex · 去重与状态', () => {
     const idx = buildExportIndex(input({ clips: [clipNote()] }));
     expect(idx.rows[0].date).toMatch(/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/);
   });
+
+  it('订阅文章已经生成过 AI 摘要 → 清单里就是那段摘要，不是正文开头', () => {
+    const idx = buildExportIndex(input({
+      articles: [newsArticle({ body: '很长很长的正文开头，一直被当摘要用', aiSummary: '这才是 AI 摘要' })],
+    }));
+    expect(idx.rows[0].summary).toBe('这才是 AI 摘要');
+  });
+
+  it('RSS 自带的 summary 不进这个字段（那是 description，会和正文开头重复）', () => {
+    const idx = buildExportIndex(input({
+      articles: [newsArticle({ body: '正文开头一段', summary: '……等。查看全文' })],
+    }));
+    expect(idx.rows[0].summary).toBe('');
+  });
 });
 
 describe('createClipbookFacade', () => {
   const makeFacade = (idx: ClipExportIndex, opts: { folderOk?: boolean; noteText?: string } = {}) => {
     const markRead = vi.fn(async (raws: any[]) => raws.length);
     const save = vi.fn(async (_raw: any) => ({ ok: true, notePath: '归档/网页剪藏/标题A.md' }));
+    const summarize = vi.fn(async (_raw: any): Promise<ClipSummaryResult> => ({ ok: true, summary: 'AI 摘要一段' }));
     const facade = createClipbookFacade({
       readIndex: async () => idx,
       readNote: async () => opts.noteText ?? '---\nurl: x\n---\n> [!summary] 标题\n> 摘要\n\n正文A',
       markRead,
       save,
+      summarize,
       isFolderReady: () => opts.folderOk !== false,
       dataVersion: async () => 'v1',
     });
-    return { facade, markRead, save };
+    return { facade, markRead, save, summarize };
   };
 
   it('articles 过滤：savedOnly 只留剪藏；includeRead=false 去掉已读', async () => {
@@ -249,5 +269,36 @@ describe('createClipbookFacade', () => {
     expect(facade.isReady()).toEqual({ ok: true });
     const { facade: noFolder } = makeFacade(idx, { folderOk: false });
     expect(noFolder.isReady()).toEqual({ ok: false, code: 'noFolder' });
+  });
+
+  it('summarizeArticle：订阅文章转给实现方，结果原样透传', async () => {
+    const idx = buildExportIndex(input({ articles: [newsArticle()] }));
+    const { facade, summarize } = makeFacade(idx);
+    const out = await facade.summarizeArticle('url:https://x.com/a');
+    expect(out).toEqual({ ok: true, summary: 'AI 摘要一段' });
+    expect(summarize).toHaveBeenCalledTimes(1);
+    expect(summarize.mock.calls[0][0]).toMatchObject({ url: 'https://x.com/a' });
+  });
+
+  it('summarizeArticle：剪藏笔记不重复生成摘要（摘要来自它自己的 frontmatter）', async () => {
+    const idx = buildExportIndex(input({ clips: [clipNote({ path: '剪藏/s.md' })] }));
+    const { facade, summarize } = makeFacade(idx);
+    expect(await facade.summarizeArticle('clip:剪藏/s.md')).toEqual({ ok: false, code: 'notFound' });
+    expect(summarize).not.toHaveBeenCalled();
+  });
+
+  it('summarizeArticle：找不到条目直接 notFound，不打 AI', async () => {
+    const { facade, summarize } = makeFacade(buildExportIndex(input({})));
+    expect(await facade.summarizeArticle('url:不存在')).toEqual({ ok: false, code: 'notFound' });
+    expect(summarize).not.toHaveBeenCalled();
+  });
+
+  it('summarizeArticle：AI 失败 / 写盘失败的原因码原样带回', async () => {
+    const idx = buildExportIndex(input({ articles: [newsArticle()] }));
+    const { facade, summarize } = makeFacade(idx);
+    summarize.mockResolvedValueOnce({ ok: false, code: 'aiFailed' });
+    expect(await facade.summarizeArticle('url:https://x.com/a')).toEqual({ ok: false, code: 'aiFailed' });
+    summarize.mockResolvedValueOnce({ ok: false, code: 'writeFailed' });
+    expect(await facade.summarizeArticle('url:https://x.com/a')).toEqual({ ok: false, code: 'writeFailed' });
   });
 });

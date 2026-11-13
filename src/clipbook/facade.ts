@@ -212,7 +212,7 @@ export function buildExportIndex(input: ExportBuildInput): ClipExportIndex {
          （真机：剪藏后「… · 2026-11-06」不见了）。用 created 补回来。 */
       date: fmtTs(Number(n.created) || 0),
       ts: Number(n.created) || 0,
-      summary: norm(n.summary) || excerpt('', 110),
+      summary: norm(n.summary),
       /* 正文在清单阶段不读盘：给 0，阅读器渲染这一章时会回填真实长度 */
       size: 0,
       state: 'saved',
@@ -240,7 +240,11 @@ export function buildExportIndex(input: ExportBuildInput): ClipExportIndex {
       source: src.name,
       date: norm(a?.date || a?.fetchedAt),
       ts: tsOf(a),
-      summary: excerpt(norm(a?.body), 110),
+      /* 只有**在阅读器里生成过的**摘要才进这个字段（`aiSummary`）。
+         不能拿 news 自带的 `summary` 顶上：那是 RSS 的 description
+         （少数派给的是「……等。查看全文」这种一句半），内容和正文开头一模一样，
+         摆到标题下方等于把第一段抄了两遍——真机截图当场就露馅。 */
+      summary: norm(a?.aiSummary),
       size: norm(a?.body).length,
       state: a?.read === true ? (a?.state === 'saved' ? 'saved' : 'read') : 'unread',
       notePath: null,
@@ -260,12 +264,23 @@ export interface ClipbookFacadeDeps {
   markRead(raws: any[]): Promise<number>;
   /** 存进剪藏本；notePath 由实现方按标题算好 */
   save(raw: any): Promise<{ ok: boolean; notePath?: string }>;
+  /** 给一篇订阅文章生成 AI 摘要并写回（阅读器标题下方那一段） */
+  summarize(raw: any): Promise<ClipSummaryResult>;
   isFolderReady(): boolean;
   /**
    * 数据版本（剪藏成书「实时更新」用）：news.json / clipbook.json / 剪藏目录
    * 任一有变化就要变。阅读器轮询它决定要不要重建目录。
    */
   dataVersion(): Promise<string>;
+}
+
+/** 摘要失败原因码：阅读器自己翻译成当前语言 */
+export type ClipSummaryFailCode = 'notFound' | 'aiFailed' | 'writeFailed';
+
+export interface ClipSummaryResult {
+  ok: boolean;
+  summary?: string;
+  code?: ClipSummaryFailCode;
 }
 
 export interface ClipSaveResult {
@@ -276,13 +291,19 @@ export interface ClipSaveResult {
 }
 
 export interface ClipbookFacade {
-  /** 契约版本：以后加动作时递增，调用方按 typeof 探测 */
+  /**
+   * 契约版本。2026-11-13 加 `summarizeArticle` 时**没有**跟着升到 2：
+   * 阅读器那边一律按 `typeof facade.xxx === 'function'` 探测单个能力，
+   * 版本号只用于「门面整体够不够新」的判断，升它会让老阅读器误判成不兼容。
+   */
   readonly version: 1;
   sources(): Promise<ClipSourceRow[]>;
   articles(opts?: { savedOnly?: boolean; includeRead?: boolean }): Promise<ClipFacadeArticle[]>;
   articleBody(key: string): Promise<string>;
   markRead(keys: string[]): Promise<number>;
   saveArticle(key: string): Promise<ClipSaveResult>;
+  /** 生成这一篇的 AI 摘要并写回剪藏本（只对订阅文章；剪藏笔记的摘要来自 frontmatter） */
+  summarizeArticle(key: string): Promise<ClipSummaryResult>;
   isReady(): { ok: boolean; code?: 'noFolder' };
   /** 数据版本：变了说明剪藏本有新文章 / 状态变化 / 笔记改动 */
   dataVersion(): Promise<string>;
@@ -347,6 +368,15 @@ export function createClipbookFacade(deps: ClipbookFacadeDeps): ClipbookFacade {
       if (!deps.isFolderReady()) return { ok: false, code: 'noFolder' };
       const out = await deps.save(row.raw);
       return out.ok ? { ok: true, notePath: out.notePath } : { ok: false, code: 'notFound' };
+    },
+
+    async summarizeArticle(key) {
+      const idx = await deps.readIndex();
+      const row = find(idx, key);
+      /* 剪藏笔记（origin=clip）的摘要在它自己的 frontmatter 里，由知识盒 / 剪藏本
+         维护；这里只给「还没落地成笔记」的订阅文章补摘要。 */
+      if (!row || row.origin !== 'news' || !row.raw) return { ok: false, code: 'notFound' };
+      return deps.summarize(row.raw);
     },
 
     isReady() {

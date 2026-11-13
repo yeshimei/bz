@@ -11,11 +11,12 @@
  */
 import { getApp } from '../core/app';
 import { needsFolderSetup } from '../core/folder-setup';
-import { readNewsData, emptyData, getNewsFilePath } from './news-data';
+import { readNewsData, emptyData, getNewsFilePath, writeNewsDataMerged } from './news-data';
 import { readClipbookData, clipbookFilePath } from './data';
 import { scanClipDirectory } from './scan';
 import { clipDir, clipFilePathOf } from './save';
 import { flowMarkAllRead, flowSave } from './flow';
+import { summarizeClipBody } from './summarize';
 import { buildExportIndex, createClipbookFacade, fnv, type ClipbookFacade } from './facade';
 
 /** 文件指纹：mtime + size；读不到给 0（文件还没建也是变化） */
@@ -59,6 +60,16 @@ export function createClipbookFacadeHost(): ClipbookFacade {
     async save(raw) {
       const ok = await flowSave({ raw });
       return ok ? { ok: true, notePath: clipFilePathOf(raw?.title) } : { ok: false };
+    },
+
+    /* 摘要写 news.json 的 `aiSummary`，**不碰 `summary`**：后者是 RSS 抓来的
+       description，剪藏本自己的列表在用，混在一起会互相顶掉。
+       写盘走合并写队列（后台抓取是另一个写者，盲覆盖会丢它刚追加的文章）。 */
+    async summarize(raw) {
+      const summary = await summarizeClipBody(String(raw?.body || ''));
+      if (!summary) return { ok: false, code: 'aiFailed' as const };
+      const written = await writeNewsDataMerged({ set: { articles: [{ ...raw, aiSummary: summary }] } });
+      return written ? { ok: true, summary } : { ok: false, code: 'writeFailed' as const };
     },
 
     isFolderReady() {
