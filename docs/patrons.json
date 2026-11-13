@@ -2,6 +2,7 @@
   "version": 1,
   "updatedAt": "2026-11-13",
   "patrons": [
+    { "name": "高点点", "amount": "patron", "date": "2026-11-13" },
     { "name": "容舠", "amount": "patron", "date": "2026-11-13" },
     { "name": "夜", "amount": 8, "date": "2026-11-12", "message": "很好用，加油💪" },
     { "name": "喜之狼", "amount": "patron", "date": "2026-11-12" },
