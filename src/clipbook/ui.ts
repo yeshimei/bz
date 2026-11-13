@@ -35,6 +35,7 @@ import { cmpZh, debounce, formatRelativeTime, localDayKey, openExternalUrl } fro
 import { isMobileEnv } from '../core/mobile';
 import { topifyZ } from '../core/dom';
 import { escManager } from '../core/esc-manager';
+import { readSecondsView } from './readtime';
 import { trapPanelFocus } from '../core/ui/focus-trap';
 import { attachItemActions, closeItemMenu, type ItemAction } from '../core/item-actions';
 import { openFlowDialog } from '../core/flow-dialog';
@@ -1218,7 +1219,7 @@ function renderListNow(): void {
       // j/k 从幻觉位置步进）；renderAll 路径下与外层 renderReader 重复渲染一次，幂等无害
       if (readerEl) renderReader();
     }
-    listEl.innerHTML = tocListHtml(list, M.cur ? M.cur.id : null, (a) => relTime(a.timeTs), searchKw);
+    listEl.innerHTML = tocListHtml(list, M.cur ? M.cur.id : null, (a) => relTime(a.timeTs), searchKw, secondsOf);
     M.list = list;
     bindItemMenus();
     return;
@@ -1252,7 +1253,7 @@ function renderListNow(): void {
       M.list = [];
       return;
     }
-    listEl.innerHTML = tocListHtml(hit, curId, timeOf, searchKw);
+    listEl.innerHTML = tocListHtml(hit, curId, timeOf, searchKw, secondsOf);
     M.list = hit;
     bindItemMenus();
     return;
@@ -1260,18 +1261,18 @@ function renderListNow(): void {
   const b = dirFor(src);
   const snapUnreadN = b.unread.length; // 快照桶大小 = 打开目录时未读数（会话内读完不触发闪开）
   // 非搜索态 kw 恒空（折叠段内不高亮）；统一传参，搜索语义单点在 tocListHtml
-  let html = tocListHtml(b.unread, curId, timeOf, searchKw);
+  let html = tocListHtml(b.unread, curId, timeOf, searchKw, secondsOf);
   // 已读段（快照 read 桶；默认收起——打开即无未读且已收空时自动展开兜底）
   if (b.read.length) {
     const open = deskFoldIsOpen('read', b.read.length, b.saved.length, snapUnreadN);
     html += deskFoldRowHtml('read', b.read.length, open);
-    html += foldBodyHtml(tocListHtml(b.read, curId, timeOf, searchKw), open);
+    html += foldBodyHtml(tocListHtml(b.read, curId, timeOf, searchKw, secondsOf), open);
   }
   // 已收段（快照 saved 桶；打开即无未读默认展开）
   if (b.saved.length) {
     const open = deskFoldIsOpen('saved', b.saved.length, b.saved.length, snapUnreadN);
     html += deskFoldRowHtml('saved', b.saved.length, open);
-    html += foldBodyHtml(tocListHtml(b.saved, curId, timeOf, searchKw), open);
+    html += foldBodyHtml(tocListHtml(b.saved, curId, timeOf, searchKw, secondsOf), open);
   }
   listEl.innerHTML = html;
   M.list = flat; // 菜单/点击查找全目录
@@ -1285,6 +1286,29 @@ function relTime(ts: number): string {
   } catch (e) {
     return '';
   }
+}
+
+/**
+ * 目录卡 meta 行的「读了几分钟」取值（2026-11-13）。
+ *
+ * 数据来自侧写 readSeconds：bz 面板自己的会话封存 + 阅读器（剪藏成书）
+ * 按章计时后的回写，两处共用一份账。渲染层是纯函数，取值从这里注入。
+ *
+ * 合成结果按 sidecar 引用缓存一次：目录一次要取几十行，每行都去遍历
+ * readLog（上限 5000 条）会白烧掉一次渲染的时间；sidecar 换了引用就重算。
+ */
+let secViewCache: { src: unknown; map: Record<string, number> } | null = null;
+
+function secondsOf(a: ClipArticle): number {
+  const sidecar = M.sidecar;
+  if (!secViewCache || secViewCache.src !== sidecar) {
+    secViewCache = {
+      src: sidecar,
+      map: readSecondsView(sidecar?.readSeconds, sidecar?.readLog),
+    };
+  }
+  const n = Number(secViewCache.map[a.id]);
+  return Number.isFinite(n) && n > 0 ? n : 0;
 }
 
 /** 按条目 id 找目录卡片（动效三件套锚点；桌面目录 / 移动章目录都查） */

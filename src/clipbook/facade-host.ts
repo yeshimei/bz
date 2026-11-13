@@ -12,11 +12,12 @@
 import { getApp } from '../core/app';
 import { needsFolderSetup } from '../core/folder-setup';
 import { readNewsData, emptyData, getNewsFilePath, writeNewsDataMerged } from './news-data';
-import { readClipbookData, clipbookFilePath } from './data';
+import { readClipbookData, clipbookFilePath, updateClipbookData, type ClipbookData } from './data';
 import { scanClipDirectory } from './scan';
 import { clipDir, clipFilePathOf } from './save';
-import { flowMarkAllRead, flowSave } from './flow';
+import { flowMarkAllRead, flowSave, trimReadLog } from './flow';
 import { summarizeClipBody } from './summarize';
+import { accrueRead, readSecondsView } from './readtime';
 import { buildExportIndex, createClipbookFacade, fnv, type ClipbookFacade } from './facade';
 import { openClipbook } from './index';
 
@@ -46,6 +47,9 @@ export function createClipbookFacadeHost(): ClipbookFacade {
         upIds: data.bilibiliUps || [],
         upInfo: data.bilibiliUpInfo || {},
         sources: data.sources || emptyData().sources,
+        /* 秒数视图要把旧 readLog 折进来：readSeconds 是这次才有的段，之前面板里
+           读的时长只在流水里。折算只发生在读取时，不写盘（写回会重复入账）。 */
+        readSeconds: readSecondsView(sidecar.readSeconds, sidecar.readLog),
       });
     },
 
@@ -71,6 +75,38 @@ export function createClipbookFacadeHost(): ClipbookFacade {
       if (!summary) return { ok: false, code: 'aiFailed' as const };
       const written = await writeNewsDataMerged({ set: { articles: [{ ...raw, aiSummary: summary }] } });
       return written ? { ok: true, summary } : { ok: false, code: 'writeFailed' as const };
+    },
+
+    /* 阅读时长回写：秒数累进 readSeconds，凑满的整分钟补进 readLog。
+       走 updateClipbookData 的读改写事务（与面板自己的会话封存同一条队列），
+       阅读器和面板同时写也不会互相覆盖。 */
+    async recordRead(batch) {
+      let written = 0;
+      try {
+        await updateClipbookData((cur) => {
+          const out = accrueRead({
+            readSeconds: cur.readSeconds,
+            readLoggedSeconds: cur.readLoggedSeconds,
+            batch,
+            ts: Date.now(),
+          });
+          written = batch.length;
+          const next: ClipbookData = {
+            ...cur,
+            readSeconds: out.readSeconds,
+            readLoggedSeconds: out.readLoggedSeconds,
+          };
+          if (out.log.length) {
+            const now = Date.now();
+            next.readLog = trimReadLog([...(cur.readLog || []), ...out.log], now);
+          }
+          return next;
+        });
+      } catch {
+        /* 写盘失败不能让阅读器那边当成功：返回 0，下一拍会把新秒数带上来 */
+        return 0;
+      }
+      return written;
     },
 
     isFolderReady() {

@@ -226,18 +226,41 @@ function tocTagsHtml(tags: string[]): string {
   return `<span class="bz-clip-item-tags">${shown}${tags.length > 2 ? ' …' : ''}</span>`;
 }
 
+/**
+ * 每篇累计阅读时长 → 人话（2026-11-13）。
+ *
+ * 不足 1 分钟不显示：剪藏本列表本来就挤（站点 · 时间 · 标签），刚点开扫一眼
+ * 就返回的条目挂个「0 分钟」只是噪音。1 分钟起才进 meta 行。
+ */
+export function readTimeLabel(seconds: number): string {
+  const s = Math.floor(Number(seconds) || 0);
+  if (s < 60) return '';
+  return formatMinutes(Math.floor(s / 60));
+}
+
 /** 目录条目序列（编辑部目录：序号 + 标题 + 「站点 · 时间」一行；摘要不入目录）。
  *  timeOf 注入展示时间串（moment 留在行为层，纯层不引用）；列表空由调用方走 uiEmpty。
- *  kw（效率#13）：搜索关键词，标题段命中 `<mark>` 高亮；meta 行不高亮。 */
-export function tocListHtml(list: ClipArticle[], curId: string | null, timeOf: (a: ClipArticle) => string, kw = ''): string {
-  return list.map((a, i) => `
+ *  kw（效率#13）：搜索关键词，标题段命中 `<mark>` 高亮；meta 行不高亮。
+ *  secondsOf（2026-11-13）：这一篇累计读了多少秒，注入式取值（侧写在行为层）；
+ *  缺省/返回 0 时 meta 行与以前一模一样。 */
+export function tocListHtml(
+  list: ClipArticle[],
+  curId: string | null,
+  timeOf: (a: ClipArticle) => string,
+  kw = '',
+  secondsOf?: (a: ClipArticle) => number,
+): string {
+  return list.map((a, i) => {
+    const dur = readTimeLabel(secondsOf ? secondsOf(a) : 0);
+    return `
     <div class="bz-clip-item bz-clip-item--${a.st}${curId && curId === a.id ? ' on' : ''}" role="button" tabindex="0" data-id="${esc(a.id)}">
       <span class="bz-clip-no">${pad2(i + 1)}</span>
       <div class="bz-clip-item-main">
         <div class="bz-clip-item-t"><span>${highlightTitleHtml(a.title, kw)}</span></div>
-        <div class="bz-clip-item-meta">${esc(siteShort(a.srcName))} · ${esc(timeOf(a))}${tocTagsHtml(a.tags)}</div>
+        <div class="bz-clip-item-meta">${esc(siteShort(a.srcName))} · ${esc(timeOf(a))}${dur ? ` · ${esc(dur)}` : ''}${tocTagsHtml(a.tags)}</div>
       </div>
-    </div>`).join('');
+    </div>`;
+  }).join('');
 }
 
 // ==================== 中栏目录折叠段（ADR-0108：已读/已收双折叠，桌面新增） ====================

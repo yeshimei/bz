@@ -20,6 +20,7 @@ import { platformOf } from './store';
 import type { ClipbookData } from './data';
 import type { ClipNote } from './scan';
 import type { NewsSources, RssFeed } from './news-data';
+import { sanitizeReadBatch, type ReadBatch } from './readtime';
 
 export type ClipSourceKind = 'rss' | 'bilibili' | 'platform' | 'site';
 
@@ -54,6 +55,14 @@ export interface ClipFacadeArticle {
   state: ClipArticleState;
   notePath: string | null;
   tags: string[];
+  /**
+   * 这一篇累计读了多少秒（剪藏本列表显示「· 3 分钟」）。
+   *
+   * 两个来源共用一份账：bz 面板里读的（右栏停留，会话封存进 readLog）和
+   * 在 bz-reader 里读的（按章计时，经 `recordRead` 回写）。以前只有前者，
+   * 阅读器里读完一篇回来，剪藏本这边显示 0 分钟。
+   */
+  seconds: number;
 }
 
 /** 内部行：多带一份 news 原文（markRead / saveArticle 要原始对象，不出门面） */
@@ -73,6 +82,8 @@ export interface ExportBuildInput {
   upIds: string[];
   upInfo: Record<string, { name?: string }>;
   sources: NewsSources;
+  /** 每篇累计阅读秒数（clipbook.json 侧写 readSeconds）；缺省 = 都没读过 */
+  readSeconds?: Record<string, number> | null;
 }
 
 const PLATFORM_ROWS: Array<{ key: 'zhihu' | 'guokr'; id: string; name: string }> = [
@@ -196,12 +207,18 @@ export function buildExportIndex(input: ExportBuildInput): ClipExportIndex {
   // 剪藏先入（URL 去重时由它代表）
   const clipUrls = new Set<string>();
   const rows: ClipExportRow[] = [];
+  /** 秒数查表：键就是行 key（`clip:<路径>` / articleKeyOf），两源共用一份账 */
+  const secOf = (key: string): number => {
+    const n = Math.floor(Number(input.readSeconds?.[key]) || 0);
+    return n > 0 ? n : 0;
+  };
   for (const n of input.clips || []) {
     const url = norm(n?.url);
     if (url) clipUrls.add(url);
     const src = sourceFor(n?.site || '', n?.site || '', n?.author || '');
+    const key = `clip:${n.path}`;
     rows.push({
-      key: `clip:${n.path}`,
+      key,
       origin: 'clip',
       title: norm(n.title) || '(无标题)',
       url,
@@ -218,6 +235,7 @@ export function buildExportIndex(input: ExportBuildInput): ClipExportIndex {
       state: 'saved',
       notePath: norm(n.path) || null,
       tags: Array.isArray(n.tags) ? n.tags.map(String) : [],
+      seconds: secOf(key),
     });
   }
 
@@ -249,6 +267,7 @@ export function buildExportIndex(input: ExportBuildInput): ClipExportIndex {
       state: a?.read === true ? (a?.state === 'saved' ? 'saved' : 'read') : 'unread',
       notePath: null,
       tags: Array.isArray(a?.tags) ? a.tags.map(String) : [],
+      seconds: secOf(key),
       raw: a,
     });
   }
@@ -266,6 +285,11 @@ export interface ClipbookFacadeDeps {
   save(raw: any): Promise<{ ok: boolean; notePath?: string }>;
   /** 给一篇订阅文章生成 AI 摘要并写回（阅读器标题下方那一段） */
   summarize(raw: any): Promise<ClipSummaryResult>;
+  /**
+   * 回写阅读时长（阅读器按章计时，切章 / 关书时批量报过来）。
+   * 返回真正落账的篇数；实现方负责累进 readSeconds 并把整分钟补进 readLog。
+   */
+  recordRead(entries: ReadBatch[]): Promise<number>;
   isFolderReady(): boolean;
   /**
    * 数据版本（剪藏成书「实时更新」用）：news.json / clipbook.json / 剪藏目录
@@ -306,6 +330,13 @@ export interface ClipbookFacade {
   saveArticle(key: string): Promise<ClipSaveResult>;
   /** 生成这一篇的 AI 摘要并写回剪藏本（只对订阅文章；剪藏笔记的摘要来自 frontmatter） */
   summarizeArticle(key: string): Promise<ClipSummaryResult>;
+  /**
+   * 回写阅读时长：`[{ key, seconds, title?, src? }]`。返回落账篇数。
+   *
+   * 与 `summarizeArticle` 一样，阅读器按 `typeof` 探测后调用——老版本 bz
+   * 没有这个方法，那就不报，界面上不显示时长，不能把剪藏本判成不可用。
+   */
+  recordRead(entries: ReadBatch[]): Promise<number>;
   isReady(): { ok: boolean; code?: 'noFolder' };
   /** 数据版本：变了说明剪藏本有新文章 / 状态变化 / 笔记改动 */
   dataVersion(): Promise<string>;
@@ -387,6 +418,14 @@ export function createClipbookFacade(deps: ClipbookFacadeDeps): ClipbookFacade {
          维护；这里只给「还没落地成笔记」的订阅文章补摘要。 */
       if (!row || row.origin !== 'news' || !row.raw) return { ok: false, code: 'notFound' };
       return deps.summarize(row.raw);
+    },
+
+    async recordRead(entries) {
+      const batch = sanitizeReadBatch(entries);
+      if (!batch.length) return 0;
+      /* 不校验 key 在不在清单里：阅读器可能刚读完就删了剪藏笔记，秒数照记
+         （账是按 key 累的，条目没了不影响以后同名 key 回来）。 */
+      return deps.recordRead(batch);
     },
 
     isReady() {
