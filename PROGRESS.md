@@ -783,3 +783,17 @@
 - [x] 门禁：`tsc` 0；home 域 19 文件 / 170 例；`test-affected --since master` 696 文件 / 10299 例；合并回主仓后 `--since HEAD~1` 同口径复跑全绿
 - [x] 收尾：合并回 master（`93fda8db`）+ 归档 issue 568 / ADR-0301 + 开发构建部署到主笔记库
 - [ ] 后续（同 567，等真机 A/B 数字再定）：快慢段拆采集 / 缓存阶段化、渲染层 diff、容器级委托、时间线懒加载
+
+## Issue 569 — 第二大脑面板图标缺失：引导 / 进度态停在空方块
+
+**状态：已交付**（2026-11-15，worktree `D:\Obsidian\bz-wt-sb-icons`，分支 `fix/sb-icons`）
+
+- [x] 根因：`panel.ts` 的 `createUI()` 写完 `panelShellHtml()` 后没有 `mountIcons`，全文件只在 `renderStats` / `renderDist` 末尾物化；引导态与进度态在 `render()` 提前 return，永远走不到那两处，头行 glyph、引导页大图标、功能钮与移动关闭钮的 × 全停在空占位上（桌面 / 移动共用同一方法，两端同症状）
+- [x] 修法：建壳即 `mountIcons(popup)`，三态一次修好；内容态原有的动态物化保留不删
+- [x] 同域同类漏挂一并补：对话气泡 who 行（含检索中态）与本周动态弹层头行；`mobile-panel` / `panel` 的其余 `innerHTML` 逐点核对过，模板不含 `ic()` 占位
+- [x] 尺寸收口：`mountIcons` 只复制 className、丢 `ic()` 的内联宽高，故在 `styles.css` 按容器补（头行 19 / 引导页 34 / 功能钮 14 / 分节标题 13 等，14px 兜底）；不改全局 `mountIcons`，避免波及所有域
+- [x] 测试：新增 `tests/secondbrain/shell-icons.test.ts` 5 例（先红后绿）
+- [x] 门禁：`tsc` 0；`test-affected --since master` 546 文件 / 8437 例全绿
+- [x] 真机双端复验（实例 `sb-icon-check`，同一空库与基线对比）：桌面 / 移动均 `[data-lucide]` 0、`.bz-ic` 14，`shots/08-desktop-after.png`、`shots/09-mobile-panel-after.png`
+- [x] 收尾：合并回 master（`c8c531f9`）+ 归档 issue 569 + 开发构建部署到测试库
+- [ ] 后续：主笔记库等用户点头再部署
