@@ -91,7 +91,7 @@ import { openEncrypt, encryptCurrentNote, lockEncrypt, changeSafePassword, unloa
 // 密码本（password-vault 域，ADR-0109 自统一保险库拆回独立域；ADR-0078 成型版，共享保险箱锁与数据）
 import { openPasswordVault, unloadPasswordVault, copyGeneratedPassword, lockPasswordVault, quickGeneratePassword } from './password-vault';
 // 内容首页（home 域，ticket 177；旧入口页 launcher 已退役删除，ADR-0093）
-import { openHome, unloadHome } from './home';
+import { openHome, unloadHome, prewarmHome } from './home';
 // recap 域面板已退役（ADR-0157）：总结链路一度迁 home 时间线卡动作行，
 // 该入口 2026-09-17 也已去掉（用户点名：首页不留「生成今日总结」）。
 // 纯函数库留 src/recap：collectRecap 仍供 home/river 摘要数字，summarize（AI 总结写日记）
@@ -669,6 +669,9 @@ export default class BzPlugin extends Plugin {
       // 日记本后台预热（②）：延迟一拍到空闲只读数据填缓存、不建 DOM（ADR-0003 兼容），
       // 首开日记本命中缓存秒开；四目录任一 md 变更经 domain-bus 事件自动失效。禁用插件时不预热（C13）。
       prewarmDiary(this.app, () => this.unloaded);
+      // 内容首页后台预热（2026-11-15）：同样只填数据缓存、不建面板；首开省掉一遍全库采集，
+      // 重开则靠域事件 / 跨天 / 5 分钟兜底判断要不要回源。禁用插件时不预热（C13）。
+      prewarmHome(this.app, () => this.unloaded);
       // 工具坞调度（ADR-0236）：就绪后延迟首跑、之后轮询兜到点触发；只在桌面端起。
       // 传卸载旗标进去 —— 插件禁用后到点的定时器必须短路，不能幽灵运行（同 C13）。
       startDockScheduler(this.app, () => this.unloaded);

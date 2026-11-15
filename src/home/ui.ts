@@ -41,7 +41,8 @@ import {
 } from './shared';
 import type { PomodoroPhase } from '../core/pomodoro-phase';
 import { isFocusingPhase } from '../core/pomodoro-phase';
-import { collectRiver, type RiverData } from './river';
+import type { RiverData } from './river';
+import { loadRiverCached } from './river-cache';
 import { loadHomeOrder } from './order';
 import { motionDaySwitch, motionPanelIn, motionPanelOut, motionRendered, motionWeekPop } from './motion';
 import {
@@ -202,7 +203,7 @@ export function createOverlay(app: any): void {
   // 打开即入焦 + Tab 圈闭（呈报#13 F3+H3 全域范式，core trapPanelFocus 单源）
   trapPanelFocus(overlay);
   mountPanelResize(overlay); // 桌面拖拽缩放 + 尺寸记忆（ADR-0084/0094）
-  void refreshRiverAndRender();
+  scheduleRefresh();
 }
 
 /**
@@ -225,16 +226,55 @@ async function readPomodoroPhase(app: any): Promise<PomodoroPhase> {
  *  用旧数据覆盖新数据——发号在采集前、校验在写回前，非最新代次直接作废 */
 let refreshSeq = 0;
 
-/** 重新采集活动河数据 + 读入口顺序/番茄钟相位（并发取回，避免多趟闪） */
-async function refreshRiverAndRender(): Promise<void> {
+/* ---------- 开发期耗时探针（issue：首页每次重开卡一小会儿） ----------
+ * __BZ_DEV__ 是编译期旗标，只有 BZ_VAULT_DIR 指向测试库的开发构建为 true；
+ * production 恒 false，整段被 esbuild 消掉，发布版零残留。测试环境未注入该全局，
+ * typeof 守卫保证不报 ReferenceError。 */
+function devNow(): number {
+  return typeof performance !== 'undefined' && typeof performance.now === 'function'
+    ? performance.now()
+    : Date.now();
+}
+function devPerf(label: string, ms: number): void {
+  if (typeof __BZ_DEV__ !== 'undefined' && __BZ_DEV__) {
+    console.debug(`[home:perf] ${label} ${ms.toFixed(1)}ms`);
+  }
+}
+
+/** 让位首帧（issue 383）：rAF 后再落一拍，等面板画出来再做采集/排版，
+ *  否则缓存命中时整条链在微任务里一口气跑到 renderAll，反而堵住「打开」那一帧。 */
+function afterPaint(): Promise<void> {
+  return new Promise((resolve) => {
+    if (typeof requestAnimationFrame !== 'function' || document.hidden) {
+      setTimeout(resolve, 0);
+      return;
+    }
+    requestAnimationFrame(() => setTimeout(resolve, 0));
+  });
+}
+
+/** 排一轮刷新：默认吃会话缓存；force = 手动刷新 / 动作落地 / 重试，恒回源。 */
+function scheduleRefresh(force = false): void {
+  void afterPaint().then(() => refreshRiverAndRender({ force }));
+}
+
+/** 重新采集活动河数据 + 读入口顺序/番茄钟相位（并发取回，避免多趟闪）。
+ *  数据层命中缓存时 river 与 H.river 是同一份对象引用 —— 五区内容没变，直接收手不重排，
+ *  既不重扫全库也不整屏重建（用户报的「每次打开卡一小会儿」就是这两件事）。 */
+async function refreshRiverAndRender(opts: { force?: boolean } = {}): Promise<void> {
   if (!H.currentOverlay || !H.appRef) return;
   const overlay = H.currentOverlay;
   const seq = ++refreshSeq;
+  const t0 = devNow();
+  const prevRiver = H.river;
+  const prevPhase = H.pomodoroPhase;
+  const prevOrderJson = JSON.stringify(H.order);
   const [river, order, phase] = await Promise.all([
-    collectRiver(H.appRef).catch(() => null),
+    loadRiverCached(H.appRef, { force: opts.force }).catch(() => null),
     loadHomeOrder(H.appRef),
     readPomodoroPhase(H.appRef),
   ]);
+  devPerf(opts.force ? 'collect(force)' : 'collect', devNow() - t0);
   // 存活守卫（arch A3）：await 期间面板被卸载（unloadHome → remove + resetHomeState 全字段
   // 归零）或重建（currentOverlay 换新）→ 本次采集作废，不得把脏数据写回已清零的 H
   //（否则同会话禁用→重启用首页会闪现上一会话旧渲染，跨天时头行日期与时间线列错位）
@@ -260,7 +300,18 @@ async function refreshRiverAndRender(): Promise<void> {
     const { defaultDay, rangeDays } = readHomeSettings();
     H.riverView = pickInitialView(river, defaultDay, rangeDays);
   }
+  // 缓存命中（同一份 RiverData）+ 相位/顺序都没变 + 上次已渲染过真数据 ⇒ 五区内容原样，
+  // 不重建 DOM、不重放编排、不动焦点与滚位。首次开（prevRiver 为 null，骨架待换）不在此列。
+  const unchanged =
+    !!river && !!prevRiver && river === prevRiver && !H.riverFailed &&
+    phase === prevPhase && JSON.stringify(H.order) === prevOrderJson;
+  if (unchanged) {
+    devPerf('cache-hit 跳过重建', devNow() - t0);
+    return;
+  }
+  const tRender = devNow();
   renderAll();
+  devPerf('renderAll', devNow() - tRender);
 }
 
 /**
@@ -293,7 +344,7 @@ export function showOverlay(): void {
   restoreScroll(overlay);
   motionPanelIn(overlay, true);
   mountPanelResize(overlay); // 复用显重挂（closeOverlay 隐藏时已摘，此处句柄恒空，幂等由 mount 自守）
-  void refreshRiverAndRender();
+  scheduleRefresh(); // 重开：数据没变就只显不重排，变了才回源（域事件 / 跨天 / 5 分钟兜底）
 }
 
 /**
@@ -437,17 +488,17 @@ function runCommandAndRefresh(commandId: string, app: any, busyText?: string): v
     void (ret as Promise<unknown>).then(
       () => {
         activeCommands.delete(commandId);
-        return refreshRiverAndRender();
+        return refreshRiverAndRender({ force: true });
       },
       () => {
         // 失败分支（func P3-2 同刀）：不再静默刷新（用户视角「点了像没点」）
         activeCommands.delete(commandId);
         notice('动作没有执行成功', 'warning');
-        return refreshRiverAndRender();
+        return refreshRiverAndRender({ force: true });
       },
     );
   } else {
-    void refreshRiverAndRender();
+    void refreshRiverAndRender({ force: true });
   }
 }
 
@@ -582,7 +633,7 @@ function renderAll(): void {
       const retry = uiBtn({ label: '重试', onClick: () => {
         H.riverFailed = false;
         renderAll();
-        void refreshRiverAndRender();
+        void refreshRiverAndRender({ force: true });
       } });
       const row = document.createElement('div');
       row.className = 'bz-btn-row bz-btn-row--center';

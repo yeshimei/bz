@@ -13,6 +13,8 @@ import { DEFAULT_SETTINGS } from '../../src/settings';
 import { openHome, unloadHome } from '../../src/home';
 import { closeOverlay } from '../../src/home/ui';
 import { resetHomeState, H } from '../../src/home/state';
+import { invalidateRiverCache } from '../../src/home/river-cache';
+import { emitDomainEvent } from '../../src/core/domain-bus';
 import { DOMAINS } from '../../src/home/domains';
 
 
@@ -219,7 +221,8 @@ describe('home 活动河 UI（issue 232）', () => {
     writeBehavior(vault, [{ source: 'memo', type: 'added', name: '甲', dt: yesterdayAt(9) }]);
     const app = recApp(vault);
     openHome(app);
-    await new Promise((r) => setTimeout(r, 20));
+    // 刷新让出首帧后异步汇入：固定 sleep 在整仓全量并发下会读到骨架（issue 291 §7①）
+    await vi.waitFor(() => expect(document.querySelectorAll('[data-home-weekday]').length).toBe(7), { timeout: 3000 });
     // issue 288：默认「时间范围」= 本周 → 7 格全出（旧口径 today 只留一格已废）
     const wks0 = document.querySelectorAll('[data-home-weekday]');
     expect(wks0.length).toBe(7);
@@ -230,15 +233,14 @@ describe('home 活动河 UI（issue 232）', () => {
     unloadHome();
     resetHomeState();
     openHome(app);
-    await new Promise((r) => setTimeout(r, 20));
-    expect(document.querySelectorAll('[data-home-weekday]').length).toBe(1);
+    await vi.waitFor(() => expect(document.querySelectorAll('[data-home-weekday]').length).toBe(1), { timeout: 3000 });
 
     // 回到「本周」：点昨天那格 → 时间线切到昨天
     setSettingsProvider(() => ({ ...DEFAULT_SETTINGS, storagePath: 'CONFIG/STORAGE', homeTimelineRange: 'week' }));
     unloadHome();
     resetHomeState();
     openHome(app);
-    await new Promise((r) => setTimeout(r, 20));
+    await vi.waitFor(() => expect(document.querySelectorAll('[data-home-weekday]').length).toBe(7), { timeout: 3000 });
     const wks = document.querySelectorAll('[data-home-weekday]');
     expect(wks.length).toBe(7);
     // 倒排：第一格=今天。2026-09-23 用户拍板：格内只留星期中文（日期数字行退役），
@@ -280,7 +282,8 @@ describe('home 活动河 UI（issue 232）', () => {
     setSettingsProvider(() => ({ ...DEFAULT_SETTINGS, storagePath: 'CONFIG/STORAGE', homeNextCards: false }));
     const app = recApp(vault);
     openHome(app);
-    await new Promise((r) => setTimeout(r, 20));
+    // 等真数据那一轮 renderAll 落地（骨架期第三栏还没被收掉）；固定 sleep 在全量并发下会 flake
+    await vi.waitFor(() => expect(document.querySelector('[data-home-entries] .bz-home-erow')).toBeTruthy());
     const next = document.querySelector('[data-home-next]') as HTMLElement;
     expect(next.style.display).toBe('none');
     expect(next.innerHTML).toBe('');
@@ -292,7 +295,7 @@ describe('home 活动河 UI（issue 232）', () => {
     unloadHome();
     resetHomeState();
     openHome(app);
-    await new Promise((r) => setTimeout(r, 20));
+    await vi.waitFor(() => expect(document.querySelector('[data-home-next]')?.textContent).toContain('明 天 预 告'));
     const grid2 = document.querySelector('.bz-home-grid') as HTMLElement;
     expect(grid2.classList.contains('bz-home-grid--no-next')).toBe(false);
     expect((document.querySelector('[data-home-next]') as HTMLElement).textContent).toContain('明 天 预 告');
@@ -335,14 +338,20 @@ describe('home 活动河 UI（issue 232）', () => {
     writeBehavior(vault, [{ source: 'memo', type: 'added', name: '甲', dt: todayAt(10) }]);
     const app = recApp(vault);
     openHome(app);
-    await new Promise((r) => setTimeout(r, 20));
+    // 刷新让出首帧后异步汇入：固定 sleep 在高负载下会读到半成品（本文件 issue 291 §7① 同款）
+    await vi.waitFor(() => expect(document.querySelector('[data-home-go="cinema"]')).toBeTruthy());
     const row = document.querySelector('[data-home-go="cinema"]') as HTMLElement;
     row.focus();
     expect(document.activeElement).toBe(row);
-    // 重开触发一轮刷新（全量重建）→ 焦点应在新 DOM 的等价元素上，而不是跌回 body
+    // 数据变了（域动作后置脏）→ 重开回源并全量重建 → 焦点应在新 DOM 的等价元素上
+    invalidateRiverCache();
     closeOverlay();
     openHome(app);
-    await new Promise((r) => setTimeout(r, 20));
+    await vi.waitFor(() => {
+      const el = document.querySelector('[data-home-go="cinema"]');
+      expect(el).toBeTruthy();
+      expect(el).not.toBe(row);
+    });
     const fresh = document.querySelector('[data-home-go="cinema"]') as HTMLElement;
     expect(fresh).not.toBe(row); // 元素确实是重建的新节点
     expect(document.activeElement).toBe(fresh);
@@ -435,8 +444,10 @@ describe('home 活动河 UI（issue 232）', () => {
     expect(el1.isConnected).toBe(true); // DOM 保留
     expect(el1.style.display).toBe('none');
 
-    // 行为流新增今日动静后重开：同一元素、同步恢复显示（秒显旧内容），刷新尚未到达
+    // 备忘录新增今日动静（真实场景由域事件把活动河缓存置脏）后重开：
+    // 同一元素、同步恢复显示（秒显旧内容），刷新尚未到达
     writeBehavior(vault, [{ source: 'memo', type: 'added', name: '新条目', dt: todayAt(10) }]);
+    emitDomainEvent('memo', { kind: 'add' });
     openHome(app);
     expect(document.querySelector('.bz-home-overlay')).toBe(el1); // 复用不重建
     expect(el1.style.display).not.toBe('none');
