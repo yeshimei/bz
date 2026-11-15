@@ -2085,6 +2085,34 @@ describe('DiaryAppController · 写作内页（ADR-0233）', () => {
     expect(q('.bz-diary-scene').style.display).toBe('none');
   });
 
+  /* 2026-11-15 发版 review：草稿恢复排在文件夹引导之前时，没配目录的库也会把写字页
+     叠在引导纸上面（两页叠着，点落笔还会失败）。草稿该留着，但别摊出来。 */
+  it('未设日记文件夹：上次的草稿不摊写作页，稿子留着等配好目录', async () => {
+    const c = await openBook();
+    const area = await openWritePage(c);
+    area.value = '没配目录时不该冒出来的字';
+    area.dispatchEvent(new Event('input', { bubbles: true }));
+    const key = vaultBasePathOf(getApp());
+    await vi.waitFor(() => expect(readDiaryDraft(key)?.text).toBe('没配目录时不该冒出来的字'), { timeout: 2500 });
+
+    // 强杀重开：先清掉内存态与页面
+    c.cleanup();
+    DiaryAppController.instance = null;
+    document.body.innerHTML = '';
+
+    setSettingsProvider(() => ({}) as never); // 目录空着 → needsFolderSetup 真
+    const app = mockAppWithVault(vault);
+    (app as any).internalPlugins.getPluginById = () => null;
+    setApp(app as never);
+    expect(vaultBasePathOf(getApp())).toBe(key); // 同一个库：草稿该被这份引导态看见
+
+    const c2 = DiaryAppController.getInstance();
+    c2.show();
+    expect(q('.bz-diary-fallback').hidden).toBe(false);
+    expect(q('.bz-diary-wsp').hidden).toBe(true); // 引导纸上不叠写字页
+    expect(readDiaryDraft(key)?.text).toBe('没配目录时不该冒出来的字'); // 稿子没被清
+  });
+
   it('重开册子：草稿还在，且不重新渲染（书页与实例都复用）', async () => {
     const c = await openBook();
     const area = await openWritePage(c);

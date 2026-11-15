@@ -548,6 +548,10 @@ export class DiaryAppController {
   private saving = false;
   /** 草稿落盘防抖：输入停 800ms 同步写一次 localStorage（强杀进程不等异步写盘） */
   private draftSaveTimer: ReturnType<typeof setTimeout> | null = null;
+  /** 最早那笔「还没落盘的字」的时刻：连续敲字超过 4 秒强制落一次（maxWait） */
+  private draftDirtySince = 0;
+  /** visibilitychange 兜底是否已挂（移动端切后台定时器被挂起，等不到防抖） */
+  private draftVisibilityBound = false;
   /** 开册进度条的 `uiProgress` 句柄（首次开册建一次就复用，不随层出入栈——基元没有状态） */
   private loadBar: { el: HTMLElement; setValue: (n: number) => void } | null = null;
   /** 进度条的显示延时器：读得快（缓存命中）就不闪这一下 */
@@ -3298,10 +3302,20 @@ export class DiaryAppController {
    * 存的是明文临时稿，与日记条目的加密写层互不相干，也不进册子数据文件。 */
   private draftVault(): string {
     try {
-      return vaultBasePathOf(getApp());
+      const base = vaultBasePathOf(getApp());
+      if (base) return base;
     } catch {
-      return ''; // app 尚未注入（少见）：退回裸键，总比不存强
+      /* app 尚未注入（少见） */
     }
+    // 移动端拿不到绝对路径时退回库名（2026-11-15 发版 review）：空串会让所有库共用一个
+    // 裸键，A 库没写完的稿子跑到 B 库去。拿不到库名才退回裸键——总比不存强。
+    try {
+      const name = getApp().vault.getName();
+      if (name) return `name:${name}`;
+    } catch {
+      /* 同上 */
+    }
+    return '';
   }
 
   private cancelDraftSave(): void {
@@ -3311,10 +3325,37 @@ export class DiaryAppController {
     }
   }
 
+  /** 切后台 / 页面被隐藏时立刻落一次（移动端定时器会被挂起，等不到 800ms 防抖） */
+  private onDraftVisibility = (): void => {
+    if (typeof document === 'undefined' || document.visibilityState === 'hidden') this.persistDraft();
+  };
+
+  private bindDraftVisibility(): void {
+    if (this.draftVisibilityBound || typeof document === 'undefined') return;
+    this.draftVisibilityBound = true;
+    document.addEventListener('visibilitychange', this.onDraftVisibility);
+  }
+
+  private unbindDraftVisibility(): void {
+    if (!this.draftVisibilityBound || typeof document === 'undefined') return;
+    this.draftVisibilityBound = false;
+    document.removeEventListener('visibilitychange', this.onDraftVisibility);
+  }
+
   private scheduleDraftSave(): void {
+    // 连续敲字一直不停顿的话，纯尾沿防抖会一次都不落盘（2026-11-15 发版 review）：
+    // 距「最早那笔没落盘的字」超过 4 秒就先写一次，最坏丢字从「整段」回到「几秒」。
+    const now = Date.now();
+    if (!this.draftDirtySince) this.draftDirtySince = now;
     this.cancelDraftSave();
+    if (now - this.draftDirtySince >= 4000) {
+      this.draftDirtySince = 0;
+      this.persistDraft();
+      return;
+    }
     this.draftSaveTimer = setTimeout(() => {
       this.draftSaveTimer = null;
+      this.draftDirtySince = 0;
       this.persistDraft();
     }, 800);
   }
@@ -3354,6 +3395,24 @@ export class DiaryAppController {
     this.renderWspTools();
     this.setWriteMode(!!saved.edit);
     this.wspEl.hidden = false;
+  }
+
+  /** 恢复出来的「改字」草稿，目标行可能已经漂了（同步 / 另一窗口在前面增删过条目）：
+   *  按当前册子的同一条正文重取行号；连正文都找不到了就转成「新写」——字留着，
+   *  别把用户锁死在「未能在日记数据中定位该条目」上（2026-11-15 发版 review）。 */
+  private resyncDraftEdit(): void {
+    const d = this.draft;
+    if (!d?.edit) return;
+    const ed = d.edit;
+    const hit = this.entries.find((e) => e.filePath === ed.filePath && e.content === ed.expectContent);
+    if (hit) {
+      const n = Number(hit.lineNumber ?? 0);
+      if (n > 0) ed.lineNumber = n;
+      return;
+    }
+    d.edit = undefined;
+    this.setWriteMode(false);
+    notice('原来那篇找不到了，这张纸改成新写一篇', 'warning');
   }
 
   private dropWrite(): void {
@@ -3565,6 +3624,8 @@ export class DiaryAppController {
     const caret = before.length + block.length;
     ta.setSelectionRange(caret, caret);
     ta.focus();
+    // 程序化改正文不会触发 input：不补这一拍，插完图就强杀的话草稿里没有这行引用
+    this.scheduleDraftSave();
   }
 
   // ============================================================
@@ -4212,8 +4273,10 @@ export class DiaryAppController {
     topifyZ(this.root!); // ADR-0067：域根层级动态发号
     this._allowCacheNext = true;
     /* 上次没写完的纸先摊回来（重启 / 强杀之后内存态已不在）：放在读册之前，
-       不依赖成册快路，也不占用读盘那一拍。 */
-    this.restoreDraft();
+       不依赖成册快路，也不占用读盘那一拍。
+       **必须排在文件夹引导之后**（2026-11-15 发版 review）：没配日记文件夹时桌上只有一张
+       引导纸，草稿若先摊开会把写字页叠在引导纸上面，落笔还会失败。草稿留着不动，
+       等配好目录下次打开再恢复。 */
 
     /* 未配置日记文件夹（2026-10-30）：不读盘、不排册，桌上贴一张引导纸——
        说明缺什么 + 「设置日记文件夹」+「看视频教程」（空态，不弹窗）。
@@ -4223,12 +4286,15 @@ export class DiaryAppController {
       return;
     }
     this.clearFolderGate();
+    this.bindDraftVisibility();
+    this.restoreDraft();
 
     this.subscribeEvents();
     this.subscribeVault();
 
     /* 快路：上次排好的这一册还能用（数据没被外部改动、锁态没变） */
     if (this.bookFresh && this.entries.length && !this._loadError && this.bookStillValid()) {
+      this.resyncDraftEdit(); // 册子在手：先把「改字」草稿的行号对准（行可能漂了）
       this.promptFirstOpenTutorial(firstOpen);
       this.toast(reopen ? '又翻开了' : '翻开的是最新那篇');
       return;
@@ -4268,6 +4334,7 @@ export class DiaryAppController {
         this.hideLoading();
       }
       this.startBackgroundFill();
+      this.resyncDraftEdit(); // 册子读完了：把「改字」草稿的行号对准（行可能漂了）
       this.promptFirstOpenTutorial(firstOpen);
       this.toast(reopen ? '又翻开了' : '翻开的是最新那篇');
     })();
@@ -4567,6 +4634,7 @@ export class DiaryAppController {
     this.bookFresh = false; // DOM 都要拆了，快路的凭据跟着作废
     this.cancelDraftSave();
     this.persistDraft(); // 卸载前的最后一拍：纸上有字就别让它随内存态消失
+    this.unbindDraftVisibility();
     this.draft = null;
     if (this.root) {
       this.root.remove();
