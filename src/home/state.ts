@@ -46,6 +46,14 @@ export interface HomeState {
    * **必须挂在 H 里**（同 riverView 教训：模块级变量 resetHomeState 归不到零）。
    */
   scroll: { body: number; flow: number };
+  /**
+   * 首屏壳（2026-11-15 首开分段渲染）：`makeRiverShell()` 的纯算占位数据，只活到
+   * 第一趟 `collectRiver` 回来。**不进 `river`** —— `river` 仍只认真数据，
+   * arch A3 存活守卫 / H12 失败态 / 缓存快路的引用判据全部保持原义。
+   */
+  riverShell: RiverData | null;
+  /** 壳渲染时的入口顺序快照：异步 loadHomeOrder 若给出不同顺序，慢数据到位得整屏重排 */
+  shellOrderJson: string | null;
 }
 
 export const H: HomeState = {
@@ -58,6 +66,8 @@ export const H: HomeState = {
   pomodoroPhase: 'idle',
   riverView: null,
   scroll: { body: 0, flow: 0 },
+  riverShell: null,
+  shellOrderJson: null,
 };
 
 /** 测试/重建用：整体重置模块状态 */
@@ -71,4 +81,6 @@ export function resetHomeState(): void {
   H.pomodoroPhase = 'idle';
   H.riverView = null;
   H.scroll = { body: 0, flow: 0 };
+  H.riverShell = null;
+  H.shellOrderJson = null;
 }

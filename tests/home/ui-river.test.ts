@@ -110,7 +110,7 @@ describe('home 活动河 UI（issue 232）', () => {
   it('时间线空态与预告三卡', async () => {
     const app = recApp(vault);
     openHome(app);
-    await new Promise((r) => setTimeout(r, 20));
+    await vi.waitFor(() => expect(H.river).not.toBeNull()); // 首屏壳只有预告骨架，三张规则卡要等慢数据补画
     const overlay = document.querySelector('.bz-home-overlay')!;
     expect(overlay.querySelector('.bz-home-flow-empty')).toBeTruthy(); // 空河引导文案
     const prs = overlay.querySelectorAll('.bz-home-pr');
@@ -174,7 +174,7 @@ describe('home 活动河 UI（issue 232）', () => {
     vault.files.set('我的/影视/《正在看》.md', '---\ntags:\n- 电影\n状态: 在看\n---\n'); // 在看 > 0 → cinema warn
     const app = recApp(vault);
     openHome(app);
-    await new Promise((r) => setTimeout(r, 20));
+    await vi.waitFor(() => expect(H.river).not.toBeNull()); // 彩点要等慢数据就地补画，壳阶段恒 off
     const overlay = document.querySelector('.bz-home-overlay')!;
     const dotClass = (id: string): string => {
       const el = overlay.querySelector(`[data-home-go="${id}"] .bz-home-dot`);
@@ -221,8 +221,11 @@ describe('home 活动河 UI（issue 232）', () => {
     writeBehavior(vault, [{ source: 'memo', type: 'added', name: '甲', dt: yesterdayAt(9) }]);
     const app = recApp(vault);
     openHome(app);
-    // 刷新让出首帧后异步汇入：固定 sleep 在整仓全量并发下会读到骨架（issue 291 §7①）
-    await vi.waitFor(() => expect(document.querySelectorAll('[data-home-weekday]').length).toBe(7), { timeout: 3000 });
+    // 首屏壳同步就有 7 格，得等慢数据把周历动静与时间线补上（issue 291 §7① 同款并发 flake）
+    await vi.waitFor(() => {
+      expect(document.querySelectorAll('[data-home-weekday]').length).toBe(7);
+      expect(H.river).not.toBeNull();
+    }, { timeout: 3000 });
     // issue 288：默认「时间范围」= 本周 → 7 格全出（旧口径 today 只留一格已废）
     const wks0 = document.querySelectorAll('[data-home-weekday]');
     expect(wks0.length).toBe(7);
@@ -240,7 +243,10 @@ describe('home 活动河 UI（issue 232）', () => {
     unloadHome();
     resetHomeState();
     openHome(app);
-    await vi.waitFor(() => expect(document.querySelectorAll('[data-home-weekday]').length).toBe(7), { timeout: 3000 });
+    await vi.waitFor(() => {
+      expect(document.querySelectorAll('[data-home-weekday]').length).toBe(7);
+      expect(H.river).not.toBeNull();
+    }, { timeout: 3000 }); // 切天要等真数据，壳阶段的周历还不可点
     const wks = document.querySelectorAll('[data-home-weekday]');
     expect(wks.length).toBe(7);
     // 倒排：第一格=今天。2026-09-23 用户拍板：格内只留星期中文（日期数字行退役），
@@ -338,8 +344,11 @@ describe('home 活动河 UI（issue 232）', () => {
     writeBehavior(vault, [{ source: 'memo', type: 'added', name: '甲', dt: todayAt(10) }]);
     const app = recApp(vault);
     openHome(app);
-    // 刷新让出首帧后异步汇入：固定 sleep 在高负载下会读到半成品（本文件 issue 291 §7① 同款）
-    await vi.waitFor(() => expect(document.querySelector('[data-home-go="cinema"]')).toBeTruthy());
+    // 首屏壳同步就有入口行；本例要的是「真数据已到之后」那次 renderAll 全量重建
+    await vi.waitFor(() => {
+      expect(document.querySelector('[data-home-go="cinema"]')).toBeTruthy();
+      expect(H.river).not.toBeNull();
+    });
     const row = document.querySelector('[data-home-go="cinema"]') as HTMLElement;
     row.focus();
     expect(document.activeElement).toBe(row);
@@ -366,7 +375,7 @@ describe('home 活动河 UI（issue 232）', () => {
     }));
     const app = recApp(vault);
     openHome(app);
-    await new Promise((r) => setTimeout(r, 20));
+    await vi.waitFor(() => expect(H.river).not.toBeNull()); // 「默认打开日」由慢数据决定
     const yesterday = yesterdayDateStr();
     expect(document.querySelector(`[data-home-weekday="${yesterday}"]`)!.classList.contains('bz-home-wk--sel')).toBe(true);
     expect(document.querySelectorAll('.bz-home-timeline .bz-home-ev').length).toBe(1); // 直接就看到昨天那条
@@ -379,7 +388,7 @@ describe('home 活动河 UI（issue 232）', () => {
     ]);
     const app = recApp(vault);
     openHome(app);
-    await new Promise((r) => setTimeout(r, 20));
+    await vi.waitFor(() => expect(H.river).not.toBeNull());
     // 点周历切到昨天 → 查看日停在过去
     const yesterday = yesterdayDateStr();
     (document.querySelector(`[data-home-weekday="${yesterday}"]`) as HTMLElement).click();
@@ -436,7 +445,7 @@ describe('home 活动河 UI（issue 232）', () => {
   it('issue 290：关闭保留 DOM——重开复用同一元素秒显旧渲染，动态刷新写入新数据', async () => {
     const app = recApp(vault); // 初始无行为流文件 → 时间线空态
     openHome(app);
-    await new Promise((r) => setTimeout(r, 20));
+    await vi.waitFor(() => expect(H.river).not.toBeNull()); // 空河引导文案是慢数据补画后才有的
     const el1 = document.querySelector('.bz-home-overlay') as HTMLElement;
     expect(el1.querySelector('.bz-home-flow-empty')!.textContent).toContain('这一天还没有留下痕迹');
 
@@ -453,9 +462,8 @@ describe('home 活动河 UI（issue 232）', () => {
     expect(el1.style.display).not.toBe('none');
     expect(H.overlayVisible).toBe(true);
     expect(el1.querySelector('.bz-home-flow-empty')!.textContent).toContain('这一天还没有留下痕迹'); // 旧渲染还在
-    // 动态刷新到达：时间线写进新条目
-    await new Promise((r) => setTimeout(r, 20));
-    expect(el1.querySelectorAll('.bz-home-timeline .bz-home-ev').length).toBe(1);
+    // 动态刷新到达：时间线写进新条目（回源要重跑全量采集，固定 sleep 在全量并发下会 flake）
+    await vi.waitFor(() => expect(el1.querySelectorAll('.bz-home-timeline .bz-home-ev').length).toBe(1));
   });
 
   it('issue 290：unloadHome 真销毁——隐藏保留的 DOM 被移除、状态整体归零', async () => {

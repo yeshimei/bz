@@ -180,7 +180,9 @@ export function prewarmRiver(app: App, isUnloaded: () => boolean = () => false):
     ? null
     : (window as unknown as { requestIdleCallback?: (cb: () => void, opts?: { timeout?: number }) => number });
   if (host && typeof host.requestIdleCallback === 'function') {
-    host.requestIdleCallback(run, { timeout: 8000 });
+    // 首开分段渲染后，预热跑的是「慢数据」那一轮：8 秒兜底会让启动后马上点开首页时
+    // 白等一整段空闲，故压到 1.2 秒——仍让出启动首帧，又赶得上用户第一次点开。
+    host.requestIdleCallback(run, { timeout: 1200 });
   } else {
     setTimeout(run, 0);
   }
