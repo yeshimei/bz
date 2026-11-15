@@ -1984,6 +1984,28 @@ describe('DiaryAppController · 写作内页（ADR-0233）', () => {
     expect(onBook.defaultPrevented).toBe(true); // 书上仍是翻页
   });
 
+  it('草稿在纸上：方向键归纸面，不翻背后的书；点过纸边后先把笔还给正文', async () => {
+    const c = await openBook();
+    const area = await openWritePage(c);
+    const rec = lastFlip();
+    expect(rec.page).toBe(0);
+
+    /* 点日戳 / 贴纸 / 纸边：焦点离开正文——此时按左右键，老实现会去翻背面的书，
+       纸盖着书看不见，用户只觉得「方向键坏了」（2026-11-16 真机反馈的排查结论）。 */
+    area.blur();
+    expect(document.activeElement).not.toBe(area);
+
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true }));
+    expect(rec.page).toBe(0); // 没翻底下的书
+    expect(document.activeElement).toBe(area); // 方向键把笔还给正文
+
+    /* 焦点在正文里：按键归录入，册子不接管 */
+    const inside = new KeyboardEvent('keydown', { key: 'ArrowLeft', bubbles: true, cancelable: true });
+    area.dispatchEvent(inside);
+    expect(rec.page).toBe(0);
+    expect(inside.defaultPrevented).toBe(false);
+  });
+
   it('写了字要收起整本：Esc / 收起钮 / 点遮罩都走二次确认（接着写 · 先收着 · 落笔）', async () => {
     const c = await openBook();
     const area = await openWritePage(c);

@@ -1725,6 +1725,16 @@ export class DiaryAppController {
       return;
     }
     if (ev.target instanceof Element && ev.target.matches('input, textarea')) return;
+    /* 写作内页摊着：方向键归纸面（与滚轮/触控同口径，见 bindChrome 那两条早退）。
+       纸盖着书，翻了也看不见；点过纸边（日戳 / 贴纸 / 空白）焦点就掉了，
+       这时按左右键会去翻背后那本书，真机反馈就是「左右键不能移动光标」。
+       方向键先把笔还给正文，其余键照常交给当前控件（落笔按钮的 Enter 等）。 */
+    if (this.wspEl && !this.wspEl.hidden) {
+      if (ev.key.startsWith('Arrow') && document.activeElement !== this.wspAreaEl) {
+        this.wspAreaEl.focus();
+      }
+      return;
+    }
     if (!this.lightboxEl.hidden) {
       if (ev.key === 'ArrowLeft') {
         this.lbStep(-1);
