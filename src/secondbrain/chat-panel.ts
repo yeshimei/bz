@@ -288,6 +288,8 @@ export class ChatPanel {
       div.innerHTML = chatUserMsgHtml();
       (div.querySelector('.bz-sb-chat-bubble') as HTMLElement).textContent = content;
     }
+    // 气泡壳的 who 行图标（局部 innerHTML 重写后不能再等整体物化，这里补挂）
+    mountIcons(div);
     this.messagesDiv.appendChild(div);
     this.messagesDiv.scrollTop = this.messagesDiv.scrollHeight;
     this.history.push({ role, content });
@@ -472,6 +474,7 @@ export class ChatPanel {
     live.className = 'bz-sb-chat-msg assistant';
     live.innerHTML = chatAiMsgHtml();
     (live.querySelector('.bz-sb-chat-bubble') as HTMLElement).innerHTML = chatThinkingHtml(CONFIG.CHAT_TOP_K);
+    mountIcons(live); // who 行图标（检索中态气泡不走 addChatMessage）
     this.messagesDiv.appendChild(live);
     motionMsgIn(live);
     motionSearchWave(this.messagesDiv);

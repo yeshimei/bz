@@ -412,6 +412,10 @@ export class SecondBrainPanel {
     const popup = document.createElement('div');
     popup.className = 'bz-sb-panel bz-panel-mtop bz-main-panel'; // 移动端全屏 + 44px 顶部避让（issue 272；桌面不生效）
     popup.innerHTML = panelShellHtml();
+    // 骨架图标一次挂齐（2026-11-15）：引导 / 进度态在 render() 里提前 return，走不到
+    // renderStats / renderDist 那两处物化，头行 glyph、引导页大图标与两枚关闭钮的 ×
+    // 会停在空占位上（桌面 / 移动共用本方法，两端同症状）。内容态的动态重渲仍各自物化。
+    mountIcons(popup);
 
     // 头行：AI 对话 / 灵感参考 / 关闭（图标钮；⚙️ 已摘——设置走设置面板；引导期 func 钮整体收起，ticket 107）
     // 「关闭」复位优先（clipbook 同款语义）：来源分布树有展开目录先全部收起并重绘，无展开才关面板
