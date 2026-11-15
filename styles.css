@@ -26350,6 +26350,42 @@ button.bz-bs-guide-link {
   --ok: #2dd4bf;
 }
 
+/* ==================== 图标尺寸（ic() 占位物化后） ====================
+   render.ts 的 ic() 把宽高写在内联 style 上，而 core/ui/icons.ts 的 mountIcons
+   替换占位时只保留 className —— 内联尺寸随占位一起没了。这里按容器把尺寸补回；
+   不改全局 mountIcons（那会波及所有域的图标尺寸）。14px 是兜底档，防任何漏写的
+   容器让 svg 按浏览器默认尺寸撑开。 */
+.bz-sb-panel .bz-ic,
+.bz-sb-weekly-modal .bz-ic,
+.bz-sb-chat-modal .bz-ic {
+  width: 14px;
+  height: 14px;
+  display: inline-flex;
+  flex: none;
+}
+.bz-sb-panel .bz-ic svg,
+.bz-sb-weekly-modal .bz-ic svg,
+.bz-sb-chat-modal .bz-ic svg {
+  width: 100%;
+  height: 100%;
+}
+/* 逐容器对齐 ic() 各调用点：头行 glyph 19、引导页大图标 34、功能钮 14、
+   分节标题 13、来源树折叠箭头 12、周报头 17、对话返回 15 / 发送 14 / who 行 10 */
+.bz-sb-panel .bz-sb-glyph .bz-ic { width: 19px; height: 19px; }
+.bz-sb-panel .bz-sb-onboard-icon .bz-ic { width: 34px; height: 34px; }
+.bz-sb-panel .bz-sb-fbtn .bz-ic { width: 14px; height: 14px; }
+.bz-sb-panel .bz-sb-ct .bz-ic { width: 13px; height: 13px; }
+.bz-sb-panel .bz-sb-dist-caret .bz-ic { width: 12px; height: 12px; }
+.bz-sb-weekly-modal .bz-sb-glyph .bz-ic { width: 17px; height: 17px; }
+.bz-sb-weekly-modal .bz-sb-fbtn .bz-ic { width: 14px; height: 14px; }
+.bz-sb-weekly-modal .bz-sb-ct .bz-ic { width: 13px; height: 13px; }
+.bz-sb-weekly-modal .bz-sb-weekly-row-hit-arrow .bz-ic { width: 12px; height: 12px; }
+.bz-sb-chat-modal .bz-sb-ws-back .bz-ic { width: 15px; height: 15px; }
+.bz-sb-chat-modal .bz-sb-ws-ref .bz-ic { width: 12px; height: 12px; }
+.bz-sb-chat-modal .bz-sb-chat-send .bz-ic { width: 14px; height: 14px; }
+.bz-sb-chat-modal .bz-sb-chat-lens .bz-ic { width: 15px; height: 15px; }
+.bz-sb-chat-modal .bz-sb-chat-who .bz-ic { width: 10px; height: 10px; }
+
 /* ==================== 主面板弹窗（统一入口） ==================== */
 
 .bz-sb-panel-mask {
