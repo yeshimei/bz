@@ -5,6 +5,7 @@
 import type { App } from 'obsidian';
 import { disarmHomeReturn } from '../core/home-return';
 import { H, resetHomeState } from './state';
+import { prewarmRiver, resetRiverCache } from './river-cache';
 import { createOverlay, showOverlay, closeOverlay, registerEscapeHandler, unregisterEscapeHandler, unmountPanelResize } from './ui';
 
 let initialized = false;
@@ -36,9 +37,19 @@ export function openHome(app: App): void {
   createOverlay(app);
 }
 
+/**
+ * 启动后台预热活动河数据（2026-11-15）：只填会话缓存，不建 DOM、不实例化面板（ADR-0003 兼容）。
+ * 首开首页命中缓存就能省掉一次约 20 轮全库遍历；卸载旗标为真时短路，防幽灵任务（C13）。
+ * 幂等；失败静默，真正打开时刷新会自行回源并呈现错误态。
+ */
+export function prewarmHome(app: App, isUnloaded: () => boolean = () => false): void {
+  prewarmRiver(app, isUnloaded);
+}
+
 /** 卸载清理（main.ts onunload 调用） */
 export function unloadHome(): void {
   initialized = false;
+  resetRiverCache(); // 缓存与域事件订阅一并复位，重新启用插件时重新预热
   // 卸载 = 本次会话全部作废：摘掉「关闭功能后回首页」的等待，防插件已经卸载还重建首页
   disarmHomeReturn();
   unregisterEscapeHandler();
