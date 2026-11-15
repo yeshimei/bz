@@ -258,6 +258,11 @@
   width: 30px;
   padding: 0;
 }
+/* 引导/进度态的移动端关闭出口：桌面仍由常规 ✕ 负责，此钮默认不显示、只在手机宽度放出来。
+   内容态挂 bz-sb-btn-hidden（display:none !important），与常规 ✕ 不会同时出现。 */
+.bz-sb-mb-close {
+  display: none;
+}
 .bz-sb-fbtn.busy {
   pointer-events: none;
   opacity: 0.72;
@@ -713,6 +718,10 @@
   .bz-sb-panel .bz-sb-pill,
   .bz-sb-panel .bz-sb-cnt {
     display: none;
+  }
+  /* 引导/进度态：常规 ✕ 被整组收起，全屏又没有遮罩 / ESC，这里放专属关闭钮 */
+  .bz-sb-panel .bz-sb-mb-close {
+    display: inline-flex;
   }
   .bz-sb-cards {
     grid-template-columns: repeat(3, minmax(0, 1fr));

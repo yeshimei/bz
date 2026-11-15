@@ -219,6 +219,9 @@ export function panelShellHtml(): string {
       <button class="bz-sb-panel-func bz-sb-fbtn bz-sb-fbtn--icon" id="bz-sb-open-chat" aria-label="AI 对话" title="AI 对话">${ic('message-square', 14)}</button>
       <button class="bz-sb-panel-func bz-sb-fbtn bz-sb-fbtn--icon" id="bz-sb-open-ref" aria-label="灵感参考" title="灵感参考">${ic('radar', 14)}</button>
       <button class="bz-sb-panel-func bz-sb-fbtn bz-sb-fbtn--icon" id="bz-sb-panel-close" aria-label="关闭" title="关闭">${ic('x', 14)}</button>
+      <!-- 引导/进度态的移动端关闭出口：不进「头行功能钮」那一组（该组会被整组收起），
+           初始带 bz-sb-btn-hidden，由 panel.ts 的三态切换决定放不放出来；只在 ≤768px 显示。 -->
+      <button class="bz-sb-fbtn bz-sb-fbtn--icon bz-touch-target bz-touch-target--lg bz-sb-mb-close bz-sb-btn-hidden" id="bz-sb-mb-close" aria-label="关闭" title="关闭">${ic('x', 14)}</button>
     </div>
   </div>
   <div class="bz-sb-panel-body">
