@@ -126,7 +126,9 @@
   height: 100%;
 }
 /* 逐容器对齐 ic() 各调用点：头行 glyph 19、引导页大图标 34、功能钮 14、
-   分节标题 13、来源树折叠箭头 12、周报头 17、对话返回 15 / 发送 14 / who 行 10 */
+   分节标题 13、来源树折叠箭头 12、周报头 17、对话返回 15 / 发送 14 / who 行 10、
+   「顺着追问」软问句 11（原本是 .bz-sb-ws-q--soft svg 的裸选择器，被上面的
+   `.bz-ic svg` 百分百覆盖后会长到 14px，这里按容器补回） */
 .bz-sb-panel .bz-sb-glyph .bz-ic { width: 19px; height: 19px; }
 .bz-sb-panel .bz-sb-onboard-icon .bz-ic { width: 34px; height: 34px; }
 .bz-sb-panel .bz-sb-fbtn .bz-ic { width: 14px; height: 14px; }
@@ -141,6 +143,7 @@
 .bz-sb-chat-modal .bz-sb-chat-send .bz-ic { width: 14px; height: 14px; }
 .bz-sb-chat-modal .bz-sb-chat-lens .bz-ic { width: 15px; height: 15px; }
 .bz-sb-chat-modal .bz-sb-chat-who .bz-ic { width: 10px; height: 10px; }
+.bz-sb-chat-modal .bz-sb-ws-q--soft .bz-ic { width: 11px; height: 11px; }
 
 /* ==================== 主面板弹窗（统一入口） ==================== */
 
