@@ -6,6 +6,7 @@ import type { App } from 'obsidian';
 import { disarmHomeReturn } from '../core/home-return';
 import { H, resetHomeState } from './state';
 import { prewarmRiver, resetRiverCache } from './river-cache';
+import { invalidateHomeOrder, loadHomeOrder } from './order';
 import { createOverlay, showOverlay, closeOverlay, registerEscapeHandler, unregisterEscapeHandler, unmountPanelResize } from './ui';
 
 let initialized = false;
@@ -44,12 +45,16 @@ export function openHome(app: App): void {
  */
 export function prewarmHome(app: App, isUnloaded: () => boolean = () => false): void {
   prewarmRiver(app, isUnloaded);
+  // 入口顺序预热（2026-11-15 发版 review）：一次 readFile，比采集便宜得多；先读到缓存，
+  // 首开铺壳就能按用户的真实顺序铺，不必「先默认、数据回来再整屏重排」。
+  void loadHomeOrder(app);
 }
 
 /** 卸载清理（main.ts onunload 调用） */
 export function unloadHome(): void {
   initialized = false;
   resetRiverCache(); // 缓存与域事件订阅一并复位，重新启用插件时重新预热
+  invalidateHomeOrder(); // 顺序缓存同批作废（换库 / 重新启用都该重新读）
   // 卸载 = 本次会话全部作废：摘掉「关闭功能后回首页」的等待，防插件已经卸载还重建首页
   disarmHomeReturn();
   unregisterEscapeHandler();

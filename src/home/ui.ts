@@ -45,8 +45,10 @@ import { isFocusingPhase } from '../core/pomodoro-phase';
 import type { RiverData } from './river';
 import { loadRiverCached } from './river-cache';
 import { makeRiverShell } from './river-shell';
-import { loadHomeOrder } from './order';
-import { motionDaySwitch, motionPanelIn, motionPanelOut, motionRendered, motionWeekPop } from './motion';
+import { loadHomeOrder, cachedHomeOrder } from './order';
+import {
+  motionDaySwitch, motionPanelIn, motionPanelOut, motionRendered, motionWeekPop, repaintRiverSurface,
+} from './motion';
 import {
   headDateText, panelFrameHtml, loadingEntriesHtml, loadingFlowHtml, loadingNextHtml, flowFailedHtml,
   weekHtml, entriesHtml, flowHtml, nextHtml, tilesHtml, sheetHeadHtml, menuHeadHtml, type FlowOpts,
@@ -197,6 +199,10 @@ export function createOverlay(app: any): void {
   bindEvents(overlay, app);
   // 首开同步铺壳（2026-11-15）：纯算 7 天日期 + 空计数，零 IO、零 await。
   // 左右入口 / 明天预告 / 周历 / 移动瓦片当场可见，只有中间时间线等后台那一轮全量采集。
+  // 顺序优先用预热缓存（一次 readFile，启动时就该有了）：否则壳按默认顺序铺，真顺序回来
+  // 一比对就整屏重排——设过自定义顺序 / 隐藏过域的人每次首开都要闪这一下。
+  const knownOrder = cachedHomeOrder(app);
+  if (knownOrder) H.order = knownOrder;
   H.riverShell = makeRiverShell();
   renderAll();
   motionPanelIn(overlay, false); // 动效层：面板壳入场（渲染编排由 renderAll 内的 motionRendered 管）
@@ -308,12 +314,17 @@ async function refreshRiverAndRender(opts: { force?: boolean } = {}): Promise<vo
   }
   // 首开壳 → 真数据：走局部补画，不整屏重建。引用判据在此天然不成立（壳与真数据是两份对象），
   // 所以显式认「阶段」，别让 unchanged 把慢数据吞掉，也别让 renderAll 把左右重放一遍。
-  const fromShell = !!river && !!H.riverShell;
+  const shell = H.riverShell;
+  const fromShell = !!river && !!shell;
   if (fromShell) H.riverShell = null;
   // 壳是同步铺的，入口顺序却来自异步 loadHomeOrder：真顺序与壳不同就得整屏重排一次
   const shellOrderChanged = fromShell && H.shellOrderJson !== null
     && H.shellOrderJson !== JSON.stringify(H.order);
   H.shellOrderJson = null;
+  // 壳铺好到采集回来之间跨过了零点（发版 review）：壳的周历 --today 与头行日期都还停在
+  // 前一天，局部补画只切 --hit/--sel，写着「今天」的那一格会错位。这种一晚上一回的边角
+  // 直接整屏重建，比在补画里重算整个周历便宜。
+  const crossedMidnight = !!shell && !!river && shell.today.dateStr !== river.today.dateStr;
   // 缓存命中（同一份 RiverData）+ 相位/顺序都没变 + 上次已渲染过真数据 ⇒ 五区内容原样，
   // 不重建 DOM、不重放编排、不动焦点与滚位。首次开（prevRiver 为 null，壳待补）不在此列。
   const unchanged =
@@ -323,7 +334,7 @@ async function refreshRiverAndRender(opts: { force?: boolean } = {}): Promise<vo
     devPerf('cache-hit 跳过重建', devNow() - t0);
     return;
   }
-  const slow = fromShell && !shellOrderChanged;
+  const slow = fromShell && !shellOrderChanged && !crossedMidnight;
   const tRender = devNow();
   if (slow) renderSlowData();
   else renderAll();
@@ -361,6 +372,9 @@ export function showOverlay(): void {
   motionPanelIn(overlay, true);
   mountPanelResize(overlay); // 复用显重挂（closeOverlay 隐藏时已摘，此处句柄恒空，幂等由 mount 自守）
   scheduleRefresh(); // 重开：数据没变就只显不重排，变了才回源（域事件 / 跨天 / 5 分钟兜底）
+  // 隐藏期间慢数据到达时量不到尺寸（display:none 下 0×0），河面 SVG 没画成；显示后补一次。
+  // 幂等：已经画过的（.has-river）不再动；数据没变的快路重开正是靠这一步补回来。
+  requestAnimationFrame(() => repaintRiverSurface(overlay));
 }
 
 /**
@@ -686,7 +700,9 @@ function renderAll(): void {
       mountIcons(entries);
       mountIcons(next);
       mountIcons(tiles);
-      mountRowInteractions(overlay, H.appRef, shell);
+      // 菜单不在这里挂（发版 review）：壳的计数是空快照，绑进去的盒头会一直停在空值上
+      // （慢数据只改文字，不重挂绑定件）。等真数据到位那次 renderSlowData 再一次性挂，
+      // 代价只是首开那几百毫秒里右键没有菜单。
       motionRendered(overlay, true); // 首屏编排：周历翻落 / 入口涟漪（时间线未到，河道段自跳）
       return;
     }
@@ -740,10 +756,27 @@ function renderAll(): void {
 }
 
 /**
+ * 入口行的数据面（副题计数 + 彩点）。壳（整段 HTML，见 layouts/river/render.ts 的
+ * entriesHtml / tilesHtml）与慢数据（就地改）共用这一条规则：**新增数据字段改这里，
+ * 并同步那两处初值**，别让慢数据漏掉一格。
+ */
+function patchRowEl(el: HTMLElement, data: RiverData, dots: ReturnType<typeof buildDots>): void {
+  const id = el.dataset.homeGo || '';
+  const text = riverCountText(id, data) ?? DOMAIN_MAP.get(id)?.sub;
+  const slot = el.querySelector('.bz-home-ect');
+  if (slot && text) slot.textContent = text;
+  const dot = el.querySelector('.bz-home-dot');
+  if (!dot) return;
+  const kind = data.pending ? 'pending' : dotOf(dots, id);
+  dot.className = 'bz-home-dot bz-home-dot--' + kind;
+}
+
+/**
  * 慢数据到位的局部补画（2026-11-15 首开分段渲染）。
- * 首屏壳已经把左右 / 周历 / 瓦片铺好并挂过菜单，这里**绝不整屏重建**：
+ * 首屏壳已经把左右 / 周历 / 瓦片铺好，这里**绝不整屏重建**：
  * 只换中间时间线、就地改入口行文字与彩点、切周历动静标记、把预告骨架换成三张真卡。
- * 节点原地复用 ⇒ 不闪、不重放编排、不丢焦点/滚位/右键菜单绑定。
+ * 节点原地复用 ⇒ 不闪、不重放编排、不丢焦点/滚位。
+ * 菜单绑定件在真数据这一步才挂（壳的计数是空快照，先挂会把空盒头钉死）。
  */
 function renderSlowData(): void {
   const overlay = H.currentOverlay;
@@ -780,22 +813,19 @@ function renderSlowData(): void {
     });
   }
 
-  // 左右两栏：副题/骨架就地换成真计数与真彩点，节点不换 → 菜单绑定与焦点都还在
+  // 左右两栏：副题/骨架就地换成真计数与真彩点，节点不换 → 焦点与滚位都还在
   const dots = buildDots(river);
   for (const container of [
     overlay.querySelector('[data-home-entries]'),
     overlay.querySelector('[data-home-tiles]'),
   ]) {
     if (!container) continue;
-    container.querySelectorAll<HTMLElement>('[data-home-go]').forEach((el) => {
-      const id = el.dataset.homeGo || '';
-      const text = riverCountText(id, river) ?? DOMAIN_MAP.get(id)?.sub;
-      const slot = el.querySelector('.bz-home-ect');
-      if (slot && text) slot.textContent = text;
-      const dot = el.querySelector('.bz-home-dot');
-      if (dot) dot.className = 'bz-home-dot bz-home-dot--' + dotOf(dots, id);
-    });
+    container.querySelectorAll<HTMLElement>('[data-home-go]').forEach((el) => patchRowEl(el, river, dots));
   }
+
+  // 入口菜单绑定件：壳阶段没挂（计数是空快照，挂上去盒头就停在空值），在这里用真数据挂一次。
+  // DOM 节点没换，所以只挂这一次；之后整屏重建会随新节点重挂。
+  mountRowInteractions(overlay, H.appRef, river);
 
   // 预告卡：骨架 → 三张规则卡（点击是 overlay 上的委托，无独立绑定件要迁）
   const next = overlay.querySelector('[data-home-next]') as HTMLElement | null;

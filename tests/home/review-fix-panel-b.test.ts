@@ -26,6 +26,9 @@ const orderMock = vi.hoisted(() => ({ save: vi.fn(), load: vi.fn() }));
 vi.mock('../../src/home/order', () => ({
   saveHomeConfig: (...args: unknown[]) => orderMock.save(...args),
   loadHomeOrder: (...args: unknown[]) => orderMock.load(...args),
+  // 首开铺壳前问一句同步缓存：这份 mock 里恒没有（等价「刚装好、还没预热」）
+  cachedHomeOrder: () => null,
+  invalidateHomeOrder: () => {},
 }));
 
 import { createOverlay, closeOverlay, showOverlay } from '../../src/home/ui';
@@ -153,7 +156,8 @@ describe('内容首页 review 回归（H11-H13）', () => {
     const app = { vault: new MockVault(), commands: { executeCommandById: exec } } as any;
     H.appRef = app;
     createOverlay(app);
-    await waitFor(() => !!H.currentOverlay!.querySelector('[data-home-entries] .bz-home-erow'));
+    // 菜单绑定件在真数据到位那一步才挂（壳的计数是空快照，先挂会把空盒头钉死）
+    await waitFor(() => H.river !== null && !!H.currentOverlay!.querySelector('[data-home-entries] .bz-home-erow'));
     const row = H.currentOverlay!.querySelector('[data-home-go="gameshelf"]') as HTMLElement;
     expect(row).toBeTruthy();
     row.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true, clientX: 10, clientY: 10 }));
@@ -197,7 +201,8 @@ describe('内容首页 review 回归（H11-H13）', () => {
     } as any;
     H.appRef = app;
     createOverlay(app);
-    await waitFor(() => !!H.currentOverlay!.querySelector('[data-home-entries] .bz-home-erow'));
+    // 菜单绑定件在真数据到位那一步才挂（壳的计数是空快照，先挂会把空盒头钉死）
+    await waitFor(() => H.river !== null && !!H.currentOverlay!.querySelector('[data-home-entries] .bz-home-erow'));
     clearNotices();
     (H.currentOverlay!.querySelector('[data-home-go="cinema"]') as HTMLElement).click();
     await tick();

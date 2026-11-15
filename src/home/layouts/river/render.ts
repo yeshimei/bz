@@ -103,7 +103,9 @@ export function weekHtml(week: RiverWeekDay[], todayDateStr: string, selDate: st
 export function entriesHtml(data: RiverData, order?: readonly string[], hidden?: readonly string[]): string {
   const dotsMap = buildDots(data);
   return visibleDomains(order, hidden).map((d) => {
-    const dot = dotOf(dotsMap, d.id);
+    // 首屏壳（pending）还没采到任何痕迹：彩点留「未定」不落色，别把「还没采」画成「今天没动静」。
+    // 慢数据到位后 ui.patchRowEl 会用真彩点换掉（与 tilesHtml 同一条规则）。
+    const dot = data.pending ? 'pending' : dotOf(dotsMap, d.id);
     const ct = riverCountText(d.id, data) ?? d.sub;
     return '<div role="button" tabindex="0" class="bz-home-erow" data-home-go="' + d.id + '">'
       + '<span class="bz-home-dot bz-home-dot--' + dot + '"></span>'
@@ -199,7 +201,8 @@ export function tilesHtml(data: RiverData, order?: readonly string[], hidden?: r
   const dotsMap = buildDots(data);
   return '<div class="bz-home-m-tiles">'
     + visibleDomains(order, hidden).map((d) => {
-        const dot = dotOf(dotsMap, d.id);
+        // 首屏壳（pending）同 entriesHtml：彩点不落色，等慢数据到位再由 ui.patchRowEl 换真彩点
+        const dot = data.pending ? 'pending' : dotOf(dotsMap, d.id);
         const ct = riverCountText(d.id, data) ?? d.sub;
         return '<div role="button" tabindex="0" class="bz-home-m-tile" data-home-go="' + d.id + '">'
           + '<span class="bz-home-dot bz-home-dot--' + dot + '"></span>'

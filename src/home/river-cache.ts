@@ -80,11 +80,13 @@ function detachInvalidators(): void {
   detachers = [];
 }
 
-/** 外部数据变动作废：在途那一轮的结果也不许写缓存（下轮回源重取） */
+/** 外部数据变动作废：缓存立刻不可用，在途那一轮的结果也不许写缓存。
+ *  **不取消在途**（2026-11-15 发版 review）：置 null 会让紧接着的调用另起一轮，两轮约 20 遍
+ *  全库扫描并排跑——大库上首开反而更慢。这里让它跑完，落地时按脏标记丢弃并串行续采一次
+ *  （见 loadRiverCached），并发始终只有一轮。 */
 function markDirty(): void {
   invalidated = true;
   cached = null;
-  inflight = null;
 }
 
 /**
@@ -126,8 +128,9 @@ export interface RiverCacheOptions {
   now?: number;
 }
 
-/** 取活动河：命中缓存返回同一份对象引用（UI 据此判断「不必整屏重建」） */
-export function loadRiverCached(app: App, opts: RiverCacheOptions = {}): Promise<RiverData> {
+/** 取活动河：命中缓存返回同一份对象引用（UI 据此判断「不必整屏重建」）。
+ *  `retried` 只给内部续采用：采集途中被置脏时最多再串一趟，避免「越改越采」的死循环。 */
+export function loadRiverCached(app: App, opts: RiverCacheOptions = {}, retried = false): Promise<RiverData> {
   const now = opts.now ?? Date.now();
   if (cacheApp !== app) {
     resetRiverCache();
@@ -143,12 +146,19 @@ export function loadRiverCached(app: App, opts: RiverCacheOptions = {}): Promise
   const key = snapshotKey(now);
   const run = collectRiver(app, now).then(
     (data) => {
-      if (inflight === run && cacheApp === app && !invalidated) {
+      if (inflight === run) inflight = null;
+      if (cacheApp !== app) return data;
+      // 采集途中数据又变了（markDirty）：这一轮不可信，丢弃结果并**串行**续采一轮，
+      // 调用方拿到的仍是「变化之后」的数据；并发始终只有一轮（见 markDirty 注释）。
+      if (invalidated && !retried) {
+        invalidated = false;
+        return loadRiverCached(app, { force: true }, true);
+      }
+      if (!invalidated) {
         cached = data;
         cachedAt = now;
         cachedKey = key;
       }
-      if (inflight === run) inflight = null;
       return data;
     },
     (err) => {
@@ -184,6 +194,9 @@ export function prewarmRiver(app: App, isUnloaded: () => boolean = () => false):
     // 白等一整段空闲，故压到 1.2 秒——仍让出启动首帧，又赶得上用户第一次点开。
     host.requestIdleCallback(run, { timeout: 1200 });
   } else {
-    setTimeout(run, 0);
+    // 没有 requestIdleCallback 的宿主（iOS WKWebView 至今未实现，2026-11-15 发版 review）：
+    // setTimeout(0) 等于启动后立刻跑约 20 轮全库遍历，正好顶在启动最忙的那一拍上。
+    // 拿不到空闲信号就退成「让出启动首帧」的定时，量级对齐上面 rIC 的 1.2 秒兜底。
+    setTimeout(run, 1200);
   }
 }

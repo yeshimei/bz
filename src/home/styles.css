@@ -106,6 +106,8 @@
 .theme-dark .bz-home-erow:hover { background: #2e2c25; }
 }
 .bz-home-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--h-ok); flex: none; }
+/* 首屏壳还没采到（pending）：占位但不着色——灰虚线点会被读成「今天没动静」，与「还没采」分不清 */
+.bz-home-dot--pending { background: none; border: 1.5px dashed transparent; }
 .bz-home-dot--off { background: none; border: 1.5px dashed #cfcabb; }
 .theme-dark .bz-home-dot--off { border-color: #55523f; }
 .bz-home-dot--warn { background: var(--h-amber); }
