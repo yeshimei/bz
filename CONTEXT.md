@@ -45,6 +45,8 @@ _Avoid_: 在域里直接写 `vault.trash(...)` 或 `vault.delete(...)` 删笔记
 
 **活动河会话缓存 (River Session Cache)**: 首页活动河聚合的会话级缓存（ADR-0300，issue 567，`src/home/river-cache.ts`）：按 app 键控、在途去重、失败不缓存、刷新恒回源；失效靠域事件 + `vault:md-*` + 跨天 + 5 分钟兜底 + 首页设置快照。命中时返回**同一份对象引用**，`ui.refreshRiverAndRender()` 据此跳过五区重建；启动空闲 `prewarmHome()` 只填数据不建 DOM，刷新前 `afterPaint()` 让出首帧。_Avoid_: 把缓存塞进 `collectRiver`、靠点前缀目录的 vault modify 做唯一失效、缓存命中还整屏重建
 
+**首屏壳 (First-Paint Shell)**: 首次启动第一次打开首页时的同步占位数据（ADR-0301，issue 568，`src/home/river-shell.ts`）：`makeRiverShell()` 纯算零 IO 造 7 天日期窗口，带 `pending: true`，只算日期、不读 vault / 设置、不建 DOM、不写盘。`createOverlay()` 同步段就拿它把周历 / 全部域入口 / 预告骨架 / 移动瓦片铺出来，中间时间线挂「正在汇入…」；`pending` 让 `riverCountText` 回落域副题，不许拿 0 当真数。`collectRiver` 回来后 `renderSlowData()` **只重写中间列**，周历 / 入口 / 瓦片就地切 class 与文本、节点原地复用；`fromShell` 阶段标记把「壳 → 真数据」与「真数据 → 真数据」的缓存判据隔开。_Avoid_: 把壳塞进 `H.river`、慢数据到位整屏重放五区、拆 `collectRiver` 快慢段来换首屏数字
+
 **卷 (Volume)**: 一册只摊开一卷（ADR-0259，取代 ADR-0258 的「一窗」）。卷界落在**月界**：从最新往前整月累加，凑够「每卷装多少则」（设置项 `diaryPageSize`，缺省 50）即收卷；单月自身超容量时才在月内按容量硬切。卷号 1 = 最新那一卷。分卷只由**条目序（日期降序）**决定，故卷界允许随新日记漂移（新内容只进第 1 卷，某卷攒满整月时后面的卷号整体 +1），不落盘。数据仍全量：开册只读到第 1 卷收卷，其余后台续读，读完只扩大索引 / 检索 / 台历的覆盖面，不重排书页。_Avoid_: 窗口、一窗（ADR-0258 退役口径）
 
 **卷内页码 (Volume Page Number)**: 第 1 页 = 本卷第一页，跨卷不连续。跨卷的绝对页码要全量分页才编得出来（那正是要省掉的 DOM），所以册页索引里只有**当前卷**的月份给页码，别的卷写「卷 N」。翻到卷尾再往后 = 下一卷第一页；翻到卷首再往前 = 上一卷最后一页（滚轮 / 键盘 / 竖向滑；拖拽到边界不出事件，故不认）。_Avoid_: 册页号、绝对页码（指跨卷时）

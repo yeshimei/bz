@@ -767,3 +767,19 @@
 - [x] 测试：新增 16 例（数据层 12 + UI 4），同步调整 5 条既有回归，3 处固定 sleep 改 waitFor
 - [x] 门禁：`tsc` 0；home 域 19 文件 / 178 例；`test-affected --since HEAD~1` 695 文件 / 10295 例全绿
 - [ ] 后续（等真机 A/B 数字再定）：7 天回顾共用一份 `mdFiles`、渲染层 diff / 容器级委托、时间线可视区懒加载、计数事件增量维护
+
+## Issue 568 — 首次启动第一次打开仍慢：首屏壳 + 时间线后台补画（ADR-0301）
+
+**状态：已交付**（2026-11-15，worktree `.dsh-worktrees/home-fast-shell`，分支 `feat/home-fast-shell`）
+
+- [x] 根因：issue 567 的缓存只治重开；首开仍等 `collectRiver` 整轮（约 20 轮全库遍历）才换掉空骨架，预热最坏 8 秒才起跑
+- [x] 新增 `src/home/river-shell.ts`：纯算零 IO 造 7 天窗口 + `pending` 壳；`createOverlay()` 同步段就铺出周历 / 全部域入口 / 预告骨架 / 移动瓦片，中间保留「正在汇入…」
+- [x] `pending` 让 `riverCountText` 回落域副题、预告走 `loadingNextHtml()`，首屏不显示「0 条待办」「剪藏库已清空」这类未采集就下结论的假数
+- [x] 新增 `renderSlowData()`：慢数据到位只重写 `[data-home-flow]`，周历 / 入口 / 瓦片就地切 class 与文本，节点原地复用（不整屏重建、不重放编排、不丢焦点与菜单绑定）
+- [x] `fromShell` 阶段标记隔离缓存判据：壳阶段不算命中缓存，也不让新对象一到就触发整屏重建；顺序异步读回不一致时退回 `renderAll()`
+- [x] 补上「默认打开日＝最后有动静」的周历 `--sel` / `aria-pressed`；壳期周历可点选（只记查看日，不拿空数据冒充 flow）
+- [x] 预热空闲兜底 8s → 1.2s；否决「快慢段拆采集」（纯算壳已省掉便宜那趟，拆了反而双份口径 + 缓存阶段化）
+- [x] 测试：新增 `first-open-shell.test.ts` 4 例（先红后绿），`reopen-cache.test.ts` / `ui-river.test.ts` 的「结构在场 = 数据已到」等待条件改为等真数据
+- [x] 门禁：`tsc` 0；home 域 19 文件 / 170 例；`test-affected --since master` 696 文件 / 10299 例；合并回主仓后 `--since HEAD~1` 同口径复跑全绿
+- [x] 收尾：合并回 master（`93fda8db`）+ 归档 issue 568 / ADR-0301 + 开发构建部署到主笔记库
+- [ ] 后续（同 567，等真机 A/B 数字再定）：快慢段拆采集 / 缓存阶段化、渲染层 diff、容器级委托、时间线懒加载
