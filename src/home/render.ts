@@ -9,7 +9,7 @@
  */
 export * from './shared';
 export {
-  panelFrameHtml, loadingEntriesHtml, loadingFlowHtml, flowFailedHtml,
+  panelFrameHtml, loadingEntriesHtml, loadingFlowHtml, loadingNextHtml, flowFailedHtml,
   weekHtml, entriesHtml, flowHtml, nextHtml, tilesHtml,
   type FlowOpts,
 } from './layouts/river/render';

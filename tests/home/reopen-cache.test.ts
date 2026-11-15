@@ -72,7 +72,9 @@ describe('首页重开快路', () => {
   it('数据没变：不重采全库，也不整屏重建（五区节点原样复用）', async () => {
     const app = appOf();
     openHome(app);
-    await waitFor(() => !!document.querySelector('[data-home-entries] .bz-home-erow'));
+    // 首开壳同步就铺好了入口行，结构在场 ≠ 数据已到：要等的是慢数据那一轮补画落地
+    await waitFor(() => collectMock.mock.calls.length >= 1
+      && !document.querySelector('[data-home-flow]')!.textContent!.includes('正在汇入'));
     // renderAll 重建的是容器内部，容器元素本身始终常驻——要守「不重建」得盯里面的行节点
     const row = document.querySelector('[data-home-entries] .bz-home-erow');
     const flowRow = document.querySelector('[data-home-flow] .bz-home-ev, [data-home-flow] .bz-home-flow-empty');
@@ -89,7 +91,8 @@ describe('首页重开快路', () => {
   it('域数据动作事件置脏后重开：回源一次并重建新节点', async () => {
     const app = appOf();
     openHome(app);
-    await waitFor(() => !!document.querySelector('[data-home-entries] .bz-home-erow'));
+    await waitFor(() => collectMock.mock.calls.length >= 1
+      && !document.querySelector('[data-home-flow]')!.textContent!.includes('正在汇入'));
     const row = document.querySelector('[data-home-entries] .bz-home-erow');
 
     emitDomainEvent('memo', { kind: 'add' });
@@ -115,7 +118,7 @@ describe('首页重开快路', () => {
     expect(collectMock).toHaveBeenCalledTimes(1);
 
     openHome(app);
-    await waitFor(() => !!document.querySelector('[data-home-entries] .bz-home-erow'));
+    await waitFor(() => !document.querySelector('[data-home-flow]')!.textContent!.includes('正在汇入'));
     expect(collectMock).toHaveBeenCalledTimes(1); // 没再扫一遍全库
     expect(document.querySelector('[data-home-flow]')!.textContent).not.toContain('正在汇入今天的痕迹');
   });

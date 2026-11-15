@@ -53,6 +53,18 @@ export function loadingFlowHtml(): string {
   return '<div class="bz-home-flow-empty">正在汇入今天的痕迹…</div>';
 }
 
+/** 数据未到的骨架占位：明天预告列（只出标题 + 骨架线）。
+ *  不复用 buildPreviews 的空数据分支——那会编出「剪藏库已清空」这类还没采到就已经下结论的假文案。 */
+export function loadingNextHtml(): string {
+  return '<div class="bz-home-sec-t bz-home-sec-t--ai">明 天 预 告</div>'
+    + '<div class="bz-home-sk">'
+    + '<span class="bz-home-sk-line" style="width:78%"></span>'
+    + '<span class="bz-home-sk-line" style="width:56%"></span>'
+    + '<span class="bz-home-sk-line" style="width:86%"></span>'
+    + '<span class="bz-home-sk-line" style="width:62%"></span>'
+    + '</div>';
+}
+
 /** 时间线列失败位（func P3-1 三态之「失败」）：行级警示文案，与「正在汇入…」（加载）、
  *  「还没有留下痕迹」（空）可区分——不用「正在」系时态词防与加载态混淆；
  *  重试入口不在此重复挂（entries 失败大卡上一颗重试钮，成功后两列一并恢复） */
