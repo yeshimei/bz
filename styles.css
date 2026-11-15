@@ -8495,6 +8495,8 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 .theme-dark .bz-home-erow:hover { background: #2e2c25; }
 }
 .bz-home-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--h-ok); flex: none; }
+/* 首屏壳还没采到（pending）：占位但不着色——灰虚线点会被读成「今天没动静」，与「还没采」分不清 */
+.bz-home-dot--pending { background: none; border: 1.5px dashed transparent; }
 .bz-home-dot--off { background: none; border: 1.5px dashed #cfcabb; }
 .theme-dark .bz-home-dot--off { border-color: #55523f; }
 .bz-home-dot--warn { background: var(--h-amber); }
@@ -9744,10 +9746,39 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
    2) 平板 / 横屏手机宽度超过断点时不进上面那组手机宽度规则，编辑部主题的头行钮组
       仍被皮肤段藏着；触屏点不到遮罩之外的可点区，同样需要一个看得见的关闭钮。
    只在粗指针（触屏）生效：桌面鼠标端头行维持原型「无钮」口径，逐像素不变。
-   关闭钮的贴纸 / 方角皮肤形态与 28px 档仍由上面那组规则供给，本段不复制尺寸。 */
+   关闭钮的 28px 档与两套皮肤形态原先只写在 ≤768px 段里，>768px 的触屏（平板 / 横屏
+   手机）拿到的是桌面 22×26 基档与裸按钮——2026-11-15 发版 review 后在这里补一份
+   （≤768px 时与上面同值重复，无副作用）。 */
 @media (pointer: coarse) {
   .bz-memo-panel.bz-memo-skin-paper .bz-panel-head-btns,
   .bz-memo-panel.bz-memo-skin-editorial .bz-panel-head-btns { display: flex; }
+
+  .bz-memo-panel .bz-memo-head-close {
+    --bz-memo-close-box: 28px;
+    width: var(--bz-memo-close-box); height: var(--bz-memo-close-box);
+    flex-shrink: 0;
+  }
+  .bz-memo-panel .bz-memo-head-close .bz-ic { width: 16px; height: 16px; }
+
+  /* 纸感：墨框白底 + 硬偏移阴影（三值 !important 是压 core 的 .bz-icon-btn 基线） */
+  .bz-memo-panel.bz-memo-skin-paper .bz-memo-head-close {
+    background: var(--bz-surface-2) !important;
+    color: var(--bz-text-1) !important;
+    border: 2px solid var(--bz-skin-ink) !important;
+    border-radius: 9px;
+    box-shadow: 2px 2px 0 var(--bz-skin-ink) !important;
+  }
+  .bz-memo-panel.bz-memo-skin-paper .bz-memo-head-close:active {
+    transform: translate(2px, 2px);
+    box-shadow: none !important;
+  }
+  /* 编辑部：方角 + 细墨框 + 白底 */
+  .bz-memo-panel.bz-memo-skin-editorial .bz-memo-head-close {
+    background: #ffffff !important;
+    color: var(--bz-text-1) !important;
+    border: 1.5px solid var(--bz-skin-ink) !important;
+    border-radius: 3px;
+  }
 }
 /* ==================== 剪藏本域样式（src/clipbook/styles.css） ==================== */
 /* 剪藏本融合域（ADR-0082 / issue 177）：桌面三栏 + 移动双屏工作台。
@@ -26370,7 +26401,9 @@ button.bz-bs-guide-link {
   height: 100%;
 }
 /* 逐容器对齐 ic() 各调用点：头行 glyph 19、引导页大图标 34、功能钮 14、
-   分节标题 13、来源树折叠箭头 12、周报头 17、对话返回 15 / 发送 14 / who 行 10 */
+   分节标题 13、来源树折叠箭头 12、周报头 17、对话返回 15 / 发送 14 / who 行 10、
+   「顺着追问」软问句 11（原本是 .bz-sb-ws-q--soft svg 的裸选择器，被上面的
+   `.bz-ic svg` 百分百覆盖后会长到 14px，这里按容器补回） */
 .bz-sb-panel .bz-sb-glyph .bz-ic { width: 19px; height: 19px; }
 .bz-sb-panel .bz-sb-onboard-icon .bz-ic { width: 34px; height: 34px; }
 .bz-sb-panel .bz-sb-fbtn .bz-ic { width: 14px; height: 14px; }
@@ -26385,6 +26418,7 @@ button.bz-bs-guide-link {
 .bz-sb-chat-modal .bz-sb-chat-send .bz-ic { width: 14px; height: 14px; }
 .bz-sb-chat-modal .bz-sb-chat-lens .bz-ic { width: 15px; height: 15px; }
 .bz-sb-chat-modal .bz-sb-chat-who .bz-ic { width: 10px; height: 10px; }
+.bz-sb-chat-modal .bz-sb-ws-q--soft .bz-ic { width: 11px; height: 11px; }
 
 /* ==================== 主面板弹窗（统一入口） ==================== */
 

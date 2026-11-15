@@ -56,6 +56,23 @@ export function releaseEntryCount(release: ChangelogRelease): number {
  */
 export const CHANGELOG_RELEASES: readonly ChangelogRelease[] = [
   {
+    version: '1.44.4',
+    date: '2026-11-15',
+    // 条目与 docs/note-v1.44.4.md 同稿（scripts/_gen-changelog.mjs 自动生成，勿手改）
+    added: [
+      { domain: '日记本', text: '写日记时随手收着，关掉 Obsidian 再打开还能接着写。' },
+    ],
+    fixed: [
+      { domain: '第二大脑', text: '手机上引导与建索引进度页有了关闭钮，骨架图标不再显示成空方块。' },
+      { domain: '备忘录', text: '手机上主界面的关闭钮不再被皮肤藏掉。' },
+      { domain: '日记本', text: '写日记时的确认框换成了日记本的纸面皮肤。' },
+    ],
+    improved: [
+      { domain: '首页', text: '重开首页不再每次重扫全库，数据没变就原样显示。' },
+      { domain: '首页', text: '第一次打开先把左右两栏铺出来，时间线后台补上。' },
+    ],
+  },
+  {
     version: '1.44.3',
     date: '2026-11-13',
     // 条目与 docs/note-v1.44.3.md 同稿（scripts/_gen-changelog.mjs 自动生成，勿手改）
