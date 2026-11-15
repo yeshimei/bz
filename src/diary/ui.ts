@@ -35,6 +35,8 @@ import { topifyZ } from '../core/dom';
 import { uiSetupScreen } from '../core/ui/setup-screen';
 import { notice } from '../core/notice';
 import { getApp } from '../core/app';
+import { vaultBasePathOf } from '../core/plugin-path';
+import { readDiaryDraft, writeDiaryDraft, clearDiaryDraft } from './draft-store';
 import { getSafeManager } from '../encrypt';
 import { onDomainEvent } from '../core/domain-bus';
 import { escapeHtml, stripMdExt } from '../core/utils';
@@ -544,6 +546,8 @@ export class DiaryAppController {
   } | null = null;
   /** 落笔进行中（防连点：写盘慢时双击「落笔」会在同刻落两篇） */
   private saving = false;
+  /** 草稿落盘防抖：输入停 800ms 同步写一次 localStorage（强杀进程不等异步写盘） */
+  private draftSaveTimer: ReturnType<typeof setTimeout> | null = null;
   /** 开册进度条的 `uiProgress` 句柄（首次开册建一次就复用，不随层出入栈——基元没有状态） */
   private loadBar: { el: HTMLElement; setValue: (n: number) => void } | null = null;
   /** 进度条的显示延时器：读得快（缓存命中）就不闪这一下 */
@@ -2847,6 +2851,7 @@ export class DiaryAppController {
     d.date = this.calDate || d.date;
     d.time = time;
     this.renderWspDay();
+    this.scheduleDraftSave();
     this.closeCal();
     this.toast(`写成 ${d.date} ${d.time}`);
   }
@@ -3125,6 +3130,7 @@ export class DiaryAppController {
       tags: [],
     };
     this.wspAreaEl.value = '';
+    clearDiaryDraft(this.draftVault()); // 新开一张空纸：上一张残留的稿子别再冒出来
     this.renderWspDay();
     this.renderWspTools();
     this.wspEl.hidden = false;
@@ -3164,6 +3170,7 @@ export class DiaryAppController {
       },
     };
     this.wspAreaEl.value = e.content;
+    clearDiaryDraft(this.draftVault()); // 改的是这一篇旧字，上一张没写完的稿子先让位
     this.renderWspDay();
     this.renderWspTools();
     this.setWriteMode(true);
@@ -3219,6 +3226,7 @@ export class DiaryAppController {
   }
 
   private bindWrite(): void {
+    this.wspAreaEl.addEventListener('input', () => this.scheduleDraftSave());
     this.wspEl.addEventListener('click', (ev) => {
       const t = ev.target as HTMLElement;
       if (t.closest('.bz-diary-wsp-datebtn')) {
@@ -3254,6 +3262,7 @@ export class DiaryAppController {
     if (i >= 0) d.tags.splice(i, 1);
     else d.tags.push(tag);
     chip.classList.toggle('bz-diary-on', i < 0);
+    this.scheduleDraftSave();
   }
 
   /** 揉掉这张纸。写过的字不静默丢：有正文先问一句（纸条层，本域自己的确认件）。
@@ -3283,7 +3292,73 @@ export class DiaryAppController {
     this.dropWrite();
   }
 
+  /* ==================== 草稿留存（2026-11-15）====================
+   * 「先收着」原先只是不销毁 DOM，强制关闭 Obsidian 后字就随内存态没了。现在每个输入停顿、
+   * 收起书、卸载都同步落一份 localStorage（按库分键），落笔 / 揉掉立刻删键。
+   * 存的是明文临时稿，与日记条目的加密写层互不相干，也不进册子数据文件。 */
+  private draftVault(): string {
+    try {
+      return vaultBasePathOf(getApp());
+    } catch {
+      return ''; // app 尚未注入（少见）：退回裸键，总比不存强
+    }
+  }
+
+  private cancelDraftSave(): void {
+    if (this.draftSaveTimer !== null) {
+      clearTimeout(this.draftSaveTimer);
+      this.draftSaveTimer = null;
+    }
+  }
+
+  private scheduleDraftSave(): void {
+    this.cancelDraftSave();
+    this.draftSaveTimer = setTimeout(() => {
+      this.draftSaveTimer = null;
+      this.persistDraft();
+    }, 800);
+  }
+
+  private persistDraft(): void {
+    const d = this.draft;
+    if (!d) return; // 新控制器还没摊纸：不能拿空态把上一轮的稿子清掉
+    const text = this.wspAreaEl?.value ?? '';
+    const vault = this.draftVault();
+    if (!text.trim()) {
+      clearDiaryDraft(vault);
+      return;
+    }
+    writeDiaryDraft(vault, {
+      text,
+      date: d.date,
+      time: d.time,
+      tags: [...d.tags],
+      edit: d.edit ? { ...d.edit, originalTags: [...d.edit.originalTags] } : undefined,
+      savedAt: Date.now(),
+    });
+  }
+
+  /** 重开日记本：把上次没写完的那张纸连同日子、时辰、贴纸一起摊回来 */
+  private restoreDraft(): void {
+    if (this.draft) return; // 内存里这张更新，不让磁盘旧稿盖掉
+    const saved = readDiaryDraft(this.draftVault());
+    if (!saved) return;
+    this.draft = {
+      date: saved.date,
+      time: saved.time,
+      tags: [...saved.tags],
+      edit: saved.edit ? { ...saved.edit, originalTags: [...saved.edit.originalTags] } : undefined,
+    };
+    this.wspAreaEl.value = saved.text;
+    this.renderWspDay();
+    this.renderWspTools();
+    this.setWriteMode(!!saved.edit);
+    this.wspEl.hidden = false;
+  }
+
   private dropWrite(): void {
+    this.cancelDraftSave();
+    clearDiaryDraft(this.draftVault());
     this.draft = null;
     this.wspAreaEl.value = '';
     this.wspEl.hidden = true;
@@ -4136,6 +4211,9 @@ export class DiaryAppController {
     this.root!.style.display = 'flex';
     topifyZ(this.root!); // ADR-0067：域根层级动态发号
     this._allowCacheNext = true;
+    /* 上次没写完的纸先摊回来（重启 / 强杀之后内存态已不在）：放在读册之前，
+       不依赖成册快路，也不占用读盘那一拍。 */
+    this.restoreDraft();
 
     /* 未配置日记文件夹（2026-10-30）：不读盘、不排册，桌上贴一张引导纸——
        说明缺什么 + 「设置日记文件夹」+「看视频教程」（空态，不弹窗）。
@@ -4321,6 +4399,8 @@ export class DiaryAppController {
     const editing = !!this.draft?.edit;
     try {
       choice = await openFlowDialog({
+        // 域内其余五处确认框都穿日记本的纸面皮肤，这一处此前漏了，掉回 core 裸壳
+        className: 'bz-diary-flow-dialog',
         title: editing ? '这篇还没改好' : '这张纸还没落笔',
         message: '先收着的话，下次翻开日记本还在这张纸上。',
         actions: [
@@ -4354,8 +4434,10 @@ export class DiaryAppController {
     this.closeMenu();
     this.closePass(false);
     /* 写作内页的草稿**不随书一起丢**（用户点名）：空纸收掉，写了字的纸原样留在书里，
-       下次翻开（`show()` 的快路不重排）还是这一张、字都在。 */
+       下次翻开（`show()` 的快路不重排）还是这一张、字都在；同时同步落一份本地稿，
+       万一下次是「重启 Obsidian 之后」才翻开，DOM 已经不在了也还能接着写。 */
     if (!this.draftHasText()) this.dropWrite();
+    else this.persistDraft();
     this.hideLoading();
     this.pauseAllAudio();
     this.unsubscribeEvents();
@@ -4483,6 +4565,8 @@ export class DiaryAppController {
     this.volIndex = 0;
     this._volKey = '';
     this.bookFresh = false; // DOM 都要拆了，快路的凭据跟着作废
+    this.cancelDraftSave();
+    this.persistDraft(); // 卸载前的最后一拍：纸上有字就别让它随内存态消失
     this.draft = null;
     if (this.root) {
       this.root.remove();

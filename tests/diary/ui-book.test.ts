@@ -44,6 +44,8 @@ import { lastFlip, flipRecords, resetFlips } from './page-flip-fake';
 import { invalidateWallCache } from '../../src/diary/data';
 import { emitDomainEvent, onDomainEvent } from '../../src/core/domain-bus';
 import { setSettingsProvider } from '../../src/core/settings-provider';
+import { vaultBasePathOf } from '../../src/core/plugin-path';
+import { readDiaryDraft } from '../../src/diary/draft-store';
 
 // ===== 翻页库替身 =====
 
@@ -168,6 +170,7 @@ beforeAll(() => {
 
 beforeEach(() => {
   document.body.innerHTML = '';
+  localStorage.clear(); // 草稿按库落 localStorage：用例之间不串上一张没写完的纸
   clearNotices();
   resetObsidianMocks();
   resetFlips();
@@ -1989,8 +1992,10 @@ describe('DiaryAppController · 写作内页（ADR-0233）', () => {
     // ① Esc：框弹出来；取消（mock 默认返回 'ok'，不是三支里的任何一支）= 接着写
     document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
     await vi.waitFor(() => expect(mocks.openFlowDialog).toHaveBeenCalledTimes(1));
-    const asked = (mocks.openFlowDialog.mock.calls[0] as unknown as [{ title: string }])[0];
+    const asked = (mocks.openFlowDialog.mock.calls[0] as unknown as [{ title: string; className?: string }])[0];
     expect(asked.title).toContain('还没落笔');
+    // 2026-11-15：这一处此前漏了皮肤类，确认框掉回 core 裸壳，跟日记本的纸面不搭
+    expect(asked.className).toBe('bz-diary-flow-dialog');
     await Promise.resolve();
     expect(q('.bz-diary-scene').style.display).toBe('flex'); // 册子还开着
     expect(q('.bz-diary-wsp').hidden).toBe(false);
@@ -2017,6 +2022,48 @@ describe('DiaryAppController · 写作内页（ADR-0233）', () => {
     q('.bz-diary-close').click();
     expect(q('.bz-diary-scene').style.display).toBe('none');
     expect(mocks.openFlowDialog).not.toHaveBeenCalled();
+  });
+
+  /* 2026-11-15 用户报障：强制关闭 Obsidian 时，写在纸上的字连 DOM 一起没了。
+     「先收着」原先只保住同一个进程里的 DOM，不是真的留了草稿。 */
+  it('写到一半强杀进程：重开日记本，字连同日子时辰贴纸都还在纸上', async () => {
+    const c = await openBook();
+    const area = await openWritePage(c);
+    inner(c).draft!.tags.push('随笔');
+    area.value = '写了一半的日记\n第二行';
+    area.dispatchEvent(new Event('input', { bubbles: true }));
+
+    const key = vaultBasePathOf(getApp());
+    await vi.waitFor(() => expect(readDiaryDraft(key)?.text).toBe('写了一半的日记\n第二行'), { timeout: 2500 });
+
+    // 强制关闭：控制器直接销毁，不走 hide（模拟进程被杀，内存态与 DOM 全没）
+    c.cleanup();
+    DiaryAppController.instance = null;
+    document.body.innerHTML = '';
+
+    const c2 = await openBook();
+    expect(q('.bz-diary-wsp').hidden).toBe(false);
+    expect(q<HTMLTextAreaElement>('.bz-diary-wsp-area').value).toBe('写了一半的日记\n第二行');
+    expect(inner(c2).draft).toMatchObject({ date: inner(c).draft?.date ?? expect.any(String), tags: ['随笔'] });
+  });
+
+  it('落笔之后草稿键清掉，重开是一张空纸', async () => {
+    const c = await openBook();
+    const area = await openWritePage(c);
+    area.value = '记下来的字';
+    area.dispatchEvent(new Event('input', { bubbles: true }));
+    await vi.waitFor(() => expect(readDiaryDraft(vaultBasePathOf(getApp()))?.text).toBe('记下来的字'), { timeout: 2500 });
+
+    q('.bz-diary-wsp [data-wact="save"]').click();
+    await vi.waitFor(() => expect(q('.bz-diary-wsp').hidden).toBe(true));
+    expect([...vault.files.values()].join('\n')).toContain('记下来的字');
+    expect(readDiaryDraft(vaultBasePathOf(getApp()))).toBeNull();
+
+    c.cleanup();
+    DiaryAppController.instance = null;
+    document.body.innerHTML = '';
+    await openBook();
+    expect(q('.bz-diary-wsp').hidden).toBe(true);
   });
 
   /* 2026-10-31 用户报障：测试库没设日记文件夹时，桌上那张「这本册子还没定文件夹」是
