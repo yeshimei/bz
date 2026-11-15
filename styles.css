@@ -9734,6 +9734,21 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   .bz-memo-tag.bz-memo-tag-pos { position: relative; }
   .bz-memo-tag.bz-memo-tag-pos::after { content: ''; position: absolute; inset: -13px; }
 }
+
+/* ═══════════ 触屏补丁段（2026-11-15：备忘录主界面关闭钮）═══════════
+   头行那枚 ✕ 一直在 markup 里，但两处级联会让移动端看不见它：
+   1) 远端「纸感手账」皮肤包运行时以 <style> 注入在插件样式**之后**，包里
+      `.bz-memo-skin-paper .bz-panel-head-btns{display:none}` 与上面收口段的恢复规则
+      同特异性、后写者赢 → 手机端整组钮（含关闭）被藏掉。此处用 (0,3,0) 压过
+      皮肤包的 (0,2,0)，与注入顺序无关。
+   2) 平板 / 横屏手机宽度超过断点时不进上面那组手机宽度规则，编辑部主题的头行钮组
+      仍被皮肤段藏着；触屏点不到遮罩之外的可点区，同样需要一个看得见的关闭钮。
+   只在粗指针（触屏）生效：桌面鼠标端头行维持原型「无钮」口径，逐像素不变。
+   关闭钮的贴纸 / 方角皮肤形态与 28px 档仍由上面那组规则供给，本段不复制尺寸。 */
+@media (pointer: coarse) {
+  .bz-memo-panel.bz-memo-skin-paper .bz-panel-head-btns,
+  .bz-memo-panel.bz-memo-skin-editorial .bz-panel-head-btns { display: flex; }
+}
 /* ==================== 剪藏本域样式（src/clipbook/styles.css） ==================== */
 /* 剪藏本融合域（ADR-0082 / issue 177）：桌面三栏 + 移动双屏工作台。
    issue 214：桌面端换肤「编辑部印刷风」（p1-final 定稿原型；左栏 = 10 版对照拍板 V1 点线索引）——
@@ -26487,6 +26502,11 @@ button.bz-bs-guide-link {
   width: 30px;
   padding: 0;
 }
+/* 引导/进度态的移动端关闭出口：桌面仍由常规 ✕ 负责，此钮默认不显示、只在手机宽度放出来。
+   内容态挂 bz-sb-btn-hidden（display:none !important），与常规 ✕ 不会同时出现。 */
+.bz-sb-mb-close {
+  display: none;
+}
 .bz-sb-fbtn.busy {
   pointer-events: none;
   opacity: 0.72;
@@ -26942,6 +26962,10 @@ button.bz-bs-guide-link {
   .bz-sb-panel .bz-sb-pill,
   .bz-sb-panel .bz-sb-cnt {
     display: none;
+  }
+  /* 引导/进度态：常规 ✕ 被整组收起，全屏又没有遮罩 / ESC，这里放专属关闭钮 */
+  .bz-sb-panel .bz-sb-mb-close {
+    display: inline-flex;
   }
   .bz-sb-cards {
     grid-template-columns: repeat(3, minmax(0, 1fr));
