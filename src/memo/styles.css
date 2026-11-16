@@ -949,3 +949,47 @@
   .bz-memo-tag.bz-memo-tag-pos { position: relative; }
   .bz-memo-tag.bz-memo-tag-pos::after { content: ''; position: absolute; inset: -13px; }
 }
+
+/* ═══════════ 触屏补丁段（2026-11-15：备忘录主界面关闭钮）═══════════
+   头行那枚 ✕ 一直在 markup 里，但两处级联会让移动端看不见它：
+   1) 远端「纸感手账」皮肤包运行时以 <style> 注入在插件样式**之后**，包里
+      `.bz-memo-skin-paper .bz-panel-head-btns{display:none}` 与上面收口段的恢复规则
+      同特异性、后写者赢 → 手机端整组钮（含关闭）被藏掉。此处用 (0,3,0) 压过
+      皮肤包的 (0,2,0)，与注入顺序无关。
+   2) 平板 / 横屏手机宽度超过断点时不进上面那组手机宽度规则，编辑部主题的头行钮组
+      仍被皮肤段藏着；触屏点不到遮罩之外的可点区，同样需要一个看得见的关闭钮。
+   只在粗指针（触屏）生效：桌面鼠标端头行维持原型「无钮」口径，逐像素不变。
+   关闭钮的 28px 档与两套皮肤形态原先只写在 ≤768px 段里，>768px 的触屏（平板 / 横屏
+   手机）拿到的是桌面 22×26 基档与裸按钮——2026-11-15 发版 review 后在这里补一份
+   （≤768px 时与上面同值重复，无副作用）。 */
+@media (pointer: coarse) {
+  .bz-memo-panel.bz-memo-skin-paper .bz-panel-head-btns,
+  .bz-memo-panel.bz-memo-skin-editorial .bz-panel-head-btns { display: flex; }
+
+  .bz-memo-panel .bz-memo-head-close {
+    --bz-memo-close-box: 28px;
+    width: var(--bz-memo-close-box); height: var(--bz-memo-close-box);
+    flex-shrink: 0;
+  }
+  .bz-memo-panel .bz-memo-head-close .bz-ic { width: 16px; height: 16px; }
+
+  /* 纸感：墨框白底 + 硬偏移阴影（三值 !important 是压 core 的 .bz-icon-btn 基线） */
+  .bz-memo-panel.bz-memo-skin-paper .bz-memo-head-close {
+    background: var(--bz-surface-2) !important;
+    color: var(--bz-text-1) !important;
+    border: 2px solid var(--bz-skin-ink) !important;
+    border-radius: 9px;
+    box-shadow: 2px 2px 0 var(--bz-skin-ink) !important;
+  }
+  .bz-memo-panel.bz-memo-skin-paper .bz-memo-head-close:active {
+    transform: translate(2px, 2px);
+    box-shadow: none !important;
+  }
+  /* 编辑部：方角 + 细墨框 + 白底 */
+  .bz-memo-panel.bz-memo-skin-editorial .bz-memo-head-close {
+    background: #ffffff !important;
+    color: var(--bz-text-1) !important;
+    border: 1.5px solid var(--bz-skin-ink) !important;
+    border-radius: 3px;
+  }
+}

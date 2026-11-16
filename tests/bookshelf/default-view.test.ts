@@ -50,11 +50,12 @@ describe('bookshelf applyDefaultView（issue 194）', () => {
 describe('bookshelf 设置 schema（issue 194）', () => {
   afterEach(() => resetSkinPackState());
 
-  it('组序：外观 → 目录 → 显示；外观组皮肤行 + 显示组两行键与选项集契约（issue 246 收编、issue 218 排序三档）', () => {
+  it('组序：外观 → 显示（「目录」组已随书库文件夹退役）；外观组皮肤行 + 显示组两行键与选项集契约', () => {
     // 主题行 = 内置首套雪松白 + 四套远端皮肤（就绪后才进选项，ADR-0199）
     seedRemoteSkins('bookshelf', ['noir', 'kraft', 'velvet', 'mono']);
     const schema = bookshelfSettingsSchema();
-    expect(schema.groups.map((g) => g.name)).toEqual(['外观', '目录', '显示']);
+    // 2026-11-12：书库只由 bz Reader 供书，「目录」组（书库文件夹）整组退役
+    expect(schema.groups.map((g) => g.name)).toEqual(['外观', '显示']);
     // 外观组（标准化）：布局占位单卡 + 主题行 choiceCards 五选一（layoutKey 联动），onChange 热切换
     const look = schema.groups[0];
     expect(look.rows).toHaveLength(2);
@@ -71,7 +72,7 @@ describe('bookshelf 设置 schema（issue 194）', () => {
     expect(skin.options.map((o: any) => o.value)).toEqual(['nordic', 'noir', 'kraft', 'velvet', 'mono']);
     expect(skin.options.every((o: any) => typeof o.prevClass === 'string')).toBe(true);
     expect(typeof skin.onChange).toBe('function');
-    const view = schema.groups[2];
+    const view = schema.groups[1];
     expect(view.rows).toHaveLength(2);
     const [side, sort] = view.rows as any[];
     expect(side.type).toBe('select');

@@ -30,9 +30,12 @@
     display: none !important;
 }
 
-/* 设置行控件统一最小宽度（ticket 170）：number/text 等输入控件对齐到 120px */
-.setting-item .setting-item-control input[type="number"],
-.setting-item .setting-item-control input[type="text"] {
+/* 设置行控件统一最小宽度（ticket 170）：number/text 等输入控件对齐到 120px。
+   2026-11-12 收窄：补 :where([id^="bz-"]) 限定在 bz 自己的设置弹窗内——原写法是裸
+   .setting-item，会给 Obsidian 原生设置页里所有插件的设置行灌最小宽度。:where()
+   不贡献特异性，插件内 (0,3,1) 与原一致。 */
+:where([id^="bz-"]) .setting-item .setting-item-control input[type="number"],
+:where([id^="bz-"]) .setting-item .setting-item-control input[type="text"] {
     min-width: 120px;
 }
 

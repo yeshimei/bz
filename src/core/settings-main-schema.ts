@@ -272,12 +272,14 @@ function providerMaxTokensRow(): NumberRow {
 }
 
 /**
- * 「服务商」组行（issue 331 拆组）：服务商下拉 + 自定义地址行 + 每家注册表提供商一行密钥
+ * 「服务商」组行（issue 331 拆组）：服务商下拉 + 自定义地址行 + 自定义协议行 + 每家注册表提供商一行密钥
  * （visibleWhen 随 aiProvider 显隐）。
  * 密钥行标题/描述取自 descriptor 的 apiKeyLabel / apiKeyDesc（文案 lint 与注册表单一事实源）；
- * 2026-11-11：**加回自定义（OpenAI 兼容）**——下拉多一档，选中后多一行「自定义 API 地址」，
- * 密钥行走同一张注册表（aiCustomApiKey）；插件没列出的服务商都从这里接，不必为加一家改代码。
- * 地址行紧跟服务商下拉（先选通道、再填地址，与「先选服务商、再填密钥」同一条链）。
+ * 2026-11-11：**加回自定义（OpenAI 兼容）**——下拉多一档，选中后多一行「自定义 API 地址」；
+ * 2026-11-12/ADR-0297：注册表扩到常用 18 家（行数随注册表走、schema 零改动），自定义再加一行
+ * 「自定义协议」（OpenAI 兼容 / Anthropic）；新增服务商的密钥走 aiApiKeys 表，故密钥行绑定按
+ * 「有无 apiKeyKey」分流——老三家键直绑、其余三函数绑表。
+ * 地址行紧跟服务商下拉（先选通道、再填地址与协议，与「先选服务商、再填密钥」同一条链）。
  * 密钥行全走「密钥型」档位（type:'secret' → 密码框 + 眼睛切明文），凭据不裸奔。
  * issue 433：行内「测试」按钮（输入框左侧，RowAction 统一渲染序）——对该行所属服务商发一次
  * 真实极小请求验证连通（testAIConnectivity 按 id 解析该家设置，不受当前下拉选中影响）。
@@ -290,7 +292,7 @@ function providerGroupRows(): SettingsRow[] {
       desc: '当前使用的 AI 服务商',
       help:
         '切换服务商不影响已填内容：密钥、模型名、最大输出 token、思考档位都是按服务商分别存储（per-provider 覆盖），切回哪家就是哪家上次的值。' +
-        '当前四档：DeepSeek、智谱 Plan、Ollama（本地）、自定义（OpenAI 兼容）。前三家填密钥即可用；自定义要自己填接口地址与模型名，其余服务商（OpenAI、OpenRouter、硅基流动、自建网关等）都从这一档接。',
+        '在册的每家都填好密钥即可用，「获取模型名」能直接拉该家的模型列表；插件没列出的服务商选「自定义」，自己填接口地址、协议与模型名。',
       binding: { key: 'aiProvider' },
       options: AI_PROVIDER_REGISTRY.map((p) => ({ value: p.id, label: p.label })),
     },
@@ -299,10 +301,26 @@ function providerGroupRows(): SettingsRow[] {
       name: '自定义 API 地址',
       desc: 'OpenAI 兼容服务的完整接口地址',
       help:
-        '仅「自定义」服务商使用：填到 /v1 这一层为止，例如 https://api.example.com/v1。地址不对时「测试」会红✕，请求也会被服务端拒绝。',
+        '仅「自定义」服务商使用：填到 /v1 这一层为止，例如 https://api.example.com/v1。地址不对时「测试」会红✕，请求也会被服务端拒绝。' +
+        '选 Anthropic 协议时填到 /v1 为止，插件会在后面接 /messages。',
       binding: { key: 'aiCustomEndpoint' },
       placeholder: 'https://api.example.com/v1',
       inputMode: 'url',
+      visibleWhen: (snapshot) => snapshot.aiProvider === 'custom',
+    },
+    {
+      type: 'select',
+      name: '自定义协议',
+      desc: '自定义服务用哪种报文',
+      help:
+        '只对「自定义」生效。OpenAI 兼容是绝大多数服务商的通用格式（请求打到 /chat/completions），选它基本不会错；' +
+        'Anthropic 是 Claude 官方的 Messages 报文（打到 /messages，system 单独成字段）。' +
+        '选错协议的典型表现是「测试」红✕：服务端要么 404 找不到端点，要么 400 说不认识某个字段。',
+      binding: { key: 'aiCustomProtocol' },
+      options: [
+        { value: 'openai', label: 'OpenAI 兼容' },
+        { value: 'anthropic', label: 'Anthropic（Claude）' },
+      ],
       visibleWhen: (snapshot) => snapshot.aiProvider === 'custom',
     },
   ];
@@ -311,7 +329,23 @@ function providerGroupRows(): SettingsRow[] {
       type: 'secret',
       name: p.apiKeyLabel,
       desc: p.apiKeyDesc,
-      binding: { key: p.apiKeyKey as never },
+      /* 密钥行绑定（2026-11-12）：老三家保留各自旧键（存量数据零迁移），其余一律走 aiApiKeys 表。
+         表形态只能三函数 binding——设置的键位是静态的，动态 id 没有对应键可直绑 */
+      binding: p.apiKeyKey
+        ? { key: p.apiKeyKey as never }
+        : {
+            get: () => String((tryGetSettings() as any).aiApiKeys?.[p.id] ?? ''),
+            set: (v: string) => {
+              const s = tryGetSettings() as any;
+              if (!s.aiApiKeys || typeof s.aiApiKeys !== 'object') s.aiApiKeys = {};
+              const table = s.aiApiKeys as Record<string, string>;
+              const trimmed = String(v ?? '');
+              if (trimmed) table[p.id] = trimmed;
+              else delete table[p.id];
+              void saveSettings();
+            },
+            save: () => {},
+          },
       placeholder: '粘贴密钥',
       visibleWhen: (snapshot) => snapshot.aiProvider === p.id,
       actions: [{

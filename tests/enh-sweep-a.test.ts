@@ -96,12 +96,9 @@ describe('enh-sweep-a：术语与描述', () => {
     expect(lintDesc(desc)).toEqual([]);
   });
 
-  it('书架墙「书库文件夹」描述人话化（走查批 D：不暴露迁移实现细节，非「沿用书库设置」旧措辞）', () => {
+  it('书架墙「书库文件夹」设置项已退役（2026-11-12 书库只由 bz Reader 供书）', () => {
     const schema = bookshelfSettingsSchema();
     const row = schema.groups.flatMap((g) => g.rows).find((r) => (r as { name?: string }).name === '书库文件夹');
-    const desc = (row as { desc?: string }).desc ?? '';
-    expect(desc).toBe('存放书籍笔记的文件夹');
-    expect(desc).not.toContain('沿用书库设置');
-    expect(desc).not.toContain('存量值');
+    expect(row).toBeUndefined();
   });
 });

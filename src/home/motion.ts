@@ -496,6 +496,17 @@ function bindTilt(card: HTMLElement): void {
   card.addEventListener('pointerleave', () => { trx = 0; tryy = 0; if (!raf) raf = requestAnimationFrame(loop); });
 }
 
+/**
+ * 重开补画河面（2026-11-15 发版 review）：面板藏着的时候慢数据落地，`ensureRiver` 量到的是
+ * 0×0（display:none 的 scrollWidth/Height 归零）直接返回、也没加 `.has-river`；重开若走会话缓存
+ * 快路（引用相同 → 不重建），这层描线就永远缺着。显示后补一次，幂等：已画过的不再动。
+ */
+export function repaintRiverSurface(overlay: HTMLElement): void {
+  const flow = overlay.querySelector<HTMLElement>('[data-home-flow]');
+  const tl = flow?.querySelector<HTMLElement>('.bz-home-timeline');
+  if (tl && !tl.classList.contains('has-river')) ensureRiver(tl, false);
+}
+
 /* ================= 评审便利：#replay 重播首屏编排（快速原型批；插件内同样无害） =================
    壳在页面加载时就跑 openHome，编排可能发生在你看到页面之前——带 #replay 打开（或刷新）
    会在 0.6s 后重播一次：面板唤醒 + 内容全编排。ui.ts 在 createOverlay 里挂 __bzHomeReplay。 */

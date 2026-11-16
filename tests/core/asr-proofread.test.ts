@@ -97,7 +97,7 @@ describe('proofreadPieces（编排：编号喂入、批级重试、原子回退�
     expect(chat).toHaveBeenCalledTimes(2);
   });
 
-  it('contextNote 进入提示词；onProgress 逐批上报（17 条 = 16 上限切两批）', async () => {
+  it('contextNote 进入提示词；onProgress 逐批回调（17 条 = 16 上限切两批）', async () => {
     const pieces = Array.from({ length: 17 }, (_, i) => `条${i + 1}`);
     const batch1 = JSON.stringify(Array.from({ length: 16 }, (_, i) => ({ n: i + 1, text: `校${i + 1}` })));
     chat.mockResolvedValueOnce(`{"items":${batch1}}`);

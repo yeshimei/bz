@@ -233,7 +233,7 @@ export async function migrateLegacyPeopleData(app: App, safe: PeopleSafeStore): 
           cleaned.push(path);
         }
       } catch {
-        keptBack.push(path); // 单件删除失败不吞：如实上报（数据已双份，重跑幂等）
+        keptBack.push(path); // 单件删除失败不吞：如实记一笔（数据已双份，重跑幂等）
       }
     }
   } else {

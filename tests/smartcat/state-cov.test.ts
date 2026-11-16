@@ -66,7 +66,7 @@ describe('eventSystem 事件总线', () => {
     eventSystem.off('cov-und', cb);
   });
 
-  it('某处理器抛错：其余处理器继续执行，错误经 console.error 上报且不外抛', () => {
+  it('某处理器抛错：其余处理器继续执行，错误经 console.error 记录且不外抛', () => {
     const errSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     const bad = () => { throw new Error('boom'); };
     const good = vi.fn();

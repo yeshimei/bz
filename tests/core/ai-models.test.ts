@@ -164,12 +164,15 @@ describe('fetchProviderModels：HTTP 通道与错误', () => {
   });
 });
 
-describe('注册表覆盖面（三条在册通道 + 自定义）', () => {
-  it('四条通道注册表齐备（自定义的端点/模型留空由用户填）', () => {
-    expect(AI_PROVIDER_REGISTRY.map((p) => p.id)).toEqual(['deepseek', 'zhipu-plan', 'ollama', 'custom']);
+describe('注册表覆盖面（常用服务商）', () => {
+  it('注册表齐备（自定义的端点/模型留空由用户填）', () => {
+    const ids = AI_PROVIDER_REGISTRY.map((p) => p.id);
+    for (const essential of ['deepseek', 'zhipu-plan', 'ollama', 'custom']) {
+      expect(ids, essential).toContain(essential);
+    }
+    expect(new Set(ids).size).toBe(ids.length); // id 不重复
     for (const p of AI_PROVIDER_REGISTRY) {
       expect(p.label, p.id).toBeTruthy();
-      expect((p as { apiKeyKey: string }).apiKeyKey, p.id).toBeTruthy();
       if (p.id !== 'custom') expect(p.endpoint, p.id).toBeTruthy();
     }
   });

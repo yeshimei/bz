@@ -2095,9 +2095,12 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 }
 .bz-fab:active { transform: scale(0.96); }
 
-/* ── 工具提示 [data-tip]（纯 CSS hover） ── */
-[data-tip] { position: relative; }
-[data-tip]::after {
+/* ── 工具提示 [data-tip]（纯 CSS hover） ──
+   2026-11-12 收窄：限定在 bz 自己的界面根内——原写法是裸 [data-tip]，任何带该
+   属性的元素（其它插件/主题）都会被强加 position:relative 与伪元素气泡。
+   :where() 不贡献特异性，(0,1,0) 与原一致。 */
+:where(.bz-panel-overlay, .bz-panel-frame, [class^="bz-"], [class*=" bz-"], [id^="bz-"], [id^="knowledge-"]) [data-tip] { position: relative; }
+:where(.bz-panel-overlay, .bz-panel-frame, [class^="bz-"], [class*=" bz-"], [id^="bz-"], [id^="knowledge-"]) [data-tip]::after {
   content: attr(data-tip);
   position: absolute;
   bottom: calc(100% + 6px);
@@ -2117,7 +2120,7 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   z-index: 80;
 }@media (hover: hover) {
 
-[data-tip]:hover::after { opacity: 1; }
+:where(.bz-panel-overlay, .bz-panel-frame, [class^="bz-"], [class*=" bz-"], [id^="bz-"], [id^="knowledge-"]) [data-tip]:hover::after { opacity: 1; }
 }
 
 /* ── 多选下拉 .bz-multiselect ── */

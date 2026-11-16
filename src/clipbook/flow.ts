@@ -23,7 +23,7 @@ import { localDayKey } from './constants';
 import type { NewsReadEvent } from '../smartcat/news-source';
 import { writeClipNote, clipFilePathOf } from './save';
 import { articleKeyOf } from './constants';
-import { updateClipbookData, type ClipReadLogEntry } from './data';
+import { addReadSeconds, updateClipbookData, type ClipReadLogEntry } from './data';
 import { enqueueNewsWrite } from './write-queue';
 
 // ---------- 阅读会话计时（对齐 ticket 076：当前显示条目 + 累计可视毫秒） ----------
@@ -96,13 +96,28 @@ export function flushReadingSession(): Promise<void> {
 const PENDING_READ_LOG_MAX = 500;
 const pendingReadLog: ClipReadLogEntry[] = [];
 
-/** readLog 追加 + 裁剪（读改写事务，与侧写其他写方同队列串行） */
+/** readLog 追加 + 裁剪（读改写事务，与侧写其他写方同队列串行）。
+ *  2026-11-13：同一笔同时累进 readSeconds / readLoggedSeconds——
+ *  面板里读的也要在剪藏本列表显示「· 3 分钟」，与阅读器回写的秒数合并成一份账。
+ *  两段加同样的整分钟秒数，保证「已入账」与「累计」对齐，阅读器那边不会重复入账。 */
 async function appendReadLog(entry: ClipReadLogEntry): Promise<void> {
   // 批次 = 之前失败暂存的段 + 本次段，一次事务合并入账；成功才清暂存
   const batch = [...pendingReadLog, entry];
   try {
     await updateClipbookData((cur) => {
-      return { ...cur, readLog: trimReadLog([...(cur.readLog || []), ...batch], entry.ts) };
+      let readSeconds = cur.readSeconds;
+      let readLoggedSeconds = cur.readLoggedSeconds;
+      for (const e of batch) {
+        const sec = Math.max(1, Math.round(Number(e.minutes) || 0)) * 60;
+        readSeconds = addReadSeconds(readSeconds, e.key, sec);
+        readLoggedSeconds = addReadSeconds(readLoggedSeconds, e.key, sec);
+      }
+      return {
+        ...cur,
+        readSeconds,
+        readLoggedSeconds,
+        readLog: trimReadLog([...(cur.readLog || []), ...batch], entry.ts),
+      };
     });
     pendingReadLog.length = 0;
   } catch (e) {

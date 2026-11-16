@@ -49,29 +49,44 @@ function skinCss(id: string): string {
   return readFileSync(resolve(process.cwd(), rel), 'utf8');
 }
 
+/** 书库墙的数据源（2026-11-12 起只读 bz Reader）：3 本 EPUB，分类走 shelf / subjects 回退。
+ *  md 书（书库/…）仍保留：阅读报告与旧数据口径跨域还读它们，但不再上墙。 */
+function seedReader(vault: MockVault): void {
+  const now = Date.now();
+  vault.files.set(READER_PATH, JSON.stringify({
+    books: [
+      {
+        id: 'b-cognition',
+        meta: { title: '认知觉醒', author: '周岭', wordCount: 180000 },
+        fileRef: { vaultPath: 'books/认知觉醒.epub' },
+        reading: { position: { percent: 0.6 }, stats: { totalReadTime: 3600, lastReadTime: now } },
+        shelf: '成长', addedAt: now, updatedAt: now,
+      },
+      {
+        id: 'b-fortress',
+        meta: { title: '围城', author: '钱钟书', wordCount: 130000 },
+        fileRef: { vaultPath: 'books/围城.epub' },
+        reading: { position: { percent: 1 }, stats: { totalReadTime: 7200, lastReadTime: now, completedTime: now } },
+        addedAt: now, updatedAt: now,
+      },
+      {
+        id: 'b-galaxy',
+        meta: { title: '银河英雄传说VOL.1：黎明篇', author: '田中芳树', subjects: ['科幻'] },
+        fileRef: { vaultPath: 'books/银河英雄传说.epub' },
+        reading: { position: { percent: 0 } },
+        addedAt: now, updatedAt: now,
+      },
+    ],
+  }));
+}
+
 function seedVault(): { vault: MockVault; app: ReturnType<typeof mockAppWithVault> } {
   const vault = new MockVault();
-  vault.files.set('书库/认知觉醒.md', `---
-tags: [book]
-author: 周岭
-category: 成长
-readingDate: 2026-08-01
-readingProgress: 60
-highlights: 12
-thinks: 3
-bookReview: 值得反复读
-wordCount: 180000
-pages: 288
----`);
-  vault.files.set('书库/围城.md', `---
-tags: [book]
-author: 钱钟书
-readingDate: 2026-07-01
-completionDate: 2026-08-15
-readingProgress: 100
-wordCount: 130000
----`);
+  // 旧 md 书保留（报告口径），书库墙不再消费（2026-11-12）
+  vault.files.set('书库/认知觉醒.md', '---\ntags: [book]\nauthor: 周岭\ncategory: 成长\n---');
+  vault.files.set('书库/围城.md', '---\ntags: [book]\nauthor: 钱钟书\n---');
   vault.files.set('书库/银河英雄传说VOL.1：黎明篇.md', '---\ntags: [book]\nauthor: 田中芳树\ncategory: 科幻\n---');
+  seedReader(vault);
   const app = makeApp(vault);
   ensureBookshelf(app);
   return { vault, app };
@@ -266,7 +281,8 @@ describe('bookshelf 书脊墙（issue 218）', () => {
     expect(popup.textContent).toContain('已抽出这本书');
     expect(popup.textContent).toContain('认知觉醒');
     expect(popup.textContent).toContain('周岭');
-    expect(popup.textContent).toContain('值得反复读');
+    // EPUB 条目没有 bookReview 字段（bz 阅读数据不落书评）→ 卡上显示「尚无书评」
+    expect(popup.textContent).toContain('尚无书评');
     expect(popup.querySelector('.bz-bs-d-seal')?.textContent).toBe('阅');
     expect(popup.querySelector('.bz-choice-btn')).toBeFalsy();
     expect(popup.querySelector('.bz-range')).toBeFalsy();
@@ -354,9 +370,9 @@ describe('bookshelf 书脊墙（issue 218）', () => {
       ],
     }));
     vault.emit('modify', vault.file(READER_PATH));
-    await waitFor(() => spines(document.querySelector('.bz-panel-overlay') as HTMLElement).length === 5, 5000); // 300ms 防抖 + rebuild
+    await waitFor(() => spines(document.querySelector('.bz-panel-overlay') as HTMLElement).length === 2, 5000); // 300ms 防抖 + rebuild
     overlay = document.querySelector('.bz-panel-overlay') as HTMLElement;
-    expect(spines(overlay).length).toBe(5); // 3 md + 2 epub
+    expect(spines(overlay).length).toBe(2); // 只 epub（md 不再上墙）
     closeOverlay();
   });
 
@@ -407,13 +423,25 @@ describe('bookshelf 书脊墙（issue 218）', () => {
 
   it('深审接缝三角：报告分类行点击 → catFilter 预填 → 视图回墙精确筛中（RR-F3 多类口径单源）', async () => {
     const { vault, app } = seedVault();
-    // 多类书：frontmatter category 为拼接串「小说,文学」（宿主 parseBookFile 单值口径）
+    // 多类书：报告侧扫 md（frontmatter category 拼接串「小说,文学」），墙侧对应 EPUB 条目
+    // 的 shelf 同值——报告分类行点进来才能在 EPUB 墙上精确筛中（2026-11-12 起墙只读 bz Reader）。
     vault.files.set('书库/多类书.md', `---
 tags: [book]
 author: 双栖作者
 category: 小说,文学
 readingDate: 2026-08-01
 ---`);
+    const readerData = JSON.parse(vault.files.get(READER_PATH) as string);
+    readerData.books.push({
+      id: 'b-multi',
+      meta: { title: '多类书', author: '双栖作者' },
+      fileRef: { vaultPath: 'books/多类书.epub' },
+      reading: { position: { percent: 0.3 } },
+      shelf: '小说,文学',
+      addedAt: Date.now(),
+      updatedAt: Date.now(),
+    });
+    vault.files.set(READER_PATH, JSON.stringify(readerData));
     await openPanel(vault, app);
     openBookshelfReport(app);
     const overlay = overlayEl();

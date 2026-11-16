@@ -529,6 +529,12 @@ export interface RiverData {
   /** 番茄钟正在专注（计时中或暂停中；采集层动态 import 跨域只读，失败回落 false）。
    *  纯层不做跨域 import（渲染纯层契约），专注态只能作为数据入参进彩点规则（item-1789106079981）。 */
   pomodoroFocusing: boolean;
+  /**
+   * 首屏壳标记（2026-11-15 首开分段渲染）：`makeRiverShell()` 造的纯算占位数据。
+   * 只有日期窗口可信，counts/streak/events/summary 都还没采——渲染层据此回落域副题，
+   * 不许把 0 当真数糊上去。真数据（collectRiver 结果）不带此字段，零影响。
+   */
+  pending?: boolean;
 }
 
 /* ---------- 时间线类别（内容过滤 / 范围 / 字号 口径；issue 287，2026-09-11 用户点名） ---------- */
@@ -748,6 +754,8 @@ export function dotOf(dots: Record<string, RiverDot>, id: string): RiverDot {
 
 /** 全部域入口行计数文案（id 与 DOMAINS 一致；缺数据回落域副题） */
 export function riverCountText(id: string, data: RiverData): string | null {
+  // 首屏壳还没采到计数：入口行/瓦片回落域副题，菜单盒头不显计数，不许把 0 当真数糊上去
+  if (data.pending) return null;
   const c = data.counts;
   switch (id) {
     case 'diary':

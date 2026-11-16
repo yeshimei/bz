@@ -1,7 +1,13 @@
 {
   "version": 1,
-  "updatedAt": "2026-11-12",
+  "updatedAt": "2026-11-13",
   "patrons": [
+    { "name": "马飞飞", "amount": 8, "date": "2026-11-13", "message": "支持作者大大" },
+    { "name": "疯言与诗", "amount": "patron", "date": "2026-11-13" },
+    { "name": "高点点", "amount": "patron", "date": "2026-11-13" },
+    { "name": "容舠", "amount": "patron", "date": "2026-11-13" },
+    { "name": "夜", "amount": 8, "date": "2026-11-12", "message": "很好用，加油💪" },
+    { "name": "喜之狼", "amount": "patron", "date": "2026-11-12" },
     { "name": "Pomodorinettina", "amount": "patron", "date": "2026-11-12", "message": "非常喜欢这个阅读器的UI，希望之后可以出更多项目更多功能～" },
     { "name": "NewTree", "amount": "patron", "date": "2026-11-11" },
     { "name": "沁弦", "amount": 6.66, "date": "2026-11-11", "message": "KEEP IT UP!Love from Charis523" },

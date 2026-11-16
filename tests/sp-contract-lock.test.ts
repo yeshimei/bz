@@ -32,7 +32,7 @@ const COUNT_BASELINE: Record<string, number> = {
   clipping: 13, // 2026-11-06 ADR-0290：自动摘要组「笔记内摘要卡」toggle（+1，常显不随总开关收起）；2026-09-27 issue 497 / ADR-0209：数据源组新增「RSSHub 实例」text 行（+1）；issue 495 基线 11
   favorites: 5,
   cinema: 7, // 2026-09-26：网格每行列数退役（列数固定 5）
-  bookshelf: 5,
+  bookshelf: 4, // 2026-11-12：书库只由 bz Reader 供书，「目录」组（书库文件夹）退役（-1）
   gameshelf: 7,
   review: 12,
   secondbrain: 6, // 2026-09-24 issue 424：检索组四行删（不限制 + 固化）、服务组两行 IP 自查/提示删

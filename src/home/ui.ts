@@ -37,15 +37,20 @@ import { H } from './state';
 import { DOMAIN_MAP } from './domains';
 import {
   DOMAIN_MENU, pomodoroMenuAction,
-  DEFAULT_TIMELINE_FILTER, timelineRangeDays, type TimelineFilter,
+  DEFAULT_TIMELINE_FILTER, timelineRangeDays, riverCountText, buildDots, dotOf,
+  type TimelineFilter,
 } from './shared';
 import type { PomodoroPhase } from '../core/pomodoro-phase';
 import { isFocusingPhase } from '../core/pomodoro-phase';
-import { collectRiver, type RiverData } from './river';
-import { loadHomeOrder } from './order';
-import { motionDaySwitch, motionPanelIn, motionPanelOut, motionRendered, motionWeekPop } from './motion';
+import type { RiverData } from './river';
+import { loadRiverCached } from './river-cache';
+import { makeRiverShell } from './river-shell';
+import { loadHomeOrder, cachedHomeOrder } from './order';
 import {
-  headDateText, panelFrameHtml, loadingEntriesHtml, loadingFlowHtml, flowFailedHtml,
+  motionDaySwitch, motionPanelIn, motionPanelOut, motionRendered, motionWeekPop, repaintRiverSurface,
+} from './motion';
+import {
+  headDateText, panelFrameHtml, loadingEntriesHtml, loadingFlowHtml, loadingNextHtml, flowFailedHtml,
   weekHtml, entriesHtml, flowHtml, nextHtml, tilesHtml, sheetHeadHtml, menuHeadHtml, type FlowOpts,
 } from './render';
 
@@ -192,6 +197,13 @@ export function createOverlay(app: any): void {
   H.overlayVisible = true;
   mountIcons(overlay); // 头行关闭钮等静态占位（renderAll 只挂数据区图标）
   bindEvents(overlay, app);
+  // 首开同步铺壳（2026-11-15）：纯算 7 天日期 + 空计数，零 IO、零 await。
+  // 左右入口 / 明天预告 / 周历 / 移动瓦片当场可见，只有中间时间线等后台那一轮全量采集。
+  // 顺序优先用预热缓存（一次 readFile，启动时就该有了）：否则壳按默认顺序铺，真顺序回来
+  // 一比对就整屏重排——设过自定义顺序 / 隐藏过域的人每次首开都要闪这一下。
+  const knownOrder = cachedHomeOrder(app);
+  if (knownOrder) H.order = knownOrder;
+  H.riverShell = makeRiverShell();
   renderAll();
   motionPanelIn(overlay, false); // 动效层：面板壳入场（渲染编排由 renderAll 内的 motionRendered 管）
   // 评审便利：#replay 重播首屏编排（motion.ts 的 hashchange 钩子消费；插件内无害）
@@ -202,7 +214,7 @@ export function createOverlay(app: any): void {
   // 打开即入焦 + Tab 圈闭（呈报#13 F3+H3 全域范式，core trapPanelFocus 单源）
   trapPanelFocus(overlay);
   mountPanelResize(overlay); // 桌面拖拽缩放 + 尺寸记忆（ADR-0084/0094）
-  void refreshRiverAndRender();
+  scheduleRefresh();
 }
 
 /**
@@ -225,16 +237,55 @@ async function readPomodoroPhase(app: any): Promise<PomodoroPhase> {
  *  用旧数据覆盖新数据——发号在采集前、校验在写回前，非最新代次直接作废 */
 let refreshSeq = 0;
 
-/** 重新采集活动河数据 + 读入口顺序/番茄钟相位（并发取回，避免多趟闪） */
-async function refreshRiverAndRender(): Promise<void> {
+/* ---------- 开发期耗时探针（issue：首页每次重开卡一小会儿） ----------
+ * __BZ_DEV__ 是编译期旗标，只有 BZ_VAULT_DIR 指向测试库的开发构建为 true；
+ * production 恒 false，整段被 esbuild 消掉，发布版零残留。测试环境未注入该全局，
+ * typeof 守卫保证不报 ReferenceError。 */
+function devNow(): number {
+  return typeof performance !== 'undefined' && typeof performance.now === 'function'
+    ? performance.now()
+    : Date.now();
+}
+function devPerf(label: string, ms: number): void {
+  if (typeof __BZ_DEV__ !== 'undefined' && __BZ_DEV__) {
+    console.debug(`[home:perf] ${label} ${ms.toFixed(1)}ms`);
+  }
+}
+
+/** 让位首帧（issue 383）：rAF 后再落一拍，等面板画出来再做采集/排版，
+ *  否则缓存命中时整条链在微任务里一口气跑到 renderAll，反而堵住「打开」那一帧。 */
+function afterPaint(): Promise<void> {
+  return new Promise((resolve) => {
+    if (typeof requestAnimationFrame !== 'function' || document.hidden) {
+      setTimeout(resolve, 0);
+      return;
+    }
+    requestAnimationFrame(() => setTimeout(resolve, 0));
+  });
+}
+
+/** 排一轮刷新：默认吃会话缓存；force = 手动刷新 / 动作落地 / 重试，恒回源。 */
+function scheduleRefresh(force = false): void {
+  void afterPaint().then(() => refreshRiverAndRender({ force }));
+}
+
+/** 重新采集活动河数据 + 读入口顺序/番茄钟相位（并发取回，避免多趟闪）。
+ *  数据层命中缓存时 river 与 H.river 是同一份对象引用 —— 五区内容没变，直接收手不重排，
+ *  既不重扫全库也不整屏重建（用户报的「每次打开卡一小会儿」就是这两件事）。 */
+async function refreshRiverAndRender(opts: { force?: boolean } = {}): Promise<void> {
   if (!H.currentOverlay || !H.appRef) return;
   const overlay = H.currentOverlay;
   const seq = ++refreshSeq;
+  const t0 = devNow();
+  const prevRiver = H.river;
+  const prevPhase = H.pomodoroPhase;
+  const prevOrderJson = JSON.stringify(H.order);
   const [river, order, phase] = await Promise.all([
-    collectRiver(H.appRef).catch(() => null),
+    loadRiverCached(H.appRef, { force: opts.force }).catch(() => null),
     loadHomeOrder(H.appRef),
     readPomodoroPhase(H.appRef),
   ]);
+  devPerf(opts.force ? 'collect(force)' : 'collect', devNow() - t0);
   // 存活守卫（arch A3）：await 期间面板被卸载（unloadHome → remove + resetHomeState 全字段
   // 归零）或重建（currentOverlay 换新）→ 本次采集作废，不得把脏数据写回已清零的 H
   //（否则同会话禁用→重启用首页会闪现上一会话旧渲染，跨天时头行日期与时间线列错位）
@@ -251,6 +302,7 @@ async function refreshRiverAndRender(): Promise<void> {
   // issue 290：失败只兜「从没有过数据」——H.river 不再随失败回 null，常驻 DOM 里已有的
   // 好渲染不被一次刷新失败换成失败空态（重试路径 renderAll 读的也是旧数据，语义不变）。
   H.riverFailed = river === null;
+  if (!river) H.riverShell = null; // 采集失败：既有失败态接管，壳不留
   if (river) H.river = river;
   if (!river && H.river) return;
   if (order) H.order = order;
@@ -260,7 +312,33 @@ async function refreshRiverAndRender(): Promise<void> {
     const { defaultDay, rangeDays } = readHomeSettings();
     H.riverView = pickInitialView(river, defaultDay, rangeDays);
   }
-  renderAll();
+  // 首开壳 → 真数据：走局部补画，不整屏重建。引用判据在此天然不成立（壳与真数据是两份对象），
+  // 所以显式认「阶段」，别让 unchanged 把慢数据吞掉，也别让 renderAll 把左右重放一遍。
+  const shell = H.riverShell;
+  const fromShell = !!river && !!shell;
+  if (fromShell) H.riverShell = null;
+  // 壳是同步铺的，入口顺序却来自异步 loadHomeOrder：真顺序与壳不同就得整屏重排一次
+  const shellOrderChanged = fromShell && H.shellOrderJson !== null
+    && H.shellOrderJson !== JSON.stringify(H.order);
+  H.shellOrderJson = null;
+  // 壳铺好到采集回来之间跨过了零点（发版 review）：壳的周历 --today 与头行日期都还停在
+  // 前一天，局部补画只切 --hit/--sel，写着「今天」的那一格会错位。这种一晚上一回的边角
+  // 直接整屏重建，比在补画里重算整个周历便宜。
+  const crossedMidnight = !!shell && !!river && shell.today.dateStr !== river.today.dateStr;
+  // 缓存命中（同一份 RiverData）+ 相位/顺序都没变 + 上次已渲染过真数据 ⇒ 五区内容原样，
+  // 不重建 DOM、不重放编排、不动焦点与滚位。首次开（prevRiver 为 null，壳待补）不在此列。
+  const unchanged =
+    !fromShell && !!river && !!prevRiver && river === prevRiver && !H.riverFailed &&
+    phase === prevPhase && JSON.stringify(H.order) === prevOrderJson;
+  if (unchanged) {
+    devPerf('cache-hit 跳过重建', devNow() - t0);
+    return;
+  }
+  const slow = fromShell && !shellOrderChanged && !crossedMidnight;
+  const tRender = devNow();
+  if (slow) renderSlowData();
+  else renderAll();
+  devPerf(slow ? 'renderSlowData' : 'renderAll', devNow() - tRender);
 }
 
 /**
@@ -293,7 +371,10 @@ export function showOverlay(): void {
   restoreScroll(overlay);
   motionPanelIn(overlay, true);
   mountPanelResize(overlay); // 复用显重挂（closeOverlay 隐藏时已摘，此处句柄恒空，幂等由 mount 自守）
-  void refreshRiverAndRender();
+  scheduleRefresh(); // 重开：数据没变就只显不重排，变了才回源（域事件 / 跨天 / 5 分钟兜底）
+  // 隐藏期间慢数据到达时量不到尺寸（display:none 下 0×0），河面 SVG 没画成；显示后补一次。
+  // 幂等：已经画过的（.has-river）不再动；数据没变的快路重开正是靠这一步补回来。
+  requestAnimationFrame(() => repaintRiverSurface(overlay));
 }
 
 /**
@@ -342,7 +423,9 @@ function bindEvents(overlay: HTMLElement, app: any): void {
     // 周历切天：切换选中格并只重渲时间线（数据已在采集窗口内）。
     // aria-pressed 同步（ui P3-3）：选中态只存在于视觉 class 的话，读屏听不出「当前在看哪天」
     const wk = t.closest('[data-home-weekday]') as HTMLElement | null;
-    if (wk && H.river) {
+    // 首屏壳阶段也允许切天：只记选中态，中间列继续挂「正在汇入…」，慢数据到位后
+    // renderSlowData 会按 H.riverView 补画那一天。否则首开那几百毫秒里周历点了没反应。
+    if (wk && (H.river || H.riverShell)) {
       H.riverView = wk.dataset.homeWeekday || null;
       const overlay2 = H.currentOverlay;
       if (overlay2) {
@@ -355,7 +438,7 @@ function bindEvents(overlay: HTMLElement, app: any): void {
         });
         if (selEl) motionWeekPop(selEl); // 选中彩条弹跳（动效层）
         const flow = overlay2.querySelector('[data-home-flow]') as HTMLElement | null;
-        if (flow) {
+        if (flow && H.river) {
           // 切天编排（动效层）：旧河 blur 退场 → 重写（markup 单源不动）→ 新河接力揭出
           motionDaySwitch(flow, () => {
             flow.innerHTML = flowHtml(H.river!, H.riverView ?? '', readHomeSettings().flow);
@@ -437,17 +520,17 @@ function runCommandAndRefresh(commandId: string, app: any, busyText?: string): v
     void (ret as Promise<unknown>).then(
       () => {
         activeCommands.delete(commandId);
-        return refreshRiverAndRender();
+        return refreshRiverAndRender({ force: true });
       },
       () => {
         // 失败分支（func P3-2 同刀）：不再静默刷新（用户视角「点了像没点」）
         activeCommands.delete(commandId);
         notice('动作没有执行成功', 'warning');
-        return refreshRiverAndRender();
+        return refreshRiverAndRender({ force: true });
       },
     );
   } else {
-    void refreshRiverAndRender();
+    void refreshRiverAndRender({ force: true });
   }
 }
 
@@ -566,14 +649,18 @@ function renderAll(): void {
   const fk = active && overlay.contains(active) ? focusKeyOf(active) : null;
 
   if (!H.river) {
-    // 数据未到：结构占位（骨架），不闪空内容；采集失败（H12）→ 失败空态 + 重试，不再永挂骨架
-    // 骨架期也按设置收敛第三栏（预告卡关掉时空列 224px 只闪现到数据到达，同刀收口）
-    const { next: nextOn } = readHomeSettings();
-    preGrid?.classList.toggle('bz-home-grid--no-next', !nextOn);
+    // 数据未到：首开铺壳 / 采集失败出空态 / 兜底骨架；三态都按设置收敛第三栏
+    const cfg = readHomeSettings();
+    preGrid?.classList.toggle('bz-home-grid--no-next', !cfg.next);
     const entries = overlay.querySelector('[data-home-entries]') as HTMLElement;
     const flow = overlay.querySelector('[data-home-flow]') as HTMLElement;
     const next = overlay.querySelector('[data-home-next]') as HTMLElement;
+    const tiles = overlay.querySelector('[data-home-tiles]') as HTMLElement;
+    const week = overlay.querySelector('[data-home-week]') as HTMLElement;
     if (H.riverFailed) {
+      // 采集失败（H12）：收掉壳，沿用既有「失败 + 重试」空态，不永挂骨架/汇入文案
+      H.riverShell = null;
+      H.shellOrderJson = null;
       const empty = uiEmpty({
         icon: 'alert-circle',
         title: '首页数据采集失败',
@@ -582,7 +669,7 @@ function renderAll(): void {
       const retry = uiBtn({ label: '重试', onClick: () => {
         H.riverFailed = false;
         renderAll();
-        void refreshRiverAndRender();
+        void refreshRiverAndRender({ force: true });
       } });
       const row = document.createElement('div');
       row.className = 'bz-btn-row bz-btn-row--center';
@@ -591,16 +678,40 @@ function renderAll(): void {
       entries.innerHTML = '';
       entries.appendChild(empty);
       mountIcons(entries);
-      // 失败三态（func P3-1）：flow 列同步出失败位（行级文案，避免「正在汇入…」假加载）——
-      // 重试入口只在 entries 大卡上挂一个，成功后随 renderAll 两列一并恢复
+      // 失败三态（func P3-1）：flow 列同步出失败位（行级文案，避免「正在汇入…」假加载）
       flow.innerHTML = flowFailedHtml();
-    } else {
-      entries.innerHTML = loadingEntriesHtml();
-      flow.innerHTML = loadingFlowHtml();
+      next.innerHTML = '';
+      tiles.innerHTML = '';
+      week.innerHTML = '';
+      return;
     }
+    if (H.riverShell) {
+      // 首开壳：左右 / 周历 / 瓦片当场出结构，中间时间线留「正在汇入…」等慢数据。
+      // 计数尚未采到，entriesHtml/tilesHtml 靠 pending 回落域副题，不显示假 0。
+      const shell = H.riverShell;
+      H.shellOrderJson = JSON.stringify(H.order);
+      week.innerHTML = weekHtml(shell.week.slice(0, cfg.rangeDays), shell.today.dateStr, shell.today.dateStr);
+      entries.innerHTML = entriesHtml(shell, H.order.desk, H.order.hiddenDesk);
+      flow.innerHTML = loadingFlowHtml();
+      next.innerHTML = cfg.next ? loadingNextHtml() : '';
+      next.style.display = cfg.next ? '' : 'none';
+      tiles.innerHTML = tilesHtml(shell, H.order.mob, H.order.hiddenMob);
+      mountIcons(week);
+      mountIcons(entries);
+      mountIcons(next);
+      mountIcons(tiles);
+      // 菜单不在这里挂（发版 review）：壳的计数是空快照，绑进去的盒头会一直停在空值上
+      // （慢数据只改文字，不重挂绑定件）。等真数据到位那次 renderSlowData 再一次性挂，
+      // 代价只是首开那几百毫秒里右键没有菜单。
+      motionRendered(overlay, true); // 首屏编排：周历翻落 / 入口涟漪（时间线未到，河道段自跳）
+      return;
+    }
+    // 无壳、无数据、未失败（手工构造状态 / 卸载间隙）：保留旧骨架兜底
+    entries.innerHTML = loadingEntriesHtml();
+    flow.innerHTML = loadingFlowHtml();
     next.innerHTML = '';
-    (overlay.querySelector('[data-home-tiles]') as HTMLElement).innerHTML = '';
-    (overlay.querySelector('[data-home-week]') as HTMLElement).innerHTML = '';
+    tiles.innerHTML = '';
+    week.innerHTML = '';
     return;
   }
   const river = H.river;
@@ -642,6 +753,91 @@ function renderAll(): void {
     const target = overlay.querySelector(`[${fk.attr}="${fk.value}"]`) as HTMLElement | null;
     target?.focus();
   }
+}
+
+/**
+ * 入口行的数据面（副题计数 + 彩点）。壳（整段 HTML，见 layouts/river/render.ts 的
+ * entriesHtml / tilesHtml）与慢数据（就地改）共用这一条规则：**新增数据字段改这里，
+ * 并同步那两处初值**，别让慢数据漏掉一格。
+ */
+function patchRowEl(el: HTMLElement, data: RiverData, dots: ReturnType<typeof buildDots>): void {
+  const id = el.dataset.homeGo || '';
+  const text = riverCountText(id, data) ?? DOMAIN_MAP.get(id)?.sub;
+  const slot = el.querySelector('.bz-home-ect');
+  if (slot && text) slot.textContent = text;
+  const dot = el.querySelector('.bz-home-dot');
+  if (!dot) return;
+  const kind = data.pending ? 'pending' : dotOf(dots, id);
+  dot.className = 'bz-home-dot bz-home-dot--' + kind;
+}
+
+/**
+ * 慢数据到位的局部补画（2026-11-15 首开分段渲染）。
+ * 首屏壳已经把左右 / 周历 / 瓦片铺好，这里**绝不整屏重建**：
+ * 只换中间时间线、就地改入口行文字与彩点、切周历动静标记、把预告骨架换成三张真卡。
+ * 节点原地复用 ⇒ 不闪、不重放编排、不丢焦点/滚位。
+ * 菜单绑定件在真数据这一步才挂（壳的计数是空快照，先挂会把空盒头钉死）。
+ */
+function renderSlowData(): void {
+  const overlay = H.currentOverlay;
+  const river = H.river;
+  if (!overlay || !river || !overlay.querySelector('[data-home-flow]')) return;
+  const cfg = readHomeSettings();
+  const windowDays = river.days.slice(0, cfg.rangeDays);
+  const view = H.riverView && windowDays.some((d) => d.dateStr === H.riverView) ? H.riverView : null;
+  H.riverView = view;
+  const today = river.today.dateStr;
+  const viewKey = view ?? today;
+
+  // 中间列：只重写这一列（用户要的「后台慢慢抓，抓到了再显示」）
+  const flow = overlay.querySelector('[data-home-flow]') as HTMLElement | null;
+  if (flow) {
+    flow.innerHTML = flowHtml(river, view ?? today, cfg.flow);
+    mountIcons(flow);
+  }
+
+  // 周历：只切 --hit 与 aria，格子节点原地复用（焦点 / 翻落动效不丢）
+  const week = overlay.querySelector('[data-home-week]') as HTMLElement | null;
+  if (week) {
+    const byDate = new Map<string, (typeof river.week)[number]>();
+    for (const w of river.week) byDate.set(w.dateStr, w);
+    week.querySelectorAll<HTMLElement>('[data-home-weekday]').forEach((cell) => {
+      const key = cell.dataset.homeWeekday || '';
+      const w = byDate.get(key);
+      const hit = !!w?.hit;
+      const sel = key === viewKey;
+      cell.classList.toggle('bz-home-wk--hit', hit);
+      cell.classList.toggle('bz-home-wk--sel', sel);
+      cell.setAttribute('aria-pressed', sel ? 'true' : 'false');
+      cell.setAttribute('aria-label', (key === today ? '今天' : (w?.label ?? '')) + (hit ? '，有动静' : ''));
+    });
+  }
+
+  // 左右两栏：副题/骨架就地换成真计数与真彩点，节点不换 → 焦点与滚位都还在
+  const dots = buildDots(river);
+  for (const container of [
+    overlay.querySelector('[data-home-entries]'),
+    overlay.querySelector('[data-home-tiles]'),
+  ]) {
+    if (!container) continue;
+    container.querySelectorAll<HTMLElement>('[data-home-go]').forEach((el) => patchRowEl(el, river, dots));
+  }
+
+  // 入口菜单绑定件：壳阶段没挂（计数是空快照，挂上去盒头就停在空值），在这里用真数据挂一次。
+  // DOM 节点没换，所以只挂这一次；之后整屏重建会随新节点重挂。
+  mountRowInteractions(overlay, H.appRef, river);
+
+  // 预告卡：骨架 → 三张规则卡（点击是 overlay 上的委托，无独立绑定件要迁）
+  const next = overlay.querySelector('[data-home-next]') as HTMLElement | null;
+  if (next) {
+    next.innerHTML = nextHtml(river, cfg.next);
+    next.style.display = cfg.next ? '' : 'none';
+    mountIcons(next);
+    overlay.querySelector('.bz-home-grid')?.classList.toggle('bz-home-grid--no-next', !cfg.next);
+  }
+
+  // 静默档：innerHTML 重写会冲掉注入件，重挂河面与预告绑定件，但不重放整屏编排
+  motionRendered(overlay, false);
 }
 
 /* ---------- ESC / 通知 ---------- */

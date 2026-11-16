@@ -1283,7 +1283,7 @@ describe('深审修复批回归（bz-fix-pomo-core）', () => {
     expect(document.getElementById('pomodoro-mask')).not.toBeNull();
   });
 
-  it('PF5：ensurePomodoro load 失败 → 吞错上报；命令链不在空内存态上开新会话覆盖盘上数据', async () => {
+  it('PF5：ensurePomodoro load 失败 → 吞错记日志；命令链不在空内存态上开新会话覆盖盘上数据', async () => {
     const { app, vault } = setup();
     vault.files.set(getPomodoroFilePath(), runningData());
     vi.spyOn(PomodoroDataManager.prototype, 'load').mockRejectedValue(new Error('磁盘故障'));

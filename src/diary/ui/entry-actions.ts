@@ -105,7 +105,7 @@ export function showConfirm(loc: DiaryEntryLocator): void {
       if (isEncrypted && loc.noteId) {
         // 加密条目：永久删除保险箱密文（ADR-0017）
         await deleteEncryptedEntry(loc.noteId);
-        // 动作埋点：加密日记密文销毁（本期无消费者，emit 即可）
+        // 动作事件：加密日记密文销毁（本期无消费者，emit 即可）
         emitDomainEvent('diary:encrypted-purged', { noteId: loc.noteId });
       } else {
         const removed = await removeDiaryEntries(loc.date, await buildLocatorPredicateFor(loc.date, loc), {
@@ -115,7 +115,7 @@ export function showConfirm(loc: DiaryEntryLocator): void {
           notice('未能在日记数据中定位该条目，没有删除', 'error');
           return;
         }
-        // 动作埋点：普通条目删除意图。A3（review-deep 架）：file-vacated 通道已随
+        // 动作事件：普通条目删除意图。A3（review-deep 架）：file-vacated 通道已随
         // ADR-0130 条目文件化退役，删除通知唯一出口 = 本处 diary:entry-deleted
         emitDomainEvent('diary:entry-deleted', { date: loc.date, time: loc.time, wasEncrypted: false });
       }

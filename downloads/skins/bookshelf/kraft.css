@@ -33,7 +33,7 @@
 .bz-bs-skin-kraft .bz-bs-spine::after { display: none; }
 .bz-bs-skin-kraft .bz-bs-spine-title { text-shadow: none; }
 .bz-bs-skin-kraft .bz-bs-spine.unread { filter: sepia(0.2) brightness(0.8); }
-.bz-bs-skin-kraft .bz-bs-wallnote, .bz-bs-skin-kraft .bz-bs-hint { color: #6b5232; }
+.bz-bs-skin-kraft .bz-bs-hint { color: #6b5232; }
 .bz-bs-skin-kraft .bz-bs-seg button { color: #6b5232; }
 .bz-bs-skin-kraft .bz-bs-seg button.on { background: #8a5a2b; color: #f0e2c4; }
 

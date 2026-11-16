@@ -59,6 +59,17 @@ export interface ClipbookData {
   /** 阅读会话流水（issue 358）：append-only，追加时裁剪（180 天外 + 上限条数，见 flow trimReadLog）；
    *  旧侧写无此段 → 空数组兜底，零迁移 */
   readLog: ClipReadLogEntry[];
+  /**
+   * 每篇累计阅读秒数（2026-11-13，剪藏成书回写）：key = articleKeyOf / `clip:<路径>`。
+   *
+   * 与 readLog 的分工：readLog 是整分钟的会话流水，报告层的唯一数据源；
+   * readSeconds 是**精确到秒的累计值**，剪藏本列表显示「· 3 分钟」用它。
+   * 阅读器（bz-reader）在剪藏本里按章计时，切章 / 关书时经门面 recordRead 报过来。
+   * 旧侧写无此段 → 空对象兜底，零迁移。
+   */
+  readSeconds: Record<string, number>;
+  /** 已经折进 readLog 的秒数（内部对账，不出门面）：防止每次上报按本次取整反复丢零头 */
+  readLoggedSeconds: Record<string, number>;
 }
 
 export const CLIPBOOK_JSON = 'clipbook.json';
@@ -86,7 +97,31 @@ function resolve(data: ClipbookData): ClipbookData {
       Array.isArray(v) ? v.map(String).filter(Boolean) : []),
     // issue 358 新段：旧侧写无此段 → 空数组兜底；条目形态容错（非法条目整条丢弃）
     readLog: resolveReadLog((data as any)?.readLog),
+    // 2026-11-13 新段：阅读器回写的秒数账；旧侧写无此段 → 空对象兜底
+    readSeconds: resolveSeconds(data && (data as any).readSeconds),
+    readLoggedSeconds: resolveSeconds(data && (data as any).readLoggedSeconds),
   };
+}
+
+/** 秒数段容错解析：非对象 → 空对象；键去空，值取整后非正一律丢掉 */
+function resolveSeconds(raw: any): Record<string, number> {
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return {};
+  const out: Record<string, number> = {};
+  for (const k of Object.keys(raw)) {
+    const key = String(k).trim();
+    if (!key) continue;
+    const n = Math.floor(Number((raw as any)[k]));
+    if (Number.isFinite(n) && n > 0) out[key] = n;
+  }
+  return out;
+}
+
+/** 秒数段累加（不可变，返回新对象）：add ≤ 0 时原样返回 */
+export function addReadSeconds(map: Record<string, number>, key: string, add: number): Record<string, number> {
+  const k = String(key || '').trim();
+  const n = Math.floor(Number(add) || 0);
+  if (!k || n <= 0) return map;
+  return { ...map, [k]: (Number(map?.[k]) || 0) + n };
 }
 
 /** readLog 段容错解析（issue 358）：非数组 → 空数组；条目缺关键字段/时长非法 → 丢弃 */
@@ -143,5 +178,8 @@ export function updateClipbookData(mutate: (cur: ClipbookData) => ClipbookData):
 }
 
 export function emptySidecar(): ClipbookData {
-  return { articleOverrides: {}, savedArchive: [], order: [], marks: {}, savedImages: {}, pendingSource: {}, readLog: [] };
+  return {
+    articleOverrides: {}, savedArchive: [], order: [], marks: {}, savedImages: {}, pendingSource: {},
+    readLog: [], readSeconds: {}, readLoggedSeconds: {},
+  };
 }

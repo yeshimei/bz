@@ -399,7 +399,7 @@ describe('SafeManager 进度回调（onProgress）', () => {
     vault = new MockVault();
   });
 
-  it('lockNote：附件并行加密后按完成数上报（done 递增、total 3、current 覆盖全部文件）', async () => {
+  it('lockNote：附件并行加密后按完成数回调（done 递增、total 3、current 覆盖全部文件）', async () => {
     makeApp(vault);
     const sm = new SafeManager('CONFIG/.ENCRYPT');
     await sm.unlock('pw');
@@ -426,7 +426,7 @@ describe('SafeManager 进度回调（onProgress）', () => {
     expect(note.attachments.map((a) => a.path)).toEqual(['我的/影视/1.png', '我的/影视/2.mp4']);
   });
 
-  it('restoreNote：按附件逐个 + 笔记本身上报，末尾 done===total', async () => {
+  it('restoreNote：按附件逐个 + 笔记本身回调，末尾 done===total', async () => {
     makeApp(vault);
     const sm = new SafeManager('CONFIG/.ENCRYPT');
     await sm.unlock('pw');

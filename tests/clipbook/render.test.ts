@@ -9,6 +9,7 @@ import {
   panelHtml, railItemHtml, railFootHtml, tocListHtml, summaryHtml,
   readerHtml, mobListHtml, mobDetailHtml, mobTocHtml, mobFoldHtml, mobChHeadHtml, mobNoHitHtml,
   siteShort, siteTint, stateFlag, stateLabel,
+  readTimeLabel,
   clipReportEntryHtml, clipReportShellHtml, buildClipReportSections,
 } from '../../src/clipbook/render';
 import * as clipRenderNs from '../../src/clipbook/render';
@@ -76,6 +77,33 @@ describe('clipbook render 纯层（issue 247）', () => {
     expect(html).toContain('>01<');
     expect(html).toContain('>03<');
     expect(html).toContain('果壳 · 昨天 14:00');
+  });
+
+  it('目录：有阅读时长才在 meta 行补「· N 分钟」，不足 1 分钟说「不到 1 分钟」', () => {
+    const list = [art({ id: 'a', srcName: '少数派' }), art({ id: 'b', srcName: '少数派' })];
+    const secs: Record<string, number> = { a: 185, b: 42 };
+    const html = tocListHtml(list, null, () => '今天', '', (x) => secs[x.id] || 0);
+    expect(html).toContain('少数派 · 今天 · 3 分钟');
+    // b 只有 42 秒：给个短词说明「记到了」，不再是整段消失（读完短文回来以为没记上）
+    expect(html).toContain('少数派 · 今天 · 不到 1 分钟');
+    expect(html).not.toContain('0 分钟');
+  });
+
+  it('目录：不传秒数取值时与旧版完全一致（老调用方零改动）', () => {
+    const list = [art({ id: 'a', srcName: '少数派' })];
+    expect(tocListHtml(list, null, () => '今天')).toBe(tocListHtml(list, null, () => '今天', '', () => 0));
+  });
+
+  it('readTimeLabel：没读过空串，不足 1 分钟说「不到 1 分钟」，满分钟走 formatMinutes', () => {
+    expect(readTimeLabel(0)).toBe('');
+    expect(readTimeLabel(1)).toBe('不到 1 分钟');
+    expect(readTimeLabel(59)).toBe('不到 1 分钟');
+    expect(readTimeLabel(60)).toBe('1 分钟');
+    expect(readTimeLabel(179)).toBe('2 分钟');
+    expect(readTimeLabel(3600)).toBe('1 小时');
+    expect(readTimeLabel(3900)).toBe('1 小时 5 分钟');
+    expect(readTimeLabel(Number.NaN)).toBe('');
+    expect(readTimeLabel(-5)).toBe('');
   });
 
   it('正文容器：markdown 交 MarkdownRenderer 水合（note 占位 / 空不出占位段）', () => {

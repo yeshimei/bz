@@ -203,8 +203,13 @@
   word-break: break-word;
 }
 .bz-clip-item:not(.bz-clip-item--unread) .bz-clip-item-t { font-weight: 400; color: var(--clip-dim); }
-/* meta 一行：「站点 · 时间」（原型对齐，左对齐不散排） */
-.bz-clip-item-meta { margin-top: 5px; font-size: var(--bz-font-caption); color: var(--clip-muted); letter-spacing: .5px; }
+/* meta 一行：「站点 · 时间 · 阅读时长」（原型对齐，左对齐不散排）。
+   2026-11-13 加时长后一行更满：固定单行 + 行尾省略，防窄面板/手机端折成两行把条目撑高。
+   截断发生在行尾，被截掉的是末尾的 AI 标签，站点与时长优先保留。 */
+.bz-clip-item-meta {
+  margin-top: 5px; font-size: var(--bz-font-caption); color: var(--clip-muted); letter-spacing: .5px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
 /* meta 尾 AI 标签（效率#9）：前两个 + 超出省略号，纯展示 */
 .bz-clip-item-tags { color: var(--clip-accent-soft); }
 /* 搜索命中高亮（效率#13）：标题段 <mark>，--text-accent 底（Obsidian 主题 token，亮暗自适应） */

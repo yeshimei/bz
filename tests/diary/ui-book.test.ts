@@ -44,6 +44,8 @@ import { lastFlip, flipRecords, resetFlips } from './page-flip-fake';
 import { invalidateWallCache } from '../../src/diary/data';
 import { emitDomainEvent, onDomainEvent } from '../../src/core/domain-bus';
 import { setSettingsProvider } from '../../src/core/settings-provider';
+import { vaultBasePathOf } from '../../src/core/plugin-path';
+import { readDiaryDraft } from '../../src/diary/draft-store';
 
 // ===== 翻页库替身 =====
 
@@ -168,6 +170,7 @@ beforeAll(() => {
 
 beforeEach(() => {
   document.body.innerHTML = '';
+  localStorage.clear(); // 草稿按库落 localStorage：用例之间不串上一张没写完的纸
   clearNotices();
   resetObsidianMocks();
   resetFlips();
@@ -1981,6 +1984,28 @@ describe('DiaryAppController · 写作内页（ADR-0233）', () => {
     expect(onBook.defaultPrevented).toBe(true); // 书上仍是翻页
   });
 
+  it('草稿在纸上：方向键归纸面，不翻背后的书；点过纸边后先把笔还给正文', async () => {
+    const c = await openBook();
+    const area = await openWritePage(c);
+    const rec = lastFlip();
+    expect(rec.page).toBe(0);
+
+    /* 点日戳 / 贴纸 / 纸边：焦点离开正文——此时按左右键，老实现会去翻背面的书，
+       纸盖着书看不见，用户只觉得「方向键坏了」（2026-11-16 真机反馈的排查结论）。 */
+    area.blur();
+    expect(document.activeElement).not.toBe(area);
+
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true }));
+    expect(rec.page).toBe(0); // 没翻底下的书
+    expect(document.activeElement).toBe(area); // 方向键把笔还给正文
+
+    /* 焦点在正文里：按键归录入，册子不接管 */
+    const inside = new KeyboardEvent('keydown', { key: 'ArrowLeft', bubbles: true, cancelable: true });
+    area.dispatchEvent(inside);
+    expect(rec.page).toBe(0);
+    expect(inside.defaultPrevented).toBe(false);
+  });
+
   it('写了字要收起整本：Esc / 收起钮 / 点遮罩都走二次确认（接着写 · 先收着 · 落笔）', async () => {
     const c = await openBook();
     const area = await openWritePage(c);
@@ -1989,8 +2014,10 @@ describe('DiaryAppController · 写作内页（ADR-0233）', () => {
     // ① Esc：框弹出来；取消（mock 默认返回 'ok'，不是三支里的任何一支）= 接着写
     document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
     await vi.waitFor(() => expect(mocks.openFlowDialog).toHaveBeenCalledTimes(1));
-    const asked = (mocks.openFlowDialog.mock.calls[0] as unknown as [{ title: string }])[0];
+    const asked = (mocks.openFlowDialog.mock.calls[0] as unknown as [{ title: string; className?: string }])[0];
     expect(asked.title).toContain('还没落笔');
+    // 2026-11-15：这一处此前漏了皮肤类，确认框掉回 core 裸壳，跟日记本的纸面不搭
+    expect(asked.className).toBe('bz-diary-flow-dialog');
     await Promise.resolve();
     expect(q('.bz-diary-scene').style.display).toBe('flex'); // 册子还开着
     expect(q('.bz-diary-wsp').hidden).toBe(false);
@@ -2019,6 +2046,48 @@ describe('DiaryAppController · 写作内页（ADR-0233）', () => {
     expect(mocks.openFlowDialog).not.toHaveBeenCalled();
   });
 
+  /* 2026-11-15 用户报障：强制关闭 Obsidian 时，写在纸上的字连 DOM 一起没了。
+     「先收着」原先只保住同一个进程里的 DOM，不是真的留了草稿。 */
+  it('写到一半强杀进程：重开日记本，字连同日子时辰贴纸都还在纸上', async () => {
+    const c = await openBook();
+    const area = await openWritePage(c);
+    inner(c).draft!.tags.push('随笔');
+    area.value = '写了一半的日记\n第二行';
+    area.dispatchEvent(new Event('input', { bubbles: true }));
+
+    const key = vaultBasePathOf(getApp());
+    await vi.waitFor(() => expect(readDiaryDraft(key)?.text).toBe('写了一半的日记\n第二行'), { timeout: 2500 });
+
+    // 强制关闭：控制器直接销毁，不走 hide（模拟进程被杀，内存态与 DOM 全没）
+    c.cleanup();
+    DiaryAppController.instance = null;
+    document.body.innerHTML = '';
+
+    const c2 = await openBook();
+    expect(q('.bz-diary-wsp').hidden).toBe(false);
+    expect(q<HTMLTextAreaElement>('.bz-diary-wsp-area').value).toBe('写了一半的日记\n第二行');
+    expect(inner(c2).draft).toMatchObject({ date: inner(c).draft?.date ?? expect.any(String), tags: ['随笔'] });
+  });
+
+  it('落笔之后草稿键清掉，重开是一张空纸', async () => {
+    const c = await openBook();
+    const area = await openWritePage(c);
+    area.value = '记下来的字';
+    area.dispatchEvent(new Event('input', { bubbles: true }));
+    await vi.waitFor(() => expect(readDiaryDraft(vaultBasePathOf(getApp()))?.text).toBe('记下来的字'), { timeout: 2500 });
+
+    q('.bz-diary-wsp [data-wact="save"]').click();
+    await vi.waitFor(() => expect(q('.bz-diary-wsp').hidden).toBe(true));
+    expect([...vault.files.values()].join('\n')).toContain('记下来的字');
+    expect(readDiaryDraft(vaultBasePathOf(getApp()))).toBeNull();
+
+    c.cleanup();
+    DiaryAppController.instance = null;
+    document.body.innerHTML = '';
+    await openBook();
+    expect(q('.bz-diary-wsp').hidden).toBe(true);
+  });
+
   /* 2026-10-31 用户报障：测试库没设日记文件夹时，桌上那张「这本册子还没定文件夹」是
      `.bz-diary-fallback`（fixed; inset:0 铺满整屏），点哪儿 target 都落在它自己身上；
      收起判据只认根与 `.bz-diary-desk`，于是只剩右上角 X 能关（有内容的库正常）。
@@ -2036,6 +2105,34 @@ describe('DiaryAppController · 写作内页（ADR-0233）', () => {
     expect(q('.bz-diary-fb-lead-title').textContent).toContain('还没定文件夹');
     fb.click(); // 点在铺满屏的容器本体上 = 用户眼里的「纸外空白」
     expect(q('.bz-diary-scene').style.display).toBe('none');
+  });
+
+  /* 2026-11-15 发版 review：草稿恢复排在文件夹引导之前时，没配目录的库也会把写字页
+     叠在引导纸上面（两页叠着，点落笔还会失败）。草稿该留着，但别摊出来。 */
+  it('未设日记文件夹：上次的草稿不摊写作页，稿子留着等配好目录', async () => {
+    const c = await openBook();
+    const area = await openWritePage(c);
+    area.value = '没配目录时不该冒出来的字';
+    area.dispatchEvent(new Event('input', { bubbles: true }));
+    const key = vaultBasePathOf(getApp());
+    await vi.waitFor(() => expect(readDiaryDraft(key)?.text).toBe('没配目录时不该冒出来的字'), { timeout: 2500 });
+
+    // 强杀重开：先清掉内存态与页面
+    c.cleanup();
+    DiaryAppController.instance = null;
+    document.body.innerHTML = '';
+
+    setSettingsProvider(() => ({}) as never); // 目录空着 → needsFolderSetup 真
+    const app = mockAppWithVault(vault);
+    (app as any).internalPlugins.getPluginById = () => null;
+    setApp(app as never);
+    expect(vaultBasePathOf(getApp())).toBe(key); // 同一个库：草稿该被这份引导态看见
+
+    const c2 = DiaryAppController.getInstance();
+    c2.show();
+    expect(q('.bz-diary-fallback').hidden).toBe(false);
+    expect(q('.bz-diary-wsp').hidden).toBe(true); // 引导纸上不叠写字页
+    expect(readDiaryDraft(key)?.text).toBe('没配目录时不该冒出来的字'); // 稿子没被清
   });
 
   it('重开册子：草稿还在，且不重新渲染（书页与实例都复用）', async () => {

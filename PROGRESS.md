@@ -726,3 +726,88 @@
       建档 `vault.create` 前同样先登记
 - [x] 测试：外部更新 / 外部新增走就绪信号、写盘途中事件抢先到不回灌、适配层三例；撤掉通道即红（已验）
 - [x] 门禁：受影响 604 文件 / 9310 例通过，tsc 干净；主仓四步产物已重出（build-preview 一并重出）
+
+## Issue 564 — 移动端第二大脑建立索引界面没有关闭出口（memo item-1794707640585-ajl4p7）
+
+**状态：已交付**（2026-11-15，worktree `.dsh-worktrees/sb-close`）
+
+- [x] 根因：引导 / 进度态把头行 `.bz-sb-panel-func` 整组收起（常规 ✕ 在组内），移动端全屏点不到遮罩、按不了 Esc
+- [x] 头行加独立类的 `#bz-sb-mb-close`，三态反着切：引导 / 进度态放出，内容态让位给常规 ✕；点击直接关面板
+- [x] 样式默认隐藏、仅 ≤768px 显示；测试守「可见且点了就关 / 内容态不重复 / 桌面零影响」
+- [x] 门禁：secondbrain 域 39 文件 / 558 例，受影响 544 文件 / 8434 例，tsc 干净
+
+## Issue 565 — 备忘录主界面触屏关闭钮被皮肤级联吃掉（memo item-1794707517386-c1niyn）
+
+**状态：已交付**（2026-11-15，worktree `.dsh-worktrees/memo-close`）
+
+- [x] 根因：远端纸感皮肤包运行期后注入，`.bz-panel-head-btns{display:none}` 压过收口段恢复规则；宽屏触屏（平板 / 横屏）不进 ≤768px 规则，编辑部皮肤同样藏钮
+- [x] 末尾补 `@media (pointer: coarse)` 段，用 (0,3,0) 选择器放回两套皮肤的钮组；桌面鼠标端零影响
+- [x] 测试四条静态守卫；补丁段不写会被既有 `lastIndexOf` 守卫命中的字面量
+- [x] 门禁：memo 域 23 文件 / 252 例，受影响 27 文件 / 520 例，tsc 干净
+
+## Issue 566 — 写日记确认框穿皮 + 草稿跨重启留存（memo item-1794707500591-qyof20）
+
+**状态：已交付**（2026-11-15，worktree `.dsh-worktrees/diary-draft`，ADR-0299）
+
+- [x] `requestClose()` 的 `openFlowDialog` 补回 `className: 'bz-diary-flow-dialog'`（域内其余五处早有）
+- [x] 新增 `src/diary/draft-store.ts`：草稿按库分键同步落 localStorage；正文 / 日子时辰 / 贴纸 / 改字目标一起存
+- [x] 输入停 800ms、改日子或贴纸、收起整本、插件卸载四处落盘；重开 `show()` 先摊回纸，落笔 / 揉掉 / 新开空纸 / 改字即删键
+- [x] 测试：纯数据层 5 例 + 控制器 3 例（确认框穿皮、强杀重开接着写、落笔清键）
+- [x] 门禁：diary 域 30 文件 / 556 例，受影响 691 文件 / 10272 例，tsc 干净
+
+## Issue 567 — 首页每次重开卡一小会儿（ADR-0300）
+
+**状态：已交付**（2026-11-15，worktree `bz-wt-homecache`，分支 `feat/home-reopen-cache`）
+
+- [x] 根因：重开无条件重采约 20 轮全库遍历 + 五区全量 `innerHTML` 重建 + 约 20 个错峰动画；issue 290 的 DOM 常驻秒显收益被吃掉
+- [x] 新增 `src/home/river-cache.ts`：按 app 键控 / 在途去重 / 失败不缓存 / 刷新恒回源；失效 = 域事件 + `vault:md-*` + 跨天 + 5 分钟兜底 + 首页设置快照
+- [x] 命中缓存（同一份 `RiverData` 引用）时跳过 `renderAll()`：不重建五区、不重挂图标菜单、不重放编排、不动滚位焦点
+- [x] `afterPaint()` 让出首帧；启动空闲 `prewarmHome()` 只填数据不建 DOM；动作落地 / 重试走 force 恒回源；`__BZ_DEV__` 下加耗时探针
+- [x] 守住三条旧口径：设置每次现读（设置快照入缓存键）、既有回归的「重开必回源/必重建」改为显式模拟数据变更、点前缀目录收不到 vault modify（TTL 兜底）
+- [x] 测试：新增 16 例（数据层 12 + UI 4），同步调整 5 条既有回归，3 处固定 sleep 改 waitFor
+- [x] 门禁：`tsc` 0；home 域 19 文件 / 178 例；`test-affected --since HEAD~1` 695 文件 / 10295 例全绿
+- [ ] 后续（等真机 A/B 数字再定）：7 天回顾共用一份 `mdFiles`、渲染层 diff / 容器级委托、时间线可视区懒加载、计数事件增量维护
+
+## Issue 568 — 首次启动第一次打开仍慢：首屏壳 + 时间线后台补画（ADR-0301）
+
+**状态：已交付**（2026-11-15，worktree `.dsh-worktrees/home-fast-shell`，分支 `feat/home-fast-shell`）
+
+- [x] 根因：issue 567 的缓存只治重开；首开仍等 `collectRiver` 整轮（约 20 轮全库遍历）才换掉空骨架，预热最坏 8 秒才起跑
+- [x] 新增 `src/home/river-shell.ts`：纯算零 IO 造 7 天窗口 + `pending` 壳；`createOverlay()` 同步段就铺出周历 / 全部域入口 / 预告骨架 / 移动瓦片，中间保留「正在汇入…」
+- [x] `pending` 让 `riverCountText` 回落域副题、预告走 `loadingNextHtml()`，首屏不显示「0 条待办」「剪藏库已清空」这类未采集就下结论的假数
+- [x] 新增 `renderSlowData()`：慢数据到位只重写 `[data-home-flow]`，周历 / 入口 / 瓦片就地切 class 与文本，节点原地复用（不整屏重建、不重放编排、不丢焦点与菜单绑定）
+- [x] `fromShell` 阶段标记隔离缓存判据：壳阶段不算命中缓存，也不让新对象一到就触发整屏重建；顺序异步读回不一致时退回 `renderAll()`
+- [x] 补上「默认打开日＝最后有动静」的周历 `--sel` / `aria-pressed`；壳期周历可点选（只记查看日，不拿空数据冒充 flow）
+- [x] 预热空闲兜底 8s → 1.2s；否决「快慢段拆采集」（纯算壳已省掉便宜那趟，拆了反而双份口径 + 缓存阶段化）
+- [x] 测试：新增 `first-open-shell.test.ts` 4 例（先红后绿），`reopen-cache.test.ts` / `ui-river.test.ts` 的「结构在场 = 数据已到」等待条件改为等真数据
+- [x] 门禁：`tsc` 0；home 域 19 文件 / 170 例；`test-affected --since master` 696 文件 / 10299 例；合并回主仓后 `--since HEAD~1` 同口径复跑全绿
+- [x] 收尾：合并回 master（`93fda8db`）+ 归档 issue 568 / ADR-0301 + 开发构建部署到主笔记库
+- [ ] 后续（同 567，等真机 A/B 数字再定）：快慢段拆采集 / 缓存阶段化、渲染层 diff、容器级委托、时间线懒加载
+
+## Issue 569 — 第二大脑面板图标缺失：引导 / 进度态停在空方块
+
+**状态：已交付**（2026-11-15，worktree `D:\Obsidian\bz-wt-sb-icons`，分支 `fix/sb-icons`）
+
+- [x] 根因：`panel.ts` 的 `createUI()` 写完 `panelShellHtml()` 后没有 `mountIcons`，全文件只在 `renderStats` / `renderDist` 末尾物化；引导态与进度态在 `render()` 提前 return，永远走不到那两处，头行 glyph、引导页大图标、功能钮与移动关闭钮的 × 全停在空占位上（桌面 / 移动共用同一方法，两端同症状）
+- [x] 修法：建壳即 `mountIcons(popup)`，三态一次修好；内容态原有的动态物化保留不删
+- [x] 同域同类漏挂一并补：对话气泡 who 行（含检索中态）与本周动态弹层头行；`mobile-panel` / `panel` 的其余 `innerHTML` 逐点核对过，模板不含 `ic()` 占位
+- [x] 尺寸收口：`mountIcons` 只复制 className、丢 `ic()` 的内联宽高，故在 `styles.css` 按容器补（头行 19 / 引导页 34 / 功能钮 14 / 分节标题 13 等，14px 兜底）；不改全局 `mountIcons`，避免波及所有域
+- [x] 测试：新增 `tests/secondbrain/shell-icons.test.ts` 5 例（先红后绿）
+- [x] 门禁：`tsc` 0；`test-affected --since master` 546 文件 / 8437 例全绿
+- [x] 真机双端复验（实例 `sb-icon-check`，同一空库与基线对比）：桌面 / 移动均 `[data-lucide]` 0、`.bz-ic` 14，`shots/08-desktop-after.png`、`shots/09-mobile-panel-after.png`
+- [x] 收尾：合并回 master（`c8c531f9`）+ 归档 issue 569 + 开发构建部署到测试库
+- [ ] 后续：主笔记库等用户点头再部署
+
+## v1.44.4 发版 — 发版前置 review（2026-11-15）
+
+**状态：已发布**（tag `v1.44.4` 已转正；GitHub 15 资产 + 码云镜像 + 网盘已更新）
+
+- [x] review 范围：`v1.44.3..HEAD` 16 个提交 / 40 个文件；四维度出编号清单 13 条 + 两路深读追加 6 条；用户勾选除 #6 外全修
+- [x] 首页：首开壳按用户顺序铺（顺序启动预热进缓存）、壳阶段不挂入口菜单、pending 彩点不落色、收起面板重开补画河面、跨午夜整屏重建、采集途中置脏改串行续采、无 rIC 宿主预热退 1.2 秒、入口行数据面收成 `patchRowEl`
+- [x] 日记：草稿恢复排到文件夹引导之后；`b64:` 遮挡正文（非加密，旧明文稿兼容）；多窗口各占一槽、读最新、清整组；连续输入 4 秒强制落盘 + `visibilitychange` 立刻落一次；改字草稿按正文重定位（找不到转新写）；「贴一件」补落盘；移动端按库名分键
+- [x] 备忘录：>768px 触屏补 28px 档与两套皮肤形态；第二大脑对话「顺着追问」图标按容器回到 11px
+- [x] 测试：新增 `tests/home/first-open-review.test.ts` 6 例、`draft-store` 3 例、`ui-book` 1 例（先红后绿）
+- [x] 门禁：`tsc` 0；`test-affected --since master` 557 文件 / 8560 例全绿
+- [x] 真机（实例 `rel1444`）：桌面首页与右键菜单盒头、日记草稿强杀恢复、未配目录引导态不摊写作页、移动首页 / 备忘录关闭钮 / 第二大脑引导图标
+- [x] 发版：note `docs/note-v1.44.4.md` 过 note 闸与 publish 闸，tag 与 manifest 逐字一致，两通道校验 1.44.4
+- [ ] 未修（用户未选）：#6 启动后无条件后台预热首页，从不打开首页的人也会白跑一遍全库采集

@@ -1000,7 +1000,7 @@ export async function ensurePomodoro(app: App): Promise<void> {
     try {
       await initDataOnce(); // 与 openPomodoro 共享 in-flight（并发只跑一次 load+recover）
     } catch (e: unknown) {
-      // 深审 PF5：load 失败吞错上报（不再挂 unhandled rejection）；命令链调用方经下方
+      // 深审 PF5：load 失败吞错记日志（不再挂 unhandled rejection）；命令链调用方经下方
       // `if (!loaded)` 守卫早退——不在空内存态上继续（防误开新会话 save 覆盖盘上数据）
       console.error('番茄钟数据加载失败:', e);
       notifyActionError(e, '加载番茄钟数据', { onRetry: () => void ensurePomodoro(app) });

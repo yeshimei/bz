@@ -37,9 +37,14 @@ export interface BookshelfItem {
   pages: number;
   /** 派生展示态：未读 / 在读 / 已读 */
   status: string;
-  /** true = bz 阅读数据驱动的 EPUB 条目（ADR-0283） */
-  isEpub: boolean;
-  /** EPUB 深链源标识（跳转读书笔记/原文用；md 书 null） */
+  /** true = bz Reader 数据驱动的条目（ADR-0283）。2026-11-12 起 bz Reader 供的不只 EPUB
+   *  （txt / mobi / azw3 / fb2 / cbz / pdf 同样走这条链），故字段按「来自阅读器」命名，
+   *  具体格式看 bookFormat——不要再拿它当「是不是 EPUB」用 */
+  fromReader: boolean;
+  /** 书的格式（小写键：epub / txt / mobi / azw3 / fb2 / cbz / pdf；md 书为空串）。
+   *  真值取 bz Reader 的 fileRef.format，缺失才回落后缀名（见 constants.bookFormatOf） */
+  bookFormat: string;
+  /** 阅读器深链源标识（跳转读书笔记/原文用；md 书 null） */
   epubVaultPath: string | null;
   /** bz 阅读的稳定书目 id（`obsidian://bz-reader?book=` 深链用；md 书 undefined/null） */
   epubBookId?: string | null;

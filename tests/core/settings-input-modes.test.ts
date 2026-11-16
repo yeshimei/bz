@@ -17,6 +17,7 @@ import { renderSettingsInto } from '../../src/core/settings-schema';
 import type { SettingsSchema, SettingsRow } from '../../src/core/settings-schema';
 import { renderPanelSchema } from '../../src/settings-panel/renderer';
 import { aiSettingsSchema } from '../../src/core/settings-main-schema';
+import { AI_PROVIDER_REGISTRY } from '../../src/core/ai';
 import { secondBrainSettingsSchema } from '../../src/secondbrain/panel';
 import { knowledgeSettingsSchema } from '../../src/knowledge/ui';
 
@@ -168,11 +169,12 @@ const rowsOf = (schema: SettingsSchema, groupName: string): NamedRow[] =>
   (schema.groups.find((g) => g.name === groupName)?.rows ?? []) as NamedRow[];
 
 describe('schema 盘点：凭据一律掩码、数值一律数字档位', () => {
-  it('AI 域：服务商密钥 4 行（三条在册通道 + 自定义）+ 数据源凭据 3 行全为 secret', () => {
+  it('AI 域：每家服务商一行密钥 + 数据源凭据 3 行全为 secret', () => {
     const ai = aiSettingsSchema();
-    // issue 422：服务商组并入「LLM」组（密钥行仍居组首）；2026-11-11 加回自定义（第 4 行）
+    // issue 422：服务商组并入「LLM」组（密钥行仍居组首）；
+    // 2026-11-12 扩表后行数随注册表长度走（服务商下拉扩几家就多几行密钥，schema 零改动）
     const providerRows = rowsOf(ai, 'LLM').filter((r) => (r.name ?? '').includes('密钥'));
-    expect(providerRows.length, '注册表四条通道各一行').toBe(4);
+    expect(providerRows.length, '注册表每家一行').toBe(AI_PROVIDER_REGISTRY.length);
     expect(providerRows.every((r) => r.type === 'secret')).toBe(true);
 
     // 数据源凭据组三行一律单行掩码（2026-09-23 用户拍板：加密的一律单行框）

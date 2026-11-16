@@ -1226,7 +1226,7 @@ export class SafeManager {
     const skippedStale: string[] = []; // E14：加密期间被编辑、删除前重读不一致而保留的原文件
     try {
       // 附件加密并行（BLOB_CONCURRENCY=3）：每个 blob 独立 salt → 逐附件 PBKDF2(100k)，
-      // 串行会让多附件明显变慢；进度按完成数上报（顺序不定，语义不变）。
+      // 串行会让多附件明显变慢；进度按完成数回调（顺序不定，语义不变）。
       // 注意：回调只返回结果，由 mapLimit 按输入顺序归位——附件在清单中的顺序必须与输入一致
       //（直接被并发 push 会随完成顺序漂移，污染清单顺序与测试断言）。
       // 失败 → 整笔放弃：本次已写暂存镜像在 catch 里清理，原文件不动。
@@ -1319,7 +1319,7 @@ export class SafeManager {
       if (input.kind !== 'diary-entry' && input.kind !== 'password-vault' && input.kind !== 'people') {
         // E14：删前重读比对——加密耗时窗口（确认框/附件加密/PBKDF2）内用户继续编辑，
         // 增量只存在于原文件，直接删 = 保险库存旧快照 + 新增量永久丢失。
-        // 与加密正文不一致（归一化行尾）→ 保留原文件不删，经 onSkippedStale 上报提示重做。
+        // 与加密正文不一致（归一化行尾）→ 保留原文件不删，经 onSkippedStale 回调提示重做。
         let stale = false;
         try {
           const f = getApp().vault.getAbstractFileByPath(input.path);
@@ -1328,7 +1328,7 @@ export class SafeManager {
             stale = current.replace(/\r\n/g, '\n') !== input.content.replace(/\r\n/g, '\n');
           }
         } catch (e) {
-          /* 读不到按原样尝试删除（删除失败本就仅上报不回滚） */
+          /* 读不到按原样尝试删除（删除失败本就只回调不回滚） */
         }
         if (stale) {
           skippedStale.push(input.path);

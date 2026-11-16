@@ -219,7 +219,11 @@ export function splitTextBlocks(text: string): Block[] {
       buf.push(lines[i]);
       i++;
     }
-    pushPara(buf.join(''));
+    /* 同一段里的连续行**保留换行**（2026-11-16 用户反馈：写日记时回车换的行，回看
+       变成一整段）。此前这里是无缝拼接（原型沿袭），Markdown 的软换行在纸面上彻底
+       消失；现在拼回 `\n`，由 `paraHTML` 落成硬换行。空行仍归 `pendingBlank` 分段，
+       段距规则不变。 */
+    pushPara(buf.join('\n'));
   }
   return blocks;
 }
@@ -425,8 +429,15 @@ export function exlibrisHTML(e: WallEntry, ctx: RenderCtx): string {
 // ===== 段块 =====
 
 function paraHTML(b: { text: string }, e: WallEntry): string {
+  /* 段内换行落成 `<br>`：`inlineMd` 只管行内语法，不认换行符；HTML 默认又会把
+     `\n` 折叠成空白（中文里连空白都没有，直接粘字）。引用块早就是这么做的，
+     正文段此前漏了这一道。 */
   return (
-    '<div class="bz-diary-b-para" data-eid="' + esc(e.id || '') + '">' + inlineMd(b.text) + '</div>'
+    '<div class="bz-diary-b-para" data-eid="' +
+    esc(e.id || '') +
+    '">' +
+    inlineMd(b.text).replace(/\n/g, '<br>') +
+    '</div>'
   );
 }
 

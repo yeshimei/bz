@@ -10,6 +10,7 @@ import { setApp } from '../../src/core/app';
 import { setSettingsProvider } from '../../src/core/settings-provider';
 import { MockVault } from '../mock-vault';
 import { H, resetHomeState } from '../../src/home/state';
+import { invalidateRiverCache, resetRiverCache } from '../../src/home/river-cache';
 import { EMPTY_COUNTS, EMPTY_SUMMARY } from '../../src/home/shared';
 import { buildPreviews } from '../../src/home/shared';
 import type { RiverData } from '../../src/home/river';
@@ -25,6 +26,9 @@ const orderMock = vi.hoisted(() => ({ save: vi.fn(), load: vi.fn() }));
 vi.mock('../../src/home/order', () => ({
   saveHomeConfig: (...args: unknown[]) => orderMock.save(...args),
   loadHomeOrder: (...args: unknown[]) => orderMock.load(...args),
+  // 首开铺壳前问一句同步缓存：这份 mock 里恒没有（等价「刚装好、还没预热」）
+  cachedHomeOrder: () => null,
+  invalidateHomeOrder: () => {},
 }));
 
 import { createOverlay, closeOverlay, showOverlay } from '../../src/home/ui';
@@ -58,6 +62,7 @@ async function waitFor(fn: () => boolean, ms = 3000): Promise<void> {
 describe('内容首页 review 回归（H11-H13）', () => {
   beforeEach(() => {
     resetHomeState();
+    resetRiverCache(); // 会话缓存是模块级状态：逐例清干净，挂起的 in-flight 不许串到下一例
     resetObsidianMocks();
     document.body.innerHTML = '';
     clearNotices();
@@ -110,7 +115,8 @@ describe('内容首页 review 回归（H11-H13）', () => {
     const app = { vault: new MockVault() } as any;
     H.appRef = app;
     createOverlay(app);
-    unloadHome(); // 同步卸载：remove + resetHomeState（H 全字段归零）
+    await waitFor(() => collectRiverMock.mock.calls.length >= 1); // 采集让出首帧后才发起
+    unloadHome(); // 卸载：remove + resetHomeState + 缓存复位
     resolveRiver(makeRiver()); // in-flight 采集稍后落地
     await tick();
     expect(H.currentOverlay).toBeNull();
@@ -125,9 +131,11 @@ describe('内容首页 review 回归（H11-H13）', () => {
     let resolve2!: (v: RiverData) => void;
     collectRiverMock.mockImplementationOnce(() => new Promise<RiverData>((res) => { resolve1 = res; }));
     createOverlay(app); // 刷新 #1 采集挂起（showOverlay 入口同源）
+    await waitFor(() => collectRiverMock.mock.calls.length >= 1);
     collectRiverMock.mockImplementationOnce(() => new Promise<RiverData>((res) => { resolve2 = res; }));
     closeOverlay();
-    showOverlay(); // 刷新 #2（keepHome 动作落地同款并发入口）
+    invalidateRiverCache(); // 刷新 #2 是「数据变了/动作落地」的强制回源，不吃缓存也不共享在途
+    showOverlay();
     await waitFor(() => collectRiverMock.mock.calls.length >= 2);
     resolve2(makeRiver()); // 新一轮 #2 先落地
     await waitFor(() => H.river !== null);
@@ -148,7 +156,8 @@ describe('内容首页 review 回归（H11-H13）', () => {
     const app = { vault: new MockVault(), commands: { executeCommandById: exec } } as any;
     H.appRef = app;
     createOverlay(app);
-    await waitFor(() => !!H.currentOverlay!.querySelector('[data-home-entries] .bz-home-erow'));
+    // 菜单绑定件在真数据到位那一步才挂（壳的计数是空快照，先挂会把空盒头钉死）
+    await waitFor(() => H.river !== null && !!H.currentOverlay!.querySelector('[data-home-entries] .bz-home-erow'));
     const row = H.currentOverlay!.querySelector('[data-home-go="gameshelf"]') as HTMLElement;
     expect(row).toBeTruthy();
     row.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true, clientX: 10, clientY: 10 }));
@@ -192,7 +201,8 @@ describe('内容首页 review 回归（H11-H13）', () => {
     } as any;
     H.appRef = app;
     createOverlay(app);
-    await waitFor(() => !!H.currentOverlay!.querySelector('[data-home-entries] .bz-home-erow'));
+    // 菜单绑定件在真数据到位那一步才挂（壳的计数是空快照，先挂会把空盒头钉死）
+    await waitFor(() => H.river !== null && !!H.currentOverlay!.querySelector('[data-home-entries] .bz-home-erow'));
     clearNotices();
     (H.currentOverlay!.querySelector('[data-home-go="cinema"]') as HTMLElement).click();
     await tick();

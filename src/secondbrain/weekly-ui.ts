@@ -163,6 +163,7 @@ function ensureModal(app: App): void {
     // bz-panel-mtop（issue 360 真机回归）：移动端真全屏 + 44px 顶部避让（panel.ts:311 同范式，桌面不生效）
     popup.classList.add('bz-sb-weekly-modal', 'bz-panel-mtop');
     popup.innerHTML = weeklyShellHtml('');
+    mountIcons(popup); // 头行 glyph 与关闭钮（body 的内容态另在 showWeeklyModal 里各自物化）
     overlayEl = popup;
     maskEl = mask;
     document.body.appendChild(mask);

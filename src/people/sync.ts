@@ -67,7 +67,7 @@ export interface PeopleSyncState {
   stats: SyncStats;
   /** 本轮开跑时刻（Date.now()；null = 不在 running——484 已耗时的计时源） */
   startedAt: number | null;
-  /** contacts 段总人数（[bz-info]{phase:"contacts",total} 上报；null = 工具未报） */
+  /** contacts 段总人数（[bz-info]{phase:"contacts",total} 输出；null = 工具未报） */
   contactsTotal: number | null;
   /** contacts 段已处理人数（ok + skipped + failed 逐人事件实时累计） */
   contactsDone: number;
@@ -403,7 +403,7 @@ export function startSync(): void {
     onStep: (text) => setState({ step: text }),
     onProgress: (phase, pct) => setState({ phase, pct }),
     onInfo: (data) => {
-      // 484：contacts 段总人数（工具上报）→ 主文案「统计 N/M」；逐人事件进当前联系人副文案
+      // 484：contacts 段总人数（工具输出）→ 主文案「统计 N/M」；逐人事件进当前联系人副文案
       if (data.phase === 'contacts' && Number.isFinite(data.total)) {
         setState({ contactsTotal: Math.max(1, Number(data.total)) });
         return;

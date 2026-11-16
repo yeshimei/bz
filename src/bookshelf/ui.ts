@@ -23,16 +23,19 @@ import { tryGetSettings, panelSizePersist } from '../core/settings-provider';
 import { isRemoteSkinReady } from '../core/skin-pack';
 import { uiModal, mountIcons, uiResizable } from '../core/ui';
 import { notice } from '../core/notice';
+import { openExternalUrl } from '../core/utils';
+import { installReaderPlugin, isReaderHealthy, readReaderInstall } from '../core/reader-install';
 import { renderReadingReport, cancelReadingReport, handleReportInteraction, type ReportRenderOptions } from '../reading-report';
 import { M, applyDefaultView, type BookshelfItem, type BookshelfView, type SideId, type SortKey } from './state';
-import { rebuildItems, resolveFolderPath, resolveBookTag } from './data';
+import { rebuildItems, resolveFolderPath, resolveBookTag, scanMarkdownBooks } from './data';
 import {
-  detailBodyHtml, labelsHtml, panelHtml, renderWallInto, sortSegHtml, wallLoadingHTML,
+  detailBodyHtml, labelsHtml, panelHtml, readerGuideHtml, readerGuideLoadingHTML,
+  renderWallInto, sortSegHtml, wallLoadingHTML,
   getDisplayItems as pipeDisplay,
 } from './render';
+import { READER_GUIDE } from './constants';
 import { closeBookNoteModals } from './notes-ui';
 import { openEpubBook } from './epub-notes';
-import { mountFolderGate } from '../core/folder-setup';
 import {
   motionPanelIn, motionPanelOut, motionWallRendered, motionDetailOpen, motionReportEnter,
   motionReportWatch, motionReportStop, motionHeatmapNav, motionYearToggle, motionTeardown,
@@ -41,6 +44,124 @@ import {
 
 /** 渲染钩子：render.ts 纯层产出的 `<i data-lucide>` 占位由 core setIcon 物化 */
 const HOOKS = { mountIcons };
+
+// ---------- bz Reader 引导页（2026-11-12：书库只由 bz Reader 供书） ----------
+
+/** 引导页读盘序号（关面板/已有书后，在途结果不得回写） */
+let guideSeq = 0;
+/** 头行连接状态读盘序号 */
+let pillSeq = 0;
+/** 安装进行中（面板重渲染后按钮仍显示阶段文案；安装器本身单飞） */
+let readerInstalling = false;
+let readerInstallStage = '';
+/** 头行状态缓存（resize/筛选会重画 chrome，3 秒内不重复读盘） */
+let pillCacheAt = 0;
+let pillCacheOk = false;
+
+/** 画头行连接状态（bz Reader 装没装） */
+function paintReaderPill(el: HTMLElement, ok: boolean): void {
+  el.hidden = false;
+  el.classList.toggle('off', !ok);
+  el.innerHTML = `<i></i>${ok ? 'bz Reader 已连接' : '未检测到 bz Reader'}`;
+}
+
+/** 头行右侧连接状态：异步读安装态；force = 安装完成后强制重读 */
+async function refreshReaderPill(force = false): Promise<void> {
+  const app = M.appRef;
+  const overlay = M.currentOverlay;
+  const el = overlay?.querySelector('#bz-bs-reader-pill') as HTMLElement | null;
+  if (!app || !overlay || !el) return;
+  if (!force && Date.now() - pillCacheAt < 3000) {
+    paintReaderPill(el, pillCacheOk);
+    return;
+  }
+  const seq = ++pillSeq;
+  const state = await readReaderInstall(app).catch(() => null);
+  if (!state || seq !== pillSeq || M.currentOverlay !== overlay) return;
+  pillCacheAt = Date.now();
+  pillCacheOk = isReaderHealthy(state);
+  paintReaderPill(el, pillCacheOk);
+}
+
+/** 本机旧口径（笔记 + book 标签）书目数：只在 0 本引导页用，带 3 秒缓存
+ *  （引导页随每次重渲染重算，全库扫描不该跟着刷） */
+let legacyBookCountCache = -1;
+let legacyBookCountAt = 0;
+function legacyBookCount(app: App): number {
+  if (legacyBookCountCache >= 0 && Date.now() - legacyBookCountAt < 3000) return legacyBookCountCache;
+  let n = 0;
+  try { n = scanMarkdownBooks(app).length; } catch { n = 0; }
+  legacyBookCountCache = n;
+  legacyBookCountAt = Date.now();
+  return n;
+}
+
+/** 引导页：0 本时占据墙区。已装 → 导入第一本；未装/半装 → 安装卡。 */
+async function renderReaderGuide(app: App): Promise<void> {
+  const overlay = M.currentOverlay;
+  const shelf = overlay?.querySelector('#bz-bs-shelf') as HTMLElement | null;
+  if (!overlay || !shelf) return;
+  const seq = ++guideSeq;
+  if (!shelf.querySelector('.bz-bs-guide')) shelf.innerHTML = readerGuideLoadingHTML();
+  const state = await readReaderInstall(app).catch(() => null);
+  if (seq !== guideSeq || M.currentOverlay !== overlay || M.items.length) return;
+  const installed = state ? isReaderHealthy(state) : false;
+  shelf.innerHTML = readerGuideHtml({
+    installed,
+    broken: !!state?.broken,
+    version: state?.version || '',
+    installing: readerInstalling,
+    stage: readerInstallStage,
+    legacyCount: legacyBookCount(app),
+  });
+  mountIcons(shelf);
+}
+
+/** 安装 bz Reader：走 bz 已有的内置安装器（GitHub 主源 + 码云备源），不引导去商店。 */
+async function installReaderNow(app: App): Promise<void> {
+  if (readerInstalling) return;
+  readerInstalling = true;
+  readerInstallStage = '获取最新版…';
+  void renderReaderGuide(app);
+  try {
+    const r = await installReaderPlugin(app, {
+      onStage: (text) => {
+        readerInstallStage = text;
+        const btn = M.currentOverlay?.querySelector('[data-bs-reader-install]') as HTMLButtonElement | null;
+        if (btn) btn.textContent = text;
+      },
+    });
+    readerInstalling = false;
+    readerInstallStage = '';
+    notice(`bz Reader ${r.version} 已安装${r.enabled ? '并启用' : '，请到设置 → 第三方插件手动启用'}`, 'success');
+    void refreshReaderPill(true);
+    void renderReaderGuide(app);
+  } catch (e) {
+    readerInstalling = false;
+    readerInstallStage = '';
+    notice(`bz Reader 安装失败：${String((e as Error)?.message || e)}`, 'error');
+    void renderReaderGuide(app);
+  }
+}
+
+/** 打开 bz Reader 的书架界面。
+ *  命令 id 不写死（2026-11-12 review P2）：对方插件改命令名时会换 id，
+ *  按「bz-reader: 前缀」现查一遍——优先 open，其次名字里带书架/打开的，最后取第一条。 */
+function openReaderShelf(app: App): void {
+  const commands = (app as any)?.commands;
+  const table = commands?.commands;
+  const ids: string[] = table && typeof table === 'object' ? Object.keys(table) : [];
+  const readerIds = ids.filter((id) => id.startsWith('bz-reader:'));
+  const named = (id: string): string => String(table?.[id]?.name || '');
+  const target = readerIds.find((id) => id === 'bz-reader:open')
+    || readerIds.find((id) => /书架|打开|shelf|open/i.test(`${id} ${named(id)}`))
+    || readerIds[0]
+    || '';
+  const ok = target && typeof commands?.executeCommandById === 'function'
+    ? commands.executeCommandById(target)
+    : false;
+  if (!ok) notice('bz Reader 没有响应，请确认它已启用', 'warning');
+}
 
 /** 最近一次墙渲染的原因（动效层分档消费；renderWall 读后复位 refresh=静默档）。
  *  各交互点置位：筛选/排序=filter、搜索/清词=search、报告返回=reshelf、缩放重排=layout；
@@ -100,11 +221,18 @@ function renderWall(): void {
   if (!overlay) return;
   const shelf = overlay.querySelector('#bz-bs-shelf') as HTMLElement | null;
   if (!shelf) return;
-  // 书库目录没配 → 墙区给引导态（空墙不等于"一本都没收"）
-  if (mountFolderGate(shelf, 'bookshelf', closeOverlay)) return;
+  const hint = overlay.querySelector('#bz-bs-hint') as HTMLElement | null;
+  // 书库 0 本 → bz Reader 引导页（2026-11-12 起书库只由 bz Reader 供书；
+  // 「书库文件夹没配」的旧引导随设置项一起退役）
+  if (!M.items.length) {
+    if (hint) hint.textContent = '0 册在墙';
+    wallAction = 'refresh'; // 空态不播墙编排，复位档位防残留到下一次有书渲染
+    const app = M.appRef;
+    if (app) void renderReaderGuide(app);
+    return;
+  }
   const sig = displaySignature();
   const room = shelf.closest('.bz-bs-room') as HTMLElement | null;
-  const hint = overlay.querySelector('#bz-bs-hint') as HTMLElement | null;
   // 渲染前取用户实时滚位（innerHTML 重建会瞬时塌陷内容高度，浏览器把 scrollTop clamp 回 0）
   const prevScroll = room ? room.scrollTop : 0;
   const keepScroll = sig === lastWallSig;
@@ -136,6 +264,12 @@ function renderChrome(): void {
   if (labels) labels.innerHTML = labelsHtml(M.items, M.side, M.catFilter);
   const seg = overlay.querySelector('#bz-bs-sortseg') as HTMLElement | null;
   if (seg) seg.innerHTML = sortSegHtml(M.sortMode);
+  // 有书才给「打开 bz Reader 书架」出口；0 本时引导页自带入口
+  const openBar = overlay.querySelector('[data-bs-reader-openbar]') as HTMLElement | null;
+  if (openBar) openBar.hidden = !M.items.length;
+  // 空库时检索/排序没有对象（原型同口径：置灰不可点）
+  overlay.querySelector('.bz-bs-tools')?.classList.toggle('bz-bs-tools-empty', !M.items.length);
+  void refreshReaderPill();
 }
 
 function renderAll(_app?: unknown): void {
@@ -249,11 +383,11 @@ function closeDomainModals(): void {
   if (detailModalClose) { detailModalClose(); detailModalClose = null; }
 }
 
-/** 跳回原文继续读：md 书走 openLinkText；EPUB 走 `obsidian://bz-reader` 协议
- *  （bz 阅读没注册 .epub 扩展名，裸 openLinkText 会落到别处或打不开）。
+/** 跳回原文继续读：bz Reader 的书走 `obsidian://bz-reader` 协议（它没注册 epub/pdf 等
+ *  扩展名，裸 openLinkText 会落到别处或打不开；PDF 同样走这条链），md 书走 openLinkText。
  *  原型壳的 workspace.openLinkText 是 no-op 桩，两侧同语义 */
 function continueBook(app: App, it: BookshelfItem): void {
-  if (it.isEpub) {
+  if (it.fromReader) {
     // 先验目标再关面板：没有可打开的东西时，用户应该还留在借书卡上（而不是对着空白桌面看提示）
     if (!it.epubBookId) {
       notice('找不到这本书的文件', 'warning');
@@ -425,11 +559,18 @@ export function createOverlay(app: App): void {
       const rrCat = t.closest('[data-rr-cat]') as HTMLElement | null;
       if (rrCat) { applyReportFilter(app, 'category', rrCat.getAttribute('data-rr-cat') || ''); return; }
     }
+    // bz Reader 引导页 / 工具行：安装、打开书架、教程、GitHub
+    const installBtn = t.closest('[data-bs-reader-install]') as HTMLElement | null;
+    if (installBtn) { void installReaderNow(app); return; }
+    const openReader = t.closest('[data-bs-reader-open], [data-bs-reader-openbar]') as HTMLElement | null;
+    if (openReader) { openReaderShelf(app); return; }
+    if (t.closest('[data-bs-reader-tut]')) { openExternalUrl(app, READER_GUIDE.tutorial); return; }
+    if (t.closest('[data-bs-reader-gh]')) { openExternalUrl(app, READER_GUIDE.repo); return; }
     // 书脊 → 借书卡
     const spine = t.closest('[data-bs-id]') as HTMLElement | null;
     if (spine && M.view === 'shelf') {
-      const epub = spine.dataset.bsEpub === '1';
-      const it = M.items.find((x) => epub ? x.epubVaultPath === spine.dataset.bsId : x.file?.path === spine.dataset.bsId);
+      const fromReader = spine.dataset.bsReader === '1';
+      const it = M.items.find((x) => fromReader ? x.epubVaultPath === spine.dataset.bsId : x.file?.path === spine.dataset.bsId);
       if (it) openBookDetail(it, app, spine);
       return;
     }
@@ -511,6 +652,7 @@ export function createOverlay(app: App): void {
 
   mountIcons(overlay);
   paintViewContainers();
+  void refreshReaderPill(true); // 头行连接状态（不等 rebuild，先显示装没装）
   motionPanelIn(overlay); // 动效层：书房灯亮（置位 boot；首屏编排由 rebuild 后的 renderWall 消费）
   // B8：首扫加载态——rebuild 完成前墙位显示占位，防异步读阅读数据空白闪烁
   const shelf0 = overlay.querySelector('#bz-bs-shelf') as HTMLElement | null;

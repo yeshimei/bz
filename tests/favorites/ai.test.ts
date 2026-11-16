@@ -145,13 +145,20 @@ describe('isAvailable（issue 334/ADR-0148：判定单源 core getAIProvider）'
   });
 
   it('未知名 provider id 回落缺省通道判定：DeepSeek 有 key 即 true', async () => {
-    setAISettingsProvider(() => ({ aiProvider: 'openai', deepseekApiKey: 'sk-d' }) as any);
+    // 2026-11-12：openai 已重新在册，不再能当「未知 id」样本；用仍不在册的 together
+    setAISettingsProvider(() => ({ aiProvider: 'together', deepseekApiKey: 'sk-d' }) as any);
     resetAIProviderCache();
     await expect(new FavoritesAIService().isAvailable()).resolves.toBe(true);
   });
 
-  it('custom（2026-11-11 在册）：地址与密钥齐备才算可用，缺一样即 false', async () => {
-    setAISettingsProvider(() => ({ aiProvider: 'custom', aiCustomEndpoint: 'https://gw.example/v1', aiCustomApiKey: 'sk-gw' }) as any);
+  it('custom（2026-11-11 在册）：地址、密钥与模型齐备才算可用，缺一样即 false', async () => {
+    // 自定义没有注册表默认模型，模型名也是必填项（core getAIProvider 同一套拦截）
+    setAISettingsProvider(() => ({
+      aiProvider: 'custom',
+      aiCustomEndpoint: 'https://gw.example/v1',
+      aiCustomApiKey: 'sk-gw',
+      aiModelOverrides: { custom: 'my-model' },
+    }) as any);
     resetAIProviderCache();
     await expect(new FavoritesAIService().isAvailable()).resolves.toBe(true);
 

@@ -71,12 +71,13 @@ describe('migrateRetiredAIKeys · issue 411/ADR-0179（服务商收敛三条通�
   });
 
   it('存量非法 aiProvider → 回落缺省通道；custom 在册不回落', () => {
-    for (const stale of ['opencode-go', 'openai', '']) {
+    /* 2026-11-12 扩表后 openai / siliconflow 等已重新在册，故非法样本改用真退役 id（together 等） */
+    for (const stale of ['opencode-go', 'together', '']) {
       const raw: Record<string, unknown> = { aiProvider: stale, deepseekApiKey: 'k' };
       expect(migrateRetiredAIKeys(raw), stale).toBe(true);
       expect(raw.aiProvider).toBe(DEFAULT_AI_PROVIDER);
     }
-    // 在册 id 不动（含 2026-11-11 加回的 custom）
+    // 在册 id 不动（含 2026-11-11 加回的 custom 与 2026-11-12 扩表的十几家）
     for (const p of AI_PROVIDER_REGISTRY) {
       const raw: Record<string, unknown> = { aiProvider: p.id };
       expect(migrateRetiredAIKeys(raw), p.id).toBe(false);
@@ -91,12 +92,13 @@ describe('migrateRetiredAIKeys · issue 411/ADR-0179（服务商收敛三条通�
   it('per-provider 覆盖表清掉退役 provider 条目，自定义的覆盖保留', () => {
     const raw: Record<string, unknown> = {
       aiProvider: 'deepseek',
-      aiModelOverrides: { deepseek: 'deepseek-v4-pro', openai: 'gpt-4o', custom: 'taste-1' },
-      aiMaxTokensOverrides: { ollama: 8192, siliconflow: 4096, custom: 8192 },
+      // openai / siliconflow 2026-11-12 起重新在册 → 它们的覆盖**不清**；together 仍是退役 id
+      aiModelOverrides: { deepseek: 'deepseek-v4-pro', openai: 'gpt-4o', together: 'gpt-4o', custom: 'taste-1' },
+      aiMaxTokensOverrides: { ollama: 8192, together: 4096, custom: 8192 },
       aiThinkingOverrides: { deepseek: 'off', dashscope: 'off' },
     };
     expect(migrateRetiredAIKeys(raw)).toBe(true);
-    expect(raw.aiModelOverrides).toEqual({ deepseek: 'deepseek-v4-pro', custom: 'taste-1' });
+    expect(raw.aiModelOverrides).toEqual({ deepseek: 'deepseek-v4-pro', openai: 'gpt-4o', custom: 'taste-1' });
     expect(raw.aiMaxTokensOverrides).toEqual({ ollama: 8192, custom: 8192 });
     expect(raw.aiThinkingOverrides).toEqual({ deepseek: 'off' });
   });
@@ -139,7 +141,7 @@ describe('migrateRetiredAIKeys · issue 411/ADR-0179（服务商收敛三条通�
       aiProvider: 'opencode-go',
       openaiApiKey: 'x',
       aiThinking: 'high',
-      aiModelOverrides: { openai: 'gpt-4o', deepseek: 'deepseek-v4-pro' },
+      aiModelOverrides: { together: 'gpt-4o', deepseek: 'deepseek-v4-pro' },
     };
     expect(migrateRetiredAIKeys(raw)).toBe(true);
     const snapshot = JSON.parse(JSON.stringify(raw));

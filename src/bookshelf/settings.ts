@@ -1,11 +1,12 @@
 /**
  * 书架墙（bookshelf）域设置 schema（接入设置面板；窗口内无设置按钮，收敛进 Obsidian 设置面板）
- * 数据与旧 library 域同源：bookshelfFolderPath 缺省回落 libraryFolderPath（同一批书两域同显）；
- * 空值时 chips 区显示实际生效目录（fallbackValue → data.resolveFolderPath，回落链已内置）。
+ *
+ * 2026-11-12：书库改为只由 bz Reader 供书（书目/进度/划线/分类全自动读取），
+ * 「目录」组（书库文件夹 bookshelfFolderPath）整组退役——设置页里不再出现这一项，
+ * 也不新增任何开关。键仍留在 data.json（不读不写不删），老库零迁移。
  */
 import type { SettingsSchema } from '../core/settings-schema';
 import { skinPackOptions } from '../core/skin-pack';
-import { resolveFolderPath } from './data';
 import { applyBookshelfSkin, BUILTIN_SKIN } from './ui';
 
 /**
@@ -41,20 +42,6 @@ export function bookshelfSettingsSchema(): SettingsSchema {
             layoutKey: 'bookshelfLayout',
             options: skinOptions(),
             onChange: (v) => applyBookshelfSkin(v),
-          },
-        ],
-      },
-      {
-        icon: 'folder-open',
-        name: '目录',
-        rows: [
-          {
-            type: 'path',
-            mode: 'single',
-            name: '书库文件夹',
-            desc: '存放书籍笔记的文件夹',
-            binding: { key: 'bookshelfFolderPath' },
-            fallbackValue: () => resolveFolderPath(),
           },
         ],
       },

@@ -54,9 +54,10 @@ export const SEGMENT_FIELDS: Record<string, string[]> = {
   // archived = issue 357 周归档可选段（深审 PA-1：本插件自己写的正常归档数据，不得被体检
   // 误报「约定外数据段/可能是外部写入」；缺段属「功能未启用」正常形态，豁免清单见 OPTIONAL_SEGMENTS）
   'pomodoro.json': ['version', 'state', 'history', 'archived'],
-  // clipbook 7 段 = clipbook/data.ts emptySidecar()（issue 339 marks/savedImages/pendingSource
-  // + issue 358 readLog 扩段；func P2-1：此前漏 4 段致用过剪藏本即恒误报）
-  'clipbook.json': ['articleOverrides', 'savedArchive', 'order', 'marks', 'savedImages', 'pendingSource', 'readLog'],
+  // clipbook 9 段 = clipbook/data.ts emptySidecar()（issue 339 marks/savedImages/pendingSource
+  // + issue 358 readLog 扩段；2026-11-13 剪藏成书回写 readSeconds/readLoggedSeconds 扩段。
+  // func P2-1 的教训：加段必须同步这里，否则用过剪藏本的老用户每次体检都恒误报漂移）
+  'clipbook.json': ['articleOverrides', 'savedArchive', 'order', 'marks', 'savedImages', 'pendingSource', 'readLog', 'readSeconds', 'readLoggedSeconds'],
   // news 11 段 = clipbook/news-data.ts emptyData()（issue 302 lastFetchAt/fetchIntervalMin 扩段；func P2-2；
   // ADR-0209 rsshubInstance 扩段，缺席属「未配置过」正常形态 → OPTIONAL_SEGMENTS 豁免）
   'news.json': [

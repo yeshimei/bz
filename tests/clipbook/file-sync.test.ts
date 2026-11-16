@@ -29,10 +29,16 @@ const SETTINGS = {
   articleDirectory: '归档/网页剪藏',
 };
 
-function seedSidecar(vault: MockVault, marks: Record<string, any>, pending: Record<string, string[]>): void {
+function seedSidecar(
+  vault: MockVault,
+  marks: Record<string, any>,
+  pending: Record<string, string[]>,
+  readSeconds: Record<string, number> = {},
+): void {
   vault.files.set('CONFIG/STORAGE/clipbook.json', JSON.stringify({
     articleOverrides: {}, savedArchive: [], order: [],
     marks, savedImages: {}, pendingSource: pending,
+    readLog: [], readSeconds, readLoggedSeconds: {},
   }));
 }
 
@@ -98,8 +104,56 @@ describe('clipbook.json 引用同步', () => {
     expect(out.body).toContain('[[新名|量子纠缠]]');
   });
 
-  it('delete 事件：剔除指向被删笔记的 marks 条目与 pendingSource 项，空键一并清理', async () => {
+  it('rename 事件：剪藏条目的阅读时长账跟着搬到新路径（改名后不归零）', async () => {
     const { vault } = await setup();
+    seedSidecar(vault, {}, {}, {
+      'clip:归档/网页剪藏/老标题.md': 300,
+      'url:https://a.com/other': 60,
+    });
+
+    emitDomainEvent('vault:md-renamed', {
+      oldPath: '归档/网页剪藏/老标题.md',
+      newPath: '归档/网页剪藏/新标题.md',
+    });
+    await flushQueue();
+
+    const side = await readClipbookData();
+    expect(side.readSeconds['clip:归档/网页剪藏/老标题.md']).toBeUndefined();
+    expect(side.readSeconds['clip:归档/网页剪藏/新标题.md']).toBe(300);
+    expect(side.readSeconds['url:https://a.com/other']).toBe(60); // 别的条目不动
+  });
+
+  it('rename 事件：新旧路径都有账时相加，不丢任何一边', async () => {
+    const { vault } = await setup();
+    seedSidecar(vault, {}, {}, {
+      'clip:归档/网页剪藏/旧.md': 120,
+      'clip:归档/网页剪藏/新.md': 60,
+    });
+
+    emitDomainEvent('vault:md-renamed', { oldPath: '归档/网页剪藏/旧.md', newPath: '归档/网页剪藏/新.md' });
+    await flushQueue();
+
+    const side = await readClipbookData();
+    expect(side.readSeconds['clip:归档/网页剪藏/新.md']).toBe(180);
+    expect(side.readSeconds['clip:归档/网页剪藏/旧.md']).toBeUndefined();
+  });
+
+  it('delete 事件：剪藏条目的时长账一并摘掉（键指向不存在的笔记）', async () => {
+    const { vault } = await setup();
+    seedSidecar(vault, {}, {}, {
+      'clip:归档/网页剪藏/删掉.md': 240,
+      'url:https://a.com/keep': 90,
+    });
+
+    emitDomainEvent('vault:md-deleted', { path: '归档/网页剪藏/删掉.md' });
+    await flushQueue();
+
+    const side = await readClipbookData();
+    expect(side.readSeconds['clip:归档/网页剪藏/删掉.md']).toBeUndefined();
+    expect(side.readSeconds['url:https://a.com/keep']).toBe(90);
+  });
+
+  it('delete 事件：剔除指向被删笔记的 marks 条目与 pendingSource 项，空键一并清理', async () => {    const { vault } = await setup();
     seedSidecar(vault, {
       'url:https://a.com/3': [
         { find: '量子纠缠', notePath: '文献盒/被删.md', kind: 'term' },

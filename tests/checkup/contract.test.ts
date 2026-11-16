@@ -30,9 +30,9 @@ const sorted = (a: string[]): string[] => [...a].sort();
 
 /** 段白名单 × 域写侧形状单源恒等（required 键集逐域锁定） */
 describe('段级契约：SEGMENT_FIELDS × 域写侧形状', () => {
-  it('clipbook.json = emptySidecar() 7 段（func P2-1：marks/savedImages/pendingSource/readLog 不得再漏）', () => {
+  it('clipbook.json = emptySidecar() 9 段（func P2-1：marks/savedImages/pendingSource/readLog 不得再漏；2026-11-13 加 readSeconds/readLoggedSeconds）', () => {
     expect(sorted(SEGMENT_FIELDS['clipbook.json'])).toEqual(sorted(Object.keys(emptySidecar())));
-    expect(SEGMENT_FIELDS['clipbook.json']).toHaveLength(7);
+    expect(SEGMENT_FIELDS['clipbook.json']).toHaveLength(9);
   });
 
   it('news.json = emptyData() 11 键（func P2-2：lastFetchAt/fetchIntervalMin 不得再漏；ADR-0209 rsshubInstance）', () => {

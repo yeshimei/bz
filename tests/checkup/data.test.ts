@@ -688,7 +688,7 @@ describe('一键修复 + 撤销链', () => {
     expect(restored.pendingSource['url:https://x']).toEqual(['文献盒/gone.md']);
   });
 
-  it('ui P3-2：一组写盘抛错不丢前序已落盘组的撤销链（failures 单独上报）', async () => {
+  it('ui P3-2：一组写盘抛错不丢前序已落盘组的撤销链（failures 单独记）', async () => {
     const raw = JSON.stringify([fullFavItem({ id: 'a', linkedNote: '我的/gone.md' })]);
     const { app, vault } = makeApp({
       [`${DIR}/favorites.json`]: raw,

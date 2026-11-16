@@ -16,6 +16,7 @@ import { M, resetBookshelfState } from '../../src/bookshelf/state';
 import { setSettingsProvider } from '../../src/core/settings-provider';
 import { ensureBookshelf, unloadBookshelf } from '../../src/bookshelf';
 import { createOverlay, closeOverlay } from '../../src/bookshelf/ui';
+import { READER_DEFAULT_DATA_DIR } from '../../src/bookshelf/reader-source';
 
 async function waitFor(fn: () => boolean, timeout = 3000): Promise<void> {
   await vi.waitFor(() => expect(fn()).toBe(true), { timeout });
@@ -23,25 +24,28 @@ async function waitFor(fn: () => boolean, timeout = 3000): Promise<void> {
 
 function seedVault(): { vault: MockVault; app: ReturnType<typeof mockAppWithVault> } {
   const vault = new MockVault();
-  vault.files.set('书库/认知觉醒.md', `---
-tags: [book]
-author: 周岭
-category: 成长
-readingDate: 2026-08-01
-readingProgress: 60
-highlights: 12
-thinks: 3
-wordCount: 180000
-pages: 288
----`);
-  vault.files.set('书库/围城.md', `---
-tags: [book]
-author: 钱钟书
-readingDate: 2026-07-01
-completionDate: 2026-08-15
-readingProgress: 100
-wordCount: 130000
----`);
+  // md 书保留（报告口径）；书库墙 2026-11-12 起只读 bz Reader
+  vault.files.set('书库/认知觉醒.md', '---\ntags: [book]\nauthor: 周岭\ncategory: 成长\n---');
+  vault.files.set('书库/围城.md', '---\ntags: [book]\nauthor: 钱钟书\n---');
+  const now = Date.now();
+  vault.files.set(`${READER_DEFAULT_DATA_DIR}/bz-reader.json`, JSON.stringify({
+    books: [
+      {
+        id: 'b-cognition',
+        meta: { title: '认知觉醒', author: '周岭' },
+        fileRef: { vaultPath: 'books/认知觉醒.epub' },
+        reading: { position: { percent: 0.6 }, stats: { lastReadTime: now } },
+        shelf: '成长', addedAt: now, updatedAt: now,
+      },
+      {
+        id: 'b-fortress',
+        meta: { title: '围城', author: '钱钟书' },
+        fileRef: { vaultPath: 'books/围城.epub' },
+        reading: { position: { percent: 1 }, stats: { lastReadTime: now, completedTime: now } },
+        addedAt: now, updatedAt: now,
+      },
+    ],
+  }));
   const app = makeApp(vault);
   ensureBookshelf(app);
   return { vault, app };

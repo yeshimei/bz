@@ -166,7 +166,7 @@ describe('diary-format 序列化 ↔ 解析', () => {
 
   it('只认英文键：旧中文键文件按属性不可信，resolveDiaryEntryMeta 从题目降级', () => {
     const parsed = parseDiaryEntryFile('---\n日期: 2026-03-23 12:32\n类型:\n  - 日记\n---\n\n正文');
-    expect(parsed.meta).toBe(null); // v3：中文键不被识别（体检按 legacy/不可信上报）
+    expect(parsed.meta).toBe(null); // v3：中文键不被识别（体检按 legacy/不可信判定）
     expect(parsed.tags).toEqual([]);
     expect(resolveDiaryEntryMeta('我的/日记/2603231232.md', parsed)).toEqual({ date: '2026-03-23', time: '12:32' });
   });

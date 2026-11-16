@@ -16,10 +16,10 @@ import { AI_PROVIDER_REGISTRY, DEFAULT_AI_PROVIDER, thinkingLevelsOf } from './c
 
 export default interface BzSettings {
   // ===== 🤖 AI 全局（Q3 语义，spec「AI 全局」）=====
-  /** AI 服务商：注册表 id（ticket 170/171 策略模式）。**issue 411/ADR-0179 起三条在册通道**：
-   *  deepseek（缺省）/ zhipu-plan（智谱 Coding 套餐）/ ollama（本地）；**2026-11-11 加回 custom**
-   *  （OpenAI 兼容自定义端点，插件没列出的服务商都从这里接）；存量非法 id 由
-   *  migrateRetiredAIKeys 回落缺省 */
+  /** AI 服务商：注册表 id（ticket 170/171 策略模式）。**2026-11-12/ADR-0297 起扩到常用 18 家**：
+   *  老三家常驻（deepseek 缺省 / zhipu-plan / ollama）+ 国内常用 6 家 + 海外常用 7 家 +
+   *  本地 lmstudio + custom 兜底（OpenAI 兼容 / Anthropic 两套协议，插件没列出的服务商都从这里接）；
+   *  存量非法 id 由 migrateRetiredAIKeys 回落缺省 */
   aiProvider: string;
   /** 🔑 DeepSeek API Key（留空则回退读取 QuickAdd data.json） */
   deepseekApiKey: string;
@@ -31,6 +31,13 @@ export default interface BzSettings {
   aiCustomEndpoint: string;
   /** 🔑 自定义（OpenAI 兼容）API Key（空 = 没配） */
   aiCustomApiKey: string;
+  /** 🔑 各服务商密钥（2026-11-12，键 = 注册表 id）：新增服务商统一走这张表，不再为每家加设置键。
+   *  老三家（deepseek / zhipu-plan / ollama）仍读各自旧键（写时也写旧键，存量零迁移），
+   *  读取顺序见 core/ai 的 keyOf：先本表、再旧键 */
+  aiApiKeys: Record<string, string>;
+  /** 自定义通道的请求协议（2026-11-12）：'openai'（缺省，OpenAI 兼容）/ 'anthropic'（Claude 官方
+   *  Messages API）。只对「自定义」服务商生效；在册的 Claude 通道走注册表固定协议 */
+  aiCustomProtocol: string;
   /** 🧠 每提供商模型覆盖（ticket 172，键 = provider id）：未填用注册表默认模型 */
   aiModelOverrides: Record<string, string>;
   /** 📏 每提供商最大输出 token 覆盖（键 = provider id）：未填按当前模型查官方最大档
@@ -1042,6 +1049,10 @@ export const DEFAULT_SETTINGS: BzSettings = {
   ollamaApiKey: '',
   aiCustomEndpoint: '',
   aiCustomApiKey: '',
+  // 各服务商密钥表（2026-11-12）：空 = 各家用各自旧键/未配
+  aiApiKeys: {},
+  // 自定义协议缺省 OpenAI 兼容（换成 anthropic 即接 Claude 系的 Messages 报文）
+  aiCustomProtocol: 'openai',
   aiModelOverrides: {},
   aiMaxTokensOverrides: {},
   // 每提供商思考档位（issue 411/ADR-0179）：空 = 各 provider 都跟随模型默认（不注入思考参数）

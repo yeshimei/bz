@@ -131,7 +131,7 @@ function metaOf(pluginVersion: string): UsageMeta {
   }
   const out: UsageMeta = { ...cachedMeta };
   if (readerSnapshot) out.reader = readerSnapshot;
-  // 每次发送前现读：用户中途改了自动更新开关，不用等下次重启才反映
+  // 每次刷新快照前现读：用户中途改了自动更新开关，不用等下次重启才反映
   if (flagsGetter) {
     try {
       const flags = flagsGetter();
@@ -159,7 +159,7 @@ function dayDocId(installId: string, vaultId: string, date: string): string {
 
 let cachedVaultId = '';
 
-/** 同库稳定、跨库不同、不可逆：库名 + 库路径做个 FNV 哈希，只发送这 8 位 */
+/** 同库稳定、跨库不同、不可逆：库名 + 库路径做个 FNV 哈希，只留这 8 位 */
 function vaultIdOf(app: unknown): string {
   if (cachedVaultId) return cachedVaultId;
   const a = app as {
@@ -257,6 +257,7 @@ function readerFields(reader?: ReaderSnapshot): Record<string, unknown> {
   if (!reader) return {};
   return {
     readerState: reader.state,
+    readerTier: reader.tier,
     readerVersion: reader.version,
     readerMinutes: reader.minutes,
     readerDaysSince: reader.daysSince,
@@ -382,7 +383,7 @@ export function initUsage(manifestVersion: string, opts?: UsageInitOptions): voi
         if (snap) readerSnapshot = snap;
       } catch {
         // 探测失败不沿用旧值：宁可这一版显示「未知」，也不拿旧数字冒充当前状态
-        readerSnapshot = { state: 'unknown', version: '', minutes: 0, daysSince: -1 };
+        readerSnapshot = { state: 'unknown', tier: 'unknown', version: '', minutes: 0, daysSince: -1 };
       }
     };
     readerFirstTimer = window.setTimeout(() => idle(() => void refresh()), READER_FIRST_DELAY_MS);

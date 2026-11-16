@@ -189,13 +189,20 @@ function decodeXmlEntities(s: string): string {
     .replace(/&amp;/g, '&');
 }
 
-/** 取标签内文本（先找 CDATA，再回退裸文本 + 实体解码）；无 → null */
+/** 取标签内文本（先逐段剥 CDATA，再回退裸文本 + 实体解码）；无 → null */
 function tagText(block: string, tag: string): string | null {
   const re = new RegExp(`<${tag}(?:\\s[^>]*)?>([\\s\\S]*?)<\\/${tag}>`, 'i');
   const m = block.match(re);
   if (!m) return null;
-  const cdata = m[1].match(/^\s*<!\[CDATA\[([\s\S]*?)\]\]>\s*$/);
-  const raw = cdata ? cdata[1] : m[1].replace(/<[^>]+>/g, '');
+  /* CDATA 可能有多段：阮一峰的 atom 一篇正文就是 4 段 CDATA 夹着换行缩进。
+     以前按「整段被一个 CDATA 包满」判定（^\s*<!\[CDATA\[ … \]\]>\s*$），
+     非贪婪的 [\s\S]*? 会回溯到最后一个 ]]>，于是只剥掉最外层，
+     中间每段的 <![CDATA[ / ]]> 全被吞进正文，htmlToMarkdown 转完就留下孤立的 ]]>。
+     现在逐段剥离：只要出现过 CDATA 就按富文本处理（保留 CDATA 里的 HTML），
+     一段都没有（纯文本字段，如 title）才按去标签处理。 */
+  const raw = m[1].includes('<![CDATA[')
+    ? m[1].replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, '$1')
+    : m[1].replace(/<[^>]+>/g, '');
   return decodeXmlEntities(raw).trim() || null;
 }
 

@@ -129,13 +129,21 @@ describe('getAIProvider 解析与缓存', () => {
     await expect(getAIProvider()).rejects.toThrow('未配置 智谱 Plan API Key');
   });
 
-  it('注册表：三条在册通道 + 自定义（2026-11-11 加回），字段齐全', () => {
-    expect(AI_PROVIDER_REGISTRY.map((p) => p.id)).toEqual(['deepseek', 'zhipu-plan', 'ollama', 'custom']);
+  it('注册表：常用服务商齐备，字段齐全（密钥键与档位表按需）', () => {
+    const ids = AI_PROVIDER_REGISTRY.map((p) => p.id);
+    /* 老三家常驻 + 自定义兜底：2026-11-12 扩表后这批仍必须在册（存量用户与所有调用方的基点） */
+    for (const essential of ['deepseek', 'zhipu-plan', 'ollama', 'custom']) {
+      expect(ids, essential).toContain(essential);
+    }
+    expect(new Set(ids).size, 'id 不重复').toBe(ids.length); // 重复 id 会让下拉出现两行同名项
+    /* 老三家用旧密钥键（存量数据零迁移），2026-11-12 起新增的一律走 aiApiKeys 表 */
+    const legacyKeyIds = new Set(['deepseek', 'zhipu-plan', 'ollama', 'custom']);
     for (const p of AI_PROVIDER_REGISTRY) {
       expect(p.apiKeyLabel, p.id).toBeTruthy();
       expect(p.apiKeyDesc, p.id).toBeTruthy();
       expect(p.defaultMaxTokens, p.id).toBeGreaterThan(0);
-      expect((p as { apiKeyKey: string }).apiKeyKey).toBeTruthy();
+      if (legacyKeyIds.has(p.id)) expect(p.apiKeyKey, p.id).toBeTruthy();
+      else expect(p.apiKeyKey, `${p.id} 不该占用静态密钥键`).toBeUndefined();
       if (p.id === 'custom') {
         /* 自定义：端点和模型都归用户填，注册表给不出默认；也不注入思考参数 */
         expect(p.endpoint).toBe('');
@@ -143,7 +151,9 @@ describe('getAIProvider 解析与缓存', () => {
         expect(p.thinking).toBeUndefined();
       } else {
         expect(p.endpoint, p.id).toBeTruthy();
-        expect(p.thinking?.levels.length, p.id).toBeGreaterThan(1);
+        /* 档位表按需：没有表 = 该家不注入思考参数（不认识的口径宁可不发），不算缺失 */
+        const levels = p.thinking?.levels ?? [];
+        if (levels.length) expect(levels[0].value, p.id).toBe('auto');
       }
     }
   });

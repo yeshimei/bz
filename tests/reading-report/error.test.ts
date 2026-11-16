@@ -1,6 +1,7 @@
 /**
  * 阅读数据分析报告错误路径测试（m1b）：统计失败 → 人话错误（容器占位 + toast），详情留 console。
- * getAllBookNotes 经 vi.mock 抛错，验证 index 的 catch 路径不把技术异常暴露给用户面。
+ * getEpubBookNotes 经 vi.mock 抛错（2026-11-12 起报告只读 bz Reader），验证 index 的 catch 路径
+ * 不把技术异常暴露给用户面。
  * （读书报告内嵌化：原独立弹窗容器换成书架墙面板内容区容器。）
  * 深审修复批：C-5 容器文案与 toast 对齐（去「控制台」引导）；EFF-6 失败态挂「重试」出口。
  */
@@ -10,7 +11,7 @@ vi.mock('../../src/reading-report/stats', async (importOriginal) => {
   const actual = await importOriginal();
   return {
     ...(actual as Record<string, unknown>),
-    getAllBookNotes: vi.fn(() => {
+    getEpubBookNotes: vi.fn(async () => {
       throw new Error('模拟书库读取失败');
     }),
   };
@@ -42,7 +43,7 @@ describe('统计失败（m1b 人话化）', () => {
     unloadReadingReport();
   });
 
-  it('getAllBookNotes 抛错 → 容器显示人话错误、toast 提示 + 重试出口、技术详情留 console', async () => {
+  it('getEpubBookNotes 抛错 → 容器显示人话错误、toast 提示 + 重试出口、技术详情留 console', async () => {
     const vault = new MockVault();
     setApp(makeApp(vault));
     const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});

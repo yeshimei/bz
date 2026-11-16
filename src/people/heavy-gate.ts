@@ -81,7 +81,7 @@ export function heavyGatePortraitBusy(): boolean {
   return portraitBusy;
 }
 
-/** 画谱引擎上报"任务是否 running"（runJob 进出时调；只影响抢占判定，不影响持有） */
+/** 画谱引擎回报"任务是否 running"（runJob 进出时调；只影响抢占判定，不影响持有） */
 export function setHeavyPortraitBusy(busy: boolean): void {
   if (portraitBusy === busy) return;
   portraitBusy = busy;
