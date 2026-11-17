@@ -357,6 +357,9 @@ export default class BzPlugin extends Plugin {
     isFolderReady: () => boolean;
     /** 按 vault 路径打开知识盒的文献预览（不在文献目录 / 文件缺失时回退原生打开） */
     openPreview: (path: string) => Promise<void>;
+    /** 把图片（data URL）送进图版录入（bz-reader 放大的图 → AI 读图生成文献笔记）。
+     *  门面按外部口径不带 app，由赋值处包一层注入；懒初始化仍在 openImageNote 内。 */
+    openImageNote: (opts: { images: string[]; onCreated?: (notePath: string) => void }) => void;
   } | null = null;
   /** 剪藏本门面（剪藏成书）：bz-reader 经 getPlugin('bz') 取实例后列订阅 / 取正文 /
    *  标已读 / 存剪藏。挂的是常驻对象，内部每次调用才读盘——阅读器可能在剪藏本面板
@@ -495,6 +498,9 @@ export default class BzPlugin extends Plugin {
       /* 包一层而不是直接挂引用：openKnowledgePreview 的首参是 app（域内签名），
          门面按外部口径只收 path，别让调用方去猜 bz 的内部形状。 */
       openPreview: (path: string) => openKnowledgePreview(this.app, path),
+      /* 图版录入：包一层注入 app（域内签名首参是 app），外部只传图片与回调。
+         onCreated 有回调时 bz 不自动打开新笔记，正好不打断阅读。 */
+      openImageNote: (opts) => openImageNote(this.app, opts),
     };
 
     // 剪藏本门面（剪藏成书）：与知识盒/AI 门面同一套跨插件约定。只新增一层窄口，

@@ -489,6 +489,9 @@ ${failures.join('\n')}`).toEqual([]);
     // 外部插件（fork-weave 阅读器）以 typeof 守卫探测——同步函数引用，非 getter / 非 Promise
     expect(typeof plugin.knowledge?.openTermNote).toBe('function');
     expect(typeof plugin.knowledge?.openPassageNote).toBe('function');
+    /* 图版入口（bz-reader 点图放大「存为图版」用）：包一层注入 app，
+       门面按外部口径只收 opts，不暴露 bz 的内部签名 */
+    expect(typeof plugin.knowledge?.openImageNote).toBe('function');
     // 门面函数即 knowledge 域既有导出（签名与 KnowledgeEntryPrefill 契约不变，不发明新入口）
     const knowledge = await import('../src/knowledge');
     expect(plugin.knowledge!.openTermNote).toBe(knowledge.openTermNote);
