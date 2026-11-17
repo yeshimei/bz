@@ -49,14 +49,18 @@
   "feedback": [
     {
       "key": "bug",
-      "items": []
+      "items": [
+        { "id": "fb-20261115-blg-02", "plugin": "bz", "domain": "日记本", "source": "bili-dm", "summary": "回看日记时换行效果丢失", "title": "日记换行回看丢失", "desc": "再次查看之前写的日记，换行效果没有显示出来，变成一个大段落。", "href": "", "reply": "00:12「好的，后续我会跟进的」", "replyDigest": "作者表示会跟进处理。", "verify": "反馈属实。册页排版把同一段里的连续非空行无缝拼成一句，导致回车换的行在纸面上消失。已修复：拼回换行符并落成 <br>，磁盘上的 md 一个字没改。", "state": "done", "submittedAt": "2026-11-15 23:55", "doneAt": "2026-11-16 00:45", "rejectedAt": "", "commitRepo": "bz", "commitId": "972855ed", "commitDate": "2026-11-16 00:45" },
+        { "id": "fb-20261115-blg-01", "plugin": "bz", "domain": "日记本", "source": "bili-dm", "summary": "日记本光标不能用左右键移动", "title": "日记本光标只能鼠标点击", "desc": "日记本不能靠左右按键移动光标，必须鼠标点击；打错字也只能把光标点到那个字后面再回退。（23:09 首次提出，23:57 补充，已合并）", "href": "", "reply": "23:14「日记本是指左右按键来翻页吗？」；00:12「好的，后续我会跟进的」", "replyDigest": "作者先追问反馈是否指翻页操作，了解后表示会跟进处理。", "verify": "作者采纳后去查了代码：焦点在正文里时，左右键本来就能正常移动光标；真正的问题是焦点掉到纸边（日戳／贴纸／空白）后，按左右键会翻背后那本书。反馈描述与实际有出入，故判「不成立」。已修复：写作内页可见时方向键归纸面，焦点不在正文先还给正文。", "state": "invalid", "submittedAt": "2026-11-15 23:09", "doneAt": "", "rejectedAt": "", "commitRepo": "bz", "commitId": "972855ed", "commitDate": "2026-11-16 00:45" }
+      ]
     },
     {
       "key": "feature",
       "items": [
-        { "id": "fb-20261118-ghi-01", "source": "github-issue", "summary": "希望 EPUB 内置图片能点击放大", "title": "EPUB 内置图片放大查看", "desc": "读史料类书籍时内置图片（报刊、论文等）很重要，目前只有 omni book reader 能点开但操作别扭，希望支持放大 EPUB 内置图片。作者回复下个版本跟上。", "href": "https://github.com/yeshimei/bz-reader/issues/3", "submittedAt": "2026-11-18", "doneAt": "" },
-        { "id": "fb-20261118-ghi-02", "source": "github-issue", "summary": "希望 EPUB 支持 Obsidian 字体或自选字体", "title": "EPUB 跟随 Obsidian 字体", "desc": "很多阅读器支持 EPUB 使用 Obsidian 当前字体或自选字体，让阅读器与 Obsidian 更一体、更美观。作者回复同一版本跟上。", "href": "https://github.com/yeshimei/bz-reader/issues/3", "submittedAt": "2026-11-18", "doneAt": "" },
-        { "id": "fb-20261118-ghi-03", "source": "github-issue", "summary": "建议朗读复用 Edge 浏览器 TTS", "title": "朗读接入 Edge TTS", "desc": "提到 qiaomu reader 的朗读用 Edge 浏览器 TTS，免费且效果不错，问能否复用。作者倾向优化本地语音合成模型（效果更好、可预生成离线听书），暂不走 Edge。", "href": "https://github.com/yeshimei/bz-reader/issues/3", "submittedAt": "2026-11-18", "doneAt": "", "rejectedAt": "2026-11-18" }
+        { "id": "fb-20261118-ghi-01", "plugin": "bz-reader", "source": "github-issue", "summary": "希望 EPUB 内置图片能点击放大", "title": "EPUB 内置图片放大查看", "desc": "读史料类书籍时内置图片（报刊、论文等）很重要，目前只有 omni book reader 能点开但操作别扭，希望支持放大 EPUB 内置图片。作者回复下个版本跟上。", "href": "https://github.com/yeshimei/bz-reader/issues/3", "reply": "", "replyDigest": "作者回复下个版本跟上。", "verify": "作者回复下个版本跟上。", "state": "accepted", "submittedAt": "2026-11-18", "doneAt": "", "rejectedAt": "", "commitRepo": "", "commitId": "", "commitDate": "" },
+        { "id": "fb-20261118-ghi-02", "plugin": "bz-reader", "source": "github-issue", "summary": "希望 EPUB 支持 Obsidian 字体或自选字体", "title": "EPUB 跟随 Obsidian 字体", "desc": "很多阅读器支持 EPUB 使用 Obsidian 当前字体或自选字体，让阅读器与 Obsidian 更一体、更美观。作者回复同一版本跟上。", "href": "https://github.com/yeshimei/bz-reader/issues/3", "reply": "", "replyDigest": "作者回复同一版本跟上。", "verify": "作者回复同一版本跟上。", "state": "accepted", "submittedAt": "2026-11-18", "doneAt": "", "rejectedAt": "", "commitRepo": "", "commitId": "", "commitDate": "" },
+        { "id": "fb-20261118-ghi-03", "plugin": "bz-reader", "source": "github-issue", "summary": "建议朗读复用 Edge 浏览器 TTS", "title": "朗读接入 Edge TTS", "desc": "提到 qiaomu reader 的朗读用 Edge 浏览器 TTS，免费且效果不错，问能否复用。作者倾向优化本地语音合成模型（效果更好、可预生成离线听书），暂不走 Edge。", "href": "https://github.com/yeshimei/bz-reader/issues/3", "reply": "", "replyDigest": "作者看过但决定不采纳，倾向先优化本地语音合成。", "verify": "作者看过但决定不采纳：作者倾向优化本地语音合成模型（效果更好、可预生成离线听书），暂不走 Edge。", "state": "rejected", "submittedAt": "2026-11-18", "doneAt": "", "rejectedAt": "2026-11-18", "commitRepo": "", "commitId": "", "commitDate": "" },
+        { "id": "fb-20261115-blg-03", "plugin": "bz", "domain": "界面", "source": "bili-dm", "summary": "放大插件首页显示比例", "title": "插件首页显示偏小", "desc": "常规使用插件的首页有点小、看不是很清，问能不能放大一点。", "href": "", "reply": "23:13「obsidian 中放大界面比例试试」", "replyDigest": "作者建议用 Obsidian 自带的界面缩放解决，不改插件。", "verify": "作者看过这个要求，决定不采纳：用 Obsidian 自带的界面缩放就能放大，不改插件。", "state": "rejected", "submittedAt": "2026-11-15 23:09", "doneAt": "", "rejectedAt": "2026-11-15 23:13", "commitRepo": "", "commitId": "", "commitDate": "" }
       ]
     }
   ],
