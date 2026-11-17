@@ -18,8 +18,7 @@
           "text": {
             "zh": "搜之前先用 AI 把你那句口语压成检索词，去掉问句壳，向量更准；字面通道仍用原话，书名、年份、引文不丢。",
             "en": "Before searching, AI compresses your spoken question into tight keywords for a more accurate vector, while the literal channel still uses your original words."
-          },
-          "issue": 2
+          }
         }
       ],
       "fixed": [
@@ -28,8 +27,7 @@
           "text": {
             "zh": "只识别到语言时如实说「简介和分类这次没补上」，不再弹「已补上简介与分类」却一个字没变。",
             "en": "When only the language is detected, it now says description and categories weren't filled in, instead of claiming both were added."
-          },
-          "issue": 1
+          }
         }
       ]
     },
@@ -42,90 +40,12 @@
           "text": {
             "zh": "PDF 扫描页也能认字了。头栏「识别」可选本页、接下来 20 页或整本；认出来的文字直接进文字层，能划词、能搜索、能朗读。",
             "en": "Scanned PDF pages can be read now. Recognize covers this page, the next 20, or the whole book; the text lands in the text layer, selectable, searchable and readable."
-          },
-          "issue": 3
+          }
         }
       ]
     }
   ],
-  "roadmap": [
-    {
-      "theme": "AI 能力",
-      "color": "#2f9e6e",
-      "order": 1,
-      "items": [
-        {
-          "title": "划词 AI：多轮追问",
-          "state": "doing",
-          "src": "builtin",
-          "fb": { "kind": "bili", "label": "B站反馈", "href": "https://www.bilibili.com/" }
-        },
-        {
-          "title": "按意思搜：结果高亮",
-          "state": "done",
-          "src": "github",
-          "fb": { "kind": "issue", "n": 5, "label": "#5" }
-        }
-      ]
-    },
-    {
-      "theme": "阅读体验",
-      "color": "#7856d6",
-      "order": 2,
-      "items": [
-        {
-          "title": "字体与排版：自定义字体上传",
-          "state": "doing",
-          "src": "builtin",
-          "fb": { "kind": "issue", "n": 12, "label": "#12" }
-        },
-        {
-          "title": "朗读：整章导出进度提示",
-          "state": "plan",
-          "src": "github",
-          "fb": { "kind": "issue", "n": 8, "label": "#8" }
-        },
-        {
-          "title": "PDF 批注同步",
-          "state": "plan",
-          "src": "builtin",
-          "fb": { "kind": "qq", "label": "群内反馈", "href": "https://qm.qq.com/" }
-        }
-      ]
-    },
-    {
-      "theme": "格式与支持",
-      "color": "#c2661a",
-      "order": 3,
-      "items": [
-        {
-          "title": "EPUB 内置图片与字体",
-          "state": "doing",
-          "src": "github",
-          "fb": { "kind": "issue", "n": 3, "label": "#3" }
-        },
-        {
-          "title": "书摘图片：自定义水印",
-          "state": "plan",
-          "src": "builtin",
-          "fb": { "kind": "afdian", "label": "爱发电留言", "href": "https://afdian.net/" }
-        }
-      ]
-    },
-    {
-      "theme": "稳定性",
-      "color": "#93939c",
-      "order": 4,
-      "items": [
-        {
-          "title": "同步插件报错",
-          "state": "done",
-          "src": "github",
-          "fb": { "kind": "issue", "n": 1, "label": "#1" }
-        }
-      ]
-    }
-  ],
+  "roadmap": [],
   "feedback": [
     {
       "key": "bug",
@@ -136,17 +56,17 @@
       "items": [
         { "id": "fb-20261118-ghi-01", "source": "github-issue", "summary": "希望 EPUB 内置图片能点击放大", "title": "EPUB 内置图片放大查看", "desc": "读史料类书籍时内置图片（报刊、论文等）很重要，目前只有 omni book reader 能点开但操作别扭，希望支持放大 EPUB 内置图片。作者回复下个版本跟上。", "href": "https://github.com/yeshimei/bz-reader/issues/3", "submittedAt": "2026-11-18", "doneAt": "" },
         { "id": "fb-20261118-ghi-02", "source": "github-issue", "summary": "希望 EPUB 支持 Obsidian 字体或自选字体", "title": "EPUB 跟随 Obsidian 字体", "desc": "很多阅读器支持 EPUB 使用 Obsidian 当前字体或自选字体，让阅读器与 Obsidian 更一体、更美观。作者回复同一版本跟上。", "href": "https://github.com/yeshimei/bz-reader/issues/3", "submittedAt": "2026-11-18", "doneAt": "" },
-        { "id": "fb-20261118-ghi-03", "source": "github-issue", "summary": "建议朗读复用 Edge 浏览器 TTS", "title": "朗读接入 Edge TTS", "desc": "提到 qiaomu reader 的朗读用 Edge 浏览器 TTS，免费且效果不错，问能否复用。作者倾向优化本地语音合成模型（效果更好、可预生成离线听书），暂不走 Edge。", "href": "https://github.com/yeshimei/bz-reader/issues/3", "submittedAt": "2026-11-18", "doneAt": "" }
+        { "id": "fb-20261118-ghi-03", "source": "github-issue", "summary": "建议朗读复用 Edge 浏览器 TTS", "title": "朗读接入 Edge TTS", "desc": "提到 qiaomu reader 的朗读用 Edge 浏览器 TTS，免费且效果不错，问能否复用。作者倾向优化本地语音合成模型（效果更好、可预生成离线听书），暂不走 Edge。", "href": "https://github.com/yeshimei/bz-reader/issues/3", "submittedAt": "2026-11-18", "doneAt": "", "rejectedAt": "2026-11-18" }
       ]
     }
   ],
   "stats": {
-    "reward": 456,
-    "pro": 1286,
-    "patrons": 328
+    "reward": 6,
+    "pro": 39,
+    "patrons": 7
   },
   "links": {
-    "support": "https://afdian.net/a/yeshimei",
-    "buy": "https://afdian.net/a/yeshimei?plan=pro"
+    "support": "https://wzyp.cn/shop/IFCEI5I3",
+    "buy": "https://wzyp.cn/shop/IFCEI5I3"
   }
 }
