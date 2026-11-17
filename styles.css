@@ -19435,13 +19435,13 @@ canvas { display: block; }
 .bzs-chgn-mini-stat.reward b{color:#d62f6c}
 .bzs-chgn-mini-stat.sponsor b{color:#a9763f}
 .bzs-chgn-mini-chev{font-style:normal;font-size:12px;line-height:1;color:var(--chg-ink-3);margin-left:1px}
-.bzs-chgn-mini-stat:hover{background:var(--chg-accent-soft);border-color:color-mix(in srgb,var(--chg-accent) 40%,transparent)}
-.bzs-chgn-mini-stat:hover .bzs-chgn-mini-chev{color:var(--chg-accent)}
+@media (hover:hover){.bzs-chgn-mini-stat:hover{background:var(--chg-accent-soft);border-color:color-mix(in srgb,var(--chg-accent) 40%,transparent)}}
+@media (hover:hover){.bzs-chgn-mini-stat:hover .bzs-chgn-mini-chev{color:var(--chg-accent)}}
 .bzs-chgn-mini-stat:active{transform:translateY(1px)}
 .bzs-chgn-tools{margin-left:auto;display:flex;gap:6px}
 .bzs-chgn .bzs-chgn-toolbtn,
 .bzs-chgn-m .bzs-chgn-toolbtn{display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 10px;border:1px solid var(--chg-line-soft);border-radius:7px;background:var(--chg-panel);font-size:11px;font-weight:600;color:var(--chg-ink-2);white-space:nowrap}
-.bzs-chgn-toolbtn:hover{background:var(--chg-accent-soft);border-color:color-mix(in srgb,var(--chg-accent) 35%,transparent)}
+@media (hover:hover){.bzs-chgn-toolbtn:hover{background:var(--chg-accent-soft);border-color:color-mix(in srgb,var(--chg-accent) 35%,transparent)}}
 .bzs-chgn-toolbtn.on{background:var(--chg-accent-soft);border-color:color-mix(in srgb,var(--chg-accent) 45%,transparent);color:var(--chg-accent)}
 .bzs-chgn-toolbtn svg{width:15px;height:15px}
 .bzs-chgn-rm-roadmap svg{color:#a9763f}
@@ -19487,7 +19487,7 @@ canvas { display: block; }
   margin-left:6px;font-family:var(--chg-mono);font-size:10.5px;font-weight:700;
   color:var(--chg-accent);text-decoration:none;white-space:nowrap;
 }
-.bzs-chgn-issue:hover{text-decoration:underline}
+@media (hover:hover){.bzs-chgn-issue:hover{text-decoration:underline}}
 
 /* ── 小图标 ── */
 .bzs-chgn-svg{width:12px;height:12px;flex:none}
@@ -19507,7 +19507,7 @@ canvas { display: block; }
   border:1px solid var(--chg-line-soft);border-radius:10px;background:var(--chg-panel);
   transition:border-color .14s,box-shadow .14s;
 }
-.bzs-chgn-fbit:hover{border-color:color-mix(in srgb,var(--chg-accent) 40%,transparent);box-shadow:0 3px 12px -8px rgba(0,0,0,.5)}
+@media (hover:hover){.bzs-chgn-fbit:hover{border-color:color-mix(in srgb,var(--chg-accent) 40%,transparent);box-shadow:0 3px 12px -8px rgba(0,0,0,.5)}}
 /* 状态点与标题同一个 flex 行、垂直居中。
    以前 grid 两列 + 点上 margin-top:4px 目测对位，差几个像素肉眼就看得出来。 */
 .bzs-chgn-fbhd{display:flex;align-items:center;gap:7px;min-width:0}
@@ -19520,6 +19520,8 @@ canvas { display: block; }
 .bzs-chgn-fbdot.doing{background:#d98a1f;box-shadow:0 0 0 3px rgba(217,138,31,.16)}
 .bzs-chgn-fbdot.invalid{background:var(--chg-ink-3);opacity:.65}
 .bzs-chgn-fbtitle{flex:1;min-width:0;font-size:11.5px;font-weight:600;line-height:1.45}
+/* 归属徽标：bz 带功能域，bz reader 只有插件名 */
+.bzs-chgn-fbplugin{flex:none;padding:1px 5px;border-radius:4px;font-size:9px;font-weight:600;line-height:1.5;color:var(--chg-accent);background:var(--chg-accent-soft);white-space:nowrap}
 /* 描述截 3 行：卡片并排时高度可控，长描述不至于把整行撑成两屏 */
 .bzs-chgn-fbdesc{
   display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:3;overflow:hidden;
@@ -19530,6 +19532,12 @@ canvas { display: block; }
   display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;
   font-size:10px;line-height:1.55;color:var(--chg-ink-2);margin-top:3px;
 }
+/* 核查结论截 2 行：说明为什么是这个状态，比描述次一级 */
+.bzs-chgn-fbverify{
+  display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;
+  font-size:9.5px;line-height:1.5;color:var(--chg-ink-3);margin-top:3px;
+}
+.bzs-chgn-fbrelease{padding:1px 6px;border-radius:4px;font-weight:600;color:var(--green,#1a7f37);background:color-mix(in srgb,var(--green,#1a7f37) 12%,transparent)}
 .bzs-chgn-fbmeta{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:auto;padding-top:7px;font-size:9.5px;color:var(--chg-ink-3)}
 .bzs-chgn-fbsrc{display:inline-flex;align-items:center;gap:3px;padding:1px 6px;border-radius:4px;font-weight:600;text-decoration:none;color:var(--chg-ink-2);background:color-mix(in srgb,var(--chg-ink-3) 12%,transparent)}
 .bzs-chgn-fbsrc.github-issue{background:var(--chg-accent-soft);color:var(--chg-accent)}
@@ -19546,7 +19554,6 @@ canvas { display: block; }
 .bzs-chgn-fbstate.invalid{background:color-mix(in srgb,var(--chg-ink-3) 14%,transparent);color:var(--chg-ink-2)}
 /* Git 提交短 id：等宽字 + 强调色，和可点来源徽标同排 */
 .bzs-chgn-fbcommit{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;text-decoration:none;color:var(--chg-accent);font-weight:600}
-.bzs-chgn-fbcommit:hover{text-decoration:underline}
 .bzs-chgn-fbempty{grid-column:1/-1;padding:26px 0;text-align:center;font-size:11px;color:var(--chg-ink-3)}
 
 /* ── 路线图两级：主题是卡片，条目在里面（2026-11-18 作者选定）──
@@ -19562,7 +19569,7 @@ canvas { display: block; }
   display:flex;align-items:center;gap:8px;padding:9px 11px;cursor:pointer;user-select:none;
   background:color-mix(in srgb,var(--chg-ink-3) 6%,transparent);
 }
-.bzs-chgn-rmthemehd:hover{background:var(--chg-accent-soft)}
+@media (hover:hover){.bzs-chgn-rmthemehd:hover{background:var(--chg-accent-soft)}}
 .bzs-chgn-chev{font-size:9px;color:var(--chg-ink-3);transition:transform .16s}
 .bzs-chgn-rmtheme.fold .bzs-chgn-chev{transform:rotate(-90deg)}
 .bzs-chgn-bar{width:3px;height:12px;border-radius:2px;flex:none}
@@ -19574,7 +19581,7 @@ canvas { display: block; }
 .bzs-chgn-rmitems{padding:4px}
 .bzs-chgn-rmtheme.fold .bzs-chgn-rmitems{display:none}
 .bzs-chgn-rmitem{display:flex;flex-direction:column;padding:7px;border-radius:7px;transition:background .14s}
-.bzs-chgn-rmitem:hover{background:color-mix(in srgb,var(--chg-ink-3) 7%,transparent)}
+@media (hover:hover){.bzs-chgn-rmitem:hover{background:color-mix(in srgb,var(--chg-ink-3) 7%,transparent)}}
 /* 状态点与标题同一个 flex 行、垂直居中（同反馈卡：不再用 margin-top 目测） */
 .bzs-chgn-rmhd{display:flex;align-items:center;gap:7px;min-width:0}
 .bzs-chgn-dot{width:8px;height:8px;border-radius:50%;flex:none}

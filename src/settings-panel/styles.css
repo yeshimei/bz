@@ -2567,6 +2567,8 @@
 .bzs-chgn-fbdot.doing{background:#d98a1f;box-shadow:0 0 0 3px rgba(217,138,31,.16)}
 .bzs-chgn-fbdot.invalid{background:var(--chg-ink-3);opacity:.65}
 .bzs-chgn-fbtitle{flex:1;min-width:0;font-size:11.5px;font-weight:600;line-height:1.45}
+/* 归属徽标：bz 带功能域，bz reader 只有插件名 */
+.bzs-chgn-fbplugin{flex:none;padding:1px 5px;border-radius:4px;font-size:9px;font-weight:600;line-height:1.5;color:var(--chg-accent);background:var(--chg-accent-soft);white-space:nowrap}
 /* 描述截 3 行：卡片并排时高度可控，长描述不至于把整行撑成两屏 */
 .bzs-chgn-fbdesc{
   display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:3;overflow:hidden;
@@ -2577,6 +2579,12 @@
   display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;
   font-size:10px;line-height:1.55;color:var(--chg-ink-2);margin-top:3px;
 }
+/* 核查结论截 2 行：说明为什么是这个状态，比描述次一级 */
+.bzs-chgn-fbverify{
+  display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;
+  font-size:9.5px;line-height:1.5;color:var(--chg-ink-3);margin-top:3px;
+}
+.bzs-chgn-fbrelease{padding:1px 6px;border-radius:4px;font-weight:600;color:var(--green,#1a7f37);background:color-mix(in srgb,var(--green,#1a7f37) 12%,transparent)}
 .bzs-chgn-fbmeta{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:auto;padding-top:7px;font-size:9.5px;color:var(--chg-ink-3)}
 .bzs-chgn-fbsrc{display:inline-flex;align-items:center;gap:3px;padding:1px 6px;border-radius:4px;font-weight:600;text-decoration:none;color:var(--chg-ink-2);background:color-mix(in srgb,var(--chg-ink-3) 12%,transparent)}
 .bzs-chgn-fbsrc.github-issue{background:var(--chg-accent-soft);color:var(--chg-accent)}

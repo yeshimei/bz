@@ -50,7 +50,7 @@ const U = {
   statePlan: '计划中', stateDoing: '进行中', stateDone: '已完成',
   srcBuiltin: '内置', srcGithub: 'GitHub',
   fbDone: '已完成', fbRejected: '否决', fbDoing: '进行中', fbInvalid: '不成立',
-  fbReply: '作者回复', fbEmpty: '暂无',
+  fbReply: '作者回复', fbVerify: '核查结论', fbRelease: '发布版本', fbEmpty: '暂无',
   fbSubmitted: '提交', fbDoneAt: '完成',
   fbSrcGithub: 'GitHub issue', fbSrcQqGroup: 'QQ 交流群', fbSrcQqChannel: 'QQ 频道',
   fbSrcQqFriend: 'QQ 好友', fbSrcBili: 'B 站私信',
@@ -145,7 +145,7 @@ function feedbackStateOf(it: BzrFeedback): FeedbackState {
   if (s === 'accepted' || s === 'rejected' || s === 'invalid' || s === 'done' || s === 'doing') return s;
   return it.rejectedAt ? 'rejected' : it.doneAt ? 'done' : 'accepted';
 }
-function feedbackItemHtml(it: BzrFeedback): string {
+export function feedbackItemHtml(it: BzrFeedback): string {
   const state = feedbackStateOf(it);
   const endAt = it.rejectedAt || it.doneAt;
   const dates = endAt
@@ -159,12 +159,25 @@ function feedbackItemHtml(it: BzrFeedback): string {
     : `<span class="bzs-chgn-fbsrc ${escapeHtml(it.source)}">${escapeHtml(src)}</span>`;
   const url = feedbackCommitUrl(it);
   const commitHtml = url ? `<a class="bzs-chgn-fbcommit" href="${escapeHtml(url)}" target="_blank" rel="noopener">${escapeHtml(it.commitId ?? '')} ↗</a>` : '';
+  /* 归属：bz 带功能域，bz reader 不带；只展示已知插件名，远端值先过白名单 */
+  const pluginText = it.plugin
+    ? [it.plugin === 'bz-reader' ? 'bz reader' : 'bz', it.plugin === 'bz' && it.domain ? it.domain : '']
+      .filter(Boolean).join(' · ')
+    : '';
+  const pluginHtml = pluginText ? `<span class="bzs-chgn-fbplugin">${escapeHtml(pluginText)}</span>` : '';
+  const verifyHtml = it.verify
+    ? `<div class="bzs-chgn-fbverify">${U.fbVerify}：${escapeHtml(it.verify)}</div>`
+    : '';
+  const releaseHtml = state === 'done' && it.releaseVersion
+    ? `<span class="bzs-chgn-fbrelease">${U.fbRelease} ${escapeHtml(it.releaseVersion)}</span>`
+    : '';
   return (
     `<div class="bzs-chgn-fbit ${state}"><div class="bzs-chgn-fbhd">` +
-    `<i class="bzs-chgn-fbdot ${state}"></i><div class="bzs-chgn-fbtitle">${escapeHtml(it.title)}</div></div>` +
+    `<i class="bzs-chgn-fbdot ${state}"></i>${pluginHtml}<div class="bzs-chgn-fbtitle">${escapeHtml(it.title)}</div></div>` +
     (it.desc ? `<div class="bzs-chgn-fbdesc">${escapeHtml(it.desc)}</div>` : '') +
     (it.reply ? `<div class="bzs-chgn-fbreply">${U.fbReply}：${escapeHtml(it.reply)}</div>` : '') +
-    '<div class="bzs-chgn-fbmeta">' + srcHtml + commitHtml + `<span>${dates}</span>` +
+    verifyHtml +
+    '<div class="bzs-chgn-fbmeta">' + srcHtml + releaseHtml + commitHtml + `<span>${dates}</span>` +
     `<span class="bzs-chgn-fbstate ${state}">${escapeHtml(label)}</span></div></div>`
   );
 }

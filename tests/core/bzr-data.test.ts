@@ -217,6 +217,35 @@ describe('用户反馈 v2：五态、分钟日期、提交链接', () => {
     expect(d.feedback!.find((g) => g.key === 'bug')!.items[0]!.state).toBe('invalid');
   });
 
+  it('新字段：plugin / domain / replyDigest / verify / releaseVersion 逐项保留', () => {
+    const d = withFeedback([{ key: 'bug', items: [{
+      id: 'n1', source: 'bili-dm', plugin: 'bz', domain: '日记本',
+      summary: 's', title: 't', desc: 'd', href: '',
+      reply: '00:12「好的」', replyDigest: '作者表示会跟进。', verify: '查过代码，属实。',
+      state: 'done', submittedAt: '2026-11-15 23:55', doneAt: '2026-11-16 00:45',
+      rejectedAt: '', commitRepo: 'bz', commitId: '972855ed', commitDate: '2026-11-16 00:45',
+      releaseVersion: '1.44.5',
+    }] }])!;
+    const it = d.feedback!.find((g) => g.key === 'bug')!.items[0]!;
+    expect(it.plugin).toBe('bz');
+    expect(it.domain).toBe('日记本');
+    expect(it.replyDigest).toBe('作者表示会跟进。');
+    expect(it.verify).toBe('查过代码，属实。');
+    expect(it.releaseVersion).toBe('1.44.5');
+  });
+
+  it('plugin 只认 bz / bz-reader，其余置空', () => {
+    const d = withFeedback([{ key: 'feature', items: [
+      { id: 'p1', source: 'github-issue', plugin: 'bz-reader', domain: '字体',
+        summary: 's', title: 't', desc: '', href: '', submittedAt: '2026-11-18' },
+      { id: 'p2', source: 'github-issue', plugin: 'evil', domain: 'x',
+        summary: 's', title: 't', desc: '', href: '', submittedAt: '2026-11-18' },
+    ] }])!;
+    const items = d.feedback!.find((g) => g.key === 'feature')!.items;
+    expect(items.find((i) => i.id === 'p1')!.plugin).toBe('bz-reader');
+    expect(items.find((i) => i.id === 'p2')!.plugin).toBe('');
+  });
+
   it('非法 commitId 过滤；非法 state 退回 accepted', () => {
     const d = withFeedback([{ key: 'bug', items: [
       { id: 'c1', source: 'bili-dm', summary: 's', title: 't', desc: '', href: '',
@@ -263,7 +292,7 @@ describe('缓存与拉取', () => {
     setHttp((u) => u.includes('github') ? 'bad json' : doc());
     expect(await refreshBzrData({ force: true })).toBe(true);
     expect(currentBzrData().stats.pro).toBe(1286);
-    expect(g.localStorage!.getItem(BZR_CACHE_KEY)).toContain('1286');
+    expect((g.localStorage as Storage).getItem(BZR_CACHE_KEY)).toContain('1286');
     expect(calls).toHaveLength(2);
   });
 
@@ -275,10 +304,10 @@ describe('缓存与拉取', () => {
   });
 
   it('缓存里的坏字段不影响好条目；坏缓存整份作废退回内置', () => {
-    g.localStorage!.setItem(BZR_CACHE_KEY, JSON.stringify({ v: BZR_CACHE_VERSION, at: Date.now(), data: GOOD }));
+    (g.localStorage as Storage).setItem(BZR_CACHE_KEY, JSON.stringify({ v: BZR_CACHE_VERSION, at: Date.now(), data: GOOD }));
     expect(currentBzrData().stats.pro).toBe(1286);
     // v 不对 → 忽略（升版本就是为了让旧缓存当场作废）
-    g.localStorage!.setItem(BZR_CACHE_KEY, JSON.stringify({ v: BZR_CACHE_VERSION + 1, at: Date.now(), data: GOOD }));
+    (g.localStorage as Storage).setItem(BZR_CACHE_KEY, JSON.stringify({ v: BZR_CACHE_VERSION + 1, at: Date.now(), data: GOOD }));
     _resetBzrDataForTests();
     expect(currentBzrData().stats.pro).not.toBe(1286);
   });

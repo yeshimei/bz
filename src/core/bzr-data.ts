@@ -87,8 +87,16 @@ export interface BzrFeedback {
   desc: string;
   /** 可空；渲染前必须过 safeFeedbackUrl */
   href: string;
+  /** 归属插件：bz / bz-reader，其余值置空 */
+  plugin?: string;
+  /** 功能域，只有 bz 条目显示（如「日记本」） */
+  domain?: string;
   /** 作者（用户本人）在聊天里对这条的回复，逐句原话，可空 */
   reply?: string;
+  /** 作者回复的一句话摘要，QQ 频道帖子用；界面不显示 */
+  replyDigest?: string;
+  /** 核查详情（查了什么、是否属实、修了什么），QQ 频道帖子用 */
+  verify?: string;
   /** 五态；老数据 / 手写夹具可能没有，渲染时按日期推导 */
   state?: FeedbackState;
   /** YYYY-MM-DD 或 YYYY-MM-DD HH:mm */
@@ -103,6 +111,8 @@ export interface BzrFeedback {
   commitId?: string;
   /** 提交日期 YYYY-MM-DD HH:mm；空 = 没提交 */
   commitDate?: string;
+  /** 已发布版本号，如 1.44.5；state=done 时界面显示 */
+  releaseVersion?: string;
 }
 
 /** 固定两组：bug（问题反馈）/ feature（功能建议） */
@@ -144,7 +154,7 @@ export const BZR_URLS: readonly string[] = [
   'https://gitee.com/ntbl/bz/raw/master/docs/bzr-data.json',
 ];
 /* bz 与 bz-reader 可能同库安装：各存各的缓存，别共用 key */
-export const BZR_CACHE_KEY = 'bz:data:v1';
+export const BZR_CACHE_KEY = 'bz:data:v2';
 export const BZR_CACHE_TTL_MS = 6 * 60 * 60 * 1000;
 export const BZR_REFRESH_GAP_MS = 60 * 1000;
 const FETCH_TIMEOUT_MS = 4000;
@@ -153,7 +163,7 @@ const FETCH_TIMEOUT_MS = 4000;
    同日升到 3：反馈条目换成五态 + 分钟日期 + 作者回复 + Git 提交链接，老缓存缺这些字段
    会导致新界面全空，必须立刻作废。
    导出给测试用：写缓存那几个用例要按当前版本号拼 doc，别再手写 1。 */
-export const BZR_CACHE_VERSION = 3;
+export const BZR_CACHE_VERSION = 4;
 const MAX_ITEMS = 200;
 const MAX_TEXT = 400;
 
@@ -256,6 +266,10 @@ function cleanCommitId(raw: unknown): string {
 function cleanCommitRepo(raw: unknown): string {
   return raw === 'bz' || raw === 'bz-reader' ? raw : '';
 }
+/** 归属插件只认两个已知值，其余置空（远端数据不可信） */
+function cleanPlugin(raw: unknown): string {
+  return raw === 'bz' || raw === 'bz-reader' ? raw : '';
+}
 
 /** 短 id 拼 GitHub commit 链接；repo 只认两个已知仓库，绝不拼进外部 host */
 export function feedbackCommitUrl(it: BzrFeedback): string {
@@ -283,7 +297,11 @@ function feedbackEntry(raw: unknown): BzrFeedback | null {
     title: clean(o.title, MAX_TEXT),
     desc: typeof o.desc === 'string' ? clean(o.desc, MAX_TEXT) : '',
     href: typeof o.href === 'string' ? (safeFeedbackUrl(o.href) ?? '') : '',
+    plugin: cleanPlugin(o.plugin),
+    domain: typeof o.domain === 'string' ? clean(o.domain, 40) : '',
     reply: typeof o.reply === 'string' ? clean(o.reply, MAX_TEXT) : '',
+    replyDigest: typeof o.replyDigest === 'string' ? clean(o.replyDigest, MAX_TEXT) : '',
+    verify: typeof o.verify === 'string' ? clean(o.verify, MAX_TEXT) : '',
     state: feedbackState(o, doneAt, rejectedAt),
     submittedAt,
     doneAt,
@@ -291,6 +309,7 @@ function feedbackEntry(raw: unknown): BzrFeedback | null {
     commitRepo: cleanCommitRepo(o.commitRepo),
     commitId: cleanCommitId(o.commitId),
     commitDate: typeof o.commitDate === 'string' && isFeedbackDate(o.commitDate) ? o.commitDate : '',
+    releaseVersion: typeof o.releaseVersion === 'string' ? clean(o.releaseVersion, 20) : '',
   };
 }
 
