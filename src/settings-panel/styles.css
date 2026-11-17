@@ -2445,3 +2445,237 @@
     color: var(--sp-ink-2);
   }
 }
+
+
+/* === bz-reader 同款更新日志：反馈/路线图/统计卡（bzs-chgn-*） === */
+/* ==========================================================
+   更新日志 · 正文内视图（日志 / 路线图 / 功能建议 / 问题反馈）· 确认弹窗
+   ----------------------------------------------------------
+   挂在同一棵弹窗 DOM 上（shell/changelog-note.ts），颜色沿用 --chg-*。
+   选择器一律 .bzs- 开头：构建时壳层样式会加 .bzs-shell 前缀，只有 .bzs-
+   开头的原样保留（见 esbuild.config.mjs 的 scopeShellStyles）。
+
+   路线图不再是侧边栏 / 手机全屏：顶部一条工具条放三个入口，点开就在
+   正文区换页（容器上的 data-view 驱动），桌面与手机同一套标记。
+   ========================================================== */
+
+/* ── 正文顶部：一条轻工具条（左统计 + 右视图入口） ──
+   按钮本体必须带 .bzs-chgn / .bzs-chgn-m 前缀：changelog.css 里那条
+   「.bzs-chgn button { font: inherit; background: none }」是 0,1,1，
+   光写 .bzs-chgn-xxx 会被它按字重、字号、底色压掉。 */
+.bzs-chgn-topbar,
+.bzs-chgn-mtop{flex:none;padding:7px 30px;border-bottom:1px solid var(--chg-line-soft)}
+.bzs-chgn-mtop{padding:7px 22px}
+.bzs-chgn-toolbar{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+/* 三颗统计 = 图标卡（图标 + 数字 + 标签 + 右侧 ›）：一眼看得出是能点的按钮 */
+.bzs-chgn-mini{display:flex;align-items:center;gap:8px;min-width:0}
+.bzs-chgn .bzs-chgn-mini-stat,
+.bzs-chgn-m .bzs-chgn-mini-stat{
+  display:inline-flex;align-items:center;gap:6px;padding:3px 8px;
+  border:1px solid var(--chg-line-soft);border-radius:8px;background:var(--chg-panel);
+  font-size:10.5px;color:var(--chg-ink-2);white-space:nowrap;
+}
+.bzs-chgn-mini-stat svg{width:14px;height:14px;flex:none;color:var(--chg-accent)}
+.bzs-chgn-mini-stat.reward svg{color:#d62f6c}
+.bzs-chgn-mini-stat.sponsor svg{color:#a9763f}
+.bzs-chgn-mini-stat b{font-family:var(--chg-mono);font-size:13px;font-weight:700;color:var(--chg-accent)}
+.bzs-chgn-mini-stat.reward b{color:#d62f6c}
+.bzs-chgn-mini-stat.sponsor b{color:#a9763f}
+.bzs-chgn-mini-chev{font-style:normal;font-size:12px;line-height:1;color:var(--chg-ink-3);margin-left:1px}
+@media (hover:hover){.bzs-chgn-mini-stat:hover{background:var(--chg-accent-soft);border-color:color-mix(in srgb,var(--chg-accent) 40%,transparent)}}
+@media (hover:hover){.bzs-chgn-mini-stat:hover .bzs-chgn-mini-chev{color:var(--chg-accent)}}
+.bzs-chgn-mini-stat:active{transform:translateY(1px)}
+.bzs-chgn-tools{margin-left:auto;display:flex;gap:6px}
+.bzs-chgn .bzs-chgn-toolbtn,
+.bzs-chgn-m .bzs-chgn-toolbtn{display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 10px;border:1px solid var(--chg-line-soft);border-radius:7px;background:var(--chg-panel);font-size:11px;font-weight:600;color:var(--chg-ink-2);white-space:nowrap}
+@media (hover:hover){.bzs-chgn-toolbtn:hover{background:var(--chg-accent-soft);border-color:color-mix(in srgb,var(--chg-accent) 35%,transparent)}}
+.bzs-chgn-toolbtn.on{background:var(--chg-accent-soft);border-color:color-mix(in srgb,var(--chg-accent) 45%,transparent);color:var(--chg-accent)}
+.bzs-chgn-toolbtn svg{width:15px;height:15px}
+.bzs-chgn-rm-roadmap svg{color:#a9763f}
+.bzs-chgn-rm-feature svg{color:#2f9e6e}
+.bzs-chgn-rm-bug svg{color:#d64545}
+.bzs-chgn-tooln{font-family:var(--chg-mono);font-size:9px;font-weight:700;line-height:1;padding:1px 5px;border-radius:999px;background:color-mix(in srgb,var(--chg-ink-3) 14%,transparent);color:var(--chg-ink-3)}
+.bzs-chgn-toolbtn.on .bzs-chgn-tooln{background:var(--chg-panel);color:var(--chg-accent)}
+
+/* 手机：工具条挤一挤，三颗统计 + 三个入口尽量落在同一行 */
+.bzs-chgn-m .bzs-chgn-toolbar{gap:8px}
+.bzs-chgn-m .bzs-chgn-mini{gap:6px}
+.bzs-chgn-m .bzs-chgn-mini-stat{gap:5px;padding:2px 7px}
+.bzs-chgn-m .bzs-chgn-mini-stat svg{width:13px;height:13px}
+/* 窄屏先把那个小箭头让出来，卡片外形本身已经够像按钮 */
+.bzs-chgn-m .bzs-chgn-mini-chev{display:none}
+.bzs-chgn-m .bzs-chgn-tools{gap:4px}
+.bzs-chgn-m .bzs-chgn-toolbtn{gap:4px;height:26px;padding:0 7px;font-size:10.5px}
+
+/* ── 正文内视图切换：日志 / 路线图 / 功能建议 / 问题反馈 ── */
+.bzs-chgn-views{flex:1;min-height:0;display:none;flex-direction:column}
+.bzs-chgn-view{display:none;flex:1;min-height:0;flex-direction:column}
+.bzs-chgn[data-view="roadmap"] .bzs-chgn-views,
+.bzs-chgn[data-view="feature"] .bzs-chgn-views,
+.bzs-chgn[data-view="bug"] .bzs-chgn-views,
+.bzs-chgn-m[data-view="roadmap"] .bzs-chgn-views,
+.bzs-chgn-m[data-view="feature"] .bzs-chgn-views,
+.bzs-chgn-m[data-view="bug"] .bzs-chgn-views{display:flex}
+.bzs-chgn[data-view="roadmap"] .bzs-chgn-wrap,
+.bzs-chgn[data-view="feature"] .bzs-chgn-wrap,
+.bzs-chgn[data-view="bug"] .bzs-chgn-wrap,
+.bzs-chgn-m[data-view="roadmap"] .bzs-chgn-mpage,
+.bzs-chgn-m[data-view="feature"] .bzs-chgn-mpage,
+.bzs-chgn-m[data-view="bug"] .bzs-chgn-mpage{display:none}
+.bzs-chgn[data-view="roadmap"] .bzs-chgn-view[data-view-page="roadmap"],
+.bzs-chgn[data-view="feature"] .bzs-chgn-view[data-view-page="feature"],
+.bzs-chgn[data-view="bug"] .bzs-chgn-view[data-view-page="bug"],
+.bzs-chgn-m[data-view="roadmap"] .bzs-chgn-view[data-view-page="roadmap"],
+.bzs-chgn-m[data-view="feature"] .bzs-chgn-view[data-view-page="feature"],
+.bzs-chgn-m[data-view="bug"] .bzs-chgn-view[data-view-page="bug"]{display:flex}
+
+/* 条目尾部的 #N 链接 */
+.bzs-chgn-issue{
+  margin-left:6px;font-family:var(--chg-mono);font-size:10.5px;font-weight:700;
+  color:var(--chg-accent);text-decoration:none;white-space:nowrap;
+}
+@media (hover:hover){.bzs-chgn-issue:hover{text-decoration:underline}}
+
+/* ── 小图标 ── */
+.bzs-chgn-svg{width:12px;height:12px;flex:none}
+.bzs-chgn-ext{width:9px;height:9px;flex:none}
+
+/* ── 反馈列表：双列卡片网格（2026-11-18 作者选「双列网格」）──
+   卡片自己是一列 flex：标题 → 描述 → meta，meta 用 margin-top:auto 落底，
+   同一行的卡片底边与标签行齐平，不会一高一低。 */
+.bzs-chgn-fblist{
+  flex:1;min-height:0;overflow-y:auto;scrollbar-width:none;min-width:0;
+  display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));
+  gap:8px;align-content:start;padding:10px 16px 20px;
+}
+.bzs-chgn-fblist::-webkit-scrollbar{display:none}
+.bzs-chgn-fbit{
+  display:flex;flex-direction:column;min-width:0;padding:10px 11px;
+  border:1px solid var(--chg-line-soft);border-radius:10px;background:var(--chg-panel);
+  transition:border-color .14s,box-shadow .14s;
+}
+@media (hover:hover){.bzs-chgn-fbit:hover{border-color:color-mix(in srgb,var(--chg-accent) 40%,transparent);box-shadow:0 3px 12px -8px rgba(0,0,0,.5)}}
+/* 状态点与标题同一个 flex 行、垂直居中。
+   以前 grid 两列 + 点上 margin-top:4px 目测对位，差几个像素肉眼就看得出来。 */
+.bzs-chgn-fbhd{display:flex;align-items:center;gap:7px;min-width:0}
+.bzs-chgn-fbdot{width:8px;height:8px;border-radius:50%;flex:none}
+.bzs-chgn-fbdot.todo{background:var(--chg-panel);box-shadow:inset 0 0 0 1.5px var(--chg-ink-3)}
+.bzs-chgn-fbdot.done{background:var(--green,#1a7f37);box-shadow:0 0 0 3px color-mix(in srgb,var(--green,#1a7f37) 14%,transparent)}
+/* 否决：红点 —— 作者看过但不做，和「已完成」的绿点必须一眼分开 */
+.bzs-chgn-fbdot.rejected{background:#d64545;box-shadow:0 0 0 3px rgba(214,69,69,.14)}
+.bzs-chgn-fbdot.accepted{background:#1477a8;box-shadow:0 0 0 3px rgba(20,119,168,.14)}
+.bzs-chgn-fbdot.doing{background:#d98a1f;box-shadow:0 0 0 3px rgba(217,138,31,.16)}
+.bzs-chgn-fbdot.invalid{background:var(--chg-ink-3);opacity:.65}
+.bzs-chgn-fbtitle{flex:1;min-width:0;font-size:11.5px;font-weight:600;line-height:1.45}
+/* 描述截 3 行：卡片并排时高度可控，长描述不至于把整行撑成两屏 */
+.bzs-chgn-fbdesc{
+  display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:3;overflow:hidden;
+  font-size:10px;line-height:1.55;color:var(--chg-ink-3);margin-top:3px;
+}
+/* 作者回复截 2 行：聊天气话不必全摊开，卡片高度可控 */
+.bzs-chgn-fbreply{
+  display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;
+  font-size:10px;line-height:1.55;color:var(--chg-ink-2);margin-top:3px;
+}
+.bzs-chgn-fbmeta{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:auto;padding-top:7px;font-size:9.5px;color:var(--chg-ink-3)}
+.bzs-chgn-fbsrc{display:inline-flex;align-items:center;gap:3px;padding:1px 6px;border-radius:4px;font-weight:600;text-decoration:none;color:var(--chg-ink-2);background:color-mix(in srgb,var(--chg-ink-3) 12%,transparent)}
+.bzs-chgn-fbsrc.github-issue{background:var(--chg-accent-soft);color:var(--chg-accent)}
+.bzs-chgn-fbsrc.bili-dm{background:rgba(251,114,153,.13);color:#d62f6c}
+.bzs-chgn-fbsrc.qq-group,
+.bzs-chgn-fbsrc.qq-channel,
+.bzs-chgn-fbsrc.qq-friend{background:rgba(30,160,220,.13);color:#1477a8}
+.bzs-chgn-fbstate{margin-left:auto;padding:1px 6px;border-radius:4px;font-weight:600}
+.bzs-chgn-fbstate.todo{background:color-mix(in srgb,var(--chg-ink-3) 12%,transparent);color:var(--chg-ink-2)}
+.bzs-chgn-fbstate.done{background:color-mix(in srgb,var(--green,#1a7f37) 14%,transparent);color:var(--green,#1a7f37)}
+.bzs-chgn-fbstate.rejected{background:rgba(214,69,69,.14);color:#d64545}
+.bzs-chgn-fbstate.accepted{background:rgba(20,119,168,.14);color:#1477a8}
+.bzs-chgn-fbstate.doing{background:rgba(217,138,31,.16);color:#b16f10}
+.bzs-chgn-fbstate.invalid{background:color-mix(in srgb,var(--chg-ink-3) 14%,transparent);color:var(--chg-ink-2)}
+/* Git 提交短 id：等宽字 + 强调色，和可点来源徽标同排 */
+.bzs-chgn-fbcommit{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;text-decoration:none;color:var(--chg-accent);font-weight:600}
+.bzs-chgn-fbempty{grid-column:1/-1;padding:26px 0;text-align:center;font-size:11px;color:var(--chg-ink-3)}
+
+/* ── 路线图两级：主题是卡片，条目在里面（2026-11-18 作者选定）──
+   主题标题行做成卡片头（浅底 + 分隔线），条目在卡内逐行排；
+   折叠还在头部那一下点击上。 */
+.bzs-chgn-rmlist{
+  flex:1;min-height:0;overflow-y:auto;scrollbar-width:none;min-width:0;
+  display:flex;flex-direction:column;gap:10px;padding:10px 16px 20px;
+}
+.bzs-chgn-rmlist::-webkit-scrollbar{display:none}
+.bzs-chgn-rmtheme{border:1px solid var(--chg-line-soft);border-radius:11px;overflow:hidden;background:var(--chg-panel)}
+.bzs-chgn-rmthemehd{
+  display:flex;align-items:center;gap:8px;padding:9px 11px;cursor:pointer;user-select:none;
+  background:color-mix(in srgb,var(--chg-ink-3) 6%,transparent);
+}
+@media (hover:hover){.bzs-chgn-rmthemehd:hover{background:var(--chg-accent-soft)}}
+.bzs-chgn-chev{font-size:9px;color:var(--chg-ink-3);transition:transform .16s}
+.bzs-chgn-rmtheme.fold .bzs-chgn-chev{transform:rotate(-90deg)}
+.bzs-chgn-bar{width:3px;height:12px;border-radius:2px;flex:none}
+.bzs-chgn-rmthemehd b{font-size:11.5px;font-weight:600}
+.bzs-chgn-prog{margin-left:auto;display:flex;align-items:center;gap:5px}
+.bzs-chgn-track{width:34px;height:3px;border-radius:2px;background:var(--chg-line);overflow:hidden;display:block}
+.bzs-chgn-track i{display:block;height:100%;background:var(--green,#1a7f37)}
+.bzs-chgn-prog small{font-family:var(--chg-mono);font-size:9px;color:var(--chg-ink-3)}
+.bzs-chgn-rmitems{padding:4px}
+.bzs-chgn-rmtheme.fold .bzs-chgn-rmitems{display:none}
+.bzs-chgn-rmitem{display:flex;flex-direction:column;padding:7px;border-radius:7px;transition:background .14s}
+@media (hover:hover){.bzs-chgn-rmitem:hover{background:color-mix(in srgb,var(--chg-ink-3) 7%,transparent)}}
+/* 状态点与标题同一个 flex 行、垂直居中（同反馈卡：不再用 margin-top 目测） */
+.bzs-chgn-rmhd{display:flex;align-items:center;gap:7px;min-width:0}
+.bzs-chgn-dot{width:8px;height:8px;border-radius:50%;flex:none}
+.bzs-chgn-dot.plan{background:var(--chg-panel);box-shadow:inset 0 0 0 1.5px var(--chg-ink-3)}
+.bzs-chgn-dot.doing{background:var(--amber,#b26a00);box-shadow:0 0 0 3px rgba(178,106,0,.13)}
+.bzs-chgn-dot.done{background:var(--green,#1a7f37);box-shadow:0 0 0 3px color-mix(in srgb,var(--green,#1a7f37) 14%,transparent)}
+.bzs-chgn-rmtitle{flex:1;min-width:0;font-size:11.5px;line-height:1.5}
+/* meta 缩进 15px = 点 8 + 间距 7：落在标题文字下面，不贴卡片左缘 */
+.bzs-chgn-rmmeta{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:4px;padding-left:15px;font-size:9.5px;color:var(--chg-ink-3)}
+.bzs-chgn-src{padding:1px 6px;border-radius:4px;font-weight:600}
+.bzs-chgn-src.builtin{background:color-mix(in srgb,var(--chg-ink-3) 12%,transparent);color:var(--chg-ink-2)}
+.bzs-chgn-src.github{background:var(--chg-accent-soft);color:var(--chg-accent)}
+.bzs-chgn-fb{display:inline-flex;align-items:center;gap:3px;padding:1px 6px;border-radius:4px;font-weight:600;font-size:9.5px;text-decoration:none;white-space:nowrap}
+.bzs-chgn-fb.issue{background:var(--chg-accent-soft);color:var(--chg-accent)}
+.bzs-chgn-fb.bili{background:rgba(251,114,153,.13);color:#d62f6c}
+.bzs-chgn-fb.qq{background:rgba(30,160,220,.13);color:#1477a8}
+.bzs-chgn-fb.afdian{background:rgba(255,140,60,.14);color:#c2661a}
+.bzs-chgn-rmempty{padding:26px 0;text-align:center;font-size:11px;color:var(--chg-ink-3)}
+
+/* ── 手机：视图页跟正文同一套左右留白，底部让给浮条 ──
+   卡片 / 网格的内边距由桌面那套自己管，这里只改外层的左右与底部。 */
+.bzs-chgn-m .bzs-chgn-rmlist{padding:8px 16px 96px}
+.bzs-chgn-m .bzs-chgn-fblist{padding:8px 16px 96px}
+
+/* ── 二次确认弹窗（购买 / 支持）─────────────────────────────
+   这层挂 body，不在 .bzs-chgn 内，取不到 --chg-*；自带 --cc-* 令牌。
+   1:1 照原型：半透明黑遮罩 + 白色圆角卡片 + 圆角图标 + 两颗等宽按钮。
+   层级在弹出时由 JS 用 allocZAbove(主窗遮罩) 现取（写死会被主窗压住，2026-11-18
+   真机踩过），这里的 z-index 只是没走 JS 时的兜底。 */
+.bzs-chgn-confirm{
+  --cc-panel:var(--background-primary,#fff);
+  --cc-ink:var(--text-normal,#1f1f23);
+  --cc-ink-2:var(--text-muted,#5a5a63);
+  --cc-line:var(--background-modifier-border,rgba(0,0,0,.12));
+  --cc-accent:var(--interactive-accent,var(--text-accent,#7856d6));
+  --cc-accent-soft:color-mix(in srgb,var(--cc-accent) 12%,transparent);
+  position:fixed;inset:0;z-index:300;display:grid;place-items:center;
+  background:rgba(0,0,0,.5);font-family:-apple-system,"Segoe UI",system-ui,"PingFang SC","Microsoft YaHei",sans-serif;
+}
+.bzs-chgn-confirm[hidden]{display:none}
+.bzs-chgn-confirm-box{
+  width:min(340px,86vw);padding:22px;border-radius:14px;background:var(--cc-panel);color:var(--cc-ink);
+  box-shadow:0 24px 70px rgba(0,0,0,.4);text-align:center;
+}
+.bzs-chgn-confirm-icon{
+  width:44px;height:44px;margin:0 auto 12px;border-radius:12px;display:grid;place-items:center;
+  background:var(--cc-accent-soft);color:var(--cc-accent);font-size:22px;line-height:1;
+}
+.bzs-chgn-confirm-box h3{margin:0 0 8px;font-size:15px;font-weight:600;line-height:1.4}
+.bzs-chgn-confirm-box p{margin:0 0 18px;font-size:11.5px;line-height:1.6;color:var(--cc-ink-2)}
+.bzs-chgn-confirm-acts{display:flex;gap:8px}
+.bzs-chgn-confirm-acts button{
+  margin:0;padding:0;flex:1;height:36px;line-height:34px;border:1px solid var(--cc-line);
+  border-radius:8px;background:none;box-shadow:none;font:inherit;font-size:12px;font-weight:600;
+  color:var(--cc-ink-2);cursor:pointer;text-align:center;
+}
+.bzs-chgn-confirm-acts button.primary{color:#fff;background:var(--cc-accent);border-color:var(--cc-accent)}
+
