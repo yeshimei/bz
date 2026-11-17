@@ -181,16 +181,19 @@ export function feedbackItemHtml(it: BzrFeedback): string {
     `<span class="bzs-chgn-fbstate ${state}">${escapeHtml(label)}</span></div></div>`
   );
 }
-function feedbackRowsHtml(data: BzrData | null, key: 'bug' | 'feature'): string {
-  const items = (data?.feedback ?? []).find((x) => x.key === key)?.items ?? [];
+/** 反馈按插件隔离：bz 只显示自己的条目；老数据没 plugin 字段视为通用 */
+const OWN_PLUGIN = 'bz';
+const isOwnFeedback = (it: BzrFeedback): boolean => !it.plugin || it.plugin === OWN_PLUGIN;
+export function feedbackRowsHtml(data: BzrData | null, key: 'bug' | 'feature'): string {
+  const items = ((data?.feedback ?? []).find((x) => x.key === key)?.items ?? []).filter(isOwnFeedback);
   return items.length ? items.map(feedbackItemHtml).join('') : `<div class="bzs-chgn-fbempty">${U.fbEmpty}</div>`;
 }
-function rmTabCounts(data: BzrData | null): Record<'roadmap' | 'feature' | 'bug', number> {
+export function rmTabCounts(data: BzrData | null): Record<'roadmap' | 'feature' | 'bug', number> {
   const groups = data?.feedback ?? [];
   return {
     roadmap: (data?.roadmap ?? []).reduce((n, t) => n + t.items.length, 0),
-    feature: groups.find((g) => g.key === 'feature')?.items.length ?? 0,
-    bug: groups.find((g) => g.key === 'bug')?.items.length ?? 0,
+    feature: (groups.find((g) => g.key === 'feature')?.items ?? []).filter(isOwnFeedback).length,
+    bug: (groups.find((g) => g.key === 'bug')?.items ?? []).filter(isOwnFeedback).length,
   };
 }
 function toolsHtml(data: BzrData | null): string {
@@ -433,6 +436,16 @@ export function openChangelogNote(
   const setView = (key: string): void => {
     curView = key;
     popup.querySelectorAll<HTMLElement>('.bzs-chgn, .bzs-chgn-m').forEach((s) => { s.dataset.view = key; });
+    /* 显式切显示：点 tab 后反馈列表替换日志正文，不叠加在正文下面 */
+    popup.querySelectorAll<HTMLElement>('.bzs-chgn-wrap, .bzs-chgn-mpage').forEach((el) => {
+      el.style.display = key === 'log' ? '' : 'none';
+    });
+    popup.querySelectorAll<HTMLElement>('.bzs-chgn-views').forEach((el) => {
+      el.style.display = key === 'log' ? 'none' : 'flex';
+    });
+    popup.querySelectorAll<HTMLElement>('.bzs-chgn-view').forEach((el) => {
+      el.style.display = el.dataset.viewPage === key ? 'flex' : 'none';
+    });
     popup.querySelectorAll<HTMLElement>('[data-view-btn]').forEach((b) => {
       const on = key !== 'log' && b.dataset.viewBtn === key;
       b.classList.toggle('on', on);

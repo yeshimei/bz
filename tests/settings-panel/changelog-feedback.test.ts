@@ -1,10 +1,30 @@
 import { describe, it, expect } from 'vitest';
-import { feedbackItemHtml } from '../../src/settings-panel/changelog-note';
-import type { BzrFeedback } from '../../src/core/bzr-data';
+import { feedbackItemHtml, feedbackRowsHtml, rmTabCounts } from '../../src/settings-panel/changelog-note';
+import type { BzrData, BzrFeedback } from '../../src/core/bzr-data';
 
 const item = (o: Partial<BzrFeedback> = {}): BzrFeedback => ({
   id: 'x', source: 'bili-dm', summary: 's', title: '标题', desc: '描述', href: '',
   submittedAt: '2026-11-15 23:55', doneAt: '', ...o,
+});
+
+describe('反馈按插件隔离：bz 只显示自己的', () => {
+  const mixed = {
+    roadmap: [],
+    feedback: [{ key: 'bug', items: [
+      item({ id: 'b1', plugin: 'bz', title: '只属于 BZ 的反馈' }),
+      item({ id: 'r1', plugin: 'bz-reader', title: '只属于 Reader 的反馈' }),
+    ] }],
+  } as unknown as BzrData;
+
+  it('列表只渲染 bz 条目', () => {
+    const s = feedbackRowsHtml(mixed, 'bug');
+    expect(s).toContain('只属于 BZ 的反馈');
+    expect(s).not.toContain('只属于 Reader 的反馈');
+  });
+
+  it('角标只数 bz 条目', () => {
+    expect(rmTabCounts(mixed).bug).toBe(1);
+  });
 });
 
 describe('反馈卡片：插件归属、核查结论、发布版本', () => {

@@ -2650,8 +2650,8 @@
 
 /* ── 手机：视图页跟正文同一套左右留白，底部让给浮条 ──
    卡片 / 网格的内边距由桌面那套自己管，这里只改外层的左右与底部。 */
-.bzs-chgn-m .bzs-chgn-rmlist{padding:8px 16px 96px}
-.bzs-chgn-m .bzs-chgn-fblist{padding:8px 16px 96px}
+.bzs-chgn-m .bzs-chgn-rmlist{padding:8px 16px 140px}
+.bzs-chgn-m .bzs-chgn-fblist{padding:8px 16px 140px}
 
 /* ── 二次确认弹窗（购买 / 支持）─────────────────────────────
    这层挂 body，不在 .bzs-chgn 内，取不到 --chg-*；自带 --cc-* 令牌。
