@@ -1,7 +1,8 @@
 {
   "version": 1,
-  "updatedAt": "2026-11-13",
+  "updatedAt": "2026-11-17",
   "patrons": [
+    { "name": "安拎", "amount": 12, "date": "2026-11-17", "message": "加油啊佬，我也要开发哈哈，希望佬在后面分享一下记录心得" },
     { "name": "马飞飞", "amount": 8, "date": "2026-11-13", "message": "支持作者大大" },
     { "name": "疯言与诗", "amount": "patron", "date": "2026-11-13" },
     { "name": "高点点", "amount": "patron", "date": "2026-11-13" },
