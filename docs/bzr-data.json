@@ -126,7 +126,22 @@
       ]
     }
   ],
+  "feedback": [
+    {
+      "key": "bug",
+      "items": []
+    },
+    {
+      "key": "feature",
+      "items": [
+        { "id": "fb-20261118-ghi-01", "source": "github-issue", "summary": "希望 EPUB 内置图片能点击放大", "title": "EPUB 内置图片放大查看", "desc": "读史料类书籍时内置图片（报刊、论文等）很重要，目前只有 omni book reader 能点开但操作别扭，希望支持放大 EPUB 内置图片。作者回复下个版本跟上。", "href": "https://github.com/yeshimei/bz-reader/issues/3", "submittedAt": "2026-11-18", "doneAt": "" },
+        { "id": "fb-20261118-ghi-02", "source": "github-issue", "summary": "希望 EPUB 支持 Obsidian 字体或自选字体", "title": "EPUB 跟随 Obsidian 字体", "desc": "很多阅读器支持 EPUB 使用 Obsidian 当前字体或自选字体，让阅读器与 Obsidian 更一体、更美观。作者回复同一版本跟上。", "href": "https://github.com/yeshimei/bz-reader/issues/3", "submittedAt": "2026-11-18", "doneAt": "" },
+        { "id": "fb-20261118-ghi-03", "source": "github-issue", "summary": "建议朗读复用 Edge 浏览器 TTS", "title": "朗读接入 Edge TTS", "desc": "提到 qiaomu reader 的朗读用 Edge 浏览器 TTS，免费且效果不错，问能否复用。作者倾向优化本地语音合成模型（效果更好、可预生成离线听书），暂不走 Edge。", "href": "https://github.com/yeshimei/bz-reader/issues/3", "submittedAt": "2026-11-18", "doneAt": "" }
+      ]
+    }
+  ],
   "stats": {
+    "reward": 456,
     "pro": 1286,
     "patrons": 328
   },
