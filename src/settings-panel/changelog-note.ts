@@ -216,6 +216,26 @@ function countText(n: number): string {
   return `${n} 处改动`;
 }
 
+/** 条目尾部的 #N 角标：issue 号来自内置日志定稿；点开新标签跳仓库 issue。
+ *  只认正整数，脏数据不渲染——和 bz-reader 同款口径。 */
+function issueLinkHtml(n?: number): string {
+  if (typeof n !== 'number' || !Number.isInteger(n) || n <= 0) return '';
+  return `<a class="bzs-chgn-issue" href="${escapeHtml(BZ_REPO_URL)}/issues/${n}" target="_blank" rel="noopener">#${n} ↗</a>`;
+}
+
+/** 条目尾部的 QQ 频道帖子角标：地址过 safeFeedbackUrl 白名单才渲染成可点链接。
+ *  链接文字写死，不取 note 里的 label，防注入。 */
+function qqLinkHtml(raw?: string): string {
+  const href = safeFeedbackUrl(raw ?? '');
+  if (!href) return '';
+  return `<a class="bzs-chgn-qq" href="${escapeHtml(href)}" target="_blank" rel="noopener">QQ 频道 ↗</a>`;
+}
+
+/** 一条日志正文 + 尾部角标（桌面 / 移动端共用一份） */
+function entryLinksHtml(e: ChangelogEntry): string {
+  return issueLinkHtml(e.issue) + qqLinkHtml(e.qq);
+}
+
 /* ── 右栏正文（桌面） ─────────────────────────────── */
 
 function rowsHtml(list: readonly ChangelogEntry[]): string {
@@ -224,7 +244,7 @@ function rowsHtml(list: readonly ChangelogEntry[]): string {
       (e) =>
         '<div class="bz-chgn-row">' +
         `<span class="bz-chgn-k">${escapeHtml(e.domain || '')}</span>` +
-        `<span class="bz-chgn-t">${escapeHtml(e.text || '')}</span>` +
+        `<span class="bz-chgn-t">${escapeHtml(e.text || '')}${entryLinksHtml(e)}</span>` +
         '</div>',
     )
     .join('');
@@ -275,7 +295,7 @@ function mobBlocksHtml(release: ChangelogRelease): string {
           (e) =>
             '<div class="bz-chgn-mit">' +
             `<span class="bz-chgn-mdom">${escapeHtml(e.domain || '')}</span>` +
-            `<span class="bz-chgn-mtxt">${escapeHtml(e.text || '')}</span>` +
+            `<span class="bz-chgn-mtxt">${escapeHtml(e.text || '')}${entryLinksHtml(e)}</span>` +
             '</div>',
         )
         .join('') +

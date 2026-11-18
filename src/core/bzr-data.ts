@@ -176,6 +176,9 @@ const FEEDBACK_HOSTS = new Set([
   'wzyp.cn', 'www.wzyp.cn',
   'bilibili.com', 'www.bilibili.com',
   'qm.qq.com',
+  /* QQ 频道帖子（更新日志条目尾部的「QQ 频道 ↗」角标，pd.qq.com/s/xxx）。
+      漏了它链接会被 safeFeedbackUrl 判非法、角标渲染不出来。 */
+  'pd.qq.com',
 ]);
 
 export type BzrHttp = (url: string, timeoutMs: number) => Promise<string | null>;

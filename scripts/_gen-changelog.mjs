@@ -308,6 +308,29 @@ const NOTE_SEC_MAP = {
   '⚡ 优化': 'improved', '体验优化': 'improved',
 };
 
+/** 条目说明尾部的链接标记 → `[QQ 频道 ↗](url)` / `[#N ↗](url)`。
+ *  与 bz-reader 的 note 同格式。剥出来存成独立字段，正文只留说明句——
+ *  渲染层据此挂可点角标，不再把 markdown 链接当纯文字显示。
+ *  链接文字一律由渲染层按类型写死（不信任 note 里的 label），防注入。 */
+const NOTE_LINK_RE = /\s*\[([^\]]+)\]\(([^)]+)\)\s*$/;
+function stripNoteLinks(raw) {
+  let text = String(raw || '').trim();
+  let issue = 0;
+  let qq = '';
+  // 一条可能挂多个角标，从尾部反复剥
+  for (;;) {
+    const m = text.match(NOTE_LINK_RE);
+    if (!m) break;
+    const label = m[1].trim();
+    const url = m[2].trim();
+    const iss = /^#(\d+)$/.exec(label) || /\/issues\/(\d+)\b/.exec(url);
+    if (iss) issue = Number(iss[1]);
+    else if (/pd\.qq\.com/.test(url) || /QQ/i.test(label)) qq = url;
+    text = text.slice(0, m.index).trim();
+  }
+  return { text, issue, qq };
+}
+
 /**
  * 解析一份 note 的「更新日志」节 → { added, fixed, improved }。
  * 解析不了就抛（带行内容），绝不静默丢条目——定稿丢一条 = 用户端少一条。
@@ -333,7 +356,9 @@ function parseNoteItems(noteFile) {
     if (!m) {
       throw new Error(`note ${noteFile} 里有一条解析不了的条目（格式必须是 \`- **标签** ：说明\`）：\n  ${line}`);
     }
-    items[cur].push({ domain: m[1].trim(), text: m[2].trim(), sub: '' });
+    // 尾部可带 [QQ 频道 ↗](url) / [#N ↗](url)，剥成独立字段；正文只留说明句
+    const { text, issue, qq } = stripNoteLinks(m[2].trim());
+    items[cur].push({ domain: m[1].trim(), text, sub: '', ...(issue ? { issue } : {}), ...(qq ? { qq } : {}) });
   }
   if (!items.added.length && !items.fixed.length && !items.improved.length) {
     throw new Error(`note ${noteFile} 更新日志节里没解析出条目（格式：\`- **标签** ：说明\`）`);
@@ -391,6 +416,8 @@ function renderBuiltinReleases(list) {
       for (const it of rows) {
         const parts = [`domain: ${q(it.domain)}`, `text: ${q(it.text)}`];
         if (it.sub) parts.push(`sub: ${q(it.sub)}`);
+        if (it.issue) parts.push(`issue: ${it.issue}`);
+        if (it.qq) parts.push(`qq: ${q(it.qq)}`);
         lines.push(`      { ${parts.join(', ')} },`);
       }
       lines.push('    ],');
@@ -512,8 +539,10 @@ if (process.argv.includes('--check')) {
             continue;
           }
           for (const sec of ['added', 'fixed', 'improved']) {
-            const wantTexts = want[sec].map((i) => `${i.domain}|${i.text}`);
-            const gotTexts = (got[sec] || []).map((i) => `${i.domain}|${i.text}`);
+            // 链接字段一并纳入签名：链接被悄悄改掉也要当场红
+            const sig = (i) => `${i.domain}|${i.text}|${i.issue || 0}|${i.qq || ''}`;
+            const wantTexts = want[sec].map(sig);
+            const gotTexts = (got[sec] || []).map(sig);
             if (wantTexts.join('\n') !== gotTexts.join('\n')) {
               problems.push(
                 `日志 v${version} 的「${secLabel[sec]}」与定稿 ${file} 不一致` +
@@ -729,6 +758,8 @@ color:var(--sp-ink-2);white-space:nowrap}
 .cg-txt{flex:1;min-width:0;font-size:12.5px;line-height:1.55;color:var(--sp-ink)}
 .cg-it--sec .cg-txt{font-size:12px;color:var(--sp-ink-2)}
 .cg-sub{font-size:11.5px;color:var(--sp-ink-3);margin-top:2px;line-height:1.5}
+.cg-link{margin-left:6px;font-size:10.5px;font-weight:700;color:var(--sp-accent);text-decoration:none;white-space:nowrap}
+.cg-link:hover{text-decoration:underline}
 .cg-empty{padding:20px 0;color:var(--sp-ink-3);font-size:12.5px}
 @media (max-width:768px){
 /* 标准移动端文档布局（用户 2026-09-26 拍板）：顶栏 = ☰ + 标题 + ✕ 三格同行；
@@ -814,8 +845,24 @@ function renderPage(){
     h += '<div class="cg-blk"><div class="cg-blk-t cg-blk-t--' + s.tier + '">' + s.label + '</div>';
     for (const it of items){
       const dom = DOMAIN_NAMES[it.domain] || it.domain;
+      // 条目尾部角标：issue 跳仓库 issue，qq 走白名单校验（与弹窗同口径）
+      let tail = '';
+      if (Number.isInteger(it.issue) && it.issue > 0) {
+        tail += '<a class="cg-link" href="https://github.com/yeshimei/bz/issues/' + it.issue +
+          '" target="_blank" rel="noopener">#' + it.issue + ' ↗</a>';
+      }
+      if (typeof it.qq === 'string' && it.qq) {
+        try {
+          const u = new URL(it.qq);
+          if ((u.protocol === 'https:' || u.protocol === 'http:') &&
+              ['pd.qq.com', 'qm.qq.com'].includes(u.hostname.toLowerCase())) {
+            tail += '<a class="cg-link" href="' + esc(u.toString()) +
+              '" target="_blank" rel="noopener">QQ 频道 ↗</a>';
+          }
+        } catch(_){}
+      }
       h += '<div class="cg-it cg-it--' + s.tier + '"><span class="cg-dom">' + esc(dom) + '</span>' +
-        '<div class="cg-txt">' + esc(it.text) +
+        '<div class="cg-txt">' + esc(it.text) + tail +
         (it.sub ? '<div class="cg-sub">' + esc(it.sub) + '</div>' : '') + '</div></div>';
     }
     h += '</div>';
