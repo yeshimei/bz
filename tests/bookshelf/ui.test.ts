@@ -49,7 +49,7 @@ function skinCss(id: string): string {
   return readFileSync(resolve(process.cwd(), rel), 'utf8');
 }
 
-/** 书库墙的数据源（2026-11-12 起只读 bz Reader）：3 本 EPUB，分类走 shelf / subjects 回退。
+/** 书库墙的数据源（2026-11-12 起只读 bz Reader）：3 本 EPUB，分类只认手动 shelf。
  *  md 书（书库/…）仍保留：阅读报告与旧数据口径跨域还读它们，但不再上墙。 */
 function seedReader(vault: MockVault): void {
   const now = Date.now();
@@ -72,6 +72,7 @@ function seedReader(vault: MockVault): void {
       {
         id: 'b-galaxy',
         meta: { title: '银河英雄传说VOL.1：黎明篇', author: '田中芳树', subjects: ['科幻'] },
+        shelf: '科幻',
         fileRef: { vaultPath: 'books/银河英雄传说.epub' },
         reading: { position: { percent: 0 } },
         addedAt: now, updatedAt: now,

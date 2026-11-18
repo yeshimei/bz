@@ -28,10 +28,11 @@ function makeApp(vault: MockVault) {
 /** 缺省数据目录（bz 阅读插件的 data.json 未注入 → 回落 `bz-reader/storage`） */
 const READER_PATH = `${READER_DEFAULT_DATA_DIR}/bz-reader.json`;
 
-/** 覆盖 subjects 有/无、percent 0/0.5/150、lastReadTime 有无 的聚合 fixture（bz 阅读落盘形状） */
+/** 覆盖 shelf / subjects 有/无、percent 0/0.5/150、lastReadTime 有无 的聚合 fixture（bz 阅读落盘形状） */
 function aggregate(overrides: {
   id: string;
   percent: number;
+  shelf?: string;
   subjects?: string[];
   lastReadTime?: number;
   completedTime?: number;
@@ -42,6 +43,7 @@ function aggregate(overrides: {
   if (overrides.completedTime !== undefined) stats.completedTime = overrides.completedTime;
   return {
     id: overrides.id,
+    ...(overrides.shelf ? { shelf: overrides.shelf } : {}),
     fileRef: { vaultPath: `书库/${overrides.id}.epub` },
     meta: {
       title: `书-${overrides.id}`,
@@ -84,17 +86,17 @@ describe('EPUB 供数面契约对照（buildEpubItem × buildEpubBookNoteEntry �
     return { wallItems, reportEntries };
   }
 
-  it('subjects 有值：category 两侧等值（ADR-0099 通道）', async () => {
+  it('手动 shelf 有值：category 两侧等值（2026-11-18 只认手动分类）', async () => {
     const { wallItems, reportEntries } = await contract([
-      aggregate({ id: 'a', percent: 0.5, subjects: ['中国古典文学', '哲学'], lastReadTime: 1735000000000 }),
+      aggregate({ id: 'a', percent: 0.5, shelf: '写作', subjects: ['中国古典文学'], lastReadTime: 1735000000000 }),
     ]);
-    expect(wallItems[0].category).toBe('中国古典文学');
+    expect(wallItems[0].category).toBe('写作');
     expect(reportEntries[0].frontmatter.category).toBe(wallItems[0].category);
   });
 
-  it('subjects 缺失：墙侧 null（kwFilter 不误命中）/ 报告侧「未分类」串——归桶等值', async () => {
+  it('只有书自带题材、没手动归类：墙侧 null / 报告侧「未分类」串——归桶等值', async () => {
     const { wallItems, reportEntries } = await contract([
-      aggregate({ id: 'a', percent: 0.5, lastReadTime: 1735000000000 }),
+      aggregate({ id: 'a', percent: 0.5, subjects: ['科普'], lastReadTime: 1735000000000 }),
     ]);
     expect(wallItems[0].category).toBeNull();
     // 报告 frontmatter 需要字符串做分布；墙侧 categoryLabel(it) || '未分类' 同桶

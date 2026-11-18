@@ -241,24 +241,22 @@ describe('bookshelf 数据层', () => {
     expect(kwFilter(items, '未分类').length).toBe(0);
   });
 
-  it('issue 221：EPUB 分类接 meta.subjects[0]；subjects 空数组/非字符串/空白值回落 null', async () => {
+  it('分类只认 bz Reader 手动指定的 shelf：书自带 subjects 不再当分类（2026-11-18）', async () => {
     const vault = new MockVault();
     vault.files.set(`${READER_DEFAULT_DATA_DIR}/bz-reader.json`, JSON.stringify({
       books: [
-        { id: 'ok', meta: { title: '红楼梦', subjects: ['中国古典文学', '清代小说'] }, fileRef: { vaultPath: 'books/hlm.epub' } },
-        { id: 'empty', meta: { title: '空数组', subjects: [] }, fileRef: { vaultPath: 'books/empty.epub' } },
-        { id: 'bad', meta: { title: '非字符串', subjects: [42, null] }, fileRef: { vaultPath: 'books/bad.epub' } },
-        { id: 'blank', meta: { title: '空白值', subjects: ['   '] }, fileRef: { vaultPath: 'books/blank.epub' } },
+        { id: 'manual', shelf: '写作', meta: { title: '手动分类', subjects: ['中国古典文学'] }, fileRef: { vaultPath: 'books/manual.epub' } },
+        { id: 'auto', meta: { title: '书自带题材', subjects: ['中国古典文学'] }, fileRef: { vaultPath: 'books/auto.epub' } },
+        { id: 'blank', shelf: '   ', meta: { title: '空白 shelf' }, fileRef: { vaultPath: 'books/blank.epub' } },
         { id: 'nofield', meta: { title: '无字段' }, fileRef: { vaultPath: 'books/nofield.epub' } },
       ],
     }));
     const app = makeApp(vault);
     const items = await loadEpubItems(app);
     const byTitle = Object.fromEntries(items.map((i) => [i.title, i]));
-    expect(byTitle['红楼梦'].category).toBe('中国古典文学');
-    expect(byTitle['空数组'].category).toBeNull();
-    expect(byTitle['非字符串'].category).toBeNull();
-    expect(byTitle['空白值'].category).toBeNull();
+    expect(byTitle['手动分类'].category).toBe('写作');
+    expect(byTitle['书自带题材'].category).toBeNull();
+    expect(byTitle['空白 shelf'].category).toBeNull();
     expect(byTitle['无字段'].category).toBeNull();
   });
 
@@ -390,6 +388,7 @@ describe('bookshelf 数据层：bz 阅读数据源', () => {
 
   const READER_BOOK = {
     id: 'rb1',
+    shelf: '小说',
     meta: { title: '悉达多', author: '黑塞', wordCount: 80000, subjects: ['小说'], coverPath: 'bz-reader/storage/covers/rb1.jpg' },
     fileRef: { vaultPath: '书库/悉达多.epub', format: 'epub' },
     reading: {

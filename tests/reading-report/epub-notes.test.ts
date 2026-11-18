@@ -102,15 +102,16 @@ describe('getEpubBookNotes（ADR-0283）', () => {
     expect(e.frontmatter.readingDate).toBe(localIsoDate(1735000000000)); // 本地时区日期（P1-20）
     expect(e.frontmatter.completionDate).toBe(localIsoDate(1735600000000));
     expect(e.frontmatter.dialogue).toBe(0);
-    // 无 subjects → 报告侧缺省串（宿主书架侧为 null，经 categoryLabel 同归「未分类」桶）
+    // 没手动归类 → 报告侧缺省串（宿主书架侧为 null，经 categoryLabel 同归「未分类」桶）
     expect(e.frontmatter.category).toBe('未分类');
   });
 
-  it('RR-F1：meta.subjects 分类接 ADR-0099 通道——与书架墙 buildEpubItem 同源不再整体「未分类」', async () => {
+  it('分类只认手动 shelf：书自带 subjects 不再当分类（2026-11-18）', async () => {
     seedReaderData([
       {
         id: 'bk_001',
         fileRef: { vaultPath: '书库/悉达多.epub' },
+        shelf: '写作',
         meta: { title: '悉达多', author: '黑塞', subjects: ['中国古典文学', '哲学'] },
         reading: {
           position: { percent: 0.5 },
@@ -123,13 +124,13 @@ describe('getEpubBookNotes（ADR-0283）', () => {
       },
     ]);
     const entries = await getEpubBookNotes(makeApp(vault));
-    expect(entries[0].frontmatter.category).toBe('中国古典文学'); // subjects[0]（ADR-0099 决策 4）
-    // subjects 空/非串 → 回落「未分类」
+    expect(entries[0].frontmatter.category).toBe('写作'); // 手动指定优先，题材不覆盖
+    // 只有书自带题材、没手动归类 → 「未分类」
     seedReaderData([
       {
         id: 'bk_002',
         fileRef: { vaultPath: '书库/宇宙.epub' },
-        meta: { title: '宇宙', subjects: ['', 42] },
+        meta: { title: '宇宙', subjects: ['科普'] },
         reading: { position: { percent: 0.5 }, stats: { totalReadTime: 0, lastReadTime: 0 }, sessions: [] },
         notes: {},
         addedAt: 1734800000000,
@@ -137,7 +138,7 @@ describe('getEpubBookNotes（ADR-0283）', () => {
       },
     ]);
     const entries2 = await getEpubBookNotes(makeApp(vault));
-    expect(entries2[0].frontmatter.category).toBe('未分类'); // subjects 空/非串回落
+    expect(entries2[0].frontmatter.category).toBe('未分类');
   });
 
   it('readingSessions 转换：duration 单位秒、type 派生（RR-F9）', async () => {

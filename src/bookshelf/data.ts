@@ -8,8 +8,8 @@
  * - EPUB 书：只有一个数据源 `bz-reader.json`——bz 阅读插件的数据目录（其 data.json 的
  *   `dataDir`，缺省 `bz-reader/storage`），读入后归一成聚合形状（见 reader-source.ts）。
  *   Weave（weave-data.json）通道已于 v1.39.4 摘除：书库只认 bz 阅读。
- * - 分类：优先用 bz Reader 每本书的 `shelf`（用户自定义分类），回退 `meta.subjects[0]`
- *   （EPUB 自带题材），都缺归「未分类」。
+ * - 分类：只用 bz Reader 每本书的 `shelf`（用户手动指定），不读 EPUB 自带题材
+ *   （2026-11-18 用户拍板）；没指定归「未分类」。
  * - status 派生：readingDate && !completionDate → 在读；都有 → 已读；否则未读
  * 筛选/排序管道在渲染纯层 shared.ts（ADR-0104）；本文件不依赖渲染层（深审 arch A1）。
  */
@@ -240,14 +240,13 @@ export function epubProgress(rawPercent: number | undefined): number {
     : Math.round(Math.max(0, Math.min(1, raw)) * 100);
 }
 
-/** 分类口径：bz Reader 的用户分类 `shelf` 优先（2026-11-12 用户拍板「分类信息也要读」），
- *  回退 EPUB 自带 `meta.subjects[0]`（issue 221/ADR-0099），都无则 null
+/** 分类口径：只认 bz Reader 用户手动指定的 `shelf`（2026-11-18 用户拍板），
+ *  不再回退 EPUB 自带 `meta.subjects[0]`——那是书自带题材，不是用户的选择；
+ *  回退会让「改/删分类」连带改到只是题材同名的书。没指定则 null
  *  （kwFilter 搜「未分类」不误命中 EPUB）。 */
-export function epubCategory(meta: any, shelf?: unknown): string | null {
+export function epubCategory(_meta: any, shelf?: unknown): string | null {
   const shelfName = typeof shelf === 'string' ? shelf.trim() : '';
-  if (shelfName) return shelfName;
-  const subjects: unknown[] = Array.isArray(meta?.subjects) ? meta.subjects : [];
-  return typeof subjects[0] === 'string' && subjects[0].trim() ? subjects[0].trim() : null;
+  return shelfName || null;
 }
 
 /** 字数与页数口径单源（书架借书卡与阅读报告同用）：只有正的 meta.wordCount 才算，
@@ -287,7 +286,7 @@ function buildEpubItem(app: App, aggregate: any): BookshelfItem | null {
   const completionDate = toDateString(completedTime);
 
   const vaultFile = app?.vault?.getAbstractFileByPath?.(vaultPath);
-  // 分类：bz Reader 的 shelf 优先，回退 EPUB subjects（aggregate.shelf 由 normalizeReaderAggregates 透传）
+  // 分类：只认 bz Reader 手动指定的 shelf（aggregate.shelf 由 normalizeReaderAggregates 透传）
   const epubCategoryValue = epubCategory(meta, aggregate?.shelf);
   const wordCount = epubWordCount(meta);
   const cfi = typeof reading?.position?.cfi === 'string' ? reading.position.cfi.trim() : '';
