@@ -7,7 +7,7 @@ const item = (o: Partial<BzrFeedback> = {}): BzrFeedback => ({
   submittedAt: '2026-11-15 23:55', doneAt: '', ...o,
 });
 
-describe('反馈按插件隔离：bz 只显示自己的', () => {
+describe('反馈显示所有插件的条目（2026-11-19 去掉插件隔离）', () => {
   const mixed = {
     roadmap: [],
     feedback: [{ key: 'bug', items: [
@@ -16,14 +16,14 @@ describe('反馈按插件隔离：bz 只显示自己的', () => {
     ] }],
   } as unknown as BzrData;
 
-  it('列表只渲染 bz 条目', () => {
+  it('列表渲染 bz 与 bz reader 的条目', () => {
     const s = feedbackRowsHtml(mixed, 'bug');
     expect(s).toContain('只属于 BZ 的反馈');
-    expect(s).not.toContain('只属于 Reader 的反馈');
+    expect(s).toContain('只属于 Reader 的反馈');
   });
 
-  it('角标只数 bz 条目', () => {
-    expect(rmTabCounts(mixed).bug).toBe(1);
+  it('角标数全部条目', () => {
+    expect(rmTabCounts(mixed).bug).toBe(2);
   });
 });
 
