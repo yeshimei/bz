@@ -234,7 +234,7 @@
         { "title": "PDF 重排：固定版式变流式", "state": "plan", "src": "builtin", "fb": { "kind": "qq", "label": "探索", "href": "" } },
         { "title": "漫画模式：分格、右到左、跨页", "state": "plan", "src": "builtin", "fb": { "kind": "qq", "label": "探索", "href": "" } },
         { "title": "整章翻译：原文译文对照", "state": "plan", "src": "builtin", "fb": { "kind": "qq", "label": "探索", "href": "" } },
-        { "title": "复习：全文回顾，AI 抽认卡与出题", "state": "plan", "src": "builtin", "fb": { "kind": "qq", "label": "探索", "href": "" } },
+        { "title": "复习：全文回顾，AI 抽认卡与出题", "state": "plan", "src": "review", "fb": { "kind": "qq", "label": "探索", "href": "" } },
         { "title": "墨水屏：黑白更清、翻页不闪", "state": "plan", "src": "builtin", "fb": { "kind": "qq", "label": "探索", "href": "" } },
         { "title": "界面动效：翻页与切章过渡，可关", "state": "plan", "src": "builtin", "fb": { "kind": "qq", "label": "探索", "href": "" } }
       ]
