@@ -27,7 +27,7 @@ describe('反馈按插件隔离：bz 只显示自己的', () => {
   });
 });
 
-describe('反馈卡片：插件归属、核查结论、发布版本', () => {
+describe('反馈卡片：插件归属、发布版本（核查结论已去掉）', () => {
   it('bz 条目的插件徽标带功能域', () => {
     const s = feedbackItemHtml(item({ plugin: 'bz', domain: '日记本' }));
     expect(s).toContain('bzs-chgn-fbplugin');
@@ -40,10 +40,10 @@ describe('反馈卡片：插件归属、核查结论、发布版本', () => {
     expect(s).not.toContain('字体');
   });
 
-  it('核查结论以小字显示', () => {
+  it('不显示核查结论（2026-11-19 作者要求去掉）', () => {
     const s = feedbackItemHtml(item({ verify: '核查结论文本' }));
-    expect(s).toContain('bzs-chgn-fbverify');
-    expect(s).toContain('核查结论文本');
+    expect(s).not.toContain('bzs-chgn-fbverify');
+    expect(s).not.toContain('核查结论文本');
   });
 
   it('已完成的条目显示发布版本号', () => {
