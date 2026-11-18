@@ -71,5 +71,6 @@ Obsidian 插件。域 = `src/<域>/`，`core` 是共享层。中文输出。
 | 分发仓库怎么重建（已退役，仅手动） | `scripts/push-assets.mjs`（保留份数 / 压平阈值）· ADR-0269 |
 | 资源地址、通道顺序 | `src/core/remote-base.ts`（唯一事实源；别在别处再写一份 slug 或域名）· ADR-0269 |
 | 支持者名单（加人 / 改名 / 删除） | `docs/patrons.json`（唯一源，格式见 `docs/patrons.md`）· `node scripts/patron-add.mjs` · skill `bz-reward`。**不再改代码、不再发版**：两个插件都在运行期读它 |
+| 用户反馈（截图 → 出清单 → 点单 → 修代码 → 真机测试 → 合并 → 五步闭环 → 对应平台回复） | `D:\Obsidian\skills\bz-reader-feedback-roadmap\references\feedback-workflow.md`（完整执行步骤、12 字段模板、bz / bz-reader 归属判定、QQ 群 @ 回复流程都在那里，本文不展开）。**先改代码合并，再走闭环；发帖和回复免确认** |
 
 本文与代码冲突时以代码为准，并顺手改这里。历史注释里的「铁律 N」是旧编号，按内容找，别按号找。
