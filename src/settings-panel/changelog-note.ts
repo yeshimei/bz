@@ -86,10 +86,14 @@ const STAT_ICON_SHIELD =
   'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
   '<path d="M12 3l7 3v6c0 4-3 7-7 9-4-2-7-5-7-9V6Z"/><path d="m9 12 2 2 4-4"/></svg>';
 
-/** 统计卡：打赏 + 赞助人（去掉 bz-reader 的高级用户那颗） */
-function statsHtml(data: BzrData | null): string {
-  const reward = data ? data.stats.reward.toLocaleString() : '—';
-  const patrons = data ? data.stats.patrons.toLocaleString() : '—';
+/** 统计卡：打赏 + 赞助人（去掉 bz-reader 的高级用户那颗）
+ *  数字固定写死、不读在线 stats（2026-11-19 用户要求）：随版本发版冻结，
+ *  每次发版由发版流程更新这两个常量。当前 = v1.44.5。 */
+const PIN_REWARD = 6;
+const PIN_PATRONS = 8;
+function statsHtml(_data: BzrData | null): string {
+  const reward = PIN_REWARD.toLocaleString();
+  const patrons = PIN_PATRONS.toLocaleString();
   const chev = '<i class="bzs-chgn-mini-chev" aria-hidden="true">›</i>';
   /* 不再自带 .bzs-chgn-mini 包装：模板里的 [data-stats] 已经是那层容器，
      再包一层会让 grid 下内层被压窄、按钮文字挤成一团（2026-11-19 真机踩到）。 */
