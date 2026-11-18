@@ -2497,15 +2497,25 @@
 .bzs-chgn-tooln{font-family:var(--chg-mono);font-size:9px;font-weight:700;line-height:1;padding:1px 5px;border-radius:999px;background:color-mix(in srgb,var(--chg-ink-3) 14%,transparent);color:var(--chg-ink-3)}
 .bzs-chgn-toolbtn.on .bzs-chgn-tooln{background:var(--chg-panel);color:var(--chg-accent)}
 
-/* 手机：工具条挤一挤，三颗统计 + 三个入口尽量落在同一行 */
-.bzs-chgn-m .bzs-chgn-toolbar{gap:8px}
-.bzs-chgn-m .bzs-chgn-mini{gap:6px}
-.bzs-chgn-m .bzs-chgn-mini-stat{gap:5px;padding:2px 7px}
+/* 手机：两组各占一整行、内部等分铺满整行宽度（2026-11-19 作者要求） */
+.bzs-chgn-m .bzs-chgn-toolbar{gap:6px}
+.bzs-chgn-m .bzs-chgn-mini,
+.bzs-chgn-m .bzs-chgn-tools{
+  flex:1 1 100%;min-width:0;display:grid;gap:4px;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+}
+/* bz 按作者早先要求不显示「高级用户」：统计行只有两颗，两等分 */
+.bzs-chgn-m .bzs-chgn-mini{grid-template-columns:repeat(2,minmax(0,1fr))}
+.bzs-chgn-m .bzs-chgn-tools{margin-left:0}
+.bzs-chgn-m .bzs-chgn-mini-stat,
+.bzs-chgn-m .bzs-chgn-toolbtn{
+  justify-content:center;min-width:0;width:100%;gap:5px;padding:2px 4px;
+  overflow:hidden;text-overflow:ellipsis;
+}
 .bzs-chgn-m .bzs-chgn-mini-stat svg{width:13px;height:13px}
 /* 窄屏先把那个小箭头让出来，卡片外形本身已经够像按钮 */
 .bzs-chgn-m .bzs-chgn-mini-chev{display:none}
-.bzs-chgn-m .bzs-chgn-tools{gap:4px}
-.bzs-chgn-m .bzs-chgn-toolbtn{gap:4px;height:26px;padding:0 7px;font-size:10.5px}
+.bzs-chgn-m .bzs-chgn-toolbtn{height:26px;font-size:10.5px}
 
 /* ── 正文内视图切换：日志 / 路线图 / 功能建议 / 问题反馈 ── */
 .bzs-chgn-views{flex:1;min-height:0;display:none;flex-direction:column}
@@ -2566,23 +2576,18 @@
 .bzs-chgn-fbdot.accepted{background:#1477a8;box-shadow:0 0 0 3px rgba(20,119,168,.14)}
 .bzs-chgn-fbdot.doing{background:#d98a1f;box-shadow:0 0 0 3px rgba(217,138,31,.16)}
 .bzs-chgn-fbdot.invalid{background:var(--chg-ink-3);opacity:.65}
-.bzs-chgn-fbtitle{flex:1;min-width:0;font-size:11.5px;font-weight:600;line-height:1.45}
+.bzs-chgn-fbtitle{flex:1;min-width:0;font-size:12.5px;font-weight:600;line-height:1.45}
 /* 归属徽标：bz 带功能域，bz reader 只有插件名 */
 .bzs-chgn-fbplugin{flex:none;padding:1px 5px;border-radius:4px;font-size:9px;font-weight:600;line-height:1.5;color:var(--chg-accent);background:var(--chg-accent-soft);white-space:nowrap}
 /* 描述截 3 行：卡片并排时高度可控，长描述不至于把整行撑成两屏 */
 .bzs-chgn-fbdesc{
   display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:3;overflow:hidden;
-  font-size:10px;line-height:1.55;color:var(--chg-ink-3);margin-top:3px;
+  font-size:11px;line-height:1.55;color:var(--chg-ink-3);margin-top:3px;
 }
 /* 作者回复截 2 行：聊天气话不必全摊开，卡片高度可控 */
 .bzs-chgn-fbreply{
   display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;
-  font-size:10px;line-height:1.55;color:var(--chg-ink-2);margin-top:3px;
-}
-/* 核查结论截 2 行：说明为什么是这个状态，比描述次一级 */
-.bzs-chgn-fbverify{
-  display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;
-  font-size:9.5px;line-height:1.5;color:var(--chg-ink-3);margin-top:3px;
+  font-size:11px;line-height:1.55;color:var(--chg-ink-2);margin-top:3px;
 }
 .bzs-chgn-fbrelease{padding:1px 6px;border-radius:4px;font-weight:600;color:var(--green,#1a7f37);background:color-mix(in srgb,var(--green,#1a7f37) 12%,transparent)}
 .bzs-chgn-fbmeta{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:auto;padding-top:7px;font-size:9.5px;color:var(--chg-ink-3)}
@@ -2620,7 +2625,7 @@
 .bzs-chgn-chev{font-size:9px;color:var(--chg-ink-3);transition:transform .16s}
 .bzs-chgn-rmtheme.fold .bzs-chgn-chev{transform:rotate(-90deg)}
 .bzs-chgn-bar{width:3px;height:12px;border-radius:2px;flex:none}
-.bzs-chgn-rmthemehd b{font-size:11.5px;font-weight:600}
+.bzs-chgn-rmthemehd b{font-size:12.5px;font-weight:600}
 .bzs-chgn-prog{margin-left:auto;display:flex;align-items:center;gap:5px}
 .bzs-chgn-track{width:34px;height:3px;border-radius:2px;background:var(--chg-line);overflow:hidden;display:block}
 .bzs-chgn-track i{display:block;height:100%;background:var(--green,#1a7f37)}
@@ -2635,7 +2640,7 @@
 .bzs-chgn-dot.plan{background:var(--chg-panel);box-shadow:inset 0 0 0 1.5px var(--chg-ink-3)}
 .bzs-chgn-dot.doing{background:var(--amber,#b26a00);box-shadow:0 0 0 3px rgba(178,106,0,.13)}
 .bzs-chgn-dot.done{background:var(--green,#1a7f37);box-shadow:0 0 0 3px color-mix(in srgb,var(--green,#1a7f37) 14%,transparent)}
-.bzs-chgn-rmtitle{flex:1;min-width:0;font-size:11.5px;line-height:1.5}
+.bzs-chgn-rmtitle{flex:1;min-width:0;font-size:12.5px;line-height:1.5}
 /* meta 缩进 15px = 点 8 + 间距 7：落在标题文字下面，不贴卡片左缘 */
 .bzs-chgn-rmmeta{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:4px;padding-left:15px;font-size:9.5px;color:var(--chg-ink-3)}
 .bzs-chgn-src{padding:1px 6px;border-radius:4px;font-weight:600}

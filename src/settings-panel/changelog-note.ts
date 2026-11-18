@@ -91,11 +91,11 @@ function statsHtml(data: BzrData | null): string {
   const reward = data ? data.stats.reward.toLocaleString() : '—';
   const patrons = data ? data.stats.patrons.toLocaleString() : '—';
   const chev = '<i class="bzs-chgn-mini-chev" aria-hidden="true">›</i>';
+  /* 不再自带 .bzs-chgn-mini 包装：模板里的 [data-stats] 已经是那层容器，
+     再包一层会让 grid 下内层被压窄、按钮文字挤成一团（2026-11-19 真机踩到）。 */
   return (
-    '<div class="bzs-chgn-mini">' +
     `<button class="bzs-chgn-mini-stat reward" type="button" data-stat="reward">${STAT_ICON_HEART}<b>${escapeHtml(String(reward))}</b><span>${U.reward}</span>${chev}</button>` +
-    `<button class="bzs-chgn-mini-stat sponsor" type="button" data-stat="patrons">${STAT_ICON_SHIELD}<b>${escapeHtml(String(patrons))}</b><span>${U.patrons}</span>${chev}</button>` +
-    '</div>'
+    `<button class="bzs-chgn-mini-stat sponsor" type="button" data-stat="patrons">${STAT_ICON_SHIELD}<b>${escapeHtml(String(patrons))}</b><span>${U.patrons}</span>${chev}</button>`
   );
 }
 
@@ -165,9 +165,6 @@ export function feedbackItemHtml(it: BzrFeedback): string {
       .filter(Boolean).join(' · ')
     : '';
   const pluginHtml = pluginText ? `<span class="bzs-chgn-fbplugin">${escapeHtml(pluginText)}</span>` : '';
-  const verifyHtml = it.verify
-    ? `<div class="bzs-chgn-fbverify">${U.fbVerify}：${escapeHtml(it.verify)}</div>`
-    : '';
   const releaseHtml = state === 'done' && it.releaseVersion
     ? `<span class="bzs-chgn-fbrelease">${U.fbRelease} ${escapeHtml(it.releaseVersion)}</span>`
     : '';
@@ -176,7 +173,6 @@ export function feedbackItemHtml(it: BzrFeedback): string {
     `<i class="bzs-chgn-fbdot ${state}"></i>${pluginHtml}<div class="bzs-chgn-fbtitle">${escapeHtml(it.title)}</div></div>` +
     (it.desc ? `<div class="bzs-chgn-fbdesc">${escapeHtml(it.desc)}</div>` : '') +
     (it.reply ? `<div class="bzs-chgn-fbreply">${U.fbReply}：${escapeHtml(it.reply)}</div>` : '') +
-    verifyHtml +
     '<div class="bzs-chgn-fbmeta">' + srcHtml + releaseHtml + commitHtml + `<span>${dates}</span>` +
     `<span class="bzs-chgn-fbstate ${state}">${escapeHtml(label)}</span></div></div>`
   );
@@ -198,11 +194,10 @@ export function rmTabCounts(data: BzrData | null): Record<'roadmap' | 'feature' 
 }
 function toolsHtml(data: BzrData | null): string {
   const n = rmTabCounts(data);
-  return '<div class="bzs-chgn-tools">' +
-    `<button class="bzs-chgn-toolbtn bzs-chgn-rm-roadmap" type="button" data-view-btn="roadmap" aria-pressed="false">${RM_ICON}<b>${U.roadmap}</b><span class="bzs-chgn-tooln">${n.roadmap}</span></button>` +
+  /* 同 statsHtml：模板里的 [data-tools] 已经是 .bzs-chgn-tools 容器，别再包一层。 */
+  return `<button class="bzs-chgn-toolbtn bzs-chgn-rm-roadmap" type="button" data-view-btn="roadmap" aria-pressed="false">${RM_ICON}<b>${U.roadmap}</b><span class="bzs-chgn-tooln">${n.roadmap}</span></button>` +
     `<button class="bzs-chgn-toolbtn bzs-chgn-rm-feature" type="button" data-view-btn="feature" aria-pressed="false">${RM_ICON}<b>${U.feature}</b><span class="bzs-chgn-tooln">${n.feature}</span></button>` +
-    `<button class="bzs-chgn-toolbtn bzs-chgn-rm-bug" type="button" data-view-btn="bug" aria-pressed="false">${RM_ICON}<b>${U.bug}</b><span class="bzs-chgn-tooln">${n.bug}</span></button>` +
-    '</div>';
+    `<button class="bzs-chgn-toolbtn bzs-chgn-rm-bug" type="button" data-view-btn="bug" aria-pressed="false">${RM_ICON}<b>${U.bug}</b><span class="bzs-chgn-tooln">${n.bug}</span></button>`;
 }
 function viewsHtml(data: BzrData | null): string {
   return '<div class="bzs-chgn-views" data-views>' +
