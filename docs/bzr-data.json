@@ -150,7 +150,54 @@
       ]
     }
   ],
-  "roadmap": [],
+  "roadmap": [
+    {
+      "theme": "版本更新",
+      "color": "#2f7dde",
+      "order": 1,
+      "items": [
+        { "title": "新增 PDF 阅读：缩放旋转、单双页、跳页设置每本独立", "state": "done", "src": "builtin", "fb": { "kind": "qq", "label": "1.0.0", "href": "" } },
+        { "title": "PDF 四种链接可复制，还能看本页被哪些笔记引用", "state": "done", "src": "builtin", "fb": { "kind": "qq", "label": "1.0.0", "href": "" } },
+        { "title": "点目录或链接跳走后，一键回到原来的位置", "state": "done", "src": "builtin", "fb": { "kind": "qq", "label": "1.0.0", "href": "" } },
+        { "title": "书架和书里都能按意思搜，不用先想到原话", "state": "done", "src": "builtin", "fb": { "kind": "qq", "label": "1.1.0", "href": "" } },
+        { "title": "勾几本书一起问 AI，答案标明出自哪一本", "state": "done", "src": "builtin", "fb": { "kind": "qq", "label": "1.1.0", "href": "" } },
+        { "title": "读时点一下先看本章导读，聊完可整段存成笔记", "state": "done", "src": "builtin", "fb": { "kind": "qq", "label": "1.1.0", "href": "" } },
+        { "title": "新装默认字号行距边距调好，手机一屏读一段", "state": "done", "src": "builtin", "fb": { "kind": "qq", "label": "1.1.1", "href": "" } },
+        { "title": "手机设置收起分栏、朗读、快捷键，界面更清爽", "state": "done", "src": "builtin", "fb": { "kind": "qq", "label": "1.1.1", "href": "" } },
+        { "title": "右下角可显示页码，可选本章或全书累计", "state": "done", "src": "builtin", "fb": { "kind": "qq", "label": "1.2.0", "href": "" } },
+        { "title": "沉浸模式左上角显示章节名，也能单独关掉", "state": "done", "src": "builtin", "fb": { "kind": "qq", "label": "1.2.0", "href": "" } },
+        { "title": "PDF 排版面板补上放大缩小、适合宽度等选项", "state": "done", "src": "builtin", "fb": { "kind": "qq", "label": "1.2.0", "href": "" } },
+        { "title": "剪藏的文章能合成一本活书来读，按订阅分卷", "state": "done", "src": "builtin", "fb": { "kind": "qq", "label": "1.3.0", "href": "" } },
+        { "title": "读订阅文章时可一键生成 AI 摘要写在标题下", "state": "done", "src": "builtin", "fb": { "kind": "qq", "label": "1.3.0", "href": "" } },
+        { "title": "剪藏成书可选汇总全部、未读或今日加未读", "state": "done", "src": "builtin", "fb": { "kind": "qq", "label": "1.3.1", "href": "" } },
+        { "title": "功能对照里两行加了「看视频」，点开看教程", "state": "done", "src": "builtin", "fb": { "kind": "qq", "label": "1.3.1", "href": "" } },
+        { "title": "EPUB、TXT、PDF 都能朗读，念完自动翻页", "state": "done", "src": "builtin", "fb": { "kind": "qq", "label": "1.4.0", "href": "" } },
+        { "title": "朗读可用系统语音、在线语音或本地自建服务", "state": "done", "src": "builtin", "fb": { "kind": "qq", "label": "1.4.0", "href": "" } },
+        { "title": "整本预生成 mp3 拷到手机，断网也能听", "state": "done", "src": "builtin", "fb": { "kind": "qq", "label": "1.4.0", "href": "" } },
+        { "title": "PDF 扫描页也能认字，可划词、搜索、朗读", "state": "done", "src": "builtin", "fb": { "kind": "qq", "label": "1.5.1", "href": "" } },
+        { "title": "划一段文字弹出解释、翻译、总结等五项菜单", "state": "done", "src": "builtin", "fb": { "kind": "qq", "label": "1.5.1", "href": "" } },
+        { "title": "书架新增「对话」页，AI 问答可翻可搜可导出", "state": "done", "src": "builtin", "fb": { "kind": "qq", "label": "1.5.1", "href": "" } },
+        { "title": "按意思搜先用 AI 把口语压成检索词，搜得更准", "state": "done", "src": "builtin", "fb": { "kind": "qq", "label": "1.5.2", "href": "" } },
+        { "title": "设置页长分组拆出小标题，一屏之内更好找", "state": "done", "src": "builtin", "fb": { "kind": "qq", "label": "1.5.2", "href": "" } },
+        { "title": "一本书可同时归进多个分类，点一下加入移出", "state": "done", "src": "builtin", "fb": { "kind": "qq", "label": "1.5.3", "href": "" } },
+        { "title": "书里的图片点一下放大，能缩放拖动和保存", "state": "done", "src": "builtin", "fb": { "kind": "qq", "label": "1.5.3", "href": "" } },
+        { "title": "移出书架可选彻底删除，连记录和数据一起清", "state": "done", "src": "builtin", "fb": { "kind": "qq", "label": "1.5.3", "href": "" } }
+      ]
+    },
+    {
+      "theme": "探索中",
+      "color": "#7856d6",
+      "order": 2,
+      "items": [
+        { "title": "PDF 重排：固定版式变流式", "state": "plan", "src": "builtin", "fb": { "kind": "qq", "label": "探索", "href": "" } },
+        { "title": "漫画模式：分格、右到左、跨页", "state": "plan", "src": "builtin", "fb": { "kind": "qq", "label": "探索", "href": "" } },
+        { "title": "整章翻译：原文译文对照", "state": "plan", "src": "builtin", "fb": { "kind": "qq", "label": "探索", "href": "" } },
+        { "title": "复习：全文回顾，AI 抽认卡与出题", "state": "plan", "src": "builtin", "fb": { "kind": "qq", "label": "探索", "href": "" } },
+        { "title": "墨水屏：黑白更清、翻页不闪", "state": "plan", "src": "builtin", "fb": { "kind": "qq", "label": "探索", "href": "" } },
+        { "title": "界面动效：翻页与切章过渡，可关", "state": "plan", "src": "builtin", "fb": { "kind": "qq", "label": "探索", "href": "" } }
+      ]
+    }
+  ],
   "feedback": [
     {
       "key": "bug",
@@ -185,7 +232,7 @@
   ],
   "stats": {
     "reward": 6,
-    "pro": 46,
+    "pro": 47,
     "patrons": 8
   },
   "links": {
