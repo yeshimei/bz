@@ -26,6 +26,10 @@ export interface ChangelogEntry {
   domain: string;
   text: string;
   sub?: string;
+  /** 对应的 GitHub issue 编号；有值时正文尾部挂 #N 链接 */
+  issue?: number;
+  /** 对应的 QQ 频道帖子地址；有值时正文尾部挂可点链接（渲染前须过白名单） */
+  qq?: string;
 }
 
 /** 一个版本的日志块 */

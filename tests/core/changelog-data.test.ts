@@ -119,6 +119,32 @@ describe('内置数据与 manifest 对得上', () => {
         for (const entry of list ?? []) {
           expect(entry.domain.trim()).not.toBe('');
           expect(entry.text.trim()).not.toBe('');
+          // 正文不再残留 markdown 链接标记——链接由 qq/issue 字段单独承载
+          expect(entry.text).not.toMatch(/\]\(https?:\/\//);
+        }
+      }
+    }
+  });
+
+  it('条目尾部链接字段形状合法（issue 为正整数 / qq 为合法 https 地址）', () => {
+    for (const release of CHANGELOG_RELEASES) {
+      for (const list of [release.added, release.improved, release.fixed]) {
+        for (const entry of list ?? []) {
+          if (entry.issue !== undefined) {
+            expect(Number.isInteger(entry.issue) && entry.issue > 0).toBe(true);
+          }
+          if (entry.qq !== undefined) {
+            // 只接受 http(s)，且 host 在弹窗白名单内（pd/qm.qq.com），否则渲染层不会显示
+            let ok = false;
+            try {
+              const u = new URL(entry.qq);
+              ok = (u.protocol === 'https:' || u.protocol === 'http:') &&
+                ['pd.qq.com', 'qm.qq.com'].includes(u.hostname.toLowerCase());
+            } catch {
+              ok = false;
+            }
+            expect(ok, `非法 qq 链接：${entry.qq}`).toBe(true);
+          }
         }
       }
     }
