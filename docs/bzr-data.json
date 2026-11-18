@@ -3,6 +3,111 @@
   "updatedAt": "2026-11-18",
   "changelog": [
     {
+      "version": "1.5.3",
+      "date": "2026-11-18",
+      "added": [
+        {
+          "domain": {
+            "zh": "多分类",
+            "en": "Multiple shelves"
+          },
+          "text": {
+            "zh": "一本书可以同时归进好几个分类，菜单里点一下加进去、再点一下移出来。",
+            "en": "A book can sit in several shelves at once: click a shelf to add it, click again to remove it."
+          },
+          "qq": "https://pd.qq.com/s/Nciiuwi316"
+        },
+        {
+          "domain": {
+            "zh": "点图放大",
+            "en": "Image zoom"
+          },
+          "text": {
+            "zh": "书里的图片点一下就放大看，能缩放、拖动、复制和保存，设置里默认关。",
+            "en": "Tap an image in a book to open it enlarged, with zoom, pan, copy and save; off by default in settings."
+          },
+          "qq": "https://pd.qq.com/s/Nhp7bum2pu"
+        },
+        {
+          "domain": {
+            "zh": "导出书摘",
+            "en": "Export"
+          },
+          "text": {
+            "zh": "导出的书摘末尾多了一节「阅读记录」，把阅读时长和每次会话一起带走。",
+            "en": "Exports now end with a reading record, carrying reading time and every session along."
+          },
+          "qq": "https://pd.qq.com/s/Ng1hypansh"
+        },
+        {
+          "domain": {
+            "zh": "导出书摘",
+            "en": "Export"
+          },
+          "text": {
+            "zh": "每条划线下面写上了它是什么时候划的。",
+            "en": "Each highlight in the export now shows when it was made."
+          },
+          "qq": "https://pd.qq.com/s/N82i9shhih"
+        },
+        {
+          "domain": {
+            "zh": "彻底删除",
+            "en": "Delete permanently"
+          },
+          "text": {
+            "zh": "移出书架时可以选择「彻底删除」，连记录和阅读数据一起清掉，源文件不动。",
+            "en": "Removing a book now offers Delete permanently, clearing its records and reading data while source files stay."
+          },
+          "qq": "https://pd.qq.com/s/N6v36z5dzr"
+        },
+        {
+          "domain": {
+            "zh": "阅读统计",
+            "en": "Reading stats"
+          },
+          "text": {
+            "zh": "阅读会话开始记录中断次数。",
+            "en": "Reading sessions now count how many times you were interrupted."
+          },
+          "qq": "https://pd.qq.com/s/Na1y6kdsvy"
+        },
+        {
+          "domain": {
+            "zh": "字体",
+            "en": "Fonts"
+          },
+          "text": {
+            "zh": "字体多了一档「跟随 Obsidian」，跟宿主主题走。",
+            "en": "Font settings gained a Follow Obsidian option that follows the host theme."
+          },
+          "qq": "https://pd.qq.com/s/Ncqmymjuje"
+        },
+        {
+          "domain": {
+            "zh": "更新日志",
+            "en": "Changelog"
+          },
+          "text": {
+            "zh": "更新日志弹窗重做，正文可在「更新 / 路线图 / 反馈」之间切换。",
+            "en": "The changelog popup was rebuilt, and its body switches between release notes, roadmap and feedback."
+          }
+        }
+      ],
+      "fixed": [
+        {
+          "domain": {
+            "zh": "加入复习",
+            "en": "Send to Review"
+          },
+          "text": {
+            "zh": "推给 Review 的划线卡带上跳回书里的链接。",
+            "en": "Highlights sent to Review now link back to the book."
+          }
+        }
+      ]
+    },
+    {
       "version": "1.5.2",
       "date": "2026-11-17",
       "improved": [
