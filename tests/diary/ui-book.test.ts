@@ -2046,6 +2046,29 @@ describe('DiaryAppController · 写作内页（ADR-0233）', () => {
     expect(mocks.openFlowDialog).not.toHaveBeenCalled();
   });
 
+  /* 2026-11-19 发版前置 review P1：收起整本（草稿留在纸上、写作页仍非 hidden）后，
+     全局 keydown 监听没摘，方向键早退分支只看 wsp 可见、不看整本可见，
+     会把主笔记编辑区（contenteditable，非 input/textarea）的方向键吞掉、光标不动。 */
+  it('收起整本后按方向键，不再抢焦点回写作页（主编辑区照常挪光标）', async () => {
+    const c = await openBook();
+    const area = await openWritePage(c);
+    area.value = '写了一半';
+    mocks.openFlowDialog.mockResolvedValueOnce('hold');
+    q('.bz-diary-close').click();
+    await vi.waitFor(() => expect(q('.bz-diary-scene').style.display).toBe('none'));
+    expect(q('.bz-diary-wsp').hidden).toBe(false); // 草稿还在纸上，写作页没隐藏——正是残留态
+
+    // 焦点在正文之外（模拟回到 Obsidian 主编辑区：contenteditable 不是 input/textarea）
+    const outside = document.createElement('div');
+    outside.tabIndex = 0;
+    document.body.appendChild(outside);
+    outside.focus();
+    expect(document.activeElement).not.toBe(area);
+
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true }));
+    expect(document.activeElement).toBe(outside); // 没被写作页分支抢回去、也没吞键
+  });
+
   /* 2026-11-15 用户报障：强制关闭 Obsidian 时，写在纸上的字连 DOM 一起没了。
      「先收着」原先只保住同一个进程里的 DOM，不是真的留了草稿。 */
   it('写到一半强杀进程：重开日记本，字连同日子时辰贴纸都还在纸上', async () => {
