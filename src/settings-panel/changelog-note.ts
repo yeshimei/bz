@@ -384,9 +384,9 @@ export function openChangelogNote(
     '<div class="bz-chgn-wrap">' +
     '<div class="bz-chgn-fade-top"></div>' +
     '<div class="bz-chgn-body"></div>' +
-    '<div class="bzs-chgn-views" data-views></div>' +
     '<div class="bz-chgn-fade-bot"></div>' +
     '</div>' +
+    '<div class="bzs-chgn-views" data-views></div>' +
     '</main>' +
     `<footer class="bz-chgn-ft"><span class="bz-chgn-grow"></span>${links}</footer>` +
     `<button class="bz-chgn-close" type="button" aria-label="关闭更新日志" title="关闭">${CLOSE_SVG}</button>` +
@@ -453,8 +453,10 @@ export function openChangelogNote(
   const setView = (key: string): void => {
     curView = key;
     popup.querySelectorAll<HTMLElement>('.bzs-chgn, .bzs-chgn-m').forEach((s) => { s.dataset.view = key; });
-    /* 显式切显示：点 tab 后反馈列表替换日志正文，不叠加在正文下面 */
-    popup.querySelectorAll<HTMLElement>('.bzs-chgn-wrap, .bzs-chgn-mpage').forEach((el) => {
+    /* 显式切显示：点 tab 后反馈列表替换日志正文，不叠加在正文下面。
+       正文容器的真名是 bz-chgn-wrap / bz-chgn-mpage（bz 保留原版式的类名），
+       之前写成 bzs-chgn-wrap 一个都没选中，正文不让位、视图被挤到右下角。 */
+    popup.querySelectorAll<HTMLElement>('.bz-chgn-wrap, .bz-chgn-mpage').forEach((el) => {
       el.style.display = key === 'log' ? '' : 'none';
     });
     popup.querySelectorAll<HTMLElement>('.bzs-chgn-views').forEach((el) => {

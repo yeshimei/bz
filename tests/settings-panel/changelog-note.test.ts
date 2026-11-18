@@ -201,6 +201,36 @@ describe('更新日志弹窗 · 桌面', () => {
     expect(note()?.querySelector('.bz-chgn-fade-top')?.classList.contains('show')).toBe(false);
     expect(note()?.querySelector('.bz-chgn-fade-bot')?.classList.contains('show')).toBe(false);
   });
+
+  // 2026-11-19：点顶部入口后，日志正文要让位，视图铺满整个正文区。
+  // 之前隐藏正文的选择器写成 .bzs-chgn-wrap，而 DOM 里是 .bz-chgn-wrap，
+  // 结果正文没藏起来、视图被挤到右下角一小块。
+  it('点路线图入口：正文让位、视图铺满，不是挤在右下角', () => {
+    openChangelogNote([release()]);
+    const root = note()!;
+    root.querySelector<HTMLElement>('.bz-chgn-pane [data-view-btn="roadmap"]')!.click();
+
+    const wrap = root.querySelector<HTMLElement>('.bz-chgn-pane .bz-chgn-wrap')!;
+    const views = root.querySelector<HTMLElement>('.bz-chgn-pane .bzs-chgn-views')!;
+    expect(wrap.style.display).toBe('none');
+    expect(views.style.display).toBe('flex');
+    const page = root.querySelector<HTMLElement>('.bz-chgn-pane [data-view-page="roadmap"]')!;
+    expect(page.style.display).toBe('flex');
+
+    // 再点一次回日志
+    root.querySelector<HTMLElement>('.bz-chgn-pane [data-view-btn="roadmap"]')!.click();
+    expect(wrap.style.display).toBe('');
+  });
+
+  it('移动端点入口：整篇日志让位，视图铺满', () => {
+    openChangelogNote([release()]);
+    const root = note()!;
+    root.querySelector<HTMLElement>('.bz-chgn-m [data-view-btn="bug"]')!.click();
+    const page = root.querySelector<HTMLElement>('.bz-chgn-mpage')!;
+    const views = root.querySelector<HTMLElement>('.bz-chgn-m .bzs-chgn-views')!;
+    expect(page.style.display).toBe('none');
+    expect(views.style.display).toBe('flex');
+  });
 });
 
 describe('更新日志弹窗 · 移动端', () => {
