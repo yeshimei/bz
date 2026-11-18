@@ -60,6 +60,18 @@ export function releaseEntryCount(release: ChangelogRelease): number {
  */
 export const CHANGELOG_RELEASES: readonly ChangelogRelease[] = [
   {
+    version: '1.44.5',
+    date: '2026-11-19',
+    // 条目与 docs/note-v1.44.5.md 同稿（scripts/_gen-changelog.mjs 自动生成，勿手改）
+    added: [
+      { domain: '更新日志', text: '日志页新增路线图与功能建议、问题反馈，能看每条反馈的处理进展。' },
+    ],
+    fixed: [
+      { domain: '日记本', text: '册页里的一段话换行后不再被吞成一段。', qq: 'https://pd.qq.com/s/Nan5656ji7' },
+      { domain: '日记本', text: '收起日记本后，主编辑区的左右键不再失灵。', qq: 'https://pd.qq.com/s/Nbyraourwo' },
+    ],
+  },
+  {
     version: '1.44.4',
     date: '2026-11-15',
     // 条目与 docs/note-v1.44.4.md 同稿（scripts/_gen-changelog.mjs 自动生成，勿手改）
