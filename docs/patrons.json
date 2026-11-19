@@ -2,6 +2,7 @@
   "version": 1,
   "updatedAt": "2026-11-19",
   "patrons": [
+    { "name": "此情可待成追忆", "amount": "patron", "date": "2026-11-19" },
     { "name": "Cole", "amount": "patron", "date": "2026-11-19" },
     { "name": "道格", "amount": "patron", "date": "2026-11-18" },
     { "name": "安拎", "amount": 12, "date": "2026-11-17", "message": "加油啊佬，我也要开发哈哈，希望佬在后面分享一下记录心得" },
