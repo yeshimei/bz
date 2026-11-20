@@ -313,6 +313,11 @@
 /* 素纸不铺格线：落笔前后不突变换版（原型口径） */
 .bz-diary-wsp-area {
   flex: 1; margin-top: 12px; width: 100%;
+  /* 正文固定保底高度（窗口模式写日记看不到字，2026-11-20 用户反馈）：
+     书高在「宽度>720 且高度<900」档被 min(700px,100vh-180px) 压小，textarea 是 flex:1
+     会被挤到只剩一两行，打字看不见。给死下限后至少留 ~6 行可见；其余 flex 项
+     （日戳/贴纸/动作栏）都是 flex:none 不会缩，多出来的空间仍由本项 flex:1 吃。 */
+  min-height: 180px;
   resize: none;
   font-family: inherit; font-size: 17px; line-height: 27px;
   color: var(--bz-diary-ink); caret-color: var(--bz-diary-seal-red);
