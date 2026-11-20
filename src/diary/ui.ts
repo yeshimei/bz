@@ -336,6 +336,71 @@ export function plainTextOf(e: WallEntry): string {
   return e.content || '';
 }
 
+/**
+ * 归一化一个「簇」（基字符 + 紧跟的组合记号）：NFKC 折全角/合成 NFD、`\p{P}\p{S}` 去标点与
+ * 符号、`\s` 去空白，再小写。单独抽出来是为了让命中判定（`searchNorm`）与荧光笔定位
+ * （`searchNormMap`）走同一段口径，绝不会出现「判命中却划不上」。
+ */
+function normCluster(s: string): string {
+  return s.normalize('NFKC').toLowerCase().replace(/[\s\p{P}\p{S}]/gu, '');
+}
+
+/**
+ * 文本 → 归一化串 + 每个归一化字符对应的原文区间 `[start, end)`。
+ *
+ * 按「簇」遍历而非单个 code unit：组合记号（`\p{M}`，如 `cafe\u0301` 的重音）并进前一个基字符
+ * 一起 NFKC，才能与 `café` 的归一化结果相同；代理对（emoji）是一个码点，被 `\p{S}` 整簇丢掉。
+ * 一个簇 NFKC 后可能变多个字符（㍿→株式会社）——它们都映射到同一原文区间，高亮时整簇标出。
+ * start/end 是 UTF-16 下标，可直接切原文。
+ */
+export function searchNormMap(text: string): { norm: string; starts: number[]; ends: number[] } {
+  const starts: number[] = [];
+  const ends: number[] = [];
+  let off = 0;
+  let cluster = '';
+  let cStart = 0;
+  let cEnd = 0;
+  /* 用数组累积归一化串，避免循环里反复拼接 */
+  const normOut: string[] = [];
+  const pushCluster = (): void => {
+    if (!cluster) return;
+    const piece = normCluster(cluster);
+    for (const ch of piece) {
+      normOut.push(ch);
+      starts.push(cStart);
+      ends.push(cEnd);
+    }
+    cluster = '';
+  };
+  for (const cp of text || '') {
+    const start = off;
+    const end = off + cp.length; // 码点的原文半开区间（代理对 cp.length=2）
+    off = end;
+    if (/\p{M}/u.test(cp) && cluster) {
+      cluster += cp; // 组合记号并入前一个簇， NFKC 时合成
+      cEnd = end;
+    } else {
+      pushCluster();
+      cluster = cp;
+      cStart = start;
+      cEnd = end;
+    }
+  }
+  pushCluster();
+  return { norm: normOut.join(''), starts, ends };
+}
+
+/** 检索归一化（放大镜放宽口径）：全角半角 / 大小写 / 标点空白 / NFD 组合都抹平 */
+export function searchNorm(s: string): string {
+  return searchNormMap(s).norm;
+}
+
+/** 归一化后 kw 是否为 text 的子串（空词不算命中） */
+export function searchHit(text: string, kw: string): boolean {
+  const n = searchNorm(kw);
+  return !!n && searchNorm(text).includes(n);
+}
+
 /** 绝对定位浮层的工作区坐标 → 视口坐标（`.bz-diary-scene` 是 position:fixed，故直接用 clientX/Y） */
 interface MenuPos {
   x: number;
@@ -480,14 +545,11 @@ export class DiaryAppController {
   private dayIdx = 0;
   private filterTag: string | null = null;
   /**
-   * 检索命中：在**全量数据**上找（ADR-0259），记的是「哪一则」——
-   * 跳过去时先按则序换卷，再在卷内按 `data-eid` 定位到页。
+   * 检索词（放大镜）：非空即把命中条目单独排成一本「搜索册」，形制与分类册同源。
+   * 在**全量数据**上匹配（ADR-0259）——目录/检索都翻全书，不受一册一卷的可视范围限制。
+   * 与 `filterTag` 互斥：进搜索册即退分类册（含加密册），反之亦然。
    */
-  private search: { kw: string | null; hits: { entry: WallEntry; index: number }[]; i: number } = {
-    kw: null,
-    hits: [],
-    i: 0,
-  };
+  private searchKw: string | null = null;
   private photoRefs: PhotoRef[] = [];
   private photoIndex = new Map<string, number>();
   private lbIdx = 0;
@@ -748,6 +810,8 @@ export class DiaryAppController {
   private visibleEntries(): WallEntry[] {
     if (this.filterTag === ENCRYPT_TAG) return this.entries.filter((e) => !!e.encrypted);
     const list = this.entries.filter((e) => !e.encrypted);
+    /* 搜索册：搜的是正文/标题的纯文本（与「誊录」「索引」同源），命中词放宽口径 */
+    if (this.searchKw) return list.filter((e) => searchHit(plainTextOf(e), this.searchKw || ''));
     if (!this.filterTag) return list;
     const tag = this.filterTag;
     return list.filter((e) => e.tags.includes(tag));
@@ -760,8 +824,8 @@ export class DiaryAppController {
    */
   private planVolumes(): Volume[] {
     const list = this.visibleEntries();
-    /* 指纹要带筛选态：全本与加密册可能条数/首末日期相同，卷界却不能混用 */
-    const key = `${this.filterTag || ''}|${list.length}|${list[0]?.date || ''}|${list[list.length - 1]?.date || ''}|${wallWindowSize()}`;
+    /* 指纹要带筛选态：全本、分类册、搜索册、加密册可能条数/首末日期相同，卷界却不能混用 */
+    const key = `${this.filterTag || ''}|${this.searchKw || ''}|${list.length}|${list[0]?.date || ''}|${list[list.length - 1]?.date || ''}|${wallWindowSize()}`;
     if (key !== this._volKey) {
       this.volumes = splitVolumes(
         list.map((e) => e.date),
@@ -791,7 +855,7 @@ export class DiaryAppController {
     this.closeLightbox();
     this.closeSheet();
     this.pauseAllAudio();
-    this.search = { kw: null, hits: [], i: 0 };
+    this.clearMarks();
 
     // 清空书芯但保住 StPageFlip 容器（库实例随后 destroy/重建；库的 destroy 会摘掉容器）
     const fbHost = this.flipHost;
@@ -889,6 +953,8 @@ export class DiaryAppController {
     this.volIndex = vol;
     this.lastSpreadCount = this.pages.length;
     this.buildBook(Math.max(0, Math.min(last, target)));
+    /* 搜索册：整本每一页的命中词都划荧光笔（不随翻页/换卷丢失——每次重排都重新打） */
+    this.markAllHits();
     this.refreshBookRect();
     /* 记账：这一册就是按**这个**书盒排出来的（onResize 拿它判「要不要重排」，
        跟写作内页让路/补排那条路都能对上，见 onResize 的注） */
@@ -2605,6 +2671,7 @@ export class DiaryAppController {
           return;
         }
         this.filterTag = this.filterTag === t ? null : t;
+        this.searchKw = null; // 分类册与搜索册互斥
         this.applyFilter();
       });
       this.albumGridEl.appendChild(b);
@@ -2670,22 +2737,25 @@ export class DiaryAppController {
     if (name) name.textContent = '';
   }
 
+  /** 挂书签（分类册 / 加密册 / 搜索册共用）：点亮书签条、写册名、按需露「全部解密」 */
+  private setFilterTab(name: string, showAll = false): void {
+    this.filterTabEl.classList.add('bz-diary-on');
+    const allBtn = this.filterTabEl.querySelector<HTMLElement>('.bz-diary-ft-all');
+    if (allBtn) allBtn.hidden = !showAll;
+    const nameEl = this.filterTabEl.querySelector<HTMLElement>('.bz-diary-ft-name');
+    if (nameEl) nameEl.textContent = name;
+  }
+
   private applyFilter(): void {
     /* 落点已经在 relayout 里给了（volume 1 / page 0）；再 jumpToPage(0) 只会多一次翻页，
        纸上有草稿时还会被 writeGuard 多弹一句「先落笔」。 */
     this.relayout({ volume: 1, page: 0 });
-    const allBtn = this.filterTabEl.querySelector<HTMLElement>('.bz-diary-ft-all');
-    if (allBtn) allBtn.hidden = this.filterTag !== ENCRYPT_TAG;
     if (this.filterTag === ENCRYPT_TAG) {
-      this.filterTabEl.classList.add('bz-diary-on');
-      const name = this.filterTabEl.querySelector<HTMLElement>('.bz-diary-ft-name');
-      if (name) name.textContent = `🔐 ${ENCRYPT_TAG}`;
+      this.setFilterTab(`🔐 ${ENCRYPT_TAG}`, true);
       const n = this.visibleEntries().length;
       this.toast(n ? `加密册打开了：${n} 篇` : '加密册里还没有日记：先右键「加密」一篇');
     } else if (this.filterTag) {
-      this.filterTabEl.classList.add('bz-diary-on');
-      const name = this.filterTabEl.querySelector<HTMLElement>('.bz-diary-ft-name');
-      if (name) name.textContent = `${getTagEmoji(this.filterTag)} ${this.filterTag}`;
+      this.setFilterTab(`${getTagEmoji(this.filterTag)} ${this.filterTag}`);
       this.toast(`分类册装订好了：${this.filterTag}`);
     } else {
       this.resetFilterTab();
@@ -2701,6 +2771,7 @@ export class DiaryAppController {
   private async enterEncryptedAlbum(): Promise<void> {
     if (this.filterTag === ENCRYPT_TAG) {
       this.filterTag = null;
+      this.searchKw = null; // 取书签回全本，搜索册也一并退
       this.applyFilter();
       return;
     }
@@ -2714,8 +2785,10 @@ export class DiaryAppController {
       } finally {
         this.enteringEncryptAlbum = false;
       }
+      /* 取消解锁：原搜索册必须原样留着——状态、书页、书签条都不能动 */
       if (!ok) return;
     }
+    this.searchKw = null; // 确认进加密册了，才退搜索册（与分类册互斥）
     this.filterTag = ENCRYPT_TAG;
     await this.mergeEncryptedEntries();
     this.applyFilter();
@@ -2736,6 +2809,7 @@ export class DiaryAppController {
         return;
       }
       this.filterTag = null;
+      this.searchKw = null; // 搜索册的书签「取下」同样回全本
       this.applyFilter();
     });
   }
@@ -2922,59 +2996,58 @@ export class DiaryAppController {
   // ============================================================
 
   /**
-   * 检索在**全量数据**上跑（ADR-0259）：一册只装一卷，扫页只能扫到这一卷；
-   * 目录报全书、检索也得翻全书。比的是「渲染出来的那段文字」（`plainTextOf`），
-   * 与旧口径（扫块元素的 textContent）同源。
+   * 检索 = 订一本「搜索册」（用户拍板，取代旧的「跳页 + 下一处」）：在全量数据上比正文/标题
+   * 纯文本（`plainTextOf`，与誊录/索引同源），把命中条目单独重排成一本——形制与分类册一致，
+   * 翻页就能看完全部命中，不必再逐处点「下一个」。命中处整本划荧光笔（见 `markAllHits`）。
+   * 与分类册（含加密册）互斥：进搜索册即退分类册。
    */
   private runSearch(kw: string): void {
-    this.clearMarks();
-    this.search = { kw, hits: [], i: 0 };
-    const list = this.visibleEntries();
-    for (let i = 0; i < list.length; i++) {
-      if (plainTextOf(list[i]).indexOf(kw) < 0) continue;
-      this.search.hits.push({ entry: list[i], index: i });
-    }
-    if (!this.search.hits.length) {
-      this.openSlip({ title: '没 找 到', body: `整本册子都翻了，没有「${escapeHtml(kw)}」这个词。`, ok: '知道了' });
+    const hits = this.entries.filter((e) => !e.encrypted && searchHit(plainTextOf(e), kw));
+    if (!hits.length) {
+      this.clearMarks(); // 新一次检索先拆上一本的旧笔
+      /* 无命中：退出上一本搜索册回全本，别让旧册名与旧笔留在纸上（手写 ==高亮== 不动） */
+      if (this.searchKw) {
+        this.searchKw = null;
+        this.relayout({ volume: 1, page: 0 });
+        this.resetFilterTab();
+      }
+      this.openSlip({
+        title: '没 找 到',
+        body: `整本册子都翻了，没有「${escapeHtml(kw)}」这个词。`,
+        ok: '知道了',
+      });
       return;
     }
-    this.toast(`寻得 ${this.search.hits.length} 处，荧光笔伺候`);
-    this.nextHit();
+    this.clearMarks();
+    this.filterTag = null; // 与分类册/加密册互斥（顺带收掉它们的书签）
+    this.searchKw = kw;
+    /* relayout 里 visibleEntries 按 searchKw 过滤 → 命中条目重排成一册；buildBook 后 markAllHits 打标 */
+    this.relayout({ volume: 1, page: 0 });
+    this.setFilterTab(`🔎 ${kw}`);
+    this.toast(`「${kw}」订成一册：${hits.length} 则 · 命中处都划了荧光笔`);
   }
 
-  /** 下一处命中：跨卷的先换卷并落到那一页（50 则的重排是几十毫秒），同卷的直接翻 */
-  private nextHit(): void {
-    const s = this.search;
-    if (!s.hits.length) return;
-    const hit = s.hits[s.i % s.hits.length];
-    s.i++;
-    const kw = s.kw || '';
-    const eid = hit.entry.id || '';
-    this.planVolumes();
-    const vol = volumeOf(this.volumes, hit.index);
-    if (vol > 0 && vol !== this.volIndex + 1) {
-      this.relayout({ volume: vol, eid });
-    } else {
-      const pi = this.pageOfEid(eid);
-      if (pi >= 0) this.jumpToPage(pi);
-    }
-    setTimeout(() => this.markHitEid(eid, kw), 80);
-  }
-
-  /** 在刚翻到的那一页上把这一条里含词的那些块划上荧光笔 */
-  private markHitEid(eid: string, kw: string): void {
-    if (!eid || !kw || !this.root) return;
+  /** 整本每一页的命中处划荧光笔：每次重排（换卷/回刷）后都重打一遍，不随翻页丢失 */
+  private markAllHits(): void {
+    if (!this.searchKw || !this.root) return;
+    const kw = this.searchKw;
     for (const page of this.pages) {
       for (const el of page) {
-        if (el.dataset.eid !== eid) continue;
-        if ((el.textContent || '').indexOf(kw) >= 0) this.markHit(el, kw);
+        if (searchHit(el.textContent || '', kw)) this.markHit(el, kw);
       }
     }
   }
 
+  /**
+   * 在一块里划荧光笔。命中判定放宽了（NFKC + 去标点 + 小写），DOM 文本却是原文，
+   * 故这里建「归一化字符 → 原文下标」映射：归一化串上找词，再按映射切回原文，标原字形。
+   * 一个原文字符 NFKC 后可能变多个（如 ㍿→株式会社），也可能被丢掉（标点），映射都记在 map 里。
+   */
   private markHit(el: HTMLElement, kw: string): void {
     if (!el.isConnected || !kw) return;
     if (!el.dataset.orig) el.dataset.orig = el.innerHTML;
+    const nk = searchNorm(kw);
+    if (!nk) return;
     const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT, {
       acceptNode: (n) =>
         n.parentElement && n.parentElement.closest('mark') ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT,
@@ -2984,19 +3057,27 @@ export class DiaryAppController {
     while ((n = walker.nextNode())) texts.push(n as Text);
     for (const node of texts) {
       const t = node.textContent || '';
-      if (t.indexOf(kw) < 0) continue;
+      /* 与命中判定共用一个归一化源（searchNormMap）：归一化串 + 每字符对应的原文区间。
+         组合记号合成、emoji 丢弃、全角折叠、多字符展开全由它统一处理，绝不会「判命中却不高亮」。 */
+      const { norm, starts, ends } = searchNormMap(t);
+      if (norm.indexOf(nk) < 0) continue;
       const frag = document.createDocumentFragment();
-      let rest = t;
-      while (rest.indexOf(kw) >= 0) {
-        const i = rest.indexOf(kw);
-        if (i) frag.appendChild(document.createTextNode(rest.slice(0, i)));
+      let cursor = 0; // 原文下标游标
+      let from = 0; // 归一化串查找游标
+      for (;;) {
+        const ni = norm.indexOf(nk, from);
+        if (ni < 0) break;
+        const s = starts[ni];
+        const e = ends[ni + nk.length - 1]; // 原文半开区间 [s, e)
+        if (s > cursor) frag.appendChild(document.createTextNode(t.slice(cursor, s)));
         const mk = document.createElement('mark');
         mk.className = 'bz-diary-hl bz-diary-hl-on';
-        mk.textContent = kw;
+        mk.textContent = t.slice(s, e);
         frag.appendChild(mk);
-        rest = rest.slice(i + kw.length);
+        cursor = e;
+        from = ni + nk.length;
       }
-      if (rest) frag.appendChild(document.createTextNode(rest));
+      if (cursor < t.length) frag.appendChild(document.createTextNode(t.slice(cursor)));
       node.parentNode?.replaceChild(frag, node);
     }
   }
@@ -3023,9 +3104,9 @@ export class DiaryAppController {
   private askSearch(): void {
     this.openSlip({
       title: '放 大 镜',
-      body: '要找哪个词？整本册子替你翻。',
+      body: '要找哪个词？命中的日记替你订成一册，翻着看就够。',
       input: { placeholder: '比如：雨、猫、游戏……' },
-      ok: '翻找',
+      ok: '订成册',
       onSubmit: (v) => {
         if (!v) return '写一个词嘛';
         this.runSearch(v);

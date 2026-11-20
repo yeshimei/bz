@@ -27,6 +27,9 @@ import {
   paginateFlow,
   pageDateOf,
   plainTextOf,
+  searchNorm,
+  searchNormMap,
+  searchHit,
   type FlowItem,
   type Page,
 } from '../../src/diary/ui';
@@ -452,6 +455,42 @@ describe('plainTextOf（誊录正文）', () => {
 
   it('日记：正文原样', () => {
     expect(plainTextOf(mk({ date: '2026-08-19', kind: 'diary', content: '被猫盯着' }))).toBe('被猫盯着');
+  });
+});
+
+describe('检索归一化（放大镜放宽口径）', () => {
+  it('全角半角 / 大小写 / 空白标点都抹平', () => {
+    expect(searchNorm('ＣＡＴ， 你好！')).toBe('cat你好');
+    expect(searchNorm('  abc  ')).toBe('abc');
+  });
+
+  it('searchHit：空词不算命中，放宽口径后能命中', () => {
+    expect(searchHit('今天下雨了', '')).toBe(false);
+    expect(searchHit('今天下雨了', '下雨')).toBe(true);
+    expect(searchHit('六月五日', '六月，五日')).toBe(true); // 标点
+    expect(searchHit('Ｃat 在跑', 'cat')).toBe(true); // 全角 + 大小写 + 空白
+    expect(searchHit('晴', '雨')).toBe(false);
+  });
+
+  it('emoji / NFD 组合记号：命中判定与荧光笔映射口径一致（判命中就划得上）', () => {
+    /* emoji 是 \p{S}，整体归一化丢掉；逐 code unit 拆成 lone surrogate 会留下 → 曾经「判命中却不高亮」 */
+    expect(searchNorm('a😀b')).toBe('ab');
+    expect(searchHit('a😀b', 'ab')).toBe(true);
+    const emojiMap = searchNormMap('a😀b');
+    expect(emojiMap.norm).toBe('ab');
+    /* 归一化串 'a'(0) 'b'(1) 分别映射回原文区间：a=[0,1)，b=[3,4)（😀 占 2 个 code unit） */
+    expect([emojiMap.starts[0], emojiMap.ends[0]]).toEqual([0, 1]);
+    expect([emojiMap.starts[1], emojiMap.ends[1]]).toEqual([3, 4]);
+
+    /* NFD 组合记号：cafe\u0301 的 é 与 café 的 é 归一化后必须同为 é（合成），映射覆盖 e+记号 */
+    const cafe = 'cafe\u0301 真好';
+    expect(searchNorm(cafe)).toBe('café真好');
+    expect(searchHit(cafe, 'café')).toBe(true);
+    const cafeMap = searchNormMap(cafe);
+    expect(cafeMap.norm.indexOf('café')).toBeGreaterThanOrEqual(0);
+    const ei = cafeMap.norm.indexOf('é');
+    /* 'é' 映射回 [3,5)：原文 'e' + 组合记号 '\u0301' 两个 code unit */
+    expect([cafeMap.starts[ei], cafeMap.ends[ei]]).toEqual([3, 5]);
   });
 });
 
@@ -914,7 +953,7 @@ describe('DiaryAppController · 文具四项接线', () => {
     expect(rows[0].textContent).toContain('卷 1');
   });
 
-  it('放大镜命中用荧光笔标出，且只拆检索打的那一笔（手写 ==高亮== 不动）', async () => {
+  it('放大镜命中整本划荧光笔，且新一次检索先拆旧笔（手写 ==高亮== 不动）', async () => {
     await openBook();
     q('.bz-diary-tools [data-tact="lens"]').click();
     const input = q<HTMLInputElement>('.bz-diary-slip-input');
@@ -924,7 +963,7 @@ describe('DiaryAppController · 文具四项接线', () => {
     await vi.waitFor(() => expect(qa('.bz-diary-page-item mark.bz-diary-hl-on').length).toBe(1));
     expect(q('.bz-diary-toast').textContent).toContain('荧光笔');
 
-    // 没命中 → 弹「没找到」纸条，不标任何东西
+    // 没命中 → 弹「没找到」纸条，退出搜索册、拆掉旧笔
     await vi.waitFor(() => expect(qa('mark.bz-diary-hl-on').length).toBe(1));
     q('.bz-diary-tools [data-tact="lens"]').click();
     const input2 = q<HTMLInputElement>('.bz-diary-slip-input');
@@ -932,6 +971,7 @@ describe('DiaryAppController · 文具四项接线', () => {
     q('.bz-diary-slip-row .bz-diary-slip-btn.bz-diary-primary').click();
     await vi.waitFor(() => expect(q('.bz-diary-slip-title').textContent).toContain('没'));
     expect(qa('mark.bz-diary-hl-on').length).toBe(0); // 新一次检索先拆旧笔
+    expect((DiaryAppController.getInstance() as unknown as { searchKw: string | null }).searchKw).toBeNull();
   });
 
   it('台历点有日记的那天 → 翻到那天；没落笔的那天只提示', async () => {
@@ -977,13 +1017,17 @@ describe('DiaryAppController · 文具四项接线', () => {
     expect(q('.bz-diary-toast').textContent).not.toContain('没落笔');
   });
 
-  it('检索命中书尾那一则：真翻到后面那页（跨页命中有落点）', async () => {
-    await openBook();
+  it('检索命中书尾那一则：单独订成搜索册，落第 0 页并划荧光笔（不再跳页）', async () => {
+    const c = await openBook();
     q('.bz-diary-tools [data-tact="lens"]').click();
     q<HTMLInputElement>('.bz-diary-slip-input').value = '元旦';
     q('.bz-diary-slip-row .bz-diary-slip-btn.bz-diary-primary').click();
-    expect(lastFlip().page).toBeGreaterThan(0); // 「元旦那天」在 2025-01-01，不在第 0 页
-    await vi.waitFor(() => expect(qa('mark.bz-diary-hl-on').length).toBe(1));
+    /* 「元旦那天」在 2025-01-01，是原本的第 1 页；订成搜索册后册里只剩这一则，落第 0 页 */
+    const visible = (c as unknown as { visibleEntries: () => WallEntry[] }).visibleEntries.bind(c);
+    expect(visible().length).toBe(1);
+    expect(visible()[0].content).toContain('元旦');
+    expect(lastFlip().page).toBe(0);
+    await vi.waitFor(() => expect(qa('mark.bz-diary-hl-on').length).toBeGreaterThan(0));
   });
 });
 
@@ -1706,6 +1750,26 @@ describe('DiaryAppController · 加密册的可见集与读盘', () => {
     } finally {
       relayout.mockRestore();
     }
+  });
+
+  it('搜索册中点加密册再取消解锁：搜索册原样留着（状态/书页/书签都不动）', async () => {
+    const c = await openBook();
+    inner(c).runSearch('猫');
+    expect((c as unknown as { searchKw: string | null }).searchKw).toBe('猫');
+    const beforeVisible = (c as unknown as { visibleEntries: () => WallEntry[] }).visibleEntries().length;
+
+    mocks.isUnlocked.mockReturnValue(false);
+    mocks.getSafeManager.mockReturnValue({ unlocked: false, manifest: null } as never);
+    q('.bz-diary-tools [data-tact="stickers"]').click();
+    qa('.bz-diary-ap-sticker').find((el) => el.dataset.tag === '加密')!.click();
+    await vi.waitFor(() => expect(q('.bz-diary-pass').hidden).toBe(false));
+    q<HTMLElement>('.bz-diary-pass-btn[data-pact="cancel"]').click();
+
+    /* 取消解锁后：仍在搜索册，书签还挂「猫」，可见集没变 */
+    expect((c as unknown as { searchKw: string | null }).searchKw).toBe('猫');
+    expect((c as unknown as { filterTag: string | null }).filterTag).toBeNull();
+    expect(q('.bz-diary-ft-name').textContent).toContain('猫');
+    expect((c as unknown as { visibleEntries: () => WallEntry[] }).visibleEntries().length).toBe(beforeVisible);
   });
 
   it('applyFilter 不再多调一次 jumpToPage（落点已由 relayout 给）', async () => {
@@ -2496,15 +2560,88 @@ describe('DiaryAppController · 分卷（ADR-0259：一册只摊开一卷）', (
     }
   });
 
-  it('检索翻全书：命中在窗外也能换卷落到那一页并划上荧光笔', async () => {
+  it('检索订成搜索册：命中条目单独重排成一本，整本划荧光笔（取代旧的逐处跳页）', async () => {
     threeMonths();
     withCap(3);
     try {
       const c = await openBook();
+      expect(c.entries.length).toBe(6);
       inner(c).runSearch('六月五日');
-      await vi.waitFor(() => expect(flipRecords.length).toBe(2), { timeout: 2000 });
-      await vi.waitFor(() => expect(qa('.bz-diary-page-item mark').length).toBeGreaterThan(0), { timeout: 2000 });
-      expect(q('.bz-diary-page-item mark').textContent).toContain('六月五日');
+      /* 搜索册只留命中那 1 则：visibleEntries 从 6 缩到 1，整本重排落第 1 卷 */
+      const visible = (c as unknown as { visibleEntries: () => WallEntry[] }).visibleEntries.bind(c);
+      expect(visible().length).toBe(1);
+      expect(visible()[0].content).toContain('六月五日');
+      expect((c as unknown as { searchKw: string | null }).searchKw).toBe('六月五日');
+      /* 书签条挂上搜索词，取下即回全本 */
+      expect(q('.bz-diary-filter-tab').classList.contains('bz-diary-on')).toBe(true);
+      expect(q('.bz-diary-ft-name').textContent).toContain('六月五日');
+      /* 整本高亮：命中块被划上荧光笔 */
+      await vi.waitFor(() => expect(qa('.bz-diary-page-item mark.bz-diary-hl-on').length).toBeGreaterThan(0), { timeout: 2000 });
+      expect(q('.bz-diary-page-item mark.bz-diary-hl-on').textContent).toContain('六月五日');
+      /* 点书签取下：搜索册退掉、回全本 6 则 */
+      q('.bz-diary-filter-tab').click();
+      expect((c as unknown as { searchKw: string | null }).searchKw).toBeNull();
+      expect(visible().length).toBe(6);
+    } finally {
+      setSettingsProvider(() => ({ diaryDirectory: '我的/日记', letterDirectory: '我的/信', cinemaFolderPath: '我的/影视', bookshelfFolderPath: '书库' }) as never);
+    }
+  });
+
+  it('搜索册与分类册互斥：进一个退另一个，书签条只挂当前册名', async () => {
+    const c = await openBook();
+    /* 先在分类册：点「日记」贴纸 */
+    q('.bz-diary-tools [data-tact="stickers"]').click();
+    qa('.bz-diary-ap-sticker').find((el) => (el.textContent || '').includes('日记'))!.click();
+    await vi.waitFor(() => expect((c as unknown as { filterTag: string | null }).filterTag).toBe('日记'));
+    expect(q('.bz-diary-ft-name').textContent).toContain('日记');
+
+    /* 转进搜索册：分类册被退掉，书签条改挂搜索词 */
+    inner(c).runSearch('猫');
+    expect((c as unknown as { filterTag: string | null }).filterTag).toBeNull();
+    expect((c as unknown as { searchKw: string | null }).searchKw).toBe('猫');
+    expect(q('.bz-diary-ft-name').textContent).toContain('猫');
+    expect(q('.bz-diary-ft-name').textContent).not.toContain('日记');
+
+    /* 再点分类贴纸：搜索册退掉，回分类册 */
+    q('.bz-diary-tools [data-tact="stickers"]').click();
+    qa('.bz-diary-ap-sticker').find((el) => (el.textContent || '').includes('日记'))!.click();
+    expect((c as unknown as { searchKw: string | null }).searchKw).toBeNull();
+    expect((c as unknown as { filterTag: string | null }).filterTag).toBe('日记');
+  });
+
+  it('检索高亮与命中口径一致：emoji 夹在词中间也能把词划出来（不吞 emoji）', async () => {
+    withCap(50);
+    try {
+      const c = await openBook();
+      /* 正文里词被 emoji 隔断：「今😀天 下雨」——搜「今天」，归一化丢掉 emoji 后判命中，
+         高亮须把「今」「天」两块分别划出，且不能把中间的 emoji 吞进 mark */
+      (c.entries as WallEntry[]).push(
+        mk({ id: 'emoji-e1', date: '2026-08-18', kind: 'diary', content: '今😀天 下雨了', tags: ['日记'] })
+      );
+      inner(c).runSearch('今天');
+      const visible = (c as unknown as { visibleEntries: () => WallEntry[] }).visibleEntries.bind(c);
+      /* 注入的 emoji 条目须进搜索册（可能还有夹具里别的「今天」，故用 some 而非 length===1） */
+      expect(visible().some((e) => e.id === 'emoji-e1')).toBe(true);
+      await vi.waitFor(() => expect(qa('mark.bz-diary-hl-on').length).toBeGreaterThan(0), { timeout: 2000 });
+      const marks = qa('mark.bz-diary-hl-on').map((el) => el.textContent);
+      expect(marks.join('')).toContain('今');
+      expect(marks.join('')).toContain('天');
+      expect(marks.every((m) => !m?.includes('😀'))).toBe(true); // emoji 不被吞进高亮
+    } finally {
+      setSettingsProvider(() => ({ diaryDirectory: '我的/日记', letterDirectory: '我的/信', cinemaFolderPath: '我的/影视', bookshelfFolderPath: '书库' }) as never);
+    }
+  });
+
+  it('检索口径放宽：全角 / 大小写 / 标点都能命中并订成搜索册', async () => {
+    threeMonths();
+    withCap(3);
+    try {
+      const c = await openBook();
+      /* 正文「六月五日」，用带全角数字 + 标点的词去搜，仍应命中那一则 */
+      inner(c).runSearch('六月，五日');
+      const visible = (c as unknown as { visibleEntries: () => WallEntry[] }).visibleEntries.bind(c);
+      expect(visible().length).toBe(1);
+      expect(visible()[0].content).toContain('六月五日');
     } finally {
       setSettingsProvider(() => ({ diaryDirectory: '我的/日记', letterDirectory: '我的/信', cinemaFolderPath: '我的/影视', bookshelfFolderPath: '书库' }) as never);
     }
