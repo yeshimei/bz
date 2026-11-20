@@ -3067,14 +3067,25 @@ export class DiaryAppController {
       for (;;) {
         const ni = norm.indexOf(nk, from);
         if (ni < 0) break;
-        const s = starts[ni];
-        const e = ends[ni + nk.length - 1]; // 原文半开区间 [s, e)
-        if (s > cursor) frag.appendChild(document.createTextNode(t.slice(cursor, s)));
-        const mk = document.createElement('mark');
-        mk.className = 'bz-diary-hl bz-diary-hl-on';
-        mk.textContent = t.slice(s, e);
-        frag.appendChild(mk);
-        cursor = e;
+        /* 放宽口径会丢掉 emoji / 标点 / 空白：命中词的归一化字符在原文里未必连续。
+           逐字符按映射切回原文，只有原文紧邻（上一段终点 == 下一段起点）才并成一个 mark，
+           否则断开、中间原文照常输出，绝不把被丢掉的字符吞进荧光笔（发版前置 review 第 2 条）。 */
+        let j = ni;
+        while (j < ni + nk.length) {
+          const s = starts[j];
+          let e = ends[j];
+          j++;
+          while (j < ni + nk.length && starts[j] === e) {
+            e = ends[j];
+            j++;
+          }
+          if (s > cursor) frag.appendChild(document.createTextNode(t.slice(cursor, s)));
+          const mk = document.createElement('mark');
+          mk.className = 'bz-diary-hl bz-diary-hl-on';
+          mk.textContent = t.slice(s, e);
+          frag.appendChild(mk);
+          cursor = e;
+        }
         from = ni + nk.length;
       }
       if (cursor < t.length) frag.appendChild(document.createTextNode(t.slice(cursor)));
@@ -4130,6 +4141,9 @@ export class DiaryAppController {
         if (!evt || !evt.unlocked) {
           // 上锁：加密条目实时不可见，加密书签与明文一起收走
           if (this.filterTag === ENCRYPT_TAG) this.filterTag = null;
+          /* 搜索册也一并退掉（发版前置 review 第 3 条）：否则 resetFilterTab 收走了书签「取下」入口，
+             searchKw 却在、重排仍按搜索词——册子和高亮都在，用户却点不到入口退回全本。 */
+          this.searchKw = null;
           this.resetFilterTab();
           this.entries = this.entries.filter((e) => !e.encrypted);
           void this.loadAndRelayout();

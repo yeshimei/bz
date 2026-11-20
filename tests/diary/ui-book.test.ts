@@ -2609,24 +2609,60 @@ describe('DiaryAppController · 分卷（ADR-0259：一册只摊开一卷）', (
     expect((c as unknown as { filterTag: string | null }).filterTag).toBe('日记');
   });
 
-  it('检索高亮与命中口径一致：emoji 夹在词中间也能把词划出来（不吞 emoji）', async () => {
+  it('检索高亮与命中口径一致：emoji 夹在词中间只划词、不吞 emoji', async () => {
     withCap(50);
     try {
       const c = await openBook();
-      /* 正文里词被 emoji 隔断：「今😀天 下雨」——搜「今天」，归一化丢掉 emoji 后判命中，
-         高亮须把「今」「天」两块分别划出，且不能把中间的 emoji 吞进 mark */
-      (c.entries as WallEntry[]).push(
-        mk({ id: 'emoji-e1', date: '2026-08-18', kind: 'diary', content: '今😀天 下雨了', tags: ['日记'] })
+      /* 夹具里别的「今天」会满足 marks 断言造成假阳性：整个换成单条，确保 mark 只来自本条 */
+      (c.entries as WallEntry[]).splice(0, (c.entries as WallEntry[]).length,
+        mk({ id: 'emoji-e1', date: '2026-08-18', kind: 'diary', content: '今😀天 下雨了',
+          segments: [{ kind: 'text', text: '今😀天 下雨了' }], tags: ['日记'] })
       );
       inner(c).runSearch('今天');
       const visible = (c as unknown as { visibleEntries: () => WallEntry[] }).visibleEntries.bind(c);
-      /* 注入的 emoji 条目须进搜索册（可能还有夹具里别的「今天」，故用 some 而非 length===1） */
       expect(visible().some((e) => e.id === 'emoji-e1')).toBe(true);
-      await vi.waitFor(() => expect(qa('mark.bz-diary-hl-on').length).toBeGreaterThan(0), { timeout: 2000 });
-      const marks = qa('mark.bz-diary-hl-on').map((el) => el.textContent);
-      expect(marks.join('')).toContain('今');
-      expect(marks.join('')).toContain('天');
-      expect(marks.every((m) => !m?.includes('😀'))).toBe(true); // emoji 不被吞进高亮
+      await vi.waitFor(() => expect(qa('mark.bz-diary-hl-on').length).toBe(2), { timeout: 2000 });
+      /* 归一化丢掉的 emoji 必须留在外面的文本节点，不能切进 mark */
+      expect(qa('mark.bz-diary-hl-on').map((el) => el.textContent)).toEqual(['今', '天']);
+      expect(q('.bz-diary-page-item').textContent).toContain('今😀天');
+    } finally {
+      setSettingsProvider(() => ({ diaryDirectory: '我的/日记', letterDirectory: '我的/信', cinemaFolderPath: '我的/影视', bookshelfFolderPath: '书库' }) as never);
+    }
+  });
+
+  it('检索高亮不吞被放宽口径丢掉的标点', async () => {
+    withCap(50);
+    try {
+      const c = await openBook();
+      (c.entries as WallEntry[]).splice(0, (c.entries as WallEntry[]).length,
+        mk({ id: 'punct-e1', date: '2026-08-18', kind: 'diary', content: '六月，五日 出门',
+          segments: [{ kind: 'text', text: '六月，五日 出门' }], tags: ['日记'] })
+      );
+      inner(c).runSearch('六月五日');
+      await vi.waitFor(() => expect(qa('mark.bz-diary-hl-on').length).toBe(2), { timeout: 2000 });
+      expect(qa('mark.bz-diary-hl-on').map((el) => el.textContent)).toEqual(['六月', '五日']);
+      expect(q('.bz-diary-page-item').textContent).toContain('六月，五日');
+    } finally {
+      setSettingsProvider(() => ({ diaryDirectory: '我的/日记', letterDirectory: '我的/信', cinemaFolderPath: '我的/影视', bookshelfFolderPath: '书库' }) as never);
+    }
+  });
+
+  it('上锁时一并退出搜索册，书签取下入口与册子状态一致', async () => {
+    withCap(50);
+    try {
+      const c = await openBook();
+      inner(c).runSearch('猫');
+      expect((c as unknown as { searchKw: string | null }).searchKw).toBe('猫');
+      expect(q('.bz-diary-filter-tab').classList.contains('bz-diary-on')).toBe(true);
+      expect(q('.bz-diary-ft-name').textContent).toContain('猫');
+
+      emitDomainEvent('encrypt:unlock-changed', { unlocked: false });
+
+      expect((c as unknown as { searchKw: string | null }).searchKw).toBeNull();
+      const visible = (c as unknown as { visibleEntries: () => WallEntry[] }).visibleEntries.bind(c);
+      expect(visible().length).toBeGreaterThan(1); // 回全本，不再停在搜索册那几则
+      expect(q('.bz-diary-filter-tab').classList.contains('bz-diary-on')).toBe(false);
+      expect(q('.bz-diary-ft-name').textContent).not.toContain('猫');
     } finally {
       setSettingsProvider(() => ({ diaryDirectory: '我的/日记', letterDirectory: '我的/信', cinemaFolderPath: '我的/影视', bookshelfFolderPath: '书库' }) as never);
     }

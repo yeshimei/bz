@@ -58,6 +58,8 @@ export interface RoadmapItem {
   state: RoadmapState;
   src: 'builtin' | 'github';
   fb: RoadmapFeedback;
+  /** 归属插件：bz 与 reader 共用一份在线配置，各自只收自己的条目 */
+  plugin?: 'bz' | 'reader';
 }
 
 export interface RoadmapTheme {
@@ -163,7 +165,9 @@ const FETCH_TIMEOUT_MS = 4000;
    同日升到 3：反馈条目换成五态 + 分钟日期 + 作者回复 + Git 提交链接，老缓存缺这些字段
    会导致新界面全空，必须立刻作废。
    导出给测试用：写缓存那几个用例要按当前版本号拼 doc，别再手写 1。 */
-export const BZR_CACHE_VERSION = 4;
+/* 2026-11-20 升到 5：路线图条目加了插件归属，reader 的不再进 bz；
+   旧缓存里的条目没标记会继续显示别人的路线图，必须立刻作废重拉。 */
+export const BZR_CACHE_VERSION = 5;
 const MAX_ITEMS = 200;
 const MAX_TEXT = 400;
 
@@ -340,6 +344,9 @@ function feedbackGroups(raw: unknown): BzrFeedbackGroup[] {
 function roadmapItem(raw: unknown): RoadmapItem | null {
   if (!raw || typeof raw !== 'object') return null;
   const o = raw as Record<string, unknown>;
+  /* 共用配置里 reader 的条目不进 bz 的路线图（发版前置 review 第 4 条：只展现自己的）。
+     未标注的旧条目照收，兼容还没打标记的历史数据。 */
+  if (o.plugin === 'reader') return null;
   if (typeof o.title !== 'string' || !clean(o.title)) return null;
   if (o.state !== 'plan' && o.state !== 'doing' && o.state !== 'done') return null;
   if (o.src !== 'builtin' && o.src !== 'github') return null;

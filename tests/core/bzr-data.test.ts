@@ -74,6 +74,22 @@ describe('解析 · 一份远端 JSON 能变成什么', () => {
     expect(d!.links.buy).toContain('afdian.net');
   });
 
+  it('路线图只展现自己的：reader 的条目不进 bz，未标注的旧条目照收（发版前置 review 第 4 条）', () => {
+    const d = parseBzrData(doc({ roadmap: [
+      { theme: '混合', color: '#fff', order: 1, items: [
+        { title: 'bz 自己的', state: 'doing', src: 'builtin', plugin: 'bz', fb: { kind: 'issue', n: 1, label: '#1' } },
+        { title: 'reader 的', state: 'plan', src: 'builtin', plugin: 'reader', fb: { kind: 'issue', n: 2, label: '#2' } },
+        { title: '老条目没标记', state: 'done', src: 'builtin', fb: { kind: 'issue', n: 3, label: '#3' } },
+      ] },
+      { theme: '全是 reader', color: '#fff', order: 2, items: [
+        { title: 'PDF 重排', state: 'plan', src: 'builtin', plugin: 'reader', fb: { kind: 'issue', n: 4, label: '#4' } },
+      ] },
+    ] }));
+    expect(d!.roadmap).toHaveLength(1);
+    expect(d!.roadmap[0]!.theme).toBe('混合');
+    expect(d!.roadmap[0]!.items.map((i) => i.title)).toEqual(['bz 自己的', '老条目没标记']);
+  });
+
   it('顶层不对（不是对象 / 缺字段 / JSON 坏）→ null', () => {
     expect(parseBzrData('not json')).toBeNull();
     expect(parseBzrData('null')).toBeNull();
