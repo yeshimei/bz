@@ -60,6 +60,12 @@ const PRODUCTS = {
     zip: (v) => `bz-reader-${v}.zip`,
     pattern: /^bz-reader-\d+\.\d+\.\d+\.zip$/,
   },
+  review: {
+    label: 'bz review',
+    pdir: '069d66671a554feab5bb6b13c0bf4f0c',
+    zip: (v) => `bz-review-${v}.zip`,
+    pattern: /^bz-review-\d+\.\d+\.\d+\.zip$/,
+  },
 };
 
 function arg(name, fallback = undefined) {
@@ -310,7 +316,7 @@ async function main() {
   const me = await quark.whoami();
   console.log(`[push-quark] 账号：${me.nickname || '(接口没给昵称)'}（${me.member_type || '未知会员'}）`);
 
-  const repo = String(arg('repo', product === 'reader' ? 'D:/Obsidian/bz-reader' : process.cwd()));
+  const repo = String(arg('repo', product === 'reader' ? 'D:/Obsidian/bz-reader' : product === 'review' ? 'D:/Obsidian/bz-review' : process.cwd()));
   const version = resolveVersion(repo);
   const given = String(arg('file', ''));
   const wanted = given ? [given] : (conf.zips ?? ((v) => [conf.zip(v)]))(version);
@@ -325,8 +331,8 @@ async function main() {
     }
     /* 只有 reader 是现场打三件套；bz 的两个包由 pack-release 产出，
        缺了就从 GitHub Release 取回来（网盘镜像的就是那份），别在这里瞎拼。 */
-    if (product === 'reader' && !given && wanted.length === 1) {
-      const packed = packPlugin(repo, version, 'bz-reader');
+    if ((product === 'reader' || product === 'review') && !given && wanted.length === 1) {
+      const packed = packPlugin(repo, version, `bz-${product}`);
       targets.push(packed.zip);
       cleanup = packed.cleanup;
       continue;
