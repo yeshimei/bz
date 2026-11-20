@@ -60,6 +60,18 @@ export function releaseEntryCount(release: ChangelogRelease): number {
  */
 export const CHANGELOG_RELEASES: readonly ChangelogRelease[] = [
   {
+    version: '1.44.6',
+    date: '2026-11-20',
+    // 条目与 docs/note-v1.44.6.md 同稿（scripts/_gen-changelog.mjs 自动生成，勿手改）
+    fixed: [
+      { domain: '日记本', text: '窗口模式下写日记，正文不再被挤得只剩一两行。', qq: 'https://pd.qq.com/s/N4jpfbpqml' },
+      { domain: '更新日志', text: '路线图只显示 bz 自己的功能，不再混进另一个插件的内容。' },
+    ],
+    improved: [
+      { domain: '日记本', text: '放大镜搜到的日记订成一册，翻着就能看完全部命中。' },
+    ],
+  },
+  {
     version: '1.44.5',
     date: '2026-11-19',
     // 条目与 docs/note-v1.44.5.md 同稿（scripts/_gen-changelog.mjs 自动生成，勿手改）
