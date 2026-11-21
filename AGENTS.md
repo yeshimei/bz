@@ -18,6 +18,8 @@ Obsidian 插件。域 = `src/<域>/`，`core` 是共享层。中文输出。
 
 等我确认后再改动代码。
 
+所有事情做完后，必须逐项跑真机验证并截图，把每项的描述和完整截图写进一份 Markdown 报告发给我点开查看。
+
 ## 硬约束（看见就是错）
 
 1. 样式只认 `src/<域>/styles.css`，域内禁滚动条自绘/注入/内联视觉，例外仅 ADR 授权的皮肤包与展示板 iframe 滚动条。
@@ -54,6 +56,7 @@ Obsidian 插件。域 = `src/<域>/`，`core` 是共享层。中文输出。
 - **码云 Release**：GitHub 七步后跑 `node scripts/push-gitee.mjs`，正文取 `docs/note-v<版本>.md`，挂 **15 个资产**（安装包/离线资源包/SHA256SUMS/三件套/downloads 扁平化 9 个）；令牌在 `~/.gitee-token`，绝不进仓库；只镜像已转正 Release（`gh release view` 非 draft），否则 exit 3。
 - **对外镜像只剩码云**：assets 步为纯本地对账（不跑脚本不联网）；真正镜像只有 `release-gate.mjs finalize` 里的 `push-gitee`，动手前过 `enforceReleaseOrder`。`yeshimei/bz-assets` 已退役冻结，`push-assets.mjs` 仅留作手动重建，唯一在用的是 `--upload-only`（补传 `downloads/`，不碰分发仓）。
 - **编号与沉淀**：占 issues/ADR 号先查主仓最新号；拍板结论进 `.scratch/memo-suite-plugin/spec.md`，决策进 `docs/adr/` 并同步 `CONTEXT.md`。
+- **社区目录扫描三条硬约束（2026-11-21，预审核被拦后补）**：目录额外跑 `@typescript-eslint/no-deprecated`、多余断言检查与 CSS 特性检查，本地 lint 关着 no-deprecated，所以这三类本地不报、目录必报——① 不写多余类型断言（`map.keys().next().value` 本身就是 `string | undefined`，别再 `as`）；② 不用 `querySelectorAll`（Obsidian 标弃用、推荐 `findAll`；跨 realm 的 iframe 文档用 `getElementsByTagName` 并写注释）；③ CSS 不写 `ui-monospace`（目录判成 `extended-system-fonts`），等宽字体用 `var(--font-monospace, …)`。**预览扫描 / 正式提交 / 催审核全由作者本人在网页上手动做，agent 绝不操作**（不跑脚本、不开浏览器）。
 
 
 ## 去哪儿查
