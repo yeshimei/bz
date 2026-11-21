@@ -59,6 +59,18 @@
         },
         {
           "domain": {
+            "zh": "全书鸟瞰",
+            "en": "Book overview"
+          },
+          "text": {
+            "zh": "下放到基础版，免费用户也能用。",
+            "en": "Now part of the base tier, so free users get it too."
+          }
+        }
+      ],
+      "improved": [
+        {
+          "domain": {
             "zh": "换版本不串线",
             "en": "Book versions"
           },
@@ -67,78 +79,6 @@
             "en": "When a book is replaced by a new version, the old progress is archived and can be found again under Archived on the shelf, while the new one starts fresh."
           },
           "qq": "https://pd.qq.com/s/N63q5vnx8b"
-        },
-        {
-          "domain": {
-            "zh": "一键装 Review",
-            "en": "Install Review"
-          },
-          "text": {
-            "zh": "没装 bz Review 时复习入口照样在，点「安装」后台下好并启用；装好没启用就一键启用。",
-            "en": "The Review entry stays visible without bz Review: click Install and it is downloaded and enabled in the background, or click Enable if it is already installed."
-          }
-        },
-        {
-          "domain": {
-            "zh": "全书鸟瞰",
-            "en": "Book overview"
-          },
-          "text": {
-            "zh": "下放到基础版，免费用户也能用。",
-            "en": "Now part of the base tier, so free users get it too."
-          }
-        },
-        {
-          "domain": {
-            "zh": "下载有备份",
-            "en": "Download backup"
-          },
-          "text": {
-            "zh": "插件下载连不上 GitHub 时自动换码云，点一下就能下。",
-            "en": "When GitHub is unreachable, plugin downloads silently switch to the Gitee mirror."
-          }
-        }
-      ],
-      "improved": [
-        {
-          "domain": {
-            "zh": "加入复习",
-            "en": "Send to Review"
-          },
-          "text": {
-            "zh": "划线加入复习后显示「已在复习」，确认时顺手补一条划线，不用再划一次。",
-            "en": "Highlights sent to Review now show as already in review, and confirming adds the highlight for you."
-          }
-        },
-        {
-          "domain": {
-            "zh": "制卡流程",
-            "en": "Card flow"
-          },
-          "text": {
-            "zh": "挑完内容后的制卡界面整段交给 bz Review，能先看到题面再决定留不留。",
-            "en": "The card-making screens now come from bz Review, so you can read each question before keeping it."
-          }
-        },
-        {
-          "domain": {
-            "zh": "更新日志",
-            "en": "Changelog"
-          },
-          "text": {
-            "zh": "统计数字改成随版本固定，反馈列表同时显示两个插件的条目，手机上工具条铺满一行。",
-            "en": "Stat numbers are pinned per release, the feedback list shows both plugins’ items, and the mobile toolbar fills its row."
-          }
-        },
-        {
-          "domain": {
-            "zh": "按章节",
-            "en": "By chapter"
-          },
-          "text": {
-            "zh": "弹窗固定半屏高，章节列表单独滚动，头尾按钮不再被长列表推走。",
-            "en": "The chapter picker is fixed at half height with its list scrolling inside, so the buttons stay put."
-          }
         },
         {
           "domain": {
@@ -159,16 +99,6 @@
             "zh": "没配置 AI 时不再只弹一句提示，给一个能直接跳到设置页的窗口。",
             "en": "When AI is not configured, a dialog now offers a direct jump to settings instead of a one-line notice."
           }
-        },
-        {
-          "domain": {
-            "zh": "功能对照表",
-            "en": "Plan comparison"
-          },
-          "text": {
-            "zh": "按新口径重排成十段，排版与复习各自独立成段。",
-            "en": "Rebuilt into ten sections, with typography and review getting their own."
-          }
         }
       ],
       "fixed": [
@@ -185,32 +115,12 @@
         },
         {
           "domain": {
-            "zh": "复习杂项",
-            "en": "Review fixes"
-          },
-          "text": {
-            "zh": "补题只补一道，划线后清选区，弹窗关掉即取消在途请求。",
-            "en": "Adding a card adds just one, the selection clears after highlighting, and closing the dialog cancels requests in flight."
-          }
-        },
-        {
-          "domain": {
             "zh": "取消与朗读",
             "en": "Cancel & read-aloud"
           },
           "text": {
             "zh": "AI 问答中途取消立刻停住；听书切句时旧回调不再盖住新句子。",
             "en": "Cancelling an AI answer stops it at once, and stale callbacks no longer overwrite the new sentence while listening."
-          }
-        },
-        {
-          "domain": {
-            "zh": "路线图",
-            "en": "Roadmap"
-          },
-          "text": {
-            "zh": "只显示 Reader 自己的条目，长分组平铺不折叠。",
-            "en": "Shows only Reader’s own entries, with long groups laid out flat instead of collapsed."
           }
         }
       ]
