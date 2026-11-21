@@ -70,6 +70,26 @@
         },
         {
           "domain": {
+            "zh": "一键装 Review",
+            "en": "Install Review"
+          },
+          "text": {
+            "zh": "没装 bz Review 时复习入口照样在，点「安装」后台下好并启用；装好没启用就一键启用。",
+            "en": "The Review entry stays visible without bz Review: click Install and it is downloaded and enabled in the background, or click Enable if it is already installed."
+          }
+        },
+        {
+          "domain": {
+            "zh": "全书鸟瞰",
+            "en": "Book overview"
+          },
+          "text": {
+            "zh": "下放到基础版，免费用户也能用。",
+            "en": "Now part of the base tier, so free users get it too."
+          }
+        },
+        {
+          "domain": {
             "zh": "下载有备份",
             "en": "Download backup"
           },
@@ -138,6 +158,16 @@
           "text": {
             "zh": "没配置 AI 时不再只弹一句提示，给一个能直接跳到设置页的窗口。",
             "en": "When AI is not configured, a dialog now offers a direct jump to settings instead of a one-line notice."
+          }
+        },
+        {
+          "domain": {
+            "zh": "功能对照表",
+            "en": "Plan comparison"
+          },
+          "text": {
+            "zh": "按新口径重排成十段，排版与复习各自独立成段。",
+            "en": "Rebuilt into ten sections, with typography and review getting their own."
           }
         }
       ],
