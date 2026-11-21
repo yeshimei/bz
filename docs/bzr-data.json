@@ -1,7 +1,190 @@
 {
   "version": 1,
-  "updatedAt": "2026-11-18",
+  "updatedAt": "2026-11-21",
   "changelog": [
+    {
+      "version": "1.6.0",
+      "date": "2026-11-21",
+      "added": [
+        {
+          "domain": {
+            "zh": "AI 服务商",
+            "en": "AI providers"
+          },
+          "text": {
+            "zh": "内置 18 家 AI 服务商，挑一家填上密钥就能用，也能自己填地址和协议。",
+            "en": "18 AI providers built in: pick one, add your key, done; or point it at your own address and protocol."
+          },
+          "qq": "https://pd.qq.com/s/Na2zwqz6c1"
+        },
+        {
+          "domain": {
+            "zh": "复习页签",
+            "en": "Review tab"
+          },
+          "text": {
+            "zh": "装了 bz Review 后，书架多一个「复习」，挑内容、制卡、复习都在一起。",
+            "en": "With bz Review installed, the shelf gains a Review tab where picking, card-making and reviewing all live together."
+          }
+        },
+        {
+          "domain": {
+            "zh": "统计回顾",
+            "en": "Stats"
+          },
+          "text": {
+            "zh": "统计页重做成六块——概览、时间、书、笔记、成就、数据。",
+            "en": "The stats page was rebuilt into six blocks: overview, time, books, notes, achievements and data."
+          }
+        },
+        {
+          "domain": {
+            "zh": "字数与速度",
+            "en": "Words & speed"
+          },
+          "text": {
+            "zh": "算出读过多少字、读得多快，还能按近 7 天、30 天、一年分开看。",
+            "en": "See how many words you have read and how fast, with ranges for the last 7 days, 30 days or a year."
+          }
+        },
+        {
+          "domain": {
+            "zh": "成就徽章",
+            "en": "Achievements"
+          },
+          "text": {
+            "zh": "连续阅读、读完多少本、深夜读书……攒满 18 枚徽章。",
+            "en": "Reading streaks, books finished, late-night sessions… 18 badges to collect."
+          }
+        },
+        {
+          "domain": {
+            "zh": "换版本不串线",
+            "en": "Book versions"
+          },
+          "text": {
+            "zh": "同一本书换了新版本，旧进度自动归档，书架「已归档」里随时能找回来，新版本从头开始读。",
+            "en": "When a book is replaced by a new version, the old progress is archived and can be found again under Archived on the shelf, while the new one starts fresh."
+          },
+          "qq": "https://pd.qq.com/s/N63q5vnx8b"
+        },
+        {
+          "domain": {
+            "zh": "下载有备份",
+            "en": "Download backup"
+          },
+          "text": {
+            "zh": "插件下载连不上 GitHub 时自动换码云，点一下就能下。",
+            "en": "When GitHub is unreachable, plugin downloads silently switch to the Gitee mirror."
+          }
+        }
+      ],
+      "improved": [
+        {
+          "domain": {
+            "zh": "加入复习",
+            "en": "Send to Review"
+          },
+          "text": {
+            "zh": "划线加入复习后显示「已在复习」，确认时顺手补一条划线，不用再划一次。",
+            "en": "Highlights sent to Review now show as already in review, and confirming adds the highlight for you."
+          }
+        },
+        {
+          "domain": {
+            "zh": "制卡流程",
+            "en": "Card flow"
+          },
+          "text": {
+            "zh": "挑完内容后的制卡界面整段交给 bz Review，能先看到题面再决定留不留。",
+            "en": "The card-making screens now come from bz Review, so you can read each question before keeping it."
+          }
+        },
+        {
+          "domain": {
+            "zh": "更新日志",
+            "en": "Changelog"
+          },
+          "text": {
+            "zh": "统计数字改成随版本固定，反馈列表同时显示两个插件的条目，手机上工具条铺满一行。",
+            "en": "Stat numbers are pinned per release, the feedback list shows both plugins’ items, and the mobile toolbar fills its row."
+          }
+        },
+        {
+          "domain": {
+            "zh": "按章节",
+            "en": "By chapter"
+          },
+          "text": {
+            "zh": "弹窗固定半屏高，章节列表单独滚动，头尾按钮不再被长列表推走。",
+            "en": "The chapter picker is fixed at half height with its list scrolling inside, so the buttons stay put."
+          }
+        },
+        {
+          "domain": {
+            "zh": "手机书架",
+            "en": "Mobile shelf"
+          },
+          "text": {
+            "zh": "四颗图标收进三点菜单，窄屏头栏不再挤成两行。",
+            "en": "Four icons moved into an overflow menu, so the narrow header no longer wraps to two rows."
+          }
+        },
+        {
+          "domain": {
+            "zh": "AI 提示",
+            "en": "AI setup"
+          },
+          "text": {
+            "zh": "没配置 AI 时不再只弹一句提示，给一个能直接跳到设置页的窗口。",
+            "en": "When AI is not configured, a dialog now offers a direct jump to settings instead of a one-line notice."
+          }
+        }
+      ],
+      "fixed": [
+        {
+          "domain": {
+            "zh": "手机侧栏",
+            "en": "Sidebar"
+          },
+          "text": {
+            "zh": "从侧栏跳转后自动收起，不再挡着正文。",
+            "en": "The sidebar now collapses after jumping, instead of covering the page."
+          },
+          "qq": "https://pd.qq.com/s/N881m4ojyd"
+        },
+        {
+          "domain": {
+            "zh": "复习杂项",
+            "en": "Review fixes"
+          },
+          "text": {
+            "zh": "补题只补一道，划线后清选区，弹窗关掉即取消在途请求。",
+            "en": "Adding a card adds just one, the selection clears after highlighting, and closing the dialog cancels requests in flight."
+          }
+        },
+        {
+          "domain": {
+            "zh": "取消与朗读",
+            "en": "Cancel & read-aloud"
+          },
+          "text": {
+            "zh": "AI 问答中途取消立刻停住；听书切句时旧回调不再盖住新句子。",
+            "en": "Cancelling an AI answer stops it at once, and stale callbacks no longer overwrite the new sentence while listening."
+          }
+        },
+        {
+          "domain": {
+            "zh": "路线图",
+            "en": "Roadmap"
+          },
+          "text": {
+            "zh": "只显示 Reader 自己的条目，长分组平铺不折叠。",
+            "en": "Shows only Reader’s own entries, with long groups laid out flat instead of collapsed."
+          }
+        }
+      ]
+    },
     {
       "version": "1.5.3",
       "date": "2026-11-18",
@@ -279,8 +462,8 @@
   ],
   "stats": {
     "reward": 6,
-    "pro": 47,
-    "patrons": 8
+    "pro": 55,
+    "patrons": 10
   },
   "links": {
     "support": "https://wzyp.cn/shop/IFCEI5I3",
