@@ -36,6 +36,7 @@ import {
   CINEMA_TUTORIAL_URL,
 } from './constants';
 import { M, noteSelfWrite, type CinemaItem, type CinemaSortMode } from './state';
+import { syncReviewToNote } from './review-in-note';
 import { loadDoubanNameIndex, searchDoubanNameIndex, normName, type DoubanIndexRow } from '../core/douban-name-index';
 import { rebuildItems, getDisplayItems, normalizeTags, normalizeRewatches, normalizeLists, allLists, refreshDataAndView } from './data';
 import { runAIRecommend, runSimilarRecommend, buildTasteProfile, quickAddWant, quickAddFromDouban } from './recommend';
@@ -1476,6 +1477,8 @@ async function persistItem(item: CinemaItem, app: App, edit?: { prevName: string
         }
       });
     }
+    // 影评入笔记（开关开才写，函数内自查）：属性写完同步写正文标记区
+    if (item.review) await syncReviewToNote(app, f, item.review);
     return;
   }
   if (edit && item.name !== edit.prevName) {
@@ -1514,6 +1517,8 @@ async function persistItem(item: CinemaItem, app: App, edit?: { prevName: string
       fm['tags'] = tags;
     }
   });
+  // 影评入笔记（开关开才写）：正文标记与属性同步；影评清空时连标记一起删（函数内自查开关）
+  await syncReviewToNote(app, item.file!, item.review || null);
   // 内存标志与盘上同步（紧跟的 renderAll 走内存态：转在看/已看后要立刻在正常视图出现）
   item.shelvedOnly = item.status === STATUS_WANT && item.shelvedOnly;
 }
@@ -3192,6 +3197,34 @@ function confirmCinema(sec: HTMLElement, o: {
     actions: [{ label: o.okLabel, value: 'ok', danger: o.danger }],
     focus: o.danger ? 'cancel' : 'primary',
   }).then((v) => v === 'ok');
+}
+
+/**
+ * 设置面板里的影院风格确认框（影评入笔记开关用）：影院面板没开也能弹。
+ * 临时宿主挂 body，ovHost 在其中建 `.bz-cinema--midnight`（display:contents）——
+ * 调色板变量与 `.cn-modal` 那张纸的样式照常穿皮，关闭后宿主一并摘掉。
+ */
+export function confirmCinemaFromSettings(o: {
+  kicker: string;
+  subject?: string;
+  lines: string[];
+  okLabel: string;
+  danger?: boolean;
+}): Promise<boolean> {
+  const sec = document.createElement('div');
+  sec.setAttribute('data-cinema-confirm-host', '');
+  document.body.appendChild(sec);
+  const answer = confirmCinema(sec, o);
+  // 影院的 .cn-ovl 平时在面板树内（z-index 50），设置面板本体层级更高会把它盖住；
+  // 从设置面板弹时必须顶到最上层，并改用 fixed 让遮罩相对视口铺满（宿主挂 body 无定位祖先）
+  const ov = sec.querySelector<HTMLElement>('.cn-ovl');
+  if (ov) {
+    ov.style.position = 'fixed';
+    ov.style.inset = '0';
+    // 自绘设置面板本体 z-index 达 100010，普通高位仍会被盖住——顶到 CSS 上限
+    ov.style.zIndex = '2147483647';
+  }
+  return answer.finally(() => sec.remove());
 }
 
 // ---------- 弹窗：删除确认 ----------

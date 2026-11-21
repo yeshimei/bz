@@ -8,12 +8,14 @@ import { onDomainEvent } from '../core/domain-bus';
 import { unregisterPanelEsc } from '../core/esc-manager';
 import { M, resetCinemaState, resolveCinemaFolderPath, DEFAULT_FOLDER, isRecentSelfWrite } from './state';
 import { rebuildItems, findPosterRenameTargets } from './data';
+import { isReviewInNoteEnabled, syncReviewFromNote } from './review-in-note';
 import { createOverlay, closeOverlay, registerEscapeHandler, renderAll, renderSoft, openAddModalDirect, openRandomMovie, openYearbookOverlay } from './ui';
 import { shutdownDoubanQueue, sweepDoubanFetch } from './douban-queue';
 import { needsFolderSetup, openFolderSettings } from '../core/folder-setup';
 
 let initialized = false;
 let autoRefreshRegistered = false;
+let reviewSyncRegistered = false;
 
 /** 打开面板时的默认视图接线（issue 194）：每次打开读设置，非法值回落
  *  （排序 date/created/rating 之外回落 date；状态筛选仅认想看/在看/已看，其余回全部）。
@@ -41,6 +43,7 @@ export function ensureCinema(app: App): void {
   registerEscapeHandler();
   registerAutoRefresh(app);
   registerPosterRenameSync(app);
+  registerReviewSync(app);
 }
 
 /** 域事件自动刷新（cinema/vault 多通道，防抖 300ms，仅 overlay 打开时刷新）。
@@ -82,6 +85,26 @@ function registerAutoRefresh(app: App): void {
   };
   onDomainEvent<{ oldPath: string; newPath: string }>('vault:md-renamed', onRenamed);
   onDomainEvent<{ oldPath: string; newPath: string }>('cinema:file-renamed', onRenamed);
+}
+
+/**
+ * 影评正文 → 属性同步（开关开才生效）：用户在笔记正文改 `<BZ-MOVIE>` 区后，把新内容并回
+ * 属性，让日记本回忆墙、小橘观察等仍读属性的消费点也看到最新值——属性始终留备份。
+ * 自写守卫（noteSelfWrite/isRecentSelfWrite）挡住「写属性 → 再触发本回调」的回灌死循环；
+ * 冲突按写入先后，最后落盘的那边为准（用户拍板）。
+ */
+function registerReviewSync(app: App): void {
+  if (reviewSyncRegistered) return;
+  reviewSyncRegistered = true;
+  onDomainEvent<{ path: string }>('vault:md-indexed', (evt) => {
+    if (!isReviewInNoteEnabled()) return;
+    const path = evt?.path;
+    if (!path || !M.folderPath || !path.startsWith(`${M.folderPath}/`)) return;
+    if (isRecentSelfWrite(path)) return;
+    const file = app.vault.getAbstractFileByPath(path) as import('obsidian').TFile | null;
+    if (!file) return;
+    void syncReviewFromNote(app, file);
+  });
 }
 
 // ---------- 海报路径 rename 联动（issue 337 审计#11） ----------
@@ -180,6 +203,7 @@ export function pickRandomCinema(app: App): void {
 export function unloadCinema(): void {
   initialized = false;
   autoRefreshRegistered = false;
+  reviewSyncRegistered = false;
   posterSyncRegistered = false;
   // 面板 ESC 层注销（对齐 bookshelf/gameshelf/home 三域样板；escManager 层不随插件卸载自动清理，
   // 残层占住 panelEscHandles 槽位会吞掉重启用后 registerPanelEsc('bz-cinema') 的幂等注册）

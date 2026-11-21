@@ -93,7 +93,10 @@ interface ToggleRow extends RowBase {
   type: 'toggle';
   name: string;
   binding: RowBinding<boolean>;
-  /** 开关变更（写内存 + 落盘后触发） */
+  /** 变更前的二次确认：返回 true 才写入/落盘，false 回滚并保持原显示。
+   *  异步期间渲染器负责防连点；取消 / 抛错都不写值、不翻开关（影评入笔记） */
+  confirm?: (value: boolean, ctx: SettingsRowContext) => Promise<boolean> | boolean;
+  /** 开关变更（写内存 + 落盘后触发；confirm 通过才走到这里） */
   onChange?: (value: boolean, ctx: SettingsRowContext) => void;
 }
 
@@ -902,8 +905,26 @@ export function renderSettingsInto(container: HTMLElement, schema: SettingsSchem
       case 'toggle': {
         const acc = bindValue(row.binding);
         const setting = newRowSetting(body, row);
-        setting.addToggle((t) =>
-          t.setValue(acc.read() === true).onChange(async (v) => {
+        setting.addToggle((t) => {
+          t.setValue(acc.read() === true);
+          let busy = false;
+          t.onChange(async (v) => {
+            if (busy) return;
+            // 二次确认（影评入笔记）：确认期间不写值、不翻开关；取消则弹回绑定原值
+            if (row.confirm) {
+              busy = true;
+              let ok = false;
+              try {
+                ok = await row.confirm(v, ctx);
+              } catch (e) {
+                notifySaveError(e, row.name);
+              }
+              busy = false;
+              if (!ok) {
+                t.setValue(acc.read() === true);
+                return;
+              }
+            }
             acc.write(v);
             // 显隐随值同步切换（原 refreshKeys 在落盘前同步刷新的口径）
             reevaluate();
@@ -914,8 +935,8 @@ export function renderSettingsInto(container: HTMLElement, schema: SettingsSchem
               notifySaveError(e, row.name);
             }
             row.onChange?.(v, ctx);
-          })
-        );
+          });
+        });
         return;
       }
       case 'select': {

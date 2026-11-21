@@ -134,6 +134,10 @@ const WHITELIST: Array<{ file: RegExp; reason: string; /** 防回归哨兵：预
     reason: '影视笔记 md 用户文档写（ADR-0129 抓取回填 frontmatter + 正文海报 embed，vault.process 原子读改写，口径同 cinema/ui）',
   },
   {
+    file: /^src\/cinema\/review-in-note\.ts$/,
+    reason: '影视笔记 md 用户文档写（2026-11-21 影评入笔记：正文 <BZ-MOVIE> 标记区批量迁入/清除与界面↔正文同步，vault.process 原子读改写，口径同 cinema/douban-fetcher 与 bookshelf/notes）',
+  },
+  {
     file: /^src\/cinema\/douban-queue\.ts$/,
     reason: '海报图片二进制附件写（ADR-0129 adapter.writeBinary 至 CONFIG/MOVIE POSTER，用户附件非插件私有数据，同 vector-store 先例）',
   },

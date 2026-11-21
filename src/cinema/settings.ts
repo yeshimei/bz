@@ -90,6 +90,60 @@ export function cinemaSettingsSchema(): SettingsSchema {
               '它只改变海报墙怎么分组，不碰笔记、不改文件名、不动目录；关掉立刻恢复成每季一张卡，数据层面没有任何变化。',
             binding: { key: 'cinemaMergeSeasons' },
           },
+          // 影评写入笔记正文（2026-11-21 QQ 群 Panda 反馈，作者拍板）：开关只是索引，
+          // 打开/关闭各弹一次影院风格确认框，确认后才批量迁入/清除；取消则不写值不翻开关
+          {
+            type: 'toggle',
+            name: '影评写入笔记正文',
+            desc: '影评写进笔记正文标记区，可用 markdown 编辑',
+            help:
+              '打开后，影评会写进影片笔记正文的 <BZ-MOVIE> 标记区，位置在笔记顶部、海报上面，可以直接用 markdown 语法编辑；界面和正文两边改动会互相同步。' +
+              '属性里的影评仍留着做备份。打开和关闭都会先弹确认框：打开时统计可搬的篇数，关闭时统计正文已有影评的篇数，并问是否批量清除、只在属性保留。',
+            binding: { key: 'cinemaReviewInNote' },
+            confirm: async (v) => {
+              const [{ confirmCinemaFromSettings }, review, { getApp }, { notice }] = await Promise.all([
+                import('./ui'),
+                import('./review-in-note'),
+                import('../core/app'),
+                import('../core/notice'),
+              ]);
+              const app = getApp();
+              const { candidates, withBlock } = await review.countReviewNotes(app);
+              if (v) {
+                const ok = await confirmCinemaFromSettings({
+                  kicker: '影评写入笔记正文',
+                  lines: [
+                    `是否把所有影片的影评放到笔记当中？当前有 ${candidates} 篇可搬。`,
+                    '确认后批量写入正文的 <BZ-MOVIE> 标记区，属性里仍保留影评备份。',
+                  ],
+                  okLabel: '确认打开',
+                });
+                if (!ok) return false;
+                const res = await review.migrateReviewsIntoNotes(app);
+                notice(
+                  `已把 ${res.done} 篇影评写入笔记${res.failed ? `，${res.failed} 篇失败` : ''}`,
+                  res.failed ? 'warning' : 'success',
+                );
+                return true;
+              }
+              const ok = await confirmCinemaFromSettings({
+                kicker: '关闭影评写入笔记',
+                lines: [
+                  `当前有 ${withBlock} 篇笔记在正文放了影评。`,
+                  '关掉后是否批量清除正文里的标记、只在属性中保留影评？正文里改过的内容会先并回属性，不会丢。',
+                ],
+                okLabel: '确认关闭',
+                danger: true,
+              });
+              if (!ok) return false;
+              const res = await review.clearReviewsFromNotes(app);
+              notice(
+                `已清除 ${res.done} 篇正文影评${res.failed ? `，${res.failed} 篇失败` : ''}`,
+                res.failed ? 'warning' : 'success',
+              );
+              return true;
+            },
+          },
         ],
       },
     ],

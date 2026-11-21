@@ -394,21 +394,39 @@ function renderRow(
       // 开关结构单源（R.toggleHtml 逐字原型），行为绑定留本层
       ctrlEl.innerHTML = R.toggleHtml(acc.read() === true);
       const sw = ctrlEl.querySelector<HTMLElement>('.bz-sw')!;
+      const confirm = (row as typeof row & { confirm?: (v: boolean, c: unknown) => Promise<boolean> | boolean }).confirm;
+      let busy = false;
       sw.addEventListener('click', () => {
-        const v = !sw.classList.contains('on');
-        // 先写后翻 UI（H5）：写入抛错（三函数逃生口）时不翻开关只提示，避免显示值与实际值背离
-        try {
-          acc.write(v);
-        } catch (e) {
-          notifyWriteError(e);
-          return;
-        }
-        sw.classList.toggle('on', v);
-        sw.setAttribute('aria-checked', String(v));
-        motionSwitchFlip(sw, v); // 动效：拨杆按弹 + 到位微光（旋钮滑行归 CSS transition）
-        safePersist(() => acc.persist(), rowName || '开关设置'); // N5 兜底（ARCH-1 单源）
-        row.onChange?.(v, ctx);
-        refresh();
+        void (async () => {
+          if (busy) return;
+          const v = !sw.classList.contains('on');
+          // 二次确认（影评入笔记）：确认期间开关不动；取消/抛错不写值、不翻开关，
+          // 避免「看着开了其实没开」的假象（用户拍板）
+          if (confirm) {
+            busy = true;
+            let ok = false;
+            try {
+              ok = await confirm(v, ctx);
+            } catch (e) {
+              notifyWriteError(e);
+            }
+            busy = false;
+            if (!ok) return;
+          }
+          // 先写后翻 UI（H5）：写入抛错（三函数逃生口）时不翻开关只提示，避免显示值与实际值背离
+          try {
+            acc.write(v);
+          } catch (e) {
+            notifyWriteError(e);
+            return;
+          }
+          sw.classList.toggle('on', v);
+          sw.setAttribute('aria-checked', String(v));
+          motionSwitchFlip(sw, v); // 动效：拨杆按弹 + 到位微光（旋钮滑行归 CSS transition）
+          safePersist(() => acc.persist(), rowName || '开关设置'); // N5 兜底（ARCH-1 单源）
+          row.onChange?.(v, ctx);
+          refresh();
+        })();
       });
       break;
     }

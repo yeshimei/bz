@@ -281,6 +281,9 @@ export default interface BzSettings {
   /** 🎬 影院：按季合并（同一部剧/纪录片的各季在片库里合并成一张卡；issue 376 / ADR-0168）。
    *  纯渲染层分组——不改笔记、不加存储，关掉即逐季一卡 */
   cinemaMergeSeasons: boolean;
+  /** 🎬 影院：影评写入笔记正文（<BZ-MOVIE> 标记区，与属性双向同步；默认关）。
+   *  开启/关闭都需二次确认，开=批量迁入、关=批量清除；开关只是索引，属性始终留备份 */
+  cinemaReviewInNote: boolean;
   /** 面板风格（issue 236 / ADR-0103）：midnight/gazette/booth */
   cinemaStyle: string;
   /** 影院抓取：ApiZero Key（豆瓣字段接口，apizero.cn；空 = 字段走豆瓣演职员兜底，ADR-0129） */
@@ -1191,6 +1194,8 @@ export const DEFAULT_SETTINGS: BzSettings = {
   cinemaStatusFilter: '',
   // 剧集按季合并（issue 376 / ADR-0168）：2026-09-20 用户改默认**开**（合并已是常态视图）
   cinemaMergeSeasons: true,
+  // 影评写入笔记正文：默认关（用户拍板；开=批量迁入，关=批量清除，均二次确认）
+  cinemaReviewInNote: false,
   cinemaStyle: 'midnight',
   cinemaApizeroKey: '',
   cinemaDoubanCookie: '',

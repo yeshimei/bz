@@ -32,10 +32,10 @@ describe('cinema 设置 schema', () => {
     expect(DEFAULT_SETTINGS.cinemaFolderPath).toBe('');
   });
 
-  it('显示组：默认排序/默认状态筛选/剧集按季合并（issue 194 + issue 376，键与契约）', () => {
+  it('显示组：默认排序/默认状态筛选/剧集按季合并 + 影评入笔记开关（issue 194 + 376，键与契约）', () => {
     const schema = cinemaSettingsSchema();
     const view = schema.groups.find((g) => g.name === '显示')!;
-    expect(view.rows).toHaveLength(3);
+    expect(view.rows).toHaveLength(4);
     const [sort, status] = view.rows as any[];
     expect(sort.type).toBe('select');
     expect(sort.binding).toMatchObject({ key: 'cinemaSortMode' });
@@ -49,6 +49,13 @@ describe('cinema 设置 schema', () => {
     expect(merge.name).toBe('按季合并');
     expect(merge.binding.key).toBe('cinemaMergeSeasons');
     expect(DEFAULT_SETTINGS.cinemaMergeSeasons).toBe(true);
+    // 影评写入笔记正文（2026-11-21 反馈）：toggle + 二次确认钩子，默认关
+    const review = view.rows[3] as any;
+    expect(review.type).toBe('toggle');
+    expect(review.name).toBe('影评写入笔记正文');
+    expect(review.binding.key).toBe('cinemaReviewInNote');
+    expect(typeof review.confirm).toBe('function');
+    expect(DEFAULT_SETTINGS.cinemaReviewInNote).toBe(false);
     // 默认值与选项集一致
     expect(DEFAULT_SETTINGS.cinemaSortMode).toBe('date');
     expect(DEFAULT_SETTINGS.cinemaStatusFilter).toBe('');
