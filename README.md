@@ -17,7 +17,6 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/yeshimei/bz"><img src="https://img.shields.io/badge/BZ-%E9%A2%9C%E5%80%BC%20%2B%20%E9%9B%86%E5%A4%A7%E6%88%90-7c3aed?style=flat-square" alt="BZ：颜值 + 集大成"></a>
   <a href="https://github.com/yeshimei/bz-reader"><img src="https://img.shields.io/badge/BZ%20READER-%E5%A4%9A%E6%A0%BC%E5%BC%8F%E9%98%85%E8%AF%BB%E5%99%A8-8a6a3a?style=flat-square" alt="BZ Reader：多格式阅读器"></a>
   <a href="https://github.com/yeshimei/bz-review"><img src="https://img.shields.io/badge/BZ%20REVIEW-%E5%A4%8D%E4%B9%A0-5f7f57?style=flat-square" alt="BZ Review：复习"></a>
 </p>

@@ -14,7 +14,11 @@
   <img src="https://img.shields.io/github/downloads/yeshimei/bz/total?style=flat-square&label=DOWNLOADS&color=7c3aed" alt="downloads">
   <img src="https://img.shields.io/badge/PLATFORM-DESKTOP%20%2B%20MOBILE-16a34a?style=flat-square" alt="desktop + mobile">
   <img src="https://img.shields.io/github/license/yeshimei/bz?style=flat-square&label=LICENSE&color=16a34a" alt="license">
-  <a href="https://github.com/yeshimei/bz-reader"><img src="https://img.shields.io/badge/BZ%20READER-multi%20format%20reader-8a6a3a?style=flat-square" alt="bz reader: multi-format reader"></a>
+</p>
+
+<p align="center">
+  <a href="https://github.com/yeshimei/bz-reader"><img src="https://img.shields.io/badge/BZ%20READER-multi--format%20reader-8a6a3a?style=flat-square" alt="BZ Reader: multi-format reader"></a>
+  <a href="https://github.com/yeshimei/bz-review"><img src="https://img.shields.io/badge/BZ%20REVIEW-review-5f7f57?style=flat-square" alt="BZ Review: review"></a>
 </p>
 
 <p align="center">
@@ -144,7 +148,8 @@ To upgrade, overwrite the extracted files and restart. You can also use BRAT: in
 
 ## Recommended plugins
 
-- [bz Reader](https://github.com/yeshimei/bz-reader) — Turn Obsidian into a place to read. Desktop and mobile, multiple formats, eight interface languages, AI Q&A, wikilinks, and all data stored locally.
+- [bz Reader](https://github.com/yeshimei/bz-reader) — Turn your vault into a reading app: desktop and mobile, multiple formats (including PDF and comics), multilingual, AI follow-ups / whole-book Q&A / semantic search / knowledge base, offline audiobooks, backlinks, reading stats — all kept locally.
+- [bz Review](https://github.com/yeshimei/bz-review) — Turns notes and highlights into review cards with AI, then schedules them with FSRS-7 spaced repetition. Focus on reading and reviewing; memory stability drives the schedule, and the parameters fit your own history.
 
 ## Offline assets
 
