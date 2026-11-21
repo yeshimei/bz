@@ -14,7 +14,12 @@
   <img src="https://img.shields.io/github/downloads/yeshimei/bz/total?style=flat-square&label=DOWNLOADS&color=7c3aed" alt="下载量">
   <img src="https://img.shields.io/badge/PLATFORM-DESKTOP%20%2B%20MOBILE-16a34a?style=flat-square" alt="桌面 + 移动端">
   <img src="https://img.shields.io/github/license/yeshimei/bz?style=flat-square&label=LICENSE&color=16a34a" alt="license">
-  <a href="https://github.com/yeshimei/bz-reader"><img src="https://img.shields.io/badge/BZ%20READER-%E5%A4%9A%E6%A0%BC%E5%BC%8F%E9%98%85%E8%AF%BB%E5%99%A8-8a6a3a?style=flat-square" alt="bz reader：多格式阅读器"></a>
+</p>
+
+<p align="center">
+  <a href="https://github.com/yeshimei/bz"><img src="https://img.shields.io/badge/BZ-%E9%A2%9C%E5%80%BC%20%2B%20%E9%9B%86%E5%A4%A7%E6%88%90-7c3aed?style=flat-square" alt="BZ：颜值 + 集大成"></a>
+  <a href="https://github.com/yeshimei/bz-reader"><img src="https://img.shields.io/badge/BZ%20READER-%E5%A4%9A%E6%A0%BC%E5%BC%8F%E9%98%85%E8%AF%BB%E5%99%A8-8a6a3a?style=flat-square" alt="BZ Reader：多格式阅读器"></a>
+  <a href="https://github.com/yeshimei/bz-review"><img src="https://img.shields.io/badge/BZ%20REVIEW-%E5%A4%8D%E4%B9%A0-5f7f57?style=flat-square" alt="BZ Review：复习"></a>
 </p>
 
 <p align="center">
@@ -140,7 +145,8 @@
 
 ## 插件推荐
 
-- **[bz reader](https://github.com/yeshimei/bz-reader)** —— 把 Obsidian 变成一个能读书的地方。桌面端 + 移动端、多格式（包括 PDF），多语言支持、AI 全书问答、双向链接，数据全部本地。
+- [bz Reader](https://github.com/yeshimei/bz-reader) —— 把 Obsidian 变成一个能读书的地方。桌面端 + 移动端、多格式（包括 PDF，漫画），多语言、AI 锚定追问 / 全书问答 / 语义搜索 / 知识库、离线听书、双链，统计，数据全部本地。
+- [bz Review](https://github.com/yeshimei/bz-review) —— bz review 把制卡、整卡交给 AI，让你专注阅读与复习。内置 FSRS 间隔重复算法，依据记忆稳定性动态排期，并按你的复习记录自适应拟合参数。用更少的复习次数，记得更牢。
 
 ## 离线资源包
 
