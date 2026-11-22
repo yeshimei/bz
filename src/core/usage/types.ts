@@ -8,8 +8,19 @@ export function usageFileName(installId: string): string {
   return `usage-${short}.json`;
 }
 
-export const KEEP_DAYS = 14;
+/**
+ * 本地账本保留天数。
+ *
+ * 2026-11-22 从 14 拉到 45：Appwrite 免费额度的写入被心跳写爆过一次（402，整个项目
+ * API 暂停到 12-12 账单周期结束）。那段日子里上报全部失败，数据只能攒在本地——
+ * 如果保留期还是 14 天，等待期早期那几天会在补发之前就被 `pruneDays` 裁掉，
+ * 「恢复后一起上传」就补不全。45 天 = 20 天等待 + 余量。
+ *
+ * 代价只有账本文件变大（一天一个 bucket，45 天也就几十 KB 到一两百 KB）。
+ */
+export const KEEP_DAYS = 45;
 
+/** 一次上报最多带几天：服务端单次请求的体积上限，补发积压时分多轮走 */
 export const PENDING_MAX_DAYS = 7;
 
 export const TICK_MS = 60_000;
