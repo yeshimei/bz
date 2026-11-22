@@ -11,8 +11,10 @@ import {
   licenseIdOf,
   parseReaderLicense,
   readerLicenseIdOf,
+  readerRevokedFlags,
   readerTierOf,
   reviewLicenseIdOf,
+  reviewRevokedFlags,
   reviewTierOf,
 } from '../../src/bookshelf/reader-tier';
 import { probeReaderUsage } from '../../src/bookshelf/reader-usage';
@@ -188,5 +190,87 @@ describe('review-tier · 判档与码号', () => {
   it('码号', () => {
     expect(reviewLicenseIdOf({ licenseKey: code(PERM, 'BZP2') })).toBe('BZR-AF-2026-0125');
     expect(reviewLicenseIdOf({})).toBe('');
+  });
+});
+
+/* ============================================================
+ * 封码状态与「为什么掉级」（2026-11-22）
+ *
+ * 这几样只有两个插件自己知道，bz 只读。要钉住的是**读不出来时不能编**：
+ * 老版本插件没有这些键，编成 false / 'none' 会把「没探测到」冒充成
+ * 「核对过没问题」和「没买」，两个数都会歪。
+ * ============================================================ */
+describe('封码状态与档位成因', () => {
+  it('reader：从 entitlement 里读全五项', () => {
+    const cfg = {
+      entitlement: {
+        license: 'BZR2.x.y',
+        revoked: true,
+        revokedAt: 1_800_000_000_000,
+        tierReason: 'revoked',
+        activateFail: 'offline',
+        activateFailAt: '2026-11-20T10:00:00.000Z',
+      },
+    };
+    const f = readerRevokedFlags(cfg);
+    expect(f.revoked).toBe(true);
+    expect(f.revokedAt).toBe(1_800_000_000_000);
+    expect(f.tierReason).toBe('revoked');
+    expect(f.activateFail).toBe('offline');
+    expect(f.activateFailAt).toBe(Date.parse('2026-11-20T10:00:00.000Z'));
+  });
+
+  it('老版本插件没有这几个键：一律 undefined，不编默认值', () => {
+    const f = readerRevokedFlags({ entitlement: { license: 'BZR2.x.y' } });
+    expect(f.revoked).toBeUndefined();
+    expect(f.revokedAt).toBeUndefined();
+    expect(f.tierReason).toBeUndefined();
+    expect(f.activateFail).toBeUndefined();
+    expect(readerRevokedFlags(null)).toEqual({});
+    expect(readerRevokedFlags({})).toEqual({});
+  });
+
+  it('脏值一律丢掉：枚举不在表内、时间戳是垃圾、布尔写成字符串', () => {
+    const f = readerRevokedFlags({
+      entitlement: {
+        revoked: 'true',
+        revokedAt: -5,
+        tierReason: 'banned',
+        activateFail: 'whatever',
+        activateFailAt: 'not-a-date',
+      },
+    });
+    expect(f.revoked).toBeUndefined();
+    expect(f.revokedAt).toBeUndefined();
+    expect(f.tierReason).toBeUndefined();
+    expect(f.activateFail).toBeUndefined();
+    expect(f.activateFailAt).toBeUndefined();
+  });
+
+  it('review：键带 license 前缀，口径与 reader 一致', () => {
+    const cfg = {
+      licenseKey: 'BZP2.x.y',
+      licenseRevoked: false,
+      licenseRevokedAt: 1_800_000_000_000,
+      licenseTierReason: 'expired',
+      licenseActivateFail: 'format',
+      licenseActivateFailAt: 1_800_000_500_000,
+    };
+    const f = reviewRevokedFlags(cfg);
+    expect(f.revoked).toBe(false); // false = 核对过、没被封，与 undefined 不同
+    expect(f.revokedAt).toBe(1_800_000_000_000);
+    expect(f.tierReason).toBe('expired');
+    expect(f.activateFail).toBe('format');
+    expect(f.activateFailAt).toBe(1_800_000_500_000);
+  });
+
+  it('review：老版本没有这些键 → undefined', () => {
+    expect(reviewRevokedFlags({ licenseKey: 'BZP2.x.y' })).toEqual({
+      revoked: undefined,
+      revokedAt: undefined,
+      tierReason: undefined,
+      activateFail: undefined,
+      activateFailAt: undefined,
+    });
   });
 });

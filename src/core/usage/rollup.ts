@@ -37,7 +37,12 @@ export function exportDay(day: DayBucket): DayBucket {
   };
 }
 
-export function buildDailyPayload(meta: UsageMeta, days: DayBucket[], since = ''): DailyPayload {
+export function buildDailyPayload(
+  meta: UsageMeta,
+  days: DayBucket[],
+  since = '',
+  firstVersion = '',
+): DailyPayload {
   const payload: DailyPayload = {
     schema: USAGE_SCHEMA,
     installId: meta.installId,
@@ -58,6 +63,8 @@ export function buildDailyPayload(meta: UsageMeta, days: DayBucket[], since = ''
   if (meta.updateAuto !== undefined) payload.updateAuto = meta.updateAuto;
   // 只有考古拿到日子才带这个键：查不到就让服务端按 firstSeen 兜底，别发空串占位
   if (since) payload.since = since;
+  // 同理：第一次见到的版本只写一次，账本里还没有就不带
+  if (firstVersion) payload.firstVersion = firstVersion;
   return payload;
 }
 

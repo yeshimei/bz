@@ -102,4 +102,19 @@ describe('usage · 账本', () => {
     expect(isDayKey('2026-1-1')).toBe(false);
     expect(isDayKey('')).toBe(false);
   });
+
+  /* ── 2026-11-22：起点版本 ─────────────────────────────────────── */
+  it('起点版本只认像版本号的串，脏值退回空以便下次重记', () => {
+    const now = at(2026, 11, 11);
+    expect(normalizeLedger({ firstVersion: '1.44.0' }, now).firstVersion).toBe('1.44.0');
+    expect(normalizeLedger({ firstVersion: '  1.30 ' }, now).firstVersion).toBe('1.30');
+    // 不是版本号形状的一律当没记过（注意最后那个：段数超了就整串丢，不是取前缀）
+    for (const bad of ['', 'abc', 'v1.2.3', 'build-7', '  ', '1.2.3.4.5']) {
+      expect(normalizeLedger({ firstVersion: bad }, now).firstVersion).toBe('');
+    }
+    // 形状合法但过长：截到 24 字符，别让一个脏值把字段撑爆
+    expect(normalizeLedger({ firstVersion: '12345678901234567890.1.2' }, now).firstVersion.length).toBe(24);
+    // 老账本没有这个键：给空串，不崩
+    expect(normalizeLedger({}, now).firstVersion).toBe('');
+  });
 });

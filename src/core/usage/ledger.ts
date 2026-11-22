@@ -115,6 +115,11 @@ export function normalizeLedger(raw: unknown, now: number): Ledger {
     createdAt: sanitizeAt(r.createdAt) ?? now,
     // 考古结果一旦落盘就照用：脏值（含未来日期）退回空，下次启动重算
     sinceDay: isDayKey(r.sinceDay) && r.sinceDay <= localDayKey(now) ? r.sinceDay : '',
+    // 只认形状像版本号的串（x.y.z，最多四段）：脏值退回空，下次启动会重新记一次
+    firstVersion:
+      typeof r.firstVersion === 'string' && /^\d+(\.\d+){0,3}$/.test(r.firstVersion.trim())
+        ? r.firstVersion.trim().slice(0, 24)
+        : '',
     lastSentDate: isDayKey(r.lastSentDate) ? r.lastSentDate : '',
     failures: Math.max(0, Math.min(99, Math.round(Number(r.failures) || 0))),
     lastAttemptAt: sanitizeAt(r.lastAttemptAt) ?? 0,

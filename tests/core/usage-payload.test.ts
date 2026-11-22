@@ -164,4 +164,52 @@ describe('usage · 发送内容', () => {
     expect(retryDelay(3)).toBe(24 * 3600_000);
     expect(retryDelay(99)).toBe(24 * 3600_000);
   });
+
+  /* ── 2026-11-22：封码状态、档位成因、激活失败、起点版本 ────────────── */
+
+  it('第一次见到的版本只在有值时才带，且与当前版本是两个键', () => {
+    expect('firstVersion' in buildDailyPayload(META, [DAY])).toBe(false);
+    expect('firstVersion' in buildDailyPayload(META, [DAY], '2026-08-15')).toBe(false);
+    const p = buildDailyPayload(META, [DAY], '2026-08-15', '1.30.0');
+    expect(p.firstVersion).toBe('1.30.0');
+    // 当前版本还是 1.44.0：两个数不一样，才看得出这台是从老版本升上来的
+    expect(p.pluginVersion).toBe('1.44.0');
+  });
+
+  it('封码状态与激活失败跟着快照走，且不掺码原文', () => {
+    const meta: UsageMeta = {
+      ...META,
+      reader: {
+        state: 'active',
+        tier: 'basic',
+        version: '1.7.0',
+        minutes: 30,
+        daysSince: 2,
+        licenseId: 'BZR-AF-2026-0017',
+        revoked: true,
+        revokedAt: 1_800_000_000_000,
+        tierReason: 'revoked',
+        activateFail: 'offline',
+        activateFailAt: 1_800_000_100_000,
+      },
+    };
+    const p = buildDailyPayload(meta, [DAY]);
+    expect(p.reader?.revoked).toBe(true);
+    expect(p.reader?.tierReason).toBe('revoked');
+    expect(p.reader?.activateFail).toBe('offline');
+    const json = JSON.stringify(p);
+    expect(json).not.toContain('BZP2.');
+    expect(json).not.toContain('BZR2.');
+  });
+
+  it('没探测到的设备不带这些键（不拿 false / none 冒充）', () => {
+    const meta: UsageMeta = {
+      ...META,
+      reader: { state: 'active', tier: 'paid', version: '1.7.0', minutes: 1, daysSince: 0 },
+    };
+    const p = buildDailyPayload(meta, [DAY]);
+    expect('revoked' in (p.reader || {})).toBe(false);
+    expect('tierReason' in (p.reader || {})).toBe(false);
+    expect('activateFail' in (p.reader || {})).toBe(false);
+  });
 });

@@ -291,6 +291,14 @@ function readerFields(reader?: ReaderSnapshot): Record<string, unknown> {
     readerDaysSince: reader.daysSince,
     // 码号：空串当没读到，不写这个键（PATCH 里不传的字段保持服务端旧值）
     ...(reader.licenseId ? { readerLicenseId: reader.licenseId } : {}),
+    /* 2026-11-22：封码状态与「为什么是这个档位」。
+       revoked 显式区分 true/false：false = 核对过、没被封；没有这个键 = 没探测到。
+       混在一起的话，「封了但设备还没联网核对」会被算成「核对过没问题」。 */
+    ...(reader.revoked !== undefined ? { readerRevoked: reader.revoked } : {}),
+    ...(reader.revokedAt ? { readerRevokedAt: isoOf(reader.revokedAt) } : {}),
+    ...(reader.tierReason ? { readerTierReason: reader.tierReason } : {}),
+    ...(reader.activateFail ? { readerActivateFail: reader.activateFail } : {}),
+    ...(reader.activateFailAt ? { readerActivateFailAt: isoOf(reader.activateFailAt) } : {}),
   };
 }
 
@@ -304,6 +312,11 @@ function reviewFields(review?: ReviewSnapshot): Record<string, unknown> {
     reviewItems: review.items,
     reviewDaysSince: review.daysSince,
     ...(review.licenseId ? { reviewLicenseId: review.licenseId } : {}),
+    ...(review.revoked !== undefined ? { reviewRevoked: review.revoked } : {}),
+    ...(review.revokedAt ? { reviewRevokedAt: isoOf(review.revokedAt) } : {}),
+    ...(review.tierReason ? { reviewTierReason: review.tierReason } : {}),
+    ...(review.activateFail ? { reviewActivateFail: review.activateFail } : {}),
+    ...(review.activateFailAt ? { reviewActivateFailAt: isoOf(review.activateFailAt) } : {}),
   };
 }
 
@@ -329,6 +342,8 @@ function installFields(payload: DailyPayload, at: string): Record<string, unknow
   };
   // 「最早使用日」只写不删：考古没查到时整个键不发，服务端的旧值也就不会被空值冲掉
   if (payload.since) out.since = payload.since;
+  // 同理：第一次见到的版本只写一次，别拿后来的新版本去覆盖它
+  if (payload.firstVersion) out.firstVersion = payload.firstVersion;
   return out;
 }
 

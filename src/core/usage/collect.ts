@@ -88,7 +88,30 @@ export function createUsage(host: UsageHost): UsageHandle {
     ready = true;
     for (const cmd of earlyCommands.splice(0)) recordCommand(ledger, cmd.id, cmd.at);
     void backfillSince();
+    rememberFirstVersion();
   })();
+
+  /**
+   * 记住「第一次见到这个插件时的版本」（2026-11-22）。
+   *
+   * 只写一次、绝不覆盖。只记当前版本的话，发一次版所有人都变成新版本，
+   * 「老用户还剩多少」「升级断在哪一版」就永远看不出来了。
+   *
+   * 放在 ready 之后同步做（不发请求、不扫盘），失败就下次启动再补——
+   * 账本里空着不写脏值，上报端看到空串就不带这个键。
+   */
+  function rememberFirstVersion(): void {
+    if (stopped || ledger.firstVersion) return;
+    let v = '';
+    try {
+      v = String(host.meta().pluginVersion || '').trim().slice(0, 24);
+    } catch {
+      return;
+    }
+    if (!v) return;
+    ledger.firstVersion = v;
+    markDirty();
+  }
 
   /**
    * 补算「最早使用日」。放在 ready 之后跑：扫目录可能几百毫秒，不能挡住活跃分钟与命令计数。
@@ -164,7 +187,12 @@ export function createUsage(host: UsageHost): UsageHandle {
     ledger.lastAttemptAt = now;
     try {
       const ok = await host.sendDaily(
-        buildDailyPayload(host.meta(), dates.map((d) => ledger.days[d]), ledger.sinceDay),
+        buildDailyPayload(
+          host.meta(),
+          dates.map((d) => ledger.days[d]),
+          ledger.sinceDay,
+          ledger.firstVersion,
+        ),
       );
       if (ok) {
         markDailySent(ledger, dates, localDayKey(now));

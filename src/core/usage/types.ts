@@ -71,6 +71,11 @@ export interface Ledger {
    * 唯一用途：让作者看板知道「统计上线之前这台设备用了多久」，好折算历史时长。
    */
   sinceDay: string;
+  /**
+   * 第一次见到这个插件时的版本。空 = 还没记（下次落盘时补上）。
+   * 只写一次、绝不覆盖——见 DailyPayload.firstVersion 的说明。
+   */
+  firstVersion: string;
   lastSentDate: string;
   failures: number;
   lastAttemptAt: number;
@@ -86,6 +91,37 @@ export type ReaderTier = PluginTier;
 
 /** 配套插件的运行状态（reader / review 共用同一套枚举） */
 export type PluginRuntimeState = 'none' | 'broken' | 'disabled' | 'idle' | 'active' | 'unknown';
+
+/**
+ * 当前档位的成因（2026-11-22）。
+ *
+ * 「现在是基础版」这一句话底下是四种完全不同的处境，处理方式也完全不同：
+ *   none      没填码       → 该引导他买
+ *   expired   码到期了     → 该做续费提醒
+ *   revoked   码被停用了   → 该查是不是误封，或者盗版在流通
+ *   invalid   码验签不过   → 码被改过 / 复制坏了
+ *   ok        有码且有效
+ *   unknown   这次没探测到
+ *
+ * 由两个插件自己判定并写进各自的档案（只有它们知道验签结果），bz 只读、不算。
+ */
+export type TierReason = 'ok' | 'none' | 'expired' | 'revoked' | 'invalid' | 'unknown';
+
+/**
+ * 上次激活失败的原因（2026-11-22）。
+ *
+ * 激活发生在两个插件各自的设置页里，bz 无从得知，只能由它们记一笔。
+ * **只记分类，绝不记码原文**——码原文一旦出门就是泄露。
+ *
+ *   format   格式不对（复制粘贴被截断、多了空格）
+ *   invalid  验签不过（码被改过）
+ *   offline  拉不到停用名单，要求联网
+ *   revoked  这枚码已被停用
+ *   expired  码已过期
+ *
+ * 激活成功一次就清掉，免得几个月前的一次手滑永远挂在身上。
+ */
+export type ActivateFail = 'format' | 'invalid' | 'offline' | 'revoked' | 'expired';
 
 /** bz 阅读的使用快照（只标量；书名/路径/划线内容不进这里） */
 export interface ReaderSnapshot {
@@ -107,6 +143,22 @@ export interface ReaderSnapshot {
    * 只带码号，不带码原文 / 昵称 / 订单号——码号本身不能用来激活。
    */
   licenseId?: string;
+  /**
+   * 这枚码是不是已被停用名单判死（2026-11-22）。
+   *
+   * 这是封码机制唯一的效果证据：封之前几台在用、封之后还剩几台。
+   * 剩下的那些就是没升级、断网、或者绕过去的——只看「码号还在上报」
+   * 分不出「还在用」和「已经被封了但设备没联网核对」。
+   */
+  revoked?: boolean;
+  /** 被判死的时刻（毫秒）；缺省 = 没被判死过 */
+  revokedAt?: number;
+  /** 当前档位的成因（没码 / 过期 / 被封 / 码坏了），口径见 TierReason */
+  tierReason?: TierReason;
+  /** 上次激活失败的原因；激活成功过就清掉，缺省 = 没失败过 */
+  activateFail?: ActivateFail;
+  /** 上次激活失败的时刻（毫秒） */
+  activateFailAt?: number;
 }
 
 /** bz review 的使用快照（只标量；卡片内容、书名、笔记路径一律不进这里） */
@@ -122,6 +174,16 @@ export interface ReviewSnapshot {
   daysSince: number;
   /** 码号；没有码就不出现这个键 */
   licenseId?: string;
+  /** 口径同 ReaderSnapshot.revoked */
+  revoked?: boolean;
+  /** 口径同 ReaderSnapshot.revokedAt */
+  revokedAt?: number;
+  /** 口径同 ReaderSnapshot.tierReason */
+  tierReason?: TierReason;
+  /** 口径同 ReaderSnapshot.activateFail */
+  activateFail?: ActivateFail;
+  /** 口径同 ReaderSnapshot.activateFailAt */
+  activateFailAt?: number;
 }
 
 export interface UsageMeta {
@@ -145,6 +207,13 @@ export interface DailyPayload extends UsageMeta {
   schema: number;
   /** 本机最早使用日（YYYY-MM-DD）；考古没查到就不带这个键 */
   since?: string;
+  /**
+   * 第一次见到这个插件时的版本（2026-11-22）。
+   *
+   * 只写一次、之后绝不覆盖。只记「当前版本」的话，发一次版所有人都变成新版本，
+   * 「老用户还剩多少」「升级断在哪一版」就永远看不出来了。
+   */
+  firstVersion?: string;
   days: DayBucket[];
 }
 
@@ -153,6 +222,7 @@ export function emptyLedger(now: number): Ledger {
     schema: USAGE_SCHEMA,
     createdAt: now,
     sinceDay: '',
+    firstVersion: '',
     lastSentDate: '',
     failures: 0,
     lastAttemptAt: 0,

@@ -16,7 +16,8 @@
 import type { App } from 'obsidian';
 import { REVIEW_SPEC, pluginDirOf, readReviewInstall } from '../core/reader-install';
 import type { PluginRuntimeState, ReviewSnapshot } from '../core/usage/types';
-import { reviewLicenseIdOf, reviewTierOf } from './reader-tier';
+import { reviewLicenseIdOf, reviewRevokedFlags, reviewTierOf } from './reader-tier';
+import type { RevokedFlags } from './reader-tier';
 
 const DAY_MS = 86_400_000;
 
@@ -74,6 +75,7 @@ export async function probeReviewUsage(app: App): Promise<ReviewSnapshot> {
   let licenseId = '';
   let items = 0;
   let daysSince = -1;
+  let flags: RevokedFlags = {};
 
   if (state === 'idle') {
     const cfg = await readJson(app, `${pluginDirOf(app, REVIEW_SPEC)}/data.json`);
@@ -81,6 +83,10 @@ export async function probeReviewUsage(app: App): Promise<ReviewSnapshot> {
       try {
         tier = reviewTierOf(cfg);
         licenseId = reviewLicenseIdOf(cfg);
+        /* 2026-11-22：封码状态、档位成因、上次激活失败原因。
+           review 把这几个键摊在 data.json 顶层（`licenseRevoked` 等），
+           老版本没有就全是 undefined —— 不上报，不拿默认值冒充。 */
+        flags = reviewRevokedFlags(cfg);
       } catch {
         tier = 'unknown';
       }
@@ -100,5 +106,10 @@ export async function probeReviewUsage(app: App): Promise<ReviewSnapshot> {
 
   const snap: ReviewSnapshot = { state, tier, version, items, daysSince };
   if (licenseId) snap.licenseId = licenseId;
+  if (flags.revoked !== undefined) snap.revoked = flags.revoked;
+  if (flags.revokedAt) snap.revokedAt = flags.revokedAt;
+  if (flags.tierReason) snap.tierReason = flags.tierReason;
+  if (flags.activateFail) snap.activateFail = flags.activateFail;
+  if (flags.activateFailAt) snap.activateFailAt = flags.activateFailAt;
   return snap;
 }

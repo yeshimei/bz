@@ -17,7 +17,7 @@
  *      统计里也算基础版，否则「卖出去了」和「还在用」会被混成一个数。
  *   4. **判不出来就报 unknown，不塞进基础版充数**（档位由调用方决定怎么兜）。
  */
-import type { PluginTier } from '../core/usage/types';
+import type { ActivateFail, PluginTier, TierReason } from '../core/usage/types';
 
 /** 从码里读出来的事实（不含原文） */
 export interface LicenseFacts {
@@ -132,4 +132,87 @@ export function readerLicenseIdOf(cfg: unknown): string {
 export function reviewLicenseIdOf(cfg: unknown): string {
   const license = String((cfg as { licenseKey?: unknown } | null)?.licenseKey || '');
   return licenseIdOf(license);
+}
+
+/* ── 2026-11-22：封码状态与「为什么掉级」的读取口径 ──────────────
+ * 这几样**只有那两个插件自己知道**：验签结果、停用名单判定、激活失败原因，
+ * 全都发生在它们各自的授权链路里。bz 只读不算，脏值一律当「没探测到」。
+ */
+
+const TIER_REASONS: readonly TierReason[] = ['ok', 'none', 'expired', 'revoked', 'invalid', 'unknown'];
+const ACTIVATE_FAILS: readonly ActivateFail[] = ['format', 'invalid', 'offline', 'revoked', 'expired'];
+
+function oneOf<T extends string>(v: unknown, pool: readonly T[]): T | undefined {
+  const s = typeof v === 'string' ? v.trim() : '';
+  return (pool as readonly string[]).includes(s) ? (s as T) : undefined;
+}
+
+/**
+ * 档位成因。老版本插件没写这个键 → undefined（不上报），**不拿 'none' 冒充**：
+ * 「没填码」和「这版插件根本不会记」是两件事，混起来会把老用户算成没买。
+ */
+function tierReasonOf(src: unknown): TierReason | undefined {
+  return oneOf((src as { tierReason?: unknown } | null)?.tierReason, TIER_REASONS);
+}
+
+/** 上次激活失败的原因；没记过 → undefined */
+function activateFailOf(src: unknown): ActivateFail | undefined {
+  return oneOf((src as { activateFail?: unknown } | null)?.activateFail, ACTIVATE_FAILS);
+}
+
+/** 毫秒戳（数字或可解析的 ISO 串）；0 / 负数 / 垃圾值 → undefined */
+export function stampOf(v: unknown): number | undefined {
+  if (typeof v === 'number') {
+    return Number.isFinite(v) && v > 0 ? Math.round(v) : undefined;
+  }
+  if (typeof v === 'string' && v.trim()) {
+    const t = Date.parse(v);
+    return Number.isFinite(t) && t > 0 ? t : undefined;
+  }
+  return undefined;
+}
+
+/** 停用标记：只认真正的布尔，别的（缺失 / 字符串 "true"）当「没探测到」 */
+function revokedOf(src: unknown): boolean | undefined {
+  const v = (src as { revoked?: unknown } | null)?.revoked;
+  return typeof v === 'boolean' ? v : undefined;
+}
+
+/** bz reader 写在自己 `entitlement` 记录里的那几笔 */
+export interface RevokedFlags {
+  revoked?: boolean;
+  revokedAt?: number;
+  tierReason?: TierReason;
+  activateFail?: ActivateFail;
+  activateFailAt?: number;
+}
+
+/** reader 侧：从 `entitlement` 读（老版本没有这几个键，全是 undefined） */
+export function readerRevokedFlags(cfg: unknown): RevokedFlags {
+  const ent = (cfg as { entitlement?: unknown } | null)?.entitlement;
+  if (!ent) return {};
+  return {
+    revoked: revokedOf(ent),
+    revokedAt: stampOf((ent as { revokedAt?: unknown }).revokedAt),
+    tierReason: tierReasonOf(ent),
+    activateFail: activateFailOf(ent),
+    activateFailAt: stampOf((ent as { activateFailAt?: unknown }).activateFailAt),
+  };
+}
+
+/**
+ * review 侧：它的 settings 摊在 data.json 顶层，几个键都带 `license` 前缀
+ * （`licenseRevoked` / `licenseTierReason` / …）。形状不同只是历史原因，
+ * 这里收口，采集端只管拿。
+ */
+export function reviewRevokedFlags(cfg: unknown): RevokedFlags {
+  const c = cfg as Record<string, unknown> | null;
+  if (!c) return {};
+  return {
+    revoked: revokedOf({ revoked: c.licenseRevoked }),
+    revokedAt: stampOf(c.licenseRevokedAt),
+    tierReason: tierReasonOf({ tierReason: c.licenseTierReason }),
+    activateFail: activateFailOf({ activateFail: c.licenseActivateFail }),
+    activateFailAt: stampOf(c.licenseActivateFailAt),
+  };
 }

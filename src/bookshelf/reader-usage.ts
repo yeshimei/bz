@@ -13,7 +13,8 @@ import type { App } from 'obsidian';
 import { readReaderInstall } from '../core/reader-install';
 import type { ReaderSnapshot, ReaderTier } from '../core/usage/types';
 import { readReaderAggregates, readReaderPluginConfig } from './reader-source';
-import { readerLicenseIdOf, readerTierOf } from './reader-tier';
+import { readerLicenseIdOf, readerRevokedFlags, readerTierOf } from './reader-tier';
+import type { RevokedFlags } from './reader-tier';
 
 const DAY_MS = 86_400_000;
 
@@ -43,11 +44,16 @@ export async function probeReaderUsage(app: App): Promise<ReaderSnapshot> {
      硬算会把「没装」也算成基础版，凭空放大基础版用户数。 */
   let tier: ReaderTier = 'unknown';
   let licenseId = '';
+  let flags: RevokedFlags = {};
   if (state === 'idle') {
     try {
       const cfg = await readReaderPluginConfig(app);
       tier = readerTierOf(cfg);
       licenseId = readerLicenseIdOf(cfg);
+      /* 2026-11-22：封码状态、档位成因、上次激活失败原因。
+         reader 那边写在自己的 entitlement 记录里；老版本没有这几个键，
+         读出来全是 undefined —— 不上报，而不是拿 false / 'none' 冒充。 */
+      flags = readerRevokedFlags(cfg);
     } catch {
       tier = 'unknown';
     }
@@ -73,5 +79,10 @@ export async function probeReaderUsage(app: App): Promise<ReaderSnapshot> {
   if (state === 'idle' && (minutes > 0 || lastAt > 0)) state = 'active';
   const snap: ReaderSnapshot = { state, tier, version, minutes, daysSince };
   if (licenseId) snap.licenseId = licenseId;
+  if (flags.revoked !== undefined) snap.revoked = flags.revoked;
+  if (flags.revokedAt) snap.revokedAt = flags.revokedAt;
+  if (flags.tierReason) snap.tierReason = flags.tierReason;
+  if (flags.activateFail) snap.activateFail = flags.activateFail;
+  if (flags.activateFailAt) snap.activateFailAt = flags.activateFailAt;
   return snap;
 }

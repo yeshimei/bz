@@ -114,6 +114,32 @@ describe('review-usage · 档位与码号', () => {
     const snap = await probeReviewUsage(appWith({ licenseKey: code({ ...PERM, exp: Date.now() - DAY }) }));
     expect(snap.tier).toBe('basic');
   });
+
+  /* 2026-11-22：review 在自己 data.json 里多记的那几笔 */
+  it('封码状态与激活失败能读出来，跟着快照走', async () => {
+    const snap = await probeReviewUsage(
+      appWith({
+        licenseKey: code(PERM),
+        licenseRevoked: true,
+        licenseRevokedAt: 1_800_000_000_000,
+        licenseTierReason: 'revoked',
+        licenseActivateFail: 'offline',
+        licenseActivateFailAt: 1_800_000_400_000,
+      }),
+    );
+    expect(snap.revoked).toBe(true);
+    expect(snap.revokedAt).toBe(1_800_000_000_000);
+    expect(snap.tierReason).toBe('revoked');
+    expect(snap.activateFail).toBe('offline');
+    expect(snap.activateFailAt).toBe(1_800_000_400_000);
+  });
+
+  it('老版本 review 没有这些键 → 快照里也不出现（不编 false）', async () => {
+    const snap = await probeReviewUsage(appWith({ licenseKey: code(PERM) }));
+    expect('revoked' in snap).toBe(false);
+    expect('tierReason' in snap).toBe(false);
+    expect('activateFail' in snap).toBe(false);
+  });
 });
 
 describe('review-usage · 最近复习与自定义存储目录', () => {
