@@ -56,23 +56,50 @@ export interface Ledger {
   days: Record<string, DayBucket>;
 }
 
-/** bz 阅读的授权档位（2026-11-12 起随快照带上，只给作者看板分类用） */
-export type ReaderTier = 'basic' | 'paid' | 'patron' | 'unknown';
+/** 配套插件的授权档位（2026-11-12 起随快照带上，只给作者看板分类用） */
+export type PluginTier = 'basic' | 'paid' | 'patron' | 'unknown';
+
+/** 兼容旧名 */
+export type ReaderTier = PluginTier;
+
+/** 配套插件的运行状态（reader / review 共用同一套枚举） */
+export type PluginRuntimeState = 'none' | 'broken' | 'disabled' | 'idle' | 'active' | 'unknown';
 
 /** bz 阅读的使用快照（只标量；书名/路径/划线内容不进这里） */
 export interface ReaderSnapshot {
   /** none 没装 / broken 装坏了 / disabled 装了没启用 / idle 启用了没读 / active 在读 / unknown 这次没探测到 */
-  state: 'none' | 'broken' | 'disabled' | 'idle' | 'active' | 'unknown';
+  state: PluginRuntimeState;
   /**
    * 当前授权档位：basic 基础版 / paid 高级版 / patron 赞助人（含带专属昵称的码）。
    * 没装、装坏、装了没启用的设备不知道档位，报 unknown——不能塞进基础版充数。
    */
-  tier: ReaderTier;
+  tier: PluginTier;
   version: string;
   /** 累计阅读分钟 */
   minutes: number;
   /** 距最近一次阅读几天；-1 = 从未读过 */
   daysSince: number;
+  /**
+   * 码号（激活码 payload 里的 `id`，例如 `BZR-AF-2026-0017`；没有码就不出现这个键）。
+   * 2026-11-22 起带上：作者要能回答「哪个码在被用、一个码几台设备、封了会影响谁」。
+   * 只带码号，不带码原文 / 昵称 / 订单号——码号本身不能用来激活。
+   */
+  licenseId?: string;
+}
+
+/** bz review 的使用快照（只标量；卡片内容、书名、笔记路径一律不进这里） */
+export interface ReviewSnapshot {
+  /** 口径同 ReaderSnapshot.state */
+  state: PluginRuntimeState;
+  /** 口径同 ReaderSnapshot.tier（Review 认 BZP* 与 BZR* 两种码） */
+  tier: PluginTier;
+  version: string;
+  /** 复习条目总数（复习笔记 + 划线卡，与它自己的 50 条上限同一口径） */
+  items: number;
+  /** 距最近一次复习几天；-1 = 从未复习过 */
+  daysSince: number;
+  /** 码号；没有码就不出现这个键 */
+  licenseId?: string;
 }
 
 export interface UsageMeta {
@@ -84,6 +111,8 @@ export interface UsageMeta {
   tz: string;
   locale: string;
   reader?: ReaderSnapshot;
+  /** bz review 的快照（这台设备没装就不带） */
+  review?: ReviewSnapshot;
   /** 首次引导走完了没 */
   guideDone?: boolean;
   /** 自动更新开关（缺省开） */

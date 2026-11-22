@@ -26,7 +26,7 @@ import { scheduleSelfUpdateCheck } from './core/self-update';
 import { applySkinManifest, loadLocalSkinPack } from './core/skin-pack';
 import { refreshManifest } from './core/download-manifest';
 import { autoUpdateAssets } from './core/auto-assets';
-import { autoUpdateReaderPlugin } from './core/reader-install';
+import { autoUpdateCompanionPlugins } from './core/reader-install';
 import { setAISettingsProvider, resetAIProviderCache } from './core/ai';
 import { setSettingsProvider, setSettingsSaver, setSettingsPanelOpener } from './core/settings-provider';
 import { bindMobileViewport, unbindMobileViewport } from './core/viewport';
@@ -123,6 +123,7 @@ import {
 } from './dock';
 import { initUsage, trackCommand, disposeUsage } from './core/usage';
 import { probeReaderUsage } from './bookshelf/reader-usage';
+import { probeReviewUsage } from './bookshelf/review-usage';
 
 /** 命令名统一前缀（2026-11-10 用户拍板，承接 GitHub issue #2）：
  *  所有 bz 命令的**显示名**以「bz · 」开头——命令面板搜「bz」一次列出全部 bz 命令；
@@ -482,6 +483,7 @@ export default class BzPlugin extends Plugin {
     attachObsidianAdapter(this.app, (ref) => this.registerEvent(ref as any));
     initUsage(String(this.manifest?.version || ''), {
       reader: () => probeReaderUsage(this.app),
+      review: () => probeReviewUsage(this.app),
       flags: () => ({
         guideDone: this.settings?.setupDone === true,
         updateAuto: this.settings?.autoUpdate === true,
@@ -634,12 +636,13 @@ export default class BzPlugin extends Plugin {
             console.warn('[bz] 自动更新在线资源失败（已静默）:', (e as Error)?.message || e);
           }
         }
-        // bz reader 跟着同一趟自动更新走（2026-11-05 用户要求）：开关关着时内部直接返回。
-        // 它走自己的 GitHub Release 链，不依赖上面那份在线资源清单是否拉到。
+        // 配套插件（bz reader → bz review）跟着同一趟自动更新走（2026-11-05 用户要求）：
+        // 开关关着时内部直接返回。各自走自己的 GitHub Release 链，不依赖上面那份在线资源清单。
+        // 2026-11-22 起两个插件一组：串行、reader 在前（review 的卡片来源是 reader 的划线）。
         try {
-          await autoUpdateReaderPlugin(getApp());
+          await autoUpdateCompanionPlugins(getApp());
         } catch (e) {
-          console.warn('[bz] 自动更新 bz reader 失败（已静默）:', (e as Error)?.message || e);
+          console.warn('[bz] 自动更新配套插件失败（已静默）:', (e as Error)?.message || e);
         }
       });
       // 知识盒/剪藏本引用同步无条件常驻（issue 336 / ADR-0149：knowledge.json、clipbook.json

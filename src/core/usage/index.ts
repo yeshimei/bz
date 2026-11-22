@@ -11,6 +11,7 @@ import {
   type Ledger,
   type PingPayload,
   type ReaderSnapshot,
+  type ReviewSnapshot,
   type UsageMeta,
 } from './types';
 
@@ -23,9 +24,12 @@ let handle: UsageHandle | null = null;
 let cachedInstallId = '';
 let cachedMeta: UsageMeta | null = null;
 let readerSnapshot: ReaderSnapshot | null = null;
+let reviewSnapshot: ReviewSnapshot | null = null;
 let flagsGetter: (() => { guideDone: boolean; updateAuto: boolean }) | null = null;
 let readerFirstTimer = 0;
 let readerTimer = 0;
+let reviewFirstTimer = 0;
+let reviewTimer = 0;
 let ledgerPath = '';
 
 interface RandomUuidCrypto {
@@ -131,6 +135,7 @@ function metaOf(pluginVersion: string): UsageMeta {
   }
   const out: UsageMeta = { ...cachedMeta };
   if (readerSnapshot) out.reader = readerSnapshot;
+  if (reviewSnapshot) out.review = reviewSnapshot;
   // 每次刷新快照前现读：用户中途改了自动更新开关，不用等下次重启才反映
   if (flagsGetter) {
     try {
@@ -261,6 +266,21 @@ function readerFields(reader?: ReaderSnapshot): Record<string, unknown> {
     readerVersion: reader.version,
     readerMinutes: reader.minutes,
     readerDaysSince: reader.daysSince,
+    // 码号：空串当没读到，不写这个键（PATCH 里不传的字段保持服务端旧值）
+    ...(reader.licenseId ? { readerLicenseId: reader.licenseId } : {}),
+  };
+}
+
+/** bz review 的那几个字段（与 readerFields 同构；没装 review 的设备整个不带） */
+function reviewFields(review?: ReviewSnapshot): Record<string, unknown> {
+  if (!review) return {};
+  return {
+    reviewState: review.state,
+    reviewTier: review.tier,
+    reviewVersion: review.version,
+    reviewItems: review.items,
+    reviewDaysSince: review.daysSince,
+    ...(review.licenseId ? { reviewLicenseId: review.licenseId } : {}),
   };
 }
 
@@ -281,6 +301,7 @@ function installFields(payload: PingPayload | DailyPayload, at: string): Record<
     tz: payload.tz,
     locale: payload.locale,
     ...readerFields(payload.reader),
+    ...reviewFields(payload.review),
     ...flagFields(payload),
   };
   // 「最早使用日」只写不删：考古没查到时整个键不发，服务端的旧值也就不会被空值冲掉
@@ -353,9 +374,43 @@ async function sendDaily(payload: DailyPayload): Promise<boolean> {
   return ok;
 }
 
+/**
+ * 一个配套插件快照的刷新节奏：首查 45 秒后，之后每 6 小时。
+ * 两个插件共用这套（2026-11-22 起 reader 和 review 各占一份）。
+ *
+ * 探测要读整份插件数据（同步解析大 JSON），挑浏览器空闲时做，别卡用户手头的操作。
+ * 失败不沿用旧值：宁可这一版显示「未知」，也不拿旧数字冒充当前状态。
+ */
+function scheduleProbe<T>(
+  probe: () => Promise<T>,
+  apply: (snap: T) => void,
+  fallback: T,
+): { first: number; repeat: number } {
+  const idle = (fn: () => void): void => {
+    const w = window as unknown as {
+      requestIdleCallback?: (cb: () => void, opts?: { timeout: number }) => number;
+    };
+    if (typeof w.requestIdleCallback === 'function') w.requestIdleCallback(fn, { timeout: 5_000 });
+    else window.setTimeout(fn, 0);
+  };
+  const refresh = async (): Promise<void> => {
+    try {
+      const snap = await probe();
+      if (snap) apply(snap);
+    } catch {
+      apply(fallback);
+    }
+  };
+  const first = window.setTimeout(() => idle(() => void refresh()), READER_FIRST_DELAY_MS);
+  const repeat = window.setInterval(() => idle(() => void refresh()), READER_REFRESH_MS);
+  return { first, repeat };
+}
+
 export interface UsageInitOptions {
   /** bz 阅读的使用快照；取不到就别传（那头没装或不归这次记录） */
   reader?: () => Promise<ReaderSnapshot>;
+  /** bz review 的使用快照；取不到就别传 */
+  review?: () => Promise<ReviewSnapshot>;
   /** 首用引导完成与自动更新开关（首启读一次，之后不追） */
   flags?: () => { guideDone: boolean; updateAuto: boolean };
 }
@@ -368,26 +423,27 @@ export function initUsage(manifestVersion: string, opts?: UsageInitOptions): voi
   if (opts?.flags) flagsGetter = opts.flags;
 
   if (opts?.reader) {
-    const probe = opts.reader;
-    // 读整份阅读数据是同步解析大 JSON，挑浏览器空闲时做，别卡用户手头的操作
-    const idle = (fn: () => void): void => {
-      const w = window as unknown as {
-        requestIdleCallback?: (cb: () => void, opts?: { timeout: number }) => number;
-      };
-      if (typeof w.requestIdleCallback === 'function') w.requestIdleCallback(fn, { timeout: 5_000 });
-      else window.setTimeout(fn, 0);
-    };
-    const refresh = async (): Promise<void> => {
-      try {
-        const snap = await probe();
-        if (snap) readerSnapshot = snap;
-      } catch {
-        // 探测失败不沿用旧值：宁可这一版显示「未知」，也不拿旧数字冒充当前状态
-        readerSnapshot = { state: 'unknown', tier: 'unknown', version: '', minutes: 0, daysSince: -1 };
-      }
-    };
-    readerFirstTimer = window.setTimeout(() => idle(() => void refresh()), READER_FIRST_DELAY_MS);
-    readerTimer = window.setInterval(() => idle(() => void refresh()), READER_REFRESH_MS);
+    const slots = scheduleProbe(
+      opts.reader,
+      (snap) => {
+        readerSnapshot = snap;
+      },
+      { state: 'unknown', tier: 'unknown', version: '', minutes: 0, daysSince: -1 },
+    );
+    readerFirstTimer = slots.first;
+    readerTimer = slots.repeat;
+  }
+
+  if (opts?.review) {
+    const slots = scheduleProbe(
+      opts.review,
+      (snap) => {
+        reviewSnapshot = snap;
+      },
+      { state: 'unknown', tier: 'unknown', version: '', items: 0, daysSince: -1 },
+    );
+    reviewFirstTimer = slots.first;
+    reviewTimer = slots.repeat;
   }
 
   handle = createUsage({
@@ -441,7 +497,11 @@ export async function disposeUsage(): Promise<void> {
   handle = null;
   if (readerFirstTimer) window.clearTimeout(readerFirstTimer);
   if (readerTimer) window.clearInterval(readerTimer);
+  if (reviewFirstTimer) window.clearTimeout(reviewFirstTimer);
+  if (reviewTimer) window.clearInterval(reviewTimer);
   readerFirstTimer = 0;
   readerTimer = 0;
+  reviewFirstTimer = 0;
+  reviewTimer = 0;
   if (cur) await cur.stop();
 }

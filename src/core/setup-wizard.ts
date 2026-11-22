@@ -43,12 +43,24 @@ import { docListedInResources } from './doc-visibility';
 import { getSettings, saveSettings, tryGetSettings } from './settings-provider';
 import { AI_PROVIDER_REGISTRY, DEFAULT_AI_PROVIDER, getProviderDescriptor, testAIConnectivity } from './ai';
 import {
+  fetchLatestPluginRelease,
   fetchLatestReaderRelease,
+  installPlugin,
   installReaderPlugin,
+  installReviewPlugin,
+  isPluginHealthy,
   isReaderHealthy,
+  pluginActionOf,
+  pluginStateText,
+  readPluginInstall,
   readReaderInstall,
+  readReviewInstall,
+  READER_SPEC,
+  REVIEW_SPEC,
   readerActionOf,
   readerStateText,
+  type PluginInstallState,
+  type PluginSpec,
   type ReaderInstallState,
 } from './reader-install';
 
@@ -64,7 +76,7 @@ const NODE_SIZE_HINT = 36.4 * 1024 * 1024;
 const MANIFEST_TIMEOUT_MS = 12000;
 
 /** 下载项的种类（决定 ③ 屏怎么分组、排序） */
-export type SetupKind = 'node' | 'reader' | 'bundle' | 'doc' | 'skins';
+export type SetupKind = 'node' | 'reader' | 'review' | 'bundle' | 'doc' | 'skins';
 
 /** 一个可下载项 */
 export interface SetupItem {
@@ -96,7 +108,7 @@ export function sizeText(bytes: number | null): string {
 export function buildSetupTasks(
   app: unknown,
   manifest: DownloadManifest | null,
-  opts: { nodeMissing: boolean; readerMissing?: boolean },
+  opts: { nodeMissing: boolean; readerMissing?: boolean; reviewMissing?: boolean },
 ): SetupItem[] {
   const mk = (i: Omit<SetupItem, 'ready'>): SetupItem => ({ ...i, ready: false });
   const items: SetupItem[] = [];
@@ -137,6 +149,24 @@ export function buildSetupTasks(
         size: 820 * 1024,
         run: async (report) => {
           const r = await installReaderPlugin(app, { onStage: (stage) => report?.(stage) });
+          if (!r.enabled) throw new Error('已装好，但没能自动启用：到「设置 → 第三方插件」里启用');
+        },
+      }),
+    );
+  }
+
+  // bz review（复习卡）：与 reader 同一套安装链路，排在它后面——review 的卡片来源是
+  // reader 的划线，reader 先落地才有东西可读（装配顺序见 reader-install 的 COMPANION_SPECS）。
+  if (opts.reviewMissing) {
+    items.push(
+      mk({
+        id: 'review',
+        kind: 'review',
+        label: 'bz review',
+        desc: '复习卡 · 间隔重复',
+        size: 900 * 1024,
+        run: async (report) => {
+          const r = await installReviewPlugin(app, { onStage: (stage) => report?.(stage) });
           if (!r.enabled) throw new Error('已装好，但没能自动启用：到「设置 → 第三方插件」里启用');
         },
       }),
@@ -216,6 +246,9 @@ async function isReady(
     const state = await readReaderInstall(app);
     return isReaderHealthy(state);
   }
+  if (kind === 'review') {
+    return isPluginHealthy(await readReviewInstall(app));
+  }
   if (!manifest) return false;
   if (kind === 'skins') {
     const st = await skinStatus(app, manifest);
@@ -231,7 +264,7 @@ async function isReady(
 export async function planSetupItems(
   app: unknown,
   manifest: DownloadManifest | null,
-  opts: { nodeMissing: boolean; readerMissing?: boolean },
+  opts: { nodeMissing: boolean; readerMissing?: boolean; reviewMissing?: boolean },
 ): Promise<SetupItem[]> {
   const items = buildSetupTasks(app, manifest, opts);
   const out: SetupItem[] = [];
@@ -412,38 +445,44 @@ interface ReaderRowHandle {
 }
 
 /**
- * bz reader 一行：状态 + 安装/更新按钮（引导检测屏与自检完成屏共用）。
+ * 一个配套插件一行：状态 + 安装/更新按钮（引导检测屏与自检完成屏共用）。
  *
- * 状态来自磁盘（core/reader-install.readReaderInstall），最新版由调用方异步查——
+ * 状态来自磁盘（core/reader-install.readPluginInstall），最新版由调用方异步查——
  * 不在这里发请求，检测屏可以让它跟清单拉取并发，完成屏则干脆不查（只补缺口）。
+ * 2026-11-22 起按 PluginSpec 分派：reader 与 review 各挂一行，判定与文案全走同一套。
  */
-function mountReaderRow(ctx: WizardCtx, card: HTMLElement, initialLatest: string | null = null): ReaderRowHandle {
+function mountPluginRow(
+  ctx: WizardCtx,
+  card: HTMLElement,
+  spec: PluginSpec,
+  initialLatest: string | null = null,
+): ReaderRowHandle {
   const row = rowEl('bz-setup-row bz-setup-row--reader');
   const mark = markEl('idle');
   const val = valEl('检查中…');
   const btn = button('bz-setup-link', '安装');
   btn.classList.add('is-hidden');
-  row.append(mark, keyEl('bz reader'), val, btn);
+  row.append(mark, keyEl(spec.name), val, btn);
   card.appendChild(row);
 
   let latest = initialLatest;
   let busy = false;
 
-  const render = (state: ReaderInstallState): void => {
-    val.textContent = readerStateText(state, latest);
-    const healthy = isReaderHealthy(state);
+  const render = (state: PluginInstallState): void => {
+    val.textContent = pluginStateText(state, latest);
+    const healthy = isPluginHealthy(state);
     mark.className =
       'bz-setup-mark ' + (state.broken ? 'bz-setup-mark--bad' : healthy ? 'bz-setup-mark--ok' : 'bz-setup-mark--idle');
     row.classList.toggle('is-bad', state.broken);
-    // 动作与设置面板、向导完成屏同一处判定（readerActionOf）：三处不再各写一套
-    const action = readerActionOf(state, latest);
+    // 动作与设置面板、向导完成屏同一处判定（pluginActionOf）：三处不再各写一套
+    const action = pluginActionOf(state, latest);
     btn.classList.toggle('is-hidden', busy || action === 'none');
     btn.disabled = busy;
     btn.textContent = action === 'install' ? '安装' : '更新';
   };
 
   const refresh = async (): Promise<void> => {
-    render(await readReaderInstall(ctx.app));
+    render(await readPluginInstall(ctx.app, spec));
   };
 
   btn.onclick = async () => {
@@ -452,7 +491,7 @@ function mountReaderRow(ctx: WizardCtx, card: HTMLElement, initialLatest: string
     btn.disabled = true;
     btn.textContent = '安装中…';
     try {
-      const r = await installReaderPlugin(ctx.app, {
+      const r = await installPlugin(ctx.app, spec, {
         onStage: (text) => {
           val.textContent = text;
         },
@@ -462,8 +501,8 @@ function mountReaderRow(ctx: WizardCtx, card: HTMLElement, initialLatest: string
       await refresh();
       notice(
         r.enabled
-          ? `bz reader 已安装并启用（${r.version}）`
-          : `bz reader 已安装（${r.version}），到「设置 → 第三方插件」里启用`,
+          ? `${spec.name} 已安装并启用（${r.version}）`
+          : `${spec.name} 已安装（${r.version}），到「设置 → 第三方插件」里启用`,
         r.enabled ? 'success' : 'warning',
       );
     } catch (e) {
@@ -475,7 +514,7 @@ function mountReaderRow(ctx: WizardCtx, card: HTMLElement, initialLatest: string
       btn.classList.remove('is-hidden');
       btn.disabled = false;
       btn.textContent = '重试';
-      notice(`bz reader 安装失败：${msg}`, 'error');
+      notice(`${spec.name} 安装失败：${msg}`, 'error');
     }
   };
 
@@ -583,17 +622,24 @@ async function stageProbe(ctx: WizardCtx, st: WizardState, ui: Ui): Promise<void
   ui.body.appendChild(env.group);
   for (const r of envRows) paint(addRow(r.key, env.card), r.ok, r.value);
 
-  // bz reader：本机状态立刻显示，最新版异步查（GitHub 主 → 码云备），不阻塞这一屏。
+  // bz reader / bz review：本机状态立刻显示，最新版异步查（GitHub 主 → 码云备），不阻塞这一屏。
   // 两条通道都不通时静默——按钮照常可点，点安装时再把具体原因给人看。
   const readerGroup = setupGroup('Obsidian 插件');
   ui.body.appendChild(readerGroup.group);
-  const readerHandle = mountReaderRow(ctx, readerGroup.card);
+  const readerHandle = mountPluginRow(ctx, readerGroup.card, READER_SPEC);
+  const reviewHandle = mountPluginRow(ctx, readerGroup.card, REVIEW_SPEC);
   if (probe?.github || probe?.gitee) {
-    void fetchLatestReaderRelease()
-      .then((r) => readerHandle.setLatest(r.version))
-      .catch(() => {
-        /* 静默：安装按钮仍可用 */
-      });
+    const handles: Array<[PluginSpec, ReaderRowHandle]> = [
+      [READER_SPEC, readerHandle],
+      [REVIEW_SPEC, reviewHandle],
+    ];
+    for (const [spec, handle] of handles) {
+      void fetchLatestPluginRelease(spec)
+        .then((r) => handle.setLatest(r.version))
+        .catch(() => {
+          /* 静默：安装按钮仍可用 */
+        });
+    }
   }
 
   if (toolRows.length) {
@@ -757,10 +803,15 @@ async function beginInstall(ctx: WizardCtx, st: WizardState, ui: Ui): Promise<vo
     st.manifest = fetched.manifest;
   }
   const nodeMissing = probeNodeRuntime(ctx.app, { fresh: true }).kind === 'none';
-  // bz reader 不进在线资源清单（它是另一个插件），单独问一次磁盘
+  // bz reader / bz review 不进在线资源清单（它们是另外两个插件），单独问一次磁盘
   const readerState = await readReaderInstall(ctx.app);
   const readerMissing = !isReaderHealthy(readerState);
-  const items = await planSetupItems(ctx.app, st.manifest ?? null, { nodeMissing, readerMissing });
+  const reviewMissing = !isPluginHealthy(await readReviewInstall(ctx.app));
+  const items = await planSetupItems(ctx.app, st.manifest ?? null, {
+    nodeMissing,
+    readerMissing,
+    reviewMissing,
+  });
   const tasks = selectedTasks(items, defaultSelection(items));
   if (!tasks.length) {
     if (!ctx.checkOnly) await markDone(ctx.app);

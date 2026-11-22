@@ -7,7 +7,14 @@
  * 档位口径见 src/bookshelf/reader-tier.ts 头注。
  */
 import { describe, expect, it } from 'vitest';
-import { parseReaderLicense, readerTierOf } from '../../src/bookshelf/reader-tier';
+import {
+  licenseIdOf,
+  parseReaderLicense,
+  readerLicenseIdOf,
+  readerTierOf,
+  reviewLicenseIdOf,
+  reviewTierOf,
+} from '../../src/bookshelf/reader-tier';
 import { probeReaderUsage } from '../../src/bookshelf/reader-usage';
 import { MockVault, mockAppWithVault } from '../mock-vault';
 
@@ -121,5 +128,65 @@ describe('reader-tier · 快照', () => {
     const snap = await probeReaderUsage(app);
     expect(snap.state).toBe('disabled');
     expect(snap.tier).toBe('unknown');
+  });
+});
+
+describe('reader-tier · 码号（2026-11-22 起带）', () => {
+  it('从 BZR2 码里取码号（只取 id，昵称不读）', () => {
+    const c = code({ ...PERM, patron: true, name: '沁弦' });
+    expect(licenseIdOf(c)).toBe('BZR-AF-2026-0125');
+  });
+
+  it('reader 配置里的码号', () => {
+    expect(readerLicenseIdOf({ entitlement: { license: code(PERM) } })).toBe('BZR-AF-2026-0125');
+  });
+
+  it('没码 / 解不开 → 空串', () => {
+    expect(readerLicenseIdOf({})).toBe('');
+    expect(licenseIdOf('')).toBe('');
+    expect(licenseIdOf('BZR2.bm90LWpzb24.c2ln')).toBe('');
+  });
+
+  it('码号只留字母数字与横线：手改坏的文件不能把奇怪字符带进统计', () => {
+    expect(licenseIdOf(code({ v: 2, id: '<script>alert(1)</script>' }))).toBe('scriptalert1script');
+    expect(licenseIdOf(code({ v: 2, id: '  BZR-AF-2026-0009  ' }))).toBe('BZR-AF-2026-0009');
+  });
+
+  it('BZP 码也认（bz review 的那批）', () => {
+    expect(licenseIdOf(code(PERM, 'BZP2'))).toBe('BZR-AF-2026-0125');
+  });
+});
+
+describe('review-tier · 判档与码号', () => {
+  const now = Date.UTC(2026, 10, 12);
+
+  it('BZP2 码 → paid', () => {
+    expect(reviewTierOf({ licenseKey: code(PERM, 'BZP2') }, now)).toBe('paid');
+  });
+
+  it('BZR 赞助人码 → patron（赞助人码跨插件可用）', () => {
+    expect(reviewTierOf({ licenseKey: code({ ...PERM, patron: true }, 'BZR2') }, now)).toBe('patron');
+  });
+
+  it('没码 / 空 / 读不到 → basic', () => {
+    expect(reviewTierOf(null, now)).toBe('basic');
+    expect(reviewTierOf({}, now)).toBe('basic');
+    expect(reviewTierOf({ licenseKey: '   ' }, now)).toBe('basic');
+  });
+
+  it('过期 → basic；没过期 → paid', () => {
+    const expired = code({ ...PERM, exp: now - DAY }, 'BZP2');
+    const alive = code({ ...PERM, exp: now + DAY }, 'BZP2');
+    expect(reviewTierOf({ licenseKey: expired }, now)).toBe('basic');
+    expect(reviewTierOf({ licenseKey: alive }, now)).toBe('paid');
+  });
+
+  it('解不开的码 → basic（不猜）', () => {
+    expect(reviewTierOf({ licenseKey: 'BZP2.!!!.x' }, now)).toBe('basic');
+  });
+
+  it('码号', () => {
+    expect(reviewLicenseIdOf({ licenseKey: code(PERM, 'BZP2') })).toBe('BZR-AF-2026-0125');
+    expect(reviewLicenseIdOf({})).toBe('');
   });
 });

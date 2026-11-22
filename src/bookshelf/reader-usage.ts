@@ -13,7 +13,7 @@ import type { App } from 'obsidian';
 import { readReaderInstall } from '../core/reader-install';
 import type { ReaderSnapshot, ReaderTier } from '../core/usage/types';
 import { readReaderAggregates, readReaderPluginConfig } from './reader-source';
-import { readerTierOf } from './reader-tier';
+import { readerLicenseIdOf, readerTierOf } from './reader-tier';
 
 const DAY_MS = 86_400_000;
 
@@ -42,9 +42,12 @@ export async function probeReaderUsage(app: App): Promise<ReaderSnapshot> {
   /* 档位只在「装了、没坏、已启用」时才有意义：别的设备根本走不到 bz 阅读的授权判定，
      硬算会把「没装」也算成基础版，凭空放大基础版用户数。 */
   let tier: ReaderTier = 'unknown';
+  let licenseId = '';
   if (state === 'idle') {
     try {
-      tier = readerTierOf(await readReaderPluginConfig(app));
+      const cfg = await readReaderPluginConfig(app);
+      tier = readerTierOf(cfg);
+      licenseId = readerLicenseIdOf(cfg);
     } catch {
       tier = 'unknown';
     }
@@ -68,5 +71,7 @@ export async function probeReaderUsage(app: App): Promise<ReaderSnapshot> {
   const minutes = Math.min(10_000_000, Math.round(ms / 60_000));
   const daysSince = lastAt > 0 ? Math.max(0, Math.floor((Date.now() - lastAt) / DAY_MS)) : -1;
   if (state === 'idle' && (minutes > 0 || lastAt > 0)) state = 'active';
-  return { state, tier, version, minutes, daysSince };
+  const snap: ReaderSnapshot = { state, tier, version, minutes, daysSince };
+  if (licenseId) snap.licenseId = licenseId;
+  return snap;
 }

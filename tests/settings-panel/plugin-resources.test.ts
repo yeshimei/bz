@@ -1,11 +1,14 @@
 // @vitest-environment jsdom
 /**
  * 「插件」组（settings-panel/plugin-resources.ts）——2026-11-05 用户要求：
- * - 组在「外部工具」上面：组首「全部更新」+ bz reader 一行；
+ * - 组在「外部工具」上面：组首「全部更新」+ 每个配套插件一行；
  * - 行右侧 GitHub（带图标，跳仓库）+ 安装/更新；
  * - **已装就只剩 GitHub，不摆一枚灰的「已安装」**；只有确认有新版才露「更新」；
  * - 行里显示版本号，后台查到最新版后补成「已安装 x · 新版 y」；
  * - 关掉自动更新只是不自动装，版本号照旧显示（点「更新」才装）。
+ *
+ * 2026-11-22 用户要求把 bz review 也纳进来：一组两个插件（reader → review），
+ * 每行一套独立的版本号与按钮状态，行序固定（review 依赖 reader）。
  */
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { requestUrl } from 'obsidian';
@@ -23,10 +26,18 @@ import { setApp } from '../../src/core/app';
 import { MockVault } from '../mock-vault';
 
 const PLUGIN_DIR = '.obsidian/plugins/bz-reader';
+const REVIEW_DIR = '.obsidian/plugins/bz-review';
+
 const MANIFEST = JSON.stringify({
   id: 'bz-reader',
   name: 'bz Reader',
   version: '0.2.0',
+  minAppVersion: '1.8.7',
+});
+const REVIEW_MANIFEST = JSON.stringify({
+  id: 'bz-review',
+  name: 'bz Review',
+  version: '1.0.2',
   minAppVersion: '1.8.7',
 });
 const MAIN_JS = 'console.log("bz reader");\n' + 'x'.repeat(2000);
@@ -35,8 +46,12 @@ const STYLES = '.bz-reader{color:red}\n' + 'x'.repeat(200);
 const ok = (text: string) => ({ status: 200, text });
 const tick = (ms = 30) => new Promise((r) => setTimeout(r, ms));
 
+/** bz review 默认装好且已是最新：多数用例只关心 reader 那一行，别让 review 干扰「全部更新」 */
+const REVIEW_INSTALLED = JSON.stringify({ id: 'bz-review', version: '1.0.2' });
+
 function newVault(): MockVault {
   const vault = new MockVault();
+  vault.files.set(`${REVIEW_DIR}/manifest.json`, REVIEW_INSTALLED);
   setApp({ vault, workspace: {} } as any);
   return vault;
 }
@@ -51,6 +66,19 @@ function route(rules: Array<[string, string | Error]>): void {
     }
     throw new Error(`unmocked url: ${opts.url}`);
   }) as never);
+}
+
+/** 两个插件各自的最新版清单（needle 精确到插件名，避免互相串台） */
+function routeBoth(
+  reader: string | Error,
+  extra: Array<[string, string | Error]> = [],
+  review: string | Error = REVIEW_MANIFEST,
+): void {
+  route([
+    ['/bz-reader/releases/latest/download/manifest.json', reader],
+    ['/bz-review/releases/latest/download/manifest.json', review],
+    ...extra,
+  ]);
 }
 
 beforeEach(() => {
@@ -86,22 +114,23 @@ const shownBtns = (el: HTMLElement, i: number): HTMLButtonElement[] =>
   rowBtns(el, i).filter((b) => b.style.display !== 'none');
 
 describe('组形状', () => {
-  it('组名「插件」、图标 puzzle；组首「全部更新」，下面 bz reader 一行', async () => {
+  it('组名「插件」、图标 puzzle；组首「全部更新」，下面 reader 与 review 各一行', async () => {
     newVault();
-    route([['/releases/latest/download/manifest.json', MANIFEST]]);
+    routeBoth(MANIFEST);
     const { el, group } = await renderGroup();
     expect(group.name).toBe(PLUGIN_GROUP_NAME);
     expect(group.icon).toBe('puzzle');
-    expect(group.rows).toHaveLength(2);
+    expect(group.rows).toHaveLength(3);
     expect(group.rows[0].type).toBe('button');
     expect((group.rows[0] as { name: string }).name).toBe('全部更新');
     expect(group.rows[1].type).toBe('info');
     expect(rowName(el, 1)).toBe('bz reader');
+    expect(rowName(el, 2)).toBe('bz review');
   });
 
   it('未安装 → 行右侧两个按钮：GitHub（带图标）+ 安装', async () => {
     newVault();
-    route([['/releases/latest/download/manifest.json', MANIFEST]]);
+    routeBoth(MANIFEST);
     const { el } = await renderGroup();
     const btns = rowBtns(el, 1);
     expect(btns).toHaveLength(2);
@@ -119,7 +148,7 @@ describe('组形状', () => {
 describe('版本号与按钮文字', () => {
   it('未安装 → 「未安装」/「安装」', async () => {
     newVault();
-    route([['/releases/latest/download/manifest.json', MANIFEST]]);
+    routeBoth(MANIFEST);
     const { el } = await renderGroup();
     expect(rowDesc(el, 1)).toBe('未安装');
     expect(shownBtns(el, 1).map((b) => b.textContent)).toEqual(['GitHub', '安装']);
@@ -128,7 +157,7 @@ describe('版本号与按钮文字', () => {
   it('已装且已是最新 → 只留 GitHub，安装钮不露（不摆灰钮）', async () => {
     const vault = newVault();
     vault.files.set(`${PLUGIN_DIR}/manifest.json`, JSON.stringify({ id: 'bz-reader', version: '0.2.0' }));
-    route([['/releases/latest/download/manifest.json', MANIFEST]]);
+    routeBoth(MANIFEST);
     const { el } = await renderGroup();
     // 打开面板那一刻就已经是「已装」——不等联网核对，安装钮就不该出现（否则先闪一下再收起）
     expect(shownBtns(el, 1).map((b) => b.textContent)).toEqual(['GitHub']);
@@ -139,7 +168,10 @@ describe('版本号与按钮文字', () => {
   it('最新版查不到（网络坏）→ 同样只留 GitHub，不摆灰钮', async () => {
     const vault = newVault();
     vault.files.set(`${PLUGIN_DIR}/manifest.json`, JSON.stringify({ id: 'bz-reader', version: '0.2.0' }));
-    route([['github.com', new Error('ENOTFOUND')], ['gitee.com', new Error('ENOTFOUND')]]);
+    route([
+      ['github.com', new Error('ENOTFOUND')],
+      ['gitee.com', new Error('ENOTFOUND')],
+    ]);
     const { el } = await renderGroup();
     await vi.waitFor(() => expect(rowDesc(el, 1)).toBe('已安装 0.2.0'));
     expect(shownBtns(el, 1).map((b) => b.textContent)).toEqual(['GitHub']);
@@ -149,7 +181,7 @@ describe('版本号与按钮文字', () => {
     const vault = newVault();
     vault.files.set(`${PLUGIN_DIR}/manifest.json`, JSON.stringify({ id: 'bz-reader', version: '0.2.0' }));
     const newer = JSON.stringify({ id: 'bz-reader', name: 'bz reader', version: '0.2.1' });
-    route([['/releases/latest/download/manifest.json', newer]]);
+    routeBoth(newer);
     const { el } = await renderGroup();
     await vi.waitFor(() => expect(rowBtns(el, 1)[1].textContent).toBe('更新'));
     const shown = shownBtns(el, 1);
@@ -161,17 +193,17 @@ describe('版本号与按钮文字', () => {
     const vault = newVault();
     vault.files.set(`${PLUGIN_DIR}/manifest.json`, JSON.stringify({ id: 'bz-reader', version: '0.2.0' }));
     const newer = JSON.stringify({ id: 'bz-reader', name: 'bz Reader', version: '0.2.1' });
-    route([['/releases/latest/download/manifest.json', newer]]);
+    routeBoth(newer);
     const { el } = await renderGroup();
     await vi.waitFor(() => expect(rowDesc(el, 1)).toBe('已安装 0.2.0 · 新版 0.2.1'));
     // 有新版 → 「全部更新」可点
     expect(rowBtns(el, 0)[0].disabled).toBe(false);
   });
 
-  it('已是最新 → 「全部更新」禁用（没有可做的）', async () => {
+  it('两个都是最新 → 「全部更新」禁用（没有可做的）', async () => {
     const vault = newVault();
     vault.files.set(`${PLUGIN_DIR}/manifest.json`, JSON.stringify({ id: 'bz-reader', version: '0.2.0' }));
-    route([['/releases/latest/download/manifest.json', MANIFEST]]);
+    routeBoth(MANIFEST);
     const { el } = await renderGroup();
     await vi.waitFor(() => expect(rowBtns(el, 0)[0].disabled).toBe(true));
   });
@@ -179,19 +211,53 @@ describe('版本号与按钮文字', () => {
   it('最新版查不到（网络坏）→ 只显示本机版本，不报错', async () => {
     const vault = newVault();
     vault.files.set(`${PLUGIN_DIR}/manifest.json`, JSON.stringify({ id: 'bz-reader', version: '0.2.0' }));
-    route([['github.com', new Error('ENOTFOUND')], ['gitee.com', new Error('ENOTFOUND')]]);
+    route([
+      ['github.com', new Error('ENOTFOUND')],
+      ['gitee.com', new Error('ENOTFOUND')],
+    ]);
     const { el } = await renderGroup();
     await vi.waitFor(() => expect(rowDesc(el, 1)).toBe('已安装 0.2.0'));
+  });
+});
+
+describe('bz review 那一行', () => {
+  it('已装 review → 自己的版本号，与 reader 互不串台', async () => {
+    newVault();
+    routeBoth(MANIFEST);
+    const { el } = await renderGroup();
+    await vi.waitFor(() => expect(rowDesc(el, 2)).toBe('已安装 1.0.2'));
+    // reader 未装，不能因为 review 装了就被顶成已装
+    expect(rowDesc(el, 1)).toBe('未安装');
+  });
+
+  it('review 未装 → 自己一枚安装钮（不影响 reader 那行）', async () => {
+    const vault = newVault();
+    vault.files.delete(`${REVIEW_DIR}/manifest.json`);
+    vault.files.set(`${PLUGIN_DIR}/manifest.json`, JSON.stringify({ id: 'bz-reader', version: '0.2.0' }));
+    routeBoth(MANIFEST);
+    const { el } = await renderGroup();
+    expect(shownBtns(el, 2).map((b) => b.textContent)).toEqual(['GitHub', '安装']);
+    expect(shownBtns(el, 1).map((b) => b.textContent)).toEqual(['GitHub']);
+  });
+
+  it('review 有新版 → 只在那行露「更新」，reader 行不受影响', async () => {
+    const vault = newVault();
+    vault.files.set(`${PLUGIN_DIR}/manifest.json`, JSON.stringify({ id: 'bz-reader', version: '0.2.0' }));
+    const newer = JSON.stringify({ id: 'bz-review', name: 'bz Review', version: '1.0.3' });
+    routeBoth(MANIFEST, [], newer);
+    const { el } = await renderGroup();
+    await vi.waitFor(() => expect(rowDesc(el, 2)).toBe('已安装 1.0.2 · 新版 1.0.3'));
+    expect(rowDesc(el, 1)).toBe('已安装 0.2.0');
+    expect(shownBtns(el, 2).map((b) => b.textContent)).toEqual(['GitHub', '更新']);
   });
 });
 
 describe('点「安装」真的装', () => {
   it('未安装 → 点安装：下载三件套、写盘、装完收起安装钮', async () => {
     const vault = newVault();
-    route([
-      ['/releases/latest/download/manifest.json', MANIFEST],
-      ['/releases/download/0.2.0/main.js', MAIN_JS],
-      ['/releases/download/0.2.0/styles.css', STYLES],
+    routeBoth(MANIFEST, [
+      ['/bz-reader/releases/download/0.2.0/main.js', MAIN_JS],
+      ['/bz-reader/releases/download/0.2.0/styles.css', STYLES],
     ]);
     const { el } = await renderGroup();
     rowBtns(el, 1)[1].click();
@@ -222,7 +288,11 @@ describe('pluginDescOf', () => {
     expect(pluginDescOf({ ...base, broken: true }, '0.2.1')).toBe('未安装');
   });
 
-  it('插件目录里现在就一个 bz reader', () => {
-    expect(PLUGIN_ENTRIES.map((e) => e.id)).toEqual(['bz-reader']);
+  it('插件目录里现在是 reader + review，顺序固定', () => {
+    expect(PLUGIN_ENTRIES.map((e) => e.id)).toEqual(['bz-reader', 'bz-review']);
+    expect(PLUGIN_ENTRIES.map((e) => e.repoUrl)).toEqual([
+      'https://github.com/yeshimei/bz-reader',
+      'https://github.com/yeshimei/bz-review',
+    ]);
   });
 });
