@@ -14,15 +14,26 @@ export const PENDING_MAX_DAYS = 7;
 
 export const TICK_MS = 60_000;
 
-// 心跳比「在线」判定窗口（5 分钟）短，留出两拍的余量：心跳与窗口等长时，
-// 只要哪一跳慢十几秒，在线数就会闪成 0，看着像掉线，其实设备一直在。
-export const PING_MS = 2 * 60_000;
-
-export const PING_FIRST_DELAY_MS = 5_000;
-
+/**
+ * 上线心跳已删除（2026-11-22，用户拍板）。
+ *
+ * 原心跳每 2 分钟一次、每次两组文档各「POST 撞 409 → PATCH」= 4 次写；403 台设备
+ * 一天就是 116 万次、一月 3500 万次，把 Appwrite 的写入额度直接写爆（402）。
+ * 它产出两样东西：`lastSeen` 和 `presence` 集合——后者的读取方为零，前者日汇总
+ * 本来就会写。所以整条链路停掉，只留日汇总一条上报路径。
+ */
 export const UPLOAD_FIRST_DELAY_MS = 20_000;
 
 export const UPLOAD_INTERVAL_MS = 6 * 60 * 60_000;
+
+/**
+ * 两次上报之间的最小间隔（跨重启生效）。
+ *
+ * 日汇总每次都要重发「今天」（水位只认已经过完的日子），而上传计时器是**进程内**的：
+ * 用户反复重载插件就会反复发同一份。账本里的 `lastAttemptAt` 是落盘的，用它挡掉
+ * 一小时内的重复——一天重启十次也只发一次。
+ */
+export const MIN_UPLOAD_GAP_MS = 60 * 60_000;
 
 export const SESSION_GAP_MS = 30 * 60_000;
 
@@ -124,13 +135,6 @@ export interface DailyPayload extends UsageMeta {
   /** 本机最早使用日（YYYY-MM-DD）；考古没查到就不带这个键 */
   since?: string;
   days: DayBucket[];
-}
-
-export interface PingPayload extends UsageMeta {
-  schema: number;
-  /** 同 DailyPayload.since：只发日期，不发任何路径或文件名 */
-  since?: string;
-  at: number;
 }
 
 export function emptyLedger(now: number): Ledger {

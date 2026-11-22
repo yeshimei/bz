@@ -124,6 +124,40 @@ describe('usage · 发送内容', () => {
     expect(l.lastSentDate).toBe('2026-11-10'); // 只认已过完的昨天
   });
 
+  it('配套插件快照跟着日汇总走（心跳删掉后这是唯一的上报路径）', () => {
+    const meta: UsageMeta = {
+      ...META,
+      reader: {
+        state: 'active',
+        tier: 'paid',
+        version: '1.6.0',
+        minutes: 120,
+        daysSince: 1,
+        licenseId: 'BZR-AF-2026-0017',
+      },
+      review: {
+        state: 'idle',
+        tier: 'basic',
+        version: '1.0.2',
+        items: 0,
+        daysSince: -1,
+      },
+      guideDone: true,
+      updateAuto: false,
+    };
+    const p = buildDailyPayload(meta, [DAY]);
+    expect(p.reader?.licenseId).toBe('BZR-AF-2026-0017');
+    expect(p.reader?.tier).toBe('paid');
+    expect(p.review?.version).toBe('1.0.2');
+    expect(p.guideDone).toBe(true);
+    expect(p.updateAuto).toBe(false);
+    // 没装的设备不带 review 这个键，服务端的旧值就不会被冲掉
+    const bare = buildDailyPayload(META, [DAY]);
+    expect('reader' in bare).toBe(false);
+    expect('review' in bare).toBe(false);
+    expect('guideDone' in bare).toBe(false);
+  });
+
   it('退避档位：6h → 12h → 24h 封顶', () => {
     expect(retryDelay(1)).toBe(6 * 3600_000);
     expect(retryDelay(2)).toBe(12 * 3600_000);

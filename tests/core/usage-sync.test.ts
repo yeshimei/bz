@@ -1,8 +1,19 @@
-/** 同步时序与退避（假时钟）。 */
+/** 同步时序与退避（假时钟）。
+ *
+ * 2026-11-22 起「上线心跳」整条链路删掉（它每 2 分钟写 4 次，403 台一天 116 万次，
+ * 把 Appwrite 额度写爆）。现在只有一条上报路径：日汇总。这份测试跟着改成：
+ * 启动后只发日汇总、没有第二条请求、一小时内重载不重发。
+ */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createUsage, type UsageHost } from '../../src/core/usage/collect';
 import { localDayKey } from '../../src/core/ui/str';
-import { emptyDay, emptyLedger, type PingPayload, type DailyPayload, type Ledger, type UsageMeta } from '../../src/core/usage/types';
+import {
+  emptyDay,
+  emptyLedger,
+  type DailyPayload,
+  type Ledger,
+  type UsageMeta,
+} from '../../src/core/usage/types';
 
 const BASE = new Date(2026, 10, 11, 9, 0).getTime();
 const META: UsageMeta = {
@@ -17,7 +28,6 @@ const META: UsageMeta = {
 
 interface Harness {
   host: UsageHost;
-  pings: PingPayload[];
   dailies: DailyPayload[];
   saves: Ledger[];
   advance(ms: number): Promise<void>;
@@ -25,12 +35,13 @@ interface Harness {
   setDailyOk(v: boolean): void;
 }
 
-function makeHarness(init: { ledger?: Ledger | null; visible?: boolean; dailyOk?: boolean; pingOk?: boolean; enabled?: boolean; since?: string } = {}): Harness {
+function makeHarness(
+  init: { ledger?: Ledger | null; visible?: boolean; dailyOk?: boolean; enabled?: boolean; since?: string } = {},
+): Harness {
   let now = BASE;
   let visible = init.visible ?? true;
   let dailyOk = init.dailyOk ?? true;
-  let since = init.since ?? '';
-  const pings: PingPayload[] = [];
+  const since = init.since ?? '';
   const dailies: DailyPayload[] = [];
   const saves: Ledger[] = [];
   const host: UsageHost = {
@@ -45,21 +56,18 @@ function makeHarness(init: { ledger?: Ledger | null; visible?: boolean; dailyOk?
       dailies.push(p);
       return dailyOk;
     },
-    sendPing: async (p) => {
-      pings.push(p);
-      return init.pingOk ?? true;
-    },
     meta: () => META,
     probeSince: async () => since,
     warn: () => undefined,
     setInterval: (fn, ms) => globalThis.setInterval(fn, ms) as unknown as number,
-    clearInterval: (id) => globalThis.clearInterval(id as unknown as Parameters<typeof globalThis.clearInterval>[0]),
+    clearInterval: (id) =>
+      globalThis.clearInterval(id as unknown as Parameters<typeof globalThis.clearInterval>[0]),
     setTimeout: (fn, ms) => globalThis.setTimeout(fn, ms) as unknown as number,
-    clearTimeout: (id) => globalThis.clearTimeout(id as unknown as Parameters<typeof globalThis.clearTimeout>[0]),
+    clearTimeout: (id) =>
+      globalThis.clearTimeout(id as unknown as Parameters<typeof globalThis.clearTimeout>[0]),
   };
   return {
     host,
-    pings,
     dailies,
     saves,
     async advance(ms: number) {
@@ -96,23 +104,22 @@ describe('usage · 同步时序', () => {
     vi.restoreAllMocks();
   });
 
-  it('启动 5 秒发第一条心跳，10 秒内不重复发', async () => {
+  it('心跳已移除：启动后只有日汇总这一条上报，两分钟内没有第二发', async () => {
     const h = makeHarness();
     createUsage(h.host);
-    await h.advance(4_000);
-    expect(h.pings).toHaveLength(0);
-    await h.advance(1_500);
-    expect(h.pings).toHaveLength(1);
-    expect(h.pings[0].installId).toBe(META.installId);
-    await h.advance(9_000);
-    expect(h.pings).toHaveLength(1);
+    await h.advance(21_000);
+    // startSession 建了今天的桶，20 秒那一发就带着「今天」走了
+    expect(h.dailies).toHaveLength(1);
+    await h.advance(2 * 60_000);
+    expect(h.dailies).toHaveLength(1);
+    await h.advance(10 * 60_000);
+    expect(h.dailies).toHaveLength(1);
   });
 
-  it('窗口不可见时心跳照发，活跃分钟不记', async () => {
+  it('窗口不可见时不记活跃分钟（心跳没了，但「真的在看」的判据不变）', async () => {
     const h = makeHarness({ visible: false });
     const handle = createUsage(h.host);
     await h.advance(70_000);
-    expect(h.pings).toHaveLength(1); // 进程还开着就算在线
     const today = localDayKey(BASE + 70_000);
     expect(handle.snapshot().days[today]?.activeMinutes ?? 0).toBe(0);
   });
@@ -144,12 +151,31 @@ describe('usage · 同步时序', () => {
     expect(handle.snapshot().lastSentDate).toBe(localDayKey(BASE - 86_400_000));
   });
 
+  it('一小时内重载插件不重发同一份（跨重启节流，账本里的 lastAttemptAt 是判据）', async () => {
+    const h = makeHarness({ ledger: ledgerWithYesterday() });
+    const first = createUsage(h.host);
+    await h.advance(21_000);
+    expect(h.dailies).toHaveLength(1);
+    await first.stop();
+    const saved = h.saves[h.saves.length - 1];
+    expect(saved.lastAttemptAt).toBeGreaterThan(0);
+
+    // 30 分钟后重载：节流期内，一条都不该发
+    const again = makeHarness({ ledger: saved });
+    createUsage(again.host);
+    await again.advance(30 * 60_000);
+    expect(again.dailies).toHaveLength(0);
+
+    // 再过一小时（总间隔超过 MIN_UPLOAD_GAP_MS）：放行
+    await again.advance(60 * 60_000);
+    expect(again.dailies.length).toBeGreaterThanOrEqual(1);
+  });
+
   it('端点没配（enabled=false）时一条请求都不发，但本地照记', async () => {
     const h = makeHarness({ enabled: false });
     const handle = createUsage(h.host);
     handle.trackCommand('bz-memo-open');
     await h.advance(70_000);
-    expect(h.pings).toHaveLength(0);
     expect(h.dailies).toHaveLength(0);
     const today = localDayKey(BASE + 70_000);
     expect(handle.snapshot().days[today]?.commands['bz-memo-open']).toBe(1);
@@ -160,14 +186,14 @@ describe('usage · 同步时序', () => {
     const handle = createUsage(h.host);
     handle.trackCommand('bz-diary-open');
     await h.advance(1_000);
-    const before = h.pings.length;
+    const before = h.dailies.length;
     await handle.stop();
     expect(h.saves.length).toBeGreaterThanOrEqual(1);
     const saved = h.saves[h.saves.length - 1];
     const today = localDayKey(BASE + 1_000);
     expect(saved.days[today]?.commands['bz-diary-open']).toBe(1);
     await h.advance(10 * 60_000);
-    expect(h.pings).toHaveLength(before);
+    expect(h.dailies).toHaveLength(before);
   });
 
   it('装载完成前发生的命令不丢（进队列补记）', async () => {
@@ -182,7 +208,10 @@ describe('usage · 同步时序', () => {
   it('账本还没读完时定时拍不记活跃分钟', async () => {
     let finish!: () => void;
     const h = makeHarness();
-    h.host.load = () => new Promise<Ledger | null>((res) => { finish = () => res(null); });
+    h.host.load = () =>
+      new Promise<Ledger | null>((res) => {
+        finish = () => res(null);
+      });
     const handle = createUsage(h.host);
     await h.advance(130_000); // 两拍过去，账本还没读回来
     const today = localDayKey(BASE + 130_000);
@@ -197,7 +226,9 @@ describe('usage · 同步时序', () => {
     const h = makeHarness({ ledger: ledgerWithYesterday() });
     h.host.sendDaily = (p) => {
       h.dailies.push(p);
-      return new Promise<boolean>((res) => { release = () => res(true); });
+      return new Promise<boolean>((res) => {
+        release = () => res(true);
+      });
     };
     createUsage(h.host);
     await h.advance(21_000);
@@ -209,11 +240,10 @@ describe('usage · 同步时序', () => {
     expect(h.dailies).toHaveLength(1);
   });
 
-  it('考古到的「最早使用日」跟着心跳与日汇总一起发', async () => {
+  it('考古到的「最早使用日」跟着日汇总一起发', async () => {
     const h = makeHarness({ ledger: ledgerWithYesterday(), since: '2026-08-15' });
     createUsage(h.host);
     await h.advance(21_000);
-    expect(h.pings[0].since).toBe('2026-08-15');
     expect(h.dailies[0].since).toBe('2026-08-15');
   });
 
@@ -221,7 +251,6 @@ describe('usage · 同步时序', () => {
     const h = makeHarness({ ledger: ledgerWithYesterday() });
     createUsage(h.host);
     await h.advance(21_000);
-    expect('since' in h.pings[0]).toBe(false);
     expect('since' in h.dailies[0]).toBe(false);
   });
 

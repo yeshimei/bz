@@ -9,7 +9,6 @@ import {
   emptyLedger,
   type DailyPayload,
   type Ledger,
-  type PingPayload,
   type ReaderSnapshot,
   type ReviewSnapshot,
   type UsageMeta,
@@ -219,7 +218,19 @@ async function api(method: string, path: string, body?: unknown): Promise<number
   }
 }
 
-/** 先建，已存在（409）再改：两条路各自一次请求，避开「改不存在文档」在某些环境下不返回 404 的情况 */
+/**
+ * 已经确认存在的文档（`集合:文档号`）。
+ *
+ * 2026-11-22：以前每次心跳都先 POST 撞 409 再 PATCH，一次更新白花两个请求。
+ * 记住之后直接 PATCH——插件重载会重置这一份，所以每轮启动最多只撞一次 409。
+ * 文档被人在服务端删掉的极端情况：PATCH 失败（404）就把记录摘掉，下一轮退回 POST。
+ */
+const knownDocs = new Set<string>();
+
+/**
+ * 先建，已存在（409）再改：两条路各自一次请求，避开「改不存在文档」在某些环境下不返回 404 的情况。
+ * 已知存在时跳过 POST（见 knownDocs）。
+ */
 async function upsert(
   collection: string,
   docId: string,
@@ -227,12 +238,24 @@ async function upsert(
   createExtra?: Record<string, unknown>,
 ): Promise<boolean> {
   const base = `/databases/${USAGE_DB}/collections/${collection}/documents`;
+  const key = `${collection}:${docId}`;
+  if (knownDocs.has(key)) {
+    const patched = await api('PATCH', `${base}/${docId}`, { data });
+    if (patched >= 200 && patched < 300) return true;
+    // 404 = 文档在服务端没了：摘掉记录，本轮退回 POST 重建
+    if (patched !== 404) return false;
+    knownDocs.delete(key);
+  }
   const created = await api('POST', base, {
     documentId: docId,
     data: { ...data, ...(createExtra || {}) },
   });
-  if (created >= 200 && created < 300) return true;
+  if (created >= 200 && created < 300) {
+    knownDocs.add(key);
+    return true;
+  }
   if (created !== 409) return false;
+  knownDocs.add(key);
   const patched = await api('PATCH', `${base}/${docId}`, { data });
   return patched >= 200 && patched < 300;
 }
@@ -284,14 +307,14 @@ function reviewFields(review?: ReviewSnapshot): Record<string, unknown> {
   };
 }
 
-function flagFields(payload: PingPayload | DailyPayload): Record<string, unknown> {
+function flagFields(payload: DailyPayload): Record<string, unknown> {
   const out: Record<string, unknown> = {};
   if (payload.guideDone !== undefined) out.guideDone = payload.guideDone;
   if (payload.updateAuto !== undefined) out.updateAuto = payload.updateAuto;
   return out;
 }
 
-function installFields(payload: PingPayload | DailyPayload, at: string): Record<string, unknown> {
+function installFields(payload: DailyPayload, at: string): Record<string, unknown> {
   const out: Record<string, unknown> = {
     lastSeen: at,
     pluginVersion: payload.pluginVersion,
@@ -307,27 +330,6 @@ function installFields(payload: PingPayload | DailyPayload, at: string): Record<
   // 「最早使用日」只写不删：考古没查到时整个键不发，服务端的旧值也就不会被空值冲掉
   if (payload.since) out.since = payload.since;
   return out;
-}
-
-async function sendPing(payload: PingPayload): Promise<boolean> {
-  const at = isoOf(payload.at);
-  // 心跳不带 since：两分钟一次太频，而 since 只要定下来就不再变，交给六小时一次的日汇总去比
-  const ok = await upsert('installs', payload.installId, installFields({ ...payload, since: '' }, at), {
-    installId: payload.installId,
-    firstSeen: at,
-  });
-  await upsert(
-    'presence',
-    payload.installId,
-    {
-      lastSeen: at,
-      pluginVersion: payload.pluginVersion,
-      platform: payload.platform,
-      isMobile: payload.isMobile,
-    },
-    { installId: payload.installId },
-  );
-  return ok;
 }
 
 /** 服务端那条 since 只往早里走：远端已经是更早的日子就不写，免得后启动的库把起点改晚 */
@@ -465,7 +467,6 @@ export function initUsage(manifestVersion: string, opts?: UsageInitOptions): voi
     },
     save: (ledger: Ledger) => enqueueFileTask(ledgerPath, () => store.write(ledger)),
     sendDaily: (payload: DailyPayload) => sendDaily(payload),
-    sendPing: (payload: PingPayload) => sendPing(payload),
     meta: () => metaOf(manifestVersion),
     // 设备级起点：localStorage 那份跨库共享，扫到的只往早里合并，写完立刻回存
     probeSince: async () => {

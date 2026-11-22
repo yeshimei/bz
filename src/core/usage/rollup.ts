@@ -49,6 +49,13 @@ export function buildDailyPayload(meta: UsageMeta, days: DayBucket[], since = ''
     locale: meta.locale,
     days: days.map(exportDay),
   };
+  /* 配套插件快照此前只跟着「上线心跳」发（心跳把 meta 整份展开）；2026-11-22 心跳删掉后
+     日汇总成了唯一的上报路径，这几项必须在这里显式带上，否则码号永远到不了服务端。
+     只在有值时才写键：PATCH 里不传的字段保持服务端旧值，不会被空值冲掉。 */
+  if (meta.reader) payload.reader = meta.reader;
+  if (meta.review) payload.review = meta.review;
+  if (meta.guideDone !== undefined) payload.guideDone = meta.guideDone;
+  if (meta.updateAuto !== undefined) payload.updateAuto = meta.updateAuto;
   // 只有考古拿到日子才带这个键：查不到就让服务端按 firstSeen 兜底，别发空串占位
   if (since) payload.since = since;
   return payload;
@@ -69,7 +76,8 @@ export function retryWaitMs(ledger: Ledger, now: number): number {
 
 export function markDailySent(ledger: Ledger, sentDates: string[], today: string): void {
   ledger.failures = 0;
-  ledger.lastAttemptAt = 0;
+  // 不清 lastAttemptAt（2026-11-22）：它现在兼任「上次上报时刻」，跨重启节流（collect 的
+  // MIN_UPLOAD_GAP_MS）要用它。退避那边不受影响——retryWaitMs 在 failures=0 时根本不看它。
   // 水位只认「已经过完的日子」：今天还在长，明天会整份重发，不能被今天顶掉
   const done = sentDates.filter((d) => d < today);
   if (!done.length) return;

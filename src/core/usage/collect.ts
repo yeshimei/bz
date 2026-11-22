@@ -3,8 +3,7 @@ import { addActiveMinute, normalizeLedger, pruneDays, recordCommand, startSessio
 import { buildDailyPayload, markDailySent, pendingDates, retryDelay, retryWaitMs } from './rollup';
 import { earlierDay } from './since';
 import {
-  PING_FIRST_DELAY_MS,
-  PING_MS,
+  MIN_UPLOAD_GAP_MS,
   USAGE_SCHEMA,
   TICK_MS,
   UPLOAD_FIRST_DELAY_MS,
@@ -12,7 +11,6 @@ import {
   emptyLedger,
   type DailyPayload,
   type Ledger,
-  type PingPayload,
   type UsageMeta,
 } from './types';
 
@@ -25,7 +23,6 @@ export interface UsageHost {
   load(): Promise<Ledger | null>;
   save(ledger: Ledger): Promise<void>;
   sendDaily(payload: DailyPayload): Promise<boolean>;
-  sendPing(payload: PingPayload): Promise<boolean>;
   meta(): UsageMeta;
   /** 本地考古「最早使用日」；查不到返回 ''（新装 / 目录还没建） */
   probeSince(): Promise<string>;
@@ -51,7 +48,6 @@ export function createUsage(host: UsageHost): UsageHandle {
   let dirty = false;
   let revision = 0;
   let lastSaveAt = 0;
-  let lastPingAt = 0;
   let uploadAt = 0;
   let ticking = false;
   let uploading = false;
@@ -66,9 +62,6 @@ export function createUsage(host: UsageHost): UsageHandle {
   const tickTimer = host.setInterval(() => {
     runTick();
   }, TICK_MS);
-  const pingTimer = host.setTimeout(() => {
-    void pingNow();
-  }, PING_FIRST_DELAY_MS);
   const uploadTimer = host.setTimeout(() => {
     void uploadPending();
   }, UPLOAD_FIRST_DELAY_MS);
@@ -83,6 +76,14 @@ export function createUsage(host: UsageHost): UsageHandle {
       host.warn('读取账本失败，按空账本继续', e);
     }
     startSession(ledger, host.now());
+    // 跨重启节流（2026-11-22）：日汇总每次都重发「今天」，而上传计时器是进程内的——
+    // 用户反复重载插件就会反复发同一份。账本里的 lastAttemptAt 是落盘的，用它挡掉
+    // 一小时内的重复；超过一小时（或从没发过）就按正常的首查延迟走。
+    const lastTry = ledger.lastAttemptAt || 0;
+    const bootAt = host.now();
+    if (lastTry > 0 && bootAt - lastTry < MIN_UPLOAD_GAP_MS) {
+      uploadAt = Math.max(uploadAt, lastTry + MIN_UPLOAD_GAP_MS);
+    }
     markDirty();
     ready = true;
     for (const cmd of earlyCommands.splice(0)) recordCommand(ledger, cmd.id, cmd.at);
@@ -125,7 +126,6 @@ export function createUsage(host: UsageHost): UsageHandle {
         lastSaveAt = now;
         void persist();
       }
-      void pingNow();
       void uploadPending();
     } finally {
       ticking = false;
@@ -144,24 +144,6 @@ export function createUsage(host: UsageHost): UsageHandle {
     }
   }
 
-  async function pingNow(): Promise<void> {
-    // 在线只认「插件还在跑」：窗口最小化、切到别的笔记库，Obsidian 都还开着，
-    // 不该从在线掉下去。活跃分钟另有 visible 门槛（那才是「真的在看」）。
-    if (stopped || !ready || !host.enabled()) return;
-    const now = host.now();
-    if (now - lastPingAt < PING_MS) return;
-    lastPingAt = now;
-    try {
-      await host.sendPing({
-        schema: USAGE_SCHEMA,
-        ...host.meta(),
-        ...(ledger.sinceDay ? { since: ledger.sinceDay } : {}),
-        at: now,
-      });
-    } catch {
-      /* 失败不重试，下一拍再来 */
-    }
-  }
 
   async function uploadPending(): Promise<void> {
     if (stopped || !ready || !host.enabled() || uploading) return;
@@ -222,7 +204,6 @@ export function createUsage(host: UsageHost): UsageHandle {
       if (stopped) return;
       stopped = true;
       host.clearInterval(tickTimer);
-      host.clearTimeout(pingTimer);
       host.clearTimeout(uploadTimer);
       await persist();
     },
