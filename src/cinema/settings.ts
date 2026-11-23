@@ -119,6 +119,8 @@ export function cinemaSettingsSchema(): SettingsSchema {
                   okLabel: '确认打开',
                 });
                 if (!ok) return false;
+                // 长篇库要挨篇读改写：先给一句「在跑」，别让面板看起来卡死
+                notice(`正在写入影评，共 ${candidates} 篇…`);
                 const res = await review.migrateReviewsIntoNotes(app);
                 notice(
                   `已把 ${res.done} 篇影评写入笔记${res.failed ? `，${res.failed} 篇失败` : ''}`,
@@ -136,6 +138,7 @@ export function cinemaSettingsSchema(): SettingsSchema {
                 danger: true,
               });
               if (!ok) return false;
+              notice(`正在清除正文影评，共 ${withBlock} 篇…`);
               const res = await review.clearReviewsFromNotes(app);
               notice(
                 `已清除 ${res.done} 篇正文影评${res.failed ? `，${res.failed} 篇失败` : ''}`,

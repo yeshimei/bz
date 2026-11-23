@@ -3201,8 +3201,11 @@ function confirmCinema(sec: HTMLElement, o: {
 
 /**
  * 设置面板里的影院风格确认框（影评入笔记开关用）：影院面板没开也能弹。
- * 临时宿主挂 body，ovHost 在其中建 `.bz-cinema--midnight`（display:contents）——
- * 调色板变量与 `.cn-modal` 那张纸的样式照常穿皮，关闭后宿主一并摘掉。
+ * 临时宿主挂 body，ovHost 在其中建 `.bz-cinema--midnight`（display:contents）——调色板变量与
+ * `.cn-modal` 那张纸的样式照常穿皮，关闭后宿主一并摘掉。
+ *
+ * 遮罩的定位与层级（fixed 铺满视口、顶到最上层）由 `cinema/styles.css` 里
+ * `[data-cinema-confirm-host]` 那条规则给，不在这里写内联样式（域内样式单源）。
  */
 export function confirmCinemaFromSettings(o: {
   kicker: string;
@@ -3214,17 +3217,7 @@ export function confirmCinemaFromSettings(o: {
   const sec = document.createElement('div');
   sec.setAttribute('data-cinema-confirm-host', '');
   document.body.appendChild(sec);
-  const answer = confirmCinema(sec, o);
-  // 影院的 .cn-ovl 平时在面板树内（z-index 50），设置面板本体层级更高会把它盖住；
-  // 从设置面板弹时必须顶到最上层，并改用 fixed 让遮罩相对视口铺满（宿主挂 body 无定位祖先）
-  const ov = sec.querySelector<HTMLElement>('.cn-ovl');
-  if (ov) {
-    ov.style.position = 'fixed';
-    ov.style.inset = '0';
-    // 自绘设置面板本体 z-index 达 100010，普通高位仍会被盖住——顶到 CSS 上限
-    ov.style.zIndex = '2147483647';
-  }
-  return answer.finally(() => sec.remove());
+  return confirmCinema(sec, o).finally(() => sec.remove());
 }
 
 // ---------- 弹窗：删除确认 ----------

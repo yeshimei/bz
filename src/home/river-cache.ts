@@ -152,7 +152,9 @@ export function loadRiverCached(app: App, opts: RiverCacheOptions = {}, retried 
       // 调用方拿到的仍是「变化之后」的数据；并发始终只有一轮（见 markDirty 注释）。
       if (invalidated && !retried) {
         invalidated = false;
-        return loadRiverCached(app, { force: true }, true);
+        // 时钟一并透传：续采用真实时间算 cachedAt/cachedKey 的话，注入时钟的调用方
+        // 下一拍会认为缓存已跨天（cacheKey 不匹配）白采一轮
+        return loadRiverCached(app, { force: true, now }, true);
       }
       if (!invalidated) {
         cached = data;

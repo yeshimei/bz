@@ -58,20 +58,47 @@ function bodyStartOf(content: string): number {
 }
 
 /**
+ * 删块后的接缝：两侧空白压成一个空行。
+ *
+ * 标记块前后各留过换行，直接首尾相接会不断积累空行——界面改几次影评，
+ * 笔记顶部就多出几行空白。这里统一收敛，重复摘插也保持同一形状。
+ */
+function seamJoin(before: string, after: string): string {
+  const left = before.replace(/\n+$/, '');
+  const right = after.replace(/^\n+/, '');
+  if (!left) return right;
+  if (!right) return `${left}\n`;
+  return `${left}\n\n${right}`;
+}
+
+/**
  * 写正文标记：review 非空则插入/替换（幂等——已有块只换内容，不重复插）；
  * review 为 null/空则只删块，其余正文一字不动。
  */
 export function setReviewInContent(content: string, review: string | null): string {
   const b = findBlock(content);
   if (review === null || review.trim() === '') {
-    return b ? content.slice(0, b.start) + content.slice(b.end) : content;
+    if (!b) return content;
+    return seamJoin(content.slice(0, b.start), content.slice(b.end));
   }
   // 先摘旧块再在 frontmatter 后最前重插——豆瓣回填海报会把 embed 插到 frontmatter 之后，
   // 若原地替换，标记就被挤到海报下面；用户拍板标记必须在海报上面（笔记顶部）
-  const without = b ? content.slice(0, b.start) + content.slice(b.end) : content;
+  const without = b ? seamJoin(content.slice(0, b.start), content.slice(b.end)) : content;
   const text = `${REVIEW_BEGIN}\n${review.replace(/\r\n/g, '\n')}\n${REVIEW_END}`;
   const at = bodyStartOf(without);
-  return without.slice(0, at) + `${text}\n\n` + without.slice(at);
+  const head = without.slice(0, at).replace(/\n+$/, '');
+  const tail = without.slice(at).replace(/^\n+/, '');
+  const body = tail ? `${text}\n\n${tail}` : `${text}\n`;
+  return head ? `${head}\n\n${body}` : body;
+}
+
+/**
+ * 正文里还留着标记残影没有？「真删干净」时连 BZ-MOVIE 字样都不剩，
+ * 这时同步删属性是对的；只剩半截边界（手滑改坏、撤销撤了一半）说明用户
+ * 没打算删影评，属性必须保住——否则一次手误就把面板里的影评清空。
+ */
+function hasDamagedBlock(content: string): boolean {
+  return content.toUpperCase().includes('BZ-MOVIE') && findBlock(content) === null;
 }
 
 /** 开关当前值（缺省关；设置访问器未注入时同样关）。 */
@@ -90,6 +117,14 @@ export interface ReviewBatchResult {
   done: number;
   failed: number;
   skipped: number;
+}
+
+/** 每处理这么多篇让出一次主线程：影视目录上千篇时，串行等 IO 也不会把界面冻死 */
+const BATCH_YIELD = 20;
+
+/** 让出一次事件循环（读完的间隙让 Obsidian 重绘进度、响应点击） */
+function yieldToUi(): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, 0));
 }
 
 /** 统计：属性有影评但正文没标记（开开关要搬多少）/ 正文已有标记（关开关要清多少）。 */
@@ -112,7 +147,9 @@ export async function countReviewNotes(app: App): Promise<{ candidates: number; 
 /** 批量迁入：属性影评 → 正文标记。无影评的不插空块（增强 1）；已有块只换内容（增强 5）。 */
 export async function migrateReviewsIntoNotes(app: App): Promise<ReviewBatchResult> {
   const res: ReviewBatchResult = { done: 0, failed: 0, skipped: 0 };
+  let i = 0;
   for (const file of cinemaNotes(app)) {
+    if (++i % BATCH_YIELD === 0) await yieldToUi();
     const fm = app.metadataCache.getFileCache(file)?.frontmatter as Record<string, unknown> | undefined;
     const review = fm?.['影评'];
     if (typeof review !== 'string' || !review.trim()) {
@@ -135,7 +172,9 @@ export async function migrateReviewsIntoNotes(app: App): Promise<ReviewBatchResu
 /** 批量清除：正文标记删除，内容先并回属性（关掉后只在属性保留影评，正文改过的内容不丢）。 */
 export async function clearReviewsFromNotes(app: App): Promise<ReviewBatchResult> {
   const res: ReviewBatchResult = { done: 0, failed: 0, skipped: 0 };
+  let i = 0;
   for (const file of cinemaNotes(app)) {
+    if (++i % BATCH_YIELD === 0) await yieldToUi();
     const content = await app.vault.cachedRead(file);
     const review = readReviewFromContent(content);
     if (!hasReviewBlock(content)) {
@@ -176,6 +215,11 @@ export async function syncReviewFromNote(app: App, file: TFile): Promise<void> {
   const fm = app.metadataCache.getFileCache(file)?.frontmatter as Record<string, unknown> | undefined;
   const current = typeof fm?.['影评'] === 'string' ? fm['影评'] as string : '';
   if ((review ?? '') === current) return;
+  // 半截标记不改属性：保住备份，等用户把边界修好或整块删干净
+  if (review === null && hasDamagedBlock(content)) {
+    console.warn('bz 影院：影评标记不完整，暂不同步属性（属性里的备份原样保留）', file.path);
+    return;
+  }
   noteSelfWrite(file.path);
   await app.fileManager.processFrontMatter(file, (f: Record<string, unknown>) => {
     if (review) f['影评'] = review;

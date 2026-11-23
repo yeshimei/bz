@@ -15,6 +15,7 @@
  */
 import type { App } from 'obsidian';
 import { REVIEW_SPEC, pluginDirOf, readReviewInstall } from '../core/reader-install';
+import { diskReadText } from '../core/storage';
 import type { PluginRuntimeState, ReviewSnapshot } from '../core/usage/types';
 import { reviewLicenseIdOf, reviewRevokedFlags, reviewTierOf } from './reader-tier';
 import type { RevokedFlags } from './reader-tier';
@@ -24,12 +25,12 @@ const DAY_MS = 86_400_000;
 /** bz-review core/storage-path 的缺省存储目录 */
 const DEFAULT_STORAGE_DIR = 'CONFIG/STORAGE';
 
-/** 读一个 vault 相对路径的 JSON；读不到 / 解析失败一律 null（探测不该抛） */
+/** 读一个 vault 相对路径的 JSON；读不到 / 解析失败一律 null（探测不该抛）。
+ *  读盘走 core/storage 的问盘助手（ADR-0289）：路径可能是点前缀目录，vault 索引会漏。 */
 async function readJson(app: App, path: string): Promise<unknown> {
+  const raw = await diskReadText(app, path);
+  if (typeof raw !== 'string' || !raw.trim()) return null;
   try {
-    const raw = await (app as { vault?: { adapter?: { read?: (p: string) => Promise<string> } } })
-      ?.vault?.adapter?.read?.(path);
-    if (typeof raw !== 'string' || !raw.trim()) return null;
     return JSON.parse(raw);
   } catch {
     return null;

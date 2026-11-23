@@ -2872,7 +2872,8 @@ export class DiaryAppController {
       month,
       byDay,
       writeMode,
-      selectedDate: writeMode ? this.calDate : null,
+      // 选中日两种模式都标：跳日模式虽然点完即关，切月/重开时仍要看得出上次停在哪天
+      selectedDate: this.calDate,
     });
     /* 写作模式所有日子都能点（选中只是标出来，「就这天」才提交）；
        跳日模式只给落过笔的日子挂监听——点了空日子只会弹一句「那天没落笔」，白费一次点击 */
