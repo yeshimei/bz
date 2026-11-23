@@ -19565,7 +19565,8 @@ canvas { display: block; }
 .bzs-chgn-fbmeta{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:auto;padding-top:7px;font-size:9.5px;color:var(--chg-ink-3)}
 .bzs-chgn-fbsrc{display:inline-flex;align-items:center;gap:3px;padding:1px 6px;border-radius:4px;font-weight:600;text-decoration:none;color:var(--chg-ink-2);background:color-mix(in srgb,var(--chg-ink-3) 12%,transparent)}
 .bzs-chgn-fbsrc.github-issue{background:var(--chg-accent-soft);color:var(--chg-accent)}
-.bzs-chgn-fbsrc.bili-dm{background:rgba(251,114,153,.13);color:#d62f6c}
+.bzs-chgn-fbsrc.bili-dm,
+.bzs-chgn-fbsrc.bili-comment{background:rgba(251,114,153,.13);color:#d62f6c}
 .bzs-chgn-fbsrc.qq-group,
 .bzs-chgn-fbsrc.qq-channel,
 .bzs-chgn-fbsrc.qq-friend{background:rgba(30,160,220,.13);color:#1477a8}
