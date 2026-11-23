@@ -69,12 +69,13 @@ export interface RoadmapTheme {
   items: RoadmapItem[];
 }
 
-/** 反馈来源：五条渠道，一一对应 skill 的判源口径 */
+/** 反馈来源：六条渠道，一一对应 skill 的判源口径（B 站评论与私信分开） */
 export type FeedbackSource =
   | 'github-issue'
   | 'qq-group'
   | 'qq-channel'
   | 'qq-friend'
+  | 'bili-comment'
   | 'bili-dm';
 
 /** 反馈五态：采纳 / 否决 / 不成立 / 已完成 / 进行中 */
@@ -251,7 +252,7 @@ function feedback(raw: unknown): RoadmapFeedback | null {
 }
 
 const FEEDBACK_SOURCES = new Set<FeedbackSource>([
-  'github-issue', 'qq-group', 'qq-channel', 'qq-friend', 'bili-dm',
+  'github-issue', 'qq-group', 'qq-channel', 'qq-friend', 'bili-comment', 'bili-dm',
 ]);
 const FEEDBACK_STATES = new Set<FeedbackState>([
   'accepted', 'rejected', 'invalid', 'done', 'doing',

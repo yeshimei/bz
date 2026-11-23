@@ -53,7 +53,7 @@ const U = {
   fbReply: '作者回复', fbVerify: '核查结论', fbRelease: '发布版本', fbEmpty: '暂无',
   fbSubmitted: '提交', fbDoneAt: '完成',
   fbSrcGithub: 'GitHub issue', fbSrcQqGroup: 'QQ 交流群', fbSrcQqChannel: 'QQ 频道',
-  fbSrcQqFriend: 'QQ 好友', fbSrcBili: 'B 站私信',
+  fbSrcQqFriend: 'QQ 好友', fbSrcBili: 'B 站私信', fbSrcBiliComment: 'B 站评论区',
 };
 
 /** 三段定义（顺序即渲染顺序；标签与线上日志文档同一套措辞） */
@@ -140,7 +140,7 @@ function roadmapPanelHtml(data: BzrData | null): string {
 function feedbackSourceLabel(s: FeedbackSource): string {
   const map: Record<FeedbackSource, string> = {
     'github-issue': U.fbSrcGithub, 'qq-group': U.fbSrcQqGroup, 'qq-channel': U.fbSrcQqChannel,
-    'qq-friend': U.fbSrcQqFriend, 'bili-dm': U.fbSrcBili,
+    'qq-friend': U.fbSrcQqFriend, 'bili-comment': U.fbSrcBiliComment, 'bili-dm': U.fbSrcBili,
   };
   return map[s];
 }
