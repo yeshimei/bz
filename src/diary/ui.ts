@@ -81,9 +81,9 @@ import {
   pad2,
   weekdayOf,
   writeDaystampHTML,
-  WEEK,
   type RenderCtx,
 } from './render';
+import { buildCalGridHtml, withinEntranceGuard } from './cal-grid';
 import {
   addEntry,
   findDiaryEntry,
@@ -581,6 +581,8 @@ export class DiaryAppController {
    */
   private pendingHome = false;
   private cal = { year: 2026, month: 1 };
+  /** 台历打开时刻（ms）：入场动画期内的「点弹层外」当误触，不关面板（反馈：尺寸跳动导致误触正文） */
+  private calOpenedAt = 0;
   /** 台历当前模式：跳日（文具「跳」）或写作内页的改日子·时辰 */
   private calMode: 'jump' | 'write' = 'jump';
   /** 写作模式下台历里选中的那天（未选回落草稿当前那天） */
@@ -2847,6 +2849,7 @@ export class DiaryAppController {
     }
     this.renderCal();
     this.calEl.hidden = false;
+    this.calOpenedAt = Date.now();
   }
 
   private renderCal(): void {
@@ -2863,19 +2866,14 @@ export class DiaryAppController {
         byDay.set(d, (byDay.get(d) || 0) + 1);
       }
     }
-    const first = new Date(year, month - 1, 1).getDay();
-    const days = new Date(year, month, 0).getDate();
-    let html = WEEK.map((w) => `<span class="bz-diary-cal-wd">${w}</span>`).join('');
-    for (let i = 0; i < first; i++) html += '<span class="bz-diary-cal-cell"></span>';
-    for (let d = 1; d <= days; d++) {
-      const n = byDay.get(d);
-      const sel = this.calDate === `${year}-${pad2(month)}-${pad2(d)}`;
-      /* `data-n` 是角上那枚「当天几则」小字（原型同款）；不设就白留一条 ::after 规则 */
-      html += `<span class="bz-diary-cal-cell${n ? ' bz-diary-has' : ''}${
-        writeMode ? ' bz-diary-pickable' : ''
-      }${sel ? ' bz-diary-sel' : ''}" data-d="${d}"${n ? ` data-n="${n}"` : ''}>${d}</span>`;
-    }
-    this.calGridEl.innerHTML = html;
+    // 网格生成抽到 ./cal-grid 纯函数：恒补满 6 行，切月高度不跳（QQ 群反馈第 3 条）
+    this.calGridEl.innerHTML = buildCalGridHtml({
+      year,
+      month,
+      byDay,
+      writeMode,
+      selectedDate: writeMode ? this.calDate : null,
+    });
     /* 写作模式所有日子都能点（选中只是标出来，「就这天」才提交）；
        跳日模式只给落过笔的日子挂监听——点了空日子只会弹一句「那天没落笔」，白费一次点击 */
     const pickable = writeMode ? '.bz-diary-cal-cell[data-d]' : '.bz-diary-cal-cell.bz-diary-has';
@@ -2962,7 +2960,15 @@ export class DiaryAppController {
   private bindCal(): void {
     this.calEl.addEventListener('click', (ev) => {
       const t = ev.target as HTMLElement;
-      if (t.closest('.bz-diary-cal-cancel') || !t.closest('.bz-diary-cal')) {
+      if (t.closest('.bz-diary-cal-cancel')) {
+        this.closeCal();
+        return;
+      }
+      /* 入场动画 0.3s 内弹层还在旋转位移，手快点空落到遮罩上不算「点外面」——
+         否则台历被关掉、下一击落到遮罩下的正文上（反馈：误触正文、日期选择中断）。
+         动画结束后照常点外面就关，不让守卫变成关不掉。 */
+      if (!t.closest('.bz-diary-cal')) {
+        if (withinEntranceGuard(Date.now() - this.calOpenedAt)) return;
         this.closeCal();
         return;
       }

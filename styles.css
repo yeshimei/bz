@@ -7580,13 +7580,21 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 
 .bz-diary-cal-nav:hover { opacity: 1; }
 }
-.bz-diary-cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px; padding: 14px 14px 6px; }
+/* grid-auto-rows 固定行高：补的空格 cell 没文本，行高会塌到 padding 高度（~25px），
+   有日期的行是 ~44px —— 不固定就连格子数相同、面板高度也随空行数跳（反馈：固化面板大小） */
+.bz-diary-cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); grid-auto-rows: 44px; gap: 3px; padding: 14px 14px 6px; }
 .bz-diary-cal-wd { text-align: center; font-size: 12px; color: var(--bz-diary-ink-faint); padding: 3px 0; }
 .bz-diary-cal-cell {
-  position: relative; text-align: center; font-size: 14.5px; padding: 8px 0 9px;
+  /* 反馈（QQ 群·固化面板）：加大点击区（原 8px 上下太容易点空）；网格恒 6 行由 ui.ts::buildCalGridHtml 补齐 */
+  position: relative; text-align: center; font-size: 14.5px; padding: 12px 0 13px;
   border-radius: 4px; cursor: default; color: var(--bz-diary-ink);
 }
 .bz-diary-cal-cell.bz-diary-has { cursor: pointer; }
+/* 矮屏（横屏手机）等比收一档行高：6 行固定高度也不顶出视口 */
+@media (max-height: 560px) {
+  .bz-diary-cal-grid { grid-auto-rows: 38px; }
+  .bz-diary-cal-cell { padding: 8px 0 9px; }
+}
 /* 写作模式（ADR-0233）：整月格子都可点，光标也得跟着说明白 */
 .bz-diary-cal-cell.bz-diary-pickable { cursor: pointer; }
 @media (hover: hover) {
