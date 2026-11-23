@@ -88,9 +88,9 @@ const STAT_ICON_SHIELD =
 
 /** 统计卡：打赏 + 赞助人（去掉 bz-reader 的高级用户那颗）
  *  数字固定写死、不读在线 stats（2026-11-19 用户要求）：随版本发版冻结，
- *  每次发版由发版流程更新这两个常量。当前 = v1.44.6（打赏 6 / 赞助人 10）。 */
+ *  每次发版由发版流程更新这两个常量。当前 = v1.45.0（打赏 6 / 赞助人 12）。 */
 const PIN_REWARD = 6;
-const PIN_PATRONS = 10;
+const PIN_PATRONS = 12;
 function statsHtml(_data: BzrData | null): string {
   const reward = PIN_REWARD.toLocaleString();
   const patrons = PIN_PATRONS.toLocaleString();
@@ -220,17 +220,22 @@ function issueLinkHtml(n?: number): string {
   return `<a class="bzs-chgn-issue" href="${escapeHtml(BZ_REPO_URL)}/issues/${n}" target="_blank" rel="noopener">#${n} ↗</a>`;
 }
 
-/** 条目尾部的 QQ 频道帖子角标：地址过 safeFeedbackUrl 白名单才渲染成可点链接。
- *  链接文字写死，不取 note 里的 label，防注入。 */
-function qqLinkHtml(raw?: string): string {
+/** 角标可用的来源文字（与 scripts/_gen-changelog.mjs 的 QQ_LABELS 同口径）：
+ *  地址仍指频道帖子，标题写真实来源；白名单之外的文字一律回落「QQ 频道」，防注入。 */
+const QQ_LABELS = ['QQ 频道', 'QQ 交流群', 'QQ 好友', 'B 站私信', 'B 站评论区'];
+
+/** 条目尾部的频道帖子角标：地址过 safeFeedbackUrl 白名单才渲染成可点链接；
+ *  文字取内置日志里的真实来源（qqLabel），过白名单后才用。 */
+function qqLinkHtml(raw?: string, label?: string): string {
   const href = safeFeedbackUrl(raw ?? '');
   if (!href) return '';
-  return `<a class="bzs-chgn-qq" href="${escapeHtml(href)}" target="_blank" rel="noopener">QQ 频道 ↗</a>`;
+  const text = typeof label === 'string' && QQ_LABELS.includes(label.trim()) ? label.trim() : 'QQ 频道';
+  return `<a class="bzs-chgn-qq" href="${escapeHtml(href)}" target="_blank" rel="noopener">${text} ↗</a>`;
 }
 
 /** 一条日志正文 + 尾部角标（桌面 / 移动端共用一份） */
 function entryLinksHtml(e: ChangelogEntry): string {
-  return issueLinkHtml(e.issue) + qqLinkHtml(e.qq);
+  return issueLinkHtml(e.issue) + qqLinkHtml(e.qq, e.qqLabel);
 }
 
 /* ── 右栏正文（桌面） ─────────────────────────────── */

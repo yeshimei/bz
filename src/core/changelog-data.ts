@@ -30,6 +30,9 @@ export interface ChangelogEntry {
   issue?: number;
   /** 对应的 QQ 频道帖子地址；有值时正文尾部挂可点链接（渲染前须过白名单） */
   qq?: string;
+  /** 角标文字：写真实来源（QQ 交流群 / QQ 好友 / B 站私信 / B 站评论区）；
+   *  地址仍是频道帖子，标题只是说明反馈从哪来。渲染层按白名单取，缺省「QQ 频道」 */
+  qqLabel?: string;
 }
 
 /** 一个版本的日志块 */
@@ -60,11 +63,22 @@ export function releaseEntryCount(release: ChangelogRelease): number {
  */
 export const CHANGELOG_RELEASES: readonly ChangelogRelease[] = [
   {
+    version: '1.44.7',
+    date: '2026-11-23',
+    // 条目与 docs/note-v1.44.7.md 同稿（scripts/_gen-changelog.mjs 自动生成，勿手改）
+    improved: [
+      { domain: '影院', text: '影评可以直接写在笔记正文里，用 markdown 编辑，界面与正文两边改动互相同步。', qq: 'https://pd.qq.com/s/N1od27bv9g', qqLabel: 'QQ 交流群' },
+      { domain: '日记本', text: '台历固定六行，切月不再跳高度，点快了也不会误关。', qq: 'https://pd.qq.com/s/Nbfmwqxea0', qqLabel: 'QQ 交流群' },
+      { domain: '书架', text: '分类只认你手动指定的分类，不再混进书自带的题材。', qq: 'https://pd.qq.com/s/N2mh8aj9ll', qqLabel: 'QQ 交流群' },
+      { domain: '设置', text: '额外检索目录选多了，标题与胶囊不再被挤成竖排、冲出卡片。' },
+    ],
+  },
+  {
     version: '1.44.6',
     date: '2026-11-20',
     // 条目与 docs/note-v1.44.6.md 同稿（scripts/_gen-changelog.mjs 自动生成，勿手改）
     fixed: [
-      { domain: '日记本', text: '窗口模式下写日记，正文不再被挤得只剩一两行。', qq: 'https://pd.qq.com/s/N4jpfbpqml' },
+      { domain: '日记本', text: '窗口模式下写日记，正文不再被挤得只剩一两行。', qq: 'https://pd.qq.com/s/N4jpfbpqml', qqLabel: 'QQ 频道' },
       { domain: '更新日志', text: '路线图只显示 bz 自己的功能，不再混进另一个插件的内容。' },
     ],
     improved: [
@@ -79,8 +93,8 @@ export const CHANGELOG_RELEASES: readonly ChangelogRelease[] = [
       { domain: '更新日志', text: '日志页新增路线图与功能建议、问题反馈，能看每条反馈的处理进展。' },
     ],
     fixed: [
-      { domain: '日记本', text: '册页里的一段话换行后不再被吞成一段。', qq: 'https://pd.qq.com/s/Nan5656ji7' },
-      { domain: '日记本', text: '收起日记本后，主编辑区的左右键不再失灵。', qq: 'https://pd.qq.com/s/Nbyraourwo' },
+      { domain: '日记本', text: '册页里的一段话换行后不再被吞成一段。', qq: 'https://pd.qq.com/s/Nan5656ji7', qqLabel: 'QQ 频道' },
+      { domain: '日记本', text: '收起日记本后，主编辑区的左右键不再失灵。', qq: 'https://pd.qq.com/s/Nbyraourwo', qqLabel: 'QQ 频道' },
     ],
   },
   {

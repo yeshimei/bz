@@ -20545,6 +20545,10 @@ canvas { display: block; }
 /* ---------- 午夜场 · 弹窗与子页面（完整功能版；视觉语言延续探索稿：纸白/金/衬线） ---------- */
 /* 覆盖层：absolute 挂在面板根内（桌面 900×620 与移动 .mob 各自 contained） */
 .bz-cinema--midnight .cn-ovl{position:absolute;inset:0;z-index:50;background:rgba(20,16,8,.45);display:flex;align-items:center;justify-content:center;padding:20px}
+/* 从设置面板弹影院确认框（影评入笔记开关，2026-11-23）：宿主临时挂 body、没有定位祖先，
+   而自绘设置面板本体 z-index 达 100010——遮罩必须相对视口铺满并顶到最上层，
+   否则要么只铺半屏、要么被面板盖住。样式单源在此，代码侧不写内联。 */
+[data-cinema-confirm-host] .bz-cinema--midnight .cn-ovl{position:fixed;inset:0;z-index:2147483647}
 /* 滚动链收口（复审 P1②）：卡片自己就是滚动层，滚到底不能把滚动链递给背后页面（原来面板
    列表会跟着滚）；换面层 `.cn-ovl--flip` 同段另有同款声明。 */
 .bz-cinema--midnight .cn-modal{background:var(--panel);border:1px solid var(--line);border-radius:var(--bz-radius-md);box-shadow:0 18px 48px #0005,0 2px 10px #0003;padding:18px 20px;max-width:min(430px,100%);max-height:100%;overflow-y:auto;overscroll-behavior:contain;position:relative}

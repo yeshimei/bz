@@ -308,27 +308,35 @@ const NOTE_SEC_MAP = {
   '⚡ 优化': 'improved', '体验优化': 'improved',
 };
 
-/** 条目说明尾部的链接标记 → `[QQ 频道 ↗](url)` / `[#N ↗](url)`。
+/** 条目说明尾部的链接标记 → `[QQ 交流群 ↗](url)` / `[QQ 频道 ↗](url)` / `[#N ↗](url)`。
  *  与 bz-reader 的 note 同格式。剥出来存成独立字段，正文只留说明句——
  *  渲染层据此挂可点角标，不再把 markdown 链接当纯文字显示。
- *  链接文字一律由渲染层按类型写死（不信任 note 里的 label），防注入。 */
+ *  角标文字取 note 里的 label（写真实来源：QQ 交流群 / B 站评论区…），但只认白名单，
+ *  其余一律回落「QQ 频道」——链接文字不放任意文本进去。 */
 const NOTE_LINK_RE = /\s*\[([^\]]+)\]\(([^)]+)\)\s*$/;
+/** 角标可用的来源文字（2026-11-23 用户要求：地址仍指频道帖，标题写真实来源） */
+const QQ_LABELS = ['QQ 频道', 'QQ 交流群', 'QQ 好友', 'B 站私信', 'B 站评论区'];
+const DEFAULT_QQ_LABEL = 'QQ 频道';
 function stripNoteLinks(raw) {
   let text = String(raw || '').trim();
   let issue = 0;
   let qq = '';
+  let qqLabel = '';
   // 一条可能挂多个角标，从尾部反复剥
   for (;;) {
     const m = text.match(NOTE_LINK_RE);
     if (!m) break;
-    const label = m[1].trim();
+    const label = m[1].trim().replace(/\s*↗\s*$/, '');
     const url = m[2].trim();
     const iss = /^#(\d+)$/.exec(label) || /\/issues\/(\d+)\b/.exec(url);
     if (iss) issue = Number(iss[1]);
-    else if (/pd\.qq\.com/.test(url) || /QQ/i.test(label)) qq = url;
+    else if (/pd\.qq\.com/.test(url) || /QQ|B 站/i.test(label)) {
+      qq = url;
+      if (QQ_LABELS.includes(label)) qqLabel = label;
+    }
     text = text.slice(0, m.index).trim();
   }
-  return { text, issue, qq };
+  return { text, issue, qq, qqLabel };
 }
 
 /**
@@ -356,9 +364,16 @@ function parseNoteItems(noteFile) {
     if (!m) {
       throw new Error(`note ${noteFile} 里有一条解析不了的条目（格式必须是 \`- **标签** ：说明\`）：\n  ${line}`);
     }
-    // 尾部可带 [QQ 频道 ↗](url) / [#N ↗](url)，剥成独立字段；正文只留说明句
-    const { text, issue, qq } = stripNoteLinks(m[2].trim());
-    items[cur].push({ domain: m[1].trim(), text, sub: '', ...(issue ? { issue } : {}), ...(qq ? { qq } : {}) });
+    // 尾部可带 [QQ 交流群 ↗](url) / [#N ↗](url)，剥成独立字段；正文只留说明句
+    const { text, issue, qq, qqLabel } = stripNoteLinks(m[2].trim());
+    items[cur].push({
+      domain: m[1].trim(),
+      text,
+      sub: '',
+      ...(issue ? { issue } : {}),
+      ...(qq ? { qq } : {}),
+      ...(qq && qqLabel ? { qqLabel } : {}),
+    });
   }
   if (!items.added.length && !items.fixed.length && !items.improved.length) {
     throw new Error(`note ${noteFile} 更新日志节里没解析出条目（格式：\`- **标签** ：说明\`）`);
@@ -418,6 +433,7 @@ function renderBuiltinReleases(list) {
         if (it.sub) parts.push(`sub: ${q(it.sub)}`);
         if (it.issue) parts.push(`issue: ${it.issue}`);
         if (it.qq) parts.push(`qq: ${q(it.qq)}`);
+        if (it.qqLabel) parts.push(`qqLabel: ${q(it.qqLabel)}`);
         lines.push(`      { ${parts.join(', ')} },`);
       }
       lines.push('    ],');
@@ -540,7 +556,7 @@ if (process.argv.includes('--check')) {
           }
           for (const sec of ['added', 'fixed', 'improved']) {
             // 链接字段一并纳入签名：链接被悄悄改掉也要当场红
-            const sig = (i) => `${i.domain}|${i.text}|${i.issue || 0}|${i.qq || ''}`;
+            const sig = (i) => `${i.domain}|${i.text}|${i.issue || 0}|${i.qq || ''}|${i.qqLabel || ''}`;
             const wantTexts = want[sec].map(sig);
             const gotTexts = (got[sec] || []).map(sig);
             if (wantTexts.join('\n') !== gotTexts.join('\n')) {
@@ -857,7 +873,7 @@ function renderPage(){
           if ((u.protocol === 'https:' || u.protocol === 'http:') &&
               ['pd.qq.com', 'qm.qq.com'].includes(u.hostname.toLowerCase())) {
             tail += '<a class="cg-link" href="' + esc(u.toString()) +
-              '" target="_blank" rel="noopener">QQ 频道 ↗</a>';
+              '" target="_blank" rel="noopener">' + esc(it.qqLabel || 'QQ 频道') + ' ↗</a>';
           }
         } catch(_){}
       }
