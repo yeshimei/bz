@@ -273,6 +273,55 @@
       ]
     }
   ],
+  "reviewChangelog": [
+    {
+      "version": "1.0.2",
+      "date": "2026-11-21",
+      "fixed": [
+        {
+          "domain": { "zh": "上架检查", "en": "Store review" },
+          "text": {
+            "zh": "修正依赖版本声明与锁文件，社区市场扫描不再报错。",
+            "en": "Fixed the dependency declaration and lockfile so the community directory scan no longer reports errors."
+          }
+        }
+      ]
+    },
+    {
+      "version": "1.0.1",
+      "date": "2026-11-21",
+      "fixed": [
+        {
+          "domain": { "zh": "上架兼容", "en": "Store compatibility" },
+          "text": {
+            "zh": "清掉社区市场扫描报的 CSS 与依赖问题。",
+            "en": "Cleared the CSS and dependency issues flagged by the community directory scan."
+          }
+        },
+        {
+          "domain": { "zh": "界面字体", "en": "Interface font" },
+          "text": {
+            "zh": "改用 Obsidian 自带的界面与等宽字体，跟主题一致。",
+            "en": "Switched to Obsidian's built-in interface and monospace fonts to match your theme."
+          }
+        },
+        {
+          "domain": { "zh": "复制群号", "en": "Copy group ID" },
+          "text": {
+            "zh": "改用系统剪贴板，桌面和手机都能复制。",
+            "en": "Now uses the system clipboard, so copying works on desktop and mobile."
+          }
+        },
+        {
+          "domain": { "zh": "滑动条", "en": "Sliders" },
+          "text": {
+            "zh": "去掉已废弃的接口调用，数值仍在旁边内联显示。",
+            "en": "Removed a deprecated API call; values still appear inline."
+          }
+        }
+      ]
+    }
+  ],
   "roadmap": [
     {
       "theme": "书架与阅读",
