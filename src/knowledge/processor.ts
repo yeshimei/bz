@@ -107,6 +107,20 @@ function tryUnlink(path: string | null | undefined): void {
   } catch { /* 临时文件可能已被清走 */ }
 }
 
+/**
+ * 转录为空时的失败原因（2026-11-24）：CLI 退出码 0、字却一个都没有。SenseVoice 侧最常见
+ * 的原因是缺 torchaudio / kaldi-native-fbank——funasr 提 fbank 特征靠它们，缺了不报错、
+ * 只吐空文本。把这句排查线索直接写进失败原因，用户不必回去翻依赖清单。
+ */
+function emptyTranscriptReason(): string {
+  const s = tryGetSettings();
+  const engine = s && s.asrEngine === 'faster-whisper' ? 'faster-whisper' : 'sensevoice';
+  if (engine === 'faster-whisper') {
+    return '转写结果为空，没有识别出一个字。常见原因是音频里没人声或声音太小，换个文件重试。';
+  }
+  return '转写结果为空，没有识别出一个字。多半是 SenseVoice 的依赖没装齐：缺 torchaudio 或 kaldi-native-fbank 时不会报错，只会出空文本。到设置 → 依赖安装，按那条 pip 命令补装后重跑。';
+}
+
 /** vault 绝对路径（ADR-0071：随 taskJson 下发，供 CLI 计算视频相对路径）；不可得 → 空串 */
 function getVaultBasePath(): string {
   try {
@@ -393,6 +407,13 @@ export const BatchRunner = {
     } catch {
       tryUnlink(transcriptPath);
       finish(false, '转录文件读取失败', null, null);
+      return;
+    }
+    // 转录为空（2026-11-24）：CLI 退出码 0 不等于转写成功——缺依赖时会静默吐空文本。
+    // 当失败处理，别把一篇没有正文的空笔记当成功归档（否则用户看到的只是「处理完成」）。
+    if (!transcript.trim()) {
+      tryUnlink(transcriptPath);
+      finish(false, emptyTranscriptReason(), null, null);
       return;
     }
     // 插件侧 AI 生成文献笔记（失败 → 该任务 failed，不落半成品笔记）
