@@ -391,9 +391,10 @@ export function buildPlanPrompt(picked: ReadonlySet<PlanItemId>, ctx: PlanContex
     steps.push([
       '语音转写 SenseVoice（Python 包）',
       [
-        'py -3.12 -m pip install --no-cache-dir torch --index-url https://download.pytorch.org/whl/cpu',
-        'py -3.12 -m pip install --no-cache-dir funasr',
-        'torch 必须带 --index-url，不然会拉 CUDA 版（2.5 GB 起）。',
+        'py -3.12 -m pip install --no-cache-dir torch torchaudio --index-url https://download.pytorch.org/whl/cpu',
+        'py -3.12 -m pip install --no-cache-dir funasr kaldi-native-fbank',
+        'torch 和 torchaudio 放同一条命令、都带 --index-url，不然会拉 CUDA 版（2.5 GB 起），版本也能自动对上。',
+        '一定别漏 torchaudio 和 kaldi-native-fbank：funasr 靠它们提 fbank 特征，缺了不会报任何错，只会让转写静默产出空文本（脚本退出码 0、文本一个字都没有）——这就是「装完了却转不出字」的根因。装完跑 py -3.12 -c "import torchaudio, kaldi_native_fbank; print(torchaudio.__version__)" 验证，能打印出版本号再往下走。',
       ],
     ]);
   } else if (asr === 'whisper') {
