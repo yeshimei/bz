@@ -63,6 +63,14 @@ export function releaseEntryCount(release: ChangelogRelease): number {
  */
 export const CHANGELOG_RELEASES: readonly ChangelogRelease[] = [
   {
+    version: '1.44.8',
+    date: '2026-11-24',
+    // 条目与 docs/note-v1.44.8.md 同稿（scripts/_gen-changelog.mjs 自动生成，勿手改）
+    improved: [
+      { domain: '知识盒', text: '设置里直接显示视频的实际落点，留空时能看到跟随卡片文件夹算出来的目录。' },
+    ],
+  },
+  {
     version: '1.44.7',
     date: '2026-11-23',
     // 条目与 docs/note-v1.44.7.md 同稿（scripts/_gen-changelog.mjs 自动生成，勿手改）
