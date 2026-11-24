@@ -205,6 +205,41 @@ describe('BatchRunner', () => {
     }
   });
 
+  it('转录为空（CLI 退出码 0 却一个字都没有）→ 任务 failed 并给出缺库线索，不当成功归档', async () => {
+    const tasks = await seedTasks();
+    const ev = makeEvents();
+    const bus: any[] = [];
+    const sub = onDomainEvent('knowledge:tasks', (e) => bus.push(e));
+    try {
+      // 首部只吐空白（SenseVoice 缺 torchaudio / kaldi-native-fbank 的典型症状），第二部正常
+      fsMock.readFileSync = vi.fn()
+        .mockImplementationOnce(() => '  \n\t\n')
+        .mockImplementation(() => TRANSCRIPT);
+      const p = BatchRunner.runAll(tasks, ev);
+      await tick();
+      child.stdout.emit('data', Buffer.from(RESULT_LINE));
+      child.emit('close', 0);
+      await vi.waitFor(() => expect(cpMock.spawn).toHaveBeenCalledTimes(2));
+      const child2 = cpMock.spawn.mock.results[1].value;
+      child2.stdout.emit('data', Buffer.from(RESULT_LINE));
+      child2.emit('close', 0);
+      await p;
+      expect(noteGenMocks.generateVideoNote).toHaveBeenCalledTimes(1); // 空文本不进 AI
+      expect(fsMock.unlinkSync).toHaveBeenCalledWith('C:/tmp/bz-transcript-abc.txt');
+      const all = await KnowledgeData.loadTasks();
+      const f = all.find((x) => x.id === tasks[0].id)!;
+      expect(f.status).toBe('failed');
+      expect(f.archived).toBeFalsy(); // 不归档成一篇空笔记
+      expect(f.reason).toContain('转写结果为空');
+      expect(f.reason).toContain('torchaudio'); // 缺库线索直接写进失败原因
+      expect(all[1].status).toBe('success');
+      expect(ev.onBatchDone).toHaveBeenCalledWith({ success: 1, failed: 1, aborted: false, stopped: false });
+      expect(bus.filter((e) => e.kind === 'failed')).toHaveLength(1);
+    } finally {
+      sub();
+    }
+  });
+
   it('转录临时文件缺失/读取失败 → 任务 failed「转录文件读取失败」、不调 AI、临时文件尽量清理', async () => {
     const tasks = await seedTasks();
     const ev = makeEvents();
