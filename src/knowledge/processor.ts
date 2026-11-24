@@ -25,7 +25,7 @@ import { tryGetSettings } from '../core/settings-provider';
 import { getApp } from '../core/app';
 import { resolveToolCommand, toolInstallHint } from '../core/tool-runtime';
 import { KnowledgeData } from './data';
-import { generateVideoNote } from './note-gen';
+import { generateVideoNote, resolveVideoDir } from './note-gen';
 import type { KnowledgeTask } from './types';
 
 /**
@@ -113,6 +113,20 @@ function getVaultBasePath(): string {
     const bp = (getApp().vault as any)?.adapter?.getBasePath?.();
     return typeof bp === 'string' ? bp : '';
   } catch { return ''; }
+}
+
+/**
+ * 视频交付目录解析（issue 571）：先按图版同款三跳算出**库内**相对目录，再拼上 vault 根
+ * 变成绝对路径下发——工具包的 outputDir 走 `path.resolve`，下发相对目录会按进程 cwd 解析、
+ * 偏离库根。用户显式填的绝对路径（盘符开头）原样下发；拿不到 vault 根时宁可不下发
+ * （工具侧明确报「交付目录未配置」），绝不再退回某台机器写死的路径。
+ */
+function resolveOutputDir(s: ReturnType<typeof tryGetSettings>): string | undefined {
+  const dir = resolveVideoDir(s || {});
+  if (!dir) return undefined;
+  if (/^[A-Za-z]:/i.test(dir)) return dir; // 用户显式填的绝对路径
+  const vault = getVaultBasePath();
+  return vault ? `${vault.replace(/[\\/]+$/, '')}/${dir}` : undefined;
 }
 
 /** 取 stderr 尾部做失败原因（滑窗 1KB） */
@@ -214,7 +228,7 @@ export const BatchRunner = {
         options: {
           ...(isLocal ? {} : { quality: (task.quality || (s && s.knowledgeQuality) || 'highest') as string }),
           keepVideo: !s || s.knowledgeKeepVideo !== false,
-          outputDir: nonEmpty(s && s.knowledgeOutputDir),
+          outputDir: resolveOutputDir(s),
           compress: !s || s.knowledgeCompress !== false,
           crf: (s && s.knowledgeCrf) || 23,
           vaultPath: getVaultBasePath(),

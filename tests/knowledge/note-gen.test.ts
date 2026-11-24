@@ -34,6 +34,7 @@ import {
   generateImageDraft,
   generateImageNote,
   resolveImageDir,
+  resolveVideoDir,
   backfillNotes,
   type DraftFields,
 } from '../../src/knowledge/note-gen';
@@ -1022,6 +1023,15 @@ describe('generateImageNote（图版文献：图片本体 + 四键 frontmatter +
     expect(vault.binaryFiles.has('附图/手稿.png')).toBe(true);
     expect(vault.binaryFiles.has('卡片盒/assets/手稿.png')).toBe(false);
     expect(vault.files.get(path)).toContain('![[附图/手稿.png]]'); // 嵌入随目录一起变
+  });
+
+  it('视频目录与图版同构三跳（issue 571）：设置优先 → Obsidian 附件位置 → 卡片盒/media；永不落库外写死路径', () => {
+    expect(resolveVideoDir({ knowledgeCardboxDirectory: '卡片盒' })).toBe('卡片盒/media');
+    expect(resolveVideoDir({ knowledgeCardboxDirectory: '卡片盒', knowledgeOutputDir: '  ' })).toBe('卡片盒/media');
+    expect(resolveVideoDir({ knowledgeCardboxDirectory: '卡片盒', knowledgeOutputDir: '/我的视频/' })).toBe('我的视频');
+    expect(resolveVideoDir({ knowledgeOutputDir: 'D:/videos' })).toBe('D:/videos'); // 用户显式绝对路径原样保留
+    // 卡片目录空 → 按三盒口径归一到「卡片盒」，末跳不与图版的 assets/ 混
+    expect(resolveVideoDir({})).toBe('卡片盒/media');
   });
 
   it('重名：图片与笔记各自加序号，互不覆盖（同扩展名才判重）', async () => {

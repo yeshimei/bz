@@ -13,8 +13,10 @@ const CONFIG_PATH = process.env.BILI_DL_CONFIG || path.join(os.homedir(), '.bili
 const COOKIES_PATH = process.env.BILI_DL_COOKIES || path.join(os.homedir(), '.bilibili-cookies.json')
 
 const DEFAULTS = {
-  outputDir: 'E:/Obsidian/叫我包仔/CONFIG/APPENDIX',   // 交付目录：视频最终放的位置
-  vaultPath: 'E:/Obsidian/叫我包仔',                   // Obsidian vault 根：交付目录在其下时生成相对路径
+  // 交付目录 / vault 根不再写死任何机器路径（issue 571）：bz 插件每题都下发库内绝对路径，
+  // 独立 CLI 使用者请在 ~/.bilibili-dl.json 里自己配；两者都空时 core 明确报「交付目录未配置」。
+  outputDir: '',                                       // 交付目录：视频最终放的位置
+  vaultPath: '',                                       // Obsidian vault 根：交付目录在其下时生成相对路径
   ffmpegPath: 'ffmpeg',
   ffprobePath: 'ffprobe',                              // 产物校验（时长/可播放性）用
   // pythonPath 通用默认 = 'python'（spawn 走系统 PATH）。两种转写引擎共用（装了 Python 后按引擎

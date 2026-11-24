@@ -49,7 +49,7 @@ import { LOCAL_MEDIA_FILTERS, MEDIA_KIND_LABEL, mediaKindOf, mediaTitleOf } from
 import { pickSystemFiles } from '../core/path-picker';
 import { BatchRunner, type BatchEvents } from './processor';
 import { openMountTree } from './mount-canvas';
-import { backfillNotes, findDuplicateTermNote, generateImageDraft, generateImageNote, generatePassageDraft, generatePassageNote, generateTermDraft, generateTermNote, parseDomainList, resolveImageDir, type DraftFields, type DraftHooks } from './note-gen';
+import { backfillNotes, findDuplicateTermNote, generateImageDraft, generateImageNote, generatePassageDraft, generatePassageNote, generateTermDraft, generateTermNote, parseDomainList, resolveImageDir, resolveVideoDir, type DraftFields, type DraftHooks } from './note-gen';
 import { canonicalVideoUrl, cleanSourceTitle, isProtocolSourcePath, isUrlLikeSourceText, normalizeSourceUrl, noteSourceName, serializeTermSource, sourceBadge, type TermSource } from './source';
 import { writeNoteFm, type FmEdit } from './note-edit';
 import { tackMediaToNote, mediaEmbedsOf } from './tack';
@@ -380,15 +380,14 @@ interface TackPick {
 }
 
 /**
- * 2026-11-07 暂时隐藏的两行目录设置（用户要求：知识盒只配文献即可用）。
+ * 暂时隐藏的目录设置行：现在只剩主题盒（2026-11-07 起知识盒只配文献即可用）。
  *
- * 隐藏的只是**面板入口**：`knowledgeCardboxDirectory` / `knowledgeTopicDirectory` 两个键、
- * 缺省名（卡片盒 / 主题盒，见 core/knowledge-boxes）与全部消费方照旧——部贰/部叁照旧扫描，
- * 自动关联与第二大脑索引仍以三盒为界，老库里已填的值也继续生效。
- * 恢复 = 删掉这个 Set 与下面 `目录与分类` 组 rows 末尾那一句 filter。
+ * 卡片文件夹 2026-11-24 恢复显示（issue 571）：图版配图与视频交付目录空值时都按三跳
+ * 回落到它，用户看不见却要跟着它走，等于没有跟随；老库里已填的值照旧生效。
+ * 隐藏的只是**面板入口**：`knowledgeTopicDirectory` 键、缺省名与消费方照旧——部叁照旧扫描，
+ * 自动关联与第二大脑索引仍以三盒为界。
  */
 const HIDDEN_DIR_SETTING_KEYS: ReadonlySet<string> = new Set([
-  'knowledgeCardboxDirectory',
   'knowledgeTopicDirectory',
 ]);
 
@@ -425,11 +424,16 @@ export function knowledgeSettingsSchema(opts?: { onClearHistory?: () => void | P
         // 可见项计数与移动端「设置项」搜索都读这份行表，只留空壳行会让三处各算一遍。
         rows: ([
           { type: 'path', mode: 'single', name: '文献文件夹', desc: '文献笔记所在文件夹，部壹扫描这里', binding: { key: 'knowledgeDirectory' } },
-          { type: 'path', mode: 'single', name: '图版图片文件夹', desc: '图版录入的图片保存位置，留空跟随 Obsidian 的默认附件位置',
+          { type: 'path', mode: 'single', name: '图版图片文件夹', desc: '图版图片保存位置，留空跟随 Obsidian 附件位置，再退回卡片文件夹下的 assets',
             binding: { key: 'knowledgeImageFolder' },
-            // 空值 = 回落到**卡片文件夹**下的 assets（2026-10-31 用户拍板；此前读的是文献文件夹）
+            // 三跳：显式值 → Obsidian 固定附件位置 → <卡片文件夹>/assets（ADR-0275）
             fallbackValue: () => resolveImageDir(tryGetSettings() || {}) },
-          { type: 'path', mode: 'single', name: '卡片文件夹', desc: '自己写的卡片笔记所在文件夹', binding: { key: 'knowledgeCardboxDirectory' } },
+          { type: 'path', mode: 'single', name: '视频文件夹', desc: '影像音声保存位置，留空跟随附件目录，否则进卡片文件夹 media',
+            binding: { key: 'knowledgeOutputDir' },
+            // 三跳与图版同构，末跳单独给媒体一个 media/；算出来的一定在库内，否则笔记里嵌绝对路径会变成死链（issue 571）
+            fallbackValue: () => resolveVideoDir(tryGetSettings() || {}),
+            help: '留空时先看 Obsidian 的附件位置，没有就跟着卡片文件夹走，设置页会显示算出来的实际目录。也可以填库外的绝对路径，但那样笔记里嵌的是绝对路径，换台电脑或换个库视频就打不开。' },
+          { type: 'path', mode: 'single', name: '卡片文件夹', desc: '自己写的卡片笔记所在文件夹，图版与视频留空时会跟随它', binding: { key: 'knowledgeCardboxDirectory' } },
           { type: 'path', mode: 'single', name: '主题文件夹', desc: '主题笔记所在文件夹', binding: { key: 'knowledgeTopicDirectory' } },
           { type: 'textarea', name: '领域词表', desc: '逗号分隔的领域词表', binding: { key: 'knowledgeDomainList' }, placeholder: '物理,医学,计算机,经济…' },
         ] as SettingsRow[]).filter(
@@ -467,13 +471,6 @@ export function knowledgeSettingsSchema(opts?: { onClearHistory?: () => void | P
           { type: 'toggle', name: '保留视频原件', desc: '转文献后保留视频文件', binding: { key: 'knowledgeKeepVideo' } },
           { type: 'select', name: '下载清晰度', desc: '下载视频的清晰度', binding: { key: 'knowledgeQuality' }, options: [{ value: 'highest', label: '最高' }, { value: '1080', label: '1080P' }, { value: '720', label: '720P' }] },
           { type: 'toggle', name: '遇错即停', desc: '失败即停止批量处理', binding: { key: 'knowledgeStopOnFailure' } },
-          {
-            type: 'text', name: '输出文件夹', desc: '视频文件的输出文件夹',
-            help:
-              '知识盒处理视频时，下载或转录出来的视频文件落在哪个目录，填完整路径，可以填 vault 之外的位置。留空则不下发这一项，由外部 bili-dl 命令行按它自己的默认值决定。' +
-              '实际写文件的是那个外部进程，插件只把路径传下去、再记录回传的结果，所以这里填错的表现是外部侧落盘失败。',
-            binding: { key: 'knowledgeOutputDir' }, placeholder: '如 D:/videos',
-          },
           { type: 'toggle', name: '视频压缩', desc: '转文字前压缩视频', binding: { key: 'knowledgeCompress' } },
           { type: 'number', name: '压缩质量 CRF', desc: '压缩画质，越小越高', binding: { key: 'knowledgeCrf' }, min: 18, max: 28, step: 1 },
         ],

@@ -43,8 +43,8 @@ bili-dl --batch '{"local":{"path":"D:/音频/播客 第 3 期.m4a","kind":"audio
 
 ```json
 {
-  "outputDir": "E:/Obsidian/叫我包仔/CONFIG/APPENDIX",
-  "vaultPath": "E:/Obsidian/叫我包仔",
+  "outputDir": "D:/我的笔记库/CONFIG/APPENDIX",
+  "vaultPath": "D:/我的笔记库",
   "ffmpegPath": "ffmpeg",
   "ffprobePath": "ffprobe",
   "pythonPath": "python",
@@ -56,8 +56,8 @@ bili-dl --batch '{"local":{"path":"D:/音频/播客 第 3 期.m4a","kind":"audio
 
 | 字段 | 说明 | 默认值 |
 |---|---|---|
-| `outputDir` | **交付目录**：视频最终放的位置 | vault 的 `CONFIG/APPENDIX` |
-| `vaultPath` | Obsidian vault 根目录；交付目录在其下时生成相对路径 | vault 根 |
+| `outputDir` | **交付目录**：视频最终放的位置 | 无（bz 插件每题下发给库内目录；独立 CLI 必须自己配，否则报「交付目录未配置」） |
+| `vaultPath` | Obsidian vault 根目录；交付目录在其下时生成相对路径 | 无（bz 插件每题下发 vault 根；独立 CLI 需自配，否则交付路径回传绝对路径） |
 | `ffmpegPath` | ffmpeg 可执行文件（可填完整路径） | `ffmpeg` |
 | `ffprobePath` | ffprobe 可执行文件（剪辑/压缩产物校验用） | `ffprobe` |
 | `pythonPath` | faster-whisper 所在 Python（需 3.11+）。**一般填 `python` 即可**（走系统 PATH，前提已 `pip install faster-whisper`）；填错/不填时会用此默认。Windows 可在命令提示符运行 `where python` 查绝对路径填入 | `python` |

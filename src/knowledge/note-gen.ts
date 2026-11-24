@@ -601,6 +601,19 @@ export function resolveImageDir(settings: { knowledgeImageFolder?: string; knowl
 }
 
 /**
+ * 视频交付目录：与图版同一套三跳（显式设置 → Obsidian 固定附件位置 → <卡片文件夹>/media）。
+ *
+ * 为什么不再「留空交给外部工具默认」（issue 571）：工具包 rc 曾写死一台机器的绝对路径，
+ * 换机器后视频落库外，CLI 只能把绝对路径回传，笔记里的 `![[…]]` 就成了别人打不开的死链。
+ * 这里让空值也算出**库内**目录（末跳单独给媒体一个 media/，不与配图的 assets/ 混），
+ * 由 processor 拼成绝对路径恒下发；卡片目录归一到「卡片盒」，本函数不会产出空串。
+ */
+export function resolveVideoDir(settings: { knowledgeOutputDir?: string; knowledgeCardboxDirectory?: string }): string {
+  const cardbox = normalizeBoxDir(settings?.knowledgeCardboxDirectory, DEFAULT_CARDBOX_DIR);
+  return resolveAssetDir(settings?.knowledgeOutputDir, cardbox ? `${cardbox}/media` : '').dir;
+}
+
+/**
  * 生成图版文献笔记（issue 312；多图与目录可配见 issue 313）：**先把图片本体逐张写进
  * 图片目录**（默认 `<卡片文件夹>/assets/`，可用设置 `knowledgeImageFolder` 改；文件名取最终标题、
  * 永不覆盖），再写笔记（frontmatter title/type: image/domain/date + 可选 source/sourceTitle；

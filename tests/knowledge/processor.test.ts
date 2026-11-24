@@ -24,13 +24,14 @@ import { onDomainEvent } from '../../src/core/domain-bus';
 import { MockVault } from '../mock-vault';
 import { clearNotices, getNoticeMessages } from '../mock-obsidian-entry';
 
-// AI 打桩：整模块 mock note-gen（processor 仅用 generateVideoNote；ESM 命名导入可被 vi.mock 替换）
+// AI 打桩：只替换 generateVideoNote；resolveVideoDir 用真身（outputDir 下发是本轮要验的行为）
 const noteGenMocks = vi.hoisted(() => ({
   generateVideoNote: vi.fn(async () => '文献盒/测试.md'),
 }));
-vi.mock('../../src/knowledge/note-gen', () => ({
-  generateVideoNote: noteGenMocks.generateVideoNote,
-}));
+vi.mock('../../src/knowledge/note-gen', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../../src/knowledge/note-gen')>();
+  return { ...actual, generateVideoNote: noteGenMocks.generateVideoNote };
+});
 
 /** 假子进程：stdout/stderr 可 emit；kill 可断言 */
 class FakeChild extends EventEmitter {
@@ -324,7 +325,7 @@ describe('BatchRunner', () => {
     await p;
   });
 
-  it('空设置下的 options 默认值：quality highest / keepVideo / compress 开 / crf 23；留空键不下发（ticket 149 rc 兜底）', async () => {
+  it('空设置下的 options 默认值：quality highest / keepVideo / compress 开 / crf 23；视频目录恒下发库内路径，其余留空键不下发（issue 571）', async () => {
     await KnowledgeData.addTask({ url: 'BV1xx411c7mD' });
     const ev = makeEvents();
     const p = BatchRunner.runAll(await KnowledgeData.loadTasks(), ev);
@@ -334,12 +335,14 @@ describe('BatchRunner', () => {
     expect(opts.shell).toBe(false);
     expect(JSON.parse(Buffer.from(args[2].slice(4), 'base64').toString('utf8'))).toEqual({
       url: 'BV1xx411c7mD', start: null, end: null, page: null,
-      // 留空 = 跟随工具默认配置（rc/DEFAULTS）→ 键不下发（undefined 被 JSON.stringify 省略），
-      // 避免空串覆盖 rc 兜底（ticket 149：Python 路径留空时整批转写报「未配置 pythonPath」）
+      // 其余留空键 = 跟随工具默认配置（rc/DEFAULTS）→ 键不下发（undefined 被 JSON.stringify 省略），
+      // 避免空串覆盖 rc 兜底（ticket 149：Python 路径留空时整批转写报「未配置 pythonPath」）。
+      // 视频目录例外（issue 571）：按卡片盒算出库内路径并拼 vault 根恒下发，不再退回工具侧写死的机器路径。
       options: {
         quality: 'highest', keepVideo: true,
         // vaultPath 取自 vault 绝对路径（本文件的 MockVault 在 beforeEach 里给了 E:/vault）
         compress: true, crf: 23, vaultPath: 'E:/vault',
+        outputDir: 'E:/vault/卡片盒/media',
         engine: 'sensevoice', // issue 444：引擎恒下发（无 rc 兜底语义），档位仅 faster-whisper 下发
         cacheRetentionDays: 7,
       },
