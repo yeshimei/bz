@@ -3,6 +3,161 @@
   "updatedAt": "2026-11-21",
   "changelog": [
     {
+      "version": "1.7.0",
+      "date": "2026-11-24",
+      "added": [
+        {
+          "domain": {
+            "zh": "漫画模式",
+            "en": "Manga"
+          },
+          "text": {
+            "zh": "CBZ 漫画单独开一屏，分格、右到左、双页合页、跨页拆半、条漫长图都能调。",
+            "en": "CBZ manga gets its own view, with panel navigation, right-to-left, paired pages, spread splitting and webtoon strips."
+          }
+        },
+        {
+          "domain": {
+            "zh": "逐格导览",
+            "en": "Panel guide"
+          },
+          "text": {
+            "zh": "一页多格时逐格跳，白边自动裁掉，灰暗的扫描件能一键修复。",
+            "en": "Step through panels one by one, trim white margins automatically, and fix washed-out scans with one tap."
+          }
+        },
+        {
+          "domain": {
+            "zh": "双链模板",
+            "en": "Link templates"
+          },
+          "text": {
+            "zh": "整本导出与复制划线各备四档，简洁、引文、详细、自定义都能改。",
+            "en": "Whole-book export and highlight copying each get four presets — compact, quoted callout, detailed callout and your own."
+          },
+          "qq": "https://pd.qq.com/s/Nb15xen1zz"
+        },
+        {
+          "domain": {
+            "zh": "更新提醒",
+            "en": "Update notice"
+          },
+          "text": {
+            "zh": "启动时在后台看有没有新版本，有就弹一次，也可以忽略这一版。",
+            "en": "A new release is checked in the background at startup, shown once, and can be skipped."
+          }
+        },
+        {
+          "domain": {
+            "zh": "屏幕常亮模式",
+            "en": "Stay awake"
+          },
+          "text": {
+            "zh": "新增常亮模式，阅读时屏幕不锁，设置里可以开关。",
+            "en": "A new stay-awake mode keeps the screen on while reading; you can toggle it in settings."
+          }
+        },
+        {
+          "domain": {
+            "zh": "图标说明",
+            "en": "Tooltips"
+          },
+          "text": {
+            "zh": "头栏图标悬停给出说明，不再把键位写进设置里。",
+            "en": "Header icons now explain themselves on hover, without single-letter key hints."
+          },
+          "qq": "https://pd.qq.com/s/Ny9zjevm"
+        }
+      ],
+      "improved": [
+        {
+          "domain": {
+            "zh": "AI 配置",
+            "en": "AI setup"
+          },
+          "text": {
+            "zh": "AI 配置向基础版开放，自定义通道能带上网关要求的附加请求头。",
+            "en": "AI settings are open on the free tier, and custom endpoints can carry extra request headers."
+          }
+        },
+        {
+          "domain": {
+            "zh": "权益下放",
+            "en": "Free tier"
+          },
+          "text": {
+            "zh": "导出、并排、剪藏、划词解释都进了基础版。",
+            "en": "Export, side-by-side reading, clipping and selection explain are now part of the free tier."
+          }
+        },
+        {
+          "domain": {
+            "zh": "插件安装",
+            "en": "Plugin setup"
+          },
+          "text": {
+            "zh": "设置里给出 bz 与 bz review 的安装入口，一个去市场、一个去 GitHub，装完回来点启用。",
+            "en": "Settings now has install entries for bz and bz review — one opens the marketplace, the other GitHub; enable it when you get back."
+          }
+        },
+        {
+          "domain": {
+            "zh": "字体档名",
+            "en": "Font names"
+          },
+          "text": {
+            "zh": "字体长名改叫「原生」「原书」，浮窗与设置页共用一张表。",
+            "en": "Long font names became “Native” and “Book”, with one shared table for the popup and settings."
+          }
+        }
+      ],
+      "fixed": [
+        {
+          "domain": {
+            "zh": "书架分类",
+            "en": "Shelves"
+          },
+          "text": {
+            "zh": "分类只认手动指定的，不再被 EPUB 自带题材顶掉。",
+            "en": "Shelves now follow only what you assign, instead of falling back to subjects embedded in the EPUB."
+          },
+          "qq": "https://pd.qq.com/s/N2mh8aj9ll"
+        },
+        {
+          "domain": {
+            "zh": "高分屏留白",
+            "en": "High-DPI padding"
+          },
+          "text": {
+            "zh": "分页时上半屏那片留白没了，正文吃满高度。",
+            "en": "The blank band on the top half of paged reading on high-DPI screens is gone."
+          },
+          "qq": "https://pd.qq.com/s/N9dspltqs9"
+        },
+        {
+          "domain": {
+            "zh": "AI 连接",
+            "en": "AI connection"
+          },
+          "text": {
+            "zh": "第三方服务商直连不通时改走 Obsidian 代发，能连上了。",
+            "en": "When a third-party provider cannot be reached directly, requests now go through Obsidian instead."
+          },
+          "qq": "https://pd.qq.com/s/Ngur4srpmj"
+        },
+        {
+          "domain": {
+            "zh": "外语界面",
+            "en": "Non-Chinese UI"
+          },
+          "text": {
+            "zh": "非简体中文不再显示 QQ 频道出处与更新日志里的群图标。",
+            "en": "Non-Chinese interfaces no longer show the QQ channel source links or the group icon in the changelog."
+          }
+        }
+      ]
+    },
+    {
       "version": "1.6.0",
       "date": "2026-11-21",
       "added": [
@@ -235,14 +390,20 @@
       "date": "2026-11-17",
       "improved": [
         {
-          "domain": { "zh": "设置页", "en": "Settings" },
+          "domain": {
+            "zh": "设置页",
+            "en": "Settings"
+          },
           "text": {
             "zh": "长分组切出小标题（文字 / 页面 / 阅读 / 导出与链接 / 目录 / 排查），图标改双列排、引擎卡补上图标，一屏之内更好找。",
             "en": "Long sections are split into subheadings, icons laid out two per row and engine cards given icons, so everything is easier to find at a glance."
           }
         },
         {
-          "domain": { "zh": "按意思搜", "en": "Search by meaning" },
+          "domain": {
+            "zh": "按意思搜",
+            "en": "Search by meaning"
+          },
           "text": {
             "zh": "搜之前先用 AI 把你那句口语压成检索词，去掉问句壳，向量更准；字面通道仍用原话，书名、年份、引文不丢。",
             "en": "Before searching, AI compresses your spoken question into tight keywords for a more accurate vector, while the literal channel still uses your original words."
@@ -251,7 +412,10 @@
       ],
       "fixed": [
         {
-          "domain": { "zh": "补全信息", "en": "Book info" },
+          "domain": {
+            "zh": "补全信息",
+            "en": "Book info"
+          },
           "text": {
             "zh": "只识别到语言时如实说「简介和分类这次没补上」，不再弹「已补上简介与分类」却一个字没变。",
             "en": "When only the language is detected, it now says description and categories weren't filled in, instead of claiming both were added."
@@ -264,7 +428,10 @@
       "date": "2026-11-17",
       "added": [
         {
-          "domain": { "zh": "扫描页识别", "en": "Scanned-page OCR" },
+          "domain": {
+            "zh": "扫描页识别",
+            "en": "Scanned-page OCR"
+          },
           "text": {
             "zh": "PDF 扫描页也能认字了。头栏「识别」可选本页、接下来 20 页或整本；认出来的文字直接进文字层，能划词、能搜索、能朗读。",
             "en": "Scanned PDF pages can be read now. Recognize covers this page, the next 20, or the whole book; the text lands in the text layer, selectable, searchable and readable."
@@ -279,7 +446,10 @@
       "date": "2026-11-21",
       "fixed": [
         {
-          "domain": { "zh": "上架检查", "en": "Store review" },
+          "domain": {
+            "zh": "上架检查",
+            "en": "Store review"
+          },
           "text": {
             "zh": "修正依赖版本声明与锁文件，社区市场扫描不再报错。",
             "en": "Fixed the dependency declaration and lockfile so the community directory scan no longer reports errors."
@@ -292,28 +462,40 @@
       "date": "2026-11-21",
       "fixed": [
         {
-          "domain": { "zh": "上架兼容", "en": "Store compatibility" },
+          "domain": {
+            "zh": "上架兼容",
+            "en": "Store compatibility"
+          },
           "text": {
             "zh": "清掉社区市场扫描报的 CSS 与依赖问题。",
             "en": "Cleared the CSS and dependency issues flagged by the community directory scan."
           }
         },
         {
-          "domain": { "zh": "界面字体", "en": "Interface font" },
+          "domain": {
+            "zh": "界面字体",
+            "en": "Interface font"
+          },
           "text": {
             "zh": "改用 Obsidian 自带的界面与等宽字体，跟主题一致。",
             "en": "Switched to Obsidian's built-in interface and monospace fonts to match your theme."
           }
         },
         {
-          "domain": { "zh": "复制群号", "en": "Copy group ID" },
+          "domain": {
+            "zh": "复制群号",
+            "en": "Copy group ID"
+          },
           "text": {
             "zh": "改用系统剪贴板，桌面和手机都能复制。",
             "en": "Now uses the system clipboard, so copying works on desktop and mobile."
           }
         },
         {
-          "domain": { "zh": "滑动条", "en": "Sliders" },
+          "domain": {
+            "zh": "滑动条",
+            "en": "Sliders"
+          },
           "text": {
             "zh": "去掉已废弃的接口调用，数值仍在旁边内联显示。",
             "en": "Removed a deprecated API call; values still appear inline."
@@ -328,14 +510,94 @@
       "color": "#2f7dde",
       "order": 1,
       "items": [
-        { "plugin": "reader", "title": "一本书可同时归进多个分类，点一下加入移出", "state": "done", "src": "builtin", "fb": { "kind": "qq", "label": "1.5.3", "href": "" } },
-        { "plugin": "reader", "title": "书里的图片点一下放大，能缩放拖动和保存", "state": "done", "src": "builtin", "fb": { "kind": "qq", "label": "1.5.3", "href": "" } },
-        { "plugin": "reader", "title": "移出书架可选彻底删除，连记录和数据一起清", "state": "done", "src": "builtin", "fb": { "kind": "qq", "label": "1.5.3", "href": "" } },
-        { "plugin": "reader", "title": "沉浸模式左上角显示章节名，也能单独关掉", "state": "done", "src": "builtin", "fb": { "kind": "qq", "label": "1.2.0", "href": "" } },
-        { "plugin": "reader", "title": "右下角可显示页码，可选本章或全书累计", "state": "done", "src": "builtin", "fb": { "kind": "qq", "label": "1.2.0", "href": "" } },
-        { "plugin": "reader", "title": "新装默认字号行距边距调好，手机一屏读一段", "state": "done", "src": "builtin", "fb": { "kind": "qq", "label": "1.1.1", "href": "" } },
-        { "plugin": "reader", "title": "手机设置收起分栏、朗读、快捷键，界面更清爽", "state": "done", "src": "builtin", "fb": { "kind": "qq", "label": "1.1.1", "href": "" } },
-        { "plugin": "reader", "title": "点目录或链接跳走后，一键回到原来的位置", "state": "done", "src": "builtin", "fb": { "kind": "qq", "label": "1.0.0", "href": "" } }
+        {
+          "plugin": "reader",
+          "title": "一本书可同时归进多个分类，点一下加入移出",
+          "state": "done",
+          "src": "builtin",
+          "fb": {
+            "kind": "qq",
+            "label": "1.5.3",
+            "href": ""
+          }
+        },
+        {
+          "plugin": "reader",
+          "title": "书里的图片点一下放大，能缩放拖动和保存",
+          "state": "done",
+          "src": "builtin",
+          "fb": {
+            "kind": "qq",
+            "label": "1.5.3",
+            "href": ""
+          }
+        },
+        {
+          "plugin": "reader",
+          "title": "移出书架可选彻底删除，连记录和数据一起清",
+          "state": "done",
+          "src": "builtin",
+          "fb": {
+            "kind": "qq",
+            "label": "1.5.3",
+            "href": ""
+          }
+        },
+        {
+          "plugin": "reader",
+          "title": "沉浸模式左上角显示章节名，也能单独关掉",
+          "state": "done",
+          "src": "builtin",
+          "fb": {
+            "kind": "qq",
+            "label": "1.2.0",
+            "href": ""
+          }
+        },
+        {
+          "plugin": "reader",
+          "title": "右下角可显示页码，可选本章或全书累计",
+          "state": "done",
+          "src": "builtin",
+          "fb": {
+            "kind": "qq",
+            "label": "1.2.0",
+            "href": ""
+          }
+        },
+        {
+          "plugin": "reader",
+          "title": "新装默认字号行距边距调好，手机一屏读一段",
+          "state": "done",
+          "src": "builtin",
+          "fb": {
+            "kind": "qq",
+            "label": "1.1.1",
+            "href": ""
+          }
+        },
+        {
+          "plugin": "reader",
+          "title": "手机设置收起分栏、朗读、快捷键，界面更清爽",
+          "state": "done",
+          "src": "builtin",
+          "fb": {
+            "kind": "qq",
+            "label": "1.1.1",
+            "href": ""
+          }
+        },
+        {
+          "plugin": "reader",
+          "title": "点目录或链接跳走后，一键回到原来的位置",
+          "state": "done",
+          "src": "builtin",
+          "fb": {
+            "kind": "qq",
+            "label": "1.0.0",
+            "href": ""
+          }
+        }
       ]
     },
     {
@@ -343,10 +605,50 @@
       "color": "#d97706",
       "order": 2,
       "items": [
-        { "plugin": "reader", "title": "PDF 扫描页也能认字，可划词、搜索、朗读", "state": "done", "src": "builtin", "fb": { "kind": "qq", "label": "1.5.1", "href": "" } },
-        { "plugin": "reader", "title": "PDF 排版面板补上放大缩小、适合宽度等选项", "state": "done", "src": "builtin", "fb": { "kind": "qq", "label": "1.2.0", "href": "" } },
-        { "plugin": "reader", "title": "新增 PDF 阅读：缩放旋转、单双页、跳页设置每本独立", "state": "done", "src": "builtin", "fb": { "kind": "qq", "label": "1.0.0", "href": "" } },
-        { "plugin": "reader", "title": "PDF 四种链接可复制，还能看本页被哪些笔记引用", "state": "done", "src": "builtin", "fb": { "kind": "qq", "label": "1.0.0", "href": "" } }
+        {
+          "plugin": "reader",
+          "title": "PDF 扫描页也能认字，可划词、搜索、朗读",
+          "state": "done",
+          "src": "builtin",
+          "fb": {
+            "kind": "qq",
+            "label": "1.5.1",
+            "href": ""
+          }
+        },
+        {
+          "plugin": "reader",
+          "title": "PDF 排版面板补上放大缩小、适合宽度等选项",
+          "state": "done",
+          "src": "builtin",
+          "fb": {
+            "kind": "qq",
+            "label": "1.2.0",
+            "href": ""
+          }
+        },
+        {
+          "plugin": "reader",
+          "title": "新增 PDF 阅读：缩放旋转、单双页、跳页设置每本独立",
+          "state": "done",
+          "src": "builtin",
+          "fb": {
+            "kind": "qq",
+            "label": "1.0.0",
+            "href": ""
+          }
+        },
+        {
+          "plugin": "reader",
+          "title": "PDF 四种链接可复制，还能看本页被哪些笔记引用",
+          "state": "done",
+          "src": "builtin",
+          "fb": {
+            "kind": "qq",
+            "label": "1.0.0",
+            "href": ""
+          }
+        }
       ]
     },
     {
@@ -354,8 +656,28 @@
       "color": "#0f9d8a",
       "order": 3,
       "items": [
-        { "plugin": "reader", "title": "剪藏成书可选汇总全部、未读或今日加未读", "state": "done", "src": "builtin", "fb": { "kind": "qq", "label": "1.3.1", "href": "" } },
-        { "plugin": "reader", "title": "剪藏的文章能合成一本活书来读，按订阅分卷", "state": "done", "src": "builtin", "fb": { "kind": "qq", "label": "1.3.0", "href": "" } }
+        {
+          "plugin": "reader",
+          "title": "剪藏成书可选汇总全部、未读或今日加未读",
+          "state": "done",
+          "src": "builtin",
+          "fb": {
+            "kind": "qq",
+            "label": "1.3.1",
+            "href": ""
+          }
+        },
+        {
+          "plugin": "reader",
+          "title": "剪藏的文章能合成一本活书来读，按订阅分卷",
+          "state": "done",
+          "src": "builtin",
+          "fb": {
+            "kind": "qq",
+            "label": "1.3.0",
+            "href": ""
+          }
+        }
       ]
     },
     {
@@ -363,8 +685,28 @@
       "color": "#7c5cd6",
       "order": 4,
       "items": [
-        { "plugin": "reader", "title": "按意思搜先用 AI 把口语压成检索词，搜得更准", "state": "done", "src": "builtin", "fb": { "kind": "qq", "label": "1.5.2", "href": "" } },
-        { "plugin": "reader", "title": "书架和书里都能按意思搜，不用先想到原话", "state": "done", "src": "builtin", "fb": { "kind": "qq", "label": "1.1.0", "href": "" } }
+        {
+          "plugin": "reader",
+          "title": "按意思搜先用 AI 把口语压成检索词，搜得更准",
+          "state": "done",
+          "src": "builtin",
+          "fb": {
+            "kind": "qq",
+            "label": "1.5.2",
+            "href": ""
+          }
+        },
+        {
+          "plugin": "reader",
+          "title": "书架和书里都能按意思搜，不用先想到原话",
+          "state": "done",
+          "src": "builtin",
+          "fb": {
+            "kind": "qq",
+            "label": "1.1.0",
+            "href": ""
+          }
+        }
       ]
     },
     {
@@ -372,11 +714,61 @@
       "color": "#c2410c",
       "order": 5,
       "items": [
-        { "plugin": "reader", "title": "书架新增「对话」页，AI 问答可翻可搜可导出", "state": "done", "src": "builtin", "fb": { "kind": "qq", "label": "1.5.1", "href": "" } },
-        { "plugin": "reader", "title": "划一段文字弹出解释、翻译、总结等五项菜单", "state": "done", "src": "builtin", "fb": { "kind": "qq", "label": "1.5.1", "href": "" } },
-        { "plugin": "reader", "title": "读订阅文章时可一键生成 AI 摘要写在标题下", "state": "done", "src": "builtin", "fb": { "kind": "qq", "label": "1.3.0", "href": "" } },
-        { "plugin": "reader", "title": "读时点一下先看本章导读，聊完可整段存成笔记", "state": "done", "src": "builtin", "fb": { "kind": "qq", "label": "1.1.0", "href": "" } },
-        { "plugin": "reader", "title": "勾几本书一起问 AI，答案标明出自哪一本", "state": "done", "src": "builtin", "fb": { "kind": "qq", "label": "1.1.0", "href": "" } }
+        {
+          "plugin": "reader",
+          "title": "书架新增「对话」页，AI 问答可翻可搜可导出",
+          "state": "done",
+          "src": "builtin",
+          "fb": {
+            "kind": "qq",
+            "label": "1.5.1",
+            "href": ""
+          }
+        },
+        {
+          "plugin": "reader",
+          "title": "划一段文字弹出解释、翻译、总结等五项菜单",
+          "state": "done",
+          "src": "builtin",
+          "fb": {
+            "kind": "qq",
+            "label": "1.5.1",
+            "href": ""
+          }
+        },
+        {
+          "plugin": "reader",
+          "title": "读订阅文章时可一键生成 AI 摘要写在标题下",
+          "state": "done",
+          "src": "builtin",
+          "fb": {
+            "kind": "qq",
+            "label": "1.3.0",
+            "href": ""
+          }
+        },
+        {
+          "plugin": "reader",
+          "title": "读时点一下先看本章导读，聊完可整段存成笔记",
+          "state": "done",
+          "src": "builtin",
+          "fb": {
+            "kind": "qq",
+            "label": "1.1.0",
+            "href": ""
+          }
+        },
+        {
+          "plugin": "reader",
+          "title": "勾几本书一起问 AI，答案标明出自哪一本",
+          "state": "done",
+          "src": "builtin",
+          "fb": {
+            "kind": "qq",
+            "label": "1.1.0",
+            "href": ""
+          }
+        }
       ]
     },
     {
@@ -384,9 +776,39 @@
       "color": "#1a9c6b",
       "order": 6,
       "items": [
-        { "plugin": "reader", "title": "EPUB、TXT、PDF 都能朗读，念完自动翻页", "state": "done", "src": "builtin", "fb": { "kind": "qq", "label": "1.4.0", "href": "" } },
-        { "plugin": "reader", "title": "朗读可用系统语音、在线语音或本地自建服务", "state": "done", "src": "builtin", "fb": { "kind": "qq", "label": "1.4.0", "href": "" } },
-        { "plugin": "reader", "title": "整本预生成 mp3 拷到手机，断网也能听", "state": "done", "src": "builtin", "fb": { "kind": "qq", "label": "1.4.0", "href": "" } }
+        {
+          "plugin": "reader",
+          "title": "EPUB、TXT、PDF 都能朗读，念完自动翻页",
+          "state": "done",
+          "src": "builtin",
+          "fb": {
+            "kind": "qq",
+            "label": "1.4.0",
+            "href": ""
+          }
+        },
+        {
+          "plugin": "reader",
+          "title": "朗读可用系统语音、在线语音或本地自建服务",
+          "state": "done",
+          "src": "builtin",
+          "fb": {
+            "kind": "qq",
+            "label": "1.4.0",
+            "href": ""
+          }
+        },
+        {
+          "plugin": "reader",
+          "title": "整本预生成 mp3 拷到手机，断网也能听",
+          "state": "done",
+          "src": "builtin",
+          "fb": {
+            "kind": "qq",
+            "label": "1.4.0",
+            "href": ""
+          }
+        }
       ]
     },
     {
@@ -394,8 +816,28 @@
       "color": "#64748b",
       "order": 7,
       "items": [
-        { "plugin": "reader", "title": "设置页长分组拆出小标题，一屏之内更好找", "state": "done", "src": "builtin", "fb": { "kind": "qq", "label": "1.5.2", "href": "" } },
-        { "plugin": "reader", "title": "功能对照里两行加了「看视频」，点开看教程", "state": "done", "src": "builtin", "fb": { "kind": "qq", "label": "1.3.1", "href": "" } }
+        {
+          "plugin": "reader",
+          "title": "设置页长分组拆出小标题，一屏之内更好找",
+          "state": "done",
+          "src": "builtin",
+          "fb": {
+            "kind": "qq",
+            "label": "1.5.2",
+            "href": ""
+          }
+        },
+        {
+          "plugin": "reader",
+          "title": "功能对照里两行加了「看视频」，点开看教程",
+          "state": "done",
+          "src": "builtin",
+          "fb": {
+            "kind": "qq",
+            "label": "1.3.1",
+            "href": ""
+          }
+        }
       ]
     },
     {
@@ -403,12 +845,72 @@
       "color": "#7856d6",
       "order": 0,
       "items": [
-        { "plugin": "reader", "title": "PDF 重排：固定版式变流式", "state": "plan", "src": "builtin", "fb": { "kind": "qq", "label": "探索", "href": "" } },
-        { "plugin": "reader", "title": "漫画模式：分格、右到左、跨页", "state": "plan", "src": "builtin", "fb": { "kind": "qq", "label": "探索", "href": "" } },
-        { "plugin": "reader", "title": "整章翻译：原文译文对照", "state": "plan", "src": "builtin", "fb": { "kind": "qq", "label": "探索", "href": "" } },
-        { "plugin": "reader", "title": "复习：全文回顾，AI 抽认卡与出题", "state": "plan", "src": "review", "fb": { "kind": "qq", "label": "探索", "href": "" } },
-        { "plugin": "reader", "title": "墨水屏：黑白更清、翻页不闪", "state": "plan", "src": "builtin", "fb": { "kind": "qq", "label": "探索", "href": "" } },
-        { "plugin": "reader", "title": "界面动效：翻页与切章过渡，可关", "state": "plan", "src": "builtin", "fb": { "kind": "qq", "label": "探索", "href": "" } }
+        {
+          "plugin": "reader",
+          "title": "PDF 重排：固定版式变流式",
+          "state": "plan",
+          "src": "builtin",
+          "fb": {
+            "kind": "qq",
+            "label": "探索",
+            "href": ""
+          }
+        },
+        {
+          "plugin": "reader",
+          "title": "漫画模式：分格、右到左、跨页",
+          "state": "plan",
+          "src": "builtin",
+          "fb": {
+            "kind": "qq",
+            "label": "探索",
+            "href": ""
+          }
+        },
+        {
+          "plugin": "reader",
+          "title": "整章翻译：原文译文对照",
+          "state": "plan",
+          "src": "builtin",
+          "fb": {
+            "kind": "qq",
+            "label": "探索",
+            "href": ""
+          }
+        },
+        {
+          "plugin": "reader",
+          "title": "复习：全文回顾，AI 抽认卡与出题",
+          "state": "plan",
+          "src": "review",
+          "fb": {
+            "kind": "qq",
+            "label": "探索",
+            "href": ""
+          }
+        },
+        {
+          "plugin": "reader",
+          "title": "墨水屏：黑白更清、翻页不闪",
+          "state": "plan",
+          "src": "builtin",
+          "fb": {
+            "kind": "qq",
+            "label": "探索",
+            "href": ""
+          }
+        },
+        {
+          "plugin": "reader",
+          "title": "界面动效：翻页与切章过渡，可关",
+          "state": "plan",
+          "src": "builtin",
+          "fb": {
+            "kind": "qq",
+            "label": "探索",
+            "href": ""
+          }
+        }
       ]
     }
   ],
@@ -416,50 +918,652 @@
     {
       "key": "bug",
       "items": [
-        { "id": "fb-20261123-qqg-01", "source": "qq-group", "plugin": "bz-reader", "summary": "高分屏分页阅读上半屏空白", "title": "高分屏分页阅读上半部分大面积留白", "desc": "QQ 群用户「时间的朋友」2026-11-23 04:04 发截图反馈：BZ Reader 在 4K 高分屏（3840×2070）以分页模式打开 EPUB 时，书页上半部分大面积空白，正文被压到屏幕中下部。用户自查附了分析：分页器对阅读区用三轨 Grid，正文轨被 1440px 上限锁死，屏高超出后多余高度被上下两条 1fr 轨道均分，把正文挤了下去；并提到该书目录锚点跳到尾注造成断页，加剧了空旷感。", "href": "", "reply": "", "replyDigest": "", "verify": "这是上游依赖库 foliate-js 的 bug：分页器把正文轨锁在 1440px、顶底轨用 1fr，屏高超过 1440+2×边距时多余高度被均分到顶部和底部，正文被挤到中下部。本插件已打修复补丁：把分页 Grid 的顶/底轨改成固定边距、正文轨改成吃满剩余高度，普通屏行为不变。注意：作者本机没有 4K 屏，无法做真实 4K 真机测试；仅用 1400×2000 超高视口模拟验证过——修复前顶部大片空白、修复后正文顶格铺满。可能存在尚未覆盖到的情况，如果仍遇到留白，请再次提交问题反馈。尚未发版，随下个版本发布。", "state": "doing", "submittedAt": "2026-11-23 04:04", "doneAt": "", "rejectedAt": "", "commitRepo": "bz-reader", "commitId": "c215d41a", "commitDate": "2026-11-23 04:42" },
-        { "id": "fb-20261122-qqg-01", "source": "qq-group", "plugin": "bz-reader", "summary": "其余服务商对话连不上（模型能拉）", "title": "第三方服务商对话连不上", "desc": "QQ 群用户「靛青」2026-11-22 00:15 反馈：AI 仍只有 DeepSeek 正常，其他服务商依旧连不上；模型列表能拉到，但对话请求连不上。核查确认 bz-reader 的对话只有 fetch 直连、没有 requestUrl 兜底，服务商不带跨域头时请求发不出去；bz 主仓同一家有兜底，故 bz 侧正常。", "href": "", "reply": "", "replyDigest": "", "verify": "已实现并合并 master：对话通道补上「fetch 失败 → Obsidian 主进程代发」退路，与 bz 主仓同口径；同时把 bz-review 的协议适配补齐（Claude 那档真正走 /messages）。真机用不返回跨域头的回显网关对照：修复前测试按钮连接失败、服务端只收到预检；修复后连接正常、服务端收到真正的对话请求。尚未发版，待随下个版本发布后转已完成。", "state": "doing", "submittedAt": "2026-11-22 00:15", "doneAt": "", "rejectedAt": "", "commitRepo": "bz-reader", "commitId": "", "commitDate": "2026-11-22 01:05" },
-        { "id": "fb-20261120-qqg-02", "source": "qq-group", "plugin": "bz", "domain": "日记本", "summary": "窗口模式写日记正文显示不全", "title": "窗口模式日记正文被挤压显示不全", "desc": "QQ 群用户「炽热的恒星」于 13:10 起报：窗口模式下写日记，内容显示不完整，不知道有没有打上字；全屏正常；把窗口变得很小又能显示。补充说在「Obsidian 完整展示」和「缩小到只显示一页」两个尺寸中间这段范围有问题，自己已知怎么处理（放大或缩小窗口）。附了两张窗口模式截图。", "href": "", "reply": "13:23「bz 所有的主窗口都是响应式布局，窗口足够小就变成移动端的布局了，保持一定的高度，正文区就不会被挤压。」", "replyDigest": "作者说明是响应式布局，窗口足够小切移动端布局，保持一定高度正文区就不被挤压。", "verify": "查 bz 与 bz-reader 两仓 git log --all，无同类修复。根因：窗口模式（宽>720、高<900）书高被压到 575px，写作内页 textarea 是 flex:1 被挤到一两行。已修复：给 textarea 死下限 180px。门禁 24 文件 513 测试全绿、tsc 干净；真机 1024x800 窗口档 textarea 184px 打字可见、移动端 390x844 档 467px 无回归。已合并 516b5222，未发版随下次版本发布。", "state": "done", "submittedAt": "2026-11-20 13:10", "doneAt": "2026-11-20", "rejectedAt": "", "commitRepo": "bz", "commitId": "516b5222", "commitDate": "2026-11-20 13:53", "releaseVersion": "1.44.6" },
-        { "id": "fb-20261118-qqf-01", "source": "qq-friend", "plugin": "bz-reader", "summary": "移动端侧栏跳转后自动收起", "title": "移动端从侧栏跳转后自动关侧栏", "desc": "用户反馈移动端点目录章节跳到正文后，左侧栏不会自动关掉，要再左滑一步；作者延伸要求划线、书签、引用、AI 回答依据的跳转也一步到位。核查发现根因是跳转触发侧栏重绘后，来源判定所依赖的 DOM 节点已脱离文档，导致收侧栏从不执行；目录、划线、书签、引用、AI 依据五路已一并修复。", "href": "", "reply": "作者先回「可以」，随后说明目录点击后应自动关闭左侧边栏，划线、书签、引用、AI 依据的转跳也都可以一步到位。", "replyDigest": "作者表示可以，并要求目录、划线、书签、引用与 AI 依据跳转后都自动收起侧栏。", "verify": "真机复现：点目录能跳转但侧栏不关。根因是 jumpTo 触发侧栏重绘后，fromSidebarHit 依赖的事件元素已脱离 DOM，来源判定恒为 false，收侧栏逻辑从未执行；同时收起函数用桌面 leftSplit 猜左右，移动端抽屉是另一套对象。已改为跳转前预判来源、从 leaf 的 parent 链找可收容器直接收起，并给 AI 依据跳转补上收侧栏。真机验证目录与 AI 依据跳转后侧栏均自动收起。", "state": "done", "submittedAt": "2026-11-18 21:23", "doneAt": "2026-11-21", "rejectedAt": "", "commitRepo": "bz-reader", "commitId": "d3a151b9", "commitDate": "2026-11-18 22:05", "releaseVersion": "1.6.0" },
-        { "id": "fb-20261118-qqg-01", "source": "qq-group", "plugin": "bz-reader", "summary": "改删分类误伤书自带题材同名的书", "title": "改删分类误伤同名题材的书", "desc": "QQ 群用户反馈分类逻辑奇怪，选分类时有概率吃掉其他分类，并怀疑是从旧库挪书导致的数据问题。查明是分类改名/删除时按含书自带题材回退的口径匹配，把只是题材同名的书也一起改掉或清空。", "href": "", "reply": "", "replyDigest": "", "verify": "核查确认：分类改名/删除时，会把只是书自带题材同名的书一起改掉，与反馈描述一致。已调整为只认用户手动指定的分类，不再读取书籍自带题材，也不会改动书籍文件。当前进行中，后续进展会同步到跟踪帖。", "state": "doing", "submittedAt": "2026-11-18", "doneAt": "", "rejectedAt": "", "commitRepo": "", "commitId": "", "commitDate": "" },
-        { "id": "fb-20261115-blg-02", "source": "bili-dm", "plugin": "bz", "domain": "日记本", "summary": "回看日记时换行效果丢失", "title": "日记换行回看丢失", "desc": "再次查看之前写的日记，换行效果没有显示出来，变成一个大段落。", "href": "", "reply": "00:12「好的，后续我会跟进的」", "replyDigest": "作者表示会跟进处理。", "verify": "反馈属实。册页排版把同一段里的连续非空行无缝拼成一句，导致回车换的行在纸面上消失。已修复：拼回换行符并落成 <br>，磁盘上的 md 一个字没改。", "state": "done", "submittedAt": "2026-11-15 23:55", "doneAt": "2026-11-19", "rejectedAt": "", "commitRepo": "bz", "commitId": "972855ed", "commitDate": "2026-11-16 00:45", "releaseVersion": "1.44.5" },
-        { "id": "fb-20261115-blg-01", "source": "bili-dm", "plugin": "bz", "domain": "日记本", "summary": "日记本光标不能用左右键移动", "title": "日记本光标只能鼠标点击", "desc": "日记本不能靠左右按键移动光标，必须鼠标点击；打错字也只能把光标点到那个字后面再回退。（23:09 首次提出，23:57 补充，已合并）", "href": "", "reply": "23:14「日记本是指左右按键来翻页吗？」；00:12「好的，后续我会跟进的」", "replyDigest": "作者先追问反馈是否指翻页操作，了解后表示会跟进处理。", "verify": "作者采纳后去查了代码：焦点在正文里时，左右键本来就能正常移动光标；真正的问题是焦点掉到纸边（日戳／贴纸／空白）后，按左右键会翻背后那本书。反馈描述与实际有出入，故判「不成立」。已修复：写作内页可见时方向键归纸面，焦点不在正文先还给正文。", "state": "invalid", "submittedAt": "2026-11-15 23:09", "doneAt": "", "rejectedAt": "", "commitRepo": "bz", "commitId": "972855ed", "commitDate": "2026-11-16 00:45" }
+        {
+          "id": "fb-20261123-qqg-01",
+          "source": "qq-group",
+          "plugin": "bz-reader",
+          "summary": "高分屏分页阅读上半屏空白",
+          "title": "高分屏分页阅读上半部分大面积留白",
+          "desc": "QQ 群用户「时间的朋友」2026-11-23 04:04 发截图反馈：BZ Reader 在 4K 高分屏（3840×2070）以分页模式打开 EPUB 时，书页上半部分大面积空白，正文被压到屏幕中下部。用户自查附了分析：分页器对阅读区用三轨 Grid，正文轨被 1440px 上限锁死，屏高超出后多余高度被上下两条 1fr 轨道均分，把正文挤了下去；并提到该书目录锚点跳到尾注造成断页，加剧了空旷感。",
+          "href": "",
+          "reply": "",
+          "replyDigest": "",
+          "verify": "这是上游依赖库 foliate-js 的 bug：分页器把正文轨锁在 1440px、顶底轨用 1fr，屏高超过 1440+2×边距时多余高度被均分到顶部和底部，正文被挤到中下部。本插件已打修复补丁：把分页 Grid 的顶/底轨改成固定边距、正文轨改成吃满剩余高度，普通屏行为不变。注意：作者本机没有 4K 屏，无法做真实 4K 真机测试；仅用 1400×2000 超高视口模拟验证过——修复前顶部大片空白、修复后正文顶格铺满。可能存在尚未覆盖到的情况，如果仍遇到留白，请再次提交问题反馈。尚未发版，随下个版本发布。",
+          "state": "doing",
+          "submittedAt": "2026-11-23 04:04",
+          "doneAt": "",
+          "rejectedAt": "",
+          "commitRepo": "bz-reader",
+          "commitId": "c215d41a",
+          "commitDate": "2026-11-23 04:42"
+        },
+        {
+          "id": "fb-20261122-qqg-01",
+          "source": "qq-group",
+          "plugin": "bz-reader",
+          "summary": "其余服务商对话连不上（模型能拉）",
+          "title": "第三方服务商对话连不上",
+          "desc": "QQ 群用户「靛青」2026-11-22 00:15 反馈：AI 仍只有 DeepSeek 正常，其他服务商依旧连不上；模型列表能拉到，但对话请求连不上。核查确认 bz-reader 的对话只有 fetch 直连、没有 requestUrl 兜底，服务商不带跨域头时请求发不出去；bz 主仓同一家有兜底，故 bz 侧正常。",
+          "href": "",
+          "reply": "",
+          "replyDigest": "",
+          "verify": "已实现并合并 master：对话通道补上「fetch 失败 → Obsidian 主进程代发」退路，与 bz 主仓同口径；同时把 bz-review 的协议适配补齐（Claude 那档真正走 /messages）。真机用不返回跨域头的回显网关对照：修复前测试按钮连接失败、服务端只收到预检；修复后连接正常、服务端收到真正的对话请求。尚未发版，待随下个版本发布后转已完成。",
+          "state": "doing",
+          "submittedAt": "2026-11-22 00:15",
+          "doneAt": "",
+          "rejectedAt": "",
+          "commitRepo": "bz-reader",
+          "commitId": "",
+          "commitDate": "2026-11-22 01:05"
+        },
+        {
+          "id": "fb-20261120-qqg-02",
+          "source": "qq-group",
+          "plugin": "bz",
+          "domain": "日记本",
+          "summary": "窗口模式写日记正文显示不全",
+          "title": "窗口模式日记正文被挤压显示不全",
+          "desc": "QQ 群用户「炽热的恒星」于 13:10 起报：窗口模式下写日记，内容显示不完整，不知道有没有打上字；全屏正常；把窗口变得很小又能显示。补充说在「Obsidian 完整展示」和「缩小到只显示一页」两个尺寸中间这段范围有问题，自己已知怎么处理（放大或缩小窗口）。附了两张窗口模式截图。",
+          "href": "",
+          "reply": "13:23「bz 所有的主窗口都是响应式布局，窗口足够小就变成移动端的布局了，保持一定的高度，正文区就不会被挤压。」",
+          "replyDigest": "作者说明是响应式布局，窗口足够小切移动端布局，保持一定高度正文区就不被挤压。",
+          "verify": "查 bz 与 bz-reader 两仓 git log --all，无同类修复。根因：窗口模式（宽>720、高<900）书高被压到 575px，写作内页 textarea 是 flex:1 被挤到一两行。已修复：给 textarea 死下限 180px。门禁 24 文件 513 测试全绿、tsc 干净；真机 1024x800 窗口档 textarea 184px 打字可见、移动端 390x844 档 467px 无回归。已合并 516b5222，未发版随下次版本发布。",
+          "state": "done",
+          "submittedAt": "2026-11-20 13:10",
+          "doneAt": "2026-11-20",
+          "rejectedAt": "",
+          "commitRepo": "bz",
+          "commitId": "516b5222",
+          "commitDate": "2026-11-20 13:53",
+          "releaseVersion": "1.44.6"
+        },
+        {
+          "id": "fb-20261118-qqf-01",
+          "source": "qq-friend",
+          "plugin": "bz-reader",
+          "summary": "移动端侧栏跳转后自动收起",
+          "title": "移动端从侧栏跳转后自动关侧栏",
+          "desc": "用户反馈移动端点目录章节跳到正文后，左侧栏不会自动关掉，要再左滑一步；作者延伸要求划线、书签、引用、AI 回答依据的跳转也一步到位。核查发现根因是跳转触发侧栏重绘后，来源判定所依赖的 DOM 节点已脱离文档，导致收侧栏从不执行；目录、划线、书签、引用、AI 依据五路已一并修复。",
+          "href": "",
+          "reply": "作者先回「可以」，随后说明目录点击后应自动关闭左侧边栏，划线、书签、引用、AI 依据的转跳也都可以一步到位。",
+          "replyDigest": "作者表示可以，并要求目录、划线、书签、引用与 AI 依据跳转后都自动收起侧栏。",
+          "verify": "真机复现：点目录能跳转但侧栏不关。根因是 jumpTo 触发侧栏重绘后，fromSidebarHit 依赖的事件元素已脱离 DOM，来源判定恒为 false，收侧栏逻辑从未执行；同时收起函数用桌面 leftSplit 猜左右，移动端抽屉是另一套对象。已改为跳转前预判来源、从 leaf 的 parent 链找可收容器直接收起，并给 AI 依据跳转补上收侧栏。真机验证目录与 AI 依据跳转后侧栏均自动收起。",
+          "state": "done",
+          "submittedAt": "2026-11-18 21:23",
+          "doneAt": "2026-11-21",
+          "rejectedAt": "",
+          "commitRepo": "bz-reader",
+          "commitId": "d3a151b9",
+          "commitDate": "2026-11-18 22:05",
+          "releaseVersion": "1.6.0"
+        },
+        {
+          "id": "fb-20261118-qqg-01",
+          "source": "qq-group",
+          "plugin": "bz-reader",
+          "summary": "改删分类误伤书自带题材同名的书",
+          "title": "改删分类误伤同名题材的书",
+          "desc": "QQ 群用户反馈分类逻辑奇怪，选分类时有概率吃掉其他分类，并怀疑是从旧库挪书导致的数据问题。查明是分类改名/删除时按含书自带题材回退的口径匹配，把只是题材同名的书也一起改掉或清空。",
+          "href": "",
+          "reply": "",
+          "replyDigest": "",
+          "verify": "核查确认：分类改名/删除时，会把只是书自带题材同名的书一起改掉，与反馈描述一致。已调整为只认用户手动指定的分类，不再读取书籍自带题材，也不会改动书籍文件。当前进行中，后续进展会同步到跟踪帖。",
+          "state": "doing",
+          "submittedAt": "2026-11-18",
+          "doneAt": "",
+          "rejectedAt": "",
+          "commitRepo": "",
+          "commitId": "",
+          "commitDate": ""
+        },
+        {
+          "id": "fb-20261115-blg-02",
+          "source": "bili-dm",
+          "plugin": "bz",
+          "domain": "日记本",
+          "summary": "回看日记时换行效果丢失",
+          "title": "日记换行回看丢失",
+          "desc": "再次查看之前写的日记，换行效果没有显示出来，变成一个大段落。",
+          "href": "",
+          "reply": "00:12「好的，后续我会跟进的」",
+          "replyDigest": "作者表示会跟进处理。",
+          "verify": "反馈属实。册页排版把同一段里的连续非空行无缝拼成一句，导致回车换的行在纸面上消失。已修复：拼回换行符并落成 <br>，磁盘上的 md 一个字没改。",
+          "state": "done",
+          "submittedAt": "2026-11-15 23:55",
+          "doneAt": "2026-11-19",
+          "rejectedAt": "",
+          "commitRepo": "bz",
+          "commitId": "972855ed",
+          "commitDate": "2026-11-16 00:45",
+          "releaseVersion": "1.44.5"
+        },
+        {
+          "id": "fb-20261115-blg-01",
+          "source": "bili-dm",
+          "plugin": "bz",
+          "domain": "日记本",
+          "summary": "日记本光标不能用左右键移动",
+          "title": "日记本光标只能鼠标点击",
+          "desc": "日记本不能靠左右按键移动光标，必须鼠标点击；打错字也只能把光标点到那个字后面再回退。（23:09 首次提出，23:57 补充，已合并）",
+          "href": "",
+          "reply": "23:14「日记本是指左右按键来翻页吗？」；00:12「好的，后续我会跟进的」",
+          "replyDigest": "作者先追问反馈是否指翻页操作，了解后表示会跟进处理。",
+          "verify": "作者采纳后去查了代码：焦点在正文里时，左右键本来就能正常移动光标；真正的问题是焦点掉到纸边（日戳／贴纸／空白）后，按左右键会翻背后那本书。反馈描述与实际有出入，故判「不成立」。已修复：写作内页可见时方向键归纸面，焦点不在正文先还给正文。",
+          "state": "invalid",
+          "submittedAt": "2026-11-15 23:09",
+          "doneAt": "",
+          "rejectedAt": "",
+          "commitRepo": "bz",
+          "commitId": "972855ed",
+          "commitDate": "2026-11-16 00:45"
+        }
       ]
     },
     {
       "key": "feature",
       "items": [
-        { "id": "fb-20261124-qqc-01", "source": "qq-channel", "plugin": "bz-reader", "summary": "给阅读器工具栏按钮加悬停气泡提示", "title": "阅读器工具栏按钮加悬停气泡提示", "desc": "QQ 频道用户「天道酬勤」建议给阅读器顶部工具栏的功能按钮增加气泡提示信息，配图用红箭头指向「更多选项」按钮并配文「如 obsidian 原功能一样」，理由是对新用户友好、方便快速入门和使用。", "href": "", "reply": "频道主回复：好的，下个版本根据", "replyDigest": "频道主回复表示会在下个版本根据这条建议处理。", "verify": "已实现并合并：只给阅读器头栏工具栏那批图标按钮加悬停气泡（如目录/搜索/书签/朗读等），不做成全插件 UI 都有；气泡文案按作者要求去掉快捷键（「目录（s）」显示为「目录」），保留「复制链接（页 / 视图 / 嵌入 / 标注）」这类说明性括号；出现时机用 Obsidian 默认。气泡只在头栏按钮上出现，设置页/侧栏/弹窗等不受影响。真机桌面端悬停目录、朗读均弹出去键位气泡，移动端工具栏布局正常。未发版，状态记进行中。", "state": "doing", "submittedAt": "2026-11-24 13:16", "doneAt": "", "rejectedAt": "", "commitRepo": "bz-reader", "commitId": "4d8063e5", "commitDate": "2026-11-24 16:01" },
-        { "id": "fb-20261123-qqg-02", "source": "qq-group", "plugin": "bz", "domain": "日记本", "summary": "固化台历面板大小防误触", "title": "台历面板尺寸固定", "desc": "QQ 交流群有人建议把日记台历面板大小固定下来：现在面板高度随月份行数变化，切月忽高忽低；入场动画期间手快点空会落到遮罩上关掉面板，下一击误触正文。作者 Panda 补充说这条必做，不然用日历视图时挺头大的。", "href": "", "reply": "", "replyDigest": "（数据里没有记录）", "verify": "已修并合并（commit e274b7d6，时间 2026-11-23 14:25）：台历网格恒补满 6 行并固定行高，切月高度恒定；入场 300ms 内点弹层外不再关面板；日期格点击区加大。真机桌面与移动端逐月翻测高度一致。未发版，状态记进行中。", "state": "done", "submittedAt": "2026-11-23", "doneAt": "2026-11-23", "rejectedAt": "", "commitRepo": "bz", "commitId": "e274b7d6", "commitDate": "2026-11-23 14:25", "releaseVersion": "1.44.7" },
-        { "id": "fb-20261123-qqg-03", "source": "qq-group", "plugin": "bz", "domain": "日记本", "summary": "日历支持年份月份级联快速跳转", "title": "日记日历快速定位多年前日期", "desc": "整理往年旧笔记时，日历只能靠左右箭头逐月切换，跳到多年前很繁琐。建议点击年份唤起年份列表、选年份后展开月份列表、再选日期，快速定位目标日期。与「笔记页加快捷按钮」是二选一方案。", "href": "", "reply": "", "replyDigest": "（数据里没有记录）", "verify": "查两仓 git 历史与源码：现为年/月/日滚轮连续滚动、台历头部仅左右箭头逐月翻，没有年份/月份级联列表。作者点单只登记采纳、不修代码，状态采纳。", "state": "accepted", "submittedAt": "2026-11-23", "doneAt": "", "rejectedAt": "", "commitRepo": "", "commitId": "", "commitDate": "" },
-        { "id": "fb-20261123-blg-01", "source": "bili-comment", "plugin": "bz-reader", "summary": "目录放正文页避免占用侧栏", "title": "书籍目录放到正文页", "desc": "B 站用户「超级无敌霸王龙」2026-11-23 在视频评论区提了两点，其一是书籍目录最好能放到正文页，放侧边栏影响浏览笔记库。", "href": "", "reply": "UP 主回复：书籍目录你可以拖到右侧放。", "replyDigest": "作者说明目录侧栏可以拖到右侧放，给出用现有功能解决的替代办法。", "verify": "查两仓 git log 无「目录放到正文页」的实现。目录侧栏是 Obsidian 的 leaf，本就能拖动到右侧栏，作者回复的现成办法可解决用户「占侧栏影响浏览笔记」的困扰，判定否决、不改插件。", "state": "rejected", "submittedAt": "2026-11-23", "doneAt": "", "rejectedAt": "2026-11-23", "commitRepo": "", "commitId": "", "commitDate": "" },
-        { "id": "fb-20261123-blg-02", "source": "bili-comment", "plugin": "bz-reader", "summary": "双链展示更多信息并支持自定义模板", "title": "双链信息更丰富、支持自定义模板", "desc": "同一用户同一条评论的另一诉求：双向链接太简陋，希望同时显示书名+章节名+页数+链接时间+引用块摘录才有意义。", "href": "", "reply": "UP 主回复：双链后续我会增加一个导出模板，让用户自定义，感谢反馈。", "replyDigest": "作者承诺后续增加导出模板让用户自定义；核查后按此实现，并把复制双链也升级成与导出完全相同的模板。", "verify": "已实现并合并 master：整本导出与复制划线共用完全相同的四档模板（简洁 / callout 引文 / callout 详细 / 自定义），都支持多行 Markdown、callout 与 {双链} 变量，粘进笔记就是模板原样的内容；两套配置各自独立，互不干扰。老版本 aliasTemplate 自动迁到复制档的自定义模板并补回双链，不会退化成纯文本。默认导出格式逐字不变，无时间不编造 1970。真机桌面与移动端验证通过，报告见 docs/verify-copy-full-template.md。尚未发版，状态记进行中。", "state": "doing", "submittedAt": "2026-11-23", "doneAt": "", "rejectedAt": "", "commitRepo": "bz-reader", "commitId": "771c2e36", "commitDate": "2026-11-23 16:58" },
-        { "id": "fb-20261121-qqg-01", "source": "qq-group", "plugin": "bz-reader", "summary": "支持自定义看书背景图片", "title": "自定义阅读背景图片", "desc": "2026-11-21 上午，群里一位用户说之前手机上用 QQ 阅读时把背景图提取出来了，电脑上有些阅读器也能换背景，问 bz reader 能否实现这个自定义功能，并强调只想更改看书时的背景。作者追问背景是不是指图片，用户确认。", "href": "", "reply": "字体能改，背景色写一个 CSS，或者找一个主题。因为我觉得背景色改了，Obsidian 的左右侧边栏、顶部状态栏，感觉会比较违和，很难受，所以就没设计这个功能。背景是指图片吗？可以，我先采纳一下。可能要放一放，后续再跟进。最近在忙新的插件。", "replyDigest": "作者说明字体可改、背景色需写 CSS 或换主题，因担心与 Obsidian 侧边栏、状态栏违和故未内置；追问确认是指背景图片后表示先采纳，但近期在忙新插件，可能要放一放、后续跟进。", "verify": "查 bz 与 bz-reader 两仓 git log，未见自定义阅读背景图片的实现；bz-reader 底色跟随 Obsidian 主题背景变量，目前没有单独的背景图设置。作者已采纳，因在忙新插件暂缓跟进。", "state": "accepted", "submittedAt": "2026-11-21 08:52", "doneAt": "", "rejectedAt": "", "commitRepo": "", "commitId": "", "commitDate": "" },
-        { "id": "fb-20261121-qqg-02", "source": "qq-group", "plugin": "bz", "domain": "影院", "summary": "影评支持在笔记正文用标记编辑并双向同步", "title": "影评支持在 Markdown 笔记正文用标记编辑并与界面双向同步", "desc": "2026-11-21 上午 10:53，QQ 群用户 Panda 提出：影评目前记在笔记属性栏，不能用格式，在 md 笔记页面看起来也难受，希望在 Markdown 笔记正文留出区域记录影评，格式更丰富、引用别的内容更方便。中午 12:23 他给出方案：用 <BZ-MOVIE> 与 </BZ-MOVIE> 标记包住影评，在正文中直接编辑、正常使用 markdown 语法。", "href": "", "reply": "作者同意实现：在影院设置面板增加一个默认关的开关，打开时二次确认后批量把影评写进笔记正文；界面与笔记标记写的影评双向同步，正文影评默认放在笔记顶部、海报上面。关闭时同样二次确认，统计已有影评篇数并问是否批量清除、只在属性中保留。", "replyDigest": "作者同意：加默认关的开关，双向同步，影评放笔记顶部，开关各一次二次确认。", "verify": "已在影院设置面板加影评写入笔记正文开关（默认关）。打开前实时统计可搬篇数并弹影院风格确认框，确认后批量把属性影评写入正文 <BZ-MOVIE> 标记区；无影评的影片不插空块，已有标记不重复插。关闭前统计正文影评篇数并二次确认，确认后清除标记、正文改动并回属性保留，属性始终留备份。界面改影评同步写正文，正文改影评同步回属性；标记固定在笔记顶部、海报上方。真机验证通过。", "state": "done", "submittedAt": "2026-11-21", "doneAt": "2026-11-23", "rejectedAt": "", "commitRepo": "bz", "commitId": "df282d9a", "commitDate": "2026-11-21 16:27", "releaseVersion": "1.44.7" },
-        { "id": "fb-20261120-qqg-03", "source": "qq-group", "plugin": "bz", "domain": "界面", "summary": "功能面板可拖拽放大或固定成页", "title": "希望功能面板能拖拽放大或固定成独立页", "desc": "QQ 群用户依米于 17:55 发截图问：功能面板没办法拖拽放大，或者能固定成页面吗。18:00 作者回复：先设置成快捷键即用即开；等有时间，后续这些功能都会出独立插件、放到 Obsidian 的原生页中。", "href": "", "reply": "18:00「设置成一个快捷键呗，即用即开」；「等我有时间了，后续这些功能都会出独立插件」；「都会放到 obsidian 的原生页中」。", "replyDigest": "作者建议先用快捷键即用即开，说明后续功能会出独立插件、放到 Obsidian 原生页中。", "verify": "查 bz 与 bz-reader 两仓 git log --all，无「功能面板固定成原生页 / 独立插件」相关实现。桌面端主面板早在 a48e93b3（09-30）已接入拖拽缩放与尺寸记忆，3c791a02 补意图尺寸记忆，与「没办法拖拽放大」有出入（可能问的是移动端或其它场景）。作者看过诉求后决定当前 bz 面板不实现，归入未来独立插件 / 原生页规划，判否决。", "state": "rejected", "submittedAt": "2026-11-20 17:55", "doneAt": "", "rejectedAt": "2026-11-20", "commitRepo": "", "commitId": "", "commitDate": "" },
-        { "id": "fb-20261120-qqg-01", "source": "qq-group", "plugin": "bz", "domain": "界面", "summary": "插件菜单树常驻 Obsidian 左侧命令栏", "title": "插件菜单树全部塞进左侧命令栏", "desc": "QQ 群用户 Jacky 于 13:07 提出，希望加载插件后左侧菜单树都在 Obsidian 左侧显示全，不用每次进入插件才能操作，快捷入口也要点进去才能用；群里 lain 建议在右上角做快捷入口。", "href": "", "reply": "Bz 只主动往左侧命令栏注入了日记和备忘录，番茄钟和工具屋在右下角的状态栏，其他功能由用户自行决定，因为命令太多了，全部塞在左侧栏爆炸了。", "replyDigest": "作者说明只主动往左侧命令栏注入日记和备忘录，番茄钟和工具屋放在右下角状态栏，因命令太多全塞左侧栏会爆炸，其余由用户自行决定。", "verify": "查 bz 与 bz-reader 两仓 git log --all，无『菜单树常驻左侧命令栏』相关实现。作者看过诉求后明确不采纳。作者更正：原话『右键菜单』实指 Obsidian 左侧命令栏。", "state": "rejected", "submittedAt": "2026-11-20 13:07", "doneAt": "", "rejectedAt": "2026-11-20", "commitRepo": "", "commitId": "", "commitDate": "" },
-        { "id": "fb-20261118-blg-01", "source": "bili-dm", "plugin": "bz-reader", "summary": "移植多模型接口逻辑到 bz-reader", "title": "bz-reader 接入其他厂商模型接口", "desc": "2026-11-18 01:16 对方反馈 bz 中只有 deepseek 官方接口能连，kimi 及其他自营、非官方网站接口接不进去。作者回复会先把 bz 的接口逻辑移植到 bz-reader；bz 侧已用 896eac6d 扩展服务商，bz-reader 侧尚未实现。", "href": "", "reply": "作者表示：bz 尚未上架市场、bz-review 本周上架，自己没有其他厂商 key 无法测试；已请对方在 bz 试用其他模型或自营站点，可行就把 bz 的接口逻辑移植到 bz-reader。对方 13:04 确认 bz 正常，作者 13:21 表示下个版本跟上。", "replyDigest": "作者表示暂无其他厂商 key 无法测试，已请对方先在 bz 试用，确认可行后把接口逻辑移植到 bz-reader，下个版本跟上。", "verify": "已实现并合并 master：96dd385 把 18 家服务商注册表、密钥测试、获取模型名整套从 bz 移植到 bz-reader，后续提交补齐。尚未发版，待随下个版本发布后转已完成。", "state": "done", "submittedAt": "2026-11-18 01:16", "doneAt": "2026-11-21", "rejectedAt": "", "commitRepo": "bz-reader", "commitId": "96dd385", "commitDate": "2026-11-19 13:24", "releaseVersion": "1.6.0" },
-        { "id": "fb-20261118-qqg-02", "source": "qq-group", "plugin": "bz-reader", "summary": "摘录导出保留阅读追踪数据", "title": "导出保留阅读追踪数据", "desc": "用户希望导出整本摘录时，同时保留帮助追踪的数据，包括阅读时间、中间是否中断、每章时长等，以便更好地追踪。作者回复 OK，采纳。", "href": "", "reply": "OK", "replyDigest": "作者回复 OK，采纳。", "verify": "已实现并随 1.5.3 发布：导出的书摘末尾新增「阅读记录」一节，把阅读时长与每次会话一起带走。", "state": "done", "submittedAt": "2026-11-18", "doneAt": "2026-11-18 20:06", "rejectedAt": "", "commitRepo": "bz-reader", "commitId": "c61ee07a", "commitDate": "2026-11-18 17:24", "releaseVersion": "1.5.3" },
-        { "id": "fb-20261118-qqg-03", "source": "qq-group", "plugin": "bz-reader", "summary": "支持彻底删除书籍全部记录", "title": "彻底删除书籍记录", "desc": "用户希望支持完全删除记录，连曾经在书架中存在过的书剩下的信息也一并删除。作者回复 OK，采纳。", "href": "", "reply": "OK", "replyDigest": "作者回复 OK，采纳。", "verify": "已实现并随 1.5.3 发布：移出书架时可以选择「彻底删除」，连记录与阅读数据一起清掉，源文件不动。", "state": "done", "submittedAt": "2026-11-18", "doneAt": "2026-11-18 20:06", "rejectedAt": "", "commitRepo": "bz-reader", "commitId": "c61ee07a", "commitDate": "2026-11-18 17:24", "releaseVersion": "1.5.3" },
-        { "id": "fb-20261118-qqg-04", "source": "qq-group", "plugin": "bz-reader", "summary": "不同版本书籍的摘录匹配疑问", "title": "书籍版本与摘录匹配", "desc": "用户问如果书的版本不同，摘录是否还符合。作者答复：书是根据文件的指纹来判断是不是一本书的，不同版本的就是不同的书。", "href": "", "reply": "书是根据文件的指纹来判断是不是一本书的，不同版本的就是不同的书", "replyDigest": "作者说明书按文件指纹判定，不同版本算不同的书，摘录各自独立。", "verify": "已实现并合并 master：指纹升级为 v2 全书 SHA-256（消除 v1 头尾取样的边界），同一路径换成不同版本现在会归档旧书、新书另起，进度划线不再串到新版本；老数据 v1 指纹后台平滑升级、进度划线全留。尚未发版，待随下个版本发布后转已完成。", "state": "done", "submittedAt": "2026-11-18", "doneAt": "2026-11-21", "rejectedAt": "", "commitRepo": "bz-reader", "commitId": "25d42a1", "commitDate": "2026-11-21 09:23", "releaseVersion": "1.6.0" },
-        { "id": "fb-20261118-qqg-05", "source": "qq-group", "plugin": "bz-reader", "summary": "导出不应包含书籍本体文件", "title": "书摘导出不含书籍本体", "desc": "用户提出若导出不包含书本体，希望导出的版本能在书库上做标注，便于整体转移包含书、记录、阅读信息的仓库。作者明确：导出不包含本体，bz Reader 严格禁止对书籍文件做任何的处理。", "href": "", "reply": "导出不包含本体，Bz Reader 严格禁止对书籍文件做任何的处理", "replyDigest": "作者明确导出不含书籍本体，插件严格禁止对书籍文件做任何处理。", "verify": "核查确认：书摘导出只写一份 Markdown 到 exportDir，epub／pdf 本体另存于 bz-reader/books，导出过程不读、不写、不移动书籍源文件，与设计红线一致。派生的「在书库标注导出版本以便整体迁移」随主诉求一并否决。", "state": "rejected", "submittedAt": "2026-11-18", "doneAt": "", "rejectedAt": "2026-11-18", "commitRepo": "", "commitId": "", "commitDate": "" },
-        { "id": "fb-20261118-qqg-06", "source": "qq-group", "plugin": "bz-reader", "summary": "记录长期未读的空窗状态", "title": "阅读空窗与久未打开提示", "desc": "用户希望记录阅读的时间空窗，例如三个月前看过、三个月后再打开，中间的空窗是否会被记录。作者答复：数据统计里面本身就有。", "href": "", "reply": "数据统计里面本身就有", "replyDigest": "作者表示数据统计里已有相关记录。", "verify": "核查确认：统计页自 0.4.0 起按 reading.stats.lastReadTime 距今天数计算 idleDays，标出 longIdle（≥7 天）／idle（≥3 天）与「久未打开／搁置／沉寂」及「搁置 n 本」洞察。注意这是按书计算的即时状态，不是把空窗当作历史事件永久留档；两次会话之间的间隔没有独立字段。", "state": "done", "submittedAt": "2026-11-18", "doneAt": "2026-11-09 12:38", "rejectedAt": "", "commitRepo": "bz-reader", "commitId": "f720ed6f", "commitDate": "2026-11-09 12:38", "releaseVersion": "0.4.0" },
-        { "id": "fb-20261118-qqg-07", "source": "qq-group", "plugin": "bz-reader", "summary": "划线标注带创建时间戳", "title": "划线创建时间戳", "desc": "用户希望书内划线标注在信息上有对应的时间标签，划线创建时应有时间戳。作者回复 OK，采纳。", "href": "", "reply": "OK", "replyDigest": "作者回复 OK，采纳。", "verify": "已实现并随 1.5.3 发布：导出的书摘里，每条划线下面标注它是什么时候划的。", "state": "done", "submittedAt": "2026-11-18", "doneAt": "2026-11-18 20:06", "rejectedAt": "", "commitRepo": "bz-reader", "commitId": "c61ee07a", "commitDate": "2026-11-18 17:24", "releaseVersion": "1.5.3" },
-        { "id": "fb-20261118-qqg-08", "source": "qq-group", "plugin": "bz-reader", "summary": "加强阅读时间与中断记录", "title": "阅读时间记录加强", "desc": "用户强调看书的时间很重要，希望记录一本书什么时候打开、阅读多久、中间是否中断、每章看了多久、划线创建时间戳等。作者答复：数据统计本身支持一部分，可以在这方面进行加强。", "href": "", "reply": "数据统计本身支持一部分，可以在这方面进行加强", "replyDigest": "作者表示统计已有部分支持，将在此基础上加强。", "verify": "已实现并随 1.5.3 发布：阅读会话开始记录中断次数。", "state": "done", "submittedAt": "2026-11-18", "doneAt": "2026-11-18 20:06", "rejectedAt": "", "commitRepo": "bz-reader", "commitId": "c61ee07a", "commitDate": "2026-11-18 17:24", "releaseVersion": "1.5.3" },
-        { "id": "fb-20261118-qqg-09", "source": "qq-group", "plugin": "bz-reader", "summary": "一本书可加入多个分类", "title": "支持多分类替代标签系统", "desc": "用户认为书的分类标准很重要，问一本书能否同时分到两个文件夹，或干脆通过标签做分类（文件夹是书的实际位置，标签是关键词找书）。作者采纳：一本书可以加入多个分类，不使用标签系统。", "href": "", "reply": "采纳一本书可以加入多个分类，不使用标签系统", "replyDigest": "作者采纳一本书可加入多个分类，明确不采用标签系统。", "verify": "已实现并随 1.5.3 发布：数据里新增 shelves 数组存完整归属、主分类恒等于第一格，书架菜单里点一下加进去、再点一下移出来；按作者决定不采用标签系统。", "state": "done", "submittedAt": "2026-11-18", "doneAt": "2026-11-18 20:06", "rejectedAt": "", "commitRepo": "bz-reader", "commitId": "c61ee07a", "commitDate": "2026-11-18 17:24", "releaseVersion": "1.5.3" },
-        { "id": "fb-20261118-qqg-10", "source": "qq-group", "plugin": "bz-reader", "summary": "通过 API 导入微信读书内容", "title": "微信读书内容 API 导入", "desc": "用户问能否通过 API 导入微信读书上别人留下的竖屏和划线之类的内容，自己也认为比较困难。作者明确：这个做不到。", "href": "", "reply": "这个做不到", "replyDigest": "作者明确该需求做不到。", "verify": "核查确认：微信读书没有开放的第三方 API，划线与竖屏内容受账号体系与版权限制；插件侧无对应接口、无实现路径，作者决定不实现。", "state": "rejected", "submittedAt": "2026-11-18", "doneAt": "", "rejectedAt": "2026-11-18", "commitRepo": "", "commitId": "", "commitDate": "" },
-        { "id": "fb-20261118-ghi-01", "source": "github-issue", "plugin": "bz-reader", "summary": "希望 EPUB 内置图片能点击放大", "title": "EPUB 内置图片放大查看", "desc": "读史料类书籍时 EPUB 内置图片往往很重要，比如当时的报刊、论文等资料。市面上只有 omni book reader 能点开放大，但放大后的操作非常蹩脚、很难受。希望在以后的更新中支持放大 EPUB 内置图片。", "href": "https://github.com/yeshimei/bz-reader/issues/3", "reply": "2026-11-17 22:52「感谢建议。1 下个版本跟上」", "replyDigest": "作者回复下个版本跟上。", "verify": "已实现并随 1.5.3 发布：书内图片点一下放大查看，支持缩放、拖动、复制与保存，设置里默认关。", "state": "done", "submittedAt": "2026-11-17 14:47", "doneAt": "2026-11-18 20:06", "rejectedAt": "", "commitRepo": "bz-reader", "commitId": "0e0cdba5", "commitDate": "2026-11-17 23:54", "releaseVersion": "1.5.3" },
-        { "id": "fb-20261118-ghi-02", "source": "github-issue", "plugin": "bz-reader", "summary": "希望 EPUB 支持 Obsidian 字体或自选字体", "title": "EPUB 跟随 Obsidian 字体", "desc": "很多阅读器支持 EPUB 使用 Obsidian 正在使用的字体，或者支持自选字体，这样整体 Obsidian 会很一体、更美观。从阅读体验上希望能支持这功能。", "href": "https://github.com/yeshimei/bz-reader/issues/3", "reply": "2026-11-17 22:52「感谢建议。2 同上」", "replyDigest": "作者回复同一版本跟上。", "verify": "已实现并随 1.5.3 发布：字体设置新增「跟随 Obsidian」一档，跟宿主主题字体栈走。", "state": "done", "submittedAt": "2026-11-17 14:47", "doneAt": "2026-11-18 20:06", "rejectedAt": "", "commitRepo": "bz-reader", "commitId": "e1131e2e", "commitDate": "2026-11-17 23:10", "releaseVersion": "1.5.3" },
-        { "id": "fb-20261118-ghi-03", "source": "github-issue", "plugin": "bz-reader", "summary": "建议朗读复用 Edge 浏览器 TTS", "title": "朗读接入 Edge TTS", "desc": "qiaomu reader 的朗读功能，支持用 Edge 浏览器的功能，免费且效果不错，不知道能不能也复用一下。", "href": "https://github.com/yeshimei/bz-reader/issues/3", "reply": "2026-11-17 22:52「感谢建议。3 我可能更加倾向优化本地语音合成模型，它效果更好，并且可以预生成离线听书」", "replyDigest": "作者更倾向优化本地语音合成模型，暂不走 Edge。", "verify": "作者回复明确倾向优化本地语音合成模型（效果更好、可预生成离线听书），决定不接 Edge TTS。", "state": "rejected", "submittedAt": "2026-11-17 14:47", "doneAt": "", "rejectedAt": "2026-11-17 22:52", "commitRepo": "", "commitId": "", "commitDate": "" },
-        { "id": "fb-20261115-blg-03", "source": "bili-dm", "plugin": "bz", "domain": "界面", "summary": "放大插件首页显示比例", "title": "插件首页显示偏小", "desc": "常规使用插件的首页有点小、看不是很清，问能不能放大一点。", "href": "", "reply": "23:13「obsidian 中放大界面比例试试」", "replyDigest": "作者建议用 Obsidian 自带的界面缩放解决，不改插件。", "verify": "作者看过这个要求，决定不采纳：用 Obsidian 自带的界面缩放就能放大，不改插件。", "state": "rejected", "submittedAt": "2026-11-15 23:09", "doneAt": "", "rejectedAt": "2026-11-15 23:13", "commitRepo": "", "commitId": "", "commitDate": "" },
-        { "id": "fb-20261108-ghi-02", "source": "github-issue", "plugin": "bz", "summary": "希望关闭模块后自动返回首页", "title": "关闭模块后返回首页", "desc": "从首页点进日记本、番茄钟等模块，关掉后整个窗口消失，得重新打开插件再进下一个模块，连续看几个模块很麻烦；用户让 Claude 改过但被告知插件更新会被覆盖。希望关闭模块后自动回首页，或加「返回首页」按钮。（2026-11-08 09:35 提出）", "href": "https://github.com/yeshimei/bz/issues/2", "reply": "2026-11-10 15:22「感谢你的建议。在这个教程视频中推荐用法是，给常用功能绑定快捷键，或者设置成 obsidian 快捷按钮。下个版本，我会为所有注册了 Obsidian 的 bz 命令增加一个前缀，方便查找。」；2026-11-10 15:32「另外，我可以在设置-首页中增加一个开关（默认关），打开后从首页进入某个功能关闭后，还会再次打开首页。如果是直接打开某个功能，且不会打开首页。」", "replyDigest": "作者承诺下个版本加命令前缀，并在设置-首页加「关闭后回到首页」开关（默认关）。", "verify": "已实现并提交：9e2e5c7b（2026-11-10 16:08），另有 1fc55c50 修复回首页延迟。发布在 v1.43.0，changelog 写明「设置里可打开『关闭后回到首页』」与「全部命令统一加上 bz 前缀」。", "state": "done", "submittedAt": "2026-11-08 09:35", "doneAt": "2026-11-10 16:08", "rejectedAt": "", "commitRepo": "bz", "commitId": "9e2e5c7b", "commitDate": "2026-11-10 16:08", "releaseVersion": "1.43.0" },
-        { "id": "fb-20261108-ghi-01", "source": "github-issue", "plugin": "bz", "summary": "希望主窗口能放大到接近全屏", "title": "主窗口放大到接近全屏", "desc": "Windows 11 上窗口是居中卡片，拖边缘最大约 1280×880，大屏留白多、局促。希望在设置里加「桌面端默认全屏」选项，或右上角加「最大化」按钮，点一下铺满、再点恢复。涉及首页 / 今日回顾 / 设置面板 / 数据体检。（2026-11-08 09:32 提出）", "href": "https://github.com/yeshimei/bz/issues/1", "reply": "2026-11-10 15:26「感谢你的建议。交流群里有人反馈了这个问题，我会在下个版本中增加一个命令（可以自行绑定快捷键）让当前界面全屏（覆盖整个 obsidian），通过 esc 或再次使用全屏命令返回正常大小。之所以如此设计，是因为 BZ UI 美学是克制，为了保持最佳观感，无法为每个界面都添加一个重复的按钮。」", "replyDigest": "作者承诺下个版本加通用全屏命令，可绑快捷键；出于 UI 克制不加重复按钮。", "verify": "已实现并提交：9e2e5c7b（2026-11-10 16:08）「命令面板统一前缀、通用全屏与首页返回」。发布在 v1.43.0，changelog 写明「加了一条通用全屏命令，各域主面板都能铺满窗口」。", "state": "done", "submittedAt": "2026-11-08 09:32", "doneAt": "2026-11-10 16:08", "rejectedAt": "", "commitRepo": "bz", "commitId": "9e2e5c7b", "commitDate": "2026-11-10 16:08", "releaseVersion": "1.43.0" }
+        {
+          "id": "fb-20261124-qqc-01",
+          "source": "qq-channel",
+          "plugin": "bz-reader",
+          "summary": "给阅读器工具栏按钮加悬停气泡提示",
+          "title": "阅读器工具栏按钮加悬停气泡提示",
+          "desc": "QQ 频道用户「天道酬勤」建议给阅读器顶部工具栏的功能按钮增加气泡提示信息，配图用红箭头指向「更多选项」按钮并配文「如 obsidian 原功能一样」，理由是对新用户友好、方便快速入门和使用。",
+          "href": "",
+          "reply": "频道主回复：好的，下个版本根据",
+          "replyDigest": "频道主回复表示会在下个版本根据这条建议处理。",
+          "verify": "已实现并合并：只给阅读器头栏工具栏那批图标按钮加悬停气泡（如目录/搜索/书签/朗读等），不做成全插件 UI 都有；气泡文案按作者要求去掉快捷键（「目录（s）」显示为「目录」），保留「复制链接（页 / 视图 / 嵌入 / 标注）」这类说明性括号；出现时机用 Obsidian 默认。气泡只在头栏按钮上出现，设置页/侧栏/弹窗等不受影响。真机桌面端悬停目录、朗读均弹出去键位气泡，移动端工具栏布局正常。未发版，状态记进行中。",
+          "state": "doing",
+          "submittedAt": "2026-11-24 13:16",
+          "doneAt": "",
+          "rejectedAt": "",
+          "commitRepo": "bz-reader",
+          "commitId": "4d8063e5",
+          "commitDate": "2026-11-24 16:01"
+        },
+        {
+          "id": "fb-20261123-qqg-02",
+          "source": "qq-group",
+          "plugin": "bz",
+          "domain": "日记本",
+          "summary": "固化台历面板大小防误触",
+          "title": "台历面板尺寸固定",
+          "desc": "QQ 交流群有人建议把日记台历面板大小固定下来：现在面板高度随月份行数变化，切月忽高忽低；入场动画期间手快点空会落到遮罩上关掉面板，下一击误触正文。作者 Panda 补充说这条必做，不然用日历视图时挺头大的。",
+          "href": "",
+          "reply": "",
+          "replyDigest": "（数据里没有记录）",
+          "verify": "已修并合并（commit e274b7d6，时间 2026-11-23 14:25）：台历网格恒补满 6 行并固定行高，切月高度恒定；入场 300ms 内点弹层外不再关面板；日期格点击区加大。真机桌面与移动端逐月翻测高度一致。未发版，状态记进行中。",
+          "state": "done",
+          "submittedAt": "2026-11-23",
+          "doneAt": "2026-11-23",
+          "rejectedAt": "",
+          "commitRepo": "bz",
+          "commitId": "e274b7d6",
+          "commitDate": "2026-11-23 14:25",
+          "releaseVersion": "1.44.7"
+        },
+        {
+          "id": "fb-20261123-qqg-03",
+          "source": "qq-group",
+          "plugin": "bz",
+          "domain": "日记本",
+          "summary": "日历支持年份月份级联快速跳转",
+          "title": "日记日历快速定位多年前日期",
+          "desc": "整理往年旧笔记时，日历只能靠左右箭头逐月切换，跳到多年前很繁琐。建议点击年份唤起年份列表、选年份后展开月份列表、再选日期，快速定位目标日期。与「笔记页加快捷按钮」是二选一方案。",
+          "href": "",
+          "reply": "",
+          "replyDigest": "（数据里没有记录）",
+          "verify": "查两仓 git 历史与源码：现为年/月/日滚轮连续滚动、台历头部仅左右箭头逐月翻，没有年份/月份级联列表。作者点单只登记采纳、不修代码，状态采纳。",
+          "state": "accepted",
+          "submittedAt": "2026-11-23",
+          "doneAt": "",
+          "rejectedAt": "",
+          "commitRepo": "",
+          "commitId": "",
+          "commitDate": ""
+        },
+        {
+          "id": "fb-20261123-blg-01",
+          "source": "bili-comment",
+          "plugin": "bz-reader",
+          "summary": "目录放正文页避免占用侧栏",
+          "title": "书籍目录放到正文页",
+          "desc": "B 站用户「超级无敌霸王龙」2026-11-23 在视频评论区提了两点，其一是书籍目录最好能放到正文页，放侧边栏影响浏览笔记库。",
+          "href": "",
+          "reply": "UP 主回复：书籍目录你可以拖到右侧放。",
+          "replyDigest": "作者说明目录侧栏可以拖到右侧放，给出用现有功能解决的替代办法。",
+          "verify": "查两仓 git log 无「目录放到正文页」的实现。目录侧栏是 Obsidian 的 leaf，本就能拖动到右侧栏，作者回复的现成办法可解决用户「占侧栏影响浏览笔记」的困扰，判定否决、不改插件。",
+          "state": "rejected",
+          "submittedAt": "2026-11-23",
+          "doneAt": "",
+          "rejectedAt": "2026-11-23",
+          "commitRepo": "",
+          "commitId": "",
+          "commitDate": ""
+        },
+        {
+          "id": "fb-20261123-blg-02",
+          "source": "bili-comment",
+          "plugin": "bz-reader",
+          "summary": "双链展示更多信息并支持自定义模板",
+          "title": "双链信息更丰富、支持自定义模板",
+          "desc": "同一用户同一条评论的另一诉求：双向链接太简陋，希望同时显示书名+章节名+页数+链接时间+引用块摘录才有意义。",
+          "href": "",
+          "reply": "UP 主回复：双链后续我会增加一个导出模板，让用户自定义，感谢反馈。",
+          "replyDigest": "作者承诺后续增加导出模板让用户自定义；核查后按此实现，并把复制双链也升级成与导出完全相同的模板。",
+          "verify": "已实现并合并 master：整本导出与复制划线共用完全相同的四档模板（简洁 / callout 引文 / callout 详细 / 自定义），都支持多行 Markdown、callout 与 {双链} 变量，粘进笔记就是模板原样的内容；两套配置各自独立，互不干扰。老版本 aliasTemplate 自动迁到复制档的自定义模板并补回双链，不会退化成纯文本。默认导出格式逐字不变，无时间不编造 1970。真机桌面与移动端验证通过，报告见 docs/verify-copy-full-template.md。尚未发版，状态记进行中。",
+          "state": "doing",
+          "submittedAt": "2026-11-23",
+          "doneAt": "",
+          "rejectedAt": "",
+          "commitRepo": "bz-reader",
+          "commitId": "771c2e36",
+          "commitDate": "2026-11-23 16:58"
+        },
+        {
+          "id": "fb-20261121-qqg-01",
+          "source": "qq-group",
+          "plugin": "bz-reader",
+          "summary": "支持自定义看书背景图片",
+          "title": "自定义阅读背景图片",
+          "desc": "2026-11-21 上午，群里一位用户说之前手机上用 QQ 阅读时把背景图提取出来了，电脑上有些阅读器也能换背景，问 bz reader 能否实现这个自定义功能，并强调只想更改看书时的背景。作者追问背景是不是指图片，用户确认。",
+          "href": "",
+          "reply": "字体能改，背景色写一个 CSS，或者找一个主题。因为我觉得背景色改了，Obsidian 的左右侧边栏、顶部状态栏，感觉会比较违和，很难受，所以就没设计这个功能。背景是指图片吗？可以，我先采纳一下。可能要放一放，后续再跟进。最近在忙新的插件。",
+          "replyDigest": "作者说明字体可改、背景色需写 CSS 或换主题，因担心与 Obsidian 侧边栏、状态栏违和故未内置；追问确认是指背景图片后表示先采纳，但近期在忙新插件，可能要放一放、后续跟进。",
+          "verify": "查 bz 与 bz-reader 两仓 git log，未见自定义阅读背景图片的实现；bz-reader 底色跟随 Obsidian 主题背景变量，目前没有单独的背景图设置。作者已采纳，因在忙新插件暂缓跟进。",
+          "state": "accepted",
+          "submittedAt": "2026-11-21 08:52",
+          "doneAt": "",
+          "rejectedAt": "",
+          "commitRepo": "",
+          "commitId": "",
+          "commitDate": ""
+        },
+        {
+          "id": "fb-20261121-qqg-02",
+          "source": "qq-group",
+          "plugin": "bz",
+          "domain": "影院",
+          "summary": "影评支持在笔记正文用标记编辑并双向同步",
+          "title": "影评支持在 Markdown 笔记正文用标记编辑并与界面双向同步",
+          "desc": "2026-11-21 上午 10:53，QQ 群用户 Panda 提出：影评目前记在笔记属性栏，不能用格式，在 md 笔记页面看起来也难受，希望在 Markdown 笔记正文留出区域记录影评，格式更丰富、引用别的内容更方便。中午 12:23 他给出方案：用 <BZ-MOVIE> 与 </BZ-MOVIE> 标记包住影评，在正文中直接编辑、正常使用 markdown 语法。",
+          "href": "",
+          "reply": "作者同意实现：在影院设置面板增加一个默认关的开关，打开时二次确认后批量把影评写进笔记正文；界面与笔记标记写的影评双向同步，正文影评默认放在笔记顶部、海报上面。关闭时同样二次确认，统计已有影评篇数并问是否批量清除、只在属性中保留。",
+          "replyDigest": "作者同意：加默认关的开关，双向同步，影评放笔记顶部，开关各一次二次确认。",
+          "verify": "已在影院设置面板加影评写入笔记正文开关（默认关）。打开前实时统计可搬篇数并弹影院风格确认框，确认后批量把属性影评写入正文 <BZ-MOVIE> 标记区；无影评的影片不插空块，已有标记不重复插。关闭前统计正文影评篇数并二次确认，确认后清除标记、正文改动并回属性保留，属性始终留备份。界面改影评同步写正文，正文改影评同步回属性；标记固定在笔记顶部、海报上方。真机验证通过。",
+          "state": "done",
+          "submittedAt": "2026-11-21",
+          "doneAt": "2026-11-23",
+          "rejectedAt": "",
+          "commitRepo": "bz",
+          "commitId": "df282d9a",
+          "commitDate": "2026-11-21 16:27",
+          "releaseVersion": "1.44.7"
+        },
+        {
+          "id": "fb-20261120-qqg-03",
+          "source": "qq-group",
+          "plugin": "bz",
+          "domain": "界面",
+          "summary": "功能面板可拖拽放大或固定成页",
+          "title": "希望功能面板能拖拽放大或固定成独立页",
+          "desc": "QQ 群用户依米于 17:55 发截图问：功能面板没办法拖拽放大，或者能固定成页面吗。18:00 作者回复：先设置成快捷键即用即开；等有时间，后续这些功能都会出独立插件、放到 Obsidian 的原生页中。",
+          "href": "",
+          "reply": "18:00「设置成一个快捷键呗，即用即开」；「等我有时间了，后续这些功能都会出独立插件」；「都会放到 obsidian 的原生页中」。",
+          "replyDigest": "作者建议先用快捷键即用即开，说明后续功能会出独立插件、放到 Obsidian 原生页中。",
+          "verify": "查 bz 与 bz-reader 两仓 git log --all，无「功能面板固定成原生页 / 独立插件」相关实现。桌面端主面板早在 a48e93b3（09-30）已接入拖拽缩放与尺寸记忆，3c791a02 补意图尺寸记忆，与「没办法拖拽放大」有出入（可能问的是移动端或其它场景）。作者看过诉求后决定当前 bz 面板不实现，归入未来独立插件 / 原生页规划，判否决。",
+          "state": "rejected",
+          "submittedAt": "2026-11-20 17:55",
+          "doneAt": "",
+          "rejectedAt": "2026-11-20",
+          "commitRepo": "",
+          "commitId": "",
+          "commitDate": ""
+        },
+        {
+          "id": "fb-20261120-qqg-01",
+          "source": "qq-group",
+          "plugin": "bz",
+          "domain": "界面",
+          "summary": "插件菜单树常驻 Obsidian 左侧命令栏",
+          "title": "插件菜单树全部塞进左侧命令栏",
+          "desc": "QQ 群用户 Jacky 于 13:07 提出，希望加载插件后左侧菜单树都在 Obsidian 左侧显示全，不用每次进入插件才能操作，快捷入口也要点进去才能用；群里 lain 建议在右上角做快捷入口。",
+          "href": "",
+          "reply": "Bz 只主动往左侧命令栏注入了日记和备忘录，番茄钟和工具屋在右下角的状态栏，其他功能由用户自行决定，因为命令太多了，全部塞在左侧栏爆炸了。",
+          "replyDigest": "作者说明只主动往左侧命令栏注入日记和备忘录，番茄钟和工具屋放在右下角状态栏，因命令太多全塞左侧栏会爆炸，其余由用户自行决定。",
+          "verify": "查 bz 与 bz-reader 两仓 git log --all，无『菜单树常驻左侧命令栏』相关实现。作者看过诉求后明确不采纳。作者更正：原话『右键菜单』实指 Obsidian 左侧命令栏。",
+          "state": "rejected",
+          "submittedAt": "2026-11-20 13:07",
+          "doneAt": "",
+          "rejectedAt": "2026-11-20",
+          "commitRepo": "",
+          "commitId": "",
+          "commitDate": ""
+        },
+        {
+          "id": "fb-20261118-blg-01",
+          "source": "bili-dm",
+          "plugin": "bz-reader",
+          "summary": "移植多模型接口逻辑到 bz-reader",
+          "title": "bz-reader 接入其他厂商模型接口",
+          "desc": "2026-11-18 01:16 对方反馈 bz 中只有 deepseek 官方接口能连，kimi 及其他自营、非官方网站接口接不进去。作者回复会先把 bz 的接口逻辑移植到 bz-reader；bz 侧已用 896eac6d 扩展服务商，bz-reader 侧尚未实现。",
+          "href": "",
+          "reply": "作者表示：bz 尚未上架市场、bz-review 本周上架，自己没有其他厂商 key 无法测试；已请对方在 bz 试用其他模型或自营站点，可行就把 bz 的接口逻辑移植到 bz-reader。对方 13:04 确认 bz 正常，作者 13:21 表示下个版本跟上。",
+          "replyDigest": "作者表示暂无其他厂商 key 无法测试，已请对方先在 bz 试用，确认可行后把接口逻辑移植到 bz-reader，下个版本跟上。",
+          "verify": "已实现并合并 master：96dd385 把 18 家服务商注册表、密钥测试、获取模型名整套从 bz 移植到 bz-reader，后续提交补齐。尚未发版，待随下个版本发布后转已完成。",
+          "state": "done",
+          "submittedAt": "2026-11-18 01:16",
+          "doneAt": "2026-11-21",
+          "rejectedAt": "",
+          "commitRepo": "bz-reader",
+          "commitId": "96dd385",
+          "commitDate": "2026-11-19 13:24",
+          "releaseVersion": "1.6.0"
+        },
+        {
+          "id": "fb-20261118-qqg-02",
+          "source": "qq-group",
+          "plugin": "bz-reader",
+          "summary": "摘录导出保留阅读追踪数据",
+          "title": "导出保留阅读追踪数据",
+          "desc": "用户希望导出整本摘录时，同时保留帮助追踪的数据，包括阅读时间、中间是否中断、每章时长等，以便更好地追踪。作者回复 OK，采纳。",
+          "href": "",
+          "reply": "OK",
+          "replyDigest": "作者回复 OK，采纳。",
+          "verify": "已实现并随 1.5.3 发布：导出的书摘末尾新增「阅读记录」一节，把阅读时长与每次会话一起带走。",
+          "state": "done",
+          "submittedAt": "2026-11-18",
+          "doneAt": "2026-11-18 20:06",
+          "rejectedAt": "",
+          "commitRepo": "bz-reader",
+          "commitId": "c61ee07a",
+          "commitDate": "2026-11-18 17:24",
+          "releaseVersion": "1.5.3"
+        },
+        {
+          "id": "fb-20261118-qqg-03",
+          "source": "qq-group",
+          "plugin": "bz-reader",
+          "summary": "支持彻底删除书籍全部记录",
+          "title": "彻底删除书籍记录",
+          "desc": "用户希望支持完全删除记录，连曾经在书架中存在过的书剩下的信息也一并删除。作者回复 OK，采纳。",
+          "href": "",
+          "reply": "OK",
+          "replyDigest": "作者回复 OK，采纳。",
+          "verify": "已实现并随 1.5.3 发布：移出书架时可以选择「彻底删除」，连记录与阅读数据一起清掉，源文件不动。",
+          "state": "done",
+          "submittedAt": "2026-11-18",
+          "doneAt": "2026-11-18 20:06",
+          "rejectedAt": "",
+          "commitRepo": "bz-reader",
+          "commitId": "c61ee07a",
+          "commitDate": "2026-11-18 17:24",
+          "releaseVersion": "1.5.3"
+        },
+        {
+          "id": "fb-20261118-qqg-04",
+          "source": "qq-group",
+          "plugin": "bz-reader",
+          "summary": "不同版本书籍的摘录匹配疑问",
+          "title": "书籍版本与摘录匹配",
+          "desc": "用户问如果书的版本不同，摘录是否还符合。作者答复：书是根据文件的指纹来判断是不是一本书的，不同版本的就是不同的书。",
+          "href": "",
+          "reply": "书是根据文件的指纹来判断是不是一本书的，不同版本的就是不同的书",
+          "replyDigest": "作者说明书按文件指纹判定，不同版本算不同的书，摘录各自独立。",
+          "verify": "已实现并合并 master：指纹升级为 v2 全书 SHA-256（消除 v1 头尾取样的边界），同一路径换成不同版本现在会归档旧书、新书另起，进度划线不再串到新版本；老数据 v1 指纹后台平滑升级、进度划线全留。尚未发版，待随下个版本发布后转已完成。",
+          "state": "done",
+          "submittedAt": "2026-11-18",
+          "doneAt": "2026-11-21",
+          "rejectedAt": "",
+          "commitRepo": "bz-reader",
+          "commitId": "25d42a1",
+          "commitDate": "2026-11-21 09:23",
+          "releaseVersion": "1.6.0"
+        },
+        {
+          "id": "fb-20261118-qqg-05",
+          "source": "qq-group",
+          "plugin": "bz-reader",
+          "summary": "导出不应包含书籍本体文件",
+          "title": "书摘导出不含书籍本体",
+          "desc": "用户提出若导出不包含书本体，希望导出的版本能在书库上做标注，便于整体转移包含书、记录、阅读信息的仓库。作者明确：导出不包含本体，bz Reader 严格禁止对书籍文件做任何的处理。",
+          "href": "",
+          "reply": "导出不包含本体，Bz Reader 严格禁止对书籍文件做任何的处理",
+          "replyDigest": "作者明确导出不含书籍本体，插件严格禁止对书籍文件做任何处理。",
+          "verify": "核查确认：书摘导出只写一份 Markdown 到 exportDir，epub／pdf 本体另存于 bz-reader/books，导出过程不读、不写、不移动书籍源文件，与设计红线一致。派生的「在书库标注导出版本以便整体迁移」随主诉求一并否决。",
+          "state": "rejected",
+          "submittedAt": "2026-11-18",
+          "doneAt": "",
+          "rejectedAt": "2026-11-18",
+          "commitRepo": "",
+          "commitId": "",
+          "commitDate": ""
+        },
+        {
+          "id": "fb-20261118-qqg-06",
+          "source": "qq-group",
+          "plugin": "bz-reader",
+          "summary": "记录长期未读的空窗状态",
+          "title": "阅读空窗与久未打开提示",
+          "desc": "用户希望记录阅读的时间空窗，例如三个月前看过、三个月后再打开，中间的空窗是否会被记录。作者答复：数据统计里面本身就有。",
+          "href": "",
+          "reply": "数据统计里面本身就有",
+          "replyDigest": "作者表示数据统计里已有相关记录。",
+          "verify": "核查确认：统计页自 0.4.0 起按 reading.stats.lastReadTime 距今天数计算 idleDays，标出 longIdle（≥7 天）／idle（≥3 天）与「久未打开／搁置／沉寂」及「搁置 n 本」洞察。注意这是按书计算的即时状态，不是把空窗当作历史事件永久留档；两次会话之间的间隔没有独立字段。",
+          "state": "done",
+          "submittedAt": "2026-11-18",
+          "doneAt": "2026-11-09 12:38",
+          "rejectedAt": "",
+          "commitRepo": "bz-reader",
+          "commitId": "f720ed6f",
+          "commitDate": "2026-11-09 12:38",
+          "releaseVersion": "0.4.0"
+        },
+        {
+          "id": "fb-20261118-qqg-07",
+          "source": "qq-group",
+          "plugin": "bz-reader",
+          "summary": "划线标注带创建时间戳",
+          "title": "划线创建时间戳",
+          "desc": "用户希望书内划线标注在信息上有对应的时间标签，划线创建时应有时间戳。作者回复 OK，采纳。",
+          "href": "",
+          "reply": "OK",
+          "replyDigest": "作者回复 OK，采纳。",
+          "verify": "已实现并随 1.5.3 发布：导出的书摘里，每条划线下面标注它是什么时候划的。",
+          "state": "done",
+          "submittedAt": "2026-11-18",
+          "doneAt": "2026-11-18 20:06",
+          "rejectedAt": "",
+          "commitRepo": "bz-reader",
+          "commitId": "c61ee07a",
+          "commitDate": "2026-11-18 17:24",
+          "releaseVersion": "1.5.3"
+        },
+        {
+          "id": "fb-20261118-qqg-08",
+          "source": "qq-group",
+          "plugin": "bz-reader",
+          "summary": "加强阅读时间与中断记录",
+          "title": "阅读时间记录加强",
+          "desc": "用户强调看书的时间很重要，希望记录一本书什么时候打开、阅读多久、中间是否中断、每章看了多久、划线创建时间戳等。作者答复：数据统计本身支持一部分，可以在这方面进行加强。",
+          "href": "",
+          "reply": "数据统计本身支持一部分，可以在这方面进行加强",
+          "replyDigest": "作者表示统计已有部分支持，将在此基础上加强。",
+          "verify": "已实现并随 1.5.3 发布：阅读会话开始记录中断次数。",
+          "state": "done",
+          "submittedAt": "2026-11-18",
+          "doneAt": "2026-11-18 20:06",
+          "rejectedAt": "",
+          "commitRepo": "bz-reader",
+          "commitId": "c61ee07a",
+          "commitDate": "2026-11-18 17:24",
+          "releaseVersion": "1.5.3"
+        },
+        {
+          "id": "fb-20261118-qqg-09",
+          "source": "qq-group",
+          "plugin": "bz-reader",
+          "summary": "一本书可加入多个分类",
+          "title": "支持多分类替代标签系统",
+          "desc": "用户认为书的分类标准很重要，问一本书能否同时分到两个文件夹，或干脆通过标签做分类（文件夹是书的实际位置，标签是关键词找书）。作者采纳：一本书可以加入多个分类，不使用标签系统。",
+          "href": "",
+          "reply": "采纳一本书可以加入多个分类，不使用标签系统",
+          "replyDigest": "作者采纳一本书可加入多个分类，明确不采用标签系统。",
+          "verify": "已实现并随 1.5.3 发布：数据里新增 shelves 数组存完整归属、主分类恒等于第一格，书架菜单里点一下加进去、再点一下移出来；按作者决定不采用标签系统。",
+          "state": "done",
+          "submittedAt": "2026-11-18",
+          "doneAt": "2026-11-18 20:06",
+          "rejectedAt": "",
+          "commitRepo": "bz-reader",
+          "commitId": "c61ee07a",
+          "commitDate": "2026-11-18 17:24",
+          "releaseVersion": "1.5.3"
+        },
+        {
+          "id": "fb-20261118-qqg-10",
+          "source": "qq-group",
+          "plugin": "bz-reader",
+          "summary": "通过 API 导入微信读书内容",
+          "title": "微信读书内容 API 导入",
+          "desc": "用户问能否通过 API 导入微信读书上别人留下的竖屏和划线之类的内容，自己也认为比较困难。作者明确：这个做不到。",
+          "href": "",
+          "reply": "这个做不到",
+          "replyDigest": "作者明确该需求做不到。",
+          "verify": "核查确认：微信读书没有开放的第三方 API，划线与竖屏内容受账号体系与版权限制；插件侧无对应接口、无实现路径，作者决定不实现。",
+          "state": "rejected",
+          "submittedAt": "2026-11-18",
+          "doneAt": "",
+          "rejectedAt": "2026-11-18",
+          "commitRepo": "",
+          "commitId": "",
+          "commitDate": ""
+        },
+        {
+          "id": "fb-20261118-ghi-01",
+          "source": "github-issue",
+          "plugin": "bz-reader",
+          "summary": "希望 EPUB 内置图片能点击放大",
+          "title": "EPUB 内置图片放大查看",
+          "desc": "读史料类书籍时 EPUB 内置图片往往很重要，比如当时的报刊、论文等资料。市面上只有 omni book reader 能点开放大，但放大后的操作非常蹩脚、很难受。希望在以后的更新中支持放大 EPUB 内置图片。",
+          "href": "https://github.com/yeshimei/bz-reader/issues/3",
+          "reply": "2026-11-17 22:52「感谢建议。1 下个版本跟上」",
+          "replyDigest": "作者回复下个版本跟上。",
+          "verify": "已实现并随 1.5.3 发布：书内图片点一下放大查看，支持缩放、拖动、复制与保存，设置里默认关。",
+          "state": "done",
+          "submittedAt": "2026-11-17 14:47",
+          "doneAt": "2026-11-18 20:06",
+          "rejectedAt": "",
+          "commitRepo": "bz-reader",
+          "commitId": "0e0cdba5",
+          "commitDate": "2026-11-17 23:54",
+          "releaseVersion": "1.5.3"
+        },
+        {
+          "id": "fb-20261118-ghi-02",
+          "source": "github-issue",
+          "plugin": "bz-reader",
+          "summary": "希望 EPUB 支持 Obsidian 字体或自选字体",
+          "title": "EPUB 跟随 Obsidian 字体",
+          "desc": "很多阅读器支持 EPUB 使用 Obsidian 正在使用的字体，或者支持自选字体，这样整体 Obsidian 会很一体、更美观。从阅读体验上希望能支持这功能。",
+          "href": "https://github.com/yeshimei/bz-reader/issues/3",
+          "reply": "2026-11-17 22:52「感谢建议。2 同上」",
+          "replyDigest": "作者回复同一版本跟上。",
+          "verify": "已实现并随 1.5.3 发布：字体设置新增「跟随 Obsidian」一档，跟宿主主题字体栈走。",
+          "state": "done",
+          "submittedAt": "2026-11-17 14:47",
+          "doneAt": "2026-11-18 20:06",
+          "rejectedAt": "",
+          "commitRepo": "bz-reader",
+          "commitId": "e1131e2e",
+          "commitDate": "2026-11-17 23:10",
+          "releaseVersion": "1.5.3"
+        },
+        {
+          "id": "fb-20261118-ghi-03",
+          "source": "github-issue",
+          "plugin": "bz-reader",
+          "summary": "建议朗读复用 Edge 浏览器 TTS",
+          "title": "朗读接入 Edge TTS",
+          "desc": "qiaomu reader 的朗读功能，支持用 Edge 浏览器的功能，免费且效果不错，不知道能不能也复用一下。",
+          "href": "https://github.com/yeshimei/bz-reader/issues/3",
+          "reply": "2026-11-17 22:52「感谢建议。3 我可能更加倾向优化本地语音合成模型，它效果更好，并且可以预生成离线听书」",
+          "replyDigest": "作者更倾向优化本地语音合成模型，暂不走 Edge。",
+          "verify": "作者回复明确倾向优化本地语音合成模型（效果更好、可预生成离线听书），决定不接 Edge TTS。",
+          "state": "rejected",
+          "submittedAt": "2026-11-17 14:47",
+          "doneAt": "",
+          "rejectedAt": "2026-11-17 22:52",
+          "commitRepo": "",
+          "commitId": "",
+          "commitDate": ""
+        },
+        {
+          "id": "fb-20261115-blg-03",
+          "source": "bili-dm",
+          "plugin": "bz",
+          "domain": "界面",
+          "summary": "放大插件首页显示比例",
+          "title": "插件首页显示偏小",
+          "desc": "常规使用插件的首页有点小、看不是很清，问能不能放大一点。",
+          "href": "",
+          "reply": "23:13「obsidian 中放大界面比例试试」",
+          "replyDigest": "作者建议用 Obsidian 自带的界面缩放解决，不改插件。",
+          "verify": "作者看过这个要求，决定不采纳：用 Obsidian 自带的界面缩放就能放大，不改插件。",
+          "state": "rejected",
+          "submittedAt": "2026-11-15 23:09",
+          "doneAt": "",
+          "rejectedAt": "2026-11-15 23:13",
+          "commitRepo": "",
+          "commitId": "",
+          "commitDate": ""
+        },
+        {
+          "id": "fb-20261108-ghi-02",
+          "source": "github-issue",
+          "plugin": "bz",
+          "summary": "希望关闭模块后自动返回首页",
+          "title": "关闭模块后返回首页",
+          "desc": "从首页点进日记本、番茄钟等模块，关掉后整个窗口消失，得重新打开插件再进下一个模块，连续看几个模块很麻烦；用户让 Claude 改过但被告知插件更新会被覆盖。希望关闭模块后自动回首页，或加「返回首页」按钮。（2026-11-08 09:35 提出）",
+          "href": "https://github.com/yeshimei/bz/issues/2",
+          "reply": "2026-11-10 15:22「感谢你的建议。在这个教程视频中推荐用法是，给常用功能绑定快捷键，或者设置成 obsidian 快捷按钮。下个版本，我会为所有注册了 Obsidian 的 bz 命令增加一个前缀，方便查找。」；2026-11-10 15:32「另外，我可以在设置-首页中增加一个开关（默认关），打开后从首页进入某个功能关闭后，还会再次打开首页。如果是直接打开某个功能，且不会打开首页。」",
+          "replyDigest": "作者承诺下个版本加命令前缀，并在设置-首页加「关闭后回到首页」开关（默认关）。",
+          "verify": "已实现并提交：9e2e5c7b（2026-11-10 16:08），另有 1fc55c50 修复回首页延迟。发布在 v1.43.0，changelog 写明「设置里可打开『关闭后回到首页』」与「全部命令统一加上 bz 前缀」。",
+          "state": "done",
+          "submittedAt": "2026-11-08 09:35",
+          "doneAt": "2026-11-10 16:08",
+          "rejectedAt": "",
+          "commitRepo": "bz",
+          "commitId": "9e2e5c7b",
+          "commitDate": "2026-11-10 16:08",
+          "releaseVersion": "1.43.0"
+        },
+        {
+          "id": "fb-20261108-ghi-01",
+          "source": "github-issue",
+          "plugin": "bz",
+          "summary": "希望主窗口能放大到接近全屏",
+          "title": "主窗口放大到接近全屏",
+          "desc": "Windows 11 上窗口是居中卡片，拖边缘最大约 1280×880，大屏留白多、局促。希望在设置里加「桌面端默认全屏」选项，或右上角加「最大化」按钮，点一下铺满、再点恢复。涉及首页 / 今日回顾 / 设置面板 / 数据体检。（2026-11-08 09:32 提出）",
+          "href": "https://github.com/yeshimei/bz/issues/1",
+          "reply": "2026-11-10 15:26「感谢你的建议。交流群里有人反馈了这个问题，我会在下个版本中增加一个命令（可以自行绑定快捷键）让当前界面全屏（覆盖整个 obsidian），通过 esc 或再次使用全屏命令返回正常大小。之所以如此设计，是因为 BZ UI 美学是克制，为了保持最佳观感，无法为每个界面都添加一个重复的按钮。」",
+          "replyDigest": "作者承诺下个版本加通用全屏命令，可绑快捷键；出于 UI 克制不加重复按钮。",
+          "verify": "已实现并提交：9e2e5c7b（2026-11-10 16:08）「命令面板统一前缀、通用全屏与首页返回」。发布在 v1.43.0，changelog 写明「加了一条通用全屏命令，各域主面板都能铺满窗口」。",
+          "state": "done",
+          "submittedAt": "2026-11-08 09:32",
+          "doneAt": "2026-11-10 16:08",
+          "rejectedAt": "",
+          "commitRepo": "bz",
+          "commitId": "9e2e5c7b",
+          "commitDate": "2026-11-10 16:08",
+          "releaseVersion": "1.43.0"
+        }
       ]
     }
   ],
   "stats": {
     "reward": 6,
-    "pro": 55,
-    "patrons": 10
+    "pro": 60,
+    "patrons": 12
   },
   "links": {
     "support": "https://wzyp.cn/shop/IFCEI5I3",
