@@ -88,7 +88,7 @@ const STAT_ICON_SHIELD =
 
 /** 统计卡：打赏 + 赞助人（去掉 bz-reader 的高级用户那颗）
  *  数字固定写死、不读在线 stats（2026-11-19 用户要求）：随版本发版冻结，
- *  每次发版由发版流程更新这两个常量。当前 = v1.45.0（打赏 6 / 赞助人 12）。 */
+ *  每次发版由发版流程更新这两个常量。当前 = v1.44.8（打赏 6 / 赞助人 12）。 */
 const PIN_REWARD = 6;
 const PIN_PATRONS = 12;
 function statsHtml(_data: BzrData | null): string {
