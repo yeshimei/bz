@@ -2,6 +2,7 @@
   "version": 1,
   "updatedAt": "2026-11-25",
   "patrons": [
+    { "name": "ph", "amount": "patron", "date": "2026-11-25" },
     { "name": "刘", "amount": "patron", "date": "2026-11-25" },
     { "name": "诗随雨堕", "amount": "patron", "date": "2026-11-25" },
     { "name": "这题有问题", "amount": "patron", "date": "2026-11-23" },
