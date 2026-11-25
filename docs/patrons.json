@@ -1,7 +1,8 @@
 {
   "version": 1,
-  "updatedAt": "2026-11-23",
+  "updatedAt": "2026-11-25",
   "patrons": [
+    { "name": "诗随雨堕", "amount": "patron", "date": "2026-11-25" },
     { "name": "这题有问题", "amount": "patron", "date": "2026-11-23" },
     { "name": "ZhangLe（25109）", "amount": "patron", "date": "2026-11-23" },
     { "name": "此情可待成追忆", "amount": "patron", "date": "2026-11-19" },
