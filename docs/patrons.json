@@ -2,6 +2,7 @@
   "version": 1,
   "updatedAt": "2026-11-26",
   "patrons": [
+    { "name": "BackOnMonday", "amount": "patron", "date": "2026-11-26" },
     { "name": "繆", "amount": "patron", "date": "2026-11-26" },
     { "name": "匿名", "amount": "patron", "date": "2026-11-25" },
     { "name": "ph", "amount": "patron", "date": "2026-11-25" },
