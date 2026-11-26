@@ -7,6 +7,7 @@
  *   node scripts/patron-add.mjs --name 沁弦 --amount 6.66 --date 2026-11-11 --message "留言"
  *   node scripts/patron-add.mjs --name 面包 --amount patron --date 2026-11-10
  *   node scripts/patron-add.mjs --name 测试 --amount 1 --dry-run
+ *   node scripts/patron-add.mjs --name 测试 --remove
  *
  * 为什么要有脚本：JSON 手改容易漏逗号、顺序加反、金额写成字符串；而名单坏掉是
  * **静默失败**——插件里只是名单变短，没人会报 bug。脚本负责校验、插到正确位置、
@@ -17,6 +18,7 @@
  *   --amount <金额|patron>  必填；数字 = 微信赞赏码收到的元数，patron = 赞助商店那条路
  *   --date <YYYY-MM-DD> 省略取今天
  *   --message <留言>    可省略；最长 120 字，换行压成空格
+ *   --remove            改成删一条（按 --name 精确匹配，同名多条再给 --date），不用 --amount
  *   --no-push           只提交，不推送
  *   --dry-run           只打印将写入的那条，不改文件、不提交
  *
@@ -84,6 +86,21 @@ function entryLine(p) {
   return `    { ${parts.join(', ')} }`;
 }
 
+/** 整份文件：缩进与字段顺序固定，diff 才看得懂 */
+function renderDoc(doc) {
+  const lines = [
+    '{',
+    `  "version": ${Number(doc.version) || 1},`,
+    `  "updatedAt": ${JSON.stringify(doc.updatedAt)},`,
+    '  "patrons": [',
+    doc.patrons.map(entryLine).join(',\n'),
+    '  ]',
+    '}',
+    '',
+  ];
+  return lines.join('\n');
+}
+
 function readDoc() {
   if (!fs.existsSync(FILE)) die(`找不到 ${FILE}`);
   let doc;
@@ -101,6 +118,36 @@ function readDoc() {
 const name = cleanText(value('--name'), MAX_NAME);
 if (!name) die('缺 --name');
 if (name.length > MAX_NAME) die(`昵称超过 ${MAX_NAME} 字`);
+
+// --remove：按昵称精确删；同名多条时必须再给 --date 指定删哪条
+if (flag('--remove')) {
+  const doc = readDoc();
+  const dateArg = value('--date') ? value('--date').replace(/\//g, '-') : '';
+  if (dateArg && !validDate(dateArg)) die(`--date 不是合法日期：${dateArg}`);
+  const hits = doc.patrons
+    .map((p, i) => ({ p, i }))
+    .filter(({ p }) => p && String(p.name) === name && (!dateArg || String(p.date) === dateArg));
+  if (!hits.length) {
+    const near = doc.patrons.filter((p) => p && String(p.name).includes(name)).map((p) => p.name);
+    die(`名单里没有「${name}」${dateArg ? `（${dateArg}）` : ''}${near.length ? `；相近的有：${near.join('、')}` : ''}`);
+  }
+  if (hits.length > 1) {
+    die(`「${name}」有 ${hits.length} 条（${hits.map((h) => h.p.date).join('、')}），加 --date 指定删哪条`);
+  }
+  const { p, i } = hits[0];
+  if (dryRun) {
+    console.log(`[dry-run] 将删除 ${entryLine(p).trim()}`);
+    console.log(`[dry-run] 删后剩 ${doc.patrons.length - 1} 位，文件未改动`);
+    process.exit(0);
+  }
+  doc.patrons.splice(i, 1);
+  doc.updatedAt = todayLocal();
+  fs.writeFileSync(FILE, renderDoc(doc), 'utf8');
+  console.log(`✓ 已删除 ${name} · ${p.amount === 'patron' ? '赞助人' : `¥${p.amount}`} · ${p.date}`);
+  console.log(`  现在共 ${doc.patrons.length} 位`);
+  commitAndPush(`chore(patrons): 名单删一位——${name}`);
+  process.exit(0);
+}
 
 const amountRaw = String(value('--amount') ?? '').trim();
 if (!amountRaw) die('缺 --amount');
@@ -132,18 +179,7 @@ const index = at === -1 ? doc.patrons.length : at;
 doc.patrons.splice(index, 0, entry);
 doc.updatedAt = todayLocal();
 
-const lines = [
-  '{',
-  `  "version": ${Number(doc.version) || 1},`,
-  `  "updatedAt": ${JSON.stringify(doc.updatedAt)},`,
-  '  "patrons": [',
-  doc.patrons.map(entryLine).join(',\n'),
-  '  ]',
-  '}',
-  '',
-];
-
-const preview = lines.join('\n');
+const preview = renderDoc(doc);
 if (dryRun) {
   console.log(`[dry-run] ${entryLine(entry).trim()}`);
   console.log(`[dry-run] 现在共 ${doc.patrons.length} 位，文件未改动`);
@@ -154,6 +190,8 @@ fs.writeFileSync(FILE, preview, 'utf8');
 console.log(`✓ 已写入 ${path.relative(ROOT, FILE)}：${name} · ${amount === 'patron' ? '赞助人' : `¥${amount}`} · ${date}`);
 console.log(`  现在共 ${doc.patrons.length} 位`);
 
+commitAndPush(`chore(patrons): 名单加一位——${name}`);
+
 function git(args, quiet = false) {
   return execFileSync('git', args, {
     cwd: ROOT,
@@ -162,22 +200,22 @@ function git(args, quiet = false) {
   });
 }
 
-try {
-  git(['add', 'docs/patrons.json']);
-  git(['commit', '-m', `chore(patrons): 名单加一位——${name}`]);
-} catch (e) {
-  die(`提交失败（文件已改，可手动补提交）：${String(e.message || e).slice(0, 200)}`);
-}
-
-if (noPush) {
-  console.log('· 已提交，未推送（--no-push）');
-} else {
+function commitAndPush(subject) {
+  try {
+    git(['add', 'docs/patrons.json']);
+    git(['commit', '-m', subject]);
+  } catch (e) {
+    die(`提交失败（文件已改，可手动补提交）：${String(e.message || e).slice(0, 200)}`);
+  }
+  if (noPush) {
+    console.log('· 已提交，未推送（--no-push）');
+    return;
+  }
   try {
     git(['push', 'origin']);
     console.log('✓ 已推送（GitHub + 码云）');
   } catch {
     die('推送失败：文件与提交都在本地，检查网络后 git push origin');
   }
+  console.log('· 生效时间：码云 60 秒内、GitHub 5 分钟内；插件下次打开弹窗即可看到');
 }
-
-console.log('· 生效时间：码云 60 秒内、GitHub 5 分钟内；插件下次打开弹窗即可看到');
