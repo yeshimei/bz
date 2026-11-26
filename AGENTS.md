@@ -37,7 +37,7 @@ Obsidian 插件。域 = `src/<域>/`，`core` 是共享层。中文输出。
 - **提交信息即日志正文**：Conventional Commits，仅 `feat`/`fix`/`perf` 进日志；标题主句（`——` 前）≥4 字，否则被 `_gen-changelog.mjs` 的 `rewrite()` 静默丢弃。同版内修自己未发布的改动 squash 回原 `feat`，只有修已发布行为或升版后回归才单留 `fix`。
 - **合入流程**：worktree → `git merge master` → 门禁（`test-affected --since master` + `tsc --noEmit` + 自审 + diff 审查）→ 合回主仓 → 推送。
 - **合并之后必须清除 worktree（硬性）**：分支一合回 master，同一个动作里就收尾——`git worktree remove <路径>` → `git worktree prune` → `git branch -d <分支>`；挂了 `node_modules` junction 的先摘 junction 再删目录。留着已合并的 worktree 会攒成一片旧目录，还容易让人误判「改动没进主分支」。**没合并的分支一个都不许删**；清完用 `git worktree list` 复核。
-- **发版前置真机验证（2026-11-23）**：review 修完、七步跑完、打 tag 之前，按 skill `bz-release` 的 A1.5 做「上一个 tag → 当前代码」的版本区间真机验证；报告 `docs/verify-release-v<版本>.md` 与截图 `docs/images/verify-release-v<版本>/` 随本版入库，P0/P1 没过不许打 tag。
+- **发版前置真机验证（2026-11-23）**：review 修完、七步跑完、打 tag 之前，按 skill `bz-release` 的 A2 做「上一个 tag → 当前代码」的版本区间真机验证；报告 `docs/verify-release-v<版本>.md` 与截图 `docs/images/verify-release-v<版本>/` 随本版入库，P0/P1 没过不许打 tag。
 - **升级提示内置**：文案在 `src/core/changelog-data.ts`，发版前把本版插数组最前，`version` 与 `manifest.json` 完全一致（`tests/core/changelog-data.test.ts` 对账，漏加必红），文案与 `downloads/bz-changelog.html` 一致。
 - **推送即双推**：`git push origin` 同时推 GitHub 与码云（pushurl），单边用 `git push github/gitee`。码云是第二下载通道（GitHub Release 主 → 码云 Release 备，jsDelivr 已退场）。
 - **码云 Release**：GitHub 七步后跑 `node scripts/push-gitee.mjs`，正文取 `docs/note-v<版本>.md`，挂 **15 个资产**（安装包/离线资源包/SHA256SUMS/三件套/downloads 扁平化 9 个）；令牌在 `~/.gitee-token`，绝不进仓库；只镜像已转正 Release（`gh release view` 非 draft），否则 exit 3。
@@ -61,7 +61,7 @@ Obsidian 插件。域 = `src/<域>/`，`core` 是共享层。中文输出。
 | 分发仓库怎么重建（已退役，仅手动） | `scripts/push-assets.mjs`（保留份数 / 压平阈值）· ADR-0269 |
 | 资源地址、通道顺序 | `src/core/remote-base.ts`（唯一事实源；别在别处再写一份 slug 或域名）· ADR-0269 |
 | 支持者名单（加人 / 改名 / 删除） | `docs/patrons.json`（唯一源，格式见 `docs/patrons.md`）· `node scripts/patron-add.mjs` · skill `bz-reward`。**不再改代码、不再发版**：两个插件都在运行期读它 |
-| 用户反馈（截图 → 出清单 → 点单 → 修代码 → 真机测试 → 合并 → 五步闭环 → 对应平台回复） | `D:\Obsidian\skills\bz-reader-feedback-roadmap\references\feedback-workflow.md`（完整执行步骤、12 字段模板、bz / bz-reader 归属判定、QQ 群 @ 回复流程都在那里，本文不展开）。**先改代码合并，再走闭环；发帖和回复免确认** |
-| 发版后反馈联动（更新日志带 QQ 帖子/Issue 链接 → 帖子改已完成 → 关 issue） | skill `bz-release`「发版 × 反馈联动」+ `feedback-workflow.md` 第 5.5 节。**发版全部完成后才做**，没发不许提前改状态 |
+| 用户反馈（截图 → 出清单 → 点单 → 修代码 → 真机测试 → 直接合并 → 五步闭环 → 自动回复） | `D:\Obsidian\skills\bz-reader-feedback-roadmap\references\feedback-workflow.md`（完整执行步骤、字段模板、bz / bz-reader 归属判定、QQ 群回复流程都在那里，本文不展开）。**先改代码合并，再走闭环；发帖和回复免确认；门禁 / 真机一过直接合并。QQ 好友 / QQ 频道 / QQ 群统一回 QQ 群，回复只走 `qq-send.ps1` 脚本。** |
+| 发版后反馈联动（更新日志带 QQ 帖子/Issue 链接 → 帖子改已完成 → 关 issue） | skill `bz-release` 第 5 节「反馈角标 + 发版后回写」+ `feedback-workflow.md` 第 5.5 节。**发版全部完成后才做**，没发不许提前改状态 |
 
 本文与代码冲突时以代码为准，并顺手改这里。历史注释里的「铁律 N」是旧编号，按内容找，别按号找。
