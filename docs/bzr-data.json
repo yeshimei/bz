@@ -78,16 +78,6 @@
           "zh": "Obsidian 设置页加了 bz reader 入口，点一下进书架设置页。",
           "en": "The Obsidian settings page now has a bz reader entry that opens the shelf settings directly."
         }
-      },
-      {
-        "domain": {
-          "zh": "购买入口",
-          "en": "Purchase entry"
-        },
-        "text": {
-          "zh": "购买入口按界面语言分流，单按钮取代地区手选。",
-          "en": "The purchase entry follows the interface language, replacing region picking with a single button."
-        }
       }
     ],
     "fixed": [
@@ -101,36 +91,6 @@
           "en": "An empty shelf no longer hides the filter bar, and “Archived” is reachable again."
         },
         "qq": "https://pd.qq.com/s/N1etlo45j5"
-      },
-      {
-        "domain": {
-          "zh": "移动端加入",
-          "en": "Mobile add"
-        },
-        "text": {
-          "zh": "整页导入时「加入书架」不再被底部导航栏遮住。",
-          "en": "The “add to shelf” button is no longer covered by the bottom nav on the full-page import view."
-        }
-      },
-      {
-        "domain": {
-          "zh": "设置输入框",
-          "en": "Settings input"
-        },
-        "text": {
-          "zh": "从 Obsidian 设置进面板先收起宿主窗口，移动端输入框不再失效。",
-          "en": "Entering from Obsidian settings now closes the host window first, so mobile input fields work again."
-        }
-      },
-      {
-        "domain": {
-          "zh": "折叠条展开",
-          "en": "Fold expand"
-        },
-        "text": {
-          "zh": "展开折叠条不再重绘主列表，展开高度跟着窗口收。",
-          "en": "Expanding the fold no longer redraws the main list, and its height follows the window."
-        }
       }
     ]
   },
@@ -1072,7 +1032,7 @@
       "items": [
         { "id": "fb-20261126-qqg-01", "source": "qq-group", "plugin": "bz", "summary": "设置面板输入框移动端无法输入", "title": "设置面板输入框在移动端失效", "desc": "QQ 群用户反馈：从 Obsidian 自带设置进入插件（bz / bz Reader / bz Review）的「打开设置面板」后，移动端所有输入框都输不进字——iPad 上打字跑进设置页自己的搜索框，iPhone 与安卓则完全输不进去；从命令面板打开同一面板正常。用户随后核实安卓同样复现。", "href": "", "reply": "", "replyDigest": "", "verify": "核查确认：宿主设置是 Obsidian 自己的顶层 Modal，打开时持有焦点与键盘 scope；插件自绘面板视觉上盖住它但焦点仍被宿主攥着，点输入框时焦点被抢回宿主搜索框。已修：从原生设置页进面板时先关宿主设置、等它真离场再开面板（最多一秒超时照开）。bz 主插件、bz Reader、bz Review 三仓均已合并；Review 另处理了 Reader 开内嵌复习页的情形，点按钮落在书架「复习」页签里的内嵌面板。真机桌面与移动端验证通过。尚未发版，状态进行中。", "state": "doing", "submittedAt": "2026-11-26", "doneAt": "", "rejectedAt": "", "commitRepo": "bz", "commitId": "2c5a76a5", "commitDate": "2026-11-26 11:30" },
         { "id": "fb-20261126-qqg-03", "source": "qq-group", "plugin": "bz", "domain": "剪藏本", "summary": "删除的资讯条目下一轮抓取又回来", "title": "删除的资讯条目不应在下一次抓取时复活", "desc": "QQ 群用户 Panda 反馈：安卓移动端读 RSS 时，把不想看的内容点「删除」后条目确实消失；但下一次拉取又会被抓回来并重新变成未读，等于删除完全没用。", "href": "", "reply": "", "replyDigest": "", "verify": "核查属实：抓取判「哪些是新文章」只拿磁盘现存条目做对照，删掉的条目下一轮又被源里同一篇声明为新增、落盘并重新变未读。已修：news.json 增加 droppedKeys 已删名单（articleKeyOf 口径），删除时写入、撤销删除时撤出，抓取入库前先按名单过滤；只有用户手动删除进名单，保留策略自动清理不进；上限 2000 条 FIFO。真机移动端删除后再抓取不复活、桌面端一致，撤出名单后能重新抓到；门禁 554 文件 8554 测试全过、tsc 干净。尚未发版，状态进行中。", "state": "doing", "submittedAt": "2026-11-26", "doneAt": "", "rejectedAt": "", "commitRepo": "bz", "commitId": "53d7f047", "commitDate": "2026-11-26 13:23" },
-        { "id": "fb-20261125-qqg-01", "source": "qq-group", "plugin": "bz-reader", "summary": "书架切「已归档」回不去，还显示没书", "title": "书架空态吞掉筛选栏，「已归档」回不去", "desc": "用户报了两点：书架分类点了「已归档」之后回不去，也找不到恢复书的入口；另有一次书架显示「没书」，导入页却显示很多书「已在书架」。", "href": "", "reply": "确认是 bug：整库为空的判定用错了数据源", "replyDigest": "作者确认判空逻辑用错数据源，已按整库重判并补回退入口。", "verify": "已修并合并 master（commit 48ddedf2，2026-11-25 18:55）：判空改成按库里全部书（含归档）；筛出来为空时保留搜索 / 分类 / 排序 / 视图 / 多选，并给「回到全部书」或「查看已归档 · N 本」按钮。真机桌面 + 移动各三条路径验证，单测 6 条。尚未发版，随下个版本发布后转已完成。", "state": "doing", "submittedAt": "2026-11-25", "doneAt": "", "rejectedAt": "", "commitRepo": "bz-reader", "commitId": "48ddedf2", "commitDate": "2026-11-25 18:55" },
+        { "id": "fb-20261125-qqg-01", "source": "qq-group", "plugin": "bz-reader", "summary": "书架切「已归档」回不去，还显示没书", "title": "书架空态吞掉筛选栏，「已归档」回不去", "desc": "用户报了两点：书架分类点了「已归档」之后回不去，也找不到恢复书的入口；另有一次书架显示「没书」，导入页却显示很多书「已在书架」。", "href": "", "reply": "确认是 bug：整库为空的判定用错了数据源", "replyDigest": "作者确认判空逻辑用错数据源，已按整库重判并补回退入口。", "verify": "已修并合并 master（commit 48ddedf2，2026-11-25 18:55）：判空改成按库里全部书（含归档）；筛出来为空时保留搜索 / 分类 / 排序 / 视图 / 多选，并给「回到全部书」或「查看已归档 · N 本」按钮。真机桌面 + 移动各三条路径验证，单测 6 条。尚未发版，随下个版本发布后转已完成。", "state": "done", "submittedAt": "2026-11-25", "doneAt": "2026-11-26", "rejectedAt": "", "commitRepo": "bz-reader", "commitId": "48ddedf2", "commitDate": "2026-11-25 18:55", "releaseVersion": "1.7.1" },
         { "id": "fb-20261123-qqg-01", "source": "qq-group", "plugin": "bz-reader", "summary": "高分屏分页阅读上半屏空白", "title": "高分屏分页阅读上半部分大面积留白", "desc": "QQ 群用户「时间的朋友」2026-11-23 04:04 发截图反馈：BZ Reader 在 4K 高分屏（3840×2070）以分页模式打开 EPUB 时，书页上半部分大面积空白，正文被压到屏幕中下部。用户自查附了分析：分页器对阅读区用三轨 Grid，正文轨被 1440px 上限锁死，屏高超出后多余高度被上下两条 1fr 轨道均分，把正文挤了下去；并提到该书目录锚点跳到尾注造成断页，加剧了空旷感。", "href": "", "reply": "", "replyDigest": "", "verify": "这是上游依赖库 foliate-js 的 bug：分页器把正文轨锁在 1440px、顶底轨用 1fr，屏高超过 1440+2×边距时多余高度被均分到顶部和底部，正文被挤到中下部。本插件已打修复补丁：把分页 Grid 的顶/底轨改成固定边距、正文轨改成吃满剩余高度，普通屏行为不变。注意：作者本机没有 4K 屏，无法做真实 4K 真机测试；仅用 1400×2000 超高视口模拟验证过——修复前顶部大片空白、修复后正文顶格铺满。可能存在尚未覆盖到的情况，如果仍遇到留白，请再次提交问题反馈。尚未发版，随下个版本发布。", "state": "done", "submittedAt": "2026-11-23 04:04", "doneAt": "2026-11-24", "rejectedAt": "", "commitRepo": "bz-reader", "commitId": "c215d41a", "commitDate": "2026-11-23 04:42", "releaseVersion": "1.7.0" },
         { "id": "fb-20261122-qqg-01", "source": "qq-group", "plugin": "bz-reader", "summary": "其余服务商对话连不上（模型能拉）", "title": "第三方服务商对话连不上", "desc": "QQ 群用户「靛青」2026-11-22 00:15 反馈：AI 仍只有 DeepSeek 正常，其他服务商依旧连不上；模型列表能拉到，但对话请求连不上。核查确认 bz-reader 的对话只有 fetch 直连、没有 requestUrl 兜底，服务商不带跨域头时请求发不出去；bz 主仓同一家有兜底，故 bz 侧正常。", "href": "", "reply": "", "replyDigest": "", "verify": "已实现并合并 master：对话通道补上「fetch 失败 → Obsidian 主进程代发」退路，与 bz 主仓同口径；同时把 bz-review 的协议适配补齐（Claude 那档真正走 /messages）。真机用不返回跨域头的回显网关对照：修复前测试按钮连接失败、服务端只收到预检；修复后连接正常、服务端收到真正的对话请求。尚未发版，待随下个版本发布后转已完成。", "state": "done", "submittedAt": "2026-11-22 00:15", "doneAt": "2026-11-24", "rejectedAt": "", "commitRepo": "bz-reader", "commitId": "", "commitDate": "2026-11-22 01:05", "releaseVersion": "1.7.0" },
         { "id": "fb-20261120-qqg-02", "source": "qq-group", "plugin": "bz", "domain": "日记本", "summary": "窗口模式写日记正文显示不全", "title": "窗口模式日记正文被挤压显示不全", "desc": "QQ 群用户「炽热的恒星」于 13:10 起报：窗口模式下写日记，内容显示不完整，不知道有没有打上字；全屏正常；把窗口变得很小又能显示。补充说在「Obsidian 完整展示」和「缩小到只显示一页」两个尺寸中间这段范围有问题，自己已知怎么处理（放大或缩小窗口）。附了两张窗口模式截图。", "href": "", "reply": "13:23「bz 所有的主窗口都是响应式布局，窗口足够小就变成移动端的布局了，保持一定的高度，正文区就不会被挤压。」", "replyDigest": "作者说明是响应式布局，窗口足够小切移动端布局，保持一定高度正文区就不被挤压。", "verify": "查 bz 与 bz-reader 两仓 git log --all，无同类修复。根因：窗口模式（宽>720、高<900）书高被压到 575px，写作内页 textarea 是 flex:1 被挤到一两行。已修复：给 textarea 死下限 180px。门禁 24 文件 513 测试全绿、tsc 干净；真机 1024x800 窗口档 textarea 184px 打字可见、移动端 390x844 档 467px 无回归。已合并 516b5222，未发版随下次版本发布。", "state": "done", "submittedAt": "2026-11-20 13:10", "doneAt": "2026-11-20", "rejectedAt": "", "commitRepo": "bz", "commitId": "516b5222", "commitDate": "2026-11-20 13:53", "releaseVersion": "1.44.6" },
@@ -1086,7 +1046,7 @@
       "key": "feature",
       "items": [
         { "id": "fb-20261126-qqc-01", "source": "qq-channel", "plugin": "bz-reader", "summary": "给 PDF 扫描识别增加百度云 OCR 接口", "title": "PDF 扫描接入百度云 OCR", "desc": "QQ 频道「功能建议」板块用户「Pluto」2026-11-26 13:53 建议给 PDF 扫描的识别功能增加百度云 OCR API 接口，频道主回复后续跟进。", "href": "", "nick": "Pluto", "reply": "后续跟进", "replyDigest": "频道主回复后续跟进，已记入待排期。", "verify": "查过可用的 OCR 库：没有能同时对接多家云 OCR 的现成库，各家鉴权方式不同且都要走宿主的网络通道；百度 OCR 的接口与鉴权可直接在插件内实现，按供应商逐家适配即可。", "state": "accepted", "submittedAt": "2026-11-26 13:53", "doneAt": "", "rejectedAt": "", "commitRepo": "", "commitId": "", "commitDate": "" },
-        { "id": "fb-20261126-qqg-02", "source": "qq-group", "plugin": "bz-reader", "summary": "加划线排序开关（按时间 / 按原文）", "title": "划线列表按时间或按原文排", "desc": "群友发来侧栏划线页截图，说标注是按添加时间排的，同一章里后划的排在先划的前面，看着乱，建议按原文先后位置排。作者定成设置项：默认按时间不变，另给一档按原文。", "href": "", "reply": "", "replyDigest": "作者在群里回复 OK，随后把排序做成设置项：默认按时间，可切按原文。", "verify": "侧栏划线本来按章节分组、组内按添加时间；现在组内可选按书内位置（从 CFI / PDF 定位串读先后），两档都保留章节分组。", "state": "doing", "submittedAt": "2026-11-26 11:05", "doneAt": "", "rejectedAt": "", "commitRepo": "bz-reader", "commitId": "6b29d5b4", "commitDate": "2026-11-26 12:05" },
+        { "id": "fb-20261126-qqg-02", "source": "qq-group", "plugin": "bz-reader", "summary": "加划线排序开关（按时间 / 按原文）", "title": "划线列表按时间或按原文排", "desc": "群友发来侧栏划线页截图，说标注是按添加时间排的，同一章里后划的排在先划的前面，看着乱，建议按原文先后位置排。作者定成设置项：默认按时间不变，另给一档按原文。", "href": "", "reply": "", "replyDigest": "作者在群里回复 OK，随后把排序做成设置项：默认按时间，可切按原文。", "verify": "侧栏划线本来按章节分组、组内按添加时间；现在组内可选按书内位置（从 CFI / PDF 定位串读先后），两档都保留章节分组。", "state": "done", "submittedAt": "2026-11-26 11:05", "doneAt": "2026-11-26", "rejectedAt": "", "commitRepo": "bz-reader", "commitId": "6b29d5b4", "commitDate": "2026-11-26 12:05", "releaseVersion": "1.7.1" },
         { "id": "fb-20261125-qqg-02", "source": "qq-group", "plugin": "bz-reader", "summary": "书籍信息与封面支持编辑替换", "title": "书籍信息可编辑、封面可替换", "desc": "QQ 群用户「小透明」2026-11-25 提交 Reader 插件问题反馈清单第 6 条：TXT 书籍详情没有编辑入口，无法配置作者、简介与封面。作者回复「6 这个可以」，并要求扩到所有书籍：书名、作者、简介都可改，封面可上传替换、也可还原原版。", "href": "", "reply": "6 这个可以", "replyDigest": "作者同意实现；实际按作者要求扩到所有书籍：书名、作者、简介可编辑，封面可上传替换与还原。", "verify": "反馈属实：书籍详情只读展示，书菜单只有改名，没有作者/简介/封面编辑入口。已实现并合并：书卡菜单与详情统一「编辑书籍信息」，手改过的字段会保留、打开书时不被原书信息覆盖；封面走本地图片，大图自动等比压缩后存进数据目录，可一键还原原版封面（EPUB 回原书封面、TXT 回占位），详情显示封面来源。桌面与移动端真机验证通过，尚未发版。", "state": "doing", "submittedAt": "2026-11-25", "doneAt": "", "rejectedAt": "", "commitRepo": "bz-reader", "commitId": "0d686af8", "commitDate": "2026-11-25 20:09" },
         { "id": "fb-20261124-qqc-01", "source": "qq-channel", "plugin": "bz-reader", "summary": "给阅读器工具栏按钮加悬停气泡提示", "title": "阅读器工具栏按钮加悬停气泡提示", "desc": "QQ 频道用户「天道酬勤」建议给阅读器顶部工具栏的功能按钮增加气泡提示信息，配图用红箭头指向「更多选项」按钮并配文「如 obsidian 原功能一样」，理由是对新用户友好、方便快速入门和使用。", "href": "", "reply": "频道主回复：好的，下个版本根据", "replyDigest": "频道主回复表示会在下个版本根据这条建议处理。", "verify": "已实现并合并：只给阅读器头栏工具栏那批图标按钮加悬停气泡（如目录/搜索/书签/朗读等），不做成全插件 UI 都有；气泡文案按作者要求去掉快捷键（「目录（s）」显示为「目录」），保留「复制链接（页 / 视图 / 嵌入 / 标注）」这类说明性括号；出现时机用 Obsidian 默认。气泡只在头栏按钮上出现，设置页/侧栏/弹窗等不受影响。真机桌面端悬停目录、朗读均弹出去键位气泡，移动端工具栏布局正常。未发版，状态记进行中。", "state": "done", "submittedAt": "2026-11-24 13:16", "doneAt": "2026-11-24", "rejectedAt": "", "commitRepo": "bz-reader", "commitId": "4d8063e5", "commitDate": "2026-11-24 16:01", "releaseVersion": "1.7.0" },
         { "id": "fb-20261123-qqg-02", "source": "qq-group", "plugin": "bz", "domain": "日记本", "summary": "固化台历面板大小防误触", "title": "台历面板尺寸固定", "desc": "QQ 交流群有人建议把日记台历面板大小固定下来：现在面板高度随月份行数变化，切月忽高忽低；入场动画期间手快点空会落到遮罩上关掉面板，下一击误触正文。作者 Panda 补充说这条必做，不然用日历视图时挺头大的。", "href": "", "reply": "", "replyDigest": "（数据里没有记录）", "verify": "已修并合并（commit e274b7d6，时间 2026-11-23 14:25）：台历网格恒补满 6 行并固定行高，切月高度恒定；入场 300ms 内点弹层外不再关面板；日期格点击区加大。真机桌面与移动端逐月翻测高度一致。未发版，状态记进行中。", "state": "done", "submittedAt": "2026-11-23", "doneAt": "2026-11-23", "rejectedAt": "", "commitRepo": "bz", "commitId": "e274b7d6", "commitDate": "2026-11-23 14:25", "releaseVersion": "1.44.7" },
