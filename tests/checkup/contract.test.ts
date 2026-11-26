@@ -35,13 +35,13 @@ describe('段级契约：SEGMENT_FIELDS × 域写侧形状', () => {
     expect(SEGMENT_FIELDS['clipbook.json']).toHaveLength(9);
   });
 
-  it('news.json = emptyData() 11 键（func P2-2：lastFetchAt/fetchIntervalMin 不得再漏；ADR-0209 rsshubInstance）', () => {
+  it('news.json = emptyData() 12 键（func P2-2：lastFetchAt/fetchIntervalMin 不得再漏；ADR-0209 rsshubInstance；fb-20261126-qqg-01 droppedKeys）', () => {
     expect(sorted(SEGMENT_FIELDS['news.json'])).toEqual(sorted(Object.keys(emptyData())));
-    expect(SEGMENT_FIELDS['news.json']).toHaveLength(11);
+    expect(SEGMENT_FIELDS['news.json']).toHaveLength(12);
   });
 
-  it('news.json：rsshubInstance 属「功能未用到就不写」可选段（ADR-0209，缺席豁免 missing）', () => {
-    expect(OPTIONAL_SEGMENTS['news.json']).toEqual(['rsshubInstance']);
+  it('news.json：rsshubInstance / droppedKeys 属「功能未用到就不写」可选段（缺席豁免 missing）', () => {
+    expect(OPTIONAL_SEGMENTS['news.json']).toEqual(['rsshubInstance', 'droppedKeys']);
     // 白名单仍完整登记可选键（防「约定外」误报）
     for (const k of OPTIONAL_SEGMENTS['news.json']) expect(SEGMENT_FIELDS['news.json']).toContain(k);
   });

@@ -211,14 +211,15 @@ function markHandledAndBump(raw: any, action: 'saved' | 'skipped'): Promise<Hand
   });
 }
 
-/** 删单篇（news.json 移除该文章；removeArticleKeys 防磁盘并集复活）；返回队列 Promise（同上） */
+/** 删单篇（news.json 移除该文章；removeArticleKeys 防磁盘并集复活，dropArticleKeys 防下次抓取再拉回来）；
+ *  返回队列 Promise（同上） */
 function removeArticle(raw: any): Promise<void> {
   const key = articleKeyOf(raw);
   return enqueueNewsWrite(async () => {
     const res = await readNewsData();
     if (!res.ok || res.missing) return;
     const list = (res.data.articles || []).filter((a: any) => articleKeyOf(a) !== key);
-    await writeNewsDataMerged({ set: { articles: list }, removeArticleKeys: [key] });
+    await writeNewsDataMerged({ set: { articles: list }, removeArticleKeys: [key], dropArticleKeys: [key] });
   });
 }
 
@@ -433,15 +434,20 @@ export async function flowUndoHandled(rawBefore: any): Promise<void> {
   });
 }
 
-/** 撤销删除 news 条目：把动作前 raw 快照插回 news.json（同 key 已在盘上则跳过，防重复） */
+/** 撤销删除 news 条目：把动作前 raw 快照插回 news.json（同 key 已在盘上则不插，防重复），
+ *  并从已删名单撤出（否则这一篇此后再也抓不回来） */
 export async function flowUndoDeleteNews(rawBefore: any): Promise<void> {
   if (!rawBefore) return;
+  const key = articleKeyOf(rawBefore);
   await enqueueNewsWrite(async () => {
     const res = await readNewsData();
     if (!res.ok || res.missing) return;
     const list = res.data.articles || [];
-    if (list.some((a: any) => articleKeyOf(a) === articleKeyOf(rawBefore))) return;
-    await writeNewsDataMerged({ set: { articles: [...list, rawBefore] } });
+    const present = list.some((a: any) => articleKeyOf(a) === key);
+    await writeNewsDataMerged({
+      set: present ? {} : { articles: [...list, rawBefore] },
+      restoreArticleKeys: [key],
+    });
   });
 }
 

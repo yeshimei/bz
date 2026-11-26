@@ -62,6 +62,15 @@ export interface NewsData {
   fetchIntervalMin: number;
   /** RSSHub 实例地址（ADR-0209）：源库路由型条目订阅时按它重拼 URL；默认值见 core/rss-catalog RSS_HUB_DEFAULT_INSTANCE */
   rsshubInstance: string;
+  /**
+   * 用户主动删除的条目键（`articleKeyOf` 口径，fb-20261126-qqg-01）：抓取入库前按它过滤。
+   *
+   * 没有这段时删除只对当次有效——抓取判「新文章」只看磁盘现存 articles，删掉的条目下一轮
+   * 又被源里同一篇声明为新增、落盘并重新变未读（安卓端用户实报「删除完全没用」）。
+   * 只有用户手动删除才进名单；保留策略的自动清理不进（那不是用户意图，重新抓到无妨）。
+   * 撤销删除时撤出。上限见 DROPPED_KEYS_LIMIT，超限 FIFO 截尾。
+   */
+  droppedKeys: string[];
 }
 
 /** 读取失败 / 文件缺失的区分（首用引导 vs 错误态沿用 reader 语义） */
@@ -77,7 +86,39 @@ export interface ReadNewsResult {
 
 /** news.json 空数据形状单源（导出供 checkup 白名单契约锁引用，防段集漂移） */
 export function emptyData(): NewsData {
-  return { articles: [], stats: DEFAULT_STATS(), bilibiliUps: [], bilibiliUpInfo: {}, bilibiliMaxItems: 10, bilibiliCookie: '', sources: { ...DEFAULT_SOURCES }, rssFeeds: [], lastFetchAt: 0, fetchIntervalMin: 30, rsshubInstance: RSS_HUB_DEFAULT_INSTANCE };
+  return { articles: [], stats: DEFAULT_STATS(), bilibiliUps: [], bilibiliUpInfo: {}, bilibiliMaxItems: 10, bilibiliCookie: '', sources: { ...DEFAULT_SOURCES }, rssFeeds: [], lastFetchAt: 0, fetchIntervalMin: 30, rsshubInstance: RSS_HUB_DEFAULT_INSTANCE, droppedKeys: [] };
+}
+
+/** 已删名单上限（FIFO 保留最后 N 条）：只增不减会随年头无限长，2000 条 URL 约 200KB，
+ *  足够覆盖若干年的手动删除量；超限后最老的先出（见 normalizeDroppedKeys） */
+export const DROPPED_KEYS_LIMIT = 2000;
+
+/** 纯函数：已删名单归一（非数组 → []；只收非空字符串、去空白、保序去重、超限 FIFO 截尾） */
+export function normalizeDroppedKeys(raw: unknown): string[] {
+  if (!Array.isArray(raw)) return [];
+  const out: string[] = [];
+  const seen = new Set<string>();
+  for (const it of raw) {
+    if (typeof it !== 'string') continue;
+    const k = it.trim();
+    if (!k || seen.has(k)) continue;
+    seen.add(k);
+    out.push(k);
+  }
+  return out.length > DROPPED_KEYS_LIMIT ? out.slice(out.length - DROPPED_KEYS_LIMIT) : out;
+}
+
+/**
+ * 纯函数：在既有名单上追加删除键 / 撤出恢复键。
+ * 撤出优先于追加（同批既 drop 又 restore 的键不留）；重复删除的键挪到末尾（刷新存活期，
+ * 否则老的先被 FIFO 挤掉、用户再次删除的反而丢了）；结果仍按上限收敛。
+ */
+export function mergeDroppedKeys(base: string[], add?: string[], restore?: string[]): string[] {
+  const restored = new Set(normalizeDroppedKeys(restore));
+  const added = normalizeDroppedKeys(add).filter((k) => !restored.has(k));
+  const addedSet = new Set(added);
+  const kept = normalizeDroppedKeys(base).filter((k) => !restored.has(k) && !addedSet.has(k));
+  return normalizeDroppedKeys([...kept, ...added]);
 }
 
 /** 纯函数：RSS 订阅列表容错解析（ADR-0121）：非数组 → []；条目须含合法 url，title 去空白可缺省 */
@@ -258,6 +299,7 @@ export function parseNewsFileContent(raw: string): NewsData | null {
       lastFetchAt: Number(obj.lastFetchAt) > 0 ? Math.floor(Number(obj.lastFetchAt)) : 0,
       fetchIntervalMin: normalizeFetchIntervalMin(obj.fetchIntervalMin),
       rsshubInstance: normalizeRsshubInstance(obj.rsshubInstance) ?? RSS_HUB_DEFAULT_INSTANCE,
+      droppedKeys: normalizeDroppedKeys(obj.droppedKeys),
     };
   }
   return null;
@@ -329,6 +371,11 @@ export interface NewsWriteIntent {
    * （文章已被删/被裁掉时不借补丁把它复活）。两处同时声明时 set 条目胜出。
    */
   patchArticleFields?: Record<string, Record<string, any>>;
+  /** 加入已删名单（用户主动删除的条目键）：与磁盘名单并集，超限 FIFO 截尾。
+   *  与 removeArticleKeys 分工——后者只剔除本次合并的 articles，前者挡此后每一轮抓取 */
+  dropArticleKeys?: string[];
+  /** 从已删名单撤出（撤销删除）：同批与 dropArticleKeys 冲突的键以撤出为准 */
+  restoreArticleKeys?: string[];
 }
 
 /**
@@ -374,6 +421,11 @@ export async function writeNewsDataMerged(intent: NewsWriteIntent): Promise<bool
       }
     }
     next.articles = merged;
+  }
+  // 已删名单：只走专门意图（不放进下面的段循环）——set 整段覆盖会用旧快照把并发删除/撤销回退，
+  // 与 articles 的 removeArticleKeys 同源教训（C2）
+  if (intent.dropArticleKeys?.length || intent.restoreArticleKeys?.length) {
+    next.droppedKeys = mergeDroppedKeys(base.droppedKeys || [], intent.dropArticleKeys, intent.restoreArticleKeys);
   }
   for (const seg of ['stats', 'bilibiliUps', 'bilibiliUpInfo', 'bilibiliMaxItems', 'bilibiliCookie', 'sources', 'rssFeeds', 'lastFetchAt', 'fetchIntervalMin', 'rsshubInstance'] as const) {
     if (intent.set[seg] !== undefined) {

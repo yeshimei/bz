@@ -63,6 +63,9 @@ export interface FetchDiskState {
   rssFeeds: RssFeed[];
   lastFetchAt: number;
   fetchIntervalMin: number;
+  /** 用户主动删除的条目键（articleKeyOf 口径）：本轮入库前先按它过滤，删掉的不再复活。
+   *  可选——老调用方/测试桩构造快照时不带，按空名单处理 */
+  droppedKeys?: string[];
 }
 
 export interface FetchStoreDeps {
@@ -93,6 +96,7 @@ export function defaultFetchStore(): FetchStoreDeps {
         rssFeeds: d.rssFeeds.map((f) => ({ ...f })),
         lastFetchAt: d.lastFetchAt ?? 0,
         fetchIntervalMin: d.fetchIntervalMin ?? DEFAULT_FETCH_INTERVAL_MIN,
+        droppedKeys: [...(d.droppedKeys || [])],
       };
     },
     write: (intent) => enqueueNewsWrite(async () => {
@@ -619,6 +623,9 @@ export async function runNewsFetchRound(deps: RunFetchDeps): Promise<NewsFetchRe
   const existing = disk.articles;
   const existingUrls = new Set(existing.map((a) => a.url));
   const existingTitles = new Set(existing.map((a) => String(a.title || '').trim()));
+  // 用户主动删除的条目：磁盘上已经没有它，只靠 existingUrls 判不出来（下一轮又当新文章入库、
+  // 重新变未读——fb-20261126-qqg-01）。名单挡在这里，撤销删除时由 flow 撤出该键
+  const droppedKeys = new Set(disk.droppedKeys || []);
 
   // 按 sources 开关决定抓哪些源（默认全开；剪藏本设置「数据源」组写）
   const sources = disk.sources || { zhihu: true, guokr: true, bilibili: true, rss: true };
@@ -654,7 +661,8 @@ export async function runNewsFetchRound(deps: RunFetchDeps): Promise<NewsFetchRe
 
   let newArticles = [guokrList, zhihuList, biliRes ? biliRes.articles : [], rssRes ? rssRes.articles : []]
     .flat()
-    .filter((a) => a && !existingUrls.has(a.url));
+    .filter((a) => a && !existingUrls.has(a.url))
+    .filter((a) => !droppedKeys.has(articleKeyOf(a)));
 
   // 标题去重
   newArticles = newArticles.filter((a) => !existingTitles.has(String(a.title || '').trim()));

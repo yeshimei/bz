@@ -35,7 +35,9 @@ export const POMODORO_HISTORY_FIELDS = ['ts', 'duration', 'task'];
 export const OPTIONAL_SEGMENTS: Record<string, string[]> = {
   'pomodoro.json': ['archived'],
   // ADR-0209：RSSHub 实例地址——段级合并只在用户保存过实例设置时落盘，没配过即缺席（正常形态）
-  'news.json': ['rsshubInstance'],
+  // droppedKeys（fb-20261126-qqg-01）：已删名单——老库首次合并写之前没有这段，属升级过渡、
+  // 不是数据损坏；删除过条目后自然出现
+  'news.json': ['rsshubInstance', 'droppedKeys'],
 };
 
 /**
@@ -58,11 +60,12 @@ export const SEGMENT_FIELDS: Record<string, string[]> = {
   // + issue 358 readLog 扩段；2026-11-13 剪藏成书回写 readSeconds/readLoggedSeconds 扩段。
   // func P2-1 的教训：加段必须同步这里，否则用过剪藏本的老用户每次体检都恒误报漂移）
   'clipbook.json': ['articleOverrides', 'savedArchive', 'order', 'marks', 'savedImages', 'pendingSource', 'readLog', 'readSeconds', 'readLoggedSeconds'],
-  // news 11 段 = clipbook/news-data.ts emptyData()（issue 302 lastFetchAt/fetchIntervalMin 扩段；func P2-2；
-  // ADR-0209 rsshubInstance 扩段，缺席属「未配置过」正常形态 → OPTIONAL_SEGMENTS 豁免）
+  // news 12 段 = clipbook/news-data.ts emptyData()（issue 302 lastFetchAt/fetchIntervalMin 扩段；func P2-2；
+  // ADR-0209 rsshubInstance 扩段，缺席属「未配置过」正常形态 → OPTIONAL_SEGMENTS 豁免；
+  // fb-20261126-qqg-01 droppedKeys 扩段，老库首次合并写前缺席同样豁免）
   'news.json': [
     'articles', 'stats', 'bilibiliUps', 'bilibiliUpInfo', 'bilibiliMaxItems', 'bilibiliCookie', 'sources', 'rssFeeds',
-    'lastFetchAt', 'fetchIntervalMin', 'rsshubInstance',
+    'lastFetchAt', 'fetchIntervalMin', 'rsshubInstance', 'droppedKeys',
   ],
   // home v3 五键 = home/order.ts emptyHomeOrder()（home 批 1d26c797 已修）
   'home.json': ['version', 'desk', 'mob', 'hiddenDesk', 'hiddenMob'],
