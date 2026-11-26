@@ -1,7 +1,8 @@
 {
   "version": 1,
-  "updatedAt": "2026-11-25",
+  "updatedAt": "2026-11-26",
   "patrons": [
+    { "name": "繆", "amount": "patron", "date": "2026-11-26" },
     { "name": "匿名", "amount": "patron", "date": "2026-11-25" },
     { "name": "ph", "amount": "patron", "date": "2026-11-25" },
     { "name": "刘", "amount": "patron", "date": "2026-11-25" },
