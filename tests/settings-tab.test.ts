@@ -94,4 +94,60 @@ describe('设置页 BzSettingTab（issue 345：只留打开设置面板按钮）
     expect(openSettingsPanel).toHaveBeenCalledTimes(1);
     expect(openSettingsPanel).toHaveBeenCalledWith(plugin.app);
   });
+
+  it('从宿主设置进入：先收宿主，宿主真正离场后才开面板（移动端焦点交接）', () => {
+    vi.useFakeTimers();
+    try {
+      const host = document.createElement('div');
+      host.className = 'modal-container is-visible';
+      const closeBtn = document.createElement('button');
+      closeBtn.className = 'modal-close-button';
+      const onClose = vi.fn();
+      closeBtn.addEventListener('click', onClose);
+      host.appendChild(closeBtn);
+      host.appendChild(tab.containerEl);
+      document.body.appendChild(host);
+
+      const btn = tab.containerEl.querySelector('.setting-item-control button') as HTMLButtonElement;
+      btn.click();
+
+      // 宿主先收，面板还不能开——否则焦点仍被宿主 Modal 攥着
+      expect(onClose).toHaveBeenCalledTimes(1);
+      expect(openSettingsPanel).not.toHaveBeenCalled();
+
+      // 宿主离场（关闭动画结束、容器摘除）后下一拍开面板
+      host.remove();
+      vi.advanceTimersByTime(60);
+      expect(openSettingsPanel).toHaveBeenCalledTimes(1);
+      expect(openSettingsPanel).toHaveBeenCalledWith(plugin.app);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('宿主迟迟不收起：最多等一秒，超时照开面板（不让人点了没反应）', () => {
+    vi.useFakeTimers();
+    try {
+      const host = document.createElement('div');
+      host.className = 'modal-container is-visible';
+      const closeBtn = document.createElement('button');
+      closeBtn.className = 'modal-close-button';
+      closeBtn.addEventListener('click', () => {}); // 点了也不收起
+      host.appendChild(closeBtn);
+      host.appendChild(tab.containerEl);
+      document.body.appendChild(host);
+
+      const btn = tab.containerEl.querySelector('.setting-item-control button') as HTMLButtonElement;
+      btn.click();
+
+      vi.advanceTimersByTime(600);
+      expect(openSettingsPanel).not.toHaveBeenCalled();
+
+      vi.advanceTimersByTime(500);
+      expect(openSettingsPanel).toHaveBeenCalledTimes(1);
+      expect(openSettingsPanel).toHaveBeenCalledWith(plugin.app);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
 });

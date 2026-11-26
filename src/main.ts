@@ -102,6 +102,8 @@ import { ensureAutoSummary, unloadAutoSummary, redoSummaryForActiveFile } from '
 import { ensureSmartCat, unloadSmartCat, openSmartCat, openSmartCatChat, hideSmartCat, openSmartcatDashboard } from './smartcat';
 // 设置面板（settings-panel 域，ADR-0080：全域设置聚合入口，桌面侧栏工作台 / 移动命令面板）
 import { openSettingsPanel, unloadSettingsPanel } from './settings-panel';
+// 宿主设置 Modal 的交接（从 Obsidian 设置页点进面板时先收宿主，否则移动端焦点被它攥着）
+import { afterHostSettingsClosed } from './settings-panel/host-close';
 // 数据体检（checkup 域，D4：全插件数据可靠层只读巡检面板）
 import { openDataCheckup, unloadDataCheckup } from './checkup';
 // 工具坞（dock 域，ADR-0235 + ADR-0236：外部工具的标准接口 + 集中观测台 + **bz 调度**；
@@ -980,9 +982,13 @@ export class BzSettingTab extends PluginSettingTab {
     containerEl.empty();
     new Setting(containerEl)
       .setName('打开设置面板')
-      .setDesc('全部设置（AI、数据存储路径、通知、各域）都在 bz 设置面板中集中管理')
+      .setDesc('点下面的按钮，在 bz 设置面板里打开——全部设置（AI、数据存储路径、通知、各域）都集中在那里')
       .addButton((btn) =>
-        btn.setButtonText('打开设置面板').setCta().onClick(() => openSettingsPanel(this.plugin.app))
+        btn.setButtonText('打开设置面板').setCta().onClick(() =>
+          // 宿主设置 Modal 不收起会攥着焦点：移动端输入全跑进它自己的搜索框（iPad 可见，
+          // iPhone / 安卓干脆输不进）。先收宿主，等它真离场再开面板。
+          afterHostSettingsClosed(this.plugin.app, containerEl, () => openSettingsPanel(this.plugin.app))
+        )
       );
   }
 }
