@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-/* 发版两道闸（`scripts/release-gate.mjs`，2026-11-02 立）
+/* 发版三道闸（note / publish / 顺序，`scripts/release-gate.mjs`，2026-11-02 立）
  *
  * 为什么要有这段代码：发版流程里「给用户过目」这件事原先只写在 skill 里，靠记性维持。
  * 已经出过两次事故——v1.36.0 出现过「正文已定稿、离线包还是旧日志」的半成品被挂上线；
@@ -246,7 +246,7 @@ export function enforceReleaseOrder(tag, slug, { what = '分发仓库', allowUnp
   const lines = [
     `[release-gate] ✗ 顺序闸没过：${who}`,
     `  ${r.reason}`,
-    '  顺序：create-draft → 用户看过确认卡 → finalize 转正 → 最后才镜像分发仓 / 码云。',
+    '  顺序：create-draft → finalize 转正（approve-publish 由 agent 自动放行，不再停等确认卡）→ 最后才镜像分发仓 / 码云。',
   ];
   if (allowUnpublished) {
     console.log(lines.join('\n'));
@@ -413,7 +413,7 @@ function main() {
       const r = queryReleaseOrder(`v${v}`, sourceSlug(ROOT));
       if (!r.ok) {
         console.error(`\n[release-gate] ✗ 顺序闸没过：v${v} —— ${r.reason}`);
-        console.error('—— 分发仓与码云都只镜像已转正的 Release：先 create-draft → 确认卡 → finalize。');
+        console.error('—— 分发仓与码云都只镜像已转正的 Release：先 create-draft → finalize（自动放行）→ 再镜像。');
         process.exit(3);
       }
       console.log(`[release-gate] ✓ 顺序闸已过：v${v}（Release 已转正）`);

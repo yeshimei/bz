@@ -178,4 +178,4 @@ if (check.status !== 0) {
   console.error('[release-steps] 终检（--check）没过，见上方输出');
   process.exit(1);
 }
-console.log(`[release-steps] 七步全部完成，总耗时 ${((Date.now() - startedAt) / 1000).toFixed(1)}s。接下来：打 tag → pack-release → gate create-draft → 确认卡 → gate finalize（转正后镜像码云；分发仓已退役，不再镜像）。`);
+console.log(`[release-steps] 七步全部完成，总耗时 ${((Date.now() - startedAt) / 1000).toFixed(1)}s。接下来：打 tag → pack-release → gate create-draft → gate finalize（approve-publish 由 agent 自动放行，不再停等确认卡；转正后镜像码云；分发仓已退役，不再镜像）。`);
