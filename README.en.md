@@ -176,6 +176,12 @@ pnpm: `pnpm install` / `pnpm run dev` / `pnpm run build` / `pnpm test`. Read [CO
 
 Both of those are in Chinese — open an issue if you need them translated.
 
+## Data
+
+The plugin records only anonymous usage data — number of uses, time of day, and the date first used — to help decide which features are worth keeping. Your notes and settings stay on your device.
+
+This data covers only the plugin's own operation. It contains nothing that identifies you personally and nothing from your notes, and it is not used for any other purpose.
+
 <a name="support" id="support"></a>
 
 ## Support the author
