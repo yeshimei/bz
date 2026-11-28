@@ -220,6 +220,9 @@ export default interface BzSettings {
   autoSummaryTagCount: string;
   /** ⏱️ 自动摘要时机：immediate（保存后立刻，create+file-open 双监听）/ lazy（仅打开文件时补全）——ticket 124 详设 */
   autoSummaryTiming: string;
+  /** 🏷️ 用 AI 标题重命名笔记（2026-11-28，fb-20261128-qqg-01）：默认开＝缺 title 时按 AI 标题改名；
+   *  关掉＝只补摘要与标签，剪藏时的原文件名原样保留 */
+  autoSummaryTitleRename: boolean;
   /** 🗑️ 聚合讯保留策略：未保存文章（已读/跳过骨架与已保存骨架同口径）保留天数——issue 224 两键合一（原 newsRetentionSavedDays/SkippedDays） */
   newsRetentionUnsavedDays: string;
   // ===== 📚 剪藏本（clipbook 融合域，ADR-0082；与旧 clipping/news 并存）=====
@@ -1153,6 +1156,8 @@ export const DEFAULT_SETTINGS: BzSettings = {
   [AUTO_SUMMARY_KEYS.tagsEnabled]: true,
   [AUTO_SUMMARY_KEYS.tagCount]: '3-6',
   [AUTO_SUMMARY_KEYS.timing]: 'immediate',
+  // 默认开＝老行为（缺 title 就改名）；关掉只补摘要/标签，保留剪藏原标题
+  [AUTO_SUMMARY_KEYS.titleRename]: true,
   newsRetentionUnsavedDays: '30',
   // clipbook（ADR-0082）：移动端默认全屏对齐 clipping 默认开
   // clipbook：右栏阅读字号三档（small/medium/large）

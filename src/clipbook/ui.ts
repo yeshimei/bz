@@ -2719,6 +2719,16 @@ export function clipbookSettingsSchema(dataSource: DataSourceState): SettingsSch
           ], visibleWhen: (s: any) => s[AUTO_SUMMARY_KEYS.enabled] === true, isChild: true },
           { type: 'toggle', name: '生成标签', desc: '为剪藏生成中文标签', binding: { key: AUTO_SUMMARY_KEYS.tagsEnabled }, visibleWhen: (s: any) => s[AUTO_SUMMARY_KEYS.enabled] === true, isChild: true },
           { type: 'text', name: '标签数量', desc: '生成的标签个数写成区间，如 3-6', binding: { key: AUTO_SUMMARY_KEYS.tagCount }, visibleWhen: (s: any) => s[AUTO_SUMMARY_KEYS.enabled] === true && s[AUTO_SUMMARY_KEYS.tagsEnabled] === true, isChild: true },
+          {
+            // 2026-11-28（fb-20261128-qqg-01）：剪藏笔记 frontmatter 不带 title，摘要在跑
+            // 就会按 AI 拟的标题改名——用户报「剪藏的文章标题被换掉」，这一行给回选择权
+            type: 'toggle', name: 'AI 标题改名', desc: '摘要生成后把笔记文件名换成 AI 给的标题',
+            help:
+              '关掉后保留剪藏时的原文件名：AI 只补摘要和标签，不生成标题、也不改名。' +
+              '已经改过名的笔记不受影响，要还原得手动改回去。',
+            binding: { key: AUTO_SUMMARY_KEYS.titleRename },
+            visibleWhen: (s: any) => s[AUTO_SUMMARY_KEYS.enabled] === true, isChild: true,
+          },
           { type: 'select', name: '摘要时机', desc: '生成剪藏摘要的时机',
             help:
               'immediate＝保存后立刻跑摘要；lazy＝懒触发，打开文章时才跑。' +

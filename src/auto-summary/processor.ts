@@ -214,7 +214,9 @@ function bodyWithSummaryCard(file: any, settings: any, fm: Record<string, any>, 
 /** 处理单个文件：缺什么补什么（title/summary/tags），字段齐全跳过；返回结构化结果（A5）。
  *  ticket 124（Q8 详设）：摘要长度/标签开关数量/时机由设置驱动。
  *  enh 包 1：force 档跳过缺失检测直接重建，且只重建 summary/tags——title 不进目标
- *  字段（不重命名、不覆盖），用户改过的标题不吞；enh 包 2：quiet 抑制单文件通知。 */
+ *  字段（不重命名、不覆盖），用户改过的标题不吞；enh 包 2：quiet 抑制单文件通知。
+ *  2026-11-28（fb-20261128-qqg-01）：titleRename 关掉时 title 不进 missing——只补摘要与
+ *  标签，文件名保持剪藏原样；提示词也不请求标题。 */
 export async function processFile(app: any, ai: AIService, file: any, opts: ProcessOptions = {}): Promise<ProcessOutcome> {
   const force = opts.force === true;
   let h: NoticeHandle | null = null;
@@ -225,6 +227,8 @@ export async function processFile(app: any, ai: AIService, file: any, opts: Proc
   const summaryLength = String(s[AUTO_SUMMARY_KEYS.length] || 'standard');
   const tagsEnabled = s[AUTO_SUMMARY_KEYS.tagsEnabled] !== false;
   const tagCount = String(s[AUTO_SUMMARY_KEYS.tagCount] || '3-6');
+  /* 缺键＝开（老库没有这个键，行为保持不变）；显式 false 才关 */
+  const titleRenameEnabled = s[AUTO_SUMMARY_KEYS.titleRename] !== false;
   try {
     const content = await app.vault.read(file);
     const { fm, body } = parseFrontmatter(content);
@@ -238,13 +242,14 @@ export async function processFile(app: any, ai: AIService, file: any, opts: Proc
     }
 
     // 缺失字段检测（空串/空数组视为缺失；ticket 124：标签开关关掉时不要求 tags）。
-    // force（enh 包 1）：跳过检测直接重建——目标字段固定 summary(+tags)，title 不入列
+    // force（enh 包 1）：跳过检测直接重建——目标字段固定 summary(+tags)，title 不入列。
+    // titleRename 关掉（2026-11-28）：title 一样不入列——不改名也不写标题字段
     const missing: string[] = [];
     if (force) {
       missing.push('summary');
       if (tagsEnabled !== false) missing.push('tags');
     } else {
-      if (!fm || !fm.title) missing.push('title');
+      if (titleRenameEnabled && (!fm || !fm.title)) missing.push('title');
       if (!fm || !fm.summary) missing.push('summary');
       if (tagsEnabled !== false && tagsMissing(fm)) missing.push('tags');
       if (missing.length === 0) return 'skipped-complete'; // 字段齐全，无需处理
