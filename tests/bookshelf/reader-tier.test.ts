@@ -6,7 +6,7 @@
  * 所以把「到期」「解不开」「没码」「BZR1 老码」逐条钉住。
  * 档位口径见 src/bookshelf/reader-tier.ts 头注。
  */
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it } from 'vitest';
 import {
   licenseIdOf,
   parseReaderLicense,
@@ -17,6 +17,7 @@ import {
   reviewRevokedFlags,
   reviewTierOf,
 } from '../../src/bookshelf/reader-tier';
+import { _resetClockForTests, noteSeen } from '../../src/core/trusted-clock';
 import { probeReaderUsage } from '../../src/bookshelf/reader-usage';
 import { MockVault, mockAppWithVault } from '../mock-vault';
 
@@ -34,6 +35,11 @@ function code(payload: Record<string, unknown>, prefix = 'BZR2'): string {
 }
 
 const PERM = { v: 2, id: 'BZR-AF-2026-0125', plan: 'lifetime' };
+
+/* 可信时间是模块级内存状态：每个用例跑完清掉，别让高水位串到别的用例。 */
+afterEach(() => {
+  _resetClockForTests();
+});
 
 describe('reader-tier · 拆码', () => {
   it('BZR2 赞助人码 → patron，且带昵称不影响判定', () => {
@@ -190,6 +196,23 @@ describe('review-tier · 判档与码号', () => {
   it('码号', () => {
     expect(reviewLicenseIdOf({ licenseKey: code(PERM, 'BZP2') })).toBe('BZR-AF-2026-0125');
     expect(reviewLicenseIdOf({})).toBe('');
+  });
+});
+
+/* 2026-11-28：判到期不再直接读系统时钟。高水位只增不减——用户把时间
+   拨回到期日之前，看板也不会把过期码重新算成「付费在用」。 */
+describe('reader-tier · 系统时钟被往回拨', () => {
+  it('高水位越过到期后，不传 now 的默认路径按过期算', () => {
+    const exp = Date.now() + DAY;
+    noteSeen(exp + DAY);
+    expect(reviewTierOf({ licenseKey: code({ ...PERM, exp }, 'BZP2') })).toBe('basic');
+    expect(readerTierOf({ entitlement: { license: code({ ...PERM, exp }) } })).toBe('basic');
+  });
+
+  it('高水位没到之前，同一枚码照常算 paid（没有误伤）', () => {
+    const exp = Date.now() + DAY;
+    noteSeen(Date.now());
+    expect(reviewTierOf({ licenseKey: code({ ...PERM, exp }, 'BZP2') })).toBe('paid');
   });
 });
 

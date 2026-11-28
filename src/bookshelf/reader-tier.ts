@@ -16,8 +16,13 @@
  *   3. **判「当前有效」而不是「有没有码」**：过期码在插件里就是基础版，
  *      统计里也算基础版，否则「卖出去了」和「还在用」会被混成一个数。
  *   4. **判不出来就报 unknown，不塞进基础版充数**（档位由调用方决定怎么兜）。
+ *
+ * 第 5 条（2026-11-28）：**判到期用可信时间，不用系统时钟**。用户把系统
+ * 时间往回拨，过期码在看板里会一直算成付费在用；高水位（core/trusted-clock）
+ * 只增不减，把这条路堵上。纯函数只到「注入 now」为止，默认值取自时钟模块。
  */
 import type { ActivateFail, PluginTier, TierReason } from '../core/usage/types';
+import { trustedNow } from '../core/trusted-clock';
 
 /** 从码里读出来的事实（不含原文） */
 export interface LicenseFacts {
@@ -102,7 +107,7 @@ function tierOfFacts(facts: LicenseFacts | null, now: number): PluginTier {
  *
  * 传 null（data.json 读不到）按 basic：bz 阅读没有码时也是这个状态。
  */
-export function readerTierOf(cfg: unknown, now = Date.now()): PluginTier {
+export function readerTierOf(cfg: unknown, now = trustedNow()): PluginTier {
   const ent = (cfg as { entitlement?: { license?: unknown } } | null)?.entitlement;
   const license = typeof ent?.license === 'string' ? ent.license : '';
   if (!license.trim()) return 'basic';
@@ -115,7 +120,7 @@ export function readerTierOf(cfg: unknown, now = Date.now()): PluginTier {
  * 配置是它自己的 settings 对象摊在 data.json 顶层，码在 `licenseKey`。
  * 传 null 按 basic：Review 没填码时就是基础版（笔记 + 划线合计 50 条上限）。
  */
-export function reviewTierOf(cfg: unknown, now = Date.now()): PluginTier {
+export function reviewTierOf(cfg: unknown, now = trustedNow()): PluginTier {
   const license = String((cfg as { licenseKey?: unknown } | null)?.licenseKey || '');
   if (!license.trim()) return 'basic';
   return tierOfFacts(parseLicenseFacts(license, REVIEW_PREFIXES), now);
