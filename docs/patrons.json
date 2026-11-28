@@ -1,7 +1,8 @@
 {
   "version": 1,
-  "updatedAt": "2026-11-27",
+  "updatedAt": "2026-11-28",
   "patrons": [
+    { "name": "lain", "amount": "patron", "date": "2026-11-28" },
     { "name": "Nexus", "amount": "patron", "date": "2026-11-27" },
     { "name": "玄雀", "amount": "patron", "date": "2026-11-27", "message": "祝开发顺利，吉星亨通，机魂大悦" },
     { "name": "上善若水", "amount": "patron", "date": "2026-11-27" },
